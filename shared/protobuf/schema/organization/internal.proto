@@ -77,7 +77,7 @@ message CheckUsersInOrganizationRequest {
     repeated uint64 userIds = 2 [json_name = "userIds"];
 }
 message CheckUserInOrganization {
-    uint32 userId = 1 [json_name = "userId"];
+    uint64 userId = 1 [json_name = "userId"];
     bool isExist = 2 [json_name = "isExist"];
     string joinedAt = 3 [json_name = "joinedAt"];
 }

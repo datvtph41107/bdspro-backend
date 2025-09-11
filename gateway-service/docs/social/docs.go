@@ -535,6 +535,83 @@ const docTemplate = `{
                 }
             }
         },
+        "/news-feed/global": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get global news feed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Lấy danh sách news feed",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "isPost",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isReel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "OwnerOf_unknown",
+                            "OwnerOf_user",
+                            "OwnerOf_group",
+                            "OwnerOf_organization"
+                        ],
+                        "name": "ownerOf",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.ListNewsFeed"
+                        }
+                    }
+                }
+            }
+        },
         "/news-feed/global/reel": {
             "get": {
                 "description": "Get news feed by id",
@@ -919,7 +996,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get global news feed",
+                "description": "Get news feed by owner",
                 "consumes": [
                     "application/json"
                 ],
@@ -929,8 +1006,22 @@ const docTemplate = `{
                 "tags": [
                     "News Feed"
                 ],
-                "summary": "Lấy danh sách news feed",
+                "summary": "Get news feed by owner",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OwnerOf",
+                        "name": "ownerOf",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "OwnerId",
+                        "name": "ownerId",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "boolean",
                         "name": "isPost",

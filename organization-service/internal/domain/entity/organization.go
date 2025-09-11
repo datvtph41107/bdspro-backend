@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"organization/internal/enums"
+	_models "common/models"
 	"time"
 )
 
@@ -12,23 +12,25 @@ const (
 )
 
 type Organization struct {
-	ID                 uint32
-	Name               string
-	TaxCode            string
-	BusinessLicenseUrl *string
-	Address            *string
-	Phone              *string
-	Email              *string
-	Website            *string
-	LogoUrl            *string
-	Status             enums.EMemberStatus
-	FoundedAt          *time.Time
-	Description        *string
-	ApproveInvestor    bool
-	BusinessDomains    []*BusinessDomain
-	BusinessDomainIds  []uint32
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	CreatedBy          uint32
-	UpdatedBy          uint32
+	_models.BaseEntity
+	Name                string `gorm:"not null;index"`
+	TaxCode             string `gorm:"not null;index:idx_organizations_tax_code"`
+	BusinessLicenseUrl  *string
+	Address             *string
+	DetailAddress       *string
+	Phone               *string
+	Email               *string
+	Website             *string
+	LogoUrl             *string
+	Status              uint32 `gorm:"index:idx_organizations_status_created_at"`
+	ApproveInvestor     bool   `gorm:"default:false"`
+	AccountBankInvestor *uint64
+	FoundedAt           *time.Time
+	Description         *string
+	BusinessDomainIds   []uint32          `gorm:"-"`
+	BusinessDomains     []*BusinessDomain `gorm:"many2many:organization_business_domains;joinForeignKey:OrganizationID;joinReferences:BusinessDomainID"`
+}
+
+func (Organization) TableName() string {
+	return "organizations"
 }

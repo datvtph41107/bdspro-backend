@@ -19,6 +19,7 @@ type OrganizationUsecase interface {
 	UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error)
 	GetOrganizations(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
 	GetOrganizationByUserId(ctx context.Context) ([]*entity.Organization, error)
+	GetProfilePublic(ctx context.Context, organizationId uint64) (*entity.Organization, error)
 	CheckOrganizationIsExist(ctx context.Context) (bool, error)
 	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)
 	GetAllOrganizationsForAdmin(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
@@ -74,12 +75,16 @@ func (o *organizationUsecase) CreateOrganization(ctx context.Context, organizati
 		return nil, nil, err
 	}
 
-	o.logWorker.Push(OrganizationLogEvent{
-		OrganizationId: organization.ID,
-		ActorId:        organization.CreatedBy,
+	event := OrganizationLogEvent{
+		OrganizationId: uint32(organization.ID),
+		ActorId:        0,
 		LogType:        "CREATE",
 		LogData:        "Created new organization",
-	})
+	}
+	if organization.CreatedBy != nil {
+		event.ActorId = uint32(*organization.CreatedBy)
+	}
+	o.logWorker.Push(event)
 
 	return organization, member, nil
 }
@@ -113,7 +118,7 @@ func (o *organizationUsecase) UpdateOrganization(ctx context.Context, organizati
 		}
 	}
 
-	organization.ID = uint32(organizationId)
+	organization.ID = organizationId
 	org, err = o.OrganizationRepository.UpdateOrganization(ctx, organization)
 	if err != nil {
 		return nil, err
@@ -198,7 +203,7 @@ func (o *organizationUsecase) GetAllOrganizationsWithMembersForAdmin(ctx context
 	organizationsWithMembers := make([]*dto.OrganizationWithMembers, len(organizations))
 	for i, organization := range organizations {
 		// Lấy members của organization này
-		members, totalMembers, err := o.OrganizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organization.ID, 0, 100, nil, nil)
+		members, totalMembers, err := o.OrganizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(organization.ID), 0, 100, nil, nil)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -238,4 +243,13 @@ func (o *organizationUsecase) GetAllOrganizationsWithMembersForAdmin(ctx context
 	}
 
 	return organizationsWithMembers, total, nil
+}
+
+func (o *organizationUsecase) GetProfilePublic(ctx context.Context, organizationId uint64) (*entity.Organization, error) {
+	organization, err := o.OrganizationRepository.FindById(ctx, uint32(organizationId))
+	if err != nil {
+		return nil, err
+	}
+	// if organization.
+	return organization, nil
 }

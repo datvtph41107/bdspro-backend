@@ -96,8 +96,8 @@ func (m *InternalOrganizationMapper) OrganizationMembersToPb(organizationMembers
 
 func (m *InternalOrganizationMapper) OrganizationMemberToPb(organizationMember *entity.OrganizationMember) *organizationpb.OrganizationMember {
 	return &organizationpb.OrganizationMember{
-		Id:     uint32(organizationMember.ID),
-		UserId: uint32(organizationMember.UserID),
+		Id:     organizationMember.ID,
+		UserId: organizationMember.UserID,
 		Status: uint32(organizationMember.Status),
 		RoleId: organizationMember.RoleId,
 		// Role:     organizationMember.Role,

@@ -7,7 +7,6 @@ import (
 
 	"organization/env"
 	"organization/internal/domain/entity"
-	"organization/internal/enums"
 
 	"gorm.io/gorm"
 )
@@ -15,100 +14,6 @@ import (
 // @bind: organization/internal/domain/repository.OrganizationRepository
 type OrganizationPostgresRepository struct {
 	db *gorm.DB
-}
-
-type OrganizationModel struct {
-	ID                  uint32 `gorm:"primaryKey;autoIncrement"`
-	Name                string `gorm:"not null;index"`
-	TaxCode             string `gorm:"not null;index:idx_organizations_tax_code"`
-	BusinessLicenseUrl  *string
-	Address             *string
-	Phone               *string
-	Email               *string
-	Website             *string
-	LogoUrl             *string
-	Status              uint32 `gorm:"index:idx_organizations_status_created_at"`
-	ApproveInvestor     bool   `gorm:"default:false"`
-	AccountBankInvestor *uint64
-	FoundedAt           *time.Time
-	Description         *string
-	BusinessDomains     []*BusinessDomainModel `gorm:"many2many:organization_business_domains;joinForeignKey:OrganizationID;joinReferences:BusinessDomainID"`
-	CreatedAt           time.Time              `gorm:"autoCreateTime;index:idx_organizations_status_created_at"`
-	UpdatedAt           time.Time              `gorm:"autoUpdateTime"`
-	CreatedBy           uint32                 `gorm:"index:idx_organizations_created_by"`
-	UpdatedBy           uint32
-	DeletedAt           *time.Time `gorm:"index"`
-	IsDeleted           bool       `gorm:"default:false"`
-}
-
-func (OrganizationModel) TableName() string {
-	return "organizations"
-}
-
-func OrganizationModelToEntity(model *OrganizationModel) *entity.Organization {
-	businessDomains := make([]*entity.BusinessDomain, len(model.BusinessDomains))
-	for i, domain := range model.BusinessDomains {
-		businessDomains[i] = BusinessDomainModelToEntity(domain)
-	}
-
-	return &entity.Organization{
-		ID:                 model.ID,
-		Name:               model.Name,
-		TaxCode:            model.TaxCode,
-		BusinessLicenseUrl: model.BusinessLicenseUrl,
-		Address:            model.Address,
-		Phone:              model.Phone,
-		Email:              model.Email,
-		Website:            model.Website,
-		LogoUrl:            model.LogoUrl,
-		Status:             enums.EMemberStatus(model.Status),
-		BusinessDomains:    businessDomains,
-		CreatedAt:          model.CreatedAt,
-		UpdatedAt:          model.UpdatedAt,
-		CreatedBy:          model.CreatedBy,
-		UpdatedBy:          model.UpdatedBy,
-		FoundedAt:          model.FoundedAt,
-		Description:        model.Description,
-	}
-}
-
-func OrganizationEntityToModel(entity *entity.Organization) *OrganizationModel {
-	businessDomains := make([]*BusinessDomainModel, len(entity.BusinessDomainIds))
-	for i, domainId := range entity.BusinessDomainIds {
-		businessDomains[i] = &BusinessDomainModel{
-			ID: domainId,
-		}
-	}
-
-	return &OrganizationModel{
-		ID:                 entity.ID,
-		Name:               entity.Name,
-		TaxCode:            entity.TaxCode,
-		BusinessLicenseUrl: entity.BusinessLicenseUrl,
-		Address:            entity.Address,
-		Phone:              entity.Phone,
-		Email:              entity.Email,
-		Website:            entity.Website,
-		LogoUrl:            entity.LogoUrl,
-		Status:             uint32(entity.Status),
-		ApproveInvestor:    entity.ApproveInvestor,
-		BusinessDomains:    businessDomains,
-		CreatedAt:          entity.CreatedAt,
-		UpdatedAt:          entity.UpdatedAt,
-		CreatedBy:          entity.CreatedBy,
-		UpdatedBy:          entity.UpdatedBy,
-		IsDeleted:          false,
-		FoundedAt:          entity.FoundedAt,
-		Description:        entity.Description,
-	}
-}
-
-func OrganizationModelsToEntities(models []*OrganizationModel) []*entity.Organization {
-	entities := make([]*entity.Organization, len(models))
-	for i, model := range models {
-		entities[i] = OrganizationModelToEntity(model)
-	}
-	return entities
 }
 
 func NewOrganizationPostgresRepository(db *gorm.DB) *OrganizationPostgresRepository {
@@ -124,9 +29,9 @@ func (o *OrganizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		return nil, nil, tx.Error
 	}
 
-	organizationModel := OrganizationEntityToModel(organization)
-	organizationModel.IsDeleted = false
-	if err := tx.Create(&organizationModel).Error; err != nil {
+	// entity.Organization := OrganizationEntityToModel(organization)
+	// entity.Organization.IsDeleted = false
+	if err := tx.Create(&organization).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
 	}
@@ -134,27 +39,27 @@ func (o *OrganizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 	role := &OrganizationRoleModel{
 		Name:           env.ADMIN_ROLE_NAME,
 		Key:            env.ADMIN_ROLE_KEY,
-		OrganizationId: organizationModel.ID,
+		OrganizationId: uint32(organization.ID),
 	}
 	if err := tx.Create(&role).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
 	}
 
-	memberModel := OrganizationMemberEntityToModel(member)
-	memberModel.OrganizationID = organizationModel.ID
-	memberModel.Role = role.ID
+	memberModel := member
+	memberModel.OrganizationID = uint32(organization.ID)
+	// memberModel.Role = role.I
 	if err := tx.Create(&memberModel).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
 	}
 
 	if len(organization.BusinessDomainIds) > 0 {
-		businessDomains := make([]*BusinessDomainModel, len(organization.BusinessDomainIds))
+		businessDomains := make([]*entity.BusinessDomain, len(organization.BusinessDomainIds))
 		for i, domainId := range organization.BusinessDomainIds {
-			businessDomains[i] = &BusinessDomainModel{ID: domainId}
+			businessDomains[i] = &entity.BusinessDomain{ID: domainId}
 		}
-		if err := tx.Model(&organizationModel).Association("BusinessDomains").Append(businessDomains); err != nil {
+		if err := tx.Model(&organization).Association("BusinessDomains").Append(businessDomains); err != nil {
 			tx.Rollback()
 			return nil, nil, err
 		}
@@ -165,18 +70,18 @@ func (o *OrganizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		return nil, nil, err
 	}
 
-	return OrganizationModelToEntity(organizationModel), OrganizationMemberModelToEntity(memberModel), nil
+	return organization, memberModel, nil
 }
 
 func (o *OrganizationPostgresRepository) FindByTaxCode(ctx context.Context, taxCode string) (*entity.Organization, error) {
-	var organizationModel *OrganizationModel
-	if err := o.db.WithContext(ctx).Where("tax_code = ? AND is_deleted = ?", taxCode, false).First(&organizationModel).Error; err != nil {
+	var organization *entity.Organization
+	if err := o.db.WithContext(ctx).Where("tax_code = ? AND is_deleted = ?", taxCode, false).First(&organization).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return OrganizationModelToEntity(organizationModel), nil
+	return organization, nil
 }
 
 func (o *OrganizationPostgresRepository) UpdateOrganization(ctx context.Context, organization *entity.Organization) (*entity.Organization, error) {
@@ -191,14 +96,14 @@ func (o *OrganizationPostgresRepository) UpdateOrganization(ctx context.Context,
 		}
 	}()
 
-	var model OrganizationModel
+	var model entity.Organization
 	if err := tx.First(&model, "id = ? AND is_deleted = ?", organization.ID, false).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
 	// Cập nhật trường khác (ngoài BusinessDomains)
-	updatedModel := OrganizationEntityToModel(organization)
+	updatedModel := organization
 	updatedModel.ID = model.ID
 	updatedModel.BusinessDomains = nil
 
@@ -215,9 +120,9 @@ func (o *OrganizationPostgresRepository) UpdateOrganization(ctx context.Context,
 
 	// Replace BusinessDomains
 	if len(organization.BusinessDomainIds) > 0 {
-		businessDomains := make([]*BusinessDomainModel, len(organization.BusinessDomainIds))
+		businessDomains := make([]*entity.BusinessDomain, len(organization.BusinessDomainIds))
 		for i, id := range organization.BusinessDomainIds {
-			businessDomains[i] = &BusinessDomainModel{ID: id}
+			businessDomains[i] = &entity.BusinessDomain{ID: id}
 		}
 
 		// ⚠️ Dùng Association từ tx.Model
@@ -232,22 +137,27 @@ func (o *OrganizationPostgresRepository) UpdateOrganization(ctx context.Context,
 		return nil, err
 	}
 
-	return OrganizationModelToEntity(&model), nil
+	return updatedModel, nil
 }
 
 func (o *OrganizationPostgresRepository) FindById(ctx context.Context, id uint32) (*entity.Organization, error) {
-	var organizationModel *OrganizationModel
-	if err := o.db.WithContext(ctx).Preload("BusinessDomains").Where("id = ? AND is_deleted = ?", id, false).First(&organizationModel).Error; err != nil {
+	var org entity.Organization
+	err := o.db.WithContext(ctx).
+		Debug().
+		Preload("BusinessDomains").
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&org).Error
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return OrganizationModelToEntity(organizationModel), nil
+	return &org, nil
 }
 
 func (o *OrganizationPostgresRepository) FindByUserId(ctx context.Context, userId uint32) ([]*entity.Organization, error) {
-	var organizations []*OrganizationModel
+	var organizations []*entity.Organization
 	if err := o.db.WithContext(ctx).
 		Joins("LEFT JOIN organization_members ON organizations.id = organization_members.organization_id").
 		Where("(organizations.created_by = ? OR organization_members.user_id = ?) AND organizations.is_deleted = ?", userId, userId, false).
@@ -256,11 +166,11 @@ func (o *OrganizationPostgresRepository) FindByUserId(ctx context.Context, userI
 		Find(&organizations).Error; err != nil {
 		return nil, err
 	}
-	return OrganizationModelsToEntities(organizations), nil
+	return organizations, nil
 }
 
 func (r *OrganizationPostgresRepository) FindByUserIdWithPagination(ctx context.Context, userId uint32, offset, limit int) ([]*entity.Organization, uint32, error) {
-	var models []*OrganizationModel
+	var models []*entity.Organization
 	if err := r.db.WithContext(ctx).
 		Where("created_by = ? AND is_deleted = ?", userId, false).
 		Offset(offset).
@@ -268,23 +178,23 @@ func (r *OrganizationPostgresRepository) FindByUserIdWithPagination(ctx context.
 		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
-	entities := make([]*entity.Organization, len(models))
-	for i, model := range models {
-		entities[i] = OrganizationModelToEntity(model)
-	}
+	// entities := make([]*entity.Organization, len(models))
+	// for i, model := range models {
+	// 	entities[i] = entity.OrganizationToEntity(model)
+	// }
 
 	var count int64
 	if err := r.db.WithContext(ctx).
-		Model(&OrganizationModel{}).
+		Model(&entity.Organization{}).
 		Where("created_by = ? AND is_deleted = ?", userId, false).
 		Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
-	return entities, uint32(count), nil
+	return models, uint32(count), nil
 }
 
 func (r *OrganizationPostgresRepository) GetAllOrganizationsWithPagination(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error) {
-	var models []*OrganizationModel
+	var models []*entity.Organization
 	if err := r.db.WithContext(ctx).
 		Preload("BusinessDomains").
 		Where("is_deleted = ?", false).
@@ -294,24 +204,24 @@ func (r *OrganizationPostgresRepository) GetAllOrganizationsWithPagination(ctx c
 		Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
-	entities := make([]*entity.Organization, len(models))
-	for i, model := range models {
-		entities[i] = OrganizationModelToEntity(model)
-	}
+	// entities := make([]*entity.Organization, len(models))
+	// for i, model := range models {
+	// 	entities[i] = entity.OrganizationToEntity(model)
+	// }
 
 	var count int64
 	if err := r.db.WithContext(ctx).
-		Model(&OrganizationModel{}).
+		Model(&entity.Organization{}).
 		Where("is_deleted = ?", false).
 		Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
-	return entities, uint32(count), nil
+	return models, uint32(count), nil
 }
 
 // Add soft delete function
 func (r *OrganizationPostgresRepository) DeleteOrganization(ctx context.Context, id uint32) error {
-	return r.db.WithContext(ctx).Model(&OrganizationModel{}).
+	return r.db.WithContext(ctx).Model(&entity.Organization{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"is_deleted": true,
@@ -320,9 +230,9 @@ func (r *OrganizationPostgresRepository) DeleteOrganization(ctx context.Context,
 }
 
 func (r *OrganizationPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.Organization, error) {
-	var models []*OrganizationModel
-	if err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&models).Error; err != nil {
+	var orgs []*entity.Organization
+	if err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&orgs).Error; err != nil {
 		return nil, err
 	}
-	return OrganizationModelsToEntities(models), nil
+	return orgs, nil
 }

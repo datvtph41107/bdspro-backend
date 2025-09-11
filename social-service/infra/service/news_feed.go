@@ -305,7 +305,7 @@ func (s *NewsFeedService) GetNewsFeedByUserID(ctx context.Context, req *socialpb
 		Total: &total,
 	}
 	for _, post := range posts {
-		result.Data = append(result.Data, s.DomainPostToPb(post))
+		result.Data = append(result.Data, s.newsFeedMapper.DomainPublicToPb(post))
 	}
 
 	s.MappingPostAndUser(ctx, result.Data)
@@ -450,7 +450,23 @@ func (s *NewsFeedService) DomainPostToPb(post *domain.NewsFeed) *socialpb.NewsFe
 // @Success 200 {object} pb_social.ListNewsFeed
 // @Router /news-feed/global [get]
 func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *socialpb.NewsFeedGlobalSearch) (*socialpb.ListNewsFeed, error) {
-	return s.getNewsFeedByOwner(ctx, req, true)
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:     req.Text,
+		IsReel:   req.IsReel,
+		IsPost:   req.IsPost,
+		IsGlobal: true,
+	}
+
+	posts, total, err := s.newsFeedUsecase.GetListPost(ctx, postSearch)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.responseGlobalNewsFeed(ctx, posts, total)
 }
 
 // @Summary Lấy danh sách news feed

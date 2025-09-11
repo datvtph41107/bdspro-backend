@@ -15,7 +15,7 @@ const (
 type OrganizationMember struct {
 	ID             uint32
 	OrganizationID uint32
-	UserID         uint32
+	UserID         uint64
 	RoleId         uint64
 	Status         OrganizationMemberStatus
 	JoinedAt       time.Time

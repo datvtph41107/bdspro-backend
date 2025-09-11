@@ -42,7 +42,7 @@ type NewsFeedPublic struct {
 
 	LikedAt        *time.Time          `gorm:"liked_at" db:"liked_at" json:"liked_at"`
 	DisLike        *bool               `gorm:"dis_like" db:"dis_like" json:"is_like"`
-	FriendTags     []UserProfile       `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
+	FriendTags     []UserProfile       `gorm:"-" json:"friend_tag"`
 	FriendTagIds   []uint64            `db:"-" json:"friend_tag_ids"`
 	NewsFeedMedias []*NewsFeedMediaDTO `db:"-" json:"news_feed_medias"`
 }

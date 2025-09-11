@@ -78,7 +78,7 @@ message SwitchOrganizationResponse {
 
 message CreateOrganizationMemberRequest {
     uint32 organizationId = 1 [json_name = "organizationId"];
-    uint32 userId = 2 [json_name = "userId"];
+    uint64 userId = 2 [json_name = "userId"];
     uint32 role = 3 [json_name = "role"];
 }
 
@@ -119,7 +119,7 @@ message GetOrganizationMembersRequest {
 
 message OrganizationMember {
     uint32 id = 1 [json_name = "id"];
-    uint32 userId = 2 [json_name = "userId"];
+    uint64 userId = 2 [json_name = "userId"];
     uint32 role = 3 [json_name = "role"];
     uint64 roleId = 4 [json_name = "roleId"];
     string roleName = 5 [json_name = "roleName"];

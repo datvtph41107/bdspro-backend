@@ -203,7 +203,7 @@ func (u *organizationRoleUsecase) UpdateRoleWithMembers(ctx context.Context, mod
 				// Không tồn tại → tạo mới
 				member = &entity.OrganizationMember{
 					OrganizationID: uint32(organizationId),
-					UserID:         memberId,
+					UserID:         uint64(memberId),
 					RoleId:         uint64(role.Id),
 				}
 				_, err = u.organizationMemberRepository.CreateOrganizationMember(ctx, member)
@@ -397,7 +397,7 @@ func (u *organizationRoleUsecase) CreateNewRoleWithMembers(ctx context.Context, 
 				// Không tồn tại → tạo mới
 				member = &entity.OrganizationMember{
 					OrganizationID: uint32(organizationId),
-					UserID:         memberId,
+					UserID:         uint64(memberId),
 					RoleId:         uint64(role.Id),
 				}
 				_, err = u.organizationMemberRepository.CreateOrganizationMember(ctx, member)

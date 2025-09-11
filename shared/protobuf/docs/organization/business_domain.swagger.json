@@ -297,6 +297,10 @@
             "type": "object",
             "$ref": "#/definitions/organizationpbBusinessDomain"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

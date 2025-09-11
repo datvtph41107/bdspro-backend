@@ -101,7 +101,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	if count >= uint32(env.MAX_ORGANIZATION_MEMBERS) {
 		return nil, custom_error.Forbidden("Organization has reached maximum number of members")
 	}
-	exist, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, organizationMember.UserID, uint32(organizationId))
+	exist, err := u.organizationMemberRepository.FindByUserIdAndOrganizationId(ctx, uint32(organizationMember.UserID), uint32(organizationId))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
@@ -112,7 +112,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMember(ctx context.Context
 	}
 
 	// Kiểm tra không cho phép thêm chủ sở hữu của tổ chức
-	if organizationMember.UserID == organization.CreatedBy {
+	if organization.CreatedBy != nil && organizationMember.UserID == *organization.CreatedBy {
 		return nil, custom_error.Forbidden("Cannot add organization owner as a member")
 	}
 
@@ -183,7 +183,7 @@ func (u *organizationMemberUsecase) CreateOrganizationMemberBatch(ctx context.Co
 	validMembers := make([]*entity.OrganizationMember, 0, len(userIds))
 	for _, userId := range userIds {
 		member := &entity.OrganizationMember{
-			UserID:         uint32(userId),
+			UserID:         userId,
 			OrganizationID: uint32(organizationId),
 			Status:         entity.OrganizationMemberStatusPending,
 		}
@@ -239,7 +239,7 @@ func (u *organizationMemberUsecase) UpdateOrganizationMember(ctx context.Context
 	}
 
 	// Nếu thành viên cần cập nhật là chủ sở hữu của tổ chức
-	if exist.UserID == organization.CreatedBy {
+	if organization.CreatedBy != nil && exist.UserID == *organization.CreatedBy {
 		return nil, custom_error.Forbidden("Cannot modify the organization owner's role")
 	}
 
@@ -291,7 +291,7 @@ func (u *organizationMemberUsecase) DeleteOrganizationMember(ctx context.Context
 	}
 
 	// Nếu thành viên cần xóa là chủ sở hữu của tổ chức
-	if member.UserID == organization.CreatedBy {
+	if organization.CreatedBy != nil && member.UserID == *organization.CreatedBy {
 		return nil, custom_error.Forbidden("Cannot delete the organization owner")
 	}
 
@@ -330,7 +330,7 @@ func (u *organizationMemberUsecase) GetOrganizationMembers(ctx context.Context, 
 
 	profileIds := make([]uint64, len(members))
 	for i, member := range members {
-		profileIds[i] = uint64(member.UserID)
+		profileIds[i] = member.UserID
 	}
 
 	profiles, err := u.userGrpcClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
@@ -375,7 +375,7 @@ func (u *organizationMemberUsecase) GetCurrentOrganizationMember(ctx context.Con
 
 	profileIds := make([]uint64, len(members))
 	for i, member := range members {
-		profileIds[i] = uint64(member.UserID)
+		profileIds[i] = member.UserID
 	}
 
 	profiles, _ := u.userGrpcClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
@@ -420,13 +420,13 @@ func (u *organizationMemberUsecase) CheckUsersInOrganization(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	mapUserIds := make(map[uint32]*entity.OrganizationMember)
+	mapUserIds := make(map[uint64]*entity.OrganizationMember)
 	for _, member := range members {
 		mapUserIds[member.UserID] = member
 	}
 	checkUsers := make([]*dto.CheckUserInOrganization, len(userIds))
 	for i, userId := range userIds {
-		userId := uint32(userId)
+		userId := userId
 		member, ok := mapUserIds[userId]
 		if !ok {
 			checkUsers[i] = &dto.CheckUserInOrganization{

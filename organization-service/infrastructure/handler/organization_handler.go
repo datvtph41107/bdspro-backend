@@ -1,17 +1,16 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 	"time"
 
-	"organization/env"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/domain/entity"
 	"organization/internal/usecase"
-	"organization/pkg/utils"
 )
 
 type OrganizationHandler struct {
@@ -42,10 +41,11 @@ func NewOrganizationHandler(organizationUsecase usecase.OrganizationUsecase,
 // @Router /organization/new [post]
 func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organizationpb.CreateOrganizationRequest) (*organizationpb.CreateOrganizationResponse, error) {
 	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
-	organization.CreatedBy = utils.GetUserID(ctx, env.USER_CONTEXT)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	organization.CreatedBy = &profileId
 
 	member := &entity.OrganizationMember{
-		UserID:   organization.CreatedBy,
+		UserID:   profileId,
 		Status:   entity.OrganizationMemberStatusActive,
 		JoinedAt: time.Now(),
 	}
@@ -73,7 +73,6 @@ func (h *OrganizationHandler) UpdateOrganization(ctx context.Context, req *organ
 	}
 
 	organization := h.OrganizationTransformer.UpdateOrganizationRequestToEntity(req)
-	organization.UpdatedBy = utils.GetUserID(ctx, env.USER_CONTEXT)
 
 	organization, err := h.OrganizationUsecase.UpdateOrganization(ctx, organization)
 	if err != nil {
@@ -213,4 +212,19 @@ func (h *OrganizationHandler) GetCurrentDashboard(ctx context.Context, req *shar
 		TotalClicked:     129200,
 		TotalViewHome:    14200,
 	}, nil
+}
+
+// @Summary Lấy profile của tổ chức global
+// @Description Lấy profile của tổ chức global
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "ID tổ chức"
+// @Router /organization/global/profile/{id} [get]
+func (h *OrganizationHandler) GetGlobalProfile(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.Organization, error) {
+	organization, err := h.OrganizationUsecase.GetProfilePublic(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.OrganizationTransformer.EntityToPb(organization), nil
 }

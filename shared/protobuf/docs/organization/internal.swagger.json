@@ -205,8 +205,8 @@
       "type": "object",
       "properties": {
         "userId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "isExist": {
           "type": "boolean"
@@ -685,8 +685,8 @@
           "format": "int64"
         },
         "userId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "role": {
           "type": "integer",

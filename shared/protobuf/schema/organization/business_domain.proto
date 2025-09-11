@@ -90,6 +90,7 @@ message GetAllBusinessDomainsRequest {
 
 message GetAllBusinessDomainsResponse {
     repeated BusinessDomain data = 1;
+    uint32 total = 2 [json_name = "total"];
 }
 
 message GetActiveBusinessDomainsRequest {

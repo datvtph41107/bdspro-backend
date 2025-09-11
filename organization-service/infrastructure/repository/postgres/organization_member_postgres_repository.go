@@ -16,7 +16,7 @@ import (
 type OrganizationMemberModel struct {
 	ID             uint32    `gorm:"primaryKey;autoIncrement"`
 	OrganizationID uint32    `gorm:"not null;index:idx_org_members_organization_id,priority:1;index:idx_org_members_user_org,priority:2;index:idx_org_members_status_org,priority:2"`
-	UserID         uint32    `gorm:"not null;index:idx_org_members_user_org,priority:1"`
+	UserID         uint64    `gorm:"not null;index:idx_org_members_user_org,priority:1"`
 	Role           uint32    `gorm:"not null;index:idx_org_members_role"`
 	RoleId         uint64    `gorm:"index:idx_org_members_role_id"`
 	Status         uint32    `gorm:"default:1;index:idx_org_members_status_org,priority:1"`
@@ -25,12 +25,12 @@ type OrganizationMemberModel struct {
 	DeletedAt      *time.Time `gorm:"index"`
 	IsDeleted      bool       `gorm:"default:false"`
 
-	Organization *OrganizationModel
+	Organization *entity.Organization
 }
 
 type OrganizationMemberRoleModel struct {
 	ID          uint32   `gorm:"column:id"`
-	UserId      uint32   `gorm:"column:user_id"`
+	UserId      uint64   `gorm:"column:user_id"`
 	Role        string   `gorm:"column:role"`
 	Permissions []string `gorm:"column:permissions"`
 }
@@ -43,7 +43,7 @@ func OrganizationMemberModelToEntity(model *OrganizationMemberModel) *entity.Org
 	return &entity.OrganizationMember{
 		ID:             model.ID,
 		OrganizationID: model.OrganizationID,
-		UserID:         model.UserID,
+		UserID:         uint64(model.UserID),
 		RoleId:         uint64(model.RoleId),
 		Status:         entity.OrganizationMemberStatus(model.Status),
 		JoinedAt:       model.JoinedAt,
@@ -85,7 +85,7 @@ func NewOrganizationMemberPostgresRepository(db *gorm.DB) *OrganizationMemberPos
 func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWithRole(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error) {
 	var result struct {
 		ID             uint32     `gorm:"column:id"`
-		UserID         uint32     `gorm:"column:user_id"`
+		UserID         uint64     `gorm:"column:user_id"`
 		OrganizationID uint32     `gorm:"column:organization_id"`
 		RoleId         uint32     `gorm:"column:role"`
 		Status         uint32     `gorm:"column:status"`
@@ -233,7 +233,7 @@ func (r *OrganizationMemberPostgresRepository) CountMemberByOrganizationId(ctx c
 func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32, dealId *uint64) ([]*entity.OrganizationMember, uint32, error) {
 	var results []struct {
 		ID             uint32          `gorm:"column:id"`
-		UserID         uint32          `gorm:"column:user_id"`
+		UserID         uint64          `gorm:"column:user_id"`
 		OrganizationID uint32          `gorm:"column:organization_id"`
 		RoleId         uint32          `gorm:"column:role"`
 		Status         uint32          `gorm:"column:status"`

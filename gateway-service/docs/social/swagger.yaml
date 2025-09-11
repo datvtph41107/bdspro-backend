@@ -777,6 +777,88 @@ paths:
     get:
       consumes:
       - application/json
+      description: Get news feed by owner
+      parameters:
+      - description: OwnerOf
+        in: path
+        name: ownerOf
+        required: true
+        type: string
+      - description: OwnerId
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - in: query
+        name: isPost
+        type: boolean
+      - in: query
+        name: isReel
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Get news feed by owner
+      tags:
+      - News Feed
+  /news-feed/detail/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by id
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết news feed
+      tags:
+      - News Feed
+  /news-feed/global:
+    get:
+      consumes:
+      - application/json
       description: Get global news feed
       parameters:
       - in: query
@@ -820,29 +902,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Lấy danh sách news feed
-      tags:
-      - News Feed
-  /news-feed/detail/{newsFeedId}:
-    get:
-      consumes:
-      - application/json
-      description: Get news feed by id
-      parameters:
-      - description: NewsFeedId
-        in: path
-        name: newsFeedId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/pb_social.NewsFeed'
-      security:
-      - BearerAuth: []
-      summary: Lấy chi tiết news feed
       tags:
       - News Feed
   /news-feed/global/{ownerOf}/{ownerId}:

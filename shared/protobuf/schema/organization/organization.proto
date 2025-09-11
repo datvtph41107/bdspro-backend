@@ -59,6 +59,11 @@ service OrganizationService {
         };
     }
     
+    rpc GetGlobalProfile(sharepb.IdRequest) returns (Organization) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/global/profile/{id}"
+        };
+    }
 }
 
 message DashboardResponse {
@@ -87,6 +92,7 @@ message CreateOrganizationRequest {
     string foundedAt = 11 [json_name = "foundedAt"];
     uint32 status = 12 [json_name = "status"];
     optional bool approveInvestor = 13 [json_name = "approveInvestor"];
+    optional string detailAddress = 14 [json_name = "detailAddress"];
 }
 
 message CreateOrganizationResponse {
@@ -108,6 +114,7 @@ message UpdateOrganizationRequest {
     optional string description = 12 [json_name = "description"];
     string foundedAt = 13 [json_name = "foundedAt"];
     optional bool approveInvestor = 14 [json_name = "approveInvestor"];
+    optional string detailAddress = 15 [json_name = "detailAddress"];
 }
 
 message UpdateOrganizationResponse {
@@ -121,7 +128,7 @@ message GetOrganizationsRequest {
 }
 
 message Organization {
-    uint32 id = 1 [json_name = "id"];
+    uint64 id = 1 [json_name = "id"];
     string name = 2 [json_name = "name"];
     string taxCode = 3 [json_name = "taxCode"];
     optional string businessLicenseUrl = 4 [json_name = "businessLicenseUrl"];
@@ -131,6 +138,10 @@ message Organization {
     optional string website = 8 [json_name = "website"];
     optional string logoUrl = 9 [json_name = "logoUrl"];
     repeated BusinessDomain businessDomains = 10 [json_name = "businessDomains"];
+    optional string description = 11 [json_name = "description"];
+    optional string foundedAt = 12 [json_name = "foundedAt"];
+    optional bool approveInvestor = 13 [json_name = "approveInvestor"];
+    optional string detailAddress = 14 [json_name = "detailAddress"];
 }
 
 message GetOrganizationsResponse {

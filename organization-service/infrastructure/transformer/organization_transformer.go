@@ -1,12 +1,12 @@
 package transformer
 
 import (
+	_models "common/models"
 	_utils "common/utils"
 	organizationpb "pb/types/organization"
 
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
-	"organization/internal/enums"
 )
 
 type OrganizationTransformer interface {
@@ -18,6 +18,7 @@ type OrganizationTransformer interface {
 	EntitiesToGetOrganizationByUserIdResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationByUserIdResponse
 	EntityToGetOwnedOrganizationResponse(organization *entity.Organization) *organizationpb.GetOwnedOrganizationResponse
 	EntitiesToGetAllOrganizationsWithMembersForAdminResponse(organizationsWithMembers []*dto.OrganizationWithMembers, total uint32) *organizationpb.GetAllOrganizationsWithMembersForAdminResponse
+	EntityToPb(organization *entity.Organization) *organizationpb.Organization
 }
 
 type organizationTransformer struct{}
@@ -28,7 +29,22 @@ func NewOrganizationTransformer() OrganizationTransformer {
 
 func (o *organizationTransformer) EntityToCreateOrganizationResponse(organization *entity.Organization) *organizationpb.CreateOrganizationResponse {
 	return &organizationpb.CreateOrganizationResponse{
-		Id: organization.ID,
+		Id: uint32(organization.ID),
+	}
+}
+
+func (o *organizationTransformer) EntityToPb(organization *entity.Organization) *organizationpb.Organization {
+	return &organizationpb.Organization{
+		Id:                 organization.ID,
+		Name:               organization.Name,
+		TaxCode:            organization.TaxCode,
+		BusinessLicenseUrl: organization.BusinessLicenseUrl,
+		Address:            organization.Address,
+		Phone:              organization.Phone,
+		Email:              organization.Email,
+		Website:            organization.Website,
+		LogoUrl:            organization.LogoUrl,
+		BusinessDomains:    o.EntityToBusinessDomains(organization.BusinessDomains),
 	}
 }
 
@@ -38,6 +54,7 @@ func (o *organizationTransformer) CreateOrganizationRequestToEntity(request *org
 		TaxCode:            request.TaxCode,
 		BusinessLicenseUrl: request.BusinessLicenseUrl,
 		Address:            request.Address,
+		DetailAddress:      request.DetailAddress,
 		Phone:              request.Phone,
 		Email:              request.Email,
 		Website:            request.Website,
@@ -45,18 +62,21 @@ func (o *organizationTransformer) CreateOrganizationRequestToEntity(request *org
 		BusinessDomainIds:  request.BusinessDomainIds,
 		Description:        request.Description,
 		FoundedAt:          _utils.ParseStringToTime(request.FoundedAt),
-		Status:             enums.EMemberStatus(request.Status),
+		Status:             request.Status,
 		ApproveInvestor:    *request.ApproveInvestor,
 	}
 }
 
 func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *organizationpb.UpdateOrganizationRequest) *entity.Organization {
 	result := &entity.Organization{
-		ID:                 request.Id,
+		BaseEntity: _models.BaseEntity{
+			ID: uint64(request.Id),
+		},
 		Name:               request.Name,
 		TaxCode:            request.TaxCode,
 		BusinessLicenseUrl: request.BusinessLicenseUrl,
 		Address:            request.Address,
+		DetailAddress:      request.DetailAddress,
 		Phone:              request.Phone,
 		Email:              request.Email,
 		Website:            request.Website,
@@ -64,11 +84,14 @@ func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *org
 		BusinessDomainIds:  request.BusinessDomainIds,
 		Description:        request.Description,
 		FoundedAt:          _utils.ParseStringToTime(request.FoundedAt),
-		ApproveInvestor:    *request.ApproveInvestor,
+	}
+
+	if request.ApproveInvestor != nil {
+		result.ApproveInvestor = *request.ApproveInvestor
 	}
 
 	if request.Status != nil {
-		result.Status = enums.EMemberStatus(*request.Status)
+		result.Status = *request.Status
 	}
 
 	return result
@@ -76,7 +99,7 @@ func (o *organizationTransformer) UpdateOrganizationRequestToEntity(request *org
 
 func (o *organizationTransformer) EntityToUpdateOrganizationResponse(organization *entity.Organization) *organizationpb.UpdateOrganizationResponse {
 	return &organizationpb.UpdateOrganizationResponse{
-		Id: organization.ID,
+		Id: uint32(organization.ID),
 	}
 }
 
@@ -157,6 +180,7 @@ func (o *organizationTransformer) EntityToGetOwnedOrganizationResponse(organizat
 		}
 	}
 
+	foundedAt := _utils.FormatTimeToString(organization.FoundedAt)
 	return &organizationpb.GetOwnedOrganizationResponse{
 		Organization: &organizationpb.Organization{
 			Id:                 organization.ID,
@@ -169,6 +193,10 @@ func (o *organizationTransformer) EntityToGetOwnedOrganizationResponse(organizat
 			Website:            organization.Website,
 			LogoUrl:            organization.LogoUrl,
 			BusinessDomains:    businessDomains,
+			FoundedAt:          &foundedAt,
+			Description:        organization.Description,
+			ApproveInvestor:    &organization.ApproveInvestor,
+			DetailAddress:      organization.DetailAddress,
 		},
 	}
 }
@@ -193,7 +221,7 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 			members[j] = &organizationpb.OrganizationMemberWithProfile{
 				Id:             member.OrganizationMember.ID,
 				OrganizationId: member.OrganizationMember.OrganizationID,
-				UserId:         member.OrganizationMember.UserID,
+				UserId:         uint32(member.OrganizationMember.UserID),
 				RoleId:         uint32(member.OrganizationMember.RoleId),
 				Status:         uint32(member.OrganizationMember.Status),
 				JoinedAt:       member.OrganizationMember.JoinedAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -229,4 +257,18 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 		Data:  organizationsResponse,
 		Total: total,
 	}
+}
+
+func (o *organizationTransformer) EntityToBusinessDomains(businessDomains []*entity.BusinessDomain) []*organizationpb.BusinessDomain {
+	businessDomainsResponse := make([]*organizationpb.BusinessDomain, len(businessDomains))
+	for i, businessDomain := range businessDomains {
+		businessDomainsResponse[i] = &organizationpb.BusinessDomain{
+			Id:          businessDomain.ID,
+			Name:        businessDomain.Name,
+			Description: businessDomain.Description,
+			Code:        businessDomain.Code,
+			IsActive:    businessDomain.IsActive,
+		}
+	}
+	return businessDomainsResponse
 }

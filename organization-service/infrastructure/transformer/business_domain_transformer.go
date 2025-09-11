@@ -73,7 +73,8 @@ func (t *businessDomainTransformer) EntitiesToGetAllBusinessDomainsResponse(enti
 		businessDomains[i] = t.EntityToBusinessDomain(entity)
 	}
 	return &organizationpb.GetAllBusinessDomainsResponse{
-		Data: businessDomains,
+		Data:  businessDomains,
+		Total: uint32(len(entities)),
 	}
 }
 

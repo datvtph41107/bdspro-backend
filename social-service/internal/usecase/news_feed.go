@@ -253,7 +253,7 @@ func (u *NewsFeedUsecase) DeletePost(ctx context.Context, newsFeedID uint64) err
 	return u.newsFeedRepo.Delete(ctx, newsfeed)
 }
 
-func (u *NewsFeedUsecase) GetListPostByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+func (u *NewsFeedUsecase) GetListPostByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
 	newsFeeds, total, err := u.newsFeedRepo.GetPublicByUserID(ctx, userId, req)
 	if err != nil {
 		return nil, 0, err

@@ -68,19 +68,19 @@ func (r *PostgreNewsFeed) QuerySeach(ctx context.Context, dto *dto.NewsFeedGloba
 	return query, nil
 }
 
-type NewsFeedQuery struct {
-	domain.NewsFeed
-	LikedAt           *time.Time      `gorm:"column:liked_at" json:"likedAt"`
-	DisLike           *bool           `gorm:"column:dis_like" json:"disLike"`
+type NewsFeedRawQuery struct {
+	dto.NewsFeedPublic
+	// LikedAt           *time.Time      `gorm:"column:liked_at" json:"likedAt"`
+	// DisLike           *bool           `gorm:"column:dis_like" json:"disLike"`
 	NewsFeedMediaRaws json.RawMessage `gorm:"column:news_feed_medias" json:"newsFeedMedias"` // hoặc []Media nếu dùng pgx/json decoding
 	FriendTagRaws     json.RawMessage `gorm:"column:friend_tag_ids" json:"friendTagIds"`     // hoặc []uint64
 }
 
-func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
-	var newsFeeds []*NewsFeedQuery
+func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
+	var newsFeeds []*NewsFeedRawQuery
 	var total int64
 	query, err := r.QuerySeach(ctx, req)
-	query = query.Where("news_feeds.created_by = ?", userId)
+	query = query.Where("news_feeds.created_by = ? and news_feeds.removed_at is null", userId)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -134,7 +134,7 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 }
 
 func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
-	var newsFeeds []*dto.NewsFeedPublic
+	var newsFeeds []*NewsFeedRawQuery
 	var total int64
 	_query := r.db.WithContext(ctx).
 		Table("news_feed_global")
@@ -178,7 +178,12 @@ left join tb_like tl on tl.user_id = %d and tl.target_id  = g.id and tl.target_t
 		return nil, 0, err
 	}
 
-	return newsFeeds, int32(total), nil
+	results, err := r.buildNewsFeedResults(newsFeeds)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, int32(total), nil
 }
 
 func (r *PostgreNewsFeed) UpdateVisibility(ctx context.Context, newsFeedID uint64, visibility enums.Visibility) error {
@@ -285,8 +290,8 @@ func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsF
 		return nil, err
 	}
 
-	newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTag))
-	for i, friendTag := range newsFeed.FriendTag {
+	newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTags))
+	for i, friendTag := range newsFeed.FriendTags {
 		newsFeed.FriendTagIds[i] = friendTag.UserID
 	}
 
@@ -368,44 +373,61 @@ func (r *PostgreNewsFeed) GetReel(ctx context.Context, dto _dto.Pagable) ([]*dom
 // 		Limit(req.GetLimit()).
 // 		Scan(&results).Error
 
-func (r *PostgreNewsFeed) GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch, userId uint64) ([]*domain.NewsFeed, int32, error) {
-	return r.GetListPostWithOwner(ctx, enums.OwnerTypeUser, userId, req)
+func (r *PostgreNewsFeed) GetListPostUser(ctx context.Context,
+	req *dto.NewsFeedGlobalSearch,
+	userId uint64,
+) ([]*dto.NewsFeedPublic, int32, error) {
+	return r.GetListPostWithOwner(ctx, enums.OwnerOfUser, userId, req)
 }
 
 func (r *PostgreNewsFeed) GetListPostGroup(ctx context.Context,
 	req *dto.NewsFeedGlobalSearch,
 	groupId uint64,
-) ([]*domain.NewsFeed, int32, error) {
-	return r.GetListPostWithOwner(ctx, enums.OwnerTypeGroup, groupId, req)
+) ([]*dto.NewsFeedPublic, int32, error) {
+	return r.GetListPostWithOwner(ctx, enums.OwnerOfGroup, groupId, req)
+}
+
+func (r *PostgreNewsFeed) GetListPostOrganization(ctx context.Context,
+	req *dto.NewsFeedGlobalSearch,
+	organizationId uint64,
+) ([]*dto.NewsFeedPublic, int32, error) {
+	return r.GetListPostWithOwner(ctx, enums.OwnerOfOrganization, organizationId, req)
 }
 
 // Lấy news feed của User
 func (r *PostgreNewsFeed) GetListPostWithOwner(
 	ctx context.Context,
-	ownerType enums.OwnerType,
+	ownerType enums.OwnerOf,
 	ownerID uint64,
 	req *dto.NewsFeedGlobalSearch,
-) ([]*domain.NewsFeed, int32, error) {
-	var newsFeeds []*NewsFeedQuery
+) ([]*dto.NewsFeedPublic, int32, error) {
+	var newsFeeds []*NewsFeedRawQuery
 	var total int64
 
-	joinCondition := ""
-	whereCondition := ""
-	if ownerType == enums.OwnerTypeUser {
-		// tableName = "news_feed_of_user"
-		joinCondition = "JOIN news_feed_of_user nfu ON nfu.post_id = news_feeds.id"
-		whereCondition = fmt.Sprintf("nfu.user_id = %d", ownerID)
-	} else if ownerType == enums.OwnerTypeGroup {
-		// tableName = "news_feed_of_group"
-		joinCondition = "JOIN news_feed_of_group nfg ON nfg.post_id = news_feeds.id"
-		whereCondition = fmt.Sprintf("nfg.group_id = %d", ownerID)
+	// joinCondition := ""
+	whereCondition := fmt.Sprintf("owner_id = %d and owner_of = %d", ownerID, ownerType)
+	if req.IsGlobal {
+		whereCondition = fmt.Sprintf("owner_id = %d and owner_of = %d and visibility = 10", ownerID, ownerType)
 	}
+	// if ownerType == enums.OwnerOfUser {
+	// 	// tableName = "news_feed_of_user"
+	// 	joinCondition = "JOIN news_feed_of_user nfu ON nfu.post_id = news_feeds.id"
+	// 	whereCondition = fmt.Sprintf("nfu.user_id = %d", ownerID)
+	// } else if ownerType == enums.OwnerOfGroup {
+	// 	// tableName = "news_feed_of_group"
+	// 	joinCondition = "JOIN news_feed_of_group nfg ON nfg.post_id = news_feeds.id"
+	// 	whereCondition = fmt.Sprintf("nfg.group_id = %d", ownerID)
+	// } else if ownerType == enums.OwnerOfOrganization {
+	// 	// tableName = "news_feed_of_organization"
+	// 	joinCondition = "JOIN news_feed_of_organization nfo ON nfo.post_id = news_feeds.id"
+	// 	whereCondition = fmt.Sprintf("nfo.organization_id = %d", ownerID)
+	// }
 
 	// Join với bảng mapping news_feed_of_user
 	query := GetDB(ctx, r.db).
 		Debug().
 		Model(&domain.NewsFeed{}).
-		Joins(joinCondition).
+		// Joins(joinCondition).
 		Where(whereCondition)
 
 	// đếm total
@@ -419,7 +441,7 @@ func (r *PostgreNewsFeed) GetListPostWithOwner(
 	err := GetDB(ctx, r.db).
 		Debug().
 		Model(&domain.NewsFeed{}).
-		Joins(joinCondition).
+		// Joins(joinCondition).
 		Joins("left join tb_like tl on tl.target_id = news_feeds.id and tl.target_type = 20 and tl.user_id = ?", profileId).
 		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
 		Joins("left join friend_tag ft on ft.news_feed_id = news_feeds.id").
@@ -461,21 +483,26 @@ func (r *PostgreNewsFeed) GetListPostWithOwner(
 	return results, int32(total), nil
 }
 
-func (r *PostgreNewsFeed) buildNewsFeedResults(newsFeeds []*NewsFeedQuery) ([]*domain.NewsFeed, error) {
-	results := make([]*domain.NewsFeed, 0)
+// type NewsFeedGlobalRaw struct {
+// 	NewsFeedPublic
+// 	RawFriendTagIds   json.RawMessage `db:"friend_tag_ids" json:"-"`
+// 	RawNewsFeedMedias json.RawMessage `db:"news_feed_medias" json:"-"`
+// }
+
+func (r *PostgreNewsFeed) buildNewsFeedResults(newsFeeds []*NewsFeedRawQuery) ([]*dto.NewsFeedPublic, error) {
+	results := make([]*dto.NewsFeedPublic, 0)
 	for _, newsFeed := range newsFeeds {
-		results = append(results, &newsFeed.NewsFeed)
-		results[len(results)-1].LikedAt = newsFeed.LikedAt
-		results[len(results)-1].DisLike = newsFeed.DisLike
-		newsFeed.NewsFeed.LikedAt = newsFeed.LikedAt
-		newsFeed.NewsFeed.DisLike = newsFeed.DisLike
-		newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTag))
-		var medias []domain.NewsFeedMedia
+		// results[len(results)-1].LikedAt = newsFeed.LikedAt
+		// results[len(results)-1].DisLike = newsFeed.DisLike
+		// newsFeed.LikedAt = newsFeed.LikedAt
+		// newsFeed.DisLike = newsFeed.DisLike
+		// newsFeed.NewsFeedPublic.FriendTagIds = make([]uint64, len(newsFeed.RawFriendTagIds))
+		var medias []*dto.NewsFeedMediaDTO
 		var friendIDs []uint64
 
 		if err := json.Unmarshal(newsFeed.NewsFeedMediaRaws, &medias); err != nil {
 			log.Printf("failed to unmarshal NewsFeedMedias: %v", err)
-			medias = []domain.NewsFeedMedia{} // fallback
+			medias = []*dto.NewsFeedMediaDTO{} // fallback
 		}
 
 		if err := json.Unmarshal(newsFeed.FriendTagRaws, &friendIDs); err != nil {
@@ -486,9 +513,11 @@ func (r *PostgreNewsFeed) buildNewsFeedResults(newsFeeds []*NewsFeedQuery) ([]*d
 		newsFeed.FriendTagIds = friendIDs
 		newsFeed.NewsFeedMedias = medias
 
-		for i, friendTag := range newsFeed.FriendTag {
-			newsFeed.FriendTagIds[i] = friendTag.UserID
+		for i, friendTag := range newsFeed.FriendTags {
+			newsFeed.FriendTagIds[i] = friendTag.ID
 		}
+		// results[len(results)-1] = &newsFeed.NewsFeedPublic
+		results = append(results, &newsFeed.NewsFeedPublic)
 	}
 
 	return results, nil
