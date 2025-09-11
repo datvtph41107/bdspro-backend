@@ -1,13 +1,15 @@
 package enums
 
-type OwnerType int32
+type OwnerOf int32
 
 const (
-	OwnerTypeUser  OwnerType = 10
-	OwnerTypeGroup OwnerType = 20
+	OwnerOfUser         OwnerOf = 10
+	OwnerOfGroup        OwnerOf = 20
+	OwnerOfOrganization OwnerOf = 30
 )
 
-var OwnerTypeNames = map[OwnerType]string{
-	OwnerTypeUser:  "user",
-	OwnerTypeGroup: "group",
+var OwnerTypeNames = map[OwnerOf]string{
+	OwnerOfUser:         "user",
+	OwnerOfGroup:        "group",
+	OwnerOfOrganization: "organization",
 }

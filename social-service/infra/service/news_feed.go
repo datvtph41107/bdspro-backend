@@ -7,7 +7,6 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	"encoding/json"
 	"net/http"
 	sharepb "pb/types/shared"
 	socialpb "pb/types/social"
@@ -48,11 +47,14 @@ func NewNewsFeedService(
 }
 
 func (s *NewsFeedService) RequiredOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId *uint64) error {
-	if ownerOf != socialpb.OwnerOf_group && ownerOf != socialpb.OwnerOf_user {
-		return _errors.ReturnError(400, "ownerOf is user/group")
+	if ownerOf != socialpb.OwnerOf_group && ownerOf != socialpb.OwnerOf_user && ownerOf != socialpb.OwnerOf_organization {
+		return _errors.ReturnError(400, "ownerOf is user/group/organization")
 	}
 	if ownerOf == socialpb.OwnerOf_group && ownerId == nil {
 		return _errors.ReturnError(400, "groupId is required")
+	}
+	if ownerOf == socialpb.OwnerOf_organization && ownerId == nil {
+		return _errors.ReturnError(400, "organizationId is required")
 	}
 	// if ownerOf == socialpb.OwnerOf_user && ownerId == nil {
 	// 	return _errors.ReturnError(400, "userId is required")
@@ -73,14 +75,6 @@ func (s *NewsFeedService) CreateNewsFeed(ctx context.Context, req *socialpb.News
 	if err := s.RequiredOwner(ctx, req.OwnerOf, req.GroupId); err != nil {
 		return nil, err
 	}
-	// if req.OwnerOf == socialpb.OwnerOf_group {
-	// 	if req.GroupId == nil {
-	// 		return nil, _errors.ReturnError(400, "groupId is required")
-	// 	}
-	// } else if req.OwnerOf == socialpb.OwnerOf_user {
-	// } else {
-	// 	return nil, _errors.ReturnError(400, "ownerOf is user/group")
-	// }
 
 	newsFeed := s.PbPostToDomain(req)
 	if req.OwnerOf == socialpb.OwnerOf_user {
@@ -102,12 +96,10 @@ func (s *NewsFeedService) CreateNewsFeed(ctx context.Context, req *socialpb.News
 // @Tags News Feed
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param ownerOf path string true "OwnerOf"
 // @Param ownerId path uint64 true "OwnerId"
-// @Param page query int true "Page"
-// @Param size query int true "Size"
-// @Param text query string true "Text"
-// @Param isReel query bool true "IsReel"
+// @Param query query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
 // @Success 200 {object} pb_social.ListNewsFeed
 // @Router /news-feed/{ownerOf}/{ownerId} [get]
 func (s *NewsFeedService) GetNewsFeedByOwner(ctx context.Context, req *socialpb.NewsFeedSearch) (*socialpb.ListNewsFeed, error) {
@@ -125,7 +117,7 @@ func (s *NewsFeedService) GetNewsFeedByOwner(ctx context.Context, req *socialpb.
 		IsPost: req.IsPost,
 	}
 
-	var posts []*domain.NewsFeed
+	var posts []*dto.NewsFeedPublic
 	var total int32
 	var err error
 
@@ -139,32 +131,38 @@ func (s *NewsFeedService) GetNewsFeedByOwner(ctx context.Context, req *socialpb.
 		if err != nil {
 			return nil, err
 		}
+	} else if req.OwnerOf == socialpb.OwnerOf_organization {
+		posts, total, err = s.newsFeedUsecase.GetListPostOrganization(ctx, req.OwnerId, postSearch)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		return nil, _errors.ReturnError(400, "ownerOf is user/group")
+		return nil, _errors.ReturnError(400, "ownerOf is user/group/organization")
 	}
 
-	data := s.newsFeedMapper.DomainToNewsFeedPbList(ctx, posts)
-	// s.userClient.PbUserToNewsFeed(ctx, data)
+	return s.responseGlobalNewsFeed(ctx, posts, total)
+	// data := s.newsFeedMapper.DomainToNewsFeedPbList(ctx, posts)
+	// // s.userClient.PbUserToNewsFeed(ctx, data)
 
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		s.bdsproClient.PbPostToDomain(ctx, data)
-		return nil
-	})
+	// g, ctx := errgroup.WithContext(ctx)
+	// g.Go(func() error {
+	// 	s.bdsproClient.PbPostToDomain(ctx, data)
+	// 	return nil
+	// })
 
-	g.Go(func() error {
-		s.userClient.PbUserToNewsFeed(ctx, data)
-		return nil
-	})
+	// g.Go(func() error {
+	// 	s.userClient.PbUserToNewsFeed(ctx, data)
+	// 	return nil
+	// })
 
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
+	// if err := g.Wait(); err != nil {
+	// 	return nil, err
+	// }
 
-	return &socialpb.ListNewsFeed{
-		Data:  data,
-		Total: &total,
-	}, nil
+	// return &socialpb.ListNewsFeed{
+	// 	Data:  data,
+	// 	Total: &total,
+	// }, nil
 }
 
 // @Summary Create a new news feed
@@ -220,56 +218,6 @@ func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *sharepb.IdReq
 	return &sharepb.Empty{}, nil
 }
 
-// @Summary Lấy danh sách news feed
-// @Description Get global news feed
-// @Tags News Feed
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param post query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
-// @Success 200 {object} pb_social.ListNewsFeed
-// @Router /news-feed/public [get]
-func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *socialpb.NewsFeedGlobalSearch) (*socialpb.ListNewsFeed, error) {
-	postSearch := &dto.NewsFeedGlobalSearch{
-		Pagable: _dto.Pagable{
-			Page: uint32(req.Page),
-			Size: uint32(req.Size),
-		},
-		Text:   req.Text,
-		IsReel: req.IsReel,
-		IsPost: req.IsPost,
-	}
-	posts, total, err := s.newsFeedUsecase.GetListPost(ctx, postSearch)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &socialpb.ListNewsFeed{
-		Data:  []*socialpb.NewsFeed{},
-		Total: &total,
-	}
-	for _, post := range posts {
-		result.Data = append(result.Data, s.DomainPublicToPb(post))
-	}
-
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		s.bdsproClient.PbPostToDomain(ctx, result.Data)
-		return nil
-	})
-
-	g.Go(func() error {
-		s.userClient.PbUserToNewsFeed(ctx, result.Data)
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 // @Summary Share news feed
 // @Description Share news feed
 // @Security BearerAuth
@@ -307,10 +255,8 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *socialpb.Share
 // @Tags News Feed
 // @Accept json
 // @Produce json
-// @Security BearerAuth
-// @Param newsFeedId path uint64 true "NewsFeedId"
 // @Success 200 {object} pb_social.NewsFeed
-// @Router /news-feed/public/reel [get]
+// @Router /news-feed/global/reel [get]
 func (s *NewsFeedService) GetReelNewsFeed(ctx context.Context, req *sharepb.IdRequest) (*socialpb.ListReelResponse, error) {
 	reqPagable := _dto.Pagable{
 		Page: uint32(req.Page),
@@ -494,32 +440,132 @@ func (s *NewsFeedService) DomainPostToPb(post *domain.NewsFeed) *socialpb.NewsFe
 	}
 }
 
-func (s *NewsFeedService) DomainPublicToPb(post *dto.NewsFeedPublic) *socialpb.NewsFeed {
-	friendTagIds := make([]uint64, 0)
-	json.Unmarshal(post.FriendTagIds, &friendTagIds)
+// @Summary Lấy danh sách news feed
+// @Description Get global news feed
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param post query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /news-feed/global [get]
+func (s *NewsFeedService) GetGlobalNewsFeed(ctx context.Context, req *socialpb.NewsFeedGlobalSearch) (*socialpb.ListNewsFeed, error) {
+	return s.getNewsFeedByOwner(ctx, req, true)
+}
 
-	medias := make([]*socialpb.NewsFeedMedia, 0)
-	json.Unmarshal(post.NewsFeedMedias, &medias)
-
-	result := &socialpb.NewsFeed{
-		Id:           post.ID,
-		Title:        post.Title,
-		Content:      post.Content,
-		Image:        post.Image,
-		Link:         post.Link,
-		Visibility:   int32(post.Visibility),
-		NumLike:      int32(post.NumLike),
-		NumComment:   int32(post.NumComment),
-		NumShare:     int32(post.NumShare),
-		NumView:      int32(post.NumView),
-		MediaFeeds:   medias,
-		FriendTagIds: friendTagIds,
-		IsReel:       post.IsReel,
-		PostId:       post.PostID,
-		CreatedBy:    post.CreatedBy,
-		UpdatedAt:    _utils.FormatTimeToString(&post.UpdatedAt),
-		LikedAt:      _utils.FormatTimeToString(post.LikedAt),
-		DisLike:      post.DisLike,
+// @Summary Lấy danh sách news feed
+// @Description Get global news feed
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Param post query pb_social.NewsFeedGlobalSearch true "NewsFeedGlobalSearch"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /news-feed/global/{ownerOf}/{ownerId} [get]
+func (s *NewsFeedService) GetGlobalNewsFeedByOwner(ctx context.Context, req *socialpb.NewsFeedGlobalSearch) (*socialpb.ListNewsFeed, error) {
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:   req.Text,
+		IsReel: req.IsReel,
+		IsPost: req.IsPost,
 	}
-	return result
+	posts, total, err := s.newsFeedUsecase.GetListPost(ctx, postSearch)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.responseGlobalNewsFeed(ctx, posts, total)
+}
+
+func (s *NewsFeedService) getNewsFeedByOwner(ctx context.Context, req *socialpb.NewsFeedGlobalSearch, isGlobal bool) (*socialpb.ListNewsFeed, error) {
+	if err := s.RequiredOwner(ctx, req.OwnerOf, &req.OwnerId); err != nil {
+		return nil, err
+	}
+
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:     req.Text,
+		IsReel:   req.IsReel,
+		IsPost:   req.IsPost,
+		IsGlobal: isGlobal,
+	}
+
+	var posts []*dto.NewsFeedPublic
+	var total int32
+	var err error
+
+	if req.OwnerOf == socialpb.OwnerOf_group {
+		posts, total, err = s.newsFeedUsecase.GetListPostGroup(ctx, req.OwnerId, postSearch)
+		if err != nil {
+			return nil, err
+		}
+	} else if req.OwnerOf == socialpb.OwnerOf_user {
+		posts, total, err = s.newsFeedUsecase.GetListPostUser(ctx, postSearch)
+		if err != nil {
+			return nil, err
+		}
+	} else if req.OwnerOf == socialpb.OwnerOf_organization {
+		posts, total, err = s.newsFeedUsecase.GetListPostOrganization(ctx, req.OwnerId, postSearch)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, _errors.ReturnError(400, "ownerOf is user/group/organization")
+	}
+
+	// data := s.newsFeedMapper.DomainToNewsFeedPbList(ctx, posts)
+	// // s.userClient.PbUserToNewsFeed(ctx, data)
+
+	// g, ctx := errgroup.WithContext(ctx)
+	// g.Go(func() error {
+	// 	s.bdsproClient.PbPostToDomain(ctx, data)
+	// 	return nil
+	// })
+
+	// g.Go(func() error {
+	// 	s.userClient.PbUserToNewsFeed(ctx, data)
+	// 	return nil
+	// })
+
+	// if err := g.Wait(); err != nil {
+	// 	return nil, err
+	// }
+
+	// return &socialpb.ListNewsFeed{
+	// 	Data:  data,
+	// 	Total: &total,
+	// }, nil
+	return s.responseGlobalNewsFeed(ctx, posts, total)
+}
+
+func (s *NewsFeedService) responseGlobalNewsFeed(ctx context.Context, newsFeeds []*dto.NewsFeedPublic, total int32) (*socialpb.ListNewsFeed, error) {
+	result := &socialpb.ListNewsFeed{
+		Data:  []*socialpb.NewsFeed{},
+		Total: &total,
+	}
+	for _, newsFeed := range newsFeeds {
+		result.Data = append(result.Data, s.newsFeedMapper.DomainPublicToPb(newsFeed))
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		s.bdsproClient.PbPostToDomain(ctx, result.Data)
+		return nil
+	})
+
+	g.Go(func() error {
+		s.userClient.PbUserToNewsFeed(ctx, result.Data)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

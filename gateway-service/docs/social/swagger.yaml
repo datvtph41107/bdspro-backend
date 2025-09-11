@@ -50,12 +50,12 @@ definitions:
       title:
         type: string
       transactionType:
-        type: string
+        type: integer
       type:
         description: '1: normal, 2: feed, 3: share'
         type: string
       visibility:
-        type: string
+        type: integer
       wardName:
         type: string
     type: object
@@ -189,6 +189,8 @@ definitions:
         items:
           $ref: '#/definitions/sharepb.ProfileItem'
         type: array
+      groupId:
+        type: integer
       id:
         type: integer
       image:
@@ -211,6 +213,8 @@ definitions:
         type: integer
       numView:
         type: integer
+      ownerOf:
+        $ref: '#/definitions/pb_social.OwnerOf'
       post:
         $ref: '#/definitions/pb_bdspro.Post'
       postId:
@@ -233,6 +237,18 @@ definitions:
       url:
         type: string
     type: object
+  pb_social.OwnerOf:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - OwnerOf_unknown
+    - OwnerOf_user
+    - OwnerOf_group
+    - OwnerOf_organization
   pb_social.ReportMessage:
     properties:
       content:
@@ -349,6 +365,10 @@ definitions:
         type: string
       id:
         type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
       phone:
         type: string
       tickVerified:
@@ -753,6 +773,55 @@ paths:
       summary: Update visibility of news feed
       tags:
       - News Feed
+  /news-feed/{ownerOf}/{ownerId}:
+    get:
+      consumes:
+      - application/json
+      description: Get global news feed
+      parameters:
+      - in: query
+        name: isPost
+        type: boolean
+      - in: query
+        name: isReel
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách news feed
+      tags:
+      - News Feed
   /news-feed/detail/{newsFeedId}:
     get:
       consumes:
@@ -776,15 +845,34 @@ paths:
       summary: Lấy chi tiết news feed
       tags:
       - News Feed
-  /news-feed/public:
+  /news-feed/global/{ownerOf}/{ownerId}:
     get:
       consumes:
       - application/json
       description: Get global news feed
       parameters:
       - in: query
+        name: isPost
+        type: boolean
+      - in: query
         name: isReel
         type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
       - in: query
         name: page
         type: integer
@@ -801,9 +889,46 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/pb_social.ListNewsFeed'
+      summary: Lấy danh sách news feed
+      tags:
+      - News Feed
+  /news-feed/global/reel:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      summary: Get news feed by id
+      tags:
+      - News Feed
+  /news-feed/group:
+    post:
+      consumes:
+      - application/json
+      description: Create a new group news feed
+      parameters:
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.NewsFeed'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
       security:
       - BearerAuth: []
-      summary: Lấy danh sách news feed
+      summary: Create a new news feed
       tags:
       - News Feed
   /news-feed/user/{userId}:
@@ -818,8 +943,27 @@ paths:
         required: true
         type: integer
       - in: query
+        name: isPost
+        type: boolean
+      - in: query
         name: isReel
         type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
       - in: query
         name: page
         type: integer

@@ -5,6 +5,7 @@ import (
 	"context"
 	socialpb "pb/types/social"
 	"social/internal/domain"
+	"social/internal/dto"
 )
 
 type NewsFeedMapper struct {
@@ -88,5 +89,48 @@ func (m *NewsFeedMapper) DomainToReelResponse(newsFeed *domain.ReelEntity) *soci
 		result.CreatedBy = *newsFeed.CreatedBy
 	}
 
+	return result
+}
+
+func (s *NewsFeedMapper) DomainPublicToPb(post *dto.NewsFeedPublic) *socialpb.NewsFeed {
+	// friendTagIds := make([]uint64, 0)
+	// json.Unmarshal(post.RawFriendTagIds, &friendTagIds)
+
+	// medias := make([]*socialpb.NewsFeedMedia, 0)
+	// json.Unmarshal(post.RawNewsFeedMedias, &medias)
+
+	result := &socialpb.NewsFeed{
+		Id:           post.ID,
+		Title:        post.Title,
+		Content:      post.Content,
+		Image:        post.Image,
+		Link:         post.Link,
+		Visibility:   int32(post.Visibility),
+		NumLike:      int32(post.NumLike),
+		NumComment:   int32(post.NumComment),
+		NumShare:     int32(post.NumShare),
+		NumView:      int32(post.NumView),
+		MediaFeeds:   s.NewsFeedMediasToPb(post.NewsFeedMedias),
+		FriendTagIds: post.FriendTagIds,
+		IsReel:       post.IsReel,
+		PostId:       post.PostID,
+		CreatedBy:    post.CreatedBy,
+		UpdatedAt:    _utils.FormatTimeToString(&post.UpdatedAt),
+		LikedAt:      _utils.FormatTimeToString(post.LikedAt),
+		DisLike:      post.DisLike,
+	}
+	return result
+}
+
+func (s *NewsFeedMapper) NewsFeedMediasToPb(posts []*dto.NewsFeedMediaDTO) []*socialpb.NewsFeedMedia {
+	result := make([]*socialpb.NewsFeedMedia, len(posts))
+	for i, post := range posts {
+		result[i] = &socialpb.NewsFeedMedia{
+			Id:          post.ID,
+			Url:         post.Url,
+			Type:        post.Type,
+			OrderNumber: int32(post.Order),
+		}
+	}
 	return result
 }

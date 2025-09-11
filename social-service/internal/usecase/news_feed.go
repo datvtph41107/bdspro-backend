@@ -57,19 +57,19 @@ func (u *NewsFeedUsecase) CreateGroupNewsFeed(ctx context.Context, newsFeed *dom
 	if groupId == nil {
 		return nil, _errors.ReturnError(http.StatusBadRequest, "groupId is required")
 	}
-	ownerType := enums.OwnerTypeGroup
+	ownerType := enums.OwnerOfGroup
 	ownerID := groupId
 	return u.createNewsFeed(ctx, newsFeed, ownerType, ownerID)
 }
 
 func (u *NewsFeedUsecase) CreateUserNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
-	ownerType := enums.OwnerTypeUser
+	ownerType := enums.OwnerOfUser
 	ownerID := profileId
 	return u.createNewsFeed(ctx, newsFeed, ownerType, &ownerID)
 }
 
-func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed, ownerType enums.OwnerType, ownerID *uint64) (*domain.NewsFeed, error) {
+func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed, ownerType enums.OwnerOf, ownerID *uint64) (*domain.NewsFeed, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
 	if newsFeed.PostID != nil {
@@ -82,6 +82,8 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 	}
 
 	err := u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		newsFeed.OwnerOf = ownerType
+		newsFeed.OwnerID = ownerID
 		createdFeed, err := u.newsFeedRepo.Create(ctx, newsFeed)
 		if err != nil {
 			return &_routes.Except{
@@ -90,22 +92,15 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 			}
 		}
 		newsFeed = createdFeed
-
-		// Track the news feed based on owner type
-		// Default to user if not specified
-
-		// Check if this is a group post by checking ParentID or other logic
-		// For now, we'll use ParentID to determine if it's a group post
-		// You can modify this logic based on your business requirements
 		if newsFeed.ParentID != nil {
 			// This could be a group post - you might want to add more logic here
 			// For example, check if ParentID refers to a group
-			ownerType = enums.OwnerTypeGroup
+			ownerType = enums.OwnerOfGroup
 			ownerID = newsFeed.ParentID
 		}
 
 		// Create tracking record based on owner type
-		if ownerType == enums.OwnerTypeUser {
+		if ownerType == enums.OwnerOfUser {
 			newsFeedOfUser := &domain.NewsFeedOfUser{
 				PostID: createdFeed.ID,
 				UserID: *ownerID,
@@ -116,7 +111,7 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 					Message: "không thể track tin đăng cho user",
 				}
 			}
-		} else if ownerType == enums.OwnerTypeGroup {
+		} else if ownerType == enums.OwnerOfGroup {
 			newsFeedOfGroup := &domain.NewsFeedOfGroup{
 				PostID:  createdFeed.ID,
 				GroupID: *ownerID,
@@ -277,7 +272,18 @@ func (u *NewsFeedUsecase) GetListPost(ctx context.Context, req *dto.NewsFeedGlob
 	return newsFeeds, int32(total), nil
 }
 
-func (u *NewsFeedUsecase) GetListPostGroup(ctx context.Context, groupId uint64, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+func (u *NewsFeedUsecase) GetListPostOrganization(ctx context.Context, organizationId uint64, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
+	if req.Size > 10 || req.Size <= 0 {
+		req.Size = 10
+	}
+	newsFeeds, total, err := u.newsFeedRepo.GetListPostOrganization(ctx, req, organizationId)
+	if err != nil {
+		return nil, 0, err
+	}
+	return newsFeeds, int32(total), nil
+}
+
+func (u *NewsFeedUsecase) GetListPostGroup(ctx context.Context, groupId uint64, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
 	if req.Size > 10 || req.Size <= 0 {
 		req.Size = 10
 	}
@@ -288,7 +294,7 @@ func (u *NewsFeedUsecase) GetListPostGroup(ctx context.Context, groupId uint64, 
 	return newsFeeds, int32(total), nil
 }
 
-func (u *NewsFeedUsecase) GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*domain.NewsFeed, int32, error) {
+func (u *NewsFeedUsecase) GetListPostUser(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
 	if req.Size > 10 || req.Size <= 0 {
 		req.Size = 10
 	}

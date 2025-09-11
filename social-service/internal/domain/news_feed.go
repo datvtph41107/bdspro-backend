@@ -22,10 +22,14 @@ type NewsFeed struct {
 	IsReel         bool             `json:"is_reel"`
 	Rank           uint64           `gorm:"column:rank_feed" json:"rank"`
 	NewsFeedMedias []NewsFeedMedia  `gorm:"foreignKey:NewsFeedID" json:"news_feed_medias"`
-	FriendTag      []FriendTag      `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
+	FriendTags     []FriendTag      `gorm:"foreignKey:NewsFeedID;" json:"friend_tag"`
 	FriendTagIds   []uint64         `gorm:"-" json:"friend_tag_ids"`
 	LikedAt        *time.Time       `gorm:"-" json:"likedAt"`
 	DisLike        *bool            `gorm:"-" json:"disLike"`
+	OwnerOf        enums.OwnerOf    `gorm:"column:owner_of" json:"ownerOf"`
+	OwnerID        *uint64          `gorm:"column:owner_id" json:"ownerId"`
+
+	RemovedAt *time.Time `gorm:"column:removed_at" json:"removedAt"`
 	// Author         *dto.UserProfile `gorm:"-" json:"author"`
 }
 

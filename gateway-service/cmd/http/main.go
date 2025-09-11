@@ -95,7 +95,7 @@ var publicRoutes = []string{
 	"/v2/payment/sepay/webhook",
 
 	// Social public routes
-	"/v2/social/news-feed/public",
+	"/v2/social/news-feed/global",
 	"/v2/social/report/reasons",
 	"/v2/social/comment/list",
 	"/v2/social/news-feed/user",

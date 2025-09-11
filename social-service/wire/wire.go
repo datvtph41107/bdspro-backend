@@ -7,7 +7,6 @@ import (
 	"github.com/google/wire"
 	_db "common/db"
 	"social/initial"
-	social_config "social/config"
 	social_infra_client "social/infra/client"
 	social_infra_impl "social/infra/impl"
 	social_infra_mapper "social/infra/mapper"
@@ -42,7 +41,6 @@ var wireSet = wire.NewSet(
 	social_infra_client.NewChatClient,
 	social_infra_service.NewCommentService,
 	social_internal_usecase.NewCommentUsecase,
-	social_config.NewConfigApp,
 	social_internal_usecase.NewFriendTagUsecase,
 	social_infra_postgre.NewLikeRepo,
 	social_infra_service.NewLikeService,

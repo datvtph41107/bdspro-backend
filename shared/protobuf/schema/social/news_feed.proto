@@ -12,6 +12,7 @@ enum OwnerOf {
     unknown = 0;
     user = 1;
     group = 2;
+    organization = 3;
   }
 
 service NewsFeedService {
@@ -47,11 +48,6 @@ service NewsFeedService {
             delete: "/v2/social/news-feed/{id}"
         };
     };
-    rpc GetGlobalNewsFeed(NewsFeedGlobalSearch) returns (ListNewsFeed) {
-        option (google.api.http) = {
-            get: "/v2/social/news-feed/public"
-        };
-    };
     rpc ShareNewsFeed(ShareRequest) returns (ShareResponse) {
         option (google.api.http) = {
             post: "/v2/social/news-feed/{newsFeedId}/share"
@@ -65,9 +61,19 @@ service NewsFeedService {
         };
     };
 
+    rpc GetGlobalNewsFeed(NewsFeedGlobalSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/global"
+        };
+    };
     rpc GetReelNewsFeed(sharepb.IdRequest) returns (ListReelResponse) {
         option (google.api.http) = {
-            get: "/v2/social/news-feed/public/reel"
+            get: "/v2/social/news-feed/global/reel"
+        };
+    };
+    rpc GetGlobalNewsFeedByOwner(NewsFeedGlobalSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/global/{ownerOf}/{ownerId}"
         };
     };
 }
@@ -133,6 +139,8 @@ message NewsFeedGlobalSearch {
     string text = 3;
     optional bool isReel = 5;
     optional bool isPost = 6;
+    uint64 ownerId = 7;
+    OwnerOf ownerOf = 8;
 }
 
 message ShareRequest {

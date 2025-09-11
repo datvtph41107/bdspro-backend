@@ -4,8 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"log"
-	"social/infra/service"
-	"social/internal/usecase"
 
 	"github.com/spf13/viper"
 )
@@ -30,29 +28,6 @@ type UserProperties struct {
 
 var AppProperties UserProperties
 
-type ConfigApp struct {
-	NewsFeedService *service.NewsFeedService
-	ReportService   *service.ReportService
-	CommentService  *service.CommentService
-	LikeService     *service.LikeService
-	NewsFeedUsecase *usecase.NewsFeedUsecase
-}
-
-func NewConfigApp(
-	newsFeedService *service.NewsFeedService,
-	reportService *service.ReportService,
-	commentService *service.CommentService,
-	likeService *service.LikeService,
-	newsFeedUsecase *usecase.NewsFeedUsecase,
-) *ConfigApp {
-	return &ConfigApp{
-		NewsFeedService: newsFeedService,
-		ReportService:   reportService,
-		CommentService:  commentService,
-		LikeService:     likeService,
-		NewsFeedUsecase: newsFeedUsecase,
-	}
-}
 func LoadConfig() {
 	// viper.SetConfigName("config")   // Tên file không có phần mở rộng
 	viper.SetConfigType("yaml") // Loại file config

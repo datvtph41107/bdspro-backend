@@ -535,13 +535,31 @@ const docTemplate = `{
                 }
             }
         },
-        "/news-feed/public": {
+        "/news-feed/global/reel": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
+                "description": "Get news feed by id",
+                "consumes": [
+                    "application/json"
                 ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Get news feed by id",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.NewsFeed"
+                        }
+                    }
+                }
+            }
+        },
+        "/news-feed/global/{ownerOf}/{ownerId}": {
+            "get": {
                 "description": "Get global news feed",
                 "consumes": [
                     "application/json"
@@ -556,7 +574,34 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "boolean",
+                        "name": "isPost",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
                         "name": "isReel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "OwnerOf_unknown",
+                            "OwnerOf_user",
+                            "OwnerOf_group",
+                            "OwnerOf_organization"
+                        ],
+                        "name": "ownerOf",
                         "in": "query"
                     },
                     {
@@ -580,6 +625,45 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/pb_social.ListNewsFeed"
+                        }
+                    }
+                }
+            }
+        },
+        "/news-feed/group": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new group news feed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Create a new news feed",
+                "parameters": [
+                    {
+                        "description": "NewsFeed",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.NewsFeed"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.NewsFeed"
                         }
                     }
                 }
@@ -613,7 +697,34 @@ const docTemplate = `{
                     },
                     {
                         "type": "boolean",
+                        "name": "isPost",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
                         "name": "isReel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "OwnerOf_unknown",
+                            "OwnerOf_user",
+                            "OwnerOf_group",
+                            "OwnerOf_organization"
+                        ],
+                        "name": "ownerOf",
                         "in": "query"
                     },
                     {
@@ -799,6 +910,83 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/news-feed/{ownerOf}/{ownerId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get global news feed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "News Feed"
+                ],
+                "summary": "Lấy danh sách news feed",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "name": "isPost",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isReel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "OwnerOf_unknown",
+                            "OwnerOf_user",
+                            "OwnerOf_group",
+                            "OwnerOf_organization"
+                        ],
+                        "name": "ownerOf",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pb_social.ListNewsFeed"
+                        }
+                    }
+                }
             }
         },
         "/report/me": {
@@ -1027,14 +1215,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "transactionType": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "type": {
                     "description": "1: normal, 2: feed, 3: share",
                     "type": "string"
                 },
                 "visibility": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "wardName": {
                     "type": "string"
@@ -1240,6 +1428,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/sharepb.ProfileItem"
                     }
                 },
+                "groupId": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1272,6 +1463,9 @@ const docTemplate = `{
                 },
                 "numView": {
                     "type": "integer"
+                },
+                "ownerOf": {
+                    "$ref": "#/definitions/pb_social.OwnerOf"
                 },
                 "post": {
                     "$ref": "#/definitions/pb_bdspro.Post"
@@ -1306,6 +1500,21 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "pb_social.OwnerOf": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "OwnerOf_unknown",
+                "OwnerOf_user",
+                "OwnerOf_group",
+                "OwnerOf_organization"
+            ]
         },
         "pb_social.ReportMessage": {
             "type": "object",
@@ -1485,6 +1694,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "isMember": {
+                    "type": "boolean"
+                },
+                "joinedAt": {
+                    "type": "string"
                 },
                 "phone": {
                     "type": "string"
