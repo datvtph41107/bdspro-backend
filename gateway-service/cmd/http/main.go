@@ -109,6 +109,7 @@ var publicRoutes = []string{
 	"/v2/auth/token/refresh",
 	"/v2/auth/oauth",
 	"/v2/auth/admin/login",
+	"/v2/bdspro/v2/product/market",
 }
 
 // HttpCmd chạy HTTP server

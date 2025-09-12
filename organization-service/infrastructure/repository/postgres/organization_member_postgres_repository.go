@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"organization/internal/domain/entity"
@@ -20,6 +19,7 @@ type OrganizationMemberModel struct {
 	UserID         uint64    `gorm:"not null;index:idx_org_members_user_org,priority:1"`
 	Role           uint32    `gorm:"not null;index:idx_org_members_role"`
 	RoleId         uint64    `gorm:"index:idx_org_members_role_id"`
+	RoleKey        uint32    `gorm:"size:50;index:idx_org_members_role_key"`
 	Status         uint32    `gorm:"default:1;index:idx_org_members_status_org,priority:1"`
 	JoinedAt       time.Time `gorm:"autoCreateTime"`
 	RemovedAt      *time.Time
@@ -46,6 +46,7 @@ func OrganizationMemberModelToEntity(model *OrganizationMemberModel) *entity.Org
 		OrganizationID: model.OrganizationID,
 		UserID:         uint64(model.UserID),
 		RoleId:         uint64(model.RoleId),
+		RoleKey:        model.RoleKey,
 		Status:         entity.OrganizationMemberStatus(model.Status),
 		JoinedAt:       model.JoinedAt,
 		RemovedAt:      model.RemovedAt,
@@ -59,6 +60,7 @@ func OrganizationMemberEntityToModel(entity *entity.OrganizationMember) *Organiz
 		UserID:         entity.UserID,
 		Role:           uint32(entity.RoleId),
 		RoleId:         entity.RoleId,
+		RoleKey:        entity.RoleKey,
 		Status:         uint32(entity.Status),
 		JoinedAt:       entity.JoinedAt,
 		RemovedAt:      entity.RemovedAt,
@@ -121,22 +123,22 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 		Status:         entity.OrganizationMemberStatus(result.Status),
 		JoinedAt:       result.JoinedAt,
 		RemovedAt:      result.RemovedAt,
-		Role: &entity.OrganizationRole{
-			Id:   result.RoleId,
-			Name: result.RoleName,
-			Key:  result.RoleKey,
-		},
+		// Role: &entity.OrganizationRole{
+		// 	Id:   result.RoleId,
+		// 	Name: result.RoleName,
+		// 	Key:  result.RoleKey,
+		// },
 	}
 
-	if result.Permissions != "" {
-		permissions := strings.Split(result.Permissions, ",")
-		member.Role.Permissions = make([]*entity.OrganizationPermission, len(permissions))
-		for i, permission := range permissions {
-			member.Role.Permissions[i] = &entity.OrganizationPermission{
-				Key: permission,
-			}
-		}
-	}
+	// if result.Permissions != "" {
+	// 	permissions := strings.Split(result.Permissions, ",")
+	// 	member.Role.Permissions = make([]*entity.OrganizationPermission, len(permissions))
+	// 	for i, permission := range permissions {
+	// 		member.Role.Permissions[i] = &entity.OrganizationPermission{
+	// 			Key: permission,
+	// 		}
+	// 	}
+	// }
 
 	return member, nil
 }
@@ -197,12 +199,27 @@ func (r *OrganizationMemberPostgresRepository) FindById(ctx context.Context, id 
 }
 
 func (r *OrganizationMemberPostgresRepository) UpdateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
-	model := OrganizationMemberEntityToModel(organizationMember)
-	err := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).Where("id = ?", organizationMember.ID).Updates(model).Error
+	// Chỉ cập nhật status và roleKey
+	updateData := map[string]interface{}{
+		"status":   uint32(organizationMember.Status),
+		"role_key": organizationMember.RoleKey,
+	}
+
+	err := r.db.WithContext(ctx).Model(&OrganizationMemberModel{}).
+		Where("id = ? and deleted_at is null", organizationMember.ID).
+		Updates(updateData).Error
 	if err != nil {
 		return nil, err
 	}
-	return OrganizationMemberModelToEntity(model), nil
+
+	// Lấy lại entity đã cập nhật
+	updatedModel := &OrganizationMemberModel{}
+	err = r.db.WithContext(ctx).Where("id = ?", organizationMember.ID).First(updatedModel).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return OrganizationMemberModelToEntity(updatedModel), nil
 }
 
 func (r *OrganizationMemberPostgresRepository) DeleteOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {
@@ -240,7 +257,7 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 		Status         uint32          `gorm:"column:status"`
 		JoinedAt       time.Time       `gorm:"column:joined_at"`
 		RemovedAt      *time.Time      `gorm:"column:removed_at"`
-		RoleKey        string          `gorm:"column:role_key"`
+		RoleKey        uint32          `gorm:"column:role_key"`
 		RoleName       string          `gorm:"column:role_name"`
 		Permissions    string          `gorm:"column:permissions"`
 		DealMember     json.RawMessage `gorm:"column:deal_member"`
@@ -258,10 +275,10 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 		om.user_id, 
 		om.organization_id, 
 		om.role, 
+		om.role_key, 
 		om.status, 
 		om.joined_at, 
 		om.removed_at, 
-		or2.key as role_key, 
 		or2.name as role_name, 
 		string_agg(op.key, ',') as permissions
 		%s`, dealSelect)).
@@ -299,26 +316,27 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 			OrganizationID: result.OrganizationID,
 			UserID:         result.UserID,
 			RoleId:         uint64(result.RoleId),
+			RoleKey:        result.RoleKey,
 			Status:         entity.OrganizationMemberStatus(result.Status),
 			JoinedAt:       result.JoinedAt,
 			RemovedAt:      result.RemovedAt,
 			RoleName:       result.RoleName,
-			Role: &entity.OrganizationRole{
-				Id:   result.RoleId,
-				Name: result.RoleName,
-				Key:  result.RoleKey,
-			},
+			// Role: &entity.OrganizationRole{
+			// 	Id:   result.RoleId,
+			// 	Name: result.RoleName,
+			// 	Key:  result.RoleKey,
+			// },
 		}
 
-		if result.Permissions != "" {
-			permissions := strings.Split(result.Permissions, ",")
-			member.Role.Permissions = make([]*entity.OrganizationPermission, len(permissions))
-			for j, permission := range permissions {
-				member.Role.Permissions[j] = &entity.OrganizationPermission{
-					Key: permission,
-				}
-			}
-		}
+		// if result.Permissions != "" {
+		// 	permissions := strings.Split(result.Permissions, ",")
+		// 	member.Role.Permissions = make([]*entity.OrganizationPermission, len(permissions))
+		// 	for j, permission := range permissions {
+		// 		member.Role.Permissions[j] = &entity.OrganizationPermission{
+		// 			Key: permission,
+		// 		}
+		// 	}
+		// }
 
 		if result.DealMember != nil {
 			dealMember := &entity.DealMember{}

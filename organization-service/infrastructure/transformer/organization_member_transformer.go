@@ -60,8 +60,9 @@ func (o *organizationMemberTransformer) EntitiesToCreateOrganizationMemberBatchR
 
 func (o *organizationMemberTransformer) UpdateOrganizationMemberRequestToEntity(request *organizationpb.UpdateOrganizationMemberRequest) *entity.OrganizationMember {
 	return &entity.OrganizationMember{
-		ID:     request.Id,
-		RoleId: uint64(request.Role),
+		ID:      request.Id,
+		Status:  entity.OrganizationMemberStatus(request.Status),
+		RoleKey: request.RoleKey,
 	}
 }
 
@@ -90,6 +91,7 @@ func (o *organizationMemberTransformer) EntityToPbsResponse(members []*dto.Organ
 			Id:       member.OrganizationMember.ID,
 			UserId:   member.OrganizationMember.UserID,
 			RoleId:   member.OrganizationMember.RoleId, // Add roleId field
+			RoleKey:  member.OrganizationMember.RoleKey,
 			Status:   uint32(member.OrganizationMember.Status),
 			RoleName: member.OrganizationMember.RoleName,
 		}

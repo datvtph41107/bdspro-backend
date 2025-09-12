@@ -7,6 +7,7 @@ import (
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 
+	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/usecase"
@@ -21,18 +22,21 @@ type OrganizationMemberHandler struct {
 	OrganizationMemberTransformer transformer.OrganizationMemberTransformer
 	OrganizationMemberValidator   validator.OrganizationMemberValidator
 	internalOrganizationService   *InternalOrganizationHandler
+	authClient                    *client.AuthClient
 }
 
 func NewOrganizationMemberHandler(organizationMemberUsecase usecase.OrganizationMemberUsecase,
 	organizationMemberTransformer transformer.OrganizationMemberTransformer,
 	organizationMemberValidator validator.OrganizationMemberValidator,
 	internalOrganizationService *InternalOrganizationHandler,
+	authClient *client.AuthClient,
 ) *OrganizationMemberHandler {
 	return &OrganizationMemberHandler{
 		OrganizationMemberUsecase:     organizationMemberUsecase,
 		OrganizationMemberTransformer: organizationMemberTransformer,
 		OrganizationMemberValidator:   organizationMemberValidator,
 		internalOrganizationService:   internalOrganizationService,
+		authClient:                    authClient,
 	}
 }
 
@@ -45,16 +49,16 @@ func (h *OrganizationMemberHandler) SwitchOrganization(ctx context.Context, req 
 	if member == nil {
 		return nil, status.Errorf(codes.NotFound, "user not in organization")
 	}
-	permissions := make([]string, len(member.Role.Permissions))
-	for i, permission := range member.Role.Permissions {
-		permissions[i] = permission.Key
-	}
+	// permissions := make([]string, len(member.Role.Permissions))
+	// for i, permission := range member.Role.Permissions {
+	// 	permissions[i] = permission.Key
+	// }
 	return &organizationpb.SwitchOrganizationResponse{
-		IsSuccess:   true,
-		Id:          req.OrganizationId,
-		UserId:      req.UserId,
-		Role:        member.Role.Key,
-		Permissions: permissions,
+		IsSuccess: true,
+		Id:        req.OrganizationId,
+		UserId:    req.UserId,
+		// Role:        member.Role.Key,
+		// Permissions: permissions,
 	}, nil
 }
 
@@ -191,6 +195,9 @@ func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Co
 		return nil, err
 	}
 
+	results := h.OrganizationMemberTransformer.EntityToPbsResponse(members, total, false)
+	h.authClient.MapRoleToOrganizationMemberPb(ctx, results.Data)
+
 	// if req.DealId != nil {
 	// 	dealMembers, err := h.internalOrganizationService.GetDealMemberByIds(ctx, &organizationpb.GetMemberByIdsRequest{
 	// 		Ids: []uint64{*req.DealId},
@@ -202,7 +209,7 @@ func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Co
 	// 	members = append(members, dealMembers...)
 	// }
 
-	return h.OrganizationMemberTransformer.EntityToPbsResponse(members, total, false), nil
+	return results, nil
 }
 
 func (h *OrganizationMemberHandler) GetCurrentOrganizationMemberRole(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetCurrentOrganizationMemberRoleResponse, error) {

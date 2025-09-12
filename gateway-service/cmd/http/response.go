@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
@@ -19,8 +18,8 @@ type ListResponse struct {
 
 func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	// Convert v thành map nếu có thể
-	m, ok := v.(proto.Message)
-	log.Println("m", v, ok, m)
+	m, _ := v.(proto.Message)
+	// log.Println("m", v, ok, m)
 	val := reflect.ValueOf(m)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()

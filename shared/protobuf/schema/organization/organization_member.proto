@@ -96,7 +96,8 @@ message CreateOrganizationMemberBatchResponse {
 
 message UpdateOrganizationMemberRequest {
     uint32 id = 1 [json_name = "id"];
-    uint32 role = 2 [json_name = "role"];
+    uint32 status = 2 [json_name = "status"];
+    uint32 roleKey = 3 [json_name = "roleKey"];
 }
 
 message UpdateOrganizationMemberResponse {
@@ -122,15 +123,16 @@ message OrganizationMember {
     uint64 userId = 2 [json_name = "userId"];
     uint32 role = 3 [json_name = "role"];
     uint64 roleId = 4 [json_name = "roleId"];
-    string roleName = 5 [json_name = "roleName"];
-    uint32 status = 6 [json_name = "status"];
-    sharepb.ProfileItem profile = 7 [json_name = "profile"];
-    optional DealMember dealMember = 8 [json_name = "dealMember"];
+    uint32 roleKey = 5 [json_name = "roleKey"];
+    string roleName = 6 [json_name = "roleName"];
+    uint32 status = 7 [json_name = "status"];
+    optional sharepb.ProfileItem profile = 8;
+    optional DealMember dealMember = 9;
 }
 
 message GetOrganizationMembersResponse {
-    repeated OrganizationMember data = 1 [json_name = "data"];
-    uint32 total = 2 [json_name = "total"];
+    repeated OrganizationMember data = 1;
+    uint32 total = 2;
 }
 
 message GetCurrentOrganizationMemberRoleResponse {

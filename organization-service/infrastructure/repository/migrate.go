@@ -2,8 +2,7 @@ package repository
 
 import (
 	_db "common/db"
-
-	"organization/internal/domain/entity"
+	"organization/infrastructure/repository/postgres"
 )
 
 func AutoMigrate() {
@@ -42,8 +41,9 @@ func AutoMigrate() {
 		// &entity.DealAction{},
 		// &entity.Deal{},
 		// &entity.GroupMember{},
-		&entity.Organization{},
-		&entity.DealMember{},
+		// &entity.Organization{},
+		// &entity.DealMember{},
+		&postgres.OrganizationMemberModel{},
 	)
 	if err != nil {
 		panic(err)

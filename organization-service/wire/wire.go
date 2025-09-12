@@ -72,7 +72,6 @@ var wireSet = wire.NewSet(
 	organization_infrastructure_transformer.NewDealCommissionTransformer,
 	organization_internal_usecase.NewDealCommissionUsecase,
 	organization_infrastructure_validator.NewDealCommissionValidator,
-	organization_infrastructure_validator.NewDealCostValidator,
 	organization_infrastructure_handler.NewDealHandler,
 	organization_infrastructure_handler.NewDealInvitationHandler,
 	organization_infrastructure_transformer.NewDealInvitationTransformer,

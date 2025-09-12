@@ -193,7 +193,7 @@ message OrganizationMemberWithProfile {
     string joinedAt = 6 [json_name = "joinedAt"];
     optional string removedAt = 7 [json_name = "removedAt"];
     string roleName = 8 [json_name = "roleName"];
-    string roleKey = 9 [json_name = "roleKey"];
+    uint32 roleKey = 9 [json_name = "roleKey"];
     repeated string permissions = 10 [json_name = "permissions"];
     sharepb.ProfileItem profile = 11 [json_name = "profile"];
 }

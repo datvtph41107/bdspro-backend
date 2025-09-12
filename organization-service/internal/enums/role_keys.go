@@ -5,14 +5,14 @@ type RoleKey uint32
 
 const (
 
-	// thương vụ
+	// thương vụ: key nhóm 400
 	RoleKeyDealOwner    RoleKey = 410 // Chủ thương vụ
 	RoleKeyDealAdmin    RoleKey = 420 // Quản trị viên
 	RoleKeyDealMember   RoleKey = 430 // Thành viên
 	RoleKeyDealPartner  RoleKey = 440 // Đối tác
 	RoleKeyDealCustomer RoleKey = 450 // Khách hàng
 
-	// tổ chức
+	// tổ chức: key nhóm 500
 	RoleKeyOrganizationOwner  RoleKey = 510 // Chủ sở hữu
 	RoleKeyOrganizationAdmin  RoleKey = 520 // Quản trị viên
 	RoleKeyOrganizationMember RoleKey = 530 // Thành viên

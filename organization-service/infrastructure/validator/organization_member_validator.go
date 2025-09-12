@@ -66,8 +66,12 @@ func (o *organizationMemberValidator) ValidateUpdateOrganizationMemberRequest(re
 		return status.Errorf(codes.InvalidArgument, "id is required")
 	}
 
-	if request.Role == 0 {
-		return status.Errorf(codes.InvalidArgument, "role is required")
+	if request.Status == 0 {
+		return status.Errorf(codes.InvalidArgument, "status is required")
+	}
+
+	if request.RoleKey == 0 {
+		return status.Errorf(codes.InvalidArgument, "roleKey is required")
 	}
 
 	return nil

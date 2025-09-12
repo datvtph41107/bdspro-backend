@@ -87,3 +87,31 @@ func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations 
 		}
 	}
 }
+
+func (c *AuthClient) MapRoleToOrganizationMemberPb(ctx context.Context, orgMembers []*organizationpb.OrganizationMember) error {
+	roleIds := make([]uint32, len(orgMembers))
+	for i, r := range orgMembers {
+		if r.GetRoleKey() != 0 {
+			roleIds[i] = r.RoleKey
+		}
+	}
+
+	roles, err := c.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{RoleKeys: roleIds})
+	if err != nil {
+		return err
+	}
+
+	roleMap := make(map[uint32]*authpb.Role)
+	for _, r := range roles.Data {
+		roleMap[r.RoleKey] = r
+	}
+
+	for i, r := range orgMembers {
+		if r.GetRoleKey() != 0 {
+			orgMembers[i].RoleName = roleMap[r.RoleKey].RoleName
+			orgMembers[i].RoleKey = roleMap[r.RoleKey].RoleKey
+			orgMembers[i].RoleId = roleMap[r.RoleKey].Id
+		}
+	}
+	return nil
+}

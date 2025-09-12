@@ -661,6 +661,10 @@
           "type": "string",
           "format": "uint64"
         },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
         "roleName": {
           "type": "string"
         },
