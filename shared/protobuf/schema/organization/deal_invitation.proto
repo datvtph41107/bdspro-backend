@@ -4,8 +4,7 @@ package organizationpb;
 
 import "google/api/annotations.proto";
 import "shared/common.proto";
-import "organization/color.proto";
-import "organization/organization_role.proto";
+import "organization/deal.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -100,6 +99,7 @@ message SendDealInvitationRequest {
   string message = 4;
   uint64 roleId = 5;
   optional uint32 colorId = 6;
+  uint32 roleKey = 7;
 }
 
 message SendDealInvitationResponse {
@@ -107,6 +107,7 @@ message SendDealInvitationResponse {
   bool success = 2;
   string message = 3;
   uint64 roleId = 4;
+  uint32 roleKey = 5;
 }
 
 message AcceptDealInvitationRequest {
@@ -175,14 +176,6 @@ message ConfirmWithdrawalResponse {
   bool success = 2;
 }
 
-message SearchDealMembersRequest {
-    uint64 dealId = 1;
-    string keyword = 2;
-    int32 page = 3;
-    int32 size = 4;
-    optional bool doneInvestment = 5;
-}
-
 message SearchDealMembersResponse {
     repeated DealMember members = 1;
     int64 total = 2;
@@ -216,33 +209,4 @@ message GetDealInvitationsByDealRequest {
 message GetDealInvitationsByDealResponse {
     repeated DealMember data = 1;
     int64 total = 2;
-}
-
-// Message định nghĩa DealMember
-message DealMember {
-  uint64 id = 1;
-  uint64 dealId = 2;
-  uint64 inviterId = 3;
-  uint64 memberId = 4;
-  uint32 status = 5;
-  string message = 6;
-  optional organizationpb.Role role = 7;
-  string reason = 8;
-  string createdAt = 9;
-  string updatedAt = 10;
-  optional sharepb.ProfileItem profile = 11;
-  optional Color color = 12;
-  optional uint64 roleId = 13;
-  string invitedAt = 14;       // Thời gian mời
-  string respondedAt = 15;     // Thời gian phản hồi
-  string withdrawnAt = 16;     // Thời gian rút khỏi
-  
-  double amountCommit = 17;
-  double commissionValue = 18;  // Giá trị hoa hồng
-  uint32 commissionType = 19;   // Loại hoa hồng (10: %, 20: VND)
-  string note = 20;             // Ghi chú
-  bool doneInvestment = 21;    // Đánh dấu đã đủ vốn góp
-  bool isOwner = 22;           // Đánh dấu là chủ thương vụ
-  uint32 roleKey = 23;         // Role key (400: Owner, 420: Admin, 430: Member)
-  
 }

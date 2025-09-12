@@ -15,6 +15,361 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin-access": {
+            "get": {
+                "description": "Lấy danh sách quyền truy cập hệ thống nội bộ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Access Control"
+                ],
+                "summary": "Lấy danh sách quyền truy cập admin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng",
+                        "name": "userId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trạng thái",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại xác thực",
+                        "name": "authType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Địa chỉ IP",
+                        "name": "ipAddress",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin-access/log": {
+            "get": {
+                "description": "Lấy danh sách log truy cập hệ thống nội bộ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Access Control"
+                ],
+                "summary": "Lấy danh sách log truy cập admin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID người dùng",
+                        "name": "userId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Địa chỉ IP",
+                        "name": "ipAddress",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessLogListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessLogListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessLogListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.GetAdminAccessLogListResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Tạo log truy cập hệ thống nội bộ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Access Control"
+                ],
+                "summary": "Tạo log truy cập admin",
+                "parameters": [
+                    {
+                        "description": "Thông tin log",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.CreateAdminAccessLogRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.CreateAdminAccessLogResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.CreateAdminAccessLogResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.CreateAdminAccessLogResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin-access/validate": {
+            "post": {
+                "description": "Kiểm tra quyền truy cập hệ thống nội bộ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Access Control"
+                ],
+                "summary": "Kiểm tra quyền truy cập admin",
+                "parameters": [
+                    {
+                        "description": "Thông tin kiểm tra",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.ValidateAdminAccessRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.ValidateAdminAccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.ValidateAdminAccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.ValidateAdminAccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin-access/{id}": {
+            "put": {
+                "description": "Cập nhật quyền truy cập hệ thống nội bộ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Access Control"
+                ],
+                "summary": "Cập nhật quyền truy cập admin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID quyền truy cập",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.UpdateAdminAccessRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.AdminAccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.AdminAccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.AdminAccessResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.AdminAccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.AdminAccessResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Xóa quyền truy cập hệ thống nội bộ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Access Control"
+                ],
+                "summary": "Xóa quyền truy cập admin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID quyền truy cập",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.DeleteAdminAccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.DeleteAdminAccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.DeleteAdminAccessResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.DeleteAdminAccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.DeleteAdminAccessResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/assign-role": {
             "post": {
                 "description": "Gán quyền cho admin",
@@ -175,7 +530,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Số lượng mục trên mỗi trang",
+                        "description": "Số lượng item trên mỗi trang",
                         "name": "size",
                         "in": "query"
                     }
@@ -619,6 +974,117 @@ const docTemplate = `{
                 }
             }
         },
+        "/permission/branch/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get permission by branch ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permission"
+                ],
+                "summary": "Get permission by branch ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Branch ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.PermissionKeysResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/permission/deal/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get permission by deal ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permission"
+                ],
+                "summary": "Get permission by deal ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Deal ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.PermissionKeysResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/permission/group/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get permission by group ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permission"
+                ],
+                "summary": "Get permission by group ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.PermissionKeysResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/permission/me": {
             "get": {
                 "security": [
@@ -873,6 +1339,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/restore-deleted": {
+            "put": {
+                "description": "Khôi phục tài khoản đã bị soft delete bằng cách bỏ trường deleted_at",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Khôi phục tài khoản đã bị xóa",
+                "parameters": [
+                    {
+                        "description": "Thông tin khôi phục tài khoản đã bị xóa",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RestoreDeletedAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RestoreDeletedAccountResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RestoreDeletedAccountResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RestoreDeletedAccountResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RestoreDeletedAccountResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/role": {
             "put": {
                 "security": [
@@ -944,6 +1462,55 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/authpb.Role"
+                        }
+                    }
+                }
+            }
+        },
+        "/role/by-group/{groupKey}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách role theo group key",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Role"
+                ],
+                "summary": "Lấy danh sách role theo group key",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group key",
+                        "name": "groupKey",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleListResponse"
                         }
                     }
                 }
@@ -1432,6 +1999,153 @@ const docTemplate = `{
                 }
             }
         },
+        "authpb.AdminAccessItem": {
+            "type": "object",
+            "properties": {
+                "authType": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "deviceType": {
+                    "type": "string"
+                },
+                "effectiveFrom": {
+                    "type": "string"
+                },
+                "effectiveTo": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "ipRange": {
+                    "type": "string"
+                },
+                "maxDevices": {
+                    "type": "integer"
+                },
+                "require2fa": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.AdminAccessLogItem": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "userAgent": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.AdminAccessResponse": {
+            "type": "object",
+            "properties": {
+                "authType": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "deviceType": {
+                    "type": "string"
+                },
+                "effectiveFrom": {
+                    "type": "string"
+                },
+                "effectiveTo": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "ipRange": {
+                    "type": "string"
+                },
+                "maxDevices": {
+                    "type": "integer"
+                },
+                "require2fa": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
         "authpb.AdminItem": {
             "type": "object",
             "properties": {
@@ -1549,6 +2263,9 @@ const docTemplate = `{
                 "backgroundColor": {
                     "type": "string"
                 },
+                "colorKey": {
+                    "type": "string"
+                },
                 "contentColor": {
                     "type": "string"
                 },
@@ -1559,6 +2276,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "hexCode": {
                     "type": "string"
                 },
                 "id": {
@@ -1575,6 +2295,43 @@ const docTemplate = `{
                 },
                 "updatedBy": {
                     "type": "integer"
+                }
+            }
+        },
+        "authpb.CreateAdminAccessLogRequest": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "userAgent": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.CreateAdminAccessLogResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
                 }
             }
         },
@@ -1609,10 +2366,18 @@ const docTemplate = `{
                 }
             }
         },
+        "authpb.DeleteAdminAccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "authpb.DeleteAdminRequest": {
             "type": "object",
             "properties": {
-                "authId": {
+                "id": {
                     "type": "integer"
                 }
             }
@@ -1622,6 +2387,46 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "authpb.GetAdminAccessListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/authpb.AdminAccessItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.GetAdminAccessLogListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/authpb.AdminAccessLogItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -1682,6 +2487,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "role": {
+                    "$ref": "#/definitions/authpb.Role"
                 }
             }
         },
@@ -1832,9 +2640,43 @@ const docTemplate = `{
                 }
             }
         },
+        "authpb.RestoreDeletedAccountRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "authpb.RestoreDeletedAccountResponse": {
+            "type": "object",
+            "properties": {
+                "authId": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "oauthId": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
         "authpb.Role": {
             "type": "object",
             "properties": {
+                "allowAssign": {
+                    "type": "boolean"
+                },
                 "color": {
                     "$ref": "#/definitions/authpb.Color"
                 },
@@ -1879,6 +2721,9 @@ const docTemplate = `{
                 },
                 "roleGroupName": {
                     "type": "string"
+                },
+                "roleKey": {
+                    "type": "integer"
                 },
                 "roleName": {
                     "type": "string"
@@ -1959,6 +2804,9 @@ const docTemplate = `{
         "authpb.RoleRequest": {
             "type": "object",
             "properties": {
+                "allowAssign": {
+                    "type": "boolean"
+                },
                 "colorId": {
                     "type": "integer"
                 },
@@ -1988,6 +2836,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "roleGroupId": {
+                    "type": "integer"
+                },
+                "roleKey": {
                     "type": "integer"
                 },
                 "roleName": {
@@ -2026,6 +2877,50 @@ const docTemplate = `{
                 }
             }
         },
+        "authpb.UpdateAdminAccessRequest": {
+            "type": "object",
+            "properties": {
+                "authType": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "deviceType": {
+                    "type": "string"
+                },
+                "effectiveFrom": {
+                    "type": "string"
+                },
+                "effectiveTo": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "ipRange": {
+                    "type": "string"
+                },
+                "maxDevices": {
+                    "type": "integer"
+                },
+                "require2fa": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
         "authpb.UpdateAdminRequest": {
             "type": "object",
             "properties": {
@@ -2043,6 +2938,43 @@ const docTemplate = `{
                 },
                 "phone": {
                     "type": "string"
+                }
+            }
+        },
+        "authpb.ValidateAdminAccessRequest": {
+            "type": "object",
+            "properties": {
+                "deviceId": {
+                    "type": "string"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.ValidateAdminAccessResponse": {
+            "type": "object",
+            "properties": {
+                "accessId": {
+                    "type": "integer"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "isAllowed": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "require2fa": {
+                    "type": "boolean"
                 }
             }
         },

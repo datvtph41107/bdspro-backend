@@ -212,6 +212,7 @@ func (r *DealMemberPostgresRepository) entityToModel(e *entity.DealMember) *enti
 		RespondedAt:  e.RespondedAt,
 		WithdrawnAt:  e.WithdrawnAt,
 		RoleID:       e.RoleID,
+		RoleKey:      e.RoleKey,
 	}
 }
 

@@ -101,6 +101,8 @@ var publicRoutes = []string{
 	"/v2/social/news-feed/user",
 	"/v2/social/news-feed/detail",
 
+	"/v2/org/organization/global/profile",
+
 	// Auth public routes
 	"/v2/auth/otp",
 	"/v2/auth/qr",

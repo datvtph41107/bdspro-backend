@@ -5,6 +5,8 @@ import (
 	_utils "common/utils"
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
+	"organization/internal/enums"
+	authpb "pb/types/auth"
 	organizationpb "pb/types/organization"
 	"time"
 )
@@ -68,6 +70,7 @@ func (t *dealInvitationTransformer) SendInvitationRequestToEntity(req *organizat
 		// MemberType: memberType,
 		Status:    entity.DealMemberStatusInvited,
 		InvitedAt: time.Now(),
+		RoleKey:   enums.RoleKey(req.RoleKey),
 		// CreatedAt: time.Now(),
 		// UpdatedAt: time.Now(),
 	}
@@ -216,8 +219,8 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 	}
 
 	if invitation.Color != nil {
-		invitationResponse.Color = &organizationpb.Color{
-			Id:              uint32(invitation.Color.ID),
+		invitationResponse.Color = &authpb.Color{
+			Id:              invitation.Color.ID,
 			Name:            invitation.Color.Name,
 			ContentColor:    invitation.Color.ContentColor,
 			BackgroundColor: invitation.Color.BackgroundColor,
@@ -234,6 +237,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *en
 			MemberId:  invitation.MemberID,
 			Status:    uint32(invitation.Status),
 			Message:   invitation.Message,
+			RoleKey:   uint32(invitation.RoleKey),
 			// Role:      role,
 			Reason: "", // DealInvitation entity doesn't have Reason field
 			// CreatedAt: _utils.FormatTimeToString(&invitation.CreatedAt),
@@ -338,8 +342,8 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 		}
 
 		if invitation.DealMember.Color != nil {
-			invitationResponse.Color = &organizationpb.Color{
-				Id:              uint32(invitation.DealMember.Color.ID),
+			invitationResponse.Color = &authpb.Color{
+				Id:              invitation.DealMember.Color.ID,
 				Name:            invitation.DealMember.Color.Name,
 				ContentColor:    invitation.DealMember.Color.ContentColor,
 				BackgroundColor: invitation.DealMember.Color.BackgroundColor,
@@ -391,8 +395,8 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 		// }
 
 		if invitation.DealMember.Color != nil {
-			invitationResponse.Color = &organizationpb.Color{
-				Id:              uint32(invitation.DealMember.Color.ID),
+			invitationResponse.Color = &authpb.Color{
+				Id:              invitation.DealMember.Color.ID,
 				Name:            invitation.DealMember.Color.Name,
 				ContentColor:    invitation.DealMember.Color.ContentColor,
 				BackgroundColor: invitation.DealMember.Color.BackgroundColor,

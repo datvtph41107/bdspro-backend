@@ -16,6 +16,7 @@ type IBaseUsecase[T any] interface {
 	GetAll(c context.Context) ([]T, error)
 	GetDetail(c context.Context, id uint64) (*T, error)
 	GetList(c context.Context, pagable _dto.IPagable) ([]T, int64, error)
+	GetListByGroupKey(c context.Context, groupKey uint32, pagable _dto.IPagable) ([]T, int64, error)
 }
 
 type BaseUsecase[T any, R ICrudRepo[T]] struct {

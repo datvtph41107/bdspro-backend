@@ -23,4 +23,5 @@ func RegisterAuthService(ctx context.Context, mux *runtime.ServeMux, env string,
 	_ = authpb.RegisterPermissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = authpb.RegisterRoleGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = authpb.RegisterAuthInternalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

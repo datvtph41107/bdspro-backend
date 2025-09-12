@@ -16,6 +16,7 @@ type DealInvitationHandler struct {
 	dealInvitationTransformer transformer.DealInvitationTransformer
 	dealInvitationValidator   validator.DealInvitationValidator
 	userClient                *client.UserClient
+	authClient                *client.AuthClient
 }
 
 func NewDealInvitationHandler(
@@ -23,12 +24,14 @@ func NewDealInvitationHandler(
 	dealInvitationTransformer transformer.DealInvitationTransformer,
 	dealInvitationValidator validator.DealInvitationValidator,
 	userClient *client.UserClient,
+	authClient *client.AuthClient,
 ) *DealInvitationHandler {
 	return &DealInvitationHandler{
 		dealInvitationUsecase:     dealInvitationUsecase,
 		dealInvitationTransformer: dealInvitationTransformer,
 		dealInvitationValidator:   dealInvitationValidator,
 		userClient:                userClient,
+		authClient:                authClient,
 	}
 }
 
@@ -65,7 +68,7 @@ func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *org
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.AcceptDealInvitationResponse "Thành công"
 // @Router /deal-invitation/accept [post]
-func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organizationpb.AcceptDealInvitationRequest) (*organizationpb.AcceptDealInvitationResponse, error) {
+func (h *DealInvitationHandler) AcceptDealInvitation(ctx context.Context, req *organizationpb.AcceptDealInvitationRequest) (*organizationpb.AcceptDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateAcceptInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -90,7 +93,7 @@ func (h *DealInvitationHandler) AcceptInvitation(ctx context.Context, req *organ
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.RejectDealInvitationResponse "Thành công"
 // @Router /deal-invitation/reject [post]
-func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organizationpb.RejectDealInvitationRequest) (*organizationpb.RejectDealInvitationResponse, error) {
+func (h *DealInvitationHandler) RejectDealInvitation(ctx context.Context, req *organizationpb.RejectDealInvitationRequest) (*organizationpb.RejectDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateRejectInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -115,7 +118,7 @@ func (h *DealInvitationHandler) RejectInvitation(ctx context.Context, req *organ
 // @Security BearerAuth
 // @Success 200 {object} organizationpb.ResendDealInvitationResponse "Thành công"
 // @Router /deal-invitation/resend [post]
-func (h *DealInvitationHandler) ResendInvitation(ctx context.Context, req *organizationpb.ResendDealInvitationRequest) (*organizationpb.ResendDealInvitationResponse, error) {
+func (h *DealInvitationHandler) ResendDealInvitation(ctx context.Context, req *organizationpb.ResendDealInvitationRequest) (*organizationpb.ResendDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateResendInvitationRequest(req); err != nil {
 		return nil, err
 	}
@@ -340,6 +343,7 @@ func (h *DealInvitationHandler) GetDealInvitationsByDeal(ctx context.Context, re
 	}
 
 	pbs := h.dealInvitationTransformer.EntitiesToGetInvitationsByDealResponse(invitations, total)
+	h.authClient.MapRoleToDealInvitationPb(ctx, pbs.Data)
 	h.userClient.MapToDealInvitationPb(ctx, pbs.Data)
 
 	return pbs, nil

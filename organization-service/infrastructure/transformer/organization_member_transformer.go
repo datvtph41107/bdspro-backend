@@ -16,7 +16,7 @@ type OrganizationMemberTransformer interface {
 	EntityToUpdateOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.UpdateOrganizationMemberResponse
 	DeleteOrganizationMemberRequestToEntity(request *organizationpb.DeleteOrganizationMemberRequest) *entity.OrganizationMember
 	EntityToDeleteOrganizationMemberResponse(organizationMember *entity.OrganizationMember) *organizationpb.DeleteOrganizationMemberResponse
-	EntityToGetOrganizationMembersResponse(organizationMembers []*dto.OrganizationMemberWithProfile, total uint32, hidePhone bool) *organizationpb.GetOrganizationMembersResponse
+	EntityToPbsResponse(organizationMembers []*dto.OrganizationMemberWithProfile, total uint32, hidePhone bool) *organizationpb.GetOrganizationMembersResponse
 	// EntityToGetOrganizationOfMemberResponse(organization *entity.Organization) *organizationpb.GetOrganizationMembersResponse
 }
 
@@ -83,7 +83,7 @@ func (o *organizationMemberTransformer) EntityToDeleteOrganizationMemberResponse
 	}
 }
 
-func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(members []*dto.OrganizationMemberWithProfile, total uint32, hidePhone bool) *organizationpb.GetOrganizationMembersResponse {
+func (o *organizationMemberTransformer) EntityToPbsResponse(members []*dto.OrganizationMemberWithProfile, total uint32, hidePhone bool) *organizationpb.GetOrganizationMembersResponse {
 	membersResponse := make([]*organizationpb.OrganizationMember, len(members))
 	for i, member := range members {
 		membersResponse[i] = &organizationpb.OrganizationMember{
@@ -105,7 +105,8 @@ func (o *organizationMemberTransformer) EntityToGetOrganizationMembersResponse(m
 				MemberId: member.OrganizationMember.DealMember.MemberID,
 				RoleId:   &member.OrganizationMember.DealMember.RoleID,
 				// RespondedAt: _utils.FormatTimeToString(&member.OrganizationMember.DealMember.CreatedAt),
-				Status: uint32(member.OrganizationMember.DealMember.Status),
+				Status:  uint32(member.OrganizationMember.DealMember.Status),
+				RoleKey: uint32(member.OrganizationMember.DealMember.RoleKey),
 			}
 		}
 	}

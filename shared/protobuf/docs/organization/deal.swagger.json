@@ -2035,10 +2035,10 @@
         "roleGroupName": {
           "type": "string"
         },
-        "autoAssign": {
+        "allowAssign": {
           "type": "boolean"
         },
-        "systemKey": {
+        "roleKey": {
           "type": "integer",
           "format": "int64"
         },
@@ -2128,44 +2128,6 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "organizationpbColor": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "contentColor": {
-          "type": "string"
-        },
-        "backgroundColor": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "createdBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updatedBy": {
           "type": "integer",
           "format": "int64"
         }
@@ -2361,7 +2323,7 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/organizationpbRole"
+          "$ref": "#/definitions/authpbRole"
         },
         "reason": {
           "type": "string"
@@ -2376,7 +2338,7 @@
           "$ref": "#/definitions/sharepbProfileItem"
         },
         "color": {
-          "$ref": "#/definitions/organizationpbColor"
+          "$ref": "#/definitions/authpbColor"
         },
         "roleId": {
           "type": "string",
@@ -2424,6 +2386,9 @@
           "type": "integer",
           "format": "int64",
           "title": "Role key (400: Owner, 420: Admin, 430: Member)"
+        },
+        "deal": {
+          "$ref": "#/definitions/organizationpbGroupDeal"
         }
       },
       "title": "Message định nghĩa DealMember"
@@ -2909,64 +2874,6 @@
         "amountRest": {
           "type": "number",
           "format": "double"
-        }
-      }
-    },
-    "organizationpbPermission": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "key": {
-          "type": "string"
-        },
-        "childrens": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/organizationpbPermission"
-          }
-        }
-      }
-    },
-    "organizationpbRole": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "key": {
-          "type": "string"
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/organizationpbPermission"
-          }
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "domainType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "color": {
-          "$ref": "#/definitions/organizationpbColor"
-        },
-        "roleKey": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },

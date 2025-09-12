@@ -13,7 +13,7 @@ service AuthInternalService {
     rpc GetRoleById(sharepb.IdRequest) returns (Role);
     rpc GetRolesByIds(sharepb.IdRequest) returns (RoleListResponse);
     rpc GetAdminRoleIdByGroupKey(sharepb.IdRequest) returns (Role);
-    rpc GetRolesBySystemKeys(GetRolesBySystemKeysRequest) returns (RoleListResponse);
+    rpc GetRolesByRoleKeys(GetRolesByRoleKeysRequest) returns (RoleListResponse);
 }
 
 message RequiredRolesRequest {
@@ -34,6 +34,6 @@ message RequiredPermissionsResponse {
     string message = 2;
 }
 
-message GetRolesBySystemKeysRequest {
-    repeated uint32 systemKeys = 1;
+message GetRolesByRoleKeysRequest {
+    repeated uint32 roleKeys = 1;
 }

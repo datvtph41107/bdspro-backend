@@ -194,9 +194,8 @@ func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sha
 	return pbRole, nil
 }
 
-// @bind: internal/usecase/role_usecase
-func (h *InternalHandler) GetRolesBySystemKeys(ctx context.Context, req *authpb.GetRolesBySystemKeysRequest) (*authpb.RoleListResponse, error) {
-	roles, err := h.roleRepo.FindBySystemKeys(ctx, req.SystemKeys)
+func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *authpb.GetRolesByRoleKeysRequest) (*authpb.RoleListResponse, error) {
+	roles, err := h.roleRepo.FindByRoleKeys(ctx, req.RoleKeys)
 	if err != nil {
 		return nil, err
 	}

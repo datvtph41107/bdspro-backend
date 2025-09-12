@@ -163,3 +163,12 @@ func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) 
 
 	return keys, nil
 }
+
+func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]domain.Role, int64, error) {
+	entities, total, err := s.Repo.GetListByGroupKey(c, groupKey)
+	if err != nil {
+		return nil, 0, _errors.ReturnError(500, err.Error())
+	}
+
+	return entities, total, nil
+}

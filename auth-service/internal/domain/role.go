@@ -18,8 +18,8 @@ type Role struct {
 	ColorID         *uint64       `json:"colorId"`
 	Color           *Color        `gorm:"foreignKey:ColorID" json:"color"`
 	OrganizationID  uint64        `gorm:"not null" json:"organizationId"`
-	AutoAssign      bool          `gorm:"default:false" json:"autoAssign"`
-	SystemKey       uint32        `gorm:"type:int" json:"systemKey"`
+	AllowAssign     bool          `gorm:"default:false" json:"allowAssign"`
+	RoleKey         uint32        `gorm:"type:int" json:"roleKey"`
 }
 
 func (Role) TableName() string {

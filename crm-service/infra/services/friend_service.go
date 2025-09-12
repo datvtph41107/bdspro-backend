@@ -80,7 +80,7 @@ func (s *FriendService) FriendList(ctx context.Context, req *sharepb.FriendListR
 		}
 		userMap := make(map[uint32]*organizationpb.CheckUserInOrganization)
 		for _, user := range checkUsers {
-			userMap[user.UserId] = user
+			userMap[uint32(user.UserId)] = user
 		}
 		for _, user := range userPbs {
 			if u, ok := userMap[uint32(user.Id)]; ok && u != nil {

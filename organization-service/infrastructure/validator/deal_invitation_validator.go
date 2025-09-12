@@ -73,7 +73,7 @@ func (v *dealInvitationValidator) ValidateSendInvitationRequest(request *organiz
 	}
 
 	// Validate role
-	if request.RoleId == 0 {
+	if request.RoleKey == 0 {
 		// validRoles := map[string]bool{
 		// 	"customer": true,
 		// 	"partner":  true,

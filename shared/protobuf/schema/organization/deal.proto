@@ -6,8 +6,8 @@ import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
 import "payment/bank.proto";
-import "organization/deal_invitation.proto";
 import "auth/role.proto";
+import "auth/color.proto";
 
 option go_package = "pb/types/organization;organizationpb";
 
@@ -766,3 +766,40 @@ message UpdateDealMemberRoleResponse {
     uint64 memberId = 4;    // ID thành viên
     uint32 roleKey = 5;     // Vai trò đã cập nhật
 }
+
+message SearchDealMembersRequest {
+    uint64 dealId = 1;
+    string keyword = 2;
+    int32 page = 3;
+    int32 size = 4;
+    optional bool doneInvestment = 5;
+}
+
+// Message định nghĩa DealMember
+message DealMember {
+    uint64 id = 1;
+    uint64 dealId = 2;
+    uint64 inviterId = 3;
+    uint64 memberId = 4;
+    uint32 status = 5;
+    string message = 6;
+    optional authpb.Role role = 7;
+    string reason = 8;
+    string createdAt = 9;
+    string updatedAt = 10;
+    optional sharepb.ProfileItem profile = 11;
+    optional authpb.Color color = 12;
+    optional uint64 roleId = 13;
+    string invitedAt = 14;       // Thời gian mời
+    string respondedAt = 15;     // Thời gian phản hồi
+    string withdrawnAt = 16;     // Thời gian rút khỏi
+    
+    double amountCommit = 17;
+    double commissionValue = 18;  // Giá trị hoa hồng
+    uint32 commissionType = 19;   // Loại hoa hồng (10: %, 20: VND)
+    string note = 20;             // Ghi chú
+    bool doneInvestment = 21;    // Đánh dấu đã đủ vốn góp
+    bool isOwner = 22;           // Đánh dấu là chủ thương vụ
+    uint32 roleKey = 23;         // Role key (400: Owner, 420: Admin, 430: Member)
+    optional GroupDeal deal = 24;
+  }

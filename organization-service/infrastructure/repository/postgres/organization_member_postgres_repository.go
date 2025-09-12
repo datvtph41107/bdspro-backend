@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	_utils "common/utils"
 	"context"
 	"encoding/json"
 	"errors"
@@ -244,10 +245,11 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 		Permissions    string          `gorm:"column:permissions"`
 		DealMember     json.RawMessage `gorm:"column:deal_member"`
 	}
+	profileId := _utils.GetProfileIdWithContext(ctx)
 
 	dealSelect := ""
 	if dealId != nil {
-		dealSelect = ", json_build_object('id', di.id,'role_id', di.role_id,'status', di.status) as deal_member "
+		dealSelect = ", json_build_object('id', di.id,'role_id', di.role_id,'role_key', di.role_key,'status', di.status) as deal_member "
 	}
 	query := r.db.WithContext(ctx).
 		Debug().
@@ -270,11 +272,11 @@ func (r *OrganizationMemberPostgresRepository) FindByOrganizationIdWithPaginatio
 	groupBy := "om.id, om.user_id, om.organization_id, om.role, om.status, om.joined_at, om.removed_at, or2.key, or2.name"
 	if dealId != nil {
 		query = query.Joins("left join deal_members di on om.user_id = di.member_id and di.deal_id = ?", dealId)
-		groupBy += ", di.id, di.role_id, di.status"
+		groupBy += ", di.id, di.role_id, di.role_key, di.status"
 	}
 
 	query = query.
-		Where("om.organization_id = ? AND om.deleted_at is null", organizationId).
+		Where("om.organization_id = ? AND om.deleted_at is null and om.user_id <> ?", organizationId, profileId).
 		Group(groupBy)
 
 	// Add role filter if roleId is provided

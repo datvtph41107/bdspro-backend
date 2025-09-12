@@ -136,7 +136,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	dealInvitationUsecase := usecase.NewDealInvitationUsecase(dealMemberPostgresRepository, groupDealPostgresRepository, eventHistoryUsecase, groupAuthUsecase, logWorker, postgresTransaction, notificationClient, userClient)
 	dealInvitationTransformer := transformer.NewDealInvitationTransformer(organizationRoleTransformer)
 	dealInvitationValidator := validator.NewDealInvitationValidator()
-	dealInvitationHandler := handler.NewDealInvitationHandler(dealInvitationUsecase, dealInvitationTransformer, dealInvitationValidator, userClient)
+	dealInvitationHandler := handler.NewDealInvitationHandler(dealInvitationUsecase, dealInvitationTransformer, dealInvitationValidator, userClient, authClient)
 	dealCommissionUsecase := usecase.NewDealCommissionUsecase(dealMemberPostgresRepository, groupDealPostgresRepository, groupAuthUsecase, logWorker)
 	dealCommissionTransformer := transformer.NewDealCommissionTransformer()
 	dealCommissionValidator := validator.NewDealCommissionValidator()

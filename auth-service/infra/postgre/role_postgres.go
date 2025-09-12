@@ -7,6 +7,7 @@ import (
 	"common/case/crud"
 	_db "common/db"
 	_dto "common/dto"
+	_errors "common/errors"
 	"context"
 
 	"gorm.io/gorm"
@@ -90,9 +91,12 @@ func (r *RoleRepo) FindByOrganizationIdWithPagination(ctx context.Context, organ
 	return roles, uint64(total), nil
 }
 
-func (r *RoleRepo) FindBySystemKeys(ctx context.Context, systemKeys []uint32) ([]domain.Role, error) {
+func (r *RoleRepo) FindByRoleKeys(ctx context.Context, roleKeys []uint32) ([]domain.Role, error) {
 	var roles []domain.Role
-	err := r.GetDB(ctx).Where("system_key IN (?)", systemKeys).Find(&roles).Error
+	err := r.GetDB(ctx).
+		Model(&domain.Role{}).
+		Preload("Color").
+		Where("role_key IN (?)", roleKeys).Find(&roles).Error
 	return roles, err
 }
 
@@ -283,4 +287,31 @@ func (r *RoleRepo) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64
 
 	// Trả về role đầu tiên (có auto_assign = true nếu có, hoặc role đầu tiên nếu không có)
 	return &roles[0], nil
+}
+
+// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
+func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]domain.Role, int64, error) {
+	var roles []domain.Role
+
+	// Query để lấy 2 role thuộc group key, ưu tiên auto_assign = true
+	err := r.GetDB(ctx).
+		Debug().
+		Model(&domain.Role{}).
+		// Preload("Color").
+		Joins("JOIN role_groups ON roles.role_group_id = role_groups.id").
+		Where("role_groups.key = ? and roles.deleted_at IS NULL and roles.allow_assign = true", groupKey).
+		Order("roles.allow_assign DESC, roles.id ASC").
+		Limit(100).
+		Find(&roles).Error
+
+	if err != nil {
+		return nil, 0, _errors.ReturnError(500, err.Error())
+	}
+
+	// if len(roles) == 0 {
+	// 	return nil, 0, _errors.ReturnError(404, "no roles found")
+	// }
+
+	// Trả về role đầu tiên (có auto_assign = true nếu có, hoặc role đầu tiên nếu không có)
+	return roles, int64(len(roles)), nil
 }

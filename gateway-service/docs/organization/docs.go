@@ -3312,6 +3312,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/organization/global/profile/{id}": {
+            "get": {
+                "description": "Lấy profile của tổ chức global",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tổ chức"
+                ],
+                "summary": "Lấy profile của tổ chức global",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID tổ chức",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/organization/member": {
             "get": {
                 "security": [
@@ -4293,7 +4318,7 @@ const docTemplate = `{
         "authpb.Role": {
             "type": "object",
             "properties": {
-                "autoAssign": {
+                "allowAssign": {
                     "type": "boolean"
                 },
                 "color": {
@@ -4341,11 +4366,11 @@ const docTemplate = `{
                 "roleGroupName": {
                     "type": "string"
                 },
+                "roleKey": {
+                    "type": "integer"
+                },
                 "roleName": {
                     "type": "string"
-                },
-                "systemKey": {
-                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -4633,41 +4658,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "organizationpb.Color": {
-            "type": "object",
-            "properties": {
-                "backgroundColor": {
-                    "type": "string"
-                },
-                "contentColor": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
                     "type": "integer"
                 }
             }
@@ -5115,6 +5105,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "detailAddress": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -5230,7 +5223,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "color": {
-                    "$ref": "#/definitions/organizationpb.Color"
+                    "$ref": "#/definitions/authpb.Color"
                 },
                 "commissionType": {
                     "description": "Loại hoa hồng (10: %, 20: VND)",
@@ -5242,6 +5235,9 @@ const docTemplate = `{
                 },
                 "createdAt": {
                     "type": "string"
+                },
+                "deal": {
+                    "$ref": "#/definitions/organizationpb.GroupDeal"
                 },
                 "dealId": {
                     "type": "integer"
@@ -5285,7 +5281,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "$ref": "#/definitions/organizationpb.Role"
+                    "$ref": "#/definitions/authpb.Role"
                 },
                 "roleId": {
                     "type": "integer"
@@ -5872,26 +5868,6 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.Permission": {
-            "type": "object",
-            "properties": {
-                "childrens": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.Permission"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "key": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "organizationpb.RejectDealInvitationRequest": {
             "type": "object",
             "properties": {
@@ -5969,35 +5945,6 @@ const docTemplate = `{
                 }
             }
         },
-        "organizationpb.Role": {
-            "type": "object",
-            "properties": {
-                "color": {
-                    "$ref": "#/definitions/organizationpb.Color"
-                },
-                "domainType": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isDefault": {
-                    "type": "boolean"
-                },
-                "key": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "permissions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/organizationpb.Permission"
-                    }
-                }
-            }
-        },
         "organizationpb.SaveDealProductResponse": {
             "type": "object",
             "properties": {
@@ -6040,6 +5987,9 @@ const docTemplate = `{
                 },
                 "roleId": {
                     "type": "integer"
+                },
+                "roleKey": {
+                    "type": "integer"
                 }
             }
         },
@@ -6053,6 +6003,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "roleId": {
+                    "type": "integer"
+                },
+                "roleKey": {
                     "type": "integer"
                 },
                 "success": {
@@ -6570,6 +6523,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "detailAddress": {
                     "type": "string"
                 },
                 "email": {

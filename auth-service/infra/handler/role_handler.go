@@ -88,6 +88,7 @@ func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (
 		ColorID:         req.ColorId,
 		RoleGroupID:     req.RoleGroupId,
 		PermissionIDs:   req.PermissionIds,
+		RoleKey:         req.RoleKey,
 	}
 
 	if err := h.internalHandler.ResetPermission(ctx, req.Id); err != nil {
@@ -228,6 +229,35 @@ func (h *RoleHandler) GetListRole(ctx context.Context, req *authpb.RoleSearchReq
 		IsDefault:  req.IsDefault,
 	}
 	roles, total, err := h.roleUsecase.GetList(ctx, roleSearchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	pbRoles := h.roleMapper.MapRoleListToPb(roles)
+
+	return &authpb.RoleListResponse{
+		Data:          pbRoles,
+		TotalElements: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy danh sách role theo group key
+// @Description Lấy danh sách role theo group key
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param groupKey path int true "Group key"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} authpb.RoleListResponse
+// @Router /role/by-group/{groupKey} [get]
+func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRolesByGroupKeyRequest) (*authpb.RoleListResponse, error) {
+	// if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_XEM"}); err != nil {
+	// 	return nil, err
+	// }
+
+	roles, total, err := h.roleUsecase.GetListByGroupKey(ctx, req.GroupKey)
 	if err != nil {
 		return nil, err
 	}

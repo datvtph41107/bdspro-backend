@@ -7,6 +7,7 @@ import (
 	"organization/internal/dto"
 	"pb/clients"
 	authpb "pb/types/auth"
+	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 )
 
@@ -50,8 +51,8 @@ func (c *AuthClient) MapRoleToGroups(ctx context.Context, groups []*dto.GroupWit
 // GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
 func (c *AuthClient) GetRoleBySystemKey(ctx context.Context, systemKey uint32) (*authpb.Role, error) {
 	// Gọi sang auth service để lấy admin role
-	response, err := c.AuthGrpcClient.GetRolesBySystemKeys(ctx, &authpb.GetRolesBySystemKeysRequest{
-		SystemKeys: []uint32{systemKey},
+	response, err := c.AuthGrpcClient.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{
+		RoleKeys: []uint32{systemKey},
 	})
 	if err != nil {
 		return nil, err
@@ -60,4 +61,29 @@ func (c *AuthClient) GetRoleBySystemKey(ctx context.Context, systemKey uint32) (
 		return nil, custom_error.RecordNotFound("Role not found")
 	}
 	return response.Data[0], nil
+}
+
+func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations []*organizationpb.DealMember) {
+	roleIds := make([]uint32, len(invitations))
+	for i, r := range invitations {
+		if r.RoleKey != 0 {
+			roleIds[i] = r.RoleKey
+		}
+	}
+
+	roles, err := c.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{RoleKeys: roleIds})
+	if err != nil {
+		return
+	}
+
+	roleMap := make(map[uint32]*authpb.Role)
+	for _, r := range roles.Data {
+		roleMap[r.RoleKey] = r
+	}
+
+	for i, r := range invitations {
+		if r.RoleKey != 0 {
+			invitations[i].Role = roleMap[r.RoleKey]
+		}
+	}
 }

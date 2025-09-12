@@ -169,7 +169,7 @@ func (h *OrganizationMemberHandler) GetOrganizationMembers(ctx context.Context, 
 		return nil, err
 	}
 
-	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total, true), nil
+	return h.OrganizationMemberTransformer.EntityToPbsResponse(members, total, true), nil
 }
 
 // @Summary Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng nhập
@@ -202,7 +202,7 @@ func (h *OrganizationMemberHandler) GetCurrentOrganizationMembers(ctx context.Co
 	// 	members = append(members, dealMembers...)
 	// }
 
-	return h.OrganizationMemberTransformer.EntityToGetOrganizationMembersResponse(members, total, false), nil
+	return h.OrganizationMemberTransformer.EntityToPbsResponse(members, total, false), nil
 }
 
 func (h *OrganizationMemberHandler) GetCurrentOrganizationMemberRole(ctx context.Context, req *organizationpb.Empty) (*organizationpb.GetCurrentOrganizationMemberRoleResponse, error) {

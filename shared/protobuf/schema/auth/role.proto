@@ -22,8 +22,8 @@ message Role {
   optional Color color = 11;
   optional uint64 roleGroupId = 12;
   optional string roleGroupName = 13;
-  bool autoAssign = 14;
-  uint32 systemKey = 15;
+  bool allowAssign = 14;
+  uint32 roleKey = 15;
   string createdAt = 16;
   string updatedAt = 17;
 }
@@ -56,8 +56,8 @@ message RoleRequest {
   string domainType = 8;
   optional uint64 colorId = 9;
   optional uint64 roleGroupId = 10;
-  bool autoAssign = 11;
-  uint32 systemKey = 12;
+  bool allowAssign = 11;
+  uint32 roleKey = 12;
 }
 
 message RoleListResponse {
@@ -123,6 +123,11 @@ service RoleService {
       post: "/v2/auth/role/permissions"
     };
   };
+  rpc GetRolesByGroupKey(GetRolesByGroupKeyRequest) returns (RoleListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role/by-group/{groupKey}"
+    };
+  };
 }
 
 // Permission Service
@@ -173,4 +178,9 @@ service PermissionService {
 message PermissionKeysResponse {
   repeated string keys = 1;
   optional Role role = 2;
+}
+
+// Get roles by group key request
+message GetRolesByGroupKeyRequest {
+  uint32 groupKey = 1;
 }

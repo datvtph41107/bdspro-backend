@@ -179,20 +179,13 @@ func (u *dealInvitationUsecase) AcceptInvitation(ctx context.Context, invitation
 	}
 
 	// Kiểm tra quyền - chỉ người được mời mới được accept
-	if invitation.MemberID != currentUserId {
-		return custom_error.Forbidden("you can only accept your own invitation")
-	}
+	// if invitation.MemberID != currentUserId {
+	// 	return custom_error.Forbidden("you can only accept your own invitation")
+	// }
 
 	// Kiểm tra trạng thái
 	if !invitation.IsInvited() {
-		return custom_error.InvalidRequest(&errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "status",
-					Description: "invitation is not in pending status",
-				},
-			},
-		})
+		return _errors.ReturnError(400, "invitation is not in pending status")
 	}
 
 	// Lấy thông tin deal
@@ -218,20 +211,20 @@ func (u *dealInvitationUsecase) AcceptInvitation(ctx context.Context, invitation
 		// if invitation.AmountCommit != 0 {
 		// 	amountCommit = invitation.AmountCommit
 		// }
-		dealMember := &entity.DealMember{
-			DealID:   invitation.DealID,
-			MemberID: invitation.MemberID,
-			// MemberType:      invitation.MemberType,
-			AmountCommit:    invitation.AmountCommit,
-			CommissionValue: 0, // Mặc định 0
-			CommissionType:  enums.CommissionTypePercent,
-			Note:            invitation.Message,
-			IsUnilateral:    false,
-		}
-		_, err = u.dealMemberRepository.CreateMember(ctx, dealMember)
-		if err != nil {
-			return err
-		}
+		// dealMember := &entity.DealMember{
+		// 	DealID:   invitation.DealID,
+		// 	MemberID: invitation.MemberID,
+		// 	// MemberType:      invitation.MemberType,
+		// 	AmountCommit:    invitation.AmountCommit,
+		// 	CommissionValue: 0, // Mặc định 0
+		// 	CommissionType:  enums.CommissionTypePercent,
+		// 	Note:            invitation.Message,
+		// 	IsUnilateral:    false,
+		// }
+		// _, err = u.dealMemberRepository.CreateMember(ctx, dealMember)
+		// if err != nil {
+		// 	return err
+		// }
 
 		return nil
 	})

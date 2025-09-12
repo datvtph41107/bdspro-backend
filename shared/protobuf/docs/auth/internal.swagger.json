@@ -183,10 +183,10 @@
         "roleGroupName": {
           "type": "string"
         },
-        "autoAssign": {
+        "allowAssign": {
           "type": "boolean"
         },
-        "systemKey": {
+        "roleKey": {
           "type": "integer",
           "format": "int64"
         },
