@@ -30,6 +30,19 @@ message RoleGroupListResponse {
   uint32 totalElements = 2;
 }
 
+// Update group permissions request
+message UpdateGroupPermissionsRequest {
+  uint64 groupId = 1;
+  repeated uint64 permissionIds = 2;
+}
+
+// Get permissions by group key request
+message GetPermissionsByGroupKeyRequest {
+  uint32 groupKey = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
 // RoleGroup Service
 service RoleGroupService {
   rpc GetListRoleGroup(sharepb.IdRequest) returns (RoleGroupListResponse) {
@@ -57,6 +70,17 @@ service RoleGroupService {
   rpc GetRoleGroupById(sharepb.IdRequest) returns (RoleGroup) {
     option (google.api.http) = {
       get: "/v2/auth/role-group/detail/{id}"
+    };
+  };
+  rpc UpdateGroupPermissions(UpdateGroupPermissionsRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/auth/role-group/permissions"
+      body: "*"
+    };
+  };
+  rpc GetPermissionsByGroupKey(GetPermissionsByGroupKeyRequest) returns (PermissionListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role-group/{groupKey}/permissions"
     };
   };
 }

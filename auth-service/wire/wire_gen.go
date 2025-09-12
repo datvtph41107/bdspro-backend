@@ -69,10 +69,10 @@ func InitializeApp() (*initial.InitialApp, error) {
 	roleUsecase := usecase.NewRoleUsecase(roleRepository, organizationClient)
 	permissionHandler := handler.NewPermissionHandler(permissionUsecase, roleMapper, roleUsecase)
 	roleGroupRepository := postgre.NewRoleGroupRepo(transactionRepo)
-	roleGroupUsecase := usecase.NewRoleGroupUsecase(roleGroupRepository)
+	roleGroupUsecase := usecase.NewRoleGroupUsecase(roleGroupRepository, permissionUsecase)
 	roleGroupMapper := mapper.NewRoleGroupMapper()
 	roleGroupValidator := validator.NewRoleGroupValidator()
-	roleGroupHandler := handler.NewRoleGroupHandler(roleGroupUsecase, roleGroupMapper, roleGroupValidator)
+	roleGroupHandler := handler.NewRoleGroupHandler(roleGroupUsecase, roleGroupMapper, roleMapper, roleGroupValidator)
 	roleHandler := handler.NewRoleHandler(roleUsecase, roleMapper, internalHandler)
 	initialApp := initial.NewApp(authHandler, oAuthHandler, internalHandler, permissionHandler, roleGroupHandler, roleHandler)
 	return initialApp, nil

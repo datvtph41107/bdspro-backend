@@ -124,7 +124,7 @@ func main() {
 			Description: "Complete API documentation for BDS Pro microservices",
 			Version:     "1.0.0",
 		},
-		BasePath:            "/v2",
+		BasePath:            "",
 		Consumes:            []string{"application/json"},
 		Produces:            []string{"application/json"},
 		Paths:               make(map[string]PathItem),
@@ -229,7 +229,7 @@ func main() {
 	}
 
 	// Copy merged swagger to gateway service docs directory
-	gatewayDocsDir := "../gateway-service/docs"
+	gatewayDocsDir := "../../gateway-service/docs"
 	if err := os.MkdirAll(gatewayDocsDir, 0o755); err != nil {
 		log.Printf("Warning: Could not create gateway docs directory: %v", err)
 	} else {
@@ -254,22 +254,22 @@ func addBearerAuthToOperation(operation *Operation) {
 	}
 
 	// Add Authorization parameter if not already present
-	hasAuthParam := false
-	for _, param := range operation.Parameters {
-		if param.Name == "Authorization" && param.In == "header" {
-			hasAuthParam = true
-			break
-		}
-	}
+	// hasAuthParam := false
+	// for _, param := range operation.Parameters {
+	// 	if param.Name == "Authorization" && param.In == "header" {
+	// 		hasAuthParam = true
+	// 		break
+	// 	}
+	// }
 
-	if !hasAuthParam {
-		authParam := Parameter{
-			Name:        "Authorization",
-			In:          "header",
-			Description: "Bearer token for authentication",
-			Required:    true,
-			Type:        "string",
-		}
-		operation.Parameters = append(operation.Parameters, authParam)
-	}
+	// if !hasAuthParam {
+	// 	authParam := Parameter{
+	// 		Name:        "Authorization",
+	// 		In:          "header",
+	// 		Description: "Bearer token for authentication",
+	// 		Required:    true,
+	// 		Type:        "string",
+	// 	}
+	// 	operation.Parameters = append(operation.Parameters, authParam)
+	// }
 }

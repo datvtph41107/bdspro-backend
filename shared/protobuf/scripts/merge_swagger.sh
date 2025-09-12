@@ -14,7 +14,8 @@ if ! command -v go &> /dev/null; then
 fi
 
 # Change to the protobuf directory
-cd "$(dirname "$0")/.."
+echo "$(dirname "$0")"
+cd "$(dirname "$0")/../../../gateway-service"
 
 # Check if docs directory exists
 if [ ! -d "docs" ]; then

@@ -262,7 +262,7 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 		return nil, err
 	}
 
-	pbRoles := h.roleMapper.MapRoleListToPb(roles)
+	pbRoles := h.roleMapper.MapRoleListToItemPb(roles)
 
 	return &authpb.RoleListResponse{
 		Data:          pbRoles,

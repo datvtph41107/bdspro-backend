@@ -184,6 +184,83 @@
         ]
       }
     },
+    "/v2/auth/role-group/permissions": {
+      "put": {
+        "operationId": "RoleGroupService_UpdateGroupPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbUpdateGroupPermissionsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RoleGroupService"
+        ]
+      }
+    },
+    "/v2/auth/role-group/{groupKey}/permissions": {
+      "get": {
+        "operationId": "RoleGroupService_GetPermissionsByGroupKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbPermissionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupKey",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "RoleGroupService"
+        ]
+      }
+    },
     "/v2/auth/role-group/{id}": {
       "delete": {
         "operationId": "RoleGroupService_DeleteRoleGroup",
@@ -307,6 +384,68 @@
       },
       "title": "RoleGroup request/response messages"
     },
+    "authpbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "authpbPermissionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "totalElements": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "authpbRoleGroup": {
       "type": "object",
       "properties": {
@@ -368,6 +507,23 @@
         }
       },
       "title": "RoleGroup request/response messages"
+    },
+    "authpbUpdateGroupPermissionsRequest": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      },
+      "title": "Update group permissions request"
     },
     "protobufAny": {
       "type": "object",

@@ -15,6 +15,7 @@ type Permission struct {
 	Children       []*Permission `gorm:"-" json:"children"`
 	Priority       uint32        `gorm:"type:int;default:10" json:"priority"`
 	RequiredKey    string        `gorm:"size:10;" json:"requiredKey"`
+	RoleGroups     []*RoleGroup  `gorm:"many2many:group_permissions;" json:"role_groups,omitempty"`
 }
 
 func (Permission) TableName() string {

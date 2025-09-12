@@ -13,6 +13,18 @@ func NewRoleMapper() *RoleMapper {
 	return &RoleMapper{}
 }
 
+func (m *RoleMapper) MapRoleListToItemPb(roles []domain.Role) []*authpb.Role {
+	var pbRoles []*authpb.Role
+	for _, role := range roles {
+		pbRoles = append(pbRoles, &authpb.Role{
+			Id:       role.ID,
+			RoleName: role.RoleName,
+			RoleKey:  role.RoleKey,
+		})
+	}
+	return pbRoles
+}
+
 func (m *RoleMapper) MapRoleListToPb(roles []domain.Role) []*authpb.Role {
 	var pbRoles []*authpb.Role
 	for _, role := range roles {

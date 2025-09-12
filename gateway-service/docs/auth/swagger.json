@@ -1460,6 +1460,268 @@
                 }
             }
         },
+        "/role-group": {
+            "post": {
+                "description": "Tạo mới role group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Tạo mới role group",
+                "parameters": [
+                    {
+                        "description": "Thông tin role group",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleGroup"
+                        }
+                    }
+                }
+            }
+        },
+        "/role-group/detail/{id}": {
+            "get": {
+                "description": "Lấy chi tiết role group theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Lấy chi tiết role group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID role group",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleGroup"
+                        }
+                    }
+                }
+            }
+        },
+        "/role-group/list": {
+            "get": {
+                "description": "Lấy danh sách role group với phân trang",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Lấy danh sách role group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleGroupListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/role-group/permissions": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật toàn bộ permission cho group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Cập nhật permission cho group",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật permission",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.UpdateGroupPermissionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.SubmitResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/role-group/{groupKey}/permissions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách permission theo group key",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Lấy danh sách permission theo group key",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group key",
+                        "name": "groupKey",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.PermissionListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/role-group/{id}": {
+            "put": {
+                "description": "Cập nhật role group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Cập nhật role group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID role group",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin role group",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.RoleGroup"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Xóa role group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoleGroup"
+                ],
+                "summary": "Xóa role group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID role group",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.SubmitResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/role/by-group/{groupKey}": {
             "get": {
                 "security": [
@@ -1797,180 +2059,6 @@
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/authpb.RefreshTokenResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/auth/role-group": {
-            "post": {
-                "description": "Tạo mới role group",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "RoleGroup"
-                ],
-                "summary": "Tạo mới role group",
-                "parameters": [
-                    {
-                        "description": "Thông tin role group",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/authpb.RoleGroupRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/authpb.RoleGroup"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/auth/role-group/detail/{id}": {
-            "get": {
-                "description": "Lấy chi tiết role group theo ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "RoleGroup"
-                ],
-                "summary": "Lấy chi tiết role group",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID role group",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/authpb.RoleGroup"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/auth/role-group/list": {
-            "get": {
-                "description": "Lấy danh sách role group với phân trang",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "RoleGroup"
-                ],
-                "summary": "Lấy danh sách role group",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Trang",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Kích thước trang",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/authpb.RoleGroupListResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/auth/role-group/{id}": {
-            "put": {
-                "description": "Cập nhật role group",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "RoleGroup"
-                ],
-                "summary": "Cập nhật role group",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID role group",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin role group",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/authpb.RoleGroupRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/authpb.RoleGroup"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Xóa role group",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "RoleGroup"
-                ],
-                "summary": "Xóa role group",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID role group",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/sharepb.SubmitResponse"
                         }
                     }
                 }
@@ -2931,6 +3019,20 @@
                 },
                 "phone": {
                     "type": "string"
+                }
+            }
+        },
+        "authpb.UpdateGroupPermissionsRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },

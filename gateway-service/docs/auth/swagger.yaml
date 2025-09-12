@@ -622,6 +622,15 @@ definitions:
       phone:
         type: string
     type: object
+  authpb.UpdateGroupPermissionsRequest:
+    properties:
+      groupId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+    type: object
   authpb.ValidateAdminAccessRequest:
     properties:
       deviceId:
@@ -1624,6 +1633,175 @@ paths:
       summary: Cập nhật role
       tags:
       - Role
+  /role-group:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới role group
+      parameters:
+      - description: Thông tin role group
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Tạo mới role group
+      tags:
+      - RoleGroup
+  /role-group/{groupKey}/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách permission theo group key
+      parameters:
+      - description: Group key
+        in: path
+        name: groupKey
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách permission theo group key
+      tags:
+      - RoleGroup
+  /role-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa role group
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Xóa role group
+      tags:
+      - RoleGroup
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật role group
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin role group
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Cập nhật role group
+      tags:
+      - RoleGroup
+  /role-group/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết role group theo ID
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Lấy chi tiết role group
+      tags:
+      - RoleGroup
+  /role-group/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role group với phân trang
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroupListResponse'
+      summary: Lấy danh sách role group
+      tags:
+      - RoleGroup
+  /role-group/permissions:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật toàn bộ permission cho group
+      parameters:
+      - description: Thông tin cập nhật permission
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.UpdateGroupPermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật permission cho group
+      tags:
+      - RoleGroup
   /role/{id}:
     delete:
       consumes:
@@ -1841,120 +2019,6 @@ paths:
       summary: Refresh token
       tags:
       - Auth
-  /v2/auth/role-group:
-    post:
-      consumes:
-      - application/json
-      description: Tạo mới role group
-      parameters:
-      - description: Thông tin role group
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/authpb.RoleGroupRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/authpb.RoleGroup'
-      summary: Tạo mới role group
-      tags:
-      - RoleGroup
-  /v2/auth/role-group/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Xóa role group
-      parameters:
-      - description: ID role group
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/sharepb.SubmitResponse'
-      summary: Xóa role group
-      tags:
-      - RoleGroup
-    put:
-      consumes:
-      - application/json
-      description: Cập nhật role group
-      parameters:
-      - description: ID role group
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Thông tin role group
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/authpb.RoleGroupRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/authpb.RoleGroup'
-      summary: Cập nhật role group
-      tags:
-      - RoleGroup
-  /v2/auth/role-group/detail/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Lấy chi tiết role group theo ID
-      parameters:
-      - description: ID role group
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/authpb.RoleGroup'
-      summary: Lấy chi tiết role group
-      tags:
-      - RoleGroup
-  /v2/auth/role-group/list:
-    get:
-      consumes:
-      - application/json
-      description: Lấy danh sách role group với phân trang
-      parameters:
-      - description: Trang
-        in: query
-        name: page
-        type: integer
-      - description: Kích thước trang
-        in: query
-        name: size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/authpb.RoleGroupListResponse'
-      summary: Lấy danh sách role group
-      tags:
-      - RoleGroup
 securityDefinitions:
   BearerAuth:
     in: header
