@@ -82,6 +82,15 @@ func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMem
 	return dealMember, nil
 }
 
+func (r *DealMemberPostgresRepository) CreateMembers(ctx context.Context, dealMembers []entity.DealMember) ([]entity.DealMember, error) {
+	if err := GetDB(ctx, r.db).Create(dealMembers).Error; err != nil {
+		return nil, err
+	}
+
+	// dealMembers.ID = model.ID
+	return dealMembers, nil
+}
+
 func (r *DealMemberPostgresRepository) GetByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (*entity.DealMember, error) {
 	var model entity.DealMember
 	if err := r.db.WithContext(ctx).Where("deal_id = ? AND member_id = ?", dealID, memberID).First(&model).Error; err != nil {

@@ -139,6 +139,7 @@ func (u *dealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entit
 		// tạo mới tài khoản nếu chưa tồn tại
 		bankAccount := deal.BankAccount
 		deal.BankAccount = nil
+		members := make([]entity.DealMember, 0)
 		if bankAccount != nil && deal.BankAccountID == nil && deal.ChargePersonID != nil {
 			bankAccount.OwnerID = *deal.ChargePersonID
 			bankAccount.OwnerType = deal.OwnerType
@@ -147,51 +148,6 @@ func (u *dealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entit
 				return err
 			}
 			deal.BankAccountID = &bankAccount.ID
-		}
-
-		if len(deal.MemberIds) > 0 {
-			members := make([]entity.DealMember, len(deal.MemberIds))
-			for i, memberID := range deal.MemberIds {
-				members[i] = entity.DealMember{
-					MemberID: memberID,
-					RoleKey:  enums.RoleKeyDealMember,
-				}
-			}
-			deal.Members = members
-		}
-
-		if len(deal.CustomerIds) > 0 {
-			customers := make([]entity.DealMember, len(deal.CustomerIds))
-			for i, customerID := range deal.CustomerIds {
-				customers[i] = entity.DealMember{
-					MemberID: customerID,
-					RoleKey:  enums.RoleKeyDealCustomer,
-				}
-			}
-			deal.Customers = customers
-		}
-
-		if len(deal.PartnerIds) > 0 {
-			partners := make([]entity.DealMember, len(deal.PartnerIds))
-			for i, partnerID := range deal.PartnerIds {
-				partners[i] = entity.DealMember{
-					MemberID: partnerID,
-					RoleKey:  enums.RoleKeyDealPartner,
-				}
-			}
-			deal.Partners = partners
-		}
-
-		// tạo mới sản phẩm liên quan nếu chưa tồn tại
-		if len(deal.ProductIds) > 0 {
-			products := make([]entity.DealProduct, len(deal.ProductIds))
-			for i, productID := range deal.ProductIds {
-				products[i] = entity.DealProduct{
-					DealID:    deal.ID,
-					ProductID: productID,
-				}
-			}
-			deal.Products = products
 		}
 
 		if len(deal.Documents) > 0 {
@@ -209,22 +165,7 @@ func (u *dealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entit
 			return err
 		}
 
-		if deal.ChargePersonID != nil {
-			_, err = u.dealMemberRepository.CreateMember(ctx, &entity.DealMember{
-				DealID:   deal.ID,
-				MemberID: *deal.ChargePersonID,
-				// MemberType:   enums.DealMemberTypeMember,
-				RoleID:       0,
-				RoleKey:      enums.RoleKeyDealAdmin,
-				AmountCommit: 0,
-				Status:       entity.DealMemberStatusAccepted,
-			})
-			if err != nil {
-				return err
-			}
-		}
-
-		_, err = u.dealMemberRepository.CreateMember(ctx, &entity.DealMember{
+		members = append(members, entity.DealMember{
 			DealID:   deal.ID,
 			MemberID: currentUserId,
 			// MemberType:   enums.DealMemberTypeMember,
@@ -233,9 +174,117 @@ func (u *dealUsecase) CreateDeal(ctx context.Context, deal *entity.Deal) (*entit
 			AmountCommit: 0,
 			Status:       entity.DealMemberStatusAccepted,
 		})
+
+		if deal.ChargePersonID != nil {
+			members = append(members, entity.DealMember{
+				DealID:   deal.ID,
+				MemberID: *deal.ChargePersonID,
+				// MemberType:   enums.DealMemberTypeMember,
+				RoleID:       0,
+				RoleKey:      enums.RoleKeyDealAdmin,
+				AmountCommit: 0,
+				Status:       entity.DealMemberStatusInvited,
+			})
+			// _, err = u.dealMemberRepository.CreateMember(ctx, &)
+			// if err != nil {
+			// 	return err
+			// }
+		}
+
+		if len(deal.MemberIds) > 0 {
+			// members := make([]entity.DealMember, len(deal.MemberIds))
+			for _, memberID := range deal.MemberIds {
+				// members[i] = entity.DealMember{
+				// 	MemberID: memberID,
+				// 	RoleKey:  enums.RoleKeyDealMember,
+				// }
+				members = append(members, entity.DealMember{
+					DealID:   deal.ID,
+					MemberID: memberID,
+					RoleKey:  enums.RoleKeyDealMember,
+					Status:   entity.DealMemberStatusInvited,
+				})
+			}
+			// deal.Members = members
+		}
+
+		if len(deal.CustomerIds) > 0 {
+			// customers := make([]entity.DealMember, len(deal.CustomerIds))
+			for _, customerID := range deal.CustomerIds {
+				// customers[i] = entity.DealMember{
+				// 	MemberID: customerID,
+				// 	RoleKey:  enums.RoleKeyDealCustomer,
+				// }
+				members = append(members, entity.DealMember{
+					DealID:   deal.ID,
+					MemberID: customerID,
+					RoleKey:  enums.RoleKeyDealCustomer,
+					Status:   entity.DealMemberStatusInvited,
+				})
+			}
+			// deal.Customers = customers
+		}
+
+		if len(deal.PartnerIds) > 0 {
+			// partners := make([]entity.DealMember, len(deal.PartnerIds))
+			for _, partnerID := range deal.PartnerIds {
+				// partners[i] = entity.DealMember{
+				// 	MemberID: partnerID,
+				// 	RoleKey:  enums.RoleKeyDealPartner,
+				// }
+				members = append(members, entity.DealMember{
+					DealID:   deal.ID,
+					MemberID: partnerID,
+					RoleKey:  enums.RoleKeyDealPartner,
+					Status:   entity.DealMemberStatusInvited,
+				})
+			}
+			// deal.Partners = partners
+		}
+
+		// tạo mới sản phẩm liên quan nếu chưa tồn tại
+		// dealProducts := make([]entity.DealProduct, len(deal.ProductIds))
+		// products := make([]*entity.DealProduct, len(deal.ProductIds))
+		// if len(deal.ProductIds) > 0 {
+		// 	for i, productID := range deal.ProductIds {
+		// 		products[i] = &entity.DealProduct{
+		// 			DealID:    deal.ID,
+		// 			ProductID: productID,
+		// 		}
+		// 	}
+		// 	// deal.Products = products
+		// }
+
+		uniqueMembers := make([]entity.DealMember, 0, len(members))
+		seen := make(map[uint64]bool) // giả sử memberId là int
+		for _, m := range members {
+			if !seen[m.MemberID] {
+				seen[m.MemberID] = true
+				uniqueMembers = append(uniqueMembers, m)
+			}
+		}
+		members = uniqueMembers
+
+		_, err = u.dealMemberRepository.CreateMembers(ctx, members)
+		// _, err = u.dealMemberRepository.CreateMember(ctx, &entity.DealMember{
+		// 	DealID:   deal.ID,
+		// 	MemberID: currentUserId,
+		// 	// MemberType:   enums.DealMemberTypeMember,
+		// 	RoleID:       0,
+		// 	RoleKey:      enums.RoleKeyDealOwner,
+		// 	AmountCommit: 0,
+		// 	Status:       entity.DealMemberStatusAccepted,
+		// })
 		if err != nil {
 			return err
 		}
+
+		// if len(products) > 0 {
+		// 	_, err = u.dealRepository.CreateDealProduct(ctx, products)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
 
 		return nil
 	})

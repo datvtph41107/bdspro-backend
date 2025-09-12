@@ -9,6 +9,7 @@ import (
 
 type DealMemberRepository interface {
 	CreateMember(ctx context.Context, dealMember *entity.DealMember) (*entity.DealMember, error)
+	CreateMembers(ctx context.Context, dealMembers []entity.DealMember) ([]entity.DealMember, error)
 	GetByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (*entity.DealMember, error)
 	DeleteMember(ctx context.Context, dealID, memberID uint64) error
 	UpdateCommission(ctx context.Context, dealID, memberID uint64, commissionValue float64, commissionType enums.CommissionType, note string) error

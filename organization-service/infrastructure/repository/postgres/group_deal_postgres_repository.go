@@ -33,7 +33,7 @@ func NewGroupDealPostgresRepository(db *gorm.DB,
 }
 
 func (r *GroupDealPostgresRepository) CreateDealProduct(ctx context.Context, dealProduct []*entity.DealProduct) ([]*entity.DealProduct, error) {
-	if err := GetDB(ctx, r.db).Create(dealProduct).Error; err != nil {
+	if err := GetDB(ctx, r.db).Create(&dealProduct).Error; err != nil {
 		return nil, err
 	}
 	return dealProduct, nil
@@ -60,6 +60,7 @@ func (r *GroupDealPostgresRepository) Create(ctx context.Context, deal *entity.D
 			ProductID: productID,
 		}
 	}
+	deal.Members = nil
 	if err := GetDB(ctx, r.db).Create(deal).Error; err != nil {
 		return nil, err
 	}
