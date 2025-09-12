@@ -657,6 +657,166 @@
     "FriendServiceFriendUpdateGroupBody": {
       "type": "object"
     },
+    "authpbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "authpbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "authpbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "roleDescription": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "string"
+        },
+        "colorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "$ref": "#/definitions/authpbColor"
+        },
+        "roleGroupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleGroupName": {
+          "type": "string"
+        },
+        "allowAssign": {
+          "type": "boolean"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Role message"
+    },
     "crmpbFriend": {
       "type": "object",
       "properties": {
@@ -768,36 +928,42 @@
         }
       }
     },
-    "organizationpbDealInvitationMember": {
+    "organizationpbBankAccountItem": {
       "type": "object",
       "properties": {
-        "userId": {
-          "type": "string",
-          "format": "uint64"
-        },
         "name": {
           "type": "string"
         },
-        "email": {
+        "bankName": {
           "type": "string"
         },
-        "roleId": {
+        "accountNumber": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "bankId": {
           "type": "string",
           "format": "uint64"
         },
-        "joinedAt": {
-          "type": "string"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
+        "bank": {
+          "$ref": "#/definitions/paymentpbBank"
         }
       }
     },
     "organizationpbDealMember": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
         "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "inviterId": {
           "type": "string",
           "format": "uint64"
         },
@@ -805,9 +971,46 @@
           "type": "string",
           "format": "uint64"
         },
-        "memberType": {
+        "status": {
           "type": "integer",
           "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "color": {
+          "$ref": "#/definitions/authpbColor"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "invitedAt": {
+          "type": "string",
+          "title": "Thời gian mời"
+        },
+        "respondedAt": {
+          "type": "string",
+          "title": "Thời gian phản hồi"
+        },
+        "withdrawnAt": {
+          "type": "string",
+          "title": "Thời gian rút khỏi"
         },
         "amountCommit": {
           "type": "number",
@@ -827,22 +1030,182 @@
           "type": "string",
           "title": "Ghi chú"
         },
-        "memberName": {
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "isOwner": {
+          "type": "boolean",
+          "title": "Đánh dấu là chủ thương vụ"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Role key (400: Owner, 420: Admin, 430: Member)"
+        },
+        "deal": {
+          "$ref": "#/definitions/organizationpbGroupDeal"
+        }
+      },
+      "title": "Message định nghĩa DealMember"
+    },
+    "organizationpbDocumentItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "size": {
           "type": "string",
-          "title": "profile"
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGroupDeal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
         },
-        "memberAvatar": {
+        "name": {
           "type": "string"
         },
-        "memberPhone": {
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
           "type": "string"
         },
-        "memberVerified": {
-          "type": "boolean"
+        "updatedAt": {
+          "type": "string"
         },
-        "roleId": {
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "numMember": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/pb_bdsproProductAttachment"
+          }
+        },
+        "dealTypeName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "partners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
+        },
+        "chargePersonId": {
           "type": "string",
           "format": "uint64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
         }
       }
     },
@@ -881,8 +1244,8 @@
           "format": "int64"
         },
         "userId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "role": {
           "type": "integer",
@@ -891,6 +1254,10 @@
         "roleId": {
           "type": "string",
           "format": "uint64"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
         },
         "roleName": {
           "type": "string"
@@ -903,9 +1270,83 @@
           "$ref": "#/definitions/sharepbProfileItem"
         },
         "dealMember": {
-          "$ref": "#/definitions/organizationpbDealInvitationMember"
+          "$ref": "#/definitions/organizationpbDealMember"
         }
       }
+    },
+    "paymentpbBank": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "pb_bdsproProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      },
+      "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
     "protobufAny": {
       "type": "object",

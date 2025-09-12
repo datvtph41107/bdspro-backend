@@ -25,7 +25,7 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 	var users []dto.AdminUserItem
 	var total int64
 
-	query := r.DB.WithContext(ctx).
+	query := r.DB.Debug().WithContext(ctx).
 		Model(&user_model.UserProfileEntity{}).
 		Select(`
 			profile_id,

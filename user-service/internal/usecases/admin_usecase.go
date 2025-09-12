@@ -26,10 +26,6 @@ func (uc *AdminUsecase) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 	//     return nil, errors.New("unauthorized: admin access required")
 	// }
 
-	// Validate request
-	if req.Page == 0 {
-		req.Page = 1
-	}
 	if req.Size == 0 {
 		req.Size = 20
 	}

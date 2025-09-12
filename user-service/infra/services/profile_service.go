@@ -197,7 +197,6 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 				Phone:           org.Phone,
 				Email:           org.Email,
 				BackgroundImage: org.LogoUrl,
-				OrganizationId:  &org.Id,
 				OwnerType:       &ownerType,
 			})
 		}
@@ -282,12 +281,6 @@ func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListA
 		RoleType:  req.RoleType,
 	}
 
-	// Set pagination
-	if req.Page > 0 {
-		dtoReq.Page = req.Page
-	} else {
-		dtoReq.Page = 1
-	}
 	if req.Size > 0 {
 		dtoReq.Size = req.Size
 	} else {
