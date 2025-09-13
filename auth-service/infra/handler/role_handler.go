@@ -90,6 +90,7 @@ func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (
 		RoleGroupID:     req.RoleGroupId,
 		PermissionIDs:   req.PermissionIds,
 		RoleKey:         req.RoleKey,
+		AllowAssign:     req.AllowAssign,
 	}
 
 	if err := h.internalHandler.ResetPermission(ctx, req.Id); err != nil {
