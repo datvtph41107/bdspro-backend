@@ -22,4 +22,6 @@ type RoleRepository interface {
 	GetPermissionKeysByRoleId(ctx context.Context, roleId uint64) ([]string, error)
 	GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64) (*domain.Role, error)
 	GetListByGroupKey(ctx context.Context, groupKey uint32) ([]domain.Role, int64, error)
+	GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKeys []uint32, organizationId uint64) ([]*domain.Role, error)
+	AssignRolesToUser(ctx context.Context, userId uint64, roles []*domain.Role) error
 }

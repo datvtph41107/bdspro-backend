@@ -315,3 +315,30 @@ func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]do
 	// Trả về role đầu tiên (có auto_assign = true nếu có, hoặc role đầu tiên nếu không có)
 	return roles, int64(len(roles)), nil
 }
+
+// GetRolesByRoleKeysAndOrganization lấy roles theo roleKeys và organizationId
+func (r *RoleRepo) GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKeys []uint32, organizationId uint64) ([]*domain.Role, error) {
+	var roles []*domain.Role
+	err := r.GetDB(ctx).
+		Model(&domain.Role{}).
+		Preload("Color").
+		Preload("Permissions").
+		Preload("RoleGroup").
+		Where("role_key IN ? AND organization_id = ? AND deleted_at IS NULL", roleKeys, organizationId).
+		Find(&roles).Error
+	return roles, err
+}
+
+// AssignRolesToUser gán roles cho user (cần implement logic gán role cho user)
+func (r *RoleRepo) AssignRolesToUser(ctx context.Context, userId uint64, roles []*domain.Role) error {
+	// TODO: Implement logic gán role cho user
+	// Có thể cần tạo bảng user_roles hoặc cập nhật bảng role_profiles
+	// Ví dụ:
+	// for _, role := range roles {
+	//     err := r.GetDB(ctx).Exec("INSERT INTO role_profiles (profile_id, role_id) VALUES (?, ?)", userId, role.ID).Error
+	//     if err != nil {
+	//         return err
+	//     }
+	// }
+	return nil
+}

@@ -128,6 +128,12 @@ service RoleService {
       get: "/v2/auth/role/by-group/{groupKey}"
     };
   };
+  rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse) {
+    option (google.api.http) = {
+      post: "/v2/auth/role/assign-user"
+      body: "*"
+    };
+  };
 }
 
 // Permission Service
@@ -183,4 +189,16 @@ message PermissionKeysResponse {
 // Get roles by group key request
 message GetRolesByGroupKeyRequest {
   uint32 groupKey = 1;
+}
+
+// Assign role to user messages
+message AssignRoleToUserRequest {
+  uint64 userId = 1;
+  repeated uint32 roleKeys = 2;
+  uint64 organizationId = 3;
+}
+
+message AssignRoleToUserResponse {
+  repeated Role assignedRoles = 1;
+  string message = 2;
 }

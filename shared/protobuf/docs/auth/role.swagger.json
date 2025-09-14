@@ -481,6 +481,38 @@
         ]
       }
     },
+    "/v2/auth/role/assign-user": {
+      "post": {
+        "operationId": "RoleService_AssignRoleToUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAssignRoleToUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbAssignRoleToUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RoleService"
+        ]
+      }
+    },
     "/v2/auth/role/by-group/{groupKey}": {
       "get": {
         "operationId": "RoleService_GetRolesByGroupKey",
@@ -908,6 +940,42 @@
         }
       },
       "title": "Role request/response messages"
+    },
+    "authpbAssignRoleToUserRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleKeys": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "Assign role to user messages"
+    },
+    "authpbAssignRoleToUserResponse": {
+      "type": "object",
+      "properties": {
+        "assignedRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbRole"
+          }
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     },
     "authpbColor": {
       "type": "object",

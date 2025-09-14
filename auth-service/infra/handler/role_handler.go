@@ -11,6 +11,7 @@ import (
 	sharepb "pb/types/shared"
 )
 
+
 type RoleHandler struct {
 	authpb.UnimplementedRoleServiceServer
 	roleUsecase     *usecase.RoleUsecase
@@ -268,4 +269,109 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 		Data:          pbRoles,
 		TotalElements: uint32(total),
 	}, nil
+}
+
+// @Summary Gán role cho user
+// @Description Gán role cho user dựa trên roleKeys
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body authpb.AssignRoleToUserRequest true "Assign role request"
+// @Success 200 {object} authpb.AssignRoleToUserResponse
+// @Router /role/assign-user [post]
+func (h *RoleHandler) AssignRoleToUser(ctx context.Context, req *authpb.AssignRoleToUserRequest) (*authpb.AssignRoleToUserResponse, error) {
+	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_GAN"}); err != nil {
+		return nil, err
+	}
+
+	// Convert request to DTO
+	assignRequest := &dto.AssignRoleToUserRequest{
+		UserID:         req.UserId,
+		RoleKeys:       req.RoleKeys,
+		OrganizationID: req.OrganizationId,
+	}
+
+	// Call usecase
+	result, err := h.roleUsecase.AssignRoleToUser(ctx, assignRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to protobuf
+	pbRoles := make([]*authpb.Role, len(result.AssignedRoles))
+	for i, role := range result.AssignedRoles {
+		pbRoles[i] = h.convertRoleDTOToPb(role)
+	}
+
+	return &authpb.AssignRoleToUserResponse{
+		AssignedRoles: pbRoles,
+		Message:       result.Message,
+	}, nil
+}
+
+// convertRoleDTOToPb convert dto.RoleDTO to authpb.Role
+func (h *RoleHandler) convertRoleDTOToPb(role dto.RoleDTO) *authpb.Role {
+	pbRole := &authpb.Role{
+		Id:              role.ID,
+		RoleName:        role.RoleName,
+		RoleDescription: role.RoleDescription,
+		Key:             role.Key,
+		PermissionIds:   role.PermissionIDs,
+		OrganizationId:  role.OrganizationID,
+		IsDefault:       role.IsDefault,
+		DomainType:      role.DomainType,
+		AllowAssign:     role.AllowAssign,
+		RoleKey:         role.RoleKey,
+		CreatedAt:       role.CreatedAt,
+		UpdatedAt:       role.UpdatedAt,
+	}
+
+	// Convert permissions
+	if role.Permissions != nil {
+		permissions := make([]*authpb.Permission, len(role.Permissions))
+		for i, perm := range role.Permissions {
+			permissions[i] = &authpb.Permission{
+				Id:             perm.ID,
+				Name:           perm.Name,
+				Key:            perm.Key,
+				Description:    perm.Description,
+				PermissionType: perm.PermissionType,
+				Module:         perm.Module,
+				ParentId:       perm.ParentID,
+				Priority:       perm.Priority,
+				CreatedAt:      perm.CreatedAt,
+				UpdatedAt:      perm.UpdatedAt,
+			}
+		}
+		pbRole.Permissions = permissions
+	}
+
+	// Convert color
+	if role.Color != nil {
+		pbRole.Color = &authpb.Color{
+			Id:              role.Color.ID,
+			Name:            role.Color.Name,
+			ContentColor:    role.Color.ContentColor,
+			BackgroundColor: role.Color.BackgroundColor,
+			ColorKey:        role.Color.ColorKey,
+			HexCode:         role.Color.HexCode,
+			Description:     role.Color.Description,
+			IsActive:        role.Color.IsActive,
+			CreatedAt:       role.Color.CreatedAt,
+			UpdatedAt:       role.Color.UpdatedAt,
+			CreatedBy:       role.Color.CreatedBy,
+			UpdatedBy:       role.Color.UpdatedBy,
+		}
+	}
+
+	// Convert role group
+	if role.RoleGroupID != nil {
+		pbRole.RoleGroupId = role.RoleGroupID
+	}
+	if role.RoleGroupName != nil {
+		pbRole.RoleGroupName = role.RoleGroupName
+	}
+
+	return pbRole
 }
