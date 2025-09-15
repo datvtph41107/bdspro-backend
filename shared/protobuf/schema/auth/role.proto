@@ -194,11 +194,10 @@ message GetRolesByGroupKeyRequest {
 // Assign role to user messages
 message AssignRoleToUserRequest {
   uint64 userId = 1;
-  repeated uint32 roleKeys = 2;
-  uint64 organizationId = 3;
+  uint64 roleId = 2;
 }
 
 message AssignRoleToUserResponse {
-  repeated Role assignedRoles = 1;
+  Role assignedRole = 1;
   string message = 2;
 }

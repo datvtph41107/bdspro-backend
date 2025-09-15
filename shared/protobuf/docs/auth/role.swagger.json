@@ -948,14 +948,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "roleKeys": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int64"
-          }
-        },
-        "organizationId": {
+        "roleId": {
           "type": "string",
           "format": "uint64"
         }
@@ -965,12 +958,8 @@
     "authpbAssignRoleToUserResponse": {
       "type": "object",
       "properties": {
-        "assignedRoles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/authpbRole"
-          }
+        "assignedRole": {
+          "$ref": "#/definitions/authpbRole"
         },
         "message": {
           "type": "string"

@@ -1,14 +1,15 @@
 package postgre
 
 import (
-	"auth/internal/domain"
-	"auth/internal/dto"
-	"auth/internal/interface/repo"
 	"common/case/crud"
 	_db "common/db"
 	_dto "common/dto"
 	_errors "common/errors"
 	"context"
+
+	"auth/internal/domain"
+	"auth/internal/dto"
+	"auth/internal/interface/repo"
 
 	"gorm.io/gorm"
 )
@@ -256,7 +257,6 @@ func (r *RoleRepo) GetPermissionKeysByUserId(ctx context.Context, userId uint64)
 		Where("p.profile_id = ? AND p.deleted_at IS NULL AND perm.key IS NOT NULL AND perm.key != ''", userId).
 		Pluck("perm.key", &permissionKeys).
 		Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,6 @@ func (r *RoleRepo) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64
 		Order("roles.auto_assign DESC, roles.id ASC").
 		Limit(2).
 		Find(&roles).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +302,6 @@ func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]do
 		Order("roles.allow_assign DESC, roles.id ASC").
 		Limit(100).
 		Find(&roles).Error
-
 	if err != nil {
 		return nil, 0, _errors.ReturnError(500, err.Error())
 	}
@@ -329,16 +327,29 @@ func (r *RoleRepo) GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKe
 	return roles, err
 }
 
-// AssignRolesToUser gán roles cho user (cần implement logic gán role cho user)
-func (r *RoleRepo) AssignRolesToUser(ctx context.Context, userId uint64, roles []*domain.Role) error {
-	// TODO: Implement logic gán role cho user
-	// Có thể cần tạo bảng user_roles hoặc cập nhật bảng role_profiles
-	// Ví dụ:
-	// for _, role := range roles {
-	//     err := r.GetDB(ctx).Exec("INSERT INTO role_profiles (profile_id, role_id) VALUES (?, ?)", userId, role.ID).Error
-	//     if err != nil {
-	//         return err
-	//     }
-	// }
+// GetRoleByRoleKey lấy role theo roleKey
+func (r *RoleRepo) GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domain.Role, error) {
+	var role domain.Role
+	err := r.GetDB(ctx).
+		Model(&domain.Role{}).
+		Preload("Color").
+		Preload("Permissions").
+		Preload("RoleGroup").
+		Where("role_key = ? AND deleted_at IS NULL", roleKey).
+		First(&role).Error
+	return &role, err
+}
+
+// AssignRoleToUser gán role cho user bằng cách cập nhật role_key trong auth method
+func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *domain.Role) error {
+	// Cập nhật role_key trong bảng user_auth
+	err := r.GetDB(ctx).
+		Model(&domain.AuthMethodDomain{}).
+		Where("user_id = ?", userId).
+		Update("role_key", role.RoleKey).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

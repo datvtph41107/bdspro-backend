@@ -18,7 +18,8 @@ type AuthMethodDomain struct {
 	Phone       string     `gorm:"size:255"`
 	CreatedAt   time.Time  `gorm:"column:created_at;autoCreateTime"`
 	DeletedAt   *time.Time `gorm:"column:deleted_at"`
-	UserID      uint64     `gorm:"column:user_id"` // Không cập nhật & xóa, chỉ tạo mới
+	UserID      uint64     `gorm:"column:user_id"`  // Không cập nhật & xóa, chỉ tạo mới
+	RoleKey     uint32     `gorm:"column:role_key"` // Role được gán cho auth method
 }
 
 // TableName đặt tên bảng tương đương với Java

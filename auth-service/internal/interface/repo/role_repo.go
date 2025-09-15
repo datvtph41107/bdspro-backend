@@ -1,9 +1,10 @@
 package repo
 
 import (
-	"auth/internal/domain"
 	"common/case/crud"
 	"context"
+
+	"auth/internal/domain"
 )
 
 type RoleRepository interface {
@@ -23,5 +24,6 @@ type RoleRepository interface {
 	GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64) (*domain.Role, error)
 	GetListByGroupKey(ctx context.Context, groupKey uint32) ([]domain.Role, int64, error)
 	GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKeys []uint32, organizationId uint64) ([]*domain.Role, error)
-	AssignRolesToUser(ctx context.Context, userId uint64, roles []*domain.Role) error
+	AssignRoleToUser(ctx context.Context, userId uint64, role *domain.Role) error
+	GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domain.Role, error)
 }

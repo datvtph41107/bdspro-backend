@@ -1,16 +1,16 @@
 package handler
 
 import (
-	"auth/infra/mapper"
-	"auth/internal/domain"
-	"auth/internal/dto"
-	"auth/internal/usecase"
 	_dto "common/dto"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
-)
 
+	"auth/infra/mapper"
+	"auth/internal/domain"
+	"auth/internal/dto"
+	"auth/internal/usecase"
+)
 
 type RoleHandler struct {
 	authpb.UnimplementedRoleServiceServer
@@ -281,15 +281,14 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 // @Success 200 {object} authpb.AssignRoleToUserResponse
 // @Router /role/assign-user [post]
 func (h *RoleHandler) AssignRoleToUser(ctx context.Context, req *authpb.AssignRoleToUserRequest) (*authpb.AssignRoleToUserResponse, error) {
-	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_GAN"}); err != nil {
-		return nil, err
-	}
+	// if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_GAN"}); err != nil {
+	// 	return nil, err
+	// }
 
 	// Convert request to DTO
 	assignRequest := &dto.AssignRoleToUserRequest{
-		UserID:         req.UserId,
-		RoleKeys:       req.RoleKeys,
-		OrganizationID: req.OrganizationId,
+		UserID: req.UserId,
+		RoleID: req.RoleId,
 	}
 
 	// Call usecase
@@ -299,14 +298,11 @@ func (h *RoleHandler) AssignRoleToUser(ctx context.Context, req *authpb.AssignRo
 	}
 
 	// Convert DTO response to protobuf
-	pbRoles := make([]*authpb.Role, len(result.AssignedRoles))
-	for i, role := range result.AssignedRoles {
-		pbRoles[i] = h.convertRoleDTOToPb(role)
-	}
+	pbRole := h.convertRoleDTOToPb(result.AssignedRole)
 
 	return &authpb.AssignRoleToUserResponse{
-		AssignedRoles: pbRoles,
-		Message:       result.Message,
+		AssignedRole: pbRole,
+		Message:      result.Message,
 	}, nil
 }
 

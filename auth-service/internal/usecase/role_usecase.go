@@ -1,14 +1,15 @@
 package usecase
 
 import (
-	"auth/internal/domain"
-	"auth/internal/dto"
-	"auth/internal/interface/provider"
-	"auth/internal/interface/repo"
 	"common/case/crud"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+
+	"auth/internal/domain"
+	"auth/internal/dto"
+	"auth/internal/interface/provider"
+	"auth/internal/interface/repo"
 )
 
 type RoleUsecase struct {
@@ -174,44 +175,38 @@ func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]d
 	return entities, total, nil
 }
 
-// AssignRoleToUser gán role cho user dựa trên roleKeys
+// AssignRoleToUser gán role cho user dựa trên roleId
 func (uc *RoleUsecase) AssignRoleToUser(ctx context.Context, req *dto.AssignRoleToUserRequest) (*dto.AssignRoleToUserResponse, error) {
 	// Validate input
 	if req.UserID == 0 {
 		return nil, _errors.ReturnError(400, "UserID không được để trống")
 	}
-	if len(req.RoleKeys) == 0 {
-		return nil, _errors.ReturnError(400, "RoleKeys không được để trống")
-	}
-	if req.OrganizationID == 0 {
-		return nil, _errors.ReturnError(400, "OrganizationID không được để trống")
+	if req.RoleID == 0 {
+		return nil, _errors.ReturnError(400, "RoleID không được để trống")
 	}
 
-	// Lấy danh sách roles theo roleKeys và organizationId
-	roles, err := uc.Repo.GetRolesByRoleKeysAndOrganization(ctx, req.RoleKeys, req.OrganizationID)
+	// Lấy role theo roleId
+	role, err := uc.Repo.GetByID(ctx, req.RoleID)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi lấy danh sách roles: "+err.Error())
+		return nil, _errors.ReturnError(500, "Lỗi khi lấy role: "+err.Error())
 	}
 
-	if len(roles) == 0 {
-		return nil, _errors.ReturnError(404, "Không tìm thấy role nào với roleKeys đã cung cấp")
+	if role == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy role với roleId đã cung cấp")
 	}
 
-	// Gán roles cho user (cần implement logic gán role cho user)
-	err = uc.Repo.AssignRolesToUser(ctx, req.UserID, roles)
+	// Gán role cho user
+	err = uc.Repo.AssignRoleToUser(ctx, req.UserID, role)
 	if err != nil {
 		return nil, _errors.ReturnError(500, "Lỗi khi gán role cho user: "+err.Error())
 	}
 
-	// Convert domain roles to DTO
-	assignedRoles := make([]dto.RoleDTO, len(roles))
-	for i, role := range roles {
-		assignedRoles[i] = uc.convertRoleToDTO(role)
-	}
+	// Convert domain role to DTO
+	assignedRole := uc.convertRoleToDTO(role)
 
 	return &dto.AssignRoleToUserResponse{
-		AssignedRoles: assignedRoles,
-		Message:       "Gán role cho user thành công",
+		AssignedRole: assignedRole,
+		Message:      "Gán role cho user thành công",
 	}, nil
 }
 

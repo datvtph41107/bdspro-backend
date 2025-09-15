@@ -2,15 +2,14 @@ package dto
 
 // AssignRoleToUserRequest DTO cho request gán role cho user
 type AssignRoleToUserRequest struct {
-	UserID         uint64   `json:"userId" validate:"required"`
-	RoleKeys       []uint32 `json:"roleKeys" validate:"required,min=1"`
-	OrganizationID uint64   `json:"organizationId" validate:"required"`
+	UserID uint64 `json:"userId" validate:"required"`
+	RoleID uint64 `json:"roleId" validate:"required"`
 }
 
 // AssignRoleToUserResponse DTO cho response gán role cho user
 type AssignRoleToUserResponse struct {
-	AssignedRoles []RoleDTO `json:"assignedRoles"`
-	Message       string    `json:"message"`
+	AssignedRole RoleDTO `json:"assignedRole"`
+	Message      string  `json:"message"`
 }
 
 // RoleDTO DTO cho role với thông tin màu sắc
