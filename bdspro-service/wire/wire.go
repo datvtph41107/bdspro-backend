@@ -1,12 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
-	_db "common/db"
-	"bdspro/initial"
 	bdspro_infra_client "bdspro/infra/client"
 	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
 	bdspro_infra_mapper "bdspro/infra/mapper"
@@ -19,6 +16,7 @@ import (
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_services "bdspro/infra/services"
 	bdspro_infra_validator "bdspro/infra/validator"
+	"bdspro/initial"
 	bdspro_initial "bdspro/initial"
 	bdspro_internal_repo "bdspro/internal/repo"
 	bdspro_internal_repo_admin "bdspro/internal/repo/admin"
@@ -26,6 +24,9 @@ import (
 	bdspro_internal_usecases_admin "bdspro/internal/usecases/admin"
 	bdspro_internal_usecases_interface "bdspro/internal/usecases/interface"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
+	_db "common/db"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -151,7 +152,6 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases.NewListUsecase,
 	bdspro_infra_providers.NewMemberPlanService,
 	bdspro_infra_services.NewMemberPlanUsecase,
-	bdspro_infra_providers.NewNotiService,
 	bdspro_infra_client.NewNotificationClient,
 	bdspro_infra_router_org.NewOrgAssetCostRouter,
 	bdspro_infra_router_org.NewOrgAssetExploitationRouter,
@@ -223,6 +223,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

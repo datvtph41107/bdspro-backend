@@ -1,13 +1,15 @@
 package usecase
 
 import (
-	"auth/internal/domain"
-	"auth/internal/interface/provider"
-	"auth/internal/interface/repo"
 	"common/case/crud"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+
+	"auth/internal/domain"
+	"auth/internal/dto"
+	"auth/internal/interface/provider"
+	"auth/internal/interface/repo"
 )
 
 type RoleUsecase struct {
@@ -171,4 +173,103 @@ func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]d
 	}
 
 	return entities, total, nil
+}
+
+// AssignRoleToUser gán role cho user dựa trên roleId
+func (uc *RoleUsecase) AssignRoleToUser(ctx context.Context, req *dto.AssignRoleToUserRequest) (*dto.AssignRoleToUserResponse, error) {
+	// Validate input
+	if req.UserID == 0 {
+		return nil, _errors.ReturnError(400, "UserID không được để trống")
+	}
+	if req.RoleID == 0 {
+		return nil, _errors.ReturnError(400, "RoleID không được để trống")
+	}
+
+	// Lấy role theo roleId
+	role, err := uc.Repo.GetByID(ctx, req.RoleID)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "Lỗi khi lấy role: "+err.Error())
+	}
+
+	if role == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy role với roleId đã cung cấp")
+	}
+
+	// Gán role cho user
+	err = uc.Repo.AssignRoleToUser(ctx, req.UserID, role)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "Lỗi khi gán role cho user: "+err.Error())
+	}
+
+	// Convert domain role to DTO
+	assignedRole := uc.convertRoleToDTO(role)
+
+	return &dto.AssignRoleToUserResponse{
+		AssignedRole: assignedRole,
+		Message:      "Gán role cho user thành công",
+	}, nil
+}
+
+// convertRoleToDTO convert domain.Role to dto.RoleDTO
+func (uc *RoleUsecase) convertRoleToDTO(role *domain.Role) dto.RoleDTO {
+	roleDTO := dto.RoleDTO{
+		ID:              role.ID,
+		RoleName:        role.RoleName,
+		RoleDescription: role.RoleDescription,
+		Key:             role.Key,
+		PermissionIDs:   role.PermissionIDs,
+		OrganizationID:  role.OrganizationID,
+		IsDefault:       role.IsDefault,
+		DomainType:      role.DomainType,
+		AllowAssign:     role.AllowAssign,
+		RoleKey:         role.RoleKey,
+		CreatedAt:       role.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:       role.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	// Convert permissions
+	if role.Permissions != nil {
+		permissions := make([]dto.PermissionDTO, len(role.Permissions))
+		for i, perm := range role.Permissions {
+			permissions[i] = dto.PermissionDTO{
+				ID:             perm.ID,
+				Name:           perm.Name,
+				Key:            perm.Key,
+				Description:    perm.Description,
+				PermissionType: perm.PermissionType,
+				Module:         perm.Module,
+				ParentID:       perm.ParentID,
+				Priority:       perm.Priority,
+				CreatedAt:      perm.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+				UpdatedAt:      perm.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			}
+		}
+		roleDTO.Permissions = permissions
+	}
+
+	// Convert color
+	if role.Color != nil {
+		roleDTO.Color = &dto.ColorDTO{
+			ID:              role.Color.ID,
+			Name:            role.Color.Name,
+			ContentColor:    role.Color.ContentColor,
+			BackgroundColor: role.Color.BackgroundColor,
+			ColorKey:        role.Color.ColorKey,
+			HexCode:         role.Color.HexCode,
+			Description:     &role.Color.Description,
+			IsActive:        role.Color.IsActive,
+			CreatedAt:       role.Color.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:       role.Color.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedBy:       0, // Color domain không có CreatedBy/UpdatedBy
+			UpdatedBy:       0,
+		}
+	}
+
+	// Convert role group
+	if role.RoleGroupID != nil {
+		roleDTO.RoleGroupID = role.RoleGroupID
+	}
+	// Role domain không có RoleGroupName field
+
+	return roleDTO
 }
