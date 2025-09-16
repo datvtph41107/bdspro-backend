@@ -6,6 +6,8 @@ replace common => ../shared/common
 
 replace pb => ../shared/protobuf
 
+replace base => ../shared/base
+
 require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
@@ -21,6 +23,7 @@ require (
 )
 
 require (
+	base v0.0.0-00010101000000-000000000000 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/bytedance/sonic v1.13.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect

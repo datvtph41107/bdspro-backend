@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	base_enum "base/enum"
 	_utils "common/utils"
 	"crm/internal/domain"
 	"crm/internal/dto"
@@ -43,9 +44,9 @@ func (m *LeadMapper) LeadDetailToPb(lead *domain.LeadEntity) *crmpb.LeadDetailDT
 		}
 	}
 	if lead.ProductCares != nil {
-		result.ProductCareIds = make([]uint64, len(lead.ProductCares))
+		result.ProductIds = make([]uint64, len(lead.ProductCares))
 		for i, productCare := range lead.ProductCares {
-			result.ProductCareIds[i] = productCare.ProductID
+			result.ProductIds[i] = productCare.ProductID
 		}
 	}
 	if lead.Contact != nil {
@@ -89,9 +90,9 @@ func (m *LeadMapper) LeadToPb(lead *domain.LeadEntity) *crmpb.LeadDTO {
 		}
 	}
 	if lead.ProductCares != nil {
-		result.ProductCareIds = make([]uint64, len(lead.ProductCares))
+		result.ProductIds = make([]uint64, len(lead.ProductCares))
 		for i, productCare := range lead.ProductCares {
-			result.ProductCareIds[i] = productCare.ProductID
+			result.ProductIds[i] = productCare.ProductID
 		}
 	}
 
@@ -148,9 +149,12 @@ func (m *LeadMapper) LeadSaveToDomain(req *crmpb.LeadSaveRequest) *dto.LeadSaveD
 		StageID:           &req.StageId,
 		Priority:          enums.EPriority(req.Priority),
 		ChargePersonID:    &req.ChargePersonId,
-		ProductCareIDs:    req.ProductCareIds,
+		ProductIDs:        req.ProductIds,
 		Documents:         documents,
 		RemoveDocumentIDs: req.RemoveDocumentIds,
+
+		OwnerOf: base_enum.EOwnerOf(req.OwnerOf),
+		OwnerID: req.OwnerId,
 	}
 }
 

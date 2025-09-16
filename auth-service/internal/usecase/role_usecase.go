@@ -158,7 +158,7 @@ func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) 
 	if organizationMember == nil {
 		return nil, _errors.ReturnError(404, "Organization member not found")
 	}
-	keys, err := uc.Repo.GetPermissionKeysByRoleId(ctx, *organizationMember.RoleId)
+	keys, err := uc.Repo.GetPermissionKeysByRoleKey(ctx, organizationMember.RoleKey)
 	if err != nil {
 		return nil, err
 	}

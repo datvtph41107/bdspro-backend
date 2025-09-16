@@ -64,7 +64,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	dealUsecase := usecase.NewGroupDealUsecase(groupDealPostgresRepository, investmentPostgres, bankAccountPostgresRepository, documentPostgresRepository, eventHistoryUsecase, groupAuthUsecase, logWorker, postgresTransaction, notificationClient, dealMemberPostgresRepository, userClient, organizationAuthUsecase, transactionClient, dealOfBranchRepo)
 	organizationBranchMemberRepository := postgres.NewOrganizationBranchMemberPostgresRepository(db)
 	internalOrganizationMapper := transformer.NewInternalOrganizationMapper()
-	internalOrganizationHandler := handler.NewInternalOrganizationHandler(organizationPostgresRepository, groupPostgresRepository, groupMemberPostgresRepository, organizationMemberPostgresRepository, groupDealPostgresRepository, dealMemberPostgresRepository, dealUsecase, organizationBranchMemberRepository, internalOrganizationMapper)
+	internalOrganizationHandler := handler.NewInternalOrganizationHandler(organizationPostgresRepository, groupPostgresRepository, groupMemberPostgresRepository, organizationMemberPostgresRepository, organizationMemberUsecase, groupDealPostgresRepository, dealMemberPostgresRepository, dealUsecase, organizationBranchMemberRepository, internalOrganizationMapper)
 	authClient := client.NewAuthClient()
 	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator, internalOrganizationHandler, authClient)
 	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationPostgresRepository, organizationAuthUsecase, organizationLogWorker, organizationMemberPostgresRepository, organizationMemberUsecase)

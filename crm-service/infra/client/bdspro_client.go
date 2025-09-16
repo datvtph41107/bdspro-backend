@@ -59,7 +59,7 @@ func (c *BdsproClient) GetProductByIds(ctx context.Context, ids []uint64) ([]*pb
 }
 
 func (c *BdsproClient) MapProductPbByIds(ctx context.Context, lead *crmpb.LeadDetailDTO) {
-	products, err := c.GetProductByIds(ctx, lead.ProductCareIds)
+	products, err := c.GetProductByIds(ctx, lead.ProductIds)
 	if err != nil {
 		return
 	}

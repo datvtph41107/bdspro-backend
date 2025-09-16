@@ -1,6 +1,7 @@
 package client
 
 import (
+	base_enum "base/enum"
 	"context"
 	"crm/internal/enums"
 )
@@ -13,15 +14,15 @@ func NewPermissionUsecase() *PermissionUsecase {
 	return &PermissionUsecase{}
 }
 
-func (u *PermissionUsecase) UserInOwner(c context.Context, ownerID uint64, ownerType enums.EOwnerType) error {
+func (u *PermissionUsecase) UserInOwner(c context.Context, ownerID uint64, ownerType base_enum.EOwnerOf) error {
 	return nil
 }
 
-func (u *PermissionUsecase) UserCanAccessTarget(c context.Context, ownerID uint64, ownerType enums.EOwnerType, targetID uint64, targetType int8) error {
+func (u *PermissionUsecase) UserCanAccessTarget(c context.Context, ownerID uint64, ownerType base_enum.EOwnerOf, targetID uint64, targetType int8) error {
 	return nil
 }
 
-func (u *PermissionUsecase) HasRoleWithOwner(c context.Context, ownerID *uint64, ownerType enums.EOwnerType, roleValue enums.EAuth) error {
+func (u *PermissionUsecase) HasRoleWithOwner(c context.Context, ownerID uint64, ownerType base_enum.EOwnerOf, roleValue enums.EAuth) error {
 	return nil
 }
 

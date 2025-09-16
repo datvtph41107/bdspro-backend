@@ -1,36 +1,39 @@
 package usecase
 
 import (
+	base_enum "base/enum"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
-	"crm/internal/enums"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 	"strings"
 )
 
 type ContactUsecase struct {
-	repo        repo.ContactRepo
-	friendRepo  repo.FriendRepo
-	followRepo  repo.FollowRepo
-	leadUsecase *LeadUsecase // forward reference
-	userClient  iusecase.UserClient
+	repo         repo.ContactRepo
+	friendRepo   repo.FriendRepo
+	followRepo   repo.FollowRepo
+	leadUsecase  *LeadUsecase // forward reference
+	userClient   provider.UserClient
+	ownerUsecase *OwnerUsecase
 }
 
 func NewContactUsecase(
 	repo repo.ContactRepo,
 	friendRepo repo.FriendRepo,
 	followRepo repo.FollowRepo,
-	userClient iusecase.UserClient,
+	userClient provider.UserClient,
+	ownerUsecase *OwnerUsecase,
 ) *ContactUsecase {
 	return &ContactUsecase{
-		repo:       repo,
-		friendRepo: friendRepo,
-		followRepo: followRepo,
-		userClient: userClient,
+		repo:         repo,
+		friendRepo:   friendRepo,
+		followRepo:   followRepo,
+		userClient:   userClient,
+		ownerUsecase: ownerUsecase,
 	}
 }
 
@@ -39,7 +42,7 @@ func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*
 	if err != nil {
 		return nil, err
 	}
-	if entity.OwnerType == enums.EOwnerTypeMember {
+	if entity.OwnerOf == base_enum.EOwnerOfMember {
 		profileId := _utils.GetProfileIdWithContext(c)
 		if profileId != entity.OwnerID {
 			return nil, &_routes.Except{
@@ -51,9 +54,12 @@ func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*
 	return entity, nil
 }
 
-func (s *ContactUsecase) Search(c context.Context, ownerType enums.EOwnerType, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
-	profileId := _utils.GetProfileIdWithContext(c)
-	contacts, total, err := s.repo.Search(c, profileId, ownerType, dto)
+func (s *ContactUsecase) Search(c context.Context, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, ownerType, dto.OwnerId)
+	if err != nil {
+		return nil, 0, err
+	}
+	contacts, total, err := s.repo.Search(c, ownerId, ownerType, dto)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -61,12 +67,22 @@ func (s *ContactUsecase) Search(c context.Context, ownerType enums.EOwnerType, d
 }
 
 func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	// if entity.OwnerType == enums.EOwnerTypeMember {
-	// 	profileId := _utils.GetProfileIdWithContext(c)
-	// 	entity.OwnerID = profileId
-	// }
-	profileId := _utils.GetProfileIdWithContext(c)
-	entity.OwnerID = profileId
+	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, entity.OwnerOf, entity.OwnerID)
+	if err != nil {
+		return nil, err
+	}
+	entity.OwnerID = ownerId
+
+	// Kiểm tra số điện thoại trong profile service
+	if entity.Phone != "" {
+		profiles, err := s.userClient.GetProfileByPhones(c, []string{entity.Phone})
+		if err == nil && len(profiles) > 0 {
+			if profile, exists := profiles[entity.Phone]; exists {
+				entity.ProfileID = &profile.ProfileId
+			}
+		}
+	}
+
 	return s.repo.Create(c, entity)
 }
 
@@ -86,7 +102,7 @@ func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
 	return s.repo.Delete(c, id)
 }
 
-func (s *ContactUsecase) Sync(c context.Context, ownerType enums.EOwnerType, contacts []domain.ContactEntity) ([]domain.ContactEntity, error) {
+func (s *ContactUsecase) Sync(c context.Context, ownerType base_enum.EOwnerOf, contacts []domain.ContactEntity) ([]domain.ContactEntity, error) {
 	phones := make([]string, len(contacts))
 	for i := 0; i < len(contacts); i++ {
 		phones[i] = contacts[i].Phone
@@ -104,7 +120,7 @@ func (s *ContactUsecase) Sync(c context.Context, ownerType enums.EOwnerType, con
 	profileId := _utils.GetProfileIdWithContext(c)
 	for i := 0; i < len(contacts); i++ {
 		contacts[i].OwnerID = profileId
-		contacts[i].OwnerType = ownerType
+		contacts[i].OwnerOf = ownerType
 		contacts[i].Phone = strings.TrimSpace(contacts[i].Phone)
 		contacts[i].FullName = strings.TrimSpace(contacts[i].FullName)
 	}

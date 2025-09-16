@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	base_enum "base/enum"
 	_models "common/models"
 	"crm/internal/domain"
 	"crm/internal/enums"
@@ -14,7 +15,7 @@ func RulePbToDomain(req *crmpb.RuleDTO) *domain.RuleEntity {
 			ID: req.Id,
 		},
 		OwnerID:        req.OwnerId,
-		OwnerType:      enums.EOwnerType(req.OwnerType),
+		OwnerType:      base_enum.EOwnerOf(req.OwnerType),
 		Active:         req.Active,
 		RuleName:       req.RuleName,
 		Note:           req.Note,

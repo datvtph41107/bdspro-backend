@@ -1,6 +1,7 @@
 package dto
 
 import (
+	base_enum "base/enum"
 	_dto "common/dto"
 	"crm/internal/enums"
 	"time"
@@ -14,15 +15,15 @@ type LeadSearchDTO struct {
 	StageIDs        []uint64            `form:"stageIds" parser:"uint64s"`
 	Sources         []enums.ESourceLead `form:"customerSources" parser:"uint64s"`
 	ChargePersonIds []uint64            `form:"chargePersonIds" parser:"uint64s"`
-	ChargeType      enums.EOwnerType    `form:"chargeType"` // deprecated
+	ChargeType      enums.EOwnerOf      `form:"chargeType"` // deprecated
 	FromDate        *time.Time          `form:"fromDate"`
 	ToDate          *time.Time          `form:"toDate"`
 	LastUpdatedAt   *time.Time          `form:"lastUpdatedAt"`
 	ProductCareIDs  []uint64            `form:"productCareIds" parser:"uint64s"` // todo: add product care
 	PipelineID      *uint64             `form:"pipelineId"`
-	// OwnerID    uint64                  `form:"ownerId"`
-	// OwnerType  enums.EOwnerType        `form:"ownerType"`
 
+	OwnerID uint64             `form:"ownerId"`
+	OwnerOf base_enum.EOwnerOf `form:"ownerOf"`
 }
 
 type LeadDTO struct {
@@ -38,9 +39,9 @@ type LeadDTO struct {
 	PipelineID     *uint64           `json:"pipelineId"`
 	StageID        *uint64           `json:"stageId"`
 	ChargePersonId *uint64           `json:"chargePersonId"`
-	ChargeType     enums.EOwnerType  `json:"chargeType"`
+	ChargeType     enums.EOwnerOf    `json:"chargeType"`
 	OwnerID        *uint64           `json:"ownerId"`
-	OwnerType      enums.EOwnerType  `json:"ownerType"`
+	OwnerType      enums.EOwnerOf    `json:"ownerType"`
 }
 
 type CustomerWithRuleDTO struct {
@@ -62,7 +63,7 @@ type CustomerWithRuleDTO struct {
 	Trigger        enums.ERuleTrigger `json:"trigger" db:"trigger"`
 	TriggerValue   string             `json:"triggerValue" db:"trigger_value"`
 	OwnerID        uint64             `json:"ownerId" db:"owner_id"`
-	OwnerType      enums.EOwnerType   `json:"ownerType" db:"owner_type"`
+	OwnerType      enums.EOwnerOf     `json:"ownerType" db:"owner_type"`
 	UpdatedAt      time.Time          `json:"updatedAt" db:"updated_at"`
 	TriggerToDay   bool               `json:"triggerToDay" db:"trigger_to_day"`
 }

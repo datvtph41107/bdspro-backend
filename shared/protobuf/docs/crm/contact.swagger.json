@@ -155,7 +155,7 @@
         ]
       }
     },
-    "/v2/crm/contact/list/{ownerType}": {
+    "/v2/crm/contact/list/{ownerOf}/{ownerId}": {
       "get": {
         "operationId": "ContactService_Search",
         "responses": {
@@ -174,11 +174,23 @@
         },
         "parameters": [
           {
-            "name": "ownerType",
+            "name": "ownerOf",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group",
+              "organization"
+            ]
+          },
+          {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "page",
@@ -486,7 +498,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "ownerType": {
+        "ownerOf": {
           "type": "integer",
           "format": "int32"
         },
@@ -569,7 +581,7 @@
         "fullName": {
           "type": "string"
         },
-        "ownerType": {
+        "ownerOf": {
           "type": "integer",
           "format": "int32"
         },
@@ -606,7 +618,7 @@
         "fullName": {
           "type": "string"
         },
-        "ownerType": {
+        "ownerOf": {
           "type": "integer",
           "format": "int32"
         },
@@ -756,6 +768,16 @@
           "format": "int64"
         }
       }
+    },
+    "sharepbOwnerOf": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "user",
+        "group",
+        "organization"
+      ],
+      "default": "unknown"
     },
     "sharepbProfileItem": {
       "type": "object",

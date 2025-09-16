@@ -1,23 +1,27 @@
 package usecase
 
 import (
+	base_dto "base/dto"
+	base_enum "base/enum"
+	base_provider "base/provider"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 )
 
 type InvitationInstallUsecase struct {
 	repo               repo.InvitationInstallRepo
-	notificationClient iusecase.INotificationClient
-	userClient         iusecase.UserClient
+	notificationClient base_provider.NotificationProvider
+	userClient         provider.UserClient
 }
 
-func NewInvitationInstallUsecase(repo repo.InvitationInstallRepo, notificationClient iusecase.INotificationClient, userClient iusecase.UserClient) *InvitationInstallUsecase {
+func NewInvitationInstallUsecase(repo repo.InvitationInstallRepo,
+	notificationClient base_provider.NotificationProvider,
+	userClient provider.UserClient,
+) *InvitationInstallUsecase {
 	return &InvitationInstallUsecase{repo: repo, notificationClient: notificationClient, userClient: userClient}
 }
 
@@ -45,14 +49,14 @@ func (u *InvitationInstallUsecase) SendInvitation(ctx context.Context, ids []uin
 			fullName = currentUser.FullName
 		}
 		for _, entity := range entities {
-			u.notificationClient.CreateHistory(newCtx, &shared_dto.HistoryDTO{
+			u.notificationClient.CreateCRMHistory(newCtx, &base_dto.HistoryDTO{
 				Title:      fullName + " đã mời bạn cài app",
 				Note:       []string{"", fullName, " đã gửi lời mời bạn cài app BDSPro \"" + entity.Content + "\""},
 				TargetId:   entity.ContactID,
-				TargetType: shared_enum.TargetHistoryContact,
-				ActionType: shared_enum.HistoryContactInstall,
+				TargetType: base_enum.TargetHistoryContact,
+				ActionType: base_enum.HistoryContactInstall,
 				OwnerID:    &profileId,
-				OwnerType:  shared_enum.EOwnerTypeMember,
+				OwnerOf:    base_enum.EOwnerOfMember,
 				// AfterStage: ,
 			})
 		}

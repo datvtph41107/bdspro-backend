@@ -6,6 +6,7 @@ import (
 	"context"
 	"crm/config"
 	"crm/infra/db"
+	"crm/initial"
 	"crm/wire"
 	"fmt"
 	"log"
@@ -70,7 +71,7 @@ var GrpcCmd = &cobra.Command{
 	},
 }
 
-func startScheduler(app *config.ConfigApp) {
+func startScheduler(app *initial.InitialApp) {
 	now := time.Now()
 	nextHour := now.Truncate(time.Hour).Add(1 * time.Hour) // giờ tròn kế tiếp
 	wait := time.Until(nextHour)

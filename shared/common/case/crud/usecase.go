@@ -81,7 +81,7 @@ func (s *BaseUsecase[T, R]) GetAll(c context.Context) ([]T, error) {
 }
 
 func (s *BaseUsecase[T, R]) GetDetail(c context.Context, id uint64) (*T, error) {
-	entity, err := s.Repo.GetByID(c, id)
+	entity, err := s.Repo.GetDetail(c, id)
 	if err != nil {
 		return nil, &_routes.Except{
 			Code:    404,

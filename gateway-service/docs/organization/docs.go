@@ -4728,6 +4728,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/organizationpb.DocumentItem"
                     }
                 },
+                "fromDate": {
+                    "type": "string"
+                },
                 "groupId": {
                     "type": "integer"
                 },
@@ -4774,6 +4777,9 @@ const docTemplate = `{
                 },
                 "targetProfit": {
                     "type": "number"
+                },
+                "toDate": {
+                    "type": "string"
                 }
             }
         },
@@ -6499,7 +6505,10 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "role": {
+                "roleKey": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "integer"
                 }
             }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"organization/infrastructure/transformer"
 	"organization/internal/domain/repository"
 	"organization/internal/usecase"
@@ -15,12 +16,13 @@ type InternalOrganizationHandler struct {
 	groupRepo        repository.GroupRepository
 	mapper           *transformer.InternalOrganizationMapper
 	// dealInvitationRepo     repository.DealMemberRepository
-	groupMemberRepo        repository.GroupMemberRepository
-	organizationMemberRepo repository.OrganizationMemberRepository
-	dealRepo               repository.DealRepository
-	dealMemberRepo         repository.DealMemberRepository
-	dealUsecase            usecase.DealUsecase
-	branchMemberRepo       repository.OrganizationBranchMemberRepository
+	groupMemberRepo           repository.GroupMemberRepository
+	organizationMemberRepo    repository.OrganizationMemberRepository
+	organizationMemberUsecase usecase.OrganizationMemberUsecase
+	dealRepo                  repository.DealRepository
+	dealMemberRepo            repository.DealMemberRepository
+	dealUsecase               usecase.DealUsecase
+	branchMemberRepo          repository.OrganizationBranchMemberRepository
 }
 
 func NewInternalOrganizationHandler(
@@ -29,6 +31,7 @@ func NewInternalOrganizationHandler(
 	// dealInvitationRepo repository.DealMemberRepository,
 	groupMemberRepo repository.GroupMemberRepository,
 	organizationMemberRepo repository.OrganizationMemberRepository,
+	organizationMemberUsecase usecase.OrganizationMemberUsecase,
 	dealRepo repository.DealRepository,
 	dealMemberRepo repository.DealMemberRepository,
 	dealUsecase usecase.DealUsecase,
@@ -38,13 +41,14 @@ func NewInternalOrganizationHandler(
 		organizationRepo: organizationRepo,
 		groupRepo:        groupRepo,
 		// dealInvitationRepo:     dealInvitationRepo,
-		mapper:                 mapper,
-		groupMemberRepo:        groupMemberRepo,
-		organizationMemberRepo: organizationMemberRepo,
-		dealRepo:               dealRepo,
-		dealMemberRepo:         dealMemberRepo,
-		dealUsecase:            dealUsecase,
-		branchMemberRepo:       branchMemberRepo,
+		mapper:                    mapper,
+		groupMemberRepo:           groupMemberRepo,
+		organizationMemberRepo:    organizationMemberRepo,
+		dealRepo:                  dealRepo,
+		dealMemberRepo:            dealMemberRepo,
+		dealUsecase:               dealUsecase,
+		branchMemberRepo:          branchMemberRepo,
+		organizationMemberUsecase: organizationMemberUsecase,
 	}
 }
 
@@ -146,4 +150,17 @@ func (h *InternalOrganizationHandler) AddProductToDeal(ctx context.Context, req 
 	return &sharepb.SubmitResponse{
 		Message: "success",
 	}, nil
+}
+
+func (h *InternalOrganizationHandler) CheckUsersInOrganization(ctx context.Context, req *organizationpb.CheckUsersInOrganizationRequest) (*organizationpb.CheckUsersInOrganizationResponse, error) {
+	users, err := h.organizationMemberUsecase.CheckUsersInOrganization(ctx, req.OrganizationId, req.UserIds)
+	if err != nil {
+		return nil, err
+	}
+	checkUsers := make([]*organizationpb.CheckUserInOrganization, len(users))
+	for i, user := range users {
+		fmt.Println("user", user)
+		checkUsers[i] = &organizationpb.CheckUserInOrganization{UserId: user.UserId, IsExist: user.IsExist, JoinedAt: user.JoinedAt}
+	}
+	return &organizationpb.CheckUsersInOrganizationResponse{Data: checkUsers}, nil
 }

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	base_enum "base/enum"
 	_dto "common/dto"
 	"crm/internal/domain"
 )
@@ -14,6 +15,9 @@ type ContactSearchDTO struct {
 	Leaded       *bool   `form:"leaded"`
 	Connected    *bool   `form:"connected"`
 	AppInstalled *bool   `form:"appInstalled"`
+
+	OwnerId uint64             `form:"ownerId"`
+	OwnerOf base_enum.EOwnerOf `form:"ownerOf"`
 }
 
 type RelationShipDTO struct {

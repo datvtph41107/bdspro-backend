@@ -10,10 +10,10 @@ option go_package = "pb/types/social;pb_social";
 
 enum OwnerOf {
     unknown = 0;
-    user = 1;
-    group = 2;
-    organization = 3;
-  }
+    user = 10;
+    group = 20;
+    organization = 30;
+}
 
 service NewsFeedService {
     rpc CreateNewsFeed(NewsFeed) returns (NewsFeed) {

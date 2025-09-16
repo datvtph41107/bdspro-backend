@@ -1,19 +1,20 @@
 package usecase
 
 import (
+	base_dto "base/dto"
+	base_enum "base/enum"
+	base_provider "base/provider"
 	_db "common/db"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"errors"
 	"pb/clients"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 
 	"crm/data"
 	"crm/internal/domain"
 	"crm/internal/enums"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 )
 
@@ -23,8 +24,8 @@ type FriendUsecase struct {
 	blockRepo                repo.BlockRepo
 	followRepo               repo.FollowRepo
 	blockService             *BlockUsecase
-	notificationClient       iusecase.INotificationClient
-	userClient               iusecase.UserClient
+	notificationClient       base_provider.NotificationProvider
+	userClient               provider.UserClient
 	organizationMemberClient clients.OrganizationClient
 }
 
@@ -33,8 +34,8 @@ func NewFriendUsecase(repo repo.FriendRepo,
 	followRepo repo.FollowRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
-	notificationClient iusecase.INotificationClient,
-	userClient iusecase.UserClient,
+	notificationClient base_provider.NotificationProvider,
+	userClient provider.UserClient,
 ) *FriendUsecase {
 	return &FriendUsecase{
 		repo:               repo,
@@ -102,19 +103,19 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 			fullName = currentUser.FullName
 		}
 
-		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, enums.EOwnerTypeOrgnization)
+		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, base_enum.EOwnerOfOrgnization)
 		if err != nil {
 			return
 		}
 
-		s.notificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
+		s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
 			Title:      fullName + " đã gửi lời mời kết bạn",
 			Note:       []string{"", fullName, " đã gửi lời mời kết bạn tới ", contact.FullName},
 			TargetId:   contact.ID,
-			TargetType: shared_enum.TargetHistoryContact,
-			ActionType: shared_enum.HistoryContactFriend,
+			TargetType: base_enum.TargetHistoryContact,
+			ActionType: base_enum.HistoryContactFriend,
 			OwnerID:    &profileId,
-			OwnerType:  shared_enum.EOwnerTypeMember,
+			OwnerOf:    base_enum.EOwnerOfMember,
 		})
 	}()
 

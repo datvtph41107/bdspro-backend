@@ -13,3 +13,7 @@ var PriorityMap = map[EPriority]string{
 	PriorityMedium: "Trung bình",
 	PriorityHigh:   "Cao",
 }
+
+func (p EPriority) IsValid() bool {
+	return p == PriorityLow || p == PriorityMedium || p == PriorityHigh
+}

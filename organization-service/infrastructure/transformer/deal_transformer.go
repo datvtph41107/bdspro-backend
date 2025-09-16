@@ -59,6 +59,8 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *organizat
 		ChargePersonID: &request.ChargePersonId,
 		IsUnilateral:   request.IsUnilateral,
 		IsManual:       request.IsManual,
+		FromDate:       _utils.ParseStringToTime(request.FromDate),
+		ToDate:         _utils.ParseStringToTime(request.ToDate),
 	}
 
 	if request.BankAccount != nil {

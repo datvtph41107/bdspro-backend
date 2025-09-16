@@ -8,6 +8,8 @@ replace common => ../shared/common
 
 replace chatservice => ../chat-service
 
+replace base => ../shared/base
+
 require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/go-playground/validator/v10 v10.20.0
@@ -24,6 +26,7 @@ require (
 )
 
 require (
+	base v0.0.0-00010101000000-000000000000 // indirect
 	github.com/bytedance/sonic v1.13.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect

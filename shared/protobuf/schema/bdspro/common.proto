@@ -158,6 +158,8 @@ message ProductResponse {
     optional sharepb.ProfileItem createdUser = 53;
     optional Transaction saleTransaction = 54;
     optional Transaction rentTransaction = 55;
+    string createdAt = 56;
+    string updatedAt = 57;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

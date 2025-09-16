@@ -1,31 +1,30 @@
 package usecase
 
 import (
+	base_dto "base/dto"
+	base_enum "base/enum"
+	base_provider "base/provider"
 	"context"
 	"crm/internal/dto"
-	delivery_dto "crm/internal/dto/delivery"
 	"crm/internal/enums"
-	iusecase "crm/internal/interface"
 	"crm/internal/repo"
 	"fmt"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 	"strconv"
 	"time"
 )
 
 type RuleEventUsecase struct {
-	ruleRepo     repo.RuleRepo
-	customerRepo repo.LeadRepo
-	client       iusecase.INotificationClient
+	ruleRepo             repo.RuleRepo
+	customerRepo         repo.LeadRepo
+	notificationProvider base_provider.NotificationProvider
 }
 
 func NewRuleEventUsecase(ruleRepo repo.RuleRepo,
 	customerRepo repo.LeadRepo,
-	client iusecase.INotificationClient) *RuleEventUsecase {
+	client base_provider.NotificationProvider) *RuleEventUsecase {
 	return &RuleEventUsecase{ruleRepo: ruleRepo,
-		customerRepo: customerRepo,
-		client:       client,
+		customerRepo:         customerRepo,
+		notificationProvider: client,
 	}
 }
 
@@ -70,7 +69,7 @@ func (u *RuleEventUsecase) CheckEventNotHistory(c context.Context, customer dto.
 		return nil
 	}
 
-	existed, err := u.client.ExistedFromDate(c, customer.CustomerID, fromDate)
+	existed, err := u.notificationProvider.ExistedFromDate(c, customer.CustomerID, fromDate)
 	if err != nil {
 		return err
 	}
@@ -152,12 +151,12 @@ func (u *RuleEventUsecase) TriggerEvent(c context.Context, customer dto.Customer
 		u.TriggerSwitchStage(c, customer)
 	}
 
-	u.client.CreateHistory(c, &shared_dto.HistoryDTO{
+	u.notificationProvider.CreateCRMHistory(c, &base_dto.HistoryDTO{
 		TargetId:   customer.CustomerID,
-		TargetType: shared_enum.TargetHistoryLead,
-		ActionType: shared_enum.HistoryRuleEvent,
+		TargetType: base_enum.TargetHistoryLead,
+		ActionType: base_enum.HistoryRuleEvent,
 		OwnerID:    &customer.OwnerID,
-		OwnerType:  customer.OwnerType,
+		OwnerOf:    base_enum.EOwnerOf(customer.OwnerType),
 		Title:      "Tương tác tự động với khách hàng thành công",
 		Note: []string{"Tương tác tự động với khách hàng",
 			customer.FullName,
@@ -167,12 +166,12 @@ func (u *RuleEventUsecase) TriggerEvent(c context.Context, customer dto.Customer
 			enums.RuleThenMap[customer.Trigger],
 		},
 	})
-	u.client.CreateHistory(c, &shared_dto.HistoryDTO{
+	u.notificationProvider.CreateCRMHistory(c, &base_dto.HistoryDTO{
 		TargetId:   customer.RuleID,
-		TargetType: shared_enum.TargetHistoryRule,
-		ActionType: shared_enum.HistoryRuleEvent,
+		TargetType: base_enum.TargetHistoryRule,
+		ActionType: base_enum.HistoryRuleEvent,
 		OwnerID:    &customer.OwnerID,
-		OwnerType:  customer.OwnerType,
+		OwnerOf:    base_enum.EOwnerOf(customer.OwnerType),
 		Title:      "Quy tắc \"" + customer.RuleName + "\" đã kích hoạt cho \"" + customer.FullName + "\"",
 		Note:       []string{},
 	})
@@ -181,10 +180,10 @@ func (u *RuleEventUsecase) TriggerEvent(c context.Context, customer dto.Customer
 
 func (u *RuleEventUsecase) TriggerReminder(c context.Context, customer dto.CustomerWithRuleDTO) error {
 	// TODO: gửi thông báo nhắc nhở
-	u.client.SendNoti(c, &delivery_dto.NotiDTO{
+	u.notificationProvider.SendNotification(c, &base_dto.NotificationDTO{
 		Title:     "Nhắc nhở",
 		Message:   fmt.Sprintf("Khách hàng %s đã quá %s ngày chưa tương tác", customer.FullName, customer.ConditionValue),
-		Type:      int(shared_enum.HistoryRuleEvent),
+		Type:      int(base_enum.HistoryRuleEvent),
 		UserID:    customer.ChargePersonId,
 		VisibleAt: &customer.UpdatedAt,
 	})

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	base_enum "base/enum"
 	_models "common/models"
 	"crm/internal/enums"
 )
@@ -8,7 +9,7 @@ import (
 type RuleEntity struct {
 	_models.BaseEntity
 	OwnerID        uint64             `json:"ownerId"`
-	OwnerType      enums.EOwnerType   `json:"ownerType"`
+	OwnerType      base_enum.EOwnerOf `json:"ownerType"`
 	Active         bool               `json:"active"`
 	RuleName       string             `json:"ruleName" binding:"required"`
 	Note           string             `json:"note"`

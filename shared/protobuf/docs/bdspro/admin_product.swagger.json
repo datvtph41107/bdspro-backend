@@ -115,6 +115,72 @@
       }
     },
     "/v2/bdspro/admin/products/{id}": {
+      "get": {
+        "operationId": "AdminProductService_GetProductById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_bdsproProductResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "AdminProductService"
+        ]
+      },
       "delete": {
         "operationId": "AdminProductService_DeleteProduct",
         "responses": {
@@ -1091,6 +1157,12 @@
         },
         "rentTransaction": {
           "$ref": "#/definitions/pb_bdsproTransaction"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },

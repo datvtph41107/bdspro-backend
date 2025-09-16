@@ -7,15 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetOwnerFromContext(c *gin.Context) (uint64, enums.EOwnerType, error) {
+func GetOwnerFromContext(c *gin.Context) (uint64, enums.EOwnerOf, error) {
 	ownerId, err := strconv.ParseUint(c.Param("ownerId"), 10, 64)
 	if err != nil {
-		return 0, enums.EOwnerType(0), err
+		return 0, enums.EOwnerOf(0), err
 	}
 	ownerTypeInt, err := strconv.ParseInt(c.Param("ownerType"), 10, 64)
 	if err != nil {
-		return 0, enums.EOwnerType(0), err
+		return 0, enums.EOwnerOf(0), err
 	}
-	ownerType := enums.EOwnerType(ownerTypeInt)
+	ownerType := enums.EOwnerOf(ownerTypeInt)
 	return ownerId, ownerType, nil
 }

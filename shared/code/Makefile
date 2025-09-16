@@ -92,7 +92,7 @@ init:
 gateway-http:
 	$(CD_ROOT) && cd gateway-service && air http
 
-crm-grpc:
+crm:
 	$(CD_ROOT) && cd crm-service && air grpc
 
 bdspro-grpc:

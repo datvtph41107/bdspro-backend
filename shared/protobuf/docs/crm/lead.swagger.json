@@ -16,38 +16,6 @@
     "application/json"
   ],
   "paths": {
-    "/v2/crm/lead": {
-      "post": {
-        "operationId": "LeadService_Create",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/crmpbLeadDTO"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/crmpbLeadSaveRequest"
-            }
-          }
-        ],
-        "tags": [
-          "LeadService"
-        ]
-      }
-    },
     "/v2/crm/lead/assign-crm": {
       "post": {
         "operationId": "LeadService_AssignCrm",
@@ -204,6 +172,7 @@
     },
     "/v2/crm/lead/detail/{id}": {
       "get": {
+        "summary": "rpc Search (LeadSearchRequest) returns (LeadTotalDTO) {\n  option (google.api.http) = {\n    get: \"/v2/crm/lead/total\"\n  };\n};",
         "operationId": "LeadService_Detail",
         "responses": {
           "200": {
@@ -270,7 +239,7 @@
         ]
       }
     },
-    "/v2/crm/lead/manage/{pipelineId}": {
+    "/v2/crm/lead/manage/{ownerOf}/{ownerId}/{pipelineId}": {
       "get": {
         "operationId": "LeadService_Manager",
         "responses": {
@@ -288,6 +257,25 @@
           }
         },
         "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group",
+              "organization"
+            ]
+          },
+          {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
           {
             "name": "pipelineId",
             "in": "path",
@@ -346,155 +334,6 @@
             "schema": {
               "$ref": "#/definitions/crmpbLeadStageRequest"
             }
-          }
-        ],
-        "tags": [
-          "LeadService"
-        ]
-      }
-    },
-    "/v2/crm/lead/total": {
-      "get": {
-        "operationId": "LeadService_Search",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/crmpbLeadTotalDTO"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "phone",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "fullName",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "steps",
-            "description": "EStep (int32)",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "collectionFormat": "multi"
-          },
-          {
-            "name": "stageIds",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uint64"
-            },
-            "collectionFormat": "multi"
-          },
-          {
-            "name": "sources",
-            "description": "ESourceLead (int32)",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "collectionFormat": "multi"
-          },
-          {
-            "name": "chargePersonIds",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uint64"
-            },
-            "collectionFormat": "multi"
-          },
-          {
-            "name": "chargeType",
-            "description": "[deprecated = true]; // EOwnerType (int32), deprecated",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "fromDate",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "name": "toDate",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
-            "name": "productCareIds",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uint64"
-            },
-            "collectionFormat": "multi"
-          },
-          {
-            "name": "ownerId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "ownerType",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "lastUpdatedAt",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [
@@ -606,6 +445,57 @@
           "LeadService"
         ]
       }
+    },
+    "/v2/crm/lead/{ownerOf}/{ownerId}": {
+      "post": {
+        "operationId": "LeadService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group",
+              "organization"
+            ]
+          },
+          {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/crmpbLeadServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "LeadService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -635,7 +525,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "ownerType": {
+        "ownerOf": {
           "type": "integer",
           "format": "int32"
         },
@@ -809,7 +699,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "ownerType": {
+        "ownerOf": {
           "type": "integer",
           "format": "int32",
           "title": "EOwnerType (int32)"
@@ -836,7 +726,7 @@
         "company": {
           "type": "string"
         },
-        "productCareIds": {
+        "productIds": {
           "type": "array",
           "items": {
             "type": "string",
@@ -908,7 +798,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "productCareIds": {
+        "productIds": {
           "type": "array",
           "items": {
             "type": "string",
@@ -1046,7 +936,7 @@
         }
       }
     },
-    "crmpbLeadSaveRequest": {
+    "crmpbLeadServiceCreateBody": {
       "type": "object",
       "properties": {
         "id": {
@@ -1099,7 +989,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "productCareIds": {
+        "productIds": {
           "type": "array",
           "items": {
             "type": "string",
@@ -1171,7 +1061,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "productCareIds": {
+        "productIds": {
           "type": "array",
           "items": {
             "type": "string",
@@ -1191,6 +1081,13 @@
             "type": "string",
             "format": "uint64"
           }
+        },
+        "ownerOf": {
+          "$ref": "#/definitions/sharepbOwnerOf"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1207,22 +1104,6 @@
         },
         "stageNote": {
           "type": "string"
-        }
-      }
-    },
-    "crmpbLeadTotalDTO": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/crmpbLeadDTO"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -1821,6 +1702,12 @@
         },
         "rentTransaction": {
           "$ref": "#/definitions/pb_bdsproTransaction"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -2051,6 +1938,16 @@
           "format": "int64"
         }
       }
+    },
+    "sharepbOwnerOf": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "user",
+        "group",
+        "organization"
+      ],
+      "default": "unknown"
     },
     "sharepbProfileItem": {
       "type": "object",

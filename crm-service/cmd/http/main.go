@@ -6,6 +6,7 @@ import (
 	"context"
 	"crm/config"
 	"crm/infra/db"
+	"crm/initial"
 	"crm/wire"
 	"log"
 	"time"
@@ -38,14 +39,14 @@ var HttpCmd = &cobra.Command{
 			db.AutoMigrate()
 
 			r.Use(_jwt.JWTAuthMiddleware(nil))
-			app.RuntimeRouter.RuntimeRoutes(r)
+			// app.RuntimeRouter.RuntimeRoutes(r)
 
 			startScheduler(app)
 		})
 	},
 }
 
-func startScheduler(app *config.ConfigApp) {
+func startScheduler(app *initial.InitialApp) {
 	now := time.Now()
 	nextHour := now.Truncate(time.Hour).Add(1 * time.Hour) // giờ tròn kế tiếp
 	wait := time.Until(nextHour)

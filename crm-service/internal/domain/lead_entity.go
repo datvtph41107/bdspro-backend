@@ -15,9 +15,7 @@ type LeadEntity struct {
 	StageID          *uint64           `json:"stageId"`
 	Priority         enums.EPriority   `json:"priority"`
 	ChargePersonID   *uint64           `json:"chargePersonId"`
-	ChargePersonType enums.EOwnerType  `json:"chargePersonType"`
-	OwnerID          *uint64           `json:"ownerId" binding:"required"`
-	OwnerType        enums.EOwnerType  `json:"ownerType" binding:"required"`
+	ChargePersonType enums.EOwnerOf    `json:"chargePersonType"`
 	StageNote        string            `json:"stageNote"`
 	Note             string            `json:"note"`
 
@@ -31,6 +29,8 @@ type LeadEntity struct {
 	// Email      string                `json:"email"`
 	// Address    string                `json:"address"`
 	// Birthday   *time.Time            `json:"birthday"`
+	// OwnerID          *uint64           `json:"ownerId" binding:"required"`
+	// OwnerType        enums.EOwnerOf    `json:"ownerType" binding:"required"`
 
 	// Step       enums.EStep           `gorm:"default:10" json:"step"`
 	// todo: sắp trễ/ chưa phân công
@@ -54,9 +54,9 @@ type LeadContactEntity struct {
 	PipelineID *uint64           `json:"pipelineId"`
 	StageID    *uint64           `json:"stageId"`
 	ChargeId   *uint64           `json:"chargeId"`
-	ChargeType enums.EOwnerType  `json:"chargeType"`
+	ChargeType enums.EOwnerOf    `json:"chargeType"`
 	OwnerID    *uint64           `json:"ownerId" binding:"required"`
-	OwnerType  enums.EOwnerType  `json:"ownerType" binding:"required"`
+	OwnerType  enums.EOwnerOf    `json:"ownerType" binding:"required"`
 
 	// Step       enums.EStep           `gorm:"default:10" json:"step"`
 	// todo: sắp trễ/ chưa phân công

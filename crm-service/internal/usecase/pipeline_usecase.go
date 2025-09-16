@@ -1,34 +1,35 @@
 package usecase
 
 import (
+	base_dto "base/dto"
+	base_enum "base/enum"
+	base_provider "base/provider"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 )
 
 type PipelineUsecase struct {
 	pipelineRepo       repo.PipelineRepo
 	permissionUsecase  PermissionUsecase
-	notificationClient iusecase.INotificationClient
+	notificationClient base_provider.NotificationProvider
 	customerRepo       repo.LeadRepo
 	stageRepo          repo.StageRepo
-	transaction        iusecase.ITransaction
+	transaction        provider.ITransaction
 }
 
 func NewPipelineUsecase(
 	pipelineRepo repo.PipelineRepo,
 	permissionUsecase PermissionUsecase,
-	notificationClient iusecase.INotificationClient,
+	notificationClient base_provider.NotificationProvider,
 	customerRepo repo.LeadRepo,
 	stageRepo repo.StageRepo,
-	transaction iusecase.ITransaction,
+	transaction provider.ITransaction,
 ) *PipelineUsecase {
 	return &PipelineUsecase{
 		pipelineRepo:       pipelineRepo,
@@ -53,7 +54,7 @@ func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO,
 	// 	return nil, 0, err
 	// }
 	// ownerId
-	return u.pipelineRepo.Search(ctx, organizationId, enums.EOwnerTypeOrgnization, dto, withStages)
+	return u.pipelineRepo.Search(ctx, organizationId, enums.EOwnerOfOrgnization, dto, withStages)
 }
 
 func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntity) (*domain.PipelineEntity, error) {
@@ -64,7 +65,7 @@ func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntit
 			Message: "Bạn không có quyền truy cập quy trình",
 		}
 	}
-	err := u.permissionUsecase.UserInOwner(c, organizationId, enums.EOwnerTypeOrgnization)
+	err := u.permissionUsecase.UserInOwner(c, organizationId, base_enum.EOwnerOfOrgnization)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntit
 	err = u.transaction.WithTransaction(c, func(c context.Context) error {
 		entity.IsCustom = true
 		entity.OwnerID = organizationId
-		entity.OwnerType = enums.EOwnerTypeOrgnization
+		entity.OwnerType = base_enum.EOwnerOfOrgnization
 		pipeline, err = u.pipelineRepo.Create(c, entity)
 		if err != nil {
 			return err
@@ -93,14 +94,14 @@ func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntit
 		return nil
 	})
 
-	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+	u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
 		Title:      "Tạo quy trình thành công",
 		Note:       []string{"Tạo quy trình", pipeline.PipelineName},
 		TargetId:   pipeline.ID,
-		TargetType: shared_enum.TargetHistoryPipeline,
-		ActionType: shared_enum.HistoryPipelineCreate,
+		TargetType: base_enum.TargetHistoryPipeline,
+		ActionType: base_enum.HistoryPipelineCreate,
 		OwnerID:    &pipeline.OwnerID,
-		OwnerType:  pipeline.OwnerType,
+		OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
 	})
 
 	return pipeline, nil
@@ -135,7 +136,7 @@ func (u *PipelineUsecase) Update(c context.Context, id uint64, dto *dto.Pipeline
 		entity.Color = dto.Color
 		entity.Active = dto.Active
 		entity.OwnerID = organizationId
-		entity.OwnerType = enums.EOwnerTypeOrgnization
+		entity.OwnerType = base_enum.EOwnerOfOrgnization
 		pipeline, err = u.pipelineRepo.Update(c, entity)
 		if err != nil {
 			return err
@@ -157,14 +158,14 @@ func (u *PipelineUsecase) Update(c context.Context, id uint64, dto *dto.Pipeline
 		return nil, err
 	}
 
-	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+	u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
 		Title:      "Cập nhật quy trình thành công",
 		Note:       []string{"Cập nhật quy trình", pipeline.PipelineName},
 		TargetId:   pipeline.ID,
-		TargetType: shared_enum.TargetHistoryPipeline,
-		ActionType: shared_enum.HistoryPipelineUpdate,
+		TargetType: base_enum.TargetHistoryPipeline,
+		ActionType: base_enum.HistoryPipelineUpdate,
 		OwnerID:    &pipeline.OwnerID,
-		OwnerType:  pipeline.OwnerType,
+		OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
 	})
 
 	return pipeline, nil
@@ -196,14 +197,14 @@ func (u *PipelineUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	u.notificationClient.CreateHistory(c, &shared_dto.HistoryDTO{
+	u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
 		Title:      "Xóa quy trình thành công",
 		Note:       []string{"Xóa quy trình", pipeline.PipelineName},
 		TargetId:   pipeline.ID,
-		TargetType: shared_enum.TargetHistoryPipeline,
-		ActionType: shared_enum.HistoryPipelineDelete,
+		TargetType: base_enum.TargetHistoryPipeline,
+		ActionType: base_enum.HistoryPipelineDelete,
 		OwnerID:    &pipeline.OwnerID,
-		OwnerType:  pipeline.OwnerType,
+		OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
 	})
 
 	return nil

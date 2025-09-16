@@ -128,5 +128,6 @@ func (c *OrganizationClient) GetOrganizationMember(ctx context.Context, organiza
 		OrganizationId: organizationId,
 		UserId:         userId,
 		RoleId:         &resp.RoleId,
+		RoleKey:        resp.RoleKey,
 	}, nil
 }

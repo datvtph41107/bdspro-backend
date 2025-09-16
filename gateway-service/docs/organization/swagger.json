@@ -4721,6 +4721,9 @@
                         "$ref": "#/definitions/organizationpb.DocumentItem"
                     }
                 },
+                "fromDate": {
+                    "type": "string"
+                },
                 "groupId": {
                     "type": "integer"
                 },
@@ -4767,6 +4770,9 @@
                 },
                 "targetProfit": {
                     "type": "number"
+                },
+                "toDate": {
+                    "type": "string"
                 }
             }
         },
@@ -6492,7 +6498,10 @@
                 "id": {
                     "type": "integer"
                 },
-                "role": {
+                "roleKey": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "integer"
                 }
             }

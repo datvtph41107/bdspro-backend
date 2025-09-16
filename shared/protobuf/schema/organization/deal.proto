@@ -282,6 +282,8 @@ message CreateGroupDealRequest {
     bool isUnilateral = 17;  // Đơn phương (gỡ khỏi thương vụ)
     bool isManual = 18;      // Nhập tay (dành cho doanh thu)
     uint32 ownerType = 19;
+    string fromDate = 20;
+    string toDate = 21; 
 }
 
 message CreateGroupDealResponse {

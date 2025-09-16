@@ -15,12 +15,12 @@ type PipelineSearchDTO struct {
 }
 
 type PipelineDTO struct {
-	ID           uint64           `json:"id"`
-	PipelineName string           `json:"pipelineName"`
-	Color        uint32           `json:"color"`
-	Active       bool             `json:"active"`
-	OwnerID      uint64           `json:"ownerId"`
-	OwnerType    enums.EOwnerType `json:"ownerType"`
+	ID           uint64         `json:"id"`
+	PipelineName string         `json:"pipelineName"`
+	Color        uint32         `json:"color"`
+	Active       bool           `json:"active"`
+	OwnerID      uint64         `json:"ownerId"`
+	OwnerType    enums.EOwnerOf `json:"ownerType"`
 }
 
 type PipelineSaveDTO struct {

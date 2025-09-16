@@ -1373,6 +1373,12 @@
         },
         "rentTransaction": {
           "$ref": "#/definitions/pb_bdsproTransaction"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },

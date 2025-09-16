@@ -1,6 +1,7 @@
 package dto
 
 import (
+	base_enum "base/enum"
 	"crm/internal/enums"
 	"time"
 )
@@ -23,9 +24,12 @@ type LeadSaveDTO struct {
 	StageID           *uint64           `json:"stageId"`
 	ChargePersonID    *uint64           `json:"chargePersonId"`
 	Priority          enums.EPriority   `json:"priority"`
-	ProductCareIDs    []uint64          `json:"productCareIds" parser:"uint64s"`
+	ProductIDs        []uint64          `json:"productIds" parser:"uint64s"`
 	Documents         []DocumentDTO     `json:"documents"`
 	RemoveDocumentIDs []uint64          `json:"removeDocumentIds" parser:"uint64s"`
+
+	OwnerID uint64             `json:"ownerId"`
+	OwnerOf base_enum.EOwnerOf `json:"ownerOf"`
 }
 
 type DocumentDTO struct {

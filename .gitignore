@@ -36,3 +36,4 @@ user-service/user-service
 auth-service/auth-service   
 transaction-service/transaction-service
 auth-service/auth-service
+**.rdb

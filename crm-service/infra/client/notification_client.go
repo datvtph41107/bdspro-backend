@@ -1,27 +1,27 @@
 package client
 
 import (
+	base_dto "base/dto"
+	base_provider "base/provider"
 	"context"
 	"crm/env"
 	delivery_dto "crm/internal/dto/delivery"
 	"pb/clients"
-	shared_dto "pb/dto"
 	"time"
 )
 
-// @bind: crm/internal/interface.INotificationClient
 type NotificationClient struct {
-	Client *clients.NotificationClient
+	*clients.NotificationClient
 }
 
 // todo: triển khai nốt thông báo
-func NewNotificationClient() *NotificationClient {
+func NewNotificationClient() base_provider.NotificationProvider {
 	return &NotificationClient{
-		Client: clients.MakeNotificationClient(env.ENV_RUNTIME),
+		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
 	}
 }
 
-func (client *NotificationClient) SendNoti(c context.Context, noti *delivery_dto.NotiDTO) error {
+func (client *NotificationClient) SendNoti(c context.Context, noti *delivery_dto.NotificationDTO) error {
 	return nil
 }
 
@@ -29,13 +29,27 @@ func (client *NotificationClient) SendReminder(c context.Context, customerID uin
 	return nil
 }
 
-func (client *NotificationClient) CreateHistory(c context.Context, entity *shared_dto.HistoryDTO) error {
-	if client.Client == nil {
-		return nil
-	}
-	return client.Client.CreateHistory(c, entity)
+// func (client *NotificationClient) CreateHistory(c context.Context, entity *shared_dto.HistoryDTO) error {
+
+// }
+
+// func (client *NotificationClient) ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error) {
+// 	return false, nil
+// }
+
+func (client *NotificationClient) SendNotification(ctx context.Context, noti *base_dto.NotificationDTO) error {
+	return nil
+}
+func (client *NotificationClient) SendBatchNotification(ctx context.Context, noti *base_dto.NotificationBatchDTO) error {
+	return nil
 }
 
-func (client *NotificationClient) ExistedFromDate(c context.Context, customerID uint64, fromDate time.Time) (bool, error) {
+//	func (client *NotificationClient) CreateCRMHistory(ctx context.Context, history *base_dto.HistoryDTO) error {
+//		if client.Client == nil {
+//			return nil
+//		}
+//		return client.Client.CreateCRMHistory(ctx, history)
+//	}
+func (client *NotificationClient) ExistedFromDate(ctx context.Context, customerID uint64, fromDate time.Time) (bool, error) {
 	return false, nil
 }

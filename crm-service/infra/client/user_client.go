@@ -14,7 +14,7 @@ import (
 	"pb/clients"
 )
 
-// @bind: crm/internal/interface.UserClient.go
+// @bind: crm/internal/interface/provider.UserClient.go
 type UserClient struct {
 	*clients.UserGrpcClient
 }

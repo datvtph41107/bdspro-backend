@@ -85,3 +85,20 @@ func (r *AdminProductPostgres) GetList(c context.Context, pagable _dto.IPagable)
 
 	return products, total, nil
 }
+
+func (r *AdminProductPostgres) GetDetail(c context.Context, id uint64) (*domain.Product, error) {
+	var product domain.Product
+	err := r.CrudRepo.GetDB(c).
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("PropertyType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL").
+		Where("id = ? and deleted_at is null", id).
+		First(&product).Error
+	return &product, err
+}

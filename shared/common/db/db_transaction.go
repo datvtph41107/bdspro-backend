@@ -15,11 +15,17 @@ type BaseRepo struct {
 	*TransactionRepo
 }
 
+func NewBaseRepo(db *gorm.DB) *BaseRepo {
+	return &BaseRepo{
+		TransactionRepo: &TransactionRepo{db: db},
+	}
+}
+
 func (t *BaseRepo) GetDB(ctx context.Context) *gorm.DB {
 	if tx, ok := ctx.Value("tx").(*gorm.DB); ok && tx != nil {
 		return tx.WithContext(ctx)
 	}
-	return t.DB
+	return t.db.WithContext(ctx)
 }
 
 type ITransactionRepo interface {
@@ -30,21 +36,21 @@ type ITransactionRepo interface {
 }
 
 type TransactionRepo struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewTransactionRepo(db *gorm.DB) *TransactionRepo {
-	return &TransactionRepo{DB: db}
+	return &TransactionRepo{db: db}
 }
 
 func (t *TransactionRepo) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return t.DB.Transaction(func(tx *gorm.DB) error {
+	return t.db.Transaction(func(tx *gorm.DB) error {
 		return fn(context.WithValue(ctx, "tx", tx))
 	})
 }
 
 func (t *TransactionRepo) StartTransaction(ctx context.Context) context.Context {
-	tx := t.DB.Begin()
+	tx := t.db.Begin()
 	return context.WithValue(ctx, "tx", tx)
 }
 
@@ -60,5 +66,5 @@ func (t *TransactionRepo) GetDB(ctx context.Context) *gorm.DB {
 	if tx, ok := ctx.Value("tx").(*gorm.DB); ok && tx != nil {
 		return tx.WithContext(ctx)
 	}
-	return t.DB
+	return t.db.WithContext(ctx)
 }

@@ -117,3 +117,15 @@ func (h *AdminProductHandler) DeleteProduct(ctx context.Context, req *sharepb.Id
 	// return h.AdminProductService.DeleteProduct(ctx, req)
 	return nil, nil
 }
+
+func (h *AdminProductHandler) GetProductById(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.ProductResponse, error) {
+	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_XEM"}); err != nil {
+		return nil, err
+	}
+	// return h.AdminProductService.GetProductById(ctx, req)
+	product, err := h.AdminProductService.GetDetail(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.ProductMapper.MapDetailProductPb(product), nil
+}

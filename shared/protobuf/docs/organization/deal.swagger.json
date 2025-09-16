@@ -2223,6 +2223,12 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
         }
       }
     },

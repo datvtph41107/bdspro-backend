@@ -1,6 +1,7 @@
 package domain
 
 import (
+	base_enum "base/enum"
 	_models "common/models"
 	"crm/internal/enums"
 	"time"
@@ -22,9 +23,10 @@ type ContactEntity struct {
 	Visibility   enums.EVisibility `gorm:"column:visibility;default:30" json:"visibility"`
 	LeadID       uint64            `gorm:"column:lead_id" json:"leadId"`
 	OwnerID      uint64            `gorm:"column:owner_id" json:"ownerId"`
-	OwnerType    enums.EOwnerType  `gorm:"column:owner_type;default:30" json:"ownerType" binding:"required"`
 	ProfileID    *uint64           `gorm:"column:profile_id" json:"profileId"`
 	FriendStatus *FriendEntity     `gorm:"-" json:"friendStatus" binding:"required"`
+
+	OwnerOf base_enum.EOwnerOf `gorm:"column:owner_of;default:30" json:"ownerOf" binding:"required"`
 }
 
 func (ContactEntity) TableName() string {
@@ -42,7 +44,7 @@ type ContactItem struct {
 	Company          string               `gorm:"column:company" json:"company"`
 	Note             string               `gorm:"column:note" json:"note"`
 	OwnerID          uint64               `gorm:"column:owner_id" json:"ownerId"`
-	OwnerType        enums.EOwnerType     `gorm:"column:owner_type;default:10" json:"ownerType" binding:"required"`
+	OwnerOf          enums.EOwnerOf       `gorm:"column:owner_of;default:10" json:"ownerOf" binding:"required"`
 	ProfileID        *uint64              `gorm:"column:profile_id" json:"profileId"`
 	Following        bool                 `gorm:"column:following" json:"following"`
 	FriendID         uint64               `gorm:"column:friend_id" json:"friendId"`

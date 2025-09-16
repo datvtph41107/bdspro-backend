@@ -1,16 +1,18 @@
 package usecase
 
 import (
+	base_dto "base/dto"
+	base_enum "base/enum"
+	base_provider "base/provider"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 )
 
 type LeadUsecase struct {
@@ -22,8 +24,9 @@ type LeadUsecase struct {
 	pipelineRepo       repo.PipelineRepo
 	documentRepo       repo.DocumentRepo
 	productCareRepo    repo.ProductCareRepo
-	transaction        iusecase.ITransaction
-	notificationClient iusecase.INotificationClient
+	transaction        provider.ITransaction
+	notificationClient base_provider.NotificationProvider
+	ownerUsecase       *OwnerUsecase
 }
 
 func NewLeadUsecase(
@@ -35,8 +38,9 @@ func NewLeadUsecase(
 	pipelineRepo repo.PipelineRepo,
 	documentRepo repo.DocumentRepo,
 	productCareRepo repo.ProductCareRepo,
-	transaction iusecase.ITransaction,
-	notificationClient iusecase.INotificationClient,
+	transaction provider.ITransaction,
+	notificationClient base_provider.NotificationProvider,
+	ownerUsecase *OwnerUsecase,
 ) *LeadUsecase {
 	result := &LeadUsecase{
 		leadRepo:           customerRepo,
@@ -49,24 +53,32 @@ func NewLeadUsecase(
 		productCareRepo:    productCareRepo,
 		transaction:        transaction,
 		notificationClient: notificationClient,
+		ownerUsecase:       ownerUsecase,
 	}
 	contactUsecase.leadUsecase = result
 	return result
 }
 
-func (u *LeadUsecase) Search(ctx context.Context, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error) {
-	organizationId := _utils.GetOrganizationIdFromContext(ctx)
-
-	err := u.permissionUC.UserInOwner(ctx, organizationId, enums.EOwnerTypeOrgnization)
+func (u *LeadUsecase) GetManager(ctx context.Context, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error) {
+	// organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	ownerId, err := u.ownerUsecase.GetOwnerInfo(ctx, dto.OwnerOf, dto.OwnerID)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return u.leadRepo.Search(ctx, organizationId, enums.EOwnerTypeOrgnization, dto)
+	err = u.permissionUC.UserInOwner(ctx, ownerId, dto.OwnerOf)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return u.leadRepo.Search(ctx, ownerId, dto.OwnerOf, dto)
 }
 
 func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain.LeadEntity, error) {
-	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	ownerId, err := u.ownerUsecase.GetOwnerInfo(ctx, dto.OwnerOf, dto.OwnerID)
+	if err != nil {
+		return nil, err
+	}
 
 	// todo: check xem có quyền tạo lead không
 	// err := u.permissionUC.HasRoleWithOwner(ctx, &organizationId, enums.EOwnerTypeOrgnization, enums.AuthCustomerCreate)
@@ -74,7 +86,7 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 	// 	return nil, err
 	// }
 
-	existed, err := u.contactRepo.GetByPhone(ctx, organizationId, enums.EOwnerTypeOrgnization, dto.Phone)
+	existed, err := u.contactRepo.GetByPhone(ctx, ownerId, dto.OwnerOf, dto.Phone)
 	if err != nil {
 		return nil, err
 	}
@@ -86,15 +98,17 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 
 	var contact *domain.ContactEntity
 	var lead *domain.LeadEntity
-	u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		if existed == nil {
-			contact, err = u.contactRepo.Create(ctx, &domain.ContactEntity{
+			contact, err = u.contactUsecase.Create(ctx, &domain.ContactEntity{
 				Avatar:   dto.Avatar,
 				FullName: dto.FullName,
 				Birthday: dto.Birthday,
 				Phone:    dto.Phone,
 				Email:    dto.Email,
 				Address:  dto.Address,
+				OwnerID:  ownerId,
+				OwnerOf:  dto.OwnerOf,
 			})
 			if err != nil {
 				return err
@@ -103,14 +117,20 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 			contact = existed
 		}
 
+		priority := enums.PriorityLow
+		if dto.Priority.IsValid() {
+			priority = dto.Priority
+		}
+
 		lead, err = u.leadRepo.Create(ctx, &domain.LeadEntity{
 			ContactID:        contact.ID,
-			OwnerID:          &organizationId,
-			OwnerType:        enums.EOwnerTypeOrgnization,
 			ChargePersonID:   dto.ChargePersonID,
-			ChargePersonType: enums.EOwnerType(enums.EOwnerTypeMember),
+			ChargePersonType: enums.EOwnerOfMember,
 			StageID:          &stage.ID,
 			PipelineID:       &stage.PipelineID,
+			Note:             dto.Note,
+			Source:           dto.Source,
+			Priority:         priority,
 		})
 		if err != nil {
 			return err
@@ -118,25 +138,37 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 
 		// todo: kiểm tra lại xem product có tồn tại không
 		// update product care
-		if len(dto.ProductCareIDs) > 0 {
-			err = u.productCareRepo.Bulk(ctx, dto.ProductCareIDs, lead.ID)
+		if len(dto.ProductIDs) > 0 {
+			err = u.productCareRepo.Bulk(ctx, dto.ProductIDs, lead.ID)
 			if err != nil {
 				return err
 			}
 		}
 
-		u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-			Note:       []string{"Tạo khách hàng ", contact.FullName},
-			TargetId:   lead.ID,
-			TargetType: shared_enum.TargetHistoryLead,
-			ActionType: shared_enum.HistoryContactCreate,
-			OwnerID:    lead.OwnerID,
-			OwnerType:  lead.OwnerType,
-			// AfterStage: ,
-		})
-
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	go (func() {
+		u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+			// Note:       []string{"Tạo khách hàng ", contact.FullName},
+			// TargetId:   lead.ID,
+			// TargetType: shared_enum.TargetHistoryLead,
+			// ActionType: shared_enum.HistoryContactCreate,
+			// OwnerID:    existed.OwnerID,
+			// OwnerOf:    shared_enum.EOwnerType(existed.OwnerOf),
+			// AfterStage: ,
+		})
+		u.notificationClient.SendNotification(ctx, &base_dto.NotificationDTO{
+			Title:     "Tạo khách hàng ",
+			Message:   contact.FullName,
+			Type:      100,
+			UserID:    ownerId,
+			VisibleAt: nil,
+		})
+	})()
 
 	return lead, nil
 }
@@ -157,7 +189,11 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 
 	lead.Source = enums.ESourceLead(dto.Source)
 	lead.ChargePersonID = dto.ChargePersonID
-	lead.ChargePersonType = enums.EOwnerType(enums.EOwnerTypeMember)
+	lead.ChargePersonType = enums.EOwnerOfMember
+
+	if dto.Priority.IsValid() {
+		lead.Priority = dto.Priority
+	}
 
 	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		// update lead
@@ -210,35 +246,49 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 		}
 
 		// update product care
-		if len(dto.ProductCareIDs) > 0 {
-			err = u.productCareRepo.Bulk(ctx, dto.ProductCareIDs, lead.ID)
+		if len(dto.ProductIDs) > 0 {
+			err = u.productCareRepo.Bulk(ctx, dto.ProductIDs, lead.ID)
 			if err != nil {
 				return err
 			}
 		}
 
-		// update history
-		u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-			Note:       []string{"Cập nhật khách hàng ", dto.FullName},
-			TargetId:   lead.ID,
-			TargetType: shared_enum.TargetHistoryLead,
-			ActionType: shared_enum.HistoryContactUpdate,
-			OwnerID:    lead.OwnerID,
-			OwnerType:  lead.OwnerType,
-		})
+		// // update history
+		// u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+		// 	Note:       []string{"Cập nhật khách hàng ", dto.FullName},
+		// 	TargetId:   lead.ID,
+		// 	TargetType: base_enum.TargetHistoryLead,
+		// 	ActionType: base_enum.HistoryContactUpdate,
+		// 	// OwnerID:    lead.OwnerID,
+		// 	// OwnerOf: base_enum.EOwnerOf(lead.OwnerOf),
+		// })
 		return nil
 	})
+
+	go (func() {
+		u.notificationClient.SendNotification(ctx, &base_dto.NotificationDTO{
+			Title:   "Cập nhật khách hàng ",
+			Message: dto.FullName,
+			Type:    100,
+			// UserID:    *lead.OwnerID,
+			VisibleAt: nil,
+		})
+	})()
 
 	return lead, err
 }
 
 func (u *LeadUsecase) Delete(ctx context.Context, id uint64) error {
-	customer, err := u.leadRepo.GetByID(ctx, id)
+	lead, err := u.leadRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	err = u.permissionUC.HasRoleWithOwner(ctx, customer.OwnerID, customer.OwnerType, enums.AuthCustomerDelete)
+	if lead.Contact == nil {
+		return _errors.ReturnError(400, "Khách hàng không tồn tại")
+	}
+
+	err = u.permissionUC.HasRoleWithOwner(ctx, lead.Contact.OwnerID, lead.Contact.OwnerOf, enums.AuthCustomerDelete)
 	if err != nil {
 		return err
 	}
@@ -248,14 +298,19 @@ func (u *LeadUsecase) Delete(ctx context.Context, id uint64) error {
 		return err
 	}
 
-	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-		// Note:       "Xóa khách hàng " + customer.FullName,
-		TargetId:   customer.ID,
-		TargetType: shared_enum.TargetHistoryLead,
-		ActionType: shared_enum.HistoryContactDelete,
-		OwnerID:    customer.OwnerID,
-		OwnerType:  customer.OwnerType,
-	})
+	go (func() {
+		if lead.Contact == nil {
+			return
+		}
+		u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+			// Note:       "Xóa khách hàng " + customer.FullName,
+			TargetId:   lead.ID,
+			TargetType: base_enum.TargetHistoryLead,
+			ActionType: base_enum.HistoryContactDelete,
+			OwnerID:    &lead.Contact.OwnerID,
+			OwnerOf:    base_enum.EOwnerOf(lead.Contact.OwnerOf),
+		})
+	})()
 
 	return nil
 }
@@ -266,7 +321,11 @@ func (u *LeadUsecase) UpdateNote(ctx context.Context, id uint64, dto *dto.LeadDT
 		return nil, err
 	}
 
-	err = u.permissionUC.HasRoleWithOwner(ctx, customer.OwnerID, customer.OwnerType, enums.AuthCustomerNote)
+	if customer.Contact == nil {
+		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+	}
+
+	err = u.permissionUC.HasRoleWithOwner(ctx, customer.Contact.OwnerID, customer.Contact.OwnerOf, enums.AuthCustomerNote)
 	if err != nil {
 		return nil, err
 	}
@@ -276,14 +335,19 @@ func (u *LeadUsecase) UpdateNote(ctx context.Context, id uint64, dto *dto.LeadDT
 		return nil, err
 	}
 
-	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-		// Note:       "Ghi chú cho khách hàng " + customer.FullName + " nội dung:\n\"" + dto.Note + "\"",
-		TargetId:   customer.ID,
-		TargetType: shared_enum.TargetHistoryLead,
-		ActionType: shared_enum.HistoryUpdateNote,
-		OwnerID:    customer.OwnerID,
-		OwnerType:  customer.OwnerType,
-	})
+	go (func() {
+		if customer.Contact == nil {
+			return
+		}
+		u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+			// Note:       "Ghi chú cho khách hàng " + customer.FullName + " nội dung:\n\"" + dto.Note + "\"",
+			TargetId:   customer.ID,
+			TargetType: base_enum.TargetHistoryLead,
+			ActionType: base_enum.HistoryUpdateNote,
+			// OwnerID:    customer.OwnerID,
+			OwnerOf: base_enum.EOwnerOf(customer.Contact.OwnerOf),
+		})
+	})()
 
 	return customer, nil
 }
@@ -294,9 +358,13 @@ func (u *LeadUsecase) Assign(ctx context.Context, id uint64, dto *dto.LeadDTO) (
 		return nil, err
 	}
 
-	err = u.permissionUC.HasRoleWithOwner(ctx, customer.OwnerID, customer.OwnerType, enums.AuthCustomerAssign)
+	err = u.permissionUC.HasRoleWithOwner(ctx, customer.Contact.OwnerID, customer.Contact.OwnerOf, enums.AuthCustomerAssign)
 	if err != nil {
 		return nil, err
+	}
+
+	if customer.Contact == nil {
+		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
 	}
 
 	_, err = u.leadRepo.Assign(ctx, id, dto)
@@ -304,14 +372,19 @@ func (u *LeadUsecase) Assign(ctx context.Context, id uint64, dto *dto.LeadDTO) (
 		return nil, err
 	}
 
-	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-		// Note:       "Phân công khách hàng " + customer.FullName + " cho " + dto.FullName,
-		TargetId:   customer.ID,
-		TargetType: shared_enum.TargetHistoryLead,
-		ActionType: shared_enum.HistoryContactAssign,
-		OwnerID:    customer.OwnerID,
-		OwnerType:  customer.OwnerType,
-	})
+	go (func() {
+		if customer.Contact == nil {
+			return
+		}
+		u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+			// Note:       "Phân công khách hàng " + customer.FullName + " cho " + dto.FullName,
+			TargetId:   customer.ID,
+			TargetType: base_enum.TargetHistoryLead,
+			ActionType: base_enum.HistoryContactAssign,
+			// OwnerID:    customer.OwnerID,
+			OwnerOf: base_enum.EOwnerOf(customer.Contact.OwnerOf),
+		})
+	})()
 
 	return customer, nil
 }
@@ -323,9 +396,13 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 		return nil, err
 	}
 
-	err = u.permissionUC.HasRoleWithOwner(ctx, customer.OwnerID, customer.OwnerType, enums.AuthCustomerSwitchStage)
+	err = u.permissionUC.HasRoleWithOwner(ctx, customer.Contact.OwnerID, customer.Contact.OwnerOf, enums.AuthCustomerSwitchStage)
 	if err != nil {
 		return nil, err
+	}
+
+	if customer.Contact == nil {
+		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
 	}
 
 	customer, err = u.leadRepo.SwitchStage(ctx, id, stageID, note)
@@ -333,14 +410,19 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 		return nil, err
 	}
 
-	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-		// Note:       "Chuyển trạng thái khách hàng " + customer.FullName,
-		TargetId:   customer.ID,
-		TargetType: shared_enum.TargetHistoryLead,
-		ActionType: shared_enum.HistorySwitchStage,
-		OwnerID:    customer.OwnerID,
-		OwnerType:  customer.OwnerType,
-	})
+	go (func() {
+		if customer.Contact == nil {
+			return
+		}
+		u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+			// Note:       "Chuyển trạng thái khách hàng " + customer.FullName,
+			TargetId:   customer.ID,
+			TargetType: base_enum.TargetHistoryLead,
+			ActionType: base_enum.HistorySwitchStage,
+			// OwnerID:    customer.OwnerID,
+			OwnerOf: base_enum.EOwnerOf(customer.Contact.OwnerOf),
+		})
+	})()
 
 	return customer, nil
 }
@@ -351,8 +433,12 @@ func (u *LeadUsecase) GetByID(ctx context.Context, id uint64) (*domain.LeadEntit
 		return nil, err
 	}
 
+	if customer.Contact == nil {
+		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+	}
+
 	// todo: check xem có quyền xem chi tiết lead không
-	err = u.permissionUC.HasRoleWithOwner(ctx, customer.OwnerID, customer.OwnerType, enums.AuthCustomerView)
+	err = u.permissionUC.HasRoleWithOwner(ctx, customer.Contact.OwnerID, customer.Contact.OwnerOf, enums.AuthCustomerView)
 	if err != nil {
 		return nil, err
 	}
@@ -422,17 +508,17 @@ func (u *LeadUsecase) AssignCrm(ctx context.Context, contactId uint64, personCha
 		return nil, err
 	}
 
-	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+	// organizationId := _utils.GetOrganizationIdFromContext(ctx)
 
 	lead = &domain.LeadEntity{
 		ContactID:        contact.ID,
-		OwnerID:          &organizationId,
-		OwnerType:        enums.EOwnerType(enums.EOwnerTypeOrgnization),
 		ChargePersonID:   &personChargeId,
-		ChargePersonType: enums.EOwnerType(enums.EOwnerTypeMember),
+		ChargePersonType: enums.EOwnerOf(enums.EOwnerOfMember),
 		StageID:          &stage.ID,
 		PipelineID:       &stage.PipelineID,
 		AssignNote:       note,
+		// OwnerID:          &organizationId,
+		// OwnerOf:          base_enum.EOwnerOf(enums.EOwnerOfOrgnization),
 	}
 	lead, err = u.leadRepo.Create(ctx, lead)
 	if err != nil {
@@ -443,14 +529,16 @@ func (u *LeadUsecase) AssignCrm(ctx context.Context, contactId uint64, personCha
 		return nil, err
 	}
 
-	u.notificationClient.CreateHistory(ctx, &shared_dto.HistoryDTO{
-		Note:       []string{"Tạo Lead từ liên hệ ", contact.FullName},
-		TargetId:   lead.ID,
-		TargetType: shared_enum.TargetHistoryLead,
-		ActionType: shared_enum.HistoryContactCreate,
-		OwnerID:    lead.OwnerID,
-		OwnerType:  lead.OwnerType,
-	})
+	go (func() {
+		u.notificationClient.CreateCRMHistory(ctx, &base_dto.HistoryDTO{
+			Note:       []string{"Tạo Lead từ liên hệ ", contact.FullName},
+			TargetId:   lead.ID,
+			TargetType: base_enum.TargetHistoryLead,
+			ActionType: base_enum.HistoryContactCreate,
+			// OwnerID:    lead.OwnerID,
+			// OwnerOf: base_enum.EOwnerOf(lead.OwnerOf),
+		})
+	})()
 
 	return lead, nil
 }

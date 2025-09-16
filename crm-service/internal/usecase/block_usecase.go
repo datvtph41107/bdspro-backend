@@ -5,7 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 )
 
@@ -14,14 +14,14 @@ type BlockUsecase struct {
 	contactRepo repo.ContactRepo
 	friendRepo  repo.FriendRepo
 	followRepo  repo.FollowRepo
-	userClient  iusecase.UserClient
+	userClient  provider.UserClient
 }
 
 func NewBlockUsecase(repo repo.BlockRepo,
 	contactRepo repo.ContactRepo,
 	friendRepo repo.FriendRepo,
 	followRepo repo.FollowRepo,
-	userClient iusecase.UserClient,
+	userClient provider.UserClient,
 ) *BlockUsecase {
 	return &BlockUsecase{
 		blockRepo:   repo,

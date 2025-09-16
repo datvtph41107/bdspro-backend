@@ -9,5 +9,5 @@ type HistoryDTO struct {
 	TargetType shared_enum.ETargetHistory `json:"targetType"`
 	ActionType shared_enum.EHistory       `json:"actionType"`
 	OwnerID    *uint64                    `json:"ownerId"`
-	OwnerType  shared_enum.EOwnerType     `json:"ownerType"`
+	OwnerOf    shared_enum.EOwnerType     `json:"ownerType"`
 }

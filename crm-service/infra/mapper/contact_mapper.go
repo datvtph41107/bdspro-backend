@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	base_enum "base/enum"
 	_models "common/models"
 	_utils "common/utils"
 	"crm/internal/domain"
@@ -25,7 +26,7 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 		Phone:         contact.Phone,
 		OwnerId:       contact.OwnerID,
 		Birthday:      _utils.FormatTimeToString(contact.Birthday),
-		OwnerType:     int32(contact.OwnerType),
+		OwnerOf:       int32(contact.OwnerOf),
 		ProfileId:     contact.ProfileID,
 		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
 		CreatedBy:     contact.CreatedBy,
@@ -35,6 +36,7 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 		Company:       contact.Company,
 		Note:          contact.Note,
 	}
+
 	if contact.FriendStatus != nil {
 		result.FriendStatus = &sharepb.FriendItem{
 			Id:         contact.FriendStatus.ID,
@@ -51,10 +53,10 @@ func (m *ContactMapper) PbToContact(pb *crmpb.ContactDTO) *domain.ContactEntity 
 		BaseEntity: _models.BaseEntity{
 			ID: pb.Id,
 		},
-		FullName:  pb.FullName,
-		Phone:     pb.Phone,
-		OwnerID:   pb.OwnerId,
-		OwnerType: enums.EOwnerType(pb.OwnerType),
+		FullName: pb.FullName,
+		Phone:    pb.Phone,
+		OwnerID:  pb.OwnerId,
+		OwnerOf:  base_enum.EOwnerOf(pb.OwnerOf),
 	}
 }
 
@@ -73,7 +75,7 @@ func (m *ContactMapper) ContactItemToPb(contact *domain.ContactItem) *crmpb.Cont
 		FullName:      contact.FullName,
 		Phone:         contact.Phone,
 		OwnerId:       contact.OwnerID,
-		OwnerType:     int32(contact.OwnerType),
+		OwnerOf:       int32(contact.OwnerOf),
 		Avatar:        contact.Avatar,
 		ProfileId:     contact.ProfileID,
 		Blocked:       contact.Blocked,
@@ -104,10 +106,10 @@ func (m *ContactMapper) ListContactItemToPb(contacts []domain.ContactItem) []*cr
 
 func (m *ContactMapper) ContactSaveToPb(contact *domain.ContactEntity) *crmpb.ContactSaveDTO {
 	return &crmpb.ContactSaveDTO{
-		Id:        contact.ID,
-		FullName:  contact.FullName,
-		Phone:     contact.Phone,
-		OwnerType: int32(contact.OwnerType),
+		Id:       contact.ID,
+		FullName: contact.FullName,
+		Phone:    contact.Phone,
+		OwnerOf:  int32(contact.OwnerOf),
 	}
 }
 
@@ -119,7 +121,7 @@ func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contac
 		FullName:   pb.FullName,
 		Phone:      pb.Phone,
 		Email:      pb.Email,
-		OwnerType:  enums.EOwnerType(pb.OwnerType),
+		OwnerOf:    base_enum.EOwnerOf(pb.OwnerOf),
 		Note:       pb.Note,
 		Zalo:       pb.Zalo,
 		Company:    pb.Company,

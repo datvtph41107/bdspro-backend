@@ -6,15 +6,14 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	"crm/config"
-	crm_config "crm/config"
+	"crm/initial"
 	crm_infra_client "crm/infra/client"
+	crm_infra_handler "crm/infra/handler"
 	crm_infra_impl "crm/infra/impl"
 	crm_infra_mapper "crm/infra/mapper"
 	crm_infra_postgre "crm/infra/postgre"
-	crm_infra_router "crm/infra/router"
-	crm_infra_services "crm/infra/services"
-	crm_internal_interface "crm/internal/interface"
+	crm_initial "crm/initial"
+	crm_internal_interface_provider "crm/internal/interface/provider"
 	crm_internal_repo "crm/internal/repo"
 	crm_internal_usecase "crm/internal/usecase"
 )
@@ -22,10 +21,10 @@ import (
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
-	wire.Bind(new(crm_internal_interface.INotificationClient), new(*crm_infra_client.NotificationClient)),
+	_db.NewTransactionRepo,
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
-	wire.Bind(new(crm_internal_interface.UserClient), new(*crm_infra_client.UserClient)),
-	wire.Bind(new(crm_internal_interface.ITransaction), new(*crm_infra_impl.TransactionGorm)),
+	wire.Bind(new(crm_internal_interface_provider.UserClient), new(*crm_infra_client.UserClient)),
+	wire.Bind(new(crm_internal_interface_provider.ITransaction), new(*crm_infra_impl.TransactionGorm)),
 	wire.Bind(new(crm_internal_repo.BlockRepo), new(*crm_infra_postgre.BlockRepo)),
 	wire.Bind(new(crm_internal_repo.ContactRepo), new(*crm_infra_postgre.PostgreContact)),
 	wire.Bind(new(crm_internal_repo.DocumentRepo), new(*crm_infra_postgre.DocumentPostgre)),
@@ -41,39 +40,36 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.StageRepo), new(*crm_infra_postgre.PostgreStage)),
 	crm_infra_client.NewBdsproClient,
 	crm_infra_postgre.NewBlockRepo,
-	crm_infra_services.NewBlockService,
+	crm_infra_handler.NewBlockService,
 	crm_internal_usecase.NewBlockUsecase,
-	crm_config.NewConfigApp,
 	crm_infra_mapper.NewContactMapper,
 	crm_infra_postgre.NewContactRepo,
-	crm_infra_router.NewContactRouter,
-	crm_infra_services.NewContactService,
+	crm_infra_handler.NewContactService,
 	crm_internal_usecase.NewContactUsecase,
-	crm_infra_services.NewCrmInternalService,
+	crm_infra_handler.NewCrmInternalService,
 	crm_infra_postgre.NewDocumentPostgre,
 	crm_infra_postgre.NewFollowPostgre,
-	crm_infra_services.NewFollowService,
+	crm_infra_handler.NewFollowService,
 	crm_internal_usecase.NewFollowUsecase,
-	crm_infra_services.NewFriendGroupService,
+	crm_infra_handler.NewFriendGroupService,
 	crm_internal_usecase.NewFriendGroupUsecase,
 	crm_infra_mapper.NewFriendMapper,
 	crm_infra_postgre.NewFriendRepo,
-	crm_infra_services.NewFriendService,
+	crm_infra_handler.NewFriendService,
 	crm_internal_usecase.NewFriendUsecase,
 	crm_infra_postgre.NewGroupRepo,
+	crm_initial.NewInitialApp,
 	crm_infra_postgre.NewInvitationInstallPostgre,
-	crm_infra_services.NewInvitationInstallService,
+	crm_infra_handler.NewInvitationInstallService,
 	crm_internal_usecase.NewInvitationInstallUsecase,
 	crm_infra_mapper.NewLeadMapper,
-	crm_infra_router.NewLeadRouter,
-	crm_infra_services.NewLeadService,
+	crm_infra_handler.NewLeadService,
 	crm_internal_usecase.NewLeadUsecase,
 	crm_infra_client.NewNotificationClient,
 	crm_infra_client.NewOrganizationClient,
-	crm_infra_router.NewPermissionRouter,
+	crm_internal_usecase.NewOwnerUsecase,
 	crm_infra_client.NewPermissionUsecase,
-	crm_infra_router.NewPipelineRouter,
-	crm_infra_services.NewPipelineService,
+	crm_infra_handler.NewPipelineService,
 	crm_internal_usecase.NewPipelineUsecase,
 	crm_infra_postgre.NewPostgreCustomer,
 	crm_infra_postgre.NewPostgrePipeline,
@@ -81,20 +77,17 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewPostgreStage,
 	crm_infra_postgre.NewProductCarePostgre,
 	crm_internal_usecase.NewRuleEventUsecase,
-	crm_infra_router.NewRuleRouter,
-	crm_infra_services.NewRuleService,
+	crm_infra_handler.NewRuleService,
 	crm_internal_usecase.NewRuleUsecase,
-	crm_infra_router.NewRuntimeRouter,
 	crm_infra_postgre.NewSharingAccessPostgre,
-	crm_infra_services.NewSharingAccessService,
+	crm_infra_handler.NewSharingAccessService,
 	crm_internal_usecase.NewSharingAccessUsecase,
-	crm_infra_router.NewStageRouter,
-	crm_infra_services.NewStageService,
+	crm_infra_handler.NewStageService,
 	crm_internal_usecase.NewStageUsecase,
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
 )
-func InitializeApp() (*config.ConfigApp, error) {
+func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

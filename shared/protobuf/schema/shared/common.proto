@@ -96,3 +96,10 @@ message CommonResponse {
   string redirect_url = 4;
   bytes data = 5;
 }
+
+enum OwnerOf {
+  unknown = 0;
+  user = 10;
+  group = 20;
+  organization = 30;
+}

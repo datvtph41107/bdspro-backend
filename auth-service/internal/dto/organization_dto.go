@@ -41,4 +41,5 @@ type OrganizationMember struct {
 	OrganizationId uint64  `json:"organizationId"`
 	UserId         uint64  `json:"userId"`
 	RoleId         *uint64 `json:"roleId"`
+	RoleKey        uint32  `json:"roleKey"`
 }

@@ -5,6 +5,13 @@ package crmpb;
 option go_package = "pb/types/crm;crmpb";
 import "shared/common.proto";
 
+enum OwnerOf {
+    unknown = 0;
+    user = 10;
+    group = 20;
+    organization = 30;
+}
+
 message LeadDTO {
     optional uint64 contactId = 1;
     string fullName = 2;
@@ -22,7 +29,7 @@ message LeadDTO {
   
     int32 chargeType = 15;                 // EOwnerType (int32)
     optional uint64 ownerId = 16;
-    int32 ownerType = 17;                  // EOwnerType (int32)
+    int32 ownerOf = 17;                  // EOwnerType (int32)
     uint64 id = 18;
     optional StageDTO stage = 19;
     optional PipelineDTO pipeline = 20;
@@ -30,7 +37,7 @@ message LeadDTO {
     string avatar = 22;
     string zalo = 23;
     string company = 24;
-    repeated uint64 productCareIds = 25;
+    repeated uint64 productIds = 25;
     int32 priority = 26;
     repeated DocumentDTO documents = 27;
     repeated uint64 removeDocumentIds = 28;
@@ -80,7 +87,7 @@ message ContactDTO {
   string phone = 2;
   string fullName = 3;
   uint64 ownerId = 4;
-  int32 ownerType = 5;
+  int32 ownerOf = 5;
   string createdAt = 6;
   optional uint64 createdBy = 7;
   uint32 contactStatus = 8;

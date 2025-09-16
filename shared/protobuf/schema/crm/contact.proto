@@ -10,7 +10,7 @@ import "crm/common.proto";
 service ContactService {
   rpc Search (ContactSearchRequest) returns (ContactListDTO) {
     option (google.api.http) = {
-      get: "/v2/crm/contact/list/{ownerType}"
+      get: "/v2/crm/contact/list/{ownerOf}/{ownerId}"
     };
   };
   rpc Detail (sharepb.IdRequest) returns (ContactDTO) {
@@ -58,20 +58,21 @@ message ContactSearchRequest {
   uint64 page = 1;
   uint32 size = 2;
   string text = 3;
-  int32 ownerType = 4;
+  sharepb.OwnerOf ownerOf = 4;
   repeated int32 friendStatus = 5;
   optional bool following = 6;
   repeated int32 roles = 7;
   optional bool leaded = 8;
   optional bool connected = 9;
   optional bool appInstalled = 10;
+  uint64 ownerId = 11;
 }
 
 message ContactSaveDTO {
   uint64 id = 1;
   string phone = 2;
   string fullName = 3;
-  int32 ownerType = 4;
+  int32 ownerOf = 4;
   string email = 5;
   string zalo = 6;
   string company = 7;

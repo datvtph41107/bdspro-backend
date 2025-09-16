@@ -11,11 +11,11 @@ import "crm/common.proto";
 import "bdspro/common.proto";
 
 service LeadService {
-  rpc Search (LeadSearchRequest) returns (LeadTotalDTO) {
-    option (google.api.http) = {
-      get: "/v2/crm/lead/total"
-    };
-  };
+  // rpc Search (LeadSearchRequest) returns (LeadTotalDTO) {
+  //   option (google.api.http) = {
+  //     get: "/v2/crm/lead/total"
+  //   };
+  // };
   rpc Detail (sharepb.IdRequest) returns (LeadDetailDTO) {
     option (google.api.http) = {
       get: "/v2/crm/lead/detail/{id}"
@@ -28,7 +28,7 @@ service LeadService {
   };
   rpc Create (LeadSaveRequest) returns (LeadDTO) {
     option (google.api.http) = {
-      post: "/v2/crm/lead"
+      post: "/v2/crm/lead/{ownerOf}/{ownerId}"
       body: "*"
     };
   };
@@ -57,7 +57,7 @@ service LeadService {
   };
   rpc Manager (LeadManagerRequest) returns (LeadManagerResponse) {
     option (google.api.http) = {
-      get: "/v2/crm/lead/manage/{pipelineId}"
+      get: "/v2/crm/lead/manage/{ownerOf}/{ownerId}/{pipelineId}"
     };
   };
   rpc GetCareExpiredTime (sharepb.Empty) returns (CareExpiredResponse) {
@@ -94,7 +94,7 @@ message LeadSearchRequest {
   google.protobuf.Timestamp fromDate = 10;
   google.protobuf.Timestamp toDate = 11;
 
-  repeated uint64 productCareIds = 12;
+  repeated uint64 productIds = 12;
 
   uint64 ownerId = 13;
   int32 ownerType = 14;
@@ -151,9 +151,11 @@ message LeadSaveRequest {
   uint64 stageId = 13;
   int32 priority = 14;
   uint64 chargePersonId = 15;
-  repeated uint64 productCareIds = 16;
+  repeated uint64 productIds = 16;
   repeated DocumentDTO documents = 17;
   repeated uint64 removeDocumentIds = 18;
+  sharepb.OwnerOf ownerOf = 19;
+  uint64 ownerId = 20;
 }
 
 message LeadDetailDTO {
@@ -164,7 +166,7 @@ message LeadDetailDTO {
   optional uint64 stageId = 5;
   optional uint64 chargePersonId = 6;
   uint32 priority = 7;
-  repeated uint64 productCareIds = 8;
+  repeated uint64 productIds = 8;
   repeated DocumentDTO documents = 9;
   optional ContactDTO contact = 10;
   optional StageDTO stage = 11;
@@ -182,6 +184,8 @@ message LeadManagerRequest {
   uint32 size = 2;
   string lastUpdatedAt = 3;
   uint64 pipelineId = 4;
+  uint64 ownerId = 5;
+  sharepb.OwnerOf ownerOf = 6;
 }
 
 message LeadManagerItem {

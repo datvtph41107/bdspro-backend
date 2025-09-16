@@ -9,11 +9,11 @@ import (
 
 type SharingEntity struct {
 	_models.BaseEntity
-	ContactID    uint64           `gorm:"primaryKey" json:"contactId"`
-	ReceiverID   uint64           `gorm:"primaryKey" json:"receiverId"`
-	ReceiverType enums.EOwnerType `gorm:"primaryKey" json:"receiverType"`
-	Permissions  pq.Int32Array    `gorm:"type:integer[]" json:"permissions"`
-	Note         string           `json:"note"`
+	ContactID    uint64         `gorm:"primaryKey" json:"contactId"`
+	ReceiverID   uint64         `gorm:"primaryKey" json:"receiverId"`
+	ReceiverType enums.EOwnerOf `gorm:"primaryKey" json:"receiverType"`
+	Permissions  pq.Int32Array  `gorm:"type:integer[]" json:"permissions"`
+	Note         string         `json:"note"`
 }
 
 func (s *SharingEntity) TableName() string {

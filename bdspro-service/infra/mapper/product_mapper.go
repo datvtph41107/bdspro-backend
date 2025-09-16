@@ -202,7 +202,9 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 		// Attributes:    product.Attributes,
 		// MediaList:     product.MediaList,
 		// HouseInfo:     product.HouseInfo,
-		Archived: product.Archived,
+		Archived:  product.Archived,
+		CreatedAt: _utils.FormatTimeToString(product.CreatedAt),
+		UpdatedAt: _utils.FormatTimeToString(product.UpdatedAt),
 	}
 
 	// if product.Attributes != nil {

@@ -331,6 +331,8 @@ definitions:
         items:
           $ref: '#/definitions/organizationpb.DocumentItem'
         type: array
+      fromDate:
+        type: string
       groupId:
         type: integer
       isManual:
@@ -363,6 +365,8 @@ definitions:
         type: integer
       targetProfit:
         type: number
+      toDate:
+        type: string
     type: object
   organizationpb.CreateGroupDealResponse:
     properties:
@@ -1500,7 +1504,9 @@ definitions:
     properties:
       id:
         type: integer
-      role:
+      roleKey:
+        type: integer
+      status:
         type: integer
     type: object
   organizationpb.UpdateOrganizationRequest:

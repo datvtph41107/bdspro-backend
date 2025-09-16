@@ -6,20 +6,20 @@ import (
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
-	iusecase "crm/internal/interface"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 )
 
 type SharingAccessUsecase struct {
 	repo        repo.SharingAccessRepo
 	contactRepo repo.ContactRepo
-	userClient  iusecase.UserClient
+	userClient  provider.UserClient
 }
 
 func NewSharingAccessUsecase(
 	repo repo.SharingAccessRepo,
 	contactRepo repo.ContactRepo,
-	userClient iusecase.UserClient,
+	userClient provider.UserClient,
 ) *SharingAccessUsecase {
 	return &SharingAccessUsecase{
 		repo:        repo,
@@ -48,7 +48,7 @@ func (s *SharingAccessUsecase) BulkShare(c context.Context,
 	contactId uint64,
 	permissions []int32,
 	note string,
-	ownerType enums.EOwnerType,
+	ownerType enums.EOwnerOf,
 	deletedIds []uint64,
 	receivers []domain.SharingEntity,
 ) error {

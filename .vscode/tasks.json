@@ -13,6 +13,160 @@
         "panel": "dedicated",
         "reveal": "always",
         "focus": false
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "👤 User gRPC (8201)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev user grpc",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🏘 BDSPro gRPC (8202)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev bdspro",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🔔 Notification gRPC (8204)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev notification grpc",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "💳 Payment gRPC (8205)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev payment",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🧩 CRM gRPC (8206)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev crm grpc",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🏢 Organization gRPC (8207)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev organization",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "💬 Chat gRPC (8208)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev chat",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "🌐 Social gRPC (8209)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev social grpc",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "📅 Appointment gRPC (8213)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev appointment",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "💳 Transaction gRPC (8215)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev transaction",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
       }
     },
     {
@@ -27,26 +181,15 @@
         "panel": "dedicated",
         "reveal": "always",
         "focus": false
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
       }
     },
     {
       "label": "👤 User HTTP (8001)",
       "type": "shell",
       "command": "cd shared/code && make run-dev user",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always",
-        "focus": false
-      }
-    },
-    {
-      "label": "👤 User gRPC (8201)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev user grpc",
       "args": [],
       "problemMatcher": [
         "$go"
@@ -72,35 +215,9 @@
       }
     },
     {
-      "label": "🏘 BDSPro gRPC (8202)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev bdspro",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always",
-        "focus": false
-      }
-    },
-    {
       "label": "📁 File ",
       "type": "shell",
       "command": "cd shared/code && make run-dev file",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "💬 Chat gRPC (8208)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev chat",
       "args": [],
       "problemMatcher": [
         "$go"
@@ -122,58 +239,10 @@
       }
     },
     {
-      "label": "🔔 Notification gRPC (8204)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev notification grpc",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "💳 Payment gRPC (8205)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev payment",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "🧩 CRM gRPC (8206)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev crm",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
       "label": "🎟 Membership",
       "type": "shell",
       "command": "cd shared/code && make run-dev membership",
       "args": [],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "🏢 Organization gRPC (8207)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev organization",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
       "presentation": {
         "panel": "dedicated"
       }
@@ -190,41 +259,5 @@
         "panel": "dedicated"
       }
     },
-    {
-      "label": "📅 Appointment gRPC (8213)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev appointment",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "🌐 Social gRPC (8209)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev social grpc",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "💳 Transaction gRPC (8215)",
-      "type": "shell",
-      "command": "cd shared/code && make run-dev transaction",
-      "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    }
   ]
 }

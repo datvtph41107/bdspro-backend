@@ -35,7 +35,7 @@ func ListSharingPbToDomain(pbs []*crmpb.SharingDTO) []domain.SharingEntity {
 func PbToSharing(pb *crmpb.SharingDTO) *domain.SharingEntity {
 	return &domain.SharingEntity{
 		ReceiverID:   pb.ToId,
-		ReceiverType: enums.EOwnerType(pb.OwnerType),
+		ReceiverType: enums.EOwnerOf(pb.OwnerType),
 		ContactID:    pb.ContactId,
 		Permissions:  pb.Permissions,
 		Note:         pb.Note,

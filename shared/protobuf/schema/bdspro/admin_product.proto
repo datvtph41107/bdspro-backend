@@ -41,6 +41,11 @@ service AdminProductService {
       post: "/v2/bdspro/admin/products/{id}/reject"
     };
   };
+  rpc GetProductById(sharepb.IdRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/products/{id}"
+    };
+  };
 }
 
 message ProductRequest {

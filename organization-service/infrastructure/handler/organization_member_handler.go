@@ -3,7 +3,6 @@ package handler
 import (
 	_dto "common/dto"
 	"context"
-	"fmt"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 
@@ -218,17 +217,4 @@ func (h *OrganizationMemberHandler) GetCurrentOrganizationMemberRole(ctx context
 		return nil, err
 	}
 	return &organizationpb.GetCurrentOrganizationMemberRoleResponse{RoleId: roleId, JoinDate: joinDate, RoleName: roleName}, nil
-}
-
-func (h *OrganizationMemberHandler) CheckUsersInOrganization(ctx context.Context, req *organizationpb.CheckUsersInOrganizationRequest) (*organizationpb.CheckUsersInOrganizationResponse, error) {
-	users, err := h.OrganizationMemberUsecase.CheckUsersInOrganization(ctx, req.OrganizationId, req.UserIds)
-	if err != nil {
-		return nil, err
-	}
-	checkUsers := make([]*organizationpb.CheckUserInOrganization, len(users))
-	for i, user := range users {
-		fmt.Println("user", user)
-		checkUsers[i] = &organizationpb.CheckUserInOrganization{UserId: user.UserId, IsExist: user.IsExist, JoinedAt: user.JoinedAt}
-	}
-	return &organizationpb.CheckUsersInOrganizationResponse{Data: checkUsers}, nil
 }

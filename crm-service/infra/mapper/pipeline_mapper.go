@@ -1,10 +1,10 @@
 package mapper
 
 import (
+	base_enum "base/enum"
 	_models "common/models"
 	"crm/internal/domain"
 	"crm/internal/dto"
-	"crm/internal/enums"
 	crmpb "pb/types/crm"
 )
 
@@ -37,7 +37,7 @@ func PipelinePbToDomain(pb *crmpb.PipelineDTO) *domain.PipelineEntity {
 		Active:       pb.Active,
 		Color:        pb.Color,
 		OwnerID:      pb.OwnerId,
-		OwnerType:    enums.EOwnerType(pb.OwnerType),
+		OwnerType:    base_enum.EOwnerOf(pb.OwnerType),
 		IsDefault:    pb.IsDefault,
 		IsCustom:     pb.IsCustom,
 	}
