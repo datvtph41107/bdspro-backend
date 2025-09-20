@@ -1,6 +1,7 @@
 package repo
 
 import (
+	base_enum "base/enum"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -41,4 +42,7 @@ type AssetRepo interface {
 	SearchByAssetShare(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
 	ListAssets(ctx context.Context, dto *dto.AssetSearchRequest) ([]domain.Asset, int64, error)
+
+	// Đếm số tài sản theo ownerOf và ownerId
+	CountByOwner(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (uint32, error)
 }

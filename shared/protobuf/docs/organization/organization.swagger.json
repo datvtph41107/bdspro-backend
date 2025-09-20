@@ -161,6 +161,50 @@
         ]
       }
     },
+    "/v2/org/organization/count-by-owner": {
+      "get": {
+        "operationId": "OrganizationService_GetCountByOwner",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbDashboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group",
+              "organization"
+            ],
+            "default": "unknown"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "OrganizationService"
+        ]
+      }
+    },
     "/v2/org/organization/current": {
       "get": {
         "operationId": "OrganizationService_GetOwnedOrganization",
@@ -694,6 +738,19 @@
         },
         "detailAddress": {
           "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -799,6 +856,16 @@
           }
         }
       }
+    },
+    "sharepbOwnerOf": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "user",
+        "group",
+        "organization"
+      ],
+      "default": "unknown"
     },
     "sharepbProfileItem": {
       "type": "object",

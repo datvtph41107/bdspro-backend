@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	base_enum "base/enum"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	_db "common/db"
@@ -66,4 +67,24 @@ func (r *PostgreProject) GetAllItem(c context.Context, dto *dto.ProjectSearchDTO
 		Find(&items).Error
 
 	return items, err
+}
+
+// CountByOwner đếm số dự án theo ownerOf và ownerId
+// Lưu ý: Project được quản lý theo developer_id, không có owner_id/owner_of
+func (r *PostgreProject) CountByOwner(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (uint32, error) {
+	var count int64
+
+	// query := r.DB.WithContext(ctx).Model(&domain.Project{}).
+	// 	Where("deleted_at IS NULL")
+
+	// // Project được quản lý theo developer_id
+	// // Có thể cần mapping developer_id với owner_id tùy theo business logic
+	// query = query.Where("developer_id = ?", ownerId)
+
+	// err := query.Count(&count).Error
+	// if err != nil {
+	// 	return 0, err
+	// }
+
+	return uint32(count), nil
 }

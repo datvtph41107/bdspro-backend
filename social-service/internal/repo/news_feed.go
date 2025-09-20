@@ -3,6 +3,7 @@ package repo
 import (
 	_dto "common/dto"
 	"context"
+	socialpb "pb/types/social"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
@@ -33,4 +34,7 @@ type NewsFeedRepo interface {
 	IncrementNumberShare(ctx context.Context, newFeedID uint64) error
 	SyncData(ctx context.Context) error
 	GetReel(ctx context.Context, dto _dto.Pagable) ([]*domain.ReelEntity, int64, error)
+
+	// Đếm số tin đăng theo ownerOf và ownerId
+	CountByOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId uint64) (int64, error)
 }

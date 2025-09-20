@@ -4,6 +4,7 @@ import (
 	_models "common/models"
 	_utils "common/utils"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 
 	"organization/internal/domain/entity"
 	"organization/internal/dto"
@@ -19,6 +20,8 @@ type OrganizationTransformer interface {
 	EntityToGetOwnedOrganizationResponse(organization *entity.Organization) *organizationpb.GetOwnedOrganizationResponse
 	EntitiesToGetAllOrganizationsWithMembersForAdminResponse(organizationsWithMembers []*dto.OrganizationWithMembers, total uint32) *organizationpb.GetAllOrganizationsWithMembersForAdminResponse
 	EntityToPb(organization *entity.Organization) *organizationpb.Organization
+	EntityToPbWithOwner(organization *entity.Organization, owner *sharepb.ProfileItem) *organizationpb.Organization
+	EntitiesToPbWithOwners(organizations []*entity.Organization, ownersMap map[uint64]*sharepb.ProfileItem) []*organizationpb.Organization
 }
 
 type organizationTransformer struct{}
@@ -34,10 +37,12 @@ func (o *organizationTransformer) EntityToCreateOrganizationResponse(organizatio
 }
 
 func (o *organizationTransformer) EntityToPb(organization *entity.Organization) *organizationpb.Organization {
+	updatedAt := _utils.FormatTimeToString(organization.UpdatedAt)
 	return &organizationpb.Organization{
 		Id:                 organization.ID,
 		Name:               organization.Name,
 		TaxCode:            organization.TaxCode,
+		Code:               organization.GenerateBusinessCode(),
 		BusinessLicenseUrl: organization.BusinessLicenseUrl,
 		Address:            organization.Address,
 		Phone:              organization.Phone,
@@ -45,6 +50,8 @@ func (o *organizationTransformer) EntityToPb(organization *entity.Organization) 
 		Website:            organization.Website,
 		LogoUrl:            organization.LogoUrl,
 		BusinessDomains:    o.EntityToBusinessDomains(organization.BusinessDomains),
+		OwnerId:            organization.OwnerId,
+		UpdatedAt:          updatedAt,
 	}
 }
 
@@ -106,29 +113,7 @@ func (o *organizationTransformer) EntityToUpdateOrganizationResponse(organizatio
 func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations []*entity.Organization, total uint32) *organizationpb.GetOrganizationsResponse {
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
 	for i, org := range organizations {
-		businessDomains := make([]*organizationpb.BusinessDomain, len(org.BusinessDomains))
-		for j, domain := range org.BusinessDomains {
-			businessDomains[j] = &organizationpb.BusinessDomain{
-				Id:          domain.ID,
-				Name:        domain.Name,
-				Description: domain.Description,
-				Code:        domain.Code,
-				IsActive:    domain.IsActive,
-			}
-		}
-
-		organizationsResponse[i] = &organizationpb.Organization{
-			Id:                 org.ID,
-			Name:               org.Name,
-			TaxCode:            org.TaxCode,
-			BusinessLicenseUrl: org.BusinessLicenseUrl,
-			Address:            org.Address,
-			Phone:              org.Phone,
-			Email:              org.Email,
-			Website:            org.Website,
-			LogoUrl:            org.LogoUrl,
-			BusinessDomains:    businessDomains,
-		}
+		organizationsResponse[i] = o.EntityToPb(org)
 	}
 	return &organizationpb.GetOrganizationsResponse{
 		Data:  organizationsResponse,
@@ -139,29 +124,7 @@ func (o *organizationTransformer) EntityToGetOrganizationsResponse(organizations
 func (o *organizationTransformer) EntitiesToGetOrganizationByUserIdResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationByUserIdResponse {
 	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
 	for i, org := range organizations {
-		businessDomains := make([]*organizationpb.BusinessDomain, len(org.BusinessDomains))
-		for j, domain := range org.BusinessDomains {
-			businessDomains[j] = &organizationpb.BusinessDomain{
-				Id:          domain.ID,
-				Name:        domain.Name,
-				Description: domain.Description,
-				Code:        domain.Code,
-				IsActive:    domain.IsActive,
-			}
-		}
-
-		organizationsResponse[i] = &organizationpb.Organization{
-			Id:                 org.ID,
-			Name:               org.Name,
-			TaxCode:            org.TaxCode,
-			BusinessLicenseUrl: org.BusinessLicenseUrl,
-			Address:            org.Address,
-			Phone:              org.Phone,
-			Email:              org.Email,
-			LogoUrl:            org.LogoUrl,
-			Website:            org.Website,
-			BusinessDomains:    businessDomains,
-		}
+		organizationsResponse[i] = o.EntityToPb(org)
 	}
 	return &organizationpb.GetOrganizationByUserIdResponse{
 		Data: organizationsResponse,
@@ -181,11 +144,13 @@ func (o *organizationTransformer) EntityToGetOwnedOrganizationResponse(organizat
 	}
 
 	foundedAt := _utils.FormatTimeToString(organization.FoundedAt)
+	updatedAt := _utils.FormatTimeToString(organization.UpdatedAt)
 	return &organizationpb.GetOwnedOrganizationResponse{
 		Organization: &organizationpb.Organization{
 			Id:                 organization.ID,
 			Name:               organization.Name,
 			TaxCode:            organization.TaxCode,
+			Code:               organization.GenerateBusinessCode(),
 			BusinessLicenseUrl: organization.BusinessLicenseUrl,
 			Address:            organization.Address,
 			Phone:              organization.Phone,
@@ -197,6 +162,8 @@ func (o *organizationTransformer) EntityToGetOwnedOrganizationResponse(organizat
 			Description:        organization.Description,
 			ApproveInvestor:    &organization.ApproveInvestor,
 			DetailAddress:      organization.DetailAddress,
+			OwnerId:            organization.OwnerId,
+			UpdatedAt:          updatedAt,
 		},
 	}
 }
@@ -236,11 +203,13 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 			}
 		}
 
+		updatedAt := _utils.FormatTimeToString(org.Organization.UpdatedAt)
 		organizationsResponse[i] = &organizationpb.OrganizationWithMembers{
 			Organization: &organizationpb.Organization{
 				Id:                 org.Organization.ID,
 				Name:               org.Organization.Name,
 				TaxCode:            org.Organization.TaxCode,
+				Code:               org.Organization.GenerateBusinessCode(),
 				BusinessLicenseUrl: org.Organization.BusinessLicenseUrl,
 				Address:            org.Organization.Address,
 				Phone:              org.Organization.Phone,
@@ -248,6 +217,9 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 				Website:            org.Organization.Website,
 				LogoUrl:            org.Organization.LogoUrl,
 				BusinessDomains:    businessDomains,
+				OwnerId:            org.Organization.OwnerId,
+				Owner:              org.Owner,
+				UpdatedAt:          updatedAt,
 			},
 			Members:      members,
 			TotalMembers: org.TotalMembers,
@@ -271,4 +243,32 @@ func (o *organizationTransformer) EntityToBusinessDomains(businessDomains []*ent
 		}
 	}
 	return businessDomainsResponse
+}
+
+func (o *organizationTransformer) EntityToPbWithOwner(organization *entity.Organization, owner *sharepb.ProfileItem) *organizationpb.Organization {
+	updatedAt := _utils.FormatTimeToString(organization.UpdatedAt)
+	return &organizationpb.Organization{
+		Id:                 organization.ID,
+		Name:               organization.Name,
+		TaxCode:            organization.TaxCode,
+		Code:               organization.GenerateBusinessCode(),
+		BusinessLicenseUrl: organization.BusinessLicenseUrl,
+		Address:            organization.Address,
+		Phone:              organization.Phone,
+		Email:              organization.Email,
+		Website:            organization.Website,
+		LogoUrl:            organization.LogoUrl,
+		BusinessDomains:    o.EntityToBusinessDomains(organization.BusinessDomains),
+		OwnerId:            organization.OwnerId,
+		Owner:              owner,
+		UpdatedAt:          updatedAt,
+	}
+}
+
+func (o *organizationTransformer) EntitiesToPbWithOwners(organizations []*entity.Organization, ownersMap map[uint64]*sharepb.ProfileItem) []*organizationpb.Organization {
+	organizationsResponse := make([]*organizationpb.Organization, len(organizations))
+	for i, org := range organizations {
+		organizationsResponse[i] = o.EntityToPbWithOwner(org, ownersMap[org.OwnerId])
+	}
+	return organizationsResponse
 }

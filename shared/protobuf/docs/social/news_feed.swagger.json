@@ -16,6 +16,50 @@
     "application/json"
   ],
   "paths": {
+    "/v2/social/news-feed/count-by-owner": {
+      "get": {
+        "operationId": "NewsFeedService_CountByOwner",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_socialCountByOwnerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group",
+              "organization"
+            ],
+            "default": "unknown"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "NewsFeedService"
+        ]
+      }
+    },
     "/v2/social/news-feed/detail/{newsFeedId}": {
       "get": {
         "operationId": "NewsFeedService_DetailNewsFeed",
@@ -989,6 +1033,15 @@
         "sortOrder": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "pb_socialCountByOwnerResponse": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

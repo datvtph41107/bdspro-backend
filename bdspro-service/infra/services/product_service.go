@@ -472,7 +472,7 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 		return nil, err
 	}
 	productResponse := s.ProductMapper.MapDetailProductPb(product)
-	if product.OwnerID != 0 && product.OwnerType == enums.EOwnerOfMember {
+	if product.OwnerID != 0 && product.OwnerOf == enums.EOwnerOfMember {
 		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
 	}
 	return productResponse, nil

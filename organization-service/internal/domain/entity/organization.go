@@ -2,6 +2,7 @@ package entity
 
 import (
 	_models "common/models"
+	"fmt"
 	"time"
 )
 
@@ -27,10 +28,16 @@ type Organization struct {
 	AccountBankInvestor *uint64
 	FoundedAt           *time.Time
 	Description         *string
+	OwnerId             uint64            `gorm:"index:idx_organizations_owner_id"`
 	BusinessDomainIds   []uint32          `gorm:"-"`
 	BusinessDomains     []*BusinessDomain `gorm:"many2many:organization_business_domains;joinForeignKey:OrganizationID;joinReferences:BusinessDomainID"`
 }
 
 func (Organization) TableName() string {
 	return "organizations"
+}
+
+// GenerateBusinessCode generates business code in format TC + 6 digits (padded with zeros)
+func (o *Organization) GenerateBusinessCode() string {
+	return fmt.Sprintf("TC%06d", o.ID)
 }

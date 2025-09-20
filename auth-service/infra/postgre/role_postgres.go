@@ -115,6 +115,7 @@ func (r *RoleRepo) GetDetail(ctx context.Context, id uint64) (*domain.Role, erro
 	var role domain.Role
 	err := r.GetDB(ctx).
 		Preload("Color").
+		Preload("Permissions").
 		Where("id = ? AND deleted_at IS NULL", id).First(&role).Error
 	if err != nil {
 		return nil, err

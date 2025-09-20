@@ -626,11 +626,11 @@ func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetI
 // 	return results, total, nil
 // }
 
-func (r *GormUserProductRepo) SearchExport(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
+func (r *GormUserProductRepo) SearchExport(ownerID *uint64, ownerOf enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, error) {
 	return nil, nil
 }
 
-func (r *GormUserProductRepo) SmartSearch(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.TotalSearchParser) ([]domain.Product, int64, error) {
+func (r *GormUserProductRepo) SmartSearch(ownerID *uint64, ownerOf enums.EOwnerOf, dto *dto.TotalSearchParser) ([]domain.Product, int64, error) {
 	return nil, 0, nil
 }
 
@@ -676,13 +676,13 @@ func (r *GormUserProductRepo) GetProductByID(ctx context.Context, productID *uin
 	return &product, nil
 }
 
-func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetID *uint64, targetOf enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	query := r.DB.
 		Debug().
 		Model(domain.Product{}).
 		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
 		Joins(`LEFT JOIN sharing_access pa
-					ON (pa.domain_id = products.id and pa.domain = 10 and pa.to_id = ? and pa.to_type = ?)`, targetID, targetType).
+					ON (pa.domain_id = products.id and pa.domain = 10 and pa.to_id = ? and pa.to_type = ?)`, targetID, targetOf).
 		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
 					FROM products WHERE deleted_at is null GROUP BY parent_id) 
 					AS child ON products.id = child.parent_id`).

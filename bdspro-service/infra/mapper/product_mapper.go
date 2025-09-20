@@ -193,7 +193,7 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 		RentStatus:      uint32(product.RentStatus),
 		RentVisibility:  uint32(product.RentVisibility),
 		OwnerId:         &product.OwnerID,
-		OwnerType:       uint32(product.OwnerType),
+		OwnerType:       uint32(product.OwnerOf),
 		ProvinceId:      product.ProvinceID,
 		DistrictId:      product.DistrictID,
 		WardId:          product.WardID,

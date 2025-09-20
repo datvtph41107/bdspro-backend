@@ -12,6 +12,7 @@ import (
 // 	GetProductByIds(ctx context.Context, in *bdspropb.IdRequest) (*bdspropb.ProductInternalResponse, error)
 // }
 
+// @bind: organization/internal/interface.BdsproClient
 type BdsproClient struct {
 	*clients.BdsproGrpcClient
 }
@@ -73,3 +74,8 @@ func (c *BdsproClient) MapProductToDealPb(ctx context.Context, deals []*organiza
 // 		req.Product = product.Data[0]
 // 	}
 // }
+
+// GetCountByOwner gọi sang BdsproInternalService để lấy số lượng sản phẩm, tài sản, bài viết và dự án
+func (c *BdsproClient) GetCountByOwner(ctx context.Context, req *bdspropb.GetCountByOwnerRequest) (*bdspropb.GetCountByOwnerResponse, error) {
+	return c.BdsproGrpcClient.GetCountByOwner(ctx, req)
+}

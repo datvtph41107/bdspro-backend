@@ -31,7 +31,7 @@ func (m *AdminHistoryMapper) AdminHistoryToDTO(entity *domain.AdminHistoryEntity
 		AfterStage: entity.AfterStage,
 		AdminID:    entity.AdminID,
 		OwnerID:    entity.OwnerID,
-		OwnerType:  entity.OwnerType,
+		OwnerType:  entity.OwnerOf,
 		IsInternal: entity.IsInternal,
 		AdminRole:  entity.AdminRole,
 		IPAddress:  entity.IPAddress,
@@ -67,7 +67,7 @@ func (m *AdminHistoryMapper) AdminHistoryToSharedDTO(entity *domain.AdminHistory
 		TargetType: entity.TargetType,
 		ActionType: entity.ActionType,
 		OwnerID:    entity.OwnerID,
-		OwnerType:  entity.OwnerType,
+		OwnerOf:    entity.OwnerOf,
 	}
 }
 
@@ -87,7 +87,7 @@ func (m *AdminHistoryMapper) CreateDTOToEntity(dto *dto.AdminHistoryCreateDTO) *
 		AfterStage: dto.AfterStage,
 		AdminID:    dto.AdminID,
 		OwnerID:    dto.OwnerID,
-		OwnerType:  dto.OwnerType,
+		OwnerOf:    dto.OwnerType,
 		IsInternal: dto.IsInternal,
 		AdminRole:  dto.AdminRole,
 		IPAddress:  dto.IPAddress,

@@ -585,3 +585,15 @@ func (s *NewsFeedService) responseGlobalNewsFeed(ctx context.Context, newsFeeds 
 
 	return result, nil
 }
+
+// CountByOwner đếm số tin đăng theo ownerOf và ownerId
+func (s *NewsFeedService) CountByOwner(ctx context.Context, req *socialpb.CountByOwnerRequest) (*socialpb.CountByOwnerResponse, error) {
+	count, err := s.newsFeedUsecase.CountByOwner(ctx, req.OwnerOf, req.OwnerId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &socialpb.CountByOwnerResponse{
+		Count: count,
+	}, nil
+}

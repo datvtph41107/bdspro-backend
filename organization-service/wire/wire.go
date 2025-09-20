@@ -24,6 +24,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	wire.Bind(new(organization_internal_interface.BdsproClient), new(*organization_infrastructure_client.BdsproClient)),
 	wire.Bind(new(organization_internal_interface.IChatClient), new(*organization_infrastructure_client.ChatClient)),
 	wire.Bind(new(organization_internal_usecase.IMembershipClient), new(*organization_infrastructure_client.MembershipClient)),
 	wire.Bind(new(organization_internal_interface.INotiClient), new(*organization_infrastructure_client.NotificationClient)),

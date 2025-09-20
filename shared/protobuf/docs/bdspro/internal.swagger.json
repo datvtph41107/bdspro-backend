@@ -1,0 +1,80 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/internal.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "BdsproInternalService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "pb_bdsproGetCountByOwnerResponse": {
+      "type": "object",
+      "properties": {
+        "totalProduct": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalAsset": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalPost": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalProject": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbOwnerOf": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "user",
+        "group",
+        "organization"
+      ],
+      "default": "unknown"
+    }
+  }
+}

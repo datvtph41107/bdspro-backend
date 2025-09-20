@@ -24,7 +24,7 @@ func NewPostgreDocType(db *_db.TransactionRepo) *PostgreDocType {
 func (r *PostgreDocType) GetAllItem(c context.Context) ([]domain.DocTypeItem, error) {
 	var items []domain.DocTypeItem
 
-	query := r.DB.
+	query := r.GetDB(c).
 		Model(&domain.DocType{}).
 		Where("deleted_at IS NULL")
 
@@ -48,10 +48,10 @@ func (r *PostgreDocType) SearchItem(c context.Context, dto *dto.DocTypeSearchDTO
 	return nil, 0, nil
 }
 
-func (r *PostgreDocType) InterText(text string, limit int) ([]uint64, error) {
+func (r *PostgreDocType) InterText(c context.Context, text string, limit int) ([]uint64, error) {
 	var ids []uint64
 
-	query := r.DB.
+	query := r.GetDB(c).
 		Model(&domain.DocType{}).
 		Where("LOWER(?) LIKE '%' || LOWER(name) || '%'", text)
 
@@ -60,10 +60,10 @@ func (r *PostgreDocType) InterText(text string, limit int) ([]uint64, error) {
 	return ids, err
 }
 
-func (r *PostgreDocType) InterTextToItem(text string, limit int) ([]domain.DocTypeItem, error) {
+func (r *PostgreDocType) InterTextToItem(c context.Context, text string, limit int) ([]domain.DocTypeItem, error) {
 	var ids []domain.DocTypeItem
 
-	query := r.DB.
+	query := r.GetDB(c).
 		Model(&domain.DocType{}).
 		Where("LOWER(?) LIKE '%' || LOWER(name) || '%'", text)
 

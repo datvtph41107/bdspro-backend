@@ -200,7 +200,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		}
 		entity.LastPriceID = &price.ID
 		entity.OwnerID = ownerId
-		entity.OwnerType = product.OwnerType
+		entity.OwnerOf = product.OwnerType
 		// _db.SaveWithContext(c, entity)
 		if err := s.ProductRepo.Create(c, entity); err != nil {
 			return err
@@ -263,7 +263,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 				LegalStatus:    enums.EDocType(assetInfo.LegalStatus),
 				LegalItems:     assetInfo.LegalItems,
 				RentStatus:     assetInfo.RentStatus,
-				OwnerType:      entity.OwnerType,
+				OwnerType:      entity.OwnerOf,
 				// Description:    assetInfo.Description,
 			}
 
@@ -503,7 +503,7 @@ func (s *ProductUsecase) SmartSearch(c context.Context, text string, dto *dto.Te
 	searchs, err := utils.InferSearchText(text)
 
 	regionIds, _ := s.Region.InterText(text, 10)
-	docTypeIds, _ := s.DocTypeRepo.InterText(text, 10)
+	docTypeIds, _ := s.DocTypeRepo.InterText(c, text, 10)
 	propertyTypeIds, _ := s.PropertyType.InterText(text, 10)
 
 	searchs.RegionIds = regionIds
@@ -588,7 +588,7 @@ func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.Tot
 	// searchs, _ := utils.InferSearchText(text)
 
 	regions, _ := s.Region.InterTextToItem(text, 10)
-	docTypes, _ := s.DocTypeRepo.InterTextToItem(text, 10)
+	docTypes, _ := s.DocTypeRepo.InterTextToItem(c, text, 10)
 	propertyTypes, _ := s.PropertyType.InterTextToItem(text, 10)
 	amenities, _ := s.Amenity.InterTextToEntity(text, 10)
 
@@ -1011,7 +1011,7 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 	}
 
 	body.ParentID = &parent.ID
-	body.OwnerType = parent.OwnerType
+	body.OwnerType = parent.OwnerOf
 	result, err := s.CreateProduct(c, body)
 
 	go func() {

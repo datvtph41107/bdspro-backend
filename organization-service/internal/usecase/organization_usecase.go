@@ -11,6 +11,8 @@ import (
 	"organization/internal/dto"
 	iusecase "organization/internal/interface"
 	"organization/pkg/utils"
+	bdspropb "pb/types/bdspro"
+	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 )
 
@@ -24,6 +26,7 @@ type OrganizationUsecase interface {
 	GetOwnedOrganization(ctx context.Context) (*entity.Organization, error)
 	GetAllOrganizationsForAdmin(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
 	GetAllOrganizationsWithMembersForAdmin(ctx context.Context, offset, limit int) ([]*dto.OrganizationWithMembers, uint32, error)
+	GetCurrentDashboard(ctx context.Context) (*organizationpb.DashboardResponse, error)
 }
 
 type organizationUsecase struct {
@@ -32,6 +35,7 @@ type organizationUsecase struct {
 	organizationAuthUsecase      OrganizationAuthUsecase
 	logWorker                    *OrganizationLogWorker
 	userClient                   iusecase.IUserClient
+	bdsproClient                 iusecase.BdsproClient
 }
 
 func NewOrganizationUsecase(
@@ -40,6 +44,7 @@ func NewOrganizationUsecase(
 	organizationAuthUsecase OrganizationAuthUsecase,
 	logWorker *OrganizationLogWorker,
 	userClient iusecase.IUserClient,
+	bdsproClient iusecase.BdsproClient,
 ) OrganizationUsecase {
 	return &organizationUsecase{
 		OrganizationRepository:       organizationRepository,
@@ -47,6 +52,7 @@ func NewOrganizationUsecase(
 		organizationAuthUsecase:      organizationAuthUsecase,
 		logWorker:                    logWorker,
 		userClient:                   userClient,
+		bdsproClient:                 bdsproClient,
 	}
 }
 
@@ -200,6 +206,26 @@ func (o *organizationUsecase) GetAllOrganizationsWithMembersForAdmin(ctx context
 		return nil, 0, err
 	}
 
+	// Lấy tất cả ownerIds để gọi user service một lần
+	ownerIds := make([]uint64, len(organizations))
+	for i, organization := range organizations {
+		ownerIds[i] = organization.OwnerId
+	}
+
+	// Lấy thông tin owner từ user service
+	var ownersMap map[uint64]*sharepb.ProfileItem
+	if len(ownerIds) > 0 {
+		ownersMap, err = o.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+			Ids: ownerIds,
+		})
+		if err != nil {
+			// Log error nhưng không fail toàn bộ request
+			ownersMap = make(map[uint64]*sharepb.ProfileItem)
+		}
+	} else {
+		ownersMap = make(map[uint64]*sharepb.ProfileItem)
+	}
+
 	organizationsWithMembers := make([]*dto.OrganizationWithMembers, len(organizations))
 	for i, organization := range organizations {
 		// Lấy members của organization này
@@ -239,6 +265,7 @@ func (o *organizationUsecase) GetAllOrganizationsWithMembersForAdmin(ctx context
 			Organization: organization,
 			Members:      membersWithProfiles,
 			TotalMembers: totalMembers,
+			Owner:        ownersMap[organization.OwnerId],
 		}
 	}
 
@@ -252,4 +279,32 @@ func (o *organizationUsecase) GetProfilePublic(ctx context.Context, organization
 	}
 	// if organization.
 	return organization, nil
+}
+
+func (o *organizationUsecase) GetCurrentDashboard(ctx context.Context) (*organizationpb.DashboardResponse, error) {
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+
+	// Gọi sang BdsproInternalService để lấy số lượng sản phẩm, tài sản, bài viết và dự án
+	bdsproReq := &bdspropb.GetCountByOwnerRequest{
+		OwnerOf: sharepb.OwnerOf_organization,
+		OwnerId: organizationId,
+	}
+
+	bdsproResp, err := o.bdsproClient.GetCountByOwner(ctx, bdsproReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Tổng hợp dữ liệu và trả về
+	return &organizationpb.DashboardResponse{
+		TotalProduct:     bdsproResp.TotalProduct,
+		TotalAsset:       bdsproResp.TotalAsset,
+		TotalPost:        bdsproResp.TotalPost,
+		TotalProject:     bdsproResp.TotalProject,
+		TotalNewsfeed:    0, // TODO: Gọi sang social service sau
+		TotalSchedule:    0, // TODO: Gọi sang appointment service sau
+		TotalTransaction: 0, // TODO: Gọi sang payment service sau
+		TotalClicked:     0, // TODO: Tính toán từ analytics sau
+		TotalViewHome:    0, // TODO: Tính toán từ analytics sau
+	}, nil
 }

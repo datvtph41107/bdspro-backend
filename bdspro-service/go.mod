@@ -6,7 +6,10 @@ replace pb => ../shared/protobuf
 
 replace common => ../shared/common
 
+replace base => ../shared/base
+
 require (
+	base v0.0.0-00010101000000-000000000000
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron v1.37.0

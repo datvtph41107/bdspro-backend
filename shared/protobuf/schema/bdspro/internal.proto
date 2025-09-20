@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package pb_bdspro;
+option go_package = "pb/types/bdspro;pb_bdspro";
+import "google/protobuf/timestamp.proto";
+import "bdspro/common.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service BdsproInternalService {
+    rpc GetCountByOwner(GetCountByOwnerRequest) returns (GetCountByOwnerResponse);
+}
+
+message GetCountByOwnerRequest {
+    sharepb.OwnerOf ownerOf = 1;
+    uint64 ownerId = 2;
+}
+
+message GetCountByOwnerResponse {
+    uint32 totalProduct = 1;
+    uint32 totalAsset = 2;
+    uint32 totalPost = 3;
+    uint32 totalProject = 4;
+}

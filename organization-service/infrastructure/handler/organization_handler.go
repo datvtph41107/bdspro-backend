@@ -7,6 +7,7 @@ import (
 	sharepb "pb/types/shared"
 	"time"
 
+	"organization/infrastructure/client"
 	"organization/infrastructure/transformer"
 	"organization/infrastructure/validator"
 	"organization/internal/domain/entity"
@@ -18,16 +19,19 @@ type OrganizationHandler struct {
 	OrganizationUsecase     usecase.OrganizationUsecase
 	OrganizationTransformer transformer.OrganizationTransformer
 	OrganizationValidator   validator.OrganizationValidator
+	UserClient              *client.UserClient
 }
 
 func NewOrganizationHandler(organizationUsecase usecase.OrganizationUsecase,
 	organizationTransformer transformer.OrganizationTransformer,
 	organizationValidator validator.OrganizationValidator,
+	userClient *client.UserClient,
 ) *OrganizationHandler {
 	return &OrganizationHandler{
 		OrganizationUsecase:     organizationUsecase,
 		OrganizationTransformer: organizationTransformer,
 		OrganizationValidator:   organizationValidator,
+		UserClient:              userClient,
 	}
 }
 
@@ -43,6 +47,7 @@ func (h *OrganizationHandler) CreateOrganization(ctx context.Context, req *organ
 	organization := h.OrganizationTransformer.CreateOrganizationRequestToEntity(req)
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	organization.CreatedBy = &profileId
+	organization.OwnerId = profileId
 
 	member := &entity.OrganizationMember{
 		UserID:   profileId,
@@ -109,7 +114,10 @@ func (h *OrganizationHandler) GetOrganizations(ctx context.Context, req *organiz
 		return nil, err
 	}
 
-	return h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations, total), nil
+	organizationPbs := h.OrganizationTransformer.EntityToGetOrganizationsResponse(organizations, total)
+	h.UserClient.MapProfileToOrganizationPb(ctx, organizationPbs.Data)
+
+	return organizationPbs, nil
 }
 
 // @Summary Lấy tổ chức của người dùng hiện tại
@@ -186,7 +194,14 @@ func (h *OrganizationHandler) GetAllOrganizationsWithMembersForAdmin(ctx context
 		return nil, err
 	}
 
-	return h.OrganizationTransformer.EntitiesToGetAllOrganizationsWithMembersForAdminResponse(organizationsWithMembers, total), nil
+	result, err := h.OrganizationTransformer.EntitiesToGetAllOrganizationsWithMembersForAdminResponse(organizationsWithMembers, total), nil
+	if err != nil {
+		return nil, err
+	}
+
+	h.UserClient.MapProfileToOrganizationPbWithMembers(ctx, result.Data)
+
+	return result, nil
 }
 
 // @Summary Lấy dashboard của tổ chức hiện tại
@@ -197,21 +212,11 @@ func (h *OrganizationHandler) GetAllOrganizationsWithMembersForAdmin(ctx context
 // @Security BearerAuth
 // @Router /organization/current/dashboard [get]
 func (h *OrganizationHandler) GetCurrentDashboard(ctx context.Context, req *sharepb.IdRequest) (*organizationpb.DashboardResponse, error) {
-	// dashboard, err := h.OrganizationUsecase.GetCurrentDashboard(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return &organizationpb.DashboardResponse{
-		TotalProduct:     100,
-		TotalNewsfeed:    115,
-		TotalPost:        212,
-		TotalProject:     162,
-		TotalAsset:       200,
-		TotalSchedule:    12,
-		TotalTransaction: 5,
-		TotalClicked:     129200,
-		TotalViewHome:    14200,
-	}, nil
+	dashboard, err := h.OrganizationUsecase.GetCurrentDashboard(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return dashboard, nil
 }
 
 // @Summary Lấy profile của tổ chức global

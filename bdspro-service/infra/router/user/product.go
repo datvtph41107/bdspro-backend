@@ -623,7 +623,7 @@ func (route *UserProductRouter) ExportExcel(c *gin.Context) {
 			nil,
 			product.RentVisibility,
 			product.OwnerID,
-			product.OwnerType,
+			product.OwnerOf,
 			product.PositionUrl,
 			product.Address,
 			product.GoogleMapLink,

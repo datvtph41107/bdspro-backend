@@ -51,7 +51,7 @@ type Product struct {
 	// RentTransaction   *tx_domain.Tx            `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
 	RentVisibility enums.EVisibility  `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 	OwnerID        uint64             `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
-	OwnerType      enums.EOwnerOf     `gorm:"type:smallint;not null;default:10" json:"ownerType"`
+	OwnerOf        enums.EOwnerOf     `gorm:"type:smallint;not null;default:10" json:"ownerOf"`
 	ProvinceID     *uint64            `json:"provinceId,omitempty"`
 	Province       *Region            `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	DistrictID     *uint64            `json:"districtId,omitempty"`

@@ -42,7 +42,7 @@ func (r *AdminPropertyTypePostgres) GetList(c context.Context, pagable _dto.IPag
 	var propertyTypes []domain.PropertyType
 	var total int64
 
-	query := r.DB.
+	query := r.GetDB(c).
 		Debug().
 		Model(domain.PropertyType{}).
 		Order("property_type.created_at asc").

@@ -64,6 +64,12 @@ service OrganizationService {
             get: "/v2/org/organization/global/profile/{id}"
         };
     }
+    
+    rpc GetCountByOwner(GetCountByOwnerRequest) returns (DashboardResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/count-by-owner"
+        };
+    }
 }
 
 message DashboardResponse {
@@ -142,6 +148,10 @@ message Organization {
     optional string foundedAt = 12 [json_name = "foundedAt"];
     optional bool approveInvestor = 13 [json_name = "approveInvestor"];
     optional string detailAddress = 14 [json_name = "detailAddress"];
+    uint64 ownerId = 15 [json_name = "ownerId"];
+    optional sharepb.ProfileItem owner = 16 [json_name = "owner"];
+    string code = 17 [json_name = "code"];
+    string updatedAt = 18 [json_name = "updatedAt"];
 }
 
 message GetOrganizationsResponse {
@@ -201,4 +211,9 @@ message OrganizationMemberWithProfile {
 message GetAllOrganizationsWithMembersForAdminResponse {
     repeated OrganizationWithMembers data = 1 [json_name = "data"];
     uint32 total = 2 [json_name = "total"];
+}
+
+message GetCountByOwnerRequest {
+    sharepb.OwnerOf ownerOf = 1 [json_name = "ownerOf"];
+    uint64 ownerId = 2 [json_name = "ownerId"];
 }

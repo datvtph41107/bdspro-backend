@@ -1,6 +1,7 @@
 package initial
 
 import (
+	internal_handler "bdspro/infra/handler"
 	admin_handler "bdspro/infra/handler/admin"
 	group_router "bdspro/infra/router/group"
 	org_router "bdspro/infra/router/org"
@@ -36,6 +37,7 @@ type InitialApp struct {
 	AdminPostHandler         *admin_handler.AdminPostHandler
 	AdminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler
 	AdminProjectHandler      *admin_handler.AdminProjectHandler
+	InternalHandler          *internal_handler.InternalHandler
 
 	// @bind: register_server_config
 	// CostDocumentServer *service.CostDocumentServer
@@ -81,6 +83,7 @@ func NewInitialApp(
 	adminPostHandler *admin_handler.AdminPostHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
 	adminProjectHandler *admin_handler.AdminProjectHandler,
+	internalHandler *internal_handler.InternalHandler,
 	// @bind: register_server_new
 	// CostDocumentServer: CostDocumentServer,
 	// IncomeDocumentServer:    IncomeDocumentServer,
@@ -115,6 +118,7 @@ func NewInitialApp(
 		AdminPostHandler:         adminPostHandler,
 		AdminPropertyTypeHandler: adminPropertyTypeHandler,
 		AdminProjectHandler:      adminProjectHandler,
+		InternalHandler:          internalHandler,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

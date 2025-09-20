@@ -286,3 +286,49 @@ func (c *UserClient) MapProfileToDealContractPbList(ctx context.Context, contrac
 		}
 	}
 }
+
+func (c *UserClient) MapProfileToOrganizationPb(ctx context.Context, organizations []*organizationpb.Organization) {
+	ids := make([]uint64, len(organizations))
+	for i, organization := range organizations {
+		ids[i] = uint64(organization.OwnerId)
+	}
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, p := range profiles.Profiles {
+		p.Phone = ""
+		profileMap[p.Id] = p
+	}
+	for _, organization := range organizations {
+		if p, ok := profileMap[uint64(organization.OwnerId)]; ok {
+			organization.Owner = p
+		}
+	}
+}
+
+func (c *UserClient) MapProfileToOrganizationPbWithMembers(ctx context.Context, organizations []*organizationpb.OrganizationWithMembers) {
+	ids := make([]uint64, len(organizations))
+	for i, organization := range organizations {
+		if organization.Organization != nil {
+			ids[i] = uint64(organization.Organization.OwnerId)
+		}
+	}
+	profiles, err := c.client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, p := range profiles.Profiles {
+		// p.Phone = ""
+		profileMap[p.Id] = p
+	}
+	for _, organization := range organizations {
+		if organization.Organization != nil {
+			if p, ok := profileMap[uint64(organization.Organization.OwnerId)]; ok {
+				organization.Organization.Owner = p
+			}
+		}
+	}
+}

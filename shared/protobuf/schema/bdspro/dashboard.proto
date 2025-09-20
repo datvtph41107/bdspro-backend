@@ -3,6 +3,7 @@ syntax = "proto3";
 package pb_bdspro;
 
 import "bdspro/product.proto";
+import "shared/common.proto";
 option go_package = "pb/types/bdspro;pb_bdspro";
 
 import "google/api/annotations.proto";

@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	socialpb "pb/types/social"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
@@ -354,4 +355,13 @@ func (u *NewsFeedUsecase) GetReelNewsFeed(ctx context.Context, req _dto.Pagable)
 		return nil, 0, err
 	}
 	return newsFeed, count, nil
+}
+
+// CountByOwner đếm số tin đăng theo ownerOf và ownerId
+func (u *NewsFeedUsecase) CountByOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId uint64) (uint32, error) {
+	count, err := u.newsFeedRepo.CountByOwner(ctx, ownerOf, ownerId)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(count), nil
 }

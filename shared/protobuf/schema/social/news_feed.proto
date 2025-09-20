@@ -48,6 +48,12 @@ service NewsFeedService {
             delete: "/v2/social/news-feed/{id}"
         };
     };
+    
+    rpc CountByOwner(CountByOwnerRequest) returns (CountByOwnerResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/count-by-owner"
+        };
+    };
     rpc ShareNewsFeed(ShareRequest) returns (ShareResponse) {
         option (google.api.http) = {
             post: "/v2/social/news-feed/{newsFeedId}/share"
@@ -192,4 +198,13 @@ message NewsFeedOfGroup {
     uint64 groupId = 3;
     string createdAt = 4;
     string updatedAt = 5;
+}
+
+message CountByOwnerRequest {
+    OwnerOf ownerOf = 1 [json_name = "ownerOf"];
+    uint64 ownerId = 2 [json_name = "ownerId"];
+}
+
+message CountByOwnerResponse {
+    uint32 count = 1 [json_name = "count"];
 }

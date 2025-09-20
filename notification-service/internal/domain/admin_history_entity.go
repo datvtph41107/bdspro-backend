@@ -18,7 +18,7 @@ type AdminHistoryEntity struct {
 	AfterStage string                     `json:"afterStage,omitempty"`
 	AdminID    uint64                     `json:"adminId"`             // ID của admin thực hiện action
 	OwnerID    *uint64                    `json:"ownerId"`             // ID của owner bị tác động
-	OwnerType  shared_enum.EOwnerType     `json:"ownerType"`           // Loại owner bị tác động
+	OwnerOf    shared_enum.EOwnerType     `json:"ownerType"`           // Loại owner bị tác động
 	IsInternal bool                       `json:"isInternal"`          // Có phải action nội bộ không
 	AdminRole  string                     `json:"adminRole,omitempty"` // Vai trò của admin (super_admin, admin, moderator, etc.)
 	IPAddress  string                     `json:"ipAddress,omitempty"` // IP address của admin
