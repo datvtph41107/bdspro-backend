@@ -144,7 +144,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	transactionValidator := validator.NewTransactionValidator()
 	transactionHandler := service.NewTransactionHandler(transactionValidator)
 	adminProductPostgres := admin_postgres.NewAdminProductPostgres(transactionRepo, gormUserProductRepo)
-	adminProductUsecase := admin_usecases.NewAdminProductUsecase(adminProductPostgres)
+	adminProductUsecase := admin_usecases.NewAdminProductUsecase(adminProductPostgres, productUsecase)
 	authGrpcClient := client.NewAuthClient()
 	adminProductHandler := admin_handler.NewAdminProductHandler(adminProductUsecase, productMapper, authGrpcClient)
 	adminAssetPostgres := admin_postgres.NewAdminAssetPostgres(transactionRepo)

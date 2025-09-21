@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
 	_dto "common/dto"
+	_routes "common/routes"
 	"context"
 	"pb/clients"
 	pb_bdspro "pb/types/bdspro"
@@ -74,16 +75,39 @@ func (h *AdminProductHandler) CreateProduct(ctx context.Context, req *pb_bdspro.
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_TAO"}); err != nil {
 		return nil, err
 	}
-	// product := h.ProductMapper.ProductSavePbToDTO(req)
-	// if req.Name == "" {
-	// 	return nil, _errors.ReturnError(400, "Tên sản phẩm không được để trống")
-	// }
-	// product, err := h.AdminProductService.Create(ctx, product)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return h.ProductMapper.MapProductPb(product), nil
-	return nil, nil
+
+	// Validate required fields
+	if req.Name == "" {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Tên sản phẩm không được để trống",
+		}
+	}
+
+	if req.OwnerId == 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "OwnerId không được để trống",
+		}
+	}
+
+	// Convert proto request to DTO
+	product := h.ProductMapper.ProductSavePbToDTO(req)
+	if product == nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Dữ liệu sản phẩm không hợp lệ",
+		}
+	}
+
+	// Create product using AdminProductService
+	createdProduct, err := h.AdminProductService.Create(ctx, product)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return response
+	return h.ProductMapper.MapDetailProductPb(createdProduct), nil
 }
 
 // @Summary Update a product

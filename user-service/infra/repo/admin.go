@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"user/infra/client"
 	"user/internal/dto"
 	user_model "user/internal/models/user"
 
@@ -12,12 +13,14 @@ import (
 
 // @bind: user/internal/repo.AdminRepository
 type AdminRepo struct {
-	DB *gorm.DB
+	DB         *gorm.DB
+	AuthClient *client.AuthClient
 }
 
-func NewAdminRepo(db *gorm.DB) *AdminRepo {
+func NewAdminRepo(db *gorm.DB, authClient *client.AuthClient) *AdminRepo {
 	return &AdminRepo{
-		DB: db,
+		DB:         db,
+		AuthClient: authClient,
 	}
 }
 
@@ -114,6 +117,32 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 
 	if err != nil {
 		return nil, 0, err
+	}
+
+	// Lấy thông tin từ auth-service cho các user
+	if len(users) > 0 && r.AuthClient != nil {
+		profileIDs := make([]uint64, len(users))
+		for i, user := range users {
+			profileIDs[i] = user.ProfileID
+		}
+
+		// Gọi auth client để lấy thông tin status
+		statusMap, err := r.AuthClient.GetUserStatusBatch(ctx, profileIDs)
+		if err == nil {
+			// Cập nhật thông tin verifiedAt và lockedAt từ auth-service
+			for i := range users {
+				if statusInfo, exists := statusMap[users[i].ProfileID]; exists {
+					if statusInfo.VerifiedAt != nil {
+						// Parse string time to time.Time nếu cần
+						// users[i].VerifiedAt = parseTime(*statusInfo.VerifiedAt)
+					}
+					if statusInfo.LockedUntil != nil {
+						// Parse string time to time.Time nếu cần
+						// users[i].LockedAt = parseTime(*statusInfo.LockedUntil)
+					}
+				}
+			}
+		}
 	}
 
 	return users, total, nil

@@ -6,15 +6,18 @@ import (
 	"math"
 	user_repo "user/infra/repo"
 	"user/internal/dto"
+	provider "user/internal/interface/provider"
 )
 
 type AdminUsecase struct {
-	AdminRepo *user_repo.AdminRepo
+	AdminRepo  *user_repo.AdminRepo
+	AuthClient provider.AuthProvider
 }
 
-func NewAdminUsecase(adminRepo *user_repo.AdminRepo) *AdminUsecase {
+func NewAdminUsecase(adminRepo *user_repo.AdminRepo, authClient provider.AuthProvider) *AdminUsecase {
 	return &AdminUsecase{
-		AdminRepo: adminRepo,
+		AdminRepo:  adminRepo,
+		AuthClient: authClient,
 	}
 }
 

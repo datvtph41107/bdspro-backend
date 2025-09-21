@@ -624,6 +624,7 @@ func (m *ProductMapper) ProductSavePbToDTO(req *pb_bdspro.ProductSaveRequest) *d
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
 		RentVisibility: enums.EVisibility(req.RentVisibility),
 		OwnerType:      req.OwnerType,
+		OwnerId:        req.OwnerId,
 	}
 	if req.PriceData != nil {
 		result.PriceData = m.PriceDataToDomain(req.PriceData)
@@ -722,11 +723,11 @@ func (m *ProductMapper) MediaItemsToDomain(req []*pb_bdspro.MediaItem) []dto.Med
 
 func (m *ProductMapper) HouseInfoToDomain(req *pb_bdspro.HouseInfo) *dto.HouseInfoUpdate {
 	return &dto.HouseInfoUpdate{
-		NumBedroom:  int(req.NumBedroom),
-		NumBathroom: int(req.NumBathroom),
-		NumFloor:    int(req.NumFloor),
-		NumFront:    int(req.NumFront),
-		NumCarPark:  int(req.NumCarPark),
+		NumBedroom:  req.NumBedroom,
+		NumBathroom: req.NumBathroom,
+		NumFloor:    req.NumFloor,
+		NumFront:    req.NumFront,
+		NumCarPark:  req.NumCarPark,
 		Furniture:   req.Furniture,
 		Orientation: req.Orientation,
 	}
@@ -744,25 +745,25 @@ func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *pb_bdspro.HouseInf
 	}
 
 	if req.NumBedroom != nil {
-		result.NumBedroom = int32(*req.NumBedroom)
+		result.NumBedroom = req.NumBedroom
 	}
 	if req.NumBathroom != nil {
-		result.NumBathroom = int32(*req.NumBathroom)
+		result.NumBathroom = req.NumBathroom
 	}
 	if req.NumFloor != nil {
-		result.NumFloor = int32(*req.NumFloor)
+		result.NumFloor = req.NumFloor
 	}
 	if req.NumFront != nil {
-		result.NumFront = int32(*req.NumFront)
+		result.NumFront = req.NumFront
 	}
 	if req.NumCarPark != nil {
-		result.NumCarPark = int32(*req.NumCarPark)
+		result.NumCarPark = req.NumCarPark
 	}
 	if req.Furniture != nil {
-		result.Furniture = *req.Furniture
+		result.Furniture = req.Furniture
 	}
 	if req.Orientation != nil {
-		result.Orientation = *req.Orientation
+		result.Orientation = req.Orientation
 	}
 
 	return result

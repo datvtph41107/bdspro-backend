@@ -2836,6 +2836,10 @@
         "id": {
           "type": "string",
           "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -2945,6 +2949,10 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

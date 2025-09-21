@@ -452,9 +452,97 @@ func (s *ProductService) Suggest(ctx context.Context, req *pb_bdspro.SuggestRequ
 	if err != nil {
 		return nil, err
 	}
-	productResponse := &pb_bdspro.ProductResponse{}
-	copier.Copy(productResponse, products)
+
+	// Tạo ProductResponse từ TotalSearchParser
+	productResponse := s.mapTotalSearchParserToResponse(products)
+
 	return productResponse, nil
+}
+
+// mapProductToResponse maps domain.Product to pb_bdspro.ProductResponse
+func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchParser) *pb_bdspro.ProductResponse {
+	response := &pb_bdspro.ProductResponse{
+		Name:            parser.Name,
+		TransactionType: int32(parser.TransactionType),
+		HouseInfo: &pb_bdspro.HouseInfo{
+			NumBedroom:  parser.Bedroom,
+			NumBathroom: parser.Bathroom,
+			NumFloor:    parser.Floor,
+			NumFront:    parser.Frontage,
+			NumCarPark:  parser.Park,
+			NumToilet:   parser.Toilet,
+			// Orientation: parser.Orientation,
+			// Furniture:   parser.Furniture,
+		},
+	}
+
+	// Map các trường từ parser
+	if parser.Area != nil {
+		response.Area = float64(*parser.Area)
+	}
+
+	if parser.PriceSuggest != nil {
+		response.PriceSuggest = parser.PriceSuggest
+	}
+
+	if parser.Address != nil {
+		response.Address = *parser.Address
+	}
+
+	// Map regions
+	if parser.Province != nil {
+		response.ProvinceId = &parser.Province.ID
+	}
+
+	if parser.District != nil {
+		response.DistrictId = &parser.District.ID
+	}
+
+	if parser.Ward != nil {
+		response.WardId = &parser.Ward.ID
+	}
+
+	// Map property types (lấy property type đầu tiên nếu có)
+	if len(parser.PropertyTypes) > 0 {
+		response.PropertyTypeId = &parser.PropertyTypes[0].ID
+	}
+
+	// Map doc types (lấy doc type đầu tiên nếu có)
+	if len(parser.DocTypes) > 0 {
+		response.DocTypeId = &parser.DocTypes[0].ID
+	}
+
+	// Map sale price
+	if parser.SalePrice != nil {
+		response.Price = &pb_bdspro.ProductPrice{
+			SalePrice: parser.SalePrice,
+		}
+	}
+
+	// Map rent price
+	if parser.RentPrice != nil {
+		if response.Price == nil {
+			response.Price = &pb_bdspro.ProductPrice{}
+		}
+		response.Price.RentPrice = parser.RentPrice
+	}
+
+	// Map amenities
+	if len(parser.Amenities) > 0 {
+		response.Amenities = make([]*pb_bdspro.AmenityItem, len(parser.Amenities))
+		for i, amenity := range parser.Amenities {
+			response.Amenities[i] = &pb_bdspro.AmenityItem{
+				Id:   amenity.ID,
+				Name: amenity.Name,
+			}
+		}
+	}
+
+	if parser.RentPrice != nil {
+		response.Price.RentPrice = parser.RentPrice
+	}
+
+	return response
 }
 
 // @Summary Lấy chi tiết sản phẩm

@@ -46,6 +46,8 @@ type AdminUserItem struct {
 	TickVerified   bool       `json:"tickVerified"`
 	LastLoginAt    *time.Time `json:"lastLoginAt"`
 	TotalLogin     uint32     `json:"totalLogin"`
+	VerifiedAt     *time.Time `json:"verifiedAt"`
+	LockedAt       *time.Time `json:"lockedAt"`
 }
 
 // Admin API Request DTOs

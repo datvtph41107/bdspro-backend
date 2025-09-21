@@ -54,25 +54,25 @@ type ProductSearchRequest struct {
 
 type TotalSearchParser struct {
 	_dto.Pagable
-	Bedroom         *uint     `json:"numBedroom"`
-	Bathroom        *uint     `json:"numBathroom"`
-	Toilet          *uint     `json:"toilet"`
-	Kitchen         *uint     `json:"kitchen"`
-	Park            *uint     `json:"park"`
+	Bedroom         *int32    `json:"numBedroom"`
+	Bathroom        *int32    `json:"numBathroom"`
+	Toilet          *int32    `json:"toilet"`
+	Kitchen         *int32    `json:"kitchen"`
+	Park            *int32    `json:"park"`
 	PriceSuggest    *float64  `json:"price"`
-	Area            *uint     `json:"area"`
-	Frontage        *uint     `json:"frontage"`
-	Floor           *uint     `json:"floor"`
+	Area            *int32    `json:"area"`
+	Frontage        *int32    `json:"frontage"`
+	Floor           *int32    `json:"floor"`
 	Address         *string   `json:"address"`
 	SourceTypeIds   *[]uint64 `json:"sourceTypeIds"`
 	RegionIds       []uint64  `json:"regionIds"`
 	DocTypeIds      []uint64  `json:"docTypeIds"`
 	PropertyTypeIds []uint64  `json:"propertyTypeIds"`
 	AmenityIds      []uint64  `json:"amenityIds"`
-	SaleStatus      []uint    `json:"saleStatus"`
-	RentStatus      []uint    `json:"rentStatus"`
+	SaleStatus      []uint32  `json:"saleStatus"`
+	RentStatus      []uint32  `json:"rentStatus"`
 	Name            string    `json:"name"`
-	TransactionType uint      `json:"transactionType"`
+	TransactionType uint32    `json:"transactionType"`
 
 	SourceTypes   *[]any                    `json:"sourceTypes"`
 	Regions       []domain.Region           `json:"regions"`

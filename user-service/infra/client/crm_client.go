@@ -8,12 +8,12 @@ import (
 )
 
 type CrmClient struct {
-	Client *clients.CrmGrpcClient
+	*clients.CrmGrpcClient
 }
 
 func NewCrmClient() *CrmClient {
 	return &CrmClient{
-		Client: clients.MakeCrmGrpcClient(env.ENV_RUNTIME),
+		clients.MakeCrmGrpcClient(env.ENV_RUNTIME),
 	}
 }
 
@@ -23,7 +23,7 @@ func (c *CrmClient) MapFriendStatusToSearchItemPb(ctx context.Context, searchIte
 		profileIds[searchItem.ProfileId] = struct{}{}
 	}
 
-	friendStatusMap, err := c.Client.GetMapFriendStatusByProfileIds(ctx, profileIds)
+	friendStatusMap, err := c.CrmGrpcClient.GetMapFriendStatusByProfileIds(ctx, profileIds)
 	if err != nil {
 		return
 	}

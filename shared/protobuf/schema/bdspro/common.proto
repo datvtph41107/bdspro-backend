@@ -69,14 +69,14 @@ message Response {
 
 message HouseInfo {
     uint64 id = 1;
-      int32 numBedroom = 2;
-      int32 numBathroom = 3;
-      int32 numFloor = 4;
-      int32 numFront = 5;
-      int32 numCarPark = 6;
-      string furniture = 7;
-      string orientation = 8;
-    int32 numToilet = 9;
+    optional int32 numBedroom = 2;
+    optional int32 numBathroom = 3;
+    optional int32 numFloor = 4;
+    optional int32 numFront = 5;
+    optional int32 numCarPark = 6;
+    optional string furniture = 7;
+    optional string orientation = 8;
+    optional int32 numToilet = 9;
   }
   
   message ProductPrivate {

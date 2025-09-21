@@ -7,7 +7,6 @@ import (
 	"github.com/google/wire"
 	_db "common/db"
 	"user/initial"
-	user_config "user/config"
 	user_infra_client "user/infra/client"
 	user_infra_handler "user/infra/handler"
 	user_infra_mapper "user/infra/mapper"
@@ -15,8 +14,10 @@ import (
 	user_infra_repo "user/infra/repo"
 	user_infra_routes "user/infra/routes"
 	user_infra_services "user/infra/services"
+	user_initial "user/initial"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
+	user_internal_interface_provider "user/internal/interface/provider"
 	user_internal_models_auth "user/internal/models/auth"
 	user_internal_models_user "user/internal/models/user"
 	user_internal_repo "user/internal/repo"
@@ -30,6 +31,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	wire.Bind(new(user_internal_interface_provider.AuthProvider), new(*user_infra_client.AuthClient)),
 	wire.Bind(new(user_internal_repo.RateRepo), new(*user_infra_postgres.RatePostgres)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
 	wire.Bind(new(user_internal_repo.AdminRepository), new(*user_infra_repo.AdminRepo)),
@@ -38,6 +40,7 @@ var wireSet = wire.NewSet(
 	user_infra_repo.NewAdminRepo,
 	user_internal_usecases.NewAdminUsecase,
 	user_infra_postgres.NewAttachPostgres,
+	user_infra_client.NewAuthClient,
 	user_infra_routes.NewAuthRoutes,
 	user_internal_services_auth.NewAuthService,
 	user_validator.NewAuthValidator,
@@ -46,7 +49,6 @@ var wireSet = wire.NewSet(
 	user_internal_services_user.NewBlockService,
 	user_infra_repo.NewCertificationRepo,
 	user_internal_services_user.NewCertificationService,
-	user_config.NewConfigApp,
 	user_infra_repo.NewContactRepo,
 	user_internal_services_auth.NewCookieService,
 	user_infra_client.NewCrmClient,
@@ -66,6 +68,7 @@ var wireSet = wire.NewSet(
 	user_infra_services.NewGrpcProfileService,
 	user_infra_services.NewGrpcRateService,
 	user_internal_services_auth.NewHttpClient,
+	user_initial.NewInitialApp,
 	user_infra_routes.NewOAuthRouter,
 	user_internal_services_auth.NewOAuthService,
 	user_infra_client.NewOrganizationClient,

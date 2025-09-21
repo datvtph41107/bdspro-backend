@@ -124,6 +124,12 @@ func (h *AdminHandler) ListAllUsers(ctx context.Context, req *userpb.ListAllUser
 		if item.LastLoginAt != nil {
 			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
 		}
+		if item.VerifiedAt != nil {
+			protoItem.VerifiedAt = _utils.FormatTimeToString(item.VerifiedAt)
+		}
+		if item.LockedAt != nil {
+			protoItem.LockedAt = _utils.FormatTimeToString(item.LockedAt)
+		}
 
 		response.Data = append(response.Data, protoItem)
 	}

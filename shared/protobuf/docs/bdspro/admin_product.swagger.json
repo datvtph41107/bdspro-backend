@@ -529,6 +529,10 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1274,6 +1278,10 @@
           "format": "int64"
         },
         "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
           "type": "string",
           "format": "uint64"
         }

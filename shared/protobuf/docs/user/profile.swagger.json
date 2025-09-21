@@ -618,6 +618,14 @@
           "type": "integer",
           "format": "int64",
           "title": "Tổng số lần đăng nhập"
+        },
+        "verifiedAt": {
+          "type": "string",
+          "title": "Thời gian xác thực"
+        },
+        "lockedAt": {
+          "type": "string",
+          "title": "Thời gian khóa tài khoản"
         }
       }
     },

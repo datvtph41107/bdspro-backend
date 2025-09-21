@@ -15,13 +15,13 @@ import (
 
 type HouseInfoUpdate struct {
 	// house info
-	NumBedroom  int    `json:"numBedroom,omitempty"`  // Số phòng ngủ (optional)
-	NumBathroom int    `json:"numBathroom,omitempty"` // Số WC (optional)
-	NumFloor    int    `json:"numFloor,omitempty"`    // Số tầng (optional)
-	NumFront    int    `json:"numFront,omitempty"`    // Số mặt tiền
-	NumCarPark  int    `json:"numCarPark,omitempty"`  // Số chỗ để ôtô
-	Furniture   string `json:"furniture,omitempty"`   // Nội thất: "full", "partial", "none"
-	Orientation string `json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
+	NumBedroom  *int32  `json:"numBedroom,omitempty"`  // Số phòng ngủ (optional)
+	NumBathroom *int32  `json:"numBathroom,omitempty"` // Số WC (optional)
+	NumFloor    *int32  `json:"numFloor,omitempty"`    // Số tầng (optional)
+	NumFront    *int32  `json:"numFront,omitempty"`    // Số mặt tiền
+	NumCarPark  *int32  `json:"numCarPark,omitempty"`  // Số chỗ để ôtô
+	Furniture   *string `json:"furniture,omitempty"`   // Nội thất: "full", "partial", "none"
+	Orientation *string `json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
 }
 
 type ProductSaveRequest struct {
@@ -50,6 +50,7 @@ type ProductSaveRequest struct {
 	SaleVisibility  enums.EVisibility       `json:"saleVisibility"`
 	RentVisibility  enums.EVisibility       `json:"rentVisibility"`
 	OwnerType       enums.EOwnerOf          `json:"ownerType"`
+	OwnerId         uint64                  `json:"ownerId"`
 	// SaleStatus      enums.EProductStatus    `json:"saleStatus"`
 	// RentStatus      enums.EProductStatus    `json:"rentStatus"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`

@@ -54,6 +54,8 @@ type UserProfileEntity struct {
 	StatusOnline      enums.EOnlineStatus   `gorm:"column:status_online" json:"statusOnline"`
 	ProfileVisibility uint8                 `gorm:"column:profile_visibility" json:"profileVisibility"`
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
+	// LastLoginAt       *time.Time            `gorm:"column:last_login_at" json:"lastLoginAt"`
+	// TotalLogin        uint32                `gorm:"column:total_login;default:0" json:"totalLogin"`
 
 	// transient
 	Certifications []CertificationEntity `gorm:"-" json:"certifications"`
@@ -62,7 +64,7 @@ type UserProfileEntity struct {
 
 	FriendStatus *FriendItem `gorm:"-" json:"friendStatus"`
 	Following    bool        `gorm:"-" json:"following"`
-	Status       uint8       `gorm:"column:status;default:1" json:"status"`
+	Status       uint8       `gorm:"column:status;default:10" json:"status"`
 
 	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`

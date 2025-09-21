@@ -272,6 +272,8 @@ message AdminUserItem {
     bool tickVerified = 16;      // Tài khoản đã xác thực
     string lastLoginAt = 17;     // Lần đăng nhập cuối
     uint32 totalLogin = 18;      // Tổng số lần đăng nhập
+    string verifiedAt = 19;      // Thời gian xác thực
+    string lockedAt = 20;        // Thời gian khóa tài khoản
 }
 
 // Admin API Request Messages
