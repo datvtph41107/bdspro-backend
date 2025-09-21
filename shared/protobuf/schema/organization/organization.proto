@@ -190,8 +190,7 @@ message GetAllOrganizationsWithMembersForAdminRequest {
 
 message OrganizationWithMembers {
     Organization organization = 1 [json_name = "organization"];
-    repeated OrganizationMemberWithProfile members = 2 [json_name = "members"];
-    uint32 totalMembers = 3 [json_name = "totalMembers"];
+    uint32 totalMembers = 2 [json_name = "totalMembers"];
 }
 
 message OrganizationMemberWithProfile {

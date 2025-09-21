@@ -14,6 +14,7 @@ service AuthInternalService {
     rpc GetRolesByIds(sharepb.IdRequest) returns (RoleListResponse);
     rpc GetAdminRoleIdByGroupKey(sharepb.IdRequest) returns (Role);
     rpc GetRolesByRoleKeys(GetRolesByRoleKeysRequest) returns (RoleListResponse);
+    rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
 }
 
 message RequiredRolesRequest {

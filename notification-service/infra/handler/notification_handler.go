@@ -8,6 +8,7 @@ import (
 	notipb "pb/types/notification"
 	"time"
 
+	"notification/infra/client"
 	"notification/infra/mapper"
 	"notification/internal/domain"
 	"notification/internal/dto"
@@ -23,6 +24,7 @@ type NotificationHandler struct {
 	AdminHistoryUsecase   *usecase.AdminHistoryUsecase
 	AdminHistoryMapper    *mapper.AdminHistoryMapper
 	AccountWarningUsecase *usecase.AccountWarningUsecase
+	AuthClient            *client.AuthClient
 	notipb.UnimplementedGatewayNotificationServiceServer
 }
 
@@ -31,12 +33,14 @@ func NewNotificationHandler(
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
 	accountWarningUsecase *usecase.AccountWarningUsecase,
+	authClient *client.AuthClient,
 ) *NotificationHandler {
 	return &NotificationHandler{
 		Usecase:               usecase,
 		AdminHistoryUsecase:   adminHistoryUsecase,
 		AdminHistoryMapper:    adminHistoryMapper,
 		AccountWarningUsecase: accountWarningUsecase,
+		AuthClient:            authClient,
 	}
 }
 
@@ -292,6 +296,12 @@ func (s *NotificationHandler) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.A
 	}
 
 	// Thêm thông tin user nếu có
+	if dto.AdminName != nil {
+		pbDTO.AdminName = dto.AdminName
+	}
+	if dto.AdminAvatar != nil {
+		pbDTO.AdminAvatar = dto.AdminAvatar
+	}
 
 	return pbDTO
 }

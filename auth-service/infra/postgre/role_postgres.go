@@ -367,3 +367,20 @@ func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *do
 
 	return nil
 }
+
+// GetAuthMethodsByIds lấy thông tin AuthMethod theo danh sách user IDs
+func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*domain.AuthMethodDomain, error) {
+	if len(userIds) == 0 {
+		return nil, nil
+	}
+
+	var authMethods []*domain.AuthMethodDomain
+	err := r.GetDB(ctx).
+		Where("user_id IN ? AND deleted_at IS NULL", userIds).
+		Find(&authMethods).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return authMethods, nil
+}

@@ -54,6 +54,12 @@ service OrganizationMemberService {
         };
     }
     
+    rpc GetOrganizationMembersForAdmin(GetOrganizationMembersForAdminRequest) returns (GetOrganizationMembersForAdminResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/admin/{organizationId}/members"
+        };
+    }
+    
     rpc GetCurrentOrganizationMemberRole(Empty) returns (GetCurrentOrganizationMemberRoleResponse) {
         option (google.api.http) = {
             get: "/v2/organization/member/me"
@@ -118,6 +124,12 @@ message GetOrganizationMembersRequest {
     optional uint32 size = 3 [json_name = "size"];
 }
 
+message GetOrganizationMembersForAdminRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
 message OrganizationMember {
     uint32 id = 1 [json_name = "id"];
     uint64 userId = 2 [json_name = "userId"];
@@ -133,6 +145,11 @@ message OrganizationMember {
 message GetOrganizationMembersResponse {
     repeated OrganizationMember data = 1;
     uint32 total = 2;
+}
+
+message GetOrganizationMembersForAdminResponse {
+    repeated OrganizationMember data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
 }
 
 message GetCurrentOrganizationMemberRoleResponse {

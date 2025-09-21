@@ -754,65 +754,11 @@
         }
       }
     },
-    "organizationpbOrganizationMemberWithProfile": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "organizationId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "roleId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "joinedAt": {
-          "type": "string"
-        },
-        "removedAt": {
-          "type": "string"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "roleKey": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "profile": {
-          "$ref": "#/definitions/sharepbProfileItem"
-        }
-      }
-    },
     "organizationpbOrganizationWithMembers": {
       "type": "object",
       "properties": {
         "organization": {
           "$ref": "#/definitions/organizationpbOrganization"
-        },
-        "members": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/organizationpbOrganizationMemberWithProfile"
-          }
         },
         "totalMembers": {
           "type": "integer",

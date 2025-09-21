@@ -187,6 +187,8 @@ message AdminHistoryDTO {
     string userAgent = 15;
     string createdAt = 16;
     string updatedAt = 17;
+    optional string adminName = 18;
+    optional string adminAvatar = 19;
 }
 
 message AdminHistoryListResponse {

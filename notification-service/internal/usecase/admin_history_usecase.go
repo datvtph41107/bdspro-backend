@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	shared_enum "pb/enums"
+	sharepb "pb/types/shared"
 	"time"
 
 	"notification/internal/domain"
@@ -10,13 +12,20 @@ import (
 	"notification/internal/repo"
 )
 
-type AdminHistoryUsecase struct {
-	adminHistoryRepo repo.AdminHistoryRepo
+type IAuthClient interface {
+	GetProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error)
+	GetMapProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (map[uint64]*sharepb.ProfileItem, error)
 }
 
-func NewAdminHistoryUsecase(adminHistoryRepo repo.AdminHistoryRepo) *AdminHistoryUsecase {
+type AdminHistoryUsecase struct {
+	adminHistoryRepo repo.AdminHistoryRepo
+	authClient       IAuthClient
+}
+
+func NewAdminHistoryUsecase(adminHistoryRepo repo.AdminHistoryRepo, authClient IAuthClient) *AdminHistoryUsecase {
 	return &AdminHistoryUsecase{
 		adminHistoryRepo: adminHistoryRepo,
+		authClient:       authClient,
 	}
 }
 
@@ -138,13 +147,58 @@ func (h *AdminHistoryUsecase) SearchInternal(c context.Context, dto dto.AdminHis
 		return nil, 0, err
 	}
 
+	// Set default status
 	for i := range histories {
 		status := "success"
 		histories[i].Status = &status
-
-		adminName := "Admin " + string(rune(histories[i].AdminID))
-		histories[i].AdminName = &adminName
 	}
 
+	// Populate admin names and avatars
+	h.populateAdminInfo(c, histories)
+
 	return histories, total, nil
+}
+
+// populateAdminInfo populates admin names and avatars for admin history entities
+func (h *AdminHistoryUsecase) populateAdminInfo(ctx context.Context, histories []domain.AdminHistoryEntity) {
+	fmt.Println("histories", len(histories))
+	if len(histories) == 0 {
+		return
+	}
+
+	// Collect unique admin IDs
+	adminIds := make([]uint64, 0, len(histories))
+	adminIdSet := make(map[uint64]bool)
+	for _, history := range histories {
+		if !adminIdSet[history.AdminID] {
+			adminIds = append(adminIds, history.AdminID)
+			adminIdSet[history.AdminID] = true
+		}
+	}
+	// Get admin profiles from auth service
+	profilesMap, err := h.authClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+		Ids: adminIds,
+	})
+	if err != nil {
+		// Log error but don't fail the request
+		return
+	}
+	for _, profile := range profilesMap {
+		fmt.Println("profile", profile)
+	}
+	// Populate admin names and avatars
+	for i := range histories {
+		// Initialize with empty values
+		histories[i].AdminName = &[]string{""}[0]
+		histories[i].AdminAvatar = &[]string{""}[0]
+
+		if profile, exists := profilesMap[histories[i].AdminID]; exists && profile != nil {
+			if profile.FullName != "" {
+				histories[i].AdminName = &profile.FullName
+			}
+			if profile.Avatar != "" {
+				histories[i].AdminAvatar = &profile.Avatar
+			}
+		}
+	}
 }

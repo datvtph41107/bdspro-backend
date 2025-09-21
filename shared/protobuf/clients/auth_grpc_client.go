@@ -66,3 +66,33 @@ func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*authpb.Ro
 	return c.AuthInternalServiceClient.
 		GetRoleById(ctx, &sharepb.IdRequest{Id: id})
 }
+
+func (c *AuthGrpcClient) GetProfileByIds(ctx context.Context, profileIds []uint64) (*sharepb.GetProfileByIdsResponse, error) {
+	if c.AuthInternalServiceClient == nil {
+		return nil, fmt.Errorf("auth client not available")
+	}
+	return c.AuthInternalServiceClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: profileIds})
+}
+
+func (c *AuthGrpcClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]struct{}) (map[uint64]*sharepb.ProfileItem, error) {
+	if c.AuthInternalServiceClient == nil {
+		return nil, fmt.Errorf("auth client not available")
+	}
+
+	profileIDs := make([]uint64, 0, len(profileIDSet))
+	for id := range profileIDSet {
+		profileIDs = append(profileIDs, id)
+	}
+
+	profiles, err := c.AuthInternalServiceClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: profileIDs})
+	if err != nil {
+		return nil, err
+	}
+
+	profileMap := make(map[uint64]*sharepb.ProfileItem, len(profiles.Profiles))
+	for _, profile := range profiles.Profiles {
+		profileMap[profile.Id] = profile
+	}
+
+	return profileMap, nil
+}

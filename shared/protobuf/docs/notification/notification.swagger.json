@@ -810,6 +810,12 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "adminName": {
+          "type": "string"
+        },
+        "adminAvatar": {
+          "type": "string"
         }
       },
       "title": "Admin History Messages"

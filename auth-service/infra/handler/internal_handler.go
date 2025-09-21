@@ -1,6 +1,7 @@
 package handler
 
 import (
+	userinterface "auth/internal/interface"
 	"auth/internal/interface/repo"
 	_errors "common/errors"
 	_redis "common/redis"
@@ -20,17 +21,20 @@ type InternalHandler struct {
 	roleRepo     repo.RoleRepository
 	redisService *_redis.RedisService
 	roleMapper   *mapper.RoleMapper
+	userClient   userinterface.IUserGrpcClient
 }
 
 func NewInternalHandler(
 	roleRepo repo.RoleRepository,
 	redisService *_redis.RedisService,
 	roleMapper *mapper.RoleMapper,
+	userClient userinterface.IUserGrpcClient,
 ) *InternalHandler {
 	return &InternalHandler{
 		roleRepo:     roleRepo,
 		redisService: redisService,
 		roleMapper:   roleMapper,
+		userClient:   userClient,
 	}
 }
 
@@ -192,6 +196,28 @@ func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sha
 	}
 
 	return pbRole, nil
+}
+
+func (h *InternalHandler) GetProfileByIds(ctx context.Context, req *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error) {
+	// Lấy thông tin từ AuthMethod domain thay vì gọi user service
+	authMethods, err := h.roleRepo.GetAuthMethodsByIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+
+	profiles := make([]*sharepb.ProfileItem, len(authMethods))
+	for i, auth := range authMethods {
+		profiles[i] = &sharepb.ProfileItem{
+			Id:       auth.UserID,
+			FullName: auth.Name,
+			Avatar:   auth.Avatar,
+			Phone:    auth.Phone,
+		}
+	}
+
+	return &sharepb.GetProfileByIdsResponse{
+		Profiles: profiles,
+	}, nil
 }
 
 func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *authpb.GetRolesByRoleKeysRequest) (*authpb.RoleListResponse, error) {

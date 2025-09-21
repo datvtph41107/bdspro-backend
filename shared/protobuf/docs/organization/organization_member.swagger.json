@@ -16,6 +16,51 @@
     "application/json"
   ],
   "paths": {
+    "/v2/org/organization/admin/{organizationId}/members": {
+      "get": {
+        "operationId": "OrganizationMemberService_GetOrganizationMembersForAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbGetOrganizationMembersForAdminResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "OrganizationMemberService"
+        ]
+      }
+    },
     "/v2/org/organization/member": {
       "get": {
         "operationId": "OrganizationMemberService_GetOrganizationMembers",
@@ -713,6 +758,22 @@
         },
         "roleName": {
           "type": "string"
+        }
+      }
+    },
+    "organizationpbGetOrganizationMembersForAdminResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbOrganizationMember"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
