@@ -233,3 +233,39 @@ func (h *OrganizationHandler) GetGlobalProfile(ctx context.Context, req *sharepb
 	}
 	return h.OrganizationTransformer.EntityToPb(organization), nil
 }
+
+// @Summary Lấy danh sách thành viên của tổ chức (Admin only)
+// @Description Lấy danh sách thành viên của tổ chức cho admin
+// @Tags Tổ chức
+// @Accept json
+// @Produce json
+// @Param page query uint32 false "Số trang"
+// @Param size query uint32 false "Số lượng mỗi trang"
+// @Security BearerAuth
+// @Router /organization/member [get]
+func (h *OrganizationHandler) GetOrganizationMembers(ctx context.Context, req *organizationpb.GetOrganizationMembersRequest) (*organizationpb.GetOrganizationMembersResponse, error) {
+	// Get pagination parameters
+	page := 0
+	size := 10
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	// Calculate offset
+	offset := page * size
+
+	// Get organizationId from context
+	organizationId := _utils.GetOrganizationIdFromContext(ctx)
+
+	// Get organization members
+	membersWithProfiles, total, err := h.OrganizationUsecase.GetOrganizationMembers(ctx, uint32(organizationId), offset, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.OrganizationTransformer.EntitiesToGetOrganizationMembersResponse(membersWithProfiles, total), nil
+}
+

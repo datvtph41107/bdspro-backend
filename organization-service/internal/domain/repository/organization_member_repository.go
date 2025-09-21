@@ -18,4 +18,5 @@ type OrganizationMemberRepository interface {
 	FindByOrganizationId(ctx context.Context, organizationId uint32) ([]*entity.OrganizationMember, error)
 	CountMemberByOrganizationId(ctx context.Context, organizationId uint32) (uint32, error)
 	FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint32, page, size int, roleId *uint32, dealId *uint64) ([]*entity.OrganizationMember, uint32, error)
+	CountMembersByOrganizationIds(ctx context.Context, organizationIds []uint32) (map[uint32]uint32, error)
 }

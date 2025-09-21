@@ -392,3 +392,42 @@ func (r *OrganizationMemberPostgresRepository) DeleteMember(ctx context.Context,
 			"removed_at": time.Now(),
 		}).Error
 }
+
+// CountMembersByOrganizationIds - Lấy count members của nhiều organizations trong 1 query
+func (r *OrganizationMemberPostgresRepository) CountMembersByOrganizationIds(ctx context.Context, organizationIds []uint32) (map[uint32]uint32, error) {
+	if len(organizationIds) == 0 {
+		return make(map[uint32]uint32), nil
+	}
+
+	type Result struct {
+		OrganizationID uint32 `gorm:"column:organization_id"`
+		Count          uint32 `gorm:"column:count"`
+	}
+
+	var results []Result
+	err := r.db.WithContext(ctx).
+		Model(&OrganizationMemberModel{}).
+		Select("organization_id, COUNT(*) as count").
+		Where("organization_id IN ? AND is_deleted = ?", organizationIds, false).
+		Group("organization_id").
+		Scan(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Tạo map kết quả
+	countMap := make(map[uint32]uint32)
+	for _, result := range results {
+		countMap[result.OrganizationID] = result.Count
+	}
+
+	// Đảm bảo tất cả organizationIds đều có trong map (với count = 0 nếu không có members)
+	for _, orgId := range organizationIds {
+		if _, exists := countMap[orgId]; !exists {
+			countMap[orgId] = 0
+		}
+	}
+
+	return countMap, nil
+}

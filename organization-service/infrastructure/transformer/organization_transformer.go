@@ -19,6 +19,7 @@ type OrganizationTransformer interface {
 	EntitiesToGetOrganizationByUserIdResponse(organizations []*entity.Organization) *organizationpb.GetOrganizationByUserIdResponse
 	EntityToGetOwnedOrganizationResponse(organization *entity.Organization) *organizationpb.GetOwnedOrganizationResponse
 	EntitiesToGetAllOrganizationsWithMembersForAdminResponse(organizationsWithMembers []*dto.OrganizationWithMembers, total uint32) *organizationpb.GetAllOrganizationsWithMembersForAdminResponse
+	EntitiesToGetOrganizationMembersResponse(membersWithProfiles []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse
 	EntityToPb(organization *entity.Organization) *organizationpb.Organization
 	EntityToPbWithOwner(organization *entity.Organization, owner *sharepb.ProfileItem) *organizationpb.Organization
 	EntitiesToPbWithOwners(organizations []*entity.Organization, ownersMap map[uint64]*sharepb.ProfileItem) []*organizationpb.Organization
@@ -182,28 +183,6 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 			}
 		}
 
-		// Convert members
-		members := make([]*organizationpb.OrganizationMemberWithProfile, len(org.Members))
-		for j, member := range org.Members {
-			members[j] = &organizationpb.OrganizationMemberWithProfile{
-				Id:             member.OrganizationMember.ID,
-				OrganizationId: member.OrganizationMember.OrganizationID,
-				UserId:         uint32(member.OrganizationMember.UserID),
-				RoleId:         uint32(member.OrganizationMember.RoleId),
-				Status:         uint32(member.OrganizationMember.Status),
-				JoinedAt:       member.OrganizationMember.JoinedAt.Format("2006-01-02T15:04:05Z07:00"),
-				RoleName:       member.OrganizationMember.RoleName,
-				RoleKey:        member.OrganizationMember.GetRoleKey(),
-				Permissions:    member.OrganizationMember.GetPermissions(),
-				Profile:        member.Profile,
-			}
-			if member.OrganizationMember.RemovedAt != nil {
-				removedAtStr := member.OrganizationMember.RemovedAt.Format("2006-01-02T15:04:05Z07:00")
-				members[j].RemovedAt = &removedAtStr
-			}
-		}
-
-		updatedAt := _utils.FormatTimeToString(org.Organization.UpdatedAt)
 		organizationsResponse[i] = &organizationpb.OrganizationWithMembers{
 			Organization: &organizationpb.Organization{
 				Id:                 org.Organization.ID,
@@ -219,14 +198,36 @@ func (o *organizationTransformer) EntitiesToGetAllOrganizationsWithMembersForAdm
 				BusinessDomains:    businessDomains,
 				OwnerId:            org.Organization.OwnerId,
 				Owner:              org.Owner,
-				UpdatedAt:          updatedAt,
 			},
-			Members:      members,
 			TotalMembers: org.TotalMembers,
 		}
 	}
 	return &organizationpb.GetAllOrganizationsWithMembersForAdminResponse{
 		Data:  organizationsResponse,
+		Total: total,
+	}
+}
+
+func (o *organizationTransformer) EntitiesToGetOrganizationMembersResponse(membersWithProfiles []*dto.OrganizationMemberWithProfile, total uint32) *organizationpb.GetOrganizationMembersResponse {
+	membersResponse := make([]*organizationpb.OrganizationMember, len(membersWithProfiles))
+	for i, member := range membersWithProfiles {
+		membersResponse[i] = &organizationpb.OrganizationMember{
+			Id:       member.OrganizationMember.ID,
+			UserId:   member.OrganizationMember.UserID,
+			Role:     uint32(member.OrganizationMember.RoleId),
+			RoleId:   member.OrganizationMember.RoleId,
+			RoleKey:  member.OrganizationMember.RoleKey,
+			RoleName: member.OrganizationMember.RoleName,
+			Status:   uint32(member.OrganizationMember.Status),
+			Profile:  member.Profile,
+		}
+		// Note: DealMember conversion would need proper mapping if needed
+		// if member.DealMember != nil {
+		//     membersResponse[i].DealMember = convertDealMember(member.DealMember)
+		// }
+	}
+	return &organizationpb.GetOrganizationMembersResponse{
+		Data:  membersResponse,
 		Total: total,
 	}
 }

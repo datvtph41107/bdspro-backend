@@ -41,3 +41,8 @@ func (Organization) TableName() string {
 func (o *Organization) GenerateBusinessCode() string {
 	return fmt.Sprintf("TC%06d", o.ID)
 }
+
+type OrganizationWithMemberCount struct {
+	Organization
+	TotalMembers uint32 `gorm:"column:total_members"`
+}

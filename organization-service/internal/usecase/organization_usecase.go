@@ -27,6 +27,8 @@ type OrganizationUsecase interface {
 	GetAllOrganizationsForAdmin(ctx context.Context, offset, limit int) ([]*entity.Organization, uint32, error)
 	GetAllOrganizationsWithMembersForAdmin(ctx context.Context, offset, limit int) ([]*dto.OrganizationWithMembers, uint32, error)
 	GetCurrentDashboard(ctx context.Context) (*organizationpb.DashboardResponse, error)
+	GetOrganizationMembers(ctx context.Context, organizationId uint32, offset, limit int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
+	GetOrganizationMembersForAdmin(ctx context.Context, organizationId uint32, offset, limit int) ([]*dto.OrganizationMemberWithProfile, uint32, error)
 }
 
 type organizationUsecase struct {
@@ -200,76 +202,116 @@ func (o *organizationUsecase) GetAllOrganizationsWithMembersForAdmin(ctx context
 		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
 	}
 
-	// Lấy tất cả organizations
-	organizations, total, err := o.OrganizationRepository.GetAllOrganizationsWithPagination(ctx, offset, limit)
+	// Lấy organizations với member counts trong 1 query
+	organizationsWithCounts, total, err := o.OrganizationRepository.GetAllOrganizationsWithMemberCounts(ctx, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Lấy tất cả ownerIds để gọi user service một lần
-	ownerIds := make([]uint64, len(organizations))
-	for i, organization := range organizations {
-		ownerIds[i] = organization.OwnerId
-	}
-
-	// Lấy thông tin owner từ user service
-	var ownersMap map[uint64]*sharepb.ProfileItem
-	if len(ownerIds) > 0 {
-		ownersMap, err = o.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
-			Ids: ownerIds,
-		})
-		if err != nil {
-			// Log error nhưng không fail toàn bộ request
-			ownersMap = make(map[uint64]*sharepb.ProfileItem)
-		}
-	} else {
-		ownersMap = make(map[uint64]*sharepb.ProfileItem)
-	}
-
-	organizationsWithMembers := make([]*dto.OrganizationWithMembers, len(organizations))
-	for i, organization := range organizations {
-		// Lấy members của organization này
-		members, totalMembers, err := o.OrganizationMemberRepository.FindByOrganizationIdWithPagination(ctx, uint32(organization.ID), 0, 100, nil, nil)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		// Lấy thông tin user từ user service
-		profileIds := make([]uint64, len(members))
-		for j, member := range members {
-			profileIds[j] = uint64(member.UserID)
-		}
-
-		var profilesMap map[uint64]*sharepb.ProfileItem
-		if len(profileIds) > 0 {
-			profilesMap, err = o.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
-				Ids: profileIds,
-			})
-			if err != nil {
-				// Log error nhưng không fail toàn bộ request
-				profilesMap = make(map[uint64]*sharepb.ProfileItem)
-			}
-		} else {
-			profilesMap = make(map[uint64]*sharepb.ProfileItem)
-		}
-
-		membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
-		for j, member := range members {
-			membersWithProfiles[j] = &dto.OrganizationMemberWithProfile{
-				OrganizationMember: member,
-				Profile:            profilesMap[uint64(member.UserID)],
-			}
-		}
-
+	// Convert sang DTO
+	organizationsWithMembers := make([]*dto.OrganizationWithMembers, len(organizationsWithCounts))
+	for i, orgWithCount := range organizationsWithCounts {
 		organizationsWithMembers[i] = &dto.OrganizationWithMembers{
-			Organization: organization,
-			Members:      membersWithProfiles,
-			TotalMembers: totalMembers,
-			Owner:        ownersMap[organization.OwnerId],
+			Organization: &orgWithCount.Organization,
+			TotalMembers: orgWithCount.TotalMembers,
 		}
 	}
 
 	return organizationsWithMembers, total, nil
+}
+
+func (o *organizationUsecase) GetOrganizationMembers(ctx context.Context, organizationId uint32, offset, limit int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
+	// Kiểm tra quyền admin
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	hasRole, err := o.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), 0, env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !hasRole {
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	// Lấy members của organization
+	members, total, err := o.OrganizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organizationId, offset, limit, nil, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy thông tin user từ user service
+	profileIds := make([]uint64, len(members))
+	for i, member := range members {
+		profileIds[i] = uint64(member.UserID)
+	}
+
+	var profilesMap map[uint64]*sharepb.ProfileItem
+	if len(profileIds) > 0 {
+		profilesMap, err = o.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+			Ids: profileIds,
+		})
+		if err != nil {
+			// Log error nhưng không fail toàn bộ request
+			profilesMap = make(map[uint64]*sharepb.ProfileItem)
+		}
+	} else {
+		profilesMap = make(map[uint64]*sharepb.ProfileItem)
+	}
+
+	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
+	for i, member := range members {
+		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
+			OrganizationMember: member,
+			Profile:            profilesMap[uint64(member.UserID)],
+		}
+	}
+
+	return membersWithProfiles, total, nil
+}
+
+func (o *organizationUsecase) GetOrganizationMembersForAdmin(ctx context.Context, organizationId uint32, offset, limit int) ([]*dto.OrganizationMemberWithProfile, uint32, error) {
+	// Kiểm tra quyền admin
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+	hasRole, err := o.organizationAuthUsecase.HasPermission(ctx, uint32(currentUserId), 0, env.ADMIN_ROLE_KEY)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !hasRole {
+		return nil, 0, custom_error.Forbidden("You are not authorized to access this resource")
+	}
+
+	// Lấy members của organization
+	members, total, err := o.OrganizationMemberRepository.FindByOrganizationIdWithPagination(ctx, organizationId, offset, limit, nil, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy thông tin user từ user service
+	profileIds := make([]uint64, len(members))
+	for i, member := range members {
+		profileIds[i] = uint64(member.UserID)
+	}
+
+	var profilesMap map[uint64]*sharepb.ProfileItem
+	if len(profileIds) > 0 {
+		profilesMap, err = o.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+			Ids: profileIds,
+		})
+		if err != nil {
+			// Log error nhưng không fail toàn bộ request
+			profilesMap = make(map[uint64]*sharepb.ProfileItem)
+		}
+	} else {
+		profilesMap = make(map[uint64]*sharepb.ProfileItem)
+	}
+
+	membersWithProfiles := make([]*dto.OrganizationMemberWithProfile, len(members))
+	for i, member := range members {
+		membersWithProfiles[i] = &dto.OrganizationMemberWithProfile{
+			OrganizationMember: member,
+			Profile:            profilesMap[uint64(member.UserID)],
+		}
+	}
+
+	return membersWithProfiles, total, nil
 }
 
 func (o *organizationUsecase) GetProfilePublic(ctx context.Context, organizationId uint64) (*entity.Organization, error) {

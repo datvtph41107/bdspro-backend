@@ -229,6 +229,43 @@ func (r *OrganizationPostgresRepository) DeleteOrganization(ctx context.Context,
 		}).Error
 }
 
+// GetAllOrganizationsWithMemberCounts - Lấy organizations với total members trong 1 query
+func (r *OrganizationPostgresRepository) GetAllOrganizationsWithMemberCounts(ctx context.Context, offset, limit int) ([]*entity.OrganizationWithMemberCount, uint32, error) {
+	var results []*entity.OrganizationWithMemberCount
+	
+	// Query với LEFT JOIN để lấy count members
+	err := r.db.WithContext(ctx).
+		Table("organizations o").
+		Select(`
+			o.id, o.name, o.tax_code, o.business_license_url, o.address, o.detail_address,
+			o.phone, o.email, o.website, o.logo_url, o.status, o.approve_investor,
+			o.account_bank_investor, o.founded_at, o.description, o.created_at, o.updated_at,
+			COALESCE(COUNT(om.id), 0) as total_members
+		`).
+		Joins("LEFT JOIN organization_members om ON o.id = om.organization_id AND om.is_deleted = false").
+		Where("o.is_deleted = ?", false).
+		Group("o.id, o.name, o.tax_code, o.business_license_url, o.address, o.detail_address, o.phone, o.email, o.website, o.logo_url, o.status, o.approve_investor, o.account_bank_investor, o.founded_at, o.description, o.created_at, o.updated_at").
+		Order("o.created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Scan(&results).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy total count
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&entity.Organization{}).
+		Where("is_deleted = ?", false).
+		Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return results, uint32(count), nil
+}
+
 func (r *OrganizationPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*entity.Organization, error) {
 	var orgs []*entity.Organization
 	if err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&orgs).Error; err != nil {

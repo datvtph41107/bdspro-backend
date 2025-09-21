@@ -67,7 +67,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	internalOrganizationMapper := transformer.NewInternalOrganizationMapper()
 	internalOrganizationHandler := handler.NewInternalOrganizationHandler(organizationPostgresRepository, groupPostgresRepository, groupMemberPostgresRepository, organizationMemberPostgresRepository, organizationMemberUsecase, groupDealPostgresRepository, dealMemberPostgresRepository, dealUsecase, organizationBranchMemberRepository, internalOrganizationMapper)
 	authClient := client.NewAuthClient()
-	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator, internalOrganizationHandler, authClient)
+	organizationMemberHandler := handler.NewOrganizationMemberHandler(organizationMemberUsecase, organizationMemberTransformer, organizationMemberValidator, organizationUsecase, organizationTransformer, internalOrganizationHandler, authClient)
 	organizationRoleUsecase := usecase.NewOrganizationRoleUsecase(organizationRoleRepository, organizationPermissionRepository, organizationPostgresRepository, organizationAuthUsecase, organizationLogWorker, organizationMemberPostgresRepository, organizationMemberUsecase)
 	organizationRoleTransformer := transformer.NewOrganizationRoleTransformer()
 	organizationRoleValidator := validator.NewOrganizationRoleValidator()

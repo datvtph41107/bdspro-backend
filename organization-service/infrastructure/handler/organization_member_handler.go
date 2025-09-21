@@ -20,6 +20,8 @@ type OrganizationMemberHandler struct {
 	OrganizationMemberUsecase     usecase.OrganizationMemberUsecase
 	OrganizationMemberTransformer transformer.OrganizationMemberTransformer
 	OrganizationMemberValidator   validator.OrganizationMemberValidator
+	OrganizationUsecase           usecase.OrganizationUsecase
+	OrganizationTransformer       transformer.OrganizationTransformer
 	internalOrganizationService   *InternalOrganizationHandler
 	authClient                    *client.AuthClient
 }
@@ -27,6 +29,8 @@ type OrganizationMemberHandler struct {
 func NewOrganizationMemberHandler(organizationMemberUsecase usecase.OrganizationMemberUsecase,
 	organizationMemberTransformer transformer.OrganizationMemberTransformer,
 	organizationMemberValidator validator.OrganizationMemberValidator,
+	organizationUsecase usecase.OrganizationUsecase,
+	organizationTransformer transformer.OrganizationTransformer,
 	internalOrganizationService *InternalOrganizationHandler,
 	authClient *client.AuthClient,
 ) *OrganizationMemberHandler {
@@ -34,6 +38,8 @@ func NewOrganizationMemberHandler(organizationMemberUsecase usecase.Organization
 		OrganizationMemberUsecase:     organizationMemberUsecase,
 		OrganizationMemberTransformer: organizationMemberTransformer,
 		OrganizationMemberValidator:   organizationMemberValidator,
+		OrganizationUsecase:           organizationUsecase,
+		OrganizationTransformer:       organizationTransformer,
 		internalOrganizationService:   internalOrganizationService,
 		authClient:                    authClient,
 	}
