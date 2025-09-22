@@ -1,29 +1,37 @@
 package enums
 
+// EPostStatus - Trạng thái cơ bản của tin đăng
 type EPostStatus int
 
 const (
-	// EPostPublic          EPostStatus = 10
-	// EPostFinished        EPostStatus = 20
-	// EPostSold            EPostStatus = 40
-	// EPostRent            EPostStatus = 50
-	// EPostStop            EPostStatus = 60 // tùy nghiệp vụ về sau
-	// EPostStatusCompleted EPostStatus = 70
-	EPostSelling EPostStatus = 100
-	EPostSold    EPostStatus = 110
-	EPostRenting EPostStatus = 200
-	EPostRented  EPostStatus = 210
+	EPostActive   EPostStatus = 10 // Đang hoạt động
+	EPostPending  EPostStatus = 20 // Chờ duyệt
+	EPostApproved EPostStatus = 30 // Đã duyệt
+	EPostRejected EPostStatus = 40 // Từ chối
+	EPostHidden   EPostStatus = 50 // Ẩn
 )
 
 var EPostStatusNames = map[EPostStatus]string{
-	// EPostPublic:          "Công khai",
-	// EPostFinished:        "Hết hạn",
-	// EPostSold:            "Đã bán",
-	// EPostRent:            "Đã cho thuê",
-	// EPostStop:            "Dừng",
-	// EPostStatusCompleted: "Đã hoàn thành",
-	EPostSelling: "Đang bán",
-	EPostSold:    "Đã bán",
-	EPostRenting: "Đang cho thuê",
-	EPostRented:  "Đã cho thuê",
+	EPostActive:   "Đang hoạt động",
+	EPostPending:  "Chờ duyệt",
+	EPostApproved: "Đã duyệt",
+	EPostRejected: "Từ chối",
+	EPostHidden:   "Ẩn",
+}
+
+// EPostVisibleStatus - Trạng thái giao dịch của tin đăng
+type EPostVisibleStatus int
+
+const (
+	EPostTransactionSelling EPostVisibleStatus = 100 // Đang bán
+	EPostTransactionSold    EPostVisibleStatus = 110 // Đã bán
+	EPostTransactionRenting EPostVisibleStatus = 200 // Đang cho thuê
+	EPostTransactionRented  EPostVisibleStatus = 210 // Đã cho thuê
+)
+
+var EPostTransactionStatusNames = map[EPostVisibleStatus]string{
+	EPostTransactionSelling: "Đang bán",
+	EPostTransactionSold:    "Đã bán",
+	EPostTransactionRenting: "Đang cho thuê",
+	EPostTransactionRented:  "Đã cho thuê",
 }

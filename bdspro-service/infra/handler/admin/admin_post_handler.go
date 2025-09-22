@@ -2,7 +2,10 @@ package admin_handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
+	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
@@ -146,4 +149,51 @@ func (h *AdminPostHandler) UnhidePost(ctx context.Context, req *sharepb.IdReques
 		Id:      req.Id,
 		Message: "Hiện tin đăng thành công",
 	}, nil
+}
+
+// @Summary Get posts
+// @Description Get posts for admin
+// @Tags AdminPost
+// @Accept json
+// @Produce json
+// @Param page query int true "Page number"
+// @Param size query int true "Page size"
+// @Param name query string false "Post name"
+// @Param status query int false "Post status"
+// @Param fromDate query string false "From date"
+// @Param toDate query string false "To date"
+// @Success 200 {object} bdspropb.AdminPostSearchResponse
+// @Router /admin/posts [get]
+func (h *AdminPostHandler) GetPosts(ctx context.Context, req *bdspropb.AdminPostSearchRequest) (*bdspropb.AdminPostSearchResponse, error) {
+	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_XEM"}); err != nil {
+		return nil, err
+	}
+
+	// Convert proto request to DTO
+	reqDto := &dto.AdminPostSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		Title:            req.Title,
+		Status:           req.Status,
+		FromDate:         _utils.ParseStringToTime(req.FromDate),
+		ToDate:           _utils.ParseStringToTime(req.ToDate),
+		TransactionTypes: req.TransactionTypes,
+		VisibleStatuses:  req.VisibleStatuses,
+	}
+
+	// Get posts from usecase
+	posts, total, err := h.AdminPostService.GetPosts(ctx, reqDto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO to proto response using mapper
+	response := &bdspropb.AdminPostSearchResponse{
+		Data:  h.PostMapper.MapAdminPostList(ctx, posts),
+		Total: total,
+	}
+
+	return response, nil
 }

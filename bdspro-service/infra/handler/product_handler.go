@@ -8,7 +8,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	shared_usecase "bdspro/internal/usecases/shared"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	bdspropb "pb/types/bdspro"
 

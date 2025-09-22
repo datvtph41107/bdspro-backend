@@ -3,6 +3,7 @@ package admin_postgres
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"bdspro/internal/enums"
 	"common/case/crud"
 	_dto "common/dto"
 	"context"
@@ -91,12 +92,12 @@ func (r *AdminPostPostgres) GetList(ctx context.Context, _req _dto.IPagable) ([]
 
 func (r *AdminPostPostgres) Approve(ctx context.Context, id uint64) error {
 	// @bind: internal/interface
-	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("status", 1).Error
+	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("status", enums.EPostApproved).Error
 }
 
 func (r *AdminPostPostgres) Reject(ctx context.Context, id uint64) error {
 	// @bind: internal/interface
-	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("status", 2).Error
+	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("status", enums.EPostRejected).Error
 }
 
 func (r *AdminPostPostgres) Archive(ctx context.Context, postId uint64, archived bool) error {
@@ -106,10 +107,89 @@ func (r *AdminPostPostgres) Archive(ctx context.Context, postId uint64, archived
 
 func (r *AdminPostPostgres) Hide(ctx context.Context, id uint64) error {
 	// @bind: internal/interface
-	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("hidden", true).Error
+	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("status", enums.EPostHidden).Error
 }
 
 func (r *AdminPostPostgres) Unhide(ctx context.Context, id uint64) error {
 	// @bind: internal/interface
-	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("hidden", false).Error
+	return r.GetDB(ctx).Model(&domain.Post{}).Where("id = ?", id).Update("status", enums.EPostActive).Error
 }
+
+// GetAdminPosts - Lấy danh sách posts cho admin với thông tin chi tiết
+func (r *AdminPostPostgres) GetAdminPosts(ctx context.Context, req *dto.AdminPostSearchRequest) ([]domain.Post, int64, error) {
+	var results []domain.Post
+
+	query := r.GetDB(ctx).
+		Debug().
+		Model(domain.Post{}).
+		// Select(`posts.id,
+		// 	posts.title as name,
+		// 	posts.status,
+		// 	posts.created_at as published_at,
+		// 	COALESCE(profiles.display_name, profiles.full_name, 'N/A') as owner,
+		// 	COALESCE(post_stats.view_count, 0) as view_count,
+		// 	COALESCE(post_stats.interest_count, 0) as interest_count,
+		// 	COALESCE(post_stats.contact_count, 0) as contact_count
+		// 	`).
+		// Joins(`LEFT JOIN profiles ON posts.profile_id = profiles.id AND profiles.deleted_at IS NULL`).
+		// Joins(`LEFT JOIN post_stats ON posts.id = post_stats.post_id AND post_stats.deleted_at IS NULL`).
+		Where("posts.deleted_at IS NULL")
+
+	// Apply filters
+	if req.Title != "" {
+		query = query.Where("posts.title ILIKE ?", "%"+req.Title+"%")
+	}
+
+	if len(req.Status) > 0 {
+		query = query.Where("posts.status IN ?", req.Status)
+	}
+
+	if req.FromDate != nil {
+		query = query.Where("posts.created_at >= ?", req.FromDate)
+	}
+
+	if req.ToDate != nil {
+		query = query.Where("posts.created_at <= ?", req.ToDate)
+	}
+
+	if len(req.TransactionTypes) > 0 {
+		query = query.Where("posts.transaction_type IN (?)", req.TransactionTypes)
+	}
+
+	if len(req.VisibleStatuses) > 0 {
+		query = query.Where("posts.visible_status IN (?)", req.VisibleStatuses)
+	}
+
+	// Get total count
+	var total int64
+	query.Count(&total)
+
+	// Apply pagination and get results
+	err := query.
+		Order("posts.created_at DESC").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Scan(&results).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, total, nil
+}
+
+// // getStatusString converts status number to string
+// func (r *GormPostRepo) getStatusString(status uint32) string {
+// 	switch status {
+// 	case 1:
+// 		return "Chờ duyệt"
+// 	case 2:
+// 		return "Đã duyệt"
+// 	case 3:
+// 		return "Từ chối"
+// 	case 4:
+// 		return "Tạm ẩn"
+// 	default:
+// 		return "Không xác định"
+// 	}
+// }

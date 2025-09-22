@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbPostListResponse"
+              "$ref": "#/definitions/bdspropbAdminPostSearchResponse"
             }
           },
           "default": {
@@ -34,13 +34,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
           {
             "name": "page",
             "in": "query",
@@ -56,25 +49,59 @@
             "format": "int64"
           },
           {
-            "name": "sort",
+            "name": "title",
+            "description": "Tên bài viết",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "text",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "ids",
+            "name": "status",
+            "description": "Trạng thái duyệt",
             "in": "query",
             "required": false,
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uint64"
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "fromDate",
+            "description": "Từ ngày",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "description": "Đến ngày",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "transactionTypes",
+            "description": "Loại giao dịch",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "visibleStatuses",
+            "description": "Trạng thái hiển thị",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
             },
             "collectionFormat": "multi"
           }
@@ -525,6 +552,89 @@
     }
   },
   "definitions": {
+    "bdspropbAdminPostItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID bài viết"
+        },
+        "code": {
+          "type": "string",
+          "title": "Mã bài viết"
+        },
+        "title": {
+          "type": "string",
+          "title": "Tên bài viết"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái"
+        },
+        "statusName": {
+          "type": "string",
+          "title": "Tên trạng thái"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem",
+          "title": "Chủ sở hữu"
+        },
+        "publishedAt": {
+          "type": "string",
+          "title": "Ngày công khai"
+        },
+        "viewCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "Lượt xem"
+        },
+        "interestCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "Lượt quan tâm"
+        },
+        "contactCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "Lượt liên hệ"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại giao dịch"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái giao dịch"
+        },
+        "visibleStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái hiển thị"
+        }
+      },
+      "title": "AdminPostItem - Thông tin bài viết cho admin"
+    },
+    "bdspropbAdminPostSearchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAdminPostItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "AdminPostSearchResponse - Response cho API admin posts"
+    },
     "bdspropbAdminPostServiceUpdatePostBody": {
       "type": "object",
       "properties": {
@@ -695,22 +805,6 @@
         }
       }
     },
-    "bdspropbPostListResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbPost"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
     "bdspropbPostMedia": {
       "type": "object",
       "properties": {
@@ -830,6 +924,33 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
         }
       }
     }

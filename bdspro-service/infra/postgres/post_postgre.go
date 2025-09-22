@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"common/case/crud3"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	"database/sql"
 	"encoding/json"

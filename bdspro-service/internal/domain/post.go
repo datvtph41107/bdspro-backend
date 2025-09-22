@@ -18,7 +18,6 @@ type Post struct {
 	TransactionType enums.TransactionType `json:"transactionType"`
 	Title           string                `json:"title"`
 	NumDate         int                   `json:"numDate"`
-	Type            uint                  `json:"type"` // 1: normal, 2: feed, 3: share
 	Price           float64               `json:"postPrice"`
 	PriceType       uint32                `json:"priceType"`      // 1: chính thức, 2: thỏa thuận
 	PackageVisible  uint                  `json:"packageVisible"` // 1: thường, 2: VIP
@@ -31,6 +30,11 @@ type Post struct {
 	OwnerOf         enums.EOwnerOf        `gorm:"column:owner_of;default:10" json:"ownerOf"`
 	PublishedAt     *time.Time            `json:"publishedAt"`
 	PublishedBy     uint64                `json:"publishedBy"`
+	Code            string                `json:"code"`
+
+	Status            enums.EPostStatus        `gorm:"default:20" json:"status"`   // Trạng thái cơ bản
+	TransactionStatus enums.EPostVisibleStatus `gorm:"-" json:"transactionStatus"` // Trạng thái giao dịch
+	VisibleStatus     enums.EPostVisibleStatus `gorm:"-" json:"visibleStatus"`
 	// Asset           *Asset               `json:"asset"`
 }
 
@@ -42,8 +46,10 @@ type PostItem struct {
 	DistrictName      string                  `gorm:"column:district_name" json:"districtName"`
 	WardName          string                  `gorm:"column:ward_name" json:"wardName"`
 	MediaListRaw      json.RawMessage         `gorm:"column:media_list_raw" json:"-"`
-	Status            enums.EPostStatus       `gorm:"-" json:"status"`
+	Status            enums.EPostStatus       `gorm:"column:status" json:"status"`
 	TransactionStatus enums.TransactionStatus `gorm:"column:transaction_status" json:"transactionStatus"`
+
+	VisibleStatus enums.EPostVisibleStatus `gorm:"-" json:"visibleStatus"`
 }
 
 func (PostItem) TableName() string {

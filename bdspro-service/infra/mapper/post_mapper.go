@@ -1,21 +1,26 @@
 package mapper
 
 import (
+	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_utils "common/utils"
+	"context"
 	bdspropb "pb/types/bdspro"
 )
 
 type PostMapper struct {
 	ProductMapper *ProductMapper // forward reference
 	AssetMapper   *AssetMapper   // forward reference
+	UserClient    *client.UserClient
 }
 
-func NewPostMapper() *PostMapper {
-	return &PostMapper{}
+func NewPostMapper(userClient *client.UserClient) *PostMapper {
+	return &PostMapper{
+		UserClient: userClient,
+	}
 }
 
 func (*PostMapper) MapPostMedia(media *domain.PostMediaEntity) *bdspropb.PostMedia {
@@ -216,4 +221,60 @@ func (m *PostMapper) PostSavePbToDTO(req *bdspropb.PostSaveRequest) *dto.PostSav
 	}
 
 	return result
+}
+
+// MapAdminPostItem - Map domain.Post sang bdspropb.AdminPostItem
+func (m *PostMapper) MapAdminPostItem(ctx context.Context, post *domain.Post) *bdspropb.AdminPostItem {
+	return &bdspropb.AdminPostItem{
+		Id:                post.ID,
+		Code:              post.Code,
+		Title:             post.Title,
+		Status:            uint32(post.Status), // Sử dụng Status field (trạng thái cơ bản)
+		StatusName:        m.getStatusName(post.Status),
+		PublishedAt:       _utils.FormatTimeToString(post.PublishedAt),
+		ViewCount:         int64(post.NumView),
+		InterestCount:     int64(post.Like),
+		ContactCount:      int64(post.Comment),
+		TransactionType:   uint32(post.TransactionType),
+		TransactionStatus: uint32(post.TransactionStatus),
+		VisibleStatus:     uint32(post.VisibleStatus),
+	}
+}
+
+// MapAdminPostList - Map danh sách domain.Post sang bdspropb.AdminPostItem
+func (m *PostMapper) MapAdminPostList(ctx context.Context, posts []domain.Post) []*bdspropb.AdminPostItem {
+	result := make([]*bdspropb.AdminPostItem, len(posts))
+
+	ownerMap := make(map[uint64]struct{})
+	for i, post := range posts {
+		result[i] = m.MapAdminPostItem(ctx, &post)
+		ownerMap[post.OwnerID] = struct{}{}
+	}
+
+	profiles, err := m.UserClient.GetMapByIDs(ctx, ownerMap)
+	if err != nil {
+		return result
+	}
+
+	for i, post := range posts {
+		if profile, ok := profiles[post.OwnerID]; ok {
+			result[i].Owner = profile
+		}
+	}
+
+	return result
+}
+
+// Helper methods
+func (m *PostMapper) getOwnerName(post *domain.Post) string {
+	// TODO: Implement logic to get owner name from profile
+	// This might require additional data or separate query
+	return "N/A"
+}
+
+func (m *PostMapper) getStatusName(status enums.EPostStatus) string {
+	if name, exists := enums.EPostStatusNames[status]; exists {
+		return name
+	}
+	return "Không xác định"
 }

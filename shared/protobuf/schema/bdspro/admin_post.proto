@@ -9,7 +9,7 @@ import "shared/common.proto";
 import "google/api/annotations.proto";
 
 service AdminPostService {
-  rpc GetPosts(sharepb.IdRequest) returns (PostListResponse) {
+  rpc GetPosts(AdminPostSearchRequest) returns (AdminPostSearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/admin/posts"
     };
@@ -63,4 +63,39 @@ message PostRequest {
   string id = 1;
   string title = 2;
   string content = 3;
+}
+
+// AdminPostSearchRequest - Request cho API admin posts
+message AdminPostSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string title = 3;                    // Tên bài viết
+  repeated uint32 status = 4;                  // Trạng thái duyệt
+  string fromDate = 5;                // Từ ngày
+  string toDate = 6;                  // Đến ngày
+  repeated uint32 transactionTypes = 7; // Loại giao dịch
+  repeated uint32 visibleStatuses = 8; // Trạng thái hiển thị
+}
+
+// AdminPostSearchResponse - Response cho API admin posts
+message AdminPostSearchResponse {
+  repeated AdminPostItem data = 1;
+  int64 total = 2;
+}
+
+// AdminPostItem - Thông tin bài viết cho admin
+message AdminPostItem {
+  uint64 id = 1;                      // ID bài viết
+  string code = 2;                    // Mã bài viết
+  string title = 3;                   // Tên bài viết
+  uint32 status = 4;                  // Trạng thái
+  string statusName = 5;              // Tên trạng thái
+  sharepb.ProfileItem owner = 6;      // Chủ sở hữu
+  string publishedAt = 7;             // Ngày công khai
+  int64 viewCount = 8;                // Lượt xem
+  int64 interestCount = 9;            // Lượt quan tâm
+  int64 contactCount = 10;            // Lượt liên hệ
+  uint32 transactionType = 11;        // Loại giao dịch
+  uint32 transactionStatus = 12;      // Trạng thái giao dịch
+  uint32 visibleStatus = 13;          // Trạng thái hiển thị
 }

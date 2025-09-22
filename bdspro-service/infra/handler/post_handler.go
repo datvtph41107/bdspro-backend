@@ -70,7 +70,7 @@ func (s *PostService) GetPostByIDs(ctx context.Context, req *bdspropb.GetPostByI
 		return nil, err
 	}
 	for i, post := range posts {
-		posts[i].Status = s.UC.MapPostStatus(post)
+		posts[i].VisibleStatus = s.UC.MapPostStatus(post)
 	}
 	postList := s.PostMapper.PostPointerToPbList(posts)
 

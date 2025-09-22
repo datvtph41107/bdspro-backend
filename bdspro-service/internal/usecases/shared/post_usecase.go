@@ -291,21 +291,21 @@ func (s *PostUsecase) Detail(c context.Context, id uint64) (*dto.PostDetail, err
 	}, nil
 }
 
-func (s *PostUsecase) MapPostStatus(post *domain.PostItem) enums.EPostStatus {
+func (s *PostUsecase) MapPostStatus(post *domain.PostItem) enums.EPostVisibleStatus {
 	// product := post.Product
 	transactionType := post.TransactionType
 	if transactionType == enums.TransactionTypeSale &&
 		post.TransactionStatus == enums.TransactionStatusCompleted {
-		post.Status = enums.EPostSold
+		post.VisibleStatus = enums.EPostTransactionSold
 	} else if transactionType == enums.TransactionTypeSale {
-		post.Status = enums.EPostSelling
+		post.VisibleStatus = enums.EPostTransactionSelling
 	} else if transactionType == enums.TransactionTypeRent &&
 		post.TransactionStatus == enums.TransactionStatusCompleted {
-		post.Status = enums.EPostRented
+		post.VisibleStatus = enums.EPostTransactionRented
 	} else {
-		post.Status = enums.EPostRenting
+		post.VisibleStatus = enums.EPostTransactionRenting
 	}
-	return post.Status
+	return post.VisibleStatus
 }
 
 func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
@@ -316,7 +316,7 @@ func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest
 	}
 
 	for i, entity := range entities {
-		entities[i].Status = s.MapPostStatus(&entity)
+		entities[i].VisibleStatus = s.MapPostStatus(&entity)
 	}
 
 	return entities, total, nil
@@ -330,7 +330,7 @@ func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) (
 	}
 
 	for i, entity := range entities {
-		entities[i].Status = s.MapPostStatus(&entity)
+		entities[i].VisibleStatus = s.MapPostStatus(&entity)
 	}
 
 	return entities, total, nil
@@ -343,7 +343,7 @@ func (s *PostUsecase) ProductPostLink(c context.Context, id uint64, dto *dto.Pos
 	}
 
 	for i, entity := range entities {
-		entities[i].Status = s.MapPostStatus(&entity)
+		entities[i].VisibleStatus = s.MapPostStatus(&entity)
 	}
 
 	return &entities, nil
@@ -355,7 +355,7 @@ func (s *PostUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	if requiredOwner.Status == enums.EPostSelling || requiredOwner.Status == enums.EPostRenting {
+	if requiredOwner.VisibleStatus == enums.EPostTransactionSelling || requiredOwner.VisibleStatus == enums.EPostTransactionRenting {
 		return &_routes.Except{
 			Code:    400,
 			Message: "Tin đăng đã được đăng",

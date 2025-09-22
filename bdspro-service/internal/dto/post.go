@@ -3,7 +3,7 @@ package dto
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/enums"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"time"
 )
 
@@ -116,6 +116,17 @@ type SearchRequest struct {
 	Status          []uint64   `form:"status"`
 	Types           []uint64   `form:"types"` // 1: hiển thị, 2: hết hạn; 3: tạm ẩn
 	PackageVisibles []uint64   `form:"packageVisibles"`
+}
+
+// AdminPostSearchRequest - Request cho API admin posts
+type AdminPostSearchRequest struct {
+	_dto.Pagable
+	Title            string     `form:"title"`            // Tên bài viết
+	Status           []uint32   `form:"status"`           // Trạng thái duyệt
+	FromDate         *time.Time `form:"fromDate"`         // Từ ngày
+	ToDate           *time.Time `form:"toDate"`           // Đến ngày
+	TransactionTypes []uint32   `form:"transactionTypes"` // Loại giao dịch
+	VisibleStatuses  []uint32   `form:"visibleStatuses"`  // Trạng thái hiển thị
 }
 
 type PostPublishSearch struct {
