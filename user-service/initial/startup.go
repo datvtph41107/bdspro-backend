@@ -3,7 +3,6 @@ package initial
 import (
 	"user/infra/handler"
 	"user/infra/routes"
-	"user/infra/services"
 )
 
 type InitialApp struct {
@@ -19,11 +18,12 @@ type InitialApp struct {
 	ReportHandler       *handler.ReportHandler
 	ReportReasonHandler *handler.ReportReasonHandler
 	ReportProofHandler  *handler.ReportProofHandler
-	ProfileService      *services.GrpcProfileService
-	AuthService         *services.GrpcAuthService
-	RateService         *services.RateService
+	ProfileService      *handler.GrpcProfileService
+	AuthService         *handler.GrpcAuthService
+	RateService         *handler.RateService
 	// Admin Services
-	AdminHandler *handler.AdminHandler
+	AdminHandler        *handler.AdminHandler
+	BookmarkUserHandler *handler.BookmarkUserHandler
 	// GroupRouter   *routes.GroupRouter
 }
 
@@ -38,10 +38,11 @@ func NewInitialApp(authService *routes.AuthRouter,
 	reportHandler *handler.ReportHandler,
 	reportReasonHandler *handler.ReportReasonHandler,
 	reportProofHandler *handler.ReportProofHandler,
-	profileService *services.GrpcProfileService,
-	grpcAuthService *services.GrpcAuthService,
-	rateService *services.RateService,
+	profileService *handler.GrpcProfileService,
+	grpcAuthService *handler.GrpcAuthService,
+	rateService *handler.RateService,
 	adminHandler *handler.AdminHandler,
+	bookmarkUserHandler *handler.BookmarkUserHandler,
 ) *InitialApp {
 	return &InitialApp{
 		Auth:                authService,
@@ -59,5 +60,6 @@ func NewInitialApp(authService *routes.AuthRouter,
 		AuthService:         grpcAuthService,
 		RateService:         rateService,
 		AdminHandler:        adminHandler,
+		BookmarkUserHandler: bookmarkUserHandler,
 	}
 }

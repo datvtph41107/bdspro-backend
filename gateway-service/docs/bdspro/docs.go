@@ -15,9 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/dashboard/cash-profit/time": {
+        "/admin/assets": {
             "get": {
-                "description": "Get cash profit time",
+                "description": "Get assets",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,36 +25,102 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Dashboard"
+                    "AdminAsset"
                 ],
-                "summary": "Get cash profit time",
+                "summary": "Get assets",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "From date",
-                        "name": "fromDate",
-                        "in": "query"
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "To date",
-                        "name": "toDate",
-                        "in": "query"
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.GetCashProfitTimeResponse"
+                            "$ref": "#/definitions/bdspropb.AssetSearchResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an asset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Update an asset",
+                "parameters": [
+                    {
+                        "description": "Asset to update",
+                        "name": "asset",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SaveAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Asset"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new asset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Create a new asset",
+                "parameters": [
+                    {
+                        "description": "Asset to create",
+                        "name": "asset",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SaveAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Asset"
                         }
                     }
                 }
             }
         },
-        "/dashboard/cash-profit/type": {
-            "get": {
-                "description": "Get cash profit",
+        "/admin/assets/archived": {
+            "put": {
+                "description": "Archive an asset",
                 "consumes": [
                     "application/json"
                 ],
@@ -62,28 +128,486 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Dashboard"
+                    "AdminAsset"
                 ],
-                "summary": "Get cash profit",
+                "summary": "Archive an asset",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "From date",
-                        "name": "fromDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "To date",
-                        "name": "toDate",
-                        "in": "query"
+                        "description": "Archive request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ArchivedRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.GetCashProfitResponse"
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/assets/merge": {
+            "post": {
+                "description": "Merge multiple assets into one",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Merge assets",
+                "parameters": [
+                    {
+                        "description": "Merge request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.MergeAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Asset"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/assets/split": {
+            "post": {
+                "description": "Split an asset into multiple assets",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Split asset",
+                "parameters": [
+                    {
+                        "description": "Split request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SplitAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Asset"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/assets/{id}": {
+            "delete": {
+                "description": "Delete an asset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Delete an asset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/assets/{id}/approve": {
+            "post": {
+                "description": "Approve an asset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Approve an asset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/assets/{id}/reject": {
+            "post": {
+                "description": "Reject an asset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Reject an asset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/archived": {
+            "put": {
+                "description": "Archive a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Archive a post",
+                "parameters": [
+                    {
+                        "description": "Archive request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ArchivedRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{id}/approve": {
+            "post": {
+                "description": "Approve a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Approve a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{id}/hide": {
+            "post": {
+                "description": "Hide a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Hide a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{id}/reject": {
+            "post": {
+                "description": "Reject a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Reject a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{id}/unhide": {
+            "post": {
+                "description": "Unhide a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Unhide a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products": {
+            "get": {
+                "description": "Get products",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Get products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SearchResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Update a product",
+                "parameters": [
+                    {
+                        "description": "Product to update",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductSaveRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Create a new product",
+                "parameters": [
+                    {
+                        "description": "Product to create",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductSaveRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}": {
+            "delete": {
+                "description": "Delete a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Delete a product",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
                         }
                     }
                 }
@@ -541,535 +1065,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/group/asset/share": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Chia sẻ sản phẩm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Group"
-                ],
-                "summary": "Chia sẻ sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Product Share Request",
-                        "name": "productShareRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/org_dto.ProductShareRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Thành công",
-                        "schema": {
-                            "$ref": "#/definitions/domain.AssetShare"
-                        }
-                    },
-                    "400": {
-                        "description": "Dữ liệu không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/group/product/share": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Chia sẻ sản phẩm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Group"
-                ],
-                "summary": "Chia sẻ sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Product Share Request",
-                        "name": "productShareRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/org_dto.ProductShareRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Thành công",
-                        "schema": {
-                            "$ref": "#/definitions/domain.AssetShare"
-                        }
-                    },
-                    "400": {
-                        "description": "Dữ liệu không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/group/product/{groupId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Danh sách sản phẩm của nhóm",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Group"
-                ],
-                "summary": "Danh sách sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Group ID",
-                        "name": "groupId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.Product"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Dữ liệu không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Lỗi server",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/org/asset/archived/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Lấy theo ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AssetArchivedDTO"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/merge": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Gộp tài sản",
-                "parameters": [
-                    {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.MergeAssetDTO"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/publish/{profileId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Lấy danh sách tài sản đã đăng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "profileId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/search": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Lấy danh sách tài sản của người dùng",
-                "parameters": [
-                    {
-                        "type": "boolean",
-                        "name": "archived",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "wardId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/split": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Lấy danh sách tài sản có số lượng con",
-                "parameters": [
-                    {
-                        "type": "boolean",
-                        "name": "archived",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "wardId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Tách tài sản",
-                "parameters": [
-                    {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SplitAssetDTO"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/asset/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Xem chi tiết",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Tài sản"
-                ],
-                "summary": "Xóa",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/org/assets/cost-type": {
             "get": {
                 "security": [
@@ -1448,6 +1443,11 @@ const docTemplate = `{
                 "summary": "Lấy danh sách bài đăng toàn cục",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "name": "-",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "content",
                         "in": "query"
@@ -1465,6 +1465,11 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "name": "hidden",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isPublished",
                         "in": "query"
                     },
                     {
@@ -1606,6 +1611,11 @@ const docTemplate = `{
                 "summary": "Lấy danh sách bài đăng cá nhân",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "name": "-",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "content",
                         "in": "query"
@@ -1623,6 +1633,11 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "name": "hidden",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isPublished",
                         "in": "query"
                     },
                     {
@@ -2694,69 +2709,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/user/asset": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Tạo mới",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.Asset"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/archived/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lấy theo ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AssetArchivedDTO"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/user/asset/legal": {
             "get": {
                 "security": [
@@ -2796,310 +2748,6 @@ const docTemplate = `{
                         "type": "string",
                         "name": "sort",
                         "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/merge": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Gộp tài sản",
-                "parameters": [
-                    {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.MergeAssetDTO"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/publish/{profileId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lấy danh sách tài sản đã đăng",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "profileId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/search": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lấy danh sách tài sản của người dùng",
-                "parameters": [
-                    {
-                        "type": "boolean",
-                        "name": "archived",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "wardId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/split": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Lấy danh sách tài sản có số lượng con",
-                "parameters": [
-                    {
-                        "type": "boolean",
-                        "name": "archived",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "wardId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Tách tài sản",
-                "parameters": [
-                    {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SplitAssetDTO"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/user/asset/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Xem chi tiết",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User: Tài sản"
-                ],
-                "summary": "Xóa",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {}
@@ -4165,6 +3813,11 @@ const docTemplate = `{
                 "summary": "Lấy danh sách bài đăng toàn cục",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "name": "-",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "content",
                         "in": "query"
@@ -4182,6 +3835,11 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "name": "hidden",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isPublished",
                         "in": "query"
                     },
                     {
@@ -4349,6 +4007,11 @@ const docTemplate = `{
                 "summary": "Lấy danh sách bài đăng cá nhân",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "name": "-",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "content",
                         "in": "query"
@@ -4366,6 +4029,11 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "name": "hidden",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isPublished",
                         "in": "query"
                     },
                     {
@@ -4565,7 +4233,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.SaveAssetRequest"
+                            "$ref": "#/definitions/bdspropb.SaveAssetRequest"
                         }
                     }
                 ],
@@ -4591,7 +4259,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.SaveAssetRequest"
+                            "$ref": "#/definitions/bdspropb.SaveAssetRequest"
                         }
                     }
                 ],
@@ -4623,7 +4291,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalDTO"
                         }
                     }
                 ],
@@ -4631,7 +4299,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalListDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalListDTO"
                         }
                     }
                 }
@@ -4660,7 +4328,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalDTO"
                         }
                     }
                 ],
@@ -4668,7 +4336,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalDTO"
                         }
                     }
                 }
@@ -4705,7 +4373,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalDTO"
                         }
                     }
                 }
@@ -4741,7 +4409,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalDTO"
                         }
                     }
                 ],
@@ -4749,7 +4417,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
+                            "$ref": "#/definitions/bdspropb.AssetLegalDTO"
                         }
                     }
                 }
@@ -4846,7 +4514,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetCostDTO"
+                            "$ref": "#/definitions/bdspropb.AssetCostDTO"
                         }
                     }
                 ],
@@ -4874,7 +4542,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetCostTypeDTO"
+                            "$ref": "#/definitions/bdspropb.AssetCostTypeDTO"
                         }
                     }
                 ],
@@ -4933,7 +4601,8 @@ const docTemplate = `{
                         "enum": [
                             10,
                             20,
-                            30
+                            30,
+                            40
                         ],
                         "type": "integer",
                         "description": "Owner Type",
@@ -4986,7 +4655,8 @@ const docTemplate = `{
                         "enum": [
                             10,
                             20,
-                            30
+                            30,
+                            40
                         ],
                         "type": "integer",
                         "description": "Owner Type",
@@ -5021,7 +4691,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetCostTypeDTO"
+                            "$ref": "#/definitions/bdspropb.AssetCostTypeDTO"
                         }
                     }
                 ],
@@ -5106,7 +4776,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetCostDTO"
+                            "$ref": "#/definitions/bdspropb.AssetCostDTO"
                         }
                     }
                 ],
@@ -5163,7 +4833,8 @@ const docTemplate = `{
                         "enum": [
                             10,
                             20,
-                            30
+                            30,
+                            40
                         ],
                         "type": "integer",
                         "description": "Owner Type",
@@ -5222,7 +4893,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetExploitationDTO"
+                            "$ref": "#/definitions/bdspropb.AssetExploitationDTO"
                         }
                     }
                 ],
@@ -5283,7 +4954,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.AssetExploitationDTO"
+                            "$ref": "#/definitions/bdspropb.AssetExploitationDTO"
                         }
                     }
                 ],
@@ -5340,7 +5011,8 @@ const docTemplate = `{
                         "enum": [
                             10,
                             20,
-                            30
+                            30,
+                            40
                         ],
                         "type": "integer",
                         "description": "Owner Type",
@@ -5374,6 +5046,77 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/dto.MergeAssetDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/asset/organization": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép lấy danh sách tài sản thuộc về tổ chức hiện tại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization: Tài sản"
+                ],
+                "summary": "Lấy danh sách tài sản của tổ chức hiện tại",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Từ khóa tìm kiếm",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại tài sản",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Trạng thái lưu trữ",
+                        "name": "archived",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép tạo tài sản mới cho tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization: Tài sản"
+                ],
+                "summary": "Tạo tài sản cho tổ chức",
+                "parameters": [
+                    {
+                        "description": "Thông tin tài sản cần tạo",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SaveAssetRequest"
                         }
                     }
                 ],
@@ -5427,66 +5170,13 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
+                        "name": "keyword",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "name": "wardId",
+                        "name": "type",
                         "in": "query"
                     }
                 ],
@@ -5514,66 +5204,13 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
+                        "name": "keyword",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "name": "wardId",
+                        "name": "type",
                         "in": "query"
                     }
                 ],
@@ -5601,66 +5238,13 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "name": "districtId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "onlyParent",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "propertyTypeIds",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "provinceId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        },
-                        "collectionFormat": "csv",
-                        "name": "rentStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "text",
+                        "name": "keyword",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "name": "wardId",
+                        "name": "type",
                         "in": "query"
                     }
                 ],
@@ -5833,6 +5417,44 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/list/project-build": {
+            "get": {
+                "description": "Lấy danh sách tòa nhà trong dự án",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy danh sách tòa nhà trong dự án",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/bdspro/v2/list/property-type": {
             "get": {
                 "description": "Lấy danh sách loại tài sản",
@@ -5934,7 +5556,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.ArchivedRequest"
+                            "$ref": "#/definitions/bdspropb.ArchivedRequest"
                         }
                     }
                 ],
@@ -5996,7 +5618,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.SaveChildRequest"
+                            "$ref": "#/definitions/bdspropb.SaveChildRequest"
                         }
                     }
                 ],
@@ -6090,7 +5712,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.SaveChildRequest"
+                            "$ref": "#/definitions/bdspropb.SaveChildRequest"
                         }
                     }
                 ],
@@ -6122,7 +5744,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.DepositeRequest"
+                            "$ref": "#/definitions/bdspropb.DepositeRequest"
                         }
                     }
                 ],
@@ -6202,6 +5824,140 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/_routes.ResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/v2/product/group/{groupId}": {
+            "get": {
+                "description": "Get list of products in a group based on sharing access",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Get group products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Parent ID",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Property Type ID",
+                        "name": "propertyTypeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Document Type ID",
+                        "name": "docTypeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "projectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Province ID",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "District ID",
+                        "name": "districtId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Ward ID",
+                        "name": "wardId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Transaction Type",
+                        "name": "transactionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sale Status",
+                        "name": "saleStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Rent Status",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sale Visibility",
+                        "name": "saleVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Rent Visibility",
+                        "name": "rentVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Source Type",
+                        "name": "sourceType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Archived",
+                        "name": "archived",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SearchResponse"
                         }
                     }
                 }
@@ -6784,7 +6540,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Chi tiết sản phẩm",
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.IdRequest"
+                            "$ref": "#/definitions/bdspropb.IdRequest"
                         }
                     }
                 }
@@ -6850,150 +6606,127 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v2/bdspro/v2/transaction": {
+        "/v2/bdspro/v2/project-build": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
+                "description": "Tạo mới tòa nhà",
+                "consumes": [
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Giao dịch"
+                    "ProjectBuild"
                 ],
-                "summary": "Tạo giao dịch",
+                "summary": "Tạo mới tòa nhà",
                 "parameters": [
                     {
-                        "description": "Thông tin giao dịch",
-                        "name": "transaction",
+                        "description": "Thông tin tòa nhà",
+                        "name": "projectBuild",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.CreateTransactionRequest"
+                            "$ref": "#/definitions/bdspropb.ProjectBuild"
                         }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProjectBuild"
+                        }
+                    }
+                }
             }
         },
-        "/v2/bdspro/v2/transaction/list": {
+        "/v2/bdspro/v2/project-build/detail/{id}": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
+                "description": "Lấy thông tin chi tiết của tòa nhà theo ID",
+                "consumes": [
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Giao dịch"
+                    "ProjectBuild"
                 ],
-                "summary": "Lấy danh sách giao dịch",
+                "summary": "Lấy thông tin chi tiết của tòa nhà theo ID",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Trang",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProjectBuild"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/v2/project-build/items": {
+            "get": {
+                "description": "Lấy danh sách tòa nhà",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProjectBuild"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Kích thước trang",
+                        "description": "Size",
                         "name": "size",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Loại giao dịch",
-                        "name": "transactionType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Trạng thái phê duyệt",
-                        "name": "approvalStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Trạng thái giao dịch",
-                        "name": "transactionStatus",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ngày bắt đầu",
-                        "name": "startDate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ngày kết thúc",
-                        "name": "endDate",
-                        "in": "query"
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ListItemResponse"
+                        }
+                    }
+                }
             }
         },
-        "/v2/bdspro/v2/transaction/types": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Giao dịch"
-                ],
-                "summary": "Lấy danh sách loại giao dịch",
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/transaction/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Giao dịch"
-                ],
-                "summary": "Lấy chi tiết giao dịch",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            },
+        "/v2/bdspro/v2/project-build/{id}": {
             "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
+                "description": "Cập nhật thông tin tòa nhà",
+                "consumes": [
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Giao dịch"
+                    "ProjectBuild"
                 ],
-                "summary": "Cập nhật giao dịch",
+                "summary": "Cập nhật thông tin tòa nhà",
                 "parameters": [
                     {
                         "type": "integer",
@@ -7003,30 +6736,36 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Thông tin giao dịch",
-                        "name": "transaction",
+                        "description": "Thông tin tòa nhà",
+                        "name": "projectBuild",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/pb_bdspro.UpdateTransactionRequest"
+                            "$ref": "#/definitions/bdspropb.ProjectBuild"
                         }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProjectBuild"
+                        }
+                    }
+                }
             },
             "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
+                "description": "Xóa tòa nhà",
+                "consumes": [
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Giao dịch"
+                    "ProjectBuild"
                 ],
-                "summary": "Xóa giao dịch",
+                "summary": "Xóa tòa nhà",
                 "parameters": [
                     {
                         "type": "integer",
@@ -7036,59 +6775,14 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/transaction/{id}/approve": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
                     }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Giao dịch"
-                ],
-                "summary": "Phê duyệt giao dịch",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v2/bdspro/v2/transaction/{id}/reject": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Giao dịch"
-                ],
-                "summary": "Từ chối giao dịch",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
+                }
             }
         }
     },
@@ -7108,6 +6802,1353 @@ const docTemplate = `{
                 },
                 "totalElements": {
                     "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AmenityItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.Apartment": {
+            "type": "object",
+            "properties": {
+                "apartmentAttrId": {
+                    "type": "integer"
+                },
+                "archived": {
+                    "type": "integer"
+                },
+                "buildId": {
+                    "type": "integer"
+                },
+                "floor": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ordinal": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.ApartmentAttribute": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "type": "number"
+                },
+                "blueprintUrl": {
+                    "type": "string"
+                },
+                "furniture": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "numBathroom": {
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "bdspropb.ArchivedRequest": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.Asset": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "buyedDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "docStatus": {
+                    "description": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "product": {
+                    "$ref": "#/definitions/bdspropb.ProductResponse"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "propertyTypeName": {
+                    "type": "string"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AssetCostDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "costTypeId": {
+                    "type": "integer"
+                },
+                "costTypeName": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AssetCostTypeDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isCustom": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AssetCreateWithProduct": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "integer"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AssetExploitationDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "assetID": {
+                    "type": "integer"
+                },
+                "contractName": {
+                    "type": "string"
+                },
+                "contractValue": {
+                    "type": "number"
+                },
+                "customer": {
+                    "type": "string"
+                },
+                "cyclePay": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "fileContract": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "typeId": {
+                    "type": "integer"
+                },
+                "typeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AssetLegalDTO": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                },
+                "relatedSplitMergeId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AssetLegalListDTO": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AssetLegalDTO"
+                    }
+                },
+                "totalElements": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AssetSearchResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.Asset"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AttributeProduct": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.DepositeRequest": {
+            "type": "object",
+            "properties": {
+                "contactId": {
+                    "type": "integer"
+                },
+                "depositeAmount": {
+                    "type": "number"
+                },
+                "depositeNote": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.Developer": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "backgroundUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "foundedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.DocType": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.HouseInfo": {
+            "type": "object",
+            "properties": {
+                "furniture": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "numBathroom": {
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "numFront": {
+                    "type": "integer"
+                },
+                "numToilet": {
+                    "type": "integer"
+                },
+                "orientation": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.IdRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.ItemResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.LegalItem": {
+            "type": "object",
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentName": {
+                    "type": "string"
+                },
+                "documentType": {
+                    "type": "string"
+                },
+                "documentUrl": {
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issuedDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.ListItemResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ItemResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.MediaItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.MergeAssetRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "new_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.PostSaveWithProduct": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "expiredAt": {
+                    "type": "integer"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "metadatas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.MediaItem"
+                    }
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "type": "integer"
+                },
+                "postPrice": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.ProductPrice": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "deposite": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "priceOwner": {
+                    "type": "number"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "rentCommission": {
+                    "description": "1000000 -\u003e 10%",
+                    "type": "number"
+                },
+                "rentPaymentCycle": {
+                    "type": "integer"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "saleCommission": {
+                    "description": "1000000 -\u003e 10%",
+                    "type": "number"
+                },
+                "salePrice": {
+                    "type": "number"
+                }
+            }
+        },
+        "bdspropb.ProductPrivate": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "importPrice": {
+                    "type": "number"
+                },
+                "internalNote": {
+                    "type": "string"
+                },
+                "operatingCost": {
+                    "type": "number"
+                },
+                "privateDocs": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "targetProfit": {
+                    "type": "number"
+                }
+            }
+        },
+        "bdspropb.ProductResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AmenityItem"
+                    }
+                },
+                "apartment": {
+                    "$ref": "#/definitions/bdspropb.Apartment"
+                },
+                "apartmentAttribute": {
+                    "$ref": "#/definitions/bdspropb.ApartmentAttribute"
+                },
+                "apartmentId": {
+                    "type": "integer"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AttributeProduct"
+                    }
+                },
+                "build": {
+                    "$ref": "#/definitions/bdspropb.ProjectBuild"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developer": {
+                    "$ref": "#/definitions/bdspropb.Developer"
+                },
+                "district": {
+                    "$ref": "#/definitions/bdspropb.Region"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "docType": {
+                    "$ref": "#/definitions/bdspropb.DocType"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/bdspropb.HouseInfo"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastPriceId": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "orgStatus": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "positionUrl": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/bdspropb.ProductPrice"
+                },
+                "priceSuggest": {
+                    "type": "number"
+                },
+                "privateData": {
+                    "$ref": "#/definitions/bdspropb.ProductPrivate"
+                },
+                "project": {
+                    "$ref": "#/definitions/bdspropb.Project"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/bdspropb.ItemResponse"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "province": {
+                    "$ref": "#/definitions/bdspropb.Region"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "rentTransaction": {
+                    "$ref": "#/definitions/bdspropb.Transaction"
+                },
+                "rentVisibility": {
+                    "type": "integer"
+                },
+                "saleStatus": {
+                    "type": "integer"
+                },
+                "saleTransaction": {
+                    "$ref": "#/definitions/bdspropb.Transaction"
+                },
+                "saleVisibility": {
+                    "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
+                },
+                "ward": {
+                    "$ref": "#/definitions/bdspropb.Region"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.ProductSaveRequest": {
+            "type": "object",
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "asset": {
+                    "$ref": "#/definitions/bdspropb.AssetCreateWithProduct"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/bdspropb.HouseInfo"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/bdspropb.PostSaveWithProduct"
+                },
+                "priceData": {
+                    "$ref": "#/definitions/bdspropb.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/bdspropb.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "rentVisibility": {
+                    "type": "integer"
+                },
+                "saleStatus": {
+                    "type": "integer"
+                },
+                "saleVisibility": {
+                    "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.Project": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "developerId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.ProjectBuild": {
+            "type": "object",
+            "properties": {
+                "apartments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.Apartment"
+                    }
+                },
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ApartmentAttribute"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "numApartment": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "projectId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.Region": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.Response": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.SaveAssetRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.LegalItem"
+                    }
+                },
+                "legalStatus": {
+                    "description": "10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ",
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "parentAssetId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "splitMergeStatus": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.SaveChildRequest": {
+            "type": "object",
+            "properties": {
+                "amenityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "asset": {
+                    "$ref": "#/definitions/bdspropb.AssetCreateWithProduct"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "docTypeId": {
+                    "type": "integer"
+                },
+                "googleMapLink": {
+                    "type": "string"
+                },
+                "houseInfo": {
+                    "$ref": "#/definitions/bdspropb.HouseInfo"
+                },
+                "mediaItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.MediaItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/bdspropb.PostSaveWithProduct"
+                },
+                "priceData": {
+                    "$ref": "#/definitions/bdspropb.ProductPrice"
+                },
+                "productPrivate": {
+                    "$ref": "#/definitions/bdspropb.ProductPrivate"
+                },
+                "projectId": {
+                    "type": "integer"
+                },
+                "propertyTypeId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "rentVisibility": {
+                    "type": "integer"
+                },
+                "saleStatus": {
+                    "type": "integer"
+                },
+                "saleVisibility": {
+                    "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ProductResponse"
+                    }
+                },
+                "totalElements": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.SplitAssetRequest": {
+            "type": "object",
+            "properties": {
+                "datas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.Asset"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.Transaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approvalDate": {
+                    "type": "string"
+                },
+                "approvalStatus": {
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "type": "integer"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "contactId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "depositeAmount": {
+                    "type": "number"
+                },
+                "depositeNote": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDeleted": {
+                    "type": "boolean"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "paymentMethodId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "relatedDealId": {
+                    "type": "integer"
+                },
+                "relatedTransactionId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
+                },
+                "transactionStatus": {
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },
@@ -7360,7 +8401,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "parentAssetId": {
                     "type": "integer"
@@ -7450,7 +8491,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "type": {
                     "$ref": "#/definitions/enums.ECostType"
@@ -7490,7 +8531,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "type": {
                     "$ref": "#/definitions/enums.ECostType"
@@ -7558,7 +8599,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "startDate": {
                     "type": "string"
@@ -7605,14 +8646,8 @@ const docTemplate = `{
                 "documentUrl": {
                     "type": "string"
                 },
-                "expiryDate": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
-                },
-                "issuedDate": {
-                    "type": "string"
                 },
                 "relatedSplitMergeId": {
                     "type": "integer"
@@ -7821,8 +8856,8 @@ const docTemplate = `{
                 "ownerId": {
                     "type": "integer"
                 },
-                "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                "ownerOf": {
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "packageVisible": {
                     "description": "1: thường, 2: VIP",
@@ -7839,6 +8874,12 @@ const docTemplate = `{
                     "$ref": "#/definitions/domain.Product"
                 },
                 "productId": {
+                    "type": "integer"
+                },
+                "publishedAt": {
+                    "type": "string"
+                },
+                "publishedBy": {
                     "type": "integer"
                 },
                 "title": {
@@ -7958,6 +8999,9 @@ const docTemplate = `{
                 "districtId": {
                     "type": "integer"
                 },
+                "districtName": {
+                    "type": "string"
+                },
                 "docType": {
                     "$ref": "#/definitions/domain.DocTypeItem"
                 },
@@ -7992,8 +9036,8 @@ const docTemplate = `{
                     "description": "Ai sở hữu (nếu đã bán)",
                     "type": "integer"
                 },
-                "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                "ownerOf": {
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "parentId": {
                     "description": "DepositeID      *uint64             ` + "`" + `gorm:\"type:int8\" json:\"depositeId,omitempty\"` + "`" + `\nID              uint64              ` + "`" + `gorm:\"primaryKey;autoIncrement\" json:\"id,omitempty\"` + "`" + `\nDeposite        *Deposite           ` + "`" + `gorm:\"-\" json:\"deposite,omitempty\"` + "`" + `",
@@ -8001,6 +9045,12 @@ const docTemplate = `{
                 },
                 "positionUrl": {
                     "type": "string"
+                },
+                "postIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "price": {
                     "$ref": "#/definitions/domain.ProductPrice"
@@ -8022,11 +9072,17 @@ const docTemplate = `{
                 "propertyTypeId": {
                     "type": "integer"
                 },
+                "propertyTypeName": {
+                    "type": "string"
+                },
                 "province": {
                     "$ref": "#/definitions/domain.Region"
                 },
                 "provinceId": {
                     "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
                 },
                 "rentStatus": {
                     "description": "1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê",
@@ -8036,14 +9092,11 @@ const docTemplate = `{
                         }
                     ]
                 },
-                "rentTransaction": {
-                    "$ref": "#/definitions/domain.Transaction"
-                },
                 "rentTransactionId": {
                     "type": "integer"
                 },
                 "rentVisibility": {
-                    "description": "1=Riêng tư, 2=Nội bộ, 3=Công khai",
+                    "description": "RentTransaction   *tx_domain.Tx            ` + "`" + `gorm:\"foreignKey:RentTransactionID;references:ID\" json:\"rentTransaction,omitempty\"` + "`" + `",
                     "allOf": [
                         {
                             "$ref": "#/definitions/enums.EVisibility"
@@ -8058,14 +9111,11 @@ const docTemplate = `{
                         }
                     ]
                 },
-                "saleTransaction": {
-                    "$ref": "#/definitions/domain.Transaction"
-                },
                 "saleTransactionId": {
                     "type": "integer"
                 },
                 "saleVisibility": {
-                    "description": "1=Riêng tư, 2=Nội bộ, 3=Công khai",
+                    "description": "SaleTransaction   *tx_domain.Tx            ` + "`" + `gorm:\"foreignKey:SaleTransactionID;references:ID\" json:\"saleTransaction,omitempty\"` + "`" + `",
                     "allOf": [
                         {
                             "$ref": "#/definitions/enums.EVisibility"
@@ -8097,6 +9147,9 @@ const docTemplate = `{
                 },
                 "wardId": {
                     "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
                 }
             }
         },
@@ -8470,93 +9523,6 @@ const docTemplate = `{
                 },
                 "unit": {
                     "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
-        "domain.Transaction": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "approvalDate": {
-                    "type": "string"
-                },
-                "approvalStatus": {
-                    "$ref": "#/definitions/enums.ApprovalStatus"
-                },
-                "approvedBy": {
-                    "type": "integer"
-                },
-                "categoryId": {
-                    "type": "integer"
-                },
-                "contactID": {
-                    "type": "integer"
-                },
-                "contactPhone": {
-                    "description": "số điện thoại liên hệ",
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "depositeAmount": {
-                    "description": "cọc",
-                    "type": "number"
-                },
-                "depositeNote": {
-                    "description": "ghi chú cọc",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ownerId": {
-                    "type": "integer"
-                },
-                "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
-                },
-                "paymentMethodId": {
-                    "type": "integer"
-                },
-                "productID": {
-                    "type": "integer"
-                },
-                "relatedDealId": {
-                    "type": "integer"
-                },
-                "relatedTransactionId": {
-                    "type": "integer"
-                },
-                "transactionDate": {
-                    "type": "string"
-                },
-                "transactionName": {
-                    "type": "string"
-                },
-                "transactionStatus": {
-                    "$ref": "#/definitions/enums.TransactionStatus"
-                },
-                "transactionType": {
-                    "$ref": "#/definitions/enums.TransactionType"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -8961,8 +9927,11 @@ const docTemplate = `{
                 "note": {
                     "type": "string"
                 },
+                "ownerId": {
+                    "type": "integer"
+                },
                 "ownerType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "parentId": {
                     "type": "integer"
@@ -9012,7 +9981,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "fromType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "page": {
                     "type": "integer"
@@ -9024,7 +9993,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "toType": {
-                    "$ref": "#/definitions/enums.EOwnerType"
+                    "$ref": "#/definitions/enums.EOwnerOf"
                 }
             }
         },
@@ -9106,19 +10075,6 @@ const docTemplate = `{
                 }
             }
         },
-        "enums.ApprovalStatus": {
-            "type": "string",
-            "enum": [
-                "pending",
-                "approved",
-                "rejected"
-            ],
-            "x-enum-varnames": [
-                "ApprovalStatusPending",
-                "ApprovalStatusApproved",
-                "ApprovalStatusRejected"
-            ]
-        },
         "enums.EAssetStatus": {
             "type": "integer",
             "enum": [
@@ -9187,17 +10143,19 @@ const docTemplate = `{
                 "EDomainAsset"
             ]
         },
-        "enums.EOwnerType": {
+        "enums.EOwnerOf": {
             "type": "integer",
             "enum": [
                 10,
                 20,
-                30
+                30,
+                40
             ],
             "x-enum-varnames": [
-                "EOwnerTypeMember",
-                "EOwnerTypeGroup",
-                "EOwnerTypeOrgnization"
+                "EOwnerOfMember",
+                "EOwnerOfGroup",
+                "EOwnerOfOrgnization",
+                "EOwnerOfUser"
             ]
         },
         "enums.EProductHistory": {
@@ -9269,30 +10227,6 @@ const docTemplate = `{
                 "EVisiblePrivate"
             ]
         },
-        "enums.TransactionStatus": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                30,
-                40,
-                50
-            ],
-            "x-enum-comments": {
-                "TransactionStatusCanceled": "Hủy",
-                "TransactionStatusCompleted": "Hoàn thành",
-                "TransactionStatusDeposite": "Đặt cọc",
-                "TransactionStatusDraft": "Nháp",
-                "TransactionStatusSigned": "Đã ký"
-            },
-            "x-enum-varnames": [
-                "TransactionStatusDraft",
-                "TransactionStatusDeposite",
-                "TransactionStatusSigned",
-                "TransactionStatusCompleted",
-                "TransactionStatusCanceled"
-            ]
-        },
         "enums.TransactionType": {
             "type": "integer",
             "enum": [
@@ -9308,741 +10242,47 @@ const docTemplate = `{
                 "TransactionTypeRent"
             ]
         },
-        "org_dto.ProductShareRequest": {
-            "type": "object",
-            "required": [
-                "groupId",
-                "productId"
-            ],
-            "properties": {
-                "groupId": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.ArchivedRequest": {
-            "type": "object",
-            "properties": {
-                "archived": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.AssetCostDTO": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "assetId": {
-                    "type": "integer"
-                },
-                "costTypeId": {
-                    "type": "integer"
-                },
-                "costTypeName": {
-                    "type": "string"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ownerId": {
-                    "type": "integer"
-                },
-                "ownerType": {
-                    "type": "integer"
-                },
-                "type": {
-                    "type": "integer"
-                },
-                "typeName": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.AssetCostTypeDTO": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isCustom": {
-                    "type": "boolean"
-                },
-                "type": {
-                    "type": "integer"
-                },
-                "typeName": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.AssetCreateWithProduct": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "legalItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.LegalItem"
-                    }
-                },
-                "legalStatus": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "integer"
-                },
-                "purchasePrice": {
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.AssetExploitationDTO": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "assetID": {
-                    "type": "integer"
-                },
-                "contractName": {
-                    "type": "string"
-                },
-                "contractValue": {
-                    "type": "number"
-                },
-                "customer": {
-                    "type": "string"
-                },
-                "cyclePay": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "endDate": {
-                    "type": "string"
-                },
-                "fileContract": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "startDate": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "typeId": {
-                    "type": "integer"
-                },
-                "typeName": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.AssetLegalDTO": {
-            "type": "object",
-            "properties": {
-                "archived": {
-                    "type": "boolean"
-                },
-                "assetId": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentName": {
-                    "type": "string"
-                },
-                "documentUrl": {
-                    "type": "string"
-                },
-                "expiryDate": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "issuedDate": {
-                    "type": "string"
-                },
-                "relatedSplitMergeId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.AssetLegalListDTO": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.AssetLegalDTO"
-                    }
-                },
-                "totalElements": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.CashProfit": {
-            "type": "object",
-            "properties": {
-                "amountIn": {
-                    "type": "number"
-                },
-                "amountOut": {
-                    "type": "number"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "profit": {
-                    "type": "number"
-                }
-            }
-        },
-        "pb_bdspro.CashProfitTime": {
-            "type": "object",
-            "properties": {
-                "amountIn": {
-                    "type": "number"
-                },
-                "amountOut": {
-                    "type": "number"
-                },
-                "profit": {
-                    "type": "number"
-                },
-                "time": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.CreateTransactionRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "categoryId": {
-                    "type": "integer"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "organizationId": {
-                    "type": "integer"
-                },
-                "ownerId": {
-                    "type": "integer"
-                },
-                "paymentMethodId": {
-                    "type": "integer"
-                },
-                "relatedDealId": {
-                    "type": "integer"
-                },
-                "relatedTransactionId": {
-                    "type": "integer"
-                },
-                "transactionDate": {
-                    "type": "string"
-                },
-                "transactionName": {
-                    "type": "string"
-                },
-                "transactionType": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.DepositeRequest": {
-            "type": "object",
-            "properties": {
-                "contactId": {
-                    "type": "integer"
-                },
-                "depositeAmount": {
-                    "type": "number"
-                },
-                "depositeNote": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "transactionType": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.GetCashProfitResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.CashProfit"
-                    }
-                }
-            }
-        },
-        "pb_bdspro.GetCashProfitTimeResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.CashProfitTime"
-                    }
-                }
-            }
-        },
-        "pb_bdspro.HouseInfo": {
-            "type": "object",
-            "properties": {
-                "furniture": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "numBathroom": {
-                    "type": "integer"
-                },
-                "numBedroom": {
-                    "type": "integer"
-                },
-                "numCarPark": {
-                    "type": "integer"
-                },
-                "numFloor": {
-                    "type": "integer"
-                },
-                "numFront": {
-                    "type": "integer"
-                },
-                "numToilet": {
-                    "type": "integer"
-                },
-                "orientation": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.IdRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "ownerType": {
-                    "type": "integer"
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "string"
-                },
-                "text": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.LegalItem": {
-            "type": "object",
-            "properties": {
-                "assetId": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "documentName": {
-                    "type": "string"
-                },
-                "documentType": {
-                    "type": "string"
-                },
-                "documentUrl": {
-                    "type": "string"
-                },
-                "expiryDate": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "issuedDate": {
-                    "type": "string"
-                }
-            }
-        },
-        "pb_bdspro.MediaItem": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "isMain": {
-                    "type": "boolean"
-                },
-                "mediaType": {
-                    "type": "string"
-                },
-                "mediaUrl": {
-                    "type": "string"
-                },
-                "order": {
-                    "type": "integer"
-                },
-                "targetId": {
-                    "type": "integer"
-                },
-                "targetType": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.PostSaveWithProduct": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "expiredAt": {
-                    "type": "integer"
-                },
-                "hidden": {
-                    "type": "boolean"
-                },
-                "metadatas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.MediaItem"
-                    }
-                },
-                "numDate": {
-                    "type": "integer"
-                },
-                "packageVisible": {
-                    "type": "integer"
-                },
-                "postPrice": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "transactionType": {
-                    "type": "integer"
-                },
-                "visibility": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.ProductPrice": {
-            "type": "object",
-            "properties": {
-                "currency": {
-                    "type": "string"
-                },
-                "deposite": {
-                    "type": "number"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "priceOwner": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "rentCommission": {
-                    "description": "1000000 -\u003e 10%",
-                    "type": "number"
-                },
-                "rentPaymentCycle": {
-                    "type": "integer"
-                },
-                "rentPrice": {
-                    "type": "number"
-                },
-                "saleCommission": {
-                    "description": "1000000 -\u003e 10%",
-                    "type": "number"
-                },
-                "salePrice": {
-                    "type": "number"
-                }
-            }
-        },
-        "pb_bdspro.ProductPrivate": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "importPrice": {
-                    "type": "number"
-                },
-                "internalNote": {
-                    "type": "string"
-                },
-                "operatingCost": {
-                    "type": "number"
-                },
-                "privateDocs": {
-                    "type": "string"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "targetProfit": {
-                    "type": "number"
-                }
-            }
-        },
-        "pb_bdspro.SaveAssetRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "archived": {
-                    "type": "boolean"
-                },
-                "area": {
-                    "type": "number"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "legalItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.LegalItem"
-                    }
-                },
-                "legalStatus": {
-                    "description": "10: sổ đỏ, 20: sổ hồng, 30: chưa có sổ",
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerType": {
-                    "type": "integer"
-                },
-                "parentAssetId": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "purchaseDate": {
-                    "type": "string"
-                },
-                "purchasePrice": {
-                    "type": "number"
-                },
-                "rentStatus": {
-                    "type": "integer"
-                },
-                "splitMergeStatus": {
-                    "type": "string"
-                },
-                "wardId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.SaveChildRequest": {
-            "type": "object",
-            "properties": {
-                "amenityIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "area": {
-                    "type": "number"
-                },
-                "asset": {
-                    "$ref": "#/definitions/pb_bdspro.AssetCreateWithProduct"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "docTypeId": {
-                    "type": "integer"
-                },
-                "googleMapLink": {
-                    "type": "string"
-                },
-                "houseInfo": {
-                    "$ref": "#/definitions/pb_bdspro.HouseInfo"
-                },
-                "mediaItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/pb_bdspro.MediaItem"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "parentId": {
-                    "type": "integer"
-                },
-                "post": {
-                    "$ref": "#/definitions/pb_bdspro.PostSaveWithProduct"
-                },
-                "priceData": {
-                    "$ref": "#/definitions/pb_bdspro.ProductPrice"
-                },
-                "productPrivate": {
-                    "$ref": "#/definitions/pb_bdspro.ProductPrivate"
-                },
-                "projectId": {
-                    "type": "integer"
-                },
-                "propertyTypeId": {
-                    "type": "integer"
-                },
-                "provinceId": {
-                    "type": "integer"
-                },
-                "rentStatus": {
-                    "type": "integer"
-                },
-                "rentVisibility": {
-                    "type": "integer"
-                },
-                "saleStatus": {
-                    "type": "integer"
-                },
-                "saleVisibility": {
-                    "type": "integer"
-                },
-                "sourceType": {
-                    "type": "integer"
-                },
-                "transactionType": {
-                    "type": "integer"
-                },
-                "wardId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "pb_bdspro.UpdateTransactionRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "categoryId": {
-                    "type": "integer"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "paymentMethodId": {
-                    "type": "integer"
-                },
-                "relatedDealId": {
-                    "type": "integer"
-                },
-                "relatedTransactionId": {
-                    "type": "integer"
-                },
-                "transactionDate": {
-                    "type": "string"
-                },
-                "transactionName": {
-                    "type": "string"
-                }
-            }
-        },
         "sharepb.Empty": {
             "type": "object"
+        },
+        "sharepb.ProfileItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isMember": {
+                    "type": "boolean"
+                },
+                "joinedAt": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "timestamppb.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+                    "type": "integer"
+                }
+            }
         }
     },
     "securityDefinitions": {

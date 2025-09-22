@@ -5,7 +5,7 @@ import (
 	"chat/models"
 	"context"
 	"pb/clients"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	chatpb "pb/types/chat"
 )
 
@@ -32,14 +32,14 @@ func (c *BdsproClient) MapProductPbByIds(ctx context.Context, message []*chatpb.
 		productIds = append(productIds, productId)
 	}
 
-	products, err := c.Client.Client.GetProductAttachmentByIds(ctx, &pb_bdspro.IdRequest{
+	products, err := c.Client.Client.GetProductAttachmentByIds(ctx, &bdspropb.IdRequest{
 		Ids: productIds,
 	})
 	if err != nil {
 		return
 	}
 
-	productMap := make(map[uint64]*pb_bdspro.ProductAttachment)
+	productMap := make(map[uint64]*bdspropb.ProductAttachment)
 	for _, product := range products.Data {
 		productMap[product.Id] = product
 	}

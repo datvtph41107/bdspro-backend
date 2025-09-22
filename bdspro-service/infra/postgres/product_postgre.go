@@ -9,6 +9,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -246,22 +247,73 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearch
 		query = query.Where("products.parent_id = ?", dto.ParentID)
 	}
 
+	// Search theo tên sản phẩm
+	if dto.Name != "" {
+		query = query.Where("LOWER(products.name) LIKE ?", "%"+strings.ToLower(dto.Name)+"%")
+	}
+
+	// Search theo code
+	if dto.Code != "" {
+		query = query.Where("LOWER(products.code) LIKE ?", "%"+strings.ToLower(dto.Code)+"%")
+	}
+
+	// Search theo diện tích
+	if dto.Area > 0 {
+		query = query.Where("products.area >= ?", dto.Area)
+	}
+
+	// Search theo transaction types
 	if dto.TransactionTypes != nil {
 		query = query.Where("products.transaction_type IN (?)", dto.TransactionTypes)
 	}
 
+	// Search theo sale status
 	if dto.SaleStatus != nil {
 		query = query.Where("products.sale_status IN (?)", dto.SaleStatus)
 	}
 
+	// Search theo rent status
 	if dto.RentStatus != nil {
 		query = query.Where("products.rent_status IN (?)", dto.RentStatus)
 	}
 
+	// Search theo property type
+	if dto.PropertyTypeIds != nil {
+		query = query.Where("products.property_type_id IN (?)", dto.PropertyTypeIds)
+	}
+
+	// Search theo province
+	if dto.ProvinceIds != nil {
+		query = query.Where("products.province_id IN (?)", dto.ProvinceIds)
+	}
+
+	// Search theo district
+	if dto.DistrictIds != nil {
+		query = query.Where("products.district_id IN (?)", dto.DistrictIds)
+	}
+
+	// Search theo ward
+	if dto.WardIds != nil {
+		query = query.Where("products.ward_id IN (?)", dto.WardIds)
+	}
+
+	// Search theo doc type
+	if dto.DocTypeIds != nil {
+		query = query.Where("products.doc_type_id IN (?)", dto.DocTypeIds)
+	}
+
+	// Search theo amenity
+	if dto.AmenityIds != nil {
+		query = query.Joins("JOIN product_amenity pa ON pa.product_id = products.id").
+			Where("pa.amenity_id IN (?)", dto.AmenityIds)
+	}
+
+	// Search theo source type
 	if dto.SourceTypeIds != nil {
 		query = query.Where("products.source_type IN (?)", dto.SourceTypeIds)
 	}
 
+	// Search theo giá
 	if dto.PriceFrom > 0 {
 		query = query.Where("? < product_price.sale_price", dto.PriceFrom)
 	}
@@ -269,18 +321,50 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearch
 		query = query.Where("product_price.sale_price < ?", dto.PriceTo)
 	}
 
+	// Search theo số phòng ngủ
 	if dto.NumBedrooms != nil {
 		query = query.Where("products.num_bedroom IN (?)", dto.NumBedrooms)
 	}
 
+	// Search theo số phòng tắm
 	if dto.NumBathrooms != nil {
 		query = query.Where("products.num_bathroom IN (?)", dto.NumBathrooms)
 	}
 
+	// Search theo số tầng
+	if dto.NumFloors != nil {
+		query = query.Where("products.num_floor IN (?)", dto.NumFloors)
+	}
+
+	// Search theo mô tả
+	if dto.Description != "" {
+		query = query.Where("LOWER(products.description) LIKE ?", "%"+strings.ToLower(dto.Description)+"%")
+	}
+
+	// Search theo ghi chú
+	if dto.Note != "" {
+		query = query.Where("LOWER(products.note) LIKE ?", "%"+strings.ToLower(dto.Note)+"%")
+	}
+
+	// Search theo thời gian cập nhật (fromDate, toDate)
+	if dto.FromDate != nil {
+		query = query.Where("products.updated_at >= ?", dto.FromDate)
+	}
+	if dto.ToDate != nil {
+		query = query.Where("products.updated_at <= ?", dto.ToDate)
+	}
+
+	// Search theo timestamp
+	if dto.Timestamp != nil {
+		query = query.Where("products.updated_at >= ?", dto.Timestamp)
+	}
+
+	// Search theo text (tìm kiếm tổng quát)
 	if dto.Text != "" {
 		query = query.Where("LOWER(products.name) LIKE ?", "%"+strings.ToLower(dto.Text)+"%")
 	}
 
+	// Search theo archived status
 	if dto.Archived != nil {
 		query = query.Where("products.archived = ?", *dto.Archived)
 	}
@@ -750,12 +834,8 @@ func (r *GormUserProductRepo) GetGroupProducts(ctx context.Context, req *dto.Gro
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
 			return db.Order("product_price.created_at asc")
 		}).
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
+		// Preload("DocType", "deleted_at IS NULL").
+		// Preload("MediaList", "deleted_at IS NULL").
 		Where("sa.deleted_at IS NULL AND sa.to_type = 20 AND sa.to_id = ? AND products.deleted_at IS NULL", req.GroupID)
 
 	// Apply filters
@@ -891,11 +971,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, dto *dto.ProductSea
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
 			return db.Order("product_price.created_at asc")
 		}).
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL")
 
 	query = r.QueryDomain(query, dto)
@@ -908,6 +984,106 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, dto *dto.ProductSea
 
 	if err != nil {
 		return nil, 0, err
+	}
+
+	var total int64
+	query.Count(&total)
+
+	return results, total, nil
+}
+
+func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+	// Struct tạm thời để map dữ liệu từ query
+	type ProductWithPostIds struct {
+		domain.Product
+		ProvinceName     string        `gorm:"province_name"`
+		DistrictName     string        `gorm:"district_name"`
+		WardName         string        `gorm:"ward_name"`
+		PropertyTypeName string        `gorm:"property_type_name"`
+		PostIds          pq.Int64Array `gorm:"column:post_ids" json:"post_ids"`
+	}
+
+	var tempResults []ProductWithPostIds
+
+	query := r.DB.
+		Debug().
+		Model(domain.Product{}).
+		Select(`products.*, 
+			products.area - COALESCE(child.total_area, 0) AS avaiable_area,
+			COALESCE(provinces.name, '') AS province_name,
+			COALESCE(districts.name, '') AS district_name,
+			COALESCE(wards.name, '') AS ward_name,
+			COALESCE(property_type.name, '') AS property_type_name,
+			COALESCE(
+				(SELECT array_agg(id ORDER BY created_at DESC) 
+				 FROM posts 
+				 WHERE product_id = products.id 
+				 AND deleted_at IS NULL 
+				 LIMIT 3), 
+				ARRAY[]::bigint[]
+			) AS post_ids`).
+		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
+					FROM products WHERE deleted_at is null GROUP BY parent_id) 
+					AS child ON products.id = child.parent_id`).
+		Joins(`LEFT JOIN region provinces ON products.province_id = provinces.id AND provinces.deleted_at IS NULL`).
+		Joins(`LEFT JOIN region districts ON products.district_id = districts.id AND districts.deleted_at IS NULL`).
+		Joins(`LEFT JOIN region wards ON products.ward_id = wards.id AND wards.deleted_at IS NULL`).
+		Joins(`LEFT JOIN property_type ON products.property_type_id = property_type.id AND property_type.deleted_at IS NULL`)
+
+	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của tổ chức
+	if dto.RequestOrganizationId != nil {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM product_organization poo 
+			WHERE poo.product_id = products.id 
+			AND poo.organization_id = ? 
+			AND poo.deleted_at IS NULL
+		)`, *dto.RequestOrganizationId)
+	}
+
+	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của user
+	if dto.RequestUserId != nil {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM product_user pou 
+			WHERE pou.product_id = products.id 
+			AND pou.profile_id = ? 
+			AND pou.deleted_at IS NULL
+		)`, *dto.RequestUserId)
+	}
+
+	query = query.
+		Preload("Price", func(db *gorm.DB) *gorm.DB {
+			return db.Order("product_price.created_at asc")
+		}).
+		Preload("DocType", "deleted_at IS NULL").
+		Preload("MediaList", "deleted_at IS NULL")
+
+	query = r.QueryDomain(query, dto)
+
+	// Giới hạn 2 bản ghi gần nhất
+	err := query.
+		Order("updated_at desc").
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Find(&tempResults).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Convert từ tempResults sang results
+	results := make([]domain.Product, len(tempResults))
+	for i, temp := range tempResults {
+		results[i] = temp.Product
+		// Convert pq.Int64Array sang []uint64
+		postIds := make([]uint64, len(temp.PostIds))
+		for j, id := range temp.PostIds {
+			postIds[j] = uint64(id)
+		}
+		results[i].PostIds = postIds
+		results[i].ProvinceName = temp.ProvinceName
+		results[i].DistrictName = temp.DistrictName
+		results[i].WardName = temp.WardName
+		results[i].PropertyTypeName = temp.PropertyTypeName
 	}
 
 	var total int64

@@ -6,7 +6,7 @@ import (
 	"bdspro/internal/dto"
 	shared_usecase "bdspro/internal/usecases/shared"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
@@ -15,7 +15,7 @@ import (
 )
 
 type AssetService struct {
-	pb_bdspro.UnimplementedAssetServiceServer
+	bdspropb.UnimplementedAssetServiceServer
 	UC            *shared_usecase.AssetUsecase
 	Mapper        *mapper.AssetMapper
 	ProfileClient *client.UserClient
@@ -34,10 +34,10 @@ func NewGrpcAssetService(uc *shared_usecase.AssetUsecase,
 // @Summary Lấy danh sách tài sản của người dùng
 // @Tags User: Tài sản
 // @Produce json
-// @Param query query dto.AssetSearchDTO true "Size"
+// @Param query query bdspropb.AssetSearchRequest true "Size"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/search [get]
-func (s *AssetService) SearchInternal(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
+func (s *AssetService) SearchInternal(ctx context.Context, req *bdspropb.AssetSearchRequest) (*bdspropb.AssetSearchResponse, error) {
 	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -48,10 +48,10 @@ func (s *AssetService) SearchInternal(ctx context.Context, req *pb_bdspro.AssetS
 		return nil, err
 	}
 
-	assets := make([]*pb_bdspro.Asset, 0)
+	assets := make([]*bdspropb.Asset, 0)
 	copier.Copy(&assets, &result)
 
-	return &pb_bdspro.AssetSearchResponse{
+	return &bdspropb.AssetSearchResponse{
 		Data:  assets,
 		Total: uint64(total),
 	}, nil
@@ -60,10 +60,10 @@ func (s *AssetService) SearchInternal(ctx context.Context, req *pb_bdspro.AssetS
 // @Summary Lấy danh sách tài sản chia sẻ
 // @Tags User: Tài sản
 // @Produce json
-// @Param query query dto.AssetSearchDTO true "Size"
+// @Param query query bdspropb.AssetSearchRequest true "Size"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/search-share [get]
-func (s *AssetService) SearchShare(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
+func (s *AssetService) SearchShare(ctx context.Context, req *bdspropb.AssetSearchRequest) (*bdspropb.AssetSearchResponse, error) {
 	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -74,10 +74,10 @@ func (s *AssetService) SearchShare(ctx context.Context, req *pb_bdspro.AssetSear
 		return nil, err
 	}
 
-	assets := make([]*pb_bdspro.Asset, 0)
+	assets := make([]*bdspropb.Asset, 0)
 	copier.Copy(&assets, &result)
 
-	return &pb_bdspro.AssetSearchResponse{
+	return &bdspropb.AssetSearchResponse{
 		Data:  assets,
 		Total: uint64(total),
 	}, nil
@@ -86,10 +86,10 @@ func (s *AssetService) SearchShare(ctx context.Context, req *pb_bdspro.AssetSear
 // @Summary Lấy danh sách tài sản có số lượng con
 // @Tags User: Tài sản
 // @Produce json
-// @Param body query dto.AssetSearchDTO true "body"
+// @Param body query bdspropb.AssetSearchRequest true "body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/split [get]
-func (s *AssetService) SearchSplit(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
+func (s *AssetService) SearchSplit(ctx context.Context, req *bdspropb.AssetSearchRequest) (*bdspropb.AssetSearchResponse, error) {
 	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -100,10 +100,10 @@ func (s *AssetService) SearchSplit(ctx context.Context, req *pb_bdspro.AssetSear
 		return nil, err
 	}
 
-	assets := make([]*pb_bdspro.Asset, 0)
+	assets := make([]*bdspropb.Asset, 0)
 	copier.Copy(&assets, &result)
 
-	return &pb_bdspro.AssetSearchResponse{
+	return &bdspropb.AssetSearchResponse{
 		Data:  assets,
 		Total: uint64(total),
 	}, nil
@@ -116,7 +116,7 @@ func (s *AssetService) SearchSplit(ctx context.Context, req *pb_bdspro.AssetSear
 // @Param body body dto.AssetArchivedDTO true "Body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/archived/{id} [put]
-func (s *AssetService) Archived(ctx context.Context, req *pb_bdspro.ArchivedRequest) (*pb_bdspro.Response, error) {
+func (s *AssetService) Archived(ctx context.Context, req *bdspropb.ArchivedRequest) (*bdspropb.Response, error) {
 	body := dto.AssetArchivedDTO{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (s *AssetService) Archived(ctx context.Context, req *pb_bdspro.ArchivedRequ
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 		Id:      body.ID,
 	}, nil
@@ -136,10 +136,10 @@ func (s *AssetService) Archived(ctx context.Context, req *pb_bdspro.ArchivedRequ
 // @Summary Tạo mới
 // @Tags User: Tài sản
 // @Produce json
-// @Param body body pb_bdspro.SaveAssetRequest true "Body"
+// @Param body body bdspropb.SaveAssetRequest true "Body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset [post]
-func (s *AssetService) CreateAsset(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Response, error) {
+func (s *AssetService) CreateAsset(ctx context.Context, req *bdspropb.SaveAssetRequest) (*bdspropb.Response, error) {
 	body := s.Mapper.AssetPbToDomain(req)
 
 	result, err := s.UC.CreateAsset(ctx, body)
@@ -147,7 +147,7 @@ func (s *AssetService) CreateAsset(ctx context.Context, req *pb_bdspro.SaveAsset
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 		Id:      result.ID,
 	}, nil
@@ -156,10 +156,10 @@ func (s *AssetService) CreateAsset(ctx context.Context, req *pb_bdspro.SaveAsset
 // @Summary Cập nhật
 // @Tags User: Tài sản
 // @Produce json
-// @Param body body pb_bdspro.SaveAssetRequest true "Body"
+// @Param body body bdspropb.SaveAssetRequest true "Body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset [put]
-func (s *AssetService) UpdateAsset(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Response, error) {
+func (s *AssetService) UpdateAsset(ctx context.Context, req *bdspropb.SaveAssetRequest) (*bdspropb.Response, error) {
 	// body := dto.AssetSaveRequest{}
 	// body := s.Mapper.AssetPbToDomain(req)
 	// if err := copier.Copy(&body, req); err != nil {
@@ -172,7 +172,7 @@ func (s *AssetService) UpdateAsset(ctx context.Context, req *pb_bdspro.SaveAsset
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 		Id:      result.ID,
 	}, nil
@@ -184,13 +184,13 @@ func (s *AssetService) UpdateAsset(ctx context.Context, req *pb_bdspro.SaveAsset
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/{id} [delete]
-func (s *AssetService) DeleteAsset(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+func (s *AssetService) DeleteAsset(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.Response, error) {
 	err := s.UC.DeleteAsset(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -201,7 +201,7 @@ func (s *AssetService) DeleteAsset(ctx context.Context, req *pb_bdspro.IdRequest
 // @Param id path int true "ID"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/detail/{id} [get]
-func (s *AssetService) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Asset, error) {
+func (s *AssetService) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Asset, error) {
 	result, err := s.UC.GetAssetDetail(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (s *AssetService) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*
 // @Param body body dto.MergeAssetDTO true "body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/merge [post]
-func (s *AssetService) Merge(ctx context.Context, req *pb_bdspro.MergeAssetRequest) (*pb_bdspro.Asset, error) {
+func (s *AssetService) Merge(ctx context.Context, req *bdspropb.MergeAssetRequest) (*bdspropb.Asset, error) {
 	body := dto.MergeAssetDTO{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (s *AssetService) Merge(ctx context.Context, req *pb_bdspro.MergeAssetReque
 		return nil, err
 	}
 
-	asset := &pb_bdspro.Asset{}
+	asset := &bdspropb.Asset{}
 	copier.Copy(asset, result)
 
 	return asset, nil
@@ -241,7 +241,7 @@ func (s *AssetService) Merge(ctx context.Context, req *pb_bdspro.MergeAssetReque
 // @Param body body dto.SplitAssetDTO true "body"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/split [post]
-func (s *AssetService) Split(ctx context.Context, req *pb_bdspro.SplitAssetRequest) (*pb_bdspro.Asset, error) {
+func (s *AssetService) Split(ctx context.Context, req *bdspropb.SplitAssetRequest) (*bdspropb.Asset, error) {
 	body := dto.SplitAssetDTO{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -252,7 +252,7 @@ func (s *AssetService) Split(ctx context.Context, req *pb_bdspro.SplitAssetReque
 		return nil, err
 	}
 
-	asset := &pb_bdspro.Asset{}
+	asset := &bdspropb.Asset{}
 	copier.Copy(asset, result)
 
 	return asset, nil
@@ -264,7 +264,7 @@ func (s *AssetService) Split(ctx context.Context, req *pb_bdspro.SplitAssetReque
 // // @Param body query dto.AssetHistoryDTO true "body"
 // // @Security BearerAuth
 // // @Router /v2/bdspro/v2/asset/history-owner [get]
-// func (s *AssetService) HistoryOwner(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
+// func (s *AssetService) HistoryOwner(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.HistoryResponse, error) {
 // 	body := dto.AssetHistoryDTO{}
 // 	if err := copier.Copy(&body, req); err != nil {
 // 		return nil, err
@@ -275,10 +275,10 @@ func (s *AssetService) Split(ctx context.Context, req *pb_bdspro.SplitAssetReque
 // 		return nil, err
 // 	}
 
-// 	history := make([]*pb_bdspro.History, 0)
+// 	history := make([]*bdspropb.History, 0)
 // 	copier.Copy(&history, &result)
 
-// 	return &pb_bdspro.HistoryResponse{
+// 	return &bdspropb.HistoryResponse{
 // 		Data: history,
 // 	}, nil
 // }
@@ -289,7 +289,7 @@ func (s *AssetService) Split(ctx context.Context, req *pb_bdspro.SplitAssetReque
 // @Param profileId path int true "ID"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/asset/publish/{profileId} [get]
-func (s *AssetService) GetPublish(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AssetSearchResponse, error) {
+func (s *AssetService) GetPublish(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.AssetSearchResponse, error) {
 	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -300,10 +300,10 @@ func (s *AssetService) GetPublish(ctx context.Context, req *pb_bdspro.IdRequest)
 		return nil, err
 	}
 
-	assets := make([]*pb_bdspro.Asset, 0)
+	assets := make([]*bdspropb.Asset, 0)
 	copier.Copy(&assets, &result)
 
-	return &pb_bdspro.AssetSearchResponse{
+	return &bdspropb.AssetSearchResponse{
 		Data: assets,
 	}, nil
 }
@@ -314,9 +314,9 @@ func (s *AssetService) GetPublish(ctx context.Context, req *pb_bdspro.IdRequest)
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body pb_bdspro.SaveAssetRequest true "Thông tin tài sản cần tạo"
+// @Param body body bdspropb.SaveAssetRequest true "Thông tin tài sản cần tạo"
 // @Router /v2/bdspro/v2/asset/organization [post]
-func (s *AssetService) CreateAssetOrganization(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Response, error) {
+func (s *AssetService) CreateAssetOrganization(ctx context.Context, req *bdspropb.SaveAssetRequest) (*bdspropb.Response, error) {
 	if req.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "tên tài sản là bắt buộc")
 	}
@@ -333,7 +333,7 @@ func (s *AssetService) CreateAssetOrganization(ctx context.Context, req *pb_bdsp
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "Tạo tài sản thành công",
 		Id:      result.ID,
 	}, nil
@@ -349,7 +349,7 @@ func (s *AssetService) CreateAssetOrganization(ctx context.Context, req *pb_bdsp
 // @Param type query int false "Loại tài sản"
 // @Param archived query bool false "Trạng thái lưu trữ"
 // @Router /v2/bdspro/v2/asset/organization [get]
-func (s *AssetService) CurrentOrganizationAssets(ctx context.Context, req *pb_bdspro.AssetSearchRequest) (*pb_bdspro.AssetSearchResponse, error) {
+func (s *AssetService) CurrentOrganizationAssets(ctx context.Context, req *bdspropb.AssetSearchRequest) (*bdspropb.AssetSearchResponse, error) {
 	body := dto.AssetSearchRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -362,7 +362,7 @@ func (s *AssetService) CurrentOrganizationAssets(ctx context.Context, req *pb_bd
 
 	assets := s.Mapper.MapAssetPbList(result)
 
-	return &pb_bdspro.AssetSearchResponse{
+	return &bdspropb.AssetSearchResponse{
 		Data:  assets,
 		Total: uint64(total),
 	}, nil

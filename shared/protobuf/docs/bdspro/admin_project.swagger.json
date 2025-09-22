@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProject"
+              "$ref": "#/definitions/bdspropbProject"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProject"
+              "$ref": "#/definitions/bdspropbProject"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProjectListResponse"
+              "$ref": "#/definitions/bdspropbProjectListResponse"
             }
           },
           "default": {
@@ -172,7 +172,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProject"
+              "$ref": "#/definitions/bdspropbProject"
             }
           },
           "default": {
@@ -195,7 +195,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAdminProjectServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAdminProjectServiceUpdateBody"
             }
           }
         ],
@@ -206,7 +206,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproAdminProjectServiceUpdateBody": {
+    "bdspropbAdminProjectServiceUpdateBody": {
       "type": "object",
       "properties": {
         "name": {
@@ -230,7 +230,7 @@
         }
       }
     },
-    "pb_bdsproProject": {
+    "bdspropbProject": {
       "type": "object",
       "properties": {
         "id": {
@@ -258,14 +258,14 @@
         }
       }
     },
-    "pb_bdsproProjectListResponse": {
+    "bdspropbProjectListResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProject"
+            "$ref": "#/definitions/bdspropbProject"
           }
         },
         "totalElements": {

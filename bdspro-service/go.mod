@@ -6,10 +6,7 @@ replace pb => ../shared/protobuf
 
 replace common => ../shared/common
 
-replace base => ../shared/base
-
 require (
-	base v0.0.0-00010101000000-000000000000
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron v1.37.0
@@ -25,7 +22,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
 

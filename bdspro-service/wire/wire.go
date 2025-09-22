@@ -116,6 +116,8 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewBdsproPublicService,
 	bdspro_infra_mapper.NewBuildMapper,
 	bdspro_infra_client.NewChatClient,
+	bdspro_infra_providers.NewCodeDataUsecase,
+	bdspro_infra_mapper.NewCommonMapper,
 	bdspro_infra_handler.NewCostDocumentServer,
 	bdspro_internal_usecases.NewCostDocumentUc,
 	bdspro_infra_mapper.NewCostTypeMapper,

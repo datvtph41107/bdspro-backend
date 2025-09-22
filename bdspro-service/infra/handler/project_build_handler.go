@@ -4,15 +4,15 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
 
 type ProjectBuildService struct {
-	pb_bdspro.UnimplementedProjectBuildServiceServer
+	bdspropb.UnimplementedProjectBuildServiceServer
 	ProjectBuildUsecase *usecases.ProjectBuildUsecase
 	Mapper              *mapper.ProjectBuildMapper
 }
@@ -34,9 +34,9 @@ func NewProjectBuildService(projectBuildUsecase *usecases.ProjectBuildUsecase,
 // @Param text query string false "Text"
 // @Param page query int false "Page"
 // @Param size query int false "Size"
-// @Success 200 {object} pb_bdspro.ListItemResponse
+// @Success 200 {object} bdspropb.ListItemResponse
 // @Router /v2/bdspro/v2/project-build/items [get]
-func (s *ProjectBuildService) GetProjectBuild(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *ProjectBuildService) GetProjectBuild(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	dto := &dto.TextSearchRequest{
 		Text: req.Text,
 		Pagable: _dto.Pagable{
@@ -49,7 +49,7 @@ func (s *ProjectBuildService) GetProjectBuild(ctx context.Context, req *pb_bdspr
 		return nil, err
 	}
 	results := s.Mapper.ProjectBuildItemToPbList(items)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data:  results,
 		Total: uint32(total),
 	}, nil
@@ -61,9 +61,9 @@ func (s *ProjectBuildService) GetProjectBuild(ctx context.Context, req *pb_bdspr
 // @Accept json
 // @Produce json
 // @Param id path int true "ID"
-// @Success 200 {object} pb_bdspro.ProjectBuild
+// @Success 200 {object} bdspropb.ProjectBuild
 // @Router /v2/bdspro/v2/project-build/detail/{id} [get]
-func (s *ProjectBuildService) GetProjectBuildById(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.ProjectBuild, error) {
+func (s *ProjectBuildService) GetProjectBuildById(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.ProjectBuild, error) {
 	id := req.Id
 	projectBuild, err := s.ProjectBuildUsecase.GetByID(ctx, id)
 	if err != nil {
@@ -77,10 +77,10 @@ func (s *ProjectBuildService) GetProjectBuildById(ctx context.Context, req *shar
 // @Tags ProjectBuild
 // @Accept json
 // @Produce json
-// @Param projectBuild body pb_bdspro.ProjectBuild true "Thông tin tòa nhà"
-// @Success 200 {object} pb_bdspro.ProjectBuild
+// @Param projectBuild body bdspropb.ProjectBuild true "Thông tin tòa nhà"
+// @Success 200 {object} bdspropb.ProjectBuild
 // @Router /v2/bdspro/v2/project-build [post]
-func (s *ProjectBuildService) CreateProjectBuild(ctx context.Context, req *pb_bdspro.ProjectBuild) (*pb_bdspro.ProjectBuild, error) {
+func (s *ProjectBuildService) CreateProjectBuild(ctx context.Context, req *bdspropb.ProjectBuild) (*bdspropb.ProjectBuild, error) {
 	domain := s.Mapper.ProjectBuildToDomain(req)
 	projectBuild, err := s.ProjectBuildUsecase.Create(ctx, domain)
 	if err != nil {
@@ -95,10 +95,10 @@ func (s *ProjectBuildService) CreateProjectBuild(ctx context.Context, req *pb_bd
 // @Accept json
 // @Produce json
 // @Param id path int true "ID"
-// @Param projectBuild body pb_bdspro.ProjectBuild true "Thông tin tòa nhà"
-// @Success 200 {object} pb_bdspro.ProjectBuild
+// @Param projectBuild body bdspropb.ProjectBuild true "Thông tin tòa nhà"
+// @Success 200 {object} bdspropb.ProjectBuild
 // @Router /v2/bdspro/v2/project-build/{id} [put]
-func (s *ProjectBuildService) UpdateProjectBuild(ctx context.Context, req *pb_bdspro.ProjectBuild) (*pb_bdspro.ProjectBuild, error) {
+func (s *ProjectBuildService) UpdateProjectBuild(ctx context.Context, req *bdspropb.ProjectBuild) (*bdspropb.ProjectBuild, error) {
 	domain := s.Mapper.ProjectBuildToDomain(req)
 	projectBuild, err := s.ProjectBuildUsecase.Update(ctx, domain)
 	if err != nil {

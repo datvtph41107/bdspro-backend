@@ -4,15 +4,15 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
 
 type AdminProjectHandler struct {
-	pb_bdspro.UnimplementedAdminProjectServiceServer
+	bdspropb.UnimplementedAdminProjectServiceServer
 	AdminProjectUsecase *admin_usecases.AdminProjectUsecase
 	ProjectMapper       *mapper.ProjectMapper
 }
@@ -27,7 +27,7 @@ func NewAdminProjectHandler(
 	}
 }
 
-func (h *AdminProjectHandler) GetList(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ProjectListResponse, error) {
+func (h *AdminProjectHandler) GetList(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ProjectListResponse, error) {
 	result, total, err := h.AdminProjectUsecase.GetList(ctx,
 		&dto.TextSearchRequest{
 			Pagable: _dto.Pagable{
@@ -41,13 +41,13 @@ func (h *AdminProjectHandler) GetList(ctx context.Context, req *pb_bdspro.Search
 	}
 
 	projects := h.ProjectMapper.MapProjectPbList(result)
-	return &pb_bdspro.ProjectListResponse{
+	return &bdspropb.ProjectListResponse{
 		Data:          projects,
 		TotalElements: total,
 	}, nil
 }
 
-func (h *AdminProjectHandler) Create(ctx context.Context, req *pb_bdspro.Project) (*pb_bdspro.Project, error) {
+func (h *AdminProjectHandler) Create(ctx context.Context, req *bdspropb.Project) (*bdspropb.Project, error) {
 	project := h.ProjectMapper.ProjectPbToDomain(req)
 	if req.Name == "" {
 		return nil, _errors.ReturnError(400, "Tên dự án không được để trống")
@@ -63,7 +63,7 @@ func (h *AdminProjectHandler) Create(ctx context.Context, req *pb_bdspro.Project
 	return h.ProjectMapper.MapProjectPb(project), nil
 }
 
-func (h *AdminProjectHandler) Update(ctx context.Context, req *pb_bdspro.Project) (*pb_bdspro.Project, error) {
+func (h *AdminProjectHandler) Update(ctx context.Context, req *bdspropb.Project) (*bdspropb.Project, error) {
 	project := h.ProjectMapper.ProjectPbToDomain(req)
 	if req.Name == "" {
 		return nil, _errors.ReturnError(400, "Tên dự án không được để trống")

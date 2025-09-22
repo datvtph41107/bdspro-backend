@@ -6,13 +6,13 @@ import (
 	"bdspro/internal/repo"
 	shared_usecase "bdspro/internal/usecases/shared"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 
 	"github.com/jinzhu/copier"
 )
 
 type PostService struct {
-	pb_bdspro.UnimplementedPostServiceServer
+	bdspropb.UnimplementedPostServiceServer
 	postRepo   repo.PostRepo
 	UC         *shared_usecase.PostUsecase
 	PostMapper *mapper.PostMapper
@@ -29,19 +29,19 @@ func NewGrpcPostService(postRepo repo.PostRepo,
 	}
 }
 
-func (s *PostService) OwnerPost(ctx context.Context, req *pb_bdspro.OwnerPostRequest) (*pb_bdspro.OwnerPostResponse, error) {
+func (s *PostService) OwnerPost(ctx context.Context, req *bdspropb.OwnerPostRequest) (*bdspropb.OwnerPostResponse, error) {
 	success, err := s.postRepo.OwnerPost(ctx, req.ProfileId, req.PostId)
-	return &pb_bdspro.OwnerPostResponse{Success: success}, err
+	return &bdspropb.OwnerPostResponse{Success: success}, err
 }
 
-func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByIDRequest) (*pb_bdspro.Post, error) {
+func (s *PostService) GetPostByID(ctx context.Context, req *bdspropb.GetPostByIDRequest) (*bdspropb.Post, error) {
 	post, err := s.postRepo.GetPostItemByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	mediaList := make([]*pb_bdspro.PostMedia, len(post.MediaList))
+	mediaList := make([]*bdspropb.PostMedia, len(post.MediaList))
 	for i, media := range post.MediaList {
-		mediaList[i] = &pb_bdspro.PostMedia{
+		mediaList[i] = &bdspropb.PostMedia{
 			Id:        media.ID,
 			MediaUrl:  media.MediaURL,
 			MediaType: media.MediaType,
@@ -49,7 +49,7 @@ func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByI
 			SortOrder: int32(media.SortOrder),
 		}
 	}
-	return &pb_bdspro.Post{
+	return &bdspropb.Post{
 		Id:             post.ID,
 		Title:          post.Title,
 		PostPrice:      post.Price,
@@ -64,7 +64,7 @@ func (s *PostService) GetPostByID(ctx context.Context, req *pb_bdspro.GetPostByI
 	}, nil
 }
 
-func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostByIDsRequest) (*pb_bdspro.GetPostByIDsResponse, error) {
+func (s *PostService) GetPostByIDs(ctx context.Context, req *bdspropb.GetPostByIDsRequest) (*bdspropb.GetPostByIDsResponse, error) {
 	posts, err := s.postRepo.GetByIDsWithStatus(ctx, req.Ids)
 	if err != nil {
 		return nil, err
@@ -74,10 +74,10 @@ func (s *PostService) GetPostByIDs(ctx context.Context, req *pb_bdspro.GetPostBy
 	}
 	postList := s.PostMapper.PostPointerToPbList(posts)
 
-	return &pb_bdspro.GetPostByIDsResponse{Posts: postList}, nil
+	return &bdspropb.GetPostByIDsResponse{Posts: postList}, nil
 }
 
-func (s *PostService) CreatePost(ctx context.Context, req *pb_bdspro.PostSaveRequest) (*pb_bdspro.Post, error) {
+func (s *PostService) CreatePost(ctx context.Context, req *bdspropb.PostSaveRequest) (*bdspropb.Post, error) {
 	body := s.PostMapper.PostSaveRequestToDTO(req)
 
 	result, err := s.UC.CreatePost(ctx, body)
@@ -85,13 +85,13 @@ func (s *PostService) CreatePost(ctx context.Context, req *pb_bdspro.PostSaveReq
 		return nil, err
 	}
 
-	post := &pb_bdspro.Post{}
+	post := &bdspropb.Post{}
 	if err := copier.Copy(post, result); err != nil {
 		return nil, err
 	}
 	return post, nil
 }
-func (s *PostService) NewExpiredPost(ctx context.Context, req *pb_bdspro.PostExpiredRequest) (*pb_bdspro.Post, error) {
+func (s *PostService) NewExpiredPost(ctx context.Context, req *bdspropb.PostExpiredRequest) (*bdspropb.Post, error) {
 	body := dto.PostExpiredRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -102,13 +102,13 @@ func (s *PostService) NewExpiredPost(ctx context.Context, req *pb_bdspro.PostExp
 		return nil, err
 	}
 
-	post := &pb_bdspro.Post{}
+	post := &bdspropb.Post{}
 	if err := copier.Copy(post, result); err != nil {
 		return nil, err
 	}
 	return post, nil
 }
-func (s *PostService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.PostDetailResponse, error) {
+func (s *PostService) GetDetail(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.PostDetailResponse, error) {
 	result, err := s.UC.Detail(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (s *PostService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest) (
 
 	return s.PostMapper.PostDetailToPb(result), nil
 }
-func (s *PostService) UpdatePost(ctx context.Context, req *pb_bdspro.PostSaveRequest) (*pb_bdspro.Post, error) {
+func (s *PostService) UpdatePost(ctx context.Context, req *bdspropb.PostSaveRequest) (*bdspropb.Post, error) {
 	body := s.PostMapper.PostUpdateRequestToDTO(req)
 
 	result, err := s.UC.UpdatePost(ctx, req.Id, body)
@@ -124,23 +124,23 @@ func (s *PostService) UpdatePost(ctx context.Context, req *pb_bdspro.PostSaveReq
 		return nil, err
 	}
 
-	post := &pb_bdspro.Post{}
+	post := &bdspropb.Post{}
 	if err := copier.Copy(post, result); err != nil {
 		return nil, err
 	}
 	return post, nil
 }
-func (s *PostService) Delete(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+func (s *PostService) Delete(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.Response, error) {
 	err := s.UC.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
-func (s *PostService) UpdateHidden(ctx context.Context, req *pb_bdspro.UpdateHiddenRequest) (*pb_bdspro.Response, error) {
+func (s *PostService) UpdateHidden(ctx context.Context, req *bdspropb.UpdateHiddenRequest) (*bdspropb.Response, error) {
 	body := dto.UpdateHiddenRequest{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err
@@ -151,11 +151,11 @@ func (s *PostService) UpdateHidden(ctx context.Context, req *pb_bdspro.UpdateHid
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
-func (s *PostService) GetPersonalPost(ctx context.Context, req *pb_bdspro.PostSearchRequest) (*pb_bdspro.PostListResponse, error) {
+func (s *PostService) GetPersonalPost(ctx context.Context, req *bdspropb.PostSearchRequest) (*bdspropb.PostListResponse, error) {
 	query := s.PostMapper.PostSearchRequestToDTO(req)
 
 	result, total, err := s.UC.PersonalPost(ctx, query)
@@ -165,12 +165,12 @@ func (s *PostService) GetPersonalPost(ctx context.Context, req *pb_bdspro.PostSe
 
 	postList := s.PostMapper.PostToPbList(&result)
 
-	return &pb_bdspro.PostListResponse{
+	return &bdspropb.PostListResponse{
 		Data:  postList,
 		Total: int32(total),
 	}, nil
 }
-func (s *PostService) GetGlobalPost(ctx context.Context, req *pb_bdspro.PostSearchRequest) (*pb_bdspro.PostListResponse, error) {
+func (s *PostService) GetGlobalPost(ctx context.Context, req *bdspropb.PostSearchRequest) (*bdspropb.PostListResponse, error) {
 	query := dto.PostSearchRequest{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -183,28 +183,28 @@ func (s *PostService) GetGlobalPost(ctx context.Context, req *pb_bdspro.PostSear
 
 	postList := s.PostMapper.PostToPbList(&result)
 
-	return &pb_bdspro.PostListResponse{
+	return &bdspropb.PostListResponse{
 		Data:  postList,
 		Total: int32(total),
 	}, nil
 }
-func (s *PostService) GetPublish(ctx context.Context, req *pb_bdspro.PostPublishSearch) (*pb_bdspro.PostListResponse, error) {
+func (s *PostService) GetPublish(ctx context.Context, req *bdspropb.PostPublishSearch) (*bdspropb.PostListResponse, error) {
 	query := dto.PostPublishSearch{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
 	}
 
 	result, total, err := s.UC.GetPublishByProfileID(ctx, req.ProfileId, query)
-	postList := make([]*pb_bdspro.Post, len(result))
+	postList := make([]*bdspropb.Post, len(result))
 	copier.Copy(&postList, &result)
 
-	return &pb_bdspro.PostListResponse{
+	return &bdspropb.PostListResponse{
 		Data:  postList,
 		Total: int32(total),
 	}, err
 }
 
-func (s *PostService) CreatePostOrganization(ctx context.Context, req *pb_bdspro.PostSaveRequest) (*pb_bdspro.Post, error) {
+func (s *PostService) CreatePostOrganization(ctx context.Context, req *bdspropb.PostSaveRequest) (*bdspropb.Post, error) {
 	body := s.PostMapper.PostSaveRequestToDTO(req)
 
 	result, err := s.UC.CreateOrganizationAsset(ctx, body)
@@ -212,14 +212,14 @@ func (s *PostService) CreatePostOrganization(ctx context.Context, req *pb_bdspro
 		return nil, err
 	}
 
-	post := &pb_bdspro.Post{}
+	post := &bdspropb.Post{}
 	if err := copier.Copy(post, result); err != nil {
 		return nil, err
 	}
 	return post, nil
 }
 
-func (s *PostService) CurrentOrganizationPosts(ctx context.Context, req *pb_bdspro.PostSearchRequest) (*pb_bdspro.PostListResponse, error) {
+func (s *PostService) CurrentOrganizationPosts(ctx context.Context, req *bdspropb.PostSearchRequest) (*bdspropb.PostListResponse, error) {
 	query := dto.PostSearchRequest{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -231,7 +231,7 @@ func (s *PostService) CurrentOrganizationPosts(ctx context.Context, req *pb_bdsp
 	}
 	postList := s.PostMapper.PostToPbList(&result)
 
-	return &pb_bdspro.PostListResponse{
+	return &bdspropb.PostListResponse{
 		Data:  postList,
 		Total: int32(total),
 	}, nil

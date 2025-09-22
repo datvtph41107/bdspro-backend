@@ -1,7 +1,7 @@
 package dto
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"time"
 )
 
@@ -15,6 +15,7 @@ type ListAllUsersRequest struct {
 	RoleType  string     `json:"roleType" form:"roleType"`
 	StartDate *time.Time `json:"startDate" form:"startDate" time_format:"2006-01-02T15:04:05"`
 	EndDate   *time.Time `json:"endDate" form:"endDate" time_format:"2006-01-02T15:04:05"`
+	Bookmark  *bool      `json:"bookmark" form:"bookmark"`
 }
 
 // ListAllUsersResponse DTO cho response danh sách tất cả user
@@ -43,6 +44,7 @@ type AdminUserItem struct {
 	RoleRealEstate string     `json:"roleRealEstate"`
 	Position       string     `json:"position"`
 	DepartmentID   uint64     `json:"departmentId"`
+	Bookmark       bool       `json:"isBookmark"`
 	TickVerified   bool       `json:"tickVerified"`
 	LastLoginAt    *time.Time `json:"lastLoginAt"`
 	TotalLogin     uint32     `json:"totalLogin"`

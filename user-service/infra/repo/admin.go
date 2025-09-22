@@ -1,6 +1,7 @@
 package repo
 
 import (
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"strings"
@@ -28,55 +29,76 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 	var users []dto.AdminUserItem
 	var total int64
 
-	query := r.DB.Debug().WithContext(ctx).
-		Model(&user_model.UserProfileEntity{}).
-		Select(`
-			profile_id,
-			full_name,
-			email,
-			phone,
-			avatar,
-			address,
-			gender,
-			birth,
-			created_at,
-			updated_at,
-			COALESCE(status, 1) as status,
-			role_type,
-			role_real_estate,
-			position,
-			department_id,
-			tick_verified,
-			NULL as last_login_at,
-			0 as total_login
-		`)
+	// Lấy adminID từ context nếu có
+	adminID := _utils.GetProfileIdWithContext(ctx)
+
+	// Kiểm tra xem có cần JOIN bookmark table không
+	needBookmarkInfo := req.Bookmark != nil && *req.Bookmark
+
+	// Base select fields
+	selectFields := `
+		up.profile_id,
+		up.full_name,
+		up.email,
+		up.phone,
+		up.avatar,
+		up.address,
+		up.gender,
+		up.birth,
+		up.created_at,
+		up.updated_at,
+		COALESCE(up.status, 10) as status,
+		up.role_type,
+		up.role_real_estate,
+		up.position,
+		up.department_id,
+		up.tick_verified,
+		NULL as last_login_at,
+		0 as total_login`
+
+	// Thêm bookmark field tùy theo trường hợp
+	if needBookmarkInfo {
+		selectFields += `,
+		CASE WHEN bu.user_id IS NOT NULL THEN true ELSE false END as bookmark`
+	} else {
+		selectFields += `,
+		false as bookmark`
+	}
+
+	// Tạo query
+	query := r.DB.Debug().WithContext(ctx).Table("user_profile up").Select(selectFields)
+
+	// JOIN bookmark table nếu cần
+	if needBookmarkInfo {
+		query = query.Joins("LEFT JOIN bookmark_user bu ON up.profile_id = bu.user_id AND bu.admin_id = ?", adminID)
+	}
 
 	// Apply search filter
 	if req.Search != "" {
 		searchTerm := "%" + strings.ToLower(req.Search) + "%"
 		query = query.Where(`
-			LOWER(full_name) LIKE ? OR 
-			LOWER(email) LIKE ? OR 
-			phone LIKE ?
+			LOWER(up.full_name) LIKE ? OR 
+			LOWER(up.email) LIKE ? OR 
+			up.phone LIKE ?
 		`, searchTerm, searchTerm, searchTerm)
 	}
 
 	// Apply status filter
 	if req.Status != nil {
-		query = query.Where("COALESCE(status, 1) = ?", *req.Status)
+		query = query.Where("COALESCE(up.status, 1) = ?", *req.Status)
 	}
 
 	// Apply role type filter
 	if req.RoleType != "" {
-		query = query.Where("role_type = ?", req.RoleType)
+		query = query.Where("up.role_type = ?", req.RoleType)
 	}
 
 	// Apply date range filter
 	if req.StartDate != nil {
-		query = query.Where("created_at >= ?", req.StartDate)
+		query = query.Where("up.created_at >= ?", req.StartDate)
 	}
 	if req.EndDate != nil {
-		query = query.Where("created_at <= ?", req.EndDate)
+		query = query.Where("up.created_at <= ?", req.EndDate)
 	}
 
 	// Get total count
@@ -96,17 +118,19 @@ func (r *AdminRepo) ListAllUsers(ctx context.Context, req *dto.ListAllUsersReque
 		sortColumn := req.SortBy
 		switch req.SortBy {
 		case "fullName":
-			sortColumn = "full_name"
+			sortColumn = "up.full_name"
 		case "createdAt":
-			sortColumn = "created_at"
+			sortColumn = "up.created_at"
 		case "updatedAt":
-			sortColumn = "updated_at"
+			sortColumn = "up.updated_at"
+		default:
+			sortColumn = "up." + sortColumn
 		}
 
 		query = query.Order(fmt.Sprintf("%s %s", sortColumn, sortOrder))
 	} else {
 		// Default sorting by created_at DESC
-		query = query.Order("created_at DESC")
+		query = query.Order("up.created_at DESC")
 	}
 
 	// Apply pagination

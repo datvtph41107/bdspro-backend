@@ -29,13 +29,6 @@ func (uc *AdminUsecase) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 	//     return nil, errors.New("unauthorized: admin access required")
 	// }
 
-	if req.Size == 0 {
-		req.Size = 20
-	}
-	if req.Size > 100 {
-		req.Size = 100
-	}
-
 	// Lấy dữ liệu từ repository
 	users, total, err := uc.AdminRepo.ListAllUsers(ctx, req)
 	if err != nil {

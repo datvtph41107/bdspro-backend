@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	pb_social "pb/types/social"
 	"social/env"
 	"social/internal/dto"
@@ -18,7 +18,7 @@ import (
 
 // @bind: social/internal/interface.BdsproClient
 type BdsproClient struct {
-	client pb_bdspro.PostServiceClient
+	client bdspropb.PostServiceClient
 }
 
 func NewBdsproClient() *BdsproClient {
@@ -44,7 +44,7 @@ func NewBdsproClient() *BdsproClient {
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
 
-		client := pb_bdspro.NewPostServiceClient(conn)
+		client := bdspropb.NewPostServiceClient(conn)
 		bdsproClient.client = client
 	}()
 
@@ -52,7 +52,7 @@ func NewBdsproClient() *BdsproClient {
 }
 
 func (c *BdsproClient) OwnerPost(ctx context.Context, postID uint64, profileID uint64) error {
-	resposne, err := c.client.OwnerPost(ctx, &pb_bdspro.OwnerPostRequest{
+	resposne, err := c.client.OwnerPost(ctx, &bdspropb.OwnerPostRequest{
 		PostId:    postID,
 		ProfileId: profileID,
 	})
@@ -69,7 +69,7 @@ func (c *BdsproClient) OwnerPost(ctx context.Context, postID uint64, profileID u
 }
 
 func (c *BdsproClient) GetPostByID(ctx context.Context, postID uint64) (*dto.BdsproPost, error) {
-	resposne, err := c.client.GetPostByID(ctx, &pb_bdspro.GetPostByIDRequest{
+	resposne, err := c.client.GetPostByID(ctx, &bdspropb.GetPostByIDRequest{
 		Id: postID,
 	})
 	if err != nil {
@@ -112,7 +112,7 @@ func (c *BdsproClient) GetPostByID(ctx context.Context, postID uint64) (*dto.Bds
 }
 
 func (c *BdsproClient) GetPostByIDs(ctx context.Context, postIDs []uint64) ([]*dto.BdsproPost, error) {
-	resposne, err := c.client.GetPostByIDs(ctx, &pb_bdspro.GetPostByIDsRequest{
+	resposne, err := c.client.GetPostByIDs(ctx, &bdspropb.GetPostByIDsRequest{
 		Ids: postIDs,
 	})
 	if err != nil {
@@ -167,14 +167,14 @@ func (c *BdsproClient) PbPostToDomain(ctx context.Context, newsFeeds []*pb_socia
 		return
 	}
 
-	posts, err := c.client.GetPostByIDs(ctx, &pb_bdspro.GetPostByIDsRequest{
+	posts, err := c.client.GetPostByIDs(ctx, &bdspropb.GetPostByIDsRequest{
 		Ids: postIDs,
 	})
 	if err != nil {
 		return
 	}
 
-	postMap := make(map[uint64]*pb_bdspro.Post, len(posts.Posts))
+	postMap := make(map[uint64]*bdspropb.Post, len(posts.Posts))
 	for _, post := range posts.Posts {
 		postMap[post.Id] = post
 	}

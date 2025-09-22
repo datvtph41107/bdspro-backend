@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_dto "common/dto"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type SharingAccessMapper struct {
@@ -15,7 +15,7 @@ func NewSharingAccessMapper() *SharingAccessMapper {
 	return &SharingAccessMapper{}
 }
 
-func (m *SharingAccessMapper) SharingAccessToDomain(dto *pb_bdspro.SharingAccess) *domain.SharingAccess {
+func (m *SharingAccessMapper) SharingAccessToDomain(dto *bdspropb.SharingAccess) *domain.SharingAccess {
 	return &domain.SharingAccess{
 		DomainID:    dto.DomainId,
 		Domain:      enums.EDomainAccess(dto.Domain),
@@ -29,7 +29,7 @@ func (m *SharingAccessMapper) SharingAccessToDomain(dto *pb_bdspro.SharingAccess
 	}
 }
 
-func (m *SharingAccessMapper) SharingAccessBulkToDomain(req *pb_bdspro.SharingAccessBulkRequest) *dto.SharingAccessBulk {
+func (m *SharingAccessMapper) SharingAccessBulkToDomain(req *bdspropb.SharingAccessBulkRequest) *dto.SharingAccessBulk {
 	result := dto.SharingAccessBulk{}
 
 	sharingAccess := []*domain.SharingAccess{}
@@ -48,8 +48,8 @@ func (m *SharingAccessMapper) SharingAccessBulkToDomain(req *pb_bdspro.SharingAc
 	return &result
 }
 
-func (m *SharingAccessMapper) SharingAccessToPb(dto *domain.SharingAccess) *pb_bdspro.SharingAccess {
-	return &pb_bdspro.SharingAccess{
+func (m *SharingAccessMapper) SharingAccessToPb(dto *domain.SharingAccess) *bdspropb.SharingAccess {
+	return &bdspropb.SharingAccess{
 		Id:          dto.ID,
 		DomainId:    dto.DomainID,
 		Domain:      uint32(dto.Domain),
@@ -62,8 +62,8 @@ func (m *SharingAccessMapper) SharingAccessToPb(dto *domain.SharingAccess) *pb_b
 	}
 }
 
-func (m *SharingAccessMapper) SharingAccessToSearchPb(entities *[]domain.SharingAccess) []*pb_bdspro.SharingAccess {
-	result := []*pb_bdspro.SharingAccess{}
+func (m *SharingAccessMapper) SharingAccessToSearchPb(entities *[]domain.SharingAccess) []*bdspropb.SharingAccess {
+	result := []*bdspropb.SharingAccess{}
 	if entities != nil {
 		for _, entity := range *entities {
 			result = append(result, m.SharingAccessToPb(&entity))
@@ -73,7 +73,7 @@ func (m *SharingAccessMapper) SharingAccessToSearchPb(entities *[]domain.Sharing
 	return result
 }
 
-func (m *SharingAccessMapper) SharingAccessToSearchDTO(pb_dto *pb_bdspro.SharingAccessRequest) *dto.SharingAccessSearch {
+func (m *SharingAccessMapper) SharingAccessToSearchDTO(pb_dto *bdspropb.SharingAccessRequest) *dto.SharingAccessSearch {
 	result := dto.SharingAccessSearch{
 		Pagable: _dto.Pagable{
 			Page: pb_dto.Page,

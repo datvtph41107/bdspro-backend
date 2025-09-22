@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	userpb "pb/types/user"
@@ -50,24 +51,20 @@ func (h *AdminHandler) ListAllUsers(ctx context.Context, req *userpb.ListAllUser
 
 	// Convert proto request to DTO
 	dtoReq := &dto.ListAllUsersRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
 		Search:    req.Search,
 		SortBy:    req.SortBy,
 		SortOrder: req.SortOrder,
 		RoleType:  req.RoleType,
 	}
 
-	// Set pagination
-	if req.Page > 0 {
-		dtoReq.Page = req.Page
-	} else {
-		dtoReq.Page = 1
+	// Set bookmark filter
+	if req.Bookmark {
+		dtoReq.Bookmark = &req.Bookmark
 	}
-	if req.Size > 0 {
-		dtoReq.Size = req.Size
-	} else {
-		dtoReq.Size = 20
-	}
-
 	// Set status filter
 	if req.Status != 0 {
 		status := req.Status
@@ -111,6 +108,7 @@ func (h *AdminHandler) ListAllUsers(ctx context.Context, req *userpb.ListAllUser
 			RoleRealEstate: item.RoleRealEstate,
 			Position:       item.Position,
 			DepartmentId:   item.DepartmentID,
+			Bookmark:       item.Bookmark,
 			TickVerified:   item.TickVerified,
 			TotalLogin:     item.TotalLogin,
 		}

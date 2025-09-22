@@ -1,7 +1,7 @@
 package dto
 
 import (
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 
@@ -11,7 +11,7 @@ import (
 type AppointmentDTO struct {
 	Appointment *entity.Appointment
 	Deal        *organizationpb.GroupDeal
-	Products    []*pb_bdspro.ProductAttachment
+	Products    []*bdspropb.ProductAttachment
 	// DealTransactions []*organizationpb.DealTransactionResponse
 	Participants []*sharepb.ProfileItem
 }

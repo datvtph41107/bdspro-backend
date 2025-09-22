@@ -2,7 +2,7 @@ package validator
 
 import (
 	_routes "common/routes"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type AssetCostValidator struct {
@@ -12,7 +12,7 @@ func NewAssetCostValidator() *AssetCostValidator {
 	return &AssetCostValidator{}
 }
 
-func (v *AssetCostValidator) ValidateSaveAssetCost(pbAssetCost *pb_bdspro.AssetCostDTO) error {
+func (v *AssetCostValidator) ValidateSaveAssetCost(pbAssetCost *bdspropb.AssetCostDTO) error {
 	if pbAssetCost.Amount == 0 ||
 		pbAssetCost.Date == "" ||
 		pbAssetCost.OwnerType == 0 ||

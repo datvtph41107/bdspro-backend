@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetLegalListDTO"
+              "$ref": "#/definitions/bdspropbAssetLegalListDTO"
             }
           },
           "default": {
@@ -102,7 +102,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+              "$ref": "#/definitions/bdspropbAssetLegalDTO"
             }
           },
           "default": {
@@ -118,7 +118,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+              "$ref": "#/definitions/bdspropbAssetLegalDTO"
             }
           }
         ],
@@ -134,7 +134,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+              "$ref": "#/definitions/bdspropbAssetLegalDTO"
             }
           },
           "default": {
@@ -266,7 +266,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+              "$ref": "#/definitions/bdspropbAssetLegalDTO"
             }
           },
           "default": {
@@ -342,7 +342,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproAssetLegalDTO": {
+    "bdspropbAssetLegalDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -377,14 +377,14 @@
         }
       }
     },
-    "pb_bdsproAssetLegalListDTO": {
+    "bdspropbAssetLegalListDTO": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAssetLegalDTO"
+            "$ref": "#/definitions/bdspropbAssetLegalDTO"
           }
         },
         "totalElements": {

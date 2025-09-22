@@ -7,13 +7,13 @@ import (
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	"bdspro/internal/utils"
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"errors"
 	"log"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 	"strings"
 
 	"github.com/jinzhu/copier"
@@ -123,8 +123,8 @@ func (uc *AssetUsecase) UpdateAsset(ctx context.Context, id uint64, asset *domai
 	go func() {
 		cloneCtx := _utils.CloneContext(ctx)
 		// afterData := _utils.StructToJSONString(struct{ Data *domain.Asset }{Data: asset})
-		uc.NotificationClient.CreateHistory(cloneCtx, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryAssetUpdate,
+		uc.NotificationClient.CreateHistory(cloneCtx, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryAssetUpdate,
 			TargetId:   asset.ID,
 			OwnerID:    &id,
 			Note:       []string{"Cập nhật tài sản ", asset.Name, " thành công"},
@@ -214,8 +214,8 @@ func (uc *AssetUsecase) CreateAsset(ctx context.Context, asset *domain.Asset) (*
 	go func() {
 		cloneCtx := _utils.CloneContext(ctx)
 		// afterData := _utils.StructToJSONString(struct{ Data *domain.Asset }{Data: asset})
-		uc.NotificationClient.CreateHistory(cloneCtx, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryAssetCreate,
+		uc.NotificationClient.CreateHistory(cloneCtx, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryAssetCreate,
 			TargetId:   asset.ID,
 			OwnerID:    &asset.ID,
 			Note:       []string{"Tạo tài sản ", asset.Name, " thành công"},
@@ -490,8 +490,8 @@ func (uc *AssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) (
 			arr = append(arr, utils.ConvertToBDS(r))
 		}
 		childCodes := strings.Join(arr, ", ")
-		uc.NotificationClient.CreateHistory(cloneCtx, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryAssetMerge,
+		uc.NotificationClient.CreateHistory(cloneCtx, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryAssetMerge,
 			TargetId:   result.ID,
 			OwnerID:    &profileId,
 			Title:      "Gộp tài sản đã chọn thành công!",
@@ -594,8 +594,8 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) (
 			arr = append(arr, utils.ConvertToBDS(r.ID))
 		}
 		childCodes := strings.Join(arr, ", ")
-		uc.NotificationClient.CreateHistory(cloneCtx, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryAssetSplit,
+		uc.NotificationClient.CreateHistory(cloneCtx, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryAssetSplit,
 			TargetId:   dto.ID,
 			OwnerID:    &dto.ID,
 			Note:       []string{"Tách tài sản ", utils.ConvertToBDS(currentAsset.ID), " thành các tài sản con :", childCodes},

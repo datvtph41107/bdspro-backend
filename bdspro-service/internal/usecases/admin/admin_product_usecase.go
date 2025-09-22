@@ -3,6 +3,7 @@ package admin_usecases
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"bdspro/internal/repo"
 	admin_repo "bdspro/internal/repo/admin"
 	shared_usecase "bdspro/internal/usecases/shared"
 	"common/case/crud"
@@ -12,17 +13,20 @@ import (
 type AdminProductUsecase struct {
 	crud.BaseUsecase[domain.Product, admin_repo.AdminProductRepo]
 	ProductUsecase *shared_usecase.ProductUsecase // @bind: internal/usecases/shared
+	ProductRepo    repo.ProductRepo
 }
 
 func NewAdminProductUsecase(
 	repo admin_repo.AdminProductRepo,
 	productUsecase *shared_usecase.ProductUsecase,
+	productRepo repo.ProductRepo,
 ) *AdminProductUsecase {
 	return &AdminProductUsecase{
 		BaseUsecase: crud.BaseUsecase[domain.Product, admin_repo.AdminProductRepo]{
 			Repo: repo,
 		},
 		ProductUsecase: productUsecase,
+		ProductRepo:    productRepo,
 	}
 }
 
@@ -37,9 +41,20 @@ func (uc *AdminProductUsecase) Create(ctx context.Context, product *dto.ProductS
 	return result.Product, nil
 }
 
-// GetList lấy danh sách sản phẩm với phân trang
+// GetList lấy danh sách sản phẩm với phân trang - search toàn bộ sản phẩm trong hệ thống
 func (uc *AdminProductUsecase) GetList(ctx context.Context, searchRequest *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	return uc.ProductUsecase.SearchProductByOwner(ctx, searchRequest)
+	// Gọi GetProductsByAdmin để lấy sản phẩm với PostIds và giới hạn 2 bản ghi gần nhất
+	results, total, err := uc.ProductRepo.GetProductsByAdmin(ctx, searchRequest)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Map product status cho từng sản phẩm
+	for i := 0; i < len(results); i++ {
+		uc.ProductUsecase.MapProductStatus(ctx, &results[i])
+	}
+
+	return results, total, nil
 }
 
 // GetDetail lấy chi tiết sản phẩm theo ID

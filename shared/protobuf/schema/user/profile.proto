@@ -243,6 +243,7 @@ message ListAllUsersRequest {
     string roleType = 7;         // Lọc theo role type
     string startDate = 8;        // Lọc từ ngày tạo
     string endDate = 9;          // Lọc đến ngày tạo
+    bool bookmark = 10;          // Lọc theo bookmark
 }
 
 message ListAllUsersResponse {
@@ -269,14 +270,24 @@ message AdminUserItem {
     string roleRealEstate = 13;  // Role real estate
     string position = 14;
     uint64 departmentId = 15;
-    bool tickVerified = 16;      // Tài khoản đã xác thực
-    string lastLoginAt = 17;     // Lần đăng nhập cuối
-    uint32 totalLogin = 18;      // Tổng số lần đăng nhập
-    string verifiedAt = 19;      // Thời gian xác thực
-    string lockedAt = 20;        // Thời gian khóa tài khoản
+    bool bookmark = 16;        // true nếu user này được admin bookmark
+    bool tickVerified = 17;      // Tài khoản đã xác thực
+    string lastLoginAt = 18;     // Lần đăng nhập cuối
+    uint32 totalLogin = 19;      // Tổng số lần đăng nhập
+    string verifiedAt = 20;      // Thời gian xác thực
+    string lockedAt = 21;        // Thời gian khóa tài khoản
 }
 
 // Admin API Request Messages
+message BookmarkUsersRequest {
+    uint32 page = 1;             // Số trang
+    uint32 size = 2;             // Số lượng item mỗi trang
+    string search = 3;           // Tìm kiếm theo tên, email, phone
+    string roleType = 4;         // Lọc theo role type
+    string startDate = 5;        // Lọc từ ngày tạo
+    string endDate = 6;          // Lọc đến ngày tạo
+}
+
 message BlockUserRequest {
     uint64 profileId = 1;
     string reason = 2;           // Lý do khóa tài khoản

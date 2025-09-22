@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductInternalResponse"
+              "$ref": "#/definitions/bdspropbProductInternalResponse"
             }
           },
           "default": {
@@ -68,22 +68,22 @@
     }
   },
   "definitions": {
-    "pb_bdsproPingResponse": {
+    "bdspropbPingResponse": {
       "type": "object"
     },
-    "pb_bdsproProductInternalResponse": {
+    "bdspropbProductInternalResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductResponse"
+            "$ref": "#/definitions/bdspropbProductResponse"
           }
         }
       }
     },
-    "pb_bdsproProductResponse": {
+    "bdspropbProductResponse": {
       "type": "object",
       "properties": {
         "id": {

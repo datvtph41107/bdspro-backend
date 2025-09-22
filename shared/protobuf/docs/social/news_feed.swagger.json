@@ -771,7 +771,7 @@
           "type": "boolean"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPost"
+          "$ref": "#/definitions/bdspropbPost"
         },
         "createdBy": {
           "type": "string",
@@ -875,7 +875,7 @@
           "type": "boolean"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPost"
+          "$ref": "#/definitions/bdspropbPost"
         },
         "createdBy": {
           "type": "string",
@@ -912,7 +912,7 @@
         }
       }
     },
-    "pb_bdsproPost": {
+    "bdspropbPost": {
       "type": "object",
       "properties": {
         "id": {
@@ -994,7 +994,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproPostMedia"
+            "$ref": "#/definitions/bdspropbPostMedia"
           }
         },
         "mediaUrl": {
@@ -1014,7 +1014,7 @@
         }
       }
     },
-    "pb_bdsproPostMedia": {
+    "bdspropbPostMedia": {
       "type": "object",
       "properties": {
         "id": {
@@ -1144,7 +1144,7 @@
           "type": "boolean"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPost"
+          "$ref": "#/definitions/bdspropbPost"
         },
         "createdBy": {
           "type": "string",

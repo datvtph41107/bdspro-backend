@@ -1,11 +1,11 @@
 package repo
 
 import (
-	base_enum "base/enum"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"common/case/crud3"
+	_enum "common/domain/enum"
 	"context"
 )
 
@@ -82,7 +82,8 @@ type ProductRepo interface {
 	GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error)
 
 	GetProducts(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
 	// Đếm số sản phẩm theo ownerOf và ownerId
-	CountByOwner(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (uint32, error)
+	CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error)
 }

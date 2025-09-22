@@ -35,7 +35,7 @@ definitions:
         type: array
       products:
         items:
-          $ref: '#/definitions/pb_bdspro.ProductAttachment'
+          $ref: '#/definitions/bdspropb.ProductAttachment'
         type: array
       reminderSchedule:
         type: integer
@@ -276,7 +276,7 @@ definitions:
         type: array
       products:
         items:
-          $ref: '#/definitions/pb_bdspro.ProductAttachment'
+          $ref: '#/definitions/bdspropb.ProductAttachment'
         type: array
       profitAmount:
         type: number
@@ -304,7 +304,7 @@ definitions:
     - TransactionType_TRANSACTION_TYPE_UNKNOWN
     - TransactionType_TRANSACTION_TYPE_EXPENSE
     - TransactionType_TRANSACTION_TYPE_REVENUE
-  pb_bdspro.ProductAttachment:
+  bdspropb.ProductAttachment:
     properties:
       area:
         type: number

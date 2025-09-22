@@ -5,15 +5,15 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 
 	"github.com/jinzhu/copier"
 )
 
 type BdsproPublicService struct {
-	pb_bdspro.UnimplementedBdsproPublicServiceServer
+	bdspropb.UnimplementedBdsproPublicServiceServer
 	UC            *shared_usecase.ProductUsecase
 	ListUC        *usecases.ListUsecase
 	Mapper        *mapper.PublicMapper
@@ -38,9 +38,9 @@ func NewBdsproPublicService(
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.ProductMarketRequest true "Request"
+// @Param req query bdspropb.ProductMarketRequest true "Request"
 // @Router /v2/bdspro/v2/product/market [get]
-func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *pb_bdspro.ProductMarketRequest) (*pb_bdspro.ProductMarketResponse, error) {
+func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *bdspropb.ProductMarketRequest) (*bdspropb.ProductMarketResponse, error) {
 	query := s.ProductMapper.MapMarketProductToDTO(req)
 
 	result, total, err := s.UC.SearchProductMarket(ctx, query)
@@ -48,7 +48,7 @@ func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *pb_bdsp
 		return nil, err
 	}
 	products := s.ProductMapper.MapProductMarketPbList(result)
-	return &pb_bdspro.ProductMarketResponse{
+	return &bdspropb.ProductMarketResponse{
 		Data:  products,
 		Total: total,
 	}, err
@@ -59,9 +59,9 @@ func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *pb_bdsp
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/property-type [get]
-func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	query := dto.PropertyTypeSearchDTO{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -70,9 +70,9 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *pb_bdspr
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*pb_bdspro.ItemResponse, 0)
+	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data:  items,
 		Total: uint32(len(result)),
 	}, nil
@@ -83,17 +83,17 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *pb_bdspr
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/region [get]
-func (s *BdsproPublicService) GetRegion(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *BdsproPublicService) GetRegion(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	query := s.Mapper.PbToRegionRequest(req)
 	result, total, err := s.ListUC.ListRegion(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*pb_bdspro.ItemResponse, 0)
+	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data:  items,
 		Total: uint32(total),
 	}, nil
@@ -104,9 +104,9 @@ func (s *BdsproPublicService) GetRegion(ctx context.Context, req *pb_bdspro.Sear
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/doc-type [get]
-func (s *BdsproPublicService) GetDocType(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *BdsproPublicService) GetDocType(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	query := dto.DocTypeSearchDTO{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -115,9 +115,9 @@ func (s *BdsproPublicService) GetDocType(ctx context.Context, req *pb_bdspro.Sea
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*pb_bdspro.ItemResponse, 0)
+	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data: items,
 	}, nil
 }
@@ -127,9 +127,9 @@ func (s *BdsproPublicService) GetDocType(ctx context.Context, req *pb_bdspro.Sea
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/project [get]
-func (s *BdsproPublicService) GetProject(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *BdsproPublicService) GetProject(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	query := dto.ProjectSearchDTO{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -138,9 +138,9 @@ func (s *BdsproPublicService) GetProject(ctx context.Context, req *pb_bdspro.Sea
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*pb_bdspro.ItemResponse, 0)
+	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data:  items,
 		Total: uint32(total),
 	}, nil
@@ -151,9 +151,9 @@ func (s *BdsproPublicService) GetProject(ctx context.Context, req *pb_bdspro.Sea
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/amenity [get]
-func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	query := dto.AmenitySearchDTO{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -162,9 +162,9 @@ func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *pb_bdspro.Sea
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*pb_bdspro.ItemResponse, 0)
+	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data:  items,
 		Total: uint32(len(result)),
 	}, nil
@@ -175,9 +175,9 @@ func (s *BdsproPublicService) GetAmenity(ctx context.Context, req *pb_bdspro.Sea
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.ProductTotalRequest true "Request"
+// @Param req query bdspropb.ProductTotalRequest true "Request"
 // @Router /v2/bdspro/v2/product/total [get]
-func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspro.ProductTotalRequest) (*pb_bdspro.SearchResponse, error) {
+func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *bdspropb.ProductTotalRequest) (*bdspropb.SearchResponse, error) {
 	query := dto.TextSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -191,7 +191,7 @@ func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspr
 	}
 	products := s.ProductMapper.MapProductPbList(result)
 
-	return &pb_bdspro.SearchResponse{
+	return &bdspropb.SearchResponse{
 		Data:          products,
 		TotalElements: total,
 	}, nil
@@ -202,9 +202,9 @@ func (s *BdsproPublicService) GetProductTotal(ctx context.Context, req *pb_bdspr
 // @Tags Sản phẩm
 // @Accept json
 // @Produce json
-// @Param req query pb_bdspro.SearchQueryRequest true "Request"
+// @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/project-build [get]
-func (s *BdsproPublicService) GetProjectBuild(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.ListItemResponse, error) {
+func (s *BdsproPublicService) GetProjectBuild(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
 	query := dto.TextSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -219,9 +219,9 @@ func (s *BdsproPublicService) GetProjectBuild(ctx context.Context, req *pb_bdspr
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*pb_bdspro.ItemResponse, 0)
+	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
-	return &pb_bdspro.ListItemResponse{
+	return &bdspropb.ListItemResponse{
 		Data:  items,
 		Total: uint32(total),
 	}, nil

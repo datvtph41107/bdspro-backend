@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSearchResponse"
+              "$ref": "#/definitions/bdspropbAdminProductSearchResponse"
             }
           },
           "default": {
@@ -34,13 +34,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
           {
             "name": "page",
             "in": "query",
@@ -56,19 +49,60 @@
             "format": "int64"
           },
           {
-            "name": "sort",
+            "name": "name",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "text",
+            "name": "areaFrom",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "number",
+            "format": "double"
           },
           {
-            "name": "ids",
+            "name": "areaTo",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "transactionTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "saleStatus",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "rentStatus",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "propertyTypeIds",
             "in": "query",
             "required": false,
             "type": "array",
@@ -77,6 +111,29 @@
               "format": "uint64"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -89,7 +146,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -105,7 +162,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductSaveRequest"
+              "$ref": "#/definitions/bdspropbProductSaveRequest"
             }
           }
         ],
@@ -121,7 +178,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -187,7 +244,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -253,7 +310,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -276,7 +333,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAdminProductServiceUpdateProductBody"
+              "$ref": "#/definitions/bdspropbAdminProductServiceUpdateProductBody"
             }
           }
         ],
@@ -292,7 +349,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -360,7 +417,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -423,7 +480,102 @@
     }
   },
   "definitions": {
-    "pb_bdsproAdminProductServiceUpdateProductBody": {
+    "bdspropbAdminProductItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "postIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "assetCode": {
+          "type": "string"
+        },
+        "postCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "propertyTypeName": {
+          "type": "string"
+        }
+      },
+      "title": "AdminProductItem thông tin sản phẩm cho admin view"
+    },
+    "bdspropbAdminProductSearchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAdminProductItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "AdminProductSearchResponse response riêng cho admin search products"
+    },
+    "bdspropbAdminProductServiceUpdateProductBody": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -482,20 +634,20 @@
           "format": "int32"
         },
         "priceData": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "mediaItems": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "productPrivate": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "googleMapLink": {
           "type": "string"
@@ -513,10 +665,10 @@
           "format": "int64"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
+          "$ref": "#/definitions/bdspropbPostSaveWithProduct"
         },
         "asset": {
-          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
+          "$ref": "#/definitions/bdspropbAssetCreateWithProduct"
         },
         "saleVisibility": {
           "type": "integer",
@@ -536,7 +688,7 @@
         }
       }
     },
-    "pb_bdsproAmenityItem": {
+    "bdspropbAmenityItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -548,7 +700,7 @@
         }
       }
     },
-    "pb_bdsproApartment": {
+    "bdspropbApartment": {
       "type": "object",
       "properties": {
         "id": {
@@ -587,7 +739,7 @@
         }
       }
     },
-    "pb_bdsproApartmentAttribute": {
+    "bdspropbApartmentAttribute": {
       "type": "object",
       "properties": {
         "id": {
@@ -621,7 +773,7 @@
         }
       }
     },
-    "pb_bdsproAssetCreateWithProduct": {
+    "bdspropbAssetCreateWithProduct": {
       "type": "object",
       "properties": {
         "purchasePrice": {
@@ -647,12 +799,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproLegalItem"
+            "$ref": "#/definitions/bdspropbLegalItem"
           }
         }
       }
     },
-    "pb_bdsproAttributeProduct": {
+    "bdspropbAttributeProduct": {
       "type": "object",
       "properties": {
         "id": {
@@ -664,7 +816,7 @@
         }
       }
     },
-    "pb_bdsproDeveloper": {
+    "bdspropbDeveloper": {
       "type": "object",
       "properties": {
         "id": {
@@ -707,7 +859,7 @@
         }
       }
     },
-    "pb_bdsproDocType": {
+    "bdspropbDocType": {
       "type": "object",
       "properties": {
         "id": {
@@ -719,7 +871,7 @@
         }
       }
     },
-    "pb_bdsproHouseInfo": {
+    "bdspropbHouseInfo": {
       "type": "object",
       "properties": {
         "id": {
@@ -758,7 +910,7 @@
         }
       }
     },
-    "pb_bdsproItemResponse": {
+    "bdspropbItemResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -770,7 +922,7 @@
         }
       }
     },
-    "pb_bdsproLegalItem": {
+    "bdspropbLegalItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -801,7 +953,7 @@
         }
       }
     },
-    "pb_bdsproMediaItem": {
+    "bdspropbMediaItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -831,7 +983,7 @@
         }
       }
     },
-    "pb_bdsproPostSaveWithProduct": {
+    "bdspropbPostSaveWithProduct": {
       "type": "object",
       "properties": {
         "productId": {
@@ -875,12 +1027,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         }
       }
     },
-    "pb_bdsproProductPrice": {
+    "bdspropbProductPrice": {
       "type": "object",
       "properties": {
         "id": {
@@ -926,7 +1078,7 @@
         }
       }
     },
-    "pb_bdsproProductPrivate": {
+    "bdspropbProductPrivate": {
       "type": "object",
       "properties": {
         "id": {
@@ -957,7 +1109,7 @@
         }
       }
     },
-    "pb_bdsproProductResponse": {
+    "bdspropbProductResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -977,20 +1129,20 @@
           "format": "uint64"
         },
         "propertyType": {
-          "$ref": "#/definitions/pb_bdsproItemResponse"
+          "$ref": "#/definitions/bdspropbItemResponse"
         },
         "docTypeId": {
           "type": "string",
           "format": "uint64"
         },
         "docType": {
-          "$ref": "#/definitions/pb_bdsproDocType"
+          "$ref": "#/definitions/bdspropbDocType"
         },
         "amenities": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAmenityItem"
+            "$ref": "#/definitions/bdspropbAmenityItem"
           }
         },
         "visibility": {
@@ -1030,26 +1182,26 @@
           "format": "uint64"
         },
         "price": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "apartmentId": {
           "type": "string",
           "format": "uint64"
         },
         "apartment": {
-          "$ref": "#/definitions/pb_bdsproApartment"
+          "$ref": "#/definitions/bdspropbApartment"
         },
         "apartmentAttribute": {
-          "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+          "$ref": "#/definitions/bdspropbApartmentAttribute"
         },
         "build": {
-          "$ref": "#/definitions/pb_bdsproProjectBuild"
+          "$ref": "#/definitions/bdspropbProjectBuild"
         },
         "project": {
-          "$ref": "#/definitions/pb_bdsproProject"
+          "$ref": "#/definitions/bdspropbProject"
         },
         "developer": {
-          "$ref": "#/definitions/pb_bdsproDeveloper"
+          "$ref": "#/definitions/bdspropbDeveloper"
         },
         "sourceType": {
           "type": "integer",
@@ -1060,7 +1212,7 @@
           "format": "uint64"
         },
         "privateData": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "note": {
           "type": "string"
@@ -1098,21 +1250,21 @@
           "format": "uint64"
         },
         "province": {
-          "$ref": "#/definitions/pb_bdsproRegion"
+          "$ref": "#/definitions/bdspropbRegion"
         },
         "districtId": {
           "type": "string",
           "format": "uint64"
         },
         "district": {
-          "$ref": "#/definitions/pb_bdsproRegion"
+          "$ref": "#/definitions/bdspropbRegion"
         },
         "wardId": {
           "type": "string",
           "format": "uint64"
         },
         "ward": {
-          "$ref": "#/definitions/pb_bdsproRegion"
+          "$ref": "#/definitions/bdspropbRegion"
         },
         "address": {
           "type": "string"
@@ -1124,18 +1276,18 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAttributeProduct"
+            "$ref": "#/definitions/bdspropbAttributeProduct"
           }
         },
         "mediaList": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "archived": {
           "type": "boolean"
@@ -1157,10 +1309,10 @@
           "$ref": "#/definitions/sharepbProfileItem"
         },
         "saleTransaction": {
-          "$ref": "#/definitions/pb_bdsproTransaction"
+          "$ref": "#/definitions/bdspropbTransaction"
         },
         "rentTransaction": {
-          "$ref": "#/definitions/pb_bdsproTransaction"
+          "$ref": "#/definitions/bdspropbTransaction"
         },
         "createdAt": {
           "type": "string"
@@ -1170,7 +1322,7 @@
         }
       }
     },
-    "pb_bdsproProductSaveRequest": {
+    "bdspropbProductSaveRequest": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -1229,20 +1381,20 @@
           "format": "int32"
         },
         "priceData": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "mediaItems": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "productPrivate": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "googleMapLink": {
           "type": "string"
@@ -1260,10 +1412,10 @@
           "format": "int64"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
+          "$ref": "#/definitions/bdspropbPostSaveWithProduct"
         },
         "asset": {
-          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
+          "$ref": "#/definitions/bdspropbAssetCreateWithProduct"
         },
         "saleVisibility": {
           "type": "integer",
@@ -1287,7 +1439,7 @@
         }
       }
     },
-    "pb_bdsproProject": {
+    "bdspropbProject": {
       "type": "object",
       "properties": {
         "id": {
@@ -1315,7 +1467,7 @@
         }
       }
     },
-    "pb_bdsproProjectBuild": {
+    "bdspropbProjectBuild": {
       "type": "object",
       "properties": {
         "id": {
@@ -1344,19 +1496,19 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartment"
+            "$ref": "#/definitions/bdspropbApartment"
           }
         },
         "attributes": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+            "$ref": "#/definitions/bdspropbApartmentAttribute"
           }
         }
       }
     },
-    "pb_bdsproRegion": {
+    "bdspropbRegion": {
       "type": "object",
       "properties": {
         "id": {
@@ -1368,7 +1520,7 @@
         }
       }
     },
-    "pb_bdsproResponse": {
+    "bdspropbResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -1380,23 +1532,7 @@
         }
       }
     },
-    "pb_bdsproSearchResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductResponse"
-          }
-        },
-        "totalElements": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
-    },
-    "pb_bdsproTransaction": {
+    "bdspropbTransaction": {
       "type": "object",
       "properties": {
         "id": {

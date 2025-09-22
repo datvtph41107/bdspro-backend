@@ -3,12 +3,12 @@ package shared_usecase
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	delivery_dto "bdspro/internal/dto/delivery"
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	_db "common/db"
+	_dto "common/domain/dto"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -145,7 +145,7 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 	}
 
 	visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
-	s.ClientUC.SendNoti(c, &delivery_dto.NotiDTO{
+	s.ClientUC.SendNoti(c, &_dto.NotificationDTO{
 		Title:     "Hết hạn tin đăng",
 		Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
 		Type:      3,
@@ -256,7 +256,7 @@ func (s *PostUsecase) MakeNewExpired(c context.Context, dto dto.PostExpiredReque
 
 	err = _db.SaveWithContext(c, entity)
 	visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
-	s.ClientUC.SendNoti(c, &delivery_dto.NotiDTO{
+	s.ClientUC.SendNoti(c, &_dto.NotificationDTO{
 		Title:     "Hết hạn tin đăng",
 		Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
 		Type:      3,

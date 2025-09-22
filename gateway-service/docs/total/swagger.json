@@ -231,7 +231,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductInternalResponse"
+              "$ref": "#/definitions/bdspropbProductInternalResponse"
             }
           },
           "default": {
@@ -255,7 +255,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproCreateAssetRequest"
+              "$ref": "#/definitions/bdspropbCreateAssetRequest"
             }
           }
         ],
@@ -263,7 +263,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -300,7 +300,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -324,7 +324,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           }
         ],
@@ -332,7 +332,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           },
           "default": {
@@ -356,7 +356,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           }
         ],
@@ -364,7 +364,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           },
           "default": {
@@ -439,7 +439,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           },
           "default": {
@@ -514,7 +514,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGroupType"
+              "$ref": "#/definitions/bdspropbGroupType"
             }
           },
           "default": {
@@ -559,7 +559,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeListDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeListDTO"
             }
           },
           "default": {
@@ -634,7 +634,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -663,7 +663,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAssetCostTypeServiceUpdateBody"
             }
           }
         ],
@@ -671,7 +671,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           },
           "default": {
@@ -746,7 +746,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           },
           "default": {
@@ -821,7 +821,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -850,7 +850,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAssetCostServiceUpdateBody"
             }
           }
         ],
@@ -858,7 +858,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           },
           "default": {
@@ -933,7 +933,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostListDTO"
+              "$ref": "#/definitions/bdspropbAssetCostListDTO"
             }
           },
           "default": {
@@ -964,7 +964,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAsset"
+              "$ref": "#/definitions/bdspropbAsset"
             }
           },
           "default": {
@@ -988,7 +988,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetExploitationDTO"
+              "$ref": "#/definitions/bdspropbAssetExploitationDTO"
             }
           }
         ],
@@ -996,7 +996,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetExploitationDTO"
+              "$ref": "#/definitions/bdspropbAssetExploitationDTO"
             }
           },
           "default": {
@@ -1071,7 +1071,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetExploitationDTO"
+              "$ref": "#/definitions/bdspropbAssetExploitationDTO"
             }
           },
           "default": {
@@ -1146,7 +1146,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1175,7 +1175,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetExploitationServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAssetExploitationServiceUpdateBody"
             }
           }
         ],
@@ -1183,7 +1183,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetExploitationDTO"
+              "$ref": "#/definitions/bdspropbAssetExploitationDTO"
             }
           },
           "default": {
@@ -1258,7 +1258,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetExploitationListDTO"
+              "$ref": "#/definitions/bdspropbAssetExploitationListDTO"
             }
           },
           "default": {
@@ -1333,7 +1333,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproHistoryResponse"
+              "$ref": "#/definitions/bdspropbHistoryResponse"
             }
           },
           "default": {
@@ -1408,7 +1408,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproHistoryResponse"
+              "$ref": "#/definitions/bdspropbHistoryResponse"
             }
           },
           "default": {
@@ -1451,7 +1451,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetSearchResponse"
+              "$ref": "#/definitions/bdspropbAssetSearchResponse"
             }
           },
           "default": {
@@ -1475,7 +1475,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproMergeAssetRequest"
+              "$ref": "#/definitions/bdspropbMergeAssetRequest"
             }
           }
         ],
@@ -1483,7 +1483,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAsset"
+              "$ref": "#/definitions/bdspropbAsset"
             }
           },
           "default": {
@@ -1558,7 +1558,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetSearchResponse"
+              "$ref": "#/definitions/bdspropbAssetSearchResponse"
             }
           },
           "default": {
@@ -1601,7 +1601,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetSearchResponse"
+              "$ref": "#/definitions/bdspropbAssetSearchResponse"
             }
           },
           "default": {
@@ -1644,7 +1644,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetSearchResponse"
+              "$ref": "#/definitions/bdspropbAssetSearchResponse"
             }
           },
           "default": {
@@ -1666,7 +1666,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSplitAssetRequest"
+              "$ref": "#/definitions/bdspropbSplitAssetRequest"
             }
           }
         ],
@@ -1674,7 +1674,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAsset"
+              "$ref": "#/definitions/bdspropbAsset"
             }
           },
           "default": {
@@ -1749,7 +1749,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1786,7 +1786,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1830,7 +1830,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -1874,7 +1874,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -1918,7 +1918,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -1962,7 +1962,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -2006,7 +2006,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -2030,7 +2030,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostSaveRequest"
+              "$ref": "#/definitions/bdspropbPostSaveRequest"
             }
           }
         ],
@@ -2038,7 +2038,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPost"
+              "$ref": "#/definitions/bdspropbPost"
             }
           },
           "default": {
@@ -2113,7 +2113,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostDetailResponse"
+              "$ref": "#/definitions/bdspropbPostDetailResponse"
             }
           },
           "default": {
@@ -2228,7 +2228,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostListResponse"
+              "$ref": "#/definitions/bdspropbPostListResponse"
             }
           },
           "default": {
@@ -2252,7 +2252,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproUpdateHiddenRequest"
+              "$ref": "#/definitions/bdspropbUpdateHiddenRequest"
             }
           }
         ],
@@ -2260,7 +2260,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2284,7 +2284,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostExpiredRequest"
+              "$ref": "#/definitions/bdspropbPostExpiredRequest"
             }
           }
         ],
@@ -2292,7 +2292,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPost"
+              "$ref": "#/definitions/bdspropbPost"
             }
           },
           "default": {
@@ -2407,7 +2407,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostListResponse"
+              "$ref": "#/definitions/bdspropbPostListResponse"
             }
           },
           "default": {
@@ -2452,7 +2452,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostListResponse"
+              "$ref": "#/definitions/bdspropbPostListResponse"
             }
           },
           "default": {
@@ -2527,7 +2527,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2564,7 +2564,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPost"
+              "$ref": "#/definitions/bdspropbPost"
             }
           },
           "default": {
@@ -2588,7 +2588,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproArchivedRequest"
+              "$ref": "#/definitions/bdspropbArchivedRequest"
             }
           }
         ],
@@ -2596,7 +2596,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2671,7 +2671,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAreaInfoResponse"
+              "$ref": "#/definitions/bdspropbAreaInfoResponse"
             }
           },
           "default": {
@@ -2695,7 +2695,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproDevideChildRequest"
+              "$ref": "#/definitions/bdspropbDevideChildRequest"
             }
           }
         ],
@@ -2703,7 +2703,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2778,7 +2778,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproHistoryResponse"
+              "$ref": "#/definitions/bdspropbHistoryResponse"
             }
           },
           "default": {
@@ -2802,7 +2802,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproMergeChildRequest"
+              "$ref": "#/definitions/bdspropbMergeChildRequest"
             }
           }
         ],
@@ -2810,7 +2810,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2849,7 +2849,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2873,7 +2873,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSaveChildRequest"
+              "$ref": "#/definitions/bdspropbSaveChildRequest"
             }
           }
         ],
@@ -2881,7 +2881,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2905,7 +2905,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproDepositRequest"
+              "$ref": "#/definitions/bdspropbDepositRequest"
             }
           }
         ],
@@ -2913,7 +2913,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2952,7 +2952,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -2991,7 +2991,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3030,7 +3030,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3185,7 +3185,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductMarketResponse"
+              "$ref": "#/definitions/bdspropbProductMarketResponse"
             }
           },
           "default": {
@@ -3388,7 +3388,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSearchResponse"
+              "$ref": "#/definitions/bdspropbSearchResponse"
             }
           },
           "default": {
@@ -3412,7 +3412,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductSaveRequest"
+              "$ref": "#/definitions/bdspropbProductSaveRequest"
             }
           }
         ],
@@ -3420,7 +3420,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3444,7 +3444,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproStatusRequest"
+              "$ref": "#/definitions/bdspropbStatusRequest"
             }
           }
         ],
@@ -3452,7 +3452,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3476,7 +3476,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproVisibilityRequest"
+              "$ref": "#/definitions/bdspropbVisibilityRequest"
             }
           }
         ],
@@ -3484,7 +3484,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3508,7 +3508,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproStatusRequest"
+              "$ref": "#/definitions/bdspropbStatusRequest"
             }
           }
         ],
@@ -3516,7 +3516,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3540,7 +3540,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproVisibilityRequest"
+              "$ref": "#/definitions/bdspropbVisibilityRequest"
             }
           }
         ],
@@ -3548,7 +3548,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3572,7 +3572,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSuggestRequest"
+              "$ref": "#/definitions/bdspropbSuggestRequest"
             }
           }
         ],
@@ -3580,7 +3580,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -3655,7 +3655,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -3730,7 +3730,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -3805,7 +3805,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproHistoryResponse"
+              "$ref": "#/definitions/bdspropbHistoryResponse"
             }
           },
           "default": {
@@ -3880,7 +3880,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproMemberResponse"
+              "$ref": "#/definitions/bdspropbMemberResponse"
             }
           },
           "default": {
@@ -3955,7 +3955,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostResponse"
+              "$ref": "#/definitions/bdspropbPostResponse"
             }
           },
           "default": {
@@ -3979,7 +3979,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessBulkRequest"
+              "$ref": "#/definitions/bdspropbSharingAccessBulkRequest"
             }
           }
         ],
@@ -3987,7 +3987,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+              "$ref": "#/definitions/bdspropbSharingAccessResponse"
             }
           },
           "default": {
@@ -4039,7 +4039,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+              "$ref": "#/definitions/bdspropbSharingAccessResponse"
             }
           },
           "default": {

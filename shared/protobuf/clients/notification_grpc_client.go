@@ -1,15 +1,14 @@
 package clients
 
 import (
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"log"
 	"time"
 
-	base_dto "base/dto"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 
@@ -83,7 +82,7 @@ func (s *NotificationClient) SendBatch(
 	return err
 }
 
-func (s *NotificationClient) CreateHistory(ctx context.Context, history *shared_dto.HistoryDTO) error {
+func (s *NotificationClient) CreateHistory(ctx context.Context, history *_dto.HistoryDTO) error {
 	_, err := s.historyClient.Create(ctx, &notificationpb.HistoryDTO{
 		ActionType: int32(history.ActionType),
 		TargetId:   history.TargetId,
@@ -94,7 +93,7 @@ func (s *NotificationClient) CreateHistory(ctx context.Context, history *shared_
 	return err
 }
 
-func (s *NotificationClient) SendNotification(ctx context.Context, noti *base_dto.NotificationDTO) error {
+func (s *NotificationClient) SendNotification(ctx context.Context, noti *_dto.NotificationDTO) error {
 	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
 		Title:   noti.Title,
 		Message: noti.Message,
@@ -103,7 +102,7 @@ func (s *NotificationClient) SendNotification(ctx context.Context, noti *base_dt
 	return err
 }
 
-func (s *NotificationClient) SendBatchNotification(ctx context.Context, noti *base_dto.NotificationBatchDTO) error {
+func (s *NotificationClient) SendBatchNotification(ctx context.Context, noti *_dto.NotificationBatchDTO) error {
 	notifications := make([]*sharepb.NotificationRequest, 0)
 	for _, notification := range noti.Datas {
 		notifications = append(notifications, &sharepb.NotificationRequest{
@@ -119,7 +118,7 @@ func (s *NotificationClient) SendBatchNotification(ctx context.Context, noti *ba
 	return err
 }
 
-func (s *NotificationClient) CreateCRMHistory(ctx context.Context, history *base_dto.HistoryDTO) error {
+func (s *NotificationClient) CreateCRMHistory(ctx context.Context, history *_dto.HistoryDTO) error {
 	_, err := s.historyClient.CreateInternal(ctx, &notificationpb.HistoryDTO{
 		ActionType: int32(history.ActionType),
 		TargetId:   history.TargetId,
@@ -184,18 +183,18 @@ func (s *NotificationClient) CreateAdminHistoryBatch(ctx context.Context, reques
 // LogAdminLogin ghi log khi admin đăng nhập thành công
 func (s *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, adminRole string, ipAddress string, userAgent string) error {
 	return s.CreateAdminHistory(ctx,
-		adminID,                              // adminID
-		adminID,                              // targetID (chính admin đó)
-		int32(shared_enum.TargetHistoryLead), // targetType
-		int32(shared_enum.HistoryCreateStep), // actionType
-		"Admin đăng nhập hệ thống",           // title
+		adminID,                        // adminID
+		adminID,                        // targetID (chính admin đó)
+		int32(_enum.TargetHistoryLead), // targetType
+		int32(_enum.HistoryCreateStep), // actionType
+		"Admin đăng nhập hệ thống",     // title
 		[]string{"Đăng nhập thành công vào hệ thống"}, // notes
-		"Chưa đăng nhập",                    // preStage
-		"Đã đăng nhập",                      // afterStage
-		&adminID,                            // ownerID
-		int32(shared_enum.EOwnerTypeMember), // ownerType
-		adminRole,                           // adminRole
-		ipAddress,                           // ipAddress
-		userAgent,                           // userAgent
+		"Chưa đăng nhập",            // preStage
+		"Đã đăng nhập",              // afterStage
+		&adminID,                    // ownerID
+		int32(_enum.EOwnerOfMember), // ownerType
+		adminRole,                   // adminRole
+		ipAddress,                   // ipAddress
+		userAgent,                   // userAgent
 	)
 }

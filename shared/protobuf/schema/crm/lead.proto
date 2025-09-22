@@ -171,7 +171,7 @@ message LeadDetailDTO {
   optional ContactDTO contact = 10;
   optional StageDTO stage = 11;
   optional PipelineDTO pipeline = 12;
-  repeated pb_bdspro.ProductResponse products = 13;
+  repeated bdspropb.ProductResponse products = 13;
   string sourceName = 14;
   string priorityName = 15;
   optional sharepb.ProfileItem chargePerson = 21;

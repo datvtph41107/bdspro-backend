@@ -369,7 +369,7 @@ message GroupDeal {
     double totalAmount = 10;
     double profitAmount = 11;
     uint32 numMember = 12;
-    repeated pb_bdspro.ProductAttachment products = 13;
+    repeated bdspropb.ProductAttachment products = 13;
     string dealTypeName = 14;
     string note = 15;
     repeated DocumentItem documents = 16;
@@ -648,7 +648,7 @@ message SaveDealProductResponse {
 }
 
 message GetDealProductsResponse {
-    repeated pb_bdspro.ProductAttachment data = 1;
+    repeated bdspropb.ProductAttachment data = 1;
 }
 
 message SummaryRequest {

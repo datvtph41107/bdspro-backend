@@ -2,7 +2,7 @@ package mapper
 
 // import (
 // 	"bdspro/internal/domain/transaction"
-// 	pb_bdspro "pb/types/bdspro"
+// 	bdspropb "pb/types/bdspro"
 // )
 
 // type ProductTransactionMapper struct {
@@ -12,7 +12,7 @@ package mapper
 // 	return &ProductTransactionMapper{}
 // }
 
-// func (m *ProductTransactionMapper) MapProductTransactionToDomain(req *pb_bdspro.Transaction) *transaction.Transaction {
+// func (m *ProductTransactionMapper) MapProductTransactionToDomain(req *bdspropb.Transaction) *transaction.Transaction {
 // 	return &transaction.Transaction{
 // 		ID:                   uint64(req.Id),
 // 		Name:                 req.TransactionName,

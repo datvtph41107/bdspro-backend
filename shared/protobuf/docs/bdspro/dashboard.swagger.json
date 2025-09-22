@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGetCashProfitTimeResponse"
+              "$ref": "#/definitions/bdspropbGetCashProfitTimeResponse"
             }
           },
           "default": {
@@ -73,7 +73,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGetCashProfitResponse"
+              "$ref": "#/definitions/bdspropbGetCashProfitResponse"
             }
           },
           "default": {
@@ -118,7 +118,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproCashProfit": {
+    "bdspropbCashProfit": {
       "type": "object",
       "properties": {
         "name": {
@@ -138,7 +138,7 @@
         }
       }
     },
-    "pb_bdsproCashProfitTime": {
+    "bdspropbCashProfitTime": {
       "type": "object",
       "properties": {
         "time": {
@@ -158,26 +158,26 @@
         }
       }
     },
-    "pb_bdsproGetCashProfitResponse": {
+    "bdspropbGetCashProfitResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproCashProfit"
+            "$ref": "#/definitions/bdspropbCashProfit"
           }
         }
       }
     },
-    "pb_bdsproGetCashProfitTimeResponse": {
+    "bdspropbGetCashProfitTimeResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproCashProfitTime"
+            "$ref": "#/definitions/bdspropbCashProfitTime"
           }
         }
       }

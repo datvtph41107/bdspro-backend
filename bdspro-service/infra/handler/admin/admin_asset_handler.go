@@ -8,14 +8,14 @@ import (
 	_errors "common/errors"
 	"context"
 	"pb/clients"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
 )
 
 type AdminAssetHandler struct {
-	pb_bdspro.UnimplementedAdminAssetServiceServer
+	bdspropb.UnimplementedAdminAssetServiceServer
 	AdminAssetService *admin_usecases.AdminAssetUsecase
 	AssetMapper       *mapper.AssetMapper
 	AuthGrpcClient    *clients.AuthGrpcClient
@@ -40,9 +40,9 @@ func NewAdminAssetHandler(
 // @Produce json
 // @Param page query int true "Page number"
 // @Param size query int true "Page size"
-// @Success 200 {object} pb_bdspro.AssetSearchResponse
+// @Success 200 {object} bdspropb.AssetSearchResponse
 // @Router /admin/assets [get]
-func (h *AdminAssetHandler) GetAssets(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.AssetSearchResponse, error) {
+func (h *AdminAssetHandler) GetAssets(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.AssetSearchResponse, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_XEM"}); err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (h *AdminAssetHandler) GetAssets(ctx context.Context, req *sharepb.IdReques
 	}
 
 	assets := h.AssetMapper.MapAssetPbList(result)
-	return &pb_bdspro.AssetSearchResponse{
+	return &bdspropb.AssetSearchResponse{
 		Data:  assets,
 		Total: uint64(total),
 	}, nil
@@ -70,10 +70,10 @@ func (h *AdminAssetHandler) GetAssets(ctx context.Context, req *sharepb.IdReques
 // @Tags AdminAsset
 // @Accept json
 // @Produce json
-// @Param asset body pb_bdspro.SaveAssetRequest true "Asset to create"
-// @Success 200 {object} pb_bdspro.Asset
+// @Param asset body bdspropb.SaveAssetRequest true "Asset to create"
+// @Success 200 {object} bdspropb.Asset
 // @Router /admin/assets [post]
-func (h *AdminAssetHandler) CreateAsset(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Asset, error) {
+func (h *AdminAssetHandler) CreateAsset(ctx context.Context, req *bdspropb.SaveAssetRequest) (*bdspropb.Asset, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_TAO"}); err != nil {
 		return nil, err
 	}
@@ -96,10 +96,10 @@ func (h *AdminAssetHandler) CreateAsset(ctx context.Context, req *pb_bdspro.Save
 // @Tags AdminAsset
 // @Accept json
 // @Produce json
-// @Param asset body pb_bdspro.SaveAssetRequest true "Asset to update"
-// @Success 200 {object} pb_bdspro.Asset
+// @Param asset body bdspropb.SaveAssetRequest true "Asset to update"
+// @Success 200 {object} bdspropb.Asset
 // @Router /admin/assets [put]
-func (h *AdminAssetHandler) UpdateAsset(ctx context.Context, req *pb_bdspro.SaveAssetRequest) (*pb_bdspro.Asset, error) {
+func (h *AdminAssetHandler) UpdateAsset(ctx context.Context, req *bdspropb.SaveAssetRequest) (*bdspropb.Asset, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_SUA"}); err != nil {
 		return nil, err
 	}
@@ -123,9 +123,9 @@ func (h *AdminAssetHandler) UpdateAsset(ctx context.Context, req *pb_bdspro.Save
 // @Accept json
 // @Produce json
 // @Param id path int true "Asset ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/assets/{id} [delete]
-func (h *AdminAssetHandler) DeleteAsset(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminAssetHandler) DeleteAsset(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_XOA"}); err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (h *AdminAssetHandler) DeleteAsset(ctx context.Context, req *sharepb.IdRequ
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Xóa tài sản thành công",
 	}, nil
@@ -147,9 +147,9 @@ func (h *AdminAssetHandler) DeleteAsset(ctx context.Context, req *sharepb.IdRequ
 // @Accept json
 // @Produce json
 // @Param id path int true "Asset ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/assets/{id}/approve [post]
-func (h *AdminAssetHandler) ApproveAsset(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminAssetHandler) ApproveAsset(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_DUYET"}); err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (h *AdminAssetHandler) ApproveAsset(ctx context.Context, req *sharepb.IdReq
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Duyệt tài sản thành công",
 	}, nil
@@ -171,9 +171,9 @@ func (h *AdminAssetHandler) ApproveAsset(ctx context.Context, req *sharepb.IdReq
 // @Accept json
 // @Produce json
 // @Param id path int true "Asset ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/assets/{id}/reject [post]
-func (h *AdminAssetHandler) RejectAsset(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminAssetHandler) RejectAsset(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_DUYET"}); err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (h *AdminAssetHandler) RejectAsset(ctx context.Context, req *sharepb.IdRequ
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Từ chối tài sản thành công",
 	}, nil
@@ -194,10 +194,10 @@ func (h *AdminAssetHandler) RejectAsset(ctx context.Context, req *sharepb.IdRequ
 // @Tags AdminAsset
 // @Accept json
 // @Produce json
-// @Param request body pb_bdspro.ArchivedRequest true "Archive request"
-// @Success 200 {object} pb_bdspro.Response
+// @Param request body bdspropb.ArchivedRequest true "Archive request"
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/assets/archived [put]
-func (h *AdminAssetHandler) ArchiveAsset(ctx context.Context, req *pb_bdspro.ArchivedRequest) (*pb_bdspro.Response, error) {
+func (h *AdminAssetHandler) ArchiveAsset(ctx context.Context, req *bdspropb.ArchivedRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_LUU_TRU"}); err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (h *AdminAssetHandler) ArchiveAsset(ctx context.Context, req *pb_bdspro.Arc
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Lưu trữ tài sản thành công",
 	}, nil
@@ -223,10 +223,10 @@ func (h *AdminAssetHandler) ArchiveAsset(ctx context.Context, req *pb_bdspro.Arc
 // @Tags AdminAsset
 // @Accept json
 // @Produce json
-// @Param request body pb_bdspro.MergeAssetRequest true "Merge request"
-// @Success 200 {object} pb_bdspro.Asset
+// @Param request body bdspropb.MergeAssetRequest true "Merge request"
+// @Success 200 {object} bdspropb.Asset
 // @Router /admin/assets/merge [post]
-func (h *AdminAssetHandler) MergeAssets(ctx context.Context, req *pb_bdspro.MergeAssetRequest) (*pb_bdspro.Asset, error) {
+func (h *AdminAssetHandler) MergeAssets(ctx context.Context, req *bdspropb.MergeAssetRequest) (*bdspropb.Asset, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_HOP_NHAT"}); err != nil {
 		return nil, err
 	}
@@ -249,10 +249,10 @@ func (h *AdminAssetHandler) MergeAssets(ctx context.Context, req *pb_bdspro.Merg
 // @Tags AdminAsset
 // @Accept json
 // @Produce json
-// @Param request body pb_bdspro.SplitAssetRequest true "Split request"
-// @Success 200 {object} pb_bdspro.Asset
+// @Param request body bdspropb.SplitAssetRequest true "Split request"
+// @Success 200 {object} bdspropb.Asset
 // @Router /admin/assets/split [post]
-func (h *AdminAssetHandler) SplitAsset(ctx context.Context, req *pb_bdspro.SplitAssetRequest) (*pb_bdspro.Asset, error) {
+func (h *AdminAssetHandler) SplitAsset(ctx context.Context, req *bdspropb.SplitAssetRequest) (*bdspropb.Asset, error) {
 	body := dto.SplitAssetDTO{}
 	if err := copier.Copy(&body, req); err != nil {
 		return nil, err

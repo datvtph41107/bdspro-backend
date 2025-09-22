@@ -135,7 +135,7 @@ message DealContractResponse {
     uint64 customerId = 5;
     sharepb.ProfileItem customer = 6;
     uint64 productId = 7;
-    pb_bdspro.ProductAttachment product = 8;
+    bdspropb.ProductAttachment product = 8;
     uint64 staffId = 9;
     string staffName = 10;
     string createdAt = 11;

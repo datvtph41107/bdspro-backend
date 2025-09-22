@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           },
           "default": {
@@ -130,7 +130,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -203,7 +203,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+              "$ref": "#/definitions/bdspropbAssetCostDTO"
             }
           },
           "default": {
@@ -226,7 +226,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAssetCostServiceUpdateBody"
             }
           }
         ],
@@ -242,7 +242,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostListDTO"
+              "$ref": "#/definitions/bdspropbAssetCostListDTO"
             }
           },
           "default": {
@@ -312,7 +312,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproAssetCostDTO": {
+    "bdspropbAssetCostDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -357,14 +357,14 @@
         }
       }
     },
-    "pb_bdsproAssetCostListDTO": {
+    "bdspropbAssetCostListDTO": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAssetCostDTO"
+            "$ref": "#/definitions/bdspropbAssetCostDTO"
           }
         },
         "totalElements": {
@@ -373,7 +373,7 @@
         }
       }
     },
-    "pb_bdsproAssetCostServiceUpdateBody": {
+    "bdspropbAssetCostServiceUpdateBody": {
       "type": "object",
       "properties": {
         "assetId": {
@@ -414,7 +414,7 @@
         }
       }
     },
-    "pb_bdsproResponse": {
+    "bdspropbResponse": {
       "type": "object",
       "properties": {
         "id": {

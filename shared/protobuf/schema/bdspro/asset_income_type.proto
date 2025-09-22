@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package pb_bdspro;
-option go_package = "pb/types/bdspro;pb_bdspro";
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
 
 message AssetIncomeTypeDTO {
   uint64 id = 1;

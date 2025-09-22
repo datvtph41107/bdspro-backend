@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGetHistoryResponse"
+              "$ref": "#/definitions/bdspropbGetHistoryResponse"
             }
           },
           "default": {
@@ -81,7 +81,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGetHistoryResponse"
+              "$ref": "#/definitions/bdspropbGetHistoryResponse"
             }
           },
           "default": {
@@ -134,14 +134,14 @@
     }
   },
   "definitions": {
-    "pb_bdsproGetHistoryResponse": {
+    "bdspropbGetHistoryResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproHistory"
+            "$ref": "#/definitions/bdspropbHistory"
           }
         },
         "total": {
@@ -150,7 +150,7 @@
         }
       }
     },
-    "pb_bdsproHistory": {
+    "bdspropbHistory": {
       "type": "object",
       "properties": {
         "id": {

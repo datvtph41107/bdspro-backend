@@ -5539,7 +5539,7 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ProductAttachment"
+                        "$ref": "#/definitions/bdspropb.ProductAttachment"
                     }
                 }
             }
@@ -5722,7 +5722,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ProductAttachment"
+                        "$ref": "#/definitions/bdspropb.ProductAttachment"
                     }
                 },
                 "profitAmount": {
@@ -6654,7 +6654,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ProductAttachment": {
+        "bdspropb.ProductAttachment": {
             "type": "object",
             "properties": {
                 "area": {

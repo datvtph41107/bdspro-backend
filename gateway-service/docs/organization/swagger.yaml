@@ -870,7 +870,7 @@ definitions:
     properties:
       data:
         items:
-          $ref: '#/definitions/pb_bdspro.ProductAttachment'
+          $ref: '#/definitions/bdspropb.ProductAttachment'
         type: array
     type: object
   organizationpb.GetDealsResponse:
@@ -991,7 +991,7 @@ definitions:
         type: array
       products:
         items:
-          $ref: '#/definitions/pb_bdspro.ProductAttachment'
+          $ref: '#/definitions/bdspropb.ProductAttachment'
         type: array
       profitAmount:
         type: number
@@ -1601,7 +1601,7 @@ definitions:
       name:
         type: string
     type: object
-  pb_bdspro.ProductAttachment:
+  bdspropb.ProductAttachment:
     properties:
       area:
         type: number

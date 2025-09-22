@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	organizationpb "pb/types/organization"
 
 	sharepb "pb/types/shared"
@@ -106,7 +106,7 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	// Make concurrent API calls for better performance
 	type result struct {
 		deal     *organizationpb.GroupDeal
-		products *pb_bdspro.ProductAttachmentResponse
+		products *bdspropb.ProductAttachmentResponse
 		// dealTransactions []*organizationpb.DealTransactionResponse
 		participants []*sharepb.ProfileItem
 		err          error
@@ -137,7 +137,7 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 
 	// Collect results
 	var deal *organizationpb.GroupDeal
-	var products *pb_bdspro.ProductAttachmentResponse
+	var products *bdspropb.ProductAttachmentResponse
 	// var dealTransactions []*organizationpb.DealTransactionResponse
 	var participants []*sharepb.ProfileItem
 

@@ -4,15 +4,15 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
 
 type AdminPropertyTypeHandler struct {
-	pb_bdspro.UnimplementedAdminPropertyTypeServiceServer
+	bdspropb.UnimplementedAdminPropertyTypeServiceServer
 	AdminPropertyTypeUsecase *admin_usecases.AdminPropertyTypeUsecase
 	PropertyTypeMapper       *mapper.PropertyTypeMapper
 }
@@ -27,7 +27,7 @@ func NewAdminPropertyTypeHandler(
 	}
 }
 
-func (h *AdminPropertyTypeHandler) GetList(ctx context.Context, req *pb_bdspro.SearchQueryRequest) (*pb_bdspro.PropertyTypeListResponse, error) {
+func (h *AdminPropertyTypeHandler) GetList(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.PropertyTypeListResponse, error) {
 	result, total, err := h.AdminPropertyTypeUsecase.GetList(ctx,
 		&dto.TextSearchRequest{
 			Pagable: _dto.Pagable{
@@ -41,13 +41,13 @@ func (h *AdminPropertyTypeHandler) GetList(ctx context.Context, req *pb_bdspro.S
 	}
 
 	propertyTypes := h.PropertyTypeMapper.MapPropertyTypePbList(result)
-	return &pb_bdspro.PropertyTypeListResponse{
+	return &bdspropb.PropertyTypeListResponse{
 		Data:          propertyTypes,
 		TotalElements: total,
 	}, nil
 }
 
-func (h *AdminPropertyTypeHandler) Create(ctx context.Context, req *pb_bdspro.PropertyType) (*pb_bdspro.PropertyType, error) {
+func (h *AdminPropertyTypeHandler) Create(ctx context.Context, req *bdspropb.PropertyType) (*bdspropb.PropertyType, error) {
 	propertyType := h.PropertyTypeMapper.PropertyTypePbToDomain(req)
 	if req.Name == "" {
 		return nil, _errors.ReturnError(400, "Tên tính chất không được để trống")
@@ -59,7 +59,7 @@ func (h *AdminPropertyTypeHandler) Create(ctx context.Context, req *pb_bdspro.Pr
 	return h.PropertyTypeMapper.MapPropertyTypePb(propertyType), nil
 }
 
-func (h *AdminPropertyTypeHandler) Update(ctx context.Context, req *pb_bdspro.PropertyType) (*pb_bdspro.PropertyType, error) {
+func (h *AdminPropertyTypeHandler) Update(ctx context.Context, req *bdspropb.PropertyType) (*bdspropb.PropertyType, error) {
 	propertyType := h.PropertyTypeMapper.PropertyTypePbToDomain(req)
 	if req.Name == "" {
 		return nil, _errors.ReturnError(400, "Tên loại không được để trống")

@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "pb_bdsproGetCountByOwnerResponse": {
+    "bdspropbGetCountByOwnerResponse": {
       "type": "object",
       "properties": {
         "totalProduct": {

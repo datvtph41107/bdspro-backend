@@ -1,13 +1,13 @@
 package postgres
 
 import (
-	base_enum "base/enum"
 	"bdspro/internal/domain"
+	_enum "common/domain/enum"
 	"context"
 )
 
 // CountByOwner đếm số sản phẩm theo ownerOf và ownerId
-func (r *GormUserProductRepo) CountByOwner(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (uint32, error) {
+func (r *GormUserProductRepo) CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error) {
 	var count int64
 
 	query := r.DB.WithContext(ctx).Model(&domain.Product{}).

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package pb_bdspro;
+package bdspropb;
 
-option go_package = "pb/types/bdspro;pb_bdspro";
+option go_package = "pb/types/bdspro;bdspropb";
 
 import "bdspro/apartment.proto";
 import "bdspro/apartment_attribute.proto";

@@ -9,14 +9,13 @@ import (
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	"bdspro/internal/utils"
-	_dto "common/dto"
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"fmt"
 	"log"
-	shared_dto "pb/dto"
-	shared_enum "pb/enums"
 	"strings"
 
 	"github.com/jinzhu/copier"
@@ -1017,8 +1016,8 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 	go func() {
 		ctxClone := _utils.CloneContext(c)
 		profileId := _utils.GetProfileIdWithContext(ctxClone)
-		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryProductChildCreate,
+		s.NotificationClient.CreateHistory(ctxClone, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryProductChildCreate,
 			TargetId:   *body.ParentID,
 			OwnerID:    &profileId,
 			Title:      "Tạo sản phẩm con thành công",
@@ -1067,8 +1066,8 @@ func (s *ProductUsecase) MergeProductChild(c context.Context, body *dto.MergePro
 			parentId = *body.ParentID
 		}
 
-		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryProductMerge,
+		s.NotificationClient.CreateHistory(ctxClone, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryProductMerge,
 			TargetId:   parentId,
 			OwnerID:    &profileId,
 			Title:      "Gộp sản phẩm đã chọn thành công",
@@ -1111,8 +1110,8 @@ func (s *ProductUsecase) MergeAllProductChild(c context.Context, parentID *uint6
 		}
 		childCodes := strings.Join(arr, ", ")
 
-		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
-			ActionType: shared_enum.HistoryProductMergeAll,
+		s.NotificationClient.CreateHistory(ctxClone, &_dto.HistoryDTO{
+			ActionType: _enum.HistoryProductMergeAll,
 			TargetId:   *parentID,
 			OwnerID:    &profileId,
 			Title:      "Gộp toàn bộ sản phẩm thành công",
@@ -1184,7 +1183,7 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 			arr = append(arr, fmt.Sprintf("%s(%.2f m2)", utils.ConvertToBDS(results[i].ID), results[i].Area))
 		}
 
-		s.NotificationClient.CreateHistory(ctxClone, &shared_dto.HistoryDTO{
+		s.NotificationClient.CreateHistory(ctxClone, &_dto.HistoryDTO{
 			Title: "Tách sản phẩm thành công",
 			Note: []string{
 				"Tách sản phẩm",
@@ -1193,7 +1192,7 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 				strings.Join(arr, ", "),
 			},
 			TargetId:   *child.ParentId,
-			ActionType: shared_enum.HistoryProductDevide,
+			ActionType: _enum.HistoryProductDevide,
 			// TargetType: shared_enum.EOwnerOf_Product,
 		})
 	}()

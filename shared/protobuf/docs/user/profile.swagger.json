@@ -100,6 +100,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "bookmark",
+            "description": "Lọc theo bookmark",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -396,8 +403,7 @@
           "type": "string",
           "title": "Lý do khóa tài khoản"
         }
-      },
-      "title": "Admin API Request Messages"
+      }
     },
     "ProfileServiceUnblockUserBody": {
       "type": "object",
@@ -605,6 +611,10 @@
         "departmentId": {
           "type": "string",
           "format": "uint64"
+        },
+        "bookmark": {
+          "type": "boolean",
+          "title": "true nếu user này được admin bookmark"
         },
         "tickVerified": {
           "type": "boolean",

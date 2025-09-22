@@ -17,6 +17,7 @@ type Product struct {
 	// Deposite        *Deposite           `gorm:"-" json:"deposite,omitempty"`
 	ParentId       *uint64             `gorm:"type:int8" json:"parentId,omitempty"`
 	AssetId        *uint64             `gorm:"type:int8" json:"assetId,omitempty"`
+	PostIds        []uint64            `gorm:"-" json:"postIds,omitempty"`
 	PropertyTypeId *uint64             `json:"propertyTypeId,omitempty"`
 	PropertyType   *PropertyTypeItem   `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	DocTypeId      *uint64             `json:"docTypeId,omitempty"`
@@ -63,6 +64,12 @@ type Product struct {
 	MediaList      []ProductMediaItem `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
 	HouseInfo      *HouseInfo         `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
 	Archived       bool               `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
+
+	ProvinceName     string `gorm:"-" json:"provinceName,omitempty"`
+	DistrictName     string `gorm:"-" json:"districtName,omitempty"`
+	WardName         string `gorm:"-" json:"wardName,omitempty"`
+	PropertyTypeName string `gorm:"-" json:"propertyTypeName,omitempty"`
+
 	// CreatedUser       *ProfileInfo       `gorm:"-" json:"createdUser,omitempty"`
 	// UpdatedUser       *ProfileInfo       `gorm:"-" json:"updatedUser,omitempty"`
 	// OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)

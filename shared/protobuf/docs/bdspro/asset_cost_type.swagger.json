@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           },
           "default": {
@@ -130,7 +130,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGroupType"
+              "$ref": "#/definitions/bdspropbGroupType"
             }
           },
           "default": {
@@ -205,7 +205,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeListDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeListDTO"
             }
           },
           "default": {
@@ -250,7 +250,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -323,7 +323,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+              "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
             }
           },
           "default": {
@@ -346,7 +346,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAssetCostTypeServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAssetCostTypeServiceUpdateBody"
             }
           }
         ],
@@ -357,7 +357,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproAssetCostTypeDTO": {
+    "bdspropbAssetCostTypeDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -379,14 +379,14 @@
         }
       }
     },
-    "pb_bdsproAssetCostTypeListDTO": {
+    "bdspropbAssetCostTypeListDTO": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+            "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
           }
         },
         "totalElements": {
@@ -395,7 +395,7 @@
         }
       }
     },
-    "pb_bdsproAssetCostTypeServiceUpdateBody": {
+    "bdspropbAssetCostTypeServiceUpdateBody": {
       "type": "object",
       "properties": {
         "typeName": {
@@ -413,26 +413,26 @@
         }
       }
     },
-    "pb_bdsproGroupType": {
+    "bdspropbGroupType": {
       "type": "object",
       "properties": {
         "incomes": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+            "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
           }
         },
         "spends": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAssetCostTypeDTO"
+            "$ref": "#/definitions/bdspropbAssetCostTypeDTO"
           }
         }
       }
     },
-    "pb_bdsproResponse": {
+    "bdspropbResponse": {
       "type": "object",
       "properties": {
         "id": {

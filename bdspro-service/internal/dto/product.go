@@ -2,7 +2,7 @@ package dto
 
 import (
 	"bdspro/internal/domain"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"time"
 )
 
@@ -32,8 +32,8 @@ type ProductSearchRequest struct {
 	DocTypeIds       []uint64   `form:"docTypeIds"`
 	PropertyTypeIds  []uint64   `form:"propertyTypeIds"`
 	AmenityIds       []uint64   `form:"amenityIds"`
-	SourceTypeIds    []uint     `form:"sourceTypeIds"`
-	TransactionTypes []uint     `form:"transactionTypes"`
+	SourceTypeIds    []uint32   `form:"sourceTypeIds"`
+	TransactionTypes []uint32   `form:"transactionTypes"`
 	SaleStatus       []uint32   `form:"saleStatus"`
 	RentStatus       []uint32   `form:"rentStatus"`
 	ProvinceIds      []uint64   `form:"provinceIds"`
@@ -45,6 +45,11 @@ type ProductSearchRequest struct {
 	ParentID         *uint64    `form:"parentId"`
 	Text             string     `form:"text"`
 	Archived         *bool      `form:"archived"`
+
+	FromDate *time.Time `form:"fromDate"`
+	ToDate   *time.Time `form:"toDate"`
+	AreaFrom *float64   `form:"areaFrom"`
+	AreaTo   *float64   `form:"areaTo"`
 
 	RequestOrganizationId *uint64 `form:"-"`
 	RequestUserId         *uint64 `form:"-"`

@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/enums"
 	_models "common/models"
 	_utils "common/utils"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type AssetCostMapper struct {
@@ -15,16 +15,16 @@ func NewAssetCostMapper() *AssetCostMapper {
 	return &AssetCostMapper{}
 }
 
-func (m *AssetCostMapper) AssetCostToPbList(assetCosts []domain.AssetCost) []*pb_bdspro.AssetCostDTO {
-	pbAssetCosts := make([]*pb_bdspro.AssetCostDTO, len(assetCosts))
+func (m *AssetCostMapper) AssetCostToPbList(assetCosts []domain.AssetCost) []*bdspropb.AssetCostDTO {
+	pbAssetCosts := make([]*bdspropb.AssetCostDTO, len(assetCosts))
 	for i, assetCost := range assetCosts {
 		pbAssetCosts[i] = m.AssetCostToPb(&assetCost)
 	}
 	return pbAssetCosts
 }
 
-func (m *AssetCostMapper) AssetCostToPb(assetCost *domain.AssetCost) *pb_bdspro.AssetCostDTO {
-	result := &pb_bdspro.AssetCostDTO{
+func (m *AssetCostMapper) AssetCostToPb(assetCost *domain.AssetCost) *bdspropb.AssetCostDTO {
+	result := &bdspropb.AssetCostDTO{
 		Id:          assetCost.ID,
 		AssetId:     assetCost.AssetID,
 		Amount:      assetCost.Amount,
@@ -43,7 +43,7 @@ func (m *AssetCostMapper) AssetCostToPb(assetCost *domain.AssetCost) *pb_bdspro.
 	return result
 }
 
-func (m *AssetCostMapper) AssetCostPbToDomain(pbAssetCost *pb_bdspro.AssetCostDTO) *domain.AssetCost {
+func (m *AssetCostMapper) AssetCostPbToDomain(pbAssetCost *bdspropb.AssetCostDTO) *domain.AssetCost {
 	res := &domain.AssetCost{
 		BaseEntity: _models.BaseEntity{
 			ID: pbAssetCost.Id,

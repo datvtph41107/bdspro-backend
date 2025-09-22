@@ -3,7 +3,7 @@ package mapper
 import (
 	"bdspro/internal/domain"
 	_utils "common/utils"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type DeveloperMapper struct {
@@ -13,9 +13,9 @@ func NewDeveloperMapper() *DeveloperMapper {
 	return &DeveloperMapper{}
 }
 
-func (m *DeveloperMapper) MapDeveloperPbItem(developer *domain.Developer) *pb_bdspro.Developer {
+func (m *DeveloperMapper) MapDeveloperPbItem(developer *domain.Developer) *bdspropb.Developer {
 	// todo: map thêm slug, logoUrl, backgroundUrl, description, address, phone, email, website, foundedAt
-	return &pb_bdspro.Developer{
+	return &bdspropb.Developer{
 		Id:            developer.ID,
 		Name:          developer.Name,
 		Slug:          developer.Slug,

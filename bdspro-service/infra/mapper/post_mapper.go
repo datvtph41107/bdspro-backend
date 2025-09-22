@@ -6,7 +6,7 @@ import (
 	"bdspro/internal/enums"
 	_dto "common/dto"
 	_utils "common/utils"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type PostMapper struct {
@@ -18,8 +18,8 @@ func NewPostMapper() *PostMapper {
 	return &PostMapper{}
 }
 
-func (*PostMapper) MapPostMedia(media *domain.PostMediaEntity) *pb_bdspro.PostMedia {
-	return &pb_bdspro.PostMedia{
+func (*PostMapper) MapPostMedia(media *domain.PostMediaEntity) *bdspropb.PostMedia {
+	return &bdspropb.PostMedia{
 		Id:        media.ID,
 		MediaUrl:  media.MediaURL,
 		MediaType: media.MediaType,
@@ -28,28 +28,28 @@ func (*PostMapper) MapPostMedia(media *domain.PostMediaEntity) *pb_bdspro.PostMe
 	}
 }
 
-func (m *PostMapper) PostToPbList(posts *[]domain.PostItem) []*pb_bdspro.Post {
-	postList := make([]*pb_bdspro.Post, len(*posts))
+func (m *PostMapper) PostToPbList(posts *[]domain.PostItem) []*bdspropb.Post {
+	postList := make([]*bdspropb.Post, len(*posts))
 	for i, post := range *posts {
 		postList[i] = m.PostToPb(&post)
 	}
 	return postList
 }
 
-func (m *PostMapper) PostPointerToPbList(posts []*domain.PostItem) []*pb_bdspro.Post {
-	postList := make([]*pb_bdspro.Post, len(posts))
+func (m *PostMapper) PostPointerToPbList(posts []*domain.PostItem) []*bdspropb.Post {
+	postList := make([]*bdspropb.Post, len(posts))
 	for i, post := range posts {
 		postList[i] = m.PostToPb(post)
 	}
 	return postList
 }
 
-func (m *PostMapper) PostToPb(post *domain.PostItem) *pb_bdspro.Post {
-	mediaList := make([]*pb_bdspro.PostMedia, len(post.MediaList))
+func (m *PostMapper) PostToPb(post *domain.PostItem) *bdspropb.Post {
+	mediaList := make([]*bdspropb.PostMedia, len(post.MediaList))
 	for i, media := range post.MediaList {
 		mediaList[i] = m.MapPostMedia(&media)
 	}
-	return &pb_bdspro.Post{
+	return &bdspropb.Post{
 		Id:              post.ID,
 		Title:           post.Title,
 		PostPrice:       post.PostPrice,
@@ -70,7 +70,7 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *pb_bdspro.Post {
 	}
 }
 
-func (m *PostMapper) PostMediaToDTO(media []*pb_bdspro.PostMedia) []dto.PostMediaItem {
+func (m *PostMapper) PostMediaToDTO(media []*bdspropb.PostMedia) []dto.PostMediaItem {
 	mediaList := make([]dto.PostMediaItem, len(media))
 	for i, media := range media {
 		mediaList[i] = dto.PostMediaItem{
@@ -82,7 +82,7 @@ func (m *PostMapper) PostMediaToDTO(media []*pb_bdspro.PostMedia) []dto.PostMedi
 	}
 	return mediaList
 }
-func (m *PostMapper) PostSaveRequestToDTO(request *pb_bdspro.PostSaveRequest) *dto.PostSaveRequest {
+func (m *PostMapper) PostSaveRequestToDTO(request *bdspropb.PostSaveRequest) *dto.PostSaveRequest {
 	result := &dto.PostSaveRequest{
 		ProductID:       request.ProductId,
 		Title:           request.Title,
@@ -102,7 +102,7 @@ func (m *PostMapper) PostSaveRequestToDTO(request *pb_bdspro.PostSaveRequest) *d
 	return result
 }
 
-func (m *PostMapper) PostUpdateRequestToDTO(request *pb_bdspro.PostSaveRequest) *dto.PostUpdateRequest {
+func (m *PostMapper) PostUpdateRequestToDTO(request *bdspropb.PostSaveRequest) *dto.PostUpdateRequest {
 	return &dto.PostUpdateRequest{
 		Title:           request.Title,
 		Content:         request.Content,
@@ -116,8 +116,8 @@ func (m *PostMapper) PostUpdateRequestToDTO(request *pb_bdspro.PostSaveRequest) 
 	}
 }
 
-func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *pb_bdspro.PostDetailResponse {
-	result := &pb_bdspro.PostDetailResponse{
+func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *bdspropb.PostDetailResponse {
+	result := &bdspropb.PostDetailResponse{
 		Post: m.PostToPb(post.Post),
 	}
 	if post.ProductInfo != nil {
@@ -129,7 +129,7 @@ func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *pb_bdspro.PostDetailR
 	return result
 }
 
-func (m *PostMapper) PostSearchRequestToDTO(request *pb_bdspro.PostSearchRequest) *dto.PostSearchRequest {
+func (m *PostMapper) PostSearchRequestToDTO(request *bdspropb.PostSearchRequest) *dto.PostSearchRequest {
 	result := &dto.PostSearchRequest{
 		Pagable: _dto.Pagable{
 			Size: request.Size,
@@ -154,12 +154,12 @@ func (m *PostMapper) PostSearchRequestToDTO(request *pb_bdspro.PostSearchRequest
 }
 
 // Admin methods
-// func (m *PostMapper) MapPostPb(post *domain.Post) *pb_bdspro.Post {
+// func (m *PostMapper) MapPostPb(post *domain.Post) *bdspropb.Post {
 // 	if post == nil {
 // 		return nil
 // 	}
 
-// 	return &pb_bdspro.Post{
+// 	return &bdspropb.Post{
 // 		Id:              post.ID,
 // 		Title:           post.Title,
 // 		PostPrice:       post.Price,
@@ -177,19 +177,19 @@ func (m *PostMapper) PostSearchRequestToDTO(request *pb_bdspro.PostSearchRequest
 // 	}
 // }
 
-// func (m *PostMapper) MapPostPbList(posts []*domain.Post) []*pb_bdspro.Post {
+// func (m *PostMapper) MapPostPbList(posts []*domain.Post) []*bdspropb.Post {
 // 	if posts == nil {
 // 		return nil
 // 	}
 
-// 	result := make([]*pb_bdspro.Post, len(posts))
+// 	result := make([]*bdspropb.Post, len(posts))
 // 	for i, post := range posts {
 // 		result[i] = m.MapPostPb(post)
 // 	}
 // 	return result
 // }
 
-func (m *PostMapper) PostSavePbToDTO(req *pb_bdspro.PostSaveRequest) *dto.PostSaveRequest {
+func (m *PostMapper) PostSavePbToDTO(req *bdspropb.PostSaveRequest) *dto.PostSaveRequest {
 	if req == nil {
 		return nil
 	}

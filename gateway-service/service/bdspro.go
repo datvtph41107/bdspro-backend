@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/viper"
@@ -17,26 +17,26 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 		url = "bdspro_grpc"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	// _ = pb_bdspro.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterBdsproPublicServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterProductServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterPostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterCostDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterIncomeDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetIncomeTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetExploitationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetCostTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetCostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterSharingAccessServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterProjectBuildServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAdminProductServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAdminAssetServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAdminPostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAdminPropertyTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = pb_bdspro.RegisterAdminProjectServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	// _ = bdspropb.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterBdsproPublicServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterProductServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterPostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterCostDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterIncomeDocumentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetIncomeTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetExploitationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetCostTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetCostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetSplitHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterSharingAccessServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAssetLegalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterProjectBuildServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAdminProductServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAdminAssetServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAdminPostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAdminPropertyTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterAdminProjectServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

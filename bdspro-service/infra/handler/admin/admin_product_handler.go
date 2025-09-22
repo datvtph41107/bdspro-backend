@@ -1,33 +1,35 @@
 package admin_handler
 
 import (
+	"bdspro/infra/client"
 	"bdspro/infra/mapper"
-	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
-	_dto "common/dto"
 	_routes "common/routes"
 	"context"
 	"pb/clients"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
 
 type AdminProductHandler struct {
-	pb_bdspro.UnimplementedAdminProductServiceServer
+	bdspropb.UnimplementedAdminProductServiceServer
 	AdminProductService *admin_usecases.AdminProductUsecase
 	ProductMapper       *mapper.ProductMapper
 	AuthGrpcClient      *clients.AuthGrpcClient
+	UserClient          *client.UserClient
 }
 
 func NewAdminProductHandler(
 	uc *admin_usecases.AdminProductUsecase,
 	productMapper *mapper.ProductMapper,
 	authGrpcClient *clients.AuthGrpcClient,
+	userClient *client.UserClient,
 ) *AdminProductHandler {
 	return &AdminProductHandler{
 		AdminProductService: uc,
 		ProductMapper:       productMapper,
 		AuthGrpcClient:      authGrpcClient,
+		UserClient:          userClient,
 	}
 }
 
@@ -38,28 +40,26 @@ func NewAdminProductHandler(
 // @Produce json
 // @Param page query int true "Page number"
 // @Param size query int true "Page size"
-// @Success 200 {object} pb_bdspro.SearchResponse
+// @Success 200 {object} bdspropb.SearchResponse
 // @Router /admin/products [get]
-func (h *AdminProductHandler) GetProducts(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.SearchResponse, error) {
+func (h *AdminProductHandler) GetProducts(ctx context.Context, req *bdspropb.AdminProductSearchRequest) (*bdspropb.AdminProductSearchResponse, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_XEM"}); err != nil {
 		return nil, err
 	}
 
-	result, total, err := h.AdminProductService.GetList(ctx,
-		&dto.ProductSearchRequest{
-			Pagable: _dto.Pagable{
-				Page: req.Page,
-				Size: req.Size,
-			},
-		})
+	reqDto := h.ProductMapper.AdminProductSearchRequestToDTO(req)
+	result, total, err := h.AdminProductService.GetList(ctx, reqDto)
+
 	if err != nil {
 		return nil, err
 	}
 
-	products := h.ProductMapper.MapProductPbList(result)
-	return &pb_bdspro.SearchResponse{
-		Data:          products,
-		TotalElements: total,
+	// Convert sang AdminProductItem
+	adminProducts := h.ProductMapper.MapAdminProductPbList(ctx, result)
+
+	return &bdspropb.AdminProductSearchResponse{
+		Data:  adminProducts,
+		Total: total,
 	}, nil
 }
 
@@ -68,10 +68,10 @@ func (h *AdminProductHandler) GetProducts(ctx context.Context, req *sharepb.IdRe
 // @Tags AdminProduct
 // @Accept json
 // @Produce json
-// @Param product body pb_bdspro.ProductSaveRequest true "Product to create"
-// @Success 200 {object} pb_bdspro.ProductResponse
+// @Param product body bdspropb.ProductSaveRequest true "Product to create"
+// @Success 200 {object} bdspropb.ProductResponse
 // @Router /admin/products [post]
-func (h *AdminProductHandler) CreateProduct(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.ProductResponse, error) {
+func (h *AdminProductHandler) CreateProduct(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.ProductResponse, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_TAO"}); err != nil {
 		return nil, err
 	}
@@ -115,10 +115,10 @@ func (h *AdminProductHandler) CreateProduct(ctx context.Context, req *pb_bdspro.
 // @Tags AdminProduct
 // @Accept json
 // @Produce json
-// @Param product body pb_bdspro.ProductSaveRequest true "Product to update"
-// @Success 200 {object} pb_bdspro.ProductResponse
+// @Param product body bdspropb.ProductSaveRequest true "Product to update"
+// @Success 200 {object} bdspropb.ProductResponse
 // @Router /admin/products [put]
-func (h *AdminProductHandler) UpdateProduct(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.ProductResponse, error) {
+func (h *AdminProductHandler) UpdateProduct(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.ProductResponse, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_SUA"}); err != nil {
 		return nil, err
 	}
@@ -132,9 +132,9 @@ func (h *AdminProductHandler) UpdateProduct(ctx context.Context, req *pb_bdspro.
 // @Accept json
 // @Produce json
 // @Param id path int true "Product ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/products/{id} [delete]
-func (h *AdminProductHandler) DeleteProduct(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminProductHandler) DeleteProduct(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_XOA"}); err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (h *AdminProductHandler) DeleteProduct(ctx context.Context, req *sharepb.Id
 	return nil, nil
 }
 
-func (h *AdminProductHandler) GetProductById(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.ProductResponse, error) {
+func (h *AdminProductHandler) GetProductById(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.ProductResponse, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_SP_XEM"}); err != nil {
 		return nil, err
 	}

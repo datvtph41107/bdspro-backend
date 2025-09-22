@@ -2,10 +2,9 @@ package client
 
 import (
 	"bdspro/env"
-	delivery_dto "bdspro/internal/dto/delivery"
+	_dto "common/domain/dto"
 	"context"
 	"pb/clients"
-	shared_dto "pb/dto"
 )
 
 // @bind: bdspro/internal/provider.NotificationProvider
@@ -24,15 +23,15 @@ func (s *NotificationClient) UserInGroup(ctx context.Context, userID uint64, gro
 	return true, nil
 }
 
-func (s *NotificationClient) SendNoti(ctx context.Context, noti *delivery_dto.NotiDTO) error {
+func (s *NotificationClient) SendNoti(ctx context.Context, noti *_dto.NotificationDTO) error {
 	return nil
 }
 
-func (s *NotificationClient) SendBatch(ctx context.Context, noti *delivery_dto.NotiBatchDTO) error {
+func (s *NotificationClient) SendBatch(ctx context.Context, noti *_dto.NotificationBatchDTO) error {
 	return nil
 }
 
-func (s *NotificationClient) CreateHistory(ctx context.Context, history *shared_dto.HistoryDTO) error {
+func (s *NotificationClient) CreateHistory(ctx context.Context, history *_dto.HistoryDTO) error {
 	err := s.NotificationClient.CreateHistory(ctx, history)
 	return err
 }

@@ -10,7 +10,7 @@ import (
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/dto"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
@@ -18,7 +18,7 @@ import (
 )
 
 type ProductService struct {
-	pb_bdspro.UnimplementedProductServiceServer
+	bdspropb.UnimplementedProductServiceServer
 	UC               *shared_usecase.ProductUsecase
 	ProductRepo      repo.ProductRepo
 	ProductMapper    *mapper.ProductMapper
@@ -56,9 +56,9 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body pb_bdspro.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
+// @Param body body bdspropb.ArchivedRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/archived [put]
-func (s *ProductService) ArchiveProduct(c context.Context, req *pb_bdspro.ArchivedRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ArchiveProduct(c context.Context, req *bdspropb.ArchivedRequest) (*bdspropb.Response, error) {
 	if req.Id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "id is required")
 	}
@@ -69,7 +69,7 @@ func (s *ProductService) ArchiveProduct(c context.Context, req *pb_bdspro.Archiv
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -80,9 +80,9 @@ func (s *ProductService) ArchiveProduct(c context.Context, req *pb_bdspro.Archiv
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body pb_bdspro.SaveChildRequest true "Thông tin sản phẩm con"
+// @Param body body bdspropb.SaveChildRequest true "Thông tin sản phẩm con"
 // @Router /v2/bdspro/v2/product/child/devide [post]
-func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.DevideChildRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ChildDevideProduct(ctx context.Context, req *bdspropb.DevideChildRequest) (*bdspropb.Response, error) {
 	dto := s.ProductMapper.MapDevideChildRequest(req)
 	if err := s.ProductValidator.ValidateDevideChildRequest(dto); err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -106,7 +106,7 @@ func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.
 // // @Param id path int true "Product ID"
 // // @Param body query dto.ProductHistorySearch true "Thông tin sản phẩm con"
 // // @Router /v2/bdspro/v2/product/child/history/{id} [get]
-// func (s *ProductService) ChildHistories(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
+// func (s *ProductService) ChildHistories(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.HistoryResponse, error) {
 // 	id := req.Id
 
 // 	_body := dto.ProductHistorySearch{}
@@ -118,9 +118,9 @@ func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.
 // 	if err != nil {
 // 		return nil, err
 // 	}
-// 	histories := make([]*pb_bdspro.History, 0)
+// 	histories := make([]*bdspropb.History, 0)
 // 	copier.Copy(&histories, &result)
-// 	return &pb_bdspro.GetHistoryResponse{
+// 	return &bdspropb.GetHistoryResponse{
 // 		Data:  histories,
 // 		Total: uint64(total),
 // 	}, nil
@@ -134,7 +134,7 @@ func (s *ProductService) ChildDevideProduct(ctx context.Context, req *pb_bdspro.
 // @Security BearerAuth
 // @Param body body dto.MergeProductChildRequest true "Thông tin sản phẩm con"
 // @Router /v2/bdspro/v2/product/child/merge [post]
-func (s *ProductService) ChildMergeProduct(ctx context.Context, req *pb_bdspro.MergeChildRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ChildMergeProduct(ctx context.Context, req *bdspropb.MergeChildRequest) (*bdspropb.Response, error) {
 	_, err := s.UC.MergeProductChild(ctx, &dto.MergeProductChildRequest{
 		ParentID: &req.ParentId,
 		ChildIDs: &req.ChildIds,
@@ -142,7 +142,7 @@ func (s *ProductService) ChildMergeProduct(ctx context.Context, req *pb_bdspro.M
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -155,12 +155,12 @@ func (s *ProductService) ChildMergeProduct(ctx context.Context, req *pb_bdspro.M
 // @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/child/merge-all/{id} [post]
-func (s *ProductService) ChildMergeAll(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ChildMergeAll(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.Response, error) {
 	_, err := s.UC.MergeAllProductChild(ctx, &req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -170,10 +170,10 @@ func (s *ProductService) ChildMergeAll(ctx context.Context, req *pb_bdspro.IdReq
 // @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
-// @Param body body pb_bdspro.SaveChildRequest true "Thông tin sản phẩm con"
+// @Param body body bdspropb.SaveChildRequest true "Thông tin sản phẩm con"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/product/child/split [post]
-func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChildRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ChildSplit(ctx context.Context, req *bdspropb.SaveChildRequest) (*bdspropb.Response, error) {
 	dto := s.ProductMapper.SaveProductToEntity(req)
 	if err := s.ProductValidator.ValidateSaveProductChild(dto); err != nil {
 		return nil, err
@@ -182,7 +182,7 @@ func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChil
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -193,9 +193,9 @@ func (s *ProductService) ChildSplit(ctx context.Context, req *pb_bdspro.SaveChil
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body pb_bdspro.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
+// @Param body body bdspropb.DepositeRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/deposite [post]
-func (s *ProductService) ProductDeposite(ctx context.Context, req *pb_bdspro.DepositeRequest) (*pb_bdspro.Transaction, error) {
+func (s *ProductService) ProductDeposite(ctx context.Context, req *bdspropb.DepositeRequest) (*bdspropb.Transaction, error) {
 	// dto := s.DepositeMapper.MapDepositePbToDomain(req)
 
 	// if dto.DepositeAmount == nil || *dto.DepositeAmount <= 0 {
@@ -227,12 +227,12 @@ func (s *ProductService) ProductDeposite(ctx context.Context, req *pb_bdspro.Dep
 // @Security BearerAuth
 // @Param transactionId path int true "Transaction ID"
 // @Router /v2/bdspro/v2/product/deposite/{transactionId} [delete]
-func (s *ProductService) DeleteDeposite(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) DeleteDeposite(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.Response, error) {
 	err := s.UC.CancelDeposite(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -248,7 +248,7 @@ func (s *ProductService) DeleteDeposite(ctx context.Context, req *pb_bdspro.IdRe
 // @Failure 400 {object} _routes.ResponseDTO
 // @Failure 500 {object} _routes.ResponseDTO
 // @Router /v2/bdspro/v2/product/export [post]
-func (s *ProductService) ExportProduct(context.Context, *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ExportProduct(context.Context, *bdspropb.IdRequest) (*bdspropb.Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExportProduct not implemented")
 }
 
@@ -269,7 +269,7 @@ func (s *ProductService) ExportProduct(context.Context, *pb_bdspro.IdRequest) (*
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/me [get]
-func (s *ProductService) ProductMe(ctx context.Context, req *pb_bdspro.ProductSearch) (*pb_bdspro.SearchResponse, error) {
+func (s *ProductService) ProductMe(ctx context.Context, req *bdspropb.ProductSearch) (*bdspropb.SearchResponse, error) {
 	body := &dto.ProductSearchRequest{}
 	if err := copier.Copy(body, req); err != nil {
 		return nil, err
@@ -282,9 +282,9 @@ func (s *ProductService) ProductMe(ctx context.Context, req *pb_bdspro.ProductSe
 
 	products := s.ProductMapper.MapProductPbList(result)
 
-	// products := make([]*pb_bdspro.ProductResponse, 0)
+	// products := make([]*bdspropb.ProductResponse, 0)
 	// copier.Copy(&products, &result)
-	return &pb_bdspro.SearchResponse{
+	return &bdspropb.SearchResponse{
 		Data:          products,
 		TotalElements: total,
 	}, nil
@@ -299,7 +299,7 @@ func (s *ProductService) ProductMe(ctx context.Context, req *pb_bdspro.ProductSe
 // @Param product body dto.ProductSaveRequest true "Thông tin sản phẩm"
 // @Success 201 {object} dto.CreateResponse "Sản phẩm được tạo thành công"
 // @Router /v2/bdspro/v2/product/new [post]
-func (s *ProductService) ProductNew(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) ProductNew(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.Response, error) {
 	body := s.ProductMapper.ProductSavePbToDTO(req)
 	if err := s.ProductValidator.ValidateCreateProduct(body); err != nil {
 		return nil, err
@@ -313,7 +313,7 @@ func (s *ProductService) ProductNew(ctx context.Context, req *pb_bdspro.ProductS
 	if result.Product != nil {
 		id = result.Product.ID
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      id,
 		Message: "success",
 	}, nil
@@ -327,7 +327,7 @@ func (s *ProductService) ProductNew(ctx context.Context, req *pb_bdspro.ProductS
 // @Security BearerAuth
 // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/rent-status [put]
-func (s *ProductService) RentStatus(ctx context.Context, req *pb_bdspro.StatusRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) RentStatus(ctx context.Context, req *bdspropb.StatusRequest) (*bdspropb.Response, error) {
 	if req.Id == 0 || req.Status == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "id, status is required")
 	}
@@ -344,7 +344,7 @@ func (s *ProductService) RentStatus(ctx context.Context, req *pb_bdspro.StatusRe
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -357,7 +357,7 @@ func (s *ProductService) RentStatus(ctx context.Context, req *pb_bdspro.StatusRe
 // @Security BearerAuth
 // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/rent-visibility [put]
-func (s *ProductService) RentVisibility(ctx context.Context, req *pb_bdspro.VisibilityRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) RentVisibility(ctx context.Context, req *bdspropb.VisibilityRequest) (*bdspropb.Response, error) {
 	if req.Id == 0 || req.Visibility == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "id, visibility is required")
 	}
@@ -370,7 +370,7 @@ func (s *ProductService) RentVisibility(ctx context.Context, req *pb_bdspro.Visi
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -383,7 +383,7 @@ func (s *ProductService) RentVisibility(ctx context.Context, req *pb_bdspro.Visi
 // @Security BearerAuth
 // @Param body body dto.StatusUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/sale-status [put]
-func (s *ProductService) SaleStatus(ctx context.Context, req *pb_bdspro.StatusRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) SaleStatus(ctx context.Context, req *bdspropb.StatusRequest) (*bdspropb.Response, error) {
 	if req.Id == 0 || req.Status == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "id, status is required")
 	}
@@ -400,7 +400,7 @@ func (s *ProductService) SaleStatus(ctx context.Context, req *pb_bdspro.StatusRe
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -413,7 +413,7 @@ func (s *ProductService) SaleStatus(ctx context.Context, req *pb_bdspro.StatusRe
 // @Security BearerAuth
 // @Param body body dto.VisibilityUpdate true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/sale-visibility [put]
-func (s *ProductService) SaleVisibility(ctx context.Context, req *pb_bdspro.VisibilityRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) SaleVisibility(ctx context.Context, req *bdspropb.VisibilityRequest) (*bdspropb.Response, error) {
 	if req.Id == 0 || req.Visibility == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "id, visibility is required")
 	}
@@ -426,7 +426,7 @@ func (s *ProductService) SaleVisibility(ctx context.Context, req *pb_bdspro.Visi
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 }
@@ -447,7 +447,7 @@ func (s *ProductService) SaleVisibility(ctx context.Context, req *pb_bdspro.Visi
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/suggest [post]
-func (s *ProductService) Suggest(ctx context.Context, req *pb_bdspro.SuggestRequest) (*pb_bdspro.ProductResponse, error) {
+func (s *ProductService) Suggest(ctx context.Context, req *bdspropb.SuggestRequest) (*bdspropb.ProductResponse, error) {
 	products, err := s.UC.SuggestFields(ctx, req.Content)
 	if err != nil {
 		return nil, err
@@ -459,12 +459,12 @@ func (s *ProductService) Suggest(ctx context.Context, req *pb_bdspro.SuggestRequ
 	return productResponse, nil
 }
 
-// mapProductToResponse maps domain.Product to pb_bdspro.ProductResponse
-func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchParser) *pb_bdspro.ProductResponse {
-	response := &pb_bdspro.ProductResponse{
+// mapProductToResponse maps domain.Product to bdspropb.ProductResponse
+func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchParser) *bdspropb.ProductResponse {
+	response := &bdspropb.ProductResponse{
 		Name:            parser.Name,
 		TransactionType: int32(parser.TransactionType),
-		HouseInfo: &pb_bdspro.HouseInfo{
+		HouseInfo: &bdspropb.HouseInfo{
 			NumBedroom:  parser.Bedroom,
 			NumBathroom: parser.Bathroom,
 			NumFloor:    parser.Floor,
@@ -514,7 +514,7 @@ func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchP
 
 	// Map sale price
 	if parser.SalePrice != nil {
-		response.Price = &pb_bdspro.ProductPrice{
+		response.Price = &bdspropb.ProductPrice{
 			SalePrice: parser.SalePrice,
 		}
 	}
@@ -522,16 +522,16 @@ func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchP
 	// Map rent price
 	if parser.RentPrice != nil {
 		if response.Price == nil {
-			response.Price = &pb_bdspro.ProductPrice{}
+			response.Price = &bdspropb.ProductPrice{}
 		}
 		response.Price.RentPrice = parser.RentPrice
 	}
 
 	// Map amenities
 	if len(parser.Amenities) > 0 {
-		response.Amenities = make([]*pb_bdspro.AmenityItem, len(parser.Amenities))
+		response.Amenities = make([]*bdspropb.AmenityItem, len(parser.Amenities))
 		for i, amenity := range parser.Amenities {
-			response.Amenities[i] = &pb_bdspro.AmenityItem{
+			response.Amenities[i] = &bdspropb.AmenityItem{
 				Id:   amenity.ID,
 				Name: amenity.Name,
 			}
@@ -552,9 +552,9 @@ func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchP
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "ID của sản phẩm"
-// @Success 200 {object} pb_bdspro.IdRequest "Chi tiết sản phẩm"
+// @Success 200 {object} bdspropb.IdRequest "Chi tiết sản phẩm"
 // @Router /v2/bdspro/v2/product/{id}/detail [get]
-func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.ProductResponse, error) {
+func (s *ProductService) GetDetail(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.ProductResponse, error) {
 	product, err := s.UC.Detail(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -574,7 +574,7 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 // // @Security BearerAuth
 // // @Param id path int true "Product ID"
 // // @Router /v2/bdspro/v2/product/{id}/histories [get]
-// func (s *ProductService) GetHistories(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
+// func (s *ProductService) GetHistories(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.HistoryResponse, error) {
 // 	query := dto.ProductHistorySearch{}
 // 	if err := copier.Copy(&query, req); err != nil {
 // 		return nil, err
@@ -584,9 +584,9 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 // 	if err != nil {
 // 		return nil, err
 // 	}
-// 	historyResponse := make([]*pb_bdspro.History, 0)
+// 	historyResponse := make([]*bdspropb.History, 0)
 // 	copier.Copy(&historyResponse, &histories)
-// 	return &pb_bdspro.HistoryResponse{
+// 	return &bdspropb.HistoryResponse{
 // 		Data:  historyResponse,
 // 		Total: uint64(total),
 // 	}, nil
@@ -600,7 +600,7 @@ func (s *ProductService) GetDetail(ctx context.Context, req *pb_bdspro.IdRequest
 // @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/members [get]
-func (s *ProductService) GetMembers(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.MemberResponse, error) {
+func (s *ProductService) GetMembers(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.MemberResponse, error) {
 	query := dto.SharingAccessSearch{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -609,9 +609,9 @@ func (s *ProductService) GetMembers(ctx context.Context, req *pb_bdspro.IdReques
 	if err != nil {
 		return nil, err
 	}
-	memberResponse := make([]*pb_bdspro.ProductAccess, 0)
+	memberResponse := make([]*bdspropb.ProductAccess, 0)
 	copier.Copy(&memberResponse, &members)
-	return &pb_bdspro.MemberResponse{
+	return &bdspropb.MemberResponse{
 		Data: memberResponse,
 	}, nil
 }
@@ -624,7 +624,7 @@ func (s *ProductService) GetMembers(ctx context.Context, req *pb_bdspro.IdReques
 // @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/posts [get]
-func (s *ProductService) GetPosts(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.PostResponse, error) {
+func (s *ProductService) GetPosts(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.PostResponse, error) {
 	query := dto.PostLinkSearch{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -638,9 +638,9 @@ func (s *ProductService) GetPosts(ctx context.Context, req *pb_bdspro.IdRequest)
 	}
 
 	postResponse := s.PostMapper.PostToPbList(posts)
-	// postResponse := make([]*pb_bdspro.PostItem, 0)
+	// postResponse := make([]*bdspropb.PostItem, 0)
 	// copier.Copy(&postResponse, &posts)
-	return &pb_bdspro.PostResponse{
+	return &bdspropb.PostResponse{
 		Data: postResponse,
 	}, nil
 }
@@ -654,7 +654,7 @@ func (s *ProductService) GetPosts(ctx context.Context, req *pb_bdspro.IdRequest)
 // @Security BearerAuth
 // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/{id} [put]
-func (s *ProductService) UpdateProduct(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) UpdateProduct(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.Response, error) {
 	body := s.ProductMapper.ProductSavePbToDTO(req)
 	if err := s.ProductValidator.ValidateCreateProduct(body); err != nil {
 		return nil, err
@@ -664,7 +664,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, req *pb_bdspro.Produ
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "success",
 	}, nil
 	// id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -685,12 +685,12 @@ func (s *ProductService) UpdateProduct(ctx context.Context, req *pb_bdspro.Produ
 // @Param productId path int true "Product ID"
 // @Security BearerAuth
 // @Router /v2/bdspro/v2/product/{id} [delete]
-func (s *ProductService) DeleteProduct(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) DeleteProduct(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.Response, error) {
 	err := s.UC.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Message: "ok",
 	}, nil
 }
@@ -703,36 +703,36 @@ func (s *ProductService) DeleteProduct(ctx context.Context, req *pb_bdspro.IdReq
 // @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/area-info/{id} [get]
-func (s *ProductService) AreaInfo(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.AreaInfoResponse, error) {
+func (s *ProductService) AreaInfo(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.AreaInfoResponse, error) {
 	areaInfo, err := s.UC.InfoArea(ctx, &req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &pb_bdspro.AreaInfoResponse{
+	return &bdspropb.AreaInfoResponse{
 		TotalArea:    areaInfo.Total,
 		AvaiableArea: areaInfo.Avaiable,
 		SplitArea:    areaInfo.Area,
 	}, nil
 }
 
-func (s *ProductService) GetDetailByIds(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.ProductInternalResponse, error) {
+func (s *ProductService) GetDetailByIds(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.ProductInternalResponse, error) {
 	products, err := s.ProductRepo.GetDetailByIds(ctx, req.Ids)
 	if err != nil {
 		return nil, err
 	}
 	productResponse := s.ProductMapper.MapProductPbList(products)
-	return &pb_bdspro.ProductInternalResponse{
+	return &bdspropb.ProductInternalResponse{
 		Data: productResponse,
 	}, nil
 }
 
-func (s *ProductService) GetProductAttachmentByIds(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.ProductAttachmentResponse, error) {
+func (s *ProductService) GetProductAttachmentByIds(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.ProductAttachmentResponse, error) {
 	products, err := s.ProductRepo.GetDetailByIds(ctx, req.Ids)
 	if err != nil {
 		return nil, err
 	}
 	productResponse := mapper.MapProductAttachmentPbList(products)
-	return &pb_bdspro.ProductAttachmentResponse{
+	return &bdspropb.ProductAttachmentResponse{
 		Data: productResponse,
 	}, nil
 }
@@ -760,9 +760,9 @@ func (s *ProductService) GetProductAttachmentByIds(ctx context.Context, req *pb_
 // @Param rentVisibility query int false "Rent Visibility"
 // @Param sourceType query int false "Source Type"
 // @Param archived query bool false "Archived"
-// @Success 200 {object} pb_bdspro.SearchResponse
+// @Success 200 {object} bdspropb.SearchResponse
 // @Router /v2/bdspro/v2/product/group/{groupId} [get]
-func (s *ProductService) GetGroupProducts(ctx context.Context, req *pb_bdspro.GroupProductSearch) (*pb_bdspro.SearchResponse, error) {
+func (s *ProductService) GetGroupProducts(ctx context.Context, req *bdspropb.GroupProductSearch) (*bdspropb.SearchResponse, error) {
 	// Convert protobuf request to DTO
 	searchReq := &dto.GroupProductSearchRequest{
 		GroupID:          req.GroupId,
@@ -806,13 +806,13 @@ func (s *ProductService) GetGroupProducts(ctx context.Context, req *pb_bdspro.Gr
 	// Convert domain products to protobuf response
 	productResponses := s.ProductMapper.MapProductPbList(products)
 
-	return &pb_bdspro.SearchResponse{
+	return &bdspropb.SearchResponse{
 		Data:          productResponses,
 		TotalElements: total,
 	}, nil
 }
 
-func (s *ProductService) CurrentOrganizationProducts(ctx context.Context, req *pb_bdspro.ProductSearch) (*pb_bdspro.SearchResponse, error) {
+func (s *ProductService) CurrentOrganizationProducts(ctx context.Context, req *bdspropb.ProductSearch) (*bdspropb.SearchResponse, error) {
 	dto := s.ProductMapper.PbSearchRequestToDTO(req)
 	products, total, err := s.UC.GetProductOfCurrentOrganization(ctx, dto)
 	if err != nil {
@@ -820,13 +820,13 @@ func (s *ProductService) CurrentOrganizationProducts(ctx context.Context, req *p
 	}
 
 	productResponses := s.ProductMapper.MapProductPbList(products)
-	return &pb_bdspro.SearchResponse{
+	return &bdspropb.SearchResponse{
 		Data:          productResponses,
 		TotalElements: total,
 	}, nil
 }
 
-func (s *ProductService) CreateOrganizationProduct(ctx context.Context, req *pb_bdspro.ProductSaveRequest) (*pb_bdspro.Response, error) {
+func (s *ProductService) CreateOrganizationProduct(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.Response, error) {
 	dto := s.ProductMapper.ProductSavePbToDTO(req)
 	result, err := s.UC.CreateOrganizationProduct(ctx, dto)
 	if err != nil {
@@ -836,7 +836,7 @@ func (s *ProductService) CreateOrganizationProduct(ctx context.Context, req *pb_
 	if result.Product != nil {
 		id = result.Product.ID
 	}
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      id,
 		Message: "success",
 	}, nil

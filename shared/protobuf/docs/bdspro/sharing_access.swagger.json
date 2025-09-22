@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+              "$ref": "#/definitions/bdspropbSharingAccessResponse"
             }
           },
           "default": {
@@ -89,7 +89,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+              "$ref": "#/definitions/bdspropbSharingAccessResponse"
             }
           },
           "default": {
@@ -105,7 +105,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessBulkRequest"
+              "$ref": "#/definitions/bdspropbSharingAccessBulkRequest"
             }
           }
         ],
@@ -121,7 +121,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+              "$ref": "#/definitions/bdspropbSharingAccessResponse"
             }
           },
           "default": {
@@ -137,7 +137,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessByDomainRequest"
+              "$ref": "#/definitions/bdspropbSharingAccessByDomainRequest"
             }
           }
         ],
@@ -153,7 +153,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSharingAccessResponse"
+              "$ref": "#/definitions/bdspropbSharingAccessResponse"
             }
           },
           "default": {
@@ -282,7 +282,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproSharingAccess": {
+    "bdspropbSharingAccess": {
       "type": "object",
       "properties": {
         "id": {
@@ -331,21 +331,21 @@
         }
       }
     },
-    "pb_bdsproSharingAccessBulkRequest": {
+    "bdspropbSharingAccessBulkRequest": {
       "type": "object",
       "properties": {
         "datas": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproSharingAccess"
+            "$ref": "#/definitions/bdspropbSharingAccess"
           }
         },
         "deletes": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproSharingAccess"
+            "$ref": "#/definitions/bdspropbSharingAccess"
           }
         },
         "domainId": {
@@ -366,7 +366,7 @@
         }
       }
     },
-    "pb_bdsproSharingAccessByDomainRequest": {
+    "bdspropbSharingAccessByDomainRequest": {
       "type": "object",
       "properties": {
         "domainId": {
@@ -395,14 +395,14 @@
         }
       }
     },
-    "pb_bdsproSharingAccessResponse": {
+    "bdspropbSharingAccessResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproSharingAccess"
+            "$ref": "#/definitions/bdspropbSharingAccess"
           }
         },
         "total": {

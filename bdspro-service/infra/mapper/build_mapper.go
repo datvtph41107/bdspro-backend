@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/domain"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type BuildMapper struct {
@@ -12,8 +12,8 @@ func NewBuildMapper() *BuildMapper {
 	return &BuildMapper{}
 }
 
-func (m *BuildMapper) MapBuildPbItem(build *domain.ProjectBuild) *pb_bdspro.ProjectBuild {
-	return &pb_bdspro.ProjectBuild{
+func (m *BuildMapper) MapBuildPbItem(build *domain.ProjectBuild) *bdspropb.ProjectBuild {
+	return &bdspropb.ProjectBuild{
 		Id:           build.ID,
 		Name:         build.Name,
 		NumFloor:     uint32(build.NumFloor),

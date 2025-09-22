@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/enums"
 	"context"
 	"pb/clients"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type OrganizationClient struct {
@@ -20,7 +20,7 @@ func NewOrganizationClient() *OrganizationClient {
 
 func (c *OrganizationClient) MapOrganizationToSharingAccess(
 	ctx context.Context,
-	sharingAccesses []*pb_bdspro.SharingAccess) {
+	sharingAccesses []*bdspropb.SharingAccess) {
 	if c.Client == nil {
 		return
 	}
@@ -46,7 +46,7 @@ func (c *OrganizationClient) MapOrganizationToSharingAccess(
 
 func (c *OrganizationClient) MapGroupToSharingAccess(
 	ctx context.Context,
-	sharingAccesses []*pb_bdspro.SharingAccess) {
+	sharingAccesses []*bdspropb.SharingAccess) {
 	if c.Client == nil {
 		return
 	}

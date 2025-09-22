@@ -3028,7 +3028,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ProductResponse"
+                        "$ref": "#/definitions/bdspropb.ProductResponse"
                     }
                 },
                 "source": {
@@ -3698,7 +3698,7 @@ const docTemplate = `{
                 "FriendStatusReject"
             ]
         },
-        "pb_bdspro.AmenityItem": {
+        "bdspropb.AmenityItem": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3709,7 +3709,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.Apartment": {
+        "bdspropb.Apartment": {
             "type": "object",
             "properties": {
                 "apartmentAttrId": {
@@ -3741,7 +3741,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ApartmentAttribute": {
+        "bdspropb.ApartmentAttribute": {
             "type": "object",
             "properties": {
                 "area": {
@@ -3770,7 +3770,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.AttributeProduct": {
+        "bdspropb.AttributeProduct": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3781,7 +3781,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.Developer": {
+        "bdspropb.Developer": {
             "type": "object",
             "properties": {
                 "address": {
@@ -3822,7 +3822,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.DocType": {
+        "bdspropb.DocType": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3833,7 +3833,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.HouseInfo": {
+        "bdspropb.HouseInfo": {
             "type": "object",
             "properties": {
                 "furniture": {
@@ -3865,7 +3865,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.MediaItem": {
+        "bdspropb.MediaItem": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3891,7 +3891,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ProductPrice": {
+        "bdspropb.ProductPrice": {
             "type": "object",
             "properties": {
                 "currency": {
@@ -3928,7 +3928,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ProductPrivate": {
+        "bdspropb.ProductPrivate": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3954,7 +3954,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ProductResponse": {
+        "bdspropb.ProductResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -3963,14 +3963,14 @@ const docTemplate = `{
                 "amenities": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.AmenityItem"
+                        "$ref": "#/definitions/bdspropb.AmenityItem"
                     }
                 },
                 "apartment": {
-                    "$ref": "#/definitions/pb_bdspro.Apartment"
+                    "$ref": "#/definitions/bdspropb.Apartment"
                 },
                 "apartmentAttribute": {
-                    "$ref": "#/definitions/pb_bdspro.ApartmentAttribute"
+                    "$ref": "#/definitions/bdspropb.ApartmentAttribute"
                 },
                 "apartmentId": {
                     "type": "integer"
@@ -3987,11 +3987,11 @@ const docTemplate = `{
                 "attributes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.AttributeProduct"
+                        "$ref": "#/definitions/bdspropb.AttributeProduct"
                     }
                 },
                 "build": {
-                    "$ref": "#/definitions/pb_bdspro.ProjectBuild"
+                    "$ref": "#/definitions/bdspropb.ProjectBuild"
                 },
                 "categoryId": {
                     "type": "integer"
@@ -4009,10 +4009,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "developer": {
-                    "$ref": "#/definitions/pb_bdspro.Developer"
+                    "$ref": "#/definitions/bdspropb.Developer"
                 },
                 "district": {
-                    "$ref": "#/definitions/pb_bdspro.Region"
+                    "$ref": "#/definitions/bdspropb.Region"
                 },
                 "districtId": {
                     "type": "integer"
@@ -4021,7 +4021,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "docType": {
-                    "$ref": "#/definitions/pb_bdspro.DocType"
+                    "$ref": "#/definitions/bdspropb.DocType"
                 },
                 "docTypeId": {
                     "type": "integer"
@@ -4030,7 +4030,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "houseInfo": {
-                    "$ref": "#/definitions/pb_bdspro.HouseInfo"
+                    "$ref": "#/definitions/bdspropb.HouseInfo"
                 },
                 "id": {
                     "type": "integer"
@@ -4041,7 +4041,7 @@ const docTemplate = `{
                 "mediaList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.MediaItem"
+                        "$ref": "#/definitions/bdspropb.MediaItem"
                     }
                 },
                 "name": {
@@ -4069,25 +4069,25 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "price": {
-                    "$ref": "#/definitions/pb_bdspro.ProductPrice"
+                    "$ref": "#/definitions/bdspropb.ProductPrice"
                 },
                 "priceSuggest": {
                     "type": "number"
                 },
                 "privateData": {
-                    "$ref": "#/definitions/pb_bdspro.ProductPrivate"
+                    "$ref": "#/definitions/bdspropb.ProductPrivate"
                 },
                 "project": {
-                    "$ref": "#/definitions/pb_bdspro.Project"
+                    "$ref": "#/definitions/bdspropb.Project"
                 },
                 "propertyType": {
-                    "$ref": "#/definitions/pb_bdspro.PropertyType"
+                    "$ref": "#/definitions/bdspropb.PropertyType"
                 },
                 "propertyTypeId": {
                     "type": "integer"
                 },
                 "province": {
-                    "$ref": "#/definitions/pb_bdspro.Region"
+                    "$ref": "#/definitions/bdspropb.Region"
                 },
                 "provinceId": {
                     "type": "integer"
@@ -4099,7 +4099,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rentTransaction": {
-                    "$ref": "#/definitions/pb_bdspro.Transaction"
+                    "$ref": "#/definitions/bdspropb.Transaction"
                 },
                 "rentVisibility": {
                     "type": "integer"
@@ -4108,7 +4108,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "saleTransaction": {
-                    "$ref": "#/definitions/pb_bdspro.Transaction"
+                    "$ref": "#/definitions/bdspropb.Transaction"
                 },
                 "saleVisibility": {
                     "type": "integer"
@@ -4123,7 +4123,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ward": {
-                    "$ref": "#/definitions/pb_bdspro.Region"
+                    "$ref": "#/definitions/bdspropb.Region"
                 },
                 "wardId": {
                     "type": "integer"
@@ -4133,7 +4133,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.Project": {
+        "bdspropb.Project": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4144,19 +4144,19 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.ProjectBuild": {
+        "bdspropb.ProjectBuild": {
             "type": "object",
             "properties": {
                 "apartments": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.Apartment"
+                        "$ref": "#/definitions/bdspropb.Apartment"
                     }
                 },
                 "attributes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ApartmentAttribute"
+                        "$ref": "#/definitions/bdspropb.ApartmentAttribute"
                     }
                 },
                 "id": {
@@ -4179,7 +4179,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.PropertyType": {
+        "bdspropb.PropertyType": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4190,7 +4190,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.Region": {
+        "bdspropb.Region": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4201,7 +4201,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.Transaction": {
+        "bdspropb.Transaction": {
             "type": "object",
             "properties": {
                 "amount": {

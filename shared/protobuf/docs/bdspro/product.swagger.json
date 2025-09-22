@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproArchivedRequest"
+              "$ref": "#/definitions/bdspropbArchivedRequest"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAreaInfoResponse"
+              "$ref": "#/definitions/bdspropbAreaInfoResponse"
             }
           },
           "default": {
@@ -130,7 +130,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -146,7 +146,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproDevideChildRequest"
+              "$ref": "#/definitions/bdspropbDevideChildRequest"
             }
           }
         ],
@@ -163,7 +163,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -179,7 +179,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproMergeChildRequest"
+              "$ref": "#/definitions/bdspropbMergeChildRequest"
             }
           }
         ],
@@ -195,7 +195,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -234,7 +234,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -250,7 +250,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSaveChildRequest"
+              "$ref": "#/definitions/bdspropbSaveChildRequest"
             }
           }
         ],
@@ -266,7 +266,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproCreateProductResponse"
+              "$ref": "#/definitions/bdspropbCreateProductResponse"
             }
           },
           "default": {
@@ -282,7 +282,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproCreateProductForOrgRequest"
+              "$ref": "#/definitions/bdspropbCreateProductForOrgRequest"
             }
           }
         ],
@@ -298,7 +298,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproCreateProductResponse"
+              "$ref": "#/definitions/bdspropbCreateProductResponse"
             }
           },
           "default": {
@@ -314,7 +314,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproCreateProductForUserRequest"
+              "$ref": "#/definitions/bdspropbCreateProductForUserRequest"
             }
           }
         ],
@@ -330,7 +330,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproTransaction"
+              "$ref": "#/definitions/bdspropbTransaction"
             }
           },
           "default": {
@@ -346,7 +346,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproDepositeRequest"
+              "$ref": "#/definitions/bdspropbDepositeRequest"
             }
           }
         ],
@@ -362,7 +362,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -437,7 +437,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -460,7 +460,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductServiceUpdateProductBody"
+              "$ref": "#/definitions/bdspropbProductServiceUpdateProductBody"
             }
           }
         ],
@@ -476,7 +476,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -515,7 +515,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSearchResponse"
+              "$ref": "#/definitions/bdspropbSearchResponse"
             }
           },
           "default": {
@@ -711,7 +711,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSearchResponse"
+              "$ref": "#/definitions/bdspropbSearchResponse"
             }
           },
           "default": {
@@ -914,7 +914,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -930,7 +930,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductSaveRequest"
+              "$ref": "#/definitions/bdspropbProductSaveRequest"
             }
           }
         ],
@@ -946,7 +946,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -962,7 +962,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductSaveRequest"
+              "$ref": "#/definitions/bdspropbProductSaveRequest"
             }
           }
         ],
@@ -978,7 +978,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSearchResponse"
+              "$ref": "#/definitions/bdspropbSearchResponse"
             }
           },
           "default": {
@@ -1181,7 +1181,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1197,7 +1197,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproStatusRequest"
+              "$ref": "#/definitions/bdspropbStatusRequest"
             }
           }
         ],
@@ -1213,7 +1213,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1229,7 +1229,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproVisibilityRequest"
+              "$ref": "#/definitions/bdspropbVisibilityRequest"
             }
           }
         ],
@@ -1245,7 +1245,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1261,7 +1261,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproStatusRequest"
+              "$ref": "#/definitions/bdspropbStatusRequest"
             }
           }
         ],
@@ -1277,7 +1277,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1293,7 +1293,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproVisibilityRequest"
+              "$ref": "#/definitions/bdspropbVisibilityRequest"
             }
           }
         ],
@@ -1309,7 +1309,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -1325,7 +1325,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproSuggestRequest"
+              "$ref": "#/definitions/bdspropbSuggestRequest"
             }
           }
         ],
@@ -1341,7 +1341,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -1416,7 +1416,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductResponse"
+              "$ref": "#/definitions/bdspropbProductResponse"
             }
           },
           "default": {
@@ -1492,7 +1492,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproMemberResponse"
+              "$ref": "#/definitions/bdspropbMemberResponse"
             }
           },
           "default": {
@@ -1567,7 +1567,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPostResponse"
+              "$ref": "#/definitions/bdspropbPostResponse"
             }
           },
           "default": {
@@ -1697,7 +1697,7 @@
         }
       }
     },
-    "pb_bdsproAmenityItem": {
+    "bdspropbAmenityItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -1709,7 +1709,7 @@
         }
       }
     },
-    "pb_bdsproApartment": {
+    "bdspropbApartment": {
       "type": "object",
       "properties": {
         "id": {
@@ -1748,7 +1748,7 @@
         }
       }
     },
-    "pb_bdsproApartmentAttribute": {
+    "bdspropbApartmentAttribute": {
       "type": "object",
       "properties": {
         "id": {
@@ -1782,7 +1782,7 @@
         }
       }
     },
-    "pb_bdsproArchivedRequest": {
+    "bdspropbArchivedRequest": {
       "type": "object",
       "properties": {
         "id": {
@@ -1794,7 +1794,7 @@
         }
       }
     },
-    "pb_bdsproAreaInfoResponse": {
+    "bdspropbAreaInfoResponse": {
       "type": "object",
       "properties": {
         "totalArea": {
@@ -1811,7 +1811,7 @@
         }
       }
     },
-    "pb_bdsproAssetCreateWithProduct": {
+    "bdspropbAssetCreateWithProduct": {
       "type": "object",
       "properties": {
         "purchasePrice": {
@@ -1837,12 +1837,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproLegalItem"
+            "$ref": "#/definitions/bdspropbLegalItem"
           }
         }
       }
     },
-    "pb_bdsproAttributeProduct": {
+    "bdspropbAttributeProduct": {
       "type": "object",
       "properties": {
         "id": {
@@ -1854,11 +1854,11 @@
         }
       }
     },
-    "pb_bdsproCreateProductForOrgRequest": {
+    "bdspropbCreateProductForOrgRequest": {
       "type": "object",
       "properties": {
         "product": {
-          "$ref": "#/definitions/pb_bdsproProductSaveRequest"
+          "$ref": "#/definitions/bdspropbProductSaveRequest"
         },
         "organizationId": {
           "type": "string",
@@ -1873,11 +1873,11 @@
         }
       }
     },
-    "pb_bdsproCreateProductForUserRequest": {
+    "bdspropbCreateProductForUserRequest": {
       "type": "object",
       "properties": {
         "product": {
-          "$ref": "#/definitions/pb_bdsproProductSaveRequest"
+          "$ref": "#/definitions/bdspropbProductSaveRequest"
         },
         "profileId": {
           "type": "string",
@@ -1892,7 +1892,7 @@
         }
       }
     },
-    "pb_bdsproCreateProductResponse": {
+    "bdspropbCreateProductResponse": {
       "type": "object",
       "properties": {
         "productId": {
@@ -1904,7 +1904,7 @@
         }
       }
     },
-    "pb_bdsproDepositeRequest": {
+    "bdspropbDepositeRequest": {
       "type": "object",
       "properties": {
         "id": {
@@ -1932,7 +1932,7 @@
         }
       }
     },
-    "pb_bdsproDeveloper": {
+    "bdspropbDeveloper": {
       "type": "object",
       "properties": {
         "id": {
@@ -1975,7 +1975,7 @@
         }
       }
     },
-    "pb_bdsproDevideChildRequest": {
+    "bdspropbDevideChildRequest": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -1986,12 +1986,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproSaveChildRequest"
+            "$ref": "#/definitions/bdspropbSaveChildRequest"
           }
         }
       }
     },
-    "pb_bdsproDocType": {
+    "bdspropbDocType": {
       "type": "object",
       "properties": {
         "id": {
@@ -2003,7 +2003,7 @@
         }
       }
     },
-    "pb_bdsproHouseInfo": {
+    "bdspropbHouseInfo": {
       "type": "object",
       "properties": {
         "id": {
@@ -2042,7 +2042,7 @@
         }
       }
     },
-    "pb_bdsproItemResponse": {
+    "bdspropbItemResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -2054,7 +2054,7 @@
         }
       }
     },
-    "pb_bdsproLegalItem": {
+    "bdspropbLegalItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -2085,7 +2085,7 @@
         }
       }
     },
-    "pb_bdsproMediaItem": {
+    "bdspropbMediaItem": {
       "type": "object",
       "properties": {
         "id": {
@@ -2115,19 +2115,19 @@
         }
       }
     },
-    "pb_bdsproMemberResponse": {
+    "bdspropbMemberResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductAccess"
+            "$ref": "#/definitions/bdspropbProductAccess"
           }
         }
       }
     },
-    "pb_bdsproMergeChildRequest": {
+    "bdspropbMergeChildRequest": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -2143,7 +2143,7 @@
         }
       }
     },
-    "pb_bdsproPost": {
+    "bdspropbPost": {
       "type": "object",
       "properties": {
         "id": {
@@ -2225,7 +2225,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproPostMedia"
+            "$ref": "#/definitions/bdspropbPostMedia"
           }
         },
         "mediaUrl": {
@@ -2245,7 +2245,7 @@
         }
       }
     },
-    "pb_bdsproPostMedia": {
+    "bdspropbPostMedia": {
       "type": "object",
       "properties": {
         "id": {
@@ -2267,19 +2267,19 @@
         }
       }
     },
-    "pb_bdsproPostResponse": {
+    "bdspropbPostResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproPost"
+            "$ref": "#/definitions/bdspropbPost"
           }
         }
       }
     },
-    "pb_bdsproPostSaveWithProduct": {
+    "bdspropbPostSaveWithProduct": {
       "type": "object",
       "properties": {
         "productId": {
@@ -2323,12 +2323,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         }
       }
     },
-    "pb_bdsproProductAccess": {
+    "bdspropbProductAccess": {
       "type": "object",
       "properties": {
         "id": {
@@ -2362,7 +2362,7 @@
         }
       }
     },
-    "pb_bdsproProductAttachment": {
+    "bdspropbProductAttachment": {
       "type": "object",
       "properties": {
         "id": {
@@ -2412,31 +2412,31 @@
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
-    "pb_bdsproProductAttachmentResponse": {
+    "bdspropbProductAttachmentResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductAttachment"
+            "$ref": "#/definitions/bdspropbProductAttachment"
           }
         }
       }
     },
-    "pb_bdsproProductInternalResponse": {
+    "bdspropbProductInternalResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductResponse"
+            "$ref": "#/definitions/bdspropbProductResponse"
           }
         }
       }
     },
-    "pb_bdsproProductPrice": {
+    "bdspropbProductPrice": {
       "type": "object",
       "properties": {
         "id": {
@@ -2482,7 +2482,7 @@
         }
       }
     },
-    "pb_bdsproProductPrivate": {
+    "bdspropbProductPrivate": {
       "type": "object",
       "properties": {
         "id": {
@@ -2513,7 +2513,7 @@
         }
       }
     },
-    "pb_bdsproProductResponse": {
+    "bdspropbProductResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -2533,20 +2533,20 @@
           "format": "uint64"
         },
         "propertyType": {
-          "$ref": "#/definitions/pb_bdsproItemResponse"
+          "$ref": "#/definitions/bdspropbItemResponse"
         },
         "docTypeId": {
           "type": "string",
           "format": "uint64"
         },
         "docType": {
-          "$ref": "#/definitions/pb_bdsproDocType"
+          "$ref": "#/definitions/bdspropbDocType"
         },
         "amenities": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAmenityItem"
+            "$ref": "#/definitions/bdspropbAmenityItem"
           }
         },
         "visibility": {
@@ -2586,26 +2586,26 @@
           "format": "uint64"
         },
         "price": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "apartmentId": {
           "type": "string",
           "format": "uint64"
         },
         "apartment": {
-          "$ref": "#/definitions/pb_bdsproApartment"
+          "$ref": "#/definitions/bdspropbApartment"
         },
         "apartmentAttribute": {
-          "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+          "$ref": "#/definitions/bdspropbApartmentAttribute"
         },
         "build": {
-          "$ref": "#/definitions/pb_bdsproProjectBuild"
+          "$ref": "#/definitions/bdspropbProjectBuild"
         },
         "project": {
-          "$ref": "#/definitions/pb_bdsproProject"
+          "$ref": "#/definitions/bdspropbProject"
         },
         "developer": {
-          "$ref": "#/definitions/pb_bdsproDeveloper"
+          "$ref": "#/definitions/bdspropbDeveloper"
         },
         "sourceType": {
           "type": "integer",
@@ -2616,7 +2616,7 @@
           "format": "uint64"
         },
         "privateData": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "note": {
           "type": "string"
@@ -2654,21 +2654,21 @@
           "format": "uint64"
         },
         "province": {
-          "$ref": "#/definitions/pb_bdsproRegion"
+          "$ref": "#/definitions/bdspropbRegion"
         },
         "districtId": {
           "type": "string",
           "format": "uint64"
         },
         "district": {
-          "$ref": "#/definitions/pb_bdsproRegion"
+          "$ref": "#/definitions/bdspropbRegion"
         },
         "wardId": {
           "type": "string",
           "format": "uint64"
         },
         "ward": {
-          "$ref": "#/definitions/pb_bdsproRegion"
+          "$ref": "#/definitions/bdspropbRegion"
         },
         "address": {
           "type": "string"
@@ -2680,18 +2680,18 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAttributeProduct"
+            "$ref": "#/definitions/bdspropbAttributeProduct"
           }
         },
         "mediaList": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "archived": {
           "type": "boolean"
@@ -2713,10 +2713,10 @@
           "$ref": "#/definitions/sharepbProfileItem"
         },
         "saleTransaction": {
-          "$ref": "#/definitions/pb_bdsproTransaction"
+          "$ref": "#/definitions/bdspropbTransaction"
         },
         "rentTransaction": {
-          "$ref": "#/definitions/pb_bdsproTransaction"
+          "$ref": "#/definitions/bdspropbTransaction"
         },
         "createdAt": {
           "type": "string"
@@ -2726,7 +2726,7 @@
         }
       }
     },
-    "pb_bdsproProductSaveRequest": {
+    "bdspropbProductSaveRequest": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -2785,20 +2785,20 @@
           "format": "int32"
         },
         "priceData": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "mediaItems": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "productPrivate": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "googleMapLink": {
           "type": "string"
@@ -2816,10 +2816,10 @@
           "format": "int64"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
+          "$ref": "#/definitions/bdspropbPostSaveWithProduct"
         },
         "asset": {
-          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
+          "$ref": "#/definitions/bdspropbAssetCreateWithProduct"
         },
         "saleVisibility": {
           "type": "integer",
@@ -2843,7 +2843,7 @@
         }
       }
     },
-    "pb_bdsproProductServiceUpdateProductBody": {
+    "bdspropbProductServiceUpdateProductBody": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -2902,20 +2902,20 @@
           "format": "int32"
         },
         "priceData": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "mediaItems": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "productPrivate": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "googleMapLink": {
           "type": "string"
@@ -2933,10 +2933,10 @@
           "format": "int64"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
+          "$ref": "#/definitions/bdspropbPostSaveWithProduct"
         },
         "asset": {
-          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
+          "$ref": "#/definitions/bdspropbAssetCreateWithProduct"
         },
         "saleVisibility": {
           "type": "integer",
@@ -2956,7 +2956,7 @@
         }
       }
     },
-    "pb_bdsproProject": {
+    "bdspropbProject": {
       "type": "object",
       "properties": {
         "id": {
@@ -2984,7 +2984,7 @@
         }
       }
     },
-    "pb_bdsproProjectBuild": {
+    "bdspropbProjectBuild": {
       "type": "object",
       "properties": {
         "id": {
@@ -3013,19 +3013,19 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartment"
+            "$ref": "#/definitions/bdspropbApartment"
           }
         },
         "attributes": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+            "$ref": "#/definitions/bdspropbApartmentAttribute"
           }
         }
       }
     },
-    "pb_bdsproRegion": {
+    "bdspropbRegion": {
       "type": "object",
       "properties": {
         "id": {
@@ -3037,7 +3037,7 @@
         }
       }
     },
-    "pb_bdsproResponse": {
+    "bdspropbResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -3049,7 +3049,7 @@
         }
       }
     },
-    "pb_bdsproSaveChildRequest": {
+    "bdspropbSaveChildRequest": {
       "type": "object",
       "properties": {
         "parentId": {
@@ -3108,20 +3108,20 @@
           "format": "int32"
         },
         "priceData": {
-          "$ref": "#/definitions/pb_bdsproProductPrice"
+          "$ref": "#/definitions/bdspropbProductPrice"
         },
         "mediaItems": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproMediaItem"
+            "$ref": "#/definitions/bdspropbMediaItem"
           }
         },
         "houseInfo": {
-          "$ref": "#/definitions/pb_bdsproHouseInfo"
+          "$ref": "#/definitions/bdspropbHouseInfo"
         },
         "productPrivate": {
-          "$ref": "#/definitions/pb_bdsproProductPrivate"
+          "$ref": "#/definitions/bdspropbProductPrivate"
         },
         "googleMapLink": {
           "type": "string"
@@ -3139,10 +3139,10 @@
           "format": "int64"
         },
         "post": {
-          "$ref": "#/definitions/pb_bdsproPostSaveWithProduct"
+          "$ref": "#/definitions/bdspropbPostSaveWithProduct"
         },
         "asset": {
-          "$ref": "#/definitions/pb_bdsproAssetCreateWithProduct"
+          "$ref": "#/definitions/bdspropbAssetCreateWithProduct"
         },
         "saleVisibility": {
           "type": "integer",
@@ -3154,14 +3154,14 @@
         }
       }
     },
-    "pb_bdsproSearchResponse": {
+    "bdspropbSearchResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductResponse"
+            "$ref": "#/definitions/bdspropbProductResponse"
           }
         },
         "totalElements": {
@@ -3170,7 +3170,7 @@
         }
       }
     },
-    "pb_bdsproStatusRequest": {
+    "bdspropbStatusRequest": {
       "type": "object",
       "properties": {
         "id": {
@@ -3197,7 +3197,7 @@
         }
       }
     },
-    "pb_bdsproSuggestRequest": {
+    "bdspropbSuggestRequest": {
       "type": "object",
       "properties": {
         "content": {
@@ -3205,7 +3205,7 @@
         }
       }
     },
-    "pb_bdsproTransaction": {
+    "bdspropbTransaction": {
       "type": "object",
       "properties": {
         "id": {
@@ -3303,7 +3303,7 @@
         }
       }
     },
-    "pb_bdsproVisibilityRequest": {
+    "bdspropbVisibilityRequest": {
       "type": "object",
       "properties": {
         "id": {

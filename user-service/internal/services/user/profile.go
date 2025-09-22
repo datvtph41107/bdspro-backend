@@ -1,7 +1,7 @@
 package user_service
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_jwt "common/jwt"
 	_models "common/models"
 	_utils "common/utils"

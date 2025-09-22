@@ -1,13 +1,13 @@
 package usecases
 
 import (
-	base_enum "base/enum"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	"context"
 	"time"
 
-	pb_bdspro "pb/types/bdspro"
+	_enum "common/domain/enum"
+	bdspropb "pb/types/bdspro"
 )
 
 type DashboardUsecase struct {
@@ -28,11 +28,11 @@ func NewDashboardUsecase(
 	}
 }
 
-func (u *DashboardUsecase) GetCashProfit(ctx context.Context, fromDate *time.Time, toDate *time.Time) ([]*pb_bdspro.CashProfit, error) {
+func (u *DashboardUsecase) GetCashProfit(ctx context.Context, fromDate *time.Time, toDate *time.Time) ([]*bdspropb.CashProfit, error) {
 	return nil, nil
 }
 
-func (u *DashboardUsecase) GetCountByOwner(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (*dto.CountByOwnerResponse, error) {
+func (u *DashboardUsecase) GetCountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (*dto.CountByOwnerResponse, error) {
 	// Đếm sản phẩm
 	totalProduct, err := u.ProductRepo.CountByOwner(ctx, ownerOf, ownerId)
 	if err != nil {

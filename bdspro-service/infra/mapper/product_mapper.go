@@ -1,16 +1,20 @@
 package mapper
 
 import (
+	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	_dto "common/dto"
+	_dto "common/domain/dto"
+	_usecase "common/domain/usecase"
 	_models "common/models"
 	_utils "common/utils"
-	pb_bdspro "pb/types/bdspro"
+	"context"
+	bdspropb "pb/types/bdspro"
 )
 
 type ProductMapper struct {
+	*CommonMapper
 	PostMapper               *PostMapper
 	ApartmentMapper          *ApartmentMapper
 	ApartmentAttributeMapper *ApartmentAttributeMapper
@@ -18,6 +22,8 @@ type ProductMapper struct {
 	ProjectMapper            *ProjectMapper
 	DeveloperMapper          *DeveloperMapper
 	DepositeMapper           *DepositeMapper
+	CodeDataUsecase          *_usecase.CodeDataUsecase
+	UserClient               *client.UserClient
 	// TransactionMapper        TransactionTransformer
 }
 
@@ -28,9 +34,12 @@ func NewProductMapper(postMapper *PostMapper,
 	projectMapper *ProjectMapper,
 	developerMapper *DeveloperMapper,
 	depositeMapper *DepositeMapper,
+	codeDataUsecase *_usecase.CodeDataUsecase,
+	userClient *client.UserClient,
 	// transactionMapper TransactionTransformer,
 ) *ProductMapper {
 	result := &ProductMapper{
+		CommonMapper:             &CommonMapper{},
 		PostMapper:               postMapper,
 		ApartmentMapper:          apartmentMapper,
 		ApartmentAttributeMapper: apartmentAttributeMapper,
@@ -38,13 +47,15 @@ func NewProductMapper(postMapper *PostMapper,
 		ProjectMapper:            projectMapper,
 		DeveloperMapper:          developerMapper,
 		DepositeMapper:           depositeMapper,
+		CodeDataUsecase:          codeDataUsecase,
+		UserClient:               userClient,
 		// TransactionMapper:        transactionMapper,
 	}
 	postMapper.ProductMapper = result
 	return result
 }
 
-// func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *pb_bdspro.ProductResponse {
+// func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *bdspropb.ProductResponse {
 // 	result := m.MapProductPb(product)
 // 	result.Id = product.ID
 // 	result.ParentId = product.ParentId
@@ -93,7 +104,7 @@ func NewProductMapper(postMapper *PostMapper,
 // 	}
 
 // 	if product.PropertyType != nil {
-// 		result.PropertyType = &pb_bdspro.PropertyType{
+// 		result.PropertyType = &bdspropb.PropertyType{
 // 			Id:   product.PropertyType.ID,
 // 			Name: product.PropertyType.Name,
 // 			// Active:    product.PropertyType.Ac,
@@ -101,7 +112,7 @@ func NewProductMapper(postMapper *PostMapper,
 // 	}
 
 // 	if product.DocType != nil {
-// 		result.DocType = &pb_bdspro.DocType{
+// 		result.DocType = &bdspropb.DocType{
 // 			Id:   product.DocType.ID,
 // 			Name: product.DocType.Name,
 // 		}
@@ -109,7 +120,7 @@ func NewProductMapper(postMapper *PostMapper,
 
 // 	// todo: map thêm category
 // 	// if product.Category != nil {
-// 	// 	result.Category = &pb_bdspro.Category{
+// 	// 	result.Category = &bdspropb.Category{
 // 	// 		Id:   product.Category.ID,
 // 	// 		Name: product.Category.Name,
 // 	// 	}
@@ -142,9 +153,9 @@ func NewProductMapper(postMapper *PostMapper,
 // 	}
 
 // 	// if product.Attributes != nil {
-// 	// 	result.Attributes = make([]*pb_bdspro.AttributeProduct, len(product.Attributes))
+// 	// 	result.Attributes = make([]*bdspropb.AttributeProduct, len(product.Attributes))
 // 	// 	for i, attribute := range product.Attributes {
-// 	// 		result.Attributes[i] = &pb_bdspro.AttributeProduct{
+// 	// 		result.Attributes[i] = &bdspropb.AttributeProduct{
 // 	// 			Id:   attribute.ID,
 // 	// 			Name: attribute.Name,
 // 	// 		}
@@ -154,8 +165,8 @@ func NewProductMapper(postMapper *PostMapper,
 // 	return result
 // }
 
-func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.ProductResponse {
-	result := &pb_bdspro.ProductResponse{
+func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *bdspropb.ProductResponse {
+	result := &bdspropb.ProductResponse{
 		Id:       product.ID,
 		ParentId: product.ParentId,
 		// DepositeId: product.DepositeID,
@@ -208,9 +219,9 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 	}
 
 	// if product.Attributes != nil {
-	// 	result.Attributes = make([]*pb_bdspro.AttributeProduct, len(product.Attributes))
+	// 	result.Attributes = make([]*bdspropb.AttributeProduct, len(product.Attributes))
 	// 	for i, attribute := range product.Attributes {
-	// 		result.Attributes[i] = &pb_bdspro.AttributeProduct{
+	// 		result.Attributes[i] = &bdspropb.AttributeProduct{
 	// 			Id:   attribute.ID,
 	// 			Name: attribute.Name,
 	// 		}
@@ -221,23 +232,23 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 	// }
 
 	if product.PropertyType != nil {
-		result.PropertyType = &pb_bdspro.ItemResponse{
+		result.PropertyType = &bdspropb.ItemResponse{
 			Id:   product.PropertyType.ID,
 			Name: product.PropertyType.Name,
 		}
 	}
 
 	if product.DocType != nil {
-		result.DocType = &pb_bdspro.DocType{
+		result.DocType = &bdspropb.DocType{
 			Id:   product.DocType.ID,
 			Name: product.DocType.Name,
 		}
 	}
 
 	if product.Amenities != nil {
-		result.Amenities = make([]*pb_bdspro.AmenityItem, len(product.Amenities))
+		result.Amenities = make([]*bdspropb.AmenityItem, len(product.Amenities))
 		for i, amenity := range product.Amenities {
-			result.Amenities[i] = &pb_bdspro.AmenityItem{
+			result.Amenities[i] = &bdspropb.AmenityItem{
 				Id:   amenity.ID,
 				Name: amenity.Name,
 			}
@@ -279,9 +290,9 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 	}
 
 	if len(product.MediaList) > 0 {
-		result.MediaList = make([]*pb_bdspro.MediaItem, len(product.MediaList))
+		result.MediaList = make([]*bdspropb.MediaItem, len(product.MediaList))
 		for i, media := range product.MediaList {
-			result.MediaList[i] = &pb_bdspro.MediaItem{
+			result.MediaList[i] = &bdspropb.MediaItem{
 				Id:        media.ID,
 				MediaUrl:  media.MediaURL,
 				MediaType: media.MediaType,
@@ -290,7 +301,7 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 	}
 
 	if product.Price != nil {
-		result.Price = &pb_bdspro.ProductPrice{
+		result.Price = &bdspropb.ProductPrice{
 			// PriceOwner:     product.Price.PriceOwner,
 			Id:               product.Price.ID,
 			Currency:         product.Price.Currency,
@@ -314,8 +325,8 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *pb_bdspro.P
 	return result
 }
 
-func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.ProductResponse {
-	result := &pb_bdspro.ProductResponse{
+func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductResponse {
+	result := &bdspropb.ProductResponse{
 		Id:         product.ID,
 		Name:       product.Name,
 		Area:       product.Area,
@@ -339,9 +350,9 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 	}
 
 	if len(product.MediaList) > 0 {
-		result.MediaList = make([]*pb_bdspro.MediaItem, len(product.MediaList))
+		result.MediaList = make([]*bdspropb.MediaItem, len(product.MediaList))
 		for i, media := range product.MediaList {
-			result.MediaList[i] = &pb_bdspro.MediaItem{
+			result.MediaList[i] = &bdspropb.MediaItem{
 				Id:        media.ID,
 				MediaUrl:  media.MediaURL,
 				MediaType: media.MediaType,
@@ -350,7 +361,7 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 	}
 
 	if product.Price != nil {
-		result.Price = &pb_bdspro.ProductPrice{
+		result.Price = &bdspropb.ProductPrice{
 			// PriceOwner:     product.Price.PriceOwner,
 			Id:               product.Price.ID,
 			Currency:         product.Price.Currency,
@@ -373,18 +384,18 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *pb_bdspro.Product
 	return result
 }
 
-func (m *ProductMapper) MapProductPbList(products []domain.Product) []*pb_bdspro.ProductResponse {
-	productList := make([]*pb_bdspro.ProductResponse, len(products))
+func (m *ProductMapper) MapProductPbList(products []domain.Product) []*bdspropb.ProductResponse {
+	productList := make([]*bdspropb.ProductResponse, len(products))
 	for i, product := range products {
 		productList[i] = m.MapProductPb(&product)
 	}
 	return productList
 }
 
-func MapProductAttachmentPbList(products []domain.Product) []*pb_bdspro.ProductAttachment {
-	productList := make([]*pb_bdspro.ProductAttachment, len(products))
+func MapProductAttachmentPbList(products []domain.Product) []*bdspropb.ProductAttachment {
+	productList := make([]*bdspropb.ProductAttachment, len(products))
 	for i, product := range products {
-		productList[i] = &pb_bdspro.ProductAttachment{
+		productList[i] = &bdspropb.ProductAttachment{
 			Id:      product.ID,
 			Name:    product.Name,
 			Code:    product.Code,
@@ -406,7 +417,7 @@ func MapProductAttachmentPbList(products []domain.Product) []*pb_bdspro.ProductA
 	return productList
 }
 
-func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dto.ProductSaveRequest {
+func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto.ProductSaveRequest {
 	result := &dto.ProductSaveRequest{
 		ParentID:        &req.ParentId,
 		Name:            req.Name,
@@ -492,7 +503,7 @@ func (m *ProductMapper) SaveProductToEntity(req *pb_bdspro.SaveChildRequest) *dt
 	return result
 }
 
-func (m *ProductMapper) MapDevideChildRequest(req *pb_bdspro.DevideChildRequest) *dto.DevideChildRequest {
+func (m *ProductMapper) MapDevideChildRequest(req *bdspropb.DevideChildRequest) *dto.DevideChildRequest {
 	childs := make([]dto.ProductSaveRequest, len(req.Childs))
 	for i, child := range req.Childs {
 		r := m.SaveProductToEntity(child)
@@ -506,7 +517,7 @@ func (m *ProductMapper) MapDevideChildRequest(req *pb_bdspro.DevideChildRequest)
 	}
 }
 
-func (m *ProductMapper) MapMarketProductToDTO(req *pb_bdspro.ProductMarketRequest) *dto.ProductSearchRequest {
+func (m *ProductMapper) MapMarketProductToDTO(req *bdspropb.ProductMarketRequest) *dto.ProductSearchRequest {
 	return &dto.ProductSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -523,8 +534,8 @@ func (m *ProductMapper) MapMarketProductToDTO(req *pb_bdspro.ProductMarketReques
 	}
 }
 
-func (m *ProductMapper) MapProductMarketToPb(product *domain.ProductMarket) *pb_bdspro.ProductMarket {
-	result := &pb_bdspro.ProductMarket{
+func (m *ProductMapper) MapProductMarketToPb(product *domain.ProductMarket) *bdspropb.ProductMarket {
+	result := &bdspropb.ProductMarket{
 		Id:         product.ID,
 		CreatedAt:  _utils.FormatTimeToString(&product.CreatedAt),
 		UpdatedAt:  _utils.FormatTimeToString(&product.UpdatedAt),
@@ -591,15 +602,15 @@ func (m *ProductMapper) MapProductMarketToPb(product *domain.ProductMarket) *pb_
 	return result
 }
 
-func (m *ProductMapper) MapProductMarketPbList(products []domain.ProductMarket) []*pb_bdspro.ProductMarket {
-	productList := make([]*pb_bdspro.ProductMarket, len(products))
+func (m *ProductMapper) MapProductMarketPbList(products []domain.ProductMarket) []*bdspropb.ProductMarket {
+	productList := make([]*bdspropb.ProductMarket, len(products))
 	for i, product := range products {
 		productList[i] = m.MapProductMarketToPb(&product)
 	}
 	return productList
 }
 
-func (m *ProductMapper) ProductSavePbToDTO(req *pb_bdspro.ProductSaveRequest) *dto.ProductSaveRequest {
+func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dto.ProductSaveRequest {
 	result := &dto.ProductSaveRequest{
 		ParentID:        req.ParentId,
 		Name:            req.Name,
@@ -691,7 +702,7 @@ func (m *ProductMapper) ProductSavePbToDTO(req *pb_bdspro.ProductSaveRequest) *d
 	return result
 }
 
-func (m *ProductMapper) PriceDataToDomain(req *pb_bdspro.ProductPrice) *domain.ProductPrice {
+func (m *ProductMapper) PriceDataToDomain(req *bdspropb.ProductPrice) *domain.ProductPrice {
 	result := &domain.ProductPrice{
 		BaseEntity: _models.BaseEntity{
 			ID: req.Id,
@@ -709,7 +720,7 @@ func (m *ProductMapper) PriceDataToDomain(req *pb_bdspro.ProductPrice) *domain.P
 	return result
 }
 
-func (m *ProductMapper) MediaItemsToDomain(req []*pb_bdspro.MediaItem) []dto.MediaItem {
+func (m *ProductMapper) MediaItemsToDomain(req []*bdspropb.MediaItem) []dto.MediaItem {
 	result := make([]dto.MediaItem, len(req))
 	for i, media := range req {
 		result[i] = dto.MediaItem{
@@ -721,7 +732,7 @@ func (m *ProductMapper) MediaItemsToDomain(req []*pb_bdspro.MediaItem) []dto.Med
 	return result
 }
 
-func (m *ProductMapper) HouseInfoToDomain(req *pb_bdspro.HouseInfo) *dto.HouseInfoUpdate {
+func (m *ProductMapper) HouseInfoToDomain(req *bdspropb.HouseInfo) *dto.HouseInfoUpdate {
 	return &dto.HouseInfoUpdate{
 		NumBedroom:  req.NumBedroom,
 		NumBathroom: req.NumBathroom,
@@ -733,8 +744,8 @@ func (m *ProductMapper) HouseInfoToDomain(req *pb_bdspro.HouseInfo) *dto.HouseIn
 	}
 }
 
-func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *pb_bdspro.HouseInfo {
-	result := &pb_bdspro.HouseInfo{
+func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *bdspropb.HouseInfo {
+	result := &bdspropb.HouseInfo{
 		// NumBedroom:  int32(*req.NumBedroom),
 		// NumBathroom: int32(*req.NumBathroom),
 		// NumFloor:    int32(*req.NumFloor),
@@ -769,7 +780,7 @@ func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *pb_bdspro.HouseInf
 	return result
 }
 
-func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *domain.ProductPrivate {
+func (m *ProductMapper) PrivateDataToDomain(req *bdspropb.ProductPrivate) *domain.ProductPrivate {
 	return &domain.ProductPrivate{
 		PrivateDocs:   req.PrivateDocs,
 		ImportPrice:   &req.ImportPrice,
@@ -795,11 +806,75 @@ func (m *ProductMapper) PrivateDataToDomain(req *pb_bdspro.ProductPrivate) *doma
 // 			filepath.Join(outputDir, "index.m3u8"),
 // 		)
 
-func (m *ProductMapper) PbSearchRequestToDTO(req *pb_bdspro.ProductSearch) *dto.ProductSearchRequest {
+func (m *ProductMapper) PbSearchRequestToDTO(req *bdspropb.ProductSearch) *dto.ProductSearchRequest {
 	return &dto.ProductSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
 		},
 	}
+}
+
+func (m *ProductMapper) MapAdminProductPbList(ctx context.Context, products []domain.Product) []*bdspropb.AdminProductItem {
+	result := make([]*bdspropb.AdminProductItem, len(products))
+	ownerIds := make(map[uint64]struct{}, len(products))
+	for i, product := range products {
+		ownerIds[product.OwnerID] = struct{}{}
+		result[i] = m.MapAdminProductPb(ctx, &product)
+	}
+	owners, err := m.UserClient.GetMapByIDs(ctx, ownerIds)
+	if err != nil {
+		return result
+	}
+	for i, product := range products {
+		if owner, ok := owners[product.OwnerID]; ok {
+			result[i].Owner = owner
+		}
+	}
+
+	return result
+}
+
+func (m *ProductMapper) MapAdminProductPb(ctx context.Context, product *domain.Product) *bdspropb.AdminProductItem {
+	return &bdspropb.AdminProductItem{
+		Id:               product.ID,
+		Name:             product.Name,
+		Area:             product.Area,
+		TransactionType:  uint32(product.TransactionType),
+		ProvinceName:     product.ProvinceName,
+		DistrictName:     product.DistrictName,
+		WardName:         product.WardName,
+		SalePrice:        m.GetSalePrice(product.Price),
+		RentPrice:        m.GetRentPrice(product.Price),
+		RentStatus:       uint32(product.RentStatus),
+		SaleStatus:       uint32(product.SaleStatus),
+		CreatedAt:        _utils.FormatTimeToString(product.CreatedAt),
+		UpdatedAt:        _utils.FormatTimeToString(product.UpdatedAt),
+		AssetId:          product.AssetId,
+		PostIds:          product.PostIds,
+		AssetCode:        m.CodeDataUsecase.GetAssetCodePtr(ctx, product.AssetId),
+		PostCodes:        m.CodeDataUsecase.GetPostCodes(ctx, product.PostIds),
+		PropertyTypeName: product.PropertyTypeName,
+	}
+}
+
+func (m *ProductMapper) AdminProductSearchRequestToDTO(req *bdspropb.AdminProductSearchRequest) *dto.ProductSearchRequest {
+	result := &dto.ProductSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		FromDate:         _utils.ParseStringToTime(req.FromDate),
+		ToDate:           _utils.ParseStringToTime(req.ToDate),
+		Name:             req.Name,
+		AreaFrom:         req.AreaFrom,
+		AreaTo:           req.AreaTo,
+		TransactionTypes: req.TransactionTypes,
+		SaleStatus:       req.SaleStatus,
+		RentStatus:       req.RentStatus,
+		PropertyTypeIds:  req.PropertyTypeIds,
+		ProvinceIds:      req.ProvinceIds,
+	}
+
+	return result
 }

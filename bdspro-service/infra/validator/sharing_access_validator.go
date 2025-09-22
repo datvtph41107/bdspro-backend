@@ -2,7 +2,7 @@ package validator
 
 import (
 	"errors"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type SharingAccessValidator struct {
@@ -12,7 +12,7 @@ func NewSharingAccessValidator() *SharingAccessValidator {
 	return &SharingAccessValidator{}
 }
 
-func (v *SharingAccessValidator) ValidateBulkSave(dto *pb_bdspro.SharingAccessBulkRequest) error {
+func (v *SharingAccessValidator) ValidateBulkSave(dto *bdspropb.SharingAccessBulkRequest) error {
 	if dto.DomainId == 0 || dto.DomainType == 0 {
 		return errors.New("domainId and domainType are required")
 	}
@@ -33,7 +33,7 @@ func (v *SharingAccessValidator) ValidateBulkSave(dto *pb_bdspro.SharingAccessBu
 	return nil
 }
 
-func (v *SharingAccessValidator) ValidateSearchAsset(dto *pb_bdspro.SharingAccessRequest) error {
+func (v *SharingAccessValidator) ValidateSearchAsset(dto *bdspropb.SharingAccessRequest) error {
 	if dto.DomainId == 0 {
 		return errors.New("domainID is required")
 	}
@@ -41,7 +41,7 @@ func (v *SharingAccessValidator) ValidateSearchAsset(dto *pb_bdspro.SharingAcces
 	return nil
 }
 
-func (v *SharingAccessValidator) ValidateSetCommission(dto *pb_bdspro.SharingAccessByDomainRequest) error {
+func (v *SharingAccessValidator) ValidateSetCommission(dto *bdspropb.SharingAccessByDomainRequest) error {
 	if dto.DomainId == 0 || dto.Commission < 0 {
 		return errors.New("domainID and commission are required")
 	}

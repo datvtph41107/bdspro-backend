@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package pb_bdspro;
+package bdspropb;
 import "bdspro/asset.proto";
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
@@ -8,7 +8,7 @@ import "user/profile.proto";
 import "bdspro/post.proto";
 import "bdspro/deposite.proto";
 import "bdspro/transaction.proto";
-option go_package = "pb/types/bdspro;pb_bdspro";
+option go_package = "pb/types/bdspro;bdspropb";
 
 service ProductService {
   rpc GetDetailByIds (IdRequest) returns (ProductInternalResponse);
@@ -48,7 +48,7 @@ service ProductService {
       body: "*"
     };
   };
-  rpc ProductDeposite (DepositeRequest) returns (pb_bdspro.Transaction) {
+  rpc ProductDeposite (DepositeRequest) returns (bdspropb.Transaction) {
     option (google.api.http) = {
       post: "/v2/bdspro/v2/product/deposite"
       body: "*"

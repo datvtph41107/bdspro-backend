@@ -10,14 +10,14 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
 )
 
 type SharingAccessService struct {
-	pb_bdspro.UnimplementedSharingAccessServiceServer
+	bdspropb.UnimplementedSharingAccessServiceServer
 	Usecase            *shared_usecase.SharingAccessUsecase
 	Mapper             *mapper.SharingAccessMapper
 	Validator          *validator.SharingAccessValidator
@@ -41,7 +41,7 @@ func NewSharingAccessService(
 	}
 }
 
-func (s *SharingAccessService) BulkSave(ctx context.Context, req *pb_bdspro.SharingAccessBulkRequest) (*pb_bdspro.SharingAccessResponse, error) {
+func (s *SharingAccessService) BulkSave(ctx context.Context, req *bdspropb.SharingAccessBulkRequest) (*bdspropb.SharingAccessResponse, error) {
 	dtos := s.Mapper.SharingAccessBulkToDomain(req)
 	if err := s.Validator.ValidateBulkSave(req); err != nil {
 		return nil, err
@@ -51,13 +51,13 @@ func (s *SharingAccessService) BulkSave(ctx context.Context, req *pb_bdspro.Shar
 	if err != nil {
 		return nil, err
 	}
-	pb_entities := []*pb_bdspro.SharingAccess{}
+	pb_entities := []*bdspropb.SharingAccess{}
 	copier.Copy(&pb_entities, &entities)
-	return &pb_bdspro.SharingAccessResponse{
+	return &bdspropb.SharingAccessResponse{
 		Data: pb_entities,
 	}, nil
 }
-func (s *SharingAccessService) SearchProduct(ctx context.Context, req *pb_bdspro.SharingAccessRequest) (*pb_bdspro.SharingAccessResponse, error) {
+func (s *SharingAccessService) SearchProduct(ctx context.Context, req *bdspropb.SharingAccessRequest) (*bdspropb.SharingAccessResponse, error) {
 	searchDTO := s.Mapper.SharingAccessToSearchDTO(req)
 	if searchDTO.DomainID == 0 || searchDTO.FromType == 0 {
 		return nil, &_routes.Except{
@@ -73,12 +73,12 @@ func (s *SharingAccessService) SearchProduct(ctx context.Context, req *pb_bdspro
 	s.UserClient.MapUserToSharingAccess(ctx, pb_entities)
 	s.OrganizationClient.MapOrganizationToSharingAccess(ctx, pb_entities)
 	s.OrganizationClient.MapGroupToSharingAccess(ctx, pb_entities)
-	return &pb_bdspro.SharingAccessResponse{
+	return &bdspropb.SharingAccessResponse{
 		Data: pb_entities,
 	}, nil
 }
 
-func (s *SharingAccessService) SearchAsset(ctx context.Context, req *pb_bdspro.SharingAccessRequest) (*pb_bdspro.SharingAccessResponse, error) {
+func (s *SharingAccessService) SearchAsset(ctx context.Context, req *bdspropb.SharingAccessRequest) (*bdspropb.SharingAccessResponse, error) {
 	searchDTO := s.Mapper.SharingAccessToSearchDTO(req)
 
 	if err := s.Validator.ValidateSearchAsset(req); err != nil {
@@ -94,12 +94,12 @@ func (s *SharingAccessService) SearchAsset(ctx context.Context, req *pb_bdspro.S
 	result := s.Mapper.SharingAccessToSearchPb(entities)
 
 	s.UserClient.MapUserToSharingAccess(ctx, result)
-	return &pb_bdspro.SharingAccessResponse{
+	return &bdspropb.SharingAccessResponse{
 		Data: result,
 	}, nil
 }
 
-func (s *SharingAccessService) SetCommission(ctx context.Context, req *pb_bdspro.SharingAccessByDomainRequest) (*pb_bdspro.SharingAccessResponse, error) {
+func (s *SharingAccessService) SetCommission(ctx context.Context, req *bdspropb.SharingAccessByDomainRequest) (*bdspropb.SharingAccessResponse, error) {
 	if err := s.Validator.ValidateSetCommission(req); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *SharingAccessService) SetCommission(ctx context.Context, req *pb_bdspro
 		return nil, err
 	}
 
-	return &pb_bdspro.SharingAccessResponse{
+	return &bdspropb.SharingAccessResponse{
 		Data: nil,
 	}, nil
 }

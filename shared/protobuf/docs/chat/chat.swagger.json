@@ -1746,7 +1746,7 @@
           "format": "uint64"
         },
         "product": {
-          "$ref": "#/definitions/pb_bdsproProductAttachment"
+          "$ref": "#/definitions/bdspropbProductAttachment"
         }
       }
     },
@@ -2041,7 +2041,7 @@
         }
       }
     },
-    "pb_bdsproProductAttachment": {
+    "bdspropbProductAttachment": {
       "type": "object",
       "properties": {
         "id": {

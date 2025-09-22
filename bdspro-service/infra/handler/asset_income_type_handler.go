@@ -4,13 +4,13 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/usecases"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 
 	"github.com/jinzhu/copier"
 )
 
 type AssetIncomeTypeServer struct {
-	pb_bdspro.UnimplementedAssetIncomeTypeServiceServer
+	bdspropb.UnimplementedAssetIncomeTypeServiceServer
 	UC usecases.AssetIncomeTypeUsecase
 }
 
@@ -20,29 +20,29 @@ func NewAssetIncomeTypeServer(AssetIncomeTypeUc usecases.AssetIncomeTypeUsecase)
 	}
 }
 
-func (s AssetIncomeTypeServer) Get(c context.Context, dto *pb_bdspro.AssetIncomeTypeDTO) (*pb_bdspro.AssetIncomeTypeListDTO, error) {
+func (s AssetIncomeTypeServer) Get(c context.Context, dto *bdspropb.AssetIncomeTypeDTO) (*bdspropb.AssetIncomeTypeListDTO, error) {
 	result, err := s.UC.GetData(c, dto.Id)
 
-	pbdatas := []*pb_bdspro.AssetIncomeTypeDTO{}
+	pbdatas := []*bdspropb.AssetIncomeTypeDTO{}
 	for _, r := range result {
-		pbdata := &pb_bdspro.AssetIncomeTypeDTO{}
+		pbdata := &bdspropb.AssetIncomeTypeDTO{}
 		copier.Copy(&pbdata, &r)
 		pbdatas = append(pbdatas, pbdata)
 	}
 
-	return &pb_bdspro.AssetIncomeTypeListDTO{
+	return &bdspropb.AssetIncomeTypeListDTO{
 		Data: pbdatas,
 	}, err
 }
-func (s AssetIncomeTypeServer) Detail(c context.Context, dto *pb_bdspro.AssetIncomeTypeDTO) (*pb_bdspro.AssetIncomeTypeDTO, error) {
+func (s AssetIncomeTypeServer) Detail(c context.Context, dto *bdspropb.AssetIncomeTypeDTO) (*bdspropb.AssetIncomeTypeDTO, error) {
 	r, err := s.UC.GetByID(c, dto.Id)
 
-	pbdata := &pb_bdspro.AssetIncomeTypeDTO{}
+	pbdata := &bdspropb.AssetIncomeTypeDTO{}
 	copier.Copy(&pbdata, &r)
 
 	return pbdata, err
 }
-func (s AssetIncomeTypeServer) Create(c context.Context, dto *pb_bdspro.AssetIncomeTypeDTO) (*pb_bdspro.AssetIncomeTypeDTO, error) {
+func (s AssetIncomeTypeServer) Create(c context.Context, dto *bdspropb.AssetIncomeTypeDTO) (*bdspropb.AssetIncomeTypeDTO, error) {
 	d := &domain.AssetIncomeType{}
 	copier.Copy(&d, &dto)
 
@@ -51,7 +51,7 @@ func (s AssetIncomeTypeServer) Create(c context.Context, dto *pb_bdspro.AssetInc
 	copier.Copy(&dto, &r)
 	return dto, err
 }
-func (s AssetIncomeTypeServer) Update(c context.Context, dto *pb_bdspro.AssetIncomeTypeDTO) (*pb_bdspro.AssetIncomeTypeDTO, error) {
+func (s AssetIncomeTypeServer) Update(c context.Context, dto *bdspropb.AssetIncomeTypeDTO) (*bdspropb.AssetIncomeTypeDTO, error) {
 	d := &domain.AssetIncomeType{}
 	copier.Copy(&d, &dto)
 
@@ -60,7 +60,7 @@ func (s AssetIncomeTypeServer) Update(c context.Context, dto *pb_bdspro.AssetInc
 	copier.Copy(&dto, &r)
 	return dto, err
 }
-func (s AssetIncomeTypeServer) Delete(c context.Context, dto *pb_bdspro.AssetIncomeTypeDTO) (*pb_bdspro.AssetIncomeTypeDTO, error) {
+func (s AssetIncomeTypeServer) Delete(c context.Context, dto *bdspropb.AssetIncomeTypeDTO) (*bdspropb.AssetIncomeTypeDTO, error) {
 	err := s.UC.Delete(c, dto.Id)
 	return dto, err
 }

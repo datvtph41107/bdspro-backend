@@ -11,7 +11,7 @@ import (
 	"log"
 	"net"
 	"os"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -42,35 +42,35 @@ var GrpcCmd = &cobra.Command{
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
 		)
-		pb_bdspro.RegisterPostServiceServer(s, app.PostService)
-		pb_bdspro.RegisterProductServiceServer(s, app.ProductService)
-		pb_bdspro.RegisterBdsproPublicServiceServer(s, app.BdsproPublicService)
-		pb_bdspro.RegisterAssetServiceServer(s, app.AssetService)
-		pb_bdspro.RegisterAssetExploitationServiceServer(s, app.AssetExploitationService)
-		pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostService)
-		pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeService)
-		pb_bdspro.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
-		pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalService)
-		pb_bdspro.RegisterProjectBuildServiceServer(s, app.ProjectBuildService)
-		pb_bdspro.RegisterTransactionServiceServer(s, app.TransactionService)
-		pb_bdspro.RegisterAdminProductServiceServer(s, app.AdminProductHandler)
-		pb_bdspro.RegisterAdminAssetServiceServer(s, app.AdminAssetHandler)
-		pb_bdspro.RegisterAdminPostServiceServer(s, app.AdminPostHandler)
-		pb_bdspro.RegisterAdminPropertyTypeServiceServer(s, app.AdminPropertyTypeHandler)
-		pb_bdspro.RegisterAdminProjectServiceServer(s, app.AdminProjectHandler)
-		pb_bdspro.RegisterBdsproInternalServiceServer(s, app.InternalHandler)
+		bdspropb.RegisterPostServiceServer(s, app.PostService)
+		bdspropb.RegisterProductServiceServer(s, app.ProductService)
+		bdspropb.RegisterBdsproPublicServiceServer(s, app.BdsproPublicService)
+		bdspropb.RegisterAssetServiceServer(s, app.AssetService)
+		bdspropb.RegisterAssetExploitationServiceServer(s, app.AssetExploitationService)
+		bdspropb.RegisterAssetCostServiceServer(s, app.AssetCostService)
+		bdspropb.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeService)
+		bdspropb.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
+		bdspropb.RegisterAssetLegalServiceServer(s, app.AssetLegalService)
+		bdspropb.RegisterProjectBuildServiceServer(s, app.ProjectBuildService)
+		bdspropb.RegisterTransactionServiceServer(s, app.TransactionService)
+		bdspropb.RegisterAdminProductServiceServer(s, app.AdminProductHandler)
+		bdspropb.RegisterAdminAssetServiceServer(s, app.AdminAssetHandler)
+		bdspropb.RegisterAdminPostServiceServer(s, app.AdminPostHandler)
+		bdspropb.RegisterAdminPropertyTypeServiceServer(s, app.AdminPropertyTypeHandler)
+		bdspropb.RegisterAdminProjectServiceServer(s, app.AdminProjectHandler)
+		bdspropb.RegisterBdsproInternalServiceServer(s, app.InternalHandler)
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
 		// @bind: register_server
-		// pb_bdspro.RegisterCostDocumentServiceServer(s, app.CostDocumentServer)
-		// pb_bdspro.RegisterIncomeDocumentServiceServer(s, app.IncomeDocumentServer)
-		// pb_bdspro.RegisterAssetIncomeTypeServiceServer(s, app.AssetIncomeTypeServer)
-		// pb_bdspro.RegisterAssetExploitationServiceServer(s, app.AssetExploitationServer)
-		// pb_bdspro.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeServer)
-		// pb_bdspro.RegisterAssetCostServiceServer(s, app.AssetCostServer)
-		// pb_bdspro.RegisterAssetLegalServiceServer(s, app.AssetLegalServer)
-		// pb_bdspro.RegisterAssetSplitHistoryServiceServer(s, app.AssetSplitHistoryServer)
+		// bdspropb.RegisterCostDocumentServiceServer(s, app.CostDocumentServer)
+		// bdspropb.RegisterIncomeDocumentServiceServer(s, app.IncomeDocumentServer)
+		// bdspropb.RegisterAssetIncomeTypeServiceServer(s, app.AssetIncomeTypeServer)
+		// bdspropb.RegisterAssetExploitationServiceServer(s, app.AssetExploitationServer)
+		// bdspropb.RegisterAssetCostTypeServiceServer(s, app.AssetCostTypeServer)
+		// bdspropb.RegisterAssetCostServiceServer(s, app.AssetCostServer)
+		// bdspropb.RegisterAssetLegalServiceServer(s, app.AssetLegalServer)
+		// bdspropb.RegisterAssetSplitHistoryServiceServer(s, app.AssetSplitHistoryServer)
 
 		log.Printf("Listen: %v", port)
 

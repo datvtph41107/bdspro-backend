@@ -5,12 +5,12 @@ import (
 	admin_usecases "bdspro/internal/usecases/admin"
 	"context"
 	"pb/clients"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
 
 type AdminPostHandler struct {
-	pb_bdspro.UnimplementedAdminPostServiceServer
+	bdspropb.UnimplementedAdminPostServiceServer
 	AdminPostService *admin_usecases.AdminPostUsecase
 	PostMapper       *mapper.PostMapper
 	AuthGrpcClient   *clients.AuthGrpcClient
@@ -34,9 +34,9 @@ func NewAdminPostHandler(
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/posts/{id}/approve [post]
-func (h *AdminPostHandler) ApprovePost(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminPostHandler) ApprovePost(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_DUYET"}); err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (h *AdminPostHandler) ApprovePost(ctx context.Context, req *sharepb.IdReque
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Duyệt tin đăng thành công",
 	}, nil
@@ -58,9 +58,9 @@ func (h *AdminPostHandler) ApprovePost(ctx context.Context, req *sharepb.IdReque
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/posts/{id}/reject [post]
-func (h *AdminPostHandler) RejectPost(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminPostHandler) RejectPost(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_TUCHOI"}); err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (h *AdminPostHandler) RejectPost(ctx context.Context, req *sharepb.IdReques
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Từ chối tin đăng thành công",
 	}, nil
@@ -81,10 +81,10 @@ func (h *AdminPostHandler) RejectPost(ctx context.Context, req *sharepb.IdReques
 // @Tags AdminPost
 // @Accept json
 // @Produce json
-// @Param request body pb_bdspro.ArchivedRequest true "Archive request"
-// @Success 200 {object} pb_bdspro.Response
+// @Param request body bdspropb.ArchivedRequest true "Archive request"
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/posts/archived [put]
-func (h *AdminPostHandler) ArchivePost(ctx context.Context, req *pb_bdspro.ArchivedRequest) (*pb_bdspro.Response, error) {
+func (h *AdminPostHandler) ArchivePost(ctx context.Context, req *bdspropb.ArchivedRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_LUU_TRU"}); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (h *AdminPostHandler) ArchivePost(ctx context.Context, req *pb_bdspro.Archi
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Lưu trữ tin đăng thành công",
 	}, nil
@@ -106,9 +106,9 @@ func (h *AdminPostHandler) ArchivePost(ctx context.Context, req *pb_bdspro.Archi
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/posts/{id}/hide [post]
-func (h *AdminPostHandler) HidePost(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminPostHandler) HidePost(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_AN"}); err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (h *AdminPostHandler) HidePost(ctx context.Context, req *sharepb.IdRequest)
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Ẩn tin đăng thành công",
 	}, nil
@@ -130,9 +130,9 @@ func (h *AdminPostHandler) HidePost(ctx context.Context, req *sharepb.IdRequest)
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID"
-// @Success 200 {object} pb_bdspro.Response
+// @Success 200 {object} bdspropb.Response
 // @Router /admin/posts/{id}/unhide [post]
-func (h *AdminPostHandler) UnhidePost(ctx context.Context, req *sharepb.IdRequest) (*pb_bdspro.Response, error) {
+func (h *AdminPostHandler) UnhidePost(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Response, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_HIEN"}); err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (h *AdminPostHandler) UnhidePost(ctx context.Context, req *sharepb.IdReques
 		return nil, err
 	}
 
-	return &pb_bdspro.Response{
+	return &bdspropb.Response{
 		Id:      req.Id,
 		Message: "Hiện tin đăng thành công",
 	}, nil

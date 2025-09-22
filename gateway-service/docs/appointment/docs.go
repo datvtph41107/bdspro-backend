@@ -266,7 +266,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ProductAttachment"
+                        "$ref": "#/definitions/bdspropb.ProductAttachment"
                     }
                 },
                 "reminderSchedule": {
@@ -627,7 +627,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.ProductAttachment"
+                        "$ref": "#/definitions/bdspropb.ProductAttachment"
                     }
                 },
                 "profitAmount": {
@@ -667,7 +667,7 @@ const docTemplate = `{
                 "TransactionType_TRANSACTION_TYPE_REVENUE"
             ]
         },
-        "pb_bdspro.ProductAttachment": {
+        "bdspropb.ProductAttachment": {
             "type": "object",
             "properties": {
                 "area": {

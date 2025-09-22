@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProjectBuild"
+              "$ref": "#/definitions/bdspropbProjectBuild"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProjectBuild"
+              "$ref": "#/definitions/bdspropbProjectBuild"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProjectBuild"
+              "$ref": "#/definitions/bdspropbProjectBuild"
             }
           },
           "default": {
@@ -123,7 +123,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -240,7 +240,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProjectBuild"
+              "$ref": "#/definitions/bdspropbProjectBuild"
             }
           },
           "default": {
@@ -299,19 +299,19 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartment"
+            "$ref": "#/definitions/bdspropbApartment"
           }
         },
         "attributes": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+            "$ref": "#/definitions/bdspropbApartmentAttribute"
           }
         }
       }
     },
-    "pb_bdsproApartment": {
+    "bdspropbApartment": {
       "type": "object",
       "properties": {
         "id": {
@@ -350,7 +350,7 @@
         }
       }
     },
-    "pb_bdsproApartmentAttribute": {
+    "bdspropbApartmentAttribute": {
       "type": "object",
       "properties": {
         "id": {
@@ -384,7 +384,7 @@
         }
       }
     },
-    "pb_bdsproItemResponse": {
+    "bdspropbItemResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -396,14 +396,14 @@
         }
       }
     },
-    "pb_bdsproListItemResponse": {
+    "bdspropbListItemResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproItemResponse"
+            "$ref": "#/definitions/bdspropbItemResponse"
           }
         },
         "total": {
@@ -412,7 +412,7 @@
         }
       }
     },
-    "pb_bdsproProjectBuild": {
+    "bdspropbProjectBuild": {
       "type": "object",
       "properties": {
         "id": {
@@ -441,14 +441,14 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartment"
+            "$ref": "#/definitions/bdspropbApartment"
           }
         },
         "attributes": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproApartmentAttribute"
+            "$ref": "#/definitions/bdspropbApartmentAttribute"
           }
         }
       }

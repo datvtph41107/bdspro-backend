@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "pb_bdsproProductAttachment": {
+    "bdspropbProductAttachment": {
       "type": "object",
       "properties": {
         "id": {
@@ -236,7 +236,7 @@
           "format": "uint64"
         },
         "product": {
-          "$ref": "#/definitions/pb_bdsproProductAttachment"
+          "$ref": "#/definitions/bdspropbProductAttachment"
         },
         "staffId": {
           "type": "string",

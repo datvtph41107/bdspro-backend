@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "pb_bdsproCostDocumentDTO": {
+    "bdspropbCostDocumentDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -29,14 +29,14 @@
         }
       }
     },
-    "pb_bdsproCostDocumentListDTO": {
+    "bdspropbCostDocumentListDTO": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproCostDocumentDTO"
+            "$ref": "#/definitions/bdspropbCostDocumentDTO"
           }
         },
         "totalElements": {

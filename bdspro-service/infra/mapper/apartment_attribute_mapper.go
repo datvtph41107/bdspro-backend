@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/domain"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type ApartmentAttributeMapper struct {
@@ -12,8 +12,8 @@ func NewApartmentAttributeMapper() *ApartmentAttributeMapper {
 	return &ApartmentAttributeMapper{}
 }
 
-func (m *ApartmentAttributeMapper) MapApartmentAttributePb(apartmentAttribute *domain.ApartmentAttribute) *pb_bdspro.ApartmentAttribute {
-	return &pb_bdspro.ApartmentAttribute{
+func (m *ApartmentAttributeMapper) MapApartmentAttributePb(apartmentAttribute *domain.ApartmentAttribute) *bdspropb.ApartmentAttribute {
+	return &bdspropb.ApartmentAttribute{
 		Id:           apartmentAttribute.ID,
 		Area:         apartmentAttribute.Area,
 		NumBedroom:   apartmentAttribute.NumBedroom,
@@ -24,8 +24,8 @@ func (m *ApartmentAttributeMapper) MapApartmentAttributePb(apartmentAttribute *d
 	}
 }
 
-func (m *ApartmentAttributeMapper) MapApartmentAttributePbItem(apartmentAttribute *domain.ApartmentAttrItem) *pb_bdspro.ApartmentAttribute {
-	result := &pb_bdspro.ApartmentAttribute{
+func (m *ApartmentAttributeMapper) MapApartmentAttributePbItem(apartmentAttribute *domain.ApartmentAttrItem) *bdspropb.ApartmentAttribute {
+	result := &bdspropb.ApartmentAttribute{
 		Id:           apartmentAttribute.ID,
 		Area:         apartmentAttribute.Area,
 		Furniture:    apartmentAttribute.Furniture,
@@ -45,8 +45,8 @@ func (m *ApartmentAttributeMapper) MapApartmentAttributePbItem(apartmentAttribut
 	return result
 }
 
-func (m *ApartmentAttributeMapper) MapApartmentAttributePbItems(apartmentAttributes []domain.ApartmentAttrItem) []*pb_bdspro.ApartmentAttribute {
-	pbs := make([]*pb_bdspro.ApartmentAttribute, len(apartmentAttributes))
+func (m *ApartmentAttributeMapper) MapApartmentAttributePbItems(apartmentAttributes []domain.ApartmentAttrItem) []*bdspropb.ApartmentAttribute {
+	pbs := make([]*bdspropb.ApartmentAttribute, len(apartmentAttributes))
 	for i, apartmentAttribute := range apartmentAttributes {
 		pbs[i] = m.MapApartmentAttributePbItem(&apartmentAttribute)
 	}

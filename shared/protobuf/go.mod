@@ -4,10 +4,7 @@ go 1.24.1
 
 replace common => ../common
 
-replace base => ../base
-
 require (
-	base v0.0.0-00010101000000-000000000000
 	common v0.0.0-00010101000000-000000000000
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb

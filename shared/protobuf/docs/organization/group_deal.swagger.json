@@ -368,7 +368,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductItem"
+            "$ref": "#/definitions/bdspropbProductItem"
           }
         },
         "dealTypeName": {
@@ -394,7 +394,7 @@
         }
       }
     },
-    "pb_bdsproProductItem": {
+    "bdspropbProductItem": {
       "type": "object",
       "properties": {
         "id": {

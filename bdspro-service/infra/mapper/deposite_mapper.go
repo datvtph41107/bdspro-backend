@@ -6,8 +6,8 @@ func NewDepositeMapper() *DepositeMapper {
 	return &DepositeMapper{}
 }
 
-// func (m *DepositeMapper) MapDepositePb(deposite *domain.Deposite) *pb_bdspro.Deposite {
-// 	result := &pb_bdspro.Deposite{
+// func (m *DepositeMapper) MapDepositePb(deposite *domain.Deposite) *bdspropb.Deposite {
+// 	result := &bdspropb.Deposite{
 // 		Id:              deposite.ID,
 // 		Amount:          float64(deposite.Amount),
 // 		CustomerName:    deposite.CustomerName,
@@ -23,7 +23,7 @@ func NewDepositeMapper() *DepositeMapper {
 // 	return result
 // }
 
-// func (m *DepositeMapper) MapDepositePbToDomain(deposite *pb_bdspro.DepositeRequest) *tx_domain.Tx {
+// func (m *DepositeMapper) MapDepositePbToDomain(deposite *bdspropb.DepositeRequest) *tx_domain.Tx {
 // 	return &tx_domain.Tx{
 // 		BaseEntity:      _models.BaseEntity{ID: deposite.Id},
 // 		ProductID:       &deposite.ProductId,
@@ -34,7 +34,7 @@ func NewDepositeMapper() *DepositeMapper {
 // 	}
 // }
 
-// func (m *DepositeMapper) DepositeToDTO(deposite *pb_bdspro.DepositRequest) *domain.Deposite {
+// func (m *DepositeMapper) DepositeToDTO(deposite *bdspropb.DepositRequest) *domain.Deposite {
 // 	return &domain.Deposite{
 // 		BaseEntity:    _models.BaseEntity{ID: deposite.Id},
 // 		ProductID:     deposite.ProductId,

@@ -3,7 +3,7 @@ package mapper
 import (
 	"bdspro/internal/domain"
 	_models "common/models"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type ProjectMapper struct {
@@ -13,9 +13,9 @@ func NewProjectMapper() *ProjectMapper {
 	return &ProjectMapper{}
 }
 
-func (m *ProjectMapper) MapProjectPbItem(project *domain.Project) *pb_bdspro.Project {
+func (m *ProjectMapper) MapProjectPbItem(project *domain.Project) *bdspropb.Project {
 	// todo: map thêm developer, description, builds
-	return &pb_bdspro.Project{
+	return &bdspropb.Project{
 		Id:   project.ID,
 		Name: project.Name,
 		// Developer:   project.Developer,
@@ -25,8 +25,8 @@ func (m *ProjectMapper) MapProjectPbItem(project *domain.Project) *pb_bdspro.Pro
 }
 
 // MapProjectPbList map danh sách project domain sang pb
-func (m *ProjectMapper) MapProjectPbList(projects []domain.Project) []*pb_bdspro.Project {
-	var result []*pb_bdspro.Project
+func (m *ProjectMapper) MapProjectPbList(projects []domain.Project) []*bdspropb.Project {
+	var result []*bdspropb.Project
 	for _, project := range projects {
 		result = append(result, m.MapProjectPb(&project))
 	}
@@ -34,8 +34,8 @@ func (m *ProjectMapper) MapProjectPbList(projects []domain.Project) []*pb_bdspro
 }
 
 // MapProjectPb map project domain sang pb
-func (m *ProjectMapper) MapProjectPb(project *domain.Project) *pb_bdspro.Project {
-	return &pb_bdspro.Project{
+func (m *ProjectMapper) MapProjectPb(project *domain.Project) *bdspropb.Project {
+	return &bdspropb.Project{
 		Id:          project.ID,
 		Name:        project.Name,
 		DeveloperId: project.DeveloperID,
@@ -47,7 +47,7 @@ func (m *ProjectMapper) MapProjectPb(project *domain.Project) *pb_bdspro.Project
 }
 
 // ProjectPbToDomain map project pb sang domain
-func (m *ProjectMapper) ProjectPbToDomain(project *pb_bdspro.Project) *domain.Project {
+func (m *ProjectMapper) ProjectPbToDomain(project *bdspropb.Project) *domain.Project {
 	return &domain.Project{
 		BaseEntity: _models.BaseEntity{
 			ID: project.Id,

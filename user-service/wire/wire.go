@@ -13,7 +13,6 @@ import (
 	user_infra_postgres "user/infra/postgres"
 	user_infra_repo "user/infra/repo"
 	user_infra_routes "user/infra/routes"
-	user_infra_services "user/infra/services"
 	user_initial "user/initial"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
@@ -47,6 +46,9 @@ var wireSet = wire.NewSet(
 	user_infra_repo.NewBlockRepo,
 	user_infra_routes.NewBlockRouter,
 	user_internal_services_user.NewBlockService,
+	user_infra_handler.NewBookmarkUserHandler,
+	user_infra_postgres.NewBookmarkUserPostgres,
+	user_internal_usecases.NewBookmarkUserUsecase,
 	user_infra_repo.NewCertificationRepo,
 	user_internal_services_user.NewCertificationService,
 	user_infra_repo.NewContactRepo,
@@ -64,9 +66,9 @@ var wireSet = wire.NewSet(
 	user_infra_repo.NewGroupRepo,
 	user_infra_routes.NewGroupRouter,
 	user_internal_services_user.NewGroupService,
-	user_infra_services.NewGrpcAuthService,
-	user_infra_services.NewGrpcProfileService,
-	user_infra_services.NewGrpcRateService,
+	user_infra_handler.NewGrpcAuthService,
+	user_infra_handler.NewGrpcProfileService,
+	user_infra_handler.NewGrpcRateService,
 	user_internal_services_auth.NewHttpClient,
 	user_initial.NewInitialApp,
 	user_infra_routes.NewOAuthRouter,

@@ -3,11 +3,11 @@ package shared_usecase
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	delivery_dto "bdspro/internal/dto/delivery"
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	_db "common/db"
+	_dto "common/domain/dto"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -67,9 +67,9 @@ func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, o
 		}).
 		Save(&entities).Error
 
-	data := []delivery_dto.NotiDTO{}
+	data := []_dto.NotificationDTO{}
 	for i := 0; i < len(entities); i++ {
-		data = append(data, delivery_dto.NotiDTO{
+		data = append(data, _dto.NotificationDTO{
 			Title:   "Chia sẻ sản phẩm",
 			Message: "Bạn nhận được chia sẻ sản phẩm ",
 			Type:    1,
@@ -80,7 +80,7 @@ func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, o
 
 	go func() {
 		ctxClone := _utils.CloneContext(c)
-		s.Client.SendBatch(ctxClone, &delivery_dto.NotiBatchDTO{
+		s.Client.SendBatch(ctxClone, &_dto.NotificationBatchDTO{
 			Datas: data,
 		})
 
@@ -184,9 +184,9 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 		}
 	}
 
-	data := []delivery_dto.NotiDTO{}
+	data := []_dto.NotificationDTO{}
 	for i := 0; i < len(entities); i++ {
-		data = append(data, delivery_dto.NotiDTO{
+		data = append(data, _dto.NotificationDTO{
 			Title:   "Chia sẻ sản phẩm",
 			Message: "Bạn nhận được chia sẻ sản phẩm ",
 			Type:    1,
@@ -197,7 +197,7 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 
 	go func() {
 		ctxClone := _utils.CloneContext(c)
-		s.Client.SendBatch(ctxClone, &delivery_dto.NotiBatchDTO{
+		s.Client.SendBatch(ctxClone, &_dto.NotificationBatchDTO{
 			Datas: data,
 		})
 

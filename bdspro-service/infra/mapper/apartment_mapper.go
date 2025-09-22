@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/domain"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type ApartmentMapper struct {
@@ -12,8 +12,8 @@ func NewApartmentMapper() *ApartmentMapper {
 	return &ApartmentMapper{}
 }
 
-func (m *ApartmentMapper) MapApartmentPb(apartment *domain.Apartment) *pb_bdspro.Apartment {
-	return &pb_bdspro.Apartment{
+func (m *ApartmentMapper) MapApartmentPb(apartment *domain.Apartment) *bdspropb.Apartment {
+	return &bdspropb.Apartment{
 		Id:              apartment.ID,
 		Name:            apartment.Name,
 		Note:            apartment.Note,
@@ -26,8 +26,8 @@ func (m *ApartmentMapper) MapApartmentPb(apartment *domain.Apartment) *pb_bdspro
 	}
 }
 
-func (m *ApartmentMapper) MapApartmentPbItem(apartment *domain.ApartmentItem) *pb_bdspro.Apartment {
-	return &pb_bdspro.Apartment{
+func (m *ApartmentMapper) MapApartmentPbItem(apartment *domain.ApartmentItem) *bdspropb.Apartment {
+	return &bdspropb.Apartment{
 		Id:   apartment.ID,
 		Name: apartment.Name,
 		// Note:            apartment.Note,
@@ -40,8 +40,8 @@ func (m *ApartmentMapper) MapApartmentPbItem(apartment *domain.ApartmentItem) *p
 	}
 }
 
-func (m *ApartmentMapper) MapApartmentPbItems(apartments []domain.ApartmentItem) []*pb_bdspro.Apartment {
-	pbs := make([]*pb_bdspro.Apartment, len(apartments))
+func (m *ApartmentMapper) MapApartmentPbItems(apartments []domain.ApartmentItem) []*bdspropb.Apartment {
+	pbs := make([]*bdspropb.Apartment, len(apartments))
 	for i, apartment := range apartments {
 		pbs[i] = m.MapApartmentPbItem(&apartment)
 	}

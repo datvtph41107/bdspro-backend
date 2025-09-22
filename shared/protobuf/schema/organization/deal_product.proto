@@ -137,7 +137,7 @@ message GroupDealProduct {
     double totalAmount = 10;
     double profitAmount = 11;
     uint32 numMember = 12;
-    repeated pb_bdspro.ProductAttachment products = 13;
+    repeated bdspropb.ProductAttachment products = 13;
     string dealTypeName = 14;
     string note = 15;
     repeated DocumentProductItem documents = 16;

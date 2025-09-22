@@ -114,7 +114,7 @@ message NewsFeed {
     repeated uint64 friendTagIds = 14;
     sharepb.ProfileItem author = 15;
     bool isReel = 16;
-    pb_bdspro.Post post = 17;
+    bdspropb.Post post = 17;
     optional uint64 createdBy = 18;
     repeated sharepb.ProfileItem friendTags = 19;
     string likedAt = 20;

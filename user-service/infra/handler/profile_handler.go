@@ -1,7 +1,7 @@
-package services
+package handler
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -275,16 +275,19 @@ func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListA
 
 	// Convert proto request to DTO
 	dtoReq := &dto.ListAllUsersRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
 		Search:    req.Search,
 		SortBy:    req.SortBy,
 		SortOrder: req.SortOrder,
 		RoleType:  req.RoleType,
 	}
 
-	if req.Size > 0 {
-		dtoReq.Size = req.Size
-	} else {
-		dtoReq.Size = 20
+	// Set bookmark filter
+	if req.Bookmark {
+		dtoReq.Bookmark = &req.Bookmark
 	}
 
 	// Set status filter
@@ -330,6 +333,7 @@ func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListA
 			RoleRealEstate: item.RoleRealEstate,
 			Position:       item.Position,
 			DepartmentId:   item.DepartmentID,
+			Bookmark:       item.Bookmark,
 			TickVerified:   item.TickVerified,
 			TotalLogin:     item.TotalLogin,
 		}

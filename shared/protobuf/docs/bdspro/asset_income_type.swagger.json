@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "pb_bdsproAssetIncomeTypeDTO": {
+    "bdspropbAssetIncomeTypeDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -32,14 +32,14 @@
         }
       }
     },
-    "pb_bdsproAssetIncomeTypeListDTO": {
+    "bdspropbAssetIncomeTypeListDTO": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproAssetIncomeTypeDTO"
+            "$ref": "#/definitions/bdspropbAssetIncomeTypeDTO"
           }
         },
         "totalElements": {

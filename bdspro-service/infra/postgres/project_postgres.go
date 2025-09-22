@@ -1,10 +1,10 @@
 package postgres
 
 import (
-	base_enum "base/enum"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	_db "common/db"
+	_enum "common/domain/enum"
 	"context"
 	"log"
 
@@ -71,7 +71,7 @@ func (r *PostgreProject) GetAllItem(c context.Context, dto *dto.ProjectSearchDTO
 
 // CountByOwner đếm số dự án theo ownerOf và ownerId
 // Lưu ý: Project được quản lý theo developer_id, không có owner_id/owner_of
-func (r *PostgreProject) CountByOwner(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (uint32, error) {
+func (r *PostgreProject) CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error) {
 	var count int64
 
 	// query := r.DB.WithContext(ctx).Model(&domain.Project{}).

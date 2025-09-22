@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb_bdspro;
+package bdspropb;
 
 import "bdspro/asset.proto";
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
 
-option go_package = "pb/types/bdspro;pb_bdspro";
+option go_package = "pb/types/bdspro;bdspropb";
 
 service PostService {
   rpc GetPostByID (GetPostByIDRequest) returns (Post);

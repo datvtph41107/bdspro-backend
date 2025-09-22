@@ -6,7 +6,7 @@ import (
 	"crm/env"
 	"fmt"
 	"log"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	"time"
 
@@ -14,7 +14,7 @@ import (
 )
 
 type BdsproClient struct {
-	Client pb_bdspro.ProductServiceClient
+	Client bdspropb.ProductServiceClient
 }
 
 func NewBdsproClient() *BdsproClient {
@@ -40,14 +40,14 @@ func NewBdsproClient() *BdsproClient {
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
 
-		client := pb_bdspro.NewProductServiceClient(conn)
+		client := bdspropb.NewProductServiceClient(conn)
 		bdsproClient.Client = client
 	}()
 	return bdsproClient
 }
 
-func (c *BdsproClient) GetProductByIds(ctx context.Context, ids []uint64) ([]*pb_bdspro.ProductResponse, error) {
-	request := &pb_bdspro.IdRequest{
+func (c *BdsproClient) GetProductByIds(ctx context.Context, ids []uint64) ([]*bdspropb.ProductResponse, error) {
+	request := &bdspropb.IdRequest{
 		Ids: ids,
 	}
 

@@ -17,7 +17,7 @@ package handler
 // // @Param id path uint64 true "ID"
 // // @Security BearerAuth
 // // @Router /v2/bdspro/v2/asset/history/:id [get]
-// func (s *AssetService) History(ctx context.Context, req *pb_bdspro.IdRequest) (*pb_bdspro.HistoryResponse, error) {
+// func (s *AssetService) History(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.HistoryResponse, error) {
 // 	body := dto.AssetHistoryDTO{}
 // 	if err := copier.Copy(&body, req); err != nil {
 // 		return nil, err
@@ -28,11 +28,11 @@ package handler
 // 		return nil, err
 // 	}
 
-// 	history := make([]*pb_bdspro.History, len(*result))
+// 	history := make([]*bdspropb.History, len(*result))
 // 	copier.Copy(&history, &result)
 // 	s.ProfileClient.MapProfileToHistory(ctx, history)
 
-// 	return &pb_bdspro.HistoryResponse{
+// 	return &bdspropb.HistoryResponse{
 // 		Data:  history,
 // 		Total: uint64(total),
 // 	}, nil

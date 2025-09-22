@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "pb_bdsproIncomeDocumentDTO": {
+    "bdspropbIncomeDocumentDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -29,14 +29,14 @@
         }
       }
     },
-    "pb_bdsproIncomeDocumentListDTO": {
+    "bdspropbIncomeDocumentListDTO": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproIncomeDocumentDTO"
+            "$ref": "#/definitions/bdspropbIncomeDocumentDTO"
           }
         },
         "totalElements": {

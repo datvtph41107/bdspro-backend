@@ -6,7 +6,7 @@ import (
 	"bdspro/internal/enums"
 	_models "common/models"
 	_utils "common/utils"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type AssetMapper struct {
@@ -23,12 +23,12 @@ func NewAssetMapper(assetLegalMapper *AssetLegalMapper, productMapper *ProductMa
 	return result
 }
 
-func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *pb_bdspro.Asset {
+func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *bdspropb.Asset {
 	if asset == nil {
 		return nil
 	}
 
-	result := &pb_bdspro.Asset{
+	result := &bdspropb.Asset{
 		Id:               asset.ID,
 		Name:             asset.Name,
 		Area:             asset.Area,
@@ -63,7 +63,7 @@ func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *pb_bdspro.Asset {
 	return result
 }
 
-func (m *AssetMapper) AssetPbToDomain(asset *pb_bdspro.SaveAssetRequest) *domain.Asset {
+func (m *AssetMapper) AssetPbToDomain(asset *bdspropb.SaveAssetRequest) *domain.Asset {
 	result := &domain.Asset{
 		BaseEntity: _models.BaseEntity{
 			ID: asset.Id,
@@ -93,19 +93,19 @@ func (m *AssetMapper) AssetPbToDomain(asset *pb_bdspro.SaveAssetRequest) *domain
 	return result
 }
 
-func (m *AssetMapper) MapAssetPbList(assets []domain.Asset) []*pb_bdspro.Asset {
+func (m *AssetMapper) MapAssetPbList(assets []domain.Asset) []*bdspropb.Asset {
 	if assets == nil {
 		return nil
 	}
 
-	result := make([]*pb_bdspro.Asset, len(assets))
+	result := make([]*bdspropb.Asset, len(assets))
 	for i, asset := range assets {
 		result[i] = m.MapAssetPb(&asset)
 	}
 	return result
 }
 
-func (m *AssetMapper) AssetSavePbToDTO(req *pb_bdspro.SaveAssetRequest) *dto.AssetSaveRequest {
+func (m *AssetMapper) AssetSavePbToDTO(req *bdspropb.SaveAssetRequest) *dto.AssetSaveRequest {
 	if req == nil {
 		return nil
 	}
@@ -133,14 +133,14 @@ func (m *AssetMapper) AssetSavePbToDTO(req *pb_bdspro.SaveAssetRequest) *dto.Ass
 	}
 }
 
-func (m *AssetMapper) mapLegalItemsPb(legalItems []domain.AssetLegal) []*pb_bdspro.LegalItem {
+func (m *AssetMapper) mapLegalItemsPb(legalItems []domain.AssetLegal) []*bdspropb.LegalItem {
 	if legalItems == nil {
 		return nil
 	}
 
-	result := make([]*pb_bdspro.LegalItem, len(legalItems))
+	result := make([]*bdspropb.LegalItem, len(legalItems))
 	for i, item := range legalItems {
-		result[i] = &pb_bdspro.LegalItem{
+		result[i] = &bdspropb.LegalItem{
 			Id:           item.ID,
 			AssetId:      item.AssetID,
 			DocumentType: item.DocumentType,
@@ -154,7 +154,7 @@ func (m *AssetMapper) mapLegalItemsPb(legalItems []domain.AssetLegal) []*pb_bdsp
 	return result
 }
 
-func (m *AssetMapper) mapLegalItemsDto(legalItems []*pb_bdspro.LegalItem) []dto.LegalItem {
+func (m *AssetMapper) mapLegalItemsDto(legalItems []*bdspropb.LegalItem) []dto.LegalItem {
 	if legalItems == nil {
 		return nil
 	}

@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproTransaction"
+              "$ref": "#/definitions/bdspropbTransaction"
             }
           },
           "default": {
@@ -54,7 +54,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproTransaction"
+              "$ref": "#/definitions/bdspropbTransaction"
             }
           },
           "default": {
@@ -70,7 +70,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproCreateTransactionRequest"
+              "$ref": "#/definitions/bdspropbCreateTransactionRequest"
             }
           }
         ],
@@ -86,7 +86,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproDeleteTransactionResponse"
+              "$ref": "#/definitions/bdspropbDeleteTransactionResponse"
             }
           },
           "default": {
@@ -117,7 +117,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproTransaction"
+              "$ref": "#/definitions/bdspropbTransaction"
             }
           },
           "default": {
@@ -148,7 +148,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListTransactionsResponse"
+              "$ref": "#/definitions/bdspropbListTransactionsResponse"
             }
           },
           "default": {
@@ -217,7 +217,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproTransaction"
+              "$ref": "#/definitions/bdspropbTransaction"
             }
           },
           "default": {
@@ -248,7 +248,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproGetTransactionTypesResponse"
+              "$ref": "#/definitions/bdspropbGetTransactionTypesResponse"
             }
           },
           "default": {
@@ -270,7 +270,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproTransaction"
+              "$ref": "#/definitions/bdspropbTransaction"
             }
           },
           "default": {
@@ -341,7 +341,7 @@
         }
       }
     },
-    "pb_bdsproCreateTransactionRequest": {
+    "bdspropbCreateTransactionRequest": {
       "type": "object",
       "properties": {
         "ownerId": {
@@ -390,7 +390,7 @@
         }
       }
     },
-    "pb_bdsproDeleteTransactionResponse": {
+    "bdspropbDeleteTransactionResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -399,7 +399,7 @@
         }
       }
     },
-    "pb_bdsproGetTransactionTypesResponse": {
+    "bdspropbGetTransactionTypesResponse": {
       "type": "object",
       "properties": {
         "types": {
@@ -410,14 +410,14 @@
         }
       }
     },
-    "pb_bdsproListTransactionsResponse": {
+    "bdspropbListTransactionsResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproTransaction"
+            "$ref": "#/definitions/bdspropbTransaction"
           }
         },
         "total": {
@@ -426,7 +426,7 @@
         }
       }
     },
-    "pb_bdsproTransaction": {
+    "bdspropbTransaction": {
       "type": "object",
       "properties": {
         "id": {

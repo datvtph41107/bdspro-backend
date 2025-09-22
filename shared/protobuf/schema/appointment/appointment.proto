@@ -65,7 +65,7 @@ message Appointment {
   organizationpb.GroupDeal deal = 14;
   repeated transactionpb.DealContractResponse dealTransactions = 15;
   repeated sharepb.ProfileItem participants = 16;
-  repeated pb_bdspro.ProductAttachment products = 17;
+  repeated bdspropb.ProductAttachment products = 17;
   uint32 optionExtend = 18;
   uint32 status = 19;
 }

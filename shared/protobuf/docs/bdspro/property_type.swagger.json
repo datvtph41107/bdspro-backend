@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPropertyType"
+              "$ref": "#/definitions/bdspropbPropertyType"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPropertyType"
+              "$ref": "#/definitions/bdspropbPropertyType"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPropertyTypeListResponse"
+              "$ref": "#/definitions/bdspropbPropertyTypeListResponse"
             }
           },
           "default": {
@@ -172,7 +172,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproPropertyType"
+              "$ref": "#/definitions/bdspropbPropertyType"
             }
           },
           "default": {
@@ -195,7 +195,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pb_bdsproAdminPropertyTypeServiceUpdateBody"
+              "$ref": "#/definitions/bdspropbAdminPropertyTypeServiceUpdateBody"
             }
           }
         ],
@@ -206,7 +206,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproAdminPropertyTypeServiceUpdateBody": {
+    "bdspropbAdminPropertyTypeServiceUpdateBody": {
       "type": "object",
       "properties": {
         "name": {
@@ -223,7 +223,7 @@
         }
       }
     },
-    "pb_bdsproPropertyType": {
+    "bdspropbPropertyType": {
       "type": "object",
       "properties": {
         "id": {
@@ -244,14 +244,14 @@
         }
       }
     },
-    "pb_bdsproPropertyTypeListResponse": {
+    "bdspropbPropertyTypeListResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproPropertyType"
+            "$ref": "#/definitions/bdspropbPropertyType"
           }
         },
         "totalElements": {

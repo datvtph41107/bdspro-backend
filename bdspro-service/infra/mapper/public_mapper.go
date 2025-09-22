@@ -3,7 +3,7 @@ package mapper
 import (
 	"bdspro/internal/dto"
 	_dto "common/dto"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 )
 
 type PublicMapper struct {
@@ -13,7 +13,7 @@ func NewPublicMapper() *PublicMapper {
 	return &PublicMapper{}
 }
 
-func (m *PublicMapper) PbToRegionRequest(region *pb_bdspro.SearchQueryRequest) *dto.RegionRequest {
+func (m *PublicMapper) PbToRegionRequest(region *bdspropb.SearchQueryRequest) *dto.RegionRequest {
 	result := &dto.RegionRequest{
 		Pagable: _dto.Pagable{
 			Page: region.Page,

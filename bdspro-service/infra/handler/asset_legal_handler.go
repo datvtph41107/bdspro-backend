@@ -6,14 +6,14 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	"context"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
 )
 
 type AssetLegalService struct {
-	pb_bdspro.UnimplementedAssetLegalServiceServer
+	bdspropb.UnimplementedAssetLegalServiceServer
 	UC     *usecases.AssetLegalUsecase
 	Mapper *mapper.AssetLegalMapper
 }
@@ -31,21 +31,21 @@ func NewAssetLegalServer(AssetLegalUc *usecases.AssetLegalUsecase, mapper *mappe
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param data body pb_bdspro.AssetLegalDTO true "Data"
-// @Success 200 {object} pb_bdspro.AssetLegalListDTO
+// @Param data body bdspropb.AssetLegalDTO true "Data"
+// @Success 200 {object} bdspropb.AssetLegalListDTO
 // @Router /v2/bdspro/v2/asset-legal [get]
-func (s AssetLegalService) Get(c context.Context, data *pb_bdspro.AssetLegalDTO) (*pb_bdspro.AssetLegalListDTO, error) {
+func (s AssetLegalService) Get(c context.Context, data *bdspropb.AssetLegalDTO) (*bdspropb.AssetLegalListDTO, error) {
 	query := dto.AssetLegalGetDTO{}
 	copier.Copy(&query, &data)
 	result, _, err := s.UC.GetData(c, query)
 
-	pbdatas := []*pb_bdspro.AssetLegalDTO{}
+	pbdatas := []*bdspropb.AssetLegalDTO{}
 	for _, r := range result {
 		pbdata := s.Mapper.AssetLegalToPb(&r)
 		pbdatas = append(pbdatas, pbdata)
 	}
 
-	return &pb_bdspro.AssetLegalListDTO{
+	return &bdspropb.AssetLegalListDTO{
 		Data: pbdatas,
 	}, err
 }
@@ -57,9 +57,9 @@ func (s AssetLegalService) Get(c context.Context, data *pb_bdspro.AssetLegalDTO)
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "ID"
-// @Success 200 {object} pb_bdspro.AssetLegalDTO
+// @Success 200 {object} bdspropb.AssetLegalDTO
 // @Router /v2/bdspro/v2/asset-legal/{id} [get]
-func (s AssetLegalService) Detail(c context.Context, dto *sharepb.IdRequest) (*pb_bdspro.AssetLegalDTO, error) {
+func (s AssetLegalService) Detail(c context.Context, dto *sharepb.IdRequest) (*bdspropb.AssetLegalDTO, error) {
 	r, err := s.UC.GetByID(c, dto.Id)
 
 	pbdata := s.Mapper.AssetLegalToPb(r)
@@ -73,10 +73,10 @@ func (s AssetLegalService) Detail(c context.Context, dto *sharepb.IdRequest) (*p
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param data body pb_bdspro.AssetLegalDTO true "Data"
-// @Success 200 {object} pb_bdspro.AssetLegalDTO
+// @Param data body bdspropb.AssetLegalDTO true "Data"
+// @Success 200 {object} bdspropb.AssetLegalDTO
 // @Router /v2/bdspro/v2/asset-legal [post]
-func (s AssetLegalService) Create(c context.Context, dto *pb_bdspro.AssetLegalDTO) (*pb_bdspro.AssetLegalDTO, error) {
+func (s AssetLegalService) Create(c context.Context, dto *bdspropb.AssetLegalDTO) (*bdspropb.AssetLegalDTO, error) {
 	d := &domain.AssetLegal{}
 	copier.Copy(&d, &dto)
 
@@ -93,10 +93,10 @@ func (s AssetLegalService) Create(c context.Context, dto *pb_bdspro.AssetLegalDT
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "ID"
-// @Param data body pb_bdspro.AssetLegalDTO true "Data"
-// @Success 200 {object} pb_bdspro.AssetLegalDTO
+// @Param data body bdspropb.AssetLegalDTO true "Data"
+// @Success 200 {object} bdspropb.AssetLegalDTO
 // @Router /v2/bdspro/v2/asset-legal/{id} [put]
-func (s AssetLegalService) Update(c context.Context, dto *pb_bdspro.AssetLegalDTO) (*pb_bdspro.AssetLegalDTO, error) {
+func (s AssetLegalService) Update(c context.Context, dto *bdspropb.AssetLegalDTO) (*bdspropb.AssetLegalDTO, error) {
 	d := &domain.AssetLegal{}
 	copier.Copy(&d, &dto)
 

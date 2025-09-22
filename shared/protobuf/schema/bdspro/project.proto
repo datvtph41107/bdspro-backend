@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb_bdspro;
+package bdspropb;
 
 import "shared/common.proto";
 import "google/api/annotations.proto";
 
-option go_package = "pb/types/bdspro;pb_bdspro";
+option go_package = "pb/types/bdspro;bdspropb";
 
 message Project {
   uint64 id = 1;

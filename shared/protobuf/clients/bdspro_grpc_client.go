@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	"time"
 
 	"google.golang.org/grpc"
 )
 
 type BdsproGrpcClient struct {
-	Client         pb_bdspro.ProductServiceClient
-	InternalClient pb_bdspro.BdsproInternalServiceClient
+	Client         bdspropb.ProductServiceClient
+	InternalClient bdspropb.BdsproInternalServiceClient
 }
 
 func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
@@ -40,20 +40,20 @@ func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
 
-		client := pb_bdspro.NewProductServiceClient(conn)
-		internalClient := pb_bdspro.NewBdsproInternalServiceClient(conn)
+		client := bdspropb.NewProductServiceClient(conn)
+		internalClient := bdspropb.NewBdsproInternalServiceClient(conn)
 		bdsproClient.Client = client
 		bdsproClient.InternalClient = internalClient
 	}()
 	return bdsproClient
 }
 
-func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductInternalResponse, error) {
+func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*bdspropb.ProductInternalResponse, error) {
 	if c.Client == nil {
 		return nil, errors.New("bdspro client not avaiable")
 	}
 
-	response, err := c.Client.GetDetailByIds(ctx, &pb_bdspro.IdRequest{Ids: ids})
+	response, err := c.Client.GetDetailByIds(ctx, &bdspropb.IdRequest{Ids: ids})
 	if err != nil {
 		return nil, err
 	}
@@ -61,12 +61,12 @@ func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*
 	return response, nil
 }
 
-func (c *BdsproGrpcClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) (*pb_bdspro.ProductAttachmentResponse, error) {
+func (c *BdsproGrpcClient) GetProductAttachmentByIds(ctx context.Context, ids []uint64) (*bdspropb.ProductAttachmentResponse, error) {
 	if c.Client == nil {
 		return nil, errors.New("bdspro client not avaiable")
 	}
 
-	response, err := c.Client.GetProductAttachmentByIds(ctx, &pb_bdspro.IdRequest{Ids: ids})
+	response, err := c.Client.GetProductAttachmentByIds(ctx, &bdspropb.IdRequest{Ids: ids})
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *BdsproGrpcClient) GetProductAttachmentByIds(ctx context.Context, ids []
 	return response, nil
 }
 
-func (c *BdsproGrpcClient) GetCountByOwner(ctx context.Context, req *pb_bdspro.GetCountByOwnerRequest) (*pb_bdspro.GetCountByOwnerResponse, error) {
+func (c *BdsproGrpcClient) GetCountByOwner(ctx context.Context, req *bdspropb.GetCountByOwnerRequest) (*bdspropb.GetCountByOwnerResponse, error) {
 	if c.InternalClient == nil {
 		return nil, errors.New("bdspro internal client not available")
 	}

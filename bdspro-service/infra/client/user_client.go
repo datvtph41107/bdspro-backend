@@ -4,7 +4,7 @@ import (
 	"bdspro/env"
 	"context"
 	clients "pb/clients"
-	pb_bdspro "pb/types/bdspro"
+	bdspropb "pb/types/bdspro"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 )
@@ -41,7 +41,7 @@ func (c *UserClient) MapProfileToHistory(ctx context.Context, history []*notific
 	}
 }
 
-func (c *UserClient) MapUserToSharingAccess(ctx context.Context, dtos []*pb_bdspro.SharingAccess) {
+func (c *UserClient) MapUserToSharingAccess(ctx context.Context, dtos []*bdspropb.SharingAccess) {
 	ids := make(map[uint64]struct{})
 	for _, dto := range dtos {
 		ids[dto.ToId] = struct{}{}

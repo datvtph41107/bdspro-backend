@@ -1233,7 +1233,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "pb_bdspro.Post": {
+        "bdspropb.Post": {
             "type": "object",
             "properties": {
                 "comment": {
@@ -1260,7 +1260,7 @@ const docTemplate = `{
                 "mediaList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/pb_bdspro.PostMedia"
+                        "$ref": "#/definitions/bdspropb.PostMedia"
                     }
                 },
                 "mediaType": {
@@ -1320,7 +1320,7 @@ const docTemplate = `{
                 }
             }
         },
-        "pb_bdspro.PostMedia": {
+        "bdspropb.PostMedia": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1559,7 +1559,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/pb_social.OwnerOf"
                 },
                 "post": {
-                    "$ref": "#/definitions/pb_bdspro.Post"
+                    "$ref": "#/definitions/bdspropb.Post"
                 },
                 "postId": {
                     "type": "integer"

@@ -179,7 +179,7 @@ definitions:
         type: array
       products:
         items:
-          $ref: '#/definitions/pb_bdspro.ProductResponse'
+          $ref: '#/definitions/bdspropb.ProductResponse'
         type: array
       source:
         type: integer
@@ -636,14 +636,14 @@ definitions:
     - FriendStatusPending
     - FriendStatusAccepted
     - FriendStatusReject
-  pb_bdspro.AmenityItem:
+  bdspropb.AmenityItem:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  pb_bdspro.Apartment:
+  bdspropb.Apartment:
     properties:
       apartmentAttrId:
         type: integer
@@ -664,7 +664,7 @@ definitions:
       status:
         type: integer
     type: object
-  pb_bdspro.ApartmentAttribute:
+  bdspropb.ApartmentAttribute:
     properties:
       area:
         type: number
@@ -683,14 +683,14 @@ definitions:
       price:
         type: number
     type: object
-  pb_bdspro.AttributeProduct:
+  bdspropb.AttributeProduct:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  pb_bdspro.Developer:
+  bdspropb.Developer:
     properties:
       address:
         type: string
@@ -717,14 +717,14 @@ definitions:
       website:
         type: string
     type: object
-  pb_bdspro.DocType:
+  bdspropb.DocType:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  pb_bdspro.HouseInfo:
+  bdspropb.HouseInfo:
     properties:
       furniture:
         type: string
@@ -745,7 +745,7 @@ definitions:
       orientation:
         type: string
     type: object
-  pb_bdspro.MediaItem:
+  bdspropb.MediaItem:
     properties:
       id:
         type: integer
@@ -762,7 +762,7 @@ definitions:
       targetType:
         type: integer
     type: object
-  pb_bdspro.ProductPrice:
+  bdspropb.ProductPrice:
     properties:
       currency:
         type: string
@@ -787,7 +787,7 @@ definitions:
       salePrice:
         type: number
     type: object
-  pb_bdspro.ProductPrivate:
+  bdspropb.ProductPrivate:
     properties:
       id:
         type: integer
@@ -804,18 +804,18 @@ definitions:
       targetProfit:
         type: number
     type: object
-  pb_bdspro.ProductResponse:
+  bdspropb.ProductResponse:
     properties:
       address:
         type: string
       amenities:
         items:
-          $ref: '#/definitions/pb_bdspro.AmenityItem'
+          $ref: '#/definitions/bdspropb.AmenityItem'
         type: array
       apartment:
-        $ref: '#/definitions/pb_bdspro.Apartment'
+        $ref: '#/definitions/bdspropb.Apartment'
       apartmentAttribute:
-        $ref: '#/definitions/pb_bdspro.ApartmentAttribute'
+        $ref: '#/definitions/bdspropb.ApartmentAttribute'
       apartmentId:
         type: integer
       archived:
@@ -826,10 +826,10 @@ definitions:
         type: integer
       attributes:
         items:
-          $ref: '#/definitions/pb_bdspro.AttributeProduct'
+          $ref: '#/definitions/bdspropb.AttributeProduct'
         type: array
       build:
-        $ref: '#/definitions/pb_bdspro.ProjectBuild'
+        $ref: '#/definitions/bdspropb.ProjectBuild'
       categoryId:
         type: integer
       code:
@@ -841,28 +841,28 @@ definitions:
       description:
         type: string
       developer:
-        $ref: '#/definitions/pb_bdspro.Developer'
+        $ref: '#/definitions/bdspropb.Developer'
       district:
-        $ref: '#/definitions/pb_bdspro.Region'
+        $ref: '#/definitions/bdspropb.Region'
       districtId:
         type: integer
       districtName:
         type: string
       docType:
-        $ref: '#/definitions/pb_bdspro.DocType'
+        $ref: '#/definitions/bdspropb.DocType'
       docTypeId:
         type: integer
       googleMapLink:
         type: string
       houseInfo:
-        $ref: '#/definitions/pb_bdspro.HouseInfo'
+        $ref: '#/definitions/bdspropb.HouseInfo'
       id:
         type: integer
       lastPriceId:
         type: integer
       mediaList:
         items:
-          $ref: '#/definitions/pb_bdspro.MediaItem'
+          $ref: '#/definitions/bdspropb.MediaItem'
         type: array
       name:
         type: string
@@ -881,19 +881,19 @@ definitions:
       positionUrl:
         type: string
       price:
-        $ref: '#/definitions/pb_bdspro.ProductPrice'
+        $ref: '#/definitions/bdspropb.ProductPrice'
       priceSuggest:
         type: number
       privateData:
-        $ref: '#/definitions/pb_bdspro.ProductPrivate'
+        $ref: '#/definitions/bdspropb.ProductPrivate'
       project:
-        $ref: '#/definitions/pb_bdspro.Project'
+        $ref: '#/definitions/bdspropb.Project'
       propertyType:
-        $ref: '#/definitions/pb_bdspro.PropertyType'
+        $ref: '#/definitions/bdspropb.PropertyType'
       propertyTypeId:
         type: integer
       province:
-        $ref: '#/definitions/pb_bdspro.Region'
+        $ref: '#/definitions/bdspropb.Region'
       provinceId:
         type: integer
       provinceName:
@@ -901,13 +901,13 @@ definitions:
       rentStatus:
         type: integer
       rentTransaction:
-        $ref: '#/definitions/pb_bdspro.Transaction'
+        $ref: '#/definitions/bdspropb.Transaction'
       rentVisibility:
         type: integer
       saleStatus:
         type: integer
       saleTransaction:
-        $ref: '#/definitions/pb_bdspro.Transaction'
+        $ref: '#/definitions/bdspropb.Transaction'
       saleVisibility:
         type: integer
       sourceType:
@@ -917,28 +917,28 @@ definitions:
       visibility:
         type: integer
       ward:
-        $ref: '#/definitions/pb_bdspro.Region'
+        $ref: '#/definitions/bdspropb.Region'
       wardId:
         type: integer
       wardName:
         type: string
     type: object
-  pb_bdspro.Project:
+  bdspropb.Project:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  pb_bdspro.ProjectBuild:
+  bdspropb.ProjectBuild:
     properties:
       apartments:
         items:
-          $ref: '#/definitions/pb_bdspro.Apartment'
+          $ref: '#/definitions/bdspropb.Apartment'
         type: array
       attributes:
         items:
-          $ref: '#/definitions/pb_bdspro.ApartmentAttribute'
+          $ref: '#/definitions/bdspropb.ApartmentAttribute'
         type: array
       id:
         type: integer
@@ -953,21 +953,21 @@ definitions:
       projectId:
         type: integer
     type: object
-  pb_bdspro.PropertyType:
+  bdspropb.PropertyType:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  pb_bdspro.Region:
+  bdspropb.Region:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  pb_bdspro.Transaction:
+  bdspropb.Transaction:
     properties:
       amount:
         type: number

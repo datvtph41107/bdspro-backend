@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package pb_bdspro;
+package bdspropb;
 
 import "shared/common.proto";
 import "google/api/annotations.proto";
 import "bdspro/public.proto";
 import "bdspro/project.proto";
 
-option go_package = "pb/types/bdspro;pb_bdspro";
+option go_package = "pb/types/bdspro;bdspropb";
 
 service AdminProjectService {
   rpc GetList(SearchQueryRequest) returns (ProjectListResponse) {

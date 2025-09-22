@@ -290,7 +290,7 @@ message Message {
   optional string fullName = 11;
   optional string avatar = 12;
   optional uint64 extraId = 13;
-  optional pb_bdspro.ProductAttachment product = 14;
+  optional bdspropb.ProductAttachment product = 14;
 }
 
 message ForwardMessageRequest {

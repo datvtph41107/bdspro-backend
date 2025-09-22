@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -74,7 +74,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -125,7 +125,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -176,7 +176,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -227,7 +227,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproListItemResponse"
+              "$ref": "#/definitions/bdspropbListItemResponse"
             }
           },
           "default": {
@@ -278,7 +278,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pb_bdsproProductMarketResponse"
+              "$ref": "#/definitions/bdspropbProductMarketResponse"
             }
           },
           "default": {
@@ -428,7 +428,7 @@
     }
   },
   "definitions": {
-    "pb_bdsproItemResponse": {
+    "bdspropbItemResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -440,14 +440,14 @@
         }
       }
     },
-    "pb_bdsproListItemResponse": {
+    "bdspropbListItemResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproItemResponse"
+            "$ref": "#/definitions/bdspropbItemResponse"
           }
         },
         "total": {
@@ -456,7 +456,7 @@
         }
       }
     },
-    "pb_bdsproProductMarket": {
+    "bdspropbProductMarket": {
       "type": "object",
       "properties": {
         "id": {
@@ -680,14 +680,14 @@
         }
       }
     },
-    "pb_bdsproProductMarketResponse": {
+    "bdspropbProductMarketResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/pb_bdsproProductMarket"
+            "$ref": "#/definitions/bdspropbProductMarket"
           }
         },
         "total": {
