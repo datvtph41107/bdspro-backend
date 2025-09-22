@@ -4,8 +4,8 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	"bdspro/internal/repo"
-	iusecase "bdspro/internal/usecases/interface"
 	"bdspro/internal/utils"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -28,7 +28,7 @@ type IAssetUsecase interface {
 type AssetUsecase struct {
 	AssetRepo             repo.AssetRepo
 	ProductUserRepo       repo.ProductRepo
-	NotificationClient    iusecase.INotificationClient
+	NotificationClient    provider.NotificationProvider
 	AssetLegalRepo        repo.AssetLegalRepo
 	AssetOrganizationRepo repo.AssetOrganizationRepo
 	AssetUserRepo         repo.AssetUserRepo
@@ -39,7 +39,7 @@ type AssetUsecase struct {
 func NewSharedAssetUsecase(
 	assetRepo repo.AssetRepo,
 	ProductRepo repo.ProductRepo,
-	notificationClient iusecase.INotificationClient,
+	notificationClient provider.NotificationProvider,
 	AssetLegalRepo repo.AssetLegalRepo,
 	AssetOrganizationRepo repo.AssetOrganizationRepo,
 	AssetUserRepo repo.AssetUserRepo,

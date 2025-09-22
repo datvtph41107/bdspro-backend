@@ -5,8 +5,8 @@ import (
 	"bdspro/internal/dto"
 	delivery_dto "bdspro/internal/dto/delivery"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	"bdspro/internal/repo"
-	iusecase "bdspro/internal/usecases/interface"
 	_db "common/db"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -21,16 +21,16 @@ import (
 type SharingAccessUsecase struct {
 	Repo           repo.SharingAccessRepo
 	ProductUsecase *ProductUsecase
-	Client         iusecase.INotificationClient
-	ChatClient     iusecase.IChatClient
+	Client         provider.NotificationProvider
+	ChatClient     provider.ChatProvider
 	AssetRepo      repo.AssetRepo
 }
 
 func NewShareAccessUsecase(
 	repo repo.SharingAccessRepo,
 	ProductUc *ProductUsecase,
-	Client iusecase.INotificationClient,
-	chatClient iusecase.IChatClient,
+	Client provider.NotificationProvider,
+	chatClient provider.ChatProvider,
 	assetRepo repo.AssetRepo,
 ) *SharingAccessUsecase {
 	return &SharingAccessUsecase{

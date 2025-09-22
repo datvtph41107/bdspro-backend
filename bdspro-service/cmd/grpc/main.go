@@ -2,7 +2,7 @@ package cmd_grpc
 
 import (
 	"bdspro/config"
-	"bdspro/db"
+	"bdspro/infra/db"
 	"bdspro/initial"
 	"bdspro/wire"
 	_middleware "common/middleware"

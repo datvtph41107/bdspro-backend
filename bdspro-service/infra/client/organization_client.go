@@ -9,12 +9,12 @@ import (
 )
 
 type OrganizationClient struct {
-	Client *clients.OrganizationClient
+	*clients.OrganizationClient
 }
 
 func NewOrganizationClient() *OrganizationClient {
 	return &OrganizationClient{
-		Client: clients.MakeOrganizationClient(env.ENV_RELEASE),
+		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RELEASE),
 	}
 }
 
@@ -31,7 +31,7 @@ func (c *OrganizationClient) MapOrganizationToSharingAccess(
 			organizationIDSet[sharingAccess.ToId] = struct{}{}
 		}
 	}
-	organizations, err := c.Client.GetOrganizationMapByIDs(ctx, organizationIDSet)
+	organizations, err := c.OrganizationClient.GetOrganizationMapByIDs(ctx, organizationIDSet)
 	if err != nil {
 		return
 	}
@@ -57,7 +57,7 @@ func (c *OrganizationClient) MapGroupToSharingAccess(
 			groupIDSet[sharingAccess.ToId] = struct{}{}
 		}
 	}
-	groups, err := c.Client.GetGroupMapByIDs(ctx, groupIDSet)
+	groups, err := c.OrganizationClient.GetGroupMapByIDs(ctx, groupIDSet)
 	if err != nil {
 		return
 	}

@@ -8,7 +8,7 @@ import (
 	chatpb "pb/types/chat"
 )
 
-// @bind: bdspro/internal/usecases/interface.IChatClient
+// @bind: bdspro/internal/provider.ChatProvider
 type ChatClient struct {
 	*clients.ChatGrpcClient
 }

@@ -8,15 +8,15 @@ import (
 	shared_dto "pb/dto"
 )
 
-// @bind: bdspro/internal/usecases/interface.INotificationClient
+// @bind: bdspro/internal/provider.NotificationProvider
 type NotificationClient struct {
-	Client *clients.NotificationClient
+	*clients.NotificationClient
 }
 
 // todo: triển khai nốt thông báo
 func NewNotificationClient() *NotificationClient {
 	return &NotificationClient{
-		Client: clients.MakeNotificationClient(env.ENV_RELEASE),
+		NotificationClient: clients.MakeNotificationClient(env.ENV_RELEASE),
 	}
 }
 
@@ -33,6 +33,6 @@ func (s *NotificationClient) SendBatch(ctx context.Context, noti *delivery_dto.N
 }
 
 func (s *NotificationClient) CreateHistory(ctx context.Context, history *shared_dto.HistoryDTO) error {
-	err := s.Client.CreateHistory(ctx, history)
+	err := s.NotificationClient.CreateHistory(ctx, history)
 	return err
 }

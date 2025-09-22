@@ -10,12 +10,12 @@ import (
 )
 
 type UserClient struct {
-	Client *clients.UserGrpcClient
+	*clients.UserGrpcClient
 }
 
 func NewUserClient() *UserClient {
 	return &UserClient{
-		Client: clients.MakeUserGrpcClient(env.ENV_RELEASE),
+		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RELEASE),
 	}
 }
 
@@ -46,7 +46,7 @@ func (c *UserClient) MapUserToSharingAccess(ctx context.Context, dtos []*pb_bdsp
 	for _, dto := range dtos {
 		ids[dto.ToId] = struct{}{}
 	}
-	profiles, err := c.Client.GetMapByIDs(ctx, ids)
+	profiles, err := c.UserGrpcClient.GetMapByIDs(ctx, ids)
 	if err != nil {
 		return
 	}
@@ -63,7 +63,7 @@ func (c *UserClient) GetProfileById(ctx context.Context, id uint64) *sharepb.Pro
 	if c.Client == nil {
 		return nil
 	}
-	profile, err := c.Client.Client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+	profile, err := c.UserGrpcClient.Client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
 		Ids: []uint64{id},
 	})
 	if err != nil {

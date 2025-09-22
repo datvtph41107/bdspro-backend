@@ -5,9 +5,9 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
-	iusecase "bdspro/internal/usecases/interface"
 	"bdspro/internal/utils"
 	_dto "common/dto"
 	_routes "common/routes"
@@ -48,8 +48,8 @@ type ProductUsecase struct {
 	PostUsecase        *PostUsecase
 	OwnerType          enums.EOwnerOf
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
-	NotificationClient iusecase.INotificationClient
-	Transaction        iusecase.ITransaction
+	NotificationClient provider.NotificationProvider
+	Transaction        provider.TransactionProvider
 	AssetUsecase       *AssetUsecase
 
 	ProductOrganizationRepo repo.ProductOrganizationRepo
@@ -72,8 +72,8 @@ func NewProductUsecase(
 	memberPlan usecases.PlanUsecase,
 	PostUsecase *PostUsecase,
 	productChildRepo repo.UProductChildRepo,
-	notificationClient iusecase.INotificationClient,
-	transaction iusecase.ITransaction,
+	notificationClient provider.NotificationProvider,
+	transaction provider.TransactionProvider,
 	assetUsecase *AssetUsecase,
 	productOrganizationRepo repo.ProductOrganizationRepo,
 	productUserRepo repo.ProductUserRepo,

@@ -1,89 +1,76 @@
 package initial
 
 import (
-	internal_handler "bdspro/infra/handler"
+	"bdspro/infra/handler"
 	admin_handler "bdspro/infra/handler/admin"
-	group_router "bdspro/infra/router/group"
-	org_router "bdspro/infra/router/org"
-	public_router "bdspro/infra/router/public"
-	user_router "bdspro/infra/router/user"
-	service "bdspro/infra/services"
 	shared_usecase "bdspro/internal/usecases/shared"
 )
 
 type InitialApp struct {
 	// GrpcServer        *server.BdsproGrpcServer
 	// GrpcGenericServer *server.GenericGrpcServer
-	PostService    *service.PostService
-	ProductService *service.ProductService
-	AssetService   *service.AssetService
-	UserRouter     *user_router.RouterManager
-	OrgRouter      *org_router.RouterManager
+	PostService    *handler.PostService
+	ProductService *handler.ProductService
+	AssetService   *handler.AssetService
 	// AdminRouter *admin_router.RouterManager
 	// UserRouter        *user_router.RouterManager
-	GroupRouter              *group_router.GroupManager
-	EnumRoute                *public_router.PublicRouter
-	BdsproPublicService      *service.BdsproPublicService
-	AssetExploitationService *service.AssetExploitationService
-	AssetCostService         *service.AssetCostService
-	AssetCostTypeService     *service.AssetCostTypeService
-	SharingAccessService     *service.SharingAccessService
-	AssetLegalService        *service.AssetLegalService
+	BdsproPublicService      *handler.BdsproPublicService
+	AssetExploitationService *handler.AssetExploitationService
+	AssetCostService         *handler.AssetCostService
+	AssetCostTypeService     *handler.AssetCostTypeService
+	SharingAccessService     *handler.SharingAccessService
+	AssetLegalService        *handler.AssetLegalService
 	ProductUsecase           *shared_usecase.ProductUsecase
-	ProjectBuildService      *service.ProjectBuildService
-	TransactionService       *service.TransactionHandler
+	ProjectBuildService      *handler.ProjectBuildService
+	TransactionService       *handler.TransactionHandler
 	AdminProductHandler      *admin_handler.AdminProductHandler
 	AdminAssetHandler        *admin_handler.AdminAssetHandler
 	AdminPostHandler         *admin_handler.AdminPostHandler
 	AdminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler
 	AdminProjectHandler      *admin_handler.AdminProjectHandler
-	InternalHandler          *internal_handler.InternalHandler
+	InternalHandler          *handler.InternalHandler
 
 	// @bind: register_server_config
-	// CostDocumentServer *service.CostDocumentServer
-	// IncomeDocumentServer    *service.IncomeDocumentServer
-	// AssetIncomeTypeServer   *service.AssetIncomeTypeServer
-	// AssetExploitationServer *service.AssetExploitationServer
-	// AssetCostTypeServer     *service.AssetCostTypeServer
-	// AssetCostServer         *service.AssetCostServer
-	// AssetLegalServer        *service.AssetLegalServer
-	// AssetSplitHistoryServer *service.AssetSplitHistoryServer
+	// CostDocumentServer *handler.CostDocumentServer
+	// IncomeDocumentServer    *handler.IncomeDocumentServer
+	// AssetIncomeTypeServer   *handler.AssetIncomeTypeServer
+	// AssetExploitationServer *handler.AssetExploitationServer
+	// AssetCostTypeServer     *handler.AssetCostTypeServer
+	// AssetCostServer         *handler.AssetCostServer
+	// AssetLegalServer        *handler.AssetLegalServer
+	// AssetSplitHistoryServer *handler.AssetSplitHistoryServer
 }
 
 func NewInitialApp(
 	// GrpcGenericServer *server.GenericGrpcServer,
-	userRouter *user_router.RouterManager,
-	orgRouter *org_router.RouterManager,
-	groupRouter *group_router.GroupManager,
-	enumRouter *public_router.PublicRouter,
-	postService *service.PostService,
-	productService *service.ProductService,
-	bdsproPublicService *service.BdsproPublicService,
-	assetService *service.AssetService,
-	assetExploitationServer *service.AssetExploitationService,
-	assetCostService *service.AssetCostService,
-	assetCostTypeService *service.AssetCostTypeService,
-	sharingAccessService *service.SharingAccessService,
+	postService *handler.PostService,
+	productService *handler.ProductService,
+	bdsproPublicService *handler.BdsproPublicService,
+	assetService *handler.AssetService,
+	assetExploitationServer *handler.AssetExploitationService,
+	assetCostService *handler.AssetCostService,
+	assetCostTypeService *handler.AssetCostTypeService,
+	sharingAccessService *handler.SharingAccessService,
 	productUsecase *shared_usecase.ProductUsecase,
 	// adminRoute *admin_router.RouterManager,
 	// @bind: register_server_param
-	// CostDocumentServer *service.CostDocumentServer,
-	// IncomeDocumentServer *service.IncomeDocumentServer,
-	// AssetIncomeTypeServer *service.AssetIncomeTypeServer,
-	// AssetExploitationServer *service.AssetExploitationServer,
-	// AssetCostTypeServer *service.AssetCostTypeServer,
-	// AssetCostServer *service.AssetCostServer,
-	// AssetLegalServer *service.AssetLegalServer,
-	// AssetSplitHistoryServer *service.AssetSplitHistoryServer,
-	assetLegalService *service.AssetLegalService,
-	projectBuildService *service.ProjectBuildService,
-	transactionService *service.TransactionHandler,
+	// CostDocumentServer *handler.CostDocumentServer,
+	// IncomeDocumentServer *handler.IncomeDocumentServer,
+	// AssetIncomeTypeServer *handler.AssetIncomeTypeServer,
+	// AssetExploitationServer *handler.AssetExploitationServer,
+	// AssetCostTypeServer *handler.AssetCostTypeServer,
+	// AssetCostServer *handler.AssetCostServer,
+	// AssetLegalServer *handler.AssetLegalServer,
+	// AssetSplitHistoryServer *handler.AssetSplitHistoryServer,
+	assetLegalService *handler.AssetLegalService,
+	projectBuildService *handler.ProjectBuildService,
+	transactionService *handler.TransactionHandler,
 	adminProductHandler *admin_handler.AdminProductHandler,
 	adminAssetHandler *admin_handler.AdminAssetHandler,
 	adminPostHandler *admin_handler.AdminPostHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
 	adminProjectHandler *admin_handler.AdminProjectHandler,
-	internalHandler *internal_handler.InternalHandler,
+	internalHandler *handler.InternalHandler,
 	// @bind: register_server_new
 	// CostDocumentServer: CostDocumentServer,
 	// IncomeDocumentServer:    IncomeDocumentServer,
@@ -99,10 +86,6 @@ func NewInitialApp(
 		// GrpcGenericServer: GrpcGenericServer,
 		PostService:              postService,
 		ProductService:           productService,
-		UserRouter:               userRouter,
-		OrgRouter:                orgRouter,
-		GroupRouter:              groupRouter,
-		EnumRoute:                enumRouter,
 		BdsproPublicService:      bdsproPublicService,
 		AssetService:             assetService,
 		AssetExploitationService: assetExploitationServer,

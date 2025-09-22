@@ -28,7 +28,7 @@ import (
 // 	Visibility         bool     `json:"visibility"`
 // }
 
-// @bind: bdspro/internal/usecases/interface.IPlanClient
+// @bind: bdspro/internal/provider.PlanProvider
 type MemberPlanProvider struct {
 	Plans map[uint64]*domain.MemberPlan
 }

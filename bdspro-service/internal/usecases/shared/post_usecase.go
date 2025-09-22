@@ -5,9 +5,9 @@ import (
 	"bdspro/internal/dto"
 	delivery_dto "bdspro/internal/dto/delivery"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
-	iusecase "bdspro/internal/usecases/interface"
 	_db "common/db"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -21,7 +21,7 @@ import (
 
 type PostUsecase struct {
 	// This           IPostUsecase
-	ClientUC             iusecase.INotificationClient
+	ClientUC             provider.NotificationProvider
 	ProductUsecase       *ProductUsecase // forward reference
 	ProductRepo          repo.ProductRepo
 	Repo                 repo.PostRepo
@@ -39,7 +39,7 @@ func NewSharedPostUsecase(repo repo.PostRepo,
 	postMediaRepo repo.PostMediaRepo,
 	assetRepo repo.AssetRepo,
 	planUsecase usecases.PlanUsecase,
-	clientUsecase iusecase.INotificationClient,
+	clientUsecase provider.NotificationProvider,
 	postOrganizationRepo repo.PostOrganizationRepo,
 	postUserRepo repo.PostUserRepo,
 	// serviceManager *manager.ServiceManager,
