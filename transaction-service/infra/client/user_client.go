@@ -14,7 +14,7 @@ type UserClient struct {
 
 func NewUserClient() *UserClient {
 	return &UserClient{
-		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RELEASE),
+		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
 }
 

@@ -2,4 +2,4 @@ package env
 
 import "os"
 
-var ENV_RELEASE = os.Getenv("ENV_RELEASE")
+var ENV_RUNTIME = os.Getenv("ENV_RUNTIME")

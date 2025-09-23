@@ -6,4 +6,6 @@ COPY docs docs
 
 COPY main .
 
+ENV ENV_RUNTIME=release
+
 CMD ["./main"]

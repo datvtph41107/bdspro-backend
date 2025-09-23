@@ -135,6 +135,7 @@ var HttpCmd = &cobra.Command{
 				"http://localhost:8000",
 				"http://14.225.210.29:8000",
 				"http://14.225.205.222:8000",
+				"http://14.225.205.222:3107",
 				"http://103.145.63.185:3107",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

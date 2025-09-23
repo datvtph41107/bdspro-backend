@@ -16,7 +16,7 @@ WORKDIR /
 
 COPY main .
 
-ENV APP_ENV=release
+ENV ENV_RUNTIME=release
 
 EXPOSE 8080
 
@@ -34,7 +34,7 @@ WORKDIR /
 
 COPY main .
 
-ENV APP_ENV=release
+ENV ENV_RUNTIME=release
 
 CMD ["./main", "grpc"]
 ```
@@ -444,7 +444,7 @@ curl http://localhost:8308/health
 
 #### **Runtime Environment:**
 ```dockerfile
-ENV APP_ENV=release
+ENV ENV_RUNTIME=release
 ENV ENV_RUNTIME=release
 ```
 

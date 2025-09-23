@@ -14,7 +14,7 @@ type OrganizationClient struct {
 
 func NewOrganizationClient() *OrganizationClient {
 	return &OrganizationClient{
-		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RELEASE),
+		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
 	}
 }
 

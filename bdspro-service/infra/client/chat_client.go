@@ -14,7 +14,7 @@ type ChatClient struct {
 }
 
 func NewChatClient() *ChatClient {
-	return &ChatClient{clients.NewChatGrpcClient(env.ENV_RELEASE)}
+	return &ChatClient{clients.NewChatGrpcClient(env.ENV_RUNTIME)}
 }
 
 func (c *ChatClient) SendProductToReceiver(ctx context.Context, productID uint64, content string, receiverID *uint64) error {

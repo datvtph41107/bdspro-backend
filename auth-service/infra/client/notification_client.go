@@ -13,7 +13,7 @@ type NotificationClient struct {
 }
 
 func NewNotificationClient() *NotificationClient {
-	notificationClient := clients.MakeNotificationClient(env.ENV_RELEASE)
+	notificationClient := clients.MakeNotificationClient(env.ENV_RUNTIME)
 	return &NotificationClient{
 		client: notificationClient,
 	}

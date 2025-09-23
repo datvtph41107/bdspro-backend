@@ -17,7 +17,7 @@ type BdsproClient struct {
 
 func NewBdsproClient() *BdsproClient {
 	bdsproClient := &BdsproClient{
-		BdsproGrpcClient: clients.MakeBdsproGrpcClient(env.ENV_RELEASE),
+		BdsproGrpcClient: clients.MakeBdsproGrpcClient(env.ENV_RUNTIME),
 	}
 	return bdsproClient
 }

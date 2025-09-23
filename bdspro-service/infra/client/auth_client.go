@@ -6,5 +6,5 @@ import (
 )
 
 func NewAuthClient() *clients.AuthGrpcClient {
-	return clients.MakeAuthGrpcClient(env.ENV_RELEASE)
+	return clients.MakeAuthGrpcClient(env.ENV_RUNTIME)
 }

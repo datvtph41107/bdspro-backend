@@ -15,7 +15,7 @@ type NotificationClient struct {
 // todo: triển khai nốt thông báo
 func NewNotificationClient() *NotificationClient {
 	return &NotificationClient{
-		NotificationClient: clients.MakeNotificationClient(env.ENV_RELEASE),
+		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
 	}
 }
 

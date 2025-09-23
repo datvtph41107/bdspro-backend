@@ -12,4 +12,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=builder /app/marketing-service .
+
+ENV ENV_RUNTIME=release
+
 CMD ["./marketing-service"] 

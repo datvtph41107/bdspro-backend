@@ -4,6 +4,6 @@ WORKDIR /
 
 COPY main .
 
-ENV APP_ENV=release
+ENV ENV_RUNTIME=release
 
 CMD ["./main", "grpc"]

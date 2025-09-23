@@ -20,7 +20,7 @@ type OrganizationClient struct {
 
 func NewOrganizationClient(conn *grpc.ClientConn) *OrganizationClient {
 	return &OrganizationClient{
-		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RELEASE),
+		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
 		client:             organizationpb.NewOrganizationRoleServiceClient(conn),
 	}
 }

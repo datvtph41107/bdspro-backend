@@ -4,7 +4,7 @@ WORKDIR /
 
 COPY main .
 
-ENV APP_ENV=release
+ENV ENV_RUNTIME=release
 
 EXPOSE 8209
 
