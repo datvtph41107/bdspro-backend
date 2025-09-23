@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/repo"
 	_dto "common/domain/dto"
 	_usecase "common/domain/usecase"
 	_models "common/models"
@@ -24,6 +25,7 @@ type ProductMapper struct {
 	DepositeMapper           *DepositeMapper
 	CodeDataUsecase          *_usecase.CodeDataUsecase
 	UserClient               *client.UserClient
+	AssetRepo                repo.AssetRepo
 	// TransactionMapper        TransactionTransformer
 }
 
@@ -36,6 +38,7 @@ func NewProductMapper(postMapper *PostMapper,
 	depositeMapper *DepositeMapper,
 	codeDataUsecase *_usecase.CodeDataUsecase,
 	userClient *client.UserClient,
+	assetRepo repo.AssetRepo,
 	// transactionMapper TransactionTransformer,
 ) *ProductMapper {
 	result := &ProductMapper{
@@ -49,6 +52,7 @@ func NewProductMapper(postMapper *PostMapper,
 		DepositeMapper:           depositeMapper,
 		CodeDataUsecase:          codeDataUsecase,
 		UserClient:               userClient,
+		AssetRepo:                assetRepo,
 		// TransactionMapper:        transactionMapper,
 	}
 	postMapper.ProductMapper = result
@@ -165,7 +169,7 @@ func NewProductMapper(postMapper *PostMapper,
 // 	return result
 // }
 
-func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *bdspropb.ProductResponse {
+func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.Product) *bdspropb.ProductResponse {
 	result := &bdspropb.ProductResponse{
 		Id:       product.ID,
 		ParentId: product.ParentId,
@@ -179,7 +183,7 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *bdspropb.Pr
 		// Amenities       []AmenityItem        `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
 		Visibility:  uint32(product.Visibility),
 		Name:        product.Name,
-		Code:        product.Code,
+		Code:        m.CodeDataUsecase.GetProductCode(ctx, product.ID),
 		CategoryId:  product.CategoryID,
 		Area:        product.Area,
 		PositionUrl: product.PositionUrl,
@@ -322,6 +326,59 @@ func (m *ProductMapper) MapDetailProductPb(product *domain.Product) *bdspropb.Pr
 	// 	result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
 	// }
 
+	// Get owner information if OwnerID is available
+	if product.OwnerID != 0 && m.UserClient != nil {
+		if owner := m.UserClient.GetProfileById(ctx, product.OwnerID); owner != nil {
+			result.CreatedUser = owner
+		}
+	}
+
+	// Add assets list - get asset by AssetId and also by ProductId
+	assets := []*bdspropb.AssetItem{}
+
+	// Get asset by AssetId if exists
+	if product.AssetId != nil {
+		assetCode := m.CodeDataUsecase.GetAssetCode(ctx, *product.AssetId)
+		assets = append(assets, &bdspropb.AssetItem{
+			Id:   *product.AssetId,
+			Code: assetCode,
+		})
+	}
+
+	// Get asset by ProductId if exists and different from AssetId
+	if product.ID != 0 && m.AssetRepo != nil {
+		if asset, err := m.AssetRepo.GetAssetByProductID(ctx, &product.ID); err == nil && asset != nil {
+			// Check if this asset is different from the one we already added
+			assetAlreadyAdded := false
+			if product.AssetId != nil && asset.ID == *product.AssetId {
+				assetAlreadyAdded = true
+			}
+
+			if !assetAlreadyAdded {
+				assetCode := m.CodeDataUsecase.GetAssetCode(ctx, asset.ID)
+				assets = append(assets, &bdspropb.AssetItem{
+					Id:   asset.ID,
+					Code: assetCode,
+				})
+			}
+		}
+	}
+
+	result.Assets = assets
+
+	// Add posts list
+	if len(product.PostIds) > 0 {
+		posts := make([]*bdspropb.PostItem, len(product.PostIds))
+		for i, postId := range product.PostIds {
+			postCode := m.CodeDataUsecase.GetPostCode(ctx, postId)
+			posts[i] = &bdspropb.PostItem{
+				Id:   postId,
+				Code: postCode,
+			}
+		}
+		result.Posts = posts
+	}
+
 	return result
 }
 
@@ -334,6 +391,20 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 		SaleStatus: uint32(product.SaleStatus),
 		RentStatus: uint32(product.RentStatus),
 		AssetId:    product.AssetId,
+
+		PropertyTypeId:  product.PropertyTypeId,
+		DocTypeId:       product.DocTypeId,
+		Visibility:      uint32(product.Visibility),
+		SourceType:      int32(product.SourceType),
+		TransactionType: int32(product.TransactionType),
+		OwnerId:         &product.OwnerID,
+	}
+
+	if product.PropertyType != nil {
+		result.PropertyType = &bdspropb.ItemResponse{
+			Id:   product.PropertyType.ID,
+			Name: product.PropertyType.Name,
+		}
 	}
 
 	if product.District != nil {
@@ -392,13 +463,13 @@ func (m *ProductMapper) MapProductPbList(products []domain.Product) []*bdspropb.
 	return productList
 }
 
-func MapProductAttachmentPbList(products []domain.Product) []*bdspropb.ProductAttachment {
+func MapProductAttachmentPbList(ctx context.Context, codeDataUsecase *_usecase.CodeDataUsecase, products []domain.Product) []*bdspropb.ProductAttachment {
 	productList := make([]*bdspropb.ProductAttachment, len(products))
 	for i, product := range products {
 		productList[i] = &bdspropb.ProductAttachment{
 			Id:      product.ID,
 			Name:    product.Name,
-			Code:    product.Code,
+			Code:    codeDataUsecase.GetProductCode(ctx, product.ID),
 			Area:    product.Area,
 			AssetId: product.AssetId,
 			// DepositeId: product.DepositeID,
@@ -534,13 +605,13 @@ func (m *ProductMapper) MapMarketProductToDTO(req *bdspropb.ProductMarketRequest
 	}
 }
 
-func (m *ProductMapper) MapProductMarketToPb(product *domain.ProductMarket) *bdspropb.ProductMarket {
+func (m *ProductMapper) MapProductMarketToPb(ctx context.Context, product *domain.ProductMarket) *bdspropb.ProductMarket {
 	result := &bdspropb.ProductMarket{
 		Id:         product.ID,
 		CreatedAt:  _utils.FormatTimeToString(&product.CreatedAt),
 		UpdatedAt:  _utils.FormatTimeToString(&product.UpdatedAt),
 		Name:       product.Name,
-		Code:       product.Code,
+		Code:       m.CodeDataUsecase.GetProductCode(ctx, uint64(product.ID)),
 		CategoryId: product.CategoryID,
 		Area:       product.Area,
 		// Description:        product.Description,
@@ -602,10 +673,10 @@ func (m *ProductMapper) MapProductMarketToPb(product *domain.ProductMarket) *bds
 	return result
 }
 
-func (m *ProductMapper) MapProductMarketPbList(products []domain.ProductMarket) []*bdspropb.ProductMarket {
+func (m *ProductMapper) MapProductMarketPbList(ctx context.Context, products []domain.ProductMarket) []*bdspropb.ProductMarket {
 	productList := make([]*bdspropb.ProductMarket, len(products))
 	for i, product := range products {
-		productList[i] = m.MapProductMarketToPb(&product)
+		productList[i] = m.MapProductMarketToPb(ctx, &product)
 	}
 	return productList
 }
@@ -874,6 +945,57 @@ func (m *ProductMapper) AdminProductSearchRequestToDTO(req *bdspropb.AdminProduc
 		RentStatus:       req.RentStatus,
 		PropertyTypeIds:  req.PropertyTypeIds,
 		ProvinceIds:      req.ProvinceIds,
+	}
+
+	return result
+}
+
+// MapProductHistoryPb maps domain.ProductHistory to bdspropb.ProductHistory
+func (m *ProductMapper) MapProductHistoryPb(ctx context.Context, history *domain.ProductHistory) *bdspropb.ProductHistory {
+	result := &bdspropb.ProductHistory{
+		Id:            history.ID,
+		Action:        uint64(history.Action),
+		CreatedUserId: history.CreatedUser.ProfileId,
+		CreatedAt:     _utils.FormatTimeToString(history.CreatedAt),
+		UpdatedAt:     _utils.FormatTimeToString(history.UpdatedAt),
+	}
+
+	if history.ParentID != nil {
+		result.ParentId = *history.ParentID
+	}
+	if history.ProductID != nil {
+		result.ProductId = *history.ProductID
+	}
+
+	// Convert ChildIds from pq.Int64Array to []uint64
+	if len(history.ChildIds) > 0 {
+		childIds := make([]uint64, len(history.ChildIds))
+		for i, id := range history.ChildIds {
+			childIds[i] = uint64(id)
+		}
+		result.ChildIds = childIds
+	}
+
+	// Get created user information
+	if history.CreatedUser.ProfileId != 0 && m.UserClient != nil {
+		if user := m.UserClient.GetProfileById(ctx, history.CreatedUser.ProfileId); user != nil {
+			result.CreatedUser = user
+		}
+	}
+
+	// Map child products if available
+	if len(history.Childs) > 0 {
+		childs := make([]*bdspropb.ProductInfo, len(history.Childs))
+		for i, child := range history.Childs {
+			childs[i] = &bdspropb.ProductInfo{
+				Id:   child.ID,
+				Name: child.Name,
+				Code: m.CodeDataUsecase.GetProductCode(ctx, child.ID),
+				Area: child.Area,
+				// Address: child.Address,
+			}
+		}
+		result.Childs = childs
 	}
 
 	return result

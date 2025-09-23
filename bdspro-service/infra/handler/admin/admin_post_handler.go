@@ -1,6 +1,7 @@
 package admin_handler
 
 import (
+	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
@@ -17,17 +18,20 @@ type AdminPostHandler struct {
 	AdminPostService *admin_usecases.AdminPostUsecase
 	PostMapper       *mapper.PostMapper
 	AuthGrpcClient   *clients.AuthGrpcClient
+	UserClient       *client.UserClient
 }
 
 func NewAdminPostHandler(
 	uc *admin_usecases.AdminPostUsecase,
 	postMapper *mapper.PostMapper,
 	authGrpcClient *clients.AuthGrpcClient,
+	userClient *client.UserClient,
 ) *AdminPostHandler {
 	return &AdminPostHandler{
 		AdminPostService: uc,
 		PostMapper:       postMapper,
 		AuthGrpcClient:   authGrpcClient,
+		UserClient:       userClient,
 	}
 }
 
@@ -196,4 +200,30 @@ func (h *AdminPostHandler) GetPosts(ctx context.Context, req *bdspropb.AdminPost
 	}
 
 	return response, nil
+}
+
+// @Summary Get post detail
+// @Description Get detailed information of a post
+// @Tags AdminPost
+// @Accept json
+// @Produce json
+// @Param id path int true "Post ID"
+// @Success 200 {object} bdspropb.Post
+// @Router /admin/posts/{id} [get]
+func (h *AdminPostHandler) AdminDetailPost(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Post, error) {
+	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TD_XEM"}); err != nil {
+		return nil, err
+	}
+
+	post, err := h.AdminPostService.GetPostDetail(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	result := h.PostMapper.PostToPbDetail(post)
+	if post.OwnerID != 0 {
+		user := h.UserClient.GetProfileById(ctx, post.OwnerID)
+		result.Owner = user
+	}
+	return result, nil
 }

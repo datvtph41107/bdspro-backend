@@ -803,6 +803,19 @@
         }
       }
     },
+    "bdspropbAssetItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "AssetItem for product detail response"
+    },
     "bdspropbAssetSearchResponse": {
       "type": "object",
       "properties": {
@@ -1092,6 +1105,19 @@
         }
       }
     },
+    "bdspropbPostItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "PostItem for product detail response"
+    },
     "bdspropbProductPrice": {
       "type": "object",
       "properties": {
@@ -1379,6 +1405,20 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAssetItem"
+          }
+        },
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPostItem"
+          }
         }
       }
     },

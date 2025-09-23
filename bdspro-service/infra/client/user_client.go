@@ -69,5 +69,8 @@ func (c *UserClient) GetProfileById(ctx context.Context, id uint64) *sharepb.Pro
 	if err != nil {
 		return nil
 	}
+	if len(profile.Profiles) == 0 {
+		return nil
+	}
 	return profile.Profiles[0]
 }

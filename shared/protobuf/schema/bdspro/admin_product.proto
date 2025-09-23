@@ -46,6 +46,17 @@ service AdminProductService {
       get: "/v2/bdspro/admin/products/{id}"
     };
   };
+  rpc GetProductHistory(sharepb.IdRequest) returns (ProductHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/products/{id}/history"
+    };
+  };
+  rpc UpdateProductNote(UpdateProductNoteRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/products/{id}/note"
+      body: "*"
+    };
+  };
 }
 
 message ProductRequest {
@@ -97,4 +108,30 @@ message AdminProductSearchRequest {
   repeated uint64 provinceIds = 10;
   string fromDate = 11;
   string toDate = 12;
+}
+
+// Update Product Note Request
+message UpdateProductNoteRequest {
+  uint64 id = 1;
+  string note = 2;
+}
+
+// Product History Response
+message ProductHistoryResponse {
+  repeated ProductHistory data = 1;
+  uint64 total = 2;
+}
+
+// Product History Item
+message ProductHistory {
+  uint64 id = 1;
+  uint64 action = 2;
+  uint64 parentId = 3;
+  uint64 productId = 4;
+  repeated uint64 childIds = 5;
+  uint64 createdUserId = 6;
+  sharepb.ProfileItem createdUser = 7;
+  repeated ProductInfo childs = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
 }

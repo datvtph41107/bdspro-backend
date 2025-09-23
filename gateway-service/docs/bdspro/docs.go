@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/admin/assets": {
             "get": {
-                "description": "Get assets",
+                "description": "Get assets with advanced filtering",
                 "consumes": [
                     "application/json"
                 ],
@@ -42,13 +42,93 @@ const docTemplate = `{
                         "name": "size",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Asset name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Asset status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Archived status",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "From date (ISO format)",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date (ISO format)",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Province IDs",
+                        "name": "provinceIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "District IDs",
+                        "name": "districtIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Ward IDs",
+                        "name": "wardIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Property type IDs",
+                        "name": "propertyTypeIds",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bdspropb.AssetSearchResponse"
+                            "$ref": "#/definitions/bdspropb.AdminAssetSearchResponse"
                         }
                     }
                 }
@@ -221,6 +301,36 @@ const docTemplate = `{
             }
         },
         "/admin/assets/{id}": {
+            "get": {
+                "description": "Get detailed information of an asset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminAsset"
+                ],
+                "summary": "Get asset detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Asset"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete an asset",
                 "consumes": [
@@ -316,6 +426,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/posts": {
+            "get": {
+                "description": "Get posts for admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Get posts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Post name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Post status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "From date",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date",
+                        "name": "toDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.AdminPostSearchResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/posts/archived": {
             "put": {
                 "description": "Archive a post",
@@ -345,6 +518,38 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{id}": {
+            "get": {
+                "description": "Get detailed information of a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminPost"
+                ],
+                "summary": "Get post detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Post"
                         }
                     }
                 }
@@ -582,6 +787,36 @@ const docTemplate = `{
             }
         },
         "/admin/products/{id}": {
+            "get": {
+                "description": "Get product details by ID for admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Get product by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductResponse"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete a product",
                 "consumes": [
@@ -601,6 +836,79 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/history": {
+            "get": {
+                "description": "Get product history by ID for admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Get product history",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductHistoryResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/note": {
+            "put": {
+                "description": "Update product note by ID for admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminProduct"
+                ],
+                "summary": "Update product note",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Note update request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.UpdateProductNoteRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -6805,6 +7113,193 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.AdminAssetItem": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Địa chỉ đầy đủ",
+                    "type": "string"
+                },
+                "area": {
+                    "description": "Diện tích",
+                    "type": "number"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "contractEndDate": {
+                    "description": "Contract information",
+                    "type": "string"
+                },
+                "contractStatus": {
+                    "description": "Trạng thái hợp đồng",
+                    "type": "integer"
+                },
+                "contractStatusName": {
+                    "description": "Tên trạng thái hợp đồng",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "Ngày tạo (ISO format)",
+                    "type": "string"
+                },
+                "districtName": {
+                    "description": "Tên quận/huyện",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalStatus": {
+                    "description": "Trạng thái pháp lý",
+                    "type": "integer"
+                },
+                "legalStatusName": {
+                    "description": "Tên trạng thái pháp lý",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "Thông tin chủ sở hữu",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.ProfileItem"
+                        }
+                    ]
+                },
+                "productCode": {
+                    "description": "Mã sản phẩm",
+                    "type": "string"
+                },
+                "productId": {
+                    "description": "Product information",
+                    "type": "integer"
+                },
+                "propertyTypeName": {
+                    "description": "Tên loại bất động sản",
+                    "type": "string"
+                },
+                "provinceName": {
+                    "description": "Tên tỉnh/thành phố",
+                    "type": "string"
+                },
+                "purchaseDate": {
+                    "description": "Ngày mua (ISO format)",
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "description": "Giá mua",
+                    "type": "number"
+                },
+                "status": {
+                    "description": "Trạng thái tài sản",
+                    "type": "integer"
+                },
+                "statusName": {
+                    "description": "Tên trạng thái tài sản",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Ngày cập nhật (ISO format)",
+                    "type": "string"
+                },
+                "wardName": {
+                    "description": "Tên phường/xã",
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AdminAssetSearchResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AdminAssetItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AdminPostItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Mã bài viết",
+                    "type": "string"
+                },
+                "contactCount": {
+                    "description": "Lượt liên hệ",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "ID bài viết",
+                    "type": "integer"
+                },
+                "interestCount": {
+                    "description": "Lượt quan tâm",
+                    "type": "integer"
+                },
+                "owner": {
+                    "description": "Chủ sở hữu",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.ProfileItem"
+                        }
+                    ]
+                },
+                "publishedAt": {
+                    "description": "Ngày công khai",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Trạng thái",
+                    "type": "integer"
+                },
+                "statusName": {
+                    "description": "Tên trạng thái",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "Tên bài viết",
+                    "type": "string"
+                },
+                "transactionStatus": {
+                    "description": "Trạng thái giao dịch",
+                    "type": "integer"
+                },
+                "transactionType": {
+                    "description": "Loại giao dịch",
+                    "type": "integer"
+                },
+                "viewCount": {
+                    "description": "Lượt xem",
+                    "type": "integer"
+                },
+                "visibleStatus": {
+                    "description": "Trạng thái hiển thị",
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.AdminPostSearchResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AdminPostItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "bdspropb.AmenityItem": {
             "type": "object",
             "properties": {
@@ -7112,6 +7607,17 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.AssetItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
         "bdspropb.AssetLegalDTO": {
             "type": "object",
             "properties": {
@@ -7154,20 +7660,6 @@ const docTemplate = `{
                     }
                 },
                 "totalElements": {
-                    "type": "integer"
-                }
-            }
-        },
-        "bdspropb.AssetSearchResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/bdspropb.Asset"
-                    }
-                },
-                "total": {
                     "type": "integer"
                 }
             }
@@ -7416,6 +7908,127 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.Post": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "expiredAt": {
+                    "type": "string"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "like": {
+                    "type": "integer"
+                },
+                "mediaList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.PostMedia"
+                    }
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "numDate": {
+                    "type": "integer"
+                },
+                "numView": {
+                    "type": "integer"
+                },
+                "owner": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "description": "1: user, 2: admin",
+                    "type": "integer"
+                },
+                "packageVisible": {
+                    "description": "1: thường, 2: VIP",
+                    "type": "integer"
+                },
+                "postPrice": {
+                    "type": "number"
+                },
+                "priceType": {
+                    "description": "1: chính thức, 2: thỏa thuận",
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "1: normal, 2: feed, 3: share",
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.PostItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.PostMedia": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isMain": {
+                    "type": "boolean"
+                },
+                "mediaType": {
+                    "type": "string"
+                },
+                "mediaUrl": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
         "bdspropb.PostSaveWithProduct": {
             "type": "object",
             "properties": {
@@ -7454,6 +8067,84 @@ const docTemplate = `{
                 },
                 "visibility": {
                     "type": "integer"
+                }
+            }
+        },
+        "bdspropb.ProductHistory": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "integer"
+                },
+                "childIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "childs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ProductInfo"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdUser": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "createdUserId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.ProductHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ProductHistory"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.ProductInfo": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "type": "number"
+                },
+                "categoryId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastPriceId": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -7550,6 +8241,12 @@ const docTemplate = `{
                 "assetId": {
                     "type": "integer"
                 },
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AssetItem"
+                    }
+                },
                 "attributes": {
                     "type": "array",
                     "items": {
@@ -7636,6 +8333,12 @@ const docTemplate = `{
                 },
                 "positionUrl": {
                     "type": "string"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.PostItem"
+                    }
                 },
                 "price": {
                     "$ref": "#/definitions/bdspropb.ProductPrice"
@@ -8152,6 +8855,17 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.UpdateProductNoteRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.Amenity": {
             "type": "object",
             "properties": {
@@ -8366,6 +9080,12 @@ const docTemplate = `{
                 "area": {
                     "type": "number"
                 },
+                "assetExploitations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.AssetExploitation"
+                    }
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -8396,6 +9116,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "owner": {
+                    "$ref": "#/definitions/domain.ProfileInfo"
                 },
                 "ownerId": {
                     "type": "integer"
@@ -8816,6 +9539,9 @@ const docTemplate = `{
         "domain.Post": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "string"
+                },
                 "content": {
                     "type": "string"
                 },
@@ -8882,15 +9608,27 @@ const docTemplate = `{
                 "publishedBy": {
                     "type": "integer"
                 },
+                "status": {
+                    "description": "Trạng thái cơ bản",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EPostStatus"
+                        }
+                    ]
+                },
                 "title": {
                     "type": "string"
                 },
+                "transactionStatus": {
+                    "description": "Trạng thái giao dịch",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EPostVisibleStatus"
+                        }
+                    ]
+                },
                 "transactionType": {
                     "$ref": "#/definitions/enums.TransactionType"
-                },
-                "type": {
-                    "description": "1: normal, 2: feed, 3: share",
-                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -8900,6 +9638,9 @@ const docTemplate = `{
                 },
                 "visibility": {
                     "$ref": "#/definitions/enums.EVisibility"
+                },
+                "visibleStatus": {
+                    "$ref": "#/definitions/enums.EPostVisibleStatus"
                 }
             }
         },
@@ -10156,6 +10897,51 @@ const docTemplate = `{
                 "EOwnerOfGroup",
                 "EOwnerOfOrgnization",
                 "EOwnerOfUser"
+            ]
+        },
+        "enums.EPostStatus": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50
+            ],
+            "x-enum-comments": {
+                "EPostActive": "Đang hoạt động",
+                "EPostApproved": "Đã duyệt",
+                "EPostHidden": "Ẩn",
+                "EPostPending": "Chờ duyệt",
+                "EPostRejected": "Từ chối"
+            },
+            "x-enum-varnames": [
+                "EPostActive",
+                "EPostPending",
+                "EPostApproved",
+                "EPostRejected",
+                "EPostHidden"
+            ]
+        },
+        "enums.EPostVisibleStatus": {
+            "type": "integer",
+            "enum": [
+                100,
+                110,
+                200,
+                210
+            ],
+            "x-enum-comments": {
+                "EPostTransactionRented": "Đã cho thuê",
+                "EPostTransactionRenting": "Đang cho thuê",
+                "EPostTransactionSelling": "Đang bán",
+                "EPostTransactionSold": "Đã bán"
+            },
+            "x-enum-varnames": [
+                "EPostTransactionSelling",
+                "EPostTransactionSold",
+                "EPostTransactionRenting",
+                "EPostTransactionRented"
             ]
         },
         "enums.EProductHistory": {

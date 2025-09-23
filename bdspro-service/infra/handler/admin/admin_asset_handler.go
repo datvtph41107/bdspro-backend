@@ -1,10 +1,12 @@
 package admin_handler
 
 import (
+	"bdspro/infra/client"
 	"bdspro/infra/mapper"
+	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
 	"pb/clients"
@@ -20,17 +22,20 @@ type AdminAssetHandler struct {
 	AdminAssetService *admin_usecases.AdminAssetUsecase
 	AssetMapper       *mapper.AssetMapper
 	AuthGrpcClient    *clients.AuthGrpcClient
+	UserClient        *client.UserClient
 }
 
 func NewAdminAssetHandler(
 	uc *admin_usecases.AdminAssetUsecase,
 	assetMapper *mapper.AssetMapper,
 	authGrpcClient *clients.AuthGrpcClient,
+	userClient *client.UserClient,
 ) *AdminAssetHandler {
 	return &AdminAssetHandler{
 		AdminAssetService: uc,
 		AssetMapper:       assetMapper,
 		AuthGrpcClient:    authGrpcClient,
+		UserClient:        userClient,
 	}
 }
 
@@ -299,4 +304,36 @@ func (h *AdminAssetHandler) SplitAsset(ctx context.Context, req *bdspropb.SplitA
 	}
 
 	return h.AssetMapper.MapAssetPb(splitAsset), nil
+}
+
+// @Summary Get asset detail
+// @Description Get detailed information of an asset
+// @Tags AdminAsset
+// @Accept json
+// @Produce json
+// @Param id path int true "Asset ID"
+// @Success 200 {object} bdspropb.Asset
+// @Router /admin/assets/{id} [get]
+func (h *AdminAssetHandler) AssetDetail(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.Asset, error) {
+	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_XEM"}); err != nil {
+		return nil, err
+	}
+
+	asset, err := h.AdminAssetService.GetAssetDetail(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get owner information from user service
+	if asset.OwnerID != nil {
+		owner := h.UserClient.GetProfileById(ctx, *asset.OwnerID)
+		if owner != nil {
+			asset.Owner = &domain.ProfileInfo{
+				ProfileId: owner.Id,
+				FullName:  owner.FullName,
+			}
+		}
+	}
+
+	return h.AssetMapper.MapAssetPb(asset), nil
 }

@@ -1253,3 +1253,15 @@ func (s *ProductUsecase) SyncData(c context.Context) error {
 func (s *ProductUsecase) GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error) {
 	return s.ProductRepo.GetGroupProducts(ctx, req)
 }
+
+// UpdateNote cập nhật ghi chú sản phẩm
+func (s *ProductUsecase) UpdateNote(ctx context.Context, id uint64, note string) error {
+	// Check permission
+	err := s.CheckPermission(ctx, &id, enums.PermissionProductUpdate)
+	if err != nil {
+		return err
+	}
+
+	// Update note in repository
+	return s.ProductRepo.UpdateNote(ctx, id, note)
+}

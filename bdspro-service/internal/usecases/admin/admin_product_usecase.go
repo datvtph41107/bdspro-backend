@@ -61,3 +61,8 @@ func (uc *AdminProductUsecase) GetList(ctx context.Context, searchRequest *dto.P
 func (uc *AdminProductUsecase) GetDetail(ctx context.Context, id uint64) (*domain.Product, error) {
 	return uc.ProductUsecase.Detail(ctx, id)
 }
+
+// UpdateNote cập nhật ghi chú sản phẩm
+func (uc *AdminProductUsecase) UpdateNote(ctx context.Context, id uint64, note string) error {
+	return uc.ProductUsecase.UpdateNote(ctx, id, note)
+}

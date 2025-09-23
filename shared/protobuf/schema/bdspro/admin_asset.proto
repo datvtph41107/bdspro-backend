@@ -14,6 +14,11 @@ service AdminAssetService {
       get: "/v2/bdspro/admin/assets"
     };
   };
+  rpc AssetDetail(sharepb.IdRequest) returns (Asset) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/assets/{id}"
+    };
+  };
   rpc CreateAsset(SaveAssetRequest) returns (Asset) {
     option (google.api.http) = {
       post: "/v2/bdspro/admin/assets"

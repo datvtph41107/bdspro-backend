@@ -193,3 +193,23 @@ func (r *AdminPostPostgres) GetAdminPosts(ctx context.Context, req *dto.AdminPos
 // 		return "Không xác định"
 // 	}
 // }
+
+// @bind: internal/interface
+func (r *AdminPostPostgres) GetPostDetail(ctx context.Context, id uint64) (*domain.Post, error) {
+	var post domain.Post
+
+	if err := r.GetDB(ctx).
+		Preload("Product").
+		Preload("Product.Province").
+		Preload("Product.District").
+		Preload("Product.Ward").
+		Preload("Product.PropertyType").
+		Preload("Product.Price").
+		Preload("MediaList").
+		Where("id = ? and deleted_at IS NULL", id).
+		First(&post).Error; err != nil {
+		return nil, err
+	}
+
+	return &post, nil
+}

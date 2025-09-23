@@ -11,6 +11,137 @@ definitions:
       totalElements:
         type: integer
     type: object
+  bdspropb.AdminAssetItem:
+    properties:
+      address:
+        description: Địa chỉ đầy đủ
+        type: string
+      area:
+        description: Diện tích
+        type: number
+      code:
+        type: string
+      contractEndDate:
+        description: Contract information
+        type: string
+      contractStatus:
+        description: Trạng thái hợp đồng
+        type: integer
+      contractStatusName:
+        description: Tên trạng thái hợp đồng
+        type: string
+      createdAt:
+        description: Ngày tạo (ISO format)
+        type: string
+      districtName:
+        description: Tên quận/huyện
+        type: string
+      id:
+        type: integer
+      legalStatus:
+        description: Trạng thái pháp lý
+        type: integer
+      legalStatusName:
+        description: Tên trạng thái pháp lý
+        type: string
+      name:
+        type: string
+      owner:
+        allOf:
+        - $ref: '#/definitions/sharepb.ProfileItem'
+        description: Thông tin chủ sở hữu
+      productCode:
+        description: Mã sản phẩm
+        type: string
+      productId:
+        description: Product information
+        type: integer
+      propertyTypeName:
+        description: Tên loại bất động sản
+        type: string
+      provinceName:
+        description: Tên tỉnh/thành phố
+        type: string
+      purchaseDate:
+        description: Ngày mua (ISO format)
+        type: string
+      purchasePrice:
+        description: Giá mua
+        type: number
+      status:
+        description: Trạng thái tài sản
+        type: integer
+      statusName:
+        description: Tên trạng thái tài sản
+        type: string
+      updatedAt:
+        description: Ngày cập nhật (ISO format)
+        type: string
+      wardName:
+        description: Tên phường/xã
+        type: string
+    type: object
+  bdspropb.AdminAssetSearchResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.AdminAssetItem'
+        type: array
+      total:
+        type: integer
+    type: object
+  bdspropb.AdminPostItem:
+    properties:
+      code:
+        description: Mã bài viết
+        type: string
+      contactCount:
+        description: Lượt liên hệ
+        type: integer
+      id:
+        description: ID bài viết
+        type: integer
+      interestCount:
+        description: Lượt quan tâm
+        type: integer
+      owner:
+        allOf:
+        - $ref: '#/definitions/sharepb.ProfileItem'
+        description: Chủ sở hữu
+      publishedAt:
+        description: Ngày công khai
+        type: string
+      status:
+        description: Trạng thái
+        type: integer
+      statusName:
+        description: Tên trạng thái
+        type: string
+      title:
+        description: Tên bài viết
+        type: string
+      transactionStatus:
+        description: Trạng thái giao dịch
+        type: integer
+      transactionType:
+        description: Loại giao dịch
+        type: integer
+      viewCount:
+        description: Lượt xem
+        type: integer
+      visibleStatus:
+        description: Trạng thái hiển thị
+        type: integer
+    type: object
+  bdspropb.AdminPostSearchResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.AdminPostItem'
+        type: array
+      total:
+        type: integer
+    type: object
   bdspropb.AmenityItem:
     properties:
       id:
@@ -213,6 +344,13 @@ definitions:
       typeName:
         type: string
     type: object
+  bdspropb.AssetItem:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+    type: object
   bdspropb.AssetLegalDTO:
     properties:
       archived:
@@ -241,15 +379,6 @@ definitions:
           $ref: '#/definitions/bdspropb.AssetLegalDTO'
         type: array
       totalElements:
-        type: integer
-    type: object
-  bdspropb.AssetSearchResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/bdspropb.Asset'
-        type: array
-      total:
         type: integer
     type: object
   bdspropb.AttributeProduct:
@@ -411,6 +540,87 @@ definitions:
       new_name:
         type: string
     type: object
+  bdspropb.Post:
+    properties:
+      comment:
+        type: integer
+      content:
+        type: string
+      districtName:
+        type: string
+      expiredAt:
+        type: string
+      hidden:
+        type: boolean
+      id:
+        type: integer
+      like:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/bdspropb.PostMedia'
+        type: array
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      numDate:
+        type: integer
+      numView:
+        type: integer
+      owner:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      ownerId:
+        type: integer
+      ownerType:
+        description: '1: user, 2: admin'
+        type: integer
+      packageVisible:
+        description: '1: thường, 2: VIP'
+        type: integer
+      postPrice:
+        type: number
+      priceType:
+        description: '1: chính thức, 2: thỏa thuận'
+        type: integer
+      productId:
+        type: integer
+      provinceName:
+        type: string
+      status:
+        type: integer
+      title:
+        type: string
+      transactionType:
+        type: integer
+      type:
+        description: '1: normal, 2: feed, 3: share'
+        type: string
+      visibility:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  bdspropb.PostItem:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+    type: object
+  bdspropb.PostMedia:
+    properties:
+      id:
+        type: integer
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
   bdspropb.PostSaveWithProduct:
     properties:
       content:
@@ -437,6 +647,57 @@ definitions:
         type: integer
       visibility:
         type: integer
+    type: object
+  bdspropb.ProductHistory:
+    properties:
+      action:
+        type: integer
+      childIds:
+        items:
+          type: integer
+        type: array
+      childs:
+        items:
+          $ref: '#/definitions/bdspropb.ProductInfo'
+        type: array
+      createdAt:
+        type: string
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      createdUserId:
+        type: integer
+      id:
+        type: integer
+      parentId:
+        type: integer
+      productId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  bdspropb.ProductHistoryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.ProductHistory'
+        type: array
+      total:
+        type: integer
+    type: object
+  bdspropb.ProductInfo:
+    properties:
+      area:
+        type: number
+      categoryId:
+        type: integer
+      code:
+        type: string
+      id:
+        type: integer
+      lastPriceId:
+        type: integer
+      name:
+        type: string
     type: object
   bdspropb.ProductPrice:
     properties:
@@ -500,6 +761,10 @@ definitions:
         type: number
       assetId:
         type: integer
+      assets:
+        items:
+          $ref: '#/definitions/bdspropb.AssetItem'
+        type: array
       attributes:
         items:
           $ref: '#/definitions/bdspropb.AttributeProduct'
@@ -558,6 +823,10 @@ definitions:
         type: integer
       positionUrl:
         type: string
+      posts:
+        items:
+          $ref: '#/definitions/bdspropb.PostItem'
+        type: array
       price:
         $ref: '#/definitions/bdspropb.ProductPrice'
       priceSuggest:
@@ -898,6 +1167,13 @@ definitions:
       updatedAt:
         type: string
     type: object
+  bdspropb.UpdateProductNoteRequest:
+    properties:
+      id:
+        type: integer
+      note:
+        type: string
+    type: object
   domain.Amenity:
     properties:
       active:
@@ -1040,6 +1316,10 @@ definitions:
         type: boolean
       area:
         type: number
+      assetExploitations:
+        items:
+          $ref: '#/definitions/domain.AssetExploitation'
+        type: array
       createdAt:
         type: string
       createdBy:
@@ -1061,6 +1341,8 @@ definitions:
         $ref: '#/definitions/enums.EDocType'
       name:
         type: string
+      owner:
+        $ref: '#/definitions/domain.ProfileInfo'
       ownerId:
         type: integer
       ownerType:
@@ -1350,6 +1632,8 @@ definitions:
     type: object
   domain.Post:
     properties:
+      code:
+        type: string
       content:
         type: string
       createdAt:
@@ -1395,19 +1679,26 @@ definitions:
         type: string
       publishedBy:
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.EPostStatus'
+        description: Trạng thái cơ bản
       title:
         type: string
+      transactionStatus:
+        allOf:
+        - $ref: '#/definitions/enums.EPostVisibleStatus'
+        description: Trạng thái giao dịch
       transactionType:
         $ref: '#/definitions/enums.TransactionType'
-      type:
-        description: '1: normal, 2: feed, 3: share'
-        type: integer
       updatedAt:
         type: string
       updatedBy:
         type: integer
       visibility:
         $ref: '#/definitions/enums.EVisibility'
+      visibleStatus:
+        $ref: '#/definitions/enums.EPostVisibleStatus'
     type: object
   domain.PostMediaEntity:
     properties:
@@ -2252,6 +2543,43 @@ definitions:
     - EOwnerOfGroup
     - EOwnerOfOrgnization
     - EOwnerOfUser
+  enums.EPostStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    type: integer
+    x-enum-comments:
+      EPostActive: Đang hoạt động
+      EPostApproved: Đã duyệt
+      EPostHidden: Ẩn
+      EPostPending: Chờ duyệt
+      EPostRejected: Từ chối
+    x-enum-varnames:
+    - EPostActive
+    - EPostPending
+    - EPostApproved
+    - EPostRejected
+    - EPostHidden
+  enums.EPostVisibleStatus:
+    enum:
+    - 100
+    - 110
+    - 200
+    - 210
+    type: integer
+    x-enum-comments:
+      EPostTransactionRented: Đã cho thuê
+      EPostTransactionRenting: Đang cho thuê
+      EPostTransactionSelling: Đang bán
+      EPostTransactionSold: Đã bán
+    x-enum-varnames:
+    - EPostTransactionSelling
+    - EPostTransactionSold
+    - EPostTransactionRenting
+    - EPostTransactionRented
   enums.EProductHistory:
     enum:
     - 10
@@ -2362,7 +2690,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get assets
+      description: Get assets with advanced filtering
       parameters:
       - description: Page number
         in: query
@@ -2374,13 +2702,68 @@ paths:
         name: size
         required: true
         type: integer
+      - description: Asset name
+        in: query
+        name: name
+        type: string
+      - collectionFormat: csv
+        description: Asset status
+        in: query
+        items:
+          type: integer
+        name: status
+        type: array
+      - description: Archived status
+        in: query
+        name: archived
+        type: boolean
+      - description: From date (ISO format)
+        in: query
+        name: fromDate
+        type: string
+      - description: To date (ISO format)
+        in: query
+        name: toDate
+        type: string
+      - description: Search text
+        in: query
+        name: text
+        type: string
+      - collectionFormat: csv
+        description: Province IDs
+        in: query
+        items:
+          type: integer
+        name: provinceIds
+        type: array
+      - collectionFormat: csv
+        description: District IDs
+        in: query
+        items:
+          type: integer
+        name: districtIds
+        type: array
+      - collectionFormat: csv
+        description: Ward IDs
+        in: query
+        items:
+          type: integer
+        name: wardIds
+        type: array
+      - collectionFormat: csv
+        description: Property type IDs
+        in: query
+        items:
+          type: integer
+        name: propertyTypeIds
+        type: array
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bdspropb.AssetSearchResponse'
+            $ref: '#/definitions/bdspropb.AdminAssetSearchResponse'
       summary: Get assets
       tags:
       - AdminAsset
@@ -2445,6 +2828,26 @@ paths:
           schema:
             $ref: '#/definitions/bdspropb.Response'
       summary: Delete an asset
+      tags:
+      - AdminAsset
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information of an asset
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Asset'
+      summary: Get asset detail
       tags:
       - AdminAsset
   /admin/assets/{id}/approve:
@@ -2555,6 +2958,69 @@ paths:
       summary: Split asset
       tags:
       - AdminAsset
+  /admin/posts:
+    get:
+      consumes:
+      - application/json
+      description: Get posts for admin
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        required: true
+        type: integer
+      - description: Post name
+        in: query
+        name: name
+        type: string
+      - description: Post status
+        in: query
+        name: status
+        type: integer
+      - description: From date
+        in: query
+        name: fromDate
+        type: string
+      - description: To date
+        in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.AdminPostSearchResponse'
+      summary: Get posts
+      tags:
+      - AdminPost
+  /admin/posts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information of a post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Post'
+      summary: Get post detail
+      tags:
+      - AdminPost
   /admin/posts/{id}/approve:
     post:
       consumes:
@@ -2748,6 +3214,74 @@ paths:
           schema:
             $ref: '#/definitions/bdspropb.Response'
       summary: Delete a product
+      tags:
+      - AdminProduct
+    get:
+      consumes:
+      - application/json
+      description: Get product details by ID for admin
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.ProductResponse'
+      summary: Get product by ID
+      tags:
+      - AdminProduct
+  /admin/products/{id}/history:
+    get:
+      consumes:
+      - application/json
+      description: Get product history by ID for admin
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.ProductHistoryResponse'
+      summary: Get product history
+      tags:
+      - AdminProduct
+  /admin/products/{id}/note:
+    put:
+      consumes:
+      - application/json
+      description: Update product note by ID for admin
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Note update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspropb.UpdateProductNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Response'
+      summary: Update product note
       tags:
       - AdminProduct
   /enums/{type}:

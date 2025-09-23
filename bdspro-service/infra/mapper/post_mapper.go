@@ -278,3 +278,39 @@ func (m *PostMapper) getStatusName(status enums.EPostStatus) string {
 	}
 	return "Không xác định"
 }
+
+func (m *PostMapper) PostToPbDetail(post *domain.Post) *bdspropb.Post {
+	result := &bdspropb.Post{
+		Id:              post.ID,
+		Title:           post.Title,
+		Content:         post.Content,
+		PostPrice:       post.Price,
+		TransactionType: uint32(post.TransactionType),
+		Visibility:      uint32(post.Visibility),
+		PackageVisible:  uint32(post.PackageVisible),
+		NumDate:         int32(post.NumDate),
+		Hidden:          post.Hidden,
+		ExpiredAt:       _utils.FormatTimeToString(post.ExpiredAt),
+		// CreatedAt:         _utils.FormatTimeToString(post.CreatedAt),
+		// UpdatedAt:         _utils.FormatTimeToString(post.UpdatedAt),
+		// MediaList:         m.PostMediaToDTO(post.MediaList),
+		OwnerId:   post.OwnerID,
+		OwnerType: uint32(post.OwnerOf),
+		// PublishedAt:       _utils.FormatTimeToString(post.PublishedAt),
+		// PublishedBy:       post.PublishedBy,
+		// Code:              post.Code,
+		PriceType: uint32(post.PriceType),
+		// TransactionStatus: uint32(post.TransactionStatus),
+		// VisibleStatus:     uint32(post.VisibleStatus),
+		Like:              post.Like,
+		Comment:           post.Comment,
+		NumView:           post.NumView,
+		Status:            uint32(post.Status),
+		TransactionStatus: uint32(post.TransactionStatus),
+		VisibleStatus:     uint32(post.VisibleStatus),
+	}
+	if post.Product != nil {
+		result.Product = m.ProductMapper.MapProductPb(post.Product)
+	}
+	return result
+}

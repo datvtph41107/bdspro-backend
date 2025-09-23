@@ -559,7 +559,7 @@ func (s *ProductService) GetDetail(ctx context.Context, req *bdspropb.IdRequest)
 	if err != nil {
 		return nil, err
 	}
-	productResponse := s.ProductMapper.MapDetailProductPb(product)
+	productResponse := s.ProductMapper.MapDetailProductPb(ctx, product)
 	if product.OwnerID != 0 && product.OwnerOf == enums.EOwnerOfMember {
 		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
 	}
@@ -731,7 +731,7 @@ func (s *ProductService) GetProductAttachmentByIds(ctx context.Context, req *bds
 	if err != nil {
 		return nil, err
 	}
-	productResponse := mapper.MapProductAttachmentPbList(products)
+	productResponse := mapper.MapProductAttachmentPbList(ctx, s.ProductMapper.CodeDataUsecase, products)
 	return &bdspropb.ProductAttachmentResponse{
 		Data: productResponse,
 	}, nil

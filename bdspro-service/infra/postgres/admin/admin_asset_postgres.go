@@ -195,12 +195,6 @@ func (r *AdminAssetPostgres) GetAdminAssets(ctx context.Context, req *dto.AdminA
 		return nil, 0, err
 	}
 
-	// Get paginated results
-	if req.Page > 0 && req.Size > 0 {
-		offset := int((req.Page - 1) * req.Size)
-		query = query.Offset(offset).Limit(int(req.Size))
-	}
-
 	// Preload related data
 	query = query.Preload("LegalItems").
 		Preload("Province").
@@ -210,9 +204,34 @@ func (r *AdminAssetPostgres) GetAdminAssets(ctx context.Context, req *dto.AdminA
 		Preload("Product").
 		Preload("AssetExploitations")
 
-	if err := query.Find(&assets).Error; err != nil {
+	if err := query.
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Find(&assets).
+		Error; err != nil {
 		return nil, 0, err
 	}
 
 	return assets, total, nil
+}
+
+// @bind: internal/interface
+func (r *AdminAssetPostgres) GetAssetDetail(ctx context.Context, id uint64) (*domain.Asset, error) {
+	var asset domain.Asset
+
+	if err := r.GetDB(ctx).
+		Preload("LegalItems").
+		Preload("Province").
+		Preload("District").
+		Preload("Ward").
+		Preload("PropertyType").
+		Preload("Product").
+		Preload("AssetExploitations").
+		// Preload("Owner").
+		Where("id = ?", id).
+		First(&asset).Error; err != nil {
+		return nil, err
+	}
+
+	return &asset, nil
 }

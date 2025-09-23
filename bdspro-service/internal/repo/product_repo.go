@@ -86,4 +86,7 @@ type ProductRepo interface {
 
 	// Đếm số sản phẩm theo ownerOf và ownerId
 	CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error)
+
+	// Cập nhật ghi chú sản phẩm
+	UpdateNote(ctx context.Context, id uint64, note string) error
 }

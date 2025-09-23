@@ -15,4 +15,5 @@ type AdminPostRepo interface {
 	Hide(ctx context.Context, id uint64) error
 	Unhide(ctx context.Context, id uint64) error
 	GetAdminPosts(ctx context.Context, req *dto.AdminPostSearchRequest) ([]domain.Post, int64, error)
+	GetPostDetail(ctx context.Context, id uint64) (*domain.Post, error)
 }

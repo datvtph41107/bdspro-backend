@@ -5,6 +5,7 @@ package bdspropb;
 import "bdspro/asset.proto";
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/bdspro;bdspropb";
 
@@ -126,6 +127,10 @@ message Post {
   string provinceName = 23;
   string districtName = 24;
   string wardName = 25;
+  optional sharepb.ProfileItem owner = 26;
+  optional ProductResponse product = 27;
+  uint32 transactionStatus = 28;
+  uint32 visibleStatus = 29;
 }
 
 message PostMedia {

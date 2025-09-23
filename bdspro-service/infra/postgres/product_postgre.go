@@ -126,11 +126,25 @@ func (r *GormUserProductRepo) UpdateAsset(asset *domain.Asset) error {
 // }
 
 func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error) {
-	var entity *domain.Product
+	// Struct tạm thời để map dữ liệu từ query
+	type ProductWithPostIds struct {
+		domain.Product
+		PostIds pq.Int64Array `gorm:"column:post_ids" json:"post_ids"`
+	}
+
+	var tempResult ProductWithPostIds
 	price := r.PriceRepo.FindByProductId(ctx, &id)
 
 	err := GetDB(ctx, r.DB).
 		Model(&domain.Product{}).
+		Select(`products.*, 
+			COALESCE(
+				(SELECT array_agg(id ORDER BY created_at DESC) 
+				 FROM posts 
+				 WHERE product_id = products.id 
+				 AND deleted_at IS NULL), 	
+				ARRAY[]::bigint[]
+			) AS post_ids`).
 		// Table("products p").
 		Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
         	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
@@ -150,12 +164,20 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		// Preload("RentTransaction", "deleted_at IS NULL").
 		// Preload("PrivateData").
 		Where("products.id = ? AND products.deleted_at IS NULL", id).
-		First(&entity).Error
+		First(&tempResult).Error
 
 	if err != nil {
 		return nil, err
 	}
 
+	// Convert PostIds from pq.Int64Array to []uint64
+	postIds := make([]uint64, len(tempResult.PostIds))
+	for i, id := range tempResult.PostIds {
+		postIds[i] = uint64(id)
+	}
+	tempResult.Product.PostIds = postIds
+
+	entity := &tempResult.Product
 	entity.Price = price
 
 	if entity.Apartment != nil {
@@ -1059,6 +1081,9 @@ func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.Pro
 
 	query = r.QueryDomain(query, dto)
 
+	var total int64
+	query.Count(&total)
+
 	// Giới hạn 2 bản ghi gần nhất
 	err := query.
 		Order("updated_at desc").
@@ -1086,8 +1111,13 @@ func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.Pro
 		results[i].PropertyTypeName = temp.PropertyTypeName
 	}
 
-	var total int64
-	query.Count(&total)
-
 	return results, total, nil
+}
+
+// UpdateNote cập nhật ghi chú sản phẩm
+func (r *GormUserProductRepo) UpdateNote(ctx context.Context, id uint64, note string) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("note", note).Error
 }

@@ -14,6 +14,11 @@ service AdminPostService {
       get: "/v2/bdspro/admin/posts"
     };
   };
+  rpc AdminDetailPost(sharepb.IdRequest) returns (Post) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/posts/{id}"
+    };
+  };
   rpc CreatePost(PostSaveRequest) returns (Post) {
     option (google.api.http) = {
       post: "/v2/bdspro/admin/posts"

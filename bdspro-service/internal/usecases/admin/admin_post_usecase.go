@@ -59,3 +59,15 @@ func (uc *AdminPostUsecase) GetPosts(ctx context.Context, dto *dto.AdminPostSear
 	}
 	return result, total, nil
 }
+
+func (uc *AdminPostUsecase) GetPostDetail(ctx context.Context, id uint64) (*domain.Post, error) {
+	post, err := uc.Repo.GetPostDetail(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate post code
+	post.Code = uc.CodeDataUsecase.GetPostCode(ctx, post.ID)
+
+	return post, nil
+}

@@ -43,3 +43,7 @@ func (uc *AdminAssetUsecase) Split(ctx context.Context, req *dto.SplitAssetDTO) 
 func (uc *AdminAssetUsecase) GetAdminAssets(ctx context.Context, req *dto.AdminAssetSearchRequest) ([]domain.Asset, int64, error) {
 	return uc.Repo.GetAdminAssets(ctx, req)
 }
+
+func (uc *AdminAssetUsecase) GetAssetDetail(ctx context.Context, id uint64) (*domain.Asset, error) {
+	return uc.Repo.GetAssetDetail(ctx, id)
+}

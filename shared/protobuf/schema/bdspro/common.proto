@@ -160,6 +160,8 @@ message ProductResponse {
     optional Transaction rentTransaction = 55;
     string createdAt = 56;
     string updatedAt = 57;
+    repeated AssetItem assets = 58;
+    repeated PostItem posts = 59;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
@@ -255,4 +257,16 @@ message ProjectBuild {
 message ItemResponse {
     uint64 id = 1;
     string name = 2;
+}
+
+// AssetItem for product detail response
+message AssetItem {
+    uint64 id = 1;
+    string code = 2;
+}
+
+// PostItem for product detail response  
+message PostItem {
+    uint64 id = 1;
+    string code = 2;
 }

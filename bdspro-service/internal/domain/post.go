@@ -24,7 +24,7 @@ type Post struct {
 	Like            uint64                `json:"numLike"`
 	Comment         uint64                `json:"numComment"`
 	NumView         uint64                `json:"numView"`
-	Product         *Product              `gorm:"-" json:"product"`
+	Product         *Product              `json:"product"`
 	MediaList       []PostMediaEntity     `json:"mediaList"`
 	OwnerID         uint64                `json:"ownerId"`
 	OwnerOf         enums.EOwnerOf        `gorm:"column:owner_of;default:10" json:"ownerOf"`

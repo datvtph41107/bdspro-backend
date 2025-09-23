@@ -917,6 +917,19 @@
         }
       }
     },
+    "bdspropbAssetItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "AssetItem for product detail response"
+    },
     "bdspropbAttributeProduct": {
       "type": "object",
       "properties": {
@@ -1215,6 +1228,20 @@
         },
         "wardName": {
           "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductResponse"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibleStatus": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1244,6 +1271,19 @@
           "format": "uint64"
         }
       }
+    },
+    "bdspropbPostItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "PostItem for product detail response"
     },
     "bdspropbPostListResponse": {
       "type": "object",
@@ -1686,6 +1726,20 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAssetItem"
+          }
+        },
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPostItem"
+          }
         }
       }
     },

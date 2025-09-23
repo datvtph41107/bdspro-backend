@@ -47,7 +47,7 @@ func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *bdsprop
 	if err != nil {
 		return nil, err
 	}
-	products := s.ProductMapper.MapProductMarketPbList(result)
+	products := s.ProductMapper.MapProductMarketPbList(ctx, result)
 	return &bdspropb.ProductMarketResponse{
 		Data:  products,
 		Total: total,
