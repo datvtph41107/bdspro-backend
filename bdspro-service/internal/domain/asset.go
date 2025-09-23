@@ -48,6 +48,8 @@ type Asset struct {
 	LegalItems       []AssetLegal       `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
 	OwnerID          *uint64            `json:"ownerId"`
 	OwnerType        enums.EOwnerOf     `json:"ownerType"`
+
+	AssetExploitations []AssetExploitation `gorm:"foreignKey:AssetID;references:ID" json:"assetExploitations,omitempty"`
 	// OwnerUserID      *uint64            `json:"ownerUserId"`
 	// OwnerOrgID       *uint64            `json:"ownerOrgId"`
 

@@ -85,7 +85,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	publicMapper := mapper.NewPublicMapper()
 	bdsproPublicService := handler.NewBdsproPublicService(productUsecase, listUsecase, publicMapper, productMapper)
 	assetLegalMapper := mapper.NewAssetLegalMapper()
-	assetMapper := mapper.NewAssetMapper(assetLegalMapper, productMapper)
+	assetMapper := mapper.NewAssetMapper(assetLegalMapper, productMapper, userClient, codeDataUsecase)
 	assetService := handler.NewGrpcAssetService(assetUsecase, assetMapper, userClient)
 	postgreAssetExploitation := postgres.NewPostgreAssetExploitation(db)
 	assetExploitationUsecase := shared_usecase.NewAssetExploitationUc(postgreAssetExploitation, requestUsecase)

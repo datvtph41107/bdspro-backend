@@ -10,6 +10,7 @@ import (
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+	"time"
 
 	"github.com/jinzhu/copier"
 )
@@ -34,32 +35,62 @@ func NewAdminAssetHandler(
 }
 
 // @Summary Get assets
-// @Description Get assets
+// @Description Get assets with advanced filtering
 // @Tags AdminAsset
 // @Accept json
 // @Produce json
 // @Param page query int true "Page number"
 // @Param size query int true "Page size"
-// @Success 200 {object} bdspropb.AssetSearchResponse
+// @Param name query string false "Asset name"
+// @Param status query []uint32 false "Asset status"
+// @Param archived query bool false "Archived status"
+// @Param fromDate query string false "From date (ISO format)"
+// @Param toDate query string false "To date (ISO format)"
+// @Param text query string false "Search text"
+// @Param provinceIds query []uint64 false "Province IDs"
+// @Param districtIds query []uint64 false "District IDs"
+// @Param wardIds query []uint64 false "Ward IDs"
+// @Param propertyTypeIds query []uint64 false "Property type IDs"
+// @Success 200 {object} bdspropb.AdminAssetSearchResponse
 // @Router /admin/assets [get]
-func (h *AdminAssetHandler) GetAssets(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.AssetSearchResponse, error) {
+func (h *AdminAssetHandler) GetAssets(ctx context.Context, req *bdspropb.AdminAssetSearchRequest) (*bdspropb.AdminAssetSearchResponse, error) {
 	if err := h.AuthGrpcClient.HasPermissions(ctx, []string{"ADMIN_TS_XEM"}); err != nil {
 		return nil, err
 	}
 
-	result, total, err := h.AdminAssetService.GetList(ctx,
-		&dto.AssetSearchRequest{
-			Pagable: _dto.Pagable{
-				Page: req.Page,
-				Size: req.Size,
-			},
-		})
+	// Convert protobuf request to DTO
+	searchReq := &dto.AdminAssetSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		Name:            req.Name,
+		Status:          req.Status,
+		Archived:        &req.Archived,
+		Text:            req.Text,
+		ProvinceIds:     req.ProvinceIds,
+		PropertyTypeIds: req.PropertyTypeIds,
+	}
+
+	// Parse dates if provided
+	if req.FromDate != "" {
+		if fromDate, err := time.Parse(time.RFC3339, req.FromDate); err == nil {
+			searchReq.FromDate = &fromDate
+		}
+	}
+	if req.ToDate != "" {
+		if toDate, err := time.Parse(time.RFC3339, req.ToDate); err == nil {
+			searchReq.ToDate = &toDate
+		}
+	}
+
+	result, total, err := h.AdminAssetService.GetAdminAssets(ctx, searchReq)
 	if err != nil {
 		return nil, err
 	}
 
-	assets := h.AssetMapper.MapAssetPbList(result)
-	return &bdspropb.AssetSearchResponse{
+	assets := h.AssetMapper.MapAdminAssetList(ctx, result)
+	return &bdspropb.AdminAssetSearchResponse{
 		Data:  assets,
 		Total: uint64(total),
 	}, nil

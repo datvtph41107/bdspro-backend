@@ -14,6 +14,16 @@ func NewCodeUsecase() *CodeDataUsecase {
 func (uc *CodeDataUsecase) GetProductCode(c context.Context, productId uint64) string {
 	return fmt.Sprintf("SP%06d", productId)
 }
+func (uc *CodeDataUsecase) GetProductCodePtr(c context.Context, productId *uint64) *string {
+	if productId == nil {
+		return nil
+	}
+	code := fmt.Sprintf("SP%06d", *productId)
+	return &code
+}
+func (uc *CodeDataUsecase) GetAssetCode(c context.Context, assetId uint64) string {
+	return fmt.Sprintf("AS%06d", assetId)
+}
 func (uc *CodeDataUsecase) GetAssetCodePtr(c context.Context, assetId *uint64) *string {
 	if assetId == nil {
 		return nil

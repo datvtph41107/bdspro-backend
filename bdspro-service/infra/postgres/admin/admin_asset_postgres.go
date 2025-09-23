@@ -141,3 +141,78 @@ func (r *AdminAssetPostgres) Split(ctx context.Context, req *dto.SplitAssetDTO) 
 	// 4. Handle legal items distribution
 	return nil, nil
 }
+
+// @bind: internal/interface
+func (r *AdminAssetPostgres) GetAdminAssets(ctx context.Context, req *dto.AdminAssetSearchRequest) ([]domain.Asset, int64, error) {
+	var assets []domain.Asset
+	var total int64
+
+	query := r.GetDB(ctx).Model(&domain.Asset{})
+
+	// Apply filters
+	if req.Name != "" {
+		query = query.Where("name ILIKE ?", "%"+req.Name+"%")
+	}
+
+	if len(req.Status) > 0 {
+		query = query.Where("status IN ?", req.Status)
+	}
+
+	if req.Archived != nil {
+		query = query.Where("archived = ?", *req.Archived)
+	}
+
+	if req.Text != "" {
+		query = query.Where("(name ILIKE ? OR description ILIKE ?)", "%"+req.Text+"%", "%"+req.Text+"%")
+	}
+
+	if len(req.ProvinceIds) > 0 {
+		query = query.Where("province_id IN ?", req.ProvinceIds)
+	}
+
+	if len(req.DistrictIds) > 0 {
+		query = query.Where("district_id IN ?", req.DistrictIds)
+	}
+
+	if len(req.WardIds) > 0 {
+		query = query.Where("ward_id IN ?", req.WardIds)
+	}
+
+	if len(req.PropertyTypeIds) > 0 {
+		query = query.Where("property_type_id IN ?", req.PropertyTypeIds)
+	}
+
+	if req.FromDate != nil {
+		query = query.Where("created_at >= ?", req.FromDate)
+	}
+
+	if req.ToDate != nil {
+		query = query.Where("created_at <= ?", req.ToDate)
+	}
+
+	// Count total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	if req.Page > 0 && req.Size > 0 {
+		offset := int((req.Page - 1) * req.Size)
+		query = query.Offset(offset).Limit(int(req.Size))
+	}
+
+	// Preload related data
+	query = query.Preload("LegalItems").
+		Preload("Province").
+		Preload("District").
+		Preload("Ward").
+		Preload("PropertyType").
+		Preload("Product").
+		Preload("AssetExploitations")
+
+	if err := query.Find(&assets).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return assets, total, nil
+}

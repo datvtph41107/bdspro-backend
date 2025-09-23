@@ -39,3 +39,7 @@ func (uc *AdminAssetUsecase) Merge(ctx context.Context, req *dto.MergeAssetReque
 func (uc *AdminAssetUsecase) Split(ctx context.Context, req *dto.SplitAssetDTO) (*domain.Asset, error) {
 	return uc.Repo.Split(ctx, req)
 }
+
+func (uc *AdminAssetUsecase) GetAdminAssets(ctx context.Context, req *dto.AdminAssetSearchRequest) ([]domain.Asset, int64, error) {
+	return uc.Repo.GetAdminAssets(ctx, req)
+}

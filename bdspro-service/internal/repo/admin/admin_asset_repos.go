@@ -14,4 +14,5 @@ type AdminAssetRepo interface {
 	Archive(ctx context.Context, req *dto.ArchivedRequest) error
 	Merge(ctx context.Context, req *dto.MergeAssetRequest) (*domain.Asset, error)
 	Split(ctx context.Context, req *dto.SplitAssetDTO) (*domain.Asset, error)
+	GetAdminAssets(ctx context.Context, req *dto.AdminAssetSearchRequest) ([]domain.Asset, int64, error)
 }

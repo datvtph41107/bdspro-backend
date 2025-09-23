@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbAssetSearchResponse"
+              "$ref": "#/definitions/bdspropbAdminAssetSearchResponse"
             }
           },
           "default": {
@@ -34,13 +34,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
           {
             "name": "page",
             "in": "query",
@@ -56,19 +49,66 @@
             "format": "int64"
           },
           {
-            "name": "sort",
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "description": "Trạng thái tài sản",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "archived",
+            "description": "Có lưu trữ hay không",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "fromDate",
+            "description": "Từ ngày (ISO format)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "description": "Đến ngày (ISO format)",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "text",
+            "description": "Tìm kiếm theo text",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "ids",
+            "name": "provinceIds",
+            "description": "Danh sách tỉnh/thành phố",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "propertyTypeIds",
+            "description": "Danh sách loại bất động sản",
             "in": "query",
             "required": false,
             "type": "array",
@@ -453,6 +493,127 @@
     }
   },
   "definitions": {
+    "bdspropbAdminAssetItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái tài sản"
+        },
+        "statusName": {
+          "type": "string",
+          "title": "Tên trạng thái tài sản"
+        },
+        "area": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích"
+        },
+        "address": {
+          "type": "string",
+          "title": "Địa chỉ đầy đủ"
+        },
+        "provinceName": {
+          "type": "string",
+          "title": "Tên tỉnh/thành phố"
+        },
+        "districtName": {
+          "type": "string",
+          "title": "Tên quận/huyện"
+        },
+        "wardName": {
+          "type": "string",
+          "title": "Tên phường/xã"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem",
+          "title": "Thông tin chủ sở hữu"
+        },
+        "propertyTypeName": {
+          "type": "string",
+          "title": "Tên loại bất động sản"
+        },
+        "createdAt": {
+          "type": "string",
+          "title": "Ngày tạo (ISO format)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "title": "Ngày cập nhật (ISO format)"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá mua"
+        },
+        "purchaseDate": {
+          "type": "string",
+          "title": "Ngày mua (ISO format)"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái pháp lý"
+        },
+        "legalStatusName": {
+          "type": "string",
+          "title": "Tên trạng thái pháp lý"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64",
+          "description": "ID sản phẩm",
+          "title": "Product information"
+        },
+        "productCode": {
+          "type": "string",
+          "title": "Mã sản phẩm"
+        },
+        "contractEndDate": {
+          "type": "string",
+          "description": "Ngày kết thúc hợp đồng (ISO format)",
+          "title": "Contract information"
+        },
+        "contractStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái hợp đồng"
+        },
+        "contractStatusName": {
+          "type": "string",
+          "title": "Tên trạng thái hợp đồng"
+        }
+      },
+      "title": "Admin Asset Item"
+    },
+    "bdspropbAdminAssetSearchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAdminAssetItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "Admin Asset Search Response"
+    },
     "bdspropbAdminAssetServiceUpdateAssetBody": {
       "type": "object",
       "properties": {
@@ -732,22 +893,6 @@
         },
         "product": {
           "$ref": "#/definitions/bdspropbProductResponse"
-        }
-      }
-    },
-    "bdspropbAssetSearchResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbAsset"
-          }
-        },
-        "total": {
-          "type": "string",
-          "format": "uint64"
         }
       }
     },

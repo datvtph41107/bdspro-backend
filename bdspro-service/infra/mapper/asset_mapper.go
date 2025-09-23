@@ -1,23 +1,35 @@
 package mapper
 
 import (
+	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	_usecase "common/domain/usecase"
 	_models "common/models"
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 )
 
 type AssetMapper struct {
+	*CommonMapper
 	AssetLegalMapper *AssetLegalMapper
 	ProductMapper    *ProductMapper
+	UserClient       *client.UserClient
+	CodeDataUsecase  *_usecase.CodeDataUsecase
 }
 
-func NewAssetMapper(assetLegalMapper *AssetLegalMapper, productMapper *ProductMapper) *AssetMapper {
+func NewAssetMapper(
+	assetLegalMapper *AssetLegalMapper,
+	productMapper *ProductMapper,
+	userClient *client.UserClient,
+	codeDataUsecase *_usecase.CodeDataUsecase) *AssetMapper {
 	result := &AssetMapper{
+		CommonMapper:     &CommonMapper{},
 		AssetLegalMapper: assetLegalMapper,
 		ProductMapper:    productMapper,
+		UserClient:       userClient,
+		CodeDataUsecase:  codeDataUsecase,
 	}
 	productMapper.PostMapper.AssetMapper = result
 	return result

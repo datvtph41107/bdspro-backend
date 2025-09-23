@@ -106,3 +106,57 @@ type AssetData struct {
 	LegalStatus    uint32  `json:"legal_status"`
 	PropertyTypeID *uint64 `json:"property_type_id"`
 }
+
+// Admin Asset Search Request
+type AdminAssetSearchRequest struct {
+	_dto.Pagable
+	Name            string     `form:"name" json:"name"`
+	Status          []uint32   `form:"status" json:"status"`                   // Trạng thái tài sản
+	Archived        *bool      `form:"archived" json:"archived"`               // Có lưu trữ hay không
+	FromDate        *time.Time `form:"fromDate" json:"fromDate"`               // Từ ngày
+	ToDate          *time.Time `form:"toDate" json:"toDate"`                   // Đến ngày
+	Text            string     `form:"text" json:"text"`                       // Tìm kiếm theo text
+	ProvinceIds     []uint64   `form:"provinceIds" json:"provinceIds"`         // Danh sách tỉnh/thành phố
+	DistrictIds     []uint64   `form:"districtIds" json:"districtIds"`         // Danh sách quận/huyện
+	WardIds         []uint64   `form:"wardIds" json:"wardIds"`                 // Danh sách phường/xã
+	PropertyTypeIds []uint64   `form:"propertyTypeIds" json:"propertyTypeIds"` // Danh sách loại bất động sản
+}
+
+// Admin Asset Item
+type AdminAssetItem struct {
+	ID               uint64       `json:"id"`
+	Code             string       `json:"code"`
+	Name             string       `json:"name"`
+	Status           uint32       `json:"status"`           // Trạng thái tài sản
+	StatusName       string       `json:"statusName"`       // Tên trạng thái
+	Area             float64      `json:"area"`             // Diện tích
+	Address          string       `json:"address"`          // Địa chỉ đầy đủ
+	ProvinceName     string       `json:"provinceName"`     // Tên tỉnh/thành phố
+	DistrictName     string       `json:"districtName"`     // Tên quận/huyện
+	WardName         string       `json:"wardName"`         // Tên phường/xã
+	PropertyTypeName string       `json:"propertyTypeName"` // Tên loại bất động sản
+	Owner            *ProfileItem `json:"owner"`            // Thông tin chủ sở hữu
+	CreatedAt        *time.Time   `json:"createdAt"`        // Ngày tạo
+	UpdatedAt        *time.Time   `json:"updatedAt"`        // Ngày cập nhật
+	Archived         bool         `json:"archived"`         // Có lưu trữ hay không
+	PurchasePrice    float64      `json:"purchasePrice"`    // Giá mua
+	PurchaseDate     *time.Time   `json:"purchaseDate"`     // Ngày mua
+	LegalStatus      uint32       `json:"legalStatus"`      // Trạng thái pháp lý
+	LegalStatusName  string       `json:"legalStatusName"`  // Tên trạng thái pháp lý
+	// Product information
+	ProductID   *uint64 `json:"productId"`   // ID sản phẩm
+	ProductCode string  `json:"productCode"` // Mã sản phẩm
+	// Contract information
+	ContractEndDate    *time.Time `json:"contractEndDate"`    // Ngày kết thúc hợp đồng
+	ContractStatus     uint32     `json:"contractStatus"`     // Trạng thái hợp đồng
+	ContractStatusName string     `json:"contractStatusName"` // Tên trạng thái hợp đồng
+}
+
+// Profile Item for Admin Asset
+type ProfileItem struct {
+	ID     uint64 `json:"id"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Phone  string `json:"phone"`
+	Avatar string `json:"avatar"`
+}
