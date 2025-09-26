@@ -154,6 +154,14 @@
       "mode": "auto",
       "program": "${workspaceFolder}/social-service",
       "args": ["grpc"]
+    },
+    {
+      "name": "🧪 Debug Feedback Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/feedback-service",
+      "args": ["grpc"]
     }
   ]
 }

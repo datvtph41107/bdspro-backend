@@ -29,6 +29,22 @@ func isWhitelisted(path, method string) bool {
 				return methods[method]
 			}
 		}
+
+		// Chuyển route thành regex pattern
+		pattern := "^" + regexp.QuoteMeta(route) + "$"
+
+		// Thay `\*` thành `[^/]+` (wildcard 1 segment)
+		pattern = strings.ReplaceAll(pattern, `\*`, `[^/]+`)
+
+		// Thay `\:param` thành `[^/]+`
+		// ví dụ "/user/:id/detail" -> "/user/[^/]+/detail"
+		re := regexp.MustCompile(`\\:([a-zA-Z0-9_]+)`)
+		pattern = re.ReplaceAllString(pattern, `[^/]+`)
+
+		matched, _ := regexp.MatchString(pattern, path)
+		if matched {
+			return methods[method]
+		}
 	}
 	return false
 }

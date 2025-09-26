@@ -60,7 +60,7 @@ var HttpCmd = &cobra.Command{
 			routes.FollowRoutes(r, app.FollowRouter)
 			routes.FriendRoutes(r, app.FriendRouter)
 			routes.GroupRoutes(r, app.GroupRouter)
-			routes.RateRoutes(r, app.RateRouter)
+			// routes.RateRoutes(r, app.RateRouter)
 
 			// group.GET("/info", func(c *gin.Context) {
 			// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Chat service avaiable"})

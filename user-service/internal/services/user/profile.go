@@ -11,6 +11,7 @@ import (
 	"user/enums"
 	user_repo "user/infra/repo"
 	"user/internal/dto"
+	"user/internal/interface/providers"
 	user_model "user/internal/models/user"
 
 	"github.com/gin-gonic/gin"
@@ -23,17 +24,16 @@ type ProfileService struct {
 	ProfileRepo       *user_repo.ProfileRepo
 	ProfessionRepo    *user_repo.ProfessionRepo
 	CertificationRepo *user_repo.CertificationRepo
-	RateRepo          *user_repo.RateRepo
-	FriendRepo        *user_repo.FriendRepo
+	FeedbackProvider  providers.FeedbackProvider
+	FriendRepo        providers.FriendProvider
 	FollowRepo        *user_repo.FollowRepo
-	// GetById(c *gin.Context, profileId uint64)
 }
 
 func NewProfileService(ProfileRepo *user_repo.ProfileRepo,
 	ProfessionRepo *user_repo.ProfessionRepo,
 	CertificationRepo *user_repo.CertificationRepo,
-	RateRepo *user_repo.RateRepo,
-	FriendRepo *user_repo.FriendRepo,
+	FeedbackProvider providers.FeedbackProvider,
+	FriendRepo providers.FriendProvider,
 	FollowRepo *user_repo.FollowRepo,
 ) *ProfileService {
 	planId := uint64(1)
@@ -42,7 +42,7 @@ func NewProfileService(ProfileRepo *user_repo.ProfileRepo,
 		ProfileRepo:       ProfileRepo,
 		ProfessionRepo:    ProfessionRepo,
 		CertificationRepo: CertificationRepo,
-		RateRepo:          RateRepo,
+		FeedbackProvider:  FeedbackProvider,
 		FriendRepo:        FriendRepo,
 		FollowRepo:        FollowRepo,
 	}
@@ -57,9 +57,21 @@ func (s *ProfileService) GetInfoMe(c context.Context) (*user_model.UserProfileEn
 	certifications, _ := s.CertificationRepo.ListItemByProfileID(c, id)
 	userInfo.Certifications = certifications
 
-	stats, err := s.RateRepo.CountInfo(c, id, 10)
+	// Lấy thống kê rating từ feedback service
+	rateStatsResp, err := s.FeedbackProvider.GetUserRateStats(c, id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Convert feedback response to user model
+	stats := user_model.RateStats{
+		TotalReviews: rateStatsResp.TotalReviews,
+		AverageScore: rateStatsResp.AverageScore,
+		Star1Count:   rateStatsResp.Star1Count,
+		Star2Count:   rateStatsResp.Star2Count,
+		Star3Count:   rateStatsResp.Star3Count,
+		Star4Count:   rateStatsResp.Star4Count,
+		Star5Count:   rateStatsResp.Star5Count,
 	}
 	userInfo.RateStats = &stats
 
@@ -158,15 +170,27 @@ func (s *ProfileService) PublicUserInfo(c context.Context, profileId uint64, isM
 		infoEntity.Certifications = certifications
 	}
 
-	stats, err := s.RateRepo.CountInfo(c, profileId, 10)
+	// Lấy thống kê rating từ feedback service
+	rateStatsResp, err := s.FeedbackProvider.GetUserRateStats(c, profileId)
 	if err != nil {
 		return nil, err
+	}
+
+	// Convert feedback response to user model
+	stats := user_model.RateStats{
+		TotalReviews: rateStatsResp.TotalReviews,
+		AverageScore: rateStatsResp.AverageScore,
+		Star1Count:   rateStatsResp.Star1Count,
+		Star2Count:   rateStatsResp.Star2Count,
+		Star3Count:   rateStatsResp.Star3Count,
+		Star4Count:   rateStatsResp.Star4Count,
+		Star5Count:   rateStatsResp.Star5Count,
 	}
 	infoEntity.RateStats = &stats
 
 	var relationShip *user_model.FriendItem
 	if profileId != 0 {
-		relationShip, _ = s.FriendRepo.GetRelationShip(profileId, currentUserId)
+		relationShip, _ = s.FriendRepo.GetRelationShip(c, profileId, currentUserId)
 	}
 	following, _ := s.FollowRepo.GetFollowing(profileId, profileId)
 	infoEntity.FriendStatus = relationShip

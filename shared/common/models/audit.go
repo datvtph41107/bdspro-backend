@@ -1,7 +1,7 @@
 package _models
 
 import (
-	_constants "common/constants"
+	_enums "common/domain/enum"
 	"log"
 
 	"gorm.io/gorm"
@@ -34,7 +34,7 @@ func (base *AuditBase) BeforeUpdate(tx *gorm.DB) error {
 func GetCurrentUserID(tx *gorm.DB) uint64 {
 	// Lấy profileId từ context
 	ginProfileId := tx.Statement.Context.Value("profileId")
-	profileId := tx.Statement.Context.Value(_constants.ProfileIDKey)
+	profileId := tx.Statement.Context.Value(_enums.ProfileIDKey)
 	if ginProfileId != nil {
 		return ginProfileId.(uint64)
 	}

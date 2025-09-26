@@ -1,0 +1,49 @@
+package handler
+
+import (
+	"context"
+	"feedback/internal/usecase"
+	feedbackpb "pb/types/feedback"
+	sharepb "pb/types/shared"
+)
+
+type RegistryHandler struct {
+	registryUsecase *usecase.RegistryUsecase
+}
+
+func NewRegistryHandler(registryUsecase *usecase.RegistryUsecase) *RegistryHandler {
+	return &RegistryHandler{
+		registryUsecase: registryUsecase,
+	}
+}
+
+// List gets a list of registry entries
+// @Summary Get registry list
+// @Description Get all registry entries
+// @Tags Registry
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.RegistryListResponse
+// @Router /registry [get]
+func (h *RegistryHandler) List(ctx context.Context, req *sharepb.Empty) (*feedbackpb.GetRegistryListResponse, error) {
+	// Get all registries
+	registries, err := h.registryUsecase.GetAllRegistries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to protobuf
+	responses := make([]*feedbackpb.FeedbackRegistry, len(registries))
+	for i, registry := range registries {
+		responses[i] = &feedbackpb.FeedbackRegistry{
+			RegistryKey:  registry.RegistryKey,
+			RegistryName: registry.RegistryName,
+			Port:         int32(registry.Port),
+			Service:      registry.Service,
+		}
+	}
+
+	return &feedbackpb.GetRegistryListResponse{
+		Data: responses,
+	}, nil
+}

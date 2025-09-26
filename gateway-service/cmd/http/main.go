@@ -57,7 +57,6 @@ var publicRoutes = []string{
 	"/v1/bdspro/v2/product/market",
 
 	// User public routes
-	"/v1/user/rate/list",
 	"/v1/user/oauth/zalo/login",
 	"/v1/user/oauth/facebook/login",
 	"/v1/user/oauth/google/login",
@@ -69,7 +68,6 @@ var publicRoutes = []string{
 	"/v1/user/profile/info/",
 	"/v1/user/profile/find-by-phone",
 	"/v2/user/profile/info/",
-	"/v2/user/rate/list",
 	"/v2/user/profile/search/public",
 
 	// Other services public routes
@@ -110,6 +108,14 @@ var publicRoutes = []string{
 	"/v2/auth/oauth",
 	"/v2/auth/admin/login",
 	"/v2/bdspro/v2/product/market",
+
+	// Feedback public routes
+	"/v2/feedback/rate/list",
+	"/v2/feedback/rate",
+	"/v2/feedback/rate/stats",
+	"/v2/feedback/report/reasons",
+	"/v2/feedback/report-reason",
+	"/v2/feedback/report",
 }
 
 // HttpCmd chạy HTTP server
@@ -212,6 +218,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterMarketingService(ctx, mux, env, opts)
 		service.RegisterTransactionService(ctx, mux, env, opts)
 		service.RegisterAuthService(ctx, mux, env, opts)
+		service.RegisterFeedbackService(ctx, mux, env, opts)
 
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))

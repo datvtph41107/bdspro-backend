@@ -9,12 +9,12 @@ import (
 )
 
 type ProfileMapper struct {
-	RateMapper *RateMapper
+	// RateMapper *RateMapper
 }
 
-func NewProfileMapper(rateMapper *RateMapper) *ProfileMapper {
+func NewProfileMapper() *ProfileMapper {
 	return &ProfileMapper{
-		RateMapper: rateMapper,
+		// RateMapper: rateMapper,
 	}
 }
 
@@ -149,9 +149,9 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *user_model.UserProfileEntity
 		result.Professions = append(result.Professions, m.ProfessionToPb(&profession))
 	}
 
-	if profile.RateStats != nil {
-		result.RateStats = m.RateMapper.EntityToPbRateStats(profile.RateStats)
-	}
+	// if profile.RateStats != nil {
+	// 	result.RateStats = m.RateMapper.EntityToPbRateStats(profile.RateStats)
+	// }
 
 	return result
 }

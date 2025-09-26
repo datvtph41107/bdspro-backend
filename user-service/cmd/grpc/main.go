@@ -2,6 +2,7 @@ package cmd_grpc
 
 import (
 	"common"
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -34,6 +35,9 @@ var GrpcCmd = &cobra.Command{
 		app, _ := wire.InitializeApp()
 		db.AutoMigrate()
 
+		// Đăng ký service vào feedback registry
+		app.FeedbackClient.RegisterService(context.Background())
+
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
@@ -47,7 +51,6 @@ var GrpcCmd = &cobra.Command{
 		)
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		userpb.RegisterAuthServiceServer(s, app.AuthService)
-		userpb.RegisterRateServiceServer(s, app.RateService)
 		// V2 Services (protobuf-based)
 		userpb.RegisterReportServiceServer(s, app.ReportHandler)
 		userpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)

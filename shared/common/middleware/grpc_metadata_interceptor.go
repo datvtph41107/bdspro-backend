@@ -1,7 +1,7 @@
 package _middleware
 
 import (
-	_constants "common/constants"
+	_enums "common/domain/enum"
 	_jwt "common/jwt"
 	"context"
 	"errors"
@@ -78,14 +78,14 @@ func ParseGrpcMetadataContextMiddleware(
 		return handler(ctx, req)
 	}
 
-	ctx = parseUint64Metadata(ctx, md, "profileId", _constants.ProfileIDKey)
-	ctx = parseUint64Metadata(ctx, md, "organizationId", _constants.OrganizationIDKey)
-	ctx = parseUint64Metadata(ctx, md, "authId", _constants.AuthIDKey)
-	ctx = parseUint64Metadata(ctx, md, "session", _constants.SessionKey)
-	ctx = parseUint64Metadata(ctx, md, "planId", _constants.PlanIDKey)
-	ctx = parseStringMetadata(ctx, md, "role", _constants.RoleKey)
-	ctx = parseStringMetadata(ctx, md, "type", _constants.TypeKey)
-	ctx = parseTimeMetadata(ctx, md, "planFrom", _constants.PlanFromKey)
+	ctx = parseUint64Metadata(ctx, md, "profileId", _enums.ProfileIDKey)
+	ctx = parseUint64Metadata(ctx, md, "organizationId", _enums.OrganizationIDKey)
+	ctx = parseUint64Metadata(ctx, md, "authId", _enums.AuthIDKey)
+	ctx = parseUint64Metadata(ctx, md, "session", _enums.SessionKey)
+	ctx = parseUint64Metadata(ctx, md, "planId", _enums.PlanIDKey)
+	ctx = parseStringMetadata(ctx, md, "role", _enums.RoleKey)
+	ctx = parseStringMetadata(ctx, md, "type", _enums.TypeKey)
+	ctx = parseTimeMetadata(ctx, md, "planFrom", _enums.PlanFromKey)
 
 	// Parse writer từ context nếu có
 	if writer, ok := ctx.Value("response-writer").(http.ResponseWriter); ok {
@@ -99,35 +99,35 @@ func ParseGrpcMetadataContextMiddleware(
 func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 	md := metadata.MD{}
 
-	appendUint64IfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+	appendUint64IfExists := func(ctxKey _enums.ContextKey, mdKey string) {
 		if val, ok := ctx.Value(ctxKey).(uint64); ok {
 			md.Append(mdKey, strconv.FormatUint(val, 10))
 		}
 	}
 
-	appendStringIfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+	appendStringIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
 		if val, ok := ctx.Value(ctxKey).(string); ok && val != "" {
 			md.Append(mdKey, val)
 		}
 	}
 
-	appendTimeIfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+	appendTimeIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
 		if val, ok := ctx.Value(ctxKey).(time.Time); ok && !val.IsZero() {
 			md.Append(mdKey, val.Format(time.RFC3339))
 		}
 	}
 
 	// Các key giống với middleware ở server
-	appendUint64IfExists(_constants.ProfileIDKey, "profileId")
-	appendUint64IfExists(_constants.OrganizationIDKey, "organizationId")
-	appendUint64IfExists(_constants.AuthIDKey, "authId")
-	appendUint64IfExists(_constants.SessionKey, "session")
-	appendUint64IfExists(_constants.PlanIDKey, "planId")
+	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
+	appendUint64IfExists(_enums.OrganizationIDKey, "organizationId")
+	appendUint64IfExists(_enums.AuthIDKey, "authId")
+	appendUint64IfExists(_enums.SessionKey, "session")
+	appendUint64IfExists(_enums.PlanIDKey, "planId")
 
-	appendStringIfExists(_constants.RoleKey, "role")
-	appendStringIfExists(_constants.TypeKey, "type")
+	appendStringIfExists(_enums.RoleKey, "role")
+	appendStringIfExists(_enums.TypeKey, "type")
 
-	appendTimeIfExists(_constants.PlanFromKey, "planFrom")
+	appendTimeIfExists(_enums.PlanFromKey, "planFrom")
 
 	return md
 }
@@ -195,7 +195,7 @@ func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 	return p, nil
 }
 
-func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey _constants.CtxKey) context.Context {
+func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey _enums.ContextKey) context.Context {
 	vals := md.Get(key)
 	if len(vals) == 0 {
 		return ctx
@@ -206,7 +206,7 @@ func parseUint64Metadata(ctx context.Context, md metadata.MD, key string, ctxKey
 	return ctx
 }
 
-func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _constants.CtxKey) context.Context {
+func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _enums.ContextKey) context.Context {
 	vals := md.Get(key)
 	if len(vals) > 0 && vals[0] != "" {
 		return context.WithValue(ctx, ctxKey, vals[0])
@@ -214,7 +214,7 @@ func parseStringMetadata(ctx context.Context, md metadata.MD, key string, ctxKey
 	return ctx
 }
 
-func parseTimeMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _constants.CtxKey) context.Context {
+func parseTimeMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _enums.ContextKey) context.Context {
 	vals := md.Get(key)
 	if len(vals) == 0 {
 		return ctx

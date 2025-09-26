@@ -1,0 +1,784 @@
+basePath: /v2/feedback
+definitions:
+  dto.RateCreateRequest:
+    properties:
+      anonymous:
+        type: boolean
+      attachs:
+        items:
+          type: string
+        type: array
+      comment:
+        type: string
+      ownerId:
+        type: integer
+      ownerOf:
+        type: integer
+      parentId:
+        type: integer
+      score:
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - anonymous
+    - comment
+    - ownerId
+    - ownerOf
+    - score
+    type: object
+  dto.RateUpdateRequest:
+    properties:
+      attachs:
+        items:
+          type: string
+        type: array
+      comment:
+        type: string
+      score:
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - comment
+    - score
+    type: object
+  dto.RegistryListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.RegistryResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  dto.RegistryResponse:
+    properties:
+      page:
+        type: integer
+      port:
+        type: integer
+      registryKey:
+        type: integer
+      registryName:
+        type: string
+      service:
+        type: string
+      size:
+        type: integer
+      sort:
+        type: string
+    type: object
+  dto.ReportCreateRequest:
+    properties:
+      content:
+        type: string
+      ownerId:
+        type: integer
+      ownerOf:
+        type: integer
+      proofDocs:
+        items:
+          type: string
+        type: array
+      reasonId:
+        type: integer
+      registryName:
+        type: string
+      userId:
+        type: integer
+    required:
+    - ownerId
+    - ownerOf
+    - reasonId
+    - userId
+    type: object
+  dto.ReportReasonCreateRequest:
+    properties:
+      description:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  dto.ReportReasonUpdateRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+    required:
+    - id
+    - name
+    type: object
+  dto.ReportUpdateRequest:
+    properties:
+      content:
+        type: string
+      proofDocs:
+        items:
+          type: string
+        type: array
+      reasonId:
+        type: integer
+    type: object
+  feedbackpb.AttachEntity:
+    properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+    type: object
+  feedbackpb.CreateRateResponse:
+    properties:
+      rate:
+        $ref: '#/definitions/feedbackpb.RateResponse'
+    type: object
+  feedbackpb.GetRateListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/feedbackpb.RateResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  feedbackpb.GetReportListResponse:
+    properties:
+      reports:
+        items:
+          $ref: '#/definitions/feedbackpb.ReportResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  feedbackpb.GetReportReasonListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/feedbackpb.ReportReason'
+        type: array
+      total:
+        type: integer
+    type: object
+  feedbackpb.GetReportReasonResponse:
+    properties:
+      reason:
+        $ref: '#/definitions/feedbackpb.ReportReason'
+    type: object
+  feedbackpb.GetReportReasonsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/feedbackpb.ReportReason'
+        type: array
+      total:
+        type: integer
+    type: object
+  feedbackpb.RateResponse:
+    properties:
+      anonymous:
+        type: boolean
+      attachs:
+        items:
+          $ref: '#/definitions/feedbackpb.AttachEntity'
+        type: array
+      comment:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      id:
+        type: integer
+      ownerId:
+        type: integer
+      ownerOf:
+        type: integer
+      parentId:
+        type: integer
+      score:
+        type: integer
+    type: object
+  feedbackpb.RateStatsResponse:
+    properties:
+      average_score:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      total_reviews:
+        type: integer
+    type: object
+  feedbackpb.ReportProof:
+    properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+    type: object
+  feedbackpb.ReportReason:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  feedbackpb.ReportResponse:
+    properties:
+      adminNote:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      ownerId:
+        type: integer
+      ownerOf:
+        type: integer
+      proofDocs:
+        items:
+          $ref: '#/definitions/feedbackpb.ReportProof'
+        type: array
+      reason:
+        $ref: '#/definitions/feedbackpb.ReportReason'
+      reasonId:
+        type: integer
+      reportStatus:
+        type: integer
+      reporter:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      response:
+        type: string
+      updatedAt:
+        type: string
+      user:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      userId:
+        type: integer
+    type: object
+  feedbackpb.UpdateHiddenRequest:
+    properties:
+      hidden:
+        type: boolean
+      id:
+        type: integer
+      registry:
+        type: string
+    type: object
+  feedbackpb.UpdateRateResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  feedbackpb.UpdateReportReasonResponse:
+    properties:
+      reason:
+        $ref: '#/definitions/feedbackpb.ReportReason'
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
+  sharepb.SubmitResponse:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API phần logic đánh giá và báo cáo
+  title: Feedback Service API
+  version: "1.0"
+paths:
+  /rate/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa đánh giá của người dùng
+      parameters:
+      - description: ID đánh giá
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa đánh giá
+      tags:
+      - Rate
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật đánh giá của người dùng
+      parameters:
+      - description: ID đánh giá
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RateUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.UpdateRateResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật đánh giá
+      tags:
+      - Rate
+  /rate/{registry}:
+    post:
+      consumes:
+      - application/json
+      description: Tạo đánh giá mới cho một đối tượng
+      parameters:
+      - description: Registry
+        in: path
+        name: registry
+        required: true
+        type: string
+      - description: Thông tin đánh giá
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RateCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.CreateRateResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo đánh giá mới
+      tags:
+      - Rate
+  /rate/{registry}/list/{ownerId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách đánh giá theo target ID và type
+      parameters:
+      - description: ID đối tượng
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Registry
+        in: path
+        name: registry
+        required: true
+        type: string
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.GetRateListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách đánh giá
+      tags:
+      - Rate
+  /rate/{registry}/stats/{ownerId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thống kê đánh giá theo target ID và type
+      parameters:
+      - description: ID đối tượng
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Registry
+        in: path
+        name: registry
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.RateStatsResponse'
+      summary: Lấy thống kê đánh giá
+      tags:
+      - Rate
+  /rate/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một đánh giá
+      parameters:
+      - description: ID đánh giá
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.RateResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin đánh giá
+      tags:
+      - Rate
+  /rate/hidden/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái ẩn/hiện của đánh giá
+      parameters:
+      - description: ID đánh giá
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/feedbackpb.UpdateHiddenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái ẩn đánh giá
+      tags:
+      - Rate
+  /registry:
+    get:
+      consumes:
+      - application/json
+      description: Get all registry entries
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegistryListResponse'
+      summary: Get registry list
+      tags:
+      - Registry
+  /report-reason:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lý do báo cáo với phân trang
+      parameters:
+      - description: Lọc theo trạng thái hoạt động
+        in: query
+        name: is_active
+        type: boolean
+      - description: Số trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.GetReportReasonListResponse'
+      summary: Lấy danh sách lý do báo cáo
+      tags:
+      - ReportReason
+    post:
+      consumes:
+      - application/json
+      description: Tạo lý do báo cáo mới
+      parameters:
+      - description: Thông tin lý do báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReportReasonCreateRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Tạo lý do báo cáo mới
+      tags:
+      - ReportReason
+  /report-reason/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa lý do báo cáo theo ID
+      parameters:
+      - description: ID lý do báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Xóa lý do báo cáo
+      tags:
+      - ReportReason
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin lý do báo cáo theo ID
+      parameters:
+      - description: ID lý do báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.GetReportReasonResponse'
+      summary: Lấy lý do báo cáo theo ID
+      tags:
+      - ReportReason
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin lý do báo cáo
+      parameters:
+      - description: ID lý do báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReportReasonUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.UpdateReportReasonResponse'
+      summary: Cập nhật lý do báo cáo
+      tags:
+      - ReportReason
+  /report/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa báo cáo của người dùng
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Xóa báo cáo
+      tags:
+      - Report
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật báo cáo của người dùng
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReportUpdateRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Cập nhật báo cáo
+      tags:
+      - Report
+  /report/{registry}:
+    post:
+      consumes:
+      - application/json
+      description: Tạo báo cáo mới cho một đối tượng
+      parameters:
+      - description: Registry
+        in: path
+        name: registry
+        required: true
+        type: string
+      - description: Thông tin báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReportCreateRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Tạo báo cáo mới
+      tags:
+      - Report
+  /report/{registry}/list/{ownerId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách báo cáo của người dùng
+      parameters:
+      - description: Registry
+        in: path
+        name: registry
+        required: true
+        type: string
+      - description: Owner ID
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.GetReportListResponse'
+      summary: Lấy danh sách báo cáo
+      tags:
+      - Report
+  /report/reasons:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lý do báo cáo có sẵn
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/feedbackpb.GetReportReasonsResponse'
+      summary: Lấy danh sách lý do báo cáo
+      tags:
+      - Report
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

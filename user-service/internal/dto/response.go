@@ -142,9 +142,9 @@ type PublicUserInfo struct {
 	// transient
 	Certifications []user_model.CertificationEntity `json:"certifications,omitempty"`
 	Professions    []user_model.ProfessionEntity    `json:"professions,omitempty"`
-	RateStats      user_model.RateStats             `json:"rateStats,omitempty"`
 	FriendStatus   *user_model.FriendItem           `json:"relationShip,omitempty"`
 	Following      bool                             `json:"following,omitempty"`
+	// RateStats      user_model.RateStats             `json:"rateStats,omitempty"`
 }
 
 type RelationShip struct {

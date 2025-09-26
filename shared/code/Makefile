@@ -68,6 +68,8 @@ buf-transaction:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path transaction
 buf-auth:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path auth	
+buf-feedback:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path feedback	
 buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction
 	echo "done"	
 	

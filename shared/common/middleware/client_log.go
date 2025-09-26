@@ -1,7 +1,7 @@
 package _middleware
 
 import (
-	_constants "common/constants"
+	_enums "common/domain/enum"
 	"context"
 	"log"
 	"strconv"
@@ -25,35 +25,35 @@ func UnaryClientInterceptor(
 	md := metadata.MD{}
 
 	// Các hàm helper để lấy giá trị từ context và gắn vào metadata
-	appendUint64IfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+	appendUint64IfExists := func(ctxKey _enums.ContextKey, mdKey string) {
 		if val, ok := ctx.Value(ctxKey).(uint64); ok {
 			md.Append(mdKey, strconv.FormatUint(val, 10))
 		}
 	}
 
-	appendStringIfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+	appendStringIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
 		if val, ok := ctx.Value(ctxKey).(string); ok && val != "" {
 			md.Append(mdKey, val)
 		}
 	}
 
-	appendTimeIfExists := func(ctxKey _constants.CtxKey, mdKey string) {
+	appendTimeIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
 		if val, ok := ctx.Value(ctxKey).(time.Time); ok && !val.IsZero() {
 			md.Append(mdKey, val.Format(time.RFC3339))
 		}
 	}
 
 	// Gắn các giá trị cần truyền sang service B
-	appendUint64IfExists(_constants.ProfileIDKey, "profileId")
-	appendUint64IfExists(_constants.OrganizationIDKey, "organizationId")
-	appendUint64IfExists(_constants.AuthIDKey, "authId")
-	appendUint64IfExists(_constants.SessionKey, "session")
-	appendUint64IfExists(_constants.PlanIDKey, "planId")
+	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
+	appendUint64IfExists(_enums.OrganizationIDKey, "organizationId")
+	appendUint64IfExists(_enums.AuthIDKey, "authId")
+	appendUint64IfExists(_enums.SessionKey, "session")
+	appendUint64IfExists(_enums.PlanIDKey, "planId")
 
-	appendStringIfExists(_constants.RoleKey, "role")
-	appendStringIfExists(_constants.TypeKey, "type")
+	appendStringIfExists(_enums.RoleKey, "role")
+	appendStringIfExists(_enums.TypeKey, "type")
 
-	appendTimeIfExists(_constants.PlanFromKey, "planFrom")
+	appendTimeIfExists(_enums.PlanFromKey, "planFrom")
 
 	// Gắn metadata vào context
 	ctx = metadata.NewOutgoingContext(ctx, md)

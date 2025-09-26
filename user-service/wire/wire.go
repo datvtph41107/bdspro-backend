@@ -16,7 +16,7 @@ import (
 	user_initial "user/initial"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
-	user_internal_interface_provider "user/internal/interface/provider"
+	user_internal_interface_providers "user/internal/interface/providers"
 	user_internal_models_auth "user/internal/models/auth"
 	user_internal_models_user "user/internal/models/user"
 	user_internal_repo "user/internal/repo"
@@ -30,8 +30,9 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
-	wire.Bind(new(user_internal_interface_provider.AuthProvider), new(*user_infra_client.AuthClient)),
-	wire.Bind(new(user_internal_repo.RateRepo), new(*user_infra_postgres.RatePostgres)),
+	wire.Bind(new(user_internal_interface_providers.AuthProvider), new(*user_infra_client.AuthClient)),
+	wire.Bind(new(user_internal_interface_providers.FriendProvider), new(*user_infra_client.CrmClient)),
+	wire.Bind(new(user_internal_interface_providers.FeedbackProvider), new(*user_infra_client.FeedbackClient)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
 	wire.Bind(new(user_internal_repo.AdminRepository), new(*user_infra_repo.AdminRepo)),
 	wire.Bind(new(user_internal_repo.ReportRepo), new(*user_infra_repo.ReportRepo)),
@@ -55,6 +56,7 @@ var wireSet = wire.NewSet(
 	user_internal_services_auth.NewCookieService,
 	user_infra_client.NewCrmClient,
 	user_internal_services_auth.NewFacebookAuthService,
+	user_infra_client.NewFeedbackClient,
 	user_infra_repo.NewFollowRepo,
 	user_infra_routes.NewFollowRouter,
 	user_internal_services_user.NewFollowService,
@@ -68,7 +70,6 @@ var wireSet = wire.NewSet(
 	user_internal_services_user.NewGroupService,
 	user_infra_handler.NewGrpcAuthService,
 	user_infra_handler.NewGrpcProfileService,
-	user_infra_handler.NewGrpcRateService,
 	user_internal_services_auth.NewHttpClient,
 	user_initial.NewInitialApp,
 	user_infra_routes.NewOAuthRouter,
@@ -83,12 +84,7 @@ var wireSet = wire.NewSet(
 	user_infra_repo.NewProfileRepo,
 	user_infra_routes.NewProfileRouter,
 	user_internal_services_user.NewProfileService,
-	user_infra_mapper.NewRateMapper,
-	user_infra_postgres.NewRatePostgres,
 	user_infra_repo.NewRateRepo,
-	user_infra_routes.NewRateRouter,
-	user_internal_services_user.NewRateService,
-	user_internal_usecases.NewRateUsecase,
 	user_internal_services_auth.NewRedisService,
 	user_internal_dto.NewRefreshResponse,
 	user_infra_handler.NewReportHandler,

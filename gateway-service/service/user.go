@@ -20,7 +20,6 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = userpb.RegisterProfileServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = userpb.RegisterRateServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterReportServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterReportReasonServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterReportProofServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

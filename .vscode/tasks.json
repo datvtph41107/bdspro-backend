@@ -79,7 +79,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     },
     {
@@ -94,7 +94,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     },
     {
@@ -109,7 +109,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     },
     {
@@ -136,7 +136,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     },
     {
@@ -151,7 +151,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     },
     {
@@ -166,7 +166,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     },
     {
@@ -259,5 +259,21 @@
         "panel": "dedicated"
       }
     },
+    {
+      "label": "🔌 Feedback gRPC (8217)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev feedback grpc",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        // "runOn": "folderOpen"
+      }
+    },
+    
   ]
 }

@@ -4,10 +4,10 @@ import (
 	"context"
 	"pb/clients"
 	"user/env"
-	client "user/internal/interface/provider"
+	"user/internal/interface/providers"
 )
 
-// @bind: user/internal/interface/provider.AuthProvider
+// @bind: user/internal/interface/providers.AuthProvider
 type AuthClient struct {
 	*clients.AuthGrpcClient
 }
@@ -18,12 +18,12 @@ func NewAuthClient() *AuthClient {
 	}
 }
 
-func (c *AuthClient) GetUserStatus(ctx context.Context, profileID uint64) (*client.UserStatusInfo, error) {
+func (c *AuthClient) GetUserStatus(ctx context.Context, profileID uint64) (*providers.UserStatusInfo, error) {
 	// TODO: Implement gọi auth-service để lấy thông tin user status
 	// Hiện tại trả về mock data, sau này sẽ implement thực tế
 
 	// Mock data - sẽ được thay thế bằng gọi API thực tế
-	return &client.UserStatusInfo{
+	return &providers.UserStatusInfo{
 		ProfileID:   profileID,
 		Verified:    true,
 		VerifiedAt:  nil, // Sẽ lấy từ auth-service
@@ -32,13 +32,13 @@ func (c *AuthClient) GetUserStatus(ctx context.Context, profileID uint64) (*clie
 	}, nil
 }
 
-func (c *AuthClient) GetUserStatusBatch(ctx context.Context, profileIDs []uint64) (map[uint64]*client.UserStatusInfo, error) {
+func (c *AuthClient) GetUserStatusBatch(ctx context.Context, profileIDs []uint64) (map[uint64]*providers.UserStatusInfo, error) {
 	// TODO: Implement gọi auth-service để lấy thông tin user status cho nhiều user
 	// Hiện tại trả về mock data, sau này sẽ implement thực tế
 
-	result := make(map[uint64]*client.UserStatusInfo)
+	result := make(map[uint64]*providers.UserStatusInfo)
 	for _, profileID := range profileIDs {
-		result[profileID] = &client.UserStatusInfo{
+		result[profileID] = &providers.UserStatusInfo{
 			ProfileID:   profileID,
 			Verified:    true,
 			VerifiedAt:  nil,

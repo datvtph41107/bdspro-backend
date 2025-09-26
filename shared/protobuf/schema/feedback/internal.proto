@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package feedbackpb;
+
+option go_package = "pb/types/feedback;feedbackpb";
+
+import "shared/common.proto";
+
+// Internal Service - Internal operations for feedback service
+service InternalService {
+  rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
+}
+
+// Internal Messages
+message FeedbackRegistry {
+  uint32 registry_key = 1;
+  string registry_name = 2;
+  int32 port = 3;
+  string service = 4;
+}

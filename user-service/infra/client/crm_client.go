@@ -5,8 +5,10 @@ import (
 	"pb/clients"
 	userpb "pb/types/user"
 	"user/env"
+	user_model "user/internal/models/user"
 )
 
+// @bind: user/internal/interface/providers.FriendProvider
 type CrmClient struct {
 	*clients.CrmGrpcClient
 }
@@ -31,4 +33,8 @@ func (c *CrmClient) MapFriendStatusToSearchItemPb(ctx context.Context, searchIte
 	for i, searchItem := range searchItems {
 		searchItems[i].FriendStatus = friendStatusMap[searchItem.ProfileId]
 	}
+}
+
+func (c *CrmClient) GetRelationShip(ctx context.Context, currentId uint64, targetId uint64) (*user_model.FriendItem, error) {
+	return nil, nil
 }

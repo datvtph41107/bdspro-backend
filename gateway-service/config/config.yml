@@ -22,6 +22,7 @@ service:
     marketing: 8214
     transaction: 8215
     auth: 8216
+    feedback: 8217
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer
