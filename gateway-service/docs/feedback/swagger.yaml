@@ -156,7 +156,7 @@ definitions:
     type: object
   feedbackpb.GetReportListResponse:
     properties:
-      reports:
+      data:
         items:
           $ref: '#/definitions/feedbackpb.ReportResponse'
         type: array
@@ -595,6 +595,8 @@ paths:
       produces:
       - application/json
       responses: {}
+      security:
+      - BearerAuth: []
       summary: Tạo lý do báo cáo mới
       tags:
       - ReportReason
@@ -616,6 +618,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
       summary: Xóa lý do báo cáo
       tags:
       - ReportReason
@@ -662,6 +666,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/feedbackpb.UpdateReportReasonResponse'
+      security:
+      - BearerAuth: []
       summary: Cập nhật lý do báo cáo
       tags:
       - ReportReason
@@ -679,6 +685,8 @@ paths:
       produces:
       - application/json
       responses: {}
+      security:
+      - BearerAuth: []
       summary: Xóa báo cáo
       tags:
       - Report
@@ -701,6 +709,8 @@ paths:
       produces:
       - application/json
       responses: {}
+      security:
+      - BearerAuth: []
       summary: Cập nhật báo cáo
       tags:
       - Report
@@ -724,6 +734,8 @@ paths:
       produces:
       - application/json
       responses: {}
+      security:
+      - BearerAuth: []
       summary: Tạo báo cáo mới
       tags:
       - Report

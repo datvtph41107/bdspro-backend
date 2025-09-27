@@ -379,6 +379,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Tạo lý do báo cáo mới",
                 "consumes": [
                     "application/json"
@@ -436,6 +441,11 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Cập nhật thông tin lý do báo cáo",
                 "consumes": [
                     "application/json"
@@ -475,6 +485,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Xóa lý do báo cáo theo ID",
                 "consumes": [
                     "application/json"
@@ -530,6 +545,11 @@
         },
         "/report/{id}": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Cập nhật báo cáo của người dùng",
                 "consumes": [
                     "application/json"
@@ -562,6 +582,11 @@
                 "responses": {}
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Xóa báo cáo của người dùng",
                 "consumes": [
                     "application/json"
@@ -587,6 +612,11 @@
         },
         "/report/{registry}": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Tạo báo cáo mới cho một đối tượng",
                 "consumes": [
                     "application/json"
@@ -905,7 +935,7 @@
         "feedbackpb.GetReportListResponse": {
             "type": "object",
             "properties": {
-                "reports": {
+                "data": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/feedbackpb.ReportResponse"

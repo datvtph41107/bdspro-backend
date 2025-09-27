@@ -28,6 +28,7 @@ func NewReportReasonHandler(reportReasonUsecase *usecase.ReportReasonUsecase) *R
 // @Tags ReportReason
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body dto.ReportReasonCreateRequest true "Thông tin lý do báo cáo"
 // @Router /report-reason [post]
 func (h *ReportReasonHandler) CreateReportReason(ctx context.Context, req *feedbackpb.CreateReportReasonRequest) (*feedbackpb.CreateReportReasonResponse, error) {
@@ -121,6 +122,7 @@ func (h *ReportReasonHandler) GetReportReason(ctx context.Context, req *sharepb.
 // @Tags ReportReason
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path uint64 true "ID lý do báo cáo"
 // @Param request body dto.ReportReasonUpdateRequest true "Thông tin cập nhật"
 // @Success 200 {object} feedbackpb.UpdateReportReasonResponse
@@ -154,6 +156,7 @@ func (h *ReportReasonHandler) UpdateReportReason(ctx context.Context, req *feedb
 // @Tags ReportReason
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path uint64 true "ID lý do báo cáo"
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /report-reason/{id} [delete]

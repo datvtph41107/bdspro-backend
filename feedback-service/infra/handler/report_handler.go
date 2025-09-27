@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 	"feedback/infra/mapper"
-	"feedback/internal/domain"
 	"feedback/internal/dto"
 	"feedback/internal/usecase"
 	feedbackpb "pb/types/feedback"
 	sharepb "pb/types/shared"
-
-	_utils "common/utils"
 
 	_dto "common/domain/dto"
 )
@@ -33,6 +30,7 @@ func NewReportHandler(reportUsecase *usecase.ReportUsecase, reportMapper *mapper
 // @Tags Report
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param registry path string true "Registry"
 // @Param request body dto.ReportCreateRequest true "Thông tin báo cáo"
 // @Router /report/{registry} [post]
@@ -134,6 +132,7 @@ func (h *ReportHandler) GetReportReasons(ctx context.Context, req *feedbackpb.Ge
 // @Tags Report
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path uint64 true "ID báo cáo"
 // @Param request body dto.ReportUpdateRequest true "Thông tin cập nhật"
 // @Router /report/{id} [put]
@@ -165,6 +164,7 @@ func (h *ReportHandler) UpdateReport(ctx context.Context, req *feedbackpb.Update
 // @Tags Report
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path uint64 true "ID báo cáo"
 // @Router /report/{id} [delete]
 func (h *ReportHandler) DeleteReport(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
@@ -178,117 +178,4 @@ func (h *ReportHandler) DeleteReport(ctx context.Context, req *sharepb.IdRequest
 		Id:      req.Id,
 		Message: "Report deleted successfully",
 	}, nil
-}
-
-// Helper functions to convert between protobuf and domain/DTO
-func convertReportResponseToProtobuf(report *dto.ReportResponse) *feedbackpb.ReportResponse {
-	if report == nil {
-		return nil
-	}
-
-	response := &feedbackpb.ReportResponse{
-		Id:           report.ID,
-		ReasonId:     report.ReasonID,
-		ReportStatus: uint32(report.ReportStatus),
-		UserId:       report.UserID,
-		Response:     &report.Response,
-		AdminNote:    &report.AdminNote,
-		OwnerId:      report.OwnerID,
-		OwnerOf:      uint32(report.OwnerOf),
-		Content:      report.Content,
-		CreatedAt:    _utils.FormatTimeToString(report.CreatedAt),
-		UpdatedAt:    _utils.FormatTimeToString(report.UpdatedAt),
-	}
-
-	if report.Reason != nil {
-		response.Reason = &feedbackpb.ReportReason{
-			Id:          report.Reason.ID,
-			Name:        report.Reason.Name,
-			Description: report.Reason.Description,
-			IsActive:    report.Reason.IsActive,
-		}
-	}
-
-	// if report.User != nil {
-	// 	response.User = report.User
-	// }
-
-	// if report.Reporter != nil {
-	// 	response.Reporter = &sharepb.ProfileItem{
-	// 		Id:       report.Reporter.ProfileID,
-	// 		FullName: report.Reporter.FullName,
-	// 		Avatar:   report.Reporter.Avatar,
-	// 	}
-	// }
-
-	if len(report.ProofDocs) > 0 {
-		for _, proof := range report.ProofDocs {
-			response.ProofDocs = append(response.ProofDocs, &feedbackpb.ReportProof{
-				Id:       proof.ID,
-				FileUrl:  proof.FileURL,
-				FileName: proof.FileName,
-				FileType: proof.FileType,
-			})
-		}
-	}
-
-	return response
-}
-
-func convertReportToProtobuf(report *domain.Report) *feedbackpb.ReportResponse {
-	if report == nil {
-		return nil
-	}
-
-	response := &feedbackpb.ReportResponse{
-		Id:           report.ID,
-		ReasonId:     report.ReasonID,
-		ReportStatus: uint32(report.ReportStatus),
-		UserId:       report.UserID,
-		Response:     &report.Response,
-		AdminNote:    &report.AdminNote,
-		OwnerId:      report.OwnerID,
-		OwnerOf:      uint32(report.OwnerOf),
-		Content:      report.Content,
-		CreatedAt:    _utils.FormatTimeToString(report.CreatedAt),
-		UpdatedAt:    _utils.FormatTimeToString(report.UpdatedAt),
-	}
-
-	if report.Reason != nil {
-		response.Reason = &feedbackpb.ReportReason{
-			Id:          report.Reason.ID,
-			Name:        report.Reason.Name,
-			Description: report.Reason.Description,
-			IsActive:    report.Reason.IsActive,
-		}
-	}
-
-	// if report.User != nil {
-	// 	response.User = &ratepb.UserItem{
-	// 		ProfileId: report.User.ProfileID,
-	// 		FullName:  report.User.FullName,
-	// 		Avatar:    report.User.Avatar,
-	// 	}
-	// }
-
-	// if report.Reporter != nil {
-	// 	response.Reporter = &ratepb.UserItem{
-	// 		ProfileId: report.Reporter.ProfileID,
-	// 		FullName:  report.Reporter.FullName,
-	// 		Avatar:    report.Reporter.Avatar,
-	// 	}
-	// }
-
-	if len(report.ProofDocs) > 0 {
-		for _, proof := range report.ProofDocs {
-			response.ProofDocs = append(response.ProofDocs, &feedbackpb.ReportProof{
-				Id:       proof.ID,
-				FileUrl:  proof.FileURL,
-				FileName: proof.FileName,
-				FileType: proof.FileType,
-			})
-		}
-	}
-
-	return response
 }

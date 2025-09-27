@@ -19,11 +19,95 @@ import (
 // Kiểm tra xem đường dẫn có trong danh sách publicRoutes không
 func isPublicRoute(pubRoutes []string, path string) bool {
 	for _, route := range pubRoutes {
-		if strings.HasPrefix(path, route) {
+		if matchRoute(route, path) {
 			return true
 		}
 	}
 	return false
+}
+
+// matchRoute kiểm tra xem path có match với pattern không
+// Hỗ trợ:
+// - * : wildcard cho bất kỳ ký tự nào (có thể rỗng)
+// - : : parameter cho số hoặc chữ (không được rỗng)
+func matchRoute(pattern, path string) bool {
+	// Nếu pattern không chứa wildcard hoặc parameter, dùng prefix matching
+	if !strings.Contains(pattern, "*") && !strings.Contains(pattern, ":") {
+		return strings.HasPrefix(path, pattern)
+	}
+
+	// Split pattern và path thành segments
+	patternSegments := strings.Split(strings.Trim(pattern, "/"), "/")
+	pathSegments := strings.Split(strings.Trim(path, "/"), "/")
+
+	// Loại bỏ segments rỗng cuối cùng từ path
+	for len(pathSegments) > 0 && pathSegments[len(pathSegments)-1] == "" {
+		pathSegments = pathSegments[:len(pathSegments)-1]
+	}
+
+	// Loại bỏ segments rỗng cuối cùng từ pattern, nhưng giữ lại wildcard
+	for len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "" {
+		patternSegments = patternSegments[:len(patternSegments)-1]
+	}
+
+	// Nếu pattern kết thúc bằng wildcard (*), cho phép path có thêm 1 segment
+	if len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "*" {
+		// Loại bỏ wildcard cuối cùng
+		patternSegments = patternSegments[:len(patternSegments)-1]
+		// Path phải có đúng số segments bằng pattern + 1 (cho wildcard)
+		if len(pathSegments) != len(patternSegments)+1 {
+			return false
+		}
+		// Chỉ kiểm tra các segments tương ứng
+		for i := 0; i < len(patternSegments); i++ {
+			patternSeg := patternSegments[i]
+			pathSeg := pathSegments[i]
+
+			// Nếu pattern segment là parameter (:), match nếu không rỗng
+			if patternSeg == ":" {
+				if pathSeg == "" {
+					return false
+				}
+				continue
+			}
+
+			// Nếu pattern segment không phải parameter, phải khớp chính xác
+			if patternSeg != pathSeg {
+				return false
+			}
+		}
+		return true
+	}
+
+	// Nếu số lượng segments không khớp, không match
+	if len(patternSegments) != len(pathSegments) {
+		return false
+	}
+
+	// Kiểm tra từng segment
+	for i, patternSeg := range patternSegments {
+		pathSeg := pathSegments[i]
+
+		// Nếu pattern segment là wildcard (*), match bất kỳ gì (kể cả rỗng)
+		if patternSeg == "*" {
+			continue
+		}
+
+		// Nếu pattern segment là parameter (:), match nếu không rỗng
+		if patternSeg == ":" {
+			if pathSeg == "" {
+				return false
+			}
+			continue
+		}
+
+		// Nếu pattern segment không phải wildcard hay parameter, phải khớp chính xác
+		if patternSeg != pathSeg {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Middleware để xác thực JWT
@@ -95,7 +179,7 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
 		// Gắn lỗi vào context để xử lý sau
-		ctx = context.WithValue(ctx, authErrorKey, AuthError{
+		_ = context.WithValue(ctx, authErrorKey, AuthError{
 			Message: "Missing Authorization header",
 		})
 		return md
@@ -112,7 +196,7 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 
 	claims, err := ParseJWT(tokenStr)
 	if err != nil || claims == nil {
-		ctx = context.WithValue(ctx, authErrorKey, AuthError{Message: "invalid or expired token"})
+		_ = context.WithValue(ctx, authErrorKey, AuthError{Message: "invalid or expired token"})
 		return md
 	}
 

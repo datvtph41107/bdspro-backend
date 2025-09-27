@@ -386,6 +386,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Tạo lý do báo cáo mới",
                 "consumes": [
                     "application/json"
@@ -443,6 +448,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Cập nhật thông tin lý do báo cáo",
                 "consumes": [
                     "application/json"
@@ -482,6 +492,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Xóa lý do báo cáo theo ID",
                 "consumes": [
                     "application/json"
@@ -537,6 +552,11 @@ const docTemplate = `{
         },
         "/report/{id}": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Cập nhật báo cáo của người dùng",
                 "consumes": [
                     "application/json"
@@ -569,6 +589,11 @@ const docTemplate = `{
                 "responses": {}
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Xóa báo cáo của người dùng",
                 "consumes": [
                     "application/json"
@@ -594,6 +619,11 @@ const docTemplate = `{
         },
         "/report/{registry}": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Tạo báo cáo mới cho một đối tượng",
                 "consumes": [
                     "application/json"
@@ -912,7 +942,7 @@ const docTemplate = `{
         "feedbackpb.GetReportListResponse": {
             "type": "object",
             "properties": {
-                "reports": {
+                "data": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/feedbackpb.ReportResponse"
