@@ -3,11 +3,14 @@ package client
 import (
 	base_dto "base/dto"
 	base_provider "base/provider"
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	"context"
-	"crm/env"
-	delivery_dto "crm/internal/dto/delivery"
 	"pb/clients"
 	"time"
+
+	"crm/env"
+	delivery_dto "crm/internal/dto/delivery"
 )
 
 type NotificationClient struct {
@@ -40,16 +43,28 @@ func (client *NotificationClient) SendReminder(c context.Context, customerID uin
 func (client *NotificationClient) SendNotification(ctx context.Context, noti *base_dto.NotificationDTO) error {
 	return nil
 }
+
 func (client *NotificationClient) SendBatchNotification(ctx context.Context, noti *base_dto.NotificationBatchDTO) error {
 	return nil
 }
 
-//	func (client *NotificationClient) CreateCRMHistory(ctx context.Context, history *base_dto.HistoryDTO) error {
-//		if client.Client == nil {
-//			return nil
-//		}
-//		return client.Client.CreateCRMHistory(ctx, history)
-//	}
+func (client *NotificationClient) CreateCRMHistory(ctx context.Context, history *base_dto.HistoryDTO) error {
+	if client.NotificationClient == nil {
+		return nil
+	}
+	// Convert base_dto.HistoryDTO to _dto.HistoryDTO
+	historyDTO := &_dto.HistoryDTO{
+		Title:      history.Title,
+		Note:       history.Note,
+		TargetId:   history.TargetId,
+		TargetType: _enum.ETargetHistory(history.TargetType),
+		ActionType: _enum.EHistory(history.ActionType),
+		OwnerID:    history.OwnerID,
+		OwnerOf:    _enum.EOwnerOf(history.OwnerOf),
+	}
+	return client.NotificationClient.CreateCRMHistory(ctx, historyDTO)
+}
+
 func (client *NotificationClient) ExistedFromDate(ctx context.Context, customerID uint64, fromDate time.Time) (bool, error) {
 	return false, nil
 }

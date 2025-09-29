@@ -3,6 +3,7 @@ package repo
 import (
 	"common/case/crud"
 	_db "common/db"
+	"context"
 
 	"membership/models"
 
@@ -23,6 +24,6 @@ func NewPlanRepo(db *gorm.DB) *PlanRepo {
 func (p *PlanRepo) ListForUser() ([]models.Plan, error) {
 	var entities []models.Plan
 
-	err := p.DB.Debug().Where("deleted_at IS NULL and visibility = true").Find(&entities).Error
+	err := p.TransactionRepo.GetDB(context.Background()).Debug().Where("deleted_at IS NULL and visibility = true").Find(&entities).Error
 	return entities, err
 }

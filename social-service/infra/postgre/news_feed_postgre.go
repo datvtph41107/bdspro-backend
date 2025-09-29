@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	socialpb "pb/types/social"
+	"time"
+
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -276,6 +278,7 @@ func (r *PostgreNewsFeed) GetPublicIgnorePreloadByID(ctx context.Context, id uin
 	}
 	return &newsFeed, nil
 }
+
 func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error) {
 	var newsFeed *domain.NewsFeed
 	err := r.db.WithContext(ctx).
@@ -285,7 +288,6 @@ func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsF
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&newsFeed).
 		Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +309,6 @@ func (r *PostgreNewsFeed) GetLastUpdated(ctx context.Context, id uint64) (*time.
 		Order("updated_at DESC").
 		Limit(1).
 		Pluck("updated_at", &updatedTime).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +350,6 @@ func (r *PostgreNewsFeed) GetReel(ctx context.Context, dto _dto.Pagable) ([]*dom
 		Limit(dto.GetLimit()).
 		Offset(dto.GetOffset()).
 		Scan(&results).Error
-
 	if err != nil {
 		return nil, 0, err
 	}
@@ -521,4 +521,14 @@ func (r *PostgreNewsFeed) buildNewsFeedResults(newsFeeds []*NewsFeedRawQuery) ([
 	}
 
 	return results, nil
+}
+
+// CountByOwner đếm số tin đăng theo ownerOf và ownerId
+func (r *PostgreNewsFeed) CountByOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId uint64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("owner_of = ? AND owner_id = ? AND deleted_at IS NULL", ownerOf, ownerId).
+		Count(&count).Error
+	return count, err
 }

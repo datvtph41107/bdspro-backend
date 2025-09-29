@@ -3,6 +3,7 @@ package repo
 import (
 	"common/case/crud"
 	_db "common/db"
+	"context"
 
 	"membership/models"
 
@@ -30,7 +31,7 @@ func (r *MembershipRepo) PlanList() []models.Membership {
 // Lấy bản ghi theo ID (bỏ qua những bản ghi đã bị xóa mềm)
 func (r *MembershipRepo) GetByProfileID(id uint64) (*models.Membership, error) {
 	var entity models.Membership
-	err := r.DB.Where("profile_id = ? AND deleted_at IS NULL", id).First(&entity).Error
+	err := r.TransactionRepo.GetDB(context.Background()).Where("profile_id = ? AND deleted_at IS NULL", id).First(&entity).Error
 	if err != nil {
 		return nil, err
 	}

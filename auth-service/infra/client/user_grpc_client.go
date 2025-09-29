@@ -1,10 +1,11 @@
 package client
 
 import (
-	"auth/env"
 	"context"
 	clients "pb/clients"
 	sharepb "pb/types/shared"
+
+	"auth/env"
 )
 
 // @bind: auth/internal/interface.IUserGrpcClient
@@ -14,7 +15,7 @@ type UserGrpcClient struct {
 
 func NewUserGrpcClient() *UserGrpcClient {
 	return &UserGrpcClient{
-		Client: clients.MakeUserGrpcClient(env.ENV_RELEASE),
+		Client: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
 }
 
