@@ -22,7 +22,7 @@ require (
 	github.com/spf13/viper v1.20.0
 	github.com/swaggo/swag v1.16.4
 	google.golang.org/grpc v1.72.0
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
 

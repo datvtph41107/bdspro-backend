@@ -21,12 +21,11 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
 
 require (
-	base v0.0.0-00010101000000-000000000000 // indirect
 	github.com/bytedance/sonic v1.13.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect

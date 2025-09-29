@@ -912,6 +912,252 @@
         }
       }
     },
+    "bdspropbAmenityItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbApartment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "floor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "ordinal": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "buildId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "archived": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "apartmentAttrId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "bdspropbApartmentAttribute": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "numBedroom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "blueprintUrl": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "bdspropbAssetItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "AssetItem for product detail response"
+    },
+    "bdspropbAttributeProduct": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbDeveloper": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string"
+        },
+        "backgroundUrl": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "foundedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "bdspropbDocType": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbHouseInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numBedroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFront": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numCarPark": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "numToilet": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "bdspropbItemResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbMediaItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "isMain": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "bdspropbPost": {
       "type": "object",
       "properties": {
@@ -1011,8 +1257,35 @@
         },
         "wardName": {
           "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductResponse"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibleStatus": {
+          "type": "integer",
+          "format": "int64"
         }
       }
+    },
+    "bdspropbPostItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "PostItem for product detail response"
     },
     "bdspropbPostMedia": {
       "type": "object",
@@ -1033,6 +1306,489 @@
         "sortOrder": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "bdspropbProductPrice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "priceOwner": {
+          "type": "number",
+          "format": "double"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "saleCommission": {
+          "type": "number",
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
+        },
+        "deposite": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommission": {
+          "type": "number",
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
+        },
+        "rentPaymentCycle": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbProductPrivate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "importPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "operatingCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "privateDocs": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbProductResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyType": {
+          "$ref": "#/definitions/bdspropbItemResponse"
+        },
+        "docTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "docType": {
+          "$ref": "#/definitions/bdspropbDocType"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAmenityItem"
+          }
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "positionUrl": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "orgStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lastPriceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "price": {
+          "$ref": "#/definitions/bdspropbProductPrice"
+        },
+        "apartmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "apartment": {
+          "$ref": "#/definitions/bdspropbApartment"
+        },
+        "apartmentAttribute": {
+          "$ref": "#/definitions/bdspropbApartmentAttribute"
+        },
+        "build": {
+          "$ref": "#/definitions/bdspropbProjectBuild"
+        },
+        "project": {
+          "$ref": "#/definitions/bdspropbProject"
+        },
+        "developer": {
+          "$ref": "#/definitions/bdspropbDeveloper"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "privateData": {
+          "$ref": "#/definitions/bdspropbProductPrivate"
+        },
+        "note": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "province": {
+          "$ref": "#/definitions/bdspropbRegion"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "district": {
+          "$ref": "#/definitions/bdspropbRegion"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ward": {
+          "$ref": "#/definitions/bdspropbRegion"
+        },
+        "address": {
+          "type": "string"
+        },
+        "googleMapLink": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAttributeProduct"
+          }
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbMediaItem"
+          }
+        },
+        "houseInfo": {
+          "$ref": "#/definitions/bdspropbHouseInfo"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "priceSuggest": {
+          "type": "number",
+          "format": "double"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "createdUser": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "saleTransaction": {
+          "$ref": "#/definitions/bdspropbTransaction"
+        },
+        "rentTransaction": {
+          "$ref": "#/definitions/bdspropbTransaction"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAssetItem"
+          }
+        },
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPostItem"
+          }
+        }
+      }
+    },
+    "bdspropbProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "developerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "bdspropbProjectBuild": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numApartment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "apartments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbApartment"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbApartmentAttribute"
+          }
+        }
+      }
+    },
+    "bdspropbRegion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbTransaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "organizationId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "paymentMethodId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "relatedDealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "relatedTransactionId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvalStatus": {
+          "type": "string"
+        },
+        "approvedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvalDate": {
+          "type": "string"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "isDeleted": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "depositeAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "depositeNote": {
+          "type": "string"
+        },
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

@@ -18,12 +18,11 @@ require (
 	github.com/spf13/viper v1.20.1
 	golang.org/x/crypto v0.41.0
 	google.golang.org/grpc v1.72.0
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
 
 require (
-	base v0.0.0-00010101000000-000000000000 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/bytedance/sonic v1.13.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect

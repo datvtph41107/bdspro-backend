@@ -349,6 +349,56 @@
         }
       }
     },
+    "bdspropbProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      },
+      "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
+    },
     "organizationpbAttachDealProductRequest": {
       "type": "object",
       "properties": {
@@ -642,56 +692,6 @@
           "format": "int64"
         }
       }
-    },
-    "bdspropbProductAttachment": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "area": {
-          "type": "number",
-          "format": "double"
-        },
-        "price": {
-          "type": "number",
-          "format": "double"
-        },
-        "image": {
-          "type": "string"
-        },
-        "assetId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "depositeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "rentStatus": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "saleStatus": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "sourceType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "sourceTypeName": {
-          "type": "string"
-        }
-      },
-      "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
     "protobufAny": {
       "type": "object",
