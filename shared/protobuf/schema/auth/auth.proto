@@ -544,6 +544,7 @@ message AdminAccessItem {
     uint64 updatedBy = 15;
     string createdAt = 16;
     string updatedAt = 17;
+    string username = 18;
 }
 
 message AdminAccessLogItem {

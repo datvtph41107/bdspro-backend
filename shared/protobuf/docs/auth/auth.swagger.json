@@ -962,6 +962,9 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "username": {
+          "type": "string"
         }
       }
     },

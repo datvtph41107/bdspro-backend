@@ -137,6 +137,7 @@ var HttpCmd = &cobra.Command{
 				"http://14.225.205.222:8000",
 				"http://14.225.205.222:3107",
 				"http://103.145.63.185:3107",
+				"http://localhost:5173",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
@@ -147,7 +148,7 @@ var HttpCmd = &cobra.Command{
 
 		env := os.Getenv("ENV_RUNTIME")
 
-		// gRPC Gateway mux
+		// gRPC Gateway muxcs
 		mux := runtime.NewServeMux(
 			runtime.WithMetadata(_middleware.InjectGrpcMetadataContextMiddleware),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {

@@ -3,25 +3,30 @@ package usecase
 import (
 	"auth/internal/domain"
 	"auth/internal/dto"
+	userinterface "auth/internal/interface"
 	"auth/internal/interface/repo"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"fmt"
+	sharepb "pb/types/shared"
 )
 
 type AdminAccessUsecase struct {
 	AdminAccessRepo repo.AdminAccessRepository
 	AuthMethodRepo  repo.AuthMethodRepository
+	UserGrpcClient  userinterface.IUserGrpcClient
 }
 
 func NewAdminAccessUsecase(
 	adminAccessRepo repo.AdminAccessRepository,
 	authMethodRepo repo.AuthMethodRepository,
+	userGrpcClient userinterface.IUserGrpcClient,
 ) *AdminAccessUsecase {
 	return &AdminAccessUsecase{
 		AdminAccessRepo: adminAccessRepo,
 		AuthMethodRepo:  authMethodRepo,
+		UserGrpcClient:  userGrpcClient,
 	}
 }
 
@@ -190,10 +195,30 @@ func (u *AdminAccessUsecase) GetAdminAccessList(ctx context.Context, req dto.Adm
 		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách quyền truy cập")
 	}
 
+	// Lấy danh sách userID từ accesses
+	userIDs := make([]uint64, 0, len(accesses))
+	for _, access := range accesses {
+		if access.UserID > 0 {
+			userIDs = append(userIDs, access.UserID)
+		}
+	}
+
+	// Lấy thông tin username từ user service
+	userMap := make(map[uint64]*sharepb.ProfileItem)
+	if len(userIDs) > 0 {
+		userMap, _ = u.UserGrpcClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+			Ids: userIDs,
+		})
+	}
+
 	// Convert to response
 	responses := make([]*dto.AdminAccessResponse, len(accesses))
 	for i, access := range accesses {
 		responses[i] = u.convertToResponse(access)
+		// Thêm username từ userMap
+		if user, ok := userMap[access.UserID]; ok && user != nil {
+			responses[i].Username = user.FullName
+		}
 	}
 
 	return &dto.AdminAccessListResponse{

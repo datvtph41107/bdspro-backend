@@ -762,6 +762,7 @@ func (h *AuthHandler) GetAdminAccessList(ctx context.Context, req *authpb.GetAdm
 		protoItem := &authpb.AdminAccessItem{
 			Id:         item.ID,
 			UserId:     item.UserID,
+			Username:   item.Username,
 			IpAddress:  item.IPAddress,
 			IpRange:    item.IPRange,
 			DeviceId:   item.DeviceID,

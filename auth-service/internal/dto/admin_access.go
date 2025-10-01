@@ -24,6 +24,7 @@ type AdminAccessRequest struct {
 type AdminAccessResponse struct {
 	ID            uint64     `json:"id"`
 	UserID        uint64     `json:"userId"`
+	Username      string     `json:"username"`
 	IPAddress     string     `json:"ipAddress"`
 	IPRange       string     `json:"ipRange"`
 	DeviceID      string     `json:"deviceId"`
