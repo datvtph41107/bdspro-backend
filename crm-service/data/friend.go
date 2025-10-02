@@ -1,7 +1,7 @@
 package data
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"crm/internal/enums"
 	"time"
 )

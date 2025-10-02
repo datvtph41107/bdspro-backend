@@ -3,7 +3,7 @@ package dto
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/enums"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 )
 
 type SharingAccessSearch struct {

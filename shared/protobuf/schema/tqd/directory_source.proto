@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// DirectorySource service
+service DirectorySourceService {
+  // Create a new directory source
+  rpc CreateDirectorySource(DirectorySource) returns (DirectorySource) {
+    option (google.api.http) = {
+      post: "/v2/tqd/directory/sources"
+      body: "*"
+    };
+  }
+
+  // Get directory source by ID
+  rpc GetDirectorySource(sharepb.IdRequest) returns (DirectorySource) {
+    option (google.api.http) = {
+      get: "/v2/tqd/directory/sources/{id}"
+    };
+  }
+
+  // Update directory source
+  rpc UpdateDirectorySource(DirectorySource) returns (DirectorySource) {
+    option (google.api.http) = {
+      put: "/v2/tqd/directory/sources/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete directory source
+  rpc DeleteDirectorySource(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/directory/sources/{id}"
+    };
+  }
+
+  // List directory sources
+  rpc ListDirectorySources(ListDirectorySourcesRequest) returns (ListDirectorySourcesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/directory/sources"
+    };
+  }
+}
+
+// DirectorySource message
+message DirectorySource {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  string category = 5;
+  string type = 6;
+  string icon = 7;
+  string color = 8;
+  bool isActive = 9;
+  uint32 sortOrder = 10;
+  int64 expectedAmount = 11;
+  int64 actualAmount = 12;
+  string frequency = 13;
+  string startDate = 14;
+  bool isRecurring = 15;
+  string paymentMethod = 16;
+  string notes = 17;
+  repeated string tags = 18;
+  string createdAt = 19;
+  string updatedAt = 20;
+  uint64 createdBy = 21;
+  uint64 updatedBy = 22;
+}
+
+// Request/Response messages
+message ListDirectorySourcesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  string category = 4;
+  string type = 5;
+  bool isActive = 6;
+  bool isRecurring = 7;
+}
+
+message GetDirectorySourcesByCategoryRequest {
+  string category = 1;
+}
+
+message GetDirectorySourcesByTypeRequest {
+  string type = 1;
+}
+
+message UpdateAmountsRequest {
+  uint64 id = 1;
+  int64 expectedAmount = 2;
+  int64 actualAmount = 3;
+}
+
+message ListDirectorySourcesResponse {
+  repeated DirectorySource data = 2;
+  int64 total = 3;
+}

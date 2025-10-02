@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"user/enums"
 
 	"github.com/go-playground/validator/v10"

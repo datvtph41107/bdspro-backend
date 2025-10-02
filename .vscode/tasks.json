@@ -274,6 +274,20 @@
         // "runOn": "folderOpen"
       }
     },
-    
+    {
+      "label": "🔌 TQD HTTP (8230)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev tqd http",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        // "runOn": "folderOpen"
+      }
+    }
   ]
 }

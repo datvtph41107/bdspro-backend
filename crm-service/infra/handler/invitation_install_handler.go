@@ -1,7 +1,7 @@
 package handler
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	crmpb "pb/types/crm"
 

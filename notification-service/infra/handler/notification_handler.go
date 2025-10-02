@@ -1,7 +1,7 @@
 package handler
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	shared_enum "pb/enums"

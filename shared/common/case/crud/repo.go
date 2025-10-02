@@ -2,7 +2,7 @@ package crud
 
 import (
 	_db "common/db"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	"time"
 )

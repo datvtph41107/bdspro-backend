@@ -3,7 +3,7 @@ package postgre
 import (
 	"common/case/crud"
 	_db "common/db"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
 

@@ -2,7 +2,7 @@ package handler
 
 import (
 	base_enum "base/enum"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"

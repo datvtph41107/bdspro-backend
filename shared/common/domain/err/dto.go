@@ -9,3 +9,10 @@ type ErrorDTO struct {
 func (e *ErrorDTO) Error() string {
 	return e.Message
 }
+
+func ErrorReturn(code int, message string) *ErrorDTO {
+	return &ErrorDTO{
+		Code:    code,
+		Message: message,
+	}
+}

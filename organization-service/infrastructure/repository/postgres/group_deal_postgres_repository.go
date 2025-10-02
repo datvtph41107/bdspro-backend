@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	"time"
 

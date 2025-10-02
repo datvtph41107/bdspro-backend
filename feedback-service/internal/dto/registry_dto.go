@@ -1,7 +1,7 @@
 package dto
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 )
 
 // RegistryCreateRequest represents request to create a registry entry

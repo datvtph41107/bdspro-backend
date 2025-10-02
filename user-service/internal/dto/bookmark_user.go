@@ -1,7 +1,7 @@
 package dto
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	user_model "user/internal/models/user"
 )
 

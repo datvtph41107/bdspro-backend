@@ -4,7 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	bdspropb "pb/types/bdspro"
 )
 

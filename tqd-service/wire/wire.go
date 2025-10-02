@@ -1,0 +1,72 @@
+//go:build wireinject
+// +build wireinject
+
+package wire
+
+import (
+	_db "common/db"
+	tqd_infra_client "tqd/infra/client"
+	tqd_infra_handler_http "tqd/infra/handler/http"
+	tqd_infra_mapper "tqd/infra/mapper"
+	tqd_infra_postgres "tqd/infra/postgres"
+	tqd_infra_providers "tqd/infra/providers"
+	tqd_infra_validator "tqd/infra/validator"
+	"tqd/initial"
+	tqd_initial "tqd/initial"
+	tqd_internal_usecase "tqd/internal/usecase"
+
+	"github.com/google/wire"
+)
+
+// Inject dependencies
+var wireSet = wire.NewSet(
+	_db.NewDB,
+	_db.NewTransactionRepo,
+	tqd_infra_handler_http.NewAmenityHandler,
+	tqd_infra_mapper.NewAmenityMapper,
+	tqd_infra_postgres.NewAmenityRepo,
+	tqd_internal_usecase.NewAmenityUsecase,
+	tqd_initial.NewApp,
+	tqd_internal_usecase.NewBaseUsecase,
+	tqd_infra_providers.NewCacheProvider,
+	tqd_infra_handler_http.NewContactLabelHandler,
+	tqd_infra_mapper.NewContactLabelMapper,
+	tqd_infra_postgres.NewContactLabelPostgresRepo,
+	tqd_internal_usecase.NewContactLabelUsecase,
+	tqd_infra_validator.NewContactLabelValidator,
+	tqd_infra_handler_http.NewDirectoryCategoryHandler,
+	tqd_infra_mapper.NewDirectoryCategoryMapper,
+	tqd_infra_postgres.NewDirectoryCategoryPostgresRepo,
+	tqd_internal_usecase.NewDirectoryCategoryUsecase,
+	tqd_infra_validator.NewDirectoryCategoryValidator,
+	tqd_infra_handler_http.NewDirectorySourceHandler,
+	tqd_infra_mapper.NewDirectorySourceMapper,
+	tqd_infra_postgres.NewDirectorySourcePostgres,
+	tqd_internal_usecase.NewDirectorySourceUsecase,
+	tqd_infra_validator.NewDirectorySourceValidator,
+	tqd_infra_handler_http.NewDirectorySupplierHandler,
+	tqd_infra_mapper.NewDirectorySupplierMapper,
+	tqd_infra_postgres.NewDirectorySupplierPostgres,
+	tqd_internal_usecase.NewDirectorySupplierUsecase,
+	tqd_infra_providers.NewFileProvider,
+	tqd_infra_providers.NewGeoProvider,
+	tqd_infra_client.NewNotificationClient,
+	tqd_infra_handler_http.NewOpenHourHandler,
+	tqd_infra_postgres.NewOpenHourPostgres,
+	tqd_internal_usecase.NewOpenHourUsecase,
+	tqd_infra_handler_http.NewPOIHTTPHandler,
+	tqd_infra_postgres.NewPOIRepo,
+	tqd_internal_usecase.NewPOIUsecase,
+	tqd_infra_client.NewPermissionClient,
+	tqd_infra_handler_http.NewPoiCategoryHandler,
+	tqd_infra_postgres.NewPoiCategoryPostgres,
+	tqd_internal_usecase.NewPoiCategoryUsecase,
+	tqd_initial.NewRedisService,
+	tqd_infra_providers.NewTransactionProvider,
+	tqd_infra_client.NewUserClient,
+)
+
+func InitializeApp() (*initial.InitialApp, error) {
+	wire.Build(wireSet)
+	return nil, nil
+}

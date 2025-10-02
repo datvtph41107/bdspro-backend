@@ -1,7 +1,7 @@
 ---
 description:
 globs:
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Quy tắc viết 1 api thông thường khi có yêu cầu:

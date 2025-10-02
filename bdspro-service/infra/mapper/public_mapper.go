@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/dto"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	bdspropb "pb/types/bdspro"
 )
 

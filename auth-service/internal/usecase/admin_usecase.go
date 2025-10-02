@@ -279,16 +279,16 @@ func (u *AdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequest)
 	}
 
 	// Lấy danh sách role admin từ organization service
-	adminRoles, err := u.OrganizationClient.GetAdminRoles(ctx)
-	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách role")
-	}
+	// adminRoles, err := u.OrganizationClient.GetAdminRoles(ctx)
+	// if err != nil {
+	// 	return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách role")
+	// }
 
 	// Tạo map role để lookup nhanh
-	roleMap := make(map[string]string)
-	for _, role := range adminRoles {
-		roleMap[role.Key] = role.Name
-	}
+	// roleMap := make(map[string]string)
+	// for _, role := range adminRoles {
+	// 	roleMap[role.Key] = role.Name
+	// }
 
 	// Chuyển đổi sang response
 	var adminItems []dto.AdminItem

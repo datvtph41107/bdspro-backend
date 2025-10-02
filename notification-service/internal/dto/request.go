@@ -5,7 +5,7 @@ import (
 	"notification/internal/enums"
 	"time"
 
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	shared_enum "pb/enums"
 )
 

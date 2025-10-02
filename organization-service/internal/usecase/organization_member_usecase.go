@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	"errors"

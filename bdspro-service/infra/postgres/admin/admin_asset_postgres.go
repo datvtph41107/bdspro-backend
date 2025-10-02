@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"common/case/crud"
 	_db "common/db"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
 )

@@ -3,7 +3,7 @@ package crud
 import (
 	"context"
 
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_routes "common/routes"
 )

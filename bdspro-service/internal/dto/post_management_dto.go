@@ -2,7 +2,7 @@ package dto
 
 import (
 	"bdspro/internal/enums"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"time"
 )
 

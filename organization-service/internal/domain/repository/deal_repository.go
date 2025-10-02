@@ -1,7 +1,7 @@
 package repository
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 
 	"organization/internal/domain/entity"

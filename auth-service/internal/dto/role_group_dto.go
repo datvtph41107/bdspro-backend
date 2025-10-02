@@ -2,7 +2,7 @@ package dto
 
 import (
 	"auth/internal/domain"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 )
 

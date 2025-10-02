@@ -1,7 +1,7 @@
 package service
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_models "common/models"
 	_routes "common/routes"

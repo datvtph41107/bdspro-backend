@@ -70,6 +70,8 @@ buf-auth:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path auth	
 buf-feedback:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path feedback	
+buf-tqd:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path tqd	
 buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction
 	echo "done"	
 	
@@ -90,7 +92,7 @@ init:
 	$(CD_ROOT) && cd marketing-service && go mod tidy
 	$(CD_ROOT) && cd auth-service && go mod tidy
 	$(CD_ROOT) && cd transaction-service && go mod tidy
-
+	
 gateway-http:
 	$(CD_ROOT) && cd gateway-service && air http
 
@@ -144,6 +146,8 @@ transaction-grpc:
 
 auth-grpc:
 	$(CD_ROOT) && cd auth-service && air grpc
+tqd-http:
+	$(CD_ROOT) && cd tqd-service && air http
 
 start-all:
 	@echo "Starting all services..."

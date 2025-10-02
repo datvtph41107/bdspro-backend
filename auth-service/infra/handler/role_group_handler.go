@@ -5,7 +5,7 @@ import (
 	"auth/internal/enums"
 	"auth/internal/usecase"
 	"auth/validator"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"

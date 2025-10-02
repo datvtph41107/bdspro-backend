@@ -1,7 +1,7 @@
 package handler
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"

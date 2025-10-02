@@ -2,7 +2,7 @@ package dto
 
 import (
 	base_enum "base/enum"
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"crm/internal/domain"
 )
 

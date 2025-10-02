@@ -1,0 +1,799 @@
+basePath: /v2/tqd
+definitions:
+  infra.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+      total:
+        type: integer
+      totalElement:
+        type: integer
+    type: object
+  sharepb.SubmitResponse:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+    type: object
+  tqdpb.ContactLabel:
+    properties:
+      code:
+        type: string
+      color:
+        type: string
+      contactCount:
+        type: integer
+      createdAt:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      isSystem:
+        type: boolean
+      name:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: integer
+      type:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  tqdpb.ListContactLabelsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/tqdpb.ContactLabel'
+        type: array
+      total:
+        type: integer
+    type: object
+  tqdpb.ListServiceCategoriesResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/tqdpb.DirectoryCategory'
+        type: array
+      total:
+        type: integer
+    type: object
+  tqdpb.DirectoryCategory:
+    properties:
+      code:
+        type: string
+      color:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      level:
+        type: integer
+      name:
+        type: string
+      path:
+        type: string
+      serviceCount:
+        type: integer
+      sortOrder:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: API phần logic chính của TQD. Đã chuyển sang grpc
+  title: TQD API
+  version: "1.0"
+paths:
+  /contact/labels:
+    get:
+      consumes:
+      - application/json
+      description: List contact labels with pagination
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - description: Search
+        in: query
+        name: search
+        type: string
+      - description: Is active
+        in: query
+        name: isActive
+        type: boolean
+      - description: Is system
+        in: query
+        name: isSystem
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List contact labels response
+          schema:
+            $ref: '#/definitions/tqdpb.ListContactLabelsResponse'
+      security:
+      - BearerAuth: []
+      summary: List contact labels with pagination
+      tags:
+      - Contact Label
+    post:
+      consumes:
+      - application/json
+      description: Create a new contact label
+      parameters:
+      - description: Contact label
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.ContactLabel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact label
+          schema:
+            $ref: '#/definitions/tqdpb.ContactLabel'
+      summary: Create a new contact label
+      tags:
+      - Contact Label
+  /contact/labels/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a contact label
+      parameters:
+      - description: Contact label ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submit response
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Delete a contact label
+      tags:
+      - Contact Label
+    get:
+      consumes:
+      - application/json
+      description: Get a contact label by ID
+      parameters:
+      - description: Contact label ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact label
+          schema:
+            $ref: '#/definitions/tqdpb.ContactLabel'
+      summary: Get a contact label by ID
+      tags:
+      - Contact Label
+    put:
+      consumes:
+      - application/json
+      description: Update a contact label
+      parameters:
+      - description: Contact label ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Contact label
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.ContactLabel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact label
+          schema:
+            $ref: '#/definitions/tqdpb.ContactLabel'
+      summary: Update a contact label
+      tags:
+      - Contact Label
+  /service/categories:
+    get:
+      consumes:
+      - application/json
+      description: List service categories with pagination
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - description: Search
+        in: query
+        name: search
+        type: string
+      - description: Is active
+        in: query
+        name: isActive
+        type: boolean
+      - description: Level
+        in: query
+        name: level
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List service categories response
+          schema:
+            $ref: '#/definitions/tqdpb.ListServiceCategoriesResponse'
+      security:
+      - BearerAuth: []
+      summary: List service categories with pagination
+      tags:
+      - Service Category
+    post:
+      consumes:
+      - application/json
+      description: Create a new service category
+      parameters:
+      - description: Service category
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.DirectoryCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service category
+          schema:
+            $ref: '#/definitions/tqdpb.DirectoryCategory'
+      security:
+      - BearerAuth: []
+      summary: Create a new service category
+      tags:
+      - Service Category
+  /service/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a service category
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submit response
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a service category
+      tags:
+      - Service Category
+    get:
+      consumes:
+      - application/json
+      description: Get a service category by ID
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service category
+          schema:
+            $ref: '#/definitions/tqdpb.DirectoryCategory'
+      security:
+      - BearerAuth: []
+      summary: Get a service category by ID
+      tags:
+      - Service Category
+    put:
+      consumes:
+      - application/json
+      description: Update a service category
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Service category
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.DirectoryCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service category
+          schema:
+            $ref: '#/definitions/tqdpb.DirectoryCategory'
+      security:
+      - BearerAuth: []
+      summary: Update a service category
+      tags:
+      - Service Category
+  /service/categories/active:
+    get:
+      consumes:
+      - application/json
+      description: Get active service categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List service categories response
+          schema:
+            $ref: '#/definitions/tqdpb.ListServiceCategoriesResponse'
+      security:
+      - BearerAuth: []
+      summary: Get active service categories
+      tags:
+      - Service Category
+  /service/categories/level/{level}:
+    get:
+      consumes:
+      - application/json
+      description: Get service categories by level
+      parameters:
+      - description: Level
+        in: path
+        name: level
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List service categories response
+          schema:
+            $ref: '#/definitions/tqdpb.ListServiceCategoriesResponse'
+      security:
+      - BearerAuth: []
+      summary: Get service categories by level
+      tags:
+      - Service Category
+  /v2/tqd/contact/labels:
+    get:
+      consumes:
+      - application/json
+      description: List contact labels with pagination
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - description: Search
+        in: query
+        name: search
+        type: string
+      - description: Is active
+        in: query
+        name: isActive
+        type: boolean
+      - description: Is system
+        in: query
+        name: isSystem
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List contact labels response
+          schema:
+            $ref: '#/definitions/tqdpb.ListContactLabelsResponse'
+      summary: List contact labels with pagination
+      tags:
+      - Contact Label
+    post:
+      consumes:
+      - application/json
+      description: Create a new contact label
+      parameters:
+      - description: Contact label
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.ContactLabel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact label
+          schema:
+            $ref: '#/definitions/tqdpb.ContactLabel'
+      security:
+      - BearerAuth: []
+      summary: Create a new contact label
+      tags:
+      - Contact Label
+  /v2/tqd/contact/labels/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a contact label
+      parameters:
+      - description: Contact label ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submit response
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Delete a contact label
+      tags:
+      - Contact Label
+    get:
+      consumes:
+      - application/json
+      description: Get a contact label by ID
+      parameters:
+      - description: Contact label ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact label
+          schema:
+            $ref: '#/definitions/tqdpb.ContactLabel'
+      security:
+      - BearerAuth: []
+      summary: Get a contact label by ID
+      tags:
+      - Contact Label
+    put:
+      consumes:
+      - application/json
+      description: Update a contact label
+      parameters:
+      - description: Contact label ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Contact label
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.ContactLabel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contact label
+          schema:
+            $ref: '#/definitions/tqdpb.ContactLabel'
+      security:
+      - BearerAuth: []
+      summary: Update a contact label
+      tags:
+      - Contact Label
+  /v2/tqd/service/categories:
+    get:
+      consumes:
+      - application/json
+      description: List service categories with pagination
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      - description: Search
+        in: query
+        name: search
+        type: string
+      - description: Is active
+        in: query
+        name: isActive
+        type: boolean
+      - description: Level
+        in: query
+        name: level
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List service categories response
+          schema:
+            $ref: '#/definitions/tqdpb.ListServiceCategoriesResponse'
+      summary: List service categories with pagination
+      tags:
+      - Service Category
+    post:
+      consumes:
+      - application/json
+      description: Create a new service category
+      parameters:
+      - description: Service category
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.DirectoryCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response
+          schema:
+            $ref: '#/definitions/infra.Response'
+      summary: Create a new service category
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a service category
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submit response
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Delete a service category
+      tags:
+      - Service Category
+    get:
+      consumes:
+      - application/json
+      description: Get a service category by ID
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response
+          schema:
+            $ref: '#/definitions/infra.Response'
+      summary: Get a service category by ID
+      tags:
+      - Service Category
+    put:
+      consumes:
+      - application/json
+      description: Update a service category
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Service category
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tqdpb.DirectoryCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response
+          schema:
+            $ref: '#/definitions/infra.Response'
+      summary: Update a service category
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/{id}/count:
+    put:
+      consumes:
+      - application/json
+      description: Update service count for a category
+      parameters:
+      - description: Service category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Service count
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submit response
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Update service count for a category
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/active:
+    get:
+      consumes:
+      - application/json
+      description: Get active service categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List service categories response
+          schema:
+            $ref: '#/definitions/tqdpb.ListServiceCategoriesResponse'
+      summary: Get active service categories
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/bulk:
+    put:
+      consumes:
+      - application/json
+      description: Bulk update service categories
+      parameters:
+      - description: Service categories
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/tqdpb.DirectoryCategory'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Submit response
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Bulk update service categories
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/code/{code}:
+    get:
+      consumes:
+      - application/json
+      description: Get service category by code
+      parameters:
+      - description: Service category code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response
+          schema:
+            $ref: '#/definitions/infra.Response'
+      summary: Get service category by code
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/level/{level}:
+    get:
+      consumes:
+      - application/json
+      description: Get service categories by level
+      parameters:
+      - description: Level
+        in: path
+        name: level
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List service categories response
+          schema:
+            $ref: '#/definitions/tqdpb.ListServiceCategoriesResponse'
+      summary: Get service categories by level
+      tags:
+      - Service Category
+  /v2/tqd/service/categories/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get service categories statistics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Statistics
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get service categories statistics
+      tags:
+      - Service Category
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

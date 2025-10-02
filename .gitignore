@@ -38,3 +38,5 @@ transaction-service/transaction-service
 auth-service/auth-service
 **.rdb
 **/feedback
+**/bin
+tqd-service/tqd-service

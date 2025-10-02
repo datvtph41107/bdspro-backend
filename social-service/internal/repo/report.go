@@ -1,7 +1,7 @@
 package repo
 
 import (
-	_dto "common/dto"
+	_dto "common/domain/dto"
 	"context"
 	"social/internal/domain"
 	"social/internal/enums"
