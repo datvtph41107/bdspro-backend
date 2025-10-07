@@ -691,3 +691,14 @@ func (r *PostgreAsset) applyListAssetsFilters(query *gorm.DB, dto *dto.AssetSear
 
 	return query
 }
+
+func (r *PostgreAsset) CountCurrent(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domain.Asset{}).
+		Where("deleted_at IS NULL").
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

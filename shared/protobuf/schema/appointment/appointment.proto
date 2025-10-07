@@ -10,7 +10,7 @@ import "bdspro/common.proto";
 import "shared/common.proto";
 import "transaction/internal.proto";
 
-option go_package = "github.com/tuandq2112/protobuf/schema/appointment";
+option go_package = "pb/types/appointment;appointmentpb";
 
 import "google/api/annotations.proto";
 
@@ -51,6 +51,12 @@ service AppointmentService {
   rpc AdminListAppointments(AdminListAppointmentsRequest) returns (AdminListAppointmentsResponse) {
     option (google.api.http) = {
         get: "/v2/appointment/admin/list"
+    };
+  }
+
+  rpc GetAppointmentStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+    option (google.api.http) = {
+        get: "/v2/appointment/stats"
     };
   }
 }
@@ -149,3 +155,4 @@ message AdminListAppointmentsResponse {
   repeated Appointment data = 1;
   int32 total = 2;
 } 
+

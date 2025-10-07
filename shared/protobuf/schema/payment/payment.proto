@@ -5,6 +5,7 @@ option go_package = "pb/types/payment;paymentpb";
 
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 service PaymentService {
   // Wallet Dashboard
@@ -150,6 +151,13 @@ service PaymentService {
     option (google.api.http) = {
       post: "/v2/payment/sepay/webhook"
       body: "*"
+    };
+  }
+  
+  // Dashboard API - Lấy thống kê số lượng giao dịch đang xử lý
+  rpc GetPaymentStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/payment/stats"
     };
   }
 }

@@ -103,3 +103,16 @@ enum OwnerOf {
   group = 20;
   organization = 30;
 }
+
+
+message GetStatsRequest {
+  string firstDate = 1;
+  string secondDate = 2;
+}
+
+message GetStatsResponse {
+  string firstDate = 1;
+  string secondDate = 2;
+  uint32 firstDateCount = 3;
+  uint32 secondDateCount = 4;
+}

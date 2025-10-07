@@ -8,7 +8,10 @@ replace pb => ../shared/protobuf
 
 replace common => ../shared/common
 
+replace base => ../shared/base
+
 require (
+	base v0.0.0-00010101000000-000000000000
 	common v0.0.0-00010101000000-000000000000
 	github.com/google/wire v0.6.0
 	github.com/hyperledger/fabric v2.1.1+incompatible
@@ -19,8 +22,7 @@ require (
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.9
 	gopkg.in/mail.v2 v2.3.1
-	gorm.io/driver/postgres v1.5.11
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
 
@@ -74,4 +76,5 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/driver/postgres v1.5.11 // indirect
 )

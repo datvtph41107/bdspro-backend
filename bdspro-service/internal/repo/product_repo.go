@@ -89,4 +89,7 @@ type ProductRepo interface {
 
 	// Cập nhật ghi chú sản phẩm
 	UpdateNote(ctx context.Context, id uint64, note string) error
+
+	// Đếm tổng số product hiện tại (không bị xóa)
+	CountCurrent(ctx context.Context) (int64, error)
 }

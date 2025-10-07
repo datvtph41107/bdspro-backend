@@ -3,9 +3,12 @@ package handler
 import (
 	"context"
 	paymentpb "pb/types/payment"
+	sharepb "pb/types/shared"
 	"regexp"
+	"time"
 
 	"payment/appconfig"
+	"payment/internal/job"
 	"payment/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -15,12 +18,14 @@ import (
 
 type PaymentHandler struct {
 	paymentpb.UnimplementedPaymentServiceServer
-	paymentUsecase usecase.PaymentUsecase
+	paymentUsecase           usecase.PaymentUsecase
+	PaymentDashboardStatsJob *job.PaymentDashboardStatsJob
 }
 
-func NewPaymentHandler(paymentUsecase usecase.PaymentUsecase) *PaymentHandler {
+func NewPaymentHandler(paymentUsecase usecase.PaymentUsecase, paymentDashboardStatsJob *job.PaymentDashboardStatsJob) *PaymentHandler {
 	return &PaymentHandler{
-		paymentUsecase: paymentUsecase,
+		paymentUsecase:           paymentUsecase,
+		PaymentDashboardStatsJob: paymentDashboardStatsJob,
 	}
 }
 
@@ -293,4 +298,38 @@ func ExtractDepositCode(content string) string {
 	re := regexp.MustCompile(`DEP\d+`)
 	match := re.FindString(content)
 	return match
+}
+
+// @Summary Lấy thống kê số lượng giao dịch đang xử lý
+// @Description Lấy thống kê số lượng giao dịch đang xử lý theo 2 ngày
+// @Tags Dashboard
+// @Accept json
+// @Produce json
+// @Param firstDate query string true "Ngày đầu tiên (YYYY-MM-DD)"
+// @Param secondDate query string true "Ngày thứ hai (YYYY-MM-DD)"
+// @Security BearerAuth
+// @Success 200 {object} sharepb.GetStatsResponse "Thành công"
+// @Router /v2/payment/stats [get]
+func (h *PaymentHandler) GetPaymentStats(ctx context.Context, req *sharepb.GetStatsRequest) (*sharepb.GetStatsResponse, error) {
+	firstDate, err := time.Parse(time.DateOnly, req.FirstDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid firstDate format")
+	}
+	
+	secondDate, err := time.Parse(time.DateOnly, req.SecondDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid secondDate format")
+	}
+	
+	stats, stats2, err := h.PaymentDashboardStatsJob.GetStats(ctx, firstDate, secondDate)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &sharepb.GetStatsResponse{
+		FirstDate:       stats.CalculateTime.Format(time.DateOnly),
+		SecondDate:      stats2.CalculateTime.Format(time.DateOnly),
+		FirstDateCount:  uint32(stats.Count),
+		SecondDateCount: uint32(stats2.Count),
+	}, nil
 }

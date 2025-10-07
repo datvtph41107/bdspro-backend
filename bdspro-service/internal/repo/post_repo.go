@@ -34,4 +34,7 @@ type PostRepo interface {
 	OwnerPost(ctx context.Context, profileId uint64, postId uint64) (bool, error)
 
 	GetPosts(ctx context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error)
+
+	// Đếm tổng số post hiện tại (không bị xóa)
+	CountCurrent(ctx context.Context) (int64, error)
 }

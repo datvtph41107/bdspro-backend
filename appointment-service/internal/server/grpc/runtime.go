@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -14,6 +15,8 @@ import (
 	appointmentreminder "appointment/internal/job/appointment_reminder"
 	"appointment/internal/server/grpc/interceptors"
 
+	"appointment/internal/job"
+
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
 	"google.golang.org/grpc"
@@ -23,18 +26,21 @@ type GRPCServer struct {
 	appointmentHandler     *handler.AppointmentHandler
 	logger                 *flogging.FabricLogger
 	appointmentReminderJob *appointmentreminder.AppointmentReminderJob
+	dashboardStatsJob      *job.DashboardStatsJob
 	// transactionHandler *handler.TransactionHandler
 }
 
 func NewGRPCServer(
 	appointmentHandler *handler.AppointmentHandler,
 	appointmentReminderJob *appointmentreminder.AppointmentReminderJob,
+	dashboardStatsJob *job.DashboardStatsJob,
 	// transactionHandler *handler.TransactionHandler,
 ) *GRPCServer {
 	return &GRPCServer{
 		appointmentHandler:     appointmentHandler,
 		logger:                 flogging.MustGetLogger(appconfig.SERVICE_NAME),
 		appointmentReminderJob: appointmentReminderJob,
+		dashboardStatsJob:      dashboardStatsJob,
 		// transactionHandler: transactionHandler,
 	}
 }
@@ -48,7 +54,13 @@ func (s *GRPCServer) Start() {
 	signalStart, signalStop := buildSignalHandler(s.logger)
 	g.Add(signalStart, signalStop)
 
+	// Start appointment reminder job
 	go s.appointmentReminderJob.Run()
+
+	// Start dashboard stats job (runs daily at midnight)
+	ctx := context.Background()
+	go s.dashboardStatsJob.RunDailyAtMidnight(ctx)
+
 	if err := g.Run(); err != nil {
 		s.logger.Errorf("Server exited: %v", err)
 	}

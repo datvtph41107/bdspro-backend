@@ -60,6 +60,7 @@ var GrpcCmd = &cobra.Command{
 		bdspropb.RegisterAdminProjectServiceServer(s, app.AdminProjectHandler)
 		bdspropb.RegisterAdminRegionServiceServer(s, app.AdminRegionHandler)
 		bdspropb.RegisterBdsproInternalServiceServer(s, app.InternalHandler)
+		bdspropb.RegisterBdsproDashboardServiceServer(s, app.BdsproDashboardHandler)
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 
@@ -95,4 +96,8 @@ func startScheduler(app *initial.InitialApp) {
 		})
 		s.StartAsync()
 	})
+	go app.AssetStatsJob.Run(context.Background())
+	go app.ProductStatsJob.Run(context.Background())
+	go app.PostStatsJob.Run(context.Background())
+
 }

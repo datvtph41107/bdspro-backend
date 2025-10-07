@@ -237,3 +237,14 @@ func (r *appointmentPostgresRepository) List(ctx context.Context, filter map[str
 	}
 	return appointmentsEntities, int64(count), nil
 }
+
+func (r *appointmentPostgresRepository) CountCurrent(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&AppointmentModel{}).
+		Where("is_deleted = ?", false).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

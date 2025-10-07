@@ -38,6 +38,7 @@ type PaymentUsecase interface {
 	GetWalletByUserId(ctx context.Context, req *paymentpb.GetWalletByUserIdRequest) (*paymentpb.Wallet, error)
 	GetWalletByWalletId(ctx context.Context, req *paymentpb.GetWalletByWalletIdRequest) (*paymentpb.Wallet, error)
 	HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error)
+	CountProcessingTransactions(ctx context.Context) (int64, error)
 }
 
 type paymentUsecase struct {
@@ -864,4 +865,13 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 		Amount:   transaction.Amount,
 		Status:   string(transaction.Status),
 	}, nil
+}
+
+func (uc *paymentUsecase) CountProcessingTransactions(ctx context.Context) (int64, error) {
+	// Đếm số giao dịch có status PENDING (đang xử lý)
+	count, err := uc.walletTransactionRepository.GetTransactionCountByStatus(ctx, 0, "PENDING")
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

@@ -19,6 +19,7 @@ type AppointmentUsecase interface {
 	UpdateAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
 	DeleteAppointment(ctx context.Context, id uint32) error
 	ListAppointments(ctx context.Context, filter map[string]any, page, size int) ([]*dto.AppointmentDTO, int64, error)
+	CountCurrent(ctx context.Context) (int64, error)
 }
 
 type appointmentUsecase struct {
@@ -178,4 +179,12 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	}
 
 	return out, nil
+}
+
+func (uc *appointmentUsecase) CountCurrent(ctx context.Context) (int64, error) {
+	count, err := uc.appointmentRepo.CountCurrent(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

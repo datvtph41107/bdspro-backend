@@ -636,3 +636,14 @@ func (r *GormPostRepo) applyPostFilters(query *gorm.DB, dto *dto.PostSearchReque
 
 	return query
 }
+
+func (r *GormPostRepo) CountCurrent(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
+		Where("deleted_at IS NULL").
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

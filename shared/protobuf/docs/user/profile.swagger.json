@@ -417,6 +417,43 @@
           "ProfileService"
         ]
       }
+    },
+    "/v2/user/stats": {
+      "get": {
+        "summary": "Dashboard API - Lấy thống kê số lượng user",
+        "operationId": "ProfileService_GetUserStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbGetStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "firstDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -668,6 +705,25 @@
             "type": "object",
             "$ref": "#/definitions/sharepbProfileItem"
           }
+        }
+      }
+    },
+    "sharepbGetStatsResponse": {
+      "type": "object",
+      "properties": {
+        "firstDate": {
+          "type": "string"
+        },
+        "secondDate": {
+          "type": "string"
+        },
+        "firstDateCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "secondDateCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

@@ -19,6 +19,22 @@ service BdsproDashboardService {
             get: "/v2/bdspro/v2/dashboard/cash-profit/time"
         };
     };
+
+    rpc GetAssetStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/dashboard/asset-stats"
+        };
+    };
+    rpc GetProductStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/dashboard/product-stats"
+        };
+    };
+    rpc GetPostStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/dashboard/post-stats"
+        };
+    };
 }
 
 message GetCashProfitRequest {

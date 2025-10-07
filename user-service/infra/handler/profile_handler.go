@@ -16,6 +16,7 @@ import (
 	"user/infra/mapper"
 	"user/internal/dto"
 	"user/internal/interface/repo"
+	"user/internal/job"
 	"user/internal/usecases"
 
 	"github.com/patrickmn/go-cache"
@@ -25,14 +26,15 @@ import (
 
 type GrpcProfileService struct {
 	userpb.UnimplementedProfileServiceServer
-	ProfileRepo    repo.IProfileRepo
-	AdminUsecase   *usecases.AdminUsecase
-	ProfileUsecase *usecases.ProfileUsecase
-	cache          *cache.Cache
-	OrgClient      orgpb.OrganizationServiceClient
-	GroupClient    organizationpb.GroupServiceClient
-	ProfileMapper  *mapper.ProfileMapper
-	CrmClient      *client.CrmClient
+	ProfileRepo           repo.IProfileRepo
+	AdminUsecase          *usecases.AdminUsecase
+	ProfileUsecase        *usecases.ProfileUsecase
+	cache                 *cache.Cache
+	OrgClient             orgpb.OrganizationServiceClient
+	GroupClient           organizationpb.GroupServiceClient
+	ProfileMapper         *mapper.ProfileMapper
+	CrmClient             *client.CrmClient
+	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
 func NewGrpcProfileService(
@@ -43,16 +45,18 @@ func NewGrpcProfileService(
 	groupClient organizationpb.GroupServiceClient,
 	profileMapper *mapper.ProfileMapper,
 	crmClient *client.CrmClient,
+	userDashboardStatsJob *job.UserDashboardStatsJob,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
-		ProfileRepo:    profileRepo,
-		ProfileUsecase: profileUsecase,
-		AdminUsecase:   adminUsecase,
-		cache:          cache.New(5*time.Minute, 10*time.Minute),
-		OrgClient:      orgClient,
-		GroupClient:    groupClient,
-		ProfileMapper:  profileMapper,
-		CrmClient:      crmClient,
+		ProfileRepo:           profileRepo,
+		ProfileUsecase:        profileUsecase,
+		AdminUsecase:          adminUsecase,
+		cache:                 cache.New(5*time.Minute, 10*time.Minute),
+		OrgClient:             orgClient,
+		GroupClient:           groupClient,
+		ProfileMapper:         profileMapper,
+		CrmClient:             crmClient,
+		UserDashboardStatsJob: userDashboardStatsJob,
 	}
 }
 
@@ -466,4 +470,38 @@ func (s *GrpcProfileService) ApproveUser(ctx context.Context, req *userpb.Approv
 	}
 
 	return &sharepb.Empty{}, nil
+}
+
+// @Summary Lấy thống kê số lượng user
+// @Description Lấy thống kê số lượng user theo 2 ngày
+// @Tags Dashboard
+// @Accept json
+// @Produce json
+// @Param firstDate query string true "Ngày đầu tiên (YYYY-MM-DD)"
+// @Param secondDate query string true "Ngày thứ hai (YYYY-MM-DD)"
+// @Security BearerAuth
+// @Success 200 {object} sharepb.GetStatsResponse "Thành công"
+// @Router /v2/user/stats [get]
+func (s *GrpcProfileService) GetUserStats(ctx context.Context, req *sharepb.GetStatsRequest) (*sharepb.GetStatsResponse, error) {
+	firstDate, err := time.Parse(time.DateOnly, req.FirstDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid firstDate format")
+	}
+
+	secondDate, err := time.Parse(time.DateOnly, req.SecondDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid secondDate format")
+	}
+
+	stats, stats2, err := s.UserDashboardStatsJob.GetStats(ctx, firstDate, secondDate)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &sharepb.GetStatsResponse{
+		FirstDate:       stats.CalculateTime.Format(time.DateOnly),
+		SecondDate:      stats2.CalculateTime.Format(time.DateOnly),
+		FirstDateCount:  uint32(stats.Count),
+		SecondDateCount: uint32(stats2.Count),
+	}, nil
 }

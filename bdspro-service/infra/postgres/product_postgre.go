@@ -1121,3 +1121,14 @@ func (r *GormUserProductRepo) UpdateNote(ctx context.Context, id uint64, note st
 		Where("id = ? AND deleted_at IS NULL", id).
 		Update("note", note).Error
 }
+
+func (r *GormUserProductRepo) CountCurrent(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domain.Product{}).
+		Where("deleted_at IS NULL").
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

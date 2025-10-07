@@ -4,9 +4,12 @@ replace common => ../shared/common
 
 replace pb => ../shared/protobuf
 
+replace base => ../shared/base
+
 go 1.24.1
 
 require (
+	base v0.0.0-00010101000000-000000000000
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.25.0

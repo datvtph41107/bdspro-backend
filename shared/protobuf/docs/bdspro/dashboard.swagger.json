@@ -16,6 +16,42 @@
     "application/json"
   ],
   "paths": {
+    "/v2/bdspro/v2/dashboard/asset-stats": {
+      "get": {
+        "operationId": "BdsproDashboardService_GetAssetStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbGetStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "firstDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproDashboardService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/dashboard/cash-profit/time": {
       "get": {
         "operationId": "BdsproDashboardService_GetCashProfitTime",
@@ -115,6 +151,78 @@
           "BdsproDashboardService"
         ]
       }
+    },
+    "/v2/bdspro/v2/dashboard/post-stats": {
+      "get": {
+        "operationId": "BdsproDashboardService_GetPostStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbGetStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "firstDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproDashboardService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/dashboard/product-stats": {
+      "get": {
+        "operationId": "BdsproDashboardService_GetProductStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbGetStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "firstDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproDashboardService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -207,6 +315,25 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbGetStatsResponse": {
+      "type": "object",
+      "properties": {
+        "firstDate": {
+          "type": "string"
+        },
+        "secondDate": {
+          "type": "string"
+        },
+        "firstDateCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "secondDateCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

@@ -3,6 +3,7 @@ package initial
 import (
 	"bdspro/infra/handler"
 	admin_handler "bdspro/infra/handler/admin"
+	"bdspro/internal/job"
 	shared_usecase "bdspro/internal/usecases/shared"
 )
 
@@ -30,7 +31,10 @@ type InitialApp struct {
 	AdminProjectHandler      *admin_handler.AdminProjectHandler
 	AdminRegionHandler       *handler.AdminRegionHandler
 	InternalHandler          *handler.InternalHandler
-
+	BdsproDashboardHandler   *handler.BdsproDashboardHandler
+	AssetStatsJob            *job.AssetDashboardStatsJob
+	ProductStatsJob          *job.ProductDashboardStatsJob
+	PostStatsJob             *job.PostDashboardStatsJob
 	// @bind: register_server_config
 	// CostDocumentServer *handler.CostDocumentServer
 	// IncomeDocumentServer    *handler.IncomeDocumentServer
@@ -73,7 +77,11 @@ func NewInitialApp(
 	adminProjectHandler *admin_handler.AdminProjectHandler,
 	adminRegionHandler *handler.AdminRegionHandler,
 	internalHandler *handler.InternalHandler,
+	bdsproDashboardHandler *handler.BdsproDashboardHandler,
 	// @bind: register_server_new
+	assetStatsJob *job.AssetDashboardStatsJob,
+	productStatsJob *job.ProductDashboardStatsJob,
+	postStatsJob *job.PostDashboardStatsJob,
 	// CostDocumentServer: CostDocumentServer,
 	// IncomeDocumentServer:    IncomeDocumentServer,
 	// AssetIncomeTypeServer:   AssetIncomeTypeServer,
@@ -105,6 +113,10 @@ func NewInitialApp(
 		AdminProjectHandler:      adminProjectHandler,
 		AdminRegionHandler:       adminRegionHandler,
 		InternalHandler:          internalHandler,
+		BdsproDashboardHandler:   bdsproDashboardHandler,
+		AssetStatsJob:            assetStatsJob,
+		ProductStatsJob:          productStatsJob,
+		PostStatsJob:             postStatsJob,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

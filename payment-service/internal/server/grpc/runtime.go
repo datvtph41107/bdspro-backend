@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	"payment/appconfig"
 	"payment/internal/interface/handler"
+	"payment/internal/job"
 	"payment/internal/server/grpc/interceptors"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -19,9 +21,10 @@ import (
 )
 
 type GRPCServer struct {
-	paymentHandler  *handler.PaymentHandler
-	bankHandler     *handler.BankHandler
-	internalHandler *handler.InternalHandler
+	paymentHandler           *handler.PaymentHandler
+	bankHandler              *handler.BankHandler
+	internalHandler          *handler.InternalHandler
+	paymentDashboardStatsJob *job.PaymentDashboardStatsJob
 
 	logger *flogging.FabricLogger
 }
@@ -30,12 +33,14 @@ func NewGRPCServer(
 	paymentHandler *handler.PaymentHandler,
 	bankHandler *handler.BankHandler,
 	internalHandler *handler.InternalHandler,
+	paymentDashboardStatsJob *job.PaymentDashboardStatsJob,
 ) *GRPCServer {
 	return &GRPCServer{
-		paymentHandler:  paymentHandler,
-		bankHandler:     bankHandler,
-		internalHandler: internalHandler,
-		logger:          flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		paymentHandler:           paymentHandler,
+		bankHandler:              bankHandler,
+		internalHandler:          internalHandler,
+		paymentDashboardStatsJob: paymentDashboardStatsJob,
+		logger:                   flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
 
@@ -52,6 +57,10 @@ func (s *GRPCServer) Start() {
 
 	signalStart, signalStop := buildSignalHandler(s.logger)
 	g.Add(signalStart, signalStop)
+
+	// Start dashboard stats job (runs daily at midnight)
+	ctx := context.Background()
+	go s.paymentDashboardStatsJob.RunDailyAtMidnight(ctx)
 
 	if err := g.Run(); err != nil {
 		s.logger.Errorf("Server exited: %v", err)

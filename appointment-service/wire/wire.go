@@ -1,11 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
-	_db "common/db"
 	"appointment/initial"
 	appointment_initial "appointment/initial"
 	appointment_internal_infrastructure_client "appointment/internal/infrastructure/client"
@@ -13,10 +11,14 @@ import (
 	appointment_internal_interface_handler "appointment/internal/interface/handler"
 	appointment_internal_interface_transformer "appointment/internal/interface/transformer"
 	appointment_internal_interface_validator "appointment/internal/interface/validator"
+	appointment_internal_job "appointment/internal/job"
 	appointment_internal_job_appointment_reminder "appointment/internal/job/appointment_reminder"
 	appointment_internal_server_grpc "appointment/internal/server/grpc"
 	appointment_internal_usecase "appointment/internal/usecase"
 	appointment_pkg_email_sender "appointment/pkg/email_sender"
+	_db "common/db"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -26,6 +28,7 @@ var wireSet = wire.NewSet(
 	appointment_internal_interface_handler.NewAppointmentHandler,
 	appointment_internal_infrastructure_repository_postgres.NewAppointmentPostgresRepository,
 	appointment_internal_job_appointment_reminder.NewAppointmentReminderJob,
+	appointment_internal_job.NewDashboardStatsJob,
 	appointment_internal_infrastructure_repository_postgres.NewAppointmentReminderPostgresRepository,
 	appointment_internal_usecase.NewAppointmentReminderUsecase,
 	appointment_internal_interface_transformer.NewAppointmentTransformer,
@@ -38,6 +41,7 @@ var wireSet = wire.NewSet(
 	appointment_internal_infrastructure_client.NewOrganizationClient,
 	appointment_internal_infrastructure_client.NewUserClient,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

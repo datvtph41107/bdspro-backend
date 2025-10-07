@@ -45,4 +45,7 @@ type AssetRepo interface {
 
 	// Đếm số tài sản theo ownerOf và ownerId
 	CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error)
+
+	// Đếm tổng số asset hiện tại (không bị xóa)
+	CountCurrent(ctx context.Context) (int64, error)
 }

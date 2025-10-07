@@ -3,9 +3,12 @@ package handler
 import (
 	"context"
 	appointmentpb "pb/types/appointment"
+	sharepb "pb/types/shared"
+	"time"
 
 	"appointment/internal/interface/transformer"
 	"appointment/internal/interface/validator"
+	"appointment/internal/job"
 	"appointment/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -17,17 +20,20 @@ type AppointmentHandler struct {
 	AppointmentUsecase usecase.AppointmentUsecase
 	Transformer        transformer.AppointmentTransformer
 	Validator          validator.AppointmentValidator
+	DashboardStatsJob  *job.DashboardStatsJob
 }
 
 func NewAppointmentHandler(
 	appointmentUsecase usecase.AppointmentUsecase,
 	transformer transformer.AppointmentTransformer,
 	validator validator.AppointmentValidator,
+	dashboardStatsJob *job.DashboardStatsJob,
 ) *AppointmentHandler {
 	return &AppointmentHandler{
 		AppointmentUsecase: appointmentUsecase,
 		Transformer:        transformer,
 		Validator:          validator,
+		DashboardStatsJob:  dashboardStatsJob,
 	}
 }
 
@@ -202,6 +208,28 @@ func (h *AppointmentHandler) AdminListAppointments(ctx context.Context, req *app
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
 	return h.Transformer.EntityToAdminListAppointmentsResponse(appointments, int32(total)), nil
+}
+
+func (h *AppointmentHandler) GetAppointmentStats(ctx context.Context, req *sharepb.GetStatsRequest) (*sharepb.GetStatsResponse, error) {
+
+	firstDate, err := time.Parse(time.DateOnly, req.FirstDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	secondDate, err := time.Parse(time.DateOnly, req.SecondDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	stats, stats2, err := h.DashboardStatsJob.GetStats(ctx, firstDate, secondDate)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &sharepb.GetStatsResponse{
+		FirstDate:       stats.CalculateTime.Format(time.DateOnly),
+		SecondDate:      stats2.CalculateTime.Format(time.DateOnly),
+		FirstDateCount:  uint32(stats.Count),
+		SecondDateCount: uint32(stats2.Count),
+	}, nil
 }

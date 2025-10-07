@@ -13,6 +13,7 @@ import (
 	"appointment/internal/interface/handler"
 	"appointment/internal/interface/transformer"
 	"appointment/internal/interface/validator"
+	"appointment/internal/job"
 	"appointment/internal/job/appointment_reminder"
 	"appointment/internal/server/grpc"
 	"appointment/internal/usecase"
@@ -35,12 +36,13 @@ func InitializeApp() (*initial.InitialApp, error) {
 	appointmentUsecase := usecase.NewAppointmentUsecase(appointmentRepository, organizationClient, bdsproClient, userClient)
 	appointmentTransformer := transformer.NewAppointmentTransformer()
 	appointmentValidator := validator.NewAppointmentValidator()
-	appointmentHandler := handler.NewAppointmentHandler(appointmentUsecase, appointmentTransformer, appointmentValidator)
+	dashboardStatsJob := job.NewDashboardStatsJob(appointmentUsecase, db)
+	appointmentHandler := handler.NewAppointmentHandler(appointmentUsecase, appointmentTransformer, appointmentValidator, dashboardStatsJob)
 	appointmentReminderRepository := postgres.NewAppointmentReminderPostgresRepository(db)
 	appointmentReminderUsecase := usecase.NewAppointmentReminderUsecase(appointmentReminderRepository)
 	emailSender := emailsender.NewEmailSender()
 	appointmentReminderJob := appointmentreminder.NewAppointmentReminderJob(appointmentReminderUsecase, emailSender)
-	grpcServer := grpc.NewGRPCServer(appointmentHandler, appointmentReminderJob)
+	grpcServer := grpc.NewGRPCServer(appointmentHandler, appointmentReminderJob, dashboardStatsJob)
 	initialApp := initial.NewInitialApp(grpcServer)
 	return initialApp, nil
 }
@@ -48,4 +50,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, handler.NewAppointmentHandler, postgres.NewAppointmentPostgresRepository, appointmentreminder.NewAppointmentReminderJob, postgres.NewAppointmentReminderPostgresRepository, usecase.NewAppointmentReminderUsecase, transformer.NewAppointmentTransformer, usecase.NewAppointmentUsecase, validator.NewAppointmentValidator, client.NewBdsproClient, emailsender.NewEmailSender, grpc.NewGRPCServer, initial.NewInitialApp, client.NewOrganizationClient, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, handler.NewAppointmentHandler, postgres.NewAppointmentPostgresRepository, appointmentreminder.NewAppointmentReminderJob, job.NewDashboardStatsJob, postgres.NewAppointmentReminderPostgresRepository, usecase.NewAppointmentReminderUsecase, transformer.NewAppointmentTransformer, usecase.NewAppointmentUsecase, validator.NewAppointmentValidator, client.NewBdsproClient, emailsender.NewEmailSender, grpc.NewGRPCServer, initial.NewInitialApp, client.NewOrganizationClient, client.NewUserClient)

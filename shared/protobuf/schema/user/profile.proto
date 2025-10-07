@@ -75,6 +75,13 @@ service ProfileService {
             body: "*"
         };
     }
+    
+    // Dashboard API - Lấy thống kê số lượng user
+    rpc GetUserStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/stats"
+        };
+    }
 }
 
 message ProfileItem {

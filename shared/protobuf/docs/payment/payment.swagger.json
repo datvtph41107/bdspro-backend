@@ -192,6 +192,43 @@
         ]
       }
     },
+    "/v2/payment/stats": {
+      "get": {
+        "summary": "Dashboard API - Lấy thống kê số lượng giao dịch đang xử lý",
+        "operationId": "PaymentService_GetPaymentStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbGetStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "firstDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
     "/v2/payment/transaction-types": {
       "get": {
         "summary": "// Deal Transactions\nrpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/dashboard\"\n  };\n}\nrpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions\"\n  };\n}\nrpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/{id}\"\n  };\n}\nrpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {\n  option (google.api.http) = {\n    put: \"/v2/payment/deal-transactions/{id}\"\n    body: \"*\"\n  };\n}\nrpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {\n  option (google.api.http) = {\n    post: \"/v2/payment/deal-transactions/{id}/approve\"\n    body: \"*\"\n  };\n}\nrpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {\n  option (google.api.http) = {\n    get: \"/v2/payment/deal-transactions/report\"\n  };\n}\nTransaction Types",
@@ -982,6 +1019,25 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbGetStatsResponse": {
+      "type": "object",
+      "properties": {
+        "firstDate": {
+          "type": "string"
+        },
+        "secondDate": {
+          "type": "string"
+        },
+        "firstDateCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "secondDateCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

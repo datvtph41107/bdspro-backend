@@ -179,6 +179,42 @@
         ]
       }
     },
+    "/v2/appointment/stats": {
+      "get": {
+        "operationId": "AppointmentService_GetAppointmentStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbGetStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "firstDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "secondDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
+    },
     "/v2/appointment/{id}": {
       "get": {
         "operationId": "AppointmentService_GetAppointment",
@@ -973,6 +1009,25 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbGetStatsResponse": {
+      "type": "object",
+      "properties": {
+        "firstDate": {
+          "type": "string"
+        },
+        "secondDate": {
+          "type": "string"
+        },
+        "firstDateCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "secondDateCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
