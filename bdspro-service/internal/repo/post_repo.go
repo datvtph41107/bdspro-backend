@@ -37,4 +37,5 @@ type PostRepo interface {
 
 	// Đếm tổng số post hiện tại (không bị xóa)
 	CountCurrent(ctx context.Context) (int64, error)
+	CountPostByTime(ctx context.Context, from time.Time, to time.Time) ([]domain.CountPostByTime, error)
 }

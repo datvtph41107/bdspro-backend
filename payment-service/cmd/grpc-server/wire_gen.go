@@ -29,14 +29,16 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 	walletAuditLogRepository := repository.NewWalletAuditLogRepository(db)
 	withdrawalRequestsRepository := repository.NewWithdrawalRequestRepository(db)
 	notificationClient := client.NewNotificationClient()
-	paymentUsecase := usecase.NewPaymentUsecase(paymentMethodRepository, walletsRepository, walletTransactionsRepository, walletAuditLogRepository, withdrawalRequestsRepository, notificationClient)
+	dashboardMetricRepository := postgres.NewDashboardMetricPostgresRepository(db)
+	paymentUsecase := usecase.NewPaymentUsecase(paymentMethodRepository, walletsRepository, walletTransactionsRepository, walletAuditLogRepository, withdrawalRequestsRepository, notificationClient, dashboardMetricRepository)
 	paymentDashboardStatsJob := job.NewPaymentDashboardStatsJob(paymentUsecase, db)
 	paymentHandler := handler.NewPaymentHandler(paymentUsecase, paymentDashboardStatsJob)
 	bankPostgresRepository := postgres.NewBankPostgresRepository(db)
 	bankUsecase := usecase.NewBankUsecase(bankPostgresRepository)
 	bankHandler := handler.NewBankHandler(bankUsecase)
 	internalHandler := handler.NewInternalHandler(bankUsecase)
-	grpcServer := grpc.NewGRPCServer(paymentHandler, bankHandler, internalHandler, paymentDashboardStatsJob)
+	transactionDashboardJob := job.NewTransactionDashboardJob(paymentUsecase)
+	grpcServer := grpc.NewGRPCServer(paymentHandler, bankHandler, internalHandler, paymentDashboardStatsJob, transactionDashboardJob)
 	return grpcServer
 }
 
@@ -44,12 +46,12 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 
 var databaseSet = wire.NewSet(database.NewPostgresDB)
 
-var repositorySet = wire.NewSet(repository.NewPaymentRepository, repository.NewWalletRepository, repository.NewWalletTransactionRepository, repository.NewWalletAuditLogRepository, repository.NewWithdrawalRequestRepository, postgres.NewBankPostgresRepository, wire.Bind(new(repository2.BankRepository), new(*postgres.BankPostgresRepository)))
+var repositorySet = wire.NewSet(repository.NewPaymentRepository, repository.NewWalletRepository, repository.NewWalletTransactionRepository, repository.NewWalletAuditLogRepository, repository.NewWithdrawalRequestRepository, postgres.NewBankPostgresRepository, postgres.NewDashboardMetricPostgresRepository, wire.Bind(new(repository2.BankRepository), new(*postgres.BankPostgresRepository)))
 
 var clientSet = wire.NewSet(client.NewNotificationClient)
 
 var usecaseSet = wire.NewSet(usecase.NewPaymentUsecase, usecase.NewBankUsecase, usecase.NewNotificationWorker)
 
-var jobSet = wire.NewSet(job.NewPaymentDashboardStatsJob)
+var jobSet = wire.NewSet(job.NewPaymentDashboardStatsJob, job.NewTransactionDashboardJob)
 
 var handlerSet = wire.NewSet(handler.NewPaymentHandler, handler.NewBankHandler, handler.NewInternalHandler)

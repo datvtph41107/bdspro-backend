@@ -152,6 +152,42 @@
         ]
       }
     },
+    "/v2/bdspro/v2/dashboard/count-post-by-time": {
+      "get": {
+        "operationId": "BdsproDashboardService_GetCountPostByTime",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbGetCountPostByTimeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "BdsproDashboardService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/dashboard/post-stats": {
       "get": {
         "operationId": "BdsproDashboardService_GetPostStats",
@@ -266,6 +302,18 @@
         }
       }
     },
+    "bdspropbCountPostByTime": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "bdspropbGetCashProfitResponse": {
       "type": "object",
       "properties": {
@@ -286,6 +334,18 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/bdspropbCashProfitTime"
+          }
+        }
+      }
+    },
+    "bdspropbGetCountPostByTimeResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbCountPostByTime"
           }
         }
       }

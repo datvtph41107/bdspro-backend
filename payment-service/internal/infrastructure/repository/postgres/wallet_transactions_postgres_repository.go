@@ -147,6 +147,15 @@ func (r *walletTransactionRepository) GetTransactionCountByStatus(ctx context.Co
 	}
 	return count, nil
 }
+func (r *walletTransactionRepository) CountTransactionsByStatus(ctx context.Context, status string) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&WalletTransactionModel{}).
+		Where("status = ?", status).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
 
 func (r *walletTransactionRepository) CreateTransaction(ctx context.Context, transaction *entity.WalletTransaction) error {
 	model := WalletTransactionEntityToModel(transaction)

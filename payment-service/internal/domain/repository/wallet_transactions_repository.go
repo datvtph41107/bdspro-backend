@@ -25,4 +25,5 @@ type WalletTransactionsRepository interface {
 	CreateTransactionType(ctx context.Context, transactionType *paymentpb.TransactionType) error
 	UpdateTransactionType(ctx context.Context, transactionType *paymentpb.TransactionType) error
 	DeleteTransactionType(ctx context.Context, id uint32) error
+	CountTransactionsByStatus(ctx context.Context, status string) (int64, error)
 }

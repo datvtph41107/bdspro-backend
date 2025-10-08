@@ -25,8 +25,8 @@ type GRPCServer struct {
 	bankHandler              *handler.BankHandler
 	internalHandler          *handler.InternalHandler
 	paymentDashboardStatsJob *job.PaymentDashboardStatsJob
-
-	logger *flogging.FabricLogger
+	TransactionDashboardJob  *job.TransactionDashboardJob
+	logger                   *flogging.FabricLogger
 }
 
 func NewGRPCServer(
@@ -34,12 +34,14 @@ func NewGRPCServer(
 	bankHandler *handler.BankHandler,
 	internalHandler *handler.InternalHandler,
 	paymentDashboardStatsJob *job.PaymentDashboardStatsJob,
+	TransactionDashboardJob *job.TransactionDashboardJob,
 ) *GRPCServer {
 	return &GRPCServer{
 		paymentHandler:           paymentHandler,
 		bankHandler:              bankHandler,
 		internalHandler:          internalHandler,
 		paymentDashboardStatsJob: paymentDashboardStatsJob,
+		TransactionDashboardJob:  TransactionDashboardJob,
 		logger:                   flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
@@ -61,7 +63,7 @@ func (s *GRPCServer) Start() {
 	// Start dashboard stats job (runs daily at midnight)
 	ctx := context.Background()
 	go s.paymentDashboardStatsJob.RunDailyAtMidnight(ctx)
-
+	go s.TransactionDashboardJob.Run(ctx)
 	if err := g.Run(); err != nil {
 		s.logger.Errorf("Server exited: %v", err)
 	}

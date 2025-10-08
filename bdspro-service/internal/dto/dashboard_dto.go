@@ -1,6 +1,9 @@
 package dto
 
-import sharepb "pb/types/shared"
+import (
+	sharepb "pb/types/shared"
+	"time"
+)
 
 type CountByOwnerResponse struct {
 	TotalProduct  uint32 `json:"totalProduct"`
@@ -12,4 +15,9 @@ type CountByOwnerResponse struct {
 type CountByOwnerRequest struct {
 	OwnerOf sharepb.OwnerOf `json:"ownerOf"`
 	OwnerId uint64          `json:"ownerId"`
+}
+
+type CountPostByTimeResponse struct {
+	Date  time.Time `json:"date"`
+	Count uint32    `json:"count"`
 }

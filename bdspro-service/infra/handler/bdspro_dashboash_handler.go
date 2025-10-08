@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bdspro/internal/job"
+	"bdspro/internal/usecases"
 	"context"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -10,9 +11,10 @@ import (
 
 type BdsproDashboardHandler struct {
 	bdspropb.UnimplementedBdsproDashboardServiceServer
-	assetStatsJob   *job.AssetDashboardStatsJob
-	productStatsJob *job.ProductDashboardStatsJob
-	postStatsJob    *job.PostDashboardStatsJob
+	assetStatsJob    *job.AssetDashboardStatsJob
+	productStatsJob  *job.ProductDashboardStatsJob
+	postStatsJob     *job.PostDashboardStatsJob
+	dashboardUsecase *usecases.DashboardUsecase
 }
 
 func NewBdsproDashboardHandler(assetStatsJob *job.AssetDashboardStatsJob, productStatsJob *job.ProductDashboardStatsJob, postStatsJob *job.PostDashboardStatsJob) *BdsproDashboardHandler {
@@ -94,4 +96,27 @@ func (h *BdsproDashboardHandler) GetPostStats(ctx context.Context, req *sharepb.
 		FirstDateCount:  uint32(stats.Count),
 		SecondDateCount: uint32(stats2.Count),
 	}, nil
+}
+
+func (h *BdsproDashboardHandler) GetCountPostByTime(ctx context.Context, req *bdspropb.GetCountPostByTimeRequest) (*bdspropb.GetCountPostByTimeResponse, error) {
+	from, err := time.Parse(time.DateOnly, req.From)
+	if err != nil {
+		return nil, err
+	}
+	to, err := time.Parse(time.DateOnly, req.To)
+	if err != nil {
+		return nil, err
+	}
+	countPostByTime, err := h.dashboardUsecase.GetCountPostByTime(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+	countPostByTimeResponse := make([]*bdspropb.CountPostByTime, len(countPostByTime))
+	for i, count := range countPostByTime {
+		countPostByTimeResponse[i] = &bdspropb.CountPostByTime{
+			Date:  count.Date.Format(time.DateOnly),
+			Count: count.Count,
+		}
+	}
+	return &bdspropb.GetCountPostByTimeResponse{Data: countPostByTimeResponse}, nil
 }

@@ -55,3 +55,8 @@ type PostItem struct {
 func (PostItem) TableName() string {
 	return "posts"
 }
+
+type CountPostByTime struct {
+	Date  time.Time `json:"date"`
+	Count uint32    `json:"count"`
+}

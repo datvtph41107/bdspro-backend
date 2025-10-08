@@ -39,6 +39,9 @@ type PaymentUsecase interface {
 	GetWalletByWalletId(ctx context.Context, req *paymentpb.GetWalletByWalletIdRequest) (*paymentpb.Wallet, error)
 	HandleDepositWebhook(ctx context.Context, transactionCode string, amount float64) (*paymentpb.WalletTransaction, error)
 	CountProcessingTransactions(ctx context.Context) (int64, error)
+	CountCompletedTransactions(ctx context.Context) (int64, error)
+	GetDashboardMetrics(ctx context.Context, fromDate time.Time, toDate time.Time) ([]*paymentpb.DashboardMetric, error)
+	CreateOrUpdateDashboardMetric(ctx context.Context, metric *entity.DashboardMetric) error
 }
 
 type paymentUsecase struct {
@@ -48,6 +51,7 @@ type paymentUsecase struct {
 	walletAuditLogRepository    repository.WalletAuditLogRepository
 	withdrawalRequestRepository repository.WithdrawalRequestsRepository
 	notificationWorker          *notificationWorker
+	dashboardMetricRepository   repository.DashboardMetricRepository
 }
 
 func NewPaymentUsecase(
@@ -57,6 +61,7 @@ func NewPaymentUsecase(
 	walletAuditLogRepository repository.WalletAuditLogRepository,
 	withdrawalRequestRepository repository.WithdrawalRequestsRepository,
 	notificationClient client.NotificationClient,
+	dashboardMetricRepository repository.DashboardMetricRepository,
 ) PaymentUsecase {
 	notificationWorker := NewNotificationWorker(notificationClient)
 	notificationWorker.Start()
@@ -67,6 +72,7 @@ func NewPaymentUsecase(
 		walletAuditLogRepository:    walletAuditLogRepository,
 		withdrawalRequestRepository: withdrawalRequestRepository,
 		notificationWorker:          notificationWorker,
+		dashboardMetricRepository:   dashboardMetricRepository,
 	}
 }
 
@@ -869,9 +875,42 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 
 func (uc *paymentUsecase) CountProcessingTransactions(ctx context.Context) (int64, error) {
 	// Đếm số giao dịch có status PENDING (đang xử lý)
-	count, err := uc.walletTransactionRepository.GetTransactionCountByStatus(ctx, 0, "PENDING")
+	count, err := uc.walletTransactionRepository.CountTransactionsByStatus(ctx, "PENDING")
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (uc *paymentUsecase) CountCompletedTransactions(ctx context.Context) (int64, error) {
+	// Đếm số giao dịch có status COMPLETED
+	count, err := uc.walletTransactionRepository.CountTransactionsByStatus(ctx, "COMPLETED")
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+func (p *paymentUsecase) GetDashboardMetrics(ctx context.Context, fromDate time.Time, toDate time.Time) ([]*paymentpb.DashboardMetric, error) {
+	metrics, err := p.dashboardMetricRepository.GetDashboardMetrics(ctx, fromDate, toDate)
+	if err != nil {
+		return nil, err
+	}
+	metricsResponse := make([]*paymentpb.DashboardMetric, len(metrics))
+	for i, metric := range metrics {
+		metricsResponse[i] = &paymentpb.DashboardMetric{
+			Time:            metric.Time.Format(time.RFC3339),
+			ProcessingCount: metric.ProcessingCount,
+			CompletedCount:  metric.CompletedCount,
+		}
+	}
+	return metricsResponse, nil
+}
+
+func (p *paymentUsecase) CreateOrUpdateDashboardMetric(ctx context.Context, metric *entity.DashboardMetric) error {
+
+	_, err := p.dashboardMetricRepository.CreateOrUpdate(ctx, metric)
+	if err != nil {
+		return err
+	}
+	return nil
 }

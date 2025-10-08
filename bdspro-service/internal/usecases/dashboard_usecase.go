@@ -14,17 +14,20 @@ type DashboardUsecase struct {
 	ProductRepo repo.ProductRepo
 	AssetRepo   repo.AssetRepo
 	ProjectRepo repo.ProjectRepo
+	PostRepo    repo.PostRepo
 }
 
 func NewDashboardUsecase(
 	productRepo repo.ProductRepo,
 	assetRepo repo.AssetRepo,
 	projectRepo repo.ProjectRepo,
+	postRepo repo.PostRepo,
 ) *DashboardUsecase {
 	return &DashboardUsecase{
 		ProductRepo: productRepo,
 		AssetRepo:   assetRepo,
 		ProjectRepo: projectRepo,
+		PostRepo:    postRepo,
 	}
 }
 
@@ -56,4 +59,20 @@ func (u *DashboardUsecase) GetCountByOwner(ctx context.Context, ownerOf _enum.EO
 		TotalAsset:   totalAsset,
 		TotalProject: totalProject,
 	}, nil
+}
+
+func (u *DashboardUsecase) GetCountPostByTime(ctx context.Context, from time.Time, to time.Time) ([]*dto.CountPostByTimeResponse, error) {
+	countPostByTime, err := u.PostRepo.CountPostByTime(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	countPostByTimeResponse := make([]*dto.CountPostByTimeResponse, len(countPostByTime))
+	for i, count := range countPostByTime {
+		countPostByTimeResponse[i] = &dto.CountPostByTimeResponse{
+			Date:  count.Date,
+			Count: count.Count,
+		}
+	}
+	return countPostByTimeResponse, nil
 }

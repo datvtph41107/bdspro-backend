@@ -160,6 +160,12 @@ service PaymentService {
       get: "/v2/payment/stats"
     };
   }
+
+  rpc GetDashboardMetrics(GetDashboardMetricsRequest) returns (GetDashboardMetricsResponse) {
+    option (google.api.http) = {
+      get: "/v2/payment/dashboard-metrics"
+    };
+  }
 }
 
 message PaginationResponse {
@@ -423,3 +429,19 @@ message SepayWebhookRequest {
   double Accumulated = 11;
   uint32 Id = 12;
 }
+
+message GetDashboardMetricsRequest {
+  string fromDate = 1;
+  string toDate = 2;
+}
+
+message DashboardMetric {
+  string time = 1;
+  uint64 processingCount = 2;
+  uint64 completedCount = 3;
+}
+
+message GetDashboardMetricsResponse {
+  repeated DashboardMetric data = 1;
+}
+

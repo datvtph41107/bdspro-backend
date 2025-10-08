@@ -28,6 +28,7 @@ var repositorySet = wire.NewSet(
 	payment_infrastructure_repository.NewWalletAuditLogRepository,
 	payment_infrastructure_repository.NewWithdrawalRequestRepository,
 	postgres.NewBankPostgresRepository,
+	postgres.NewDashboardMetricPostgresRepository,
 	wire.Bind(new(repository.BankRepository), new(*postgres.BankPostgresRepository)),
 )
 
@@ -43,6 +44,7 @@ var usecaseSet = wire.NewSet(
 
 var jobSet = wire.NewSet(
 	job.NewPaymentDashboardStatsJob,
+	job.NewTransactionDashboardJob,
 )
 
 var handlerSet = wire.NewSet(

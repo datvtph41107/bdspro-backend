@@ -35,6 +35,11 @@ service BdsproDashboardService {
             get: "/v2/bdspro/v2/dashboard/post-stats"
         };
     };
+    rpc GetCountPostByTime(GetCountPostByTimeRequest) returns (GetCountPostByTimeResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/dashboard/count-post-by-time"
+        };
+    };
 }
 
 message GetCashProfitRequest {
@@ -65,4 +70,18 @@ message CashProfitTime {
 
 message GetCashProfitTimeResponse {
     repeated CashProfitTime data = 1;
+}
+
+message GetCountPostByTimeRequest {
+    string from = 1;
+    string to = 2;
+}
+
+message CountPostByTime {
+    string date = 1;
+    uint32 count = 2;
+}
+
+message GetCountPostByTimeResponse {
+    repeated CountPostByTime data = 1;
 }

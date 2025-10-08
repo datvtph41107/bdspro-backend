@@ -14,6 +14,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/oklog/run v1.1.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	google.golang.org/grpc v1.72.0

@@ -647,3 +647,18 @@ func (r *GormPostRepo) CountCurrent(ctx context.Context) (int64, error) {
 	}
 	return count, nil
 }
+
+func (r *GormPostRepo) CountPostByTime(ctx context.Context, from time.Time, to time.Time) ([]domain.CountPostByTime, error) {
+	var countPostByTime []domain.CountPostByTime
+
+	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
+		Where("deleted_at IS NULL AND created_at >= ? AND created_at <= ?", from, to).
+		Group("DATE(created_at)").
+		Order("DATE(created_at)").
+		Scan(&countPostByTime).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return countPostByTime, nil
+}

@@ -16,6 +16,42 @@
     "application/json"
   ],
   "paths": {
+    "/v2/payment/dashboard-metrics": {
+      "get": {
+        "operationId": "PaymentService_GetDashboardMetrics",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/paymentpbGetDashboardMetricsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
     "/v2/payment/payment-methods": {
       "get": {
         "summary": "Payment Methods",
@@ -656,6 +692,22 @@
         }
       }
     },
+    "paymentpbDashboardMetric": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string"
+        },
+        "processingCount": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "completedCount": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "paymentpbDepositRequest": {
       "type": "object",
       "properties": {
@@ -688,6 +740,18 @@
         },
         "format": {
           "type": "string"
+        }
+      }
+    },
+    "paymentpbGetDashboardMetricsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/paymentpbDashboardMetric"
+          }
         }
       }
     },
