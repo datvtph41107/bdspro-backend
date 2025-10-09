@@ -5,7 +5,7 @@ import (
 	"pb/clients"
 	userpb "pb/types/user"
 	"user/env"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 // @bind: user/internal/interface/providers.FriendProvider
@@ -35,6 +35,6 @@ func (c *CrmClient) MapFriendStatusToSearchItemPb(ctx context.Context, searchIte
 	}
 }
 
-func (c *CrmClient) GetRelationShip(ctx context.Context, currentId uint64, targetId uint64) (*user_model.FriendItem, error) {
+func (c *CrmClient) GetRelationShip(ctx context.Context, currentId uint64, targetId uint64) (*models.FriendItem, error) {
 	return nil, nil
 }

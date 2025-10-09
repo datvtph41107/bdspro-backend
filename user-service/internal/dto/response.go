@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"user/enums"
-	auth_model "user/internal/models/auth"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 // AuthLoginResponse đại diện cho phản hồi đăng nhập
@@ -26,15 +25,14 @@ type FollowInfoRes struct {
 	NumFriend    int64 `json:"numFriend"`
 }
 
-// Hàm khởi tạo AuthLoginResponse từ UserAuthEntity
-func MakeAuthLoginResponse(accessToken string, authEntity *auth_model.UserAuthEntity, role string) *AuthLoginResponse {
+// Hàm khởi tạo AuthLoginResponse
+func MakeAuthLoginResponse(accessToken string, authID uint64, profileID uint64, role string) *AuthLoginResponse {
 	return &AuthLoginResponse{
 		AccessToken: accessToken,
 		// RefreshToken: refreshToken,
 		Role:      role,
-		Username:  authEntity.Username,
-		AuthID:    authEntity.ID,
-		ProfileID: authEntity.UserID,
+		AuthID:    authID,
+		ProfileID: profileID,
 	}
 }
 
@@ -65,15 +63,6 @@ type RequestLoginResponse struct {
 	AuthID   uint64 `json:"authId,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	OAuthID  string `json:"oauthId,omitempty"`
-}
-
-// NewRequestLoginResponse tạo mới từ UserAuthEntity
-func NewRequestLoginResponse(e auth_model.UserAuthEntity) RequestLoginResponse {
-	return RequestLoginResponse{
-		AuthID:   e.ID,
-		Provider: e.Provider,
-		OAuthID:  e.OAuthID,
-	}
 }
 
 // UserInfoResponse đại diện cho phản hồi thông tin người dùng
@@ -140,16 +129,16 @@ type PublicUserInfo struct {
 	TabDefault      enums.ESettingTab     `json:"tabDefault,omitempty"`
 
 	// transient
-	Certifications []user_model.CertificationEntity `json:"certifications,omitempty"`
-	Professions    []user_model.ProfessionEntity    `json:"professions,omitempty"`
-	FriendStatus   *user_model.FriendItem           `json:"relationShip,omitempty"`
-	Following      bool                             `json:"following,omitempty"`
-	// RateStats      user_model.RateStats             `json:"rateStats,omitempty"`
+	Certifications []models.CertificationEntity `json:"certifications,omitempty"`
+	Professions    []models.ProfessionEntity    `json:"professions,omitempty"`
+	FriendStatus   *models.FriendItem           `json:"relationShip,omitempty"`
+	Following      bool                         `json:"following,omitempty"`
+	// RateStats      models.RateStats             `json:"rateStats,omitempty"`
 }
 
 type RelationShip struct {
-	FriendStatus *user_model.FriendItem `json:"friendStatus,omitempty"`
-	IsFollowing  bool                   `json:"isFollowing,omitempty"`
+	FriendStatus *models.FriendItem `json:"friendStatus,omitempty"`
+	IsFollowing  bool               `json:"isFollowing,omitempty"`
 }
 
 type JwtTokenProperties struct {
@@ -165,7 +154,7 @@ type JwtTokenProperties struct {
 // }
 
 // // NewUserInfoResponse tạo mới từ UserProfileEntity
-// func MakeUserInfoResponse(e *user_model.UserProfileEntity) *UserInfoResponse {
+// func MakeUserInfoResponse(e *models.UserProfileEntity) *UserInfoResponse {
 // 	if e == nil {
 // 		return nil
 // 	}
@@ -223,41 +212,6 @@ type ReportListResponse struct {
 	Total   int64            `json:"total"`
 	Page    int              `json:"page"`
 	Size    int              `json:"size"`
-}
-
-// MakeReportResponse tạo response từ model
-func MakeReportResponse(report *user_model.Report, proofDocs []user_model.ReportProof) *ReportResponse {
-	proofResponses := make([]ReportProofResponse, len(proofDocs))
-	for i, proof := range proofDocs {
-		proofResponses[i] = ReportProofResponse{
-			ID:       proof.ID,
-			ReportID: proof.ReportID,
-			FileName: proof.FileName,
-			FileUrl:  proof.FileUrl,
-			FileType: proof.FileType,
-		}
-	}
-
-	return &ReportResponse{
-		ID:       report.ID,
-		ReasonID: report.ReasonID,
-		Reason: ReportReasonResponse{
-			ID:     report.Reason.ID,
-			Reason: report.Reason.Reason,
-		},
-		ReportStatus: uint32(report.ReportStatus),
-		StatusText:   enums.ApproveStatusMap[report.ReportStatus],
-		UserID:       report.UserID,
-		User: ReportUserResponse{
-			ProfileId: report.User.ProfileID,
-			Phone:     report.User.Phone,
-			FullName:  report.User.FullName,
-			Avatar:    report.User.Avatar,
-		},
-		ProofDocs: proofResponses,
-		CreatedAt: report.CreatedAt,
-		UpdatedAt: report.UpdatedAt,
-	}
 }
 
 // AdminNoteResponse đại diện cho phản hồi cập nhật ghi chú admin

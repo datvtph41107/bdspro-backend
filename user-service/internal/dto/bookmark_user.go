@@ -2,7 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 // BookmarkUserListRequest request để lấy danh sách bookmark user
@@ -19,12 +19,12 @@ type BookmarkUserUpdateRequest struct {
 
 // BookmarkUserResponse response cho bookmark user
 type BookmarkUserResponse struct {
-	ID        uint64               `json:"id"`
-	AdminID   uint64               `json:"adminId"`
-	UserID    uint64               `json:"userId"`
-	CreatedAt string               `json:"createdAt"`
-	UpdatedAt string               `json:"updatedAt"`
-	User      *user_model.UserItem `json:"user,omitempty"`
+	ID        uint64           `json:"id"`
+	AdminID   uint64           `json:"adminId"`
+	UserID    uint64           `json:"userId"`
+	CreatedAt string           `json:"createdAt"`
+	UpdatedAt string           `json:"updatedAt"`
+	User      *models.UserItem `json:"user,omitempty"`
 }
 
 // BookmarkUserListResponse response cho danh sách bookmark user

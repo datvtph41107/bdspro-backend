@@ -6,18 +6,18 @@ import (
 	_utils "common/utils"
 	"strconv"
 	"user/internal/dto"
-	user_service "user/internal/services/user"
+	"user/internal/usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ProfileRouter struct {
-	Profile *user_service.ProfileService
+	Profile *usecases.ProfileUsecase
 }
 
-func NewProfileRouter(profileService *user_service.ProfileService) *ProfileRouter {
+func NewProfileRouter(profileUsecase *usecases.ProfileUsecase) *ProfileRouter {
 	return &ProfileRouter{
-		Profile: profileService,
+		Profile: profileUsecase,
 	}
 }
 

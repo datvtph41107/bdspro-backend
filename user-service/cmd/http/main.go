@@ -52,14 +52,12 @@ var HttpCmd = &cobra.Command{
 			db.AutoMigrate()
 
 			r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
-			routes.AuthRoutes(r, app.Auth)
-			routes.OAuthRoutes(r, app.OAuthRouter)
 			routes.ProfileRoutes(r, app.ProfileRouter)
 			// routes.AuthRoutes(r, app.Auth)
 			routes.BlockRoutes(r, app.BlockRouter)
 			routes.FollowRoutes(r, app.FollowRouter)
 			routes.FriendRoutes(r, app.FriendRouter)
-			routes.GroupRoutes(r, app.GroupRouter)
+			// routes.GroupRoutes(r, app.GroupRouter)
 			// routes.RateRoutes(r, app.RateRouter)
 
 			// group.GET("/info", func(c *gin.Context) {

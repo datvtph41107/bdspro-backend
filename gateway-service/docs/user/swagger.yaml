@@ -78,7 +78,7 @@ definitions:
       certifications:
         description: transient
         items:
-          $ref: '#/definitions/user_model.CertificationEntity'
+          $ref: '#/definitions/models.CertificationEntity'
         type: array
       departmentId:
         type: integer
@@ -106,18 +106,18 @@ definitions:
         type: string
       professions:
         items:
-          $ref: '#/definitions/user_model.ProfessionEntity'
+          $ref: '#/definitions/models.ProfessionEntity'
         type: array
       profileId:
         type: integer
       rateStats:
-        $ref: '#/definitions/user_model.RateStats'
+        $ref: '#/definitions/models.RateStats'
       referralBy:
         type: string
       referralCode:
         type: string
       relationShip:
-        $ref: '#/definitions/user_model.FriendItem'
+        $ref: '#/definitions/models.FriendItem'
       roleRealEstate:
         $ref: '#/definitions/enums.ERoleRealEstate'
       slogan:
@@ -324,7 +324,7 @@ definitions:
       tickVerified:
         type: boolean
     type: object
-  user_model.CertificationEntity:
+  models.CertificationEntity:
     properties:
       approveUserId:
         type: integer
@@ -362,7 +362,7 @@ definitions:
         - $ref: '#/definitions/enums.VerifyStatus'
         description: Trạng thái xác minh
     type: object
-  user_model.FriendItem:
+  models.FriendItem:
     properties:
       createdBy:
         type: integer
@@ -375,7 +375,7 @@ definitions:
         - $ref: '#/definitions/enums.EFriendStatus'
         description: '1: Pending, 2: Accepted, 3: Declined'
     type: object
-  user_model.GroupEntity:
+  models.GroupEntity:
     properties:
       backgroundColor:
         type: string
@@ -395,7 +395,7 @@ definitions:
       updatedBy:
         type: integer
     type: object
-  user_model.ProfessionEntity:
+  models.ProfessionEntity:
     properties:
       approveUserId:
         type: integer
@@ -424,7 +424,7 @@ definitions:
       updatedBy:
         type: integer
     type: object
-  user_model.RateStats:
+  models.RateStats:
     properties:
       averageScore:
         type: number
@@ -1641,7 +1641,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user_model.GroupEntity'
+          $ref: '#/definitions/models.GroupEntity'
       produces:
       - application/json
       responses:
@@ -1704,7 +1704,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user_model.GroupEntity'
+          $ref: '#/definitions/models.GroupEntity'
       - description: ID của lời mời kết bạn
         in: path
         name: id

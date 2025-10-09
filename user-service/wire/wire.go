@@ -11,19 +11,14 @@ import (
 	user_infra_handler "user/infra/handler"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_postgres "user/infra/postgres"
-	user_infra_repo "user/infra/repo"
 	user_infra_routes "user/infra/routes"
 	user_initial "user/initial"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
 	user_internal_interface_providers "user/internal/interface/providers"
-	user_internal_models_auth "user/internal/models/auth"
-	user_internal_models_user "user/internal/models/user"
-	user_internal_repo "user/internal/repo"
-	user_internal_services_auth "user/internal/services/auth"
-	user_internal_services_user "user/internal/services/user"
+	user_internal_interface_repo "user/internal/interface/repo"
+	user_internal_models "user/internal/models"
 	user_internal_usecases "user/internal/usecases"
-	user_validator "user/validator"
 )
 
 // Inject dependencies
@@ -33,73 +28,52 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_interface_providers.AuthProvider), new(*user_infra_client.AuthClient)),
 	wire.Bind(new(user_internal_interface_providers.FriendProvider), new(*user_infra_client.CrmClient)),
 	wire.Bind(new(user_internal_interface_providers.FeedbackProvider), new(*user_infra_client.FeedbackClient)),
+	wire.Bind(new(user_internal_interface_repo.IAdminRepo), new(*user_infra_postgres.AdminPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IBlockRepo), new(*user_infra_postgres.BlockPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IContactRepo), new(*user_infra_postgres.ContactPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IFollowRepo), new(*user_infra_postgres.FollowPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IProfessionRepo), new(*user_infra_postgres.ProfessionPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IProfileRepo), new(*user_infra_postgres.ProfilePostgres)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
-	wire.Bind(new(user_internal_repo.AdminRepository), new(*user_infra_repo.AdminRepo)),
-	wire.Bind(new(user_internal_repo.ReportRepo), new(*user_infra_repo.ReportRepo)),
 	user_infra_handler.NewAdminHandler,
-	user_infra_repo.NewAdminRepo,
+	user_infra_mapper.NewAdminMapper,
+	user_infra_postgres.NewAdminPostgres,
 	user_internal_usecases.NewAdminUsecase,
 	user_infra_postgres.NewAttachPostgres,
 	user_infra_client.NewAuthClient,
-	user_infra_routes.NewAuthRoutes,
-	user_internal_services_auth.NewAuthService,
-	user_validator.NewAuthValidator,
-	user_infra_repo.NewBlockRepo,
+	user_infra_postgres.NewBlockPostgres,
 	user_infra_routes.NewBlockRouter,
-	user_internal_services_user.NewBlockService,
+	user_internal_usecases.NewBlockUsecase,
 	user_infra_handler.NewBookmarkUserHandler,
 	user_infra_postgres.NewBookmarkUserPostgres,
 	user_internal_usecases.NewBookmarkUserUsecase,
-	user_infra_repo.NewCertificationRepo,
-	user_internal_services_user.NewCertificationService,
-	user_infra_repo.NewContactRepo,
-	user_internal_services_auth.NewCookieService,
+	user_infra_postgres.NewCertificationPostgres,
+	user_internal_usecases.NewCertificationUsecase,
+	user_infra_postgres.NewContactPostgres,
 	user_infra_client.NewCrmClient,
-	user_internal_services_auth.NewFacebookAuthService,
 	user_infra_client.NewFeedbackClient,
-	user_infra_repo.NewFollowRepo,
+	user_infra_postgres.NewFollowPostgres,
 	user_infra_routes.NewFollowRouter,
-	user_internal_services_user.NewFollowService,
-	user_infra_repo.NewFriendRepo,
+	user_internal_usecases.NewFollowUsecase,
+	user_infra_postgres.NewFriendPostgres,
 	user_infra_routes.NewFriendRouter,
-	user_internal_services_user.NewFriendService,
-	user_internal_services_auth.NewGoogleAuthService,
+	user_internal_usecases.NewFriendUsecase,
 	user_infra_client.NewGroupClient,
-	user_infra_repo.NewGroupRepo,
-	user_infra_routes.NewGroupRouter,
-	user_internal_services_user.NewGroupService,
-	user_infra_handler.NewGrpcAuthService,
+	user_infra_postgres.NewGroupPostgres,
 	user_infra_handler.NewGrpcProfileService,
-	user_internal_services_auth.NewHttpClient,
 	user_initial.NewInitialApp,
-	user_infra_routes.NewOAuthRouter,
-	user_internal_services_auth.NewOAuthService,
 	user_infra_client.NewOrganizationClient,
 	user_infra_client.NewOrganizationMemberClient,
 	user_infra_client.NewPaymentClient,
-	user_infra_repo.NewProfessionRepo,
-	user_infra_routes.NewProfessionRouter,
-	user_internal_services_user.NewProfessionService,
+	user_infra_postgres.NewProfessionPostgres,
+	user_internal_usecases.NewProfessionUsecase,
 	user_infra_mapper.NewProfileMapper,
-	user_infra_repo.NewProfileRepo,
+	user_infra_postgres.NewProfilePostgres,
 	user_infra_routes.NewProfileRouter,
-	user_internal_services_user.NewProfileService,
-	user_infra_repo.NewRateRepo,
-	user_internal_services_auth.NewRedisService,
+	user_internal_usecases.NewProfileUsecase,
 	user_internal_dto.NewRefreshResponse,
-	user_infra_handler.NewReportHandler,
-	user_infra_mapper.NewReportMapper,
-	user_infra_handler.NewReportProofHandler,
-	user_infra_mapper.NewReportProofMapper,
-	user_infra_handler.NewReportReasonHandler,
-	user_infra_repo.NewReportRepo,
-	user_internal_services_user.NewReportService,
-	user_internal_usecases.NewReportUsecase,
-	user_internal_dto.NewRequestLoginResponse,
 	user_infra_postgres.NewTransactionGorm,
-	user_internal_models_auth.NewUserOTPRepository,
-	user_internal_models_user.NewUserProfileEntityWithRequest,
-	user_internal_services_auth.NewZaloAuthService,
+	user_internal_models.NewUserProfileEntityWithRequest,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)

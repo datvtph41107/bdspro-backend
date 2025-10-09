@@ -13,84 +13,56 @@ import (
 	"user/infra/handler"
 	"user/infra/mapper"
 	"user/infra/postgres"
-	"user/infra/repo"
 	"user/infra/routes"
 	"user/initial"
 	"user/internal/dto"
 	"user/internal/interface"
 	"user/internal/interface/providers"
-	"user/internal/models/auth"
-	"user/internal/models/user"
-	repo2 "user/internal/repo"
-	"user/internal/services/auth"
-	"user/internal/services/user"
+	"user/internal/interface/repo"
+	"user/internal/models"
 	"user/internal/usecases"
-	"user/validator"
 )
 
 // Injectors from wire.go:
 
 func InitializeApp() (*initial.InitialApp, error) {
-	redisService := auth_service.NewRedisService()
-	cookieService := auth_service.NewCookieService()
 	db, err := _db.NewDB()
 	if err != nil {
 		return nil, err
 	}
-	profileRepo := repo.NewProfileRepo(db)
-	organizationMemberServiceClient := client.NewOrganizationMemberClient()
-	paymentServiceClient := client.NewPaymentClient()
-	authService := auth_service.NewAuthService(redisService, cookieService, profileRepo, organizationMemberServiceClient, paymentServiceClient)
-	authRouter := routes.NewAuthRoutes(authService)
-	httpClient := auth_service.NewHttpClient()
-	googleAuthService := auth_service.NewGoogleAuthService(httpClient, authService)
-	zaloAuthService := auth_service.NewZaloAuthService(httpClient, authService)
-	facebookAuthService := auth_service.NewFacebookAuthService(authService, httpClient)
-	oAuthRouter := routes.NewOAuthRouter(googleAuthService, zaloAuthService, facebookAuthService)
-	professionRepo := repo.NewProfessionRepo(db)
-	certificationRepo := repo.NewCertificationRepo(db)
+	profilePostgres := postgres.NewProfilePostgres(db)
+	professionPostgres := postgres.NewProfessionPostgres(db)
+	iCertificationRepo := postgres.NewCertificationPostgres(db)
 	feedbackClient := client.NewFeedbackClient()
 	crmClient := client.NewCrmClient()
-	followRepo := repo.NewFollowRepo(db)
-	profileService := user_service.NewProfileService(profileRepo, professionRepo, certificationRepo, feedbackClient, crmClient, followRepo)
-	profileRouter := routes.NewProfileRouter(profileService)
-	blockRepo := repo.NewBlockRepo(db)
-	contactRepo := repo.NewContactRepo(db)
-	friendRepo := repo.NewFriendRepo(db)
-	blockService := user_service.NewBlockService(blockRepo, contactRepo, friendRepo, followRepo)
-	blockRouter := routes.NewBlockRouter(blockService)
-	followService := user_service.NewFollowService(followRepo, contactRepo, blockRepo, blockService)
-	followRouter := routes.NewFollowRouter(followService)
-	friendService := user_service.NewFriendService(friendRepo, contactRepo, followRepo, blockRepo, blockService)
-	friendRouter := routes.NewFriendRouter(friendService)
-	groupRepo := repo.NewGroupRepo(db)
-	groupService := user_service.NewGroupService(groupRepo)
-	groupRouter := routes.NewGroupRouter(groupService)
-	reportRepo := repo.NewReportRepo(db)
-	transactionGorm := postgres.NewTransactionGorm(db)
-	reportUsecase := usecases.NewReportUsecase(reportRepo, transactionGorm)
-	reportProofMapper := mapper.NewReportProofMapper()
-	reportMapper := mapper.NewReportMapper(reportProofMapper)
-	reportHandler := handler.NewReportHandler(reportUsecase, reportMapper)
-	reportReasonHandler := handler.NewReportReasonHandler(reportUsecase, reportMapper)
-	reportProofHandler := handler.NewReportProofHandler(reportUsecase, reportMapper)
+	followPostgres := postgres.NewFollowPostgres(db)
+	profileUsecase := usecases.NewProfileUsecase(profilePostgres, professionPostgres, iCertificationRepo, feedbackClient, crmClient, followPostgres)
+	profileRouter := routes.NewProfileRouter(profileUsecase)
+	blockPostgres := postgres.NewBlockPostgres(db)
+	contactPostgres := postgres.NewContactPostgres(db)
+	iFriendRepo := postgres.NewFriendPostgres(db)
+	blockUsecase := usecases.NewBlockUsecase(blockPostgres, contactPostgres, iFriendRepo, followPostgres)
+	blockRouter := routes.NewBlockRouter(blockUsecase)
+	followUsecase := usecases.NewFollowUsecase(followPostgres, contactPostgres, blockPostgres, blockUsecase)
+	followRouter := routes.NewFollowRouter(followUsecase)
+	friendUsecase := usecases.NewFriendUsecase(iFriendRepo, contactPostgres, followPostgres, blockPostgres, blockUsecase)
+	friendRouter := routes.NewFriendRouter(friendUsecase)
 	authClient := client.NewAuthClient()
-	adminRepo := repo.NewAdminRepo(db, authClient)
-	adminUsecase := usecases.NewAdminUsecase(adminRepo, authClient)
+	adminPostgres := postgres.NewAdminPostgres(db, authClient)
+	adminUsecase := usecases.NewAdminUsecase(adminPostgres, authClient)
 	organizationServiceClient := client.NewOrganizationClient()
 	groupServiceClient := client.NewGroupClient()
 	profileMapper := mapper.NewProfileMapper()
-	grpcProfileService := handler.NewGrpcProfileService(profileRepo, profileService, adminUsecase, organizationServiceClient, groupServiceClient, profileMapper, crmClient)
-	grpcAuthService := handler.NewGrpcAuthService(authService, profileRepo, organizationMemberServiceClient)
+	grpcProfileService := handler.NewGrpcProfileService(profilePostgres, adminUsecase, profileUsecase, organizationServiceClient, groupServiceClient, profileMapper, crmClient)
 	adminHandler := handler.NewAdminHandler(adminUsecase)
-	bookmarkUserRepository := postgres.NewBookmarkUserPostgres()
-	bookmarkUserUsecase := usecases.NewBookmarkUserUsecase(bookmarkUserRepository)
+	iBookmarkUserRepo := postgres.NewBookmarkUserPostgres()
+	bookmarkUserUsecase := usecases.NewBookmarkUserUsecase(iBookmarkUserRepo)
 	bookmarkUserHandler := handler.NewBookmarkUserHandler(bookmarkUserUsecase)
-	initialApp := initial.NewInitialApp(authRouter, oAuthRouter, profileRouter, blockRouter, followRouter, friendRouter, groupRouter, reportHandler, reportReasonHandler, reportProofHandler, grpcProfileService, grpcAuthService, adminHandler, bookmarkUserHandler, feedbackClient)
+	initialApp := initial.NewInitialApp(profileRouter, blockRouter, followRouter, friendRouter, grpcProfileService, adminHandler, bookmarkUserHandler, feedbackClient)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(providers.AuthProvider), new(*client.AuthClient)), wire.Bind(new(providers.FriendProvider), new(*client.CrmClient)), wire.Bind(new(providers.FeedbackProvider), new(*client.FeedbackClient)), wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), wire.Bind(new(repo2.AdminRepository), new(*repo.AdminRepo)), wire.Bind(new(repo2.ReportRepo), new(*repo.ReportRepo)), handler.NewAdminHandler, repo.NewAdminRepo, usecases.NewAdminUsecase, postgres.NewAttachPostgres, client.NewAuthClient, routes.NewAuthRoutes, auth_service.NewAuthService, validator.NewAuthValidator, repo.NewBlockRepo, routes.NewBlockRouter, user_service.NewBlockService, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, usecases.NewBookmarkUserUsecase, repo.NewCertificationRepo, user_service.NewCertificationService, repo.NewContactRepo, auth_service.NewCookieService, client.NewCrmClient, auth_service.NewFacebookAuthService, client.NewFeedbackClient, repo.NewFollowRepo, routes.NewFollowRouter, user_service.NewFollowService, repo.NewFriendRepo, routes.NewFriendRouter, user_service.NewFriendService, auth_service.NewGoogleAuthService, client.NewGroupClient, repo.NewGroupRepo, routes.NewGroupRouter, user_service.NewGroupService, handler.NewGrpcAuthService, handler.NewGrpcProfileService, auth_service.NewHttpClient, initial.NewInitialApp, routes.NewOAuthRouter, auth_service.NewOAuthService, client.NewOrganizationClient, client.NewOrganizationMemberClient, client.NewPaymentClient, repo.NewProfessionRepo, routes.NewProfessionRouter, user_service.NewProfessionService, mapper.NewProfileMapper, repo.NewProfileRepo, routes.NewProfileRouter, user_service.NewProfileService, repo.NewRateRepo, auth_service.NewRedisService, dto.NewRefreshResponse, handler.NewReportHandler, mapper.NewReportMapper, handler.NewReportProofHandler, mapper.NewReportProofMapper, handler.NewReportReasonHandler, repo.NewReportRepo, user_service.NewReportService, usecases.NewReportUsecase, dto.NewRequestLoginResponse, postgres.NewTransactionGorm, auth_model.NewUserOTPRepository, user_model.NewUserProfileEntityWithRequest, auth_service.NewZaloAuthService)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(providers.AuthProvider), new(*client.AuthClient)), wire.Bind(new(providers.FriendProvider), new(*client.CrmClient)), wire.Bind(new(providers.FeedbackProvider), new(*client.FeedbackClient)), wire.Bind(new(repo.IAdminRepo), new(*postgres.AdminPostgres)), wire.Bind(new(repo.IBlockRepo), new(*postgres.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*postgres.ContactPostgres)), wire.Bind(new(repo.IFollowRepo), new(*postgres.FollowPostgres)), wire.Bind(new(repo.IProfessionRepo), new(*postgres.ProfessionPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), handler.NewAdminHandler, postgres.NewAdminPostgres, usecases.NewAdminUsecase, postgres.NewAttachPostgres, client.NewAuthClient, postgres.NewBlockPostgres, routes.NewBlockRouter, usecases.NewBlockUsecase, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, usecases.NewBookmarkUserUsecase, postgres.NewCertificationPostgres, usecases.NewCertificationUsecase, postgres.NewContactPostgres, client.NewCrmClient, client.NewFeedbackClient, postgres.NewFollowPostgres, routes.NewFollowRouter, usecases.NewFollowUsecase, postgres.NewFriendPostgres, routes.NewFriendRouter, usecases.NewFriendUsecase, client.NewGroupClient, postgres.NewGroupPostgres, handler.NewGrpcProfileService, initial.NewInitialApp, client.NewOrganizationClient, client.NewOrganizationMemberClient, client.NewPaymentClient, postgres.NewProfessionPostgres, usecases.NewProfessionUsecase, mapper.NewProfileMapper, postgres.NewProfilePostgres, routes.NewProfileRouter, usecases.NewProfileUsecase, dto.NewRefreshResponse, postgres.NewTransactionGorm, models.NewUserProfileEntityWithRequest)

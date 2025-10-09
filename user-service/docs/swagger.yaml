@@ -188,7 +188,7 @@ definitions:
     - Pending
     - Accepted
     - Reject
-  user_model.GroupEntity:
+  models.GroupEntity:
     properties:
       backgroundColor:
         type: string
@@ -827,7 +827,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user_model.GroupEntity'
+          $ref: '#/definitions/models.GroupEntity'
       produces:
       - application/json
       responses:
@@ -890,7 +890,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user_model.GroupEntity'
+          $ref: '#/definitions/models.GroupEntity'
       - description: ID của lời mời kết bạn
         in: path
         name: id

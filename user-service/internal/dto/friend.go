@@ -2,7 +2,7 @@ package dto
 
 import (
 	"time"
-	"user/enums"
+	"user/internal/enums"
 )
 
 type FriendDTO struct {

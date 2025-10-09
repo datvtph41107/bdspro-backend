@@ -1015,7 +1015,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_model.GroupEntity"
+                            "$ref": "#/definitions/models.GroupEntity"
                         }
                     }
                 ],
@@ -1060,7 +1060,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_model.GroupEntity"
+                            "$ref": "#/definitions/models.GroupEntity"
                         }
                     },
                     {
@@ -2391,7 +2391,7 @@
                     "description": "transient",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/user_model.CertificationEntity"
+                        "$ref": "#/definitions/models.CertificationEntity"
                     }
                 },
                 "departmentId": {
@@ -2433,14 +2433,14 @@
                 "professions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/user_model.ProfessionEntity"
+                        "$ref": "#/definitions/models.ProfessionEntity"
                     }
                 },
                 "profileId": {
                     "type": "integer"
                 },
                 "rateStats": {
-                    "$ref": "#/definitions/user_model.RateStats"
+                    "$ref": "#/definitions/models.RateStats"
                 },
                 "referralBy": {
                     "type": "string"
@@ -2449,7 +2449,7 @@
                     "type": "string"
                 },
                 "relationShip": {
-                    "$ref": "#/definitions/user_model.FriendItem"
+                    "$ref": "#/definitions/models.FriendItem"
                 },
                 "roleRealEstate": {
                     "$ref": "#/definitions/enums.ERoleRealEstate"
@@ -2741,7 +2741,7 @@
                 }
             }
         },
-        "user_model.CertificationEntity": {
+        "models.CertificationEntity": {
             "type": "object",
             "properties": {
                 "approveUserId": {
@@ -2797,7 +2797,7 @@
                 }
             }
         },
-        "user_model.FriendItem": {
+        "models.FriendItem": {
             "type": "object",
             "properties": {
                 "createdBy": {
@@ -2819,7 +2819,7 @@
                 }
             }
         },
-        "user_model.GroupEntity": {
+        "models.GroupEntity": {
             "type": "object",
             "properties": {
                 "backgroundColor": {
@@ -2849,7 +2849,7 @@
                 }
             }
         },
-        "user_model.ProfessionEntity": {
+        "models.ProfessionEntity": {
             "type": "object",
             "properties": {
                 "approveUserId": {
@@ -2893,7 +2893,7 @@
                 }
             }
         },
-        "user_model.RateStats": {
+        "models.RateStats": {
             "type": "object",
             "properties": {
                 "averageScore": {

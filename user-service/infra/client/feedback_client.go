@@ -5,7 +5,7 @@ import (
 	clients "pb/clients"
 	feedbackpb "pb/types/feedback"
 	"user/env"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 // @bind: user/internal/interface/providers.FeedbackProvider
@@ -21,20 +21,20 @@ func NewFeedbackClient() *FeedbackClient {
 
 func (c *FeedbackClient) RegisterService(ctx context.Context) error {
 	_, err := c.FeedbackGrpcClient.RegisterEntity(ctx, &feedbackpb.FeedbackRegistry{
-		Name:    "user",
-		Port:    8201,
-		Service: "user_grpc",
+		RegistryName: "user",
+		Port:         8201,
+		Service:      "user_grpc",
 	})
 
 	return err
 }
 
-func (c *FeedbackClient) GetUserRateStats(ctx context.Context, userId uint64) (*user_model.RateStats, error) {
+func (c *FeedbackClient) GetUserRateStats(ctx context.Context, userId uint64) (*models.RateStats, error) {
 	// rateStats, err := c.FeedbackGrpcClient.GetRateStats(ctx, userId, 10)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	return &user_model.RateStats{
+	return &models.RateStats{
 		TotalReviews: 0,
 		AverageScore: 0,
 		Star1Count:   0,

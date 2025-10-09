@@ -1,0 +1,382 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "user/admin_profile.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "AdminProfileService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/user/admin-profile/assign-role": {
+      "post": {
+        "operationId": "AdminProfileService_AssignRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAssignRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbAssignRoleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AdminProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin-profile/create": {
+      "post": {
+        "summary": "Admin Management",
+        "operationId": "AdminProfileService_CreateAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAdminProfile"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbAdminProfile"
+            }
+          }
+        ],
+        "tags": [
+          "AdminProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin-profile/delete/{id}": {
+      "delete": {
+        "operationId": "AdminProfileService_DeleteAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbDeleteAdminResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "AdminProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin-profile/list": {
+      "get": {
+        "operationId": "AdminProfileService_ListAdmins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAdminListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AdminProfileService"
+        ]
+      }
+    },
+    "/v2/user/admin-profile/update": {
+      "put": {
+        "operationId": "AdminProfileService_UpdateAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAdminProfile"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbAdminProfile"
+            }
+          }
+        ],
+        "tags": [
+          "AdminProfileService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "userpbAdminListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbAdminProfile"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "userpbAdminProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleType": {
+          "type": "string"
+        },
+        "roleRealEstate": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string"
+        },
+        "departmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bookmark": {
+          "type": "boolean"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "lastLoginAt": {
+          "type": "string"
+        },
+        "totalLogin": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "verifiedAt": {
+          "type": "string"
+        },
+        "lockedAt": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "internalNotes": {
+          "type": "string"
+        },
+        "sendNotification": {
+          "type": "boolean"
+        }
+      }
+    },
+    "userpbAssignRoleRequest": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleKey": {
+          "type": "string"
+        }
+      }
+    },
+    "userpbAssignRoleResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "userpbDeleteAdminResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

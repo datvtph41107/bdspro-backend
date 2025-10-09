@@ -1,11 +1,10 @@
 package handler
 
 import (
-	_dto "common/domain/dto"
-	_utils "common/utils"
 	"context"
+	authpb "pb/types/auth"
 	userpb "pb/types/user"
-	"user/internal/dto"
+	"user/infra/mapper"
 	"user/internal/usecases"
 
 	"google.golang.org/grpc/codes"
@@ -13,13 +12,17 @@ import (
 )
 
 type AdminHandler struct {
-	userpb.UnimplementedProfileServiceServer
+	userpb.UnimplementedAdminProfileServiceServer
 	AdminUsecase *usecases.AdminUsecase
+	AdminMapper  *mapper.AdminMapper
 }
 
-func NewAdminHandler(adminUsecase *usecases.AdminUsecase) *AdminHandler {
+func NewAdminHandler(
+	adminUsecase *usecases.AdminUsecase,
+	adminMapper *mapper.AdminMapper) *AdminHandler {
 	return &AdminHandler{
 		AdminUsecase: adminUsecase,
+		AdminMapper:  adminMapper,
 	}
 }
 
@@ -37,100 +40,119 @@ func NewAdminHandler(adminUsecase *usecases.AdminUsecase) *AdminHandler {
 // @Param roleType query string false "Lọc theo role type"
 // @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
 // @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
-// @Success 200 {object} userpb.ListAllUsersResponse
-// @Failure 400 {object} userpb.ListAllUsersResponse
-// @Failure 401 {object} userpb.ListAllUsersResponse
-// @Failure 500 {object} userpb.ListAllUsersResponse
-// @Router /v2/user/admin/users [get]
-func (h *AdminHandler) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
+// @Router /admin/list [get]
+func (h *AdminHandler) ListAdmin(ctx context.Context, req *userpb.ListAdminRequest) (*userpb.ListAdminResponse, error) {
 	// TODO: Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if !h.isAdmin(profileID) {
 	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
 	// }
 
-	// Convert proto request to DTO
-	dtoReq := &dto.ListAllUsersRequest{
-		Pagable: _dto.Pagable{
-			Page: req.Page,
-			Size: req.Size,
-		},
-		Search:    req.Search,
-		SortBy:    req.SortBy,
-		SortOrder: req.SortOrder,
-		RoleType:  req.RoleType,
-	}
-
-	// Set bookmark filter
-	if req.Bookmark {
-		dtoReq.Bookmark = &req.Bookmark
-	}
-	// Set status filter
-	if req.Status != 0 {
-		status := req.Status
-		dtoReq.Status = &status
-	}
-
-	// Set date filters
-	if req.StartDate != "" {
-		// TODO: Parse startDate string to time.Time
-	}
-	if req.EndDate != "" {
-		// TODO: Parse endDate string to time.Time
-	}
+	// Convert proto request to DTO using mapper
+	dtoReq := h.AdminMapper.ListAdminRequestToDTO(req)
 
 	// Call usecase
-	result, err := h.AdminUsecase.ListAllUsers(ctx, dtoReq)
+	result, total, err := h.AdminUsecase.ListAdmins(ctx, dtoReq)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
 	}
 
-	// Convert DTO response to proto response
-	response := &userpb.ListAllUsersResponse{
-		Total:      result.Total,
-		Page:       result.Page,
-		Size:       result.Size,
-		TotalPages: result.TotalPages,
-	}
+	// Convert DTO response to proto response using mapper
+	response := h.AdminMapper.ListAdminResponseToProto(result)
 
-	// Convert data items
-	for _, item := range result.Data {
-		protoItem := &userpb.AdminUserItem{
-			ProfileId:      item.ProfileID,
-			FullName:       item.FullName,
-			Email:          item.Email,
-			Phone:          item.Phone,
-			Avatar:         item.Avatar,
-			Address:        item.Address,
-			Gender:         uint32(item.Gender),
-			Status:         uint32(item.Status),
-			RoleType:       item.RoleType,
-			RoleRealEstate: item.RoleRealEstate,
-			Position:       item.Position,
-			DepartmentId:   item.DepartmentID,
-			Bookmark:       item.Bookmark,
-			TickVerified:   item.TickVerified,
-			TotalLogin:     item.TotalLogin,
-		}
-
-		// Convert time fields
-		protoItem.CreatedAt = _utils.FormatTimeToString(&item.CreatedAt)
-		protoItem.UpdatedAt = _utils.FormatTimeToString(&item.UpdatedAt)
-		if item.Birth != nil {
-			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
-		}
-		if item.LastLoginAt != nil {
-			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
-		}
-		if item.VerifiedAt != nil {
-			protoItem.VerifiedAt = _utils.FormatTimeToString(item.VerifiedAt)
-		}
-		if item.LockedAt != nil {
-			protoItem.LockedAt = _utils.FormatTimeToString(item.LockedAt)
-		}
-
-		response.Data = append(response.Data, protoItem)
-	}
-
-	return response, nil
+	return &userpb.ListAdminResponse{
+		Data:  response,
+		Total: uint32(total),
+	}, nil
 }
+
+// @Summary Create Admin
+// @Description Tạo tài khoản admin mới
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.CreateAdminRequest true "Thông tin tạo admin"
+// @Router /admin/create [post]
+func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+	// Convert proto request to model using mapper
+	payload := h.AdminMapper.CreateAdminRequestToModel(req)
+
+	result, err := h.AdminUsecase.CreateAdmin(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert model response to proto response using mapper
+	return h.AdminMapper.AdminProfileResponseToProto(result), nil
+}
+
+// @Summary Update Admin
+// @Description Cập nhật thông tin admin
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.UpdateAdminRequest true "Thông tin cập nhật admin"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /admin/update [put]
+func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+	// Convert proto request to DTO using mapper
+	dtoReq := h.AdminMapper.UpdateAdminRequestToDTO(req)
+
+	result, err := h.AdminUsecase.UpdateAdmin(ctx, *dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert model response to proto response using mapper
+	return h.AdminMapper.AdminProfileResponseToProto(result), nil
+}
+
+// @Summary Delete Admin
+// @Description Xóa tài khoản admin
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param body body authpb.DeleteAdminRequest true "Thông tin xóa admin"
+// @Success 200 {object} authpb.DeleteAdminResponse
+// @Failure 400 {object} authpb.DeleteAdminResponse
+// @Failure 500 {object} authpb.DeleteAdminResponse
+// @Router /admin/delete [delete]
+func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminRequest) (*authpb.DeleteAdminResponse, error) {
+	// Convert proto request to DTO using mapper
+	dtoReq := h.AdminMapper.DeleteAdminRequestToDTO(req)
+
+	err := h.AdminUsecase.DeleteAdmin(ctx, *dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.DeleteAdminResponse{
+		Message: "Xóa tài khoản admin thành công",
+	}, nil
+}
+
+// // @Summary Assign Role
+// // @Description Gán quyền cho admin
+// // @Tags Admin
+// // @Accept json
+// // @Produce json
+// // @Param body body authpb.AssignRoleRequest true "Thông tin gán quyền"
+// // @Success 200 {object} authpb.AssignRoleResponse
+// // @Failure 400 {object} authpb.AssignRoleResponse
+// // @Failure 500 {object} authpb.AssignRoleResponse
+// // @Router /admin/assign-role [post]
+// func (h *AdminHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleRequest) (*authpb.AssignRoleResponse, error) {
+// 	// Convert proto request to DTO using mapper
+// 	dtoReq := h.AdminMapper.AssignRoleRequestToDTO(req)
+
+// 	err := h.AdminUsecase.AssignRole(ctx, *dtoReq)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &authpb.AssignRoleResponse{
+// 		Message: "Gán quyền thành công",
+// 	}, nil
+// }

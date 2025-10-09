@@ -2,18 +2,18 @@ package routes
 
 import (
 	_routes "common/routes"
-	services "user/internal/services/user"
+	"user/internal/usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
 type BlockRouter struct {
-	service *services.BlockService
+	usecase *usecases.BlockUsecase
 }
 
-func NewBlockRouter(service *services.BlockService) *BlockRouter {
+func NewBlockRouter(usecase *usecases.BlockUsecase) *BlockRouter {
 	return &BlockRouter{
-		service: service,
+		usecase: usecase,
 	}
 }
 
@@ -35,7 +35,7 @@ func BlockRoutes(r *gin.Engine, router *BlockRouter) {
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /v1/user/block/list [get]
 func (r *BlockRouter) ListBlockedUsers(c *gin.Context) {
-	result, err := r.service.ListBlockedUsers(c)
+	result, err := r.usecase.ListBlockedUsers(c)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -50,7 +50,7 @@ func (r *BlockRouter) ListBlockedUsers(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /v1/user/block/{profileId} [post]
 func (r *BlockRouter) BlockUser(c *gin.Context) {
-	result, err := r.service.BlockUser(c)
+	result, err := r.usecase.BlockUser(c)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -65,6 +65,6 @@ func (r *BlockRouter) BlockUser(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /v1/user/block/{profileId} [delete]
 func (r *BlockRouter) UnblockUser(c *gin.Context) {
-	result, err := r.service.UnblockUser(c)
+	result, err := r.usecase.UnblockUser(c)
 	_routes.RouteResult(c, result, err)
 }

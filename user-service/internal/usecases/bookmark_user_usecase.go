@@ -6,17 +6,17 @@ import (
 	"context"
 	"errors"
 	"user/internal/dto"
-	user_model "user/internal/models/user"
-	"user/internal/repo"
+	"user/internal/interface/repo"
+	"user/internal/models"
 )
 
 // BookmarkUserUsecase usecase cho bookmark user
 type BookmarkUserUsecase struct {
-	BookmarkUserRepo repo.BookmarkUserRepository
+	BookmarkUserRepo repo.IBookmarkUserRepo
 }
 
 // NewBookmarkUserUsecase tạo instance mới của BookmarkUserUsecase
-func NewBookmarkUserUsecase(bookmarkUserRepo repo.BookmarkUserRepository) *BookmarkUserUsecase {
+func NewBookmarkUserUsecase(bookmarkUserRepo repo.IBookmarkUserRepo) *BookmarkUserUsecase {
 	return &BookmarkUserUsecase{
 		BookmarkUserRepo: bookmarkUserRepo,
 	}
@@ -39,7 +39,7 @@ func (u *BookmarkUserUsecase) GetBookmarkUsers(ctx context.Context, req *dto.Boo
 
 		// Map user info if available
 		if bookmark.User != nil {
-			responses[i].User = &user_model.UserItem{
+			responses[i].User = &models.UserItem{
 				ProfileID:    bookmark.User.ProfileID,
 				FullName:     bookmark.User.FullName,
 				Avatar:       bookmark.User.Avatar,
@@ -71,7 +71,7 @@ func (u *BookmarkUserUsecase) UpdateBookmarkUsers(ctx context.Context, adminID u
 
 			// Nếu chưa bookmark thì tạo mới
 			if !exists {
-				bookmark := &user_model.BookmarkUserEntity{
+				bookmark := &models.BookmarkUserEntity{
 					AdminID: adminID,
 					UserID:  profileID,
 				}

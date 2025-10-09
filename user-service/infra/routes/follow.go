@@ -2,18 +2,18 @@ package routes
 
 import (
 	_routes "common/routes"
-	user_service "user/internal/services/user"
+	"user/internal/usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
 type FollowRouter struct {
-	service *user_service.FollowService
+	usecase *usecases.FollowUsecase
 }
 
-func NewFollowRouter(service *user_service.FollowService) *FollowRouter {
+func NewFollowRouter(service *usecases.FollowUsecase) *FollowRouter {
 	return &FollowRouter{
-		service: service,
+		usecase: service,
 	}
 }
 
@@ -37,7 +37,7 @@ func FollowRoutes(r *gin.Engine, router *FollowRouter) {
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /v1/user/follow/followers [get]
 func (r *FollowRouter) FollowerList(c *gin.Context) {
-	result, err := r.service.FollowerUser(c)
+	result, err := r.usecase.FollowerUser(c)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -51,7 +51,7 @@ func (r *FollowRouter) FollowerList(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy người dùng"
 // @Router /v1/user/follow/following [get]
 func (r *FollowRouter) FollowingList(c *gin.Context) {
-	result, err := r.service.FollowingUser(c)
+	result, err := r.usecase.FollowingUser(c)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -67,7 +67,7 @@ func (r *FollowRouter) FollowingList(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
 // @Router /v1/user/follow/{profileId} [post]
 func (r *FollowRouter) Add(c *gin.Context) {
-	result, err := r.service.FollowUser(c)
+	result, err := r.usecase.FollowUser(c)
 
 	_routes.RouteResult(c, result, err)
 }
@@ -84,7 +84,7 @@ func (r *FollowRouter) Add(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy người dùng hoặc người dùng"
 // @Router /v1/user/follow/{profileId} [delete]
 func (r *FollowRouter) Remove(c *gin.Context) {
-	result, err := r.service.UnfollowUser(c)
+	result, err := r.usecase.UnfollowUser(c)
 
 	_routes.RouteResult(c, result, err)
 }

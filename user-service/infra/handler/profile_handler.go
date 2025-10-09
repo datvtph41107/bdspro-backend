@@ -13,9 +13,8 @@ import (
 
 	"user/infra/client"
 	"user/infra/mapper"
-	user_repo "user/infra/repo"
 	"user/internal/dto"
-	user_service "user/internal/services/user"
+	"user/internal/interface/repo"
 	"user/internal/usecases"
 
 	"github.com/patrickmn/go-cache"
@@ -25,34 +24,34 @@ import (
 
 type GrpcProfileService struct {
 	userpb.UnimplementedProfileServiceServer
-	ProfileRepo   *user_repo.ProfileRepo
-	Profile       *user_service.ProfileService
-	AdminUsecase  *usecases.AdminUsecase
-	cache         *cache.Cache
-	OrgClient     orgpb.OrganizationServiceClient
-	GroupClient   organizationpb.GroupServiceClient
-	ProfileMapper *mapper.ProfileMapper
-	CrmClient     *client.CrmClient
+	ProfileRepo    repo.IProfileRepo
+	AdminUsecase   *usecases.AdminUsecase
+	ProfileUsecase *usecases.ProfileUsecase
+	cache          *cache.Cache
+	OrgClient      orgpb.OrganizationServiceClient
+	GroupClient    organizationpb.GroupServiceClient
+	ProfileMapper  *mapper.ProfileMapper
+	CrmClient      *client.CrmClient
 }
 
 func NewGrpcProfileService(
-	profileRepo *user_repo.ProfileRepo,
-	profileService *user_service.ProfileService,
+	profileRepo repo.IProfileRepo,
 	adminUsecase *usecases.AdminUsecase,
+	profileUsecase *usecases.ProfileUsecase,
 	orgClient orgpb.OrganizationServiceClient,
 	groupClient organizationpb.GroupServiceClient,
 	profileMapper *mapper.ProfileMapper,
 	crmClient *client.CrmClient,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
-		ProfileRepo:   profileRepo,
-		Profile:       profileService,
-		AdminUsecase:  adminUsecase,
-		cache:         cache.New(5*time.Minute, 10*time.Minute),
-		OrgClient:     orgClient,
-		GroupClient:   groupClient,
-		ProfileMapper: profileMapper,
-		CrmClient:     crmClient,
+		ProfileRepo:    profileRepo,
+		ProfileUsecase: profileUsecase,
+		AdminUsecase:   adminUsecase,
+		cache:          cache.New(5*time.Minute, 10*time.Minute),
+		OrgClient:      orgClient,
+		GroupClient:    groupClient,
+		ProfileMapper:  profileMapper,
+		CrmClient:      crmClient,
 	}
 }
 
@@ -127,7 +126,7 @@ func (s *GrpcProfileService) GetProfileByPhones(ctx context.Context, req *userpb
 // @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
 // @Router /v2/user/profile/info/{id} [get]
 func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdRequest) (*userpb.ProfilePublicInfo, error) {
-	result, err := s.Profile.PublicUserInfo(ctx, req.Id, false)
+	result, err := s.ProfileUsecase.PublicUserInfo(ctx, req.Id, false)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
@@ -144,7 +143,7 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 // @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
 // @Router /v2/user/profile/info/me [get]
 func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.Empty) (*userpb.ProfilePublicInfo, error) {
-	result, err := s.Profile.PublicUserInfoMe(ctx)
+	result, err := s.ProfileUsecase.PublicUserInfoMe(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
@@ -222,7 +221,7 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoRequest) (*sharepb.Empty, error) {
 	dto := s.ProfileMapper.SetProfileToDTO(req)
 
-	s.Profile.UpdateUserInfo(ctx, dto)
+	s.ProfileUsecase.UpdateUserInfo(ctx, dto)
 
 	return &sharepb.Empty{}, nil
 }
@@ -232,7 +231,7 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 		Page: uint32(req.Page),
 		Size: uint32(req.Size),
 	}
-	results, total, err := s.Profile.SearchProfilePublic(ctx, req, pageable)
+	results, total, err := s.ProfileUsecase.SearchProfilePublic(ctx, req, pageable)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to search profile: %v", err)
 	}
@@ -247,112 +246,112 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 	}, nil
 }
 
-// @Summary Lấy danh sách tất cả user (Admin only)
-// @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param search query string false "Tìm kiếm theo tên, email, phone"
-// @Param page query int false "Trang hiện tại (mặc định: 1)"
-// @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
-// @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
-// @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
-// @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
-// @Param roleType query string false "Lọc theo role type"
-// @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
-// @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
-// @Success 200 {object} userpb.ListAllUsersResponse
-// @Failure 400 {object} userpb.ListAllUsersResponse
-// @Failure 401 {object} userpb.ListAllUsersResponse
-// @Failure 500 {object} userpb.ListAllUsersResponse
-// @Router /v2/user/admin/users [get]
-func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
+// // @Summary Lấy danh sách tất cả user (Admin only)
+// // @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
+// // @Tags Admin
+// // @Accept json
+// // @Produce json
+// // @Param search query string false "Tìm kiếm theo tên, email, phone"
+// // @Param page query int false "Trang hiện tại (mặc định: 1)"
+// // @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
+// // @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
+// // @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
+// // @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
+// // @Param roleType query string false "Lọc theo role type"
+// // @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
+// // @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
+// // @Success 200 {object} userpb.ListAllUsersResponse
+// // @Failure 400 {object} userpb.ListAllUsersResponse
+// // @Failure 401 {object} userpb.ListAllUsersResponse
+// // @Failure 500 {object} userpb.ListAllUsersResponse
+// // @Router /v2/user/admin/users [get]
+// func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
+// 	// TODO: Kiểm tra quyền admin
+// 	// profileID := _utils.GetProfileIdWithContext(ctx)
+// 	// if !h.isAdmin(profileID) {
+// 	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
+// 	// }
 
-	// Convert proto request to DTO
-	dtoReq := &dto.ListAllUsersRequest{
-		Pagable: _dto.Pagable{
-			Page: req.Page,
-			Size: req.Size,
-		},
-		Search:    req.Search,
-		SortBy:    req.SortBy,
-		SortOrder: req.SortOrder,
-		RoleType:  req.RoleType,
-	}
+// 	// Convert proto request to DTO
+// 	dtoReq := &dto.ListAllUsersRequest{
+// 		Pagable: _dto.Pagable{
+// 			Page: req.Page,
+// 			Size: req.Size,
+// 		},
+// 		Search:    req.Search,
+// 		SortBy:    req.SortBy,
+// 		SortOrder: req.SortOrder,
+// 		RoleType:  req.RoleType,
+// 	}
 
-	// Set bookmark filter
-	if req.Bookmark {
-		dtoReq.Bookmark = &req.Bookmark
-	}
+// 	// Set bookmark filter
+// 	if req.Bookmark {
+// 		dtoReq.Bookmark = &req.Bookmark
+// 	}
 
-	// Set status filter
-	if req.Status != 0 {
-		status := req.Status
-		dtoReq.Status = &status
-	}
+// 	// Set status filter
+// 	if req.Status != 0 {
+// 		status := req.Status
+// 		dtoReq.Status = &status
+// 	}
 
-	// Set date filters
-	if req.StartDate != "" {
-		// TODO: Parse startDate string to time.Time
-	}
-	if req.EndDate != "" {
-		// TODO: Parse endDate string to time.Time
-	}
+// 	// Set date filters
+// 	if req.StartDate != "" {
+// 		// TODO: Parse startDate string to time.Time
+// 	}
+// 	if req.EndDate != "" {
+// 		// TODO: Parse endDate string to time.Time
+// 	}
 
-	// Call usecase
-	result, err := s.AdminUsecase.ListAllUsers(ctx, dtoReq)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
-	}
+// 	// Call usecase
+// 	result, total, err := s.AdminUsecase.ListAdmins(ctx, dtoReq)
+// 	if err != nil {
+// 		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
+// 	}
 
-	// Convert DTO response to proto response
-	response := &userpb.ListAllUsersResponse{
-		Total:      result.Total,
-		Page:       result.Page,
-		Size:       result.Size,
-		TotalPages: result.TotalPages,
-	}
+// 	// Convert DTO response to proto response
+// 	response := &userpb.ListAllUsersResponse{
+// 		Total:      result.Total,
+// 		Page:       result.Page,
+// 		Size:       result.Size,
+// 		TotalPages: result.TotalPages,
+// 	}
 
-	// Convert data items
-	for _, item := range result.Data {
-		protoItem := &userpb.AdminUserItem{
-			ProfileId:      item.ProfileID,
-			FullName:       item.FullName,
-			Email:          item.Email,
-			Phone:          item.Phone,
-			Avatar:         item.Avatar,
-			Address:        item.Address,
-			Gender:         uint32(item.Gender),
-			Status:         uint32(item.Status),
-			RoleType:       item.RoleType,
-			RoleRealEstate: item.RoleRealEstate,
-			Position:       item.Position,
-			DepartmentId:   item.DepartmentID,
-			Bookmark:       item.Bookmark,
-			TickVerified:   item.TickVerified,
-			TotalLogin:     item.TotalLogin,
-		}
+// 	// Convert data items
+// 	for _, item := range result.Data {
+// 		protoItem := &userpb.AdminUserItem{
+// 			ProfileId:      item.ProfileID,
+// 			FullName:       item.FullName,
+// 			Email:          item.Email,
+// 			Phone:          item.Phone,
+// 			Avatar:         item.Avatar,
+// 			Address:        item.Address,
+// 			Gender:         uint32(item.Gender),
+// 			Status:         uint32(item.Status),
+// 			RoleType:       item.RoleType,
+// 			RoleRealEstate: item.RoleRealEstate,
+// 			Position:       item.Position,
+// 			DepartmentId:   item.DepartmentID,
+// 			Bookmark:       item.Bookmark,
+// 			TickVerified:   item.TickVerified,
+// 			TotalLogin:     item.TotalLogin,
+// 		}
 
-		// Convert time fields
-		protoItem.CreatedAt = _utils.FormatTimeToString(&item.CreatedAt)
-		protoItem.UpdatedAt = _utils.FormatTimeToString(&item.UpdatedAt)
-		if item.Birth != nil {
-			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
-		}
-		if item.LastLoginAt != nil {
-			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
-		}
+// 		// Convert time fields
+// 		protoItem.CreatedAt = _utils.FormatTimeToString(&item.CreatedAt)
+// 		protoItem.UpdatedAt = _utils.FormatTimeToString(&item.UpdatedAt)
+// 		if item.Birth != nil {
+// 			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
+// 		}
+// 		if item.LastLoginAt != nil {
+// 			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
+// 		}
 
-		response.Data = append(response.Data, protoItem)
-	}
+// 		response.Data = append(response.Data, protoItem)
+// 	}
 
-	return response, nil
-}
+// 	return response, nil
+// }
 
 // @Summary Khóa tài khoản user (Admin only)
 // @Description Khóa tài khoản user với lý do cụ thể (chỉ dành cho admin)

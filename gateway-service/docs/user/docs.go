@@ -1023,7 +1023,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_model.GroupEntity"
+                            "$ref": "#/definitions/models.GroupEntity"
                         }
                     }
                 ],
@@ -1068,7 +1068,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user_model.GroupEntity"
+                            "$ref": "#/definitions/models.GroupEntity"
                         }
                     },
                     {
@@ -2399,7 +2399,7 @@ const docTemplate = `{
                     "description": "transient",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/user_model.CertificationEntity"
+                        "$ref": "#/definitions/models.CertificationEntity"
                     }
                 },
                 "departmentId": {
@@ -2441,14 +2441,14 @@ const docTemplate = `{
                 "professions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/user_model.ProfessionEntity"
+                        "$ref": "#/definitions/models.ProfessionEntity"
                     }
                 },
                 "profileId": {
                     "type": "integer"
                 },
                 "rateStats": {
-                    "$ref": "#/definitions/user_model.RateStats"
+                    "$ref": "#/definitions/models.RateStats"
                 },
                 "referralBy": {
                     "type": "string"
@@ -2457,7 +2457,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "relationShip": {
-                    "$ref": "#/definitions/user_model.FriendItem"
+                    "$ref": "#/definitions/models.FriendItem"
                 },
                 "roleRealEstate": {
                     "$ref": "#/definitions/enums.ERoleRealEstate"
@@ -2749,7 +2749,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.CertificationEntity": {
+        "models.CertificationEntity": {
             "type": "object",
             "properties": {
                 "approveUserId": {
@@ -2805,7 +2805,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.FriendItem": {
+        "models.FriendItem": {
             "type": "object",
             "properties": {
                 "createdBy": {
@@ -2827,7 +2827,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.GroupEntity": {
+        "models.GroupEntity": {
             "type": "object",
             "properties": {
                 "backgroundColor": {
@@ -2857,7 +2857,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.ProfessionEntity": {
+        "models.ProfessionEntity": {
             "type": "object",
             "properties": {
                 "approveUserId": {
@@ -2901,7 +2901,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user_model.RateStats": {
+        "models.RateStats": {
             "type": "object",
             "properties": {
                 "averageScore": {

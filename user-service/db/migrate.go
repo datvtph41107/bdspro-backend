@@ -2,27 +2,25 @@ package db
 
 import (
 	_db "common/db"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
-		// &auth_model.UserSessionEntity{},
-		// &auth_model.UserAuthEntity{},
-		// &user_model.BlockEntity{},
-		// &user_model.ContactEntity{},
-		// &user_model.FollowEntity{},
-		// &user_model.FriendEntity{},
-		// &user_model.GroupEntity{},
-		// &user_model.UserProfileEntity{},
-		// &user_model.ProfessionEntity{},
-		// &user_model.CertificationEntity{},
-		// &user_model.AttachEntity{},
-		&user_model.Report{},
-		&user_model.UserProfileEntity{},
-		&user_model.BookmarkUserEntity{},
-	// &user_model.ReportReason{},
-	// &user_model.ReportProof{},
-	// &user_model.Rate{},
+		// &models.BlockEntity{},
+		// &models.ContactEntity{},
+		// &models.FollowEntity{},
+		// &models.FriendEntity{},
+		// &models.GroupEntity{},
+		// &models.UserProfileEntity{},
+		// &models.ProfessionEntity{},
+		// &models.CertificationEntity{},
+		// &models.AttachEntity{},
+		// &models.Report{},
+		&models.UserProfileEntity{},
+		&models.BookmarkUserEntity{},
+	// &models.ReportReason{},
+	// &models.ReportProof{},
+	// &models.Rate{},
 	)
 }

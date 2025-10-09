@@ -67,3 +67,25 @@ type ApproveUserRequest struct {
 	ProfileID uint64 `json:"profileId"`
 	Note      string `json:"note"`
 }
+
+// Admin Management DTOs
+type UpdateAdminRequest struct {
+	AuthID   uint64 `json:"authId"`
+	FullName string `json:"fullName"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone"`
+	Avatar   string `json:"avatar"`
+}
+
+type DeleteAdminRequest struct {
+	AuthID uint64 `json:"authId"`
+}
+
+type AssignRoleRequest struct {
+	AuthID  uint64 `json:"authId"`
+	RoleKey string `json:"roleKey"`
+}
+
+type AdminListRequest struct {
+	_dto.Pagable
+}

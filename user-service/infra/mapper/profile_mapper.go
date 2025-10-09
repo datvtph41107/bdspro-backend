@@ -5,7 +5,7 @@ import (
 	userpb "pb/types/user"
 	"user/enums"
 	"user/internal/dto"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 type ProfileMapper struct {
@@ -87,7 +87,7 @@ func (m *ProfileMapper) ProfessionToDTO(profession *userpb.ProfessionItem) *dto.
 	}
 }
 
-func (m *ProfileMapper) CertificationToPb(certification *user_model.CertificationEntity) *userpb.CertificationItem {
+func (m *ProfileMapper) CertificationToPb(certification *models.CertificationEntity) *userpb.CertificationItem {
 	return &userpb.CertificationItem{
 		Id:        certification.ID,
 		Name:      certification.Name,
@@ -99,7 +99,7 @@ func (m *ProfileMapper) CertificationToPb(certification *user_model.Certificatio
 	}
 }
 
-func (m *ProfileMapper) ProfessionToPb(profession *user_model.ProfessionEntity) *userpb.ProfessionItem {
+func (m *ProfileMapper) ProfessionToPb(profession *models.ProfessionEntity) *userpb.ProfessionItem {
 	return &userpb.ProfessionItem{
 		Id:        profession.ID,
 		Name:      profession.Name,
@@ -108,7 +108,7 @@ func (m *ProfileMapper) ProfessionToPb(profession *user_model.ProfessionEntity) 
 	}
 }
 
-func (m *ProfileMapper) PublicUserInfoToPb(profile *user_model.UserProfileEntity) *userpb.ProfilePublicInfo {
+func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *userpb.ProfilePublicInfo {
 	result := &userpb.ProfilePublicInfo{
 		ProfileId:         profile.ProfileID,
 		Phone:             profile.Phone,
@@ -156,7 +156,7 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *user_model.UserProfileEntity
 	return result
 }
 
-func (m *ProfileMapper) UserSearchItemToPbs(profiles *[]user_model.UserProfileSearch) []*userpb.UserSearchItem {
+func (m *ProfileMapper) UserSearchItemToPbs(profiles *[]models.UserProfileSearch) []*userpb.UserSearchItem {
 	infos := []*userpb.UserSearchItem{}
 	for _, profile := range *profiles {
 		infos = append(infos, &userpb.UserSearchItem{

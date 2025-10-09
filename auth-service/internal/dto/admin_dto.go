@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"auth/internal/enums"
@@ -8,12 +10,17 @@ import (
 
 // CreateAdminRequest DTO cho tạo admin mới
 type CreateAdminRequest struct {
-	Username string `json:"username" binding:"required" validate:"required"`
-	Password string `json:"password" binding:"required" validate:"required"`
-	FullName string `json:"fullName" binding:"required" validate:"required"`
-	Email    string `json:"email" binding:"required,email" validate:"required,email"`
-	Phone    string `json:"phone" binding:"required" validate:"required"`
-	Avatar   string `json:"avatar"`
+	Username         string   `json:"username" binding:"required" validate:"required"`
+	Password         string   `json:"password" binding:"required" validate:"required"`
+	FullName         string   `json:"fullName" binding:"required" validate:"required"`
+	Email            string   `json:"email" binding:"required,email" validate:"required,email"`
+	Phone            string   `json:"phone" binding:"required" validate:"required"`
+	Avatar           string   `json:"avatar"`
+	JobTitle         string   `json:"jobTitle" binding:"required" validate:"required"` // Chức danh / Vị trí công việc
+	RoleKey          string   `json:"roleKey" binding:"required" validate:"required"`  // Vai trò hệ thống (role)
+	Attachments      []string `json:"attachments"`                                     // File đính kèm (URLs)
+	InternalNotes    string   `json:"internalNotes"`                                   // Ghi chú nội bộ
+	SendNotification bool     `json:"sendNotification"`                                // Gửi thông báo tài khoản qua Email/SMS
 }
 
 // UpdateAdminRequest DTO cho cập nhật admin
@@ -89,4 +96,43 @@ type AdminRoleDTO struct {
 	ID   uint32 `json:"id"`
 	Name string `json:"name"`
 	Key  string `json:"key"`
+}
+
+// ChangePasswordRequest DTO cho thay đổi mật khẩu admin
+type ChangePasswordRequest struct {
+	AuthID      uint64 `json:"authId" binding:"required" validate:"required"`
+	OldPassword string `json:"oldPassword" binding:"required" validate:"required"`
+	NewPassword string `json:"newPassword" binding:"required" validate:"required"`
+}
+
+// ResetPasswordRequest DTO cho reset mật khẩu admin
+type ResetPasswordRequest struct {
+	AuthID      uint64 `json:"authId" binding:"required" validate:"required"`
+	NewPassword string `json:"newPassword" binding:"required" validate:"required"`
+}
+
+// Validate thực hiện validation custom cho CreateAdminRequest
+func (req *CreateAdminRequest) Validate() error {
+	// Validation cho email nội bộ
+	if req.Email != "" && !strings.Contains(req.Email, "@bdspro.vn") {
+		// Có thể bỏ comment dòng này nếu muốn bắt buộc email nội bộ
+		// return fmt.Errorf("email phải là email nội bộ (@bdspro.vn)")
+	}
+
+	// Validation cho phone nội bộ (có thể thêm logic kiểm tra số nội bộ)
+	if req.Phone != "" && len(req.Phone) != 10 {
+		return fmt.Errorf("số điện thoại phải có 10 chữ số")
+	}
+
+	// Validation cho password strength
+	if req.Password != "" && len(req.Password) < 6 {
+		return fmt.Errorf("mật khẩu phải có ít nhất 6 ký tự")
+	}
+
+	// Validation cho username
+	if req.Username != "" && len(req.Username) < 3 {
+		return fmt.Errorf("username phải có ít nhất 3 ký tự")
+	}
+
+	return nil
 }

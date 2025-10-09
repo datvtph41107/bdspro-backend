@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ func NewAttachPostgres(db *gorm.DB) *AttachPostgres {
 	return &AttachPostgres{db: db}
 }
 
-func (a *AttachPostgres) CreateBatchAttach(ctx context.Context, attach *[]user_model.AttachEntity) error {
+func (a *AttachPostgres) CreateBatchAttach(ctx context.Context, attach *[]models.AttachEntity) error {
 	if err := GetDB(ctx, a.db).
 		Save(attach).
 		Error; err != nil {

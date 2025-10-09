@@ -2,19 +2,19 @@ package routes
 
 import (
 	_routes "common/routes"
-	"user/enums"
-	user_service "user/internal/services/user"
+	"user/internal/enums"
+	"user/internal/usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
 type FriendRouter struct {
-	service *user_service.FriendService
+	usecase *usecases.FriendUsecase
 }
 
-func NewFriendRouter(service *user_service.FriendService) *FriendRouter {
+func NewFriendRouter(service *usecases.FriendUsecase) *FriendRouter {
 	return &FriendRouter{
-		service: service,
+		usecase: service,
 	}
 }
 
@@ -43,7 +43,7 @@ func FriendRoutes(r *gin.Engine, router *FriendRouter) {
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/list [get]
 func (r *FriendRouter) FriendList(c *gin.Context) {
-	result, err := r.service.FriendList(c)
+	result, err := r.usecase.FriendList(c)
 
 	_routes.RouteResult(c, result, err)
 }
@@ -66,7 +66,7 @@ func (r *FriendRouter) FriendRequest(c *gin.Context) {
 	// 	return
 	// }
 
-	result, err := r.service.Request(c)
+	result, err := r.usecase.Request(c)
 	_routes.RouteResult(c, result, err)
 
 }
@@ -83,7 +83,7 @@ func (r *FriendRouter) FriendRequest(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /v1/user/friend/request/{requestId}/accept [put]
 func (r *FriendRouter) FriendAccept(c *gin.Context) {
-	result, err := r.service.ChangeStatus(c, enums.EFriendStatusAccepted)
+	result, err := r.usecase.ChangeStatus(c, enums.EFriendStatusAccepted)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -100,7 +100,7 @@ func (r *FriendRouter) FriendAccept(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /v1/user/friend/group/{requestId}/{groupId} [put]
 func (r *FriendRouter) FriendUpdateGroup(c *gin.Context) {
-	result, err := r.service.ChangeGroup(c)
+	result, err := r.usecase.ChangeGroup(c)
 	_routes.RouteResult(c, result, err)
 }
 
@@ -116,7 +116,7 @@ func (r *FriendRouter) FriendUpdateGroup(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /v1/user/friend/request/{requestId}/reject [delete]
 func (r *FriendRouter) FriendReject(c *gin.Context) {
-	result, err := r.service.ChangeStatus(c, enums.EFriendStatusReject)
+	result, err := r.usecase.ChangeStatus(c, enums.EFriendStatusReject)
 
 	_routes.RouteResult(c, result, err)
 }
@@ -132,7 +132,7 @@ func (r *FriendRouter) FriendReject(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/request/sent [get]
 func (r *FriendRouter) FriendSent(c *gin.Context) {
-	result, err := r.service.RequestSent(c)
+	result, err := r.usecase.RequestSent(c)
 
 	_routes.RouteResult(c, result, err)
 }
@@ -148,7 +148,7 @@ func (r *FriendRouter) FriendSent(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/request/received [get]
 func (r *FriendRouter) FriendReceived(c *gin.Context) {
-	result, err := r.service.RequestReceived(c)
+	result, err := r.usecase.RequestReceived(c)
 
 	_routes.RouteResult(c, result, err)
 }
@@ -164,7 +164,7 @@ func (r *FriendRouter) FriendReceived(c *gin.Context) {
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /v1/user/friend/info [get]
 func (r *FriendRouter) FriendInfo(c *gin.Context) {
-	result, err := r.service.FriendInfo(c)
+	result, err := r.usecase.FriendInfo(c)
 
 	_routes.RouteResult(c, result, err)
 }

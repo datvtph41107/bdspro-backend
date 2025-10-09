@@ -1288,6 +1288,29 @@
         },
         "avatar": {
           "type": "string"
+        },
+        "jobTitle": {
+          "type": "string",
+          "title": "Chức danh / Vị trí công việc"
+        },
+        "roleKey": {
+          "type": "string",
+          "title": "Vai trò hệ thống (role)"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "File đính kèm (URLs)"
+        },
+        "internalNotes": {
+          "type": "string",
+          "title": "Ghi chú nội bộ"
+        },
+        "sendNotification": {
+          "type": "boolean",
+          "title": "Gửi thông báo tài khoản qua Email/SMS"
         }
       },
       "title": "Admin Management Messages"

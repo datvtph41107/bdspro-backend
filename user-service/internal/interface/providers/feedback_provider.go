@@ -2,9 +2,9 @@ package providers
 
 import (
 	"context"
-	user_model "user/internal/models/user"
+	models "user/internal/models"
 )
 
 type FeedbackProvider interface {
-	GetUserRateStats(ctx context.Context, userId uint64) (*user_model.RateStats, error)
+	GetUserRateStats(ctx context.Context, userId uint64) (*models.RateStats, error)
 }
