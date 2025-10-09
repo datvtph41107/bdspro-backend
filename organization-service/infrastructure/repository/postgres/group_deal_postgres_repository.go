@@ -388,3 +388,76 @@ func (r *GroupDealPostgresRepository) GetDealOverviewByGroup(ctx context.Context
 
 	return &result, nil
 }
+
+// GetAllDeals lấy toàn bộ danh sách deal trong hệ thống (dành cho admin)
+func (r *GroupDealPostgresRepository) GetAllDeals(ctx context.Context, searchRequest *dto.AdminDealSearchRequest) ([]*entity.Deal, int64, error) {
+	var deals []*entity.Deal
+	var total int64
+
+	offset := searchRequest.Page * searchRequest.Size
+	limit := searchRequest.Size
+
+	// Build base query
+	query := r.db.WithContext(ctx).Model(&entity.Deal{}).
+		Where("deleted_at IS NULL")
+
+	// Apply filters
+	if searchRequest.Keyword != nil && *searchRequest.Keyword != "" {
+		keyword := "%" + *searchRequest.Keyword + "%"
+		query = query.Where("name ILIKE ?", keyword)
+	}
+
+	if searchRequest.Status != nil {
+		query = query.Where("status = ?", *searchRequest.Status)
+	}
+
+	if searchRequest.DealType != nil {
+		query = query.Where("deal_type = ?", *searchRequest.DealType)
+	}
+
+	if searchRequest.OrganizationID != nil {
+		query = query.Where("owner_id = ? AND owner_type = ?", *searchRequest.OrganizationID, enums.OwnerOfOrganization)
+	}
+
+	if searchRequest.GroupID != nil {
+		query = query.Where("owner_id = ? AND owner_type = ?", *searchRequest.GroupID, enums.OwnerOfGroup)
+	}
+
+	if searchRequest.OwnerID != nil {
+		query = query.Where("owner_id = ?", *searchRequest.OwnerID)
+	}
+
+	if searchRequest.OwnerType != nil {
+		query = query.Where("owner_type = ?", *searchRequest.OwnerType)
+	}
+
+	if searchRequest.StartDate != nil {
+		query = query.Where("created_at >= ?", *searchRequest.StartDate)
+	}
+
+	if searchRequest.EndDate != nil {
+		query = query.Where("created_at <= ?", *searchRequest.EndDate)
+	}
+
+	if searchRequest.MinAmount != nil {
+		query = query.Where("target_profit >= ?", *searchRequest.MinAmount)
+	}
+
+	if searchRequest.MaxAmount != nil {
+		query = query.Where("target_profit <= ?", *searchRequest.MaxAmount)
+	}
+
+	// Count total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get deals with pagination
+	query = query.Offset(offset).Limit(limit).Order("created_at DESC")
+
+	if err := query.Find(&deals).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return deals, total, nil
+}

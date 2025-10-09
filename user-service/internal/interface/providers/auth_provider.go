@@ -1,8 +1,10 @@
 package providers
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	"time"
+	"user/internal/models"
 )
 
 // UserStatusInfo chứa thông tin trạng thái của user
@@ -16,23 +18,19 @@ type UserStatusInfo struct {
 
 // AuthMethodDomain chứa thông tin auth method
 type AuthMethodDomain struct {
-	ID               uint64     `json:"id"`
-	UserID           uint64     `json:"userId"`
-	Provider         string     `json:"provider"`
-	Username         string     `json:"username"`
-	Password         string     `json:"password"`
-	Name             string     `json:"name"`
-	Email            string     `json:"email"`
-	Phone            string     `json:"phone"`
-	Avatar           string     `json:"avatar"`
-	JobTitle         string     `json:"jobTitle"`
-	RoleKey          uint32     `json:"roleKey"`
-	Attachments      string     `json:"attachments"`
-	InternalNotes    string     `json:"internalNotes"`
-	SendNotification bool       `json:"sendNotification"`
-	CreatedAt        time.Time  `json:"createdAt"`
-	UpdatedAt        time.Time  `json:"updatedAt"`
-	DeletedAt        *time.Time `json:"deletedAt,omitempty"`
+	ID        uint64     `json:"id"`
+	UserID    uint64     `json:"userId"`
+	Provider  string     `json:"provider"`
+	AuthName  string     `json:"authName"`
+	Password  string     `json:"password"`
+	FullName  string     `json:"name"`
+	Email     string     `json:"email"`
+	Phone     string     `json:"phone"`
+	Avatar    string     `json:"avatar"`
+	RoleKey   uint32     `json:"roleKey"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
 // ProfileDTO chứa thông tin profile
@@ -80,11 +78,19 @@ type AuthProvider interface {
 	GetUserStatusBatch(ctx context.Context, profileIDs []uint64) (map[uint64]*UserStatusInfo, error)
 
 	// AuthMethod Management methods
-	FindByUsernameAndProvider(ctx context.Context, username, provider string) (*AuthMethodDomain, error)
+	FindByAuthNameAndProvider(ctx context.Context, authName, provider string) (*AuthMethodDomain, error)
 	FindByEmail(ctx context.Context, email string) (*AuthMethodDomain, error)
 	FindByID(ctx context.Context, id uint64) (*AuthMethodDomain, error)
 	Create(ctx context.Context, authMethod *AuthMethodDomain) (*AuthMethodDomain, error)
 	Update(ctx context.Context, authMethod *AuthMethodDomain) (*AuthMethodDomain, error)
 	SoftDelete(ctx context.Context, id uint64) error
 	FindAdminsByProvider(ctx context.Context, provider string, page, size int) ([]*AuthMethodDomain, int64, error)
+
+	// GetRoleMapByProfileIds(ctx context.Context, roleKeys []uint32) (map[uint32]*_dto.RoleDTO, error)
+	GetAuthUsersByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*_dto.AuthUserProfileDTO, error)
+
+	// GetRolesByIds lấy danh sách roles theo IDs
+	GetRolesByIds(ctx context.Context, roleIds []uint64) (map[uint64]*models.RoleDTO, error)
+
+	// Admin Management methods - gọi trực tiếp auth service
 }

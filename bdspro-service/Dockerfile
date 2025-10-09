@@ -2,6 +2,6 @@ FROM alpine:latest
 
 WORKDIR /
 
-COPY main .
+COPY . .
 
 ENV ENV_RUNTIME=release

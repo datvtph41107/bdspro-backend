@@ -168,11 +168,10 @@ func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]in
 	}
 	existingUser, _ := s.AuthMethodRepo.FindByOAuthID(c, username, "ZALO")
 	if existingUser == nil {
-		e := &domain.AuthMethodDomain{
+		e := &domain.AuthMethod{
 			Provider:    "ZALO",
-			Username:    username,
-			OAuthID:     username,
-			Name:        userInfo["name"].(string),
+			AuthName:    username,
+			FullName:    userInfo["name"].(string),
 			Avatar:      extractAvatar(userInfo),
 			IsSensitive: userInfo["is_sensitive"].(bool),
 		}

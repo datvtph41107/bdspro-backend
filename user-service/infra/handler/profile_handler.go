@@ -5,6 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	authpb "pb/types/auth"
 	organizationpb "pb/types/organization"
 	orgpb "pb/types/organization"
 	sharepb "pb/types/shared"
@@ -246,112 +247,124 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 	}, nil
 }
 
-// // @Summary Lấy danh sách tất cả user (Admin only)
-// // @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
-// // @Tags Admin
-// // @Accept json
-// // @Produce json
-// // @Param search query string false "Tìm kiếm theo tên, email, phone"
-// // @Param page query int false "Trang hiện tại (mặc định: 1)"
-// // @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
-// // @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
-// // @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
-// // @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
-// // @Param roleType query string false "Lọc theo role type"
-// // @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
-// // @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
-// // @Success 200 {object} userpb.ListAllUsersResponse
-// // @Failure 400 {object} userpb.ListAllUsersResponse
-// // @Failure 401 {object} userpb.ListAllUsersResponse
-// // @Failure 500 {object} userpb.ListAllUsersResponse
-// // @Router /v2/user/admin/users [get]
-// func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
-// 	// TODO: Kiểm tra quyền admin
-// 	// profileID := _utils.GetProfileIdWithContext(ctx)
-// 	// if !h.isAdmin(profileID) {
-// 	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-// 	// }
+// @Summary Lấy danh sách tất cả user (Admin only)
+// @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param search query string false "Tìm kiếm theo tên, email, phone"
+// @Param page query int false "Trang hiện tại (mặc định: 1)"
+// @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
+// @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
+// @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
+// @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
+// @Param roleType query string false "Lọc theo role type"
+// @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
+// @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
+// @Success 200 {object} userpb.ListAllUsersResponse
+// @Failure 400 {object} userpb.ListAllUsersResponse
+// @Failure 401 {object} userpb.ListAllUsersResponse
+// @Failure 500 {object} userpb.ListAllUsersResponse
+// @Router /v2/user/admin/users [get]
+func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
+	// Convert proto request to DTO
+	dtoReq := &dto.ListUsersRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		Search:    req.Search,
+		SortBy:    req.SortBy,
+		SortOrder: req.SortOrder,
+		RoleType:  req.RoleType,
+	}
 
-// 	// Convert proto request to DTO
-// 	dtoReq := &dto.ListAllUsersRequest{
-// 		Pagable: _dto.Pagable{
-// 			Page: req.Page,
-// 			Size: req.Size,
-// 		},
-// 		Search:    req.Search,
-// 		SortBy:    req.SortBy,
-// 		SortOrder: req.SortOrder,
-// 		RoleType:  req.RoleType,
-// 	}
+	// Set bookmark filter
+	if req.Bookmark {
+		dtoReq.Bookmark = &req.Bookmark
+	}
 
-// 	// Set bookmark filter
-// 	if req.Bookmark {
-// 		dtoReq.Bookmark = &req.Bookmark
-// 	}
+	// Set status filter
+	if req.Status != 0 {
+		status := req.Status
+		dtoReq.Status = &status
+	}
 
-// 	// Set status filter
-// 	if req.Status != 0 {
-// 		status := req.Status
-// 		dtoReq.Status = &status
-// 	}
+	// Set date filters
+	if req.StartDate != "" {
+		// TODO: Parse startDate string to time.Time
+	}
+	if req.EndDate != "" {
+		// TODO: Parse endDate string to time.Time
+	}
 
-// 	// Set date filters
-// 	if req.StartDate != "" {
-// 		// TODO: Parse startDate string to time.Time
-// 	}
-// 	if req.EndDate != "" {
-// 		// TODO: Parse endDate string to time.Time
-// 	}
+	// Call usecase
+	result, total, err := s.ProfileUsecase.ListAllUsers(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
+	}
 
-// 	// Call usecase
-// 	result, total, err := s.AdminUsecase.ListAdmins(ctx, dtoReq)
-// 	if err != nil {
-// 		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
-// 	}
+	// Convert DTO response to proto response
+	response := &userpb.ListAllUsersResponse{
+		// Total:      result.Total,
+		Page:       req.Page,
+		Size:       req.Size,
+		TotalPages: total,
+		Total:      int32(total),
+	}
 
-// 	// Convert DTO response to proto response
-// 	response := &userpb.ListAllUsersResponse{
-// 		Total:      result.Total,
-// 		Page:       result.Page,
-// 		Size:       result.Size,
-// 		TotalPages: result.TotalPages,
-// 	}
+	// Convert data items
+	for _, item := range result {
+		protoItem := &userpb.AdminUserItem{
+			ProfileId: item.ProfileID,
+			FullName:  item.FullName,
+			Email:     item.Email,
+			Phone:     item.Phone,
+			Avatar:    item.Avatar,
+			Address:   item.Address,
+			Gender:    uint32(item.Gender),
+			Status:    uint32(item.Status),
+			// RoleType:  item.RoleType,
+			// RoleRealEstate: item.RoleRealEstate,
+			Position:     item.Position,
+			DepartmentId: item.DepartmentID,
+			Bookmark:     item.Bookmark,
+			TickVerified: item.TickVerified,
 
-// 	// Convert data items
-// 	for _, item := range result.Data {
-// 		protoItem := &userpb.AdminUserItem{
-// 			ProfileId:      item.ProfileID,
-// 			FullName:       item.FullName,
-// 			Email:          item.Email,
-// 			Phone:          item.Phone,
-// 			Avatar:         item.Avatar,
-// 			Address:        item.Address,
-// 			Gender:         uint32(item.Gender),
-// 			Status:         uint32(item.Status),
-// 			RoleType:       item.RoleType,
-// 			RoleRealEstate: item.RoleRealEstate,
-// 			Position:       item.Position,
-// 			DepartmentId:   item.DepartmentID,
-// 			Bookmark:       item.Bookmark,
-// 			TickVerified:   item.TickVerified,
-// 			TotalLogin:     item.TotalLogin,
-// 		}
+			Role: &authpb.Role{
+				Id:       item.RoleID,
+				RoleName: item.RoleName,
+				RoleKey:  item.RoleKey,
+			},
 
-// 		// Convert time fields
-// 		protoItem.CreatedAt = _utils.FormatTimeToString(&item.CreatedAt)
-// 		protoItem.UpdatedAt = _utils.FormatTimeToString(&item.UpdatedAt)
-// 		if item.Birth != nil {
-// 			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
-// 		}
-// 		if item.LastLoginAt != nil {
-// 			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
-// 		}
+			// RoleName:    item.RoleName,
+			// RoleId:      item.RoleID,
+			// RoleColor:   item.RoleColor,
+			// RoleBgColor: item.RoleBgColor,
+			// TotalLogin:     item.TotalLogin,
+		}
+		if item.RoleColor != "" && item.RoleBgColor != "" {
+			protoItem.Role.Color = &authpb.Color{
+				ContentColor:    item.RoleColor,
+				BackgroundColor: item.RoleBgColor,
+			}
+		}
 
-// 		response.Data = append(response.Data, protoItem)
-// 	}
+		// Convert time fields
+		protoItem.CreatedAt = _utils.FormatTimeToString(item.CreatedAt)
+		protoItem.UpdatedAt = _utils.FormatTimeToString(item.UpdatedAt)
+		if item.Birth != nil {
+			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
+		}
+		// if item.LastLoginAt != nil {
+		// 	protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
+		// }
 
-// 	return response, nil
-// }
+		response.Data = append(response.Data, protoItem)
+	}
+
+	return response, nil
+}
 
 // @Summary Khóa tài khoản user (Admin only)
 // @Description Khóa tài khoản user với lý do cụ thể (chỉ dành cho admin)

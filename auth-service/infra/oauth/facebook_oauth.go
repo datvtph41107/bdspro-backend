@@ -145,11 +145,10 @@ func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[strin
 	existingUser, _ := s.AuthMethodRepo.FindByOAuthID(c, username, "FACEBOOK")
 	if existingUser == nil {
 		// User doesn't exist, create new one
-		oauthUser := &auth_model.AuthMethodDomain{
+		oauthUser := &auth_model.AuthMethod{
 			Provider: "FACEBOOK",
-			Username: username,
-			OAuthID:  username,
-			Name:     s.extractString(userInfo, "name"),
+			AuthName: username,
+			FullName: s.extractString(userInfo, "name"),
 			Email:    s.extractString(userInfo, "email"),
 			Avatar:   s.extractAvatar(userInfo),
 		}

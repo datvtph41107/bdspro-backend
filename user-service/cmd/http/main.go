@@ -37,7 +37,7 @@ var HttpCmd = &cobra.Command{
 		// os.Setenv("TZ", "Europe/London")
 
 		parameters := common.SetupParameters{
-			ConfigFile:   config.ConfigFile,
+			ConfigFile:   config.EmbeddedConfig,
 			Engine:       r,
 			PublicRoutes: publicRoutes,
 			Prefix:       "/user",

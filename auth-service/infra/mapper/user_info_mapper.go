@@ -1,0 +1,52 @@
+package mapper
+
+import (
+	"auth/internal/domain"
+	_utils "common/utils"
+	authpb "pb/types/auth"
+)
+
+type UserInfoMapper struct {
+}
+
+func NewUserInfoMapper() *UserInfoMapper {
+	return &UserInfoMapper{}
+}
+
+func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *domain.AuthUser) *authpb.AuthUserStatusInfo {
+	result := &authpb.AuthUserStatusInfo{
+		ProfileId:   user.ProfileID,
+		Status:      uint32(user.Status),
+		StatusText:  user.Status.Str(),
+		IsLocked:    user.IsLocked(),
+		LockType:    uint32(user.Status),
+		LockedAt:    _utils.FormatTimeToString(user.LockedAt),
+		LockedUntil: _utils.FormatTimeToString(user.LockedUntil),
+		LockReason:  user.LockReason,
+		LockedBy:    *user.LockedBy,
+		CanLogin:    user.CanLogin(),
+		IsExpired:   user.IsLockExpired(),
+	}
+
+	if user.Role != nil {
+		result.Role = &authpb.Role{
+			Id:       user.Role.ID,
+			RoleName: user.Role.RoleName,
+			RoleKey:  user.Role.RoleKey,
+		}
+		if user.Role.Color != nil {
+			result.Role.Color = &authpb.Color{
+				Id:              user.Role.Color.ID,
+				Name:            user.Role.Color.Name,
+				ContentColor:    user.Role.Color.ContentColor,
+				BackgroundColor: user.Role.Color.BackgroundColor,
+				ColorKey:        user.Role.Color.ColorKey,
+				HexCode:         user.Role.Color.HexCode,
+				Description:     &user.Role.Color.Description,
+				IsActive:        user.Role.Color.IsActive,
+			}
+		}
+	}
+
+	return result
+}

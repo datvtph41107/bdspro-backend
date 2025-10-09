@@ -4,4 +4,4 @@ WORKDIR /
 
 ENV ENV_RUNTIME=release
 
-COPY main .
+COPY . .

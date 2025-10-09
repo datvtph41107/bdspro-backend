@@ -5,7 +5,7 @@ import (
 	"pb/clients"
 	sharepb "pb/types/shared"
 
-	"github.com/tuandq2112/appointment-service/internal/env"
+	"appointment/internal/env"
 )
 
 type UserClient struct {

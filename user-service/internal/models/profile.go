@@ -32,6 +32,7 @@ type UserProfileEntity struct {
 	ReferralCode      string                `gorm:"size:255" copier:"-" json:"referralCode"`
 	ReferralBy        string                `gorm:"size:255" copier:"-" json:"referralBy"`
 	RoleType          enums.ERole           `gorm:"default:10" copier:"-" json:"roleType"`
+	RoleKey           uint32                `gorm:"default:10" copier:"-" json:"roleKey"`
 	RoleRealEstate    enums.ERoleRealEstate `gorm:"default:10" copier:"-" json:"roleRealEstate"`
 	Position          string                `gorm:"size:255" json:"position"`
 	DepartmentID      uint64                `gorm:"column:department_id" json:"departmentId"`
@@ -66,9 +67,13 @@ type UserProfileEntity struct {
 	Following    bool        `gorm:"-" json:"following"`
 	Status       uint8       `gorm:"column:status;default:10" json:"status"`
 
-	// CreatedAt    time.Time      `gorm:"autoCreateTime"`
-	// UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
-	// DeletedAt    gorm.DeletedAt `gorm:"index"`
+	Bookmark bool `gorm:"-" json:"bookmark"`
+
+	// transient
+	RoleName    string `gorm:"-" json:"roleName"`
+	RoleID      uint64 `gorm:"-" json:"roleId"`
+	RoleColor   string `gorm:"-" json:"roleColor"`
+	RoleBgColor string `gorm:"-" json:"roleBgColor"`
 }
 
 // TableName đặt tên bảng trong DB

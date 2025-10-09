@@ -51,3 +51,5 @@ grpc:
     host: :8205
   auth:
     host: :8202
+  notification:
+    host: :8208

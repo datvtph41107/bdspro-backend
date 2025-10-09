@@ -14,4 +14,5 @@ type IProfileRepo interface {
 	GetByProfileID(profileId uint64) (*models.UserProfileEntity, error)
 	GetProfileByIds(ids []uint64) ([]*models.UserProfileEntity, error)
 	GetProfileByPhones(phones []string) ([]*models.UserProfileEntity, error)
+	ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]models.UserProfileEntity, uint32, error)
 }

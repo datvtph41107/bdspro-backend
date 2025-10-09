@@ -27,5 +27,7 @@ type RoleRepository interface {
 	GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKeys []uint32, organizationId uint64) ([]*domain.Role, error)
 	AssignRoleToUser(ctx context.Context, userId uint64, role *domain.Role) error
 	GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domain.Role, error)
-	GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*domain.AuthMethodDomain, error)
+	GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*domain.AuthMethod, error)
+	GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64) ([]*domain.AuthAdminWithRole, error)
+	GetRoleByGroupId(ctx context.Context, groupId uint64) ([]domain.Role, error)
 }

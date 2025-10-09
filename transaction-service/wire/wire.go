@@ -7,6 +7,7 @@ import (
 	"github.com/google/wire"
 	_db "common/db"
 	"tx/initial"
+	infra_mapper "tx/mapper"
 	organization_internal_interface "tx/internal/interface"
 	transaction_infra_client "tx/infra/client"
 	transaction_infra_handler "tx/infra/handler"
@@ -24,8 +25,10 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
 	wire.Bind(new(organization_internal_interface.IOrganizationClient), new(*transaction_infra_client.OrganizationClient)),
+	wire.Bind(new(infra_mapper.TransactionMapper), new(*transaction_infra_handler.AdminTransactionHandler)),
 	wire.Bind(new(tx_internal_repo.DealTransactionRepository), new(*transaction_infra_postgres.DealTransactionPostgresRepository)),
 	wire.Bind(new(tx_internal_interface.ITransaction), new(*transaction_infra_postgres.TransactionGorm)),
+	transaction_infra_handler.NewAdminTransactionHandler,
 	transaction_infra_client.NewBdsproClient,
 	transaction_infra_handler.NewContractDealHandler,
 	transaction_infra_mapper.NewContractDealMapper,

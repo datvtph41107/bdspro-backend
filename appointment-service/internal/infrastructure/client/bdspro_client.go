@@ -5,7 +5,7 @@ import (
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
 
-	"github.com/tuandq2112/appointment-service/internal/env"
+	"appointment/internal/env"
 )
 
 type BdsproClient interface {

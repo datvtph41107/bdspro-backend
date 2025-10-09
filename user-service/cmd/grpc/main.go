@@ -25,7 +25,7 @@ var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Run the GRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
-		common.LoadConfig(config.ConfigFile)
+		common.LoadConfig(config.EmbeddedConfig)
 		// _db.NewDB()
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
@@ -49,6 +49,8 @@ var GrpcCmd = &cobra.Command{
 				admin_middleware.AdminAuthInterceptor,
 			),
 		)
+
+		userpb.RegisterAdminProfileServiceServer(s, app.AdminHandler)
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		// V2 Services (protobuf-based)
 		userpb.RegisterBookmarkUserServiceServer(s, app.BookmarkUserHandler)

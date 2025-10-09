@@ -18,6 +18,9 @@ run-dev:
 %:
 	@:	
 
+map:
+	cd ../../$(word 2, $(MAKECMDGOALS))-service && go run ../shared/code/script/gen_mapper/v2.go $(word 2, $(MAKECMDGOALS))
+
 dev:
 	go run monitor/run-dev.go
 swag-file:

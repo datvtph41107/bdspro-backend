@@ -55,18 +55,23 @@ const (
 	HistoryProductMergeAll    EHistory = 8120
 
 	// -- action for advertising/marketing --
-	HistoryCampaignCreate    EHistory = 9010
-	HistoryCampaignUpdate    EHistory = 9020
-	HistoryCampaignDelete    EHistory = 9030
-	HistoryCampaignPayment   EHistory = 9040
-	HistoryCampaignActivate  EHistory = 9050
-	HistoryCampaignPause     EHistory = 9060
-	HistoryCampaignResume    EHistory = 9070
-	HistoryCampaignExtend    EHistory = 9080
-	HistoryCampaignTopup     EHistory = 9090
-	HistoryPackageCreate     EHistory = 9110
-	HistoryPackageUpdate     EHistory = 9120
-	HistoryPackageDelete     EHistory = 9130
+	HistoryCampaignCreate   EHistory = 9010
+	HistoryCampaignUpdate   EHistory = 9020
+	HistoryCampaignDelete   EHistory = 9030
+	HistoryCampaignPayment  EHistory = 9040
+	HistoryCampaignActivate EHistory = 9050
+	HistoryCampaignPause    EHistory = 9060
+	HistoryCampaignResume   EHistory = 9070
+	HistoryCampaignExtend   EHistory = 9080
+	HistoryCampaignTopup    EHistory = 9090
+	HistoryPackageCreate    EHistory = 9110
+	HistoryPackageUpdate    EHistory = 9120
+	HistoryPackageDelete    EHistory = 9130
+
+	// -- action for admin --
+	HistoryAdminCreate EHistory = 10010
+	HistoryAdminUpdate EHistory = 10020
+	HistoryAdminDelete EHistory = 10030
 )
 
 var HistoryMap = map[EHistory]string{
@@ -118,18 +123,23 @@ var HistoryMap = map[EHistory]string{
 	HistoryProductShare:     "Chia sẻ sản phẩm",
 
 	// -- action for advertising/marketing --
-	HistoryCampaignCreate:    "Tạo chiến dịch quảng cáo",
-	HistoryCampaignUpdate:    "Cập nhật chiến dịch quảng cáo",
-	HistoryCampaignDelete:    "Xóa chiến dịch quảng cáo",
-	HistoryCampaignPayment:   "Thanh toán chiến dịch",
-	HistoryCampaignActivate:  "Kích hoạt chiến dịch",
-	HistoryCampaignPause:     "Tạm dừng chiến dịch",
-	HistoryCampaignResume:    "Tiếp tục chiến dịch",
-	HistoryCampaignExtend:    "Gia hạn chiến dịch",
-	HistoryCampaignTopup:     "Nạp tiền chiến dịch",
-	HistoryPackageCreate:     "Tạo gói quảng cáo",
-	HistoryPackageUpdate:     "Cập nhật gói quảng cáo",
-	HistoryPackageDelete:     "Xóa gói quảng cáo",
+	HistoryCampaignCreate:   "Tạo chiến dịch quảng cáo",
+	HistoryCampaignUpdate:   "Cập nhật chiến dịch quảng cáo",
+	HistoryCampaignDelete:   "Xóa chiến dịch quảng cáo",
+	HistoryCampaignPayment:  "Thanh toán chiến dịch",
+	HistoryCampaignActivate: "Kích hoạt chiến dịch",
+	HistoryCampaignPause:    "Tạm dừng chiến dịch",
+	HistoryCampaignResume:   "Tiếp tục chiến dịch",
+	HistoryCampaignExtend:   "Gia hạn chiến dịch",
+	HistoryCampaignTopup:    "Nạp tiền chiến dịch",
+	HistoryPackageCreate:    "Tạo gói quảng cáo",
+	HistoryPackageUpdate:    "Cập nhật gói quảng cáo",
+	HistoryPackageDelete:    "Xóa gói quảng cáo",
+
+	// -- action for admin --
+	HistoryAdminCreate: "Tạo admin",
+	HistoryAdminUpdate: "Cập nhật admin",
+	HistoryAdminDelete: "Xóa admin",
 }
 
 var HistoryContactAction = []EHistory{

@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"appointment/appconfig"
+	utils "appointment/pkg"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq2112/appointment-service/appconfig"
-	utils "github.com/tuandq2112/appointment-service/pkg"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

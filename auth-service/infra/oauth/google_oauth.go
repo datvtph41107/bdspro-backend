@@ -112,11 +112,10 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	// }
 
 	if existingUser == nil {
-		oauthUser := &domain.AuthMethodDomain{
+		oauthUser := &domain.AuthMethod{
 			Provider: "GOOGLE",
-			Username: oauthId,
-			OAuthID:  oauthId,
-			Name:     userInfo["name"].(string),
+			AuthName: oauthId,
+			FullName: userInfo["name"].(string),
 			Avatar:   userInfo["picture"].(string),
 			Email:    userInfo["email"].(string),
 		}

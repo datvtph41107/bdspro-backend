@@ -4,6 +4,7 @@ package userpb;
 
 import "shared/common.proto";
 import "google/api/annotations.proto";
+import "auth/role.proto";
 
 option go_package = "pb/types/user;userpb";
 
@@ -18,7 +19,7 @@ service AdminProfileService {
 
     rpc UpdateAdmin(AdminProfile) returns (AdminProfile) {
         option (google.api.http) = {
-            put: "/v2/user/admin-profile/update"
+            put: "/v2/user/admin-profile/update/{id}"
             body: "*"
         };
     }
@@ -29,16 +30,22 @@ service AdminProfileService {
         };
     }
 
-    rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {
-        option (google.api.http) = {
-            post: "/v2/user/admin-profile/assign-role"
-            body: "*"
-        };
-    }
+    // rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {
+    //     option (google.api.http) = {
+    //         post: "/v2/user/admin-profile/assign-role"
+    //         body: "*"
+    //     };
+    // }
 
     rpc ListAdmins(AdminListRequest) returns (AdminListResponse) {
         option (google.api.http) = {
             get: "/v2/user/admin-profile/list"
+        };
+    }
+
+    rpc GetDetail(sharepb.IdRequest) returns (AdminProfile) {
+        option (google.api.http) = {
+            get: "/v2/user/admin-profile/detail/{id}"
         };
     }
 }
@@ -69,6 +76,13 @@ message AdminProfile {
     repeated string attachments = 22;
     string internalNotes = 23;
     bool sendNotification = 24;
+    string jobTitle = 25;
+    string workAt = 26;
+    string roleKey = 27;
+    optional uint64 roleId = 28;
+    optional authpb.Role role = 29;
+    string username = 30;
+    string password = 31;
 }
 
 message ListAdminRequest {
@@ -123,8 +137,10 @@ message AssignRoleResponse {
 }
 
 message AdminListRequest {
-    int32 page = 1;
-    int32 size = 2;
+    uint32 page = 1;
+    uint32 size = 2;
+    uint64 roleId = 3;
+    string name = 4;
 }
 
 message AdminListResponse {

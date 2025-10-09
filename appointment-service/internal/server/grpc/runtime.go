@@ -9,12 +9,13 @@ import (
 
 	pb "pb/types/appointment"
 
+	"appointment/appconfig"
+	"appointment/internal/interface/handler"
+	appointmentreminder "appointment/internal/job/appointment_reminder"
+	"appointment/internal/server/grpc/interceptors"
+
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
-	"github.com/tuandq2112/appointment-service/appconfig"
-	"github.com/tuandq2112/appointment-service/internal/interface/handler"
-	appointmentreminder "github.com/tuandq2112/appointment-service/internal/job/appointment_reminder"
-	"github.com/tuandq2112/appointment-service/internal/server/grpc/interceptors"
 	"google.golang.org/grpc"
 )
 

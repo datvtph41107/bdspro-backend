@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
 	"time"
@@ -227,8 +228,8 @@ func (h *AuthHandler) RestoreAccount(ctx context.Context, req *authpb.RestoreAcc
 	// Convert DTO response to proto response
 	return &authpb.RestoreAccountResponse{
 		AuthId:   result.AuthId,
-		Provider: result.Provider,
-		OauthId:  result.OAuthId,
+		Provider: string(result.Provider),
+		AuthName: result.AuthName,
 	}, nil
 }
 
@@ -259,8 +260,8 @@ func (h *AuthHandler) RestoreDeletedAccount(ctx context.Context, req *authpb.Res
 	// Convert DTO response to proto response
 	return &authpb.RestoreDeletedAccountResponse{
 		AuthId:   result.AuthId,
-		Provider: result.Provider,
-		OauthId:  result.OAuthId,
+		Provider: string(result.Provider),
+		AuthName: result.AuthName,
 		Message:  result.Message,
 	}, nil
 }
@@ -640,9 +641,9 @@ func (h *AuthHandler) GetAdminAccessList(ctx context.Context, req *authpb.GetAdm
 	items := make([]*authpb.AdminAccessItem, len(result.Data))
 	for i, item := range result.Data {
 		protoItem := &authpb.AdminAccessItem{
-			Id:         item.ID,
-			UserId:     item.UserID,
-			Username:   item.Username,
+			Id:     item.ID,
+			UserId: item.UserID,
+			// Username:   item.Username,
 			IpAddress:  item.IPAddress,
 			IpRange:    item.IPRange,
 			DeviceId:   item.DeviceID,
@@ -654,16 +655,16 @@ func (h *AuthHandler) GetAdminAccessList(ctx context.Context, req *authpb.GetAdm
 			Require2Fa: item.Require2FA,
 			CreatedBy:  item.CreatedBy,
 			UpdatedBy:  item.UpdatedBy,
-			CreatedAt:  item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedAt:  _utils.FormatTimeToString(&item.CreatedAt),
 			UpdatedAt:  item.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
 
 		// Handle nullable time fields
 		if item.EffectiveFrom != nil {
-			protoItem.EffectiveFrom = item.EffectiveFrom.Format("2006-01-02T15:04:05Z07:00")
+			protoItem.EffectiveFrom = _utils.FormatTimeToString(item.EffectiveFrom)
 		}
 		if item.EffectiveTo != nil {
-			protoItem.EffectiveTo = item.EffectiveTo.Format("2006-01-02T15:04:05Z07:00")
+			protoItem.EffectiveTo = _utils.FormatTimeToString(item.EffectiveTo)
 		}
 
 		items[i] = protoItem
@@ -785,7 +786,7 @@ func (h *AuthHandler) GetAdminAccessLogList(ctx context.Context, req *authpb.Get
 			Status:     item.Status,
 			Reason:     item.Reason,
 			UserAgent:  item.UserAgent,
-			CreatedAt:  item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedAt:  _utils.FormatTimeToString(&item.CreatedAt),
 		}
 	}
 

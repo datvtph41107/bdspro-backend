@@ -17,6 +17,9 @@ const (
 	// advertising/marketing
 	TargetHistoryCampaign ETargetHistory = 80
 	TargetHistoryPackage  ETargetHistory = 90
+
+	// admin
+	TargetHistoryAdmin ETargetHistory = 100
 )
 
 var TargetHistoryMap = map[ETargetHistory]string{
@@ -29,4 +32,5 @@ var TargetHistoryMap = map[ETargetHistory]string{
 	TargetHistoryAsset:    "Tài sản",
 	TargetHistoryCampaign: "Chiến dịch quảng cáo",
 	TargetHistoryPackage:  "Gói quảng cáo",
+	TargetHistoryAdmin:    "Admin",
 }

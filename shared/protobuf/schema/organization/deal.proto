@@ -82,6 +82,13 @@ service DealService {
         };
     }
 
+    // API admin lấy toàn bộ danh sách thương vụ trong hệ thống
+    rpc GetAllDeals(AdminDealSearchRequest) returns (AdminDealSearchResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/admin/deal/list"
+        };
+    }
+
 
     rpc UpdateGroupDealStatus(UpdateGroupDealStatusRequest) returns (UpdateGroupDealStatusResponse) {
         option (google.api.http) = {
@@ -804,4 +811,66 @@ message DealMember {
     bool isOwner = 22;           // Đánh dấu là chủ thương vụ
     uint32 roleKey = 23;         // Role key (400: Owner, 420: Admin, 430: Member)
     optional GroupDeal deal = 24;
-  }
+}
+
+// Admin API messages
+message AdminDealSearchRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    optional string keyword = 3;              // Tìm kiếm theo tên deal
+    optional uint32 status = 4;               // Trạng thái deal
+    optional uint32 dealType = 5;             // Loại deal
+    optional uint64 organizationId = 6;       // Lọc theo tổ chức
+    optional uint64 groupId = 7;              // Lọc theo nhóm
+    optional uint64 ownerId = 8;              // Lọc theo chủ sở hữu
+    optional uint32 ownerType = 9;            // Loại chủ sở hữu
+    optional string startDate = 10;           // Ngày bắt đầu
+    optional string endDate = 11;             // Ngày kết thúc
+    optional double minAmount = 12;           // Số tiền tối thiểu
+    optional double maxAmount = 13;           // Số tiền tối đa
+}
+
+message AdminDealSearchResponse {
+    repeated AdminDealItem data = 1;
+    int64 total = 2;
+}
+
+message AdminDealItem {
+    uint64 id = 1;
+    string name = 2;
+    double targetProfit = 3;
+    double totalAmount = 4;
+    double profitAmount = 5;
+    uint32 status = 6;
+    string statusName = 7;
+    uint32 dealType = 8;
+    string dealTypeName = 9;
+    string code = 10;
+    
+    // Owner info
+    uint64 ownerId = 11;
+    uint32 ownerType = 12;
+    optional sharepb.ProfileItem owner = 13;
+    
+    // Organization/Group info
+    optional uint64 organizationId = 14;
+    optional string organizationName = 15;
+    optional uint64 groupId = 16;
+    optional string groupName = 17;
+    
+    // Member info
+    uint32 numMember = 18;
+    optional sharepb.ProfileItem chargePerson = 19;
+    
+    // Timestamps
+    string createdAt = 20;
+    string updatedAt = 21;
+    optional string fromDate = 22;
+    optional string toDate = 23;
+    
+    // Additional info
+    bool isUnilateral = 24;
+    bool isManual = 25;
+    optional string cancelReason = 26;
+    string note = 27;
+}

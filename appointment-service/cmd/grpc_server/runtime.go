@@ -1,8 +1,11 @@
 package grpcserver
 
 import (
+	"appointment/appconfig"
+	"appointment/wire"
+	"log"
+
 	"github.com/spf13/cobra"
-	"github.com/tuandq2112/appointment-service/appconfig"
 )
 
 var GrpcServerCmd = &cobra.Command{
@@ -11,7 +14,11 @@ var GrpcServerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		appconfig.InitConfig()
 
-		grpcServer := InitializeGRPCServer()
+		app, err := wire.InitializeApp()
+		if err != nil {
+			log.Fatalf("Failed to initialize app: %v", err)
+		}
+		grpcServer := app.GRPCServer
 		grpcServer.Start()
 	},
 }

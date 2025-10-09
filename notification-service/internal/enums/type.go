@@ -40,6 +40,11 @@ const (
 	TransactionDeposit  TypeEnum = 5001 //"TRANSACTION_DEPOSIT"
 	TransactionWithdraw TypeEnum = 5002 //"TRANSACTION_WITHDRAW"
 	TransactionPayment  TypeEnum = 5003 //"TRANSACTION_PAYMENT"
+
+	// Warning/Alert Types
+	WarningViolation TypeEnum = 8001 //"WARNING_VIOLATION" - Cảnh báo vi phạm
+	WarningReminder  TypeEnum = 8002 //"WARNING_REMINDER" - Nhắc nhở chung
+	WarningGuidance  TypeEnum = 8003 //"WARNING_GUIDANCE" - Hướng dẫn sử dụng
 )
 
 var TypeEnumMap = map[TypeEnum]string{
@@ -64,12 +69,17 @@ var TypeEnumMap = map[TypeEnum]string{
 	DealUpdateStatus:   "Cập nhật trạng thái thương vụ",
 	InvestmentApproved: "Khai báo góp vốn đã được phê duyệt",
 	InvestmentRejected: "Khai báo góp vốn đã bị từ chối",
+
+	// Cảnh báo
+	WarningViolation: "Cảnh báo vi phạm",
+	WarningReminder:  "Nhắc nhở chung",
+	WarningGuidance:  "Hướng dẫn sử dụng",
 }
 
 // IsValid kiểm tra xem giá trị có hợp lệ không
 func (t TypeEnum) IsValid() bool {
 	switch t {
-	case FriendRequest, FriendResponse, Follow:
+	case FriendRequest, FriendResponse, Follow, CommentNewsFeed, CommentChildren, LikeNewsFeed, LikeComment, ShareNewsFeed, JoinGroup, JoinOrganization, Deposit, Withdraw, Payment, MemberJoinDeal, CustomerJoinDeal, PartnerJoinDeal, DealUpdateStatus, InvestmentApproved, InvestmentRejected, NotiDealInvitation, NotiDealInvitationAccepted, NotiDealInvitationRejected, NotiDealMemberWithdrawn, NotiDealMemberRemoved, TransactionDeposit, TransactionWithdraw, TransactionPayment, WarningViolation, WarningReminder, WarningGuidance:
 		return true
 	default:
 		return false

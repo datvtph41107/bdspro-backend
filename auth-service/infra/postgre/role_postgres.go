@@ -6,6 +6,7 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
+	"time"
 
 	"auth/internal/domain"
 	"auth/internal/dto"
@@ -97,7 +98,9 @@ func (r *RoleRepo) FindByRoleKeys(ctx context.Context, roleKeys []uint32) ([]dom
 	err := r.GetDB(ctx).
 		Model(&domain.Role{}).
 		Preload("Color").
-		Where("role_key IN (?)", roleKeys).Find(&roles).Error
+		Where("role_key IN (?) AND deleted_at IS NULL", roleKeys).
+		Find(&roles).
+		Error
 	return roles, err
 }
 
@@ -149,6 +152,9 @@ func (r *RoleRepo) AddCondition(db *gorm.DB, pagable *dto.RoleSearchRequest) *go
 
 	if pagable.Name != "" {
 		db = db.Where("name LIKE ?", "%"+pagable.Name+"%")
+	}
+	if pagable.RoleGroupID != nil {
+		db = db.Where("role_group_id = ?", *pagable.RoleGroupID)
 	}
 
 	return db
@@ -356,9 +362,9 @@ func (r *RoleRepo) GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domai
 
 // AssignRoleToUser gán role cho user bằng cách cập nhật role_key trong auth method
 func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *domain.Role) error {
-	// Cập nhật role_key trong bảng user_auth
+	// Cập nhật role_key trong bảng auth_method
 	err := r.GetDB(ctx).
-		Model(&domain.AuthMethodDomain{}).
+		Model(&domain.AuthMethod{}).
 		Where("user_id = ?", userId).
 		Update("role_key", role.RoleKey).Error
 	if err != nil {
@@ -369,12 +375,12 @@ func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *do
 }
 
 // GetAuthMethodsByIds lấy thông tin AuthMethod theo danh sách user IDs
-func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*domain.AuthMethodDomain, error) {
+func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*domain.AuthMethod, error) {
 	if len(userIds) == 0 {
 		return nil, nil
 	}
 
-	var authMethods []*domain.AuthMethodDomain
+	var authMethods []*domain.AuthMethod
 	err := r.GetDB(ctx).
 		Where("user_id IN ? AND deleted_at IS NULL", userIds).
 		Find(&authMethods).Error
@@ -383,4 +389,107 @@ func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([
 	}
 
 	return authMethods, nil
+}
+
+// GetAuthAdminsWithRolesByIds lấy danh sách admin kèm với thông tin role
+func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64) ([]*domain.AuthAdminWithRole, error) {
+	if len(ids) == 0 {
+		return []*domain.AuthAdminWithRole{}, nil
+	}
+
+	// Query để lấy admin info kèm với role
+	var results []struct {
+		ID        uint64    `gorm:"id"`
+		UserID    uint64    `gorm:"user_id"`
+		AuthName  string    `gorm:"auth_name"`
+		FullName  string    `gorm:"full_name"`
+		Email     string    `gorm:"email"`
+		Phone     string    `gorm:"phone"`
+		Avatar    string    `gorm:"avatar"`
+		RoleKey   uint32    `gorm:"role_key"`
+		Status    uint32    `gorm:"status"`
+		CreatedAt time.Time `gorm:"created_at"`
+		UpdatedAt time.Time `gorm:"updated_at"`
+		RoleID    *uint64   `gorm:"role_id"`
+		RoleName  *string   `gorm:"role_name"`
+		RoleDesc  *string   `gorm:"role_description"`
+	}
+
+	err := r.GetDB(ctx).
+		Table("auth_method am").
+		Select(`
+			am.id,
+			am.user_id,
+			am.auth_name,
+			am.full_name,
+			am.email,
+			am.phone,
+			am.avatar,
+			am.role_key,
+			am.status,
+			am.created_at,
+			am.updated_at,
+			r.id as role_id,
+			r.role_name,
+			r.role_description
+		`).
+		Joins("LEFT JOIN roles r ON am.role_key = r.role_key").
+		Where("am.user_id IN (?) AND am.provider = 'ADMIN' AND am.deleted_at IS NULL", ids).
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert sang domain objects
+	admins := make([]*domain.AuthAdminWithRole, len(results))
+	for i, result := range results {
+		admin := &domain.AuthAdminWithRole{
+			ID:        result.ID,
+			UserID:    result.UserID,
+			Username:  result.AuthName,
+			FullName:  result.FullName,
+			Email:     result.Email,
+			Phone:     result.Phone,
+			Avatar:    result.Avatar,
+			RoleKey:   result.RoleKey,
+			Status:    result.Status,
+			CreatedAt: result.CreatedAt,
+			UpdatedAt: result.UpdatedAt,
+		}
+
+		// Nếu có role info thì tạo Role object
+		if result.RoleID != nil && result.RoleName != nil {
+			role := &domain.Role{
+				RoleName:        *result.RoleName,
+				RoleKey:         result.RoleKey,
+				RoleDescription: *result.RoleDesc,
+			}
+			role.ID = *result.RoleID
+			admin.Role = role
+		}
+
+		admins[i] = admin
+	}
+
+	return admins, nil
+}
+
+func (r *RoleRepo) GetRolesByIds(ctx context.Context, ids []uint64) ([]*domain.Role, error) {
+	var roles []*domain.Role
+	err := r.GetDB(ctx).
+		Preload("Color").
+		Where("id IN ? AND deleted_at IS NULL", ids).
+		Find(&roles).Error
+	return roles, err
+}
+
+func (r *RoleRepo) GetRoleByGroupId(ctx context.Context, groupId uint64) ([]domain.Role, error) {
+	var roles []domain.Role
+	err := r.GetDB(ctx).
+		Model(&domain.Role{}).
+		Preload("Color").
+		Where("role_group_id = ? AND deleted_at IS NULL", groupId).
+		Find(&roles).Error
+	return roles, err
 }

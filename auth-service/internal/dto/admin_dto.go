@@ -10,17 +10,12 @@ import (
 
 // CreateAdminRequest DTO cho tạo admin mới
 type CreateAdminRequest struct {
-	Username         string   `json:"username" binding:"required" validate:"required"`
-	Password         string   `json:"password" binding:"required" validate:"required"`
-	FullName         string   `json:"fullName" binding:"required" validate:"required"`
-	Email            string   `json:"email" binding:"required,email" validate:"required,email"`
-	Phone            string   `json:"phone" binding:"required" validate:"required"`
-	Avatar           string   `json:"avatar"`
-	JobTitle         string   `json:"jobTitle" binding:"required" validate:"required"` // Chức danh / Vị trí công việc
-	RoleKey          string   `json:"roleKey" binding:"required" validate:"required"`  // Vai trò hệ thống (role)
-	Attachments      []string `json:"attachments"`                                     // File đính kèm (URLs)
-	InternalNotes    string   `json:"internalNotes"`                                   // Ghi chú nội bộ
-	SendNotification bool     `json:"sendNotification"`                                // Gửi thông báo tài khoản qua Email/SMS
+	Username string `json:"username" binding:"required" validate:"required"`
+	Password string `json:"password" binding:"required" validate:"required"`
+	FullName string `json:"fullName" binding:"required" validate:"required"`
+	Email    string `json:"email" binding:"required,email" validate:"required,email"`
+	Phone    string `json:"phone" binding:"required" validate:"required"`
+	Avatar   string `json:"avatar"`
 }
 
 // UpdateAdminRequest DTO cho cập nhật admin
@@ -45,8 +40,10 @@ type AssignRoleRequest struct {
 
 // AdminListRequest DTO cho danh sách admin
 type AdminListRequest struct {
-	Page int32 `json:"page" form:"page" binding:"min=1" validate:"min=1"`
-	Size int32 `json:"size" form:"size" binding:"min=1,max=100" validate:"min=1,max=100"`
+	Page   int32  `json:"page" form:"page" binding:"min=1" validate:"min=1"`
+	Size   int32  `json:"size" form:"size" binding:"min=1,max=100" validate:"min=1,max=100"`
+	RoleID uint64 `json:"roleId" form:"roleId"`
+	Name   string `json:"name" form:"name"`
 }
 
 // AdminSearchRequest DTO cho tìm kiếm admin

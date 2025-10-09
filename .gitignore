@@ -40,4 +40,7 @@ auth-service/auth-service
 **/feedback
 **/bin
 tqd-service/tqd-service
+
+**/.tool
+.gitbe
 config/

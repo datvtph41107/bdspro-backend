@@ -7,10 +7,10 @@ import (
 
 	sharepb "pb/types/shared"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/entity"
-	"github.com/tuandq2112/appointment-service/internal/domain/repository"
-	"github.com/tuandq2112/appointment-service/internal/dto"
-	"github.com/tuandq2112/appointment-service/internal/infrastructure/client"
+	"appointment/internal/domain/entity"
+	"appointment/internal/domain/repository"
+	"appointment/internal/dto"
+	"appointment/internal/infrastructure/client"
 )
 
 type AppointmentUsecase interface {

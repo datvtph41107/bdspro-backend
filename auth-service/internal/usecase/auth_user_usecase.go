@@ -28,6 +28,7 @@ type AuthUsecase struct {
 	PreePlanID         *uint64
 	ProfileProvider    provider.ProfileProvider
 	AuthMethodRepo     repo.AuthMethodRepository
+	UserInfoRepo       repo.UserInfoRepository
 	SessionRepo        repo.SessionRepository
 	OTPRepo            repo.OTPRepository
 	StatusRepo         repo.StatusRepository
@@ -42,6 +43,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	cacheProvider provider.CacheProvider,
 	profileProvider provider.ProfileProvider,
 	authMethodRepo repo.AuthMethodRepository,
+	userInfoRepo repo.UserInfoRepository,
 	sessionRepo repo.SessionRepository,
 	otpRepo repo.OTPRepository,
 	statusRepo repo.StatusRepository,
@@ -58,6 +60,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		PreePlanID:         &planId,
 		ProfileProvider:    profileProvider,
 		AuthMethodRepo:     authMethodRepo,
+		UserInfoRepo:       userInfoRepo,
 		SessionRepo:        sessionRepo,
 		OTPRepo:            otpRepo,
 		StatusRepo:         statusRepo,
@@ -162,7 +165,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
 	if err != nil || infoEntity == nil || infoEntity.ProfileID == 0 {
-		infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.Name, e.Email, e.Phone, e.Avatar)
+		infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
 		s.ProfileProvider.SaveProfile(c, infoEntity)
 
 		e.UserID = infoEntity.ProfileID
@@ -193,7 +196,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	// }
 	// Liên kết tài khoản OAuth với hồ sơ người dùng
 	if otp.AuthID != 0 {
-		var oauthAcc *domain.AuthMethodDomain
+		var oauthAcc *domain.AuthMethod
 		if err := _db.DB.First(&oauthAcc, otp.AuthID).Error; err == nil {
 			if oauthAcc != nil && oauthAcc.UserID == 0 {
 				// var statusOauth *domain.UserStatusEntity
@@ -219,7 +222,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	return s.ResponseLogin(e, infoEntity, newSession.SessionID), nil
 }
 
-func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethodDomain, otp dto.OtpVerifyRequest) *domain.UserSessionEntity {
+func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethod, otp dto.OtpVerifyRequest) *domain.UserSessionEntity {
 	return &domain.UserSessionEntity{
 		AuthID:    e.ID,
 		Version:   otp.Version,
@@ -233,7 +236,7 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	claims := _jwt.GetPrincipalContext(c)
 	fmt.Println("claims", claims)
 
-	log.Println("refreshToken: %s", refreshToken, ":???")
+	log.Printf("refreshToken: %s :???", refreshToken)
 	props, err := _jwt.GetProperties(refreshToken)
 	if err != nil {
 		return nil, &_routes.Except{
@@ -310,9 +313,9 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 
 	profileId := _utils.GetProfileIdWithContext(c)
 
-	e := domain.AuthMethodDomain{
+	e := domain.AuthMethod{
 		Provider: "PHONE",
-		OAuthID:  query.Phone,
+		AuthName: query.Phone,
 		UserID:   profileId,
 	}
 
@@ -329,13 +332,13 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 	return &dto.RestoreAccountResponse{
 		AuthId:   createdAuth.ID,
 		Provider: createdAuth.Provider,
-		OAuthId:  createdAuth.OAuthID,
+		AuthName: createdAuth.AuthName,
 	}, nil
 }
 
 // RestoreDeletedAccount khôi phục tài khoản đã bị soft delete
 func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDeletedAccountRequest) (*dto.RestoreDeletedAccountResponse, error) {
-	var deletedAuth *domain.AuthMethodDomain
+	var deletedAuth *domain.AuthMethod
 	var err error
 
 	// Tìm tài khoản đã bị xóa theo phone, email hoặc username
@@ -387,7 +390,7 @@ func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDe
 	return &dto.RestoreDeletedAccountResponse{
 		AuthId:   deletedAuth.ID,
 		Provider: deletedAuth.Provider,
-		OAuthId:  deletedAuth.OAuthID,
+		AuthName: deletedAuth.AuthName,
 		Message:  "Tài khoản đã được khôi phục thành công",
 	}, nil
 }
@@ -423,12 +426,12 @@ func (s *AuthUsecase) Delete(c context.Context) (*dto.DeleteAccountResponse, err
 	}, nil
 }
 
-func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (*domain.AuthMethodDomain, error) {
+func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (*domain.AuthMethod, error) {
 	// Tạo một UserAuthEntity mới
-	e := &domain.AuthMethodDomain{
+	e := &domain.AuthMethod{
 		Provider: "PHONE",
-		OAuthID:  dto.Phone,
-		Name:     dto.Fullname,
+		AuthName: dto.Phone,
+		FullName: dto.Fullname,
 	}
 
 	// Lưu vào database
@@ -549,7 +552,7 @@ func (s *AuthUsecase) CheckOtpSpam(c context.Context, phoneNumber, ip string) er
 }
 
 // GetParamValidate kiểm tra thông tin xác thực và trả về data.AuthParam
-func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMethodDomain, otp string) (*dto.AuthParam, error) {
+func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMethod, otp string) (*dto.AuthParam, error) {
 	if oauth == nil {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -580,7 +583,7 @@ func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMeth
 	}, nil
 }
 
-func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethodDomain, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
+func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethod, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
 	if authEntity.UserID == 0 {
 		return &dto.AuthLoginResponse{
 			AuthID: authEntity.ID,
@@ -599,7 +602,7 @@ func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethodDomain, profile
 	return dto.MakeAuthLoginResponse(accessToken, authEntity, enums.RoleMap[profile.RoleType])
 }
 
-func (s *AuthUsecase) GetRefreshToken(authEntity *domain.AuthMethodDomain, sessionID uint64) string {
+func (s *AuthUsecase) GetRefreshToken(authEntity *domain.AuthMethod, sessionID uint64) string {
 	refreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:    authEntity.ID,
 		ProfileID: authEntity.UserID,
@@ -611,7 +614,7 @@ func (s *AuthUsecase) GetRefreshToken(authEntity *domain.AuthMethodDomain, sessi
 	return refreshToken
 }
 
-func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethodDomain, otp *dto.OtpVerifyRequest) *domain.UserSessionEntity {
+func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp *dto.OtpVerifyRequest) *domain.UserSessionEntity {
 	var authId uint64
 	if e != nil {
 		authId = e.ID
@@ -715,7 +718,7 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 
 // ------------------------------------------------------------
 
-func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.AuthMethodDomain, sessionId uint64) string {
+func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.AuthMethod, sessionId uint64) string {
 	s.CacheProvider.SaveToken(c, authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), s.properties.JwtRefreshExpMinutes*60)
 	refreshToken := s.GetRefreshToken(authEntity, sessionId)
 	s.CookieProvider.SetRefreshToken(c, refreshToken)
@@ -819,7 +822,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		adminProfile = s.ProfileProvider.MakeUserProfileEntity(
 			adminAuthEntity.ID,
 			s.PreePlanID,
-			adminAuthEntity.Name,
+			adminAuthEntity.FullName,
 			adminAuthEntity.Email,
 			adminAuthEntity.Phone,
 			adminAuthEntity.Avatar,
@@ -835,14 +838,14 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	adminOtpRequest := dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
 			Phone:    adminAuthEntity.Phone,
-			Fullname: adminAuthEntity.Name,
+			Fullname: adminAuthEntity.FullName,
 		},
 		Otp:      "",
 		AuthID:   adminAuthEntity.ID,
 		Version:  "1.0",
 		Platform: "WEB",
 		OS:       "ADMIN",
-		Fullname: adminAuthEntity.Name,
+		Fullname: adminAuthEntity.FullName,
 	}
 
 	newSession := s.createSession(c, adminAuthEntity, adminOtpRequest)
@@ -855,7 +858,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	// Tạo response với đầy đủ thông tin
 	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
 	response.Role = enums.RoleMap[adminProfile.RoleType]
-	response.Username = adminLogin.Username
+	response.Username = adminAuthEntity.AuthName
 
 	// Ghi log admin history
 	go func() {
@@ -899,6 +902,223 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 			log.Printf("Successfully logged admin login for user %d", adminAuthEntity.UserID)
 		}
 	}()
+
+	return response, nil
+}
+
+// LockAccount khóa tài khoản (tạm thời hoặc vĩnh viễn)
+func (s *AuthUsecase) LockAccount(ctx context.Context, req *dto.LockAccountRequest) (*dto.LockAccountResponse, error) {
+	// Validate duration cho khóa tạm thời
+	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
+		return &dto.LockAccountResponse{
+			Success: false,
+			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
+		}, fmt.Errorf("invalid duration for temporary lock")
+	}
+
+	// Kiểm tra user đã bị khóa chưa
+	userInfo, err := s.UserInfoRepo.GetUserStatus(ctx, req.ProfileID)
+	if err != nil {
+		return &dto.LockAccountResponse{
+			Success: false,
+			Message: "Lỗi khi kiểm tra trạng thái user: " + err.Error(),
+		}, err
+	}
+
+	if userInfo.IsLocked() {
+		return &dto.LockAccountResponse{
+			Success: false,
+			Message: "User đã bị khóa",
+		}, fmt.Errorf("user already locked")
+	}
+
+	// Thực hiện khóa user
+	err = s.UserInfoRepo.LockUser(ctx, req.ProfileID, req.LockType, req.Duration, req.Reason, req.LockedBy)
+	if err != nil {
+		return &dto.LockAccountResponse{
+			Success: false,
+			Message: "Lỗi khi khóa user: " + err.Error(),
+		}, err
+	}
+
+	// Tạo response
+	response := &dto.LockAccountResponse{
+		Success:   true,
+		Message:   "Khóa user thành công",
+		ProfileID: req.ProfileID,
+		LockType:  req.LockType,
+		LockedAt:  time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
+	if req.LockType == domain.StatusTemporarilyLocked {
+		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
+		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
+	}
+
+	return response, nil
+}
+
+// UnlockAccount mở khóa tài khoản
+func (s *AuthUsecase) UnlockAccount(ctx context.Context, req *dto.UnlockAccountRequest) (*dto.UnlockAccountResponse, error) {
+	// Kiểm tra user có bị khóa không
+	userInfo, err := s.UserInfoRepo.GetUserStatus(ctx, req.ProfileID)
+	if err != nil {
+		return &dto.UnlockAccountResponse{
+			Success: false,
+			Message: "Lỗi khi kiểm tra trạng thái user: " + err.Error(),
+		}, err
+	}
+
+	if !userInfo.IsLocked() {
+		return &dto.UnlockAccountResponse{
+			Success: false,
+			Message: "User không bị khóa",
+		}, fmt.Errorf("user is not locked")
+	}
+
+	// Thực hiện mở khóa user
+	err = s.UserInfoRepo.UnlockUser(ctx, req.ProfileID, req.Reason, req.UnlockedBy)
+	if err != nil {
+		return &dto.UnlockAccountResponse{
+			Success: false,
+			Message: "Lỗi khi mở khóa user: " + err.Error(),
+		}, err
+	}
+
+	// Tạo response
+	response := &dto.UnlockAccountResponse{
+		Success:    true,
+		Message:    "Mở khóa user thành công",
+		ProfileID:  req.ProfileID,
+		UnlockedAt: time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return response, nil
+}
+
+// GetAccountStatus lấy trạng thái tài khoản
+func (s *AuthUsecase) GetAccountStatus(ctx context.Context, req *dto.GetAccountStatusRequest) (*dto.GetAccountStatusResponse, error) {
+	// Lấy thông tin user
+	userInfo, err := s.UserInfoRepo.GetUserStatus(ctx, req.ProfileID)
+	if err != nil {
+		return &dto.GetAccountStatusResponse{}, err
+	}
+
+	// Xác định trạng thái text
+	var statusText string
+	switch userInfo.Status {
+	case domain.StatusActive:
+		statusText = "Hoạt động"
+	case (domain.StatusInactive):
+		statusText = "Vô hiệu hóa"
+	case domain.StatusTemporarilyLocked:
+		statusText = "Khóa tạm thời"
+	case domain.StatusPermanentlyLocked:
+		statusText = "Khóa vĩnh viễn"
+	default:
+		statusText = "Không xác định"
+	}
+
+	// Xác định loại khóa
+	var lockType domain.AccountStatus
+	if userInfo.IsTemporarilyLocked() {
+		lockType = domain.StatusTemporarilyLocked
+	} else if userInfo.IsPermanentlyLocked() {
+		lockType = domain.StatusPermanentlyLocked
+	}
+
+	// Kiểm tra khóa có hết hạn không
+	var isExpired bool
+	if userInfo.IsTemporarilyLocked() {
+		isExpired = userInfo.IsLockExpired()
+	}
+
+	// Tạo response
+	response := &dto.GetAccountStatusResponse{
+		ProfileID:  userInfo.ProfileID,
+		Status:     uint32(userInfo.Status),
+		StatusText: statusText,
+		IsLocked:   userInfo.IsLocked(),
+		LockType:   lockType,
+		CanLogin:   userInfo.CanLogin(),
+		IsExpired:  isExpired,
+	}
+
+	// Thêm thông tin khóa nếu có
+	if userInfo.IsLocked() {
+		response.LockedAt = userInfo.LockedAt.Format("2006-01-02T15:04:05Z07:00")
+		response.LockReason = userInfo.LockReason
+		response.LockedBy = *userInfo.LockedBy
+
+		if userInfo.LockedUntil != nil {
+			response.LockedUntil = userInfo.LockedUntil.Format("2006-01-02T15:04:05Z07:00")
+		}
+	}
+
+	return response, nil
+}
+
+// CheckAndUnlockExpiredAccounts kiểm tra và tự động mở khóa các tài khoản hết hạn
+func (s *AuthUsecase) CheckAndUnlockExpiredAccounts(ctx context.Context) error {
+	return s.UserInfoRepo.CheckLockExpiration(ctx)
+}
+
+// LockMultipleUsers khóa nhiều user cùng lúc
+func (s *AuthUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultipleUsersRequest) (*dto.LockMultipleUsersResponse, error) {
+	// Validate duration cho khóa tạm thời
+	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
+		return &dto.LockMultipleUsersResponse{
+			Success: false,
+			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
+		}, fmt.Errorf("invalid duration for temporary lock")
+	}
+
+	// Thực hiện khóa nhiều user
+	err := s.UserInfoRepo.LockMultipleUsers(ctx, req.ProfileIDs, req.LockType, req.Duration, req.Reason, req.LockedBy)
+	if err != nil {
+		return &dto.LockMultipleUsersResponse{
+			Success: false,
+			Message: "Lỗi khi khóa nhiều user: " + err.Error(),
+		}, err
+	}
+
+	// Tạo response
+	response := &dto.LockMultipleUsersResponse{
+		Success:    true,
+		Message:    "Khóa nhiều user thành công",
+		ProfileIDs: req.ProfileIDs,
+		LockType:   req.LockType,
+		LockedAt:   time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
+	if req.LockType == domain.StatusTemporarilyLocked {
+		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
+		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
+	}
+
+	return response, nil
+}
+
+// UnlockMultipleUsers mở khóa nhiều user cùng lúc
+func (s *AuthUsecase) UnlockMultipleUsers(ctx context.Context, req *dto.UnlockMultipleUsersRequest) (*dto.UnlockMultipleUsersResponse, error) {
+	// Thực hiện mở khóa nhiều user
+	err := s.UserInfoRepo.UnlockMultipleUsers(ctx, req.ProfileIDs, req.Reason, req.UnlockedBy)
+	if err != nil {
+		return &dto.UnlockMultipleUsersResponse{
+			Success: false,
+			Message: "Lỗi khi mở khóa nhiều user: " + err.Error(),
+		}, err
+	}
+
+	// Tạo response
+	response := &dto.UnlockMultipleUsersResponse{
+		Success:    true,
+		Message:    "Mở khóa nhiều user thành công",
+		ProfileIDs: req.ProfileIDs,
+		UnlockedAt: time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
 
 	return response, nil
 }

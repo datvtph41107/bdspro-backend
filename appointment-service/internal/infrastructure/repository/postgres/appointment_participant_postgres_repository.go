@@ -3,7 +3,7 @@ package postgres
 import (
 	"time"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/entity"
+	"appointment/internal/domain/entity"
 )
 
 type AppointmentParticipantModel struct {

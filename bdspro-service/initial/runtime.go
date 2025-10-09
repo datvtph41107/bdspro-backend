@@ -28,6 +28,7 @@ type InitialApp struct {
 	AdminPostHandler         *admin_handler.AdminPostHandler
 	AdminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler
 	AdminProjectHandler      *admin_handler.AdminProjectHandler
+	AdminRegionHandler       *handler.AdminRegionHandler
 	InternalHandler          *handler.InternalHandler
 
 	// @bind: register_server_config
@@ -70,6 +71,7 @@ func NewInitialApp(
 	adminPostHandler *admin_handler.AdminPostHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
 	adminProjectHandler *admin_handler.AdminProjectHandler,
+	adminRegionHandler *handler.AdminRegionHandler,
 	internalHandler *handler.InternalHandler,
 	// @bind: register_server_new
 	// CostDocumentServer: CostDocumentServer,
@@ -101,6 +103,7 @@ func NewInitialApp(
 		AdminPostHandler:         adminPostHandler,
 		AdminPropertyTypeHandler: adminPropertyTypeHandler,
 		AdminProjectHandler:      adminProjectHandler,
+		AdminRegionHandler:       adminRegionHandler,
 		InternalHandler:          internalHandler,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new

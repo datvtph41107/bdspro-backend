@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	_ "embed"
+	"gateway/env"
 	"log"
 
 	"github.com/spf13/viper"
@@ -21,9 +22,15 @@ func LoadConfig() {
 	viper.AutomaticEnv()
 
 	// Đọc file config
-	err := viper.ReadConfig(bytes.NewReader(ConfigFile))
-	if err != nil {
-		log.Fatalf("Lỗi khi đọc file config: %v", err)
+	if env.ENV_RUNTIME == "release" {
+		err := viper.ReadConfig(bytes.NewReader(ConfigFile))
+		if err != nil {
+			log.Fatalf("Lỗi khi đọc file config: %v", err)
+		}
+	} else {
+		err := viper.ReadConfig(bytes.NewReader(ConfigFile))
+		if err != nil {
+			log.Fatalf("Lỗi khi đọc file config: %v", err)
+		}
 	}
-
 }

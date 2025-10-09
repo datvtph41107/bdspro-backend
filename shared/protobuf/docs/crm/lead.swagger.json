@@ -1140,8 +1140,33 @@
         },
         "name": {
           "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "codeName": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
-      }
+      },
+      "title": "Message definitions"
     },
     "bdspropbTransaction": {
       "type": "object",

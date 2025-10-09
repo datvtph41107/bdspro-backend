@@ -6,6 +6,7 @@ import (
 
 	"organization/infrastructure/utils"
 	"organization/internal/domain/entity"
+	"organization/internal/dto"
 	"organization/internal/enums"
 )
 
@@ -24,6 +25,11 @@ type DealTransformer interface {
 	EntityToGetDealsResponse(deals []*entity.Deal, total uint32) *organizationpb.GetDealsResponse
 	EntityToDealMemberProto(member *entity.DealMember) *organizationpb.DealMember
 	EntityToGetGroupDealsV2Response(deals []*entity.Deal, total uint32) *organizationpb.GetGroupDealsV2Response
+
+	// Admin API
+	AdminDealSearchRequestToDTO(req *organizationpb.AdminDealSearchRequest) *dto.AdminDealSearchRequest
+	EntityToAdminDealItem(deal *entity.Deal) *organizationpb.AdminDealItem
+	EntityToAdminDealSearchResponse(deals []*entity.Deal, total int64) *organizationpb.AdminDealSearchResponse
 }
 
 type groupDealTransformer struct {
@@ -369,6 +375,79 @@ func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*entity.D
 
 	for i, deal := range deals {
 		response.Data[i] = t.EntityToGetGroupDealResponse(deal)
+	}
+
+	return response
+}
+
+// AdminDealSearchRequestToDTO converts proto request to DTO
+func (t *groupDealTransformer) AdminDealSearchRequestToDTO(req *organizationpb.AdminDealSearchRequest) *dto.AdminDealSearchRequest {
+	return &dto.AdminDealSearchRequest{
+		Page:           int(req.Page),
+		Size:           int(req.Size),
+		Keyword:        req.Keyword,
+		Status:         req.Status,
+		DealType:       req.DealType,
+		OrganizationID: req.OrganizationId,
+		GroupID:        req.GroupId,
+		OwnerID:        req.OwnerId,
+		OwnerType:      req.OwnerType,
+		StartDate:      req.StartDate,
+		EndDate:        req.EndDate,
+		MinAmount:      req.MinAmount,
+		MaxAmount:      req.MaxAmount,
+	}
+}
+
+// EntityToAdminDealItem converts entity to proto admin deal item
+func (t *groupDealTransformer) EntityToAdminDealItem(deal *entity.Deal) *organizationpb.AdminDealItem {
+	item := &organizationpb.AdminDealItem{
+		Id:           deal.ID,
+		Name:         deal.Name,
+		TargetProfit: deal.TargetProfit,
+		TotalAmount:  0, // Will be filled from transaction service
+		ProfitAmount: 0, // Will be filled from transaction service
+		Status:       uint32(deal.Status),
+		StatusName:   enums.DealStatusMap[deal.Status],
+		DealType:     uint32(deal.DealType),
+		DealTypeName: enums.DealTypeMap[deal.DealType],
+		Code:         utils.GenerateDealCode(deal.ID),
+		OwnerId:      deal.OwnerId,
+		OwnerType:    uint32(deal.OwnerType),
+		NumMember:    deal.NumMember,
+		CreatedAt:    _utils.FormatTimeToString(deal.CreatedAt),
+		UpdatedAt:    _utils.FormatTimeToString(deal.UpdatedAt),
+		IsUnilateral: deal.IsUnilateral,
+		IsManual:     deal.IsManual,
+		Note:         deal.Note,
+	}
+
+	if deal.FromDate != nil {
+		fromDate := _utils.FormatTimeToString(deal.FromDate)
+		item.FromDate = &fromDate
+	}
+
+	if deal.ToDate != nil {
+		toDate := _utils.FormatTimeToString(deal.ToDate)
+		item.ToDate = &toDate
+	}
+
+	if deal.CancelReason != nil {
+		item.CancelReason = deal.CancelReason
+	}
+
+	return item
+}
+
+// EntityToAdminDealSearchResponse converts entities to proto response
+func (t *groupDealTransformer) EntityToAdminDealSearchResponse(deals []*entity.Deal, total int64) *organizationpb.AdminDealSearchResponse {
+	response := &organizationpb.AdminDealSearchResponse{
+		Total: total,
+		Data:  make([]*organizationpb.AdminDealItem, len(deals)),
+	}
+
+	for i, deal := range deals {
+		response.Data[i] = t.EntityToAdminDealItem(deal)
 	}
 
 	return response

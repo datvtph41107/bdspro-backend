@@ -1,6 +1,7 @@
 package clients
 
 import (
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_middleware "common/middleware"
 	"context"
@@ -67,32 +68,40 @@ func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*authpb.Ro
 		GetRoleById(ctx, &sharepb.IdRequest{Id: id})
 }
 
-func (c *AuthGrpcClient) GetProfileByIds(ctx context.Context, profileIds []uint64) (*sharepb.GetProfileByIdsResponse, error) {
-	if c.AuthInternalServiceClient == nil {
-		return nil, fmt.Errorf("auth client not available")
-	}
-	return c.AuthInternalServiceClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: profileIds})
-}
-
-func (c *AuthGrpcClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]struct{}) (map[uint64]*sharepb.ProfileItem, error) {
-	if c.AuthInternalServiceClient == nil {
-		return nil, fmt.Errorf("auth client not available")
-	}
-
-	profileIDs := make([]uint64, 0, len(profileIDSet))
-	for id := range profileIDSet {
-		profileIDs = append(profileIDs, id)
-	}
-
-	profiles, err := c.AuthInternalServiceClient.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: profileIDs})
+func (c *AuthGrpcClient) GetAuthUsersByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*_dto.AuthUserProfileDTO, error) {
+	response, err := c.AuthInternalServiceClient.
+		GetAuthUsersByProfileIDs(ctx, &authpb.GetAuthUsersByProfileIDsRequest{ProfileIds: profileIDs})
 	if err != nil {
 		return nil, err
 	}
 
-	profileMap := make(map[uint64]*sharepb.ProfileItem, len(profiles.Profiles))
-	for _, profile := range profiles.Profiles {
-		profileMap[profile.Id] = profile
-	}
+	roleMap := make(map[uint64]*_dto.AuthUserProfileDTO)
+	for _, user := range response.Data {
+		roleMap[user.ProfileId] = &_dto.AuthUserProfileDTO{
+			ProfileID: user.ProfileId,
+			RoleID:    user.RoleId,
+		}
 
-	return profileMap, nil
+		if user.Role != nil {
+			r := &_dto.RoleDTO{
+				ID:       user.Role.Id,
+				RoleName: user.Role.RoleName,
+				RoleKey:  user.Role.RoleKey,
+			}
+			if user.Role.Color != nil {
+				r.Color = &_dto.ColorDTO{
+					ID:              user.Role.Color.Id,
+					Code:            user.Role.Color.ColorKey,
+					Color:           user.Role.Color.ContentColor,
+					ContentColor:    user.Role.Color.ContentColor,
+					BackgroundColor: user.Role.Color.BackgroundColor,
+					ColorKey:        user.Role.Color.ColorKey,
+					HexCode:         user.Role.Color.HexCode,
+				}
+			}
+
+			roleMap[user.ProfileId].Role = r
+		}
+	}
+	return roleMap, nil
 }

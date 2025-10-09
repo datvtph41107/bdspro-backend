@@ -13,6 +13,7 @@ type InitialApp struct {
 	ContractDealHandler        *handler.ContractDealHandler
 	DealCostHandler            *handler.DealCostHandler
 	CostTypeHandler            *handler.CostTypeHandler
+	AdminTransactionHandler    *handler.AdminTransactionHandler
 	Logger                     *flogging.FabricLogger
 }
 
@@ -22,6 +23,7 @@ func NewInitalApp(
 	contractDealHandler *handler.ContractDealHandler,
 	dealCostHandler *handler.DealCostHandler,
 	costTypeHandler *handler.CostTypeHandler,
+	adminTransactionHandler *handler.AdminTransactionHandler,
 ) *InitialApp {
 	return &InitialApp{
 		TransactionHandler:         transactionHandler,
@@ -29,6 +31,7 @@ func NewInitalApp(
 		ContractDealHandler:        contractDealHandler,
 		DealCostHandler:            dealCostHandler,
 		CostTypeHandler:            costTypeHandler,
+		AdminTransactionHandler:    adminTransactionHandler,
 		Logger:                     flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

@@ -17,6 +17,146 @@
   ],
   "paths": {},
   "definitions": {
+    "authpbAuthAdminWithRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "username": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbAuthMethod": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "authName": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "roleKey": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "deletedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbAuthUserStatusInfo": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusText": {
+          "type": "string"
+        },
+        "isLocked": {
+          "type": "boolean"
+        },
+        "lockType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lockedAt": {
+          "type": "string"
+        },
+        "lockedUntil": {
+          "type": "string"
+        },
+        "lockReason": {
+          "type": "string"
+        },
+        "lockedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "canLogin": {
+          "type": "boolean"
+        },
+        "isExpired": {
+          "type": "boolean"
+        }
+      }
+    },
     "authpbColor": {
       "type": "object",
       "properties": {
@@ -58,6 +198,30 @@
         "updatedBy": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "authpbGetAuthAdminByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbAuthAdminWithRole"
+          }
+        }
+      }
+    },
+    "authpbGetAuthUsersByProfileIDsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbAuthUserStatusInfo"
+          }
         }
       }
     },
@@ -279,6 +443,25 @@
         },
         "joinedAt": {
           "type": "string"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     }

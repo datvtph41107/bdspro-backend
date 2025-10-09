@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	authpb "pb/types/auth"
 
 	"auth/config"
+	"auth/env"
 	"auth/infra/db"
 	"auth/wire"
 
@@ -24,6 +26,7 @@ var GrpcCmd = &cobra.Command{
 }
 
 func startGRPCServer() {
+	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
 	config.LoadConfig()
 	// Start gRPC server
 	port := fmt.Sprintf(":%d", config.Properties.Server.TCPPort)
@@ -46,6 +49,7 @@ func startGRPCServer() {
 	authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
 	authpb.RegisterRoleServiceServer(s, app.RoleHandler)
 	authpb.RegisterRoleGroupServiceServer(s, app.RoleGroupHandler)
+	authpb.RegisterUserInfoServiceServer(s, app.UserInfoHandler)
 	// authpb.RegisterRoleDefaultServiceHandlerServer(s, app.)
 
 	// Enable reflection for debugging

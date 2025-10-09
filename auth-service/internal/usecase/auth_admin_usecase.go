@@ -10,7 +10,6 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -42,20 +41,14 @@ func NewAdminUsecase(
 }
 
 // CreateAdmin tạo tài khoản admin mới
-func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req dto.CreateAdminRequest) (*dto.AdminResponse, error) {
+func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMethod) (*domain.AuthMethod, error) {
 	// Validate request
 	if err := req.Validate(); err != nil {
 		return nil, _errors.ReturnError(int32(400), err.Error())
 	}
 
-	// Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if profileID == 0 {
-	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	// }
-
 	// Kiểm tra username đã tồn tại chưa
-	existingAuth, err := u.AuthMethodRepo.FindByUsernameAndProvider(ctx, req.Username, "ADMIN")
+	existingAuth, err := u.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.AuthName, "ADMIN")
 	if err == nil && existingAuth != nil {
 		return nil, _errors.ReturnError(int32(400), "Username đã tồn tại")
 	}
@@ -75,27 +68,16 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req dto.CreateAdminR
 	// Convert roleKey string to uint32 (có thể cần mapping logic)
 	var roleKey uint32 = 1 // Default role, cần implement logic mapping
 
-	// Convert attachments array to JSON string
-	attachmentsJSON := "[]"
-	if len(req.Attachments) > 0 {
-		attachmentsJSON = fmt.Sprintf(`["%s"]`, strings.Join(req.Attachments, `","`))
-	}
-
 	// Tạo auth method mới
-	authMethod := &domain.AuthMethodDomain{
-		Provider:         "ADMIN",
-		Username:         req.Username,
-		Password:         hashedPassword,
-		Name:             req.FullName,
-		Email:            req.Email,
-		Phone:            req.Phone,
-		Avatar:           req.Avatar,
-		JobTitle:         req.JobTitle,
-		RoleKey:          roleKey,
-		Attachments:      attachmentsJSON,
-		InternalNotes:    req.InternalNotes,
-		SendNotification: req.SendNotification,
-		CreatedAt:        time.Now(),
+	authMethod := &domain.AuthMethod{
+		Provider:  "ADMIN",
+		Password:  hashedPassword,
+		FullName:  req.FullName,
+		Email:     req.Email,
+		Phone:     req.Phone,
+		Avatar:    req.Avatar,
+		RoleKey:   roleKey,
+		CreatedAt: time.Now(),
 	}
 
 	// Lưu auth method
@@ -131,28 +113,20 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req dto.CreateAdminR
 		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
 	}
 
-	// Gửi thông báo tài khoản nếu được yêu cầu
-	if req.SendNotification {
-		// TODO: Implement gửi email/SMS thông báo tài khoản
-		// Có thể gọi notification service để gửi email với thông tin tài khoản
-		fmt.Printf("Sending notification to: %s, %s\n", req.Email, req.Phone)
-		// u.NotificationProvider.SendAdminAccountNotification(ctx, req.Email, req.Phone, req.Username, req.Password)
-	}
-
-	return &dto.AdminResponse{
-		AuthID:    createdAuth.ID,
-		ProfileID: profile.ProfileID,
-		Username:  req.Username,
-		FullName:  req.FullName,
-		Email:     req.Email,
-		Phone:     req.Phone,
-		Avatar:    req.Avatar,
-		Role:      enums.RoleMap[enums.ERoleAdmin],
+	return &domain.AuthMethod{
+		ID:       createdAuth.ID,
+		UserID:   profile.ProfileID,
+		AuthName: req.AuthName,
+		FullName: req.FullName,
+		Email:    req.Email,
+		Phone:    req.Phone,
+		Avatar:   req.Avatar,
+		RoleKey:  uint32(enums.ERoleAdmin),
 	}, nil
 }
 
-// UpdateAdmin cập nhật thông tin admin
-func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req dto.UpdateAdminRequest) (*dto.AdminResponse, error) {
+// UpdateAdmin cập nhật thông tin admin, nếu không tìm thấy thì tạo mới
+func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *domain.AuthMethod) (*domain.AuthMethod, error) {
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
@@ -160,9 +134,35 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req dto.UpdateAdminR
 	}
 
 	// Tìm admin cần cập nhật
-	authMethod, err := u.AuthMethodRepo.FindByID(ctx, req.AuthID)
+	authMethod, err := u.AuthMethodRepo.GetByUserIdAndProvider(ctx, req.UserID, "ADMIN")
+
+	// Nếu không tìm thấy thì tạo mới
 	if err != nil || authMethod == nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
+		// Tạo auth method mới
+		hashedPassword, err := _utils.HashPassword(req.Password)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi mã hóa password")
+		}
+		newAuthMethod := &domain.AuthMethod{
+			// ID:       req.ID,
+			Provider: "ADMIN",
+			AuthName: req.AuthName,
+			Password: hashedPassword,
+			FullName: req.FullName,
+			UserID:   req.UserID,
+			Email:    req.Email,
+			Phone:    req.Phone,
+			Avatar:   req.Avatar,
+			RoleKey:  req.RoleKey,
+		}
+
+		// Lưu auth method mới
+		createdAuth, err := u.AuthMethodRepo.Create(ctx, newAuthMethod)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi tạo tài khoản admin mới")
+		}
+
+		return createdAuth, nil
 	}
 
 	// Kiểm tra provider phải là ADMIN
@@ -173,16 +173,24 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req dto.UpdateAdminR
 	// Kiểm tra email đã tồn tại chưa (nếu thay đổi)
 	if req.Email != authMethod.Email {
 		existingEmail, err := u.AuthMethodRepo.FindByEmail(ctx, req.Email)
-		if err == nil && existingEmail != nil && existingEmail.ID != req.AuthID {
+		if err == nil && existingEmail != nil && existingEmail.ID != req.ID {
 			return nil, _errors.ReturnError(int32(400), "Email đã tồn tại")
 		}
 	}
 
 	// Cập nhật thông tin auth method
-	authMethod.Name = req.FullName
+	authMethod.FullName = req.FullName
 	authMethod.Email = req.Email
 	authMethod.Phone = req.Phone
 	authMethod.Avatar = req.Avatar
+
+	if req.Password != "" {
+		hashedPassword, err := _utils.HashPassword(req.Password)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi mã hóa password")
+		}
+		authMethod.Password = hashedPassword
+	}
 
 	// Lưu cập nhật
 	updatedAuth, err := u.AuthMethodRepo.Update(ctx, authMethod)
@@ -190,30 +198,11 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req dto.UpdateAdminR
 		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
 	}
 
-	// Cập nhật profile
-	profile, err := u.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
-	if err == nil && profile != nil {
-		profile.FullName = req.FullName
-		profile.Email = req.Email
-		profile.Phone = req.Phone
-		profile.Avatar = req.Avatar
-		u.ProfileProvider.UpdateProfile(ctx, profile)
-	}
-
-	return &dto.AdminResponse{
-		AuthID:    updatedAuth.ID,
-		ProfileID: updatedAuth.UserID,
-		Username:  updatedAuth.Username,
-		FullName:  req.FullName,
-		Email:     req.Email,
-		Phone:     req.Phone,
-		Avatar:    req.Avatar,
-		Role:      enums.RoleMap[enums.ERoleAdmin],
-	}, nil
+	return updatedAuth, nil
 }
 
 // DeleteAdmin xóa tài khoản admin
-func (u *AuthAdminUsecase) DeleteAdmin(ctx context.Context, req dto.DeleteAdminRequest) error {
+func (u *AuthAdminUsecase) DeleteAdmin(ctx context.Context, authID uint64) error {
 	// // Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if profileID == 0 {
@@ -221,7 +210,7 @@ func (u *AuthAdminUsecase) DeleteAdmin(ctx context.Context, req dto.DeleteAdminR
 	// }
 
 	// Tìm admin cần xóa
-	authMethod, err := u.AuthMethodRepo.FindByID(ctx, req.AuthID)
+	authMethod, err := u.AuthMethodRepo.FindByID(ctx, authID)
 	if err != nil || authMethod == nil {
 		return _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
 	}
@@ -237,7 +226,7 @@ func (u *AuthAdminUsecase) DeleteAdmin(ctx context.Context, req dto.DeleteAdminR
 	// }
 
 	// Soft delete auth method
-	err = u.AuthMethodRepo.SoftDelete(ctx, req.AuthID)
+	err = u.AuthMethodRepo.SoftDelete(ctx, authID)
 	if err != nil {
 		return _errors.ReturnError(int32(500), "Lỗi xóa tài khoản admin")
 	}
@@ -309,7 +298,7 @@ func (u *AuthAdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequ
 	// }
 
 	// Lấy danh sách admin từ database
-	admins, total, err := u.AuthMethodRepo.FindAdminsByProvider(ctx, "ADMIN", int(req.Page), int(req.Size))
+	admins, total, err := u.AuthMethodRepo.FindAdminsByProvider(ctx, "ADMIN", int(req.Page), int(req.Size), &req.RoleID, req.Name)
 	if err != nil {
 		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách admin")
 	}
@@ -338,8 +327,8 @@ func (u *AuthAdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequ
 		adminItem := dto.AdminItem{
 			AuthID:    admin.ID,
 			ProfileID: admin.UserID,
-			Username:  admin.Username,
-			FullName:  admin.Name,
+			Username:  admin.AuthName,
+			FullName:  admin.FullName,
 			Email:     admin.Email,
 			Phone:     admin.Phone,
 			Avatar:    admin.Avatar,
@@ -368,7 +357,7 @@ func (u *AuthAdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequ
 }
 
 // GetAdminByID lấy thông tin admin theo ID
-func (u *AuthAdminUsecase) GetAdminByID(ctx context.Context, authID uint64) (*dto.AdminResponse, error) {
+func (u *AuthAdminUsecase) GetByID(ctx context.Context, authID uint64) (*domain.AuthMethod, error) {
 	// Tìm admin theo ID
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, authID)
 	if err != nil || authMethod == nil {
@@ -380,33 +369,7 @@ func (u *AuthAdminUsecase) GetAdminByID(ctx context.Context, authID uint64) (*dt
 		return nil, _errors.ReturnError(int32(400), "Tài khoản không phải admin")
 	}
 
-	// Lấy thông tin profile
-	var profile *dto.ProfileDTO
-	if authMethod.UserID > 0 {
-		profile, _ = u.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
-	}
-
-	response := &dto.AdminResponse{
-		AuthID:    authMethod.ID,
-		ProfileID: authMethod.UserID,
-		Username:  authMethod.Username,
-		FullName:  authMethod.Name,
-		Email:     authMethod.Email,
-		Phone:     authMethod.Phone,
-		Avatar:    authMethod.Avatar,
-		Role:      enums.RoleMap[enums.ERoleAdmin],
-	}
-
-	// Cập nhật thông tin từ profile nếu có
-	if profile != nil {
-		response.FullName = profile.FullName
-		response.Email = profile.Email
-		response.Phone = profile.Phone
-		response.Avatar = profile.Avatar
-		response.Role = enums.RoleMap[profile.RoleType]
-	}
-
-	return response, nil
+	return authMethod, nil
 }
 
 // ChangePassword thay đổi mật khẩu admin

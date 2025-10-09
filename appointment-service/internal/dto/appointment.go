@@ -5,7 +5,7 @@ import (
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/entity"
+	"appointment/internal/domain/entity"
 )
 
 type AppointmentDTO struct {

@@ -58,6 +58,7 @@ var GrpcCmd = &cobra.Command{
 		bdspropb.RegisterAdminPostServiceServer(s, app.AdminPostHandler)
 		bdspropb.RegisterAdminPropertyTypeServiceServer(s, app.AdminPropertyTypeHandler)
 		bdspropb.RegisterAdminProjectServiceServer(s, app.AdminProjectHandler)
+		bdspropb.RegisterAdminRegionServiceServer(s, app.AdminRegionHandler)
 		bdspropb.RegisterBdsproInternalServiceServer(s, app.InternalHandler)
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)

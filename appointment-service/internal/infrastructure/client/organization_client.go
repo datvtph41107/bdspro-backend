@@ -5,7 +5,7 @@ import (
 	"pb/clients"
 	organizationpb "pb/types/organization"
 
-	"github.com/tuandq2112/appointment-service/internal/env"
+	"appointment/internal/env"
 )
 
 type OrganizationClient interface {

@@ -126,3 +126,31 @@ func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *
 
 	return pbPermission
 }
+
+// MapAuthAdminWithRoleToPb convert domain.AuthAdminWithRole to proto
+func (m *RoleMapper) MapAuthAdminWithRoleToPb(admin *domain.AuthAdminWithRole) *authpb.AuthAdminWithRole {
+	if admin == nil {
+		return nil
+	}
+
+	pbAdmin := &authpb.AuthAdminWithRole{
+		Id:        admin.ID,
+		UserId:    admin.UserID,
+		Username:  admin.Username,
+		FullName:  admin.FullName,
+		Email:     admin.Email,
+		Phone:     admin.Phone,
+		Avatar:    admin.Avatar,
+		RoleKey:   admin.RoleKey,
+		Status:    admin.Status,
+		CreatedAt: _utils.FormatTimeToString(&admin.CreatedAt),
+		UpdatedAt: _utils.FormatTimeToString(&admin.UpdatedAt),
+	}
+
+	// Map role nếu có
+	if admin.Role != nil {
+		pbAdmin.Role = m.MapRoleToPb(admin.Role)
+	}
+
+	return pbAdmin
+}

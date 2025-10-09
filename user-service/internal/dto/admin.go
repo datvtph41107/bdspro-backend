@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// ListAllUsersRequest DTO cho request lấy danh sách tất cả user
-type ListAllUsersRequest struct {
+// ListUsersRequest DTO cho request lấy danh sách tất cả user
+type ListUsersRequest struct {
 	_dto.Pagable
 	Search    string     `json:"search" form:"search"`
 	SortBy    string     `json:"sortBy" form:"sortBy"`
@@ -88,4 +88,6 @@ type AssignRoleRequest struct {
 
 type AdminListRequest struct {
 	_dto.Pagable
+	RoleID uint64 `json:"roleId" form:"roleId"`
+	Name   string `json:"name" form:"name"`
 }

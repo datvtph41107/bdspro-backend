@@ -7,8 +7,8 @@ import (
 	sharepb "pb/types/shared"
 	"time"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/entity"
-	"github.com/tuandq2112/appointment-service/internal/dto"
+	"appointment/internal/domain/entity"
+	"appointment/internal/dto"
 )
 
 type AppointmentTransformer interface {
@@ -16,6 +16,7 @@ type AppointmentTransformer interface {
 	UpdateAppointmentRequestToEntity(req *appointmentpb.UpdateAppointmentRequest) *entity.Appointment
 	EntityToAppointmentResponse(appointment *entity.Appointment, deal *organizationpb.GroupDeal, products []*bdspropb.ProductAttachment, participants []*sharepb.ProfileItem) *appointmentpb.Appointment
 	EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.ListAppointmentsResponse
+	EntityToAdminListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.AdminListAppointmentsResponse
 }
 
 type appointmentTransformer struct{}
@@ -95,6 +96,17 @@ func (t *appointmentTransformer) EntityToListAppointmentsResponse(appointments [
 		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants)
 	}
 	return &appointmentpb.ListAppointmentsResponse{
+		Data:  appointmentsResponse,
+		Total: total,
+	}
+}
+
+func (t *appointmentTransformer) EntityToAdminListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *appointmentpb.AdminListAppointmentsResponse {
+	appointmentsResponse := make([]*appointmentpb.Appointment, len(appointments))
+	for i, appointment := range appointments {
+		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants)
+	}
+	return &appointmentpb.AdminListAppointmentsResponse{
 		Data:  appointmentsResponse,
 		Total: total,
 	}

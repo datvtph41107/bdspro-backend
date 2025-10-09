@@ -19,6 +19,7 @@ func AutoMigrate() {
 		// &models.Report{},
 		&models.UserProfileEntity{},
 		&models.BookmarkUserEntity{},
+		&models.AdminProfile{},
 	// &models.ReportReason{},
 	// &models.ReportProof{},
 	// &models.Rate{},

@@ -152,7 +152,7 @@ type AuthMethodDomain struct {
 
 // TableName đặt tên bảng tương đương với Java
 func (AuthMethodDomain) TableName() string {
-    return "user_auth"
+    return "auth_method"
 }
 ```
 

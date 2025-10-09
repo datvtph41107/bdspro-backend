@@ -862,3 +862,40 @@ func (h *DealHandler) UpdateDealMemberRole(ctx context.Context, req *organizatio
 		Message: "Update deal member role successfully",
 	}, nil
 }
+
+
+// @Summary Lấy toàn bộ danh sách thương vụ (Admin)
+// @Description Lấy toàn bộ danh sách thương vụ trong hệ thống (dành cho admin)
+// @Tags Admin - Thương vụ
+// @Accept json
+// @Produce json
+// @Param page query int true "Trang hiện tại"
+// @Param size query int true "Số lượng items mỗi trang"
+// @Param keyword query string false "Từ khóa tìm kiếm"
+// @Param status query int false "Trạng thái deal"
+// @Param dealType query int false "Loại deal"
+// @Param organizationId query int false "ID tổ chức"
+// @Param groupId query int false "ID nhóm"
+// @Param ownerId query int false "ID chủ sở hữu"
+// @Param ownerType query int false "Loại chủ sở hữu"
+// @Param startDate query string false "Ngày bắt đầu"
+// @Param endDate query string false "Ngày kết thúc"
+// @Param minAmount query float64 false "Số tiền tối thiểu"
+// @Param maxAmount query float64 false "Số tiền tối đa"
+// @Security BearerAuth
+// @Success 200 {object} organizationpb.AdminDealSearchResponse "Thành công"
+// @Router /v2/org/admin/deal/list [get]
+func (h *DealHandler) GetAllDeals(ctx context.Context, req *organizationpb.AdminDealSearchRequest) (*organizationpb.AdminDealSearchResponse, error) {
+	// Convert request to DTO
+	searchDTO := h.DealTransformer.AdminDealSearchRequestToDTO(req)
+
+	// Call usecase
+	deals, total, err := h.DealUsecase.GetAllDeals(ctx, searchDTO)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map to response
+	return h.DealTransformer.EntityToAdminDealSearchResponse(deals, total), nil
+}
+

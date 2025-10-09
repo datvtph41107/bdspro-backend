@@ -17,3 +17,17 @@ type AccountItemDTO struct {
 	Avatar   string `json:"avatar"`
 	Phone    string `json:"phone"`
 }
+
+// Warning/Alert DTOs
+type SendWarningRequest struct {
+	UserID      uint64 `json:"userId" binding:"required"`
+	WarningType int32  `json:"warningType" binding:"required"` // 0: vi phạm, 1: nhắc nhở, 2: hướng dẫn
+	Content     string `json:"content" binding:"required"`
+	Title       string `json:"title,omitempty"`
+}
+
+type SendWarningResponse struct {
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	NotificationID uint64 `json:"notificationId,omitempty"`
+}

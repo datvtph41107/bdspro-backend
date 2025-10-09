@@ -15,14 +15,20 @@ import (
 type RoleUsecase struct {
 	crud.BaseUsecase[domain.Role, repo.RoleRepository]
 	OrganizationProvider provider.OrganizationProvider
+	ModuleService        *ModuleService
 }
 
-func NewRoleUsecase(roleRepo repo.RoleRepository, organizationProvider provider.OrganizationProvider) *RoleUsecase {
+func NewRoleUsecase(
+	roleRepo repo.RoleRepository,
+	organizationProvider provider.OrganizationProvider,
+	moduleService *ModuleService,
+) *RoleUsecase {
 	return &RoleUsecase{
 		BaseUsecase: crud.BaseUsecase[domain.Role, repo.RoleRepository]{
 			Repo: roleRepo,
 		},
 		OrganizationProvider: organizationProvider,
+		ModuleService:        moduleService,
 	}
 }
 
@@ -272,4 +278,20 @@ func (uc *RoleUsecase) convertRoleToDTO(role *domain.Role) dto.RoleDTO {
 	// Role domain không có RoleGroupName field
 
 	return roleDTO
+}
+
+func (uc *RoleUsecase) GetListByModuleCode(ctx context.Context, code string) ([]domain.Role, error) {
+	module, err := uc.ModuleService.GetModuleByCode(code)
+	if err != nil {
+		return nil, err
+	}
+	if module == nil {
+		return nil, _errors.ReturnError(404, "Module không đúng")
+	}
+
+	entities, err := uc.Repo.GetRoleByGroupId(ctx, module.ID)
+	if err != nil {
+		return nil, err
+	}
+	return entities, nil
 }

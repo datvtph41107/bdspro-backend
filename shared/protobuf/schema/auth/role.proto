@@ -82,6 +82,7 @@ message RoleSearchRequest {
   uint32 domainType = 4;
   string name = 5;
   optional bool isDefault = 6;
+  optional uint64 roleGroupId = 7;
 }
 
 // Role Service
@@ -126,6 +127,11 @@ service RoleService {
   rpc GetRolesByGroupKey(GetRolesByGroupKeyRequest) returns (RoleListResponse) {
     option (google.api.http) = {
       get: "/v2/auth/role/by-group/{groupKey}"
+    };
+  };
+  rpc GetRolesByModuleCode(GetRolesByGroupKeyRequest) returns (RoleListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role/by-module/{code}"
     };
   };
   rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse) {
@@ -189,6 +195,7 @@ message PermissionKeysResponse {
 // Get roles by group key request
 message GetRolesByGroupKeyRequest {
   uint32 groupKey = 1;
+  string code = 2;
 }
 
 // Assign role to user messages

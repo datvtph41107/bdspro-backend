@@ -67,6 +67,11 @@ const (
 	HistoryPackageCreate    EHistory = 9110
 	HistoryPackageUpdate    EHistory = 9120
 	HistoryPackageDelete    EHistory = 9130
+
+	// -- action for admin --
+	HistoryAdminCreate EHistory = 10010
+	HistoryAdminUpdate EHistory = 10020
+	HistoryAdminDelete EHistory = 10030
 )
 
 var HistoryMap = map[EHistory]string{
@@ -130,6 +135,11 @@ var HistoryMap = map[EHistory]string{
 	HistoryPackageCreate:    "Tạo gói quảng cáo",
 	HistoryPackageUpdate:    "Cập nhật gói quảng cáo",
 	HistoryPackageDelete:    "Xóa gói quảng cáo",
+
+	// -- action for admin --
+	HistoryAdminCreate: "Tạo admin",
+	HistoryAdminUpdate: "Cập nhật admin",
+	HistoryAdminDelete: "Xóa admin",
 }
 
 var HistoryContactAction = []EHistory{

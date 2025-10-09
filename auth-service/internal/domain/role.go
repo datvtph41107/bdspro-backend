@@ -1,7 +1,7 @@
 package domain
 
 import (
-	_models "common/models"
+	_models "common/domain/entity"
 )
 
 type Role struct {

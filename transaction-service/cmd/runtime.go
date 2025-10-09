@@ -48,6 +48,7 @@ var GrpcCmd = &cobra.Command{
 		transactionpb.RegisterDealContractServiceServer(s, app.ContractDealHandler)
 		transactionpb.RegisterDealCostServiceServer(s, app.DealCostHandler)
 		transactionpb.RegisterCostTypeServiceServer(s, app.CostTypeHandler)
+		transactionpb.RegisterAdminTransactionServiceServer(s, app.AdminTransactionHandler)
 
 		log.Printf("Listen: %v", port)
 

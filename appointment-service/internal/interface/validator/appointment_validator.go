@@ -4,7 +4,8 @@ import (
 	appointmentpb "pb/types/appointment"
 	"time"
 
-	"github.com/tuandq2112/appointment-service/internal/custom_error"
+	"appointment/internal/custom_error"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,6 +18,7 @@ type AppointmentValidator interface {
 	ValidateGetAppointmentRequest(req *appointmentpb.GetAppointmentRequest) error
 	ValidateDeleteAppointmentRequest(req *appointmentpb.DeleteAppointmentRequest) error
 	ValidateListAppointmentsRequest(req *appointmentpb.ListAppointmentsRequest) error
+	ValidateAdminListAppointmentsRequest(req *appointmentpb.AdminListAppointmentsRequest) error
 }
 
 type appointmentValidator struct{}
@@ -201,6 +203,20 @@ func (v *appointmentValidator) ValidateDeleteAppointmentRequest(req *appointment
 }
 
 func (v *appointmentValidator) ValidateListAppointmentsRequest(req *appointmentpb.ListAppointmentsRequest) error {
+	details := []protoadapt.MessageV1{}
+
+	if req == nil {
+		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if len(details) > 0 {
+		return custom_error.InvalidRequest(details...)
+	}
+
+	return nil
+}
+
+func (v *appointmentValidator) ValidateAdminListAppointmentsRequest(req *appointmentpb.AdminListAppointmentsRequest) error {
 	details := []protoadapt.MessageV1{}
 
 	if req == nil {

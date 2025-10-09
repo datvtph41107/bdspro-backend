@@ -2,11 +2,11 @@ module auth
 
 go 1.24.1
 
+replace code => ../shared/code
+
 replace common => ../shared/common
 
 replace pb => ../shared/protobuf
-
-replace base => ../shared/base
 
 require (
 	common v0.0.0-00010101000000-000000000000
@@ -16,7 +16,6 @@ require (
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.20.1
-	golang.org/x/crypto v0.41.0
 	google.golang.org/grpc v1.72.0
 	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
@@ -76,6 +75,7 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.15.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect

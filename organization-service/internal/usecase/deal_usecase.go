@@ -46,6 +46,9 @@ type DealUsecase interface {
 	// Thống kê tổng quan thương vụ
 	GetOrganizationDealOverview(ctx context.Context, organizationID uint64) (*dto.DealOverview, error)
 	GetGroupDealOverview(ctx context.Context, groupID uint64) (*dto.DealOverview, error)
+
+	// Admin API
+	GetAllDeals(ctx context.Context, searchRequest *dto.AdminDealSearchRequest) ([]*entity.Deal, int64, error)
 }
 
 type dealUsecase struct {
@@ -1141,4 +1144,20 @@ func (u *dealUsecase) UpdateDealMemberRole(ctx context.Context, req *dto.UpdateD
 		return nil, err
 	}
 	return &dto.UpdateDealMemberRoleResponse{Success: true, Message: "Update deal member role successfully"}, nil
+}
+
+// GetAllDeals lấy toàn bộ danh sách deal trong hệ thống (dành cho admin)
+func (u *dealUsecase) GetAllDeals(ctx context.Context, searchRequest *dto.AdminDealSearchRequest) ([]*entity.Deal, int64, error) {
+	// Validation
+	if searchRequest.Page < 0 {
+		searchRequest.Page = 0
+	}
+	if searchRequest.Size <= 0 {
+		searchRequest.Size = 20
+	}
+	if searchRequest.Size > 100 {
+		searchRequest.Size = 100
+	}
+
+	return u.dealRepository.GetAllDeals(ctx, searchRequest)
 }

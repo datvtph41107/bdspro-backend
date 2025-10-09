@@ -29,4 +29,7 @@ type DealRepository interface {
 	// Thống kê thương vụ
 	GetDealOverviewByOrganization(ctx context.Context, organizationID uint64) (*dto.DealOverview, error)
 	GetDealOverviewByGroup(ctx context.Context, groupID uint64) (*dto.DealOverview, error)
+
+	// Admin API
+	GetAllDeals(ctx context.Context, searchRequest *dto.AdminDealSearchRequest) ([]*entity.Deal, int64, error)
 }

@@ -47,6 +47,12 @@ service AppointmentService {
         get: "/v2/appointment"
     };
   }
+
+  rpc AdminListAppointments(AdminListAppointmentsRequest) returns (AdminListAppointmentsResponse) {
+    option (google.api.http) = {
+        get: "/v2/appointment/admin/list"
+    };
+  }
 }
 
 message Appointment {
@@ -125,6 +131,21 @@ message ListAppointmentsRequest {
 }
 
 message ListAppointmentsResponse {
+  repeated Appointment data = 1;
+  int32 total = 2;
+}
+
+message AdminListAppointmentsRequest {
+  optional string title = 1;
+  optional uint32 status = 2;
+  optional string startTime = 3;
+  optional string endTime = 4;
+  optional uint32 createdBy = 5;
+  optional int32 page = 6;
+  optional int32 size = 7;
+}
+
+message AdminListAppointmentsResponse {
   repeated Appointment data = 1;
   int32 total = 2;
 } 

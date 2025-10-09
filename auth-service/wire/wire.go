@@ -1,9 +1,12 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
+	_db "common/db"
+	"auth/initial"
 	auth_infra_client "auth/infra/client"
 	auth_infra_cookie "auth/infra/cookie"
 	auth_infra_handler "auth/infra/handler"
@@ -12,18 +15,14 @@ import (
 	auth_infra_postgre "auth/infra/postgre"
 	auth_infra_properties "auth/infra/properties"
 	auth_infra_redis "auth/infra/redis"
-	"auth/initial"
 	auth_initial "auth/initial"
 	auth_internal_domain "auth/internal/domain"
-	auth_internal_interface_userinterface "auth/internal/interface"
+	auth_internal_interface "auth/internal/interface"
 	auth_internal_interface_factory "auth/internal/interface/factory"
 	auth_internal_interface_provider "auth/internal/interface/provider"
 	auth_internal_interface_repo "auth/internal/interface/repo"
 	auth_internal_usecase "auth/internal/usecase"
 	auth_validator "auth/validator"
-	_db "common/db"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -34,10 +33,9 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(auth_internal_interface_provider.OrganizationProvider), new(*auth_infra_client.OrganizationClient)),
 	wire.Bind(new(auth_internal_interface_provider.PaymentProvider), new(*auth_infra_client.PaymentClient)),
 	wire.Bind(new(auth_internal_interface_provider.ProfileProvider), new(*auth_infra_client.UserClient)),
-	wire.Bind(new(auth_internal_interface_userinterface.IUserGrpcClient), new(*auth_infra_client.UserGrpcClient)),
+	wire.Bind(new(auth_internal_interface.IUserGrpcClient), new(*auth_infra_client.UserGrpcClient)),
 	wire.Bind(new(auth_internal_interface_provider.CookieProvider), new(*auth_infra_cookie.BroswerCookieProvider)),
 	wire.Bind(new(auth_internal_interface_repo.AdminAccessRepository), new(*auth_infra_postgre.AdminAccessPostgresRepo)),
-	wire.Bind(new(auth_internal_interface_repo.AuthMethodRepository), new(*auth_infra_postgre.AuthMethodPostgres)),
 	wire.Bind(new(auth_internal_interface_repo.OTPRepository), new(*auth_infra_postgre.OTPPostgres)),
 	wire.Bind(new(auth_internal_interface_repo.SessionRepository), new(*auth_infra_postgre.SessionPostgres)),
 	wire.Bind(new(auth_internal_interface_repo.StatusRepository), new(*auth_infra_postgre.StatusPostgres)),
@@ -48,6 +46,7 @@ var wireSet = wire.NewSet(
 	auth_internal_usecase.NewAdminUsecase,
 	auth_initial.NewApp,
 	auth_infra_handler.NewAuthHandler,
+	auth_infra_mapper.NewAuthMethodMapper,
 	auth_infra_postgre.NewAuthRepository,
 	auth_internal_usecase.NewAuthService,
 	auth_infra_cookie.NewCookieProvider,
@@ -56,6 +55,9 @@ var wireSet = wire.NewSet(
 	auth_infra_client.NewGrpcClient,
 	auth_infra_client.NewHttpClient,
 	auth_infra_handler.NewInternalHandler,
+	auth_infra_postgre.NewModuleRepo,
+	auth_internal_usecase.NewModuleService,
+	auth_internal_usecase.NewModuleUsecase,
 	auth_infra_client.NewNotificationClient,
 	auth_infra_handler.NewOAuthRouter,
 	auth_infra_postgre.NewOTPRepository,
@@ -81,10 +83,13 @@ var wireSet = wire.NewSet(
 	auth_infra_postgre.NewStatusRepository,
 	auth_infra_client.NewUserClient,
 	auth_infra_client.NewUserGrpcClient,
+	auth_infra_handler.NewUserInfoHandler,
+	auth_infra_mapper.NewUserInfoMapper,
+	auth_infra_postgre.NewUserInfoRepository,
+	auth_internal_usecase.NewUserInfoUsecase,
 	auth_internal_domain.NewUserOTPRepository,
 	auth_infra_oauth.NewZaloAuthService,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

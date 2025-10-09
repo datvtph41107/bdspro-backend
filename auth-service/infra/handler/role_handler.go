@@ -54,6 +54,8 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (
 		DomainType:      req.DomainType,
 		ColorID:         req.ColorId,
 		RoleGroupID:     req.RoleGroupId,
+		RoleKey:         req.RoleKey,
+		AllowAssign:     req.AllowAssign,
 		// OrganizationID: 0,
 	}
 
@@ -225,10 +227,11 @@ func (h *RoleHandler) GetListRole(ctx context.Context, req *authpb.RoleSearchReq
 			Page: req.Page,
 			Size: req.Size,
 		},
-		Scope:      req.Scope,
-		DomainType: req.DomainType,
-		Name:       req.Name,
-		IsDefault:  req.IsDefault,
+		Scope:       req.Scope,
+		DomainType:  req.DomainType,
+		Name:        req.Name,
+		IsDefault:   req.IsDefault,
+		RoleGroupID: req.RoleGroupId,
 	}
 	roles, total, err := h.roleUsecase.GetList(ctx, roleSearchRequest)
 	if err != nil {
@@ -269,6 +272,29 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 	return &authpb.RoleListResponse{
 		Data:          pbRoles,
 		TotalElements: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy danh sách role theo module code
+// @Description Lấy danh sách role theo module code
+// @Tags Role
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param code path string true "Module code"
+// @Success 200 {object} authpb.RoleListResponse
+// @Router /role/by-module/{code} [get]
+func (h *RoleHandler) GetRolesByModuleCode(ctx context.Context, req *authpb.GetRolesByGroupKeyRequest) (*authpb.RoleListResponse, error) {
+	roles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	pbRoles := h.roleMapper.MapRoleListToItemPb(roles)
+
+	return &authpb.RoleListResponse{
+		Data:          pbRoles,
+		TotalElements: uint32(len(roles)),
 	}, nil
 }
 

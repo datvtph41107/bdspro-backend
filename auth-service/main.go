@@ -2,7 +2,6 @@ package main
 
 import (
 	grpc "auth/cmd"
-	"auth/internal/utils"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,8 +33,6 @@ func main() {
 		log.Println("run go-routine")
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
-	passwordHash, _ := utils.HashPassword("admin123")
-	fmt.Printf("password_hash: %v\n", passwordHash)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -18,6 +18,7 @@ func RegisterTransactionService(ctx context.Context, mux *runtime.ServeMux, env 
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = pb_transaction.RegisterTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = pb_transaction.RegisterAdminTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_transaction.RegisterDealContractServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_transaction.RegisterDealCostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_transaction.RegisterCostTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

@@ -4,43 +4,43 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"strings"
 	"user/infra/client"
 	"user/internal/dto"
+	"user/internal/interface/repo"
 	models "user/internal/models"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IAdminRepo
 type AdminPostgres struct {
 	DB         *gorm.DB
 	AuthClient *client.AuthClient
 }
 
-func NewAdminPostgres(db *gorm.DB, authClient *client.AuthClient) *AdminPostgres {
+func NewAdminPostgres(db *gorm.DB, authClient *client.AuthClient) repo.IAdminRepo {
 	return &AdminPostgres{
 		DB:         db,
 		AuthClient: authClient,
 	}
 }
 
-func (r *AdminPostgres) ListAllUsers(ctx context.Context, req *dto.ListAllUsersRequest) ([]dto.AdminUserItem, int64, error) {
-	var users []dto.AdminUserItem
+func (r *AdminPostgres) ListAdmin(ctx context.Context, req *dto.AdminListRequest) ([]models.AdminProfile, int64, error) {
+	var admins []models.AdminProfile
 	var total int64
 
 	// Lấy adminID từ context nếu có
 	adminID := _utils.GetProfileIdWithContext(ctx)
 
 	// Kiểm tra xem có cần JOIN bookmark table không
-	needBookmarkInfo := req.Bookmark != nil && *req.Bookmark
+	needBookmarkInfo := false
 
 	// Base select fields
 	selectFields := `
-		up.profile_id,
+		up.id,
 		up.full_name,
 		up.email,
 		up.phone,
+		up.auth_id,
 		up.avatar,
 		up.address,
 		up.gender,
@@ -48,11 +48,17 @@ func (r *AdminPostgres) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 		up.created_at,
 		up.updated_at,
 		COALESCE(up.status, 10) as status,
+		up.verified_at,
+		up.locked_at,
+		up.last_login_at,
+		up.total_login,
+		up.job_title,
+		up.role_id,
+		up.role_key,
 		up.role_type,
-		up.role_real_estate,
-		up.position,
-		up.department_id,
-		up.tick_verified,
+		up.attachments,
+		up.internal_notes,
+		up.send_notification,
 		NULL as last_login_at,
 		0 as total_login`
 
@@ -66,40 +72,36 @@ func (r *AdminPostgres) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 	}
 
 	// Tạo query
-	query := r.DB.Debug().WithContext(ctx).Table("user_profile up").Select(selectFields)
+	query := r.DB.Debug().WithContext(ctx).Table("admin_profiles up").Select(selectFields)
 
 	// JOIN bookmark table nếu cần
 	if needBookmarkInfo {
 		query = query.Joins("LEFT JOIN bookmark_user bu ON up.profile_id = bu.user_id AND bu.admin_id = ?", adminID)
 	}
 
-	// Apply search filter
-	if req.Search != "" {
-		searchTerm := "%" + strings.ToLower(req.Search) + "%"
-		query = query.Where(`
-			LOWER(up.full_name) LIKE ? OR 
-			LOWER(up.email) LIKE ? OR 
-			up.phone LIKE ?
-		`, searchTerm, searchTerm, searchTerm)
+	// Apply name filter
+	if req.Name != "" {
+		like := "%" + req.Name + "%"
+		query = query.Where("up.full_name ILIKE ?", like)
 	}
 
-	// Apply status filter
-	if req.Status != nil {
-		query = query.Where("COALESCE(up.status, 1) = ?", *req.Status)
+	// // Apply status filter
+	// if req.Status != nil {
+	// 	query = query.Where("COALESCE(up.status, 1) = ?", *req.Status)
+	// }
+
+	// Apply roleId filter
+	if req.RoleID > 0 {
+		query = query.Where("up.role_id = ?", req.RoleID)
 	}
 
-	// Apply role type filter
-	if req.RoleType != "" {
-		query = query.Where("up.role_type = ?", req.RoleType)
-	}
-
-	// Apply date range filter
-	if req.StartDate != nil {
-		query = query.Where("up.created_at >= ?", req.StartDate)
-	}
-	if req.EndDate != nil {
-		query = query.Where("up.created_at <= ?", req.EndDate)
-	}
+	// // Apply date range filter
+	// if req.StartDate != nil {
+	// 	query = query.Where("up.created_at >= ?", req.StartDate)
+	// }
+	// if req.EndDate != nil {
+	// 	query = query.Where("up.created_at <= ?", req.EndDate)
+	// }
 
 	// Get total count
 	err := query.Count(&total).Error
@@ -108,26 +110,26 @@ func (r *AdminPostgres) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 	}
 
 	// Apply sorting
-	if req.SortBy != "" {
-		sortOrder := "ASC"
-		if strings.ToUpper(req.SortOrder) == "DESC" {
-			sortOrder = "DESC"
-		}
+	if false {
+		// sortOrder := "ASC"
+		// if strings.ToUpper(req.SortOrder) == "DESC" {
+		// 	sortOrder = "DESC"
+		// }
 
-		// Map sortBy to actual column names
-		sortColumn := req.SortBy
-		switch req.SortBy {
-		case "fullName":
-			sortColumn = "up.full_name"
-		case "createdAt":
-			sortColumn = "up.created_at"
-		case "updatedAt":
-			sortColumn = "up.updated_at"
-		default:
-			sortColumn = "up." + sortColumn
-		}
+		// // Map sortBy to actual column names
+		// sortColumn := req.SortBy
+		// switch req.SortBy {
+		// case "fullName":
+		// 	sortColumn = "up.full_name"
+		// case "createdAt":
+		// 	sortColumn = "up.created_at"
+		// case "updatedAt":
+		// 	sortColumn = "up.updated_at"
+		// default:
+		// 	sortColumn = "up." + sortColumn
+		// }
 
-		query = query.Order(fmt.Sprintf("%s %s", sortColumn, sortOrder))
+		// query = query.Order(fmt.Sprintf("%s %s", sortColumn, sortOrder))
 	} else {
 		// Default sorting by created_at DESC
 		query = query.Order("up.created_at DESC")
@@ -137,50 +139,54 @@ func (r *AdminPostgres) ListAllUsers(ctx context.Context, req *dto.ListAllUsersR
 	err = query.
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
-		Find(&users).Error
+		Find(&admins).Error
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Lấy thông tin từ auth-service cho các user
-	if len(users) > 0 && r.AuthClient != nil {
-		profileIDs := make([]uint64, len(users))
-		for i, user := range users {
-			profileIDs[i] = user.ProfileID
+	// Lấy thông tin username từ auth-service cho các admin
+	if len(admins) > 0 && r.AuthClient != nil {
+		// Lấy danh sách auth_id để gọi auth service
+		authIDs := make([]uint64, 0, len(admins))
+		for _, admin := range admins {
+			if admin.AuthID > 0 {
+				authIDs = append(authIDs, admin.AuthID)
+			}
 		}
 
-		// Gọi auth client để lấy thông tin status
-		statusMap, err := r.AuthClient.GetUserStatusBatch(ctx, profileIDs)
-		if err == nil {
-			// Cập nhật thông tin verifiedAt và lockedAt từ auth-service
-			for i := range users {
-				if statusInfo, exists := statusMap[users[i].ProfileID]; exists {
-					if statusInfo.VerifiedAt != nil {
-						// Parse string time to time.Time nếu cần
-						// users[i].VerifiedAt = parseTime(*statusInfo.VerifiedAt)
-					}
-					if statusInfo.LockedUntil != nil {
-						// Parse string time to time.Time nếu cần
-						// users[i].LockedAt = parseTime(*statusInfo.LockedUntil)
+		// Gọi auth client để lấy thông tin batch
+		if len(authIDs) > 0 {
+			authAdminsResp, err := r.AuthClient.GetAuthAdminByIds(ctx, authIDs)
+			if err == nil && authAdminsResp != nil {
+				// Tạo map để lookup nhanh
+				authAdminMap := make(map[uint64]string)
+				for _, authAdmin := range authAdminsResp {
+					authAdminMap[authAdmin.ProfileID] = authAdmin.Username
+				}
+
+				// Cập nhật username cho từng admin
+				for i := range admins {
+					if username, ok := authAdminMap[admins[i].ID]; ok {
+						admins[i].Username = username
 					}
 				}
 			}
 		}
 	}
 
-	return users, total, nil
+	return admins, total, nil
 }
 
 // GetUserByProfileID lấy thông tin user theo profile ID
-func (r *AdminPostgres) GetUserByProfileID(profileID uint64) (*models.UserProfileEntity, error) {
+func (r *AdminPostgres) GetByID(ctx context.Context, profileID uint64) (*models.AdminProfile, error) {
 
 	// Kiểm tra xem có dữ liệu trong bảng không
 	var count int64
-	r.DB.Model(&models.UserProfileEntity{}).Count(&count)
+	r.DB.Model(&models.AdminProfile{}).Count(&count)
 
 	// Kiểm tra xem có user nào với profile_id này không (kể cả đã bị soft delete)
-	var user models.UserProfileEntity
+	var user models.AdminProfile
 	err := r.DB.Unscoped().Where("profile_id = ?", profileID).First(&user).Error
 	if err != nil {
 		return nil, err
@@ -192,7 +198,7 @@ func (r *AdminPostgres) GetUserByProfileID(profileID uint64) (*models.UserProfil
 func (r *AdminPostgres) UpdateUserStatus(profileID uint64, status uint8) error {
 	// Status: 0 = blocked, 1 = active, 2 = approved
 
-	err := r.DB.Model(&models.UserProfileEntity{}).
+	err := r.DB.Model(&models.AdminProfile{}).
 		Where("profile_id = ?", profileID).
 		Update("status", status).Error
 
@@ -204,34 +210,44 @@ func (r *AdminPostgres) UpdateUserStatus(profileID uint64, status uint8) error {
 }
 
 // CreateAdmin tạo admin profile mới
-func (r *AdminPostgres) CreateAdmin(ctx context.Context, admin *models.AdminProfile) (uint64, error) {
+func (r *AdminPostgres) CreateAdmin(ctx context.Context, admin *models.AdminProfile) (*models.AdminProfile, error) {
 	err := r.DB.WithContext(ctx).Create(admin).Error
 	if err != nil {
-		return 0, fmt.Errorf("failed to create admin profile: %v", err)
+		return nil, fmt.Errorf("failed to create admin profile: %v", err)
 	}
 
-	return admin.AuthID, nil
+	return admin, nil
 }
 
 // UpdateAdmin cập nhật thông tin admin
-func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *dto.UpdateAdminRequest) error {
+func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *models.AdminProfile) (*models.AdminProfile, error) {
 	updates := map[string]interface{}{
-		"full_name": req.FullName,
-		"email":     req.Email,
-		"phone":     req.Phone,
-		"avatar":    req.Avatar,
+		"full_name":         req.FullName,
+		"email":             req.Email,
+		"phone":             req.Phone,
+		"avatar":            req.Avatar,
+		"address":           req.Address,
+		"gender":            req.Gender,
+		"birth":             req.Birth,
+		"job_title":         req.JobTitle,
+		"work_at":           req.WorkAt,
+		"role_id":           req.RoleID,
+		"role_key":          req.RoleKey,
+		"attachments":       req.Attachments,
+		"internal_notes":    req.InternalNotes,
+		"send_notification": req.SendNotification,
 	}
 
 	err := r.DB.WithContext(ctx).
 		Model(&models.AdminProfile{}).
-		Where("auth_id = ?", req.AuthID).
+		Where("id = ?", req.ID).
 		Updates(updates).Error
 
 	if err != nil {
-		return fmt.Errorf("failed to update admin: %v", err)
+		return nil, fmt.Errorf("failed to update admin: %v", err)
 	}
 
-	return nil
+	return req, nil
 }
 
 // DeleteAdmin xóa admin profile (soft delete)
@@ -259,4 +275,13 @@ func (r *AdminPostgres) AssignRole(ctx context.Context, authID uint64, roleKey s
 	}
 
 	return nil
+}
+
+func (r *AdminPostgres) GetDetail(ctx context.Context, req uint64) (*models.AdminProfile, error) {
+	var admin models.AdminProfile
+	err := r.DB.WithContext(ctx).Where("id = ?", req).First(&admin).Error
+	if err != nil {
+		return nil, err
+	}
+	return &admin, nil
 }

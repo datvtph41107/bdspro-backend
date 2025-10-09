@@ -4,9 +4,10 @@ import (
 	"context"
 	appointmentpb "pb/types/appointment"
 
-	"github.com/tuandq2112/appointment-service/internal/interface/transformer"
-	"github.com/tuandq2112/appointment-service/internal/interface/validator"
-	"github.com/tuandq2112/appointment-service/internal/usecase"
+	"appointment/internal/interface/transformer"
+	"appointment/internal/interface/validator"
+	"appointment/internal/usecase"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -154,4 +155,53 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *appointm
 	}
 
 	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
+}
+
+// @Summary [Admin] Lấy danh sách tất cả lịch hẹn trong hệ thống
+// @Description Lấy danh sách tất cả lịch hẹn trong hệ thống cho admin
+// @Tags Admin - Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param title query string false "Tìm kiếm theo tiêu đề"
+// @Param status query uint32 false "Lọc theo trạng thái"
+// @Param startTime query string false "Lọc theo thời gian bắt đầu"
+// @Param endTime query string false "Lọc theo thời gian kết thúc"
+// @Param createdBy query uint32 false "Lọc theo người tạo"
+// @Param page query int32 false "Trang"
+// @Param size query int32 false "Kích thước trang"
+// @Security BearerAuth
+// @Success 200 {object} appointmentpb.AdminListAppointmentsResponse "Thành công"
+// @Router /v2/admin/appointment [get]
+func (h *AppointmentHandler) AdminListAppointments(ctx context.Context, req *appointmentpb.AdminListAppointmentsRequest) (*appointmentpb.AdminListAppointmentsResponse, error) {
+	if err := h.Validator.ValidateAdminListAppointmentsRequest(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	page := 0
+	size := 20
+	if req.Page != nil {
+		page = int(*req.Page)
+	}
+	if req.Size != nil {
+		size = int(*req.Size)
+	}
+
+	// Build filter từ request
+	filter := make(map[string]any)
+	if req.Title != nil && *req.Title != "" {
+		filter["title"] = *req.Title
+	}
+	if req.Status != nil {
+		filter["status"] = *req.Status
+	}
+	if req.CreatedBy != nil {
+		filter["created_by"] = *req.CreatedBy
+	}
+
+	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, page, size)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.Transformer.EntityToAdminListAppointmentsResponse(appointments, int32(total)), nil
 }

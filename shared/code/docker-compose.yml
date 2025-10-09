@@ -34,22 +34,12 @@ services:
           memory: 128M
     networks:
       - internal
-
-
+  
   bdspro:
     build:
       context: ./bdspro-service
       dockerfile: Dockerfile
     container_name: bdspro
-    command: ["./main", "http"]
-    networks:
-      - internal
-  
-  bdspro-grpc:
-    build:
-      context: ./bdspro-service
-      dockerfile: Dockerfile
-    container_name: bdspro_grpc
     command: ["./main", "grpc"]
     networks:
       - internal
@@ -246,17 +236,17 @@ services:
   #   ports:
   #     - "8761:8761"
 
-  # redis:
-  #   image: redis:latest
-  #   container_name: redis
-  #   restart: always
-  #   command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
-  #   networks:
-  #     - internal
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
+    networks:
+      - internal
 
 networks:
   internal:

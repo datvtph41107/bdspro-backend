@@ -17,6 +17,9 @@ const (
 	// advertising/marketing
 	TargetHistoryCampaign ETargetHistory = 80
 	TargetHistoryPackage  ETargetHistory = 90
+
+	// admin
+	TargetHistoryAdmin ETargetHistory = 100
 )
 
 var TargetNotificationMap = map[ETargetHistory]string{
@@ -29,6 +32,7 @@ var TargetNotificationMap = map[ETargetHistory]string{
 	TargetHistoryAsset:    "Tài sản",
 	TargetHistoryCampaign: "Chiến dịch quảng cáo",
 	TargetHistoryPackage:  "Gói quảng cáo",
+	TargetHistoryAdmin:    "Admin",
 }
 
 func (e ETargetHistory) IsValid() bool {
@@ -41,7 +45,8 @@ func (e ETargetHistory) IsValid() bool {
 		TargetHistoryProduct,
 		TargetHistoryAsset,
 		TargetHistoryCampaign,
-		TargetHistoryPackage:
+		TargetHistoryPackage,
+		TargetHistoryAdmin:
 		return true
 	default:
 		return false

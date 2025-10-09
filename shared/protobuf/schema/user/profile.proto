@@ -3,6 +3,7 @@ syntax = "proto3";
 package userpb;
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "auth/role.proto";
 
 option go_package = "pb/types/user;userpb";
 
@@ -63,6 +64,14 @@ service ProfileService {
     rpc ApproveUser(ApproveUserRequest) returns (sharepb.Empty) {
         option (google.api.http) = {
             post: "/v2/user/admin/users/{profileId}/approve"
+            body: "*"
+        };
+    }
+    
+    // Admin API - Gửi cảnh báo cho user
+    rpc SendWarningToUser(SendWarningRequest) returns (SendWarningResponse) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/warning/send"
             body: "*"
         };
     }
@@ -276,6 +285,7 @@ message AdminUserItem {
     uint32 totalLogin = 19;      // Tổng số lần đăng nhập
     string verifiedAt = 20;      // Thời gian xác thực
     string lockedAt = 21;        // Thời gian khóa tài khoản
+    optional authpb.Role role = 22;        // Role của user
 }
 
 // Admin API Request Messages
@@ -301,5 +311,26 @@ message UnblockUserRequest {
 message ApproveUserRequest {
     uint64 profileId = 1;
     string note = 2;             // Ghi chú khi duyệt
+}
+
+// Warning/Alert API Messages
+message SendWarningRequest {
+    uint64 userId = 1;           // ID của user nhận cảnh báo
+    WarningType warningType = 2; // Loại cảnh báo
+    string content = 3;          // Nội dung cảnh báo
+    string title = 4;            // Tiêu đề cảnh báo (optional)
+}
+
+message SendWarningResponse {
+    bool success = 1;
+    string message = 2;
+    uint64 notificationId = 3;   // ID của notification được tạo
+}
+
+// Enum cho loại cảnh báo
+enum WarningType {
+    WARNING_VIOLATION = 0;       // Cảnh báo vi phạm
+    WARNING_REMINDER = 1;        // Nhắc nhở chung
+    WARNING_GUIDANCE = 2;        // Hướng dẫn sử dụng
 }
 

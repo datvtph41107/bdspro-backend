@@ -1,9 +1,15 @@
 package handler
 
 import (
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
+	_utils "common/utils"
 	"context"
-	authpb "pb/types/auth"
+	"fmt"
+	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+	"time"
+	"user/infra/client"
 	"user/infra/mapper"
 	"user/internal/usecases"
 
@@ -13,21 +19,50 @@ import (
 
 type AdminHandler struct {
 	userpb.UnimplementedAdminProfileServiceServer
-	AdminUsecase *usecases.AdminUsecase
-	AdminMapper  *mapper.AdminMapper
+	AdminUsecase       *usecases.AdminUsecase
+	AdminMapper        *mapper.AdminMapper
+	NotificationClient *client.NotificationClient
 }
 
 func NewAdminHandler(
 	adminUsecase *usecases.AdminUsecase,
-	adminMapper *mapper.AdminMapper) *AdminHandler {
+	adminMapper *mapper.AdminMapper,
+	notificationClient *client.NotificationClient) *AdminHandler {
 	return &AdminHandler{
-		AdminUsecase: adminUsecase,
-		AdminMapper:  adminMapper,
+		AdminUsecase:       adminUsecase,
+		AdminMapper:        adminMapper,
+		NotificationClient: notificationClient,
 	}
 }
 
-// @Summary Lấy danh sách tất cả user (Admin only)
-// @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
+// createAdminHistory tạo lịch sử hoạt động cho admin
+func (h *AdminHandler) createAdminHistory(ctx context.Context, actionType _enum.EHistory, targetId uint64, title string, note []string) {
+	if h.NotificationClient == nil {
+		return
+	}
+
+	profileID := _utils.GetProfileIdWithContext(ctx)
+
+	historyDTO := &_dto.HistoryDTO{
+		Title:      title,
+		Note:       note,
+		TargetId:   targetId,
+		TargetType: _enum.TargetHistoryAdmin,
+		ActionType: actionType,
+		OwnerID:    &profileID,
+		// OwnerType:  int32(_enum.EOwnerOfMember),
+	}
+
+	// Tạo context với timeout
+	contextTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// Gọi notification service để tạo history (bỏ qua lỗi để không ảnh hưởng đến API chính)
+	_ = h.NotificationClient.CreateHistory(contextTimeout, historyDTO)
+}
+
+// @Summary Lấy danh sách tất cả admin (Admin only)
+// @Description Lấy danh sách tất cả admin trong hệ thống với phân trang và thông tin role (chỉ dành cho admin)
 // @Tags Admin
 // @Accept json
 // @Produce json
@@ -41,7 +76,7 @@ func NewAdminHandler(
 // @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
 // @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
 // @Router /admin/list [get]
-func (h *AdminHandler) ListAdmin(ctx context.Context, req *userpb.ListAdminRequest) (*userpb.ListAdminResponse, error) {
+func (h *AdminHandler) ListAdmins(ctx context.Context, req *userpb.AdminListRequest) (*userpb.AdminListResponse, error) {
 	// TODO: Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if !h.isAdmin(profileID) {
@@ -57,12 +92,12 @@ func (h *AdminHandler) ListAdmin(ctx context.Context, req *userpb.ListAdminReque
 		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
 	}
 
-	// Convert DTO response to proto response using mapper
+	// Convert DTO response to proto response using mapper (bao gồm thông tin role)
 	response := h.AdminMapper.ListAdminResponseToProto(result)
 
-	return &userpb.ListAdminResponse{
+	return &userpb.AdminListResponse{
 		Data:  response,
-		Total: uint32(total),
+		Total: int32(total),
 	}, nil
 }
 
@@ -71,16 +106,21 @@ func (h *AdminHandler) ListAdmin(ctx context.Context, req *userpb.ListAdminReque
 // @Tags Admin
 // @Accept json
 // @Produce json
-// @Param body body authpb.CreateAdminRequest true "Thông tin tạo admin"
+// @Param body body userpb.AdminProfile true "Thông tin tạo admin"
 // @Router /admin/create [post]
-func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+func (h *AdminHandler) CreateAdmin(ctx context.Context, req *userpb.AdminProfile) (*userpb.AdminProfile, error) {
 	// Convert proto request to model using mapper
-	payload := h.AdminMapper.CreateAdminRequestToModel(req)
+	payload := h.AdminMapper.PbToDomain(req)
 
 	result, err := h.AdminUsecase.CreateAdmin(ctx, payload)
 	if err != nil {
 		return nil, err
 	}
+
+	// Ghi nhật ký tạo admin
+	h.createAdminHistory(ctx, _enum.HistoryAdminCreate, result.ID,
+		"Tạo tài khoản admin mới",
+		[]string{fmt.Sprintf("Tạo admin: %s (%s)", result.FullName, result.Email)})
 
 	// Convert model response to proto response using mapper
 	return h.AdminMapper.AdminProfileResponseToProto(result), nil
@@ -91,19 +131,24 @@ func (h *AdminHandler) CreateAdmin(ctx context.Context, req *authpb.CreateAdminR
 // @Tags Admin
 // @Accept json
 // @Produce json
-// @Param body body authpb.UpdateAdminRequest true "Thông tin cập nhật admin"
-// @Success 200 {object} authpb.AuthSuccessResponse
-// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Param body body userpb.AdminProfile true "Thông tin cập nhật admin"
+// @Success 200 {object} userpb.AdminProfile
+// @Failure 400 {object} userpb.AdminProfile
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/update [put]
-func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminRequest) (*authpb.AuthSuccessResponse, error) {
+func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *userpb.AdminProfile) (*userpb.AdminProfile, error) {
 	// Convert proto request to DTO using mapper
-	dtoReq := h.AdminMapper.UpdateAdminRequestToDTO(req)
+	dtoReq := h.AdminMapper.PbToDomain(req)
 
-	result, err := h.AdminUsecase.UpdateAdmin(ctx, *dtoReq)
+	result, err := h.AdminUsecase.UpdateAdmin(ctx, dtoReq)
 	if err != nil {
 		return nil, err
 	}
+
+	// Ghi nhật ký cập nhật admin
+	h.createAdminHistory(ctx, _enum.HistoryAdminUpdate, result.ID,
+		"Cập nhật thông tin admin",
+		[]string{fmt.Sprintf("Cập nhật admin: %s (%s)", result.FullName, result.Email)})
 
 	// Convert model response to proto response using mapper
 	return h.AdminMapper.AdminProfileResponseToProto(result), nil
@@ -114,23 +159,33 @@ func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *authpb.UpdateAdminR
 // @Tags Admin
 // @Accept json
 // @Produce json
-// @Param body body authpb.DeleteAdminRequest true "Thông tin xóa admin"
-// @Success 200 {object} authpb.DeleteAdminResponse
-// @Failure 400 {object} authpb.DeleteAdminResponse
-// @Failure 500 {object} authpb.DeleteAdminResponse
+// @Param body body shared.IdRequest true "Thông tin xóa admin"
 // @Router /admin/delete [delete]
-func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *authpb.DeleteAdminRequest) (*authpb.DeleteAdminResponse, error) {
-	// Convert proto request to DTO using mapper
-	dtoReq := h.AdminMapper.DeleteAdminRequestToDTO(req)
-
-	err := h.AdminUsecase.DeleteAdmin(ctx, *dtoReq)
+func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*userpb.DeleteAdminResponse, error) {
+	err := h.AdminUsecase.DeleteAdmin(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &authpb.DeleteAdminResponse{
+	// Ghi nhật ký xóa admin
+	h.createAdminHistory(ctx, _enum.HistoryAdminDelete, req.Id,
+		"Xóa tài khoản admin",
+		[]string{fmt.Sprintf("Xóa admin với ID: %d", req.Id)})
+
+	return &userpb.DeleteAdminResponse{
 		Message: "Xóa tài khoản admin thành công",
 	}, nil
+}
+
+func (h *AdminHandler) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*userpb.AdminProfile, error) {
+	// Convert proto request to DTO using mapper
+
+	result, err := h.AdminUsecase.GetDetail(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.AdminMapper.AdminProfileResponseToProto(result), nil
 }
 
 // // @Summary Assign Role

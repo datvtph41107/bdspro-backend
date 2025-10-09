@@ -140,6 +140,7 @@ var HttpCmd = &cobra.Command{
 				"http://localhost:3001",
 				"http://localhost:8000",
 				"http://localhost:5173",
+				"http://localhost:5174",
 				"http://14.225.210.29:8000",
 				"http://14.225.205.222:8000",
 				"http://14.225.205.222:3107",
@@ -220,7 +221,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterTransactionService(ctx, mux, env, opts)
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterFeedbackService(ctx, mux, env, opts)
-		service.RegisterTqdService(ctx, mux, env, opts)
+		// service.RegisterTqdService(ctx, mux, env, opts)
 
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))

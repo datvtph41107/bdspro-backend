@@ -234,6 +234,39 @@
         ]
       }
     },
+    "/v2/user/admin/warning/send": {
+      "post": {
+        "summary": "Admin API - Gửi cảnh báo cho user",
+        "operationId": "ProfileService_SendWarningToUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbSendWarningResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbSendWarningRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/accounts/me": {
       "get": {
         "operationId": "ProfileService_ListAccountMe",
@@ -413,6 +446,166 @@
           "title": "Lý do mở khóa tài khoản"
         }
       }
+    },
+    "authpbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "authpbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "authpbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "roleDescription": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "string"
+        },
+        "colorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "$ref": "#/definitions/authpbColor"
+        },
+        "roleGroupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleGroupName": {
+          "type": "string"
+        },
+        "allowAssign": {
+          "type": "boolean"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Role message"
     },
     "protobufAny": {
       "type": "object",
@@ -636,6 +829,10 @@
         "lockedAt": {
           "type": "string",
           "title": "Thời gian khóa tài khoản"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole",
+          "title": "Role của user"
         }
       }
     },
@@ -890,6 +1087,45 @@
         }
       }
     },
+    "userpbSendWarningRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID của user nhận cảnh báo"
+        },
+        "warningType": {
+          "$ref": "#/definitions/userpbWarningType",
+          "title": "Loại cảnh báo"
+        },
+        "content": {
+          "type": "string",
+          "title": "Nội dung cảnh báo"
+        },
+        "title": {
+          "type": "string",
+          "title": "Tiêu đề cảnh báo (optional)"
+        }
+      },
+      "title": "Warning/Alert API Messages"
+    },
+    "userpbSendWarningResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "notificationId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID của notification được tạo"
+        }
+      }
+    },
     "userpbSetInfoRequest": {
       "type": "object",
       "properties": {
@@ -1027,6 +1263,17 @@
           "$ref": "#/definitions/sharepbFriendItem"
         }
       }
+    },
+    "userpbWarningType": {
+      "type": "string",
+      "enum": [
+        "WARNING_VIOLATION",
+        "WARNING_REMINDER",
+        "WARNING_GUIDANCE"
+      ],
+      "default": "WARNING_VIOLATION",
+      "description": "- WARNING_VIOLATION: Cảnh báo vi phạm\n - WARNING_REMINDER: Nhắc nhở chung\n - WARNING_GUIDANCE: Hướng dẫn sử dụng",
+      "title": "Enum cho loại cảnh báo"
     }
   }
 }

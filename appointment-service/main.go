@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tuandq2112/appointment-service/cmd"
+	"appointment/cmd"
 )
 
 // @title Appointment Service API

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	authpb "pb/types/auth"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -18,32 +17,12 @@ func RegisterAuthService(ctx context.Context, mux *runtime.ServeMux, env string,
 		url = "auth"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	err := authpb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register auth service: %v", err)
-	}
-	err = authpb.RegisterOAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register oauth service: %v", err)
-	}
-	err = authpb.RegisterRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register role service: %v", err)
-	}
-	err = authpb.RegisterPermissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register permission service: %v", err)
-	}
-	err = authpb.RegisterRoleGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register role group service: %v", err)
-	}
-	err = authpb.RegisterAuthInternalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register auth internal service: %v", err)
-	}
-	err = authpb.RegisterRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		log.Fatalf("Failed to register role service: %v", err)
-	}
+	_ = authpb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterOAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterPermissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterRoleGroupServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterAuthInternalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterRoleServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = authpb.RegisterUserInfoServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

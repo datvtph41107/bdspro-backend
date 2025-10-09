@@ -20,13 +20,15 @@ import (
 )
 
 type ProfileUsecase struct {
-	PreePlanID        *uint64
-	ProfileRepo       repo.IProfileRepo
-	ProfessionRepo    repo.IProfessionRepo
-	CertificationRepo repo.ICertificationRepo
-	FeedbackProvider  providers.FeedbackProvider
-	FriendRepo        providers.FriendProvider
-	FollowRepo        repo.IFollowRepo
+	PreePlanID         *uint64
+	ProfileRepo        repo.IProfileRepo
+	ProfessionRepo     repo.IProfessionRepo
+	CertificationRepo  repo.ICertificationRepo
+	FeedbackProvider   providers.FeedbackProvider
+	FriendRepo         providers.FriendProvider
+	FollowRepo         repo.IFollowRepo
+	AuthProvider       providers.AuthProvider
+	NotificationClient providers.NotificationProvider
 }
 
 func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
@@ -35,16 +37,20 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	FeedbackProvider providers.FeedbackProvider,
 	FriendRepo providers.FriendProvider,
 	FollowRepo repo.IFollowRepo,
+	AuthProvider providers.AuthProvider,
+	NotificationClient providers.NotificationProvider,
 ) *ProfileUsecase {
 	planId := uint64(1)
 	return &ProfileUsecase{
-		PreePlanID:        &planId,
-		ProfileRepo:       ProfileRepo,
-		ProfessionRepo:    ProfessionRepo,
-		CertificationRepo: CertificationRepo,
-		FeedbackProvider:  FeedbackProvider,
-		FriendRepo:        FriendRepo,
-		FollowRepo:        FollowRepo,
+		PreePlanID:         &planId,
+		ProfileRepo:        ProfileRepo,
+		ProfessionRepo:     ProfessionRepo,
+		CertificationRepo:  CertificationRepo,
+		FeedbackProvider:   FeedbackProvider,
+		FriendRepo:         FriendRepo,
+		FollowRepo:         FollowRepo,
+		AuthProvider:       AuthProvider,
+		NotificationClient: NotificationClient,
 	}
 }
 
@@ -273,24 +279,42 @@ func (s *ProfileUsecase) SearchProfilePublic(c context.Context, req *userpb.Sear
 	return results, total, nil
 }
 
-// func (s *ProfileUsecase) ListAccountMe(c context.Context) (*userpb.AccountInfoResponse, error) {
-// 	claims := _jwt.GetPrincipalContext(c)
-// 	if claims == nil {
-// 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
-// 	}
+// ListAllUsers lấy danh sách tất cả user với phân trang và tìm kiếm
+func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]models.UserProfileEntity, uint32, error) {
+	// Kiểm tra quyền admin (sẽ được implement sau)
+	// profileID := _utils.GetProfileIdWithContext(ctx)
+	// if !uc.isAdmin(profileID) {
+	//     return nil, errors.New("unauthorized: admin access required")
+	// }
 
-// 	// profile := s.GetProfileByID(claims.ProfileId)
-// 	// organization := s.GetOrganizationByID(claims.OrganizationId)
+	// Lấy dữ liệu từ repository
+	users, total, err := uc.ProfileRepo.ListAllUsers(ctx, req)
+	if err != nil {
+		return nil, 0, err
+	}
 
-// 	// accountInfo := &userpb.AccountInfo{
-// 	// 	Id:       profile.ProfileID,
-// 	// 	FullName: profile.FullName,
-// 	// 	Avatar:   profile.Avatar,
-// 	// 	Phone:    profile.Phone,
-// 	// }
+	profileIDs := make([]uint64, len(users))
+	for i, user := range users {
+		profileIDs[i] = user.ProfileID
+	}
 
-// 	return &userpb.AccountInfoResponse{
-// 		Data:  []*userpb.AccountInfo{},
-// 		Total: 0,
-// 	}, nil
-// }
+	profiles, err := uc.AuthProvider.GetAuthUsersByProfileIDs(ctx, profileIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	for i, user := range users {
+		if profile, ok := profiles[user.ProfileID]; ok {
+			if profile.Role != nil {
+				users[i].RoleName = profile.Role.RoleName
+				users[i].RoleID = profile.Role.ID
+				if profile.Role.Color != nil {
+					users[i].RoleColor = profile.Role.Color.Color
+					users[i].RoleBgColor = profile.Role.Color.BackgroundColor
+				}
+			}
+		}
+	}
+
+	return users, total, nil
+}

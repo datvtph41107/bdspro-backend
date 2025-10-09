@@ -22,6 +22,130 @@
     "application/json"
   ],
   "paths": {
+    "/v2/org/admin/deal/list": {
+      "get": {
+        "summary": "API admin lấy toàn bộ danh sách thương vụ trong hệ thống",
+        "operationId": "DealService_GetAllDeals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/organizationpbAdminDealSearchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "keyword",
+            "description": "Tìm kiếm theo tên deal",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "description": "Trạng thái deal",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "dealType",
+            "description": "Loại deal",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "organizationId",
+            "description": "Lọc theo tổ chức",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
+            "description": "Lọc theo nhóm",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerId",
+            "description": "Lọc theo chủ sở hữu",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "description": "Loại chủ sở hữu",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "startDate",
+            "description": "Ngày bắt đầu",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "endDate",
+            "description": "Ngày kết thúc",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "minAmount",
+            "description": "Số tiền tối thiểu",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "maxAmount",
+            "description": "Số tiền tối đa",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          }
+        ],
+        "tags": [
+          "DealService"
+        ]
+      }
+    },
     "/v2/org/deal": {
       "post": {
         "operationId": "DealService_CreateGroupDeal",
@@ -2147,6 +2271,124 @@
         "memberId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "organizationpbAdminDealItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dealTypeName": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Owner info"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Organization/Group info"
+        },
+        "organizationName": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "numMember": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Member info"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string",
+          "title": "Timestamps"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Additional info"
+        },
+        "isManual": {
+          "type": "boolean"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "organizationpbAdminDealSearchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbAdminDealItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

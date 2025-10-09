@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/tuandq2112/appointment-service/internal/domain/entity"
-	"github.com/tuandq2112/appointment-service/internal/domain/repository"
+	"appointment/internal/domain/entity"
+	"appointment/internal/domain/repository"
+
 	"gorm.io/gorm"
 )
 

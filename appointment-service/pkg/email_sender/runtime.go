@@ -1,13 +1,14 @@
 package emailsender
 
 import (
-	"github.com/tuandq2112/appointment-service/appconfig"
+	"appointment/appconfig"
+
 	"gopkg.in/mail.v2"
 )
 
 type EmailSender struct {
 	From     string
-	Name     string 
+	Name     string
 	Host     string
 	Port     int
 	Username string

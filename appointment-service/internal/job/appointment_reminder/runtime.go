@@ -5,9 +5,10 @@ import (
 	"log"
 	"time"
 
+	"appointment/internal/usecase"
+	emailsender "appointment/pkg/email_sender"
+
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/tuandq2112/appointment-service/internal/usecase"
-	emailsender "github.com/tuandq2112/appointment-service/pkg/email_sender"
 )
 
 type AppointmentReminderJob struct {

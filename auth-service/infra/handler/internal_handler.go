@@ -1,8 +1,8 @@
 package handler
 
 import (
-	userinterface "auth/internal/interface"
 	"auth/internal/interface/repo"
+	"auth/internal/usecase"
 	_errors "common/errors"
 	_redis "common/redis"
 	_utils "common/utils"
@@ -18,23 +18,32 @@ import (
 
 type InternalHandler struct {
 	authpb.UnimplementedAuthInternalServiceServer
-	roleRepo     repo.RoleRepository
-	redisService *_redis.RedisService
-	roleMapper   *mapper.RoleMapper
-	userClient   userinterface.IUserGrpcClient
+	roleRepo          repo.RoleRepository
+	redisService      *_redis.RedisService
+	roleMapper        *mapper.RoleMapper
+	authMethodMapper  *mapper.AuthMethodMapper
+	authMethodUsecase *usecase.AuthAdminUsecase
+	userInfoUsecase   *usecase.AuthUserProfileUsecase
+	userInfoMapper    *mapper.UserInfoMapper
 }
 
 func NewInternalHandler(
 	roleRepo repo.RoleRepository,
 	redisService *_redis.RedisService,
 	roleMapper *mapper.RoleMapper,
-	userClient userinterface.IUserGrpcClient,
+	authMethodMapper *mapper.AuthMethodMapper,
+	authMethodUsecase *usecase.AuthAdminUsecase,
+	userInfoUsecase *usecase.AuthUserProfileUsecase,
+	userInfoMapper *mapper.UserInfoMapper,
 ) *InternalHandler {
 	return &InternalHandler{
-		roleRepo:     roleRepo,
-		redisService: redisService,
-		roleMapper:   roleMapper,
-		userClient:   userClient,
+		roleRepo:          roleRepo,
+		redisService:      redisService,
+		roleMapper:        roleMapper,
+		authMethodMapper:  authMethodMapper,
+		authMethodUsecase: authMethodUsecase,
+		userInfoUsecase:   userInfoUsecase,
+		userInfoMapper:    userInfoMapper,
 	}
 }
 
@@ -209,7 +218,7 @@ func (h *InternalHandler) GetProfileByIds(ctx context.Context, req *sharepb.GetP
 	for i, auth := range authMethods {
 		profiles[i] = &sharepb.ProfileItem{
 			Id:       auth.UserID,
-			FullName: auth.Name,
+			FullName: auth.FullName,
 			Avatar:   auth.Avatar,
 			Phone:    auth.Phone,
 		}
@@ -229,5 +238,87 @@ func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *authpb.Ge
 	result := h.roleMapper.MapRoleListToPb(roles)
 	return &authpb.RoleListResponse{
 		Data: result,
+	}, nil
+}
+
+func (h *InternalHandler) CreateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
+	entity := h.authMethodMapper.MapAuthMethodPbToDomain(req)
+
+	result, err := h.authMethodUsecase.CreateAdmin(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return h.authMethodMapper.MapAuthMethodPb(result), nil
+}
+
+func (h *InternalHandler) UpdateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
+	// Convert proto request to DTO
+	en := h.authMethodMapper.MapAuthMethodPbToDomain(req)
+
+	result, err := h.authMethodUsecase.UpdateAdmin(ctx, en)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return h.authMethodMapper.MapAuthMethodPb(result), nil
+}
+
+func (h *InternalHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+	err := h.authMethodUsecase.DeleteAdmin(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.SubmitResponse{
+		Message: "Admin đã được xóa thành công",
+	}, nil
+}
+
+func (h *InternalHandler) GetAdminById(ctx context.Context, req *sharepb.IdRequest) (*authpb.AuthMethod, error) {
+	result, err := h.authMethodUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.authMethodMapper.MapAuthMethodPb(result), nil
+}
+
+// GetAuthUsersByProfileIDs lấy thông tin AuthUser theo danh sách profile IDs (Internal API)
+func (h *InternalHandler) GetAuthUsersByProfileIDs(ctx context.Context, req *authpb.GetAuthUsersByProfileIDsRequest) (*authpb.GetAuthUsersByProfileIDsResponse, error) {
+	// Call usecase
+	result, err := h.userInfoUsecase.GetAuthUsersByProfileIDs(ctx, req.ProfileIds)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	var users []*authpb.AuthUserStatusInfo
+	for _, user := range result {
+		users = append(users, h.userInfoMapper.MapAuthUserStatusInfoToPb(&user))
+	}
+
+	return &authpb.GetAuthUsersByProfileIDsResponse{
+		Data: users,
+	}, nil
+}
+
+// GetAuthAdminByIds lấy thông tin admin kèm với role theo danh sách IDs
+func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.GetAuthAdminByIdsRequest) (*authpb.GetAuthAdminByIdsResponse, error) {
+	// Gọi repository để lấy admin info kèm role
+	admins, err := h.roleRepo.GetAuthAdminsWithRolesByIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert sang proto response
+	var pbAdmins []*authpb.AuthAdminWithRole
+	for _, admin := range admins {
+		pbAdmins = append(pbAdmins, h.roleMapper.MapAuthAdminWithRoleToPb(admin))
+	}
+
+	return &authpb.GetAuthAdminByIdsResponse{
+		Data: pbAdmins,
 	}, nil
 }
