@@ -260,6 +260,7 @@ message ListAllUsersRequest {
     string startDate = 8;        // Lọc từ ngày tạo
     string endDate = 9;          // Lọc đến ngày tạo
     bool bookmark = 10;          // Lọc theo bookmark
+    uint64 roleId = 11;          // Lọc theo role ID
 }
 
 message ListAllUsersResponse {

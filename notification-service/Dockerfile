@@ -4,8 +4,8 @@ WORKDIR /
 
 COPY main .
 
-COPY bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
+COPY config config
 
 ENV ENV_RUNTIME=release
 
-COPY . .
+CMD ["./main"]

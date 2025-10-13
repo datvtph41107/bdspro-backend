@@ -21,7 +21,7 @@ func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
 	bdsproClient := &BdsproGrpcClient{Client: nil, InternalClient: nil}
 	go func() {
 		url := "localhost"
-		name := "bdspro_grpc"
+		name := "bdspro"
 		if env_runtime == "release" {
 			url = name
 		}

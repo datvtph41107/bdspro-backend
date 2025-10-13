@@ -262,6 +262,7 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 // @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
 // @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
 // @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
+// @Param roleId query int false "Lọc theo role ID"
 // @Param roleType query string false "Lọc theo role type"
 // @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
 // @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
@@ -281,6 +282,15 @@ func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListA
 		SortBy:    req.SortBy,
 		SortOrder: req.SortOrder,
 		RoleType:  req.RoleType,
+		RoleID:    &req.RoleId,
+		Status:    &req.Status,
+		Bookmark:  &req.Bookmark,
+	}
+
+	// Set roleId filter
+	if req.RoleId != 0 {
+		roleId := req.RoleId
+		dtoReq.RoleID = &roleId
 	}
 
 	// Set bookmark filter
@@ -334,23 +344,25 @@ func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListA
 			DepartmentId: item.DepartmentID,
 			Bookmark:     item.Bookmark,
 			TickVerified: item.TickVerified,
+		}
 
-			Role: &authpb.Role{
-				Id:       item.RoleID,
+		// Set role information if available
+		if item.RoleName != "" {
+			roleID := uint64(0)
+			if item.RoleID != nil {
+				roleID = *item.RoleID
+			}
+			protoItem.Role = &authpb.Role{
+				Id:       roleID,
 				RoleName: item.RoleName,
 				RoleKey:  item.RoleKey,
-			},
+			}
 
-			// RoleName:    item.RoleName,
-			// RoleId:      item.RoleID,
-			// RoleColor:   item.RoleColor,
-			// RoleBgColor: item.RoleBgColor,
-			// TotalLogin:     item.TotalLogin,
-		}
-		if item.RoleColor != "" && item.RoleBgColor != "" {
-			protoItem.Role.Color = &authpb.Color{
-				ContentColor:    item.RoleColor,
-				BackgroundColor: item.RoleBgColor,
+			if item.RoleColor != "" && item.RoleBgColor != "" {
+				protoItem.Role.Color = &authpb.Color{
+					ContentColor:    item.RoleColor,
+					BackgroundColor: item.RoleBgColor,
+				}
 			}
 		}
 

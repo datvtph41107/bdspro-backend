@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 	"notification/env"
-	sharepb "pb/types/shared"
 	clients "pb/clients"
+	sharepb "pb/types/shared"
 )
 
 // @bind: notification/internal/interface.IAuthClient
@@ -19,13 +19,15 @@ func NewAuthClient() *AuthClient {
 }
 
 func (c *AuthClient) GetProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error) {
-	return c.Client.GetProfileByIds(ctx, in.Ids)
+	return c.Client.GetProfileByIds(ctx, in)
 }
 
 func (c *AuthClient) GetMapProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (map[uint64]*sharepb.ProfileItem, error) {
-	profileIdSet := make(map[uint64]struct{})
+	profileIDSet := make(map[uint64]struct{})
 	for _, id := range in.Ids {
-		profileIdSet[id] = struct{}{}
+		profileIDSet[id] = struct{}{}
 	}
-	return c.Client.GetMapByIDs(ctx, profileIdSet)
+
+	// return c.Client.GetMapByIDs(ctx, profileIDSet)
+	return nil, nil
 }

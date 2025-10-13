@@ -47,6 +47,7 @@ func startGRPCServer() {
 	feedbackpb.RegisterInternalServiceServer(s, app.InternalHandler)
 	feedbackpb.RegisterRateServiceServer(s, app.RateHandler)
 	feedbackpb.RegisterReportServiceServer(s, app.ReportHandler)
+	feedbackpb.RegisterReportAdminServiceServer(s, app.ReportAdminHandler)
 	feedbackpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)
 	// feedbackpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
 

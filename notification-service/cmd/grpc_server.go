@@ -24,7 +24,7 @@ var GrpcCmd = &cobra.Command{
 }
 
 func startGRPCServer() {
-	config.LoadProperties()
+	config.LoadConfig()
 	// Start gRPC server
 	port := fmt.Sprintf(":%d", config.AppProperties.Server.TCPPort)
 	lis, err := net.Listen("tcp", port)

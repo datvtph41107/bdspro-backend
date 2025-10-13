@@ -2,8 +2,12 @@ FROM alpine:latest
 
 WORKDIR /
 
-ENV ENV_RUNTIME=release
-
 COPY main .
 
+COPY config config
+
+ENV ENV_RUNTIME=release
+
 EXPOSE 8080
+
+CMD ["./main"]

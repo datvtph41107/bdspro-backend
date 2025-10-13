@@ -13,6 +13,7 @@ type ListUsersRequest struct {
 	SortOrder string     `json:"sortOrder" form:"sortOrder"`
 	Status    *uint32    `json:"status" form:"status"`
 	RoleType  string     `json:"roleType" form:"roleType"`
+	RoleID    *uint64    `json:"roleId" form:"roleId"`
 	StartDate *time.Time `json:"startDate" form:"startDate" time_format:"2006-01-02T15:04:05"`
 	EndDate   *time.Time `json:"endDate" form:"endDate" time_format:"2006-01-02T15:04:05"`
 	Bookmark  *bool      `json:"bookmark" form:"bookmark"`

@@ -288,6 +288,21 @@
       "runOptions": {
         // "runOn": "folderOpen"
       }
+    },
+    {
+      "label": "🔌 Assistant HTTP (8218)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev assistant http",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        // "runOn": "folderOpen"
+      }
     }
   ]
 }

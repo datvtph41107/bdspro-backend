@@ -99,41 +99,55 @@ type UserInfoResponse struct {
 }
 
 type PublicUserInfo struct {
-	ProfileID       uint64                `json:"profileId,omitempty"`
-	FullName        string                `json:"fullname,omitempty"`
-	Avatar          string                `json:"avatar,omitempty"`
-	Phone           string                `json:"phone,omitempty"`
-	Phone2          string                `json:"phone2,omitempty"`
-	Email           string                `json:"email,omitempty"`
-	TaxCode         string                `json:"taxCode,omitempty"`
-	Address         string                `json:"address,omitempty"`
-	BackgroundImage string                `json:"backgroundImage,omitempty"`
-	ReferralCode    string                `json:"referralCode,omitempty"`
-	ReferralBy      string                `json:"referralBy,omitempty"`
-	RoleRealEstate  enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
-	Position        string                `json:"position,omitempty"`
-	DepartmentID    uint64                `json:"departmentId,omitempty"`
-	Birth           *time.Time            `json:"birth,omitempty"`
-	StartDate       *time.Time            `json:"startDate,omitempty"`
-	FrontIdentify   string                `json:"frontIdentify,omitempty"`
-	BackIdentify    string                `json:"backIdentify,omitempty"`
-	Slogan          string                `json:"slogan,omitempty"`
-	Website         string                `json:"website,omitempty"`
-	Facebook        string                `json:"facebook,omitempty"`
-	Instagram       string                `json:"instagram,omitempty"`
-	Twitter         string                `json:"twitter,omitempty"`
-	Linkedin        string                `json:"linkedin,omitempty"`
-	Youtube         string                `json:"youtube,omitempty"`
-	Introduction    string                `json:"introduction,omitempty"`
-	StatusOnline    enums.EOnlineStatus   `json:"statusOnline,omitempty"`
-	TabDefault      enums.ESettingTab     `json:"tabDefault,omitempty"`
+	ProfileID         uint64                `json:"profileId,omitempty"`
+	FullName          string                `json:"fullname,omitempty"`
+	Avatar            string                `json:"avatar,omitempty"`
+	Phone             string                `json:"phone,omitempty"`
+	Phone2            string                `json:"phone2,omitempty"`
+	Email             string                `json:"email,omitempty"`
+	TaxCode           string                `json:"taxCode,omitempty"`
+	Address           string                `json:"address,omitempty"`
+	Gender            uint8                 `json:"gender,omitempty"`
+	TickVerified      bool                  `json:"tickVerified,omitempty"`
+	BackgroundImage   string                `json:"backgroundImage,omitempty"`
+	ReferralCode      string                `json:"referralCode,omitempty"`
+	ReferralBy        string                `json:"referralBy,omitempty"`
+	RoleType          enums.ERole           `json:"roleType,omitempty"`
+	RoleKey           uint32                `json:"roleKey,omitempty"`
+	RoleRealEstate    enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
+	Position          string                `json:"position,omitempty"`
+	DepartmentID      uint64                `json:"departmentId,omitempty"`
+	Birth             *time.Time            `json:"birth,omitempty"`
+	StartDate         *time.Time            `json:"startDate,omitempty"`
+	FrontIdentify     string                `json:"frontIdentify,omitempty"`
+	BackIdentify      string                `json:"backIdentify,omitempty"`
+	PlanID            *uint64               `json:"planId,omitempty"`
+	PlanAt            *time.Time            `json:"planAt,omitempty"`
+	Slogan            string                `json:"slogan,omitempty"`
+	Website           string                `json:"website,omitempty"`
+	Facebook          string                `json:"facebook,omitempty"`
+	Instagram         string                `json:"instagram,omitempty"`
+	Twitter           string                `json:"twitter,omitempty"`
+	Linkedin          string                `json:"linkedin,omitempty"`
+	Youtube           string                `json:"youtube,omitempty"`
+	Introduction      string                `json:"introduction,omitempty"`
+	Visibility        uint8                 `json:"visibility,omitempty"`
+	StatusOnline      enums.EOnlineStatus   `json:"statusOnline,omitempty"`
+	ProfileVisibility uint8                 `json:"profileVisibility,omitempty"`
+	TabDefault        enums.ESettingTab     `json:"tabDefault,omitempty"`
+	Status            uint8                 `json:"status,omitempty"`
+	RoleID            *uint64               `json:"roleId,omitempty"`
+	RoleName          string                `json:"roleName,omitempty"`
+	RoleColor         string                `json:"roleColor,omitempty"`
+	RoleBgColor       string                `json:"roleBgColor,omitempty"`
 
 	// transient
 	Certifications []models.CertificationEntity `json:"certifications,omitempty"`
 	Professions    []models.ProfessionEntity    `json:"professions,omitempty"`
 	FriendStatus   *models.FriendItem           `json:"relationShip,omitempty"`
 	Following      bool                         `json:"following,omitempty"`
-	// RateStats      models.RateStats             `json:"rateStats,omitempty"`
+	Bookmark       bool                         `json:"bookmark,omitempty"`
+	RateStats      *models.RateStats            `json:"rateStats,omitempty"`
 }
 
 type RelationShip struct {

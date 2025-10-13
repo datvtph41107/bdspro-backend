@@ -4520,6 +4520,329 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/admin/region/list": {
+            "get": {
+                "description": "Lấy danh sách địa chỉ theo level: 1=Tỉnh/TP, 2=Quận/Huyện, 3=Xã/Phường",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin - Region"
+                ],
+                "summary": "Lấy danh sách địa chỉ (tỉnh/huyện/xã)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Số lượng item",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tìm kiếm theo tên",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cấp địa chỉ: 1=Tỉnh/TP, 2=Quận/Huyện, 3=Xã/Phường",
+                        "name": "level",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của cấp cha",
+                        "name": "parentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.RegionListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/admin/region/{id}": {
+            "get": {
+                "description": "Lấy thông tin chi tiết của một địa chỉ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin - Region"
+                ],
+                "summary": "Lấy chi tiết địa chỉ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của địa chỉ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Region"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/admin/transactions": {
+            "get": {
+                "description": "Lấy danh sách tất cả thương vụ trong hệ thống (dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminTransaction"
+                ],
+                "summary": "Lấy danh sách thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng items mỗi trang",
+                        "name": "size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Từ khóa tìm kiếm",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại giao dịch (10: Bán, 20: Thuê)",
+                        "name": "transactionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trạng thái giao dịch (10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy)",
+                        "name": "transactionStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trạng thái phê duyệt (pending, approved, rejected)",
+                        "name": "approvalStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ngày bắt đầu (RFC3339)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ngày kết thúc (RFC3339)",
+                        "name": "endDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID sản phẩm",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID liên hệ",
+                        "name": "contactId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID chủ sở hữu",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại chủ sở hữu (10: Member, 20: Group, 30: Organization)",
+                        "name": "ownerType",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.AdminTransactionSearchResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/admin/transactions/{id}": {
+            "get": {
+                "description": "Lấy thông tin chi tiết của một thương vụ (dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminTransaction"
+                ],
+                "summary": "Lấy chi tiết thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.AdminTransactionDetail"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Xóa một thương vụ (soft delete) (dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminTransaction"
+                ],
+                "summary": "Xóa thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/admin/transactions/{id}/approve": {
+            "post": {
+                "description": "Phê duyệt một thương vụ (dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminTransaction"
+                ],
+                "summary": "Phê duyệt thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/bdspro/admin/transactions/{id}/reject": {
+            "post": {
+                "description": "Từ chối một thương vụ (dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminTransaction"
+                ],
+                "summary": "Từ chối thương vụ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID thương vụ",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin từ chối",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.AdminRejectTransactionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/asset": {
             "put": {
                 "security": [
@@ -6717,6 +7040,45 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/product/suggest/deepseek": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Phân tích văn bản mô tả bất động sản bằng DeepSeek AI và trả về các trường thông tin được gợi ý",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Gợi ý các trường thông tin sử dụng DeepSeek AI",
+                "parameters": [
+                    {
+                        "description": "Nội dung mô tả sản phẩm",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SuggestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/product/total": {
             "get": {
                 "description": "Lấy tổng số lượng sản phẩm",
@@ -7300,6 +7662,233 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.AdminRejectTransactionRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AdminTransactionDetail": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approvalDate": {
+                    "type": "string"
+                },
+                "approvalStatus": {
+                    "description": "pending, approved, rejected",
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "description": "Thông tin phê duyệt",
+                    "type": "integer"
+                },
+                "approver": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "categoryId": {
+                    "description": "Thông tin thanh toán",
+                    "type": "integer"
+                },
+                "contact": {
+                    "$ref": "#/definitions/bdspropb.ContactInfo"
+                },
+                "contactId": {
+                    "description": "Thông tin contact",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "Thời gian",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "depositeAmount": {
+                    "description": "Thông tin đặt cọc",
+                    "type": "number"
+                },
+                "depositeNote": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "owner": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "ownerId": {
+                    "description": "Thông tin owner",
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "paymentMethodId": {
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/bdspropb.ProductInfo"
+                },
+                "productId": {
+                    "description": "Thông tin sản phẩm",
+                    "type": "integer"
+                },
+                "relatedDealId": {
+                    "type": "integer"
+                },
+                "relatedTransactionId": {
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
+                },
+                "transactionStatus": {
+                    "description": "10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy",
+                    "type": "integer"
+                },
+                "transactionStatusName": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "description": "10: Bán, 20: Thuê",
+                    "type": "integer"
+                },
+                "transactionTypeName": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "updater": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                }
+            }
+        },
+        "bdspropb.AdminTransactionItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approvalDate": {
+                    "type": "string"
+                },
+                "approvalStatus": {
+                    "description": "pending, approved, rejected",
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "description": "Thông tin phê duyệt",
+                    "type": "integer"
+                },
+                "approver": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "contactId": {
+                    "description": "Thông tin contact",
+                    "type": "integer"
+                },
+                "contactName": {
+                    "type": "string"
+                },
+                "contactPhone": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "Thời gian",
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "depositeAmount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "owner": {
+                    "$ref": "#/definitions/sharepb.ProfileItem"
+                },
+                "ownerId": {
+                    "description": "Thông tin owner",
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "productCode": {
+                    "type": "string"
+                },
+                "productId": {
+                    "description": "Thông tin sản phẩm",
+                    "type": "integer"
+                },
+                "productName": {
+                    "type": "string"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionName": {
+                    "type": "string"
+                },
+                "transactionStatus": {
+                    "description": "10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy",
+                    "type": "integer"
+                },
+                "transactionStatusName": {
+                    "type": "string"
+                },
+                "transactionType": {
+                    "description": "10: Bán, 20: Thuê",
+                    "type": "integer"
+                },
+                "transactionTypeName": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.AdminTransactionSearchResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.AdminTransactionItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "bdspropb.AmenityItem": {
             "type": "object",
             "properties": {
@@ -7675,6 +8264,26 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.ContactInfo": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
         "bdspropb.DepositeRequest": {
             "type": "object",
             "properties": {
@@ -7971,6 +8580,9 @@ const docTemplate = `{
                     "description": "1: chính thức, 2: thỏa thuận",
                     "type": "integer"
                 },
+                "product": {
+                    "$ref": "#/definitions/bdspropb.ProductResponse"
+                },
                 "productId": {
                     "type": "integer"
                 },
@@ -7983,6 +8595,9 @@ const docTemplate = `{
                 "title": {
                     "type": "string"
                 },
+                "transactionStatus": {
+                    "type": "integer"
+                },
                 "transactionType": {
                     "type": "integer"
                 },
@@ -7991,6 +8606,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "visibility": {
+                    "type": "integer"
+                },
+                "visibleStatus": {
                     "type": "integer"
                 },
                 "wardName": {
@@ -8570,11 +9188,46 @@ const docTemplate = `{
         "bdspropb.Region": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "codeName": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "integer"
+                },
+                "level": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "bdspropb.RegionListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.Region"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -8769,6 +9422,14 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "bdspropb.SuggestRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
                 }
             }
         },

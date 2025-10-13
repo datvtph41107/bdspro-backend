@@ -8,24 +8,31 @@ import (
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
-		// &FriendEntity{},
-		// &domain.PipelineEntity{},
+		// Core CRM entities
 		&domain.ContactEntity{},
-		// &FollowEntity{},
-		// &BlockEntity{},
-		// &GroupEntity{},
-		// &domain.HistoryEntity{},
-		// &domain.AppInvitedEntity{},
-		// &domain.PipelineEntity{},
-		// &domain.StageEntity{},
-		// &domain.RuleEntity{},
 		&domain.LeadEntity{},
-		// &domain.ContactEntity{},
-		// &domain.SharingEntity{},
-		// &domain.LeadEntity{},
-		// &domain.ProductCareEntity{},
-		// &domain.DocumentEntity{},
-		// &domain.ProductCareEntity{},
+		&domain.LeadContactEntity{},
+
+		// Pipeline management
+		&domain.PipelineEntity{},
+		&domain.StageEntity{},
+		&domain.RuleEntity{},
+
+		// Social entities
+		&domain.FriendEntity{},
+		&domain.FollowEntity{},
+		&domain.BlockEntity{},
+		&domain.GroupEntity{},
+
+		// Sharing and documents
+		&domain.SharingEntity{},
+		&domain.DocumentEntity{},
+
+		// Product care
+		&domain.ProductCareEntity{},
+
+		// App invited
+		&domain.AppInvitedEntity{},
 	)
 
 	log.Println("Migrate success")

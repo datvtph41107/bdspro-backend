@@ -116,6 +116,7 @@ var publicRoutes = []string{
 	"/v2/feedback/report/reasons",
 	"/v2/feedback/report-reason",
 	"/v2/feedback/report",
+	"/v2/bdspro/v2/product/suggest/deepseek",
 }
 
 // HttpCmd chạy HTTP server
@@ -146,6 +147,9 @@ var HttpCmd = &cobra.Command{
 				"http://14.225.205.222:3107",
 				"http://103.145.63.185:3107",
 				"http://localhost:5173",
+				"https://admin.bdspro.com",
+				"https://bdspro.com",
+				"https://app.bdspro.com",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
@@ -221,6 +225,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterTransactionService(ctx, mux, env, opts)
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterFeedbackService(ctx, mux, env, opts)
+		service.RegisterAssistantService(ctx, mux, env, opts)
 		// service.RegisterTqdService(ctx, mux, env, opts)
 
 		// v2 API routes (gRPC Gateway)

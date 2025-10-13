@@ -43,6 +43,12 @@ type AdminNoteRequest struct {
 	IsInternal bool   `json:"isInternal,omitempty"` // Ghi chú nội bộ hay công khai
 }
 
+type AdminReportActionRequest struct {
+	Response         *string `json:"response,omitempty"`
+	AdminNote        *string `json:"adminNote,omitempty"`
+	SendNotification bool    `json:"sendNotification,omitempty"`
+}
+
 type ReportResponse struct {
 	ID           uint64        `json:"id"`
 	ReasonID     uint64        `json:"reasonId"`

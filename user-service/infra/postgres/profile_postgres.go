@@ -162,12 +162,16 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		up.created_at,
 		up.updated_at,
 		COALESCE(up.status, 10) as status,
+		up.role_id,
+		up.role_key,
+		up.position,
+		up.department_id,
+		up.tick_verified,
 		NULL as verified_at,
 		NULL as locked_at,
 		NULL as last_login_at,
 		NULL as total_login,
 		NULL as job_title,
-		NULL as role_key,
 		NULL as attachments,
 		NULL as internal_notes,
 		NULL as send_notification,
@@ -191,33 +195,41 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		query = query.Joins("LEFT JOIN bookmark_user bu ON up.profile_id = bu.user_id AND bu.admin_id = ?", adminID)
 	}
 
-	// Apply search filter
-	// if req.Search != "" {
-	// 	searchTerm := "%" + strings.ToLower(req.Search) + "%"
-	// 	query = query.Where(`
-	// 		LOWER(up.full_name) LIKE ? OR
-	// 		LOWER(up.email) LIKE ? OR
-	// 		up.phone LIKE ?
-	// 	`, searchTerm, searchTerm, searchTerm)
-	// }
+	// Filter: deleted records
+	query = query.Where("up.deleted_at IS NULL")
 
-	// // Apply status filter
-	// if req.Status != nil {
-	// 	query = query.Where("COALESCE(up.status, 1) = ?", *req.Status)
-	// }
+	// Filter: search by name, email, phone
+	if req.Search != "" {
+		searchTerm := "%" + req.Search + "%"
+		query = query.Where(`
+			up.full_name ILIKE ? OR
+			up.email ILIKE ? OR
+			up.phone LIKE ?
+		`, searchTerm, searchTerm, searchTerm)
+	}
 
-	// // Apply role type filter
+	// Filter: status
+	if req.Status != nil {
+		query = query.Where("COALESCE(up.status, 10) = ?", *req.Status)
+	}
+
+	// Filter: role ID
+	if req.RoleID != nil && *req.RoleID > 0 {
+		query = query.Where("up.role_id = ?", *req.RoleID)
+	}
+
+	// Filter: role type (nếu cần - hiện tại không có trường role_type trong user_profile)
 	// if req.RoleType != "" {
 	// 	query = query.Where("up.role_type = ?", req.RoleType)
 	// }
 
-	// // Apply date range filter
-	// if req.StartDate != nil {
-	// 	query = query.Where("up.created_at >= ?", req.StartDate)
-	// }
-	// if req.EndDate != nil {
-	// 	query = query.Where("up.created_at <= ?", req.EndDate)
-	// }
+	// Filter: date range
+	if req.StartDate != nil {
+		query = query.Where("up.created_at >= ?", req.StartDate)
+	}
+	if req.EndDate != nil {
+		query = query.Where("up.created_at <= ?", req.EndDate)
+	}
 
 	// Get total count
 	err := query.Count(&total).Error

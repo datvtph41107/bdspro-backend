@@ -1334,6 +1334,38 @@
         ]
       }
     },
+    "/v2/bdspro/v2/product/suggest/deepseek": {
+      "post": {
+        "operationId": "ProductService_SuggestDeepseek",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbProductResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbSuggestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/{id}": {
       "delete": {
         "operationId": "ProductService_DeleteProduct",

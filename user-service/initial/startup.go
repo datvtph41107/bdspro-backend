@@ -18,6 +18,9 @@ type InitialApp struct {
 	AdminHandler        *handler.AdminHandler
 	BookmarkUserHandler *handler.BookmarkUserHandler
 	FeedbackClient      *client.FeedbackClient
+	// System Config
+	SystemConfigHandler *handler.SystemConfigHandler
+	SystemConfigUsecase *usecases.SystemConfigUsecase
 }
 
 func NewInitialApp(
@@ -29,6 +32,8 @@ func NewInitialApp(
 	adminHandler *handler.AdminHandler,
 	bookmarkUserHandler *handler.BookmarkUserHandler,
 	feedbackClient *client.FeedbackClient,
+	systemConfigHandler *handler.SystemConfigHandler,
+	systemConfigUsecase *usecases.SystemConfigUsecase,
 ) *InitialApp {
 	return &InitialApp{
 		ProfileRouter:       profile,
@@ -39,5 +44,7 @@ func NewInitialApp(
 		AdminHandler:        adminHandler,
 		BookmarkUserHandler: bookmarkUserHandler,
 		FeedbackClient:      feedbackClient,
+		SystemConfigHandler: systemConfigHandler,
+		SystemConfigUsecase: systemConfigUsecase,
 	}
 }

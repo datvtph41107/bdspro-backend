@@ -1,0 +1,448 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "assistant/assistant.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "AssistantService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/assistant/analyze/product": {
+      "post": {
+        "summary": "Phân tích văn bản sản phẩm BĐS sử dụng AI",
+        "operationId": "AssistantService_AnalyzeProductText",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/chat": {
+      "post": {
+        "summary": "Chat với AI assistant",
+        "operationId": "AssistantService_Chat",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/generate": {
+      "post": {
+        "summary": "Generate text content",
+        "operationId": "AssistantService_GenerateContent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "AssistantService_Health",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbHealthResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "assistantpbAnalysisMetadata": {
+      "type": "object",
+      "properties": {
+        "processingTimeMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tokensUsed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "confidenceScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "model": {
+          "type": "string"
+        }
+      }
+    },
+    "assistantpbAnalyzeRequest": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "title": "Văn bản mô tả sản phẩm cần phân tích"
+        },
+        "context": {
+          "type": "string",
+          "title": "Context bổ sung (optional)"
+        }
+      }
+    },
+    "assistantpbAnalyzeResponse": {
+      "type": "object",
+      "properties": {
+        "product": {
+          "$ref": "#/definitions/assistantpbProductInfo"
+        },
+        "rawResponse": {
+          "type": "string",
+          "title": "Raw JSON từ AI"
+        },
+        "metadata": {
+          "$ref": "#/definitions/assistantpbAnalysisMetadata"
+        }
+      }
+    },
+    "assistantpbChatMessage": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "title": "\"user\" hoặc \"assistant\""
+        },
+        "content": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "assistantpbChatMetadata": {
+      "type": "object",
+      "properties": {
+        "processingTimeMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tokensUsed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "model": {
+          "type": "string"
+        }
+      }
+    },
+    "assistantpbChatRequest": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/assistantpbChatMessage"
+          },
+          "title": "Chat history"
+        },
+        "context": {
+          "type": "string",
+          "title": "Context bổ sung"
+        },
+        "sessionId": {
+          "type": "string",
+          "title": "Session ID để maintain conversation"
+        }
+      }
+    },
+    "assistantpbChatResponse": {
+      "type": "object",
+      "properties": {
+        "reply": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/assistantpbChatMetadata"
+        }
+      }
+    },
+    "assistantpbGenerateMetadata": {
+      "type": "object",
+      "properties": {
+        "processingTimeMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tokensUsed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "model": {
+          "type": "string"
+        }
+      }
+    },
+    "assistantpbGenerateRequest": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string"
+        },
+        "template": {
+          "type": "string",
+          "title": "Template type: \"product_description\", \"email\", \"social_post\""
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Variables để thay vào template"
+        },
+        "maxTokens": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "temperature": {
+          "type": "number",
+          "format": "float",
+          "title": "0.0 - 1.0"
+        }
+      }
+    },
+    "assistantpbGenerateResponse": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/assistantpbGenerateMetadata"
+        }
+      }
+    },
+    "assistantpbHealthResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "title": "\"healthy\", \"degraded\", \"unhealthy\""
+        },
+        "uptimeSeconds": {
+          "type": "string",
+          "format": "int64"
+        },
+        "version": {
+          "type": "string"
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Component health checks"
+        }
+      }
+    },
+    "assistantpbProductInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "float"
+        },
+        "address": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "ward": {
+          "type": "string"
+        },
+        "propertyType": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int32",
+          "title": "1=Bán, 2=Thuê, 3=Cả hai"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "bedroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "bathroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "floor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "frontage": {
+          "type": "number",
+          "format": "float"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "legalDoc": {
+          "type": "string"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

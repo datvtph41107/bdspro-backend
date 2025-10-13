@@ -10,7 +10,7 @@ import (
 
 	pb "pb/types/appointment"
 
-	"appointment/appconfig"
+	"appointment/config"
 	"appointment/internal/interface/handler"
 	appointmentreminder "appointment/internal/job/appointment_reminder"
 	"appointment/internal/server/grpc/interceptors"
@@ -38,7 +38,7 @@ func NewGRPCServer(
 ) *GRPCServer {
 	return &GRPCServer{
 		appointmentHandler:     appointmentHandler,
-		logger:                 flogging.MustGetLogger(appconfig.SERVICE_NAME),
+		logger:                 flogging.MustGetLogger(config.SERVICE_NAME),
 		appointmentReminderJob: appointmentReminderJob,
 		dashboardStatsJob:      dashboardStatsJob,
 		// transactionHandler: transactionHandler,
@@ -76,10 +76,10 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
 	streamInts := []grpc.StreamServerInterceptor{}
-	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.GRPC_PORT))
+	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", config.GRPC_PORT))
 	_, start, stop, err := BuildGRPCServer(
-		// fmt.Sprintf("localhost:%s", appconfig.GRPC_PORT),
-		fmt.Sprintf(":%s", appconfig.GRPC_PORT),
+		// fmt.Sprintf("localhost:%s", config.GRPC_PORT),
+		fmt.Sprintf(":%s", config.GRPC_PORT),
 		func(s *grpc.Server) {
 			logger.Info("Registering AppointmentServiceServer")
 			pb.RegisterAppointmentServiceServer(s, appointmentHandler)

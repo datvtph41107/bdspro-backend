@@ -3,11 +3,9 @@ package config
 import (
 	"auth/env"
 	"bytes"
-	"common"
+	_ "embed"
 	"log"
 	"os"
-
-	_ "embed"
 
 	"github.com/spf13/viper"
 )
@@ -15,8 +13,15 @@ import (
 //go:embed app.yml
 var EmbeddedConfig []byte
 
+// LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() {
-	common.LoadConfig(EmbeddedConfig)
+	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
+	viper.SetConfigType("yaml") // Loại file config
+
+	// Đọc biến môi trường (nếu có)
+	viper.AutomaticEnv()
+
+	var err error
 	if env.ENV_RUNTIME == "release" {
 		config_release, err := os.ReadFile("config/product.yml")
 		if err != nil {
@@ -26,7 +31,15 @@ func LoadConfig() {
 		if err != nil {
 			log.Fatalf("Lỗi khi đọc file config: %v", err)
 		}
+	} else {
+		// Đọc file config
+		err = viper.ReadConfig(bytes.NewReader(EmbeddedConfig))
 	}
+
+	if err != nil {
+		log.Fatalf("Lỗi khi đọc file config: %v", err)
+	}
+
 	if err := viper.Unmarshal(&Properties); err != nil {
 		log.Fatalf("Lỗi parse config: %v", err)
 	}

@@ -307,7 +307,7 @@ func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		if profile, ok := profiles[user.ProfileID]; ok {
 			if profile.Role != nil {
 				users[i].RoleName = profile.Role.RoleName
-				users[i].RoleID = profile.Role.ID
+				users[i].RoleID = &profile.Role.ID
 				if profile.Role.Color != nil {
 					users[i].RoleColor = profile.Role.Color.Color
 					users[i].RoleBgColor = profile.Role.Color.BackgroundColor

@@ -50,6 +50,7 @@ type ProductUsecase struct {
 	NotificationClient provider.NotificationProvider
 	Transaction        provider.TransactionProvider
 	AssetUsecase       *AssetUsecase
+	DeepseekClient     provider.DeepseekProvider
 
 	ProductOrganizationRepo repo.ProductOrganizationRepo
 	ProductUserRepo         repo.ProductUserRepo
@@ -76,6 +77,7 @@ func NewProductUsecase(
 	assetUsecase *AssetUsecase,
 	productOrganizationRepo repo.ProductOrganizationRepo,
 	productUserRepo repo.ProductUserRepo,
+	deepseekClient provider.DeepseekProvider,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -97,6 +99,7 @@ func NewProductUsecase(
 		NotificationClient: notificationClient,
 		Transaction:        transaction,
 		AssetUsecase:       assetUsecase,
+		DeepseekClient:     deepseekClient,
 
 		ProductOrganizationRepo: productOrganizationRepo,
 		ProductUserRepo:         productUserRepo,
@@ -637,6 +640,140 @@ func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.Tot
 	}
 
 	return &searchs, nil
+}
+
+// SuggestFieldsWithDeepseek - Gọi DeepSeek AI để phân tích và gợi ý thông tin sản phẩm
+func (s *ProductUsecase) SuggestFieldsWithDeepseek(c context.Context, text string) (*dto.TotalSearchParser, error) {
+	// Gọi DeepSeek client để phân tích
+	deepseekResult, err := s.DeepseekClient.SuggestProductInfo(c, text)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: fmt.Sprintf("Lỗi khi gọi DeepSeek AI: %v", err),
+		}
+	}
+
+	// Khởi tạo result parser
+	result := &dto.TotalSearchParser{}
+
+	// Map các trường cơ bản
+	if deepseekResult.Name != nil {
+		result.Name = *deepseekResult.Name
+	}
+	if deepseekResult.Area != nil {
+		area := int32(*deepseekResult.Area)
+		result.Area = &area
+	}
+	if deepseekResult.Address != nil {
+		result.Address = deepseekResult.Address
+	}
+
+	// Map transaction type
+	if deepseekResult.TransactionType != nil {
+		result.TransactionType = uint32(*deepseekResult.TransactionType)
+	}
+
+	// Map giá
+	if deepseekResult.SalePrice != nil {
+		result.SalePrice = deepseekResult.SalePrice
+	}
+	if deepseekResult.RentPrice != nil {
+		result.RentPrice = deepseekResult.RentPrice
+	}
+
+	// Map thông tin nhà
+	if deepseekResult.Bedroom != nil {
+		result.Bedroom = deepseekResult.Bedroom
+	}
+	if deepseekResult.Bathroom != nil {
+		result.Bathroom = deepseekResult.Bathroom
+	}
+	if deepseekResult.Floor != nil {
+		result.Floor = deepseekResult.Floor
+	}
+	if deepseekResult.Frontage != nil {
+		frontage := int32(*deepseekResult.Frontage)
+		result.Frontage = &frontage
+	}
+
+	// Tìm region (province, district, ward) từ database
+	if deepseekResult.Province != nil {
+		provinces, _ := s.Region.InterTextToItem(*deepseekResult.Province, 1)
+		if len(provinces) > 0 {
+			result.Province = &provinces[0]
+		}
+	}
+
+	if deepseekResult.District != nil {
+		districts, _ := s.Region.InterTextToItem(*deepseekResult.District, 1)
+		if len(districts) > 0 {
+			result.District = &districts[0]
+		}
+	}
+
+	if deepseekResult.Ward != nil {
+		wards, _ := s.Region.InterTextToItem(*deepseekResult.Ward, 1)
+		if len(wards) > 0 {
+			result.Ward = &wards[0]
+		}
+	}
+
+	// Tìm property type từ database
+	if deepseekResult.PropertyType != nil {
+		propertyTypes, _ := s.PropertyType.InterTextToItem(*deepseekResult.PropertyType, 1)
+		if len(propertyTypes) > 0 {
+			result.PropertyTypes = propertyTypes
+		}
+	}
+
+	// Tìm doc type từ database
+	if deepseekResult.LegalDoc != nil {
+		docTypes, _ := s.DocTypeRepo.InterTextToItem(c, *deepseekResult.LegalDoc, 1)
+		if len(docTypes) > 0 {
+			result.DocTypes = docTypes
+		}
+	}
+
+	// Fallback: Nếu không có province từ DeepSeek, thử tìm từ text gốc
+	if result.Province == nil || result.District == nil {
+		regions, _ := s.Region.InterTextToItem(text, 10)
+		var ward, district, province *domain.Region
+		for i := 0; i < len(regions); i++ {
+			r := regions[i]
+			if r.Level == 1 && province == nil {
+				province = &r
+			}
+			if r.Level == 2 && district == nil {
+				district = &r
+			}
+			if r.Level == 3 && ward == nil {
+				ward = &r
+			}
+		}
+		if result.Province == nil {
+			result.Province = province
+		}
+		if result.District == nil {
+			result.District = district
+		}
+		if result.Ward == nil {
+			result.Ward = ward
+		}
+	}
+
+	// Xử lý quan hệ parent-child của region
+	if result.Ward != nil && result.Ward.ParentID != nil && (result.District == nil || result.District.ID != *result.Ward.ParentID) {
+		result.District, _ = s.Region.GetByID(c, *result.Ward.ParentID)
+		if result.District != nil && result.District.ParentID != nil {
+			result.Province, _ = s.Region.GetByID(c, *result.District.ParentID)
+		}
+	}
+
+	if result.District != nil && result.District.ParentID != nil && (result.Province == nil || result.Province.ID != *result.District.ParentID) {
+		result.Province, _ = s.Region.GetByID(c, *result.District.ParentID)
+	}
+
+	return result, nil
 }
 
 func (s *ProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Product, error) {

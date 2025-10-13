@@ -7,21 +7,22 @@ import (
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
-		// &models.BlockEntity{},
-		// &models.ContactEntity{},
-		// &models.FollowEntity{},
-		// &models.FriendEntity{},
-		// &models.GroupEntity{},
-		// &models.UserProfileEntity{},
-		// &models.ProfessionEntity{},
-		// &models.CertificationEntity{},
-		// &models.AttachEntity{},
-		// &models.Report{},
+		// Core entities
 		&models.UserProfileEntity{},
-		&models.BookmarkUserEntity{},
 		&models.AdminProfile{},
-	// &models.ReportReason{},
-	// &models.ReportProof{},
-	// &models.Rate{},
+		&models.SystemConfigEntity{},
+
+		// Social entities
+		&models.BlockEntity{},
+		&models.ContactEntity{},
+		&models.FollowEntity{},
+		&models.FriendEntity{},
+		&models.GroupEntity{},
+		&models.BookmarkUserEntity{},
+
+		// Profile related entities
+		&models.ProfessionEntity{},
+		&models.CertificationEntity{},
+		&models.AttachEntity{},
 	)
 }

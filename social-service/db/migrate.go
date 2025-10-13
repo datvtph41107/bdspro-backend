@@ -7,16 +7,22 @@ import (
 
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
+		// Core news feed entities
 		&domain.NewsFeed{},
-		&domain.Report{},
-		// &domain.FriendTag{},
-		// &domain.NewsFeedMedia{},
-		// &domain.ReportReason{},
-		// &domain.Report{},
-		// &domain.Comment{},
-		// &domain.Like{},
-		// &domain.NewsFeedShare{},
 		&domain.NewsFeedOfUser{},
 		&domain.NewsFeedOfGroup{},
+
+		// News feed interactions
+		&domain.NewsFeedMedia{},
+		&domain.NewsFeedShare{},
+		&domain.Comment{},
+		&domain.Like{},
+
+		// Social features
+		&domain.FriendTag{},
+
+		// Report entities
+		&domain.Report{},
+		&domain.ReportReason{},
 	)
 }

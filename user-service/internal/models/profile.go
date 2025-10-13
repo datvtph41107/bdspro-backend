@@ -69,9 +69,12 @@ type UserProfileEntity struct {
 
 	Bookmark bool `gorm:"-" json:"bookmark"`
 
+	// Role information
+	RoleID *uint64 `gorm:"column:role_id" json:"roleId"`
+	// RoleKey *uint32 `gorm:"column:role_key" json:"roleKey"`
+
 	// transient
 	RoleName    string `gorm:"-" json:"roleName"`
-	RoleID      uint64 `gorm:"-" json:"roleId"`
 	RoleColor   string `gorm:"-" json:"roleColor"`
 	RoleBgColor string `gorm:"-" json:"roleBgColor"`
 }

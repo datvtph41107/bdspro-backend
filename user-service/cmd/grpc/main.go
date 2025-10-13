@@ -38,6 +38,13 @@ var GrpcCmd = &cobra.Command{
 		// Đăng ký service vào feedback registry
 		app.FeedbackClient.RegisterService(context.Background())
 
+		// Load system config vào memory khi startup
+		if app.SystemConfigUsecase != nil {
+			if err := app.SystemConfigUsecase.InitializeSystemConfig(context.Background()); err != nil {
+				log.Printf("Warning: Failed to initialize system config: %v", err)
+			}
+		}
+
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
@@ -54,6 +61,7 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		// V2 Services (protobuf-based)
 		userpb.RegisterBookmarkUserServiceServer(s, app.BookmarkUserHandler)
+		userpb.RegisterSystemConfigServiceServer(s, app.SystemConfigHandler)
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

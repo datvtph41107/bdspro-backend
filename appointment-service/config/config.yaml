@@ -3,7 +3,13 @@ GRPC:
 
 Database:
   PRIMARY_DB_TYPE: postgres
-  DB_DNS: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_appointment port=5432 sslmode=disable
+  HOST: 103.172.239.89
+  PORT: 5432
+  NAME: db_appointment
+  USER: appointment
+  PASSWORD: b0e6d3f2c7a1b4e9d5f0
+  dsn: host=103.172.239.89 user=appointment password=b0e6d3f2c7a1b4e9d5f0 dbname=db_appointment port=5432 sslmode=disable
+  DB_DNS: host=103.172.239.89 user=appointment password=b0e6d3f2c7a1b4e9d5f0 dbname=db_appointment port=5432 sslmode=disable
 
 Email:
   HOST: smtp.gmail.com

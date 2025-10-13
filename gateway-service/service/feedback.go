@@ -20,6 +20,7 @@ func RegisterFeedbackService(ctx context.Context, mux *runtime.ServeMux, env str
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = feedbackpb.RegisterRateServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = feedbackpb.RegisterReportServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = feedbackpb.RegisterReportAdminServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = feedbackpb.RegisterReportReasonServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = feedbackpb.RegisterRegistryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = feedbackpb.RegisterInternalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

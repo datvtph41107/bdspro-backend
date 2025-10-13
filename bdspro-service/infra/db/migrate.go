@@ -7,32 +7,60 @@ import (
 
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
+		// Core entities
 		&domain.Asset{},
+		&domain.Product{},
+		&domain.Post{},
+		&domain.Intent{},
+
+		// Asset related
 		&domain.AssetCost{},
 		&domain.AssetCostType{},
 		&domain.AssetIncomeType{},
 		&domain.AssetExploitation{},
 		&domain.AssetLegal{},
-		&domain.CostDocument{},
-		&domain.IncomeDocument{},
-		&domain.PostMediaEntity{},
-		&domain.Product{},
-		&domain.AssetCostType{},
-		&domain.AssetCost{},
-		&domain.Post{},
-		&domain.ProductUser{},
-		&domain.ProductOrganization{},
 		&domain.AssetOrganization{},
 		&domain.AssetUser{},
+
+		// Product related
+		&domain.ProductUser{},
+		&domain.ProductOrganization{},
+		&domain.ProductHistory{},
+		&domain.ProductPrice{},
+		&domain.ProductMedia{},
+		&domain.ProductPrivate{},
+
+		// Post related
+		&domain.PostMediaEntity{},
 		&domain.PostOrganization{},
 		&domain.PostUser{},
+
+		// Document related
+		&domain.CostDocument{},
+		&domain.IncomeDocument{},
+
+		// Project related
+		&domain.Project{},
+		&domain.ProjectBuild{},
+		&domain.ProjectInventory{},
+		&domain.BuildRoom{},
+
+		// Sharing and Access
 		&domain.SharingAccess{},
-		&domain.AssetCostType{},
-		&domain.AssetLegal{},
 		&domain.RecordHistory{},
-		&domain.SharingAccess{},
-		&domain.Post{},
-		&domain.Product{},
-		&domain.ProductHistory{},
+
+		// Other entities
+		&domain.Amenity{},
+		&domain.Apartment{},
+		&domain.Developer{},
+		&domain.PropertyType{},
+		&domain.Region{},
+		&domain.DocType{},
+		&domain.PaymentMethod{},
+		// &domain.Deposite{},
+		&domain.Transaction{},
+		// &domain.Plan{},
+		&domain.Task{},
+		&domain.Customer{},
 	)
 }

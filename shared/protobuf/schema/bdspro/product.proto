@@ -106,6 +106,12 @@ service ProductService {
       body: "*"
     };
   };
+  rpc SuggestDeepseek (SuggestRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/suggest/deepseek"
+      body: "*"
+    };
+  };
   rpc GetDetail (IdRequest) returns (ProductResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/detail"

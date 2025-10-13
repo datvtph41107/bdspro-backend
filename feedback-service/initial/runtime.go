@@ -16,6 +16,7 @@ type InitialApp struct {
 	InternalHandler     *handler.InternalHandler
 	RateHandler         *handler.RateHandler
 	ReportHandler       *handler.ReportHandler
+	ReportAdminHandler  *handler.ReportAdminHandler
 	ReportReasonHandler *handler.ReportReasonHandler
 	RegistryHandler     *handler.RegistryHandler
 	RegistryUsecase     *usecase.RegistryUsecase
@@ -24,6 +25,7 @@ type InitialApp struct {
 func NewApp(internalHandler *handler.InternalHandler,
 	rateHandler *handler.RateHandler,
 	reportHandler *handler.ReportHandler,
+	reportAdminHandler *handler.ReportAdminHandler,
 	reportReasonHandler *handler.ReportReasonHandler,
 	registryHandler *handler.RegistryHandler,
 	registryUsecase *usecase.RegistryUsecase) *InitialApp {
@@ -32,6 +34,7 @@ func NewApp(internalHandler *handler.InternalHandler,
 		InternalHandler:     internalHandler,
 		RateHandler:         rateHandler,
 		ReportHandler:       reportHandler,
+		ReportAdminHandler:  reportAdminHandler,
 		ReportReasonHandler: reportReasonHandler,
 		RegistryHandler:     registryHandler,
 		Logger:              flogging.MustGetLogger(viper.GetString("server.name")),

@@ -25,4 +25,5 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
 	_ = userpb.RegisterReportProofServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterBookmarkUserServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterAdminProfileServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterSystemConfigServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

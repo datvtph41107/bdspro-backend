@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"appointment/appconfig"
+	"appointment/config"
 	utils "appointment/pkg"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -57,7 +57,7 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterce
 			logger.Error("Invalid token", err)
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-		newCtx := context.WithValue(ctx, appconfig.USER_CONTEXT, claims)
+		newCtx := context.WithValue(ctx, config.USER_CONTEXT, claims)
 		return handler(newCtx, req)
 	}
 }

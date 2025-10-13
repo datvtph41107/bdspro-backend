@@ -128,6 +128,21 @@ case "$1" in
     path_jar=main
     payload_build=transaction
     ;;
+  "tqd")
+    service_path=tqd-service
+    path_jar=main
+    payload_build=tqd
+    ;;
+  "marketing")
+    service_path=marketing-service
+    path_jar=main
+    payload_build=marketing
+    ;;
+  "feedback")
+    service_path=feedback-service
+    path_jar=main
+    payload_build=feedback
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1
@@ -165,7 +180,7 @@ scp ../config/production/${payload_build}.yml ${REMOTE_USER}@${REMOTE_HOST}:${RE
 # rsync -avz --delete ./Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}${service_path}
 
 if [ "$1" = "notification" ]; then
-  scp ../../config/production/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
+  scp ../config/production/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
 fi
 if [ "$1" = "chat" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}

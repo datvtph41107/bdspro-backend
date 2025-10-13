@@ -43,4 +43,5 @@ tqd-service/tqd-service
 
 **/.tool
 .gitbe
-config/
+/config/
+**/config/product.yml

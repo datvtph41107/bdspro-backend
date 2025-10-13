@@ -1,9 +1,11 @@
 package config
 
 import (
-	"common"
+	"bytes"
 	_ "embed"
 	"log"
+	"notification/env"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -43,16 +45,34 @@ type UserProperties struct {
 
 var AppProperties UserProperties
 
-// LoadConfig đọc cấu hình từ file `.env` hoặc `config.yaml`
-func LoadProperties() {
-	log.Printf("Đọc config")
-	common.LoadConfig(EmbeddedConfig)
+// LoadConfig đọc cấu hình từ file config.yml
+func LoadConfig() {
+	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
+	viper.SetConfigType("yaml") // Loại file config
 
-	// var config UserProperties
-	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
-		// return nil, err
+	// Đọc biến môi trường (nếu có)
+	viper.AutomaticEnv()
+
+	var err error
+	if env.ENV_RUNTIME == "release" {
+		config_release, err := os.ReadFile("config/product.yml")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = viper.ReadConfig(bytes.NewReader(config_release))
+		if err != nil {
+			log.Fatalf("Lỗi khi đọc file config: %v", err)
+		}
+	} else {
+		// Đọc file config
+		err = viper.ReadConfig(bytes.NewReader(EmbeddedConfig))
 	}
 
-	// return &config, nil
+	if err != nil {
+		log.Fatalf("Lỗi khi đọc file config: %v", err)
+	}
+
+	if err := viper.Unmarshal(&AppProperties); err != nil {
+		log.Fatalf("Lỗi parse config: %v", err)
+	}
 }

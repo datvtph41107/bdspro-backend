@@ -4,12 +4,14 @@ import (
 	"bytes"
 	_ "embed"
 	"log"
+	"os"
+	"tqd/env"
 
 	"github.com/spf13/viper"
 )
 
 //go:embed config.yml
-var configFile []byte
+var EmbeddedConfig []byte
 
 // Properties holds all configuration properties
 type Properties struct {
@@ -54,14 +56,31 @@ type KeyConfig struct {
 
 var AppConfig *Properties
 
-// LoadConfig loads configuration from config.yml
+// LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() *Properties {
-	viper.SetConfigType("yaml")
+	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
+	viper.SetConfigType("yaml") // Loại file config
+
+	// Đọc biến môi trường (nếu có)
 	viper.AutomaticEnv()
 
-	err := viper.ReadConfig(bytes.NewReader(configFile))
+	var err error
+	if env.ENV_RUNTIME == "release" {
+		config_release, err := os.ReadFile("config/product.yml")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = viper.ReadConfig(bytes.NewReader(config_release))
+		if err != nil {
+			log.Fatalf("Lỗi khi đọc file config: %v", err)
+		}
+	} else {
+		// Đọc file config
+		err = viper.ReadConfig(bytes.NewReader(EmbeddedConfig))
+	}
+
 	if err != nil {
-		log.Fatalf("Error reading config file: %v", err)
+		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}
 
 	AppConfig = &Properties{}

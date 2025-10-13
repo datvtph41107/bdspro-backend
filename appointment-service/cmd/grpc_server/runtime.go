@@ -1,7 +1,7 @@
 package grpcserver
 
 import (
-	"appointment/appconfig"
+	"appointment/config"
 	"appointment/wire"
 	"log"
 
@@ -12,7 +12,7 @@ var GrpcServerCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Start the gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
-		appconfig.InitConfig()
+		config.InitConfig()
 
 		app, err := wire.InitializeApp()
 		if err != nil {

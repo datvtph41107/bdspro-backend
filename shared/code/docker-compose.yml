@@ -225,6 +225,53 @@ services:
     networks:
       - internal
 
+  tqd:
+    build: ./tqd-service
+    container_name: tqd
+    command: ["./main", "http"]
+    ports:
+      - "8030:8030"
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  feedback:
+    build: ./feedback-service
+    container_name: feedback
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  marketing:
+    build: ./marketing-service
+    container_name: marketing
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
       
   # eureka:
   #   build:

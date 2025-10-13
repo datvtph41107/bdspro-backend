@@ -459,6 +459,32 @@ func (s *ProductService) Suggest(ctx context.Context, req *bdspropb.SuggestReque
 	return productResponse, nil
 }
 
+// @Summary Gợi ý các trường thông tin sử dụng DeepSeek AI
+// @Description Phân tích văn bản mô tả bất động sản bằng DeepSeek AI và trả về các trường thông tin được gợi ý
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body bdspropb.SuggestRequest true "Nội dung mô tả sản phẩm"
+// @Success 200 {object} bdspropb.ProductResponse
+// @Router /v2/bdspro/v2/product/suggest/deepseek [post]
+func (s *ProductService) SuggestDeepseek(ctx context.Context, req *bdspropb.SuggestRequest) (*bdspropb.ProductResponse, error) {
+	if req.Content == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "content is required")
+	}
+
+	// Gọi usecase để phân tích bằng DeepSeek
+	products, err := s.UC.SuggestFieldsWithDeepseek(ctx, req.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	// Tạo ProductResponse từ TotalSearchParser
+	productResponse := s.mapTotalSearchParserToResponse(products)
+
+	return productResponse, nil
+}
+
 // mapProductToResponse maps domain.Product to bdspropb.ProductResponse
 func (s *ProductService) mapTotalSearchParserToResponse(parser *dto.TotalSearchParser) *bdspropb.ProductResponse {
 	response := &bdspropb.ProductResponse{

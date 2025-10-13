@@ -14,7 +14,7 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 	port := viper.GetString("service.port.bdspro")
 	url := "localhost"
 	if env == "release" {
-		url = "bdspro_grpc"
+		url = "bdspro"
 	}
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	// _ = bdspropb.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

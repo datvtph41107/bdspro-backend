@@ -38,14 +38,15 @@ func InitializeApp() (*initial.InitialApp, error) {
 	reportUsecase := usecase.NewReportUsecase(reportRepo, reportReasonRepo, iTransaction, registryUsecase)
 	reportMapper := mapper.NewReportMapper()
 	reportHandler := handler.NewReportHandler(reportUsecase, reportMapper)
+	reportAdminHandler := handler.NewReportAdminHandler(reportUsecase, reportMapper)
 	reportReasonUsecase := usecase.NewReportReasonUsecase(reportReasonRepo)
 	reportReasonHandler := handler.NewReportReasonHandler(reportReasonUsecase)
 	registryHandler := handler.NewRegistryHandler(registryUsecase)
-	initialApp := initial.NewApp(internalHandler, rateHandler, reportHandler, reportReasonHandler, registryHandler, registryUsecase)
+	initialApp := initial.NewApp(internalHandler, rateHandler, reportHandler, reportAdminHandler, reportReasonHandler, registryHandler, registryUsecase)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, initial.NewApp, handler.NewInternalHandler, handler.NewRateHandler, mapper.NewRateMapper, postgre.NewRatePostgres, usecase.NewRateUsecase, initial.NewRedisService, handler.NewRegistryHandler, postgre.NewRegistryPostgres, usecase.NewRegistryUsecase, handler.NewReportHandler, mapper.NewReportMapper, postgre.NewReportPostgres, postgre.NewReportProofPostgres, handler.NewReportReasonHandler, postgre.NewReportReasonPostgres, usecase.NewReportReasonUsecase, usecase.NewReportUsecase, postgre.NewTransactionPostgres, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, initial.NewApp, handler.NewInternalHandler, handler.NewRateHandler, mapper.NewRateMapper, postgre.NewRatePostgres, usecase.NewRateUsecase, initial.NewRedisService, handler.NewRegistryHandler, postgre.NewRegistryPostgres, usecase.NewRegistryUsecase, handler.NewReportHandler, handler.NewReportAdminHandler, mapper.NewReportMapper, postgre.NewReportPostgres, postgre.NewReportProofPostgres, handler.NewReportReasonHandler, postgre.NewReportReasonPostgres, usecase.NewReportReasonUsecase, usecase.NewReportUsecase, postgre.NewTransactionPostgres, client.NewUserClient)

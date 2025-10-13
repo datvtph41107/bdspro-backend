@@ -1,11 +1,9 @@
 package initial
 
 import (
-	"common"
 	_redis "common/redis"
 	"context"
 
-	"auth/config"
 	"auth/infra/handler"
 	"auth/internal/usecase"
 
@@ -37,7 +35,7 @@ func NewApp(authHandler *handler.AuthHandler,
 	userInfoHandler *handler.AuthUserProfileHandler,
 	moduleService *usecase.ModuleService,
 ) *InitialApp {
-	common.LoadConfig(config.EmbeddedConfig)
+	// Config đã được load trong main.go rồi, không cần load lại
 	app := &InitialApp{
 		AuthHandler:       authHandler,
 		UserInfoHandler:   userInfoHandler,

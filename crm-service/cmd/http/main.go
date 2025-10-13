@@ -25,7 +25,7 @@ var HttpCmd = &cobra.Command{
 		r := gin.Default()
 
 		parameters := common.SetupParameters{
-			ConfigFile:   config.ConfigFile,
+			ConfigFile:   config.EmbeddedConfig,
 			Engine:       r,
 			PublicRoutes: publicRoutes,
 			Prefix:       "/crm",

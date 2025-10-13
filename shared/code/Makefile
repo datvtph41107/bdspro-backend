@@ -74,7 +74,9 @@ buf-auth:
 buf-feedback:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path feedback	
 buf-tqd:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path tqd	
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path tqd
+buf-assistant:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
 buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction
 	echo "done"	
 	

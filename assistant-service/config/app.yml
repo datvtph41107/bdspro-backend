@@ -1,0 +1,43 @@
+app:
+  name: "Assistant Service"
+  version: "1.0.0"
+  environment: "development"
+  port:
+    grpc: "8218"
+    http: "8061"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  dbname: "bdspro_db"
+  sslmode: "disable"
+  max_connections: 100
+  max_idle_connections: 10
+  type: "POSTGRES"
+  dns: "host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_bdspro port=5432 sslmode=disable"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  max_retries: 3
+
+deepseek:
+  api_key: "${DEEPSEEK_API_KEY}"
+  base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-chat"
+  timeout_seconds: 30
+  max_tokens: 4000
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+
+monitoring:
+  enabled: true
+  prometheus_port: "9091"
+

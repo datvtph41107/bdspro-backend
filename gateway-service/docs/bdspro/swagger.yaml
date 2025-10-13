@@ -142,6 +142,162 @@ definitions:
       total:
         type: integer
     type: object
+  bdspropb.AdminRejectTransactionRequest:
+    properties:
+      id:
+        type: integer
+      reason:
+        type: string
+    type: object
+  bdspropb.AdminTransactionDetail:
+    properties:
+      amount:
+        type: number
+      approvalDate:
+        type: string
+      approvalStatus:
+        description: pending, approved, rejected
+        type: string
+      approvedBy:
+        description: Thông tin phê duyệt
+        type: integer
+      approver:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      categoryId:
+        description: Thông tin thanh toán
+        type: integer
+      contact:
+        $ref: '#/definitions/bdspropb.ContactInfo'
+      contactId:
+        description: Thông tin contact
+        type: integer
+      createdAt:
+        description: Thời gian
+        type: string
+      createdBy:
+        type: integer
+      creator:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      currency:
+        type: string
+      depositeAmount:
+        description: Thông tin đặt cọc
+        type: number
+      depositeNote:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      owner:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      ownerId:
+        description: Thông tin owner
+        type: integer
+      ownerType:
+        type: integer
+      paymentMethodId:
+        type: integer
+      product:
+        $ref: '#/definitions/bdspropb.ProductInfo'
+      productId:
+        description: Thông tin sản phẩm
+        type: integer
+      relatedDealId:
+        type: integer
+      relatedTransactionId:
+        type: integer
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
+      transactionStatus:
+        description: '10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy'
+        type: integer
+      transactionStatusName:
+        type: string
+      transactionType:
+        description: '10: Bán, 20: Thuê'
+        type: integer
+      transactionTypeName:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      updater:
+        $ref: '#/definitions/sharepb.ProfileItem'
+    type: object
+  bdspropb.AdminTransactionItem:
+    properties:
+      amount:
+        type: number
+      approvalDate:
+        type: string
+      approvalStatus:
+        description: pending, approved, rejected
+        type: string
+      approvedBy:
+        description: Thông tin phê duyệt
+        type: integer
+      approver:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      contactId:
+        description: Thông tin contact
+        type: integer
+      contactName:
+        type: string
+      contactPhone:
+        type: string
+      createdAt:
+        description: Thời gian
+        type: string
+      currency:
+        type: string
+      depositeAmount:
+        type: number
+      id:
+        type: integer
+      owner:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      ownerId:
+        description: Thông tin owner
+        type: integer
+      ownerType:
+        type: integer
+      productCode:
+        type: string
+      productId:
+        description: Thông tin sản phẩm
+        type: integer
+      productName:
+        type: string
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
+      transactionStatus:
+        description: '10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy'
+        type: integer
+      transactionStatusName:
+        type: string
+      transactionType:
+        description: '10: Bán, 20: Thuê'
+        type: integer
+      transactionTypeName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  bdspropb.AdminTransactionSearchResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.AdminTransactionItem'
+        type: array
+      total:
+        type: integer
+    type: object
   bdspropb.AmenityItem:
     properties:
       id:
@@ -388,6 +544,19 @@ definitions:
       name:
         type: string
     type: object
+  bdspropb.ContactInfo:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
   bdspropb.DepositeRequest:
     properties:
       contactId:
@@ -583,6 +752,8 @@ definitions:
       priceType:
         description: '1: chính thức, 2: thỏa thuận'
         type: integer
+      product:
+        $ref: '#/definitions/bdspropb.ProductResponse'
       productId:
         type: integer
       provinceName:
@@ -591,12 +762,16 @@ definitions:
         type: integer
       title:
         type: string
+      transactionStatus:
+        type: integer
       transactionType:
         type: integer
       type:
         description: '1: normal, 2: feed, 3: share'
         type: string
       visibility:
+        type: integer
+      visibleStatus:
         type: integer
       wardName:
         type: string
@@ -979,10 +1154,33 @@ definitions:
     type: object
   bdspropb.Region:
     properties:
+      code:
+        type: integer
+      codeName:
+        type: string
+      createdAt:
+        type: string
       id:
+        type: integer
+      level:
         type: integer
       name:
         type: string
+      parentId:
+        type: integer
+      unit:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  bdspropb.RegionListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.Region'
+        type: array
+      total:
+        type: integer
     type: object
   bdspropb.Response:
     properties:
@@ -1111,6 +1309,11 @@ definitions:
         type: array
       id:
         type: integer
+    type: object
+  bdspropb.SuggestRequest:
+    properties:
+      content:
+        type: string
     type: object
   bdspropb.Transaction:
     properties:
@@ -5516,6 +5719,221 @@ paths:
       summary: Lấy danh sách bài đăng đã đăng
       tags:
       - 'User: Tin đăng'
+  /v2/bdspro/admin/region/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một địa chỉ
+      parameters:
+      - description: ID của địa chỉ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Region'
+      summary: Lấy chi tiết địa chỉ
+      tags:
+      - Admin - Region
+  /v2/bdspro/admin/region/list:
+    get:
+      consumes:
+      - application/json
+      description: 'Lấy danh sách địa chỉ theo level: 1=Tỉnh/TP, 2=Quận/Huyện, 3=Xã/Phường'
+      parameters:
+      - default: 1
+        description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Số lượng item
+        in: query
+        name: size
+        type: integer
+      - description: Tìm kiếm theo tên
+        in: query
+        name: text
+        type: string
+      - description: 'Cấp địa chỉ: 1=Tỉnh/TP, 2=Quận/Huyện, 3=Xã/Phường'
+        in: query
+        name: level
+        type: integer
+      - description: ID của cấp cha
+        in: query
+        name: parentId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.RegionListResponse'
+      summary: Lấy danh sách địa chỉ (tỉnh/huyện/xã)
+      tags:
+      - Admin - Region
+  /v2/bdspro/admin/transactions:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả thương vụ trong hệ thống (dành cho admin)
+      parameters:
+      - description: Trang hiện tại
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Số lượng items mỗi trang
+        in: query
+        name: size
+        required: true
+        type: integer
+      - description: Từ khóa tìm kiếm
+        in: query
+        name: keyword
+        type: string
+      - description: 'Loại giao dịch (10: Bán, 20: Thuê)'
+        in: query
+        name: transactionType
+        type: integer
+      - description: 'Trạng thái giao dịch (10: Nháp, 20: Đặt cọc, 30: Đã ký, 40:
+          Hoàn thành, 50: Hủy)'
+        in: query
+        name: transactionStatus
+        type: integer
+      - description: Trạng thái phê duyệt (pending, approved, rejected)
+        in: query
+        name: approvalStatus
+        type: string
+      - description: Ngày bắt đầu (RFC3339)
+        in: query
+        name: startDate
+        type: string
+      - description: Ngày kết thúc (RFC3339)
+        in: query
+        name: endDate
+        type: string
+      - description: ID sản phẩm
+        in: query
+        name: productId
+        type: integer
+      - description: ID liên hệ
+        in: query
+        name: contactId
+        type: integer
+      - description: ID chủ sở hữu
+        in: query
+        name: ownerId
+        type: integer
+      - description: 'Loại chủ sở hữu (10: Member, 20: Group, 30: Organization)'
+        in: query
+        name: ownerType
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.AdminTransactionSearchResponse'
+      summary: Lấy danh sách thương vụ
+      tags:
+      - AdminTransaction
+  /v2/bdspro/admin/transactions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một thương vụ (soft delete) (dành cho admin)
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Response'
+      summary: Xóa thương vụ
+      tags:
+      - AdminTransaction
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một thương vụ (dành cho admin)
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.AdminTransactionDetail'
+      summary: Lấy chi tiết thương vụ
+      tags:
+      - AdminTransaction
+  /v2/bdspro/admin/transactions/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Phê duyệt một thương vụ (dành cho admin)
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Response'
+      summary: Phê duyệt thương vụ
+      tags:
+      - AdminTransaction
+  /v2/bdspro/admin/transactions/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Từ chối một thương vụ (dành cho admin)
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin từ chối
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspropb.AdminRejectTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.Response'
+      summary: Từ chối thương vụ
+      tags:
+      - AdminTransaction
   /v2/bdspro/v2/asset:
     post:
       parameters:
@@ -7004,6 +7422,31 @@ paths:
       security:
       - BearerAuth: []
       summary: Gợi ý các trường thông tin
+      tags:
+      - 'User: Sản phẩm'
+  /v2/bdspro/v2/product/suggest/deepseek:
+    post:
+      consumes:
+      - application/json
+      description: Phân tích văn bản mô tả bất động sản bằng DeepSeek AI và trả về
+        các trường thông tin được gợi ý
+      parameters:
+      - description: Nội dung mô tả sản phẩm
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspropb.SuggestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.ProductResponse'
+      security:
+      - BearerAuth: []
+      summary: Gợi ý các trường thông tin sử dụng DeepSeek AI
       tags:
       - 'User: Sản phẩm'
   /v2/bdspro/v2/product/total:

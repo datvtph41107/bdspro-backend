@@ -1,7 +1,7 @@
 package emailsender
 
 import (
-	"appointment/appconfig"
+	"appointment/config"
 
 	"gopkg.in/mail.v2"
 )
@@ -17,12 +17,12 @@ type EmailSender struct {
 
 func NewEmailSender() *EmailSender {
 	return &EmailSender{
-		Host:     appconfig.EMAIL_HOST,
-		Port:     appconfig.EMAIL_PORT,
-		Username: appconfig.EMAIL_USERNAME,
-		Password: appconfig.EMAIL_PASSWORD,
-		From:     appconfig.EMAIL_FROM,
-		Name:     appconfig.EMAIL_NAME,
+		Host:     config.EMAIL_HOST,
+		Port:     config.EMAIL_PORT,
+		Username: config.EMAIL_USERNAME,
+		Password: config.EMAIL_PASSWORD,
+		From:     config.EMAIL_FROM,
+		Name:     config.EMAIL_NAME,
 	}
 }
 

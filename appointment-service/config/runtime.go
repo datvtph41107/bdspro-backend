@@ -1,4 +1,4 @@
-package appconfig
+package config
 
 import (
 	"os"
@@ -40,10 +40,18 @@ func InitConfig() {
 }
 
 func loadConfig() {
-	file := "config.yaml"
+	// Check if running in production
+	envRuntime := os.Getenv("ENV_RUNTIME")
+
+	file := "app.yml"
+	if envRuntime == "release" {
+		file = "config/product.yml"
+	}
+
 	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
 		file = envFile
 	}
+
 	flogging.ActivateSpec("debug")
 
 	cfg = viper.New()
@@ -53,11 +61,22 @@ func loadConfig() {
 	cfg.AddConfigPath("./config/")
 	cfg.AddConfigPath("../config/")
 
-	configLogger.Infof("Loading config file: %s", file)
+	configLogger.Infof("Loading config file: %s (ENV_RUNTIME=%s)", file, envRuntime)
 
 	if err := cfg.ReadInConfig(); err != nil {
 		configLogger.Fatalf("Error parsing config file: %s", err)
 	}
+
+	// Sync config vào global viper để common/db có thể dùng
+	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
+
+	// Copy tất cả settings từ local viper sang global viper
+	for key, value := range cfg.AllSettings() {
+		viper.Set(key, value)
+	}
+
+	configLogger.Infof("Config synced to global viper")
 }
 
 func readConfig() error {
