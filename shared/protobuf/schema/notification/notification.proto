@@ -246,7 +246,7 @@ message AdminHistorySearchRequest {
 
 // Account Warning Messages
 message SendAccountWarningRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     uint64 targetId = 2;
     string targetType = 3;
     string warningType = 4;
@@ -276,7 +276,7 @@ message SendAccountWarningResponse {
 }
 
 message GetAccountWarningListRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     int32 page = 2;
     int32 size = 3;
     optional uint64 targetId = 4;
@@ -318,7 +318,7 @@ message AccountWarningItem {
 }
 
 message MarkWarningAsReadRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     uint64 warningId = 2;
     uint64 targetId = 3;
 }
@@ -329,7 +329,7 @@ message MarkWarningAsReadResponse {
 }
 
 message MarkWarningAsAcknowledgedRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     uint64 warningId = 2;
     uint64 targetId = 3;
 }
@@ -340,7 +340,7 @@ message MarkWarningAsAcknowledgedResponse {
 }
 
 message CreateWarningTemplateRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     string name = 2;
     string warningType = 3;
     string title = 4;
@@ -364,7 +364,7 @@ message CreateWarningTemplateResponse {
 }
 
 message GetWarningTemplateListRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     int32 page = 2;
     int32 size = 3;
     string warningType = 4;
@@ -378,7 +378,7 @@ message GetWarningTemplateListResponse {
 }
 
 message GetWarningTemplateDetailRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     uint64 id = 2;
 }
 
@@ -411,7 +411,7 @@ message WarningTemplateItem {
 }
 
 message GetWarningLogListRequest {
-    OwnerOf ownerOf = 1; // user, group, organization
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
     int32 page = 2;
     int32 size = 3;
     optional uint64 warningId = 4;
