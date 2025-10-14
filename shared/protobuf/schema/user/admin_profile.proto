@@ -58,7 +58,7 @@ message AdminProfile {
     string phone = 4;
     string avatar = 5;
     string address = 6;
-    uint32 gender = 7;
+    optional uint32 gender = 7;
     string birth = 8;
     string createdAt = 9;
     string updatedAt = 10;

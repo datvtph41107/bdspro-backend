@@ -9,6 +9,7 @@ import (
 	_middleware "common/middleware"
 	"notification/internal/domain"
 	"notification/internal/dto"
+	"notification/internal/enums"
 	"notification/internal/repo"
 )
 
@@ -66,18 +67,19 @@ func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.
 	// Tạo cảnh báo
 	warning := &domain.AccountWarningEntity{
 		TargetID:    req.TargetID,
-		TargetType:  req.TargetType,
-		WarningType: req.WarningType,
+		TargetType:  enums.TargetTypeEnum(req.TargetType),
+		WarningType: enums.WarningTypeEnum(req.WarningType),
 		Title:       req.Title,
 		Content:     req.Content,
-		Severity:    req.Severity,
-		Status:      "sent",
+		Severity:    enums.SeverityEnum(req.Severity),
+		Status:      enums.WarningStatusSent,
 		IsRead:      false,
 		SentBy:      profileID,
 		EmailSent:   req.SendEmail,
 		RelatedID:   req.RelatedID,
 		RelatedType: req.RelatedType,
 		ExpiresAt:   req.ExpiresAt,
+		TemplateID:  req.TemplateID, // Lưu ID mẫu nếu có
 	}
 
 	createdWarning, err := u.AccountWarningRepo.Create(ctx, warning)
@@ -109,12 +111,12 @@ func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.
 	return &dto.SendAccountWarningResponse{
 		ID:          createdWarning.ID,
 		TargetID:    createdWarning.TargetID,
-		TargetType:  createdWarning.TargetType,
-		WarningType: createdWarning.WarningType,
+		TargetType:  string(createdWarning.TargetType),
+		WarningType: string(createdWarning.WarningType),
 		Title:       createdWarning.Title,
 		Content:     createdWarning.Content,
-		Severity:    createdWarning.Severity,
-		Status:      createdWarning.Status,
+		Severity:    string(createdWarning.Severity),
+		Status:      string(createdWarning.Status),
 		SentBy:      createdWarning.SentBy,
 		SentAt:      createdWarning.SentAt,
 		EmailSent:   createdWarning.EmailSent,
@@ -177,12 +179,12 @@ func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req d
 		items[i] = &dto.AccountWarningItem{
 			ID:          warning.ID,
 			TargetID:    warning.TargetID,
-			TargetType:  warning.TargetType,
-			WarningType: warning.WarningType,
+			TargetType:  string(warning.TargetType),
+			WarningType: string(warning.WarningType),
 			Title:       warning.Title,
 			Content:     warning.Content,
-			Severity:    warning.Severity,
-			Status:      warning.Status,
+			Severity:    string(warning.Severity),
+			Status:      string(warning.Status),
 			IsRead:      warning.IsRead,
 			ReadAt:      warning.ReadAt,
 			SentBy:      warning.SentBy,
@@ -322,10 +324,10 @@ func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req d
 	// Tạo mẫu
 	template := &domain.AccountWarningTemplateEntity{
 		Name:        req.Name,
-		WarningType: req.WarningType,
+		WarningType: enums.WarningTypeEnum(req.WarningType),
 		Title:       req.Title,
 		Content:     req.Content,
-		Severity:    req.Severity,
+		Severity:    enums.SeverityEnum(req.Severity),
 		IsActive:    req.IsActive,
 	}
 
@@ -337,10 +339,10 @@ func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req d
 	return &dto.CreateWarningTemplateResponse{
 		ID:          createdTemplate.ID,
 		Name:        createdTemplate.Name,
-		WarningType: createdTemplate.WarningType,
+		WarningType: string(createdTemplate.WarningType),
 		Title:       createdTemplate.Title,
 		Content:     createdTemplate.Content,
-		Severity:    createdTemplate.Severity,
+		Severity:    string(createdTemplate.Severity),
 		IsActive:    createdTemplate.IsActive,
 		CreatedBy:   createdTemplate.CreatedBy,
 		UpdatedBy:   createdTemplate.UpdatedBy,
@@ -401,10 +403,10 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 		items[i] = &dto.WarningTemplateItem{
 			ID:          template.ID,
 			Name:        template.Name,
-			WarningType: template.WarningType,
+			WarningType: string(template.WarningType),
 			Title:       template.Title,
 			Content:     template.Content,
-			Severity:    template.Severity,
+			Severity:    string(template.Severity),
 			IsActive:    template.IsActive,
 			CreatedBy:   template.CreatedBy,
 			UpdatedBy:   template.UpdatedBy,
@@ -418,6 +420,38 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 		Total: total,
 		Page:  req.Page, // Trả về page gốc (0-based)
 		Size:  req.Size,
+	}, nil
+}
+
+// GetWarningTemplateDetail lấy chi tiết mẫu cảnh báo theo ID
+func (u *AccountWarningUsecase) GetWarningTemplateDetail(ctx context.Context, id uint64) (*dto.WarningTemplateItem, error) {
+	// Kiểm tra quyền admin
+	hasAdminRole, err := u.hasAdminRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAdminRole {
+		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+
+	// Lấy template theo ID
+	template, err := u.AccountWarningRepo.FindTemplateByID(ctx, id)
+	if err != nil {
+		return nil, _errors.ReturnError(int32(404), "Không tìm thấy mẫu cảnh báo")
+	}
+
+	return &dto.WarningTemplateItem{
+		ID:          template.ID,
+		Name:        template.Name,
+		WarningType: string(template.WarningType),
+		Title:       template.Title,
+		Content:     template.Content,
+		Severity:    string(template.Severity),
+		IsActive:    template.IsActive,
+		CreatedBy:   template.CreatedBy,
+		UpdatedBy:   template.UpdatedBy,
+		CreatedAt:   *template.BaseEntity.CreatedAt,
+		UpdatedAt:   *template.BaseEntity.UpdatedAt,
 	}, nil
 }
 

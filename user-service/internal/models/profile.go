@@ -2,6 +2,7 @@ package models
 
 import (
 	_db "common/db"
+	_enum "common/domain/enum"
 	_model "common/models"
 	"fmt"
 	"time"
@@ -63,18 +64,21 @@ type UserProfileEntity struct {
 	Professions    []ProfessionEntity    `gorm:"-" json:"professions"`
 	RateStats      *RateStats            `gorm:"-" json:"rateStats"`
 
-	FriendStatus *FriendItem `gorm:"-" json:"friendStatus"`
-	Following    bool        `gorm:"-" json:"following"`
-	Status       uint8       `gorm:"column:status;default:10" json:"status"`
+	FriendStatus *FriendItem       `gorm:"-" json:"friendStatus"`
+	Following    bool              `gorm:"-" json:"following"`
+	Status       _enum.EUserStatus `gorm:"column:status;default:10" json:"status"`
 
 	Bookmark bool `gorm:"-" json:"bookmark"`
 
+	// WarningLevel level
+	WarningLevel _enum.EWarningLevel `gorm:"column:warning;default:0" json:"warning"`
+
 	// Role information
 	RoleID *uint64 `gorm:"column:role_id" json:"roleId"`
-	// RoleKey *uint32 `gorm:"column:role_key" json:"roleKey"`
 
-	// transient
+	// transient - Role information from auth-service
 	RoleName    string `gorm:"-" json:"roleName"`
+	RoleKeyData uint32 `gorm:"-" json:"roleKeyData"` // Role key from role table
 	RoleColor   string `gorm:"-" json:"roleColor"`
 	RoleBgColor string `gorm:"-" json:"roleBgColor"`
 }
@@ -129,13 +133,13 @@ type OtpVerifyRequest struct {
 
 // GetByProfileId truy vấn UserProfileEntity theo profileId
 func ProfileGetByPhone(phone string) (*UserProfileEntity, error) {
-	var userProfile *UserProfileEntity
+	var userProfile UserProfileEntity
 	if err := _db.DB.Model(&UserProfileEntity{}).
 		Where("(phone like '%' || ? || '%') and deleted_at is null", phone).
-		Scan(&userProfile).Error; err != nil {
+		First(&userProfile).Error; err != nil {
 		return nil, err
 	}
-	return userProfile, nil
+	return &userProfile, nil
 }
 
 // GetByProfileId truy vấn UserProfileEntity theo profileId

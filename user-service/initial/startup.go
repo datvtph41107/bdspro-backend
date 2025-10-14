@@ -15,12 +15,18 @@ type InitialApp struct {
 	ProfileService *handler.GrpcProfileService
 	ProfileUsecase *usecases.ProfileUsecase
 	// Admin Services
-	AdminHandler        *handler.AdminHandler
-	BookmarkUserHandler *handler.BookmarkUserHandler
-	FeedbackClient      *client.FeedbackClient
+	AdminHandler            *handler.AdminHandler
+	AdminUserProfileHandler *handler.AdminUserProfileHandler
+	BookmarkUserHandler     *handler.BookmarkUserHandler
+	FeedbackClient          *client.FeedbackClient
 	// System Config
 	SystemConfigHandler *handler.SystemConfigHandler
 	SystemConfigUsecase *usecases.SystemConfigUsecase
+	// Membership & Plan
+	MembershipHandler *handler.MembershipHandler
+	PlanHandler       *handler.PlanHandler
+	// Internal Service
+	InternalHandler *handler.InternalHandler
 }
 
 func NewInitialApp(
@@ -30,21 +36,29 @@ func NewInitialApp(
 	friend *routes.FriendRouter,
 	profileService *handler.GrpcProfileService,
 	adminHandler *handler.AdminHandler,
+	adminUserProfileHandler *handler.AdminUserProfileHandler,
 	bookmarkUserHandler *handler.BookmarkUserHandler,
 	feedbackClient *client.FeedbackClient,
 	systemConfigHandler *handler.SystemConfigHandler,
 	systemConfigUsecase *usecases.SystemConfigUsecase,
+	membershipHandler *handler.MembershipHandler,
+	planHandler *handler.PlanHandler,
+	internalHandler *handler.InternalHandler,
 ) *InitialApp {
 	return &InitialApp{
-		ProfileRouter:       profile,
-		BlockRouter:         block,
-		FollowRouter:        follow,
-		FriendRouter:        friend,
-		ProfileService:      profileService,
-		AdminHandler:        adminHandler,
-		BookmarkUserHandler: bookmarkUserHandler,
-		FeedbackClient:      feedbackClient,
-		SystemConfigHandler: systemConfigHandler,
-		SystemConfigUsecase: systemConfigUsecase,
+		ProfileRouter:           profile,
+		BlockRouter:             block,
+		FollowRouter:            follow,
+		FriendRouter:            friend,
+		ProfileService:          profileService,
+		AdminHandler:            adminHandler,
+		AdminUserProfileHandler: adminUserProfileHandler,
+		BookmarkUserHandler:     bookmarkUserHandler,
+		FeedbackClient:          feedbackClient,
+		SystemConfigHandler:     systemConfigHandler,
+		SystemConfigUsecase:     systemConfigUsecase,
+		MembershipHandler:       membershipHandler,
+		PlanHandler:             planHandler,
+		InternalHandler:         internalHandler,
 	}
 }

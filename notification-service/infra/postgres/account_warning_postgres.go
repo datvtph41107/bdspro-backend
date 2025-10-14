@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"notification/internal/domain"
+	"notification/internal/enums"
 )
 
 // @bind: notification/internal/repo.AccountWarningRepository
@@ -91,8 +92,8 @@ func (r *AccountWarningPostgresRepo) FindAll(c context.Context, page, size int, 
 	}
 
 	// Get paginated results
-	offset := (page - 1) * size
-	err = query.Order("sent_at DESC").Offset(offset).Limit(size).Find(&warnings).Error
+	offset := page * size
+	err = query.Debug().Order("sent_at DESC").Offset(offset).Limit(size).Find(&warnings).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -153,7 +154,7 @@ func (r *AccountWarningPostgresRepo) MarkAsRead(c context.Context, id uint64, ta
 		Updates(map[string]interface{}{
 			"is_read": true,
 			"read_at": now,
-			"status":  "read",
+			"status":  enums.WarningStatusRead,
 		}).Error
 }
 
@@ -161,7 +162,7 @@ func (r *AccountWarningPostgresRepo) MarkAsRead(c context.Context, id uint64, ta
 func (r *AccountWarningPostgresRepo) MarkAsAcknowledged(c context.Context, id uint64, targetID uint64) error {
 	return _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).
 		Where("id = ? AND target_id = ? AND deleted_at IS NULL", id, targetID).
-		Update("status", "acknowledged").Error
+		Update("status", enums.WarningStatusAcknowledged).Error
 }
 
 // CheckDuplicateWarning kiểm tra cảnh báo trùng lặp

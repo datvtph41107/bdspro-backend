@@ -1,0 +1,2538 @@
+{
+  "permissions": [
+    {
+      "name": "Tạo thương vụ",
+      "key": "TAO_THUONG_VU",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 10,
+      "requiredKey": ""
+    },
+    {
+      "name": "QUẢN LÝ THƯƠNG VỤ",
+      "key": "TONG_QUAT_THUONG_VU",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 30,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Cài đặt thương vụ",
+          "key": "CAI_DAT_THUONG_VU",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Đổi số tài khoản",
+              "key": "CAI_DAT_THUONG_VU_TAI_KHOAN_NGAN_HANG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Nâng cao",
+              "key": "CAI_DAT_THUONG_VU_NANG_CAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem",
+              "key": "CAI_DAT_THUONG_VU_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem tiến độ",
+              "key": "CAI_DAT_THUONG_VU_TIEN_DO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem nhật ký",
+              "key": "CAI_DAT_THUONG_VU_NHAT_KY",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Ghi chú nội bộ",
+              "key": "CAI_DAT_THUONG_VU_GHI_CHU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chia hoa hồng",
+              "key": "CAI_DAT_THUONG_VU_CHIA_HOA_HONG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chia sẻ",
+              "key": "CAI_DAT_THUONG_VU_CHIA_SE",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cập nhật",
+              "key": "CAI_DAT_THUONG_VU_CAP_NHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm thương vụ",
+              "key": "CAI_DAT_THUONG_VU_THEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Ghim",
+              "key": "CAI_DAT_THUONG_VU_GHIM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Báo cáo",
+              "key": "CAI_DAT_THUONG_VU_BAO_CAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Góp vốn thương vụ",
+          "key": "GOP_VON_THUONG_VU",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem tổng số vốn",
+              "key": "GOP_VON_THUONG_VU_XEM_TONG_SO_VON",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem tài khoản nhận",
+              "key": "GOP_VON_THUONG_VU_XEM_TAI_KHOAN_NHAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Danh sách tài khoản góp",
+              "key": "GOP_VON_THUONG_VU_DANH_SACH_KHOAN_GOP",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm khoản góp",
+              "key": "GOP_VON_THUONG_VU_THEM_KHOAN_GOP",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa khoản góp",
+              "key": "GOP_VON_THUONG_VU_SUA_KHOAN_GOP",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa khoản góp",
+              "key": "GOP_VON_THUONG_VU_XOA_KHOAN_GOP",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm cho thành viên",
+              "key": "GOP_VON_THUONG_VU_THEM_CHO_THANH_VIEN",
+              "description": "Cho phép thêm khoản góp cho thành viên khác",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phê duyệt",
+              "key": "GOP_VON_THUONG_VU_PHE_DUYET",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem",
+              "key": "GOP_VON_THUONG_VU_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Thành viên thương vụ",
+          "key": "THANH_VIEN_THUONG_VU",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Thêm thành viên",
+              "key": "THANH_VIEN_THUONG_VU_THEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gỡ thành viên",
+              "key": "THANH_VIEN_THUONG_VU_GO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cập nhật vai trò",
+              "key": "THANH_VIEN_THUONG_VU_VAI_TRO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem danh sách",
+              "key": "THANH_VIEN_THUONG_VU_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Doanh thu thương vụ",
+          "key": "DOANH_THU_THUONG_VU",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem doanh thu",
+              "key": "DOANH_THU_THUONG_VU_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm chi phí",
+              "key": "DOANH_THU_THUONG_VU_THEM_CHI_PHI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa chi phí",
+              "key": "DOANH_THU_THUONG_VU_SUA_CHI_PHI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa chi phí",
+              "key": "DOANH_THU_THUONG_VU_XOA_CHI_PHI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phê duyệt",
+              "key": "DOANH_THU_THUONG_VU_PHE_DUYET",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Nhập tay doanh thu",
+              "key": "DOANH_THU_THUONG_VU_NHAP_TAY",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Danh sách giao dịch",
+              "key": "DOANH_THU_THUONG_VU_DANH_SACH_GIAO_DICH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Lợi nhuận ròng",
+              "key": "DOANH_THU_THUONG_VU_LOI_NHUAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Lịch hẹn thương vụ",
+          "key": "LICH_HEN_THUONG_VU",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Danh sách",
+              "key": "LICH_HEN_THUONG_VU_DANH_SACH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Đặt lịch",
+              "key": "LICH_HEN_THUONG_VU_DAT_LICH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cập nhật",
+              "key": "LICH_HEN_THUONG_VU_CAP_NHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "LICH_HEN_THUONG_VU_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Hủy",
+              "key": "LICH_HEN_THUONG_VU_HUY",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phê duyệt",
+              "key": "LICH_HEN_THUONG_VU_PHE_DUYET",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Giao dịch thương vụ",
+          "key": "GIAO_DICH_THUONG_VU",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "GIAO_DICH_THUONG_VU_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm giao dịch",
+              "key": "GIAO_DICH_THUONG_VU_TAO_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cập nhật",
+              "key": "GIAO_DICH_THUONG_VU_CAP_NHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "GIAO_DICH_THUONG_VU_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phê duyệt",
+              "key": "GIAO_DICH_THUONG_VU_PHE_DUYET",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Đặt cọc/Ký/Chuyển tiền",
+              "key": "GIAO_DICH_THUONG_VU_DAT_COC_KY_CHUYEN_TIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm sản phẩm",
+              "key": "GIAO_DICH_THUONG_VU_THEM_SAN_PHAM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TÀI KHOẢN",
+      "key": "TAI_KHOAN",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 10,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Thiết lập chung",
+          "key": "THIET_LAP_TAI_KHOAN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Tạo nhóm",
+              "key": "NHOM_TAO_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TRANG QUẢN TRỊ",
+      "key": "QUAN_TRI",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 30,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Lead CRM",
+          "key": "LEAD_CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Tạo lead",
+              "key": "LEAD_CRM_TAO_LEAD",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa lead",
+              "key": "LEAD_CRM_SUA_LEAD",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa lead",
+              "key": "LEAD_CRM_XOA_LEAD",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem dạng bảng",
+              "key": "LEAD_CRM_XEM_DANG_BANG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem dạng Kanban",
+              "key": "LEAD_CRM_XEM_DANG_KANBAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Bảng hàng",
+          "key": "BANG_HANG",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "BANG_HANG_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm",
+              "key": "BANG_HANG_THEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "BANG_HANG_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "BANG_HANG_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Nhân viên",
+          "key": "NHAN_VIEN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Thống kê",
+              "key": "NHAN_VIEN_THONG_KE",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Đấu giá",
+              "key": "NHAN_VIEN_DAU_GIA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Marketing",
+              "key": "NHAN_VIEN_MARKETING",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Sản phẩm cá nhân",
+          "key": "SAN_PHAM_CA_NHAN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "SAN_PHAM_CA_NHAN_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "childs": [
+                {
+                  "name": "Xem sản phẩm",
+                  "key": "SAN_PHAM_CA_NHAN_XEM_XEM_SAN_PHAM",
+                  "description": "",
+                  "permissionType": "ORGANIZATION",
+                  "module": "",
+                  "priority": 10,
+                  "requiredKey": ""
+                },
+                {
+                  "name": "Sửa sản phẩm",
+                  "key": "SAN_PHAM_CA_NHAN_XEM_SUA_SAN_PHAM",
+                  "description": "",
+                  "permissionType": "ORGANIZATION",
+                  "module": "",
+                  "priority": 10,
+                  "requiredKey": ""
+                }
+              ]
+            },
+            {
+              "name": "Thêm mới",
+              "key": "SAN_PHAM_CA_NHAN_THEM_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "childs": [
+                {
+                  "name": "Sửa sản phẩm",
+                  "key": "SAN_PHAM_CA_NHAN_THEM_MOI_SUA_SAN_PHAM",
+                  "description": "",
+                  "permissionType": "ORGANIZATION",
+                  "module": "",
+                  "priority": 10,
+                  "requiredKey": ""
+                },
+                {
+                  "name": "Xem sản phẩm",
+                  "key": "SAN_PHAM_CA_NHAN_THEM_MOI_XEM_SAN_PHAM",
+                  "description": "",
+                  "permissionType": "ORGANIZATION",
+                  "module": "",
+                  "priority": 10,
+                  "requiredKey": ""
+                }
+              ]
+            },
+            {
+              "name": "Sửa",
+              "key": "SAN_PHAM_CA_NHAN_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "SAN_PHAM_CA_NHAN_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Lưu trữ",
+              "key": "SAN_PHAM_CA_NHAN_LUU_TRU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gộp/tách",
+              "key": "SAN_PHAM_CA_NHAN_GOP_TACH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chuyển thành tài sản",
+              "key": "SAN_PHAM_CA_NHAN_CHUYEN_THANH_TAI_SAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chia sẻ cobroker",
+              "key": "SAN_PHAM_CA_NHAN_CHIA_SE_COBROKER",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "import",
+              "key": "SAN_PHAM_CA_NHAN_IMPORT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "export",
+              "key": "SAN_PHAM_CA_NHAN_EXPORT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thay đổi trạng thái",
+              "key": "SAN_PHAM_CA_NHAN_THAY_DOI_TRANG_THAI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thay đổi phạm vi",
+              "key": "SAN_PHAM_CA_NHAN_THAY_DOI_PHAM_VI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Tổ chức hệ thống",
+          "key": "TO_CHUC_HE_THONG",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": ""
+        },
+        {
+          "name": "Tài sản cá nhân",
+          "key": "TAI_SAN_CA_NHAN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem tài sản",
+              "key": "TAI_SAN_CA_NHAN_XEM_TAI_SAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa tài sản",
+              "key": "TAI_SAN_CA_NHAN_SUA_TAI_SAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa tài sản",
+              "key": "TAI_SAN_CA_NHAN_XOA_TAI_SAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tách gộp",
+              "key": "TAI_SAN_CA_NHAN_TACH_GOP",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Lưu trữ",
+              "key": "TAI_SAN_CA_NHAN_LUU_TRU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Khai thác dòng tiền",
+              "key": "TAI_SAN_CA_NHAN_KHAI_THAC_DONG_TIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Báo cáo biến động",
+              "key": "TAI_SAN_CA_NHAN_BAO_CAO_BIEN_DONG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Tổ chức",
+          "key": "TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Sửa thành viên",
+              "key": "TO_CHUC_SUA_THANH_VIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem thành viên",
+              "key": "TO_CHUC_XEM_THANH_VIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Tin đăng",
+          "key": "TIN_DANG",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem tin đăng",
+              "key": "TIN_DANG_XEM_TIN_DANG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa tin đăng",
+              "key": "TIN_DANG_SUA_TIN_DANG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "CRM",
+          "key": "CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Sửa CRM",
+              "key": "CRM_SUA_CRM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem CRM",
+              "key": "CRM_XEM_CRM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Admin sản phẩm",
+          "key": "ADMIN_SP",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem danh sách",
+              "key": "ADMIN_SP_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo mới",
+              "key": "ADMIN_SP_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_SP_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_SP_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Loại bất động sản",
+          "key": "LOAI_BAT_DONG_SAN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "LOAI_BAT_DONG_SAN_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo mới",
+              "key": "LOAI_BAT_DONG_SAN_TAO_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "LOAI_BAT_DONG_SAN_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "LOAI_BAT_DONG_SAN_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Dự án",
+          "key": "DU_AN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "DU_AN_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo mới",
+              "key": "DU_AN_TAO_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "DU_AN_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "DU_AN_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Tài khoản admin",
+          "key": "ADMIN_TK",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_TK_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_TK_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_TK_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_TK_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Truy cập tin đăng",
+          "key": "ADMIN_TD",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_TD_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_TD_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_TD_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_TD_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Truy cập tài sản",
+          "key": "ADMIN_TS",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_TS_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_TS_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_TS_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_TS_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TỔ CHỨC",
+      "key": "TO_CHUC",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 30,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Thiết lập chung",
+          "key": "TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Thêm mới",
+              "key": "TO_CHUC_THEM_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chỉnh sửa",
+              "key": "TO_CHUC_CHINH_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm thành viên",
+              "key": "TO_CHUC_THEM_THANH_VIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa thành viên",
+              "key": "TO_CHUC_XOA_THANH_VIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phân quyền",
+              "key": "TO_CHUC_PHAN_QUYEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Nhật ký",
+              "key": "TO_CHUC_NHAT_KY",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm chi nhánh",
+              "key": "TO_CHUC_THEM_CHI_NHANH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Trang chủ",
+          "key": "TRANG_CHU_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": ""
+        },
+        {
+          "name": "Thương vụ tổ chức",
+          "key": "THUONG_VU_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Cập nhật",
+              "key": "THUONG_VU_CAP_NHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tổng quan",
+              "key": "THUONG_VU_TO_CHUC_TONG_QUAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tiến độ",
+              "key": "THUONG_VU_TO_CHUC_TIEN_DO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Doanh thu lợi nhuận",
+              "key": "THUONG_VU_TO_CHUC_DOANH_THU_LOI_NHUAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Nhật ký",
+              "key": "THUONG_VU_TO_CHUC_NHAT_KY",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem danh sách",
+              "key": "THUONG_VU_TO_CHUC_DANH_SACH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chỉ danh sách tham gia",
+              "key": "THUONG_VU_TO_CHUC_CHI_DANH_SACH_THAM_GIA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Báo cáo",
+              "key": "THUONG_VU_TO_CHUC_BAO_CAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo mới",
+              "key": "THUONG_VU_TO_CHUC_TAO_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chỉnh sửa",
+              "key": "THUONG_VU_TO_CHUC_CHINH_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "THUONG_VU_TO_CHUC_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Ghi chú nội bộ",
+              "key": "THUONG_VU_TO_CHUC_GHI_CHU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chia hoa hồng",
+              "key": "THUONG_VU_TO_CHUC_CHIA_HOA_HONG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Ghim",
+              "key": "THUONG_VU_TO_CHUC_GHIM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cài đặt",
+              "key": "THUONG_VU_TO_CHUC_CAI_DAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "CRM",
+          "key": "CRM_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "CRM_TO_CHUC_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Lịch hẹn",
+          "key": "LICH_HEN_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "LICH_HEN_TO_CHUC_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "LICH_HEN_TO_CHUC_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "LICH_HEN_TO_CHUC_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "LICH_HEN_TO_CHUC_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Giao dịch",
+          "key": "GIAO_DICH_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": ""
+        },
+        {
+          "name": "Thống kê",
+          "key": "THONG_KE_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "THONG_KE_TO_CHUC_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Bảng hàng",
+          "key": "BANG_HANG_TO_CHUC",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "BANG_HANG_TO_CHUC_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "BANG_HANG_TO_CHUC_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "BANG_HANG_TO_CHUC_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "BANG_HANG_TO_CHUC_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HỆ THỐNG",
+      "key": "HE_THONG",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 40,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Vai trò \u0026 phân quyền hệ thống",
+          "key": "ADMIN_VT",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Thêm vai trò",
+              "key": "ADMIN_VT_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa vai trò",
+              "key": "ADMIN_VT_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa vai trò",
+              "key": "ADMIN_VT_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem vai trò",
+              "key": "ADMIN_VT_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gán vai trò",
+              "key": "ADMIN_VT_GAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Vai trò mặc định",
+          "key": "VAI_TRO_MAC_DINH",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Chỉ xem",
+              "key": "VAI_TRO_MAC_DINH_CHI_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chỉnh sửa",
+              "key": "VAI_TRO_MAC_DINH_CHINH_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Nhóm vai trò",
+          "key": "NHOM_VAI_TRO",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Chỉ xem",
+              "key": "NHOM_VAI_TRO_CHI_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chỉnh sửa",
+              "key": "NHOM_VAI_TRO_CHINH_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NHÓM",
+      "key": "NHOM",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 10,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Thiết lập chung",
+          "key": "THIET_LAP_NHOM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Danh sách",
+              "key": "NHOM_DANH_SACH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa nhóm",
+              "key": "NHOM_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa nhóm",
+              "key": "NHOM_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "x",
+              "key": "NHOM_CHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "x",
+              "key": "NHOM_THUONG_VU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Thành viên",
+          "key": "THANH_VIEN_NHOM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Mời thành viên",
+              "key": "THANH_VIEN_NHOM_MOI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem",
+              "key": "THANH_VIEN_NHOM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phân quyền thành viên",
+              "key": "THANH_VIEN_NHOM_PHAN_QUYEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa thành viên",
+              "key": "THANH_VIEN_NHOM_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Tiện ích nhóm",
+          "key": "TIEN_ICH_NHOM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Thương vụ nhóm",
+              "key": "TIEN_ICH_NHOM_THUONG_VU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Chat nhóm",
+              "key": "TIEN_ICH_NHOM_CHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tài liệu nhóm",
+              "key": "TIEN_ICH_NHOM_TAI_LIEU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Báo cáo nhóm",
+              "key": "TIEN_ICH_NHOM_BAO_CAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Góp vốn",
+              "key": "TIEN_ICH_NHOM_GOP_VON",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "CRM",
+              "key": "TIEN_ICH_NHOM_CRM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Sản phẩm",
+          "key": "SAN_PHAM_NHOM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem sản phẩm",
+              "key": "SAN_PHAM_NHOM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Lịch hẹn",
+          "key": "LICH_HEN_NHOM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "LICH_HEN_NHOM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Bảng tin",
+          "key": "BANG_TIN_NHOM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem bảng tin",
+              "key": "NHOM_XEM_BANG_TIN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phê duyệt (x)",
+              "key": "BANG_TIN_NHOM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo bài viết",
+              "key": "NHOM_TAO_BAI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CRM",
+      "key": "CRM",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 10,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Lead",
+          "key": "CRM_LEAD",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Cập nhật trạng thái",
+              "key": "CRM_LEAD_TRANG_THAI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gán người phụ trách",
+              "key": "CRM_LEAD_GAN_PHU_TRACH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cập nhật",
+              "key": "CRM_LEAD_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo mới",
+              "key": "CRM_LEAD_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Ghi chú",
+              "key": "CRM_LEAD_GHI_CHU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "CRM_LEAD_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem",
+              "key": "CRM_LEAD_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Quy trình",
+          "key": "QUY_TRINH_CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "QUY_TRINH_CRM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm mới",
+              "key": "QUY_TRINH_CRM_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "QUY_TRINH_CRM_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "QUY_TRINH_CRM_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Phân quyền",
+          "key": "PHAN_QUYEN_CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "PHAN_QUYEN_CRM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "PHAN_QUYEN_CRM_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "PHAN_QUYEN_CRM_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "PHAN_QUYEN_CRM_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gán vai trò",
+              "key": "PHAN_QUYEN_CRM_GAN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Tự động",
+          "key": "TU_DONG_CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "TU_DONG_CRM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "TU_DONG_CRM_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "TU_DONG_CRM_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "TU_DONG_CRM_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Trạng thái",
+              "key": "TU_DONG_CRM_TRANG_THAI",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Lịch sử",
+          "key": "LICH_SU_CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem lịch sử",
+              "key": "LICH_SU_CRM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Thiết lập chung",
+          "key": "CRM",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "CRM_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gán lead",
+              "key": "CRM_GAN_LEAD",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "CRM_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo lead",
+              "key": "CRM_TAO_LEAD",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Cài đặt",
+              "key": "CRM_CAI_DAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CHI NHÁNH/PHÒNG BAN",
+      "key": "CHI_NHANH",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 10,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Thiết lập chung",
+          "key": "CHI_NHANH_PHONG_BAN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Thông tin chung",
+              "key": "CHI_NHANH_THONG_TIN_CHUNG",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xem thương vụ",
+              "key": "CHI_NHANH_THUONG_VU_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Danh sách giao dịch",
+              "key": "CHI_NHANH_GIAO_DICH_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Nhật ký",
+              "key": "CHI_NHANH_NHAT_KY_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Danh sách",
+              "key": "CHI_NHANH_DANH_SACH",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Thành viên",
+          "key": "CHI_NHANH_THANH_VIEN",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "CHI_NHANH_THANH_VIEN_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Thêm",
+              "key": "CHI_NHANH_THANH_VIEN_THEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gỡ",
+              "key": "CHI_NHANH_THANH_VIEN_GO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Hành động",
+          "key": "HANH_DONG",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 10,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Cập nhật",
+              "key": "CHI_NHANH_CAP_NHAT",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Gán thành viên sang chi nhánh khác",
+              "key": "CHI_NHANH_GAN_THANH_VIEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa/Vô hiệu",
+              "key": "CHI_NHANH_XOA_VO_HIEU",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Phân quyền",
+              "key": "CHI_NHANH_PHAN_QUYEN",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "exportedAt": "2025-10-13T13:51:17.12348+07:00",
+  "totalPermissions": 269,
+  "totalRootPermissions": 9
+}

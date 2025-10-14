@@ -17,7 +17,6 @@ import (
 	auth_infra_redis "auth/infra/redis"
 	auth_initial "auth/initial"
 	auth_internal_domain "auth/internal/domain"
-	auth_internal_interface "auth/internal/interface"
 	auth_internal_interface_factory "auth/internal/interface/factory"
 	auth_internal_interface_provider "auth/internal/interface/provider"
 	auth_internal_interface_repo "auth/internal/interface/repo"
@@ -33,7 +32,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(auth_internal_interface_provider.OrganizationProvider), new(*auth_infra_client.OrganizationClient)),
 	wire.Bind(new(auth_internal_interface_provider.PaymentProvider), new(*auth_infra_client.PaymentClient)),
 	wire.Bind(new(auth_internal_interface_provider.ProfileProvider), new(*auth_infra_client.UserClient)),
-	wire.Bind(new(auth_internal_interface.IUserGrpcClient), new(*auth_infra_client.UserGrpcClient)),
 	wire.Bind(new(auth_internal_interface_provider.CookieProvider), new(*auth_infra_cookie.BroswerCookieProvider)),
 	wire.Bind(new(auth_internal_interface_repo.AdminAccessRepository), new(*auth_infra_postgre.AdminAccessPostgresRepo)),
 	wire.Bind(new(auth_internal_interface_repo.OTPRepository), new(*auth_infra_postgre.OTPPostgres)),
@@ -82,7 +80,6 @@ var wireSet = wire.NewSet(
 	auth_infra_postgre.NewSessionRepository,
 	auth_infra_postgre.NewStatusRepository,
 	auth_infra_client.NewUserClient,
-	auth_infra_client.NewUserGrpcClient,
 	auth_infra_handler.NewUserInfoHandler,
 	auth_infra_mapper.NewUserInfoMapper,
 	auth_infra_postgre.NewUserInfoRepository,

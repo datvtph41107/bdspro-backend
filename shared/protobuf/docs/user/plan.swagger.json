@@ -1,0 +1,479 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "user/plan.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PlanService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/admin/plans": {
+      "get": {
+        "operationId": "PlanService_GetAllPlans",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbGetAllPlansResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "post": {
+        "summary": "Admin APIs - Quản lý plans",
+        "operationId": "PlanService_CreatePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbCreatePlanRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      }
+    },
+    "/api/v1/admin/plans/{id}": {
+      "get": {
+        "operationId": "PlanService_GetPlanById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbGetPlanByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "delete": {
+        "operationId": "PlanService_DeletePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbDeletePlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      },
+      "put": {
+        "operationId": "PlanService_UpdatePlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PlanServiceUpdatePlanBody"
+            }
+          }
+        ],
+        "tags": [
+          "PlanService"
+        ]
+      }
+    },
+    "/api/v1/user/plans": {
+      "get": {
+        "summary": "User APIs - Lấy danh sách plans để hiển thị",
+        "operationId": "PlanService_GetVisiblePlans",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbGetVisiblePlansResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PlanService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "PlanServiceUpdatePlanBody": {
+      "type": "object",
+      "properties": {
+        "packageName": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "string",
+          "format": "int64"
+        },
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createProduct": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limitPost": {
+          "type": "string",
+          "format": "int64"
+        },
+        "publicProductLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createProductAI": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "friendLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "joinOrg": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createOrganization": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orgMemberLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orgProductLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "color": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "visibility": {
+          "type": "boolean"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "userpbCreatePlanRequest": {
+      "type": "object",
+      "properties": {
+        "packageName": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "string",
+          "format": "int64"
+        },
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createProduct": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limitPost": {
+          "type": "string",
+          "format": "int64"
+        },
+        "publicProductLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createProductAI": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "friendLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "joinOrg": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createOrganization": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orgMemberLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orgProductLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "color": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "visibility": {
+          "type": "boolean"
+        }
+      }
+    },
+    "userpbDeletePlanResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "userpbGetAllPlansResponse": {
+      "type": "object",
+      "properties": {
+        "plans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbPlanResponse"
+          }
+        }
+      }
+    },
+    "userpbGetPlanByIdResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/userpbPlanResponse"
+        }
+      }
+    },
+    "userpbGetVisiblePlansResponse": {
+      "type": "object",
+      "properties": {
+        "plans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbPlanResponse"
+          }
+        }
+      }
+    },
+    "userpbPlanResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "string",
+          "format": "int64"
+        },
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createProduct": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limitPost": {
+          "type": "string",
+          "format": "int64"
+        },
+        "publicProductLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createProductAI": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "friendLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "joinOrg": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createOrganization": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orgMemberLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orgProductLimit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "color": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "visibility": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

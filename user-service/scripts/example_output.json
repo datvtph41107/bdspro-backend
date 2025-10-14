@@ -1,0 +1,193 @@
+{
+  "userProfiles": [
+    {
+      "profileId": 1,
+      "phone": "0901234567",
+      "phone2": "",
+      "email": "user@example.com",
+      "taxCode": "",
+      "fullName": "Nguyễn Văn A",
+      "address": "123 Đường ABC, Quận 1, TP.HCM",
+      "gender": 1,
+      "avatar": "https://example.com/avatar.jpg",
+      "tickVerified": true,
+      "backgroundImage": "",
+      "referralCode": "REF000001",
+      "referralBy": "",
+      "roleType": 10,
+      "roleKey": 10,
+      "position": "Nhân viên kinh doanh",
+      "departmentId": 1,
+      "birth": "1990-01-15T00:00:00Z",
+      "startDate": "2023-01-01T00:00:00Z",
+      "planId": 1,
+      "planAt": "2024-01-01T00:00:00Z",
+      "slogan": "Chuyên gia bất động sản",
+      "website": "https://example.com",
+      "facebook": "fb.com/user",
+      "statusOnline": 10,
+      "roleId": 1,
+      "status": 10,
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "adminProfiles": [
+    {
+      "id": 1,
+      "profileId": 100,
+      "email": "admin@example.com",
+      "fullName": "Admin User",
+      "phone": "0909999999",
+      "avatar": "",
+      "status": 10,
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "plans": [
+    {
+      "id": 1,
+      "packageName": "Basic",
+      "duration": 30,
+      "price": 99000,
+      "createProduct": 10,
+      "limitPost": 50,
+      "publicProductLimit": 5,
+      "createProductAI": 0,
+      "friendLimit": 100,
+      "customerLimit": 50,
+      "joinOrg": 1,
+      "createOrganization": 0,
+      "orgMemberLimit": 0,
+      "orgProductLimit": 0,
+      "color": "#4CAF50",
+      "visibility": true,
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "packageName": "Premium",
+      "duration": 30,
+      "price": 299000,
+      "createProduct": 50,
+      "limitPost": 200,
+      "publicProductLimit": 20,
+      "createProductAI": 10,
+      "friendLimit": 500,
+      "customerLimit": 200,
+      "joinOrg": 3,
+      "createOrganization": 1,
+      "orgMemberLimit": 10,
+      "orgProductLimit": 100,
+      "color": "#FF9800",
+      "visibility": true,
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "memberships": [
+    {
+      "id": 1,
+      "profileId": 1,
+      "planId": 1,
+      "finishedDate": "2024-02-01T00:00:00Z",
+      "orderId": 1001,
+      "paidAt": "2024-01-01T10:00:00Z",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "name": "Bạn thân",
+      "textColor": "#FFFFFF",
+      "backgroundColor": "#2196F3",
+      "createdBy": 1,
+      "updatedBy": 1,
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "friends": [
+    {
+      "id": 1,
+      "senderId": 1,
+      "receiverId": 2,
+      "groupId": 1,
+      "status": 2,
+      "text": "Kết bạn nhé!",
+      "respondedAt": "2023-01-02T10:00:00Z",
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2023-01-02T10:00:00Z"
+    }
+  ],
+  "follows": [
+    {
+      "id": 1,
+      "followerId": 1,
+      "followedId": 3,
+      "createdAt": "2023-01-01T10:00:00Z"
+    }
+  ],
+  "blocks": [
+    {
+      "id": 1,
+      "blockerId": 1,
+      "blockedId": 99,
+      "createdAt": "2023-01-01T10:00:00Z"
+    }
+  ],
+  "contacts": [
+    {
+      "id": 1,
+      "profileId": 1,
+      "contactId": 5,
+      "createdAt": "2023-01-01T10:00:00Z"
+    }
+  ],
+  "bookmarkUsers": [
+    {
+      "id": 1,
+      "profileId": 1,
+      "bookmarkId": 10,
+      "createdAt": "2023-01-01T10:00:00Z"
+    }
+  ],
+  "professions": [
+    {
+      "id": 1,
+      "profileId": 1,
+      "name": "Môi giới bất động sản",
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "certifications": [
+    {
+      "id": 1,
+      "profileId": 1,
+      "name": "Chứng chỉ hành nghề BĐS",
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "systemConfigs": [
+    {
+      "id": 1,
+      "key": "max_upload_size",
+      "value": "10485760",
+      "groupKey": "upload",
+      "createdAt": "2023-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "exportedAt": "2025-10-13T11:00:00+07:00",
+  "totalUsers": 1,
+  "totalPlans": 2,
+  "totalMemberships": 1,
+  "totalFriends": 1
+}
+

@@ -72,6 +72,11 @@ const (
 	HistoryAdminCreate EHistory = 10010
 	HistoryAdminUpdate EHistory = 10020
 	HistoryAdminDelete EHistory = 10030
+
+	// -- action for user management --
+	HistoryUserCreate EHistory = 11010
+	HistoryUserUpdate EHistory = 11020
+	HistoryUserDelete EHistory = 11030
 )
 
 var HistoryMap = map[EHistory]string{
@@ -140,6 +145,11 @@ var HistoryMap = map[EHistory]string{
 	HistoryAdminCreate: "Tạo admin",
 	HistoryAdminUpdate: "Cập nhật admin",
 	HistoryAdminDelete: "Xóa admin",
+
+	// -- action for user management --
+	HistoryUserCreate: "Tạo người dùng",
+	HistoryUserUpdate: "Cập nhật người dùng",
+	HistoryUserDelete: "Xóa người dùng",
 }
 
 var HistoryContactAction = []EHistory{

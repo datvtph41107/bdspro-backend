@@ -5,7 +5,7 @@ package userpb;
 import "shared/common.proto";
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
-import "user/profile.proto";
+import "user/admin_user_profile.proto";
 
 option go_package = "pb/types/user;userpb";
 

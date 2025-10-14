@@ -1,18 +1,17 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
-	"user/initial"
 	user_infra_client "user/infra/client"
 	user_infra_handler "user/infra/handler"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_postgres "user/infra/postgres"
 	user_infra_routes "user/infra/routes"
 	user_infra_setting "user/infra/setting"
+	"user/initial"
 	user_initial "user/initial"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
@@ -21,6 +20,8 @@ import (
 	user_internal_job "user/internal/job"
 	user_internal_models "user/internal/models"
 	user_internal_usecases "user/internal/usecases"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -42,6 +43,7 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewAdminMapper,
 	user_infra_postgres.NewAdminPostgres,
 	user_internal_usecases.NewAdminUsecase,
+	user_infra_handler.NewAdminUserProfileHandler,
 	user_infra_postgres.NewAttachPostgres,
 	user_infra_client.NewAuthClient,
 	user_infra_postgres.NewBlockPostgres,
@@ -65,10 +67,19 @@ var wireSet = wire.NewSet(
 	user_infra_postgres.NewGroupPostgres,
 	user_infra_handler.NewGrpcProfileService,
 	user_initial.NewInitialApp,
+	user_infra_handler.NewInternalHandler,
+	user_infra_handler.NewMembershipHandler,
+	user_infra_mapper.NewMembershipMapper,
+	user_infra_postgres.NewMembershipRepo,
+	user_internal_usecases.NewMembershipUsecase,
 	user_infra_client.NewNotificationClient,
 	user_infra_client.NewOrganizationClient,
 	user_infra_client.NewOrganizationMemberClient,
 	user_infra_client.NewPaymentClient,
+	user_infra_handler.NewPlanHandler,
+	user_infra_mapper.NewPlanMapper,
+	user_infra_postgres.NewPlanRepo,
+	user_internal_usecases.NewPlanUsecase,
 	user_infra_postgres.NewProfessionPostgres,
 	user_internal_usecases.NewProfessionUsecase,
 	user_infra_mapper.NewProfileMapper,
@@ -85,6 +96,7 @@ var wireSet = wire.NewSet(
 	user_internal_models.NewUserProfileEntityWithRequest,
 	user_internal_usecases.NewUserUsecase,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

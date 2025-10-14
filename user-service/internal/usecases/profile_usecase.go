@@ -2,6 +2,7 @@ package usecases
 
 import (
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_jwt "common/jwt"
 	_models "common/models"
 	_utils "common/utils"
@@ -222,6 +223,26 @@ func (s *ProfileUsecase) ProfileGetByPhone(c *gin.Context) (*dto.PublicUserInfo,
 	return info, nil
 }
 
+// FindByPhone tìm user theo số điện thoại (v2)
+func (s *ProfileUsecase) FindByPhone(ctx context.Context, phone string) (*models.UserProfileEntity, error) {
+	if phone == "" {
+		return nil, nil
+	}
+
+	// Lấy thông tin user từ DB
+	infoEntity, err := models.ProfileGetByPhone(phone)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return infoEntity, nil
+}
+
 func (s *ProfileUsecase) SearchUserByFriend(c *gin.Context, dto dto.ProfileSearch) (*[]models.UserProfileSearch, int64, error) {
 	profileId := _jwt.GetProfileId(c)
 	// Lấy thông tin user từ DB
@@ -308,6 +329,7 @@ func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 			if profile.Role != nil {
 				users[i].RoleName = profile.Role.RoleName
 				users[i].RoleID = &profile.Role.ID
+				users[i].RoleKeyData = profile.Role.RoleKey
 				if profile.Role.Color != nil {
 					users[i].RoleColor = profile.Role.Color.Color
 					users[i].RoleBgColor = profile.Role.Color.BackgroundColor
@@ -317,4 +339,40 @@ func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	}
 
 	return users, total, nil
+}
+
+// CheckAccountStatus kiểm tra trạng thái tài khoản người dùng
+func (uc *ProfileUsecase) CheckAccountStatus(ctx context.Context, profileID uint64) (*userpb.CheckAccountStatusResponse, error) {
+	profile, err := uc.ProfileRepo.GetByProfileID(profileID)
+	if err != nil {
+		return nil, err
+	}
+
+	if profile == nil {
+		return nil, errors.New("profile not found")
+	}
+
+	var statusText string
+	switch profile.Status {
+	case _enum.EUserStatusActive:
+		statusText = "Hoạt động"
+	case _enum.EUserStatusInactive:
+		statusText = "Chưa hoạt động"
+	case _enum.EUserStatusTemporaryLocked:
+		statusText = "Khóa tạm thời"
+	case _enum.EUserStatusPermanentlyLocked:
+		statusText = "Khóa vĩnh viễn"
+	case _enum.EUserStatusSuspended:
+		statusText = "Ngừng hoạt động"
+	default:
+		statusText = "Không xác định"
+	}
+
+	return &userpb.CheckAccountStatusResponse{
+		ProfileId:  profileID,
+		Status:     uint32(profile.Status),
+		StatusText: statusText,
+		IsLocked:   profile.Status.IsLocked(),
+		CanLogin:   profile.Status.IsActive(),
+	}, nil
 }

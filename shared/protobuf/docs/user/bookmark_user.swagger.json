@@ -322,7 +322,12 @@
         "status": {
           "type": "integer",
           "format": "int64",
-          "title": "1: active, 0: inactive"
+          "title": "Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động"
+        },
+        "warningLevel": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Cấp độ cảnh báo (0: none, 10: info, 20: warning, 30: danger, 40: critical)"
         },
         "roleType": {
           "type": "string",

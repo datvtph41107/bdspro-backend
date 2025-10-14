@@ -37,8 +37,21 @@ func (r *OTPPostgres) CreateOTP(ctx context.Context, otp *domain.UserOTPEntity) 
 	return _db.DB.Create(otp).Error
 }
 
-// UpdateOTP cập nhật OTP
+// UpdateOTP cập nhật OTP, nếu chưa có thì tạo mới
 func (r *OTPPostgres) UpdateOTP(ctx context.Context, otp *domain.UserOTPEntity) error {
+	// Kiểm tra xem OTP đã tồn tại chưa
+	var existingOTP domain.UserOTPEntity
+	err := _db.DB.Where("auth_id = ?", otp.AuthID).First(&existingOTP).Error
+
+	if err != nil {
+		// Nếu không tìm thấy, tạo mới
+		if err == gorm.ErrRecordNotFound {
+			return _db.DB.Create(otp).Error
+		}
+		return err
+	}
+
+	// Nếu đã tồn tại, cập nhật
 	return r.db.Model(&domain.UserOTPEntity{}).
 		Where("auth_id = ?", otp.AuthID).
 		Updates(map[string]interface{}{
@@ -59,8 +72,8 @@ func (r *OTPPostgres) DeleteOTP(ctx context.Context, authID uint64) error {
 // GetOTPByPhone lấy OTP theo số điện thoại
 func (r *OTPPostgres) GetOTPByPhone(ctx context.Context, phone string) (*domain.UserOTPEntity, error) {
 	var otp domain.UserOTPEntity
-	err := _db.DB.Joins("JOIN auth_method_domains ON user_otp_entities.auth_id = auth_method_domains.id").
-		Where("auth_method_domains.oauth_id = ?", phone).
+	err := _db.DB.Joins("JOIN auth_method ON user_otp_entities.auth_id = auth_method.id").
+		Where("auth_method.phone = ? AND auth_method.provider = ?", phone, "PHONE").
 		First(&otp).Error
 	if err != nil {
 		return nil, err

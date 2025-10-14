@@ -16,6 +16,7 @@ type SendAccountWarningRequest struct {
 	RelatedID   *uint64    `json:"relatedId"`
 	RelatedType string     `json:"relatedType"`
 	ExpiresAt   *time.Time `json:"expiresAt"`
+	TemplateID  *uint64    `json:"templateId"` // ID của mẫu cảnh báo nếu sử dụng
 }
 
 // SendAccountWarningResponse đại diện cho response gửi cảnh báo

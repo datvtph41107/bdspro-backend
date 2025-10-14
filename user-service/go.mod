@@ -13,6 +13,7 @@ require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/wire v0.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -21,6 +22,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.9
+	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
@@ -84,5 +86,4 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.11 // indirect
 )

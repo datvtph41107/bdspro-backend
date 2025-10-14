@@ -69,6 +69,7 @@ var publicRoutes = []string{
 	"/v1/user/profile/find-by-phone",
 	"/v2/user/profile/info/",
 	"/v2/user/profile/search/public",
+	"/v2/user/profile/find-by-phone",
 
 	// Other services public routes
 	"/v1/public",

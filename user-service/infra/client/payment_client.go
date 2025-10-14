@@ -1,25 +1,50 @@
 package client
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"log"
-	"user/env"
+	"user/internal/dto"
+	"user/internal/interface/providers"
 
-	paymentpb "pb/types/payment"
-
+	"github.com/go-resty/resty/v2"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
-func NewPaymentClient() paymentpb.PaymentServiceClient {
-	url := "localhost"
-	if env.ENV_RUNTIME == "release" {
-		url = "payment"
+
+type PaymentClient struct {
+	client *resty.Client
+	url    string
+	path   string
+}
+
+func NewPaymentClient() providers.IPaymentProvider {
+	return &PaymentClient{
+		client: resty.New(),
+		url:    viper.GetString("payment.url"),
+		path:   viper.GetString("payment.path"),
 	}
-	conn, err := grpc.NewClient(fmt.Sprintf("%s%s", url, viper.GetString("grpc.payment.host")), grpc.WithTransportCredentials(insecure.NewCredentials()))
+}
+
+func (p *PaymentClient) CreateOrder(ctx context.Context, req dto.OrderRequest) (*dto.OrderResponse, error) {
+	targetURL := fmt.Sprintf("http://%s/%s", p.url, p.path)
+
+	resp, err := p.client.R().
+		SetContext(ctx).
+		SetBody(req).
+		Post(targetURL)
+
 	if err != nil {
-		log.Fatalf("Failed to connect to payment service: %v", err)
+		return nil, err
 	}
-	paymentClient := paymentpb.NewPaymentServiceClient(conn)
-	return paymentClient
+
+	if resp.IsError() {
+		return nil, fmt.Errorf("payment service error: %s", resp.String())
+	}
+
+	var result dto.OrderResponse
+	if err := json.Unmarshal(resp.Body(), &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }

@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// ============= Membership Messages =============
+
+message MembershipResponse {
+  uint64 id = 1;
+  uint64 profileId = 2;
+  uint64 planId = 3;
+  google.protobuf.Timestamp finishedDate = 4;
+  uint64 orderId = 5;
+  google.protobuf.Timestamp paidAt = 6;
+  google.protobuf.Timestamp createdAt = 7;
+  google.protobuf.Timestamp updatedAt = 8;
+}
+
+message CreateOrderRequest {
+  uint64 planId = 1;
+}
+
+message CreateOrderResponse {
+  MembershipResponse membership = 1;
+  string paymentUrl = 2;
+}
+
+message VerifyOrderRequest {
+  uint64 targetId = 1;
+  int32 type = 2;
+  string signature = 3;
+  google.protobuf.Timestamp paidAt = 4;
+}
+
+message VerifyOrderResponse {
+  MembershipResponse membership = 1;
+  bool success = 2;
+}
+
+message GetMyMembershipRequest {
+}
+
+message GetMyMembershipResponse {
+  MembershipResponse membership = 1;
+}
+
+// ============= Membership Service =============
+
+service MembershipService {
+  // User APIs - Quản lý membership của user
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/user/membership/order"
+      body: "*"
+    };
+  }
+  rpc VerifyOrder(VerifyOrderRequest) returns (VerifyOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/user/membership/verify"
+      body: "*"
+    };
+  }
+  rpc GetMyMembership(GetMyMembershipRequest) returns (GetMyMembershipResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/membership/me"
+    };
+  }
+}
+

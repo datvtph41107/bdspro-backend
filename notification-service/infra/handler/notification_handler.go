@@ -352,6 +352,7 @@ func (s *NotificationHandler) SendAccountWarning(ctx context.Context, req *notip
 		RelatedID:   req.RelatedId,
 		RelatedType: req.RelatedType,
 		ExpiresAt:   expiresAt,
+		TemplateID:  req.TemplateId, // ID mẫu cảnh báo nếu sử dụng
 	}
 
 	result, err := s.AccountWarningUsecase.SendAccountWarning(ctx, *dto)
@@ -624,6 +625,38 @@ func (s *NotificationHandler) GetWarningTemplateList(ctx context.Context, req *n
 	}, nil
 }
 
+// @Summary Lấy chi tiết mẫu cảnh báo
+// @Description Lấy chi tiết mẫu cảnh báo theo ID
+// @Tags Account Warning Template
+// @Accept json
+// @Produce json
+// @Param id path int true "ID mẫu cảnh báo"
+// @Success 200 {object} notificationpb.GetWarningTemplateDetailResponse
+// @Failure 401 {object} notificationpb.GetWarningTemplateDetailResponse
+// @Failure 404 {object} notificationpb.GetWarningTemplateDetailResponse
+// @Failure 500 {object} notificationpb.GetWarningTemplateDetailResponse
+// @Router /account-warning/template/{id} [get]
+func (s *NotificationHandler) GetWarningTemplateDetail(ctx context.Context, req *notipb.GetWarningTemplateDetailRequest) (*notipb.GetWarningTemplateDetailResponse, error) {
+	result, err := s.AccountWarningUsecase.GetWarningTemplateDetail(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi lấy chi tiết mẫu: %v", err)
+	}
+
+	return &notipb.GetWarningTemplateDetailResponse{
+		Id:          result.ID,
+		Name:        result.Name,
+		WarningType: result.WarningType,
+		Title:       result.Title,
+		Content:     result.Content,
+		Severity:    result.Severity,
+		IsActive:    result.IsActive,
+		CreatedBy:   result.CreatedBy,
+		UpdatedBy:   result.UpdatedBy,
+		CreatedAt:   result.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   result.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}, nil
+}
+
 // @Summary Lấy danh sách log cảnh báo
 // @Description Lấy danh sách log cảnh báo
 // @Tags Account Warning Log
@@ -674,5 +707,224 @@ func (s *NotificationHandler) GetWarningLogList(ctx context.Context, req *notipb
 		Total: int32(result.Total),
 		Page:  int32(result.Page),
 		Size:  int32(result.Size),
+	}, nil
+}
+
+// System Warning APIs - Admin
+
+// @Summary Lấy danh sách cảnh báo hệ thống (Admin)
+// @Description Admin lấy danh sách tất cả cảnh báo hệ thống
+// @Tags System Warning - Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Param sort query string false "Sắp xếp"
+// @Param warningType query string false "Loại cảnh báo"
+// @Param severity query string false "Mức độ nghiêm trọng"
+// @Param targetId query int false "ID người nhận"
+// @Param targetType query string false "Loại người nhận"
+// @Param isRead query bool false "Đã đọc chưa"
+// @Success 200 {object} notificationpb.GetSystemWarningListResponse
+// @Failure 401 {object} notificationpb.GetSystemWarningListResponse
+// @Failure 500 {object} notificationpb.GetSystemWarningListResponse
+// @Router /admin/system-warning [get]
+func (s *NotificationHandler) GetAdminSystemWarningList(ctx context.Context, req *notipb.GetSystemWarningListRequest) (*notipb.GetSystemWarningListResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.GetAccountWarningListRequest{
+		Page:        int(req.Page),
+		Size:        int(req.Size),
+		WarningType: "system", // Chỉ lấy cảnh báo hệ thống
+	}
+
+	if req.TargetId != nil {
+		dto.TargetID = req.TargetId
+	}
+	if req.TargetType != nil {
+		dto.TargetType = *req.TargetType
+	}
+	if req.Severity != nil {
+		dto.Severity = *req.Severity
+	}
+	if req.IsRead != nil {
+		dto.IsRead = req.IsRead
+	}
+
+	result, err := s.AccountWarningUsecase.GetAccountWarningList(ctx, *dto)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi lấy danh sách cảnh báo hệ thống: %v", err)
+	}
+
+	// Convert DTO response to proto response
+	items := make([]*notipb.SystemWarningItem, len(result.Data))
+	for i, item := range result.Data {
+		items[i] = &notipb.SystemWarningItem{
+			Id:          item.ID,
+			TargetId:    item.TargetID,
+			TargetType:  item.TargetType,
+			WarningType: item.WarningType,
+			Title:       item.Title,
+			Content:     item.Content,
+			Severity:    item.Severity,
+			Status:      item.Status,
+			IsRead:      item.IsRead,
+			SentBy:      item.SentBy,
+			SentAt:      item.SentAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedAt:   item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   item.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+
+		if item.ReadAt != nil {
+			readAtStr := item.ReadAt.Format("2006-01-02T15:04:05Z07:00")
+			items[i].ReadAt = &readAtStr
+		}
+	}
+
+	return &notipb.GetSystemWarningListResponse{
+		Data:  items,
+		Total: int32(result.Total),
+	}, nil
+}
+
+// @Summary Tạo cảnh báo hệ thống (Admin)
+// @Description Admin tạo cảnh báo hệ thống gửi tới user
+// @Tags System Warning - Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body notificationpb.CreateSystemWarningRequest true "Thông tin cảnh báo"
+// @Success 200 {object} notificationpb.CreateSystemWarningResponse
+// @Failure 400 {object} notificationpb.CreateSystemWarningResponse
+// @Failure 401 {object} notificationpb.CreateSystemWarningResponse
+// @Failure 500 {object} notificationpb.CreateSystemWarningResponse
+// @Router /admin/system-warning [post]
+func (s *NotificationHandler) CreateSystemWarning(ctx context.Context, req *notipb.CreateSystemWarningRequest) (*notipb.CreateSystemWarningResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.SendAccountWarningRequest{
+		TargetID:    req.TargetId,
+		TargetType:  "user", // System warning luôn gửi cho user
+		WarningType: "system",
+		Title:       req.Title,
+		Content:     req.Content,
+		Severity:    req.Severity,
+		SendEmail:   false,
+	}
+
+	result, err := s.AccountWarningUsecase.SendAccountWarning(ctx, *dto)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi tạo cảnh báo hệ thống: %v", err)
+	}
+
+	// Convert DTO response to proto response
+	return &notipb.CreateSystemWarningResponse{
+		Id:          result.ID,
+		WarningType: result.WarningType,
+		Title:       result.Title,
+		Content:     result.Content,
+		Severity:    result.Severity,
+		TargetId:    result.TargetID,
+		SentBy:      result.SentBy,
+		SentAt:      result.SentAt.Format("2006-01-02T15:04:05Z07:00"),
+		Message:     result.Message,
+	}, nil
+}
+
+// @Summary Xóa cảnh báo hệ thống (Admin)
+// @Description Admin xóa cảnh báo hệ thống
+// @Tags System Warning - Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID cảnh báo"
+// @Success 200 {object} notificationpb.DeleteSystemWarningResponse
+// @Failure 400 {object} notificationpb.DeleteSystemWarningResponse
+// @Failure 401 {object} notificationpb.DeleteSystemWarningResponse
+// @Failure 404 {object} notificationpb.DeleteSystemWarningResponse
+// @Failure 500 {object} notificationpb.DeleteSystemWarningResponse
+// @Router /admin/system-warning/{id} [delete]
+func (s *NotificationHandler) DeleteSystemWarning(ctx context.Context, req *notipb.DeleteSystemWarningRequest) (*notipb.DeleteSystemWarningResponse, error) {
+	// Xóa cảnh báo (soft delete)
+	err := s.AccountWarningUsecase.AccountWarningRepo.SoftDelete(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi xóa cảnh báo hệ thống: %v", err)
+	}
+
+	return &notipb.DeleteSystemWarningResponse{
+		Success: true,
+		Message: "Đã xóa cảnh báo thành công",
+	}, nil
+}
+
+// System Warning APIs - User
+
+// @Summary Lấy cảnh báo hệ thống của tôi (User)
+// @Description User lấy danh sách cảnh báo hệ thống của mình
+// @Tags System Warning - User
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Param sort query string false "Sắp xếp"
+// @Param warningType query string false "Loại cảnh báo"
+// @Param isRead query bool false "Đã đọc chưa"
+// @Success 200 {object} notificationpb.GetMySystemWarningsResponse
+// @Failure 401 {object} notificationpb.GetMySystemWarningsResponse
+// @Failure 500 {object} notificationpb.GetMySystemWarningsResponse
+// @Router /system-warning/me [get]
+func (s *NotificationHandler) GetMySystemWarnings(ctx context.Context, req *notipb.GetMySystemWarningsRequest) (*notipb.GetMySystemWarningsResponse, error) {
+	// Lấy profileID từ context
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "không có quyền truy cập")
+	}
+
+	// Convert proto request to DTO
+	dto := &dto.GetAccountWarningListRequest{
+		Page:        int(req.Page),
+		Size:        int(req.Size),
+		TargetID:    &profileID,
+		TargetType:  "user",
+		WarningType: "system", // Chỉ lấy cảnh báo hệ thống
+	}
+
+	if req.IsRead != nil {
+		dto.IsRead = req.IsRead
+	}
+
+	result, err := s.AccountWarningUsecase.GetAccountWarningList(ctx, *dto)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi lấy danh sách cảnh báo: %v", err)
+	}
+
+	// Convert DTO response to proto response
+	items := make([]*notipb.SystemWarningItem, len(result.Data))
+	for i, item := range result.Data {
+		items[i] = &notipb.SystemWarningItem{
+			Id:          item.ID,
+			TargetId:    item.TargetID,
+			TargetType:  item.TargetType,
+			WarningType: item.WarningType,
+			Title:       item.Title,
+			Content:     item.Content,
+			Severity:    item.Severity,
+			Status:      item.Status,
+			IsRead:      item.IsRead,
+			SentBy:      item.SentBy,
+			SentAt:      item.SentAt.Format("2006-01-02T15:04:05Z07:00"),
+			CreatedAt:   item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   item.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+
+		if item.ReadAt != nil {
+			readAtStr := item.ReadAt.Format("2006-01-02T15:04:05Z07:00")
+			items[i].ReadAt = &readAtStr
+		}
+	}
+
+	return &notipb.GetMySystemWarningsResponse{
+		Data:  items,
+		Total: int32(result.Total),
 	}, nil
 }

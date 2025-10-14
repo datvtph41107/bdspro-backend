@@ -4,12 +4,16 @@ import (
 	"auth/infra/oauth"
 	"auth/internal/dto"
 	_routes "common/routes"
+	"context"
 	"net/http"
 	authpb "pb/types/auth"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
+// @bind: pb/types/auth.OAuthServiceServer
 type OAuthHandler struct {
 	authpb.UnimplementedOAuthServiceServer
 	GoogleAuthService   *oauth.OAuthGoogle
@@ -99,4 +103,62 @@ func (route *OAuthHandler) OauthCallback(c *gin.Context) {
 
 	_routes.RouteResult(c, result, err)
 	// c.JSON(http.StatusOK, response)
+}
+
+// GetLoginURL - gRPC method để lấy URL đăng nhập OAuth
+func (h *OAuthHandler) GetLoginURL(ctx context.Context, req *authpb.GetLoginURLRequest) (*authpb.GetLoginURLResponse, error) {
+	var url string
+
+	switch req.Provider {
+	case "zalo":
+		url = h.ZaloAuthService.GetUrlLogin()
+	case "google":
+		url = h.GoogleAuthService.GetUrlLogin()
+	case "facebook":
+		url = h.FacebookAuthService.GetUrlLogin()
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "Provider không hợp lệ: %s", req.Provider)
+	}
+
+	return &authpb.GetLoginURLResponse{
+		Url: url,
+	}, nil
+}
+
+// HandleCallback - gRPC method để xử lý OAuth callback
+func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCallbackRequest) (*authpb.HandleCallbackResponse, error) {
+	var result *dto.AuthLoginResponse
+	var err error
+
+	// Tạo gin.Context giả để truyền vào các OAuth service (cần refactor sau)
+	// TODO: Refactor OAuth services để không phụ thuộc vào gin.Context
+	ginCtx := &gin.Context{}
+	ginCtx.Request = &http.Request{}
+
+	switch req.Provider {
+	case "zalo":
+		result, err = h.ZaloAuthService.HandleCallback(ginCtx, req.Code, req.State)
+	case "google":
+		result, err = h.GoogleAuthService.HandleCallback(ginCtx, req.Code, req.State)
+	case "facebook":
+		result, err = h.FacebookAuthService.HandleCallback(ginCtx, req.Code, req.Platform, req.State)
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "Provider không hợp lệ: %s", req.Provider)
+	}
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Lỗi xử lý callback: %v", err)
+	}
+
+	return &authpb.HandleCallbackResponse{
+		AuthId:       result.AuthID,
+		ProfileId:    result.ProfileID,
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
+		// FullName:     result.Profile.FullName,
+		// Avatar:       result.Profile.Avatar,
+		// Email:        result.Profile.Email,
+		// Phone:        result.Profile.Phone,
+		Provider: req.Provider,
+	}, nil
 }

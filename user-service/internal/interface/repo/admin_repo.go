@@ -1,6 +1,7 @@
 package repo
 
 import (
+	_enum "common/domain/enum"
 	"context"
 	"user/internal/dto"
 	models "user/internal/models"
@@ -8,7 +9,7 @@ import (
 
 type IAdminRepo interface {
 	GetByID(ctx context.Context, req uint64) (*models.AdminProfile, error)
-	UpdateUserStatus(profileID uint64, status uint8) error
+	UpdateUserStatus(profileID uint64, status _enum.EUserStatus) error
 
 	// Admin Management methods
 	ListAdmin(ctx context.Context, req *dto.AdminListRequest) ([]models.AdminProfile, int64, error)

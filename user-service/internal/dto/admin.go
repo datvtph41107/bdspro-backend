@@ -2,6 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	"time"
 )
 
@@ -30,36 +31,43 @@ type ListAllUsersResponse struct {
 
 // AdminUserItem DTO cho thông tin user trong admin view
 type AdminUserItem struct {
-	ProfileID      uint64     `json:"profileId"`
-	FullName       string     `json:"fullName"`
-	Email          string     `json:"email"`
-	Phone          string     `json:"phone"`
-	Avatar         string     `json:"avatar"`
-	Address        string     `json:"address"`
-	Gender         uint8      `json:"gender"`
-	Birth          *time.Time `json:"birth"`
-	CreatedAt      time.Time  `json:"createdAt"`
-	UpdatedAt      time.Time  `json:"updatedAt"`
-	Status         uint8      `json:"status"`
-	RoleType       string     `json:"roleType"`
-	RoleRealEstate string     `json:"roleRealEstate"`
-	Position       string     `json:"position"`
-	DepartmentID   uint64     `json:"departmentId"`
-	Bookmark       bool       `json:"isBookmark"`
-	TickVerified   bool       `json:"tickVerified"`
-	LastLoginAt    *time.Time `json:"lastLoginAt"`
-	TotalLogin     uint32     `json:"totalLogin"`
-	VerifiedAt     *time.Time `json:"verifiedAt"`
-	LockedAt       *time.Time `json:"lockedAt"`
+	ProfileID      uint64              `json:"profileId"`
+	FullName       string              `json:"fullName"`
+	Email          string              `json:"email"`
+	Phone          string              `json:"phone"`
+	Avatar         string              `json:"avatar"`
+	Address        string              `json:"address"`
+	Gender         uint8               `json:"gender"`
+	Birth          *time.Time          `json:"birth"`
+	CreatedAt      time.Time           `json:"createdAt"`
+	UpdatedAt      time.Time           `json:"updatedAt"`
+	Status         _enum.EUserStatus   `json:"status"`
+	WarningLevel   _enum.EWarningLevel `json:"warningLevel"`
+	RoleType       string              `json:"roleType"`
+	RoleRealEstate string              `json:"roleRealEstate"`
+	Position       string              `json:"position"`
+	DepartmentID   uint64              `json:"departmentId"`
+	Bookmark       bool                `json:"isBookmark"`
+	TickVerified   bool                `json:"tickVerified"`
+	LastLoginAt    *time.Time          `json:"lastLoginAt"`
+	TotalLogin     uint32              `json:"totalLogin"`
+	VerifiedAt     *time.Time          `json:"verifiedAt"`
+	LockedAt       *time.Time          `json:"lockedAt"`
+	RoleID         *uint64             `json:"roleId"`
+	RoleName       string              `json:"roleName"`
+	RoleKey        string              `json:"roleKey"`
+	RoleColor      string              `json:"roleColor"`
+	RoleBgColor    string              `json:"roleBgColor"`
 }
 
 // Admin API Request DTOs
-type BlockUserRequest struct {
-	ProfileID uint64 `json:"profileId"`
-	Reason    string `json:"reason"`
+type LockUserRequest struct {
+	ProfileID uint64            `json:"profileId"`
+	Reason    string            `json:"reason"`
+	LockType  _enum.EUserStatus `json:"lockType"`
 }
 
-type UnblockUserRequest struct {
+type UnLockUserRequest struct {
 	ProfileID uint64 `json:"profileId"`
 	Reason    string `json:"reason"`
 }
@@ -91,4 +99,99 @@ type AdminListRequest struct {
 	_dto.Pagable
 	RoleID uint64 `json:"roleId" form:"roleId"`
 	Name   string `json:"name" form:"name"`
+}
+
+// CreateUserRequest DTO cho request tạo user mới
+type CreateUserRequest struct {
+	Username string     `json:"username"` // Optional - sẽ tự động generate từ email nếu không có
+	Password string     `json:"password"` // Optional - sẽ tự động generate nếu không có
+	FullName string     `json:"fullName" validate:"required"`
+	Email    string     `json:"email" validate:"required,email"`
+	Phone    string     `json:"phone" validate:"required"`
+	Avatar   string     `json:"avatar"`
+	RoleID   uint64     `json:"roleId"`
+	Gender   *uint32    `json:"gender"`
+	Address  string     `json:"address"`
+	Birth    *time.Time `json:"birth"`
+}
+
+// UpdateUserRequest DTO cho request cập nhật user
+type UpdateUserRequest struct {
+	ProfileID uint64            `json:"profileId" validate:"required"`
+	FullName  string            `json:"fullName"`
+	Email     string            `json:"email" validate:"omitempty,email"`
+	Phone     string            `json:"phone"`
+	Avatar    string            `json:"avatar"`
+	RoleID    *uint64           `json:"roleId"`
+	Gender    *uint32           `json:"gender"`
+	Address   string            `json:"address"`
+	Birth     *time.Time        `json:"birth"`
+	Status    _enum.EUserStatus `json:"status"`
+}
+
+// DeleteUserRequest DTO cho request xóa user
+type DeleteUserRequest struct {
+	ProfileID uint64 `json:"profileId" validate:"required"`
+	Reason    string `json:"reason"`
+}
+
+// CreateUserResponse DTO cho response tạo user
+type CreateUserResponse struct {
+	ProfileID uint64    `json:"profileId"`
+	AuthID    uint64    `json:"authId"`
+	Username  string    `json:"username"`
+	FullName  string    `json:"fullName"`
+	Email     string    `json:"email"`
+	Phone     string    `json:"phone"`
+	Avatar    string    `json:"avatar"`
+	RoleID    uint64    `json:"roleId"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// UpdateUserResponse DTO cho response cập nhật user
+type UpdateUserResponse struct {
+	ProfileID uint64            `json:"profileId"`
+	FullName  string            `json:"fullName"`
+	Email     string            `json:"email"`
+	Phone     string            `json:"phone"`
+	Avatar    string            `json:"avatar"`
+	RoleID    uint64            `json:"roleId"`
+	Status    _enum.EUserStatus `json:"status"`
+	UpdatedAt *time.Time        `json:"updatedAt"`
+}
+
+// GetUserDetailResponse DTO cho response chi tiết user
+type GetUserDetailResponse struct {
+	ProfileID       uint64            `json:"profileId"`
+	FullName        string            `json:"fullName"`
+	Email           string            `json:"email"`
+	Phone           string            `json:"phone"`
+	Phone2          string            `json:"phone2"`
+	Avatar          string            `json:"avatar"`
+	Address         string            `json:"address"`
+	Gender          uint8             `json:"gender"`
+	Birth           *time.Time        `json:"birth"`
+	CreatedAt       time.Time         `json:"createdAt"`
+	UpdatedAt       time.Time         `json:"updatedAt"`
+	Status          _enum.EUserStatus `json:"status"`
+	Position        string            `json:"position"`
+	DepartmentID    uint64            `json:"departmentId"`
+	TickVerified    bool              `json:"tickVerified"`
+	BackgroundImage string            `json:"backgroundImage"`
+	TaxCode         string            `json:"taxCode"`
+	FrontIdentify   string            `json:"frontIdentify"`
+	BackIdentify    string            `json:"backIdentify"`
+	Slogan          string            `json:"slogan"`
+	Website         string            `json:"website"`
+	Facebook        string            `json:"facebook"`
+	Instagram       string            `json:"instagram"`
+	Twitter         string            `json:"twitter"`
+	Linkedin        string            `json:"linkedin"`
+	Youtube         string            `json:"youtube"`
+	Introduction    string            `json:"introduction"`
+	RoleID          *uint64           `json:"roleId"`
+	RoleName        string            `json:"roleName"`
+	RoleKey         uint32            `json:"roleKey"`
+	RoleColor       string            `json:"roleColor"`
+	RoleBgColor     string            `json:"roleBgColor"`
 }

@@ -59,47 +59,80 @@ service GatewayNotificationService {
   // Account Warning APIs
   rpc SendAccountWarning(SendAccountWarningRequest) returns (SendAccountWarningResponse) {
     option (google.api.http) = {
-      post: "/v2/notification/account-warning/send"
+      post: "/v2/notification/{ownerOf}/account-warning/send"
       body: "*"
     };
   }
 
   rpc GetAccountWarningList(GetAccountWarningListRequest) returns (GetAccountWarningListResponse) {
     option (google.api.http) = {
-      get: "/v2/notification/account-warning/list"
+      get: "/v2/notification/{ownerOf}/account-warning/list"
     };
   }
 
   rpc MarkWarningAsRead(MarkWarningAsReadRequest) returns (MarkWarningAsReadResponse) {
     option (google.api.http) = {
-      put: "/v2/notification/account-warning/read"
+      put: "/v2/notification/{ownerOf}/account-warning/read"
       body: "*"
     };
   }
 
   rpc MarkWarningAsAcknowledged(MarkWarningAsAcknowledgedRequest) returns (MarkWarningAsAcknowledgedResponse) {
     option (google.api.http) = {
-      put: "/v2/notification/account-warning/acknowledge"
+      put: "/v2/notification/{ownerOf}/account-warning/acknowledge"
       body: "*"
     };
   }
 
   rpc CreateWarningTemplate(CreateWarningTemplateRequest) returns (CreateWarningTemplateResponse) {
     option (google.api.http) = {
-      post: "/v2/notification/account-warning/template"
+      post: "/v2/notification/{ownerOf}/account-warning/template"
       body: "*"
     };
   }
 
   rpc GetWarningTemplateList(GetWarningTemplateListRequest) returns (GetWarningTemplateListResponse) {
     option (google.api.http) = {
-      get: "/v2/notification/account-warning/template/list"
+      get: "/v2/notification/{ownerOf}/account-warning/template/list"
+    };
+  }
+
+  rpc GetWarningTemplateDetail(GetWarningTemplateDetailRequest) returns (GetWarningTemplateDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/{ownerOf}/account-warning/template/{id}"
     };
   }
 
   rpc GetWarningLogList(GetWarningLogListRequest) returns (GetWarningLogListResponse) {
     option (google.api.http) = {
-      get: "/v2/notification/account-warning/log/list"
+      get: "/v2/notification/{ownerOf}/account-warning/log/list"
+    };
+  }
+
+  // System Warning APIs - Admin
+  rpc GetAdminSystemWarningList(GetSystemWarningListRequest) returns (GetSystemWarningListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/admin/system-warning"
+    };
+  }
+
+  rpc CreateSystemWarning(CreateSystemWarningRequest) returns (CreateSystemWarningResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/admin/system-warning"
+      body: "*"
+    };
+  }
+
+  rpc DeleteSystemWarning(DeleteSystemWarningRequest) returns (DeleteSystemWarningResponse) {
+    option (google.api.http) = {
+      delete: "/v2/notification/admin/system-warning/{id}"
+    };
+  }
+
+  // System Warning APIs - User
+  rpc GetMySystemWarnings(GetMySystemWarningsRequest) returns (GetMySystemWarningsResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/system-warning/me"
     };
   }
 }
@@ -213,16 +246,18 @@ message AdminHistorySearchRequest {
 
 // Account Warning Messages
 message SendAccountWarningRequest {
-    uint64 targetId = 1;
-    string targetType = 2;
-    string warningType = 3;
-    string title = 4;
-    string content = 5;
-    string severity = 6;
-    bool sendEmail = 7;
-    optional uint64 relatedId = 8;
-    string relatedType = 9;
-    optional string expiresAt = 10;
+    OwnerOf ownerOf = 1; // user, group, organization
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    bool sendEmail = 8;
+    optional uint64 relatedId = 9;
+    string relatedType = 10;
+    optional string expiresAt = 11;
+    optional uint64 templateId = 12; // ID của mẫu cảnh báo nếu sử dụng
 }
 
 message SendAccountWarningResponse {
@@ -241,15 +276,16 @@ message SendAccountWarningResponse {
 }
 
 message GetAccountWarningListRequest {
-    int32 page = 1;
-    int32 size = 2;
-    optional uint64 targetId = 3;
-    string targetType = 4;
-    string warningType = 5;
-    string severity = 6;
-    string status = 7;
-    optional uint64 sentBy = 8;
-    optional bool isRead = 9;
+    OwnerOf ownerOf = 1; // user, group, organization
+    int32 page = 2;
+    int32 size = 3;
+    optional uint64 targetId = 4;
+    string targetType = 5;
+    string warningType = 6;
+    string severity = 7;
+    string status = 8;
+    optional uint64 sentBy = 9;
+    optional bool isRead = 10;
 }
 
 message GetAccountWarningListResponse {
@@ -282,8 +318,9 @@ message AccountWarningItem {
 }
 
 message MarkWarningAsReadRequest {
-    uint64 warningId = 1;
-    uint64 targetId = 2;
+    OwnerOf ownerOf = 1; // user, group, organization
+    uint64 warningId = 2;
+    uint64 targetId = 3;
 }
 
 message MarkWarningAsReadResponse {
@@ -292,8 +329,9 @@ message MarkWarningAsReadResponse {
 }
 
 message MarkWarningAsAcknowledgedRequest {
-    uint64 warningId = 1;
-    uint64 targetId = 2;
+    OwnerOf ownerOf = 1; // user, group, organization
+    uint64 warningId = 2;
+    uint64 targetId = 3;
 }
 
 message MarkWarningAsAcknowledgedResponse {
@@ -302,12 +340,13 @@ message MarkWarningAsAcknowledgedResponse {
 }
 
 message CreateWarningTemplateRequest {
-    string name = 1;
-    string warningType = 2;
-    string title = 3;
-    string content = 4;
-    string severity = 5;
-    bool isActive = 6;
+    OwnerOf ownerOf = 1; // user, group, organization
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
 }
 
 message CreateWarningTemplateResponse {
@@ -325,9 +364,10 @@ message CreateWarningTemplateResponse {
 }
 
 message GetWarningTemplateListRequest {
-    int32 page = 1;
-    int32 size = 2;
-    string warningType = 3;
+    OwnerOf ownerOf = 1; // user, group, organization
+    int32 page = 2;
+    int32 size = 3;
+    string warningType = 4;
 }
 
 message GetWarningTemplateListResponse {
@@ -335,6 +375,25 @@ message GetWarningTemplateListResponse {
     int32 total = 2;
     int32 page = 3;
     int32 size = 4;
+}
+
+message GetWarningTemplateDetailRequest {
+    OwnerOf ownerOf = 1; // user, group, organization
+    uint64 id = 2;
+}
+
+message GetWarningTemplateDetailResponse {
+    uint64 id = 1;
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+    uint64 createdBy = 8;
+    uint64 updatedBy = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
 }
 
 message WarningTemplateItem {
@@ -352,10 +411,11 @@ message WarningTemplateItem {
 }
 
 message GetWarningLogListRequest {
-    int32 page = 1;
-    int32 size = 2;
-    optional uint64 warningId = 3;
-    optional uint64 targetId = 4;
+    OwnerOf ownerOf = 1; // user, group, organization
+    int32 page = 2;
+    int32 size = 3;
+    optional uint64 warningId = 4;
+    optional uint64 targetId = 5;
 }
 
 message GetWarningLogListResponse {
@@ -376,4 +436,80 @@ message WarningLogItem {
     string performedAt = 8;
     string ipAddress = 9;
     string userAgent = 10;
+}
+
+// System Warning Messages
+message GetSystemWarningListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string sort = 3;
+    optional string warningType = 4;
+    optional string severity = 5;
+    optional uint64 targetId = 6;
+    optional string targetType = 7;
+    optional bool isRead = 8;
+}
+
+message GetSystemWarningListResponse {
+    repeated SystemWarningItem data = 1;
+    int32 total = 2;
+}
+
+message CreateSystemWarningRequest {
+    string warningType = 1;
+    string title = 2;
+    string content = 3;
+    string severity = 4;
+    uint64 targetId = 5;
+}
+
+message CreateSystemWarningResponse {
+    uint64 id = 1;
+    string warningType = 2;
+    string title = 3;
+    string content = 4;
+    string severity = 5;
+    uint64 targetId = 6;
+    uint64 sentBy = 7;
+    string sentAt = 8;
+    string message = 9;
+}
+
+message DeleteSystemWarningRequest {
+    uint64 id = 1;
+}
+
+message DeleteSystemWarningResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetMySystemWarningsRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string sort = 3;
+    optional string warningType = 4;
+    optional bool isRead = 5;
+}
+
+message GetMySystemWarningsResponse {
+    repeated SystemWarningItem data = 1;
+    int32 total = 2;
+}
+
+message SystemWarningItem {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    string status = 8;
+    bool isRead = 9;
+    optional string readAt = 10;
+    uint64 sentBy = 11;
+    string sentAt = 12;
+    string createdAt = 13;
+    string updatedAt = 14;
 }

@@ -36,50 +36,12 @@ service ProfileService {
             get: "/v2/user/profile/search/public"
         };
     }
+    rpc CheckAccountStatus(CheckAccountStatusRequest) returns (CheckAccountStatusResponse);
     
-    // Admin API - Lấy danh sách tất cả user với phân trang và tìm kiếm
-    rpc ListAllUsers(ListAllUsersRequest) returns (ListAllUsersResponse) {
+    // Tìm user theo số điện thoại
+    rpc FindByPhone(FindByPhoneRequest) returns (FindByPhoneResponse) {
         option (google.api.http) = {
-            get: "/v2/user/admin/users"
-        };
-    }
-    
-    // Admin API - Khóa tài khoản user
-    rpc BlockUser(BlockUserRequest) returns (sharepb.Empty) {
-        option (google.api.http) = {
-            post: "/v2/user/admin/users/{profileId}/block"
-            body: "*"
-        };
-    }
-    
-    // Admin API - Mở khóa tài khoản user
-    rpc UnblockUser(UnblockUserRequest) returns (sharepb.Empty) {
-        option (google.api.http) = {
-            post: "/v2/user/admin/users/{profileId}/unblock"
-            body: "*"
-        };
-    }
-    
-    // Admin API - Duyệt tài khoản user
-    rpc ApproveUser(ApproveUserRequest) returns (sharepb.Empty) {
-        option (google.api.http) = {
-            post: "/v2/user/admin/users/{profileId}/approve"
-            body: "*"
-        };
-    }
-    
-    // Admin API - Gửi cảnh báo cho user
-    rpc SendWarningToUser(SendWarningRequest) returns (SendWarningResponse) {
-        option (google.api.http) = {
-            post: "/v2/user/admin/warning/send"
-            body: "*"
-        };
-    }
-    
-    // Dashboard API - Lấy thống kê số lượng user
-    rpc GetUserStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
-        option (google.api.http) = {
-            get: "/v2/user/stats"
+            get: "/v2/user/profile/find-by-phone"
         };
     }
 }
@@ -248,97 +210,25 @@ message SearchProfilePublicResponse {
     int32 total = 2;
 }
 
-// Admin API Messages
-message ListAllUsersRequest {
-    string search = 1;           // Tìm kiếm theo tên, email, phone
-    uint32 page = 2;             // Trang hiện tại
-    uint32 size = 3;             // Số lượng item trên mỗi trang
-    string sortBy = 4;           // Sắp xếp theo trường (created_at, full_name, email)
-    string sortOrder = 5;        // Thứ tự sắp xếp (asc, desc)
-    uint32 status = 6;           // Lọc theo trạng thái (1: active, 0: inactive)
-    string roleType = 7;         // Lọc theo role type
-    string startDate = 8;        // Lọc từ ngày tạo
-    string endDate = 9;          // Lọc đến ngày tạo
-    bool bookmark = 10;          // Lọc theo bookmark
-    uint64 roleId = 11;          // Lọc theo role ID
-}
-
-message ListAllUsersResponse {
-    repeated AdminUserItem data = 1;
-    int32 total = 2;
-    uint32 page = 3;
-    uint32 size = 4;
-    uint32 totalPages = 5;
-}
-
-message AdminUserItem {
+message CheckAccountStatusRequest {
     uint64 profileId = 1;
+}
+
+message CheckAccountStatusResponse {
+    uint64 profileId = 1;
+    uint32 status = 2;
+    string statusText = 3;
+    bool isLocked = 4;
+    bool canLogin = 5;
+}
+
+message FindByPhoneRequest {
+    string phone = 1; // Số điện thoại cần tìm
+}
+
+message FindByPhoneResponse {
+    string phone = 1; // Thông tin user tìm được (null nếu không tìm thấy)
     string fullName = 2;
-    string email = 3;
-    string phone = 4;
-    string avatar = 5;
-    string address = 6;
-    uint32 gender = 7;
-    string birth = 8;
-    string createdAt = 9;
-    string updatedAt = 10;
-    uint32 status = 11;          // 1: active, 0: inactive
-    string roleType = 12;        // Role type của user
-    string roleRealEstate = 13;  // Role real estate
-    string position = 14;
-    uint64 departmentId = 15;
-    bool bookmark = 16;        // true nếu user này được admin bookmark
-    bool tickVerified = 17;      // Tài khoản đã xác thực
-    string lastLoginAt = 18;     // Lần đăng nhập cuối
-    uint32 totalLogin = 19;      // Tổng số lần đăng nhập
-    string verifiedAt = 20;      // Thời gian xác thực
-    string lockedAt = 21;        // Thời gian khóa tài khoản
-    optional authpb.Role role = 22;        // Role của user
 }
 
-// Admin API Request Messages
-message BookmarkUsersRequest {
-    uint32 page = 1;             // Số trang
-    uint32 size = 2;             // Số lượng item mỗi trang
-    string search = 3;           // Tìm kiếm theo tên, email, phone
-    string roleType = 4;         // Lọc theo role type
-    string startDate = 5;        // Lọc từ ngày tạo
-    string endDate = 6;          // Lọc đến ngày tạo
-}
-
-message BlockUserRequest {
-    uint64 profileId = 1;
-    string reason = 2;           // Lý do khóa tài khoản
-}
-
-message UnblockUserRequest {
-    uint64 profileId = 1;
-    string reason = 2;           // Lý do mở khóa tài khoản
-}
-
-message ApproveUserRequest {
-    uint64 profileId = 1;
-    string note = 2;             // Ghi chú khi duyệt
-}
-
-// Warning/Alert API Messages
-message SendWarningRequest {
-    uint64 userId = 1;           // ID của user nhận cảnh báo
-    WarningType warningType = 2; // Loại cảnh báo
-    string content = 3;          // Nội dung cảnh báo
-    string title = 4;            // Tiêu đề cảnh báo (optional)
-}
-
-message SendWarningResponse {
-    bool success = 1;
-    string message = 2;
-    uint64 notificationId = 3;   // ID của notification được tạo
-}
-
-// Enum cho loại cảnh báo
-enum WarningType {
-    WARNING_VIOLATION = 0;       // Cảnh báo vi phạm
-    WARNING_REMINDER = 1;        // Nhắc nhở chung
-    WARNING_GUIDANCE = 2;        // Hướng dẫn sử dụng
-}
 

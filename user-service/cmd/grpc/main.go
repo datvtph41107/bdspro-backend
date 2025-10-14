@@ -10,7 +10,6 @@ import (
 	userpb "pb/types/user"
 	"time"
 	"user/config"
-	"user/db"
 	"user/wire"
 
 	_middleware "common/middleware"
@@ -33,7 +32,7 @@ var GrpcCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		app, _ := wire.InitializeApp()
-		db.AutoMigrate()
+		// db.AutoMigrate()
 
 		// Đăng ký service vào feedback registry
 		app.FeedbackClient.RegisterService(context.Background())
@@ -58,10 +57,14 @@ var GrpcCmd = &cobra.Command{
 		)
 
 		userpb.RegisterAdminProfileServiceServer(s, app.AdminHandler)
+		userpb.RegisterAdminUserProfileServiceServer(s, app.AdminUserProfileHandler)
 		userpb.RegisterProfileServiceServer(s, app.ProfileService)
 		// V2 Services (protobuf-based)
 		userpb.RegisterBookmarkUserServiceServer(s, app.BookmarkUserHandler)
 		userpb.RegisterSystemConfigServiceServer(s, app.SystemConfigHandler)
+		userpb.RegisterMembershipServiceServer(s, app.MembershipHandler)
+		userpb.RegisterPlanServiceServer(s, app.PlanHandler)
+		userpb.RegisterInternalUserServiceServer(s, app.InternalHandler)
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

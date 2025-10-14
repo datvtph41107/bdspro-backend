@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -13,35 +14,39 @@ import (
 
 type AdminUsecase struct {
 	adminRepo    repo.IAdminRepo
+	profileRepo  repo.IProfileRepo
 	authProvider providers.AuthProvider
 }
 
 func NewAdminUsecase(
 	adminRepo repo.IAdminRepo,
+	profileRepo repo.IProfileRepo,
 	authProvider providers.AuthProvider,
 ) *AdminUsecase {
 	return &AdminUsecase{
 		adminRepo:    adminRepo,
+		profileRepo:  profileRepo,
 		authProvider: authProvider,
 	}
 }
 
 // BlockUser khóa tài khoản user với lý do
-func (uc *AdminUsecase) BlockUser(ctx context.Context, req *dto.BlockUserRequest) error {
+func (uc *AdminUsecase) LockUser(ctx context.Context, req *dto.LockUserRequest) error {
 
 	// Kiểm tra user có tồn tại không
-	_, err := uc.adminRepo.GetByID(ctx, req.ProfileID)
+	_, err := uc.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
 
-	// Cập nhật trạng thái user thành blocked
-	err = uc.adminRepo.UpdateUserStatus(req.ProfileID, 0) // 0 = blocked
+	// Cập nhật trạng thái user_profile thành khóa tạm thời
+	err = uc.profileRepo.UpdateUserProfileStatus(ctx, req.ProfileID, req.LockType)
 	if err != nil {
-		fmt.Printf("Failed to block user: %v\n", err)
-		return fmt.Errorf("failed to block user: %v", err)
+		fmt.Printf("Failed to block user in user_profile: %v\n", err)
+		return fmt.Errorf("failed to update user profile status: %v", err)
 	}
-	fmt.Printf("User blocked successfully\n")
+
+	fmt.Printf("User blocked successfully (Temporary Locked)\n")
 
 	// TODO: Log action và gửi notification
 	// TODO: Lưu lý do khóa vào bảng audit log
@@ -50,18 +55,20 @@ func (uc *AdminUsecase) BlockUser(ctx context.Context, req *dto.BlockUserRequest
 }
 
 // UnblockUser mở khóa tài khoản user với lý do
-func (uc *AdminUsecase) UnblockUser(ctx context.Context, req *dto.UnblockUserRequest) error {
+func (uc *AdminUsecase) UnLockUser(ctx context.Context, req *dto.UnLockUserRequest) error {
 	// Kiểm tra user có tồn tại không
-	_, err := uc.adminRepo.GetByID(ctx, req.ProfileID)
+	_, err := uc.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
 
-	// Cập nhật trạng thái user thành active
-	err = uc.adminRepo.UpdateUserStatus(req.ProfileID, 1) // 1 = active
+	// Cập nhật trạng thái user_profile thành active
+	err = uc.profileRepo.UpdateUserProfileStatus(ctx, req.ProfileID, _enum.EUserStatusActive)
 	if err != nil {
-		return fmt.Errorf("failed to unblock user: %v", err)
+		return fmt.Errorf("failed to update user profile status: %v", err)
 	}
+
+	fmt.Printf("User unblocked successfully (Active)\n")
 
 	// TODO: Log action và gửi notification
 	// TODO: Lưu lý do mở khóa vào bảng audit log
@@ -72,16 +79,18 @@ func (uc *AdminUsecase) UnblockUser(ctx context.Context, req *dto.UnblockUserReq
 // ApproveUser duyệt tài khoản user
 func (uc *AdminUsecase) ApproveUser(ctx context.Context, req *dto.ApproveUserRequest) error {
 	// Kiểm tra user có tồn tại không
-	_, err := uc.adminRepo.GetByID(ctx, req.ProfileID)
+	_, err := uc.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
 
-	// Cập nhật trạng thái user thành approved
-	err = uc.adminRepo.UpdateUserStatus(req.ProfileID, 2) // 2 = approved
+	// Cập nhật trạng thái user_profile thành active
+	err = uc.profileRepo.UpdateUserProfileStatus(ctx, req.ProfileID, _enum.EUserStatusActive)
 	if err != nil {
-		return fmt.Errorf("failed to approve user: %v", err)
+		return fmt.Errorf("failed to update user profile status: %v", err)
 	}
+
+	fmt.Printf("User approved successfully (Active)\n")
 
 	// TODO: Log action và gửi notification
 	// TODO: Lưu ghi chú duyệt vào bảng audit log
@@ -257,4 +266,292 @@ func (u *AdminUsecase) GetDetail(ctx context.Context, req uint64) (*models.Admin
 	fmt.Printf("GetDetail admin ID %d with role: %+v\n", req, detail.Role)
 
 	return detail, nil
+}
+
+// CreateUser tạo user mới giống với tài khoản admin
+func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserRequest) (*dto.CreateUserResponse, error) {
+	// Kiểm tra quyền admin
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+
+	// Kiểm tra email đã tồn tại chưa
+	existingAuth, _ := u.authProvider.FindByEmail(ctx, req.Email)
+	if existingAuth != nil {
+		return nil, _errors.ReturnError(int32(400), "Email đã tồn tại trong hệ thống")
+	}
+
+	// Tự động generate username từ email nếu không có
+	username := req.Username
+	if username == "" {
+		// Lấy phần trước @ của email làm username
+		atIndex := 0
+		for i, c := range req.Email {
+			if c == '@' {
+				atIndex = i
+				break
+			}
+		}
+		if atIndex > 0 {
+			username = req.Email[:atIndex]
+		} else {
+			username = req.Email
+		}
+	}
+
+	// Tự động generate password nếu không có (8 ký tự random)
+	password := req.Password
+	if password == "" {
+		// TODO: Gửi password này qua email cho user
+		password = "Admin@123" // Default password - nên thay đổi sau
+	}
+
+	// Tạo auth method trong auth service
+	authMethod := &providers.AuthMethodDomain{
+		AuthName: username,
+		Password: password,
+		FullName: req.FullName,
+		Email:    req.Email,
+		Phone:    req.Phone,
+		Avatar:   req.Avatar,
+		Provider: "ADMIN",
+	}
+
+	createdAuth, err := u.authProvider.Create(ctx, authMethod)
+	if err != nil {
+		fmt.Printf("Error creating auth method: %v\n", err)
+		return nil, _errors.ReturnError(int32(500), "Lỗi tạo tài khoản xác thực")
+	}
+
+	// Tạo user profile trong user service (dùng UserProfileEntity)
+	userProfile := &models.UserProfileEntity{
+		ProfileID: profileID,
+		FullName:  req.FullName,
+		Email:     req.Email,
+		Phone:     req.Phone,
+		Avatar:    req.Avatar,
+		RoleID:    &req.RoleID,
+		Gender:    uint8(0),
+		Address:   req.Address,
+		Birth:     req.Birth,
+		Status:    1, // Active by default
+	}
+
+	// Set gender if provided
+	if req.Gender != nil && *req.Gender > 0 {
+		userProfile.Gender = uint8(*req.Gender)
+	}
+
+	createdProfile, err := u.profileRepo.CreateUserProfile(ctx, userProfile)
+	if err != nil {
+		fmt.Printf("Error creating user profile: %v\n", err)
+		// Rollback: xóa auth method đã tạo
+		_ = u.authProvider.SoftDelete(ctx, createdAuth.ID)
+		return nil, _errors.ReturnError(int32(500), "Lỗi tạo hồ sơ người dùng")
+	}
+
+	return &dto.CreateUserResponse{
+		ProfileID: createdProfile.ProfileID,
+		AuthID:    createdAuth.ID,
+		Username:  createdAuth.AuthName,
+		FullName:  createdProfile.FullName,
+		Email:     createdProfile.Email,
+		Phone:     createdProfile.Phone,
+		Avatar:    createdProfile.Avatar,
+		RoleID:    *createdProfile.RoleID,
+	}, nil
+}
+
+// UpdateUser cập nhật thông tin user
+func (u *AdminUsecase) UpdateUser(ctx context.Context, req *dto.UpdateUserRequest) (*dto.UpdateUserResponse, error) {
+	// Kiểm tra quyền admin
+	adminProfileID := _utils.GetProfileIdWithContext(ctx)
+	if adminProfileID == 0 {
+		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+
+	// Kiểm tra user có tồn tại không
+	existingUser, err := u.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
+	if err != nil {
+		return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+	}
+
+	// Cập nhật thông tin trong user profile
+	updatedProfile := &models.UserProfileEntity{
+		ProfileID: req.ProfileID,
+		RoleID:    req.RoleID,
+		Address:   req.Address,
+		Birth:     req.Birth,
+	}
+
+	// Set gender if provided
+	if req.Gender != nil && *req.Gender > 0 {
+		updatedProfile.Gender = uint8(*req.Gender)
+	} else {
+		updatedProfile.Gender = existingUser.Gender
+	}
+
+	// Chỉ cập nhật các trường không rỗng
+	if req.FullName != "" {
+		updatedProfile.FullName = req.FullName
+	} else {
+		updatedProfile.FullName = existingUser.FullName
+	}
+
+	if req.Email != "" {
+		updatedProfile.Email = req.Email
+	} else {
+		updatedProfile.Email = existingUser.Email
+	}
+
+	if req.Phone != "" {
+		updatedProfile.Phone = req.Phone
+	} else {
+		updatedProfile.Phone = existingUser.Phone
+	}
+
+	if req.Avatar != "" {
+		updatedProfile.Avatar = req.Avatar
+	} else {
+		updatedProfile.Avatar = existingUser.Avatar
+	}
+
+	// Set status if provided
+	if req.Status != 0 {
+		updatedProfile.Status = req.Status
+	} else {
+		updatedProfile.Status = existingUser.Status
+	}
+
+	result, err := u.profileRepo.UpdateUserProfile(ctx, updatedProfile)
+	if err != nil {
+		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin người dùng")
+	}
+
+	// Cập nhật thông tin trong auth service
+	_, err = u.authProvider.Update(ctx, &providers.AuthMethodDomain{
+		UserID:   req.ProfileID,
+		FullName: result.FullName,
+		Email:    result.Email,
+		Phone:    result.Phone,
+		Avatar:   result.Avatar,
+	})
+	if err != nil {
+		fmt.Printf("Error updating auth method: %v\n", err)
+		// Không return error vì profile đã được cập nhật
+	}
+
+	roleID := uint64(0)
+	if result.RoleID != nil {
+		roleID = *result.RoleID
+	}
+
+	return &dto.UpdateUserResponse{
+		ProfileID: result.ProfileID,
+		FullName:  result.FullName,
+		Email:     result.Email,
+		Phone:     result.Phone,
+		Avatar:    result.Avatar,
+		RoleID:    roleID,
+		Status:    result.Status,
+		UpdatedAt: result.UpdatedAt,
+	}, nil
+}
+
+// DeleteUser xóa user
+func (u *AdminUsecase) DeleteUser(ctx context.Context, req *dto.DeleteUserRequest) error {
+	// Kiểm tra quyền admin
+	adminProfileID := _utils.GetProfileIdWithContext(ctx)
+	if adminProfileID == 0 {
+		return _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+
+	// Kiểm tra user có tồn tại không
+	_, err := u.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
+	if err != nil {
+		return _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+	}
+
+	// Xóa user profile (soft delete)
+	err = u.profileRepo.DeleteUserProfile(ctx, req.ProfileID)
+	if err != nil {
+		return _errors.ReturnError(int32(500), "Lỗi xóa hồ sơ người dùng")
+	}
+
+	// Xóa auth method trong auth service
+	err = u.authProvider.SoftDelete(ctx, req.ProfileID)
+	if err != nil {
+		fmt.Printf("Error deleting auth method: %v\n", err)
+		// Không return error vì profile đã được xóa
+	}
+
+	return nil
+}
+
+// GetUserDetail lấy chi tiết thông tin user
+func (u *AdminUsecase) GetUserDetail(ctx context.Context, profileID uint64) (*dto.GetUserDetailResponse, error) {
+	// Kiểm tra quyền admin
+	adminProfileID := _utils.GetProfileIdWithContext(ctx)
+	if adminProfileID == 0 {
+		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	}
+
+	// Lấy thông tin user từ profile repo
+	user, err := u.profileRepo.GetUserDetailByID(ctx, profileID)
+	if err != nil {
+		return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+	}
+
+	// Lấy thông tin role nếu có
+	var roleName, roleColor, roleBgColor string
+	var roleKey uint32
+	if user.RoleID != nil && *user.RoleID > 0 {
+		roleMap, err := u.authProvider.GetRolesByIds(ctx, []uint64{*user.RoleID})
+		if err == nil {
+			if role, ok := roleMap[*user.RoleID]; ok {
+				roleName = role.RoleName
+				roleKey = role.RoleKey
+				// Assuming role has color fields
+			}
+		}
+	}
+
+	gender := uint8(0)
+	if user.Gender > 0 {
+		gender = user.Gender
+	}
+
+	return &dto.GetUserDetailResponse{
+		ProfileID:       user.ProfileID,
+		FullName:        user.FullName,
+		Email:           user.Email,
+		Phone:           user.Phone,
+		Phone2:          user.Phone2,
+		Avatar:          user.Avatar,
+		Address:         user.Address,
+		Gender:          gender,
+		Birth:           user.Birth,
+		Status:          user.Status,
+		Position:        user.Position,
+		DepartmentID:    user.DepartmentID,
+		TickVerified:    user.TickVerified,
+		BackgroundImage: user.BackgroundImage,
+		TaxCode:         user.TaxCode,
+		FrontIdentify:   user.FrontIdentify,
+		BackIdentify:    user.BackIdentify,
+		Slogan:          user.Slogan,
+		Website:         user.Website,
+		Facebook:        user.Facebook,
+		Instagram:       user.Instagram,
+		Twitter:         user.Twitter,
+		Linkedin:        user.Linkedin,
+		Youtube:         user.Youtube,
+		Introduction:    user.Introduction,
+		RoleID:          user.RoleID,
+		RoleName:        roleName,
+		RoleKey:         roleKey,
+		RoleColor:       roleColor,
+		RoleBgColor:     roleBgColor,
+	}, nil
 }

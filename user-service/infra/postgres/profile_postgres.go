@@ -2,6 +2,7 @@ package postgres
 
 import (
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_utils "common/utils"
 	"context"
 	"user/internal/dto"
@@ -35,17 +36,19 @@ func (r *ProfilePostgres) GlobalSearchProfile(c context.Context, text string, pa
 		query = query.Where("LOWER(full_name) LIKE ? OR email LIKE ?", "%"+text+"%", "%"+text+"%")
 	}
 
-	err := query.Debug().
+	// Get total count first (use Session to avoid affecting the original query)
+	err := query.Session(&gorm.Session{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Then fetch data with pagination
+	err = query.Debug().
 		Offset(pageable.GetOffset()).
 		Limit(pageable.GetLimit()).
 		Order("updated_at DESC").
 		Find(&profiles).
 		Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	err = query.Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -70,11 +73,18 @@ func (r *ProfilePostgres) FriendSearchProfile(c context.Context, profileId uint6
 		query = query.Where("LOWER(user_profile.full_name) LIKE ? OR user_profile.email LIKE ?", "%"+dto.Text+"%", "%"+dto.Text+"%")
 	}
 
-	err := query.Debug().Offset(dto.GetOffset()).Limit(dto.GetLimit()).Scan(&friends).Error
+	// Get total count first (use Session to avoid affecting the original query)
+	err := query.Session(&gorm.Session{}).Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
-	err = query.Count(&total).Error
+
+	// Then fetch data with pagination
+	err = query.Debug().Offset(dto.GetOffset()).Limit(dto.GetLimit()).Scan(&friends).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
 	return &friends, total, err
 }
 
@@ -146,8 +156,9 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	// Lấy adminID từ context nếu có
 	adminID := _utils.GetProfileIdWithContext(ctx)
 
-	// Kiểm tra xem có cần JOIN bookmark table không
-	needBookmarkInfo := false
+	// Luôn JOIN bookmark table để trả về thông tin bookmark
+	needBookmarkInfo := true
+	hasBookmarkFilter := req.Bookmark != nil
 
 	// Base select fields
 	selectFields := `
@@ -162,6 +173,7 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		up.created_at,
 		up.updated_at,
 		COALESCE(up.status, 10) as status,
+		COALESCE(up.warning, 0) as warning,
 		up.role_id,
 		up.role_key,
 		up.position,
@@ -209,7 +221,7 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	}
 
 	// Filter: status
-	if req.Status != nil {
+	if req.Status != nil && *req.Status != 0 {
 		query = query.Where("COALESCE(up.status, 10) = ?", *req.Status)
 	}
 
@@ -231,8 +243,17 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		query = query.Where("up.created_at <= ?", req.EndDate)
 	}
 
-	// Get total count
-	err := query.Count(&total).Error
+	// Filter theo bookmark nếu có filter
+	if hasBookmarkFilter {
+		if *req.Bookmark {
+			query = query.Where("bu.user_id IS NOT NULL")
+		} else {
+			query = query.Where("bu.user_id IS NULL")
+		}
+	}
+
+	// Get total count (use Session to avoid affecting the original query)
+	err := query.Session(&gorm.Session{}).Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -265,6 +286,7 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 
 	// Apply pagination
 	err = query.
+		Debug().
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&users).Error
@@ -300,4 +322,53 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	// }
 
 	return users, uint32(total), nil
+}
+
+// GetUserDetailByID lấy chi tiết user theo profile ID
+func (r *ProfilePostgres) GetUserDetailByID(ctx context.Context, profileID uint64) (*models.UserProfileEntity, error) {
+	var user models.UserProfileEntity
+	err := r.DB.WithContext(ctx).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// CreateUserProfile tạo user profile mới
+func (r *ProfilePostgres) CreateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error) {
+	err := r.DB.WithContext(ctx).Create(profile).Error
+	if err != nil {
+		return nil, err
+	}
+	return profile, nil
+}
+
+// UpdateUserProfile cập nhật thông tin user profile
+func (r *ProfilePostgres) UpdateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error) {
+	err := r.DB.WithContext(ctx).
+		Where("profile_id = ? AND deleted_at IS NULL", profile.ProfileID).
+		Updates(profile).Error
+	if err != nil {
+		return nil, err
+	}
+	return profile, nil
+}
+
+// DeleteUserProfile xóa user profile (soft delete)
+func (r *ProfilePostgres) DeleteUserProfile(ctx context.Context, profileID uint64) error {
+	err := r.DB.WithContext(ctx).
+		Where("profile_id = ?", profileID).
+		Delete(&models.UserProfileEntity{}).Error
+	return err
+}
+
+// UpdateUserProfileStatus cập nhật trạng thái user profile
+func (r *ProfilePostgres) UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error {
+	err := r.DB.WithContext(ctx).
+		Model(&models.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Update("status", status).Error
+	return err
 }

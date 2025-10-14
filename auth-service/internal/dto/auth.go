@@ -283,7 +283,7 @@ type GetAccountStatusResponse struct {
 	LockedAt    string               `json:"lockedAt,omitempty"`
 	LockedUntil string               `json:"lockedUntil,omitempty"`
 	LockReason  string               `json:"lockReason,omitempty"`
-	LockedBy    uint64               `json:"lockedBy,omitempty"`
+	LockedBy    *uint64              `json:"lockedBy,omitempty"`
 	CanLogin    bool                 `json:"canLogin"`
 	IsExpired   bool                 `json:"isExpired,omitempty"` // Chỉ có khi lockType = temporary
 }

@@ -37,7 +37,7 @@ type AuthUser struct {
 	LockReason  string        `gorm:"column:lock_reason;size:500" json:"lockReason"`
 	LockedBy    *uint64       `gorm:"column:locked_by" json:"lockedBy"`
 	Role        *Role         `gorm:"foreignKey:RoleID;references:ID" json:"role"`
-	RoleID      uint64        `gorm:"column:role_id" json:"roleId"`
+	RoleID      *uint64       `gorm:"column:role_id" json:"roleId"`
 	// CreatedAt   time.Time  `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
 	// UpdatedAt   time.Time  `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
 }

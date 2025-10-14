@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	_enum "common/domain/enum"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -195,9 +196,7 @@ func (r *AdminPostgres) GetByID(ctx context.Context, profileID uint64) (*models.
 }
 
 // UpdateUserStatus cập nhật trạng thái user
-func (r *AdminPostgres) UpdateUserStatus(profileID uint64, status uint8) error {
-	// Status: 0 = blocked, 1 = active, 2 = approved
-
+func (r *AdminPostgres) UpdateUserStatus(profileID uint64, status _enum.EUserStatus) error {
 	err := r.DB.Model(&models.AdminProfile{}).
 		Where("profile_id = ?", profileID).
 		Update("status", status).Error
@@ -240,7 +239,7 @@ func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *models.AdminProfil
 
 	err := r.DB.WithContext(ctx).
 		Model(&models.AdminProfile{}).
-		Where("id = ?", req.ID).
+		Where("profile_id = ?", req.ProfileID).
 		Updates(updates).Error
 
 	if err != nil {

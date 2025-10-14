@@ -15,11 +15,12 @@ import (
 )
 
 type UserGrpcClient struct {
-	Client userpb.ProfileServiceClient
+	Client         userpb.ProfileServiceClient
+	InternalClient userpb.InternalUserServiceClient
 }
 
 func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
-	userClient := &UserGrpcClient{Client: nil}
+	userClient := &UserGrpcClient{Client: nil, InternalClient: nil}
 	go func() {
 		url := "localhost"
 		name := "user_grpc"
@@ -43,6 +44,7 @@ func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
 
 		client := userpb.NewProfileServiceClient(conn)
 		userClient.Client = client
+		userClient.InternalClient = userpb.NewInternalUserServiceClient(conn)
 	}()
 	return userClient
 }

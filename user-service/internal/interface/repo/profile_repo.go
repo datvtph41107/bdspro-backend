@@ -2,6 +2,7 @@ package repo
 
 import (
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	"context"
 	"user/internal/dto"
 	"user/internal/models"
@@ -15,4 +16,9 @@ type IProfileRepo interface {
 	GetProfileByIds(ids []uint64) ([]*models.UserProfileEntity, error)
 	GetProfileByPhones(phones []string) ([]*models.UserProfileEntity, error)
 	ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]models.UserProfileEntity, uint32, error)
+	GetUserDetailByID(ctx context.Context, profileID uint64) (*models.UserProfileEntity, error)
+	CreateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
+	UpdateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
+	DeleteUserProfile(ctx context.Context, profileID uint64) error
+	UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error
 }

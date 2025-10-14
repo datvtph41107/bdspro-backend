@@ -82,6 +82,7 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 	}
 	oauth, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
 	if err == nil && oauth != nil {
+		// User đã tồn tại - gửi OTP
 		param, _ := s.GetParamValidate(c, oauth, "")
 		err = s.OtpUsecase.ValidateAuth(c,
 			[]enums.AuthCodeEnum{
@@ -93,6 +94,11 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 		}
 		s.SendNewOTP(c, param.OTP, otp.Phone) // todo
 	} else {
+		// User chưa tồn tại - đăng ký mới
+		// Bắt buộc phải có họ tên khi đăng ký
+		if otp.Fullname == "" {
+			return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký")
+		}
 		oauth, err = s.RequestIsRegister(c, otp)
 		if err != nil {
 			return nil, err
@@ -165,12 +171,32 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
 	if err != nil || infoEntity == nil || infoEntity.ProfileID == 0 {
-		infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
-		s.ProfileProvider.SaveProfile(c, infoEntity)
+		// infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
+		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, e.FullName, e.Email, e.AuthName, e.Avatar)
+		if err != nil {
+			return nil, err
+		}
 
 		e.UserID = infoEntity.ProfileID
 		s.AuthMethodRepo.Update(c, e)
 	}
+
+	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
+	if e.UserID != 0 {
+		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, e.UserID)
+		if err != nil {
+			log.Printf("Failed to check account status: %v", err)
+		}
+		if isLocked || !canLogin {
+			// Logout tài khoản nếu bị khóa
+			s.CacheProvider.DeleteToken(c, e.ID)
+			return nil, _errors.ReturnError(
+				int32(403),
+				"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ",
+			)
+		}
+	}
+
 	// wallet, err := s.PaymentClient.GetWallet(c.Request.Context(), &paymentpb.GetWalletRequest{
 	// 	Id: uint32(infoEntity.ProfileID),
 	// })
@@ -834,6 +860,22 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		s.AuthMethodRepo.Update(c, adminAuthEntity)
 	}
 
+	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
+	if adminAuthEntity.UserID != 0 {
+		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, adminAuthEntity.UserID)
+		if err != nil {
+			log.Printf("Failed to check account status: %v", err)
+		}
+		if isLocked || !canLogin {
+			// Logout tài khoản nếu bị khóa
+			s.CacheProvider.DeleteToken(c, adminAuthEntity.ID)
+			return nil, _errors.ReturnError(
+				int32(403),
+				"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ",
+			)
+		}
+	}
+
 	// Tạo session cho admin (bắt chước VerifyOtp)
 	adminOtpRequest := dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
@@ -1049,7 +1091,7 @@ func (s *AuthUsecase) GetAccountStatus(ctx context.Context, req *dto.GetAccountS
 	if userInfo.IsLocked() {
 		response.LockedAt = userInfo.LockedAt.Format("2006-01-02T15:04:05Z07:00")
 		response.LockReason = userInfo.LockReason
-		response.LockedBy = *userInfo.LockedBy
+		response.LockedBy = userInfo.LockedBy
 
 		if userInfo.LockedUntil != nil {
 			response.LockedUntil = userInfo.LockedUntil.Format("2006-01-02T15:04:05Z07:00")

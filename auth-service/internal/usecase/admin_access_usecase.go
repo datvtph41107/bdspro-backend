@@ -3,30 +3,29 @@ package usecase
 import (
 	"auth/internal/domain"
 	"auth/internal/dto"
-	userinterface "auth/internal/interface"
+	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"fmt"
-	sharepb "pb/types/shared"
 )
 
 type AdminAccessUsecase struct {
 	AdminAccessRepo repo.AdminAccessRepository
 	AuthMethodRepo  repo.AuthMethodRepository
-	UserGrpcClient  userinterface.IUserGrpcClient
+	UserProvider    provider.ProfileProvider
 }
 
 func NewAdminAccessUsecase(
 	adminAccessRepo repo.AdminAccessRepository,
 	authMethodRepo repo.AuthMethodRepository,
-	userGrpcClient userinterface.IUserGrpcClient,
+	userProvider provider.ProfileProvider,
 ) *AdminAccessUsecase {
 	return &AdminAccessUsecase{
 		AdminAccessRepo: adminAccessRepo,
 		AuthMethodRepo:  authMethodRepo,
-		UserGrpcClient:  userGrpcClient,
+		UserProvider:    userProvider,
 	}
 }
 
@@ -204,11 +203,9 @@ func (u *AdminAccessUsecase) GetAdminAccessList(ctx context.Context, req dto.Adm
 	}
 
 	// Lấy thông tin username từ user service
-	userMap := make(map[uint64]*sharepb.ProfileItem)
+	userMap := make(map[uint64]*dto.ProfileDTO)
 	if len(userIDs) > 0 {
-		userMap, _ = u.UserGrpcClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
-			Ids: userIDs,
-		})
+		userMap, _ = u.UserProvider.GetMapProfileByIds(ctx, userIDs)
 	}
 
 	// Convert to response

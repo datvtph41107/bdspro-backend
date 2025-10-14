@@ -1,0 +1,129 @@
+{
+  "roleGroups": [
+    {
+      "id": 1,
+      "groupName": "Tổ chức",
+      "description": "Danh sách vai trò của tổ chức khi thêm thành viên",
+      "key": "500",
+      "code": "org",
+      "createdAt": "2025-08-21T15:59:59.170928+07:00",
+      "updatedAt": "2025-08-21T15:59:59.170928+07:00"
+    },
+    {
+      "id": 2,
+      "groupName": "CRM",
+      "description": "danh sách nhóm vai trò trong crm. người dùng có thể tạo vai trò",
+      "key": "10",
+      "code": "crm",
+      "createdAt": "2025-08-21T16:04:15.229173+07:00",
+      "updatedAt": "2025-08-21T16:04:15.229173+07:00"
+    },
+    {
+      "id": 3,
+      "groupName": "Nhóm",
+      "description": "Danh sách vai trò của nhóm. khi thêm thành viên thì sẽ set luôn",
+      "key": "30",
+      "code": "group",
+      "createdAt": "2025-08-21T16:20:25.751036+07:00",
+      "updatedAt": "2025-08-21T16:20:25.751036+07:00"
+    },
+    {
+      "id": 4,
+      "groupName": "Thương vụ",
+      "description": "Các vai trò trong 1 thương vụ. khi mời thành viên thì gán vai trò luôn",
+      "key": "400",
+      "code": "deal",
+      "createdAt": "2025-08-21T16:46:33.049715+07:00",
+      "updatedAt": "2025-08-21T16:46:33.049715+07:00"
+    },
+    {
+      "id": 5,
+      "groupName": "Người dùng",
+      "description": "vai trò mặc định người dùng được gán",
+      "key": "100",
+      "code": "user",
+      "createdAt": "2025-08-22T09:05:23.415598+07:00",
+      "updatedAt": "2025-08-22T09:05:23.415598+07:00"
+    },
+    {
+      "id": 7,
+      "groupName": "Tài khoản",
+      "description": "Là nhóm các role mặc định sẽ được gán cho tài khoản khi tạo mới",
+      "key": "120",
+      "code": "account",
+      "createdAt": "2025-08-22T09:06:37.084153+07:00",
+      "updatedAt": "2025-08-22T09:06:37.084153+07:00"
+    },
+    {
+      "id": 8,
+      "groupName": "Chi nhánh",
+      "description": "Danh sách vai trò mặc định dành cho người dùng là thành viên của chi nhánh/ phòng ban trong tổ chức",
+      "key": "50",
+      "code": "brand",
+      "createdAt": "2025-09-03T09:02:01.751576+07:00",
+      "updatedAt": "2025-09-03T09:02:01.751576+07:00"
+    },
+    {
+      "id": 10,
+      "groupName": "Quản trị",
+      "description": "Nhóm tài khoản quản trị hệ thống. thuộc các nhóm có thể truy cập trang admin",
+      "key": "800",
+      "code": "admin",
+      "createdAt": "2025-09-12T13:43:53.720133+07:00",
+      "updatedAt": "2025-09-12T13:43:53.720133+07:00"
+    }
+  ],
+  "groupPermissions": [
+    {
+      "roleGroupId": 1,
+      "permissionId": 220
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 30
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 14
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 130
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 131
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 132
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 133
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 134
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 135
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 136
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 276
+    },
+    {
+      "roleGroupId": 1,
+      "permissionId": 261
+    }
+  ],
+  "exportedAt": "2025-10-13T14:06:26.6397+07:00",
+  "totalRoleGroups": 8,
+  "totalMappings": 12
+}

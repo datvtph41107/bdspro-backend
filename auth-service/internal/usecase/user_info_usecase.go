@@ -163,7 +163,7 @@ func (u *AuthUserProfileUsecase) GetAccountStatus(ctx context.Context, req *dto.
 	if userInfo.IsLocked() {
 		response.LockedAt = userInfo.LockedAt.Format("2006-01-02T15:04:05Z07:00")
 		response.LockReason = userInfo.LockReason
-		response.LockedBy = *userInfo.LockedBy
+		response.LockedBy = userInfo.LockedBy
 
 		if userInfo.LockedUntil != nil {
 			response.LockedUntil = userInfo.LockedUntil.Format("2006-01-02T15:04:05Z07:00")

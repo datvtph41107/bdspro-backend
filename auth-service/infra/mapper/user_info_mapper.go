@@ -23,7 +23,7 @@ func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *domain.AuthUser) *authp
 		LockedAt:    _utils.FormatTimeToString(user.LockedAt),
 		LockedUntil: _utils.FormatTimeToString(user.LockedUntil),
 		LockReason:  user.LockReason,
-		LockedBy:    *user.LockedBy,
+		LockedBy:    user.LockedBy,
 		CanLogin:    user.CanLogin(),
 		IsExpired:   user.IsLockExpired(),
 	}

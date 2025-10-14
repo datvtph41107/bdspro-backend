@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package userpb;
+
+import "shared/common.proto";
+
+option go_package = "pb/types/user;userpb";
+
+// Service nội bộ cho user - chỉ dùng cho giao tiếp giữa các service
+service InternalUserService {
+    // Tạo profile mới (dùng bởi auth-service khi đăng ký)
+    rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
+    
+    // Cập nhật profile (dùng bởi auth-service)
+    rpc UpdateProfile(UpdateProfileRequest) returns (sharepb.Empty);
+    
+    // Xóa mềm profile (dùng bởi auth-service)
+    rpc SoftDeleteProfile(SoftDeleteProfileRequest) returns (sharepb.Empty);
+    
+    // Lấy profile theo ID
+    rpc GetProfileByID(GetProfileByIDRequest) returns (ProfileResponse);
+}
+
+// ============= Request Messages =============
+
+message CreateProfileRequest {
+    uint64 profileId = 1;      // Profile ID = Auth ID
+    optional uint64 planId = 2; // Plan ID (nếu có)
+    string fullName = 3;        // Họ tên
+    string email = 4;           // Email
+    string phone = 5;           // Số điện thoại
+    string avatar = 6;          // Avatar URL
+    string referralCode = 7;    // Mã giới thiệu
+}
+
+message UpdateProfileRequest {
+    uint64 profileId = 1;
+    optional string fullName = 2;
+    optional string email = 3;
+    optional string phone = 4;
+    optional string avatar = 5;
+    optional uint64 planId = 6;
+}
+
+message SoftDeleteProfileRequest {
+    uint64 profileId = 1;
+}
+
+message GetProfileByIDRequest {
+    uint64 profileId = 1;
+}
+
+// ============= Response Messages =============
+
+message CreateProfileResponse {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string email = 3;
+    string phone = 4;
+    string avatar = 5;
+    string referralCode = 6;
+    optional uint64 planId = 7;
+}
+
+message ProfileResponse {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string email = 3;
+    string phone = 4;
+    string avatar = 5;
+    string referralCode = 6;
+    optional uint64 planId = 7;
+    string createdAt = 8;
+    string updatedAt = 9;
+}
+

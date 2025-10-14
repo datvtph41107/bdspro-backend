@@ -22,7 +22,7 @@ func NewAuthRepository(db *_db.TransactionRepo) repo.AuthMethodRepository {
 // FindByPhone tìm kiếm auth bằng số điện thoại
 func (r *AuthMethodPostgres) FindByPhone(ctx context.Context, phone string) (*domain.AuthMethod, error) {
 	var auth domain.AuthMethod
-	err := r.GetDB(ctx).Where("provider = ? AND oauth_id = ? AND deleted_at IS NULL", "PHONE", phone).First(&auth).Error
+	err := r.GetDB(ctx).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", "PHONE", phone).First(&auth).Error
 	if err != nil {
 		return nil, err
 	}
@@ -42,17 +42,17 @@ func (r *AuthMethodPostgres) GetByID(ctx context.Context, id uint64) (*domain.Au
 // ExistsByOAuth kiểm tra sự tồn tại của auth theo OAuth
 func (r *AuthMethodPostgres) ExistsByOAuth(ctx context.Context, phone string) (bool, error) {
 	var count int64
-	err := r.GetDB(ctx).Model(&domain.AuthMethod{}).Where("provider = ? AND oauth_id = ? AND deleted_at IS NULL", "PHONE", phone).Count(&count).Error
+	err := r.GetDB(ctx).Model(&domain.AuthMethod{}).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", "PHONE", phone).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
 }
 
-// FindByOAuthId tìm kiếm bằng provider và oauth_id
+// FindByOAuthId tìm kiếm bằng provider và oauth_id (auth_name cho OAuth providers)
 func (r *AuthMethodPostgres) FindByOAuthID(ctx context.Context, oauthId, provider string) (*domain.AuthMethod, error) {
 	var user domain.AuthMethod
-	err := r.GetDB(ctx).Where("provider = ? AND oauth_id = ? AND deleted_at IS NULL", provider, oauthId).First(&user).Error
+	err := r.GetDB(ctx).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", provider, oauthId).First(&user).Error
 	if err != nil {
 		return nil, err
 	}

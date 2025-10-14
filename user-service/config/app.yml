@@ -53,3 +53,8 @@ grpc:
     host: :8202
   notification:
     host: :8208
+
+payment:
+  secretKey: key-to-generate-signature-for-call-hook
+  url: localhost:8005
+  path: payment/payos/create

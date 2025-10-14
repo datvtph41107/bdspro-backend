@@ -2,10 +2,10 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"fmt"
-	authpb "pb/types/auth"
 	organizationpb "pb/types/organization"
 	orgpb "pb/types/organization"
 	sharepb "pb/types/shared"
@@ -14,7 +14,6 @@ import (
 
 	"user/infra/client"
 	"user/infra/mapper"
-	"user/internal/dto"
 	"user/internal/interface/repo"
 	"user/internal/job"
 	"user/internal/usecases"
@@ -251,269 +250,49 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 	}, nil
 }
 
-// @Summary Lấy danh sách tất cả user (Admin only)
-// @Description Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)
-// @Tags Admin
+// CheckAccountStatus kiểm tra trạng thái tài khoản người dùng
+// @bind: internal/usecases.ProfileUsecase
+func (s *GrpcProfileService) CheckAccountStatus(ctx context.Context, req *userpb.CheckAccountStatusRequest) (*userpb.CheckAccountStatusResponse, error) {
+	result, err := s.ProfileUsecase.CheckAccountStatus(ctx, req.ProfileId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check account status: %v", err)
+	}
+
+	return result, nil
+}
+
+// @Summary Tìm user theo số điện thoại
+// @Description Tìm kiếm thông tin user dựa trên số điện thoại
+// @Tags Profile
 // @Accept json
 // @Produce json
-// @Param search query string false "Tìm kiếm theo tên, email, phone"
-// @Param page query int false "Trang hiện tại (mặc định: 1)"
-// @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
-// @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
-// @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
-// @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
-// @Param roleId query int false "Lọc theo role ID"
-// @Param roleType query string false "Lọc theo role type"
-// @Param startDate query string false "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)"
-// @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
-// @Success 200 {object} userpb.ListAllUsersResponse
-// @Failure 400 {object} userpb.ListAllUsersResponse
-// @Failure 401 {object} userpb.ListAllUsersResponse
-// @Failure 500 {object} userpb.ListAllUsersResponse
-// @Router /v2/user/admin/users [get]
-func (s *GrpcProfileService) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
-	// Convert proto request to DTO
-	dtoReq := &dto.ListUsersRequest{
-		Pagable: _dto.Pagable{
-			Page: req.Page,
-			Size: req.Size,
-		},
-		Search:    req.Search,
-		SortBy:    req.SortBy,
-		SortOrder: req.SortOrder,
-		RoleType:  req.RoleType,
-		RoleID:    &req.RoleId,
-		Status:    &req.Status,
-		Bookmark:  &req.Bookmark,
-	}
-
-	// Set roleId filter
-	if req.RoleId != 0 {
-		roleId := req.RoleId
-		dtoReq.RoleID = &roleId
-	}
-
-	// Set bookmark filter
-	if req.Bookmark {
-		dtoReq.Bookmark = &req.Bookmark
-	}
-
-	// Set status filter
-	if req.Status != 0 {
-		status := req.Status
-		dtoReq.Status = &status
-	}
-
-	// Set date filters
-	if req.StartDate != "" {
-		// TODO: Parse startDate string to time.Time
-	}
-	if req.EndDate != "" {
-		// TODO: Parse endDate string to time.Time
+// @Param phone query string true "Số điện thoại cần tìm"
+// @Success 200 {object} userpb.FindByPhoneResponse
+// @Failure 400 {object} userpb.FindByPhoneResponse
+// @Failure 500 {object} userpb.FindByPhoneResponse
+// @Router /v2/user/profile/find-by-phone [get]
+func (s *GrpcProfileService) FindByPhone(ctx context.Context, req *userpb.FindByPhoneRequest) (*userpb.FindByPhoneResponse, error) {
+	// Validate phone number
+	if req.Phone == "" {
+		return nil, _errors.ReturnError(400, "Số điện thoại không đúng")
 	}
 
 	// Call usecase
-	result, total, err := s.ProfileUsecase.ListAllUsers(ctx, dtoReq)
+	profile, err := s.ProfileUsecase.FindByPhone(ctx, req.Phone)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to find user by phone: %v", err)
 	}
 
-	// Convert DTO response to proto response
-	response := &userpb.ListAllUsersResponse{
-		// Total:      result.Total,
-		Page:       req.Page,
-		Size:       req.Size,
-		TotalPages: total,
-		Total:      int32(total),
+	// Not found
+	if profile == nil {
+		return nil, _errors.ReturnError(404, "Số điện thoại không tồn tại")
 	}
 
-	// Convert data items
-	for _, item := range result {
-		protoItem := &userpb.AdminUserItem{
-			ProfileId: item.ProfileID,
-			FullName:  item.FullName,
-			Email:     item.Email,
-			Phone:     item.Phone,
-			Avatar:    item.Avatar,
-			Address:   item.Address,
-			Gender:    uint32(item.Gender),
-			Status:    uint32(item.Status),
-			// RoleType:  item.RoleType,
-			// RoleRealEstate: item.RoleRealEstate,
-			Position:     item.Position,
-			DepartmentId: item.DepartmentID,
-			Bookmark:     item.Bookmark,
-			TickVerified: item.TickVerified,
-		}
-
-		// Set role information if available
-		if item.RoleName != "" {
-			roleID := uint64(0)
-			if item.RoleID != nil {
-				roleID = *item.RoleID
-			}
-			protoItem.Role = &authpb.Role{
-				Id:       roleID,
-				RoleName: item.RoleName,
-				RoleKey:  item.RoleKey,
-			}
-
-			if item.RoleColor != "" && item.RoleBgColor != "" {
-				protoItem.Role.Color = &authpb.Color{
-					ContentColor:    item.RoleColor,
-					BackgroundColor: item.RoleBgColor,
-				}
-			}
-		}
-
-		// Convert time fields
-		protoItem.CreatedAt = _utils.FormatTimeToString(item.CreatedAt)
-		protoItem.UpdatedAt = _utils.FormatTimeToString(item.UpdatedAt)
-		if item.Birth != nil {
-			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
-		}
-		// if item.LastLoginAt != nil {
-		// 	protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
-		// }
-
-		response.Data = append(response.Data, protoItem)
+	// Convert to proto response
+	response := &userpb.FindByPhoneResponse{
+		FullName: profile.FullName,
+		Phone:    profile.Phone,
 	}
 
 	return response, nil
-}
-
-// @Summary Khóa tài khoản user (Admin only)
-// @Description Khóa tài khoản user với lý do cụ thể (chỉ dành cho admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param profileId path int true "ID của user cần khóa"
-// @Param request body userpb.BlockUserRequest true "Thông tin khóa tài khoản"
-// @Success 200 {object} sharepb.Empty
-// @Failure 400 {object} sharepb.Empty
-// @Failure 401 {object} sharepb.Empty
-// @Failure 500 {object} sharepb.Empty
-// @Router /v2/user/admin/users/{profileId}/block [post]
-func (s *GrpcProfileService) BlockUser(ctx context.Context, req *userpb.BlockUserRequest) (*sharepb.Empty, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
-
-	// Convert proto request to DTO
-	dtoReq := &dto.BlockUserRequest{
-		ProfileID: req.ProfileId,
-		Reason:    req.Reason,
-	}
-
-	// Call usecase
-	err := s.AdminUsecase.BlockUser(ctx, dtoReq)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to block user: %v", err)
-	}
-
-	return &sharepb.Empty{}, nil
-}
-
-// @Summary Mở khóa tài khoản user (Admin only)
-// @Description Mở khóa tài khoản user với lý do cụ thể (chỉ dành cho admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param profileId path int true "ID của user cần mở khóa"
-// @Param request body userpb.UnblockUserRequest true "Thông tin mở khóa tài khoản"
-// @Success 200 {object} sharepb.Empty
-// @Failure 400 {object} sharepb.Empty
-// @Failure 401 {object} sharepb.Empty
-// @Failure 500 {object} sharepb.Empty
-// @Router /v2/user/admin/users/{profileId}/unblock [post]
-func (s *GrpcProfileService) UnblockUser(ctx context.Context, req *userpb.UnblockUserRequest) (*sharepb.Empty, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
-
-	// Convert proto request to DTO
-	dtoReq := &dto.UnblockUserRequest{
-		ProfileID: req.ProfileId,
-		Reason:    req.Reason,
-	}
-
-	// Call usecase
-	err := s.AdminUsecase.UnblockUser(ctx, dtoReq)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to unblock user: %v", err)
-	}
-
-	return &sharepb.Empty{}, nil
-}
-
-// @Summary Duyệt tài khoản user (Admin only)
-// @Description Duyệt tài khoản user với ghi chú (chỉ dành cho admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param profileId path int true "ID của user cần duyệt"
-// @Param request body userpb.ApproveUserRequest true "Thông tin duyệt tài khoản"
-// @Success 200 {object} sharepb.Empty
-// @Failure 400 {object} sharepb.Empty
-// @Failure 401 {object} sharepb.Empty
-// @Failure 500 {object} sharepb.Empty
-// @Router /v2/user/admin/users/{profileId}/approve [post]
-func (s *GrpcProfileService) ApproveUser(ctx context.Context, req *userpb.ApproveUserRequest) (*sharepb.Empty, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
-
-	// Convert proto request to DTO
-	dtoReq := &dto.ApproveUserRequest{
-		ProfileID: req.ProfileId,
-		Note:      req.Note,
-	}
-
-	// Call usecase
-	err := s.AdminUsecase.ApproveUser(ctx, dtoReq)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to approve user: %v", err)
-	}
-
-	return &sharepb.Empty{}, nil
-}
-
-// @Summary Lấy thống kê số lượng user
-// @Description Lấy thống kê số lượng user theo 2 ngày
-// @Tags Dashboard
-// @Accept json
-// @Produce json
-// @Param firstDate query string true "Ngày đầu tiên (YYYY-MM-DD)"
-// @Param secondDate query string true "Ngày thứ hai (YYYY-MM-DD)"
-// @Security BearerAuth
-// @Success 200 {object} sharepb.GetStatsResponse "Thành công"
-// @Router /v2/user/stats [get]
-func (s *GrpcProfileService) GetUserStats(ctx context.Context, req *sharepb.GetStatsRequest) (*sharepb.GetStatsResponse, error) {
-	firstDate, err := time.Parse(time.DateOnly, req.FirstDate)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid firstDate format")
-	}
-
-	secondDate, err := time.Parse(time.DateOnly, req.SecondDate)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid secondDate format")
-	}
-
-	stats, stats2, err := s.UserDashboardStatsJob.GetStats(ctx, firstDate, secondDate)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &sharepb.GetStatsResponse{
-		FirstDate:       stats.CalculateTime.Format(time.DateOnly),
-		SecondDate:      stats2.CalculateTime.Format(time.DateOnly),
-		FirstDateCount:  uint32(stats.Count),
-		SecondDateCount: uint32(stats2.Count),
-	}, nil
 }

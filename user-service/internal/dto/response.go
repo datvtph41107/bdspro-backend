@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	_enum "common/domain/enum"
 	"user/enums"
 	models "user/internal/models"
 )
@@ -135,7 +136,7 @@ type PublicUserInfo struct {
 	StatusOnline      enums.EOnlineStatus   `json:"statusOnline,omitempty"`
 	ProfileVisibility uint8                 `json:"profileVisibility,omitempty"`
 	TabDefault        enums.ESettingTab     `json:"tabDefault,omitempty"`
-	Status            uint8                 `json:"status,omitempty"`
+	Status            _enum.EUserStatus     `json:"status,omitempty"`
 	RoleID            *uint64               `json:"roleId,omitempty"`
 	RoleName          string                `json:"roleName,omitempty"`
 	RoleColor         string                `json:"roleColor,omitempty"`

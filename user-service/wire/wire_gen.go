@@ -52,7 +52,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	friendUsecase := usecases.NewFriendUsecase(iFriendRepo, contactPostgres, followPostgres, blockPostgres, blockUsecase)
 	friendRouter := routes.NewFriendRouter(friendUsecase)
 	iAdminRepo := postgres.NewAdminPostgres(db, authClient)
-	adminUsecase := usecases.NewAdminUsecase(iAdminRepo, authClient)
+	adminUsecase := usecases.NewAdminUsecase(iAdminRepo, profilePostgres, authClient)
 	organizationServiceClient := client.NewOrganizationClient()
 	groupServiceClient := client.NewGroupClient()
 	profileMapper := mapper.NewProfileMapper()
@@ -61,6 +61,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	grpcProfileService := handler.NewGrpcProfileService(profilePostgres, adminUsecase, profileUsecase, organizationServiceClient, groupServiceClient, profileMapper, crmClient, userDashboardStatsJob)
 	adminMapper := mapper.NewAdminMapper()
 	adminHandler := handler.NewAdminHandler(adminUsecase, adminMapper, notificationClient)
+	adminUserProfileHandler := handler.NewAdminUserProfileHandler(adminUsecase, profileUsecase, notificationClient, userDashboardStatsJob)
 	iBookmarkUserRepo := postgres.NewBookmarkUserPostgres()
 	bookmarkUserUsecase := usecases.NewBookmarkUserUsecase(iBookmarkUserRepo)
 	bookmarkUserHandler := handler.NewBookmarkUserHandler(bookmarkUserUsecase)
@@ -68,11 +69,22 @@ func InitializeApp() (*initial.InitialApp, error) {
 	systemConfigPostgres := postgres.NewSystemConfigPostgres(db)
 	systemConfigUsecase := usecases.NewSystemConfigUsecase(systemConfigPersist, systemConfigPostgres)
 	systemConfigHandler := handler.NewSystemConfigHandler(systemConfigUsecase)
-	initialApp := initial.NewInitialApp(profileRouter, blockRouter, followRouter, friendRouter, grpcProfileService, adminHandler, bookmarkUserHandler, feedbackClient, systemConfigHandler, systemConfigUsecase)
+	transactionRepo := _db.NewTransactionRepo(db)
+	iMembershipRepo := postgres.NewMembershipRepo(transactionRepo)
+	iPlanRepo := postgres.NewPlanRepo(transactionRepo)
+	iPaymentProvider := client.NewPaymentClient()
+	iMembershipUsecase := usecases.NewMembershipUsecase(iMembershipRepo, iPlanRepo, iPaymentProvider)
+	membershipMapper := mapper.NewMembershipMapper()
+	membershipHandler := handler.NewMembershipHandler(iMembershipUsecase, membershipMapper)
+	iPlanUsecase := usecases.NewPlanUsecase(iPlanRepo)
+	planMapper := mapper.NewPlanMapper()
+	planHandler := handler.NewPlanHandler(iPlanUsecase, planMapper)
+	internalHandler := handler.NewInternalHandler(profileUsecase)
+	initialApp := initial.NewInitialApp(profileRouter, blockRouter, followRouter, friendRouter, grpcProfileService, adminHandler, adminUserProfileHandler, bookmarkUserHandler, feedbackClient, systemConfigHandler, systemConfigUsecase, membershipHandler, planHandler, internalHandler)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(providers.AuthProvider), new(*client.AuthClient)), wire.Bind(new(providers.FriendProvider), new(*client.CrmClient)), wire.Bind(new(providers.FeedbackProvider), new(*client.FeedbackClient)), wire.Bind(new(providers.NotificationProvider), new(*client.NotificationClient)), wire.Bind(new(repo.IBlockRepo), new(*postgres.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*postgres.ContactPostgres)), wire.Bind(new(repo.IFollowRepo), new(*postgres.FollowPostgres)), wire.Bind(new(repo.IProfessionRepo), new(*postgres.ProfessionPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(repo.ISystemConfigRepo), new(*postgres.SystemConfigPostgres)), wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), handler.NewAdminHandler, mapper.NewAdminMapper, postgres.NewAdminPostgres, usecases.NewAdminUsecase, postgres.NewAttachPostgres, client.NewAuthClient, postgres.NewBlockPostgres, routes.NewBlockRouter, usecases.NewBlockUsecase, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, usecases.NewBookmarkUserUsecase, postgres.NewCertificationPostgres, usecases.NewCertificationUsecase, postgres.NewContactPostgres, client.NewCrmClient, client.NewFeedbackClient, postgres.NewFollowPostgres, routes.NewFollowRouter, usecases.NewFollowUsecase, postgres.NewFriendPostgres, routes.NewFriendRouter, usecases.NewFriendUsecase, client.NewGroupClient, postgres.NewGroupPostgres, handler.NewGrpcProfileService, initial.NewInitialApp, client.NewNotificationClient, client.NewOrganizationClient, client.NewOrganizationMemberClient, client.NewPaymentClient, postgres.NewProfessionPostgres, usecases.NewProfessionUsecase, mapper.NewProfileMapper, postgres.NewProfilePostgres, routes.NewProfileRouter, usecases.NewProfileUsecase, dto.NewRefreshResponse, handler.NewSystemConfigHandler, setting.NewSystemConfigPersist, postgres.NewSystemConfigPostgres, usecases.NewSystemConfigUsecase, postgres.NewTransactionGorm, job.NewUserDashboardStatsJob, models.NewUserProfileEntityWithRequest, usecases.NewUserUsecase)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(providers.AuthProvider), new(*client.AuthClient)), wire.Bind(new(providers.FriendProvider), new(*client.CrmClient)), wire.Bind(new(providers.FeedbackProvider), new(*client.FeedbackClient)), wire.Bind(new(providers.NotificationProvider), new(*client.NotificationClient)), wire.Bind(new(repo.IBlockRepo), new(*postgres.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*postgres.ContactPostgres)), wire.Bind(new(repo.IFollowRepo), new(*postgres.FollowPostgres)), wire.Bind(new(repo.IProfessionRepo), new(*postgres.ProfessionPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(repo.ISystemConfigRepo), new(*postgres.SystemConfigPostgres)), wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), handler.NewAdminHandler, mapper.NewAdminMapper, postgres.NewAdminPostgres, usecases.NewAdminUsecase, handler.NewAdminUserProfileHandler, postgres.NewAttachPostgres, client.NewAuthClient, postgres.NewBlockPostgres, routes.NewBlockRouter, usecases.NewBlockUsecase, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, usecases.NewBookmarkUserUsecase, postgres.NewCertificationPostgres, usecases.NewCertificationUsecase, postgres.NewContactPostgres, client.NewCrmClient, client.NewFeedbackClient, postgres.NewFollowPostgres, routes.NewFollowRouter, usecases.NewFollowUsecase, postgres.NewFriendPostgres, routes.NewFriendRouter, usecases.NewFriendUsecase, client.NewGroupClient, postgres.NewGroupPostgres, handler.NewGrpcProfileService, initial.NewInitialApp, handler.NewInternalHandler, handler.NewMembershipHandler, mapper.NewMembershipMapper, postgres.NewMembershipRepo, usecases.NewMembershipUsecase, client.NewNotificationClient, client.NewOrganizationClient, client.NewOrganizationMemberClient, client.NewPaymentClient, handler.NewPlanHandler, mapper.NewPlanMapper, postgres.NewPlanRepo, usecases.NewPlanUsecase, postgres.NewProfessionPostgres, usecases.NewProfessionUsecase, mapper.NewProfileMapper, postgres.NewProfilePostgres, routes.NewProfileRouter, usecases.NewProfileUsecase, dto.NewRefreshResponse, handler.NewSystemConfigHandler, setting.NewSystemConfigPersist, postgres.NewSystemConfigPostgres, usecases.NewSystemConfigUsecase, postgres.NewTransactionGorm, job.NewUserDashboardStatsJob, models.NewUserProfileEntityWithRequest, usecases.NewUserUsecase)

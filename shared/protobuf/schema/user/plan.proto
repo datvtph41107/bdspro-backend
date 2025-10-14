@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// ============= Plan Messages =============
+
+message PlanResponse {
+  uint64 id = 1;
+  string packageName = 2;
+  int64 duration = 3;
+  int64 price = 4;
+  int32 createProduct = 5;
+  int64 limitPost = 6;
+  int32 publicProductLimit = 7;
+  int32 createProductAI = 8;
+  int32 friendLimit = 9;
+  int32 customerLimit = 10;
+  int32 joinOrg = 11;
+  int32 createOrganization = 12;
+  int32 orgMemberLimit = 13;
+  int32 orgProductLimit = 14;
+  string color = 15;
+  repeated string features = 16;
+  bool visibility = 17;
+  google.protobuf.Timestamp createdAt = 18;
+  google.protobuf.Timestamp updatedAt = 19;
+}
+
+message CreatePlanRequest {
+  string packageName = 1;
+  int64 duration = 2;
+  int64 price = 3;
+  int32 createProduct = 4;
+  int64 limitPost = 5;
+  int32 publicProductLimit = 6;
+  int32 createProductAI = 7;
+  int32 friendLimit = 8;
+  int32 customerLimit = 9;
+  int32 joinOrg = 10;
+  int32 createOrganization = 11;
+  int32 orgMemberLimit = 12;
+  int32 orgProductLimit = 13;
+  string color = 14;
+  repeated string features = 15;
+  bool visibility = 16;
+}
+
+message UpdatePlanRequest {
+  uint64 id = 1;
+  string packageName = 2;
+  int64 duration = 3;
+  int64 price = 4;
+  int32 createProduct = 5;
+  int64 limitPost = 6;
+  int32 publicProductLimit = 7;
+  int32 createProductAI = 8;
+  int32 friendLimit = 9;
+  int32 customerLimit = 10;
+  int32 joinOrg = 11;
+  int32 createOrganization = 12;
+  int32 orgMemberLimit = 13;
+  int32 orgProductLimit = 14;
+  string color = 15;
+  repeated string features = 16;
+  bool visibility = 17;
+}
+
+message DeletePlanRequest {
+  uint64 id = 1;
+}
+
+message DeletePlanResponse {
+  bool success = 1;
+}
+
+message GetPlanByIdRequest {
+  uint64 id = 1;
+}
+
+message GetPlanByIdResponse {
+  PlanResponse plan = 1;
+}
+
+message GetAllPlansRequest {
+}
+
+message GetAllPlansResponse {
+  repeated PlanResponse plans = 1;
+}
+
+message GetVisiblePlansRequest {
+}
+
+message GetVisiblePlansResponse {
+  repeated PlanResponse plans = 1;
+}
+
+// ============= Plan Service =============
+
+service PlanService {
+  // User APIs - Lấy danh sách plans để hiển thị
+  rpc GetVisiblePlans(GetVisiblePlansRequest) returns (GetVisiblePlansResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/plans"
+    };
+  }
+  
+  // Admin APIs - Quản lý plans
+  rpc CreatePlan(CreatePlanRequest) returns (PlanResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/admin/plans"
+      body: "*"
+    };
+  }
+  rpc UpdatePlan(UpdatePlanRequest) returns (PlanResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/admin/plans/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlan(DeletePlanRequest) returns (DeletePlanResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/admin/plans/{id}"
+    };
+  }
+  rpc GetPlanById(GetPlanByIdRequest) returns (GetPlanByIdResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/admin/plans/{id}"
+    };
+  }
+  rpc GetAllPlans(GetAllPlansRequest) returns (GetAllPlansResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/admin/plans"
+    };
+  }
+}
+
