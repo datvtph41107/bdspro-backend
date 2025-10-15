@@ -16,7 +16,7 @@ WORKDIR /
 
 COPY main .
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
 
 EXPOSE 8080
 
@@ -34,7 +34,7 @@ WORKDIR /
 
 COPY main .
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
 
 CMD ["./main", "grpc"]
 ```
@@ -49,7 +49,7 @@ WORKDIR /
 COPY main .
 COPY docs docs
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
 
 EXPOSE 8080
 
@@ -444,8 +444,8 @@ curl http://localhost:8308/health
 
 #### **Runtime Environment:**
 ```dockerfile
-ENV ENV_RUNTIME=release
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
+ENV ENV_RUNTIME=develop
 ```
 
 #### **Config File Path:**

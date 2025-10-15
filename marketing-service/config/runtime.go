@@ -34,7 +34,7 @@ func InitConfig() {
 }
 
 func loadConfig() {
-	file := "config.yaml"
+	file := "develop.yaml"
 	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
 		file = envFile
 	}

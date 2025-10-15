@@ -284,7 +284,7 @@ func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsF
 	err := r.db.WithContext(ctx).
 		Model(&domain.NewsFeed{}).
 		Preload("NewsFeedMedias").
-		Preload("FriendTag").
+		Preload("FriendTags").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&newsFeed).
 		Error

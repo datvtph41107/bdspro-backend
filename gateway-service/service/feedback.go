@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 
@@ -13,10 +14,8 @@ import (
 
 func RegisterFeedbackService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.feedback")
-	url := "localhost"
-	if env == "release" {
-		url = "feedback_grpc"
-	}
+	url := common.GetPrefixProtobufUrl(env, "feedback")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = feedbackpb.RegisterRateServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = feedbackpb.RegisterReportServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

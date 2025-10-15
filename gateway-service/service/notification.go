@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	notificationpb "pb/types/notification"
@@ -12,10 +13,8 @@ import (
 
 func RegisterNotificationService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.notification")
-	url := "localhost"
-	if env == "release" {
-		url = "notification"
-	}
+	url := common.GetPrefixProtobufUrl(env, "notification")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	fmt.Println("url", url, "endpoint", endpoint)
 	_ = notificationpb.RegisterGatewayNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

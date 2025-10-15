@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_middleware "common/middleware"
 	"context"
 	"errors"
@@ -20,11 +21,8 @@ type OrganizationClient struct {
 func MakeOrganizationClient(env_runtime string) *OrganizationClient {
 	organizationClient := &OrganizationClient{}
 	go func() {
-		url := "localhost"
 		name := "organization"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8207", url),
 			grpc.WithInsecure(),

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	organizationpb "pb/types/organization"
@@ -12,10 +13,8 @@ import (
 
 func RegisterOrganizationService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.organization")
-	url := "localhost"
-	if env == "release" {
-		url = "organization"
-	}
+	url := common.GetPrefixProtobufUrl(env, "organization")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = organizationpb.RegisterOrganizationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = organizationpb.RegisterOrganizationMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

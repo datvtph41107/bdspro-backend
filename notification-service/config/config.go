@@ -1,8 +1,7 @@
 package config
 
 import (
-	"bytes"
-	_ "embed"
+	"common"
 	"log"
 	"notification/env"
 	"os"
@@ -11,9 +10,6 @@ import (
 )
 
 const C_SESSION_ID = "C_SESSION_ID"
-
-//go:embed app.yml
-var EmbeddedConfig []byte
 
 // UserProperties chứa cấu hình của ứng dụng
 type UserProperties struct {
@@ -48,29 +44,7 @@ var AppProperties UserProperties
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	viper.SetConfigType("yaml") // Loại file config
-
-	// Đọc biến môi trường (nếu có)
-	viper.AutomaticEnv()
-
-	var err error
-	if env.ENV_RUNTIME == "release" {
-		config_release, err := os.ReadFile("config/product.yml")
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = viper.ReadConfig(bytes.NewReader(config_release))
-		if err != nil {
-			log.Fatalf("Lỗi khi đọc file config: %v", err)
-		}
-	} else {
-		// Đọc file config
-		err = viper.ReadConfig(bytes.NewReader(EmbeddedConfig))
-	}
-
-	if err != nil {
-		log.Fatalf("Lỗi khi đọc file config: %v", err)
-	}
+	common.LoadYMLConfigFile(env.ENV_RUNTIME)
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
 		log.Fatalf("Lỗi parse config: %v", err)

@@ -54,24 +54,37 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *bdspropb.Post {
 	for i, media := range post.MediaList {
 		mediaList[i] = m.MapPostMedia(&media)
 	}
+
+	// Đảm bảo luôn có transactionStatus mặc định
+	transactionStatus := uint32(post.VisibleStatus)
+	if transactionStatus == 0 {
+		// Nếu chưa được set, dùng giá trị mặc định dựa vào TransactionType
+		if post.TransactionType == enums.TransactionTypeSale {
+			transactionStatus = 100 // Đang bán (mặc định)
+		} else {
+			transactionStatus = 200 // Đang cho thuê (mặc định)
+		}
+	}
+
 	return &bdspropb.Post{
-		Id:              post.ID,
-		Title:           post.Title,
-		PostPrice:       post.PostPrice,
-		PriceType:       uint32(post.PriceType),
-		PackageVisible:  uint32(post.PackageVisible),
-		TransactionType: uint32(post.TransactionType),
-		Visibility:      uint32(post.Visibility),
-		Like:            post.Like,
-		Comment:         post.Comment,
-		NumView:         post.NumView,
-		NumDate:         int32(post.NumDate),
-		Content:         post.Content,
-		OwnerId:         post.OwnerID,
-		OwnerType:       uint32(post.OwnerOf),
-		MediaList:       mediaList,
-		Status:          uint32(post.Status),
-		ExpiredAt:       _utils.FormatTimeToString(post.ExpiredAt),
+		Id:                post.ID,
+		Title:             post.Title,
+		PostPrice:         post.PostPrice,
+		PriceType:         uint32(post.PriceType),
+		PackageVisible:    uint32(post.PackageVisible),
+		TransactionType:   uint32(post.TransactionType),
+		Visibility:        uint32(post.Visibility),
+		Like:              post.Like,
+		Comment:           post.Comment,
+		NumView:           post.NumView,
+		NumDate:           int32(post.NumDate),
+		Content:           post.Content,
+		OwnerId:           post.OwnerID,
+		OwnerType:         uint32(post.OwnerOf),
+		MediaList:         mediaList,
+		Status:            uint32(post.Status),
+		TransactionStatus: transactionStatus, // Map trạng thái giao dịch: 100-Đang bán, 110-Đã bán, 200-Đang cho thuê, 210-Đã cho thuê
+		ExpiredAt:         _utils.FormatTimeToString(post.ExpiredAt),
 	}
 }
 

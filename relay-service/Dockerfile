@@ -4,4 +4,4 @@ WORKDIR /app
 
 COPY . .
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop

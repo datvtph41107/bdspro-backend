@@ -8,7 +8,7 @@ COPY docs docs
 
 COPY config config
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
 
 EXPOSE 8080
 

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	marketingpb "pb/types/marketing"
@@ -12,10 +13,8 @@ import (
 
 func RegisterMarketingService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.marketing")
-	url := "localhost"
-	if env == "release" {
-		url = "chat"
-	}
+	url := common.GetPrefixProtobufUrl(env, "marketing")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = marketingpb.RegisterMarketingServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

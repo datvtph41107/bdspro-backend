@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"common"
 	"fmt"
 	"log"
 	"mime"
@@ -46,10 +47,7 @@ func ForwardingRequest(g *Gateway, env string) func(c *gin.Context) {
 		}
 
 		// Xác định host dựa trên environment
-		host := "localhost"
-		if env == "release" {
-			host = serviceName
-		}
+		host := common.GetPrefixProtobufUrl(env, serviceName)
 
 		// Tạo target URL
 		targetURL := fmt.Sprintf(

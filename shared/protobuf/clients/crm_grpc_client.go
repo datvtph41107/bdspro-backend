@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_middleware "common/middleware"
 	_utils "common/utils"
 	"context"
@@ -21,11 +22,8 @@ type CrmGrpcClient struct {
 func MakeCrmGrpcClient(env_runtime string) *CrmGrpcClient {
 	crmClient := &CrmGrpcClient{}
 	go func() {
-		url := "localhost"
 		name := "crm"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8206", url),
 			grpc.WithInsecure(),

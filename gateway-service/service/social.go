@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 
@@ -13,10 +14,8 @@ import (
 
 func RegisterSocialService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.social")
-	url := "localhost"
-	if env == "release" {
-		url = "social"
-	}
+	url := common.GetPrefixProtobufUrl(env, "social")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = pb_social.RegisterNewsFeedServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = pb_social.RegisterCommentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

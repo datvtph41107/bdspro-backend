@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_middleware "common/middleware"
 	"context"
 	"errors"
@@ -20,11 +21,8 @@ type BdsproGrpcClient struct {
 func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
 	bdsproClient := &BdsproGrpcClient{Client: nil, InternalClient: nil}
 	go func() {
-		url := "localhost"
 		name := "bdspro"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
 			grpc.WithInsecure(),

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 
@@ -17,10 +18,7 @@ func RegisterAssistantService(ctx context.Context, mux *runtime.ServeMux, env st
 		port = "50061"
 	}
 
-	url := "localhost"
-	if env == "release" {
-		url = "assistant_grpc"
-	}
+	url := common.GetPrefixProtobufUrl(env, "assistant_grpc")
 
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 

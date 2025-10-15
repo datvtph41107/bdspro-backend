@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	chatpb "pb/types/chat"
@@ -12,10 +13,8 @@ import (
 
 func RegisterChatService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.chat")
-	url := "localhost"
-	if env == "release" {
-		url = "chat"
-	}
+	url := common.GetPrefixProtobufUrl(env, "chat")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	fmt.Println("url", url, "endpoint", endpoint)
 	_ = chatpb.RegisterChatServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

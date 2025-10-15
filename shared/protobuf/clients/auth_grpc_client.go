@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	_middleware "common/middleware"
@@ -21,11 +22,8 @@ type AuthGrpcClient struct {
 func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 	authClient := &AuthGrpcClient{}
 	go func() {
-		url := "localhost"
 		name := "auth"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8216", url),
 			grpc.WithInsecure(),

@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_middleware "common/middleware"
@@ -23,11 +24,8 @@ type NotificationClient struct {
 func MakeNotificationClient(env_runtime string) *NotificationClient {
 	notificationClient := &NotificationClient{}
 	go func() {
-		url := "localhost"
 		name := "notification"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8204", url),
 			grpc.WithInsecure(),
@@ -197,4 +195,22 @@ func (s *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, 
 		ipAddress,                   // ipAddress
 		userAgent,                   // userAgent
 	)
+}
+
+// CreateNotification tạo thông báo cho user với đầy đủ thông tin
+func (s *NotificationClient) CreateNotification(ctx context.Context,
+	title string,
+	message string,
+	notificationType int32,
+	link string,
+	ownerID uint64,
+) error {
+	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
+		Title:   title,
+		Message: message,
+		Type:    notificationType,
+		Link:    link,
+		OwnerId: ownerID,
+	})
+	return err
 }

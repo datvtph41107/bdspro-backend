@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	bdspropb "pb/types/bdspro"
@@ -12,10 +13,8 @@ import (
 
 func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.bdspro")
-	url := "localhost"
-	if env == "release" {
-		url = "bdspro"
-	}
+	url := common.GetPrefixProtobufUrl(env, "bdspro")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	// _ = bdspropb.RegisterBdsproServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = bdspropb.RegisterBdsproPublicServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

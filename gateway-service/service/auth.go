@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	authpb "pb/types/auth"
@@ -12,10 +13,8 @@ import (
 
 func RegisterAuthService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.auth")
-	url := "localhost"
-	if env == "release" {
-		url = "auth"
-	}
+	url := common.GetPrefixProtobufUrl(env, "auth")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = authpb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = authpb.RegisterOAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

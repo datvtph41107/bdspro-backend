@@ -123,6 +123,21 @@ case "$1" in
     path_jar=main
     payload_build=organization
     ;;
+  "tqd")
+    service_path=tqd-service
+    path_jar=main
+    payload_build=tqd
+    ;;
+  "feedback")
+    service_path=feedback-service
+    path_jar=main
+    payload_build=feedback
+    ;;
+  "marketing")
+    service_path=marketing-service
+    path_jar=main
+    payload_build=marketing
+    ;;
   "transaction")
     service_path=transaction-service
     path_jar=main
@@ -154,11 +169,13 @@ fi
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 mkdir -p ${REMOTE_DIR}
+mkdir -p ${REMOTE_DIR}/config
 "
 
 scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
+scp config/develop.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/develop.yml
 scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 
 # rsync -avz --delete ./Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}${service_path}

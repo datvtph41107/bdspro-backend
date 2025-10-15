@@ -6,7 +6,7 @@ COPY main .
 
 COPY config config
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
 
 EXPOSE 8209
 

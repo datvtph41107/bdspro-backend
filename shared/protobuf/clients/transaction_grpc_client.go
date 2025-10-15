@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_middleware "common/middleware"
 	"context"
 	"fmt"
@@ -20,11 +21,8 @@ type TransactionGrpcClient struct {
 func NewTransactionGrpcClient(env_runtime string) *TransactionGrpcClient {
 	transactionClient := &TransactionGrpcClient{}
 	go func() {
-		url := "localhost"
 		name := "transaction"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8215", url),
 			grpc.WithInsecure(),

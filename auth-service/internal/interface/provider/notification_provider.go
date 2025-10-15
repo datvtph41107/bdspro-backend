@@ -17,4 +17,11 @@ type NotificationProvider interface {
 		adminRole string,
 		ipAddress string,
 		userAgent string) error
+
+	CreateNotification(ctx context.Context,
+		title string,
+		message string,
+		notificationType int32,
+		link string,
+		ownerID uint64) error
 }

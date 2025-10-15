@@ -1,6 +1,7 @@
 package service
 
 import (
+	"common"
 	"context"
 	"fmt"
 	crmpb "pb/types/crm"
@@ -12,10 +13,8 @@ import (
 
 func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.crm")
-	url := "localhost"
-	if env == "release" {
-		url = "crm"
-	}
+	url := common.GetPrefixProtobufUrl(env, "crm")
+
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = crmpb.RegisterPipelineServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterContactServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

@@ -50,7 +50,10 @@ type PostItem struct {
 	Status            enums.EPostStatus       `gorm:"column:status" json:"status"`
 	TransactionStatus enums.TransactionStatus `gorm:"column:transaction_status" json:"transactionStatus"`
 
-	VisibleStatus enums.EPostVisibleStatus `gorm:"-" json:"visibleStatus"`
+	VisibleStatus         enums.EPostVisibleStatus `gorm:"-" json:"visibleStatus"`
+	TransactionTypeName   string                   `gorm:"-" json:"transactionTypeName"`
+	TransactionStatusName string                   `gorm:"-" json:"transactionStatusName"`
+	VisibleStatusName     string                   `gorm:"-" json:"visibleStatusName"`
 }
 
 func (PostItem) TableName() string {

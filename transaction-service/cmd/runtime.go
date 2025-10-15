@@ -1,7 +1,6 @@
 package cmd_grpc
 
 import (
-	"common"
 	_middleware "common/middleware"
 	"fmt"
 	"log"
@@ -22,7 +21,7 @@ var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Run the GRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
-		common.LoadConfig(config.ConfigFile)
+		config.LoadConfig()
 		// _db.NewDB()
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)

@@ -308,6 +308,23 @@ func (s *PostUsecase) MapPostStatus(post *domain.PostItem) enums.EPostVisibleSta
 	return post.VisibleStatus
 }
 
+func (s *PostUsecase) MapStatusNames(post *domain.PostItem) {
+	// Map transaction type name
+	if name, ok := enums.TransactionTypeNames[post.TransactionType]; ok {
+		post.TransactionTypeName = name
+	}
+
+	// Map transaction status name
+	if name, ok := enums.TransactionStatusNames[post.TransactionStatus]; ok {
+		post.TransactionStatusName = name
+	}
+
+	// Map visible status name
+	if name, ok := enums.EPostTransactionStatusNames[post.VisibleStatus]; ok {
+		post.VisibleStatusName = name
+	}
+}
+
 func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, total, err := s.Repo.Search(c, profileId, dto)
@@ -331,6 +348,7 @@ func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) (
 
 	for i, entity := range entities {
 		entities[i].VisibleStatus = s.MapPostStatus(&entity)
+		s.MapStatusNames(&entities[i])
 	}
 
 	return entities, total, nil

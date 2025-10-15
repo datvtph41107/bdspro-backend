@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	_middleware "common/middleware"
 	"context"
 	"fmt"
@@ -18,11 +19,8 @@ type ChatGrpcClient struct {
 func NewChatGrpcClient(env_runtime string) *ChatGrpcClient {
 	chatClient := &ChatGrpcClient{}
 	go func() {
-		url := "localhost"
 		name := "chat"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8208", url),
 			grpc.WithInsecure(),

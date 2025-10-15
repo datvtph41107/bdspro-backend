@@ -178,6 +178,14 @@
       "mode": "auto",
       "program": "${workspaceFolder}/assistant-service",
       "args": ["http"]
+    },
+    {
+      "name": "🧪 Debug Marketing Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/marketing-service",
+      "args": ["grpc"]
     }
   ]
 }

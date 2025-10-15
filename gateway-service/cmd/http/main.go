@@ -118,6 +118,11 @@ var publicRoutes = []string{
 	"/v2/feedback/report-reason",
 	"/v2/feedback/report",
 	"/v2/bdspro/v2/product/suggest/deepseek",
+	"/v2/bdspro/v2/post/global",
+
+	"/v2/user/profile/search/public",
+	"/v2/bdspro/v2/post/detail/",
+	"/v2/social/news-feed/detail/",
 }
 
 // HttpCmd chạy HTTP server

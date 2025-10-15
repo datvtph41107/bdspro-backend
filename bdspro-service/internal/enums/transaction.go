@@ -28,6 +28,19 @@ const (
 	TransactionStatusCanceled  TransactionStatus = 50 // Hủy
 )
 
+var TransactionStatusNames = map[TransactionStatus]string{
+	TransactionStatusDraft:     "Nháp",
+	TransactionStatusDeposite:  "Đặt cọc",
+	TransactionStatusSigned:    "Đã ký",
+	TransactionStatusCompleted: "Hoàn thành",
+	TransactionStatusCanceled:  "Hủy",
+}
+
+var TransactionTypeNames = map[TransactionType]string{
+	TransactionTypeSale: "Bán",
+	TransactionTypeRent: "Thuê",
+}
+
 // TransactionAction represents the type of action performed on a transaction
 type TransactionAction uint32
 

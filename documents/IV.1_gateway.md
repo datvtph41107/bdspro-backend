@@ -103,7 +103,7 @@ jwt:
 func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
     port := viper.GetString("service.port.user")
     url := "localhost"
-    if env == "release" {
+    if env != "local" {
         url = "user_grpc"  // Docker container name
     }
     endpoint := fmt.Sprintf("%s:%s", url, port)
@@ -400,7 +400,7 @@ WORKDIR /
 COPY main .
 COPY docs docs
 
-ENV ENV_RUNTIME=release
+ENV ENV_RUNTIME=develop
 
 EXPOSE 8080
 

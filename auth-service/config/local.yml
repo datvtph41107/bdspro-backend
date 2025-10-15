@@ -1,0 +1,78 @@
+server:
+  name: auth-service
+  tcp_port: 8216
+
+database:
+  host: localhost
+  port: 5432
+  name: auth_service
+  user: postgres
+  password: password
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_auth port=5432 sslmode=disable
+
+redis:
+  host: 14.225.210.29:6379
+  # host: localhost:6379
+  pass: protected_redis_secure_password
+
+
+oauth:
+  google:
+    client_id: 83012182189-nk4k3aqn3ccmr5hikv8djgb5vpkeragk.apps.googleusercontent.com
+    client_secret: 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
+    redirect_uri: http://14.225.210.29:8000/user/oauth/google/callback
+  
+  facebook:
+    client_id: 2029655954220379
+    client_secret: a00ffdf676394cb22b4af98bfe1dac3b
+    redirect_uri: http://14.225.210.29:8000/user/oauth/facebook/callback
+  
+  zalo:
+    app_id: 282266321456750389
+    secret_key: 26DSfVq7RHOM4SVlRNI1
+    redirect_uri: http://14.225.210.29:8000/user/oauth/zalo/callback
+    permission_url: https://oauth.zaloapp.com/v4/permission?
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 150 # access token hết hạn 100 giờ
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+sms:
+  provider: "twilio"  # or other SMS providers
+  account_sid: "your_twilio_account_sid"
+  auth_token: "your_twilio_auth_token"
+  from_number: "+1234567890"
+
+otp:
+  max-times-resend: 5
+  max-times-otp-enter: 3 #số lần nhập OTP
+  expired-after-seconds: 600 #10p hết hạn otp
+  lock-verify-after: 900 # khóa tài khoản 15p nếu sai OTP/gửi OTP 5 lần
+  lock-send-after: 60 # lần gửi OTP tiếp theo trong request hiện tại sau 60s
+  lock-request-after: 300 # lần gửi OTP giữa 2 lần request là 5p
+  limit-otp-device: 10
+  limit-otp-ip: 100
+  cooldown-seconds: 300
+  ip-cooldown-seconds: 900
+
+grpc:
+  organization:
+    host: :8207
+  group:
+    host: :8207
+  payment:
+    host: :8205
+
+admin:
+  username: admin
+  password: admin123
+  email: admin@example.com
+  full_name: Administrator

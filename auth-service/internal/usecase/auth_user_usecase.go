@@ -170,6 +170,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	s.SessionRepo.CreateSession(c, newSession)
 
 	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
+	isNewUser := false
 	if err != nil || infoEntity == nil || infoEntity.ProfileID == 0 {
 		// infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
 		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, e.FullName, e.Email, e.AuthName, e.Avatar)
@@ -179,6 +180,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 		e.UserID = infoEntity.ProfileID
 		s.AuthMethodRepo.Update(c, e)
+		isNewUser = true
 	}
 
 	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
@@ -244,6 +246,28 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), property.AppProperties.Jwt.RefreshExpMinutes*60)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, e, newSession.SessionID)
+
+	// Gửi thông báo chào mừng nếu là user mới
+	if isNewUser {
+		go func() {
+			contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			err := s.NotificationClient.CreateNotification(
+				contextTimeout,
+				"Chào mừng bạn đến với BDSPro",
+				"Thiết lập tài khoản thành công",
+				1, // type: 1 - thông báo hệ thống
+				"",
+				infoEntity.ProfileID,
+			)
+			if err != nil {
+				log.Printf("Failed to send welcome notification: %v", err)
+			} else {
+				log.Printf("Successfully sent welcome notification to user %d", infoEntity.ProfileID)
+			}
+		}()
+	}
 
 	return s.ResponseLogin(e, infoEntity, newSession.SessionID), nil
 }

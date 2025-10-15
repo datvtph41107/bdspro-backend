@@ -9,7 +9,7 @@ package clients
 // 	go func() {
 // 		url := "localhost"
 // 		name := "organization"
-// 		if env_runtime == "release" {
+// 		if env_runtime != "" {
 // 			url = name
 // 		}
 

@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common"
 	"context"
 	"fmt"
 	"log"
@@ -19,11 +20,8 @@ type FeedbackGrpcClient struct {
 func MakeFeedbackGrpcClient(env_runtime string) *FeedbackGrpcClient {
 	feedbackClient := &FeedbackGrpcClient{}
 	go func() {
-		url := "localhost"
 		name := "feedback"
-		if env_runtime == "release" {
-			url = name
-		}
+		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8217", url),
 			grpc.WithInsecure(),

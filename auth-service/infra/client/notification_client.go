@@ -42,3 +42,14 @@ func (c *NotificationClient) CreateAdminHistory(ctx context.Context,
 ) error {
 	return c.client.CreateAdminHistory(ctx, adminID, targetID, targetType, actionType, title, notes, preStage, afterStage, ownerID, ownerType, adminRole, ipAddress, userAgent)
 }
+
+// CreateNotification tạo thông báo cho user
+func (c *NotificationClient) CreateNotification(ctx context.Context,
+	title string,
+	message string,
+	notificationType int32,
+	link string,
+	ownerID uint64,
+) error {
+	return c.client.CreateNotification(ctx, title, message, notificationType, link, ownerID)
+}

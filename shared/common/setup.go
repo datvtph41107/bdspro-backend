@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -147,4 +148,38 @@ func LoadConfig(configFile []byte) {
 	if err != nil {
 		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}
+}
+
+func LoadYMLConfigFile(runtimeEnv string) {
+	viper.SetConfigType("yaml") // Loại file config
+
+	// Đọc biến môi trường (nếu có)
+	viper.AutomaticEnv()
+
+	env := "local"
+	if runtimeEnv != "" {
+		env = runtimeEnv
+	}
+	var err error
+	if env != "" {
+		config_file, err := os.ReadFile("config/" + env + ".yml")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = viper.ReadConfig(bytes.NewReader(config_file))
+		if err != nil {
+			log.Fatalf("Lỗi khi đọc file config: %v", err)
+		}
+	}
+
+	if err != nil {
+		log.Fatalf("Lỗi khi đọc file config: %v", err)
+	}
+}
+
+func GetPrefixProtobufUrl(env_runtime string, name string) string {
+	if env_runtime != "" {
+		return name
+	}
+	return "localhost"
 }
