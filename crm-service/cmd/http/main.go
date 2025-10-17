@@ -1,48 +1,42 @@
 package cmd_http
 
 import (
-	"common"
-	_jwt "common/jwt"
 	"context"
-	"crm/config"
-	"crm/infra/db"
 	"crm/initial"
-	"crm/wire"
-	"log"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
 )
 
+// @deprecated
 var publicRoutes = []string{}
 
 var HttpCmd = &cobra.Command{
 	Use:   "http",
 	Short: "Run the HTTP server",
 	Run: func(cmd *cobra.Command, args []string) {
-		r := gin.Default()
+		// r := gin.Default()
 
-		parameters := common.SetupParameters{
-			ConfigFile:   config.EmbeddedConfig,
-			Engine:       r,
-			PublicRoutes: publicRoutes,
-			Prefix:       "/crm",
-		}
+		// parameters := common.SetupParameters{
+		// 	ConfigFile:   config.EmbeddedConfig,
+		// 	Engine:       r,
+		// 	PublicRoutes: publicRoutes,
+		// 	Prefix:       "/crm",
+		// }
 
-		common.SetupRestfulAPI(parameters, func() {
-			// config.LoadProperties()
-			log.Printf("Data: ", config.AppProperties)
+		// common.SetupRestfulAPI(parameters, func() {
+		// 	// config.LoadProperties()
+		// 	log.Printf("Data: ", config.AppProperties)
 
-			app, _ := wire.InitializeApp()
-			db.AutoMigrate()
+		// 	app, _ := wire.InitializeApp()
+		// 	db.AutoMigrate()
 
-			r.Use(_jwt.JWTAuthMiddleware(nil))
-			// app.RuntimeRouter.RuntimeRoutes(r)
+		// 	r.Use(_jwt.JWTAuthMiddleware(nil))
+		// 	// app.RuntimeRouter.RuntimeRoutes(r)
 
-			startScheduler(app)
-		})
+		// 	startScheduler(app)
+		// })
 	},
 }
 

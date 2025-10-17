@@ -1,7 +1,6 @@
 package config
 
 import (
-	_ "embed"
 	"os"
 	"path"
 
@@ -14,9 +13,6 @@ import (
 type ConfigApp struct {
 	GRPCServer *grpc.GRPCServer
 }
-
-//go:embed config.yaml
-var ConfigFile []byte
 
 func NewConfigApp(grpcServer *grpc.GRPCServer) *ConfigApp {
 	return &ConfigApp{

@@ -3,7 +3,6 @@ package config
 import (
 	"common"
 	"crm/env"
-	_ "embed"
 	"log"
 	"os"
 
@@ -11,9 +10,6 @@ import (
 )
 
 const C_SESSION_ID = "C_SESSION_ID"
-
-//go:embed app.yml
-var EmbeddedConfig []byte
 
 // UserProperties chứa cấu hình của ứng dụng
 type UserProperties struct {

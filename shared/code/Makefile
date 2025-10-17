@@ -202,7 +202,7 @@ build-all:
 	$(CD_ROOT) && cd marketing-service && go build -o marketing-service main.go
 	# $(CD_ROOT) && cd membership-service && go build -o membership-service .
 	$(CD_ROOT) && cd auth-service && go build -o auth-service .
-	# $(CD_ROOT) && cd transaction-service && go build -o transaction-service .
-	# $(CD_ROOT) && cd feedback-service && go build -o feedback-service .
+	$(CD_ROOT) && cd transaction-service && go build -o transaction-service .
+	$(CD_ROOT) && cd feedback-service && go build -o feedback-service .
 	$(CD_ROOT) && cd tqd-service && go build -o tqd-service .
 	$(CD_ROOT) && cd assistant-service && go build -o assistant-service .
