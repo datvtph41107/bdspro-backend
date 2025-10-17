@@ -58,7 +58,8 @@ func (h *AuthHandler) RequestOTP(ctx context.Context, req *authpb.RequestOTPRequ
 
 	// Convert DTO response to proto response
 	response := &authpb.RequestOTPResponse{
-		AuthId: result.AuthID,
+		AuthId:  result.AuthID,
+		Existed: result.Existed,
 		// Message: result.Message,
 	}
 

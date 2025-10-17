@@ -56,7 +56,7 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *bdspropb.Post {
 	}
 
 	// Đảm bảo luôn có transactionStatus mặc định
-	transactionStatus := uint32(post.VisibleStatus)
+	transactionStatus := uint32(post.TransactionStatus)
 	if transactionStatus == 0 {
 		// Nếu chưa được set, dùng giá trị mặc định dựa vào TransactionType
 		if post.TransactionType == enums.TransactionTypeSale {

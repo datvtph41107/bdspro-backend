@@ -11,6 +11,7 @@ func MakeAuthLoginResponse(accessToken string, authEntity *domain.AuthMethod, ro
 		Username:  authEntity.AuthName,
 		AuthID:    authEntity.ID,
 		ProfileID: authEntity.UserID,
+		FullName:  authEntity.FullName, // OAuth fullname
 	}
 }
 
@@ -168,7 +169,7 @@ type AuthLoginResponse struct {
 	ProfileID      uint64 `json:"profileId"`
 	RefreshToken   string `json:"refreshToken"`
 	OrganizationID uint64 `json:"organizationId,omitempty"`
-	// FullName       string `json:"fullName"`
+	FullName       string `json:"fullName"` // OAuth fullname
 	// Avatar         string `json:"avatar"`
 	// Phone          string `json:"phone"`
 	// Email          string `json:"email"`

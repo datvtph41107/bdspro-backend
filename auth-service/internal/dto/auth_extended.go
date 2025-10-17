@@ -7,6 +7,7 @@ type RequestLoginResponse struct {
 	AuthID   uint64 `json:"authId"`
 	Provider string `json:"provider"`
 	OAuthID  string `json:"oauthId"`
+	Existed  bool   `json:"existed"` // true: user đã tồn tại, false: user mới đăng ký
 }
 
 // RefreshResponse đại diện cho response khi refresh token

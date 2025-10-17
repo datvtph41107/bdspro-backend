@@ -176,7 +176,7 @@ scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
 scp config/develop.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/develop.yml
-scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+scp ../shared/code/Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 
 # rsync -avz --delete ./Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}${service_path}
 

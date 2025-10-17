@@ -1,0 +1,57 @@
+server:
+  port: 8001
+  tcp_port: 8201
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate: ERROR
+
+service:
+  name: "user service"
+  feature: "Enabled only for Service User"
+
+redis:
+  host: 14.225.210.29:6379
+  pass: protected_redis_secure_password
+  
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL9Dialect
+  datasource:
+    url: jdbc:postgresql://14.225.205.222:5432/db_user
+    username: user
+    password: znodVcrXdFtaOLdPaTQr3lmV
+    driver-class-name: org.postgresql.Driver
+
+
+grpc:
+  organization:
+    host: :8207
+  group:
+    host: :8207
+  payment:
+    host: :8205
+  auth:
+    host: :8202
+  notification:
+    host: :8208
+
+payment:
+  secretKey: key-to-generate-signature-for-call-hook
+  url: localhost:8005
+  path: payment/payos/create

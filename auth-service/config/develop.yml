@@ -51,13 +51,18 @@ sms:
   auth_token: "your_twilio_auth_token"
   from_number: "+1234567890"
 
+zns:
+  access_token: "Deqa38AjsNytZIi7YQBQVZs99Wc3lgyuOC8JJwkpisjf-ZDRjh2rNttw8cwUfjvMRlXiSQIhx5nRX4fKiQZZO7204nA6hk4TSzeT6hcCcXz9-JGeffMd6atf4mEecx8iNFSv0e3ThZSqzJWv-QBBAK_fL0_ygiK2BVXf3yZJpZqPYq0qpk7K0mwkM7VwvQvS6R8oNzVfpaKaaMPSvywEA2sxUmVz_Oii4DC89zcS_2CvprHRXgEYN7NI2I_1lRaaAk9AFksEpH8SvaGPoR2qO0pk2476jFr92VbJFUI9rKWO-qD7q8dIGGNZ9a_oeBHG1in1NkM-itSrvKP4yRQwOJENB4JN_AvHEwS39CZgeGShgGLpuFc2VZ-q3dducfrwBjGSPUF-Yqmjk1avtV7b70-FM1V2viKnOMk66SL0XBhJT0"
+  template_id: 497058
+  otp_template_id: 497058  # Template ID riêng cho OTP
+
 otp:
   max-times-resend: 5
   max-times-otp-enter: 3 #số lần nhập OTP
   expired-after-seconds: 600 #10p hết hạn otp
   lock-verify-after: 900 # khóa tài khoản 15p nếu sai OTP/gửi OTP 5 lần
   lock-send-after: 60 # lần gửi OTP tiếp theo trong request hiện tại sau 60s
-  lock-request-after: 300 # lần gửi OTP giữa 2 lần request là 5p
+  lock-request-after: 60 # lần gửi OTP giữa 2 lần request là 1 phút (thay đổi từ 5p → 1p)
   limit-otp-device: 10
   limit-otp-ip: 100
   cooldown-seconds: 300

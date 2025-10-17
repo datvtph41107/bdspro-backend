@@ -23,7 +23,7 @@ type UserGrpcClient struct {
 func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
 	userClient := &UserGrpcClient{Client: nil, InternalClient: nil}
 	go func() {
-		name := "user_grpc"
+		name := "user"
 		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),

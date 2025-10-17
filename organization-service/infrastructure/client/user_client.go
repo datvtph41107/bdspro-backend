@@ -24,7 +24,7 @@ func NewUserClient() *UserClient {
 	userClient := &UserClient{client: nil}
 	go func() {
 		url := "localhost"
-		name := "user_grpc"
+		name := "user"
 		if env.ENV_RUNTIME == "release" {
 			url = name
 		}

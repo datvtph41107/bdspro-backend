@@ -158,6 +158,7 @@ message RequestOTPRequest {
 message RequestOTPResponse {
     uint64 authId = 1;
     string message = 2;
+    bool existed = 3;  // true: user đã tồn tại, false: user mới đăng ký
 }
 
 message VerifyOTPRequest {

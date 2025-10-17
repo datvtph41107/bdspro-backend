@@ -23,7 +23,7 @@ func (c *FeedbackClient) RegisterService(ctx context.Context) error {
 	_, err := c.FeedbackGrpcClient.RegisterEntity(ctx, &feedbackpb.FeedbackRegistry{
 		RegistryName: "user",
 		Port:         8201,
-		Service:      "user_grpc",
+		Service:      "user",
 	})
 
 	return err

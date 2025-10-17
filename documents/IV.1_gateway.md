@@ -104,7 +104,7 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
     port := viper.GetString("service.port.user")
     url := "localhost"
     if env != "local" {
-        url = "user_grpc"  // Docker container name
+        url = "user"  // Docker container name
     }
     endpoint := fmt.Sprintf("%s:%s", url, port)
     

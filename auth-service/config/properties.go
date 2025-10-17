@@ -53,6 +53,11 @@ type AppProperties struct {
 		AuthToken  string `mapstructure:"auth_token"`
 		FromNumber string `mapstructure:"from_number"`
 	} `mapstructure:"sms"`
+	ZNS struct {
+		AccessToken   string `mapstructure:"access_token"`
+		TemplateID    int    `mapstructure:"template_id"`
+		OTPTemplateID int    `mapstructure:"otp_template_id"`
+	} `mapstructure:"zns"`
 	// OTP Config
 	Otp struct {
 		MaxTimesResend    int   `mapstructure:"max-times-resend"`

@@ -36,6 +36,7 @@ type AuthUsecase struct {
 	OrganizationClient provider.OrganizationProvider
 	PaymentProvider    provider.PaymentProvider
 	NotificationClient provider.NotificationProvider
+	ZnsProvider        provider.IZnsProvider
 	properties         dto.PropertiesDTO
 }
 
@@ -51,6 +52,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	organizationClient provider.OrganizationProvider,
 	paymentProvider provider.PaymentProvider,
 	notificationClient provider.NotificationProvider,
+	znsProvider provider.IZnsProvider,
 	properties factory.IFactory,
 ) *AuthUsecase {
 	planId := uint64(1)
@@ -68,6 +70,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		OrganizationClient: organizationClient,
 		PaymentProvider:    paymentProvider,
 		NotificationClient: notificationClient,
+		ZnsProvider:        znsProvider,
 		properties:         properties.GetProperties(),
 	}
 }
@@ -80,9 +83,11 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 			"Số điện thoại không đúng",
 		)
 	}
+
 	oauth, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
 	if err == nil && oauth != nil {
 		// User đã tồn tại - gửi OTP
+
 		param, _ := s.GetParamValidate(c, oauth, "")
 		err = s.OtpUsecase.ValidateAuth(c,
 			[]enums.AuthCodeEnum{
@@ -94,20 +99,23 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 		}
 		s.SendNewOTP(c, param.OTP, otp.Phone) // todo
 	} else {
-		// User chưa tồn tại - đăng ký mới
 		// Bắt buộc phải có họ tên khi đăng ký
-		if otp.Fullname == "" {
-			return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký")
-		}
+		// if otp.Fullname == "" {
+		// 	return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký")
+		// }
 		oauth, err = s.RequestIsRegister(c, otp)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	existed := oauth != nil && oauth.UserID != 0
+
 	return &dto.RequestLoginResponse{
 		AuthID:   oauth.ID,
 		Provider: "PHONE",
 		OAuthID:  otp.Phone,
+		Existed:  existed,
 	}, nil
 }
 
@@ -172,8 +180,13 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
 	isNewUser := false
 	if err != nil || infoEntity == nil || infoEntity.ProfileID == 0 {
+		// Kiểm tra nếu là user mới thì bắt buộc phải có họ tên
+		if otp.Fullname == "" {
+			return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký tài khoản mới")
+		}
+
 		// infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
-		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, e.FullName, e.Email, e.AuthName, e.Avatar)
+		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, otp.Fullname, e.Email, e.AuthName, e.Avatar)
 		if err != nil {
 			return nil, err
 		}
@@ -548,7 +561,22 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEnt
 
 	s.OTPRepo.UpdateOTP(c, otpEntity)
 
-	// TODO: Gọi sang notification để gửi OTP
+	// Gửi OTP qua ZNS
+	if s.ZnsProvider != nil {
+		result, err := s.ZnsProvider.SendOTPZNS(c, phone, otp)
+		if err != nil {
+			log.Printf("⚠️ [ZNS] Lỗi khi gửi OTP qua ZNS cho phone %s: %v", phone, err)
+			// Log lỗi nhưng không block flow, vì OTP vẫn được lưu vào DB
+		} else {
+			if success, ok := result["success"].(bool); ok && success {
+				log.Printf("✅ [ZNS] Đã gửi OTP thành công cho phone %s", phone)
+			} else {
+				log.Printf("⚠️ [ZNS] Gửi OTP thất bại cho phone %s: %v", phone, result["message"])
+			}
+		}
+	} else {
+		log.Printf("⚠️ [ZNS] ZnsProvider chưa được khởi tạo, không gửi OTP qua ZNS")
+	}
 
 	return otp
 }
@@ -636,7 +664,8 @@ func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMeth
 func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethod, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
 	if authEntity.UserID == 0 {
 		return &dto.AuthLoginResponse{
-			AuthID: authEntity.ID,
+			AuthID:   authEntity.ID,
+			FullName: authEntity.FullName,
 		}
 	}
 	accessToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{

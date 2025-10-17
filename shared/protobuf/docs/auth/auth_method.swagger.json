@@ -1222,6 +1222,10 @@
         },
         "message": {
           "type": "string"
+        },
+        "existed": {
+          "type": "boolean",
+          "title": "true: user đã tồn tại, false: user mới đăng ký"
         }
       }
     },

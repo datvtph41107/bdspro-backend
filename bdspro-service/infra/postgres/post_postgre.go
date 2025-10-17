@@ -242,9 +242,13 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 			'isMain', post_media.is_main,
 			'sortOrder', post_media.sort_order
 		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
-		 CASE
-			WHEN posts.transaction_type = 10 THEN COALESCE(sale_transaction.transaction_status, 0)
-			WHEN posts.transaction_type = 20 THEN COALESCE(rent_transaction.transaction_status, 0)
+		CASE
+			WHEN posts.transaction_type = 10 AND products.sale_status = 20 THEN 100
+			WHEN posts.transaction_type = 10 AND products.sale_status = 30 THEN 110
+			WHEN posts.transaction_type = 10 AND products.sale_status = 10 THEN 100
+			WHEN posts.transaction_type = 20 AND products.rent_status = 20 THEN 200
+			WHEN posts.transaction_type = 20 AND products.rent_status = 30 THEN 210
+			WHEN posts.transaction_type = 20 AND products.rent_status = 10 THEN 200
 			ELSE 0
 			END AS transaction_status
 		`).
@@ -254,10 +258,8 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		Joins("left join region district  on district.id = products.district_id").
 		Joins("left join region ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
-		Joins("LEFT JOIN transactions sale_transaction ON sale_transaction.id = products.sale_transaction_id and sale_transaction.deleted_at is null").
-		Joins("LEFT JOIN transactions rent_transaction ON rent_transaction.id = products.rent_transaction_id and rent_transaction.deleted_at is null").
 		Where("posts.deleted_at is null").
-		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, sale_transaction.transaction_status, rent_transaction.transaction_status")
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, products.sale_status, products.rent_status")
 
 	if profileId != 0 {
 		query = query.Where("posts.created_by = ?", profileId)
@@ -443,9 +445,13 @@ func (r *GormPostRepo) GetByIDsWithStatus(ctx context.Context, ids []uint64) ([]
 			'isMain', post_media.is_main,
 			'sortOrder', post_media.sort_order
 		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
-		 CASE
-			WHEN posts.transaction_type = 10 THEN COALESCE(sale_transaction.transaction_status, 0)
-			WHEN posts.transaction_type = 20 THEN COALESCE(rent_transaction.transaction_status, 0)
+		CASE
+			WHEN posts.transaction_type = 10 AND products.sale_status = 20 THEN 100
+			WHEN posts.transaction_type = 10 AND products.sale_status = 30 THEN 110
+			WHEN posts.transaction_type = 10 AND products.sale_status = 10 THEN 100
+			WHEN posts.transaction_type = 20 AND products.rent_status = 20 THEN 200
+			WHEN posts.transaction_type = 20 AND products.rent_status = 30 THEN 210
+			WHEN posts.transaction_type = 20 AND products.rent_status = 10 THEN 200
 			ELSE 0
 			END AS transaction_status
 		`).
@@ -455,10 +461,8 @@ func (r *GormPostRepo) GetByIDsWithStatus(ctx context.Context, ids []uint64) ([]
 		Joins("left join region district  on district.id = products.district_id").
 		Joins("left join region ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
-		Joins("LEFT JOIN transactions sale_transaction ON sale_transaction.id = products.sale_transaction_id and sale_transaction.deleted_at is null").
-		Joins("LEFT JOIN transactions rent_transaction ON rent_transaction.id = products.rent_transaction_id and rent_transaction.deleted_at is null").
 		Where("posts.id in (?) and posts.deleted_at is null", ids).
-		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, sale_transaction.transaction_status, rent_transaction.transaction_status").
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, products.sale_status, products.rent_status").
 		Scan(&posts).Error
 	if err != nil {
 		return nil, err
@@ -499,9 +503,13 @@ func (r *GormPostRepo) GetPosts(ctx context.Context, dto *dto.PostSearchRequest)
 			'isMain', post_media.is_main,
 			'sortOrder', post_media.sort_order
 		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
-		 CASE
-			WHEN posts.transaction_type = 10 THEN COALESCE(sale_transaction.transaction_status, 0)
-			WHEN posts.transaction_type = 20 THEN COALESCE(rent_transaction.transaction_status, 0)
+		CASE
+			WHEN posts.transaction_type = 10 AND products.sale_status = 20 THEN 100
+			WHEN posts.transaction_type = 10 AND products.sale_status = 30 THEN 110
+			WHEN posts.transaction_type = 10 AND products.sale_status = 10 THEN 100
+			WHEN posts.transaction_type = 20 AND products.rent_status = 20 THEN 200
+			WHEN posts.transaction_type = 20 AND products.rent_status = 30 THEN 210
+			WHEN posts.transaction_type = 20 AND products.rent_status = 10 THEN 200
 			ELSE 0
 			END AS transaction_status
 		`).
@@ -511,8 +519,6 @@ func (r *GormPostRepo) GetPosts(ctx context.Context, dto *dto.PostSearchRequest)
 		Joins("left join region district  on district.id = products.district_id").
 		Joins("left join region ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
-		Joins("LEFT JOIN transactions sale_transaction ON sale_transaction.id = products.sale_transaction_id and sale_transaction.deleted_at is null").
-		Joins("LEFT JOIN transactions rent_transaction ON rent_transaction.id = products.rent_transaction_id and rent_transaction.deleted_at is null").
 		Where("posts.deleted_at is null")
 
 	// Apply user/organization filtering with EXISTS
@@ -545,7 +551,7 @@ func (r *GormPostRepo) GetPosts(ctx context.Context, dto *dto.PostSearchRequest)
 
 	// Execute main query with pagination
 	err := baseQuery.
-		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, sale_transaction.transaction_status, rent_transaction.transaction_status").
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, products.sale_status, products.rent_status").
 		Order("posts.updated_at desc").
 		Limit(dto.GetLimit()).
 		Offset(dto.GetOffset()).

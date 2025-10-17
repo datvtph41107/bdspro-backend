@@ -135,7 +135,7 @@ type OtpVerifyRequest struct {
 func ProfileGetByPhone(phone string) (*UserProfileEntity, error) {
 	var userProfile UserProfileEntity
 	if err := _db.DB.Model(&UserProfileEntity{}).
-		Where("(phone like '%' || ? || '%') and deleted_at is null", phone).
+		Where("(phone = ?) and deleted_at is null", phone).
 		First(&userProfile).Error; err != nil {
 		return nil, err
 	}

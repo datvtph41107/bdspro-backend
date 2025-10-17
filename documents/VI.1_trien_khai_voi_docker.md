@@ -107,7 +107,7 @@ services:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: user_grpc
+    container_name: user
     command: ["./main", "grpc"]
     deploy:
       resources:

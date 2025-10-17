@@ -15,6 +15,7 @@ import (
 	auth_infra_postgre "auth/infra/postgre"
 	auth_infra_properties "auth/infra/properties"
 	auth_infra_redis "auth/infra/redis"
+	auth_infra_zns "auth/infra/zns"
 	auth_initial "auth/initial"
 	auth_internal_domain "auth/internal/domain"
 	auth_internal_interface_factory "auth/internal/interface/factory"
@@ -39,6 +40,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(auth_internal_interface_repo.StatusRepository), new(*auth_infra_postgre.StatusPostgres)),
 	wire.Bind(new(auth_internal_interface_factory.IFactory), new(*auth_infra_properties.RuntimeProperties)),
 	wire.Bind(new(auth_internal_interface_provider.CacheProvider), new(*auth_infra_redis.RedisProvider)),
+	wire.Bind(new(auth_internal_interface_provider.IZnsProvider), new(*auth_infra_zns.ZnsProvider)),
 	auth_infra_postgre.NewAdminAccessPostgresRepo,
 	auth_internal_usecase.NewAdminAccessUsecase,
 	auth_internal_usecase.NewAdminUsecase,
@@ -86,6 +88,7 @@ var wireSet = wire.NewSet(
 	auth_internal_usecase.NewUserInfoUsecase,
 	auth_internal_domain.NewUserOTPRepository,
 	auth_infra_oauth.NewZaloAuthService,
+	auth_infra_zns.NewZnsProvider,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)

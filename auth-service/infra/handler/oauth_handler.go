@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// @bind: pb/types/auth.OAuthServiceServer
 type OAuthHandler struct {
 	authpb.UnimplementedOAuthServiceServer
 	GoogleAuthService   *oauth.OAuthGoogle
@@ -155,10 +154,10 @@ func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCal
 		ProfileId:    result.ProfileID,
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
-		// FullName:     result.Profile.FullName,
-		// Avatar:       result.Profile.Avatar,
-		// Email:        result.Profile.Email,
-		// Phone:        result.Profile.Phone,
+		FullName:     result.FullName, // OAuth fullname
+		// Avatar:       result.Avatar,
+		// Email:        result.Email,
+		// Phone:        result.Phone,
 		Provider: req.Provider,
 	}, nil
 }

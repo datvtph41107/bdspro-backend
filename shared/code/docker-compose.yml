@@ -1,14 +1,14 @@
 version: '3.3'
 
 services:
-  user:
-    build:
-      context: ./user-service
-      dockerfile: Dockerfile
-    container_name: user
-    command: ["./main", "http"]
-    networks:
-      - internal
+  # user:
+  #   build:
+  #     context: ./user-service
+  #     dockerfile: Dockerfile
+  #   container_name: user
+  #   command: ["./main", "http"]
+  #   networks:
+  #     - internal
   auth:
     build:
       context: ./auth-service
@@ -18,20 +18,12 @@ services:
     networks:
       - internal
     
-  user-grpc:
+  user:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: user_grpc
+    container_name: user
     command: ["./main", "grpc"]
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     networks:
       - internal
   
