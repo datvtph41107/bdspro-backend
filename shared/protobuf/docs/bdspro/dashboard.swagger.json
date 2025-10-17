@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/bdspro/v2/dashboard/asset-stats": {
+    "/v2/bdspro/dashboard/asset-stats": {
       "get": {
         "operationId": "BdsproDashboardService_GetAssetStats",
         "responses": {
@@ -52,7 +52,7 @@
         ]
       }
     },
-    "/v2/bdspro/v2/dashboard/cash-profit/time": {
+    "/v2/bdspro/dashboard/cash-profit/time": {
       "get": {
         "operationId": "BdsproDashboardService_GetCashProfitTime",
         "responses": {
@@ -102,7 +102,7 @@
         ]
       }
     },
-    "/v2/bdspro/v2/dashboard/cash-profit/type": {
+    "/v2/bdspro/dashboard/cash-profit/type": {
       "get": {
         "operationId": "BdsproDashboardService_GetCashProfit",
         "responses": {
@@ -152,7 +152,7 @@
         ]
       }
     },
-    "/v2/bdspro/v2/dashboard/count-post-by-time": {
+    "/v2/bdspro/dashboard/count-post-by-time": {
       "get": {
         "operationId": "BdsproDashboardService_GetCountPostByTime",
         "responses": {
@@ -188,7 +188,7 @@
         ]
       }
     },
-    "/v2/bdspro/v2/dashboard/post-stats": {
+    "/v2/bdspro/dashboard/post-stats": {
       "get": {
         "operationId": "BdsproDashboardService_GetPostStats",
         "responses": {
@@ -224,7 +224,7 @@
         ]
       }
     },
-    "/v2/bdspro/v2/dashboard/product-stats": {
+    "/v2/bdspro/dashboard/product-stats": {
       "get": {
         "operationId": "BdsproDashboardService_GetProductStats",
         "responses": {

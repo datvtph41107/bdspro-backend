@@ -11,33 +11,33 @@ import "google/api/annotations.proto";
 service BdsproDashboardService {
     rpc GetCashProfit(GetCashProfitRequest) returns (GetCashProfitResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/dashboard/cash-profit/type"
+            get: "/v2/bdspro/dashboard/cash-profit/type"
         };
     };
     rpc GetCashProfitTime(GetCashProfitRequest) returns (GetCashProfitTimeResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/dashboard/cash-profit/time"
+            get: "/v2/bdspro/dashboard/cash-profit/time"
         };
     };
 
     rpc GetAssetStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/dashboard/asset-stats"
+            get: "/v2/bdspro/dashboard/asset-stats"
         };
     };
     rpc GetProductStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/dashboard/product-stats"
+            get: "/v2/bdspro/dashboard/product-stats"
         };
     };
     rpc GetPostStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/dashboard/post-stats"
+            get: "/v2/bdspro/dashboard/post-stats"
         };
     };
     rpc GetCountPostByTime(GetCountPostByTimeRequest) returns (GetCountPostByTimeResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/v2/dashboard/count-post-by-time"
+            get: "/v2/bdspro/dashboard/count-post-by-time"
         };
     };
 }

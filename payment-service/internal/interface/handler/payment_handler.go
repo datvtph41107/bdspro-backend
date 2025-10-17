@@ -315,12 +315,12 @@ func (h *PaymentHandler) GetPaymentStats(ctx context.Context, req *sharepb.GetSt
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid firstDate format")
 	}
-	
+
 	secondDate, err := time.Parse(time.DateOnly, req.SecondDate)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid secondDate format")
 	}
-	
+
 	stats, stats2, err := h.PaymentDashboardStatsJob.GetStats(ctx, firstDate, secondDate)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -331,5 +331,23 @@ func (h *PaymentHandler) GetPaymentStats(ctx context.Context, req *sharepb.GetSt
 		SecondDate:      stats2.CalculateTime.Format(time.DateOnly),
 		FirstDateCount:  uint32(stats.Count),
 		SecondDateCount: uint32(stats2.Count),
+	}, nil
+}
+
+func (h *PaymentHandler) GetDashboardMetrics(ctx context.Context, req *paymentpb.GetDashboardMetricsRequest) (*paymentpb.GetDashboardMetricsResponse, error) {
+	fromDate, err := time.Parse(time.DateOnly, req.FromDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid fromDate format")
+	}
+	toDate, err := time.Parse(time.DateOnly, req.ToDate)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid toDate format")
+	}
+	metrics, err := h.paymentUsecase.GetDashboardMetrics(ctx, fromDate, toDate)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &paymentpb.GetDashboardMetricsResponse{
+		Data: metrics,
 	}, nil
 }

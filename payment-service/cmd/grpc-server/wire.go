@@ -27,8 +27,8 @@ var repositorySet = wire.NewSet(
 	payment_infrastructure_repository.NewWalletTransactionRepository,
 	payment_infrastructure_repository.NewWalletAuditLogRepository,
 	payment_infrastructure_repository.NewWithdrawalRequestRepository,
+	payment_infrastructure_repository.NewDashboardMetricRepository,
 	postgres.NewBankPostgresRepository,
-	postgres.NewDashboardMetricPostgresRepository,
 	wire.Bind(new(repository.BankRepository), new(*postgres.BankPostgresRepository)),
 )
 

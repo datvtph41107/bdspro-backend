@@ -1,9 +1,6 @@
 package postgres
 
 import (
-	"bdspro/internal/domain"
-	"bdspro/internal/dto"
-	"bdspro/internal/enums"
 	"common/case/crud3"
 	_dto "common/domain/dto"
 	"context"
@@ -12,6 +9,10 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"bdspro/internal/domain"
+	"bdspro/internal/dto"
+	"bdspro/internal/enums"
 
 	"gorm.io/gorm"
 )
@@ -95,7 +96,6 @@ func (r *GormPostRepo) CountPost(ctx context.Context, profileId uint64) int64 {
 	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
 		Where("created_by = ? AND deleted_at is null", profileId).
 		Count(&count).Error
-
 	if err != nil {
 		// Log nếu cần thiết
 		return 0
@@ -110,7 +110,6 @@ func (r *GormPostRepo) CountPostFromDate(ctx context.Context, from time.Time) in
 	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
 		Where("created_by > ? AND deleted_at is null", from).
 		Count(&count).Error
-
 	if err != nil {
 		// Log nếu cần thiết
 		return 0
@@ -127,7 +126,6 @@ func (r *GormPostRepo) ExistedPostWorking(ctx context.Context, productID uint64,
 		Where("product_id = ? AND created_by = ? AND expired_at > ? AND deleted_at is null AND transaction_type = ?",
 			productID, profileId, now, transactionType).
 		Count(&count).Error
-
 	if err != nil {
 		// Log nếu cần thiết
 		return false
@@ -365,7 +363,6 @@ func (r *GormPostRepo) GetPostItemByID(ctx context.Context, id uint64) (*domain.
 		Preload("MediaList", "deleted_at is null").
 		Where("id = ? AND deleted_at is null", id).
 		First(&post).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -553,7 +550,6 @@ func (r *GormPostRepo) GetPosts(ctx context.Context, dto *dto.PostSearchRequest)
 		Limit(dto.GetLimit()).
 		Offset(dto.GetOffset()).
 		Scan(&posts).Error
-
 	if err != nil {
 		return nil, 0, err
 	}
@@ -652,6 +648,7 @@ func (r *GormPostRepo) CountPostByTime(ctx context.Context, from time.Time, to t
 	var countPostByTime []domain.CountPostByTime
 
 	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
+		Select("DATE(created_at) as date, COUNT(*) as count").
 		Where("deleted_at IS NULL AND created_at >= ? AND created_at <= ?", from, to).
 		Group("DATE(created_at)").
 		Order("DATE(created_at)").

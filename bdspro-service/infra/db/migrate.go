@@ -1,8 +1,9 @@
 package db
 
 import (
-	"bdspro/internal/domain"
 	_db "common/db"
+
+	"bdspro/internal/domain"
 )
 
 func MigrateDomain() {

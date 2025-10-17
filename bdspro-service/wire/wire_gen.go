@@ -142,7 +142,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	assetDashboardStatsJob := job.NewAssetDashboardStatsJob(postgreAsset, db)
 	productDashboardStatsJob := job.NewProductDashboardStatsJob(gormUserProductRepo, db)
 	postDashboardStatsJob := job.NewPostDashboardStatsJob(gormPostRepo, db)
-	bdsproDashboardHandler := handler.NewBdsproDashboardHandler(assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob)
+	bdsproDashboardHandler := handler.NewBdsproDashboardHandler(assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob, dashboardUsecase)
 	initialApp := initial.NewInitialApp(postService, productService, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler, adminProductHandler, adminAssetHandler, adminPostHandler, adminPropertyTypeHandler, adminProjectHandler, adminRegionHandler, internalHandler, bdsproDashboardHandler, assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob)
 	return initialApp, nil
 }

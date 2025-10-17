@@ -17,11 +17,12 @@ type BdsproDashboardHandler struct {
 	dashboardUsecase *usecases.DashboardUsecase
 }
 
-func NewBdsproDashboardHandler(assetStatsJob *job.AssetDashboardStatsJob, productStatsJob *job.ProductDashboardStatsJob, postStatsJob *job.PostDashboardStatsJob) *BdsproDashboardHandler {
+func NewBdsproDashboardHandler(assetStatsJob *job.AssetDashboardStatsJob, productStatsJob *job.ProductDashboardStatsJob, postStatsJob *job.PostDashboardStatsJob, dashboardUsecase *usecases.DashboardUsecase) *BdsproDashboardHandler {
 	return &BdsproDashboardHandler{
-		assetStatsJob:   assetStatsJob,
-		productStatsJob: productStatsJob,
-		postStatsJob:    postStatsJob,
+		assetStatsJob:    assetStatsJob,
+		productStatsJob:  productStatsJob,
+		postStatsJob:     postStatsJob,
+		dashboardUsecase: dashboardUsecase,
 	}
 }
 func (h *BdsproDashboardHandler) GetCashProfit(ctx context.Context, req *bdspropb.GetCashProfitRequest) (*bdspropb.GetCashProfitResponse, error) {

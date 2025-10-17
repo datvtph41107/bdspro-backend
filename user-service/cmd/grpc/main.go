@@ -9,6 +9,7 @@ import (
 	"os"
 	userpb "pb/types/user"
 	"time"
+
 	"user/config"
 	"user/wire"
 
@@ -34,6 +35,7 @@ var GrpcCmd = &cobra.Command{
 		app, _ := wire.InitializeApp()
 		// db.AutoMigrate()
 
+		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
 		// Đăng ký service vào feedback registry
 		app.FeedbackClient.RegisterService(context.Background())
 

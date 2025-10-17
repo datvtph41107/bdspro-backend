@@ -1,12 +1,16 @@
 package config
 
 import (
+	"bytes"
+	_ "embed"
+	"log"
 	"os"
-	"path"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
 )
+
+//go:embed app.yml
+var EmbeddedConfig []byte
 
 const (
 	SERVICE_NAME = "appointment-service"
@@ -27,113 +31,96 @@ var (
 	EMAIL_NAME     = "Tuấn Đặng"
 )
 
-var (
-	cfg          *viper.Viper
-	configLogger = flogging.MustGetLogger("config")
-)
-
 func InitConfig() {
-	loadConfig()
+	LoadConfig()
 	if err := readConfig(); err != nil {
-		configLogger.Fatalf("Error reading config values: %v", err)
+		log.Fatalf("Error reading config values: %v", err)
 	}
 }
 
-func loadConfig() {
-	// Check if running in production
+// LoadConfig đọc cấu hình từ file config.yml
+func LoadConfig() {
 	envRuntime := os.Getenv("ENV_RUNTIME")
+	viper.SetConfigType("yaml") // Loại file config
 
-	file := "app.yml"
-	if envRuntime == "release" {
-		file = "config/product.yml"
-	}
-
-	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
-		file = envFile
-	}
-
-	flogging.ActivateSpec("debug")
-
-	cfg = viper.New()
-	cfg.SetConfigType("yaml")
-	cfg.SetConfigName(path.Base(file))
-	cfg.AddConfigPath(path.Dir(file))
-	cfg.AddConfigPath("./config/")
-	cfg.AddConfigPath("../config/")
-
-	configLogger.Infof("Loading config file: %s (ENV_RUNTIME=%s)", file, envRuntime)
-
-	if err := cfg.ReadInConfig(); err != nil {
-		configLogger.Fatalf("Error parsing config file: %s", err)
-	}
-
-	// Sync config vào global viper để common/db có thể dùng
-	viper.SetConfigType("yaml")
+	// Đọc biến môi trường (nếu có)
 	viper.AutomaticEnv()
 
-	// Copy tất cả settings từ local viper sang global viper
-	for key, value := range cfg.AllSettings() {
-		viper.Set(key, value)
+	var err error
+	if envRuntime == "release" {
+		config_release, err := os.ReadFile("config/product.yml")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = viper.ReadConfig(bytes.NewReader(config_release))
+		if err != nil {
+			log.Fatalf("Lỗi khi đọc file config: %v", err)
+		}
+	} else {
+		// Đọc file config
+		err = viper.ReadConfig(bytes.NewReader(EmbeddedConfig))
 	}
 
-	configLogger.Infof("Config synced to global viper")
+	if err != nil {
+		log.Fatalf("Lỗi khi đọc file config: %v", err)
+	}
 }
 
 func readConfig() error {
-	if port := cfg.GetString("GRPC.PORT"); port != "" {
+	if port := viper.GetString("GRPC.PORT"); port != "" {
 		GRPC_PORT = port
-		configLogger.Infof("GRPC port specified: %s", GRPC_PORT)
+		log.Printf("GRPC port specified: %s", GRPC_PORT)
 	} else {
-		configLogger.Warnf("GRPC port not specified, using default: %s", GRPC_PORT)
+		log.Printf("GRPC port not specified, using default: %s", GRPC_PORT)
 	}
 
-	if dns := cfg.GetString("Database.DB_DNS"); dns != "" {
+	if dns := viper.GetString("Database.DB_DNS"); dns != "" {
 		DB_DNS = dns
-		configLogger.Infof("Database DNS specified: %s", DB_DNS)
+		log.Printf("Database DNS specified: %s", DB_DNS)
 	} else {
-		configLogger.Warnf("Database DNS not specified, using default: %s", DB_DNS)
+		log.Printf("Database DNS not specified, using default: %s", DB_DNS)
 	}
 
-	if emailHost := cfg.GetString("Email.HOST"); emailHost != "" {
+	if emailHost := viper.GetString("Email.HOST"); emailHost != "" {
 		EMAIL_HOST = emailHost
-		configLogger.Infof("Email host specified: %s", EMAIL_HOST)
+		log.Printf("Email host specified: %s", EMAIL_HOST)
 	} else {
-		configLogger.Warnf("Email host not specified, using default: %s", EMAIL_HOST)
+		log.Printf("Email host not specified, using default: %s", EMAIL_HOST)
 	}
 
-	if emailPort := cfg.GetInt("Email.PORT"); emailPort != 0 {
+	if emailPort := viper.GetInt("Email.PORT"); emailPort != 0 {
 		EMAIL_PORT = emailPort
-		configLogger.Infof("Email port specified: %d", EMAIL_PORT)
+		log.Printf("Email port specified: %d", EMAIL_PORT)
 	} else {
-		configLogger.Warnf("Email port not specified, using default: %d", EMAIL_PORT)
+		log.Printf("Email port not specified, using default: %d", EMAIL_PORT)
 	}
 
-	if emailUsername := cfg.GetString("Email.USERNAME"); emailUsername != "" {
+	if emailUsername := viper.GetString("Email.USERNAME"); emailUsername != "" {
 		EMAIL_USERNAME = emailUsername
-		configLogger.Infof("Email username specified: %s", EMAIL_USERNAME)
+		log.Printf("Email username specified: %s", EMAIL_USERNAME)
 	} else {
-		configLogger.Warnf("Email username not specified, using default: %s", EMAIL_USERNAME)
+		log.Printf("Email username not specified, using default: %s", EMAIL_USERNAME)
 	}
 
-	if emailPassword := cfg.GetString("Email.PASSWORD"); emailPassword != "" {
+	if emailPassword := viper.GetString("Email.PASSWORD"); emailPassword != "" {
 		EMAIL_PASSWORD = emailPassword
-		configLogger.Infof("Email password specified: %s", EMAIL_PASSWORD)
+		log.Printf("Email password specified: %s", EMAIL_PASSWORD)
 	} else {
-		configLogger.Warnf("Email password not specified, using default: %s", EMAIL_PASSWORD)
+		log.Printf("Email password not specified, using default: %s", EMAIL_PASSWORD)
 	}
 
-	if emailFrom := cfg.GetString("Email.FROM"); emailFrom != "" {
+	if emailFrom := viper.GetString("Email.FROM"); emailFrom != "" {
 		EMAIL_FROM = emailFrom
-		configLogger.Infof("Email from specified: %s", EMAIL_FROM)
+		log.Printf("Email from specified: %s", EMAIL_FROM)
 	} else {
-		configLogger.Warnf("Email from not specified, using default: %s", EMAIL_FROM)
+		log.Printf("Email from not specified, using default: %s", EMAIL_FROM)
 	}
 
-	if emailName := cfg.GetString("Email.NAME"); emailName != "" {
+	if emailName := viper.GetString("Email.NAME"); emailName != "" {
 		EMAIL_NAME = emailName
-		configLogger.Infof("Email name specified: %s", EMAIL_NAME)
+		log.Printf("Email name specified: %s", EMAIL_NAME)
 	} else {
-		configLogger.Warnf("Email name not specified, using default: %s", EMAIL_NAME)
+		log.Printf("Email name not specified, using default: %s", EMAIL_NAME)
 	}
 
 	return nil

@@ -4,7 +4,7 @@ SCHEMA := cd ../protobuf/schema
 
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
-PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/config.yml)
+# PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/config.yml)
 
 # Debug info
 debug-info:
@@ -77,7 +77,7 @@ buf-tqd:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path tqd
 buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
-buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction
+buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction buf-feedback buf-tqd buf-assistant
 	echo "done"	
 	
 init:
@@ -153,6 +153,7 @@ auth-grpc:
 	$(CD_ROOT) && cd auth-service && air grpc
 tqd-http:
 	$(CD_ROOT) && cd tqd-service && air http
+	
 
 start-all:
 	@echo "Starting all services..."
@@ -199,6 +200,9 @@ build-all:
 	$(CD_ROOT) && cd bdspro-service && go build -o bdspro-service main.go
 	$(CD_ROOT) && cd crm-service && go build -o crm-service main.go
 	$(CD_ROOT) && cd marketing-service && go build -o marketing-service main.go
-	$(CD_ROOT) && cd membership-service && go build -o membership-service .
+	# $(CD_ROOT) && cd membership-service && go build -o membership-service .
 	$(CD_ROOT) && cd auth-service && go build -o auth-service .
-	$(CD_ROOT) && cd transaction-service && go build -o transaction-service .
+	# $(CD_ROOT) && cd transaction-service && go build -o transaction-service .
+	# $(CD_ROOT) && cd feedback-service && go build -o feedback-service .
+	$(CD_ROOT) && cd tqd-service && go build -o tqd-service .
+	$(CD_ROOT) && cd assistant-service && go build -o assistant-service .

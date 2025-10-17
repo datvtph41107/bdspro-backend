@@ -1,10 +1,11 @@
 package domain
 
 import (
-	"bdspro/internal/enums"
 	_models "common/models"
 	"encoding/json"
 	"time"
+
+	"bdspro/internal/enums"
 )
 
 type Post struct {

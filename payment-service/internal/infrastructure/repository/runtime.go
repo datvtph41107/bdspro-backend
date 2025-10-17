@@ -3,6 +3,7 @@ package repository
 import (
 	"log"
 
+	"payment/internal/domain/entity"
 	"payment/internal/domain/repository"
 	"payment/internal/infrastructure/repository/postgres"
 
@@ -47,4 +48,12 @@ func NewWithdrawalRequestRepository(db *gorm.DB) repository.WithdrawalRequestsRe
 		log.Fatalf("Failed to migrate withdrawal request table: %v", err)
 	}
 	return postgres.NewWithdrawalRequestsRepository(db)
+}
+
+func NewDashboardMetricRepository(db *gorm.DB) repository.DashboardMetricRepository {
+	err := db.AutoMigrate(&entity.DashboardMetric{})
+	if err != nil {
+		log.Fatalf("Failed to migrate dashboard metric table: %v", err)
+	}
+	return postgres.NewDashboardMetricPostgresRepository(db)
 }

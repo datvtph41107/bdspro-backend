@@ -4,6 +4,7 @@ import (
 	"user/infra/client"
 	"user/infra/handler"
 	"user/infra/routes"
+	"user/internal/job"
 	"user/internal/usecases"
 )
 
@@ -26,7 +27,8 @@ type InitialApp struct {
 	MembershipHandler *handler.MembershipHandler
 	PlanHandler       *handler.PlanHandler
 	// Internal Service
-	InternalHandler *handler.InternalHandler
+	InternalHandler       *handler.InternalHandler
+	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
 func NewInitialApp(
@@ -44,6 +46,7 @@ func NewInitialApp(
 	membershipHandler *handler.MembershipHandler,
 	planHandler *handler.PlanHandler,
 	internalHandler *handler.InternalHandler,
+	userDashboardStatsJob *job.UserDashboardStatsJob,
 ) *InitialApp {
 	return &InitialApp{
 		ProfileRouter:           profile,
@@ -60,5 +63,6 @@ func NewInitialApp(
 		MembershipHandler:       membershipHandler,
 		PlanHandler:             planHandler,
 		InternalHandler:         internalHandler,
+		UserDashboardStatsJob:   userDashboardStatsJob,
 	}
 }

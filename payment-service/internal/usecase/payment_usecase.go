@@ -890,6 +890,7 @@ func (uc *paymentUsecase) CountCompletedTransactions(ctx context.Context) (int64
 	}
 	return count, nil
 }
+
 func (p *paymentUsecase) GetDashboardMetrics(ctx context.Context, fromDate time.Time, toDate time.Time) ([]*paymentpb.DashboardMetric, error) {
 	metrics, err := p.dashboardMetricRepository.GetDashboardMetrics(ctx, fromDate, toDate)
 	if err != nil {
@@ -907,7 +908,6 @@ func (p *paymentUsecase) GetDashboardMetrics(ctx context.Context, fromDate time.
 }
 
 func (p *paymentUsecase) CreateOrUpdateDashboardMetric(ctx context.Context, metric *entity.DashboardMetric) error {
-
 	_, err := p.dashboardMetricRepository.CreateOrUpdate(ctx, metric)
 	if err != nil {
 		return err
