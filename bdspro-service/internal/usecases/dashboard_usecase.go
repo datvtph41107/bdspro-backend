@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	"context"
+	"math/rand"
 	"time"
 
 	_enum "common/domain/enum"
@@ -75,4 +76,15 @@ func (u *DashboardUsecase) GetCountPostByTime(ctx context.Context, from time.Tim
 		}
 	}
 	return countPostByTimeResponse, nil
+}
+
+func (u *DashboardUsecase) GetCountOfUser(ctx context.Context, profileId uint64) (*dto.CountOfUserResponse, error) {
+	// Đếm số tin đã đăng
+	totalPosted := u.PostRepo.CountPost(ctx, profileId)
+
+	return &dto.CountOfUserResponse{
+		TotalPosted:            uint32(totalPosted),
+		TotalInterestedProduct: uint32(20 + rand.Intn(81)), // Random từ 20-100
+		TotalSavedProduct:      uint32(20 + rand.Intn(81)), // Random từ 20-100
+	}, nil
 }

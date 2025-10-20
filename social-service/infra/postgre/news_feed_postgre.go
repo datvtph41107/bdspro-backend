@@ -82,7 +82,7 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 	var newsFeeds []*NewsFeedRawQuery
 	var total int64
 	query, err := r.QuerySeach(ctx, req)
-	query = query.Where("news_feeds.created_by = ? and news_feeds.removed_at is null", userId)
+	query = query.Where("news_feeds.created_by = ? and news_feeds.removed_at is null and news_feeds.visibility = 10", userId)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -19,4 +19,8 @@ type SessionRepository interface {
 	GetActiveSessionsByAuthID(ctx context.Context, authID uint64) ([]*domain.UserSessionEntity, error)
 	GetExpiredSessions(ctx context.Context, before time.Time) ([]*domain.UserSessionEntity, error)
 	CleanupExpiredSessions(ctx context.Context, before time.Time) error
+
+	// Login history
+	GetLoginHistoryByAuthID(ctx context.Context, authID uint64, page, size int32) ([]*domain.UserSessionEntity, int64, error)
+	GetLoginHistoryByUserID(ctx context.Context, userID uint64, page, size int32) ([]*domain.UserSessionEntity, int64, error)
 }

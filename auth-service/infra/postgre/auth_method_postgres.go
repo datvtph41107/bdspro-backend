@@ -368,3 +368,22 @@ func (r *AuthMethodPostgres) CheckLockExpiration(ctx context.Context) error {
 
 	return nil
 }
+
+// GetConnectedOAuthAccounts lấy danh sách các tài khoản OAuth đã liên kết của user
+// @bind: internal/interface/repo.AuthMethodRepository
+func (r *AuthMethodPostgres) GetConnectedOAuthAccounts(ctx context.Context, userID uint64) ([]*domain.AuthMethod, error) {
+	var accounts []*domain.AuthMethod
+
+	// Lấy tất cả auth_method của user với provider là OAuth (GOOGLE, FACEBOOK, ZALO)
+	err := r.GetDB(ctx).
+		Where("user_id = ? AND provider IN (?) AND deleted_at IS NULL",
+			userID, []string{"GOOGLE", "FACEBOOK", "ZALO"}).
+		Order("created_at DESC").
+		Find(&accounts).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get connected OAuth accounts: %w", err)
+	}
+
+	return accounts, nil
+}

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"common"
 	_middleware "common/middleware"
 	"fmt"
 	"log"
@@ -14,10 +15,7 @@ import (
 )
 
 func NewOrganizationClient() organizationpb.OrganizationServiceClient {
-	url := "localhost"
-	if env.ENV_RUNTIME == "release" {
-		url = "organization"
-	}
+	url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "organization")
 	conn, err := grpc.NewClient(
 		fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -32,12 +30,9 @@ func NewOrganizationClient() organizationpb.OrganizationServiceClient {
 
 func NewOrganizationMemberClient() organizationpb.OrganizationMemberServiceClient {
 	// conn, err := grpc.NewClient(viper.GetString("grpc.organization.host"), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	url := "localhost"
-	if env.ENV_RUNTIME == "release" {
-		url = "organization"
-	}
+	url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "organization")
 	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")),
+		fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
 	)
@@ -49,10 +44,7 @@ func NewOrganizationMemberClient() organizationpb.OrganizationMemberServiceClien
 }
 
 func NewGroupClient() organizationpb.GroupServiceClient {
-	url := "localhost"
-	if env.ENV_RUNTIME == "release" {
-		url = "organization"
-	}
+	url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "organization")
 	conn, err := grpc.NewClient(
 		fmt.Sprintf("%s%s", url, viper.GetString("grpc.group.host")),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

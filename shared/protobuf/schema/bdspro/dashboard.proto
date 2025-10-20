@@ -40,6 +40,16 @@ service BdsproDashboardService {
             get: "/v2/bdspro/dashboard/count-post-by-time"
         };
     };
+    rpc GetSuggestToday(SuggestTodayRequest) returns (SuggestTodayResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/suggest/today"
+        };
+    };
+    rpc GetCountOfUser(GetCountOfUserRequest) returns (GetCountOfUserResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/count/product"
+        };
+    };
 }
 
 message GetCashProfitRequest {
@@ -84,4 +94,26 @@ message CountPostByTime {
 
 message GetCountPostByTimeResponse {
     repeated CountPostByTime data = 1;
+}
+
+message SuggestTodayRequest {}
+
+message SuggestTodayResponse {
+    repeated SuggestTodayItem data = 1;
+}
+
+message SuggestTodayItem {
+    string imageUrl = 1;
+    string title = 2;
+    double price = 3;
+    uint64 linkId = 4;
+    int32 domainType = 5;
+}
+
+message GetCountOfUserRequest {}
+
+message GetCountOfUserResponse {
+    uint32 totalPosted = 1;            // Số tin đã đăng
+    uint32 totalInterestedProduct = 2; // Số sản phẩm quan tâm
+    uint32 totalSavedProduct = 3;      // Số sản phẩm đã lưu
 }

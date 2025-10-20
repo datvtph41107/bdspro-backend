@@ -347,6 +347,45 @@
         ]
       }
     },
+    "/v2/auth/login-history": {
+      "get": {
+        "summary": "Login History",
+        "operationId": "AuthService_GetLoginHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbGetLoginHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/logout": {
       "delete": {
         "operationId": "AuthService_Logout",
@@ -458,6 +497,71 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/authpbVerifyOTPRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/password/create": {
+      "post": {
+        "summary": "Password Management",
+        "operationId": "AuthService_CreatePassword",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbCreatePasswordResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbCreatePasswordRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/password/login": {
+      "post": {
+        "operationId": "AuthService_LoginWithPassword",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAuthSuccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbLoginWithPasswordRequest"
             }
           }
         ],
@@ -652,6 +756,38 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/authpbSwitchOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/switch/user": {
+      "post": {
+        "operationId": "AuthService_SwitchAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbSwitchAccountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbSwitchAccountRequest"
             }
           }
         ],
@@ -908,6 +1044,22 @@
         },
         "password": {
           "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "title": "App version"
+        },
+        "platform": {
+          "type": "string",
+          "title": "WEB, MOBILE, DESKTOP"
+        },
+        "os": {
+          "type": "string",
+          "title": "iOS, Android, Windows, MacOS, Linux"
+        },
+        "deviceName": {
+          "type": "string",
+          "title": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\""
         }
       },
       "title": "Admin Authentication Messages"
@@ -947,6 +1099,11 @@
         },
         "role": {
           "type": "string"
+        },
+        "passwordAuthId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID của auth_method có provider ADMIN (password authentication)"
         }
       }
     },
@@ -1032,6 +1189,33 @@
       },
       "title": "Admin Access Control Messages"
     },
+    "authpbCreatePasswordRequest": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "confirmPassword": {
+          "type": "string"
+        }
+      },
+      "title": "Password Management Messages"
+    },
+    "authpbCreatePasswordResponse": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
     "authpbDeleteAccountResponse": {
       "type": "object",
       "properties": {
@@ -1093,6 +1277,91 @@
         "size": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "authpbGetLoginHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbLoginHistoryItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "authpbLoginHistoryItem": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "createdDate": {
+          "type": "string"
+        },
+        "finishedDate": {
+          "type": "string"
+        },
+        "ipRequest": {
+          "type": "string"
+        },
+        "totalRequest": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "activate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authpbLoginWithPasswordRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "Phone hoặc username"
+        },
+        "password": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string",
+          "title": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\""
         }
       }
     },
@@ -1307,6 +1576,66 @@
         }
       }
     },
+    "authpbSwitchAccountRequest": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "authpbSwitchAccountResponse": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "groupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "role": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "accessToken": {
+          "type": "string"
+        }
+      }
+    },
     "authpbSwitchOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -1380,6 +1709,10 @@
         },
         "fullname": {
           "type": "string"
+        },
+        "deviceName": {
+          "type": "string",
+          "title": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\""
         }
       }
     },

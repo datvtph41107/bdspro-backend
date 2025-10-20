@@ -48,23 +48,17 @@ func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistan
 
 	// Map kết quả sang protobuf
 	productInfo := &assistantpb.ProductInfo{}
+
+	// Basic fields
 	if result.Name != nil {
 		productInfo.Name = result.Name
 	}
 	if result.Area != nil {
-		productInfo.Area = result.Area
+		areaFloat32 := float32(*result.Area)
+		productInfo.Area = &areaFloat32
 	}
-	if result.Address != nil {
-		productInfo.Address = result.Address
-	}
-	if result.Province != nil {
-		productInfo.Province = result.Province
-	}
-	if result.District != nil {
-		productInfo.District = result.District
-	}
-	if result.Ward != nil {
-		productInfo.Ward = result.Ward
+	if result.Description != nil {
+		productInfo.Description = result.Description
 	}
 	if result.PropertyType != nil {
 		productInfo.PropertyType = result.PropertyType
@@ -72,38 +66,62 @@ func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistan
 	if result.TransactionType != nil {
 		productInfo.TransactionType = result.TransactionType
 	}
-	if result.SalePrice != nil {
-		productInfo.SalePrice = result.SalePrice
-	}
-	if result.RentPrice != nil {
-		productInfo.RentPrice = result.RentPrice
-	}
-	if result.Bedroom != nil {
-		productInfo.Bedroom = result.Bedroom
-	}
-	if result.Bathroom != nil {
-		productInfo.Bathroom = result.Bathroom
-	}
-	if result.Floor != nil {
-		productInfo.Floor = result.Floor
-	}
-	if result.Frontage != nil {
-		productInfo.Frontage = result.Frontage
-	}
-	if result.Orientation != nil {
-		productInfo.Orientation = result.Orientation
-	}
 	if result.LegalDoc != nil {
 		productInfo.LegalDoc = result.LegalDoc
 	}
-	if result.Furniture != nil {
-		productInfo.Furniture = result.Furniture
+
+	// Address - map từ nested structure sang flat
+	if result.Address != nil {
+		if result.Address.Detail != nil {
+			productInfo.Address = result.Address.Detail
+		}
+		if result.Address.Province != nil {
+			productInfo.Province = result.Address.Province
+		}
+		if result.Address.District != nil {
+			productInfo.District = result.Address.District
+		}
+		if result.Address.Ward != nil {
+			productInfo.Ward = result.Address.Ward
+		}
 	}
-	if result.Description != nil {
-		productInfo.Description = result.Description
+
+	// PriceData - map từ nested structure
+	if result.PriceData != nil {
+		if result.PriceData.SalePrice != nil {
+			productInfo.SalePrice = result.PriceData.SalePrice
+		}
+		if result.PriceData.RentPrice != nil {
+			productInfo.RentPrice = result.PriceData.RentPrice
+		}
 	}
-	if result.Amenities != nil {
-		productInfo.Amenities = *result.Amenities
+
+	// HouseInfo - map từ nested structure
+	if result.HouseInfo != nil {
+		if result.HouseInfo.NumBedroom != nil {
+			productInfo.Bedroom = result.HouseInfo.NumBedroom
+		}
+		if result.HouseInfo.NumBathroom != nil {
+			productInfo.Bathroom = result.HouseInfo.NumBathroom
+		}
+		if result.HouseInfo.NumFloor != nil {
+			productInfo.Floor = result.HouseInfo.NumFloor
+		}
+		if result.HouseInfo.NumFront != nil {
+			numFrontFloat32 := float32(*result.HouseInfo.NumFront)
+			productInfo.Frontage = &numFrontFloat32
+		}
+		if result.HouseInfo.Orientation != nil {
+			productInfo.Orientation = result.HouseInfo.Orientation
+		}
+		if result.HouseInfo.Furniture != nil {
+			productInfo.Furniture = result.HouseInfo.Furniture
+		}
+	}
+
+	// Amenities
+	if len(result.Amenities) > 0 {
+		productInfo.Amenities = result.Amenities
 	}
 
 	return &assistantpb.AnalyzeResponse{

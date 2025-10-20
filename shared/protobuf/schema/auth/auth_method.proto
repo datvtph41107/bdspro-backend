@@ -139,12 +139,40 @@ service AuthService {
             body: "*"
         };
     }
+    rpc SwitchAccount(SwitchAccountRequest) returns (SwitchAccountResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/switch/user"
+            body: "*"
+        };
+    }
 
     // Admin Authentication
     rpc AdminLogin(AdminLoginRequest) returns (AuthSuccessResponse) {
         option (google.api.http) = {
             post: "/v2/auth/admin/login"
             body: "*"
+        };
+    }
+
+    // Password Management
+    rpc CreatePassword(CreatePasswordRequest) returns (CreatePasswordResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/password/create"
+            body: "*"
+        };
+    }
+
+    rpc LoginWithPassword(LoginWithPasswordRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/password/login"
+            body: "*"
+        };
+    }
+
+    // Login History
+    rpc GetLoginHistory(GetLoginHistoryRequest) returns (GetLoginHistoryResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/login-history"
         };
     }
 }
@@ -169,6 +197,7 @@ message VerifyOTPRequest {
     string platform = 5;
     string os = 6;
     string fullname = 7;
+    string deviceName = 8;  // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
 }
 
 message AuthSuccessResponse {
@@ -182,6 +211,7 @@ message AuthSuccessResponse {
     string email = 8;
     uint64 organizationId = 9;
     string role = 10;
+    uint64 passwordAuthId = 11; // ID của auth_method có provider ADMIN (password authentication)
 }
 
 message ResendOTPRequest {
@@ -432,6 +462,10 @@ message SwitchOrganizationResponse {
 message AdminLoginRequest {
     string username = 1;
     string password = 2;
+    string version = 3;    // App version
+    string platform = 4;   // WEB, MOBILE, DESKTOP
+    string os = 5;         // iOS, Android, Windows, MacOS, Linux
+    string deviceName = 6; // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
 }
 
 message AdminAccessItem {
@@ -549,4 +583,71 @@ message AuthMethod {
     string createdAt = 11;
     string updatedAt = 12;
     string deletedAt = 13;
+}
+
+// Password Management Messages
+message CreatePasswordRequest {
+    string password = 1;
+    string confirmPassword = 2;
+}
+
+message CreatePasswordResponse {
+    uint64 authId = 1;
+    string message = 2;
+    bool success = 3;
+}
+
+message LoginWithPasswordRequest {
+    string username = 1;   // Phone hoặc username
+    string password = 2;
+    string version = 3;
+    string platform = 4;
+    string os = 5;
+    string deviceName = 6; // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+}
+
+message SwitchAccountRequest {
+    uint64 profileId = 1;
+    optional uint64 organizationId = 2;
+    optional uint64 groupId = 3;
+    optional uint32 ownerType = 4;
+}
+
+message SwitchAccountResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    optional uint64 organizationId = 3;
+    optional uint64 groupId = 4;
+    string role = 5;
+    string fullName = 6;
+    string avatar = 7;
+    string email = 8;
+    string phone = 9;
+    string accessToken = 10;
+}
+
+// Login History Messages
+message GetLoginHistoryRequest {
+    int32 page = 1;
+    int32 size = 2;
+}
+
+message GetLoginHistoryResponse {
+    repeated LoginHistoryItem data = 1;
+    int64 total = 2;
+}
+
+message LoginHistoryItem {
+    uint64 sessionId = 1;
+    uint64 authId = 2;
+    string platform = 3;
+    string version = 4;
+    string os = 5;
+    string deviceName = 6;
+    string createdDate = 7;
+    string finishedDate = 8;
+    string ipRequest = 9;
+    uint64 totalRequest = 10;
+    string userAgent = 11;
+    bool activate = 12;
 }

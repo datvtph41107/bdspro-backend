@@ -424,3 +424,19 @@ func (s *PostUsecase) searchPost(c context.Context, dto *dto.PostSearchRequest) 
 	// }
 	return results, total, nil
 }
+
+// GetRandomPosts lấy ngẫu nhiên n bản ghi post
+func (s *PostUsecase) GetRandomPosts(c context.Context, limit int) ([]domain.PostItem, error) {
+	results, err := s.Repo.GetRandomPosts(c, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map status for each post
+	for i := range results {
+		results[i].VisibleStatus = s.MapPostStatus(&results[i])
+		s.MapStatusNames(&results[i])
+	}
+
+	return results, nil
+}

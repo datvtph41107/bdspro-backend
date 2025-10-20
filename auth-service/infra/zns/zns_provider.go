@@ -2,9 +2,7 @@ package zns
 
 import (
 	"auth/config"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -131,109 +129,110 @@ func (z *ZnsProvider) SendZNSMessage(
 	templateID *int,
 	trackingID *string,
 ) (map[string]interface{}, error) {
-	// Chuẩn hóa số điện thoại sang format quốc tế
-	phone = cleanPhoneNumber(phone)
+	return nil, nil
+	// // Chuẩn hóa số điện thoại sang format quốc tế
+	// phone = cleanPhoneNumber(phone)
 
+	// // return map[string]interface{}{
+	// // 	"success":     true,
+	// // 	"message":     "Gửi ZNS thành công",
+	// // 	"data":        nil,
+	// // 	"phone":       phone,
+	// // 	"tracking_id": "",
+	// // }, nil
+
+	// // TODO: Tạm thời bỏ rate limit, sẽ bật lại sau
+	// // Kiểm tra rate limit (100 lần/ngày)
+	// // if err := z.checkDailyLimit(ctx); err != nil {
+	// // 	return map[string]interface{}{
+	// // 		"success": false,
+	// // 		"message": err.Error(),
+	// // 		"phone":   phone,
+	// // 	}, err
+	// // }
+
+	// // Sử dụng template ID mặc định nếu không được cung cấp
+	// tplID := z.templateID
+	// if templateID != nil {
+	// 	tplID = *templateID
+	// }
+
+	// // Tạo tracking ID mặc định nếu không được cung cấp
+	// trkID := fmt.Sprintf("zns_%s_%d", phone, time.Now().Unix())
+	// if trackingID != nil {
+	// 	trkID = *trackingID
+	// }
+
+	// // Chuẩn bị payload
+	// payload := ZNSRequest{
+	// 	Phone:        phone,
+	// 	TemplateID:   fmt.Sprintf("%d", tplID),
+	// 	TemplateData: templateData,
+	// 	TrackingID:   trkID,
+	// }
+
+	// // Marshal payload thành JSON
+	// payloadBytes, err := json.Marshal(payload)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("lỗi khi marshal payload ZNS: %w", err)
+	// }
+
+	// // Tạo HTTP request
+	// req, err := http.NewRequestWithContext(
+	// 	ctx,
+	// 	"POST",
+	// 	"https://business.openapi.zalo.me/message/template",
+	// 	bytes.NewBuffer(payloadBytes),
+	// )
+	// if err != nil {
+	// 	return nil, fmt.Errorf("lỗi khi tạo request ZNS: %w", err)
+	// }
+
+	// // Set headers
+	// req.Header.Set("Content-Type", "application/json")
+	// req.Header.Set("access_token", z.accessToken)
+
+	// // Gửi request
+	// resp, err := z.httpClient.Do(req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("lỗi khi gửi request ZNS: %w", err)
+	// }
+	// defer resp.Body.Close()
+
+	// // Parse response
+	// var znsResp ZNSResponse
+	// if err := json.NewDecoder(resp.Body).Decode(&znsResp); err != nil {
+	// 	return nil, fmt.Errorf("lỗi khi parse response ZNS: %w", err)
+	// }
+
+	// // Kiểm tra response status
+	// if resp.StatusCode != http.StatusOK {
+	// 	return map[string]interface{}{
+	// 		"success":     false,
+	// 		"message":     fmt.Sprintf("Gửi ZNS thất bại: %d", resp.StatusCode),
+	// 		"phone":       phone,
+	// 		"tracking_id": trkID,
+	// 	}, fmt.Errorf("ZNS API trả về status code %d: %s", resp.StatusCode, znsResp.Message)
+	// }
+
+	// // Kiểm tra error code từ ZNS
+	// if znsResp.Error != 0 {
+	// 	return map[string]interface{}{
+	// 		"success":     false,
+	// 		"message":     fmt.Sprintf("ZNS error: %s", znsResp.Message),
+	// 		"phone":       phone,
+	// 		"tracking_id": trkID,
+	// 	}, fmt.Errorf("ZNS API trả về error code %d: %s", znsResp.Error, znsResp.Message)
+	// }
+
+	// // Thành công
 	// return map[string]interface{}{
 	// 	"success":     true,
 	// 	"message":     "Gửi ZNS thành công",
-	// 	"data":        nil,
+	// 	"data":        znsResp.Data,
 	// 	"phone":       phone,
-	// 	"tracking_id": "",
+	// 	"tracking_id": trkID,
 	// }, nil
-
-	// TODO: Tạm thời bỏ rate limit, sẽ bật lại sau
-	// Kiểm tra rate limit (100 lần/ngày)
-	// if err := z.checkDailyLimit(ctx); err != nil {
-	// 	return map[string]interface{}{
-	// 		"success": false,
-	// 		"message": err.Error(),
-	// 		"phone":   phone,
-	// 	}, err
-	// }
-
-	// Sử dụng template ID mặc định nếu không được cung cấp
-	tplID := z.templateID
-	if templateID != nil {
-		tplID = *templateID
-	}
-
-	// Tạo tracking ID mặc định nếu không được cung cấp
-	trkID := fmt.Sprintf("zns_%s_%d", phone, time.Now().Unix())
-	if trackingID != nil {
-		trkID = *trackingID
-	}
-
-	// Chuẩn bị payload
-	payload := ZNSRequest{
-		Phone:        phone,
-		TemplateID:   fmt.Sprintf("%d", tplID),
-		TemplateData: templateData,
-		TrackingID:   trkID,
-	}
-
-	// Marshal payload thành JSON
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("lỗi khi marshal payload ZNS: %w", err)
-	}
-
-	// Tạo HTTP request
-	req, err := http.NewRequestWithContext(
-		ctx,
-		"POST",
-		"https://business.openapi.zalo.me/message/template",
-		bytes.NewBuffer(payloadBytes),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("lỗi khi tạo request ZNS: %w", err)
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("access_token", z.accessToken)
-
-	// Gửi request
-	resp, err := z.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("lỗi khi gửi request ZNS: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Parse response
-	var znsResp ZNSResponse
-	if err := json.NewDecoder(resp.Body).Decode(&znsResp); err != nil {
-		return nil, fmt.Errorf("lỗi khi parse response ZNS: %w", err)
-	}
-
-	// Kiểm tra response status
-	if resp.StatusCode != http.StatusOK {
-		return map[string]interface{}{
-			"success":     false,
-			"message":     fmt.Sprintf("Gửi ZNS thất bại: %d", resp.StatusCode),
-			"phone":       phone,
-			"tracking_id": trkID,
-		}, fmt.Errorf("ZNS API trả về status code %d: %s", resp.StatusCode, znsResp.Message)
-	}
-
-	// Kiểm tra error code từ ZNS
-	if znsResp.Error != 0 {
-		return map[string]interface{}{
-			"success":     false,
-			"message":     fmt.Sprintf("ZNS error: %s", znsResp.Message),
-			"phone":       phone,
-			"tracking_id": trkID,
-		}, fmt.Errorf("ZNS API trả về error code %d: %s", znsResp.Error, znsResp.Message)
-	}
-
-	// Thành công
-	return map[string]interface{}{
-		"success":     true,
-		"message":     "Gửi ZNS thành công",
-		"data":        znsResp.Data,
-		"phone":       phone,
-		"tracking_id": trkID,
-	}, nil
 }
 
 // SendOTPZNS gửi OTP qua ZNS

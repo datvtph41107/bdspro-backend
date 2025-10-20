@@ -201,6 +201,7 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 				Email:           org.Email,
 				BackgroundImage: org.LogoUrl,
 				OwnerType:       &ownerType,
+				OrganizationId:  &org.Id,
 			})
 		}
 	}

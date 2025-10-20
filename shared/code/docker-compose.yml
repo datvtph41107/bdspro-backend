@@ -77,6 +77,7 @@ services:
       context: ./gateway-service
       dockerfile: Dockerfile
     container_name: gateway
+    command: ["./main", "http"]
     networks:
       - internal
     ports:
@@ -225,14 +226,6 @@ services:
       - "8030:8030"
     networks:
       - internal
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
 
   feedback:
     build: ./feedback-service
@@ -240,14 +233,6 @@ services:
     command: ["./main", "grpc"]
     networks:
       - internal
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
 
   marketing:
     build: ./marketing-service
@@ -255,14 +240,6 @@ services:
     command: ["./main", "grpc"]
     networks:
       - internal
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
 
       
   # eureka:

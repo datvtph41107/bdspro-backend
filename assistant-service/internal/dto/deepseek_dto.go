@@ -39,25 +39,57 @@ type DeepseekUsage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
+// AddressInfo - Thông tin địa chỉ
+type AddressInfo struct {
+	Province *string `json:"province,omitempty"`
+	District *string `json:"district,omitempty"`
+	Ward     *string `json:"ward,omitempty"`
+	Detail   *string `json:"detail,omitempty"`
+}
+
+// PriceDataAnalysis - Thông tin giá cả
+type PriceDataAnalysis struct {
+	SalePrice        *float64 `json:"salePrice,omitempty"`
+	SaleCommission   *float64 `json:"saleCommission,omitempty"`
+	Deposite         *float64 `json:"deposite,omitempty"`
+	RentPrice        *float64 `json:"rentPrice,omitempty"`
+	RentCommission   *float64 `json:"rentCommission,omitempty"`
+	RentPaymentCycle *uint32  `json:"rentPaymentCycle,omitempty"`
+	Currency         *string  `json:"currency,omitempty"`
+}
+
+// HouseInfoAnalysis - Thông tin nhà
+type HouseInfoAnalysis struct {
+	NumBedroom  *int32  `json:"numBedroom,omitempty"`
+	NumBathroom *int32  `json:"numBathroom,omitempty"`
+	NumFloor    *int32  `json:"numFloor,omitempty"`
+	NumFront    *int32  `json:"numFront,omitempty"`
+	NumCarPark  *int32  `json:"numCarPark,omitempty"`
+	Furniture   *string `json:"furniture,omitempty"`
+	Orientation *string `json:"orientation,omitempty"`
+}
+
+// ProductPrivateAnalysis - Thông tin nội bộ
+type ProductPrivateAnalysis struct {
+	ImportPrice   *float64 `json:"importPrice,omitempty"`
+	OperatingCost *float64 `json:"operatingCost,omitempty"`
+	InternalNote  *string  `json:"internalNote,omitempty"`
+	TargetProfit  *float64 `json:"targetProfit,omitempty"`
+}
+
 // ProductAnalysisResult - Kết quả phân tích sản phẩm BĐS từ AI
 type ProductAnalysisResult struct {
-	Name            *string   `json:"name"`
-	Area            *float32  `json:"area"`
-	Address         *string   `json:"address"`
-	Province        *string   `json:"province"`
-	District        *string   `json:"district"`
-	Ward            *string   `json:"ward"`
-	PropertyType    *string   `json:"propertyType"`
-	TransactionType *int32    `json:"transactionType"`
-	SalePrice       *float64  `json:"salePrice"`
-	RentPrice       *float64  `json:"rentPrice"`
-	Bedroom         *int32    `json:"bedroom"`
-	Bathroom        *int32    `json:"bathroom"`
-	Floor           *int32    `json:"floor"`
-	Frontage        *float32  `json:"frontage"`
-	Orientation     *string   `json:"orientation"`
-	LegalDoc        *string   `json:"legalDoc"`
-	Furniture       *string   `json:"furniture"`
-	Description     *string   `json:"description"`
-	Amenities       *[]string `json:"amenities"`
+	Name            *string                 `json:"name,omitempty"`
+	Area            *float64                `json:"area,omitempty"`
+	Description     *string                 `json:"description,omitempty"`
+	Note            *string                 `json:"note,omitempty"`
+	TransactionType *int32                  `json:"transactionType,omitempty"`
+	GoogleMapLink   *string                 `json:"googleMapLink,omitempty"`
+	Address         *AddressInfo            `json:"address,omitempty"`
+	PropertyType    *string                 `json:"propertyType,omitempty"`
+	LegalDoc        *string                 `json:"legalDoc,omitempty"`
+	PriceData       *PriceDataAnalysis      `json:"priceData,omitempty"`
+	HouseInfo       *HouseInfoAnalysis      `json:"houseInfo,omitempty"`
+	ProductPrivate  *ProductPrivateAnalysis `json:"productPrivate,omitempty"`
+	Amenities       []string                `json:"amenities,omitempty"`
 }

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	_ "embed"
 	"log"
 	"organization/env"
@@ -16,9 +15,6 @@ import (
 type ConfigApp struct {
 	GRPCServer *grpc.GRPCServer
 }
-
-//go:embed config.yaml
-var ConfigFile []byte
 
 func NewConfigApp(grpcServer *grpc.GRPCServer) *ConfigApp {
 	return &ConfigApp{
@@ -62,7 +58,7 @@ func loadConfig() {
 	viper.AutomaticEnv()
 
 	// Đọc file config
-	err := viper.ReadConfig(bytes.NewReader(ConfigFile))
+	err := cfg.ReadInConfig()
 	if err != nil {
 		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}

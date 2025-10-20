@@ -1,0 +1,406 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/v2/assistant/analyze/product": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Phân tích văn bản sản phẩm BĐS sử dụng AI",
+                "parameters": [
+                    {
+                        "description": "Nội dung cần phân tích",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/chat": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thực hiện conversation với AI assistant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Chat với AI assistant",
+                "parameters": [
+                    {
+                        "description": "Message và history",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/generate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nội dung theo template và prompt",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Generate nội dung",
+                "parameters": [
+                    {
+                        "description": "Prompt và template",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/health": {
+            "get": {
+                "description": "Kiểm tra trạng thái service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.HealthResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "assistantpb.AnalysisMetadata": {
+            "type": "object",
+            "properties": {
+                "confidence_score": {
+                    "type": "number"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "processing_time_ms": {
+                    "type": "integer"
+                },
+                "tokens_used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "assistantpb.AnalyzeRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "Văn bản mô tả sản phẩm cần phân tích",
+                    "type": "string"
+                },
+                "context": {
+                    "description": "Context bổ sung (optional)",
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.AnalyzeResponse": {
+            "type": "object",
+            "properties": {
+                "metadata": {
+                    "$ref": "#/definitions/assistantpb.AnalysisMetadata"
+                },
+                "product": {
+                    "$ref": "#/definitions/assistantpb.ProductInfo"
+                },
+                "raw_response": {
+                    "description": "Raw JSON từ AI",
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.ChatMessage": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "role": {
+                    "description": "\"user\" hoặc \"assistant\"",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "assistantpb.ChatMetadata": {
+            "type": "object",
+            "properties": {
+                "model": {
+                    "type": "string"
+                },
+                "processing_time_ms": {
+                    "type": "integer"
+                },
+                "tokens_used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "assistantpb.ChatRequest": {
+            "type": "object",
+            "properties": {
+                "context": {
+                    "description": "Context bổ sung",
+                    "type": "string"
+                },
+                "history": {
+                    "description": "Chat history",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/assistantpb.ChatMessage"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "description": "Session ID để maintain conversation",
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.ChatResponse": {
+            "type": "object",
+            "properties": {
+                "metadata": {
+                    "$ref": "#/definitions/assistantpb.ChatMetadata"
+                },
+                "reply": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.GenerateMetadata": {
+            "type": "object",
+            "properties": {
+                "model": {
+                    "type": "string"
+                },
+                "processing_time_ms": {
+                    "type": "integer"
+                },
+                "tokens_used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "assistantpb.GenerateRequest": {
+            "type": "object",
+            "properties": {
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "temperature": {
+                    "description": "0.0 - 1.0",
+                    "type": "number"
+                },
+                "template": {
+                    "description": "Template type: \"product_description\", \"email\", \"social_post\"",
+                    "type": "string"
+                },
+                "variables": {
+                    "description": "Variables để thay vào template",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "assistantpb.GenerateResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/assistantpb.GenerateMetadata"
+                }
+            }
+        },
+        "assistantpb.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "checks": {
+                    "description": "Component health checks",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "description": "\"healthy\", \"degraded\", \"unhealthy\"",
+                    "type": "string"
+                },
+                "uptime_seconds": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.ProductInfo": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "bathroom": {
+                    "type": "integer"
+                },
+                "bedroom": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "floor": {
+                    "type": "integer"
+                },
+                "frontage": {
+                    "type": "number"
+                },
+                "furniture": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "legal_doc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orientation": {
+                    "type": "string"
+                },
+                "property_type": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "rent_price": {
+                    "type": "number"
+                },
+                "sale_price": {
+                    "type": "number"
+                },
+                "transaction_type": {
+                    "description": "1=Bán, 2=Thuê, 3=Cả hai",
+                    "type": "integer"
+                },
+                "ward": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

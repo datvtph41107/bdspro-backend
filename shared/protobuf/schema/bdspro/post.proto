@@ -5,6 +5,7 @@ package bdspropb;
 import "bdspro/asset.proto";
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 import "shared/common.proto";
 
 option go_package = "pb/types/bdspro;bdspropb";
@@ -76,6 +77,11 @@ service PostService {
   rpc CurrentOrganizationPosts (PostSearchRequest) returns (PostListResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/post/organization"
+    };
+  };
+  rpc GetTodayPost (sharepb.Empty) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/dashboard/today/post"
     };
   };
 }

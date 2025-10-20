@@ -6,6 +6,7 @@ import (
 	"auth/internal/dto"
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,7 +63,31 @@ func (s *FacebookAuthService) HandleCallback(c *gin.Context, code string, platfo
 		return nil, fmt.Errorf("không thể lấy thông tin user: %v", err)
 	}
 
-	return s.RegisterOrLogin(c, userInfo)
+	return s.RegisterOrLogin(c, userInfo, nil)
+}
+
+func (s *FacebookAuthService) HandleCallbackWithDeviceInfo(c context.Context, code string, platform string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+	var accessToken string
+	var err error
+
+	// For Android platform, code is already the access token
+	if platform == "android" {
+		accessToken = code
+	} else {
+		// Get access token from authorization code
+		accessToken, err = s.getAccessToken(code)
+		if err != nil {
+			return nil, fmt.Errorf("không thể lấy access token: %v", err)
+		}
+	}
+
+	// Get user info using access token
+	userInfo, err := s.fetchUserInfo(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy thông tin user: %v", err)
+	}
+
+	return s.RegisterOrLogin(c, userInfo, otpReq)
 }
 
 func (s *FacebookAuthService) getAccessToken(code string) (string, error) {
@@ -135,7 +160,7 @@ func (s *FacebookAuthService) fetchUserInfo(accessToken string) (map[string]inte
 	return userInfo, nil
 }
 
-func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]interface{}) (*dto.AuthLoginResponse, error) {
+func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[string]interface{}, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
 	username, ok := userInfo["id"].(string)
 	if !ok {
 		return nil, errors.New("không lấy được id từ Facebook")
@@ -167,14 +192,22 @@ func (s *FacebookAuthService) RegisterOrLogin(c *gin.Context, userInfo map[strin
 		existingUser = createdUser
 	}
 
-	// Create session
-	session := s.AuthService.CreateSession(c, existingUser, &dto.OtpVerifyRequest{})
+	// Nếu không có otpReq thì tạo mặc định
+	if otpReq == nil {
+		otpReq = &dto.OtpVerifyRequest{}
+	}
+
+	// Create session and save to database
+	session, _ := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
 
 	// Generate refresh token
 	s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Get user profile
 	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+
+	// Ghi log admin history
+	s.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Facebook OAuth")
 
 	return s.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
 }

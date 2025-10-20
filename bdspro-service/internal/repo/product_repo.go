@@ -92,4 +92,7 @@ type ProductRepo interface {
 
 	// Đếm tổng số product hiện tại (không bị xóa)
 	CountCurrent(ctx context.Context) (int64, error)
+
+	// Lấy ngẫu nhiên 5 sản phẩm
+	GetRandomProducts(ctx context.Context, limit int) ([]domain.Product, error)
 }

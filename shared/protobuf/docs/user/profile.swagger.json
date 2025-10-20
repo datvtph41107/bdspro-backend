@@ -315,8 +315,8 @@
           "type": "string"
         },
         "organizationId": {
-          "type": "integer",
-          "format": "int64"
+          "type": "string",
+          "format": "uint64"
         },
         "groupId": {
           "type": "integer",

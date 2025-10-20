@@ -26,6 +26,10 @@ const authErrorKey authErrorKeyType = "auth_error"
 func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) metadata.MD {
 	md := metadata.MD{}
 
+	// Luôn inject IP và User-Agent vào metadata (dù có token hay không)
+	appendIfExists(md, "client-ip", getClientIP(r))
+	appendIfExists(md, "user-agent", r.Header.Get("User-Agent"))
+
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
 		ctx = context.WithValue(ctx, authErrorKey, AuthError{Message: "missing token"})
@@ -67,6 +71,35 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	return md
 }
 
+// getClientIP lấy IP address thực của client từ request
+func getClientIP(r *http.Request) string {
+	// Ưu tiên lấy từ X-Forwarded-For (khi đi qua proxy/load balancer)
+	if xForwardedFor := r.Header.Get("X-Forwarded-For"); xForwardedFor != "" {
+		// X-Forwarded-For có thể chứa nhiều IP, lấy IP đầu tiên
+		ips := strings.Split(xForwardedFor, ",")
+		if len(ips) > 0 {
+			return strings.TrimSpace(ips[0])
+		}
+	}
+
+	// Nếu không có X-Forwarded-For, thử lấy từ X-Real-IP
+	if xRealIP := r.Header.Get("X-Real-IP"); xRealIP != "" {
+		return strings.TrimSpace(xRealIP)
+	}
+
+	// Cuối cùng lấy từ RemoteAddr
+	// RemoteAddr có format "IP:Port", cần tách IP ra
+	if remoteAddr := r.RemoteAddr; remoteAddr != "" {
+		// Tách IP khỏi port
+		if idx := strings.LastIndex(remoteAddr, ":"); idx != -1 {
+			return remoteAddr[:idx]
+		}
+		return remoteAddr
+	}
+
+	return ""
+}
+
 func ParseGrpcMetadataContextMiddleware(
 	ctx context.Context,
 	req interface{},
@@ -86,6 +119,10 @@ func ParseGrpcMetadataContextMiddleware(
 	ctx = parseStringMetadata(ctx, md, "role", _enums.RoleKey)
 	ctx = parseStringMetadata(ctx, md, "type", _enums.TypeKey)
 	ctx = parseTimeMetadata(ctx, md, "planFrom", _enums.PlanFromKey)
+
+	// Parse IP address và User-Agent từ metadata
+	ctx = parseStringMetadata(ctx, md, "client-ip", _enums.ClientIPKey)
+	ctx = parseStringMetadata(ctx, md, "user-agent", _enums.UserAgentKey)
 
 	// Parse writer từ context nếu có
 	if writer, ok := ctx.Value("response-writer").(http.ResponseWriter); ok {

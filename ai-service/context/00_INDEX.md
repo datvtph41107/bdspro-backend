@@ -2,16 +2,29 @@
 
 ## 📚 Complete Context Documentation
 
-**Last Updated**: October 15, 2025
-**Documentation Version**: v1.0
+**Last Updated**: October 18, 2025
+**Documentation Version**: v1.1
 **Total Services**: 19 microservices
-**Status**: ✅ Complete
+**Status**: ✅ Complete + Quick Reference
 
 ---
 
-## 🎯 Quick Navigation
+## ⚡ FASTEST START (NEW!)
 
-### 📖 Essential Reading (Start Here)
+### 🚀 **[Quick Reference Guide](23_QUICK_REFERENCE_GUIDE.md)** ⭐⭐⭐
+   - **CREATE API trong 7 bước**
+   - **All import aliases & conventions**
+   - **Repository pattern template**
+   - **Common patterns & code templates**
+   - **All services ports at a glance**
+   - **Special services quick lookup**
+   - **Debug checklist**
+   - **~5 min scan, instant lookup**
+   - 💡 **Bookmark này để tra cứu nhanh!**
+
+---
+
+## 🎯 Essential Reading (Start Here)
 
 1. **[System Overview](00_SYSTEM_OVERVIEW.md)** ⭐
    - Architecture overview
@@ -129,27 +142,40 @@
    - Assistant Service (AI - planned)
    - ~25 min read
 
+### 11. **[Additional Services Deep Dive](22_ADDITIONAL_SERVICES_DEEP_DIVE.md)** 🆕
+   - **TQD Service**: POI management, geolocation
+   - **Assistant Service**: AI DeepSeek integration
+   - **Payment Service**: Advanced wallet & locking
+   - **Membership Service**: Subscription plans
+   - **Task Service**: Project management
+   - **Detailed implementation patterns**
+   - ~30 min read
+
 ---
 
 ## 📊 Documentation Statistics
 
 ### Coverage
+- ✅ **Quick Reference Guide**: ⚡ NEW - Fast lookup
 - ✅ **System Overview**: Complete
 - ✅ **API Documentation**: 145+ endpoints
 - ✅ **Core Services**: 3 detailed (Auth, Organization, BDSPro)
 - ✅ **Supporting Services**: 14 summarized
+- ✅ **Additional Services**: 5 deep dive (TQD, Assistant, Payment, Membership, Task)
 - ✅ **Shared Libraries**: Complete
 - ✅ **Technology Stack**: Complete
 - ✅ **Database Architecture**: Complete
 - ✅ **Development Workflow**: Complete
 
 ### Metrics
-- **Total Documentation Pages**: 10
+- **Total Documentation Pages**: 23 files
 - **Total Services Covered**: 19/19 (100%)
-- **Total Lines**: ~5,000 lines
+- **Total Lines**: ~7,500+ lines
 - **Total Endpoints Documented**: 145+
 - **Total Database Tables**: 150+
-- **Estimated Reading Time**: ~3-4 hours
+- **Code Templates**: 10+ ready-to-use
+- **Estimated Reading Time**: ~5-6 hours (full read)
+- **Quick Lookup Time**: ~5 minutes (Quick Reference)
 
 ---
 
@@ -157,10 +183,11 @@
 
 ### For New Developers
 
-**Day 1: Understanding the System**
-1. Read [System Overview](00_SYSTEM_OVERVIEW.md) (10 min)
-2. Browse [API Endpoints](01_API_ENDPOINTS_COMPLETE.md) (20 min)
-3. Review [Technology Stack](04_TECHNOLOGY_STACK.md) (20 min)
+**Day 1: Quick Start** ⚡ (UPDATED!)
+1. **Bookmark** [Quick Reference Guide](23_QUICK_REFERENCE_GUIDE.md) (5 min scan)
+2. Read [System Overview](00_SYSTEM_OVERVIEW.md) (10 min)
+3. Browse [API Endpoints](01_API_ENDPOINTS_COMPLETE.md) (20 min)
+4. **Practice**: Tạo API đầu tiên theo Quick Reference (30 min)
 
 **Day 2: Deep Dive into Core**
 1. Study [Auth Service](02_AUTH_SERVICE.md) (30 min)
@@ -170,24 +197,24 @@
 **Day 3: Business Logic**
 1. Study [Organization Service](05_ORGANIZATION_SERVICE.md) (25 min)
 2. Study [BDSPro Service](06_BDSPRO_SERVICE.md) (30 min)
-3. Review [Other Services](08_OTHER_SERVICES_SUMMARY.md) (25 min)
+3. Review [Additional Services](22_ADDITIONAL_SERVICES_DEEP_DIVE.md) (30 min)
 
-**Day 4: Data & Database**
+**Day 4: Data & Practice**
 1. Study [Database Architecture](09_DATABASE_ARCHITECTURE.md) (20 min)
-2. Practice adding a new feature (2-3 hours)
+2. Practice adding features (2-3 hours)
+3. **Always keep Quick Reference open for lookup!**
 
 ### For Experienced Developers
 
-**Quick Start** (1 hour):
-1. [System Overview](00_SYSTEM_OVERVIEW.md) - 10 min
-2. [Development Workflow](07_DEVELOPMENT_WORKFLOW.md) - 15 min
-3. [API Endpoints](01_API_ENDPOINTS_COMPLETE.md) - Browse relevant services
-4. Start coding!
+**Instant Start** ⚡ (15 min):
+1. [Quick Reference Guide](23_QUICK_REFERENCE_GUIDE.md) - 5 min scan
+2. [System Overview](00_SYSTEM_OVERVIEW.md) - 10 min skim
+3. Start coding with Quick Reference as lookup!
 
-**Deep Dive** (as needed):
-- Reference specific service docs when working on that service
-- Check shared library docs when using common components
-- Review database docs when creating new tables
+**As-Needed Reference**:
+- **Quick Reference**: Patterns, templates, conventions
+- **Service Docs**: Detailed business logic
+- **Workflow Docs**: Step-by-step when stuck
 
 ---
 
@@ -195,8 +222,24 @@
 
 ### Looking for...
 
-**"How do I add a new API?"**
-→ [Development Workflow](07_DEVELOPMENT_WORKFLOW.md) - Step-by-step guide
+**"Cần tra cứu NHANH patterns/conventions?"** ⚡
+→ [Quick Reference Guide](23_QUICK_REFERENCE_GUIDE.md) - Instant lookup!
+
+**"How do I add a new API?"** 
+→ [Quick Reference](23_QUICK_REFERENCE_GUIDE.md) - 7 bước + code templates
+→ [Development Workflow](07_DEVELOPMENT_WORKFLOW.md) - Chi tiết step-by-step
+
+**"Import aliases là gì?"**
+→ [Quick Reference](23_QUICK_REFERENCE_GUIDE.md) - Section "Import Aliases"
+
+**"Repository pattern viết như thế nào?"**
+→ [Quick Reference](23_QUICK_REFERENCE_GUIDE.md) - Templates + examples
+
+**"Service X có port gì?"**
+→ [Quick Reference](23_QUICK_REFERENCE_GUIDE.md) - Bảng tất cả ports
+
+**"Lấy profileId/organizationId ra sao?"**
+→ [Quick Reference](23_QUICK_REFERENCE_GUIDE.md) - Code snippets
 
 **"What are all the API endpoints?"**
 → [API Endpoints Complete](01_API_ENDPOINTS_COMPLETE.md) - All 145+ endpoints
@@ -207,17 +250,11 @@
 **"How do I use the shared library?"**
 → [Shared Common Library](03_SHARED_COMMON_LIBRARY.md) - BaseEntity, CRUD, etc.
 
+**"Payment service hoạt động ra sao?"**
+→ [Additional Services Deep Dive](22_ADDITIONAL_SERVICES_DEEP_DIVE.md) - Payment section
+
 **"What database tables exist?"**
 → [Database Architecture](09_DATABASE_ARCHITECTURE.md) - All schemas
-
-**"How does the organization hierarchy work?"**
-→ [Organization Service](05_ORGANIZATION_SERVICE.md) - Detailed explanation
-
-**"How do property listings work?"**
-→ [BDSPro Service](06_BDSPRO_SERVICE.md) - Post, Product, Asset
-
-**"What technologies are used?"**
-→ [Technology Stack](04_TECHNOLOGY_STACK.md) - Complete tech overview
 
 **"Which service handles X?"**
 → [Other Services Summary](08_OTHER_SERVICES_SUMMARY.md) - Service responsibilities

@@ -586,6 +586,44 @@ func (s *NewsFeedService) responseGlobalNewsFeed(ctx context.Context, newsFeeds 
 	return result, nil
 }
 
+// @Summary Lấy danh sách news feed của chính mình
+// @Description Get my news feed (tất cả bài viết của user đang đăng nhập)
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int32 false "Page number" default(1)
+// @Param size query int32 false "Page size" default(10)
+// @Param text query string false "Search text"
+// @Param isReel query bool false "Filter reel"
+// @Param isPost query bool false "Filter post"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /news-feed/me [get]
+func (s *NewsFeedService) GetMyNewsFeed(ctx context.Context, req *socialpb.MyNewsFeedRequest) (*socialpb.ListNewsFeed, error) {
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, _errors.ReturnError(http.StatusUnauthorized, "Unauthorized")
+	}
+
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:   req.Text,
+		IsReel: req.IsReel,
+		IsPost: req.IsPost,
+	}
+
+	// Lấy tất cả bài viết của user (không lọc visibility)
+	posts, total, err := s.newsFeedUsecase.GetListPostUser(ctx, postSearch)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.responseGlobalNewsFeed(ctx, posts, total)
+}
+
 // CountByOwner đếm số tin đăng theo ownerOf và ownerId
 func (s *NewsFeedService) CountByOwner(ctx context.Context, req *socialpb.CountByOwnerRequest) (*socialpb.CountByOwnerResponse, error) {
 	count, err := s.newsFeedUsecase.CountByOwner(ctx, req.OwnerOf, req.OwnerId)

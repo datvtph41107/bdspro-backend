@@ -1,0 +1,24 @@
+server:
+  name: utility-service
+  http_port: 8030
+  tcp_port: 50030
+
+database:
+  host: localhost
+  port: 5432
+  username: postgres
+  password: postgres
+  database: utility_db
+  sslmode: disable
+
+jwt:
+  key-generate: "your-secret-key-here"
+  tokenPrefix: "Bearer "
+  tokenExpirationAfterDays: 7
+  accessExpAfterMinutes: 60
+  refreshExpAfterMinutes: 43200
+  authorizationHeader: "Authorization"
+  listPermit:
+    - "/v2/utility/event-queue/list"
+    - "/v2/utility/event-queue/detail"
+

@@ -1,0 +1,264 @@
+definitions:
+  assistantpb.AnalysisMetadata:
+    properties:
+      confidence_score:
+        type: number
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.AnalyzeRequest:
+    properties:
+      content:
+        description: Văn bản mô tả sản phẩm cần phân tích
+        type: string
+      context:
+        description: Context bổ sung (optional)
+        type: string
+    type: object
+  assistantpb.AnalyzeResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/assistantpb.AnalysisMetadata'
+      product:
+        $ref: '#/definitions/assistantpb.ProductInfo'
+      raw_response:
+        description: Raw JSON từ AI
+        type: string
+    type: object
+  assistantpb.ChatMessage:
+    properties:
+      content:
+        type: string
+      role:
+        description: '"user" hoặc "assistant"'
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  assistantpb.ChatMetadata:
+    properties:
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.ChatRequest:
+    properties:
+      context:
+        description: Context bổ sung
+        type: string
+      history:
+        description: Chat history
+        items:
+          $ref: '#/definitions/assistantpb.ChatMessage'
+        type: array
+      message:
+        type: string
+      session_id:
+        description: Session ID để maintain conversation
+        type: string
+    type: object
+  assistantpb.ChatResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/assistantpb.ChatMetadata'
+      reply:
+        type: string
+      session_id:
+        type: string
+    type: object
+  assistantpb.GenerateMetadata:
+    properties:
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.GenerateRequest:
+    properties:
+      max_tokens:
+        type: integer
+      prompt:
+        type: string
+      temperature:
+        description: 0.0 - 1.0
+        type: number
+      template:
+        description: 'Template type: "product_description", "email", "social_post"'
+        type: string
+      variables:
+        additionalProperties:
+          type: string
+        description: Variables để thay vào template
+        type: object
+    type: object
+  assistantpb.GenerateResponse:
+    properties:
+      content:
+        type: string
+      metadata:
+        $ref: '#/definitions/assistantpb.GenerateMetadata'
+    type: object
+  assistantpb.HealthResponse:
+    properties:
+      checks:
+        additionalProperties:
+          type: string
+        description: Component health checks
+        type: object
+      status:
+        description: '"healthy", "degraded", "unhealthy"'
+        type: string
+      uptime_seconds:
+        type: integer
+      version:
+        type: string
+    type: object
+  assistantpb.ProductInfo:
+    properties:
+      address:
+        type: string
+      amenities:
+        items:
+          type: string
+        type: array
+      area:
+        type: number
+      bathroom:
+        type: integer
+      bedroom:
+        type: integer
+      description:
+        type: string
+      district:
+        type: string
+      floor:
+        type: integer
+      frontage:
+        type: number
+      furniture:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      legal_doc:
+        type: string
+      name:
+        type: string
+      orientation:
+        type: string
+      property_type:
+        type: string
+      province:
+        type: string
+      rent_price:
+        type: number
+      sale_price:
+        type: number
+      transaction_type:
+        description: 1=Bán, 2=Thuê, 3=Cả hai
+        type: integer
+      ward:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /v2/assistant/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn
+        bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng AI
+      tags:
+      - Assistant
+  /v2/assistant/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với AI assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung
+      tags:
+      - Assistant
+  /v2/assistant/health:
+    get:
+      consumes:
+      - application/json
+      description: Kiểm tra trạng thái service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.HealthResponse'
+      summary: Health check
+      tags:
+      - Assistant
+swagger: "2.0"

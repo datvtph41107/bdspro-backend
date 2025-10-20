@@ -65,31 +65,54 @@ Nhiệm vụ của bạn là trích xuất thông tin sản phẩm bất động
 
 Hãy phân tích và trả về JSON với cấu trúc sau:
 {
-  "name": "Tên/tiêu đề sản phẩm",
-  "area": diện tích (số, đơn vị m2),
-  "address": "Địa chỉ chi tiết",
-  "province": "Tỉnh/Thành phố",
-  "district": "Quận/Huyện",
-  "ward": "Phường/Xã",
-  "propertyType": "Loại BĐS (nhà riêng, chung cư, đất nền, ...)",
-  "transactionType": 1 (1=Bán, 2=Cho thuê, 3=Cả hai),
-  "salePrice": giá bán (số, VND),
-  "rentPrice": giá thuê (số, VND/tháng),
-  "bedroom": số phòng ngủ (số),
-  "bathroom": số phòng tắm (số),
-  "floor": số tầng (số),
-  "frontage": mặt tiền (số, đơn vị m),
-  "orientation": "Hướng nhà (Đông, Tây, Nam, Bắc, ...)",
+  "name": "Tên/tiêu đề sản phẩm (bắt buộc)",
+  "area": diện tích (số float, đơn vị m2, bắt buộc),
+  "description": "Mô tả chi tiết sản phẩm",
+  "note": "Ghi chú thêm",
+  "transactionType": 10 hoặc 20 (10=Bán, 20=Cho thuê),
+  "googleMapLink": "Link Google Maps nếu có",
+  "address": {
+    "province": "Tỉnh/Thành phố",
+    "district": "Quận/Huyện",
+    "ward": "Phường/Xã",
+    "detail": "Địa chỉ chi tiết"
+  },
+  "propertyType": "Loại BĐS (nhà riêng, chung cư, đất nền, biệt thự, ...)",
   "legalDoc": "Giấy tờ pháp lý (sổ đỏ/hồng, sổ chung, ...)",
-  "furniture": "Nội thất (đầy đủ, cơ bản, không có)",
-  "description": "Mô tả tóm tắt",
-  "amenities": ["tiện ích 1", "tiện ích 2"]
+  "priceData": {
+    "salePrice": giá bán (số float, VND),
+    "saleCommission": hoa hồng bán (số float, VND),
+    "deposite": tiền đặt cọc (số float, VND),
+    "rentPrice": giá thuê (số float, VND/tháng),
+    "rentCommission": hoa hồng thuê (số float, VND),
+    "rentPaymentCycle": chu kỳ thanh toán thuê (số: 1=tháng, 3=quý, 6=6 tháng, 12=năm),
+    "currency": "VND"
+  },
+  "houseInfo": {
+    "numBedroom": số phòng ngủ (số int),
+    "numBathroom": số phòng tắm/WC (số int),
+    "numFloor": số tầng (số int),
+    "numFront": số mặt tiền (số int),
+    "numCarPark": số chỗ đậu xe (số int),
+    "furniture": "Nội thất (full, partial, none)",
+    "orientation": "Hướng nhà (Đông, Tây, Nam, Bắc, Đông Nam, ...)"
+  },
+  "productPrivate": {
+    "importPrice": giá nhập (số float, VND),
+    "operatingCost": chi phí vận hành (số float, VND),
+    "internalNote": "Ghi chú nội bộ",
+    "targetProfit": lợi nhuận mục tiêu (số float, VND)
+  },
+  "amenities": ["tiện ích 1", "tiện ích 2", "..."]
 }
 
 Lưu ý:
-- Chỉ trả về các trường có thông tin trong văn bản
-- Trường nào không có thông tin thì không trả về
-- Chỉ trả về JSON thuần, không có markdown hay text khác`
+- Các trường BẮT BUỘC: name, area
+- Các trường khác chỉ trả về nếu có thông tin trong văn bản
+- Trường nào không có thông tin thì KHÔNG trả về (omit)
+- Chỉ trả về JSON thuần, KHÔNG có markdown, code block hay text khác
+- Số liệu giá cả phải là số, không có ký tự đặc biệt (tỷ, triệu...)
+- transactionType: 10 cho "Bán", 20 cho "Cho thuê"`
 
 	response, err := c.sendRequest(ctx, systemPrompt, content, 0, 0)
 	if err != nil {
@@ -260,9 +283,7 @@ func cleanJSONFromMarkdown(content string) string {
 		content = strings.TrimPrefix(content, "```")
 	}
 
-	if strings.HasSuffix(content, "```") {
-		content = strings.TrimSuffix(content, "```")
-	}
+	content = strings.TrimSuffix(content, "```")
 
 	return strings.TrimSpace(content)
 }

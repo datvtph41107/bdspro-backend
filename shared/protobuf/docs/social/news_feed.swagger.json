@@ -310,6 +310,62 @@
         ]
       }
     },
+    "/v2/social/news-feed/me": {
+      "get": {
+        "operationId": "NewsFeedService_GetMyNewsFeed",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pb_socialListNewsFeed"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "isReel",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "isPost",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "NewsFeedService"
+        ]
+      }
+    },
     "/v2/social/news-feed/user/{userId}": {
       "get": {
         "operationId": "NewsFeedService_GetNewsFeedByUserID",

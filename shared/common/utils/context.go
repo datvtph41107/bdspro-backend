@@ -48,6 +48,14 @@ func GetSessionIdFromContext(c context.Context) uint64 {
 	return sessionId.(uint64)
 }
 
+func GetAuthIdFromContext(c context.Context) uint64 {
+	authId := c.Value(_enums.AuthIDKey)
+	if authId == nil {
+		return 0
+	}
+	return authId.(uint64)
+}
+
 // func GetProfileIdFromContext(ctx context.Context) uint64 {
 // 	return ctx.Value("profileId").(uint64)
 // 	// if claims, ok := clms.(*Principal); ok {

@@ -3,6 +3,7 @@ package handler
 import (
 	"auth/infra/oauth"
 	"auth/internal/dto"
+	"auth/internal/usecase"
 	_routes "common/routes"
 	"context"
 	"net/http"
@@ -18,17 +19,21 @@ type OAuthHandler struct {
 	GoogleAuthService   *oauth.OAuthGoogle
 	ZaloAuthService     *oauth.ZaloAuthService
 	FacebookAuthService *oauth.FacebookAuthService
+	OAuthUsecase        *usecase.OAuthUsecase
 }
 
+// @bind: infra/handler.OAuthHandler
 func NewOAuthRouter(
 	google *oauth.OAuthGoogle,
 	zalo *oauth.ZaloAuthService,
 	facebook *oauth.FacebookAuthService,
+	oauthUsecase *usecase.OAuthUsecase,
 ) *OAuthHandler {
 	return &OAuthHandler{
 		GoogleAuthService:   google,
 		ZaloAuthService:     zalo,
 		FacebookAuthService: facebook,
+		OAuthUsecase:        oauthUsecase,
 	}
 }
 
@@ -126,21 +131,40 @@ func (h *OAuthHandler) GetLoginURL(ctx context.Context, req *authpb.GetLoginURLR
 
 // HandleCallback - gRPC method để xử lý OAuth callback
 func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCallbackRequest) (*authpb.HandleCallbackResponse, error) {
+	// Validate required fields for session creation
+	if req.Platform == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Platform là bắt buộc (WEB, MOBILE, DESKTOP)")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Version là bắt buộc")
+	}
+	if req.Os == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
+	}
+
 	var result *dto.AuthLoginResponse
 	var err error
 
+	// Tạo OtpVerifyRequest với thông tin device
+	otpReq := &dto.OtpVerifyRequest{
+		Version:    req.Version,
+		Platform:   req.Platform,
+		OS:         req.Os,
+		DeviceName: req.DeviceName,
+	}
+
 	// Tạo gin.Context giả để truyền vào các OAuth service (cần refactor sau)
 	// TODO: Refactor OAuth services để không phụ thuộc vào gin.Context
-	ginCtx := &gin.Context{}
-	ginCtx.Request = &http.Request{}
+	// ginCtx := &gin.Context{}
+	// ginCtx.Request = &http.Request{}
 
 	switch req.Provider {
 	case "zalo":
-		result, err = h.ZaloAuthService.HandleCallback(ginCtx, req.Code, req.State)
+		result, err = h.ZaloAuthService.HandleCallbackWithDeviceInfo(ctx, req.Code, req.State, otpReq)
 	case "google":
-		result, err = h.GoogleAuthService.HandleCallback(ginCtx, req.Code, req.State)
+		result, err = h.GoogleAuthService.HandleCallbackWithDeviceInfo(ctx, req.Code, req.State, otpReq)
 	case "facebook":
-		result, err = h.FacebookAuthService.HandleCallback(ginCtx, req.Code, req.Platform, req.State)
+		result, err = h.FacebookAuthService.HandleCallbackWithDeviceInfo(ctx, req.Code, req.Platform, req.State, otpReq)
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "Provider không hợp lệ: %s", req.Provider)
 	}
@@ -159,5 +183,42 @@ func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCal
 		// Email:        result.Email,
 		// Phone:        result.Phone,
 		Provider: req.Provider,
+	}, nil
+}
+
+// GetConnectedAccounts - gRPC method để lấy danh sách tài khoản MXH đã liên kết
+// @Summary Lấy danh sách tài khoản MXH đã liên kết
+// @Description Lấy danh sách các tài khoản mạng xã hội (Google, Facebook, Zalo) mà user đã liên kết
+// @Tags OAuth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} authpb.GetConnectedAccountsResponse
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal Server Error"
+// @Router /v2/auth/oauth/connected-accounts [get]
+func (h *OAuthHandler) GetConnectedAccounts(ctx context.Context, req *authpb.GetConnectedAccountsRequest) (*authpb.GetConnectedAccountsResponse, error) {
+	// Lấy danh sách tài khoản đã liên kết từ usecase
+	accounts, err := h.OAuthUsecase.GetConnectedAccounts(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Lỗi khi lấy danh sách tài khoản: %v", err)
+	}
+
+	// Convert sang protobuf response
+	var pbAccounts []*authpb.ConnectedAccount
+	for _, account := range accounts {
+		pbAccounts = append(pbAccounts, &authpb.ConnectedAccount{
+			AuthId:    account.AuthID,
+			Provider:  account.Provider,
+			AuthName:  account.AuthName,
+			FullName:  account.FullName,
+			Email:     account.Email,
+			Avatar:    account.Avatar,
+			CreatedAt: account.CreatedAt,
+		})
+	}
+
+	return &authpb.GetConnectedAccountsResponse{
+		Data: pbAccounts,
 	}, nil
 }

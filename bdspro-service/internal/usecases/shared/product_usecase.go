@@ -1402,3 +1402,12 @@ func (s *ProductUsecase) UpdateNote(ctx context.Context, id uint64, note string)
 	// Update note in repository
 	return s.ProductRepo.UpdateNote(ctx, id, note)
 }
+
+// GetSupportToday lấy ngẫu nhiên 5 sản phẩm cho support today
+func (s *ProductUsecase) GetSupportToday(ctx context.Context) ([]domain.Product, error) {
+	products, err := s.ProductRepo.GetRandomProducts(ctx, 5)
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}

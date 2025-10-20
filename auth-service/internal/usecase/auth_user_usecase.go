@@ -282,16 +282,70 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		}()
 	}
 
-	return s.ResponseLogin(e, infoEntity, newSession.SessionID), nil
+	// Lấy passwordAuthId (auth_method có provider ADMIN)
+	response := s.ResponseLogin(e, infoEntity, newSession.SessionID)
+	if infoEntity.ProfileID != 0 {
+		passwordAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(c, infoEntity.ProfileID, "ADMIN")
+		if err == nil && passwordAuth != nil {
+			response.PasswordAuthId = passwordAuth.ID
+		}
+	}
+
+	// Ghi log admin history
+	go func() {
+		// Tạo context mới với timeout riêng, không dùng context gốc
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
+		ipAddress := _utils.AuditIPFromContext(c)
+		userAgent := _utils.GetUserAgentFromContext(c)
+
+		// Nếu không có IP hoặc User Agent, sử dụng giá trị mặc định
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "Mobile-Client"
+		}
+
+		log.Printf("Creating login history for user %d, IP: %s, UserAgent: %s",
+			e.UserID, ipAddress, userAgent)
+
+		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
+			e.UserID,                             // adminID
+			e.UserID,                             // targetID (chính user đó)
+			int32(shared_enum.TargetHistoryLead), // targetType
+			int32(shared_enum.HistoryCreateStep), // actionType
+			"Đăng nhập hệ thống bằng OTP",        // title
+			[]string{"Đăng nhập thành công vào hệ thống"}, // notes
+			"Chưa đăng nhập",                    // preStage
+			"Đã đăng nhập",                      // afterStage
+			&e.UserID,                           // ownerID
+			int32(shared_enum.EOwnerTypeMember), // ownerType
+			enums.RoleMap[infoEntity.RoleType],  // adminRole
+			ipAddress,                           // ipAddress
+			userAgent,                           // userAgent
+		)
+		if err != nil {
+			log.Printf("Failed to log login history: %v", err)
+		} else {
+			log.Printf("Successfully logged login history for user %d", e.UserID)
+		}
+	}()
+
+	return response, nil
 }
 
 func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethod, otp dto.OtpVerifyRequest) *domain.UserSessionEntity {
 	return &domain.UserSessionEntity{
-		AuthID:    e.ID,
-		Version:   otp.Version,
-		Platform:  otp.Platform,
-		OS:        otp.OS,
-		IPRequest: _utils.AuditIPFromContext(c),
+		AuthID:     e.ID,
+		Version:    otp.Version,
+		Platform:   otp.Platform,
+		OS:         otp.OS,
+		DeviceName: otp.DeviceName,
+		IPRequest:  _utils.AuditIPFromContext(c),
+		UserAgent:  _utils.GetUserAgentFromContext(c),
 	}
 }
 
@@ -702,13 +756,29 @@ func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp
 		otp = &dto.OtpVerifyRequest{}
 	}
 	return &domain.UserSessionEntity{
-		AuthID:    authId,
-		Version:   otp.Version,
-		Platform:  otp.Platform,
-		OS:        otp.OS,
-		IPRequest: _utils.AuditIPFromContext(c),
-		Activate:  false,
+		AuthID:     authId,
+		Version:    otp.Version,
+		Platform:   otp.Platform,
+		OS:         otp.OS,
+		DeviceName: otp.DeviceName,
+		IPRequest:  _utils.AuditIPFromContext(c),
+		UserAgent:  _utils.GetUserAgentFromContext(c),
+		Activate:   false,
 	}
+}
+
+// CreateAndSaveSession tạo session và lưu vào database
+func (s *AuthUsecase) CreateAndSaveSession(c context.Context, e *domain.AuthMethod, otp *dto.OtpVerifyRequest) (*domain.UserSessionEntity, error) {
+	// Tạo session object
+	session := s.CreateSession(c, e, otp)
+
+	// Lưu vào database
+	err := s.SessionRepo.CreateSession(c, session)
+	if err != nil {
+		return session, err
+	}
+
+	return session, nil
 }
 
 func (s *AuthUsecase) CreateQRSession(c context.Context, e *dto.SessionQRRequest, sessionId uint64) (*dto.SessionQRResponse, error) {
@@ -792,6 +862,50 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	s.GenRefreshToken(c, authEntity, sessionId)
 	profile, _ := s.ProfileProvider.GetByProfileID(c, authEntity.UserID)
+
+	// Ghi log admin history
+	go func() {
+		// Tạo context mới với timeout riêng, không dùng context gốc
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
+		ipAddress := _utils.AuditIPFromContext(c)
+		userAgent := _utils.GetUserAgentFromContext(c)
+
+		// Nếu không có IP hoặc User Agent, sử dụng giá trị mặc định
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "QR-Client"
+		}
+
+		log.Printf("Creating login history for user %d (QR), IP: %s, UserAgent: %s",
+			authEntity.UserID, ipAddress, userAgent)
+
+		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
+			authEntity.UserID,                             // adminID
+			authEntity.UserID,                             // targetID (chính user đó)
+			int32(shared_enum.TargetHistoryLead),          // targetType
+			int32(shared_enum.HistoryCreateStep),          // actionType
+			"Đăng nhập hệ thống bằng QR Code",             // title
+			[]string{"Đăng nhập thành công vào hệ thống"}, // notes
+			"Chưa đăng nhập",                              // preStage
+			"Đã đăng nhập",                                // afterStage
+			&authEntity.UserID,                            // ownerID
+			int32(shared_enum.EOwnerTypeMember),           // ownerType
+			enums.RoleMap[profile.RoleType],               // adminRole
+			ipAddress,                                     // ipAddress
+			userAgent,                                     // userAgent
+		)
+		if err != nil {
+			log.Printf("Failed to log QR login history: %v", err)
+		} else {
+			log.Printf("Successfully logged QR login history for user %d", authEntity.UserID)
+		}
+	}()
+
 	return s.ResponseLogin(authEntity, profile, sessionEntity.SessionID), nil
 }
 
@@ -805,8 +919,61 @@ func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.Auth
 	return refreshToken
 }
 
+// LogLoginHistory ghi lại lịch sử đăng nhập
+func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *domain.AuthMethod, profile *dto.ProfileDTO, title string) {
+	go func() {
+		// Tạo context mới với timeout riêng, không dùng context gốc
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
+		ipAddress := _utils.AuditIPFromContext(c)
+		userAgent := _utils.GetUserAgentFromContext(c)
+
+		// Nếu không có IP hoặc User Agent, sử dụng giá trị mặc định
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "Client"
+		}
+
+		// Kiểm tra profile có tồn tại không
+		if profile == nil {
+			log.Printf("Cannot log login history: profile is nil for user %d", authEntity.UserID)
+			return
+		}
+
+		log.Printf("Creating login history for user %d, IP: %s, UserAgent: %s",
+			authEntity.UserID, ipAddress, userAgent)
+
+		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
+			authEntity.UserID,                    // adminID
+			authEntity.UserID,                    // targetID (chính user đó)
+			int32(shared_enum.TargetHistoryLead), // targetType
+			int32(shared_enum.HistoryCreateStep), // actionType
+			title,                                // title
+			[]string{"Đăng nhập thành công vào hệ thống"}, // notes
+			"Chưa đăng nhập",                    // preStage
+			"Đã đăng nhập",                      // afterStage
+			&authEntity.UserID,                  // ownerID
+			int32(shared_enum.EOwnerTypeMember), // ownerType
+			enums.RoleMap[profile.RoleType],     // adminRole
+			ipAddress,                           // ipAddress
+			userAgent,                           // userAgent
+		)
+		if err != nil {
+			log.Printf("Failed to log login history: %v", err)
+		} else {
+			log.Printf("Successfully logged login history for user %d", authEntity.UserID)
+		}
+	}()
+}
+
 func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint64) (*dto.AuthLoginResponse, error) {
 	// principal := _jwt.MetadataFromContext(c)
+	authId := _utils.GetAuthIdFromContext(c)
+	sessionId := _utils.GetSessionIdFromContext(c)
 	profileId := _utils.GetProfileIdWithContext(c)
 	if profileId == 0 {
 		return nil, &_routes.Except{
@@ -831,13 +998,13 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 	// }
 	profile, _ := s.ProfileProvider.GetByProfileID(c, profileId)
 	payload := _jwt.JwtTokenProperties{
-		// AuthID:    principal.AuthID,
-		// ProfileID: principal.ProfileId,
-		// SessionID: uint64(principal.Session),
-		Role:   "ROLE_USER",
-		Type:   "ACCESS",
-		PlanID: profile.PlanID,
-		PlanAt: profile.PlanAt,
+		AuthID:    authId,
+		ProfileID: profileId,
+		SessionID: sessionId,
+		Role:      "ROLE_USER",
+		Type:      "ACCESS",
+		PlanID:    profile.PlanID,
+		PlanAt:    profile.PlanAt,
 	}
 	payload.AdditionalInfo = map[string]interface{}{
 		"organization": clientResponse.OrganizationId,
@@ -847,12 +1014,15 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 		return nil, err
 	}
 	response := &dto.AuthLoginResponse{
-		// AuthID:         principal.AuthID,
+		AuthID:      authId,
 		AccessToken: newAccessToken,
 		Role:        "ROLE_USER",
 		Username:    profile.FullName,
 		ProfileID:   profile.ProfileID,
-		// RefreshToken:   s.GetRefreshToken(authEntity, uint64(principal.Session)),
+		FullName:    profile.FullName,
+		// Avatar:         profile.Avatar,
+		// Email:          profile.Email,
+		// Phone:          profile.Phone,
 		OrganizationID: clientResponse.OrganizationId,
 	}
 
@@ -929,18 +1099,19 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		}
 	}
 
-	// Tạo session cho admin (bắt chước VerifyOtp)
+	// Tạo session cho admin
 	adminOtpRequest := dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
 			Phone:    adminAuthEntity.Phone,
 			Fullname: adminAuthEntity.FullName,
 		},
-		Otp:      "",
-		AuthID:   adminAuthEntity.ID,
-		Version:  "1.0",
-		Platform: "WEB",
-		OS:       "ADMIN",
-		Fullname: adminAuthEntity.FullName,
+		Otp:        "",
+		AuthID:     adminAuthEntity.ID,
+		Version:    adminLogin.Version,
+		Platform:   adminLogin.Platform,
+		OS:         adminLogin.OS,
+		DeviceName: adminLogin.DeviceName,
+		Fullname:   adminAuthEntity.FullName,
 	}
 
 	newSession := s.createSession(c, adminAuthEntity, adminOtpRequest)
@@ -1216,4 +1387,376 @@ func (s *AuthUsecase) UnlockMultipleUsers(ctx context.Context, req *dto.UnlockMu
 	}
 
 	return response, nil
+}
+
+// CreatePassword tạo mật khẩu cho user chưa có mật khẩu
+func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePasswordRequest) (*dto.CreatePasswordResponse, error) {
+	// Lấy profileId từ context
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, _errors.ReturnError(
+			int32(401),
+			"Không thể xác thực phiên đăng nhập",
+		)
+	}
+
+	// Kiểm tra password và confirmPassword có khớp không
+	if req.Password != req.ConfirmPassword {
+		return nil, _errors.ReturnError(
+			int32(400),
+			"Mật khẩu xác nhận không khớp",
+		)
+	}
+
+	// Kiểm tra độ dài password (tối thiểu 8 ký tự)
+	if len(req.Password) < 8 {
+		return nil, _errors.ReturnError(
+			int32(400),
+			"Mật khẩu phải có ít nhất 8 ký tự",
+		)
+	}
+
+	// Kiểm tra user đã có auth_method với provider ADMIN chưa
+	existingAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profileId, "ADMIN")
+	if err == nil && existingAuth != nil {
+		return nil, _errors.ReturnError(
+			int32(400),
+			"Bạn đã có mật khẩu. Vui lòng sử dụng chức năng đổi mật khẩu nếu muốn thay đổi",
+		)
+	}
+
+	// Hash password
+	hashedPassword, err := _utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, _errors.ReturnError(
+			int32(500),
+			"Lỗi khi xử lý mật khẩu",
+		)
+	}
+
+	// Lấy thông tin profile để có username
+	profile, err := s.ProfileProvider.GetByProfileID(ctx, profileId)
+	if err != nil || profile == nil {
+		return nil, _errors.ReturnError(
+			int32(404),
+			"Không tìm thấy thông tin người dùng",
+		)
+	}
+
+	// Tạo auth_method mới với provider ADMIN
+	newAuthMethod := &domain.AuthMethod{
+		Provider: "ADMIN",
+		AuthName: profile.Phone, // Sử dụng phone làm username
+		Password: hashedPassword,
+		UserID:   profileId,
+		FullName: profile.FullName,
+		Email:    profile.Email,
+		Phone:    profile.Phone,
+		Avatar:   profile.Avatar,
+	}
+
+	// Lưu vào database
+	createdAuth, err := s.AuthMethodRepo.Create(ctx, newAuthMethod)
+	if err != nil {
+		return nil, _errors.ReturnError(
+			int32(500),
+			"Lỗi khi tạo mật khẩu",
+		)
+	}
+
+	// Tạo status và OTP cho auth_method mới (nếu cần)
+	statusEntity := &domain.UserStatusEntity{
+		Active:   true,
+		Verified: true, // Đã verified vì user đã đăng nhập
+		IdDomain: domain.IdDomain{
+			AuthID: createdAuth.ID,
+		},
+	}
+	s.StatusRepo.CreateStatus(ctx, statusEntity)
+
+	// Trả về response
+	return &dto.CreatePasswordResponse{
+		AuthId:  createdAuth.ID,
+		Message: "Tạo mật khẩu thành công",
+		Success: true,
+	}, nil
+}
+
+// LoginWithPassword đăng nhập bằng username/phone và password
+func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPasswordRequest) (*dto.AuthLoginResponse, error) {
+	// Validate input
+	if req.Username == "" || req.Password == "" {
+		return nil, _errors.ReturnError(
+			int32(400),
+			"Username và password không được để trống",
+		)
+	}
+
+	// Tìm auth_method theo username (có thể là phone)
+	// Thử tìm theo phone trước
+	var authEntity *domain.AuthMethod
+	var err error
+
+	// Kiểm tra xem username có phải là số điện thoại không
+	if _utils.ValidatePhoneNumber(req.Username) {
+		// Tìm theo phone với provider ADMIN
+		authEntity, err = s.AuthMethodRepo.FindByPhone(ctx, req.Username)
+		if err != nil || authEntity == nil {
+			return nil, _errors.ReturnError(
+				int32(401),
+				"Số điện thoại hoặc mật khẩu không đúng",
+			)
+		}
+		// Kiểm tra có auth_method với provider ADMIN không
+		if authEntity.Provider != "ADMIN" {
+			// Tìm auth_method ADMIN của cùng user
+			if authEntity.UserID != 0 {
+				authEntity, err = s.AuthMethodRepo.GetByUserIdAndProvider(ctx, authEntity.UserID, "ADMIN")
+				if err != nil || authEntity == nil {
+					return nil, _errors.ReturnError(
+						int32(401),
+						"Bạn chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng OTP",
+					)
+				}
+			} else {
+				return nil, _errors.ReturnError(
+					int32(401),
+					"Bạn chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng OTP",
+				)
+			}
+		}
+	} else {
+		// Tìm theo username với provider ADMIN
+		authEntity, err = s.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.Username, "ADMIN")
+		if err != nil || authEntity == nil {
+			return nil, _errors.ReturnError(
+				int32(401),
+				"Username hoặc mật khẩu không đúng",
+			)
+		}
+	}
+
+	// Kiểm tra provider phải là ADMIN
+	if authEntity.Provider != "ADMIN" {
+		return nil, _errors.ReturnError(
+			int32(401),
+			"Phương thức đăng nhập không đúng",
+		)
+	}
+
+	// Kiểm tra password
+	if !_utils.CheckPasswordHash(req.Password, authEntity.Password) {
+		return nil, _errors.ReturnError(
+			int32(401),
+			"Username hoặc mật khẩu không đúng",
+		)
+	}
+
+	// Lấy profile của user
+	profile, err := s.ProfileProvider.GetByProfileID(ctx, authEntity.UserID)
+	if err != nil || profile == nil || profile.ProfileID == 0 {
+		return nil, _errors.ReturnError(
+			int32(404),
+			"Không tìm thấy thông tin người dùng",
+		)
+	}
+
+	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
+	if authEntity.UserID != 0 {
+		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(ctx, authEntity.UserID)
+		if err != nil {
+			log.Printf("Failed to check account status: %v", err)
+		}
+		if isLocked || !canLogin {
+			// Logout tài khoản nếu bị khóa
+			s.CacheProvider.DeleteToken(ctx, authEntity.ID)
+			return nil, _errors.ReturnError(
+				int32(403),
+				"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ",
+			)
+		}
+	}
+
+	// Tạo session
+	otpRequest := dto.OtpVerifyRequest{
+		OtpRequest: dto.OtpRequest{
+			Phone:    authEntity.Phone,
+			Fullname: authEntity.FullName,
+		},
+		Otp:        "",
+		AuthID:     authEntity.ID,
+		Version:    req.Version,
+		Platform:   req.Platform,
+		OS:         req.OS,
+		DeviceName: req.DeviceName,
+		Fullname:   authEntity.FullName,
+	}
+
+	newSession := s.createSession(ctx, authEntity, otpRequest)
+	s.SessionRepo.CreateSession(ctx, newSession)
+
+	// Tạo refresh token
+	s.GenRefreshToken(ctx, authEntity, newSession.SessionID)
+
+	// Lấy passwordAuthId (chính là auth_method hiện tại)
+	response := s.ResponseLogin(authEntity, profile, newSession.SessionID)
+	response.PasswordAuthId = authEntity.ID
+
+	// Ghi log admin history
+	go func() {
+		// Tạo context mới với timeout riêng, không dùng context gốc
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
+		ipAddress := _utils.AuditIPFromContext(ctx)
+		userAgent := _utils.GetUserAgentFromContext(ctx)
+
+		// Nếu không có IP hoặc User Agent, sử dụng giá trị mặc định
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "Admin-Client"
+		}
+
+		log.Printf("Creating admin history for user %d, IP: %s, UserAgent: %s",
+			authEntity.UserID, ipAddress, userAgent)
+
+		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
+			authEntity.UserID,                             // adminID
+			authEntity.UserID,                             // targetID (chính admin đó)
+			int32(shared_enum.TargetHistoryLead),          // targetType
+			int32(shared_enum.HistoryCreateStep),          // actionType
+			"Admin đăng nhập hệ thống",                    // title
+			[]string{"Đăng nhập thành công vào hệ thống"}, // notes
+			"Chưa đăng nhập",                              // preStage
+			"Đã đăng nhập",                                // afterStage
+			&authEntity.UserID,                            // ownerID
+			int32(shared_enum.EOwnerTypeMember),           // ownerType
+			enums.RoleMap[profile.RoleType],               // adminRole
+			ipAddress,                                     // ipAddress
+			userAgent,                                     // userAgent
+		)
+		if err != nil {
+			log.Printf("Failed to log admin login: %v", err)
+		} else {
+			log.Printf("Successfully logged admin login for user %d", authEntity.UserID)
+		}
+	}()
+
+	return response, nil
+}
+
+// SwitchAccount chuyển đổi tài khoản sang profile khác hoặc tổ chức khác
+func (s *AuthUsecase) SwitchAccount(c context.Context, req dto.SwitchAccountRequest) (*dto.SwitchAccountResponse, error) {
+	// Lấy profileId hiện tại từ context
+	sessionId := _utils.GetSessionIdFromContext(c)
+	currentProfileId := _utils.GetProfileIdWithContext(c)
+	authId := _utils.GetAuthIdFromContext(c)
+	if currentProfileId == 0 {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Không thể xác thực phiên đăng nhập",
+		}
+	}
+
+	// Kiểm tra quyền truy cập profile mới
+	if req.ProfileID != currentProfileId {
+		// TODO: Kiểm tra quyền truy cập profile khác (có thể là admin hoặc có quyền đặc biệt)
+		// Hiện tại chỉ cho phép chuyển đổi trong cùng profile
+		return nil, &_routes.Except{
+			Code:    403,
+			Message: "Không có quyền truy cập profile này",
+		}
+	}
+
+	// Lấy thông tin profile
+	profile, err := s.ProfileProvider.GetByProfileID(c, req.ProfileID)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy profile",
+		}
+	}
+
+	// Lấy thông tin auth hiện tại (sử dụng provider OTP làm mặc định)
+	authEntity, err := s.AuthMethodRepo.GetByUserIdAndProvider(c, req.ProfileID, "PHONE")
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy thông tin xác thực",
+		}
+	}
+
+	// Tạo JWT token mới với thông tin chuyển đổi
+	payload := _jwt.JwtTokenProperties{
+		AuthID:    authId,
+		ProfileID: currentProfileId,
+		SessionID: sessionId,
+		Role:      "ROLE_USER",
+		Type:      "ACCESS",
+		PlanID:    profile.PlanID,
+		PlanAt:    profile.PlanAt,
+	}
+
+	// Thêm thông tin organization/group nếu có
+	payload.AdditionalInfo = make(map[string]interface{})
+	if req.OrganizationID != nil {
+		payload.AdditionalInfo["organization"] = *req.OrganizationID
+	}
+	if req.GroupID != nil {
+		payload.AdditionalInfo["group"] = *req.GroupID
+	}
+	if req.OwnerType != nil {
+		payload.AdditionalInfo["ownerType"] = *req.OwnerType
+	}
+
+	// Tạo access token mới
+	accessToken, err := _jwt.GenerateToken(payload)
+	if err != nil {
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi tạo token",
+		}
+	}
+
+	// Tạo response
+	response := &dto.SwitchAccountResponse{
+		AuthID:         authEntity.ID,
+		ProfileID:      req.ProfileID,
+		OrganizationID: req.OrganizationID,
+		GroupID:        req.GroupID,
+		Role:           "ROLE_USER",
+		FullName:       profile.FullName,
+		Avatar:         profile.Avatar,
+		Email:          profile.Email,
+		Phone:          profile.Phone,
+		AccessToken:    accessToken,
+	}
+
+	return response, nil
+}
+
+// GetLoginHistory lấy danh sách lịch sử đăng nhập của user
+func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*domain.UserSessionEntity, int64, error) {
+	// Lấy profileId từ context
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, 0, _errors.ReturnError(
+			int32(401),
+			"Không tìm thấy thông tin người dùng",
+		)
+	}
+
+	// Lấy danh sách lịch sử đăng nhập từ repository (JOIN với auth_method)
+	sessions, total, err := s.SessionRepo.GetLoginHistoryByUserID(ctx, profileID, page, size)
+	if err != nil {
+		return nil, 0, _errors.ReturnError(
+			int32(500),
+			"Không thể lấy lịch sử đăng nhập: "+err.Error(),
+		)
+	}
+
+	return sessions, total, nil
 }

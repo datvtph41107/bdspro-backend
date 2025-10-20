@@ -24,12 +24,13 @@ type OtpRequest struct {
 // OtpVerifyRequest mở rộng từ OtpRequest để xác minh OTP
 type OtpVerifyRequest struct {
 	OtpRequest
-	Otp      string `json:"otp" binding:"required" validate:"required"`
-	AuthID   uint64 `json:"authId,omitempty"`
-	Version  string `json:"version,omitempty"`
-	Platform string `json:"platform,omitempty"`
-	OS       string `json:"os,omitempty"`
-	Fullname string `json:"fullname,omitempty"`
+	Otp        string `json:"otp" binding:"required" validate:"required"`
+	AuthID     uint64 `json:"authId,omitempty"`
+	Version    string `json:"version,omitempty"`
+	Platform   string `json:"platform,omitempty"`
+	OS         string `json:"os,omitempty"`
+	DeviceName string `json:"deviceName,omitempty"`
+	Fullname   string `json:"fullname,omitempty"`
 }
 
 // RequestOTPResponse đại diện cho response gửi OTP
@@ -169,7 +170,8 @@ type AuthLoginResponse struct {
 	ProfileID      uint64 `json:"profileId"`
 	RefreshToken   string `json:"refreshToken"`
 	OrganizationID uint64 `json:"organizationId,omitempty"`
-	FullName       string `json:"fullName"` // OAuth fullname
+	FullName       string `json:"fullName"`                 // OAuth fullname
+	PasswordAuthId uint64 `json:"passwordAuthId,omitempty"` // ID của auth_method có provider ADMIN
 	// Avatar         string `json:"avatar"`
 	// Phone          string `json:"phone"`
 	// Email          string `json:"email"`
@@ -230,8 +232,12 @@ type HandleCallbackResponse struct {
 
 // AdminLoginRequest đại diện cho yêu cầu đăng nhập admin
 type AdminLoginRequest struct {
-	Username string `json:"username" binding:"required" validate:"required"`
-	Password string `json:"password" binding:"required" validate:"required"`
+	Username   string `json:"username" binding:"required" validate:"required"`
+	Password   string `json:"password" binding:"required" validate:"required"`
+	Version    string `json:"version" binding:"required" validate:"required"`
+	Platform   string `json:"platform" binding:"required" validate:"required"`
+	OS         string `json:"os" binding:"required" validate:"required"`
+	DeviceName string `json:"deviceName,omitempty"`
 }
 
 // Account Lock DTOs
@@ -349,4 +355,88 @@ type AuthUserStatusInfo struct {
 	LockedBy    uint64               `json:"lockedBy,omitempty"`
 	CanLogin    bool                 `json:"canLogin"`
 	IsExpired   bool                 `json:"isExpired,omitempty"`
+}
+
+// CreatePasswordRequest đại diện cho yêu cầu tạo mật khẩu
+type CreatePasswordRequest struct {
+	Password        string `json:"password" binding:"required" validate:"required,min=8,max=100"`
+	ConfirmPassword string `json:"confirmPassword" binding:"required" validate:"required"`
+}
+
+// CreatePasswordResponse đại diện cho response tạo mật khẩu
+type CreatePasswordResponse struct {
+	AuthId  uint64 `json:"authId"`
+	Message string `json:"message"`
+	Success bool   `json:"success"`
+}
+
+// LoginWithPasswordRequest đại diện cho yêu cầu đăng nhập bằng mật khẩu
+type LoginWithPasswordRequest struct {
+	Username   string `json:"username" binding:"required" validate:"required"` // Phone hoặc username
+	Password   string `json:"password" binding:"required" validate:"required"`
+	Version    string `json:"version,omitempty"`
+	Platform   string `json:"platform,omitempty"`
+	OS         string `json:"os,omitempty"`
+	DeviceName string `json:"deviceName,omitempty"`
+}
+
+// SwitchAccountRequest đại diện cho yêu cầu chuyển đổi tài khoản
+type SwitchAccountRequest struct {
+	ProfileID      uint64  `json:"profileId" binding:"required" validate:"required"`
+	OrganizationID *uint64 `json:"organizationId,omitempty"`
+	GroupID        *uint32 `json:"groupId,omitempty"`
+	OwnerType      *uint32 `json:"ownerType,omitempty"`
+}
+
+// SwitchAccountResponse đại diện cho response chuyển đổi tài khoản
+type SwitchAccountResponse struct {
+	AuthID         uint64  `json:"authId"`
+	ProfileID      uint64  `json:"profileId"`
+	OrganizationID *uint64 `json:"organizationId,omitempty"`
+	GroupID        *uint32 `json:"groupId,omitempty"`
+	Role           string  `json:"role"`
+	FullName       string  `json:"fullName"`
+	Avatar         string  `json:"avatar"`
+	Email          string  `json:"email"`
+	Phone          string  `json:"phone"`
+	AccessToken    string  `json:"accessToken"`
+}
+
+// GetLoginHistoryRequest đại diện cho request lấy lịch sử đăng nhập
+type GetLoginHistoryRequest struct {
+	Page int32 `json:"page" form:"page"`
+	Size int32 `json:"size" form:"size"`
+}
+
+// GetLoginHistoryResponse đại diện cho response lịch sử đăng nhập
+type GetLoginHistoryResponse struct {
+	Data  []LoginHistoryItem `json:"data"`
+	Total int64              `json:"total"`
+}
+
+// LoginHistoryItem đại diện cho một mục lịch sử đăng nhập
+type LoginHistoryItem struct {
+	SessionID    uint64 `json:"sessionId"`
+	AuthID       uint64 `json:"authId"`
+	Platform     string `json:"platform"`
+	Version      string `json:"version"`
+	OS           string `json:"os"`
+	DeviceName   string `json:"deviceName"`
+	CreatedDate  string `json:"createdDate"`
+	FinishedDate string `json:"finishedDate"`
+	IPRequest    string `json:"ipRequest"`
+	TotalRequest uint64 `json:"totalRequest"`
+	UserAgent    string `json:"userAgent"`
+	Activate     bool   `json:"activate"`
+}
+
+// ConnectedAccountDTO đại diện cho một tài khoản MXH đã liên kết
+type ConnectedAccountDTO struct {
+	AuthID    uint64 `json:"authId"`
+	Provider  string `json:"provider"` // GOOGLE, FACEBOOK, ZALO
+	AuthName  string `json:"authName"` // OAuth ID từ provider
+	FullName  string `json:"fullName"`
+	Email     string `json:"email"`
+	Avatar    string `json:"avatar"`
+	CreatedAt string `json:"createdAt"`
 }

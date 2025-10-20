@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDSPro AI Assistant - Test UI</title>
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .settings input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .settings input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .answer-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .answer-box h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .answer-text {
+            color: #333;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        /* Markdown styles */
+        .answer-text h1, .answer-text h2, .answer-text h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .answer-text h1 {
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .answer-text h2 {
+            font-size: 20px;
+        }
+
+        .answer-text h3 {
+            font-size: 18px;
+        }
+
+        .answer-text p {
+            margin-bottom: 12px;
+        }
+
+        .answer-text ul, .answer-text ol {
+            margin-left: 25px;
+            margin-bottom: 12px;
+        }
+
+        .answer-text li {
+            margin-bottom: 6px;
+        }
+
+        .answer-text code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .answer-text pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        .answer-text pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .answer-text blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 16px;
+            margin: 12px 0;
+            color: #666;
+            font-style: italic;
+        }
+
+        .answer-text strong {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .answer-text em {
+            font-style: italic;
+        }
+
+        .answer-text a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .answer-text a:hover {
+            text-decoration: underline;
+        }
+
+        .answer-text table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .answer-text table th,
+        .answer-text table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .answer-text table th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+
+        .meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .meta-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .meta-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .meta-card .label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sources {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .sources h4 {
+            color: #f57c00;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .sources ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .sources li {
+            padding: 8px 0;
+            color: #666;
+            font-size: 14px;
+            border-bottom: 1px solid #ffe5b4;
+        }
+
+        .sources li:last-child {
+            border-bottom: none;
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44336;
+            padding: 20px;
+            border-radius: 10px;
+            color: #c62828;
+        }
+
+        .error h3 {
+            margin-bottom: 10px;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .api-status.online {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .api-status.offline {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .online .status-dot {
+            background: #4caf50;
+        }
+
+        .offline .status-dot {
+            background: #f44336;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .admin-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 2px dashed #ffc107;
+        }
+
+        .admin-section h3 {
+            color: #f57c00;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .admin-section p {
+            color: #856404;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .retrain-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            padding: 12px 20px;
+            width: auto;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        .retrain-btn:hover {
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .retrain-btn:disabled {
+            background: #ccc;
+        }
+
+        .training-progress {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .training-progress.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+            animation: indeterminate 2s infinite;
+        }
+
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+
+        .training-log {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #333;
+        }
+
+        .training-log p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 600px) {
+            .settings {
+                grid-template-columns: 1fr;
+            }
+
+            .meta-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 BDSPro AI Assistant</h1>
+            <p>Hỏi đáp về kiến trúc & code của dự án BDSPro</p>
+        </div>
+
+        <div class="content">
+            <!-- API Status -->
+            <div id="apiStatus" class="api-status offline">
+                <span class="status-dot"></span>
+                <span id="statusText">Đang kiểm tra kết nối...</span>
+            </div>
+
+            <!-- Query Form -->
+            <div class="form-group">
+                <label for="question">Câu hỏi của bạn</label>
+                <div class="input-wrapper">
+                    <textarea 
+                        id="question" 
+                        placeholder="Ví dụ: Làm sao để tạo một API mới trong BDSPro?&#10;Kiến trúc của auth-service như thế nào?&#10;Cách sử dụng Clean Architecture trong project?"
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings">
+                <div class="form-group">
+                    <label for="topK">Số chunks (top_k)</label>
+                    <input type="number" id="topK" value="3" min="1" max="20">
+                </div>
+                <div class="form-group">
+                    <label for="temperature">Temperature</label>
+                    <input type="number" id="temperature" value="0.3" min="0" max="2" step="0.1">
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button id="submitBtn" onclick="askQuestion()">
+                Gửi câu hỏi
+            </button>
+
+            <!-- Result -->
+            <div id="result" class="result"></div>
+
+            <!-- Admin Section -->
+            <div class="admin-section">
+                <h3>⚙️ Admin Panel</h3>
+                <p>Train lại model với TẤT CẢ dữ liệu từ <code>data/train/*.json</code>. Quá trình tự động train + embed + activate, mất khoảng 10-20 phút.</p>
+                <button id="retrainBtn" class="retrain-btn" onclick="retrainModel()">
+                    🔄 Retrain Model
+                </button>
+
+                <!-- Training Progress -->
+                <div id="trainingProgress" class="training-progress">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+                    <div id="trainingLog" class="training-log"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Made with ❤️ for BDSPro Team | API Endpoint: <strong id="apiUrl">http://localhost:8040</strong>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = 'http://localhost:8040';
+        const API_ENDPOINT = `${API_URL}/v2/ai/query`;
+        const TRAIN_ENDPOINT = `${API_URL}/v2/ai/train`;
+
+        // Configure marked.js
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {}
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        // Check API status on load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAPIStatus();
+            
+            // Add Enter + Ctrl shortcut to submit
+            document.getElementById('question').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    askQuestion();
+                }
+            });
+        });
+
+        // Check if API is online
+        async function checkAPIStatus() {
+            const statusDiv = document.getElementById('apiStatus');
+            const statusText = document.getElementById('statusText');
+            
+            try {
+                const response = await fetch(`${API_URL}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.className = 'api-status online';
+                    statusText.textContent = `✓ Kết nối thành công - ${data.service} v${data.version}`;
+                } else {
+                    throw new Error('API không phản hồi');
+                }
+            } catch (error) {
+                statusDiv.className = 'api-status offline';
+                statusText.textContent = `✗ Không thể kết nối đến API (${API_URL})`;
+                console.error('API Status Check Error:', error);
+            }
+        }
+
+        // Ask question
+        async function askQuestion() {
+            const question = document.getElementById('question').value.trim();
+            const topK = parseInt(document.getElementById('topK').value);
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const resultDiv = document.getElementById('result');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Validation
+            if (!question) {
+                displayError('Vui lòng nhập câu hỏi!');
+                return;
+            }
+
+            // Show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span>Đang xử lý...';
+            resultDiv.innerHTML = '';
+            resultDiv.classList.remove('show');
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        top_k: topK,
+                        temperature: temperature
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || errorData.message || 'Lỗi từ server');
+                }
+
+                const result = await response.json();
+                
+                // Handle response format: { success, message, data }
+                if (result.success && result.data) {
+                    displayResult(result.data);
+                } else if (result.answer) {
+                    // Legacy format support
+                    displayResult(result);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+
+            } catch (error) {
+                displayError(error.message);
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Gửi câu hỏi';
+            }
+        }
+
+        // Display success result
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            
+            // Parse markdown to HTML
+            const answerHtml = marked.parse(data.answer);
+            
+            const html = `
+                <div class="answer-box">
+                    <h3>💡 Câu trả lời</h3>
+                    <div class="answer-text">${answerHtml}</div>
+                </div>
+
+                <div class="meta-info">
+                    <div class="meta-card">
+                        <div class="value">${data.processing_time_ms}</div>
+                        <div class="label">ms</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="value">${data.context_chunks}</div>
+                        <div class="label">Chunks</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="value">${(data.confidence * 100).toFixed(1)}%</div>
+                        <div class="label">Confidence</div>
+                    </div>
+                </div>
+
+                ${data.sources && data.sources.length > 0 ? `
+                <div class="sources">
+                    <h4>📚 Nguồn tham khảo</h4>
+                    <ul>
+                        ${data.sources.map(source => `<li>${escapeHtml(source)}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+            `;
+
+            resultDiv.innerHTML = html;
+            resultDiv.classList.add('show');
+            
+            // Highlight code blocks
+            resultDiv.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+
+        // Display error
+        function displayError(message) {
+            const resultDiv = document.getElementById('result');
+            
+            const html = `
+                <div class="error">
+                    <h3>❌ Lỗi</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <p style="margin-top: 10px; font-size: 13px;">
+                        Kiểm tra:
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            <li>AI service đã chạy chưa? (python main.py)</li>
+                            <li>Port có đúng là 8040?</li>
+                            <li>CORS có được cấu hình đúng?</li>
+                        </ul>
+                    </p>
+                </div>
+            `;
+
+            resultDiv.innerHTML = html;
+            resultDiv.classList.add('show');
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Retrain model
+        async function retrainModel() {
+            const retrainBtn = document.getElementById('retrainBtn');
+            const trainingProgress = document.getElementById('trainingProgress');
+            const trainingLog = document.getElementById('trainingLog');
+
+            // Show progress
+            retrainBtn.disabled = true;
+            retrainBtn.innerHTML = '<span class="spinner"></span>Đang training...';
+            trainingProgress.classList.add('show');
+            trainingLog.innerHTML = '<p>🚀 Bắt đầu quá trình training...</p>';
+
+            try {
+                // Add log
+                addTrainingLog('📡 Gửi yêu cầu training đến server...');
+                
+                const response = await fetch(TRAIN_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Lỗi từ server');
+                }
+
+                const data = await response.json();
+                
+                // Check if training was successful
+                if (data.status === 'success' || data.results?.status === 'success') {
+                    // Success
+                    addTrainingLog('✅ Training hoàn thành!');
+                    addTrainingLog(`📊 Message: ${data.message}`);
+                    addTrainingLog('');
+                    addTrainingLog('📈 Kết quả training:');
+                    addTrainingLog(`  - Model path: ${data.results.model_path}`);
+                    addTrainingLog(`  - Epochs: ${data.results.epochs}`);
+                    addTrainingLog(`  - Training examples: ${data.results.training_examples}`);
+                    addTrainingLog(`  - Total steps: ${data.results.total_steps}`);
+                    addTrainingLog(`  - Embedded chunks: ${data.embedded_chunks}`);
+                    addTrainingLog('');
+                    addTrainingLog('📝 Thông tin:');
+                    if (data.info && Array.isArray(data.info)) {
+                        data.info.forEach(info => {
+                            addTrainingLog(`  ${info}`);
+                        });
+                    }
+                    addTrainingLog('');
+                    addTrainingLog('🎉 Training thành công! Model đã được kích hoạt.');
+                } else {
+                    throw new Error(data.message || 'Training failed');
+                }
+
+            } catch (error) {
+                addTrainingLog(`❌ Lỗi: ${error.message}`);
+                addTrainingLog('');
+                addTrainingLog('💡 Kiểm tra:');
+                addTrainingLog('  - File data/train/*.json có tồn tại?');
+                addTrainingLog('  - Service có đủ RAM? (cần ít nhất 4GB)');
+                addTrainingLog('  - Xem console server để biết thêm chi tiết');
+            } finally {
+                // Reset button
+                retrainBtn.disabled = false;
+                retrainBtn.innerHTML = '🔄 Retrain Model';
+            }
+        }
+
+        // Add training log message
+        function addTrainingLog(message) {
+            const trainingLog = document.getElementById('trainingLog');
+            const p = document.createElement('p');
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            trainingLog.appendChild(p);
+            trainingLog.scrollTop = trainingLog.scrollHeight;
+        }
+    </script>
+</body>
+</html>
+
+
+
+

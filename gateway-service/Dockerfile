@@ -10,6 +10,4 @@ COPY config config
 
 ENV ENV_RUNTIME=develop
 
-EXPOSE 8080
-
-CMD ["./main","http"]
+EXPOSE 8000

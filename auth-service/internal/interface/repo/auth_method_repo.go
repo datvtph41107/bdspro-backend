@@ -34,4 +34,7 @@ type AuthMethodRepository interface {
 	UnlockAccount(c context.Context, authID uint64, reason string, unlockedBy uint64) error
 	GetAccountStatus(c context.Context, authID uint64) (*domain.AuthMethod, error)
 	CheckLockExpiration(c context.Context) error // Kiểm tra và tự động mở khóa các tài khoản hết hạn
+
+	// OAuth connected accounts
+	GetConnectedOAuthAccounts(c context.Context, userID uint64) ([]*domain.AuthMethod, error)
 }

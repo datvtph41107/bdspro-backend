@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-// @bind: bdspro/internal/repo.IntentRepo
-
 type IntentPostgres struct {
 	DB *_db.TransactionRepo
 }

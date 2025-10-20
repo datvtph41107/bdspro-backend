@@ -7,6 +7,7 @@ import (
 	shared_usecase "bdspro/internal/usecases/shared"
 	"context"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
 )
@@ -234,5 +235,27 @@ func (s *PostService) CurrentOrganizationPosts(ctx context.Context, req *bdsprop
 	return &bdspropb.PostListResponse{
 		Data:  postList,
 		Total: int32(total),
+	}, nil
+}
+
+// GetTodayPost trả ra ngẫu nhiên 5 bản ghi tin đăng
+// @Summary Lấy ngẫu nhiên 5 tin đăng
+// @Description API trả ra ngẫu nhiên 5 bản ghi tin đăng đã được publish
+// @Tags Post
+// @Accept json
+// @Produce json
+// @Success 200 {object} bdspropb.PostListResponse
+// @Router /v2/bdspro/v2/dashboard/today/post [get]
+func (s *PostService) GetTodayPost(ctx context.Context, req *sharepb.Empty) (*bdspropb.PostListResponse, error) {
+	result, err := s.UC.GetRandomPosts(ctx, 5)
+	if err != nil {
+		return nil, err
+	}
+
+	postList := s.PostMapper.PostToPbList(&result)
+
+	return &bdspropb.PostListResponse{
+		Data:  postList,
+		Total: int32(len(result)),
 	}, nil
 }

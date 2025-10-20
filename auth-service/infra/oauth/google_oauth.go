@@ -53,7 +53,16 @@ func (g *OAuthGoogle) HandleCallback(c *gin.Context, accessToken string, state s
 		return nil, err
 	}
 
-	return g.RegisterOrLogin(c, userInfo)
+	return g.RegisterOrLogin(c, userInfo, nil)
+}
+
+func (g *OAuthGoogle) HandleCallbackWithDeviceInfo(c context.Context, accessToken string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+	userInfo, err := g.getUserInfo(accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return g.RegisterOrLogin(c, userInfo, otpReq)
 }
 
 func (g *OAuthGoogle) getAccessToken(code string) (string, error) {
@@ -101,7 +110,7 @@ func (g *OAuthGoogle) getUserInfo(accessToken string) (map[string]interface{}, e
 	return userInfo, nil
 }
 
-func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]interface{}) (*dto.AuthLoginResponse, error) {
+func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]interface{}, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
 	oauthId, ok := userInfo["sub"].(string)
 	if !ok {
 		return nil, errors.New("failed to get user ID")
@@ -127,10 +136,20 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		existingUser = createdUser
 	}
 
-	session := g.AuthService.CreateSession(c, existingUser, &dto.OtpVerifyRequest{})
+	// Nếu không có otpReq thì tạo mặc định
+	if otpReq == nil {
+		otpReq = &dto.OtpVerifyRequest{}
+	}
+
+	session, _ := g.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+
 	// g.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	// planID := g.AuthService.GetPlanID(existingUser.UserID)
 	profile, _ := g.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
+
+	// Ghi log admin history
+	g.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Google OAuth")
+
 	return g.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
 }

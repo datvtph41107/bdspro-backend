@@ -16,6 +16,29 @@
     "application/json"
   ],
   "paths": {
+    "/v2/auth/oauth/connected-accounts": {
+      "get": {
+        "summary": "Check Connected Social Accounts",
+        "operationId": "OAuthService_GetConnectedAccounts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbGetConnectedAccountsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
     "/v2/auth/oauth/{provider}/callback": {
       "get": {
         "summary": "OAuth Callback",
@@ -56,6 +79,28 @@
           },
           {
             "name": "platform",
+            "description": "WEB, MOBILE, DESKTOP",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "description": "App version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "os",
+            "description": "iOS, Android, Windows, MacOS, Linux",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "deviceName",
+            "description": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\"",
             "in": "query",
             "required": false,
             "type": "string"
@@ -100,6 +145,47 @@
     }
   },
   "definitions": {
+    "authpbConnectedAccount": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provider": {
+          "type": "string",
+          "title": "GOOGLE, FACEBOOK, ZALO"
+        },
+        "authName": {
+          "type": "string",
+          "title": "OAuth ID từ provider"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbGetConnectedAccountsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbConnectedAccount"
+          }
+        }
+      }
+    },
     "authpbGetLoginURLResponse": {
       "type": "object",
       "properties": {

@@ -1,13 +1,17 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
+	_db "common/db"
+	"bdspro/initial"
 	bdspro_infra_client "bdspro/infra/client"
 	bdspro_infra_handler "bdspro/infra/handler"
 	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
 	bdspro_infra_mapper "bdspro/infra/mapper"
+	bdspro_infra_postgre "bdspro/infra/postgre"
 	bdspro_infra_postgres "bdspro/infra/postgres"
 	bdspro_infra_postgres_admin "bdspro/infra/postgres/admin"
 	bdspro_infra_providers "bdspro/infra/providers"
@@ -15,18 +19,14 @@ import (
 	bdspro_infra_router_public "bdspro/infra/router/public"
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_validator "bdspro/infra/validator"
-	"bdspro/initial"
 	bdspro_initial "bdspro/initial"
-	"bdspro/internal/job"
+	bdspro_internal_job "bdspro/internal/job"
 	bdspro_internal_provider "bdspro/internal/provider"
 	bdspro_internal_repo "bdspro/internal/repo"
 	bdspro_internal_repo_admin "bdspro/internal/repo/admin"
 	bdspro_internal_usecases "bdspro/internal/usecases"
 	bdspro_internal_usecases_admin "bdspro/internal/usecases/admin"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
-	_db "common/db"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -107,6 +107,7 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases_shared.NewAssetCostTypeUsecase,
 	bdspro_internal_usecases_shared.NewAssetCostUsecase,
 	bdspro_infra_validator.NewAssetCostValidator,
+	bdspro_internal_job.NewAssetDashboardStatsJob,
 	bdspro_infra_mapper.NewAssetExploitationMapper,
 	bdspro_infra_handler.NewAssetExploitationServer,
 	bdspro_internal_usecases_shared.NewAssetExploitationUc,
@@ -121,6 +122,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewAssetShareRouter,
 	bdspro_internal_usecases.NewAssetShareUC,
 	bdspro_infra_client.NewAuthClient,
+	bdspro_infra_handler.NewBdsproDashboardHandler,
 	bdspro_infra_handler.NewBdsproPublicService,
 	bdspro_infra_mapper.NewBuildMapper,
 	bdspro_infra_client.NewChatClient,
@@ -153,6 +155,8 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewIncomeDocumentServer,
 	bdspro_internal_usecases.NewIncomeDocumentUc,
 	bdspro_initial.NewInitialApp,
+	bdspro_infra_postgre.NewIntentPostgres,
+	bdspro_internal_usecases.NewIntentUsecase,
 	bdspro_infra_handler.NewInternalHandler,
 	bdspro_infra_router_user.NewListRouter,
 	bdspro_internal_usecases.NewListUsecase,
@@ -168,6 +172,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_org.NewOrgProductRouter,
 	bdspro_infra_router_org.NewOrgRouterManager,
 	bdspro_infra_client.NewOrganizationClient,
+	bdspro_internal_job.NewPostDashboardStatsJob,
 	bdspro_infra_mapper.NewPostMapper,
 	bdspro_infra_router_user.NewPostMediaRoute,
 	bdspro_infra_postgres.NewPostgreAmenity,
@@ -187,6 +192,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres.NewPostgreRegion,
 	bdspro_infra_postgres.NewPostgreReportHistory,
 	bdspro_infra_postgres.NewPostgreUserCostType,
+	bdspro_internal_job.NewProductDashboardStatsJob,
 	bdspro_infra_mapper.NewProductMapper,
 	bdspro_infra_postgres.NewProductOfOrgPostgres,
 	bdspro_infra_handler.NewProductService,
@@ -229,12 +235,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductChildRouter,
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
-	job.NewAssetDashboardStatsJob,
-	job.NewProductDashboardStatsJob,
-	job.NewPostDashboardStatsJob,
-	bdspro_infra_handler.NewBdsproDashboardHandler,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

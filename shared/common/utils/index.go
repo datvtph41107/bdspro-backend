@@ -1,6 +1,7 @@
 package _utils
 
 import (
+	_enum "common/domain/enum"
 	"context"
 	"strings"
 
@@ -10,7 +11,11 @@ import (
 // AuditIP lấy địa chỉ IP của client từ request trong Gin
 // AuditIPFromContext lấy địa chỉ IP của client từ context.Context
 func AuditIPFromContext(ctx context.Context) string {
-	// Nếu context chứa giá trị "X-Forwarded-For" hoặc "client-ip" thì lấy ra
+	// Lấy từ context key enum
+	if clientIP, ok := ctx.Value(_enum.ClientIPKey).(string); ok && clientIP != "" {
+		return clientIP
+	}
+	// Fallback cho compatibility với code cũ
 	if xfHeader, ok := ctx.Value("X-Forwarded-For").(string); ok && xfHeader != "" {
 		clientIP := strings.Split(xfHeader, ",")[0]
 		return strings.TrimSpace(clientIP)
@@ -24,6 +29,11 @@ func AuditIPFromContext(ctx context.Context) string {
 
 // GetUserAgentFromContext lấy User-Agent từ context.Context
 func GetUserAgentFromContext(ctx context.Context) string {
+	// Lấy từ context key enum
+	if userAgent, ok := ctx.Value(_enum.UserAgentKey).(string); ok && userAgent != "" {
+		return userAgent
+	}
+	// Fallback cho compatibility với code cũ
 	if userAgent, ok := ctx.Value("User-Agent").(string); ok && userAgent != "" {
 		return userAgent
 	}

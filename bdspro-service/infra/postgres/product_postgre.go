@@ -1132,3 +1132,22 @@ func (r *GormUserProductRepo) CountCurrent(ctx context.Context) (int64, error) {
 	}
 	return count, nil
 }
+
+func (r *GormUserProductRepo) GetRandomProducts(ctx context.Context, limit int) ([]domain.Product, error) {
+	var products []domain.Product
+	err := r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Select("products.id, products.name, products.code, products.created_at, products.updated_at, products.last_price_id").
+		Where("deleted_at IS NULL AND archived = false").
+		Where("name IS NOT NULL AND name != ''").
+		Where("EXISTS (SELECT 1 FROM product_media WHERE product_media.product_id = products.id AND product_media.deleted_at IS NULL)").
+		Order("RANDOM()").
+		Limit(limit).
+		Preload("Price").
+		Preload("MediaList").
+		Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}

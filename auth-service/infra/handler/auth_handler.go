@@ -6,6 +6,7 @@ import (
 	authpb "pb/types/auth"
 	"time"
 
+	"auth/infra/mapper"
 	"auth/internal/dto"
 	"auth/internal/usecase"
 
@@ -19,18 +20,21 @@ type AuthHandler struct {
 	AdminAccessUsecase *usecase.AdminAccessUsecase
 	InternalHandler    *InternalHandler
 	AdminUsecase       *usecase.AuthAdminUsecase
+	SessionMapper      *mapper.SessionMapper
 }
 
 func NewAuthHandler(service *usecase.AuthUsecase,
 	adminAccessUsecase *usecase.AdminAccessUsecase,
 	internalHandler *InternalHandler,
 	adminUsecase *usecase.AuthAdminUsecase,
+	sessionMapper *mapper.SessionMapper,
 ) *AuthHandler {
 	return &AuthHandler{
 		AuthUsecase:        service,
 		AdminAccessUsecase: adminAccessUsecase,
 		InternalHandler:    internalHandler,
 		AdminUsecase:       adminUsecase,
+		SessionMapper:      sessionMapper,
 	}
 }
 
@@ -77,18 +81,30 @@ func (h *AuthHandler) RequestOTP(ctx context.Context, req *authpb.RequestOTPRequ
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /otp/verify [post]
 func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPRequest) (*authpb.AuthSuccessResponse, error) {
+	// Validate required fields for session creation
+	if req.Platform == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Platform là bắt buộc (WEB, MOBILE, DESKTOP)")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Version là bắt buộc")
+	}
+	if req.Os == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
 			Phone:    req.Phone,
 			Fullname: req.Fullname,
 		},
-		Otp:      req.Otp,
-		AuthID:   req.AuthId,
-		Version:  req.Version,
-		Platform: req.Platform,
-		OS:       req.Os,
-		Fullname: req.Fullname,
+		Otp:        req.Otp,
+		AuthID:     req.AuthId,
+		Version:    req.Version,
+		Platform:   req.Platform,
+		OS:         req.Os,
+		DeviceName: req.DeviceName,
+		Fullname:   req.Fullname,
 	}
 
 	result, err := h.AuthUsecase.VerifyOtp(ctx, *dto)
@@ -108,6 +124,7 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 		// Email:          result.Email,
 		OrganizationId: result.OrganizationID,
 		Role:           result.Role,
+		PasswordAuthId: result.PasswordAuthId,
 	}
 
 	return response, nil
@@ -353,7 +370,7 @@ func (h *AuthHandler) SwitchOrganization(ctx context.Context, req *authpb.Switch
 		ProfileId:      result.ProfileID,
 		OrganizationId: result.OrganizationID,
 		Role:           result.Role,
-		// FullName:       result.FullName,
+		FullName:       result.FullName,
 		// Avatar:         result.Avatar,
 		// Email:          result.Email,
 		// Phone:          result.Phone,
@@ -372,10 +389,25 @@ func (h *AuthHandler) SwitchOrganization(ctx context.Context, req *authpb.Switch
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/login [post]
 func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequest) (*authpb.AuthSuccessResponse, error) {
+	// Validate required fields for session creation
+	if req.Platform == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Platform là bắt buộc (WEB, MOBILE, DESKTOP)")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Version là bắt buộc")
+	}
+	if req.Os == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
+	}
+
 	// Convert proto request to DTO
 	dto := &dto.AdminLoginRequest{
-		Username: req.Username,
-		Password: req.Password,
+		Username:   req.Username,
+		Password:   req.Password,
+		Version:    req.Version,
+		Platform:   req.Platform,
+		OS:         req.Os,
+		DeviceName: req.DeviceName,
 	}
 
 	result, err := h.AuthUsecase.AdminLogin(ctx, *dto)
@@ -796,5 +828,176 @@ func (h *AuthHandler) GetAdminAccessLogList(ctx context.Context, req *authpb.Get
 		Total: int32(result.Total),
 		Page:  int32(result.Page),
 		Size:  int32(result.Size),
+	}, nil
+}
+
+// @Summary Tạo mật khẩu
+// @Description Tạo mật khẩu cho user chưa có mật khẩu
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.CreatePasswordRequest true "Thông tin mật khẩu"
+// @Success 200 {object} authpb.CreatePasswordResponse
+// @Failure 400 {object} authpb.CreatePasswordResponse
+// @Failure 401 {object} authpb.CreatePasswordResponse
+// @Failure 500 {object} authpb.CreatePasswordResponse
+// @Router /password/create [post]
+func (h *AuthHandler) CreatePassword(ctx context.Context, req *authpb.CreatePasswordRequest) (*authpb.CreatePasswordResponse, error) {
+	// Convert proto request to DTO
+	dtoReq := dto.CreatePasswordRequest{
+		Password:        req.Password,
+		ConfirmPassword: req.ConfirmPassword,
+	}
+
+	result, err := h.AuthUsecase.CreatePassword(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.CreatePasswordResponse{
+		AuthId:  result.AuthId,
+		Message: result.Message,
+		Success: result.Success,
+	}, nil
+}
+
+// @Summary Đăng nhập bằng mật khẩu
+// @Description Đăng nhập bằng username/phone và password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.LoginWithPasswordRequest true "Thông tin đăng nhập"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 401 {object} authpb.AuthSuccessResponse
+// @Failure 403 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /password/login [post]
+func (h *AuthHandler) LoginWithPassword(ctx context.Context, req *authpb.LoginWithPasswordRequest) (*authpb.AuthSuccessResponse, error) {
+	// Validate required fields for session creation
+	if req.Platform == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Platform là bắt buộc (WEB, MOBILE, DESKTOP)")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Version là bắt buộc")
+	}
+	if req.Os == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
+	}
+
+	// Convert proto request to DTO
+	dtoReq := dto.LoginWithPasswordRequest{
+		Username:   req.Username,
+		Password:   req.Password,
+		Version:    req.Version,
+		Platform:   req.Platform,
+		OS:         req.Os,
+		DeviceName: req.DeviceName,
+	}
+
+	result, err := h.AuthUsecase.LoginWithPassword(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.AuthSuccessResponse{
+		AuthId:         result.AuthID,
+		ProfileId:      result.ProfileID,
+		AccessToken:    result.AccessToken,
+		RefreshToken:   result.RefreshToken,
+		FullName:       result.FullName,
+		OrganizationId: result.OrganizationID,
+		Role:           result.Role,
+		PasswordAuthId: result.PasswordAuthId,
+	}, nil
+}
+
+// @Summary Chuyển đổi tài khoản
+// @Description Chuyển đổi sang tài khoản cá nhân hoặc tổ chức khác
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body authpb.SwitchAccountRequest true "Thông tin chuyển đổi tài khoản"
+// @Success 200 {object} authpb.SwitchAccountResponse
+// @Failure 400 {object} authpb.SwitchAccountResponse
+// @Failure 500 {object} authpb.SwitchAccountResponse
+// @Router /v2/auth/switch/user [post]
+func (h *AuthHandler) SwitchAccount(ctx context.Context, req *authpb.SwitchAccountRequest) (*authpb.SwitchAccountResponse, error) {
+	// Convert proto request to DTO
+	dto := &dto.SwitchAccountRequest{
+		ProfileID:      req.ProfileId,
+		OrganizationID: req.OrganizationId,
+		// GroupID:        req.GroupId,
+		OwnerType: req.OwnerType,
+	}
+
+	result, err := h.AuthUsecase.SwitchAccount(ctx, *dto)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "lỗi khi chuyển đổi tài khoản: %v", err)
+	}
+
+	// Convert DTO response to proto response
+	// var groupId *uint64
+	// if result.GroupID != nil {
+	// 	groupIdVal := uint64(*result.GroupID)
+	// 	groupId = &groupIdVal
+	// }
+
+	return &authpb.SwitchAccountResponse{
+		AuthId:         result.AuthID,
+		ProfileId:      result.ProfileID,
+		OrganizationId: result.OrganizationID,
+		Role:           result.Role,
+		FullName:       result.FullName,
+		Avatar:         result.Avatar,
+		Email:          result.Email,
+		Phone:          result.Phone,
+		AccessToken:    result.AccessToken,
+
+		// GroupId:        groupId,
+	}, nil
+}
+
+// @Summary Lấy lịch sử đăng nhập
+// @Description Lấy danh sách lịch sử đăng nhập của user hiện tại
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param page query int false "Số trang" default(1)
+// @Param size query int false "Số lượng mỗi trang" default(20)
+// @Success 200 {object} authpb.GetLoginHistoryResponse
+// @Failure 401 {object} authpb.GetLoginHistoryResponse
+// @Failure 500 {object} authpb.GetLoginHistoryResponse
+// @Router /v2/auth/login-history [get]
+// @Security BearerAuth
+func (h *AuthHandler) GetLoginHistory(ctx context.Context, req *authpb.GetLoginHistoryRequest) (*authpb.GetLoginHistoryResponse, error) {
+	// Set default values
+	page := req.Page
+	size := req.Size
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 {
+		size = 20
+	}
+	if size > 100 {
+		size = 100
+	}
+
+	// Gọi usecase để lấy danh sách lịch sử đăng nhập
+	sessions, total, err := h.AuthUsecase.GetLoginHistory(ctx, page, size)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Không thể lấy lịch sử đăng nhập: %v", err)
+	}
+
+	// Chuyển đổi từ entity sang protobuf DTO
+	items := h.SessionMapper.MapSessionsToLoginHistoryListPb(sessions)
+
+	return &authpb.GetLoginHistoryResponse{
+		Data:  items,
+		Total: total,
 	}, nil
 }

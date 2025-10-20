@@ -82,6 +82,11 @@ service NewsFeedService {
             get: "/v2/social/news-feed/global/{ownerOf}/{ownerId}"
         };
     };
+    rpc GetMyNewsFeed(MyNewsFeedRequest) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/me"
+        };
+    };
 }
 
 message VisibilityRequest {
@@ -207,4 +212,12 @@ message CountByOwnerRequest {
 
 message CountByOwnerResponse {
     uint32 count = 1 [json_name = "count"];
+}
+
+message MyNewsFeedRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    optional bool isReel = 4;
+    optional bool isPost = 5;
 }

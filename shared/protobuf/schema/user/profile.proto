@@ -134,7 +134,7 @@ message AccountInfo {
     optional string phone = 4;
     optional string email = 5;
     optional string backgroundImage = 8;
-    optional uint32 organizationId = 9;
+    optional uint64 organizationId = 9;
     optional uint32 groupId = 10;
     optional uint32 ownerType = 11;
 }

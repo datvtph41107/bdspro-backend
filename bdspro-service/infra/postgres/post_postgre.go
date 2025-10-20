@@ -665,3 +665,65 @@ func (r *GormPostRepo) CountPostByTime(ctx context.Context, from time.Time, to t
 
 	return countPostByTime, nil
 }
+
+// GetRandomPosts lấy ngẫu nhiên n bản ghi post
+func (r *GormPostRepo) GetRandomPosts(ctx context.Context, limit int) ([]domain.PostItem, error) {
+	var results []domain.PostItem
+
+	query := r.DB.WithContext(ctx).
+		Model(domain.PostItem{}).
+		Select(`posts.*,
+		province.name as province_name, 
+		district.name as district_name, 
+		ward.name as ward_name,
+		CASE
+			WHEN posts.transaction_type = 10 THEN COALESCE(prices.sale_price, 0)
+			ELSE COALESCE(prices.rent_price, 0)
+			END AS post_price,
+		COALESCE(json_agg(json_build_object(
+			'id', post_media.id,
+			'mediaUrl', post_media.media_url,
+			'mediaType', post_media.media_type,
+			'isMain', post_media.is_main,
+			'sortOrder', post_media.sort_order
+		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
+		CASE
+			WHEN posts.transaction_type = 10 AND products.sale_status = 20 THEN 100
+			WHEN posts.transaction_type = 10 AND products.sale_status = 30 THEN 110
+			WHEN posts.transaction_type = 10 AND products.sale_status = 10 THEN 100
+			WHEN posts.transaction_type = 20 AND products.rent_status = 20 THEN 200
+			WHEN posts.transaction_type = 20 AND products.rent_status = 30 THEN 210
+			WHEN posts.transaction_type = 20 AND products.rent_status = 10 THEN 200
+			ELSE 0
+			END AS transaction_status
+		`).
+		Joins("left join products products on products.id = posts.product_id").
+		Joins("left join product_price prices on prices.id = products.last_price_id").
+		Joins("left join region province on province.id = products.province_id").
+		Joins("left join region district  on district.id = products.district_id").
+		Joins("left join region ward on ward.id = products.ward_id").
+		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
+		Where("posts.deleted_at is null").
+		Where("posts.published_at is not null").
+		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, products.sale_status, products.rent_status").
+		Order("RANDOM()").
+		Limit(limit)
+
+	err := query.Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal MediaListRaw
+	for i, r := range results {
+		if r.MediaListRaw != nil {
+			list := []domain.PostMediaEntity{}
+			if err := json.Unmarshal(r.MediaListRaw, &list); err != nil {
+				return nil, err
+			}
+			results[i].MediaList = list
+		}
+	}
+
+	return results, nil
+}

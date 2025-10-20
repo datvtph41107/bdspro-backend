@@ -21,3 +21,9 @@ type CountPostByTimeResponse struct {
 	Date  time.Time `json:"date"`
 	Count uint32    `json:"count"`
 }
+
+type CountOfUserResponse struct {
+	TotalPosted            uint32 `json:"totalPosted"`
+	TotalInterestedProduct uint32 `json:"totalInterestedProduct"`
+	TotalSavedProduct      uint32 `json:"totalSavedProduct"`
+}

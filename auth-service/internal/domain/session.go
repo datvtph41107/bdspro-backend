@@ -12,6 +12,7 @@ type UserSessionEntity struct {
 	Platform     string     `gorm:"column:platform;size:10"`
 	Version      string     `gorm:"column:version;size:20"`
 	OS           string     `gorm:"column:os;size:20"`
+	DeviceName   string     `gorm:"column:device_name;size:255"`
 	CreatedDate  *time.Time `gorm:"column:created_date;autoCreateTime"`
 	FinishedDate *time.Time `gorm:"column:finished_date"`
 	IPRequest    string     `gorm:"column:ip_request;size:20"`

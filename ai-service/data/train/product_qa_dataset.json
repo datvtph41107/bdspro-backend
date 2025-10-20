@@ -1,0 +1,124 @@
+[
+  {
+    "question": "Sản phẩm (Product) trong BDSPro là gì?",
+    "answer": "**Product** trong BDSPro là **sản phẩm bất động sản** (listing) - những BĐS được đăng bán hoặc cho thuê.\n\n**Định nghĩa**: Product đại diện cho bảng `products` trong database, chứa thông tin chi tiết về một căn nhà, đất, hoặc bất động sản khác mà công ty/môi giới đang quản lý.\n\n**Phân biệt với Asset**: \n- **Product**: BĐS để bán/cho thuê, có thể là của người khác (môi giới)\n- **Asset**: BĐS mà công ty/cá nhân đã mua và sở hữu thực tế\n\n**Entity location**: `bdspro-service/internal/domain/product.go`\n\n**Table name**: `products`\n\n**Embed**: `_models.BaseEntity` (có ID, CreatedAt, UpdatedAt, DeletedAt, CreatedBy, UpdatedBy)",
+    "source": "Product Domain",
+    "section": "Basic Concepts",
+    "metadata": {
+      "domain": "Product",
+      "level": "basic",
+      "type": "definition"
+    }
+  },
+  {
+    "question": "Product gồm những trường (fields) gì?",
+    "answer": "Product struct có **70+ fields** chia thành các nhóm:\n\n**1. Thông tin cơ bản**:\n- `Name` (string): Tên sản phẩm\n- `Code` (string, 15 chars): Mã sản phẩm (SP000001, SP000002...)\n- `Area` (float64): Diện tích (m²)\n- `Description` (string): Mô tả chi tiết\n- `Note` (string): Ghi chú\n- `Archived` (bool): Đã lưu trữ hay chưa\n\n**2. Phân loại**:\n- `PropertyTypeId` (*uint64): ID loại BĐS\n- `PropertyType` (*PropertyTypeItem): Relation loại BĐS (nhà, đất, căn hộ...)\n- `DocTypeId` (*uint64): ID loại giấy tờ pháp lý\n- `DocType` (*DocTypeItem): Relation loại giấy tờ (sổ đỏ, sổ hồng...)\n- `CategoryID` (*uint64): Danh mục sản phẩm\n\n**3. Địa chỉ**:\n- `ProvinceID`, `DistrictID`, `WardID` (*uint64): ID địa giới hành chính\n- `Province`, `District`, `Ward` (*Region): Relations địa giới\n- `Address` (string): Địa chỉ chi tiết\n- `GoogleMapLink` (string): Link Google Maps\n- `PositionUrl` (string): URL vị trí\n- `ProvinceName`, `DistrictName`, `WardName` (string): Tên tỉnh/quận/phường (computed)\n\n**4. Giá cả**:\n- `LastPriceID` (*uint64): ID giá hiện tại\n- `Price` (*ProductPrice): Relation tới bảng giá\n\n**5. Trạng thái bán (Sale)**:\n- `SaleStatus` (EProductSaleStatus): Chưa bán(10), Đang bán(20), Đã bán(30)\n- `SaleVisibility` (EVisibility): Riêng tư(10), Nội bộ(20), Công khai(30)\n- `SaleTransactionID` (*uint64): ID giao dịch bán (nếu đã bán)\n\n**6. Trạng thái thuê (Rent)**:\n- `RentStatus` (EProductRentStatus): Chưa thuê(10), Đang đăng tin(20), Đang cho thuê(30), Không cho thuê(40)\n- `RentVisibility` (EVisibility): Phạm vi hiển thị\n- `RentTransactionID` (*uint64): ID giao dịch thuê\n\n**7. Ownership & Visibility**:\n- `OwnerID` (uint64): ID người sở hữu\n- `OwnerOf` (EOwnerOf): Member(10), Group(20), Organization(30)\n- `Visibility` (EVisibility): Phạm vi hiển thị chung\n- `TransactionType` (uint): Bán(10) hay Thuê(20)\n\n**8. Relations**:\n- `ParentId` (*uint64): ID sản phẩm cha (nếu tách từ SP khác)\n- `AssetId` (*uint64): Link tới Asset (tài sản thực)\n- `ApartmentID` (*uint64): Link tới Apartment (căn hộ chung cư)\n- `PostIds` ([]uint64): Array ID các bài đăng (Post)\n\n**9. Media & Amenities**:\n- `MediaList` ([]ProductMediaItem): Ảnh/video sản phẩm\n- `Amenities` ([]AmenityItem): Tiện ích xung quanh (siêu thị, trường học...) - Many-to-Many\n\n**10. House Info**:\n- `HouseInfo` (*HouseInfo): Thông tin chi tiết nhà (số phòng, tầng, hướng...)\n\n**11. Private Data**:\n- `PrivateData` (*ProductPrivate): Thông tin nội bộ (giá nhập, hoa hồng, ghi chú riêng)\n\n**12. Source & Metadata**:\n- `SourceType` (ESourceType): Nguồn dữ liệu (manual, import, API...)\n\n**13. Relations tới dự án**:\n- `ApartmentAttr` (*ApartmentAttribute): Thuộc tính căn hộ (computed)\n- `Build` (*ProjectBuild): Tòa nhà (computed)\n- `Project` (*Project): Dự án (computed)\n- `Developer` (*Developer): Chủ đầu tư (computed)",
+    "source": "Product Domain",
+    "section": "Entity Structure",
+    "metadata": {
+      "domain": "Product",
+      "level": "intermediate",
+      "type": "structure"
+    }
+  },
+  {
+    "question": "Các trường quan trọng nhất trong Product entity là gì?",
+    "answer": "**Top 15 fields quan trọng nhất**:\n\n**Core (Must-have)**:\n1. `ID` (uint64): Primary key\n2. `Name` (string): Tên sản phẩm - REQUIRED\n3. `Code` (string): Mã sản phẩm - Unique code để hiển thị\n4. `Area` (float64): Diện tích - Thông tin cốt lõi\n5. `Description` (string): Mô tả chi tiết\n\n**Classification**:\n6. `PropertyTypeId` + `PropertyType`: Loại BĐS (nhà/đất/căn hộ) - CRITICAL\n7. `DocTypeId` + `DocType`: Loại giấy tờ - Quan trọng về pháp lý\n\n**Location** (CRITICAL):\n8. `ProvinceID`, `DistrictID`, `WardID`: Địa chỉ hành chính\n9. `Address`: Địa chỉ cụ thể\n\n**Pricing**:\n10. `LastPriceID` + `Price`: Giá hiện tại - Thông tin cốt lõi\n\n**Transaction Status** (CRITICAL):\n11. `SaleStatus`: Trạng thái bán (chưa/đang/đã bán)\n12. `RentStatus`: Trạng thái thuê\n13. `TransactionType`: Bán(10) hay Thuê(20)\n\n**Ownership** (CRITICAL):\n14. `OwnerID` + `OwnerOf`: Ai sở hữu sản phẩm\n15. `Visibility`: Phạm vi hiển thị (public/internal/private)\n\n**Audit Fields** (từ BaseEntity):\n- `CreatedAt`, `UpdatedAt`, `DeletedAt`\n- `CreatedBy`, `UpdatedBy`\n\nCác field này **luôn cần có** khi tạo/update Product!",
+    "source": "Product Domain",
+    "section": "Key Fields",
+    "metadata": {
+      "domain": "Product",
+      "level": "basic",
+      "type": "key_fields"
+    }
+  },
+  {
+    "question": "Làm sao tạo Product mới trong BDSPro?",
+    "answer": "**Quy trình tạo Product**:\n\n**1. Proto definition**:\nFile: `shared/protobuf/schema/bdspro/product.proto`\n```protobuf\nmessage CreateProductRequest {\n  string name = 1;\n  double area = 2;\n  uint64 propertyTypeId = 3;\n  uint64 provinceId = 4;\n  uint64 districtId = 5;\n  uint64 wardId = 6;\n  string address = 7;\n  // ... other fields\n}\n```\n\n**2. Handler** (`infra/handler/product_handler.go`):\n```go\nfunc (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*pb.ProductResponse, error) {\n    // @bind: internal/interface/repo.IProductRepo\n    // @bind: internal/usecases/shared.IProductUsecase\n    \n    // Validate request\n    // Call usecase\n    result, err := h.productUsecase.CreateProduct(ctx, req)\n    if err != nil {\n        return nil, err\n    }\n    return result, nil\n}\n```\n\n**3. Usecase** (`internal/usecases/shared/product_usecase.go`):\n```go\nimport _utils \"common/utils\"\n\nfunc (uc *ProductUsecase) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*domain.Product, *_err.ErrorDTO) {\n    // Get user context\n    profileID := _utils.GetProfileIdWithContext(ctx)\n    organizationID := _utils.GetOrganizationIdFromContext(ctx)\n    \n    // Map DTO to domain\n    product := uc.mapper.CreateRequestToDomain(req)\n    \n    // Generate code\n    product.Code = _usecase.NewCodeDataUsecase().GetProductCode()\n    \n    // Set ownership\n    product.OwnerID = organizationID\n    product.OwnerOf = _enum.EOwnerOfOrgnization\n    \n    // Create in DB\n    err := uc.productRepo.Create(ctx, product)\n    if err != nil {\n        return nil, &_err.ErrorDTO{Code: 500, Message: \"Tạo sản phẩm thất bại\"}\n    }\n    \n    return product, nil\n}\n```\n\n**4. Mapper** (`infra/mapper/product_mapper.go`):\n```go\nimport _utils \"common/utils\"\n\nfunc (m *ProductMapper) CreateRequestToDomain(req *pb.CreateProductRequest) *domain.Product {\n    return &domain.Product{\n        Name: req.Name,\n        Area: req.Area,\n        PropertyTypeId: &req.PropertyTypeId,\n        ProvinceID: &req.ProvinceId,\n        DistrictID: &req.DistrictId,\n        WardID: &req.WardId,\n        Address: req.Address,\n        Description: req.Description,\n        TransactionType: req.TransactionType,\n        SaleStatus: enums.EProductNotSold, // Default\n        RentStatus: enums.EProductNotRent,\n        Visibility: enums.EVisibleInternal,\n    }\n}\n```\n\n**5. Repository** (`infra/postgre/product_postgres.go`):\n```go\nimport _provider \"common/provider\"\n\ntype ProductRepo struct {\n    _provider.CrudRepo[domain.Product]\n}\n\nfunc NewProductRepo(db *_db.TransactionRepo) _repo.IProductRepo {\n    repo := &ProductRepo{}\n    repo.Init(repo, db)\n    return repo\n}\n```\n\n**Key points**:\n- Luôn dùng `_utils.GetProfileIdWithContext(ctx)` để lấy user\n- Generate `Code` bằng `CodeDataUsecase`\n- Set default values cho status và visibility\n- Repository embed `CrudRepo[domain.Product]`",
+    "source": "Product Domain",
+    "section": "CRUD Operations",
+    "metadata": {
+      "domain": "Product",
+      "level": "advanced",
+      "type": "implementation"
+    }
+  },
+  {
+    "question": "Product có những enum và status nào?",
+    "answer": "Product có nhiều enum quan trọng:\n\n**1. EProductSaleStatus** (trạng thái bán):\n- `EProductNotSold` = 10: Chưa bán\n- `EProductSelling` = 20: Đang bán\n- `EProductSold` = 30: Đã bán\n\n**2. EProductRentStatus** (trạng thái thuê):\n- `EProductNotRent` = 10: Chưa thuê\n- `EProductPosting` = 20: Đang đăng tin cho thuê\n- `EProductRented` = 30: Đang cho thuê\n- `EProductNotForRent` = 40: Không cho thuê\n\n**3. EVisibility** (phạm vi hiển thị):\n- `EVisiblePrivate` = 10: Riêng tư (chỉ người tạo)\n- `EVisibleInternal` = 20: Nội bộ (trong organization)\n- `EVisiblePublic` = 30: Công khai (mọi người)\n\n**4. EOwnerOf** (loại chủ sở hữu):\n- `EOwnerOfMember` = 10: Thuộc 1 member\n- `EOwnerOfGroup` = 20: Thuộc nhóm\n- `EOwnerOfOrgnization` = 30: Thuộc organization\n\n**5. ESourceType** (nguồn dữ liệu):\n- Manual input\n- Import từ Excel\n- API sync\n\n**6. TransactionType** (loại giao dịch):\n- 10: Bán\n- 20: Thuê\n\n**Validation rules**:\n- SaleStatus và RentStatus độc lập nhau\n- 1 Product có thể vừa bán vừa cho thuê (TransactionType riêng)\n- Visibility có 3 levels: Product.Visibility, SaleVisibility, RentVisibility\n- Default khi tạo mới: SaleStatus=10, RentStatus=40, Visibility=20",
+    "source": "Product Domain",
+    "section": "Enums & Status",
+    "metadata": {
+      "domain": "Product",
+      "level": "intermediate",
+      "type": "enums"
+    }
+  },
+  {
+    "question": "HouseInfo trong Product là gì? Gồm những trường nào?",
+    "answer": "**HouseInfo** là bảng con chứa **thông tin chi tiết về nhà/căn hộ**.\n\n**Entity**: `bdspro-service/internal/domain/house_info.go`\n\n**Table**: `house_info`\n\n**Relation**: Product (1) --- (0..1) HouseInfo [ProductID]\n\n**Fields**:\n1. `ProductID` (uint64): Primary key, link tới Product\n2. `NumBedroom` (*int32): Số phòng ngủ\n3. `NumBathroom` (*int32): Số phòng tắm/WC\n4. `NumFloor` (*int32): Số tầng\n5. `NumFront` (*int32): Số mặt tiền\n6. `NumCarPark` (*int32): Số chỗ để ôtô\n7. `NumToilet` (*int32): Số toilet\n8. `Furniture` (*string): Nội thất - \"full\", \"partial\", \"none\"\n9. `Orientation` (*string): Hướng nhà - \"Đông\", \"Tây\", \"Nam\", \"Bắc\", \"Đông Nam\"...\n\n**Embed**: `_models.BaseEntityNotId` (không có ID riêng, dùng ProductID làm PK)\n\n**Usage**:\n```go\n// Access from Product\nproduct.HouseInfo.NumBedroom // => 3\nproduct.HouseInfo.NumBathroom // => 2\nproduct.HouseInfo.Orientation // => \"Đông Nam\"\n```\n\n**Lưu ý**:\n- Tất cả fields đều optional (*)\n- Chỉ áp dụng cho nhà/căn hộ, không dùng cho đất trống\n- Furniture values: \"full\" (đầy đủ), \"partial\" (cơ bản), \"none\" (không)\n- Orientation: 8 hướng chính (Đông, Tây, Nam, Bắc, ĐB, ĐN, TB, TN)",
+    "source": "Product Domain",
+    "section": "Related Entities - HouseInfo",
+    "metadata": {
+      "domain": "Product,HouseInfo",
+      "level": "intermediate",
+      "type": "related_entity"
+    }
+  },
+  {
+    "question": "ProductPrivate là gì? Dùng để làm gì?",
+    "answer": "**ProductPrivate** là bảng chứa **thông tin nội bộ/bí mật** của sản phẩm, không hiển thị ra ngoài.\n\n**Entity**: `bdspro-service/internal/domain/product_private.go`\n\n**Table**: `product_private`\n\n**Relation**: Product (1) --- (0..1) ProductPrivate [ProductId]\n\n**Fields**:\n1. `ProductId` (uint64): Link tới Product\n2. `ImportPrice` (*float64): Giá nhập/giá chủ nhà muốn net - CHỈ NỘI BỘ\n3. `OperatingCost` (*float64): Chi phí vận hành (sửa chữa, marketing...)\n4. `TargetProfit` (*float64): Lợi nhuận mục tiêu\n5. `InternalNote` (string): Ghi chú nội bộ (thông tin nhạy cảm)\n6. `PrivateDocs` (string): Danh sách tài liệu riêng tư (lưu dạng CSV)\n\n**Methods**:\n```go\n// Set documents\nprivate.SetPrivateDocs([]string{\"doc1.pdf\", \"doc2.pdf\"})\n// => PrivateDocs = \"doc1.pdf,doc2.pdf\"\n\n// Get documents\ndocs := private.GetPrivateDocs()\n// => []string{\"doc1.pdf\", \"doc2.pdf\"}\n```\n\n**Use Cases**:\n- Lưu giá thực tế mà chủ nhà chấp nhận (ImportPrice)\n- Tính toán margin: `margin = SalePrice - ImportPrice - OperatingCost`\n- Kiểm tra xem có đạt TargetProfit không\n- Ghi chú riêng về khách hàng, đàm phán, điều kiện đặc biệt\n- Lưu link tài liệu nhạy cảm (hợp đồng, giấy tờ pháp lý...)\n\n**Security**:\n- CHỈ hiển thị cho member có quyền\n- Không trả về trong public API\n- Không xuất hiện trong Post/Listing công khai\n\n**Access trong Product**:\n```go\nproduct.PrivateData.ImportPrice // => 5.2 tỷ\nproduct.PrivateData.InternalNote // => \"Chủ nhà cần bán gấp\"\n```",
+    "source": "Product Domain",
+    "section": "Related Entities - ProductPrivate",
+    "metadata": {
+      "domain": "Product,ProductPrivate",
+      "level": "intermediate",
+      "type": "related_entity"
+    }
+  },
+  {
+    "question": "Làm thế nào để query danh sách Product có phân trang?",
+    "answer": "**Query Product list với pagination**:\n\n**1. Proto Request** (embed Pagable):\n```protobuf\nmessage GetProductListRequest {\n  // Pagination\n  int32 page = 1;\n  int32 size = 2;\n  string sort = 3;\n  \n  // Filters\n  uint64 provinceId = 4;\n  uint64 propertyTypeId = 5;\n  int32 saleStatus = 6;\n  // ...\n}\n\nmessage GetProductListResponse {\n  repeated ProductDTO data = 1;\n  int64 total = 2;\n}\n```\n\n**2. DTO** (embed `_dto.Pagable`):\n```go\nimport _dto \"common/domain/dto\"\n\ntype GetProductListRequest struct {\n    _dto.Pagable\n    ProvinceId     *uint64\n    PropertyTypeId *uint64\n    SaleStatus     *int32\n    // Filters...\n}\n```\n\n**3. Handler**:\n```go\nfunc (h *ProductHandler) GetProductList(ctx context.Context, req *pb.GetProductListRequest) (*pb.GetProductListResponse, error) {\n    // Parse pagination\n    dto := &dto.GetProductListRequest{\n        Pagable: _dto.Pagable{\n            Page: req.Page,\n            Size: req.Size,\n            Sort: req.Sort,\n        },\n        ProvinceId: &req.ProvinceId,\n        // ...\n    }\n    \n    // Call usecase\n    products, total, err := h.usecase.GetList(ctx, dto)\n    if err != nil {\n        return nil, err\n    }\n    \n    // Map to response\n    return &pb.GetProductListResponse{\n        Data: h.mapper.DomainListToPb(products),\n        Total: total,\n    }, nil\n}\n```\n\n**4. Usecase**:\n```go\nfunc (uc *ProductUsecase) GetList(ctx context.Context, req *dto.GetProductListRequest) ([]*domain.Product, int64, *_err.ErrorDTO) {\n    // Call repo với pagination\n    products, total, err := uc.productRepo.GetList(ctx, req)\n    if err != nil {\n        return nil, 0, &_err.ErrorDTO{Code: 500, Message: \"Lỗi lấy danh sách\"}\n    }\n    \n    return products, total, nil\n}\n```\n\n**5. Repository** (dùng CrudRepo):\n```go\n// CrudRepo đã implement sẵn GetList\n// Hoặc override nếu cần custom query:\n\nfunc (r *ProductRepo) GetList(ctx context.Context, req _dto.IPagable) ([]*domain.Product, int64, error) {\n    var products []*domain.Product\n    var total int64\n    \n    query := r.Db.WithContext(ctx).Model(&domain.Product{})\n    \n    // Apply filters\n    if req.ProvinceId != nil {\n        query = query.Where(\"province_id = ?\", *req.ProvinceId)\n    }\n    \n    // Count total\n    query.Count(&total)\n    \n    // Apply pagination\n    offset := req.GetOffset()\n    limit := req.GetLimit()\n    query = query.Offset(offset).Limit(limit)\n    \n    // Execute\n    if err := query.Find(&products).Error; err != nil {\n        return nil, 0, err\n    }\n    \n    return products, total, nil\n}\n```\n\n**Response format**:\n```json\n{\n  \"data\": [\n    {\"id\": 1, \"name\": \"Nhà mặt tiền Quận 1\", ...},\n    {\"id\": 2, \"name\": \"Căn hộ Vinhomes\", ...}\n  ],\n  \"total\": 150\n}\n```\n\n**Key points**:\n- Request DTO embed `_dto.Pagable`\n- Response LUÔN trả `data` (array) + `total` (int64)\n- Repository dùng `GetOffset()` và `GetLimit()` từ Pagable\n- Default: page=1, size=20, max size=100",
+    "source": "Product Domain",
+    "section": "CRUD - List with Pagination",
+    "metadata": {
+      "domain": "Product",
+      "level": "intermediate",
+      "type": "implementation"
+    }
+  },
+  {
+    "question": "Cách update Product trong BDSPro?",
+    "answer": "**Update Product flow**:\n\n**1. Proto**:\n```protobuf\nmessage UpdateProductRequest {\n  uint64 id = 1;  // Required\n  string name = 2;\n  double area = 3;\n  string description = 4;\n  // Only include fields cần update\n}\n```\n\n**2. Handler**:\n```go\nfunc (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProductRequest) (*pb.ProductResponse, error) {\n    // Get existing product\n    existing, err := h.usecase.GetByID(ctx, req.Id)\n    if err != nil {\n        return nil, status.Error(codes.NotFound, \"Product not found\")\n    }\n    \n    // Check permission (optional)\n    profileID := _utils.GetProfileIdWithContext(ctx)\n    if existing.CreatedBy != profileID {\n        // Check if user has edit permission\n    }\n    \n    // Call update usecase\n    updated, errDTO := h.usecase.UpdateProduct(ctx, req)\n    if errDTO != nil {\n        return nil, status.Error(codes.Internal, errDTO.Message)\n    }\n    \n    // Map to response\n    return h.mapper.DomainToPb(updated), nil\n}\n```\n\n**3. Usecase**:\n```go\nfunc (uc *ProductUsecase) UpdateProduct(ctx context.Context, req *pb.UpdateProductRequest) (*domain.Product, *_err.ErrorDTO) {\n    // Get existing\n    existing, err := uc.productRepo.GetByID(ctx, req.Id)\n    if err != nil {\n        return nil, &_err.ErrorDTO{Code: 404, Message: \"Không tìm thấy sản phẩm\"}\n    }\n    \n    // Map updates\n    uc.mapper.UpdateRequestToDomain(req, existing)\n    \n    // Update in DB\n    if err := uc.productRepo.Update(ctx, &req.Id, existing); err != nil {\n        return nil, &_err.ErrorDTO{Code: 500, Message: \"Cập nhật thất bại\"}\n    }\n    \n    // Log history (optional)\n    uc.logHistory(ctx, existing.ID, _enum.EProductUpdate)\n    \n    return existing, nil\n}\n```\n\n**4. Mapper**:\n```go\nfunc (m *ProductMapper) UpdateRequestToDomain(req *pb.UpdateProductRequest, existing *domain.Product) {\n    // Only update non-empty fields\n    if req.Name != \"\" {\n        existing.Name = req.Name\n    }\n    if req.Area > 0 {\n        existing.Area = req.Area\n    }\n    if req.Description != \"\" {\n        existing.Description = req.Description\n    }\n    // UpdatedAt, UpdatedBy tự động set bởi AuditBase callback\n}\n```\n\n**5. Repository** (CrudRepo đã implement):\n```go\n// CrudRepo.Update tự động:\n// - Check ID tồn tại\n// - Trigger BeforeSave callback\n// - Update record\n// - Trigger AfterSave callback\n// - Set UpdatedBy từ context\n```\n\n**BeforeSave/AfterSave Hooks** (nếu cần):\n```go\nfunc (r *ProductRepo) BeforeSave(ctx context.Context, id *uint64, entity *domain.Product) error {\n    // Custom validation\n    if entity.Area <= 0 {\n        return errors.New(\"Area phải > 0\")\n    }\n    return nil\n}\n\nfunc (r *ProductRepo) AfterSave(ctx context.Context, id *uint64, entity *domain.Product) error {\n    // Clear cache\n    // Update search index\n    // Send notification\n    return nil\n}\n```\n\n**Key points**:\n- Luôn get existing trước khi update\n- Chỉ update fields được gửi lên (partial update)\n- `UpdatedBy` và `UpdatedAt` tự động set bởi `AuditBase`\n- CrudRepo handle transaction và callbacks\n- Log history nếu cần audit trail",
+    "source": "Product Domain",
+    "section": "CRUD - Update",
+    "metadata": {
+      "domain": "Product",
+      "level": "advanced",
+      "type": "implementation"
+    }
+  },
+  {
+    "question": "Cách xóa Product? Hard delete hay soft delete?",
+    "answer": "Product sử dụng **SOFT DELETE** (không xóa thật khỏi database).\n\n**1. Delete API**:\n```go\nfunc (h *ProductHandler) DeleteProduct(ctx context.Context, req *pb.DeleteProductRequest) (*pb.DeleteResponse, error) {\n    // Call usecase\n    err := h.usecase.DeleteProduct(ctx, req.Id)\n    if err != nil {\n        return nil, status.Error(codes.Internal, err.Message)\n    }\n    \n    return &pb.DeleteResponse{Success: true}, nil\n}\n```\n\n**2. Usecase**:\n```go\nfunc (uc *ProductUsecase) DeleteProduct(ctx context.Context, id uint64) *_err.ErrorDTO {\n    // Check exists\n    existing, err := uc.productRepo.GetByID(ctx, id)\n    if err != nil {\n        return &_err.ErrorDTO{Code: 404, Message: \"Không tìm thấy sản phẩm\"}\n    }\n    \n    // Check permission\n    profileID := _utils.GetProfileIdWithContext(ctx)\n    if existing.CreatedBy != profileID {\n        // Check delete permission\n    }\n    \n    // Soft delete\n    if err := uc.productRepo.Delete(ctx, id); err != nil {\n        return &_err.ErrorDTO{Code: 500, Message: \"Xóa thất bại\"}\n    }\n    \n    return nil\n}\n```\n\n**3. Repository** (CrudRepo):\n```go\n// CrudRepo.Delete tự động:\n// - Set DeletedAt = now()\n// - Không xóa record khỏi DB\n// - GORM tự động filter deleted records trong queries\n```\n\n**BaseEntity có DeletedAt**:\n```go\ntype BaseEntity struct {\n    ID        uint64         `gorm:\"primaryKey\"`\n    CreatedAt time.Time\n    UpdatedAt time.Time\n    DeletedAt gorm.DeletedAt `gorm:\"index\"` // Soft delete\n}\n```\n\n**Query behavior**:\n```go\n// Normal query - tự động filter deleted\ndb.Find(&products) // WHERE deleted_at IS NULL\n\n// Include deleted (if needed)\ndb.Unscoped().Find(&products) // Lấy cả deleted\n\n// Restore deleted product\ndb.Model(&product).Update(\"deleted_at\", nil)\n```\n\n**Hard Delete** (KHÔNG khuyến khích):\n```go\n// Chỉ dùng khi THỰC SỰ cần xóa vĩnh viễn\ndb.Unscoped().Delete(&product)\n```\n\n**Archive vs Delete**:\n- **Archive** (`Archived = true`): Lưu trữ, không hiển thị, có thể restore dễ dàng\n- **Soft Delete** (`DeletedAt != null`): Xóa mềm, không query được (trừ Unscoped)\n\n**Recommendation**: Dùng `Archived` cho user action, dùng `DeletedAt` cho system cleanup.\n\n**Key points**:\n- Product LUÔN dùng soft delete\n- `DeletedAt` tự động set bởi GORM\n- Queries tự động filter deleted records\n- Có thể restore bằng cách set `DeletedAt = nil`\n- Hard delete CHỈ khi thực sự cần thiết",
+    "source": "Product Domain",
+    "section": "CRUD - Delete",
+    "metadata": {
+      "domain": "Product",
+      "level": "intermediate",
+      "type": "implementation"
+    }
+  },
+  {
+    "question": "ProductPrice là gì? Quan hệ với Product ra sao?",
+    "answer": "**ProductPrice** là bảng lưu **lịch sử giá** của sản phẩm.\n\n**Why separate table?**\n- Product có thể thay đổi giá nhiều lần\n- Cần tracking lịch sử giá để phân tích\n- Giá bán và giá thuê khác nhau\n- Hỗ trợ nhiều loại tiền tệ\n\n**Relation**:\n- Product (1) --- (N) ProductPrice\n- Product.LastPriceID → ProductPrice.ID (giá hiện tại)\n\n**Typical fields** (cần xem chi tiết trong code):\n```go\ntype ProductPrice struct {\n    ID          uint64\n    ProductID   uint64\n    SalePrice   *float64  // Giá bán\n    RentPrice   *float64  // Giá thuê/tháng\n    Currency    string    // VND, USD\n    Unit        string    // tỷ, triệu, m²\n    ValidFrom   time.Time\n    ValidTo     *time.Time\n}\n```\n\n**Usage**:\n```go\n// Get current price\nproduct.Price.SalePrice  // => 5.2 (tỷ)\nproduct.Price.RentPrice  // => 15 (triệu/tháng)\n\n// Query price history\nprices := GetProductPriceHistory(productId)\n```\n\n**Update giá**:\n1. Tạo ProductPrice mới với giá mới\n2. Update `Product.LastPriceID` về record mới\n3. Giữ nguyên price cũ (history)\n\n**Display**:\n- Hiển thị theo `Product.Price` (current price)\n- Chart price history từ bảng ProductPrice",
+    "source": "Product Domain",
+    "section": "Related Entities - ProductPrice",
+    "metadata": {
+      "domain": "Product,ProductPrice",
+      "level": "intermediate",
+      "type": "related_entity"
+    }
+  }
+]
+

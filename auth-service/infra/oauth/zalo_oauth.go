@@ -8,6 +8,7 @@ import (
 	"auth/internal/usecase"
 	_db "common/db"
 	_errors "common/errors"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -130,7 +131,16 @@ func (s *ZaloAuthService) HandleCallback(c *gin.Context, code string, state stri
 		return nil, err
 	}
 
-	return s.RegisterOrLogin(c, userInfo)
+	return s.RegisterOrLogin(c, userInfo, nil)
+}
+
+func (s *ZaloAuthService) HandleCallbackWithDeviceInfo(c context.Context, code string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+	userInfo, err := s.fetchUserInfo(code)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.RegisterOrLogin(c, userInfo, otpReq)
 }
 
 func (s *ZaloAuthService) fetchUserInfo(accessToken string) (map[string]interface{}, error) {
@@ -158,7 +168,7 @@ func (s *ZaloAuthService) fetchUserInfo(accessToken string) (map[string]interfac
 	return userInfo, nil
 }
 
-func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]interface{}) (*dto.AuthLoginResponse, error) {
+func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string]interface{}, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
 	username, ok := userInfo["id"].(string)
 	if !ok {
 		return nil, _errors.ReturnError(
@@ -175,15 +185,24 @@ func (s *ZaloAuthService) RegisterOrLogin(c *gin.Context, userInfo map[string]in
 			Avatar:      extractAvatar(userInfo),
 			IsSensitive: userInfo["is_sensitive"].(bool),
 		}
-		_db.SaveWithAudit(c, e)
+		_db.SaveWithContext(c, e)
 		s.AuthService.NewUser(c, e.ID)
 		existingUser = e
 	}
 
-	session := s.AuthService.CreateSession(c, existingUser, &dto.OtpVerifyRequest{})
+	// Nếu không có otpReq thì tạo mặc định
+	if otpReq == nil {
+		otpReq = &dto.OtpVerifyRequest{}
+	}
+
+	session, _ := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+
 	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
+
+	// Ghi log admin history
+	s.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Zalo OAuth")
 
 	return s.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
 }
