@@ -624,6 +624,48 @@ func (s *NewsFeedService) GetMyNewsFeed(ctx context.Context, req *socialpb.MyNew
 	return s.responseGlobalNewsFeed(ctx, posts, total)
 }
 
+// @Summary Lấy danh sách bài viết của user (Public API)
+// @Description Lấy danh sách bài viết công khai của một user cụ thể - API public không cần authentication
+// @Tags News Feed
+// @Accept json
+// @Produce json
+// @Param userId path int true "User ID"
+// @Param page query int32 false "Page number" default(1)
+// @Param size query int32 false "Page size" default(10)
+// @Param text query string false "Search text"
+// @Param isReel query bool false "Filter reel"
+// @Param isPost query bool false "Filter post"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /v2/social/public/news-feed/user/{userId} [get]
+func (s *NewsFeedService) GetUserNewsFeedPublic(ctx context.Context, req *socialpb.PublicNewsFeedSearch) (*socialpb.ListNewsFeed, error) {
+	postSearch := &dto.NewsFeedGlobalSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:   req.Text,
+		IsReel: req.IsReel,
+		IsPost: req.IsPost,
+	}
+
+	// Lấy bài viết public của user
+	posts, total, err := s.newsFeedUsecase.GetListPostByUserID(ctx, req.UserId, postSearch)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &socialpb.ListNewsFeed{
+		Data:  []*socialpb.NewsFeed{},
+		Total: &total,
+	}
+	for _, post := range posts {
+		result.Data = append(result.Data, s.newsFeedMapper.DomainPublicToPb(post))
+	}
+
+	s.MappingPostAndUser(ctx, result.Data)
+	return result, nil
+}
+
 // CountByOwner đếm số tin đăng theo ownerOf và ownerId
 func (s *NewsFeedService) CountByOwner(ctx context.Context, req *socialpb.CountByOwnerRequest) (*socialpb.CountByOwnerResponse, error) {
 	count, err := s.newsFeedUsecase.CountByOwner(ctx, req.OwnerOf, req.OwnerId)

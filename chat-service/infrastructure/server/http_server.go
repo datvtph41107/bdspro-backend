@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"chat/configs"
+	"chat/config"
 	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
 	"chat/infrastructure/handlers"
@@ -22,6 +22,14 @@ import (
 	"github.com/hyperledger/fabric/common/flogging"
 )
 
+func parseTimeout(timeoutStr string) time.Duration {
+	duration, err := time.ParseDuration(timeoutStr)
+	if err != nil {
+		return 30 * time.Second // Default 30s
+	}
+	return duration
+}
+
 var logger = flogging.MustGetLogger("http_server")
 
 type HTTPServer struct {
@@ -32,9 +40,9 @@ func NewHTTPServer(port string) *HTTPServer {
 	logger.Info("Initializing HTTP server...")
 	ctx := context.Background()
 
-	configs.InitConfig()
+	config.LoadConfig()
 
-	db, err := postgres.NewPostgresDB(configs.DNS)
+	db, err := postgres.NewPostgresDB(config.AppProperties.Database.DSN)
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -74,9 +82,9 @@ func NewHTTPServer(port string) *HTTPServer {
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%s", port),
 		Handler:        handler,
-		IdleTimeout:    configs.IDLE_TIMEOUT,
-		ReadTimeout:    configs.READ_TIMEOUT,
-		WriteTimeout:   configs.WRITE_TIMEOUT,
+		IdleTimeout:    parseTimeout(config.AppProperties.Timeout.Idle),
+		ReadTimeout:    parseTimeout(config.AppProperties.Timeout.Read),
+		WriteTimeout:   parseTimeout(config.AppProperties.Timeout.Write),
 		MaxHeaderBytes: 1 << 20,
 	}
 

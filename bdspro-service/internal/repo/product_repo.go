@@ -80,6 +80,7 @@ type ProductRepo interface {
 	GetDetailByIds(ctx context.Context, ids []uint64) ([]domain.Product, error)
 	SyncData(ctx context.Context) error
 	GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error)
+	GetUserProducts(ctx context.Context, req *dto.UserProductSearchRequest) ([]domain.Product, int64, error)
 
 	GetProducts(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 	GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)

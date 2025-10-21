@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"relay/config"
 
 	"github.com/redis/go-redis/v9"
 )
 
 var redisClient = redis.NewClient(&redis.Options{
-	Addr: "localhost:6379",
-	DB:   0,
+	Addr:     config.AppProperties.Redis.Host,
+	Password: config.AppProperties.Redis.Password,
+	DB:       0,
 })
 
 func PushMessageToQueue(key string, message []byte) error {

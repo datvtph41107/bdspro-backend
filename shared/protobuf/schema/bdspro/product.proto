@@ -178,6 +178,11 @@ service ProductService {
       body: "*"
     };
   };
+  rpc GetUserProducts (UserProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/user/{userId}"
+    };
+  };
 }
 
 message PingResponse {}
@@ -326,6 +331,33 @@ message GroupProductSearch {
   optional bool archived = 25;
 }
 
+message UserProductSearch {
+  uint64 userId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string sort = 4;
+  string text = 5;
+  optional uint64 parentId = 6;
+  optional uint64 propertyTypeId = 7;
+  optional uint64 docTypeId = 8;
+  optional uint64 projectId = 9;
+  optional uint64 provinceId = 10;
+  optional uint64 districtId = 11;
+  optional uint64 wardId = 12;
+  optional int32 transactionType = 13;
+  optional int32 saleStatus = 14;
+  optional int32 rentStatus = 15;
+  optional int32 saleVisibility = 16;
+  optional int32 rentVisibility = 17;
+  optional int32 sourceType = 18;
+  optional int32 transactionPrice = 19;
+  optional int32 salePrice = 20;
+  optional int32 rentPrice = 21;
+  optional int32 saleCommission = 22;
+  optional int32 rentCommission = 23;
+  optional int32 rentPaymentCycle = 24;
+  optional bool archived = 25;
+}
 
 message SearchResponse {
   repeated ProductResponse data = 1;

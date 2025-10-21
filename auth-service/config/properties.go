@@ -55,6 +55,7 @@ type AppProperties struct {
 	} `mapstructure:"sms"`
 	ZNS struct {
 		AccessToken   string `mapstructure:"access_token"`
+		RefreshToken  string `mapstructure:"refresh_token"`
 		TemplateID    int    `mapstructure:"template_id"`
 		OTPTemplateID int    `mapstructure:"otp_template_id"`
 	} `mapstructure:"zns"`

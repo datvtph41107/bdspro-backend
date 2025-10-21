@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"chat/configs"
+	"chat/config"
 	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
 	"chat/infrastructure/handlers"
@@ -32,9 +32,9 @@ type GRPCServer struct {
 func NewGRPCServer(port string) *GRPCServer {
 	grpcLogger.Info("Initializing gRPC server...")
 
-	configs.InitConfig()
+	config.LoadConfig()
 
-	db, err := postgres.NewPostgresDB(configs.DNS)
+	db, err := postgres.NewPostgresDB(config.AppProperties.Database.DSN)
 	if err != nil {
 		grpcLogger.Fatalf("Failed to connect to database: %v", err)
 	}

@@ -201,7 +201,7 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	session, _ := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
 
 	// Generate refresh token
-	s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
+	refreshToken := s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Get user profile
 	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
@@ -209,7 +209,9 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	// Ghi log admin history
 	s.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Facebook OAuth")
 
-	return s.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
+	response := s.AuthService.ResponseLogin(existingUser, profile, session.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	return response, nil
 }
 
 // extractString helper function để extract string từ map

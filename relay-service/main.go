@@ -9,7 +9,7 @@ import (
 
 func main() {
 	os.Setenv("TZ", "Asia/Ho_Chi_Minh")
-	config.InitConfig()
+	config.LoadConfig()
 
-	server.NewWSServer(config.PORT).Start()
+	server.NewWSServer(config.AppProperties.Server.Port).Start()
 }

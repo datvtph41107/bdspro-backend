@@ -1391,6 +1391,10 @@ func (s *ProductUsecase) GetGroupProducts(ctx context.Context, req *dto.GroupPro
 	return s.ProductRepo.GetGroupProducts(ctx, req)
 }
 
+func (s *ProductUsecase) GetUserProducts(ctx context.Context, req *dto.UserProductSearchRequest) ([]domain.Product, int64, error) {
+	return s.ProductRepo.GetUserProducts(ctx, req)
+}
+
 // UpdateNote cập nhật ghi chú sản phẩm
 func (s *ProductUsecase) UpdateNote(ctx context.Context, id uint64, note string) error {
 	// Check permission

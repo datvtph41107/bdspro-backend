@@ -15,6 +15,7 @@ import (
 	auth_infra_postgre "auth/infra/postgre"
 	auth_infra_properties "auth/infra/properties"
 	auth_infra_redis "auth/infra/redis"
+	auth_infra_scheduler "auth/infra/scheduler"
 	auth_infra_zns "auth/infra/zns"
 	auth_initial "auth/initial"
 	auth_internal_domain "auth/internal/domain"
@@ -91,6 +92,7 @@ var wireSet = wire.NewSet(
 	auth_internal_domain.NewUserOTPRepository,
 	auth_infra_oauth.NewZaloAuthService,
 	auth_infra_zns.NewZnsProvider,
+	auth_infra_scheduler.NewZnsScheduler,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)

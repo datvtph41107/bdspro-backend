@@ -84,8 +84,8 @@ message GetRateStatsRequest {
 }
 
 message RateStatsResponse {
-  int64 total_reviews = 1;
-  double average_score = 2;
+  int64 totalReviews = 1;
+  double averageScore = 2;
   int64 star1Count = 3;
   int64 star2Count = 4;
   int64 star3Count = 5;

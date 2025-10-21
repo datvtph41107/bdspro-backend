@@ -20,15 +20,29 @@ func GetJwtFromRequest(r *http.Request, headerKey, prefixToken string) string {
 	return ""
 }
 
-func ValidTokenByIssueAt(issuedAt time.Time, date string) bool {
-	if date != "" {
-		validDateFrom, err := time.Parse(time.RFC3339, date)
+func ValidTokenByIssueAt(issuedAt time.Time, timestampStr string) bool {
+	if timestampStr == "" {
+		return true
+	}
+
+	// Parse Unix timestamp từ string
+	validFromUnix, err := strconv.ParseInt(timestampStr, 10, 64)
+	if err != nil {
+		// Fallback: thử parse RFC3339 format cũ để tương thích ngược
+		validDateFrom, err := time.Parse(time.RFC3339, timestampStr)
 		if err != nil {
 			return false
 		}
 		return !issuedAt.After(validDateFrom)
 	}
-	return true
+
+	// Convert cả hai về Unix timestamp (UTC) để so sánh
+	validFromTime := time.Unix(validFromUnix, 0).UTC()
+	issuedAtUTC := issuedAt.UTC()
+
+	// Token hợp lệ nếu IssuedAt >= ValidFrom
+	// Nghĩa là token được issue sau thời điểm validFrom
+	return !issuedAtUTC.Before(validFromTime)
 }
 
 func GenerateSignedUrl(info string, profileId int64, secretKey string, expiration int64) string {

@@ -852,6 +852,81 @@ func (s *ProductService) CurrentOrganizationProducts(ctx context.Context, req *b
 	}, nil
 }
 
+// @Summary Lấy danh sách sản phẩm của user
+// @Description Lấy danh sách sản phẩm của một user cụ thể
+// @Tags Product
+// @Accept json
+// @Produce json
+// @Param userId path int true "User ID"
+// @Param page query int false "Page number"
+// @Param size query int false "Page size"
+// @Param text query string false "Search text"
+// @Param parentId query int false "Parent ID"
+// @Param propertyTypeId query int false "Property Type ID"
+// @Param docTypeId query int false "Document Type ID"
+// @Param projectId query int false "Project ID"
+// @Param provinceId query int false "Province ID"
+// @Param districtId query int false "District ID"
+// @Param wardId query int false "Ward ID"
+// @Param transactionType query int false "Transaction Type"
+// @Param saleStatus query int false "Sale Status"
+// @Param rentStatus query int false "Rent Status"
+// @Param saleVisibility query int false "Sale Visibility"
+// @Param rentVisibility query int false "Rent Visibility"
+// @Param sourceType query int false "Source Type"
+// @Param archived query bool false "Archived"
+// @Success 200 {object} bdspropb.SearchResponse
+// @Router /v2/bdspro/v2/product/user/{userId} [get]
+func (s *ProductService) GetUserProducts(ctx context.Context, req *bdspropb.UserProductSearch) (*bdspropb.SearchResponse, error) {
+	// Convert protobuf request to DTO
+	searchReq := &dto.UserProductSearchRequest{
+		UserID:           req.UserId,
+		Text:             req.Text,
+		ParentID:         req.ParentId,
+		PropertyTypeID:   req.PropertyTypeId,
+		DocTypeID:        req.DocTypeId,
+		ProjectID:        req.ProjectId,
+		ProvinceID:       req.ProvinceId,
+		DistrictID:       req.DistrictId,
+		WardID:           req.WardId,
+		TransactionType:  req.TransactionType,
+		SaleStatus:       req.SaleStatus,
+		RentStatus:       req.RentStatus,
+		SaleVisibility:   req.SaleVisibility,
+		RentVisibility:   req.RentVisibility,
+		SourceType:       req.SourceType,
+		TransactionPrice: req.TransactionPrice,
+		SalePrice:        req.SalePrice,
+		RentPrice:        req.RentPrice,
+		SaleCommission:   req.SaleCommission,
+		RentCommission:   req.RentCommission,
+		RentPaymentCycle: req.RentPaymentCycle,
+		Archived:         req.Archived,
+	}
+
+	// Set pagination
+	if req.Page > 0 {
+		searchReq.Page = req.Page
+	}
+	if req.Size > 0 {
+		searchReq.Size = req.Size
+	}
+
+	// Get products from usecase
+	products, total, err := s.UC.GetUserProducts(ctx, searchReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert domain products to protobuf response
+	productResponses := s.ProductMapper.MapProductPbList(products)
+
+	return &bdspropb.SearchResponse{
+		Data:          productResponses,
+		TotalElements: total,
+	}, nil
+}
+
 func (s *ProductService) CreateOrganizationProduct(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.Response, error) {
 	dto := s.ProductMapper.ProductSavePbToDTO(req)
 	result, err := s.UC.CreateOrganizationProduct(ctx, dto)

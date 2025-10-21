@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"chat/configs"
+	"chat/config"
 
 	"github.com/hyperledger/fabric/common/flogging"
 )
@@ -12,9 +12,9 @@ import (
 var logger = flogging.MustGetLogger("scripts")
 
 func AddSwaggerSecurity() {
-	configs.InitConfig()
-	logger.Infof("Swagger path: %s", configs.SWAGGER_PATH)
-	data, err := ioutil.ReadFile(configs.SWAGGER_PATH)
+	config.LoadConfig()
+	logger.Infof("Swagger path: %s", config.AppProperties.Swagger.Path)
+	data, err := ioutil.ReadFile(config.AppProperties.Swagger.Path)
 	if err != nil {
 		logger.Errorf("Error reading file: %v", err)
 		return
@@ -46,7 +46,7 @@ func AddSwaggerSecurity() {
 		return
 	}
 
-	if err := ioutil.WriteFile(configs.SWAGGER_PATH, updatedData, 0644); err != nil {
+	if err := ioutil.WriteFile(config.AppProperties.Swagger.Path, updatedData, 0644); err != nil {
 		logger.Errorf("Error writing file: %v", err)
 		return
 	}

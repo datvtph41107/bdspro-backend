@@ -17,8 +17,8 @@ type RedisClient struct {
 func NewRedisClient() *RedisClient {
 	logger := flogging.MustGetLogger("redis")
 	client := redis.NewClient(&redis.Options{
-		Addr:     config.REDIS_HOST,
-		Password: config.REDIS_PASSWORD,
+		Addr:     config.AppProperties.Redis.Host,
+		Password: config.AppProperties.Redis.Password,
 		DB:       0,
 	})
 

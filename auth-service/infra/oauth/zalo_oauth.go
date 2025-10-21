@@ -199,12 +199,14 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 
 	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
-	s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
+	refreshToken := s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Ghi log admin history
 	s.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Zalo OAuth")
 
-	return s.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
+	response := s.AuthService.ResponseLogin(existingUser, profile, session.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	return response, nil
 }
 
 func extractAvatar(userInfo map[string]interface{}) string {

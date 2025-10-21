@@ -2,81 +2,70 @@ package config
 
 import (
 	"common"
+	"log"
 	"os"
-	"path"
-	"time"
+	"relay/env"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
 )
 
+const C_SESSION_ID = "C_SESSION_ID"
+
+// RelayProperties chứa cấu hình của ứng dụng
+type RelayProperties struct {
+	Server struct {
+		Port    string `mapstructure:"port"`
+		TcpPort string `mapstructure:"tcp_port"`
+	} `mapstructure:"server"`
+
+	Eureka struct {
+		Url  string `mapstructure:"url"`
+		Port string `mapstructure:"port"`
+	} `mapstructure:"eureka"`
+
+	Database struct {
+		Type string `mapstructure:"type"`
+		DSN  string `mapstructure:"dsn"`
+	} `mapstructure:"database"`
+
+	Timeout struct {
+		Transaction string `mapstructure:"transaction"`
+		Idle        string `mapstructure:"idle"`
+		Read        string `mapstructure:"read"`
+		Write       string `mapstructure:"write"`
+	} `mapstructure:"timeout"`
+
+	Redis struct {
+		Host     string `mapstructure:"host"`
+		Password string `mapstructure:"pass"`
+	} `mapstructure:"redis"`
+
+	Swagger struct {
+		Path string `mapstructure:"path"`
+	} `mapstructure:"swagger"`
+
+	Worker struct {
+		Number int `mapstructure:"number"`
+	} `mapstructure:"worker"`
+
+	MaxParticipant int `mapstructure:"max_participant"`
+
+	Services struct {
+		Chat struct {
+			Host string `mapstructure:"host"`
+			Port string `mapstructure:"port"`
+		} `mapstructure:"chat"`
+	} `mapstructure:"services"`
+}
+
+var AppProperties RelayProperties
+
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() {
-	ENV_RUNTIME := os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(ENV_RUNTIME)
-}
+	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
+	common.LoadYMLConfigFile(env.ENV_RUNTIME)
 
-var (
-	cfg          *viper.Viper
-	configLogger = flogging.MustGetLogger("configs.config")
-
-	DB_TYPE             string
-	DNS                 string
-	TRANSACTION_TIMEOUT time.Duration
-
-	IDLE_TIMEOUT  time.Duration
-	READ_TIMEOUT  time.Duration
-	WRITE_TIMEOUT time.Duration
-
-	REDIS_HOST     string
-	REDIS_PASSWORD string
-
-	SWAGGER_PATH     string
-	NUMBER_OF_WORKER int = 10
-	MAX_PARTICIPANT  int = 10
-	ENV_RUNTIME      string
-	PORT             string
-)
-
-func loadConfig() {
-	file := "app.yml"
-	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
-		file = envFile
+	if err := viper.Unmarshal(&AppProperties); err != nil {
+		log.Fatalf("Lỗi parse config: %v", err)
 	}
-	flogging.ActivateSpec("debug")
-
-	cfg = viper.New()
-	cfg.SetConfigType("yaml")
-	cfg.SetConfigName(path.Base(file)) // Chỉ lấy tên file, không có extension
-	cfg.AddConfigPath(path.Dir(file))
-	cfg.AddConfigPath("./config/")
-	cfg.AddConfigPath("../config/")
-
-	configLogger.Infof("Loading config file: %s", file)
-
-	if err := cfg.ReadInConfig(); err != nil {
-		configLogger.Fatalf("Error parsing config file: %s", err)
-	}
-
-	// Đọc giá trị từ file vào biến
-	DB_TYPE = cfg.GetString("database.type")
-	DNS = cfg.GetString("database.dns")
-	TRANSACTION_TIMEOUT = cfg.GetDuration("timeout.transaction")
-	IDLE_TIMEOUT = cfg.GetDuration("timeout.idle")
-	READ_TIMEOUT = cfg.GetDuration("timeout.read")
-	WRITE_TIMEOUT = cfg.GetDuration("timeout.write")
-
-	REDIS_HOST = cfg.GetString("redis.host")
-	REDIS_PASSWORD = cfg.GetString("redis.password")
-
-	SWAGGER_PATH = cfg.GetString("swagger.path")
-
-	NUMBER_OF_WORKER = cfg.GetInt("worker.number")
-	MAX_PARTICIPANT = cfg.GetInt("max_participant")
-	ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	PORT = cfg.GetString("server.port")
-}
-
-func InitConfig() {
-	loadConfig()
 }

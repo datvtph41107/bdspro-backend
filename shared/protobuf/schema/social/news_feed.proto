@@ -87,6 +87,11 @@ service NewsFeedService {
             get: "/v2/social/news-feed/me"
         };
     };
+    rpc GetUserNewsFeedPublic(PublicNewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/public/news-feed/user/{userId}"
+        };
+    };
 }
 
 message VisibilityRequest {
@@ -220,4 +225,13 @@ message MyNewsFeedRequest {
     string text = 3;
     optional bool isReel = 4;
     optional bool isPost = 5;
+}
+
+message PublicNewsFeedSearch {
+    uint64 userId = 1;
+    int32 page = 2;
+    int32 size = 3;
+    string text = 4;
+    optional bool isReel = 5;
+    optional bool isPost = 6;
 }

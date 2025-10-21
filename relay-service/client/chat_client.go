@@ -20,13 +20,9 @@ type ChatClient struct {
 func NewChatClient() *ChatClient {
 	chatClient := &ChatClient{Client: nil}
 	go func() {
-		url := "localhost"
 		name := "chat"
-		if config.ENV_RUNTIME == "release" {
-			url = name
-		}
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8208", url),
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", config.AppProperties.Services.Chat.Host, config.AppProperties.Services.Chat.Port),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
@@ -35,7 +31,8 @@ func NewChatClient() *ChatClient {
 			log.Fatalf("failed to dial: %v", err)
 		}
 
-		ctx, _ := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)

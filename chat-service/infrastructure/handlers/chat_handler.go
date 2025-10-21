@@ -10,7 +10,7 @@ import (
 	chatpb "pb/types/chat"
 	sharepb "pb/types/shared"
 
-	"chat/configs"
+	"chat/config"
 	"chat/infrastructure/client"
 	"chat/infrastructure/delivery/errors"
 	"chat/infrastructure/mapper"
@@ -59,8 +59,8 @@ func NewChatHandler(
 		participantUsecases:     participantUsecases,
 		messageReactionUsecases: messageReactionUsecases,
 		logger:                  flogging.MustGetLogger("chat_handler"),
-		numberOfWorker:          configs.NUMBER_OF_WORKER,
-		maxParticipant:          configs.MAX_PARTICIPANT,
+		numberOfWorker:          config.AppProperties.Worker.Number,
+		maxParticipant:          config.AppProperties.MaxParticipant,
 		redisClient:             redis.NewRedisClient(),
 		eventChannel:            make(chan any),
 		userClient:              userClient,

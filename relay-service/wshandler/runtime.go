@@ -129,12 +129,14 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 	}
 
 	userId := utils.GetCurrentUserID(r.Context())
+	print("userId: %d request: %s", userId, r.RequestURI)
 
 	if userId == 0 {
 		conn.Close()
 		wsLogger.Error("Missing user_id")
 		return
 	}
+
 	// userIdStr := strconv.FormatUint(userId, 10)
 
 	// roomID := r.URL.Query().Get("roomId")
@@ -245,65 +247,70 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 	switch msg.Type {
 
 	case constants.CREATE_ROOM_TYPE:
-		// if roomName, ok := m["roomId"].(string); ok {
-		// 	h.rooms[roomName] = make(map[*websocket.Conn]bool)
-		// }
 		if rawMembers, ok := m["members"].([]any); ok {
-			members := make([]uint64, 0, len(rawMembers))
-			for _, v := range rawMembers {
-				if userID, ok := v.(float64); ok {
-					members = append(members, uint64(userID))
-				}
+			members, err := utils.ParseUint64Slice(rawMembers)
+			if err != nil {
+				wsLogger.Errorf("Failed to parse members: %v", err)
+				return
 			}
 			h.sendToUser(members, data)
 		}
 
 	case constants.JOIN_ROOM_TYPE:
-		if roomID, ok := m["roomId"].(float64); ok {
-			if userID, ok := m["userId"].(float64); ok {
-				h.addUserToRoom(uint64(roomID), uint64(userID))
-				h.sendToRoom(uint64(roomID), data)
-			}
+		roomID, okRoom := utils.ParseUint64(m["roomId"])
+		userID, okUser := utils.ParseUint64(m["userId"])
+		if okRoom && okUser {
+			h.addUserToRoom(roomID, userID)
+			h.sendToRoom(roomID, data)
+		} else {
+			wsLogger.Errorf("Failed to parse roomId or userId in JOIN_ROOM_TYPE")
 		}
 
 	case constants.LEAVE_ROOM_TYPE:
-		if roomID, ok := m["roomId"].(float64); ok {
-			if userID, ok := m["userId"].(float64); ok {
-				h.sendToRoom(uint64(roomID), data)
-
-				h.removeUserFromRoom(uint64(roomID), uint64(userID))
-			}
+		roomID, okRoom := utils.ParseUint64(m["roomId"])
+		userID, okUser := utils.ParseUint64(m["userId"])
+		if okRoom && okUser {
+			h.sendToRoom(roomID, data)
+			h.removeUserFromRoom(roomID, userID)
+		} else {
+			wsLogger.Errorf("Failed to parse roomId or userId in LEAVE_ROOM_TYPE")
 		}
 
 	case constants.DELETE_ROOM_TYPE:
-		if roomID, ok := m["roomId"].(float64); ok {
-			h.sendToRoom(uint64(roomID), data)
-
-			delete(h.rooms, uint64(roomID))
+		if roomID, ok := utils.ParseUint64(m["roomId"]); ok {
+			h.sendToRoom(roomID, data)
+			delete(h.rooms, roomID)
+		} else {
+			wsLogger.Errorf("Failed to parse roomId in DELETE_ROOM_TYPE")
 		}
 
 	case constants.REMOVE_MEMBER_TYPE:
-		if roomID, ok := m["roomId"].(float64); ok {
-			if userID, ok := m["userId"].(float64); ok {
-				h.sendToRoom(uint64(roomID), data)
-
-				h.removeUserFromRoom(uint64(roomID), uint64(userID))
-
-			}
+		roomID, okRoom := utils.ParseUint64(m["roomId"])
+		userID, okUser := utils.ParseUint64(m["userId"])
+		if okRoom && okUser {
+			h.sendToRoom(roomID, data)
+			h.removeUserFromRoom(roomID, userID)
+		} else {
+			wsLogger.Errorf("Failed to parse roomId or userId in REMOVE_MEMBER_TYPE")
 		}
 	case constants.UPDATE_ROOM_TYPE:
-		if userIds, ok := m["members"].([]any); ok {
-			for _, v := range userIds {
-				if userID, ok := v.(float64); ok {
-					h.sendToUser([]uint64{uint64(userID)}, data)
-				}
+		if rawMembers, ok := m["members"].([]any); ok {
+			members, err := utils.ParseUint64Slice(rawMembers)
+			if err != nil {
+				wsLogger.Errorf("Failed to parse members in UPDATE_ROOM_TYPE: %v", err)
+				return
+			}
+			for _, userID := range members {
+				h.sendToUser([]uint64{userID}, data)
 			}
 		}
 
 	case constants.UPDATE_SETTINGS_TYPE:
 		// Truyền tin nhắn đến phòng theo loại sự kiện
-		if conversationID, ok := m["conversationId"].(float64); ok {
-			h.sendToRoom(uint64(conversationID), data)
+		if conversationID, ok := utils.ParseUint64(m["conversationId"]); ok {
+			h.sendToRoom(conversationID, data)
+		} else {
+			wsLogger.Errorf("Failed to parse conversationId in UPDATE_SETTINGS_TYPE")
 		}
 
 	case constants.RECALL_MESSAGE_TYPE,
@@ -316,8 +323,10 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		constants.MESSAGE_TYPE:
 
 		// Truyền tin nhắn đến phòng theo loại sự kiện
-		if roomID, ok := m["roomId"].(float64); ok {
-			h.sendToRoom(uint64(roomID), data)
+		if roomID, ok := utils.ParseUint64(m["roomId"]); ok {
+			h.sendToRoom(roomID, data)
+		} else {
+			wsLogger.Errorf("Failed to parse roomId in message type: %s", msg.Type)
 		}
 
 	default:

@@ -1,12 +1,14 @@
 server:
-  port: 8308
+  port: 8007
+  tcp_port: 8208
 
-# database:
-#   dsn: host=14.225.210.29 user=chat password=chat123 dbname=db_chat port=5432 sslmode=disable
+eureka:
+  url: localhost
+  port: 8761
 
 database:
   type: "POSTGRES"
-  dns: "host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_chat port=5432 sslmode=disable"
+  dsn: "host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_chat port=5432 sslmode=disable"
 
 timeout:
   transaction: 30s
@@ -25,7 +27,12 @@ worker:
   number: 10
 
 max_participant: 10
-environment:
-  - FABRIC_LOGGING_SPEC=debug
 
-  
+services:
+  user:
+    host: "user"
+    port: "8205"
+  bdspro:
+    host: "bdspro"
+    port: "8204"
+

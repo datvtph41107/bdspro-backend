@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"auth/infra/handler"
+	"auth/infra/scheduler"
 	"auth/internal/usecase"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -24,6 +25,9 @@ type InitialApp struct {
 
 	// Module service để cache modules trong memory
 	ModuleService *usecase.ModuleService
+
+	// Scheduler để chạy background jobs
+	ZnsScheduler *scheduler.ZnsScheduler
 }
 
 func NewApp(authHandler *handler.AuthHandler,
@@ -34,6 +38,7 @@ func NewApp(authHandler *handler.AuthHandler,
 	roleHandler *handler.RoleHandler,
 	userInfoHandler *handler.AuthUserProfileHandler,
 	moduleService *usecase.ModuleService,
+	znsScheduler *scheduler.ZnsScheduler,
 ) *InitialApp {
 	// Config đã được load trong main.go rồi, không cần load lại
 	app := &InitialApp{
@@ -45,13 +50,27 @@ func NewApp(authHandler *handler.AuthHandler,
 		RoleGroupHandler:  roleGroupHandler,
 		RoleHandler:       roleHandler,
 		ModuleService:     moduleService,
+		ZnsScheduler:      znsScheduler,
 		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 
 	// Load modules khi khởi động
 	app.LoadModulesOnStartup()
 
+	// Khởi động ZNS Token Refresh Scheduler
+	app.StartZnsScheduler()
+
 	return app
+}
+
+// StartZnsScheduler khởi động ZNS scheduler để refresh token tự động
+func (app *InitialApp) StartZnsScheduler() {
+	if app.ZnsScheduler != nil {
+		app.ZnsScheduler.Start()
+		app.Logger.Infof("✅ ZNS Token Refresh Scheduler started successfully")
+	} else {
+		app.Logger.Warnf("⚠️ ZNS Scheduler is nil, skipping scheduler start")
+	}
 }
 
 func NewRedisService() *_redis.RedisService {

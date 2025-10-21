@@ -146,10 +146,12 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	// g.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	// planID := g.AuthService.GetPlanID(existingUser.UserID)
 	profile, _ := g.ProfileProvider.GetByProfileID(c, existingUser.UserID)
-	g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
+	refreshToken := g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Ghi log admin history
 	g.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Google OAuth")
 
-	return g.AuthService.ResponseLogin(existingUser, profile, session.SessionID), nil
+	response := g.AuthService.ResponseLogin(existingUser, profile, session.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	return response, nil
 }

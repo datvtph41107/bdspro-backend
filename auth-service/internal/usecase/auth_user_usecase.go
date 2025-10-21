@@ -258,7 +258,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	// s.RedisService.SaveToken(e.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), property.AppProperties.Jwt.RefreshExpMinutes*60)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
-	s.GenRefreshToken(c, e, newSession.SessionID)
+	refreshToken := s.GenRefreshToken(c, e, newSession.SessionID)
 
 	// Gửi thông báo chào mừng nếu là user mới
 	if isNewUser {
@@ -284,6 +284,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	// Lấy passwordAuthId (auth_method có provider ADMIN)
 	response := s.ResponseLogin(e, infoEntity, newSession.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
 	if infoEntity.ProfileID != 0 {
 		passwordAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(c, infoEntity.ProfileID, "ADMIN")
 		if err == nil && passwordAuth != nil {
@@ -366,9 +367,21 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		props.OrganizationID = claims.OrganizationId
 	}
 
-	date, _ := s.CacheProvider.GetToken(c, props.AuthID)
-	invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, date)
+	// Lấy timestamp từ cache
+	cachedTimestamp, err := s.CacheProvider.GetToken(c, props.AuthID)
+	if err != nil {
+		log.Printf("⚠️ [RefreshToken] Không tìm thấy token trong cache cho authID %d: %v", props.AuthID, err)
+		return nil, &_routes.Except{
+			Code:    401,
+			Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
+		}
+	}
+
+	// Validate token bằng cách so sánh Unix timestamp (UTC)
+	invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
 	if invalidToken {
+		log.Printf("⚠️ [RefreshToken] Token không hợp lệ cho authID %d. IssuedAt: %s, CachedTime: %s",
+			props.AuthID, props.IssuedAt.Format(time.RFC3339), cachedTimestamp)
 		return nil, &_routes.Except{
 			Code:    401,
 			Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
@@ -390,6 +403,7 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 			PlanAt:         profile.PlanAt,
 			Type:           "ACCESS",
 		})
+		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID)
 		return &dto.RefreshResponse{AccessToken: newToken}, nil
 	}
 
@@ -858,9 +872,8 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 		}
 	}
 
-	s.CacheProvider.SaveToken(c, authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), s.properties.JwtRefreshExpMinutes*60)
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
-	s.GenRefreshToken(c, authEntity, sessionId)
+	refreshToken := s.GenRefreshToken(c, authEntity, sessionId)
 	profile, _ := s.ProfileProvider.GetByProfileID(c, authEntity.UserID)
 
 	// Ghi log admin history
@@ -906,16 +919,24 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 		}
 	}()
 
-	return s.ResponseLogin(authEntity, profile, sessionEntity.SessionID), nil
+	response := s.ResponseLogin(authEntity, profile, sessionEntity.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	return response, nil
 }
 
 // ------------------------------------------------------------
 
 func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.AuthMethod, sessionId uint64) string {
-	s.CacheProvider.SaveToken(c, authEntity.ID, time.Now().Add(-5*time.Second).Format(time.RFC3339), s.properties.JwtRefreshExpMinutes*60)
+	// Lưu Unix timestamp (UTC) vào cache để tránh vấn đề timezone
+	// Trừ 5 giây để đảm bảo token mới được issue sau thời điểm này sẽ hợp lệ
+	validFromTimestamp := time.Now().UTC().Add(-5 * time.Second).Unix()
+	s.CacheProvider.SaveToken(c, authEntity.ID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
+
 	refreshToken := s.GetRefreshToken(authEntity, sessionId)
-	s.CookieProvider.SetRefreshToken(c, refreshToken)
-	log.Println("refreshToken=", refreshToken)
+	// Không set cookie nữa, trả refreshToken trong response body
+	// s.CookieProvider.SetRefreshToken(c, refreshToken)
+	log.Printf("✅ [GenRefreshToken] authID=%d, validFrom=%d (%s), refreshToken=%s",
+		authEntity.ID, validFromTimestamp, time.Unix(validFromTimestamp, 0).UTC().Format(time.RFC3339), refreshToken)
 	return refreshToken
 }
 
@@ -1118,11 +1139,12 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	s.SessionRepo.CreateSession(c, newSession)
 
 	// Tạo refresh token
-	s.GenRefreshToken(c, adminAuthEntity, newSession.SessionID)
+	refreshToken := s.GenRefreshToken(c, adminAuthEntity, newSession.SessionID)
 
 	adminProfile.RoleType = enums.ERoleAdmin
 	// Tạo response với đầy đủ thông tin
 	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
 	response.Role = enums.RoleMap[adminProfile.RoleType]
 	response.Username = adminAuthEntity.AuthName
 
@@ -1596,10 +1618,11 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	s.SessionRepo.CreateSession(ctx, newSession)
 
 	// Tạo refresh token
-	s.GenRefreshToken(ctx, authEntity, newSession.SessionID)
+	refreshToken := s.GenRefreshToken(ctx, authEntity, newSession.SessionID)
 
 	// Lấy passwordAuthId (chính là auth_method hiện tại)
 	response := s.ResponseLogin(authEntity, profile, newSession.SessionID)
+	response.RefreshToken = refreshToken // Set refreshToken vào response body
 	response.PasswordAuthId = authEntity.ID
 
 	// Ghi log admin history

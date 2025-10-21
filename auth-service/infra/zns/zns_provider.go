@@ -2,9 +2,14 @@ package zns
 
 import (
 	"auth/config"
+	"auth/env"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -14,11 +19,18 @@ import (
 // @bind: auth/internal/interface/provider.IZnsProvider
 type ZnsProvider struct {
 	accessToken   string
+	refreshToken  string
 	templateID    int
 	otpTemplateID int
 	httpClient    *http.Client
 	redisClient   *redis.Client
 }
+
+// Redis keys cho ZNS tokens
+const (
+	ZNSAccessTokenKey  = "zns:access_token"
+	ZNSRefreshTokenKey = "zns:refresh_token"
+)
 
 // NewZnsProvider tạo instance mới của ZnsProvider
 func NewZnsProvider() *ZnsProvider {
@@ -29,8 +41,7 @@ func NewZnsProvider() *ZnsProvider {
 		DB:       0,
 	})
 
-	return &ZnsProvider{
-		accessToken:   config.Properties.ZNS.AccessToken,
+	provider := &ZnsProvider{
 		templateID:    config.Properties.ZNS.TemplateID,
 		otpTemplateID: config.Properties.ZNS.OTPTemplateID,
 		httpClient: &http.Client{
@@ -38,6 +49,69 @@ func NewZnsProvider() *ZnsProvider {
 		},
 		redisClient: redisClient,
 	}
+
+	// Load tokens từ Redis, nếu không có thì dùng config
+	provider.loadTokensFromRedis()
+
+	return provider
+}
+
+// loadTokensFromRedis load access token và refresh token từ Redis
+// Nếu không có trong Redis thì load từ config và lưu vào Redis
+func (z *ZnsProvider) loadTokensFromRedis() {
+	ctx := context.Background()
+
+	// Load access token từ Redis
+	accessToken, err := z.redisClient.Get(ctx, ZNSAccessTokenKey).Result()
+	if err == redis.Nil {
+		// Không có trong Redis, dùng token từ config
+		accessToken = config.Properties.ZNS.AccessToken
+		// Lưu vào Redis
+		z.redisClient.Set(ctx, ZNSAccessTokenKey, accessToken, 0)
+		fmt.Println("📝 [ZNS] Loaded access token from config and saved to Redis")
+	} else if err != nil {
+		// Lỗi khi đọc Redis, dùng token từ config
+		accessToken = config.Properties.ZNS.AccessToken
+		fmt.Printf("⚠️ [ZNS] Error loading access token from Redis: %v, using config\n", err)
+	} else {
+		fmt.Println("✅ [ZNS] Loaded access token from Redis")
+	}
+	z.accessToken = accessToken
+
+	// Load refresh token từ Redis
+	refreshToken, err := z.redisClient.Get(ctx, ZNSRefreshTokenKey).Result()
+	if err == redis.Nil {
+		// Không có trong Redis, dùng token từ config
+		refreshToken = config.Properties.ZNS.RefreshToken
+		// Lưu vào Redis
+		z.redisClient.Set(ctx, ZNSRefreshTokenKey, refreshToken, 0)
+		fmt.Println("📝 [ZNS] Loaded refresh token from config and saved to Redis")
+	} else if err != nil {
+		// Lỗi khi đọc Redis, dùng token từ config
+		refreshToken = config.Properties.ZNS.RefreshToken
+		fmt.Printf("⚠️ [ZNS] Error loading refresh token from Redis: %v, using config\n", err)
+	} else {
+		fmt.Println("✅ [ZNS] Loaded refresh token from Redis")
+	}
+	z.refreshToken = refreshToken
+}
+
+// saveTokensToRedis lưu access token và refresh token mới vào Redis
+func (z *ZnsProvider) saveTokensToRedis(ctx context.Context, accessToken, refreshToken string) error {
+	// Lưu access token
+	err := z.redisClient.Set(ctx, ZNSAccessTokenKey, accessToken, 0).Err()
+	if err != nil {
+		return fmt.Errorf("lỗi khi lưu access token vào Redis: %w", err)
+	}
+
+	// Lưu refresh token
+	err = z.redisClient.Set(ctx, ZNSRefreshTokenKey, refreshToken, 0).Err()
+	if err != nil {
+		return fmt.Errorf("lỗi khi lưu refresh token vào Redis: %w", err)
+	}
+
+	fmt.Println("💾 [ZNS] Saved new tokens to Redis successfully")
+	return nil
 }
 
 // ZNSRequest định nghĩa cấu trúc payload gửi đến ZNS API
@@ -129,110 +203,113 @@ func (z *ZnsProvider) SendZNSMessage(
 	templateID *int,
 	trackingID *string,
 ) (map[string]interface{}, error) {
-	return nil, nil
-	// // Chuẩn hóa số điện thoại sang format quốc tế
-	// phone = cleanPhoneNumber(phone)
+	// return nil, nil
+	// Chuẩn hóa số điện thoại sang format quốc tế
+	phone = cleanPhoneNumber(phone)
+	if env.ENV_RUNTIME == "local" {
+		return nil, nil
+	}
 
-	// // return map[string]interface{}{
-	// // 	"success":     true,
-	// // 	"message":     "Gửi ZNS thành công",
-	// // 	"data":        nil,
-	// // 	"phone":       phone,
-	// // 	"tracking_id": "",
-	// // }, nil
-
-	// // TODO: Tạm thời bỏ rate limit, sẽ bật lại sau
-	// // Kiểm tra rate limit (100 lần/ngày)
-	// // if err := z.checkDailyLimit(ctx); err != nil {
-	// // 	return map[string]interface{}{
-	// // 		"success": false,
-	// // 		"message": err.Error(),
-	// // 		"phone":   phone,
-	// // 	}, err
-	// // }
-
-	// // Sử dụng template ID mặc định nếu không được cung cấp
-	// tplID := z.templateID
-	// if templateID != nil {
-	// 	tplID = *templateID
-	// }
-
-	// // Tạo tracking ID mặc định nếu không được cung cấp
-	// trkID := fmt.Sprintf("zns_%s_%d", phone, time.Now().Unix())
-	// if trackingID != nil {
-	// 	trkID = *trackingID
-	// }
-
-	// // Chuẩn bị payload
-	// payload := ZNSRequest{
-	// 	Phone:        phone,
-	// 	TemplateID:   fmt.Sprintf("%d", tplID),
-	// 	TemplateData: templateData,
-	// 	TrackingID:   trkID,
-	// }
-
-	// // Marshal payload thành JSON
-	// payloadBytes, err := json.Marshal(payload)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("lỗi khi marshal payload ZNS: %w", err)
-	// }
-
-	// // Tạo HTTP request
-	// req, err := http.NewRequestWithContext(
-	// 	ctx,
-	// 	"POST",
-	// 	"https://business.openapi.zalo.me/message/template",
-	// 	bytes.NewBuffer(payloadBytes),
-	// )
-	// if err != nil {
-	// 	return nil, fmt.Errorf("lỗi khi tạo request ZNS: %w", err)
-	// }
-
-	// // Set headers
-	// req.Header.Set("Content-Type", "application/json")
-	// req.Header.Set("access_token", z.accessToken)
-
-	// // Gửi request
-	// resp, err := z.httpClient.Do(req)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("lỗi khi gửi request ZNS: %w", err)
-	// }
-	// defer resp.Body.Close()
-
-	// // Parse response
-	// var znsResp ZNSResponse
-	// if err := json.NewDecoder(resp.Body).Decode(&znsResp); err != nil {
-	// 	return nil, fmt.Errorf("lỗi khi parse response ZNS: %w", err)
-	// }
-
-	// // Kiểm tra response status
-	// if resp.StatusCode != http.StatusOK {
-	// 	return map[string]interface{}{
-	// 		"success":     false,
-	// 		"message":     fmt.Sprintf("Gửi ZNS thất bại: %d", resp.StatusCode),
-	// 		"phone":       phone,
-	// 		"tracking_id": trkID,
-	// 	}, fmt.Errorf("ZNS API trả về status code %d: %s", resp.StatusCode, znsResp.Message)
-	// }
-
-	// // Kiểm tra error code từ ZNS
-	// if znsResp.Error != 0 {
-	// 	return map[string]interface{}{
-	// 		"success":     false,
-	// 		"message":     fmt.Sprintf("ZNS error: %s", znsResp.Message),
-	// 		"phone":       phone,
-	// 		"tracking_id": trkID,
-	// 	}, fmt.Errorf("ZNS API trả về error code %d: %s", znsResp.Error, znsResp.Message)
-	// }
-
-	// // Thành công
 	// return map[string]interface{}{
 	// 	"success":     true,
 	// 	"message":     "Gửi ZNS thành công",
-	// 	"data":        znsResp.Data,
+	// 	"data":        nil,
 	// 	"phone":       phone,
-	// 	"tracking_id": trkID,
+	// 	"tracking_id": "",
 	// }, nil
+
+	// TODO: Tạm thời bỏ rate limit, sẽ bật lại sau
+	// Kiểm tra rate limit (100 lần/ngày)
+	// if err := z.checkDailyLimit(ctx); err != nil {
+	// 	return map[string]interface{}{
+	// 		"success": false,
+	// 		"message": err.Error(),
+	// 		"phone":   phone,
+	// 	}, err
+	// }
+
+	// Sử dụng template ID mặc định nếu không được cung cấp
+	tplID := z.templateID
+	if templateID != nil {
+		tplID = *templateID
+	}
+
+	// Tạo tracking ID mặc định nếu không được cung cấp
+	trkID := fmt.Sprintf("zns_%s_%d", phone, time.Now().Unix())
+	if trackingID != nil {
+		trkID = *trackingID
+	}
+
+	// Chuẩn bị payload
+	payload := ZNSRequest{
+		Phone:        phone,
+		TemplateID:   fmt.Sprintf("%d", tplID),
+		TemplateData: templateData,
+		TrackingID:   trkID,
+	}
+
+	// Marshal payload thành JSON
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi marshal payload ZNS: %w", err)
+	}
+
+	// Tạo HTTP request
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"POST",
+		"https://business.openapi.zalo.me/message/template",
+		bytes.NewBuffer(payloadBytes),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi tạo request ZNS: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("access_token", z.accessToken)
+
+	// Gửi request
+	resp, err := z.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi gửi request ZNS: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Parse response
+	var znsResp ZNSResponse
+	if err := json.NewDecoder(resp.Body).Decode(&znsResp); err != nil {
+		return nil, fmt.Errorf("lỗi khi parse response ZNS: %w", err)
+	}
+
+	// Kiểm tra response status
+	if resp.StatusCode != http.StatusOK {
+		return map[string]interface{}{
+			"success":     false,
+			"message":     fmt.Sprintf("Gửi ZNS thất bại: %d", resp.StatusCode),
+			"phone":       phone,
+			"tracking_id": trkID,
+		}, fmt.Errorf("ZNS API trả về status code %d: %s", resp.StatusCode, znsResp.Message)
+	}
+
+	// Kiểm tra error code từ ZNS
+	if znsResp.Error != 0 {
+		return map[string]interface{}{
+			"success":     false,
+			"message":     fmt.Sprintf("ZNS error: %s", znsResp.Message),
+			"phone":       phone,
+			"tracking_id": trkID,
+		}, fmt.Errorf("ZNS API trả về error code %d: %s", znsResp.Error, znsResp.Message)
+	}
+
+	// Thành công
+	return map[string]interface{}{
+		"success":     true,
+		"message":     "Gửi ZNS thành công",
+		"data":        znsResp.Data,
+		"phone":       phone,
+		"tracking_id": trkID,
+	}, nil
 }
 
 // SendOTPZNS gửi OTP qua ZNS
@@ -262,4 +339,121 @@ func (z *ZnsProvider) SendOTPZNS(
 	}
 
 	return result, err
+}
+
+// ZNSRefreshTokenResponse định nghĩa cấu trúc response từ API refresh token
+type ZNSRefreshTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	Error        int    `json:"error"`
+	Message      string `json:"message"`
+}
+
+// RefreshAccessToken làm mới access token cho ZNS sử dụng refresh token
+// API: https://oauth.zaloapp.com/v4/oa/access_token
+// Method: POST
+// Headers: secret_key, Content-Type: application/x-www-form-urlencoded
+// Body: refresh_token, app_id, grant_type='refresh_token'
+// Response: access_token mới và refresh_token mới
+func (z *ZnsProvider) RefreshAccessToken(ctx context.Context) (string, string, error) {
+	// Chuẩn bị form data
+	formData := url.Values{}
+	formData.Set("refresh_token", z.refreshToken)
+	formData.Set("app_id", config.Properties.OAuth.Zalo.AppID)
+	formData.Set("grant_type", "refresh_token")
+
+	// Tạo HTTP request
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"POST",
+		"https://oauth.zaloapp.com/v4/oa/access_token",
+		bytes.NewBufferString(formData.Encode()),
+	)
+	if err != nil {
+		return "", "", fmt.Errorf("lỗi khi tạo request refresh token: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("secret_key", config.Properties.OAuth.Zalo.SecretKey)
+
+	// Gửi request
+	resp, err := z.httpClient.Do(req)
+	if err != nil {
+		return "", "", fmt.Errorf("lỗi khi gửi request refresh token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Đọc response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", fmt.Errorf("lỗi khi đọc response refresh token: %w", err)
+	}
+
+	// Parse response
+	var znsResp ZNSRefreshTokenResponse
+	if err := json.Unmarshal(body, &znsResp); err != nil {
+		return "", "", fmt.Errorf("lỗi khi parse response refresh token: %w", err)
+	}
+
+	// Kiểm tra response status
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("refresh token thất bại với status code %d: %s", resp.StatusCode, znsResp.Message)
+	}
+
+	// Kiểm tra error code từ Zalo
+	if znsResp.Error != 0 {
+		return "", "", fmt.Errorf("zalo API trả về error code %d: %s", znsResp.Error, znsResp.Message)
+	}
+
+	// Kiểm tra access token và refresh token có hợp lệ không
+	if znsResp.AccessToken == "" || znsResp.RefreshToken == "" {
+		return "", "", fmt.Errorf("refresh token trả về access_token hoặc refresh_token rỗng")
+	}
+
+	// Cập nhật access token và refresh token mới vào instance
+	z.accessToken = znsResp.AccessToken
+	z.refreshToken = znsResp.RefreshToken
+
+	// Lưu tokens mới vào Redis để persist
+	if err := z.saveTokensToRedis(ctx, znsResp.AccessToken, znsResp.RefreshToken); err != nil {
+		fmt.Printf("⚠️ [ZNS] Warning: Failed to save tokens to Redis: %v\n", err)
+		// Không return error vì token đã được cập nhật trong memory
+	}
+
+	// Log thành công
+	fmt.Printf("✅ [ZNS] Refresh token thành công. Access token expires in: %d seconds\n", znsResp.ExpiresIn)
+
+	return znsResp.AccessToken, znsResp.RefreshToken, nil
+}
+
+// UpdateTokens cập nhật access token và refresh token mới
+// Dùng để update token manually từ response API
+func (z *ZnsProvider) UpdateTokens(ctx context.Context, accessToken, refreshToken string) error {
+	if accessToken == "" || refreshToken == "" {
+		return fmt.Errorf("access token và refresh token không được để trống")
+	}
+
+	// Cập nhật tokens trong memory
+	z.accessToken = accessToken
+	z.refreshToken = refreshToken
+
+	// Lưu vào Redis
+	if err := z.saveTokensToRedis(ctx, accessToken, refreshToken); err != nil {
+		return fmt.Errorf("lỗi khi lưu tokens vào Redis: %w", err)
+	}
+
+	fmt.Println("✅ [ZNS] Tokens updated successfully")
+	return nil
+}
+
+// GetAccessToken lấy access token hiện tại
+func (z *ZnsProvider) GetAccessToken() string {
+	return z.accessToken
+}
+
+// GetRefreshToken lấy refresh token hiện tại
+func (z *ZnsProvider) GetRefreshToken() string {
+	return z.refreshToken
 }

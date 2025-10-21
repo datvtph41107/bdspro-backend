@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"chat/configs"
+	configs "chat/config"
 	"chat/internal/repository/orm"
 	"chat/internal/usecases"
 	"chat/models"
@@ -13,7 +13,7 @@ import (
 var repoLogger = flogging.MustGetLogger("repository")
 
 func NewRepository(db *gorm.DB) usecases.Repository {
-	switch configs.DB_TYPE {
+	switch configs.AppProperties.Database.Type {
 	case "POSTGRES":
 		err := db.AutoMigrate(&models.ConversationModel{},
 			&models.MessageModel{},

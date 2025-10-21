@@ -18,6 +18,15 @@ import (
 	"github.com/hyperledger/fabric/common/flogging"
 )
 
+// parseTimeout chuyển đổi string timeout thành time.Duration
+func parseTimeout(timeoutStr string) time.Duration {
+	duration, err := time.ParseDuration(timeoutStr)
+	if err != nil {
+		return 30 * time.Second // Default 30s
+	}
+	return duration
+}
+
 var wsLogger = flogging.MustGetLogger("ws_server")
 
 type WSServer struct {
@@ -26,13 +35,6 @@ type WSServer struct {
 
 func NewWSServer(port string) *WSServer {
 	wsLogger.Info("Initializing WebSocket server...")
-
-	config.InitConfig()
-	// db, err := postgres.NewPostgresDB(configs.DNS)
-	// if err != nil {
-	// 	logger.Fatalf("Failed to connect to database: %v", err)
-	// }
-	// repository := repository.NewRepository(db)
 
 	chatClient := client.NewChatClient()
 	wsHandler := wshandler.NewWebSocketHandler(chatClient)
@@ -44,9 +46,9 @@ func NewWSServer(port string) *WSServer {
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%s", port),
 		Handler:        handler,
-		IdleTimeout:    config.IDLE_TIMEOUT,
-		ReadTimeout:    config.READ_TIMEOUT,
-		WriteTimeout:   config.WRITE_TIMEOUT,
+		IdleTimeout:    parseTimeout(config.AppProperties.Timeout.Idle),
+		ReadTimeout:    parseTimeout(config.AppProperties.Timeout.Read),
+		WriteTimeout:   parseTimeout(config.AppProperties.Timeout.Write),
 		MaxHeaderBytes: 1 << 20,
 	}
 	go wsHandler.SubscribeToRedisChannel(constants.API_WS_CHANNEL)
