@@ -41,11 +41,26 @@ func (client *NotificationClient) SendReminder(c context.Context, customerID uin
 // }
 
 func (client *NotificationClient) SendNotification(ctx context.Context, noti *base_dto.NotificationDTO) error {
-	return nil
+	if client.NotificationClient == nil {
+		return nil
+	}
+	return client.NotificationClient.CreateNotification(ctx, noti.Title, noti.Message, int32(noti.Type), "", noti.UserID)
 }
 
 func (client *NotificationClient) SendBatchNotification(ctx context.Context, noti *base_dto.NotificationBatchDTO) error {
-	return nil
+	if client.NotificationClient == nil {
+		return nil
+	}
+	// Convert to protobuf format
+	_noti := &_dto.NotificationBatchDTO{}
+	for _, data := range noti.Datas {
+		_noti.Datas = append(_noti.Datas, _dto.NotificationDTO{
+			Title:   data.Title,
+			Message: data.Message,
+			Type:    data.Type,
+		})
+	}
+	return client.NotificationClient.SendBatchNotification(ctx, _noti)
 }
 
 func (client *NotificationClient) CreateCRMHistory(ctx context.Context, history *base_dto.HistoryDTO) error {

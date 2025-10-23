@@ -53,7 +53,7 @@ func (g *OAuthGoogle) HandleCallback(c *gin.Context, accessToken string, state s
 		return nil, err
 	}
 
-	return g.RegisterOrLogin(c, userInfo, nil)
+	return g.RegisterOrLogin(c, userInfo, &dto.OtpVerifyRequest{})
 }
 
 func (g *OAuthGoogle) HandleCallbackWithDeviceInfo(c context.Context, accessToken string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
@@ -136,6 +136,9 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		existingUser = createdUser
 	}
 
+	if existingUser.UserID == 0 {
+		return g.AuthService.ResponseLogin(existingUser, nil, 0), nil
+	}
 	// Nếu không có otpReq thì tạo mặc định
 	if otpReq == nil {
 		otpReq = &dto.OtpVerifyRequest{}
@@ -152,6 +155,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	g.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Google OAuth")
 
 	response := g.AuthService.ResponseLogin(existingUser, profile, session.SessionID)
-	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	response.RefreshToken = refreshToken         // Set refreshToken vào response body
+	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	return response, nil
 }

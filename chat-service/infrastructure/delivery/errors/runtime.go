@@ -73,3 +73,11 @@ func ConversationAlreadyExists(details ...protoadapt.MessageV1) error {
 func Unauthorized() error {
 	return NewError(int32(401), errors.New("Unauthorized"))
 }
+
+func CannotLeavePrivateChat() error {
+	return NewError(int32(CannotLeavePrivateChatCode), errors.New("Không thể rời khỏi cuộc trò chuyện 1-1. Chỉ có thể rời khỏi nhóm chat."))
+}
+
+func CannotModifyPrivateChat() error {
+	return NewError(int32(CannotModifyPrivateChatCode), errors.New("Không thể thêm hoặc xóa thành viên trong cuộc trò chuyện 1-1."))
+}

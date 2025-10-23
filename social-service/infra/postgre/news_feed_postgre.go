@@ -122,6 +122,7 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Group("news_feeds.id, tl.created_at, tl.dis_like").
+		Where("news_feeds.deleted_at is null and news_feeds.visibility = 10 and news_feeds.created_by = ?", userId).
 		Scan(&newsFeeds).Error
 	if err != nil {
 		return nil, 0, err

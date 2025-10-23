@@ -208,6 +208,7 @@ services:
   social:
     build: ./social-service
     container_name: social
+    command: ["./main", "grpc"]
     networks:
       - internal
 

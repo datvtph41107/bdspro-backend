@@ -1104,6 +1104,10 @@
           "type": "string",
           "format": "uint64",
           "title": "ID của auth_method có provider ADMIN (password authentication)"
+        },
+        "referralCode": {
+          "type": "string",
+          "title": "Mã giới thiệu của user"
         }
       }
     },

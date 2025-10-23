@@ -705,6 +705,7 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 		// RentStatus:     enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
 		RentVisibility: enums.EVisibility(req.RentVisibility),
+		Visibility:     enums.EVisibility(req.Visibility),
 		OwnerType:      req.OwnerType,
 		OwnerId:        req.OwnerId,
 	}

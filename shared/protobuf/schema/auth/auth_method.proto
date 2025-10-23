@@ -212,6 +212,7 @@ message AuthSuccessResponse {
     uint64 organizationId = 9;
     string role = 10;
     uint64 passwordAuthId = 11; // ID của auth_method có provider ADMIN (password authentication)
+    string referralCode = 12; // Mã giới thiệu của user
 }
 
 message ResendOTPRequest {

@@ -83,7 +83,7 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 			"Số điện thoại không đúng",
 		)
 	}
-
+	existed := false
 	oauth, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
 	if err == nil && oauth != nil {
 		// User đã tồn tại - gửi OTP
@@ -97,6 +97,7 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 		if err != nil {
 			return nil, err
 		}
+		existed = oauth.UserID != 0
 		s.SendNewOTP(c, param.OTP, otp.Phone) // todo
 	} else {
 		// Bắt buộc phải có họ tên khi đăng ký
@@ -108,8 +109,6 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 			return nil, err
 		}
 	}
-
-	existed := oauth != nil && oauth.UserID != 0
 
 	return &dto.RequestLoginResponse{
 		AuthID:   oauth.ID,
@@ -284,7 +283,8 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	// Lấy passwordAuthId (auth_method có provider ADMIN)
 	response := s.ResponseLogin(e, infoEntity, newSession.SessionID)
-	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	response.RefreshToken = refreshToken            // Set refreshToken vào response body
+	response.ReferralCode = infoEntity.ReferralCode // Set mã giới thiệu vào response
 	if infoEntity.ProfileID != 0 {
 		passwordAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(c, infoEntity.ProfileID, "ADMIN")
 		if err == nil && passwordAuth != nil {
@@ -370,21 +370,18 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	// Lấy timestamp từ cache
 	cachedTimestamp, err := s.CacheProvider.GetToken(c, props.AuthID)
 	if err != nil {
-		log.Printf("⚠️ [RefreshToken] Không tìm thấy token trong cache cho authID %d: %v", props.AuthID, err)
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
-		}
-	}
-
-	// Validate token bằng cách so sánh Unix timestamp (UTC)
-	invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
-	if invalidToken {
-		log.Printf("⚠️ [RefreshToken] Token không hợp lệ cho authID %d. IssuedAt: %s, CachedTime: %s",
-			props.AuthID, props.IssuedAt.Format(time.RFC3339), cachedTimestamp)
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
+		log.Printf("⚠️ [RefreshToken] Không tìm thấy token trong cache cho authID %d: %v. Bỏ qua kiểm tra.", props.AuthID, err)
+		// Không tìm thấy trong cache thì bỏ qua kiểm tra, tiếp tục xử lý
+	} else {
+		// Validate token bằng cách so sánh Unix timestamp (UTC)
+		invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
+		if invalidToken {
+			log.Printf("⚠️ [RefreshToken] Token không hợp lệ cho authID %d. IssuedAt: %s, CachedTime: %s",
+				props.AuthID, props.IssuedAt.Format(time.RFC3339), cachedTimestamp)
+			return nil, &_routes.Except{
+				Code:    401,
+				Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
+			}
 		}
 	}
 
@@ -599,6 +596,7 @@ func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam
 	}
 
 	// Tạo UserOTPEntity mới
+	now := time.Now()
 	otpEntity := &domain.UserOTPEntity{
 		OTP: _utils.GenerateOTP(),
 		IdDomain: domain.IdDomain{
@@ -607,6 +605,7 @@ func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam
 		// AuthID:       oauthId,
 		OTPSendTime:  0,
 		OTPCheckTime: 0,
+		OTPDate:      &now, // Set thời gian tạo OTP
 	}
 
 	return &dto.AuthParam{
@@ -624,6 +623,12 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEnt
 	otpEntity.OTPSendTime += 1
 	otpEntity.OTP = otp
 	otpEntity.Activate = false
+
+	// Set thời gian gửi OTP (để validate LIMIT_NEXT_TIME)
+	now := time.Now()
+	otpEntity.OTPDate = &now
+
+	// Set thời gian hết hạn
 	t := time.Now().Add(time.Duration(s.properties.ExpiredAfterSec) * time.Second)
 	otpEntity.ExpiredTime = &t
 
@@ -920,7 +925,8 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	}()
 
 	response := s.ResponseLogin(authEntity, profile, sessionEntity.SessionID)
-	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	response.RefreshToken = refreshToken         // Set refreshToken vào response body
+	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	return response, nil
 }
 
@@ -1045,6 +1051,7 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 		// Email:          profile.Email,
 		// Phone:          profile.Phone,
 		OrganizationID: clientResponse.OrganizationId,
+		ReferralCode:   profile.ReferralCode, // Mã giới thiệu
 	}
 
 	return response, nil
@@ -1144,7 +1151,8 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	adminProfile.RoleType = enums.ERoleAdmin
 	// Tạo response với đầy đủ thông tin
 	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
-	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	response.RefreshToken = refreshToken              // Set refreshToken vào response body
+	response.ReferralCode = adminProfile.ReferralCode // Set mã giới thiệu vào response
 	response.Role = enums.RoleMap[adminProfile.RoleType]
 	response.Username = adminAuthEntity.AuthName
 
@@ -1622,7 +1630,8 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 
 	// Lấy passwordAuthId (chính là auth_method hiện tại)
 	response := s.ResponseLogin(authEntity, profile, newSession.SessionID)
-	response.RefreshToken = refreshToken // Set refreshToken vào response body
+	response.RefreshToken = refreshToken         // Set refreshToken vào response body
+	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	response.PasswordAuthId = authEntity.ID
 
 	// Ghi log admin history

@@ -125,6 +125,7 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 		OrganizationId: result.OrganizationID,
 		Role:           result.Role,
 		PasswordAuthId: result.PasswordAuthId,
+		ReferralCode:   result.ReferralCode, // Mã giới thiệu
 	}
 
 	return response, nil
@@ -345,6 +346,7 @@ func (h *AuthHandler) QRConfirm(ctx context.Context, req *authpb.QRConfirmReques
 		ProfileId:    result.ProfileID,
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
+		ReferralCode: result.ReferralCode, // Mã giới thiệu
 	}, nil
 }
 
@@ -374,7 +376,8 @@ func (h *AuthHandler) SwitchOrganization(ctx context.Context, req *authpb.Switch
 		// Avatar:         result.Avatar,
 		// Email:          result.Email,
 		// Phone:          result.Phone,
-		AccessToken: result.AccessToken,
+		AccessToken:  result.AccessToken,
+		ReferralCode: result.ReferralCode, // Mã giới thiệu
 	}, nil
 }
 
@@ -423,6 +426,7 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequ
 		Role:           result.Role,
 		AccessToken:    result.AccessToken,
 		RefreshToken:   result.RefreshToken,
+		ReferralCode:   result.ReferralCode, // Mã giới thiệu
 	}, nil
 }
 
@@ -911,6 +915,7 @@ func (h *AuthHandler) LoginWithPassword(ctx context.Context, req *authpb.LoginWi
 		OrganizationId: result.OrganizationID,
 		Role:           result.Role,
 		PasswordAuthId: result.PasswordAuthId,
+		ReferralCode:   result.ReferralCode, // Mã giới thiệu
 	}, nil
 }
 

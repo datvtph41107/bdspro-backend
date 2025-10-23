@@ -431,6 +431,7 @@ message ProductSaveRequest {
 	uint32 ownerType = 27;
   uint64 id = 28;
   uint64 ownerId = 29;
+  uint32 visibility = 30;
 }
 
 

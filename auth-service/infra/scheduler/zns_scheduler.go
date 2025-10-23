@@ -25,8 +25,8 @@ func NewZnsScheduler(znsProvider provider.IZnsProvider) *ZnsScheduler {
 func (s *ZnsScheduler) Start() {
 	log.Println("🔧 [ZNS Scheduler] Starting ZNS Token Refresh Scheduler...")
 
-	// Chạy ngay lần đầu tiên khi khởi động (optional)
-	// s.refreshTokenJob()
+	// Chạy ngay lần đầu tiên khi khởi động
+	s.refreshTokenJob()
 
 	// Khởi động goroutine để schedule job chạy vào 00:00 mỗi ngày
 	go s.scheduleDaily()

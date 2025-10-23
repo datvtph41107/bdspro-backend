@@ -166,6 +166,20 @@ func (c *conversationUsecases) DeleteRoom(ctx context.Context, conversationId ui
 func (c *conversationUsecases) LeaveRoom(ctx context.Context, conversationId uint64) error {
 	currentUserId := utils.GetCurrentUserID(ctx)
 
+	// Lấy thông tin conversation để kiểm tra loại
+	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	if conversation == nil {
+		return errors.ConversationNotFound()
+	}
+
+	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép rời
+	if conversation.Type == models.ConversationTypePrivate {
+		return errors.CannotLeavePrivateChat()
+	}
+
 	participant, err := c.repo.FindParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err

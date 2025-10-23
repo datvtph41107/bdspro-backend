@@ -20,7 +20,7 @@ REMOTE_PATH=/root/$WORKSPACE_NAME
 
 if [ "$1" = "compose" ]; then
   REMOTE_HOST=14.225.205.222
-  echo "đẩy docker-compose.yml lên server..." $REMOTE_PATH
+  echo "đẩy docker compose file lên server..." $REMOTE_PATH
   ssh ${REMOTE_USER}@${REMOTE_HOST} "
 mkdir -p ${REMOTE_PATH}
 "
@@ -162,7 +162,7 @@ echo "Đang đẩy file lên server..."
 echo $(pwd)
 
 if [ "$1" = "compose" ]; then
-  echo "đẩy docker-compose.yml lên server..."
+  echo "đẩy docker compose file lên server..."
   scp docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
   exit 0  
 fi
@@ -218,10 +218,10 @@ fi
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}
-docker-compose build --no-cache ${payload_build}
-docker-compose up -d ${payload_build}
+docker compose build --no-cache ${payload_build}
+docker compose up -d ${payload_build}
 "
-# docker-compose build --no-cache ${payload_build}
+# docker compose build --no-cache ${payload_build}
 
 # # SSH vào server và chạy lệnh build (giả sử bạn có file build.sh trong thư mục remote)
 # echo "Đang chạy build trên server..."

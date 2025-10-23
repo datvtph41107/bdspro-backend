@@ -15,6 +15,7 @@ type ContactRepo interface {
 	Delete(c context.Context, id uint64) error
 	GetByID(c context.Context, id uint64) (*domain.ContactEntity, error)
 	GetByProfileID(c context.Context, profileId uint64, currentUserId uint64, ownerType base_enum.EOwnerOf) (*domain.ContactEntity, error)
+	GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.ContactEntity, error)
 	Existed(c context.Context, followId uint64) error
 	Bulk(c context.Context, entities []domain.ContactEntity) ([]domain.ContactEntity, error)
 	ExistByProfile(c context.Context, profileId uint64) (bool, error)

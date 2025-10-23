@@ -58,6 +58,7 @@ message HandleCallbackResponse {
     string email = 7;
     string phone = 8;
     string provider = 9;
+    string referralCode = 10; // Mã giới thiệu của user
 }
 
 message GetConnectedAccountsRequest {

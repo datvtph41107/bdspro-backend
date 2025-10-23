@@ -17,4 +17,6 @@ var (
 	PermissionDeniedCode          = 4014
 	NotMessageOwnerCode           = 4015
 	ConversationAlreadyExistsCode = 4016
+	CannotLeavePrivateChatCode    = 4017
+	CannotModifyPrivateChatCode   = 4018
 )

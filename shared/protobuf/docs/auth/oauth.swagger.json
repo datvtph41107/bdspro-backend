@@ -228,6 +228,10 @@
         },
         "provider": {
           "type": "string"
+        },
+        "referralCode": {
+          "type": "string",
+          "title": "Mã giới thiệu của user"
         }
       }
     },

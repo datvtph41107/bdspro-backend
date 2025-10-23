@@ -80,20 +80,41 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 		}
 	}
 
-	// ok, _ := s.contact.ExistByProfile(c, receiverId)
-	// if !ok {
-	// 	return nil, &_routes.Except{
-	// 		Code:    400,
-	// 		Message: "Người dùng không tồn tại hoặc chưa đăng ký",
-	// 	}
-	// }
+	// Lấy thông tin cả 2 người
+	currentUser, _ := s.userClient.GetProfileById(c, profileId)
+	receiverUser, _ := s.userClient.GetProfileById(c, receiverId)
 
+	if receiverUser == nil {
+		return nil, &_routes.Except{
+			Code:    400,
+			Message: "Người dùng không tồn tại",
+		}
+	}
+
+	// Tạo friend request
 	e := &domain.FriendEntity{
 		Status:     enums.FriendStatusPending,
 		ReceiverID: receiverId,
 	}
 	_db.SaveWithContext(c, &e)
 
+	// Tạo contact cho người gửi (lưu thông tin người nhận)
+	s.contact.GetOrCreateByProfileID(c, receiverId, profileId, base_enum.EOwnerOfMember,
+		receiverUser.FullName, receiverUser.Phone, receiverUser.Avatar)
+
+	// Tạo contact cho người nhận (lưu thông tin người gửi)
+	currentFullName := ""
+	currentPhone := ""
+	currentAvatar := ""
+	if currentUser != nil {
+		currentFullName = currentUser.FullName
+		currentPhone = currentUser.Phone
+		currentAvatar = currentUser.Avatar
+	}
+	s.contact.GetOrCreateByProfileID(c, profileId, receiverId, base_enum.EOwnerOfMember,
+		currentFullName, currentPhone, currentAvatar)
+
+	// Background tasks
 	ctxClone := _utils.CloneContext(c)
 	go func() {
 		profileId := _utils.GetProfileIdWithContext(ctxClone)
@@ -103,11 +124,12 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 			fullName = currentUser.FullName
 		}
 
-		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, base_enum.EOwnerOfOrgnization)
+		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, base_enum.EOwnerOfMember)
 		if err != nil {
 			return
 		}
 
+		// Tạo History
 		s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
 			Title:      fullName + " đã gửi lời mời kết bạn",
 			Note:       []string{"", fullName, " đã gửi lời mời kết bạn tới ", contact.FullName},
@@ -116,6 +138,14 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 			ActionType: base_enum.HistoryContactFriend,
 			OwnerID:    &profileId,
 			OwnerOf:    base_enum.EOwnerOfMember,
+		})
+
+		// Gửi Notification cho người nhận
+		s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
+			Title:   "Lời mời kết bạn",
+			Message: fullName + " đã gửi lời mời kết bạn cho bạn",
+			Type:    10, // FriendRequest
+			UserID:  receiverId,
 		})
 	}()
 
@@ -173,7 +203,75 @@ func (s *FriendUsecase) ChangeStatus(c context.Context, requestId uint64, status
 	// 	return s.repo.UpdateStatusById(request.Status, id, &t)
 	// }
 
-	return 0, s.repo.UpdateStatusById(c, status, requestEntity.ID, nil)
+	// Update status
+	updateErr := s.repo.UpdateStatusById(c, status, requestEntity.ID, nil)
+	if updateErr != nil {
+		return 0, updateErr
+	}
+
+	// Gửi notification và tạo history khi accept hoặc reject
+	ctxClone := _utils.CloneContext(c)
+	go func() {
+		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
+		fullName := ""
+		if currentUser != nil {
+			fullName = currentUser.FullName
+		}
+
+		senderID := uint64(0)
+		if requestEntity.CreatedBy != nil {
+			senderID = *requestEntity.CreatedBy
+		}
+
+		if senderID == 0 {
+			return
+		}
+
+		contact, err := s.contact.GetByProfileID(ctxClone, senderID, profileId, base_enum.EOwnerOfMember)
+		if err != nil {
+			return
+		}
+
+		if status == enums.FriendStatusAccepted {
+			// Chấp nhận lời mời
+			s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
+				Title:      fullName + " đã chấp nhận lời mời kết bạn",
+				Note:       []string{"", fullName, " đã chấp nhận lời mời kết bạn từ ", contact.FullName},
+				TargetId:   contact.ID,
+				TargetType: base_enum.TargetHistoryContact,
+				ActionType: base_enum.HistoryContactFriend,
+				OwnerID:    &profileId,
+				OwnerOf:    base_enum.EOwnerOfMember,
+			})
+
+			s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
+				Title:   "Chấp nhận lời mời kết bạn",
+				Message: fullName + " đã chấp nhận lời mời kết bạn của bạn",
+				Type:    20, // FriendResponse
+				UserID:  senderID,
+			})
+		} else if status == enums.FriendStatusReject {
+			// Từ chối lời mời
+			s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
+				Title:      fullName + " đã từ chối lời mời kết bạn",
+				Note:       []string{"", fullName, " đã từ chối lời mời kết bạn từ ", contact.FullName},
+				TargetId:   contact.ID,
+				TargetType: base_enum.TargetHistoryContact,
+				ActionType: base_enum.HistoryContactFriend,
+				OwnerID:    &profileId,
+				OwnerOf:    base_enum.EOwnerOfMember,
+			})
+
+			s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
+				Title:   "Từ chối lời mời kết bạn",
+				Message: fullName + " đã từ chối lời mời kết bạn của bạn",
+				Type:    20, // FriendResponse
+				UserID:  senderID,
+			})
+		}
+	}()
+
+	return 0, nil
 }
 
 func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId uint64) (int, error) {

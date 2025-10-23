@@ -15,8 +15,8 @@ type UserOTPEntity struct {
 	OTP          string     `gorm:"size:10" json:"otp"`
 	OTPSendTime  int        `gorm:"default:0" json:"otpSendTime"`
 	OTPCheckTime int        `gorm:"default:0" json:"otpCheckTime"`
-	OTPDate      *time.Time `gorm:"autoUpdateTime;type:timestamptz" json:"otpDate"`
-	ExpiredTime  *time.Time `json:"expiredTime;type:timestamptz"`
+	OTPDate      *time.Time `gorm:"type:timestamptz" json:"otpDate"` // Bỏ autoUpdateTime để tránh update nhầm khi check OTP
+	ExpiredTime  *time.Time `gorm:"type:timestamptz" json:"expiredTime"`
 	Activate     bool       `gorm:"default:false" json:"activate"`
 	// CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	// UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updatedAt"`

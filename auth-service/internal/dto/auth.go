@@ -172,6 +172,7 @@ type AuthLoginResponse struct {
 	OrganizationID uint64 `json:"organizationId,omitempty"`
 	FullName       string `json:"fullName"`                 // OAuth fullname
 	PasswordAuthId uint64 `json:"passwordAuthId,omitempty"` // ID của auth_method có provider ADMIN
+	ReferralCode   string `json:"referralCode,omitempty"`   // Mã giới thiệu của user
 	// Avatar         string `json:"avatar"`
 	// Phone          string `json:"phone"`
 	// Email          string `json:"email"`

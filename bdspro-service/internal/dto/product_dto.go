@@ -49,6 +49,7 @@ type ProductSaveRequest struct {
 	AssetCreate     *AssetCreateWithProduct `json:"asset"`
 	SaleVisibility  enums.EVisibility       `json:"saleVisibility"`
 	RentVisibility  enums.EVisibility       `json:"rentVisibility"`
+	Visibility      enums.EVisibility       `json:"visibility"`
 	OwnerType       enums.EOwnerOf          `json:"ownerType"`
 	OwnerId         uint64                  `json:"ownerId"`
 	// SaleStatus      enums.EProductStatus    `json:"saleStatus"`

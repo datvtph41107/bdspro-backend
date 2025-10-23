@@ -95,9 +95,11 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 		if otpEntity.OTPDate != nil {
 			nextTime := otpEntity.OTPDate.Add(time.Duration(s.properties.LockSendAfter) * time.Second)
 			if time.Now().Before(nextTime) {
-				return _errors.ReturnError(
+				seconds := int32(time.Until(nextTime).Seconds())
+				return _errors.ReturnErrorWithSecond(
 					int32(code),
-					"Hãy thử lại sau "+fmt.Sprintf("%.0f", time.Until(nextTime).Seconds())+"s",
+					"Hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s",
+					seconds,
 				)
 			}
 		}
@@ -105,9 +107,11 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 		if otpEntity.OTPDate != nil {
 			nextTime := otpEntity.OTPDate.Add(time.Duration(s.properties.LockRequestAfter) * time.Second)
 			if time.Now().Before(nextTime) {
-				return _errors.ReturnError(
+				seconds := int32(time.Until(nextTime).Seconds())
+				return _errors.ReturnErrorWithSecond(
 					int32(code),
-					"Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau "+fmt.Sprintf("%.0f", time.Until(nextTime).Seconds())+"s",
+					"Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s",
+					seconds,
 				)
 			}
 		}

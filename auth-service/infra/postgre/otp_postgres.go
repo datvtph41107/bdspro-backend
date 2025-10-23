@@ -58,8 +58,9 @@ func (r *OTPPostgres) UpdateOTP(ctx context.Context, otp *domain.UserOTPEntity) 
 			"otp":            otp.OTP,
 			"otp_send_time":  otp.OTPSendTime,
 			"otp_check_time": otp.OTPCheckTime,
-			"activate":       otp.Activate,
+			"otp_date":       otp.OTPDate,
 			"expired_time":   otp.ExpiredTime,
+			"activate":       otp.Activate,
 		}).
 		Error
 }

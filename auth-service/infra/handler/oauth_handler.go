@@ -182,7 +182,8 @@ func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCal
 		// Avatar:       result.Avatar,
 		// Email:        result.Email,
 		// Phone:        result.Phone,
-		Provider: req.Provider,
+		Provider:     req.Provider,
+		ReferralCode: result.ReferralCode, // Mã giới thiệu
 	}, nil
 }
 

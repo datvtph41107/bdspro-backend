@@ -24,7 +24,7 @@ func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.Ty
 	if typeMessage == enums.Follow {
 		return []string{"", attachData[0], " đã theo dõi bạn"}
 	}
-	if typeMessage == enums.FriendRequest {
+	if typeMessage == enums.FriendRequest && len(attachData) > 0 {
 		return []string{"", attachData[0], " đã gửi lời mời kết bạn cho bạn"}
 	}
 	if typeMessage == enums.FriendRequest {

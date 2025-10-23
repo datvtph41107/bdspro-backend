@@ -21,6 +21,20 @@ func NewParticipantUsecases(repository Repository) *participantUsecases {
 }
 
 func (p *participantUsecases) RemoveUser(ctx context.Context, conversationId uint64, userId uint64) error {
+	// Lấy thông tin conversation để kiểm tra loại
+	conversation, err := p.repo.GetConversationByID(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	if conversation == nil {
+		return errors.ConversationNotFound()
+	}
+
+	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép xóa thành viên
+	if conversation.Type == models.ConversationTypePrivate {
+		return errors.CannotModifyPrivateChat()
+	}
+
 	participant, err := p.repo.FindParticipant(ctx, conversationId, userId)
 	if err != nil {
 		return err
@@ -59,7 +73,21 @@ func (p *participantUsecases) GetListParticipant(ctx context.Context, conversati
 }
 
 func (p *participantUsecases) AddUser(ctx context.Context, conversationId uint64, userId uint64) error {
-	err := p.validateConversationAndCurrentUser(ctx, conversationId)
+	// Lấy thông tin conversation để kiểm tra loại
+	conversation, err := p.repo.GetConversationByID(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	if conversation == nil {
+		return errors.ConversationNotFound()
+	}
+
+	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép thêm thành viên
+	if conversation.Type == models.ConversationTypePrivate {
+		return errors.CannotModifyPrivateChat()
+	}
+
+	err = p.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return err
 	}

@@ -801,6 +801,10 @@
         "ownerId": {
           "type": "string",
           "format": "uint64"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1685,6 +1689,10 @@
         "ownerId": {
           "type": "string",
           "format": "uint64"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

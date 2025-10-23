@@ -123,7 +123,7 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto dt
 		Joins("left join region district on district.id = assets.district_id").
 		Joins("left join region ward on ward.id = assets.ward_id").
 		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id and legal.deleted_at is null").
-		Where("assets.deleted_at is null and assets.owner_id = ? and assets.owner_type = ?", ownerID, ownerType).
+		Where("assets.deleted_at is null and assets.owner_id = ? and assets.owner_of = ?", ownerID, ownerType).
 		Group("assets.id, assets.created_by, province.id, district.id, ward.id, property_type.id")
 
 	return r.QuerySearch(query, dto)

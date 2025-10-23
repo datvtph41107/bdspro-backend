@@ -50,7 +50,12 @@ func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType ba
 		END AS status`).
 		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_of = ?", profileId, ownerType)
 
-	if dto.FriendStatus != nil {
+	if dto.Text != "" {
+		tx = tx.Where("(tb_contact.full_name ILIKE ? OR tb_contact.phone ILIKE ? OR tb_contact.email ILIKE ?)",
+			"%"+dto.Text+"%", "%"+dto.Text+"%", "%"+dto.Text+"%")
+	}
+
+	if len(dto.FriendStatus) > 0 {
 		tx = tx.Where("fr.status IN (?)", dto.FriendStatus)
 	}
 	// if dto.Following != nil {
@@ -218,6 +223,36 @@ func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, cur
 		return nil, result.Error
 	}
 	return &contact, nil
+}
+
+func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.ContactEntity, error) {
+	// Tìm contact hiện tại
+	contact, err := r.GetByProfileID(c, profileId, ownerId, ownerType)
+	if err == nil && contact != nil {
+		return contact, nil
+	}
+
+	// Nếu không tồn tại, tạo mới
+	newContact := &domain.ContactEntity{
+		FullName:  fullName,
+		Phone:     phone,
+		Avatar:    avatar,
+		ProfileID: &profileId,
+		OwnerID:   ownerId,
+		OwnerOf:   ownerType,
+	}
+
+	result := r.GetDB(c).Create(newContact)
+	if result.Error != nil {
+		// Nếu lỗi unique constraint, thử get lại
+		contact, err = r.GetByProfileID(c, profileId, ownerId, ownerType)
+		if err == nil && contact != nil {
+			return contact, nil
+		}
+		return nil, result.Error
+	}
+
+	return newContact, nil
 }
 
 func (r *PostgreContact) UpdateNote(c context.Context, id uint64, note string) error {

@@ -77,21 +77,43 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 	entity.PrivateData = nil
 	entity.HouseInfo = nil
 
-	err := GetDB(c, r.DB).Model(entity).
+	// Sử dụng map để update các trường cụ thể, bao gồm cả zero values
+	updateData := map[string]interface{}{
+		"parent_id":        entity.ParentId,
+		"asset_id":         entity.AssetId,
+		"property_type_id": entity.PropertyTypeId,
+		"doc_type_id":      entity.DocTypeId,
+		"visibility":       entity.Visibility,
+		"name":             entity.Name,
+		"code":             entity.Code,
+		"category_id":      entity.CategoryID,
+		"area":             entity.Area,
+		"position_url":     entity.PositionUrl,
+		"description":      entity.Description,
+		"last_price_id":    entity.LastPriceID,
+		"apartment_id":     entity.ApartmentID,
+		"source_type":      entity.SourceType,
+		"note":             entity.Note,
+		"transaction_type": entity.TransactionType,
+		"sale_status":      entity.SaleStatus,
+		"sale_visibility":  entity.SaleVisibility,
+		"rent_status":      entity.RentStatus,
+		"rent_visibility":  entity.RentVisibility,
+		"province_id":      entity.ProvinceID,
+		"district_id":      entity.DistrictID,
+		"ward_id":          entity.WardID,
+		"address":          entity.Address,
+		"google_map_link":  entity.GoogleMapLink,
+		"archived":         entity.Archived,
+	}
+
+	err := GetDB(c, r.DB).Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
-		Updates(entity).Error
+		Updates(updateData).Error
 
 	entity.Price = price
 	entity.PrivateData = privateInfo
 	entity.HouseInfo = houseInfo
-
-	// if err == nil {
-	// 	err = r.PriceRepo.UpdatePrice(c, id, price)
-	// }
-	// if err != nil {
-	// 	return err
-	// }
-	// err = r.ProductPrivate.UpdateInfo(c, id, privateInfo)
 
 	return err
 }
@@ -127,12 +149,12 @@ func (r *GormUserProductRepo) UpdateAsset(asset *domain.Asset) error {
 
 func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error) {
 	// Struct tạm thời để map dữ liệu từ query
-	type ProductWithPostIds struct {
-		domain.Product
-		PostIds pq.Int64Array `gorm:"column:post_ids" json:"post_ids"`
-	}
+	// type ProductWithPostIds struct {
+	// 	domain.Product
+	// 	PostIds pq.Int64Array `gorm:"column:post_ids" json:"post_ids"`
+	// }
 
-	var tempResult ProductWithPostIds
+	var tempResult domain.Product
 	price := r.PriceRepo.FindByProductId(ctx, &id)
 
 	err := GetDB(ctx, r.DB).
@@ -175,9 +197,9 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 	for i, id := range tempResult.PostIds {
 		postIds[i] = uint64(id)
 	}
-	tempResult.Product.PostIds = postIds
+	// tempResult.Product.PostIds = postIds
 
-	entity := &tempResult.Product
+	entity := &tempResult
 	entity.Price = price
 
 	if entity.Apartment != nil {
@@ -952,7 +974,11 @@ func (r *GormUserProductRepo) GetUserProducts(ctx context.Context, req *dto.User
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
 			return db.Order("product_price.created_at asc")
 		}).
-		Where("pu.profile_id = ? AND products.deleted_at IS NULL", req.UserID)
+		Preload("MediaList", "deleted_at IS NULL").
+		Preload("Province", "deleted_at IS NULL").
+		Preload("District", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Where("(pu.profile_id = ? or owner_id = ?) AND products.visibility = ? AND products.deleted_at IS NULL", req.UserID, req.UserID, enums.EVisiblePublic)
 
 	// Apply filters
 	if req.Text != "" {
