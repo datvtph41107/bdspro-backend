@@ -170,9 +170,9 @@ func (r *AdminAssetPostgres) GetAdminAssets(ctx context.Context, req *dto.AdminA
 		query = query.Where("province_id IN ?", req.ProvinceIds)
 	}
 
-	if len(req.DistrictIds) > 0 {
-		query = query.Where("district_id IN ?", req.DistrictIds)
-	}
+	// if len(req.DistrictIds) > 0 {
+	// 	query = query.Where("district_id IN ?", req.DistrictIds)
+	// }
 
 	if len(req.WardIds) > 0 {
 		query = query.Where("ward_id IN ?", req.WardIds)

@@ -474,15 +474,20 @@ func (u *AdminUsecase) DeleteUser(ctx context.Context, req *dto.DeleteUserReques
 	}
 
 	// Xóa user profile (soft delete)
-	err = u.profileRepo.DeleteUserProfile(ctx, req.ProfileID)
+	// Lấy thông tin admin đang thực hiện xóa
+	reason := "Xóa bởi admin"
+	if req.Reason != "" {
+		reason = req.Reason
+	}
+	err = u.profileRepo.DeleteUserProfile(ctx, req.ProfileID, &adminProfileID, reason)
 	if err != nil {
 		return _errors.ReturnError(int32(500), "Lỗi xóa hồ sơ người dùng")
 	}
 
-	// Xóa auth method trong auth service
-	err = u.authProvider.SoftDelete(ctx, req.ProfileID)
+	// Xóa TẤT CẢ auth method của user trong auth service
+	err = u.authProvider.DeleteAllAuthMethodsByUserId(ctx, req.ProfileID)
 	if err != nil {
-		fmt.Printf("Error deleting auth method: %v\n", err)
+		fmt.Printf("Error deleting all auth methods for user %d: %v\n", req.ProfileID, err)
 		// Không return error vì profile đã được xóa
 	}
 

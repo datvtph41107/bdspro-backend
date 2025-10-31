@@ -54,6 +54,8 @@ func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 		expirationMinutes = jwtTokenProperties.MinuteExpired
 	} else if jwtTokenProperties.Type == RefreshToken {
 		expirationMinutes = viper.GetInt64("jwt.refreshExpAfterMinutes")
+	} else if jwtTokenProperties.Type == TempToken {
+		expirationMinutes = 10 // TEMP token chỉ có hạn 10 phút
 	} else {
 		expirationMinutes = viper.GetInt64("jwt.accessExpAfterMinutes")
 	}

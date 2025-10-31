@@ -60,11 +60,11 @@ func (m *AssetMapper) MapAdminAssetItem(ctx context.Context, asset *domain.Asset
 		CreatedAt:        _utils.FormatTimeToString(asset.CreatedAt),
 		UpdatedAt:        _utils.FormatTimeToString(asset.UpdatedAt),
 		ProvinceName:     m.CommonMapper.GetProvinceName(asset.Province),
-		DistrictName:     m.CommonMapper.GetDistrictName(asset.District),
 		WardName:         m.CommonMapper.GetWardName(asset.Ward),
 		PropertyTypeName: m.CommonMapper.GetPropertyTypeName(asset.PropertyType),
 		ProductId:        asset.ProductID,
 		ProductCode:      m.CodeDataUsecase.GetProductCodePtr(ctx, asset.ProductID),
+		// DistrictName:     m.CommonMapper.GetDistrictName(asset.District),
 	}
 
 	// Set contract information (get the latest contract)

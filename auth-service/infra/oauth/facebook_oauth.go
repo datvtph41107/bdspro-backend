@@ -208,7 +208,10 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	refreshToken := s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Get user profile
-	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+	profile, err := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+	if err != nil || profile == nil {
+		return nil, fmt.Errorf("không tìm thấy thông tin người dùng")
+	}
 
 	// Ghi log admin history
 	s.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Facebook OAuth")

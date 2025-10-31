@@ -1,0 +1,65 @@
+package cmd_grpc
+
+import (
+	_middleware "common/middleware"
+	"context"
+	"fmt"
+	"hub/config"
+	"hub/wire"
+	"log"
+	"net"
+	"os"
+	hubpb "pb/types/hub"
+	"time"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+)
+
+var GrpcCmd = &cobra.Command{
+	Use:   "grpc",
+	Short: "Run the GRPC server",
+	Run: func(cmd *cobra.Command, args []string) {
+		config.LoadConfig()
+
+		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
+		os.Setenv("TZ", "Europe/London")
+		time.Local = time.FixedZone("Europe/London", 7*60*60)
+
+		app, _ := wire.InitializeApp()
+		// db.AutoMigrate()
+
+		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
+		lis, err := net.Listen("tcp", port)
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+		interceptors := grpc.ChainUnaryInterceptor(
+			_middleware.ParseGrpcMetadataContextMiddleware,
+			_middleware.UnaryRecoveryInterceptor(app.Logger),
+		)
+
+		// Load system config vào memory khi startup
+		if app.SystemConfigUsecase != nil {
+			if err := app.SystemConfigUsecase.InitializeSystemConfig(context.Background()); err != nil {
+				log.Printf("Warning: Failed to initialize system config: %v", err)
+			}
+		}
+
+		s := grpc.NewServer(interceptors)
+		hubpb.RegisterEventQueueServiceServer(s, app.EventQueueService)
+		hubpb.RegisterHubInternalServiceServer(s, app.InternalHandler)
+		hubpb.RegisterLocationServiceServer(s, app.LocationHandler)
+		hubpb.RegisterLocationV2ServiceServer(s, app.LocationV2Handler)
+		hubpb.RegisterUserGuideServiceServer(s, app.UserGuideHandler)
+		hubpb.RegisterSystemConfigServiceServer(s, app.SystemConfigHandler)
+		hubpb.RegisterFAQServiceServer(s, app.FAQHandler)
+
+		log.Printf("Listen: %v", port)
+
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("gRPC server error: %v", err)
+		}
+	},
+}

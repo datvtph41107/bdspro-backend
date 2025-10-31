@@ -19,6 +19,6 @@ type IProfileRepo interface {
 	GetUserDetailByID(ctx context.Context, profileID uint64) (*models.UserProfileEntity, error)
 	CreateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
 	UpdateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
-	DeleteUserProfile(ctx context.Context, profileID uint64) error
+	DeleteUserProfile(ctx context.Context, profileID uint64, deletedBy *uint64, reason string) error
 	UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error
 }

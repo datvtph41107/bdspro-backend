@@ -304,6 +304,18 @@ func (h *InternalHandler) GetAuthUsersByProfileIDs(ctx context.Context, req *aut
 	}, nil
 }
 
+// DeleteAuthMethodsByUserId xóa tất cả auth_method của 1 user
+func (h *InternalHandler) DeleteAuthMethodsByUserId(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+	err := h.authMethodUsecase.DeleteAllAuthMethodsByUserId(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.SubmitResponse{
+		Message: fmt.Sprintf("Đã xóa tất cả auth methods của user %d", req.Id),
+	}, nil
+}
+
 // GetAuthAdminByIds lấy thông tin admin kèm với role theo danh sách IDs
 func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.GetAuthAdminByIdsRequest) (*authpb.GetAuthAdminByIdsResponse, error) {
 	// Gọi repository để lấy admin info kèm role

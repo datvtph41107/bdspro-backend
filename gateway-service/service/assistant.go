@@ -15,10 +15,10 @@ import (
 func RegisterAssistantService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.assistant")
 	if port == "" {
-		port = "50061"
+		port = "8218"
 	}
 
-	url := common.GetPrefixProtobufUrl(env, "assistant_grpc")
+	url := common.GetPrefixProtobufUrl(env, "assistant")
 
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 

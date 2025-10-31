@@ -1277,6 +1277,14 @@
         "rentPaymentCycle": {
           "type": "integer",
           "format": "int64"
+        },
+        "saleCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentCommissionType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1407,7 +1415,7 @@
         },
         "sourceType": {
           "type": "integer",
-          "format": "int32"
+          "format": "int64"
         },
         "customerId": {
           "type": "string",
@@ -1535,6 +1543,13 @@
             "type": "object",
             "$ref": "#/definitions/bdspropbPostItem"
           }
+        },
+        "imageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "imageUrl": {
+          "type": "string"
         }
       }
     },

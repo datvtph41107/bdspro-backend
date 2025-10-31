@@ -218,8 +218,16 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		if err := s.UpdateAmenity(c, entity.ID, product.AmenityIds); err != nil {
 			return err
 		}
-		if err := s.UpdateMediaItems(c, entity.ID, product.MediaItems); err != nil {
+		mediaIDs, err := s.UpdateMediaItems(c, entity.ID, product.MediaItems)
+		if err != nil {
 			return err
+		}
+		// Gán ID của ảnh đầu tiên vào ImageId
+		if len(mediaIDs) > 0 {
+			entity.ImageId = &mediaIDs[0]
+			if err := s.ProductRepo.UpdateImageID(c, entity.ID, entity.ImageId); err != nil {
+				return err
+			}
 		}
 		if err := s.UpdateHouseInfo(c, entity.ID, houseInfoEntity); err != nil {
 			return err
@@ -258,7 +266,6 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 				PropertyTypeId: entity.PropertyTypeId,
 				Description:    entity.Description,
 				ProvinceID:     entity.ProvinceID,
-				DistrictID:     entity.DistrictID,
 				WardID:         entity.WardID,
 				PurchasePrice:  assetInfo.PurchasePrice,
 				PurchaseDate:   assetInfo.PurchaseDate,
@@ -328,8 +335,16 @@ func (s *ProductUsecase) updateProduct(contextTx context.Context, id uint64, pro
 	if err := s.UpdateAmenity(contextTx, entity.ID, product.AmenityIds); err != nil {
 		return err
 	}
-	if err := s.UpdateMediaItems(contextTx, entity.ID, product.MediaItems); err != nil {
+	mediaIDs, err := s.UpdateMediaItems(contextTx, entity.ID, product.MediaItems)
+	if err != nil {
 		return err
+	}
+	// Gán ID của ảnh đầu tiên vào ImageId
+	if len(mediaIDs) > 0 {
+		entity.ImageId = &mediaIDs[0]
+		if err := s.ProductRepo.UpdateImageID(contextTx, entity.ID, entity.ImageId); err != nil {
+			return err
+		}
 	}
 
 	houseInfoEntity := &domain.HouseInfo{}
@@ -400,46 +415,30 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 // 	return product, nil
 // }
 
-func (s *ProductUsecase) GetProductOfGroup(c context.Context, groupId uint64, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (s *ProductUsecase) GetProductOfGroup(c context.Context, groupId uint64, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
 	dto.RequestGroupId = &groupId
 	return s.searchProduct(c, dto)
 }
 
-func (s *ProductUsecase) GetProductOfCurrentUser(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (s *ProductUsecase) GetProductOfCurrentUser(c context.Context, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	dto.RequestUserId = &profileId
 	return s.searchProduct(c, dto)
 }
 
-func (s *ProductUsecase) GetProductOfCurrentOrganization(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
+func (s *ProductUsecase) GetProductOfCurrentOrganization(c context.Context, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
 	organizationId := _utils.GetOrganizationIdFromContext(c)
 	dto.RequestOrganizationId = &organizationId
 	return s.searchProduct(c, dto)
 }
 
-func (s *ProductUsecase) searchProduct(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	results, total, err := s.ProductRepo.GetProducts(c, dto)
+func (s *ProductUsecase) searchProduct(c context.Context, payload dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
+	results, total, err := s.ProductRepo.GetProducts(c, payload)
 	if err != nil {
 		return nil, 0, err
 	}
 	for i := 0; i < len(results); i++ {
-		s.MapProductStatus(c, &results[i])
-	}
-	return results, total, nil
-}
-
-func (s *ProductUsecase) SearchProductByOwner(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	// profileId := _jwt.GetProfileId(c)
-	ownerID := s.GetOwnerID(c, enums.EOwnerOfMember)
-	// if err != nil {
-	// 	return nil, 0, err
-	// }
-	results, total, err := s.ProductRepo.SearchProductWithOwner(&ownerID, *dto)
-	if err != nil {
-		return nil, 0, err
-	}
-	for i := 0; i < len(results); i++ {
-		s.MapProductStatus(c, &results[i])
+		s.MapProductStatusList(c, &results[i])
 	}
 	return results, total, nil
 }
@@ -542,7 +541,7 @@ func (s *ProductUsecase) UpdateAmenity(ctx context.Context, productID uint64, id
 	return nil
 }
 
-func (s *ProductUsecase) UpdateMediaItems(ctx context.Context, productID uint64, items []dto.MediaItem) error {
+func (s *ProductUsecase) UpdateMediaItems(ctx context.Context, productID uint64, items []dto.MediaItem) ([]uint64, error) {
 	return s.MediaRepo.UpdateProductMediaItems(ctx, productID, items)
 }
 

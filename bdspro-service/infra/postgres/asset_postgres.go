@@ -76,9 +76,9 @@ func (r *PostgreAsset) QuerySearch(query *gorm.DB, dto dto.AssetSearchRequest) *
 	if dto.ProvinceID != nil {
 		query.Where("province_id = ?", dto.ProvinceID)
 	}
-	if dto.DistrictID != nil {
-		query.Where("district_id = ?", dto.DistrictID)
-	}
+	// if dto.DistrictID != nil {
+	// 	query.Where("district_id = ?", dto.DistrictID)
+	// }
 	if dto.WardID != nil {
 		query.Where("ward_id = ?", dto.WardID)
 	}
@@ -106,9 +106,9 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto dt
 		Table("assets").
 		// Preload("LegalItems", "deleted_at IS NULL").
 		Select(`assets.*,
-		province.name as province_name, 
-		district.name as district_name, 
-		ward.name as ward_name,
+		province_v2.name as province_name, 
+		'' as district_name, 
+		ward_v2.name as ward_name,
 		property_type.name as property_type_name,
 		COALESCE(json_agg(json_build_object(
 			'id', legal.id,
@@ -119,12 +119,14 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto dt
 			'description', legal.description
 		)) FILTER (WHERE legal.asset_id = assets.id), '[]') AS legal_list`).
 		Joins("left join property_type on property_type.id = assets.property_type_id").
-		Joins("left join region province on province.id = assets.province_id").
-		Joins("left join region district on district.id = assets.district_id").
-		Joins("left join region ward on ward.id = assets.ward_id").
+		Joins("join ward_v2 on ward_v2.id = assets.ward_id").
+		Joins("join province_v2 on province_v2.id = assets.province_id").
+		// Joins("left join region province on province.id = assets.province_id").
+		// Joins("left join region district on district.id = assets.district_id").
+		// Joins("left join region ward on ward.id = assets.ward_id").
 		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id and legal.deleted_at is null").
 		Where("assets.deleted_at is null and assets.owner_id = ? and assets.owner_of = ?", ownerID, ownerType).
-		Group("assets.id, assets.created_by, province.id, district.id, ward.id, property_type.id")
+		Group("assets.id, assets.created_by, province_v2.name, ward_v2.name, property_type.id")
 
 	return r.QuerySearch(query, dto)
 
@@ -239,9 +241,9 @@ func (r *PostgreAsset) Update(ctx context.Context, id uint64, asset *domain.Asse
 		Model(&domain.Asset{}).
 		Where("id = ? and deleted_at is null", id).
 		Updates(map[string]interface{}{
-			"name":               asset.Name,
-			"ward_id":            asset.WardID,
-			"district_id":        asset.DistrictID,
+			"name":    asset.Name,
+			"ward_id": asset.WardID,
+			// "district_id":        asset.DistrictID,
 			"province_id":        asset.ProvinceID,
 			"split_merge_status": asset.SplitMergeStatus,
 			"purchase_price":     asset.PurchasePrice,
@@ -285,7 +287,7 @@ func (r *PostgreAsset) GetByID(id uint64) (*domain.Asset, error) {
 		Where("id = ? and assets.deleted_at is null", id).
 		Preload("PropertyType", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
 		Preload("Province", "deleted_at IS NULL").
 		Preload("Product", "deleted_at IS NULL").
 		Preload("Product.MediaList", "deleted_at IS NULL").
@@ -339,22 +341,22 @@ func (r *PostgreAsset) SplitAsset(ctx context.Context, id uint64, splitData map[
 
 	// Example logic for splitting
 	part1 := domain.Asset{
-		Name:          asset.Name + " Part 1",
-		Description:   asset.Description,
-		Area:          asset.Area / 2,
-		WardID:        asset.WardID,
-		DistrictID:    asset.DistrictID,
+		Name:        asset.Name + " Part 1",
+		Description: asset.Description,
+		Area:        asset.Area / 2,
+		WardID:      asset.WardID,
+		// DistrictID:    asset.DistrictID,
 		ProvinceID:    asset.ProvinceID,
 		Address:       asset.Address,
 		PurchasePrice: asset.PurchasePrice / 2,
 		// DocStatus:   asset.DocStatus,
 	}
 	part2 := domain.Asset{
-		Name:          asset.Name + " Part 2",
-		Description:   asset.Description,
-		Area:          asset.Area / 2,
-		WardID:        asset.WardID,
-		DistrictID:    asset.DistrictID,
+		Name:        asset.Name + " Part 2",
+		Description: asset.Description,
+		Area:        asset.Area / 2,
+		WardID:      asset.WardID,
+		// DistrictID:    asset.DistrictID,
 		ProvinceID:    asset.ProvinceID,
 		Address:       asset.Address,
 		PurchasePrice: asset.PurchasePrice / 2,
@@ -392,9 +394,9 @@ func (r *PostgreAsset) MergeAssets(ctx context.Context, ids []uint64) (*domain.A
 		Area:          0,
 		PurchasePrice: 0,
 		WardID:        assets[0].WardID,
-		DistrictID:    assets[0].DistrictID,
-		ProvinceID:    assets[0].ProvinceID,
-		Address:       assets[0].Address,
+		// DistrictID:    assets[0].DistrictID,
+		ProvinceID: assets[0].ProvinceID,
+		Address:    assets[0].Address,
 		// DocStatus:    assets[0].DocStatus,
 	}
 
@@ -524,9 +526,9 @@ func (r *PostgreAsset) GetAssetsWithChildCount(ctx context.Context, ownerID uint
 	if searchDto.ProvinceID != nil {
 		query = query.Where("assets.province_id = ?", searchDto.ProvinceID)
 	}
-	if searchDto.DistrictID != nil {
-		query = query.Where("assets.district_id = ?", searchDto.DistrictID)
-	}
+	// if searchDto.DistrictID != nil {
+	// 	query = query.Where("assets.district_id = ?", searchDto.DistrictID)
+	// }
 	if searchDto.WardID != nil {
 		query = query.Where("assets.ward_id = ?", searchDto.WardID)
 	}
@@ -636,9 +638,9 @@ func (r *PostgreAsset) applyListAssetsFilters(query *gorm.DB, dto *dto.AssetSear
 	}
 
 	// Filter by district
-	if dto.DistrictID != nil {
-		query = query.Where("district_id = ?", *dto.DistrictID)
-	}
+	// if dto.DistrictID != nil {
+	// 	query = query.Where("district_id = ?", *dto.DistrictID)
+	// }
 
 	// Filter by ward
 	if dto.WardID != nil {

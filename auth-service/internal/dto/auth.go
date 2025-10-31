@@ -7,11 +7,13 @@ func MakeAuthLoginResponse(accessToken string, authEntity *domain.AuthMethod, ro
 	return &AuthLoginResponse{
 		AccessToken: accessToken,
 		// RefreshToken: refreshToken,
-		Role:      role,
-		Username:  authEntity.AuthName,
-		AuthID:    authEntity.ID,
-		ProfileID: authEntity.UserID,
-		FullName:  authEntity.FullName, // OAuth fullname
+		Role:            role,
+		Username:        authEntity.AuthName,
+		AuthID:          authEntity.ID,
+		ProfileID:       authEntity.UserID,
+		FullName:        authEntity.FullName, // OAuth fullname
+		ServerPublicKey: authEntity.PublicKey,
+		// EncryptedAuthKey: authEntity.AuthKey,
 	}
 }
 
@@ -25,12 +27,14 @@ type OtpRequest struct {
 type OtpVerifyRequest struct {
 	OtpRequest
 	Otp        string `json:"otp" binding:"required" validate:"required"`
-	AuthID     uint64 `json:"authId,omitempty"`
+	AuthID     uint64 `json:"authId,omitempty"` // đối với oauth thì truyền -> sẽ link oauth với tài khoản otp, tạo profile mới
 	Version    string `json:"version,omitempty"`
 	Platform   string `json:"platform,omitempty"`
 	OS         string `json:"os,omitempty"`
 	DeviceName string `json:"deviceName,omitempty"`
 	Fullname   string `json:"fullname,omitempty"`
+
+	ClientPublicKey string `json:"clientPublicKey,omitempty"` // Diffie-Hellman public key từ client
 }
 
 // RequestOTPResponse đại diện cho response gửi OTP
@@ -59,8 +63,9 @@ type ResendOTPRequest struct {
 
 // ResendOTPResponse đại diện cho response gửi lại OTP
 type ResendOTPResponse struct {
-	AuthId  uint64 `json:"authId"`
-	Message string `json:"message"`
+	AuthId     uint64 `json:"authId"`
+	Message    string `json:"message"`
+	SmsChannel string `json:"smsChannel"` // "zalo" nếu gửi ZNS thành công, "sms" nếu ZNS lỗi
 }
 
 // RefreshTokenRequest đại diện cho yêu cầu làm mới token
@@ -173,6 +178,13 @@ type AuthLoginResponse struct {
 	FullName       string `json:"fullName"`                 // OAuth fullname
 	PasswordAuthId uint64 `json:"passwordAuthId,omitempty"` // ID của auth_method có provider ADMIN
 	ReferralCode   string `json:"referralCode,omitempty"`   // Mã giới thiệu của user
+
+	RequireFullname bool   `json:"requireFullname"`     // true nếu user cần cập nhật họ tên
+	TempToken       string `json:"tempToken,omitempty"` // Token tạm thời (10 phút) cho user chưa có họ tên
+
+	// Diffie-Hellman key exchange fields
+	EncryptedAuthKey string `json:"encryptedAuthKey,omitempty"` // Auth key đã được mã hóa bằng shared secret
+	ServerPublicKey  string `json:"serverPublicKey,omitempty"`  // Diffie-Hellman public key của server
 	// Avatar         string `json:"avatar"`
 	// Phone          string `json:"phone"`
 	// Email          string `json:"email"`
@@ -239,6 +251,17 @@ type AdminLoginRequest struct {
 	Platform   string `json:"platform" binding:"required" validate:"required"`
 	OS         string `json:"os" binding:"required" validate:"required"`
 	DeviceName string `json:"deviceName,omitempty"`
+}
+
+// LoginWithKeyRequest đại diện cho yêu cầu đăng nhập bằng auth key (Diffie-Hellman)
+type LoginWithKeyRequest struct {
+	Phone            string `json:"phone" binding:"required" validate:"required,e164"`
+	EncryptedAuthKey string `json:"encryptedAuthKey" binding:"required" validate:"required"` // Auth key đã mã hóa
+	ClientPublicKey  string `json:"clientPublicKey" binding:"required" validate:"required"`  // DH public key của client
+	Version          string `json:"version" binding:"required" validate:"required"`
+	Platform         string `json:"platform" binding:"required" validate:"required"`
+	OS               string `json:"os" binding:"required" validate:"required"`
+	DeviceName       string `json:"deviceName,omitempty"`
 }
 
 // Account Lock DTOs
@@ -440,4 +463,57 @@ type ConnectedAccountDTO struct {
 	Email     string `json:"email"`
 	Avatar    string `json:"avatar"`
 	CreatedAt string `json:"createdAt"`
+}
+
+// PIN DTOs
+
+// CreatePINRequest đại diện cho yêu cầu tạo mã PIN
+type CreatePINRequest struct {
+	PIN   string `json:"pin" binding:"required" validate:"required,len=6,numeric"`
+	Phone string `json:"phone" binding:"required" validate:"required,e164"`
+}
+
+// CreatePINResponse đại diện cho response tạo mã PIN
+type CreatePINResponse struct {
+	AuthId  uint64 `json:"authId"`
+	Message string `json:"message"`
+}
+
+// VerifyPINRequest đại diện cho yêu cầu xác minh mã PIN
+type VerifyPINRequest struct {
+	Phone      string `json:"phone" binding:"required" validate:"required,e164"`
+	PIN        string `json:"pin" binding:"required" validate:"required,len=6,numeric"`
+	Version    string `json:"version,omitempty"`
+	Platform   string `json:"platform,omitempty"`
+	OS         string `json:"os,omitempty"`
+	DeviceName string `json:"deviceName,omitempty"`
+}
+
+// UpdatePINRequest đại diện cho yêu cầu cập nhật mã PIN
+type UpdatePINRequest struct {
+	OldPIN string `json:"oldPin" binding:"required" validate:"required,len=6,numeric"`
+	NewPIN string `json:"newPin" binding:"required" validate:"required,len=6,numeric"`
+}
+
+// UpdatePINResponse đại diện cho response cập nhật mã PIN
+type UpdatePINResponse struct {
+	Message string `json:"message"`
+}
+
+// CheckPINExistsRequest đại diện cho yêu cầu kiểm tra mã PIN
+type CheckPINExistsRequest struct {
+	// Empty - lấy từ token
+}
+
+// CheckPINExistsResponse đại diện cho response kiểm tra mã PIN
+type CheckPINExistsResponse struct {
+	Exists bool   `json:"exists"`
+	AuthId uint64 `json:"authId"`
+}
+
+// AuthParam dùng để validate PIN
+type PINAuthParam struct {
+	Status  *domain.UserStatusEntity
+	PIN     *domain.UserPINEntity
+	PINCode string
 }

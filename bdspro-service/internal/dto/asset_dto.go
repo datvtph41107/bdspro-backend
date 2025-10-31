@@ -24,7 +24,6 @@ type AssetCreateWithProduct struct {
 type AssetSearchRequest struct {
 	_dto.Pagable
 	ProvinceID      *uint64  `form:"provinceId"`
-	DistrictID      *uint64  `form:"districtId"`
 	WardID          *uint64  `form:"wardId"`
 	Text            string   `form:"text"`
 	PropertyTypeIds []uint64 `form:"propertyTypeIds"`
@@ -44,7 +43,6 @@ type AssetSaveRequest struct {
 	Name             string      `json:"name"`
 	Area             float64     `json:"area"`
 	WardID           *uint64     `json:"ward_id"`
-	DistrictID       *uint64     `json:"district_id"`
 	ProvinceID       *uint64     `json:"province_id"`
 	ProductID        *uint64     `json:"product_id"`
 	ParentAssetID    *uint64     `json:"parent_asset_id"`
@@ -85,6 +83,7 @@ type LegalItem struct {
 	AssetID        uint64 `json:"asset_id"`
 	DocumentType   string `json:"document_type"`
 	DocumentNumber string `json:"document_number"`
+	DocumentURL    string `json:"document_url"`
 	IssueDate      string `json:"issue_date"`
 	ExpiryDate     string `json:"expiry_date"`
 	Status         uint32 `json:"status"`
@@ -117,7 +116,6 @@ type AdminAssetSearchRequest struct {
 	ToDate          *time.Time `form:"toDate" json:"toDate"`                   // Đến ngày
 	Text            string     `form:"text" json:"text"`                       // Tìm kiếm theo text
 	ProvinceIds     []uint64   `form:"provinceIds" json:"provinceIds"`         // Danh sách tỉnh/thành phố
-	DistrictIds     []uint64   `form:"districtIds" json:"districtIds"`         // Danh sách quận/huyện
 	WardIds         []uint64   `form:"wardIds" json:"wardIds"`                 // Danh sách phường/xã
 	PropertyTypeIds []uint64   `form:"propertyTypeIds" json:"propertyTypeIds"` // Danh sách loại bất động sản
 }
@@ -132,7 +130,6 @@ type AdminAssetItem struct {
 	Area             float64      `json:"area"`             // Diện tích
 	Address          string       `json:"address"`          // Địa chỉ đầy đủ
 	ProvinceName     string       `json:"provinceName"`     // Tên tỉnh/thành phố
-	DistrictName     string       `json:"districtName"`     // Tên quận/huyện
 	WardName         string       `json:"wardName"`         // Tên phường/xã
 	PropertyTypeName string       `json:"propertyTypeName"` // Tên loại bất động sản
 	Owner            *ProfileItem `json:"owner"`            // Thông tin chủ sở hữu

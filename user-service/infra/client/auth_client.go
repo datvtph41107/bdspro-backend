@@ -90,6 +90,15 @@ func (c *AuthClient) SoftDelete(ctx context.Context, id uint64) error {
 	return nil
 }
 
+// DeleteAllAuthMethodsByUserId xóa tất cả auth_method của 1 user
+func (c *AuthClient) DeleteAllAuthMethodsByUserId(ctx context.Context, userId uint64) error {
+	// _, err := c.AuthGrpcClient.DeleteAuthMethodsByUserId(ctx, &sharepb.IdRequest{
+	// 	Id: userId,
+	// })
+	// return err
+	return nil
+}
+
 func (c *AuthClient) FindAdminsByProvider(ctx context.Context, provider string, page, size int) ([]*providers.AuthMethodDomain, int64, error) {
 	// return c.AuthGrpcClient.FindAdminsByProvider(ctx, provider, page, size)
 	return nil, 0, nil

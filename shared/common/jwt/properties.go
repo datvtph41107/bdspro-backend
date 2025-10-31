@@ -4,12 +4,13 @@ import (
 	"time"
 )
 
-// TokenType định nghĩa kiểu token (access/refresh)
+// TokenType định nghĩa kiểu token (access/refresh/temp)
 type TokenType string
 
 const (
 	AccessToken  TokenType = "ACCESS"
 	RefreshToken TokenType = "REFRESH"
+	TempToken    TokenType = "TEMP" // Token tạm thời cho user chưa có fullname, hạn 10 phút
 )
 
 type UserMetadata struct {

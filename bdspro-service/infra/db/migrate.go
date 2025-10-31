@@ -55,7 +55,7 @@ func MigrateDomain() {
 		&domain.Apartment{},
 		&domain.Developer{},
 		&domain.PropertyType{},
-		&domain.Region{},
+		// &domain.Region{},
 		&domain.DocType{},
 		&domain.PaymentMethod{},
 		// &domain.Deposite{},

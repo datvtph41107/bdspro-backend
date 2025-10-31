@@ -21,6 +21,7 @@ type AuthHandler struct {
 	InternalHandler    *InternalHandler
 	AdminUsecase       *usecase.AuthAdminUsecase
 	SessionMapper      *mapper.SessionMapper
+	PINUsecase         *usecase.PINUsecase
 }
 
 func NewAuthHandler(service *usecase.AuthUsecase,
@@ -28,6 +29,7 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 	internalHandler *InternalHandler,
 	adminUsecase *usecase.AuthAdminUsecase,
 	sessionMapper *mapper.SessionMapper,
+	pinUsecase *usecase.PINUsecase,
 ) *AuthHandler {
 	return &AuthHandler{
 		AuthUsecase:        service,
@@ -35,6 +37,7 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 		InternalHandler:    internalHandler,
 		AdminUsecase:       adminUsecase,
 		SessionMapper:      sessionMapper,
+		PINUsecase:         pinUsecase,
 	}
 }
 
@@ -62,8 +65,9 @@ func (h *AuthHandler) RequestOTP(ctx context.Context, req *authpb.RequestOTPRequ
 
 	// Convert DTO response to proto response
 	response := &authpb.RequestOTPResponse{
-		AuthId:  result.AuthID,
-		Existed: result.Existed,
+		AuthId:     result.AuthID,
+		Existed:    result.Existed,
+		SmsChannel: result.SmsChannel,
 		// Message: result.Message,
 	}
 
@@ -98,13 +102,14 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 			Phone:    req.Phone,
 			Fullname: req.Fullname,
 		},
-		Otp:        req.Otp,
-		AuthID:     req.AuthId,
-		Version:    req.Version,
-		Platform:   req.Platform,
-		OS:         req.Os,
-		DeviceName: req.DeviceName,
-		Fullname:   req.Fullname,
+		Otp:             req.Otp,
+		AuthID:          req.AuthId,
+		Version:         req.Version,
+		Platform:        req.Platform,
+		OS:              req.Os,
+		DeviceName:      req.DeviceName,
+		ClientPublicKey: req.ClientPublicKey, // Diffie-Hellman public key từ client
+		// Fullname:   req.Fullname,
 	}
 
 	result, err := h.AuthUsecase.VerifyOtp(ctx, *dto)
@@ -122,13 +127,103 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 		// Avatar:         result.Avatar,
 		// Phone:          result.Phone,
 		// Email:          result.Email,
-		OrganizationId: result.OrganizationID,
-		Role:           result.Role,
-		PasswordAuthId: result.PasswordAuthId,
-		ReferralCode:   result.ReferralCode, // Mã giới thiệu
+		OrganizationId:   result.OrganizationID,
+		Role:             result.Role,
+		PasswordAuthId:   result.PasswordAuthId,
+		ReferralCode:     result.ReferralCode,     // Mã giới thiệu
+		RequireFullname:  result.RequireFullname,  // User cần cập nhật họ tên
+		TempToken:        result.TempToken,        // TEMP token (nếu chưa có họ tên)
+		EncryptedAuthKey: result.EncryptedAuthKey, // Auth key đã mã hóa (Diffie-Hellman)
+		ServerPublicKey:  result.ServerPublicKey,  // Server public key (Diffie-Hellman)
 	}
 
 	return response, nil
+}
+
+// @Summary Check phone
+// @Description Check phone đã tồn tại hay chưa
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.PhoneCheckRequest true "Thông tin phone"
+// @Success 200 {object} authpb.PhoneCheckResponse
+// @Failure 400 {object} authpb.PhoneCheckResponse
+// @Failure 500 {object} authpb.PhoneCheckResponse
+// @Router /phone/check [get]
+func (h *AuthHandler) PhoneCheck(ctx context.Context, req *authpb.PhoneCheckRequest) (*authpb.PhoneCheckResponse, error) {
+	// Convert proto request to DTO
+	existed, userId, err := h.AuthUsecase.PhoneCheck(ctx, req.Phone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	return &authpb.PhoneCheckResponse{
+		Existed: existed,
+		UserId:  userId,
+	}, nil
+}
+
+// @Summary Xác minh OTP Recovery
+// @Description Xác minh OTP và gán số điện thoại vào tài khoản hiện tại (không tạo profile mới)
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.VerifyOTPRequest true "Thông tin OTP"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /otp/verify-recovery [post]
+func (h *AuthHandler) VerifyRecovery(ctx context.Context, req *authpb.VerifyOTPRequest) (*authpb.AuthSuccessResponse, error) {
+	// Validate required fields for session creation
+	if req.Platform == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Platform là bắt buộc (WEB, MOBILE, DESKTOP)")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Version là bắt buộc")
+	}
+	if req.Os == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
+	}
+
+	// Convert proto request to DTO
+	dto := &dto.OtpVerifyRequest{
+		OtpRequest: dto.OtpRequest{
+			Phone:    req.Phone,
+			Fullname: req.Fullname,
+		},
+		Otp:             req.Otp,
+		AuthID:          req.AuthId,
+		Version:         req.Version,
+		Platform:        req.Platform,
+		OS:              req.Os,
+		DeviceName:      req.DeviceName,
+		ClientPublicKey: req.ClientPublicKey,
+	}
+
+	_, err := h.AuthUsecase.VerifyRecovery(ctx, *dto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	// response := &authpb.AuthSuccessResponse{
+	// 	AuthId:           result.AuthID,
+	// 	ProfileId:        result.ProfileID,
+	// 	AccessToken:      result.AccessToken,
+	// 	RefreshToken:     result.RefreshToken,
+	// 	FullName:         result.Username,
+	// 	OrganizationId:   result.OrganizationID,
+	// 	Role:             result.Role,
+	// 	PasswordAuthId:   result.PasswordAuthId,
+	// 	ReferralCode:     result.ReferralCode,
+	// 	RequireFullname:  result.RequireFullname,
+	// 	TempToken:        result.TempToken,
+	// 	EncryptedAuthKey: result.EncryptedAuthKey,
+	// 	ServerPublicKey:  result.ServerPublicKey,
+	// }
+
+	return nil, nil
 }
 
 // @Summary Gửi lại OTP
@@ -150,7 +245,7 @@ func (h *AuthHandler) ResendOTP(ctx context.Context, req *authpb.ResendOTPReques
 
 	result, err := h.AuthUsecase.ResendOTP(ctx, *dto)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "lỗi khi gửi lại OTP: %v", err)
+		return nil, err
 	}
 
 	// Convert DTO response to proto response
@@ -179,7 +274,8 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, req *authpb.RefreshToken
 	}
 
 	return &authpb.RefreshTokenResponse{
-		AccessToken: result.AccessToken,
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
 	}, nil
 }
 
@@ -201,6 +297,74 @@ func (h *AuthHandler) Logout(ctx context.Context, req *authpb.LogoutRequest) (*a
 	return &authpb.LogoutResponse{
 		Message: result.Message,
 	}, nil
+}
+
+// @Summary Đăng nhập bằng Auth Key
+// @Description Đăng nhập bằng auth key đã được lưu (Diffie-Hellman key exchange)
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body authpb.LoginWithKeyRequest true "Login request"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 401 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /login/key [post]
+func (h *AuthHandler) LoginWithKey(ctx context.Context, req *authpb.LoginWithKeyRequest) (*authpb.AuthSuccessResponse, error) {
+	// Validate required fields
+	if req.Phone == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Số điện thoại là bắt buộc")
+	}
+	if req.EncryptedAuthKey == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Encrypted auth key là bắt buộc")
+	}
+	if req.ClientPublicKey == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Client public key là bắt buộc")
+	}
+	if req.Platform == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Platform là bắt buộc (WEB, MOBILE, DESKTOP)")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Version là bắt buộc")
+	}
+	if req.Os == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
+	}
+
+	// Convert proto request to DTO
+	dtoReq := dto.LoginWithKeyRequest{
+		Phone:            req.Phone,
+		EncryptedAuthKey: req.EncryptedAuthKey,
+		ClientPublicKey:  req.ClientPublicKey,
+		Version:          req.Version,
+		Platform:         req.Platform,
+		OS:               req.Os,
+		DeviceName:       req.DeviceName,
+	}
+
+	result, err := h.AuthUsecase.LoginWithKey(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	response := &authpb.AuthSuccessResponse{
+		AuthId:           result.AuthID,
+		ProfileId:        result.ProfileID,
+		AccessToken:      result.AccessToken,
+		RefreshToken:     result.RefreshToken,
+		FullName:         result.Username,
+		OrganizationId:   result.OrganizationID,
+		Role:             result.Role,
+		PasswordAuthId:   result.PasswordAuthId,
+		ReferralCode:     result.ReferralCode,
+		RequireFullname:  result.RequireFullname,
+		TempToken:        result.TempToken,
+		EncryptedAuthKey: result.EncryptedAuthKey,
+		ServerPublicKey:  result.ServerPublicKey,
+	}
+
+	return response, nil
 }
 
 // @Summary Delete account
@@ -347,6 +511,9 @@ func (h *AuthHandler) QRConfirm(ctx context.Context, req *authpb.QRConfirmReques
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
 		ReferralCode: result.ReferralCode, // Mã giới thiệu
+
+		RequireFullname: result.RequireFullname, // User cần cập nhật họ tên
+		TempToken:       result.TempToken,       // TEMP token (nếu chưa có họ tên)
 	}, nil
 }
 
@@ -376,8 +543,10 @@ func (h *AuthHandler) SwitchOrganization(ctx context.Context, req *authpb.Switch
 		// Avatar:         result.Avatar,
 		// Email:          result.Email,
 		// Phone:          result.Phone,
-		AccessToken:  result.AccessToken,
-		ReferralCode: result.ReferralCode, // Mã giới thiệu
+		AccessToken:     result.AccessToken,
+		ReferralCode:    result.ReferralCode,    // Mã giới thiệu
+		RequireFullname: result.RequireFullname, // User cần cập nhật họ tên
+		TempToken:       result.TempToken,       // TEMP token (nếu chưa có họ tên)
 	}, nil
 }
 
@@ -420,13 +589,15 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequ
 
 	// Convert DTO response to proto response
 	return &authpb.AuthSuccessResponse{
-		AuthId:         result.AuthID,
-		ProfileId:      result.ProfileID,
-		OrganizationId: result.OrganizationID,
-		Role:           result.Role,
-		AccessToken:    result.AccessToken,
-		RefreshToken:   result.RefreshToken,
-		ReferralCode:   result.ReferralCode, // Mã giới thiệu
+		AuthId:          result.AuthID,
+		ProfileId:       result.ProfileID,
+		OrganizationId:  result.OrganizationID,
+		Role:            result.Role,
+		AccessToken:     result.AccessToken,
+		RefreshToken:    result.RefreshToken,
+		ReferralCode:    result.ReferralCode,    // Mã giới thiệu
+		RequireFullname: result.RequireFullname, // User cần cập nhật họ tên
+		TempToken:       result.TempToken,       // TEMP token (nếu chưa có họ tên)
 	}, nil
 }
 
@@ -916,6 +1087,9 @@ func (h *AuthHandler) LoginWithPassword(ctx context.Context, req *authpb.LoginWi
 		Role:           result.Role,
 		PasswordAuthId: result.PasswordAuthId,
 		ReferralCode:   result.ReferralCode, // Mã giới thiệu
+
+		RequireFullname: result.RequireFullname, // User cần cập nhật họ tên
+		TempToken:       result.TempToken,       // TEMP token (nếu chưa có họ tên)
 	}, nil
 }
 
@@ -983,7 +1157,7 @@ func (h *AuthHandler) GetLoginHistory(ctx context.Context, req *authpb.GetLoginH
 	page := req.Page
 	size := req.Size
 	if page < 1 {
-		page = 1
+		page = 0
 	}
 	if size < 1 {
 		size = 20
@@ -1006,3 +1180,47 @@ func (h *AuthHandler) GetLoginHistory(ctx context.Context, req *authpb.GetLoginH
 		Total: total,
 	}, nil
 }
+
+// @Summary Update Fullname
+// @Description Cập nhật họ tên cho user đã đăng nhập và trả về thông tin login mới
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.UpdateFullnameRequest true "Họ tên mới"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} authpb.AuthSuccessResponse
+// @Failure 401 {object} authpb.AuthSuccessResponse
+// @Failure 500 {object} authpb.AuthSuccessResponse
+// @Router /v2/auth/fullname [put]
+// @Security BearerAuth
+func (h *AuthHandler) UpdateFullname(ctx context.Context, req *authpb.UpdateFullnameRequest) (*authpb.AuthSuccessResponse, error) {
+	// Validate request
+	if req.Fullname == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Họ tên không được để trống")
+	}
+
+	// Gọi usecase để cập nhật fullname
+	result, err := h.AuthUsecase.UpdateFullname(ctx, req.Fullname)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert DTO response to proto response
+	response := &authpb.AuthSuccessResponse{
+		AuthId:          result.AuthID,
+		ProfileId:       result.ProfileID,
+		AccessToken:     result.AccessToken,
+		RefreshToken:    result.RefreshToken,
+		FullName:        result.FullName,
+		OrganizationId:  result.OrganizationID,
+		Role:            result.Role,
+		PasswordAuthId:  result.PasswordAuthId,
+		ReferralCode:    result.ReferralCode,
+		RequireFullname: result.RequireFullname,
+		TempToken:       result.TempToken,
+	}
+
+	return response, nil
+}
+
+// LoginWithToken is deprecated - use LoginWithKey instead

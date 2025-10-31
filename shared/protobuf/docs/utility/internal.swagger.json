@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "utility/internal.proto",
+    "title": "hub/internal.proto",
     "version": "version not set"
   },
   "tags": [

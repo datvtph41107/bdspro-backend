@@ -11,21 +11,21 @@ func NewCommonMapper() *CommonMapper {
 	return &CommonMapper{}
 }
 
-func (m *CommonMapper) GetProvinceName(province *domain.Region) string {
+func (m *CommonMapper) GetProvinceName(province *domain.ProvinceV2) string {
 	if province == nil {
 		return ""
 	}
 	return province.Name
 }
 
-func (m *CommonMapper) GetDistrictName(district *domain.Region) string {
+func (m *CommonMapper) GetDistrictName(district *domain.District) string {
 	if district == nil {
 		return ""
 	}
 	return district.Name
 }
 
-func (m *CommonMapper) GetWardName(ward *domain.Region) string {
+func (m *CommonMapper) GetWardName(ward *domain.WardV2) string {
 	if ward == nil {
 		return ""
 	}

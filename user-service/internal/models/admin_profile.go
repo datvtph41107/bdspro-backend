@@ -17,7 +17,7 @@ type AdminProfile struct {
 	Gender           *uint32           `gorm:"default:0" json:"gender"`
 	Birth            *time.Time        `gorm:"column:birth" json:"birth"`
 	FullName         string            `gorm:"column:full_name;size:255" json:"fullName"`
-	Email            string            `gorm:"size:50;uniqueIndex" json:"email"`
+	Email            string            `gorm:"size:50" json:"email"`
 	Phone            string            `gorm:"column:phone;size:20" json:"phone"`
 	Avatar           string            `gorm:"column:avatar;size:255" json:"avatar"`
 	JobTitle         string            `gorm:"column:job_title;size:100" json:"jobTitle"` // Chức danh / Vị trí công việc

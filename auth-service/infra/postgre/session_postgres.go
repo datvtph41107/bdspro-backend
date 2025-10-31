@@ -131,8 +131,8 @@ func (r *SessionPostgres) GetLoginHistoryByUserID(ctx context.Context, userID ui
 	}
 
 	// Default page và size
-	if page < 1 {
-		page = 1
+	if page < 0 {
+		page = 0
 	}
 	if size < 1 {
 		size = 20
@@ -141,7 +141,7 @@ func (r *SessionPostgres) GetLoginHistoryByUserID(ctx context.Context, userID ui
 		size = 100
 	}
 
-	offset := (page - 1) * size
+	offset := page * size
 
 	// Lấy dữ liệu với phân trang, JOIN với auth_method, sắp xếp theo thời gian tạo giảm dần (mới nhất lên đầu)
 	err := _db.DB.

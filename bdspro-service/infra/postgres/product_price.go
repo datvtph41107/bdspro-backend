@@ -76,7 +76,9 @@ func (r *GormProductPriceRepo) UpdatePrice(ctx context.Context, priceId *uint64,
 			!_utils.CompareEqual(&oldPrice.RentPrice, &entity.RentPrice) ||
 			!_utils.CompareEqual(&oldPrice.RentCommission, &entity.RentCommission) ||
 			!_utils.CompareEqual(&oldPrice.Deposite, &entity.Deposite) ||
-			!_utils.CompareEqual(&oldPrice.RentPaymentCycle, &entity.RentPaymentCycle)
+			!_utils.CompareEqual(&oldPrice.RentPaymentCycle, &entity.RentPaymentCycle) ||
+			!_utils.CompareEqual(&oldPrice.RentCommissionType, &entity.RentCommissionType) ||
+			!_utils.CompareEqual(&oldPrice.SaleCommissionType, &entity.SaleCommissionType)
 			// oldPrice.SaleCommissionType != entity.Price.SaleCommissionType ||
 			// oldPrice.RentCommissionType != entity.Price.RentCommissionType ||
 

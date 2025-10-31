@@ -11,7 +11,7 @@ type InitialApp struct {
 	// GrpcServer        *server.BdsproGrpcServer
 	// GrpcGenericServer *server.GenericGrpcServer
 	PostService    *handler.PostService
-	ProductService *handler.ProductService
+	ProductService *handler.ProductHandler
 	AssetService   *handler.AssetService
 	// AdminRouter *admin_router.RouterManager
 	// UserRouter        *user_router.RouterManager
@@ -49,7 +49,7 @@ type InitialApp struct {
 func NewInitialApp(
 	// GrpcGenericServer *server.GenericGrpcServer,
 	postService *handler.PostService,
-	productService *handler.ProductService,
+	productService *handler.ProductHandler,
 	bdsproPublicService *handler.BdsproPublicService,
 	assetService *handler.AssetService,
 	assetExploitationServer *handler.AssetExploitationService,

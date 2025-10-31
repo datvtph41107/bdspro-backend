@@ -5,8 +5,10 @@ import (
 	"auth/infra/client"
 	"auth/internal/domain"
 	"auth/internal/dto"
+	"auth/internal/enums"
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
+	_errors "common/errors"
 	"context"
 	"encoding/json"
 	"errors"
@@ -148,7 +150,11 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 
 	// g.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	// planID := g.AuthService.GetPlanID(existingUser.UserID)
-	profile, _ := g.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+	profile, err := g.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+	if err != nil || profile == nil {
+		return nil, _errors.ReturnError(int32(enums.NOT_FOUND_ACCOUNT), "không tìm thấy thông tin người dùng")
+	}
+
 	refreshToken := g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Ghi log admin history

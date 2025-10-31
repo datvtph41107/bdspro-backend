@@ -111,7 +111,7 @@ func matchRoute(pattern, path string) bool {
 }
 
 // Middleware để xác thực JWT
-func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
+func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusOK)
@@ -159,6 +159,25 @@ func JWTAuthMiddleware(pubRoutes []string) gin.HandlerFunc {
 			c.Set("organizationId", claims.OrganizationId)
 			c.Set("profileId", claims.ProfileId)
 			c.Set("planId", claims.PlanId)
+
+			// Kiểm tra nếu là TEMP token thì chỉ cho phép gọi tempRoutes
+			if claims.Type == string(TempToken) {
+				isTempRoute := false
+				for _, route := range tempRoutes {
+					if matchRoute(route, c.Request.URL.Path) {
+						isTempRoute = true
+						break
+					}
+				}
+				if !isTempRoute {
+					c.JSON(http.StatusForbidden, gin.H{
+						"code":    403,
+						"message": "Token không đúng",
+					})
+					c.Abort()
+					return
+				}
+			}
 		}
 
 		c.Next()
@@ -259,6 +278,7 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"code":    info.Code,
 					"message": info.Message,
+					"second":  info.Second,
 				})
 				return
 			}

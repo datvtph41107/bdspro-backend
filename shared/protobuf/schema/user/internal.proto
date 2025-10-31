@@ -17,6 +17,9 @@ service InternalUserService {
     // Xóa mềm profile (dùng bởi auth-service)
     rpc SoftDeleteProfile(SoftDeleteProfileRequest) returns (sharepb.Empty);
     
+    // Xóa vĩnh viễn profile (dùng bởi auth-service)
+    rpc HardDeleteProfile(sharepb.IdRequest) returns (sharepb.Empty);
+    
     // Lấy profile theo ID
     rpc GetProfileByID(GetProfileByIDRequest) returns (ProfileResponse);
 }
@@ -43,6 +46,10 @@ message UpdateProfileRequest {
 }
 
 message SoftDeleteProfileRequest {
+    uint64 profileId = 1;
+}
+
+message HardDeleteProfileRequest {
     uint64 profileId = 1;
 }
 

@@ -8,6 +8,9 @@ import (
 	"context"
 )
 
+func (s *ProductUsecase) MapProductStatusList(c context.Context, product *dto.ProductListResponse) error {
+	return nil
+}
 func (s *ProductUsecase) MapProductStatus(c context.Context, product *domain.Product) error {
 	// if product.SaleTransaction != nil {
 	// 	switch product.SaleTransaction.TransactionStatus {

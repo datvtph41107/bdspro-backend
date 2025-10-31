@@ -1,0 +1,60 @@
+//go:build wireinject
+// +build wireinject
+	
+package wire
+
+import (
+	"github.com/google/wire"
+	_db "common/db"
+	"hub/initial"
+	hub_infra_handler "hub/infra/handler"
+	hub_infra_mapper "hub/infra/mapper"
+	hub_infra_postgre "hub/infra/postgre"
+	hub_infra_setting "hub/infra/setting"
+	hub_initial "hub/initial"
+	hub_internal_repo "hub/internal/repo"
+	hub_internal_usecase "hub/internal/usecase"
+	user_internal_repo "hub/internal/repo"
+)
+
+// Inject dependencies
+var wireSet = wire.NewSet(
+	_db.NewDB,
+	_db.NewTransactionRepo,
+	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
+	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
+	hub_infra_postgre.NewDistrictRepo,
+	hub_infra_mapper.NewEventQueueMapper,
+	hub_infra_postgre.NewEventQueueRepo,
+	hub_infra_handler.NewEventQueueService,
+	hub_internal_usecase.NewEventQueueUsecase,
+	hub_infra_handler.NewFAQHandler,
+	hub_infra_mapper.NewFAQMapper,
+	hub_infra_postgre.NewFAQRepo,
+	hub_internal_usecase.NewFAQUsecase,
+	hub_initial.NewInitialApp,
+	hub_infra_handler.NewInternalHandler,
+	hub_infra_handler.NewLocationHandler,
+	hub_infra_mapper.NewLocationMapper,
+	hub_internal_usecase.NewLocationUsecase,
+	hub_infra_handler.NewLocationV2Handler,
+	hub_infra_mapper.NewLocationV2Mapper,
+	hub_internal_usecase.NewLocationV2Usecase,
+	hub_infra_postgre.NewProvinceRepo,
+	hub_infra_postgre.NewProvinceV2Repo,
+	hub_infra_handler.NewSystemConfigHandler,
+	hub_infra_setting.NewSystemConfigPersist,
+	hub_infra_postgre.NewSystemConfigPostgres,
+	hub_internal_usecase.NewSystemConfigUsecase,
+	hub_infra_handler.NewUserGuideHandler,
+	hub_infra_mapper.NewUserGuideMapper,
+	hub_infra_postgre.NewUserGuideRepo,
+	hub_infra_postgre.NewUserGuideStepRepo,
+	hub_internal_usecase.NewUserGuideUsecase,
+	hub_infra_postgre.NewWardRepo,
+	hub_infra_postgre.NewWardV2Repo,
+)
+func InitializeApp() (*initial.InitialApp, error) {
+	wire.Build(wireSet)
+	return nil, nil
+}

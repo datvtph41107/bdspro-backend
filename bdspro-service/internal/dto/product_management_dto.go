@@ -29,7 +29,6 @@ type ProductSaveRequestDTO struct {
 	AmenityIDs      []uint64           `json:"amenityIds"`
 	ProjectID       *uint64            `json:"projectId,omitempty"`
 	ProvinceID      *uint64            `json:"provinceId,omitempty"`
-	DistrictID      *uint64            `json:"districtId,omitempty"`
 	WardID          *uint64            `json:"wardId,omitempty"`
 	TransactionType int32              `json:"transactionType"`
 	PriceData       *ProductPriceDTO   `json:"priceData,omitempty"`

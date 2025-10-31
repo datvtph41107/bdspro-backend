@@ -4,15 +4,17 @@ import "auth/internal/domain"
 
 // RequestLoginResponse đại diện cho response khi request OTP
 type RequestLoginResponse struct {
-	AuthID   uint64 `json:"authId"`
-	Provider string `json:"provider"`
-	OAuthID  string `json:"oauthId"`
-	Existed  bool   `json:"existed"` // true: user đã tồn tại, false: user mới đăng ký
+	AuthID     uint64 `json:"authId"`
+	Provider   string `json:"provider"`
+	OAuthID    string `json:"oauthId"`
+	Existed    bool   `json:"existed"`    // true: user đã tồn tại, false: user mới đăng ký
+	SmsChannel string `json:"smsChannel"` // "zalo" nếu gửi ZNS thành công, "sms" nếu ZNS lỗi
 }
 
 // RefreshResponse đại diện cho response khi refresh token
 type RefreshResponse struct {
-	AccessToken string `json:"accessToken"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 // AuthParam đại diện cho thông tin xác thực

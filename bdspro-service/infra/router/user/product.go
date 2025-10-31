@@ -222,7 +222,7 @@ func (route *UserProductRouter) SearchProductWithOwner(c *gin.Context) {
 		_routes.RouteResult(c, nil, err)
 		return
 	}
-	result, total, err := route.UC.SearchProductByOwner(c, &body)
+	result, total, err := route.UC.GetProductOfCurrentUser(c, body)
 	_routes.RouteResult(c, _routes.ResponseDTO{
 		Code:          0,
 		Data:          result,
@@ -645,7 +645,7 @@ func (route *UserProductRouter) ExportExcel(c *gin.Context) {
 			nil,             //strings.Join(product.MediaTypes, ","),
 			nil,             //product.MediaList,
 			nilIfNil(product.Province, func() any { return product.Province.Name }),
-			nilIfNil(product.District, func() any { return product.District.Name }),
+			// nilIfNil(product.District, func() any { return product.District.Name }),
 			nilIfNil(product.Ward, func() any { return product.Ward.Name }),
 			nilIfNil(product.DocType, func() any { return product.DocType.Name }),
 			nilIfNil(product.PropertyType, func() any { return product.PropertyType.Name }),

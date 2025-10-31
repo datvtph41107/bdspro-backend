@@ -347,6 +347,39 @@
         ]
       }
     },
+    "/v2/auth/fullname": {
+      "put": {
+        "summary": "Update Fullname",
+        "operationId": "AuthService_UpdateFullname",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAuthSuccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbUpdateFullnameRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/login-history": {
       "get": {
         "summary": "Login History",
@@ -379,6 +412,39 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/login/key": {
+      "post": {
+        "summary": "Login with Key (Diffie-Hellman Auth Key)",
+        "operationId": "AuthService_LoginWithKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAuthSuccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbLoginWithKeyRequest"
+            }
           }
         ],
         "tags": [
@@ -505,6 +571,38 @@
         ]
       }
     },
+    "/v2/auth/otp/verify-recovery": {
+      "post": {
+        "operationId": "AuthService_VerifyRecovery",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAuthSuccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbVerifyOTPRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/password/create": {
       "post": {
         "summary": "Password Management",
@@ -562,6 +660,156 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/authpbLoginWithPasswordRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/phone/check/{phone}": {
+      "get": {
+        "summary": "PIN Management",
+        "operationId": "AuthService_PhoneCheck",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbPhoneCheckResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "phone",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/pin/check": {
+      "get": {
+        "operationId": "AuthService_CheckPINExists",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbCheckPINExistsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/pin/create": {
+      "post": {
+        "summary": "PIN Management",
+        "operationId": "AuthService_CreatePIN",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbCreatePINResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbCreatePINRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/pin/update": {
+      "put": {
+        "operationId": "AuthService_UpdatePIN",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbUpdatePINResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbUpdatePINRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/v2/auth/pin/verify": {
+      "post": {
+        "operationId": "AuthService_VerifyPIN",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAuthSuccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbVerifyPINRequest"
             }
           }
         ],
@@ -1108,6 +1356,34 @@
         "referralCode": {
           "type": "string",
           "title": "Mã giới thiệu của user"
+        },
+        "requireFullname": {
+          "type": "boolean",
+          "title": "true nếu user cần cập nhật họ tên"
+        },
+        "tempToken": {
+          "type": "string",
+          "title": "Token tạm thời (10 phút) cho user chưa có họ tên, chỉ dùng để gọi UpdateFullname"
+        },
+        "encryptedAuthKey": {
+          "type": "string",
+          "title": "Auth key đã được mã hóa bằng shared secret (Diffie-Hellman)"
+        },
+        "serverPublicKey": {
+          "type": "string",
+          "title": "Diffie-Hellman public key của server (nếu cần gửi về client)"
+        }
+      }
+    },
+    "authpbCheckPINExistsResponse": {
+      "type": "object",
+      "properties": {
+        "exists": {
+          "type": "boolean"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1192,6 +1468,32 @@
         }
       },
       "title": "Admin Access Control Messages"
+    },
+    "authpbCreatePINRequest": {
+      "type": "object",
+      "properties": {
+        "pin": {
+          "type": "string",
+          "title": "Mã PIN 6 số"
+        },
+        "phone": {
+          "type": "string",
+          "title": "Số điện thoại"
+        }
+      },
+      "title": "PIN Messages"
+    },
+    "authpbCreatePINResponse": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     },
     "authpbCreatePasswordRequest": {
       "type": "object",
@@ -1344,6 +1646,40 @@
         }
       }
     },
+    "authpbLoginWithKeyRequest": {
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string",
+          "title": "Số điện thoại để identify user"
+        },
+        "encryptedAuthKey": {
+          "type": "string",
+          "title": "Auth key đã được mã hóa bằng server public key (từ lần verify trước)"
+        },
+        "clientPublicKey": {
+          "type": "string",
+          "title": "Diffie-Hellman public key mới của client"
+        },
+        "version": {
+          "type": "string",
+          "title": "App version"
+        },
+        "platform": {
+          "type": "string",
+          "title": "WEB, MOBILE, DESKTOP"
+        },
+        "os": {
+          "type": "string",
+          "title": "iOS, Android, Windows, MacOS, Linux"
+        },
+        "deviceName": {
+          "type": "string",
+          "title": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\""
+        }
+      },
+      "title": "Login with Key Messages (Diffie-Hellman Auth Key)"
+    },
     "authpbLoginWithPasswordRequest": {
       "type": "object",
       "properties": {
@@ -1374,6 +1710,18 @@
       "properties": {
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "authpbPhoneCheckResponse": {
+      "type": "object",
+      "properties": {
+        "existed": {
+          "type": "boolean"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1499,6 +1847,9 @@
         "existed": {
           "type": "boolean",
           "title": "true: user đã tồn tại, false: user mới đăng ký"
+        },
+        "smsChannel": {
+          "type": "string"
         }
       }
     },
@@ -1650,6 +2001,36 @@
       },
       "title": "Organization Messages"
     },
+    "authpbUpdateFullnameRequest": {
+      "type": "object",
+      "properties": {
+        "fullname": {
+          "type": "string"
+        }
+      },
+      "title": "Update Fullname Messages"
+    },
+    "authpbUpdatePINRequest": {
+      "type": "object",
+      "properties": {
+        "oldPin": {
+          "type": "string",
+          "title": "Mã PIN cũ để xác thực"
+        },
+        "newPin": {
+          "type": "string",
+          "title": "Mã PIN mới"
+        }
+      }
+    },
+    "authpbUpdatePINResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "authpbValidateAdminAccessRequest": {
       "type": "object",
       "properties": {
@@ -1717,6 +2098,33 @@
         "deviceName": {
           "type": "string",
           "title": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\""
+        },
+        "clientPublicKey": {
+          "type": "string",
+          "title": "Diffie-Hellman public key từ client"
+        }
+      }
+    },
+    "authpbVerifyPINRequest": {
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string"
+        },
+        "pin": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
         }
       }
     },

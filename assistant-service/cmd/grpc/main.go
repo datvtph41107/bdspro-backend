@@ -1,10 +1,12 @@
 package grpc
 
 import (
+	"assistant/env"
 	"assistant/wire"
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	assistantpb "pb/types/assistant"
 
@@ -14,6 +16,13 @@ import (
 )
 
 func RunGRPCServer() {
+	// Load config
+	env.ENV_RUNTIME = &env.Runtime{
+		Environment: getEnv("ENVIRONMENT", "development"),
+		ConfigPath:  getEnv("CONFIG_PATH", "config"),
+	}
+	loadConfig()
+
 	// Get port from config
 	grpcPort := viper.GetString("app.port.grpc")
 	if grpcPort == "" {
@@ -46,4 +55,29 @@ func RunGRPCServer() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve gRPC server: %v", err)
 	}
+}
+
+func loadConfig() {
+	viper.SetConfigName("app")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(env.ENV_RUNTIME.ConfigPath)
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config")
+
+	// Auto read environment variables
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Failed to read config file: %v", err)
+	}
+
+	log.Printf("✓ Config loaded successfully from: %s", viper.ConfigFileUsed())
+	log.Printf("✓ Environment: %s", env.ENV_RUNTIME.Environment)
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

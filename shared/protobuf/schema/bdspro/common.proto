@@ -100,6 +100,8 @@ message HouseInfo {
       optional double rentPrice = 8;
       optional double rentCommission = 9; // 1000000 -> 10%
       optional uint32 rentPaymentCycle = 10;
+      optional uint32 saleCommissionType = 11;
+      optional uint32 rentCommissionType = 12;
   }
 
 message ProductResponse {
@@ -128,7 +130,7 @@ message ProductResponse {
     ProjectBuild build = 23;
     Project project = 24;
     Developer developer = 25;
-    int32 sourceType = 26;
+    uint32 sourceType = 26;
     optional uint64 customerId = 27;
     optional ProductPrivate privateData = 28;
     string note = 29;
@@ -162,6 +164,8 @@ message ProductResponse {
     string updatedAt = 57;
     repeated AssetItem assets = 58;
     repeated PostItem posts = 59;
+    optional uint64 imageId = 60;
+    string imageUrl = 61;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

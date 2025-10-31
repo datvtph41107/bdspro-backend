@@ -8,6 +8,8 @@ import (
 	"auth/internal/domain"
 	"auth/internal/interface/repo"
 	_db "common/db"
+
+	"gorm.io/gorm"
 )
 
 type AuthMethodPostgres struct {
@@ -77,11 +79,17 @@ func (r *AuthMethodPostgres) Update(ctx context.Context, auth *domain.AuthMethod
 	return auth, nil
 }
 
-// DeleteProfile xóa profile
+// DeleteProfile xóa profile (deprecated - sử dụng DeleteByUserId)
 func (r *AuthMethodPostgres) DeleteProfile(ctx context.Context, profileID uint64) error {
-	return r.GetDB(ctx).Model(&domain.AuthMethod{}).
-		Where("user_id = ?", profileID).
-		Update("deleted_at", time.Now()).Error
+	return r.DeleteByUserId(ctx, profileID)
+}
+
+// DeleteByUserId xóa tất cả auth_method của 1 user (hard delete)
+func (r *AuthMethodPostgres) DeleteByUserId(ctx context.Context, userId uint64) error {
+	return r.GetDB(ctx).
+		Unscoped().
+		Where("user_id = ?", userId).
+		Delete(&domain.AuthMethod{}).Error
 }
 
 // FindByUsername tìm kiếm auth bằng username
@@ -195,7 +203,8 @@ func (r *AuthMethodPostgres) CountByProvider(ctx context.Context, provider strin
 }
 
 func (r *AuthMethodPostgres) Delete(ctx context.Context, id uint64) error {
-	return r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthMethod{}).
+	return r.GetDB(ctx).WithContext(ctx).
+		Unscoped().
 		Where("id = ?", id).
 		Delete(&domain.AuthMethod{}).Error
 }
@@ -370,7 +379,6 @@ func (r *AuthMethodPostgres) CheckLockExpiration(ctx context.Context) error {
 }
 
 // GetConnectedOAuthAccounts lấy danh sách các tài khoản OAuth đã liên kết của user
-// @bind: internal/interface/repo.AuthMethodRepository
 func (r *AuthMethodPostgres) GetConnectedOAuthAccounts(ctx context.Context, userID uint64) ([]*domain.AuthMethod, error) {
 	var accounts []*domain.AuthMethod
 
@@ -386,4 +394,16 @@ func (r *AuthMethodPostgres) GetConnectedOAuthAccounts(ctx context.Context, user
 	}
 
 	return accounts, nil
+}
+
+func (r *AuthMethodPostgres) PhoneCheck(ctx context.Context, phone string) (*domain.AuthMethod, error) {
+	var auth *domain.AuthMethod
+	err := r.GetDB(ctx).Debug().Where("auth_name = ? AND deleted_at IS NULL AND provider = ?", phone, "PHONE").First(&auth).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return auth, nil
 }

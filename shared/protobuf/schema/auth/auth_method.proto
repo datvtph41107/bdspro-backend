@@ -21,6 +21,13 @@ service AuthService {
         };
     }
 
+    rpc VerifyRecovery(VerifyOTPRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/verify-recovery"
+            body: "*"
+        };
+    }
+
     rpc ResendOTP(ResendOTPRequest) returns (ResendOTPResponse) {
         option (google.api.http) = {
             post: "/v2/auth/otp/resend"
@@ -169,10 +176,61 @@ service AuthService {
         };
     }
 
+    // PIN Management
+    rpc PhoneCheck(PhoneCheckRequest) returns (PhoneCheckResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/phone/check/{phone}"
+        };
+    }
+
+    // PIN Management
+    rpc CreatePIN(CreatePINRequest) returns (CreatePINResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/pin/create"
+            body: "*"
+        };
+    }
+
+    rpc VerifyPIN(VerifyPINRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/pin/verify"
+            body: "*"
+        };
+    }
+
+    rpc UpdatePIN(UpdatePINRequest) returns (UpdatePINResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/pin/update"
+            body: "*"
+        };
+    }
+
+    rpc CheckPINExists(CheckPINExistsRequest) returns (CheckPINExistsResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/pin/check"
+        };
+    }
+
     // Login History
     rpc GetLoginHistory(GetLoginHistoryRequest) returns (GetLoginHistoryResponse) {
         option (google.api.http) = {
             get: "/v2/auth/login-history"
+        };
+    }
+
+    // Update Fullname
+    rpc UpdateFullname(UpdateFullnameRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/fullname"
+            body: "*"
+        };
+    }
+
+    // Login with Key (Diffie-Hellman Auth Key)
+    rpc LoginWithKey(LoginWithKeyRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/login/key"
+            body: "*"
         };
     }
 }
@@ -187,6 +245,7 @@ message RequestOTPResponse {
     uint64 authId = 1;
     string message = 2;
     bool existed = 3;  // true: user đã tồn tại, false: user mới đăng ký
+    string smsChannel = 4;
 }
 
 message VerifyOTPRequest {
@@ -198,6 +257,7 @@ message VerifyOTPRequest {
     string os = 6;
     string fullname = 7;
     string deviceName = 8;  // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+    string clientPublicKey = 9; // Diffie-Hellman public key từ client
 }
 
 message AuthSuccessResponse {
@@ -213,6 +273,10 @@ message AuthSuccessResponse {
     string role = 10;
     uint64 passwordAuthId = 11; // ID của auth_method có provider ADMIN (password authentication)
     string referralCode = 12; // Mã giới thiệu của user
+    bool requireFullname = 13; // true nếu user cần cập nhật họ tên
+    string tempToken = 14; // Token tạm thời (10 phút) cho user chưa có họ tên, chỉ dùng để gọi UpdateFullname
+    string encryptedAuthKey = 15; // Auth key đã được mã hóa bằng shared secret (Diffie-Hellman)
+    string serverPublicKey = 16; // Diffie-Hellman public key của server (nếu cần gửi về client)
 }
 
 message ResendOTPRequest {
@@ -651,4 +715,66 @@ message LoginHistoryItem {
     uint64 totalRequest = 10;
     string userAgent = 11;
     bool activate = 12;
+}
+
+// Update Fullname Messages
+message UpdateFullnameRequest {
+    string fullname = 1;
+}
+
+// Login with Key Messages (Diffie-Hellman Auth Key)
+message LoginWithKeyRequest {
+    string phone = 1;              // Số điện thoại để identify user
+    string encryptedAuthKey = 2;   // Auth key đã được mã hóa bằng server public key (từ lần verify trước)
+    string clientPublicKey = 3;    // Diffie-Hellman public key mới của client
+    string version = 4;            // App version
+    string platform = 5;           // WEB, MOBILE, DESKTOP
+    string os = 6;                 // iOS, Android, Windows, MacOS, Linux
+    string deviceName = 7;         // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+}
+
+message PhoneCheckResponse {
+    bool existed = 1;
+    optional uint64 userId = 2;
+}
+
+// PIN Messages
+message CreatePINRequest {
+    string pin = 1;                // Mã PIN 6 số
+    string phone = 2;              // Số điện thoại
+}
+
+message CreatePINResponse {
+    uint64 authId = 1;
+    string message = 2;
+}
+
+message VerifyPINRequest {
+    string phone = 1;
+    string pin = 2;
+    string version = 3;
+    string platform = 4;
+    string os = 5;
+    string deviceName = 6;
+}
+
+message UpdatePINRequest {
+    string oldPin = 1;             // Mã PIN cũ để xác thực
+    string newPin = 2;             // Mã PIN mới
+}
+
+message UpdatePINResponse {
+    string message = 1;
+}
+
+message CheckPINExistsRequest {
+    // Empty - lấy từ token
+}
+
+message PhoneCheckRequest {
+    string phone = 1;
+}
+message CheckPINExistsResponse {
+    bool exists = 1;
+    uint64 authId = 2;
 }

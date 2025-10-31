@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "utility/event_queue.proto",
+    "title": "hub/event_queue.proto",
     "version": "version not set"
   },
   "tags": [
@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/utilitypbEventQueueDTO"
+              "$ref": "#/definitions/hubpbEventQueueDTO"
             }
           },
           "default": {
@@ -39,7 +39,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/utilitypbEventQueueSaveDTO"
+              "$ref": "#/definitions/hubpbEventQueueSaveDTO"
             }
           }
         ],
@@ -55,7 +55,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/utilitypbEventQueueDTO"
+              "$ref": "#/definitions/hubpbEventQueueDTO"
             }
           },
           "default": {
@@ -123,7 +123,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/utilitypbEventQueueDTO"
+              "$ref": "#/definitions/hubpbEventQueueDTO"
             }
           },
           "default": {
@@ -162,7 +162,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/utilitypbEventQueueListResponse"
+              "$ref": "#/definitions/hubpbEventQueueListResponse"
             }
           },
           "default": {
@@ -253,7 +253,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/utilitypbEventQueueDTO"
+              "$ref": "#/definitions/hubpbEventQueueDTO"
             }
           },
           "default": {
@@ -457,7 +457,7 @@
         }
       }
     },
-    "utilitypbEventQueueDTO": {
+    "hubpbEventQueueDTO": {
       "type": "object",
       "properties": {
         "id": {
@@ -522,14 +522,14 @@
       },
       "title": "Response messages"
     },
-    "utilitypbEventQueueListResponse": {
+    "hubpbEventQueueListResponse": {
       "type": "object",
       "properties": {
         "data": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/utilitypbEventQueueDTO"
+            "$ref": "#/definitions/hubpbEventQueueDTO"
           }
         },
         "total": {
@@ -538,7 +538,7 @@
         }
       }
     },
-    "utilitypbEventQueueSaveDTO": {
+    "hubpbEventQueueSaveDTO": {
       "type": "object",
       "properties": {
         "id": {

@@ -26,10 +26,17 @@ redis:
   max_retries: 3
 
 deepseek:
-  api_key: "${DEEPSEEK_API_KEY}"
+  api_key: sk-e55042ea5c144ac1ada1829ed11595f9
   base_url: "https://api.deepseek.com/v1"
   model: "deepseek-chat"
   timeout_seconds: 30
+  max_tokens: 4000
+
+openai:
+  api_key: "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"
+  base_url: "https://api.openai.com/v1"
+  model: "gpt-4o"  # Nhanh hơn gpt-4o-mini, chi phí thấp hơn
+  timeout_seconds: 45  # Giảm timeout vì model nhanh hơn
   max_tokens: 4000
 
 logging:

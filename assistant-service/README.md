@@ -1,6 +1,6 @@
 # Assistant Service
 
-AI-powered assistant service sử dụng DeepSeek để phân tích và xử lý thông tin bất động sản.
+AI-powered assistant service sử dụng DeepSeek và OpenAI để phân tích và xử lý thông tin bất động sản.
 
 ## 📋 Tổng quan
 
@@ -8,6 +8,7 @@ Assistant Service cung cấp các tính năng AI:
 - **Phân tích văn bản**: Trích xuất thông tin sản phẩm BĐS từ văn bản tiếng Việt
 - **Chatbot**: Conversation với AI assistant
 - **Generate nội dung**: Tạo mô tả sản phẩm, email, social posts
+- **Multi-provider support**: Hỗ trợ cả DeepSeek và OpenAI
 
 ## 🚀 Cài đặt
 
@@ -16,7 +17,8 @@ Assistant Service cung cấp các tính năng AI:
 - Go 1.21+
 - Protocol Buffers compiler (protoc)
 - Wire (dependency injection)
-- DeepSeek API Key
+- DeepSeek API Key (optional)
+- OpenAI API Key (optional)
 
 ### 1. Generate Protobuf
 
@@ -35,7 +37,12 @@ wire ./wire
 ### 3. Set Environment Variables
 
 ```bash
-export DEEPSEEK_API_KEY="sk-your-api-key"
+# DeepSeek (optional)
+export DEEPSEEK_API_KEY="sk-your-deepseek-key"
+
+# OpenAI (optional)
+export OPENAI_API_KEY="sk-your-openai-key"
+
 export ENVIRONMENT="development"
 ```
 
@@ -201,8 +208,15 @@ app:
 deepseek:
   api_key: "${DEEPSEEK_API_KEY}"
   base_url: "https://api.deepseek.com/v1"
-  model: "deepseek-chat"
+  model: "deepseek-v3"
   timeout_seconds: 30
+  max_tokens: 4000
+
+openai:
+  api_key: "${OPENAI_API_KEY}"
+  base_url: "https://api.openai.com/v1"
+  model: "gpt-4o-mini"
+  timeout_seconds: 60
   max_tokens: 4000
 ```
 
@@ -210,7 +224,8 @@ deepseek:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DEEPSEEK_API_KEY` | DeepSeek API key | Required |
+| `DEEPSEEK_API_KEY` | DeepSeek API key | Optional |
+| `OPENAI_API_KEY` | OpenAI API key | Optional |
 | `ENVIRONMENT` | Environment (development/production) | `development` |
 | `CONFIG_PATH` | Config file path | `config` |
 
@@ -222,7 +237,7 @@ assistant-service/
 ├── config/            # Configuration files
 ├── env/               # Environment setup
 ├── infra/
-│   ├── client/        # DeepSeek client implementation
+│   ├── client/        # AI client implementations (DeepSeek, OpenAI)
 │   └── handler/       # gRPC handlers
 ├── internal/
 │   ├── dto/           # Data Transfer Objects
@@ -287,10 +302,14 @@ docker run -d \
 
 ## 🚨 Troubleshooting
 
-### Lỗi "DEEPSEEK_API_KEY not found"
+### Lỗi "API_KEY not found"
 
 ```bash
-export DEEPSEEK_API_KEY="sk-your-key"
+# Cho DeepSeek
+export DEEPSEEK_API_KEY="sk-your-deepseek-key"
+
+# Cho OpenAI
+export OPENAI_API_KEY="sk-your-openai-key"
 ```
 
 ### Lỗi connection timeout
@@ -300,6 +319,9 @@ Tăng timeout trong config:
 ```yaml
 deepseek:
   timeout_seconds: 60
+
+openai:
+  timeout_seconds: 90
 ```
 
 ### Lỗi "failed to generate wire"
@@ -330,6 +352,7 @@ wire ./wire
 ## 📚 References
 
 - [DeepSeek API Documentation](https://platform.deepseek.com/docs)
+- [OpenAI API Documentation](https://platform.openai.com/docs)
 - [gRPC Gateway](https://grpc-ecosystem.github.io/grpc-gateway/)
 - [Wire](https://github.com/google/wire)
 

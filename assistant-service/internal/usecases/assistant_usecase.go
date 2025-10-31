@@ -10,16 +10,18 @@ import (
 
 type AssistantUsecase struct {
 	DeepseekClient provider.DeepseekProvider
+	OpenAIClient   provider.OpenAIProvider
 }
 
-func NewAssistantUsecase(deepseekClient provider.DeepseekProvider) *AssistantUsecase {
+func NewAssistantUsecase(deepseekClient provider.DeepseekProvider, openaiClient provider.OpenAIProvider) *AssistantUsecase {
 	return &AssistantUsecase{
 		DeepseekClient: deepseekClient,
+		OpenAIClient:   openaiClient,
 	}
 }
 
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
-func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, int64, error) {
+func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
 	startTime := time.Now()
 
 	// Thêm context vào content nếu có
@@ -30,19 +32,20 @@ func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content strin
 	// Gọi DeepSeek để phân tích
 	result, err := u.DeepseekClient.AnalyzeProductText(ctx, content)
 	if err != nil {
-		return nil, "", 0, fmt.Errorf("failed to analyze product text: %w", err)
+		return nil, "", "", 0, fmt.Errorf("failed to analyze product text: %w", err)
 	}
 
 	processingTime := time.Since(startTime).Milliseconds()
 
 	// Raw response để debug (optional)
-	rawResponse := "" // Có thể marshal result về JSON nếu cần
+	rawResponse := ""                        // Có thể marshal result về JSON nếu cần
+	modelName := u.DeepseekClient.GetModel() // Lấy từ config
 
-	return result, rawResponse, processingTime, nil
+	return result, rawResponse, modelName, processingTime, nil
 }
 
 // Chat - Thực hiện conversation với AI
-func (u *AssistantUsecase) Chat(ctx context.Context, message string, history []dto.DeepseekMessage, contextStr string, sessionID string) (string, string, int64, error) {
+func (u *AssistantUsecase) Chat(ctx context.Context, message string, history []dto.DeepseekMessage, contextStr string, sessionID string) (string, string, string, int64, error) {
 	startTime := time.Now()
 
 	// Thêm context vào message nếu có
@@ -53,7 +56,7 @@ func (u *AssistantUsecase) Chat(ctx context.Context, message string, history []d
 	// Gọi DeepSeek để chat
 	reply, err := u.DeepseekClient.Chat(ctx, message, history)
 	if err != nil {
-		return "", "", 0, fmt.Errorf("failed to chat: %w", err)
+		return "", "", "", 0, fmt.Errorf("failed to chat: %w", err)
 	}
 
 	processingTime := time.Since(startTime).Milliseconds()
@@ -63,11 +66,13 @@ func (u *AssistantUsecase) Chat(ctx context.Context, message string, history []d
 		sessionID = fmt.Sprintf("session_%d", time.Now().UnixNano())
 	}
 
-	return reply, sessionID, processingTime, nil
+	modelName := u.DeepseekClient.GetModel() // Lấy từ config
+
+	return reply, sessionID, modelName, processingTime, nil
 }
 
 // GenerateContent - Tạo nội dung theo template
-func (u *AssistantUsecase) GenerateContent(ctx context.Context, prompt string, template string, variables map[string]string, maxTokens int, temperature float32) (string, int64, error) {
+func (u *AssistantUsecase) GenerateContent(ctx context.Context, prompt string, template string, variables map[string]string, maxTokens int, temperature float32) (string, string, int64, error) {
 	startTime := time.Now()
 
 	// Build prompt từ template và variables
@@ -79,12 +84,104 @@ func (u *AssistantUsecase) GenerateContent(ctx context.Context, prompt string, t
 	// Gọi DeepSeek để generate
 	content, err := u.DeepseekClient.GenerateContent(ctx, finalPrompt, maxTokens, temperature)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to generate content: %w", err)
+		return "", "", 0, fmt.Errorf("failed to generate content: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+	modelName := u.DeepseekClient.GetModel() // Lấy từ config
+
+	return content, modelName, processingTime, nil
+}
+
+// AnalyzeProductTextWithOpenAI - Phân tích văn bản sản phẩm BĐS bằng OpenAI
+func (u *AssistantUsecase) AnalyzeProductTextWithOpenAI(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
+	startTime := time.Now()
+
+	// Thêm context vào content nếu có
+	if contextStr != "" {
+		content = fmt.Sprintf("%s\n\nContext bổ sung: %s", content, contextStr)
+	}
+
+	// Gọi OpenAI để phân tích
+	result, err := u.OpenAIClient.AnalyzeProductText(ctx, content)
+	if err != nil {
+		return nil, "", "", 0, fmt.Errorf("failed to analyze product text with openai: %w", err)
 	}
 
 	processingTime := time.Since(startTime).Milliseconds()
 
-	return content, processingTime, nil
+	// Raw response để debug (optional)
+	rawResponse := ""                      // Có thể marshal result về JSON nếu cần
+	modelName := u.OpenAIClient.GetModel() // Lấy từ config
+
+	return result, rawResponse, modelName, processingTime, nil
+}
+
+// ChatWithOpenAI - Thực hiện conversation với OpenAI
+func (u *AssistantUsecase) ChatWithOpenAI(ctx context.Context, message string, history []dto.DeepseekMessage, contextStr string, sessionID string) (string, string, string, int64, error) {
+	startTime := time.Now()
+
+	// Thêm context vào message nếu có
+	if contextStr != "" {
+		message = fmt.Sprintf("%s\n\nContext: %s", message, contextStr)
+	}
+
+	// Gọi OpenAI để chat
+	reply, err := u.OpenAIClient.Chat(ctx, message, history)
+	if err != nil {
+		return "", "", "", 0, fmt.Errorf("failed to chat with openai: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+
+	// Generate hoặc use existing session ID
+	if sessionID == "" {
+		sessionID = fmt.Sprintf("session_%d", time.Now().UnixNano())
+	}
+
+	modelName := u.OpenAIClient.GetModel() // Lấy từ config
+
+	return reply, sessionID, modelName, processingTime, nil
+}
+
+// GenerateContentWithOpenAI - Tạo nội dung theo template bằng OpenAI
+func (u *AssistantUsecase) GenerateContentWithOpenAI(ctx context.Context, prompt string, template string, variables map[string]string, maxTokens int, temperature float32) (string, string, int64, error) {
+	startTime := time.Now()
+
+	// Build prompt từ template và variables
+	finalPrompt := prompt
+	if template != "" {
+		finalPrompt = u.buildPromptFromTemplate(template, variables, prompt)
+	}
+
+	// Gọi OpenAI để generate
+	content, err := u.OpenAIClient.GenerateContent(ctx, finalPrompt, maxTokens, temperature)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("failed to generate content with openai: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+	modelName := u.OpenAIClient.GetModel() // Lấy từ config
+
+	return content, modelName, processingTime, nil
+}
+
+// AnalyzeProductTextWithFallback - Phân tích văn bản với fallback từ DeepSeek sang OpenAI
+func (u *AssistantUsecase) AnalyzeProductTextWithFallback(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
+	// Try DeepSeek first (faster, cheaper)
+	result, rawResponse, modelName, processingTime, err := u.AnalyzeProductText(ctx, content, contextStr)
+	if err == nil {
+		return result, rawResponse, modelName, processingTime, nil
+	}
+
+	// Log error và fallback to OpenAI
+	fmt.Printf("DeepSeek failed: %v, falling back to OpenAI\n", err)
+	result, rawResponse, modelName, processingTime, err = u.AnalyzeProductTextWithOpenAI(ctx, content, contextStr)
+	if err != nil {
+		return nil, "", "", 0, fmt.Errorf("both providers failed: %w", err)
+	}
+
+	return result, rawResponse, modelName, processingTime, nil
 }
 
 // buildPromptFromTemplate - Build prompt từ template và variables

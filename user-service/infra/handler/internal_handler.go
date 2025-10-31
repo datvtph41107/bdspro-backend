@@ -90,10 +90,53 @@ func (h *InternalHandler) UpdateProfile(ctx context.Context, req *userpb.UpdateP
 
 // SoftDeleteProfile xóa mềm profile (dùng bởi auth-service)
 func (h *InternalHandler) SoftDeleteProfile(ctx context.Context, req *userpb.SoftDeleteProfileRequest) (*sharepb.Empty, error) {
-	err := h.profileUsecase.ProfileRepo.DeleteUserProfile(ctx, req.ProfileId)
+	// Lấy thông tin người xóa từ context (nếu có)
+	var deletedBy *uint64
+	if profileID := _utils.GetProfileIdWithContext(ctx); profileID > 0 {
+		deletedBy = &profileID
+	}
+
+	reason := "Xóa từ auth service"
+
+	// Xóa profile
+	err := h.profileUsecase.ProfileRepo.DeleteUserProfile(ctx, req.ProfileId, deletedBy, reason)
 	if err != nil {
 		log.Printf("Failed to soft delete profile: %v", err)
 		return nil, status.Errorf(codes.Internal, "Failed to soft delete profile: %v", err)
+	}
+
+	// Xóa TẤT CẢ auth method của user
+	err = h.profileUsecase.AuthProvider.DeleteAllAuthMethodsByUserId(ctx, req.ProfileId)
+	if err != nil {
+		log.Printf("Warning: Failed to delete all auth methods for user %d: %v", req.ProfileId, err)
+		// Không return error vì profile đã được xóa
+	}
+
+	return &sharepb.Empty{}, nil
+}
+
+// HardDeleteProfile xóa vĩnh viễn profile khỏi database (dùng bởi auth-service)
+func (h *InternalHandler) HardDeleteProfile(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {
+	// Lấy thông tin người xóa từ context (nếu có)
+	var deletedBy *uint64
+	if profileID := _utils.GetProfileIdWithContext(ctx); profileID > 0 {
+		deletedBy = &profileID
+	}
+
+	reason := "Hard delete từ auth service"
+
+	// Xóa profile
+	err := h.profileUsecase.ProfileRepo.DeleteUserProfile(ctx, req.Id, deletedBy, reason)
+	if err != nil {
+		log.Printf("Failed to hard delete profile: %v", err)
+		return nil, status.Errorf(codes.Internal, "Failed to hard delete profile: %v", err)
+	}
+
+	// Xóa TẤT CẢ auth method của user
+	err = h.profileUsecase.AuthProvider.DeleteAllAuthMethodsByUserId(ctx, req.Id)
+	if err != nil {
+		log.Printf("Warning: Failed to delete all auth methods for user %d: %v", req.Id, err)
+		// Không return error vì profile đã được xóa
 	}
 
 	return &sharepb.Empty{}, nil

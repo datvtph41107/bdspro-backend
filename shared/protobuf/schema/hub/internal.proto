@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+// ========== Messages ==========
+
+// Location message - represents Province, District, or Ward
+message Location {
+  uint64 id = 1;
+  string name = 2;
+  int32 type = 3;
+  string typeText = 4;
+  int32 level = 5; // 1=Province, 2=District, 3=Ward
+  optional string parentId = 6; // Province ID for District, District ID for Ward
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message GetLocationsByIdsRequest {
+  repeated uint64 ids = 1; // List of location IDs (Province, District, or Ward)
+}
+
+message GetLocationsByIdsResponse {
+  repeated Location data = 1; // List of locations
+}
+
+// ========== Service Definition ==========
+
+service HubInternalService {
+  rpc HealthCheck (sharepb.Empty) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/health"
+    };
+  };
+
+  // Get Locations by IDs - Internal RPC for other services
+  rpc GetLocationsByIds (GetLocationsByIdsRequest) returns (GetLocationsByIdsResponse);
+}
+

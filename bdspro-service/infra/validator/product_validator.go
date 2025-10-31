@@ -49,12 +49,10 @@ func (v *ProductValidator) ValidateCreateProduct(dto *dto.ProductSaveRequest) er
 		dto.PropertyTypeId == nil ||
 		dto.PriceData == nil ||
 		(dto.PriceData.SalePrice == nil && dto.PriceData.RentPrice == nil) ||
-		// dto.WardID == nil ||
-		dto.DistrictID == nil ||
 		dto.ProvinceID == nil {
 		return &_routes.Except{
 			Code:    400,
-			Message: `name, area, transactionType, propertyTypeId, priceData, districtId, provinceId are required`,
+			Message: `name, area, transactionType, propertyTypeId, priceData, provinceId are required`,
 		}
 	}
 	return nil

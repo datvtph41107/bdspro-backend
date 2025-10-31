@@ -99,15 +99,19 @@ var publicRoutes = []string{
 	"/v2/social/comment/list",
 	"/v2/social/news-feed/user",
 	"/v2/social/news-feed/detail",
+	"/v2/social/news-feed/global/reel",
+	"/v2/social/news-feed/reel/global",
 
 	"/v2/org/organization/global/profile",
 
 	// Auth public routes
 	"/v2/auth/otp",
+	"/v2/auth/login/key",
 	"/v2/auth/qr",
 	"/v2/auth/token/refresh",
 	"/v2/auth/oauth",
 	"/v2/auth/admin/login",
+	"/v2/auth/phone/check",
 	"/v2/bdspro/v2/product/market",
 
 	// Feedback public routes
@@ -119,10 +123,18 @@ var publicRoutes = []string{
 	"/v2/feedback/report",
 	"/v2/bdspro/v2/product/suggest/deepseek",
 	"/v2/bdspro/v2/post/global",
+	"/v2/hub/system-config/key",
+	"/v2/hub/system-config/by-group",
+	"/v2/hub/user-guides",
 
 	"/v2/user/profile/search/public",
 	"/v2/bdspro/v2/post/detail/",
 	"/v2/social/news-feed/detail/",
+}
+
+var tempRoutes = []string{
+	"/v2/auth/fullname",
+	"/v2/auth/phone",
 }
 
 // HttpCmd chạy HTTP server
@@ -151,6 +163,7 @@ var HttpCmd = &cobra.Command{
 				"http://14.225.210.29:8000",
 				"http://14.225.205.222:8000",
 				"http://14.225.205.222:3107",
+				"http://14.225.205.222:3108",
 				"http://103.145.63.185:3107",
 				"http://localhost:5173",
 				"https://admin.bdspro.com",
@@ -232,10 +245,11 @@ var HttpCmd = &cobra.Command{
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterFeedbackService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
+		service.RegisterHubService(ctx, mux, env, opts)
 		// service.RegisterTqdService(ctx, mux, env, opts)
 
 		// v2 API routes (gRPC Gateway)
-		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes), gin.WrapH(mux))
+		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")
@@ -257,7 +271,7 @@ var HttpCmd = &cobra.Command{
 
 		// v1 API routes (legacy proxy)
 		forwarding := pkg.ForwardingRequest(gateway, env)
-		r.Any("/v1/:service/*path", _jwt.JWTAuthMiddleware(publicRoutes), forwarding)
+		r.Any("/v1/:service/*path", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), forwarding)
 
 		log.Printf("Gateway server starting on port: %s", port)
 		if err := r.Run(":" + port); err != nil {

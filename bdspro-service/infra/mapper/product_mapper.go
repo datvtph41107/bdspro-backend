@@ -198,7 +198,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		// Build:           product.Build,
 		// Project:         product.Project,
 		// Developer:       product.Developer,
-		SourceType: int32(product.SourceType),
+		SourceType: uint32(product.SourceType),
 		// CustomerId: product.CustomerID,
 		// PrivateData:     product.PrivateData,
 		Note:            product.Note,
@@ -210,10 +210,10 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		OwnerId:         &product.OwnerID,
 		OwnerType:       uint32(product.OwnerOf),
 		ProvinceId:      product.ProvinceID,
-		DistrictId:      product.DistrictID,
-		WardId:          product.WardID,
-		Address:         product.Address,
-		GoogleMapLink:   product.GoogleMapLink,
+		// DistrictId:      product.DistrictID,
+		WardId:        product.WardID,
+		Address:       product.Address,
+		GoogleMapLink: product.GoogleMapLink,
 		// Attributes:    product.Attributes,
 		// MediaList:     product.MediaList,
 		// HouseInfo:     product.HouseInfo,
@@ -283,9 +283,9 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		result.HouseInfo = m.HouseInfoToPb(product.HouseInfo)
 	}
 
-	if product.District != nil {
-		result.DistrictName = product.District.Name
-	}
+	// if product.District != nil {
+	// 	result.DistrictName = product.District.Name
+	// }
 	if product.Province != nil {
 		result.ProvinceName = product.Province.Name
 	}
@@ -307,14 +307,16 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 	if product.Price != nil {
 		result.Price = &bdspropb.ProductPrice{
 			// PriceOwner:     product.Price.PriceOwner,
-			Id:               product.Price.ID,
-			Currency:         product.Price.Currency,
-			SalePrice:        product.Price.SalePrice,
-			SaleCommission:   product.Price.SaleCommission,
-			RentPrice:        product.Price.RentPrice,
-			RentCommission:   product.Price.RentCommission,
-			Deposite:         product.Price.Deposite,
-			RentPaymentCycle: product.Price.RentPaymentCycle,
+			Id:                 product.Price.ID,
+			Currency:           product.Price.Currency,
+			SalePrice:          product.Price.SalePrice,
+			SaleCommission:     product.Price.SaleCommission,
+			RentPrice:          product.Price.RentPrice,
+			RentCommission:     product.Price.RentCommission,
+			Deposite:           product.Price.Deposite,
+			RentPaymentCycle:   product.Price.RentPaymentCycle,
+			SaleCommissionType: product.Price.SaleCommissionType,
+			RentCommissionType: product.Price.RentCommissionType,
 		}
 
 	}
@@ -391,11 +393,12 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 		SaleStatus: uint32(product.SaleStatus),
 		RentStatus: uint32(product.RentStatus),
 		AssetId:    product.AssetId,
+		ImageId:    product.ImageId,
 
 		PropertyTypeId:  product.PropertyTypeId,
 		DocTypeId:       product.DocTypeId,
 		Visibility:      uint32(product.Visibility),
-		SourceType:      int32(product.SourceType),
+		SourceType:      uint32(product.SourceType),
 		TransactionType: int32(product.TransactionType),
 		OwnerId:         &product.OwnerID,
 	}
@@ -407,10 +410,10 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 		}
 	}
 
-	if product.District != nil {
-		result.DistrictName = product.District.Name
-		result.DistrictId = &product.District.ID
-	}
+	// if product.District != nil {
+	// 	result.DistrictName = product.District.Name
+	// 	result.DistrictId = &product.District.ID
+	// }
 	if product.Province != nil {
 		result.ProvinceName = product.Province.Name
 		result.ProvinceId = &product.Province.ID
@@ -434,14 +437,16 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	if product.Price != nil {
 		result.Price = &bdspropb.ProductPrice{
 			// PriceOwner:     product.Price.PriceOwner,
-			Id:               product.Price.ID,
-			Currency:         product.Price.Currency,
-			SalePrice:        product.Price.SalePrice,
-			SaleCommission:   product.Price.SaleCommission,
-			RentPrice:        product.Price.RentPrice,
-			RentCommission:   product.Price.RentCommission,
-			Deposite:         product.Price.Deposite,
-			RentPaymentCycle: product.Price.RentPaymentCycle,
+			Id:                 product.Price.ID,
+			Currency:           product.Price.Currency,
+			SalePrice:          product.Price.SalePrice,
+			SaleCommission:     product.Price.SaleCommission,
+			RentPrice:          product.Price.RentPrice,
+			RentCommission:     product.Price.RentCommission,
+			Deposite:           product.Price.Deposite,
+			RentPaymentCycle:   product.Price.RentPaymentCycle,
+			SaleCommissionType: product.Price.SaleCommissionType,
+			RentCommissionType: product.Price.RentCommissionType,
 		}
 	}
 
@@ -453,6 +458,38 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	// }
 
 	return result
+}
+
+func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListResponse) []*bdspropb.ProductResponse {
+	productList := make([]*bdspropb.ProductResponse, len(products))
+	for i, product := range products {
+		productList[i] = &bdspropb.ProductResponse{
+			Id:             product.ID,
+			Name:           product.Name,
+			Code:           product.Code,
+			Area:           product.Area,
+			PropertyTypeId: &product.PropertyTypeId,
+			DocTypeId:      &product.DocTypeId,
+			// ProjectId:       product.ProjectId,
+			ProvinceId:      &product.ProvinceId,
+			ProvinceName:    product.ProvinceName,
+			WardId:          &product.WardId,
+			WardName:        product.WardName,
+			TransactionType: product.TransactionType,
+			Price: &bdspropb.ProductPrice{
+				SalePrice: &product.PriceSalePrice,
+				RentPrice: &product.PriceRentPrice,
+			},
+			ImageId:        product.ImageID,
+			ImageUrl:       product.ImageURL,
+			SourceType:     product.SourceType,
+			SaleStatus:     product.SaleStatus,
+			RentStatus:     product.RentStatus,
+			SaleVisibility: product.SaleVisibility,
+			RentVisibility: product.RentVisibility,
+		}
+	}
+	return productList
 }
 
 func (m *ProductMapper) MapProductPbList(products []domain.Product) []*bdspropb.ProductResponse {
@@ -490,18 +527,18 @@ func MapProductAttachmentPbList(ctx context.Context, codeDataUsecase *_usecase.C
 
 func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto.ProductSaveRequest {
 	result := &dto.ProductSaveRequest{
-		ParentID:        &req.ParentId,
-		Name:            req.Name,
-		Code:            req.Code,
-		Area:            req.Area,
-		Description:     req.Description,
-		Note:            req.Note,
-		PropertyTypeId:  req.PropertyTypeId,
-		DocTypeId:       req.DocTypeId,
-		AmenityIds:      req.AmenityIds,
-		ProjectId:       req.ProjectId,
-		ProvinceID:      req.ProvinceId,
-		DistrictID:      req.DistrictId,
+		ParentID:       &req.ParentId,
+		Name:           req.Name,
+		Code:           req.Code,
+		Area:           req.Area,
+		Description:    req.Description,
+		Note:           req.Note,
+		PropertyTypeId: req.PropertyTypeId,
+		DocTypeId:      req.DocTypeId,
+		AmenityIds:     req.AmenityIds,
+		ProjectId:      req.ProjectId,
+		ProvinceID:     req.ProvinceId,
+		// DistrictID:      req.DistrictId,
 		WardID:          req.WardId,
 		TransactionType: req.TransactionType,
 		GoogleMapLink:   req.GoogleMapLink,
@@ -510,6 +547,7 @@ func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto
 		// RentStatus:      enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
 		RentVisibility: enums.EVisibility(req.RentVisibility),
+		ImageId:        req.ImageId,
 		// OwnerType:      enums.EOwnerOf(req.OwnerType),
 	}
 
@@ -519,12 +557,14 @@ func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto
 	if req.PriceData != nil {
 		result.PriceData = &domain.ProductPrice{
 			// PriceOwner:     req.PriceData.PriceOwner,
-			Currency:       req.PriceData.Currency,
-			SalePrice:      req.PriceData.SalePrice,
-			SaleCommission: req.PriceData.SaleCommission,
-			RentPrice:      req.PriceData.RentPrice,
-			RentCommission: req.PriceData.RentCommission,
-			Deposite:       req.PriceData.Deposite,
+			Currency:           req.PriceData.Currency,
+			SalePrice:          req.PriceData.SalePrice,
+			SaleCommission:     req.PriceData.SaleCommission,
+			RentPrice:          req.PriceData.RentPrice,
+			RentCommission:     req.PriceData.RentCommission,
+			Deposite:           req.PriceData.Deposite,
+			SaleCommissionType: req.PriceData.SaleCommissionType,
+			RentCommissionType: req.PriceData.RentCommissionType,
 		}
 	}
 
@@ -644,8 +684,8 @@ func (m *ProductMapper) MapProductMarketToPb(ctx context.Context, product *domai
 		// MediaUrls:          product.MediaList,
 		// MediaTypes:         product.MediaList,
 		// MainImage:          product.MediaList[0].MediaURL,
-		ProvinceName:     product.ProvinceName,
-		DistrictName:     product.DistrictName,
+		ProvinceName: product.ProvinceName,
+		// DistrictName:     product.DistrictName,
 		WardName:         product.WardName,
 		DocTypeName:      product.DocTypeName,
 		PropertyTypeName: product.PropertyTypeName,
@@ -683,18 +723,18 @@ func (m *ProductMapper) MapProductMarketPbList(ctx context.Context, products []d
 
 func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dto.ProductSaveRequest {
 	result := &dto.ProductSaveRequest{
-		ParentID:        req.ParentId,
-		Name:            req.Name,
-		Code:            req.Code,
-		Area:            req.Area,
-		Description:     req.Description,
-		Note:            req.Note,
-		PropertyTypeId:  req.PropertyTypeId,
-		DocTypeId:       req.DocTypeId,
-		AmenityIds:      req.AmenityIds,
-		ProjectId:       req.ProjectId,
-		ProvinceID:      req.ProvinceId,
-		DistrictID:      req.DistrictId,
+		ParentID:       req.ParentId,
+		Name:           req.Name,
+		Code:           req.Code,
+		Area:           req.Area,
+		Description:    req.Description,
+		Note:           req.Note,
+		PropertyTypeId: req.PropertyTypeId,
+		DocTypeId:      req.DocTypeId,
+		AmenityIds:     req.AmenityIds,
+		ProjectId:      req.ProjectId,
+		ProvinceID:     req.ProvinceId,
+		// DistrictID:      req.DistrictId,
 		WardID:          req.WardId,
 		TransactionType: req.TransactionType,
 		// HouseInfo:       req.HouseInfo,
@@ -708,6 +748,7 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 		Visibility:     enums.EVisibility(req.Visibility),
 		OwnerType:      req.OwnerType,
 		OwnerId:        req.OwnerId,
+		ImageId:        req.ImageId,
 	}
 	if req.PriceData != nil {
 		result.PriceData = m.PriceDataToDomain(req.PriceData)
@@ -782,12 +823,14 @@ func (m *ProductMapper) PriceDataToDomain(req *bdspropb.ProductPrice) *domain.Pr
 		ProductID: &req.ProductId,
 		Currency:  req.Currency,
 		// PriceOwner:       req.PriceOwner,
-		SalePrice:        req.SalePrice,
-		SaleCommission:   req.SaleCommission,
-		Deposite:         req.Deposite,
-		RentPrice:        req.RentPrice,
-		RentCommission:   req.RentCommission,
-		RentPaymentCycle: req.RentPaymentCycle,
+		SalePrice:          req.SalePrice,
+		SaleCommission:     req.SaleCommission,
+		SaleCommissionType: req.SaleCommissionType,
+		Deposite:           req.Deposite,
+		RentPrice:          req.RentPrice,
+		RentCommission:     req.RentCommission,
+		RentCommissionType: req.RentCommissionType,
+		RentPaymentCycle:   req.RentPaymentCycle,
 	}
 	return result
 }
@@ -878,8 +921,8 @@ func (m *ProductMapper) PrivateDataToDomain(req *bdspropb.ProductPrivate) *domai
 // 			filepath.Join(outputDir, "index.m3u8"),
 // 		)
 
-func (m *ProductMapper) PbSearchRequestToDTO(req *bdspropb.ProductSearch) *dto.ProductSearchRequest {
-	return &dto.ProductSearchRequest{
+func (m *ProductMapper) PbSearchRequestToDTO(req *bdspropb.ProductSearch) dto.ProductSearchRequest {
+	return dto.ProductSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
@@ -909,12 +952,12 @@ func (m *ProductMapper) MapAdminProductPbList(ctx context.Context, products []do
 
 func (m *ProductMapper) MapAdminProductPb(ctx context.Context, product *domain.Product) *bdspropb.AdminProductItem {
 	return &bdspropb.AdminProductItem{
-		Id:               product.ID,
-		Name:             product.Name,
-		Area:             product.Area,
-		TransactionType:  uint32(product.TransactionType),
-		ProvinceName:     product.ProvinceName,
-		DistrictName:     product.DistrictName,
+		Id:              product.ID,
+		Name:            product.Name,
+		Area:            product.Area,
+		TransactionType: uint32(product.TransactionType),
+		ProvinceName:    product.ProvinceName,
+		// DistrictName:     product.DistrictName,
 		WardName:         product.WardName,
 		SalePrice:        m.GetSalePrice(product.Price),
 		RentPrice:        m.GetRentPrice(product.Price),

@@ -106,7 +106,7 @@ func (uc *AssetUsecase) UpdateAsset(ctx context.Context, id uint64, asset *domai
 	}
 	asset.LegalItems = nil
 
-	asset, err := uc.RequiredOwner(ctx, id)
+	_, err := uc.RequiredOwner(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -170,10 +170,10 @@ func (uc *AssetUsecase) DeleteAsset(ctx context.Context, id uint64) error {
 
 // UC7: Tạo mới tài sản bằng nút truy cập nhanh
 func (uc *AssetUsecase) CreateAsset(ctx context.Context, asset *domain.Asset) (*domain.Asset, error) {
-	if asset.Name == "" || asset.Area <= 0 || asset.DistrictID == nil || asset.OwnerOf == 0 {
+	if asset.Name == "" || asset.Area <= 0 || asset.ProvinceID == nil || asset.OwnerOf == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
-			Message: "missing required fields: name, area, districtId, ownerType",
+			Message: "missing required fields: name, area, provinceId, ownerType",
 		}
 	}
 
@@ -465,7 +465,7 @@ func (uc *AssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) (
 		nAsset.OwnerID = ownerID
 		nAsset.OwnerOf = ownerType
 		nAsset.WardID = currentAsset.WardID
-		nAsset.DistrictID = currentAsset.DistrictID
+		// nAsset.DistrictID = currentAsset.DistrictID
 		nAsset.ProvinceID = currentAsset.ProvinceID
 		nAsset.Archived = false
 		nAsset.Area = sumArea
@@ -551,7 +551,7 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) (
 		nAsset.OwnerID = ownerID
 		nAsset.OwnerOf = ownerType
 		nAsset.WardID = currentAsset.WardID
-		nAsset.DistrictID = currentAsset.DistrictID
+		// nAsset.DistrictID = currentAsset.DistrictID
 		nAsset.ProvinceID = currentAsset.ProvinceID
 		nAsset.Archived = false
 		nAsset.RentStatus = enums.EAssetStatusOwning

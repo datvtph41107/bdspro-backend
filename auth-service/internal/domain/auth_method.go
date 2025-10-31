@@ -57,6 +57,9 @@ type AuthMethod struct {
 	LockedUntil *time.Time   `gorm:"column:locked_until"`         // Thời gian khóa đến khi nào (cho khóa tạm thời)
 	LockReason  string       `gorm:"column:lock_reason;size:500"` // Lý do khóa
 	LockedBy    *uint64      `gorm:"column:locked_by"`            // ID admin khóa tài khoản
+	PrivateKey  string       `gorm:"column:private_key;size:512"` // Diffie-Hellman private key
+	PublicKey   string       `gorm:"column:public_key;size:512"`  // Diffie-Hellman public key
+	AuthKey     string       `gorm:"column:auth_key;size:512"`    // Auth key được mã hóa
 	CreatedAt   time.Time    `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt   time.Time    `gorm:"column:updated_at;autoUpdateTime"`
 	DeletedAt   *time.Time   `gorm:"column:deleted_at"`

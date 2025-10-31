@@ -32,6 +32,7 @@ type AuthUsecase struct {
 	SessionRepo        repo.SessionRepository
 	OTPRepo            repo.OTPRepository
 	StatusRepo         repo.StatusRepository
+	AuthConfigRepo     repo.IAuthConfigRepo // ✅ Thêm AuthConfigRepo
 	OtpUsecase         *OtpUsecase
 	OrganizationClient provider.OrganizationProvider
 	PaymentProvider    provider.PaymentProvider
@@ -48,6 +49,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	sessionRepo repo.SessionRepository,
 	otpRepo repo.OTPRepository,
 	statusRepo repo.StatusRepository,
+	authConfigRepo repo.IAuthConfigRepo, // ✅ Thêm AuthConfigRepo
 	otpUsecase *OtpUsecase,
 	organizationClient provider.OrganizationProvider,
 	paymentProvider provider.PaymentProvider,
@@ -66,6 +68,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		SessionRepo:        sessionRepo,
 		OTPRepo:            otpRepo,
 		StatusRepo:         statusRepo,
+		AuthConfigRepo:     authConfigRepo, // ✅ Thêm AuthConfigRepo
 		OtpUsecase:         otpUsecase,
 		OrganizationClient: organizationClient,
 		PaymentProvider:    paymentProvider,
@@ -84,6 +87,7 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 		)
 	}
 	existed := false
+	var smsChannel string
 	oauth, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
 	if err == nil && oauth != nil {
 		// User đã tồn tại - gửi OTP
@@ -98,23 +102,24 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 			return nil, err
 		}
 		existed = oauth.UserID != 0
-		s.SendNewOTP(c, param.OTP, otp.Phone) // todo
+		_, smsChannel = s.SendNewOTP(c, param.OTP, otp.Phone)
 	} else {
 		// Bắt buộc phải có họ tên khi đăng ký
 		// if otp.Fullname == "" {
 		// 	return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký")
 		// }
-		oauth, err = s.RequestIsRegister(c, otp)
+		oauth, smsChannel, err = s.RequestIsRegister(c, otp)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return &dto.RequestLoginResponse{
-		AuthID:   oauth.ID,
-		Provider: "PHONE",
-		OAuthID:  otp.Phone,
-		Existed:  existed,
+		AuthID:     oauth.ID,
+		Provider:   "PHONE",
+		OAuthID:    otp.Phone,
+		Existed:    existed,
+		SmsChannel: smsChannel,
 	}, nil
 }
 
@@ -139,10 +144,11 @@ func (s *AuthUsecase) ResendOTP(c context.Context, otp dto.OtpRequest) (*dto.Res
 		return nil, err
 	}
 
-	s.SendNewOTP(c, param.OTP, otp.Phone)
+	_, smsChannel := s.SendNewOTP(c, param.OTP, otp.Phone)
 	return &dto.ResendOTPResponse{
-		AuthId:  oauth.ID,
-		Message: "OTP đã được gửi",
+		AuthId:     oauth.ID,
+		Message:    "OTP đã được gửi",
+		SmsChannel: smsChannel,
 	}, nil
 }
 
@@ -179,13 +185,15 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
 	isNewUser := false
 	if err != nil || infoEntity == nil || infoEntity.ProfileID == 0 {
-		// Kiểm tra nếu là user mới thì bắt buộc phải có họ tên
-		if otp.Fullname == "" {
-			return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký tài khoản mới")
+		// Cho phép đăng ký mà không cần họ tên
+		// User có thể cập nhật họ tên sau khi đăng ký
+		fullname := otp.Fullname
+		if fullname == "" {
+			fullname = "" // Để trống nếu user không nhập
 		}
 
 		// infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
-		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, otp.Fullname, e.Email, e.AuthName, e.Avatar)
+		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, fullname, e.Email, e.AuthName, e.Avatar)
 		if err != nil {
 			return nil, err
 		}
@@ -292,6 +300,51 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		}
 	}
 
+	// Diffie-Hellman key exchange: Mã hóa auth_key nếu client gửi public key
+	if otp.ClientPublicKey != "" {
+		log.Printf("[VerifyOTP] Starting DH key exchange...")
+		log.Printf("[VerifyOTP] ClientPublicKey (base64): %s", otp.ClientPublicKey)
+
+		// Decode client public key
+		clientPublicKey, err := _utils.DecodePublicKey(otp.ClientPublicKey)
+		if err != nil {
+			log.Printf("Failed to decode client public key: %v", err)
+		} else {
+			log.Printf("[VerifyOTP] ClientPublicKey (hex): %s", clientPublicKey.Text(16))
+
+			// Decode server private key
+			serverPrivateKey, err := _utils.DecodePrivateKey(e.PrivateKey)
+			if err != nil {
+				log.Printf("Failed to decode server private key: %v", err)
+			} else {
+				log.Printf("[VerifyOTP] ServerPrivateKey (hex): %s", serverPrivateKey.Text(16))
+				log.Printf("[VerifyOTP] ServerPublicKey (base64): %s", e.PublicKey)
+
+				// Compute shared secret
+				sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
+				if err != nil {
+					log.Printf("Failed to compute shared secret: %v", err)
+				} else {
+					// Log shared secret (hex)
+					sharedSecretHex := sharedSecret.Text(16)
+					log.Printf("[VerifyOTP] SharedSecret (hex): %s", sharedSecretHex)
+					log.Printf("[VerifyOTP] AuthKey: %s", e.AuthKey)
+
+					// Encrypt auth_key with shared secret
+					encryptedAuthKey, err := _utils.EncryptAuthKeyXOR(e.AuthKey, sharedSecretHex)
+					log.Printf("[VerifyOTP] EncryptedAuthKey: %s", encryptedAuthKey)
+					if err != nil {
+						log.Printf("Failed to encrypt auth key: %v", err)
+					} else {
+						response.EncryptedAuthKey = encryptedAuthKey
+						response.ServerPublicKey = e.PublicKey
+						log.Printf("[VerifyOTP] DH key exchange completed successfully")
+					}
+				}
+			}
+		}
+	}
+
 	// Ghi log admin history
 	go func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
@@ -327,6 +380,241 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 			enums.RoleMap[infoEntity.RoleType],  // adminRole
 			ipAddress,                           // ipAddress
 			userAgent,                           // userAgent
+		)
+		if err != nil {
+			log.Printf("Failed to log login history: %v", err)
+		} else {
+			log.Printf("Successfully logged login history for user %d", e.UserID)
+		}
+	}()
+
+	return response, nil
+}
+
+// VerifyRecovery xác minh OTP và gán số điện thoại vào tài khoản hiện tại (không tạo profile mới)
+func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+	// 1. Lấy authID của user đang đăng nhập từ context
+	currentAuthID := _utils.GetAuthIdFromContext(c)
+	if currentAuthID == 0 {
+		return nil, _errors.ReturnError(401, "Vui lòng đăng nhập để thực hiện thao tác này")
+	}
+
+	// 2. Lấy thông tin auth_method của user hiện tại
+	currentAuthMethod, err := s.AuthMethodRepo.FindByID(c, currentAuthID)
+	if err != nil || currentAuthMethod == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin tài khoản")
+	}
+	if currentAuthMethod.UserID == 0 {
+		return nil, _errors.ReturnError(400, "Tài khoản hiện tại chưa có profile")
+	}
+
+	// 3. Verify OTP cho số điện thoại mới
+	e, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
+	if err != nil {
+		return nil, err
+	}
+	param, _ := s.GetParamValidate(c, e, otp.Otp)
+	err = s.OtpUsecase.ValidateAuth(c, []enums.AuthCodeEnum{
+		enums.ACTIVATED,
+		enums.EXPIRED,
+		enums.LIMIT_OTP_SEND,
+		enums.LIMIT_OTP_ENTER,
+		enums.LOCKED,
+		enums.CHECK_OTP,
+	}, param)
+	if err != nil {
+		return nil, err
+	}
+
+	// Gán userID
+	e.UserID = currentAuthMethod.UserID
+	_, err = s.AuthMethodRepo.Update(c, e)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "Lỗi khi cập nhật thông tin tài khoản")
+	}
+
+	// 11. Ghi log
+	go func() {
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		ipAddress := _utils.AuditIPFromContext(c)
+		userAgent := _utils.GetUserAgentFromContext(c)
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "Mobile-Client"
+		}
+
+		s.NotificationClient.CreateAdminHistory(contextTimeout,
+			currentAuthMethod.UserID,
+			currentAuthMethod.UserID,
+			int32(shared_enum.TargetHistoryLead),
+			int32(shared_enum.HistoryCreateStep),
+			"Liên kết số điện thoại mới",
+			[]string{fmt.Sprintf("Đã liên kết số điện thoại %s vào tài khoản", otp.Phone)},
+			"",
+			"Đã liên kết",
+			&currentAuthMethod.UserID,
+			int32(shared_enum.EOwnerTypeMember),
+			"",
+			ipAddress,
+			userAgent,
+		)
+	}()
+
+	return nil, nil
+}
+
+// LoginWithKey đăng nhập bằng auth key (Diffie-Hellman)
+func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyRequest) (*dto.AuthLoginResponse, error) {
+	// 1. Tìm auth method bằng phone
+	e, err := s.AuthMethodRepo.FindByPhone(c, req.Phone)
+	if err != nil {
+		return nil, _errors.ReturnError(404, "Số điện thoại không tồn tại")
+	}
+
+	// Kiểm tra auth_key đã được khởi tạo chưa
+	if e.AuthKey == "" || e.PrivateKey == "" || e.PublicKey == "" {
+		return nil, _errors.ReturnError(400, "Tài khoản chưa được khởi tạo auth key. Vui lòng đăng ký lại")
+	}
+
+	log.Printf("[LoginWithKey] Starting DH key exchange for phone: %s", req.Phone)
+
+	// 2. Decode server private key
+	serverPrivateKey, err := _utils.DecodePrivateKey(e.PrivateKey)
+	if err != nil {
+		log.Printf("Failed to decode server private key: %v", err)
+		return nil, _errors.ReturnError(500, "Lỗi xác thực")
+	}
+	log.Printf("[LoginWithKey] ServerPrivateKey (hex): %s", serverPrivateKey.Text(16))
+
+	// 3. Decode client public key
+	log.Printf("[LoginWithKey] ClientPublicKey (base64): %s", req.ClientPublicKey)
+	clientPublicKey, err := _utils.DecodePublicKey(req.ClientPublicKey)
+	if err != nil {
+		log.Printf("Failed to decode client public key: %v", err)
+		return nil, _errors.ReturnError(400, "Client public key không hợp lệ")
+	}
+	log.Printf("[LoginWithKey] ClientPublicKey (hex): %s", clientPublicKey.Text(16))
+
+	// 4. Compute shared secret
+	sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
+	if err != nil {
+		log.Printf("Failed to compute shared secret: %v", err)
+		return nil, _errors.ReturnError(500, "Lỗi xác thực")
+	}
+
+	// Log shared secret (hex)
+	sharedSecretHex := sharedSecret.Text(16)
+	log.Printf("[LoginWithKey] SharedSecret (hex): %s", sharedSecretHex)
+	log.Printf("[LoginWithKey] EncryptedAuthKey from client: %s", req.EncryptedAuthKey)
+
+	// 5. Decrypt auth key từ client gửi lên
+	decryptedAuthKey, err := _utils.DecryptAuthKeyXOR(req.EncryptedAuthKey, sharedSecretHex)
+	if err != nil {
+		log.Printf("Failed to decrypt auth key: %v", err)
+		return nil, _errors.ReturnError(400, "Auth key không hợp lệ")
+	}
+
+	log.Printf("[LoginWithKey] DecryptedAuthKey: %s", decryptedAuthKey)
+	log.Printf("[LoginWithKey] StoredAuthKey: %s", e.AuthKey)
+
+	// 6. So sánh với auth_key trong database
+	if decryptedAuthKey != e.AuthKey {
+		log.Printf("[LoginWithKey] Auth key mismatch! Decrypted: %s, Stored: %s", decryptedAuthKey, e.AuthKey)
+		return nil, _errors.ReturnError(401, "Auth key không đúng")
+	}
+
+	log.Printf("[LoginWithKey] Auth key validation successful!")
+
+	// 7. Kiểm tra account status
+	if e.UserID != 0 {
+		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, e.UserID)
+		if err != nil {
+			log.Printf("Failed to check account status: %v", err)
+		}
+		if isLocked || !canLogin {
+			return nil, _errors.ReturnError(403, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên")
+		}
+	}
+
+	// 8. Tạo session
+	newSession := &domain.UserSessionEntity{
+		AuthID:     e.ID,
+		Version:    req.Version,
+		Platform:   req.Platform,
+		OS:         req.OS,
+		DeviceName: req.DeviceName,
+		IPRequest:  _utils.AuditIPFromContext(c),
+		UserAgent:  _utils.GetUserAgentFromContext(c),
+	}
+	s.SessionRepo.CreateSession(c, newSession)
+
+	// 9. Lấy profile
+	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
+	if err != nil || infoEntity == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+	}
+
+	// 10. Generate tokens
+	refreshToken := s.GenRefreshToken(c, e, newSession.SessionID)
+	response := s.ResponseLogin(e, infoEntity, newSession.SessionID)
+	response.RefreshToken = refreshToken
+	response.ReferralCode = infoEntity.ReferralCode
+	response.ServerPublicKey = ""
+
+	// 11. Get password auth id
+	if infoEntity.ProfileID != 0 {
+		passwordAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(c, infoEntity.ProfileID, "ADMIN")
+		if err == nil && passwordAuth != nil {
+			response.PasswordAuthId = passwordAuth.ID
+		}
+	}
+
+	// 12. Mã hóa auth_key mới với client public key mới (để client lưu cho lần login sau)
+	// encryptedAuthKey, err := _utils.EncryptAuthKeyXOR(e.AuthKey, sharedSecretHex)
+	// if err != nil {
+	// 	log.Printf("Failed to encrypt auth key: %v", err)
+	// } else {
+	// 	log.Printf("[LoginWithKey] New EncryptedAuthKey: %s", encryptedAuthKey)
+	// 	response.EncryptedAuthKey = encryptedAuthKey
+	// 	response.ServerPublicKey = e.PublicKey
+	// }
+
+	// 13. Ghi log admin history
+	go func() {
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		ipAddress := _utils.AuditIPFromContext(c)
+		userAgent := _utils.GetUserAgentFromContext(c)
+
+		if ipAddress == "" {
+			ipAddress = "127.0.0.1"
+		}
+		if userAgent == "" {
+			userAgent = "Mobile-Client"
+		}
+
+		log.Printf("Creating login history for user %d (LoginWithKey), IP: %s, UserAgent: %s",
+			e.UserID, ipAddress, userAgent)
+
+		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
+			e.UserID,
+			e.UserID,
+			int32(shared_enum.TargetHistoryLead),
+			int32(shared_enum.HistoryCreateStep),
+			"Đăng nhập hệ thống bằng Auth Key",
+			[]string{"Đăng nhập thành công vào hệ thống bằng Auth Key (Diffie-Hellman)"},
+			"Chưa đăng nhập",
+			"Đã đăng nhập",
+			&e.UserID,
+			int32(shared_enum.EOwnerTypeMember),
+			enums.RoleMap[infoEntity.RoleType],
+			ipAddress,
+			userAgent,
 		)
 		if err != nil {
 			log.Printf("Failed to log login history: %v", err)
@@ -390,7 +678,9 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		if err != nil {
 			return nil, err
 		}
-		newToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
+
+		// Tạo access token mới
+		newAccessToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 			AuthID:         props.AuthID,
 			ProfileID:      props.ProfileID,
 			Role:           props.Role,
@@ -400,8 +690,39 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 			PlanAt:         profile.PlanAt,
 			Type:           "ACCESS",
 		})
+
+		// Tạo refresh token mới
+		newRefreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
+			AuthID:         props.AuthID,
+			ProfileID:      props.ProfileID,
+			Role:           props.Role,
+			SessionID:      props.SessionID,
+			OrganizationID: props.OrganizationID,
+			PlanID:         profile.PlanID,
+			PlanAt:         profile.PlanAt,
+			Type:           "REFRESH",
+		})
+
+		// Lưu timestamp mới vào cache để invalidate refresh token cũ
+		currentTime := time.Now().Format(time.RFC3339)
+		err = s.CacheProvider.SaveToken(c, props.AuthID, currentTime, uint64(config.Properties.JWT.RefreshExpMinutes*60))
+		if err != nil {
+			log.Printf("⚠️ [RefreshToken] Không thể lưu timestamp vào cache cho authID %d: %v", props.AuthID, err)
+		}
+
+		// ✅ Lưu refresh token mới vào DB để ZNS provider có thể dùng
+		err = s.AuthConfigRepo.UpdateValue(c, domain.ConfigKeyZNSRefresh, newRefreshToken)
+		if err != nil {
+			log.Printf("⚠️ [RefreshToken] Không thể lưu refresh token vào DB: %v", err)
+		} else {
+			log.Printf("✅ [RefreshToken] Đã lưu refresh token mới vào DB")
+		}
+
 		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID)
-		return &dto.RefreshResponse{AccessToken: newToken}, nil
+		return &dto.RefreshResponse{
+			AccessToken:  newAccessToken,
+			RefreshToken: newRefreshToken,
+		}, nil
 	}
 
 	return nil, &_routes.Except{
@@ -525,8 +846,10 @@ func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDe
 
 // Xóa tài khoản
 func (s *AuthUsecase) Delete(c context.Context) (*dto.DeleteAccountResponse, error) {
-	principal := _jwt.GetPrincipalContext(c)
-	profile, err := s.ProfileProvider.GetByProfileID(c, principal.ProfileId)
+	// principal := _jwt.GetPrincipalContext(c)
+	profileId := _utils.GetProfileIdWithContext(c)
+	authId := _utils.GetAuthIdFromContext(c)
+	profile, err := s.ProfileProvider.GetByProfileID(c, profileId)
 	if err != nil {
 		return nil, err
 	}
@@ -537,47 +860,72 @@ func (s *AuthUsecase) Delete(c context.Context) (*dto.DeleteAccountResponse, err
 		}
 	}
 
-	t := time.Now()
-	profile.DeletedAt = &t
-
-	if err := s.ProfileProvider.UpdateProfile(c, profile); err != nil {
-		return nil, err
+	// Xóa vĩnh viễn profile trong user-service
+	if err := s.ProfileProvider.HardDeleteProfile(c, profileId); err != nil {
+		log.Printf("Failed to hard delete profile: %v", err)
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi khi xóa thông tin tài khoản",
+		}
 	}
 
-	s.ProfileProvider.SoftDeleteProfile(c, principal.ProfileId)
+	// Xóa vĩnh viễn auth method trong auth-service
+	if err := s.AuthMethodRepo.Delete(c, authId); err != nil {
+		log.Printf("Failed to hard delete auth method: %v", err)
+		return nil, &_routes.Except{
+			Code:    500,
+			Message: "Lỗi khi xóa phương thức xác thực",
+		}
+	}
+
+	// Xóa session và cache
 	s.CookieProvider.ResetAll(c)
-	s.CacheProvider.DeleteToken(c, principal.AuthID)
+	s.CacheProvider.DeleteToken(c, authId)
 
 	return &dto.DeleteAccountResponse{
-		// ProfileId: profile.ProfileID,
-		Message: "Tài khoản đã được xóa",
+		Message: "Tài khoản đã được xóa vĩnh viễn",
 	}, nil
 }
 
-func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (*domain.AuthMethod, error) {
-	// Tạo một UserAuthEntity mới
+func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (*domain.AuthMethod, string, error) {
+	// Generate Diffie-Hellman key pair
+	keyPair, err := _utils.GenerateDHKeyPair()
+	if err != nil {
+		return nil, "", _errors.ReturnError(500, "Lỗi sinh key pair")
+	}
+
+	// Generate auth key
+	authKey, err := _utils.GenerateAuthKey()
+	if err != nil {
+		return nil, "", _errors.ReturnError(500, "Lỗi sinh auth key")
+	}
+
+	// Tạo một UserAuthEntity mới với DH keys và auth_key
 	e := &domain.AuthMethod{
-		Provider: "PHONE",
-		AuthName: dto.Phone,
-		FullName: dto.Fullname,
+		Provider:   "PHONE",
+		AuthName:   dto.Phone,
+		FullName:   dto.Fullname,
+		PrivateKey: _utils.EncodePrivateKey(keyPair.PrivateKey),
+		PublicKey:  _utils.EncodePublicKey(keyPair.PublicKey),
+		AuthKey:    authKey,
 	}
 
 	// Lưu vào database
 	createdAuth, err := s.AuthMethodRepo.Create(c, e)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	// Tạo AuthParam mới
 	param, err := s.NewUser(c, createdAuth.ID)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	// Gửi OTP trong updateNewOTP luôn
-	s.SendNewOTP(c, param.OTP, dto.Phone)
+	_, smsChannel := s.SendNewOTP(c, param.OTP, dto.Phone)
 
-	return createdAuth, nil
+	return createdAuth, smsChannel, nil
 }
 
 func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam, error) {
@@ -615,11 +963,11 @@ func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam
 	}, nil
 }
 
-func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEntity, phone string) string {
+func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEntity, phone string) (otp string, smsChannel string) {
 	ip := _utils.AuditIPFromContext(c)
 	s.CheckOtpSpam(c, phone, ip)
 
-	otp := _utils.GenerateOTP()
+	otp = _utils.GenerateOTP()
 	otpEntity.OTPSendTime += 1
 	otpEntity.OTP = otp
 	otpEntity.Activate = false
@@ -634,24 +982,34 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEnt
 
 	s.OTPRepo.UpdateOTP(c, otpEntity)
 
+	// Mặc định channel là "sms"
+	smsChannel = "sms"
+
 	// Gửi OTP qua ZNS
 	if s.ZnsProvider != nil {
 		result, err := s.ZnsProvider.SendOTPZNS(c, phone, otp)
 		if err != nil {
 			log.Printf("⚠️ [ZNS] Lỗi khi gửi OTP qua ZNS cho phone %s: %v", phone, err)
-			// Log lỗi nhưng không block flow, vì OTP vẫn được lưu vào DB
+			// ZNS lỗi → smsChannel = "sms"
+			smsChannel = "sms"
 		} else {
 			if success, ok := result["success"].(bool); ok && success {
 				log.Printf("✅ [ZNS] Đã gửi OTP thành công cho phone %s", phone)
+				// ZNS thành công → smsChannel = "zalo"
+				smsChannel = "zalo"
 			} else {
 				log.Printf("⚠️ [ZNS] Gửi OTP thất bại cho phone %s: %v", phone, result["message"])
+				// ZNS thất bại → smsChannel = "sms"
+				smsChannel = "sms"
 			}
 		}
 	} else {
 		log.Printf("⚠️ [ZNS] ZnsProvider chưa được khởi tạo, không gửi OTP qua ZNS")
+		// Không có ZNS provider → smsChannel = "sms"
+		smsChannel = "sms"
 	}
 
-	return otp
+	return otp, smsChannel
 }
 
 func (s *AuthUsecase) CheckOtpSpam(c context.Context, phoneNumber, ip string) error {
@@ -741,17 +1099,43 @@ func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethod, profile *dto.
 			FullName: authEntity.FullName,
 		}
 	}
-	accessToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
-		AuthID:    authEntity.ID,
-		ProfileID: authEntity.UserID,
-		SessionID: sessionID,
-		Role:      enums.RoleMap[profile.RoleType],
-		Type:      "ACCESS",
-		PlanID:    profile.PlanID,
-		PlanAt:    profile.PlanAt,
-	})
 
-	return dto.MakeAuthLoginResponse(accessToken, authEntity, enums.RoleMap[profile.RoleType])
+	// Kiểm tra xem user đã có họ tên chưa
+	requireFullname := profile.FullName == ""
+	var accessToken string
+
+	if requireFullname {
+		// User chưa có họ tên, tạo TEMP token
+		accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
+			AuthID:    authEntity.ID,
+			ProfileID: authEntity.UserID,
+			SessionID: sessionID,
+			Role:      enums.RoleMap[profile.RoleType],
+			Type:      _jwt.TempToken, // Token tạm thời, hạn 10 phút
+			PlanID:    profile.PlanID,
+			PlanAt:    profile.PlanAt,
+		})
+	} else {
+		// User đã có họ tên, tạo ACCESS token bình thường
+		accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
+			AuthID:    authEntity.ID,
+			ProfileID: authEntity.UserID,
+			SessionID: sessionID,
+			Role:      enums.RoleMap[profile.RoleType],
+			Type:      _jwt.AccessToken,
+			PlanID:    profile.PlanID,
+			PlanAt:    profile.PlanAt,
+		})
+	}
+
+	response := dto.MakeAuthLoginResponse(accessToken, authEntity, enums.RoleMap[profile.RoleType])
+	response.RequireFullname = requireFullname
+	if requireFullname {
+		response.TempToken = accessToken // Đặt vào field tempToken để frontend biết
+		response.AccessToken = ""        // Xóa accessToken vì đây là TEMP token
+	}
+
+	return response
 }
 
 func (s *AuthUsecase) GetRefreshToken(authEntity *domain.AuthMethod, sessionID uint64) string {
@@ -879,7 +1263,13 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	refreshToken := s.GenRefreshToken(c, authEntity, sessionId)
-	profile, _ := s.ProfileProvider.GetByProfileID(c, authEntity.UserID)
+	profile, err := s.ProfileProvider.GetByProfileID(c, authEntity.UserID)
+	if err != nil || profile == nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy thông tin người dùng",
+		}
+	}
 
 	// Ghi log admin history
 	go func() {
@@ -1023,7 +1413,14 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 	// if err != nil {
 	// 	return nil, err
 	// }
-	profile, _ := s.ProfileProvider.GetByProfileID(c, profileId)
+	profile, err := s.ProfileProvider.GetByProfileID(c, profileId)
+	if err != nil || profile == nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy thông tin người dùng",
+		}
+	}
+
 	payload := _jwt.JwtTokenProperties{
 		AuthID:    authId,
 		ProfileID: profileId,
@@ -1770,7 +2167,187 @@ func (s *AuthUsecase) SwitchAccount(c context.Context, req dto.SwitchAccountRequ
 	return response, nil
 }
 
+// LoginWithToken đăng nhập bằng refreshToken và trả về thông tin đầy đủ
+func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (*dto.AuthLoginResponse, error) {
+	// Parse refreshToken để lấy thông tin
+	props, err := _jwt.GetProperties(refreshToken)
+	if err != nil {
+		return nil, _errors.ReturnError(401, "Token không hợp lệ hoặc đã hết hạn")
+	}
+
+	// Kiểm tra xem có phải là REFRESH token không
+	if props.Type != "REFRESH" {
+		return nil, _errors.ReturnError(401, "Token không phải là refresh token")
+	}
+
+	// Kiểm tra token có trong cache không (validate bằng issuedAt)
+	cachedTimestamp, err := s.CacheProvider.GetToken(ctx, props.AuthID)
+	if err != nil {
+		log.Printf("⚠️ [LoginWithToken] Không tìm thấy token trong cache cho authID %d: %v", props.AuthID, err)
+		// Không tìm thấy thì vẫn cho login tiếp
+	} else {
+		invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
+		if invalidToken {
+			return nil, _errors.ReturnError(401, "Phiên làm việc đã hết hạn, vui lòng đăng nhập lại")
+		}
+	}
+
+	// Lấy auth entity
+	authEntity, err := s.AuthMethodRepo.FindByID(ctx, props.AuthID)
+	if err != nil || authEntity == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin đăng nhập")
+	}
+
+	// Lấy profile
+	profile, err := s.ProfileProvider.GetByProfileID(ctx, props.ProfileID)
+	if err != nil || profile == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+	}
+
+	// Check account status
+	isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(ctx, props.ProfileID)
+	if err != nil {
+		log.Printf("Failed to check account status: %v", err)
+	}
+	if isLocked || !canLogin {
+		return nil, _errors.ReturnError(403, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ")
+	}
+
+	// Tạo access token mới
+	var accessToken string
+	if profile.FullName == "" {
+		// Chưa có fullname, trả TEMP token
+		accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
+			AuthID:         props.AuthID,
+			ProfileID:      props.ProfileID,
+			SessionID:      props.SessionID,
+			Role:           props.Role,
+			Type:           _jwt.TempToken,
+			OrganizationID: props.OrganizationID,
+			PlanID:         profile.PlanID,
+			PlanAt:         profile.PlanAt,
+		})
+	} else {
+		// Đã có fullname, trả ACCESS token bình thường
+		accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
+			AuthID:         props.AuthID,
+			ProfileID:      props.ProfileID,
+			SessionID:      props.SessionID,
+			Role:           props.Role,
+			Type:           _jwt.AccessToken,
+			OrganizationID: props.OrganizationID,
+			PlanID:         profile.PlanID,
+			PlanAt:         profile.PlanAt,
+		})
+	}
+
+	// Tạo response
+	response := dto.MakeAuthLoginResponse(accessToken, authEntity, props.Role)
+	response.RefreshToken = refreshToken // Giữ nguyên refresh token
+	response.RequireFullname = (profile.FullName == "")
+	response.ReferralCode = profile.ReferralCode
+	if props.OrganizationID != nil {
+		response.OrganizationID = *props.OrganizationID
+	} else {
+		response.OrganizationID = 0
+	}
+
+	// Lấy passwordAuthId nếu có
+	if profile.ProfileID != 0 {
+		passwordAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profile.ProfileID, "ADMIN")
+		if err == nil && passwordAuth != nil {
+			response.PasswordAuthId = passwordAuth.ID
+		}
+	}
+
+	// Nếu chưa có fullname thì set tempToken
+	if response.RequireFullname {
+		response.TempToken = accessToken
+		response.AccessToken = ""
+	} else {
+		response.TempToken = ""
+	}
+
+	return response, nil
+}
+
 // GetLoginHistory lấy danh sách lịch sử đăng nhập của user
+// UpdateFullname cập nhật họ tên cho user và trả về thông tin login
+func (s *AuthUsecase) UpdateFullname(ctx context.Context, fullname string) (*dto.AuthLoginResponse, error) {
+	// Validate fullname
+	if fullname == "" {
+		return nil, _errors.ReturnError(400, "Họ tên không được để trống")
+	}
+
+	// Lấy profileId từ context
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, _errors.ReturnError(401, "Không thể xác thực người dùng")
+	}
+
+	// Lấy profile hiện tại
+	profile, err := s.ProfileProvider.GetByProfileID(ctx, profileId)
+	if err != nil || profile == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+	}
+
+	// Update fullname
+	profile.FullName = fullname
+	err = s.ProfileProvider.UpdateProfile(ctx, profile)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "Lỗi khi cập nhật họ tên")
+	}
+
+	// Lấy authId từ context
+	authId := _utils.GetAuthIdFromContext(ctx)
+	if authId == 0 {
+		return nil, _errors.ReturnError(401, "Không thể xác thực người dùng")
+	}
+
+	// Lấy sessionId từ context
+	sessionId := _utils.GetSessionIdFromContext(ctx)
+	if sessionId == 0 {
+		return nil, _errors.ReturnError(401, "Không tìm thấy thông tin phiên đăng nhập")
+	}
+
+	// Lấy auth entity
+	authEntity, err := s.AuthMethodRepo.FindByID(ctx, authId)
+	if err != nil || authEntity == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin đăng nhập")
+	}
+
+	// Tạo ACCESS token mới (không phải TEMP nữa vì đã có fullname)
+	accessToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
+		AuthID:    authId,
+		ProfileID: profileId,
+		SessionID: sessionId,
+		Role:      enums.RoleMap[profile.RoleType],
+		Type:      _jwt.AccessToken, // Token bình thường, không phải TEMP
+		PlanID:    profile.PlanID,
+		PlanAt:    profile.PlanAt,
+	})
+
+	// Refresh token
+	refreshToken := s.GenRefreshToken(ctx, authEntity, sessionId)
+
+	// Tạo response giống như login thành công
+	response := dto.MakeAuthLoginResponse(accessToken, authEntity, enums.RoleMap[profile.RoleType])
+	response.RefreshToken = refreshToken
+	response.RequireFullname = false // Không cần fullname nữa
+	response.TempToken = ""          // Xóa temp token
+	response.ReferralCode = profile.ReferralCode
+
+	// Lấy passwordAuthId nếu có
+	if profileId != 0 {
+		passwordAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profileId, "ADMIN")
+		if err == nil && passwordAuth != nil {
+			response.PasswordAuthId = passwordAuth.ID
+		}
+	}
+
+	return response, nil
+}
+
 func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*domain.UserSessionEntity, int64, error) {
 	// Lấy profileId từ context
 	profileID := _utils.GetProfileIdWithContext(ctx)
@@ -1791,4 +2368,17 @@ func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]
 	}
 
 	return sessions, total, nil
+}
+
+func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint64, error) {
+	// Check if phone exists
+	auth, err := s.AuthMethodRepo.PhoneCheck(ctx, phone)
+	if err != nil {
+		return false, nil, _errors.ReturnError(500, "Lỗi khi kiểm tra sự tồn tại của số điện thoại")
+	}
+	if auth == nil {
+		return false, nil, nil
+	}
+
+	return true, &auth.ID, nil
 }

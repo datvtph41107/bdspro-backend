@@ -303,6 +303,21 @@
       "runOptions": {
         // "runOn": "folderOpen"
       }
+    },
+    {
+      "label": "🔌 Hub gRPC (8280)",
+      "type": "shell",
+      "command": "cd shared/code && make run-dev hub grpc",
+      "args": [],
+      "problemMatcher": [
+        "$go"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
     }
   ]
 }

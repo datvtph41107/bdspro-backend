@@ -24,9 +24,11 @@ var publicRoutes = []string{
 	"/membership/user/plans",
 }
 
+var tempRoutes = []string{}
+
 func (r *MembershipRouter) RegisterRoutes(router *gin.Engine) {
 	membershipRouter := router.Group("/membership/user")
-	membershipRouter.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+	membershipRouter.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 	{
 		membershipRouter.GET("/plans", r.ListPlan)
 		membershipRouter.POST("/order", r.CreateOrder)

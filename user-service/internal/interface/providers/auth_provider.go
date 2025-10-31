@@ -84,6 +84,7 @@ type AuthProvider interface {
 	Create(ctx context.Context, authMethod *AuthMethodDomain) (*AuthMethodDomain, error)
 	Update(ctx context.Context, authMethod *AuthMethodDomain) (*AuthMethodDomain, error)
 	SoftDelete(ctx context.Context, id uint64) error
+	DeleteAllAuthMethodsByUserId(ctx context.Context, userId uint64) error // Xóa tất cả auth_method của 1 user
 	FindAdminsByProvider(ctx context.Context, provider string, page, size int) ([]*AuthMethodDomain, int64, error)
 
 	// GetRoleMapByProfileIds(ctx context.Context, roleKeys []uint32) (map[uint32]*_dto.RoleDTO, error)

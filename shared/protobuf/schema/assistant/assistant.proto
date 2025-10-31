@@ -59,16 +59,16 @@ message ProductInfo {
   optional string province = 4;
   optional string district = 5;
   optional string ward = 6;
-  optional string property_type = 7;
+  optional string propertyType = 7;
   optional int32 transaction_type = 8; // 1=Bán, 2=Thuê, 3=Cả hai
-  optional double sale_price = 9;
+  optional double salePrice = 9;
   optional double rent_price = 10;
   optional int32 bedroom = 11;
   optional int32 bathroom = 12;
   optional int32 floor = 13;
   optional float frontage = 14;
   optional string orientation = 15;
-  optional string legal_doc = 16;
+  optional string legalDoc = 16;
   optional string furniture = 17;
   optional string description = 18;
   repeated string amenities = 19;

@@ -77,6 +77,8 @@ buf-tqd:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path tqd
 buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
+buf-hub:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path hub	
 buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction buf-feedback buf-tqd buf-assistant
 	echo "done"	
 	

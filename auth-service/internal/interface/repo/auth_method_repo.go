@@ -15,6 +15,7 @@ type AuthMethodRepository interface {
 	Update(ctx context.Context, auth *domain.AuthMethod) (*domain.AuthMethod, error)
 	Delete(ctx context.Context, id uint64) error
 	SoftDelete(ctx context.Context, id uint64) error
+	DeleteByUserId(ctx context.Context, userId uint64) error // Xóa tất cả auth_method của 1 user
 	FindByID(ctx context.Context, id uint64) (*domain.AuthMethod, error)
 
 	// Admin management methods
@@ -37,4 +38,5 @@ type AuthMethodRepository interface {
 
 	// OAuth connected accounts
 	GetConnectedOAuthAccounts(c context.Context, userID uint64) ([]*domain.AuthMethod, error)
+	PhoneCheck(ctx context.Context, phone string) (*domain.AuthMethod, error)
 }

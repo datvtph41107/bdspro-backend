@@ -63,10 +63,10 @@ func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *bdspropb.Asset {
 		result.ProvinceName = asset.Province.Name
 		result.ProvinceId = &asset.Province.ID
 	}
-	if asset.District != nil {
-		result.DistrictName = asset.District.Name
-		result.DistrictId = &asset.District.ID
-	}
+	// if asset.District != nil {
+	// 	result.DistrictName = asset.District.Name
+	// 	result.DistrictId = &asset.District.ID
+	// }
 	if asset.Ward != nil {
 		result.WardName = asset.Ward.Name
 		result.WardId = &asset.Ward.ID
@@ -80,10 +80,10 @@ func (m *AssetMapper) AssetPbToDomain(asset *bdspropb.SaveAssetRequest) *domain.
 		BaseEntity: _models.BaseEntity{
 			ID: asset.Id,
 		},
-		Name:             asset.Name,
-		Area:             asset.Area,
-		WardID:           asset.WardId,
-		DistrictID:       asset.DistrictId,
+		Name:   asset.Name,
+		Area:   asset.Area,
+		WardID: asset.WardId,
+		// DistrictID:       asset.DistrictId,
 		ProvinceID:       asset.ProvinceId,
 		ProductID:        asset.ProductId,
 		ParentAssetID:    asset.ParentAssetId,
@@ -127,7 +127,6 @@ func (m *AssetMapper) AssetSavePbToDTO(req *bdspropb.SaveAssetRequest) *dto.Asse
 		Name:             req.Name,
 		Area:             req.Area,
 		WardID:           req.WardId,
-		DistrictID:       req.DistrictId,
 		ProvinceID:       req.ProvinceId,
 		ProductID:        req.ProductId,
 		ParentAssetID:    req.ParentAssetId,
@@ -156,11 +155,11 @@ func (m *AssetMapper) mapLegalItemsPb(legalItems []domain.AssetLegal) []*bdsprop
 			Id:           item.ID,
 			AssetId:      item.AssetID,
 			DocumentType: item.DocumentType,
-			DocumentName: item.DocumentType, // Using DocumentType as DocumentName
-			DocumentUrl:  "",                // Empty for now
+			DocumentName: item.DocumentName,
+			DocumentUrl:  item.DocumentURL,
 			IssuedDate:   _utils.FormatTimeToString(item.IssuedDate),
 			ExpiryDate:   _utils.FormatTimeToString(item.ExpiryDate),
-			Description:  "", // Empty for now
+			Description:  item.Description,
 		}
 	}
 	return result
@@ -177,7 +176,8 @@ func (m *AssetMapper) mapLegalItemsDto(legalItems []*bdspropb.LegalItem) []dto.L
 			ID:             item.Id,
 			AssetID:        item.AssetId,
 			DocumentType:   item.DocumentType,
-			DocumentNumber: item.DocumentName, // Using DocumentName as DocumentNumber
+			DocumentNumber: item.DocumentName,
+			DocumentURL:    item.DocumentUrl,
 			IssueDate:      item.IssuedDate,
 			ExpiryDate:     item.ExpiryDate,
 			Status:         0, // Default status

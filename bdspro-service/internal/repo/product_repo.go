@@ -43,7 +43,7 @@ type ProductRepo interface {
 
 	// Tìm kiếm sản phẩm theo chủ sở hữu
 	// deprecated
-	SearchProductWithOwner(profileId *uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	// SearchProductWithOwner(profileId *uint64, payload dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error)
 
 	// Tìm kiếm sản phẩm để export excel
 	SearchToExport(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, error)
@@ -64,6 +64,7 @@ type ProductRepo interface {
 	// NewDeposite(ctx context.Context, dto *domain.Deposite) error
 	CountByAssetID(assetID uint64) (int64, error)
 	UpdateAssetID(c context.Context, id uint64, assetID uint64) error
+	UpdateImageID(c context.Context, id uint64, imageID *uint64) error
 	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
 	// CancelDeposite(ctx context.Context, id uint64) error
 
@@ -82,7 +83,7 @@ type ProductRepo interface {
 	GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error)
 	GetUserProducts(ctx context.Context, req *dto.UserProductSearchRequest) ([]domain.Product, int64, error)
 
-	GetProducts(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
+	GetProducts(c context.Context, payload dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error)
 	GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
 	// Đếm số sản phẩm theo ownerOf và ownerId

@@ -26,6 +26,9 @@ service AuthInternalService {
     
     // Get Auth Admin by IDs with role info
     rpc GetAuthAdminByIds(GetAuthAdminByIdsRequest) returns (GetAuthAdminByIdsResponse);
+    
+    // Delete all auth methods by userId
+    rpc DeleteAuthMethodsByUserId(sharepb.IdRequest) returns (sharepb.SubmitResponse);
 }
 
 message RequiredRolesRequest {

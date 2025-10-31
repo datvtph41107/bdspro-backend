@@ -25,9 +25,9 @@ type CreateAssetForOrgDTO struct {
 // AssetSaveRequestDTO DTO cho thông tin asset cần tạo
 type AssetSaveRequestDTO struct {
 	Name             string             `json:"name" binding:"required"`
-	WardID           *uint64            `json:"wardId" binding:"required"`
-	DistrictID       *uint64            `json:"districtId,omitempty"`
-	ProvinceID       *uint64            `json:"provinceId,omitempty"`
+	WardID           *uint64            `json:"wardId,omitempty"`
+	DistrictID       *uint64            `json:"districtId" binding:"required"`
+	ProvinceID       *uint64            `json:"provinceId" binding:"required"`
 	ProductID        *uint64            `json:"productId,omitempty"`
 	ParentAssetID    *uint64            `json:"parentAssetId,omitempty"`
 	SplitMergeStatus string             `json:"splitMergeStatus,omitempty"`

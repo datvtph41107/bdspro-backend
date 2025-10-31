@@ -239,6 +239,18 @@ func (u *AuthAdminUsecase) DeleteAdmin(ctx context.Context, authID uint64) error
 	return nil
 }
 
+// DeleteAllAuthMethodsByUserId xóa tất cả auth_method của 1 user (hard delete)
+func (u *AuthAdminUsecase) DeleteAllAuthMethodsByUserId(ctx context.Context, userId uint64) error {
+	// Xóa tất cả auth_method của user
+	err := u.AuthMethodRepo.DeleteByUserId(ctx, userId)
+	if err != nil {
+		return _errors.ReturnError(int32(500), fmt.Sprintf("Lỗi xóa auth methods của user %d: %v", userId, err))
+	}
+
+	fmt.Printf("Deleted all auth methods for userId: %d\n", userId)
+	return nil
+}
+
 // AssignRole gán quyền cho admin
 func (u *AuthAdminUsecase) AssignRole(ctx context.Context, req dto.AssignRoleRequest) error {
 	// Kiểm tra quyền admin

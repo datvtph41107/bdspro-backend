@@ -25,7 +25,7 @@ func NewPlanRouter(service *services.PlanService) *PlanRouter {
 
 func (r *PlanRouter) RegisterRoutes(router *gin.Engine) {
 	PlanGroup := router.Group("/membership/plan")
-	PlanGroup.Use(_jwt.JWTAuthMiddleware([]string{"/membership/plan/list"}))
+	PlanGroup.Use(_jwt.JWTAuthMiddleware([]string{"/membership/plan/list"}, []string{}))
 	{
 		PlanGroup.POST("", r.BaseRouter.Create)
 		PlanGroup.PUT(":id", r.BaseRouter.Update)

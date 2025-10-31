@@ -37,6 +37,8 @@ var publicRoutes = []string{
 	// "/v2/tqd/directory/suppliers",
 }
 
+var tempRoutes = []string{}
+
 var (
 	HttpPort int
 	HttpHost string
@@ -138,7 +140,7 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 
 	// API v2 routes
 	v2 := router.Group("/v2/tqd")
-	v2.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+	v2.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 	{
 		// Contact Label routes
 		contactLabelHandler := app.ContactLabelHandler

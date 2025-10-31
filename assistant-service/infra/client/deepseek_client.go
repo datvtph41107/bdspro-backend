@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// @bind: assistant/internal/interface/provider.DeepseekProvider
+// ++@bind: assistant/internal/interface/provider.DeepseekProvider
 
 type DeepseekClient struct {
 	apiKey     string
@@ -58,6 +58,9 @@ func NewDeepseekClient() *DeepseekClient {
 	}
 }
 
+// "description": "Mô tả chi tiết sản phẩm",
+// "note": "Ghi chú thêm",
+
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
 func (c *DeepseekClient) AnalyzeProductText(ctx context.Context, content string) (*dto.ProductAnalysisResult, error) {
 	systemPrompt := `Bạn là trợ lý AI chuyên phân tích thông tin bất động sản tiếng Việt. 
@@ -67,8 +70,6 @@ Hãy phân tích và trả về JSON với cấu trúc sau:
 {
   "name": "Tên/tiêu đề sản phẩm (bắt buộc)",
   "area": diện tích (số float, đơn vị m2, bắt buộc),
-  "description": "Mô tả chi tiết sản phẩm",
-  "note": "Ghi chú thêm",
   "transactionType": 10 hoặc 20 (10=Bán, 20=Cho thuê),
   "googleMapLink": "Link Google Maps nếu có",
   "address": {
@@ -286,4 +287,9 @@ func cleanJSONFromMarkdown(content string) string {
 	content = strings.TrimSuffix(content, "```")
 
 	return strings.TrimSpace(content)
+}
+
+// GetModel - Trả về model name đang sử dụng
+func (c *DeepseekClient) GetModel() string {
+	return c.model
 }

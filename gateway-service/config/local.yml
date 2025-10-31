@@ -23,6 +23,8 @@ service:
     transaction: 8215
     auth: 8216
     feedback: 8217
+    assistant: 8218
+    hub: 8280
 jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer

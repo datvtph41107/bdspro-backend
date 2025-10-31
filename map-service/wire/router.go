@@ -15,12 +15,14 @@ var publicRoutes = []string{
 	"/map/locations/find-by-polygon",
 }
 
+var tempRoutes = []string{}
+
 // NewRouter creates a new router with all routes configured
 func NewRouter(mapPointHandler *handler.MapPointHandler) *gin.Engine {
 	r := gin.Default()
 
 	// JWT middleware
-	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+	r.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 
 	// Swagger documentation
 	r.GET("/map/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

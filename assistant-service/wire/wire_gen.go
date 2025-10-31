@@ -20,7 +20,8 @@ import (
 
 func InitializeApp() (*initial.InitialApp, error) {
 	deepseekClient := client.NewDeepseekClient()
-	assistantUsecase := usecases.NewAssistantUsecase(deepseekClient)
+	openAIClient := client.NewOpenAIClient()
+	assistantUsecase := usecases.NewAssistantUsecase(deepseekClient, openAIClient)
 	assistantHandler := handler.NewAssistantHandler(assistantUsecase)
 	initialApp := initial.NewInitialApp(assistantHandler)
 	return initialApp, nil
@@ -29,4 +30,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), handler.NewAssistantHandler, usecases.NewAssistantUsecase, client.NewDeepseekClient, initial.NewInitialApp)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.OpenAIProvider), new(*client.OpenAIClient)), handler.NewAssistantHandler, usecases.NewAssistantUsecase, client.NewDeepseekClient, initial.NewInitialApp, client.NewOpenAIClient)

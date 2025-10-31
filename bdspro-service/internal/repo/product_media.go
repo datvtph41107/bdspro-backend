@@ -9,5 +9,5 @@ import (
 type ProductMediaRepo interface {
 	Create(access *domain.ProductMedia) error
 	ExistsByUserAndProduct(userId, productId uint64) (bool, error)
-	UpdateProductMediaItems(ctx context.Context, productID uint64, mediaItems []dto.MediaItem) error
+	UpdateProductMediaItems(ctx context.Context, productID uint64, mediaItems []dto.MediaItem) ([]uint64, error)
 }

@@ -262,7 +262,6 @@ func (s *BdsproPublicService) GetUserProductsPublic(ctx context.Context, req *bd
 		DocTypeID:        req.DocTypeId,
 		ProjectID:        req.ProjectId,
 		ProvinceID:       req.ProvinceId,
-		DistrictID:       req.DistrictId,
 		WardID:           req.WardId,
 		TransactionType:  req.TransactionType,
 		SaleStatus:       req.SaleStatus,

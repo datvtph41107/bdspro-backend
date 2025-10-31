@@ -13,6 +13,7 @@ type ProfileProvider interface {
 	CreateProfile(ctx context.Context, authID uint64, planID *uint64, name, email, phone, avatar string) (*dto.ProfileDTO, error)
 	UpdateProfile(ctx context.Context, profile *dto.ProfileDTO) error
 	SoftDeleteProfile(ctx context.Context, profileID uint64) error
+	HardDeleteProfile(ctx context.Context, profileID uint64) error
 	CheckAccountStatus(ctx context.Context, profileID uint64) (isLocked bool, canLogin bool, err error)
 
 	// Profile utilities

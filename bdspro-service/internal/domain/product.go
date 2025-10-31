@@ -18,6 +18,7 @@ type Product struct {
 	ParentId       *uint64             `gorm:"type:int8" json:"parentId,omitempty"`
 	AssetId        *uint64             `gorm:"type:int8" json:"assetId,omitempty"`
 	PostIds        []uint64            `gorm:"-" json:"postIds,omitempty"`
+	ImageId        *uint64             `gorm:"type:int8" json:"imageId,omitempty"`
 	PropertyTypeId *uint64             `json:"propertyTypeId,omitempty"`
 	PropertyType   *PropertyTypeItem   `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	DocTypeId      *uint64             `json:"docTypeId,omitempty"`
@@ -54,11 +55,9 @@ type Product struct {
 	OwnerID        uint64             `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
 	OwnerOf        enums.EOwnerOf     `gorm:"type:smallint;not null;default:10" json:"ownerOf"`
 	ProvinceID     *uint64            `json:"provinceId,omitempty"`
-	Province       *Region            `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
-	DistrictID     *uint64            `json:"districtId,omitempty"`
-	District       *Region            `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"`
+	Province       *ProvinceV2        `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	WardID         *uint64            `json:"wardId,omitempty"`
-	Ward           *Region            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
+	Ward           *WardV2            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
 	Address        string             `gorm:"size:255" json:"address,omitempty"`
 	GoogleMapLink  string             `gorm:"size:255" json:"googleMapLink,omitempty"`
 	MediaList      []ProductMediaItem `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
@@ -66,7 +65,6 @@ type Product struct {
 	Archived       bool               `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
 
 	ProvinceName     string `gorm:"-" json:"provinceName,omitempty"`
-	DistrictName     string `gorm:"-" json:"districtName,omitempty"`
 	WardName         string `gorm:"-" json:"wardName,omitempty"`
 	PropertyTypeName string `gorm:"-" json:"propertyTypeName,omitempty"`
 
@@ -156,7 +154,6 @@ type ProductMarket struct {
 
 	// Region Names
 	ProvinceName *string `gorm:"column:province_name" json:"provinceName"`
-	DistrictName *string `gorm:"column:district_name" json:"districtName"`
 	WardName     *string `gorm:"column:ward_name" json:"wardName"`
 
 	// DocType and PropertyType Name

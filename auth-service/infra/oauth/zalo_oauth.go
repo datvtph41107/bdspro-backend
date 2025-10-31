@@ -202,7 +202,11 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 	session, _ := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
 
 	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
-	profile, _ := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+	profile, err := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
+	if err != nil || profile == nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+	}
+
 	refreshToken := s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
 	// Ghi log admin history

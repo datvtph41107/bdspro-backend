@@ -16,7 +16,7 @@ jwt:
   key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer
   tokenExpirationAfterDays: 14
-  accessExpAfterMinutes: 15 # access token hết hạn 15 phút
+  accessExpAfterMinutes: 1 # access token hết hạn 15 phút
   refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
   listPermit:
   authorizationHeader: Authorization

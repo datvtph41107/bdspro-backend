@@ -66,7 +66,7 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			)
 		}
 	case enums.LIMIT_OTP_ENTER:
-		if otpEntity.OTPCheckTime >= s.properties.MaxTimesOtpEnter {
+		if otpEntity.OTPCheckTime > s.properties.MaxTimesOtpEnter {
 			s.LockAccount(c, param)
 			return _errors.ReturnError(
 				int32(code),
@@ -88,7 +88,7 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 		if otpEntity.ExpiredTime.IsZero() && otpEntity.ExpiredTime.Before(time.Now()) {
 			return _errors.ReturnError(
 				int32(code),
-				"Mã đã hết hạn",
+				"Mã OTP đã hết hạn. Nhấn Gửi lại mã.",
 			)
 		}
 	case enums.LIMIT_NEXT_TIME:

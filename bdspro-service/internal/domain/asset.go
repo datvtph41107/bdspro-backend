@@ -25,12 +25,10 @@ type Asset struct {
 	// BuyedDate        *time.Time        `json:"buyedDate,omitempty"`
 	_models.BaseEntity
 	Name             string             `json:"name,omitempty" binding:"required"`
-	WardID           *uint64            `json:"wardId" binding:"required"`
-	Ward             *Region            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
-	DistrictID       *uint64            `json:"districtId,omitempty"`
-	District         *Region            `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"`
-	ProvinceID       *uint64            `json:"provinceId,omitempty"`
-	Province         *Region            `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
+	WardID           *uint64            `json:"wardId,omitempty"`
+	Ward             *WardV2            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
+	ProvinceID       *uint64            `json:"provinceId" binding:"required"`
+	Province         *ProvinceV2        `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	ProductID        *uint64            `json:"productId"`
 	ParentAssetID    *uint64            `json:"parentAssetId"`
 	SplitMergeStatus string             `json:"splitMergeStatus"`
@@ -61,7 +59,6 @@ type AssetList struct {
 	Asset
 	PropertyTypeName string          `gorm:"column:property_type_name" json:"propertyTypeName"`
 	ProvinceName     string          `gorm:"column:province_name" json:"provinceName"`
-	DistrictName     string          `gorm:"column:district_name" json:"districtName"`
 	WardName         string          `gorm:"column:ward_name" json:"wardName"`
 	Permissions      string          `gorm:"column:permissions" json:"permissions"`
 	LegalList        json.RawMessage `gorm:"column:legal_list" json:"legalList"` // raw json from query
@@ -81,7 +78,6 @@ type AssetLog struct {
 	DeletedAt        gorm.DeletedAt     `json:"-"`
 	Name             string             `json:"name,omitempty"`
 	WardId           uint64             `json:"wardId"`
-	DistrictId       uint64             `json:"districtId,omitempty"`
 	ProvinceId       uint64             `json:"provinceId,omitempty"`
 	Price            float64            `json:"price"`
 	BuyedDate        *time.Time         `json:"buyedDate,omitempty"`

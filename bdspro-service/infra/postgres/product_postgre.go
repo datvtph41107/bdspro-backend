@@ -100,11 +100,11 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"rent_status":      entity.RentStatus,
 		"rent_visibility":  entity.RentVisibility,
 		"province_id":      entity.ProvinceID,
-		"district_id":      entity.DistrictID,
 		"ward_id":          entity.WardID,
 		"address":          entity.Address,
 		"google_map_link":  entity.GoogleMapLink,
 		"archived":         entity.Archived,
+		// "district_id":      entity.DistrictID,
 	}
 
 	err := GetDB(c, r.DB).Model(&domain.Product{}).
@@ -180,7 +180,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		// Preload("CreatedUser").
 		// Preload("UpdatedUser").
 		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
 		// Preload("SaleTransaction", "deleted_at IS NULL").
 		// Preload("RentTransaction", "deleted_at IS NULL").
@@ -416,53 +416,6 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearch
 	return query
 }
 
-func (r *GormUserProductRepo) SearchProductWithOwner(profileId *uint64, dto dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	var results []domain.Product
-
-	query := r.DB.
-		Debug().
-		Model(domain.Product{}).
-		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
-		Joins(`LEFT JOIN sharing_access pa
-					ON (pa.domain_id = products.id and pa.domain = 10 and pa.to_id = ? and pa.to_type = 10)`, profileId).
-		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
-					FROM products WHERE deleted_at is null GROUP BY parent_id) 
-					AS child ON products.id = child.parent_id`).
-
-		// Where("pa.user_id = ?", profileId).
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
-		// Preload("Amenities", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("PropertyType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		// Preload("SaleTransaction", "deleted_at IS NULL").
-		// Preload("RentTransaction", "deleted_at IS NULL").
-		Where("products.owner_id = ? and products.deleted_at is NULL", profileId)
-
-	query = r.QueryDomain(query, &dto)
-
-	err := query.
-		Order("updated_at desc").
-		Limit(dto.GetLimit()).
-		Offset(dto.GetOffset()).
-		Find(&results).Error
-
-	// err := query.Find(&results).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var total int64
-	query.Count(&total)
-
-	return results, total, nil
-}
-
 func (r *GormUserProductRepo) SearchToExport(profileId uint64, dto dto.ProductSearchRequest) ([]domain.Product, error) {
 	var results []domain.Product
 
@@ -481,9 +434,9 @@ func (r *GormUserProductRepo) SearchToExport(profileId uint64, dto dto.ProductSe
 			return db.Order("product_price.created_at asc")
 		}).
 		Preload("HouseInfo", "deleted_at IS NULL").
-		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
+		// Preload("Province", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
+		// Preload("Ward", "deleted_at IS NULL").
 		Preload("Amenities", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
 		Preload("PropertyType", "deleted_at IS NULL").
@@ -709,6 +662,13 @@ func (r *GormUserProductRepo) UpdateAssetID(c context.Context, id uint64, assetI
 		Error
 }
 
+func (r *GormUserProductRepo) UpdateImageID(c context.Context, id uint64, imageID *uint64) error {
+	return GetDB(c, r.DB).Model(&domain.Product{}).
+		Where("id = ? and deleted_at is null", id).
+		Update("image_id", imageID).
+		Error
+}
+
 // func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 // 	var results []domain.Product
 
@@ -907,9 +867,9 @@ func (r *GormUserProductRepo) GetGroupProducts(ctx context.Context, req *dto.Gro
 		query = query.Where("products.province_id = ?", *req.ProvinceID)
 	}
 
-	if req.DistrictID != nil {
-		query = query.Where("products.district_id = ?", *req.DistrictID)
-	}
+	// if req.DistrictID != nil {
+	// 	query = query.Where("products.district_id = ?", *req.DistrictID)
+	// }
 
 	if req.WardID != nil {
 		query = query.Where("products.ward_id = ?", *req.WardID)
@@ -1005,9 +965,9 @@ func (r *GormUserProductRepo) GetUserProducts(ctx context.Context, req *dto.User
 		query = query.Where("products.province_id = ?", *req.ProvinceID)
 	}
 
-	if req.DistrictID != nil {
-		query = query.Where("products.district_id = ?", *req.DistrictID)
-	}
+	// if req.DistrictID != nil {
+	// 	query = query.Where("products.district_id = ?", *req.DistrictID)
+	// }
 
 	if req.WardID != nil {
 		query = query.Where("products.ward_id = ?", *req.WardID)
@@ -1078,60 +1038,379 @@ func (r *GormUserProductRepo) UpdateRentTransactionID(c context.Context, id uint
 		Update("rent_transaction_id", transactionID).Error
 }
 
-func (r *GormUserProductRepo) GetProducts(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
-	var results []domain.Product
+func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
+	// Struct tạm để scan raw SQL với flat fields
+	var tempResults []dto.ProductListResponse
 
-	query := r.DB.
-		Debug().
-		Model(domain.Product{}).
-		Select("products.*, products.area - COALESCE(child.total_area, 0) AS avaiable_area").
-		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
-					FROM products WHERE deleted_at is null GROUP BY parent_id) 
-					AS child ON products.id = child.parent_id`)
+	// Build base SQL - SELECT các column match với ProductListResponse
+	baseSQL := `
+		SELECT 
+			   products.id,
+		       products.name,
+		       products.code,
+		       products.area,
+		       products.area - COALESCE(child.total_area, 0) AS available_area,
+		       COALESCE(products.property_type_id, 0) AS property_type_id,
+		       COALESCE(products.doc_type_id, 0) AS doc_type_id,
+		       COALESCE(products.province_id, 0) AS province_id,
+		       products.transaction_type,
+		       products.sale_status,
+		       products.rent_status,
+		       products.sale_visibility,
+		       products.rent_visibility,
+		       products.source_type,
+		       COALESCE(pp.id, 0) AS price_id,
+		       COALESCE(pp.currency, '') AS price_currency,
+		       COALESCE(pp.sale_price, 0) AS price_sale_price,
+		       COALESCE(pp.sale_commission, 0) AS price_sale_commission,
+		       COALESCE(pp.sale_commission_type, 0) AS price_sale_commission_type,
+		       COALESCE(pp.deposite, 0) AS price_deposite,
+		       COALESCE(pp.rent_price, 0) AS price_rent_price,
+		       COALESCE(pp.rent_commission, 0) AS price_rent_commission,
+		       COALESCE(pp.rent_commission_type, 0) AS price_rent_commission_type,
+		       COALESCE(pp.rent_payment_cycle, 0) AS price_rent_payment_cycle,
+		       COALESCE(pm.media_url, '') AS image_url
+		FROM products
+		LEFT JOIN (
+			SELECT parent_id, SUM(area) AS total_area 
+			FROM products 
+			WHERE deleted_at IS NULL 
+			GROUP BY parent_id
+		) AS child ON products.id = child.parent_id
+		LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL
+		LEFT JOIN LATERAL (
+			SELECT media_url 
+			FROM product_media 
+			WHERE product_id = products.id AND deleted_at IS NULL
+			ORDER BY is_main DESC, "order" ASC, id ASC
+			LIMIT 1
+		) pm ON true
+		WHERE products.deleted_at IS NULL
+	`
 
-	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của tổ chức
-	if dto.RequestOrganizationId != nil {
-		query = query.Where(`EXISTS (
+	// Build WHERE conditions và args động
+	var whereClauses []string
+	var args []interface{}
+
+	// EXISTS cho organization
+	if payload.RequestOrganizationId != nil {
+		whereClauses = append(whereClauses, `EXISTS (
 			SELECT 1 FROM product_organization poo 
 			WHERE poo.product_id = products.id 
 			AND poo.organization_id = ? 
 			AND poo.deleted_at IS NULL
-		)`, *dto.RequestOrganizationId)
+		)`)
+		args = append(args, *payload.RequestOrganizationId)
 	}
 
-	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của user
-	if dto.RequestUserId != nil {
-		query = query.Where(`EXISTS (
+	// EXISTS cho user
+	if payload.RequestUserId != nil {
+		whereClauses = append(whereClauses, `EXISTS (
 			SELECT 1 FROM product_user pou 
 			WHERE pou.product_id = products.id 
 			AND pou.profile_id = ? 
 			AND pou.deleted_at IS NULL
-		)`, *dto.RequestUserId)
+		)`)
+		args = append(args, *payload.RequestUserId)
 	}
 
-	query = query.
-		Preload("Price", func(db *gorm.DB) *gorm.DB {
-			return db.Order("product_price.created_at asc")
-		}).
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL")
+	// Apply filters từ QueryDomain
+	r.buildQueryConditions(&payload, &whereClauses, &args)
 
-	query = r.QueryDomain(query, dto)
+	// Append WHERE clauses vào base SQL
+	if len(whereClauses) > 0 {
+		baseSQL += " AND " + strings.Join(whereClauses, " AND ")
+	}
 
-	err := query.
-		Order("updated_at desc").
-		Limit(dto.GetLimit()).
-		Offset(dto.GetOffset()).
-		Find(&results).Error
+	// Add ORDER BY, LIMIT, OFFSET
+	baseSQL += " ORDER BY products.updated_at DESC LIMIT ? OFFSET ?"
+	args = append(args, payload.GetLimit(), payload.GetOffset())
 
+	// Execute query - Price đã được LEFT JOIN trong SQL
+	err := r.DB.Debug().Raw(baseSQL, args...).Scan(&tempResults).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	var total int64
-	query.Count(&total)
+	// Populate Price struct từ các PriceXXX fields
+	for i := range tempResults {
+		// Chỉ populate Price nếu có data (PriceID > 0)
+		if tempResults[i].PriceID > 0 {
+			tempResults[i].Price = domain.ProductPrice{
+				Currency:           tempResults[i].PriceCurrency,
+				SalePrice:          &tempResults[i].PriceSalePrice,
+				SaleCommission:     &tempResults[i].PriceSaleCommission,
+				SaleCommissionType: &tempResults[i].PriceSaleCommType,
+				Deposite:           &tempResults[i].PriceDeposite,
+				RentPrice:          &tempResults[i].PriceRentPrice,
+				RentCommission:     &tempResults[i].PriceRentCommission,
+				RentCommissionType: &tempResults[i].PriceRentCommType,
+				RentPaymentCycle:   &tempResults[i].PriceRentPayCycle,
+			}
+			tempResults[i].Price.ID = tempResults[i].PriceID
+		}
+	}
 
-	return results, total, nil
+	// Count total
+	countSQL := `
+		SELECT COUNT(DISTINCT products.id)
+		FROM products
+		LEFT JOIN (
+			SELECT parent_id, SUM(area) AS total_area 
+			FROM products 
+			WHERE deleted_at IS NULL 
+			GROUP BY parent_id
+		) AS child ON products.id = child.parent_id
+		WHERE products.deleted_at IS NULL
+	`
+
+	var countWhereClauses []string
+	var countArgs []interface{}
+
+	if payload.RequestOrganizationId != nil {
+		countWhereClauses = append(countWhereClauses, `EXISTS (
+			SELECT 1 FROM product_organization poo 
+			WHERE poo.product_id = products.id 
+			AND poo.organization_id = ? 
+			AND poo.deleted_at IS NULL
+		)`)
+		countArgs = append(countArgs, *payload.RequestOrganizationId)
+	}
+
+	if payload.RequestUserId != nil {
+		countWhereClauses = append(countWhereClauses, `EXISTS (
+			SELECT 1 FROM product_user pou 
+			WHERE pou.product_id = products.id 
+			AND pou.profile_id = ? 
+			AND pou.deleted_at IS NULL
+		)`)
+		countArgs = append(countArgs, *payload.RequestUserId)
+	}
+
+	r.buildQueryConditions(&payload, &countWhereClauses, &countArgs)
+
+	if len(countWhereClauses) > 0 {
+		countSQL += " AND " + strings.Join(countWhereClauses, " AND ")
+	}
+
+	var total int64
+	r.DB.Raw(countSQL, countArgs...).Count(&total)
+
+	return tempResults, total, nil
+}
+
+// Helper function để build WHERE conditions từ dto
+func (r *GormUserProductRepo) buildQueryConditions(dto *dto.ProductSearchRequest, whereClauses *[]string, args *[]interface{}) {
+	// ParentID
+	if dto.ParentID != nil && *dto.ParentID == 0 {
+		*whereClauses = append(*whereClauses, "products.parent_id IS NULL")
+	} else if dto.ParentID != nil && *dto.ParentID > 0 {
+		*whereClauses = append(*whereClauses, "products.parent_id = ?")
+		*args = append(*args, *dto.ParentID)
+	}
+
+	// Name
+	if dto.Name != "" {
+		*whereClauses = append(*whereClauses, "LOWER(products.name) LIKE ?")
+		*args = append(*args, "%"+strings.ToLower(dto.Name)+"%")
+	}
+
+	// Code
+	if dto.Code != "" {
+		*whereClauses = append(*whereClauses, "LOWER(products.code) LIKE ?")
+		*args = append(*args, "%"+strings.ToLower(dto.Code)+"%")
+	}
+
+	// Area
+	if dto.Area > 0 {
+		*whereClauses = append(*whereClauses, "products.area >= ?")
+		*args = append(*args, dto.Area)
+	}
+
+	// TransactionTypes
+	if len(dto.TransactionTypes) > 0 {
+		placeholders := make([]string, len(dto.TransactionTypes))
+		for i := range dto.TransactionTypes {
+			placeholders[i] = "?"
+			*args = append(*args, dto.TransactionTypes[i])
+		}
+		*whereClauses = append(*whereClauses, "products.transaction_type IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// SaleStatus
+	if len(dto.SaleStatus) > 0 {
+		placeholders := make([]string, len(dto.SaleStatus))
+		for i := range dto.SaleStatus {
+			placeholders[i] = "?"
+			*args = append(*args, dto.SaleStatus[i])
+		}
+		*whereClauses = append(*whereClauses, "products.sale_status IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// RentStatus
+	if len(dto.RentStatus) > 0 {
+		placeholders := make([]string, len(dto.RentStatus))
+		for i := range dto.RentStatus {
+			placeholders[i] = "?"
+			*args = append(*args, dto.RentStatus[i])
+		}
+		*whereClauses = append(*whereClauses, "products.rent_status IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// PropertyTypeIds
+	if len(dto.PropertyTypeIds) > 0 {
+		placeholders := make([]string, len(dto.PropertyTypeIds))
+		for i := range dto.PropertyTypeIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.PropertyTypeIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.property_type_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// ProvinceIds
+	if len(dto.ProvinceIds) > 0 {
+		placeholders := make([]string, len(dto.ProvinceIds))
+		for i := range dto.ProvinceIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.ProvinceIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.province_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// DistrictIds
+	if len(dto.DistrictIds) > 0 {
+		placeholders := make([]string, len(dto.DistrictIds))
+		for i := range dto.DistrictIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.DistrictIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.district_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// WardIds
+	if len(dto.WardIds) > 0 {
+		placeholders := make([]string, len(dto.WardIds))
+		for i := range dto.WardIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.WardIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.ward_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// DocTypeIds
+	if len(dto.DocTypeIds) > 0 {
+		placeholders := make([]string, len(dto.DocTypeIds))
+		for i := range dto.DocTypeIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.DocTypeIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.doc_type_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// AmenityIds - cần JOIN
+	if len(dto.AmenityIds) > 0 {
+		placeholders := make([]string, len(dto.AmenityIds))
+		for i := range dto.AmenityIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.AmenityIds[i])
+		}
+		*whereClauses = append(*whereClauses, `EXISTS (
+			SELECT 1 FROM product_amenity pa 
+			WHERE pa.product_id = products.id 
+			AND pa.amenity_id IN (`+strings.Join(placeholders, ",")+`)
+		)`)
+	}
+
+	// SourceTypeIds
+	if len(dto.SourceTypeIds) > 0 {
+		placeholders := make([]string, len(dto.SourceTypeIds))
+		for i := range dto.SourceTypeIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.SourceTypeIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.source_type IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// NumBedrooms
+	if len(dto.NumBedrooms) > 0 {
+		placeholders := make([]string, len(dto.NumBedrooms))
+		for i := range dto.NumBedrooms {
+			placeholders[i] = "?"
+			*args = append(*args, dto.NumBedrooms[i])
+		}
+		*whereClauses = append(*whereClauses, "products.num_bedroom IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// NumBathrooms
+	if len(dto.NumBathrooms) > 0 {
+		placeholders := make([]string, len(dto.NumBathrooms))
+		for i := range dto.NumBathrooms {
+			placeholders[i] = "?"
+			*args = append(*args, dto.NumBathrooms[i])
+		}
+		*whereClauses = append(*whereClauses, "products.num_bathroom IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// NumFloors
+	if len(dto.NumFloors) > 0 {
+		placeholders := make([]string, len(dto.NumFloors))
+		for i := range dto.NumFloors {
+			placeholders[i] = "?"
+			*args = append(*args, dto.NumFloors[i])
+		}
+		*whereClauses = append(*whereClauses, "products.num_floor IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// Description
+	if dto.Description != "" {
+		*whereClauses = append(*whereClauses, "LOWER(products.description) LIKE ?")
+		*args = append(*args, "%"+strings.ToLower(dto.Description)+"%")
+	}
+
+	// Note
+	if dto.Note != "" {
+		*whereClauses = append(*whereClauses, "LOWER(products.note) LIKE ?")
+		*args = append(*args, "%"+strings.ToLower(dto.Note)+"%")
+	}
+
+	// FromDate
+	if dto.FromDate != nil {
+		*whereClauses = append(*whereClauses, "products.updated_at >= ?")
+		*args = append(*args, dto.FromDate)
+	}
+
+	// ToDate
+	if dto.ToDate != nil {
+		*whereClauses = append(*whereClauses, "products.updated_at <= ?")
+		*args = append(*args, dto.ToDate)
+	}
+
+	// Timestamp
+	if dto.Timestamp != nil {
+		*whereClauses = append(*whereClauses, "products.updated_at >= ?")
+		*args = append(*args, dto.Timestamp)
+	}
+
+	// Text search
+	if dto.Text != "" {
+		*whereClauses = append(*whereClauses, "LOWER(products.name) LIKE ?")
+		*args = append(*args, "%"+strings.ToLower(dto.Text)+"%")
+	}
+
+	// Archived
+	if dto.Archived != nil {
+		*whereClauses = append(*whereClauses, "products.archived = ?")
+		*args = append(*args, *dto.Archived)
+	}
+
+	// UserId
+	if dto.RequestUserId != nil {
+		*whereClauses = append(*whereClauses, "products.owner_id = ? and products.owner_type = ?")
+		*args = append(*args, *dto.RequestUserId, enums.EOwnerOfMember)
+	} else if dto.RequestOrganizationId != nil {
+		*whereClauses = append(*whereClauses, "products.owner_of = ? and products.owner_type = ?")
+		*args = append(*args, *dto.RequestOrganizationId, enums.EOwnerOfOrgnization)
+	}
 }
 
 func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
@@ -1167,9 +1446,9 @@ func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.Pro
 		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
 					FROM products WHERE deleted_at is null GROUP BY parent_id) 
 					AS child ON products.id = child.parent_id`).
-		Joins(`LEFT JOIN region provinces ON products.province_id = provinces.id AND provinces.deleted_at IS NULL`).
-		Joins(`LEFT JOIN region districts ON products.district_id = districts.id AND districts.deleted_at IS NULL`).
-		Joins(`LEFT JOIN region wards ON products.ward_id = wards.id AND wards.deleted_at IS NULL`).
+		Joins(`LEFT JOIN provinces ON products.province_id = provinces.id AND provinces.deleted_at IS NULL`).
+		Joins(`LEFT JOIN districts ON products.district_id = districts.id AND districts.deleted_at IS NULL`).
+		Joins(`LEFT JOIN wards ON products.ward_id = wards.id AND wards.deleted_at IS NULL`).
 		Joins(`LEFT JOIN property_type ON products.property_type_id = property_type.id AND property_type.deleted_at IS NULL`)
 
 	// Tối ưu: Sử dụng EXISTS thay vì INNER JOIN để lấy sản phẩm của tổ chức
@@ -1226,7 +1505,7 @@ func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.Pro
 		}
 		results[i].PostIds = postIds
 		results[i].ProvinceName = temp.ProvinceName
-		results[i].DistrictName = temp.DistrictName
+		// results[i].DistrictName = temp.DistrictName
 		results[i].WardName = temp.WardName
 		results[i].PropertyTypeName = temp.PropertyTypeName
 	}

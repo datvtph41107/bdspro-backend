@@ -41,7 +41,7 @@ func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistan
 	}
 
 	// Gọi usecase để phân tích
-	result, rawResponse, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
+	result, rawResponse, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to analyze: %v", err)
 	}
@@ -129,9 +129,9 @@ func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistan
 		RawResponse: rawResponse,
 		Metadata: &assistantpb.AnalysisMetadata{
 			ProcessingTimeMs: processingTime,
-			TokensUsed:       0, // TODO: Get from DeepSeek response
+			TokensUsed:       0, // TODO: Get from API response
 			ConfidenceScore:  0.0,
-			Model:            "deepseek-chat",
+			Model:            modelName,
 		},
 	}, nil
 }
@@ -161,7 +161,7 @@ func (h *AssistantHandler) Chat(ctx context.Context, req *assistantpb.ChatReques
 	}
 
 	// Gọi usecase để chat
-	reply, sessionID, processingTime, err := h.Usecase.Chat(ctx, req.Message, history, req.Context, req.SessionId)
+	reply, sessionID, modelName, processingTime, err := h.Usecase.Chat(ctx, req.Message, history, req.Context, req.SessionId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to chat: %v", err)
 	}
@@ -171,8 +171,8 @@ func (h *AssistantHandler) Chat(ctx context.Context, req *assistantpb.ChatReques
 		SessionId: sessionID,
 		Metadata: &assistantpb.ChatMetadata{
 			ProcessingTimeMs: processingTime,
-			TokensUsed:       0, // TODO: Get from DeepSeek response
-			Model:            "deepseek-chat",
+			TokensUsed:       0, // TODO: Get from API response
+			Model:            modelName,
 		},
 	}, nil
 }
@@ -203,7 +203,7 @@ func (h *AssistantHandler) GenerateContent(ctx context.Context, req *assistantpb
 	}
 
 	// Gọi usecase để generate
-	content, processingTime, err := h.Usecase.GenerateContent(
+	content, modelName, processingTime, err := h.Usecase.GenerateContent(
 		ctx,
 		req.Prompt,
 		req.Template,
@@ -219,8 +219,8 @@ func (h *AssistantHandler) GenerateContent(ctx context.Context, req *assistantpb
 		Content: content,
 		Metadata: &assistantpb.GenerateMetadata{
 			ProcessingTimeMs: processingTime,
-			TokensUsed:       0, // TODO: Get from DeepSeek response
-			Model:            "deepseek-chat",
+			TokensUsed:       0, // TODO: Get from API response
+			Model:            modelName,
 		},
 	}, nil
 }

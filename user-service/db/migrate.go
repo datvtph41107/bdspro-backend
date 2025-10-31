@@ -9,6 +9,7 @@ func AutoMigrate() {
 	_db.DB.AutoMigrate(
 		// Core entities
 		&models.UserProfileEntity{},
+		&models.ProfileDeleted{},
 		&models.AdminProfile{},
 		&models.SystemConfigEntity{},
 

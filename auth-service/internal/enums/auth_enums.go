@@ -16,6 +16,7 @@ const (
 	ACTIVATED          AuthCodeEnum = 1016
 	INACTIVE_ACCOUNT   AuthCodeEnum = 1030
 	NOT_FOUND_ACCOUNT  AuthCodeEnum = 1044
+	FULLNAME_REQUIRED  AuthCodeEnum = 1045
 )
 
 // authCodeMap ánh xạ mã số với tên enum

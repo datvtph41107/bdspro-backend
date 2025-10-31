@@ -7,6 +7,7 @@ import (
 	"context"
 	"log"
 	"pb/clients"
+	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
 )
@@ -142,6 +143,24 @@ func (c *UserClient) SoftDeleteProfile(ctx context.Context, profileID uint64) er
 
 	if err != nil {
 		log.Printf("Failed to soft delete profile: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *UserClient) HardDeleteProfile(ctx context.Context, profileID uint64) error {
+	if c.UserGrpcClient == nil || c.UserGrpcClient.InternalClient == nil {
+		log.Printf("Internal user service client is nil")
+		return nil
+	}
+
+	_, err := c.UserGrpcClient.InternalClient.HardDeleteProfile(ctx, &sharepb.IdRequest{
+		Id: profileID,
+	})
+
+	if err != nil {
+		log.Printf("Failed to hard delete profile: %v", err)
 		return err
 	}
 

@@ -356,12 +356,35 @@ func (r *ProfilePostgres) UpdateUserProfile(ctx context.Context, profile *models
 	return profile, nil
 }
 
-// DeleteUserProfile xóa user profile (soft delete)
-func (r *ProfilePostgres) DeleteUserProfile(ctx context.Context, profileID uint64) error {
-	err := r.DB.WithContext(ctx).
-		Where("profile_id = ?", profileID).
-		Delete(&models.UserProfileEntity{}).Error
-	return err
+// DeleteUserProfile xóa vĩnh viễn user profile (hard delete)
+// Trước khi xóa, lưu thông tin vào bảng profile_deleted
+func (r *ProfilePostgres) DeleteUserProfile(ctx context.Context, profileID uint64, deletedBy *uint64, reason string) error {
+	// Bắt đầu transaction
+	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Lấy thông tin profile trước khi xóa
+		var profile models.UserProfileEntity
+		err := tx.Where("profile_id = ?", profileID).First(&profile).Error
+		if err != nil {
+			return err
+		}
+
+		// 2. Tạo bản sao vào profile_deleted
+		profileDeleted := models.NewProfileDeleted(&profile, deletedBy, reason)
+		err = tx.Create(profileDeleted).Error
+		if err != nil {
+			return err
+		}
+
+		// 3. Xóa profile (hard delete)
+		err = tx.Unscoped().
+			Where("profile_id = ?", profileID).
+			Delete(&models.UserProfileEntity{}).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 // UpdateUserProfileStatus cập nhật trạng thái user profile

@@ -143,6 +143,11 @@ case "$1" in
     path_jar=main
     payload_build=transaction
     ;;
+  "hub")
+    service_path=hub-service
+    path_jar=main
+    payload_build=hub
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1

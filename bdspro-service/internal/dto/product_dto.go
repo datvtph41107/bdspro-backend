@@ -36,7 +36,6 @@ type ProductSaveRequest struct {
 	AmenityIds      []uint64                `json:"amenityIds"`
 	ProjectId       *uint64                 `json:"projectId"`
 	ProvinceID      *uint64                 `json:"provinceId"`
-	DistrictID      *uint64                 `json:"districtId"`
 	WardID          *uint64                 `json:"wardId"`
 	TransactionType int32                   `json:"transactionType"`
 	PriceData       *domain.ProductPrice    `json:"priceData" binding:"required"`
@@ -52,6 +51,7 @@ type ProductSaveRequest struct {
 	Visibility      enums.EVisibility       `json:"visibility"`
 	OwnerType       enums.EOwnerOf          `json:"ownerType"`
 	OwnerId         uint64                  `json:"ownerId"`
+	ImageId         *uint64                 `json:"imageId"`
 	// SaleStatus      enums.EProductStatus    `json:"saleStatus"`
 	// RentStatus      enums.EProductStatus    `json:"rentStatus"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`
@@ -182,7 +182,6 @@ type ProductSearch struct {
 	DocTypeID        *uint64 `json:"docTypeId"`
 	ProjectID        *uint64 `json:"projectId"`
 	ProvinceID       *uint64 `json:"provinceId"`
-	DistrictID       *uint64 `json:"districtId"`
 	WardID           *uint64 `json:"wardId"`
 	TransactionType  *int32  `json:"transactionType"`
 	SaleStatus       *int32  `json:"saleStatus"`
@@ -208,7 +207,6 @@ type GroupProductSearchRequest struct {
 	DocTypeID        *uint64 `json:"docTypeId"`
 	ProjectID        *uint64 `json:"projectId"`
 	ProvinceID       *uint64 `json:"provinceId"`
-	DistrictID       *uint64 `json:"districtId"`
 	WardID           *uint64 `json:"wardId"`
 	TransactionType  *int32  `json:"transactionType"`
 	SaleStatus       *int32  `json:"saleStatus"`
@@ -234,7 +232,6 @@ type UserProductSearchRequest struct {
 	DocTypeID        *uint64 `json:"docTypeId"`
 	ProjectID        *uint64 `json:"projectId"`
 	ProvinceID       *uint64 `json:"provinceId"`
-	DistrictID       *uint64 `json:"districtId"`
 	WardID           *uint64 `json:"wardId"`
 	TransactionType  *int32  `json:"transactionType"`
 	SaleStatus       *int32  `json:"saleStatus"`
@@ -249,4 +246,39 @@ type UserProductSearchRequest struct {
 	RentCommission   *int32  `json:"rentCommission"`
 	RentPaymentCycle *int32  `json:"rentPaymentCycle"`
 	Archived         *bool   `json:"archived"`
+}
+
+type ProductListResponse struct {
+	ID              uint64              `gorm:"column:id" json:"id"`
+	ImageID         *uint64             `gorm:"column:image_id" json:"imageId"`
+	ImageURL        string              `gorm:"column:image_url" json:"imageUrl"`
+	Name            string              `gorm:"column:name" json:"name"`
+	Code            string              `gorm:"column:code" json:"code"`
+	Area            float64             `gorm:"column:area" json:"area"`
+	AvailableArea   float64             `gorm:"column:available_area" json:"availableArea"`
+	PropertyTypeId  uint64              `gorm:"column:property_type_id" json:"propertyTypeId"`
+	DocTypeId       uint64              `gorm:"column:doc_type_id" json:"docTypeId"`
+	ProjectId       uint64              `gorm:"column:project_id" json:"projectId"`
+	ProvinceId      uint64              `gorm:"column:province_id" json:"provinceId"`
+	ProvinceName    string              `gorm:"column:province_name" json:"provinceName"`
+	WardId          uint64              `gorm:"column:ward_id" json:"wardId"`
+	WardName        string              `gorm:"column:ward_name" json:"wardName"`
+	TransactionType int32               `gorm:"column:transaction_type" json:"transactionType"`
+	SaleStatus      uint32              `gorm:"column:sale_status" json:"saleStatus"`
+	RentStatus      uint32              `gorm:"column:rent_status" json:"rentStatus"`
+	SaleVisibility  uint32              `gorm:"column:sale_visibility" json:"saleVisibility"`
+	RentVisibility  uint32              `gorm:"column:rent_visibility" json:"rentVisibility"`
+	SourceType      uint32              `gorm:"column:source_type" json:"sourceType"`
+	Price           domain.ProductPrice `gorm:"-" json:"price"`
+
+	PriceID             uint64  `gorm:"column:price_id" json:"-"`
+	PriceCurrency       string  `gorm:"column:price_currency" json:"-"`
+	PriceSalePrice      float64 `gorm:"column:price_sale_price" json:"-"`
+	PriceSaleCommission float64 `gorm:"column:price_sale_commission" json:"-"`
+	PriceSaleCommType   uint32  `gorm:"column:price_sale_commission_type" json:"-"`
+	PriceDeposite       float64 `gorm:"column:price_deposite" json:"-"`
+	PriceRentPrice      float64 `gorm:"column:price_rent_price" json:"-"`
+	PriceRentCommission float64 `gorm:"column:price_rent_commission" json:"-"`
+	PriceRentCommType   uint32  `gorm:"column:price_rent_commission_type" json:"-"`
+	PriceRentPayCycle   uint32  `gorm:"column:price_rent_payment_cycle" json:"-"`
 }

@@ -72,7 +72,7 @@ var Rules = []_utils.Rule{
 	},
 	{
 		Field:   "area",
-		Pattern: regexp.MustCompile(`([\d\.]+)\s*(m2|m²|mét vuông|m\s*vuông)`),
+		Pattern: regexp.MustCompile(`([\d\.]+)\s*(m2|m²|mét vuông|m\s*vuông|m\b)`),
 		GetValue: func(match []string) interface{} {
 			// val, _ := _utils.ExtractPriceInSentence(match[1])
 			val, _ := strconv.ParseFloat(match[1], 64)
