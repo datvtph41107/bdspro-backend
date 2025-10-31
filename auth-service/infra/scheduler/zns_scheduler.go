@@ -41,24 +41,23 @@ func (s *ZnsScheduler) Stop() {
 	close(s.stopChan)
 }
 
-// scheduleDaily schedule job chạy vào 00:00 mỗi ngày
+// scheduleDaily schedule job chạy vào 00:00 và 12:00 mỗi ngày
 func (s *ZnsScheduler) scheduleDaily() {
 	for {
-		// Tính toán thời gian còn lại đến 00:00 ngày tiếp theo
-		now := time.Now()
-		next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
-		duration := next.Sub(now)
+		// Tính toán thời gian còn lại đến lần chạy tiếp theo (0h hoặc 12h)
+		next := s.getNextScheduleTime()
+		duration := time.Until(next)
 
 		log.Printf("⏰ [ZNS Scheduler] Next refresh token job will run at: %s (in %s)",
 			next.Format("2006-01-02 15:04:05"),
 			duration.Round(time.Second))
 
-		// Tạo timer để chờ đến 00:00
+		// Tạo timer để chờ đến thời điểm tiếp theo
 		timer := time.NewTimer(duration)
 
 		select {
 		case <-timer.C:
-			// Đến 00:00, chạy job
+			// Đến giờ chạy, thực hiện job
 			s.refreshTokenJob()
 
 		case <-s.stopChan:
@@ -68,6 +67,25 @@ func (s *ZnsScheduler) scheduleDaily() {
 			return
 		}
 	}
+}
+
+// getNextScheduleTime tính toán thời điểm chạy tiếp theo (0h hoặc 12h)
+func (s *ZnsScheduler) getNextScheduleTime() time.Time {
+	now := time.Now()
+	year, month, day := now.Year(), now.Month(), now.Day()
+
+	// Thời điểm 12h trưa hôm nay
+	noon := time.Date(year, month, day, 12, 0, 0, 0, now.Location())
+	// Thời điểm 0h ngày mai
+	nextMidnight := time.Date(year, month, day+1, 0, 0, 0, 0, now.Location())
+
+	// Nếu chưa đến 12h trưa -> chạy lúc 12h
+	if now.Before(noon) {
+		return noon
+	}
+
+	// Nếu đã qua 12h trưa -> chạy lúc 0h ngày mai
+	return nextMidnight
 }
 
 // refreshTokenJob job refresh ZNS access token

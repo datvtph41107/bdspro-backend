@@ -229,6 +229,7 @@ message FindByPhoneRequest {
 message FindByPhoneResponse {
     string phone = 1; // Thông tin user tìm được (null nếu không tìm thấy)
     string fullName = 2;
+    string avatar = 3;
 }
 
 

@@ -293,6 +293,7 @@ func (s *GrpcProfileService) FindByPhone(ctx context.Context, req *userpb.FindBy
 	response := &userpb.FindByPhoneResponse{
 		FullName: profile.FullName,
 		Phone:    profile.Phone,
+		Avatar:   profile.Avatar,
 	}
 
 	return response, nil

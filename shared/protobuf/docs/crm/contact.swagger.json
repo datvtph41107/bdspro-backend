@@ -303,6 +303,55 @@
         ]
       }
     },
+    "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}": {
+      "get": {
+        "operationId": "ContactService_CheckPhone",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ownerOf",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "unknown",
+              "user",
+              "group",
+              "organization"
+            ]
+          },
+          {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "phone",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
     "/v2/crm/contact/relation-ship/{id}": {
       "get": {
         "operationId": "ContactService_RelationShip",

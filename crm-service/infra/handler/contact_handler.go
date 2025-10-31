@@ -225,3 +225,34 @@ func (s *ContactService) Note(ctx context.Context, req *crmpb.NoteContactDTO) (*
 		Note: req.Note,
 	}, nil
 }
+
+// @Summary Kiểm tra số điện thoại liên hệ
+// @Description Kiểm tra xem số điện thoại đã tồn tại trong danh bạ chưa
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param phone path string true "Số điện thoại cần kiểm tra"
+// @Param ownerOf path int true "Loại sở hữu (10: user, 20: nhóm, 30: organization)"
+// @Param ownerId path int true "ID của owner"
+// @Security BearerAuth
+// @Success 200 {object} crmpb.CheckPhoneResponse
+// @Router /contact/phone/{ownerOf}/{ownerId}/{phone} [get]
+func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRequest) (*crmpb.ContactDTO, error) {
+	if req.Phone == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Số điện thoại không được để trống")
+	}
+
+	contact, existed, err := s.UC.SearchByPhone(ctx, base_enum.EOwnerOf(req.OwnerOf), req.OwnerId, req.Phone)
+	if err != nil {
+		return nil, err
+	}
+
+	if !existed {
+		return nil, nil
+	}
+
+	contactPb := s.ContactMapper.ContactToPb(contact)
+	s.UserClient.PbUserToContact(ctx, contactPb)
+
+	return contactPb, nil
+}

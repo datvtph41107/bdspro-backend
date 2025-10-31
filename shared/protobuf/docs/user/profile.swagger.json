@@ -402,6 +402,9 @@
         },
         "fullName": {
           "type": "string"
+        },
+        "avatar": {
+          "type": "string"
         }
       }
     },

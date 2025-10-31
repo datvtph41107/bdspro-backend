@@ -2,6 +2,7 @@ package usecase
 
 import (
 	base_enum "base/enum"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -73,11 +74,26 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 	}
 	entity.OwnerID = ownerId
 
-	// Kiểm tra số điện thoại trong profile service
+	// Kiểm tra số điện thoại đã tồn tại trong hệ thống chưa
 	if entity.Phone != "" {
+		existedContact, err := s.repo.GetByPhone(c, ownerId, entity.OwnerOf, entity.Phone)
+		if err != nil {
+			return nil, err
+		}
+		if existedContact != nil {
+			return nil, &_routes.Except{
+				Code:    400,
+				Message: "Liên hệ với số điện thoại này đã tồn tại",
+			}
+		}
+
+		// Kiểm tra số điện thoại trong profile service
 		profiles, err := s.userClient.GetProfileByPhones(c, []string{entity.Phone})
 		if err == nil && len(profiles) > 0 {
 			if profile, exists := profiles[entity.Phone]; exists {
+				if profile.ProfileId == ownerId {
+					return nil, _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+				}
 				entity.ProfileID = &profile.ProfileId
 			}
 		}
@@ -170,4 +186,24 @@ func (s *ContactUsecase) Note(c context.Context, id uint64, note string) error {
 		return err
 	}
 	return s.repo.UpdateNote(c, id, note)
+}
+
+// SearchByPhone tìm kiếm liên hệ theo số điện thoại
+// Trả về contact và existed=true nếu tìm thấy, existed=false nếu không tìm thấy
+func (s *ContactUsecase) SearchByPhone(c context.Context, ownerType base_enum.EOwnerOf, ownerId uint64, phone string) (*domain.ContactEntity, bool, error) {
+	realOwnerId, err := s.ownerUsecase.GetOwnerInfo(c, ownerType, ownerId)
+	if err != nil {
+		return nil, false, err
+	}
+
+	contact, err := s.repo.GetByPhone(c, realOwnerId, ownerType, phone)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if contact == nil {
+		return nil, false, nil
+	}
+
+	return contact, true, nil
 }

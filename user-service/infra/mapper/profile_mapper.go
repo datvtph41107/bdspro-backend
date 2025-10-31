@@ -139,6 +139,7 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *u
 		TabDefault:        uint32(profile.TabDefault),
 		RoleRealEstate:    uint32(profile.RoleRealEstate),
 		Following:         profile.Following,
+		ReferralCode:      profile.ReferralCode,
 	}
 
 	for _, certification := range profile.Certifications {

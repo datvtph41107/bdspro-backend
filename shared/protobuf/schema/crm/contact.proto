@@ -52,6 +52,11 @@ service ContactService {
       body: "*"
     };
   };
+  rpc CheckPhone(CheckPhoneRequest) returns (ContactDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}"
+    };
+  };
 }
 
 message ContactSearchRequest {
@@ -110,4 +115,15 @@ message RelationShipResponse {
 message NoteContactDTO {
   uint64 id = 1;
   string note = 2;
+}
+
+message CheckPhoneRequest {
+  string phone = 1;
+  sharepb.OwnerOf ownerOf = 2;
+  uint64 ownerId = 3;
+}
+
+message CheckPhoneResponse {
+  bool existed = 1;
+  optional ContactDTO contact = 2;
 }

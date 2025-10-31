@@ -62,8 +62,8 @@ otp:
   max-times-otp-enter: 3 #số lần nhập OTP
   expired-after-seconds: 600 #10p hết hạn otp
   lock-verify-after: 900 # khóa tài khoản 15p nếu sai OTP/gửi OTP 5 lần
-  lock-send-after: 60 # lần gửi OTP tiếp theo trong request hiện tại sau 60s
-  lock-request-after: 60 # lần gửi OTP giữa 2 lần request là 1 phút (thay đổi từ 5p → 1p)
+  lock-send-after: 30 # lần gửi OTP tiếp theo trong request hiện tại sau 60s
+  lock-request-after: 30 # lần gửi OTP giữa 2 lần request là 1 phút (thay đổi từ 5p → 1p)
   limit-otp-device: 10
   limit-otp-ip: 100
   cooldown-seconds: 300
