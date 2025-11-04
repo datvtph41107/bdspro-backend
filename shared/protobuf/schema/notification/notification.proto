@@ -23,6 +23,12 @@ service GatewayNotificationService {
       put: "/v2/notification/read/{id}"
     };
   };
+  rpc ReadMany (ReadManyRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/read-many"
+      body: "*"
+    };
+  };
   rpc ReadAll (EmptyRequest) returns (StatusResponse) {
     option (google.api.http) = {
       put: "/v2/notification/read-all"
@@ -179,6 +185,10 @@ message NotificationDTO {
 
 message IdRequest {
     uint64 id = 1;
+}
+
+message ReadManyRequest {
+    repeated uint64 ids = 1;
 }
 
 message EmptyRequest {}

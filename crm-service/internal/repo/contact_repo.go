@@ -25,4 +25,5 @@ type ContactRepo interface {
 	Restore(c context.Context, id uint64) error
 	GetByProductId(c context.Context, productId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error)
 	GetByIDs(c context.Context, ids []uint64) ([]domain.ContactEntity, error)
+	GetByProfileIDAndOwnerIdNull(c context.Context, profileId uint64) (*domain.ContactEntity, error)
 }

@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	shared_enum "pb/enums"
 	notipb "pb/types/notification"
 	"time"
@@ -106,6 +107,33 @@ func (s *NotificationHandler) Read(ctx context.Context, req *notipb.IdRequest) (
 	return &notipb.StatusResponse{
 		Success: true,
 		Message: "Thông báo đã được đánh dấu là đã đọc",
+	}, nil
+}
+
+// @Summary Đánh dấu nhiều thông báo đã đọc
+// @Description Đánh dấu nhiều thông báo với danh sách ID là đã đọc
+// @Tags Notifications
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body notipb.ReadManyRequest true "Danh sách ID thông báo"
+// @Success 200 {object} notipb.StatusResponse "message"
+// @Failure 500 {object} map[string]string "error"
+// @Router /read-many [put]
+func (s *NotificationHandler) ReadMany(ctx context.Context, req *notipb.ReadManyRequest) (*notipb.StatusResponse, error) {
+	if len(req.Ids) == 0 {
+		return &notipb.StatusResponse{
+			Success: true,
+			Message: "Không có thông báo nào để đánh dấu",
+		}, nil
+	}
+	count, err := s.Usecase.ReadMany(ctx, req.Ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to mark notifications as read: %v", err)
+	}
+	return &notipb.StatusResponse{
+		Success: true,
+		Message: fmt.Sprintf("Đã đánh dấu %d thông báo là đã đọc", count),
 	}, nil
 }
 

@@ -14,6 +14,7 @@ service CrmInternalService {
 
     rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
     rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
+    rpc GetOrCreateContactByProfileIdWithNullOwner(sharepb.IdRequest) returns (GetOrCreateContactResponse);
 }
 
 message FriendStatusByProfileIdsRequest {
@@ -31,5 +32,12 @@ message FeedbackRegistry {
     string registry_name = 2;
     int32 port = 3;
     string service = 4;
-  }
+}
+
+message GetOrCreateContactResponse {
+    uint64 id = 1;
+    optional uint64 profileId = 2;
+    uint64 ownerId = 3;
+    int32 ownerOf = 4;
+}
   

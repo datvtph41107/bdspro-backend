@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	"time"
 
@@ -179,51 +180,76 @@ func (r *appointmentPostgresRepository) Delete(ctx context.Context, id uint32) e
 	return nil
 }
 
-func (r *appointmentPostgresRepository) List(ctx context.Context, filter map[string]any, page, size int) ([]*domain.Appointment, int64, error) {
+func (r *appointmentPostgresRepository) List(ctx context.Context, profileId uint64, filter map[string]any, pagable _dto.Pagable) ([]*domain.Appointment, int64, error) {
 	var appointments []*domain.Appointment
-	query := r.db.WithContext(ctx).
-		Model(&domain.Appointment{}).
-		Preload("AppointmentParticipants").
-		Preload("AppointmentParticipants.Contact").
-		Where("is_deleted = ?", false)
+	var query *gorm.DB
+	var countQuery *gorm.DB
 
-	// Build count query with same filters
-	countQuery := r.db.WithContext(ctx).Model(&domain.Appointment{}).Where("is_deleted = ?", false)
+	// Query từ bảng participant, join sang appointment
+	query = r.db.WithContext(ctx).
+		Table("appointment_participants").
+		Select("appointments.*").
+		Joins("INNER JOIN appointments ON appointment_participants.appointment_id = appointments.id").
+		Where("appointment_participants.user_id = ?", profileId).
+		Where("appointment_participants.is_deleted = ?", false).
+		Where("appointments.is_deleted = ?", false)
 
+	countQuery = r.db.WithContext(ctx).
+		Table("appointment_participants").
+		Joins("INNER JOIN appointments ON appointment_participants.appointment_id = appointments.id").
+		Where("appointment_participants.user_id = ?", profileId).
+		Where("appointment_participants.is_deleted = ?", false).
+		Where("appointments.is_deleted = ?", false)
+
+	// Áp dụng các filter khác với prefix "appointments."
 	for key, value := range filter {
-		if key == "deal_ids" {
-			// Handle dealIds as array with IN clause
-			if dealIds, ok := value.([]uint32); ok && len(dealIds) > 0 {
-				query = query.Where("deal_id IN ?", dealIds)
-				countQuery = countQuery.Where("deal_id IN ?", dealIds)
+		query = query.Where("appointments."+key+" = ?", value)
+		countQuery = countQuery.Where("appointments."+key+" = ?", value)
+	}
+
+	// Áp dụng pagination và lấy dữ liệu
+	err := query.Offset(pagable.GetOffset()).Limit(pagable.GetLimit()).Scan(&appointments).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy tất cả appointment IDs để query participants
+	appointmentIds := make([]uint32, 0, len(appointments))
+	for _, appointment := range appointments {
+		appointmentIds = append(appointmentIds, appointment.Id)
+	}
+
+	// Query tất cả participants cho các appointments này với Preload Contact
+	participantsMap := make(map[uint32][]domain.AppointmentParticipant)
+	if len(appointmentIds) > 0 {
+		var participants []*domain.AppointmentParticipant
+		err = r.db.WithContext(ctx).
+			Where("appointment_id IN (?) AND is_deleted = ?", appointmentIds, false).
+			Find(&participants).Error
+		if err == nil {
+			for _, p := range participants {
+				participantsMap[p.AppointmentId] = append(participantsMap[p.AppointmentId], *p)
 			}
-		} else if key == "transaction_id" {
-			query = query.Where("transaction_id = ?", value)
-			countQuery = countQuery.Where("transaction_id = ?", value)
-		} else {
-			query = query.Where(key+" = ?", value)
-			countQuery = countQuery.Where(key+" = ?", value)
 		}
 	}
 
-	// Get total count
-	var count int64
-	err := countQuery.Count(&count).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Get paginated results
-	err = query.Offset(page * size).Limit(size).Order("created_at DESC").Find(&appointments).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
+	// Map participants vào appointments
 	appointmentsEntities := make([]*domain.Appointment, 0)
 	for _, appointment := range appointments {
+		participants := participantsMap[appointment.Id]
+		if participants == nil {
+			participants = make([]domain.AppointmentParticipant, 0)
+		}
+		appointment.AppointmentParticipants = participants
 		appointmentsEntities = append(appointmentsEntities, appointment)
 	}
 
+	// Đếm tổng số records
+	var count int64
+	err = countQuery.Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
 	return appointmentsEntities, count, nil
 }
 

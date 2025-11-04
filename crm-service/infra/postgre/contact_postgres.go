@@ -471,3 +471,17 @@ func (r *PostgreContact) GetByIDs(c context.Context, ids []uint64) ([]domain.Con
 	}
 	return contacts, nil
 }
+
+func (r *PostgreContact) GetByProfileIDAndOwnerIdNull(c context.Context, profileId uint64) (*domain.ContactEntity, error) {
+	var contact domain.ContactEntity
+	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+		Where("profile_id = ? and deleted_at is null and owner_id = 0", profileId).
+		First(&contact)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &contact, nil
+}

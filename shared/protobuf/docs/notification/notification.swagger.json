@@ -447,6 +447,38 @@
         ]
       }
     },
+    "/v2/notification/read-many": {
+      "put": {
+        "operationId": "GatewayNotificationService_ReadMany",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/notificationpbReadManyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GatewayNotificationService"
+        ]
+      }
+    },
     "/v2/notification/read/{id}": {
       "put": {
         "operationId": "GatewayNotificationService_Read",
@@ -1662,6 +1694,18 @@
         },
         "body": {
           "type": "string"
+        }
+      }
+    },
+    "notificationpbReadManyRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },

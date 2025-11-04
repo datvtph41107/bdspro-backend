@@ -2,6 +2,7 @@ package usecase
 
 import (
 	base_enum "base/enum"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -22,9 +23,9 @@ type AppointmentUsecase interface {
 	GetAppointment(ctx context.Context, id uint32) (*dto.AppointmentDTO, error)
 	UpdateAppointment(ctx context.Context, appointment *domain.Appointment) (*domain.Appointment, error)
 	DeleteAppointment(ctx context.Context, id uint32) error
-	ListAppointments(ctx context.Context, filter map[string]any, page, size int) ([]*dto.AppointmentDTO, int64, error)
+	ListAppointments(ctx context.Context, filter map[string]any, pagable _dto.Pagable) ([]*dto.AppointmentDTO, int64, error)
 	CountCurrent(ctx context.Context) (int64, error)
-	GetAppointmentsByProduct(ctx context.Context, productId uint64, page, size int) ([]*dto.AppointmentDTO, int64, error)
+	GetAppointmentsByProduct(ctx context.Context, productId uint64, pagable _dto.Pagable) ([]*dto.AppointmentDTO, int64, error)
 	GetAppointmentsByDeal(ctx context.Context, dealId uint32, page, size int) ([]*dto.AppointmentDTO, int64, error)
 	UpdateAppointmentStatus(ctx context.Context, id uint32, action string) (*domain.Appointment, error)
 }
@@ -57,6 +58,50 @@ func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
 		return nil, fmt.Errorf("profileId not found in context")
+	}
+
+	// Kiểm tra xem user request đã có trong danh sách participants chưa
+	userRequestExists := false
+	for _, participant := range appointment.AppointmentParticipants {
+		if uint64(participant.UserId) == profileId {
+			userRequestExists = true
+			break
+		}
+	}
+
+	// Nếu chưa có, tự động thêm user request vào danh sách participants với role "host"
+	if !userRequestExists {
+		// Tìm hoặc tạo contact cho user request
+		contact, err := uc.contactRepo.GetByProfileID(ctx, profileId, profileId, base_enum.EOwnerOfMember)
+		var contactID uint32
+		if err != nil || contact == nil || contact.ID == 0 {
+			// Nếu chưa có, tạo mới
+			profileIdPtr := profileId
+			newContact := &domain.ContactEntity{
+				ProfileID: &profileIdPtr,
+				OwnerID:   profileId,
+				OwnerOf:   base_enum.EOwnerOfMember,
+			}
+			createdContact, err := uc.contactRepo.Create(ctx, newContact)
+			if err != nil {
+				// Nếu conflict, thử get lại
+				if contact, getErr := uc.contactRepo.GetByProfileID(ctx, profileId, profileId, base_enum.EOwnerOfMember); getErr == nil && contact != nil && contact.ID > 0 {
+					contactID = uint32(contact.ID)
+				}
+			} else if createdContact != nil && createdContact.ID > 0 {
+				contactID = uint32(createdContact.ID)
+			}
+		} else {
+			contactID = uint32(contact.ID)
+		}
+
+		// Thêm user request vào danh sách participants
+		appointment.AppointmentParticipants = append(appointment.AppointmentParticipants, domain.AppointmentParticipant{
+			UserId:    uint32(profileId),
+			ContactID: contactID,
+			Role:      domain.AppointmentParticipantRoleHost,
+			Status:    domain.AppointmentParticipantStatusConfirmed,
+		})
 	}
 
 	// Tạo/cập nhật Contact cho mỗi participant nếu cần
@@ -169,8 +214,12 @@ func (uc *appointmentUsecase) DeleteAppointment(ctx context.Context, id uint32) 
 	return nil
 }
 
-func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[string]any, page, size int) ([]*dto.AppointmentDTO, int64, error) {
-	appointments, total, err := uc.appointmentRepo.List(ctx, filter, page, size)
+func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[string]any, pagable _dto.Pagable) ([]*dto.AppointmentDTO, int64, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, 0, fmt.Errorf("profileId not found in context")
+	}
+	appointments, total, err := uc.appointmentRepo.List(ctx, profileId, filter, pagable)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -204,8 +253,8 @@ func (uc *appointmentUsecase) mapAppointmentDTOs(ctx context.Context, appointmen
 			productIdsSet[uint64(id)] = struct{}{}
 		}
 		for _, participant := range appointment.AppointmentParticipants {
-			if participant.Contact != nil && participant.Contact.ProfileID != nil {
-				participantIdsSet[*participant.Contact.ProfileID] = struct{}{}
+			if participant.UserId > 0 {
+				participantIdsSet[uint64(participant.UserId)] = struct{}{}
 			}
 		}
 		if appointment.DealId > 0 {
@@ -322,12 +371,12 @@ func (uc *appointmentUsecase) mapAppointmentDTOs(ctx context.Context, appointmen
 		participants := make([]*sharepb.ProfileItem, 0)
 		if participantsMap != nil {
 			for _, participant := range appointment.AppointmentParticipants {
-				if participant.Contact != nil && participant.Contact.ProfileID != nil {
-					if participantItem, ok := participantsMap[*participant.Contact.ProfileID]; ok {
+				if participant.UserId > 0 {
+					if participantItem, ok := participantsMap[uint64(participant.UserId)]; ok {
 						participants = append(participants, participantItem)
-					} else {
+					} else if participant.Contact != nil {
 						participants = append(participants, &sharepb.ProfileItem{
-							Id:       *participant.Contact.ProfileID,
+							Id:       uint64(participant.UserId),
 							FullName: participant.Contact.FullName,
 							Avatar:   participant.Contact.Avatar,
 							Phone:    participant.Contact.Phone,
@@ -355,13 +404,13 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	dealId := uint64(appointment.DealId)
 	fmt.Println("appointment.ProductIds", appointment.ProductIds)
 	productIds := make([]uint64, len(appointment.ProductIds))
-	participantIds := make([]uint64, len(appointment.ParticipantIds))
+	participantIds := make([]uint64, len(appointment.AppointmentParticipants))
 
 	for i, id := range appointment.ProductIds {
 		productIds[i] = uint64(id)
 	}
-	for i, id := range appointment.ParticipantIds {
-		participantIds[i] = uint64(id)
+	for i, participant := range appointment.AppointmentParticipants {
+		participantIds[i] = uint64(participant.UserId)
 	}
 
 	// Make concurrent API calls for better performance
@@ -484,8 +533,8 @@ func (uc *appointmentUsecase) CountCurrent(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
-func (uc *appointmentUsecase) GetAppointmentsByProduct(ctx context.Context, productId uint64, page, size int) ([]*dto.AppointmentDTO, int64, error) {
-	appointments, total, err := uc.appointmentRepo.GetByProductId(ctx, productId, page, size)
+func (uc *appointmentUsecase) GetAppointmentsByProduct(ctx context.Context, productId uint64, pagable _dto.Pagable) ([]*dto.AppointmentDTO, int64, error) {
+	appointments, total, err := uc.appointmentRepo.GetByProductId(ctx, productId, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
 		return nil, 0, err
 	}

@@ -135,6 +135,11 @@ func (s *NotificationUsecase) Read(c context.Context, id uint64) (int64, error) 
 	return s.Repo.MarkAsRead(c, profileId, id)
 }
 
+func (s *NotificationUsecase) ReadMany(c context.Context, ids []uint64) (int64, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	return s.Repo.MarkAsReadMany(c, profileId, ids)
+}
+
 func (s *NotificationUsecase) ReadAll(c context.Context) (int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	return s.Repo.ReadAll(c, profileId)

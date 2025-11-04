@@ -22,6 +22,7 @@ func (s *NotificationMapper) MapToPB(noti *domain.NotificationEntity) *notipb.No
 		Timestamp:        _utils.FormatTimeToString(noti.CreatedAt),
 		NotificationType: uint32(noti.NotificationType),
 		TargetId:         &noti.TargetID,
+		IsRead:           noti.IsRead,
 		// Link:    noti.Link,
 		// Type:    int32(noti.Type),
 	}

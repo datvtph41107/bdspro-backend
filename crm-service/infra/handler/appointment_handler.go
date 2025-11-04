@@ -179,7 +179,7 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 		filter["transaction_id"] = *req.TransactionId
 	}
 
-	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, int(pagable.GetPage()), int(pagable.GetSize()))
+	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, pagable)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -207,13 +207,12 @@ func (h *AppointmentHandler) AdminListAppointments(ctx context.Context, req *crm
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	page := 0
-	size := 20
-	if req.Page != nil {
-		page = int(*req.Page)
-	}
-	if req.Size != nil {
-		size = int(*req.Size)
+	var pagable _dto.Pagable
+	if req.Page != nil && req.Size != nil {
+		pagable = _dto.Pagable{
+			Page: uint32(*req.Page),
+			Size: uint32(*req.Size),
+		}
 	}
 
 	// Build filter từ request
@@ -228,7 +227,7 @@ func (h *AppointmentHandler) AdminListAppointments(ctx context.Context, req *crm
 		filter["created_by"] = *req.CreatedBy
 	}
 
-	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, page, size)
+	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, pagable)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -272,7 +271,7 @@ func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *
 		Page: req.Page,
 		Size: req.Size,
 	}
-	appointments, total, err := h.AppointmentUsecase.GetAppointmentsByProduct(ctx, req.Id, int(pagable.GetPage()), int(pagable.GetSize()))
+	appointments, total, err := h.AppointmentUsecase.GetAppointmentsByProduct(ctx, req.Id, pagable)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

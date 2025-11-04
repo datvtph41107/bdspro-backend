@@ -69,6 +69,17 @@ func (r *PostgreNotification) MarkAsRead(ctx context.Context, profileId uint64, 
 	return result.RowsAffected, result.Error
 }
 
+// MarkAsReadMany: Đánh dấu nhiều thông báo là đã đọc
+func (r *PostgreNotification) MarkAsReadMany(ctx context.Context, profileId uint64, ids []uint64) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	result := r.DB.WithContext(ctx).Model(&domain.NotificationEntity{}).
+		Where("id IN ? AND owner_id = ? and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", ids, profileId).
+		Update("is_read", true)
+	return result.RowsAffected, result.Error
+}
+
 func (r *PostgreNotification) ReadAll(ctx context.Context, profileId uint64) (int64, error) {
 	result := r.DB.WithContext(ctx).
 		Model(&domain.NotificationEntity{}).
