@@ -1,11 +1,10 @@
 package postgres
 
 import (
+	_enum "common/domain/enum"
 	"context"
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/enums"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -87,9 +86,10 @@ func (r *PostgreNotification) ExistsByIdAndUserId(id uint64, userID uint64) (boo
 }
 
 func (repo *PostgreNotification) Delete(ctx context.Context, profileId, id uint64) error {
-	return repo.DB.Model(&domain.NotificationEntity{}).
+	return repo.DB.WithContext(ctx).
+		Unscoped().
 		Where("owner_id = ? AND id = ? and (visible_at is null OR visible_at < CURRENT_TIMESTAMP)", profileId, id).
-		Update("deleted_at", time.Now()).
+		Delete(&domain.NotificationEntity{}).
 		Error
 }
 
@@ -102,25 +102,19 @@ func (repo *PostgreNotification) ListNotiWithTargetIdAndOwnerType(ctx context.Co
 }
 
 func (repo *PostgreNotification) DeleteIds(ctx context.Context, ids []uint64) error {
-	return repo.DB.Model(&domain.NotificationEntity{}).
+	return repo.DB.WithContext(ctx).
+		Unscoped().
 		Where("id IN (?)", ids).
-		Update("deleted_at", time.Now()).
+		Delete(&domain.NotificationEntity{}).
 		Error
 }
 
-func (repo *PostgreNotification) RemoveUnique(
-	ctx context.Context,
-	ownerId uint64,
-	targetId uint64,
-	typeNoti enums.TypeEnum,
-	ownerType enums.OwnerType,
-) (*domain.NotificationEntity, error) {
+func (repo *PostgreNotification) RemoveUnique(ctx context.Context, ownerId, targetId uint64, notificationType _enum.ENotificationType, ownerOf _enum.EOwnerOf) (*domain.NotificationEntity, error) {
 	var notification *domain.NotificationEntity
 	err := repo.DB.WithContext(ctx).
 		Debug().
-		Model(&domain.NotificationEntity{}).
-		Where("owner_id = ? AND target_id = ? AND owner_type = ? AND type = ? and deleted_at is null", ownerId, targetId, ownerType, typeNoti).
-		Update("deleted_at", time.Now()).Error
-	// Find(&notification).Error
+		Unscoped().
+		Where("owner_id = ? AND target_id = ? AND owner_of = ? AND notification_type = ? and deleted_at is null", ownerId, targetId, ownerOf, notificationType).
+		Delete(&domain.NotificationEntity{}).Error
 	return notification, err
 }

@@ -95,7 +95,7 @@ func (s *NotificationClient) SendNotification(ctx context.Context, noti *_dto.No
 	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
 		Title:   noti.Title,
 		Message: noti.Message,
-		Type:    int32(noti.Type),
+		Type:    int32(noti.NotificationType),
 	})
 	return err
 }
@@ -106,7 +106,7 @@ func (s *NotificationClient) SendBatchNotification(ctx context.Context, noti *_d
 		notifications = append(notifications, &sharepb.NotificationRequest{
 			Title:   notification.Title,
 			Message: notification.Message,
-			Type:    int32(notification.Type),
+			Type:    int32(notification.NotificationType),
 		})
 	}
 	_, err := s.Client.SendBatch(ctx, &notificationpb.NotiBatchRequest{
@@ -200,17 +200,19 @@ func (s *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, 
 // CreateNotification tạo thông báo cho user với đầy đủ thông tin
 func (s *NotificationClient) CreateNotification(ctx context.Context,
 	title string,
-	message string,
+	message []string,
 	notificationType int32,
 	link string,
 	ownerID uint64,
+	attachData []string,
 ) error {
 	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
-		Title:   title,
-		Message: message,
-		Type:    notificationType,
-		Link:    link,
-		OwnerId: ownerID,
+		Title:      title,
+		Message:    message,
+		Type:       notificationType,
+		Link:       link,
+		OwnerId:    ownerID,
+		AttachData: attachData,
 	})
 	return err
 }

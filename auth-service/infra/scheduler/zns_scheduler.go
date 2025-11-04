@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"auth/env"
 	"auth/internal/interface/provider"
 	"context"
 	"log"
@@ -27,9 +26,9 @@ func (s *ZnsScheduler) Start() {
 	log.Println("🔧 [ZNS Scheduler] Starting ZNS Token Refresh Scheduler...")
 
 	// Chạy ngay lần đầu tiên khi khởi động
-	if env.ENV_RUNTIME != "" {
-		s.refreshTokenJob()
-	}
+	// if env.ENV_RUNTIME != "" {
+	// 	s.refreshTokenJob()
+	// }
 
 	// Khởi động goroutine để schedule job chạy vào 00:00 mỗi ngày
 	go s.scheduleDaily()

@@ -47,6 +47,16 @@ func (c *UserClient) GetProfileByPhones(ctx context.Context, phones []string) (m
 }
 
 func (c *UserClient) GetProfileById(ctx context.Context, profileId uint64) (*domain.Profile, error) {
+	result, err := c.GetProfileWithPhoneById(ctx, profileId)
+	if err != nil {
+		return nil, err
+	}
+	result.Phone = ""
+
+	return result, nil
+}
+
+func (c *UserClient) GetProfileWithPhoneById(ctx context.Context, profileId uint64) (*domain.Profile, error) {
 	request := &sharepb.GetProfileByIdsRequest{
 		Ids: []uint64{profileId},
 	}
@@ -62,6 +72,7 @@ func (c *UserClient) GetProfileById(ctx context.Context, profileId uint64) (*dom
 	return &domain.Profile{
 		ProfileId:    profileId,
 		FullName:     response.Profiles[0].FullName,
+		Phone:        response.Profiles[0].Phone,
 		Avatar:       response.Profiles[0].Avatar,
 		TickVerified: response.Profiles[0].TickVerified,
 	}, nil

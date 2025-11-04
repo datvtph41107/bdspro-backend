@@ -9,23 +9,19 @@ import (
 
 	"notification/internal/domain"
 	"notification/internal/dto"
+	iprovider "notification/internal/interface"
 	"notification/internal/repo"
 )
 
-type IAuthClient interface {
-	GetProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error)
-	GetMapProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (map[uint64]*sharepb.ProfileItem, error)
-}
-
 type AdminHistoryUsecase struct {
 	adminHistoryRepo repo.AdminHistoryRepo
-	authClient       IAuthClient
+	userClient       iprovider.IUserClient
 }
 
-func NewAdminHistoryUsecase(adminHistoryRepo repo.AdminHistoryRepo, authClient IAuthClient) *AdminHistoryUsecase {
+func NewAdminHistoryUsecase(adminHistoryRepo repo.AdminHistoryRepo, userClient iprovider.IUserClient) *AdminHistoryUsecase {
 	return &AdminHistoryUsecase{
 		adminHistoryRepo: adminHistoryRepo,
-		authClient:       authClient,
+		userClient:       userClient,
 	}
 }
 
@@ -176,7 +172,7 @@ func (h *AdminHistoryUsecase) populateAdminInfo(ctx context.Context, histories [
 		}
 	}
 	// Get admin profiles from auth service
-	profilesMap, err := h.authClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
+	profilesMap, err := h.userClient.GetMapProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{
 		Ids: adminIds,
 	})
 	if err != nil {

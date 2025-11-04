@@ -216,6 +216,10 @@
         "targetId": {
           "type": "string",
           "format": "uint64"
+        },
+        "notificationType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -270,7 +274,10 @@
           "type": "string"
         },
         "message": {
-          "type": "string"
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "title": {
           "type": "string"
@@ -306,6 +313,17 @@
         "ownerId": {
           "type": "string",
           "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "notificationType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "avatar": {
+          "type": "string"
         }
       }
     }

@@ -2,18 +2,17 @@ package usecase
 
 import (
 	_db "common/db"
+	_enum "common/domain/enum"
 	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	"encoding/json"
 	"log"
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
 	"notification/internal/repo"
 	notificationpb "pb/types/notification"
-	"time"
 )
 
 type NotificationUsecase struct {
@@ -37,26 +36,25 @@ func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto
 		}
 	}
 
-	var visibleAt *time.Time
-	if request.VisibleAt != nil {
-		visibleAt = request.VisibleAt
-	}
-	notification := domain.NotificationEntity{
-		OwnerID:   profileId,
-		OwnerType: int32(request.OwnerType),
-		TargetID:  request.TargetID,
-		Title:     request.Title,
-		Message:   request.Message,
-		Link:      request.Link,
-		Type:      enums.TypeEnum(request.Type),
-		VisibleAt: visibleAt,
+	// var visibleAt *time.Time
+	// if request.VisibleAt != nil {
+	// 	visibleAt = request.VisibleAt
+	// }
+	notification := &domain.NotificationEntity{
+		OwnerID:          profileId,
+		OwnerOf:          request.OwnerOf,
+		Avatar:           request.Avatar,
+		TargetID:         request.TargetID,
+		NotificationType: request.NotificationType,
+		Title:            request.Title,
+		Message:          request.Message,
+		AttachData:       request.AttachData,
 	}
 
-	if err := s.Repo.Create(c, &notification); err != nil {
+	if err := _db.SaveWithContext(c, notification); err != nil {
 		return nil, err
 	}
-
-	return &notification, nil
+	return notification, nil
 }
 
 func (s *NotificationUsecase) CreateBatch(c context.Context, dto *notificationpb.NotiBatchRequest) (*notificationpb.ListResponse, error) {
@@ -71,19 +69,20 @@ func (s *NotificationUsecase) CreateBatch(c context.Context, dto *notificationpb
 	notifications := []domain.NotificationEntity{}
 	for i := 0; i < len(dto.Datas); i++ {
 		request := dto.Datas[i]
-		var visibleAt *time.Time
-		if request.VisibleAt != nil {
-			t := request.VisibleAt.AsTime()
-			visibleAt = &t
-		}
+		// var visibleAt *time.Time
+		// if request.VisibleAt != nil {
+		// 	t := request.VisibleAt.AsTime()
+		// 	visibleAt = &t
+		// }
 		notifications = append(notifications, domain.NotificationEntity{
-			OwnerID:   request.TargetId,
-			OwnerType: request.TargetType,
-			Title:     request.Title,
-			Message:   []string{request.Message},
-			Link:      request.Link,
-			Type:      enums.TypeEnum(request.Type),
-			VisibleAt: visibleAt,
+			OwnerID:    request.TargetId,
+			OwnerOf:    _enum.EOwnerOf(request.OwnerOf),
+			Title:      request.Title,
+			Message:    request.Message,
+			AttachData: request.AttachData,
+			// Link:       request.Link,
+			// Type:       enums.TypeEnum(request.Type),
+			// VisibleAt:  visibleAt,
 		})
 	}
 
@@ -152,22 +151,73 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 
 	log.Println("ismerge=", dto.IsMerge)
 	if dto.IsMerge {
-		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.Type, dto.OwnerType)
+		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
 	}
 
-	message := s.GetMessage(c, enums.TypeEnum(dto.Type), dto.AttachData)
-	str, _ := json.Marshal(dto.AttachData)
+	// message := s.GetMessage(c, enums.TypeEnum(dto.Type), dto.AttachData)
+	// str, _ := json.Marshal(dto.AttachData)
 	notification := domain.NotificationEntity{
-		TargetID:  dto.TargetID,
-		OwnerType: int32(dto.OwnerType),
+		Avatar:   dto.Avatar,
+		TargetID: dto.TargetID,
+		OwnerOf:  dto.OwnerOf,
 		// Title:     dto.Title,
 		OwnerID: dto.OwnerID,
 		// PrefixMessage: prefixMessage,
-		Message:    message,
-		AttachData: string(str),
-		Link:       dto.Link,
-		Type:       enums.TypeEnum(dto.Type),
-		VisibleAt:  dto.VisibleAt,
+		Message:    dto.Message,
+		AttachData: dto.AttachData,
+		// Link:       dto.Link,
+		// Type:       enums.TypeEnum(dto.Type),
+		// VisibleAt:  dto.VisibleAt,
+	}
+
+	// todo: delete old notifications
+	// if len(notifications) > 0 {
+	// 	ids := []uint64{}
+	// 	for _, notification := range notifications {
+	// 		ids = append(ids, notification.ID)
+	// 	}
+	// 	if err := s.Repo.DeleteIds(c, ids); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	if err := s.Repo.Create(c, &notification); err != nil {
+		return nil, err
+	}
+
+	return &notification, nil
+}
+
+func (s *NotificationUsecase) CreateToOwner(c context.Context, dto *dto.NotiNewRequest) (*domain.NotificationEntity, error) {
+	// notifications, err := s.Repo.ListNotiWithTargetIdAndOwnerType(c, dto.TargetID, int32(dto.OwnerType), 4)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	if err := s._removeNotification(c, dto); err != nil {
+		return nil, err
+	}
+
+	log.Println("ismerge=", dto.IsMerge)
+	// if dto.IsMerge {
+	// 	s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
+	// }
+
+	// message := s.GetMessage(c, enums.TypeEnum(dto.Type), dto.AttachData)
+	// str, _ := json.Marshal(dto.AttachData)
+	notification := domain.NotificationEntity{
+		Avatar:  dto.Avatar,
+		Title:   dto.Title,
+		Message: dto.Message,
+		OwnerOf: dto.OwnerOf,
+		// Title:     dto.Title,
+		OwnerID: dto.OwnerID,
+		// PrefixMessage: prefixMessage,
+		AttachData:       dto.AttachData,
+		NotificationType: dto.NotificationType,
+		TargetID:         dto.TargetID,
+		// Link:       dto.Link,
+		// Type:       enums.TypeEnum(dto.Type),
+		// VisibleAt:  dto.VisibleAt,
 	}
 
 	// todo: delete old notifications
@@ -212,4 +262,17 @@ func (s *NotificationUsecase) PushByToken(c context.Context, dto *dto.PushTokenR
 
 func (s *NotificationUsecase) PushByTopic(c context.Context, dto *dto.PushTopicRequest) (*notificationpb.PushResponse, error) {
 	return nil, nil
+}
+
+func (s *NotificationUsecase) _removeNotification(c context.Context, dto *dto.NotiNewRequest) error {
+	// Kiểm tra xem notification type có cần merge (xóa thông báo cũ) không
+
+	if dto.NotificationType == _enum.NotificationFriendRequest ||
+		dto.NotificationType == _enum.NotificationFriendResponse {
+		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, _enum.NotificationFriendRequest, dto.OwnerOf)
+		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, _enum.NotificationFriendResponse, dto.OwnerOf)
+	} else if dto.NotificationType.IsMergeableNotification() {
+		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
+	}
+	return nil
 }

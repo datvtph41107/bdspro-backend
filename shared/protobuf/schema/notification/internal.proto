@@ -11,6 +11,7 @@ import "notification/notification.proto";
 
 // InternalNotificationService định nghĩa các RPC nội bộ cho notification service
 service InternalNotificationService {
+    // @deprecated: không dùng nữa thay bằng CreateToOwner(NotificationRequest)
     rpc Create (sharepb.NotificationRequest) returns (NotificationDTO);
     rpc SendBatch (NotiBatchRequest) returns (BatchResponse);
     rpc PushByToken (PushTokenRequest) returns (PushResponse);
@@ -19,6 +20,8 @@ service InternalNotificationService {
     rpc CreateAdminHistoryBatch (AdminHistoryBatchRequest) returns (BatchResponse);
     // Tạo deal history (internal RPC)
     rpc CreateDealHistory(CreateDealHistoryRequest) returns (CreateDealHistoryResponse);
+    
+    rpc CreateToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
 }
 
 // ===== NOTIFICATION MESSAGES =====

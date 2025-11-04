@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_enum "common/domain/enum"
 	"context"
 	"log"
 	shared_enum "pb/enums"
@@ -41,13 +42,13 @@ func NewInternalHandler(
 func (s *InternalHandler) Create(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
 	dto := &dto.NotiNewRequest{
 		Title:        req.Title,
-		Message:      []string{req.Message},
+		Message:      req.Message,
 		AttachData:   req.AttachData,
 		Link:         req.Link,
 		Type:         enums.TypeEnum(req.Type),
 		TargetID:     req.TargetId,
 		OwnerID:      req.OwnerId,
-		OwnerType:    enums.OwnerType(req.TargetType),
+		OwnerOf:      _enum.EOwnerOf(req.OwnerOf),
 		SendToDevice: req.SendToDevice,
 		IsMerge:      req.IsMerge,
 	}
@@ -65,8 +66,9 @@ func (s *InternalHandler) SendBatch(ctx context.Context, req *notificationpb.Not
 	notifications := make([]*dto.NotiNewRequest, 0)
 	for _, noti := range req.Datas {
 		notifications = append(notifications, &dto.NotiNewRequest{
+			Avatar:       noti.Avatar,
 			Title:        noti.Title,
-			Message:      []string{noti.Message},
+			Message:      noti.Message,
 			Type:         enums.TypeEnum(noti.Type),
 			AttachData:   noti.AttachData,
 			TargetID:     noti.TargetId,
@@ -195,4 +197,28 @@ func (s *InternalHandler) CreateDealHistory(ctx context.Context, req *notificati
 		Message: "Deal history created successfully",
 		Id:      response.ID,
 	}, nil
+}
+
+func (s *InternalHandler) CreateToOwner(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
+	dto := &dto.NotiNewRequest{
+		Avatar:           req.Avatar,
+		Title:            req.Title,
+		Message:          req.Message,
+		AttachData:       req.AttachData,
+		NotificationType: _enum.ENotificationType(req.NotificationType),
+		Type:             enums.TypeEnum(req.Type),
+		TargetID:         req.TargetId,
+		OwnerID:          req.OwnerId,
+		OwnerOf:          _enum.EOwnerOf(req.OwnerOf),
+		SendToDevice:     req.SendToDevice,
+		IsMerge:          req.IsMerge,
+	}
+	log.Println("dto", dto)
+	notification, err := s.Usecase.CreateToOwner(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	response := s.Mapper.MapToPB(notification)
+	return response, nil
 }

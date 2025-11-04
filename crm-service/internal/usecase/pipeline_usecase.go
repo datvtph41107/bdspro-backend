@@ -1,9 +1,8 @@
 package usecase
 
 import (
-	base_dto "base/dto"
 	base_enum "base/enum"
-	base_provider "base/provider"
+	_provider "common/domain/provider"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -17,7 +16,7 @@ import (
 type PipelineUsecase struct {
 	pipelineRepo       repo.PipelineRepo
 	permissionUsecase  PermissionUsecase
-	notificationClient base_provider.NotificationProvider
+	notificationClient _provider.NotificationProvider
 	customerRepo       repo.LeadRepo
 	stageRepo          repo.StageRepo
 	transaction        provider.ITransaction
@@ -26,7 +25,7 @@ type PipelineUsecase struct {
 func NewPipelineUsecase(
 	pipelineRepo repo.PipelineRepo,
 	permissionUsecase PermissionUsecase,
-	notificationClient base_provider.NotificationProvider,
+	notificationClient _provider.NotificationProvider,
 	customerRepo repo.LeadRepo,
 	stageRepo repo.StageRepo,
 	transaction provider.ITransaction,
@@ -94,15 +93,15 @@ func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntit
 		return nil
 	})
 
-	u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
-		Title:      "Tạo quy trình thành công",
-		Note:       []string{"Tạo quy trình", pipeline.PipelineName},
-		TargetId:   pipeline.ID,
-		TargetType: base_enum.TargetHistoryPipeline,
-		ActionType: base_enum.HistoryPipelineCreate,
-		OwnerID:    &pipeline.OwnerID,
-		OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
-	})
+	// u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
+	// 	Title:      "Tạo quy trình thành công",
+	// 	Note:       []string{"Tạo quy trình", pipeline.PipelineName},
+	// 	TargetId:   pipeline.ID,
+	// 	TargetType: base_enum.TargetHistoryPipeline,
+	// 	ActionType: base_enum.HistoryPipelineCreate,
+	// 	OwnerID:    &pipeline.OwnerID,
+	// 	OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
+	// })
 
 	return pipeline, nil
 }
@@ -158,15 +157,15 @@ func (u *PipelineUsecase) Update(c context.Context, id uint64, dto *dto.Pipeline
 		return nil, err
 	}
 
-	u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
-		Title:      "Cập nhật quy trình thành công",
-		Note:       []string{"Cập nhật quy trình", pipeline.PipelineName},
-		TargetId:   pipeline.ID,
-		TargetType: base_enum.TargetHistoryPipeline,
-		ActionType: base_enum.HistoryPipelineUpdate,
-		OwnerID:    &pipeline.OwnerID,
-		OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
-	})
+	// u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
+	// 	Title:      "Cập nhật quy trình thành công",
+	// 	Note:       []string{"Cập nhật quy trình", pipeline.PipelineName},
+	// 	TargetId:   pipeline.ID,
+	// 	TargetType: base_enum.TargetHistoryPipeline,
+	// 	ActionType: base_enum.HistoryPipelineUpdate,
+	// 	OwnerID:    &pipeline.OwnerID,
+	// 	OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
+	// })
 
 	return pipeline, nil
 }
@@ -197,15 +196,15 @@ func (u *PipelineUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 
-	u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
-		Title:      "Xóa quy trình thành công",
-		Note:       []string{"Xóa quy trình", pipeline.PipelineName},
-		TargetId:   pipeline.ID,
-		TargetType: base_enum.TargetHistoryPipeline,
-		ActionType: base_enum.HistoryPipelineDelete,
-		OwnerID:    &pipeline.OwnerID,
-		OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
-	})
+	// u.notificationClient.CreateCRMHistory(c, &base_dto.HistoryDTO{
+	// 	Title:      "Xóa quy trình thành công",
+	// 	Note:       []string{"Xóa quy trình", pipeline.PipelineName},
+	// 	TargetId:   pipeline.ID,
+	// 	TargetType: base_enum.TargetHistoryPipeline,
+	// 	ActionType: base_enum.HistoryPipelineDelete,
+	// 	OwnerID:    &pipeline.OwnerID,
+	// 	OwnerOf:    base_enum.EOwnerOf(pipeline.OwnerType),
+	// })
 
 	return nil
 }

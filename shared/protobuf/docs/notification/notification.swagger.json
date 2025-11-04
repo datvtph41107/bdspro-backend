@@ -1622,6 +1622,10 @@
         "targetId": {
           "type": "string",
           "format": "uint64"
+        },
+        "notificationType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

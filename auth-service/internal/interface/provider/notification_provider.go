@@ -1,8 +1,12 @@
 package provider
 
-import "context"
+import (
+	_provider "common/domain/provider"
+	"context"
+)
 
 type NotificationProvider interface {
+	_provider.NotificationProvider
 	CreateAdminHistory(ctx context.Context,
 		adminID uint64,
 		targetID uint64,
@@ -18,10 +22,10 @@ type NotificationProvider interface {
 		ipAddress string,
 		userAgent string) error
 
-	CreateNotification(ctx context.Context,
-		title string,
-		message string,
-		notificationType int32,
-		link string,
-		ownerID uint64) error
+	// CreateNotification(ctx context.Context,
+	// 	title string,
+	// 	message string,
+	// 	notificationType int32,
+	// 	link string,
+	// 	ownerID uint64) error
 }

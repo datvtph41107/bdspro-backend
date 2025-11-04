@@ -1,9 +1,8 @@
 package usecase
 
 import (
-	base_dto "base/dto"
-	base_enum "base/enum"
-	base_provider "base/provider"
+	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	"context"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -16,12 +15,12 @@ import (
 type RuleEventUsecase struct {
 	ruleRepo             repo.RuleRepo
 	customerRepo         repo.LeadRepo
-	notificationProvider base_provider.NotificationProvider
+	notificationProvider _provider.NotificationProvider
 }
 
 func NewRuleEventUsecase(ruleRepo repo.RuleRepo,
 	customerRepo repo.LeadRepo,
-	client base_provider.NotificationProvider) *RuleEventUsecase {
+	client _provider.NotificationProvider) *RuleEventUsecase {
 	return &RuleEventUsecase{ruleRepo: ruleRepo,
 		customerRepo:         customerRepo,
 		notificationProvider: client,
@@ -69,13 +68,13 @@ func (u *RuleEventUsecase) CheckEventNotHistory(c context.Context, customer dto.
 		return nil
 	}
 
-	existed, err := u.notificationProvider.ExistedFromDate(c, customer.CustomerID, fromDate)
-	if err != nil {
-		return err
-	}
-	if existed {
-		return nil
-	}
+	// existed, err := u.notificationProvider.ExistedFromDate(c, customer.CustomerID, fromDate)
+	// if err != nil {
+	// 	return err
+	// }
+	// if existed {
+	// 	return nil
+	// }
 
 	u.TriggerEvent(c, customer)
 
@@ -151,42 +150,45 @@ func (u *RuleEventUsecase) TriggerEvent(c context.Context, customer dto.Customer
 		u.TriggerSwitchStage(c, customer)
 	}
 
-	u.notificationProvider.CreateCRMHistory(c, &base_dto.HistoryDTO{
-		TargetId:   customer.CustomerID,
-		TargetType: base_enum.TargetHistoryLead,
-		ActionType: base_enum.HistoryRuleEvent,
-		OwnerID:    &customer.OwnerID,
-		OwnerOf:    base_enum.EOwnerOf(customer.OwnerType),
-		Title:      "Tương tác tự động với khách hàng thành công",
-		Note: []string{"Tương tác tự động với khách hàng",
-			customer.FullName,
-			"với quy tắc",
-			customer.RuleName,
-			"Đã thực hiện",
-			enums.RuleThenMap[customer.Trigger],
-		},
-	})
-	u.notificationProvider.CreateCRMHistory(c, &base_dto.HistoryDTO{
-		TargetId:   customer.RuleID,
-		TargetType: base_enum.TargetHistoryRule,
-		ActionType: base_enum.HistoryRuleEvent,
-		OwnerID:    &customer.OwnerID,
-		OwnerOf:    base_enum.EOwnerOf(customer.OwnerType),
-		Title:      "Quy tắc \"" + customer.RuleName + "\" đã kích hoạt cho \"" + customer.FullName + "\"",
-		Note:       []string{},
-	})
+	// u.notificationProvider.CreateCRMHistory(c, &base_dto.HistoryDTO{
+	// 	TargetId:   customer.CustomerID,
+	// 	TargetType: base_enum.TargetHistoryLead,
+	// 	ActionType: base_enum.HistoryRuleEvent,
+	// 	OwnerID:    &customer.OwnerID,
+	// 	OwnerOf:    base_enum.EOwnerOf(customer.OwnerType),
+	// 	Title:      "Tương tác tự động với khách hàng thành công",
+	// 	Note: []string{"Tương tác tự động với khách hàng",
+	// 		customer.FullName,
+	// 		"với quy tắc",
+	// 		customer.RuleName,
+	// 		"Đã thực hiện",
+	// 		enums.RuleThenMap[customer.Trigger],
+	// 	},
+	// })
+	// u.notificationProvider.CreateCRMHistory(c, &base_dto.HistoryDTO{
+	// 	TargetId:   customer.RuleID,
+	// 	TargetType: base_enum.TargetHistoryRule,
+	// 	ActionType: base_enum.HistoryRuleEvent,
+	// 	OwnerID:    &customer.OwnerID,
+	// 	OwnerOf:    base_enum.EOwnerOf(customer.OwnerType),
+	// 	Title:      "Quy tắc \"" + customer.RuleName + "\" đã kích hoạt cho \"" + customer.FullName + "\"",
+	// 	Note:       []string{},
+	// })
 	return nil
 }
 
 func (u *RuleEventUsecase) TriggerReminder(c context.Context, customer dto.CustomerWithRuleDTO) error {
 	// TODO: gửi thông báo nhắc nhở
-	u.notificationProvider.SendNotification(c, &base_dto.NotificationDTO{
-		Title:     "Nhắc nhở",
-		Message:   fmt.Sprintf("Khách hàng %s đã quá %s ngày chưa tương tác", customer.FullName, customer.ConditionValue),
-		Type:      int(base_enum.HistoryRuleEvent),
-		UserID:    customer.ChargePersonId,
-		VisibleAt: &customer.UpdatedAt,
-	})
+	u.notificationProvider.CreateNotification(c,
+		"Nhắc nhở",
+		"",
+		[]string{fmt.Sprintf("Khách hàng %s đã quá %s ngày chưa tương tác", customer.FullName, customer.ConditionValue)},
+		_enum.NotificationRuleEvent,
+		&customer.ChargePersonId,
+		customer.OwnerID,
+		_enum.EOwnerOfMember,
+		[]string{},
+	)
 	return nil
 }
 

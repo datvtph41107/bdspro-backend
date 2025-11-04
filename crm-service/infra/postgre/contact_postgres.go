@@ -220,6 +220,9 @@ func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, cur
 			profileId, currentUserId, ownerType).
 		First(&contact)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, result.Error
 	}
 	return &contact, nil

@@ -15,6 +15,7 @@ import (
 	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	_db "common/db"
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_jwt "common/jwt"
 	_routes "common/routes"
@@ -275,11 +276,14 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 			err := s.NotificationClient.CreateNotification(
 				contextTimeout,
+				infoEntity.Avatar,
 				"Chào mừng bạn đến với BDSPro",
-				"Thiết lập tài khoản thành công",
-				1, // type: 1 - thông báo hệ thống
-				"",
+				[]string{"Thiết lập tài khoản thành công"},
+				_enum.NotificationSystem,
+				&infoEntity.ProfileID,
 				infoEntity.ProfileID,
+				_enum.EOwnerOfMember,
+				[]string{},
 			)
 			if err != nil {
 				log.Printf("Failed to send welcome notification: %v", err)

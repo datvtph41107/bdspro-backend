@@ -1,9 +1,7 @@
 package usecase
 
 import (
-	base_dto "base/dto"
-	base_enum "base/enum"
-	base_provider "base/provider"
+	_provider "common/domain/provider"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
@@ -14,12 +12,12 @@ import (
 
 type InvitationInstallUsecase struct {
 	repo               repo.InvitationInstallRepo
-	notificationClient base_provider.NotificationProvider
+	notificationClient _provider.NotificationProvider
 	userClient         provider.UserClient
 }
 
 func NewInvitationInstallUsecase(repo repo.InvitationInstallRepo,
-	notificationClient base_provider.NotificationProvider,
+	notificationClient _provider.NotificationProvider,
 	userClient provider.UserClient,
 ) *InvitationInstallUsecase {
 	return &InvitationInstallUsecase{repo: repo, notificationClient: notificationClient, userClient: userClient}
@@ -41,25 +39,25 @@ func (u *InvitationInstallUsecase) SendInvitation(ctx context.Context, ids []uin
 	}
 
 	go func() {
-		newCtx := _utils.CloneContext(ctx)
-		profileId := _utils.GetProfileIdWithContext(newCtx)
-		currentUser, _ := u.userClient.GetProfileById(newCtx, profileId)
-		fullName := ""
-		if currentUser != nil {
-			fullName = currentUser.FullName
-		}
-		for _, entity := range entities {
-			u.notificationClient.CreateCRMHistory(newCtx, &base_dto.HistoryDTO{
-				Title:      fullName + " đã mời bạn cài app",
-				Note:       []string{"", fullName, " đã gửi lời mời bạn cài app BDSPro \"" + entity.Content + "\""},
-				TargetId:   entity.ContactID,
-				TargetType: base_enum.TargetHistoryContact,
-				ActionType: base_enum.HistoryContactInstall,
-				OwnerID:    &profileId,
-				OwnerOf:    base_enum.EOwnerOfMember,
-				// AfterStage: ,
-			})
-		}
+		// newCtx := _utils.CloneContext(ctx)
+		// profileId := _utils.GetProfileIdWithContext(newCtx)
+		// currentUser, _ := u.userClient.GetProfileById(newCtx, profileId)
+		// fullName := ""
+		// if currentUser != nil {
+		// 	fullName = currentUser.FullName
+		// }
+		// for _, entity := range entities {
+		// 	u.notificationClient.CreateCRMHistory(newCtx, &base_dto.HistoryDTO{
+		// 		Title:      fullName + " đã mời bạn cài app",
+		// 		Note:       []string{"", fullName, " đã gửi lời mời bạn cài app BDSPro \"" + entity.Content + "\""},
+		// 		TargetId:   entity.ContactID,
+		// 		TargetType: base_enum.TargetHistoryContact,
+		// 		ActionType: base_enum.HistoryContactInstall,
+		// 		OwnerID:    &profileId,
+		// 		OwnerOf:    base_enum.EOwnerOfMember,
+		// 		// AfterStage: ,
+		// 	})
+		// }
 	}()
 
 	return entities, nil

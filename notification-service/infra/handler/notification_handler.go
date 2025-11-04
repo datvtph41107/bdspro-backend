@@ -10,7 +10,6 @@ import (
 
 	"notification/infra/client"
 	"notification/infra/mapper"
-	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
 	"notification/internal/usecase"
@@ -24,7 +23,8 @@ type NotificationHandler struct {
 	AdminHistoryUsecase   *usecase.AdminHistoryUsecase
 	AdminHistoryMapper    *mapper.AdminHistoryMapper
 	AccountWarningUsecase *usecase.AccountWarningUsecase
-	AuthClient            *client.AuthClient
+	UserClient            *client.UserClient
+	Mapper                *mapper.NotificationMapper
 	notipb.UnimplementedGatewayNotificationServiceServer
 }
 
@@ -33,14 +33,16 @@ func NewNotificationHandler(
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
 	accountWarningUsecase *usecase.AccountWarningUsecase,
-	authClient *client.AuthClient,
+	userClient *client.UserClient,
+	mapper *mapper.NotificationMapper,
 ) *NotificationHandler {
 	return &NotificationHandler{
 		Usecase:               usecase,
 		AdminHistoryUsecase:   adminHistoryUsecase,
 		AdminHistoryMapper:    adminHistoryMapper,
 		AccountWarningUsecase: accountWarningUsecase,
-		AuthClient:            authClient,
+		UserClient:            userClient,
+		Mapper:                mapper,
 	}
 }
 
@@ -66,7 +68,7 @@ func (s *NotificationHandler) Create(ctx context.Context, req *notipb.GatewayNot
 		return nil, status.Errorf(codes.Internal, "method Send not implemented")
 	}
 
-	response := s.mapToPB(notification)
+	response := s.Mapper.MapToPB(notification)
 	return response, nil
 }
 
@@ -168,7 +170,7 @@ func (s *NotificationHandler) List(ctx context.Context, req *notipb.ListRequest)
 	notifications, total, err := s.Usecase.Search(ctx, &query)
 	var responses []*notipb.NotificationDTO
 	for _, noti := range notifications {
-		responses = append(responses, s.mapToPB(&noti))
+		responses = append(responses, s.Mapper.MapToPB(&noti))
 	}
 
 	return &notipb.ListResponse{
@@ -304,21 +306,6 @@ func (s *NotificationHandler) convertToPbDTO(dto *dto.AdminHistoryDTO) *notipb.A
 	}
 
 	return pbDTO
-}
-
-// -- mapping ---
-func (s *NotificationHandler) mapToPB(noti *domain.NotificationEntity) *notipb.NotificationDTO {
-	return &notipb.NotificationDTO{
-		Id:        noti.ID,
-		UserId:    noti.OwnerID,
-		Title:     noti.Title,
-		Message:   noti.Message,
-		Link:      noti.Link,
-		Type:      int32(noti.Type),
-		Timestamp: _utils.FormatTimeToString(noti.CreatedAt),
-		IsRead:    noti.IsRead,
-		TargetId:  &noti.TargetID,
-	}
 }
 
 // @Summary Gửi cảnh báo tài khoản

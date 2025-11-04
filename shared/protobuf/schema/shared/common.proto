@@ -67,7 +67,7 @@ message GetProfileByIdsResponse {
 
 message NotificationRequest {
   string link = 1;
-  string message = 2;
+  repeated string message = 2;
   string title = 3;
   int32 type = 4;
   uint64 targetId = 5;
@@ -77,6 +77,9 @@ message NotificationRequest {
   repeated string attachData = 9;
   bool isMerge = 10;
   uint64 ownerId = 11;
+  uint32 ownerOf = 12;
+  uint32 notificationType = 13;
+  string avatar = 14;
 }
 
 message SetCookie {

@@ -5,6 +5,7 @@ import (
 	"notification/internal/enums"
 )
 
+// @deprecated
 func (s *NotificationUsecase) GetMessage(c context.Context, typeMessage enums.TypeEnum, attachData []string) []string {
 	if typeMessage == enums.ShareNewsFeed {
 		return []string{"", attachData[0], " đã chia sẻ bài viết của bạn: \"" + attachData[1] + "\""}

@@ -6,22 +6,31 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	shared_enum "pb/enums"
 )
 
 type NotiNewRequest struct {
-	TargetID      uint64          `json:"targetId" binding:"required"`
-	OwnerID       uint64          `json:"ownerId" binding:"required"`
-	OwnerType     enums.OwnerType `json:"ownerType" binding:"required"`
-	Title         string          `json:"title" binding:"required"`
-	PrefixMessage string          `json:"prefixMessage,omitempty"`
-	Message       []string        `json:"message" binding:"required"`
-	AttachData    []string        `json:"attachData,omitempty"`
-	Link          string          `json:"link,omitempty"`
-	Type          enums.TypeEnum  `json:"type" binding:"required"`
-	VisibleAt     *time.Time      `json:"visibleAt,omitempty"`
-	SendToDevice  bool            `json:"sendToDevice,omitempty"`
-	IsMerge       bool            `json:"isMerge,omitempty"`
+	Avatar  string `json:"avatar,omitempty"`
+	OwnerID uint64 `json:"ownerId" binding:"required"`
+	// @deprecated: không dùng nữa thay bằng OwnerOf
+	OwnerType    enums.OwnerType `json:"ownerType" binding:"required"`
+	OwnerOf      _enum.EOwnerOf  `json:"ownerOf" binding:"required"`
+	Title        string          `json:"title" binding:"required"`
+	Message      []string        `json:"message" binding:"required"`
+	AttachData   []string        `json:"attachData,omitempty"`
+	SendToDevice bool            `json:"sendToDevice,omitempty"`
+	// id của post, comment, deal, etc.
+	// kết hợp với notificationType để không tạo quá nhiều thông báo.
+	// ví dụ 10 user cùng like 1 bài thì chỉ only 1 thông báo thôi
+	TargetID         uint64                  `json:"targetId" binding:"required"`
+	NotificationType _enum.ENotificationType `json:"notificationType" binding:"required"`
+	IsMerge          bool                    `json:"isMerge,omitempty"`
+
+	PrefixMessage string         `json:"prefixMessage,omitempty"`
+	Link          string         `json:"link,omitempty"`
+	Type          enums.TypeEnum `json:"type" binding:"required"`
+	VisibleAt     *time.Time     `json:"visibleAt,omitempty"`
 }
 
 // SearchNotiRequest đại diện cho request tìm kiếm thông báo
