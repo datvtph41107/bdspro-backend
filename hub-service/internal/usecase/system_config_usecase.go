@@ -10,7 +10,6 @@ import (
 	"hub/internal/repo"
 )
 
-// @bind: hub/internal/repo.ISystemConfigRepo
 type SystemConfigUsecase struct {
 	persistData dto.SystemConfigPersist
 	defaultData dto.SystemConfigPersist

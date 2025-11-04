@@ -121,12 +121,13 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *u
 		BackgroundImage:   profile.BackgroundImage,
 		Position:          profile.Position,
 		DepartmentId:      profile.DepartmentID,
+		Gender:            profile.Gender,
 		Birth:             _utils.FormatTimeToString(profile.Birth),
 		StartDate:         _utils.FormatTimeToString(profile.StartDate),
-		FrontIdentify:     profile.FrontIdentify,
-		BackIdentify:      profile.BackIdentify,
 		Slogan:            profile.Slogan,
 		Website:           profile.Website,
+		ProvinceId:        profile.ProvinceID,
+		WardId:            profile.WardID,
 		Facebook:          profile.Facebook,
 		Instagram:         profile.Instagram,
 		Twitter:           profile.Twitter,
@@ -140,6 +141,8 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *u
 		RoleRealEstate:    uint32(profile.RoleRealEstate),
 		Following:         profile.Following,
 		ReferralCode:      profile.ReferralCode,
+		// FrontIdentify:     profile.FrontIdentify,
+		// BackIdentify:      profile.BackIdentify,
 	}
 
 	for _, certification := range profile.Certifications {
@@ -167,4 +170,30 @@ func (m *ProfileMapper) UserSearchItemToPbs(profiles *[]models.UserProfileSearch
 		})
 	}
 	return infos
+}
+
+func (m *ProfileMapper) SetPersonToDTO(req *userpb.SetPersonRequest) *dto.UserInfoRequest {
+	result := &dto.UserInfoRequest{}
+	if req.FullName != nil {
+		result.FullName = *req.FullName
+	}
+	if req.Gender != nil {
+		result.Gender = *req.Gender
+	}
+	if req.Birth != nil {
+		result.Birth = _utils.ParseStringToTime(*req.Birth)
+	}
+	if req.Phone != nil {
+		result.Phone = *req.Phone
+	}
+	if req.Email != nil {
+		result.Email = *req.Email
+	}
+	if req.ProvinceId != nil {
+		result.ProvinceID = req.ProvinceId
+	}
+	if req.WardId != nil {
+		result.WardID = req.WardId
+	}
+	return result
 }

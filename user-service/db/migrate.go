@@ -11,7 +11,6 @@ func AutoMigrate() {
 		&models.UserProfileEntity{},
 		&models.ProfileDeleted{},
 		&models.AdminProfile{},
-		&models.SystemConfigEntity{},
 
 		// Social entities
 		&models.BlockEntity{},

@@ -146,7 +146,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/crmpbContactServiceUpdateBody"
+              "$ref": "#/definitions/ContactServiceUpdateBody"
             }
           }
         ],
@@ -216,12 +216,7 @@
             "name": "friendStatus",
             "in": "query",
             "required": false,
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "collectionFormat": "multi"
+            "type": "string"
           },
           {
             "name": "following",
@@ -530,6 +525,43 @@
         }
       }
     },
+    "ContactServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "assignedCrm": {
+          "type": "boolean"
+        }
+      }
+    },
     "crmpbContactDTO": {
       "type": "object",
       "properties": {
@@ -624,43 +656,6 @@
           "type": "string",
           "format": "uint64"
         },
-        "phone": {
-          "type": "string"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "ownerOf": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "email": {
-          "type": "string"
-        },
-        "zalo": {
-          "type": "string"
-        },
-        "company": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "visibility": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "assignedCrm": {
-          "type": "boolean"
-        }
-      }
-    },
-    "crmpbContactServiceUpdateBody": {
-      "type": "object",
-      "properties": {
         "phone": {
           "type": "string"
         },

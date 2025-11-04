@@ -26,7 +26,7 @@ type UserProfileEntity struct {
 	TaxCode           string                `gorm:"size:13" json:"taxCode"`
 	FullName          string                `gorm:"size:255" json:"fullName"`
 	Address           string                `gorm:"size:255" json:"address"`
-	Gender            uint8                 `json:"gender"`
+	Gender            uint32                `json:"gender"`
 	Avatar            string                `gorm:"size:255" json:"avatar"`
 	TickVerified      bool                  `gorm:"column:tick_verified;default:false" json:"tickVerified"`
 	BackgroundImage   string                `gorm:"size:255" json:"backgroundImage"`
@@ -42,6 +42,8 @@ type UserProfileEntity struct {
 	DeletedAt         *time.Time            `gorm:"column:deleted_at" json:"-"`
 	FrontIdentify     string                `gorm:"column:front_identify" json:"frontIdentify"`
 	BackIdentify      string                `gorm:"column:back_identify" json:"backIdentify"`
+	ProvinceID        *uint64               `gorm:"column:province_id" json:"provinceId"`
+	WardID            *uint64               `gorm:"column:ward_id" json:"wardId"`
 	PlanID            *uint64               `gorm:"column:plan_id" json:"planId"`
 	PlanAt            *time.Time            `gorm:"column:plan_at" json:"planAt"`
 	Slogan            string                `gorm:"column:slogan" json:"slogan"`

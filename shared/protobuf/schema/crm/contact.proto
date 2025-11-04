@@ -64,7 +64,7 @@ message ContactSearchRequest {
   uint32 size = 2;
   string text = 3;
   sharepb.OwnerOf ownerOf = 4;
-  repeated int32 friendStatus = 5;
+  string friendStatus = 5;
   optional bool following = 6;
   repeated int32 roles = 7;
   optional bool leaded = 8;

@@ -40,6 +40,48 @@
     }
   },
   "definitions": {
+    "hubpbAddressV2Info": {
+      "type": "object",
+      "properties": {
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "provinceType": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        },
+        "wardType": {
+          "type": "string"
+        },
+        "fullAddress": {
+          "type": "string"
+        }
+      }
+    },
+    "hubpbGetAddressV2ByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/hubpbAddressV2Info"
+        }
+      }
+    },
     "hubpbGetLocationsByIdsResponse": {
       "type": "object",
       "properties": {

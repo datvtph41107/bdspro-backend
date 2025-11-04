@@ -21,4 +21,6 @@ type IProfileRepo interface {
 	UpdateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
 	DeleteUserProfile(ctx context.Context, profileID uint64, deletedBy *uint64, reason string) error
 	UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error
+	GetByPhone(phone string) (*models.UserProfileEntity, error)
+	UpdatePerson(c context.Context, profileId uint64, req *dto.UserInfoRequest) error
 }

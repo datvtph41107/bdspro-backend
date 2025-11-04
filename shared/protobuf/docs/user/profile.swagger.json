@@ -198,6 +198,38 @@
           "ProfileService"
         ]
       }
+    },
+    "/v2/user/profile/set-person": {
+      "put": {
+        "operationId": "ProfileService_SetPerson",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbSetPersonRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -552,6 +584,24 @@
         "profileVisibility": {
           "type": "integer",
           "format": "int64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "gender": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },
@@ -721,6 +771,35 @@
             "type": "string",
             "format": "uint64"
           }
+        }
+      }
+    },
+    "userpbSetPersonRequest": {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

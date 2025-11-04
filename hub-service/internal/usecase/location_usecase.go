@@ -21,23 +21,42 @@ type ILocationUsecase interface {
 	GetDistricts(ctx context.Context, provinceID, keyword string) ([]domain.District, error)
 	SearchLocation(ctx context.Context, keyword string) ([]domain.LocationSearchResult, error)
 	GetLocationsByIds(ctx context.Context, ids []uint64) ([]LocationInfo, error)
+	GetAddressV2ByIds(ctx context.Context, provinceId, wardId *uint64) (*AddressV2Info, error)
+}
+
+type AddressV2Info struct {
+	ProvinceID   *uint64
+	ProvinceName string
+	ProvinceCode string
+	ProvinceType string
+	WardID       *uint64
+	WardName     string
+	WardCode     string
+	WardType     string
+	FullAddress  string
 }
 
 type LocationUsecase struct {
-	provinceRepo _repo.IProvinceRepo
-	districtRepo _repo.IDistrictRepo
-	wardRepo     _repo.IWardRepo
+	provinceRepo   _repo.IProvinceRepo
+	districtRepo   _repo.IDistrictRepo
+	wardRepo       _repo.IWardRepo
+	provinceV2Repo _repo.IProvinceV2Repo
+	wardV2Repo     _repo.IWardV2Repo
 }
 
 func NewLocationUsecase(
 	provinceRepo _repo.IProvinceRepo,
 	districtRepo _repo.IDistrictRepo,
 	wardRepo _repo.IWardRepo,
+	provinceV2Repo _repo.IProvinceV2Repo,
+	wardV2Repo _repo.IWardV2Repo,
 ) ILocationUsecase {
 	return &LocationUsecase{
-		provinceRepo: provinceRepo,
-		districtRepo: districtRepo,
-		wardRepo:     wardRepo,
+		provinceRepo:   provinceRepo,
+		districtRepo:   districtRepo,
+		wardRepo:       wardRepo,
+		provinceV2Repo: provinceV2Repo,
+		wardV2Repo:     wardV2Repo,
 	}
 }
 
@@ -129,4 +148,46 @@ func (u *LocationUsecase) GetLocationsByIds(ctx context.Context, ids []uint64) (
 	}
 
 	return results, nil
+}
+
+// GetAddressV2ByIds lấy thông tin đầy đủ của province và ward theo IDs
+func (u *LocationUsecase) GetAddressV2ByIds(ctx context.Context, provinceId, wardId *uint64) (*AddressV2Info, error) {
+	result := &AddressV2Info{}
+
+	// Lấy thông tin province nếu có
+	if provinceId != nil && *provinceId > 0 {
+		p, err := u.provinceV2Repo.GetByID(ctx, *provinceId)
+		if err == nil && p != nil {
+			result.ProvinceID = provinceId
+			result.ProvinceName = p.Name
+			result.ProvinceCode = p.Codename
+			result.ProvinceType = p.DivisionType
+		}
+	}
+
+	// Lấy thông tin ward nếu có
+	if wardId != nil && *wardId > 0 {
+		w, err := u.wardV2Repo.GetByID(ctx, *wardId)
+		if err == nil && w != nil {
+			result.WardID = wardId
+			result.WardName = w.Name
+			result.WardCode = w.Codename
+			result.WardType = w.DivisionType
+		}
+	}
+
+	// Tạo full address
+	fullAddress := ""
+	if result.WardName != "" {
+		fullAddress = result.WardType + " " + result.WardName
+	}
+	if result.ProvinceName != "" {
+		if fullAddress != "" {
+			fullAddress += ", "
+		}
+		fullAddress += result.ProvinceType + " " + result.ProvinceName
+	}
+	result.FullAddress = fullAddress
+
+	return result, nil
 }

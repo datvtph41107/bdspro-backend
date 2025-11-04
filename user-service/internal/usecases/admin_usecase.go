@@ -332,7 +332,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 		Phone:     req.Phone,
 		Avatar:    req.Avatar,
 		RoleID:    &req.RoleID,
-		Gender:    uint8(0),
+		Gender:    0,
 		Address:   req.Address,
 		Birth:     req.Birth,
 		Status:    1, // Active by default
@@ -340,7 +340,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 
 	// Set gender if provided
 	if req.Gender != nil && *req.Gender > 0 {
-		userProfile.Gender = uint8(*req.Gender)
+		userProfile.Gender = *req.Gender
 	}
 
 	createdProfile, err := u.profileRepo.CreateUserProfile(ctx, userProfile)
@@ -387,7 +387,7 @@ func (u *AdminUsecase) UpdateUser(ctx context.Context, req *dto.UpdateUserReques
 
 	// Set gender if provided
 	if req.Gender != nil && *req.Gender > 0 {
-		updatedProfile.Gender = uint8(*req.Gender)
+		updatedProfile.Gender = *req.Gender
 	} else {
 		updatedProfile.Gender = existingUser.Gender
 	}
@@ -522,7 +522,7 @@ func (u *AdminUsecase) GetUserDetail(ctx context.Context, profileID uint64) (*dt
 		}
 	}
 
-	gender := uint8(0)
+	gender := uint32(0)
 	if user.Gender > 0 {
 		gender = user.Gender
 	}

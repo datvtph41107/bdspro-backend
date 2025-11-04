@@ -63,6 +63,17 @@ func (r *WardV2Repo) GetList(ctx context.Context, provinceCode *int, keyword str
 	return wards, total, err
 }
 
+// GetByID returns ward by ID
+func (r *WardV2Repo) GetByID(ctx context.Context, id uint64) (*domain.WardV2, error) {
+	var ward domain.WardV2
+	db := r.db.GetDB(ctx)
+	err := db.Where("id = ? AND deleted_at IS NULL", id).First(&ward).Error
+	if err != nil {
+		return nil, err
+	}
+	return &ward, nil
+}
+
 // GetByCode returns ward by code
 func (r *WardV2Repo) GetByCode(ctx context.Context, code int) (*domain.WardV2, error) {
 	var ward domain.WardV2

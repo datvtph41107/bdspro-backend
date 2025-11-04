@@ -88,6 +88,9 @@ type UserInfoRequest struct {
 	StatusOnline      enums.EOnlineStatus   `json:"statusOnline,omitempty"`
 	TabDefault        enums.ESettingTab     `json:"tabDefault,omitempty"`
 	RoleRealEstate    enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
+	ProvinceID        *uint64               `json:"provinceId,omitempty"`
+	WardID            *uint64               `json:"wardId,omitempty"`
+	Gender            uint32                `json:"gender,omitempty"`
 
 	Certifications         []CertificationBatchSave `json:"certifications,omitempty"`
 	CertificationRemoveIds []uint64                 `json:"certificationRemoveIds,omitempty"`

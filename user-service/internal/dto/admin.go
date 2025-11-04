@@ -169,7 +169,7 @@ type GetUserDetailResponse struct {
 	Phone2          string            `json:"phone2"`
 	Avatar          string            `json:"avatar"`
 	Address         string            `json:"address"`
-	Gender          uint8             `json:"gender"`
+	Gender          uint32            `json:"gender"`
 	Birth           *time.Time        `json:"birth"`
 	CreatedAt       time.Time         `json:"createdAt"`
 	UpdatedAt       time.Time         `json:"updatedAt"`

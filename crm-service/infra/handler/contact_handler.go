@@ -3,6 +3,7 @@ package handler
 import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
@@ -63,7 +64,7 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 			Size: uint32(req.Size),
 		},
 		Text:         req.Text,
-		FriendStatus: req.FriendStatus,
+		FriendStatus: _utils.ParseInt32Array(req.FriendStatus),
 		Following:    req.Following,
 		Roles:        req.Roles,
 		Leaded:       req.Leaded,

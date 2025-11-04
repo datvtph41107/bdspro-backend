@@ -3,6 +3,7 @@ package usecases
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_errors "common/errors"
 	_jwt "common/jwt"
 	_models "common/models"
 	_utils "common/utils"
@@ -375,4 +376,33 @@ func (uc *ProfileUsecase) CheckAccountStatus(ctx context.Context, profileID uint
 		IsLocked:   profile.Status.IsLocked(),
 		CanLogin:   profile.Status.IsActive(),
 	}, nil
+}
+
+// SetPerson cập nhật thông tin cá nhân cơ bản
+func (s *ProfileUsecase) SetPerson(c context.Context, req *dto.UserInfoRequest) error {
+	profileId := _utils.GetProfileIdWithContext(c)
+
+	// Validate email nếu có
+	if req.Email != "" {
+		if !_utils.IsValidEmail(req.Email) {
+			return _errors.ReturnError(400, "email không hợp lệ")
+		}
+	}
+
+	// Validate phone nếu có
+	if req.Phone != "" {
+		// Check phone đã được dùng bởi user khác chưa
+		existedProfile, _ := s.ProfileRepo.GetByPhone(req.Phone)
+		if existedProfile != nil && existedProfile.ProfileID != profileId {
+			return _errors.ReturnError(400, "số điện thoại đã được sử dụng")
+		}
+	}
+
+	// Update profile
+	err := s.ProfileRepo.UpdatePerson(c, profileId, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

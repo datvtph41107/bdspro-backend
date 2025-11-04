@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// @bind: hub/internal/usecase.SystemConfigUsecase
 type SystemConfigHandler struct {
 	hubpb.UnimplementedSystemConfigServiceServer
 	usecase *usecase.SystemConfigUsecase

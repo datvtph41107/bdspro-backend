@@ -24,7 +24,7 @@ func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
 		name := "hub"
 		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8211", url),
+		conn, err := grpc.Dial(fmt.Sprintf("%s:8280", url),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),

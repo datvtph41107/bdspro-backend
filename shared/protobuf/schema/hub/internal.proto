@@ -28,6 +28,27 @@ message GetLocationsByIdsResponse {
   repeated Location data = 1; // List of locations
 }
 
+message GetAddressV2ByIdsRequest {
+  optional uint64 provinceId = 1;
+  optional uint64 wardId = 2;
+}
+
+message AddressV2Info {
+  optional uint64 provinceId = 1;
+  optional string provinceName = 2;
+  optional string provinceCode = 3;
+  optional string provinceType = 4;
+  optional uint64 wardId = 5;
+  optional string wardName = 6;
+  optional string wardCode = 7;
+  optional string wardType = 8;
+  optional string fullAddress = 9;
+}
+
+message GetAddressV2ByIdsResponse {
+  AddressV2Info data = 1;
+}
+
 // ========== Service Definition ==========
 
 service HubInternalService {
@@ -39,5 +60,8 @@ service HubInternalService {
 
   // Get Locations by IDs - Internal RPC for other services
   rpc GetLocationsByIds (GetLocationsByIdsRequest) returns (GetLocationsByIdsResponse);
+
+  // Get Address V2 by Province and Ward IDs - Returns full address information
+  rpc GetAddressV2ByIds (GetAddressV2ByIdsRequest) returns (GetAddressV2ByIdsResponse);
 }
 

@@ -58,3 +58,34 @@ func (h *InternalHandler) GetLocationsByIds(ctx context.Context, req *hubpb.GetL
 		Data: data,
 	}, nil
 }
+
+// GetAddressV2ByIds lấy thông tin đầy đủ của province và ward theo IDs
+func (h *InternalHandler) GetAddressV2ByIds(ctx context.Context, req *hubpb.GetAddressV2ByIdsRequest) (*hubpb.GetAddressV2ByIdsResponse, error) {
+	// Get address info from usecase
+	addressInfo, err := h.locationUsecase.GetAddressV2ByIds(ctx, req.ProvinceId, req.WardId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to proto
+	data := &hubpb.AddressV2Info{
+		ProvinceId: addressInfo.ProvinceID,
+		WardId:     addressInfo.WardID,
+	}
+
+	if addressInfo.ProvinceName != "" {
+		data.ProvinceName = &addressInfo.ProvinceName
+	}
+
+	if addressInfo.WardName != "" {
+		data.WardName = &addressInfo.WardName
+	}
+
+	if addressInfo.FullAddress != "" {
+		data.FullAddress = &addressInfo.FullAddress
+	}
+
+	return &hubpb.GetAddressV2ByIdsResponse{
+		Data: data,
+	}, nil
+}

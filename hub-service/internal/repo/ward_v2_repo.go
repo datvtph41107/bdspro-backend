@@ -12,6 +12,9 @@ type IWardV2Repo interface {
 	// GetList returns paginated list of wards
 	GetList(ctx context.Context, provinceCode *int, keyword string, page, size int) ([]domain.WardV2, int64, error)
 
+	// GetByID returns ward by ID
+	GetByID(ctx context.Context, id uint64) (*domain.WardV2, error)
+
 	// GetByCode returns ward by code
 	GetByCode(ctx context.Context, code int) (*domain.WardV2, error)
 

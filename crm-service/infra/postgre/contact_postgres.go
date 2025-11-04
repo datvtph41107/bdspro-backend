@@ -39,7 +39,7 @@ func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType ba
 		Select(`tb_contact.*, 
 		fl.id IS NOT NULL AS following,
 		fr.id AS friend_id,
-		fr.status AS friend_status,
+		COALESCE(fr.status, 40) AS friend_status,
 		fr.created_by AS friend_created_by,
 		fr.receiver_id AS friend_receiver_id,
 		bl.profile_id IS NOT NULL AS blocked,
@@ -56,11 +56,15 @@ func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType ba
 	}
 
 	if len(dto.FriendStatus) > 0 {
-		tx = tx.Where("fr.status IN (?)", dto.FriendStatus)
+		tx = tx.Where("COALESCE(fr.status, 40) IN (?)", dto.FriendStatus)
 	}
-	// if dto.Following != nil {
-	// 	tx = tx.Where("following = ?", *dto.Following)
-	// }
+	if dto.Following != nil {
+		if *dto.Following {
+			tx = tx.Where("fl.id IS NOT NULL")
+		} else {
+			tx = tx.Where("fl.id IS NULL")
+		}
+	}
 	// if dto.Roles != nil {
 	// 	tx = tx.Where("tb_contact.roles IN (?)", dto.Roles)
 	// }

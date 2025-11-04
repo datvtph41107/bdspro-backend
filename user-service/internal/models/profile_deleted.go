@@ -16,7 +16,7 @@ type ProfileDeleted struct {
 	TaxCode           string                `gorm:"size:13" json:"taxCode"`
 	FullName          string                `gorm:"size:255" json:"fullName"`
 	Address           string                `gorm:"size:255" json:"address"`
-	Gender            uint8                 `json:"gender"`
+	Gender            uint32                `json:"gender"`
 	Avatar            string                `gorm:"size:255" json:"avatar"`
 	TickVerified      bool                  `gorm:"column:tick_verified;default:false" json:"tickVerified"`
 	BackgroundImage   string                `gorm:"size:255" json:"backgroundImage"`

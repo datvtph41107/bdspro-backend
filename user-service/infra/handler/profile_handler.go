@@ -33,6 +33,7 @@ type GrpcProfileService struct {
 	GroupClient           organizationpb.GroupServiceClient
 	ProfileMapper         *mapper.ProfileMapper
 	CrmClient             *client.CrmClient
+	HubClient             *client.HubClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
@@ -44,6 +45,7 @@ func NewGrpcProfileService(
 	groupClient organizationpb.GroupServiceClient,
 	profileMapper *mapper.ProfileMapper,
 	crmClient *client.CrmClient,
+	hubClient *client.HubClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
@@ -55,6 +57,7 @@ func NewGrpcProfileService(
 		GroupClient:           groupClient,
 		ProfileMapper:         profileMapper,
 		CrmClient:             crmClient,
+		HubClient:             hubClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
 	}
 }
@@ -135,7 +138,20 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
-	return s.ProfileMapper.PublicUserInfoToPb(result), nil
+	profilePb := s.ProfileMapper.PublicUserInfoToPb(result)
+
+	// Lấy tên province và ward từ hub service
+	if result.ProvinceID != nil || result.WardID != nil {
+		provinceName, wardName := s.HubClient.GetProvinceAndWardNames(ctx, result.ProvinceID, result.WardID)
+		if provinceName != "" {
+			profilePb.ProvinceName = &provinceName
+		}
+		if wardName != "" {
+			profilePb.WardName = &wardName
+		}
+	}
+
+	return profilePb, nil
 }
 
 // @Summary Lấy thông tin công khai của người dùng request
@@ -151,7 +167,21 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
-	return s.ProfileMapper.PublicUserInfoToPb(result), nil
+
+	profilePb := s.ProfileMapper.PublicUserInfoToPb(result)
+
+	// Lấy tên province và ward từ hub service
+	if result.ProvinceID != nil || result.WardID != nil {
+		provinceName, wardName := s.HubClient.GetProvinceAndWardNames(ctx, result.ProvinceID, result.WardID)
+		if provinceName != "" {
+			profilePb.ProvinceName = &provinceName
+		}
+		if wardName != "" {
+			profilePb.WardName = &wardName
+		}
+	}
+
+	return profilePb, nil
 }
 
 // @Summary Lấy danh sách tài khoản của người dùng
@@ -229,6 +259,22 @@ func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoReq
 	s.ProfileUsecase.UpdateUserInfo(ctx, dto)
 
 	return &sharepb.Empty{}, nil
+}
+
+// @Summary Cập nhật thông tin cá nhân
+// @Description Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt, email, địa chỉ)
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body userpb.SetPersonRequest true "Thông tin cá nhân"
+// @Success 200 {object} sharepb.Empty
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Router /v2/user/profile/set-person [put]
+func (s *GrpcProfileService) SetPerson(ctx context.Context, req *userpb.SetPersonRequest) (*sharepb.Empty, error) {
+	dto := s.ProfileMapper.SetPersonToDTO(req)
+	err := s.ProfileUsecase.SetPerson(ctx, dto)
+	return &sharepb.Empty{}, err
 }
 
 func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userpb.SearchProfilePublicRequest) (*userpb.SearchProfilePublicResponse, error) {

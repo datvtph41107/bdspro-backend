@@ -31,6 +31,12 @@ service ProfileService {
             body: "*"
         };
     }
+    rpc SetPerson(SetPersonRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/user/profile/set-person"
+            body: "*"
+        };
+    }
     rpc SearchProfilePublic(SearchProfilePublicRequest) returns (SearchProfilePublicResponse) {
         option (google.api.http) = {
             get: "/v2/user/profile/search/public"
@@ -102,6 +108,11 @@ message ProfilePublicInfo {
     uint32 tabDefault = 34;
     uint32 visibility = 35;
     uint32 profileVisibility = 36;
+    optional uint64 provinceId = 37;
+    optional uint64 wardId = 38;
+    uint32 gender = 39;
+    optional string provinceName = 40;
+    optional string wardName = 41;
 }
 
 message RateStats {
@@ -172,6 +183,16 @@ message SetInfoRequest {
     repeated uint64 certificationRemoveIds = 29;
     repeated ProfessionItem professions = 30;
     repeated uint64 professionRemoveIds = 31;
+}
+
+message SetPersonRequest {
+    optional string fullName = 1;
+    optional uint32 gender = 2;
+    optional string birth = 3;
+    optional string phone = 4;
+    optional string email = 5;
+    optional uint64 provinceId = 6;
+    optional uint64 wardId = 7;
 }
 
 message CertificationItem {

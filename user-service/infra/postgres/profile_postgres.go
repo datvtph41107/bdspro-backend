@@ -395,3 +395,55 @@ func (r *ProfilePostgres) UpdateUserProfileStatus(ctx context.Context, profileID
 		Update("status", status).Error
 	return err
 }
+
+// GetByPhone lấy profile theo số điện thoại
+func (r *ProfilePostgres) GetByPhone(phone string) (*models.UserProfileEntity, error) {
+	var profile models.UserProfileEntity
+	err := r.DB.Model(&models.UserProfileEntity{}).
+		Where("phone = ? AND deleted_at IS NULL", phone).
+		First(&profile).Error
+	if err != nil {
+		return nil, err
+	}
+	return &profile, nil
+}
+
+// UpdatePerson cập nhật thông tin cá nhân cơ bản
+func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req *dto.UserInfoRequest) error {
+	updates := make(map[string]interface{})
+
+	// Chỉ update các field được gửi lên (không nil)
+	if req.FullName != "" {
+		updates["full_name"] = req.FullName
+	}
+	if req.Email != "" {
+		updates["email"] = req.Email
+	}
+	if req.ProvinceID != nil {
+		updates["province_id"] = *req.ProvinceID
+	}
+	if req.WardID != nil {
+		updates["ward_id"] = *req.WardID
+	}
+	if req.Gender != 0 {
+		updates["gender"] = req.Gender
+	}
+	if req.Birth != nil {
+		updates["birth"] = *req.Birth
+	}
+	if req.Phone2 != "" {
+		updates["phone2"] = req.Phone2
+	}
+
+	// Nếu không có gì để update
+	if len(updates) == 0 {
+		return nil
+	}
+
+	err := r.DB.WithContext(c).
+		Model(&models.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileId).
+		Updates(updates).Error
+
+	return err
+}
