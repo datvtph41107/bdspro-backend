@@ -8,6 +8,7 @@ import (
 	"context"
 	"pb/clients"
 	notificationpb "pb/types/notification"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -29,7 +30,19 @@ func (s *NotificationClient) UserInGroup(ctx context.Context, userID uint64, gro
 }
 
 func (s *NotificationClient) SendNoti(ctx context.Context, noti *_dto.NotificationDTO) error {
-	return nil
+	_, err := s.NotificationClient.Client.Create(ctx, &sharepb.NotificationRequest{
+		Avatar:       noti.Avatar,
+		Title:        noti.Title,
+		Message:      noti.Message,
+		Type:         int32(noti.NotificationType),
+		OwnerId:      noti.OwnerID,
+		TargetId:     noti.TargetID,
+		OwnerOf:      uint32(noti.OwnerOf),
+		AttachData:   noti.AttachData,
+		SendToDevice: noti.SendToDevice,
+		IsMerge:      noti.IsMerge,
+	})
+	return err
 }
 
 func (s *NotificationClient) SendBatch(ctx context.Context, noti *_dto.NotificationBatchDTO) error {

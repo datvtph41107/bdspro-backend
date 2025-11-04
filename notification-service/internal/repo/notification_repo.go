@@ -17,4 +17,5 @@ type NotificationRepo interface {
 	ListNotiWithTargetIdAndOwnerType(ctx context.Context, targetId uint64, ownerType int32, hour int) ([]domain.NotificationEntity, error)
 	DeleteIds(ctx context.Context, ids []uint64) error
 	RemoveUnique(ctx context.Context, ownerId, targetId uint64, notificationType _enum.ENotificationType, ownerOf _enum.EOwnerOf) (*domain.NotificationEntity, error)
+	RemoveUnique2(ctx context.Context, ownerId uint64, targetId *uint64, notificationType _enum.ENotificationType, ownerOf _enum.EOwnerOf, attachData []string) (*domain.NotificationEntity, error)
 }

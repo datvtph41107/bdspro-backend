@@ -17,6 +17,7 @@ message FriendListRequest {
     optional uint64 organizationId = 4;
     optional uint64 dealId = 5;
     optional uint64 groupId = 6;
+    string friendStatus = 7;
 }
 
 message IdRequest {

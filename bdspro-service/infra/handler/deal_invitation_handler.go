@@ -268,7 +268,7 @@ func (h *DealInvitationHandler) SearchMembers(ctx context.Context, req *bdspropb
 // @Security BearerAuth
 // @Success 200 {object} bdspropb.GetDealInvitationResponse "Thành công"
 // @Router /deal-invitation/{id} [get]
-func (h *DealInvitationHandler) GetInvitation(ctx context.Context, req *bdspropb.GetDealInvitationRequest) (*bdspropb.GetDealInvitationResponse, error) {
+func (h *DealInvitationHandler) GetDealInvitation(ctx context.Context, req *bdspropb.GetDealInvitationRequest) (*bdspropb.GetDealInvitationResponse, error) {
 	if err := h.dealInvitationValidator.ValidateGetInvitationRequest(req); err != nil {
 		return nil, err
 	}

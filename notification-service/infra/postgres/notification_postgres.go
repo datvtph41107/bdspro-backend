@@ -3,6 +3,7 @@ package postgres
 import (
 	_enum "common/domain/enum"
 	"context"
+	"fmt"
 	"notification/internal/domain"
 	"notification/internal/dto"
 
@@ -116,5 +117,30 @@ func (repo *PostgreNotification) RemoveUnique(ctx context.Context, ownerId, targ
 		Unscoped().
 		Where("owner_id = ? AND target_id = ? AND owner_of = ? AND notification_type = ? and deleted_at is null", ownerId, targetId, ownerOf, notificationType).
 		Delete(&domain.NotificationEntity{}).Error
+	return notification, err
+}
+
+func (repo *PostgreNotification) RemoveUnique2(ctx context.Context, ownerId uint64, targetId *uint64, notificationType _enum.ENotificationType, ownerOf _enum.EOwnerOf, attachData []string) (*domain.NotificationEntity, error) {
+	var notification *domain.NotificationEntity
+	query := repo.DB.WithContext(ctx).
+		Debug().
+		Unscoped().
+		Where("owner_id = ? AND owner_of = ? AND notification_type = ? AND deleted_at is null", ownerId, ownerOf, notificationType)
+	if targetId != nil {
+		query = query.Where("target_id = ?", targetId)
+	}
+
+	// Lọc theo các phần tử có giá trị trong mảng attachData
+	// PostgreSQL array index bắt đầu từ 1
+	for i, value := range attachData {
+		if value != "" {
+			// Index trong PostgreSQL array bắt đầu từ 1, không phải 0
+			arrayIndex := i + 1
+			// Dùng raw SQL với fmt.Sprintf để build query string động cho array index
+			query = query.Where(fmt.Sprintf("attach_data[%d] = ?", arrayIndex), value)
+		}
+	}
+
+	err := query.Delete(&domain.NotificationEntity{}).Error
 	return notification, err
 }

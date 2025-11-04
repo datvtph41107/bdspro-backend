@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
@@ -892,13 +894,28 @@ func (u *dealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, member
 	if err != nil {
 		return err
 	}
-	if user == nil {
+	if user == nil || len(user.Profiles) == 0 {
 		return errors.New("user not found")
 	}
 
+	currentUserId := _utils.GetProfileIdWithContext(ctx)
+
+	// Kiểm tra xem đã có invitation cho user này chưa
+	exists, err := u.dealMemberRepository.ExistsByDealIDAndInviteeID(ctx, dealID, memberID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("invitation already exists for this user")
+	}
+
+	// Tạo invitation với status Invited để user có thể đồng ý join
 	dealMember := &domain.DealMember{
-		DealID:   dealID,
-		MemberID: memberID,
+		DealID:    dealID,
+		MemberID:  memberID,
+		Status:    domain.DealMemberStatusInvited,
+		InviterID: currentUserId,
+		InvitedAt: time.Now(),
 	}
 
 	_, err = u.dealMemberRepository.CreateMember(ctx, dealMember)
@@ -906,14 +923,34 @@ func (u *dealUsecase) AddMemberToDeal(ctx context.Context, dealID uint64, member
 		return err
 	}
 
-	// Ghi lại lịch sử thêm thành viên vào thương vụ
-	u.historyUsecase.LogDealHistory(ctx, dealID, enums.DealHistoryEventAddMember,
-		fmt.Sprintf("Thêm thành viên %s vào thương vụ '%s'", user.Profiles[0].FullName, deal.Name),
+	// Gửi thông báo để user đồng ý join thương vụ
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		u.notiClient.SendNoti(cloneCtx,
+			&_dto.NotificationDTO{
+				Avatar:           user.Profiles[0].Avatar,
+				Title:            "Lời mời tham gia thương vụ",
+				Message:          []string{user.Profiles[0].FullName, " đã mời bạn tham gia thương vụ: \"", deal.Name, "\""},
+				NotificationType: _enum.NotificationDealInvitation,
+				AttachData:       []string{strconv.FormatUint(deal.ID, 10), strconv.FormatUint(dealMember.ID, 10)},
+				TargetID:         dealID,
+				IsMerge:          false,
+				OwnerID:          memberID,
+				OwnerOf:          _enum.EOwnerOfMember,
+				SendToDevice:     true,
+			})
+
+	}()
+
+	// Ghi lại lịch sử gửi lời mời tham gia thương vụ
+	u.historyUsecase.LogDealHistory(ctx, dealID, enums.DealHistoryEventSendInvitation,
+		fmt.Sprintf("Gửi lời mời tham gia thương vụ '%s' cho %s", deal.Name, user.Profiles[0].FullName),
 		map[string]interface{}{
 			"deal_id":     dealID,
 			"member_id":   memberID,
 			"member_name": user.Profiles[0].FullName,
 			"deal_name":   deal.Name,
+			"inviter_id":  currentUserId,
 		})
 
 	return nil

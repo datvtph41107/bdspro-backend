@@ -29,6 +29,8 @@ type ContactEntity struct {
 	ProfileID    *uint64            `gorm:"column:profile_id;" json:"profileId"`
 	FriendStatus *FriendEntity      `gorm:"-" json:"friendStatus" binding:"required"`
 
+	Status enums.EStatusContact `gorm:"column:status;default:10" json:"status"`
+
 	ContactTags pq.Int32Array `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
 
 	// transient

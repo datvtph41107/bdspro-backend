@@ -383,8 +383,9 @@ func (s *ContactService) ContactListWithMember(ctx context.Context, req *sharepb
 			Page: uint32(req.Page),
 			Size: uint32(req.Size),
 		},
-		Text:    req.Text,
-		OwnerId: profileId,
+		Text:         req.Text,
+		OwnerId:      profileId,
+		FriendStatus: _utils.ParseInt32Array(req.FriendStatus),
 	})
 	if err != nil {
 		return nil, err
@@ -398,25 +399,69 @@ func (s *ContactService) ContactListWithMember(ctx context.Context, req *sharepb
 
 	// Convert ContactDTO sang Friend format để trả về (vì response type là FriendListResponse)
 	// Chỉ lấy contact + profile, không check friend status
-	friends := make([]*sharepb.ContactDTO, 0, len(contactsPb))
+	contactPbs := make([]*sharepb.ContactDTO, 0, len(contactsPb))
 	for _, contact := range contactsPb {
 		friend := s.contactToFriend(ctx, contact, profileId)
-		friends = append(friends, friend)
+		contactPbs = append(contactPbs, friend)
 	}
 
 	// Map member info nếu có (deal, organization, group)
 	if req.DealId != nil {
-		s.BdsproClient.MapDealMemberToContacts(ctx, *req.DealId, friends)
+		s.BdsproClient.MapDealMemberToContacts(ctx, *req.DealId, contactPbs)
 	}
 	if req.OrganizationId != nil {
-		s.OrganizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, friends)
+		s.OrganizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, contactPbs)
 	}
 	if req.GroupId != nil {
-		s.OrganizationClient.MapGroupMemberToContact(ctx, *req.GroupId, friends)
+		s.OrganizationClient.MapGroupMemberToContact(ctx, *req.GroupId, contactPbs)
 	}
 
 	return &crmpb.ContactListDTO{
-		Data:  friends,
+		Data:  contactPbs,
+		Total: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy danh sách contact là bạn bè
+// @Description Lấy danh sách contact mà là bạn bè (đã chấp nhận lời mời kết bạn)
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param text query string false "Tên hoặc số điện thoại"
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Success 200 {object} crmpb.ContactListDTO "Danh sách contact là bạn bè"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Router /contact/friends [get]
+func (s *ContactService) ContactListFriends(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.ContactListDTO, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, errors.New("profileId not found")
+	}
+
+	// Lấy danh sách contact với filter FriendStatus = 20 (Accepted - bạn bè)
+	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOfMember, dto.ContactSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:         req.Text,
+		FriendStatus: []int32{20}, // Chỉ lấy contact là bạn bè (FriendStatusAccepted = 20)
+		OwnerId:      profileId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert contact sang ContactDTO
+	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
+
+	// Map profile info vào contact
+	s.UserClient.PbUserToContacts(ctx, contactsPb)
+
+	return &crmpb.ContactListDTO{
+		Data:  contactsPb,
 		Total: uint32(total),
 	}, nil
 }

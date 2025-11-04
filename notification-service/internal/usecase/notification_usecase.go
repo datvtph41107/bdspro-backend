@@ -172,8 +172,12 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 	// }
 
 	log.Println("ismerge=", dto.IsMerge)
-	if dto.IsMerge {
-		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
+	// if dto.IsMerge {
+	// 	// s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
+	// }
+	err := s._removeNotification(c, dto)
+	if err != nil {
+		return nil, err
 	}
 
 	// message := s.GetMessage(c, enums.TypeEnum(dto.Type), dto.AttachData)
@@ -187,6 +191,9 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 		// PrefixMessage: prefixMessage,
 		Message:    dto.Message,
 		AttachData: dto.AttachData,
+
+		Title:            dto.Title,
+		NotificationType: _enum.ENotificationType(dto.Type),
 		// Link:       dto.Link,
 		// Type:       enums.TypeEnum(dto.Type),
 		// VisibleAt:  dto.VisibleAt,
@@ -352,8 +359,18 @@ func (s *NotificationUsecase) PushByUserId(c context.Context, dto *dto.PushByUse
 func (s *NotificationUsecase) _removeNotification(c context.Context, dto *dto.NotiNewRequest) error {
 	// Kiểm tra xem notification type có cần merge (xóa thông báo cũ) không
 
-	if dto.NotificationType == _enum.NotificationFriendRequest ||
-		dto.NotificationType == _enum.NotificationFriendResponse {
+	if dto.Type == enums.TypeEnum(_enum.NotificationDealMemberWithdrawn) ||
+		dto.Type == enums.TypeEnum(_enum.NotificationDealInvitationAccepted) ||
+		dto.Type == enums.TypeEnum(_enum.NotificationDealInvitationRejected) {
+		s.Repo.RemoveUnique2(c, dto.OwnerID, nil, _enum.NotificationDealInvitation, dto.OwnerOf, []string{"", dto.AttachData[1]})
+		s.Repo.RemoveUnique2(c, dto.OwnerID, nil, _enum.NotificationDealInvitationAccepted, dto.OwnerOf, []string{"", dto.AttachData[1]})
+		s.Repo.RemoveUnique2(c, dto.OwnerID, nil, _enum.NotificationDealInvitationRejected, dto.OwnerOf, []string{"", dto.AttachData[1]})
+	} else if (dto.Type == enums.TypeEnum(_enum.NotificationDealInvitation) ||
+		dto.Type == enums.TypeEnum(_enum.NotificationDealMemberRemoved)) &&
+		len(dto.AttachData) > 1 {
+		s.Repo.RemoveUnique2(c, dto.OwnerID, nil, _enum.ENotificationType(dto.Type), dto.OwnerOf, []string{"", dto.AttachData[1]})
+	} else if dto.Type == enums.TypeEnum(_enum.NotificationFriendRequest) ||
+		dto.Type == enums.TypeEnum(_enum.NotificationFriendResponse) {
 		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, _enum.NotificationFriendRequest, dto.OwnerOf)
 		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, _enum.NotificationFriendResponse, dto.OwnerOf)
 	} else if dto.NotificationType.IsMergeableNotification() {

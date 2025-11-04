@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"bdspro/internal/domain"
@@ -496,6 +497,11 @@ func (u *dealInvitationUsecase) RemoveFromDeal(ctx context.Context, invitationID
 		return errors.New("invitation not found")
 	}
 
+	// Kiểm tra không cho xóa role chủ thương vụ (RoleKeyDealOwner)
+	if invitation.RoleKey == enums.RoleKeyDealOwner {
+		return errors.New("Không thể xóa chủ thương vụ")
+	}
+
 	// Kiểm tra quyền - chỉ leader mới được gỡ thành viên
 	deal, err := u.dealRepository.GetByID(ctx, invitation.DealID)
 	if err != nil {
@@ -729,10 +735,12 @@ func (u *dealInvitationUsecase) populateUserProfiles(ctx context.Context, invita
 // Notification methods
 func (u *dealInvitationUsecase) sendInvitationNotification(ctx context.Context, invitation *domain.DealMember, deal *domain.Deal) error {
 	notification := &_dto.NotificationDTO{
+		Title:            "Lời mời tham gia thương vụ",
 		NotificationType: _enum.NotificationDealInvitation,
-		AttachData:       []string{deal.Name, invitation.Message},
-		TargetID:         deal.ID,
-		IsMerge:          false,
+		AttachData:       []string{strconv.FormatUint(invitation.ID, 10), strconv.FormatUint(deal.ID, 10)},
+		Message:          []string{"Bạn được mời tham gia thương vụ:", deal.Name},
+		TargetID:         invitation.ID,
+		IsMerge:          true,
 		OwnerID:          invitation.MemberID,
 		OwnerOf:          _enum.EOwnerOfMember,
 	}
@@ -742,11 +750,13 @@ func (u *dealInvitationUsecase) sendInvitationNotification(ctx context.Context, 
 
 func (u *dealInvitationUsecase) sendAcceptanceNotification(ctx context.Context, invitation *domain.DealMember, deal *domain.Deal) error {
 	notification := &_dto.NotificationDTO{
+		Title:            "Bạn đã tham gia thương vụ",
+		Message:          []string{"Bạn đã tham gia thương vụ:", deal.Name},
 		NotificationType: _enum.NotificationDealInvitationAccepted,
-		AttachData:       []string{deal.Name},
+		AttachData:       []string{strconv.FormatUint(invitation.ID, 10), strconv.FormatUint(deal.ID, 10), deal.Name},
 		TargetID:         deal.ID,
 		IsMerge:          false,
-		OwnerID:          invitation.InviterID,
+		OwnerID:          invitation.MemberID,
 		OwnerOf:          _enum.EOwnerOfMember,
 	}
 
@@ -755,11 +765,13 @@ func (u *dealInvitationUsecase) sendAcceptanceNotification(ctx context.Context, 
 
 func (u *dealInvitationUsecase) sendRejectionNotification(ctx context.Context, invitation *domain.DealMember, deal *domain.Deal) error {
 	notification := &_dto.NotificationDTO{
+		Title:            "Bạn đã bị từ chối tham gia thương vụ",
+		Message:          []string{"Bạn đã bị từ chối tham gia thương vụ:", deal.Name},
 		NotificationType: _enum.NotificationDealInvitationRejected,
-		AttachData:       []string{deal.Name, invitation.Message},
+		AttachData:       []string{strconv.FormatUint(invitation.ID, 10), strconv.FormatUint(deal.ID, 10), deal.Name},
 		TargetID:         deal.ID,
 		IsMerge:          false,
-		OwnerID:          invitation.InviterID,
+		OwnerID:          invitation.MemberID,
 		OwnerOf:          _enum.EOwnerOfMember,
 	}
 
@@ -768,11 +780,13 @@ func (u *dealInvitationUsecase) sendRejectionNotification(ctx context.Context, i
 
 func (u *dealInvitationUsecase) sendWithdrawalNotification(ctx context.Context, invitation *domain.DealMember, deal *domain.Deal) error {
 	notification := &_dto.NotificationDTO{
+		Title:            "Bạn đã rút khỏi thương vụ",
+		Message:          []string{"Bạn đã rút khỏi thương vụ:", deal.Name},
 		NotificationType: _enum.NotificationDealMemberWithdrawn,
-		AttachData:       []string{deal.Name, invitation.Message},
+		AttachData:       []string{strconv.FormatUint(invitation.ID, 10), strconv.FormatUint(deal.ID, 10), deal.Name},
 		TargetID:         deal.ID,
 		IsMerge:          false,
-		OwnerID:          invitation.InviterID,
+		OwnerID:          invitation.MemberID,
 		OwnerOf:          _enum.EOwnerOfMember,
 	}
 
@@ -781,8 +795,10 @@ func (u *dealInvitationUsecase) sendWithdrawalNotification(ctx context.Context, 
 
 func (u *dealInvitationUsecase) sendRemovalNotification(ctx context.Context, invitation *domain.DealMember, deal *domain.Deal) error {
 	notification := &_dto.NotificationDTO{
+		Title:            "Bạn đã bị gỡ khỏi thương vụ",
+		Message:          []string{"Bạn đã bị gỡ khỏi thương vụ:", deal.Name},
 		NotificationType: _enum.NotificationDealMemberRemoved,
-		AttachData:       []string{deal.Name, invitation.Message},
+		AttachData:       []string{strconv.FormatUint(invitation.ID, 10), strconv.FormatUint(deal.ID, 10), deal.Name},
 		TargetID:         deal.ID,
 		IsMerge:          false,
 		OwnerID:          invitation.MemberID,

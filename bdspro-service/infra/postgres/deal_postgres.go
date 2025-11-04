@@ -188,21 +188,18 @@ func (r *DealPostgresRepository) GetDeals(ctx context.Context, userID uint64, se
 	offset := searchRequest.GetOffset()
 	limit := searchRequest.GetLimit()
 
-	// Build base query with subquery to check user access
+	// Build base query starting from deal_members with status = 20 (Accepted), then join with deals
 	baseQuery := `
-		SELECT d.* 
-		FROM deals d 
-		WHERE 1 = 1 
-		AND (
-			d.owner_id = ? 
-			OR EXISTS (
-				SELECT 1 FROM deal_members dm 
-				WHERE dm.deal_id = d.id AND dm.member_id = ?
-			)
-		)
+		SELECT DISTINCT d.* 
+		FROM deal_members dm
+		INNER JOIN deals d ON dm.deal_id = d.id
+		WHERE dm.member_id = ? 
+		AND dm.status = ?
+		AND d.deleted_at IS NULL
+		AND dm.deleted_at IS NULL
 	`
 
-	args := []interface{}{userID, userID}
+	args := []interface{}{userID, domain.DealMemberStatusAccepted}
 
 	if searchRequest.OwnerID != nil && searchRequest.OwnerType != 0 {
 		baseQuery += " AND d.owner_id = ? AND d.owner_type = ?"
@@ -226,9 +223,36 @@ func (r *DealPostgresRepository) GetDeals(ctx context.Context, userID uint64, se
 		args = append(args, "%"+searchRequest.Text+"%")
 	}
 
-	// Count total
-	countQuery := "SELECT COUNT(*) FROM (" + baseQuery + ") as count_query"
-	if err := r.db.WithContext(ctx).Raw(countQuery, args...).Scan(&total).Error; err != nil {
+	// Count total - build count query separately
+	countQuery := `
+		SELECT COUNT(DISTINCT d.id)
+		FROM deal_members dm
+		INNER JOIN deals d ON dm.deal_id = d.id
+		WHERE dm.member_id = ? 
+		AND dm.status = ?
+		AND d.deleted_at IS NULL
+		AND dm.deleted_at IS NULL
+	`
+	countArgs := []interface{}{userID, domain.DealMemberStatusAccepted}
+
+	if searchRequest.OwnerID != nil && searchRequest.OwnerType != 0 {
+		countQuery += " AND d.owner_id = ? AND d.owner_type = ?"
+		countArgs = append(countArgs, *searchRequest.OwnerID, searchRequest.OwnerType)
+	}
+	if searchRequest.OrganizationID != nil {
+		countQuery += " AND d.owner_id = ? AND d.owner_type = ?"
+		countArgs = append(countArgs, *searchRequest.OrganizationID, enums.EOwnerOfOrganization)
+	}
+	if searchRequest.GroupID != nil {
+		countQuery += " AND d.owner_id = ? AND d.owner_type = ?"
+		countArgs = append(countArgs, *searchRequest.GroupID, enums.EOwnerOfGroup)
+	}
+	if searchRequest.Text != "" {
+		countQuery += " AND d.name ILIKE ?"
+		countArgs = append(countArgs, "%"+searchRequest.Text+"%")
+	}
+
+	if err := r.db.WithContext(ctx).Raw(countQuery, countArgs...).Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 

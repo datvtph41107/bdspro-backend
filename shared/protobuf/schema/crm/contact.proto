@@ -80,7 +80,12 @@ service ContactService {
     option (google.api.http) = {
         get: "/v2/crm/contact/with-member"
     };
-};
+  };
+  rpc ContactListFriends(sharepb.FriendListRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+        get: "/v2/crm/contact/friends"
+    };
+  };
 }
 
 message ContactSearchRequest {
