@@ -36,6 +36,7 @@ const (
 	NotificationContactMessage ENotificationType = 6110
 	NotificationFriendRequest  ENotificationType = 6120
 	NotificationFriendResponse ENotificationType = 6130
+	NotificationContactFollow  ENotificationType = 6140
 
 	// -- action for asset --
 	NotificationAssetUpdate    ENotificationType = 7010
@@ -112,6 +113,7 @@ var NotificationMap = map[ENotificationType]string{
 	NotificationContactFriend:  "Gửi lời kết bạn",
 	NotificationContactStage:   "Cập nhật trạng thái CRM",
 	NotificationContactMessage: "Gửi tin nhắn",
+	NotificationContactFollow:  "Theo dõi",
 
 	// -- action for asset --
 	NotificationAssetUpdate:    "Cập nhật tài sản",
@@ -183,6 +185,7 @@ var NotificationContactAction = []ENotificationType{
 	NotificationContactFriend,
 	NotificationContactStage,
 	NotificationContactMessage,
+	NotificationContactFollow,
 }
 
 var NotificationAssetActionType = []ENotificationType{
@@ -239,6 +242,7 @@ var NotificationMergeTypes = []ENotificationType{
 	NotificationFriendRequest,
 	NotificationFriendResponse,
 	NotificationContactFriend,
+	NotificationContactFollow,
 }
 
 // IsMergeableNotification kiểm tra xem notification type có cần merge không

@@ -1,20 +1,25 @@
 package usecase
 
 import (
+	base_enum "base/enum"
+	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	"strconv"
 )
 
 type FollowUsecase struct {
-	followRepo   repo.FollowRepo
-	contactRepo  repo.ContactRepo
-	blockRepo    repo.BlockRepo
-	blockService *BlockUsecase
-	userClient   provider.UserClient
+	followRepo         repo.FollowRepo
+	contactRepo        repo.ContactRepo
+	blockRepo          repo.BlockRepo
+	blockService       *BlockUsecase
+	userClient         provider.UserClient
+	notificationClient _provider.NotificationProvider
 }
 
 func NewFollowUsecase(followRepo repo.FollowRepo,
@@ -22,13 +27,15 @@ func NewFollowUsecase(followRepo repo.FollowRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
 	client provider.UserClient,
+	notificationClient _provider.NotificationProvider,
 ) *FollowUsecase {
 	return &FollowUsecase{
-		followRepo:   followRepo,
-		contactRepo:  contactRepo,
-		blockRepo:    blockRepo,
-		blockService: blockService,
-		userClient:   client,
+		followRepo:         followRepo,
+		contactRepo:        contactRepo,
+		blockRepo:          blockRepo,
+		blockService:       blockService,
+		userClient:         client,
+		notificationClient: notificationClient,
 	}
 }
 
@@ -81,6 +88,49 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 	}
 
 	e, err := s.followRepo.FollowUser(c, profileId, followId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Background tasks - Gửi notification cho người được theo dõi
+	ctxClone := _utils.CloneContext(c)
+	go func() {
+		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
+		if currentUser == nil {
+			return
+		}
+
+		// Lấy thông tin contact để có targetId
+		_, err := s.contactRepo.GetByProfileID(ctxClone, followId, profileId, base_enum.EOwnerOfMember)
+		if err != nil {
+			// Nếu chưa có contact thì tạo mới
+			targetUser, _ := s.userClient.GetProfileById(ctxClone, followId)
+			if targetUser != nil {
+				_, _ = s.contactRepo.GetOrCreateByProfileID(
+					ctxClone,
+					followId,
+					profileId,
+					base_enum.EOwnerOfMember,
+					targetUser.FullName,
+					targetUser.Phone,
+					targetUser.Avatar,
+				)
+			}
+		}
+
+		s.notificationClient.CreateNotification(
+			ctxClone,
+			currentUser.Avatar,
+			"Theo dõi",
+			[]string{"", currentUser.FullName, " đã theo dõi bạn"},
+			_enum.NotificationContactFollow,
+			&profileId,
+			followId,
+			_enum.EOwnerOfMember,
+			[]string{strconv.FormatUint(followId, 10)},
+		)
+	}()
+
 	return e, err
 }
 
@@ -91,5 +141,19 @@ func (s *FollowUsecase) UnfollowUser(c context.Context, followId uint64) error {
 	}
 
 	err = s.followRepo.UnfollowUser(c, profileId, followId)
-	return err
+	if err != nil {
+		return err
+	}
+	go func() {
+		ctxClone := _utils.CloneContext(c)
+		s.notificationClient.RemoveNotification(
+			ctxClone,
+			_enum.EOwnerOfMember,
+			followId,
+			profileId,
+			_enum.NotificationContactFollow,
+		)
+	}()
+
+	return nil
 }

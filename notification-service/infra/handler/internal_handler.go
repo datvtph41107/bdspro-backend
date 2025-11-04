@@ -222,3 +222,17 @@ func (s *InternalHandler) CreateToOwner(ctx context.Context, req *sharepb.Notifi
 	response := s.Mapper.MapToPB(notification)
 	return response, nil
 }
+
+func (s *InternalHandler) RemoveToOwner(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
+	dto := &dto.NotiNewRequest{
+		OwnerID:          req.OwnerId,
+		TargetID:         req.TargetId,
+		NotificationType: _enum.ENotificationType(req.NotificationType),
+		OwnerOf:          _enum.EOwnerOf(req.OwnerOf),
+	}
+	err := s.Usecase.RemoveToOwner(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+	return &notificationpb.NotificationDTO{}, nil
+}

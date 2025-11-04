@@ -451,12 +451,25 @@ func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) erro
 		}
 	}
 
+	// Xóa friend request
 	err = s.repo.CancelRequest(c, requestEntity.ID)
 	if err != nil {
 		return err
 	}
 
-	// Background tasks - Gửi notification và tạo history
+	// Xóa contact của user hiện tại về receiverId
+	contact1, err := s.contact.GetByProfileID(c, receiverId, profileId, base_enum.EOwnerOfMember)
+	if err == nil && contact1 != nil {
+		s.contact.Delete(c, contact1.ID)
+	}
+
+	// // Xóa contact của receiverId về user hiện tại
+	// contact2, err := s.contact.GetByProfileID(c, profileId, receiverId, base_enum.EOwnerOfMember)
+	// if err == nil && contact2 != nil {
+	// 	s.contact.Delete(c, contact2.ID)
+	// }
+
+	// Background tasks - Gửi notification
 	ctxClone := _utils.CloneContext(c)
 	go func() {
 		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
@@ -464,30 +477,6 @@ func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) erro
 		if currentUser != nil {
 			fullName = currentUser.FullName
 		}
-
-		// contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, base_enum.EOwnerOfMember)
-		// if err != nil {
-		// 	return
-		// }
-
-		// Tạo History
-		// s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
-		// 	Title:      fullName + " đã hủy lời mời kết bạn",
-		// 	Note:       []string{"", fullName, " đã hủy lời mời kết bạn tới ", contact.FullName},
-		// 	TargetId:   contact.ID,
-		// 	TargetType: base_enum.TargetHistoryContact,
-		// 	ActionType: base_enum.HistoryContactFriend,
-		// 	OwnerID:    &profileId,
-		// 	OwnerOf:    base_enum.EOwnerOfMember,
-		// })
-
-		// Gửi Notification cho người nhận
-		// s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
-		// 	Title:   "Hủy lời mời kết bạn",
-		// 	Message: fullName + " đã hủy lời mời kết bạn",
-		// 	Type:    20, // FriendResponse
-		// 	UserID:  receiverId,
-		// })
 
 		s.notificationClient.CreateNotification(
 			ctxClone,
@@ -499,6 +488,74 @@ func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) erro
 			receiverId,
 			_enum.EOwnerOfMember,
 			[]string{strconv.FormatUint(requestEntity.ReceiverID, 10)},
+		)
+	}()
+
+	return nil
+}
+
+// Unfriend hủy kết bạn và xóa contact của cả 2 user
+func (s *FriendUsecase) Unfriend(c context.Context, friendId uint64) error {
+	profileId := _utils.GetProfileIdWithContext(c)
+
+	// Tìm friend relationship giữa 2 user
+	requestEntity, err := s.repo.FindBySenderIdAndReceiverId(c, profileId, friendId)
+	if err != nil {
+		// Thử tìm ngược lại
+		requestEntity, err = s.repo.FindBySenderIdAndReceiverId(c, friendId, profileId)
+		if err != nil {
+			return &_routes.Except{
+				Code:    400,
+				Message: "Không tìm thấy quan hệ bạn bè",
+			}
+		}
+	}
+
+	// Kiểm tra xem có phải là bạn bè không (status == Accepted)
+	if requestEntity.Status != enums.FriendStatusAccepted {
+		return &_routes.Except{
+			Code:    400,
+			Message: "Hai người chưa là bạn bè",
+		}
+	}
+
+	// Xóa friend relationship
+	err = s.repo.DeleteByID(c, requestEntity.ID)
+	if err != nil {
+		return err
+	}
+
+	// Xóa contact của user hiện tại về friendId
+	contact1, err := s.contact.GetByProfileID(c, friendId, profileId, base_enum.EOwnerOfMember)
+	if err == nil && contact1 != nil {
+		s.contact.Delete(c, contact1.ID)
+	}
+
+	// Xóa contact của friendId về user hiện tại
+	contact2, err := s.contact.GetByProfileID(c, profileId, friendId, base_enum.EOwnerOfMember)
+	if err == nil && contact2 != nil {
+		s.contact.Delete(c, contact2.ID)
+	}
+
+	// Background tasks - Gửi notification
+	ctxClone := _utils.CloneContext(c)
+	go func() {
+		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
+		fullName := ""
+		if currentUser != nil {
+			fullName = currentUser.FullName
+		}
+
+		s.notificationClient.CreateNotification(
+			ctxClone,
+			currentUser.Avatar,
+			"Hủy kết bạn",
+			[]string{"", fullName, " đã hủy kết bạn với bạn"},
+			_enum.NotificationFriendResponse,
+			&profileId,
+			friendId,
+			_enum.EOwnerOfMember,
+			[]string{},
 		)
 	}()
 

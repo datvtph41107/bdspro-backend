@@ -58,7 +58,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	ruleService := handler.NewRuleService(ruleUsecase, userClient)
 	blockRepo := postgre.NewBlockRepo(db)
 	blockUsecase := usecase.NewBlockUsecase(blockRepo, postgreContact, friendPostgre, followPostgre, userClient)
-	followUsecase := usecase.NewFollowUsecase(followPostgre, postgreContact, blockRepo, blockUsecase, userClient)
+	followUsecase := usecase.NewFollowUsecase(followPostgre, postgreContact, blockRepo, blockUsecase, userClient, notificationProvider)
 	followService := handler.NewFollowService(followUsecase, userClient)
 	blockService := handler.NewBlockService(blockUsecase)
 	friendGroupRepo := postgre.NewGroupRepo(db)

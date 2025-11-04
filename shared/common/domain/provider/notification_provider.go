@@ -17,4 +17,11 @@ type NotificationProvider interface {
 		ownerOf _enum.EOwnerOf,
 		attachData []string,
 	) error
+	RemoveNotification(
+		ctx context.Context,
+		ownerOf _enum.EOwnerOf,
+		ownerId uint64,
+		targetId uint64,
+		notificationType _enum.ENotificationType,
+	) error
 }

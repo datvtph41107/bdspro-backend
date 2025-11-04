@@ -188,6 +188,14 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 	return &notification, nil
 }
 
+func (s *NotificationUsecase) RemoveToOwner(c context.Context, dto *dto.NotiNewRequest) error {
+	err := s._removeNotification(c, dto)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *NotificationUsecase) CreateToOwner(c context.Context, dto *dto.NotiNewRequest) (*domain.NotificationEntity, error) {
 	// notifications, err := s.Repo.ListNotiWithTargetIdAndOwnerType(c, dto.TargetID, int32(dto.OwnerType), 4)
 	// if err != nil {

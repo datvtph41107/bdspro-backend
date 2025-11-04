@@ -22,6 +22,7 @@ service InternalNotificationService {
     rpc CreateDealHistory(CreateDealHistoryRequest) returns (CreateDealHistoryResponse);
     
     rpc CreateToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
+    rpc RemoveToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
 }
 
 // ===== NOTIFICATION MESSAGES =====

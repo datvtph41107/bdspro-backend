@@ -72,3 +72,19 @@ func (c *NotificationGrpcClient) CreateNotification(
 	})
 	return err
 }
+
+func (c *NotificationGrpcClient) RemoveNotification(
+	ctx context.Context,
+	ownerOf _enum.EOwnerOf,
+	ownerId uint64,
+	targetId uint64,
+	notificationType _enum.ENotificationType,
+) error {
+	_, err := c.Client.RemoveToOwner(ctx, &sharepb.NotificationRequest{
+		OwnerOf:          uint32(ownerOf),
+		OwnerId:          ownerId,
+		TargetId:         targetId,
+		NotificationType: uint32(notificationType),
+	})
+	return err
+}
