@@ -468,6 +468,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			Name:           product.Name,
 			Code:           product.Code,
 			Area:           product.Area,
+			AvailableArea:  &product.AvailableArea,
 			PropertyTypeId: &product.PropertyTypeId,
 			DocTypeId:      &product.DocTypeId,
 			// ProjectId:       product.ProjectId,

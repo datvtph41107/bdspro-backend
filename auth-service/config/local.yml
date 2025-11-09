@@ -46,9 +46,10 @@ jwt:
   authorizationHeader: Authorization
 
 sms:
+  endpoint: "https://api.yoursales.vn/api/public/sms/send"
   provider: "twilio"  # or other SMS providers
   account_sid: "your_twilio_account_sid"
-  auth_token: "your_twilio_auth_token"
+  auth_token: "OTRjNGFlMzUtMTUzMC00OTdjLWE2ZjgtZDVjZTAxZWM2MjQ2OjBmMTI4ZGMzLTIyYmYtNDAyMC1hYzNhLWE2YzlkZjJiODExNg=="
   from_number: "+1234567890"
 
 zns:

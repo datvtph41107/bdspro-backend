@@ -1,14 +1,15 @@
 {
   "version": "2.0.0",
+  "terminal.integrated.env.osx": {
+    "PATH": "/Users/baphieu/go/bin:${env:PATH}"
+  },
   "tasks": [
     {
       "label": "🔌 Gateway HTTP (8000)",
       "type": "shell",
       "command": "cd shared/code && make run-dev gateway http",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always",
@@ -23,9 +24,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev user grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always",
@@ -40,9 +39,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev bdspro",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always",
@@ -57,9 +54,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev notification grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -72,9 +67,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev payment",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -87,9 +80,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev crm grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -102,9 +93,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev organization",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -117,9 +106,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev chat",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       }
@@ -129,9 +116,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev social grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -144,9 +129,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev appointment",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -159,9 +142,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev transaction",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -174,9 +155,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev auth grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always",
@@ -191,9 +170,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev user",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always",
@@ -205,9 +182,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev bdspro-http",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated",
         "reveal": "always",
@@ -219,9 +194,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev file",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       }
@@ -231,9 +204,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev map",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       }
@@ -252,9 +223,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev relay",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       }
@@ -264,9 +233,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev feedback grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -279,9 +246,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev tqd http",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -294,9 +259,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev assistant http",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },
@@ -309,9 +272,7 @@
       "type": "shell",
       "command": "cd shared/code && make run-dev hub grpc",
       "args": [],
-      "problemMatcher": [
-        "$go"
-      ],
+      "problemMatcher": ["$go"],
       "presentation": {
         "panel": "dedicated"
       },

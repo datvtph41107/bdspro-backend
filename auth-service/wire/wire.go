@@ -16,6 +16,7 @@ import (
 	auth_infra_properties "auth/infra/properties"
 	auth_infra_redis "auth/infra/redis"
 	auth_infra_scheduler "auth/infra/scheduler"
+	auth_infra_sms "auth/infra/sms"
 	auth_infra_zns "auth/infra/zns"
 	auth_initial "auth/initial"
 	auth_internal_domain "auth/internal/domain"
@@ -43,6 +44,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(auth_internal_interface_repo.StatusRepository), new(*auth_infra_postgre.StatusPostgres)),
 	wire.Bind(new(auth_internal_interface_factory.IFactory), new(*auth_infra_properties.RuntimeProperties)),
 	wire.Bind(new(auth_internal_interface_provider.CacheProvider), new(*auth_infra_redis.RedisProvider)),
+	wire.Bind(new(auth_internal_interface_provider.ISmsProvider), new(*auth_infra_sms.SMSProvider)),
 	wire.Bind(new(auth_internal_interface_provider.IZnsProvider), new(*auth_infra_zns.ZnsProvider)),
 	auth_infra_postgre.NewAdminAccessPostgresRepo,
 	auth_internal_usecase.NewAdminAccessUsecase,
@@ -86,6 +88,7 @@ var wireSet = wire.NewSet(
 	auth_infra_postgre.NewRoleRepo,
 	auth_internal_usecase.NewRoleUsecase,
 	auth_infra_properties.NewRuntimeProperties,
+	auth_infra_sms.NewSMSProvider,
 	auth_infra_mapper.NewSessionMapper,
 	auth_infra_postgre.NewSessionRepository,
 	auth_infra_postgre.NewStatusRepository,

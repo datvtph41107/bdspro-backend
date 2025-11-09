@@ -93,6 +93,240 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/assistant/deepseek/analyze/product": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Phân tích văn bản sản phẩm BĐS sử dụng DeepSeek AI",
+                "parameters": [
+                    {
+                        "description": "Nội dung cần phân tích",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/deepseek/chat": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thực hiện conversation với DeepSeek AI assistant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Chat với DeepSeek AI assistant",
+                "parameters": [
+                    {
+                        "description": "Message và history",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/deepseek/generate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nội dung theo template và prompt sử dụng DeepSeek",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Generate nội dung với DeepSeek",
+                "parameters": [
+                    {
+                        "description": "Prompt và template",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/gemini/analyze/product": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sử dụng Google Gemini AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Phân tích văn bản sản phẩm BĐS sử dụng Gemini AI",
+                "parameters": [
+                    {
+                        "description": "Nội dung cần phân tích",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/gemini/chat": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thực hiện conversation với Google Gemini AI assistant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Chat với Gemini AI assistant",
+                "parameters": [
+                    {
+                        "description": "Message và history",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/gemini/generate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nội dung theo template và prompt sử dụng Google Gemini",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Generate nội dung với Gemini",
+                "parameters": [
+                    {
+                        "description": "Prompt và template",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/assistant/generate": {
             "post": {
                 "security": [
@@ -150,6 +384,123 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/assistantpb.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/openai/analyze/product": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sử dụng OpenAI GPT để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Phân tích văn bản sản phẩm BĐS sử dụng OpenAI",
+                "parameters": [
+                    {
+                        "description": "Nội dung cần phân tích",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.AnalyzeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/openai/chat": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thực hiện conversation với OpenAI GPT assistant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Chat với OpenAI AI assistant",
+                "parameters": [
+                    {
+                        "description": "Message và history",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ChatResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/assistant/openai/generate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nội dung theo template và prompt sử dụng OpenAI GPT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Generate nội dung với OpenAI",
+                "parameters": [
+                    {
+                        "description": "Prompt và template",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.GenerateResponse"
                         }
                     }
                 }
@@ -383,7 +734,7 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "legal_doc": {
+                "legalDoc": {
                     "type": "string"
                 },
                 "name": {
@@ -392,7 +743,7 @@ const docTemplate = `{
                 "orientation": {
                     "type": "string"
                 },
-                "property_type": {
+                "propertyType": {
                     "type": "string"
                 },
                 "province": {
@@ -401,7 +752,7 @@ const docTemplate = `{
                 "rent_price": {
                     "type": "number"
                 },
-                "sale_price": {
+                "salePrice": {
                     "type": "number"
                 },
                 "transaction_type": {
@@ -413,17 +764,24 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Assistant API",
+	Description:      "API cho assistant service, bao gồm event-queue và các tiện ích khác",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -166,6 +166,7 @@ message ProductResponse {
     repeated PostItem posts = 59;
     optional uint64 imageId = 60;
     string imageUrl = 61;
+    optional double availableArea = 62;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

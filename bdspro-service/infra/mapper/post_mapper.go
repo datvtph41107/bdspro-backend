@@ -66,7 +66,7 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *bdspropb.Post {
 		}
 	}
 
-	return &bdspropb.Post{
+	result := &bdspropb.Post{
 		Id:                post.ID,
 		Title:             post.Title,
 		PostPrice:         post.PostPrice,
@@ -85,7 +85,13 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *bdspropb.Post {
 		Status:            uint32(post.Status),
 		TransactionStatus: transactionStatus, // Map trạng thái giao dịch: 100-Đang bán, 110-Đã bán, 200-Đang cho thuê, 210-Đã cho thuê
 		ExpiredAt:         _utils.FormatTimeToString(post.ExpiredAt),
+		ProvinceId:        post.ProvinceId,
+		WardId:            post.WardId,
+		ProvinceName:      post.ProvinceName,
+		WardName:          post.WardName,
 	}
+
+	return result
 }
 
 func (m *PostMapper) PostMediaToDTO(media []*bdspropb.PostMedia) []dto.PostMediaItem {

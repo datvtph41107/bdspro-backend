@@ -46,7 +46,7 @@ type participantUsecases interface {
 	RemoveUser(ctx context.Context, conversationId uint64, userId uint64) error
 	MuteConversation(ctx context.Context, conversationId uint64, mute bool) error
 	GetListParticipant(ctx context.Context, conversationId uint64) ([]*models.ParticipantModel, int64, error)
-	AddUser(ctx context.Context, conversationId uint64, userId uint64) error
+	AddUsers(ctx context.Context, conversationId uint64, userIds []uint64) (int, error)
 	InternalGetListParticipant(ctx context.Context, conversationId string) ([]*models.ParticipantModel, error)
 }
 

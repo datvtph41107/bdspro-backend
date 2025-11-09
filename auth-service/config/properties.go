@@ -48,6 +48,7 @@ type AppProperties struct {
 		RefreshTokenExpiry  int      `mapstructure:"refresh_token_expiry"`
 	} `mapstructure:"jwt"`
 	SMS struct {
+		Endpoint   string `mapstructure:"endpoint"`
 		Provider   string `mapstructure:"provider"`
 		AccountSID string `mapstructure:"account_sid"`
 		AuthToken  string `mapstructure:"auth_token"`

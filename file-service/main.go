@@ -9,7 +9,9 @@ import (
 	"file/repositories"
 	"file/services"
 	"log"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -35,20 +37,23 @@ var publicRoutes = []string{
 	"/v1/file/load",
 	"/v1/file/video",
 	"/file/load",
-	"file/upload",
+	"/file/upload",
+	"/v1/file/version/download",
 }
 
 type ConfigApp struct {
-	DB          *gorm.DB
-	FileService *services.FileService
+	DB             *gorm.DB
+	FileService    *services.FileService
+	VersionService *services.VersionService
 }
 
 var RootApp *ConfigApp
 
-func NewConfigApp(db *gorm.DB, fileService *services.FileService) *ConfigApp {
+func NewConfigApp(db *gorm.DB, fileService *services.FileService, versionService *services.VersionService) *ConfigApp {
 	return &ConfigApp{
-		DB:          db,
-		FileService: fileService,
+		DB:             db,
+		FileService:    fileService,
+		VersionService: versionService,
 	}
 }
 
@@ -75,10 +80,35 @@ func main() {
 	accessRepository := repositories.NewFileAccessRepository(db)
 	storageService := services.NewStorageService()
 	fileService := services.NewFileService(fileRepository, accessRepository, storageService)
-	RootApp := NewConfigApp(db, fileService)
+	versionService := services.NewVersionService(fileService, storageService)
+	RootApp := NewConfigApp(db, fileService, versionService)
 	// RootApp.
 
-	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://localhost:8000",
+			"http://localhost:5173",
+			"http://localhost:5174",
+			"http://14.225.210.29:8000",
+			"http://14.225.205.222:8000",
+			"http://14.225.205.222:3107",
+			"http://14.225.205.222:3108",
+			"http://103.145.63.185:3107",
+			"http://localhost:5173",
+			"https://admin.bdspro.com",
+			"https://bdspro.com",
+			"https://app.bdspro.com",
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
+		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+	r.Use(_jwt.JWTAuthMiddleware(publicRoutes, []string{}))
+
 	models.AutoMigrate()
 
 	log.Printf("MAIN")
@@ -94,6 +124,8 @@ func main() {
 	r.POST("/v1/file/upload", RootApp.FileService.Upload)
 	r.POST("/v1/file/upload/video", RootApp.FileService.UploadVideoHLS)
 	r.PUT("/v1/file/signature", RootApp.FileService.GenerateSignature)
+	r.POST("/v1/file/version/upload", RootApp.VersionService.UploadVersion)
+	r.GET("/v1/file/version/download/:p", RootApp.VersionService.DownloadVersion)
 
 	r.Run(":8002")
 }

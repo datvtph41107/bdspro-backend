@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_enum "common/domain/enum"
 	_utils "common/utils"
 	"context"
 	"social/internal/domain"
@@ -56,12 +57,15 @@ func (u *NumberUpdateUsecase) UpdateLikeNumberNewsFeed(ctx context.Context, news
 	sumUserLiked, _ := u.likeRepo.SumUserComment(ctx, newsFeed.ID, enums.TargetTypeNewsFeed)
 	fullNames := u.userUsecase.getFullNames(ctx, likedUserIds, sumUserLiked)
 
-	u.notiClient.NotifyToUser(ctx,
-		50, // like comment
-		newsFeed.CreatedBy,
+	u.notiClient.CreateToOwner(ctx,
+		"",
+		"",
+		[]string{"", fullNames, " thích bài viết của bạn: \"" + _utils.ShortenContent(newsFeed.Content, 50) + "\""},
+		_enum.NotificationLikeNewsFeed,
+		&newsFeed.ID,
+		*newsFeed.CreatedBy,
+		_enum.EOwnerOfMember,
 		[]string{fullNames, _utils.ShortenContent(newsFeed.Content, 50)},
-		newsFeed.ID,
-		true,
 	)
 
 	return true, nil
@@ -87,12 +91,15 @@ func (u *NumberUpdateUsecase) UpdateLikeNumberComment(ctx context.Context, comme
 	sumUserLiked, _ := u.likeRepo.SumUserComment(ctx, comment.ID, enums.TargetTypeComment)
 	fullNames := u.userUsecase.getFullNames(ctx, likedUserIds, sumUserLiked)
 
-	u.notiClient.NotifyToUser(ctx,
-		60, // like comment
-		&comment.UserID,
+	u.notiClient.CreateToOwner(ctx,
+		"",
+		"",
+		[]string{"", fullNames, " thích bình luận của bạn: \"" + _utils.ShortenContent(comment.Content, 50) + "\""},
+		_enum.NotificationLikeComment,
+		&comment.ID,
+		comment.UserID,
+		_enum.EOwnerOfMember,
 		[]string{fullNames, _utils.ShortenContent(comment.Content, 50)},
-		comment.ID,
-		true,
 	)
 
 	return true, nil
@@ -124,12 +131,15 @@ func (u *NumberUpdateUsecase) UpdateNumberReplyComment(ctx context.Context,
 	sumUserCommented, _ := u.commentRepo.SumUserComment(ctx, newsFeed.ID, &parentComment.ID)
 	fullNames := u.userUsecase.getFullNames(ctx, commentedUserIds, sumUserCommented)
 
-	u.notiClient.NotifyToUser(ctx,
-		41, // comment new feed
-		&parentComment.UserID,
+	u.notiClient.CreateToOwner(ctx,
+		"",
+		"",
+		[]string{"", fullNames, " đã trả lời bình luận của bạn: \"" + _utils.ShortenContent(comment.Content, 50) + "\""},
+		_enum.NotificationCommentChildren,
+		&comment.ID,
+		parentComment.UserID,
+		_enum.EOwnerOfMember,
 		[]string{fullNames, _utils.ShortenContent(comment.Content, 50)},
-		comment.ID,
-		true,
 	)
 
 	return true, err
@@ -157,12 +167,15 @@ func (u *NumberUpdateUsecase) UpdateNumberComment(ctx context.Context,
 	sumUserCommented, _ := u.commentRepo.SumUserComment(ctx, newsFeed.ID, nil)
 	fullNames := u.userUsecase.getFullNames(ctx, commentedUserIds, sumUserCommented)
 
-	u.notiClient.NotifyToUser(ctx,
-		40, // comment new feed
-		newsFeed.CreatedBy,
+	u.notiClient.CreateToOwner(ctx,
+		"",
+		"",
+		[]string{"", fullNames, " đã bình luận bài viết của bạn: \"" + _utils.ShortenContent(newsFeed.Content, 50) + "\""},
+		_enum.NotificationCommentNewsFeed,
+		&newsFeed.ID,
+		*newsFeed.CreatedBy,
+		_enum.EOwnerOfMember,
 		[]string{fullNames, _utils.ShortenContent(newsFeed.Content, 50)},
-		newsFeed.ID,
-		true,
 	)
 
 	return true, err

@@ -17,8 +17,8 @@
   ],
   "paths": {
     "/v2/chat/conversation/add-user": {
-      "post": {
-        "operationId": "ChatService_AddUser",
+      "put": {
+        "operationId": "ChatService_AddUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1228,12 +1228,15 @@
       "type": "object",
       "properties": {
         "conversationId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "uint64"
         },
-        "userId": {
-          "type": "integer",
-          "format": "int32"
+        "userIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -1242,6 +1245,10 @@
       "properties": {
         "success": {
           "type": "boolean"
+        },
+        "totalAdded": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1874,6 +1881,9 @@
         },
         "role": {
           "$ref": "#/definitions/chatpbParticipantRoleEnum"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -2123,6 +2133,33 @@
     },
     "sharepbEmpty": {
       "type": "object"
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        }
+      }
     }
   }
 }

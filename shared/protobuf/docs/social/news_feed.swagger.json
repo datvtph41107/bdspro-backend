@@ -1390,6 +1390,14 @@
         "visibleStatus": {
           "type": "integer",
           "format": "int64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

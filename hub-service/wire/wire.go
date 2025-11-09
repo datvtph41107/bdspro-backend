@@ -51,6 +51,10 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewUserGuideRepo,
 	hub_infra_postgre.NewUserGuideStepRepo,
 	hub_internal_usecase.NewUserGuideUsecase,
+	hub_infra_handler.NewVersionHandler,
+	hub_infra_mapper.NewVersionMapper,
+	hub_infra_postgre.NewVersionRepo,
+	hub_internal_usecase.NewVersionUsecase,
 	hub_infra_postgre.NewWardRepo,
 	hub_infra_postgre.NewWardV2Repo,
 )

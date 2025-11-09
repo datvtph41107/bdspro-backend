@@ -43,6 +43,9 @@ type PostItem struct {
 	Post
 	PostPrice         float64                 `gorm:"column:post_price" json:"postPrice"`
 	Address           uint64                  `gorm:"column:address" json:"address"`
+	ProvinceId        *uint64                 `gorm:"column:province_id" json:"provinceId"`
+	DistrictId        *uint64                 `gorm:"column:district_id" json:"districtId"`
+	WardId            *uint64                 `gorm:"column:ward_id" json:"wardId"`
 	ProvinceName      string                  `gorm:"column:province_name" json:"provinceName"`
 	DistrictName      string                  `gorm:"column:district_name" json:"districtName"`
 	WardName          string                  `gorm:"column:ward_name" json:"wardName"`

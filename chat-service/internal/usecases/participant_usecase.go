@@ -72,32 +72,60 @@ func (p *participantUsecases) GetListParticipant(ctx context.Context, conversati
 	return p.repo.GetListParticipant(ctx, conversationId)
 }
 
-func (p *participantUsecases) AddUser(ctx context.Context, conversationId uint64, userId uint64) error {
+func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint64, userIds []uint64) (int, error) {
 	// Lấy thông tin conversation để kiểm tra loại
 	conversation, err := p.repo.GetConversationByID(ctx, conversationId)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if conversation == nil {
-		return errors.ConversationNotFound()
+		return 0, errors.ConversationNotFound()
 	}
 
 	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép thêm thành viên
 	if conversation.Type == models.ConversationTypePrivate {
-		return errors.CannotModifyPrivateChat()
+		return 0, errors.CannotModifyPrivateChat()
 	}
 
 	err = p.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	participant := &models.ParticipantModel{
-		UserID:         userId,
-		ConversationID: conversationId,
-		Role:           models.ParticipantRoleMember,
-		JoinedAt:       time.Now(),
+
+	// Lấy danh sách participant hiện tại để check trùng
+	existingParticipants, _, err := p.repo.GetListParticipant(ctx, conversationId)
+	if err != nil {
+		return 0, err
 	}
-	return p.repo.AddParticipant(ctx, participant)
+
+	// Tạo map để check user đã tồn tại chưa
+	existingUserMap := make(map[uint64]bool)
+	for _, participant := range existingParticipants {
+		existingUserMap[participant.UserID] = true
+	}
+
+	// Thêm từng user chưa tồn tại
+	totalAdded := 0
+	now := time.Now()
+	for _, userId := range userIds {
+		// Skip nếu user đã là thành viên
+		if existingUserMap[userId] {
+			continue
+		}
+
+		participant := &models.ParticipantModel{
+			UserID:         userId,
+			ConversationID: conversationId,
+			Role:           models.ParticipantRoleMember,
+			JoinedAt:       now,
+		}
+		err = p.repo.AddParticipant(ctx, participant)
+		if err == nil {
+			totalAdded++
+		}
+	}
+
+	return totalAdded, nil
 }
 
 func (p *participantUsecases) InternalGetListParticipant(ctx context.Context, conversationId string) ([]*models.ParticipantModel, error) {

@@ -8,7 +8,7 @@ import (
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	_db "common/db"
-	_dto "common/domain/dto"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -76,18 +76,11 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 	profileId := _utils.GetProfileIdWithContext(c)
 	// profileId := _jwt.GetProfileId(c)
 	if plan != nil && plan.LimitPost <= s.Repo.CountPostFromDate(c, time.Now().Add(-30)) {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Số lượng tạo tin đã đạt giới hạn. Vui lòng nâng cấp gói",
-			// Bạn đã hết hạn mức tin
-		}
+		return nil, _errors.ReturnError(400, "Số lượng tạo tin đã đạt giới hạn. Vui lòng nâng cấp gói")
 	}
 	// plan := s.planService.Plans
 	if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, profileId, dto.TransactionType); existed {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Tin đăng vẫn còn hạn",
-		}
+		return nil, _errors.ReturnError(400, "Tin đăng vẫn còn hạn")
 	}
 
 	numDate := dto.NumDate
@@ -144,14 +137,14 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 		s.PostUserRepo.CreateOwner(c, entity.ID, profileId)
 	}
 
-	visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
-	s.ClientUC.SendNoti(c, &_dto.NotificationDTO{
-		Title:     "Hết hạn tin đăng",
-		Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
-		Type:      3,
-		UserID:    profileId,
-		VisibleAt: &visibleAt,
-	})
+	// visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
+	// s.ClientUC.SendNoti(c, &_dto.NotificationDTO{
+	// 	Title:     "Hết hạn tin đăng",
+	// 	Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
+	// 	Type:      3,
+	// 	UserID:    profileId,
+	// 	VisibleAt: &visibleAt,
+	// })
 
 	return entity, err
 }
@@ -236,7 +229,7 @@ func (s *PostUsecase) MakeNewExpired(c context.Context, dto dto.PostExpiredReque
 		return nil, err
 	}
 
-	profileId := _utils.GetProfileIdWithContext(c)
+	// profileId := _utils.GetProfileIdWithContext(c)
 	// // plan := s.planService.Plans
 	// if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, profileId); existed {
 	// 	return nil, &_routes.Except{
@@ -255,14 +248,14 @@ func (s *PostUsecase) MakeNewExpired(c context.Context, dto dto.PostExpiredReque
 	entity.ExpiredAt = &newExpired
 
 	err = _db.SaveWithContext(c, entity)
-	visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
-	s.ClientUC.SendNoti(c, &_dto.NotificationDTO{
-		Title:     "Hết hạn tin đăng",
-		Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
-		Type:      3,
-		UserID:    profileId,
-		VisibleAt: &visibleAt,
-	})
+	// visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)
+	// s.ClientUC.SendNoti(c, &_dto.NotificationDTO{
+	// 	Title:     "Hết hạn tin đăng",
+	// 	Message:   "Tin đăng của bạn sắp hết hạn. Vui lòng kiểm tra lại",
+	// 	Type:      3,
+	// 	UserID:    profileId,
+	// 	VisibleAt: &visibleAt,
+	// })
 
 	return &entity.Post, err
 }

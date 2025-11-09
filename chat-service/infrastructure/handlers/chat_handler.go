@@ -734,15 +734,42 @@ func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetLis
 	if err != nil {
 		return nil, err
 	}
+
+	// Lấy danh sách userId
+	userIds := make([]uint64, 0, len(participants))
+	for _, participant := range participants {
+		userIds = append(userIds, participant.UserID)
+	}
+
+	// Gọi user-service để lấy thông tin user
+	userMap := make(map[uint64]*sharepb.ProfileItem)
+	if len(userIds) > 0 {
+		users, err := s.userClient.Client.GetProfileByIds(ctx, userIds)
+		if err == nil && users != nil {
+			for _, user := range users.Profiles {
+				userMap[user.Id] = user
+			}
+		}
+	}
+
+	// Map data
 	var pbParticipants []*chatpb.Participant
 	for _, participant := range participants {
-		pbParticipants = append(pbParticipants, &chatpb.Participant{
-			UserId:    (participant.UserID),
+		pbParticipant := &chatpb.Participant{
+			UserId:    participant.UserID,
 			Role:      chatpb.ParticipantRoleEnum(participant.Role),
 			JoinedAt:  participant.JoinedAt.Local().Format(time.RFC3339),
 			MuteNotif: participant.MuteNotif,
-		})
+		}
+
+		// Thêm thông tin user nếu có
+		if user, ok := userMap[participant.UserID]; ok {
+			pbParticipant.Profile = user
+		}
+
+		pbParticipants = append(pbParticipants, pbParticipant)
 	}
+
 	return &chatpb.GetListParticipantResponse{
 		Data:  pbParticipants,
 		Total: int32(total),
@@ -813,34 +840,58 @@ func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMess
 }
 
 // @Summary Thêm thành viên
-// @Description Thêm thành viên vào đoạn hội thoại được chỉ định
+// @Description Thêm một hoặc nhiều thành viên vào đoạn hội thoại được chỉ định
 // @Tags Chat
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param message body chatpb.AddUserRequest true "Đoạn hội thoại và thành viên cần thêm"
+// @Param message body chatpb.AddUserRequest true "Đoạn hội thoại và danh sách thành viên cần thêm"
 // @Success 200 {object} chatpb.AddUserResponse
 // @Router /conversation/add-user [post]
-func (s *chatHandler) AddUser(ctx context.Context, req *chatpb.AddUserRequest) (*chatpb.AddUserResponse, error) {
-	err := s.participantUsecases.AddUser(ctx, uint64(req.ConversationId), uint64(req.UserId))
+func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) (*chatpb.AddUserResponse, error) {
+	// Kiểm tra danh sách userIds
+	if len(req.UserIds) == 0 {
+		return &chatpb.AddUserResponse{
+			Success:    false,
+			TotalAdded: 0,
+		}, nil
+	}
+
+	// Thêm users vào conversation
+	totalAdded, err := s.participantUsecases.AddUsers(ctx, req.ConversationId, req.UserIds)
 	if err != nil {
 		return nil, err
 	}
-	event := &chatpb.JoinRoom{
-		Type: constants.JOIN_ROOM_TYPE,
-		Data: &chatpb.JoinRoomData{
-			RoomId: strconv.Itoa(int(req.ConversationId)),
-			UserId: strconv.Itoa(int(req.UserId)),
-		},
+
+	// Lấy thông tin users để gửi event join room
+	users, _ := s.userClient.Client.GetProfileByIds(ctx, req.UserIds)
+	userMap := make(map[uint64]*sharepb.ProfileItem)
+	if users != nil {
+		for _, user := range users.Profiles {
+			userMap[user.Id] = user
+		}
 	}
-	user, _ := s.userClient.GetUserById(ctx, uint64(req.UserId))
-	if user != nil {
-		event.Data.FullName = &user.FullName
-		event.Data.Avatar = &user.Avatar
+
+	// Gửi event join room cho từng user
+	roomId := strconv.FormatUint(req.ConversationId, 10)
+	for _, userId := range req.UserIds {
+		event := &chatpb.JoinRoom{
+			Type: constants.JOIN_ROOM_TYPE,
+			Data: &chatpb.JoinRoomData{
+				RoomId: roomId,
+				UserId: strconv.FormatUint(userId, 10),
+			},
+		}
+		if user, ok := userMap[userId]; ok {
+			event.Data.FullName = &user.FullName
+			event.Data.Avatar = &user.Avatar
+		}
+		s.eventChannel <- event
 	}
-	s.eventChannel <- event
+
 	return &chatpb.AddUserResponse{
-		Success: true,
+		Success:    totalAdded > 0,
+		TotalAdded: int32(totalAdded),
 	}, nil
 }
 

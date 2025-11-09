@@ -57,6 +57,7 @@ func (c *conversationUsecases) CreateConversation(ctx context.Context, conversat
 	} else if len(members) > 1 {
 		existedConversation, err = c.repo.HasExactConversationWithUserIDs(ctx, allMember)
 	}
+	print("existedConversation: ", existedConversation)
 	if err != nil {
 		return nil, err
 	}

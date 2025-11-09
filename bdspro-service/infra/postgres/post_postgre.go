@@ -228,8 +228,9 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		Debug().
 		Model(domain.PostItem{}).
 		Select(`posts.*,
+		province.id as province_id,
+		ward.id as ward_id,
 		province.name as province_name, 
-		district.name as district_name, 
 		ward.name as ward_name,
 		CASE
 			WHEN posts.transaction_type = 10 THEN COALESCE(prices.sale_price, 0)
@@ -254,12 +255,12 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		`).
 		Joins("left join products products on products.id = posts.product_id").
 		Joins("left join product_price prices on prices.id = products.last_price_id").
-		Joins("left join region province on province.id = products.province_id").
-		Joins("left join region district  on district.id = products.district_id").
-		Joins("left join region ward on ward.id = products.ward_id").
+		Joins("left join province_v2 province on province.id = products.province_id").
+		// Joins("left join region district  on district.id = products.district_id").
+		Joins("left join ward_v2 ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
 		Where("posts.deleted_at is null").
-		Group("posts.id, posts.created_by, province.id, district.id, ward.id, prices.id, products.sale_status, products.rent_status")
+		Group("posts.id, posts.created_by, province.id, ward.id, province.name, ward.name, prices.id, products.sale_status, products.rent_status")
 
 	if profileId != 0 {
 		query = query.Where("posts.created_by = ?", profileId)
@@ -431,6 +432,9 @@ func (r *GormPostRepo) GetByIDsWithStatus(ctx context.Context, ids []uint64) ([]
 	err := GetDB(ctx, r.DB).
 		Model(domain.PostItem{}).
 		Select(`posts.*,
+		products.province_id as province_id,
+		products.district_id as district_id,
+		products.ward_id as ward_id,
 		province.name as province_name, 
 		district.name as district_name, 
 		ward.name as ward_name,
@@ -489,6 +493,9 @@ func (r *GormPostRepo) GetPosts(ctx context.Context, dto *dto.PostSearchRequest)
 		Debug().
 		Model(domain.PostItem{}).
 		Select(`posts.*,
+		products.province_id as province_id,
+		products.district_id as district_id,
+		products.ward_id as ward_id,
 		province.name as province_name, 
 		district.name as district_name, 
 		ward.name as ward_name,
@@ -673,6 +680,9 @@ func (r *GormPostRepo) GetRandomPosts(ctx context.Context, limit int) ([]domain.
 	query := r.DB.WithContext(ctx).
 		Model(domain.PostItem{}).
 		Select(`posts.*,
+		products.province_id as province_id,
+		products.district_id as district_id,
+		products.ward_id as ward_id,
 		province.name as province_name, 
 		district.name as district_name, 
 		ward.name as ward_name,

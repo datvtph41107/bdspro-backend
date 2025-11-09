@@ -8,6 +8,7 @@ import (
 	"bdspro/internal/repo"
 	_db "common/db"
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -71,11 +72,10 @@ func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, o
 	for i := 0; i < len(entities); i++ {
 		data = append(data, _dto.NotificationDTO{
 			Title:   "Chia sẻ sản phẩm",
-			Message: "Bạn nhận được chia sẻ sản phẩm ",
-			Type:    1,
-			UserID:  entities[i].ToId,
+			Message: []string{"Bạn nhận được chia sẻ sản phẩm "},
+			OwnerID: entities[i].ToId,
+			OwnerOf: _enum.EOwnerOf(entities[i].ToType),
 		})
-		// entities[i].ProductID = id
 	}
 
 	go func() {
@@ -188,9 +188,9 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 	for i := 0; i < len(entities); i++ {
 		data = append(data, _dto.NotificationDTO{
 			Title:   "Chia sẻ sản phẩm",
-			Message: "Bạn nhận được chia sẻ sản phẩm ",
-			Type:    1,
-			UserID:  entities[i].ToId,
+			Message: []string{"Bạn nhận được chia sẻ sản phẩm "},
+			OwnerID: entities[i].ToId,
+			OwnerOf: _enum.EOwnerOf(entities[i].ToType),
 		})
 		// entities[i].ProductID = id
 	}

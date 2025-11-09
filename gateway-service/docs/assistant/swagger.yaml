@@ -150,19 +150,19 @@ definitions:
         items:
           type: string
         type: array
-      legal_doc:
+      legalDoc:
         type: string
       name:
         type: string
       orientation:
         type: string
-      property_type:
+      propertyType:
         type: string
       province:
         type: string
       rent_price:
         type: number
-      sale_price:
+      salePrice:
         type: number
       transaction_type:
         description: 1=Bán, 2=Thuê, 3=Cả hai
@@ -172,6 +172,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: API cho assistant service, bao gồm event-queue và các tiện ích khác
+  title: Assistant API
+  version: "1.0"
 paths:
   /v2/assistant/analyze/product:
     post:
@@ -222,6 +225,152 @@ paths:
       summary: Chat với AI assistant
       tags:
       - Assistant
+  /v2/assistant/deepseek/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn
+        bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng DeepSeek AI
+      tags:
+      - Assistant
+  /v2/assistant/deepseek/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với DeepSeek AI assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với DeepSeek AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/deepseek/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt sử dụng DeepSeek
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung với DeepSeek
+      tags:
+      - Assistant
+  /v2/assistant/gemini/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng Google Gemini AI để phân tích và trích xuất thông tin từ
+        văn bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng Gemini AI
+      tags:
+      - Assistant
+  /v2/assistant/gemini/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với Google Gemini AI assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với Gemini AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/gemini/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt sử dụng Google Gemini
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung với Gemini
+      tags:
+      - Assistant
   /v2/assistant/generate:
     post:
       consumes:
@@ -261,4 +410,82 @@ paths:
       summary: Health check
       tags:
       - Assistant
+  /v2/assistant/openai/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng OpenAI GPT để phân tích và trích xuất thông tin từ văn
+        bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng OpenAI
+      tags:
+      - Assistant
+  /v2/assistant/openai/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với OpenAI GPT assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với OpenAI AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/openai/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt sử dụng OpenAI GPT
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung với OpenAI
+      tags:
+      - Assistant
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

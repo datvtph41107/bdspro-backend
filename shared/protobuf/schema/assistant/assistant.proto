@@ -37,6 +37,81 @@ service AssistantService {
       get: "/v2/assistant/health"
     };
   };
+
+  // DeepSeek APIs
+  // Phân tích văn bản sản phẩm BĐS sử dụng DeepSeek
+  rpc AnalyzeProductTextWithDeepSeek (AnalyzeRequest) returns (AnalyzeResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/deepseek/analyze/product"
+      body: "*"
+    };
+  };
+
+  // Chat với DeepSeek AI assistant
+  rpc ChatWithDeepSeek (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/deepseek/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content với DeepSeek
+  rpc GenerateContentWithDeepSeek (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/deepseek/generate"
+      body: "*"
+    };
+  };
+
+  // OpenAI APIs
+  // Phân tích văn bản sản phẩm BĐS sử dụng OpenAI
+  rpc AnalyzeProductTextWithOpenAI (AnalyzeRequest) returns (AnalyzeResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/openai/analyze/product"
+      body: "*"
+    };
+  };
+
+  // Chat với OpenAI AI assistant
+  rpc ChatWithOpenAI (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/openai/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content với OpenAI
+  rpc GenerateContentWithOpenAI (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/openai/generate"
+      body: "*"
+    };
+  };
+
+  // Gemini APIs
+  // Phân tích văn bản sản phẩm BĐS sử dụng Gemini
+  rpc AnalyzeProductTextWithGemini (AnalyzeRequest) returns (AnalyzeResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/analyze/product"
+      body: "*"
+    };
+  };
+
+  // Chat với Gemini AI assistant
+  rpc ChatWithGemini (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content với Gemini
+  rpc GenerateContentWithGemini (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/generate"
+      body: "*"
+    };
+  };
 }
 
 // =============== Analyze Product Text ===============

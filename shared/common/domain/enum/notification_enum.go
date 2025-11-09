@@ -75,6 +75,13 @@ const (
 	NotificationPackageUpdate    ENotificationType = 9120
 	NotificationPackageDelete    ENotificationType = 9130
 
+	NotificationCommentNewsFeed ENotificationType = 9210 //"COMMENT_NEWS_FEED"
+	NotificationCommentChildren ENotificationType = 9220 //"COMMENT_REPLY"
+	NotificationLikeNewsFeed    ENotificationType = 9230 //"LIKE_NEWS_FEED"
+	NotificationLikeComment     ENotificationType = 9240 //"LIKE_COMMENT"
+	NotificationShareNewsFeed   ENotificationType = 9250 //"SHARE_NEWS_FEED"
+	NotificationShareProduct    ENotificationType = 9260 //"SHARE_PRODUCT"
+
 	// -- action for admin --
 	NotificationAdminCreate ENotificationType = 10010
 	NotificationAdminUpdate ENotificationType = 10020
@@ -243,6 +250,12 @@ var NotificationMergeTypes = []ENotificationType{
 	NotificationFriendResponse,
 	NotificationContactFriend,
 	NotificationContactFollow,
+	NotificationLikeNewsFeed,
+	NotificationLikeComment,
+	NotificationCommentNewsFeed,
+	NotificationCommentChildren,
+	NotificationShareNewsFeed,
+	NotificationShareProduct,
 }
 
 // IsMergeableNotification kiểm tra xem notification type có cần merge không

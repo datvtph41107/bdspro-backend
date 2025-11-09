@@ -1,0 +1,452 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "hub/version.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "VersionService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/hub/admin/versions": {
+      "get": {
+        "operationId": "VersionService_GetVersionList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbGetVersionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "appName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      },
+      "post": {
+        "operationId": "VersionService_CreateVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbCreateVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/hubpbCreateVersionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      }
+    },
+    "/v2/hub/admin/versions/{id}": {
+      "get": {
+        "operationId": "VersionService_GetVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbGetVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      },
+      "delete": {
+        "operationId": "VersionService_DeleteVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbDeleteVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      },
+      "put": {
+        "operationId": "VersionService_UpdateVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbUpdateVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/VersionServiceUpdateVersionBody"
+            }
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      }
+    },
+    "/v2/hub/app-bundle/update-check/{appName}": {
+      "get": {
+        "operationId": "VersionService_CheckAppUpdate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbCheckAppUpdateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "appName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "targetVersion",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "VersionServiceUpdateVersionBody": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string"
+        },
+        "versionName": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        },
+        "downloadUrl": {
+          "type": "string"
+        },
+        "releaseNotes": {
+          "type": "string"
+        },
+        "appName": {
+          "type": "string"
+        },
+        "bundleSize": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bundleName": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "hubpbCheckAppUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "needUpdate": {
+          "type": "boolean"
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        },
+        "latestVersion": {
+          "$ref": "#/definitions/hubpbVersionItem"
+        }
+      }
+    },
+    "hubpbCreateVersionRequest": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string"
+        },
+        "versionName": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        },
+        "downloadUrl": {
+          "type": "string"
+        },
+        "releaseNotes": {
+          "type": "string"
+        },
+        "appName": {
+          "type": "string"
+        },
+        "bundleSize": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bundleName": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "hubpbCreateVersionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/hubpbVersionItem"
+        }
+      }
+    },
+    "hubpbDeleteVersionResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "hubpbGetVersionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/hubpbVersionItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "hubpbGetVersionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/hubpbVersionItem"
+        }
+      }
+    },
+    "hubpbUpdateVersionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/hubpbVersionItem"
+        }
+      }
+    },
+    "hubpbVersionItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "versionName": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        },
+        "downloadUrl": {
+          "type": "string"
+        },
+        "releaseNotes": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "appName": {
+          "type": "string"
+        },
+        "bundleSize": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bundleName": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

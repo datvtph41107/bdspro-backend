@@ -2,6 +2,7 @@ ROOT_DIR := ../..
 CD_ROOT := cd $(ROOT_DIR)
 SCHEMA := cd ../protobuf/schema
 
+AIR_EXE=/Users/baphieu/go/bin/air
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
 # PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/config.yml)
@@ -13,7 +14,7 @@ debug-info:
 
 run-dev:
 	@lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
-	@cd $(ROOT_DIR)/$(SERVICE)-service && air $(ARGS)
+	@cd $(ROOT_DIR)/$(SERVICE)-service && $(AIR_EXE) $(ARGS)
 
 %:
 	@:	

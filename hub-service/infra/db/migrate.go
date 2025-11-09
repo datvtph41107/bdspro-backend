@@ -16,6 +16,7 @@ func AutoMigrate() {
 		&domain.UserGuideEntity{},
 		&domain.SystemConfigEntity{},
 		&domain.FAQEntity{},
+		&domain.VersionEntity{},
 		// &domain.UserGuideGroupEntity{},
 	)
 

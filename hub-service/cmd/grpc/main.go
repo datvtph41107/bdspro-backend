@@ -55,6 +55,7 @@ var GrpcCmd = &cobra.Command{
 		hubpb.RegisterUserGuideServiceServer(s, app.UserGuideHandler)
 		hubpb.RegisterSystemConfigServiceServer(s, app.SystemConfigHandler)
 		hubpb.RegisterFAQServiceServer(s, app.FAQHandler)
+		hubpb.RegisterVersionServiceServer(s, app.VersionHandler)
 
 		log.Printf("Listen: %v", port)
 

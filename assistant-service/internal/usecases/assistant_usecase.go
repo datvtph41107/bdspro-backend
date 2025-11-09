@@ -11,12 +11,14 @@ import (
 type AssistantUsecase struct {
 	DeepseekClient provider.DeepseekProvider
 	OpenAIClient   provider.OpenAIProvider
+	GeminiClient   provider.GeminiProvider
 }
 
-func NewAssistantUsecase(deepseekClient provider.DeepseekProvider, openaiClient provider.OpenAIProvider) *AssistantUsecase {
+func NewAssistantUsecase(deepseekClient provider.DeepseekProvider, openaiClient provider.OpenAIProvider, geminiClient provider.GeminiProvider) *AssistantUsecase {
 	return &AssistantUsecase{
 		DeepseekClient: deepseekClient,
 		OpenAIClient:   openaiClient,
+		GeminiClient:   geminiClient,
 	}
 }
 
@@ -256,4 +258,77 @@ func (u *AssistantUsecase) buildSocialPostPrompt(variables map[string]string, ba
 	}
 
 	return prompt
+}
+
+// AnalyzeProductTextWithGemini - Phân tích văn bản sản phẩm BĐS bằng Gemini
+func (u *AssistantUsecase) AnalyzeProductTextWithGemini(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
+	startTime := time.Now()
+
+	// Thêm context vào content nếu có
+	if contextStr != "" {
+		content = fmt.Sprintf("%s\n\nContext bổ sung: %s", content, contextStr)
+	}
+
+	// Gọi Gemini để phân tích
+	result, err := u.GeminiClient.AnalyzeProductText(ctx, content)
+	if err != nil {
+		return nil, "", "", 0, fmt.Errorf("failed to analyze product text with gemini: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+
+	// Raw response để debug (optional)
+	rawResponse := ""                      // Có thể marshal result về JSON nếu cần
+	modelName := u.GeminiClient.GetModel() // Lấy từ config
+
+	return result, rawResponse, modelName, processingTime, nil
+}
+
+// ChatWithGemini - Thực hiện conversation với Gemini
+func (u *AssistantUsecase) ChatWithGemini(ctx context.Context, message string, history []dto.DeepseekMessage, contextStr string, sessionID string) (string, string, string, int64, error) {
+	startTime := time.Now()
+
+	// Thêm context vào message nếu có
+	if contextStr != "" {
+		message = fmt.Sprintf("%s\n\nContext: %s", message, contextStr)
+	}
+
+	// Gọi Gemini để chat
+	reply, err := u.GeminiClient.Chat(ctx, message, history)
+	if err != nil {
+		return "", "", "", 0, fmt.Errorf("failed to chat with gemini: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+
+	// Generate hoặc use existing session ID
+	if sessionID == "" {
+		sessionID = fmt.Sprintf("session_%d", time.Now().UnixNano())
+	}
+
+	modelName := u.GeminiClient.GetModel() // Lấy từ config
+
+	return reply, sessionID, modelName, processingTime, nil
+}
+
+// GenerateContentWithGemini - Tạo nội dung theo template bằng Gemini
+func (u *AssistantUsecase) GenerateContentWithGemini(ctx context.Context, prompt string, template string, variables map[string]string, maxTokens int, temperature float32) (string, string, int64, error) {
+	startTime := time.Now()
+
+	// Build prompt từ template và variables
+	finalPrompt := prompt
+	if template != "" {
+		finalPrompt = u.buildPromptFromTemplate(template, variables, prompt)
+	}
+
+	// Gọi Gemini để generate
+	content, err := u.GeminiClient.GenerateContent(ctx, finalPrompt, maxTokens, temperature)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("failed to generate content with gemini: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+	modelName := u.GeminiClient.GetModel() // Lấy từ config
+
+	return content, modelName, processingTime, nil
 }

@@ -126,6 +126,7 @@ var publicRoutes = []string{
 	"/v2/hub/system-config/key",
 	"/v2/hub/system-config/by-group",
 	"/v2/hub/user-guides",
+	"/v2/hub/app-bundle/update-check",
 
 	"/v2/user/profile/search/public",
 	"/v2/bdspro/v2/post/detail/",

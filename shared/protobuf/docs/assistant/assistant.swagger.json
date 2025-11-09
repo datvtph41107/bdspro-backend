@@ -82,6 +82,204 @@
         ]
       }
     },
+    "/v2/assistant/deepseek/analyze/product": {
+      "post": {
+        "summary": "DeepSeek APIs\nPhân tích văn bản sản phẩm BĐS sử dụng DeepSeek",
+        "operationId": "AssistantService_AnalyzeProductTextWithDeepSeek",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/deepseek/chat": {
+      "post": {
+        "summary": "Chat với DeepSeek AI assistant",
+        "operationId": "AssistantService_ChatWithDeepSeek",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/deepseek/generate": {
+      "post": {
+        "summary": "Generate text content với DeepSeek",
+        "operationId": "AssistantService_GenerateContentWithDeepSeek",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/gemini/analyze/product": {
+      "post": {
+        "summary": "Gemini APIs\nPhân tích văn bản sản phẩm BĐS sử dụng Gemini",
+        "operationId": "AssistantService_AnalyzeProductTextWithGemini",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/gemini/chat": {
+      "post": {
+        "summary": "Chat với Gemini AI assistant",
+        "operationId": "AssistantService_ChatWithGemini",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/gemini/generate": {
+      "post": {
+        "summary": "Generate text content với Gemini",
+        "operationId": "AssistantService_GenerateContentWithGemini",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
     "/v2/assistant/generate": {
       "post": {
         "summary": "Generate text content",
@@ -133,6 +331,105 @@
             }
           }
         },
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/openai/analyze/product": {
+      "post": {
+        "summary": "OpenAI APIs\nPhân tích văn bản sản phẩm BĐS sử dụng OpenAI",
+        "operationId": "AssistantService_AnalyzeProductTextWithOpenAI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbAnalyzeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/openai/chat": {
+      "post": {
+        "summary": "Chat với OpenAI AI assistant",
+        "operationId": "AssistantService_ChatWithOpenAI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbChatRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AssistantService"
+        ]
+      }
+    },
+    "/v2/assistant/openai/generate": {
+      "post": {
+        "summary": "Generate text content với OpenAI",
+        "operationId": "AssistantService_GenerateContentWithOpenAI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/assistantpbGenerateRequest"
+            }
+          }
+        ],
         "tags": [
           "AssistantService"
         ]

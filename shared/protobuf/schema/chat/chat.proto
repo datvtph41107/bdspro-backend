@@ -113,9 +113,9 @@ service ChatService {
     };
   };
 
-  rpc AddUser (AddUserRequest) returns (AddUserResponse) {
+  rpc AddUsers(AddUserRequest) returns (AddUserResponse) {
     option (google.api.http) = {
-      post: "/v2/chat/conversation/add-user"
+      put: "/v2/chat/conversation/add-user"
       body: "*"
     };
   };
@@ -419,6 +419,7 @@ message Participant {
   optional string leftAt = 3;
   bool muteNotif = 4;
   ParticipantRoleEnum role = 5;
+  sharepb.ProfileItem profile = 6;
 }
 
 enum ParticipantRoleEnum {
@@ -455,12 +456,13 @@ message GetReadReceiptResponse {
 }
 
 message AddUserRequest {
-  int32 conversationId = 1;
-  int32 userId = 2;
+  uint64 conversationId = 1;
+  repeated uint64 userIds = 2;
 }
 
 message AddUserResponse {
   bool success = 1;
+  int32 totalAdded = 2;
 }
 
 message LeaveRoomRequest {

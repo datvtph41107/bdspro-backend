@@ -554,7 +554,7 @@ func (r *GormUserProductRepo) SmartSearchProduct(
 			ON house_info.product_id = products.id AND house_info.deleted_at IS NULL`).
 		Preload("HouseInfo", "deleted_at IS NULL").
 		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
 		Preload("Amenities", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
@@ -780,7 +780,7 @@ func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetI
 			return db.Order("product_price.created_at asc")
 		}).
 		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
 		// Preload("Amenities", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
@@ -809,7 +809,7 @@ func (r *GormUserProductRepo) GetDetailByIds(ctx context.Context, ids []uint64) 
 		Preload("Price").
 		Preload("MediaList", "deleted_at IS NULL").
 		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
 		Where("id IN (?) and deleted_at is null", ids).
 		Find(&products).Error; err != nil {
@@ -936,7 +936,7 @@ func (r *GormUserProductRepo) GetUserProducts(ctx context.Context, req *dto.User
 		}).
 		Preload("MediaList", "deleted_at IS NULL").
 		Preload("Province", "deleted_at IS NULL").
-		Preload("District", "deleted_at IS NULL").
+		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").
 		Where("(pu.profile_id = ? or owner_id = ?) AND products.visibility = ? AND products.deleted_at IS NULL", req.UserID, req.UserID, enums.EVisiblePublic)
 
@@ -1432,7 +1432,7 @@ func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.Pro
 		Select(`products.*, 
 			products.area - COALESCE(child.total_area, 0) AS avaiable_area,
 			COALESCE(provinces.name, '') AS province_name,
-			COALESCE(districts.name, '') AS district_name,
+			// COALESCE(districts.name, '') AS district_name,
 			COALESCE(wards.name, '') AS ward_name,
 			COALESCE(property_type.name, '') AS property_type_name,
 			COALESCE(
@@ -1447,7 +1447,7 @@ func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.Pro
 					FROM products WHERE deleted_at is null GROUP BY parent_id) 
 					AS child ON products.id = child.parent_id`).
 		Joins(`LEFT JOIN provinces ON products.province_id = provinces.id AND provinces.deleted_at IS NULL`).
-		Joins(`LEFT JOIN districts ON products.district_id = districts.id AND districts.deleted_at IS NULL`).
+		// Joins(`LEFT JOIN districts ON products.district_id = districts.id AND districts.deleted_at IS NULL`).
 		Joins(`LEFT JOIN wards ON products.ward_id = wards.id AND wards.deleted_at IS NULL`).
 		Joins(`LEFT JOIN property_type ON products.property_type_id = property_type.id AND property_type.deleted_at IS NULL`)
 

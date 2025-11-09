@@ -10,4 +10,4 @@ COPY main .
 
 ENV ENV_RUNTIME=develop
 
-CMD ["./main"]
+CMD ["./main","http"]

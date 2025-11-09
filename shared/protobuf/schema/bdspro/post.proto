@@ -137,6 +137,8 @@ message Post {
   optional ProductResponse product = 27;
   uint32 transactionStatus = 28;
   uint32 visibleStatus = 29;
+  optional uint64 provinceId = 30;
+  optional uint64 wardId = 31;
 }
 
 message PostMedia {

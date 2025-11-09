@@ -16,6 +16,7 @@ type InitialApp struct {
 	UserGuideHandler    *handler.UserGuideHandler
 	FAQHandler          *handler.FAQHandler
 	SystemConfigHandler *handler.SystemConfigHandler
+	VersionHandler      *handler.VersionHandler
 	SystemConfigUsecase *usecase.SystemConfigUsecase
 	Logger              *flogging.FabricLogger
 }
@@ -28,6 +29,7 @@ func NewInitialApp(
 	userGuideHandler *handler.UserGuideHandler,
 	faqHandler *handler.FAQHandler,
 	systemConfigHandler *handler.SystemConfigHandler,
+	versionHandler *handler.VersionHandler,
 	systemConfigUsecase *usecase.SystemConfigUsecase,
 ) *InitialApp {
 	return &InitialApp{
@@ -38,6 +40,7 @@ func NewInitialApp(
 		UserGuideHandler:    userGuideHandler,
 		FAQHandler:          faqHandler,
 		SystemConfigHandler: systemConfigHandler,
+		VersionHandler:      versionHandler,
 		SystemConfigUsecase: systemConfigUsecase,
 		Logger:              flogging.MustGetLogger(viper.GetString("server.name")),
 	}

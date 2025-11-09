@@ -60,16 +60,16 @@ func (r *gormRepository) AddParticipant(ctx context.Context, participant *models
 }
 
 func (r *gormRepository) HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (*models.ConversationModel, error) {
-	var conversation models.ConversationModel
+	var conversation *models.ConversationModel
 	err := r.db.WithContext(ctx).
 		Model(&models.ParticipantModel{}).
 		// Select("conversation_id").
-		Group("conversation_id").
+		Group("conversation_id, user_id").
 		Having("COUNT(*) = ? AND COUNT(CASE WHEN user_id IN ? THEN 1 END) = ?", len(userIDs), userIDs, len(userIDs)).
 		Limit(1).
-		Scan(&conversation).Error
+		Scan(conversation).Error
 	if err != nil {
 		return nil, err
 	}
-	return &conversation, nil
+	return conversation, nil
 }
