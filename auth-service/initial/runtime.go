@@ -67,9 +67,9 @@ func NewApp(authHandler *handler.AuthHandler,
 func (app *InitialApp) StartZnsScheduler() {
 	if app.ZnsScheduler != nil {
 		app.ZnsScheduler.Start()
-		app.Logger.Infof("✅ ZNS Token Refresh Scheduler started successfully")
+		app.Logger.Infof("ZNS Token Refresh Scheduler started successfully")
 	} else {
-		app.Logger.Warnf("⚠️ ZNS Scheduler is nil, skipping scheduler start")
+		app.Logger.Warnf("ZNS Scheduler is nil, skipping scheduler start")
 	}
 }
 

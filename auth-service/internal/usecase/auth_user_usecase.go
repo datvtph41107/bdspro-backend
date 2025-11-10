@@ -717,14 +717,6 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 			log.Printf("⚠️ [RefreshToken] Không thể lưu timestamp vào cache cho authID %d: %v", props.AuthID, err)
 		}
 
-		// ✅ Lưu refresh token mới vào DB để ZNS provider có thể dùng
-		err = s.AuthConfigRepo.UpdateValue(c, domain.ConfigKeyZNSRefresh, newRefreshToken)
-		if err != nil {
-			log.Printf("⚠️ [RefreshToken] Không thể lưu refresh token vào DB: %v", err)
-		} else {
-			log.Printf("✅ [RefreshToken] Đã lưu refresh token mới vào DB")
-		}
-
 		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID)
 		return &dto.RefreshResponse{
 			AccessToken:  newAccessToken,
