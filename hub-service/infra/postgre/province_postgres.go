@@ -44,3 +44,14 @@ func (r *ProvinceRepo) Search(ctx context.Context, keyword string) ([]domain.Pro
 	err := db.Where("name ILIKE ? AND deleted_at IS NULL", "%"+keyword+"%").Find(&provinces).Error
 	return provinces, err
 }
+
+// InferFromText infers province from text
+func (r *ProvinceRepo) InferFromText(ctx context.Context, text string) (*domain.Province, error) {
+	var province domain.Province
+	db := r.db.GetDB(ctx)
+	err := db.Where("name ILIKE ? OR codename ILIKE ? OR short_codename ILIKE ?", "%"+text+"%", "%"+text+"%", "%"+text+"%").First(&province).Error
+	if err != nil {
+		return nil, err
+	}
+	return &province, nil
+}

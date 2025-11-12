@@ -89,3 +89,19 @@ func (h *InternalHandler) GetAddressV2ByIds(ctx context.Context, req *hubpb.GetA
 		Data: data,
 	}, nil
 }
+
+// InferAddressFromText lấy thông tin đầy đủ của province và ward theo text
+func (h *InternalHandler) InferAddressFromText(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.AddressV3Proto, error) {
+	// Get address info from usecase
+	addressInfo, err := h.locationUsecase.InferAddressFromText(ctx, req.GetText())
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.AddressV3Proto{
+		ProvinceId:   addressInfo.ProvinceID,
+		WardId:       addressInfo.WardID,
+		ProvinceName: addressInfo.ProvinceName,
+		WardName:     addressInfo.WardName,
+	}, nil
+}

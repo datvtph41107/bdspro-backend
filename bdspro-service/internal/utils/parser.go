@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bdspro/internal/dto"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"math"
 	"regexp"
@@ -114,6 +115,15 @@ func InferSearchText(text string) (dto.TotalSearchParser, error) {
 	raw := _utils.ParseWithRules(text, Rules)
 
 	dataParser := dto.TotalSearchParser{}
+	err := mapstructure.Decode(raw, &dataParser)
+	return dataParser, err
+
+}
+
+func InferSearchText2(text string) (_dto.ProductV3DTO, error) {
+	raw := _utils.ParseWithRules(text, Rules)
+
+	dataParser := _dto.ProductV3DTO{}
 	err := mapstructure.Decode(raw, &dataParser)
 	return dataParser, err
 

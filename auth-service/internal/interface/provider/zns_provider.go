@@ -25,13 +25,4 @@ type IZnsProvider interface {
 	// RefreshAccessToken làm mới access token cho ZNS sử dụng refresh token
 	// Trả về access token và refresh token mới
 	RefreshAccessToken(ctx context.Context) (accessToken string, refreshToken string, err error)
-
-	// UpdateTokens cập nhật access token và refresh token mới (manual update)
-	UpdateTokens(ctx context.Context, accessToken, refreshToken string) error
-
-	// GetAccessToken lấy access token hiện tại
-	GetAccessToken() string
-
-	// GetRefreshToken lấy refresh token hiện tại
-	GetRefreshToken() string
 }

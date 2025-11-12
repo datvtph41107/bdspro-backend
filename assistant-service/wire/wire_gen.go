@@ -22,7 +22,9 @@ func InitializeApp() (*initial.InitialApp, error) {
 	deepseekClient := client.NewDeepseekClient()
 	openAIClient := client.NewOpenAIClient()
 	geminiClient := client.NewGeminiClient()
-	assistantUsecase := usecases.NewAssistantUsecase(deepseekClient, openAIClient, geminiClient)
+	bdsproInternalClient := client.NewBdsproInternalClient()
+	hubClient := client.NewHubClient()
+	assistantUsecase := usecases.NewAssistantUsecase(deepseekClient, openAIClient, geminiClient, bdsproInternalClient, hubClient)
 	assistantHandler := handler.NewAssistantHandler(assistantUsecase)
 	initialApp := initial.NewInitialApp(assistantHandler)
 	return initialApp, nil
@@ -31,4 +33,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.GeminiProvider), new(*client.GeminiClient)), wire.Bind(new(provider.OpenAIProvider), new(*client.OpenAIClient)), handler.NewAssistantHandler, usecases.NewAssistantUsecase, client.NewDeepseekClient, client.NewGeminiClient, initial.NewInitialApp, client.NewOpenAIClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.BdsproInternalProvider), new(*client.BdsproInternalClient)), wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.GeminiProvider), new(*client.GeminiClient)), wire.Bind(new(provider.HubProvider), new(*client.HubClient)), wire.Bind(new(provider.OpenAIProvider), new(*client.OpenAIClient)), handler.NewAssistantHandler, usecases.NewAssistantUsecase, client.NewBdsproInternalClient, client.NewDeepseekClient, client.NewGeminiClient, client.NewHubClient, initial.NewInitialApp, client.NewOpenAIClient)

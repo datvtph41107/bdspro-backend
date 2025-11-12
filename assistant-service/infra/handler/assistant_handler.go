@@ -7,6 +7,7 @@ import (
 	"time"
 
 	assistantpb "pb/types/assistant"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,112 +28,102 @@ func NewAssistantHandler(usecase *usecases.AssistantUsecase) *AssistantHandler {
 
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
 // @Summary Phân tích văn bản sản phẩm BĐS sử dụng AI
-// @Description Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm
+// @Description Sử dụng AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm
 // @Tags Assistant
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body assistantpb.AnalyzeRequest true "Nội dung cần phân tích"
-// @Success 200 {object} assistantpb.AnalyzeResponse
-// @Router /v2/assistant/analyze/product [post]
-func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistantpb.AnalyzeRequest) (*assistantpb.AnalyzeResponse, error) {
+// @Success 200 {object} assistantpb.SuggestResponse
+// @Router /v2/assistant/bdspro/product [post]
+func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistantpb.AnalyzeRequest) (*assistantpb.SuggestResponse, error) {
 	if req.Content == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "content is required")
 	}
 
-	// Gọi usecase để phân tích
-	result, rawResponse, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
+	productV3, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to analyze: %v", err)
 	}
 
-	// Map kết quả sang protobuf
-	productInfo := &assistantpb.ProductInfo{}
-
-	// Basic fields
-	if result.Name != nil {
-		productInfo.Name = result.Name
-	}
-	if result.Area != nil {
-		areaFloat32 := float32(*result.Area)
-		productInfo.Area = &areaFloat32
-	}
-	if result.Description != nil {
-		productInfo.Description = result.Description
-	}
-	if result.PropertyType != nil {
-		productInfo.PropertyType = result.PropertyType
-	}
-	if result.TransactionType != nil {
-		productInfo.TransactionType = result.TransactionType
-	}
-	if result.LegalDoc != nil {
-		productInfo.LegalDoc = result.LegalDoc
+	productInfo := &sharepb.ProductV3Proto{
+		Name:        productV3.Name,
+		Description: productV3.Description,
+		Area:        productV3.Area,
 	}
 
-	// Address - map từ nested structure sang flat
-	if result.Address != nil {
-		if result.Address.Detail != nil {
-			productInfo.Address = result.Address.Detail
-		}
-		if result.Address.Province != nil {
-			productInfo.Province = result.Address.Province
-		}
-		if result.Address.District != nil {
-			productInfo.District = result.Address.District
-		}
-		if result.Address.Ward != nil {
-			productInfo.Ward = result.Address.Ward
+	if productV3.SourceType != nil {
+		productInfo.SourceType = &sharepb.ItemV3Proto{
+			Id:   productV3.SourceType.ID,
+			Name: productV3.SourceType.Name,
 		}
 	}
 
-	// PriceData - map từ nested structure
-	if result.PriceData != nil {
-		if result.PriceData.SalePrice != nil {
-			productInfo.SalePrice = result.PriceData.SalePrice
-		}
-		if result.PriceData.RentPrice != nil {
-			productInfo.RentPrice = result.PriceData.RentPrice
-		}
-	}
-
-	// HouseInfo - map từ nested structure
-	if result.HouseInfo != nil {
-		if result.HouseInfo.NumBedroom != nil {
-			productInfo.Bedroom = result.HouseInfo.NumBedroom
-		}
-		if result.HouseInfo.NumBathroom != nil {
-			productInfo.Bathroom = result.HouseInfo.NumBathroom
-		}
-		if result.HouseInfo.NumFloor != nil {
-			productInfo.Floor = result.HouseInfo.NumFloor
-		}
-		if result.HouseInfo.NumFront != nil {
-			numFrontFloat32 := float32(*result.HouseInfo.NumFront)
-			productInfo.Frontage = &numFrontFloat32
-		}
-		if result.HouseInfo.Orientation != nil {
-			productInfo.Orientation = result.HouseInfo.Orientation
-		}
-		if result.HouseInfo.Furniture != nil {
-			productInfo.Furniture = result.HouseInfo.Furniture
+	if productV3.HouseInfo != nil {
+		productInfo.HouseInfo = &sharepb.HouseInfoV3Proto{
+			NumBedroom:  productV3.HouseInfo.NumBedroom,
+			NumBathroom: productV3.HouseInfo.NumBathroom,
+			NumFloor:    productV3.HouseInfo.NumFloor,
+			NumFront:    productV3.HouseInfo.NumFront,
+			NumCarPark:  productV3.HouseInfo.NumCarPark,
+			Orientation: productV3.HouseInfo.Orientation,
+			Furniture:   productV3.HouseInfo.Furniture,
 		}
 	}
 
-	// Amenities
-	if len(result.Amenities) > 0 {
-		productInfo.Amenities = result.Amenities
+	if productV3.PriceData != nil {
+		productInfo.PriceData = &sharepb.PriceV3Proto{
+			Currency:           productV3.PriceData.Currency,
+			SalePrice:          productV3.PriceData.SalePrice,
+			SaleCommission:     productV3.PriceData.SaleCommission,
+			SaleCommissionType: productV3.PriceData.SaleCommissionType,
+			RentPrice:          productV3.PriceData.RentPrice,
+		}
 	}
 
-	return &assistantpb.AnalyzeResponse{
-		Product:     productInfo,
-		RawResponse: rawResponse,
-		Metadata: &assistantpb.AnalysisMetadata{
-			ProcessingTimeMs: processingTime,
-			TokensUsed:       0, // TODO: Get from API response
-			ConfidenceScore:  0.0,
-			Model:            modelName,
-		},
+	if productV3.TransactionType != nil {
+		productInfo.TransactionType = &sharepb.ItemV3Proto{
+			Id:   productV3.TransactionType.ID,
+			Name: productV3.TransactionType.Name,
+		}
+	}
+
+	if productV3.Address != nil {
+		productInfo.Address = &sharepb.AddressV3Proto{
+			Detail:       productV3.Address.Detail,
+			ProvinceId:   productV3.Address.ProvinceID,
+			DistrictId:   productV3.Address.DistrictID,
+			WardId:       productV3.Address.WardID,
+			ProvinceName: productV3.Address.ProvinceName,
+			DistrictName: productV3.Address.DistrictName,
+			WardName:     productV3.Address.WardName,
+		}
+	}
+	if productV3.PropertyType != nil {
+		productInfo.PropertyType = &sharepb.ItemV3Proto{
+			Id:   productV3.PropertyType.ID,
+			Name: productV3.PropertyType.Name,
+		}
+	}
+	if productV3.DocType != nil {
+		productInfo.DocType = &sharepb.ItemV3Proto{
+			Id:   productV3.DocType.ID,
+			Name: productV3.DocType.Name,
+		}
+	}
+	if productV3.Amenities != nil {
+		productInfo.Amenities = make([]*sharepb.ItemV3Proto, len(productV3.Amenities))
+		for i, amenity := range productV3.Amenities {
+			productInfo.Amenities[i] = &sharepb.ItemV3Proto{
+				Id:   amenity.ID,
+				Name: amenity.Name,
+			}
+		}
+	}
+	return &assistantpb.SuggestResponse{
+		ModelName:      modelName,
+		ProcessingTime: processingTime,
+		Product:        productInfo,
 	}, nil
 }
 
@@ -267,92 +258,24 @@ func (h *AssistantHandler) AnalyzeProductTextWithDeepSeek(ctx context.Context, r
 	}
 
 	// Gọi usecase để phân tích với DeepSeek
-	result, rawResponse, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
+	result, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to analyze with deepseek: %v", err)
 	}
 
 	// Map kết quả sang protobuf
-	productInfo := &assistantpb.ProductInfo{}
-
-	// Basic fields
-	if result.Name != nil {
-		productInfo.Name = result.Name
-	}
-	if result.Area != nil {
-		areaFloat32 := float32(*result.Area)
-		productInfo.Area = &areaFloat32
-	}
-	if result.Description != nil {
-		productInfo.Description = result.Description
-	}
-	if result.PropertyType != nil {
-		productInfo.PropertyType = result.PropertyType
-	}
-	if result.TransactionType != nil {
-		productInfo.TransactionType = result.TransactionType
-	}
-	if result.LegalDoc != nil {
-		productInfo.LegalDoc = result.LegalDoc
-	}
-
-	// Address
-	if result.Address != nil {
-		if result.Address.Detail != nil {
-			productInfo.Address = result.Address.Detail
-		}
-		if result.Address.Province != nil {
-			productInfo.Province = result.Address.Province
-		}
-		if result.Address.District != nil {
-			productInfo.District = result.Address.District
-		}
-		if result.Address.Ward != nil {
-			productInfo.Ward = result.Address.Ward
-		}
-	}
-
-	// PriceData
-	if result.PriceData != nil {
-		if result.PriceData.SalePrice != nil {
-			productInfo.SalePrice = result.PriceData.SalePrice
-		}
-		if result.PriceData.RentPrice != nil {
-			productInfo.RentPrice = result.PriceData.RentPrice
-		}
-	}
-
-	// HouseInfo
-	if result.HouseInfo != nil {
-		if result.HouseInfo.NumBedroom != nil {
-			productInfo.Bedroom = result.HouseInfo.NumBedroom
-		}
-		if result.HouseInfo.NumBathroom != nil {
-			productInfo.Bathroom = result.HouseInfo.NumBathroom
-		}
-		if result.HouseInfo.NumFloor != nil {
-			productInfo.Floor = result.HouseInfo.NumFloor
-		}
-		if result.HouseInfo.NumFront != nil {
-			numFrontFloat32 := float32(*result.HouseInfo.NumFront)
-			productInfo.Frontage = &numFrontFloat32
-		}
-		if result.HouseInfo.Orientation != nil {
-			productInfo.Orientation = result.HouseInfo.Orientation
-		}
-		if result.HouseInfo.Furniture != nil {
-			productInfo.Furniture = result.HouseInfo.Furniture
-		}
-	}
-
-	// Amenities
-	if len(result.Amenities) > 0 {
-		productInfo.Amenities = result.Amenities
+	productInfo := &assistantpb.ProductInfo{
+		Name: &result.Name,
+		// Area:            float32(result.Area),
+		// Description:     &result.Description,
+		// PropertyType:    result.propertyType,
+		// TransactionType: int32(result.TransactionType),
+		// LegalDoc:        &result.LegalDoc,
+		// Address: result.Address.Detail,
 	}
 
 	return &assistantpb.AnalyzeResponse{
-		Product:     productInfo,
-		RawResponse: rawResponse,
+		Product: productInfo,
 		Metadata: &assistantpb.AnalysisMetadata{
 			ProcessingTimeMs: processingTime,
 			TokensUsed:       0,
@@ -667,88 +590,13 @@ func (h *AssistantHandler) AnalyzeProductTextWithGemini(ctx context.Context, req
 	}
 
 	// Gọi usecase để phân tích với Gemini
-	result, rawResponse, modelName, processingTime, err := h.Usecase.AnalyzeProductTextWithGemini(ctx, req.Content, req.Context)
+	_, rawResponse, modelName, processingTime, err := h.Usecase.AnalyzeProductTextWithGemini(ctx, req.Content, req.Context)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to analyze with gemini: %v", err)
 	}
 
 	// Map kết quả sang protobuf (tương tự như AnalyzeProductText)
 	productInfo := &assistantpb.ProductInfo{}
-
-	// Basic fields
-	if result.Name != nil {
-		productInfo.Name = result.Name
-	}
-	if result.Area != nil {
-		areaFloat32 := float32(*result.Area)
-		productInfo.Area = &areaFloat32
-	}
-	if result.Description != nil {
-		productInfo.Description = result.Description
-	}
-	if result.PropertyType != nil {
-		productInfo.PropertyType = result.PropertyType
-	}
-	if result.TransactionType != nil {
-		productInfo.TransactionType = result.TransactionType
-	}
-	if result.LegalDoc != nil {
-		productInfo.LegalDoc = result.LegalDoc
-	}
-
-	// Address - map từ nested structure sang flat
-	if result.Address != nil {
-		if result.Address.Detail != nil {
-			productInfo.Address = result.Address.Detail
-		}
-		if result.Address.Province != nil {
-			productInfo.Province = result.Address.Province
-		}
-		if result.Address.District != nil {
-			productInfo.District = result.Address.District
-		}
-		if result.Address.Ward != nil {
-			productInfo.Ward = result.Address.Ward
-		}
-	}
-
-	// PriceData - map từ nested structure
-	if result.PriceData != nil {
-		if result.PriceData.SalePrice != nil {
-			productInfo.SalePrice = result.PriceData.SalePrice
-		}
-		if result.PriceData.RentPrice != nil {
-			productInfo.RentPrice = result.PriceData.RentPrice
-		}
-	}
-
-	// HouseInfo - map từ nested structure
-	if result.HouseInfo != nil {
-		if result.HouseInfo.NumBedroom != nil {
-			productInfo.Bedroom = result.HouseInfo.NumBedroom
-		}
-		if result.HouseInfo.NumBathroom != nil {
-			productInfo.Bathroom = result.HouseInfo.NumBathroom
-		}
-		if result.HouseInfo.NumFloor != nil {
-			productInfo.Floor = result.HouseInfo.NumFloor
-		}
-		if result.HouseInfo.NumFront != nil {
-			numFrontFloat32 := float32(*result.HouseInfo.NumFront)
-			productInfo.Frontage = &numFrontFloat32
-		}
-		if result.HouseInfo.Orientation != nil {
-			productInfo.Orientation = result.HouseInfo.Orientation
-		}
-		if result.HouseInfo.Furniture != nil {
-			productInfo.Furniture = result.HouseInfo.Furniture
-		}
-	}
-
-	// Amenities
-	if len(result.Amenities) > 0 {
-		productInfo.Amenities = result.Amenities
-	}
 
 	return &assistantpb.AnalyzeResponse{
 		Product:     productInfo,

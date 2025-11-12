@@ -9,6 +9,7 @@ import (
 	"hub/initial"
 	hub_infra_handler "hub/infra/handler"
 	hub_infra_mapper "hub/infra/mapper"
+	hub_infra_middleware "hub/infra/middleware"
 	hub_infra_postgre "hub/infra/postgre"
 	hub_infra_setting "hub/infra/setting"
 	hub_initial "hub/initial"
@@ -23,6 +24,11 @@ var wireSet = wire.NewSet(
 	_db.NewTransactionRepo,
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
 	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
+	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
+	hub_infra_handler.NewApiKeyHandler,
+	hub_infra_mapper.NewApiKeyMapper,
+	hub_infra_postgre.NewApiKeyRepo,
+	hub_internal_usecase.NewApiKeyUsecase,
 	hub_infra_postgre.NewDistrictRepo,
 	hub_infra_mapper.NewEventQueueMapper,
 	hub_infra_postgre.NewEventQueueRepo,

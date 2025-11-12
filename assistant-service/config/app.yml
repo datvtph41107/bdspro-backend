@@ -1,7 +1,7 @@
 app:
   name: "Assistant Service"
   version: "1.0.0"
-  environment: "development"
+  environment: ""
   port:
     grpc: "8218"
     http: "8061"

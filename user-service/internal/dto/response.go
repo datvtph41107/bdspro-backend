@@ -145,6 +145,8 @@ type PublicUserInfo struct {
 	// transient
 	Certifications []models.CertificationEntity `json:"certifications,omitempty"`
 	Professions    []models.ProfessionEntity    `json:"professions,omitempty"`
+	PurposeUses    []models.PurposeUseEntity    `json:"purposeUses,omitempty"`
+	MainAreas      []models.MainAreaEntity      `json:"mainAreas,omitempty"`
 	FriendStatus   *models.FriendItem           `json:"relationShip,omitempty"`
 	Following      bool                         `json:"following,omitempty"`
 	Bookmark       bool                         `json:"bookmark,omitempty"`

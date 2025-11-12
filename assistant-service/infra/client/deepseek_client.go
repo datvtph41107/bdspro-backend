@@ -3,6 +3,7 @@ package client
 import (
 	"assistant/internal/dto"
 	"bytes"
+	_dto "common/domain/dto"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -62,7 +63,7 @@ func NewDeepseekClient() *DeepseekClient {
 // "note": "Ghi chú thêm",
 
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
-func (c *DeepseekClient) AnalyzeProductText(ctx context.Context, content string) (*dto.ProductAnalysisResult, error) {
+func (c *DeepseekClient) AnalyzeProductText(ctx context.Context, content string) (*_dto.ProductV3DTO, error) {
 	systemPrompt := `Bạn là trợ lý AI chuyên phân tích thông tin bất động sản tiếng Việt. 
 Nhiệm vụ của bạn là trích xuất thông tin sản phẩm bất động sản từ văn bản người dùng cung cấp.
 
@@ -124,7 +125,7 @@ Lưu ý:
 	contentStr := response.Choices[0].Message.Content
 	contentStr = cleanJSONFromMarkdown(contentStr)
 
-	var result dto.ProductAnalysisResult
+	var result _dto.ProductV3DTO
 	if err := json.Unmarshal([]byte(contentStr), &result); err != nil {
 		return nil, fmt.Errorf("failed to parse product analysis: %w, content: %s", err, contentStr)
 	}

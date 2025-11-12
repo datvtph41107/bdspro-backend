@@ -14,7 +14,7 @@ type ZnsScheduler struct {
 }
 
 const (
-	refreshInterval = 6 * time.Hour
+	refreshInterval = 8 * time.Hour
 	timeLayout      = "2006-01-02 15:04:05"
 )
 
@@ -45,7 +45,7 @@ func (s *ZnsScheduler) Stop() {
 	close(s.stopChan)
 }
 
-// scheduleDaily schedule job chạy mỗi 6 giờ
+// scheduleDaily schedule job chạy mỗi 8 giờ
 func (s *ZnsScheduler) scheduleDaily() {
 	for {
 		next := s.getNextScheduleTime()
@@ -71,7 +71,7 @@ func (s *ZnsScheduler) scheduleDaily() {
 	}
 }
 
-// getNextScheduleTime tính thời điểm chạy tiếp theo bắt đầu từ 00h và lặp lại mỗi 6 giờ
+// getNextScheduleTime tính thời điểm chạy tiếp theo bắt đầu từ 00h và lặp lại mỗi 8 giờ
 func (s *ZnsScheduler) getNextScheduleTime() time.Time {
 	now := time.Now()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())

@@ -34,8 +34,8 @@ func NewMembershipHandler(
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body pb.CreateOrderRequest true "Thông tin đơn hàng"
-// @Success 200 {object} pb.CreateOrderResponse
+// @Param request body userpb.CreateOrderRequest true "Thông tin đơn hàng"
+// @Success 200 {object} userpb.CreateOrderResponse
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /user/membership/order [post]
@@ -57,8 +57,8 @@ func (h *MembershipHandler) CreateOrder(ctx context.Context, req *userpb.CreateO
 // @Tags Membership
 // @Accept json
 // @Produce json
-// @Param request body pb.VerifyOrderRequest true "Thông tin xác nhận thanh toán"
-// @Success 200 {object} pb.VerifyOrderResponse
+// @Param request body userpb.VerifyOrderRequest true "Thông tin xác nhận thanh toán"
+// @Success 200 {object} userpb.VerifyOrderResponse
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /user/membership/verify [post]
@@ -92,7 +92,7 @@ func (h *MembershipHandler) VerifyOrder(ctx context.Context, req *userpb.VerifyO
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} pb.GetMyMembershipResponse
+// @Success 200 {object} userpb.GetMyMembershipResponse
 // @Failure 404 {object} map[string]string
 // @Router /user/membership/me [get]
 func (h *MembershipHandler) GetMyMembership(ctx context.Context, req *userpb.GetMyMembershipRequest) (*userpb.GetMyMembershipResponse, error) {

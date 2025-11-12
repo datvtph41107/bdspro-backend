@@ -2,25 +2,33 @@ package handler
 
 import (
 	"context"
+	"strings"
 
 	_dto "common/domain/dto"
 	"hub/infra/mapper"
 	_usecase "hub/internal/usecase"
 	hubpb "pb/types/hub"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type VersionHandler struct {
 	hubpb.UnimplementedVersionServiceServer
 	versionUsecase _usecase.IVersionUsecase
+	apiKeyUsecase  _usecase.IApiKeyUsecase
 	versionMapper  *mapper.VersionMapper
 }
 
 func NewVersionHandler(
 	versionUsecase _usecase.IVersionUsecase,
+	apiKeyUsecase _usecase.IApiKeyUsecase,
 	versionMapper *mapper.VersionMapper,
 ) *VersionHandler {
 	return &VersionHandler{
 		versionUsecase: versionUsecase,
+		apiKeyUsecase:  apiKeyUsecase,
 		versionMapper:  versionMapper,
 	}
 }
@@ -145,6 +153,10 @@ func (h *VersionHandler) GetVersionList(ctx context.Context, req *hubpb.GetVersi
 // @Success 200 {object} hubpb.CheckAppUpdateResponse
 // @Router /v2/hub/app-bundle/update-check/{appName} [get]
 func (h *VersionHandler) CheckAppUpdate(ctx context.Context, req *hubpb.CheckAppUpdateRequest) (*hubpb.CheckAppUpdateResponse, error) {
+	if err := h.validateAPIKey(ctx); err != nil {
+		return nil, err
+	}
+
 	latest, needUpdate, forceUpdate, err := h.versionUsecase.CheckAppUpdate(ctx, req.GetAppName(), req.GetPlatform(), req.GetTargetVersion())
 	if err != nil {
 		return nil, err
@@ -160,4 +172,37 @@ func (h *VersionHandler) CheckAppUpdate(ctx context.Context, req *hubpb.CheckApp
 	}
 
 	return response, nil
+}
+
+func (h *VersionHandler) validateAPIKey(ctx context.Context) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return status.Error(codes.Unauthenticated, "missing metadata")
+	}
+
+	values := md.Get("x-api-key")
+	if len(values) == 0 {
+		return status.Error(codes.Unauthenticated, "missing api key")
+	}
+
+	apiKey := strings.TrimSpace(values[0])
+	if apiKey == "" {
+		return status.Error(codes.Unauthenticated, "missing api key")
+	}
+
+	_, errDTO := h.apiKeyUsecase.VerifyApiKey(ctx, apiKey)
+	if errDTO != nil {
+		switch errDTO.Code {
+		case 400:
+			return status.Error(codes.InvalidArgument, errDTO.Message)
+		case 401:
+			return status.Error(codes.Unauthenticated, errDTO.Message)
+		case 404:
+			return status.Error(codes.PermissionDenied, errDTO.Message)
+		default:
+			return status.Error(codes.Internal, errDTO.Message)
+		}
+	}
+
+	return nil
 }

@@ -84,7 +84,7 @@ type TotalSearchParser struct {
 	Ward          *domain.Region            `json:"ward"`
 	District      *domain.Region            `json:"district"`
 	Province      *domain.Region            `json:"province"`
-	DocTypes      []domain.DocTypeItem      `json:"docTypes"`
+	DocTypes      *domain.DocTypeItem       `json:"docTypes"`
 	PropertyTypes []domain.PropertyTypeItem `json:"propertyTypes"`
 	Amenities     []domain.AmenityItem      `json:"amenities"`
 	SalePrice     *float64                  `json:"salePrice"`

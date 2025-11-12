@@ -1,20 +1,32 @@
 package handler
 
 import (
+	"bdspro/infra/mapper"
 	"bdspro/internal/usecases"
+	shared_usecase "bdspro/internal/usecases/shared"
 	_enum "common/domain/enum"
 	"context"
+	"fmt"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 )
 
 type InternalHandler struct {
 	bdspropb.UnimplementedBdsproInternalServiceServer
 	dashboardUsecase *usecases.DashboardUsecase
+	productUsecase   *shared_usecase.ProductUsecase
+	productMapper    *mapper.ProductMapper
 }
 
-func NewInternalHandler(dashboardUsecase *usecases.DashboardUsecase) *InternalHandler {
+func NewInternalHandler(
+	dashboardUsecase *usecases.DashboardUsecase,
+	productUsecase *shared_usecase.ProductUsecase,
+	productMapper *mapper.ProductMapper,
+) *InternalHandler {
 	return &InternalHandler{
 		dashboardUsecase: dashboardUsecase,
+		productUsecase:   productUsecase,
+		productMapper:    productMapper,
 	}
 }
 
@@ -35,4 +47,16 @@ func (s *InternalHandler) GetCountByOwner(ctx context.Context, req *bdspropb.Get
 		TotalPost:    0, // Không có tin đăng nữa
 		TotalProject: counts.TotalProject,
 	}, nil
+}
+
+func (s *InternalHandler) GetSuggest(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.ProductV3Proto, error) {
+	fmt.Println("req: " + req.Text)
+	products, err := s.productUsecase.SuggestFields(ctx, req.Text)
+	if err != nil {
+		return nil, err
+	}
+
+	productResponse := s.productMapper.MapTotalSearchParserToProductV3Proto(products)
+
+	return productResponse, nil
 }

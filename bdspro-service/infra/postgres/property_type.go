@@ -3,6 +3,7 @@ package postgres
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	_dto "common/domain/dto"
 	"context"
 
 	"gorm.io/gorm"
@@ -37,16 +38,21 @@ func (r *PostgrePropertyType) InterText(text string, limit int) ([]uint64, error
 	return ids, err
 }
 
-func (r *PostgrePropertyType) InterTextToItem(text string, limit int) ([]domain.PropertyTypeItem, error) {
-	var ids []domain.PropertyTypeItem
+func (r *PostgrePropertyType) InterTextToItem(text string, limit int) (*_dto.ItemDTO, error) {
+	var item domain.PropertyTypeItem
 
 	query := r.DB.
 		Model(&domain.PropertyType{}).
 		Where("LOWER(?) LIKE '%' || LOWER(name) || '%'", text)
 
-	err := query.Limit(limit).Scan(&ids).Error
-
-	return ids, err
+	err := query.Limit(limit).First(&item).Error
+	if err != nil {
+		return nil, err
+	}
+	return &_dto.ItemDTO{
+		ID:   item.ID,
+		Name: item.Name,
+	}, nil
 }
 
 func (r *PostgrePropertyType) GetAllItem(c context.Context, dto *dto.PropertyTypeSearchDTO) ([]domain.PropertyTypeItem, error) {

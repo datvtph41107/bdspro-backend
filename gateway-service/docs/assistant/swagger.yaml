@@ -170,18 +170,90 @@ definitions:
       ward:
         type: string
     type: object
+  assistantpb.SuggestResponse:
+    properties:
+      modelName:
+        type: string
+      processingTime:
+        type: integer
+      product:
+        $ref: '#/definitions/sharepb.ProductV3Proto'
+    type: object
+  sharepb.AddressV3Proto:
+    properties:
+      detail:
+        type: string
+      districtId:
+        type: integer
+      districtName:
+        type: string
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      wardId:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  sharepb.ItemV3Proto:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  sharepb.ProductV3Proto:
+    properties:
+      address:
+        $ref: '#/definitions/sharepb.AddressV3Proto'
+      amenities:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      area:
+        type: number
+      bathroom:
+        type: integer
+      bedroom:
+        type: integer
+      description:
+        type: string
+      docType:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      floor:
+        type: integer
+      frontage:
+        type: number
+      furniture:
+        type: string
+      id:
+        type: integer
+      legalDoc:
+        type: string
+      name:
+        type: string
+      orientation:
+        type: string
+      propertyType:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      rentPrice:
+        type: number
+      salePrice:
+        type: number
+    type: object
 info:
   contact: {}
   description: API cho assistant service, bao gồm event-queue và các tiện ích khác
   title: Assistant API
   version: "1.0"
 paths:
-  /v2/assistant/analyze/product:
+  /v2/assistant/bdspro/product:
     post:
       consumes:
       - application/json
-      description: Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn
-        bản mô tả sản phẩm
+      description: Sử dụng AI để phân tích và trích xuất thông tin từ văn bản mô tả
+        sản phẩm
       parameters:
       - description: Nội dung cần phân tích
         in: body
@@ -195,7 +267,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+            $ref: '#/definitions/assistantpb.SuggestResponse'
       security:
       - BearerAuth: []
       summary: Phân tích văn bản sản phẩm BĐS sử dụng AI

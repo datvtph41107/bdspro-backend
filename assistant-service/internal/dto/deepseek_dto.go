@@ -41,10 +41,12 @@ type DeepseekUsage struct {
 
 // AddressInfo - Thông tin địa chỉ
 type AddressInfo struct {
-	Province *string `json:"province,omitempty"`
-	District *string `json:"district,omitempty"`
-	Ward     *string `json:"ward,omitempty"`
-	Detail   *string `json:"detail,omitempty"`
+	ProvinceID *uint64 `json:"provinceId,omitempty"`
+	Province   *string `json:"province,omitempty"`
+	District   *string `json:"district,omitempty"`
+	Ward       *string `json:"ward,omitempty"`
+	Detail     *string `json:"detail,omitempty"`
+	WardID     *uint64 `json:"wardId,omitempty"`
 }
 
 // PriceDataAnalysis - Thông tin giá cả

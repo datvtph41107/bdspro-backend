@@ -59,3 +59,14 @@ func (r *WardRepo) SearchByDistrictID(ctx context.Context, districtID string, ke
 	err := db.Where("district_id = ? AND name ILIKE ? AND deleted_at IS NULL", districtID, "%"+keyword+"%").Find(&wards).Error
 	return wards, err
 }
+
+// InferFromText infers ward from text
+func (r *WardRepo) InferFromText(ctx context.Context, text string) (*domain.Ward, error) {
+	var ward domain.Ward
+	db := r.db.GetDB(ctx)
+	err := db.Where("name ILIKE ? OR codename ILIKE ? OR short_codename ILIKE ?", "%"+text+"%", "%"+text+"%", "%"+text+"%").First(&ward).Error
+	if err != nil {
+		return nil, err
+	}
+	return &ward, nil
+}

@@ -102,6 +102,7 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 			Phone:    req.Phone,
 			Fullname: req.Fullname,
 		},
+		Fullname:        req.Fullname,
 		Otp:             req.Otp,
 		AuthID:          req.AuthId,
 		Version:         req.Version,

@@ -26,6 +26,8 @@ type ProfileUsecase struct {
 	ProfileRepo        repo.IProfileRepo
 	ProfessionRepo     repo.IProfessionRepo
 	CertificationRepo  repo.ICertificationRepo
+	PurposeUseRepo     repo.IPurposeUseRepo
+	MainAreaRepo       repo.IMainAreaRepo
 	FeedbackProvider   providers.FeedbackProvider
 	FriendRepo         providers.FriendProvider
 	FollowRepo         repo.IFollowRepo
@@ -36,6 +38,8 @@ type ProfileUsecase struct {
 func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	ProfessionRepo repo.IProfessionRepo,
 	CertificationRepo repo.ICertificationRepo,
+	PurposeUseRepo repo.IPurposeUseRepo,
+	MainAreaRepo repo.IMainAreaRepo,
 	FeedbackProvider providers.FeedbackProvider,
 	FriendRepo providers.FriendProvider,
 	FollowRepo repo.IFollowRepo,
@@ -48,6 +52,8 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 		ProfileRepo:        ProfileRepo,
 		ProfessionRepo:     ProfessionRepo,
 		CertificationRepo:  CertificationRepo,
+		PurposeUseRepo:     PurposeUseRepo,
+		MainAreaRepo:       MainAreaRepo,
 		FeedbackProvider:   FeedbackProvider,
 		FriendRepo:         FriendRepo,
 		FollowRepo:         FollowRepo,
@@ -64,6 +70,12 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 	userInfo.Professions = professions
 	certifications, _ := s.CertificationRepo.ListItemByProfileID(c, id)
 	userInfo.Certifications = certifications
+	if s.PurposeUseRepo != nil {
+		purposeUses, _ := s.PurposeUseRepo.ListByProfileID(c, id)
+		userInfo.PurposeUses = purposeUses
+	}
+	areas, _ := s.MainAreaRepo.ListByProfileID(c, id)
+	userInfo.MainAreas = areas
 
 	// Lấy thống kê rating từ feedback service
 	rateStatsResp, err := s.FeedbackProvider.GetUserRateStats(c, id)
@@ -142,6 +154,25 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 		return nil, err
 	}
 
+	if s.PurposeUseRepo != nil && info.PurposeUseIDs != nil {
+		if err := s.PurposeUseRepo.AssignToProfile(c, profileId, info.PurposeUseIDs); err != nil {
+			return nil, err
+		}
+		if purposeUses, err := s.PurposeUseRepo.ListByProfileID(c, profileId); err == nil {
+			infoEntity.PurposeUses = purposeUses
+		}
+	}
+
+	if err := s.MainAreaRepo.ReplaceProfileAreas(c, profileId, info.MainAreaIds); err != nil {
+		return nil, err
+	}
+
+	if areas, err := s.MainAreaRepo.ListByProfileID(c, profileId); err == nil {
+		infoEntity.MainAreas = areas
+	} else {
+		return nil, err
+	}
+
 	return infoEntity, nil
 }
 
@@ -176,6 +207,12 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 		infoEntity.Professions = professions
 		certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
 		infoEntity.Certifications = certifications
+		if s.PurposeUseRepo != nil {
+			purposeUses, _ := s.PurposeUseRepo.ListByProfileID(c, profileId)
+			infoEntity.PurposeUses = purposeUses
+		}
+		areas, _ := s.MainAreaRepo.ListByProfileID(c, profileId)
+		infoEntity.MainAreas = areas
 	}
 
 	// Lấy thống kê rating từ feedback service
@@ -402,6 +439,65 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *dto.UserInfoRequest) 
 	err := s.ProfileRepo.UpdatePerson(c, profileId, req)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// QuickSetup thiết lập nhanh vai trò, khu vực và mục đích sử dụng cho hồ sơ người dùng
+func (s *ProfileUsecase) QuickSetup(ctx context.Context, req *_dto.UserV3DTO) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	if !enums.ERoleRealEstate(req.RoleRealEstate).IsValid() {
+		return _errors.ReturnError(400, "roleRealEstate không hợp lệ")
+	}
+
+	if err := s.ProfileRepo.PatchProfileV3(ctx, profileId, req); err != nil {
+		return err
+	}
+
+	if s.PurposeUseRepo != nil {
+		if err := s.PurposeUseRepo.AssignToProfile(ctx, profileId, req.PurposeUseIDs); err != nil {
+			return err
+		}
+	}
+
+	if s.MainAreaRepo != nil {
+		mainAreaIDs := make([]uint64, 0, len(req.MainAreaIds))
+		mainAreaIDSet := make(map[uint64]struct{}, len(req.MainAreaIds))
+
+		for _, id := range req.MainAreaIds {
+			if id == 0 {
+				continue
+			}
+			if _, exists := mainAreaIDSet[id]; exists {
+				continue
+			}
+			mainAreaIDSet[id] = struct{}{}
+			mainAreaIDs = append(mainAreaIDs, id)
+		}
+
+		if len(req.MainAreaNews) > 0 {
+			entities := make([]*models.MainAreaEntity, 0)
+			for _, item := range req.MainAreaNews {
+				entities = append(entities, &models.MainAreaEntity{
+					Name: item.Name,
+				})
+			}
+
+			if err := s.MainAreaRepo.CreateBatch(ctx, entities); err != nil {
+				return err
+			}
+			for _, item := range entities {
+				if item.ID > 0 {
+					mainAreaIDs = append(mainAreaIDs, item.ID)
+				}
+			}
+		}
+
+		if err := s.MainAreaRepo.ReplaceProfileAreas(ctx, profileId, mainAreaIDs); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -985,28 +985,28 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEnt
 	smsChannel = "sms"
 
 	// Gửi OTP qua ZNS
-	// if s.ZnsProvider != nil {
-	// 	result, err := s.ZnsProvider.SendOTPZNS(c, phone, otp)
-	// 	if err != nil {
-	// 		log.Printf("⚠️ [ZNS] Lỗi khi gửi OTP qua ZNS cho phone %s: %v", phone, err)
-	// 		// ZNS lỗi → smsChannel = "sms"
-	// 		smsChannel = "sms"
-	// 	} else {
-	// 		if success, ok := result["success"].(bool); ok && success {
-	// 			log.Printf("✅ [ZNS] Đã gửi OTP thành công cho phone %s", phone)
-	// 			// ZNS thành công → smsChannel = "zalo"
-	// 			smsChannel = "zalo"
-	// 		} else {
-	// 			log.Printf("⚠️ [ZNS] Gửi OTP thất bại cho phone %s: %v", phone, result["message"])
-	// 			// ZNS thất bại → smsChannel = "sms"
-	// 			smsChannel = "sms"
-	// 		}
-	// 	}
-	// } else {
-	// 	log.Printf("⚠️ [ZNS] ZnsProvider chưa được khởi tạo, không gửi OTP qua ZNS")
-	// 	// Không có ZNS provider → smsChannel = "sms"
-	// 	smsChannel = "sms"
-	// }
+	if s.ZnsProvider != nil {
+		result, err := s.ZnsProvider.SendOTPZNS(c, phone, otp)
+		if err != nil {
+			log.Printf("⚠️ [ZNS] Lỗi khi gửi OTP qua ZNS cho phone %s: %v", phone, err)
+			// ZNS lỗi → smsChannel = "sms"
+			smsChannel = "sms"
+		} else {
+			if success, ok := result["success"].(bool); ok && success {
+				log.Printf("✅ [ZNS] Đã gửi OTP thành công cho phone %s", phone)
+				// ZNS thành công → smsChannel = "zalo"
+				smsChannel = "zalo"
+			} else {
+				log.Printf("⚠️ [ZNS] Gửi OTP thất bại cho phone %s: %v", phone, result["message"])
+				// ZNS thất bại → smsChannel = "sms"
+				smsChannel = "sms"
+			}
+		}
+	} else {
+		log.Printf("⚠️ [ZNS] ZnsProvider chưa được khởi tạo, không gửi OTP qua ZNS")
+		// Không có ZNS provider → smsChannel = "sms"
+		smsChannel = "sms"
+	}
 
 	if smsChannel == "sms" && s.SMSProvider != nil {
 		_, err := s.SMSProvider.SendSMS(c, phone, "BDSP", "Mã OTP của bạn là: "+otp)

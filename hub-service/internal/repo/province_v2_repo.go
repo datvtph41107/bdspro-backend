@@ -23,4 +23,6 @@ type IProvinceV2Repo interface {
 
 	// Search searches provinces by keyword
 	Search(ctx context.Context, keyword string, page, size int) ([]domain.ProvinceV2, int64, error)
+
+	InferFromText(ctx context.Context, text string) (*domain.ProvinceV2, error)
 }

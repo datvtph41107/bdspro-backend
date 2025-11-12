@@ -434,6 +434,9 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 	if req.Phone2 != "" {
 		updates["phone2"] = req.Phone2
 	}
+	if req.RoleRealEstate != 0 {
+		updates["role_real_estate"] = req.RoleRealEstate
+	}
 
 	// Nếu không có gì để update
 	if len(updates) == 0 {
@@ -446,4 +449,17 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 		Updates(updates).Error
 
 	return err
+}
+
+func (r *ProfilePostgres) PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error {
+	updates := make(map[string]interface{})
+
+	if req.RoleRealEstate != 0 {
+		updates["role_real_estate"] = req.RoleRealEstate
+	}
+
+	return r.DB.WithContext(c).
+		Model(&models.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileId).
+		Updates(updates).Error
 }

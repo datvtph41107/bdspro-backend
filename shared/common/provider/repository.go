@@ -44,6 +44,10 @@ func (r *CrudRepo[T]) Create(c context.Context, entity *T) error {
 	return err
 }
 
+func (r *CrudRepo[T]) CreateBatch(c context.Context, entities []*T) error {
+	return r.GetDB(c).Create(entities).Error
+}
+
 // Cập nhật bản ghi
 func (r *CrudRepo[T]) Update(c context.Context, id uint64, entity *T) error {
 	if err := r.implements.BeforeSave(c, &id, entity); err != nil {

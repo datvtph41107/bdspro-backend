@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package userpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/user;userpb";
+
+service MainAreaService {
+    rpc GetMainAreas(sharepb.IdRequest) returns (MainAreaPage) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/main-area"
+        };
+    }
+
+    rpc CreateMainArea(MainArea) returns (MainArea) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/main-area"
+            body: "*"
+        };
+    }
+
+    rpc UpdateMainArea(MainArea) returns (MainArea) {
+        option (google.api.http) = {
+            put: "/v2/user/admin/main-area/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteMainArea(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/user/admin/main-area/{id}"
+        };
+    }
+
+    rpc GetMainAreaItems(sharepb.RequestV3Proto) returns (sharepb.ItemV3PageProto) {
+        option (google.api.http) = {
+            get: "/v2/user/main-area"
+        };
+    }
+}
+
+message MainArea {
+    uint64 id = 1;
+    string name = 2;
+    optional string description = 3;
+    uint64 numberProfile = 4;
+    string createdAt = 5;
+    string updatedAt = 6;
+}
+
+message MainAreaPage {
+    repeated MainArea data = 1;
+    uint32 total = 2;
+}

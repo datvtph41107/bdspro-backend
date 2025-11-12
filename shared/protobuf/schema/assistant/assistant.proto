@@ -3,14 +3,17 @@ syntax = "proto3";
 package assistantpb;
 
 import "google/api/annotations.proto";
+import "bdspro/common.proto";
+import "bdspro/product.proto";
+import "shared/v3.proto";
 
 option go_package = "pb/types/assistant;assistantpb";
 
 service AssistantService {
   // Phân tích văn bản sản phẩm BĐS sử dụng AI
-  rpc AnalyzeProductText (AnalyzeRequest) returns (AnalyzeResponse) {
+  rpc AnalyzeProductText (AnalyzeRequest) returns (SuggestResponse) {
     option (google.api.http) = {
-      post: "/v2/assistant/analyze/product"
+      post: "/v2/assistant/bdspro/product"
       body: "*"
     };
   };
@@ -229,3 +232,8 @@ message ErrorResponse {
   repeated string details = 3;
 }
 
+message SuggestResponse {
+  string modelName = 1;
+  int64 processingTime = 2;
+  sharepb.ProductV3Proto product = 3;
+}

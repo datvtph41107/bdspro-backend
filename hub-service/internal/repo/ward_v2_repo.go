@@ -26,4 +26,6 @@ type IWardV2Repo interface {
 
 	// SearchLocation searches wards with province info by joining two tables
 	SearchLocation(ctx context.Context, keyword string, page, size int) ([]domain.LocationSearchResultV2, int64, error)
+
+	InferFromText(ctx context.Context, text string) (*domain.WardV2, error)
 }

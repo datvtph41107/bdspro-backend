@@ -118,6 +118,11 @@ case "$1" in
     path_jar=main
     payload_build=appointment
     ;;
+  "assistant")
+    service_path=assistant-service
+    path_jar=main
+    payload_build=assistant
+    ;;  
   "org")
     service_path=organization-service
     path_jar=main
@@ -191,18 +196,15 @@ fi
 if [ "$1" = "chat" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
-if [ "$1" = "relay" ]; then
-  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
-if [ "$1" = "org" ]; then
-  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
-if [ "$1" = "payment" ]; then
-  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
-if [ "$1" = "appointment" ]; then
-  scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
+CONFIG_COPY_SERVICES=("relay" "org" "payment" "appointment" "assistant")
+for service in "${CONFIG_COPY_SERVICES[@]}"; do
+  if [ "$1" = "$service" ]; then
+    scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+    break
+  fi
+done
+
+scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
 if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}

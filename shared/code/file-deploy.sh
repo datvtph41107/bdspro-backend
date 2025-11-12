@@ -2,10 +2,10 @@
 start=$(date +%s)
 
 # Kiểm tra xem có tham số đầu vào không
-if [ -z "$1" ]; then
-  echo "Usage: $0 <project_name>"
-  exit 1
-fi
+# if [ -z "$1" ]; then
+#   echo "Usage: $0 <project_name>"
+#   exit 1
+# fi
 
 # Cấu hình thông tin server
 REMOTE_USER="root"
@@ -16,20 +16,9 @@ REMOTE_PATH=/root/$WORKSPACE_NAME
 cd ../..
 
 # Chọn thư mục dựa vào tham số đầu tiên
-service_path=/common
-path_jar=''
-service_name=$1
-payload_build=$1
-case "$1" in
-  "file")
-    service_path=file-service
-    path_jar=main
-    ;;
-  *)
-    echo "Tham số không hợp lệ."
-    exit 1
-    ;;
-esac
+service_path=file-service
+path_jar=main
+payload_build=file
 
 cd $service_path
 REMOTE_DIR=${REMOTE_PATH}/${service_path}

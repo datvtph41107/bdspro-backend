@@ -172,3 +172,33 @@ func (r *WardV2Repo) SearchLocation(ctx context.Context, keyword string, page, s
 
 	return results, total, nil
 }
+
+// InferFromText infers ward from text
+func (r *WardV2Repo) InferFromText(ctx context.Context, text string) (*domain.WardV2, error) {
+	var result struct {
+		domain.WardV2
+		ProvinceName string `gorm:"column:province_name" json:"provinceName"`
+	}
+
+	db := r.db.GetDB(ctx)
+	query := `
+		SELECT 
+			w.*,
+			p.name AS province_name
+		FROM ward_v2 w
+		INNER JOIN province_v2 p ON w.province_id = p.id
+		WHERE w.deleted_at IS NULL 
+			AND p.deleted_at IS NULL
+			AND (
+				LOWER(?) LIKE '%' || LOWER(w.name) || '%'
+				OR LOWER(w.name) LIKE '%' || LOWER(?) || '%'
+			)
+		LIMIT 1
+	`
+	err := db.Raw(query, text, text).Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	result.WardV2.ProvinceName = result.ProvinceName
+	return &result.WardV2, nil
+}

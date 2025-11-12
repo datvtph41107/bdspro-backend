@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"hub/config"
+	hubMiddleware "hub/infra/middleware"
 	"hub/wire"
 	"log"
 	"net"
@@ -37,6 +38,7 @@ var GrpcCmd = &cobra.Command{
 		}
 		interceptors := grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			hubMiddleware.NewAPIKeyUnaryServerInterceptor(app.ApiKeyUsecase),
 			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)
 
@@ -56,6 +58,7 @@ var GrpcCmd = &cobra.Command{
 		hubpb.RegisterSystemConfigServiceServer(s, app.SystemConfigHandler)
 		hubpb.RegisterFAQServiceServer(s, app.FAQHandler)
 		hubpb.RegisterVersionServiceServer(s, app.VersionHandler)
+		hubpb.RegisterApiKeyServiceServer(s, app.ApiKeyHandler)
 
 		log.Printf("Listen: %v", port)
 

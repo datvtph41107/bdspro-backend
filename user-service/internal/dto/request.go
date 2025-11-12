@@ -96,6 +96,15 @@ type UserInfoRequest struct {
 	CertificationRemoveIds []uint64                 `json:"certificationRemoveIds,omitempty"`
 	Professions            []ProfessionBatchSave    `json:"professions,omitempty"`
 	ProfessionRemoveIds    []uint64                 `json:"professionRemoveIds,omitempty"`
+	PurposeUseIDs          []uint64                 `json:"purposeUseIds,omitempty"`
+	MainAreaIds            []uint64                 `json:"mainAreaIds,omitempty"`
+}
+
+type QuickSetupRequest struct {
+	RoleRealEstate enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
+	MainAreaIds    []uint64              `json:"mainAreaIds,omitempty"`
+	PurposeUseIDs  []uint64              `json:"purposeUseIds,omitempty"`
+	MainAreaNews   []_dto.ItemDTO        `json:"mainAreaNews,omitempty"`
 }
 
 type ProfessionBatchSave struct {

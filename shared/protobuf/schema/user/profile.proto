@@ -4,6 +4,7 @@ package userpb;
 import "google/api/annotations.proto";
 import "shared/common.proto";
 import "auth/role.proto";
+import "shared/v3.proto";
 
 option go_package = "pb/types/user;userpb";
 
@@ -34,6 +35,12 @@ service ProfileService {
     rpc SetPerson(SetPersonRequest) returns (sharepb.Empty) {
         option (google.api.http) = {
             put: "/v2/user/profile/set-person"
+            body: "*"
+        };
+    }
+    rpc QuickSetup(sharepb.UserV3Proto) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/profile/quick-setup"
             body: "*"
         };
     }
@@ -113,6 +120,8 @@ message ProfilePublicInfo {
     uint32 gender = 39;
     optional string provinceName = 40;
     optional string wardName = 41;
+    repeated PurposeUseItem purposeUses = 43;
+    repeated MainAreaItem mainAreas = 42;
 }
 
 message RateStats {
@@ -183,6 +192,8 @@ message SetInfoRequest {
     repeated uint64 certificationRemoveIds = 29;
     repeated ProfessionItem professions = 30;
     repeated uint64 professionRemoveIds = 31;
+    repeated uint64 mainAreaIds = 32;
+    repeated uint64 purposeUseIds = 33;
 }
 
 message SetPersonRequest {
@@ -193,6 +204,13 @@ message SetPersonRequest {
     optional string email = 5;
     optional uint64 provinceId = 6;
     optional uint64 wardId = 7;
+}
+
+message QuickSetupRequest {
+    optional uint64 roleId = 1;
+    repeated uint64 mainAreaIds = 2;
+    repeated uint64 purposeUseIds = 3;
+    repeated ItemV3Proto mainAreaNews = 4;
 }
 
 message CertificationItem {
@@ -211,6 +229,18 @@ message ProfessionItem {
     string issuer = 3;
     string issueDate = 4;
     uint32 verifiedStatus = 5;
+}
+
+message MainAreaItem {
+    uint64 id = 1;
+    string name = 2;
+    optional string description = 3;
+}
+
+message PurposeUseItem {
+    uint64 id = 1;
+    string name = 2;
+    optional string description = 3;
 }
 
 message UserSearchItem {

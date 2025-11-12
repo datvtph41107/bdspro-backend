@@ -159,7 +159,7 @@ func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *userpb.AdminProfile
 // @Tags Admin
 // @Accept json
 // @Produce json
-// @Param body body shared.IdRequest true "Thông tin xóa admin"
+// @Param body body sharepb.IdRequest true "Thông tin xóa admin"
 // @Router /admin/delete [delete]
 func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*userpb.DeleteAdminResponse, error) {
 	err := h.AdminUsecase.DeleteAdmin(ctx, req.Id)

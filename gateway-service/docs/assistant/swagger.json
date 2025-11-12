@@ -7,14 +7,14 @@
         "version": "1.0"
     },
     "paths": {
-        "/v2/assistant/analyze/product": {
+        "/v2/assistant/bdspro/product": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm",
+                "description": "Sử dụng AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm",
                 "consumes": [
                     "application/json"
                 ],
@@ -40,7 +40,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/assistantpb.AnalyzeResponse"
+                            "$ref": "#/definitions/assistantpb.SuggestResponse"
                         }
                     }
                 }
@@ -753,6 +753,116 @@
                 },
                 "ward": {
                     "type": "string"
+                }
+            }
+        },
+        "assistantpb.SuggestResponse": {
+            "type": "object",
+            "properties": {
+                "modelName": {
+                    "type": "string"
+                },
+                "processingTime": {
+                    "type": "integer"
+                },
+                "product": {
+                    "$ref": "#/definitions/sharepb.ProductV3Proto"
+                }
+            }
+        },
+        "sharepb.AddressV3Proto": {
+            "type": "object",
+            "properties": {
+                "detail": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.ItemV3Proto": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.ProductV3Proto": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/sharepb.AddressV3Proto"
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "area": {
+                    "type": "number"
+                },
+                "bathroom": {
+                    "type": "integer"
+                },
+                "bedroom": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "docType": {
+                    "$ref": "#/definitions/sharepb.ItemV3Proto"
+                },
+                "floor": {
+                    "type": "integer"
+                },
+                "frontage": {
+                    "type": "number"
+                },
+                "furniture": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "legalDoc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orientation": {
+                    "type": "string"
+                },
+                "propertyType": {
+                    "$ref": "#/definitions/sharepb.ItemV3Proto"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "salePrice": {
+                    "type": "number"
                 }
             }
         }

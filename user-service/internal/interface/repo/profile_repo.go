@@ -23,4 +23,6 @@ type IProfileRepo interface {
 	UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error
 	GetByPhone(phone string) (*models.UserProfileEntity, error)
 	UpdatePerson(c context.Context, profileId uint64, req *dto.UserInfoRequest) error
+
+	PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
 }

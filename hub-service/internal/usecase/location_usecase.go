@@ -4,6 +4,7 @@ import (
 	"context"
 	"hub/internal/domain"
 	_repo "hub/internal/repo"
+	"strings"
 )
 
 // LocationInfo represents a unified location (Province, District, or Ward)
@@ -22,6 +23,7 @@ type ILocationUsecase interface {
 	SearchLocation(ctx context.Context, keyword string) ([]domain.LocationSearchResult, error)
 	GetLocationsByIds(ctx context.Context, ids []uint64) ([]LocationInfo, error)
 	GetAddressV2ByIds(ctx context.Context, provinceId, wardId *uint64) (*AddressV2Info, error)
+	InferAddressFromText(ctx context.Context, text string) (*AddressV2Info, error)
 }
 
 type AddressV2Info struct {
@@ -188,6 +190,34 @@ func (u *LocationUsecase) GetAddressV2ByIds(ctx context.Context, provinceId, war
 		fullAddress += result.ProvinceType + " " + result.ProvinceName
 	}
 	result.FullAddress = fullAddress
+
+	return result, nil
+}
+
+// InferAddressFromText lấy thông tin đầy đủ của province và ward theo text
+func (u *LocationUsecase) InferAddressFromText(ctx context.Context, text string) (*AddressV2Info, error) {
+
+	words := strings.ToLower(text)
+
+	// Tìm province và ward theo text
+	province, _ := u.provinceV2Repo.InferFromText(ctx, words)
+	ward, _ := u.wardV2Repo.InferFromText(ctx, words)
+
+	result := &AddressV2Info{}
+
+	if province != nil {
+		result.ProvinceID = &province.ID
+		result.ProvinceName = province.Name
+	}
+
+	if ward != nil {
+		result.WardID = &ward.ID
+		result.WardName = ward.Name
+		if ward.ProvinceName != "" {
+			result.ProvinceName = ward.ProvinceName
+			result.ProvinceID = &ward.ProvinceID
+		}
+	}
 
 	return result, nil
 }

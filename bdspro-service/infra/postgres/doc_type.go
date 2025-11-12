@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"common/case/crud"
 	_db "common/db"
+	_dto "common/domain/dto"
 	"context"
 )
 
@@ -60,14 +61,19 @@ func (r *PostgreDocType) InterText(c context.Context, text string, limit int) ([
 	return ids, err
 }
 
-func (r *PostgreDocType) InterTextToItem(c context.Context, text string, limit int) ([]domain.DocTypeItem, error) {
-	var ids []domain.DocTypeItem
+func (r *PostgreDocType) InterTextToItem(c context.Context, text string, limit int) (*_dto.ItemDTO, error) {
+	var item domain.DocType
 
 	query := r.GetDB(c).
 		Model(&domain.DocType{}).
 		Where("LOWER(?) LIKE '%' || LOWER(name) || '%'", text)
 
-	err := query.Limit(limit).Scan(&ids).Error
-
-	return ids, err
+	err := query.Limit(limit).First(&item).Error
+	if err != nil {
+		return nil, err
+	}
+	return &_dto.ItemDTO{
+		ID:   item.ID,
+		Name: item.Name,
+	}, nil
 }

@@ -21,6 +21,10 @@ type HubProperties struct {
 		ListPermit          []string `mapstructure:"listPermit"`
 		AuthorizationHeader string   `mapstructure:"authorizationHeader"`
 	} `mapstructure:"jwt"`
+	Security struct {
+		APIKey           string   `mapstructure:"api_key"`
+		ProtectedMethods []string `mapstructure:"protected_methods"`
+	} `mapstructure:"security"`
 }
 
 var AppProperties HubProperties

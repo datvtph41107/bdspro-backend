@@ -123,6 +123,38 @@
         ]
       }
     },
+    "/v2/user/profile/quick-setup": {
+      "post": {
+        "operationId": "ProfileService_QuickSetup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sharepbUserV3Proto"
+            }
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/search/public": {
       "get": {
         "operationId": "ProfileService_SearchProfilePublic",
@@ -297,6 +329,18 @@
         }
       }
     },
+    "sharepbItemV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "sharepbProfileItem": {
       "type": "object",
       "properties": {
@@ -321,6 +365,46 @@
         },
         "joinedAt": {
           "type": "string"
+        }
+      }
+    },
+    "sharepbUserV3Proto": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "roleRealEstate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mainAreaIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "purposeUseIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "mainAreaNews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
         }
       }
     },
@@ -436,6 +520,21 @@
           "type": "string"
         },
         "avatar": {
+          "type": "string"
+        }
+      }
+    },
+    "userpbMainAreaItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
           "type": "string"
         }
       }
@@ -602,6 +701,35 @@
         },
         "wardName": {
           "type": "string"
+        },
+        "purposeUses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbPurposeUseItem"
+          }
+        },
+        "mainAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbMainAreaItem"
+          }
+        }
+      }
+    },
+    "userpbPurposeUseItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -766,6 +894,20 @@
           }
         },
         "professionRemoveIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "mainAreaIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "purposeUseIds": {
           "type": "array",
           "items": {
             "type": "string",

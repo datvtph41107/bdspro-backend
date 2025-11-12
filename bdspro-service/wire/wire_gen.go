@@ -139,7 +139,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	regionMapper := mapper.NewRegionMapper()
 	adminRegionHandler := handler.NewAdminRegionHandler(regionUsecase, regionMapper)
 	dashboardUsecase := usecases.NewDashboardUsecase(gormUserProductRepo, postgreAsset, postgreProject, gormPostRepo)
-	internalHandler := handler.NewInternalHandler(dashboardUsecase)
+	internalHandler := handler.NewInternalHandler(dashboardUsecase, productUsecase, productMapper)
 	assetDashboardStatsJob := job.NewAssetDashboardStatsJob(postgreAsset, db)
 	productDashboardStatsJob := job.NewProductDashboardStatsJob(gormUserProductRepo, db)
 	postDashboardStatsJob := job.NewPostDashboardStatsJob(gormPostRepo, db)

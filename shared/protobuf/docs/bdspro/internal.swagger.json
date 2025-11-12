@@ -66,6 +66,78 @@
         }
       }
     },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbHouseInfoV3Proto": {
+      "type": "object",
+      "properties": {
+        "numBedroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFront": {
+          "type": "number",
+          "format": "float"
+        },
+        "numCarPark": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "furniture": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbItemV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "sharepbOwnerOf": {
       "type": "string",
       "enum": [
@@ -75,6 +147,89 @@
         "organization"
       ],
       "default": "unknown"
+    },
+    "sharepbPriceV3Proto": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "float"
+        },
+        "saleCommission": {
+          "type": "number",
+          "format": "float"
+        },
+        "saleCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "float"
+        },
+        "rentCommission": {
+          "type": "number",
+          "format": "float"
+        },
+        "rentCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentPaymentCycle": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbProductV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "propertyType": {
+          "$ref": "#/definitions/sharepbItemV3Proto"
+        },
+        "docType": {
+          "$ref": "#/definitions/sharepbItemV3Proto"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "address": {
+          "$ref": "#/definitions/sharepbAddressV3Proto"
+        },
+        "area": {
+          "type": "number",
+          "format": "float"
+        },
+        "houseInfo": {
+          "$ref": "#/definitions/sharepbHouseInfoV3Proto"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/sharepbItemV3Proto"
+        },
+        "priceData": {
+          "$ref": "#/definitions/sharepbPriceV3Proto"
+        },
+        "sourceType": {
+          "$ref": "#/definitions/sharepbItemV3Proto"
+        }
+      }
     }
   }
 }

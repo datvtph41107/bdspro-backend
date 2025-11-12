@@ -1,7 +1,9 @@
 package mapper
 
 import (
+	_dto "common/domain/dto"
 	_utils "common/utils"
+	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"user/enums"
 	"user/internal/dto"
@@ -50,6 +52,8 @@ func (m *ProfileMapper) SetProfileToDTO(profile *userpb.SetInfoRequest) *dto.Use
 
 		CertificationRemoveIds: profile.CertificationRemoveIds,
 		ProfessionRemoveIds:    profile.ProfessionRemoveIds,
+		PurposeUseIDs:          profile.PurposeUseIds,
+		MainAreaIds:            profile.MainAreaIds,
 	}
 
 	for _, certification := range profile.Certifications {
@@ -108,6 +112,17 @@ func (m *ProfileMapper) ProfessionToPb(profession *models.ProfessionEntity) *use
 	}
 }
 
+func (m *ProfileMapper) PurposeUseToPb(purpose *models.PurposeUseEntity) *userpb.PurposeUseItem {
+	result := &userpb.PurposeUseItem{
+		Id:   purpose.ID,
+		Name: purpose.Name,
+	}
+	if purpose.Description != "" {
+		result.Description = &purpose.Description
+	}
+	return result
+}
+
 func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *userpb.ProfilePublicInfo {
 	result := &userpb.ProfilePublicInfo{
 		ProfileId:         profile.ProfileID,
@@ -153,6 +168,22 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *u
 		result.Professions = append(result.Professions, m.ProfessionToPb(&profession))
 	}
 
+	for _, purpose := range profile.PurposeUses {
+		result.PurposeUses = append(result.PurposeUses, m.PurposeUseToPb(&purpose))
+	}
+
+	for _, area := range profile.MainAreas {
+		item := &userpb.MainAreaItem{
+			Id:   area.ID,
+			Name: area.Name,
+		}
+		if area.Description != "" {
+			desc := area.Description
+			item.Description = &desc
+		}
+		result.MainAreas = append(result.MainAreas, item)
+	}
+
 	// if profile.RateStats != nil {
 	// 	result.RateStats = m.RateMapper.EntityToPbRateStats(profile.RateStats)
 	// }
@@ -195,5 +226,28 @@ func (m *ProfileMapper) SetPersonToDTO(req *userpb.SetPersonRequest) *dto.UserIn
 	if req.WardId != nil {
 		result.WardID = req.WardId
 	}
+	return result
+}
+
+func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
+	result := &_dto.UserV3DTO{
+		ProfileID:      req.ProfileId,
+		FullName:       req.FullName,
+		Avatar:         req.Avatar,
+		RoleRealEstate: req.RoleRealEstate,
+		MainAreaIds:    req.MainAreaIds,
+		PurposeUseIDs:  req.PurposeUseIds,
+		// MainAreaNews:   req.MainAreaNews,
+	}
+
+	if len(req.MainAreaNews) > 0 {
+		for _, news := range req.MainAreaNews {
+			result.MainAreaNews = append(result.MainAreaNews, _dto.ItemDTO{
+				ID:   news.Id,
+				Name: news.Name,
+			})
+		}
+	}
+
 	return result
 }

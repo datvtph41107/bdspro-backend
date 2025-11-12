@@ -3,6 +3,7 @@ package client
 import (
 	"assistant/internal/dto"
 	"bytes"
+	_dto "common/domain/dto"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -114,7 +115,7 @@ func NewGeminiClient() *GeminiClient {
 }
 
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
-func (c *GeminiClient) AnalyzeProductText(ctx context.Context, content string) (*dto.ProductAnalysisResult, error) {
+func (c *GeminiClient) AnalyzeProductText(ctx context.Context, content string) (*_dto.ProductV3DTO, error) {
 	systemPrompt := `Bạn là trợ lý AI chuyên phân tích thông tin bất động sản tiếng Việt. 
 Nhiệm vụ của bạn là trích xuất thông tin sản phẩm bất động sản từ văn bản người dùng cung cấp.
 
@@ -122,23 +123,24 @@ Hãy phân tích và trả về JSON với cấu trúc sau:
 {
   "name": "Tên/tiêu đề sản phẩm (bắt buộc)",
   "area": diện tích (số float, đơn vị m2, bắt buộc),
-  "transactionType": 10 hoặc 20 (10=Bán, 20=Cho thuê),
+  "transactionType": {"name": "Bán/Cho thuê", "id": 10/20},
   "googleMapLink": "Link Google Maps nếu có",
   "address": {
-    "province": "Tỉnh/Thành phố",
-    "district": "Quận/Huyện",
-    "ward": "Phường/Xã",
+    "provinceName": "Tỉnh/Thành phố",
+    "districtName": "Quận/Huyện",
+    "wardName": "Phường/Xã",
     "detail": "Địa chỉ chi tiết"
   },
-  "propertyType": "Loại BĐS (nhà riêng, chung cư, đất nền, biệt thự, ...)",
-  "legalDoc": "Giấy tờ pháp lý (sổ đỏ/hồng, sổ chung, ...)",
+  "sourceType": {"name": "Loại nguồn (Chủ đất, Môi giới, Sàn, Khác)", "id": 10/20/30/40},
+  "propertyType": {"name":"Loại BĐS (nhà riêng, chung cư, đất nền, biệt thự, ...)"},
+  "legalDoc": {"name":"Giấy tờ pháp lý (sổ đỏ/hồng, sổ chung, ...)"},
   "priceData": {
     "salePrice": giá bán (số float, VND),
     "saleCommission": hoa hồng bán (số float, VND),
     "deposite": tiền đặt cọc (số float, VND),
     "rentPrice": giá thuê (số float, VND/tháng),
     "rentCommission": hoa hồng thuê (số float, VND),
-    "rentPaymentCycle": chu kỳ thanh toán thuê (số: 1=tháng, 3=quý, 6=6 tháng, 12=năm),
+    "rentPaymentCycle": Chu kỳ thanh toán (1,2,3),
     "currency": "VND"
   },
   "houseInfo": {
@@ -156,7 +158,7 @@ Hãy phân tích và trả về JSON với cấu trúc sau:
     "internalNote": "Ghi chú nội bộ",
     "targetProfit": lợi nhuận mục tiêu (số float, VND)
   },
-  "amenities": ["tiện ích 1", "tiện ích 2", "..."]
+  "amenities": [{"name": "tiện ích 1", "id": 1}, {"name": "tiện ích 2", "id": 2}]
 }
 
 Lưu ý:
@@ -182,7 +184,7 @@ Lưu ý:
 	contentStr := response.Candidates[0].Content.Parts[0].Text
 	contentStr = cleanJSONFromMarkdownGemini(contentStr)
 
-	var result dto.ProductAnalysisResult
+	var result _dto.ProductV3DTO
 	if err := json.Unmarshal([]byte(contentStr), &result); err != nil {
 		return nil, fmt.Errorf("failed to parse product analysis: %w, content: %s", err, contentStr)
 	}

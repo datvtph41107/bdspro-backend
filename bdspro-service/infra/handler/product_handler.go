@@ -448,15 +448,16 @@ func (s *ProductHandler) SaleVisibility(ctx context.Context, req *bdspropb.Visib
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/suggest [post]
 func (s *ProductHandler) Suggest(ctx context.Context, req *bdspropb.SuggestRequest) (*bdspropb.ProductResponse, error) {
-	products, err := s.UC.SuggestFields(ctx, req.Content)
-	if err != nil {
-		return nil, err
-	}
+	// products, err := s.UC.SuggestFields(ctx, req.Content)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// Tạo ProductResponse từ TotalSearchParser
-	productResponse := s.mapTotalSearchParserToResponse(products)
+	// // Tạo ProductResponse từ TotalSearchParser
+	// productResponse := s.ProductMapper.MapTotalSearchParserToResponse(products)
 
-	return productResponse, nil
+	// return productResponse, nil
+	return nil, nil
 }
 
 // @Summary Gợi ý các trường thông tin sử dụng DeepSeek AI
@@ -480,95 +481,9 @@ func (s *ProductHandler) SuggestDeepseek(ctx context.Context, req *bdspropb.Sugg
 	}
 
 	// Tạo ProductResponse từ TotalSearchParser
-	productResponse := s.mapTotalSearchParserToResponse(products)
+	productResponse := s.ProductMapper.MapTotalSearchParserToResponse(products)
 
 	return productResponse, nil
-}
-
-// mapProductToResponse maps domain.Product to bdspropb.ProductResponse
-func (s *ProductHandler) mapTotalSearchParserToResponse(parser *dto.TotalSearchParser) *bdspropb.ProductResponse {
-	response := &bdspropb.ProductResponse{
-		Name:            parser.Name,
-		TransactionType: int32(parser.TransactionType),
-		HouseInfo: &bdspropb.HouseInfo{
-			NumBedroom:  parser.Bedroom,
-			NumBathroom: parser.Bathroom,
-			NumFloor:    parser.Floor,
-			NumFront:    parser.Frontage,
-			NumCarPark:  parser.Park,
-			NumToilet:   parser.Toilet,
-			// Orientation: parser.Orientation,
-			// Furniture:   parser.Furniture,
-		},
-	}
-
-	// Map các trường từ parser
-	if parser.Area != nil {
-		response.Area = float64(*parser.Area)
-	}
-
-	if parser.PriceSuggest != nil {
-		response.PriceSuggest = parser.PriceSuggest
-	}
-
-	if parser.Address != nil {
-		response.Address = *parser.Address
-	}
-
-	// Map regions
-	if parser.Province != nil {
-		response.ProvinceId = &parser.Province.ID
-	}
-
-	if parser.District != nil {
-		response.DistrictId = &parser.District.ID
-	}
-
-	if parser.Ward != nil {
-		response.WardId = &parser.Ward.ID
-	}
-
-	// Map property types (lấy property type đầu tiên nếu có)
-	if len(parser.PropertyTypes) > 0 {
-		response.PropertyTypeId = &parser.PropertyTypes[0].ID
-	}
-
-	// Map doc types (lấy doc type đầu tiên nếu có)
-	if len(parser.DocTypes) > 0 {
-		response.DocTypeId = &parser.DocTypes[0].ID
-	}
-
-	// Map sale price
-	if parser.SalePrice != nil {
-		response.Price = &bdspropb.ProductPrice{
-			SalePrice: parser.SalePrice,
-		}
-	}
-
-	// Map rent price
-	if parser.RentPrice != nil {
-		if response.Price == nil {
-			response.Price = &bdspropb.ProductPrice{}
-		}
-		response.Price.RentPrice = parser.RentPrice
-	}
-
-	// Map amenities
-	if len(parser.Amenities) > 0 {
-		response.Amenities = make([]*bdspropb.AmenityItem, len(parser.Amenities))
-		for i, amenity := range parser.Amenities {
-			response.Amenities[i] = &bdspropb.AmenityItem{
-				Id:   amenity.ID,
-				Name: amenity.Name,
-			}
-		}
-	}
-
-	if parser.RentPrice != nil {
-		response.Price.RentPrice = parser.RentPrice
-	}
-
-	return response
 }
 
 // @Summary Lấy chi tiết sản phẩm

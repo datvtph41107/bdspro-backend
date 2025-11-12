@@ -12,6 +12,7 @@ import (
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 )
 
 type ProductMapper struct {
@@ -1044,4 +1045,120 @@ func (m *ProductMapper) MapProductHistoryPb(ctx context.Context, history *domain
 	}
 
 	return result
+}
+
+func (m *ProductMapper) MapTotalSearchParserToResponse(parser *dto.TotalSearchParser) *bdspropb.ProductResponse {
+	response := &bdspropb.ProductResponse{
+		Name:            parser.Name,
+		TransactionType: int32(parser.TransactionType),
+		HouseInfo: &bdspropb.HouseInfo{
+			NumBedroom:  parser.Bedroom,
+			NumBathroom: parser.Bathroom,
+			NumFloor:    parser.Floor,
+			NumFront:    parser.Frontage,
+			NumCarPark:  parser.Park,
+			NumToilet:   parser.Toilet,
+			// Orientation: parser.Orientation,
+			// Furniture:   parser.Furniture,
+		},
+	}
+
+	// Map các trường từ parser
+	if parser.Area != nil {
+		response.Area = float64(*parser.Area)
+	}
+
+	if parser.PriceSuggest != nil {
+		response.PriceSuggest = parser.PriceSuggest
+	}
+
+	if parser.Address != nil {
+		response.Address = *parser.Address
+	}
+
+	// Map regions
+	if parser.Province != nil {
+		response.ProvinceId = &parser.Province.ID
+	}
+
+	if parser.District != nil {
+		response.DistrictId = &parser.District.ID
+	}
+
+	if parser.Ward != nil {
+		response.WardId = &parser.Ward.ID
+	}
+
+	// Map property types (lấy property type đầu tiên nếu có)
+	if len(parser.PropertyTypes) > 0 {
+		response.PropertyTypeId = &parser.PropertyTypes[0].ID
+	}
+
+	// Map doc types (lấy doc type đầu tiên nếu có)
+	if parser.DocTypes != nil {
+		response.DocTypeId = &parser.DocTypes.ID
+	}
+
+	// Map sale price
+	if parser.SalePrice != nil {
+		response.Price = &bdspropb.ProductPrice{
+			SalePrice: parser.SalePrice,
+		}
+	}
+
+	// Map rent price
+	if parser.RentPrice != nil {
+		if response.Price == nil {
+			response.Price = &bdspropb.ProductPrice{}
+		}
+		response.Price.RentPrice = parser.RentPrice
+	}
+
+	// Map amenities
+	if len(parser.Amenities) > 0 {
+		response.Amenities = make([]*bdspropb.AmenityItem, len(parser.Amenities))
+		for i, amenity := range parser.Amenities {
+			response.Amenities[i] = &bdspropb.AmenityItem{
+				Id:   amenity.ID,
+				Name: amenity.Name,
+			}
+		}
+	}
+
+	if parser.RentPrice != nil {
+		response.Price.RentPrice = parser.RentPrice
+	}
+
+	return response
+}
+
+func (m *ProductMapper) MapTotalSearchParserToProductV3Proto(parser *_dto.ProductV3DTO) *sharepb.ProductV3Proto {
+	response := &sharepb.ProductV3Proto{
+		Name: parser.Name,
+	}
+
+	if parser.PropertyType != nil {
+		response.PropertyType = &sharepb.ItemV3Proto{
+			Id:   parser.PropertyType.ID,
+			Name: parser.PropertyType.Name,
+		}
+	}
+
+	if parser.DocType != nil {
+		response.DocType = &sharepb.ItemV3Proto{
+			Id:   parser.DocType.ID,
+			Name: parser.DocType.Name,
+		}
+	}
+
+	if len(parser.Amenities) > 0 {
+		response.Amenities = make([]*sharepb.ItemV3Proto, len(parser.Amenities))
+		for i, amenity := range parser.Amenities {
+			response.Amenities[i] = &sharepb.ItemV3Proto{
+				Id:   amenity.ID,
+				Name: amenity.Name,
+			}
+		}
+	}
+	return response
 }

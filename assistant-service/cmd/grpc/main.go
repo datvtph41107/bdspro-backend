@@ -18,7 +18,7 @@ import (
 func RunGRPCServer() {
 	// Load config
 	env.ENV_RUNTIME = &env.Runtime{
-		Environment: getEnv("ENVIRONMENT", "development"),
+		Environment: getEnv("ENV_RUNTIME", ""),
 		ConfigPath:  getEnv("CONFIG_PATH", "config"),
 	}
 	loadConfig()
@@ -58,7 +58,7 @@ func RunGRPCServer() {
 }
 
 func loadConfig() {
-	viper.SetConfigName("app")
+	viper.SetConfigName("develop")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(env.ENV_RUNTIME.ConfigPath)
 	viper.AddConfigPath(".")

@@ -277,6 +277,23 @@ func (s *GrpcProfileService) SetPerson(ctx context.Context, req *userpb.SetPerso
 	return &sharepb.Empty{}, err
 }
 
+// @Summary Cài đặt nhanh hồ sơ người dùng
+// @Description Thiết lập nhanh vai trò, khu vực hoạt động và mục đích sử dụng cho người dùng hiện tại
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body sharepb.UserV3Proto true "Thông tin cài đặt nhanh"
+// @Success 200 {object} sharepb.Empty
+// @Router /v2/user/profile/quick-setup [post]
+func (s *GrpcProfileService) QuickSetup(ctx context.Context, req *sharepb.UserV3Proto) (*sharepb.Empty, error) {
+	dto := s.ProfileMapper.UserV3ToDTO(req)
+	if err := s.ProfileUsecase.QuickSetup(ctx, dto); err != nil {
+		return nil, err
+	}
+	return &sharepb.Empty{}, nil
+}
+
 func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userpb.SearchProfilePublicRequest) (*userpb.SearchProfilePublicResponse, error) {
 	pageable := _dto.Pagable{
 		Page: uint32(req.Page),

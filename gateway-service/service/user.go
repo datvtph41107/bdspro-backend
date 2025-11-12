@@ -28,4 +28,6 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
 	_ = userpb.RegisterSystemConfigServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterMembershipServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterPlanServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterMainAreaServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterPurposeUseServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -8,10 +9,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	_db "common/db"
 	_utils "common/utils"
 	"file/models"
+	clients "pb/clients"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +26,7 @@ type VersionService struct {
 	fileService *FileService
 	storage     *StorageService
 	xorCryptKey string
+	hubClient   *clients.HubGrpcClient
 }
 
 func NewVersionService(fileService *FileService, storage *StorageService) *VersionService {
@@ -30,11 +34,23 @@ func NewVersionService(fileService *FileService, storage *StorageService) *Versi
 		fileService: fileService,
 		storage:     storage,
 		xorCryptKey: fileService.XorCryptKey,
+		hubClient:   clients.MakeHubGrpcClient(os.Getenv("ENV_RUNTIME")),
 	}
 }
 
 // UploadVersion xử lý upload binary version và lưu metadata vào cơ sở dữ liệu.
 func (s *VersionService) UploadVersion(c *gin.Context) {
+	apiKey := c.GetHeader("X-Api-Key")
+	if strings.TrimSpace(apiKey) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing API key"})
+		return
+	}
+
+	if err := s.verifyApiKey(c, apiKey); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "File is required"})
@@ -208,4 +224,28 @@ func detectMimeType(path string) string {
 	default:
 		return "application/octet-stream"
 	}
+}
+
+func (s *VersionService) verifyApiKey(c *gin.Context, apiKey string) error {
+	if s.hubClient == nil {
+		return errors.New("hub client not initialized")
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	resp, err := s.hubClient.VerifyApiKey(ctx, apiKey)
+	if err != nil {
+		return err
+	}
+
+	if resp == nil || !resp.GetValid() {
+		msg := "API key không hợp lệ"
+		if resp != nil && strings.TrimSpace(resp.GetMessage()) != "" {
+			msg = resp.GetMessage()
+		}
+		return errors.New(msg)
+	}
+
+	return nil
 }

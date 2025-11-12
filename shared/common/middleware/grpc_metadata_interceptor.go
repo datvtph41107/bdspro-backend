@@ -29,6 +29,7 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	// Luôn inject IP và User-Agent vào metadata (dù có token hay không)
 	appendIfExists(md, "client-ip", getClientIP(r))
 	appendIfExists(md, "user-agent", r.Header.Get("User-Agent"))
+	appendIfExists(md, "x-api-key", r.Header.Get("X-Api-Key"))
 
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
@@ -119,6 +120,7 @@ func ParseGrpcMetadataContextMiddleware(
 	ctx = parseStringMetadata(ctx, md, "role", _enums.RoleKey)
 	ctx = parseStringMetadata(ctx, md, "type", _enums.TypeKey)
 	ctx = parseTimeMetadata(ctx, md, "planFrom", _enums.PlanFromKey)
+	ctx = parseStringMetadata(ctx, md, "x-api-key", _enums.APIKeyKey)
 
 	// Parse IP address và User-Agent từ metadata
 	ctx = parseStringMetadata(ctx, md, "client-ip", _enums.ClientIPKey)
@@ -153,7 +155,6 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 			md.Append(mdKey, val.Format(time.RFC3339))
 		}
 	}
-
 	// Các key giống với middleware ở server
 	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
 	appendUint64IfExists(_enums.OrganizationIDKey, "organizationId")
@@ -163,6 +164,7 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 
 	appendStringIfExists(_enums.RoleKey, "role")
 	appendStringIfExists(_enums.TypeKey, "type")
+	appendStringIfExists(_enums.APIKeyKey, "x-api-key")
 
 	appendTimeIfExists(_enums.PlanFromKey, "planFrom")
 

@@ -452,7 +452,7 @@ func (z *ZnsProvider) RefreshAccessToken(ctx context.Context) (string, string, e
 		return "", "", fmt.Errorf("refresh token trong DB rỗng")
 	}
 
-	fmt.Printf("🔄 [ZNS] Using refresh token from DB: %s...\n", currentRefreshToken[:20])
+	fmt.Printf("🔄 [ZNS] Using refresh token from DB: %s...\n", currentRefreshToken)
 
 	// Chuẩn bị form data
 	formData := url.Values{}
@@ -518,34 +518,4 @@ func (z *ZnsProvider) RefreshAccessToken(ctx context.Context) (string, string, e
 	fmt.Printf("✅ [ZNS] Refresh token thành công. Access token expires in: %s seconds\n", znsResp.ExpiresIn)
 
 	return znsResp.AccessToken, znsResp.RefreshToken, nil
-}
-
-// UpdateTokens cập nhật access token và refresh token mới
-// Dùng để update token manually từ response API
-func (z *ZnsProvider) UpdateTokens(ctx context.Context, accessToken, refreshToken string) error {
-	if accessToken == "" || refreshToken == "" {
-		return fmt.Errorf("access token và refresh token không được để trống")
-	}
-
-	// Lưu vào DB và cập nhật memory (thread-safe)
-	if err := z.saveTokensToDB(ctx, accessToken, refreshToken); err != nil {
-		return fmt.Errorf("lỗi khi lưu tokens vào DB: %w", err)
-	}
-
-	fmt.Println("✅ [ZNS] Tokens updated successfully")
-	return nil
-}
-
-// GetAccessToken lấy access token hiện tại (thread-safe)
-func (z *ZnsProvider) GetAccessToken() string {
-	z.mu.RLock()
-	defer z.mu.RUnlock()
-	return z.accessToken
-}
-
-// GetRefreshToken lấy refresh token hiện tại (thread-safe)
-func (z *ZnsProvider) GetRefreshToken() string {
-	z.mu.RLock()
-	defer z.mu.RUnlock()
-	return z.refreshToken
 }

@@ -13,4 +13,5 @@ const (
 	PlanFromKey       ContextKey = "planFrom"
 	ClientIPKey       ContextKey = "client-ip"
 	UserAgentKey      ContextKey = "user-agent"
+	APIKeyKey         ContextKey = "api-key"
 )

@@ -6,9 +6,12 @@ import "google/protobuf/timestamp.proto";
 import "bdspro/common.proto";
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "bdspro/product.proto";
+import "shared/v3.proto";
 
 service BdsproInternalService {
     rpc GetCountByOwner(GetCountByOwnerRequest) returns (GetCountByOwnerResponse);
+    rpc GetSuggest(sharepb.RequestV3Proto) returns (sharepb.ProductV3Proto);
 }
 
 message GetCountByOwnerRequest {

@@ -572,7 +572,7 @@ func (s *ProductUsecase) UpdatePrivateData(ctx context.Context, productID uint64
 // 	return ""
 // }
 
-func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.TotalSearchParser, error) {
+func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*_dto.ProductV3DTO, error) {
 	// searchs, err := utils.InferSearchText(body.Content)
 	// if err != nil {
 	// 	return nil, err
@@ -580,63 +580,63 @@ func (s *ProductUsecase) SuggestFields(c context.Context, text string) (*dto.Tot
 	// if searchs, err := utils.InferSearchText(body.Content); err != nil {
 	// 	return nil, err
 	// }
-	var searchs dto.TotalSearchParser
-	var err error
-	if searchs, err = utils.InferSearchText(text); err != nil {
-		return nil, err
-	}
+	searchs := _dto.ProductV3DTO{}
+	// var err error
+	// if searchs, err = utils.InferSearchText2(text); err != nil {
+	// 	return nil, err
+	// }
 
 	// searchs, _ := utils.InferSearchText(text)
 
-	regions, _ := s.Region.InterTextToItem(text, 10)
-	docTypes, _ := s.DocTypeRepo.InterTextToItem(c, text, 10)
-	propertyTypes, _ := s.PropertyType.InterTextToItem(text, 10)
-	amenities, _ := s.Amenity.InterTextToEntity(text, 10)
+	// regions, _ := s.Region.InterTextToItem(text, 10)
+	docType, _ := s.DocTypeRepo.InterTextToItem(c, text, 10)
+	propertyType, _ := s.PropertyType.InterTextToItem(text, 10)
+	amenities, _ := s.Amenity.InterTextToItem(text, 10)
 
 	searchs.Name = _utils.TrimFirstWords(text, 12)
 
 	// tìm địa chỉ
-	var ward, district, province *domain.Region
-	for i := 0; i < len(regions); i++ {
-		r := regions[i]
-		if r.Level == 1 && province == nil {
-			province = &r
-			continue
-		}
-		if r.Level == 2 && district == nil {
-			district = &r
-			continue
-		}
-		if r.Level == 3 && ward == nil {
-			ward = &r
-			continue
-		}
-	}
-	if ward != nil && ward.ParentID != nil && (district == nil || district.ID != *ward.ParentID) {
-		district, _ = s.Region.GetByID(c, *ward.ParentID)
-		province, _ = s.Region.GetByID(c, *district.ParentID)
-	}
+	// var ward, district, province *domain.Region
+	// for i := 0; i < len(regions); i++ {
+	// 	r := regions[i]
+	// 	if r.Level == 1 && province == nil {
+	// 		province = &r
+	// 		continue
+	// 	}
+	// 	if r.Level == 2 && district == nil {
+	// 		district = &r
+	// 		continue
+	// 	}
+	// 	if r.Level == 3 && ward == nil {
+	// 		ward = &r
+	// 		continue
+	// 	}
+	// }
+	// if ward != nil && ward.ParentID != nil && (district == nil || district.ID != *ward.ParentID) {
+	// 	district, _ = s.Region.GetByID(c, *ward.ParentID)
+	// 	province, _ = s.Region.GetByID(c, *district.ParentID)
+	// }
 
-	if district != nil && district.ParentID != nil && (province == nil || province.ID != *district.ParentID) {
-		province, _ = s.Region.GetByID(c, *district.ParentID)
-	}
+	// if district != nil && district.ParentID != nil && (province == nil || province.ID != *district.ParentID) {
+	// 	province, _ = s.Region.GetByID(c, *district.ParentID)
+	// }
 	// ---- xong ----
 
-	searchs.DocTypes = docTypes
-	searchs.PropertyTypes = propertyTypes
+	searchs.DocType = docType
+	searchs.PropertyType = propertyType
 	searchs.Amenities = amenities
-	searchs.Ward = ward
-	searchs.District = district
-	searchs.Province = province
-	if searchs.PriceSuggest != nil {
-		if *searchs.PriceSuggest > 100_000_000 {
-			searchs.TransactionType = 10
-			searchs.SalePrice = searchs.PriceSuggest
-		} else {
-			searchs.TransactionType = 20
-			searchs.RentPrice = searchs.PriceSuggest
-		}
-	}
+	// searchs.Ward = ward
+	// searchs.District = district
+	// searchs.Province = province
+	// if searchs.PriceSuggest != nil {
+	// 	if *searchs.PriceSuggest > 100_000_000 {
+	// 		searchs.TransactionType = 10
+	// 		searchs.SalePrice = searchs.PriceSuggest
+	// 	} else {
+	// 		searchs.TransactionType = 20
+	// 		searchs.RentPrice = searchs.PriceSuggest
+	// 	}
+	// }
 
 	return &searchs, nil
 }
@@ -718,20 +718,20 @@ func (s *ProductUsecase) SuggestFieldsWithDeepseek(c context.Context, text strin
 	}
 
 	// Tìm property type từ database
-	if deepseekResult.PropertyType != nil {
-		propertyTypes, _ := s.PropertyType.InterTextToItem(*deepseekResult.PropertyType, 1)
-		if len(propertyTypes) > 0 {
-			result.PropertyTypes = propertyTypes
-		}
-	}
+	// if deepseekResult.PropertyType != nil {
+	// 	propertyTypes, _ := s.PropertyType.InterTextToItem(*deepseekResult.PropertyType, 1)
+	// 	if len(propertyTypes) > 0 {
+	// 		result.PropertyTypes = propertyTypes
+	// 	}
+	// }
 
 	// Tìm doc type từ database
-	if deepseekResult.LegalDoc != nil {
-		docTypes, _ := s.DocTypeRepo.InterTextToItem(c, *deepseekResult.LegalDoc, 1)
-		if len(docTypes) > 0 {
-			result.DocTypes = docTypes
-		}
-	}
+	// if deepseekResult.LegalDoc != nil {
+	// 	docTypes, _ := s.DocTypeRepo.InterTextToItem(c, *deepseekResult.LegalDoc, 1)
+	// 	if len(docTypes) > 0 {
+	// 		result.DocTypes = docTypes
+	// 	}
+	// }
 
 	// Fallback: Nếu không có province từ DeepSeek, thử tìm từ text gốc
 	if result.Province == nil || result.District == nil {

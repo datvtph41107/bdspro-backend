@@ -96,3 +96,13 @@ func (r *ProvinceV2Repo) GetByCodeWithWards(ctx context.Context, code int) (*dom
 func (r *ProvinceV2Repo) Search(ctx context.Context, keyword string, page, size int) ([]domain.ProvinceV2, int64, error) {
 	return r.GetList(ctx, keyword, page, size)
 }
+
+func (r *ProvinceV2Repo) InferFromText(ctx context.Context, text string) (*domain.ProvinceV2, error) {
+	var province domain.ProvinceV2
+	db := r.db.GetDB(ctx)
+	err := db.Where("LOWER(?) LIKE '%'||LOWER(name)||'%'", text).First(&province).Error
+	if err != nil {
+		return nil, err
+	}
+	return &province, nil
+}

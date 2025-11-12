@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package userpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/user;userpb";
+
+service PurposeUseService {
+    rpc GetPurposeUses(sharepb.IdRequest) returns (PurposeUsePage) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/purpose-use"
+        };
+    }    
+
+    rpc CreatePurposeUse(PurposeUse) returns (PurposeUse) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/purpose-use"
+            body: "*"
+        };
+    }
+
+    rpc UpdatePurposeUse(PurposeUse) returns (PurposeUse) {
+        option (google.api.http) = {
+            put: "/v2/user/admin/purpose-use/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeletePurposeUse(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/user/admin/purpose-use/{id}"
+        };
+    }
+
+    rpc GetPurposeUseItems(sharepb.IdRequest) returns (sharepb.ItemV3PageProto) {
+        option (google.api.http) = {
+            get: "/v2/user/purpose-use"
+        };
+    }
+}
+
+message PurposeUse {
+    uint64 id = 1;
+    string name = 2;
+    optional string description = 3;
+    uint64 numberProfile = 4;
+    string createdAt = 5;
+    string updatedAt = 6;
+}
+
+message PurposeUsePage {
+    repeated PurposeUse data = 1;
+    uint32 total = 2;
+}

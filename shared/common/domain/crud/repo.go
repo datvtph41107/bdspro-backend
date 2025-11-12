@@ -8,6 +8,7 @@ import (
 // là usecase cơ bản cho logic thêm sửa xóa 1 bản ghi thông thường
 type ICrudRepo[T any] interface {
 	Create(c context.Context, entity *T) error
+	CreateBatch(c context.Context, entity []*T) error
 	Update(c context.Context, id uint64, entity *T) error
 	Delete(c context.Context, id uint64) error
 	GetAll(c context.Context) ([]T, error)

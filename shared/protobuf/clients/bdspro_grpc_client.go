@@ -2,12 +2,14 @@ package clients
 
 import (
 	"common"
+	_dto "common/domain/dto"
 	_middleware "common/middleware"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 	"time"
 
 	"google.golang.org/grpc"
@@ -83,4 +85,62 @@ func (c *BdsproGrpcClient) GetCountByOwner(ctx context.Context, req *bdspropb.Ge
 	}
 
 	return response, nil
+}
+
+func (c *BdsproGrpcClient) GetSuggest(ctx context.Context, content string) (*_dto.ProductV3DTO, error) {
+	if c.InternalClient == nil {
+		return nil, errors.New("bdspro internal client not available")
+	}
+
+	fmt.Println("content: " + content)
+
+	response, err := c.InternalClient.GetSuggest(ctx, &sharepb.RequestV3Proto{Text: content})
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("response: ....")
+
+	result := &_dto.ProductV3DTO{
+		ID:          response.Id,
+		Name:        response.Name,
+		Description: response.Description,
+	}
+
+	// if response.Address != nil {
+	// 	result.Address = &_dto.AddressV3DTO{
+	// 		ProvinceID:   response.Address.ProvinceId,
+	// 		ProvinceName: response.Address.ProvinceName,
+	// 		DistrictID:   response.Address.DistrictId,
+	// 		DistrictName: response.Address.DistrictName,
+	// 		WardID:       response.Address.WardId,
+	// 		WardName:     response.Address.WardName,
+	// 	}
+	// }
+
+	if response.PropertyType != nil {
+		result.PropertyType = &_dto.ItemDTO{
+			ID:   response.PropertyType.Id,
+			Name: response.PropertyType.Name,
+		}
+	}
+
+	if response.DocType != nil {
+		result.DocType = &_dto.ItemDTO{
+			ID:   response.DocType.Id,
+			Name: response.DocType.Name,
+		}
+	}
+
+	if response.Amenities != nil {
+		result.Amenities = make([]_dto.ItemDTO, len(response.Amenities))
+		for i, amenity := range response.Amenities {
+			result.Amenities[i] = _dto.ItemDTO{
+				ID:   amenity.Id,
+				Name: amenity.Name,
+			}
+		}
+	}
+
+	return result, nil
 }

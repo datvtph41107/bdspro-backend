@@ -23,4 +23,5 @@ func RegisterHubService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	_ = hubpb.RegisterSystemConfigServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = hubpb.RegisterFAQServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = hubpb.RegisterVersionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = hubpb.RegisterApiKeyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

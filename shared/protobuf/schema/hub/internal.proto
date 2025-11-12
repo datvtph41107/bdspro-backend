@@ -5,6 +5,7 @@ package hubpb;
 option go_package = "pb/types/hub;hubpb";
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "shared/v3.proto";
 
 // ========== Messages ==========
 
@@ -49,6 +50,14 @@ message GetAddressV2ByIdsResponse {
   AddressV2Info data = 1;
 }
 
+message InferAddressFromTextRequest {
+  string text = 1; // Raw address text to analyze
+}
+
+message InferAddressFromTextResponse {
+  repeated AddressV2Info data = 1; // List of inferred address candidates
+}
+
 // ========== Service Definition ==========
 
 service HubInternalService {
@@ -63,5 +72,8 @@ service HubInternalService {
 
   // Get Address V2 by Province and Ward IDs - Returns full address information
   rpc GetAddressV2ByIds (GetAddressV2ByIdsRequest) returns (GetAddressV2ByIdsResponse);
+
+  // Infer address information (province, ward, etc.) from free text input
+  rpc InferAddressFromText (sharepb.RequestV3Proto) returns (sharepb.AddressV3Proto);
 }
 

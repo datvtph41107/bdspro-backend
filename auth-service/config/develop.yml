@@ -28,8 +28,8 @@ oauth:
     redirect_uri: http://14.225.210.29:8000/user/oauth/facebook/callback
   
   zalo:
-    app_id: 282266321456750389
-    secret_key: 26DSfVq7RHOM4SVlRNI1
+    app_id: 2829833978864922978
+    secret_key: sSOl1rT294QeKLkHIGMQ
     redirect_uri: http://14.225.210.29:8000/user/oauth/zalo/callback
     permission_url: https://oauth.zaloapp.com/v4/permission?
 

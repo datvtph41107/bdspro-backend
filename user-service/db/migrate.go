@@ -19,6 +19,10 @@ func AutoMigrate() {
 		&models.FriendEntity{},
 		&models.GroupEntity{},
 		&models.BookmarkUserEntity{},
+		&models.MainAreaEntity{},
+		&models.MainAreaProfileEntity{},
+		&models.PurposeUseEntity{},
+		&models.PurposeUseProfileEntity{},
 
 		// Profile related entities
 		&models.ProfessionEntity{},

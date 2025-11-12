@@ -1074,6 +1074,10 @@
         },
         "imageUrl": {
           "type": "string"
+        },
+        "availableArea": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

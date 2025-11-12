@@ -22,3 +22,7 @@ jwt:
     - "/v2/hub/event-queue/list"
     - "/v2/hub/event-queue/detail"
 
+security:
+  api_key: "local-hub-api-key"
+  protected_methods:
+    - "/hubpb.VersionService/CheckAppUpdate"

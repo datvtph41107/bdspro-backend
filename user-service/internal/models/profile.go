@@ -64,6 +64,8 @@ type UserProfileEntity struct {
 	// transient
 	Certifications []CertificationEntity `gorm:"-" json:"certifications"`
 	Professions    []ProfessionEntity    `gorm:"-" json:"professions"`
+	PurposeUses    []PurposeUseEntity    `gorm:"-" json:"purposeUses"`
+	MainAreas      []MainAreaEntity      `gorm:"-" json:"mainAreas"`
 	RateStats      *RateStats            `gorm:"-" json:"rateStats"`
 
 	FriendStatus *FriendItem       `gorm:"-" json:"friendStatus"`

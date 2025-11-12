@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud3"
+	_dto "common/domain/dto"
 	"context"
 
 	"gorm.io/gorm"
@@ -32,16 +33,27 @@ func (r *PostgreAmenity) InterText(text string, limit int) ([]uint64, error) {
 	return ids, err
 }
 
-func (r *PostgreAmenity) InterTextToEntity(text string, limit int) ([]domain.AmenityItem, error) {
-	var outputs []domain.AmenityItem
+func (r *PostgreAmenity) InterTextToItem(text string, limit int) ([]_dto.ItemDTO, error) {
+	var outputs []domain.Amenity
 
 	query := r.DB.
 		Model(&domain.Amenity{}).
 		Where("LOWER(?) LIKE '%' || LOWER(name) || '%'", text)
 
 	err := query.Limit(limit).Scan(&outputs).Error
+	if err != nil {
+		return nil, err
+	}
 
-	return outputs, err
+	items := make([]_dto.ItemDTO, 0)
+	for _, output := range outputs {
+		items = append(items, _dto.ItemDTO{
+			ID:   output.ID,
+			Name: output.Name,
+		})
+	}
+
+	return items, err
 }
 
 func (r *PostgreAmenity) GetAll(c context.Context, dto *dto.AmenitySearchDTO) ([]domain.AmenityItem, error) {

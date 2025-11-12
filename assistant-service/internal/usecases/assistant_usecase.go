@@ -1,29 +1,42 @@
 package usecases
 
 import (
-	"assistant/internal/dto"
-	"assistant/internal/interface/provider"
+	_dto "common/domain/dto"
+	_errors "common/errors"
 	"context"
 	"fmt"
 	"time"
+
+	"assistant/internal/dto"
+	"assistant/internal/interface/provider"
 )
 
 type AssistantUsecase struct {
 	DeepseekClient provider.DeepseekProvider
 	OpenAIClient   provider.OpenAIProvider
 	GeminiClient   provider.GeminiProvider
+	BdsproInternal provider.BdsproInternalProvider
+	HubClient      provider.HubProvider
 }
 
-func NewAssistantUsecase(deepseekClient provider.DeepseekProvider, openaiClient provider.OpenAIProvider, geminiClient provider.GeminiProvider) *AssistantUsecase {
+func NewAssistantUsecase(
+	deepseekClient provider.DeepseekProvider,
+	openaiClient provider.OpenAIProvider,
+	geminiClient provider.GeminiProvider,
+	bdsproInternal provider.BdsproInternalProvider,
+	hubClient provider.HubProvider,
+) *AssistantUsecase {
 	return &AssistantUsecase{
 		DeepseekClient: deepseekClient,
 		OpenAIClient:   openaiClient,
 		GeminiClient:   geminiClient,
+		BdsproInternal: bdsproInternal,
+		HubClient:      hubClient,
 	}
 }
 
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
-func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
+func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content string, contextStr string) (*_dto.ProductV3DTO, string, int64, error) {
 	startTime := time.Now()
 
 	// Thêm context vào content nếu có
@@ -31,19 +44,34 @@ func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content strin
 		content = fmt.Sprintf("%s\n\nContext bổ sung: %s", content, contextStr)
 	}
 
-	// Gọi DeepSeek để phân tích
-	result, err := u.DeepseekClient.AnalyzeProductText(ctx, content)
+	// Gọi Gemini để phân tích
+	productV3, err := u.GeminiClient.AnalyzeProductText(ctx, content)
 	if err != nil {
-		return nil, "", "", 0, fmt.Errorf("failed to analyze product text: %w", err)
+		return nil, "", 0, err
 	}
+	// productV3 := &_dto.ProductV3DTO{}
 
 	processingTime := time.Since(startTime).Milliseconds()
 
 	// Raw response để debug (optional)
-	rawResponse := ""                        // Có thể marshal result về JSON nếu cần
-	modelName := u.DeepseekClient.GetModel() // Lấy từ config
+	modelName := u.GeminiClient.GetModel() // Lấy từ config
 
-	return result, rawResponse, modelName, processingTime, nil
+	addressV3, err := u.HubClient.InferAddressFromText(ctx, content)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	productV3_bdspro, err := u.BdsproInternal.GetSuggest(ctx, content)
+	if err != nil {
+		return nil, "", 0, _errors.ReturnError(500, "failed to get product suggest")
+	}
+
+	productV3.Address = addressV3
+	productV3.PropertyType = productV3_bdspro.PropertyType
+	productV3.DocType = productV3_bdspro.DocType
+	productV3.Amenities = productV3_bdspro.Amenities
+
+	return productV3, modelName, processingTime, nil
 }
 
 // Chat - Thực hiện conversation với AI
@@ -168,24 +196,6 @@ func (u *AssistantUsecase) GenerateContentWithOpenAI(ctx context.Context, prompt
 	return content, modelName, processingTime, nil
 }
 
-// AnalyzeProductTextWithFallback - Phân tích văn bản với fallback từ DeepSeek sang OpenAI
-func (u *AssistantUsecase) AnalyzeProductTextWithFallback(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
-	// Try DeepSeek first (faster, cheaper)
-	result, rawResponse, modelName, processingTime, err := u.AnalyzeProductText(ctx, content, contextStr)
-	if err == nil {
-		return result, rawResponse, modelName, processingTime, nil
-	}
-
-	// Log error và fallback to OpenAI
-	fmt.Printf("DeepSeek failed: %v, falling back to OpenAI\n", err)
-	result, rawResponse, modelName, processingTime, err = u.AnalyzeProductTextWithOpenAI(ctx, content, contextStr)
-	if err != nil {
-		return nil, "", "", 0, fmt.Errorf("both providers failed: %w", err)
-	}
-
-	return result, rawResponse, modelName, processingTime, nil
-}
-
 // buildPromptFromTemplate - Build prompt từ template và variables
 func (u *AssistantUsecase) buildPromptFromTemplate(template string, variables map[string]string, basePrompt string) string {
 	switch template {
@@ -261,7 +271,7 @@ func (u *AssistantUsecase) buildSocialPostPrompt(variables map[string]string, ba
 }
 
 // AnalyzeProductTextWithGemini - Phân tích văn bản sản phẩm BĐS bằng Gemini
-func (u *AssistantUsecase) AnalyzeProductTextWithGemini(ctx context.Context, content string, contextStr string) (*dto.ProductAnalysisResult, string, string, int64, error) {
+func (u *AssistantUsecase) AnalyzeProductTextWithGemini(ctx context.Context, content string, contextStr string) (*_dto.ProductV3DTO, string, string, int64, error) {
 	startTime := time.Now()
 
 	// Thêm context vào content nếu có

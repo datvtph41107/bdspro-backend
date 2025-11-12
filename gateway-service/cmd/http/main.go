@@ -131,6 +131,8 @@ var publicRoutes = []string{
 	"/v2/user/profile/search/public",
 	"/v2/bdspro/v2/post/detail/",
 	"/v2/social/news-feed/detail/",
+	"/v2/user/main-area",
+	"/v2/user/purpose-use",
 }
 
 var tempRoutes = []string{

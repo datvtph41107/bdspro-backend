@@ -39,6 +39,7 @@ var publicRoutes = []string{
 	"/file/load",
 	"/file/upload",
 	"/v1/file/version/download",
+	"/v1/file/version/upload",
 }
 
 type ConfigApp struct {

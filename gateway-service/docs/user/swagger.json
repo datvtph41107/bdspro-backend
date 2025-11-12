@@ -7,14 +7,9 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/user/auth/delete": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này cho phép xóa người dùng",
+        "/admin/create": {
+            "post": {
+                "description": "Tạo tài khoản admin mới",
                 "consumes": [
                     "application/json"
                 ],
@@ -22,118 +17,165 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Admin"
                 ],
-                "summary": "Xóa tài khoản",
+                "summary": "Create Admin",
+                "parameters": [
+                    {
+                        "description": "Thông tin tạo admin",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AdminProfile"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/admin/delete": {
+            "delete": {
+                "description": "Xóa tài khoản admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete Admin",
+                "parameters": [
+                    {
+                        "description": "Thông tin xóa admin",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/admin/list": {
+            "get": {
+                "description": "Lấy danh sách tất cả admin trong hệ thống với phân trang và thông tin role (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy danh sách tất cả admin (Admin only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tìm kiếm theo tên, email, phone",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại (mặc định: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sắp xếp theo trường (createdAt, fullName, email)",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Thứ tự sắp xếp (asc, desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo trạng thái (1: active, 0: inactive)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lọc theo role type",
+                        "name": "roleType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)",
+                        "name": "endDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/admin/plans": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy tất cả các gói membership (bao gồm ẩn) (Admin only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan"
+                ],
+                "summary": "Lấy tất cả gói membership",
                 "responses": {
                     "200": {
-                        "description": "Cập nhật thành công",
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.PublicUserInfo"
+                            "$ref": "#/definitions/userpb.GetAllPlansResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
-            }
-        },
-        "/v1/user/auth/logout": {
-            "delete": {
-                "description": "Đăng xuất, xóa refresh token",
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Logout",
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/otp/request": {
-            "post": {
-                "description": "Gửi lại OTP hoặc submit lúc nhập SĐT",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Gửi OTP",
-                "parameters": [
-                    {
-                        "description": "OTP Request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.OtpRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/otp/resend": {
-            "post": {
-                "description": "Gửi lại OTP mới",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Resend OTP",
-                "parameters": [
-                    {
-                        "description": "OTP Request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.OtpRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/otp/verify": {
-            "post": {
-                "description": "Xác minh OTP đã nhận",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Xác minh OTP",
-                "parameters": [
-                    {
-                        "description": "OTP Verify Request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.OtpVerifyRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/qr/confirm": {
+            },
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "API này xác nhận rằng app đã quét QR và người dùng đã đồng ý đăng nhập",
+                "description": "Tạo một gói membership mới (Admin only)",
                 "consumes": [
                     "application/json"
                 ],
@@ -141,44 +183,17 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Plan"
                 ],
-                "summary": "Xác nhận QR Login",
+                "summary": "Tạo gói membership mới",
                 "parameters": [
                     {
-                        "description": "Thông tin xác nhận QR",
+                        "description": "Thông tin gói",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SessionQRConfirm"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/qr/init": {
-            "post": {
-                "description": "API này tạo một phiên QR để người dùng có thể đăng nhập qua app",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Tạo QR Login",
-                "parameters": [
-                    {
-                        "description": "Thông tin tạo QR",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SessionQRRequest"
+                            "$ref": "#/definitions/userpb.CreatePlanRequest"
                         }
                     }
                 ],
@@ -186,15 +201,38 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SessionQRResponse"
+                            "$ref": "#/definitions/userpb.PlanResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
             }
         },
-        "/v1/user/auth/qr/status": {
-            "post": {
-                "description": "API này kiểm tra xem QR đã được xác nhận hay chưa",
+        "/admin/plans/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy chi tiết một gói membership (Admin only)",
                 "consumes": [
                     "application/json"
                 ],
@@ -202,31 +240,43 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Plan"
                 ],
-                "summary": "Kiểm tra trạng thái QR",
+                "summary": "Lấy thông tin gói membership theo ID",
                 "parameters": [
                     {
-                        "description": "Thông tin kiểm tra QR",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SessionQRRequest"
-                        }
+                        "type": "integer",
+                        "description": "Plan ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/restore": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetPlanByIdResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Dùng để khôi phục số điện thoại khi mất hoặc đổi số mới",
+                "description": "Cập nhật thông tin gói membership (Admin only)",
                 "consumes": [
                     "application/json"
                 ],
@@ -234,63 +284,63 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Plan"
                 ],
-                "summary": "Khôi phục tài khoản",
+                "summary": "Cập nhật gói membership",
                 "parameters": [
                     {
-                        "description": "Restore Phone Request",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RestorePhoneRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/switch/organization": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này cho phép người dùng chuyển đổi tổ chức",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Chuyển đổi tổ chức",
-                "parameters": [
-                    {
-                        "description": "Thông tin chuyển đổi tổ chức",
+                        "description": "Thông tin gói cập nhật",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SwitchOrganizationRequest"
+                            "$ref": "#/definitions/userpb.UpdatePlanRequest"
                         }
                     }
                 ],
-                "responses": {}
-            }
-        },
-        "/v1/user/auth/token/refresh": {
-            "post": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.PlanResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Làm mới access token bằng refresh token trong cookie",
+                "description": "Xóa mềm gói membership (Admin only)",
                 "consumes": [
                     "application/json"
                 ],
@@ -298,10 +348,268 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Plan"
                 ],
-                "summary": "Refresh token",
-                "responses": {}
+                "summary": "Xóa gói membership",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Plan ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.DeletePlanResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/update": {
+            "put": {
+                "description": "Cập nhật thông tin admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update Admin",
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật admin",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AdminProfile"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AdminProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.AdminProfile"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/authpb.AuthSuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/membership/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin gói membership đang sử dụng của user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Membership"
+                ],
+                "summary": "Lấy thông tin membership của user hiện tại",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetMyMembershipResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/membership/order": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo đơn hàng để mua gói membership và nhận link thanh toán",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Membership"
+                ],
+                "summary": "Tạo đơn hàng mua gói membership",
+                "parameters": [
+                    {
+                        "description": "Thông tin đơn hàng",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateOrderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/membership/verify": {
+            "post": {
+                "description": "Webhook từ payment service để xác nhận thanh toán và kích hoạt membership",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Membership"
+                ],
+                "summary": "Xác nhận thanh toán từ payment service",
+                "parameters": [
+                    {
+                        "description": "Thông tin xác nhận thanh toán",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.VerifyOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.VerifyOrderResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/plans": {
+            "get": {
+                "description": "Lấy tất cả các gói membership đang hiển thị cho user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan"
+                ],
+                "summary": "Lấy danh sách các gói membership hiển thị",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetVisiblePlansResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/v1/user/block/list": {
@@ -958,278 +1266,6 @@
                 }
             }
         },
-        "/v1/user/groups": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Nhóm"
-                ],
-                "summary": "Lấy danh sách nhóm",
-                "responses": {
-                    "400": {
-                        "description": "Yêu cầu không hợp lệ",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Không tìm thấy nhóm",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo một nhóm mới với thông tin được cung cấp",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Nhóm"
-                ],
-                "summary": "Tạo nhóm mới",
-                "parameters": [
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.GroupEntity"
-                        }
-                    }
-                ],
-                "responses": {
-                    "400": {
-                        "description": "Yêu cầu không hợp lệ",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "409": {
-                        "description": "Nhóm đã tồn tại",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/groups/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật thông tin nhóm hiện tại",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Nhóm"
-                ],
-                "summary": "Cập nhật thông tin nhóm",
-                "parameters": [
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.GroupEntity"
-                        }
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID của lời mời kết bạn",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "400": {
-                        "description": "Yêu cầu không hợp lệ",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Không tìm thấy nhóm",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa một nhóm khỏi hệ thống",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Nhóm"
-                ],
-                "summary": "Xóa nhóm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của nhóm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID của lời mời kết bạn",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Nhóm đã bị xóa",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Yêu cầu không hợp lệ",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Không tìm thấy nhóm",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/oauth/{provider}/callback": {
-            "get": {
-                "description": "Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "OAuth Callback",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tên của provider (google, facebook, zalo, ...)",
-                        "name": "provider",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Mã xác thực từ provider",
-                        "name": "code",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Chuỗi state để bảo vệ chống tấn công CSRF",
-                        "name": "state",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Thông tin người dùng từ provider",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Lỗi khi xử lý callback",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/oauth/{provider}/login": {
-            "get": {
-                "description": "Chuyển hướng người dùng đến trang đăng nhập của provider (Google, Facebook, Zalo, v.v.).",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "OAuth Login",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tên của provider (google, facebook, zalo, ...)",
-                        "name": "provider",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "302": {
-                        "description": "Chuyển hướng đến trang đăng nhập của provider"
-                    },
-                    "400": {
-                        "description": "Lỗi khi provider không hợp lệ",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/v1/user/profile/chat/find": {
             "get": {
                 "security": [
@@ -1423,14 +1459,14 @@
                 }
             }
         },
-        "/v2/user/auth/switch-account": {
-            "post": {
+        "/v2/user/admin/main-area": {
+            "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Chuyển đổi tài khoản",
+                "description": "Lấy danh sách nhãn khu vực hoạt động (Admin)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1438,21 +1474,853 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "AdminDictionary"
                 ],
-                "summary": "Chuyển đổi tài khoản",
+                "summary": "Lấy danh sách nhãn khu vực hoạt động",
                 "parameters": [
                     {
-                        "description": "Thông tin tài khoản",
-                        "name": "body",
+                        "description": "Thông tin nhãn",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/userpb.SwitchAccountRequest"
+                            "$ref": "#/definitions/sharepb.IdRequest"
                         }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.MainAreaPage"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nhãn khu vực hoạt động mới (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Tạo nhãn khu vực hoạt động",
+                "parameters": [
+                    {
+                        "description": "Thông tin nhãn",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.MainArea"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.MainArea"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/main-area/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật nhãn khu vực hoạt động (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Cập nhật nhãn khu vực hoạt động",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nhãn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin nhãn",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.MainArea"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.MainArea"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa mềm nhãn khu vực hoạt động (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Xóa nhãn khu vực hoạt động",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nhãn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.SubmitResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/purpose-use": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách mục đích sử dụng (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Lấy danh sách mục đích sử dụng",
+                "parameters": [
+                    {
+                        "description": "Thông tin mục đích sử dụng",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.PurposeUsePage"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo mục đích sử dụng mới (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Tạo mục đích sử dụng mới",
+                "parameters": [
+                    {
+                        "description": "Thông tin mục đích sử dụng",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.PurposeUse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.PurposeUse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/purpose-use/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật mục đích sử dụng (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Cập nhật mục đích sử dụng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID mục đích sử dụng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin mục đích sử dụng",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.PurposeUse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.PurposeUse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa mềm mục đích sử dụng (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Xóa mục đích sử dụng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID mục đích sử dụng",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.SubmitResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/user/new": {
+            "post": {
+                "description": "Tạo user mới giống với tài khoản admin (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Tạo user mới (Admin only)",
+                "parameters": [
+                    {
+                        "description": "Thông tin user mới",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateUserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateUserResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.CreateUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/users": {
+            "get": {
+                "description": "Lấy danh sách tất cả user trong hệ thống với phân trang và tìm kiếm (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy danh sách tất cả user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tìm kiếm theo tên, email, phone",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại (mặc định: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sắp xếp theo trường (createdAt, fullName, email)",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Thứ tự sắp xếp (asc, desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo trạng thái (1: active, 0: inactive)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo role ID",
+                        "name": "roleId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lọc theo role type",
+                        "name": "roleType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lọc từ ngày tạo (format: 2006-01-02T15:04:05)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)",
+                        "name": "endDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ListAllUsersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ListAllUsersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ListAllUsersResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ListAllUsersResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/users/{profileId}": {
+            "get": {
+                "description": "Lấy chi tiết thông tin user (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lấy chi tiết user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của user cần lấy chi tiết",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetUserDetailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetUserDetailResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetUserDetailResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetUserDetailResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.GetUserDetailResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Cập nhật thông tin user (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cập nhật thông tin user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của user cần cập nhật",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateUserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateUserResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdateUserResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Xóa user khỏi hệ thống (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Xóa user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của user cần xóa",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin xóa",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.DeleteUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/users/{profileId}/approve": {
+            "post": {
+                "description": "Duyệt tài khoản user với ghi chú. Cập nhật status thành \"Hoạt động\" trong bảng user_profile (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Duyệt tài khoản user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của user cần duyệt",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin duyệt tài khoản",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ApproveUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/users/{profileId}/lock": {
+            "post": {
+                "description": "Khóa tài khoản user với lý do cụ thể. Cập nhật status thành \"Khóa tạm thời\" trong bảng user_profile (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Khóa tài khoản user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của user cần khóa",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin khóa tài khoản",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.LockUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/users/{profileId}/unlock": {
+            "post": {
+                "description": "Mở khóa tài khoản user với lý do cụ thể. Cập nhật status thành \"Hoạt động\" trong bảng user_profile (chỉ dành cho admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Mở khóa tài khoản user (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của user cần mở khóa",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin mở khóa tài khoản",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UnLockUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/main-area": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách nhãn khu vực hoạt động (User)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserDictionary"
+                ],
+                "summary": "Lấy danh sách nhãn khu vực hoạt động",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Từ khóa tìm kiếm",
+                        "name": "request",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.ItemV3PageProto"
+                        }
+                    }
+                }
             }
         },
         "/v2/user/profile/accounts/me": {
@@ -1478,6 +2346,50 @@
                         "description": "Danh sách tài khoản của người dùng",
                         "schema": {
                             "$ref": "#/definitions/userpb.AccountInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/profile/find-by-phone": {
+            "get": {
+                "description": "Tìm kiếm thông tin user dựa trên số điện thoại",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Tìm user theo số điện thoại",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Số điện thoại cần tìm",
+                        "name": "phone",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.FindByPhoneResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.FindByPhoneResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.FindByPhoneResponse"
                         }
                     }
                 }
@@ -1548,14 +2460,14 @@
                 }
             }
         },
-        "/v2/user/rate": {
+        "/v2/user/profile/quick-setup": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Tạo đánh giá",
+                "description": "Thiết lập nhanh vai trò, khu vực hoạt động và mục đích sử dụng cho người dùng hiện tại",
                 "consumes": [
                     "application/json"
                 ],
@@ -1563,63 +2475,17 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Rate"
+                    "Profile"
                 ],
-                "summary": "Tạo đánh giá",
+                "summary": "Cài đặt nhanh hồ sơ người dùng",
                 "parameters": [
                     {
-                        "description": "Rate",
-                        "name": "rate",
+                        "description": "Thông tin cài đặt nhanh",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/userpb.Rate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.Rate"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/rate/hidden/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật ẩn đánh giá",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Cập nhật ẩn đánh giá",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Hidden",
-                        "name": "hidden",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/userpb.UpdateHiddenRequest"
+                            "$ref": "#/definitions/sharepb.UserV3Proto"
                         }
                     }
                 ],
@@ -1633,224 +2499,14 @@
                 }
             }
         },
-        "/v2/user/rate/history/{rateId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách đánh giá",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Lấy danh sách đánh giá",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Rate ID",
-                        "name": "rateId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Size",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.RateList"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/rate/list/{targetId}/{targetType}": {
-            "get": {
-                "description": "Lấy danh sách đánh giá",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Lấy danh sách đánh giá",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Target ID",
-                        "name": "targetId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Target Type",
-                        "name": "targetType",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "name": "createdAt",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "createdBy",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "targetId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "targetType",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "updatedAt",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "updatedBy",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.RateList"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/rate/stats/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy thông tin đánh giá",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Lấy thông tin đánh giá",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.RateStats"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/rate/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy thông tin đánh giá",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Lấy thông tin đánh giá",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.Rate"
-                        }
-                    }
-                }
-            },
+        "/v2/user/profile/set-person": {
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Cập nhật đánh giá",
+                "description": "Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt, email, địa chỉ)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1858,60 +2514,18 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Rate"
+                    "Profile"
                 ],
-                "summary": "Cập nhật đánh giá",
+                "summary": "Cập nhật thông tin cá nhân",
                 "parameters": [
                     {
-                        "description": "Rate",
-                        "name": "rate",
+                        "description": "Thông tin cá nhân",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/userpb.Rate"
+                            "$ref": "#/definitions/userpb.SetPersonRequest"
                         }
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.Rate"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa đánh giá",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Rate"
-                ],
-                "summary": "Xóa đánh giá",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -1920,96 +2534,24 @@
                         "schema": {
                             "$ref": "#/definitions/sharepb.Empty"
                         }
-                    }
-                }
-            }
-        },
-        "/v2/user/report": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Tạo báo cáo người dùng mới",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report"
-                ],
-                "summary": "Tạo báo cáo",
-                "parameters": [
-                    {
-                        "description": "Thông tin báo cáo",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
                         "schema": {
-                            "$ref": "#/definitions/userpb.CreateReportRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.ReportResponse"
+                            "type": "string"
                         }
                     }
                 }
             }
         },
-        "/v2/user/report/admin-note": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật ghi chú nội bộ hoặc công khai cho báo cáo (chỉ dành cho admin)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report"
-                ],
-                "summary": "Cập nhật ghi chú admin",
-                "parameters": [
-                    {
-                        "description": "Thông tin ghi chú admin",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/userpb.AdminNoteRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.AdminNoteResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/report/detail/{id}": {
+        "/v2/user/purpose-use": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Lấy thông tin chi tiết báo cáo",
+                "description": "Lấy danh sách mục đích sử dụng (User)",
                 "consumes": [
                     "application/json"
                 ],
@@ -2017,258 +2559,69 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Report"
+                    "UserDictionary"
                 ],
-                "summary": "Lấy thông tin chi tiết báo cáo",
+                "summary": "Lấy danh sách mục đích sử dụng",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID báo cáo",
-                        "name": "id",
-                        "in": "path",
+                        "description": "Thông tin mục đích sử dụng",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.ItemV3PageProto"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thống kê số lượng user theo 2 ngày",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Lấy thống kê số lượng user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ngày đầu tiên (YYYY-MM-DD)",
+                        "name": "firstDate",
+                        "in": "query",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.ReportResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/report/list/{userId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách báo cáo theo userId",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report"
-                ],
-                "summary": "Lấy danh sách báo cáo",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID người dùng",
-                        "name": "userId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Trạng thái báo cáo",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID nguyên nhân",
-                        "name": "reasonId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Trang",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Kích thước trang",
-                        "name": "size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.GetReportsResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/report/reasons": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Lấy danh sách nguyên nhân báo cáo",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report-Reason"
-                ],
-                "summary": "Lấy danh sách nguyên nhân báo cáo",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Trang",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Kích thước trang",
-                        "name": "size",
-                        "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Từ khóa tìm kiếm",
-                        "name": "search",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.GetReportReasonsResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/report/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cập nhật thông tin báo cáo (chỉ khi chưa duyệt)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report"
-                ],
-                "summary": "Cập nhật báo cáo",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID báo cáo",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin cập nhật",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/userpb.UpdateReportRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.ReportResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Xóa báo cáo (chỉ khi chưa duyệt)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report"
-                ],
-                "summary": "Xóa báo cáo",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID báo cáo",
-                        "name": "id",
-                        "in": "path",
+                        "description": "Ngày thứ hai (YYYY-MM-DD)",
+                        "name": "secondDate",
+                        "in": "query",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Thành công",
                         "schema": {
-                            "$ref": "#/definitions/userpb.DeleteReportResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v2/user/report/{id}/respond": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Duyệt hoặc từ chối báo cáo (chỉ dành cho admin)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report"
-                ],
-                "summary": "Phản hồi báo cáo",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID báo cáo",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Phản hồi",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/userpb.RespondToReportRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/userpb.ReportResponse"
+                            "$ref": "#/definitions/sharepb.GetStatsResponse"
                         }
                     }
                 }
@@ -2276,6 +2629,233 @@
         }
     },
     "definitions": {
+        "_enum.EUserStatus": {
+            "type": "integer",
+            "enum": [
+                0,
+                10,
+                20,
+                30,
+                40
+            ],
+            "x-enum-comments": {
+                "EUserStatusActive": "Hoạt động",
+                "EUserStatusInactive": "Chưa hoạt động",
+                "EUserStatusPermanentlyLocked": "Khóa vĩnh viễn",
+                "EUserStatusSuspended": "Ngừng hoạt động",
+                "EUserStatusTemporaryLocked": "Khóa tạm thời"
+            },
+            "x-enum-varnames": [
+                "EUserStatusInactive",
+                "EUserStatusActive",
+                "EUserStatusTemporaryLocked",
+                "EUserStatusPermanentlyLocked",
+                "EUserStatusSuspended"
+            ]
+        },
+        "authpb.AuthSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "authId": {
+                    "type": "integer"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "encryptedAuthKey": {
+                    "description": "Auth key đã được mã hóa bằng shared secret (Diffie-Hellman)",
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "passwordAuthId": {
+                    "description": "ID của auth_method có provider ADMIN (password authentication)",
+                    "type": "integer"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "referralCode": {
+                    "description": "Mã giới thiệu của user",
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "requireFullname": {
+                    "description": "true nếu user cần cập nhật họ tên",
+                    "type": "boolean"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "serverPublicKey": {
+                    "description": "Diffie-Hellman public key của server (nếu cần gửi về client)",
+                    "type": "string"
+                },
+                "tempToken": {
+                    "description": "Token tạm thời (10 phút) cho user chưa có họ tên, chỉ dùng để gọi UpdateFullname",
+                    "type": "string"
+                }
+            }
+        },
+        "authpb.Color": {
+            "type": "object",
+            "properties": {
+                "backgroundColor": {
+                    "type": "string"
+                },
+                "colorKey": {
+                    "type": "string"
+                },
+                "contentColor": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "hexCode": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "authpb.Permission": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/authpb.Permission"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "module": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "permissionType": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "authpb.Role": {
+            "type": "object",
+            "properties": {
+                "allowAssign": {
+                    "type": "boolean"
+                },
+                "color": {
+                    "$ref": "#/definitions/authpb.Color"
+                },
+                "colorId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "domainType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
+                },
+                "permissionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/authpb.Permission"
+                    }
+                },
+                "roleDescription": {
+                    "type": "string"
+                },
+                "roleGroupId": {
+                    "type": "integer"
+                },
+                "roleGroupName": {
+                    "type": "string"
+                },
+                "roleKey": {
+                    "type": "integer"
+                },
+                "roleName": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.FollowInfoRes": {
             "type": "object",
             "properties": {
@@ -2323,52 +2903,6 @@
                 }
             }
         },
-        "dto.OtpRequest": {
-            "type": "object",
-            "required": [
-                "phone"
-            ],
-            "properties": {
-                "fullname": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string",
-                    "example": "0901230456"
-                }
-            }
-        },
-        "dto.OtpVerifyRequest": {
-            "type": "object",
-            "required": [
-                "otp",
-                "phone"
-            ],
-            "properties": {
-                "authId": {
-                    "type": "integer"
-                },
-                "fullname": {
-                    "type": "string"
-                },
-                "os": {
-                    "type": "string"
-                },
-                "otp": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string",
-                    "example": "0901230456"
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.PublicUserInfo": {
             "type": "object",
             "properties": {
@@ -2386,6 +2920,9 @@
                 },
                 "birth": {
                     "type": "string"
+                },
+                "bookmark": {
+                    "type": "boolean"
                 },
                 "certifications": {
                     "description": "transient",
@@ -2412,6 +2949,9 @@
                 "fullname": {
                     "type": "string"
                 },
+                "gender": {
+                    "type": "integer"
+                },
                 "instagram": {
                     "type": "string"
                 },
@@ -2421,11 +2961,23 @@
                 "linkedin": {
                     "type": "string"
                 },
+                "mainAreas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.MainAreaEntity"
+                    }
+                },
                 "phone": {
                     "type": "string"
                 },
                 "phone2": {
                     "type": "string"
+                },
+                "planAt": {
+                    "type": "string"
+                },
+                "planId": {
+                    "type": "integer"
                 },
                 "position": {
                     "type": "string"
@@ -2439,6 +2991,15 @@
                 "profileId": {
                     "type": "integer"
                 },
+                "profileVisibility": {
+                    "type": "integer"
+                },
+                "purposeUses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PurposeUseEntity"
+                    }
+                },
                 "rateStats": {
                     "$ref": "#/definitions/models.RateStats"
                 },
@@ -2451,14 +3012,35 @@
                 "relationShip": {
                     "$ref": "#/definitions/models.FriendItem"
                 },
+                "roleBgColor": {
+                    "type": "string"
+                },
+                "roleColor": {
+                    "type": "string"
+                },
+                "roleId": {
+                    "type": "integer"
+                },
+                "roleKey": {
+                    "type": "integer"
+                },
+                "roleName": {
+                    "type": "string"
+                },
                 "roleRealEstate": {
                     "$ref": "#/definitions/enums.ERoleRealEstate"
+                },
+                "roleType": {
+                    "$ref": "#/definitions/enums.ERole"
                 },
                 "slogan": {
                     "type": "string"
                 },
                 "startDate": {
                     "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/_enum.EUserStatus"
                 },
                 "statusOnline": {
                     "$ref": "#/definitions/enums.EOnlineStatus"
@@ -2469,83 +3051,20 @@
                 "taxCode": {
                     "type": "string"
                 },
+                "tickVerified": {
+                    "type": "boolean"
+                },
                 "twitter": {
                     "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
                 },
                 "website": {
                     "type": "string"
                 },
                 "youtube": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.RestorePhoneRequest": {
-            "type": "object",
-            "required": [
-                "phone"
-            ],
-            "properties": {
-                "phone": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.SessionQRConfirm": {
-            "type": "object",
-            "properties": {
-                "sessionId": {
-                    "description": "ID của trình duyệt hoặc phiên web",
-                    "type": "integer"
-                }
-            }
-        },
-        "dto.SessionQRRequest": {
-            "type": "object",
-            "properties": {
-                "clientId": {
-                    "description": "ID của trình duyệt hoặc phiên web",
-                    "type": "string"
-                },
-                "csrfToken": {
-                    "description": "Token chống CSRF (nếu cần)",
-                    "type": "string"
-                },
-                "expiration": {
-                    "description": "Thời gian hết hạn QR code (tính bằng giây)",
-                    "type": "integer"
-                },
-                "sessionId": {
-                    "type": "integer"
-                },
-                "sessionKey": {
-                    "type": "string"
-                },
-                "userAgent": {
-                    "description": "Chuỗi nhận diện trình duyệt",
-                    "type": "string"
-                }
-            }
-        },
-        "dto.SessionQRResponse": {
-            "type": "object",
-            "properties": {
-                "sessionId": {
-                    "type": "integer"
-                },
-                "sessionKey": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.SwitchOrganizationRequest": {
-            "type": "object",
-            "required": [
-                "organizationId"
-            ],
-            "properties": {
-                "organizationId": {
-                    "type": "integer"
                 }
             }
         },
@@ -2636,7 +3155,7 @@
                 "Busy"
             ]
         },
-        "enums.ERoleRealEstate": {
+        "enums.ERole": {
             "type": "integer",
             "enum": [
                 10,
@@ -2644,9 +3163,28 @@
                 30
             ],
             "x-enum-varnames": [
+                "ERoleUser",
+                "ERoleAdmin",
+                "ERoleSuperAdmin"
+            ]
+        },
+        "enums.ERoleRealEstate": {
+            "type": "integer",
+            "enum": [
+                10,
+                20,
+                30,
+                40,
+                50,
+                60
+            ],
+            "x-enum-varnames": [
                 "ERoleRealEstateBroker",
                 "ERoleRealEstateAppraiser",
-                "ERoleRealEstateLegal"
+                "ERoleRealEstateLegal",
+                "ERoleRealEstateInvestor",
+                "ERoleRealEstateCustomer",
+                "ERoleRealEstateManager"
             ]
         },
         "enums.ESettingTab": {
@@ -2694,52 +3232,6 @@
                 "VerifyVerified",
                 "VerifyRejected"
             ]
-        },
-        "sharepb.Empty": {
-            "type": "object"
-        },
-        "sharepb.FriendItem": {
-            "type": "object",
-            "properties": {
-                "createdBy": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "receiverId": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "integer"
-                }
-            }
-        },
-        "sharepb.ProfileItem": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "fullName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isMember": {
-                    "type": "boolean"
-                },
-                "joinedAt": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "tickVerified": {
-                    "type": "boolean"
-                }
-            }
         },
         "models.CertificationEntity": {
             "type": "object",
@@ -2819,12 +3311,9 @@
                 }
             }
         },
-        "models.GroupEntity": {
+        "models.MainAreaEntity": {
             "type": "object",
             "properties": {
-                "backgroundColor": {
-                    "type": "string"
-                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -2832,14 +3321,17 @@
                     "description": "gorm.Model",
                     "type": "integer"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
                 },
-                "textColor": {
-                    "type": "string"
+                "numberProfile": {
+                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -2893,6 +3385,39 @@
                 }
             }
         },
+        "models.PurposeUseEntity": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "numberProfile": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.RateStats": {
             "type": "object",
             "properties": {
@@ -2915,6 +3440,159 @@
                     "type": "integer"
                 },
                 "totalReviews": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.Empty": {
+            "type": "object"
+        },
+        "sharepb.FriendItem": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.GetStatsResponse": {
+            "type": "object",
+            "properties": {
+                "firstDate": {
+                    "type": "string"
+                },
+                "firstDateCount": {
+                    "type": "integer"
+                },
+                "secondDate": {
+                    "type": "string"
+                },
+                "secondDateCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.IdRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.ItemV3PageProto": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.ItemV3Proto": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.SubmitResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.UserV3Proto": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "mainAreaIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "mainAreaNews": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "purposeUseIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "roleRealEstate": {
+                    "type": "integer"
+                }
+            }
+        },
+        "timestamppb.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
                     "type": "integer"
                 }
             }
@@ -2965,53 +3643,205 @@
                 }
             }
         },
-        "userpb.AdminNoteRequest": {
+        "userpb.AdminProfile": {
             "type": "object",
             "properties": {
-                "adminNote": {
-                    "description": "Ghi chú nội bộ admin",
+                "address": {
                     "type": "string"
                 },
-                "isInternal": {
-                    "description": "Ghi chú nội bộ hay công khai",
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "bookmark": {
                     "type": "boolean"
                 },
-                "reportId": {
-                    "description": "ID báo cáo cần cập nhật ghi chú",
+                "createdAt": {
+                    "type": "string"
+                },
+                "departmentId": {
                     "type": "integer"
-                }
-            }
-        },
-        "userpb.AdminNoteResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
+                },
+                "email": {
                     "type": "string"
                 },
-                "report": {
-                    "description": "Báo cáo đã được cập nhật",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/userpb.Report"
-                        }
-                    ]
+                "fullName": {
+                    "type": "string"
                 },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "userpb.Attach": {
-            "type": "object",
-            "properties": {
+                "gender": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
-                "imageType": {
+                "internalNotes": {
                     "type": "string"
                 },
-                "imageUrl": {
+                "jobTitle": {
                     "type": "string"
+                },
+                "lastLoginAt": {
+                    "type": "string"
+                },
+                "lockedAt": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/authpb.Role"
+                },
+                "roleId": {
+                    "type": "integer"
+                },
+                "roleKey": {
+                    "type": "string"
+                },
+                "roleRealEstate": {
+                    "type": "string"
+                },
+                "roleType": {
+                    "type": "string"
+                },
+                "sendNotification": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "tickVerified": {
+                    "type": "boolean"
+                },
+                "totalLogin": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verifiedAt": {
+                    "type": "string"
+                },
+                "workAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.AdminUserItem": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "bookmark": {
+                    "description": "true nếu user này được admin bookmark",
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "departmentId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "integer"
+                },
+                "lastLoginAt": {
+                    "description": "Lần đăng nhập cuối",
+                    "type": "string"
+                },
+                "lockedAt": {
+                    "description": "Thời gian khóa tài khoản",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "Role của user",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/authpb.Role"
+                        }
+                    ]
+                },
+                "roleRealEstate": {
+                    "description": "Role real estate",
+                    "type": "string"
+                },
+                "roleType": {
+                    "description": "Role type của user",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động",
+                    "type": "integer"
+                },
+                "tickVerified": {
+                    "description": "Tài khoản đã xác thực",
+                    "type": "boolean"
+                },
+                "totalLogin": {
+                    "description": "Tổng số lần đăng nhập",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "verifiedAt": {
+                    "description": "Thời gian xác thực",
+                    "type": "string"
+                },
+                "warningLevel": {
+                    "description": "Cấp độ cảnh báo (0: none, 10: info, 20: warning, 30: danger, 40: critical)",
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.ApproveUserRequest": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "description": "Ghi chú khi duyệt",
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
                 }
             }
         },
@@ -3041,103 +3871,512 @@
                 }
             }
         },
-        "userpb.CreateReportRequest": {
+        "userpb.CreateOrderRequest": {
             "type": "object",
             "properties": {
-                "additionalInfo": {
-                    "description": "Thông tin bổ sung",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "priority": {
-                    "description": "Mức độ ưu tiên",
-                    "type": "integer"
-                },
-                "proofDocs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportProof"
-                    }
-                },
-                "reasonId": {
-                    "type": "integer"
-                },
-                "userId": {
-                    "description": "User bị báo cáo",
+                "planId": {
                     "type": "integer"
                 }
             }
         },
-        "userpb.DeleteReportResponse": {
+        "userpb.CreateOrderResponse": {
             "type": "object",
             "properties": {
-                "message": {
+                "membership": {
+                    "$ref": "#/definitions/userpb.MembershipResponse"
+                },
+                "paymentUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.CreatePlanRequest": {
+            "type": "object",
+            "properties": {
+                "color": {
                     "type": "string"
                 },
+                "createOrganization": {
+                    "type": "integer"
+                },
+                "createProduct": {
+                    "type": "integer"
+                },
+                "createProductAI": {
+                    "type": "integer"
+                },
+                "customerLimit": {
+                    "type": "integer"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "friendLimit": {
+                    "type": "integer"
+                },
+                "joinOrg": {
+                    "type": "integer"
+                },
+                "limitPost": {
+                    "type": "integer"
+                },
+                "orgMemberLimit": {
+                    "type": "integer"
+                },
+                "orgProductLimit": {
+                    "type": "integer"
+                },
+                "packageName": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "publicProductLimit": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "userpb.CreateUserRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Địa chỉ",
+                    "type": "string"
+                },
+                "avatar": {
+                    "description": "URL avatar",
+                    "type": "string"
+                },
+                "birth": {
+                    "description": "Ngày sinh (format: YYYY-MM-DD)",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Email",
+                    "type": "string"
+                },
+                "fullName": {
+                    "description": "Họ và tên",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "Giới tính (0: khác, 1: nam, 2: nữ)",
+                    "type": "integer"
+                },
+                "password": {
+                    "description": "Mật khẩu (optional - tự động generate nếu không có)",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "Số điện thoại",
+                    "type": "string"
+                },
+                "roleId": {
+                    "description": "Role ID",
+                    "type": "integer"
+                },
+                "username": {
+                    "description": "Tên đăng nhập (optional - tự động generate từ email nếu không có)",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.CreateUserResponse": {
+            "type": "object",
+            "properties": {
+                "authId": {
+                    "description": "ID của auth method vừa tạo",
+                    "type": "integer"
+                },
+                "avatar": {
+                    "description": "URL avatar",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "Thời gian tạo",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Email",
+                    "type": "string"
+                },
+                "fullName": {
+                    "description": "Họ và tên",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "Số điện thoại",
+                    "type": "string"
+                },
+                "profileId": {
+                    "description": "ID của user vừa tạo",
+                    "type": "integer"
+                },
+                "roleId": {
+                    "description": "Role ID",
+                    "type": "integer"
+                },
+                "username": {
+                    "description": "Tên đăng nhập",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.DeletePlanResponse": {
+            "type": "object",
+            "properties": {
                 "success": {
                     "type": "boolean"
                 }
             }
         },
-        "userpb.GetReportReasonsResponse": {
+        "userpb.DeleteUserRequest": {
             "type": "object",
             "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportReason"
-                    }
-                },
-                "page": {
+                "profileId": {
+                    "description": "ID của user cần xóa",
                     "type": "integer"
                 },
-                "size": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
+                "reason": {
+                    "description": "Lý do xóa",
+                    "type": "string"
                 }
             }
         },
-        "userpb.GetReportsResponse": {
+        "userpb.FindByPhoneResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "Thông tin user tìm được (null nếu không tìm thấy)",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.GetAllPlansResponse": {
+            "type": "object",
+            "properties": {
+                "plans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.PlanResponse"
+                    }
+                }
+            }
+        },
+        "userpb.GetMyMembershipResponse": {
+            "type": "object",
+            "properties": {
+                "membership": {
+                    "$ref": "#/definitions/userpb.MembershipResponse"
+                }
+            }
+        },
+        "userpb.GetPlanByIdResponse": {
+            "type": "object",
+            "properties": {
+                "plan": {
+                    "$ref": "#/definitions/userpb.PlanResponse"
+                }
+            }
+        },
+        "userpb.GetUserDetailResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "backIdentify": {
+                    "type": "string"
+                },
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "departmentId": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "facebook": {
+                    "type": "string"
+                },
+                "frontIdentify": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "integer"
+                },
+                "instagram": {
+                    "type": "string"
+                },
+                "introduction": {
+                    "type": "string"
+                },
+                "linkedin": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "$ref": "#/definitions/authpb.Role"
+                },
+                "slogan": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động",
+                    "type": "integer"
+                },
+                "taxCode": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
+                },
+                "twitter": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "youtube": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.GetVisiblePlansResponse": {
+            "type": "object",
+            "properties": {
+                "plans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.PlanResponse"
+                    }
+                }
+            }
+        },
+        "userpb.ListAllUsersResponse": {
             "type": "object",
             "properties": {
                 "data": {
-                    "description": "Keep reports for now until protobuf regeneration",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/userpb.Report"
+                        "$ref": "#/definitions/userpb.AdminUserItem"
                     }
-                },
-                "hasNext": {
-                    "description": "Có trang tiếp theo",
-                    "type": "boolean"
-                },
-                "hasPrev": {
-                    "description": "Có trang trước",
-                    "type": "boolean"
                 },
                 "page": {
                     "type": "integer"
                 },
                 "size": {
                     "type": "integer"
-                },
-                "summary": {
-                    "description": "Thống kê tóm tắt",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/userpb.ReportStats"
-                        }
-                    ]
                 },
                 "total": {
                     "type": "integer"
                 },
                 "totalPages": {
                     "type": "integer"
+                }
+            }
+        },
+        "userpb.LockUserRequest": {
+            "type": "object",
+            "properties": {
+                "lockType": {
+                    "description": "Loại khóa tài khoản",
+                    "type": "integer"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "description": "Lý do khóa tài khoản",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.MainArea": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "numberProfile": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.MainAreaItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.MainAreaPage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.MainArea"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.MembershipResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "finishedDate": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "orderId": {
+                    "type": "integer"
+                },
+                "paidAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "planId": {
+                    "type": "integer"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                }
+            }
+        },
+        "userpb.PlanResponse": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "createOrganization": {
+                    "type": "integer"
+                },
+                "createProduct": {
+                    "type": "integer"
+                },
+                "createProductAI": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "customerLimit": {
+                    "type": "integer"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "friendLimit": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joinOrg": {
+                    "type": "integer"
+                },
+                "limitPost": {
+                    "type": "integer"
+                },
+                "orgMemberLimit": {
+                    "type": "integer"
+                },
+                "orgProductLimit": {
+                    "type": "integer"
+                },
+                "packageName": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "publicProductLimit": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "visibility": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3206,6 +4445,9 @@
                 "fullName": {
                     "type": "string"
                 },
+                "gender": {
+                    "type": "integer"
+                },
                 "instagram": {
                     "type": "string"
                 },
@@ -3214,6 +4456,12 @@
                 },
                 "linkedin": {
                     "type": "string"
+                },
+                "mainAreas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.MainAreaItem"
+                    }
                 },
                 "phone": {
                     "type": "string"
@@ -3235,6 +4483,18 @@
                 },
                 "profileVisibility": {
                     "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "purposeUses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.PurposeUseItem"
+                    }
                 },
                 "rateStats": {
                     "$ref": "#/definitions/userpb.RateStats"
@@ -3269,6 +4529,12 @@
                 "visibility": {
                     "type": "integer"
                 },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                },
                 "website": {
                     "type": "string"
                 },
@@ -3277,43 +4543,22 @@
                 }
             }
         },
-        "userpb.Rate": {
+        "userpb.PurposeUse": {
             "type": "object",
             "properties": {
-                "anonymous": {
-                    "type": "boolean"
-                },
-                "attachs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.Attach"
-                    }
-                },
-                "comment": {
-                    "type": "string"
-                },
                 "createdAt": {
                     "type": "string"
                 },
-                "createdBy": {
-                    "type": "integer"
-                },
-                "createdUser": {
-                    "$ref": "#/definitions/sharepb.ProfileItem"
+                "description": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "parentId": {
-                    "type": "integer"
+                "name": {
+                    "type": "string"
                 },
-                "score": {
-                    "type": "integer"
-                },
-                "targetId": {
-                    "type": "integer"
-                },
-                "targetType": {
+                "numberProfile": {
                     "type": "integer"
                 },
                 "updatedAt": {
@@ -3321,13 +4566,27 @@
                 }
             }
         },
-        "userpb.RateList": {
+        "userpb.PurposeUseItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.PurposeUsePage": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/userpb.Rate"
+                        "$ref": "#/definitions/userpb.PurposeUse"
                     }
                 },
                 "total": {
@@ -3361,299 +4620,10 @@
                 }
             }
         },
-        "userpb.Report": {
+        "userpb.SetPersonRequest": {
             "type": "object",
             "properties": {
-                "adminNote": {
-                    "description": "Ghi chú nội bộ admin",
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "type": "integer"
-                },
-                "description": {
-                    "description": "Mô tả chi tiết từ người báo cáo",
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ipAddress": {
-                    "description": "IP address của người báo cáo",
-                    "type": "string"
-                },
-                "priority": {
-                    "description": "Mức độ ưu tiên (1=thấp, 5=cao)",
-                    "type": "integer"
-                },
-                "proofDocs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportProof"
-                    }
-                },
-                "reason": {
-                    "$ref": "#/definitions/userpb.ReportReason"
-                },
-                "reasonId": {
-                    "type": "integer"
-                },
-                "reportStatus": {
-                    "type": "integer"
-                },
-                "reporter": {
-                    "description": "Thông tin user báo cáo",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/userpb.ReportUser"
-                        }
-                    ]
-                },
-                "reporterId": {
-                    "description": "User báo cáo",
-                    "type": "integer"
-                },
-                "resolvedAt": {
-                    "description": "Thời gian xử lý xong",
-                    "type": "string"
-                },
-                "resolvedBy": {
-                    "description": "Admin xử lý",
-                    "type": "integer"
-                },
-                "response": {
-                    "description": "Phản hồi từ admin",
-                    "type": "string"
-                },
-                "statusText": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                },
-                "user": {
-                    "description": "Thông tin user bị báo cáo",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/userpb.ReportUser"
-                        }
-                    ]
-                },
-                "userAgent": {
-                    "description": "User agent của người báo cáo",
-                    "type": "string"
-                },
-                "userId": {
-                    "description": "User bị báo cáo",
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.ReportProof": {
-            "type": "object",
-            "properties": {
-                "fileName": {
-                    "type": "string"
-                },
-                "fileSize": {
-                    "type": "integer"
-                },
-                "fileType": {
-                    "type": "string"
-                },
-                "fileUrl": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "mimeType": {
-                    "type": "string"
-                },
-                "reportId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.ReportReason": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "created_by": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "sort_order": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "updated_by": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.ReportResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "report": {
-                    "$ref": "#/definitions/userpb.Report"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "userpb.ReportStats": {
-            "type": "object",
-            "properties": {
-                "approvalRate": {
-                    "description": "Tỷ lệ chấp nhận (%)",
-                    "type": "number"
-                },
-                "approvedReports": {
-                    "type": "integer"
-                },
-                "avgResponseTime": {
-                    "description": "Thời gian phản hồi TB (giờ)",
-                    "type": "number"
-                },
-                "inProgressReports": {
-                    "description": "Báo cáo đang xử lý",
-                    "type": "integer"
-                },
-                "pendingReports": {
-                    "type": "integer"
-                },
-                "rejectedReports": {
-                    "type": "integer"
-                },
-                "statsByAdmin": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportStatsByAdmin"
-                    }
-                },
-                "statsByDate": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportStatsByDate"
-                    }
-                },
-                "statsByPriority": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportStatsByPriority"
-                    }
-                },
-                "statsByReason": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/userpb.ReportStatsByReason"
-                    }
-                },
-                "totalReports": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.ReportStatsByAdmin": {
-            "type": "object",
-            "properties": {
-                "adminId": {
-                    "type": "integer"
-                },
-                "adminName": {
-                    "type": "string"
-                },
-                "avgResponseTime": {
-                    "type": "number"
-                },
-                "handledCount": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.ReportStatsByDate": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "pending": {
-                    "type": "integer"
-                },
-                "resolved": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.ReportStatsByPriority": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "priority": {
-                    "type": "integer"
-                },
-                "priorityName": {
-                    "type": "string"
-                }
-            }
-        },
-        "userpb.ReportStatsByReason": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "percentage": {
-                    "description": "Phần trăm",
-                    "type": "number"
-                },
-                "reasonId": {
-                    "type": "integer"
-                },
-                "reasonName": {
-                    "type": "string"
-                }
-            }
-        },
-        "userpb.ReportUser": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "Địa chỉ",
-                    "type": "string"
-                },
-                "avatar": {
+                "birth": {
                     "type": "string"
                 },
                 "email": {
@@ -3662,105 +4632,198 @@
                 "fullName": {
                     "type": "string"
                 },
-                "isVerified": {
-                    "description": "Tài khoản đã xác thực",
-                    "type": "boolean"
-                },
-                "lastLogin": {
-                    "description": "Lần đăng nhập cuối",
-                    "type": "string"
+                "gender": {
+                    "type": "integer"
                 },
                 "phone": {
                     "type": "string"
                 },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.UnLockUserRequest": {
+            "type": "object",
+            "properties": {
                 "profileId": {
                     "type": "integer"
                 },
-                "userType": {
-                    "description": "Loại user (1=individual, 2=business)",
-                    "type": "integer"
-                },
-                "username": {
-                    "description": "Username/handle",
+                "reason": {
+                    "description": "Lý do mở khóa tài khoản",
                     "type": "string"
                 }
             }
         },
-        "userpb.RespondToReportRequest": {
+        "userpb.UpdatePlanRequest": {
             "type": "object",
             "properties": {
-                "adminNote": {
-                    "description": "Ghi chú nội bộ",
+                "color": {
                     "type": "string"
                 },
-                "id": {
+                "createOrganization": {
                     "type": "integer"
                 },
-                "response": {
-                    "description": "Phản hồi công khai",
-                    "type": "string"
-                },
-                "sendNotification": {
-                    "description": "Gửi thông báo cho user",
-                    "type": "boolean"
-                },
-                "status": {
-                    "description": "1=pending, 2=approved, 3=rejected",
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.SwitchAccountRequest": {
-            "type": "object",
-            "properties": {
-                "groupId": {
+                "createProduct": {
                     "type": "integer"
                 },
-                "organizationId": {
+                "createProductAI": {
                     "type": "integer"
                 },
-                "ownerType": {
+                "customerLimit": {
                     "type": "integer"
                 },
-                "profileId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.UpdateHiddenRequest": {
-            "type": "object",
-            "properties": {
-                "hidden": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "userpb.UpdateReportRequest": {
-            "type": "object",
-            "properties": {
-                "additionalInfo": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
+                "duration": {
                     "type": "integer"
                 },
-                "priority": {
-                    "type": "integer"
-                },
-                "proofDocs": {
+                "features": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/userpb.ReportProof"
+                        "type": "string"
                     }
                 },
-                "reasonId": {
+                "friendLimit": {
                     "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joinOrg": {
+                    "type": "integer"
+                },
+                "limitPost": {
+                    "type": "integer"
+                },
+                "orgMemberLimit": {
+                    "type": "integer"
+                },
+                "orgProductLimit": {
+                    "type": "integer"
+                },
+                "packageName": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "publicProductLimit": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "userpb.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Địa chỉ",
+                    "type": "string"
+                },
+                "avatar": {
+                    "description": "URL avatar",
+                    "type": "string"
+                },
+                "birth": {
+                    "description": "Ngày sinh",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Email",
+                    "type": "string"
+                },
+                "fullName": {
+                    "description": "Họ và tên",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "Giới tính",
+                    "type": "integer"
+                },
+                "phone": {
+                    "description": "Số điện thoại",
+                    "type": "string"
+                },
+                "profileId": {
+                    "description": "ID của user cần cập nhật",
+                    "type": "integer"
+                },
+                "roleId": {
+                    "description": "Role ID",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động",
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.UpdateUserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "description": "URL avatar",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Email",
+                    "type": "string"
+                },
+                "fullName": {
+                    "description": "Họ và tên",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "Số điện thoại",
+                    "type": "string"
+                },
+                "profileId": {
+                    "description": "ID của user vừa cập nhật",
+                    "type": "integer"
+                },
+                "roleId": {
+                    "description": "Role ID",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "Thời gian cập nhật",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.VerifyOrderRequest": {
+            "type": "object",
+            "properties": {
+                "paidAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "signature": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.VerifyOrderResponse": {
+            "type": "object",
+            "properties": {
+                "membership": {
+                    "$ref": "#/definitions/userpb.MembershipResponse"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         }
