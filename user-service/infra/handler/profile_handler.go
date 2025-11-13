@@ -162,22 +162,22 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 // @Security BearerAuth
 // @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
 // @Router /v2/user/profile/info/me [get]
-func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.Empty) (*userpb.ProfilePublicInfo, error) {
+func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.Empty) (*sharepb.UserV3Proto, error) {
 	result, err := s.ProfileUsecase.PublicUserInfoMe(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
-	profilePb := s.ProfileMapper.PublicUserInfoToPb(result)
+	profilePb := s.ProfileMapper.OwnerProfileToUserV3Proto(result)
 
 	// Lấy tên province và ward từ hub service
 	if result.ProvinceID != nil || result.WardID != nil {
 		provinceName, wardName := s.HubClient.GetProvinceAndWardNames(ctx, result.ProvinceID, result.WardID)
 		if provinceName != "" {
-			profilePb.ProvinceName = &provinceName
+			profilePb.Address.ProvinceName = provinceName
 		}
 		if wardName != "" {
-			profilePb.WardName = &wardName
+			profilePb.Address.WardName = wardName
 		}
 	}
 

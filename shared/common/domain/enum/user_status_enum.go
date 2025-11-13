@@ -38,6 +38,6 @@ func (e EUserStatus) IsLocked() bool {
 	return e == EUserStatusTemporaryLocked || e == EUserStatusPermanentlyLocked
 }
 
-func (e EUserStatus) IsActive() bool {
-	return e == EUserStatusActive
+func (e EUserStatus) CanLogin() bool {
+	return e != EUserStatusSuspended
 }

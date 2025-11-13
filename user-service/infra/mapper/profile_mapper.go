@@ -251,3 +251,41 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 
 	return result
 }
+
+func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEntity) *sharepb.UserV3Proto {
+	if profile == nil {
+		return nil
+	}
+	result := &sharepb.UserV3Proto{
+		ProfileId:       profile.ProfileID,
+		FullName:        profile.FullName,
+		Avatar:          profile.Avatar,
+		BackgroundImage: profile.BackgroundImage,
+		Gender:          profile.Gender,
+		Birth:           _utils.FormatTimeToString(profile.Birth),
+		Phone:           profile.Phone,
+		Email:           profile.Email,
+		Address: &sharepb.AddressV3Proto{
+			Detail:     profile.Address,
+			ProvinceId: profile.ProvinceID,
+			WardId:     profile.WardID,
+		},
+		RoleRealEstate: uint32(profile.RoleRealEstate),
+		MainAreaIds:    nil,
+		PurposeUseIds:  nil,
+		CreatedAt:      _utils.FormatTimeToString(profile.CreatedAt),
+		UpdatedAt:      _utils.FormatTimeToString(profile.UpdatedAt),
+	}
+
+	if len(profile.MainAreas) > 0 {
+		for _, area := range profile.MainAreas {
+			result.MainAreaIds = append(result.MainAreaIds, area.ID)
+		}
+	}
+	if len(profile.PurposeUses) > 0 {
+		for _, purpose := range profile.PurposeUses {
+			result.PurposeUseIds = append(result.PurposeUseIds, purpose.ID)
+		}
+	}
+	return result
+}

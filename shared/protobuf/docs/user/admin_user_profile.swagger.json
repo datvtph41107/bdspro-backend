@@ -336,7 +336,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AdminUserProfileServiceLockUserBody"
+              "$ref": "#/definitions/userpbAdminUserProfileServiceLockUserBody"
             }
           }
         ],
@@ -463,20 +463,6 @@
         "note": {
           "type": "string",
           "title": "Ghi chú khi duyệt"
-        }
-      }
-    },
-    "AdminUserProfileServiceLockUserBody": {
-      "type": "object",
-      "properties": {
-        "reason": {
-          "type": "string",
-          "title": "Lý do khóa tài khoản"
-        },
-        "lockType": {
-          "type": "integer",
-          "format": "int64",
-          "title": "Loại khóa tài khoản"
         }
       }
     },
@@ -831,6 +817,20 @@
         "role": {
           "$ref": "#/definitions/authpbRole",
           "title": "Role của user"
+        }
+      }
+    },
+    "userpbAdminUserProfileServiceLockUserBody": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "title": "Lý do khóa tài khoản"
+        },
+        "lockType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại khóa tài khoản"
         }
       }
     },

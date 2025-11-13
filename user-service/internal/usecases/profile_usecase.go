@@ -411,7 +411,7 @@ func (uc *ProfileUsecase) CheckAccountStatus(ctx context.Context, profileID uint
 		Status:     uint32(profile.Status),
 		StatusText: statusText,
 		IsLocked:   profile.Status.IsLocked(),
-		CanLogin:   profile.Status.IsActive(),
+		CanLogin:   profile.Status.CanLogin(),
 	}, nil
 }
 

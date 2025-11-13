@@ -74,4 +74,22 @@ message UserV3Proto {
     repeated uint64 mainAreaIds = 5;
     repeated uint64 purposeUseIds = 6;
     repeated ItemV3Proto mainAreaNews = 7;
+    repeated ItemV3Proto mainAreas = 8;
+    repeated ItemV3Proto purposeUses = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+    string backgroundImage = 12;
+    uint32 gender = 13;
+    string birth = 14;
+    string phone = 15;
+    string email = 16;
+    AddressV3Proto address = 17;
+}
+
+message OTPV3Proto {
+    string otp = 1;
+    string phone = 2;
+    string fullname = 3;
+    string mode = 4;
+    uint64 authId = 5;
 }

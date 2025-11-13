@@ -286,7 +286,7 @@ func (z *ZnsProvider) SendZNSMessage(
 	// return nil, nil
 	// Chuẩn hóa số điện thoại sang format quốc tế
 	phone = cleanPhoneNumber(phone)
-	if env.ENV_RUNTIME == "local" {
+	if env.ENV_RUNTIME == "" {
 		return nil, nil
 	}
 

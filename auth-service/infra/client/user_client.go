@@ -227,3 +227,21 @@ func (c *UserClient) GetMapProfileByIds(ctx context.Context, ids []uint64) (map[
 
 	return profileMap, nil
 }
+
+func (c *UserClient) LockAccount(ctx context.Context, profileID uint64) error {
+	if c.UserGrpcClient == nil {
+		log.Printf("User service client is nil")
+		return nil
+	}
+
+	_, err := c.UserGrpcClient.InternalClient.LockUser(ctx, &sharepb.RequestV3Proto{
+		Id:   profileID,
+		Text: "Người dùng khóa tạm thời",
+	})
+	if err != nil {
+		log.Printf("Failed to lock account: %v", err)
+		return err
+	}
+
+	return nil
+}

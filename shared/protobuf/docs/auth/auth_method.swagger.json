@@ -16,6 +16,38 @@
     "application/json"
   ],
   "paths": {
+    "/v2/auth/account/lock": {
+      "put": {
+        "operationId": "AuthService_OwnerLockAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/sharepbOTPV3Proto"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/admin-access": {
       "get": {
         "operationId": "AuthService_GetAdminAccessList",
@@ -324,7 +356,7 @@
         ]
       }
     },
-    "/v2/auth/delete": {
+    "/v2/auth/delete/{otp}": {
       "delete": {
         "summary": "Account Management",
         "operationId": "AuthService_DeleteAccount",
@@ -342,6 +374,15 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "otp",
+            "description": "Empty request - profileId will be extracted from context",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "AuthService"
         ]
@@ -476,7 +517,7 @@
     },
     "/v2/auth/otp/request": {
       "post": {
-        "summary": "OTP Authentication",
+        "summary": "OTP Authentication\nToàn hệ thống chỉ có duy nhất 2 api để gửi OTP là otp/request và otp/resend\nmode: \"auth\" -\u003e đăng nhập/đăng ký (required: phone)\nmode: \"verify\" -\u003e xác thực OTP (required: authId)",
         "operationId": "AuthService_RequestOTP",
         "responses": {
           "200": {
@@ -1830,6 +1871,13 @@
         },
         "fullname": {
           "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
         }
       },
       "title": "OTP Messages"
@@ -1861,6 +1909,10 @@
         },
         "fullname": {
           "type": "string"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -2153,6 +2205,30 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbEmpty": {
+      "type": "object"
+    },
+    "sharepbOTPV3Proto": {
+      "type": "object",
+      "properties": {
+        "otp": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "fullname": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     }

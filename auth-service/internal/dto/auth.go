@@ -21,6 +21,8 @@ func MakeAuthLoginResponse(accessToken string, authEntity *domain.AuthMethod, ro
 type OtpRequest struct {
 	Phone    string `json:"phone" binding:"required" validate:"required,e164"`
 	Fullname string `json:"fullname,omitempty"`
+	Mode     string `json:"mode" binding:"required" validate:"required"`
+	AuthId   uint64 `json:"authId,omitempty"`
 }
 
 // OtpVerifyRequest mở rộng từ OtpRequest để xác minh OTP

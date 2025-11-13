@@ -83,10 +83,33 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 }
 
 func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.RequestLoginResponse, error) {
+	if otp.Mode != "auth" && otp.Mode != "verify" {
+		return nil, _errors.ReturnError(
+			400,
+			"Mode phải là auth hoặc verify",
+		)
+	}
+
+	var err error
+	var oauth *dto.RequestLoginResponse
+	if otp.Mode == "auth" {
+		oauth, err = s._requestAuth(c, otp)
+	} else if otp.Mode == "verify" {
+		oauth, err = s._requestVerify(c, otp)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return oauth, nil
+}
+
+func (s *AuthUsecase) _requestAuth(c context.Context, otp dto.OtpRequest) (*dto.RequestLoginResponse, error) {
 	valid := _utils.ValidatePhoneNumber(otp.Phone)
 	if !valid {
 		return nil, _errors.ReturnError(
-			int32(400),
+			400,
 			"Số điện thoại không đúng",
 		)
 	}
@@ -127,8 +150,60 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 	}, nil
 }
 
+func (s *AuthUsecase) _requestVerify(c context.Context, otp dto.OtpRequest) (*dto.RequestLoginResponse, error) {
+	if otp.AuthId == 0 {
+		return nil, _errors.ReturnError(
+			400,
+			"AuthId không được để trống",
+		)
+	}
+	var smsChannel string
+	oauth, err := s.AuthMethodRepo.FindByID(c, otp.AuthId)
+	if err != nil {
+		return nil, err
+	}
+	if oauth == nil {
+		return nil, _errors.ReturnError(
+			400,
+			"AuthId không đúng",
+		)
+	}
+
+	// User đã tồn tại - gửi OTP
+	param, _ := s.GetParamValidate(c, oauth, "")
+	err = s.OtpUsecase.ValidateAuth(c,
+		[]enums.AuthCodeEnum{
+			enums.LOCKED,
+			enums.LIMIT_REQUEST_TIME,
+		}, param)
+	if err != nil {
+		return nil, err
+	}
+	_, smsChannel = s.SendNewOTP(c, param.OTP, oauth.AuthName)
+
+	return &dto.RequestLoginResponse{
+		AuthID:     oauth.ID,
+		Provider:   "PHONE",
+		OAuthID:    oauth.AuthName,
+		Existed:    oauth.UserID != 0,
+		SmsChannel: smsChannel,
+	}, nil
+}
+
 func (s *AuthUsecase) ResendOTP(c context.Context, otp dto.OtpRequest) (*dto.ResendOTPResponse, error) {
-	oauth, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
+	if otp.AuthId == 0 && otp.Phone == "" {
+		return nil, _errors.ReturnError(
+			400,
+			"Phone/ID không được để trống",
+		)
+	}
+	var oauth *domain.AuthMethod
+	var err error
+	if otp.AuthId != 0 {
+		oauth, err = s.AuthMethodRepo.FindByID(c, otp.AuthId)
+	} else {
+		oauth, err = s.AuthMethodRepo.FindByPhone(c, otp.Phone)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -209,11 +284,11 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
 	if e.UserID != 0 {
-		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, e.UserID)
+		_, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, e.UserID)
 		if err != nil {
 			log.Printf("Failed to check account status: %v", err)
 		}
-		if isLocked || !canLogin {
+		if !canLogin {
 			// Logout tài khoản nếu bị khóa
 			s.CacheProvider.DeleteToken(c, e.ID)
 			return nil, _errors.ReturnError(
@@ -844,37 +919,51 @@ func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDe
 }
 
 // Xóa tài khoản
-func (s *AuthUsecase) Delete(c context.Context) (*dto.DeleteAccountResponse, error) {
+func (s *AuthUsecase) Delete(c context.Context, otp string) (*dto.DeleteAccountResponse, error) {
+	if len(otp) < 6 {
+		return nil, _errors.ReturnError(
+			400,
+			"OTP không đủ độ dài",
+		)
+	}
+	authId := _utils.GetAuthIdFromContext(c)
+	e, err := s.AuthMethodRepo.FindByID(c, authId)
+	if err != nil {
+		return nil, err
+	}
+	param, _ := s.GetParamValidate(c, e, otp)
+	err = s.OtpUsecase.ValidateAuth(c, []enums.AuthCodeEnum{
+		enums.ACTIVATED,
+		enums.EXPIRED,
+		enums.LIMIT_OTP_SEND,
+		enums.LIMIT_OTP_ENTER,
+		enums.LOCKED,
+		enums.CHECK_OTP,
+	}, param)
+	if err != nil {
+		return nil, err
+	}
+
 	// principal := _jwt.GetPrincipalContext(c)
 	profileId := _utils.GetProfileIdWithContext(c)
-	authId := _utils.GetAuthIdFromContext(c)
 	profile, err := s.ProfileProvider.GetByProfileID(c, profileId)
 	if err != nil {
 		return nil, err
 	}
 	if profile == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Tài khoản không tồn tại",
-		}
+		return nil, _errors.ReturnError(400, "Tài khoản không tồn tại")
 	}
 
 	// Xóa vĩnh viễn profile trong user-service
 	if err := s.ProfileProvider.HardDeleteProfile(c, profileId); err != nil {
 		log.Printf("Failed to hard delete profile: %v", err)
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi xóa thông tin tài khoản",
-		}
+		return nil, _errors.ReturnError(500, "Lỗi khi xóa thông tin tài khoản")
 	}
 
 	// Xóa vĩnh viễn auth method trong auth-service
 	if err := s.AuthMethodRepo.Delete(c, authId); err != nil {
 		log.Printf("Failed to hard delete auth method: %v", err)
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi xóa phương thức xác thực",
-		}
+		return nil, _errors.ReturnError(500, "Lỗi khi xóa phương thức xác thực")
 	}
 
 	// Xóa session và cache
@@ -883,6 +972,53 @@ func (s *AuthUsecase) Delete(c context.Context) (*dto.DeleteAccountResponse, err
 
 	return &dto.DeleteAccountResponse{
 		Message: "Tài khoản đã được xóa vĩnh viễn",
+	}, nil
+}
+
+func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccountResponse, error) {
+	if len(otp) < 6 {
+		return nil, _errors.ReturnError(
+			400,
+			"OTP không đủ độ dài",
+		)
+	}
+	authId := _utils.GetAuthIdFromContext(c)
+	e, err := s.AuthMethodRepo.FindByID(c, authId)
+	if err != nil {
+		return nil, err
+	}
+	param, _ := s.GetParamValidate(c, e, otp)
+	err = s.OtpUsecase.ValidateAuth(c, []enums.AuthCodeEnum{
+		enums.ACTIVATED,
+		enums.EXPIRED,
+		enums.LIMIT_OTP_SEND,
+		enums.LIMIT_OTP_ENTER,
+		enums.LOCKED,
+		enums.CHECK_OTP,
+	}, param)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.AuthMethodRepo.LockAccount(c, authId, "temporary", 1, "Khóa tài khoản", 0)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.ProfileProvider.LockAccount(c, e.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	lockedAt := time.Now()
+	lockedUntil := lockedAt.Add(time.Hour * 24)
+	return &dto.LockAccountResponse{
+		Success:     true,
+		Message:     "Khóa tài khoản thành công",
+		ProfileID:   e.UserID,
+		LockType:    domain.AccountStatus(_enum.EUserStatusPermanentlyLocked),
+		LockedAt:    _utils.FormatTimeToString(&lockedAt),
+		LockedUntil: _utils.FormatTimeToString(&lockedUntil),
 	}, nil
 }
 
@@ -1609,57 +1745,57 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 }
 
 // LockAccount khóa tài khoản (tạm thời hoặc vĩnh viễn)
-func (s *AuthUsecase) LockAccount(ctx context.Context, req *dto.LockAccountRequest) (*dto.LockAccountResponse, error) {
-	// Validate duration cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
-		return &dto.LockAccountResponse{
-			Success: false,
-			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
-		}, fmt.Errorf("invalid duration for temporary lock")
-	}
+// func (s *AuthUsecase) LockAccount(ctx context.Context, req *dto.LockAccountRequest) (*dto.LockAccountResponse, error) {
+// 	// Validate duration cho khóa tạm thời
+// 	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
+// 		return &dto.LockAccountResponse{
+// 			Success: false,
+// 			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
+// 		}, fmt.Errorf("invalid duration for temporary lock")
+// 	}
 
-	// Kiểm tra user đã bị khóa chưa
-	userInfo, err := s.UserInfoRepo.GetUserStatus(ctx, req.ProfileID)
-	if err != nil {
-		return &dto.LockAccountResponse{
-			Success: false,
-			Message: "Lỗi khi kiểm tra trạng thái user: " + err.Error(),
-		}, err
-	}
+// 	// Kiểm tra user đã bị khóa chưa
+// 	userInfo, err := s.UserInfoRepo.GetUserStatus(ctx, req.ProfileID)
+// 	if err != nil {
+// 		return &dto.LockAccountResponse{
+// 			Success: false,
+// 			Message: "Lỗi khi kiểm tra trạng thái user: " + err.Error(),
+// 		}, err
+// 	}
 
-	if userInfo.IsLocked() {
-		return &dto.LockAccountResponse{
-			Success: false,
-			Message: "User đã bị khóa",
-		}, fmt.Errorf("user already locked")
-	}
+// 	if userInfo.IsLocked() {
+// 		return &dto.LockAccountResponse{
+// 			Success: false,
+// 			Message: "User đã bị khóa",
+// 		}, fmt.Errorf("user already locked")
+// 	}
 
-	// Thực hiện khóa user
-	err = s.UserInfoRepo.LockUser(ctx, req.ProfileID, req.LockType, req.Duration, req.Reason, req.LockedBy)
-	if err != nil {
-		return &dto.LockAccountResponse{
-			Success: false,
-			Message: "Lỗi khi khóa user: " + err.Error(),
-		}, err
-	}
+// 	// Thực hiện khóa user
+// 	err = s.UserInfoRepo.LockUser(ctx, req.ProfileID, req.LockType, req.Duration, req.Reason, req.LockedBy)
+// 	if err != nil {
+// 		return &dto.LockAccountResponse{
+// 			Success: false,
+// 			Message: "Lỗi khi khóa user: " + err.Error(),
+// 		}, err
+// 	}
 
-	// Tạo response
-	response := &dto.LockAccountResponse{
-		Success:   true,
-		Message:   "Khóa user thành công",
-		ProfileID: req.ProfileID,
-		LockType:  req.LockType,
-		LockedAt:  time.Now().Format("2006-01-02T15:04:05Z07:00"),
-	}
+// 	// Tạo response
+// 	response := &dto.LockAccountResponse{
+// 		Success:   true,
+// 		Message:   "Khóa user thành công",
+// 		ProfileID: req.ProfileID,
+// 		LockType:  req.LockType,
+// 		LockedAt:  time.Now().Format("2006-01-02T15:04:05Z07:00"),
+// 	}
 
-	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked {
-		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
-		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
-	}
+// 	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
+// 	if req.LockType == domain.StatusTemporarilyLocked {
+// 		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
+// 		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
+// 	}
 
-	return response, nil
-}
+// 	return response, nil
+// }
 
 // UnlockAccount mở khóa tài khoản
 func (s *AuthUsecase) UnlockAccount(ctx context.Context, req *dto.UnlockAccountRequest) (*dto.UnlockAccountResponse, error) {

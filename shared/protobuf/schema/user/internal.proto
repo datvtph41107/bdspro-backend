@@ -3,6 +3,7 @@ syntax = "proto3";
 package userpb;
 
 import "shared/common.proto";
+import "shared/v3.proto";
 
 option go_package = "pb/types/user;userpb";
 
@@ -22,6 +23,8 @@ service InternalUserService {
     
     // Lấy profile theo ID
     rpc GetProfileByID(GetProfileByIDRequest) returns (ProfileResponse);
+
+    rpc LockUser(sharepb.RequestV3Proto) returns (sharepb.Empty);
 }
 
 // ============= Request Messages =============

@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
+	sharepb "pb/types/shared"
 	"time"
 
 	"auth/infra/mapper"
@@ -56,6 +57,8 @@ func (h *AuthHandler) RequestOTP(ctx context.Context, req *authpb.RequestOTPRequ
 	dto := &dto.OtpRequest{
 		Phone:    req.Phone,
 		Fullname: req.Fullname,
+		Mode:     req.Mode,
+		AuthId:   req.AuthId,
 	}
 
 	result, err := h.AuthUsecase.RequestOtp(ctx, *dto)
@@ -242,6 +245,7 @@ func (h *AuthHandler) ResendOTP(ctx context.Context, req *authpb.ResendOTPReques
 	dto := &dto.OtpRequest{
 		Phone:    req.Phone,
 		Fullname: req.Fullname,
+		AuthId:   req.AuthId,
 	}
 
 	result, err := h.AuthUsecase.ResendOTP(ctx, *dto)
@@ -378,9 +382,9 @@ func (h *AuthHandler) LoginWithKey(ctx context.Context, req *authpb.LoginWithKey
 // @Failure 500 {object} authpb.DeleteAccountResponse
 // @Router /delete [delete]
 func (h *AuthHandler) DeleteAccount(ctx context.Context, req *authpb.DeleteAccountRequest) (*authpb.DeleteAccountResponse, error) {
-	result, err := h.AuthUsecase.Delete(ctx)
+	result, err := h.AuthUsecase.Delete(ctx, req.Otp)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "lỗi khi xóa tài khoản: %v", err)
+		return nil, err
 	}
 
 	return &authpb.DeleteAccountResponse{
@@ -1225,3 +1229,21 @@ func (h *AuthHandler) UpdateFullname(ctx context.Context, req *authpb.UpdateFull
 }
 
 // LoginWithToken is deprecated - use LoginWithKey instead
+
+// @Summary Khóa tài khoản của người dùng
+// @Description Khóa tài khoản của người dùng
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body sharepb.OTPV3Proto true "Thông tin khóa tài khoản"
+// @Success 200 {object} sharepb.Empty
+// @Router /v2/auth/account/lock [put]
+func (h *AuthHandler) OwnerLockAccount(ctx context.Context, req *sharepb.OTPV3Proto) (*sharepb.Empty, error) {
+	_, err := h.AuthUsecase.LockAccount(ctx, req.Otp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.Empty{}, nil
+}

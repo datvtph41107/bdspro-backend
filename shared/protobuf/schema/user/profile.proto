@@ -16,7 +16,7 @@ service ProfileService {
             get: "/v2/user/profile/info/{id}"
         };
     }
-    rpc GetProfileInfoMe(sharepb.Empty) returns (ProfilePublicInfo) {
+    rpc GetProfileInfoMe(sharepb.Empty) returns (sharepb.UserV3Proto) {
         option (google.api.http) = {
             get: "/v2/user/profile/info/me"
         };
@@ -204,13 +204,6 @@ message SetPersonRequest {
     optional string email = 5;
     optional uint64 provinceId = 6;
     optional uint64 wardId = 7;
-}
-
-message QuickSetupRequest {
-    optional uint64 roleId = 1;
-    repeated uint64 mainAreaIds = 2;
-    repeated uint64 purposeUseIds = 3;
-    repeated ItemV3Proto mainAreaNews = 4;
 }
 
 message CertificationItem {

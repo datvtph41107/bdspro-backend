@@ -2,14 +2,26 @@ syntax = "proto3";
 
 package authpb;
 import "google/api/annotations.proto";
+import "shared/v3.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/auth;authpb";
 
 service AuthService {
     // OTP Authentication
+    // Toàn hệ thống chỉ có duy nhất 2 api để gửi OTP là otp/request và otp/resend
+    // mode: "auth" -> đăng nhập/đăng ký (required: phone)
+    // mode: "verify" -> xác thực OTP (required: authId)
     rpc RequestOTP(RequestOTPRequest) returns (RequestOTPResponse) {
         option (google.api.http) = {
             post: "/v2/auth/otp/request"
+            body: "*"
+        };
+    }
+
+    rpc ResendOTP(ResendOTPRequest) returns (ResendOTPResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/resend"
             body: "*"
         };
     }
@@ -24,13 +36,6 @@ service AuthService {
     rpc VerifyRecovery(VerifyOTPRequest) returns (AuthSuccessResponse) {
         option (google.api.http) = {
             post: "/v2/auth/otp/verify-recovery"
-            body: "*"
-        };
-    }
-
-    rpc ResendOTP(ResendOTPRequest) returns (ResendOTPResponse) {
-        option (google.api.http) = {
-            post: "/v2/auth/otp/resend"
             body: "*"
         };
     }
@@ -52,7 +57,14 @@ service AuthService {
     // Account Management
     rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
         option (google.api.http) = {
-            delete: "/v2/auth/delete"
+            delete: "/v2/auth/delete/{otp}"
+        };
+    }
+
+    rpc OwnerLockAccount(sharepb.OTPV3Proto) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/auth/account/lock"
+            body: "*"
         };
     }
 
@@ -239,6 +251,8 @@ service AuthService {
 message RequestOTPRequest {
     string phone = 1;
     string fullname = 2;
+    string mode = 3;
+    uint64 authId = 4;
 }
 
 message RequestOTPResponse {
@@ -282,6 +296,7 @@ message AuthSuccessResponse {
 message ResendOTPRequest {
     string phone = 1;
     string fullname = 2;
+    uint64 authId = 3;
 }
 
 message ResendOTPResponse {
@@ -310,6 +325,7 @@ message LogoutResponse {
 // Account Management Messages
 message DeleteAccountRequest {
     // Empty request - profileId will be extracted from context
+    string otp = 1;
 }
 
 message DeleteAccountResponse {

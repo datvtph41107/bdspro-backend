@@ -15,6 +15,7 @@ type ProfileProvider interface {
 	SoftDeleteProfile(ctx context.Context, profileID uint64) error
 	HardDeleteProfile(ctx context.Context, profileID uint64) error
 	CheckAccountStatus(ctx context.Context, profileID uint64) (isLocked bool, canLogin bool, err error)
+	LockAccount(ctx context.Context, profileID uint64) error
 
 	// Profile utilities
 	MakeUserProfileEntity(authID uint64, planID *uint64, name, email, phone, avatar string) *dto.ProfileDTO

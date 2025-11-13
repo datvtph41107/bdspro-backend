@@ -1,11 +1,13 @@
 package handler
 
 import (
+	_enum "common/domain/enum"
 	_utils "common/utils"
 	"context"
 	"log"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+	"user/internal/dto"
 	"user/internal/models"
 	"user/internal/usecases"
 
@@ -16,11 +18,13 @@ import (
 type InternalHandler struct {
 	userpb.UnimplementedInternalUserServiceServer
 	profileUsecase *usecases.ProfileUsecase
+	adminUsecase   *usecases.AdminUsecase
 }
 
-func NewInternalHandler(profileUsecase *usecases.ProfileUsecase) *InternalHandler {
+func NewInternalHandler(profileUsecase *usecases.ProfileUsecase, adminUsecase *usecases.AdminUsecase) *InternalHandler {
 	return &InternalHandler{
 		profileUsecase: profileUsecase,
+		adminUsecase:   adminUsecase,
 	}
 }
 
@@ -160,4 +164,17 @@ func (h *InternalHandler) GetProfileByID(ctx context.Context, req *userpb.GetPro
 		CreatedAt:    _utils.FormatTimeToString(profile.CreatedAt),
 		UpdatedAt:    _utils.FormatTimeToString(profile.UpdatedAt),
 	}, nil
+}
+
+func (h *InternalHandler) LockUser(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.Empty, error) {
+	err := h.adminUsecase.LockUser(ctx, &dto.LockUserRequest{
+		ProfileID: req.Id,
+		Reason:    req.Text,
+		LockType:  _enum.EUserStatusTemporaryLocked,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to lock account: %v", err)
+	}
+
+	return &sharepb.Empty{}, nil
 }

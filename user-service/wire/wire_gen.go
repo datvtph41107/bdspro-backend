@@ -77,7 +77,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	iPlanUsecase := usecases.NewPlanUsecase(iPlanRepo)
 	planMapper := mapper.NewPlanMapper()
 	planHandler := handler.NewPlanHandler(iPlanUsecase, planMapper)
-	internalHandler := handler.NewInternalHandler(profileUsecase)
+	internalHandler := handler.NewInternalHandler(profileUsecase, adminUsecase)
 	iAdminMainAreaUsecase := usecases.NewAdminMainAreaUsecase(iMainAreaRepo)
 	mainAreaMapper := mapper.NewMainAreaMapper()
 	mainAreaHandler := handler.NewMainAreaHandler(iAdminMainAreaUsecase, mainAreaMapper)
