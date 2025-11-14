@@ -5,8 +5,12 @@ import (
 	"pb/clients"
 
 	"auth/env"
+	"auth/internal/dto"
 	_enum "common/domain/enum"
 	provider_grpc "common/provider/grpc"
+	notificationpb "pb/types/notification"
+
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // @bind: auth/internal/interface/provider.NotificationProvider
@@ -45,6 +49,47 @@ func (c *NotificationClient) CreateAdminHistory(ctx context.Context,
 	userAgent string,
 ) error {
 	return c.NotificationClient.CreateAdminHistory(ctx, adminID, targetID, targetType, actionType, title, notes, preStage, afterStage, ownerID, ownerType, adminRole, ipAddress, userAgent)
+}
+
+func (c *NotificationClient) CreateHistoryAuth(ctx context.Context, payload *dto.HistoryAuthCreateDTO) error {
+	if payload == nil {
+		return nil
+	}
+
+	var metadataStruct *structpb.Struct
+	if payload.Metadata != nil {
+		if converted, err := structpb.NewStruct(payload.Metadata); err == nil {
+			metadataStruct = converted
+		}
+	}
+
+	req := &notificationpb.HistoryAuthCreateRequest{
+		UserId:         payload.UserID,
+		OrganizationId: payload.OrganizationID,
+		ActionType:     payload.ActionType,
+		ActionName:     payload.ActionName,
+		Description:    payload.Description,
+		Reason:         payload.Reason,
+		IpAddress:      payload.IPAddress,
+		UserAgent:      payload.UserAgent,
+		PerformedBy:    payload.PerformedBy,
+		SessionId:      payload.SessionID,
+		Channel:        payload.Channel,
+		DeviceId:       payload.DeviceID,
+		Location:       payload.Location,
+		AdditionalNote: payload.AdditionalNote,
+		SourceService:  payload.SourceService,
+		Metadata:       metadataStruct,
+	}
+
+	if payload.Success != nil {
+		req.Success = *payload.Success
+	} else {
+		req.Success = true
+	}
+
+	_, err := c.NotificationGrpcClient.CreateHistoryAuth(ctx, req)
+	return err
 }
 
 // CreateNotification tạo thông báo cho user

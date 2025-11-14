@@ -388,6 +388,39 @@
         ]
       }
     },
+    "/v2/auth/device/check": {
+      "post": {
+        "summary": "Device Management",
+        "operationId": "AuthService_RegisterDevice",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbCreateDeviceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbCreateDeviceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/fullname": {
       "put": {
         "summary": "Update Fullname",
@@ -494,7 +527,7 @@
       }
     },
     "/v2/auth/logout": {
-      "delete": {
+      "post": {
         "operationId": "AuthService_Logout",
         "responses": {
           "200": {
@@ -510,6 +543,16 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbLogoutRequest"
+            }
+          }
+        ],
         "tags": [
           "AuthService"
         ]
@@ -1020,6 +1063,57 @@
         ]
       }
     },
+    "/v2/auth/sessions": {
+      "get": {
+        "operationId": "AuthService_GetSessionsByProfile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbSessionPageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/switch/organization": {
       "post": {
         "summary": "Organization Management",
@@ -1510,6 +1604,65 @@
       },
       "title": "Admin Access Control Messages"
     },
+    "authpbCreateDeviceRequest": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string"
+        },
+        "manufacturer": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "pushToken": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        }
+      },
+      "title": "Device Management Messages"
+    },
+    "authpbCreateDeviceResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/authpbDevice"
+        }
+      }
+    },
     "authpbCreatePINRequest": {
       "type": "object",
       "properties": {
@@ -1575,6 +1728,78 @@
       "type": "object",
       "properties": {
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "authpbDevice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string"
+        },
+        "manufacturer": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "pushToken": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
           "type": "string"
         }
       }
@@ -1743,6 +1968,20 @@
         "deviceName": {
           "type": "string",
           "title": "Tên thiết bị: \"iPhone 13 Pro\", \"Samsung Galaxy S21\", \"MacBook Pro\""
+        }
+      }
+    },
+    "authpbLogoutRequest": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Empty request"
+        },
+        "type": {
+          "type": "string",
+          "title": "\"device\",\"session\",\"others\""
         }
       }
     },
@@ -1980,6 +2219,22 @@
         },
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "authpbSessionPageResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbSessionV3Proto"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -2229,6 +2484,68 @@
         "authId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "sharepbSessionV3Proto": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "createdDate": {
+          "type": "string"
+        },
+        "finishedDate": {
+          "type": "string"
+        },
+        "ipRequest": {
+          "type": "string"
+        },
+        "totalRequest": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "activate": {
+          "type": "boolean"
+        },
+        "sessionKey": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "lastLogin": {
+          "type": "string"
+        },
+        "logoutAt": {
+          "type": "string"
+        },
+        "lastReq": {
+          "type": "string"
         }
       }
     }

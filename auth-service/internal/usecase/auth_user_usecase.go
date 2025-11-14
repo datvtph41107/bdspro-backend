@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"auth/config"
@@ -15,6 +16,7 @@ import (
 	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	_db "common/db"
+	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
 	_jwt "common/jwt"
@@ -448,6 +450,43 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		log.Printf("Creating login history for user %d, IP: %s, UserAgent: %s",
 			e.UserID, ipAddress, userAgent)
 
+		success := true
+		historyDeviceID := otp.DeviceID
+		if historyDeviceID == "" {
+			historyDeviceID = otp.DeviceName
+		}
+		deviceName := otp.DeviceName
+		if deviceName == "" {
+			deviceName = historyDeviceID
+		}
+		description := "Đăng nhập hệ thống qua OTP"
+		if deviceName != "" {
+			description = fmt.Sprintf("Đăng nhập hệ thống qua OTP từ %s", deviceName)
+		}
+		historyPayload := dto.HistoryAuthCreateDTO{
+			UserID:      e.UserID,
+			ActionType:  "login",
+			ActionName:  "OTP_LOGIN",
+			Description: description,
+			Success:     &success,
+			SessionID:   strconv.FormatUint(newSession.SessionID, 10),
+			Channel:     otp.Platform,
+			DeviceID:    historyDeviceID,
+			Metadata: map[string]interface{}{
+				"authId":       e.ID,
+				"loginChannel": "otp",
+			},
+		}
+		if deviceName != "" {
+			historyPayload.Metadata["deviceName"] = deviceName
+		}
+		historyPayload.IPAddress = ipAddress
+		historyPayload.UserAgent = userAgent
+		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
+		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
+			log.Printf("Failed to log auth history (OTP): %v", err)
+		}
+
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
 			e.UserID,                             // adminID
 			e.UserID,                             // targetID (chính user đó)
@@ -623,8 +662,16 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	}
 
 	// 8. Tạo session
+	deviceID := _utils.GetDeviceIdFromContext(c)
+	if deviceID == "" {
+		deviceID = req.DeviceID
+	}
+	if deviceID == "" {
+		deviceID = req.DeviceName
+	}
 	newSession := &domain.UserSessionEntity{
 		AuthID:     e.ID,
+		DeviceID:   deviceID,
 		Version:    req.Version,
 		Platform:   req.Platform,
 		OS:         req.OS,
@@ -683,6 +730,28 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		log.Printf("Creating login history for user %d (LoginWithKey), IP: %s, UserAgent: %s",
 			e.UserID, ipAddress, userAgent)
 
+		success := true
+		historyPayload := dto.HistoryAuthCreateDTO{
+			UserID:      e.UserID,
+			ActionType:  "login",
+			ActionName:  "AUTH_KEY_LOGIN",
+			Description: "Đăng nhập hệ thống bằng sinh trắc học",
+			Success:     &success,
+			SessionID:   strconv.FormatUint(newSession.SessionID, 10),
+			Channel:     req.Platform,
+			DeviceID:    deviceID,
+			Metadata: map[string]interface{}{
+				"authId":       e.ID,
+				"loginChannel": "auth_key",
+			},
+		}
+		historyPayload.IPAddress = ipAddress
+		historyPayload.UserAgent = userAgent
+		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
+		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
+			log.Printf("Failed to log auth key history: %v", err)
+		}
+
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
 			e.UserID,
 			e.UserID,
@@ -709,14 +778,26 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 }
 
 func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethod, otp dto.OtpVerifyRequest) *domain.UserSessionEntity {
+	deviceID := _utils.GetDeviceIdFromContext(c)
+	if deviceID == "" {
+		deviceID = otp.DeviceID
+	}
+	if deviceID == "" {
+		deviceID = otp.DeviceName
+	}
+	now := time.Now()
 	return &domain.UserSessionEntity{
 		AuthID:     e.ID,
+		DeviceID:   deviceID,
 		Version:    otp.Version,
 		Platform:   otp.Platform,
 		OS:         otp.OS,
 		DeviceName: otp.DeviceName,
 		IPRequest:  _utils.AuditIPFromContext(c),
 		UserAgent:  _utils.GetUserAgentFromContext(c),
+		Activate:   false,
+		LastLogin:  &now,
+		LogoutAt:   nil,
 	}
 }
 
@@ -756,6 +837,18 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	}
 
 	if props.Type == "REFRESH" {
+		if props.SessionID != 0 {
+			sessionEntity, err := s.SessionRepo.GetBySessionID(c, props.SessionID)
+			if err != nil {
+				return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
+			}
+			if sessionEntity == nil || sessionEntity.LogoutAt != nil {
+				return nil, _errors.ReturnError(401, "Phiên làm việc đã kết thúc. Vui lòng đăng nhập lại")
+			}
+		} else {
+			return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
+		}
+
 		profile, err := s.ProfileProvider.GetByProfileID(c, props.ProfileID)
 		if err != nil {
 			return nil, err
@@ -793,10 +886,26 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		}
 
 		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID)
-		return &dto.RefreshResponse{
+		response := &dto.RefreshResponse{
 			AccessToken:  newAccessToken,
 			RefreshToken: newRefreshToken,
-		}, nil
+		}
+
+		if props.ProfileID != 0 {
+			metadata := map[string]interface{}{
+				"authId":    props.AuthID,
+				"sessionId": props.SessionID,
+			}
+			s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+				UserID:      props.ProfileID,
+				ActionType:  "token",
+				ActionName:  "REFRESH_TOKEN",
+				Description: "Làm mới phiên",
+				Metadata:    metadata,
+			})
+		}
+
+		return response, nil
 	}
 
 	return nil, &_routes.Except{
@@ -805,19 +914,159 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	}
 }
 
-func (s *AuthUsecase) Logout(c context.Context) (*dto.LogoutResponse, error) {
+func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDeviceId uint64) (*dto.LogoutResponse, error) {
+	authID := _utils.GetAuthIdFromContext(c)
+	if authID == 0 {
+		return nil, _errors.ReturnError(401, "Không thể xác thực phiên đăng nhập")
+	}
+
 	sessionID := _utils.GetSessionIdFromContext(c)
-	currentSession, err := s.SessionRepo.GetBySessionID(c, sessionID)
-	if err != nil {
-		return nil, err
+
+	logoutType = strings.ToLower(logoutType)
+	if logoutType == "" {
+		logoutType = "session"
 	}
 
 	now := time.Now()
-	currentSession.FinishedDate = &now
-	s.SessionRepo.UpdateSession(c, currentSession)
-	s.CacheProvider.DeleteToken(c, currentSession.AuthID)
+	var sessions []*domain.UserSessionEntity
+	var err error
+	var currentSession *domain.UserSessionEntity
+
+	switch logoutType {
+	case "others":
+		sessions, err = s.SessionRepo.GetSessionsByAuthIDWithoutSessionId(c, authID, sessionID)
+		if err != nil {
+			return nil, err
+		}
+		if sessionID != 0 {
+			currentSession, _ = s.SessionRepo.GetBySessionIDAndAuthID(c, sessionID, authID)
+		}
+	case "device":
+		if sessionDeviceId == 0 {
+			return nil, _errors.ReturnError(400, "sessionId là bắt buộc khi logout theo thiết bị")
+		}
+		session, err := s.SessionRepo.GetBySessionIDAndAuthID(c, sessionDeviceId, authID)
+		if err != nil {
+			return nil, err
+		}
+		if session != nil {
+			sessions = []*domain.UserSessionEntity{session}
+		}
+	default: // "session"
+		sessionID := _utils.GetSessionIdFromContext(c)
+		if sessionID == 0 {
+			return nil, _errors.ReturnError(401, "Không thể xác thực phiên đăng nhập")
+		}
+		session, err := s.SessionRepo.GetBySessionID(c, sessionID)
+		if err != nil {
+			return nil, err
+		}
+		if session != nil {
+			sessions = []*domain.UserSessionEntity{session}
+			currentSession = session
+		}
+	}
+
+	if len(sessions) == 0 {
+		return &dto.LogoutResponse{Message: "Không tìm thấy phiên đăng nhập để đăng xuất"}, nil
+	}
+
+	var lastSession *domain.UserSessionEntity
+	for _, session := range sessions {
+		session.FinishedDate = &now
+		session.LogoutAt = &now
+		if err := s.SessionRepo.UpdateSession(c, session); err != nil {
+			return nil, err
+		}
+		lastSession = session
+	}
+
+	s.CacheProvider.DeleteToken(c, authID)
+
+	if profileID := _utils.GetProfileIdWithContext(c); profileID != 0 && lastSession != nil {
+		metadata := map[string]interface{}{
+			"authId":     lastSession.AuthID,
+			"sessionId":  lastSession.SessionID,
+			"platform":   lastSession.Platform,
+			"deviceName": lastSession.DeviceName,
+			"os":         lastSession.OS,
+			"ipAddress":  lastSession.IPRequest,
+			"userAgent":  lastSession.UserAgent,
+			"type":       logoutType,
+		}
+		if len(sessions) > 1 {
+			metadata["sessionCount"] = len(sessions)
+		}
+		s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+			UserID:      profileID,
+			ActionType:  "logout",
+			ActionName:  "LOGOUT",
+			Description: s.buildLogoutDescription(logoutType, lastSession, currentSession, len(sessions)),
+			Metadata:    metadata,
+		})
+	}
 
 	return &dto.LogoutResponse{Message: "Đăng xuất thành công"}, nil
+}
+
+func (s *AuthUsecase) buildLogoutDescription(logoutType string, targetSession *domain.UserSessionEntity, currentSession *domain.UserSessionEntity, affected int) string {
+	targetDevice := formatSessionDevice(targetSession)
+
+	switch logoutType {
+	case "others":
+		initiator := formatSessionDevice(currentSession)
+		if initiator == "" {
+			initiator = "thiết bị hiện tại"
+		}
+		if affected > 1 {
+			return fmt.Sprintf("Đăng xuất %d thiết bị khác từ %s", affected, initiator)
+		}
+		if targetDevice != "" {
+			return fmt.Sprintf("Đăng xuất thiết bị %s từ %s", targetDevice, initiator)
+		}
+		return fmt.Sprintf("Đăng xuất các thiết bị khác từ %s", initiator)
+	case "device":
+		if targetDevice != "" {
+			return fmt.Sprintf("Đăng xuất khỏi hệ thống trên thiết bị %s", targetDevice)
+		}
+		return "Đăng xuất khỏi hệ thống trên một thiết bị"
+	default:
+		if targetDevice != "" {
+			return fmt.Sprintf("Đăng xuất khỏi hệ thống trên thiết bị %s", targetDevice)
+		}
+		return "Đăng xuất khỏi hệ thống"
+	}
+}
+
+func formatSessionDevice(session *domain.UserSessionEntity) string {
+	if session == nil {
+		return ""
+	}
+
+	deviceName := session.DeviceName
+	if deviceName == "" {
+		deviceName = session.DeviceID
+	}
+	if deviceName == "" {
+		deviceName = session.Platform
+	}
+	if deviceName == "" {
+		deviceName = "thiết bị không xác định"
+	}
+
+	var platformInfo []string
+	if session.Platform != "" {
+		platformInfo = append(platformInfo, session.Platform)
+	}
+	if session.OS != "" && session.OS != session.Platform {
+		platformInfo = append(platformInfo, session.OS)
+	}
+
+	if len(platformInfo) > 0 {
+		return fmt.Sprintf("%s (%s)", deviceName, strings.Join(platformInfo, " / "))
+	}
+
+	return deviceName
 }
 
 // Restore khôi phục tài khoản
@@ -1010,6 +1259,20 @@ func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccou
 		return nil, err
 	}
 
+	metadata := map[string]interface{}{
+		"authId":     authId,
+		"lockType":   "temporary",
+		"durationHr": 24,
+	}
+	s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+		UserID:         e.UserID,
+		ActionType:     "account",
+		ActionName:     "LOCK_ACCOUNT",
+		Description:    "Khóa tài khoản tạm thời theo yêu cầu người dùng",
+		AdditionalNote: "User initiated lock account",
+		Metadata:       metadata,
+	})
+
 	lockedAt := time.Now()
 	lockedUntil := lockedAt.Add(time.Hour * 24)
 	return &dto.LockAccountResponse{
@@ -1022,7 +1285,7 @@ func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccou
 	}, nil
 }
 
-func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (*domain.AuthMethod, string, error) {
+func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest) (*domain.AuthMethod, string, error) {
 	// Generate Diffie-Hellman key pair
 	keyPair, err := _utils.GenerateDHKeyPair()
 	if err != nil {
@@ -1038,8 +1301,8 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (
 	// Tạo một UserAuthEntity mới với DH keys và auth_key
 	e := &domain.AuthMethod{
 		Provider:   "PHONE",
-		AuthName:   dto.Phone,
-		FullName:   dto.Fullname,
+		AuthName:   otpReq.Phone,
+		FullName:   otpReq.Fullname,
 		PrivateKey: _utils.EncodePrivateKey(keyPair.PrivateKey),
 		PublicKey:  _utils.EncodePublicKey(keyPair.PublicKey),
 		AuthKey:    authKey,
@@ -1058,7 +1321,18 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, dto dto.OtpRequest) (
 	}
 
 	// Gửi OTP trong updateNewOTP luôn
-	_, smsChannel := s.SendNewOTP(c, param.OTP, dto.Phone)
+	_, smsChannel := s.SendNewOTP(c, param.OTP, otpReq.Phone)
+
+	s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+		UserID:      createdAuth.UserID,
+		ActionType:  "register",
+		ActionName:  "REQUEST_REGISTER",
+		Description: "Khởi tạo yêu cầu đăng ký tài khoản",
+		Metadata: map[string]interface{}{
+			"authId": createdAuth.ID,
+			"phone":  otpReq.Phone,
+		},
+	})
 
 	return createdAuth, smsChannel, nil
 }
@@ -1095,6 +1369,7 @@ func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam
 		Status:  statusEntity,
 		OTP:     otpEntity,
 		OTPCode: "",
+		Auth:    nil,
 	}, nil
 }
 
@@ -1234,6 +1509,7 @@ func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMeth
 		Status:  statusEntity,
 		OTP:     otpEntity,
 		OTPCode: otp,
+		Auth:    oauth,
 	}, nil
 }
 
@@ -1303,8 +1579,17 @@ func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp
 	if otp == nil {
 		otp = &dto.OtpVerifyRequest{}
 	}
+	deviceID := _utils.GetDeviceIdFromContext(c)
+	if deviceID == "" {
+		deviceID = otp.DeviceID
+	}
+	if deviceID == "" {
+		deviceID = otp.DeviceName
+	}
+	now := time.Now()
 	return &domain.UserSessionEntity{
 		AuthID:     authId,
+		DeviceID:   deviceID,
 		Version:    otp.Version,
 		Platform:   otp.Platform,
 		OS:         otp.OS,
@@ -1312,6 +1597,8 @@ func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp
 		IPRequest:  _utils.AuditIPFromContext(c),
 		UserAgent:  _utils.GetUserAgentFromContext(c),
 		Activate:   false,
+		LastLogin:  &now,
+		LogoutAt:   nil,
 	}
 }
 
@@ -1396,6 +1683,9 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	}
 
 	sessionEntity.Activate = true
+	now := time.Now()
+	sessionEntity.LastLogin = &now
+	sessionEntity.LogoutAt = nil
 	s.SessionRepo.UpdateSession(c, sessionEntity)
 
 	authEntity, err := s.AuthMethodRepo.FindByID(c, sessionEntity.AuthID)
@@ -1436,6 +1726,28 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 
 		log.Printf("Creating login history for user %d (QR), IP: %s, UserAgent: %s",
 			authEntity.UserID, ipAddress, userAgent)
+
+		success := true
+		historyPayload := dto.HistoryAuthCreateDTO{
+			UserID:      authEntity.UserID,
+			ActionType:  "login",
+			ActionName:  "QR_LOGIN",
+			Description: "Đăng nhập hệ thống bằng QR Code",
+			Success:     &success,
+			SessionID:   strconv.FormatUint(sessionEntity.SessionID, 10),
+			Channel:     sessionEntity.Platform,
+			DeviceID:    sessionEntity.DeviceID,
+			Metadata: map[string]interface{}{
+				"authId":       authEntity.ID,
+				"loginChannel": "qr_code",
+			},
+		}
+		historyPayload.IPAddress = ipAddress
+		historyPayload.UserAgent = userAgent
+		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
+		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
+			log.Printf("Failed to log QR auth history: %v", err)
+		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
 			authEntity.UserID,                             // adminID
@@ -1509,6 +1821,25 @@ func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *domain.Auth
 		log.Printf("Creating login history for user %d, IP: %s, UserAgent: %s",
 			authEntity.UserID, ipAddress, userAgent)
 
+		success := true
+		historyPayload := dto.HistoryAuthCreateDTO{
+			UserID:      authEntity.UserID,
+			ActionType:  "login",
+			ActionName:  title,
+			Description: "Đăng nhập hệ thống",
+			Success:     &success,
+			Metadata: map[string]interface{}{
+				"authId":       authEntity.ID,
+				"loginChannel": "unknown",
+			},
+		}
+		historyPayload.IPAddress = ipAddress
+		historyPayload.UserAgent = userAgent
+		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
+		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
+			log.Printf("Failed to log auth history (generic): %v", err)
+		}
+
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
 			authEntity.UserID,                    // adminID
 			authEntity.UserID,                    // targetID (chính user đó)
@@ -1530,6 +1861,75 @@ func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *domain.Auth
 			log.Printf("Successfully logged login history for user %d", authEntity.UserID)
 		}
 	}()
+}
+
+func (s *AuthUsecase) prepareHistoryAuthPayload(ctx context.Context, payload *dto.HistoryAuthCreateDTO) dto.HistoryAuthCreateDTO {
+	var result dto.HistoryAuthCreateDTO
+	if payload != nil {
+		result = *payload
+	}
+
+	if result.IPAddress == "" {
+		result.IPAddress = _utils.AuditIPFromContext(ctx)
+	}
+
+	if result.UserAgent == "" {
+		result.UserAgent = _utils.GetUserAgentFromContext(ctx)
+	}
+
+	if result.OrganizationID == nil {
+		if organizationID := _utils.GetOrganizationIdFromContext(ctx); organizationID != 0 {
+			result.OrganizationID = &organizationID
+		}
+	}
+
+	if result.PerformedBy == nil {
+		if performer := _utils.GetProfileIdWithContext(ctx); performer != 0 {
+			result.PerformedBy = &performer
+		}
+	}
+
+	if result.SessionID == "" {
+		if sessionID := _utils.GetSessionIdFromContext(ctx); sessionID != 0 {
+			result.SessionID = strconv.FormatUint(sessionID, 10)
+		}
+	}
+
+	if result.SourceService == "" {
+		result.SourceService = "auth-service"
+	}
+
+	if result.Success == nil {
+		success := true
+		result.Success = &success
+	}
+
+	if payload != nil && payload.Metadata != nil {
+		metadataCopy := make(map[string]interface{}, len(payload.Metadata))
+		for k, v := range payload.Metadata {
+			metadataCopy[k] = v
+		}
+		result.Metadata = metadataCopy
+	}
+
+	return result
+}
+
+func (s *AuthUsecase) logHistoryAuthAsync(ctx context.Context, payload *dto.HistoryAuthCreateDTO) {
+	if s.NotificationClient == nil || payload == nil {
+		return
+	}
+
+	prepared := s.prepareHistoryAuthPayload(ctx, payload)
+
+	go func(p dto.HistoryAuthCreateDTO) {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := s.NotificationClient.CreateHistoryAuth(timeoutCtx, &p); err != nil {
+			log.Printf("failed to create auth history: %v", err)
+		}
+	}(prepared)
 }
 
 func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint64) (*dto.AuthLoginResponse, error) {
@@ -1670,6 +2070,14 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	}
 
 	// Tạo session cho admin
+	adminDeviceID := _utils.GetDeviceIdFromContext(c)
+	if adminDeviceID == "" {
+		adminDeviceID = adminLogin.DeviceID
+	}
+	if adminDeviceID == "" {
+		adminDeviceID = adminLogin.DeviceName
+	}
+
 	adminOtpRequest := dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
 			Phone:    adminAuthEntity.Phone,
@@ -1681,6 +2089,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		Platform:   adminLogin.Platform,
 		OS:         adminLogin.OS,
 		DeviceName: adminLogin.DeviceName,
+		DeviceID:   adminDeviceID,
 		Fullname:   adminAuthEntity.FullName,
 	}
 
@@ -1718,6 +2127,32 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 
 		log.Printf("Creating admin history for user %d, IP: %s, UserAgent: %s",
 			adminAuthEntity.UserID, ipAddress, userAgent)
+
+		success := true
+		historyDeviceID := adminDeviceID
+		if historyDeviceID == "" {
+			historyDeviceID = adminLogin.DeviceName
+		}
+		historyPayload := dto.HistoryAuthCreateDTO{
+			UserID:      adminAuthEntity.UserID,
+			ActionType:  "login",
+			ActionName:  "ADMIN_LOGIN",
+			Description: "Admin đăng nhập hệ thống",
+			Success:     &success,
+			SessionID:   strconv.FormatUint(newSession.SessionID, 10),
+			Channel:     adminLogin.Platform,
+			DeviceID:    historyDeviceID,
+			Metadata: map[string]interface{}{
+				"authId":       adminAuthEntity.ID,
+				"loginChannel": "admin_password",
+			},
+		}
+		historyPayload.IPAddress = ipAddress
+		historyPayload.UserAgent = userAgent
+		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
+		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
+			log.Printf("Failed to log admin auth history: %v", err)
+		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
 			adminAuthEntity.UserID,                        // adminID
@@ -2150,6 +2585,14 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	}
 
 	// Tạo session
+	deviceID := _utils.GetDeviceIdFromContext(ctx)
+	if deviceID == "" {
+		deviceID = req.DeviceID
+	}
+	if deviceID == "" {
+		deviceID = req.DeviceName
+	}
+
 	otpRequest := dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
 			Phone:    authEntity.Phone,
@@ -2161,6 +2604,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		Platform:   req.Platform,
 		OS:         req.OS,
 		DeviceName: req.DeviceName,
+		DeviceID:   deviceID,
 		Fullname:   authEntity.FullName,
 	}
 
@@ -2196,6 +2640,32 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 
 		log.Printf("Creating admin history for user %d, IP: %s, UserAgent: %s",
 			authEntity.UserID, ipAddress, userAgent)
+
+		success := true
+		historyDeviceID := deviceID
+		if historyDeviceID == "" {
+			historyDeviceID = req.DeviceName
+		}
+		historyPayload := dto.HistoryAuthCreateDTO{
+			UserID:      authEntity.UserID,
+			ActionType:  "login",
+			ActionName:  "PASSWORD_LOGIN",
+			Description: "Đăng nhập hệ thống bằng mật khẩu",
+			Success:     &success,
+			SessionID:   strconv.FormatUint(newSession.SessionID, 10),
+			Channel:     req.Platform,
+			DeviceID:    historyDeviceID,
+			Metadata: map[string]interface{}{
+				"authId":       authEntity.ID,
+				"loginChannel": "password",
+			},
+		}
+		historyPayload.IPAddress = ipAddress
+		historyPayload.UserAgent = userAgent
+		preparedHistory := s.prepareHistoryAuthPayload(ctx, &historyPayload)
+		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
+			log.Printf("Failed to log password auth history: %v", err)
+		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
 			authEntity.UserID,                             // adminID
@@ -2493,8 +2963,12 @@ func (s *AuthUsecase) UpdateFullname(ctx context.Context, fullname string) (*dto
 	return response, nil
 }
 
-func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*domain.UserSessionEntity, int64, error) {
-	// Lấy profileId từ context
+// GetSessionsByProfile lấy danh sách session theo profileId từ request
+func (s *AuthUsecase) GetSessionsByProfile(ctx context.Context, pagable *_dto.Pagable) ([]*domain.UserSessionEntity, int64, error) {
+	if pagable == nil {
+		pagable = &_dto.Pagable{}
+	}
+
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
 		return nil, 0, _errors.ReturnError(
@@ -2503,17 +2977,38 @@ func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]
 		)
 	}
 
-	// Lấy danh sách lịch sử đăng nhập từ repository (JOIN với auth_method)
-	sessions, total, err := s.SessionRepo.GetLoginHistoryByUserID(ctx, profileID, page, size)
+	sessions, total, err := s.SessionRepo.GetSessionsByProfile(ctx, profileID, pagable)
 	if err != nil {
 		return nil, 0, _errors.ReturnError(
 			int32(500),
-			"Không thể lấy lịch sử đăng nhập: "+err.Error(),
+			"Không thể lấy danh sách session: "+err.Error(),
 		)
 	}
 
 	return sessions, total, nil
 }
+
+// func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*domain.UserSessionEntity, int64, error) {
+// 	// Lấy profileId từ context
+// 	profileID := _utils.GetProfileIdWithContext(ctx)
+// 	if profileID == 0 {
+// 		return nil, 0, _errors.ReturnError(
+// 			int32(401),
+// 			"Không tìm thấy thông tin người dùng",
+// 		)
+// 	}
+
+// 	// Lấy danh sách lịch sử đăng nhập từ repository (JOIN với auth_method)
+// 	sessions, total, err := s.SessionRepo.GetLoginHistoryByUserID(ctx, profileID, page, size)
+// 	if err != nil {
+// 		return nil, 0, _errors.ReturnError(
+// 			int32(500),
+// 			"Không thể lấy lịch sử đăng nhập: "+err.Error(),
+// 		)
+// 	}
+
+// 	return sessions, total, nil
+// }
 
 func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint64, error) {
 	// Check if phone exists

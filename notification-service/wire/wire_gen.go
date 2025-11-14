@@ -38,14 +38,17 @@ func InitializeApp() (*initial.InitialApp, error) {
 	adminHistoryMapper := mapper.NewAdminHistoryMapper()
 	dealHistoryRepository := postgres.NewDealHistoryPostgres(db)
 	dealHistoryUsecase := usecase.NewDealHistoryUsecase(dealHistoryRepository)
-	internalHandler := handler.NewInternalHandler(notificationUsecase, notificationMapper, adminHistoryUsecase, adminHistoryMapper, dealHistoryUsecase)
+	historyAuthPostgres := postgres.NewHistoryAuthPostgres(db)
+	historyAuthUsecase := usecase.NewHistoryAuthUsecase(historyAuthPostgres)
+	historyAuthMapper := mapper.NewHistoryAuthMapper()
+	internalHandler := handler.NewInternalHandler(notificationUsecase, notificationMapper, adminHistoryUsecase, adminHistoryMapper, dealHistoryUsecase, historyAuthUsecase, historyAuthMapper)
 	accountWarningPostgresRepo := postgres.NewAccountWarningPostgresRepo()
 	accountWarningUsecase := usecase.NewAccountWarningUsecase(accountWarningPostgresRepo)
 	notificationHandler := handler.NewNotificationHandler(notificationUsecase, adminHistoryUsecase, adminHistoryMapper, accountWarningUsecase, userClient, notificationMapper)
 	historyRepo := postgres.NewHistoryRepo(db)
 	historyUsecase := usecase.NewHistoryUsecase(historyRepo)
 	historyMapper := mapper.NewHistoryMapper()
-	historyHandler := handler.NewHistoryHandler(historyUsecase, historyMapper)
+	historyHandler := handler.NewHistoryHandler(historyUsecase, historyMapper, historyAuthUsecase, historyAuthMapper)
 	dealHistoryHandler := handler.NewDealHistoryHandler(dealHistoryUsecase)
 	initialApp := initial.NewInitialApp(internalHandler, notificationHandler, historyHandler, dealHistoryHandler)
 	return initialApp, nil
@@ -54,4 +57,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(iprovider.IUserClient), new(*client.UserClient)), wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, handler.NewDealHistoryHandler, postgres.NewDealHistoryPostgres, usecase.NewDealHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, handler.NewHistoryHandler, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, usecase.NewHistoryUsecase, initial.NewInitialApp, handler.NewInternalHandler, handler.NewNotificationHandler, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(iprovider.IUserClient), new(*client.UserClient)), wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo.AdminHistoryRepo), new(*postgres.AdminHistoryPostgres)), wire.Bind(new(repo.HistoryAuthRepo), new(*postgres.HistoryAuthPostgres)), wire.Bind(new(repo.HistoryRepo), new(*postgres.HistoryRepo)), wire.Bind(new(repo.NotificationRepo), new(*postgres.PostgreNotification)), postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, handler.NewDealHistoryHandler, postgres.NewDealHistoryPostgres, usecase.NewDealHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, mapper.NewHistoryAuthMapper, postgres.NewHistoryAuthPostgres, usecase.NewHistoryAuthUsecase, handler.NewHistoryHandler, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, usecase.NewHistoryUsecase, initial.NewInitialApp, handler.NewInternalHandler, handler.NewNotificationHandler, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPostgreNotification, dto.NewSendNotiResponse, client.NewUserClient)

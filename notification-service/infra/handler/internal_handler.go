@@ -21,6 +21,8 @@ type InternalHandler struct {
 	AdminHistoryUsecase *usecase.AdminHistoryUsecase
 	AdminHistoryMapper  *mapper.AdminHistoryMapper
 	DealHistoryUsecase  usecase.DealHistoryUsecase
+	HistoryAuthUsecase  *usecase.HistoryAuthUsecase
+	HistoryAuthMapper   *mapper.HistoryAuthMapper
 }
 
 func NewInternalHandler(
@@ -29,6 +31,8 @@ func NewInternalHandler(
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
 	dealHistoryUsecase usecase.DealHistoryUsecase,
+	historyAuthUsecase *usecase.HistoryAuthUsecase,
+	historyAuthMapper *mapper.HistoryAuthMapper,
 ) *InternalHandler {
 	return &InternalHandler{
 		Usecase:             uc,
@@ -36,6 +40,8 @@ func NewInternalHandler(
 		AdminHistoryUsecase: adminHistoryUsecase,
 		AdminHistoryMapper:  adminHistoryMapper,
 		DealHistoryUsecase:  dealHistoryUsecase,
+		HistoryAuthUsecase:  historyAuthUsecase,
+		HistoryAuthMapper:   historyAuthMapper,
 	}
 }
 
@@ -155,6 +161,46 @@ func (s *InternalHandler) CreateAdminHistoryBatch(c context.Context, request *no
 	return &notificationpb.BatchResponse{
 		Data: ids,
 	}, nil
+}
+
+func (s *InternalHandler) CreateHistoryAuth(ctx context.Context, req *notificationpb.HistoryAuthCreateRequest) (*notificationpb.HistoryAuthDTO, error) {
+	if s.HistoryAuthUsecase == nil {
+		return nil, nil
+	}
+
+	dto := &dto.HistoryAuthCreateDTO{
+		UserID:         req.UserId,
+		OrganizationID: req.OrganizationId,
+		ActionType:     req.ActionType,
+		ActionName:     req.ActionName,
+		Description:    req.Description,
+		Success:        &req.Success,
+		Reason:         req.Reason,
+		IPAddress:      req.IpAddress,
+		UserAgent:      req.UserAgent,
+		PerformedBy:    req.PerformedBy,
+		SessionID:      req.SessionId,
+		Channel:        req.Channel,
+		DeviceID:       req.DeviceId,
+		Location:       req.Location,
+		AdditionalNote: req.AdditionalNote,
+		SourceService:  req.SourceService,
+	}
+
+	if req.Metadata != nil {
+		dto.Metadata = req.Metadata.AsMap()
+	}
+
+	entity, err := s.HistoryAuthUsecase.CreateHistoryAuth(ctx, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.HistoryAuthMapper == nil {
+		return nil, nil
+	}
+
+	return s.HistoryAuthMapper.DomainToPb(entity), nil
 }
 
 // convertToPbDTO chuyển đổi AdminHistoryDTO thành protobuf AdminHistoryDTO

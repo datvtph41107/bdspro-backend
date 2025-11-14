@@ -14,8 +14,9 @@ type ZnsScheduler struct {
 }
 
 const (
-	refreshInterval = 8 * time.Hour
-	timeLayout      = "2006-01-02 15:04:05"
+	// Chạy mỗi ngày một lần vào 00:00
+	dailyInterval = 24 * time.Hour
+	timeLayout    = "2006-01-02 15:04:05"
 )
 
 // NewZnsScheduler tạo instance mới của ZnsScheduler
@@ -30,13 +31,11 @@ func NewZnsScheduler(znsProvider provider.IZnsProvider) *ZnsScheduler {
 func (s *ZnsScheduler) Start() {
 	log.Println("🔧 [ZNS Scheduler] Starting ZNS Token Refresh Scheduler...")
 
-	// Chạy ngay lần đầu tiên khi khởi động
-	// if env.ENV_RUNTIME != "" {
-	// 	s.refreshTokenJob()
-	// }
+	// Nếu muốn chạy ngay khi khởi động, mở dòng sau:
+	// s.refreshTokenJob()
 
 	// Khởi động goroutine để schedule job chạy vào 00:00 mỗi ngày
-	go s.scheduleDaily()
+	go s.scheduleDailyAtMidnight()
 }
 
 // Stop dừng scheduler
@@ -45,23 +44,24 @@ func (s *ZnsScheduler) Stop() {
 	close(s.stopChan)
 }
 
-// scheduleDaily schedule job chạy mỗi 8 giờ
-func (s *ZnsScheduler) scheduleDaily() {
+// scheduleDailyAtMidnight schedule job chạy vào 00:00 mỗi ngày
+func (s *ZnsScheduler) scheduleDailyAtMidnight() {
 	for {
-		next := s.getNextScheduleTime()
+		next := s.getNextMidnightTime()
 		duration := time.Until(next)
 
 		log.Printf("⏰ [ZNS Scheduler] Next refresh token job will run at: %s (in %s)",
-			next.Format(timeLayout), duration.Round(time.Second))
+			next.Format(timeLayout), duration.Round(time.Second),
+		)
 
-		// Tạo timer để chờ đến thời điểm tiếp theo
+		// Tạo timer để chờ đến 00:00 tiếp theo
 		timer := time.NewTimer(duration)
 
 		select {
 		case <-timer.C:
-			// Đến giờ chạy, thực hiện job
+			// Đến 00:00, thực hiện job
 			s.refreshTokenJob()
-
+			// Sau khi chạy xong, lặp lại tiếp vào 00:00 ngày hôm sau
 		case <-s.stopChan:
 			// Nhận tín hiệu stop, dừng scheduler
 			timer.Stop()
@@ -71,18 +71,11 @@ func (s *ZnsScheduler) scheduleDaily() {
 	}
 }
 
-// getNextScheduleTime tính thời điểm chạy tiếp theo bắt đầu từ 00h và lặp lại mỗi 8 giờ
-func (s *ZnsScheduler) getNextScheduleTime() time.Time {
+// getNextMidnightTime tính thời điểm 00:00 tiếp theo
+func (s *ZnsScheduler) getNextMidnightTime() time.Time {
 	now := time.Now()
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-
-	elapsed := now.Sub(startOfDay)
-	if remainder := elapsed % refreshInterval; remainder == 0 {
-		return now
-	}
-
-	intervalsPassed := elapsed / refreshInterval
-	return startOfDay.Add((intervalsPassed + 1) * refreshInterval)
+	nextMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	return nextMidnight
 }
 
 // refreshTokenJob job refresh ZNS access token
@@ -99,10 +92,18 @@ func (s *ZnsScheduler) refreshTokenJob() {
 		return
 	}
 
-	log.Printf("✅ [ZNS Scheduler] Successfully refreshed ZNS token at %s", time.Now().Format("2006-01-02 15:04:05"))
-	log.Printf("📝 [ZNS Scheduler] New Access Token: %s...", newAccessToken[:50])
-	log.Printf("📝 [ZNS Scheduler] New Refresh Token: %s...", newRefreshToken[:50])
+	log.Printf("✅ [ZNS Scheduler] Successfully refreshed ZNS token at %s", time.Now().Format(timeLayout))
+	log.Printf("📝 [ZNS Scheduler] New Access Token: %s...", prefix(newAccessToken, 50))
+	log.Printf("📝 [ZNS Scheduler] New Refresh Token: %s...", prefix(newRefreshToken, 50))
 
 	// TODO: Lưu token mới vào config file hoặc database nếu cần persist
 	// Hiện tại token đã được cập nhật trong memory của znsProvider
+}
+
+// prefix giới hạn chuỗi đầu ra cho log
+func prefix(str string, n int) string {
+	if len(str) <= n {
+		return str
+	}
+	return str[:n]
 }

@@ -93,3 +93,24 @@ message OTPV3Proto {
     string mode = 4;
     uint64 authId = 5;
 }
+
+message SessionV3Proto {
+    uint64 sessionId = 1;
+    uint64 authId = 2;
+    string deviceId = 3;
+    string platform = 4;
+    string version = 5;
+    string os = 6;
+    string deviceName = 7;
+    string createdDate = 8;
+    string finishedDate = 9;
+    string ipRequest = 10;
+    uint64 totalRequest = 11;
+    string userAgent = 12;
+    bool activate = 13;
+    string sessionKey = 14;
+    string clientId = 15;
+    string lastLogin = 16;
+    string logoutAt = 17;
+    string lastReq = 18;
+}

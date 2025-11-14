@@ -30,6 +30,11 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	appendIfExists(md, "client-ip", getClientIP(r))
 	appendIfExists(md, "user-agent", r.Header.Get("User-Agent"))
 	appendIfExists(md, "x-api-key", r.Header.Get("X-Api-Key"))
+	if deviceID := r.Header.Get("X-Device-Id"); deviceID != "" {
+		appendIfExists(md, "device-id", deviceID)
+	} else {
+		appendIfExists(md, "device-id", r.Header.Get("Device-Id"))
+	}
 
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
@@ -125,6 +130,7 @@ func ParseGrpcMetadataContextMiddleware(
 	// Parse IP address và User-Agent từ metadata
 	ctx = parseStringMetadata(ctx, md, "client-ip", _enums.ClientIPKey)
 	ctx = parseStringMetadata(ctx, md, "user-agent", _enums.UserAgentKey)
+	ctx = parseStringMetadata(ctx, md, "device-id", _enums.DeviceIDKey)
 
 	// Parse writer từ context nếu có
 	if writer, ok := ctx.Value("response-writer").(http.ResponseWriter); ok {

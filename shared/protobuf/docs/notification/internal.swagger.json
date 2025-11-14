@@ -177,6 +177,72 @@
       },
       "title": "CreateDealHistoryResponse response khi tạo deal history"
     },
+    "notificationpbHistoryAuthDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "actionType": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "performedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "additionalNote": {
+          "type": "string"
+        },
+        "sourceService": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
     "notificationpbNotificationDTO": {
       "type": "object",
       "properties": {

@@ -3,6 +3,8 @@ package provider
 import (
 	_provider "common/domain/provider"
 	"context"
+
+	"auth/internal/dto"
 )
 
 type NotificationProvider interface {
@@ -21,6 +23,8 @@ type NotificationProvider interface {
 		adminRole string,
 		ipAddress string,
 		userAgent string) error
+
+	CreateHistoryAuth(ctx context.Context, payload *dto.HistoryAuthCreateDTO) error
 
 	// CreateNotification(ctx context.Context,
 	// 	title string,

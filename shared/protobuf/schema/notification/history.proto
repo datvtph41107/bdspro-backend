@@ -5,6 +5,7 @@ package notificationpb;
 option go_package = "pb/types/notification;notificationpb";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "notification/internal.proto";
 
 
 service HistoryService {
@@ -62,6 +63,12 @@ service HistoryService {
     };
   };
 
+  rpc AuthHistory (HistoryAuthSearchRequest) returns (HistoryAuthListResponse) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/auth"
+    };
+  };
+
   rpc Create (HistoryDTO) returns (HistoryDTO);
   rpc CreateInternal (HistoryDTO) returns (HistoryDTO);
   rpc SearchInternal (HistorySearchRequest) returns (HistoryListDTO);
@@ -115,4 +122,24 @@ message HistoryDTO {
 message HistoryListDTO {
     repeated HistoryDTO data = 1;
     uint32 total = 2;
+}
+
+message HistoryAuthSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 userId = 3;
+  optional uint64 organizationId = 4;
+  string actionType = 5;
+  string channel = 6;
+  string deviceId = 7;
+  optional bool success = 8;
+  string fromDate = 9;
+  string toDate = 10;
+}
+
+message HistoryAuthListResponse {
+  repeated HistoryAuthDTO data = 1;
+  uint64 total = 2;
+  uint32 page = 3;
+  uint32 size = 4;
 }

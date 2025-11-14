@@ -56,6 +56,17 @@ func GetAuthIdFromContext(c context.Context) uint64 {
 	return authId.(uint64)
 }
 
+func GetDeviceIdFromContext(c context.Context) string {
+	deviceID := c.Value(_enums.DeviceIDKey)
+	if deviceID == nil {
+		return ""
+	}
+	if id, ok := deviceID.(string); ok {
+		return id
+	}
+	return ""
+}
+
 // func GetProfileIdFromContext(ctx context.Context) uint64 {
 // 	return ctx.Value("profileId").(uint64)
 // 	// if claims, ok := clms.(*Principal); ok {

@@ -29,6 +29,7 @@ func AutoMigrate() {
 		&domain.AuthUser{},
 		&domain.UserOTPEntity{},
 		&domain.UserSessionEntity{},
+		&domain.DeviceEntity{},
 		&domain.UserStatusEntity{},
 		&domain.Role{},
 		&domain.Permission{},

@@ -88,3 +88,10 @@ func (c *NotificationGrpcClient) RemoveNotification(
 	})
 	return err
 }
+
+func (c *NotificationGrpcClient) CreateHistoryAuth(
+	ctx context.Context,
+	req *notificationpb.HistoryAuthCreateRequest,
+) (*notificationpb.HistoryAuthDTO, error) {
+	return c.Client.CreateHistoryAuth(ctx, req)
+}

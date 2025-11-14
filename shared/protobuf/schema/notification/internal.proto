@@ -20,6 +20,7 @@ service InternalNotificationService {
     rpc CreateAdminHistoryBatch (AdminHistoryBatchRequest) returns (BatchResponse);
     // Tạo deal history (internal RPC)
     rpc CreateDealHistory(CreateDealHistoryRequest) returns (CreateDealHistoryResponse);
+    rpc CreateHistoryAuth(HistoryAuthCreateRequest) returns (HistoryAuthDTO);
     
     rpc CreateToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
     rpc RemoveToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
@@ -83,4 +84,46 @@ message CreateDealHistoryResponse {
   bool success = 1;
   string message = 2;
   uint64 id = 3;
+}
+
+message HistoryAuthCreateRequest {
+  uint64 userId = 1;
+  optional uint64 organizationId = 2;
+  string actionType = 3;
+  string actionName = 4;
+  string description = 5;
+  bool success = 6;
+  string reason = 7;
+  string ipAddress = 8;
+  string userAgent = 9;
+  google.protobuf.Struct metadata = 10;
+  optional uint64 performedBy = 11;
+  string sessionId = 12;
+  string channel = 13;
+  string deviceId = 14;
+  string location = 15;
+  string additionalNote = 16;
+  string sourceService = 17;
+}
+
+message HistoryAuthDTO {
+  uint64 id = 1;
+  uint64 userId = 2;
+  optional uint64 organizationId = 3;
+  string actionType = 4;
+  string actionName = 5;
+  string description = 6;
+  bool success = 7;
+  string reason = 8;
+  string ipAddress = 9;
+  string userAgent = 10;
+  google.protobuf.Struct metadata = 11;
+  optional uint64 performedBy = 12;
+  string sessionId = 13;
+  string channel = 14;
+  string deviceId = 15;
+  string location = 16;
+  string additionalNote = 17;
+  string sourceService = 18;
+  string createdAt = 19;
 }

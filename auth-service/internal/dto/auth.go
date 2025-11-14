@@ -34,6 +34,7 @@ type OtpVerifyRequest struct {
 	Platform   string `json:"platform,omitempty"`
 	OS         string `json:"os,omitempty"`
 	DeviceName string `json:"deviceName,omitempty"`
+	DeviceID   string `json:"deviceId,omitempty"`
 	Fullname   string `json:"fullname,omitempty"`
 
 	ClientPublicKey string `json:"clientPublicKey,omitempty"` // Diffie-Hellman public key từ client
@@ -253,6 +254,7 @@ type AdminLoginRequest struct {
 	Platform   string `json:"platform" binding:"required" validate:"required"`
 	OS         string `json:"os" binding:"required" validate:"required"`
 	DeviceName string `json:"deviceName,omitempty"`
+	DeviceID   string `json:"deviceId,omitempty"`
 }
 
 // LoginWithKeyRequest đại diện cho yêu cầu đăng nhập bằng auth key (Diffie-Hellman)
@@ -264,6 +266,7 @@ type LoginWithKeyRequest struct {
 	Platform         string `json:"platform" binding:"required" validate:"required"`
 	OS               string `json:"os" binding:"required" validate:"required"`
 	DeviceName       string `json:"deviceName,omitempty"`
+	DeviceID         string `json:"deviceId,omitempty"`
 }
 
 // Account Lock DTOs
@@ -404,6 +407,7 @@ type LoginWithPasswordRequest struct {
 	Platform   string `json:"platform,omitempty"`
 	OS         string `json:"os,omitempty"`
 	DeviceName string `json:"deviceName,omitempty"`
+	DeviceID   string `json:"deviceId,omitempty"`
 }
 
 // SwitchAccountRequest đại diện cho yêu cầu chuyển đổi tài khoản
@@ -444,6 +448,7 @@ type GetLoginHistoryResponse struct {
 type LoginHistoryItem struct {
 	SessionID    uint64 `json:"sessionId"`
 	AuthID       uint64 `json:"authId"`
+	DeviceID     string `json:"deviceId"`
 	Platform     string `json:"platform"`
 	Version      string `json:"version"`
 	OS           string `json:"os"`
@@ -489,6 +494,7 @@ type VerifyPINRequest struct {
 	Platform   string `json:"platform,omitempty"`
 	OS         string `json:"os,omitempty"`
 	DeviceName string `json:"deviceName,omitempty"`
+	DeviceID   string `json:"deviceId,omitempty"`
 }
 
 // UpdatePINRequest đại diện cho yêu cầu cập nhật mã PIN

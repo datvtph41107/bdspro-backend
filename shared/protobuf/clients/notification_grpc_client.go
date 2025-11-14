@@ -178,6 +178,10 @@ func (s *NotificationClient) CreateAdminHistoryBatch(ctx context.Context, reques
 	return err
 }
 
+func (s *NotificationClient) CreateHistoryAuth(ctx context.Context, req *notificationpb.HistoryAuthCreateRequest) (*notificationpb.HistoryAuthDTO, error) {
+	return s.Client.CreateHistoryAuth(ctx, req)
+}
+
 // LogAdminLogin ghi log khi admin đăng nhập thành công
 func (s *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, adminRole string, ipAddress string, userAgent string) error {
 	return s.CreateAdminHistory(ctx,

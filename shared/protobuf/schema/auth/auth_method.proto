@@ -50,7 +50,8 @@ service AuthService {
 
     rpc Logout(LogoutRequest) returns (LogoutResponse) {
         option (google.api.http) = {
-            delete: "/v2/auth/logout"
+            post: "/v2/auth/logout"
+            body: "*"
         };
     }
 
@@ -188,6 +189,14 @@ service AuthService {
         };
     }
 
+    // Device Management
+    rpc RegisterDevice(CreateDeviceRequest) returns (CreateDeviceResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/device/check"
+            body: "*"
+        };
+    }
+
     // PIN Management
     rpc PhoneCheck(PhoneCheckRequest) returns (PhoneCheckResponse) {
         option (google.api.http) = {
@@ -227,6 +236,12 @@ service AuthService {
     rpc GetLoginHistory(GetLoginHistoryRequest) returns (GetLoginHistoryResponse) {
         option (google.api.http) = {
             get: "/v2/auth/login-history"
+        };
+    }
+
+    rpc GetSessionsByProfile(sharepb.RequestV3Proto) returns (SessionPageResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/sessions"
         };
     }
 
@@ -316,6 +331,8 @@ message RefreshTokenResponse {
 
 message LogoutRequest {
     // Empty request
+    optional uint64 sessionId = 1;
+    string type = 2;// "device","session","others"
 }
 
 message LogoutResponse {
@@ -353,6 +370,53 @@ message RestoreDeletedAccountResponse {
     string provider = 2;
     string authName = 3;
     string message = 4;
+}
+
+// Device Management Messages
+message CreateDeviceRequest {
+    string deviceId = 1;
+    string deviceName = 2;
+    string deviceType = 3;
+    string platform = 4;
+    string osVersion = 5;
+    string appVersion = 6;
+    string buildNumber = 7;
+    string manufacturer = 8;
+    string model = 9;
+    string locale = 10;
+    string timezone = 11;
+    string pushToken = 12;
+    string ipAddress = 13;
+    string userAgent = 14;
+    string lastSeenAt = 15;
+}
+
+message Device {
+    uint64 id = 1;
+    string deviceId = 2;
+    string deviceName = 3;
+    string deviceType = 4;
+    string platform = 5;
+    string osVersion = 6;
+    string appVersion = 7;
+    string buildNumber = 8;
+    string manufacturer = 9;
+    string model = 10;
+    string locale = 11;
+    string timezone = 12;
+    string pushToken = 13;
+    string ipAddress = 14;
+    string userAgent = 15;
+    uint64 profileId = 16;
+    uint64 organizationId = 17;
+    uint64 authId = 18;
+    string lastSeenAt = 19;
+    string createdAt = 20;
+    string updatedAt = 21;
+}
+
+message CreateDeviceResponse {
+    Device data = 1;
 }
 
 message AdminAccessResponse {
@@ -715,6 +779,11 @@ message GetLoginHistoryRequest {
 
 message GetLoginHistoryResponse {
     repeated LoginHistoryItem data = 1;
+    int64 total = 2;
+}
+
+message SessionPageResponse {
+    repeated sharepb.SessionV3Proto data = 1;
     int64 total = 2;
 }
 

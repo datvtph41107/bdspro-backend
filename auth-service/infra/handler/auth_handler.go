@@ -1,10 +1,12 @@
 package handler
 
 import (
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
+	"strings"
 	"time"
 
 	"auth/infra/mapper"
@@ -23,6 +25,8 @@ type AuthHandler struct {
 	AdminUsecase       *usecase.AuthAdminUsecase
 	SessionMapper      *mapper.SessionMapper
 	PINUsecase         *usecase.PINUsecase
+	DeviceUsecase      *usecase.DeviceUsecase
+	DeviceMapper       *mapper.DeviceMapper
 }
 
 func NewAuthHandler(service *usecase.AuthUsecase,
@@ -31,6 +35,8 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 	adminUsecase *usecase.AuthAdminUsecase,
 	sessionMapper *mapper.SessionMapper,
 	pinUsecase *usecase.PINUsecase,
+	deviceUsecase *usecase.DeviceUsecase,
+	deviceMapper *mapper.DeviceMapper,
 ) *AuthHandler {
 	return &AuthHandler{
 		AuthUsecase:        service,
@@ -39,6 +45,8 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 		AdminUsecase:       adminUsecase,
 		SessionMapper:      sessionMapper,
 		PINUsecase:         pinUsecase,
+		DeviceUsecase:      deviceUsecase,
+		DeviceMapper:       deviceMapper,
 	}
 }
 
@@ -292,11 +300,27 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, req *authpb.RefreshToken
 // @Success 200 {object} authpb.LogoutResponse
 // @Failure 400 {object} authpb.LogoutResponse
 // @Failure 500 {object} authpb.LogoutResponse
-// @Router /logout [delete]
+// @Param type path string true "Loại logout" Enums(session,device,others)
+// @Param request body authpb.LogoutRequest false "Thông tin logout"
+// @Router /v2/auth/logout/{type} [post]
 func (h *AuthHandler) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
-	result, err := h.AuthUsecase.Logout(ctx)
+	logoutType := strings.ToLower(req.GetType())
+	switch logoutType {
+	case "", "session", "device", "others":
+		if logoutType == "" {
+			logoutType = "session"
+		}
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "Type logout không hợp lệ")
+	}
+
+	if logoutType == "device" && req.GetSessionId() == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "deviceId là bắt buộc khi type=device")
+	}
+
+	result, err := h.AuthUsecase.Logout(ctx, logoutType, req.GetSessionId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "lỗi khi logout: %v", err)
+		return nil, err
 	}
 
 	return &authpb.LogoutResponse{
@@ -1098,6 +1122,28 @@ func (h *AuthHandler) LoginWithPassword(ctx context.Context, req *authpb.LoginWi
 	}, nil
 }
 
+// @Summary Đăng ký thiết bị
+// @Description Lưu thông tin thiết bị của ứng dụng khi khởi động
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body authpb.CreateDeviceRequest true "Thông tin thiết bị"
+// @Success 200 {object} authpb.CreateDeviceResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /device/check [post]
+func (h *AuthHandler) RegisterDevice(ctx context.Context, req *authpb.CreateDeviceRequest) (*authpb.CreateDeviceResponse, error) {
+	dtoReq := h.DeviceMapper.MapCreateDeviceRequestPbToDTO(req)
+	result, err := h.DeviceUsecase.RegisterDevice(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.CreateDeviceResponse{
+		Data: h.DeviceMapper.MapDeviceToPb(result),
+	}, nil
+}
+
 // @Summary Chuyển đổi tài khoản
 // @Description Chuyển đổi sang tài khoản cá nhân hoặc tổ chức khác
 // @Tags Auth
@@ -1145,42 +1191,66 @@ func (h *AuthHandler) SwitchAccount(ctx context.Context, req *authpb.SwitchAccou
 	}, nil
 }
 
-// @Summary Lấy lịch sử đăng nhập
-// @Description Lấy danh sách lịch sử đăng nhập của user hiện tại
+// // @Summary Lấy lịch sử đăng nhập
+// // @Description Lấy danh sách lịch sử đăng nhập của user hiện tại
+// // @Tags Auth
+// // @Accept json
+// // @Produce json
+// // @Param page query int false "Số trang" default(1)
+// // @Param size query int false "Số lượng mỗi trang" default(20)
+// // @Success 200 {object} authpb.GetLoginHistoryResponse
+// // @Failure 401 {object} authpb.GetLoginHistoryResponse
+// // @Failure 500 {object} authpb.GetLoginHistoryResponse
+// // @Router /v2/auth/login-history [get]
+// // @Security BearerAuth
+// func (h *AuthHandler) GetLoginHistory(ctx context.Context, req *authpb.GetLoginHistoryRequest) (*authpb.GetLoginHistoryResponse, error) {
+// 	// Set default values
+// 	// Gọi usecase để lấy danh sách lịch sử đăng nhập
+// 	sessions, total, err := h.AuthUsecase.GetLoginHistory(ctx, page, size)
+// 	if err != nil {
+// 		return nil, status.Errorf(codes.Internal, "Không thể lấy lịch sử đăng nhập: %v", err)
+// 	}
+
+// 	// Chuyển đổi từ entity sang protobuf DTO
+// 	items := h.SessionMapper.MapSessionsToLoginHistoryListPb(sessions)
+
+// 	return &authpb.GetLoginHistoryResponse{
+// 		Data:  items,
+// 		Total: total,
+// 	}, nil
+// }
+
+// @Summary Lấy danh sách session
+// @Description Lấy danh sách session của người dùng hiện tại
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param page query int false "Số trang" default(1)
+// @Param page query int false "Trang hiện tại" default(1)
 // @Param size query int false "Số lượng mỗi trang" default(20)
-// @Success 200 {object} authpb.GetLoginHistoryResponse
-// @Failure 401 {object} authpb.GetLoginHistoryResponse
-// @Failure 500 {object} authpb.GetLoginHistoryResponse
-// @Router /v2/auth/login-history [get]
+// @Success 200 {object} authpb.SessionPageResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 401 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/sessions [get]
 // @Security BearerAuth
-func (h *AuthHandler) GetLoginHistory(ctx context.Context, req *authpb.GetLoginHistoryRequest) (*authpb.GetLoginHistoryResponse, error) {
-	// Set default values
-	page := req.Page
-	size := req.Size
-	if page < 1 {
-		page = 0
-	}
-	if size < 1 {
-		size = 20
-	}
-	if size > 100 {
-		size = 100
+func (h *AuthHandler) GetSessionsByProfile(ctx context.Context, req *sharepb.RequestV3Proto) (*authpb.SessionPageResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Request không hợp lệ")
 	}
 
-	// Gọi usecase để lấy danh sách lịch sử đăng nhập
-	sessions, total, err := h.AuthUsecase.GetLoginHistory(ctx, page, size)
+	pagable := &_dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+	}
+
+	sessions, total, err := h.AuthUsecase.GetSessionsByProfile(ctx, pagable)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Không thể lấy lịch sử đăng nhập: %v", err)
+		return nil, err
 	}
 
-	// Chuyển đổi từ entity sang protobuf DTO
-	items := h.SessionMapper.MapSessionsToLoginHistoryListPb(sessions)
+	items := h.SessionMapper.MapSessionsToSessionV3ProtoList(sessions)
 
-	return &authpb.GetLoginHistoryResponse{
+	return &authpb.SessionPageResponse{
 		Data:  items,
 		Total: total,
 	}, nil

@@ -2,7 +2,9 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
+	"fmt"
 
 	"notification/infra/mapper"
 	"notification/internal/dto"
@@ -11,16 +13,31 @@ import (
 	shared_dto "pb/dto"
 	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type HistoryHandler struct {
 	notificationpb.UnimplementedHistoryServiceServer
-	UC     *usecase.HistoryUsecase
-	Mapper *mapper.HistoryMapper
+	UC                 *usecase.HistoryUsecase
+	Mapper             *mapper.HistoryMapper
+	HistoryAuthUsecase *usecase.HistoryAuthUsecase
+	HistoryAuthMapper  *mapper.HistoryAuthMapper
 }
 
-func NewHistoryHandler(uc *usecase.HistoryUsecase, mapper *mapper.HistoryMapper) *HistoryHandler {
-	return &HistoryHandler{UC: uc, Mapper: mapper}
+func NewHistoryHandler(
+	uc *usecase.HistoryUsecase,
+	mapper *mapper.HistoryMapper,
+	historyAuthUsecase *usecase.HistoryAuthUsecase,
+	historyAuthMapper *mapper.HistoryAuthMapper,
+) *HistoryHandler {
+	return &HistoryHandler{
+		UC:                 uc,
+		Mapper:             mapper,
+		HistoryAuthUsecase: historyAuthUsecase,
+		HistoryAuthMapper:  historyAuthMapper,
+	}
 }
 
 // @Summary Lấy lịch sử của người dùng
@@ -145,6 +162,76 @@ func (s *HistoryHandler) ProductHistory(ctx context.Context, req *notificationpb
 	return &notificationpb.HistoryListDTO{
 		Data:  historiesPb,
 		Total: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy lịch sử của người dùng
+// @Description Lấy lịch sử của người dùng
+// @Tags Lịch sử
+// @Accept json
+// @Produce json
+// @Param page query notificationpb.HistoryAuthSearchRequest false "Trang"
+// @Security BearerAuth
+// @Router /history/auth [get]
+func (s *HistoryHandler) AuthHistory(ctx context.Context, req *notificationpb.HistoryAuthSearchRequest) (*notificationpb.HistoryAuthListResponse, error) {
+	if s.HistoryAuthUsecase == nil || s.HistoryAuthMapper == nil {
+		return nil, status.Error(codes.Unavailable, "history auth service not available")
+	}
+
+	// if req.GetUserId() == 0 {
+	// 	return nil, status.Error(codes.InvalidArgument, "userId is required")
+	// }
+
+	// var organizationID *uint64
+	// if req.OrganizationId != nil {
+	// 	val := req.GetOrganizationId()
+	// 	organizationID = &val
+	// }
+
+	var success *bool
+	if req.Success != nil {
+		val := req.GetSuccess()
+		success = &val
+	}
+
+	searchDTO := dto.HistoryAuthSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: req.GetPage(),
+			Size: req.GetSize(),
+		},
+		ActionType: req.GetActionType(),
+		Channel:    req.GetChannel(),
+		DeviceID:   req.GetDeviceId(),
+		Success:    success,
+	}
+	// UserID:         req.GetUserId(),
+	// OrganizationID: organizationID,
+
+	if from := req.GetFromDate(); from != "" {
+		if parsed := _utils.ParseStringToTime(from); parsed != nil {
+			searchDTO.FromDate = parsed
+		}
+	}
+
+	if to := req.GetToDate(); to != "" {
+		if parsed := _utils.ParseStringToTime(to); parsed != nil {
+			searchDTO.ToDate = parsed
+		}
+	}
+
+	histories, total, err := s.HistoryAuthUsecase.SearchHistoryAuth(ctx, searchDTO)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to load security history: %v", err))
+	}
+
+	data := s.HistoryAuthMapper.DomainsToPb(histories)
+	page := searchDTO.Pagable.GetPage()
+	size := searchDTO.Pagable.GetSize()
+	return &notificationpb.HistoryAuthListResponse{
+		Data:  data,
+		Total: uint64(total),
+		Page:  page,
+		Size:  size,
 	}, nil
 }
 

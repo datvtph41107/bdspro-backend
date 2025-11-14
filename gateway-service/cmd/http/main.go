@@ -134,6 +134,7 @@ var publicRoutes = []string{
 	"/v2/social/public/news-feed/user/",
 	"/v2/user/main-area",
 	"/v2/user/purpose-use",
+	"/v2/auth/device/check",
 }
 
 var tempRoutes = []string{

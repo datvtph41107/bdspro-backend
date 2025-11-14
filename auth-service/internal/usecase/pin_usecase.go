@@ -9,19 +9,21 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type PINUsecase struct {
-	pinRepo         repo.PINRepository
-	statusRepo      repo.StatusRepository
-	authMethodRepo  repo.AuthMethodRepository
-	sessionRepo     repo.SessionRepository
-	profileProvider provider.ProfileProvider
-	maxPINAttempts  int
-	pinLockDuration time.Duration
+	pinRepo              repo.PINRepository
+	statusRepo           repo.StatusRepository
+	authMethodRepo       repo.AuthMethodRepository
+	sessionRepo          repo.SessionRepository
+	profileProvider      provider.ProfileProvider
+	notificationProvider provider.NotificationProvider
+	maxPINAttempts       int
+	pinLockDuration      time.Duration
 }
 
 func NewPINUsecase(
@@ -30,15 +32,17 @@ func NewPINUsecase(
 	authMethodRepo repo.AuthMethodRepository,
 	sessionRepo repo.SessionRepository,
 	profileProvider provider.ProfileProvider,
+	notificationProvider provider.NotificationProvider,
 ) *PINUsecase {
 	return &PINUsecase{
-		pinRepo:         pinRepo,
-		statusRepo:      statusRepo,
-		authMethodRepo:  authMethodRepo,
-		sessionRepo:     sessionRepo,
-		profileProvider: profileProvider,
-		maxPINAttempts:  3,
-		pinLockDuration: 15 * time.Minute,
+		pinRepo:              pinRepo,
+		statusRepo:           statusRepo,
+		authMethodRepo:       authMethodRepo,
+		sessionRepo:          sessionRepo,
+		profileProvider:      profileProvider,
+		notificationProvider: notificationProvider,
+		maxPINAttempts:       3,
+		pinLockDuration:      15 * time.Minute,
 	}
 }
 
@@ -131,6 +135,7 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 			// Khóa PIN
 			lockedUntil := time.Now().Add(s.pinLockDuration)
 			s.pinRepo.LockPIN(c, authEntity.ID, lockedUntil)
+			s.logPINLockHistory(c, authEntity, request, lockedUntil)
 			return nil, _errors.ReturnError(
 				423,
 				fmt.Sprintf("Đã nhập sai %d lần. Mã PIN đã bị khóa trong %d phút", s.maxPINAttempts, int(s.pinLockDuration.Minutes())),
@@ -229,18 +234,97 @@ func (s *PINUsecase) CheckPINExists(c context.Context, authID uint64) (*dto.Chec
 	}, nil
 }
 
+func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.AuthMethod, request dto.VerifyPINRequest, lockedUntil time.Time) {
+	if s.notificationProvider == nil || authEntity == nil || authEntity.UserID == 0 {
+		return
+	}
+
+	ipAddress := _utils.AuditIPFromContext(ctx)
+	if ipAddress == "" {
+		ipAddress = "127.0.0.1"
+	}
+
+	userAgent := _utils.GetUserAgentFromContext(ctx)
+	if userAgent == "" {
+		userAgent = "Mobile-Client"
+	}
+
+	deviceID := _utils.GetDeviceIdFromContext(ctx)
+	if deviceID == "" {
+		deviceID = request.DeviceID
+	}
+	if deviceID == "" {
+		deviceID = request.DeviceName
+	}
+
+	metadata := map[string]interface{}{
+		"authId":      authEntity.ID,
+		"phone":       request.Phone,
+		"lockedUntil": lockedUntil.Format(time.RFC3339),
+		"maxAttempts": s.maxPINAttempts,
+	}
+	if request.Platform != "" {
+		metadata["platform"] = request.Platform
+	}
+	if request.OS != "" {
+		metadata["os"] = request.OS
+	}
+	if deviceID != "" {
+		metadata["deviceId"] = deviceID
+	}
+
+	success := false
+	description := fmt.Sprintf("Nhập sai mã PIN quá %d lần. Mã PIN đã bị khóa trong %d phút", s.maxPINAttempts, int(s.pinLockDuration.Minutes()))
+	payload := dto.HistoryAuthCreateDTO{
+		UserID:        authEntity.UserID,
+		ActionType:    "pin_lock",
+		ActionName:    "PIN_LOCKED",
+		Description:   description,
+		Success:       &success,
+		Reason:        "PIN_ATTEMPTS_EXCEEDED",
+		IPAddress:     ipAddress,
+		UserAgent:     userAgent,
+		Channel:       request.Platform,
+		DeviceID:      deviceID,
+		SourceService: "auth-service",
+		Metadata:      metadata,
+	}
+
+	go func(history dto.HistoryAuthCreateDTO) {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &history); err != nil {
+			log.Printf("failed to log PIN lock history: %v", err)
+		}
+	}(payload)
+}
+
 // createSession tạo session mới cho user
 func (s *PINUsecase) createSession(c context.Context, authEntity *domain.AuthMethod, request dto.VerifyPINRequest) *domain.UserSessionEntity {
 	userAgent := _utils.GetUserAgentFromContext(c)
 	ip := _utils.AuditIPFromContext(c)
+	deviceID := _utils.GetDeviceIdFromContext(c)
+	if deviceID == "" {
+		deviceID = request.DeviceID
+	}
+	if deviceID == "" {
+		deviceID = request.DeviceName
+	}
+
+	now := time.Now()
 
 	return &domain.UserSessionEntity{
 		AuthID:     authEntity.ID,
+		DeviceID:   deviceID,
 		Version:    request.Version,
 		Platform:   request.Platform,
 		OS:         request.OS,
 		DeviceName: request.DeviceName,
 		UserAgent:  userAgent,
 		IPRequest:  ip,
+		LastLogin:  &now,
+		Activate:   false,
+		LogoutAt:   nil,
 	}
 }

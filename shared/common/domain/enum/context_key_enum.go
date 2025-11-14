@@ -14,4 +14,5 @@ const (
 	ClientIPKey       ContextKey = "client-ip"
 	UserAgentKey      ContextKey = "user-agent"
 	APIKeyKey         ContextKey = "api-key"
+	DeviceIDKey       ContextKey = "device-id"
 )

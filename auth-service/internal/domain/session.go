@@ -9,12 +9,16 @@ import (
 type UserSessionEntity struct {
 	SessionID    uint64     `gorm:"primaryKey;column:session_id;autoIncrement"`
 	AuthID       uint64     `gorm:"column:auth_id"`
+	DeviceID     string     `gorm:"column:device_id;size:255"`
 	Platform     string     `gorm:"column:platform;size:10"`
 	Version      string     `gorm:"column:version;size:20"`
 	OS           string     `gorm:"column:os;size:20"`
 	DeviceName   string     `gorm:"column:device_name;size:255"`
 	CreatedDate  *time.Time `gorm:"column:created_date;autoCreateTime"`
 	FinishedDate *time.Time `gorm:"column:finished_date"`
+	LastLogin    *time.Time `gorm:"column:last_login"`
+	LogoutAt     *time.Time `gorm:"column:logout_at"`
+	LastRequest  *time.Time `gorm:"column:last_req"`
 	IPRequest    string     `gorm:"column:ip_request;size:20"`
 	TotalRequest uint64     `gorm:"column:total_request"`
 	UserAgent    string     `gorm:"column:user_agent" json:"userAgent"`

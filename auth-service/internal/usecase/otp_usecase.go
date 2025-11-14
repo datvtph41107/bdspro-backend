@@ -4,29 +4,34 @@ import (
 	"auth/internal/dto"
 	"auth/internal/enums"
 	"auth/internal/interface/factory"
+	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
 type OtpUsecase struct {
-	otpRepo    repo.OTPRepository
-	statusRepo repo.StatusRepository
-	properties dto.PropertiesDTO
+	otpRepo              repo.OTPRepository
+	statusRepo           repo.StatusRepository
+	properties           dto.PropertiesDTO
+	notificationProvider provider.NotificationProvider
 }
 
 func NewOtpUsecase(
 	otpRepo repo.OTPRepository,
 	statusRepo repo.StatusRepository,
 	properties factory.IFactory,
+	notificationProvider provider.NotificationProvider,
 ) *OtpUsecase {
 	return &OtpUsecase{
-		otpRepo:    otpRepo,
-		statusRepo: statusRepo,
-		properties: properties.GetProperties(),
+		otpRepo:              otpRepo,
+		statusRepo:           statusRepo,
+		properties:           properties.GetProperties(),
+		notificationProvider: notificationProvider,
 	}
 }
 
@@ -60,6 +65,7 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 	case enums.LIMIT_OTP_SEND:
 		if otpEntity.OTPSendTime >= s.properties.MaxTimesResend {
 			s.LockAccount(c, param)
+			s.logOtpLockHistory(c, param, "limit_otp_send", otpEntity.OTPSendTime, s.properties.MaxTimesResend)
 			return _errors.ReturnError(
 				int32(code),
 				fmt.Sprintf("Đã quá %d lần gửi OTP. Vui lòng thử lại sau", s.properties.MaxTimesResend),
@@ -68,6 +74,7 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 	case enums.LIMIT_OTP_ENTER:
 		if otpEntity.OTPCheckTime > s.properties.MaxTimesOtpEnter {
 			s.LockAccount(c, param)
+			s.logOtpLockHistory(c, param, "limit_otp_enter", otpEntity.OTPCheckTime, s.properties.MaxTimesOtpEnter)
 			return _errors.ReturnError(
 				int32(code),
 				"Đã quá 3 lần nhập. Vui lòng thử lại sau "+fmt.Sprintf("%.0f phút", time.Until(statusEntity.LockedUntil).Minutes()),
@@ -148,4 +155,90 @@ func (s *OtpUsecase) LockAccount(c context.Context, param *dto.AuthParam) {
 		s.otpRepo.UpdateOTP(c, otpEntity)
 		s.statusRepo.UpdateStatus(c, statusEntity)
 	}
+}
+
+func (s *OtpUsecase) logOtpLockHistory(ctx context.Context, param *dto.AuthParam, reason string, current int, max int) {
+	if s.notificationProvider == nil || param == nil {
+		return
+	}
+
+	var userID uint64
+	var phone string
+	if param.Auth != nil {
+		userID = param.Auth.UserID
+		phone = param.Auth.AuthName
+	}
+	if userID == 0 && param.Status != nil {
+		userID = param.Status.AuthID
+	}
+
+	authID := uint64(0)
+	if param.Status != nil {
+		authID = param.Status.AuthID
+	}
+
+	if userID == 0 && authID == 0 {
+		return
+	}
+
+	ipAddress := _utils.AuditIPFromContext(ctx)
+	if ipAddress == "" {
+		ipAddress = "127.0.0.1"
+	}
+
+	userAgent := _utils.GetUserAgentFromContext(ctx)
+	if userAgent == "" {
+		userAgent = "Mobile-Client"
+	}
+
+	description := "Tài khoản bị khóa do vượt giới hạn OTP"
+	actionName := "OTP_LIMIT"
+	switch reason {
+	case "limit_otp_send":
+		description = fmt.Sprintf("Tài khoản bị khóa do gửi OTP quá %d lần", max)
+		actionName = "OTP_LIMIT_SEND"
+	case "limit_otp_enter":
+		description = fmt.Sprintf("Tài khoản bị khóa do nhập OTP sai quá %d lần", max)
+		actionName = "OTP_LIMIT_ENTER"
+	}
+
+	metadata := map[string]interface{}{
+		"authId":       authID,
+		"reason":       reason,
+		"currentCount": current,
+		"maxCount":     max,
+	}
+	if phone != "" {
+		metadata["phone"] = phone
+	}
+	if param.Status != nil && !param.Status.LockedUntil.IsZero() {
+		metadata["lockedUntil"] = param.Status.LockedUntil.Format(time.RFC3339)
+	}
+	if param.OTP != nil {
+		metadata["otpSendTime"] = param.OTP.OTPSendTime
+		metadata["otpCheckTime"] = param.OTP.OTPCheckTime
+	}
+
+	success := false
+	payload := dto.HistoryAuthCreateDTO{
+		UserID:        userID,
+		ActionType:    "otp_lock",
+		ActionName:    actionName,
+		Description:   description,
+		Success:       &success,
+		Reason:        reason,
+		IPAddress:     ipAddress,
+		UserAgent:     userAgent,
+		SourceService: "auth-service",
+		Metadata:      metadata,
+	}
+
+	go func(history dto.HistoryAuthCreateDTO) {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &history); err != nil {
+			log.Printf("failed to log OTP lock history: %v", err)
+		}
+	}(payload)
 }

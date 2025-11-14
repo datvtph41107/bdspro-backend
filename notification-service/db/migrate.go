@@ -15,5 +15,7 @@ func AutoMigrate() {
 		&domain.AccountWarningLogEntity{},
 		&domain.AccountWarningTemplateEntity{},
 		&domain.DealHistoryEntity{},
+		&domain.HistoryAuthEntity{},
+		&domain.HistoryFcmEntity{},
 	)
 }

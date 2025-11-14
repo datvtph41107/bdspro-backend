@@ -22,6 +22,7 @@ type AuthParam struct {
 	Status  *domain.UserStatusEntity `json:"status"`
 	OTP     *domain.UserOTPEntity    `json:"otp"`
 	OTPCode string                   `json:"otpCode"`
+	Auth    *domain.AuthMethod       `json:"auth,omitempty"`
 }
 
 // PublicUserInfo đại diện cho thông tin user công khai
