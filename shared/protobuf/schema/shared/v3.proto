@@ -66,6 +66,22 @@ message ProductV3Proto {
     optional ItemV3Proto sourceType = 12;
 }
 
+message KYCV3Proto {
+    uint64 id = 1;
+    uint64 profileId = 2;
+    string fullName = 3;
+    string identityCard = 4;
+    string frontImage = 5;
+    string backImage = 6;
+    string selfieImage = 7;
+    uint32 status = 8;
+    string rejectReason = 9;
+    uint64 reviewedBy = 10;
+    string reviewedAt = 11;
+    string createdAt = 12;
+    string updatedAt = 13;
+}
+
 message UserV3Proto {
     uint64 profileId = 1;
     string fullName = 2;
@@ -91,6 +107,7 @@ message UserV3Proto {
     repeated ItemV3Proto tagMainAreas = 22;
     repeated ItemV3Proto tagProjects = 23;
     repeated ItemV3Proto tagProfessions = 24;
+    optional KYCV3Proto kyc = 25;
 }
 
 message OTPV3Proto {

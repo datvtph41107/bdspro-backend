@@ -163,6 +163,7 @@ message ProfilePublicInfo {
     repeated PurposeUseItem purposeUses = 43;
     repeated MainAreaItem mainAreas = 42;
     repeated TagItem tags = 44;
+    optional sharepb.KYCV3Proto kyc = 45;
 }
 
 message RateStats {

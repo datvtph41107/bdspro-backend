@@ -25,6 +25,7 @@ func AutoMigrate() {
 		&models.PurposeUseProfileEntity{},
 		&models.TagEntity{},
 		&models.TagUserEntity{},
+		&models.KYCEntity{},
 
 		// Profile related entities
 		&models.ProfessionEntity{},

@@ -165,7 +165,7 @@ func (m *ProfileMapper) TagToPb(tag *models.TagEntity) *userpb.TagItem {
 	}
 }
 
-func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *userpb.ProfilePublicInfo {
+func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *userpb.ProfilePublicInfo {
 	result := &userpb.ProfilePublicInfo{
 		ProfileId:         profile.ProfileID,
 		Phone:             profile.Phone,
@@ -229,6 +229,11 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *u
 	// if profile.RateStats != nil {
 	// 	result.RateStats = m.RateMapper.EntityToPbRateStats(profile.RateStats)
 	// }
+
+	// Thêm KYC vào response
+	if kyc != nil {
+		result.Kyc = kyc
+	}
 
 	return result
 }
@@ -321,7 +326,7 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 	return result
 }
 
-func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEntity) *sharepb.UserV3Proto {
+func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
 	if profile == nil {
 		return nil
 	}
@@ -392,5 +397,11 @@ func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEnt
 			})
 		}
 	}
+
+	// Thêm KYC vào response
+	if kyc != nil {
+		result.Kyc = kyc
+	}
+
 	return result
 }

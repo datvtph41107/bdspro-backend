@@ -32,4 +32,5 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
 	_ = userpb.RegisterPurposeUseServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterProfessionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterTagServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterKYCServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

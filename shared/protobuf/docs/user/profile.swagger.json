@@ -664,6 +664,54 @@
         }
       }
     },
+    "sharepbKYCV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "identityCard": {
+          "type": "string"
+        },
+        "frontImage": {
+          "type": "string"
+        },
+        "backImage": {
+          "type": "string"
+        },
+        "selfieImage": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rejectReason": {
+          "type": "string"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "reviewedAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
     "sharepbProfileItem": {
       "type": "object",
       "properties": {
@@ -807,6 +855,9 @@
             "type": "object",
             "$ref": "#/definitions/sharepbItemV3Proto"
           }
+        },
+        "kyc": {
+          "$ref": "#/definitions/sharepbKYCV3Proto"
         }
       }
     },
@@ -1187,6 +1238,9 @@
             "type": "object",
             "$ref": "#/definitions/userpbTagItem"
           }
+        },
+        "kyc": {
+          "$ref": "#/definitions/sharepbKYCV3Proto"
         }
       }
     },

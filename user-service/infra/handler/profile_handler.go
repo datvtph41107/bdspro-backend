@@ -28,22 +28,27 @@ type GrpcProfileService struct {
 	ProfileRepo           repo.IProfileRepo
 	AdminUsecase          *usecases.AdminUsecase
 	ProfileUsecase        *usecases.ProfileUsecase
+	KYCUsecase            usecases.IKYCUsecase
 	cache                 *cache.Cache
 	OrgClient             orgpb.OrganizationServiceClient
 	GroupClient           organizationpb.GroupServiceClient
 	ProfileMapper         *mapper.ProfileMapper
+	KYCMapper             *mapper.KYCMapper
 	CrmClient             *client.CrmClient
 	HubClient             *client.HubClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
+// @bind: internal/usecases.IKYCUsecase
 func NewGrpcProfileService(
 	profileRepo repo.IProfileRepo,
 	adminUsecase *usecases.AdminUsecase,
 	profileUsecase *usecases.ProfileUsecase,
+	kycUsecase usecases.IKYCUsecase,
 	orgClient orgpb.OrganizationServiceClient,
 	groupClient organizationpb.GroupServiceClient,
 	profileMapper *mapper.ProfileMapper,
+	kycMapper *mapper.KYCMapper,
 	crmClient *client.CrmClient,
 	hubClient *client.HubClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
@@ -52,10 +57,12 @@ func NewGrpcProfileService(
 		ProfileRepo:           profileRepo,
 		ProfileUsecase:        profileUsecase,
 		AdminUsecase:          adminUsecase,
+		KYCUsecase:            kycUsecase,
 		cache:                 cache.New(5*time.Minute, 10*time.Minute),
 		OrgClient:             orgClient,
 		GroupClient:           groupClient,
 		ProfileMapper:         profileMapper,
+		KYCMapper:             kycMapper,
 		CrmClient:             crmClient,
 		HubClient:             hubClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
@@ -138,7 +145,14 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
-	profilePb := s.ProfileMapper.PublicUserInfoToPb(result)
+	// Lấy KYC của user (theo profileId từ request)
+	var kyc *sharepb.KYCV3Proto
+	kycEntity, errKYC := s.KYCUsecase.GetKYCByProfileID(ctx, req.Id)
+	if errKYC == nil && kycEntity != nil {
+		kyc = s.KYCMapper.ToProto(kycEntity)
+	}
+
+	profilePb := s.ProfileMapper.PublicUserInfoToPb(result, kyc)
 
 	// Lấy tên province và ward từ hub service
 	if result.ProvinceID != nil || result.WardID != nil {
@@ -168,7 +182,14 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
-	profilePb := s.ProfileMapper.OwnerProfileToUserV3Proto(result)
+	// Lấy KYC của user
+	var kyc *sharepb.KYCV3Proto
+	kycEntity, errKYC := s.KYCUsecase.GetMyKYC(ctx)
+	if errKYC == nil && kycEntity != nil {
+		kyc = s.KYCMapper.ToProto(kycEntity)
+	}
+
+	profilePb := s.ProfileMapper.OwnerProfileToUserV3Proto(result, kyc)
 
 	// Lấy tên province và ward từ hub service
 	if result.ProvinceID != nil || result.WardID != nil {
