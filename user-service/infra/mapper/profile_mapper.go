@@ -51,6 +51,7 @@ func (m *ProfileMapper) SetProfileToDTO(profile *userpb.SetInfoRequest) *dto.Use
 		StatusOnline:      enums.EOnlineStatus(profile.StatusOnline),
 		TabDefault:        enums.ESettingTab(profile.TabDefault),
 		RoleRealEstate:    enums.ERoleRealEstate(profile.RoleRealEstate),
+		// SignatureVisible:  profile.SignatureVisible,
 
 		CertificationRemoveIds: profile.CertificationRemoveIds,
 		ProfessionRemoveIds:    profile.ProfessionRemoveIds,
@@ -182,14 +183,14 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, ky
 		Birth:             _utils.FormatTimeToString(profile.Birth),
 		StartDate:         _utils.FormatTimeToString(profile.StartDate),
 		Slogan:            profile.Slogan,
-		Website:           profile.Website,
+		Website:           profile.WebsiteURL,
 		ProvinceId:        profile.ProvinceID,
 		WardId:            profile.WardID,
-		Facebook:          profile.Facebook,
-		Instagram:         profile.Instagram,
-		Twitter:           profile.Twitter,
-		Linkedin:          profile.Linkedin,
-		Youtube:           profile.Youtube,
+		Facebook:          profile.FacebookURL,
+		Instagram:         profile.InstagramURL,
+		Twitter:           profile.TwitterURL,
+		Linkedin:          profile.LinkedinURL,
+		Youtube:           profile.YoutubeURL,
 		Introduction:      profile.Introduction,
 		Visibility:        uint32(profile.Visibility),
 		ProfileVisibility: uint32(profile.ProfileVisibility),
@@ -305,12 +306,23 @@ func (m *ProfileMapper) PrivacyRequestToDTO(req *userpb.UpdatePrivacySettingRequ
 
 func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 	result := &_dto.UserV3DTO{
-		ProfileID:      req.ProfileId,
-		FullName:       req.FullName,
-		Avatar:         req.Avatar,
-		RoleRealEstate: req.RoleRealEstate,
-		MainAreaIds:    req.MainAreaIds,
-		PurposeUseIDs:  req.PurposeUseIds,
+		ProfileID:        req.ProfileId,
+		FullName:         req.FullName,
+		Avatar:           req.Avatar,
+		BackgroundImage:  req.BackgroundImage,
+		RoleRealEstate:   req.RoleRealEstate,
+		MainAreaIds:      req.MainAreaIds,
+		PurposeUseIDs:    req.PurposeUseIds,
+		FacebookURL:      req.FacebookUrl,
+		InstagramURL:     req.InstagramUrl,
+		TwitterURL:       req.TwitterUrl,
+		LinkedinURL:      req.LinkedinUrl,
+		YoutubeURL:       req.YoutubeUrl,
+		WebsiteURL:       req.WebsiteUrl,
+		ZaloURL:          req.ZaloUrl,
+		SignatureVisible: req.SignatureVisible,
+		Gender:           req.Gender,
+		Birth:            _utils.ParseStringToTime(req.Birth),
 		// MainAreaNews:   req.MainAreaNews,
 	}
 
@@ -320,6 +332,18 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 				ID:   news.Id,
 				Name: news.Name,
 			})
+		}
+	}
+
+	if req.Address != nil {
+		result.Address = &_dto.AddressV3DTO{
+			Detail:       req.Address.Detail,
+			ProvinceID:   req.Address.ProvinceId,
+			ProvinceName: req.Address.ProvinceName,
+			DistrictID:   req.Address.DistrictId,
+			DistrictName: req.Address.DistrictName,
+			WardID:       req.Address.WardId,
+			WardName:     req.Address.WardName,
 		}
 	}
 
@@ -344,11 +368,20 @@ func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEnt
 			ProvinceId: profile.ProvinceID,
 			WardId:     profile.WardID,
 		},
-		RoleRealEstate: uint32(profile.RoleRealEstate),
-		MainAreaIds:    nil,
-		PurposeUseIds:  nil,
-		CreatedAt:      _utils.FormatTimeToString(profile.CreatedAt),
-		UpdatedAt:      _utils.FormatTimeToString(profile.UpdatedAt),
+		Phone2:           profile.Phone2,
+		ZaloUrl:          profile.ZaloURL,
+		FacebookUrl:      profile.FacebookURL,
+		InstagramUrl:     profile.InstagramURL,
+		TwitterUrl:       profile.TwitterURL,
+		LinkedinUrl:      profile.LinkedinURL,
+		YoutubeUrl:       profile.YoutubeURL,
+		WebsiteUrl:       profile.WebsiteURL,
+		SignatureVisible: profile.SignatureVisible,
+		RoleRealEstate:   uint32(profile.RoleRealEstate),
+		MainAreaIds:      nil,
+		PurposeUseIds:    nil,
+		CreatedAt:        _utils.FormatTimeToString(profile.CreatedAt),
+		UpdatedAt:        _utils.FormatTimeToString(profile.UpdatedAt),
 	}
 
 	if len(profile.TagProfessions) > 0 {

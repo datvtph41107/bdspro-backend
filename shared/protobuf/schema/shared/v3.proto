@@ -108,6 +108,17 @@ message UserV3Proto {
     repeated ItemV3Proto tagProjects = 23;
     repeated ItemV3Proto tagProfessions = 24;
     optional KYCV3Proto kyc = 25;
+    string phone2 = 26;
+    string zaloUrl = 27;
+    string facebookUrl = 28;
+    string instagramUrl = 29;
+    string twitterUrl = 30;
+    string linkedinUrl = 31;
+    string youtubeUrl = 32;
+    string websiteUrl = 33;
+    string blogUrl = 34;
+    string otherUrl = 35;
+    bool signatureVisible = 36;
 }
 
 message OTPV3Proto {

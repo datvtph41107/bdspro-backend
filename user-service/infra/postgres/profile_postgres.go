@@ -421,7 +421,7 @@ func (r *ProfilePostgres) GetByPhone(phone string) (*models.UserProfileEntity, e
 }
 
 // UpdatePerson cập nhật thông tin cá nhân cơ bản
-func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req *dto.UserInfoRequest) error {
+func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req *_dto.UserV3DTO) error {
 	updates := make(map[string]interface{})
 
 	// Chỉ update các field được gửi lên (không nil)
@@ -441,13 +441,66 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 		updates["gender"] = req.Gender
 	}
 	if req.Birth != nil {
-		updates["birth"] = *req.Birth
+		updates["birth"] = req.Birth
 	}
 	if req.Phone2 != "" {
 		updates["phone2"] = req.Phone2
 	}
 	if req.RoleRealEstate != 0 {
 		updates["role_real_estate"] = req.RoleRealEstate
+	}
+	if req.SignatureVisible {
+		updates["signature_visible"] = true
+	}
+	if req.ZaloURL != "" {
+		updates["zalo_url"] = req.ZaloURL
+	}
+	if req.FacebookURL != "" {
+		updates["facebook_url"] = req.FacebookURL
+	}
+	if req.InstagramURL != "" {
+		updates["instagram_url"] = req.InstagramURL
+	}
+	if req.TwitterURL != "" {
+		updates["twitter_url"] = req.TwitterURL
+	}
+	if req.LinkedinURL != "" {
+		updates["linkedin_url"] = req.LinkedinURL
+	}
+	if req.YoutubeURL != "" {
+		updates["youtube_url"] = req.YoutubeURL
+	}
+	if req.WebsiteURL != "" {
+		updates["website_url"] = req.WebsiteURL
+	}
+	// if req.Introduction != "" {
+	// 	updates["introduction"] = req.Introduction
+	// }
+	if req.Position != "" {
+		updates["position"] = req.Position
+	}
+	if req.DepartmentID != 0 {
+		updates["department_id"] = req.DepartmentID
+	}
+	if req.SignatureVisible {
+		updates["signature_visible"] = true
+	}
+	if req.Avatar != "" {
+		updates["avatar"] = req.Avatar
+	}
+	if req.BackgroundImage != "" {
+		updates["background_image"] = req.BackgroundImage
+	}
+	if req.Address != nil {
+		if req.Address.Detail != "" {
+			updates["address"] = req.Address.Detail
+		}
+		if req.Address.ProvinceID != nil {
+			updates["province_id"] = *req.Address.ProvinceID
+		}
+		if req.Address.WardID != nil {
+			updates["ward_id"] = *req.Address.WardID
+		}
 	}
 
 	// Nếu không có gì để update

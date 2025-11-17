@@ -500,7 +500,7 @@ func (uc *ProfileUsecase) CheckAccountStatus(ctx context.Context, profileID uint
 }
 
 // SetPerson cập nhật thông tin cá nhân cơ bản
-func (s *ProfileUsecase) SetPerson(c context.Context, req *dto.UserInfoRequest) error {
+func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error {
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	// Validate email nếu có
@@ -520,7 +520,17 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *dto.UserInfoRequest) 
 	}
 
 	if s.TagRepo != nil && req.UpdateTags {
-		if err := s.TagRepo.ReplaceProfileTags(c, &profileId, req.Tags); err != nil {
+		tags := make([]models.TagEntity, len(req.Tags))
+		for i, tag := range req.Tags {
+			tags[i] = models.TagEntity{
+				BaseEntity: _models.BaseEntity{
+					ID: tag.ID,
+				},
+				Name:    tag.Name,
+				TagType: enums.TagType(tag.ItemType),
+			}
+		}
+		if err := s.TagRepo.ReplaceProfileTags(c, &profileId, tags); err != nil {
 			return err
 		}
 	}

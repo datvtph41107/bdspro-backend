@@ -47,17 +47,20 @@ type UserProfileEntity struct {
 	PlanID            *uint64               `gorm:"column:plan_id" json:"planId"`
 	PlanAt            *time.Time            `gorm:"column:plan_at" json:"planAt"`
 	Slogan            string                `gorm:"column:slogan" json:"slogan"`
-	Website           string                `gorm:"column:website" json:"website"`
-	Facebook          string                `gorm:"column:facebook" json:"facebook"`
-	Instagram         string                `gorm:"column:instagram" json:"instagram"`
-	Twitter           string                `gorm:"column:twitter" json:"twitter"`
-	Linkedin          string                `gorm:"column:linkedin" json:"linkedin"`
-	Youtube           string                `gorm:"column:youtube" json:"youtube"`
+	WebsiteURL        string                `gorm:"column:website_url" json:"websiteUrl"`
+	ZaloURL           string                `gorm:"column:zalo_url" json:"zaloUrl"`
+	FacebookURL       string                `gorm:"column:facebook_url" json:"facebookUrl"`
+	InstagramURL      string                `gorm:"column:instagram_url" json:"instagramUrl"`
+	TwitterURL        string                `gorm:"column:twitter_url" json:"twitterUrl"`
+	LinkedinURL       string                `gorm:"column:linkedin_url" json:"linkedinUrl"`
+	YoutubeURL        string                `gorm:"column:youtube_url" json:"youtubeUrl"`
 	Introduction      string                `gorm:"column:introduction" json:"introduction"`
 	Visibility        uint8                 `gorm:"column:visibility" json:"visibility"`                // ai xem được trang cá nhân
 	StatusOnline      enums.EOnlineStatus   `gorm:"column:status_online" json:"statusOnline"`           // online, gần đây, không hiển thị
 	ProfileVisibility uint8                 `gorm:"column:profile_visibility" json:"profileVisibility"` // ai xem được liên hệ
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
+	SignatureVisible  bool                  `gorm:"column:signature_visible;default:false" json:"signatureVisible"`
+
 	// LastLoginAt       *time.Time            `gorm:"column:last_login_at" json:"lastLoginAt"`
 	// TotalLogin        uint32                `gorm:"column:total_login;default:0" json:"totalLogin"`
 

@@ -32,9 +32,10 @@ service ProfileService {
             body: "*"
         };
     }
-    rpc SetPerson(SetPersonRequest) returns (sharepb.Empty) {
+    
+    rpc SetPerson(sharepb.UserV3Proto) returns (sharepb.Empty) {
         option (google.api.http) = {
-            put: "/v2/user/profile/set-person"
+            put: "/v2/user/profile/data"
             body: "*"
         };
     }

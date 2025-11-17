@@ -23,7 +23,7 @@ type IProfileRepo interface {
 	DeleteUserProfile(ctx context.Context, profileID uint64, deletedBy *uint64, reason string) error
 	UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error
 	GetByPhone(phone string) (*models.UserProfileEntity, error)
-	UpdatePerson(c context.Context, profileId uint64, req *dto.UserInfoRequest) error
+	UpdatePerson(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
 
 	PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
 	UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error

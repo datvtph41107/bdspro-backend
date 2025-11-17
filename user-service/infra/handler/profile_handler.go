@@ -274,6 +274,16 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 	}, nil
 }
 
+// @Summary Cập nhật thông tin cá nhân
+// @Description Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt, email, địa chỉ)
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body sharepb.UserV3Proto true "Thông tin cá nhân"
+// @Success 200 {object} sharepb.Empty
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Router /v2/user/profile/set-info [put]
 func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoRequest) (*sharepb.Empty, error) {
 	dto := s.ProfileMapper.SetProfileToDTO(req)
 
@@ -292,8 +302,8 @@ func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoReq
 // @Success 200 {object} sharepb.Empty
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Router /v2/user/profile/set-person [put]
-func (s *GrpcProfileService) SetPerson(ctx context.Context, req *userpb.SetPersonRequest) (*sharepb.Empty, error) {
-	dto := s.ProfileMapper.SetPersonToDTO(req)
+func (s *GrpcProfileService) SetPerson(ctx context.Context, req *sharepb.UserV3Proto) (*sharepb.Empty, error) {
+	dto := s.ProfileMapper.UserV3ToDTO(req)
 	err := s.ProfileUsecase.SetPerson(ctx, dto)
 	return &sharepb.Empty{}, err
 }
