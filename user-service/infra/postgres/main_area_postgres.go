@@ -26,9 +26,9 @@ func (r *MainAreaPostgres) ListByProfileID(ctx context.Context, profileID uint64
 	err := r.TransactionRepo.
 		GetDB(ctx).
 		Model(&models.MainAreaEntity{}).
-		Joins("JOIN area_active_profile aap ON aap.area_active_id = area_active.id AND aap.deleted_at IS NULL").
-		Where("aap.profile_id = ? AND area_active.deleted_at IS NULL", profileID).
-		Order("area_active.name ASC").
+		Joins("JOIN main_area_profile aap ON aap.main_area_id = main_area.id").
+		Where("aap.profile_id = ?", profileID).
+		Order("main_area.name ASC").
 		Find(&areas).Error
 
 	return areas, err

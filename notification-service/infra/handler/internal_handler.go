@@ -8,6 +8,9 @@ import (
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"notification/infra/mapper"
 	"notification/internal/dto"
 	"notification/internal/enums"
@@ -23,6 +26,7 @@ type InternalHandler struct {
 	DealHistoryUsecase  usecase.DealHistoryUsecase
 	HistoryAuthUsecase  *usecase.HistoryAuthUsecase
 	HistoryAuthMapper   *mapper.HistoryAuthMapper
+	PersonConfigUsecase *usecase.PersonConfigUsecase
 }
 
 func NewInternalHandler(
@@ -33,6 +37,7 @@ func NewInternalHandler(
 	dealHistoryUsecase usecase.DealHistoryUsecase,
 	historyAuthUsecase *usecase.HistoryAuthUsecase,
 	historyAuthMapper *mapper.HistoryAuthMapper,
+	personConfigUsecase *usecase.PersonConfigUsecase,
 ) *InternalHandler {
 	return &InternalHandler{
 		Usecase:             uc,
@@ -42,6 +47,7 @@ func NewInternalHandler(
 		DealHistoryUsecase:  dealHistoryUsecase,
 		HistoryAuthUsecase:  historyAuthUsecase,
 		HistoryAuthMapper:   historyAuthMapper,
+		PersonConfigUsecase: personConfigUsecase,
 	}
 }
 
@@ -281,4 +287,85 @@ func (s *InternalHandler) RemoveToOwner(ctx context.Context, req *sharepb.Notifi
 		return nil, err
 	}
 	return &notificationpb.NotificationDTO{}, nil
+}
+
+// BatchPersonConfig cập nhật danh sách cấu hình cá nhân
+func (s *InternalHandler) BatchPersonConfig(ctx context.Context, req *notificationpb.BatchPersonConfigRequest) (*notificationpb.BatchPersonConfigResponse, error) {
+	if s.PersonConfigUsecase == nil {
+		return &notificationpb.BatchPersonConfigResponse{
+			Success: false,
+		}, nil
+	}
+
+	configDTOs := make([]*dto.PersonConfigDTO, len(req.Configs))
+	for i, cfg := range req.Configs {
+		configDTOs[i] = &dto.PersonConfigDTO{
+			ID:        cfg.Id,
+			UserID:    cfg.UserId,
+			Key:       cfg.Key,
+			Checked:   cfg.Checked,
+			IsDefault: cfg.IsDefault,
+			Channel:   _enum.EChannelNotification(cfg.Channel),
+		}
+	}
+
+	entities, err := s.PersonConfigUsecase.BatchUpsert(ctx, configDTOs)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &notificationpb.BatchPersonConfigResponse{
+		Success: true,
+		Data:    make([]*sharepb.PersonConfigV3Proto, len(entities)),
+	}
+
+	for i, entity := range entities {
+		response.Data[i] = &sharepb.PersonConfigV3Proto{
+			Id:        entity.ID,
+			UserId:    entity.UserID,
+			Key:       entity.Key,
+			Checked:   entity.Checked,
+			IsDefault: entity.IsDefault,
+			Channel:   uint32(entity.Channel),
+		}
+	}
+
+	return response, nil
+}
+
+// GetPersonConfigs trả về danh sách cấu hình cá nhân theo userId
+func (s *InternalHandler) GetPersonConfigs(ctx context.Context, req *notificationpb.GetPersonConfigsRequest) (*notificationpb.GetPersonConfigsResponse, error) {
+	if req == nil || req.UserId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "userId là bắt buộc")
+	}
+
+	if s.PersonConfigUsecase == nil {
+		return &notificationpb.GetPersonConfigsResponse{
+			Success: false,
+			Data:    []*sharepb.PersonConfigV3Proto{},
+		}, nil
+	}
+
+	entities, err := s.PersonConfigUsecase.ListByUserID(ctx, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &notificationpb.GetPersonConfigsResponse{
+		Success: true,
+		Data:    make([]*sharepb.PersonConfigV3Proto, 0, len(entities)),
+	}
+
+	for _, entity := range entities {
+		response.Data = append(response.Data, &sharepb.PersonConfigV3Proto{
+			Id:        entity.ID,
+			UserId:    entity.UserID,
+			Key:       entity.Key,
+			Checked:   entity.Checked,
+			IsDefault: entity.IsDefault,
+			Channel:   uint32(entity.Channel),
+		})
+	}
+
+	return response, nil
 }

@@ -5,6 +5,7 @@ import (
 	_enum "common/domain/enum"
 	_utils "common/utils"
 	"context"
+	"user/enums"
 	"user/internal/dto"
 	models "user/internal/models"
 
@@ -121,6 +122,17 @@ func (r *ProfilePostgres) UpdateProfile(c context.Context, profileId uint64, dto
 			"back_identify":      dto.BackIdentify,
 			"tab_default":        dto.TabDefault,
 			"role_real_estate":   dto.RoleRealEstate,
+		}).Error
+}
+
+func (r *ProfilePostgres) UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error {
+	return r.DB.WithContext(ctx).
+		Model(&models.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Updates(map[string]interface{}{
+			"visibility":         visibility,
+			"profile_visibility": profileVisibility,
+			"status_online":      statusOnline,
 		}).Error
 }
 

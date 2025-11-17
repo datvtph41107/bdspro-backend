@@ -2,6 +2,8 @@ package mapper
 
 import (
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
+	_models "common/models"
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -54,6 +56,7 @@ func (m *ProfileMapper) SetProfileToDTO(profile *userpb.SetInfoRequest) *dto.Use
 		ProfessionRemoveIds:    profile.ProfessionRemoveIds,
 		PurposeUseIDs:          profile.PurposeUseIds,
 		MainAreaIds:            profile.MainAreaIds,
+		UpdateTags:             profile.UpdateTags,
 	}
 
 	for _, certification := range profile.Certifications {
@@ -62,6 +65,12 @@ func (m *ProfileMapper) SetProfileToDTO(profile *userpb.SetInfoRequest) *dto.Use
 
 	for _, profession := range profile.Professions {
 		result.Professions = append(result.Professions, *m.ProfessionToDTO(profession))
+	}
+
+	for _, tag := range profile.Tags {
+		if model := m.TagToModel(tag); model != nil {
+			result.Tags = append(result.Tags, *model)
+		}
 	}
 
 	return result
@@ -85,9 +94,25 @@ func (m *ProfileMapper) ProfessionToDTO(profession *userpb.ProfessionItem) *dto.
 		Name:      profession.Name,
 		Issuer:    profession.Issuer,
 		IssueDate: _utils.ParseStringToTime(profession.IssueDate),
+		IsActive:  profession.GetIsActive(),
 		// FileName:  profession.FileName,
 		// FileURL:   profession.FileUrl,
 		// FileType:  profession.FileType,
+	}
+}
+
+func (m *ProfileMapper) TagToModel(tag *userpb.TagItem) *models.TagEntity {
+	if tag == nil {
+		return nil
+	}
+	return &models.TagEntity{
+		BaseEntity: _models.BaseEntity{
+			ID: tag.Id,
+		},
+		Name:      tag.Name,
+		TagType:   enums.TagType(tag.TagType),
+		IsDefault: tag.IsDefault,
+		IsActive:  tag.IsActive,
 	}
 }
 
@@ -104,12 +129,18 @@ func (m *ProfileMapper) CertificationToPb(certification *models.CertificationEnt
 }
 
 func (m *ProfileMapper) ProfessionToPb(profession *models.ProfessionEntity) *userpb.ProfessionItem {
-	return &userpb.ProfessionItem{
-		Id:        profession.ID,
-		Name:      profession.Name,
-		Issuer:    profession.Issuer,
-		IssueDate: _utils.FormatTimeToString(profession.IssueDate),
+	result := &userpb.ProfessionItem{
+		Id:             profession.ID,
+		Name:           profession.Name,
+		Issuer:         profession.Issuer,
+		IssueDate:      _utils.FormatTimeToString(profession.IssueDate),
+		VerifiedStatus: uint32(profession.VerifiedStatus),
 	}
+
+	isActive := profession.IsActive
+	result.IsActive = &isActive
+
+	return result
 }
 
 func (m *ProfileMapper) PurposeUseToPb(purpose *models.PurposeUseEntity) *userpb.PurposeUseItem {
@@ -121,6 +152,17 @@ func (m *ProfileMapper) PurposeUseToPb(purpose *models.PurposeUseEntity) *userpb
 		result.Description = &purpose.Description
 	}
 	return result
+}
+
+func (m *ProfileMapper) TagToPb(tag *models.TagEntity) *userpb.TagItem {
+	isActive := tag.IsActive
+	return &userpb.TagItem{
+		Id:        tag.ID,
+		Name:      tag.Name,
+		TagType:   uint32(tag.TagType),
+		IsDefault: tag.IsDefault,
+		IsActive:  isActive,
+	}
 }
 
 func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *userpb.ProfilePublicInfo {
@@ -172,16 +214,16 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity) *u
 		result.PurposeUses = append(result.PurposeUses, m.PurposeUseToPb(&purpose))
 	}
 
-	for _, area := range profile.MainAreas {
-		item := &userpb.MainAreaItem{
-			Id:   area.ID,
-			Name: area.Name,
-		}
-		if area.Description != "" {
-			desc := area.Description
-			item.Description = &desc
-		}
-		result.MainAreas = append(result.MainAreas, item)
+	// for _, area := range profile.TagMainAreas {
+	// 	item := &userpb.MainAreaItem{
+	// 		Id:   area.ID,
+	// 		Name: area.Name,
+	// 	}
+	// 	result.MainAreas = append(result.MainAreas, item)
+	// }
+
+	for _, tag := range profile.Tags {
+		result.Tags = append(result.Tags, m.TagToPb(&tag))
 	}
 
 	// if profile.RateStats != nil {
@@ -226,6 +268,33 @@ func (m *ProfileMapper) SetPersonToDTO(req *userpb.SetPersonRequest) *dto.UserIn
 	if req.WardId != nil {
 		result.WardID = req.WardId
 	}
+	return result
+}
+
+func (m *ProfileMapper) PrivacyRequestToDTO(req *userpb.UpdatePrivacySettingRequest) *dto.ProfilePrivacyRequest {
+	if req == nil {
+		return nil
+	}
+
+	result := &dto.ProfilePrivacyRequest{
+		Visibility:        uint8(req.Visibility),
+		ProfileVisibility: uint8(req.ProfileVisibility),
+		StatusOnline:      enums.EOnlineStatus(req.StatusOnline),
+	}
+
+	if len(req.PersonConfigs) > 0 {
+		result.PersonConfigs = make([]*dto.PersonConfigDTO, len(req.PersonConfigs))
+		for i, cfg := range req.PersonConfigs {
+			result.PersonConfigs[i] = &dto.PersonConfigDTO{
+				ID:        cfg.Id,
+				Key:       cfg.Key,
+				Checked:   cfg.Checked,
+				IsDefault: cfg.IsDefault,
+				Channel:   _enum.EChannelNotification(cfg.Channel),
+			}
+		}
+	}
+
 	return result
 }
 
@@ -277,14 +346,50 @@ func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEnt
 		UpdatedAt:      _utils.FormatTimeToString(profile.UpdatedAt),
 	}
 
-	if len(profile.MainAreas) > 0 {
-		for _, area := range profile.MainAreas {
-			result.MainAreaIds = append(result.MainAreaIds, area.ID)
+	if len(profile.TagProfessions) > 0 {
+		for _, profession := range profile.TagProfessions {
+			result.TagProfessions = append(result.TagProfessions, &sharepb.ItemV3Proto{
+				Id:   profession.ID,
+				Name: profession.Name,
+			})
+		}
+	}
+	if len(profile.TagMainAreas) > 0 {
+		for _, area := range profile.TagMainAreas {
+			result.TagMainAreas = append(result.TagMainAreas, &sharepb.ItemV3Proto{
+				Id:   area.ID,
+				Name: area.Name,
+			})
+		}
+	}
+	if len(profile.TagSpecialties) > 0 {
+		for _, specialty := range profile.TagSpecialties {
+			result.TagSpecialities = append(result.TagSpecialities, &sharepb.ItemV3Proto{
+				Id:   specialty.ID,
+				Name: specialty.Name,
+			})
+		}
+	}
+	if len(profile.TagProjects) > 0 {
+		for _, project := range profile.TagProjects {
+			result.TagProjects = append(result.TagProjects, &sharepb.ItemV3Proto{
+				Id:   project.ID,
+				Name: project.Name,
+			})
 		}
 	}
 	if len(profile.PurposeUses) > 0 {
 		for _, purpose := range profile.PurposeUses {
 			result.PurposeUseIds = append(result.PurposeUseIds, purpose.ID)
+		}
+	}
+
+	if len(profile.Tags) > 0 {
+		for _, tag := range profile.Tags {
+			result.MainAreaNews = append(result.MainAreaNews, &sharepb.ItemV3Proto{
+				Id:   tag.ID,
+				Name: tag.Name,
+			})
 		}
 	}
 	return result

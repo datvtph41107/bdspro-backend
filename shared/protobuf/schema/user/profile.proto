@@ -38,6 +38,12 @@ service ProfileService {
             body: "*"
         };
     }
+    rpc UpdatePrivacySetting(UpdatePrivacySettingRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/user/profile/privacy"
+            body: "*"
+        };
+    }
     rpc QuickSetup(sharepb.UserV3Proto) returns (sharepb.Empty) {
         option (google.api.http) = {
             post: "/v2/user/profile/quick-setup"
@@ -55,6 +61,40 @@ service ProfileService {
     rpc FindByPhone(FindByPhoneRequest) returns (FindByPhoneResponse) {
         option (google.api.http) = {
             get: "/v2/user/profile/find-by-phone"
+        };
+    }
+}
+
+service TagService {
+    rpc AdminCreateTag(AdminTagRequest) returns (TagItem) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/tags"
+            body: "*"
+        };
+    }
+
+    rpc AdminUpdateTag(AdminTagRequest) returns (TagItem) {
+        option (google.api.http) = {
+            put: "/v2/user/admin/tags/{id}"
+            body: "*"
+        };
+    }
+
+    rpc AdminDeleteTag(sharepb.IdRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/user/admin/tags/{id}"
+        };
+    }
+
+    rpc AdminListTags(AdminTagListRequest) returns (AdminTagListResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/tags"
+        };
+    }
+
+    rpc ListTagsByType(TagListRequest) returns (TagListResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/tags/{tagType}"
         };
     }
 }
@@ -122,6 +162,7 @@ message ProfilePublicInfo {
     optional string wardName = 41;
     repeated PurposeUseItem purposeUses = 43;
     repeated MainAreaItem mainAreas = 42;
+    repeated TagItem tags = 44;
 }
 
 message RateStats {
@@ -194,6 +235,8 @@ message SetInfoRequest {
     repeated uint64 professionRemoveIds = 31;
     repeated uint64 mainAreaIds = 32;
     repeated uint64 purposeUseIds = 33;
+    repeated TagItem tags = 34;
+    bool updateTags = 35;
 }
 
 message SetPersonRequest {
@@ -204,6 +247,21 @@ message SetPersonRequest {
     optional string email = 5;
     optional uint64 provinceId = 6;
     optional uint64 wardId = 7;
+}
+
+message UpdatePrivacySettingRequest {
+    uint32 visibility = 1;
+    uint32 profileVisibility = 2;
+    uint32 statusOnline = 3;
+    repeated PersonConfigInput personConfigs = 4;
+}
+
+message PersonConfigInput {
+    uint64 id = 1;
+    string key = 2;
+    bool checked = 3;
+    bool isDefault = 4;
+    uint32 channel = 5;
 }
 
 message CertificationItem {
@@ -222,6 +280,47 @@ message ProfessionItem {
     string issuer = 3;
     string issueDate = 4;
     uint32 verifiedStatus = 5;
+    optional bool isActive = 6;
+}
+
+message TagItem {
+    uint64 id = 1;
+    string name = 2;
+    uint32 tagType = 3;
+    bool isDefault = 4;
+    bool isActive = 5;
+}
+
+message AdminTagRequest {
+    uint64 id = 1;
+    string name = 2;
+    uint32 tagType = 3;
+    bool isActive = 4;
+    bool isDefault = 5;
+}
+
+message TagListRequest {
+    uint32 tagType = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    string text = 4;
+}
+
+message TagListResponse {
+    repeated TagItem data = 1;
+    uint32 total = 2;
+}
+
+message AdminTagListRequest {
+    repeated uint32 tagTypes = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    string text = 4;
+}
+
+message AdminTagListResponse {
+    repeated TagItem data = 1;
+    uint32 total = 2;
 }
 
 message MainAreaItem {

@@ -9,6 +9,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"user/enums"
 	"user/internal/dto"
@@ -28,6 +29,7 @@ type ProfileUsecase struct {
 	CertificationRepo  repo.ICertificationRepo
 	PurposeUseRepo     repo.IPurposeUseRepo
 	MainAreaRepo       repo.IMainAreaRepo
+	TagRepo            repo.ITagRepo
 	FeedbackProvider   providers.FeedbackProvider
 	FriendRepo         providers.FriendProvider
 	FollowRepo         repo.IFollowRepo
@@ -40,6 +42,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	CertificationRepo repo.ICertificationRepo,
 	PurposeUseRepo repo.IPurposeUseRepo,
 	MainAreaRepo repo.IMainAreaRepo,
+	TagRepo repo.ITagRepo,
 	FeedbackProvider providers.FeedbackProvider,
 	FriendRepo providers.FriendProvider,
 	FollowRepo repo.IFollowRepo,
@@ -54,6 +57,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 		CertificationRepo:  CertificationRepo,
 		PurposeUseRepo:     PurposeUseRepo,
 		MainAreaRepo:       MainAreaRepo,
+		TagRepo:            TagRepo,
 		FeedbackProvider:   FeedbackProvider,
 		FriendRepo:         FriendRepo,
 		FollowRepo:         FollowRepo,
@@ -74,8 +78,33 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 		purposeUses, _ := s.PurposeUseRepo.ListByProfileID(c, id)
 		userInfo.PurposeUses = purposeUses
 	}
-	areas, _ := s.MainAreaRepo.ListByProfileID(c, id)
-	userInfo.MainAreas = areas
+	// areas, _ := s.MainAreaRepo.ListByProfileID(c, id)
+	// for _, area := range areas {
+	// 	userInfo.MainAreas = append(userInfo.MainAreas, models.TagEntity{
+	// 		BaseEntity: _models.BaseEntity{
+	// 			ID: area.ID,
+	// 		},
+	// 		Name:    area.Name,
+	// 		TagType: enums.TagTypeMainArea,
+	// 	})
+	// }
+	if s.TagRepo != nil {
+		tags, err := s.TagRepo.ListByProfileID(c, id)
+		if err != nil {
+			return nil, err
+		}
+		for _, tag := range tags {
+			if tag.TagType == enums.TagTypeMainArea {
+				userInfo.TagMainAreas = append(userInfo.TagMainAreas, tag)
+			} else if tag.TagType == enums.TagTypeSpecialty {
+				userInfo.TagSpecialties = append(userInfo.TagSpecialties, tag)
+			} else if tag.TagType == enums.TagTypeProject {
+				userInfo.TagProjects = append(userInfo.TagProjects, tag)
+			} else if tag.TagType == enums.TagTypeProfession {
+				userInfo.TagProfessions = append(userInfo.TagProfessions, tag)
+			}
+		}
+	}
 
 	// Lấy thống kê rating từ feedback service
 	rateStatsResp, err := s.FeedbackProvider.GetUserRateStats(c, id)
@@ -121,6 +150,7 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 			Issuer:         info.Professions[i].Issuer,
 			IssueDate:      info.Professions[i].IssueDate,
 			VerifiedStatus: enums.VerifyPending,
+			IsActive:       true,
 			BaseEntity: _models.BaseEntity{
 				ID: info.Professions[i].ID,
 			},
@@ -167,10 +197,49 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 		return nil, err
 	}
 
-	if areas, err := s.MainAreaRepo.ListByProfileID(c, profileId); err == nil {
-		infoEntity.MainAreas = areas
-	} else {
-		return nil, err
+	// if areas, err := s.MainAreaRepo.ListByProfileID(c, profileId); err == nil {
+	// 	infoEntity.MainAreas = areas
+	// } else {
+	// 	return nil, err
+	// }
+
+	if s.TagRepo != nil && info.UpdateTags {
+		if info.Tags != nil {
+			tagEntities := make([]models.TagEntity, 0, len(info.Tags))
+			for _, tag := range info.Tags {
+				if tag.Name == "" || !tag.TagType.IsValid() {
+					continue
+				}
+				tagEntities = append(tagEntities, models.TagEntity{
+					BaseEntity: _models.BaseEntity{
+						ID: tag.ID,
+					},
+					Name:    tag.Name,
+					TagType: tag.TagType,
+					UserID:  &profileId,
+				})
+			}
+
+			if err := s.TagRepo.ReplaceProfileTags(c, &profileId, tagEntities); err != nil {
+				return nil, err
+			}
+		}
+
+		if tags, err := s.TagRepo.ListByProfileID(c, profileId); err == nil {
+			for _, tag := range tags {
+				if tag.TagType == enums.TagTypeMainArea {
+					infoEntity.TagMainAreas = append(infoEntity.TagMainAreas, tag)
+				} else if tag.TagType == enums.TagTypeSpecialty {
+					infoEntity.TagSpecialties = append(infoEntity.TagSpecialties, tag)
+				} else if tag.TagType == enums.TagTypeProject {
+					infoEntity.TagProjects = append(infoEntity.TagProjects, tag)
+				} else if tag.TagType == enums.TagTypeProfession {
+					infoEntity.TagProfessions = append(infoEntity.TagProfessions, tag)
+				}
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	return infoEntity, nil
@@ -211,8 +280,23 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 			purposeUses, _ := s.PurposeUseRepo.ListByProfileID(c, profileId)
 			infoEntity.PurposeUses = purposeUses
 		}
-		areas, _ := s.MainAreaRepo.ListByProfileID(c, profileId)
-		infoEntity.MainAreas = areas
+		// areas, _ := s.MainAreaRepo.ListByProfileID(c, profileId)
+		// infoEntity.MainAreas = areas
+		if s.TagRepo != nil {
+			tags, _ := s.TagRepo.ListByProfileID(c, profileId)
+			for _, tag := range tags {
+				if tag.TagType == enums.TagTypeMainArea {
+					infoEntity.TagMainAreas = append(infoEntity.TagMainAreas, tag)
+				} else if tag.TagType == enums.TagTypeSpecialty {
+					infoEntity.TagSpecialties = append(infoEntity.TagSpecialties, tag)
+				} else if tag.TagType == enums.TagTypeProject {
+					infoEntity.TagProjects = append(infoEntity.TagProjects, tag)
+				} else if tag.TagType == enums.TagTypeProfession {
+					infoEntity.TagProfessions = append(infoEntity.TagProfessions, tag)
+				}
+			}
+		}
+
 	}
 
 	// Lấy thống kê rating từ feedback service
@@ -435,9 +519,56 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *dto.UserInfoRequest) 
 		}
 	}
 
+	if s.TagRepo != nil && req.UpdateTags {
+		if err := s.TagRepo.ReplaceProfileTags(c, &profileId, req.Tags); err != nil {
+			return err
+		}
+	}
+
 	// Update profile
 	err := s.ProfileRepo.UpdatePerson(c, profileId, req)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ProfileUsecase) UpdatePrivacySetting(ctx context.Context, req *dto.ProfilePrivacyRequest) error {
+	if req == nil {
+		return _errors.ReturnError(400, "payload không hợp lệ")
+	}
+
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return _errors.ReturnError(401, "profileId không hợp lệ")
+	}
+
+	if err := s.ProfileRepo.UpdatePrivacySetting(ctx, profileID, req.Visibility, req.ProfileVisibility, req.StatusOnline); err != nil {
+		return err
+	}
+
+	if len(req.PersonConfigs) == 0 {
+		return nil
+	}
+
+	if s.NotificationClient == nil {
+		return _errors.ReturnError(500, "notification client chưa được cấu hình")
+	}
+
+	configs := make([]*sharepb.PersonConfigV3Proto, len(req.PersonConfigs))
+	for i, cfg := range req.PersonConfigs {
+		configs[i] = &sharepb.PersonConfigV3Proto{
+			Id:        cfg.ID,
+			UserId:    profileID,
+			Key:       cfg.Key,
+			Checked:   cfg.Checked,
+			IsDefault: cfg.IsDefault,
+			Channel:   uint32(cfg.Channel),
+		}
+	}
+
+	if err := s.NotificationClient.BatchPersonConfig(ctx, configs); err != nil {
 		return err
 	}
 

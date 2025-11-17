@@ -18,13 +18,15 @@ import (
 
 type InternalHandler struct {
 	authpb.UnimplementedAuthInternalServiceServer
-	roleRepo          repo.RoleRepository
-	redisService      *_redis.RedisService
-	roleMapper        *mapper.RoleMapper
-	authMethodMapper  *mapper.AuthMethodMapper
-	authMethodUsecase *usecase.AuthAdminUsecase
-	userInfoUsecase   *usecase.AuthUserProfileUsecase
-	userInfoMapper    *mapper.UserInfoMapper
+	roleRepo            repo.RoleRepository
+	redisService        *_redis.RedisService
+	roleMapper          *mapper.RoleMapper
+	authMethodMapper    *mapper.AuthMethodMapper
+	authMethodUsecase   *usecase.AuthAdminUsecase
+	userInfoUsecase     *usecase.AuthUserProfileUsecase
+	userInfoMapper      *mapper.UserInfoMapper
+	authSecurityUsecase *usecase.AuthSecurityUsecase
+	authSecurityMapper  *mapper.AuthSecurityMapper
 }
 
 func NewInternalHandler(
@@ -35,15 +37,19 @@ func NewInternalHandler(
 	authMethodUsecase *usecase.AuthAdminUsecase,
 	userInfoUsecase *usecase.AuthUserProfileUsecase,
 	userInfoMapper *mapper.UserInfoMapper,
+	authSecurityUsecase *usecase.AuthSecurityUsecase,
+	authSecurityMapper *mapper.AuthSecurityMapper,
 ) *InternalHandler {
 	return &InternalHandler{
-		roleRepo:          roleRepo,
-		redisService:      redisService,
-		roleMapper:        roleMapper,
-		authMethodMapper:  authMethodMapper,
-		authMethodUsecase: authMethodUsecase,
-		userInfoUsecase:   userInfoUsecase,
-		userInfoMapper:    userInfoMapper,
+		roleRepo:            roleRepo,
+		redisService:        redisService,
+		roleMapper:          roleMapper,
+		authMethodMapper:    authMethodMapper,
+		authMethodUsecase:   authMethodUsecase,
+		userInfoUsecase:     userInfoUsecase,
+		userInfoMapper:      userInfoMapper,
+		authSecurityUsecase: authSecurityUsecase,
+		authSecurityMapper:  authSecurityMapper,
 	}
 }
 
@@ -333,4 +339,18 @@ func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.Get
 	return &authpb.GetAuthAdminByIdsResponse{
 		Data: pbAdmins,
 	}, nil
+}
+
+// GetAuthDataByAuthId trả về thông tin status, pin và devices theo authId
+func (h *InternalHandler) GetAuthDataByAuthId(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.AuthDataV3Proto, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.ReturnError(400, "authId là bắt buộc")
+	}
+
+	result, err := h.authSecurityUsecase.GetAuthSecurityData(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.authSecurityMapper.MapToProto(result), nil
 }

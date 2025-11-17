@@ -277,6 +277,24 @@ func (s *GrpcProfileService) SetPerson(ctx context.Context, req *userpb.SetPerso
 	return &sharepb.Empty{}, err
 }
 
+// @Summary Cập nhật quyền riêng tư hồ sơ
+// @Description Chỉ cập nhật visibility, profileVisibility, statusOnline và đồng bộ person_config sang notification
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body userpb.UpdatePrivacySettingRequest true "Thiết lập quyền riêng tư"
+// @Success 200 {object} sharepb.Empty
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Router /v2/user/profile/privacy [put]
+func (s *GrpcProfileService) UpdatePrivacySetting(ctx context.Context, req *userpb.UpdatePrivacySettingRequest) (*sharepb.Empty, error) {
+	dto := s.ProfileMapper.PrivacyRequestToDTO(req)
+	if err := s.ProfileUsecase.UpdatePrivacySetting(ctx, dto); err != nil {
+		return nil, err
+	}
+	return &sharepb.Empty{}, nil
+}
+
 // @Summary Cài đặt nhanh hồ sơ người dùng
 // @Description Thiết lập nhanh vai trò, khu vực hoạt động và mục đích sử dụng cho người dùng hiện tại
 // @Tags Profile

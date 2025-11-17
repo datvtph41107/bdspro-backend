@@ -95,3 +95,22 @@ func (c *NotificationGrpcClient) CreateHistoryAuth(
 ) (*notificationpb.HistoryAuthDTO, error) {
 	return c.Client.CreateHistoryAuth(ctx, req)
 }
+
+func (c *NotificationGrpcClient) GetPersonConfigs(ctx context.Context, userID uint64) ([]*sharepb.PersonConfigV3Proto, error) {
+	if userID == 0 {
+		return []*sharepb.PersonConfigV3Proto{}, nil
+	}
+
+	if c.Client == nil {
+		return nil, fmt.Errorf("notification grpc client chưa được khởi tạo")
+	}
+
+	resp, err := c.Client.GetPersonConfigs(ctx, &notificationpb.GetPersonConfigsRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetData(), nil
+}

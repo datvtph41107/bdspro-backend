@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"user/config"
-	"user/db"
 	"user/wire"
 
 	_middleware "common/middleware"
@@ -34,7 +33,7 @@ var GrpcCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		app, _ := wire.InitializeApp()
-		db.AutoMigrate()
+		// db.AutoMigrate()
 
 		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
 		// Đăng ký service vào feedback registry
@@ -62,6 +61,8 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterInternalUserServiceServer(s, app.InternalHandler)
 		userpb.RegisterMainAreaServiceServer(s, app.MainAreaHandler)
 		userpb.RegisterPurposeUseServiceServer(s, app.PurposeUseHandler)
+		userpb.RegisterProfessionServiceServer(s, app.ProfessionHandler)
+		userpb.RegisterTagServiceServer(s, app.TagHandler)
 		log.Printf("Listen: %v", port)
 
 		if err := s.Serve(lis); err != nil {

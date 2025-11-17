@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"pb/clients"
 
 	"auth/env"
@@ -9,6 +10,7 @@ import (
 	_enum "common/domain/enum"
 	provider_grpc "common/provider/grpc"
 	notificationpb "pb/types/notification"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -116,4 +118,38 @@ func (c *NotificationClient) CreateNotification(
 	attachData []string,
 ) error {
 	return c.NotificationGrpcClient.CreateNotification(ctx, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
+}
+
+func (c *NotificationClient) GetPersonConfigs(ctx context.Context, userID uint64) ([]*dto.PersonConfigDTO, error) {
+	if userID == 0 {
+		return []*dto.PersonConfigDTO{}, nil
+	}
+
+	if c.NotificationGrpcClient == nil || c.NotificationGrpcClient.Client == nil {
+		return nil, errors.New("notification grpc client chưa được khởi tạo")
+	}
+
+	var configs []*sharepb.PersonConfigV3Proto
+	var err error
+
+	if configs, err = c.NotificationGrpcClient.GetPersonConfigs(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	result := make([]*dto.PersonConfigDTO, 0, len(configs))
+	for _, cfg := range configs {
+		if cfg == nil {
+			continue
+		}
+		result = append(result, &dto.PersonConfigDTO{
+			ID:        cfg.Id,
+			UserID:    cfg.UserId,
+			Key:       cfg.Key,
+			Checked:   cfg.Checked,
+			IsDefault: cfg.IsDefault,
+			Channel:   _enum.EChannelNotification(cfg.Channel),
+		})
+	}
+
+	return result, nil
 }

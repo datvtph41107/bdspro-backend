@@ -23,6 +23,8 @@ func AutoMigrate() {
 		&models.MainAreaProfileEntity{},
 		&models.PurposeUseEntity{},
 		&models.PurposeUseProfileEntity{},
+		&models.TagEntity{},
+		&models.TagUserEntity{},
 
 		// Profile related entities
 		&models.ProfessionEntity{},

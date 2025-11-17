@@ -24,6 +24,8 @@ service InternalUserService {
     // Lấy profile theo ID
     rpc GetProfileByID(GetProfileByIDRequest) returns (ProfileResponse);
 
+    rpc GetProfileByIDV3(sharepb.RequestV3Proto) returns (sharepb.UserV3Proto);
+
     rpc LockUser(sharepb.RequestV3Proto) returns (sharepb.Empty);
 }
 

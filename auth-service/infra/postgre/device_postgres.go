@@ -46,3 +46,15 @@ func (r *DevicePostgresRepo) Update(ctx context.Context, device *domain.DeviceEn
 	}
 	return device, nil
 }
+
+// ListByAuthID lấy danh sách thiết bị theo auth_id
+func (r *DevicePostgresRepo) ListByAuthID(ctx context.Context, authID uint64) ([]*domain.DeviceEntity, error) {
+	var devices []*domain.DeviceEntity
+	if err := _db.DB.WithContext(ctx).
+		Where("auth_id = ? AND deleted_at IS NULL", authID).
+		Order("updated_at DESC").
+		Find(&devices).Error; err != nil {
+		return nil, err
+	}
+	return devices, nil
+}

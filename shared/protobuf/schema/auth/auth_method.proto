@@ -197,6 +197,13 @@ service AuthService {
         };
     }
 
+    // Auth Security
+    rpc GetCurrentAuthSetting(sharepb.Empty) returns (sharepb.AuthDataV3Proto) {
+        option (google.api.http) = {
+            get: "/v2/auth/setting/me"
+        };
+    }
+
     // PIN Management
     rpc PhoneCheck(PhoneCheckRequest) returns (PhoneCheckResponse) {
         option (google.api.http) = {
@@ -222,6 +229,13 @@ service AuthService {
     rpc UpdatePIN(UpdatePINRequest) returns (UpdatePINResponse) {
         option (google.api.http) = {
             put: "/v2/auth/pin/update"
+            body: "*"
+        };
+    }
+
+    rpc ActivePIN(ActivePINRequest) returns (UpdatePINResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/pin/active"
             body: "*"
         };
     }
@@ -827,6 +841,7 @@ message PhoneCheckResponse {
 message CreatePINRequest {
     string pin = 1;                // Mã PIN 6 số
     string phone = 2;              // Số điện thoại
+    string otp = 3;                // Mã OTP xác minh
 }
 
 message CreatePINResponse {
@@ -850,6 +865,11 @@ message UpdatePINRequest {
 
 message UpdatePINResponse {
     string message = 1;
+}
+
+message ActivePINRequest {
+    bool active = 1;               // Trạng thái muốn cập nhật (true: bật, false: tắt)
+    string pin = 2;                // Mã PIN để xác thực
 }
 
 message CheckPINExistsRequest {

@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "shared/common.proto";
 import "notification/notification.proto";
+import "shared/v3.proto";
 
 
 // InternalNotificationService định nghĩa các RPC nội bộ cho notification service
@@ -24,6 +25,8 @@ service InternalNotificationService {
     
     rpc CreateToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
     rpc RemoveToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
+    rpc BatchPersonConfig(BatchPersonConfigRequest) returns (BatchPersonConfigResponse);
+    rpc GetPersonConfigs(GetPersonConfigsRequest) returns (GetPersonConfigsResponse);
 }
 
 // ===== NOTIFICATION MESSAGES =====
@@ -126,4 +129,23 @@ message HistoryAuthDTO {
   string additionalNote = 17;
   string sourceService = 18;
   string createdAt = 19;
+}
+
+// ===== PERSON CONFIG MESSAGES =====
+message BatchPersonConfigRequest {
+  repeated sharepb.PersonConfigV3Proto configs = 1;
+}
+
+message BatchPersonConfigResponse {
+  bool success = 1;
+  repeated sharepb.PersonConfigV3Proto data = 2;
+}
+
+message GetPersonConfigsRequest {
+  uint64 userId = 1;
+}
+
+message GetPersonConfigsResponse {
+  bool success = 1;
+  repeated sharepb.PersonConfigV3Proto data = 2;
 }

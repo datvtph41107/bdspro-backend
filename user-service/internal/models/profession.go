@@ -13,6 +13,7 @@ type ProfessionEntity struct {
 	Issuer         string             `gorm:"type:varchar(255)" json:"issuer"`                 // cơ quan cấp
 	IssueDate      *time.Time         `gorm:"type:date" json:"issueDate"`                      // ngày cấp
 	VerifiedStatus enums.VerifyStatus `gorm:"type:smallint;not null;default:10" json:"status"` // trạng thái
+	IsActive       bool               `gorm:"type:boolean;not null;default:true" json:"isActive"`
 }
 
 func (ProfessionEntity) TableName() string {

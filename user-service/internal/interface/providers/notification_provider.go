@@ -3,6 +3,7 @@ package providers
 import (
 	_dto "common/domain/dto"
 	"context"
+	sharepb "pb/types/shared"
 )
 
 // NotificationProvider định nghĩa interface cho việc tương tác với notification-service
@@ -15,4 +16,6 @@ type NotificationProvider interface {
 
 	// CreateInternalHistory tạo lịch sử nội bộ
 	// CreateInternalHistory(ctx context.Context, history *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error)
+
+	BatchPersonConfig(ctx context.Context, configs []*sharepb.PersonConfigV3Proto) error
 }

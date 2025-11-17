@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"context"
+	"user/enums"
 	"user/internal/dto"
 	"user/internal/models"
 )
@@ -25,4 +26,5 @@ type IProfileRepo interface {
 	UpdatePerson(c context.Context, profileId uint64, req *dto.UserInfoRequest) error
 
 	PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
+	UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error
 }

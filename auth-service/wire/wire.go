@@ -55,6 +55,8 @@ var wireSet = wire.NewSet(
 	auth_infra_handler.NewAuthHandler,
 	auth_infra_mapper.NewAuthMethodMapper,
 	auth_infra_postgre.NewAuthRepository,
+	auth_infra_mapper.NewAuthSecurityMapper,
+	auth_internal_usecase.NewAuthSecurityUsecase,
 	auth_internal_usecase.NewAuthService,
 	auth_infra_cookie.NewCookieProvider,
 	auth_infra_mapper.NewDeviceMapper,

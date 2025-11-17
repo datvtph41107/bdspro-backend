@@ -478,6 +478,7 @@ type ConnectedAccountDTO struct {
 type CreatePINRequest struct {
 	PIN   string `json:"pin" binding:"required" validate:"required,len=6,numeric"`
 	Phone string `json:"phone" binding:"required" validate:"required,e164"`
+	OTP   string `json:"otp" binding:"required" validate:"required,len=6,numeric"`
 }
 
 // CreatePINResponse đại diện cho response tạo mã PIN
@@ -508,6 +509,12 @@ type UpdatePINResponse struct {
 	Message string `json:"message"`
 }
 
+// ActivePINRequest đại diện cho yêu cầu bật/tắt PIN
+type ActivePINRequest struct {
+	Active bool   `json:"active"`
+	PIN    string `json:"pin" binding:"required" validate:"required,len=6,numeric"`
+}
+
 // CheckPINExistsRequest đại diện cho yêu cầu kiểm tra mã PIN
 type CheckPINExistsRequest struct {
 	// Empty - lấy từ token
@@ -524,4 +531,13 @@ type PINAuthParam struct {
 	Status  *domain.UserStatusEntity
 	PIN     *domain.UserPINEntity
 	PINCode string
+}
+
+// PinVerifyMeta chứa thông tin bổ sung để log/validate PIN
+type PinVerifyMeta struct {
+	Phone      string
+	Platform   string
+	OS         string
+	DeviceID   string
+	DeviceName string
 }

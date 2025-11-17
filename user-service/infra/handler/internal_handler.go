@@ -166,6 +166,23 @@ func (h *InternalHandler) GetProfileByID(ctx context.Context, req *userpb.GetPro
 	}, nil
 }
 
+func (h *InternalHandler) GetProfileByIDV3(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.UserV3Proto, error) {
+	profile, err := h.profileUsecase.ProfileRepo.GetUserDetailByID(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Profile not found")
+	}
+
+	return &sharepb.UserV3Proto{
+		ProfileId:         profile.ProfileID,
+		FullName:          profile.FullName,
+		Avatar:            profile.Avatar,
+		RoleRealEstate:    uint32(profile.RoleRealEstate),
+		Visibility:        uint32(profile.Visibility),
+		ProfileVisibility: uint32(profile.ProfileVisibility),
+		StatusOnline:      uint32(profile.StatusOnline),
+	}, nil
+}
+
 func (h *InternalHandler) LockUser(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.Empty, error) {
 	err := h.adminUsecase.LockUser(ctx, &dto.LockUserRequest{
 		ProfileID: req.Id,

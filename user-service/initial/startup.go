@@ -28,6 +28,8 @@ type InitialApp struct {
 	InternalHandler       *handler.InternalHandler
 	MainAreaHandler       *handler.MainAreaHandler
 	PurposeUseHandler     *handler.PurposeUseHandler
+	ProfessionHandler     *handler.ProfessionHandler
+	TagHandler            *handler.TagHandler
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
@@ -46,6 +48,8 @@ func NewInitialApp(
 	internalHandler *handler.InternalHandler,
 	mainAreaHandler *handler.MainAreaHandler,
 	purposeUseHandler *handler.PurposeUseHandler,
+	professionHandler *handler.ProfessionHandler,
+	tagHandler *handler.TagHandler,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 ) *InitialApp {
 	return &InitialApp{
@@ -63,6 +67,8 @@ func NewInitialApp(
 		InternalHandler:         internalHandler,
 		MainAreaHandler:         mainAreaHandler,
 		PurposeUseHandler:       purposeUseHandler,
+		ProfessionHandler:       professionHandler,
+		TagHandler:              tagHandler,
 		UserDashboardStatsJob:   userDashboardStatsJob,
 	}
 }

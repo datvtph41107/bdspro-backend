@@ -4,6 +4,7 @@ import (
 	"auth/env"
 	"auth/internal/dto"
 	"auth/internal/utils"
+	_dto "common/domain/dto"
 	"context"
 	"log"
 	"pb/clients"
@@ -45,6 +46,33 @@ func (c *UserClient) GetByProfileID(ctx context.Context, profileID uint64) (*dto
 		Avatar:       resp.Avatar,
 		ReferralCode: resp.ReferralCode,
 		// PlanID:       resp.PlanId,
+	}, nil
+}
+
+func (c *UserClient) GetByProfileIDV3(ctx context.Context, profileID uint64) (*_dto.UserV3DTO, error) {
+	if c.UserGrpcClient == nil {
+		log.Printf("Internal user service client is nil")
+		return nil, nil
+	}
+
+	resp, err := c.UserGrpcClient.InternalClient.GetProfileByIDV3(ctx, &sharepb.RequestV3Proto{
+		Id: profileID,
+	})
+	if err != nil {
+		log.Printf("Failed to get profile by ID: %v", err)
+		return nil, err
+	}
+
+	return &_dto.UserV3DTO{
+		ProfileID:         resp.ProfileId,
+		FullName:          resp.FullName,
+		Avatar:            resp.Avatar,
+		RoleRealEstate:    resp.RoleRealEstate,
+		MainAreaIds:       resp.MainAreaIds,
+		PurposeUseIDs:     resp.PurposeUseIds,
+		Visibility:        resp.Visibility,
+		ProfileVisibility: resp.ProfileVisibility,
+		StatusOnline:      resp.StatusOnline,
 	}, nil
 }
 

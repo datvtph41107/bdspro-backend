@@ -80,6 +80,13 @@ func (s *NotificationClient) SendBatch(
 	return err
 }
 
+func (s *NotificationClient) BatchPersonConfig(ctx context.Context, configs []*sharepb.PersonConfigV3Proto) error {
+	_, err := s.Client.BatchPersonConfig(ctx, &notificationpb.BatchPersonConfigRequest{
+		Configs: configs,
+	})
+	return err
+}
+
 func (s *NotificationClient) CreateHistory(ctx context.Context, history *_dto.HistoryDTO) error {
 	_, err := s.historyClient.Create(ctx, &notificationpb.HistoryDTO{
 		ActionType: int32(history.ActionType),

@@ -5,6 +5,7 @@ import (
 
 	_dto "common/domain/dto"
 	"user/enums"
+	"user/internal/models"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -98,6 +99,8 @@ type UserInfoRequest struct {
 	ProfessionRemoveIds    []uint64                 `json:"professionRemoveIds,omitempty"`
 	PurposeUseIDs          []uint64                 `json:"purposeUseIds,omitempty"`
 	MainAreaIds            []uint64                 `json:"mainAreaIds,omitempty"`
+	Tags                   []models.TagEntity       `json:"tags,omitempty"`
+	UpdateTags             bool                     `json:"updateTags,omitempty"`
 }
 
 type QuickSetupRequest struct {
@@ -115,6 +118,7 @@ type ProfessionBatchSave struct {
 	FileName  string     `json:"fileName,omitempty"`
 	FileURL   string     `json:"fileUrl,omitempty"`
 	FileType  string     `json:"fileType,omitempty"`
+	IsActive  bool       `json:"isActive,omitempty"`
 }
 
 type CertificationBatchSave struct {
@@ -127,6 +131,12 @@ type CertificationBatchSave struct {
 	FileName  string     `json:"fileName,omitempty"`
 	IssueDate *time.Time `json:"issueDate,omitempty" time_format:"2006-01-02T15:04:05"`
 	ID        uint64     `json:"id,omitempty"`
+}
+
+type TagRequest struct {
+	ID      uint64        `json:"id,omitempty"`
+	Name    string        `json:"name,omitempty"`
+	TagType enums.TagType `json:"tagType,omitempty"`
 }
 
 // Hàm validate để kiểm tra dữ liệu đầu vào

@@ -19,14 +19,16 @@ import (
 
 type AuthHandler struct {
 	authpb.UnimplementedAuthServiceServer
-	AuthUsecase        *usecase.AuthUsecase
-	AdminAccessUsecase *usecase.AdminAccessUsecase
-	InternalHandler    *InternalHandler
-	AdminUsecase       *usecase.AuthAdminUsecase
-	SessionMapper      *mapper.SessionMapper
-	PINUsecase         *usecase.PINUsecase
-	DeviceUsecase      *usecase.DeviceUsecase
-	DeviceMapper       *mapper.DeviceMapper
+	AuthUsecase         *usecase.AuthUsecase
+	AdminAccessUsecase  *usecase.AdminAccessUsecase
+	InternalHandler     *InternalHandler
+	AdminUsecase        *usecase.AuthAdminUsecase
+	SessionMapper       *mapper.SessionMapper
+	PINUsecase          *usecase.PINUsecase
+	DeviceUsecase       *usecase.DeviceUsecase
+	DeviceMapper        *mapper.DeviceMapper
+	AuthSecurityUsecase *usecase.AuthSecurityUsecase
+	AuthSecurityMapper  *mapper.AuthSecurityMapper
 }
 
 func NewAuthHandler(service *usecase.AuthUsecase,
@@ -37,16 +39,20 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 	pinUsecase *usecase.PINUsecase,
 	deviceUsecase *usecase.DeviceUsecase,
 	deviceMapper *mapper.DeviceMapper,
+	authSecurityUsecase *usecase.AuthSecurityUsecase,
+	authSecurityMapper *mapper.AuthSecurityMapper,
 ) *AuthHandler {
 	return &AuthHandler{
-		AuthUsecase:        service,
-		AdminAccessUsecase: adminAccessUsecase,
-		InternalHandler:    internalHandler,
-		AdminUsecase:       adminUsecase,
-		SessionMapper:      sessionMapper,
-		PINUsecase:         pinUsecase,
-		DeviceUsecase:      deviceUsecase,
-		DeviceMapper:       deviceMapper,
+		AuthUsecase:         service,
+		AdminAccessUsecase:  adminAccessUsecase,
+		InternalHandler:     internalHandler,
+		AdminUsecase:        adminUsecase,
+		SessionMapper:       sessionMapper,
+		PINUsecase:          pinUsecase,
+		DeviceUsecase:       deviceUsecase,
+		DeviceMapper:        deviceMapper,
+		AuthSecurityUsecase: authSecurityUsecase,
+		AuthSecurityMapper:  authSecurityMapper,
 	}
 }
 
@@ -173,6 +179,158 @@ func (h *AuthHandler) PhoneCheck(ctx context.Context, req *authpb.PhoneCheckRequ
 	return &authpb.PhoneCheckResponse{
 		Existed: existed,
 		UserId:  userId,
+	}, nil
+}
+
+// @Summary Tạo mã PIN
+// @Description Thiết lập mã PIN mới sau khi xác thực OTP
+// @Tags PIN
+// @Accept json
+// @Produce json
+// @Param body body authpb.CreatePINRequest true "Thông tin tạo PIN"
+// @Success 200 {object} authpb.CreatePINResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/pin/create [post]
+func (h *AuthHandler) CreatePIN(ctx context.Context, req *authpb.CreatePINRequest) (*authpb.CreatePINResponse, error) {
+	dtoReq := dto.CreatePINRequest{
+		PIN:   strings.TrimSpace(req.Pin),
+		Phone: strings.TrimSpace(req.Phone),
+		OTP:   strings.TrimSpace(req.Otp),
+	}
+
+	result, err := h.PINUsecase.CreatePIN(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.CreatePINResponse{
+		AuthId:  result.AuthId,
+		Message: result.Message,
+	}, nil
+}
+
+// @Summary Xác minh mã PIN
+// @Description Đăng nhập thông qua mã PIN đã thiết lập
+// @Tags PIN
+// @Accept json
+// @Produce json
+// @Param body body authpb.VerifyPINRequest true "Thông tin xác minh PIN"
+// @Success 200 {object} authpb.AuthSuccessResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 423 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/pin/verify [post]
+func (h *AuthHandler) VerifyPIN(ctx context.Context, req *authpb.VerifyPINRequest) (*authpb.AuthSuccessResponse, error) {
+	dtoReq := dto.VerifyPINRequest{
+		Phone:      strings.TrimSpace(req.Phone),
+		PIN:        strings.TrimSpace(req.Pin),
+		Version:    strings.TrimSpace(req.Version),
+		Platform:   strings.TrimSpace(req.Platform),
+		OS:         strings.TrimSpace(req.Os),
+		DeviceName: strings.TrimSpace(req.DeviceName),
+		DeviceID:   _utils.GetDeviceIdFromContext(ctx),
+	}
+
+	result, err := h.PINUsecase.VerifyPIN(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapAuthSuccessResponse(result), nil
+}
+
+// @Summary Cập nhật mã PIN
+// @Description Thay đổi mã PIN bằng cách xác thực mã PIN hiện tại
+// @Tags PIN
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body authpb.UpdatePINRequest true "Thông tin cập nhật PIN"
+// @Success 200 {object} authpb.UpdatePINResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 401 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/pin/update [put]
+func (h *AuthHandler) UpdatePIN(ctx context.Context, req *authpb.UpdatePINRequest) (*authpb.UpdatePINResponse, error) {
+	authID := _utils.GetAuthIdFromContext(ctx)
+	if authID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "Không xác định được người dùng hiện tại")
+	}
+
+	dtoReq := dto.UpdatePINRequest{
+		OldPIN: strings.TrimSpace(req.OldPin),
+		NewPIN: strings.TrimSpace(req.NewPin),
+	}
+
+	result, err := h.PINUsecase.UpdatePIN(ctx, authID, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.UpdatePINResponse{
+		Message: result.Message,
+	}, nil
+}
+
+// @Summary Cập nhật trạng thái PIN
+// @Description Bật hoặc tắt đăng nhập bằng PIN sau khi xác thực mã PIN hiện tại
+// @Tags PIN
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body authpb.ActivePINRequest true "Thông tin trạng thái PIN"
+// @Success 200 {object} authpb.UpdatePINResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 401 {object} sharepb.ErrorResponse
+// @Failure 423 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/pin/active [put]
+func (h *AuthHandler) ActivePIN(ctx context.Context, req *authpb.ActivePINRequest) (*authpb.UpdatePINResponse, error) {
+	authID := _utils.GetAuthIdFromContext(ctx)
+	if authID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "Không xác định được người dùng hiện tại")
+	}
+
+	dtoReq := dto.ActivePINRequest{
+		Active: req.Active,
+		PIN:    strings.TrimSpace(req.Pin),
+	}
+
+	result, err := h.PINUsecase.ActivePIN(ctx, authID, dtoReq)
+	// result, err -> handle
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.UpdatePINResponse{
+		Message: result.Message,
+	}, nil
+}
+
+// @Summary Kiểm tra trạng thái PIN
+// @Description Kiểm tra người dùng hiện tại đã thiết lập PIN hay chưa
+// @Tags PIN
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} authpb.CheckPINExistsResponse
+// @Failure 401 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/pin/check [get]
+func (h *AuthHandler) CheckPINExists(ctx context.Context, _ *authpb.CheckPINExistsRequest) (*authpb.CheckPINExistsResponse, error) {
+	authID := _utils.GetAuthIdFromContext(ctx)
+	if authID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "Không xác định được người dùng hiện tại")
+	}
+
+	result, err := h.PINUsecase.CheckPINExists(ctx, authID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authpb.CheckPINExistsResponse{
+		Exists: result.Exists,
+		AuthId: result.AuthId,
 	}, nil
 }
 
@@ -1144,6 +1302,29 @@ func (h *AuthHandler) RegisterDevice(ctx context.Context, req *authpb.CreateDevi
 	}, nil
 }
 
+// @Summary Lấy thông tin bảo mật tài khoản hiện tại
+// @Description Trả về trạng thái, PIN và danh sách thiết bị của người dùng đang đăng nhập
+// @Tags Auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} sharepb.AuthDataV3Proto
+// @Failure 401 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/security/me [get]
+func (h *AuthHandler) GetCurrentAuthSetting(ctx context.Context, _ *sharepb.Empty) (*sharepb.AuthDataV3Proto, error) {
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "Không xác định được người dùng hiện tại")
+	}
+
+	result, err := h.AuthSecurityUsecase.GetAuthSecurityDataByProfileID(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.AuthSecurityMapper.MapToProto(result), nil
+}
+
 // @Summary Chuyển đổi tài khoản
 // @Description Chuyển đổi sang tài khoản cá nhân hoặc tổ chức khác
 // @Tags Auth
@@ -1316,4 +1497,31 @@ func (h *AuthHandler) OwnerLockAccount(ctx context.Context, req *sharepb.OTPV3Pr
 	}
 
 	return &sharepb.Empty{}, nil
+}
+
+func mapAuthSuccessResponse(result *dto.AuthLoginResponse) *authpb.AuthSuccessResponse {
+	if result == nil {
+		return &authpb.AuthSuccessResponse{}
+	}
+
+	fullName := result.FullName
+	if fullName == "" {
+		fullName = result.Username
+	}
+
+	return &authpb.AuthSuccessResponse{
+		AuthId:           result.AuthID,
+		ProfileId:        result.ProfileID,
+		AccessToken:      result.AccessToken,
+		RefreshToken:     result.RefreshToken,
+		FullName:         fullName,
+		OrganizationId:   result.OrganizationID,
+		Role:             result.Role,
+		PasswordAuthId:   result.PasswordAuthId,
+		ReferralCode:     result.ReferralCode,
+		RequireFullname:  result.RequireFullname,
+		TempToken:        result.TempToken,
+		EncryptedAuthKey: result.EncryptedAuthKey,
+		ServerPublicKey:  result.ServerPublicKey,
+	}
 }

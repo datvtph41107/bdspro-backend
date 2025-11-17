@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "ProfileService"
+    },
+    {
+      "name": "TagService"
     }
   ],
   "consumes": [
@@ -16,6 +19,196 @@
     "application/json"
   ],
   "paths": {
+    "/v2/user/admin/tags": {
+      "get": {
+        "operationId": "TagService_AdminListTags",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbAdminTagListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tagTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TagService"
+        ]
+      },
+      "post": {
+        "operationId": "TagService_AdminCreateTag",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbTagItem"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbAdminTagRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TagService"
+        ]
+      }
+    },
+    "/v2/user/admin/tags/{id}": {
+      "delete": {
+        "operationId": "TagService_AdminDeleteTag",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "TagService"
+        ]
+      },
+      "put": {
+        "operationId": "TagService_AdminUpdateTag",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbTagItem"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TagServiceAdminUpdateTagBody"
+            }
+          }
+        ],
+        "tags": [
+          "TagService"
+        ]
+      }
+    },
     "/v2/user/profile/accounts/me": {
       "get": {
         "operationId": "ProfileService_ListAccountMe",
@@ -116,6 +309,38 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
+    "/v2/user/profile/privacy": {
+      "put": {
+        "operationId": "ProfileService_UpdatePrivacySetting",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/userpbUpdatePrivacySettingRequest"
+            }
           }
         ],
         "tags": [
@@ -262,9 +487,78 @@
           "ProfileService"
         ]
       }
+    },
+    "/v2/user/profile/tags/{tagType}": {
+      "get": {
+        "operationId": "TagService_ListTagsByType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbTagListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tagType",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TagService"
+        ]
+      }
     }
   },
   "definitions": {
+    "TagServiceAdminUpdateTagBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tagType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -473,6 +767,46 @@
         },
         "address": {
           "$ref": "#/definitions/sharepbAddressV3Proto"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profileVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusOnline": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tagSpecialities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagMainAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagProjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagProfessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
         }
       }
     },
@@ -525,6 +859,44 @@
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "userpbAdminTagListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbTagItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "userpbAdminTagRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tagType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
         }
       }
     },
@@ -607,6 +979,28 @@
         }
       }
     },
+    "userpbPersonConfigInput": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "key": {
+          "type": "string"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "channel": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "userpbProfessionItem": {
       "type": "object",
       "properties": {
@@ -626,6 +1020,9 @@
         "verifiedStatus": {
           "type": "integer",
           "format": "int64"
+        },
+        "isActive": {
+          "type": "boolean"
         }
       }
     },
@@ -782,6 +1179,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/userpbMainAreaItem"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbTagItem"
           }
         }
       }
@@ -981,6 +1385,16 @@
             "type": "string",
             "format": "uint64"
           }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbTagItem"
+          }
+        },
+        "updateTags": {
+          "type": "boolean"
         }
       }
     },
@@ -1010,6 +1424,68 @@
         "wardId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "userpbTagItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tagType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "isActive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "userpbTagListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbTagItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "userpbUpdatePrivacySettingRequest": {
+      "type": "object",
+      "properties": {
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profileVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusOnline": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "personConfigs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userpbPersonConfigInput"
+          }
         }
       }
     },

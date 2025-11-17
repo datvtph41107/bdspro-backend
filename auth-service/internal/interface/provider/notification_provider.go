@@ -26,6 +26,8 @@ type NotificationProvider interface {
 
 	CreateHistoryAuth(ctx context.Context, payload *dto.HistoryAuthCreateDTO) error
 
+	GetPersonConfigs(ctx context.Context, userID uint64) ([]*dto.PersonConfigDTO, error)
+
 	// CreateNotification(ctx context.Context,
 	// 	title string,
 	// 	message string,

@@ -30,4 +30,6 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, env string,
 	_ = userpb.RegisterPlanServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterMainAreaServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = userpb.RegisterPurposeUseServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterProfessionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = userpb.RegisterTagServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

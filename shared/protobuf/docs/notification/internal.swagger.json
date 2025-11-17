@@ -146,6 +146,21 @@
       },
       "title": "Admin History Messages"
     },
+    "notificationpbBatchPersonConfigResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPersonConfigV3Proto"
+          }
+        }
+      }
+    },
     "notificationpbBatchResponse": {
       "type": "object",
       "properties": {
@@ -176,6 +191,21 @@
         }
       },
       "title": "CreateDealHistoryResponse response khi tạo deal history"
+    },
+    "notificationpbGetPersonConfigsResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPersonConfigV3Proto"
+          }
+        }
+      }
     },
     "notificationpbHistoryAuthDTO": {
       "type": "object",
@@ -390,6 +420,32 @@
         },
         "avatar": {
           "type": "string"
+        }
+      }
+    },
+    "sharepbPersonConfigV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "key": {
+          "type": "string"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "channel": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

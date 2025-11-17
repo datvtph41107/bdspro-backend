@@ -181,6 +181,19 @@ func (r *AuthMethodPostgres) GetByUserIdAndProvider(ctx context.Context, userID 
 	return &auth, nil
 }
 
+// GetFirstByUserID lấy auth method đầu tiên (ưu tiên theo thời gian tạo) của user
+func (r *AuthMethodPostgres) GetFirstByUserID(ctx context.Context, userID uint64) (*domain.AuthMethod, error) {
+	var auth domain.AuthMethod
+	err := r.GetDB(ctx).WithContext(ctx).
+		Where("user_id = ? AND deleted_at IS NULL", userID).
+		Order("created_at ASC").
+		First(&auth).Error
+	if err != nil {
+		return nil, err
+	}
+	return &auth, nil
+}
+
 // FindByUsernameAndProvider tìm auth method theo username và provider
 func (r *AuthMethodPostgres) FindByAuthNameAndProvider(ctx context.Context, username, provider string) (*domain.AuthMethod, error) {
 	var auth domain.AuthMethod

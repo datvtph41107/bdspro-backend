@@ -783,6 +783,38 @@
         ]
       }
     },
+    "/v2/auth/pin/active": {
+      "put": {
+        "operationId": "AuthService_ActivePIN",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbUpdatePINResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authpbActivePINRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/pin/check": {
       "get": {
         "operationId": "AuthService_CheckPINExists",
@@ -1114,6 +1146,29 @@
         ]
       }
     },
+    "/v2/auth/setting/me": {
+      "get": {
+        "summary": "Auth Security",
+        "operationId": "AuthService_GetCurrentAuthSetting",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbAuthDataV3Proto"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/switch/organization": {
       "post": {
         "summary": "Organization Management",
@@ -1254,6 +1309,19 @@
         },
         "require2fa": {
           "type": "boolean"
+        }
+      }
+    },
+    "authpbActivePINRequest": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean",
+          "title": "Trạng thái muốn cập nhật (true: bật, false: tắt)"
+        },
+        "pin": {
+          "type": "string",
+          "title": "Mã PIN để xác thực"
         }
       }
     },
@@ -1673,6 +1741,10 @@
         "phone": {
           "type": "string",
           "title": "Số điện thoại"
+        },
+        "otp": {
+          "type": "string",
+          "title": "Mã OTP xác minh"
         }
       },
       "title": "PIN Messages"
@@ -2463,8 +2535,147 @@
         }
       }
     },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbAuthDataV3Proto": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "$ref": "#/definitions/sharepbUserStatusV3Proto"
+        },
+        "pin": {
+          "$ref": "#/definitions/sharepbPinV3Proto"
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbDeviceV3Proto"
+          }
+        },
+        "user": {
+          "$ref": "#/definitions/sharepbUserV3Proto"
+        },
+        "personConfigs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPersonConfigV3Proto"
+          }
+        }
+      }
+    },
+    "sharepbDeviceV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "deviceName": {
+          "type": "string"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "buildNumber": {
+          "type": "string"
+        },
+        "manufacturer": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "pushToken": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        },
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ipAddress": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
     "sharepbEmpty": {
       "type": "object"
+    },
+    "sharepbItemV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
     },
     "sharepbOTPV3Proto": {
       "type": "object",
@@ -2484,6 +2695,57 @@
         "authId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "sharepbPersonConfigV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "key": {
+          "type": "string"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "channel": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbPinV3Proto": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "pin": {
+          "type": "string"
+        },
+        "pinCheckTime": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pinDate": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "lockedUntil": {
+          "type": "string"
         }
       }
     },
@@ -2546,6 +2808,118 @@
         },
         "lastReq": {
           "type": "string"
+        }
+      }
+    },
+    "sharepbUserStatusV3Proto": {
+      "type": "object",
+      "properties": {
+        "authId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "lockedUntil": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbUserV3Proto": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "roleRealEstate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mainAreaIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "purposeUseIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "mainAreaNews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "mainAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "purposeUses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/definitions/sharepbAddressV3Proto"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profileVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusOnline": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

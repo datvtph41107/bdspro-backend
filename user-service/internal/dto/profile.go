@@ -2,6 +2,8 @@ package dto
 
 import (
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
+	"user/enums"
 )
 
 type ProfileSearch struct {
@@ -30,4 +32,19 @@ type SendWarningResponse struct {
 	Success        bool   `json:"success"`
 	Message        string `json:"message"`
 	NotificationID uint64 `json:"notificationId,omitempty"`
+}
+
+type ProfilePrivacyRequest struct {
+	Visibility        uint8
+	ProfileVisibility uint8
+	StatusOnline      enums.EOnlineStatus
+	PersonConfigs     []*PersonConfigDTO
+}
+
+type PersonConfigDTO struct {
+	ID        uint64
+	Key       string
+	Checked   bool
+	IsDefault bool
+	Channel   _enum.EChannelNotification
 }

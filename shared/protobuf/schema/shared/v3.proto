@@ -84,6 +84,13 @@ message UserV3Proto {
     string phone = 15;
     string email = 16;
     AddressV3Proto address = 17;
+    uint32 visibility = 18;
+    uint32 profileVisibility = 19;
+    uint32 statusOnline = 20;
+    repeated ItemV3Proto tagSpecialities = 21;
+    repeated ItemV3Proto tagMainAreas = 22;
+    repeated ItemV3Proto tagProjects = 23;
+    repeated ItemV3Proto tagProfessions = 24;
 }
 
 message OTPV3Proto {
@@ -113,4 +120,61 @@ message SessionV3Proto {
     string lastLogin = 16;
     string logoutAt = 17;
     string lastReq = 18;
+}
+
+message PersonConfigV3Proto {
+    uint64 id = 1;
+    string key = 2;
+    bool checked = 3;
+    bool is_default = 4;
+    uint64 userId = 5;
+    uint32 channel = 6;
+  }
+
+message PinV3Proto {
+    uint64 authId = 1;
+    string pin = 2;
+    uint32 pinCheckTime = 3;
+    string pinDate = 4;
+    bool isActive = 5;
+    string lockedUntil = 6;
+}
+
+message UserStatusV3Proto {
+    uint64 authId = 1;
+    bool active = 2;
+    bool verified = 3;
+    string lockedUntil = 4;
+    string updatedAt = 5;
+}
+
+message DeviceV3Proto {
+    uint64 id = 1;
+    string deviceId = 2;
+    string deviceName = 3;
+    string deviceType = 4;
+    string platform = 5;
+    string osVersion = 6;
+    string appVersion = 7;
+    string buildNumber = 8;
+    string manufacturer = 9;
+    string model = 10;
+    string locale = 11;
+    string timezone = 12;
+    string pushToken = 13;
+    string lastSeenAt = 14;
+    uint64 authId = 15;
+    uint64 profileId = 16;
+    uint64 organizationId = 17;
+    string ipAddress = 18;
+    string userAgent = 19;
+}
+
+message AuthDataV3Proto {
+    uint64 authId = 1;
+    optional UserStatusV3Proto status = 2;
+    optional PinV3Proto pin = 3;
+    repeated DeviceV3Proto devices = 4;
+    optional UserV3Proto user = 5;
+    repeated PersonConfigV3Proto personConfigs = 6;
 }

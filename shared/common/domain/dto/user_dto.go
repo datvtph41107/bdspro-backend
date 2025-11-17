@@ -31,11 +31,14 @@ type AuthUserProfileDTO struct {
 }
 
 type UserV3DTO struct {
-	ProfileID      uint64    `json:"profileId"`
-	FullName       string    `json:"fullName"`
-	Avatar         string    `json:"avatar"`
-	RoleRealEstate uint32    `json:"roleRealEstate"`
-	MainAreaIds    []uint64  `json:"mainAreaIds"`
-	PurposeUseIDs  []uint64  `json:"purposeUseIds"`
-	MainAreaNews   []ItemDTO `json:"mainAreaNews"`
+	ProfileID         uint64    `json:"profileId"`
+	FullName          string    `json:"fullName"`
+	Avatar            string    `json:"avatar"`
+	RoleRealEstate    uint32    `json:"roleRealEstate"`
+	MainAreaIds       []uint64  `json:"mainAreaIds"`
+	PurposeUseIDs     []uint64  `json:"purposeUseIds"`
+	MainAreaNews      []ItemDTO `json:"mainAreaNews"`
+	Visibility        uint32    `json:"visibility"`
+	ProfileVisibility uint32    `json:"profileVisibility"`
+	StatusOnline      uint32    `json:"statusOnline"`
 }

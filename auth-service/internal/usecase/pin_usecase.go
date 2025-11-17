@@ -3,6 +3,7 @@ package usecase
 import (
 	"auth/internal/domain"
 	"auth/internal/dto"
+	"auth/internal/enums"
 	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
 	_errors "common/errors"
@@ -20,6 +21,8 @@ type PINUsecase struct {
 	statusRepo           repo.StatusRepository
 	authMethodRepo       repo.AuthMethodRepository
 	sessionRepo          repo.SessionRepository
+	otpRepo              repo.OTPRepository
+	otpUsecase           *OtpUsecase
 	profileProvider      provider.ProfileProvider
 	notificationProvider provider.NotificationProvider
 	maxPINAttempts       int
@@ -31,6 +34,8 @@ func NewPINUsecase(
 	statusRepo repo.StatusRepository,
 	authMethodRepo repo.AuthMethodRepository,
 	sessionRepo repo.SessionRepository,
+	otpRepo repo.OTPRepository,
+	otpUsecase *OtpUsecase,
 	profileProvider provider.ProfileProvider,
 	notificationProvider provider.NotificationProvider,
 ) *PINUsecase {
@@ -39,6 +44,8 @@ func NewPINUsecase(
 		statusRepo:           statusRepo,
 		authMethodRepo:       authMethodRepo,
 		sessionRepo:          sessionRepo,
+		otpRepo:              otpRepo,
+		otpUsecase:           otpUsecase,
 		profileProvider:      profileProvider,
 		notificationProvider: notificationProvider,
 		maxPINAttempts:       3,
@@ -52,11 +59,32 @@ func (s *PINUsecase) CreatePIN(c context.Context, request dto.CreatePINRequest) 
 	if len(request.PIN) != 6 {
 		return nil, _errors.ReturnError(400, "Mã PIN phải có đúng 6 số")
 	}
+	if len(request.OTP) != 6 {
+		return nil, _errors.ReturnError(400, "OTP không hợp lệ")
+	}
 
+	authID := _utils.GetAuthIdFromContext(c)
 	// Tìm auth method theo phone
-	authEntity, err := s.authMethodRepo.FindByPhone(c, request.Phone)
+	authEntity, err := s.authMethodRepo.FindByID(c, authID)
 	if err != nil {
 		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+	}
+
+	// Validate OTP trước khi tạo PIN
+	param, err := s.buildAuthParam(c, authEntity, request.OTP)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.otpUsecase.ValidateAuth(c, []enums.AuthCodeEnum{
+		enums.ACTIVATED,
+		enums.EXPIRED,
+		enums.LIMIT_OTP_SEND,
+		enums.LIMIT_OTP_ENTER,
+		enums.LOCKED,
+		enums.CHECK_OTP,
+	}, param); err != nil {
+		return nil, err
 	}
 
 	// Kiểm tra xem đã có PIN chưa
@@ -89,6 +117,11 @@ func (s *PINUsecase) CreatePIN(c context.Context, request dto.CreatePINRequest) 
 		return nil, _errors.ReturnError(500, "Không thể lưu mã PIN")
 	}
 
+	s.logPINActionHistory(c, authEntity, "pin", "PIN_CREATED",
+		"Tạo mã PIN mới cho tài khoản", map[string]interface{}{
+			"createdAt": now.Format(time.RFC3339),
+		})
+
 	return &dto.CreatePINResponse{
 		AuthId:  authEntity.ID,
 		Message: "Tạo mã PIN thành công",
@@ -103,54 +136,16 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
 	}
 
-	// Lấy PIN entity
-	pinEntity, err := s.pinRepo.GetByAuthID(c, authEntity.ID)
+	_, err = s.verifyPINCode(c, authEntity, request.PIN, &dto.PinVerifyMeta{
+		Phone:      request.Phone,
+		Platform:   request.Platform,
+		OS:         request.OS,
+		DeviceID:   request.DeviceID,
+		DeviceName: request.DeviceName,
+	}, true)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Chưa thiết lập mã PIN")
+		return nil, err
 	}
-
-	// Kiểm tra PIN có bị khóa không
-	if pinEntity.LockedUntil != nil && pinEntity.LockedUntil.After(time.Now()) {
-		minutes := time.Until(*pinEntity.LockedUntil).Minutes()
-		return nil, _errors.ReturnError(
-			423,
-			fmt.Sprintf("Mã PIN đã bị khóa. Vui lòng thử lại sau %.0f phút", minutes),
-		)
-	}
-
-	// Kiểm tra PIN có active không
-	if !pinEntity.IsActive {
-		return nil, _errors.ReturnError(403, "Mã PIN đã bị vô hiệu hóa")
-	}
-
-	// Verify PIN
-	err = bcrypt.CompareHashAndPassword([]byte(pinEntity.PIN), []byte(request.PIN))
-	if err != nil {
-		// PIN sai - tăng số lần nhập sai
-		s.pinRepo.IncrementCheckTime(c, authEntity.ID)
-		pinEntity.PINCheckTime++
-
-		// Kiểm tra số lần nhập sai
-		if pinEntity.PINCheckTime >= s.maxPINAttempts {
-			// Khóa PIN
-			lockedUntil := time.Now().Add(s.pinLockDuration)
-			s.pinRepo.LockPIN(c, authEntity.ID, lockedUntil)
-			s.logPINLockHistory(c, authEntity, request, lockedUntil)
-			return nil, _errors.ReturnError(
-				423,
-				fmt.Sprintf("Đã nhập sai %d lần. Mã PIN đã bị khóa trong %d phút", s.maxPINAttempts, int(s.pinLockDuration.Minutes())),
-			)
-		}
-
-		remaining := s.maxPINAttempts - pinEntity.PINCheckTime
-		return nil, _errors.ReturnError(
-			401,
-			fmt.Sprintf("Mã PIN không đúng. Bạn còn %d lần thử", remaining),
-		)
-	}
-
-	// PIN đúng - reset counter
-	s.pinRepo.ResetCheckCounter(c, authEntity.ID)
 
 	// Tạo session
 	newSession := s.createSession(c, authEntity, request)
@@ -183,6 +178,11 @@ func (s *PINUsecase) UpdatePIN(c context.Context, authID uint64, request dto.Upd
 		return nil, _errors.ReturnError(400, "Mã PIN mới phải có đúng 6 số")
 	}
 
+	authEntity, err := s.authMethodRepo.FindByID(c, authID)
+	if err != nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+	}
+
 	// Lấy PIN hiện tại
 	pinEntity, err := s.pinRepo.GetByAuthID(c, authID)
 	if err != nil {
@@ -213,8 +213,58 @@ func (s *PINUsecase) UpdatePIN(c context.Context, authID uint64, request dto.Upd
 		return nil, _errors.ReturnError(500, "Không thể lưu mã PIN mới")
 	}
 
+	s.logPINActionHistory(c, authEntity, "pin", "PIN_UPDATED",
+		"Cập nhật mã PIN thành công", map[string]interface{}{
+			"updatedAt": now.Format(time.RFC3339),
+		})
+
 	return &dto.UpdatePINResponse{
 		Message: "Cập nhật mã PIN thành công",
+	}, nil
+}
+
+// ActivePIN bật/tắt PIN của người dùng hiện tại
+func (s *PINUsecase) ActivePIN(c context.Context, authID uint64, request dto.ActivePINRequest) (*dto.UpdatePINResponse, error) {
+	if len(request.PIN) != 6 {
+		return nil, _errors.ReturnError(400, "Mã PIN phải có đúng 6 số")
+	}
+
+	authEntity, err := s.authMethodRepo.FindByID(c, authID)
+	if err != nil {
+		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+	}
+
+	pinEntity, err := s.verifyPINCode(c, authEntity, request.PIN, &dto.PinVerifyMeta{
+		Phone: authEntity.AuthName,
+	}, !request.Active)
+	if err != nil {
+		return nil, err
+	}
+
+	pinEntity.IsActive = request.Active
+	pinEntity.PINCheckTime = 0
+	pinEntity.LockedUntil = nil
+
+	if err := s.pinRepo.Update(c, pinEntity); err != nil {
+		return nil, _errors.ReturnError(500, "Không thể cập nhật trạng thái PIN")
+	}
+
+	status := "vô hiệu hóa"
+	if request.Active {
+		status = "kích hoạt"
+	}
+
+	actionName := "PIN_DEACTIVATED"
+	if request.Active {
+		actionName = "PIN_ACTIVATED"
+	}
+	s.logPINActionHistory(c, authEntity, "pin", actionName,
+		fmt.Sprintf("Mã PIN đã được %s", status), map[string]interface{}{
+			"active": request.Active,
+		})
+
+	return &dto.UpdatePINResponse{
+		Message: fmt.Sprintf("Mã PIN đã được %s", status),
 	}, nil
 }
 
@@ -234,7 +284,56 @@ func (s *PINUsecase) CheckPINExists(c context.Context, authID uint64) (*dto.Chec
 	}, nil
 }
 
-func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.AuthMethod, request dto.VerifyPINRequest, lockedUntil time.Time) {
+func (s *PINUsecase) verifyPINCode(ctx context.Context, authEntity *domain.AuthMethod, inputPIN string, meta *dto.PinVerifyMeta, requireActive bool) (*domain.UserPINEntity, error) {
+	pinEntity, err := s.pinRepo.GetByAuthID(ctx, authEntity.ID)
+	if err != nil {
+		return nil, _errors.ReturnError(404, "Chưa thiết lập mã PIN")
+	}
+
+	if pinEntity.LockedUntil != nil && pinEntity.LockedUntil.After(time.Now()) {
+		minutes := time.Until(*pinEntity.LockedUntil).Minutes()
+		return nil, _errors.ReturnError(
+			423,
+			fmt.Sprintf("Mã PIN đã bị khóa. Vui lòng thử lại sau %.0f phút", minutes),
+		)
+	}
+
+	if requireActive && !pinEntity.IsActive {
+		return nil, _errors.ReturnError(403, "Mã PIN đã bị vô hiệu hóa")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(pinEntity.PIN), []byte(inputPIN)); err != nil {
+		_ = s.pinRepo.IncrementCheckTime(ctx, authEntity.ID)
+		pinEntity.PINCheckTime++
+
+		if pinEntity.PINCheckTime >= s.maxPINAttempts {
+			lockedUntil := time.Now().Add(s.pinLockDuration)
+			_ = s.pinRepo.LockPIN(ctx, authEntity.ID, lockedUntil)
+			s.logPINLockHistory(ctx, authEntity, meta, lockedUntil)
+			return nil, _errors.ReturnError(
+				423,
+				fmt.Sprintf("Đã nhập sai %d lần. Mã PIN đã bị khóa trong %d phút", s.maxPINAttempts, int(s.pinLockDuration.Minutes())),
+			)
+		}
+
+		remaining := s.maxPINAttempts - pinEntity.PINCheckTime
+		return nil, _errors.ReturnError(
+			401,
+			fmt.Sprintf("Mã PIN không đúng. Bạn còn %d lần thử", remaining),
+		)
+	}
+
+	if err := s.pinRepo.ResetCheckCounter(ctx, authEntity.ID); err != nil {
+		return nil, _errors.ReturnError(500, "Không thể cập nhật trạng thái PIN")
+	}
+
+	pinEntity.PINCheckTime = 0
+	pinEntity.LockedUntil = nil
+
+	return pinEntity, nil
+}
+
+func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.AuthMethod, meta *dto.PinVerifyMeta, lockedUntil time.Time) {
 	if s.notificationProvider == nil || authEntity == nil || authEntity.UserID == 0 {
 		return
 	}
@@ -250,24 +349,35 @@ func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.A
 	}
 
 	deviceID := _utils.GetDeviceIdFromContext(ctx)
-	if deviceID == "" {
-		deviceID = request.DeviceID
+	if meta != nil {
+		if deviceID == "" {
+			deviceID = meta.DeviceID
+		}
+		if deviceID == "" {
+			deviceID = meta.DeviceName
+		}
 	}
-	if deviceID == "" {
-		deviceID = request.DeviceName
+
+	phone := ""
+	platform := ""
+	osName := ""
+	if meta != nil {
+		phone = meta.Phone
+		platform = meta.Platform
+		osName = meta.OS
 	}
 
 	metadata := map[string]interface{}{
 		"authId":      authEntity.ID,
-		"phone":       request.Phone,
+		"phone":       phone,
 		"lockedUntil": lockedUntil.Format(time.RFC3339),
 		"maxAttempts": s.maxPINAttempts,
 	}
-	if request.Platform != "" {
-		metadata["platform"] = request.Platform
+	if platform != "" {
+		metadata["platform"] = platform
 	}
-	if request.OS != "" {
-		metadata["os"] = request.OS
+	if osName != "" {
+		metadata["os"] = osName
 	}
 	if deviceID != "" {
 		metadata["deviceId"] = deviceID
@@ -284,10 +394,67 @@ func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.A
 		Reason:        "PIN_ATTEMPTS_EXCEEDED",
 		IPAddress:     ipAddress,
 		UserAgent:     userAgent,
-		Channel:       request.Platform,
+		Channel:       platform,
 		DeviceID:      deviceID,
 		SourceService: "auth-service",
 		Metadata:      metadata,
+	}
+
+	s.dispatchHistoryAuth(payload, "failed to log PIN lock history")
+}
+
+func (s *PINUsecase) logPINActionHistory(ctx context.Context, authEntity *domain.AuthMethod, actionType, actionName, description string, metadata map[string]interface{}) {
+	if s.notificationProvider == nil || authEntity == nil || authEntity.UserID == 0 {
+		return
+	}
+
+	ipAddress := _utils.AuditIPFromContext(ctx)
+	if ipAddress == "" {
+		ipAddress = "127.0.0.1"
+	}
+
+	userAgent := _utils.GetUserAgentFromContext(ctx)
+	if userAgent == "" {
+		userAgent = "Mobile-Client"
+	}
+
+	deviceID := _utils.GetDeviceIdFromContext(ctx)
+
+	mergedMetadata := map[string]interface{}{
+		"authId": authEntity.ID,
+		"phone":  authEntity.AuthName,
+	}
+	for k, v := range metadata {
+		if mergedMetadata == nil {
+			mergedMetadata = map[string]interface{}{}
+		}
+		mergedMetadata[k] = v
+	}
+
+	success := true
+	payload := dto.HistoryAuthCreateDTO{
+		UserID:        authEntity.UserID,
+		ActionType:    actionType,
+		ActionName:    actionName,
+		Description:   description,
+		Success:       &success,
+		IPAddress:     ipAddress,
+		UserAgent:     userAgent,
+		DeviceID:      deviceID,
+		Metadata:      mergedMetadata,
+		SourceService: "auth-service",
+	}
+
+	s.dispatchHistoryAuth(payload, fmt.Sprintf("failed to log %s history", actionName))
+}
+
+func (s *PINUsecase) dispatchHistoryAuth(payload dto.HistoryAuthCreateDTO, logPrefix string) {
+	if s.notificationProvider == nil {
+		return
+	}
+
+	if payload.SourceService == "" {
+		payload.SourceService = "auth-service"
 	}
 
 	go func(history dto.HistoryAuthCreateDTO) {
@@ -295,7 +462,7 @@ func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.A
 		defer cancel()
 
 		if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &history); err != nil {
-			log.Printf("failed to log PIN lock history: %v", err)
+			log.Printf("%s: %v", logPrefix, err)
 		}
 	}(payload)
 }
@@ -327,4 +494,27 @@ func (s *PINUsecase) createSession(c context.Context, authEntity *domain.AuthMet
 		Activate:   false,
 		LogoutAt:   nil,
 	}
+}
+
+func (s *PINUsecase) buildAuthParam(c context.Context, authEntity *domain.AuthMethod, otp string) (*dto.AuthParam, error) {
+	if s.otpRepo == nil || s.otpUsecase == nil {
+		return nil, _errors.ReturnError(500, "OTP service chưa được cấu hình")
+	}
+
+	statusEntity, err := s.statusRepo.GetByID(c, authEntity.ID)
+	if err != nil {
+		return nil, _errors.ReturnError(400, "Không tìm thấy trạng thái người dùng")
+	}
+
+	otpEntity, err := s.otpRepo.GetByID(c, authEntity.ID)
+	if err != nil {
+		return nil, _errors.ReturnError(400, "Không tìm thấy OTP hợp lệ")
+	}
+
+	return &dto.AuthParam{
+		Status:  statusEntity,
+		OTP:     otpEntity,
+		OTPCode: otp,
+		Auth:    authEntity,
+	}, nil
 }

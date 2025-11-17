@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package userpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/user;userpb";
+
+service ProfessionService {
+    rpc ListProfessions(sharepb.RequestV3Proto) returns (ProfessionPage) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/profession"
+        };
+    }
+
+    rpc CreateProfession(Profession) returns (Profession) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/profession"
+            body: "*"
+        };
+    }
+
+    rpc UpdateProfession(Profession) returns (Profession) {
+        option (google.api.http) = {
+            put: "/v2/user/admin/profession/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteProfession(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/user/admin/profession/{id}"
+        };
+    }
+
+    rpc GetProfessionItems(sharepb.RequestV3Proto) returns (ProfessionPage) {
+        option (google.api.http) = {
+            get: "/v2/user/professions"
+        };
+    }
+}
+
+message Profession {
+    uint64 id = 1;
+    string name = 2;
+    string issuer = 3;
+    string issueDate = 4;
+    uint32 verifiedStatus = 5;
+    optional uint64 approveUserId = 6;
+    string createdAt = 7;
+    string updatedAt = 8;
+    optional bool isActive = 9;
+}
+
+message ProfessionPage {
+    repeated Profession data = 1;
+    uint32 total = 2;
+}
+

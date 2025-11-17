@@ -17,5 +17,6 @@ func AutoMigrate() {
 		&domain.DealHistoryEntity{},
 		&domain.HistoryAuthEntity{},
 		&domain.HistoryFcmEntity{},
+		&domain.PersonConfigEntity{},
 	)
 }

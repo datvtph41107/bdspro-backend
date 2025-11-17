@@ -1,31 +1,33 @@
 package postgres
 
 import (
+	_db "common/db"
+	_dto "common/domain/dto"
+	_provider "common/provider"
 	"context"
 	"time"
+	"user/internal/interface/repo"
 	models "user/internal/models"
-
-	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IProfessionRepo
 type ProfessionPostgres struct {
-	DB *gorm.DB
+	_provider.CrudRepo[models.ProfessionEntity]
 }
 
-func NewProfessionPostgres(db *gorm.DB) *ProfessionPostgres {
-	return &ProfessionPostgres{
-		DB: db,
-	}
+func NewProfessionPostgres(db *_db.TransactionRepo) repo.IProfessionRepo {
+	repo := &ProfessionPostgres{}
+	repo.Init(repo, db)
+	return repo
 }
 
 func (r *ProfessionPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]models.ProfessionEntity, error) {
 	var professions []models.ProfessionEntity
 
-	err := r.DB.WithContext(c).
+	err := r.TransactionRepo.
+		GetDB(c).
 		Model(&models.ProfessionEntity{}).
-		Where("created_by = ? and deleted_at is null", profileID).
-		// Select("id, name, verified_status").
+		Where("created_by = ? AND deleted_at IS NULL", profileID).
+		Order("created_at DESC").
 		Find(&professions).Error
 
 	return professions, err
@@ -36,35 +38,70 @@ func (r *ProfessionPostgres) BatchSave(
 	professions *[]models.ProfessionEntity,
 	deletedIds []uint64,
 ) error {
-	// Bắt đầu transaction thủ công
-	tx := r.DB.WithContext(c).Begin()
-	if tx.Error != nil {
-		return tx.Error
+	if len(deletedIds) == 0 && len(*professions) == 0 {
+		return nil
 	}
 
-	// Xóa bản ghi nếu có deletedIds
-	if len(deletedIds) > 0 {
-		if err := tx.Model(&models.ProfessionEntity{}).
-			Where("id IN ?", deletedIds).
-			Update("deleted_at", time.Now()).Error; err != nil {
-			tx.Rollback()
-			return err
+	return r.TransactionRepo.WithTransaction(c, func(txCtx context.Context) error {
+		db := r.TransactionRepo.GetDB(txCtx)
+
+		if len(deletedIds) > 0 {
+			if err := db.
+				Model(&models.ProfessionEntity{}).
+				Where("id IN ? AND deleted_at IS NULL", deletedIds).
+				Update("deleted_at", time.Now()).
+				Error; err != nil {
+				return err
+			}
 		}
-	}
 
-	// Thêm hoặc cập nhật bản ghi nếu có
-	if len(*professions) > 0 {
-		if err := tx.Save(professions).Error; err != nil {
-			tx.Rollback()
-			return err
+		if len(*professions) == 0 {
+			return nil
 		}
+
+		for idx := range *professions {
+			item := &(*professions)[idx]
+			if item.ID == 0 {
+				if err := db.Create(item).Error; err != nil {
+					return err
+				}
+				continue
+			}
+
+			if err := db.
+				Model(&models.ProfessionEntity{}).
+				Where("id = ? AND deleted_at IS NULL", item.ID).
+				Updates(item).
+				Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *ProfessionPostgres) ListVerified(ctx context.Context, pagable _dto.IPagable) ([]models.ProfessionEntity, uint32, error) {
+	var (
+		data  []models.ProfessionEntity
+		total int64
+	)
+
+	db := r.TransactionRepo.GetDB(ctx).
+		Model(&models.ProfessionEntity{}).
+		Where("deleted_at IS NULL AND is_active = ?", true)
+
+	if err := db.
+		Offset(pagable.GetOffset()).
+		Limit(pagable.GetLimit()).
+		Order("created_at DESC").
+		Find(&data).Error; err != nil {
+		return nil, 0, err
 	}
 
-	// Commit nếu mọi thứ thành công
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback() // fallback nếu commit lỗi
-		return err
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return nil
+	return data, uint32(total), nil
 }

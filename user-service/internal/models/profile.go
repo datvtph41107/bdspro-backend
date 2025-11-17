@@ -54,9 +54,9 @@ type UserProfileEntity struct {
 	Linkedin          string                `gorm:"column:linkedin" json:"linkedin"`
 	Youtube           string                `gorm:"column:youtube" json:"youtube"`
 	Introduction      string                `gorm:"column:introduction" json:"introduction"`
-	Visibility        uint8                 `gorm:"column:visibility" json:"visibility"`
-	StatusOnline      enums.EOnlineStatus   `gorm:"column:status_online" json:"statusOnline"`
-	ProfileVisibility uint8                 `gorm:"column:profile_visibility" json:"profileVisibility"`
+	Visibility        uint8                 `gorm:"column:visibility" json:"visibility"`                // ai xem được trang cá nhân
+	StatusOnline      enums.EOnlineStatus   `gorm:"column:status_online" json:"statusOnline"`           // online, gần đây, không hiển thị
+	ProfileVisibility uint8                 `gorm:"column:profile_visibility" json:"profileVisibility"` // ai xem được liên hệ
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
 	// LastLoginAt       *time.Time            `gorm:"column:last_login_at" json:"lastLoginAt"`
 	// TotalLogin        uint32                `gorm:"column:total_login;default:0" json:"totalLogin"`
@@ -65,7 +65,11 @@ type UserProfileEntity struct {
 	Certifications []CertificationEntity `gorm:"-" json:"certifications"`
 	Professions    []ProfessionEntity    `gorm:"-" json:"professions"`
 	PurposeUses    []PurposeUseEntity    `gorm:"-" json:"purposeUses"`
-	MainAreas      []MainAreaEntity      `gorm:"-" json:"mainAreas"`
+	TagProfessions []TagEntity           `gorm:"-" json:"tagProfessions"`
+	TagSpecialties []TagEntity           `gorm:"-" json:"tagSpecialties"`
+	TagMainAreas   []TagEntity           `gorm:"-" json:"tagMainAreas"`
+	TagProjects    []TagEntity           `gorm:"-" json:"tagProjects"`
+	Tags           []TagEntity           `gorm:"-" json:"tags"`
 	RateStats      *RateStats            `gorm:"-" json:"rateStats"`
 
 	FriendStatus *FriendItem       `gorm:"-" json:"friendStatus"`
