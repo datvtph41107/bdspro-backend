@@ -44,7 +44,7 @@ func (s *InternalHandler) GetCountByOwner(ctx context.Context, req *bdspropb.Get
 	return &bdspropb.GetCountByOwnerResponse{
 		TotalProduct: counts.TotalProduct,
 		TotalAsset:   counts.TotalAsset,
-		TotalPost:    0, // Không có tin đăng nữa
+		TotalPost:    counts.TotalPost,
 		TotalProject: counts.TotalProject,
 	}, nil
 }
@@ -59,4 +59,20 @@ func (s *InternalHandler) GetSuggest(ctx context.Context, req *sharepb.RequestV3
 	productResponse := s.productMapper.MapTotalSearchParserToProductV3Proto(products)
 
 	return productResponse, nil
+}
+
+// GetDashboardByProfileId lấy dashboard stats theo profileId (member)
+func (s *InternalHandler) GetDashboardByProfileId(ctx context.Context, req *sharepb.IdRequest) (*sharepb.BDSProDashboardProto, error) {
+	// Lấy stats với ownerOf = Member (10) và ownerId = profileId
+	counts, err := s.dashboardUsecase.GetCountByOwner(ctx, _enum.EOwnerOfMember, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.BDSProDashboardProto{
+		TotalProduct: uint64(counts.TotalProduct),
+		TotalAsset:   uint64(counts.TotalAsset),
+		TotalPost:    uint64(counts.TotalPost),
+		TotalProject: uint64(counts.TotalProject),
+	}, nil
 }

@@ -99,6 +99,9 @@ func (h *RateHandler) GetRateList(ctx context.Context, req *feedbackpb.GetRateLi
 	// Convert to response
 	rateResponses := h.rateMapper.MapRateToPbs(ctx, rates)
 
+	// Map user profile
+	h.rateMapper.MapUserToPb(ctx, rateResponses)
+
 	return &feedbackpb.GetRateListResponse{
 		Data:  rateResponses,
 		Total: total,
@@ -207,6 +210,9 @@ func (h *RateHandler) GetRate(ctx context.Context, req *feedbackpb.RegistryIdReq
 	}
 
 	response := h.rateMapper.MapRateToPb(ctx, rate)
+
+	// Map user profile
+	h.rateMapper.MapUserToPbSingle(ctx, response)
 
 	return response, nil
 }

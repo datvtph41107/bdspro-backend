@@ -14,4 +14,5 @@ type ReportRepo interface {
 	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uint64) error
 	ExistByOwnerIdAndUserIdAndOwnerOf(ctx context.Context, ownerId uint64, userId uint64, ownerOf uint32) (bool, error)
+	GetIDByOwnerIdAndUserIdAndOwnerOf(ctx context.Context, ownerId uint64, userId uint64, ownerOf uint32) (*uint64, error)
 }

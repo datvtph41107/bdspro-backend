@@ -254,3 +254,26 @@ func (m *RateMapper) MapUserToPb(ctx context.Context, rates []*feedbackpb.RateRe
 		}
 	}
 }
+
+// MapUserToPbSingle map user profile cho single rate response
+func (m *RateMapper) MapUserToPbSingle(ctx context.Context, rate *feedbackpb.RateResponse) {
+	if rate == nil {
+		return
+	}
+
+	// Chỉ lấy thông tin user khi không anonymous
+	if rate.CreatedBy != nil && !rate.Anonymous {
+		profileIDSet := map[uint64]struct{}{
+			*rate.CreatedBy: {},
+		}
+
+		profileMap, err := m.userClient.GetMapByIDs(ctx, profileIDSet)
+		if err != nil {
+			return
+		}
+
+		if profile, ok := profileMap[*rate.CreatedBy]; ok {
+			rate.CreatedUser = profile
+		}
+	}
+}

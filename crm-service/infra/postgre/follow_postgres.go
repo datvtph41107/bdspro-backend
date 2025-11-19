@@ -169,3 +169,21 @@ func (repo *FollowPostgre) GetFollowing(ctx context.Context, profileId uint64, t
 
 	return exists, err
 }
+
+func (repo *FollowPostgre) GetFollowId(ctx context.Context, profileId uint64, targetId uint64) (*uint64, error) {
+	var followId uint64
+
+	err := repo.DB.Model(&domain.FollowEntity{}).
+		Select("id").
+		Where("created_by = ? AND following_id = ? AND deleted_at IS NULL", profileId, targetId).
+		First(&followId).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &followId, nil
+}

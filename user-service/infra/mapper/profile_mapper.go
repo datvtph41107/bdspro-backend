@@ -350,7 +350,7 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 	return result
 }
 
-func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
+func (m *ProfileMapper) ModelToUserV3Proto(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
 	if profile == nil {
 		return nil
 	}
@@ -436,5 +436,150 @@ func (m *ProfileMapper) OwnerProfileToUserV3Proto(profile *models.UserProfileEnt
 		result.Kyc = kyc
 	}
 
+	return result
+}
+
+func (m *ProfileMapper) DTOToUserV3Proto(profile *_dto.UserV3DTO, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
+	if profile == nil {
+		return nil
+	}
+	result := &sharepb.UserV3Proto{
+		ProfileId:        profile.ProfileID,
+		FullName:         profile.FullName,
+		Avatar:           profile.Avatar,
+		BackgroundImage:  profile.BackgroundImage,
+		Gender:           profile.Gender,
+		Birth:            _utils.FormatTimeToString(profile.Birth),
+		Phone:            profile.Phone,
+		Phone2:           profile.Phone2,
+		Email:            profile.Email,
+		ZaloUrl:          profile.ZaloURL,
+		FacebookUrl:      profile.FacebookURL,
+		InstagramUrl:     profile.InstagramURL,
+		TwitterUrl:       profile.TwitterURL,
+		LinkedinUrl:      profile.LinkedinURL,
+		YoutubeUrl:       profile.YoutubeURL,
+		WebsiteUrl:       profile.WebsiteURL,
+		Introduction:     profile.Introduction,
+		SignatureVisible: profile.SignatureVisible,
+		RoleRealEstate:   uint32(profile.RoleRealEstate),
+		MainAreaIds:      nil,
+		PurposeUseIds:    nil,
+		CreatedAt:        _utils.FormatTimeToString(profile.CreatedAt),
+		UpdatedAt:        _utils.FormatTimeToString(profile.UpdatedAt),
+	}
+
+	if profile.Address != nil {
+		result.Address = &sharepb.AddressV3Proto{
+			Detail:       profile.Address.Detail,
+			ProvinceId:   profile.Address.ProvinceID,
+			ProvinceName: profile.Address.ProvinceName,
+			WardId:       profile.Address.WardID,
+			WardName:     profile.Address.WardName,
+		}
+	}
+
+	if len(profile.TagProfessions) > 0 {
+		for _, profession := range profile.TagProfessions {
+			result.TagProfessions = append(result.TagProfessions, &sharepb.ItemV3Proto{
+				Id:   profession.ID,
+				Name: profession.Name,
+			})
+		}
+	}
+	if len(profile.TagMainAreas) > 0 {
+		for _, area := range profile.TagMainAreas {
+			result.TagMainAreas = append(result.TagMainAreas, &sharepb.ItemV3Proto{
+				Id:   area.ID,
+				Name: area.Name,
+			})
+		}
+	}
+	if len(profile.TagSpecialities) > 0 {
+		for _, specialty := range profile.TagSpecialities {
+			result.TagSpecialities = append(result.TagSpecialities, &sharepb.ItemV3Proto{
+				Id:   specialty.ID,
+				Name: specialty.Name,
+			})
+		}
+	}
+	if len(profile.TagProjects) > 0 {
+		for _, project := range profile.TagProjects {
+			result.TagProjects = append(result.TagProjects, &sharepb.ItemV3Proto{
+				Id:   project.ID,
+				Name: project.Name,
+			})
+		}
+	}
+	// if len(profile.PurposeUses) > 0 {
+	// 	for _, purpose := range profile.PurposeUses {
+	// 		result.PurposeUseIds = append(result.PurposeUseIds, purpose.ID)
+	// 	}
+	// }
+
+	if len(profile.Tags) > 0 {
+		for _, tag := range profile.Tags {
+			result.MainAreaNews = append(result.MainAreaNews, &sharepb.ItemV3Proto{
+				Id:   tag.ID,
+				Name: tag.Name,
+			})
+		}
+	}
+
+	// Thêm KYC vào response
+	if kyc != nil {
+		result.Kyc = kyc
+	}
+
+	return result
+}
+
+func (m *ProfileMapper) DTOToFriendV3Proto(friend *_dto.FriendV3DTO) *sharepb.FriendV3Proto {
+	if friend == nil {
+		return nil
+	}
+	result := &sharepb.FriendV3Proto{
+		Id:         friend.ID,
+		ReceiverId: friend.ReceiverID,
+		CreatedBy:  friend.CreatedBy,
+		Status:     friend.Status,
+	}
+	return result
+}
+
+func (m *ProfileMapper) DTOToRateStatsV3Proto(rateStats *_dto.RateStateV3DTO) *sharepb.RateStatsV3Proto {
+	if rateStats == nil {
+		return nil
+	}
+	result := &sharepb.RateStatsV3Proto{
+		TotalReviews: rateStats.TotalReviews,
+		AverageScore: rateStats.AverageScore,
+		Star1Count:   rateStats.Star1Count,
+		Star2Count:   rateStats.Star2Count,
+		Star3Count:   rateStats.Star3Count,
+		Star4Count:   rateStats.Star4Count,
+		Star5Count:   rateStats.Star5Count,
+	}
+	return result
+}
+
+func (m *ProfileMapper) DTOToKYCProto(kyc *_dto.KYCV3DTO) *sharepb.KYCV3Proto {
+	if kyc == nil {
+		return nil
+	}
+	result := &sharepb.KYCV3Proto{
+		Id:           kyc.ID,
+		ProfileId:    kyc.ProfileID,
+		FullName:     kyc.FullName,
+		IdentityCard: kyc.IdentityCard,
+		FrontImage:   kyc.FrontImage,
+		BackImage:    kyc.BackImage,
+		SelfieImage:  kyc.SelfieImage,
+		Status:       uint32(kyc.Status),
+		RejectReason: kyc.RejectReason,
+		ReviewedAt:   _utils.FormatTimeToString(kyc.ReviewedAt),
+		CreatedAt:    _utils.FormatTimeToString(kyc.CreatedAt),
+		UpdatedAt:    _utils.FormatTimeToString(kyc.UpdatedAt),
+	}
 	return result
 }

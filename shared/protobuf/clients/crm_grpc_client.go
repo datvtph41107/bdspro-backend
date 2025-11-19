@@ -16,7 +16,8 @@ import (
 )
 
 type CrmGrpcClient struct {
-	client crmpb.CrmInternalServiceClient
+	crmpb.CrmInternalServiceClient
+	FriendServiceClient crmpb.FriendServiceClient
 }
 
 func MakeCrmGrpcClient(env_runtime string) *CrmGrpcClient {
@@ -40,13 +41,15 @@ func MakeCrmGrpcClient(env_runtime string) *CrmGrpcClient {
 		go _middleware.MonitorConnection(ctx, name, conn)
 
 		client := crmpb.NewCrmInternalServiceClient(conn)
-		crmClient.client = client
+		friendClient := crmpb.NewFriendServiceClient(conn)
+		crmClient.CrmInternalServiceClient = client
+		crmClient.FriendServiceClient = friendClient
 	}()
 	return crmClient
 }
 
 func (c *CrmGrpcClient) GetMapFriendStatusByProfileIds(ctx context.Context, profileIds map[uint64]struct{}) (map[uint64]*sharepb.FriendItem, error) {
-	if c.client == nil {
+	if c.CrmInternalServiceClient == nil {
 		return nil, errors.New("crm client not avaiable")
 	}
 
@@ -60,7 +63,7 @@ func (c *CrmGrpcClient) GetMapFriendStatusByProfileIds(ctx context.Context, prof
 		profileIDs = append(profileIDs, id)
 	}
 
-	response, err := c.client.FriendStatusByProfileIds(ctx, &crmpb.FriendStatusByProfileIdsRequest{
+	response, err := c.FriendStatusByProfileIds(ctx, &crmpb.FriendStatusByProfileIdsRequest{
 		ProfileIds:       profileIDs,
 		CurrentProfileId: currentUserId,
 	})
@@ -79,4 +82,18 @@ func (c *CrmGrpcClient) GetMapFriendStatusByProfileIds(ctx context.Context, prof
 	}
 
 	return friendStatusMap, nil
+}
+
+// GetFriendInfoByProfileId lấy friend info theo profileId
+func (c *CrmGrpcClient) GetFriendInfoByProfileId(ctx context.Context, profileId uint64) (*sharepb.ContactInfoV3Proto, error) {
+	if c.CrmInternalServiceClient == nil {
+		return nil, errors.New("crm client not available")
+	}
+
+	resp, err := c.CrmInternalServiceClient.GetFriendInfoByProfileId(ctx, &sharepb.IdRequest{Id: profileId})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	feedbackpb "pb/types/feedback"
+	sharepb "pb/types/shared"
 	"time"
 
 	_middleware "common/middleware"
@@ -43,9 +44,11 @@ func MakeFeedbackGrpcClient(env_runtime string) *FeedbackGrpcClient {
 	return feedbackClient
 }
 
-func (c *FeedbackGrpcClient) GetRateStats(ctx context.Context, targetId uint64, targetType uint8) error {
-	// _, err := c.InternalServiceClient.GetRateStats(ctx, &feedbackpb.GetRateStatsRequest{
-	// 	Name: "user",
-	// })
-	return nil
+func (c *FeedbackGrpcClient) GetRateStats(ctx context.Context, req *sharepb.IdRequest) (*sharepb.RateStatsV3Proto, error) {
+	resp, err := c.InternalServiceClient.GetRateStats(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }

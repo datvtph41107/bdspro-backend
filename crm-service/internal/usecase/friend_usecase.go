@@ -427,6 +427,43 @@ func (s *FriendUsecase) FriendInfo(c context.Context) (*data.FollowInfoRes, erro
 	}, nil
 }
 
+// FriendInfoByProfileId lấy friend info theo profileId cụ thể
+func (s *FriendUsecase) FriendInfoByProfileId(c context.Context, profileId uint64) (*data.FollowInfoRes, error) {
+	numFollower, numFollowing, friendNumber, err := s.followRepo.GetFollowInfoCount(c, profileId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lấy contactId nếu có (contact của current user về profileId này)
+	var contactId *uint64
+	var blockId *uint64
+	var followId *uint64
+	currentUserId := _utils.GetProfileIdWithContext(c)
+	if currentUserId > 0 {
+		contact, err := s.contact.GetByProfileID(c, profileId, currentUserId, base_enum.EOwnerOfMember)
+		if err == nil && contact != nil {
+			contactId = &contact.ID
+		}
+
+		// Kiểm tra xem currentUserId có block profileId hay không
+		if s.blockRepo.IsBlocked(c, currentUserId, profileId) {
+			blockId = &profileId
+		}
+
+		// Lấy followId nếu current user đang follow profileId này
+		followId, _ = s.followRepo.GetFollowId(c, currentUserId, profileId)
+	}
+
+	return &data.FollowInfoRes{
+		NumFollower:  numFollower,
+		NumFollowing: numFollowing,
+		NumFriend:    friendNumber,
+		ContactId:    contactId,
+		BlockId:      blockId,
+		FollowId:     followId,
+	}, nil
+}
+
 func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) error {
 	profileId := _utils.GetProfileIdWithContext(c)
 

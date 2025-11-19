@@ -5,9 +5,11 @@ package crmpb;
 option go_package = "pb/types/crm;crmpb";
 
 import "shared/common.proto";
+import "shared/v3.proto";
 
 service CrmInternalService {
     rpc FriendStatusByProfileIds(FriendStatusByProfileIdsRequest) returns (FriendStatusByProfileIdsResponse);
+    rpc GetFriendInfoByProfileId(sharepb.IdRequest) returns (sharepb.ContactInfoV3Proto);
 }
 
 message FriendStatusByProfileIdsRequest {

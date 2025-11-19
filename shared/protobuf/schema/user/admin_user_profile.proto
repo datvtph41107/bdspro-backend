@@ -159,6 +159,7 @@ message UpdateUserRequest {
     string address = 8;          // Địa chỉ
     string birth = 9;            // Ngày sinh
     uint32 status = 10;          // Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động
+    string idVerifiedAt = 11;    // Thời gian xác thực ID (format: ISO 8601)
 }
 
 message DeleteUserRequest {

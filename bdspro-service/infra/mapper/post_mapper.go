@@ -9,6 +9,7 @@ import (
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 )
 
 type PostMapper struct {
@@ -89,6 +90,7 @@ func (m *PostMapper) PostToPb(post *domain.PostItem) *bdspropb.Post {
 		WardId:            post.WardId,
 		ProvinceName:      post.ProvinceName,
 		WardName:          post.WardName,
+		Area:              post.Area,
 	}
 
 	return result
@@ -173,6 +175,18 @@ func (m *PostMapper) PostSearchRequestToDTO(request *bdspropb.PostSearchRequest)
 	}
 	if request.ExpiredTo != nil {
 		result.ExpiredTo = _utils.ParseStringToTime(*request.ExpiredTo)
+	}
+	return result
+}
+
+// RequestV3ProtoToPostSearchDTO convert RequestV3Proto sang PostSearchRequest
+func (m *PostMapper) RequestV3ProtoToPostSearchDTO(request *sharepb.RequestV3Proto) *dto.PostSearchRequest {
+	result := &dto.PostSearchRequest{
+		Pagable: _dto.Pagable{
+			Page: request.Page,
+			Size: request.Size,
+		},
+		Text: request.Text,
 	}
 	return result
 }

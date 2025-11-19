@@ -6,6 +6,7 @@ option go_package = "pb/types/crm;crmpb";
 import "google/api/annotations.proto";
 import "shared/common.proto";
 import "crm/common.proto";
+import "crm/tag.proto";
 
 service ContactService {
   rpc Search (ContactSearchRequest) returns (ContactListDTO) {
@@ -85,6 +86,7 @@ message ContactSaveDTO {
   string avatar = 9;
   int32 visibility = 10;
   bool assignedCrm = 11;
+  repeated TagItem tags = 12;
 }
 
 message ContactListDTO {

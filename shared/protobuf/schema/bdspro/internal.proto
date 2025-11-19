@@ -12,6 +12,7 @@ import "shared/v3.proto";
 service BdsproInternalService {
     rpc GetCountByOwner(GetCountByOwnerRequest) returns (GetCountByOwnerResponse);
     rpc GetSuggest(sharepb.RequestV3Proto) returns (sharepb.ProductV3Proto);
+    rpc GetDashboardByProfileId(sharepb.IdRequest) returns (sharepb.BDSProDashboardProto);
 }
 
 message GetCountByOwnerRequest {

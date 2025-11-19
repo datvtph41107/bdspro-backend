@@ -516,6 +516,10 @@
           "type": "integer",
           "format": "int64",
           "title": "Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời, 30: Khóa vĩnh viễn, 40: Ngừng hoạt động"
+        },
+        "idVerifiedAt": {
+          "type": "string",
+          "title": "Thời gian xác thực ID (format: ISO 8601)"
         }
       }
     },

@@ -5,10 +5,13 @@ package feedbackpb;
 option go_package = "pb/types/feedback;feedbackpb";
 
 import "shared/common.proto";
+import "shared/v3.proto";
 
 // Internal Service - Internal operations for feedback service
 service InternalService {
   rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
+  rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
+  rpc GetReportIdByOwnerIdAndUserId(GetReportIdRequest) returns (GetReportIdResponse);
 }
 
 // Internal Messages

@@ -263,6 +263,13 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

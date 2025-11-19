@@ -27,6 +27,9 @@ type ContactEntity struct {
 	FriendStatus *FriendEntity     `gorm:"-" json:"friendStatus" binding:"required"`
 
 	OwnerOf base_enum.EOwnerOf `gorm:"column:owner_of;default:30" json:"ownerOf" binding:"required"`
+
+	// transient
+	Tags []TagEntity `gorm:"-" json:"tags"`
 }
 
 func (ContactEntity) TableName() string {

@@ -57,6 +57,8 @@ type PostItem struct {
 	TransactionTypeName   string                   `gorm:"-" json:"transactionTypeName"`
 	TransactionStatusName string                   `gorm:"-" json:"transactionStatusName"`
 	VisibleStatusName     string                   `gorm:"-" json:"visibleStatusName"`
+
+	Area float64 `gorm:"column:area" json:"area"`
 }
 
 func (PostItem) TableName() string {

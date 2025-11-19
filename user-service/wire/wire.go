@@ -47,6 +47,7 @@ var wireSet = wire.NewSet(
 	user_infra_handler.NewAdminUserProfileHandler,
 	user_infra_postgres.NewAttachPostgres,
 	user_infra_client.NewAuthClient,
+	user_infra_client.NewBdsproClient,
 	user_infra_postgres.NewBlockPostgres,
 	user_infra_routes.NewBlockRouter,
 	user_internal_usecases.NewBlockUsecase,

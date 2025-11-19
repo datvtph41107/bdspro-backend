@@ -35,6 +35,7 @@ type ProfileUsecase struct {
 	FollowRepo         repo.IFollowRepo
 	AuthProvider       providers.AuthProvider
 	NotificationClient providers.NotificationProvider
+	KYCRepo            repo.IKYCRepo
 }
 
 func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
@@ -48,6 +49,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	FollowRepo repo.IFollowRepo,
 	AuthProvider providers.AuthProvider,
 	NotificationClient providers.NotificationProvider,
+	KYCRepo repo.IKYCRepo,
 ) *ProfileUsecase {
 	planId := uint64(1)
 	return &ProfileUsecase{
@@ -63,6 +65,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 		FollowRepo:         FollowRepo,
 		AuthProvider:       AuthProvider,
 		NotificationClient: NotificationClient,
+		KYCRepo:            KYCRepo,
 	}
 }
 
@@ -326,6 +329,144 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	infoEntity.Following = following
 
 	return infoEntity, nil
+}
+
+func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access string) (*_dto.TotalResponseDTO, error) {
+	// var infoEntity models.UserProfileEntity
+	currentUserId := _utils.GetProfileIdWithContext(c)
+	isMe := false
+	if currentUserId == profileId {
+		isMe = true
+	}
+
+	// Lấy thông tin user từ DB
+	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		infoEntity = &models.UserProfileEntity{
+			ProfileID: profileId,
+		}
+	}
+
+	if infoEntity.Status != _enum.EUserStatusActive {
+		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+	}
+
+	// var result dto.PublicUserInfo
+	if infoEntity.Visibility != 10 && !isMe {
+		// copier.Copy(&result, &infoEntity)
+		infoEntity = &models.UserProfileEntity{}
+	}
+	var user *_dto.UserV3DTO
+	var kyc *_dto.KYCV3DTO
+	if infoEntity.ProfileVisibility == 10 || isMe {
+		// professions, _ := s.ProfessionRepo.ListItemByProfileID(c, profileId)
+		// infoEntity.Professions = professions
+		// certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
+		// infoEntity.Certifications = certifications
+
+		user = &_dto.UserV3DTO{
+			ProfileID:       infoEntity.ProfileID,
+			FullName:        infoEntity.FullName,
+			Avatar:          infoEntity.Avatar,
+			BackgroundImage: infoEntity.BackgroundImage,
+			RoleRealEstate:  uint32(infoEntity.RoleRealEstate),
+			Gender:          uint32(infoEntity.Gender),
+			Birth:           infoEntity.Birth,
+			Email:           infoEntity.Email,
+			Phone:           infoEntity.Phone,
+			Phone2:          infoEntity.Phone2,
+			TaxCode:         infoEntity.TaxCode,
+			ProvinceID:      infoEntity.ProvinceID,
+			WardID:          infoEntity.WardID,
+			CreatedAt:       infoEntity.CreatedAt,
+			UpdatedAt:       infoEntity.UpdatedAt,
+			Introduction:    infoEntity.Introduction,
+		}
+
+		if user.ProvinceID != nil || user.WardID != nil {
+			user.Address = &_dto.AddressV3DTO{
+				Detail:     infoEntity.Address,
+				ProvinceID: infoEntity.ProvinceID,
+				WardID:     infoEntity.WardID,
+			}
+		}
+
+		if s.PurposeUseRepo != nil {
+			purposeUses, _ := s.PurposeUseRepo.ListByProfileID(c, profileId)
+			infoEntity.PurposeUses = purposeUses
+		}
+		// areas, _ := s.MainAreaRepo.ListByProfileID(c, profileId)
+		// infoEntity.MainAreas = areas
+		if s.TagRepo != nil {
+			tags, _ := s.TagRepo.ListByProfileID(c, profileId)
+			for _, tag := range tags {
+				if tag.TagType == enums.TagTypeMainArea {
+					user.TagMainAreas = append(user.TagMainAreas, _dto.ItemDTO{
+						ID:   tag.ID,
+						Name: tag.Name,
+					})
+				} else if tag.TagType == enums.TagTypeSpecialty {
+					user.TagSpecialities = append(user.TagSpecialities, _dto.ItemDTO{
+						ID:   tag.ID,
+						Name: tag.Name,
+					})
+				} else if tag.TagType == enums.TagTypeProject {
+					user.TagProjects = append(user.TagProjects, _dto.ItemDTO{
+						ID:   tag.ID,
+						Name: tag.Name,
+					})
+				} else if tag.TagType == enums.TagTypeProfession {
+					user.TagProfessions = append(user.TagProfessions, _dto.ItemDTO{
+						ID:   tag.ID,
+						Name: tag.Name,
+					})
+				}
+			}
+		}
+		kycEntity, _ := s.KYCRepo.GetByProfileID(c, profileId)
+		if kycEntity != nil {
+			kyc = &_dto.KYCV3DTO{
+				ID:         kycEntity.ID,
+				Status:     uint32(kycEntity.Status),
+				ReviewedBy: kycEntity.ReviewedBy,
+				CreatedAt:  kycEntity.CreatedAt,
+			}
+		}
+	}
+
+	// Lấy thống kê rating từ feedback service
+	var stats *_dto.RateStateV3DTO
+	rateStatsResp, _ := s.FeedbackProvider.GetUserRateStatsV3(c, profileId)
+	if rateStatsResp != nil {
+		stats = &_dto.RateStateV3DTO{
+			TotalReviews: rateStatsResp.TotalReviews,
+			AverageScore: rateStatsResp.AverageScore,
+			Star1Count:   rateStatsResp.Star1Count,
+			Star2Count:   rateStatsResp.Star2Count,
+			Star3Count:   rateStatsResp.Star3Count,
+			Star4Count:   rateStatsResp.Star4Count,
+			Star5Count:   rateStatsResp.Star5Count,
+		}
+	}
+
+	// Convert feedback response to user model
+	// infoEntity.RateStats = &stats
+
+	var relationShip *_dto.FriendV3DTO
+	if profileId != 0 && currentUserId != 0 && profileId != currentUserId {
+		relationShip, _ = s.FriendRepo.GetRelationShipV3(c, profileId, currentUserId)
+	}
+	following, _ := s.FollowRepo.GetFollowing(profileId, profileId)
+	// infoEntity.FriendStatus = relationShip
+	infoEntity.Following = following
+
+	return &_dto.TotalResponseDTO{
+		User:         user,
+		FriendStatus: relationShip,
+		RateStats:    stats,
+		KYC:          kyc,
+	}, nil
 }
 
 func (s *ProfileUsecase) ProfileGetByPhone(c *gin.Context) (*dto.PublicUserInfo, error) {

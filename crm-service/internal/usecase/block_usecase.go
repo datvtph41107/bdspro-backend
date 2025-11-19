@@ -40,11 +40,17 @@ func (s *BlockUsecase) ListBlockedUsers(c context.Context) ([]uint64, error) {
 }
 
 func (s *BlockUsecase) ValidateBlockId(c context.Context, blockId uint64) error {
-	err := s.contactRepo.Existed(c, blockId)
+	profile, err := s.userClient.GetProfileById(c, blockId)
 	if err != nil {
 		return err
 	}
-	return err
+	if profile == nil {
+		return &_routes.Except{
+			Code:    404,
+			Message: "Người dùng không tồn tại",
+		}
+	}
+	return nil
 }
 
 // Chặn một người dùng

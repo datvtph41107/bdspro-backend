@@ -8,6 +8,7 @@ import (
 type CountByOwnerResponse struct {
 	TotalProduct  uint32 `json:"totalProduct"`
 	TotalAsset    uint32 `json:"totalAsset"`
+	TotalPost     uint32 `json:"totalPost"`
 	TotalNewsfeed uint32 `json:"totalNewsfeed"`
 	TotalProject  uint32 `json:"totalProject"`
 }

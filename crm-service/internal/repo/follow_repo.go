@@ -13,4 +13,5 @@ type FollowRepo interface {
 	BlockFollow(c context.Context, profileId uint64, targetId uint64) error
 	GetFollowInfoCount(c context.Context, userID uint64) (int64, int64, int64, error)
 	GetFollowing(ctx context.Context, profileId uint64, targetId uint64) (bool, error)
+	GetFollowId(ctx context.Context, profileId uint64, targetId uint64) (*uint64, error)
 }

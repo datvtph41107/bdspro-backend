@@ -135,6 +135,8 @@ var publicRoutes = []string{
 	"/v2/user/main-area",
 	"/v2/user/purpose-use",
 	"/v2/auth/device/check",
+	"/v3/user/profile/p",
+	"/v3/bdspro/post/personal",
 }
 
 var tempRoutes = []string{
@@ -255,6 +257,7 @@ var HttpCmd = &cobra.Command{
 
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
+		r.Any("/v3/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")

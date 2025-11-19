@@ -12,11 +12,13 @@ import (
 type InternalHandler struct {
 	feedbackpb.UnimplementedInternalServiceServer
 	RegistryUsecase *usecase.RegistryUsecase
+	RateUsecase     *usecase.RateUsecase
 }
 
-func NewInternalHandler(registryUsecase *usecase.RegistryUsecase) *InternalHandler {
+func NewInternalHandler(registryUsecase *usecase.RegistryUsecase, rateUsecase *usecase.RateUsecase) *InternalHandler {
 	return &InternalHandler{
 		RegistryUsecase: registryUsecase,
+		RateUsecase:     rateUsecase,
 	}
 }
 
@@ -48,5 +50,21 @@ func (h *InternalHandler) RegisterEntity(ctx context.Context, req *feedbackpb.Fe
 
 	return &sharepb.SubmitResponse{
 		Message: "Entity registered successfully",
+	}, nil
+}
+
+func (h *InternalHandler) GetRateStats(ctx context.Context, req *sharepb.IdRequest) (*sharepb.RateStatsV3Proto, error) {
+	rateStats, err := h.RateUsecase.GetRateStats(ctx, req.Id, "user")
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.RateStatsV3Proto{
+		TotalReviews: uint64(rateStats.TotalReviews),
+		AverageScore: float32(rateStats.AverageScore),
+		Star1Count:   uint64(rateStats.Star1Count),
+		Star2Count:   uint64(rateStats.Star2Count),
+		Star3Count:   uint64(rateStats.Star3Count),
+		Star4Count:   uint64(rateStats.Star4Count),
+		Star5Count:   uint64(rateStats.Star5Count),
 	}, nil
 }

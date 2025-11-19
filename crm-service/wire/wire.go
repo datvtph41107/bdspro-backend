@@ -84,6 +84,10 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewSharingAccessUsecase,
 	crm_infra_handler.NewStageService,
 	crm_internal_usecase.NewStageUsecase,
+	crm_infra_mapper.NewTagMapper,
+	crm_infra_postgre.NewTagPostgres,
+	crm_infra_handler.NewTagService,
+	crm_internal_usecase.NewTagUsecase,
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
 )

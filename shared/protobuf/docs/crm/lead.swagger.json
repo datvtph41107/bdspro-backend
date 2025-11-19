@@ -1362,6 +1362,13 @@
         },
         "birthday": {
           "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbTagItem"
+          }
         }
       }
     },
@@ -1971,6 +1978,32 @@
         },
         "colorRGB": {
           "type": "string"
+        }
+      }
+    },
+    "crmpbTagItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

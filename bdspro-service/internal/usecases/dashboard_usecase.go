@@ -49,6 +49,12 @@ func (u *DashboardUsecase) GetCountByOwner(ctx context.Context, ownerOf _enum.EO
 		return nil, err
 	}
 
+	// Đếm post
+	totalPost, err := u.PostRepo.CountByOwner(ctx, ownerOf, ownerId)
+	if err != nil {
+		return nil, err
+	}
+
 	// Đếm dự án
 	totalProject, err := u.ProjectRepo.CountByOwner(ctx, ownerOf, ownerId)
 	if err != nil {
@@ -58,6 +64,7 @@ func (u *DashboardUsecase) GetCountByOwner(ctx context.Context, ownerOf _enum.EO
 	return &dto.CountByOwnerResponse{
 		TotalProduct: totalProduct,
 		TotalAsset:   totalAsset,
+		TotalPost:    totalPost,
 		TotalProject: totalProject,
 	}, nil
 }

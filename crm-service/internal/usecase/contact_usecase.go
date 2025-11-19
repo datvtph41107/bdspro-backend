@@ -20,6 +20,7 @@ type ContactUsecase struct {
 	leadUsecase  *LeadUsecase // forward reference
 	userClient   provider.UserClient
 	ownerUsecase *OwnerUsecase
+	tagUsecase   *TagUsecase
 }
 
 func NewContactUsecase(
@@ -28,6 +29,7 @@ func NewContactUsecase(
 	followRepo repo.FollowRepo,
 	userClient provider.UserClient,
 	ownerUsecase *OwnerUsecase,
+	tagUsecase *TagUsecase,
 ) *ContactUsecase {
 	return &ContactUsecase{
 		repo:         repo,
@@ -35,6 +37,7 @@ func NewContactUsecase(
 		followRepo:   followRepo,
 		userClient:   userClient,
 		ownerUsecase: ownerUsecase,
+		tagUsecase:   tagUsecase,
 	}
 }
 
@@ -99,7 +102,22 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 		}
 	}
 
-	return s.repo.Create(c, entity)
+	result, err := s.repo.Create(c, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	// Xử lý tags nếu có
+	if len(entity.Tags) > 0 && result.ID > 0 {
+		if err := s.tagUsecase.ReplaceContactTags(c, result.ID, entity.Tags); err != nil {
+			return nil, err
+		}
+		// Load lại tags để trả về
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
+		result.Tags = tags
+	}
+
+	return result, nil
 }
 
 func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
@@ -107,7 +125,27 @@ func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Con
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.Update(c, id, entity)
+
+	result, err := s.repo.Update(c, id, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	// Xử lý tags nếu có
+	if len(entity.Tags) > 0 {
+		if err := s.tagUsecase.ReplaceContactTags(c, id, entity.Tags); err != nil {
+			return nil, err
+		}
+		// Load lại tags để trả về
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
+		result.Tags = tags
+	} else {
+		// Nếu không có tags trong request, vẫn load tags hiện có
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
+		result.Tags = tags
+	}
+
+	return result, nil
 }
 
 func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
@@ -157,6 +195,11 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEn
 		friendStatus, _ := s.friendRepo.GetByUserID(c, *entity.ProfileID)
 		entity.FriendStatus = friendStatus
 	}
+
+	// Load tags
+	tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
+	entity.Tags = tags
+
 	return entity, nil
 }
 

@@ -41,9 +41,9 @@ type ProfileDeleted struct {
 	Linkedin          string                `gorm:"column:linkedin" json:"linkedin"`
 	Youtube           string                `gorm:"column:youtube" json:"youtube"`
 	Introduction      string                `gorm:"column:introduction" json:"introduction"`
-	Visibility        uint8                 `gorm:"column:visibility" json:"visibility"`
+	Visibility        _enum.EVisibility     `gorm:"column:visibility" json:"visibility"`
 	StatusOnline      enums.EOnlineStatus   `gorm:"column:status_online" json:"statusOnline"`
-	ProfileVisibility uint8                 `gorm:"column:profile_visibility" json:"profileVisibility"`
+	ProfileVisibility _enum.EVisibility     `gorm:"column:profile_visibility" json:"profileVisibility"`
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
 	Status            _enum.EUserStatus     `gorm:"column:status;default:10" json:"status"`
 	WarningLevel      _enum.EWarningLevel   `gorm:"column:warning;default:0" json:"warning"`

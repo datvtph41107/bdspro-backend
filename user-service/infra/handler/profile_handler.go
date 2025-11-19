@@ -6,7 +6,6 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	organizationpb "pb/types/organization"
 	orgpb "pb/types/organization"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -31,11 +30,12 @@ type GrpcProfileService struct {
 	KYCUsecase            usecases.IKYCUsecase
 	cache                 *cache.Cache
 	OrgClient             orgpb.OrganizationServiceClient
-	GroupClient           organizationpb.GroupServiceClient
+	GroupClient           orgpb.GroupServiceClient
 	ProfileMapper         *mapper.ProfileMapper
 	KYCMapper             *mapper.KYCMapper
 	CrmClient             *client.CrmClient
 	HubClient             *client.HubClient
+	BdsproClient          *client.BdsproClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
@@ -46,11 +46,12 @@ func NewGrpcProfileService(
 	profileUsecase *usecases.ProfileUsecase,
 	kycUsecase usecases.IKYCUsecase,
 	orgClient orgpb.OrganizationServiceClient,
-	groupClient organizationpb.GroupServiceClient,
+	groupClient orgpb.GroupServiceClient,
 	profileMapper *mapper.ProfileMapper,
 	kycMapper *mapper.KYCMapper,
 	crmClient *client.CrmClient,
 	hubClient *client.HubClient,
+	bdsproClient *client.BdsproClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
@@ -65,6 +66,7 @@ func NewGrpcProfileService(
 		KYCMapper:             kycMapper,
 		CrmClient:             crmClient,
 		HubClient:             hubClient,
+		BdsproClient:          bdsproClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
 	}
 }
@@ -168,6 +170,56 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 	return profilePb, nil
 }
 
+// @Summary Lấy thông tin công khai của người dùng v3
+// @Description Lấy thông tin công khai của người dùng v3
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của Profile"
+// @Success 200 {object} sharepb.TotalResponseProto "Thông tin công khai của người dùng"
+// @Router /v3/user/profile/info/{id} [get]
+func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.TotalResponseProto, error) {
+	result, err := s.ProfileUsecase.UserInfoV3(ctx, req.Id, req.Access)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
+	}
+
+	// Lấy tên province và ward từ hub service
+	if result.User != nil && (result.User.ProvinceID != nil || result.User.WardID != nil) {
+		provinceName, wardName := s.HubClient.GetProvinceAndWardNames(ctx, result.User.ProvinceID, result.User.WardID)
+		if provinceName != "" {
+			result.User.Address.ProvinceName = provinceName
+		}
+		if wardName != "" {
+			result.User.Address.WardName = wardName
+		}
+	}
+
+	// Lấy friend info từ CRM service
+	var contactInfo *sharepb.ContactInfoV3Proto
+	friendInfoResp, errFriendInfo := s.CrmClient.GetFriendInfo(ctx, req.Id)
+	if errFriendInfo == nil && friendInfoResp != nil {
+		contactInfo = friendInfoResp
+	}
+
+	// Lấy BDSPro dashboard stats từ BDSPro service
+	var bdsproInfo *sharepb.BDSProDashboardProto
+	bdsproInfoResp, errBdsPro := s.BdsproClient.GetDashboardByProfileId(ctx, req.Id)
+	if errBdsPro == nil && bdsproInfoResp != nil {
+		bdsproInfo = bdsproInfoResp
+	}
+
+	return &sharepb.TotalResponseProto{
+		User:         s.ProfileMapper.DTOToUserV3Proto(result.User, nil),
+		FriendStatus: s.ProfileMapper.DTOToFriendV3Proto(result.FriendStatus),
+		RateStats:    s.ProfileMapper.DTOToRateStatsV3Proto(result.RateStats),
+		Kyc:          s.ProfileMapper.DTOToKYCProto(result.KYC),
+		ContactInfo:  contactInfo,
+		BdsproInfo:   bdsproInfo,
+	}, nil
+}
+
 // @Summary Lấy thông tin công khai của người dùng request
 // @Description Lấy thông tin công khai của người dùng request me
 // @Tags Profile
@@ -189,7 +241,7 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 		kyc = s.KYCMapper.ToProto(kycEntity)
 	}
 
-	profilePb := s.ProfileMapper.OwnerProfileToUserV3Proto(result, kyc)
+	profilePb := s.ProfileMapper.ModelToUserV3Proto(result, kyc)
 
 	// Lấy tên province và ward từ hub service
 	if result.ProvinceID != nil || result.WardID != nil {

@@ -95,6 +95,27 @@
         }
       }
     },
+    "sharepbBDSProDashboardProto": {
+      "type": "object",
+      "properties": {
+        "totalProduct": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalAsset": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalPost": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "totalProject": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "sharepbHouseInfoV3Proto": {
       "type": "object",
       "properties": {

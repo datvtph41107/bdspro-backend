@@ -1136,6 +1136,10 @@
         "wardId": {
           "type": "string",
           "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

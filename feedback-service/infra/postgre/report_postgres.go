@@ -129,6 +129,22 @@ func (r *ReportPostgres) ExistByOwnerIdAndUserIdAndOwnerOf(ctx context.Context, 
 	return count > 0, err
 }
 
+func (r *ReportPostgres) GetIDByOwnerIdAndUserIdAndOwnerOf(ctx context.Context, ownerId uint64, userId uint64, ownerOf uint32) (*uint64, error) {
+	var report domain.Report
+	err := r.db.WithContext(ctx).
+		Model(&domain.Report{}).
+		Select("id").
+		Where("owner_id = ? AND created_by = ? AND owner_of = ? AND deleted_at IS NULL", ownerId, userId, ownerOf).
+		First(&report).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &report.ID, nil
+}
+
 // ReportProofPostgres implementation
 type ReportProofPostgres struct {
 	db *gorm.DB

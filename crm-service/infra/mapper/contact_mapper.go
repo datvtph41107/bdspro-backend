@@ -12,10 +12,13 @@ import (
 )
 
 type ContactMapper struct {
+	TagMapper *TagMapper
 }
 
-func NewContactMapper() *ContactMapper {
-	return &ContactMapper{}
+func NewContactMapper(tagMapper *TagMapper) *ContactMapper {
+	return &ContactMapper{
+		TagMapper: tagMapper,
+	}
 }
 
 func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
@@ -45,6 +48,12 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 			ReceiverId: contact.FriendStatus.ReceiverID,
 		}
 	}
+
+	// Map tags - uncomment after proto generation
+	// if len(contact.Tags) > 0 && m.TagMapper != nil {
+	// 	result.Tags = m.TagMapper.TagsToPb(contact.Tags)
+	// }
+
 	return result
 }
 
@@ -114,7 +123,7 @@ func (m *ContactMapper) ContactSaveToPb(contact *domain.ContactEntity) *crmpb.Co
 }
 
 func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.ContactEntity {
-	return &domain.ContactEntity{
+	entity := &domain.ContactEntity{
 		BaseEntity: _models.BaseEntity{
 			ID: pb.Id,
 		},
@@ -128,6 +137,13 @@ func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contac
 		Avatar:     pb.Avatar,
 		Visibility: enums.EVisibility(pb.Visibility),
 	}
+
+	// Map tags - uncomment after proto generation
+	// if len(pb.Tags) > 0 && m.TagMapper != nil {
+	// 	entity.Tags = m.TagMapper.PbToTagEntities(pb.Tags)
+	// }
+
+	return entity
 }
 
 func (m *ContactMapper) ListContactToDomain(contacts []*crmpb.ContactSaveDTO) []domain.ContactEntity {

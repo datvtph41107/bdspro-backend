@@ -57,6 +57,35 @@
         }
       }
     },
+    "sharepbContactInfoV3Proto": {
+      "type": "object",
+      "properties": {
+        "numFriend": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numFollower": {
+          "type": "string",
+          "format": "int64"
+        },
+        "numFollowing": {
+          "type": "string",
+          "format": "int64"
+        },
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "blockId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "reportId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "sharepbFriendItem": {
       "type": "object",
       "properties": {

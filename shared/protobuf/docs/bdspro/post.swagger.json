@@ -741,6 +741,64 @@
           "PostService"
         ]
       }
+    },
+    "/v3/bdspro/post/personal/{id}": {
+      "get": {
+        "operationId": "PostService_GetPersonalPosts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbPostListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PostService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -1272,6 +1330,10 @@
         "wardId": {
           "type": "string",
           "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

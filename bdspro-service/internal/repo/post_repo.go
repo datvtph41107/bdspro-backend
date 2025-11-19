@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	_enum "common/domain/enum"
 	"context"
 	"time"
 
@@ -38,6 +39,7 @@ type PostRepo interface {
 	// Đếm tổng số post hiện tại (không bị xóa)
 	CountCurrent(ctx context.Context) (int64, error)
 	CountPostByTime(ctx context.Context, from time.Time, to time.Time) ([]domain.CountPostByTime, error)
+	CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error)
 
 	// Lấy ngẫu nhiên n bản ghi post
 	GetRandomPosts(ctx context.Context, limit int) ([]domain.PostItem, error)

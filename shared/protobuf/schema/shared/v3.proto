@@ -10,6 +10,7 @@ message RequestV3Proto {
     string text = 2;
     uint32 page = 3;
     uint32 size = 4;
+    string access = 5; // p: public, s: private
 }
 message ItemV3Proto {
     uint64 id = 1;
@@ -119,6 +120,7 @@ message UserV3Proto {
     string blogUrl = 34;
     string otherUrl = 35;
     bool signatureVisible = 36;
+    string introduction = 37;
 }
 
 message OTPV3Proto {
@@ -205,4 +207,48 @@ message AuthDataV3Proto {
     repeated DeviceV3Proto devices = 4;
     optional UserV3Proto user = 5;
     repeated PersonConfigV3Proto personConfigs = 6;
+}
+
+message FriendV3Proto {
+    uint64 id = 1;
+    uint64 receiverId = 2;
+    optional uint64 createdBy = 3;
+    uint32 status = 4;
+}
+
+message ContactInfoV3Proto {
+    int64 numFriend = 1;
+    int64 numFollower = 2;
+    int64 numFollowing = 3;
+    optional uint64 contactId = 4;
+    optional uint64 blockId = 5;
+    optional uint64 reportId = 6;
+    optional uint64 followId = 7;
+}
+
+message RateStatsV3Proto {
+    uint64 totalReviews = 1;
+    float averageScore = 2;
+    uint64 star1Count = 3;
+    uint64 star2Count = 4;
+    uint64 star3Count = 5;
+    uint64 star4Count = 6;
+    uint64 star5Count = 7;
+}
+
+message BDSProDashboardProto {
+    uint64 totalProduct = 1;
+    uint64 totalAsset = 2;
+    uint64 totalPost = 3;
+    uint64 totalProject = 4;
+}
+
+message TotalResponseProto {
+    optional UserV3Proto user = 1;
+    optional KYCV3Proto kyc = 2;
+    optional ItemV3Proto province = 3;
+    optional FriendV3Proto friendStatus = 4;
+    optional RateStatsV3Proto rateStats = 5;
+    optional ContactInfoV3Proto contactInfo = 6;
+    optional BDSProDashboardProto bdsproInfo = 7;
 }

@@ -67,4 +67,11 @@ type UserV3DTO struct {
 	Gender            uint32        `json:"gender"`
 	Birth             *time.Time    `json:"birth"`
 	Address           *AddressV3DTO `json:"address"`
+	Introduction      string        `json:"introduction"`
+	CreatedAt         *time.Time    `json:"createdAt"`
+	UpdatedAt         *time.Time    `json:"updatedAt"`
+	TagProfessions    []ItemDTO     `json:"tagProfessions"`
+	TagMainAreas      []ItemDTO     `json:"tagMainAreas"`
+	TagSpecialities   []ItemDTO     `json:"tagSpecialities"`
+	TagProjects       []ItemDTO     `json:"tagProjects"`
 }

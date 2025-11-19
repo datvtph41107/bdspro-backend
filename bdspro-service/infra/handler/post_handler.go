@@ -259,3 +259,39 @@ func (s *PostService) GetTodayPost(ctx context.Context, req *sharepb.Empty) (*bd
 		Total: int32(len(result)),
 	}, nil
 }
+
+// GetPersonalPosts lấy danh sách post của user theo profileId
+// @Summary Lấy danh sách post của user
+// @Description Lấy danh sách post của user theo profileId với phân trang
+// @Tags Post
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "Profile ID"
+// @Param page query uint32 false "Trang hiện tại (mặc định: 1)"
+// @Param size query uint32 false "Số lượng item trên mỗi trang (mặc định: 20)"
+// @Param text query string false "Tìm kiếm theo text"
+// @Success 200 {object} bdspropb.PostListResponse
+// @Router /v3/bdspro/post/personal/{id} [get]
+func (s *PostService) GetPersonalPosts(ctx context.Context, req *sharepb.RequestV3Proto) (*bdspropb.PostListResponse, error) {
+	// Convert RequestV3Proto sang PostSearchRequest DTO
+	query := s.PostMapper.RequestV3ProtoToPostSearchDTO(req)
+
+	// Lấy posts theo profileId từ request
+	result, total, err := s.postRepo.Search(ctx, req.Id, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map status cho mỗi post
+	for i := range result {
+		result[i].VisibleStatus = s.UC.MapPostStatus(&result[i])
+		s.UC.MapStatusNames(&result[i])
+	}
+
+	postList := s.PostMapper.PostToPbList(&result)
+
+	return &bdspropb.PostListResponse{
+		Data:  postList,
+		Total: int32(total),
+	}, nil
+}

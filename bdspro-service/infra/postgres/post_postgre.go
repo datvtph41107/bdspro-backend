@@ -3,6 +3,7 @@ package postgres
 import (
 	"common/case/crud3"
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -243,6 +244,7 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 			'isMain', post_media.is_main,
 			'sortOrder', post_media.sort_order
 		)) FILTER (WHERE post_media.post_id = posts.id), '[]') AS media_list_raw,
+		products.area as area,
 		CASE
 			WHEN posts.transaction_type = 10 AND products.sale_status = 20 THEN 100
 			WHEN posts.transaction_type = 10 AND products.sale_status = 30 THEN 110
@@ -260,7 +262,7 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		Joins("left join ward_v2 ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
 		Where("posts.deleted_at is null").
-		Group("posts.id, posts.created_by, province.id, ward.id, province.name, ward.name, prices.id, products.sale_status, products.rent_status")
+		Group("posts.id, posts.created_by, province.id, ward.id, province.name, ward.name, prices.id, products.sale_status, products.rent_status, products.area")
 
 	if profileId != 0 {
 		query = query.Where("posts.created_by = ?", profileId)
@@ -655,6 +657,20 @@ func (r *GormPostRepo) CountCurrent(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (r *GormPostRepo) CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error) {
+	var count int64
+
+	query := r.DB.WithContext(ctx).Model(&domain.Post{}).
+		Where("deleted_at IS NULL and owner_id = ? and owner_of = ?", ownerId, ownerOf)
+
+	err := query.Debug().Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(count), nil
 }
 
 func (r *GormPostRepo) CountPostByTime(ctx context.Context, from time.Time, to time.Time) ([]domain.CountPostByTime, error) {

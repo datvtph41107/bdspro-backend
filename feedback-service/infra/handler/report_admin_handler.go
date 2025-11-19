@@ -11,7 +11,6 @@ import (
 	_dto "common/domain/dto"
 )
 
-// @bind: internal/interface/repo/report_repo.ReportRepo
 type ReportAdminHandler struct {
 	feedbackpb.UnimplementedReportAdminServiceServer
 	reportUsecase *usecase.ReportUsecase

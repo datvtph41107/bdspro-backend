@@ -16,6 +16,11 @@ service ProfileService {
             get: "/v2/user/profile/info/{id}"
         };
     }
+    rpc GetProfileInfoV3(sharepb.RequestV3Proto) returns (sharepb.TotalResponseProto) {
+        option (google.api.http) = {
+            get: "/v3/user/profile/{access}/{id}"
+        };
+    }
     rpc GetProfileInfoMe(sharepb.Empty) returns (sharepb.UserV3Proto) {
         option (google.api.http) = {
             get: "/v2/user/profile/info/me"

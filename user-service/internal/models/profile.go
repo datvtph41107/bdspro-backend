@@ -55,9 +55,9 @@ type UserProfileEntity struct {
 	LinkedinURL       string                `gorm:"column:linkedin_url" json:"linkedinUrl"`
 	YoutubeURL        string                `gorm:"column:youtube_url" json:"youtubeUrl"`
 	Introduction      string                `gorm:"column:introduction" json:"introduction"`
-	Visibility        uint8                 `gorm:"column:visibility" json:"visibility"`                // ai xem được trang cá nhân
+	Visibility        _enum.EVisibility     `gorm:"column:visibility" json:"visibility"`                // ai xem được trang cá nhân
 	StatusOnline      enums.EOnlineStatus   `gorm:"column:status_online" json:"statusOnline"`           // online, gần đây, không hiển thị
-	ProfileVisibility uint8                 `gorm:"column:profile_visibility" json:"profileVisibility"` // ai xem được liên hệ
+	ProfileVisibility _enum.EVisibility     `gorm:"column:profile_visibility" json:"profileVisibility"` // ai xem được liên hệ
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
 	SignatureVisible  bool                  `gorm:"column:signature_visible;default:false" json:"signatureVisible"`
 

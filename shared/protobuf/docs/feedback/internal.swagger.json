@@ -45,6 +45,39 @@
         }
       }
     },
+    "sharepbRateStatsV3Proto": {
+      "type": "object",
+      "properties": {
+        "totalReviews": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "averageScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "star1Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star2Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star3Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star4Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star5Count": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "sharepbSubmitResponse": {
       "type": "object",
       "properties": {

@@ -6,7 +6,6 @@ import (
 	"feedback/internal/dto"
 )
 
-// @bind: feedback/internal/interface/repo.RateRepo
 type RateRepo interface {
 	Create(ctx context.Context, rate *domain.Rate) (*domain.Rate, error)
 	GetByID(ctx context.Context, id uint64) (*domain.Rate, error)

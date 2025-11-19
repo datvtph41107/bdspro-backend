@@ -4,6 +4,7 @@ package crmpb;
 
 option go_package = "pb/types/crm;crmpb";
 import "shared/common.proto";
+import "crm/tag.proto";
 
 enum OwnerOf {
     unknown = 0;
@@ -103,4 +104,5 @@ message ContactDTO {
   string company = 18;
   string note = 19;
   string birthday = 20;
+  repeated TagItem tags = 21;
 }

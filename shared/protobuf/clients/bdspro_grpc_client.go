@@ -87,6 +87,20 @@ func (c *BdsproGrpcClient) GetCountByOwner(ctx context.Context, req *bdspropb.Ge
 	return response, nil
 }
 
+// GetDashboardByProfileId lấy dashboard stats theo profileId
+func (c *BdsproGrpcClient) GetDashboardByProfileId(ctx context.Context, profileId uint64) (*sharepb.BDSProDashboardProto, error) {
+	if c.InternalClient == nil {
+		return nil, errors.New("bdspro internal client not available")
+	}
+
+	resp, err := c.InternalClient.GetDashboardByProfileId(ctx, &sharepb.IdRequest{Id: profileId})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (c *BdsproGrpcClient) GetSuggest(ctx context.Context, content string) (*_dto.ProductV3DTO, error) {
 	if c.InternalClient == nil {
 		return nil, errors.New("bdspro internal client not available")
