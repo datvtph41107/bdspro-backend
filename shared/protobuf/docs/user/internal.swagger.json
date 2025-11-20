@@ -86,6 +86,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -247,7 +251,7 @@
             "$ref": "#/definitions/sharepbItemV3Proto"
           }
         },
-        "tagProfessions": {
+        "tagJobs": {
           "type": "array",
           "items": {
             "type": "object",
@@ -288,6 +292,19 @@
           "type": "string"
         },
         "signatureVisible": {
+          "type": "boolean"
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "updateTags": {
           "type": "boolean"
         }
       }

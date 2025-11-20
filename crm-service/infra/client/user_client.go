@@ -292,6 +292,10 @@ func (c *UserClient) ValidateProfileIds(ctx context.Context, profileIds []uint64
 	return len(response.Profiles) == len(profileIds), nil
 }
 
+func (c *UserClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]struct{}) (map[uint64]*sharepb.ProfileItem, error) {
+	return c.UserGrpcClient.GetMapByIDs(ctx, profileIDSet)
+}
+
 func (c *UserClient) MapToRulePb(ctx context.Context, rules []*crmpb.RuleDTO) {
 	profileIDSet := make(map[uint64]struct{})
 	for _, rule := range rules {

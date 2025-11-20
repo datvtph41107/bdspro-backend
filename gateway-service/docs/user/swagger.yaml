@@ -358,8 +358,8 @@ definitions:
     type: integer
     x-enum-varnames:
     - Online
-    - Offline
-    - Busy
+    - LASTEST
+    - HIDDEN
   enums.ERole:
     enum:
     - 10
@@ -508,6 +508,8 @@ definitions:
         type: integer
       id:
         type: integer
+      isActive:
+        type: boolean
       issueDate:
         description: ngày cấp
         type: string
@@ -565,9 +567,65 @@ definitions:
       totalReviews:
         type: integer
     type: object
+  sharepb.AddressV3Proto:
+    properties:
+      detail:
+        type: string
+      districtId:
+        type: integer
+      districtName:
+        type: string
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      wardId:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  sharepb.BDSProDashboardProto:
+    properties:
+      totalAsset:
+        type: integer
+      totalPost:
+        type: integer
+      totalProduct:
+        type: integer
+      totalProject:
+        type: integer
+    type: object
+  sharepb.ContactInfoV3Proto:
+    properties:
+      blockId:
+        type: integer
+      contactId:
+        type: integer
+      followId:
+        type: integer
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+      reportId:
+        type: integer
+    type: object
   sharepb.Empty:
     type: object
   sharepb.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  sharepb.FriendV3Proto:
     properties:
       createdBy:
         type: integer
@@ -619,8 +677,56 @@ definitions:
     properties:
       id:
         type: integer
+      itemType:
+        type: integer
       name:
         type: string
+    type: object
+  sharepb.KYCV3Proto:
+    properties:
+      backImage:
+        type: string
+      createdAt:
+        type: string
+      frontImage:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      identityCard:
+        type: string
+      profileId:
+        type: integer
+      rejectReason:
+        type: string
+      reviewedAt:
+        type: string
+      reviewedBy:
+        type: integer
+      selfieImage:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  sharepb.RateStatsV3Proto:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
     type: object
   sharepb.SubmitResponse:
     properties:
@@ -633,11 +739,52 @@ definitions:
       message:
         type: string
     type: object
+  sharepb.TotalResponseProto:
+    properties:
+      bdsproInfo:
+        $ref: '#/definitions/sharepb.BDSProDashboardProto'
+      contactInfo:
+        $ref: '#/definitions/sharepb.ContactInfoV3Proto'
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendV3Proto'
+      kyc:
+        $ref: '#/definitions/sharepb.KYCV3Proto'
+      province:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      rateStats:
+        $ref: '#/definitions/sharepb.RateStatsV3Proto'
+      user:
+        $ref: '#/definitions/sharepb.UserV3Proto'
+    type: object
   sharepb.UserV3Proto:
     properties:
+      address:
+        $ref: '#/definitions/sharepb.AddressV3Proto'
       avatar:
         type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      blogUrl:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      facebookUrl:
+        type: string
       fullName:
+        type: string
+      gender:
+        type: integer
+      instagramUrl:
+        type: string
+      introduction:
+        type: string
+      kyc:
+        $ref: '#/definitions/sharepb.KYCV3Proto'
+      linkedinUrl:
         type: string
       mainAreaIds:
         items:
@@ -647,14 +794,68 @@ definitions:
         items:
           $ref: '#/definitions/sharepb.ItemV3Proto'
         type: array
+      mainAreas:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      otherUrl:
+        type: string
+      phone:
+        type: string
+      phone2:
+        type: string
       profileId:
+        type: integer
+      profileVisibility:
         type: integer
       purposeUseIds:
         items:
           type: integer
         type: array
+      purposeUses:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
       roleRealEstate:
         type: integer
+      signatureVisible:
+        type: boolean
+      statusOnline:
+        type: integer
+      tagJobs:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tagMainAreas:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tagProjects:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tagSpecialities:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tags:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      twitterUrl:
+        type: string
+      updateTags:
+        type: boolean
+      updatedAt:
+        type: string
+      visibility:
+        type: integer
+      websiteUrl:
+        type: string
+      youtubeUrl:
+        type: string
+      zaloUrl:
+        type: string
     type: object
   timestamppb.Timestamp:
     properties:
@@ -1094,6 +1295,15 @@ definitions:
       totalPages:
         type: integer
     type: object
+  userpb.ListKYCsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/sharepb.KYCV3Proto'
+        type: array
+      total:
+        type: integer
+    type: object
   userpb.LockUserRequest:
     properties:
       lockType:
@@ -1157,6 +1367,19 @@ definitions:
       updatedAt:
         $ref: '#/definitions/timestamppb.Timestamp'
     type: object
+  userpb.PersonConfigInput:
+    properties:
+      channel:
+        type: integer
+      checked:
+        type: boolean
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+    type: object
   userpb.PlanResponse:
     properties:
       color:
@@ -1200,10 +1423,33 @@ definitions:
       visibility:
         type: boolean
     type: object
+  userpb.Profession:
+    properties:
+      approveUserId:
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      issueDate:
+        type: string
+      issuer:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
   userpb.ProfessionItem:
     properties:
       id:
         type: integer
+      isActive:
+        type: boolean
       issueDate:
         type: string
       issuer:
@@ -1249,6 +1495,8 @@ definitions:
         type: string
       introduction:
         type: string
+      kyc:
+        $ref: '#/definitions/sharepb.KYCV3Proto'
       linkedin:
         type: string
       mainAreas:
@@ -1293,6 +1541,10 @@ definitions:
         type: integer
       tabDefault:
         type: integer
+      tags:
+        items:
+          $ref: '#/definitions/userpb.TagItem'
+        type: array
       taxCode:
         type: string
       twitter:
@@ -1358,6 +1610,15 @@ definitions:
       totalReviews:
         type: integer
     type: object
+  userpb.RejectKYCRequest:
+    properties:
+      id:
+        description: KYC ID
+        type: integer
+      reason:
+        description: Lý do từ chối
+        type: string
+    type: object
   userpb.SetPersonRequest:
     properties:
       birth:
@@ -1373,6 +1634,37 @@ definitions:
       provinceId:
         type: integer
       wardId:
+        type: integer
+    type: object
+  userpb.SubmitKYCRequest:
+    properties:
+      backImage:
+        description: Ảnh mặt sau CMND/CCCD
+        type: string
+      frontImage:
+        description: Ảnh mặt trước CMND/CCCD
+        type: string
+      fullName:
+        description: Họ tên
+        type: string
+      identityCard:
+        description: Số CMND/CCCD
+        type: string
+      selfieImage:
+        description: Ảnh selfie (optional)
+        type: string
+    type: object
+  userpb.TagItem:
+    properties:
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      tagType:
         type: integer
     type: object
   userpb.UnLockUserRequest:
@@ -1422,6 +1714,19 @@ definitions:
       visibility:
         type: boolean
     type: object
+  userpb.UpdatePrivacySettingRequest:
+    properties:
+      personConfigs:
+        items:
+          $ref: '#/definitions/userpb.PersonConfigInput'
+        type: array
+      profileVisibility:
+        type: integer
+      statusOnline:
+        type: integer
+      visibility:
+        type: integer
+    type: object
   userpb.UpdateUserRequest:
     properties:
       address:
@@ -1442,6 +1747,9 @@ definitions:
       gender:
         description: Giới tính
         type: integer
+      idVerifiedAt:
+        description: 'Thời gian xác thực ID (format: ISO 8601)'
+        type: string
       phone:
         description: Số điện thoại
         type: string
@@ -2434,6 +2742,179 @@ paths:
       summary: Xem thông tin public của người dùng
       tags:
       - Profile
+  /v2/kyc/submit:
+    post:
+      consumes:
+      - application/json
+      description: User submit KYC verification request
+      parameters:
+      - description: Thông tin KYC
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.SubmitKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.KYCV3Proto'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Submit KYC request
+      tags:
+      - KYC
+  /v2/user/admin/kyc/approve/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Admin duyệt yêu cầu KYC của user
+      parameters:
+      - description: KYC ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Duyệt KYC request
+      tags:
+      - Admin KYC
+  /v2/user/admin/kyc/reject/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Admin từ chối yêu cầu KYC của user
+      parameters:
+      - description: KYC ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Lý do từ chối
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.RejectKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Từ chối KYC request
+      tags:
+      - Admin KYC
+  /v2/user/admin/kycs:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả KYC requests với phân trang và tìm kiếm (Admin
+        only)
+      parameters:
+      - description: 'Trang hiện tại (mặc định: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Số lượng item trên mỗi trang (mặc định: 20)'
+        in: query
+        name: size
+        type: integer
+      - description: Tìm kiếm theo tên, số CMND
+        in: query
+        name: search
+        type: string
+      - description: 'Lọc theo trạng thái: 10: Pending, 20: Approved, 30: Rejected'
+        in: query
+        name: status
+        type: integer
+      - description: Sắp xếp theo trường
+        in: query
+        name: sortBy
+        type: string
+      - description: Thứ tự sắp xếp (asc, desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ListKYCsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách KYC requests
+      tags:
+      - Admin KYC
   /v2/user/admin/main-area:
     get:
       consumes:
@@ -2530,6 +3011,90 @@ paths:
       security:
       - BearerAuth: []
       summary: Cập nhật nhãn khu vực hoạt động
+      tags:
+      - AdminDictionary
+  /v2/user/admin/profession:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nghề nghiệp với phân trang (Admin)
+      parameters:
+      - description: Trang hiện tại (bắt đầu từ 0)
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang (tối đa 100)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nghề nghiệp
+      tags:
+      - AdminDictionary
+    post:
+      consumes:
+      - application/json
+      description: Tạo nghề nghiệp mới (Admin)
+      parameters:
+      - description: Thông tin nghề nghiệp
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.Profession'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nghề nghiệp
+      tags:
+      - AdminDictionary
+  /v2/user/admin/profession/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa mềm nghề nghiệp (Admin)
+      parameters:
+      - description: ID nghề nghiệp
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa nghề nghiệp
+      tags:
+      - AdminDictionary
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin nghề nghiệp (Admin)
+      parameters:
+      - description: ID nghề nghiệp
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin nghề nghiệp
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.Profession'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật nghề nghiệp
       tags:
       - AdminDictionary
   /v2/user/admin/purpose-use:
@@ -2996,6 +3561,28 @@ paths:
       summary: Lấy danh sách nhãn khu vực hoạt động
       tags:
       - UserDictionary
+  /v2/user/profession:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nghề nghiệp đã được duyệt (User)
+      parameters:
+      - description: Trang hiện tại (bắt đầu từ 0)
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang (tối đa 100)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nghề nghiệp
+      tags:
+      - UserDictionary
   /v2/user/profile/accounts/me:
     get:
       consumes:
@@ -3082,6 +3669,35 @@ paths:
       summary: Lấy thông tin công khai của người dùng request
       tags:
       - Profile
+  /v2/user/profile/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Chỉ cập nhật visibility, profileVisibility, statusOnline và đồng
+        bộ person_config sang notification
+      parameters:
+      - description: Thiết lập quyền riêng tư
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UpdatePrivacySettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quyền riêng tư hồ sơ
+      tags:
+      - Profile
   /v2/user/profile/quick-setup:
     post:
       consumes:
@@ -3105,6 +3721,35 @@ paths:
       security:
       - BearerAuth: []
       summary: Cài đặt nhanh hồ sơ người dùng
+      tags:
+      - Profile
+  /v2/user/profile/set-info:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt,
+        email, địa chỉ)
+      parameters:
+      - description: Thông tin cá nhân
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.UserV3Proto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin cá nhân
       tags:
       - Profile
   /v2/user/profile/set-person:
@@ -3188,6 +3833,29 @@ paths:
       summary: Lấy thống kê số lượng user
       tags:
       - Dashboard
+  /v3/user/profile/info/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin công khai của người dùng v3
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin công khai của người dùng
+          schema:
+            $ref: '#/definitions/sharepb.TotalResponseProto'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin công khai của người dùng v3
+      tags:
+      - Profile
 securityDefinitions:
   BearerAuth:
     in: header

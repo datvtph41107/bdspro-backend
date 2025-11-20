@@ -27,7 +27,7 @@ func (u *InvitationInstallUsecase) SendInvitation(ctx context.Context, ids []uin
 	entities := make([]*domain.AppInvitedEntity, len(ids))
 	for i, id := range ids {
 		entities[i] = &domain.AppInvitedEntity{
-			ContactID: id,
+			ContactID: &id,
 			Content:   req.Content,
 			Link:      req.Link,
 			Channel:   req.Channel,

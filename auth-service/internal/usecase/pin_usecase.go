@@ -6,6 +6,7 @@ import (
 	"auth/internal/enums"
 	"auth/internal/interface/provider"
 	"auth/internal/interface/repo"
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -25,6 +26,7 @@ type PINUsecase struct {
 	otpUsecase           *OtpUsecase
 	profileProvider      provider.ProfileProvider
 	notificationProvider provider.NotificationProvider
+	deviceUsecase        *DeviceUsecase
 	maxPINAttempts       int
 	pinLockDuration      time.Duration
 }
@@ -38,6 +40,7 @@ func NewPINUsecase(
 	otpUsecase *OtpUsecase,
 	profileProvider provider.ProfileProvider,
 	notificationProvider provider.NotificationProvider,
+	deviceUsecase *DeviceUsecase,
 ) *PINUsecase {
 	return &PINUsecase{
 		pinRepo:              pinRepo,
@@ -48,6 +51,7 @@ func NewPINUsecase(
 		otpUsecase:           otpUsecase,
 		profileProvider:      profileProvider,
 		notificationProvider: notificationProvider,
+		deviceUsecase:        deviceUsecase,
 		maxPINAttempts:       3,
 		pinLockDuration:      15 * time.Minute,
 	}
@@ -160,7 +164,7 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 	// Generate access token
 	accessToken := "generated_token" // TODO: Implement proper token generation
 
-	return &dto.AuthLoginResponse{
+	response := &dto.AuthLoginResponse{
 		AuthID:       authEntity.ID,
 		ProfileID:    profile.ProfileID,
 		AccessToken:  accessToken,
@@ -168,7 +172,29 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 		Username:     profile.FullName,
 		FullName:     profile.FullName,
 		ReferralCode: profile.ReferralCode,
-	}, nil
+	}
+
+	// Cập nhật device với authId và profileId nếu có thông tin thiết bị
+	if s.deviceUsecase != nil {
+		deviceID := request.DeviceID
+		if deviceID == "" {
+			deviceID = request.DeviceName
+		}
+		if deviceID != "" && authEntity.ID > 0 && profile.ProfileID > 0 {
+			go func() {
+				// Tạo context mới với authId và profileId
+				deviceCtx := context.WithValue(context.Background(), _enum.ProfileIDKey, profile.ProfileID)
+				deviceCtx = context.WithValue(deviceCtx, _enum.AuthIDKey, authEntity.ID)
+
+				err := s.deviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, authEntity.ID, profile.ProfileID)
+				if err != nil {
+					log.Printf("Failed to update device with auth info after verify PIN: %v", err)
+				}
+			}()
+		}
+	}
+
+	return response, nil
 }
 
 // UpdatePIN cập nhật mã PIN

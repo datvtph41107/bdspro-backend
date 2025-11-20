@@ -4,7 +4,7 @@ import (
 	"context"
 	"feedback/internal/dto"
 	"feedback/internal/usecase"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 	sharepb "pb/types/shared"
 
 	_dto "common/domain/dto"
@@ -12,7 +12,7 @@ import (
 )
 
 type ReportReasonHandler struct {
-	feedbackpb.UnimplementedReportReasonServiceServer
+	crmpb.UnimplementedReportReasonServiceServer
 	reportReasonUsecase *usecase.ReportReasonUsecase
 }
 
@@ -31,7 +31,7 @@ func NewReportReasonHandler(reportReasonUsecase *usecase.ReportReasonUsecase) *R
 // @Security BearerAuth
 // @Param request body dto.ReportReasonCreateRequest true "Thông tin lý do báo cáo"
 // @Router /report-reason [post]
-func (h *ReportReasonHandler) CreateReportReason(ctx context.Context, req *feedbackpb.CreateReportReasonRequest) (*feedbackpb.CreateReportReasonResponse, error) {
+func (h *ReportReasonHandler) CreateReportReason(ctx context.Context, req *crmpb.CreateReportReasonRequest) (*crmpb.CreateReportReasonResponse, error) {
 	// Convert protobuf request to DTO
 	createReq := &dto.ReportReasonCreateRequest{
 		Name:        req.Name,
@@ -48,7 +48,7 @@ func (h *ReportReasonHandler) CreateReportReason(ctx context.Context, req *feedb
 	// Convert to protobuf response
 	reasonResponse := convertReportReasonToProtobuf(response)
 
-	return &feedbackpb.CreateReportReasonResponse{
+	return &crmpb.CreateReportReasonResponse{
 		Reason: reasonResponse,
 	}, nil
 }
@@ -62,9 +62,9 @@ func (h *ReportReasonHandler) CreateReportReason(ctx context.Context, req *feedb
 // @Param is_active query bool false "Lọc theo trạng thái hoạt động"
 // @Param page query int false "Số trang"
 // @Param size query int false "Kích thước trang"
-// @Success 200 {object} feedbackpb.GetReportReasonListResponse
+// @Success 200 {object} crmpb.GetReportReasonListResponse
 // @Router /report-reason [get]
-func (h *ReportReasonHandler) GetReportReasonList(ctx context.Context, req *feedbackpb.GetReportReasonListRequest) (*feedbackpb.GetReportReasonListResponse, error) {
+func (h *ReportReasonHandler) GetReportReasonList(ctx context.Context, req *crmpb.GetReportReasonListRequest) (*crmpb.GetReportReasonListResponse, error) {
 	// Convert protobuf request to DTO
 	listReq := &dto.ReportReasonListRequest{
 		Pagable: _dto.Pagable{
@@ -81,12 +81,12 @@ func (h *ReportReasonHandler) GetReportReasonList(ctx context.Context, req *feed
 	}
 
 	// Convert to protobuf
-	reasons := make([]*feedbackpb.ReportReason, len(response.Data))
+	reasons := make([]*crmpb.ReportReason, len(response.Data))
 	for i, reason := range response.Data {
 		reasons[i] = convertReportReasonToProtobuf(&reason)
 	}
 
-	return &feedbackpb.GetReportReasonListResponse{
+	return &crmpb.GetReportReasonListResponse{
 		Data:  reasons,
 		Total: response.Total,
 	}, nil
@@ -99,9 +99,9 @@ func (h *ReportReasonHandler) GetReportReasonList(ctx context.Context, req *feed
 // @Accept json
 // @Produce json
 // @Param id path uint64 true "ID lý do báo cáo"
-// @Success 200 {object} feedbackpb.GetReportReasonResponse
+// @Success 200 {object} crmpb.GetReportReasonResponse
 // @Router /report-reason/{id} [get]
-func (h *ReportReasonHandler) GetReportReason(ctx context.Context, req *sharepb.IdRequest) (*feedbackpb.GetReportReasonResponse, error) {
+func (h *ReportReasonHandler) GetReportReason(ctx context.Context, req *sharepb.IdRequest) (*crmpb.GetReportReasonResponse, error) {
 	// Get reason by ID
 	response, err := h.reportReasonUsecase.GetReportReasonByID(ctx, req.Id)
 	if err != nil {
@@ -111,7 +111,7 @@ func (h *ReportReasonHandler) GetReportReason(ctx context.Context, req *sharepb.
 	// Convert to protobuf response
 	reasonResponse := convertReportReasonToProtobuf(response)
 
-	return &feedbackpb.GetReportReasonResponse{
+	return &crmpb.GetReportReasonResponse{
 		Reason: reasonResponse,
 	}, nil
 }
@@ -125,9 +125,9 @@ func (h *ReportReasonHandler) GetReportReason(ctx context.Context, req *sharepb.
 // @Security BearerAuth
 // @Param id path uint64 true "ID lý do báo cáo"
 // @Param request body dto.ReportReasonUpdateRequest true "Thông tin cập nhật"
-// @Success 200 {object} feedbackpb.UpdateReportReasonResponse
+// @Success 200 {object} crmpb.UpdateReportReasonResponse
 // @Router /report-reason/{id} [put]
-func (h *ReportReasonHandler) UpdateReportReason(ctx context.Context, req *feedbackpb.UpdateReportReasonRequest) (*feedbackpb.UpdateReportReasonResponse, error) {
+func (h *ReportReasonHandler) UpdateReportReason(ctx context.Context, req *crmpb.UpdateReportReasonRequest) (*crmpb.UpdateReportReasonResponse, error) {
 	// Convert protobuf request to DTO
 	updateReq := &dto.ReportReasonUpdateRequest{
 		ID:          req.Id,
@@ -145,7 +145,7 @@ func (h *ReportReasonHandler) UpdateReportReason(ctx context.Context, req *feedb
 	// Convert to protobuf response
 	reasonResponse := convertReportReasonToProtobuf(response)
 
-	return &feedbackpb.UpdateReportReasonResponse{
+	return &crmpb.UpdateReportReasonResponse{
 		Reason: reasonResponse,
 	}, nil
 }
@@ -174,12 +174,12 @@ func (h *ReportReasonHandler) DeleteReportReason(ctx context.Context, req *share
 }
 
 // Helper functions to convert between protobuf and domain
-func convertReportReasonToProtobuf(reason *dto.ReportReasonResponse) *feedbackpb.ReportReason {
+func convertReportReasonToProtobuf(reason *dto.ReportReasonResponse) *crmpb.ReportReason {
 	if reason == nil {
 		return nil
 	}
 
-	return &feedbackpb.ReportReason{
+	return &crmpb.ReportReason{
 		Id:          reason.ID,
 		Name:        reason.Name,
 		Description: reason.Description,

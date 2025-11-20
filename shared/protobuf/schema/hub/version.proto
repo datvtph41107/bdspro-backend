@@ -131,6 +131,12 @@ service VersionService {
     };
   };
 
+  rpc CreateVersionFromDev(CreateVersionRequest) returns (CreateVersionResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/app-bundle/version"
+      body: "*"
+    };
+  };
   rpc CheckAppUpdate(CheckAppUpdateRequest) returns (CheckAppUpdateResponse) {
     option (google.api.http) = {
       get: "/v2/hub/app-bundle/update-check/{appName}"

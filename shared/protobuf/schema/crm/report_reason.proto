@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package feedbackpb;
+package crmpb;
 
-option go_package = "pb/types/feedback;feedbackpb";
+option go_package = "pb/types/crm;crmpb";
 
 import "shared/common.proto";
 import "google/api/annotations.proto";

@@ -33,6 +33,13 @@ func AutoMigrate() {
 
 		// App invited
 		&domain.AppInvitedEntity{},
+
+		// Registry
+		&domain.FeedbackRegistry{},
+		&domain.Rate{},
+		&domain.Report{},
+		&domain.ReportReason{},
+		&domain.ReportProof{},
 	)
 
 	log.Println("Migrate success")

@@ -28,7 +28,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 	registryUsecase := usecase.NewRegistryUsecase(registryRepo)
 	rateRepo := postgre.NewRatePostgres(db)
 	iTransaction := postgre.NewTransactionPostgres(db)
-	rateUsecase := usecase.NewRateUsecase(rateRepo, iTransaction, registryUsecase)
+	notificationProvider := client.NewNotificationClient()
+	rateUsecase := usecase.NewRateUsecase(rateRepo, iTransaction, registryUsecase, notificationProvider)
 	internalHandler := handler.NewInternalHandler(registryUsecase, rateUsecase)
 	userClient := client.NewUserClient()
 	rateMapper := mapper.NewRateMapper(userClient)
@@ -49,4 +50,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, initial.NewApp, handler.NewInternalHandler, handler.NewRateHandler, mapper.NewRateMapper, postgre.NewRatePostgres, usecase.NewRateUsecase, initial.NewRedisService, handler.NewRegistryHandler, postgre.NewRegistryPostgres, usecase.NewRegistryUsecase, handler.NewReportAdminHandler, handler.NewReportHandler, mapper.NewReportMapper, postgre.NewReportPostgres, postgre.NewReportProofPostgres, handler.NewReportReasonHandler, postgre.NewReportReasonPostgres, usecase.NewReportReasonUsecase, usecase.NewReportUsecase, postgre.NewTransactionPostgres, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, initial.NewApp, handler.NewInternalHandler, client.NewNotificationClient, handler.NewRateHandler, mapper.NewRateMapper, postgre.NewRatePostgres, usecase.NewRateUsecase, initial.NewRedisService, handler.NewRegistryHandler, postgre.NewRegistryPostgres, usecase.NewRegistryUsecase, handler.NewReportAdminHandler, handler.NewReportHandler, mapper.NewReportMapper, postgre.NewReportPostgres, postgre.NewReportProofPostgres, handler.NewReportReasonHandler, postgre.NewReportReasonPostgres, usecase.NewReportReasonUsecase, usecase.NewReportUsecase, postgre.NewTransactionPostgres, client.NewUserClient)

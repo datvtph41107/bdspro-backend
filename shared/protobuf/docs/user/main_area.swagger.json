@@ -353,6 +353,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

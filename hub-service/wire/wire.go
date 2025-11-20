@@ -7,12 +7,14 @@ import (
 	"github.com/google/wire"
 	_db "common/db"
 	"hub/initial"
+	hub_infra_client "hub/infra/client"
 	hub_infra_handler "hub/infra/handler"
 	hub_infra_mapper "hub/infra/mapper"
 	hub_infra_middleware "hub/infra/middleware"
 	hub_infra_postgre "hub/infra/postgre"
 	hub_infra_setting "hub/infra/setting"
 	hub_initial "hub/initial"
+	hub_internal_interface "hub/internal/interface"
 	hub_internal_repo "hub/internal/repo"
 	hub_internal_usecase "hub/internal/usecase"
 	user_internal_repo "hub/internal/repo"
@@ -22,6 +24,8 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	wire.Bind(new(hub_internal_interface.INotificationClient), new(*hub_infra_client.NotificationClient)),
+	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
 	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
 	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
@@ -46,12 +50,14 @@ var wireSet = wire.NewSet(
 	hub_infra_handler.NewLocationV2Handler,
 	hub_infra_mapper.NewLocationV2Mapper,
 	hub_internal_usecase.NewLocationV2Usecase,
+	hub_infra_client.NewNotificationClient,
 	hub_infra_postgre.NewProvinceRepo,
 	hub_infra_postgre.NewProvinceV2Repo,
 	hub_infra_handler.NewSystemConfigHandler,
 	hub_infra_setting.NewSystemConfigPersist,
 	hub_infra_postgre.NewSystemConfigPostgres,
 	hub_internal_usecase.NewSystemConfigUsecase,
+	hub_infra_client.NewUserClient,
 	hub_infra_handler.NewUserGuideHandler,
 	hub_infra_mapper.NewUserGuideMapper,
 	hub_infra_postgre.NewUserGuideRepo,

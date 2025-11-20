@@ -36,8 +36,8 @@ var GrpcCmd = &cobra.Command{
 		// db.AutoMigrate()
 
 		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
-		// Đăng ký service vào feedback registry
-		app.FeedbackClient.RegisterService(context.Background())
+		// Đăng ký service vào crm registry
+		app.CrmClient.RegisterService(context.Background())
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)

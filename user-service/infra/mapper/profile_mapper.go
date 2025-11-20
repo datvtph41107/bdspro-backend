@@ -323,6 +323,8 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 		SignatureVisible: req.SignatureVisible,
 		Gender:           req.Gender,
 		Birth:            _utils.ParseStringToTime(req.Birth),
+		UpdateTags:       req.UpdateTags,
+		Introduction:     req.Introduction,
 		// MainAreaNews:   req.MainAreaNews,
 	}
 
@@ -347,6 +349,16 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 		}
 	}
 
+	if req.Tags != nil && result.UpdateTags {
+		for _, tag := range req.Tags {
+			result.Tags = append(result.Tags, _dto.ItemDTO{
+				ID:       tag.Id,
+				Name:     tag.Name,
+				ItemType: tag.ItemType,
+			})
+		}
+	}
+
 	return result
 }
 
@@ -368,25 +380,30 @@ func (m *ProfileMapper) ModelToUserV3Proto(profile *models.UserProfileEntity, ky
 			ProvinceId: profile.ProvinceID,
 			WardId:     profile.WardID,
 		},
-		Phone2:           profile.Phone2,
-		ZaloUrl:          profile.ZaloURL,
-		FacebookUrl:      profile.FacebookURL,
-		InstagramUrl:     profile.InstagramURL,
-		TwitterUrl:       profile.TwitterURL,
-		LinkedinUrl:      profile.LinkedinURL,
-		YoutubeUrl:       profile.YoutubeURL,
-		WebsiteUrl:       profile.WebsiteURL,
-		SignatureVisible: profile.SignatureVisible,
-		RoleRealEstate:   uint32(profile.RoleRealEstate),
-		MainAreaIds:      nil,
-		PurposeUseIds:    nil,
-		CreatedAt:        _utils.FormatTimeToString(profile.CreatedAt),
-		UpdatedAt:        _utils.FormatTimeToString(profile.UpdatedAt),
+		Phone2:            profile.Phone2,
+		ZaloUrl:           profile.ZaloURL,
+		FacebookUrl:       profile.FacebookURL,
+		InstagramUrl:      profile.InstagramURL,
+		TwitterUrl:        profile.TwitterURL,
+		LinkedinUrl:       profile.LinkedinURL,
+		YoutubeUrl:        profile.YoutubeURL,
+		WebsiteUrl:        profile.WebsiteURL,
+		SignatureVisible:  profile.SignatureVisible,
+		RoleRealEstate:    uint32(profile.RoleRealEstate),
+		MainAreaIds:       nil,
+		PurposeUseIds:     nil,
+		Visibility:        uint32(profile.Visibility),
+		ProfileVisibility: uint32(profile.ProfileVisibility),
+		StatusOnline:      uint32(profile.StatusOnline),
+		CreatedAt:         _utils.FormatTimeToString(profile.CreatedAt),
+		UpdatedAt:         _utils.FormatTimeToString(profile.UpdatedAt),
+
+		// TabDefault:        enums.ESettingTab(profile.TabDefault),
 	}
 
-	if len(profile.TagProfessions) > 0 {
-		for _, profession := range profile.TagProfessions {
-			result.TagProfessions = append(result.TagProfessions, &sharepb.ItemV3Proto{
+	if len(profile.TagJobs) > 0 {
+		for _, profession := range profile.TagJobs {
+			result.TagJobs = append(result.TagJobs, &sharepb.ItemV3Proto{
 				Id:   profession.ID,
 				Name: profession.Name,
 			})
@@ -479,9 +496,9 @@ func (m *ProfileMapper) DTOToUserV3Proto(profile *_dto.UserV3DTO, kyc *sharepb.K
 		}
 	}
 
-	if len(profile.TagProfessions) > 0 {
-		for _, profession := range profile.TagProfessions {
-			result.TagProfessions = append(result.TagProfessions, &sharepb.ItemV3Proto{
+	if len(profile.TagJobs) > 0 {
+		for _, profession := range profile.TagJobs {
+			result.TagJobs = append(result.TagJobs, &sharepb.ItemV3Proto{
 				Id:   profession.ID,
 				Name: profession.Name,
 			})

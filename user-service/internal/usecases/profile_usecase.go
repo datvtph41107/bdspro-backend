@@ -30,8 +30,7 @@ type ProfileUsecase struct {
 	PurposeUseRepo     repo.IPurposeUseRepo
 	MainAreaRepo       repo.IMainAreaRepo
 	TagRepo            repo.ITagRepo
-	FeedbackProvider   providers.FeedbackProvider
-	FriendRepo         providers.FriendProvider
+	CrmProvider        providers.CrmProvider
 	FollowRepo         repo.IFollowRepo
 	AuthProvider       providers.AuthProvider
 	NotificationClient providers.NotificationProvider
@@ -44,8 +43,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	PurposeUseRepo repo.IPurposeUseRepo,
 	MainAreaRepo repo.IMainAreaRepo,
 	TagRepo repo.ITagRepo,
-	FeedbackProvider providers.FeedbackProvider,
-	FriendRepo providers.FriendProvider,
+	CrmProvider providers.CrmProvider,
 	FollowRepo repo.IFollowRepo,
 	AuthProvider providers.AuthProvider,
 	NotificationClient providers.NotificationProvider,
@@ -60,8 +58,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 		PurposeUseRepo:     PurposeUseRepo,
 		MainAreaRepo:       MainAreaRepo,
 		TagRepo:            TagRepo,
-		FeedbackProvider:   FeedbackProvider,
-		FriendRepo:         FriendRepo,
+		CrmProvider:        CrmProvider,
 		FollowRepo:         FollowRepo,
 		AuthProvider:       AuthProvider,
 		NotificationClient: NotificationClient,
@@ -72,6 +69,9 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity, error) {
 	id := _utils.GetProfileIdWithContext(c)
 	userInfo, _ := s.ProfileRepo.GetByProfileID(id)
+	if userInfo == nil {
+		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+	}
 
 	professions, _ := s.ProfessionRepo.ListItemByProfileID(c, id)
 	userInfo.Professions = professions
@@ -103,19 +103,19 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 				userInfo.TagSpecialties = append(userInfo.TagSpecialties, tag)
 			} else if tag.TagType == enums.TagTypeProject {
 				userInfo.TagProjects = append(userInfo.TagProjects, tag)
-			} else if tag.TagType == enums.TagTypeProfession {
-				userInfo.TagProfessions = append(userInfo.TagProfessions, tag)
+			} else if tag.TagType == enums.TagTypeJob {
+				userInfo.TagJobs = append(userInfo.TagJobs, tag)
 			}
 		}
 	}
 
-	// Lấy thống kê rating từ feedback service
-	rateStatsResp, err := s.FeedbackProvider.GetUserRateStats(c, id)
+	// Lấy thống kê rating từ crm service
+	rateStatsResp, err := s.CrmProvider.GetUserRateStats(c, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert feedback response to user model
+	// Convert crm response to user model
 	stats := models.RateStats{
 		TotalReviews: rateStatsResp.TotalReviews,
 		AverageScore: rateStatsResp.AverageScore,
@@ -125,6 +125,7 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 		Star4Count:   rateStatsResp.Star4Count,
 		Star5Count:   rateStatsResp.Star5Count,
 	}
+
 	userInfo.RateStats = &stats
 
 	return userInfo, nil
@@ -236,8 +237,8 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 					infoEntity.TagSpecialties = append(infoEntity.TagSpecialties, tag)
 				} else if tag.TagType == enums.TagTypeProject {
 					infoEntity.TagProjects = append(infoEntity.TagProjects, tag)
-				} else if tag.TagType == enums.TagTypeProfession {
-					infoEntity.TagProfessions = append(infoEntity.TagProfessions, tag)
+				} else if tag.TagType == enums.TagTypeJob {
+					infoEntity.TagJobs = append(infoEntity.TagJobs, tag)
 				}
 			}
 		} else {
@@ -246,11 +247,6 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 	}
 
 	return infoEntity, nil
-}
-
-func (s *ProfileUsecase) PublicUserInfoMe(c context.Context) (*models.UserProfileEntity, error) {
-	profileId := _utils.GetProfileIdWithContext(c)
-	return s.PublicUserInfo(c, profileId, true)
 }
 
 func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isMe bool) (*models.UserProfileEntity, error) {
@@ -294,8 +290,8 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 					infoEntity.TagSpecialties = append(infoEntity.TagSpecialties, tag)
 				} else if tag.TagType == enums.TagTypeProject {
 					infoEntity.TagProjects = append(infoEntity.TagProjects, tag)
-				} else if tag.TagType == enums.TagTypeProfession {
-					infoEntity.TagProfessions = append(infoEntity.TagProfessions, tag)
+				} else if tag.TagType == enums.TagTypeJob {
+					infoEntity.TagJobs = append(infoEntity.TagJobs, tag)
 				}
 			}
 		}
@@ -303,7 +299,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	}
 
 	// Lấy thống kê rating từ feedback service
-	rateStatsResp, err := s.FeedbackProvider.GetUserRateStats(c, profileId)
+	rateStatsResp, err := s.CrmProvider.GetUserRateStats(c, profileId)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +318,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 
 	var relationShip *models.FriendItem
 	if profileId != 0 {
-		relationShip, _ = s.FriendRepo.GetRelationShip(c, profileId, currentUserId)
+		relationShip, _ = s.CrmProvider.GetRelationShip(c, profileId, currentUserId)
 	}
 	following, _ := s.FollowRepo.GetFollowing(profileId, profileId)
 	infoEntity.FriendStatus = relationShip
@@ -416,8 +412,8 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 						ID:   tag.ID,
 						Name: tag.Name,
 					})
-				} else if tag.TagType == enums.TagTypeProfession {
-					user.TagProfessions = append(user.TagProfessions, _dto.ItemDTO{
+				} else if tag.TagType == enums.TagTypeJob {
+					user.TagJobs = append(user.TagJobs, _dto.ItemDTO{
 						ID:   tag.ID,
 						Name: tag.Name,
 					})
@@ -437,7 +433,7 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 
 	// Lấy thống kê rating từ feedback service
 	var stats *_dto.RateStateV3DTO
-	rateStatsResp, _ := s.FeedbackProvider.GetUserRateStatsV3(c, profileId)
+	rateStatsResp, _ := s.CrmProvider.GetUserRateStatsV3(c, profileId)
 	if rateStatsResp != nil {
 		stats = &_dto.RateStateV3DTO{
 			TotalReviews: rateStatsResp.TotalReviews,
@@ -455,7 +451,7 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 
 	var relationShip *_dto.FriendV3DTO
 	if profileId != 0 && currentUserId != 0 && profileId != currentUserId {
-		relationShip, _ = s.FriendRepo.GetRelationShipV3(c, profileId, currentUserId)
+		relationShip, _ = s.CrmProvider.GetRelationShipV3(c, profileId, currentUserId)
 	}
 	following, _ := s.FollowRepo.GetFollowing(profileId, profileId)
 	// infoEntity.FriendStatus = relationShip

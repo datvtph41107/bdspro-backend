@@ -95,13 +95,13 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 	// Background tasks - Gửi notification cho người được theo dõi
 	ctxClone := _utils.CloneContext(c)
 	go func() {
-		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
-		if currentUser == nil {
+		currentUser, err := s.userClient.GetProfileById(ctxClone, profileId)
+		if err != nil || currentUser == nil {
 			return
 		}
 
 		// Lấy thông tin contact để có targetId
-		_, err := s.contactRepo.GetByProfileID(ctxClone, followId, profileId, base_enum.EOwnerOfMember)
+		_, err = s.contactRepo.GetByProfileID(ctxClone, followId, profileId, base_enum.EOwnerOfMember)
 		if err != nil {
 			// Nếu chưa có contact thì tạo mới
 			targetUser, _ := s.userClient.GetProfileById(ctxClone, followId)
@@ -118,7 +118,8 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 			}
 		}
 
-		s.notificationClient.CreateNotification(
+		// Tạo notification cho người được theo dõi
+		err = s.notificationClient.CreateNotification(
 			ctxClone,
 			currentUser.Avatar,
 			"Theo dõi",
@@ -129,6 +130,10 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 			_enum.EOwnerOfMember,
 			[]string{strconv.FormatUint(followId, 10)},
 		)
+		if err != nil {
+			// Log error nhưng không ảnh hưởng đến flow chính
+			// Notification service sẽ tự động merge notification cũ nếu có
+		}
 	}()
 
 	return e, err

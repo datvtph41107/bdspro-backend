@@ -22,6 +22,7 @@ jwt:
 
 redis:
   host: 14.225.210.29:6379
+  pass: protected_redis_secure_password
 
 firebase:
   file: bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json

@@ -205,3 +205,82 @@ func (repo *FriendPostgre) CancelRequest(ctx context.Context, id uint64) error {
 		Update("deleted_at", time.Now()).
 		Error
 }
+
+// GetCommonFriends lấy danh sách bạn chung giữa 2 user
+// Trả về: danh sách profileId của bạn chung (tối đa limit), tổng số bạn chung
+func (repo *FriendPostgre) GetCommonFriends(ctx context.Context, user1Id uint64, user2Id uint64, limit int) ([]uint64, int64, error) {
+	// Lấy danh sách bạn bè của user1 (status = Accepted)
+	var user1Friends []domain.FriendEntity
+	err := repo.DB.
+		Model(&domain.FriendEntity{}).
+		Where("status = ? AND deleted_at IS NULL", enums.FriendStatusAccepted).
+		Where("(created_by = ? OR receiver_id = ?)", user1Id, user1Id).
+		Find(&user1Friends).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy danh sách bạn bè của user2 (status = Accepted)
+	var user2Friends []domain.FriendEntity
+	err = repo.DB.
+		Model(&domain.FriendEntity{}).
+		Where("status = ? AND deleted_at IS NULL", enums.FriendStatusAccepted).
+		Where("(created_by = ? OR receiver_id = ?)", user2Id, user2Id).
+		Find(&user2Friends).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Tạo map để tìm giao điểm - lưu profileId của bạn bè user1
+	user1FriendMap := make(map[uint64]bool)
+	for _, friend := range user1Friends {
+		var friendProfileId uint64
+		// Xác định profileId của bạn bè (người còn lại trong mối quan hệ)
+		if friend.CreatedBy != nil && *friend.CreatedBy == user1Id {
+			// user1 là người gửi, bạn bè là receiver
+			friendProfileId = friend.ReceiverID
+		} else if friend.ReceiverID == user1Id {
+			// user1 là người nhận, bạn bè là created_by
+			if friend.CreatedBy != nil {
+				friendProfileId = *friend.CreatedBy
+			}
+		}
+		// Loại bỏ chính user1 và user2
+		if friendProfileId != user1Id && friendProfileId != user2Id && friendProfileId > 0 {
+			user1FriendMap[friendProfileId] = true
+		}
+	}
+
+	// Tìm bạn chung từ danh sách bạn bè của user2
+	var commonFriends []uint64
+	commonFriendMap := make(map[uint64]bool) // Để tránh duplicate
+	for _, friend := range user2Friends {
+		var friendProfileId uint64
+		// Xác định profileId của bạn bè (người còn lại trong mối quan hệ)
+		if friend.CreatedBy != nil && *friend.CreatedBy == user2Id {
+			// user2 là người gửi, bạn bè là receiver
+			friendProfileId = friend.ReceiverID
+		} else if friend.ReceiverID == user2Id {
+			// user2 là người nhận, bạn bè là created_by
+			if friend.CreatedBy != nil {
+				friendProfileId = *friend.CreatedBy
+			}
+		}
+		// Loại bỏ chính user1 và user2, và kiểm tra xem có trong danh sách bạn bè của user1 không
+		if friendProfileId != user1Id && friendProfileId != user2Id && friendProfileId > 0 {
+			if user1FriendMap[friendProfileId] && !commonFriendMap[friendProfileId] {
+				commonFriends = append(commonFriends, friendProfileId)
+				commonFriendMap[friendProfileId] = true
+			}
+		}
+	}
+
+	total := int64(len(commonFriends))
+
+	// Giới hạn số lượng trả về
+	if limit > 0 && len(commonFriends) > limit {
+		commonFriends = commonFriends[:limit]
+	}
+
+	return commonFriends, total, nil
+}

@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"feedback/internal/usecase"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 	sharepb "pb/types/shared"
 )
 
@@ -25,7 +25,7 @@ func NewRegistryHandler(registryUsecase *usecase.RegistryUsecase) *RegistryHandl
 // @Produce json
 // @Success 200 {object} dto.RegistryListResponse
 // @Router /registry [get]
-func (h *RegistryHandler) List(ctx context.Context, req *sharepb.Empty) (*feedbackpb.GetRegistryListResponse, error) {
+func (h *RegistryHandler) List(ctx context.Context, req *sharepb.Empty) (*crmpb.GetRegistryListResponse, error) {
 	// Get all registries
 	registries, err := h.registryUsecase.GetAllRegistries(ctx)
 	if err != nil {
@@ -33,9 +33,9 @@ func (h *RegistryHandler) List(ctx context.Context, req *sharepb.Empty) (*feedba
 	}
 
 	// Convert to protobuf
-	responses := make([]*feedbackpb.FeedbackRegistry, len(registries))
+	responses := make([]*crmpb.FeedbackRegistry, len(registries))
 	for i, registry := range registries {
-		responses[i] = &feedbackpb.FeedbackRegistry{
+		responses[i] = &crmpb.FeedbackRegistry{
 			RegistryKey:  registry.RegistryKey,
 			RegistryName: registry.RegistryName,
 			Port:         int32(registry.Port),
@@ -43,7 +43,7 @@ func (h *RegistryHandler) List(ctx context.Context, req *sharepb.Empty) (*feedba
 		}
 	}
 
-	return &feedbackpb.GetRegistryListResponse{
+	return &crmpb.GetRegistryListResponse{
 		Data: responses,
 	}, nil
 }

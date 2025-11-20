@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -8,21 +10,25 @@ import (
 	"feedback/internal/domain"
 	"feedback/internal/dto"
 	"feedback/internal/interface/repo"
+	"fmt"
 )
 
 type RateUsecase struct {
-	rateRepo        repo.RateRepo
-	transaction     repo.ITransaction
-	registryUsecase *RegistryUsecase
+	rateRepo             repo.RateRepo
+	transaction          repo.ITransaction
+	registryUsecase      *RegistryUsecase
+	notificationProvider _provider.NotificationProvider
 }
 
 func NewRateUsecase(rateRepo repo.RateRepo,
 	transaction repo.ITransaction,
-	registryUsecase *RegistryUsecase) *RateUsecase {
+	registryUsecase *RegistryUsecase,
+	notificationProvider _provider.NotificationProvider) *RateUsecase {
 	return &RateUsecase{
-		rateRepo:        rateRepo,
-		transaction:     transaction,
-		registryUsecase: registryUsecase,
+		rateRepo:             rateRepo,
+		transaction:          transaction,
+		registryUsecase:      registryUsecase,
+		notificationProvider: notificationProvider,
 	}
 }
 
@@ -63,6 +69,36 @@ func (u *RateUsecase) CreateRate(ctx context.Context, registryName string, rate 
 	if err != nil {
 		return nil, err
 	}
+
+	// Gửi thông báo cho owner (người được đánh giá) khi có đánh giá mới
+	if u.notificationProvider != nil {
+		go func() {
+			// Tạo context mới để tránh context bị cancel
+			notiCtx := _utils.CloneContext(ctx)
+			ownerOfEnum := _enum.EOwnerOf(rate.OwnerOf)
+			targetId := rate.ID
+			title := "Bạn có đánh giá mới"
+			message := []string{fmt.Sprintf("Bạn vừa nhận được một đánh giá %d sao", rate.Score)}
+
+			// Thêm comment vào message nếu có
+			if rate.Comment != "" {
+				message = append(message, rate.Comment)
+			}
+
+			_ = u.notificationProvider.CreateNotification(
+				notiCtx,
+				"", // avatar - có thể lấy từ user service nếu cần
+				title,
+				message,
+				_enum.NotificationRateCreate,
+				&targetId,
+				rate.OwnerID,
+				ownerOfEnum,
+				[]string{},
+			)
+		}()
+	}
+
 	return rate, nil
 }
 

@@ -4,13 +4,13 @@ import (
 	"context"
 	"feedback/internal/dto"
 	"feedback/internal/usecase"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 	sharepb "pb/types/shared"
 	"strings"
 )
 
 type InternalHandler struct {
-	feedbackpb.UnimplementedInternalServiceServer
+	crmpb.UnimplementedInternalServiceServer
 	RegistryUsecase *usecase.RegistryUsecase
 	RateUsecase     *usecase.RateUsecase
 }
@@ -23,7 +23,7 @@ func NewInternalHandler(registryUsecase *usecase.RegistryUsecase, rateUsecase *u
 }
 
 // RegisterEntity registers a new entity in the registry
-func (h *InternalHandler) RegisterEntity(ctx context.Context, req *feedbackpb.FeedbackRegistry) (*sharepb.SubmitResponse, error) {
+func (h *InternalHandler) RegisterEntity(ctx context.Context, req *crmpb.FeedbackRegistry) (*sharepb.SubmitResponse, error) {
 	// Check if entity already exists
 	existingEntity, err := h.RegistryUsecase.GetRegistryByName(ctx, req.RegistryName)
 	if err == nil && existingEntity != nil {

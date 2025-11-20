@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	"feedback/internal/domain"
 	"feedback/internal/dto"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 )
 
 type ReportMapper struct {
@@ -14,12 +14,12 @@ func NewReportMapper() *ReportMapper {
 	return &ReportMapper{}
 }
 
-func (m *ReportMapper) ReportToPb(report *domain.Report) *feedbackpb.ReportResponse {
+func (m *ReportMapper) ReportToPb(report *domain.Report) *crmpb.ReportResponse {
 	if report == nil {
 		return nil
 	}
 
-	response := &feedbackpb.ReportResponse{
+	response := &crmpb.ReportResponse{
 		Id:           report.ID,
 		ReasonId:     report.ReasonID,
 		ReportStatus: uint32(report.ReportStatus),
@@ -34,7 +34,7 @@ func (m *ReportMapper) ReportToPb(report *domain.Report) *feedbackpb.ReportRespo
 	}
 
 	if report.Reason != nil {
-		response.Reason = &feedbackpb.ReportReason{
+		response.Reason = &crmpb.ReportReason{
 			Id:          report.Reason.ID,
 			Name:        report.Reason.Name,
 			Description: report.Reason.Description,
@@ -60,7 +60,7 @@ func (m *ReportMapper) ReportToPb(report *domain.Report) *feedbackpb.ReportRespo
 
 	if len(report.ProofDocs) > 0 {
 		for _, proof := range report.ProofDocs {
-			response.ProofDocs = append(response.ProofDocs, &feedbackpb.ReportProof{
+			response.ProofDocs = append(response.ProofDocs, &crmpb.ReportProof{
 				Id:       proof.ID,
 				FileUrl:  proof.FileURL,
 				FileName: proof.FileName,
@@ -112,10 +112,10 @@ func (m *ReportMapper) ReportReasonToReportReasonResponse(reason *domain.ReportR
 	}
 }
 
-func (m *ReportMapper) ReportReasonListToReportReasonResponseList(reasons []domain.ReportReason) []*feedbackpb.ReportReason {
-	var responses []*feedbackpb.ReportReason
+func (m *ReportMapper) ReportReasonListToReportReasonResponseList(reasons []domain.ReportReason) []*crmpb.ReportReason {
+	var responses []*crmpb.ReportReason
 	for _, reason := range reasons {
-		responses = append(responses, &feedbackpb.ReportReason{
+		responses = append(responses, &crmpb.ReportReason{
 			Id:          reason.ID,
 			Name:        reason.Name,
 			Description: reason.Description,

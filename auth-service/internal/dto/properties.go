@@ -18,4 +18,7 @@ type PropertiesDTO struct {
 		Email    string
 		FullName string
 	}
+	CSKH struct {
+		TeamIDs []uint64
+	}
 }

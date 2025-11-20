@@ -134,6 +134,12 @@ func CreateContextFromGin(c *gin.Context) context.Context {
 		}
 	}
 
+	if deviceId, exists := c.Get("device-id"); exists {
+		if did, ok := deviceId.(string); ok {
+			ctx = context.WithValue(ctx, _enums.DeviceIDKey, did)
+		}
+	}
+
 	// Get auth ID if available
 	if claims, exists := c.Get("claims"); exists {
 		if principal, ok := claims.(*Principal); ok {

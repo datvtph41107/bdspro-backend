@@ -7,7 +7,7 @@ import (
 	"fmt"
 	crmpb "pb/types/crm"
 	organizationpb "pb/types/organization"
-	sharedpb "pb/types/shared"
+	sharepb "pb/types/shared"
 	"strings"
 
 	"crm/data"
@@ -15,7 +15,6 @@ import (
 	"crm/infra/mapper"
 	"crm/internal/enums"
 	"crm/internal/usecase"
-	sharepb "pb/types/shared"
 )
 
 type FriendService struct {
@@ -255,10 +254,10 @@ func (s *FriendService) FriendRequest(ctx context.Context, req *crmpb.FriendRequ
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /friend/request/{requestId}/accept [put]
-func (s *FriendService) FriendAccept(ctx context.Context, req *sharedpb.IdRequest) (*sharedpb.SubmitResponse, error) {
+func (s *FriendService) FriendAccept(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	result, err := s.UC.ChangeStatus(ctx, req.Id, enums.FriendStatusAccepted)
 
-	return &sharedpb.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      uint64(result),
 		Message: "Lời mời đã được chấp nhận",
 	}, err
@@ -276,10 +275,10 @@ func (s *FriendService) FriendAccept(ctx context.Context, req *sharedpb.IdReques
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /friend/group/{requestId}/{groupId} [put]
-func (s *FriendService) FriendUpdateGroup(ctx context.Context, req *crmpb.GroupUpdateRequest) (*sharedpb.SubmitResponse, error) {
+func (s *FriendService) FriendUpdateGroup(ctx context.Context, req *crmpb.GroupUpdateRequest) (*sharepb.SubmitResponse, error) {
 	result, err := s.UC.ChangeGroup(ctx, req.RequestId, req.GroupId)
 
-	return &sharedpb.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      uint64(result),
 		Message: "Đổi nhóm thành công",
 	}, err
@@ -296,10 +295,10 @@ func (s *FriendService) FriendUpdateGroup(ctx context.Context, req *crmpb.GroupU
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy lời mời"
 // @Router /friend/reject/{requestId} [delete]
-func (s *FriendService) FriendReject(ctx context.Context, req *sharedpb.IdRequest) (*sharedpb.SubmitResponse, error) {
+func (s *FriendService) FriendReject(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	result, err := s.UC.ChangeStatus(ctx, req.Id, enums.FriendStatusReject)
 
-	return &sharedpb.SubmitResponse{
+	return &sharepb.SubmitResponse{
 		Id:      uint64(result),
 		Message: "Lời mời đã bị từ chối",
 	}, err
@@ -363,7 +362,7 @@ func (s *FriendService) FriendReceived(ctx context.Context, req *sharepb.FriendL
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/info [get]
-func (s *FriendService) FriendInfo(ctx context.Context, req *sharedpb.Empty) (*crmpb.FriendInfoResponse, error) {
+func (s *FriendService) FriendInfo(ctx context.Context, req *sharepb.Empty) (*crmpb.FriendInfoResponse, error) {
 	result, err := s.UC.FriendInfo(ctx)
 
 	return &crmpb.FriendInfoResponse{
@@ -373,30 +372,30 @@ func (s *FriendService) FriendInfo(ctx context.Context, req *sharedpb.Empty) (*c
 	}, err
 }
 
-// @Summary Hủy lời mời kết bạn
-// @Description Hủy lời mời kết bạn đang chờ
+// @Summary Hủy kết bạn
+// @Description Hủy kết bạn với người dùng khác (không phải từ chối lời mời)
 // @Tags Bạn bè
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param receiverId path int true "ID của lời mời kết bạn"
-// @Success 200 {string} string "Lời mời đã bị hủy"
+// @Param id path int true "ID của người bạn cần hủy kết bạn"
+// @Success 200 {string} string "Đã hủy kết bạn thành công"
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
-// @Failure 404 {string} string "Không tìm thấy lời mời"
-// @Router /friend/cancel/{receiverId} [delete]
-func (s *FriendService) CancelFriendRequest(ctx context.Context, req *sharedpb.IdRequest) (*sharedpb.SubmitResponse, error) {
+// @Failure 404 {string} string "Không tìm thấy quan hệ bạn bè"
+// @Router /friend/cancel/{id} [delete]
+func (s *FriendService) CancelFriendRequest(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := s.UC.CancelRequest(ctx, req.Id)
 
-	return &sharedpb.SubmitResponse{
-		Message: "Lời mời đã bị hủy",
+	return &sharepb.SubmitResponse{
+		Message: "Đã hủy kết bạn thành công",
 		Id:      req.Id,
 	}, err
 }
 
-func (s *FriendService) FriendNote(ctx context.Context, req *sharedpb.IdRequest) (*sharedpb.SubmitResponse, error) {
+func (s *FriendService) FriendNote(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	// result, err := s.UC.Note(ctx, req.Id)
 
-	// return &sharedpb.SubmitResponse{
+	// return &sharepb.SubmitResponse{
 	// 	Message: "Lời mời đã bị hủy",
 	// 	Id:      req.Id,
 	// }, err

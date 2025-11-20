@@ -695,9 +695,6 @@
         }
       }
     },
-    "sharepbEmpty": {
-      "type": "object"
-    },
     "sharepbContactInfoV3Proto": {
       "type": "object",
       "properties": {
@@ -720,8 +717,30 @@
         "blockId": {
           "type": "string",
           "format": "uint64"
+        },
+        "reportId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "followId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "friendCommons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbUserV3Proto"
+          }
+        },
+        "numFriendCommons": {
+          "type": "string",
+          "format": "uint64"
         }
       }
+    },
+    "sharepbEmpty": {
+      "type": "object"
     },
     "sharepbFriendItem": {
       "type": "object",
@@ -786,6 +805,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -915,7 +938,7 @@
         "rateStats": {
           "$ref": "#/definitions/sharepbRateStatsV3Proto"
         },
-        "friendInfo": {
+        "contactInfo": {
           "$ref": "#/definitions/sharepbContactInfoV3Proto"
         },
         "bdsproInfo": {
@@ -1033,7 +1056,7 @@
             "$ref": "#/definitions/sharepbItemV3Proto"
           }
         },
-        "tagProfessions": {
+        "tagJobs": {
           "type": "array",
           "items": {
             "type": "object",
@@ -1074,6 +1097,19 @@
           "type": "string"
         },
         "signatureVisible": {
+          "type": "boolean"
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "updateTags": {
           "type": "boolean"
         }
       }

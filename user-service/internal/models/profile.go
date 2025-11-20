@@ -68,7 +68,7 @@ type UserProfileEntity struct {
 	Certifications []CertificationEntity `gorm:"-" json:"certifications"`
 	Professions    []ProfessionEntity    `gorm:"-" json:"professions"`
 	PurposeUses    []PurposeUseEntity    `gorm:"-" json:"purposeUses"`
-	TagProfessions []TagEntity           `gorm:"-" json:"tagProfessions"`
+	TagJobs        []TagEntity           `gorm:"-" json:"tagJobs"`
 	TagSpecialties []TagEntity           `gorm:"-" json:"tagSpecialties"`
 	TagMainAreas   []TagEntity           `gorm:"-" json:"tagMainAreas"`
 	TagProjects    []TagEntity           `gorm:"-" json:"tagProjects"`

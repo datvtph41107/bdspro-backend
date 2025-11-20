@@ -21,7 +21,7 @@ jwt:
   authorizationHeader: Authorization
 
 redis:
-  host: 14.225.210.29:6379
+  host: localhost:6379
 
 firebase:
   file: bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json

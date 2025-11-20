@@ -6,7 +6,7 @@ import (
 	"feedback/internal/domain"
 	"feedback/internal/dto"
 	"feedback/internal/usecase"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 	sharepb "pb/types/shared"
 
 	_utils "common/utils"
@@ -16,7 +16,7 @@ import (
 )
 
 type RateHandler struct {
-	feedbackpb.UnimplementedRateServiceServer
+	crmpb.UnimplementedRateServiceServer
 	rateUsecase *usecase.RateUsecase
 	userClient  *client.UserClient
 	rateMapper  *mapper.RateMapper
@@ -39,9 +39,9 @@ func NewRateHandler(rateUsecase *usecase.RateUsecase, userClient *client.UserCli
 // @Security BearerAuth
 // @Param registry path string true "Registry"
 // @Param request body dto.RateCreateRequest true "Thông tin đánh giá"
-// @Success 200 {object} feedbackpb.CreateRateResponse
+// @Success 200 {object} crmpb.CreateRateResponse
 // @Router /rate/{registry} [post]
-func (h *RateHandler) CreateRate(ctx context.Context, req *feedbackpb.CreateRateRequest) (*feedbackpb.RateResponse, error) {
+func (h *RateHandler) CreateRate(ctx context.Context, req *crmpb.CreateRateRequest) (*crmpb.RateResponse, error) {
 	// Convert protobuf request to DTO
 	rateReq := &dto.RateCreateRequest{
 		Anonymous: req.Anonymous,
@@ -76,9 +76,9 @@ func (h *RateHandler) CreateRate(ctx context.Context, req *feedbackpb.CreateRate
 // @Param registry path string true "Registry"
 // @Param page query int false "Trang"
 // @Param size query int false "Kích thước trang"
-// @Success 200 {object} feedbackpb.GetRateListResponse
+// @Success 200 {object} crmpb.GetRateListResponse
 // @Router /rate/{registry}/list/{ownerId} [get]
-func (h *RateHandler) GetRateList(ctx context.Context, req *feedbackpb.GetRateListRequest) (*feedbackpb.GetRateListResponse, error) {
+func (h *RateHandler) GetRateList(ctx context.Context, req *crmpb.GetRateListRequest) (*crmpb.GetRateListResponse, error) {
 	// Convert request to DTO
 	searchReq := &dto.RateSearchDTO{
 		Pagable: _dto.Pagable{
@@ -102,7 +102,7 @@ func (h *RateHandler) GetRateList(ctx context.Context, req *feedbackpb.GetRateLi
 	// Map user profile
 	h.rateMapper.MapUserToPb(ctx, rateResponses)
 
-	return &feedbackpb.GetRateListResponse{
+	return &crmpb.GetRateListResponse{
 		Data:  rateResponses,
 		Total: total,
 	}, nil
@@ -116,16 +116,16 @@ func (h *RateHandler) GetRateList(ctx context.Context, req *feedbackpb.GetRateLi
 // @Produce json
 // @Param ownerId path uint64 true "ID đối tượng"
 // @Param registry path string true "Registry"
-// @Success 200 {object} feedbackpb.RateStatsResponse
+// @Success 200 {object} crmpb.RateStatsResponse
 // @Router /rate/{registry}/stats/{ownerId} [get]
-func (h *RateHandler) GetRateStats(ctx context.Context, req *feedbackpb.GetRateStatsRequest) (*feedbackpb.RateStatsResponse, error) {
+func (h *RateHandler) GetRateStats(ctx context.Context, req *crmpb.GetRateStatsRequest) (*crmpb.RateStatsResponse, error) {
 	// Get rate stats
 	stats, err := h.rateUsecase.GetRateStats(ctx, req.OwnerId, req.Registry)
 	if err != nil {
 		return nil, err
 	}
 
-	return &feedbackpb.RateStatsResponse{
+	return &crmpb.RateStatsResponse{
 		TotalReviews: stats.TotalReviews,
 		AverageScore: stats.AverageScore,
 		Star1Count:   stats.Star1Count,
@@ -145,9 +145,9 @@ func (h *RateHandler) GetRateStats(ctx context.Context, req *feedbackpb.GetRateS
 // @Security BearerAuth
 // @Param id path uint64 true "ID đánh giá"
 // @Param request body dto.RateUpdateRequest true "Thông tin cập nhật"
-// @Success 200 {object} feedbackpb.UpdateRateResponse
+// @Success 200 {object} crmpb.UpdateRateResponse
 // @Router /rate/{id} [put]
-func (h *RateHandler) UpdateRate(ctx context.Context, req *feedbackpb.UpdateRateRequest) (*feedbackpb.UpdateRateResponse, error) {
+func (h *RateHandler) UpdateRate(ctx context.Context, req *crmpb.UpdateRateRequest) (*crmpb.UpdateRateResponse, error) {
 	// Convert protobuf request to DTO
 	rateReq := &dto.RateUpdateRequest{
 		Score:   uint8(req.Score),
@@ -164,7 +164,7 @@ func (h *RateHandler) UpdateRate(ctx context.Context, req *feedbackpb.UpdateRate
 		return nil, err
 	}
 
-	return &feedbackpb.UpdateRateResponse{
+	return &crmpb.UpdateRateResponse{
 		Success: true,
 	}, nil
 }
@@ -179,7 +179,7 @@ func (h *RateHandler) UpdateRate(ctx context.Context, req *feedbackpb.UpdateRate
 // @Param id path uint64 true "ID đánh giá"
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /rate/{id} [delete]
-func (h *RateHandler) DeleteRate(ctx context.Context, req *feedbackpb.RegistryIdRequest) (*sharepb.SubmitResponse, error) {
+func (h *RateHandler) DeleteRate(ctx context.Context, req *crmpb.RegistryIdRequest) (*sharepb.SubmitResponse, error) {
 	// Delete rate
 	err := h.rateUsecase.DeleteRate(ctx, req.Id)
 	if err != nil {
@@ -200,9 +200,9 @@ func (h *RateHandler) DeleteRate(ctx context.Context, req *feedbackpb.RegistryId
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "ID đánh giá"
-// @Success 200 {object} feedbackpb.RateResponse
+// @Success 200 {object} crmpb.RateResponse
 // @Router /rate/detail/{id} [get]
-func (h *RateHandler) GetRate(ctx context.Context, req *feedbackpb.RegistryIdRequest) (*feedbackpb.RateResponse, error) {
+func (h *RateHandler) GetRate(ctx context.Context, req *crmpb.RegistryIdRequest) (*crmpb.RateResponse, error) {
 	// Get rate
 	rate, err := h.rateUsecase.GetRate(ctx, req.Id, req.Registry)
 	if err != nil {
@@ -225,10 +225,10 @@ func (h *RateHandler) GetRate(ctx context.Context, req *feedbackpb.RegistryIdReq
 // @Produce json
 // @Security BearerAuth
 // @Param id path uint64 true "ID đánh giá"
-// @Param body body feedbackpb.UpdateHiddenRequest true "Body"
+// @Param body body crmpb.UpdateHiddenRequest true "Body"
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /rate/hidden/{id} [put]
-func (h *RateHandler) UpdateHidden(ctx context.Context, req *feedbackpb.UpdateHiddenRequest) (*sharepb.SubmitResponse, error) {
+func (h *RateHandler) UpdateHidden(ctx context.Context, req *crmpb.UpdateHiddenRequest) (*sharepb.SubmitResponse, error) {
 	// Update hidden status
 	err := h.rateUsecase.UpdateHidden(ctx, req.Id, req.Hidden, req.Registry)
 	if err != nil {
@@ -279,7 +279,12 @@ func convertRateUpdateRequestToDomain(req *dto.RateUpdateRequest) *domain.Rate {
 		Comment: req.Comment,
 	}
 
-	if len(req.Attachs) > 0 {
+	// Chỉ thêm attachs nếu có trong request (có thể là empty array để xóa tất cả)
+	// Nếu req.Attachs là nil, thì rate.Attachs sẽ là nil (không update attachs)
+	// Nếu req.Attachs là empty slice, thì rate.Attachs sẽ là empty slice (xóa tất cả)
+	// Nếu req.Attachs có giá trị, thì rate.Attachs sẽ có giá trị (thay thế)
+	if req.Attachs != nil {
+		rate.Attachs = make([]domain.AttachEntity, 0)
 		for _, attachURL := range req.Attachs {
 			rate.Attachs = append(rate.Attachs, domain.AttachEntity{
 				FileURL:  attachURL,
@@ -292,12 +297,12 @@ func convertRateUpdateRequestToDomain(req *dto.RateUpdateRequest) *domain.Rate {
 	return rate
 }
 
-func (h *RateHandler) convertRateToResponse(ctx context.Context, rate *domain.Rate) *feedbackpb.RateResponse {
+func (h *RateHandler) convertRateToResponse(ctx context.Context, rate *domain.Rate) *crmpb.RateResponse {
 	if rate == nil {
 		return nil
 	}
 
-	response := &feedbackpb.RateResponse{
+	response := &crmpb.RateResponse{
 		Id:        rate.ID,
 		Anonymous: rate.Anonymous,
 		OwnerId:   rate.OwnerID,
@@ -325,7 +330,7 @@ func (h *RateHandler) convertRateToResponse(ctx context.Context, rate *domain.Ra
 
 	if len(rate.Attachs) > 0 {
 		for _, attach := range rate.Attachs {
-			response.Attachs = append(response.Attachs, &feedbackpb.AttachEntity{
+			response.Attachs = append(response.Attachs, &crmpb.AttachEntity{
 				Id:       attach.ID,
 				FileUrl:  attach.FileURL,
 				FileName: attach.FileName,

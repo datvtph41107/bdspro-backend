@@ -57,6 +57,35 @@
         }
       }
     },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        }
+      }
+    },
     "sharepbContactInfoV3Proto": {
       "type": "object",
       "properties": {
@@ -83,6 +112,21 @@
         "reportId": {
           "type": "string",
           "format": "uint64"
+        },
+        "followId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "friendCommons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbUserV3Proto"
+          }
+        },
+        "numFriendCommons": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -104,6 +148,290 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "sharepbItemV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbKYCV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "identityCard": {
+          "type": "string"
+        },
+        "frontImage": {
+          "type": "string"
+        },
+        "backImage": {
+          "type": "string"
+        },
+        "selfieImage": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rejectReason": {
+          "type": "string"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "reviewedAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbRateStatsV3Proto": {
+      "type": "object",
+      "properties": {
+        "totalReviews": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "averageScore": {
+          "type": "number",
+          "format": "float"
+        },
+        "star1Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star2Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star3Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star4Count": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "star5Count": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "sharepbUserV3Proto": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "roleRealEstate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mainAreaIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "purposeUseIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "mainAreaNews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "mainAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "purposeUses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "birth": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/definitions/sharepbAddressV3Proto"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profileVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusOnline": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tagSpecialities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagMainAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagProjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagJobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "kyc": {
+          "$ref": "#/definitions/sharepbKYCV3Proto"
+        },
+        "phone2": {
+          "type": "string"
+        },
+        "zaloUrl": {
+          "type": "string"
+        },
+        "facebookUrl": {
+          "type": "string"
+        },
+        "instagramUrl": {
+          "type": "string"
+        },
+        "twitterUrl": {
+          "type": "string"
+        },
+        "linkedinUrl": {
+          "type": "string"
+        },
+        "youtubeUrl": {
+          "type": "string"
+        },
+        "websiteUrl": {
+          "type": "string"
+        },
+        "blogUrl": {
+          "type": "string"
+        },
+        "otherUrl": {
+          "type": "string"
+        },
+        "signatureVisible": {
+          "type": "boolean"
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "updateTags": {
+          "type": "boolean"
         }
       }
     }

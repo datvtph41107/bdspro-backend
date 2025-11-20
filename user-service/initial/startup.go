@@ -19,7 +19,7 @@ type InitialApp struct {
 	AdminHandler            *handler.AdminHandler
 	AdminUserProfileHandler *handler.AdminUserProfileHandler
 	BookmarkUserHandler     *handler.BookmarkUserHandler
-	FeedbackClient          *client.FeedbackClient
+	CrmClient               *client.CrmClient
 	// System Config
 	// Membership & Plan
 	MembershipHandler *handler.MembershipHandler
@@ -43,7 +43,7 @@ func NewInitialApp(
 	adminHandler *handler.AdminHandler,
 	adminUserProfileHandler *handler.AdminUserProfileHandler,
 	bookmarkUserHandler *handler.BookmarkUserHandler,
-	feedbackClient *client.FeedbackClient,
+	crmClient *client.CrmClient,
 	membershipHandler *handler.MembershipHandler,
 	planHandler *handler.PlanHandler,
 	internalHandler *handler.InternalHandler,
@@ -63,7 +63,7 @@ func NewInitialApp(
 		AdminHandler:            adminHandler,
 		AdminUserProfileHandler: adminUserProfileHandler,
 		BookmarkUserHandler:     bookmarkUserHandler,
-		FeedbackClient:          feedbackClient,
+		CrmClient:               crmClient,
 		MembershipHandler:       membershipHandler,
 		PlanHandler:             planHandler,
 		InternalHandler:         internalHandler,

@@ -10,6 +10,9 @@ import "shared/v3.proto";
 service CrmInternalService {
     rpc FriendStatusByProfileIds(FriendStatusByProfileIdsRequest) returns (FriendStatusByProfileIdsResponse);
     rpc GetFriendInfoByProfileId(sharepb.IdRequest) returns (sharepb.ContactInfoV3Proto);
+
+    rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
+    rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
 }
 
 message FriendStatusByProfileIdsRequest {
@@ -20,3 +23,12 @@ message FriendStatusByProfileIdsRequest {
 message FriendStatusByProfileIdsResponse {
     repeated sharepb.FriendItem friendStatus = 1;
 }
+
+// Internal Messages
+message FeedbackRegistry {
+    uint32 registry_key = 1;
+    string registry_name = 2;
+    int32 port = 3;
+    string service = 4;
+  }
+  

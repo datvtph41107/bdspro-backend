@@ -153,10 +153,6 @@ func (h *VersionHandler) GetVersionList(ctx context.Context, req *hubpb.GetVersi
 // @Success 200 {object} hubpb.CheckAppUpdateResponse
 // @Router /v2/hub/app-bundle/update-check/{appName} [get]
 func (h *VersionHandler) CheckAppUpdate(ctx context.Context, req *hubpb.CheckAppUpdateRequest) (*hubpb.CheckAppUpdateResponse, error) {
-	if err := h.validateAPIKey(ctx); err != nil {
-		return nil, err
-	}
-
 	latest, needUpdate, forceUpdate, err := h.versionUsecase.CheckAppUpdate(ctx, req.GetAppName(), req.GetPlatform(), req.GetTargetVersion())
 	if err != nil {
 		return nil, err
@@ -174,13 +170,37 @@ func (h *VersionHandler) CheckAppUpdate(ctx context.Context, req *hubpb.CheckApp
 	return response, nil
 }
 
+// @Summary Tạo phiên bản từ dev
+// @Description Tạo phiên bản từ dev
+// @Tags Version
+// @Accept json
+// @Produce json
+// @Param body body hubpb.CreateVersionRequest true "Thông tin phiên bản"
+// @Success 200 {object} hubpb.CreateVersionResponse
+// @Router /v2/hub/app-bundle/version [post]
+func (h *VersionHandler) CreateVersionFromDev(ctx context.Context, req *hubpb.CreateVersionRequest) (*hubpb.CreateVersionResponse, error) {
+	if err := h.validateAPIKey(ctx); err != nil {
+		return nil, err
+	}
+	entity := h.versionMapper.CreateRequestToEntity(req)
+
+	result, err := h.versionUsecase.CreateBundleVersion(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &hubpb.CreateVersionResponse{
+		Data: h.versionMapper.EntityToProto(result),
+	}, nil
+}
+
 func (h *VersionHandler) validateAPIKey(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return status.Error(codes.Unauthenticated, "missing metadata")
 	}
-
-	values := md.Get("x-api-key")
+	
+	values := md.Get("api-key")
 	if len(values) == 0 {
 		return status.Error(codes.Unauthenticated, "missing api key")
 	}

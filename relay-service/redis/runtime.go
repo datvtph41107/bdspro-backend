@@ -105,3 +105,12 @@ func (r *RedisClient) ReadStream(ctx context.Context, stream, consumerGroup, con
 
 	return messages, nil
 }
+
+// Set key-value pair in Redis
+func (r *RedisClient) Set(ctx context.Context, key string, value string) error {
+	err := r.client.Set(ctx, key, value, 0).Err()
+	if err != nil {
+		r.logger.Errorf("Failed to set key %s in Redis: %v", key, err)
+	}
+	return err
+}

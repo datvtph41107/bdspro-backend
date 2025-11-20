@@ -29,12 +29,13 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	// Luôn inject IP và User-Agent vào metadata (dù có token hay không)
 	appendIfExists(md, "client-ip", getClientIP(r))
 	appendIfExists(md, "user-agent", r.Header.Get("User-Agent"))
-	appendIfExists(md, "x-api-key", r.Header.Get("X-Api-Key"))
-	if deviceID := r.Header.Get("X-Device-Id"); deviceID != "" {
+	appendIfExists(md, "api-key", r.Header.Get("api-key"))
+	if deviceID := r.Header.Get("device-id"); deviceID != "" {
 		appendIfExists(md, "device-id", deviceID)
 	} else {
-		appendIfExists(md, "device-id", r.Header.Get("Device-Id"))
+		appendIfExists(md, "device-id", r.Header.Get("device-id"))
 	}
+	appendIfExists(md, "api-key", r.Header.Get("API-KEY"))
 
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
@@ -125,7 +126,7 @@ func ParseGrpcMetadataContextMiddleware(
 	ctx = parseStringMetadata(ctx, md, "role", _enums.RoleKey)
 	ctx = parseStringMetadata(ctx, md, "type", _enums.TypeKey)
 	ctx = parseTimeMetadata(ctx, md, "planFrom", _enums.PlanFromKey)
-	ctx = parseStringMetadata(ctx, md, "x-api-key", _enums.APIKeyKey)
+	ctx = parseStringMetadata(ctx, md, "api-key", _enums.APIKeyKey)
 
 	// Parse IP address và User-Agent từ metadata
 	ctx = parseStringMetadata(ctx, md, "client-ip", _enums.ClientIPKey)
@@ -170,8 +171,8 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 
 	appendStringIfExists(_enums.RoleKey, "role")
 	appendStringIfExists(_enums.TypeKey, "type")
-	appendStringIfExists(_enums.APIKeyKey, "x-api-key")
-
+	appendStringIfExists(_enums.APIKeyKey, "api-key")
+	appendStringIfExists(_enums.DeviceIDKey, "device-id")
 	appendTimeIfExists(_enums.PlanFromKey, "planFrom")
 
 	return md

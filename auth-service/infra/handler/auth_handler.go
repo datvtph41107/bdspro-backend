@@ -114,7 +114,13 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 	}
 
 	// Convert proto request to DTO
-	dto := &dto.OtpVerifyRequest{
+	// Lấy DeviceID từ context hoặc dùng deviceName làm fallback
+	deviceID := _utils.GetDeviceIdFromContext(ctx)
+	if deviceID == "" && req.DeviceName != "" {
+		deviceID = req.DeviceName
+	}
+
+	otpDto := &dto.OtpVerifyRequest{
 		OtpRequest: dto.OtpRequest{
 			Phone:    req.Phone,
 			Fullname: req.Fullname,
@@ -126,11 +132,12 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 		Platform:        req.Platform,
 		OS:              req.Os,
 		DeviceName:      req.DeviceName,
+		DeviceID:        deviceID,            // Lấy từ context hoặc request
 		ClientPublicKey: req.ClientPublicKey, // Diffie-Hellman public key từ client
 		// Fullname:   req.Fullname,
 	}
 
-	result, err := h.AuthUsecase.VerifyOtp(ctx, *dto)
+	result, err := h.AuthUsecase.VerifyOtp(ctx, *otpDto)
 	if err != nil {
 		return nil, err
 	}
@@ -518,6 +525,12 @@ func (h *AuthHandler) LoginWithKey(ctx context.Context, req *authpb.LoginWithKey
 		return nil, status.Errorf(codes.InvalidArgument, "OS là bắt buộc (iOS, Android, Windows, MacOS, Linux)")
 	}
 
+	// Lấy DeviceID từ context hoặc dùng deviceName làm fallback
+	deviceID := _utils.GetDeviceIdFromContext(ctx)
+	// if deviceID == "" && req.DeviceName != "" {
+	// 	deviceID = req.DeviceName
+	// }
+
 	// Convert proto request to DTO
 	dtoReq := dto.LoginWithKeyRequest{
 		Phone:            req.Phone,
@@ -527,6 +540,7 @@ func (h *AuthHandler) LoginWithKey(ctx context.Context, req *authpb.LoginWithKey
 		Platform:         req.Platform,
 		OS:               req.Os,
 		DeviceName:       req.DeviceName,
+		DeviceID:         deviceID,
 	}
 
 	result, err := h.AuthUsecase.LoginWithKey(ctx, dtoReq)

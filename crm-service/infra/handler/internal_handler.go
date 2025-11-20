@@ -3,28 +3,36 @@ package handler
 import (
 	"context"
 	"crm/infra/mapper"
+	"crm/internal/dto"
 	"crm/internal/repo"
 	"crm/internal/usecase"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
+	"strings"
 )
 
 type CrmInternalService struct {
 	crmpb.UnimplementedCrmInternalServiceServer
-	FriendRepo    repo.FriendRepo
-	FriendMapper  *mapper.FriendMapper
-	FriendUsecase *usecase.FriendUsecase
+	FriendRepo      repo.FriendRepo
+	FriendMapper    *mapper.FriendMapper
+	FriendUsecase   *usecase.FriendUsecase
+	RegistryUsecase *usecase.RegistryUsecase
+	RateUsecase     *usecase.RateUsecase
 }
 
 func NewCrmInternalService(
 	friendRepo repo.FriendRepo,
 	friendMapper *mapper.FriendMapper,
 	friendUsecase *usecase.FriendUsecase,
+	registryUsecase *usecase.RegistryUsecase,
+	rateUsecase *usecase.RateUsecase,
 ) *CrmInternalService {
 	return &CrmInternalService{
-		FriendRepo:    friendRepo,
-		FriendMapper:  friendMapper,
-		FriendUsecase: friendUsecase,
+		FriendRepo:      friendRepo,
+		FriendMapper:    friendMapper,
+		FriendUsecase:   friendUsecase,
+		RegistryUsecase: registryUsecase,
+		RateUsecase:     rateUsecase,
 	}
 }
 
@@ -45,11 +53,60 @@ func (s *CrmInternalService) GetFriendInfoByProfileId(ctx context.Context, req *
 	}
 
 	return &sharepb.ContactInfoV3Proto{
-		NumFollower:  result.NumFollower,
-		NumFollowing: result.NumFollowing,
-		NumFriend:    result.NumFriend,
-		ContactId:    result.ContactId,
-		BlockId:      result.BlockId,
-		FollowId:     result.FollowId,
+		NumFollower:      result.NumFollower,
+		NumFollowing:     result.NumFollowing,
+		NumFriend:        result.NumFriend,
+		ContactId:        result.ContactId,
+		BlockId:          result.BlockId,
+		FollowId:         result.FollowId,
+		FriendCommons:    result.FriendCommons,
+		NumFriendCommons: result.NumFriendCommons,
+	}, nil
+}
+
+// RegisterEntity registers a new entity in the registry
+func (h *CrmInternalService) RegisterEntity(ctx context.Context, req *crmpb.FeedbackRegistry) (*sharepb.SubmitResponse, error) {
+	// Check if entity already exists
+	existingEntity, err := h.RegistryUsecase.GetRegistryByName(ctx, req.RegistryName)
+	if err == nil && existingEntity != nil {
+		// Entity already exists, return success without creating new one
+		return &sharepb.SubmitResponse{
+			Message: "Entity already exists",
+		}, nil
+	}
+
+	// Convert protobuf to DTO
+	cleanName := strings.TrimSpace(strings.ToLower(req.RegistryName))
+	createReq := &dto.RegistryCreateRequest{
+		RegistryKey:  req.RegistryKey,
+		RegistryName: cleanName,
+		Port:         int(req.Port),
+		Service:      req.Service,
+	}
+
+	// Create registry entry
+	_, err = h.RegistryUsecase.CreateRegistry(ctx, createReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.SubmitResponse{
+		Message: "Entity registered successfully",
+	}, nil
+}
+
+func (h *CrmInternalService) GetRateStats(ctx context.Context, req *sharepb.IdRequest) (*sharepb.RateStatsV3Proto, error) {
+	rateStats, err := h.RateUsecase.GetRateStats(ctx, req.Id, "user")
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.RateStatsV3Proto{
+		TotalReviews: uint64(rateStats.TotalReviews),
+		AverageScore: float32(rateStats.AverageScore),
+		Star1Count:   uint64(rateStats.Star1Count),
+		Star2Count:   uint64(rateStats.Star2Count),
+		Star3Count:   uint64(rateStats.Star3Count),
+		Star4Count:   uint64(rateStats.Star4Count),
+		Star5Count:   uint64(rateStats.Star5Count),
 	}, nil
 }

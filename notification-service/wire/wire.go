@@ -10,6 +10,7 @@ import (
 	crm_internal_repo "notification/internal/repo"
 	noti_internal_repo "notification/internal/repo"
 	notification_config "notification/config"
+	notification_infra_cache "notification/infra/cache"
 	notification_infra_client "notification/infra/client"
 	notification_infra_firebase "notification/infra/firebase"
 	notification_infra_handler "notification/infra/handler"
@@ -26,7 +27,9 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	wire.Bind(new(notification_internal_interface.IAuthClient), new(*notification_infra_client.AuthClient)),
 	wire.Bind(new(notification_internal_interface.IUserClient), new(*notification_infra_client.UserClient)),
+	wire.Bind(new(notification_internal_interface.IFirebaseProvider), new(*notification_infra_firebase.FirebaseProvider)),
 	wire.Bind(new(notification_internal_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
 	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
 	wire.Bind(new(notification_internal_repo.HistoryAuthRepo), new(*notification_infra_postgres.HistoryAuthPostgres)),
@@ -38,6 +41,7 @@ var wireSet = wire.NewSet(
 	notification_infra_mapper.NewAdminHistoryMapper,
 	notification_infra_postgres.NewAdminHistoryPostgres,
 	notification_internal_usecase.NewAdminHistoryUsecase,
+	notification_infra_client.NewAuthClient,
 	notification_infra_handler.NewDealHistoryHandler,
 	notification_infra_postgres.NewDealHistoryPostgres,
 	notification_internal_usecase.NewDealHistoryUsecase,
@@ -59,6 +63,7 @@ var wireSet = wire.NewSet(
 	notification_infra_postgres.NewPersonConfigPostgres,
 	notification_internal_usecase.NewPersonConfigUsecase,
 	notification_infra_postgres.NewPostgreNotification,
+	notification_infra_cache.NewRedisClient,
 	notification_internal_dto.NewSendNotiResponse,
 	notification_infra_client.NewUserClient,
 )

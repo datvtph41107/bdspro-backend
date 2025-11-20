@@ -25,8 +25,7 @@ import (
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
 	"auth/validator"
-	_db "common/db"
-
+	"common/db"
 	"github.com/google/wire"
 )
 
@@ -47,6 +46,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 	otpPostgres := postgre.NewOTPRepository(db)
 	statusPostgres := postgre.NewStatusRepository()
 	authConfigPostgres := postgre.NewAuthConfigRepository()
+	devicePostgresRepo := postgre.NewDevicePostgresRepo()
+	deviceUsecase := usecase.NewDeviceUsecase(devicePostgresRepo)
 	runtimeProperties := properties.NewRuntimeProperties()
 	notificationClient := client.NewNotificationClient()
 	otpUsecase := usecase.NewOtpUsecase(otpPostgres, statusPostgres, runtimeProperties, notificationClient)
@@ -57,9 +58,10 @@ func InitializeApp() (*initial.InitialApp, error) {
 	organizationClient := client.NewOrganizationClient(clientConn)
 	httpClient := client.NewHttpClient()
 	paymentClient := client.NewPaymentClient(httpClient)
+	chatProvider := client.NewChatClient()
 	znsProvider := zns.NewZnsProvider(authConfigPostgres)
 	smsProvider := sms.NewSMSProvider()
-	authUsecase := usecase.NewAuthService(broswerCookieProvider, redisProvider, userClient, authMethodRepository, userInfoRepository, sessionPostgres, otpPostgres, statusPostgres, authConfigPostgres, otpUsecase, organizationClient, paymentClient, notificationClient, znsProvider, smsProvider, runtimeProperties)
+	authUsecase := usecase.NewAuthService(broswerCookieProvider, redisProvider, userClient, authMethodRepository, userInfoRepository, sessionPostgres, otpPostgres, statusPostgres, authConfigPostgres, devicePostgresRepo, deviceUsecase, otpUsecase, organizationClient, paymentClient, notificationClient, chatProvider, znsProvider, smsProvider, runtimeProperties)
 	adminAccessPostgresRepo := postgre.NewAdminAccessPostgresRepo()
 	adminAccessUsecase := usecase.NewAdminAccessUsecase(adminAccessPostgresRepo, authMethodRepository, userClient)
 	roleRepository := postgre.NewRoleRepo(transactionRepo)
@@ -70,13 +72,11 @@ func InitializeApp() (*initial.InitialApp, error) {
 	authUserProfileUsecase := usecase.NewUserInfoUsecase(userInfoRepository)
 	userInfoMapper := mapper.NewUserInfoMapper()
 	pinPostgres := postgre.NewPINRepository(db)
-	devicePostgresRepo := postgre.NewDevicePostgresRepo()
 	authSecurityUsecase := usecase.NewAuthSecurityUsecase(statusPostgres, pinPostgres, devicePostgresRepo, authMethodRepository, userClient, notificationClient)
 	authSecurityMapper := mapper.NewAuthSecurityMapper()
-	internalHandler := handler.NewInternalHandler(roleRepository, redisService, roleMapper, authMethodMapper, authAdminUsecase, authUserProfileUsecase, userInfoMapper, authSecurityUsecase, authSecurityMapper)
+	internalHandler := handler.NewInternalHandler(roleRepository, redisService, roleMapper, authMethodMapper, authAdminUsecase, authUserProfileUsecase, userInfoMapper, authSecurityUsecase, authSecurityMapper, devicePostgresRepo)
 	sessionMapper := mapper.NewSessionMapper()
-	pinUsecase := usecase.NewPINUsecase(pinPostgres, statusPostgres, authMethodRepository, sessionPostgres, otpPostgres, otpUsecase, userClient, notificationClient)
-	deviceUsecase := usecase.NewDeviceUsecase(devicePostgresRepo)
+	pinUsecase := usecase.NewPINUsecase(pinPostgres, statusPostgres, authMethodRepository, sessionPostgres, otpPostgres, otpUsecase, userClient, notificationClient, deviceUsecase)
 	deviceMapper := mapper.NewDeviceMapper()
 	authHandler := handler.NewAuthHandler(authUsecase, adminAccessUsecase, internalHandler, authAdminUsecase, sessionMapper, pinUsecase, deviceUsecase, deviceMapper, authSecurityUsecase, authSecurityMapper)
 	oAuthGoogle := oauth.NewGoogleAuthService(httpClient, authUsecase, authMethodRepository, userClient)
@@ -104,4 +104,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.NotificationProvider), new(*client.NotificationClient)), wire.Bind(new(provider.OrganizationProvider), new(*client.OrganizationClient)), wire.Bind(new(provider.PaymentProvider), new(*client.PaymentClient)), wire.Bind(new(provider.ProfileProvider), new(*client.UserClient)), wire.Bind(new(provider.CookieProvider), new(*cookie.BroswerCookieProvider)), wire.Bind(new(repo.AdminAccessRepository), new(*postgre.AdminAccessPostgresRepo)), wire.Bind(new(repo.IAuthConfigRepo), new(*postgre.AuthConfigPostgres)), wire.Bind(new(repo.DeviceRepository), new(*postgre.DevicePostgresRepo)), wire.Bind(new(repo.OTPRepository), new(*postgre.OTPPostgres)), wire.Bind(new(repo.PINRepository), new(*postgre.PINPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgre.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgre.StatusPostgres)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(provider.CacheProvider), new(*redis.RedisProvider)), wire.Bind(new(provider.ISmsProvider), new(*sms.SMSProvider)), wire.Bind(new(provider.IZnsProvider), new(*zns.ZnsProvider)), postgre.NewAdminAccessPostgresRepo, usecase.NewAdminAccessUsecase, usecase.NewAdminUsecase, initial.NewApp, postgre.NewAuthConfigRepository, handler.NewAuthHandler, mapper.NewAuthMethodMapper, postgre.NewAuthRepository, mapper.NewAuthSecurityMapper, usecase.NewAuthSecurityUsecase, usecase.NewAuthService, cookie.NewCookieProvider, mapper.NewDeviceMapper, postgre.NewDevicePostgresRepo, usecase.NewDeviceUsecase, oauth.NewFacebookAuthService, oauth.NewGoogleAuthService, client.NewGrpcClient, client.NewHttpClient, handler.NewInternalHandler, postgre.NewModuleRepo, usecase.NewModuleService, usecase.NewModuleUsecase, client.NewNotificationClient, handler.NewOAuthRouter, usecase.NewOAuthUsecase, postgre.NewOTPRepository, client.NewOrganizationClient, usecase.NewOtpUsecase, postgre.NewPINRepository, usecase.NewPINUsecase, client.NewPaymentClient, handler.NewPermissionHandler, postgre.NewPermissionRepo, usecase.NewPermissionUsecase, redis.NewRedisProvider, initial.NewRedisService, handler.NewRoleGroupHandler, mapper.NewRoleGroupMapper, postgre.NewRoleGroupRepo, usecase.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper.NewRoleMapper, postgre.NewRoleRepo, usecase.NewRoleUsecase, properties.NewRuntimeProperties, sms.NewSMSProvider, mapper.NewSessionMapper, postgre.NewSessionRepository, postgre.NewStatusRepository, client.NewUserClient, handler.NewUserInfoHandler, mapper.NewUserInfoMapper, postgre.NewUserInfoRepository, usecase.NewUserInfoUsecase, domain.NewUserOTPRepository, oauth.NewZaloAuthService, zns.NewZnsProvider, scheduler.NewZnsScheduler)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.NotificationProvider), new(*client.NotificationClient)), wire.Bind(new(provider.OrganizationProvider), new(*client.OrganizationClient)), wire.Bind(new(provider.PaymentProvider), new(*client.PaymentClient)), wire.Bind(new(provider.ProfileProvider), new(*client.UserClient)), wire.Bind(new(provider.CookieProvider), new(*cookie.BroswerCookieProvider)), wire.Bind(new(repo.AdminAccessRepository), new(*postgre.AdminAccessPostgresRepo)), wire.Bind(new(repo.IAuthConfigRepo), new(*postgre.AuthConfigPostgres)), wire.Bind(new(repo.DeviceRepository), new(*postgre.DevicePostgresRepo)), wire.Bind(new(repo.OTPRepository), new(*postgre.OTPPostgres)), wire.Bind(new(repo.PINRepository), new(*postgre.PINPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgre.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgre.StatusPostgres)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(provider.CacheProvider), new(*redis.RedisProvider)), wire.Bind(new(provider.ISmsProvider), new(*sms.SMSProvider)), wire.Bind(new(provider.IZnsProvider), new(*zns.ZnsProvider)), postgre.NewAdminAccessPostgresRepo, usecase.NewAdminAccessUsecase, usecase.NewAdminUsecase, initial.NewApp, postgre.NewAuthConfigRepository, handler.NewAuthHandler, mapper.NewAuthMethodMapper, postgre.NewAuthRepository, mapper.NewAuthSecurityMapper, usecase.NewAuthSecurityUsecase, usecase.NewAuthService, client.NewChatClient, cookie.NewCookieProvider, mapper.NewDeviceMapper, postgre.NewDevicePostgresRepo, usecase.NewDeviceUsecase, oauth.NewFacebookAuthService, oauth.NewGoogleAuthService, client.NewGrpcClient, client.NewHttpClient, handler.NewInternalHandler, postgre.NewModuleRepo, usecase.NewModuleService, usecase.NewModuleUsecase, client.NewNotificationClient, handler.NewOAuthRouter, usecase.NewOAuthUsecase, postgre.NewOTPRepository, client.NewOrganizationClient, usecase.NewOtpUsecase, postgre.NewPINRepository, usecase.NewPINUsecase, client.NewPaymentClient, handler.NewPermissionHandler, postgre.NewPermissionRepo, usecase.NewPermissionUsecase, redis.NewRedisProvider, initial.NewRedisService, handler.NewRoleGroupHandler, mapper.NewRoleGroupMapper, postgre.NewRoleGroupRepo, usecase.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper.NewRoleMapper, postgre.NewRoleRepo, usecase.NewRoleUsecase, properties.NewRuntimeProperties, sms.NewSMSProvider, mapper.NewSessionMapper, postgre.NewSessionRepository, postgre.NewStatusRepository, client.NewUserClient, handler.NewUserInfoHandler, mapper.NewUserInfoMapper, postgre.NewUserInfoRepository, usecase.NewUserInfoUsecase, domain.NewUserOTPRepository, oauth.NewZaloAuthService, zns.NewZnsProvider, scheduler.NewZnsScheduler)

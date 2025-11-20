@@ -4,16 +4,16 @@ package enums
 type TagType uint32
 
 const (
-	TagTypeSpecialty  TagType = 10
-	TagTypeMainArea   TagType = 20
-	TagTypeProject    TagType = 30
-	TagTypeProfession TagType = 40
+	TagTypeSpecialty TagType = 10
+	TagTypeMainArea  TagType = 20
+	TagTypeProject   TagType = 30
+	TagTypeJob       TagType = 40
 )
 
 // IsValid kiểm tra giá trị tag type có hợp lệ không.
 func (t TagType) IsValid() bool {
 	switch t {
-	case TagTypeSpecialty, TagTypeMainArea, TagTypeProject, TagTypeProfession:
+	case TagTypeSpecialty, TagTypeMainArea, TagTypeProject, TagTypeJob:
 		return true
 	default:
 		return false

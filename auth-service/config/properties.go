@@ -79,6 +79,10 @@ type AppProperties struct {
 		Email    string `mapstructure:"email"`
 		FullName string `mapstructure:"full_name"`
 	} `mapstructure:"admin"`
+	// CSKH Team IDs - danh sách profile ID của đội chăm sóc khách hàng
+	CSKH struct {
+		TeamIDs []uint64 `mapstructure:"team_ids"`
+	} `mapstructure:"cskh"`
 }
 
 var Properties AppProperties

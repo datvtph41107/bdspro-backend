@@ -474,9 +474,9 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 	if req.WebsiteURL != "" {
 		updates["website_url"] = req.WebsiteURL
 	}
-	// if req.Introduction != "" {
-	// 	updates["introduction"] = req.Introduction
-	// }
+	if req.Introduction != "" {
+		updates["introduction"] = req.Introduction
+	}
 	if req.Position != "" {
 		updates["position"] = req.Position
 	}

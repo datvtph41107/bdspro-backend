@@ -28,7 +28,7 @@ message AppInvited {
     string content = 2;
     string link = 3;
     string channel = 4;
-    uint64 contactId = 5;
+    optional uint64 contactId = 5;
     uint64 createdAt = 6;
     uint64 updatedAt = 7;
     ContactDTO contact = 8;

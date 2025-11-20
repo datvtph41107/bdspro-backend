@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package feedbackpb;
+package crmpb;
 
-option go_package = "pb/types/feedback;feedbackpb";
+option go_package = "pb/types/crm;crmpb";
 
 import "shared/common.proto";
 import "google/api/annotations.proto";
-import "feedback/rate.proto";
-import "feedback/report_reason.proto";
+import "crm/rate.proto";
+import "crm/report_reason.proto";
 
 // Report Service
 service ReportService {

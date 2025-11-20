@@ -37,6 +37,10 @@ type UserProperties struct {
 		File    string `mapstructure:"file"`
 		FileURL string `mapstructure:"fileUrl"`
 	} `mapstructure:"firebase"`
+	Redis struct {
+		Host     string `mapstructure:"host"`
+		Password string `mapstructure:"pass"`
+	} `mapstructure:"redis"`
 }
 
 var AppProperties UserProperties

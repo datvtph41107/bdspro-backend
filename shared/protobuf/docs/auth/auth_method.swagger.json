@@ -1139,6 +1139,13 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2674,6 +2681,58 @@
         },
         "name": {
           "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbKYCV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "identityCard": {
+          "type": "string"
+        },
+        "frontImage": {
+          "type": "string"
+        },
+        "backImage": {
+          "type": "string"
+        },
+        "selfieImage": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rejectReason": {
+          "type": "string"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "reviewedAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -2920,6 +2979,83 @@
         "statusOnline": {
           "type": "integer",
           "format": "int64"
+        },
+        "tagSpecialities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagMainAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagProjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "tagJobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "kyc": {
+          "$ref": "#/definitions/sharepbKYCV3Proto"
+        },
+        "phone2": {
+          "type": "string"
+        },
+        "zaloUrl": {
+          "type": "string"
+        },
+        "facebookUrl": {
+          "type": "string"
+        },
+        "instagramUrl": {
+          "type": "string"
+        },
+        "twitterUrl": {
+          "type": "string"
+        },
+        "linkedinUrl": {
+          "type": "string"
+        },
+        "youtubeUrl": {
+          "type": "string"
+        },
+        "websiteUrl": {
+          "type": "string"
+        },
+        "blogUrl": {
+          "type": "string"
+        },
+        "otherUrl": {
+          "type": "string"
+        },
+        "signatureVisible": {
+          "type": "boolean"
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "updateTags": {
+          "type": "boolean"
         }
       }
     }

@@ -23,7 +23,13 @@ type InitialApp struct {
 	SharingAccessService     *handler.SharingAccessService
 	InvitationInstallService *handler.InvitationInstallService
 	CrmInternalService       *handler.CrmInternalService
-	Logger                   *flogging.FabricLogger
+	// Feedback handlers
+	RateHandler         *handler.RateHandler
+	ReportHandler       *handler.ReportHandler
+	ReportAdminHandler  *handler.ReportAdminHandler
+	ReportReasonHandler *handler.ReportReasonHandler
+	RegistryHandler     *handler.RegistryHandler
+	Logger              *flogging.FabricLogger
 }
 
 func NewInitialApp(
@@ -41,6 +47,12 @@ func NewInitialApp(
 	sharingAccessService *handler.SharingAccessService,
 	invitationInstallService *handler.InvitationInstallService,
 	crmInternalService *handler.CrmInternalService,
+	// Feedback handlers
+	rateHandler *handler.RateHandler,
+	reportHandler *handler.ReportHandler,
+	reportAdminHandler *handler.ReportAdminHandler,
+	reportReasonHandler *handler.ReportReasonHandler,
+	registryHandler *handler.RegistryHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
@@ -57,6 +69,12 @@ func NewInitialApp(
 		SharingAccessService:     sharingAccessService,
 		InvitationInstallService: invitationInstallService,
 		CrmInternalService:       crmInternalService,
-		Logger:                   flogging.MustGetLogger(viper.GetString("server.name")),
+		// Feedback handlers
+		RateHandler:         rateHandler,
+		ReportHandler:       reportHandler,
+		ReportAdminHandler:  reportAdminHandler,
+		ReportReasonHandler: reportReasonHandler,
+		RegistryHandler:     registryHandler,
+		Logger:              flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

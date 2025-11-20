@@ -15,6 +15,7 @@ message RequestV3Proto {
 message ItemV3Proto {
     uint64 id = 1;
     string name = 2;
+    uint32 itemType = 3;
 }
 message ItemV3PageProto {
     repeated ItemV3Proto data = 1;
@@ -107,7 +108,7 @@ message UserV3Proto {
     repeated ItemV3Proto tagSpecialities = 21;
     repeated ItemV3Proto tagMainAreas = 22;
     repeated ItemV3Proto tagProjects = 23;
-    repeated ItemV3Proto tagProfessions = 24;
+    repeated ItemV3Proto tagJobs = 24;
     optional KYCV3Proto kyc = 25;
     string phone2 = 26;
     string zaloUrl = 27;
@@ -121,6 +122,9 @@ message UserV3Proto {
     string otherUrl = 35;
     bool signatureVisible = 36;
     string introduction = 37;
+
+    repeated ItemV3Proto tags = 38;
+    bool updateTags = 39;
 }
 
 message OTPV3Proto {
@@ -224,6 +228,8 @@ message ContactInfoV3Proto {
     optional uint64 blockId = 5;
     optional uint64 reportId = 6;
     optional uint64 followId = 7;
+    repeated UserV3Proto friendCommons = 8;
+    uint64 numFriendCommons = 9;
 }
 
 message RateStatsV3Proto {

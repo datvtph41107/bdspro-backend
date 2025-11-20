@@ -234,6 +234,38 @@
           "VersionService"
         ]
       }
+    },
+    "/v2/hub/app-bundle/version": {
+      "post": {
+        "operationId": "VersionService_CreateVersionFromDev",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbCreateVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/hubpbCreateVersionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "VersionService"
+        ]
+      }
     }
   },
   "definitions": {

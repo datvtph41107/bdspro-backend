@@ -1,7 +1,7 @@
 package enums
 
-type FeedbackName string
+type CrmName string
 
 const (
-	FeedbackNameUser FeedbackName = "user"
+	CrmNameUser CrmName = "user"
 )

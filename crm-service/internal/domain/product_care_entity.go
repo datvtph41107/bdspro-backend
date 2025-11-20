@@ -5,7 +5,7 @@ import (
 )
 
 type ProductCareEntity struct {
-	_models.BaseEntity
+	_models.BaseEntityNotId
 	LeadID    uint64 `gorm:"primaryKey" json:"lead_id"`
 	ProductID uint64 `gorm:"primaryKey" json:"product_id"`
 }

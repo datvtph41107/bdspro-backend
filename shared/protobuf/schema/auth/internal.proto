@@ -33,6 +33,9 @@ service AuthInternalService {
 
     // Get authentication security data by authId
     rpc GetAuthDataByAuthId(sharepb.RequestV3Proto) returns (sharepb.AuthDataV3Proto);
+    
+    // Get push tokens by profile ID (Internal API for notification service)
+    rpc GetPushTokensByProfileId(sharepb.IdRequest) returns (GetPushTokensResponse);
 }
 
 message RequiredRolesRequest {
@@ -109,4 +112,9 @@ message AuthAdminWithRole {
     uint32 status = 10;
     string createdAt = 11;
     string updatedAt = 12;
+}
+
+// Get Push Tokens Messages
+message GetPushTokensResponse {
+    repeated string pushTokens = 1;
 }

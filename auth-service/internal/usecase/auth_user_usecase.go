@@ -36,10 +36,13 @@ type AuthUsecase struct {
 	OTPRepo            repo.OTPRepository
 	StatusRepo         repo.StatusRepository
 	AuthConfigRepo     repo.IAuthConfigRepo // ✅ Thêm AuthConfigRepo
+	DeviceRepo         repo.DeviceRepository
+	DeviceUsecase      *DeviceUsecase
 	OtpUsecase         *OtpUsecase
 	OrganizationClient provider.OrganizationProvider
 	PaymentProvider    provider.PaymentProvider
 	NotificationClient provider.NotificationProvider
+	ChatProvider       provider.ChatProvider
 	ZnsProvider        provider.IZnsProvider
 	SMSProvider        provider.ISmsProvider
 	properties         dto.PropertiesDTO
@@ -54,10 +57,13 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	otpRepo repo.OTPRepository,
 	statusRepo repo.StatusRepository,
 	authConfigRepo repo.IAuthConfigRepo, // ✅ Thêm AuthConfigRepo
+	deviceRepo repo.DeviceRepository,
+	deviceUsecase *DeviceUsecase,
 	otpUsecase *OtpUsecase,
 	organizationClient provider.OrganizationProvider,
 	paymentProvider provider.PaymentProvider,
 	notificationClient provider.NotificationProvider,
+	chatProvider provider.ChatProvider,
 	znsProvider provider.IZnsProvider,
 	smsProvider provider.ISmsProvider,
 	properties factory.IFactory,
@@ -74,10 +80,13 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		OTPRepo:            otpRepo,
 		StatusRepo:         statusRepo,
 		AuthConfigRepo:     authConfigRepo, // ✅ Thêm AuthConfigRepo
+		DeviceRepo:         deviceRepo,
+		DeviceUsecase:      deviceUsecase,
 		OtpUsecase:         otpUsecase,
 		OrganizationClient: organizationClient,
 		PaymentProvider:    paymentProvider,
 		NotificationClient: notificationClient,
+		ChatProvider:       chatProvider,
 		ZnsProvider:        znsProvider,
 		SMSProvider:        smsProvider,
 		properties:         properties.GetProperties(),
@@ -282,6 +291,34 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		e.UserID = infoEntity.ProfileID
 		s.AuthMethodRepo.Update(c, e)
 		isNewUser = true
+
+		// Tạo nhóm chat mặc định "Hỗ trợ khách hàng" cho user mới
+		if s.ChatProvider != nil && len(s.properties.CSKH.TeamIDs) > 0 {
+			go func() {
+				// Tạo context mới cho goroutine để tránh context bị cancel
+				ctx := context.Background()
+				// Set profileId vào context để chat service có thể xác định người tạo
+				ctx = context.WithValue(ctx, _enum.ProfileIDKey, infoEntity.ProfileID)
+
+				conversationID, err := s.ChatProvider.CreateConversation(
+					ctx,
+					"Hỗ trợ khách hàng",
+					infoEntity.ProfileID,
+					s.properties.CSKH.TeamIDs,
+				)
+				if err != nil {
+					log.Printf("Failed to create default support chat group for user %d: %v", infoEntity.ProfileID, err)
+				} else {
+					log.Printf("Created default support chat group (ID: %d) for new user %d", conversationID, infoEntity.ProfileID)
+				}
+			}()
+		}
+	} else {
+		// User đã có profile - kiểm tra và update authId với profileId nếu chưa có
+		if e.UserID == 0 && infoEntity.ProfileID != 0 {
+			e.UserID = infoEntity.ProfileID
+			s.AuthMethodRepo.Update(c, e)
+		}
 	}
 
 	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
@@ -509,6 +546,27 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		}
 	}()
 
+	// Cập nhật device với authId và profileId nếu có thông tin thiết bị
+	if s.DeviceUsecase != nil {
+		deviceID := _utils.GetDeviceIdFromContext(c)
+		print("deviceID", deviceID)
+		if deviceID != "" {
+			go func() {
+				// Tạo context mới với authId và profileId
+				deviceCtx := context.WithValue(context.Background(), _enum.AuthIDKey, e.ID)
+				deviceCtx = context.WithValue(deviceCtx, _enum.ProfileIDKey, infoEntity.ProfileID)
+				// if infoEntity.OrganizationID > 0 {
+				// 	deviceCtx = context.WithValue(deviceCtx, _enum.OrganizationIDKey, infoEntity.OrganizationID)
+				// }
+
+				err := s.DeviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, e.ID, infoEntity.ProfileID)
+				if err != nil {
+					log.Printf("Failed to update device with auth info after verify OTP: %v", err)
+				}
+			}()
+		}
+	}
+
 	return response, nil
 }
 
@@ -712,6 +770,26 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	// 	response.ServerPublicKey = e.PublicKey
 	// }
 
+	if s.DeviceUsecase != nil {
+		deviceID := _utils.GetDeviceIdFromContext(c)
+		print("deviceID", deviceID)
+		if deviceID != "" {
+			go func() {
+				// Tạo context mới với authId và profileId
+				deviceCtx := context.WithValue(context.Background(), _enum.AuthIDKey, e.ID)
+				deviceCtx = context.WithValue(deviceCtx, _enum.ProfileIDKey, infoEntity.ProfileID)
+				// if infoEntity.OrganizationID > 0 {
+				// 	deviceCtx = context.WithValue(deviceCtx, _enum.OrganizationIDKey, infoEntity.OrganizationID)
+				// }
+
+				err := s.DeviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, e.ID, infoEntity.ProfileID)
+				if err != nil {
+					log.Printf("Failed to update device with auth info after verify OTP: %v", err)
+				}
+			}()
+		}
+	}
+
 	// 13. Ghi log admin history
 	go func() {
 		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -773,6 +851,29 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 			log.Printf("Successfully logged login history for user %d", e.UserID)
 		}
 	}()
+
+	// Cập nhật device với authId và profileId nếu có thông tin thiết bị
+	if s.DeviceUsecase != nil {
+		deviceID := req.DeviceID
+		if deviceID == "" {
+			deviceID = req.DeviceName
+		}
+		if deviceID != "" && e.ID > 0 && infoEntity.ProfileID > 0 {
+			go func() {
+				// Tạo context mới với authId và profileId
+				deviceCtx := context.WithValue(context.Background(), _enum.AuthIDKey, e.ID)
+				deviceCtx = context.WithValue(deviceCtx, _enum.ProfileIDKey, infoEntity.ProfileID)
+				// if infoEntity.OrganizationID > 0 {
+				// 	deviceCtx = context.WithValue(deviceCtx, _enum.OrganizationIDKey, infoEntity.OrganizationID)
+				// }
+
+				err := s.DeviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, e.ID, infoEntity.ProfileID)
+				if err != nil {
+					log.Printf("Failed to update device with auth info after login with key: %v", err)
+				}
+			}()
+		}
+	}
 
 	return response, nil
 }
@@ -1006,6 +1107,11 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 		})
 	}
 
+	// Xóa profileId khỏi tất cả devices của user
+	if profileID := _utils.GetProfileIdWithContext(c); profileID > 0 {
+		s.removeProfileIdFromDevices(c, profileID)
+	}
+
 	return &dto.LogoutResponse{Message: "Đăng xuất thành công"}, nil
 }
 
@@ -1218,6 +1324,11 @@ func (s *AuthUsecase) Delete(c context.Context, otp string) (*dto.DeleteAccountR
 	// Xóa session và cache
 	s.CookieProvider.ResetAll(c)
 	s.CacheProvider.DeleteToken(c, authId)
+
+	// Xóa profileId khỏi tất cả devices của user
+	if profileId > 0 {
+		s.removeProfileIdFromDevices(c, profileId)
+	}
 
 	return &dto.DeleteAccountResponse{
 		Message: "Tài khoản đã được xóa vĩnh viễn",
@@ -3009,6 +3120,33 @@ func (s *AuthUsecase) GetSessionsByProfile(ctx context.Context, pagable *_dto.Pa
 
 // 	return sessions, total, nil
 // }
+
+// removeProfileIdFromDevices xóa profileId khỏi tất cả devices của user
+func (s *AuthUsecase) removeProfileIdFromDevices(ctx context.Context, profileID uint64) {
+	if s.DeviceRepo == nil {
+		log.Printf("DeviceRepo is nil, skipping remove profileId from devices")
+		return
+	}
+
+	// Lấy tất cả devices của profileId
+	devices, err := s.DeviceRepo.ListByProfileID(ctx, profileID)
+	if err != nil {
+		log.Printf("Failed to list devices for profileId %d: %v", profileID, err)
+		return
+	}
+
+	// Xóa profileId khỏi mỗi device
+	for _, device := range devices {
+		device.ProfileID = nil
+		if _, err := s.DeviceRepo.Update(ctx, device); err != nil {
+			log.Printf("Failed to remove profileId from device %s: %v", device.DeviceID, err)
+		}
+	}
+
+	if len(devices) > 0 {
+		log.Printf("Removed profileId from %d device(s) for profileId %d", len(devices), profileID)
+	}
+}
 
 func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint64, error) {
 	// Check if phone exists

@@ -18,9 +18,21 @@ func NewRatePostgres(db *gorm.DB) repo.RateRepo {
 }
 
 func (r *RatePostgres) Create(ctx context.Context, rate *domain.Rate) (*domain.Rate, error) {
+	// Tạo rate trước để có ID
 	if err := r.db.WithContext(ctx).Create(rate).Error; err != nil {
 		return nil, err
 	}
+
+	// Lưu attachs nếu có
+	if len(rate.Attachs) > 0 {
+		for i := range rate.Attachs {
+			rate.Attachs[i].RateID = rate.ID
+		}
+		if err := r.db.WithContext(ctx).Create(&rate.Attachs).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	return rate, nil
 }
 
@@ -88,13 +100,39 @@ func (r *RatePostgres) GetRateList(ctx context.Context, id uint64, ownerOf uint3
 }
 
 func (r *RatePostgres) Update(ctx context.Context, id uint64, rate *domain.Rate) error {
-	return r.db.WithContext(ctx).
+	// Update rate fields
+	if err := r.db.WithContext(ctx).
 		Model(&domain.Rate{}).
 		Where("id = ? and deleted_at is null", id).
 		Updates(map[string]interface{}{
 			"score":   rate.Score,
 			"comment": rate.Comment,
-		}).Error
+		}).Error; err != nil {
+		return err
+	}
+
+	// Chỉ update attachs nếu rate.Attachs không phải là nil
+	// nil = không update attachs, empty slice = xóa tất cả, có giá trị = thay thế
+	if rate.Attachs != nil {
+		// Xóa attachs cũ trước
+		if err := r.db.WithContext(ctx).
+			Where("rate_id = ?", id).
+			Delete(&domain.AttachEntity{}).Error; err != nil {
+			return err
+		}
+
+		// Tạo attachs mới nếu có
+		if len(rate.Attachs) > 0 {
+			for i := range rate.Attachs {
+				rate.Attachs[i].RateID = id
+			}
+			if err := r.db.WithContext(ctx).Create(&rate.Attachs).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *RatePostgres) Delete(ctx context.Context, id uint64) error {

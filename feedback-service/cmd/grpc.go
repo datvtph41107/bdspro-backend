@@ -9,7 +9,7 @@ import (
 	"feedback/config"
 	"feedback/infra/db"
 	"feedback/wire"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -44,12 +44,12 @@ func startGRPCServer() {
 	db.AutoMigrate()
 
 	// Register services
-	feedbackpb.RegisterInternalServiceServer(s, app.InternalHandler)
-	feedbackpb.RegisterRateServiceServer(s, app.RateHandler)
-	feedbackpb.RegisterReportServiceServer(s, app.ReportHandler)
-	feedbackpb.RegisterReportAdminServiceServer(s, app.ReportAdminHandler)
-	feedbackpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)
-	// feedbackpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
+	crmpb.RegisterInternalServiceServer(s, app.InternalHandler)
+	crmpb.RegisterRateServiceServer(s, app.RateHandler)
+	crmpb.RegisterReportServiceServer(s, app.ReportHandler)
+	crmpb.RegisterReportAdminServiceServer(s, app.ReportAdminHandler)
+	crmpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)
+	// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
 
 	// Enable reflection for debugging
 	// reflection.Register(s)

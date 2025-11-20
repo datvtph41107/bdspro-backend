@@ -27,6 +27,7 @@ type InternalHandler struct {
 	userInfoMapper      *mapper.UserInfoMapper
 	authSecurityUsecase *usecase.AuthSecurityUsecase
 	authSecurityMapper  *mapper.AuthSecurityMapper
+	deviceRepo          repo.DeviceRepository
 }
 
 func NewInternalHandler(
@@ -39,6 +40,7 @@ func NewInternalHandler(
 	userInfoMapper *mapper.UserInfoMapper,
 	authSecurityUsecase *usecase.AuthSecurityUsecase,
 	authSecurityMapper *mapper.AuthSecurityMapper,
+	deviceRepo repo.DeviceRepository,
 ) *InternalHandler {
 	return &InternalHandler{
 		roleRepo:            roleRepo,
@@ -50,6 +52,7 @@ func NewInternalHandler(
 		userInfoMapper:      userInfoMapper,
 		authSecurityUsecase: authSecurityUsecase,
 		authSecurityMapper:  authSecurityMapper,
+		deviceRepo:          deviceRepo,
 	}
 }
 
@@ -353,4 +356,29 @@ func (h *InternalHandler) GetAuthDataByAuthId(ctx context.Context, req *sharepb.
 	}
 
 	return h.authSecurityMapper.MapToProto(result), nil
+}
+
+// GetPushTokensByProfileId lấy danh sách push token theo profile ID (Internal API cho notification service)
+func (h *InternalHandler) GetPushTokensByProfileId(ctx context.Context, req *sharepb.IdRequest) (*authpb.GetPushTokensResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.ReturnError(400, "profileId là bắt buộc")
+	}
+
+	devices, err := h.deviceRepo.ListByProfileID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	var pushTokens []string
+	for _, device := range devices {
+		if device.PushToken != "" {
+			pushTokens = append(pushTokens, device.PushToken)
+		}
+	}
+
+	fmt.Println("pushTokens=", pushTokens)
+
+	return &authpb.GetPushTokensResponse{
+		PushTokens: pushTokens,
+	}, nil
 }

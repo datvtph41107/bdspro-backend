@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package feedbackpb;
+package crmpb;
 
-option go_package = "pb/types/feedback;feedbackpb";
+option go_package = "pb/types/crm;crmpb";
 
 import "shared/common.proto";
-import "feedback/internal.proto";
+import "crm/internal.proto";
 import "google/api/annotations.proto";
 
 // Registry Service - Service registry for microservices

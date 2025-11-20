@@ -2,15 +2,19 @@ package usecase
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"strings"
 
 	_crud "common/domain/crud"
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_err "common/domain/err"
 	_errors "common/errors"
 	"hub/internal/domain"
+	iprovider "hub/internal/interface"
 	_repo "hub/internal/repo"
+	sharepb "pb/types/shared"
 )
 
 type IVersionUsecase interface {
@@ -23,13 +27,21 @@ type IVersionUsecase interface {
 
 type VersionUsecase struct {
 	_crud.BaseUsecase[domain.VersionEntity, _repo.IVersionRepo]
+	NotificationClient iprovider.INotificationClient
+	UserClient         iprovider.IUserClient
 }
 
-func NewVersionUsecase(repo _repo.IVersionRepo) IVersionUsecase {
+func NewVersionUsecase(
+	repo _repo.IVersionRepo,
+	notificationClient iprovider.INotificationClient,
+	userClient iprovider.IUserClient,
+) IVersionUsecase {
 	return &VersionUsecase{
 		BaseUsecase: _crud.BaseUsecase[domain.VersionEntity, _repo.IVersionRepo]{
 			Repo: repo,
 		},
+		NotificationClient: notificationClient,
+		UserClient:         userClient,
 	}
 }
 
@@ -170,7 +182,78 @@ func (u *VersionUsecase) CreateBundleVersion(ctx context.Context, bundleVersion 
 			Message: "Không thể tạo phiên bản bundle: " + err.Error(),
 		}
 	}
+
+	// Gửi thông báo cho tất cả user về version mới
+	go u.sendNotificationToAllUsers(ctx, bundleVersion)
+
 	return bundleVersion, nil
+}
+
+// sendNotificationToAllUsers gửi thông báo cho tất cả user về version mới
+func (u *VersionUsecase) sendNotificationToAllUsers(ctx context.Context, version *domain.VersionEntity) {
+	if u.NotificationClient == nil || u.UserClient == nil {
+		log.Println("NotificationClient or UserClient is nil, skipping notification")
+		return
+	}
+
+	// Lấy tất cả user theo batch
+	page := uint32(1)
+	size := uint32(100) // Lấy 100 user mỗi lần
+
+	for {
+		usersResp, err := u.UserClient.ListAllUsers(ctx, page, size)
+		if err != nil {
+			log.Printf("Failed to get users list: %v", err)
+			break
+		}
+
+		if usersResp == nil || len(usersResp.Data) == 0 {
+			break
+		}
+
+		// Tạo danh sách notification requests
+		notificationRequests := make([]*sharepb.NotificationRequest, 0, len(usersResp.Data))
+		targetId := version.ID
+
+		for _, user := range usersResp.Data {
+			title := "Có phiên bản mới"
+			message := []string{
+				"Ứng dụng " + version.AppName + " đã có phiên bản mới " + version.VersionName,
+			}
+			if version.ReleaseNotes != "" {
+				message = append(message, version.ReleaseNotes)
+			}
+
+			notificationRequests = append(notificationRequests, &sharepb.NotificationRequest{
+				Avatar:           "",
+				Title:            title,
+				Message:          message,
+				NotificationType: uint32(_enum.NotificationSystem),
+				OwnerId:          user.ProfileId,
+				TargetId:         targetId,
+				OwnerOf:          uint32(_enum.EOwnerOfMember),
+				AttachData:       []string{},
+				SendToDevice:     true,
+				IsMerge:          true, // Merge thông báo
+			})
+		}
+
+		// Gửi batch notification
+		if len(notificationRequests) > 0 {
+			if err := u.NotificationClient.SendBatch(ctx, notificationRequests); err != nil {
+				log.Printf("Failed to send batch notification: %v", err)
+			} else {
+				log.Printf("Sent notification to %d users for version %s", len(notificationRequests), version.VersionName)
+			}
+		}
+
+		// Kiểm tra xem còn user nào không
+		if int32(len(usersResp.Data)) < int32(size) {
+			break
+		}
+
+		page++
+	}
 }
 
 func (u *VersionUsecase) UpdateBundleVersion(ctx context.Context, bundleVersion *domain.VersionEntity) (*domain.VersionEntity, error) {

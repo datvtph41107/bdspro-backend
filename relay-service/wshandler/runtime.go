@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"sync"
+	"time"
 
 	"relay/constants"
 	"relay/redis"
@@ -168,7 +170,13 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 
 	h.mu.Unlock()
 
+	// Lưu trạng thái online vào Redis
+	h.saveUserOnlineStatus(context.Background(), userId, true)
+
 	wsLogger.Infof("User %s connected", userId)
+
+	// Subscribe to notification channel for this user
+	go h.subscribeToNotificationChannel(conn, userId)
 
 	go h.handleDisconnect(conn, userId)
 }
@@ -224,6 +232,9 @@ func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64)
 	// 	}
 	// }
 	h.mu.Unlock()
+
+	// Lưu trạng thái offline vào Redis
+	h.saveUserOnlineStatus(context.Background(), userID, false)
 
 	wsLogger.Infof("User %s disconnected", userID)
 }
@@ -327,6 +338,14 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 			h.sendToRoom(roomID, data)
 		} else {
 			wsLogger.Errorf("Failed to parse roomId in message type: %s", msg.Type)
+		}
+
+	case constants.NOTIFICATION_TYPE:
+		// Xử lý notification event - gửi đến user cụ thể
+		if ownerID, ok := utils.ParseUint64(m["ownerId"]); ok {
+			h.sendToUser([]uint64{ownerID}, data)
+		} else {
+			wsLogger.Errorf("Failed to parse ownerId in NOTIFICATION_TYPE")
 		}
 
 	default:
@@ -436,5 +455,43 @@ func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
 		if err != nil {
 			wsLogger.Errorf("Failed to send message to all users: %v", err)
 		}
+	}
+}
+
+// subscribeToNotificationChannel subscribes to notification channel for a specific user
+func (h *WebSocketHandler) subscribeToNotificationChannel(conn *websocket.Conn, userID uint64) {
+	channel := "notification:" + strconv.FormatUint(userID, 10)
+	pubsub := h.redisClient.Subscribe(context.Background(), channel)
+	messages := pubsub.Channel()
+
+	wsLogger.Infof("Subscribed to notification channel: %s for user: %d", channel, userID)
+
+	for msg := range messages {
+		wsLogger.Infof("Received notification from channel %s: %s", channel, msg.Payload)
+		// Send notification directly to the WebSocket connection
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
+			wsLogger.Errorf("Failed to send notification to user %d: %v", userID, err)
+			return
+		}
+	}
+}
+
+// saveUserOnlineStatus lưu trạng thái online/offline của user vào Redis
+// Format: <true/false>|<timestamp>
+func (h *WebSocketHandler) saveUserOnlineStatus(ctx context.Context, userID uint64, isOnline bool) {
+	key := constants.USER_ONLINE_STATUS_KEY_PREFIX + strconv.FormatUint(userID, 10)
+	timestamp := time.Now().Format(time.RFC3339)
+
+	var status string
+	if isOnline {
+		status = "true|" + timestamp
+	} else {
+		status = "false|" + timestamp
+	}
+
+	if err := h.redisClient.Set(ctx, key, status); err != nil {
+		wsLogger.Errorf("Failed to save user online status for user %d: %v", userID, err)
+	} else {
+		wsLogger.Infof("Saved user online status for user %d: %s", userID, status)
 	}
 }

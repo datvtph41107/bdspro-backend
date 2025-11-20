@@ -126,6 +126,7 @@ var publicRoutes = []string{
 	"/v2/hub/system-config/key",
 	"/v2/hub/system-config/by-group",
 	"/v2/hub/user-guides",
+	"/v2/hub/app-bundle/version",
 	"/v2/hub/app-bundle/update-check",
 
 	"/v2/user/profile/search/public",
@@ -250,7 +251,6 @@ var HttpCmd = &cobra.Command{
 		service.RegisterMarketingService(ctx, mux, env, opts)
 		service.RegisterTransactionService(ctx, mux, env, opts)
 		service.RegisterAuthService(ctx, mux, env, opts)
-		service.RegisterFeedbackService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
 		service.RegisterHubService(ctx, mux, env, opts)
 		// service.RegisterTqdService(ctx, mux, env, opts)

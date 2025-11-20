@@ -91,6 +91,12 @@ const (
 	NotificationUserCreate ENotificationType = 11010
 	NotificationUserUpdate ENotificationType = 11020
 	NotificationUserDelete ENotificationType = 11030
+
+	// -- action for feedback/rate --
+	NotificationRateCreate   ENotificationType = 12010
+	NotificationRateUpdate   ENotificationType = 12020
+	NotificationRateDelete   ENotificationType = 12030
+	NotificationReportCreate ENotificationType = 12040
 )
 
 var NotificationMap = map[ENotificationType]string{
@@ -165,6 +171,12 @@ var NotificationMap = map[ENotificationType]string{
 	NotificationUserCreate: "Tạo người dùng",
 	NotificationUserUpdate: "Cập nhật người dùng",
 	NotificationUserDelete: "Xóa người dùng",
+
+	// -- action for feedback/rate --
+	NotificationRateCreate:   "Tạo đánh giá",
+	NotificationRateUpdate:   "Cập nhật đánh giá",
+	NotificationRateDelete:   "Xóa đánh giá",
+	NotificationReportCreate: "Tạo báo cáo",
 }
 
 var NotificationContactAction = []ENotificationType{

@@ -4,13 +4,17 @@ go 1.24.1
 
 replace common => ../shared/common
 
+replace relay => ../relay-service
+
 replace pb => ../shared/protobuf
 
 require (
 	common v0.0.0-00010101000000-000000000000
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/wire v0.7.0
+	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
 	github.com/spf13/cobra v1.10.1
@@ -22,6 +26,7 @@ require (
 	gorm.io/datatypes v1.2.6
 	gorm.io/gorm v1.30.0
 	pb v0.0.0-00010101000000-000000000000
+	relay v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -45,6 +50,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cncf/xds/go v0.0.0-20250121191232-2f005788dc42 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -72,7 +78,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
-	github.com/hyperledger/fabric v2.1.1+incompatible // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

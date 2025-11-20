@@ -5,6 +5,7 @@ import (
 	_db "common/db"
 	_enum "common/domain/enum"
 	_provider "common/domain/provider"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -16,6 +17,7 @@ import (
 	"crm/internal/enums"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	sharepb "pb/types/shared"
 )
 
 type FriendUsecase struct {
@@ -119,13 +121,19 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 		profileId := _utils.GetProfileIdWithContext(ctxClone)
 		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
 		fullName := ""
+		avatar := ""
 		if currentUser != nil {
 			fullName = currentUser.FullName
+			avatar = currentUser.Avatar
 		}
 
 		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, base_enum.EOwnerOfMember)
-		if err != nil {
-			return
+		var attachData []string
+		if err == nil && contact != nil {
+			attachData = []string{strconv.FormatUint(contact.ID, 10)}
+		} else {
+			// Nếu không có contact, vẫn gửi notification với receiverId
+			attachData = []string{strconv.FormatUint(receiverId, 10)}
 		}
 
 		// Tạo History
@@ -142,14 +150,14 @@ func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.F
 		// Gửi Notification cho người nhận
 		s.notificationClient.CreateNotification(
 			ctxClone,
-			currentUser.Avatar,
+			avatar,
 			"Lời mời kết bạn",
 			[]string{"", fullName, " đã gửi lời mời kết bạn cho bạn"},
 			_enum.NotificationFriendRequest,
 			&profileId,
 			receiverId,
 			_enum.EOwnerOfMember,
-			[]string{strconv.FormatUint(contact.ID, 10)},
+			attachData,
 		)
 		// s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
 		// 	Title:   "Lời mời kết bạn",
@@ -438,6 +446,8 @@ func (s *FriendUsecase) FriendInfoByProfileId(c context.Context, profileId uint6
 	var contactId *uint64
 	var blockId *uint64
 	var followId *uint64
+	var friendCommons []*sharepb.UserV3Proto
+	var numFriendCommons uint64
 	currentUserId := _utils.GetProfileIdWithContext(c)
 	if currentUserId > 0 {
 		contact, err := s.contact.GetByProfileID(c, profileId, currentUserId, base_enum.EOwnerOfMember)
@@ -452,16 +462,57 @@ func (s *FriendUsecase) FriendInfoByProfileId(c context.Context, profileId uint6
 
 		// Lấy followId nếu current user đang follow profileId này
 		followId, _ = s.followRepo.GetFollowId(c, currentUserId, profileId)
+
+		// Lấy bạn chung giữa currentUserId và profileId
+		friendCommons, numFriendCommons, err = s.GetCommonFriends(c, currentUserId, profileId, 2)
+		if err != nil {
+			// Log error nhưng không fail toàn bộ request
+			friendCommons = []*sharepb.UserV3Proto{}
+			numFriendCommons = 0
+		}
 	}
 
 	return &data.FollowInfoRes{
-		NumFollower:  numFollower,
-		NumFollowing: numFollowing,
-		NumFriend:    friendNumber,
-		ContactId:    contactId,
-		BlockId:      blockId,
-		FollowId:     followId,
+		NumFollower:      numFollower,
+		NumFollowing:     numFollowing,
+		NumFriend:        friendNumber,
+		ContactId:        contactId,
+		BlockId:          blockId,
+		FollowId:         followId,
+		FriendCommons:    friendCommons,
+		NumFriendCommons: numFriendCommons,
 	}, nil
+}
+
+// GetCommonFriends lấy danh sách bạn chung giữa 2 user
+// Trả về: danh sách UserV3Proto (tối đa limit), tổng số bạn chung
+func (s *FriendUsecase) GetCommonFriends(c context.Context, user1Id uint64, user2Id uint64, limit int) ([]*sharepb.UserV3Proto, uint64, error) {
+	// Lấy danh sách profileId của bạn chung
+	commonFriendIds, total, err := s.repo.GetCommonFriends(c, user1Id, user2Id, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if len(commonFriendIds) == 0 {
+		return []*sharepb.UserV3Proto{}, uint64(total), nil
+	}
+
+	// Lấy thông tin profile của các bạn chung bằng cách gọi từng profile
+	// Vì UserClient interface không có method GetProfileByIds, ta sẽ gọi từng cái
+	friendCommons := make([]*sharepb.UserV3Proto, 0, len(commonFriendIds))
+	for _, profileId := range commonFriendIds {
+		profile, err := s.userClient.GetProfileById(c, profileId)
+		if err != nil || profile == nil {
+			continue
+		}
+		friendCommons = append(friendCommons, &sharepb.UserV3Proto{
+			ProfileId: profile.ProfileId,
+			FullName:  profile.FullName,
+			Avatar:    profile.Avatar,
+		})
+	}
+
+	return friendCommons, uint64(total), nil
 }
 
 func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) error {
@@ -550,10 +601,7 @@ func (s *FriendUsecase) Unfriend(c context.Context, friendId uint64) error {
 
 	// Kiểm tra xem có phải là bạn bè không (status == Accepted)
 	if requestEntity.Status != enums.FriendStatusAccepted {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Hai người chưa là bạn bè",
-		}
+		return _errors.ReturnError(400, "Hai người chưa là bạn bè")
 	}
 
 	// Xóa friend relationship
@@ -579,13 +627,15 @@ func (s *FriendUsecase) Unfriend(c context.Context, friendId uint64) error {
 	go func() {
 		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
 		fullName := ""
+		avatar := ""
 		if currentUser != nil {
 			fullName = currentUser.FullName
+			avatar = currentUser.Avatar
 		}
 
 		s.notificationClient.CreateNotification(
 			ctxClone,
-			currentUser.Avatar,
+			avatar,
 			"Hủy kết bạn",
 			[]string{"", fullName, " đã hủy kết bạn với bạn"},
 			_enum.NotificationFriendResponse,

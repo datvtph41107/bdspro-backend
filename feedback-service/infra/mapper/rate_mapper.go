@@ -6,7 +6,7 @@ import (
 	"feedback/infra/client"
 	"feedback/internal/domain"
 	"feedback/internal/dto"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 )
 
 type RateMapper struct {
@@ -149,8 +149,8 @@ func (m *RateMapper) RateStatsToRateStatsResponse(stats domain.RateStats) dto.Ra
 	}
 }
 
-func (m *RateMapper) MapRateToPbs(ctx context.Context, rates []domain.Rate) []*feedbackpb.RateResponse {
-	ratesPb := make([]*feedbackpb.RateResponse, len(rates))
+func (m *RateMapper) MapRateToPbs(ctx context.Context, rates []domain.Rate) []*crmpb.RateResponse {
+	ratesPb := make([]*crmpb.RateResponse, len(rates))
 	for i, rate := range rates {
 		ratesPb[i] = m.MapRateItemToPb(ctx, &rate)
 	}
@@ -159,12 +159,12 @@ func (m *RateMapper) MapRateToPbs(ctx context.Context, rates []domain.Rate) []*f
 	return ratesPb
 }
 
-func (m *RateMapper) MapRateToPb(ctx context.Context, rate *domain.Rate) *feedbackpb.RateResponse {
+func (m *RateMapper) MapRateToPb(ctx context.Context, rate *domain.Rate) *crmpb.RateResponse {
 	if rate == nil {
 		return nil
 	}
 
-	response := &feedbackpb.RateResponse{
+	response := &crmpb.RateResponse{
 		Id:        rate.ID,
 		Anonymous: rate.Anonymous,
 		Score:     uint32(rate.Score),
@@ -183,7 +183,7 @@ func (m *RateMapper) MapRateToPb(ctx context.Context, rate *domain.Rate) *feedba
 
 	if len(rate.Attachs) > 0 {
 		for _, attach := range rate.Attachs {
-			response.Attachs = append(response.Attachs, &feedbackpb.AttachEntity{
+			response.Attachs = append(response.Attachs, &crmpb.AttachEntity{
 				Id:       attach.ID,
 				FileUrl:  attach.FileURL,
 				FileName: attach.FileName,
@@ -195,12 +195,12 @@ func (m *RateMapper) MapRateToPb(ctx context.Context, rate *domain.Rate) *feedba
 	return response
 }
 
-func (m *RateMapper) MapRateItemToPb(ctx context.Context, rate *domain.Rate) *feedbackpb.RateResponse {
+func (m *RateMapper) MapRateItemToPb(ctx context.Context, rate *domain.Rate) *crmpb.RateResponse {
 	if rate == nil {
 		return nil
 	}
 
-	response := &feedbackpb.RateResponse{
+	response := &crmpb.RateResponse{
 		Id:        rate.ID,
 		Anonymous: rate.Anonymous,
 		Score:     uint32(rate.Score),
@@ -219,7 +219,7 @@ func (m *RateMapper) MapRateItemToPb(ctx context.Context, rate *domain.Rate) *fe
 
 	if len(rate.Attachs) > 0 {
 		for _, attach := range rate.Attachs {
-			response.Attachs = append(response.Attachs, &feedbackpb.AttachEntity{
+			response.Attachs = append(response.Attachs, &crmpb.AttachEntity{
 				Id:       attach.ID,
 				FileUrl:  attach.FileURL,
 				FileName: attach.FileName,
@@ -231,7 +231,7 @@ func (m *RateMapper) MapRateItemToPb(ctx context.Context, rate *domain.Rate) *fe
 	return response
 }
 
-func (m *RateMapper) MapUserToPb(ctx context.Context, rates []*feedbackpb.RateResponse) {
+func (m *RateMapper) MapUserToPb(ctx context.Context, rates []*crmpb.RateResponse) {
 	profileIDSet := make(map[uint64]struct{})
 	for _, rate := range rates {
 		// Chỉ lấy thông tin user khi không anonymous
@@ -256,7 +256,7 @@ func (m *RateMapper) MapUserToPb(ctx context.Context, rates []*feedbackpb.RateRe
 }
 
 // MapUserToPbSingle map user profile cho single rate response
-func (m *RateMapper) MapUserToPbSingle(ctx context.Context, rate *feedbackpb.RateResponse) {
+func (m *RateMapper) MapUserToPbSingle(ctx context.Context, rate *crmpb.RateResponse) {
 	if rate == nil {
 		return
 	}

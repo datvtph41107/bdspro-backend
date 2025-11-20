@@ -3,6 +3,7 @@ package firebase
 import (
 	_db "common/db"
 	"context"
+	"fmt"
 	"log"
 
 	"notification/config"
@@ -16,6 +17,7 @@ import (
 )
 
 // FirebaseProvider xử lý gửi thông báo đến Firebase
+// @bind: notification/internal/interface.IFirebaseProvider
 type FirebaseProvider struct {
 	firebaseApp *firebase.App
 }
@@ -90,4 +92,76 @@ func (s *FirebaseProvider) dtoToNotification(request *dto.SendNotiRequest) *mess
 		Body:     request.Body,
 		ImageURL: request.Image,
 	}
+}
+
+// SendPushNotification gửi push notification đến nhiều tokens
+func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []string, title string, message string, data map[string]string) error {
+	if len(tokens) == 0 {
+		return fmt.Errorf("no tokens provided")
+	}
+
+	if s.firebaseApp == nil {
+		return fmt.Errorf("firebase app is not initialized")
+	}
+
+	client, err := s.firebaseApp.Messaging(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get messaging client: %w", err)
+	}
+
+	// Tạo notification
+	notification := &messaging.Notification{
+		Title: title,
+		Body:  message,
+	}
+
+	// Tạo message với data
+	messageBody := &messaging.Message{
+		Notification: notification,
+		Data:         data,
+	}
+
+	// Nếu có nhiều tokens, dùng multicast
+	if len(tokens) > 1 {
+		messages := make([]*messaging.Message, 0, len(tokens))
+		for _, token := range tokens {
+			msg := &messaging.Message{
+				Token:        token,
+				Notification: notification,
+				Data:         data,
+			}
+			messages = append(messages, msg)
+		}
+
+		// Gửi multicast
+		br, err := client.SendMulticast(ctx, &messaging.MulticastMessage{
+			Tokens:       tokens,
+			Notification: notification,
+			Data:         data,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to send multicast: %w", err)
+		}
+
+		// Log kết quả
+		log.Printf("Firebase multicast sent: success=%d, failure=%d", br.SuccessCount, br.FailureCount)
+		if br.FailureCount > 0 {
+			for i, resp := range br.Responses {
+				if !resp.Success {
+					log.Printf("Failed to send to token %s: %v", tokens[i], resp.Error)
+				}
+			}
+		}
+		return nil
+	}
+
+	// Nếu chỉ có 1 token, gửi đơn lẻ
+	messageBody.Token = tokens[0]
+	_, err = client.Send(ctx, messageBody)
+	if err != nil {
+		return fmt.Errorf("failed to send message: %w", err)
+	}
+
+	log.Printf("Firebase push notification sent successfully to token: %s", tokens[0])
+	return nil
 }

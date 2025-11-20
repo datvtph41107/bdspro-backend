@@ -7,6 +7,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"strconv"
 	"strings"
 )
 
@@ -45,7 +46,7 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 	orgID := _utils.GetOrganizationIdFromContext(ctx)
 	authID := _utils.GetAuthIdFromContext(ctx)
 
-	existing, err := u.deviceRepo.FindByDeviceID(ctx, req.DeviceID)
+	existing, err := u.deviceRepo.FindByDeviceIDAndModelAndManufacturer(ctx, req.DeviceID, req.Model, req.Manufacturer)
 	if err != nil {
 		return nil, _errors.ReturnError(500, "Không thể truy vấn thông tin thiết bị")
 	}
@@ -63,13 +64,17 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 			Model:          req.Model,
 			Locale:         req.Locale,
 			Timezone:       req.Timezone,
-			PushToken:      req.PushToken,
 			IPAddress:      req.IPAddress,
 			UserAgent:      req.UserAgent,
 			LastSeenAt:     lastSeen,
 			ProfileID:      toUint64Pointer(profileID),
 			OrganizationID: toUint64Pointer(orgID),
 			AuthID:         toUint64Pointer(authID),
+		}
+
+		// Chỉ set PushToken nếu có giá trị (không rỗng)
+		if strings.TrimSpace(req.PushToken) != "" {
+			device.PushToken = strings.TrimSpace(req.PushToken)
 		}
 
 		created, createErr := u.deviceRepo.Create(ctx, device)
@@ -90,19 +95,25 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 	existing.Model = req.Model
 	existing.Locale = req.Locale
 	existing.Timezone = req.Timezone
-	existing.PushToken = req.PushToken
 	existing.IPAddress = req.IPAddress
 	existing.UserAgent = req.UserAgent
 	existing.LastSeenAt = lastSeen
 
-	if pointer := toUint64Pointer(profileID); pointer != nil {
-		existing.ProfileID = pointer
+	// Chỉ update PushToken nếu có giá trị (không rỗng), nếu rỗng thì giữ nguyên giá trị cũ
+	if strings.TrimSpace(req.PushToken) != "" {
+		existing.PushToken = strings.TrimSpace(req.PushToken)
 	}
-	if pointer := toUint64Pointer(orgID); pointer != nil {
-		existing.OrganizationID = pointer
+
+	// Chỉ cập nhật profileId, organizationId, authId nếu có giá trị từ context
+	// Không ghi đè nếu thiếu (giữ nguyên giá trị cũ trong DB)
+	if profileID > 0 {
+		existing.ProfileID = toUint64Pointer(profileID)
 	}
-	if pointer := toUint64Pointer(authID); pointer != nil {
-		existing.AuthID = pointer
+	if orgID > 0 {
+		existing.OrganizationID = toUint64Pointer(orgID)
+	}
+	if authID > 0 {
+		existing.AuthID = toUint64Pointer(authID)
 	}
 
 	updated, updateErr := u.deviceRepo.Update(ctx, existing)
@@ -111,6 +122,38 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 	}
 
 	return updated, nil
+}
+
+// UpdateDeviceWithAuthInfo cập nhật authId và profileId vào device đã tồn tại
+func (u *DeviceUsecase) UpdateDeviceWithAuthInfo(ctx context.Context, deviceID string, authID, profileID uint64) error {
+	if strings.TrimSpace(deviceID) == "" {
+		return nil // Không có deviceID thì bỏ qua
+	}
+
+	id, err := strconv.ParseUint(deviceID, 10, 64)
+	if err != nil {
+		return err
+	}
+	existing, err := u.deviceRepo.FindByDeviceID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if existing == nil {
+		// Device chưa tồn tại, không cần update
+		return nil
+	}
+
+	// Cập nhật authId và profileId
+	if authID > 0 {
+		existing.AuthID = toUint64Pointer(authID)
+	}
+	if profileID > 0 {
+		existing.ProfileID = toUint64Pointer(profileID)
+	}
+
+	_, err = u.deviceRepo.Update(ctx, existing)
+	return err
 }
 
 func toUint64Pointer(value uint64) *uint64 {

@@ -83,3 +83,8 @@ admin:
   password: admin123
   email: admin@example.com
   full_name: Administrator
+
+cskh:
+  # Danh sách profile ID của đội chăm sóc khách hàng BDSPro
+  # Những user này sẽ được thêm vào nhóm chat "Hỗ trợ khách hàng" khi user mới đăng ký
+  team_ids: []  # Ví dụ: [1, 2, 3] - cần cập nhật với ID thực tế của đội CSKH

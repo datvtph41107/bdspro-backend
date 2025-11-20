@@ -21,6 +21,7 @@ var wireSet = wire.NewSet(
 	_db.NewTransactionRepo,
 	feedback_initial.NewApp,
 	feedback_infra_handler.NewInternalHandler,
+	feedback_infra_client.NewNotificationClient,
 	feedback_infra_handler.NewRateHandler,
 	feedback_infra_mapper.NewRateMapper,
 	feedback_infra_postgre.NewRatePostgres,

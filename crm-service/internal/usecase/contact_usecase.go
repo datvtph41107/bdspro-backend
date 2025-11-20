@@ -2,6 +2,8 @@ package usecase
 
 import (
 	base_enum "base/enum"
+	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -10,17 +12,19 @@ import (
 	"crm/internal/dto"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	"strconv"
 	"strings"
 )
 
 type ContactUsecase struct {
-	repo         repo.ContactRepo
-	friendRepo   repo.FriendRepo
-	followRepo   repo.FollowRepo
-	leadUsecase  *LeadUsecase // forward reference
-	userClient   provider.UserClient
-	ownerUsecase *OwnerUsecase
-	tagUsecase   *TagUsecase
+	repo               repo.ContactRepo
+	friendRepo         repo.FriendRepo
+	followRepo         repo.FollowRepo
+	leadUsecase        *LeadUsecase // forward reference
+	userClient         provider.UserClient
+	ownerUsecase       *OwnerUsecase
+	tagUsecase         *TagUsecase
+	notificationClient _provider.NotificationProvider
 }
 
 func NewContactUsecase(
@@ -30,14 +34,16 @@ func NewContactUsecase(
 	userClient provider.UserClient,
 	ownerUsecase *OwnerUsecase,
 	tagUsecase *TagUsecase,
+	notificationClient _provider.NotificationProvider,
 ) *ContactUsecase {
 	return &ContactUsecase{
-		repo:         repo,
-		friendRepo:   friendRepo,
-		followRepo:   followRepo,
-		userClient:   userClient,
-		ownerUsecase: ownerUsecase,
-		tagUsecase:   tagUsecase,
+		repo:               repo,
+		friendRepo:         friendRepo,
+		followRepo:         followRepo,
+		userClient:         userClient,
+		ownerUsecase:       ownerUsecase,
+		tagUsecase:         tagUsecase,
+		notificationClient: notificationClient,
 	}
 }
 
@@ -116,6 +122,20 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 		tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
 		result.Tags = tags
 	}
+
+	// Tạo thông báo khi tạo liên hệ thành công
+	go func() {
+		s.notificationClient.CreateNotification(c,
+			result.Avatar,
+			"Tạo liên hệ",
+			[]string{result.FullName},
+			_enum.NotificationContactCreate,
+			&result.ID,
+			ownerId,
+			_enum.EOwnerOfMember,
+			[]string{strconv.FormatUint(result.ID, 10)},
+		)
+	}()
 
 	return result, nil
 }

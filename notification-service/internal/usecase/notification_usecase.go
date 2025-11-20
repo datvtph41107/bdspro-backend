@@ -7,21 +7,37 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"encoding/json"
 	"log"
+	"notification/infra/cache"
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
+	iprovider "notification/internal/interface"
 	"notification/internal/repo"
 	notificationpb "pb/types/notification"
+	"strconv"
+	"strings"
 )
 
 type NotificationUsecase struct {
-	Repo repo.NotificationRepo
+	Repo             repo.NotificationRepo
+	RedisClient      *cache.RedisClient
+	AuthClient       iprovider.IAuthClient
+	FirebaseProvider iprovider.IFirebaseProvider
 }
 
-func NewNotificationService(repo repo.NotificationRepo) *NotificationUsecase {
+func NewNotificationService(
+	repo repo.NotificationRepo,
+	redisClient *cache.RedisClient,
+	authClient iprovider.IAuthClient,
+	firebaseProvider iprovider.IFirebaseProvider,
+) *NotificationUsecase {
 	return &NotificationUsecase{
-		Repo: repo,
+		Repo:             repo,
+		RedisClient:      redisClient,
+		AuthClient:       authClient,
+		FirebaseProvider: firebaseProvider,
 	}
 }
 
@@ -88,6 +104,11 @@ func (s *NotificationUsecase) CreateBatch(c context.Context, dto *notificationpb
 
 	if err := _db.SaveWithContext(c, &notifications); err != nil {
 		return nil, err
+	}
+
+	// Publish notification events to Redis for each notification
+	for i := range notifications {
+		s.publishNotificationEvent(c, &notifications[i])
 	}
 
 	// response := s.mapToDTO(notification)
@@ -243,6 +264,12 @@ func (s *NotificationUsecase) CreateToOwner(c context.Context, dto *dto.NotiNewR
 		return nil, err
 	}
 
+	// Publish notification event to Redis
+	s.publishNotificationEvent(c, &notification)
+
+	// Check user online status and send push notification if offline
+	s.checkAndSendPushNotification(c, &notification)
+
 	return &notification, nil
 }
 
@@ -283,4 +310,147 @@ func (s *NotificationUsecase) _removeNotification(c context.Context, dto *dto.No
 		s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
 	}
 	return nil
+}
+
+// publishNotificationEvent publishes notification event to Redis for relay service
+func (s *NotificationUsecase) publishNotificationEvent(ctx context.Context, notification *domain.NotificationEntity) {
+	if s.RedisClient == nil {
+		log.Println("RedisClient is nil, skipping publish notification event")
+		return
+	}
+
+	// Create notification event message
+	eventData := map[string]interface{}{
+		"id":               notification.ID,
+		"ownerId":          notification.OwnerID,
+		"ownerOf":          int32(notification.OwnerOf),
+		"title":            notification.Title,
+		"message":          notification.Message,
+		"attachData":       notification.AttachData,
+		"targetId":         notification.TargetID,
+		"notificationType": int32(notification.NotificationType),
+		"avatar":           notification.Avatar,
+		"isRead":           notification.IsRead,
+		"createdAt":        _utils.FormatTimeToString(notification.CreatedAt),
+	}
+
+	eventMessage := map[string]interface{}{
+		"type": "notification",
+		"data": eventData,
+	}
+
+	messageBytes, err := json.Marshal(eventMessage)
+	if err != nil {
+		log.Printf("Failed to marshal notification event: %v", err)
+		return
+	}
+
+	// Publish to Redis channel: notification:{ownerId}
+	channel := "notification:" + strconv.FormatUint(notification.OwnerID, 10)
+	if err := s.RedisClient.Publish(ctx, channel, string(messageBytes)); err != nil {
+		log.Printf("Failed to publish notification event to Redis: %v", err)
+	}
+}
+
+// checkAndSendPushNotification kiểm tra trạng thái online của user và gửi push notification nếu offline
+func (s *NotificationUsecase) checkAndSendPushNotification(ctx context.Context, notification *domain.NotificationEntity) {
+	if s.RedisClient == nil {
+		log.Println("RedisClient is nil, skipping check online status")
+		return
+	}
+
+	if s.AuthClient == nil {
+		log.Println("AuthClient is nil, skipping push notification")
+		return
+	}
+
+	// Check online status từ Redis
+	const USER_ONLINE_STATUS_KEY_PREFIX = "user:online:"
+	onlineKey := USER_ONLINE_STATUS_KEY_PREFIX + strconv.FormatUint(notification.OwnerID, 10)
+	statusStr, err := s.RedisClient.Get(ctx, onlineKey)
+	if err != nil {
+		log.Printf("Failed to get online status for user %d: %v", notification.OwnerID, err)
+		return
+	}
+
+	// Parse status: format "true|timestamp" hoặc "false|timestamp"
+	isOnline := false
+	if statusStr != "" {
+		parts := strings.Split(statusStr, "|")
+		if len(parts) > 0 && parts[0] == "true" {
+			isOnline = true
+		}
+	}
+
+	// Nếu user online, không cần gửi push notification (đã nhận qua WebSocket)
+	if isOnline {
+		log.Printf("User %d is online, skipping push notification", notification.OwnerID)
+		return
+	}
+
+	// User offline, lấy push token và gửi push notification
+	log.Printf("User %d is offline, getting push tokens and sending push notification", notification.OwnerID)
+	pushTokens, err := s.AuthClient.GetPushTokensByProfileId(ctx, notification.OwnerID)
+	if err != nil {
+		log.Printf("Failed to get push tokens for user %d: %v", notification.OwnerID, err)
+		return
+	}
+
+	if len(pushTokens) == 0 {
+		log.Printf("No push tokens found for user %d", notification.OwnerID)
+		return
+	}
+
+	// Gửi push notification qua Firebase
+	if s.FirebaseProvider == nil {
+		log.Printf("FirebaseProvider is nil, skipping push notification for user %d", notification.OwnerID)
+		return
+	}
+
+	// Tạo title và message từ notification
+	title := notification.Title
+	if title == "" {
+		title = "Thông báo mới"
+	}
+
+	message := ""
+	if len(notification.Message) > 0 {
+		message = notification.Message[0]
+		if len(notification.Message) > 1 {
+			// Nếu có nhiều message, join lại
+			message = strings.Join(notification.Message, " ")
+		}
+	}
+
+	// Tạo data payload với đầy đủ thông tin
+	data := make(map[string]string)
+	data["notificationId"] = strconv.FormatUint(notification.ID, 10)
+	data["targetId"] = strconv.FormatUint(notification.TargetID, 10)
+	data["ownerId"] = strconv.FormatUint(notification.OwnerID, 10)
+	data["ownerOf"] = strconv.FormatInt(int64(notification.OwnerOf), 10)
+	data["type"] = strconv.FormatInt(int64(notification.NotificationType), 10)
+	data["notificationType"] = strconv.FormatInt(int64(notification.NotificationType), 10) // Giữ lại để backward compatibility
+
+	// Avatar - luôn thêm vào data (có thể là empty string)
+	data["avatar"] = notification.Avatar
+
+	// AttachData - nếu có thì join lại thành string
+	if len(notification.AttachData) > 0 {
+		data["attachData"] = strings.Join(notification.AttachData, ",")
+	}
+
+	// Title và message cũng thêm vào data để app có thể xử lý
+	if title != "" {
+		data["title"] = title
+	}
+	if message != "" {
+		data["message"] = message
+	}
+
+	// Gửi push notification
+	if err := s.FirebaseProvider.SendPushNotification(ctx, pushTokens, title, message, data); err != nil {
+		log.Printf("Failed to send push notification to user %d: %v", notification.OwnerID, err)
+	} else {
+		log.Printf("Successfully sent push notification to user %d with %d tokens", notification.OwnerID, len(pushTokens))
+	}
 }

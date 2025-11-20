@@ -229,7 +229,7 @@ func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.
 // @Success 200 {object} userpb.ProfilePublicInfo "Thông tin công khai của người dùng"
 // @Router /v2/user/profile/info/me [get]
 func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.Empty) (*sharepb.UserV3Proto, error) {
-	result, err := s.ProfileUsecase.PublicUserInfoMe(ctx)
+	result, err := s.ProfileUsecase.GetInfoMe(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}

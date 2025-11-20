@@ -35,6 +35,11 @@ func NewRuntimeProperties() *RuntimeProperties {
 				Email:    config.Properties.Admin.Email,
 				FullName: config.Properties.Admin.FullName,
 			},
+			CSKH: struct {
+				TeamIDs []uint64
+			}{
+				TeamIDs: config.Properties.CSKH.TeamIDs,
+			},
 		},
 	}
 }

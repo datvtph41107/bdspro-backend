@@ -25,4 +25,4 @@ jwt:
 security:
   api_key: "local-hub-api-key"
   protected_methods:
-    - "/hubpb.VersionService/CheckAppUpdate"
+    - "/hubpb.VersionService/CreateVersionFromDev"

@@ -5,8 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	feedbackpb "pb/types/feedback"
-	sharepb "pb/types/shared"
+	crmpb "pb/types/crm"
 	"time"
 
 	_middleware "common/middleware"
@@ -15,7 +14,7 @@ import (
 )
 
 type FeedbackGrpcClient struct {
-	feedbackpb.InternalServiceClient
+	crmpb.CrmInternalServiceClient
 }
 
 func MakeFeedbackGrpcClient(env_runtime string) *FeedbackGrpcClient {
@@ -39,16 +38,7 @@ func MakeFeedbackGrpcClient(env_runtime string) *FeedbackGrpcClient {
 		go _middleware.MonitorConnection(ctx, name, conn)
 
 		// Initialize all service clients
-		feedbackClient.InternalServiceClient = feedbackpb.NewInternalServiceClient(conn)
+		feedbackClient.CrmInternalServiceClient = crmpb.NewCrmInternalServiceClient(conn)
 	}()
 	return feedbackClient
-}
-
-func (c *FeedbackGrpcClient) GetRateStats(ctx context.Context, req *sharepb.IdRequest) (*sharepb.RateStatsV3Proto, error) {
-	resp, err := c.InternalServiceClient.GetRateStats(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
 }

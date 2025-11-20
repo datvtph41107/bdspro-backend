@@ -1467,6 +1467,275 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/kyc/submit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "User submit KYC verification request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC"
+                ],
+                "summary": "Submit KYC request",
+                "parameters": [
+                    {
+                        "description": "Thông tin KYC",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.SubmitKYCRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.KYCV3Proto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/kyc/approve/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin duyệt yêu cầu KYC của user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin KYC"
+                ],
+                "summary": "Duyệt KYC request",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "KYC ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/kyc/reject/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin từ chối yêu cầu KYC của user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin KYC"
+                ],
+                "summary": "Từ chối KYC request",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "KYC ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Lý do từ chối",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.RejectKYCRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/admin/kycs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả KYC requests với phân trang và tìm kiếm (Admin only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin KYC"
+                ],
+                "summary": "Lấy danh sách KYC requests",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại (mặc định: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng item trên mỗi trang (mặc định: 20)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tìm kiếm theo tên, số CMND",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo trạng thái: 10: Pending, 20: Approved, 30: Rejected",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sắp xếp theo trường",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Thứ tự sắp xếp (asc, desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/userpb.ListKYCsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v2/user/admin/main-area": {
             "get": {
                 "security": [
@@ -1622,6 +1891,138 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/v2/user/admin/profession": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách nghề nghiệp với phân trang (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Lấy danh sách nghề nghiệp",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại (bắt đầu từ 0)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang (tối đa 100)",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo nghề nghiệp mới (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Tạo nghề nghiệp",
+                "parameters": [
+                    {
+                        "description": "Thông tin nghề nghiệp",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Profession"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/user/admin/profession/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin nghề nghiệp (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Cập nhật nghề nghiệp",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nghề nghiệp",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin nghề nghiệp",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.Profession"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa mềm nghề nghiệp (Admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AdminDictionary"
+                ],
+                "summary": "Xóa nghề nghiệp",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID nghề nghiệp",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/v2/user/admin/purpose-use": {
@@ -2331,6 +2732,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/user/profession": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách nghề nghiệp đã được duyệt (User)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserDictionary"
+                ],
+                "summary": "Lấy danh sách nghề nghiệp",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại (bắt đầu từ 0)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang (tối đa 100)",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/user/profile/accounts/me": {
             "get": {
                 "security": [
@@ -2468,6 +2904,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/user/profile/privacy": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chỉ cập nhật visibility, profileVisibility, statusOnline và đồng bộ person_config sang notification",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Cập nhật quyền riêng tư hồ sơ",
+                "parameters": [
+                    {
+                        "description": "Thiết lập quyền riêng tư",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userpb.UpdatePrivacySettingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/user/profile/quick-setup": {
             "post": {
                 "security": [
@@ -2502,6 +2983,51 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/user/profile/set-info": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt, email, địa chỉ)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Cập nhật thông tin cá nhân",
+                "parameters": [
+                    {
+                        "description": "Thông tin cá nhân",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.UserV3Proto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -2630,6 +3156,43 @@ const docTemplate = `{
                         "description": "Thành công",
                         "schema": {
                             "$ref": "#/definitions/sharepb.GetStatsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v3/user/profile/info/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin công khai của người dùng v3",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy thông tin công khai của người dùng v3",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của Profile",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin công khai của người dùng",
+                        "schema": {
+                            "$ref": "#/definitions/sharepb.TotalResponseProto"
                         }
                     }
                 }
@@ -3159,8 +3722,8 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "Online",
-                "Offline",
-                "Busy"
+                "LASTEST",
+                "HIDDEN"
             ]
         },
         "enums.ERole": {
@@ -3365,6 +3928,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "isActive": {
+                    "type": "boolean"
+                },
                 "issueDate": {
                     "description": "ngày cấp",
                     "type": "string"
@@ -3452,10 +4018,96 @@ const docTemplate = `{
                 }
             }
         },
+        "sharepb.AddressV3Proto": {
+            "type": "object",
+            "properties": {
+                "detail": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.BDSProDashboardProto": {
+            "type": "object",
+            "properties": {
+                "totalAsset": {
+                    "type": "integer"
+                },
+                "totalPost": {
+                    "type": "integer"
+                },
+                "totalProduct": {
+                    "type": "integer"
+                },
+                "totalProject": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.ContactInfoV3Proto": {
+            "type": "object",
+            "properties": {
+                "blockId": {
+                    "type": "integer"
+                },
+                "contactId": {
+                    "type": "integer"
+                },
+                "followId": {
+                    "type": "integer"
+                },
+                "numFollower": {
+                    "type": "integer"
+                },
+                "numFollowing": {
+                    "type": "integer"
+                },
+                "numFriend": {
+                    "type": "integer"
+                },
+                "reportId": {
+                    "type": "integer"
+                }
+            }
+        },
         "sharepb.Empty": {
             "type": "object"
         },
         "sharepb.FriendItem": {
+            "type": "object",
+            "properties": {
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "receiverId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.FriendV3Proto": {
             "type": "object",
             "properties": {
                 "createdBy": {
@@ -3535,8 +4187,81 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "itemType": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "sharepb.KYCV3Proto": {
+            "type": "object",
+            "properties": {
+                "backImage": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "frontImage": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "identityCard": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "rejectReason": {
+                    "type": "string"
+                },
+                "reviewedAt": {
+                    "type": "string"
+                },
+                "reviewedBy": {
+                    "type": "integer"
+                },
+                "selfieImage": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.RateStatsV3Proto": {
+            "type": "object",
+            "properties": {
+                "averageScore": {
+                    "type": "number"
+                },
+                "star1Count": {
+                    "type": "integer"
+                },
+                "star2Count": {
+                    "type": "integer"
+                },
+                "star3Count": {
+                    "type": "integer"
+                },
+                "star4Count": {
+                    "type": "integer"
+                },
+                "star5Count": {
+                    "type": "integer"
+                },
+                "totalReviews": {
+                    "type": "integer"
                 }
             }
         },
@@ -3557,13 +4282,75 @@ const docTemplate = `{
                 }
             }
         },
+        "sharepb.TotalResponseProto": {
+            "type": "object",
+            "properties": {
+                "bdsproInfo": {
+                    "$ref": "#/definitions/sharepb.BDSProDashboardProto"
+                },
+                "contactInfo": {
+                    "$ref": "#/definitions/sharepb.ContactInfoV3Proto"
+                },
+                "friendStatus": {
+                    "$ref": "#/definitions/sharepb.FriendV3Proto"
+                },
+                "kyc": {
+                    "$ref": "#/definitions/sharepb.KYCV3Proto"
+                },
+                "province": {
+                    "$ref": "#/definitions/sharepb.ItemV3Proto"
+                },
+                "rateStats": {
+                    "$ref": "#/definitions/sharepb.RateStatsV3Proto"
+                },
+                "user": {
+                    "$ref": "#/definitions/sharepb.UserV3Proto"
+                }
+            }
+        },
         "sharepb.UserV3Proto": {
             "type": "object",
             "properties": {
+                "address": {
+                    "$ref": "#/definitions/sharepb.AddressV3Proto"
+                },
                 "avatar": {
                     "type": "string"
                 },
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "birth": {
+                    "type": "string"
+                },
+                "blogUrl": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "facebookUrl": {
+                    "type": "string"
+                },
                 "fullName": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "integer"
+                },
+                "instagramUrl": {
+                    "type": "string"
+                },
+                "introduction": {
+                    "type": "string"
+                },
+                "kyc": {
+                    "$ref": "#/definitions/sharepb.KYCV3Proto"
+                },
+                "linkedinUrl": {
                     "type": "string"
                 },
                 "mainAreaIds": {
@@ -3578,7 +4365,25 @@ const docTemplate = `{
                         "$ref": "#/definitions/sharepb.ItemV3Proto"
                     }
                 },
+                "mainAreas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "otherUrl": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
                 "profileId": {
+                    "type": "integer"
+                },
+                "profileVisibility": {
                     "type": "integer"
                 },
                 "purposeUseIds": {
@@ -3587,8 +4392,71 @@ const docTemplate = `{
                         "type": "integer"
                     }
                 },
+                "purposeUses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
                 "roleRealEstate": {
                     "type": "integer"
+                },
+                "signatureVisible": {
+                    "type": "boolean"
+                },
+                "statusOnline": {
+                    "type": "integer"
+                },
+                "tagJobs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "tagMainAreas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "tagProjects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "tagSpecialities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ItemV3Proto"
+                    }
+                },
+                "twitterUrl": {
+                    "type": "string"
+                },
+                "updateTags": {
+                    "type": "boolean"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "integer"
+                },
+                "websiteUrl": {
+                    "type": "string"
+                },
+                "youtubeUrl": {
+                    "type": "string"
+                },
+                "zaloUrl": {
+                    "type": "string"
                 }
             }
         },
@@ -4227,6 +5095,20 @@ const docTemplate = `{
                 }
             }
         },
+        "userpb.ListKYCsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.KYCV3Proto"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "userpb.LockUserRequest": {
             "type": "object",
             "properties": {
@@ -4323,6 +5205,26 @@ const docTemplate = `{
                 }
             }
         },
+        "userpb.PersonConfigInput": {
+            "type": "object",
+            "properties": {
+                "channel": {
+                    "type": "integer"
+                },
+                "checked": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                }
+            }
+        },
         "userpb.PlanResponse": {
             "type": "object",
             "properties": {
@@ -4388,11 +5290,46 @@ const docTemplate = `{
                 }
             }
         },
+        "userpb.Profession": {
+            "type": "object",
+            "properties": {
+                "approveUserId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "issueDate": {
+                    "type": "string"
+                },
+                "issuer": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "verifiedStatus": {
+                    "type": "integer"
+                }
+            }
+        },
         "userpb.ProfessionItem": {
             "type": "object",
             "properties": {
                 "id": {
                     "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
                 },
                 "issueDate": {
                     "type": "string"
@@ -4462,6 +5399,9 @@ const docTemplate = `{
                 "introduction": {
                     "type": "string"
                 },
+                "kyc": {
+                    "$ref": "#/definitions/sharepb.KYCV3Proto"
+                },
                 "linkedin": {
                     "type": "string"
                 },
@@ -4527,6 +5467,12 @@ const docTemplate = `{
                 },
                 "tabDefault": {
                     "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.TagItem"
+                    }
                 },
                 "taxCode": {
                     "type": "string"
@@ -4628,6 +5574,19 @@ const docTemplate = `{
                 }
             }
         },
+        "userpb.RejectKYCRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "KYC ID",
+                    "type": "integer"
+                },
+                "reason": {
+                    "description": "Lý do từ chối",
+                    "type": "string"
+                }
+            }
+        },
         "userpb.SetPersonRequest": {
             "type": "object",
             "properties": {
@@ -4650,6 +5609,51 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "wardId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "userpb.SubmitKYCRequest": {
+            "type": "object",
+            "properties": {
+                "backImage": {
+                    "description": "Ảnh mặt sau CMND/CCCD",
+                    "type": "string"
+                },
+                "frontImage": {
+                    "description": "Ảnh mặt trước CMND/CCCD",
+                    "type": "string"
+                },
+                "fullName": {
+                    "description": "Họ tên",
+                    "type": "string"
+                },
+                "identityCard": {
+                    "description": "Số CMND/CCCD",
+                    "type": "string"
+                },
+                "selfieImage": {
+                    "description": "Ảnh selfie (optional)",
+                    "type": "string"
+                }
+            }
+        },
+        "userpb.TagItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tagType": {
                     "type": "integer"
                 }
             }
@@ -4725,6 +5729,26 @@ const docTemplate = `{
                 }
             }
         },
+        "userpb.UpdatePrivacySettingRequest": {
+            "type": "object",
+            "properties": {
+                "personConfigs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/userpb.PersonConfigInput"
+                    }
+                },
+                "profileVisibility": {
+                    "type": "integer"
+                },
+                "statusOnline": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "integer"
+                }
+            }
+        },
         "userpb.UpdateUserRequest": {
             "type": "object",
             "properties": {
@@ -4751,6 +5775,10 @@ const docTemplate = `{
                 "gender": {
                     "description": "Giới tính",
                     "type": "integer"
+                },
+                "idVerifiedAt": {
+                    "description": "Thời gian xác thực ID (format: ISO 8601)",
+                    "type": "string"
                 },
                 "phone": {
                     "description": "Số điện thoại",

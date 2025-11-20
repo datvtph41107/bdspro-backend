@@ -40,7 +40,7 @@ func NewVersionService(fileService *FileService, storage *StorageService) *Versi
 
 // UploadVersion xử lý upload binary version và lưu metadata vào cơ sở dữ liệu.
 func (s *VersionService) UploadVersion(c *gin.Context) {
-	apiKey := c.GetHeader("X-Api-Key")
+	apiKey := c.GetHeader("API-KEY")
 	if strings.TrimSpace(apiKey) == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing API key"})
 		return

@@ -5,14 +5,14 @@ import (
 	"feedback/infra/mapper"
 	"feedback/internal/dto"
 	"feedback/internal/usecase"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 	sharepb "pb/types/shared"
 
 	_dto "common/domain/dto"
 )
 
 type ReportAdminHandler struct {
-	feedbackpb.UnimplementedReportAdminServiceServer
+	crmpb.UnimplementedReportAdminServiceServer
 	reportUsecase *usecase.ReportUsecase
 	reportMapper  *mapper.ReportMapper
 }
@@ -38,9 +38,9 @@ func NewReportAdminHandler(reportUsecase *usecase.ReportUsecase, reportMapper *m
 // @Param reason_id query int false "ID lý do báo cáo"
 // @Param userId query int false "ID người dùng bị báo cáo"
 // @Param ownerId query int false "ID đối tượng bị báo cáo"
-// @Success 200 {object} feedbackpb.GetAdminReportListResponse
+// @Success 200 {object} crmpb.GetAdminReportListResponse
 // @Router /admin/report/{registry} [get]
-func (h *ReportAdminHandler) GetAdminReportList(ctx context.Context, req *feedbackpb.GetAdminReportListRequest) (*feedbackpb.GetAdminReportListResponse, error) {
+func (h *ReportAdminHandler) GetAdminReportList(ctx context.Context, req *crmpb.GetAdminReportListRequest) (*crmpb.GetAdminReportListResponse, error) {
 	// Convert request to DTO
 	searchReq := &dto.ReportListRequest{
 		Pagable: _dto.Pagable{
@@ -69,12 +69,12 @@ func (h *ReportAdminHandler) GetAdminReportList(ctx context.Context, req *feedba
 	}
 
 	// Convert to response
-	var reportResponses []*feedbackpb.ReportResponse
+	var reportResponses []*crmpb.ReportResponse
 	for _, report := range reports {
 		reportResponses = append(reportResponses, h.reportMapper.ReportToPb(&report))
 	}
 
-	return &feedbackpb.GetAdminReportListResponse{
+	return &crmpb.GetAdminReportListResponse{
 		Data:  reportResponses,
 		Total: total,
 	}, nil
@@ -90,7 +90,7 @@ func (h *ReportAdminHandler) GetAdminReportList(ctx context.Context, req *feedba
 // @Param id path uint64 true "ID báo cáo"
 // @Param request body dto.AdminReportActionRequest true "Thông tin duyệt"
 // @Router /admin/report/{id}/approve [post]
-func (h *ReportAdminHandler) ApproveReport(ctx context.Context, req *feedbackpb.ApproveReportRequest) (*sharepb.SubmitResponse, error) {
+func (h *ReportAdminHandler) ApproveReport(ctx context.Context, req *crmpb.ApproveReportRequest) (*sharepb.SubmitResponse, error) {
 	// Convert to DTO
 	actionReq := &dto.AdminReportActionRequest{
 		Response:  req.Response,
@@ -122,7 +122,7 @@ func (h *ReportAdminHandler) ApproveReport(ctx context.Context, req *feedbackpb.
 // @Param id path uint64 true "ID báo cáo"
 // @Param request body dto.AdminReportActionRequest true "Thông tin từ chối"
 // @Router /admin/report/{id}/reject [post]
-func (h *ReportAdminHandler) RejectReport(ctx context.Context, req *feedbackpb.RejectReportRequest) (*sharepb.SubmitResponse, error) {
+func (h *ReportAdminHandler) RejectReport(ctx context.Context, req *crmpb.RejectReportRequest) (*sharepb.SubmitResponse, error) {
 	// Convert to DTO
 	actionReq := &dto.AdminReportActionRequest{
 		Response:  req.Response,

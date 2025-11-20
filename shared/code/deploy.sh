@@ -19,7 +19,6 @@ REMOTE_PATH=/root/$WORKSPACE_NAME
 
 
 if [ "$1" = "compose" ]; then
-  REMOTE_HOST=14.225.205.222
   echo "đẩy docker compose file lên server..." $REMOTE_PATH
   ssh ${REMOTE_USER}@${REMOTE_HOST} "
 mkdir -p ${REMOTE_PATH}

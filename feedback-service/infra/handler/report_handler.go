@@ -5,14 +5,14 @@ import (
 	"feedback/infra/mapper"
 	"feedback/internal/dto"
 	"feedback/internal/usecase"
-	feedbackpb "pb/types/feedback"
+	crmpb "pb/types/feedback"
 	sharepb "pb/types/shared"
 
 	_dto "common/domain/dto"
 )
 
 type ReportHandler struct {
-	feedbackpb.UnimplementedReportServiceServer
+	crmpb.UnimplementedReportServiceServer
 	reportUsecase *usecase.ReportUsecase
 	reportMapper  *mapper.ReportMapper
 }
@@ -34,7 +34,7 @@ func NewReportHandler(reportUsecase *usecase.ReportUsecase, reportMapper *mapper
 // @Param registry path string true "Registry"
 // @Param request body dto.ReportCreateRequest true "Thông tin báo cáo"
 // @Router /report/{registry} [post]
-func (h *ReportHandler) CreateReport(ctx context.Context, req *feedbackpb.CreateReportRequest) (*feedbackpb.ReportResponse, error) {
+func (h *ReportHandler) CreateReport(ctx context.Context, req *crmpb.CreateReportRequest) (*crmpb.ReportResponse, error) {
 	// Convert protobuf request to DTO
 	reportReq := &dto.ReportCreateRequest{
 		ReasonID:     req.ReasonId,
@@ -72,9 +72,9 @@ func (h *ReportHandler) CreateReport(ctx context.Context, req *feedbackpb.Create
 // @Param ownerId path uint64 true "Owner ID"
 // @Param page query int false "Trang"
 // @Param size query int false "Kích thước trang"
-// @Success 200 {object} feedbackpb.GetReportListResponse
+// @Success 200 {object} crmpb.GetReportListResponse
 // @Router /report/{registry}/list/{ownerId} [get]
-func (h *ReportHandler) GetReportList(ctx context.Context, req *feedbackpb.GetReportListRequest) (*feedbackpb.GetReportListResponse, error) {
+func (h *ReportHandler) GetReportList(ctx context.Context, req *crmpb.GetReportListRequest) (*crmpb.GetReportListResponse, error) {
 	// Convert request to DTO
 	searchReq := &dto.ReportListRequest{
 		Pagable: _dto.Pagable{
@@ -94,12 +94,12 @@ func (h *ReportHandler) GetReportList(ctx context.Context, req *feedbackpb.GetRe
 	}
 
 	// Convert to response
-	var reportResponses []*feedbackpb.ReportResponse
+	var reportResponses []*crmpb.ReportResponse
 	for _, report := range reports {
 		reportResponses = append(reportResponses, h.reportMapper.ReportToPb(&report))
 	}
 
-	return &feedbackpb.GetReportListResponse{
+	return &crmpb.GetReportListResponse{
 		Data:  reportResponses,
 		Total: total,
 	}, nil
@@ -111,16 +111,16 @@ func (h *ReportHandler) GetReportList(ctx context.Context, req *feedbackpb.GetRe
 // @Tags Report
 // @Accept json
 // @Produce json
-// @Success 200 {object} feedbackpb.GetReportReasonsResponse
+// @Success 200 {object} crmpb.GetReportReasonsResponse
 // @Router /report/reasons [get]
-func (h *ReportHandler) GetReportReasons(ctx context.Context, req *feedbackpb.GetReportReasonsRequest) (*feedbackpb.GetReportReasonsResponse, error) {
+func (h *ReportHandler) GetReportReasons(ctx context.Context, req *crmpb.GetReportReasonsRequest) (*crmpb.GetReportReasonsResponse, error) {
 	// Get report reasons
 	reasons, err := h.reportUsecase.GetReportReasons(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &feedbackpb.GetReportReasonsResponse{
+	return &crmpb.GetReportReasonsResponse{
 		Data:  h.reportMapper.ReportReasonListToReportReasonResponseList(reasons),
 		Total: int64(len(reasons)),
 	}, nil
@@ -136,7 +136,7 @@ func (h *ReportHandler) GetReportReasons(ctx context.Context, req *feedbackpb.Ge
 // @Param id path uint64 true "ID báo cáo"
 // @Param request body dto.ReportUpdateRequest true "Thông tin cập nhật"
 // @Router /report/{id} [put]
-func (h *ReportHandler) UpdateReport(ctx context.Context, req *feedbackpb.UpdateReportRequest) (*feedbackpb.UpdateReportResponse, error) {
+func (h *ReportHandler) UpdateReport(ctx context.Context, req *crmpb.UpdateReportRequest) (*crmpb.UpdateReportResponse, error) {
 	// Convert protobuf request to DTO
 	reportReq := &dto.ReportUpdateRequest{
 		// ReasonID:  req.ReasonId,
@@ -153,7 +153,7 @@ func (h *ReportHandler) UpdateReport(ctx context.Context, req *feedbackpb.Update
 	// Convert to protobuf response
 	pbResponse := h.reportMapper.ReportToPb(updatedReport)
 
-	return &feedbackpb.UpdateReportResponse{
+	return &crmpb.UpdateReportResponse{
 		Report: pbResponse,
 	}, nil
 }
