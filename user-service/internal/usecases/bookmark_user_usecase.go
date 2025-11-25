@@ -120,6 +120,7 @@ func (u *BookmarkUserUsecase) GetBookmarkedUsers(ctx context.Context, req *dto.B
 			RoleType:       user.RoleType,
 			RoleRealEstate: user.RoleRealEstate,
 			Position:       user.Position,
+			Workplace:      user.Workplace,
 			DepartmentID:   user.DepartmentID,
 			Bookmark:       true, // Tất cả user trong danh sách này đều có bookmark
 			TickVerified:   user.TickVerified,

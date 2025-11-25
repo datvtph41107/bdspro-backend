@@ -50,11 +50,11 @@ func (r *VersionPostgres) GetListWithFilter(ctx context.Context, appName string,
 	return versions, total, nil
 }
 
-func (r *VersionPostgres) GetLatestByAppAndPlatform(ctx context.Context, appName string, platform string) (*domain.VersionEntity, error) {
+func (r *VersionPostgres) GetLatestByAppAndPlatform(ctx context.Context, appName string, platform string, versionName string) (*domain.VersionEntity, error) {
 	var version domain.VersionEntity
 
 	query := r.GetDB(ctx).
-		Where("app_name = ? AND platform = ? AND active = true AND deleted_at IS NULL", appName, platform).
+		Where("app_name = ? AND platform = ? AND version_name = ? AND active = true AND deleted_at IS NULL", appName, platform, versionName).
 		Order("created_at DESC, id DESC")
 
 	if err := query.First(&version).Error; err != nil {

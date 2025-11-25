@@ -24,7 +24,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 	geminiClient := client.NewGeminiClient()
 	bdsproInternalClient := client.NewBdsproInternalClient()
 	hubClient := client.NewHubClient()
-	assistantUsecase := usecases.NewAssistantUsecase(deepseekClient, openAIClient, geminiClient, bdsproInternalClient, hubClient)
+	ocrClient := client.NewOCRClient()
+	assistantUsecase := usecases.NewAssistantUsecase(deepseekClient, openAIClient, geminiClient, bdsproInternalClient, hubClient, ocrClient)
 	assistantHandler := handler.NewAssistantHandler(assistantUsecase)
 	initialApp := initial.NewInitialApp(assistantHandler)
 	return initialApp, nil
@@ -33,4 +34,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.BdsproInternalProvider), new(*client.BdsproInternalClient)), wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.GeminiProvider), new(*client.GeminiClient)), wire.Bind(new(provider.HubProvider), new(*client.HubClient)), wire.Bind(new(provider.OpenAIProvider), new(*client.OpenAIClient)), handler.NewAssistantHandler, usecases.NewAssistantUsecase, client.NewBdsproInternalClient, client.NewDeepseekClient, client.NewGeminiClient, client.NewHubClient, initial.NewInitialApp, client.NewOpenAIClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(provider.BdsproInternalProvider), new(*client.BdsproInternalClient)), wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.GeminiProvider), new(*client.GeminiClient)), wire.Bind(new(provider.HubProvider), new(*client.HubClient)), wire.Bind(new(provider.OCRProvider), new(*client.OCRClient)), wire.Bind(new(provider.OpenAIProvider), new(*client.OpenAIClient)), wire.Bind(new(provider.QRCodeProvider), new(*client.QRCodeClient)), handler.NewAssistantHandler, usecases.NewAssistantUsecase, client.NewBdsproInternalClient, client.NewDeepseekClient, client.NewGeminiClient, client.NewHubClient, initial.NewInitialApp, client.NewOCRClient, client.NewOpenAIClient, client.NewQRCodeClient)

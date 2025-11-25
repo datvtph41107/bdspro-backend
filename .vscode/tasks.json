@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "terminal.integrated.env.osx": {
-    "PATH": "/Users/baphieu/go/bin:${env:PATH}"
+    "PATH": "/Users/baphieu/go/bin:${env:PATH}",
   },
   "tasks": [
     {

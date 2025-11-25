@@ -118,7 +118,7 @@ func (r *RatePostgres) Update(ctx context.Context, id uint64, rate *domain.Rate)
 		// Xóa attachs cũ trước
 		if err := r.db.WithContext(ctx).
 			Where("rate_id = ?", id).
-			Delete(&domain.AttachEntity{}).Error; err != nil {
+			Delete(&domain.FeedbackAttachEntity{}).Error; err != nil {
 			return err
 		}
 

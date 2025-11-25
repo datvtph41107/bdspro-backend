@@ -12,6 +12,6 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	log.Println("🚀 Starting Assistant Service...")
+	log.Println("🚀 Starting Assistant Service...3")
 	grpc.RunGRPCServer()
 }

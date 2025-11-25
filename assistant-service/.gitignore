@@ -45,3 +45,5 @@ temp/
 # Wire generated files
 wire_gen.go
 
+files/
+research/*

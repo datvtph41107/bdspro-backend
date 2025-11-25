@@ -664,6 +664,13 @@
             "type": "object",
             "$ref": "#/definitions/crmpbTagItem"
           }
+        },
+        "contactTags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
         }
       }
     },
@@ -707,6 +714,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/crmpbTagItem"
+          }
+        },
+        "contactTags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
           }
         }
       }
@@ -857,6 +871,45 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "sharepbItemV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "tag"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "file upload"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "approved"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "issuedAt": {
+          "type": "string"
         }
       }
     },

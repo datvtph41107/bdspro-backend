@@ -26,6 +26,7 @@ func AutoMigrate() {
 		&models.TagEntity{},
 		&models.TagUserEntity{},
 		&models.KYCEntity{},
+		&models.ProfileMediaEntity{},
 
 		// Profile related entities
 		&models.ProfessionEntity{},

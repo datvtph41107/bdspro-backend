@@ -5,7 +5,7 @@ SCHEMA := cd ../protobuf/schema
 AIR_EXE=/Users/baphieu/go/bin/air
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
-# PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/config.yml)
+PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/local.yml)
 
 # Debug info
 debug-info:

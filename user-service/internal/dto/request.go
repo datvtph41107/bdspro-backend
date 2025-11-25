@@ -71,6 +71,8 @@ type UserInfoRequest struct {
 	Avatar            string                `json:"avatar,omitempty"`
 	BackgroundImage   string                `json:"backgroundImage,omitempty"`
 	Position          string                `json:"position,omitempty"`
+	Workplace         string                `json:"workplace,omitempty"`
+	RoleTitle         string                `json:"roleTitle,omitempty"`
 	DepartmentID      uint64                `json:"departmentId,omitempty"`
 	Birth             *time.Time            `json:"birth,omitempty" time_format:"2006-01-02T15:04:05"`
 	StartDate         *time.Time            `json:"startDate,omitempty" time_format:"2006-01-02T15:04:05"`

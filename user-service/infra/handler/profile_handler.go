@@ -345,15 +345,15 @@ func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoReq
 }
 
 // @Summary Cập nhật thông tin cá nhân
-// @Description Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt, email, địa chỉ)
+// @Description Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt, email, địa chỉ) và các thiết lập visibility (visibilityIntroduce, visibilityProfession, visibilityMainArea, visibilityFriends, visibilitySignature, viewRoles)
 // @Tags Profile
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body userpb.SetPersonRequest true "Thông tin cá nhân"
+// @Param request body sharepb.UserV3Proto true "Thông tin cá nhân"
 // @Success 200 {object} sharepb.Empty
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
-// @Router /v2/user/profile/set-person [put]
+// @Router /v2/user/profile/data [put]
 func (s *GrpcProfileService) SetPerson(ctx context.Context, req *sharepb.UserV3Proto) (*sharepb.Empty, error) {
 	dto := s.ProfileMapper.UserV3ToDTO(req)
 	err := s.ProfileUsecase.SetPerson(ctx, dto)
@@ -461,4 +461,26 @@ func (s *GrpcProfileService) FindByPhone(ctx context.Context, req *userpb.FindBy
 	}
 
 	return response, nil
+}
+
+// @Summary Lấy phần trăm hoàn thành cập nhật tài khoản
+// @Description Trả về phần trăm hoàn thành cập nhật tài khoản dựa trên số field đã thiết lập
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} userpb.ProfileCompletionResponse "Thông tin phần trăm hoàn thành"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Router /v2/user/profile/completion [get]
+func (s *GrpcProfileService) GetProfileCompletion(ctx context.Context, req *sharepb.Empty) (*userpb.ProfileCompletionResponse, error) {
+	result, err := s.ProfileUsecase.GetProfileCompletion(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profile completion: %v", err)
+	}
+	return &userpb.ProfileCompletionResponse{
+		Percentage:      uint32(result.Percentage),
+		CompletedFields: result.CompletedFields,
+		TotalFields:     result.TotalFields,
+		MissingFields:   result.MissingFields,
+	}, nil
 }

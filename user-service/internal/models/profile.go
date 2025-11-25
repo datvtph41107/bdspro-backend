@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 	"user/enums"
+
+	"github.com/lib/pq"
 )
 
 type UserProfileSearch struct {
@@ -36,6 +38,8 @@ type UserProfileEntity struct {
 	RoleKey           uint32                `gorm:"default:10" copier:"-" json:"roleKey"`
 	RoleRealEstate    enums.ERoleRealEstate `gorm:"default:10" copier:"-" json:"roleRealEstate"`
 	Position          string                `gorm:"size:255" json:"position"`
+	Workplace         string                `gorm:"size:255;column:workplace" json:"workplace"`
+	RoleTitle         string                `gorm:"size:255;column:role_title" json:"roleTitle"`
 	DepartmentID      uint64                `gorm:"column:department_id" json:"departmentId"`
 	Birth             *time.Time            `gorm:"column:birth" json:"birth"`
 	StartDate         *time.Time            `gorm:"column:start_date" json:"startDate"`
@@ -61,6 +65,13 @@ type UserProfileEntity struct {
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
 	SignatureVisible  bool                  `gorm:"column:signature_visible;default:false" json:"signatureVisible"`
 
+	VisibilityIntroduce  _enum.EVisibility `gorm:"column:visibility_introduce" json:"visibilityIntroduce"`
+	VisibilityProfession _enum.EVisibility `gorm:"column:visibility_profession" json:"visibilityProfession"`
+	VisibilityMainArea   _enum.EVisibility `gorm:"column:visibility_main_area" json:"visibilityMainArea"`
+	VisibilityFriends    _enum.EVisibility `gorm:"column:visibility_friends" json:"visibilityFriends"`
+	VisibilitySignature  _enum.EVisibility `gorm:"column:visibility_signature" json:"visibilitySignature"`
+	ViewRoles            pq.Int32Array     `gorm:"type:integer[];column:view_roles" json:"viewRoles"` // Array of EViewRole (10, 20, 30, 40)
+
 	// LastLoginAt       *time.Time            `gorm:"column:last_login_at" json:"lastLoginAt"`
 	// TotalLogin        uint32                `gorm:"column:total_login;default:0" json:"totalLogin"`
 
@@ -73,6 +84,7 @@ type UserProfileEntity struct {
 	TagMainAreas   []TagEntity           `gorm:"-" json:"tagMainAreas"`
 	TagProjects    []TagEntity           `gorm:"-" json:"tagProjects"`
 	Tags           []TagEntity           `gorm:"-" json:"tags"`
+	ProfileMedias  []ProfileMediaEntity  `gorm:"-" json:"profileMedias"`
 	RateStats      *RateStats            `gorm:"-" json:"rateStats"`
 
 	FriendStatus *FriendItem       `gorm:"-" json:"friendStatus"`
@@ -112,7 +124,7 @@ func (UserItem) TableName() string {
 
 // MakeUserProfileEntity tạo user với authId
 func MakeUserProfileEntity(authId uint64, planID *uint64, fullname, email, phone, avatar string) *UserProfileEntity {
-	return &UserProfileEntity{
+	profile := &UserProfileEntity{
 		ReferralCode: generateReferral(authId),
 		RoleType:     enums.ERoleUser,
 		FullName:     fullname,
@@ -121,6 +133,26 @@ func MakeUserProfileEntity(authId uint64, planID *uint64, fullname, email, phone
 		Avatar:       avatar,
 		PlanID:       planID,
 	}
+	// Set tất cả visibility thành public mặc định
+	SetAllVisibilityPublic(profile)
+	return profile
+}
+
+// SetAllVisibilityPublic set tất cả visibility fields thành public (10)
+func SetAllVisibilityPublic(profile *UserProfileEntity) {
+	if profile == nil {
+		return
+	}
+	// Set visibility chung
+	profile.Visibility = _enum.EVisibilityDTOPublic
+	profile.ProfileVisibility = _enum.EVisibilityDTOPublic
+
+	// Set các visibility riêng lẻ
+	profile.VisibilityIntroduce = _enum.EVisibilityDTOPublic
+	profile.VisibilityProfession = _enum.EVisibilityDTOPublic
+	profile.VisibilityMainArea = _enum.EVisibilityDTOPublic
+	profile.VisibilityFriends = _enum.EVisibilityDTOPublic
+	profile.VisibilitySignature = _enum.EVisibilityDTOPublic
 }
 
 // NewUserProfileEntityWithRequest tạo user từ authId và OtpVerifyRequest

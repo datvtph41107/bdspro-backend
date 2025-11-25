@@ -343,6 +343,9 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 		userProfile.Gender = *req.Gender
 	}
 
+	// Set tất cả visibility thành public mặc định
+	models.SetAllVisibilityPublic(userProfile)
+
 	createdProfile, err := u.profileRepo.CreateUserProfile(ctx, userProfile)
 	if err != nil {
 		fmt.Printf("Error creating user profile: %v\n", err)
@@ -539,6 +542,7 @@ func (u *AdminUsecase) GetUserDetail(ctx context.Context, profileID uint64) (*dt
 		Birth:           user.Birth,
 		Status:          user.Status,
 		Position:        user.Position,
+		Workplace:       user.Workplace,
 		DepartmentID:    user.DepartmentID,
 		TickVerified:    user.TickVerified,
 		BackgroundImage: user.BackgroundImage,

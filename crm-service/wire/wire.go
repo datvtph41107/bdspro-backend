@@ -48,6 +48,8 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewContactUsecase,
 	crm_infra_handler.NewCrmInternalService,
 	crm_infra_postgre.NewDocumentPostgre,
+	crm_infra_handler.NewEnumService,
+	crm_internal_usecase.NewEnumUsecase,
 	crm_infra_postgre.NewFollowPostgre,
 	crm_infra_handler.NewFollowService,
 	crm_internal_usecase.NewFollowUsecase,

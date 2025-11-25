@@ -5,6 +5,8 @@ import (
 	_models "common/models"
 	"crm/internal/enums"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type ContactEntity struct {
@@ -26,7 +28,8 @@ type ContactEntity struct {
 	ProfileID    *uint64           `gorm:"column:profile_id" json:"profileId"`
 	FriendStatus *FriendEntity     `gorm:"-" json:"friendStatus" binding:"required"`
 
-	OwnerOf base_enum.EOwnerOf `gorm:"column:owner_of;default:30" json:"ownerOf" binding:"required"`
+	OwnerOf     base_enum.EOwnerOf `gorm:"column:owner_of;default:30" json:"ownerOf" binding:"required"`
+	ContactTags pq.Int32Array      `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
 
 	// transient
 	Tags []TagEntity `gorm:"-" json:"tags"`

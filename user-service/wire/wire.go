@@ -1,16 +1,17 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
+	"user/initial"
 	user_infra_client "user/infra/client"
 	user_infra_handler "user/infra/handler"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_postgres "user/infra/postgres"
 	user_infra_routes "user/infra/routes"
-	"user/initial"
 	user_initial "user/initial"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
@@ -19,8 +20,6 @@ import (
 	user_internal_job "user/internal/job"
 	user_internal_models "user/internal/models"
 	user_internal_usecases "user/internal/usecases"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -97,6 +96,7 @@ var wireSet = wire.NewSet(
 	user_internal_models.NewProfileDeleted,
 	user_infra_postgres.NewProfileDeletedPostgres,
 	user_infra_mapper.NewProfileMapper,
+	user_infra_postgres.NewProfileMediaPostgres,
 	user_infra_postgres.NewProfilePostgres,
 	user_infra_routes.NewProfileRouter,
 	user_internal_usecases.NewProfileUsecase,
@@ -113,7 +113,6 @@ var wireSet = wire.NewSet(
 	user_internal_models.NewUserProfileEntityWithRequest,
 	user_internal_usecases.NewUserUsecase,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

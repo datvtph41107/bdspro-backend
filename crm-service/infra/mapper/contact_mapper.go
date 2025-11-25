@@ -9,6 +9,8 @@ import (
 
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
+
+	"github.com/lib/pq"
 )
 
 type ContactMapper struct {
@@ -136,6 +138,12 @@ func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contac
 		Company:    pb.Company,
 		Avatar:     pb.Avatar,
 		Visibility: enums.EVisibility(pb.Visibility),
+
+		ContactTags: pq.Int32Array{},
+	}
+
+	for _, tag := range pb.ContactTags {
+		entity.ContactTags = append(entity.ContactTags, int32(tag.Id))
 	}
 
 	// Map tags - uncomment after proto generation

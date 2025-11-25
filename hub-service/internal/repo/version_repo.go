@@ -11,5 +11,5 @@ import (
 type IVersionRepo interface {
 	_crud.ICrudRepo[domain.VersionEntity]
 	GetListWithFilter(ctx context.Context, appName string, platform string, pagable _dto.IPagable) ([]*domain.VersionEntity, int64, error)
-	GetLatestByAppAndPlatform(ctx context.Context, appName string, platform string) (*domain.VersionEntity, error)
+	GetLatestByAppAndPlatform(ctx context.Context, appName string, platform string, versionName string) (*domain.VersionEntity, error)
 }

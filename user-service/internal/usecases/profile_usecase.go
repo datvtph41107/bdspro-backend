@@ -27,6 +27,7 @@ type ProfileUsecase struct {
 	ProfileRepo        repo.IProfileRepo
 	ProfessionRepo     repo.IProfessionRepo
 	CertificationRepo  repo.ICertificationRepo
+	ProfileMediaRepo   repo.IProfileMediaRepo
 	PurposeUseRepo     repo.IPurposeUseRepo
 	MainAreaRepo       repo.IMainAreaRepo
 	TagRepo            repo.ITagRepo
@@ -40,6 +41,7 @@ type ProfileUsecase struct {
 func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	ProfessionRepo repo.IProfessionRepo,
 	CertificationRepo repo.ICertificationRepo,
+	ProfileMediaRepo repo.IProfileMediaRepo,
 	PurposeUseRepo repo.IPurposeUseRepo,
 	MainAreaRepo repo.IMainAreaRepo,
 	TagRepo repo.ITagRepo,
@@ -55,6 +57,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 		ProfileRepo:        ProfileRepo,
 		ProfessionRepo:     ProfessionRepo,
 		CertificationRepo:  CertificationRepo,
+		ProfileMediaRepo:   ProfileMediaRepo,
 		PurposeUseRepo:     PurposeUseRepo,
 		MainAreaRepo:       MainAreaRepo,
 		TagRepo:            TagRepo,
@@ -275,6 +278,10 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 		infoEntity.Professions = professions
 		certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
 		infoEntity.Certifications = certifications
+		if s.ProfileMediaRepo != nil {
+			medias, _ := s.ProfileMediaRepo.ListItemByProfileID(c, profileId)
+			infoEntity.ProfileMedias = medias
+		}
 		if s.PurposeUseRepo != nil {
 			purposeUses, _ := s.PurposeUseRepo.ListByProfileID(c, profileId)
 			infoEntity.PurposeUses = purposeUses
@@ -358,8 +365,8 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 	if infoEntity.ProfileVisibility == 10 || isMe {
 		// professions, _ := s.ProfessionRepo.ListItemByProfileID(c, profileId)
 		// infoEntity.Professions = professions
-		// certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
-		// infoEntity.Certifications = certifications
+		certifications, _ := s.CertificationRepo.ListItemByProfileID(c, profileId)
+		infoEntity.Certifications = certifications
 
 		user = &_dto.UserV3DTO{
 			ProfileID:       infoEntity.ProfileID,
@@ -378,6 +385,26 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 			CreatedAt:       infoEntity.CreatedAt,
 			UpdatedAt:       infoEntity.UpdatedAt,
 			Introduction:    infoEntity.Introduction,
+			WebsiteURL:      infoEntity.WebsiteURL,
+			ZaloURL:         infoEntity.ZaloURL,
+			FacebookURL:     infoEntity.FacebookURL,
+			InstagramURL:    infoEntity.InstagramURL,
+			TwitterURL:      infoEntity.TwitterURL,
+			LinkedinURL:     infoEntity.LinkedinURL,
+			Workplace:       infoEntity.Workplace,
+			RoleTitle:       infoEntity.RoleTitle,
+
+			VisibilityIntroduce:  uint32(infoEntity.VisibilityIntroduce),
+			VisibilityProfession: uint32(infoEntity.VisibilityProfession),
+			VisibilityMainArea:   uint32(infoEntity.VisibilityMainArea),
+			VisibilityFriends:    uint32(infoEntity.VisibilityFriends),
+			VisibilitySignature:  uint32(infoEntity.VisibilitySignature),
+		}
+
+		if len(infoEntity.ViewRoles) > 0 {
+			for _, role := range infoEntity.ViewRoles {
+				user.ViewRoles = append(user.ViewRoles, uint32(role))
+			}
 		}
 
 		if user.ProvinceID != nil || user.WardID != nil {
@@ -420,6 +447,51 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 				}
 			}
 		}
+
+		// Map certifications vào UserV3DTO
+		if len(infoEntity.Certifications) > 0 {
+			for _, cert := range infoEntity.Certifications {
+				fileName := cert.FileName
+				fileURL := cert.FileURL
+				fileType := cert.FileType
+				var issuedAt *string
+				if cert.IssueDate != nil {
+					issuedAtStr := _utils.FormatTimeToString(cert.IssueDate)
+					issuedAt = &issuedAtStr
+				}
+				status := uint32(cert.VerifiedStatus)
+				user.Certifications = append(user.Certifications, _dto.ItemDTO{
+					ID:       cert.ID,
+					Name:     cert.Name,
+					FileName: &fileName,
+					FileURL:  &fileURL,
+					FileType: &fileType,
+					Status:   &status,
+					// Issuer trong ItemDTO là *uint64 nhưng trong CertificationEntity là string, nên không map
+					IssuedAt: issuedAt,
+				})
+			}
+		}
+
+		// Map medias vào UserV3DTO
+		if s.ProfileMediaRepo != nil {
+			medias, _ := s.ProfileMediaRepo.ListItemByProfileID(c, profileId)
+			for idx, media := range medias {
+				i := uint32(idx)
+				fileName := media.FileName
+				fileURL := media.FileURL
+				fileType := media.FileType
+				user.Medias = append(user.Medias, _dto.ItemDTO{
+					ID:       media.ID,
+					Name:     media.Name,
+					FileName: &fileName,
+					FileURL:  &fileURL,
+					FileType: &fileType,
+					Status:   &i,
+				})
+			}
+		}
+
 		kycEntity, _ := s.KYCRepo.GetByProfileID(c, profileId)
 		if kycEntity != nil {
 			kyc = &_dto.KYCV3DTO{
@@ -672,6 +744,96 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 		}
 	}
 
+	// Cập nhật certifications nếu có
+	if s.CertificationRepo != nil {
+		certificates := []models.CertificationEntity{}
+		for _, cert := range req.Certifications {
+			certEntity := models.CertificationEntity{
+				Name:           cert.Name,
+				VerifiedStatus: enums.VerifyPending, // Cập nhật trạng thái mặc định
+				BaseEntity: _models.BaseEntity{
+					ID: cert.ID,
+				},
+			}
+
+			// Map các field từ ItemDTO (nếu có)
+			if cert.FileName != nil {
+				certEntity.FileName = *cert.FileName
+			}
+			if cert.FileURL != nil {
+				certEntity.FileURL = *cert.FileURL
+			}
+			if cert.FileType != nil {
+				certEntity.FileType = *cert.FileType
+			}
+			// Issuer trong ItemDTO là *uint64, nhưng trong CertificationEntity là string
+			// Có thể convert sang string nếu cần, tạm thời bỏ qua vì không có mapping rõ ràng
+			if cert.IssuedAt != nil {
+				// IssuedAt trong ItemDTO là *string, cần parse sang time.Time
+				if issueDate := _utils.ParseStringToTime(*cert.IssuedAt); issueDate != nil {
+					certEntity.IssueDate = issueDate
+				}
+			}
+
+			certificates = append(certificates, certEntity)
+		}
+
+		if err := s.CertificationRepo.BatchSave(c, &certificates, req.CertificationRemoveIds); err != nil {
+			return err
+		}
+	}
+
+	update_media := false
+	if len(req.FieldSets) > 0 {
+		for _, fieldSet := range req.FieldSets {
+			if fieldSet == "medias" {
+				update_media = true
+				break
+			}
+		}
+	}
+	// Cập nhật medias nếu có - xóa hết ảnh cũ rồi lưu mới
+	if s.ProfileMediaRepo != nil && (len(req.Medias) > 0 || update_media) {
+		// Lấy danh sách medias hiện tại của profile để xóa hết
+		existingMedias, _ := s.ProfileMediaRepo.ListItemByProfileID(c, profileId)
+		deleteIds := make([]uint64, 0, len(existingMedias))
+		for _, media := range existingMedias {
+			deleteIds = append(deleteIds, media.ID)
+		}
+
+		// Tạo danh sách medias mới (không có ID để tạo mới)
+		medias := []models.ProfileMediaEntity{}
+		for _, media := range req.Medias {
+			mediaEntity := models.ProfileMediaEntity{
+				Name: media.Name,
+				BaseEntity: _models.BaseEntity{
+					ID: 0, // ID = 0 để tạo mới
+				},
+			}
+
+			// Map các field từ ItemDTO
+			if media.FileName != nil {
+				mediaEntity.FileName = *media.FileName
+			}
+			if media.FileURL != nil {
+				mediaEntity.FileURL = *media.FileURL
+			}
+			if media.FileType != nil {
+				mediaEntity.FileType = *media.FileType
+			}
+
+			// Set status mặc định cho media mới
+			mediaEntity.Status = _enum.EApproveStatusPending
+
+			medias = append(medias, mediaEntity)
+		}
+
+		// Xóa hết medias cũ và lưu medias mới
+		if err := s.ProfileMediaRepo.BatchSave(c, &medias, deleteIds); err != nil {
+			return err
+		}
+	}
+
 	// Update profile
 	err := s.ProfileRepo.UpdatePerson(c, profileId, req)
 	if err != nil {
@@ -779,4 +941,148 @@ func (s *ProfileUsecase) QuickSetup(ctx context.Context, req *_dto.UserV3DTO) er
 	}
 
 	return nil
+}
+
+// GetProfileCompletion tính toán phần trăm hoàn thành cập nhật tài khoản
+func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.ProfileCompletionResponse, error) {
+	profileID := _utils.GetProfileIdWithContext(ctx)
+
+	// Lấy thông tin profile
+	profile, err := s.ProfileRepo.GetByProfileID(profileID)
+	if err != nil {
+		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+	}
+
+	// Định nghĩa các field cần kiểm tra và điểm số của chúng
+	type fieldCheck struct {
+		name     string
+		check    func() bool
+		required bool // true nếu là field bắt buộc
+	}
+
+	var completedFields uint32 = 0
+	var totalFields uint32 = 0
+	var missingFields []string
+
+	// Danh sách các field cần kiểm tra
+	fields := []fieldCheck{
+		// Các field bắt buộc (quan trọng)
+		// {"fullName", func() bool { return profile.FullName != "" }, true},
+		{"avatar", func() bool { return profile.Avatar != "" }, true},
+		{"backgroundImage", func() bool { return profile.BackgroundImage != "" }, false},
+		// Các field tùy chọn nhưng quan trọng
+		{"birth", func() bool { return profile.Birth != nil }, false},
+		{"gender", func() bool { return profile.Gender != 0 }, false},
+		{"roleTitle", func() bool { return profile.RoleTitle != "" }, false},
+		{"workplace", func() bool { return profile.Workplace != "" }, false},
+		{"phone2", func() bool { return profile.Phone2 != "" }, true},
+		{"zaloUrl", func() bool { return profile.ZaloURL != "" }, true},
+		{"facebookUrl", func() bool { return profile.FacebookURL != "" }, true},
+		{"websiteUrl", func() bool { return profile.WebsiteURL != "" }, true},
+		{"email", func() bool { return profile.Email != "" }, true},
+	}
+
+	// Kiểm tra các field cơ bản
+	for _, field := range fields {
+		totalFields++
+		if field.check() {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, field.name)
+		}
+	}
+
+	// Kiểm tra các field liên quan đến collections
+	// Certifications
+	totalFields++
+	certifications, _ := s.CertificationRepo.ListItemByProfileID(ctx, profileID)
+	if len(certifications) > 0 {
+		completedFields++
+	} else {
+		missingFields = append(missingFields, "certifications")
+	}
+
+	// Professions
+	totalFields++
+	professions, _ := s.ProfessionRepo.ListItemByProfileID(ctx, profileID)
+	if len(professions) > 0 {
+		completedFields++
+	} else {
+		missingFields = append(missingFields, "professions")
+	}
+
+	// PurposeUses
+	if s.PurposeUseRepo != nil {
+		totalFields++
+		purposeUses, _ := s.PurposeUseRepo.ListByProfileID(ctx, profileID)
+		if len(purposeUses) > 0 {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, "purposeUses")
+		}
+	}
+
+	// Tags - Query một lần và check 4 loại tag riêng biệt
+	if s.TagRepo != nil {
+		tags, _ := s.TagRepo.ListByProfileID(ctx, profileID)
+
+		// Tạo map để check nhanh các loại tag có tồn tại không
+		tagTypeMap := make(map[enums.TagType]bool)
+		for _, tag := range tags {
+			tagTypeMap[tag.TagType] = true
+		}
+
+		// Check MainArea tags
+		totalFields++
+		if tagTypeMap[enums.TagTypeMainArea] {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, "mainAreas")
+		}
+
+		// Check Specialty tags
+		totalFields++
+		if tagTypeMap[enums.TagTypeSpecialty] {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, "specialties")
+		}
+
+		// Check Project tags
+		totalFields++
+		if tagTypeMap[enums.TagTypeProject] {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, "projects")
+		}
+
+		// Check Job tags
+		totalFields++
+		if tagTypeMap[enums.TagTypeJob] {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, "jobs")
+		}
+	}
+
+	// ProfileMedias
+	if s.ProfileMediaRepo != nil {
+		totalFields++
+		medias, _ := s.ProfileMediaRepo.ListItemByProfileID(ctx, profileID)
+		if len(medias) > 0 {
+			completedFields++
+		} else {
+			missingFields = append(missingFields, "medias")
+		}
+	}
+
+	// Tính phần trăm hoàn thành
+	var percentage float64 = float64(completedFields) / float64(totalFields) * 100
+
+	return &dto.ProfileCompletionResponse{
+		Percentage:      percentage,
+		CompletedFields: completedFields,
+		TotalFields:     totalFields,
+		MissingFields:   missingFields,
+	}, nil
 }

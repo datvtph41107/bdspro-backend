@@ -40,11 +40,9 @@ mkdir -p ${REMOTE_DIR}/config
 scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
 scp config/develop.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/develop.yml
-scp ../shared/code/Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
-if [ "$1" = "file" ]; then
-  scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
 if [ $? -ne 0 ]; then
   echo "Có lỗi khi đẩy file lên server"
   exit 1
@@ -54,7 +52,7 @@ fi
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}
-docker compose build --pull --no-cache ${payload_build}
+docker compose build --pull ${payload_build}
 docker compose up -d --force-recreate ${payload_build}
 "
 

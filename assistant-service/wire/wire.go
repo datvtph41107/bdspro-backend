@@ -22,7 +22,9 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(assistant_internal_interface_provider.DeepseekProvider), new(*assistant_infra_client.DeepseekClient)),
 	wire.Bind(new(assistant_internal_interface_provider.GeminiProvider), new(*assistant_infra_client.GeminiClient)),
 	wire.Bind(new(assistant_internal_interface_provider.HubProvider), new(*assistant_infra_client.HubClient)),
+	wire.Bind(new(assistant_internal_interface_provider.OCRProvider), new(*assistant_infra_client.OCRClient)),
 	wire.Bind(new(assistant_internal_interface_provider.OpenAIProvider), new(*assistant_infra_client.OpenAIClient)),
+	wire.Bind(new(assistant_internal_interface_provider.QRCodeProvider), new(*assistant_infra_client.QRCodeClient)),
 	assistant_infra_handler.NewAssistantHandler,
 	assistant_internal_usecases.NewAssistantUsecase,
 	assistant_infra_client.NewBdsproInternalClient,
@@ -30,7 +32,9 @@ var wireSet = wire.NewSet(
 	assistant_infra_client.NewGeminiClient,
 	assistant_infra_client.NewHubClient,
 	assistant_initial.NewInitialApp,
+	assistant_infra_client.NewOCRClient,
 	assistant_infra_client.NewOpenAIClient,
+	assistant_infra_client.NewQRCodeClient,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)

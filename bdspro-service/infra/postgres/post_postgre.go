@@ -204,7 +204,9 @@ func (r *GormPostRepo) Query(query *gorm.DB, dto *dto.PostSearchRequest) (tx *go
 	}
 
 	if dto.IsPublished {
-		query.Where("posts.published_at is not null")
+		// Nếu đã được filter ở Search() thì không cần filter lại
+		// Chỉ filter nếu chưa được filter
+		query = query.Where("posts.published_at is not null")
 	}
 	// if dto.Types != nil && contain10 && contain20 && contain30 {
 	// } else if dto.Types != nil && contain20 && contain10 {
@@ -223,7 +225,7 @@ func (r *GormPostRepo) Query(query *gorm.DB, dto *dto.PostSearchRequest) (tx *go
 
 func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
 	var results []domain.PostItem
-	// now := time.Now()
+	now := time.Now()
 
 	query := r.DB.
 		Debug().
@@ -271,11 +273,18 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		query = query.Where("posts.product_id = ?", dto.ProductID)
 	}
 
-	query = r.Query(query, dto)
-	size := dto.Size
-	if size <= 0 {
-		size = 20
+	// Filter cho global post (profileId = 0 và IsPublished = true)
+	// Chỉ trả về posts: đã published, public visibility, chưa hết hạn, không bị ẩn
+	if profileId == 0 && dto.IsPublished {
+		query = query.Where("posts.published_at is not null").
+			Where("posts.visibility = ?", enums.EVisiblePublic).
+			Where("posts.hidden = ?", false).
+			Where("(posts.expired_at IS NULL OR posts.expired_at > ?)", now)
 	}
+
+	query = r.Query(query, dto)
+	var total int64
+	query.Count(&total)
 
 	err := query.
 		Order("posts.created_at desc").
@@ -296,9 +305,6 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 			results[i].MediaList = list
 		}
 	}
-
-	var total int64
-	query.Count(&total)
 
 	return results, total, nil
 }
@@ -633,7 +639,7 @@ func (r *GormPostRepo) applyPostFilters(query *gorm.DB, dto *dto.PostSearchReque
 
 	// Filter by is published
 	if dto.IsPublished {
-		query = query.Where("is_published = ?", dto.IsPublished)
+		query = query.Where("posts.published_at is not null")
 	}
 
 	// Filter by expired date range

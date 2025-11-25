@@ -259,7 +259,7 @@ func convertRateCreateRequestToDomain(req *dto.RateCreateRequest) *domain.Rate {
 
 	if len(req.Attachs) > 0 {
 		for _, attachURL := range req.Attachs {
-			rate.Attachs = append(rate.Attachs, domain.AttachEntity{
+			rate.Attachs = append(rate.Attachs, domain.FeedbackAttachEntity{
 				FileURL:  attachURL,
 				FileType: "image",
 				FileName: "attachment",
@@ -282,9 +282,9 @@ func convertRateUpdateRequestToDomain(req *dto.RateUpdateRequest) *domain.Rate {
 
 	// Chỉ thêm attachs nếu có trong request (có thể là empty array để xóa tất cả)
 	if req.Attachs != nil {
-		rate.Attachs = make([]domain.AttachEntity, 0)
+		rate.Attachs = make([]domain.FeedbackAttachEntity, 0)
 		for _, attachURL := range req.Attachs {
-			rate.Attachs = append(rate.Attachs, domain.AttachEntity{
+			rate.Attachs = append(rate.Attachs, domain.FeedbackAttachEntity{
 				FileURL:  attachURL,
 				FileType: "image",
 				FileName: "attachment",

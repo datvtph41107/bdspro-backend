@@ -6,6 +6,13 @@ type ItemDTO struct {
 	ID       uint64 `json:"id"`
 	Name     string `json:"name"`
 	ItemType uint32 `json:"itemType"`
+
+	FileName *string `json:"fileName"`
+	FileURL  *string `json:"fileUrl"`
+	FileType *string `json:"fileType"`
+	Status   *uint32 `json:"status"`
+	Issuer   *uint64 `json:"issuer"`
+	IssuedAt *string `json:"issuedAt"`
 }
 
 type FriendV3DTO struct {

@@ -9,6 +9,9 @@ replace common => ../shared/common
 require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/google/wire v0.5.0
+	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
+	github.com/makiuchi-d/gozxing v0.1.1
+	github.com/otiai10/gosseract/v2 v2.4.1
 	github.com/spf13/viper v1.20.0
 	google.golang.org/grpc v1.72.0
 	pb v0.0.0
@@ -72,6 +75,7 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect

@@ -89,7 +89,30 @@
         },
         "itemType": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "title": "tag"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "file upload"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "approved"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "issuedAt": {
+          "type": "string"
         }
       }
     },
@@ -306,6 +329,59 @@
         },
         "updateTags": {
           "type": "boolean"
+        },
+        "viewRoles": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "visibilityIntroduce": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityProfession": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityMainArea": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityFriends": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilitySignature": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "medias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "fieldSets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workplace": {
+          "type": "string"
+        },
+        "roleTitle": {
+          "type": "string"
         }
       }
     },

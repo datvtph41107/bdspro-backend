@@ -333,7 +333,7 @@ func (s *PostUsecase) PersonalPost(c context.Context, dto *dto.PostSearchRequest
 }
 
 func (s *PostUsecase) GlobalPost(c context.Context, dto dto.PostSearchRequest) ([]domain.PostItem, int64, error) {
-	dto.IsPublished = true
+	// dto.IsPublished = true
 	entities, total, err := s.Repo.Search(c, 0, &dto)
 	if err != nil {
 		return nil, 0, err

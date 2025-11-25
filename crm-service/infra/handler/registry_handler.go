@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"crm/internal/usecase"
-	crmpb "pb/types/feedback"
+	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 )
 

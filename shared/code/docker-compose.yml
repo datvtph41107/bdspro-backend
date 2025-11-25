@@ -243,7 +243,9 @@ services:
       - internal
   
   assistant:
-    build: ./assistant-service
+    build: 
+      context: .
+      dockerfile: assistant-service/Dockerfile
     container_name: assistant
     command: ["./main", "grpc"]
     networks:

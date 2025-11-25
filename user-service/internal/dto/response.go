@@ -117,6 +117,7 @@ type PublicUserInfo struct {
 	RoleKey           uint32                `json:"roleKey,omitempty"`
 	RoleRealEstate    enums.ERoleRealEstate `json:"roleRealEstate,omitempty"`
 	Position          string                `json:"position,omitempty"`
+	Workplace         string                `json:"workplace,omitempty"`
 	DepartmentID      uint64                `json:"departmentId,omitempty"`
 	Birth             *time.Time            `json:"birth,omitempty"`
 	StartDate         *time.Time            `json:"startDate,omitempty"`
@@ -237,4 +238,11 @@ type AdminNoteResponse struct {
 	Success bool            `json:"success"`
 	Message string          `json:"message"`
 	Report  *ReportResponse `json:"report,omitempty"`
+}
+
+type ProfileCompletionResponse struct {
+	Percentage      float64  `json:"percentage"`
+	CompletedFields uint32   `json:"completedFields"`
+	TotalFields     uint32   `json:"totalFields"`
+	MissingFields   []string `json:"missingFields"`
 }

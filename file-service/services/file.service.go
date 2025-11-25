@@ -605,7 +605,9 @@ func (s *FileService) UploadVideoHLS(c *gin.Context) {
 
 	fileInfo, err := s.Storage.StoreVideo(c, file, file.Filename, nil, fileEntity.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		// Clean up file entity if validation/processing fails
+		_db.DB.WithContext(c).Delete(&fileEntity)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -628,7 +630,7 @@ func (s *FileService) UploadVideoHLS(c *gin.Context) {
 	fileInfo.ID = fileEntity.ID
 	fileInfo.RelativePath = fileEntity.Path
 
-	c.JSON(http.StatusOK, gin.H{"file": fileInfo})
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": fileInfo})
 	// Trả về response chứa đường dẫn HLS
 	// c.JSON(http.StatusOK, gin.H{
 	// 	"message":       "Video uploaded and processed successfully",

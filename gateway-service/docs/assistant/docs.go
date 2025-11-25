@@ -389,6 +389,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/assistant/national-card/extract": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Nhận vào 2 link ảnh (mặt trước và mặt sau), sử dụng OCR để đọc thông tin và MRZ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assistant"
+                ],
+                "summary": "Trích xuất thông tin từ ảnh căn cước công dân",
+                "parameters": [
+                    {
+                        "description": "Link ảnh căn cước",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ExtractNationalCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin đã trích xuất",
+                        "schema": {
+                            "$ref": "#/definitions/assistantpb.ExtractNationalCardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Yêu cầu không hợp lệ",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/assistant/openai/analyze/product": {
             "post": {
                 "security": [
@@ -619,6 +664,52 @@ const docTemplate = `{
                 }
             }
         },
+        "assistantpb.ExtractMetadata": {
+            "type": "object",
+            "properties": {
+                "confidence_score": {
+                    "description": "Độ tin cậy (0-1)",
+                    "type": "number"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "processing_time_ms": {
+                    "type": "integer"
+                },
+                "tokens_used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "assistantpb.ExtractNationalCardRequest": {
+            "type": "object",
+            "properties": {
+                "backImageUrl": {
+                    "description": "Link ảnh mặt sau căn cước",
+                    "type": "string"
+                },
+                "frontImageUrl": {
+                    "description": "Link ảnh mặt trước căn cước",
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.ExtractNationalCardResponse": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "$ref": "#/definitions/assistantpb.NationalCardInfo"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/assistantpb.ExtractMetadata"
+                },
+                "mrz": {
+                    "description": "Machine Readable Zone (MRZ) nếu có",
+                    "type": "string"
+                }
+            }
+        },
         "assistantpb.GenerateMetadata": {
             "type": "object",
             "properties": {
@@ -688,6 +779,67 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "assistantpb.NationalCardInfo": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Địa chỉ",
+                    "type": "string"
+                },
+                "dateOfBirth": {
+                    "description": "Ngày sinh (dd/mm/yyyy)",
+                    "type": "string"
+                },
+                "ethnic": {
+                    "description": "Dân tộc",
+                    "type": "string"
+                },
+                "expiryDate": {
+                    "description": "Ngày hết hạn (nếu có)",
+                    "type": "string"
+                },
+                "features": {
+                    "description": "Đặc điểm nhận dạng",
+                    "type": "string"
+                },
+                "fullName": {
+                    "description": "Họ và tên",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "Giới tính",
+                    "type": "string"
+                },
+                "idNumber": {
+                    "description": "Thông tin từ mặt trước",
+                    "type": "string"
+                },
+                "issueDate": {
+                    "description": "Thông tin từ mặt sau",
+                    "type": "string"
+                },
+                "issuePlace": {
+                    "description": "Nơi cấp",
+                    "type": "string"
+                },
+                "nationality": {
+                    "description": "Quốc tịch",
+                    "type": "string"
+                },
+                "placeOfOrigin": {
+                    "description": "Quê quán",
+                    "type": "string"
+                },
+                "placeOfResidence": {
+                    "description": "Nơi thường trú",
+                    "type": "string"
+                },
+                "religion": {
+                    "description": "Tôn giáo",
                     "type": "string"
                 }
             }
@@ -804,14 +956,93 @@ const docTemplate = `{
                 }
             }
         },
+        "sharepb.HouseInfoV3Proto": {
+            "type": "object",
+            "properties": {
+                "furniture": {
+                    "type": "string"
+                },
+                "numBathroom": {
+                    "type": "integer"
+                },
+                "numBedroom": {
+                    "type": "integer"
+                },
+                "numCarPark": {
+                    "type": "integer"
+                },
+                "numFloor": {
+                    "type": "integer"
+                },
+                "numFront": {
+                    "type": "number"
+                },
+                "orientation": {
+                    "type": "string"
+                }
+            }
+        },
         "sharepb.ItemV3Proto": {
             "type": "object",
             "properties": {
+                "fileName": {
+                    "description": "file upload",
+                    "type": "string"
+                },
+                "fileType": {
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "integer"
+                },
+                "issuedAt": {
+                    "type": "string"
+                },
+                "issuer": {
+                    "type": "integer"
+                },
+                "itemType": {
+                    "description": "tag",
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
+                },
+                "status": {
+                    "description": "approved",
+                    "type": "integer"
+                }
+            }
+        },
+        "sharepb.PriceV3Proto": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "rentCommission": {
+                    "type": "number"
+                },
+                "rentCommissionType": {
+                    "type": "integer"
+                },
+                "rentPaymentCycle": {
+                    "type": "integer"
+                },
+                "rentPrice": {
+                    "type": "number"
+                },
+                "saleCommission": {
+                    "type": "number"
+                },
+                "saleCommissionType": {
+                    "type": "integer"
+                },
+                "salePrice": {
+                    "type": "number"
                 }
             }
         },
@@ -830,47 +1061,32 @@ const docTemplate = `{
                 "area": {
                     "type": "number"
                 },
-                "bathroom": {
-                    "type": "integer"
-                },
-                "bedroom": {
-                    "type": "integer"
-                },
                 "description": {
                     "type": "string"
                 },
                 "docType": {
                     "$ref": "#/definitions/sharepb.ItemV3Proto"
                 },
-                "floor": {
-                    "type": "integer"
-                },
-                "frontage": {
-                    "type": "number"
-                },
-                "furniture": {
-                    "type": "string"
+                "houseInfo": {
+                    "$ref": "#/definitions/sharepb.HouseInfoV3Proto"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "legalDoc": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
-                "orientation": {
-                    "type": "string"
+                "priceData": {
+                    "$ref": "#/definitions/sharepb.PriceV3Proto"
                 },
                 "propertyType": {
                     "$ref": "#/definitions/sharepb.ItemV3Proto"
                 },
-                "rentPrice": {
-                    "type": "number"
+                "sourceType": {
+                    "$ref": "#/definitions/sharepb.ItemV3Proto"
                 },
-                "salePrice": {
-                    "type": "number"
+                "transactionType": {
+                    "$ref": "#/definitions/sharepb.ItemV3Proto"
                 }
             }
         }

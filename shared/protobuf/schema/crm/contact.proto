@@ -7,6 +7,7 @@ import "google/api/annotations.proto";
 import "shared/common.proto";
 import "crm/common.proto";
 import "crm/tag.proto";
+import "shared/v3.proto";
 
 service ContactService {
   rpc Search (ContactSearchRequest) returns (ContactListDTO) {
@@ -87,6 +88,7 @@ message ContactSaveDTO {
   int32 visibility = 10;
   bool assignedCrm = 11;
   repeated TagItem tags = 12;
+  repeated sharepb.ItemV3Proto contactTags = 13;
 }
 
 message ContactListDTO {

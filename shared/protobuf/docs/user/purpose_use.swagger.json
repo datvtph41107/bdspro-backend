@@ -366,7 +366,30 @@
         },
         "itemType": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "title": "tag"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "file upload"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "approved"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "issuedAt": {
+          "type": "string"
         }
       }
     },

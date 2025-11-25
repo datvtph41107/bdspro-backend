@@ -40,6 +40,7 @@ func AutoMigrate() {
 		&domain.Report{},
 		&domain.ReportReason{},
 		&domain.ReportProof{},
+		&domain.FeedbackAttachEntity{},
 	)
 
 	log.Println("Migrate success")

@@ -54,3 +54,7 @@ monitoring:
   enabled: true
   prometheus_port: "9091"
 
+ocr:
+  timeout_seconds: 60
+  temp_dir: "" # Để trống sẽ dùng system temp dir
+

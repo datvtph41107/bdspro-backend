@@ -16,6 +16,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/wire v0.6.0
 	github.com/jinzhu/copier v0.4.0
+	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0

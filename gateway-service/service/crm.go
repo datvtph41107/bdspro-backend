@@ -34,4 +34,5 @@ func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	// _ = crmpb.RegisterReportAdminServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterReportReasonServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterRegistryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = crmpb.RegisterEnumServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

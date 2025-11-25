@@ -33,6 +33,8 @@ func (m *ProfileMapper) SetProfileToDTO(profile *userpb.SetInfoRequest) *dto.Use
 		Avatar:            profile.Avatar,
 		BackgroundImage:   profile.BackgroundImage,
 		Position:          profile.Position,
+		Workplace:         profile.Workplace,
+		RoleTitle:         profile.RoleTitle,
 		DepartmentID:      profile.DepartmentId,
 		Birth:             _utils.ParseStringToTime(profile.Birth),
 		StartDate:         _utils.ParseStringToTime(profile.StartDate),
@@ -178,6 +180,8 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, ky
 		Avatar:            profile.Avatar,
 		BackgroundImage:   profile.BackgroundImage,
 		Position:          profile.Position,
+		Workplace:         profile.Workplace,
+		RoleTitle:         profile.RoleTitle,
 		DepartmentId:      profile.DepartmentID,
 		Gender:            profile.Gender,
 		Birth:             _utils.FormatTimeToString(profile.Birth),
@@ -199,9 +203,19 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, ky
 		RoleRealEstate:    uint32(profile.RoleRealEstate),
 		Following:         profile.Following,
 		ReferralCode:      profile.ReferralCode,
+		// VisibilityIntroduce:  uint32(profile.VisibilityIntroduce),
+		// VisibilityProfession: uint32(profile.VisibilityProfession),
+		// VisibilityMainArea:   uint32(profile.VisibilityMainArea),
+		// VisibilityFriends:    uint32(profile.VisibilityFriends),
+		// VisibilitySignature:  uint32(profile.VisibilitySignature),
 		// FrontIdentify:     profile.FrontIdentify,
 		// BackIdentify:      profile.BackIdentify,
 	}
+
+	// Convert ViewRoles from []enums.EViewRole to []uint32
+	// for _, role := range profile.ViewRoles {
+	// 	result.ViewRoles = append(result.ViewRoles, uint32(role))
+	// }
 
 	for _, certification := range profile.Certifications {
 		result.Certifications = append(result.Certifications, m.CertificationToPb(&certification))
@@ -325,6 +339,18 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 		Birth:            _utils.ParseStringToTime(req.Birth),
 		UpdateTags:       req.UpdateTags,
 		Introduction:     req.Introduction,
+		Email:            req.Email,
+		Phone2:           req.Phone2,
+		Workplace:        req.Workplace,
+		RoleTitle:        req.RoleTitle,
+
+		VisibilityIntroduce:  req.VisibilityIntroduce,
+		VisibilityProfession: req.VisibilityProfession,
+		VisibilityMainArea:   req.VisibilityMainArea,
+		VisibilityFriends:    req.VisibilityFriends,
+		VisibilitySignature:  req.VisibilitySignature,
+		ViewRoles:            req.ViewRoles,
+		FieldSets:            req.FieldSets,
 		// MainAreaNews:   req.MainAreaNews,
 	}
 
@@ -359,6 +385,35 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 		}
 	}
 
+	// Map certifications từ ItemV3Proto sang ItemDTO
+	if len(req.Certifications) > 0 {
+		for _, cert := range req.Certifications {
+			result.Certifications = append(result.Certifications, _dto.ItemDTO{
+				ID:       cert.Id,
+				Name:     cert.Name,
+				FileName: cert.FileName,
+				FileURL:  cert.FileUrl,
+				FileType: cert.FileType,
+				Status:   cert.Status,
+				Issuer:   cert.Issuer,
+				IssuedAt: cert.IssuedAt,
+			})
+		}
+	}
+
+	// Map medias từ ItemV3Proto sang ItemDTO
+	if len(req.Medias) > 0 {
+		for _, media := range req.Medias {
+			result.Medias = append(result.Medias, _dto.ItemDTO{
+				ID:       media.Id,
+				Name:     media.Name,
+				FileName: media.FileName,
+				FileURL:  media.FileUrl,
+				FileType: media.FileType,
+			})
+		}
+	}
+
 	return result
 }
 
@@ -375,6 +430,8 @@ func (m *ProfileMapper) ModelToUserV3Proto(profile *models.UserProfileEntity, ky
 		Birth:           _utils.FormatTimeToString(profile.Birth),
 		Phone:           profile.Phone,
 		Email:           profile.Email,
+		Workplace:       profile.Workplace,
+		RoleTitle:       profile.RoleTitle,
 		Address: &sharepb.AddressV3Proto{
 			Detail:     profile.Address,
 			ProvinceId: profile.ProvinceID,
@@ -395,10 +452,23 @@ func (m *ProfileMapper) ModelToUserV3Proto(profile *models.UserProfileEntity, ky
 		Visibility:        uint32(profile.Visibility),
 		ProfileVisibility: uint32(profile.ProfileVisibility),
 		StatusOnline:      uint32(profile.StatusOnline),
-		CreatedAt:         _utils.FormatTimeToString(profile.CreatedAt),
-		UpdatedAt:         _utils.FormatTimeToString(profile.UpdatedAt),
+
+		VisibilityIntroduce:  uint32(profile.VisibilityIntroduce),
+		VisibilityProfession: uint32(profile.VisibilityProfession),
+		VisibilityMainArea:   uint32(profile.VisibilityMainArea),
+		VisibilityFriends:    uint32(profile.VisibilityFriends),
+		VisibilitySignature:  uint32(profile.VisibilitySignature),
+		CreatedAt:            _utils.FormatTimeToString(profile.CreatedAt),
+		UpdatedAt:            _utils.FormatTimeToString(profile.UpdatedAt),
 
 		// TabDefault:        enums.ESettingTab(profile.TabDefault),
+	}
+
+	// Convert ViewRoles from pq.Int32Array to []uint32
+	if len(profile.ViewRoles) > 0 {
+		for _, role := range profile.ViewRoles {
+			result.ViewRoles = append(result.ViewRoles, uint32(role))
+		}
 	}
 
 	if len(profile.TagJobs) > 0 {
@@ -470,6 +540,8 @@ func (m *ProfileMapper) DTOToUserV3Proto(profile *_dto.UserV3DTO, kyc *sharepb.K
 		Phone:            profile.Phone,
 		Phone2:           profile.Phone2,
 		Email:            profile.Email,
+		Workplace:        profile.Workplace,
+		RoleTitle:        profile.RoleTitle,
 		ZaloUrl:          profile.ZaloURL,
 		FacebookUrl:      profile.FacebookURL,
 		InstagramUrl:     profile.InstagramURL,
@@ -482,8 +554,24 @@ func (m *ProfileMapper) DTOToUserV3Proto(profile *_dto.UserV3DTO, kyc *sharepb.K
 		RoleRealEstate:   uint32(profile.RoleRealEstate),
 		MainAreaIds:      nil,
 		PurposeUseIds:    nil,
-		CreatedAt:        _utils.FormatTimeToString(profile.CreatedAt),
-		UpdatedAt:        _utils.FormatTimeToString(profile.UpdatedAt),
+
+		Visibility:           profile.Visibility,
+		ProfileVisibility:    profile.ProfileVisibility,
+		StatusOnline:         profile.StatusOnline,
+		VisibilityIntroduce:  profile.VisibilityIntroduce,
+		VisibilityProfession: profile.VisibilityProfession,
+		VisibilityMainArea:   profile.VisibilityMainArea,
+		VisibilityFriends:    profile.VisibilityFriends,
+		VisibilitySignature:  profile.VisibilitySignature,
+		CreatedAt:            _utils.FormatTimeToString(profile.CreatedAt),
+		UpdatedAt:            _utils.FormatTimeToString(profile.UpdatedAt),
+	}
+
+	// Convert ViewRoles from pq.Int32Array to []uint32
+	if len(profile.ViewRoles) > 0 {
+		for _, role := range profile.ViewRoles {
+			result.ViewRoles = append(result.ViewRoles, uint32(role))
+		}
 	}
 
 	if profile.Address != nil {
@@ -543,9 +631,71 @@ func (m *ProfileMapper) DTOToUserV3Proto(profile *_dto.UserV3DTO, kyc *sharepb.K
 		}
 	}
 
+	// Map certifications từ ItemDTO sang ItemV3Proto
+	if len(profile.Certifications) > 0 {
+		for _, cert := range profile.Certifications {
+			result.Certifications = append(result.Certifications, &sharepb.ItemV3Proto{
+				Id:       cert.ID,
+				Name:     cert.Name,
+				ItemType: cert.ItemType,
+				FileName: cert.FileName,
+				FileUrl:  cert.FileURL,
+				FileType: cert.FileType,
+				Status:   cert.Status,
+				Issuer:   cert.Issuer,
+				IssuedAt: cert.IssuedAt,
+			})
+		}
+	}
+
+	// Map medias từ ItemDTO sang ItemV3Proto
+	if len(profile.Medias) > 0 {
+		for _, media := range profile.Medias {
+			itemProto := &sharepb.ItemV3Proto{
+				Id:   media.ID,
+				Name: media.Name,
+			}
+			if media.FileName != nil {
+				itemProto.FileName = media.FileName
+			}
+			if media.FileURL != nil {
+				itemProto.FileUrl = media.FileURL
+			}
+			if media.FileType != nil {
+				itemProto.FileType = media.FileType
+			}
+			result.Medias = append(result.Medias, itemProto)
+		}
+	}
+
 	// Thêm KYC vào response
 	if kyc != nil {
 		result.Kyc = kyc
+	}
+
+	return result
+}
+
+func (m *ProfileMapper) ModelToUserV3ProtoWithMedias(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
+	result := m.ModelToUserV3Proto(profile, kyc)
+	if result == nil {
+		return nil
+	}
+
+	// Map medias từ ProfileMediaEntity sang ItemV3Proto
+	if len(profile.ProfileMedias) > 0 {
+		for _, media := range profile.ProfileMedias {
+			fileName := media.FileName
+			fileURL := media.FileURL
+			fileType := media.FileType
+			result.Medias = append(result.Medias, &sharepb.ItemV3Proto{
+				Id:       media.ID,
+				Name:     media.Name,
+				FileName: &fileName,
+				FileUrl:  &fileURL,
+				FileType: &fileType,
+			})
+		}
 	}
 
 	return result

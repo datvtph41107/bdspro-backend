@@ -69,6 +69,13 @@ service ProfileService {
             get: "/v2/user/profile/find-by-phone"
         };
     }
+    
+    // Lấy phần trăm hoàn thành cập nhật tài khoản
+    rpc GetProfileCompletion(sharepb.Empty) returns (ProfileCompletionResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/completion"
+        };
+    }
 }
 
 service TagService {
@@ -170,6 +177,14 @@ message ProfilePublicInfo {
     repeated MainAreaItem mainAreas = 42;
     repeated TagItem tags = 44;
     optional sharepb.KYCV3Proto kyc = 45;
+    uint32 visibilityIntroduce = 46;
+    uint32 visibilityProfession = 47;
+    uint32 visibilityMainArea = 48;
+    uint32 visibilityFriends = 49;
+    uint32 visibilitySignature = 50;
+    repeated uint32 viewRoles = 51;
+    string workplace = 52;
+    string roleTitle = 53;
 }
 
 message RateStats {
@@ -217,6 +232,8 @@ message SetInfoRequest {
     string avatar = 7;
     string backgroundImage = 8;
     string position = 9;
+    string workplace = 53;
+    string roleTitle = 54;
     uint64 departmentId = 10;
     string birth = 11;
     string startDate = 12;
@@ -380,6 +397,13 @@ message FindByPhoneResponse {
     string phone = 1; // Thông tin user tìm được (null nếu không tìm thấy)
     string fullName = 2;
     string avatar = 3;
+}
+
+message ProfileCompletionResponse {
+    uint32 percentage = 1; // Phần trăm hoàn thành (0-100)
+    uint32 completedFields = 2; // Số field đã hoàn thành
+    uint32 totalFields = 3; // Tổng số field cần thiết
+    repeated string missingFields = 4; // Danh sách các field còn thiếu
 }
 
 

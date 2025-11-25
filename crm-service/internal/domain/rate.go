@@ -7,17 +7,17 @@ import (
 
 type Rate struct {
 	_models.BaseEntity
-	Anonymous  bool           `gorm:"not null" json:"anonymous"`
-	OwnerID    uint64         `gorm:"not null" json:"ownerId" binding:"required"`
-	OwnerOf    uint32         `gorm:"default:10;not null" json:"ownerOf" binding:"required"` // 10: user 20: group 30: organization
-	Score      uint8          `gorm:"not null" json:"score" binding:"required,gte=1,lte=5"`
-	Comment    string         `gorm:"type:text" json:"comment,omitempty" binding:"required"`
-	ParentID   *uint64        `json:"parentId,omitempty"`
-	Attachs    []AttachEntity `gorm:"foreignKey:RateID" json:"attachs,omitempty"`
-	RootID     *uint64        `json:"rootId,omitempty"`
-	Hidden     bool           `gorm:"default:false" json:"hidden"`
-	ApprovedAt *time.Time     `json:"approvedAt"`
-	ApprovedBy *uint64        `json:"approvedBy"`
+	Anonymous  bool                   `gorm:"not null" json:"anonymous"`
+	OwnerID    uint64                 `gorm:"not null" json:"ownerId" binding:"required"`
+	OwnerOf    uint32                 `gorm:"default:10;not null" json:"ownerOf" binding:"required"` // 10: user 20: group 30: organization
+	Score      uint8                  `gorm:"not null" json:"score" binding:"required,gte=1,lte=5"`
+	Comment    string                 `gorm:"type:text" json:"comment,omitempty" binding:"required"`
+	ParentID   *uint64                `json:"parentId,omitempty"`
+	Attachs    []FeedbackAttachEntity `gorm:"foreignKey:RateID" json:"attachs,omitempty"`
+	RootID     *uint64                `json:"rootId,omitempty"`
+	Hidden     bool                   `gorm:"default:false" json:"hidden"`
+	ApprovedAt *time.Time             `json:"approvedAt"`
+	ApprovedBy *uint64                `json:"approvedBy"`
 }
 
 func (Rate) TableName() string {
@@ -34,7 +34,7 @@ type RateStats struct {
 	Star5Count   int64   `gorm:"column:star_5_count" json:"star5Count"`
 }
 
-type AttachEntity struct {
+type FeedbackAttachEntity struct {
 	_models.BaseEntity
 	RateID   uint64 `gorm:"not null" json:"rateId"`
 	FileURL  string `gorm:"type:varchar(500)" json:"fileUrl"`
@@ -42,6 +42,6 @@ type AttachEntity struct {
 	FileType string `gorm:"type:varchar(50)" json:"fileType"`
 }
 
-func (AttachEntity) TableName() string {
+func (FeedbackAttachEntity) TableName() string {
 	return "feedback_rate_attachments"
 }

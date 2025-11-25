@@ -72,7 +72,7 @@ func (u *VersionUsecase) CheckAppUpdate(ctx context.Context, appName string, pla
 		}
 	}
 
-	latest, err := u.Repo.GetLatestByAppAndPlatform(ctx, appName, platform)
+	latest, err := u.Repo.GetLatestByAppAndPlatform(ctx, appName, platform, targetVersion)
 	if err != nil {
 		return nil, false, false, &_err.ErrorDTO{
 			Code:    500,
@@ -162,7 +162,7 @@ func (u *VersionUsecase) CreateBundleVersion(ctx context.Context, bundleVersion 
 		}
 	}
 
-	latest, _ := u.Repo.GetLatestByAppAndPlatform(ctx, bundleVersion.AppName, bundleVersion.Platform)
+	latest, _ := u.Repo.GetLatestByAppAndPlatform(ctx, bundleVersion.AppName, bundleVersion.Platform, bundleVersion.VersionName)
 	// if err != nil {
 	// 	return nil, &_err.ErrorDTO{
 	// 		Code:    500,

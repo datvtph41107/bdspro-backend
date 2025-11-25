@@ -231,6 +231,29 @@
         ]
       }
     },
+    "/v2/user/profile/completion": {
+      "get": {
+        "summary": "Lấy phần trăm hoàn thành cập nhật tài khoản",
+        "operationId": "ProfileService_GetProfileCompletion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbProfileCompletionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v2/user/profile/data": {
       "put": {
         "operationId": "ProfileService_SetPerson",
@@ -808,7 +831,30 @@
         },
         "itemType": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "title": "tag"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "file upload"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "approved"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "issuedAt": {
+          "type": "string"
         }
       }
     },
@@ -1111,6 +1157,59 @@
         },
         "updateTags": {
           "type": "boolean"
+        },
+        "viewRoles": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "visibilityIntroduce": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityProfession": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityMainArea": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityFriends": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilitySignature": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "medias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "fieldSets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workplace": {
+          "type": "string"
+        },
+        "roleTitle": {
+          "type": "string"
         }
       }
     },
@@ -1330,6 +1429,33 @@
         }
       }
     },
+    "userpbProfileCompletionResponse": {
+      "type": "object",
+      "properties": {
+        "percentage": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Phần trăm hoàn thành (0-100)"
+        },
+        "completedFields": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số field đã hoàn thành"
+        },
+        "totalFields": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Tổng số field cần thiết"
+        },
+        "missingFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Danh sách các field còn thiếu"
+        }
+      }
+    },
     "userpbProfilePublicInfo": {
       "type": "object",
       "properties": {
@@ -1494,6 +1620,39 @@
         },
         "kyc": {
           "$ref": "#/definitions/sharepbKYCV3Proto"
+        },
+        "visibilityIntroduce": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityProfession": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityMainArea": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityFriends": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilitySignature": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "viewRoles": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "workplace": {
+          "type": "string"
+        },
+        "roleTitle": {
+          "type": "string"
         }
       }
     },
@@ -1589,6 +1748,12 @@
           "type": "string"
         },
         "position": {
+          "type": "string"
+        },
+        "workplace": {
+          "type": "string"
+        },
+        "roleTitle": {
           "type": "string"
         },
         "departmentId": {

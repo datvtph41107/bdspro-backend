@@ -39,7 +39,14 @@ type GeminiContent struct {
 
 // GeminiPart - Part trong content
 type GeminiPart struct {
-	Text string `json:"text"`
+	Text       string            `json:"text,omitempty"`
+	InlineData *GeminiInlineData `json:"inlineData,omitempty"`
+}
+
+// GeminiInlineData - Image data inline
+type GeminiInlineData struct {
+	MimeType string `json:"mimeType"`
+	Data     string `json:"data"` // Base64 encoded image
 }
 
 // GeminiGenerationConfig - Generation config

@@ -46,6 +46,7 @@ type AdminUserItem struct {
 	RoleType       string              `json:"roleType"`
 	RoleRealEstate string              `json:"roleRealEstate"`
 	Position       string              `json:"position"`
+	Workplace      string              `json:"workplace"`
 	DepartmentID   uint64              `json:"departmentId"`
 	Bookmark       bool                `json:"isBookmark"`
 	TickVerified   bool                `json:"tickVerified"`
@@ -175,6 +176,7 @@ type GetUserDetailResponse struct {
 	UpdatedAt       time.Time         `json:"updatedAt"`
 	Status          _enum.EUserStatus `json:"status"`
 	Position        string            `json:"position"`
+	Workplace       string            `json:"workplace"`
 	DepartmentID    uint64            `json:"departmentId"`
 	TickVerified    bool              `json:"tickVerified"`
 	BackgroundImage string            `json:"backgroundImage"`

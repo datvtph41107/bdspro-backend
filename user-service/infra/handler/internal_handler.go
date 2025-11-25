@@ -39,6 +39,8 @@ func (h *InternalHandler) CreateProfile(ctx context.Context, req *userpb.CreateP
 		Avatar:       req.Avatar,
 		ReferralCode: req.ReferralCode,
 	}
+	// Set tất cả visibility thành public mặc định
+	models.SetAllVisibilityPublic(profile)
 
 	// Gọi repo để tạo profile
 	createdProfile, err := h.profileUsecase.ProfileRepo.CreateUserProfile(ctx, profile)

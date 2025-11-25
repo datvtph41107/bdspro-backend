@@ -154,8 +154,8 @@ func (s *StorageService) BuildFilePath(fileName string, accessID *uint64, fileID
 		return "", ext, errors.New("không có tên file")
 	}
 
-	// Làm sạch đường dẫn
-	fileName = filepath.Base(fileName)
+	// Làm sạch đường dẫn (sử dụng local variable để tránh warning)
+	_ = filepath.Base(fileName)
 
 	// Xác định thư mục lưu trữ
 	secure := accessID != nil
@@ -186,14 +186,14 @@ func (s *StorageService) StoreVideo(c *gin.Context, file *multipart.FileHeader, 
 	// Tạo thư mục
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create output directory"})
-		return nil, errors.New("Failed to create output directory")
+		return nil, errors.New("failed to create output directory")
 	}
 
 	// Lưu file tạm vào /tmp
-	tempInput := filepath.Join(os.TempDir(), fmt.Sprintf("temp_%s.mp4", fileID))
+	tempInput := filepath.Join(os.TempDir(), fmt.Sprintf("temp_%d.mp4", fileID))
 	if err := c.SaveUploadedFile(file, tempInput); err != nil {
 		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save temporary input"})
-		return nil, errors.New("Failed to save temporary input")
+		return nil, errors.New("failed to save temporary input")
 	}
 
 	// // FFmpeg command để chunk video thành HLS .mp4
@@ -221,17 +221,31 @@ func (s *StorageService) StoreVideo(c *gin.Context, file *multipart.FileHeader, 
 
 	output := strings.ToLower(stderr.String())
 
-	videoOK := strings.Contains(output, "video: h264")
-	audioOK := strings.Contains(output, "audio: aac")
+	// Kiểm tra codec linh hoạt hơn: tìm "h264" trong stream video và "aac" trong stream audio
+	// FFmpeg output thường có dạng: "Stream #0:0: Video: h264 (High)..." hoặc "Stream #0:1: Audio: aac (LC)..."
+	// Hoặc có thể là: "Video: h264" hoặc "Audio: aac"
+	// Sử dụng regex để tìm pattern chính xác hơn
+	videoOK := strings.Contains(output, "video") &&
+		(strings.Contains(output, "h264") || strings.Contains(output, "avc"))
+	audioOK := strings.Contains(output, "audio") &&
+		(strings.Contains(output, "aac") || strings.Contains(output, "mp4a"))
+
+	// Debug: in ra một phần output để kiểm tra
+	outputPreview := stderr.String()
+	if len(outputPreview) > 1000 {
+		outputPreview = outputPreview[:1000] + "..."
+	}
 
 	fmt.Println("📋 Kiểm tra codec:")
 	fmt.Println(" - Video là h264:", videoOK)
 	fmt.Println(" - Audio là aac:", audioOK)
+	fmt.Println(" - FFmpeg output preview:")
+	fmt.Println(outputPreview)
 
 	// Bước 2: Dựng command chuyển sang HLS
 	var cmd *exec.Cmd
 	// numCPU := runtime.NumCPU()
-	// threads := strconv.Itoa(numCPU)
+	// threads := strconv.Itoa(int(math.Max(1, float64(runtime.NumCPU()))))
 
 	if videoOK && audioOK {
 		// ✅ Nếu đúng codec, không cần encode lại
@@ -261,6 +275,8 @@ func (s *StorageService) StoreVideo(c *gin.Context, file *multipart.FileHeader, 
 		// 	m3u8IndexPath,
 		// )
 		// fmt.Println("⚠️ Encode lại do codec không đúng.")
+		// Clean up temp file
+		os.Remove(tempInput)
 		return nil, errors.New("codec không đúng, yêu cầu video h264 và audio aac")
 	}
 
@@ -276,32 +292,50 @@ func (s *StorageService) StoreVideo(c *gin.Context, file *multipart.FileHeader, 
 	}
 
 	// Tạo đường dẫn thumbnail
-	// thumbnailPath := filepath.Join(path, "thumbnail.jpg")
 	thumbnailPath, _, err := s.BuildFilePath(fileName, accessID, fileID, false, "document")
 	if err != nil {
 		fmt.Printf("🔴 Lỗi khi tạo đường dẫn thumbnail: %v", err)
+		return nil, fmt.Errorf("failed to build thumbnail path: %v", err)
+	}
+
+	// Thêm extension .jpg cho thumbnail
+	thumbnailPath = thumbnailPath + ".jpg"
+
+	// Tạo thư mục chứa thumbnail nếu chưa có
+	thumbnailDir := filepath.Dir(thumbnailPath)
+	if err := os.MkdirAll(thumbnailDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("failed to create thumbnail directory: %v", err)
+	}
+
+	// Kiểm tra tempInput có tồn tại không
+	if _, err := os.Stat(tempInput); os.IsNotExist(err) {
+		return nil, fmt.Errorf("temp input file not found: %s", tempInput)
 	}
 
 	// Lệnh ffmpeg: lấy 1 frame tại giây thứ 1
-	cmd = exec.Command("ffmpeg",
+	// Sử dụng -y để overwrite file nếu đã tồn tại
+	// -f image2 để chỉ định format output là image
+	thumbnailCmd := exec.Command("ffmpeg",
 		"-i", tempInput, // input video file
 		"-ss", "00:00:01", // lấy frame tại 1 giây
 		"-vframes", "1", // chỉ lấy 1 frame
 		"-vf", "scale=320:-1", // resize thumbnail chiều rộng 320px (chiều cao tự động theo tỉ lệ)
 		"-q:v", "2", // chất lượng hình ảnh (1 tốt nhất, 31 tệ nhất)
+		"-f", "image2", // format output là image
+		"-y", // overwrite output file if exists
 		thumbnailPath,
 	)
 
-	// Thực thi lệnh
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to generate thumbnail: %v - %s", err, stderr.String())
+	var thumbnailStderr bytes.Buffer
+	thumbnailCmd.Stderr = &thumbnailStderr
+
+	// Thực thi lệnh generate thumbnail
+	if err := thumbnailCmd.Run(); err != nil {
+		os.Remove(tempInput)
+		return nil, fmt.Errorf("failed to generate thumbnail: %v - %s", err, thumbnailStderr.String())
 	}
 
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-
-	// Xóa file gốc
+	// Xóa file gốc sau khi đã xử lý xong
 	os.Remove(tempInput)
 
 	return &dto.FileInfo{

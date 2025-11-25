@@ -23,6 +23,7 @@ type InitialApp struct {
 	SharingAccessService     *handler.SharingAccessService
 	InvitationInstallService *handler.InvitationInstallService
 	CrmInternalService       *handler.CrmInternalService
+	EnumService              *handler.EnumService
 	// Feedback handlers
 	RateHandler         *handler.RateHandler
 	ReportHandler       *handler.ReportHandler
@@ -47,6 +48,7 @@ func NewInitialApp(
 	sharingAccessService *handler.SharingAccessService,
 	invitationInstallService *handler.InvitationInstallService,
 	crmInternalService *handler.CrmInternalService,
+	enumService *handler.EnumService,
 	// Feedback handlers
 	rateHandler *handler.RateHandler,
 	reportHandler *handler.ReportHandler,
@@ -69,6 +71,7 @@ func NewInitialApp(
 		SharingAccessService:     sharingAccessService,
 		InvitationInstallService: invitationInstallService,
 		CrmInternalService:       crmInternalService,
+		EnumService:              enumService,
 		// Feedback handlers
 		RateHandler:         rateHandler,
 		ReportHandler:       reportHandler,

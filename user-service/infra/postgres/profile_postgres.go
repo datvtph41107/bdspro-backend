@@ -9,6 +9,7 @@ import (
 	"user/internal/dto"
 	models "user/internal/models"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -106,6 +107,8 @@ func (r *ProfilePostgres) UpdateProfile(c context.Context, profileId uint64, dto
 			"phone2":           dto.Phone2,
 			"tax_code":         dto.TaxCode,
 			"position":         dto.Position,
+			"workplace":        dto.Workplace,
+			"role_title":       dto.RoleTitle,
 			"department_id":    dto.DepartmentID,
 			"slogan":           dto.Slogan,
 			"website":          dto.Website,
@@ -351,6 +354,29 @@ func (r *ProfilePostgres) GetUserDetailByID(ctx context.Context, profileID uint6
 
 // CreateUserProfile tạo user profile mới
 func (r *ProfilePostgres) CreateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error) {
+	// Set tất cả visibility thành public mặc định nếu chưa được set
+	if profile.Visibility == 0 {
+		profile.Visibility = _enum.EVisibilityDTOPublic
+	}
+	if profile.ProfileVisibility == 0 {
+		profile.ProfileVisibility = _enum.EVisibilityDTOPublic
+	}
+	if profile.VisibilityIntroduce == 0 {
+		profile.VisibilityIntroduce = _enum.EVisibilityDTOPublic
+	}
+	if profile.VisibilityProfession == 0 {
+		profile.VisibilityProfession = _enum.EVisibilityDTOPublic
+	}
+	if profile.VisibilityMainArea == 0 {
+		profile.VisibilityMainArea = _enum.EVisibilityDTOPublic
+	}
+	if profile.VisibilityFriends == 0 {
+		profile.VisibilityFriends = _enum.EVisibilityDTOPublic
+	}
+	if profile.VisibilitySignature == 0 {
+		profile.VisibilitySignature = _enum.EVisibilityDTOPublic
+	}
+
 	err := r.DB.WithContext(ctx).Create(profile).Error
 	if err != nil {
 		return nil, err
@@ -425,83 +451,126 @@ func (r *ProfilePostgres) GetByPhone(phone string) (*models.UserProfileEntity, e
 func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req *_dto.UserV3DTO) error {
 	updates := make(map[string]interface{})
 
-	// Chỉ update các field được gửi lên (không nil)
-	if req.FullName != "" {
+	// Tạo set từ FieldSets để check nhanh hơn
+	fieldSetMap := make(map[string]bool)
+	for _, field := range req.FieldSets {
+		fieldSetMap[field] = true
+	}
+
+	// Helper function để check xem field có trong FieldSets không
+	// Nếu FieldSets rỗng, cho phép update tất cả (backward compatible)
+	shouldUpdate := func(fieldName string) bool {
+		if len(fieldSetMap) == 0 {
+			return true // Nếu không có FieldSets, update tất cả như cũ
+		}
+		return fieldSetMap[fieldName]
+	}
+
+	// Chỉ update các field được gửi lên (không nil) và có trong FieldSets (nếu có)
+	if req.FullName != "" && shouldUpdate("fullName") {
 		updates["full_name"] = req.FullName
 	}
-	if req.Email != "" {
+	if req.Email != "" && shouldUpdate("email") {
 		updates["email"] = req.Email
 	}
-	if req.ProvinceID != nil {
+	if req.ProvinceID != nil && shouldUpdate("provinceId") {
 		updates["province_id"] = *req.ProvinceID
 	}
-	if req.WardID != nil {
+	if req.WardID != nil && shouldUpdate("wardId") {
 		updates["ward_id"] = *req.WardID
 	}
-	if req.Gender != 0 {
+	if req.Gender != 0 && shouldUpdate("gender") {
 		updates["gender"] = req.Gender
 	}
-	if req.Birth != nil {
+	if req.Birth != nil && shouldUpdate("birth") {
 		updates["birth"] = req.Birth
 	}
-	if req.Phone2 != "" {
+	if req.Phone2 != "" && shouldUpdate("phone2") {
 		updates["phone2"] = req.Phone2
 	}
-	if req.RoleRealEstate != 0 {
+	if req.RoleRealEstate != 0 && shouldUpdate("roleRealEstate") {
 		updates["role_real_estate"] = req.RoleRealEstate
 	}
-	if req.SignatureVisible {
+	if req.SignatureVisible && shouldUpdate("signatureVisible") {
 		updates["signature_visible"] = true
 	}
-	if req.ZaloURL != "" {
+	if req.ZaloURL != "" && shouldUpdate("zaloUrl") {
 		updates["zalo_url"] = req.ZaloURL
 	}
-	if req.FacebookURL != "" {
+	if req.FacebookURL != "" && shouldUpdate("facebookUrl") {
 		updates["facebook_url"] = req.FacebookURL
 	}
-	if req.InstagramURL != "" {
+	if req.InstagramURL != "" && shouldUpdate("instagramUrl") {
 		updates["instagram_url"] = req.InstagramURL
 	}
-	if req.TwitterURL != "" {
+	if req.TwitterURL != "" && shouldUpdate("twitterUrl") {
 		updates["twitter_url"] = req.TwitterURL
 	}
-	if req.LinkedinURL != "" {
+	if req.LinkedinURL != "" && shouldUpdate("linkedinUrl") {
 		updates["linkedin_url"] = req.LinkedinURL
 	}
-	if req.YoutubeURL != "" {
+	if req.YoutubeURL != "" && shouldUpdate("youtubeUrl") {
 		updates["youtube_url"] = req.YoutubeURL
 	}
-	if req.WebsiteURL != "" {
+	if req.WebsiteURL != "" && shouldUpdate("websiteUrl") {
 		updates["website_url"] = req.WebsiteURL
 	}
-	if req.Introduction != "" {
+	if req.Introduction != "" && shouldUpdate("introduction") {
 		updates["introduction"] = req.Introduction
 	}
-	if req.Position != "" {
+	if req.Position != "" && shouldUpdate("position") {
 		updates["position"] = req.Position
 	}
-	if req.DepartmentID != 0 {
+	if req.Workplace != "" && shouldUpdate("workplace") {
+		updates["workplace"] = req.Workplace
+	}
+	if req.RoleTitle != "" && shouldUpdate("roleTitle") {
+		updates["role_title"] = req.RoleTitle
+	}
+	if req.DepartmentID != 0 && shouldUpdate("departmentId") {
 		updates["department_id"] = req.DepartmentID
 	}
-	if req.SignatureVisible {
-		updates["signature_visible"] = true
-	}
-	if req.Avatar != "" {
+	if req.Avatar != "" && shouldUpdate("avatar") {
 		updates["avatar"] = req.Avatar
 	}
-	if req.BackgroundImage != "" {
+	if req.BackgroundImage != "" && shouldUpdate("backgroundImage") {
 		updates["background_image"] = req.BackgroundImage
 	}
 	if req.Address != nil {
-		if req.Address.Detail != "" {
+		if req.Address.Detail != "" && shouldUpdate("address") {
 			updates["address"] = req.Address.Detail
 		}
-		if req.Address.ProvinceID != nil {
+		if req.Address.ProvinceID != nil && shouldUpdate("provinceId") {
 			updates["province_id"] = *req.Address.ProvinceID
 		}
-		if req.Address.WardID != nil {
+		if req.Address.WardID != nil && shouldUpdate("wardId") {
 			updates["ward_id"] = *req.Address.WardID
 		}
+	}
+
+	// Cập nhật các visibility fields
+	if req.VisibilityIntroduce != 0 && shouldUpdate("visibilityIntroduce") {
+		updates["visibility_introduce"] = req.VisibilityIntroduce
+	}
+	if req.VisibilityProfession != 0 && shouldUpdate("visibilityProfession") {
+		updates["visibility_profession"] = req.VisibilityProfession
+	}
+	if req.VisibilityMainArea != 0 && shouldUpdate("visibilityMainArea") {
+		updates["visibility_main_area"] = req.VisibilityMainArea
+	}
+	if req.VisibilityFriends != 0 && shouldUpdate("visibilityFriends") {
+		updates["visibility_friends"] = req.VisibilityFriends
+	}
+	if req.VisibilitySignature != 0 && shouldUpdate("visibilitySignature") {
+		updates["visibility_signature"] = req.VisibilitySignature
+	}
+	// Cập nhật ViewRoles (integer array) - Convert []uint32 sang pq.Int32Array
+	if len(req.ViewRoles) > 0 && shouldUpdate("viewRoles") {
+		viewRoles := make(pq.Int32Array, len(req.ViewRoles))
+		for i, role := range req.ViewRoles {
+			viewRoles[i] = int32(role)
+		}
+		updates["view_roles"] = viewRoles
 	}
 
 	// Nếu không có gì để update

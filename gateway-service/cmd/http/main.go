@@ -138,6 +138,7 @@ var publicRoutes = []string{
 	"/v2/auth/device/check",
 	"/v3/user/profile/p",
 	"/v3/bdspro/post/personal",
+	"/v2/assistant/national-card/extract",
 }
 
 var tempRoutes = []string{

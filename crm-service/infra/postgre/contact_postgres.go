@@ -233,13 +233,30 @@ func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, cur
 }
 
 func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.ContactEntity, error) {
-	// Tìm contact hiện tại
+	// Kiểm tra contact đã tồn tại chưa (tránh tạo trùng)
 	contact, err := r.GetByProfileID(c, profileId, ownerId, ownerType)
-	if err == nil && contact != nil {
+	if err == nil && contact != nil && contact.ID > 0 {
+		// Contact đã tồn tại, cập nhật thông tin nếu có thay đổi
+		needUpdate := false
+		if contact.FullName != fullName && fullName != "" {
+			contact.FullName = fullName
+			needUpdate = true
+		}
+		if contact.Avatar != avatar && avatar != "" {
+			contact.Avatar = avatar
+			needUpdate = true
+		}
+		if contact.Phone != phone && phone != "" {
+			contact.Phone = phone
+			needUpdate = true
+		}
+		if needUpdate {
+			_, _ = r.Update(c, contact.ID, contact)
+		}
 		return contact, nil
 	}
 
-	// Nếu không tồn tại, tạo mới
+	// Nếu không tồn tại, tạo mới với ON CONFLICT để tránh race condition
 	newContact := &domain.ContactEntity{
 		FullName:  fullName,
 		Phone:     phone,
@@ -249,14 +266,38 @@ func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uin
 		OwnerOf:   ownerType,
 	}
 
-	result := r.GetDB(c).Create(newContact)
+	// Sử dụng ON CONFLICT để xử lý trường hợp contact đã được tạo bởi request khác đồng thời
+	// Unique constraint trên (profile_id, owner_id, owner_of) khi profile_id IS NOT NULL và deleted_at IS NULL
+	// Nếu contact đã tồn tại (conflict), cập nhật full_name, avatar, phone
+	result := r.GetDB(c).Clauses(
+		clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "profile_id"},
+				{Name: "owner_id"},
+				{Name: "owner_of"},
+			},
+			DoUpdates: clause.AssignmentColumns([]string{"full_name", "avatar", "phone"}),
+		},
+	).Create(newContact)
+
 	if result.Error != nil {
-		// Nếu lỗi unique constraint, thử get lại
+		// Nếu lỗi unique constraint, thử get lại contact đã tồn tại
 		contact, err = r.GetByProfileID(c, profileId, ownerId, ownerType)
-		if err == nil && contact != nil {
+		if err == nil && contact != nil && contact.ID > 0 {
 			return contact, nil
 		}
+		// Nếu vẫn lỗi, có thể do constraint chưa được định nghĩa hoặc lỗi khác
 		return nil, result.Error
+	}
+
+	// Nếu tạo thành công hoặc đã được update bởi ON CONFLICT, get lại để có đầy đủ thông tin (bao gồm ID)
+	if newContact.ID == 0 {
+		contact, err = r.GetByProfileID(c, profileId, ownerId, ownerType)
+		if err == nil && contact != nil && contact.ID > 0 {
+			return contact, nil
+		}
+		// Nếu vẫn không tìm thấy, trả về contact vừa tạo (có thể chưa có ID nếu ON CONFLICT)
+		return newContact, nil
 	}
 
 	return newContact, nil

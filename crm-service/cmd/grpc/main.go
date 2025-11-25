@@ -4,6 +4,7 @@ import (
 	_middleware "common/middleware"
 	"context"
 	"crm/config"
+	"crm/infra/db"
 	"crm/initial"
 	"crm/wire"
 	"fmt"
@@ -32,7 +33,7 @@ var GrpcCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		app, _ := wire.InitializeApp()
-		// db.AutoMigrate()
+		db.AutoMigrate()
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
@@ -58,6 +59,7 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterSharingAccessServiceServer(s, app.SharingAccessService)
 		crmpb.RegisterInvitationInstallServiceServer(s, app.InvitationInstallService)
 		crmpb.RegisterCrmInternalServiceServer(s, app.CrmInternalService)
+		crmpb.RegisterEnumServiceServer(s, app.EnumService)
 		// Feedback services
 		crmpb.RegisterRateServiceServer(s, app.RateHandler)
 		crmpb.RegisterReportServiceServer(s, app.ReportHandler)

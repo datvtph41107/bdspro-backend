@@ -15,7 +15,18 @@ message RequestV3Proto {
 message ItemV3Proto {
     uint64 id = 1;
     string name = 2;
+    // tag
     uint32 itemType = 3;
+
+    // file upload
+    optional string fileName = 4;
+    optional string fileUrl = 5;
+    optional string fileType = 6;
+
+    // approved
+    optional uint32 status = 7;
+    optional uint64 issuer = 8;
+    optional string issuedAt = 9;
 }
 message ItemV3PageProto {
     repeated ItemV3Proto data = 1;
@@ -125,6 +136,18 @@ message UserV3Proto {
 
     repeated ItemV3Proto tags = 38;
     bool updateTags = 39;
+
+    repeated uint32 viewRoles = 40;
+    uint32 visibilityIntroduce = 41;
+    uint32 visibilityProfession = 42;
+    uint32 visibilityMainArea = 43;
+    uint32 visibilityFriends = 44;
+    uint32 visibilitySignature = 45;
+    repeated ItemV3Proto certifications = 46;
+    repeated ItemV3Proto medias = 47;
+    repeated string fieldSets = 48;
+    string workplace = 49;
+    string roleTitle = 50;
 }
 
 message OTPV3Proto {
