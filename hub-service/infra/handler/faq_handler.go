@@ -178,18 +178,15 @@ func (h *FAQHandler) GetFAQSimple(ctx context.Context, req *hubpb.GetFAQSimpleRe
 		return nil, err
 	}
 
-	// Convert to simple proto format
+	// Convert to simple proto format with safe truncation
 	var simpleItems []*hubpb.FAQSimple
 	for _, item := range data {
-		answer := item.Answer
-		// Truncate answer to max 50 characters
-		if len(answer) > 50 {
-			answer = answer[:50] + "..."
-		}
+		// Truncate answer to max 50 characters (UTF-8 safe)
+		answer := h.faqMapper.TruncateAnswerSafe(item.Answer, 30)
 
 		simpleItems = append(simpleItems, &hubpb.FAQSimple{
 			Id:       item.ID,
-			Question: item.Question,
+			Question: h.faqMapper.SanitizeUTF8(item.Question),
 			Answer:   answer,
 		})
 	}

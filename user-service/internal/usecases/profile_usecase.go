@@ -11,6 +11,8 @@ import (
 	"errors"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+	"strconv"
+	"strings"
 	"user/enums"
 	"user/internal/dto"
 	"user/internal/interface/providers"
@@ -18,7 +20,9 @@ import (
 	"user/internal/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/jinzhu/copier"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -1101,4 +1105,103 @@ func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.Profile
 		TotalFields:     totalFields,
 		MissingFields:   missingFields,
 	}, nil
+}
+
+// GetStatusOnline lấy trạng thái online/offline của user
+func (s *ProfileUsecase) GetStatusOnline(ctx context.Context, profileID uint64) (*userpb.StatusOnlineResponse, error) {
+	// Lấy thông tin profile từ DB (bao gồm visibilityStatusOnline)
+	profile, err := s.ProfileRepo.GetByProfileID(profileID)
+	if err != nil {
+		return nil, _errors.ReturnError(404, "Người dùng không tồn tại")
+	}
+
+	if profile == nil {
+		return nil, _errors.ReturnError(404, "Người dùng không tồn tại")
+	}
+
+	// Check visibilityStatusOnline - nếu là Private (20) thì không cho phép xem trạng thái online
+	if profile.StatusOnline == enums.HIDDEN {
+		return nil, _errors.ReturnError(400, "Người dùng đã ẩn trạng thái online")
+	}
+
+	// Ưu tiên lấy trạng thái từ Redis (relay service)
+	isOnline, offAt, err := s.getUserOnlineStatusFromRedis(ctx, profileID)
+	if err == nil {
+		// Tìm thấy trong Redis, trả về kết quả
+		response := &userpb.StatusOnlineResponse{
+			ProfileId: profileID,
+			Online:    isOnline,
+			OffAt:     offAt,
+		}
+		if profile.StatusOnline == enums.LASTEST {
+			response.Online = false
+		}
+		return response, nil
+	}
+
+	// Fallback: Nếu không tìm thấy trong Redis, dùng logic cũ với updated_at
+	// now := time.Now()
+	// onlineDuration := 1 * time.Minute // 1 phút
+
+	isOnline = false
+	offAt = nil
+
+	// Lấy updated_at từ BaseEntity
+	if profile.UpdatedAt != nil {
+		offAtStr := _utils.FormatTimeToString(profile.UpdatedAt)
+		offAt = &offAtStr
+	} else {
+		if profile.CreatedAt != nil {
+			offAtStr := _utils.FormatTimeToString(profile.CreatedAt)
+			offAt = &offAtStr
+		}
+	}
+
+	response := &userpb.StatusOnlineResponse{
+		ProfileId: profileID,
+		Online:    isOnline,
+	}
+
+	if offAt != nil {
+		response.OffAt = offAt
+	}
+
+	return response, nil
+}
+
+// getUserOnlineStatusFromRedis lấy trạng thái online/offline từ Redis (do relay service lưu)
+// Format trong Redis: "true|timestamp" hoặc "false|timestamp"
+// Key: "user:online:{profileID}"
+func (s *ProfileUsecase) getUserOnlineStatusFromRedis(ctx context.Context, profileID uint64) (bool, *string, error) {
+	// Tạo Redis client để đọc từ Redis
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     viper.GetString("redis.host"),
+		Password: viper.GetString("redis.pass"),
+		DB:       0,
+	})
+	defer redisClient.Close()
+
+	key := "user:online:" + strconv.FormatUint(profileID, 10)
+
+	value, err := redisClient.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return false, nil, errors.New("not found in redis")
+		}
+		return false, nil, err // Lỗi khi đọc Redis
+	}
+
+	// Parse value theo format: "true|timestamp" hoặc "false|timestamp"
+	parts := strings.Split(value, "|")
+	if len(parts) != 2 {
+		return false, nil, errors.New("invalid format")
+	}
+
+	isOnlineStr := parts[0]
+	timestampStr := parts[1]
+
+	isOnline := isOnlineStr == "true"
+	offAt := &timestampStr
+
+	return isOnline, offAt, nil
 }

@@ -122,3 +122,15 @@ func (r *UserGuideRepo) GetSimpleListWithText(ctx context.Context, text string, 
 
 	return data, total, nil
 }
+
+// GetByKey retrieves user guide by key
+func (r *UserGuideRepo) GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error) {
+	var entity domain.UserGuideEntity
+	err := r.GetDB(ctx).
+		Where("key = ? AND deleted_at IS NULL", key).
+		First(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}

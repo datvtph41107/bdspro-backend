@@ -27,6 +27,7 @@ type WebSocketHandler struct {
 	users      map[uint64][]uint64 // userID -> list of roomIDs: check online
 	mu         sync.Mutex
 	chatClient ChatClient
+	userClient UserClient
 }
 
 type RedisMessage struct {
@@ -34,7 +35,7 @@ type RedisMessage struct {
 	Data any    `json:"data"`
 }
 
-func NewWebSocketHandler(chatClient ChatClient) *WebSocketHandler {
+func NewWebSocketHandler(chatClient ChatClient, userClient UserClient) *WebSocketHandler {
 	return &WebSocketHandler{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -49,6 +50,7 @@ func NewWebSocketHandler(chatClient ChatClient) *WebSocketHandler {
 		rooms:      make(map[uint64][]uint64),
 		users:      make(map[uint64][]uint64),
 		chatClient: chatClient,
+		userClient: userClient,
 	}
 }
 
@@ -210,9 +212,17 @@ func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
 }
 
 func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64) {
-	defer conn.Close()
-	<-context.Background().Done()
+	// Đọc từ connection để detect disconnect
+	// Khi connection đóng, ReadMessage sẽ trả về error
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			// Connection đã đóng hoặc có lỗi
+			break
+		}
+	}
 
+	// Cleanup khi disconnect
 	h.mu.Lock()
 	delete(h.clients, userID)
 	// for room, members := range h.rooms {
@@ -236,7 +246,20 @@ func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64)
 	// Lưu trạng thái offline vào Redis
 	h.saveUserOnlineStatus(context.Background(), userID, false)
 
-	wsLogger.Infof("User %s disconnected", userID)
+	// Cập nhật last seen trong user-service
+	if h.userClient != nil {
+		ctx := context.Background()
+		if err := h.userClient.UpdateLastSeen(ctx, userID); err != nil {
+			wsLogger.Errorf("Failed to update last seen for user %d: %v", userID, err)
+		} else {
+			wsLogger.Infof("Updated last seen for user %d", userID)
+		}
+	}
+
+	wsLogger.Infof("User %d disconnected", userID)
+
+	// Đóng connection
+	conn.Close()
 }
 
 func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {

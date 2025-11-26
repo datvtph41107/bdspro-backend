@@ -562,6 +562,38 @@
         ]
       }
     },
+    "/v2/user/status-online/{id}": {
+      "get": {
+        "summary": "Lấy trạng thái online/offline của user",
+        "operationId": "ProfileService_GetStatusOnline",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbStatusOnlineResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/v3/user/profile/{access}/{id}": {
       "get": {
         "operationId": "ProfileService_GetProfileInfoV3",
@@ -1879,6 +1911,24 @@
         },
         "updateTags": {
           "type": "boolean"
+        }
+      }
+    },
+    "userpbStatusOnlineResponse": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Profile ID của user"
+        },
+        "online": {
+          "type": "boolean",
+          "title": "Trạng thái online (true) hoặc offline (false)"
+        },
+        "offAt": {
+          "type": "string",
+          "title": "Thời gian offline (nếu offline)"
         }
       }
     },

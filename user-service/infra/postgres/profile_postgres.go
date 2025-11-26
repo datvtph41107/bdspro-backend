@@ -5,7 +5,11 @@ import (
 	_enum "common/domain/enum"
 	_utils "common/utils"
 	"context"
+	"fmt"
+	hubpb "pb/types/hub"
+	"time"
 	"user/enums"
+	"user/infra/client"
 	"user/internal/dto"
 	models "user/internal/models"
 
@@ -15,12 +19,14 @@ import (
 
 // @bind: user/internal/interface/repo.IProfileRepo
 type ProfilePostgres struct {
-	DB *gorm.DB
+	DB        *gorm.DB
+	HubClient *client.HubClient
 }
 
 func NewProfilePostgres(db *gorm.DB) *ProfilePostgres {
 	return &ProfilePostgres{
-		DB: db,
+		DB:        db,
+		HubClient: client.NewHubClient(),
 	}
 }
 
@@ -447,6 +453,16 @@ func (r *ProfilePostgres) GetByPhone(phone string) (*models.UserProfileEntity, e
 	return &profile, nil
 }
 
+// UpdateLastSeen cập nhật thời gian hoạt động gần nhất của user
+func (r *ProfilePostgres) UpdateLastSeen(ctx context.Context, profileID uint64) error {
+	now := time.Now()
+	err := r.DB.WithContext(ctx).
+		Model(&models.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Update("last_seen_at", now).Error
+	return err
+}
+
 // UpdatePerson cập nhật thông tin cá nhân cơ bản
 func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req *_dto.UserV3DTO) error {
 	updates := make(map[string]interface{})
@@ -470,64 +486,64 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 	if req.FullName != "" && shouldUpdate("fullName") {
 		updates["full_name"] = req.FullName
 	}
-	if req.Email != "" && shouldUpdate("email") {
+	if req.Email != "" || shouldUpdate("email") {
 		updates["email"] = req.Email
 	}
-	if req.ProvinceID != nil && shouldUpdate("provinceId") {
+	if req.ProvinceID != nil || shouldUpdate("provinceId") {
 		updates["province_id"] = *req.ProvinceID
 	}
-	if req.WardID != nil && shouldUpdate("wardId") {
+	if req.WardID != nil || shouldUpdate("wardId") {
 		updates["ward_id"] = *req.WardID
 	}
-	if req.Gender != 0 && shouldUpdate("gender") {
+	if req.Gender != 0 || shouldUpdate("gender") {
 		updates["gender"] = req.Gender
 	}
-	if req.Birth != nil && shouldUpdate("birth") {
+	if req.Birth != nil || shouldUpdate("birth") {
 		updates["birth"] = req.Birth
 	}
-	if req.Phone2 != "" && shouldUpdate("phone2") {
+	if req.Phone2 != "" || shouldUpdate("phone2") {
 		updates["phone2"] = req.Phone2
 	}
-	if req.RoleRealEstate != 0 && shouldUpdate("roleRealEstate") {
+	if req.RoleRealEstate != 0 || shouldUpdate("roleRealEstate") {
 		updates["role_real_estate"] = req.RoleRealEstate
 	}
-	if req.SignatureVisible && shouldUpdate("signatureVisible") {
+	if req.SignatureVisible || shouldUpdate("signatureVisible") {
 		updates["signature_visible"] = true
 	}
-	if req.ZaloURL != "" && shouldUpdate("zaloUrl") {
+	if req.ZaloURL != "" || shouldUpdate("zaloUrl") {
 		updates["zalo_url"] = req.ZaloURL
 	}
-	if req.FacebookURL != "" && shouldUpdate("facebookUrl") {
+	if req.FacebookURL != "" || shouldUpdate("facebookUrl") {
 		updates["facebook_url"] = req.FacebookURL
 	}
-	if req.InstagramURL != "" && shouldUpdate("instagramUrl") {
+	if req.InstagramURL != "" || shouldUpdate("instagramUrl") {
 		updates["instagram_url"] = req.InstagramURL
 	}
-	if req.TwitterURL != "" && shouldUpdate("twitterUrl") {
+	if req.TwitterURL != "" || shouldUpdate("twitterUrl") {
 		updates["twitter_url"] = req.TwitterURL
 	}
-	if req.LinkedinURL != "" && shouldUpdate("linkedinUrl") {
+	if req.LinkedinURL != "" || shouldUpdate("linkedinUrl") {
 		updates["linkedin_url"] = req.LinkedinURL
 	}
-	if req.YoutubeURL != "" && shouldUpdate("youtubeUrl") {
+	if req.YoutubeURL != "" || shouldUpdate("youtubeUrl") {
 		updates["youtube_url"] = req.YoutubeURL
 	}
-	if req.WebsiteURL != "" && shouldUpdate("websiteUrl") {
+	if req.WebsiteURL != "" || shouldUpdate("websiteUrl") {
 		updates["website_url"] = req.WebsiteURL
 	}
-	if req.Introduction != "" && shouldUpdate("introduction") {
+	if req.Introduction != "" || shouldUpdate("introduction") {
 		updates["introduction"] = req.Introduction
 	}
-	if req.Position != "" && shouldUpdate("position") {
+	if req.Position != "" || shouldUpdate("position") {
 		updates["position"] = req.Position
 	}
-	if req.Workplace != "" && shouldUpdate("workplace") {
+	if req.Workplace != "" || shouldUpdate("workplace") {
 		updates["workplace"] = req.Workplace
 	}
-	if req.RoleTitle != "" && shouldUpdate("roleTitle") {
+	if req.RoleTitle != "" || shouldUpdate("roleTitle") {
 		updates["role_title"] = req.RoleTitle
 	}
-	if req.DepartmentID != 0 && shouldUpdate("departmentId") {
+	if req.DepartmentID != 0 || shouldUpdate("departmentId") {
 		updates["department_id"] = req.DepartmentID
 	}
 	if req.Avatar != "" && shouldUpdate("avatar") {
@@ -597,4 +613,12 @@ func (r *ProfilePostgres) PatchProfileV3(c context.Context, profileId uint64, re
 		Model(&models.UserProfileEntity{}).
 		Where("profile_id = ? AND deleted_at IS NULL", profileId).
 		Updates(updates).Error
+}
+
+// GetUserGuideByKey lấy user guide theo key từ hub service
+func (r *ProfilePostgres) GetUserGuideByKey(ctx context.Context, key string) (*hubpb.UserGuideDetail, error) {
+	if r.HubClient == nil {
+		return nil, fmt.Errorf("hub client not available")
+	}
+	return r.HubClient.GetUserGuideByKey(ctx, key)
 }

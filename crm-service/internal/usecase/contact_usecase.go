@@ -85,16 +85,16 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 
 	// Kiểm tra số điện thoại đã tồn tại trong hệ thống chưa
 	if entity.Phone != "" {
-		existedContact, err := s.repo.GetByPhone(c, ownerId, entity.OwnerOf, entity.Phone)
-		if err != nil {
-			return nil, err
-		}
-		if existedContact != nil {
-			return nil, &_routes.Except{
-				Code:    400,
-				Message: "Liên hệ với số điện thoại này đã tồn tại",
-			}
-		}
+		// existedContact, err := s.repo.GetByPhone(c, ownerId, entity.OwnerOf, entity.Phone)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// if existedContact != nil {
+		// 	return nil, &_routes.Except{
+		// 		Code:    400,
+		// 		Message: "Liên hệ với số điện thoại này đã tồn tại",
+		// 	}
+		// }
 
 		// Kiểm tra số điện thoại trong profile service
 		profiles, err := s.userClient.GetProfileByPhones(c, []string{entity.Phone})

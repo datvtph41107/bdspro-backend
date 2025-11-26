@@ -24,6 +24,7 @@ message UserGuide {
   string createdAt = 5;
   string updatedAt = 6;
   repeated UserGuideStep steps = 7;
+  string key = 8;
 }
 
 message UserGuideDetail {
@@ -34,6 +35,7 @@ message UserGuideDetail {
   string createdAt = 5;
   string updatedAt = 6;
   repeated UserGuideStep steps = 7;
+  string key = 8;
 }
 
 // ========== Request/Response Messages ==========
@@ -49,6 +51,7 @@ message CreateUserGuideRequest {
   string description = 2;
   string groupKey = 3;
   repeated UserGuideStepInput steps = 4;
+  string key = 5;
 }
 
 message CreateUserGuideResponse {
@@ -61,6 +64,7 @@ message UpdateUserGuideRequest {
   string description = 3;
   string groupKey = 4;
   repeated UserGuideStepInput steps = 5;
+  string key = 6;
 }
 
 message UpdateUserGuideResponse {
@@ -80,6 +84,14 @@ message GetUserGuideRequest {
 }
 
 message GetUserGuideResponse {
+  UserGuideDetail data = 1;
+}
+
+message GetUserGuideByKeyRequest {
+  string key = 1;
+}
+
+message GetUserGuideByKeyResponse {
   UserGuideDetail data = 1;
 }
 
@@ -243,6 +255,13 @@ service UserGuideService {
   rpc GetUserGuide (GetUserGuideRequest) returns (GetUserGuideResponse) {
     option (google.api.http) = {
       get: "/v2/hub/user-guides/{id}"
+    };
+  };
+
+  // Get User Guide Detail by Key
+  rpc GetUserGuideByKey (GetUserGuideByKeyRequest) returns (GetUserGuideByKeyResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides/key/{key}"
     };
   };
 

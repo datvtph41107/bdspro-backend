@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"pb/clients"
 	hubpb "pb/types/hub"
 	"user/env"
@@ -67,4 +68,20 @@ func (c *HubClient) GetProvinceAndWardNames(ctx context.Context, provinceId, war
 	}
 
 	return provinceName, wardName
+}
+
+// GetUserGuideByKey lấy user guide theo key
+func (c *HubClient) GetUserGuideByKey(ctx context.Context, key string) (*hubpb.UserGuideDetail, error) {
+	if c.HubGrpcClient.UserGuideClient == nil {
+		return nil, fmt.Errorf("user guide client not available")
+	}
+
+	resp, err := c.HubGrpcClient.UserGuideClient.GetUserGuideByKey(ctx, &hubpb.GetUserGuideByKeyRequest{
+		Key: key,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
 }

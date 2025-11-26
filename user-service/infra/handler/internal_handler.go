@@ -197,3 +197,14 @@ func (h *InternalHandler) LockUser(ctx context.Context, req *sharepb.RequestV3Pr
 
 	return &sharepb.Empty{}, nil
 }
+
+// UpdateLastSeen cập nhật thời gian hoạt động gần nhất của user (dùng bởi relay-service khi disconnect)
+func (h *InternalHandler) UpdateLastSeen(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {
+	err := h.profileUsecase.ProfileRepo.UpdateLastSeen(ctx, req.Id)
+	if err != nil {
+		log.Printf("Failed to update last seen for profile %d: %v", req.Id, err)
+		return nil, status.Errorf(codes.Internal, "Failed to update last seen: %v", err)
+	}
+
+	return &sharepb.Empty{}, nil
+}

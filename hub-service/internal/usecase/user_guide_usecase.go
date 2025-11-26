@@ -15,6 +15,7 @@ type IUserGuideUsecase interface {
 	GetListWithFilter(ctx context.Context, title string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, *_err.ErrorDTO)
 	GetGroups(ctx context.Context) ([]map[string]interface{}, *_err.ErrorDTO)
 	GetSimpleList(ctx context.Context, text string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, *_err.ErrorDTO)
+	GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, *_err.ErrorDTO)
 }
 
 type UserGuideUsecase struct {
@@ -68,4 +69,16 @@ func (u *UserGuideUsecase) GetSimpleList(ctx context.Context, text string, group
 	}
 
 	return data, total, nil
+}
+
+// GetByKey retrieves user guide by key
+func (u *UserGuideUsecase) GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, *_err.ErrorDTO) {
+	data, err := u.Repo.GetByKey(ctx, key)
+	if err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy user guide với key: " + key,
+		}
+	}
+	return data, nil
 }

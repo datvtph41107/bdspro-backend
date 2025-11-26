@@ -21,6 +21,7 @@ type HubGrpcClient struct {
 	InternalClient   hubpb.HubInternalServiceClient
 	LocationV2Client hubpb.LocationV2ServiceClient
 	ApiKeyClient     hubpb.ApiKeyServiceClient
+	UserGuideClient  hubpb.UserGuideServiceClient
 }
 
 func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
@@ -47,6 +48,7 @@ func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
 		hubClient.InternalClient = hubpb.NewHubInternalServiceClient(conn)
 		hubClient.LocationV2Client = hubpb.NewLocationV2ServiceClient(conn)
 		hubClient.ApiKeyClient = hubpb.NewApiKeyServiceClient(conn)
+		hubClient.UserGuideClient = hubpb.NewUserGuideServiceClient(conn)
 	}()
 	return hubClient
 }

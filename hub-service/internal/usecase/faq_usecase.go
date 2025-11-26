@@ -38,13 +38,6 @@ func (u *FAQUsecase) GetListWithFilter(ctx context.Context, question string, gro
 		}
 	}
 
-	for _, item := range data {
-		// Trả về tối đa 50 ký tự cho answer
-		if len(item.Answer) > 50 {
-			item.Answer = item.Answer[:50] + "..."
-		}
-	}
-
 	return data, total, nil
 }
 

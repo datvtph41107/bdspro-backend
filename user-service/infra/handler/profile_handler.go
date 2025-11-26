@@ -505,3 +505,21 @@ func (s *GrpcProfileService) GetProfileCompletion(ctx context.Context, req *shar
 		MissingFields:   result.MissingFields,
 	}, nil
 }
+
+// @Summary Lấy trạng thái online/offline của user
+// @Description Trả về trạng thái online/offline và thời gian offline (nếu offline) của user
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "Profile ID"
+// @Success 200 {object} userpb.StatusOnlineResponse "Thông tin trạng thái online/offline"
+// @Failure 404 {string} string "Người dùng không tồn tại"
+// @Failure 500 {string} string "Lỗi server"
+// @Router /v2/user/status-online/{id} [get]
+func (s *GrpcProfileService) GetStatusOnline(ctx context.Context, req *userpb.IdRequest) (*userpb.StatusOnlineResponse, error) {
+	result, err := s.ProfileUsecase.GetStatusOnline(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get status online: %v", err)
+	}
+	return result, nil
+}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"hub/config"
+	"hub/infra/db"
 	hubMiddleware "hub/infra/middleware"
 	"hub/wire"
 	"log"
@@ -29,7 +30,7 @@ var GrpcCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		app, _ := wire.InitializeApp()
-		// db.AutoMigrate()
+		db.AutoMigrate()
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)

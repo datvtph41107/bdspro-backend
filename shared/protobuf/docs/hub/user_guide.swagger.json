@@ -455,6 +455,37 @@
         ]
       }
     },
+    "/v2/hub/user-guides/key/{key}": {
+      "get": {
+        "summary": "Get User Guide Detail by Key",
+        "operationId": "UserGuideService_GetUserGuideByKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbGetUserGuideByKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UserGuideService"
+        ]
+      }
+    },
     "/v2/hub/user-guides/{id}": {
       "get": {
         "summary": "Get User Guide Detail",
@@ -589,6 +620,9 @@
             "type": "object",
             "$ref": "#/definitions/hubpbUserGuideStepInput"
           }
+        },
+        "key": {
+          "type": "string"
         }
       }
     },
@@ -632,6 +666,9 @@
             "type": "object",
             "$ref": "#/definitions/hubpbUserGuideStepInput"
           }
+        },
+        "key": {
+          "type": "string"
         }
       }
     },
@@ -763,6 +800,14 @@
         }
       }
     },
+    "hubpbGetUserGuideByKeyResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/hubpbUserGuideDetail"
+        }
+      }
+    },
     "hubpbGetUserGuideGroupsResponse": {
       "type": "object",
       "properties": {
@@ -859,6 +904,9 @@
             "type": "object",
             "$ref": "#/definitions/hubpbUserGuideStep"
           }
+        },
+        "key": {
+          "type": "string"
         }
       }
     },
@@ -890,6 +938,9 @@
             "type": "object",
             "$ref": "#/definitions/hubpbUserGuideStep"
           }
+        },
+        "key": {
+          "type": "string"
         }
       }
     },

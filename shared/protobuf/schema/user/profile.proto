@@ -76,6 +76,13 @@ service ProfileService {
             get: "/v2/user/profile/completion"
         };
     }
+    
+    // Lấy trạng thái online/offline của user
+    rpc GetStatusOnline(IdRequest) returns (StatusOnlineResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/status-online/{id}"
+        };
+    }
 }
 
 service TagService {
@@ -404,6 +411,12 @@ message ProfileCompletionResponse {
     uint32 completedFields = 2; // Số field đã hoàn thành
     uint32 totalFields = 3; // Tổng số field cần thiết
     repeated string missingFields = 4; // Danh sách các field còn thiếu
+}
+
+message StatusOnlineResponse {
+    uint64 profileId = 1; // Profile ID của user
+    bool online = 2;      // Trạng thái online (true) hoặc offline (false)
+    optional string offAt = 3; // Thời gian offline (nếu offline)
 }
 
 

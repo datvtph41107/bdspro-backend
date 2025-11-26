@@ -27,6 +27,9 @@ service InternalUserService {
     rpc GetProfileByIDV3(sharepb.RequestV3Proto) returns (sharepb.UserV3Proto);
 
     rpc LockUser(sharepb.RequestV3Proto) returns (sharepb.Empty);
+    
+    // Cập nhật thời gian hoạt động gần nhất (dùng bởi relay-service khi disconnect)
+    rpc UpdateLastSeen(sharepb.IdRequest) returns (sharepb.Empty);
 }
 
 // ============= Request Messages =============

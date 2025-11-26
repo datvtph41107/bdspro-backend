@@ -9,6 +9,7 @@ type UserGuideEntity struct {
 	Title       string `gorm:"column:title;not null" json:"title"`
 	Description string `gorm:"column:description;type:text;not null" json:"description"`
 	GroupKey    string `gorm:"column:group_key;not null;index" json:"groupKey"`
+	Key         string `gorm:"column:key;uniqueIndex" json:"key"`
 }
 
 func (UserGuideEntity) TableName() string {

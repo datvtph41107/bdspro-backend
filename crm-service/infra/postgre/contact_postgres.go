@@ -187,8 +187,6 @@ func (r *PostgreContact) Existed(c context.Context, followId uint64) error {
 }
 
 // Bulk inserts all contacts.
-// If a phone number already exists, we update the contact's name (and updated_at)
-// instead of inserting a duplicate.
 func (r *PostgreContact) Bulk(
 	ctx context.Context,
 	entities []domain.ContactEntity,
@@ -199,16 +197,17 @@ func (r *PostgreContact) Bulk(
 	}
 
 	// INSERT ... ON CONFLICT (phone) DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()
-	result := r.GetDB(ctx).Clauses(
-		clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "phone"},
-				{Name: "owner_id"},
-				{Name: "owner_of"},
-			},
-			DoUpdates: clause.AssignmentColumns([]string{"full_name", "profile_id"}), // thêm "updated_at" nếu cần
-		},
-	).Create(&entities)
+	// result := r.GetDB(ctx).Clauses(
+	// 	clause.OnConflict{
+	// 		Columns: []clause.Column{
+	// 			{Name: "phone"},
+	// 			{Name: "owner_id"},
+	// 			{Name: "owner_of"},
+	// 		},
+	// 		DoUpdates: clause.AssignmentColumns([]string{"full_name", "profile_id"}), // thêm "updated_at" nếu cần
+	// 	},
+	// ).Create(&entities)
+	result := r.GetDB(ctx).Create(&entities)
 
 	if result.Error != nil {
 		return nil, result.Error

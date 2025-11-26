@@ -78,6 +78,7 @@ func (m *UserGuideMapper) EntityToProto(entity *domain.UserGuideEntity) *hubpb.U
 		GroupKey:    entity.GroupKey,
 		CreatedAt:   _utils.FormatTimeToString(entity.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(entity.UpdatedAt),
+		Key:         entity.Key,
 	}
 }
 
@@ -96,6 +97,7 @@ func (m *UserGuideMapper) EntityToDetailProto(entity *domain.UserGuideEntity, st
 		CreatedAt:   _utils.FormatTimeToString(entity.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(entity.UpdatedAt),
 		Steps:       m.StepEntitiesToProto(steps),
+		Key:         entity.Key,
 	}
 }
 
@@ -122,6 +124,7 @@ func (m *UserGuideMapper) CreateRequestToEntity(req *hubpb.CreateUserGuideReques
 		Title:       req.Title,
 		Description: req.Description,
 		GroupKey:    req.GroupKey,
+		Key:         req.Key,
 	}
 }
 
@@ -134,6 +137,7 @@ func (m *UserGuideMapper) UpdateRequestToEntity(entity *domain.UserGuideEntity, 
 	entity.Title = req.Title
 	entity.Description = req.Description
 	entity.GroupKey = req.GroupKey
+	entity.Key = req.Key
 }
 
 // GroupMapToProto converts group map to UserGuideGroup protobuf message

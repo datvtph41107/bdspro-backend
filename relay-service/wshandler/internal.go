@@ -16,3 +16,7 @@ type ChatClient interface {
 	GetMembersOfRoom(ctx context.Context, conversationId uint64) ([]uint64, error)
 	GetRoomsOfMember(ctx context.Context, userId uint64) ([]uint64, error)
 }
+
+type UserClient interface {
+	UpdateLastSeen(ctx context.Context, profileID uint64) error
+}

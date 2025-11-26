@@ -261,3 +261,25 @@ func (h *UserGuideHandler) GetUserGuideSimple(ctx context.Context, req *hubpb.Ge
 		Total: total,
 	}, nil
 }
+
+// @Summary Lấy chi tiết user guide theo key
+// @Description Lấy thông tin chi tiết user guide theo key với steps
+// @Tags UserGuide
+// @Accept json
+// @Produce json
+// @Param key path string true "User Guide Key"
+// @Success 200 {object} hubpb.GetUserGuideByKeyResponse
+// @Router /v2/hub/user-guides/key/{key} [get]
+func (h *UserGuideHandler) GetUserGuideByKey(ctx context.Context, req *hubpb.GetUserGuideByKeyRequest) (*hubpb.GetUserGuideByKeyResponse, error) {
+	result, err := h.userGuideUsecase.GetByKey(ctx, req.GetKey())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get steps
+	steps, _ := h.stepRepo.GetByUserGuideID(ctx, result.ID)
+
+	return &hubpb.GetUserGuideByKeyResponse{
+		Data: h.userGuideMapper.EntityToDetailProto(result, steps),
+	}, nil
+}

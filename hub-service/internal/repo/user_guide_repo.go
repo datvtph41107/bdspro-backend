@@ -12,4 +12,5 @@ type IUserGuideRepo interface {
 	GetListWithFilter(ctx context.Context, title string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, error)
 	GetGroups(ctx context.Context) ([]map[string]interface{}, error)
 	GetSimpleListWithText(ctx context.Context, text string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, error)
+	GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error)
 }

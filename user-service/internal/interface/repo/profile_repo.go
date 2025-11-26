@@ -27,4 +27,5 @@ type IProfileRepo interface {
 
 	PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
 	UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error
+	UpdateLastSeen(ctx context.Context, profileID uint64) error
 }

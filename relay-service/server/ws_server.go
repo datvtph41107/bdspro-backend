@@ -37,7 +37,8 @@ func NewWSServer(port string) *WSServer {
 	wsLogger.Info("Initializing WebSocket server...")
 
 	chatClient := client.NewChatClient()
-	wsHandler := wshandler.NewWebSocketHandler(chatClient)
+	userClient := client.NewUserClient()
+	wsHandler := wshandler.NewWebSocketHandler(chatClient, userClient)
 
 	mux := http.NewServeMux()
 
