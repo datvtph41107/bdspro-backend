@@ -16,3 +16,6 @@ jwt:
   refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
   listPermit:
   authorizationHeader: Authorization
+
+service:
+  auth_key: "internal-service-secret-key-change-in-production"

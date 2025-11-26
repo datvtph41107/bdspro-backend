@@ -51,6 +51,9 @@ message SubmitKYCRequest {
     string frontImage = 3;      // Ảnh mặt trước CMND/CCCD
     string backImage = 4;       // Ảnh mặt sau CMND/CCCD
     string selfieImage = 5;     // Ảnh selfie (optional)
+    optional string idNumber = 6;      // Số CMND/CCCD (optional)
+    optional string dateOfBirth = 7;   // Ngày sinh (optional)
+    optional string expiryDate = 8;     // Ngày hết hạn (optional)
 }
 
 message ListKYCsRequest {

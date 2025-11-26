@@ -11,12 +11,14 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/liyue201/goqr"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
@@ -159,7 +161,7 @@ func (c *OCRClient) ExtractNationalCard(ctx context.Context, frontURL, backURL s
 		mrzFromFrontText = c.extractMRZFromText(string(frontData))
 	}()
 	wg.Wait()
-	fmt.Printf("⏱️  [Extract MRZ] Từ text: %v\n", time.Since(extractMRZStart))
+	fmt.Printf("⏱️  [Extract MRZ] Từ??? text: %v\n", time.Since(extractMRZStart))
 
 	// Xử lý kết quả MRZ (ưu tiên mặt sau)
 	var mrz string
@@ -288,6 +290,198 @@ func (c *OCRClient) ExtractNationalCard(ctx context.Context, frontURL, backURL s
 	return info, mrz, qr, nil
 }
 
+// ExtractNationalCardFromData trích xuất thông tin từ 2 ảnh CCCD (từ file data)
+func (c *OCRClient) ExtractNationalCardFromData(ctx context.Context, frontImageData, backImageData []byte) (map[string]interface{}, string, string, error) {
+	startTime := time.Now()
+
+	var wg sync.WaitGroup
+	var (
+		qrFront, qrBack                   string
+		mrzFront, mrzBack                 string
+		mrzFromFrontText, mrzFromBackText string
+		qrFrontErr, qrBackErr             error
+		mrzFrontErr, mrzBackErr           error
+	)
+
+	// Đo thời gian infer - chạy TẤT CẢ song song: OCR, QR, MRZ cho cả 2 mặt
+	inferStart := time.Now()
+	wg.Add(4) // 2 QR + 2 MRZ
+
+	// Đọc QR code từ cả 2 mặt song song
+	go func() {
+		defer wg.Done()
+		qrFrontStart := time.Now()
+		qrFront, qrFrontErr = c.readQRCodeFromBytes(frontImageData)
+		fmt.Printf("⏱️  [QR] Front: %v\n", time.Since(qrFrontStart))
+	}()
+	go func() {
+		defer wg.Done()
+		qrBackStart := time.Now()
+		qrBack, qrBackErr = c.readQRCodeFromBytes(backImageData)
+		fmt.Printf("⏱️  [QR] Back: %v\n", time.Since(qrBackStart))
+	}()
+
+	// Đọc MRZ từ cả 2 mặt song song
+	go func() {
+		defer wg.Done()
+		mrzFrontStart := time.Now()
+		mrzFront, mrzFrontErr = c.ocrMRZFromBytes(frontImageData)
+		fmt.Printf("⏱️  [MRZ] Front: %v\n", time.Since(mrzFrontStart))
+	}()
+	go func() {
+		defer wg.Done()
+		mrzBackStart := time.Now()
+		mrzBack, mrzBackErr = c.ocrMRZFromBytes(backImageData)
+		fmt.Printf("⏱️  [MRZ] Back: %v\n", time.Since(mrzBackStart))
+	}()
+
+	wg.Wait()
+	inferDuration := time.Since(inferStart)
+	fmt.Printf("⏱️  [Infer] Tổng thời gian (QR + MRZ): %v\n", inferDuration)
+
+	fmt.Printf("\nOCRClient: qrFront: %s", qrFront)
+	fmt.Printf("\nOCRClient: qrBack: %s\n", qrBack)
+	// Extract MRZ từ text song song (nếu cần fallback)
+	extractMRZStart := time.Now()
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		mrzFromBackText = c.extractMRZFromText(string(backImageData))
+	}()
+	go func() {
+		defer wg.Done()
+		mrzFromFrontText = c.extractMRZFromText(string(frontImageData))
+	}()
+	wg.Wait()
+	fmt.Printf("⏱️  [Extract MRZ] Từ text: %v\n", time.Since(extractMRZStart))
+
+	// Xử lý kết quả MRZ (ưu tiên mặt sau)
+	var mrz string
+	if mrzBackErr == nil && mrzBack != "" {
+		mrz = mrzBack
+	} else if mrzFrontErr == nil && mrzFront != "" {
+		mrz = mrzFront
+	} else {
+		// fallback extract từ OCR text (ưu tiên backText vì MRZ thường ở mặt sau)
+		if mrzFromBackText != "" {
+			mrz = mrzFromBackText
+		} else if mrzFromFrontText != "" {
+			mrz = mrzFromFrontText
+		}
+	}
+
+	// Xử lý kết quả QR code (ưu tiên mặt sau)
+	var qr string
+	if qrBackErr == nil && qrBack != "" {
+		qr = qrBack
+	} else if qrFrontErr == nil && qrFront != "" {
+		qr = qrFront
+	}
+
+	// Đo thời gian parse
+	parseStart := time.Now()
+	// Parse thông tin - ưu tiên QR code trước
+	info := make(map[string]interface{})
+	var qrInfo, mrzInfo map[string]interface{}
+
+	// Parse QR và MRZ song song (nếu có)
+	parseQRMRZStart := time.Now()
+	if qr != "" || mrz != "" {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			if qr != "" {
+				parseQRStart := time.Now()
+				qrInfo = c.parseQRCode(qr)
+				fmt.Printf("⏱️  [Parse] QR code: %v\n", time.Since(parseQRStart))
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			if mrz != "" {
+				parseMRZStart := time.Now()
+				mrzInfo = c.parseMRZ(mrz)
+				fmt.Printf("⏱️  [Parse] MRZ: %v\n", time.Since(parseMRZStart))
+			}
+		}()
+		wg.Wait()
+	}
+	fmt.Printf("⏱️  [Parse] QR + MRZ tổng: %v\n", time.Since(parseQRMRZStart))
+
+	// Merge QR code info (nếu có) - ưu tiên cho idNumber, fullName, dateOfBirth
+	if qrInfo != nil {
+		if idNumber, ok := qrInfo["idNumber"]; ok && idNumber != nil && idNumber != "" {
+			info["idNumber"] = idNumber
+		}
+		if fullName, ok := qrInfo["fullName"]; ok && fullName != nil && fullName != "" {
+			info["fullName"] = fullName
+		}
+		if dateOfBirth, ok := qrInfo["dateOfBirth"]; ok && dateOfBirth != nil && dateOfBirth != "" {
+			info["dateOfBirth"] = dateOfBirth
+		}
+		// Merge các trường khác từ QR code
+		for k, v := range qrInfo {
+			if v != nil && v != "" && k != "idNumber" && k != "fullName" && k != "dateOfBirth" {
+				info[k] = v
+			}
+		}
+		info["qrCode"] = qr
+	}
+
+	// Merge MRZ info (nếu có) - chỉ lấy nếu QR code không có
+	if mrzInfo != nil {
+		if info["idNumber"] == nil || info["idNumber"] == "" {
+			if idNumber, ok := mrzInfo["idNumber"]; ok && idNumber != nil && idNumber != "" {
+				info["idNumber"] = idNumber
+			}
+		}
+		if info["fullName"] == nil || info["fullName"] == "" {
+			if fullName, ok := mrzInfo["fullName"]; ok && fullName != nil && fullName != "" {
+				info["fullName"] = fullName
+			}
+		}
+		if info["dateOfBirth"] == nil || info["dateOfBirth"] == "" {
+			if dateOfBirth, ok := mrzInfo["dateOfBirth"]; ok && dateOfBirth != nil && dateOfBirth != "" {
+				info["dateOfBirth"] = dateOfBirth
+			}
+		}
+		// Merge các trường khác từ MRZ (như expiryDate)
+		for k, v := range mrzInfo {
+			if v != nil && v != "" && k != "idNumber" && k != "fullName" && k != "dateOfBirth" {
+				if existing, exists := info[k]; !exists || existing == nil || existing == "" {
+					info[k] = v
+				}
+			}
+		}
+	}
+
+	// Parse thông tin từ OCR text (mặt trước và mặt sau) song song
+	parseTextStart := time.Now()
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		parseFrontStart := time.Now()
+		c.parseFrontSide(string(frontImageData), info)
+		fmt.Printf("⏱️  [Parse] Front side: %v\n", time.Since(parseFrontStart))
+	}()
+	go func() {
+		defer wg.Done()
+		parseBackStart := time.Now()
+		c.parseBackSide(string(backImageData), info)
+		fmt.Printf("⏱️  [Parse] Back side: %v\n", time.Since(parseBackStart))
+	}()
+	wg.Wait()
+	fmt.Printf("⏱️  [Parse] Front + Back side tổng: %v\n", time.Since(parseTextStart))
+
+	parseDuration := time.Since(parseStart)
+	fmt.Printf("⏱️  [Parse] Tổng thời gian parse: %v\n", parseDuration)
+
+	totalDuration := time.Since(startTime)
+	fmt.Printf("⏱️  [TOTAL] Tổng thời gian xử lý: %v\n", totalDuration)
+
+	return info, mrz, qr, nil
+}
+
 // downloadImage tải ảnh từ URL
 func (c *OCRClient) downloadImage(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -357,24 +551,187 @@ func (c *OCRClient) ocrMRZFromBytes(data []byte) (string, error) {
 	return "", fmt.Errorf("invalid MRZ")
 }
 
-// readQRCodeFromBytes đọc QR code từ bytes
+// readQRCodeFromBytes đọc QR code từ data []byte (ảnh CCCD)
+// Sử dụng Node.js script decode_qr.js với jsQR library
 func (c *OCRClient) readQRCodeFromBytes(data []byte) (string, error) {
-	img, _, err := image.Decode(bytes.NewReader(data))
+	// Lưu image data vào file tạm
+	tempImagePath := filepath.Join(c.tempDir, fmt.Sprintf("qr_temp_%d.png", time.Now().UnixNano()))
+	defer os.Remove(tempImagePath) // Cleanup sau khi xong
+
+	// Ghi image data vào file
+	if err := os.WriteFile(tempImagePath, data, 0644); err != nil {
+		return "", fmt.Errorf("failed to write temp image: %w", err)
+	}
+
+	// Tìm đường dẫn đến decode_qr.js
+	// Thử các vị trí có thể:
+	scriptPaths := []string{
+		filepath.Join("assistant-service", "decode_qr.js"), // Từ root của project
+		"decode_qr.js",                     // Trong thư mục hiện tại
+		filepath.Join(".", "decode_qr.js"), // Relative path
+	}
+
+	var scriptPath string
+	for _, path := range scriptPaths {
+		if _, err := os.Stat(path); err == nil {
+			scriptPath = path
+			break
+		}
+	}
+
+	if scriptPath == "" {
+		return "", fmt.Errorf("decode_qr.js not found in any of: %v", scriptPaths)
+	}
+
+	// Chạy Node.js script với timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "node", scriptPath, tempImagePath)
+	fmt.Printf("\nOCRClient: cmd: %s", cmd.String())
+	cmd.Dir = filepath.Dir(scriptPath) // Set working directory để script có thể load dependencies
+
+	// Capture stdout và stderr
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("decode_qr.js timeout after 10 seconds")
+		}
+		return "", fmt.Errorf("failed to run decode_qr.js: %w, output: %s", err, string(output))
+	}
+
+	// Parse kết quả
+	result := strings.TrimSpace(string(output))
+	if result == "" {
+		return "", fmt.Errorf("QR code not found or empty result")
+	}
+
+	return result, nil
+}
+
+// -----------------------
+// Helper functions
+// -----------------------
+func preprocess(img image.Image) image.Image {
+	// Grayscale + contrast
+	gray := image.NewGray(img.Bounds())
+	b := img.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			r, g, b, _ := img.At(x, y).RGBA()
+			pix := uint8((r + g + b) / 3 >> 8)
+			if pix < 128 {
+				pix = uint8(float64(pix) * 0.8)
+			} else {
+				pix = uint8(128 + float64(pix-128)*1.2)
+			}
+			gray.Set(x, y, color.Gray{Y: pix})
+		}
+	}
+
+	// Resize nếu quá nhỏ
+	w := b.Dx()
+	var resized image.Image = gray
+	if w < 400 {
+		resizedNRGBA := imaging.Resize(gray, 600, 0, imaging.Lanczos)
+		resized = imaging.Grayscale(resizedNRGBA) // convert NRGBA -> gray
+	}
+
+	// Sharpen
+	sharp := imaging.Sharpen(resized, 1.5)
+	return sharp
+}
+
+// Gozxing engine
+func (c *OCRClient) readQRCodeWithGozxingImage(img image.Image) (string, error) {
+	bmp, err := gozxing.NewBinaryBitmapFromImage(img)
 	if err != nil {
 		return "", err
 	}
-
-	// Chuyển sang BinaryBitmap để đọc QR
-	luminanceSource := gozxing.NewLuminanceSourceFromImage(img)
-	bitmap, _ := gozxing.NewBinaryBitmap(gozxing.NewHybridBinarizer(luminanceSource))
-
-	// Tạo QRCodeReader
 	qrReader := qrcode.NewQRCodeReader()
-	result, err := qrReader.Decode(bitmap, nil)
+	result, err := qrReader.Decode(bmp, nil)
 	if err != nil {
 		return "", err
 	}
-	return result.GetText(), nil
+	return result.String(), nil
+}
+
+// goqr engine fallback
+func (c *OCRClient) readQRCodeWithGoqrImage(img image.Image) (string, error) {
+	codes, err := goqr.Recognize(img)
+	if err != nil || len(codes) == 0 {
+		return "", fmt.Errorf("goqr decode failed")
+	}
+	return string(codes[0].Payload), nil
+}
+
+// decodeImageWithFallback - Decode image với fallback mechanism
+func (c *OCRClient) decodeImageWithFallback(data []byte) (image.Image, error) {
+	// Thử decode trực tiếp từ bytes
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err == nil {
+		return img, nil
+	}
+
+	// Fallback: lưu vào file tạm rồi decode (một số format cần file)
+	imagePath := filepath.Join(c.tempDir, fmt.Sprintf("qr_decode_%d.png", time.Now().UnixNano()))
+	defer os.Remove(imagePath)
+
+	if err := os.WriteFile(imagePath, data, 0644); err != nil {
+		return nil, fmt.Errorf("failed to save temp image: %w", err)
+	}
+
+	file, err := os.Open(imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open temp image: %w", err)
+	}
+	defer file.Close()
+
+	img, _, err = image.Decode(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode temp image: %w", err)
+	}
+
+	return img, nil
+}
+
+// convertToGrayscale - Convert image sang grayscale
+func (c *OCRClient) convertToGrayscale(img image.Image) image.Image {
+	bounds := img.Bounds()
+	gray := image.NewGray(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			gray.Set(x, y, color.GrayModel.Convert(img.At(x, y)))
+		}
+	}
+	return gray
+}
+
+// resizeImage - Resize image (simple nearest neighbor)
+func (c *OCRClient) resizeImage(img image.Image, newWidth, newHeight int) image.Image {
+	bounds := img.Bounds()
+	oldWidth := bounds.Dx()
+	oldHeight := bounds.Dy()
+
+	// Tạo ảnh mới
+	resized := image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+
+	// Scale factors
+	xScale := float64(oldWidth) / float64(newWidth)
+	yScale := float64(oldHeight) / float64(newHeight)
+
+	// Resize bằng nearest neighbor
+	for y := 0; y < newHeight; y++ {
+		for x := 0; x < newWidth; x++ {
+			srcX := int(float64(x) * xScale)
+			srcY := int(float64(y) * yScale)
+			if srcX < oldWidth && srcY < oldHeight {
+				resized.Set(x, y, img.At(bounds.Min.X+srcX, bounds.Min.Y+srcY))
+			}
+		}
+	}
+
+	return resized
 }
 
 // Các hàm cropMRZRegion, cleanMRZText, isValidMRZ, extractMRZFromText, parseNationalCardInfo,
@@ -1037,6 +1394,64 @@ func (c *OCRClient) parseQRCode(qrText string) map[string]interface{} {
 	}
 
 	return result
+}
+
+// parseDateFromQR - Parse date từ QR code với validation
+// isDOB: true nếu là date of birth (cần xác định century), false nếu là issue/expiry date (luôn 20YY)
+func (c *OCRClient) parseDateFromQR(dateStr string, isDOB bool) string {
+	dateStr = strings.TrimSpace(dateStr)
+	if dateStr == "" {
+		return ""
+	}
+
+	if len(dateStr) == 8 {
+		// Format: DDMMYYYY (ví dụ: 18112000 -> 18/11/2000)
+		day := dateStr[0:2]
+		month := dateStr[2:4]
+		year := dateStr[4:8]
+
+		// Validate
+		dayInt := parseInt(day)
+		monthInt := parseInt(month)
+		yearInt := parseInt(year)
+
+		if monthInt >= 1 && monthInt <= 12 && dayInt >= 1 && dayInt <= 31 && yearInt >= 1900 && yearInt <= 2100 {
+			return fmt.Sprintf("%s/%s/%s", day, month, year)
+		}
+	} else if len(dateStr) == 6 {
+		// Format: YYMMDD
+		yy := dateStr[0:2]
+		month := dateStr[2:4]
+		day := dateStr[4:6]
+
+		// Validate month và day
+		monthInt := parseInt(month)
+		dayInt := parseInt(day)
+		yyInt := parseInt(yy)
+
+		if monthInt >= 1 && monthInt <= 12 && dayInt >= 1 && dayInt <= 31 {
+			var year string
+			if isDOB {
+				// Date of birth: YY < 50 -> 20YY, YY >= 50 -> 19YY
+				if yyInt < 50 {
+					year = "20" + yy
+				} else {
+					year = "19" + yy
+				}
+			} else {
+				// Issue/Expiry date: luôn là năm tương lai, nên dùng 20YY
+				// Nếu YY < 30, có thể là 21YY (năm 2100+)
+				if yyInt < 30 {
+					year = "21" + yy
+				} else {
+					year = "20" + yy
+				}
+			}
+			return fmt.Sprintf("%s/%s/%s", day, month, year)
+		}
+	}
+
+	return ""
 }
 
 // parseInt - Helper để parse string thành int

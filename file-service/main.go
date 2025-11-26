@@ -67,6 +67,11 @@ func NewConfigApp(db *gorm.DB, fileService *services.FileService, versionService
 // @name Authorization
 func main() {
 	r := gin.Default()
+
+	// Tắt redirect tự động của Gin để tránh redirect 301
+	r.RedirectTrailingSlash = false
+	r.RedirectFixedPath = false
+
 	config.LoadConfig()
 	db, err := _db.NewDB()
 	if err != nil {
@@ -98,12 +103,13 @@ func main() {
 			"http://14.225.205.222:3108",
 			"http://103.145.63.185:3107",
 			"http://localhost:5173",
+			"http://192.168.100.76",
 			"https://admin.bdspro.com",
 			"https://bdspro.com",
 			"https://app.bdspro.com",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang", "X-Service-Auth"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,

@@ -53,6 +53,9 @@ func (u *KYCUsecase) SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*
 		existingKYC.FrontImage = req.FrontImage
 		existingKYC.BackImage = req.BackImage
 		existingKYC.SelfieImage = req.SelfieImage
+		existingKYC.IDNumber = req.IDNumber
+		existingKYC.DateOfBirth = req.DateOfBirth
+		existingKYC.ExpiryDate = req.ExpiryDate
 		existingKYC.Status = _enum.EApproveStatusPending
 		existingKYC.RejectReason = ""
 		existingKYC.ReviewedBy = nil
@@ -77,6 +80,9 @@ func (u *KYCUsecase) SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*
 		FrontImage:   req.FrontImage,
 		BackImage:    req.BackImage,
 		SelfieImage:  req.SelfieImage,
+		IDNumber:     req.IDNumber,
+		DateOfBirth:  req.DateOfBirth,
+		ExpiryDate:   req.ExpiryDate,
 		Status:       _enum.EApproveStatusPending,
 	}
 

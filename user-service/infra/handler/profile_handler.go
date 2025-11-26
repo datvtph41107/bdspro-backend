@@ -151,7 +151,10 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 	var kyc *sharepb.KYCV3Proto
 	kycEntity, errKYC := s.KYCUsecase.GetKYCByProfileID(ctx, req.Id)
 	if errKYC == nil && kycEntity != nil {
-		kyc = s.KYCMapper.ToProto(kycEntity)
+		// Kiểm tra xem có phải owner request không
+		requestProfileID := _utils.GetProfileIdWithContext(ctx)
+		isOwner := requestProfileID > 0 && requestProfileID == req.Id
+		kyc = s.KYCMapper.ToProtoWithOwnerCheck(kycEntity, isOwner)
 	}
 
 	profilePb := s.ProfileMapper.PublicUserInfoToPb(result, kyc)
@@ -210,11 +213,28 @@ func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.
 		bdsproInfo = bdsproInfoResp
 	}
 
+	// Lấy KYC với owner check
+	var kycProto *sharepb.KYCV3Proto
+	if result.KYC != nil {
+		// Kiểm tra xem có phải owner request không
+		requestProfileID := _utils.GetProfileIdWithContext(ctx)
+		isOwner := requestProfileID > 0 && requestProfileID == req.Id
+		kycProto = s.ProfileMapper.DTOToKYCProtoWithOwnerCheck(result.KYC, isOwner)
+	} else {
+		// Nếu không có KYC trong result, thử lấy trực tiếp từ KYC service
+		kycEntity, errKYC := s.KYCUsecase.GetKYCByProfileID(ctx, req.Id)
+		if errKYC == nil && kycEntity != nil {
+			requestProfileID := _utils.GetProfileIdWithContext(ctx)
+			isOwner := requestProfileID > 0 && requestProfileID == req.Id
+			kycProto = s.KYCMapper.ToProtoWithOwnerCheck(kycEntity, isOwner)
+		}
+	}
+
 	return &sharepb.TotalResponseProto{
 		User:         s.ProfileMapper.DTOToUserV3Proto(result.User, nil),
 		FriendStatus: s.ProfileMapper.DTOToFriendV3Proto(result.FriendStatus),
 		RateStats:    s.ProfileMapper.DTOToRateStatsV3Proto(result.RateStats),
-		Kyc:          s.ProfileMapper.DTOToKYCProto(result.KYC),
+		Kyc:          kycProto,
 		ContactInfo:  contactInfo,
 		BdsproInfo:   bdsproInfo,
 	}, nil
@@ -238,7 +258,8 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 	var kyc *sharepb.KYCV3Proto
 	kycEntity, errKYC := s.KYCUsecase.GetMyKYC(ctx)
 	if errKYC == nil && kycEntity != nil {
-		kyc = s.KYCMapper.ToProto(kycEntity)
+		// GetProfileInfoMe luôn là owner request
+		kyc = s.KYCMapper.ToProtoWithOwnerCheck(kycEntity, true)
 	}
 
 	profilePb := s.ProfileMapper.ModelToUserV3Proto(result, kyc)

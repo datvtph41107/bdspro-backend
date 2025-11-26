@@ -11,6 +11,9 @@ type SubmitKYCRequest struct {
 	FrontImage   string `json:"frontImage" binding:"required"`
 	BackImage    string `json:"backImage" binding:"required"`
 	SelfieImage  string `json:"selfieImage"`
+	IDNumber     string `json:"idNumber"`
+	DateOfBirth  string `json:"dateOfBirth"`
+	ExpiryDate   string `json:"expiryDate"`
 }
 
 // ListKYCsRequest DTO cho list KYC (Admin)

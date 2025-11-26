@@ -58,3 +58,8 @@ ocr:
   timeout_seconds: 60
   temp_dir: "" # Để trống sẽ dùng system temp dir
 
+file_service:
+  base_url: "http://14.225.210.29:8002" # URL của file-service
+  service_auth_key: "internal-service-secret-key-change-in-production" # Key để xác thực với file-service
+  timeout_seconds: 30
+

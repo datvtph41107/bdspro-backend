@@ -46,6 +46,9 @@ type KYCV3DTO struct {
 	ReviewedAt   *time.Time `json:"reviewedAt"`
 	CreatedAt    *time.Time `json:"createdAt"`
 	UpdatedAt    *time.Time `json:"updatedAt"`
+	IDNumber     string     `json:"idNumber"`
+	DateOfBirth  string     `json:"dateOfBirth"`
+	ExpiryDate   string     `json:"expiryDate"`
 }
 
 type TotalResponseDTO struct {

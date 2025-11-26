@@ -103,7 +103,7 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 			if tag.TagType == enums.TagTypeMainArea {
 				userInfo.TagMainAreas = append(userInfo.TagMainAreas, tag)
 			} else if tag.TagType == enums.TagTypeSpecialty {
-				userInfo.TagSpecialties = append(userInfo.TagSpecialties, tag)
+				userInfo.TagSpecialities = append(userInfo.TagSpecialities, tag)
 			} else if tag.TagType == enums.TagTypeProject {
 				userInfo.TagProjects = append(userInfo.TagProjects, tag)
 			} else if tag.TagType == enums.TagTypeJob {
@@ -237,7 +237,7 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 				if tag.TagType == enums.TagTypeMainArea {
 					infoEntity.TagMainAreas = append(infoEntity.TagMainAreas, tag)
 				} else if tag.TagType == enums.TagTypeSpecialty {
-					infoEntity.TagSpecialties = append(infoEntity.TagSpecialties, tag)
+					infoEntity.TagSpecialities = append(infoEntity.TagSpecialities, tag)
 				} else if tag.TagType == enums.TagTypeProject {
 					infoEntity.TagProjects = append(infoEntity.TagProjects, tag)
 				} else if tag.TagType == enums.TagTypeJob {
@@ -294,7 +294,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 				if tag.TagType == enums.TagTypeMainArea {
 					infoEntity.TagMainAreas = append(infoEntity.TagMainAreas, tag)
 				} else if tag.TagType == enums.TagTypeSpecialty {
-					infoEntity.TagSpecialties = append(infoEntity.TagSpecialties, tag)
+					infoEntity.TagSpecialities = append(infoEntity.TagSpecialities, tag)
 				} else if tag.TagType == enums.TagTypeProject {
 					infoEntity.TagProjects = append(infoEntity.TagProjects, tag)
 				} else if tag.TagType == enums.TagTypeJob {
@@ -499,6 +499,22 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access 
 				Status:     uint32(kycEntity.Status),
 				ReviewedBy: kycEntity.ReviewedBy,
 				CreatedAt:  kycEntity.CreatedAt,
+			}
+
+			if profileId == currentUserId {
+				kyc.IdentityCard = kycEntity.IdentityCard
+				kyc.FrontImage = kycEntity.FrontImage
+				kyc.BackImage = kycEntity.BackImage
+				kyc.SelfieImage = kycEntity.SelfieImage
+				kyc.Status = uint32(kycEntity.Status)
+				kyc.RejectReason = kycEntity.RejectReason
+				kyc.ReviewedBy = kycEntity.ReviewedBy
+				kyc.ReviewedAt = kycEntity.ReviewedAt
+				kyc.CreatedAt = kycEntity.CreatedAt
+				kyc.UpdatedAt = kycEntity.UpdatedAt
+				kyc.IDNumber = kycEntity.IDNumber
+				kyc.DateOfBirth = kycEntity.DateOfBirth
+				kyc.ExpiryDate = kycEntity.ExpiryDate
 			}
 		}
 	}
@@ -969,7 +985,7 @@ func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.Profile
 		// Các field bắt buộc (quan trọng)
 		// {"fullName", func() bool { return profile.FullName != "" }, true},
 		{"avatar", func() bool { return profile.Avatar != "" }, true},
-		{"backgroundImage", func() bool { return profile.BackgroundImage != "" }, false},
+		// {"backgroundImage", func() bool { return profile.BackgroundImage != "" }, false},
 		// Các field tùy chọn nhưng quan trọng
 		{"birth", func() bool { return profile.Birth != nil }, false},
 		{"gender", func() bool { return profile.Gender != 0 }, false},
@@ -994,33 +1010,33 @@ func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.Profile
 
 	// Kiểm tra các field liên quan đến collections
 	// Certifications
-	totalFields++
-	certifications, _ := s.CertificationRepo.ListItemByProfileID(ctx, profileID)
-	if len(certifications) > 0 {
-		completedFields++
-	} else {
-		missingFields = append(missingFields, "certifications")
-	}
+	// totalFields++
+	// certifications, _ := s.CertificationRepo.ListItemByProfileID(ctx, profileID)
+	// if len(certifications) > 0 {
+	// 	completedFields++
+	// } else {
+	// 	missingFields = append(missingFields, "certifications")
+	// }
 
 	// Professions
-	totalFields++
-	professions, _ := s.ProfessionRepo.ListItemByProfileID(ctx, profileID)
-	if len(professions) > 0 {
-		completedFields++
-	} else {
-		missingFields = append(missingFields, "professions")
-	}
+	// totalFields++
+	// professions, _ := s.ProfessionRepo.ListItemByProfileID(ctx, profileID)
+	// if len(professions) > 0 {
+	// 	completedFields++
+	// } else {
+	// 	missingFields = append(missingFields, "professions")
+	// }
 
 	// PurposeUses
-	if s.PurposeUseRepo != nil {
-		totalFields++
-		purposeUses, _ := s.PurposeUseRepo.ListByProfileID(ctx, profileID)
-		if len(purposeUses) > 0 {
-			completedFields++
-		} else {
-			missingFields = append(missingFields, "purposeUses")
-		}
-	}
+	// if s.PurposeUseRepo != nil {
+	// 	totalFields++
+	// 	purposeUses, _ := s.PurposeUseRepo.ListByProfileID(ctx, profileID)
+	// 	if len(purposeUses) > 0 {
+	// 		completedFields++
+	// 	} else {
+	// 		missingFields = append(missingFields, "purposeUses")
+	// 	}
+	// }
 
 	// Tags - Query một lần và check 4 loại tag riêng biệt
 	if s.TagRepo != nil {
@@ -1045,7 +1061,7 @@ func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.Profile
 		if tagTypeMap[enums.TagTypeSpecialty] {
 			completedFields++
 		} else {
-			missingFields = append(missingFields, "specialties")
+			missingFields = append(missingFields, "specialities")
 		}
 
 		// Check Project tags
@@ -1066,15 +1082,15 @@ func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.Profile
 	}
 
 	// ProfileMedias
-	if s.ProfileMediaRepo != nil {
-		totalFields++
-		medias, _ := s.ProfileMediaRepo.ListItemByProfileID(ctx, profileID)
-		if len(medias) > 0 {
-			completedFields++
-		} else {
-			missingFields = append(missingFields, "medias")
-		}
-	}
+	// if s.ProfileMediaRepo != nil {
+	// 	totalFields++
+	// 	medias, _ := s.ProfileMediaRepo.ListItemByProfileID(ctx, profileID)
+	// 	if len(medias) > 0 {
+	// 		completedFields++
+	// 	} else {
+	// 		missingFields = append(missingFields, "medias")
+	// 	}
+	// }
 
 	// Tính phần trăm hoàn thành
 	var percentage float64 = float64(completedFields) / float64(totalFields) * 100

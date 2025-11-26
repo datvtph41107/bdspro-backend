@@ -14,6 +14,11 @@ func NewKYCMapper() *KYCMapper {
 }
 
 func (m *KYCMapper) ToProto(entity *models.KYCEntity) *sharepb.KYCV3Proto {
+	return m.ToProtoWithOwnerCheck(entity, false)
+}
+
+// ToProtoWithOwnerCheck trả về KYC proto, chỉ trả về 4 trường nhạy cảm nếu isOwner = true
+func (m *KYCMapper) ToProtoWithOwnerCheck(entity *models.KYCEntity, isOwner bool) *sharepb.KYCV3Proto {
 	if entity == nil {
 		return nil
 	}
@@ -28,6 +33,19 @@ func (m *KYCMapper) ToProto(entity *models.KYCEntity) *sharepb.KYCV3Proto {
 		SelfieImage:  entity.SelfieImage,
 		Status:       uint32(entity.Status),
 		RejectReason: entity.RejectReason,
+	}
+
+	// Chỉ trả về 4 trường nhạy cảm nếu là owner request
+	if isOwner {
+		if entity.IDNumber != "" {
+			resp.IdNumber = &entity.IDNumber
+		}
+		if entity.DateOfBirth != "" {
+			resp.DateOfBirth = &entity.DateOfBirth
+		}
+		if entity.ExpiryDate != "" {
+			resp.ExpiryDate = &entity.ExpiryDate
+		}
 	}
 
 	if entity.ReviewedBy != nil {
@@ -59,6 +77,9 @@ func (m *KYCMapper) FromSubmitRequest(req *dto.SubmitKYCRequest, profileID uint6
 		FrontImage:   req.FrontImage,
 		BackImage:    req.BackImage,
 		SelfieImage:  req.SelfieImage,
+		IDNumber:     req.IDNumber,
+		DateOfBirth:  req.DateOfBirth,
+		ExpiryDate:   req.ExpiryDate,
 		Status:       10, // Pending
 	}
 }

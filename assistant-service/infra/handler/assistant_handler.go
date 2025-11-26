@@ -2,8 +2,11 @@ package handler
 
 import (
 	"assistant/internal/dto"
+	"assistant/internal/interface/provider"
 	"assistant/internal/usecases"
+	_errors "common/errors"
 	"context"
+	"fmt"
 	"time"
 
 	assistantpb "pb/types/assistant"
@@ -15,14 +18,16 @@ import (
 
 type AssistantHandler struct {
 	assistantpb.UnimplementedAssistantServiceServer
-	Usecase   *usecases.AssistantUsecase
-	StartTime time.Time
+	Usecase      *usecases.AssistantUsecase
+	FileProvider provider.FileProvider
+	StartTime    time.Time
 }
 
-func NewAssistantHandler(usecase *usecases.AssistantUsecase) *AssistantHandler {
+func NewAssistantHandler(usecase *usecases.AssistantUsecase, fileProvider provider.FileProvider) *AssistantHandler {
 	return &AssistantHandler{
-		Usecase:   usecase,
-		StartTime: time.Now(),
+		Usecase:      usecase,
+		FileProvider: fileProvider,
+		StartTime:    time.Now(),
 	}
 }
 
@@ -712,13 +717,25 @@ func (h *AssistantHandler) GenerateContentWithGemini(ctx context.Context, req *a
 // @Router /v2/assistant/national-card/extract [post]
 func (h *AssistantHandler) ExtractNationalCard(ctx context.Context, req *assistantpb.ExtractNationalCardRequest) (*assistantpb.ExtractNationalCardResponse, error) {
 	if req.FrontImageUrl == "" || req.BackImageUrl == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "frontImageUrl and backImageUrl are required")
+		return nil, _errors.ReturnError(400, "frontImageUrl and backImageUrl are required")
 	}
 
-	info, mrz, qrCode, processingTime, _ := h.Usecase.ExtractNationalCard(ctx, req.FrontImageUrl, req.BackImageUrl)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "failed to extract national card: %v", err)
-	// }
+	// Lấy file data từ file-service bằng encoded path (req.FrontImageUrl và req.BackImageUrl là encoded path)
+	frontImageData, err := h.FileProvider.GetFile(ctx, req.FrontImageUrl, "s")
+	if err != nil {
+		fmt.Printf("ExtractNationalCard: failed to get front image: %s", frontImageData)
+		return nil, _errors.ReturnError(500, "failed to get front image: "+err.Error())
+	}
+
+	backImageData, err := h.FileProvider.GetFile(ctx, req.BackImageUrl, "s")
+	if err != nil {
+		return nil, _errors.ReturnError(500, "failed to get back image: "+err.Error())
+	}
+
+	info, mrz, qrCode, processingTime, err := h.Usecase.ExtractNationalCardFromData(ctx, frontImageData, backImageData)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "failed to extract national card: "+err.Error())
+	}
 
 	// Convert map[string]interface{} to NationalCardInfo
 	cardInfo := &assistantpb.NationalCardInfo{}

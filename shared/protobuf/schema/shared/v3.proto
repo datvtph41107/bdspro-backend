@@ -93,6 +93,9 @@ message KYCV3Proto {
     string reviewedAt = 11;
     string createdAt = 12;
     string updatedAt = 13;
+    optional string idNumber = 14;      // Số CMND/CCCD (trả về nếu là owner)
+    optional string dateOfBirth = 15;   // Ngày sinh (trả về nếu là owner)
+    optional string expiryDate = 16;    // Ngày hết hạn (trả về nếu là owner)
 }
 
 message UserV3Proto {

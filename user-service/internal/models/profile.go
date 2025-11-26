@@ -76,16 +76,16 @@ type UserProfileEntity struct {
 	// TotalLogin        uint32                `gorm:"column:total_login;default:0" json:"totalLogin"`
 
 	// transient
-	Certifications []CertificationEntity `gorm:"-" json:"certifications"`
-	Professions    []ProfessionEntity    `gorm:"-" json:"professions"`
-	PurposeUses    []PurposeUseEntity    `gorm:"-" json:"purposeUses"`
-	TagJobs        []TagEntity           `gorm:"-" json:"tagJobs"`
-	TagSpecialties []TagEntity           `gorm:"-" json:"tagSpecialties"`
-	TagMainAreas   []TagEntity           `gorm:"-" json:"tagMainAreas"`
-	TagProjects    []TagEntity           `gorm:"-" json:"tagProjects"`
-	Tags           []TagEntity           `gorm:"-" json:"tags"`
-	ProfileMedias  []ProfileMediaEntity  `gorm:"-" json:"profileMedias"`
-	RateStats      *RateStats            `gorm:"-" json:"rateStats"`
+	Certifications  []CertificationEntity `gorm:"-" json:"certifications"`
+	Professions     []ProfessionEntity    `gorm:"-" json:"professions"`
+	PurposeUses     []PurposeUseEntity    `gorm:"-" json:"purposeUses"`
+	TagJobs         []TagEntity           `gorm:"-" json:"tagJobs"`
+	TagSpecialities []TagEntity           `gorm:"-" json:"tagSpecialities"`
+	TagMainAreas    []TagEntity           `gorm:"-" json:"tagMainAreas"`
+	TagProjects     []TagEntity           `gorm:"-" json:"tagProjects"`
+	Tags            []TagEntity           `gorm:"-" json:"tags"`
+	ProfileMedias   []ProfileMediaEntity  `gorm:"-" json:"profileMedias"`
+	RateStats       *RateStats            `gorm:"-" json:"rateStats"`
 
 	FriendStatus *FriendItem       `gorm:"-" json:"friendStatus"`
 	Following    bool              `gorm:"-" json:"following"`

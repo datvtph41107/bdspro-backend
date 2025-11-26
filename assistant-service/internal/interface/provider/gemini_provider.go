@@ -17,6 +17,9 @@ type GeminiProvider interface {
 	// GenerateContent tạo nội dung theo template
 	GenerateContent(ctx context.Context, prompt string, maxTokens int, temperature float32) (string, error)
 
+	// ExtractNationalCardFromImages trích xuất thông tin từ 2 ảnh căn cước bằng Gemini Vision
+	// ExtractNationalCardFromImages(ctx context.Context, frontImageData, backImageData []byte) (map[string]interface{}, error)
+
 	// GetModel trả về model name đang sử dụng
 	GetModel() string
 }

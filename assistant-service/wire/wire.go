@@ -1,17 +1,18 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
-	_db "common/db"
-	"assistant/initial"
 	assistant_infra_client "assistant/infra/client"
 	assistant_infra_handler "assistant/infra/handler"
+	"assistant/initial"
 	assistant_initial "assistant/initial"
 	assistant_internal_interface_provider "assistant/internal/interface/provider"
 	assistant_internal_usecases "assistant/internal/usecases"
+	_db "common/db"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -25,6 +26,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(assistant_internal_interface_provider.OCRProvider), new(*assistant_infra_client.OCRClient)),
 	wire.Bind(new(assistant_internal_interface_provider.OpenAIProvider), new(*assistant_infra_client.OpenAIClient)),
 	wire.Bind(new(assistant_internal_interface_provider.QRCodeProvider), new(*assistant_infra_client.QRCodeClient)),
+	wire.Bind(new(assistant_internal_interface_provider.FileProvider), new(*assistant_infra_client.FileClient)),
+	assistant_infra_client.NewFileClient,
 	assistant_infra_handler.NewAssistantHandler,
 	assistant_internal_usecases.NewAssistantUsecase,
 	assistant_infra_client.NewBdsproInternalClient,
@@ -36,6 +39,7 @@ var wireSet = wire.NewSet(
 	assistant_infra_client.NewOpenAIClient,
 	assistant_infra_client.NewQRCodeClient,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

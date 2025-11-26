@@ -2,12 +2,12 @@
 
 # Set CGO environment variables for Tesseract and Leptonica
 # For Homebrew on macOS (Apple Silicon)
-export PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig
-export CGO_ENABLED=1
+# export PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig
+# export CGO_ENABLED=1
 # export CGO_CFLAGS=-I/opt/homebrew/include -I/usr/local/include
 # export CGO_LDFLAGS=-L/opt/homebrew/lib -ltesseract -lleptonica
-export CGO_CFLAGS="-I/opt/homebrew/Cellar/tesseract/5.5.1_1/include -I/opt/homebrew/Cellar/leptonica/1.86.0/include/leptonica"
-export CGO_LDFLAGS="-L/opt/homebrew/Cellar/tesseract/5.5.1_1/lib -ltesseract -L/opt/homebrew/opt/libarchive/lib -larchive -lcurl"
+# export CGO_CFLAGS="-I/opt/homebrew/Cellar/tesseract/5.5.1_1/include -I/opt/homebrew/Cellar/leptonica/1.86.0/include/leptonica"
+# export CGO_LDFLAGS="-L/opt/homebrew/Cellar/tesseract/5.5.1_1/lib -ltesseract -L/opt/homebrew/opt/libarchive/lib -larchive -lcurl"
 # go build
 
 build:

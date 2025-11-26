@@ -24,7 +24,7 @@ cd $service_path
 REMOTE_DIR=${REMOTE_PATH}/${service_path}
 
 echo "--- GO BUILDING ---"
-GOOS=linux GOARCH=amd64 go build -o main .
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 echo "--- FINISH BUILDING ---"
 
 

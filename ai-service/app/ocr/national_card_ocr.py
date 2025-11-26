@@ -2,19 +2,33 @@
 Module để đọc MRZ và OCR text từ ảnh căn cước công dân
 """
 
+from __future__ import annotations  # Enable postponed evaluation of annotations
+
 import io
 import re
 import time
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, TYPE_CHECKING, Any
 from urllib.request import urlopen
 from urllib.parse import urlparse
 
+# Define Image type stub to avoid NameError during class definition
+if TYPE_CHECKING:
+    from PIL import Image
+else:
+    # Create a dummy class to avoid NameError
+    class Image:
+        @staticmethod
+        def open(*args, **kwargs):
+            raise ImportError("PIL/Pillow is not installed")
+
 try:
     import pytesseract
-    from PIL import Image
+    from PIL import Image as PILImage
+    Image = PILImage  # Use real Image
     TESSERACT_AVAILABLE = True
 except ImportError:
     TESSERACT_AVAILABLE = False
+    # Image is already defined as dummy class above
     print("⚠️  Warning: pytesseract or PIL not installed. OCR will not work.")
     print("   Install with: pip install pytesseract pillow")
 
@@ -51,7 +65,7 @@ class NationalCardOCR:
                 self.mrz_detector = None
                 self.mrz_reader = None
     
-    def download_image(self, image_url: str) -> Image.Image:
+    def download_image(self, image_url: str) -> "Image.Image":
         """Download ảnh từ URL và convert sang PIL Image"""
         try:
             with urlopen(image_url) as response:
@@ -61,7 +75,7 @@ class NationalCardOCR:
         except Exception as e:
             raise ValueError(f"Failed to download image from {image_url}: {str(e)}")
     
-    def extract_mrz(self, back_image: Image.Image) -> Optional[str]:
+    def extract_mrz(self, back_image: "Image.Image") -> Optional[str]:
         """
         Trích xuất MRZ từ ảnh mặt sau
         
@@ -163,7 +177,7 @@ class NationalCardOCR:
         
         return info
     
-    def ocr_image(self, image: Image.Image, lang: str = 'vie+eng') -> str:
+    def ocr_image(self, image: "Image.Image", lang: str = 'vie+eng') -> str:
         """OCR ảnh và trả về text"""
         try:
             text = pytesseract.image_to_string(image, lang=lang)

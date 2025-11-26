@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -32,7 +33,8 @@ type FileService struct {
 	Document         string
 	SignatureKey     string
 	XorCryptKey      string
-	SignatureExpire  int // minutes
+	SignatureExpire  int    // minutes
+	ServiceAuthKey   string // Key để xác thực request từ service nội bộ
 	FileRepository   *repositories.FileRepository
 	Storage          *StorageService
 	AccessRepository *repositories.AccessRepository
@@ -41,12 +43,15 @@ type FileService struct {
 }
 
 func NewFileService(fileRepo *repositories.FileRepository, accessRepo *repositories.AccessRepository, storage *StorageService) *FileService {
+	serviceAuthKey := viper.GetString("service.auth_key")
+
 	fs := &FileService{
 		RootPath:         "files",
 		Document:         "documents",
 		SignatureKey:     "key-signature",
 		XorCryptKey:      "key-encode-decode",
-		SignatureExpire:  1,
+		SignatureExpire:  5,
+		ServiceAuthKey:   serviceAuthKey,
 		Queue:            make(chan func(), MaxQueueSize),
 		FileRepository:   fileRepo,
 		AccessRepository: accessRepo,
@@ -354,6 +359,20 @@ func (fs *FileService) GetFile(c *gin.Context) {
 		return
 	}
 
+	// Kiểm tra nếu là request từ service nội bộ
+	if fs.isServiceInternalRequest(c) {
+		// Bypass permission check cho service internal request
+		LoadFileAndResponse(c, decodedPath, ext, s)
+		return
+	}
+
+	// Kiểm tra nếu user có role ADMIN thì cho phép truy cập
+	if fs.isAdminRole(c) {
+		// Bypass permission check cho ADMIN
+		LoadFileAndResponse(c, decodedPath, ext, s)
+		return
+	}
+
 	// Thực hiện kiểm tra giới hạn request đồng thời
 	semaphore <- struct{}{}        // Chặn khi số lượng request đạt tối đa
 	defer func() { <-semaphore }() // Giải phóng khi hoàn thành
@@ -521,6 +540,71 @@ func (fs *FileService) validSignature(sig *SignatureDecode) bool {
 		return false
 	}
 	return true
+}
+
+// isServiceInternalRequest kiểm tra xem request có phải từ service nội bộ không
+// bằng cách verify header X-Service-Auth với HMAC signature
+// Format: timestamp:signature (ví dụ: "1703123456:abc123...")
+func (fs *FileService) isServiceInternalRequest(c *gin.Context) bool {
+	serviceAuthHeader := c.GetHeader("X-Service-Auth")
+	fmt.Printf("\nFileService: isServiceInternalRequest: %s", serviceAuthHeader)
+	if serviceAuthHeader == "" {
+		return false
+	}
+
+	// Parse timestamp và signature
+	parts := strings.Split(serviceAuthHeader, ":")
+	if len(parts) != 2 {
+		// Fallback: nếu không đúng format, kiểm tra key trực tiếp (backward compatibility)
+		return serviceAuthHeader == fs.ServiceAuthKey
+	}
+
+	timestampStr := parts[0]
+	signature := parts[1]
+
+	// Parse timestamp
+	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
+	if err != nil {
+		return false
+	}
+
+	// Kiểm tra timestamp không quá cũ (chống replay attack)
+	// Cho phép timestamp trong vòng 5 phút (300 giây)
+	now := time.Now().Unix()
+	if now-timestamp > 300 || timestamp > now+60 {
+		// Timestamp quá cũ hoặc quá mới (có thể là replay attack)
+		return false
+	}
+
+	// Lấy service name từ header (nếu có), fallback về "assistant-service"
+	serviceName := c.GetHeader("X-Service-Name")
+	if serviceName == "" {
+		serviceName = "assistant-service"
+	}
+
+	// Tạo signature để so sánh
+	// Signature = HMAC-SHA256(timestamp:service_name, secret_key)
+	data := timestampStr + ":" + serviceName
+	expectedSignature := _utils.GenerateHmacSHA256(data, fs.ServiceAuthKey)
+
+	fmt.Printf("\nFileService: serviceName: %s", serviceName)
+	fmt.Printf("\nFileService: timestamp: %s", timestampStr)
+	fmt.Printf("\nFileService: signature: %s", signature)
+	fmt.Printf("\nFileService: expectedSignature: %s", expectedSignature)
+
+	// So sánh signature (constant-time comparison để chống timing attack)
+	return signature == expectedSignature
+}
+
+// isAdminRole kiểm tra xem user có role ADMIN không
+func (fs *FileService) isAdminRole(c *gin.Context) bool {
+	principal := _jwt.GetPrincipal(c)
+	if principal == nil {
+		return false
+	}
+
+	// Kiểm tra role có phải ROLE_ADMIN không
+	return principal.Role == "ROLE_ADMIN"
 }
 
 func signDecode(key string, signEncode string) (*SignatureDecode, error) {

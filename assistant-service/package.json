@@ -1,0 +1,14 @@
+{
+  "name": "canvas-jsqr-app",
+  "version": "1.0.0",
+  "description": "Minimal Node.js project with canvas and jsqr",
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "jsqr": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "",
+  "license": "MIT"
+}

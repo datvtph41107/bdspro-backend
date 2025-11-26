@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"user/config"
+	"user/db"
 	"user/wire"
 
 	_middleware "common/middleware"
@@ -33,7 +34,7 @@ var GrpcCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		app, _ := wire.InitializeApp()
-		// db.AutoMigrate()
+		db.AutoMigrate()
 
 		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
 		// Đăng ký service vào crm registry

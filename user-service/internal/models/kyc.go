@@ -18,6 +18,9 @@ type KYCEntity struct {
 	RejectReason string               `gorm:"column:reject_reason;size:500" json:"rejectReason"`
 	ReviewedBy   *uint64              `gorm:"column:reviewed_by" json:"reviewedBy"`
 	ReviewedAt   *time.Time           `gorm:"column:reviewed_at" json:"reviewedAt"`
+	IDNumber     string               `gorm:"column:id_number;size:20" json:"idNumber"`
+	DateOfBirth  string               `gorm:"column:date_of_birth;size:20" json:"dateOfBirth"`
+	ExpiryDate   string               `gorm:"column:expiry_date;size:20" json:"expiryDate"`
 }
 
 // TableName đặt tên bảng trong DB

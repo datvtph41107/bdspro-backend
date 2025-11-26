@@ -2,7 +2,9 @@ package main
 
 import (
 	"assistant/cmd/grpc"
+	"fmt"
 	"log"
+	"time"
 )
 
 // @title Assistant API
@@ -12,6 +14,10 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	// Set timezone về UTC (múi 0)
+	time.Local = time.UTC
+	fmt.Printf("\n🚀 Timezone: %s", time.Now())
+
 	log.Println("🚀 Starting Assistant Service...3")
 	grpc.RunGRPCServer()
 }

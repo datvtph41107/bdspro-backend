@@ -487,8 +487,8 @@ func (m *ProfileMapper) ModelToUserV3Proto(profile *models.UserProfileEntity, ky
 			})
 		}
 	}
-	if len(profile.TagSpecialties) > 0 {
-		for _, specialty := range profile.TagSpecialties {
+	if len(profile.TagSpecialities) > 0 {
+		for _, specialty := range profile.TagSpecialities {
 			result.TagSpecialities = append(result.TagSpecialities, &sharepb.ItemV3Proto{
 				Id:   specialty.ID,
 				Name: specialty.Name,
@@ -731,6 +731,11 @@ func (m *ProfileMapper) DTOToRateStatsV3Proto(rateStats *_dto.RateStateV3DTO) *s
 }
 
 func (m *ProfileMapper) DTOToKYCProto(kyc *_dto.KYCV3DTO) *sharepb.KYCV3Proto {
+	return m.DTOToKYCProtoWithOwnerCheck(kyc, false)
+}
+
+// DTOToKYCProtoWithOwnerCheck trả về KYC proto từ DTO, chỉ trả về 4 trường nhạy cảm nếu isOwner = true
+func (m *ProfileMapper) DTOToKYCProtoWithOwnerCheck(kyc *_dto.KYCV3DTO, isOwner bool) *sharepb.KYCV3Proto {
 	if kyc == nil {
 		return nil
 	}
@@ -748,5 +753,19 @@ func (m *ProfileMapper) DTOToKYCProto(kyc *_dto.KYCV3DTO) *sharepb.KYCV3Proto {
 		CreatedAt:    _utils.FormatTimeToString(kyc.CreatedAt),
 		UpdatedAt:    _utils.FormatTimeToString(kyc.UpdatedAt),
 	}
+
+	// Chỉ trả về 4 trường nhạy cảm nếu là owner request
+	if isOwner {
+		if kyc.IDNumber != "" {
+			result.IdNumber = &kyc.IDNumber
+		}
+		if kyc.DateOfBirth != "" {
+			result.DateOfBirth = &kyc.DateOfBirth
+		}
+		if kyc.ExpiryDate != "" {
+			result.ExpiryDate = &kyc.ExpiryDate
+		}
+	}
+
 	return result
 }

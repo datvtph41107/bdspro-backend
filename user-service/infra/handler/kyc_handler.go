@@ -55,12 +55,24 @@ func (h *KYCHandler) SubmitKYC(ctx context.Context, req *userpb.SubmitKYCRequest
 		SelfieImage:  req.SelfieImage,
 	}
 
+	// Thêm 4 trường mới nếu có
+	if req.IdNumber != nil {
+		submitDTO.IDNumber = *req.IdNumber
+	}
+	if req.DateOfBirth != nil {
+		submitDTO.DateOfBirth = *req.DateOfBirth
+	}
+	if req.ExpiryDate != nil {
+		submitDTO.ExpiryDate = *req.ExpiryDate
+	}
+
 	kyc, err := h.kycUsecase.SubmitKYC(ctx, submitDTO)
 	if err != nil {
 		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
-	return h.mapper.ToProto(kyc), nil
+	// SubmitKYC luôn trả về cho owner (chính user submit)
+	return h.mapper.ToProtoWithOwnerCheck(kyc, true), nil
 }
 
 // ListKYCs lấy danh sách KYC requests (Admin)
