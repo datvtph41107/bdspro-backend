@@ -6,6 +6,7 @@ import (
 	_crud "common/domain/crud"
 	_dto "common/domain/dto"
 	_err "common/domain/err"
+	_errors "common/errors"
 	"hub/internal/domain"
 	_repo "hub/internal/repo"
 )
@@ -15,7 +16,7 @@ type IUserGuideUsecase interface {
 	GetListWithFilter(ctx context.Context, title string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, *_err.ErrorDTO)
 	GetGroups(ctx context.Context) ([]map[string]interface{}, *_err.ErrorDTO)
 	GetSimpleList(ctx context.Context, text string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, *_err.ErrorDTO)
-	GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, *_err.ErrorDTO)
+	GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error)
 }
 
 type UserGuideUsecase struct {
@@ -72,13 +73,10 @@ func (u *UserGuideUsecase) GetSimpleList(ctx context.Context, text string, group
 }
 
 // GetByKey retrieves user guide by key
-func (u *UserGuideUsecase) GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, *_err.ErrorDTO) {
+func (u *UserGuideUsecase) GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error) {
 	data, err := u.Repo.GetByKey(ctx, key)
 	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Không tìm thấy user guide với key: " + key,
-		}
+		return nil, _errors.ReturnError(404, "Không tìm thấy user guide với key: "+key)
 	}
 	return data, nil
 }

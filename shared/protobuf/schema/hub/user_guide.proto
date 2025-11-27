@@ -259,9 +259,9 @@ service UserGuideService {
   };
 
   // Get User Guide Detail by Key
-  rpc GetUserGuideByKey (GetUserGuideByKeyRequest) returns (GetUserGuideByKeyResponse) {
+  rpc GetUserGuideByKey(GetUserGuideByKeyRequest) returns (GetUserGuideByKeyResponse) {
     option (google.api.http) = {
-      get: "/v2/hub/user-guides/key/{key}"
+      get: "/v2/hub/user-guides/by-key/{key}"
     };
   };
 

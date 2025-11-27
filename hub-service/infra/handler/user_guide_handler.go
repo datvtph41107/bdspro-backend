@@ -269,9 +269,9 @@ func (h *UserGuideHandler) GetUserGuideSimple(ctx context.Context, req *hubpb.Ge
 // @Produce json
 // @Param key path string true "User Guide Key"
 // @Success 200 {object} hubpb.GetUserGuideByKeyResponse
-// @Router /v2/hub/user-guides/key/{key} [get]
+// @Router /v2/hub/user-guides/by-key/{key} [get]
 func (h *UserGuideHandler) GetUserGuideByKey(ctx context.Context, req *hubpb.GetUserGuideByKeyRequest) (*hubpb.GetUserGuideByKeyResponse, error) {
-	result, err := h.userGuideUsecase.GetByKey(ctx, req.GetKey())
+	result, err := h.userGuideUsecase.GetByKey(ctx, req.Key)
 	if err != nil {
 		return nil, err
 	}

@@ -432,30 +432,7 @@
         ]
       }
     },
-    "/v2/hub/user-guides/groups": {
-      "get": {
-        "summary": "Get User Guide Groups",
-        "operationId": "UserGuideService_GetUserGuideGroups",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/hubpbGetUserGuideGroupsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "UserGuideService"
-        ]
-      }
-    },
-    "/v2/hub/user-guides/key/{key}": {
+    "/v2/hub/user-guides/by-key/{key}": {
       "get": {
         "summary": "Get User Guide Detail by Key",
         "operationId": "UserGuideService_GetUserGuideByKey",
@@ -481,6 +458,29 @@
             "type": "string"
           }
         ],
+        "tags": [
+          "UserGuideService"
+        ]
+      }
+    },
+    "/v2/hub/user-guides/groups": {
+      "get": {
+        "summary": "Get User Guide Groups",
+        "operationId": "UserGuideService_GetUserGuideGroups",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbGetUserGuideGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "UserGuideService"
         ]
