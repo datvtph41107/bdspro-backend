@@ -6,6 +6,14 @@ option go_package = "pb/types/hub;hubpb";
 import "google/api/annotations.proto";
 import "shared/common.proto";
 
+// ========== Enums ==========
+
+enum UserGuideMode {
+  USER_GUIDE_MODE_UNSPECIFIED = 0;
+  USER_GUIDE_MODE_SINGLE = 10;    // Chế độ đơn
+  USER_GUIDE_MODE_STEPS = 20;     // Các bước
+}
+
 // ========== Messages ==========
 
 message UserGuideStep {
@@ -25,6 +33,7 @@ message UserGuide {
   string updatedAt = 6;
   repeated UserGuideStep steps = 7;
   string key = 8;
+  UserGuideMode mode = 9;
 }
 
 message UserGuideDetail {
@@ -36,6 +45,7 @@ message UserGuideDetail {
   string updatedAt = 6;
   repeated UserGuideStep steps = 7;
   string key = 8;
+  UserGuideMode mode = 9;
 }
 
 // ========== Request/Response Messages ==========
@@ -52,6 +62,7 @@ message CreateUserGuideRequest {
   string groupKey = 3;
   repeated UserGuideStepInput steps = 4;
   string key = 5;
+  UserGuideMode mode = 6;
 }
 
 message CreateUserGuideResponse {
@@ -65,6 +76,7 @@ message UpdateUserGuideRequest {
   string groupKey = 4;
   repeated UserGuideStepInput steps = 5;
   string key = 6;
+  UserGuideMode mode = 7;
 }
 
 message UpdateUserGuideResponse {

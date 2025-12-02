@@ -42,7 +42,16 @@ func (r *gormRepository) FindMessageByID(ctx context.Context, messageId uint64) 
 
 func (r *gormRepository) UpdatePinMessage(ctx context.Context, messageID uint64, isPin bool) (*models.MessageModel, error) {
 	var message *models.MessageModel
-	err := r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("id = ?", messageID).Update("pined", isPin).Error
+	updates := map[string]interface{}{
+		"pined": isPin,
+	}
+	if isPin {
+		now := time.Now()
+		updates["pinned_at"] = &now
+	} else {
+		updates["pinned_at"] = nil
+	}
+	err := r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("id = ?", messageID).Updates(updates).Error
 	return message, err
 }
 
@@ -54,7 +63,11 @@ func (r *gormRepository) UpdateRecallMessage(ctx context.Context, messageID uint
 
 func (r *gormRepository) GetPinnedMessages(ctx context.Context, conversationID uint64) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
-	err := r.db.WithContext(ctx).Where("conversation_id = ? AND pined = ?", conversationID, true).Find(&messages).Error
+	err := r.db.WithContext(ctx).
+		Where("conversation_id = ? AND pined = ?", conversationID, true).
+		Order("pinned_at DESC").
+		Find(&messages).
+		Error
 	return messages, err
 }
 
@@ -66,6 +79,10 @@ func (r *gormRepository) UpdateMessage(ctx context.Context, messageID uint64, co
 
 func (r *gormRepository) DeleteViolation(ctx context.Context, messageID uint64) error {
 	return r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("id = ?", messageID).Update("is_deleted", true).Error
+}
+
+func (r *gormRepository) DeleteAllMessagesByConversationID(ctx context.Context, conversationID uint64) error {
+	return r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("conversation_id = ?", conversationID).Update("is_deleted", true).Error
 }
 
 func (r *gormRepository) GetMessageByTypeWithPagination(ctx context.Context, page, size int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error) {

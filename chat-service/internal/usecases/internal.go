@@ -27,6 +27,7 @@ type Repository interface {
 	GetPinnedMessages(ctx context.Context, conversationID uint64) ([]*models.MessageModel, error)
 	UpdateMessage(ctx context.Context, messageID uint64, content string) (*models.MessageModel, error)
 	DeleteViolation(ctx context.Context, messageID uint64) error
+	DeleteAllMessagesByConversationID(ctx context.Context, conversationID uint64) error
 
 	ExistParticipant(ctx context.Context, conversationID uint64, userID uint64) (bool, error)
 	ExistParticipants(ctx context.Context, conversationIDs []uint64, userID uint64) (bool, error)

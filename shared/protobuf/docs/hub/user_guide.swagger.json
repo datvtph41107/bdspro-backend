@@ -623,6 +623,9 @@
         },
         "key": {
           "type": "string"
+        },
+        "mode": {
+          "$ref": "#/definitions/hubpbUserGuideMode"
         }
       }
     },
@@ -669,6 +672,9 @@
         },
         "key": {
           "type": "string"
+        },
+        "mode": {
+          "$ref": "#/definitions/hubpbUserGuideMode"
         }
       }
     },
@@ -907,6 +913,9 @@
         },
         "key": {
           "type": "string"
+        },
+        "mode": {
+          "$ref": "#/definitions/hubpbUserGuideMode"
         }
       }
     },
@@ -941,6 +950,9 @@
         },
         "key": {
           "type": "string"
+        },
+        "mode": {
+          "$ref": "#/definitions/hubpbUserGuideMode"
         }
       }
     },
@@ -955,6 +967,16 @@
           "format": "int64"
         }
       }
+    },
+    "hubpbUserGuideMode": {
+      "type": "string",
+      "enum": [
+        "USER_GUIDE_MODE_UNSPECIFIED",
+        "USER_GUIDE_MODE_SINGLE",
+        "USER_GUIDE_MODE_STEPS"
+      ],
+      "default": "USER_GUIDE_MODE_UNSPECIFIED",
+      "title": "- USER_GUIDE_MODE_SINGLE: Chế độ đơn\n - USER_GUIDE_MODE_STEPS: Các bước"
     },
     "hubpbUserGuideSimple": {
       "type": "object",

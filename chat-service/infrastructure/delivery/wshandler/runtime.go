@@ -242,7 +242,14 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		constants.MESSAGE_TYPE:
 
 		// Truyền tin nhắn đến phòng theo loại sự kiện
-		if roomID, ok := m["room_id"].(string); ok {
+		// Hỗ trợ cả room_id (snake_case) và roomId (camelCase)
+		var roomID string
+		if id, ok := m["room_id"].(string); ok {
+			roomID = id
+		} else if id, ok := m["roomId"].(string); ok {
+			roomID = id
+		}
+		if roomID != "" {
 			h.sendToRoom(roomID, data)
 		}
 

@@ -227,3 +227,19 @@ func (s *NotificationClient) CreateNotification(ctx context.Context,
 	})
 	return err
 }
+
+func (s *NotificationClient) PushByUserId(
+	ctx context.Context,
+	userId uint64,
+	title string,
+	body string,
+	data map[string]string,
+) error {
+	_, err := s.Client.PushByUserId(ctx, &notificationpb.PushByUserIdRequest{
+		UserId: userId,
+		Title:  title,
+		Body:   body,
+		Data:   data,
+	})
+	return err
+}

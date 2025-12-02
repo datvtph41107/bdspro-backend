@@ -26,6 +26,7 @@ type MessageModel struct {
 	IsDeleted      bool                    `json:"is_deleted" gorm:"default:false"`
 	CreatedAt      time.Time               `json:"created_at" gorm:"index:idx_conversation_created;default:CURRENT_TIMESTAMP"`
 	Pined          bool                    `json:"pin" gorm:"default:false"`
+	PinnedAt       *time.Time              `json:"pinned_at" gorm:"column:pinned_at"`
 	Recall         bool                    `json:"recall" gorm:"default:false"`
 	ReplyId        *uint64                 `json:"reply_id"`
 	ReplyMessage   *MessageModel           `json:"reply_message" gorm:"foreignKey:ReplyId;references:ID"`

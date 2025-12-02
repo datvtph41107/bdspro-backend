@@ -182,6 +182,29 @@ func (c *messageUsecases) DeleteViolation(ctx context.Context, messageId uint64)
 	return c.repo.DeleteViolation(ctx, messageId)
 }
 
+func (c *messageUsecases) DeleteConversation(ctx context.Context, conversationId uint64) (uint64, error) {
+	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+	if err != nil {
+		return 0, err
+	}
+
+	if conversation == nil {
+		return 0, errors.ConversationNotFound()
+	}
+
+	if conversation.Type != models.ConversationTypePrivate {
+		return 0, errors.PermissionDenied()
+	}
+
+	// Kiểm tra user có phải là người tạo conversation hoặc người nhận conversation không
+	currentUserId := utils.GetCurrentUserID(ctx)
+	if conversation.ReceiverId != nil && *conversation.ReceiverId != currentUserId {
+		return conversationId, errors.NotParticipant()
+	}
+
+	return conversationId, nil
+}
+
 func (c *messageUsecases) EditMessage(ctx context.Context, messageId uint64, content string) (*models.MessageModel, error) {
 	message, err := c.repo.FindMessageByID(ctx, messageId)
 	if err != nil {

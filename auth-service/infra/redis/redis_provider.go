@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"auth/config"
+	_redis "common/redis"
 	"context"
 	"fmt"
 	"time"
@@ -11,18 +11,12 @@ import (
 
 // @bind: auth/internal/interface/provider.CacheProvider
 type RedisProvider struct {
-	client *redis.Client
+	*_redis.RedisService
 }
 
 func NewRedisProvider() *RedisProvider {
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Properties.Redis.Host, config.Properties.Redis.Port),
-		Password: config.Properties.Redis.Password,
-		DB:       0,
-	})
-
 	return &RedisProvider{
-		client: client,
+		RedisService: _redis.NewRedisService(),
 	}
 }
 
@@ -30,8 +24,10 @@ func NewRedisProvider() *RedisProvider {
 func (r *RedisProvider) SaveToken(c context.Context, userID uint64, token string, expirationInSeconds uint64) error {
 	key := fmt.Sprintf("user_token:%d", userID)
 
+	println("SaveToken: ", key, token, expirationInSeconds)
+
 	// Lưu token với expiration
-	err := r.client.Set(c, key, token, time.Duration(expirationInSeconds)*time.Second).Err()
+	err := r.RedisService.Client.Set(c, key, token, time.Duration(expirationInSeconds)*time.Second).Err()
 	if err != nil {
 		return fmt.Errorf("lỗi khi lưu token vào Redis: %v", err)
 	}
@@ -43,7 +39,7 @@ func (r *RedisProvider) SaveToken(c context.Context, userID uint64, token string
 func (r *RedisProvider) GetToken(c context.Context, userID uint64) (string, error) {
 	key := fmt.Sprintf("user_token:%d", userID)
 
-	token, err := r.client.Get(c, key).Result()
+	token, err := r.RedisService.Client.Get(c, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return "", fmt.Errorf("token không tồn tại cho user %d", userID)
@@ -58,7 +54,7 @@ func (r *RedisProvider) GetToken(c context.Context, userID uint64) (string, erro
 func (r *RedisProvider) IsTokenValid(c context.Context, userID uint64, token string) (bool, error) {
 	key := fmt.Sprintf("user_token:%d", userID)
 
-	storedToken, err := r.client.Get(c, key).Result()
+	storedToken, err := r.RedisService.Client.Get(c, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return false, nil // Token không tồn tại
@@ -74,7 +70,7 @@ func (r *RedisProvider) IsTokenValid(c context.Context, userID uint64, token str
 func (r *RedisProvider) DeleteToken(c context.Context, userID uint64) error {
 	key := fmt.Sprintf("user_token:%d", userID)
 
-	err := r.client.Del(c, key).Err()
+	err := r.RedisService.Client.Del(c, key).Err()
 	if err != nil {
 		return fmt.Errorf("lỗi khi xóa token từ Redis: %v", err)
 	}
@@ -84,12 +80,12 @@ func (r *RedisProvider) DeleteToken(c context.Context, userID uint64) error {
 
 // Close đóng Redis connection
 func (r *RedisProvider) Close() error {
-	return r.client.Close()
+	return r.RedisService.Client.Close()
 }
 
 // Ping kiểm tra kết nối Redis
 func (r *RedisProvider) Ping(c context.Context) error {
-	_, err := r.client.Ping(c).Result()
+	_, err := r.RedisService.Client.Ping(c).Result()
 	if err != nil {
 		return fmt.Errorf("lỗi kết nối Redis: %v", err)
 	}
@@ -97,5 +93,19 @@ func (r *RedisProvider) Ping(c context.Context) error {
 }
 
 func (r *RedisProvider) Increment(c context.Context, key string) error {
-	return r.client.Incr(c, key).Err()
+	return r.RedisService.Client.Incr(c, key).Err()
+}
+
+// SaveAppState lưu trạng thái app (foreground/background) của user vào Redis
+func (r *RedisProvider) SaveAppState(c context.Context, userID uint64, state string) error {
+	key := fmt.Sprintf("user:app_state:%d", userID)
+	timestamp := time.Now().Format(time.RFC3339)
+	status := state + "|" + timestamp
+
+	err := r.RedisService.Client.Set(c, key, status, 0).Err()
+	if err != nil {
+		return fmt.Errorf("lỗi khi lưu app state vào Redis: %v", err)
+	}
+
+	return nil
 }

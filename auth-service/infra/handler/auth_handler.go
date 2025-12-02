@@ -2,6 +2,7 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
@@ -1313,6 +1314,62 @@ func (h *AuthHandler) RegisterDevice(ctx context.Context, req *authpb.CreateDevi
 
 	return &authpb.CreateDeviceResponse{
 		Data: h.DeviceMapper.MapDeviceToPb(result),
+	}, nil
+}
+
+// validateAppState kiểm tra app state có hợp lệ không
+// Các giá trị hợp lệ: 'active', 'background', 'inactive', 'unknown', 'extension'
+func validateAppState(state string) error {
+	validStates := map[string]bool{
+		"active":     true,
+		"background": true,
+		"inactive":   true,
+		"unknown":    true,
+		"extension":  true,
+	}
+
+	if state == "" {
+		return status.Errorf(codes.InvalidArgument, "App state không được để trống")
+	}
+
+	if !validStates[state] {
+		return status.Errorf(codes.InvalidArgument, "App state không hợp lệ. Giá trị hợp lệ: 'active', 'background', 'inactive', 'unknown', 'extension'")
+	}
+
+	return nil
+}
+
+// @Summary Cập nhật trạng thái thiết bị
+// @Description Cập nhật trạng thái app (foreground/background) của thiết bị
+// @Tags Device
+// @Produce json
+// @Security BearerAuth
+// @Param state path string true "Trạng thái thiết bị (active/background/inactive/unknown/extension)"
+// @Success 200 {object} authpb.AppStateResponse
+// @Failure 400 {object} sharepb.ErrorResponse
+// @Failure 401 {object} sharepb.ErrorResponse
+// @Failure 500 {object} sharepb.ErrorResponse
+// @Router /v2/auth/device/state/{state} [put]
+func (h *AuthHandler) UpdateDeviceMode(ctx context.Context, req *authpb.AppStateRequest) (*authpb.AppStateResponse, error) {
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, _errors.ReturnError(400, "Không xác định được người dùng hiện tại")
+	}
+
+	// Validate app state
+	state := req.State
+	if err := validateAppState(state); err != nil {
+		return nil, err
+	}
+
+	// Lưu app state vào Redis
+	err := h.AuthUsecase.CacheProvider.SaveAppState(ctx, profileID, state)
+	if err != nil {
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+
+	return &authpb.AppStateResponse{
+		Message: "Cập nhật trạng thái thiết bị thành công",
 	}, nil
 }
 

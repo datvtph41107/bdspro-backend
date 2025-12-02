@@ -95,6 +95,15 @@ type PushTokenRequest struct {
 
 type PushTopicRequest struct {
 	Topic string `json:"topic" binding:"required"`
+	Title string `json:"title" binding:"required"`
+	Body  string `json:"body" binding:"required"`
+}
+
+type PushByUserIdRequest struct {
+	UserID uint64            `json:"userId" binding:"required"`
+	Title  string            `json:"title" binding:"required"`
+	Body   string            `json:"body" binding:"required"`
+	Data   map[string]string `json:"data,omitempty"`
 }
 
 type HistorySearchDTO struct {

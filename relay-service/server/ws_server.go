@@ -38,7 +38,8 @@ func NewWSServer(port string) *WSServer {
 
 	chatClient := client.NewChatClient()
 	userClient := client.NewUserClient()
-	wsHandler := wshandler.NewWebSocketHandler(chatClient, userClient)
+	notificationClient := client.NewNotificationClient()
+	wsHandler := wshandler.NewWebSocketHandler(chatClient, userClient, notificationClient)
 
 	mux := http.NewServeMux()
 

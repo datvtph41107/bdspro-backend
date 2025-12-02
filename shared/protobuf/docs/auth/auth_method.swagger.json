@@ -421,6 +421,37 @@
         ]
       }
     },
+    "/v2/auth/device/state/{state}": {
+      "put": {
+        "operationId": "AuthService_UpdateDeviceMode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authpbAppStateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "state",
+            "description": "active, inactive",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
     "/v2/auth/fullname": {
       "put": {
         "summary": "Update Fullname",
@@ -1521,6 +1552,14 @@
         }
       },
       "title": "Admin Authentication Messages"
+    },
+    "authpbAppStateResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
     },
     "authpbAuthSuccessResponse": {
       "type": "object",
@@ -2684,7 +2723,30 @@
         },
         "itemType": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "title": "tag"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "file upload"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "approved"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "issuedAt": {
+          "type": "string"
         }
       }
     },
@@ -2733,6 +2795,18 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "idNumber": {
+          "type": "string",
+          "title": "Số CMND/CCCD (trả về nếu là owner)"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "title": "Ngày sinh (trả về nếu là owner)"
+        },
+        "expiryDate": {
+          "type": "string",
+          "title": "Ngày hết hạn (trả về nếu là owner)"
         }
       }
     },
@@ -3056,6 +3130,59 @@
         },
         "updateTags": {
           "type": "boolean"
+        },
+        "viewRoles": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "visibilityIntroduce": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityProfession": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityMainArea": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilityFriends": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibilitySignature": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "medias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "fieldSets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workplace": {
+          "type": "string"
+        },
+        "roleTitle": {
+          "type": "string"
         }
       }
     }

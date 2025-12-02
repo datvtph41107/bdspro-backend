@@ -17,6 +17,7 @@ service InternalNotificationService {
     rpc SendBatch (NotiBatchRequest) returns (BatchResponse);
     rpc PushByToken (PushTokenRequest) returns (PushResponse);
     rpc PushByTopic (PushTopicRequest) returns (PushResponse);
+    rpc PushByUserId (PushByUserIdRequest) returns (PushResponse);
     rpc CreateAdminHistory (AdminHistoryCreateRequest) returns (AdminHistoryDTO);
     rpc CreateAdminHistoryBatch (AdminHistoryBatchRequest) returns (BatchResponse);
     // Tạo deal history (internal RPC)
@@ -148,4 +149,12 @@ message GetPersonConfigsRequest {
 message GetPersonConfigsResponse {
   bool success = 1;
   repeated sharepb.PersonConfigV3Proto data = 2;
+}
+
+// ===== PUSH NOTIFICATION MESSAGES =====
+message PushByUserIdRequest {
+  uint64 userId = 1;
+  string title = 2;
+  string body = 3;
+  map<string, string> data = 4; // Optional data payload
 }

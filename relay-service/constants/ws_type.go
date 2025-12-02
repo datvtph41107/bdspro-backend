@@ -21,4 +21,7 @@ const (
 
 	// notification
 	NOTIFICATION_TYPE = "notification"
+
+	// app state
+	APP_STATE_TYPE = "app_state"
 )

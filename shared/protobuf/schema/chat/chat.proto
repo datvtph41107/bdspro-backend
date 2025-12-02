@@ -491,6 +491,14 @@ message DeleteViolationResponse {
   bool success = 1;
 }
 
+message DeleteMessageRequest {
+  int32 conversationId = 1;
+}
+
+message DeleteMessageResponse {
+  bool success = 1;
+}
+
 message DeleteRoomRequest {
   int32 conversationId = 1;
 }

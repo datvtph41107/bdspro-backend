@@ -8,6 +8,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"notification/infra/cache"
 	"notification/internal/domain"
@@ -291,12 +292,61 @@ func (s *NotificationUsecase) SendBatch(c context.Context, notifications []*dto.
 	return notificationIds, nil
 }
 
+// PushByToken gửi push notification đến một token cụ thể (chỉ push, không lưu vào DB)
 func (s *NotificationUsecase) PushByToken(c context.Context, dto *dto.PushTokenRequest) (*notificationpb.PushResponse, error) {
-	return nil, nil
+	if s.FirebaseProvider == nil {
+		return nil, fmt.Errorf("FirebaseProvider is not initialized")
+	}
+
+	// Gửi push notification đến token
+	err := s.FirebaseProvider.SendPushNotification(c, []string{dto.Token}, dto.Title, dto.Body, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send push notification: %w", err)
+	}
+
+	return &notificationpb.PushResponse{
+		MessageId: "success",
+	}, nil
 }
 
+// PushByTopic gửi push notification đến một topic (chỉ push, không lưu vào DB)
+// Note: Cần implement method SendToTopic trong FirebaseProvider để hỗ trợ topic
 func (s *NotificationUsecase) PushByTopic(c context.Context, dto *dto.PushTopicRequest) (*notificationpb.PushResponse, error) {
-	return nil, nil
+	// TODO: Implement SendToTopic trong FirebaseProvider
+	return nil, fmt.Errorf("PushByTopic not yet implemented - need SendToTopic method in FirebaseProvider")
+}
+
+// PushByUserId gửi push notification đến user theo userId (lấy token tự động, chỉ push, không lưu vào DB)
+func (s *NotificationUsecase) PushByUserId(c context.Context, dto *dto.PushByUserIdRequest) (*notificationpb.PushResponse, error) {
+	if s.AuthClient == nil {
+		return nil, fmt.Errorf("AuthClient is not initialized")
+	}
+
+	if s.FirebaseProvider == nil {
+		return nil, fmt.Errorf("FirebaseProvider is not initialized")
+	}
+
+	// Lấy push tokens từ auth service
+	pushTokens, err := s.AuthClient.GetPushTokensByProfileId(c, dto.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get push tokens for user %d: %w", dto.UserID, err)
+	}
+
+	if len(pushTokens) == 0 {
+		return &notificationpb.PushResponse{
+			MessageId: "no_tokens",
+		}, nil
+	}
+
+	// Gửi push notification
+	err = s.FirebaseProvider.SendPushNotification(c, pushTokens, dto.Title, dto.Body, dto.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send push notification: %w", err)
+	}
+
+	return &notificationpb.PushResponse{
+		MessageId: "success",
+	}, nil
 }
 
 func (s *NotificationUsecase) _removeNotification(c context.Context, dto *dto.NotiNewRequest) error {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,11 +24,12 @@ type WebSocketHandler struct {
 	redisClient redisClient
 	clients     map[uint64]*websocket.Conn // Conn -> userID
 	// rooms       map[string]map[*websocket.Conn]bool // roomID -> list of connections
-	rooms      map[uint64][]uint64 // roomID -> list of userIDs: gửi socket tới room
-	users      map[uint64][]uint64 // userID -> list of roomIDs: check online
-	mu         sync.Mutex
-	chatClient ChatClient
-	userClient UserClient
+	rooms              map[uint64][]uint64 // roomID -> list of userIDs: gửi socket tới room
+	users              map[uint64][]uint64 // userID -> list of roomIDs: check online
+	mu                 sync.Mutex
+	chatClient         ChatClient
+	userClient         UserClient
+	notificationClient NotificationClient
 }
 
 type RedisMessage struct {
@@ -35,7 +37,7 @@ type RedisMessage struct {
 	Data any    `json:"data"`
 }
 
-func NewWebSocketHandler(chatClient ChatClient, userClient UserClient) *WebSocketHandler {
+func NewWebSocketHandler(chatClient ChatClient, userClient UserClient, notificationClient NotificationClient) *WebSocketHandler {
 	return &WebSocketHandler{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -47,10 +49,11 @@ func NewWebSocketHandler(chatClient ChatClient, userClient UserClient) *WebSocke
 		redisClient: redis.NewRedisClient(),
 		clients:     make(map[uint64]*websocket.Conn),
 		// rooms:       make(map[string]map[*websocket.Conn]bool),
-		rooms:      make(map[uint64][]uint64),
-		users:      make(map[uint64][]uint64),
-		chatClient: chatClient,
-		userClient: userClient,
+		rooms:              make(map[uint64][]uint64),
+		users:              make(map[uint64][]uint64),
+		chatClient:         chatClient,
+		userClient:         userClient,
+		notificationClient: notificationClient,
 	}
 }
 
@@ -180,7 +183,8 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 	// Subscribe to notification channel for this user
 	go h.subscribeToNotificationChannel(conn, userId)
 
-	go h.handleDisconnect(conn, userId)
+	// Xử lý message từ client và detect disconnect
+	go h.handleClientMessages(conn, userId)
 }
 
 func (h *WebSocketHandler) roomsOfUser(userId uint64) []uint64 {
@@ -211,16 +215,23 @@ func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
 	}()
 }
 
-func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64) {
-	// Đọc từ connection để detect disconnect
-	// Khi connection đóng, ReadMessage sẽ trả về error
+// handleClientMessages xử lý message từ client và detect disconnect
+func (h *WebSocketHandler) handleClientMessages(conn *websocket.Conn, userID uint64) {
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
-			// Connection đã đóng hoặc có lỗi
-			break
+			// Connection đã đóng hoặc có lỗi - cleanup
+			h.handleDisconnect(userID)
+			return
 		}
+
+		// Message từ client được xử lý ở đây nếu cần
+		// App state update đã được xử lý bởi auth-service qua REST API
+		// Không cần xử lý message ở đây nữa
 	}
+}
+
+func (h *WebSocketHandler) handleDisconnect(userID uint64) {
 
 	// Cleanup khi disconnect
 	h.mu.Lock()
@@ -246,6 +257,9 @@ func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64)
 	// Lưu trạng thái offline vào Redis
 	h.saveUserOnlineStatus(context.Background(), userID, false)
 
+	// App state update đã được quản lý bởi auth-service qua REST API
+	// Không cần reset state ở đây nữa
+
 	// Cập nhật last seen trong user-service
 	if h.userClient != nil {
 		ctx := context.Background()
@@ -257,9 +271,6 @@ func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID uint64)
 	}
 
 	wsLogger.Infof("User %d disconnected", userID)
-
-	// Đóng connection
-	conn.Close()
 }
 
 func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
@@ -418,12 +429,18 @@ func (h *WebSocketHandler) removeUserFromRoom(roomID uint64, userID uint64) {
 }
 
 func (h *WebSocketHandler) sendToUser(members []uint64, data []byte) {
+	ctx := context.Background()
 	for _, userId := range members {
 		if h.clients[userId] != nil {
 			conn := h.clients[userId]
 			err := conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
 				wsLogger.Errorf("Failed to send message to user %s: %v", userId, err)
+			}
+		} else {
+			// User không có connection, kiểm tra nếu ở background thì gửi notification
+			if h.isUserInBackground(ctx, userId) {
+				h.sendNotificationForMessage(ctx, userId, data)
 			}
 		}
 	}
@@ -469,14 +486,23 @@ func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
 		return
 	}
 
+	ctx := context.Background()
 	for _, clientId := range members {
 		conn := h.clients[clientId]
 		if conn == nil {
+			// User không có connection, kiểm tra nếu ở background thì gửi notification
+			h.sendNotificationForMessage(ctx, clientId, data)
 			continue
 		}
-		err := conn.WriteMessage(websocket.TextMessage, data)
-		if err != nil {
-			wsLogger.Errorf("Failed to send message to all users: %v", err)
+
+		// Kiểm tra nếu user ở background thì gửi notification thay vì websocket
+		if h.isUserInBackground(ctx, clientId) {
+			h.sendNotificationForMessage(ctx, clientId, data)
+		} else {
+			err := conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				wsLogger.Errorf("Failed to send message to all users: %v", err)
+			}
 		}
 	}
 }
@@ -516,5 +542,101 @@ func (h *WebSocketHandler) saveUserOnlineStatus(ctx context.Context, userID uint
 		wsLogger.Errorf("Failed to save user online status for user %d: %v", userID, err)
 	} else {
 		wsLogger.Infof("Saved user online status for user %d: %s", userID, status)
+	}
+}
+
+// saveUserAppState lưu trạng thái app (foreground/background) của user vào Redis
+func (h *WebSocketHandler) saveUserAppState(ctx context.Context, userID uint64, state string) {
+	key := constants.USER_APP_STATE_KEY_PREFIX + strconv.FormatUint(userID, 10)
+	timestamp := time.Now().Format(time.RFC3339)
+	status := state + "|" + timestamp
+
+	if err := h.redisClient.Set(ctx, key, status); err != nil {
+		wsLogger.Errorf("Failed to save user app state for user %d: %v", userID, err)
+	} else {
+		wsLogger.Infof("Saved user app state for user %d: %s", userID, status)
+	}
+}
+
+// isUserInBackground kiểm tra xem user có đang ở trạng thái background không
+func (h *WebSocketHandler) isUserInBackground(ctx context.Context, userID uint64) bool {
+	key := constants.USER_APP_STATE_KEY_PREFIX + strconv.FormatUint(userID, 10)
+	status, err := h.redisClient.Get(ctx, key)
+	if err != nil {
+		wsLogger.Errorf("Failed to get user app state for user %d: %v", userID, err)
+		return false
+	}
+
+	if status == "" {
+		return false
+	}
+
+	// Format: "state|timestamp" (ví dụ: "active|2024-01-01T00:00:00Z", "background|2024-01-01T00:00:00Z")
+	parts := strings.Split(status, "|")
+	if len(parts) == 0 {
+		return false
+	}
+
+	state := parts[0]
+	// Nếu state không phải "active" thì coi là chế độ nền (background, inactive, unknown, extension, etc.)
+	return state != "active"
+}
+
+// sendNotificationForMessage gửi notification khi user ở background và có tin nhắn mới
+func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userID uint64, data []byte) {
+	if h.notificationClient == nil {
+		return
+	}
+
+	// Parse message để lấy thông tin
+	var msg RedisMessage
+	if err := json.Unmarshal(data, &msg); err != nil {
+		wsLogger.Errorf("Failed to unmarshal message for notification: %v", err)
+		return
+	}
+
+	m, ok := msg.Data.(map[string]any)
+	if !ok {
+		return
+	}
+
+	// Chỉ gửi notification cho message type
+	if msg.Type != constants.MESSAGE_TYPE {
+		return
+	}
+
+	roomID, ok := utils.ParseUint64(m["roomId"])
+	if !ok {
+		return
+	}
+
+	// // Lấy thông tin người gửi
+	// fromID, ok := utils.ParseUint64(m["from"])
+	// if !ok {
+	// 	return
+	// }
+
+	// Lấy nội dung tin nhắn
+	message := ""
+	if msgStr, ok := m["content"].(string); ok {
+		message = msgStr
+	}
+
+	fromName := ""
+	if fromNameStr, ok := m["fullName"].(string); ok {
+		fromName = fromNameStr
+	}
+
+	// Gửi notification
+	// attachData := []string{message}
+	err := h.notificationClient.PushByUserId(
+		ctx, userID, fromName+" đã gửi tin nhắn", message, map[string]string{
+			"roomId": strconv.FormatUint(roomID, 10),
+		},
+	)
+	if err != nil {
+		wsLogger.Errorf("Failed to send notification to user %d: %v", userID, err)
+	} else {
+		wsLogger.Infof("Sent notification to user %d for message in room %d", userID, roomID)
 	}
 }

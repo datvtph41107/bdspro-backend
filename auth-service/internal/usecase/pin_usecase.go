@@ -27,6 +27,7 @@ type PINUsecase struct {
 	profileProvider      provider.ProfileProvider
 	notificationProvider provider.NotificationProvider
 	deviceUsecase        *DeviceUsecase
+	cacheProvider        provider.CacheProvider
 	maxPINAttempts       int
 	pinLockDuration      time.Duration
 }
@@ -41,6 +42,7 @@ func NewPINUsecase(
 	profileProvider provider.ProfileProvider,
 	notificationProvider provider.NotificationProvider,
 	deviceUsecase *DeviceUsecase,
+	cacheProvider provider.CacheProvider,
 ) *PINUsecase {
 	return &PINUsecase{
 		pinRepo:              pinRepo,
@@ -52,6 +54,7 @@ func NewPINUsecase(
 		profileProvider:      profileProvider,
 		notificationProvider: notificationProvider,
 		deviceUsecase:        deviceUsecase,
+		cacheProvider:        cacheProvider,
 		maxPINAttempts:       3,
 		pinLockDuration:      15 * time.Minute,
 	}
@@ -191,6 +194,13 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 					log.Printf("Failed to update device with auth info after verify PIN: %v", err)
 				}
 			}()
+		}
+	}
+
+	// Lưu app state = "active" khi login thành công
+	if profile.ProfileID != 0 && s.cacheProvider != nil {
+		if err := s.cacheProvider.SaveAppState(c, profile.ProfileID, "active"); err != nil {
+			log.Printf("Failed to save app state for user %d: %v", profile.ProfileID, err)
 		}
 	}
 

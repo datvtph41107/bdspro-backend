@@ -79,6 +79,7 @@ func (m *UserGuideMapper) EntityToProto(entity *domain.UserGuideEntity) *hubpb.U
 		CreatedAt:   _utils.FormatTimeToString(entity.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(entity.UpdatedAt),
 		Key:         entity.Key,
+		Mode:        hubpb.UserGuideMode(entity.Mode),
 	}
 }
 
@@ -98,6 +99,7 @@ func (m *UserGuideMapper) EntityToDetailProto(entity *domain.UserGuideEntity, st
 		UpdatedAt:   _utils.FormatTimeToString(entity.UpdatedAt),
 		Steps:       m.StepEntitiesToProto(steps),
 		Key:         entity.Key,
+		Mode:        hubpb.UserGuideMode(entity.Mode),
 	}
 }
 
@@ -120,11 +122,17 @@ func (m *UserGuideMapper) CreateRequestToEntity(req *hubpb.CreateUserGuideReques
 		return nil
 	}
 
+	mode := int32(10) // Default: chế độ đơn
+	if req.Mode != hubpb.UserGuideMode_USER_GUIDE_MODE_UNSPECIFIED {
+		mode = int32(req.Mode)
+	}
+
 	return &domain.UserGuideEntity{
 		Title:       req.Title,
 		Description: req.Description,
 		GroupKey:    req.GroupKey,
 		Key:         req.Key,
+		Mode:        mode,
 	}
 }
 
@@ -138,6 +146,9 @@ func (m *UserGuideMapper) UpdateRequestToEntity(entity *domain.UserGuideEntity, 
 	entity.Description = req.Description
 	entity.GroupKey = req.GroupKey
 	entity.Key = req.Key
+	if req.Mode != hubpb.UserGuideMode_USER_GUIDE_MODE_UNSPECIFIED {
+		entity.Mode = int32(req.Mode)
+	}
 }
 
 // GroupMapToProto converts group map to UserGuideGroup protobuf message

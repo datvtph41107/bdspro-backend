@@ -419,6 +419,11 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		if err == nil && passwordAuth != nil {
 			response.PasswordAuthId = passwordAuth.ID
 		}
+
+		// Lưu app state = "active" khi login thành công
+		if err := s.CacheProvider.SaveAppState(c, infoEntity.ProfileID, "active"); err != nil {
+			log.Printf("Failed to save app state for user %d: %v", infoEntity.ProfileID, err)
+		}
 	}
 
 	// Diffie-Hellman key exchange: Mã hóa auth_key nếu client gửi public key
@@ -758,6 +763,11 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		if err == nil && passwordAuth != nil {
 			response.PasswordAuthId = passwordAuth.ID
 		}
+
+		// Lưu app state = "active" khi login thành công
+		if err := s.CacheProvider.SaveAppState(c, infoEntity.ProfileID, "active"); err != nil {
+			log.Printf("Failed to save app state for user %d: %v", infoEntity.ProfileID, err)
+		}
 	}
 
 	// 12. Mã hóa auth_key mới với client public key mới (để client lưu cho lần login sau)
@@ -920,14 +930,14 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	}
 
 	// Lấy timestamp từ cache
-	cachedTimestamp, err := s.CacheProvider.GetToken(c, props.AuthID)
+	cachedTimestamp, err := s.CacheProvider.GetToken(c, props.ProfileID)
 	if err != nil {
 		log.Printf("⚠️ [RefreshToken] Không tìm thấy token trong cache cho authID %d: %v. Bỏ qua kiểm tra.", props.AuthID, err)
 		// Không tìm thấy trong cache thì bỏ qua kiểm tra, tiếp tục xử lý
 	} else {
 		// Validate token bằng cách so sánh Unix timestamp (UTC)
-		invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
-		if invalidToken {
+		validToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
+		if !validToken {
 			log.Printf("⚠️ [RefreshToken] Token không hợp lệ cho authID %d. IssuedAt: %s, CachedTime: %s",
 				props.AuthID, props.IssuedAt.Format(time.RFC3339), cachedTimestamp)
 			return nil, &_routes.Except{
@@ -980,11 +990,11 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		})
 
 		// Lưu timestamp mới vào cache để invalidate refresh token cũ
-		currentTime := time.Now().Format(time.RFC3339)
-		err = s.CacheProvider.SaveToken(c, props.AuthID, currentTime, uint64(config.Properties.JWT.RefreshExpMinutes*60))
-		if err != nil {
-			log.Printf("⚠️ [RefreshToken] Không thể lưu timestamp vào cache cho authID %d: %v", props.AuthID, err)
-		}
+		// currentTime := time.Now().Format(time.RFC3339)
+		// err = s.CacheProvider.SaveToken(c, props.ProfileID, currentTime, uint64(config.Properties.JWT.RefreshExpMinutes*60))
+		// if err != nil {
+		// 	log.Printf("⚠️ [RefreshToken] Không thể lưu timestamp vào cache cho authID %d: %v", props.AuthID, err)
+		// }
 
 		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID)
 		response := &dto.RefreshResponse{
@@ -1110,6 +1120,11 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 	// Xóa profileId khỏi tất cả devices của user
 	if profileID := _utils.GetProfileIdWithContext(c); profileID > 0 {
 		s.removeProfileIdFromDevices(c, profileID)
+
+		// Lưu app state = "inactive" khi logout
+		if err := s.CacheProvider.SaveAppState(c, profileID, "inactive"); err != nil {
+			log.Printf("Failed to save app state for user %d: %v", profileID, err)
+		}
 	}
 
 	return &dto.LogoutResponse{Message: "Đăng xuất thành công"}, nil
@@ -1894,7 +1909,8 @@ func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.Auth
 	// Lưu Unix timestamp (UTC) vào cache để tránh vấn đề timezone
 	// Trừ 5 giây để đảm bảo token mới được issue sau thời điểm này sẽ hợp lệ
 	validFromTimestamp := time.Now().UTC().Add(-5 * time.Second).Unix()
-	s.CacheProvider.SaveToken(c, authEntity.ID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
+	println("GenRefreshToken: ", authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
+	s.CacheProvider.SaveToken(c, authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
 
 	refreshToken := s.GetRefreshToken(authEntity, sessionId)
 	// Không set cookie nữa, trả refreshToken trong response body
@@ -2731,6 +2747,13 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	response.PasswordAuthId = authEntity.ID
 
+	// Lưu app state = "active" khi login thành công
+	if profile.ProfileID != 0 {
+		if err := s.CacheProvider.SaveAppState(ctx, profile.ProfileID, "active"); err != nil {
+			log.Printf("Failed to save app state for user %d: %v", profile.ProfileID, err)
+		}
+	}
+
 	// Ghi log admin history
 	go func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
@@ -2907,7 +2930,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 	}
 
 	// Kiểm tra token có trong cache không (validate bằng issuedAt)
-	cachedTimestamp, err := s.CacheProvider.GetToken(ctx, props.AuthID)
+	cachedTimestamp, err := s.CacheProvider.GetToken(ctx, props.ProfileID)
 	if err != nil {
 		log.Printf("⚠️ [LoginWithToken] Không tìm thấy token trong cache cho authID %d: %v", props.AuthID, err)
 		// Không tìm thấy thì vẫn cho login tiếp

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -27,9 +28,11 @@ func ValidTokenByIssueAt(issuedAt time.Time, timestampStr string) bool {
 
 	// Parse Unix timestamp từ string
 	validFromUnix, err := strconv.ParseInt(timestampStr, 10, 64)
+	log.Println("validFromUnix", validFromUnix, err)
 	if err != nil {
 		// Fallback: thử parse RFC3339 format cũ để tương thích ngược
 		validDateFrom, err := time.Parse(time.RFC3339, timestampStr)
+		log.Println("validDateFrom", validDateFrom, issuedAt)
 		if err != nil {
 			return false
 		}
@@ -39,6 +42,9 @@ func ValidTokenByIssueAt(issuedAt time.Time, timestampStr string) bool {
 	// Convert cả hai về Unix timestamp (UTC) để so sánh
 	validFromTime := time.Unix(validFromUnix, 0).UTC()
 	issuedAtUTC := issuedAt.UTC()
+
+	log.Println("validFromTime", issuedAtUTC, validFromTime)
+	log.Println("issuedAtUTC.Before(validFromTime)", !issuedAtUTC.Before(validFromTime))
 
 	// Token hợp lệ nếu IssuedAt >= ValidFrom
 	// Nghĩa là token được issue sau thời điểm validFrom

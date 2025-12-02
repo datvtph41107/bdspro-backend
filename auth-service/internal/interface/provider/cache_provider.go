@@ -10,4 +10,5 @@ type CacheProvider interface {
 	IsTokenValid(c context.Context, userID uint64, token string) (bool, error)
 	DeleteToken(c context.Context, userID uint64) error
 	Increment(c context.Context, key string) error
+	SaveAppState(c context.Context, userID uint64, state string) error
 }

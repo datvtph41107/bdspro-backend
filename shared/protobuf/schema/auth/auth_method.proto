@@ -197,6 +197,12 @@ service AuthService {
         };
     }
 
+    rpc UpdateDeviceMode(AppStateRequest) returns (AppStateResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/device/state/{state}"
+        };
+    }
+
     // Auth Security
     rpc GetCurrentAuthSetting(sharepb.Empty) returns (sharepb.AuthDataV3Proto) {
         option (google.api.http) = {
@@ -431,6 +437,14 @@ message Device {
 
 message CreateDeviceResponse {
     Device data = 1;
+}
+
+message AppStateRequest {
+    string state = 1; // active, inactive
+}
+
+message AppStateResponse {
+    string message = 1;
 }
 
 message AdminAccessResponse {

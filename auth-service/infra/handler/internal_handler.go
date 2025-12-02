@@ -4,7 +4,6 @@ import (
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
 	_errors "common/errors"
-	_redis "common/redis"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -14,12 +13,13 @@ import (
 	"strings"
 
 	"auth/infra/mapper"
+	"auth/infra/redis"
 )
 
 type InternalHandler struct {
 	authpb.UnimplementedAuthInternalServiceServer
 	roleRepo            repo.RoleRepository
-	redisService        *_redis.RedisService
+	redisService        *redis.RedisProvider
 	roleMapper          *mapper.RoleMapper
 	authMethodMapper    *mapper.AuthMethodMapper
 	authMethodUsecase   *usecase.AuthAdminUsecase
@@ -32,7 +32,7 @@ type InternalHandler struct {
 
 func NewInternalHandler(
 	roleRepo repo.RoleRepository,
-	redisService *_redis.RedisService,
+	redisService *redis.RedisProvider,
 	roleMapper *mapper.RoleMapper,
 	authMethodMapper *mapper.AuthMethodMapper,
 	authMethodUsecase *usecase.AuthAdminUsecase,

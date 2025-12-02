@@ -38,6 +38,7 @@ type messageUsecases interface {
 	GetPinnedMessages(ctx context.Context, conversationId uint64) ([]*models.MessageModel, error)
 	EditMessage(ctx context.Context, messageId uint64, content string) (*models.MessageModel, error)
 	DeleteViolation(ctx context.Context, messageId uint64) error
+	DeleteConversation(ctx context.Context, conversationId uint64) (uint64, error)
 
 	GetMessageByTypeWithPagination(ctx context.Context, page, size int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error)
 }

@@ -84,7 +84,6 @@ var wireSet = wire.NewSet(
 	auth_infra_postgre.NewPermissionRepo,
 	auth_internal_usecase.NewPermissionUsecase,
 	auth_infra_redis.NewRedisProvider,
-	auth_initial.NewRedisService,
 	auth_infra_handler.NewRoleGroupHandler,
 	auth_infra_mapper.NewRoleGroupMapper,
 	auth_infra_postgre.NewRoleGroupRepo,

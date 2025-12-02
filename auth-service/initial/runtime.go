@@ -1,7 +1,6 @@
 package initial
 
 import (
-	_redis "common/redis"
 	"context"
 
 	"auth/infra/handler"
@@ -71,10 +70,6 @@ func (app *InitialApp) StartZnsScheduler() {
 	} else {
 		app.Logger.Warnf("ZNS Scheduler is nil, skipping scheduler start")
 	}
-}
-
-func NewRedisService() *_redis.RedisService {
-	return _redis.NewRedisService()
 }
 
 // LoadModulesOnStartup load tất cả modules từ database khi khởi động service

@@ -100,11 +100,31 @@ func (s *InternalHandler) SendBatch(ctx context.Context, req *notificationpb.Not
 }
 
 func (s *InternalHandler) PushByToken(ctx context.Context, req *notificationpb.PushTokenRequest) (*notificationpb.PushResponse, error) {
-	return nil, nil
+	dto := &dto.PushTokenRequest{
+		Token: req.Token,
+		Title: req.Title,
+		Body:  req.Body,
+	}
+	return s.Usecase.PushByToken(ctx, dto)
 }
 
 func (s *InternalHandler) PushByTopic(ctx context.Context, req *notificationpb.PushTopicRequest) (*notificationpb.PushResponse, error) {
-	return nil, nil
+	dto := &dto.PushTopicRequest{
+		Topic: req.Topic,
+		Title: req.Title,
+		Body:  req.Body,
+	}
+	return s.Usecase.PushByTopic(ctx, dto)
+}
+
+func (s *InternalHandler) PushByUserId(ctx context.Context, req *notificationpb.PushByUserIdRequest) (*notificationpb.PushResponse, error) {
+	dto := &dto.PushByUserIdRequest{
+		UserID: req.UserId,
+		Title:  req.Title,
+		Body:   req.Body,
+		Data:   req.Data,
+	}
+	return s.Usecase.PushByUserId(ctx, dto)
 }
 
 // CreateAdminHistory tạo lịch sử admin (internal)

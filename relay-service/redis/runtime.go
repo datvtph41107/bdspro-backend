@@ -114,3 +114,16 @@ func (r *RedisClient) Set(ctx context.Context, key string, value string) error {
 	}
 	return err
 }
+
+// Get value from Redis
+func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
+	val, err := r.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", nil
+	}
+	if err != nil {
+		r.logger.Errorf("Failed to get key %s from Redis: %v", key, err)
+		return "", err
+	}
+	return val, nil
+}

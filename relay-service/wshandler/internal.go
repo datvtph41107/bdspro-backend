@@ -9,6 +9,7 @@ import (
 type redisClient interface {
 	Subscribe(ctx context.Context, channel string) *redis.PubSub
 	Set(ctx context.Context, key string, value string) error
+	Get(ctx context.Context, key string) (string, error)
 }
 
 type ChatClient interface {
@@ -19,4 +20,8 @@ type ChatClient interface {
 
 type UserClient interface {
 	UpdateLastSeen(ctx context.Context, profileID uint64) error
+}
+
+type NotificationClient interface {
+	PushByUserId(ctx context.Context, userId uint64, title string, body string, data map[string]string) error
 }

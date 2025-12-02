@@ -157,10 +157,31 @@ func (c *conversationUsecases) Search(ctx context.Context, keyword string, searc
 }
 
 func (c *conversationUsecases) DeleteRoom(ctx context.Context, conversationId uint64) error {
-	err := c.isConversationAdmin(ctx, conversationId)
+	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
+	if conversation == nil {
+		return errors.ConversationNotFound()
+	}
+
+	currentUserId := utils.GetCurrentUserID(ctx)
+
+	// Nếu không phải private chat (type != 1), thì check admin
+	if conversation.Type != models.ConversationTypePrivate {
+		err := c.isConversationAdmin(ctx, conversationId)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Nếu là private chat (type == 1), check xem user có phải là created_by hoặc receiver_id không
+		if conversation.CreatedBy != currentUserId {
+			if conversation.ReceiverId == nil || *conversation.ReceiverId != currentUserId {
+				return errors.NotParticipant()
+			}
+		}
+	}
+
 	return c.repo.DeleteConversation(ctx, conversationId)
 }
 
