@@ -17,7 +17,6 @@ type AssistantUsecase struct {
 	GeminiClient   provider.GeminiProvider
 	BdsproInternal provider.BdsproInternalProvider
 	HubClient      provider.HubProvider
-	OCRClient      provider.OCRProvider
 }
 
 func NewAssistantUsecase(
@@ -26,7 +25,6 @@ func NewAssistantUsecase(
 	geminiClient provider.GeminiProvider,
 	bdsproInternal provider.BdsproInternalProvider,
 	hubClient provider.HubProvider,
-	ocrClient provider.OCRProvider,
 ) *AssistantUsecase {
 	return &AssistantUsecase{
 		DeepseekClient: deepseekClient,
@@ -34,7 +32,6 @@ func NewAssistantUsecase(
 		GeminiClient:   geminiClient,
 		BdsproInternal: bdsproInternal,
 		HubClient:      hubClient,
-		OCRClient:      ocrClient,
 	}
 }
 
@@ -344,32 +341,4 @@ func (u *AssistantUsecase) GenerateContentWithGemini(ctx context.Context, prompt
 	modelName := u.GeminiClient.GetModel() // Lấy từ config
 
 	return content, modelName, processingTime, nil
-}
-
-// ExtractNationalCard - Trích xuất thông tin từ ảnh căn cước (từ URL - backward compatible)
-func (u *AssistantUsecase) ExtractNationalCard(ctx context.Context, frontImageURL, backImageURL string) (map[string]interface{}, string, string, int64, error) {
-	startTime := time.Now()
-
-	info, mrz, qrCode, err := u.OCRClient.ExtractNationalCard(ctx, frontImageURL, backImageURL)
-	if err != nil {
-		return nil, "", "", 0, fmt.Errorf("failed to extract national card: %w", err)
-	}
-
-	processingTime := time.Since(startTime).Milliseconds()
-
-	return info, mrz, qrCode, processingTime, nil
-}
-
-// ExtractNationalCardFromData - Trích xuất thông tin từ ảnh căn cước (từ file data)
-func (u *AssistantUsecase) ExtractNationalCardFromData(ctx context.Context, frontImageData, backImageData []byte) (map[string]interface{}, string, string, int64, error) {
-	startTime := time.Now()
-
-	info, mrz, qrCode, err := u.OCRClient.ExtractNationalCardFromData(ctx, frontImageData, backImageData)
-	if err != nil {
-		return nil, "", "", 0, fmt.Errorf("failed to extract national card: %w", err)
-	}
-
-	processingTime := time.Since(startTime).Milliseconds()
-
-	return info, mrz, qrCode, processingTime, nil
 }

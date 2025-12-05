@@ -103,6 +103,23 @@ func (u *TagUsecase) AdminListTags(ctx context.Context, req *dto.AdminTagListReq
 	return u.TagRepo.ListAdmin(ctx, tagTypes, pagable, strings.TrimSpace(req.Text))
 }
 
+// GetProfileTagsByType lấy tags của profile cụ thể theo type (public API, không cần authentication)
+func (u *TagUsecase) GetProfileTagsByType(ctx context.Context, profileID uint64, tagType enums.TagType) ([]models.TagEntity, uint32, error) {
+	// if profileID == 0 {
+	// 	return nil, 0, _errors.ReturnError(400, "Profile ID không hợp lệ")
+	// }
+	if !tagType.IsValid() {
+		return nil, 0, _errors.ReturnError(400, "Tag type không hợp lệ")
+	}
+
+	// Mặc định lấy tất cả, không phân trang cho public API
+	pagable := &_dto.Pagable{
+		Page: 0,
+		Size: 1000,
+	}
+	return u.TagRepo.ListForUser(ctx, profileID, tagType, pagable, "")
+}
+
 func validateAdminTagRequest(req *dto.AdminTagRequest) error {
 	if req == nil {
 		return _errors.ReturnError(400, "Thiếu thông tin tag")

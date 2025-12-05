@@ -21,7 +21,7 @@ SELECT
 	m.forward_from    AS latest_message_forward_from,
 	m.sender_id       AS latest_message_sender_id,
 	m.created_at      AS latest_message_created_at,
-	m.is_deleted      AS latest_message_is_deleted,
+	m.deleted_at      AS latest_message_deleted_at,
 	m.pined           AS latest_message_pined,
 	m.recall          AS latest_message_recall,
 	COALESCE(unread.unread_count, 0) AS unread_count,
@@ -30,7 +30,7 @@ FROM conversations c
 LEFT JOIN LATERAL (
 	SELECT *
 	FROM messages
-	WHERE conversation_id = c.id AND is_deleted = FALSE
+	WHERE conversation_id = c.id AND deleted_at IS NULL
 	ORDER BY created_at DESC
 	LIMIT 1
 ) m ON true
@@ -49,10 +49,10 @@ LEFT JOIN (
 		COUNT(m.id) AS unread_count
 	FROM messages m
 	LEFT JOIN read_recepts rr ON rr.message_id = m.id AND rr.user_id = $1
-	WHERE m.is_deleted = FALSE AND rr.message_id IS NULL
+	WHERE m.deleted_at IS NULL AND rr.message_id IS NULL
 	GROUP BY m.conversation_id
 ) unread ON unread.conversation_id = c.id
-WHERE ?? p.user_id = $2 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($3))) || '%' AND c.is_deleted = FALSE
+WHERE ?? p.user_id = $2 AND LOWER((TRIM(c.name))) LIKE '%' || LOWER((TRIM($3))) || '%' AND c.deleted_at IS NULL
 ORDER BY COALESCE(m.created_at,c.created_at) DESC
 LIMIT $4 OFFSET $5
 `
@@ -71,7 +71,6 @@ where p.user_id = $2 and r.read_at is null and m.created_at is not null
 `
 
 func (r *gormRepository) CreateConversation(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
-	conversation.IsDeleted = false
 	err := r.db.WithContext(ctx).Create(conversation).Error
 	if err != nil {
 		return nil, err
@@ -107,7 +106,7 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 				ForwardFrom: res.LatestMessageForwardFrom,
 				SenderID:    res.LatestMessageSenderID,
 				CreatedAt:   res.LatestMessageCreatedAt,
-				IsDeleted:   res.LatestMessageIsDeleted,
+				DeletedAt:   res.LatestMessageDeletedAt,
 				Pined:       res.LatestMessagePined,
 				Recall:      res.LatestMessageRecall,
 			}
@@ -127,7 +126,7 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
 	err := r.db.WithContext(ctx).
-		Where("id = ? AND is_deleted = ?", conversationID, false).
+		Where("id = ? AND deleted_at IS NULL", conversationID).
 		Preload("BackgroundImage").
 		First(&conversation).Error
 	if err == gorm.ErrRecordNotFound {
@@ -139,7 +138,7 @@ func (r *gormRepository) GetConversationByID(ctx context.Context, conversationID
 func (r *gormRepository) GetConversationsByIDs(ctx context.Context, conversationIDs []uint64) ([]*models.ConversationModel, error) {
 	var conversations []*models.ConversationModel
 	err := r.db.WithContext(ctx).
-		Where("id IN (?) AND is_deleted = ?", conversationIDs, false).
+		Where("id IN (?) AND deleted_at IS NULL", conversationIDs).
 		Preload("BackgroundImage").
 		Find(&conversations).Error
 	if err == gorm.ErrRecordNotFound {
@@ -149,7 +148,7 @@ func (r *gormRepository) GetConversationsByIDs(ctx context.Context, conversation
 }
 
 func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBoardCast, forbidForward bool, name string, backgroundImageId *uint64) error {
-	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND is_deleted = ?", id, false).Updates(map[string]any{
+	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND deleted_at IS NULL", id).Updates(map[string]any{
 		"is_broadcast":        isBoardCast,
 		"forbid_forward":      forbidForward,
 		"name":                name,
@@ -160,11 +159,11 @@ func (r *gormRepository) UpdateConversation(ctx context.Context, id uint64, isBo
 func (r *gormRepository) GetMessageOrConversation(ctx context.Context, keyword string, searchType int, limit int64, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error) {
 	var conversations []*models.ConversationModel
 	var messages []*models.MessageModel
-	err := r.db.WithContext(ctx).Where("name LIKE ? AND is_deleted = ?", "%"+keyword+"%", false).Limit(int(limit)).Offset(int(offset)).Find(&conversations).Error
+	err := r.db.WithContext(ctx).Where("name LIKE ? AND deleted_at IS NULL", "%"+keyword+"%").Limit(int(limit)).Offset(int(offset)).Find(&conversations).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	err = r.db.WithContext(ctx).Where("content LIKE ? AND is_deleted = ?", "%"+keyword+"%", false).Limit(int(limit)).Offset(int(offset)).Find(&messages).Error
+	err = r.db.WithContext(ctx).Where("content LIKE ? AND deleted_at IS NULL", "%"+keyword+"%").Limit(int(limit)).Offset(int(offset)).Find(&messages).Error
 	if err != nil {
 		return nil, nil, err
 	}
@@ -177,7 +176,7 @@ func (r *gormRepository) GetMessageOrConversation(ctx context.Context, keyword s
 func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conversationID uint64) (*models.ConversationModel, error) {
 	var conversation models.ConversationModel
 	err := r.db.WithContext(ctx).
-		Where("id = ? AND is_deleted = ?", conversationID, false).
+		Where("id = ? AND deleted_at IS NULL", conversationID).
 		Preload("Participants").
 		Preload("BackgroundImage").
 		First(&conversation).Error
@@ -192,11 +191,9 @@ func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conv
 }
 
 func (r *gormRepository) DeleteConversation(ctx context.Context, conversationID uint64) error {
-	// Soft delete by setting is_deleted to true and updating deleted_at
-	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ?", conversationID).Updates(map[string]interface{}{
-		"is_deleted": true,
-		"deleted_at": time.Now(),
-	}).Error
+	// Soft delete by setting deleted_at
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ?", conversationID).Update("deleted_at", now).Error
 }
 
 func (r *gormRepository) GetConversationWithReceiverID(ctx context.Context, currentUserId uint64, receiverID uint64) (*models.ConversationModel, error) {
@@ -214,7 +211,7 @@ func (r *gormRepository) GetConversationWithReceiverID(ctx context.Context, curr
 }
 
 func (r *gormRepository) SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) error {
-	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND is_deleted = ?", conversationId, false).Updates(map[string]any{
+	return r.db.WithContext(ctx).Model(&models.ConversationModel{}).Where("id = ? AND deleted_at IS NULL", conversationId).Updates(map[string]any{
 		"background_image_id": backgroundImageId,
 	}).Error
 }

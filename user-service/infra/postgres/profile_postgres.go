@@ -476,10 +476,13 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 	// Helper function để check xem field có trong FieldSets không
 	// Nếu FieldSets rỗng, cho phép update tất cả (backward compatible)
 	shouldUpdate := func(fieldName string) bool {
+		// Nếu không có FieldSets thì cho phép update tất cả các trường (backward compatible)
 		if len(fieldSetMap) == 0 {
-			return true // Nếu không có FieldSets, update tất cả như cũ
+			return true
 		}
-		return fieldSetMap[fieldName]
+		// Nếu có FieldSets thì chỉ update nếu fieldName có trong đó
+		_, ok := fieldSetMap[fieldName]
+		return ok
 	}
 
 	// Chỉ update các field được gửi lên (không nil) và có trong FieldSets (nếu có)
@@ -490,10 +493,10 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 		updates["email"] = req.Email
 	}
 	if req.ProvinceID != nil || shouldUpdate("provinceId") {
-		updates["province_id"] = *req.ProvinceID
+		updates["province_id"] = req.ProvinceID
 	}
 	if req.WardID != nil || shouldUpdate("wardId") {
-		updates["ward_id"] = *req.WardID
+		updates["ward_id"] = req.WardID
 	}
 	if req.Gender != 0 || shouldUpdate("gender") {
 		updates["gender"] = req.Gender

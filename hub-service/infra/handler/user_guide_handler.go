@@ -277,9 +277,13 @@ func (h *UserGuideHandler) GetUserGuideByKey(ctx context.Context, req *hubpb.Get
 	}
 
 	// Get steps
-	steps, _ := h.stepRepo.GetByUserGuideID(ctx, result.ID)
+	// steps, _ := h.stepRepo.GetByUserGuideID(ctx, result.ID)
 
 	return &hubpb.GetUserGuideByKeyResponse{
-		Data: h.userGuideMapper.EntityToDetailProto(result, steps),
+		Data: &hubpb.UserGuideDetail{
+			Id:    result.ID,
+			Title: result.Title,
+			Mode:  hubpb.UserGuideMode(result.Mode),
+		},
 	}, nil
 }

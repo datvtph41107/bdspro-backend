@@ -30,42 +30,42 @@ fi
 
 cd ../..
 
-if [ "$1" = "assistant" ]; then
-  service_path=assistant-service
-  REMOTE_DIR=${REMOTE_PATH}/${service_path}
+# if [ "$1" = "assistant" ]; then
+#   service_path=assistant-service
+#   REMOTE_DIR=${REMOTE_PATH}/${service_path}
   
-  echo "--- PUSHING ALL FILES TO SERVER ---"
-  ssh ${REMOTE_USER}@${REMOTE_HOST} "
-    mkdir -p ${REMOTE_DIR}
-    rm -rf ${REMOTE_DIR}
-  "
+#   echo "--- PUSHING ALL FILES TO SERVER ---"
+#   ssh ${REMOTE_USER}@${REMOTE_HOST} "
+#     mkdir -p ${REMOTE_DIR}
+#     rm -rf ${REMOTE_DIR}
+#   "
   
-  # Push toàn bộ file lên server (trừ các file không cần thiết)
-  rsync -avz --exclude='.git' --exclude='tmp' --exclude='files' --exclude='main' --exclude='assistant-service' \
-    ${service_path}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/
+#   # Push toàn bộ file lên server (trừ các file không cần thiết)
+#   rsync -avz --exclude='.git' --exclude='tmp' --exclude='files' --exclude='main' --exclude='assistant-service' \
+#     ${service_path}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/
   
-  # Push shared folder (cần cho go.mod dependencies)
-  rsync -avz --exclude='.git' --exclude='node_modules' \
-    ./shared ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
+#   # Push shared folder (cần cho go.mod dependencies)
+#   rsync -avz --exclude='.git' --exclude='node_modules' \
+#     ./shared ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}
   
-  # Push Dockerfile (sử dụng Dockerfile.develop hoặc tạo Dockerfile build từ source)
-  scp ${service_path}/Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+#   # Push Dockerfile (sử dụng Dockerfile.develop hoặc tạo Dockerfile build từ source)
+#   scp ${service_path}/Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
   
-  echo "--- BUILDING IN DOCKER ---"
-  # Build từ context lớn hơn (từ REMOTE_PATH) để có thể truy cập shared folder
-  # Dockerfile cần sửa để copy shared từ ./shared thay vì ../shared
-  ssh ${REMOTE_USER}@${REMOTE_HOST} "
-    cd ${REMOTE_PATH}
-    docker compose -f docker-compose.yml build --no-cache assistant
-    docker compose -f docker-compose.yml up -d assistant
-  "
+#   echo "--- BUILDING IN DOCKER ---"
+#   # Build từ context lớn hơn (từ REMOTE_PATH) để có thể truy cập shared folder
+#   # Dockerfile cần sửa để copy shared từ ./shared thay vì ../shared
+#   ssh ${REMOTE_USER}@${REMOTE_HOST} "
+#     cd ${REMOTE_PATH}
+#     docker compose -f docker-compose.yml build --no-cache assistant
+#     docker compose -f docker-compose.yml up -d assistant
+#   "
   
-  echo "Deployment và build thành công!"
-  end=$(date +%s)
-  elapsed=$((end - start))
-  echo "Thời gian thực thi: $elapsed giây"
-  exit 0
-fi
+#   echo "Deployment và build thành công!"
+#   end=$(date +%s)
+#   elapsed=$((end - start))
+#   echo "Thời gian thực thi: $elapsed giây"
+#   exit 0
+# fi
 
 # Chọn thư mục dựa vào tham số đầu tiên
 service_path=/common

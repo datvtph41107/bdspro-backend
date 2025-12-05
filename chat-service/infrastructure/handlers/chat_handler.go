@@ -1019,7 +1019,7 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequ
 		Name:            conversation.Name,
 		IsBroadcast:     conversation.IsBroadcast,
 		ForbidForward:   conversation.ForbidForward,
-		IsDeleted:       conversation.IsDeleted,
+		IsDeleted:       conversation.DeletedAt != nil,
 		MuteNotif:       participant.MuteNotif,
 		BackgroundImage: s.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage),
 	}, nil

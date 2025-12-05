@@ -4,9 +4,7 @@ import (
 	"assistant/internal/dto"
 	"assistant/internal/interface/provider"
 	"assistant/internal/usecases"
-	_errors "common/errors"
 	"context"
-	"fmt"
 	"time"
 
 	assistantpb "pb/types/assistant"
@@ -700,100 +698,6 @@ func (h *AssistantHandler) GenerateContentWithGemini(ctx context.Context, req *a
 			ProcessingTimeMs: processingTime,
 			TokensUsed:       0, // TODO: Get from API response
 			Model:            modelName,
-		},
-	}, nil
-}
-
-// ExtractNationalCard - Trích xuất thông tin từ ảnh căn cước
-// @Summary Trích xuất thông tin từ ảnh căn cước công dân
-// @Description Nhận vào 2 link ảnh (mặt trước và mặt sau), sử dụng OCR để đọc thông tin và MRZ
-// @Tags Assistant
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body assistantpb.ExtractNationalCardRequest true "Link ảnh căn cước"
-// @Success 200 {object} assistantpb.ExtractNationalCardResponse "Thông tin đã trích xuất"
-// @Failure 400 {string} string "Yêu cầu không hợp lệ"
-// @Router /v2/assistant/national-card/extract [post]
-func (h *AssistantHandler) ExtractNationalCard(ctx context.Context, req *assistantpb.ExtractNationalCardRequest) (*assistantpb.ExtractNationalCardResponse, error) {
-	if req.FrontImageUrl == "" || req.BackImageUrl == "" {
-		return nil, _errors.ReturnError(400, "frontImageUrl and backImageUrl are required")
-	}
-
-	// Lấy file data từ file-service bằng encoded path (req.FrontImageUrl và req.BackImageUrl là encoded path)
-	frontImageData, err := h.FileProvider.GetFile(ctx, req.FrontImageUrl, "s")
-	if err != nil {
-		fmt.Printf("ExtractNationalCard: failed to get front image: %s", frontImageData)
-		return nil, _errors.ReturnError(500, "failed to get front image: "+err.Error())
-	}
-
-	backImageData, err := h.FileProvider.GetFile(ctx, req.BackImageUrl, "s")
-	if err != nil {
-		return nil, _errors.ReturnError(500, "failed to get back image: "+err.Error())
-	}
-
-	info, mrz, qrCode, processingTime, err := h.Usecase.ExtractNationalCardFromData(ctx, frontImageData, backImageData)
-	if err != nil {
-		return nil, _errors.ReturnError(500, "failed to extract national card: "+err.Error())
-	}
-
-	// Convert map[string]interface{} to NationalCardInfo
-	cardInfo := &assistantpb.NationalCardInfo{}
-
-	if val, ok := info["idNumber"].(string); ok {
-		cardInfo.IdNumber = &val
-	}
-	if val, ok := info["fullName"].(string); ok {
-		cardInfo.FullName = &val
-	}
-	if val, ok := info["dateOfBirth"].(string); ok {
-		cardInfo.DateOfBirth = &val
-	}
-	if val, ok := info["gender"].(string); ok {
-		cardInfo.Gender = &val
-	}
-	if val, ok := info["nationality"].(string); ok {
-		cardInfo.Nationality = &val
-	}
-	if val, ok := info["placeOfOrigin"].(string); ok {
-		cardInfo.PlaceOfOrigin = &val
-	}
-	if val, ok := info["placeOfResidence"].(string); ok {
-		cardInfo.PlaceOfResidence = &val
-	}
-	if val, ok := info["ethnic"].(string); ok {
-		cardInfo.Ethnic = &val
-	}
-	if val, ok := info["religion"].(string); ok {
-		cardInfo.Religion = &val
-	}
-	if val, ok := info["issueDate"].(string); ok {
-		cardInfo.IssueDate = &val
-	}
-	if val, ok := info["issuePlace"].(string); ok {
-		cardInfo.IssuePlace = &val
-	}
-	if val, ok := info["expiryDate"].(string); ok {
-		cardInfo.ExpiryDate = &val
-	}
-	if val, ok := info["features"].(string); ok {
-		cardInfo.Features = &val
-	}
-	if val, ok := info["address"].(string); ok {
-		cardInfo.Address = &val
-	}
-
-	// QR code đã được parse và merge vào info trong OCRClient
-	// Thông tin từ QR code sẽ có trong cardInfo nếu parse thành công
-
-	return &assistantpb.ExtractNationalCardResponse{
-		Info:   cardInfo,
-		Mrz:    mrz,
-		QrCode: qrCode,
-		Metadata: &assistantpb.ExtractMetadata{
-			ProcessingTimeMs: processingTime,
-			Model:            "ocr-service",
-			ConfidenceScore:  0.0, // TODO: Get from OCR service
 		},
 	}, nil
 }

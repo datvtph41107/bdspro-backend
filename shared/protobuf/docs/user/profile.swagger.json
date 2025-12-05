@@ -19,6 +19,45 @@
     "application/json"
   ],
   "paths": {
+    "/v2/pub/user/profile/tags/{tagType}": {
+      "get": {
+        "operationId": "TagService_GetProfileTagsByType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/userpbTagListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tagType",
+            "description": "Mặc định là 20 (mainArea)",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "profileId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "TagService"
+        ]
+      }
+    },
     "/v2/user/admin/tags": {
       "get": {
         "operationId": "TagService_AdminListTags",

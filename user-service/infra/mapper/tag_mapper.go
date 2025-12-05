@@ -60,6 +60,17 @@ func (m *TagMapper) AdminTagListRequestToDTO(req *userpb.AdminTagListRequest) *d
 	}
 }
 
+func (m *TagMapper) GetProfileTagsByTypeRequestToDTO(req *userpb.GetProfileTagsByTypeRequest) (uint64, enums.TagType) {
+	if req == nil {
+		return 0, enums.TagTypeMainArea // Default
+	}
+	tagType := enums.TagType(req.TagType)
+	if tagType == 0 {
+		tagType = enums.TagTypeMainArea // Default là mainArea
+	}
+	return req.ProfileId, tagType
+}
+
 func (m *TagMapper) TagEntityToPb(tag *models.TagEntity) *userpb.TagItem {
 	if tag == nil {
 		return nil

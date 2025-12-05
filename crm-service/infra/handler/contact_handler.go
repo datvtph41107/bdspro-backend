@@ -21,6 +21,7 @@ type ContactService struct {
 	crmpb.UnimplementedContactServiceServer
 	UC            *usecase.ContactUsecase
 	UserClient    *client.UserClient
+	ChatClient    *client.ChatClient
 	ContactMapper *mapper.ContactMapper
 	FriendMapper  *mapper.FriendMapper
 }
@@ -28,12 +29,14 @@ type ContactService struct {
 func NewContactService(
 	uc *usecase.ContactUsecase,
 	userClient *client.UserClient,
+	chatClient *client.ChatClient,
 	contactMapper *mapper.ContactMapper,
 	friendMapper *mapper.FriendMapper,
 ) *ContactService {
 	return &ContactService{
 		UC:            uc,
 		UserClient:    userClient,
+		ChatClient:    chatClient,
 		ContactMapper: contactMapper,
 		FriendMapper:  friendMapper,
 	}
@@ -78,6 +81,11 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 
 	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
+
+	// Nếu có conversationId, map thông tin member vào contact
+	if req.ConversationId != nil && *req.ConversationId > 0 {
+		s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
+	}
 
 	return &crmpb.ContactListDTO{
 		Data:  contactsPb,

@@ -33,7 +33,7 @@ type ProfileDTO struct {
 	ProfileVisibility uint8       `gorm:"default:1"`
 	StatusOnline      uint8       `gorm:"default:1"`
 	TabDefault        uint8       `gorm:"default:1"`
-	RoleRealEstate    uint8       `gorm:"default:1"`
+	RoleRealEstate    uint8       `gorm:"default:10"`
 	PlanID            *uint64     `gorm:"column:plan_id"`
 	PlanAt            *time.Time  `gorm:"column:plan_at"`
 	ReferralCode      string      `gorm:"size:255"`

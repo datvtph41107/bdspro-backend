@@ -25,8 +25,8 @@ type ConversationModel struct {
 	ForbidForward     bool                  `gorm:"default:false;column:forbid_forward"`
 	CreatedAt         time.Time             `gorm:"autoCreateTime;column:created_at;index:idx_type_created"`
 	UpdatedAt         time.Time             `gorm:"autoUpdateTime;column:updated_at"`
+	DeletedAt         *time.Time            `gorm:"index" json:"-"`
 	Participants      []ParticipantModel    `gorm:"foreignKey:ConversationID;references:ID"`
-	IsDeleted         bool                  `json:"is_deleted" gorm:"default:false"`
 	Avatar            string                `gorm:"size:255"`
 	BackgroundImage   *BackgroundImageModel `gorm:"foreignKey:BackgroundImageID;references:ID"`
 	BackgroundImageID *uint64               `gorm:"column:background_image_id"`
@@ -50,7 +50,7 @@ type ConversationWithMessage struct {
 	LatestMessageForwardFrom *uint64       `gorm:"column:latest_message_forward_from"`
 	LatestMessageSenderID    uint64        `gorm:"column:latest_message_sender_id"`
 	LatestMessageCreatedAt   time.Time     `gorm:"column:latest_message_created_at"`
-	LatestMessageIsDeleted   bool          `gorm:"column:latest_message_is_deleted"`
+	LatestMessageDeletedAt   *time.Time    `gorm:"column:latest_message_deleted_at"`
 	LatestMessagePined       bool          `gorm:"column:latest_message_pined"`
 	LatestMessageRecall      bool          `gorm:"column:latest_message_recall"`
 	UnreadCount              int           `gorm:"column:unread_count"`

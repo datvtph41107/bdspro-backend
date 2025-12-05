@@ -73,13 +73,6 @@ func (c *FileClient) GetFile(ctx context.Context, p string, s string) ([]byte, e
 	req.Header.Set("X-Service-Auth", authHeader)
 	req.Header.Set("X-Service-Name", serviceName)
 
-	fmt.Printf("\nExtractNationalCard: authHeader: %s", authHeader)
-	fmt.Printf("\nExtractNationalCard: serviceName: %s", serviceName)
-	fmt.Printf("\nExtractNationalCard: timestamp: %s", timestampStr)
-	fmt.Printf("\nExtractNationalCard: signature: %s", signature)
-	fmt.Printf("\nExtractNationalCard: data: %s", data)
-	fmt.Printf("\nExtractNationalCard: url: %s", url)
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)

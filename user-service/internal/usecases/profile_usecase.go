@@ -926,6 +926,7 @@ func (s *ProfileUsecase) QuickSetup(ctx context.Context, req *_dto.UserV3DTO) er
 		mainAreaIDs := make([]uint64, 0, len(req.MainAreaIds))
 		mainAreaIDSet := make(map[uint64]struct{}, len(req.MainAreaIds))
 
+		// Xử lý MainAreaIds đã có
 		for _, id := range req.MainAreaIds {
 			if id == 0 {
 				continue
@@ -937,24 +938,63 @@ func (s *ProfileUsecase) QuickSetup(ctx context.Context, req *_dto.UserV3DTO) er
 			mainAreaIDs = append(mainAreaIDs, id)
 		}
 
+		// Xử lý MainAreaNews - check xem đã tồn tại chưa trước khi tạo mới
 		if len(req.MainAreaNews) > 0 {
-			entities := make([]*models.MainAreaEntity, 0)
+			// Lấy danh sách tên từ MainAreaNews
+			names := make([]string, 0, len(req.MainAreaNews))
 			for _, item := range req.MainAreaNews {
-				entities = append(entities, &models.MainAreaEntity{
-					Name: item.Name,
-				})
+				if item.Name != "" {
+					names = append(names, item.Name)
+				}
 			}
 
-			if err := s.MainAreaRepo.CreateBatch(ctx, entities); err != nil {
+			// Check xem các main area đã tồn tại chưa
+			existingAreas, err := s.MainAreaRepo.GetByNames(ctx, names)
+			if err != nil {
 				return err
 			}
-			for _, item := range entities {
-				if item.ID > 0 {
-					mainAreaIDs = append(mainAreaIDs, item.ID)
+
+			// Tạo map từ tên (lowercase) -> ID để check nhanh
+			existingAreaMap := make(map[string]uint64)
+			for _, area := range existingAreas {
+				existingAreaMap[strings.ToLower(area.Name)] = area.ID
+			}
+
+			// Tạo danh sách main area mới (chưa tồn tại)
+			newEntities := make([]*models.MainAreaEntity, 0)
+			for _, item := range req.MainAreaNews {
+				if item.Name == "" {
+					continue
+				}
+				lowerName := strings.ToLower(item.Name)
+				// Nếu đã tồn tại, thêm ID vào danh sách
+				if existingID, exists := existingAreaMap[lowerName]; exists {
+					if _, alreadyAdded := mainAreaIDSet[existingID]; !alreadyAdded {
+						mainAreaIDSet[existingID] = struct{}{}
+						mainAreaIDs = append(mainAreaIDs, existingID)
+					}
+				} else {
+					// Nếu chưa tồn tại, thêm vào danh sách để tạo mới
+					newEntities = append(newEntities, &models.MainAreaEntity{
+						Name: item.Name,
+					})
+				}
+			}
+
+			// Tạo các main area mới
+			if len(newEntities) > 0 {
+				if err := s.MainAreaRepo.CreateBatch(ctx, newEntities); err != nil {
+					return err
+				}
+				for _, item := range newEntities {
+					if item.ID > 0 {
+						mainAreaIDs = append(mainAreaIDs, item.ID)
+					}
 				}
 			}
 		}
 
+		// Replace tất cả main areas của profile
 		if err := s.MainAreaRepo.ReplaceProfileAreas(ctx, profileId, mainAreaIDs); err != nil {
 			return err
 		}

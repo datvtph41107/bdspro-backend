@@ -69,3 +69,24 @@ func (h *TagHandler) AdminListTags(ctx context.Context, req *userpb.AdminTagList
 		Total: total,
 	}, nil
 }
+
+// @Summary Lấy danh sách tags của profile theo type (Public API)
+// @Description API public không cần token để lấy danh sách tags có type là mainArea của profile
+// @Tags Tag
+// @Accept json
+// @Produce json
+// @Param profileId path int true "ID của Profile"
+// @Param tagType query int false "Loại tag (mặc định là 20 - mainArea)"
+// @Success 200 {object} userpb.TagListResponse
+// @Router /v2/pub/user/profile/tags/{profileId} [get]
+func (h *TagHandler) GetProfileTagsByType(ctx context.Context, req *userpb.GetProfileTagsByTypeRequest) (*userpb.TagListResponse, error) {
+	profileID, tagType := h.TagMapper.GetProfileTagsByTypeRequestToDTO(req)
+	result, total, err := h.TagUsecase.GetProfileTagsByType(ctx, profileID, tagType)
+	if err != nil {
+		return nil, err
+	}
+	return &userpb.TagListResponse{
+		Data:  h.TagMapper.TagsToPb(result),
+		Total: total,
+	}, nil
+}

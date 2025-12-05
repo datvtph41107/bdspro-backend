@@ -252,6 +252,13 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "conversationId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -600,6 +607,9 @@
             "type": "object",
             "$ref": "#/definitions/crmpbTagItem"
           }
+        },
+        "member": {
+          "$ref": "#/definitions/crmpbConversationMember"
         }
       }
     },
@@ -758,6 +768,29 @@
         "total": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "crmpbConversationMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "leftAt": {
+          "type": "string"
+        },
+        "muteNotif": {
+          "type": "boolean"
+        },
+        "role": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0: Member, 1: Admin, 2: Banned"
         }
       }
     },

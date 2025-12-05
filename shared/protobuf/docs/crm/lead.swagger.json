@@ -1369,6 +1369,32 @@
             "type": "object",
             "$ref": "#/definitions/crmpbTagItem"
           }
+        },
+        "member": {
+          "$ref": "#/definitions/crmpbConversationMember"
+        }
+      }
+    },
+    "crmpbConversationMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "leftAt": {
+          "type": "string"
+        },
+        "muteNotif": {
+          "type": "boolean"
+        },
+        "role": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0: Member, 1: Admin, 2: Banned"
         }
       }
     },

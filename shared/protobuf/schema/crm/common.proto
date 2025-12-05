@@ -105,4 +105,13 @@ message ContactDTO {
   string note = 19;
   string birthday = 20;
   repeated TagItem tags = 21;
+  optional ConversationMember member = 22;
+}
+
+message ConversationMember {
+  uint64 userId = 1;
+  string joinedAt = 2;
+  optional string leftAt = 3;
+  bool muteNotif = 4;
+  int32 role = 5; // 0: Member, 1: Admin, 2: Banned
 }

@@ -78,11 +78,13 @@ func (r *gormRepository) UpdateMessage(ctx context.Context, messageID uint64, co
 }
 
 func (r *gormRepository) DeleteViolation(ctx context.Context, messageID uint64) error {
-	return r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("id = ?", messageID).Update("is_deleted", true).Error
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("id = ?", messageID).Update("deleted_at", now).Error
 }
 
 func (r *gormRepository) DeleteAllMessagesByConversationID(ctx context.Context, conversationID uint64) error {
-	return r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("conversation_id = ?", conversationID).Update("is_deleted", true).Error
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&models.MessageModel{}).Where("conversation_id = ?", conversationID).Update("deleted_at", now).Error
 }
 
 func (r *gormRepository) GetMessageByTypeWithPagination(ctx context.Context, page, size int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error) {

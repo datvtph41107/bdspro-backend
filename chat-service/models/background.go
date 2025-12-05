@@ -23,7 +23,6 @@ type BackgroundImageModel struct {
 	CreatedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP;onupdate:CURRENT_TIMESTAMP"`
 	DeletedAt   *time.Time `gorm:"index" json:"-"`
-	IsDeleted   bool       `gorm:"default:false" json:"is_deleted"`
 }
 
 func (b *BackgroundImageModel) TableName() string {

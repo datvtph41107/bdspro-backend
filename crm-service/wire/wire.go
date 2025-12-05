@@ -42,6 +42,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewBlockRepo,
 	crm_infra_handler.NewBlockService,
 	crm_internal_usecase.NewBlockUsecase,
+	crm_infra_client.NewChatClient,
 	crm_infra_mapper.NewContactMapper,
 	crm_infra_postgre.NewContactRepo,
 	crm_infra_handler.NewContactService,

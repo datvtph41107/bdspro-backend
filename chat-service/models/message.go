@@ -23,7 +23,7 @@ type MessageModel struct {
 	ContentType    ContentTypeEnum         `json:"content_type" gorm:"type:varchar(50)"`
 	FileURL        *string                 `json:"file_url" gorm:"type:varchar(500)"`
 	ForwardFrom    *uint64                 `json:"forward_from"`
-	IsDeleted      bool                    `json:"is_deleted" gorm:"default:false"`
+	DeletedAt      *time.Time              `gorm:"index" json:"-"`
 	CreatedAt      time.Time               `json:"created_at" gorm:"index:idx_conversation_created;default:CURRENT_TIMESTAMP"`
 	Pined          bool                    `json:"pin" gorm:"default:false"`
 	PinnedAt       *time.Time              `json:"pinned_at" gorm:"column:pinned_at"`
