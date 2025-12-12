@@ -87,6 +87,7 @@ func (u *TagUsecase) ListTagsByType(ctx context.Context, req *dto.TagListRequest
 	pagable := &_dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
+		Sort: req.Sort,
 	}
 	return u.TagRepo.ListForUser(ctx, profileID, req.TagType, pagable, strings.TrimSpace(req.Text))
 }
@@ -99,8 +100,9 @@ func (u *TagUsecase) AdminListTags(ctx context.Context, req *dto.AdminTagListReq
 	pagable := &_dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
+		Sort: req.Sort,
 	}
-	return u.TagRepo.ListAdmin(ctx, tagTypes, pagable, strings.TrimSpace(req.Text))
+	return u.TagRepo.ListAdmin(ctx, tagTypes, pagable, strings.TrimSpace(req.Text), req.IsDefault)
 }
 
 // GetProfileTagsByType lấy tags của profile cụ thể theo type (public API, không cần authentication)

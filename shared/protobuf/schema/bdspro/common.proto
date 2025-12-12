@@ -14,6 +14,7 @@ import "bdspro/apartment_attribute.proto";
 import "bdspro/attribute_product.proto";
 import "bdspro/transaction.proto";
 import "shared/common.proto";
+import "shared/v3.proto";
 option go_package = "pb/types/bdspro;bdspropb";
 
 message ArchivedRequest {
@@ -147,7 +148,7 @@ message ProductResponse {
     optional Region district = 40;
     optional uint64 wardId = 41;
     optional Region ward = 42;
-    string address = 43;
+    sharepb.AddressV3Proto address = 43;
     string googleMapLink = 44;
     repeated AttributeProduct attributes = 45;
     repeated MediaItem mediaList = 46;
@@ -167,6 +168,14 @@ message ProductResponse {
     optional uint64 imageId = 60;
     string imageUrl = 61;
     optional double availableArea = 62;
+    optional uint64 projectId = 63;
+    string projectName = 64;
+    // Statistics fields
+    int64 publicListingCount = 65; // Số tin đăng công khai
+    int64 shareCount = 66;         // Số lượt chia sẻ
+    bool hasAsset = 67;            // Có gắn với ít nhất 1 tài sản
+    bool hasInventory = 68;        // Thuộc bảng hàng
+    bool hasDeal = 69;             // Đang ở ít nhất 1 thương vụ
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
@@ -268,6 +277,16 @@ message ItemResponse {
 message AssetItem {
     uint64 id = 1;
     string code = 2;
+    string name = 3;
+    double area = 4;
+    optional uint64 provinceId = 5;
+    string provinceName = 6;
+    optional uint64 wardId = 7;
+    string wardName = 8;
+    string address = 9;
+    double purchasePrice = 10;
+    uint32 legalStatus = 11;
+    uint32 rentStatus = 12;
 }
 
 // PostItem for product detail response  

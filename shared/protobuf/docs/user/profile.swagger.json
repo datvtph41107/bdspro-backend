@@ -106,6 +106,18 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "isDefault",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -591,6 +603,12 @@
           },
           {
             "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sort",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1990,6 +2008,12 @@
         },
         "isActive": {
           "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },

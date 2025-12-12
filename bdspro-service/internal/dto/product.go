@@ -31,11 +31,15 @@ type ProductSearchRequest struct {
 	NumFloors        []uint     `form:"numFloors"`
 	DocTypeIds       []uint64   `form:"docTypeIds"`
 	PropertyTypeIds  []uint64   `form:"propertyTypeIds"`
+	ProjectIds       []uint64   `form:"projectIds"`
 	AmenityIds       []uint64   `form:"amenityIds"`
 	SourceTypeIds    []uint32   `form:"sourceTypeIds"`
 	TransactionTypes []uint32   `form:"transactionTypes"`
 	SaleStatus       []uint32   `form:"saleStatus"`
 	RentStatus       []uint32   `form:"rentStatus"`
+	SaleVisibilities []uint32   `form:"saleVisibilities"`
+	RentVisibilities []uint32   `form:"rentVisibilities"`
+	Visibilities     []uint32   `form:"visibilities"`
 	ProvinceIds      []uint64   `form:"provinceIds"`
 	DistrictIds      []uint64   `form:"districtIds"`
 	WardIds          []uint64   `form:"wardIds"`
@@ -45,6 +49,9 @@ type ProductSearchRequest struct {
 	ParentID         *uint64    `form:"parentId"`
 	Text             string     `form:"text"`
 	Archived         *bool      `form:"archived"`
+
+	ProvinceId *uint64 `form:"provinceId"`
+	WardId     *uint64 `form:"wardId"`
 
 	FromDate *time.Time `form:"fromDate"`
 	ToDate   *time.Time `form:"toDate"`

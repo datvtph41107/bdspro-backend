@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	_utils "common/utils"
 	"strings"
 	"user/enums"
 	"user/internal/dto"
@@ -39,6 +40,7 @@ func (m *TagMapper) TagListRequestToDTO(req *userpb.TagListRequest) *dto.TagList
 		Page:    req.Page,
 		Size:    req.Size,
 		Text:    req.Text,
+		Sort:    req.Sort,
 	}
 }
 
@@ -52,11 +54,18 @@ func (m *TagMapper) AdminTagListRequestToDTO(req *userpb.AdminTagListRequest) *d
 		tagTypes = append(tagTypes, enums.TagType(t))
 	}
 
+	var isDefault *bool
+	if req.IsDefault != nil {
+		isDefault = req.IsDefault
+	}
+
 	return &dto.AdminTagListRequest{
-		TagTypes: tagTypes,
-		Page:     req.Page,
-		Size:     req.Size,
-		Text:     req.Text,
+		TagTypes:  tagTypes,
+		Page:      req.Page,
+		Size:      req.Size,
+		Text:      req.Text,
+		Sort:      req.Sort,
+		IsDefault: isDefault,
 	}
 }
 
@@ -82,6 +91,8 @@ func (m *TagMapper) TagEntityToPb(tag *models.TagEntity) *userpb.TagItem {
 		TagType:   uint32(tag.TagType),
 		IsDefault: tag.IsDefault,
 		IsActive:  tag.IsActive,
+		CreatedAt: _utils.FormatTimeToString(tag.CreatedAt),
+		UpdatedAt: _utils.FormatTimeToString(tag.UpdatedAt),
 	}
 }
 

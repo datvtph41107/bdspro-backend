@@ -704,6 +704,39 @@
         ]
       }
     },
+    "/v2/bdspro/v2/product/link-asset": {
+      "post": {
+        "summary": "API liên kết Product với Asset",
+        "operationId": "ProductService_LinkProductAsset",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbLinkProductAssetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/me": {
       "get": {
         "operationId": "ProductService_ProductMe",
@@ -900,6 +933,72 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "transactionTypes",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "propertyTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sourceTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "visibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "wardIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1167,6 +1266,72 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "transactionTypes",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "propertyTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sourceTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "visibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "wardIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1358,6 +1523,307 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/bdspropbSuggestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/product/summary": {
+      "get": {
+        "operationId": "ProductService_ProductSummary",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbProductSummaryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "propertyTypeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "docTypeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "provinceId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "districtId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "wardId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "transactionType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleStatus",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentStatus",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleVisibility",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentVisibility",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sourceType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "transactionPrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "salePrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentPrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleCommission",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentCommission",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentPaymentCycle",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "transactionTypes",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "propertyTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sourceTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "visibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "wardIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/product/unlink-asset": {
+      "post": {
+        "operationId": "ProductService_UnlinkProductAsset",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbUnlinkProductAssetRequest"
             }
           }
         ],
@@ -1619,6 +2085,74 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/product/{id}/assets": {
+      "get": {
+        "operationId": "ProductService_GetAssetsByProduct",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbProductAssetListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "ids",
@@ -2079,6 +2613,42 @@
         },
         "code": {
           "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
         }
       },
       "title": "AssetItem for product detail response"
@@ -2325,6 +2895,25 @@
           "type": "string"
         }
       }
+    },
+    "bdspropbLinkProductAssetRequest": {
+      "type": "object",
+      "properties": {
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          },
+          "title": "Nhiều sản phẩm"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "1 tài sản"
+        }
+      },
+      "title": "Messages cho Product-Asset linking"
     },
     "bdspropbMediaItem": {
       "type": "object",
@@ -2639,6 +3228,18 @@
         },
         "avatar": {
           "type": "string"
+        }
+      }
+    },
+    "bdspropbProductAssetListResponse": {
+      "type": "object",
+      "properties": {
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -2959,7 +3560,7 @@
           "$ref": "#/definitions/bdspropbRegion"
         },
         "address": {
-          "type": "string"
+          "$ref": "#/definitions/sharepbAddressV3Proto"
         },
         "googleMapLink": {
           "type": "string"
@@ -3036,6 +3637,36 @@
         "availableArea": {
           "type": "number",
           "format": "double"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "projectName": {
+          "type": "string"
+        },
+        "publicListingCount": {
+          "type": "string",
+          "format": "int64",
+          "description": "Số tin đăng công khai",
+          "title": "Statistics fields"
+        },
+        "shareCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "Số lượt chia sẻ"
+        },
+        "hasAsset": {
+          "type": "boolean",
+          "title": "Có gắn với ít nhất 1 tài sản"
+        },
+        "hasInventory": {
+          "type": "boolean",
+          "title": "Thuộc bảng hàng"
+        },
+        "hasDeal": {
+          "type": "boolean",
+          "title": "Đang ở ít nhất 1 thương vụ"
         }
       }
     },
@@ -3282,6 +3913,23 @@
         "imageId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "bdspropbProductSummaryResponse": {
+      "type": "object",
+      "properties": {
+        "totalProducts": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sellingProducts": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalValue": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -3661,6 +4309,19 @@
         }
       }
     },
+    "bdspropbUnlinkProductAssetRequest": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "bdspropbVisibilityRequest": {
       "type": "object",
       "properties": {
@@ -3699,6 +4360,35 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },

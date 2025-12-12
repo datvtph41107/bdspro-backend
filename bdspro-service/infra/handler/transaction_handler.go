@@ -1,26 +1,38 @@
 package handler
 
 import (
+	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
+	"bdspro/internal/usecases"
+	"context"
 	bdspropb "pb/types/bdspro"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type TransactionHandler struct {
 	bdspropb.UnimplementedTransactionServiceServer
 	// TransactionUsecase transaction_usecase.TransactionUsecase
 	// Transformer mapper.TransactionTransformer
-	Validator validator.TransactionValidator
+	Validator             validator.TransactionValidator
+	TransferTaxFeeUsecase *usecases.TransferTaxFeeUsecase
+	LoanPaymentUsecase    *usecases.LoanPaymentUsecase
 }
 
 func NewTransactionHandler(
 	// transactionUsecase transaction_usecase.TransactionUsecase,
 	// transformer mapper.TransactionTransformer,
 	validator validator.TransactionValidator,
+	transferTaxFeeUsecase *usecases.TransferTaxFeeUsecase,
+	loanPaymentUsecase *usecases.LoanPaymentUsecase,
 ) *TransactionHandler {
 	return &TransactionHandler{
 		// TransactionUsecase: transactionUsecase,
 		// Transformer: transformer,
-		Validator: validator,
+		Validator:             validator,
+		TransferTaxFeeUsecase: transferTaxFeeUsecase,
+		LoanPaymentUsecase:    loanPaymentUsecase,
 	}
 }
 
@@ -227,3 +239,64 @@ func NewTransactionHandler(
 
 // 	return h.Transformer.EntityToTransactionTypesResponse(types), nil
 // }
+
+// @Summary Tính thuế và phí chuyển nhượng
+// @Description API tính toán thuế và phí chuyển nhượng bất động sản bao gồm: thuế TNCN (nếu cá nhân), thuế TN doanh nghiệp (nếu doanh nghiệp), lệ phí trước bạ, phí công chứng
+// @Tags Giao dịch
+// @Accept json
+// @Produce json
+// @Param body body bdspropb.CalculateTransferTaxFeeRequest true "Thông tin tính thuế phí"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/calculate-tax-fee [post]
+func (h *TransactionHandler) CalculateTransferTaxFee(ctx context.Context, req *bdspropb.CalculateTransferTaxFeeRequest) (*bdspropb.CalculateTransferTaxFeeResponse, error) {
+	if req.TransferValue <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "Giá trị chuyển nhượng phải lớn hơn 0")
+	}
+
+	// Convert proto request to DTO
+	dtoReq := mapper.MapCalculateTransferTaxFeeRequestToDTO(req)
+
+	// Calculate tax and fee
+	result, err := h.TransferTaxFeeUsecase.CalculateTransferTaxFee(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Convert DTO response to proto
+	return mapper.MapCalculateTransferTaxFeeResponseToProto(result), nil
+}
+
+// @Summary Tính lịch trả nợ vay ngân hàng
+// @Description API tính toán lịch trả nợ vay ngân hàng theo 2 phương thức: dư nợ giảm dần (10) và trả lãi định kỳ/gốc cuối kỳ (20)
+// @Tags Giao dịch
+// @Accept json
+// @Produce json
+// @Param body body bdspropb.CalculateLoanPaymentRequest true "Thông tin tính vay"
+// @Security BearerAuth
+// @Router /v2/bdspro/v2/transaction/calculate-loan-payment [post]
+func (h *TransactionHandler) CalculateLoanPayment(ctx context.Context, req *bdspropb.CalculateLoanPaymentRequest) (*bdspropb.CalculateLoanPaymentResponse, error) {
+	if req.LoanAmount <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "Số tiền vay phải lớn hơn 0")
+	}
+	if req.InterestRate <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "Lãi suất phải lớn hơn 0")
+	}
+	if req.Term <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "Kỳ hạn phải lớn hơn 0")
+	}
+	if req.PaymentMethod != 10 && req.PaymentMethod != 20 {
+		return nil, status.Error(codes.InvalidArgument, "Phương thức trả nợ phải là 10 (dư nợ giảm dần) hoặc 20 (trả lãi định kỳ/gốc cuối kỳ)")
+	}
+
+	// Convert proto request to DTO
+	dtoReq := mapper.MapCalculateLoanPaymentRequestToDTO(req)
+
+	// Calculate loan payment schedule
+	result, err := h.LoanPaymentUsecase.CalculateLoanPayment(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Convert DTO response to proto
+	return mapper.MapCalculateLoanPaymentResponseToProto(result), nil
+}

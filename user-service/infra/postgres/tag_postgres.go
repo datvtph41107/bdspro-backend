@@ -132,7 +132,7 @@ func (r *TagPostgres) ListForUser(ctx context.Context, profileID uint64, tagType
 	return tags, uint32(total), nil
 }
 
-func (r *TagPostgres) ListAdmin(ctx context.Context, tagTypes []enums.TagType, pagable _dto.IPagable, searchText string) ([]models.TagEntity, uint32, error) {
+func (r *TagPostgres) ListAdmin(ctx context.Context, tagTypes []enums.TagType, pagable _dto.IPagable, searchText string, isDefault *bool) ([]models.TagEntity, uint32, error) {
 	var (
 		tags  []models.TagEntity
 		total int64
@@ -151,19 +151,65 @@ func (r *TagPostgres) ListAdmin(ctx context.Context, tagTypes []enums.TagType, p
 		db = db.Where("LOWER(name) LIKE ?", searchTextLower)
 	}
 
+	if isDefault != nil {
+		db = db.Where("is_default = ?", *isDefault)
+	}
+
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
+	}
+
+	// Parse sort string (format: "field,order" e.g., "createdAt,desc" or "updatedAt,asc")
+	orderClause := r.parseSort(pagable)
+	if orderClause == "" {
+		orderClause = "updated_at DESC" // Default sort
 	}
 
 	if err := db.
 		Offset(pagable.GetOffset()).
 		Limit(pagable.GetLimit()).
-		Order("tag_type ASC, name ASC").
+		Order(orderClause).
 		Find(&tags).Error; err != nil {
 		return nil, 0, err
 	}
 
 	return tags, uint32(total), nil
+}
+
+// parseSort parses sort string from format "field,order" to SQL ORDER BY clause
+// Examples: "createdAt,desc" -> "created_at DESC", "updatedAt,asc" -> "updated_at ASC"
+func (r *TagPostgres) parseSort(pagable _dto.IPagable) string {
+	pagableStruct, ok := pagable.(*_dto.Pagable)
+	if !ok || pagableStruct == nil || pagableStruct.Sort == "" {
+		return ""
+	}
+
+	parts := strings.Split(pagableStruct.Sort, ",")
+	if len(parts) != 2 {
+		return ""
+	}
+
+	field := strings.TrimSpace(parts[0])
+	order := strings.TrimSpace(strings.ToUpper(parts[1]))
+
+	// Map field names to database column names
+	fieldMap := map[string]string{
+		"createdAt": "created_at",
+		"updatedAt": "updated_at",
+		"name":      "name",
+		"tagType":   "tag_type",
+	}
+
+	dbField, exists := fieldMap[field]
+	if !exists {
+		return ""
+	}
+
+	if order != "ASC" && order != "DESC" {
+		return ""
+	}
+
+	return dbField + " " + order
 }
 
 func (r *TagPostgres) Update(ctx context.Context, id uint64, tag *models.TagEntity) error {

@@ -16,6 +16,7 @@ import (
 	"tqd/initial"
 	"tqd/wire"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
@@ -79,19 +80,29 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 	router := gin.Default()
 
 	// Add CORS middleware
-	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:5173")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With")
-		c.Header("Access-Control-Allow-Credentials", "true")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	})
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://localhost:8000",
+			"http://localhost:5173",
+			"http://localhost:5174",
+			"http://14.225.210.29:8000",
+			"http://14.225.205.222:8000",
+			"http://14.225.205.222:3107",
+			"http://14.225.205.222:3108",
+			"http://103.145.63.185:3107",
+			"http://localhost:5173",
+			"https://admin.bdspro.com",
+			"https://bdspro.com",
+			"https://app.bdspro.com",
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
+		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Setup routes
 	setupHTTPRoutes(router, app)

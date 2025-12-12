@@ -192,7 +192,7 @@ func (h *POIHTTPHandler) GetPOIByCode(c *gin.Context) {
 // @Tags POI
 // @Param page query int false "Page number" default(1)
 // @Param size query int false "Page size" default(20)
-// @Param search query string false "Search term"
+// @Param text query string false "Search by name or address or code"
 // @Param categoryId query int false "Category ID"
 // @Param isActive query bool false "Filter by active status"
 // @Param minLat query float64 false "Minimum latitude"

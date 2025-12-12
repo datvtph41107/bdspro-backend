@@ -13,6 +13,12 @@ type HouseInfo struct {
 	Furniture   *string `gorm:"type:varchar(50)" json:"furniture,omitempty"`   // Nội thất: "full", "partial", "none"
 	Orientation *string `gorm:"type:varchar(50)" json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
 	NumToilet   *int32  `json:"numToilet,omitempty"`
+	RoadType    *uint32 `json:"roadType,omitempty"`
+
+	FrontWidth *float32 `json:"frontWidth,omitempty"` // mặt tiền ? m
+	BackWidth  *float32 `json:"backWidth,omitempty"`  // hậu ? m
+	Width      *float32 `json:"width,omitempty"`      // rộng ? m
+	Height     *float32 `json:"height,omitempty"`     // dài ? m
 }
 
 // GORM table name override

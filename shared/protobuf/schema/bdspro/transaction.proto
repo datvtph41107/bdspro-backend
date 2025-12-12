@@ -56,6 +56,20 @@ service TransactionService {
       get: "/v2/bdspro/v2/transaction/types"
     };
   }
+
+  rpc CalculateTransferTaxFee(CalculateTransferTaxFeeRequest) returns (CalculateTransferTaxFeeResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/calculate-tax-fee"
+      body: "*"
+    };
+  }
+
+  rpc CalculateLoanPayment(CalculateLoanPaymentRequest) returns (CalculateLoanPaymentResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/calculate-loan-payment"
+      body: "*"
+    };
+  }
 }
 
 message Transaction {
@@ -154,4 +168,61 @@ message GetTransactionTypesRequest {}
 
 message GetTransactionTypesResponse {
   repeated string types = 1;
+}
+
+message CalculateTransferTaxFeeRequest {
+  double transferValue = 1; // Giá trị chuyển nhượng (VND)
+  bool isBusiness = 2; // true nếu là doanh nghiệp, false nếu là cá nhân
+  optional double originalPrice = 3; // Giá gốc mua vào (để tính thuế TNCN nếu có)
+  optional uint64 provinceId = 4; // ID tỉnh/thành phố (để tính lệ phí trước bạ theo từng địa phương)
+}
+
+message CalculateTransferTaxFeeResponse {
+  double transferValue = 1; // Giá trị chuyển nhượng
+  double personalIncomeTax = 2; // Thuế thu nhập cá nhân (TNCN) - 2% nếu là cá nhân
+  double corporateTax = 3; // Thuế thu nhập doanh nghiệp - 2% nếu là doanh nghiệp
+  double registrationFee = 4; // Lệ phí trước bạ - 0.5%
+  double notarizationFee = 5; // Phí công chứng
+  double dossierReviewFee = 6; // Phí thẩm định hồ sơ
+  double cadastralFee = 7; // Lệ phí địa chính
+  double certificateFee = 8; // Lệ phí cấp GCN (Giấy chứng nhận)
+  double surveyFee = 9; // Phí đo vẽ/địa chính
+  double totalTaxFee = 10; // Tổng thuế và phí
+  double netAmount = 11; // Số tiền thực nhận sau khi trừ thuế phí
+  TaxFeeBreakdown breakdown = 12; // Chi tiết từng khoản
+}
+
+message TaxFeeBreakdown {
+  string personalIncomeTaxNote = 1; // Ghi chú thuế TNCN
+  string corporateTaxNote = 2; // Ghi chú thuế doanh nghiệp
+  string registrationFeeNote = 3; // Ghi chú lệ phí trước bạ
+  string notarizationFeeNote = 4; // Ghi chú phí công chứng
+  string dossierReviewFeeNote = 5; // Ghi chú phí thẩm định hồ sơ
+  string cadastralFeeNote = 6; // Ghi chú lệ phí địa chính
+  string certificateFeeNote = 7; // Ghi chú lệ phí cấp GCN
+  string surveyFeeNote = 8; // Ghi chú phí đo vẽ/địa chính
+}
+
+message CalculateLoanPaymentRequest {
+  double interestRate = 1; // Lãi suất năm đầu (%/năm) - thường là lãi suất ưu đãi
+  double propertyValue = 2; // Giá trị tài sản (VND)
+  double loanAmount = 3; // Số tiền vay (VND)
+  uint32 term = 4; // Kỳ hạn (tháng)
+  uint32 paymentMethod = 5; // Phương thức trả nợ: 10=dư nợ giảm dần, 20=trả lãi định kỳ/gốc cuối kỳ
+  optional double floatingInterestRate = 6; // Lãi suất thả nổi từ năm 2 (%/năm) - thường 10-11%
+}
+
+message CalculateLoanPaymentResponse {
+  repeated LoanPaymentScheduleItem schedule = 1; // Lịch trả nợ theo tháng
+  double totalInterest = 2; // Tổng tiền lãi
+  double totalPayment = 3; // Tổng tiền trả
+}
+
+message LoanPaymentScheduleItem {
+  uint32 month = 1; // Tháng
+  double remainingPrincipal = 2; // Dư nợ còn lại
+  double principalPayment = 3; // Tiền gốc trả trong tháng
+  double interestPayment = 4; // Tiền lãi trả trong tháng
+  double totalPayment = 5; // Tổng trả trong tháng
+  double interestRate = 6; // Lãi suất áp dụng cho tháng này (%/năm)
 } 

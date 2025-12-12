@@ -174,8 +174,9 @@ mkdir -p ${REMOTE_DIR}/config
 scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
-scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
-scp ../config/production/${payload_build}.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/product.yml
+# scp Dockerfile.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+scp ../shared/code/Dockerfile.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+scp ../config/production/${payload_build}.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/production.yml
 
 # rsync -avz --delete ./Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}${service_path}
 
@@ -201,9 +202,9 @@ fi
 if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
-if [ "$1" = "gateway" ]; then
-  scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
+# if [ "$1" = "gateway" ]; then
+#   scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+# fi
 if [ "$1" = "file" ]; then
   scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi

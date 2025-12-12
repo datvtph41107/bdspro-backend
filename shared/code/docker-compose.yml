@@ -224,7 +224,7 @@ services:
     container_name: tqd
     command: ["./main", "http"]
     ports:
-      - "8030:8030"
+      - "8030:8230"
     networks:
       - internal
 

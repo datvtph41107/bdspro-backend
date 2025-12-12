@@ -13,6 +13,7 @@ import (
 	"context"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+	"strings"
 )
 
 type ProductMapper struct {
@@ -58,6 +59,52 @@ func NewProductMapper(postMapper *PostMapper,
 	}
 	postMapper.ProductMapper = result
 	return result
+}
+
+// cleanAddressUnit loại bỏ các từ tiền tố địa chỉ như "Thành phố", "Tỉnh", "Phường", "Thị xã", "Huyện"
+func cleanAddressUnit(input string) string {
+	if input == "" {
+		return input
+	}
+
+	// Danh sách các tiền tố cần loại bỏ (lowercase để so sánh)
+	prefixes := []string{
+		"thành phố ",
+		"tỉnh ",
+		"phường ",
+		"xã ",
+		"thị xã ",
+		"thị trấn ",
+		"huyện ",
+		"quận ",
+		"tp. ",
+		"tp ",
+		"tt. ",
+		"tt ",
+	}
+
+	// Chuyển sang lowercase để so sánh
+	lowerInput := strings.ToLower(input)
+
+	// Kiểm tra và loại bỏ tiền tố
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(lowerInput, prefix) {
+			// Lấy phần sau tiền tố từ chuỗi gốc (giữ nguyên chữ hoa/thường gốc)
+			result := input[len(prefix):]
+			return strings.TrimSpace(result)
+		}
+	}
+
+	return strings.TrimSpace(input)
+}
+
+// cleanAddressUnitPtr loại bỏ các từ tiền tố địa chỉ cho pointer string
+func cleanAddressUnitPtr(input *string) *string {
+	if input == nil || *input == "" {
+		return input
+	}
+	result := cleanAddressUnit(*input)
+	return &result
 }
 
 // func (m *ProductMapper) MapProductDetailPb(product *domain.Product) *bdspropb.ProductResponse {
@@ -212,8 +259,14 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		OwnerType:       uint32(product.OwnerOf),
 		ProvinceId:      product.ProvinceID,
 		// DistrictId:      product.DistrictID,
-		WardId:        product.WardID,
-		Address:       product.Address,
+		WardId: product.WardID,
+		Address: &sharepb.AddressV3Proto{
+			Detail:       product.Address,
+			ProvinceId:   product.ProvinceID,
+			ProvinceName: cleanAddressUnit(product.ProvinceName),
+			WardId:       product.WardID,
+			WardName:     cleanAddressUnit(product.WardName),
+		},
 		GoogleMapLink: product.GoogleMapLink,
 		// Attributes:    product.Attributes,
 		// MediaList:     product.MediaList,
@@ -285,13 +338,13 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 	}
 
 	// if product.District != nil {
-	// 	result.DistrictName = product.District.Name
+	// 	result.DistrictName = cleanAddressUnit(product.District.Name)
 	// }
 	if product.Province != nil {
-		result.ProvinceName = product.Province.Name
+		result.ProvinceName = cleanAddressUnit(product.Province.Name)
 	}
 	if product.Ward != nil {
-		result.WardName = product.Ward.Name
+		result.WardName = cleanAddressUnit(product.Ward.Name)
 	}
 
 	if len(product.MediaList) > 0 {
@@ -336,34 +389,80 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		}
 	}
 
-	// Add assets list - get asset by AssetId and also by ProductId
+	// Add assets list - lấy tất cả assets liên kết với product qua bảng product_asset
 	assets := []*bdspropb.AssetItem{}
+	assetMap := make(map[uint64]bool) // Để tránh duplicate
 
-	// Get asset by AssetId if exists
-	if product.AssetId != nil {
-		assetCode := m.CodeDataUsecase.GetAssetCode(ctx, *product.AssetId)
-		assets = append(assets, &bdspropb.AssetItem{
-			Id:   *product.AssetId,
-			Code: assetCode,
-		})
+	// Lấy assets liên kết qua bảng product_asset
+	if product.ID != 0 && m.AssetRepo != nil {
+		linkedAssets, err := m.AssetRepo.GetAssetsByProductID(ctx, product.ID)
+		if err == nil && len(linkedAssets) > 0 {
+			for _, asset := range linkedAssets {
+				if !assetMap[asset.ID] {
+					assetCode := m.CodeDataUsecase.GetAssetCode(ctx, asset.ID)
+					assetItem := &bdspropb.AssetItem{
+						Id:            asset.ID,
+						Code:          assetCode,
+						Name:          asset.Name,
+						Area:          asset.Area,
+						Address:       asset.Address,
+						PurchasePrice: asset.PurchasePrice,
+						LegalStatus:   uint32(asset.LegalStatus),
+						RentStatus:    uint32(asset.RentStatus),
+					}
+					if asset.ProvinceID != nil {
+						assetItem.ProvinceId = asset.ProvinceID
+						if asset.Province != nil {
+							assetItem.ProvinceName = asset.Province.Name
+						}
+					}
+					if asset.WardID != nil {
+						assetItem.WardId = asset.WardID
+						if asset.Ward != nil {
+							assetItem.WardName = asset.Ward.Name
+						}
+					}
+					assets = append(assets, assetItem)
+					assetMap[asset.ID] = true
+				}
+			}
+		}
 	}
 
-	// Get asset by ProductId if exists and different from AssetId
-	if product.ID != 0 && m.AssetRepo != nil {
-		if asset, err := m.AssetRepo.GetAssetByProductID(ctx, &product.ID); err == nil && asset != nil {
-			// Check if this asset is different from the one we already added
-			assetAlreadyAdded := false
-			if product.AssetId != nil && asset.ID == *product.AssetId {
-				assetAlreadyAdded = true
+	// Nếu có AssetId trực tiếp (không qua product_asset) và chưa được thêm
+	if product.AssetId != nil && !assetMap[*product.AssetId] {
+		assetCode := m.CodeDataUsecase.GetAssetCode(ctx, *product.AssetId)
+		// Lấy thông tin asset nếu có
+		if asset, err := m.AssetRepo.GetByID(*product.AssetId); err == nil && asset != nil {
+			assetItem := &bdspropb.AssetItem{
+				Id:            asset.ID,
+				Code:          assetCode,
+				Name:          asset.Name,
+				Area:          asset.Area,
+				Address:       asset.Address,
+				PurchasePrice: asset.PurchasePrice,
+				LegalStatus:   uint32(asset.LegalStatus),
+				RentStatus:    uint32(asset.RentStatus),
 			}
-
-			if !assetAlreadyAdded {
-				assetCode := m.CodeDataUsecase.GetAssetCode(ctx, asset.ID)
-				assets = append(assets, &bdspropb.AssetItem{
-					Id:   asset.ID,
-					Code: assetCode,
-				})
+			if asset.ProvinceID != nil {
+				assetItem.ProvinceId = asset.ProvinceID
+				if asset.Province != nil {
+					assetItem.ProvinceName = asset.Province.Name
+				}
 			}
+			if asset.WardID != nil {
+				assetItem.WardId = asset.WardID
+				if asset.Ward != nil {
+					assetItem.WardName = asset.Ward.Name
+				}
+			}
+			assets = append(assets, assetItem)
+		} else {
+			// Nếu không lấy được thông tin, chỉ trả về id và code
+			assets = append(assets, &bdspropb.AssetItem{
+				Id:   *product.AssetId,
+				Code: assetCode,
+			})
 		}
 	}
 
@@ -387,10 +486,16 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 
 func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductResponse {
 	result := &bdspropb.ProductResponse{
-		Id:         product.ID,
-		Name:       product.Name,
-		Area:       product.Area,
-		Address:    product.Address,
+		Id:   product.ID,
+		Name: product.Name,
+		Area: product.Area,
+		Address: &sharepb.AddressV3Proto{
+			Detail:       product.Address,
+			ProvinceId:   product.ProvinceID,
+			ProvinceName: cleanAddressUnit(product.ProvinceName),
+			WardId:       product.WardID,
+			WardName:     cleanAddressUnit(product.WardName),
+		},
 		SaleStatus: uint32(product.SaleStatus),
 		RentStatus: uint32(product.RentStatus),
 		AssetId:    product.AssetId,
@@ -412,15 +517,15 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	}
 
 	// if product.District != nil {
-	// 	result.DistrictName = product.District.Name
+	// 	result.DistrictName = cleanAddressUnit(product.District.Name)
 	// 	result.DistrictId = &product.District.ID
 	// }
 	if product.Province != nil {
-		result.ProvinceName = product.Province.Name
+		result.ProvinceName = cleanAddressUnit(product.Province.Name)
 		result.ProvinceId = &product.Province.ID
 	}
 	if product.Ward != nil {
-		result.WardName = product.Ward.Name
+		result.WardName = cleanAddressUnit(product.Ward.Name)
 		result.WardId = &product.Ward.ID
 	}
 
@@ -458,30 +563,61 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	// 	result.RentTransaction = m.TransactionMapper.EntityToTransactionResponse(product.RentTransaction)
 	// }
 
+	// Statistics fields
+	result.PublicListingCount = product.PublicListingCount
+	result.ShareCount = product.ShareCount
+	result.HasAsset = product.HasAsset
+	result.HasInventory = product.HasInventory
+	result.HasDeal = product.HasDeal
+
 	return result
 }
 
 func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListResponse) []*bdspropb.ProductResponse {
 	productList := make([]*bdspropb.ProductResponse, len(products))
 	for i, product := range products {
+		// Clean address data nếu có
+		var address *sharepb.AddressV3Proto
+		if product.Address != nil {
+			address = &sharepb.AddressV3Proto{
+				Detail:       product.Address.Detail,
+				ProvinceId:   product.Address.ProvinceId,
+				ProvinceName: cleanAddressUnit(product.Address.ProvinceName),
+				WardId:       product.Address.WardId,
+				WardName:     cleanAddressUnit(product.Address.WardName),
+			}
+		}
+
+		// Thêm numBedroom và numBathroom vào HouseInfo nếu có
+		var houseInfo *bdspropb.HouseInfo
+		if product.NumBedroom != nil || product.NumBathroom != nil {
+			houseInfo = &bdspropb.HouseInfo{
+				NumBedroom:  product.NumBedroom,
+				NumBathroom: product.NumBathroom,
+			}
+		}
+
 		productList[i] = &bdspropb.ProductResponse{
-			Id:             product.ID,
-			Name:           product.Name,
-			Code:           product.Code,
-			Area:           product.Area,
-			AvailableArea:  &product.AvailableArea,
-			PropertyTypeId: &product.PropertyTypeId,
-			DocTypeId:      &product.DocTypeId,
-			// ProjectId:       product.ProjectId,
+			Id:              product.ID,
+			Name:            product.Name,
+			Code:            product.Code,
+			Area:            product.Area,
+			AvailableArea:   &product.AvailableArea,
+			PropertyTypeId:  &product.PropertyTypeId,
+			DocTypeId:       &product.DocTypeId,
+			ProjectId:       &product.ProjectId,
+			ProjectName:     product.ProjectName,
 			ProvinceId:      &product.ProvinceId,
-			ProvinceName:    product.ProvinceName,
+			ProvinceName:    cleanAddressUnit(product.ProvinceName),
 			WardId:          &product.WardId,
-			WardName:        product.WardName,
+			WardName:        cleanAddressUnit(product.WardName),
 			TransactionType: product.TransactionType,
 			Price: &bdspropb.ProductPrice{
 				SalePrice: &product.PriceSalePrice,
 				RentPrice: &product.PriceRentPrice,
 			},
+			Address:        address,
+			HouseInfo:      houseInfo,
 			ImageId:        product.ImageID,
 			ImageUrl:       product.ImageURL,
 			SourceType:     product.SourceType,
@@ -489,6 +625,12 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			RentStatus:     product.RentStatus,
 			SaleVisibility: product.SaleVisibility,
 			RentVisibility: product.RentVisibility,
+			// Statistics fields
+			PublicListingCount: product.PublicListingCount,
+			ShareCount:         product.ShareCount,
+			HasAsset:           product.HasAsset,
+			HasInventory:       product.HasInventory,
+			HasDeal:            product.HasDeal,
 		}
 	}
 	return productList
@@ -520,7 +662,7 @@ func MapProductAttachmentPbList(ctx context.Context, codeDataUsecase *_usecase.C
 		if product.Price != nil {
 			productList[i].Price = *product.Price.SalePrice
 		}
-		if product.MediaList != nil && len(product.MediaList) > 0 {
+		if len(product.MediaList) > 0 {
 			productList[i].Image = product.MediaList[0].MediaURL
 		}
 	}
@@ -686,9 +828,9 @@ func (m *ProductMapper) MapProductMarketToPb(ctx context.Context, product *domai
 		// MediaUrls:          product.MediaList,
 		// MediaTypes:         product.MediaList,
 		// MainImage:          product.MediaList[0].MediaURL,
-		ProvinceName: product.ProvinceName,
-		// DistrictName:     product.DistrictName,
-		WardName:         product.WardName,
+		ProvinceName: cleanAddressUnitPtr(product.ProvinceName),
+		// DistrictName:     cleanAddressUnitPtr(product.DistrictName),
+		WardName:         cleanAddressUnitPtr(product.WardName),
 		DocTypeName:      product.DocTypeName,
 		PropertyTypeName: product.PropertyTypeName,
 		SalePrice:        product.SalePrice,
@@ -924,12 +1066,94 @@ func (m *ProductMapper) PrivateDataToDomain(req *bdspropb.ProductPrivate) *domai
 // 		)
 
 func (m *ProductMapper) PbSearchRequestToDTO(req *bdspropb.ProductSearch) dto.ProductSearchRequest {
-	return dto.ProductSearchRequest{
+	result := dto.ProductSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
+			Sort: req.Sort,
 		},
+		Text:       req.Text,
+		ParentID:   req.ParentId,
+		Archived:   req.Archived,
+		ProvinceId: req.ProvinceId,
+		WardId:     req.WardId,
 	}
+
+	// Parse string fields thành arrays (hỗ trợ query params dạng "1,2,3")
+	if req.TransactionTypes != "" {
+		int32Array := _utils.ParseInt32Array(req.TransactionTypes)
+		result.TransactionTypes = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.TransactionTypes[i] = uint32(v)
+		}
+	}
+	if req.PropertyTypeIds != "" {
+		result.PropertyTypeIds = _utils.ParseUint64Array(req.PropertyTypeIds)
+	}
+	if req.ProjectIds != "" {
+		result.ProjectIds = _utils.ParseUint64Array(req.ProjectIds)
+	}
+	if req.SaleStatuses != "" {
+		int32Array := _utils.ParseInt32Array(req.SaleStatuses)
+		result.SaleStatus = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.SaleStatus[i] = uint32(v)
+		}
+	}
+	if req.RentStatuses != "" {
+		int32Array := _utils.ParseInt32Array(req.RentStatuses)
+		result.RentStatus = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.RentStatus[i] = uint32(v)
+		}
+	}
+	if req.SaleVisibilities != "" {
+		int32Array := _utils.ParseInt32Array(req.SaleVisibilities)
+		result.SaleVisibilities = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.SaleVisibilities[i] = uint32(v)
+		}
+	}
+	if req.RentVisibilities != "" {
+		int32Array := _utils.ParseInt32Array(req.RentVisibilities)
+		result.RentVisibilities = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.RentVisibilities[i] = uint32(v)
+		}
+	}
+	if req.SourceTypeIds != "" {
+		int32Array := _utils.ParseInt32Array(req.SourceTypeIds)
+		result.SourceTypeIds = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.SourceTypeIds[i] = uint32(v)
+		}
+	}
+	if req.Visibilities != "" {
+		int32Array := _utils.ParseInt32Array(req.Visibilities)
+		result.Visibilities = make([]uint32, len(int32Array))
+		for i, v := range int32Array {
+			result.Visibilities[i] = uint32(v)
+		}
+	}
+	if req.ProvinceIds != "" {
+		result.ProvinceIds = _utils.ParseUint64Array(req.ProvinceIds)
+	}
+	if req.WardIds != "" {
+		result.WardIds = _utils.ParseUint64Array(req.WardIds)
+	}
+
+	// Map single fields as arrays nếu có giá trị
+	if req.PropertyTypeId > 0 {
+		result.PropertyTypeIds = append(result.PropertyTypeIds, req.PropertyTypeId)
+	}
+	if req.ProjectId > 0 {
+		result.ProjectIds = append(result.ProjectIds, req.ProjectId)
+	}
+	if req.TransactionType > 0 {
+		result.TransactionTypes = append(result.TransactionTypes, uint32(req.TransactionType))
+	}
+
+	return result
 }
 
 func (m *ProductMapper) MapAdminProductPbList(ctx context.Context, products []domain.Product) []*bdspropb.AdminProductItem {
@@ -958,9 +1182,9 @@ func (m *ProductMapper) MapAdminProductPb(ctx context.Context, product *domain.P
 		Name:            product.Name,
 		Area:            product.Area,
 		TransactionType: uint32(product.TransactionType),
-		ProvinceName:    product.ProvinceName,
-		// DistrictName:     product.DistrictName,
-		WardName:         product.WardName,
+		ProvinceName:    cleanAddressUnit(product.ProvinceName),
+		// DistrictName:     cleanAddressUnit(product.DistrictName),
+		WardName:         cleanAddressUnit(product.WardName),
 		SalePrice:        m.GetSalePrice(product.Price),
 		RentPrice:        m.GetRentPrice(product.Price),
 		RentStatus:       uint32(product.RentStatus),
@@ -1073,7 +1297,13 @@ func (m *ProductMapper) MapTotalSearchParserToResponse(parser *dto.TotalSearchPa
 	}
 
 	if parser.Address != nil {
-		response.Address = *parser.Address
+		response.Address = &sharepb.AddressV3Proto{
+			Detail:       *parser.Address,
+			ProvinceId:   &parser.Province.ID,
+			ProvinceName: cleanAddressUnit(parser.Province.Name),
+			WardId:       &parser.Ward.ID,
+			WardName:     cleanAddressUnit(parser.Ward.Name),
+		}
 	}
 
 	// Map regions

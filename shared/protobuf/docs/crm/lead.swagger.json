@@ -1001,7 +1001,7 @@
           "$ref": "#/definitions/bdspropbRegion"
         },
         "address": {
-          "type": "string"
+          "$ref": "#/definitions/sharepbAddressV3Proto"
         },
         "googleMapLink": {
           "type": "string"
@@ -1078,6 +1078,13 @@
         "availableArea": {
           "type": "number",
           "format": "double"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "projectName": {
+          "type": "string"
         }
       }
     },
@@ -2058,6 +2065,35 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },

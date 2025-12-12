@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
+	sharepb "pb/types/shared"
 )
 
 // type MediaItem struct {
@@ -259,6 +260,7 @@ type ProductListResponse struct {
 	PropertyTypeId  uint64              `gorm:"column:property_type_id" json:"propertyTypeId"`
 	DocTypeId       uint64              `gorm:"column:doc_type_id" json:"docTypeId"`
 	ProjectId       uint64              `gorm:"column:project_id" json:"projectId"`
+	ProjectName     string              `gorm:"column:project_name" json:"projectName"`
 	ProvinceId      uint64              `gorm:"column:province_id" json:"provinceId"`
 	ProvinceName    string              `gorm:"column:province_name" json:"provinceName"`
 	WardId          uint64              `gorm:"column:ward_id" json:"wardId"`
@@ -271,6 +273,14 @@ type ProductListResponse struct {
 	SourceType      uint32              `gorm:"column:source_type" json:"sourceType"`
 	Price           domain.ProductPrice `gorm:"-" json:"price"`
 
+	NumBedroom  *int32                  `gorm:"column:num_bedroom" json:"numBedroom"`
+	NumBathroom *int32                  `gorm:"column:num_bathroom" json:"numBathroom"`
+	Address     *sharepb.AddressV3Proto `gorm:"-" json:"address"`
+	// Internal fields for address mapping
+	AddressDetail string  `gorm:"column:address" json:"-"`
+	DistrictID    *uint64 `gorm:"column:district_id" json:"-"`
+	DistrictName  string  `gorm:"column:district_name" json:"-"`
+
 	PriceID             uint64  `gorm:"column:price_id" json:"-"`
 	PriceCurrency       string  `gorm:"column:price_currency" json:"-"`
 	PriceSalePrice      float64 `gorm:"column:price_sale_price" json:"-"`
@@ -281,4 +291,17 @@ type ProductListResponse struct {
 	PriceRentCommission float64 `gorm:"column:price_rent_commission" json:"-"`
 	PriceRentCommType   uint32  `gorm:"column:price_rent_commission_type" json:"-"`
 	PriceRentPayCycle   uint32  `gorm:"column:price_rent_payment_cycle" json:"-"`
+
+	// Statistics fields
+	PublicListingCount int64 `gorm:"-" json:"publicListingCount,omitempty"` // Số tin đăng công khai
+	ShareCount         int64 `gorm:"-" json:"shareCount,omitempty"`         // Số lượt chia sẻ
+	HasAsset           bool  `gorm:"-" json:"hasAsset,omitempty"`           // Có gắn với ít nhất 1 tài sản
+	HasInventory       bool  `gorm:"-" json:"hasInventory,omitempty"`       // Thuộc bảng hàng
+	HasDeal            bool  `gorm:"-" json:"hasDeal,omitempty"`            // Đang ở ít nhất 1 thương vụ
+}
+
+type ProductSummaryDTO struct {
+	TotalProducts   int64   `json:"totalProducts"`
+	SellingProducts int64   `json:"sellingProducts"`
+	TotalValue      float64 `json:"totalValue"`
 }

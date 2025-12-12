@@ -20,7 +20,7 @@ type IPOIRepo interface {
 
 type ListPOIsRequest struct {
 	_dto.Pagable
-	Search     string
+	Text       string
 	CategoryID *uint64
 	IsActive   *bool
 	MinLat     *float64

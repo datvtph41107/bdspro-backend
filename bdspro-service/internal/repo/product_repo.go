@@ -97,4 +97,7 @@ type ProductRepo interface {
 
 	// Lấy ngẫu nhiên 5 sản phẩm
 	GetRandomProducts(ctx context.Context, limit int) ([]domain.Product, error)
+
+	// Lấy thống kê tổng hợp sản phẩm của user
+	GetProductSummary(ctx context.Context, userID uint64, searchRequest dto.ProductSearchRequest) (*dto.ProductSummaryDTO, error)
 }

@@ -7,6 +7,7 @@ import (
 	"common/case/crud3"
 	_utils "common/utils"
 	"context"
+	sharepb "pb/types/shared"
 	"strings"
 
 	"github.com/lib/pq"
@@ -34,6 +35,30 @@ func NewGormUserProductRepo(db *gorm.DB,
 		ProductAccess:  ProductAccess,
 		ProductPrivate: ProductPrivate,
 		// TransactionRepo: TransactionRepo,
+	}
+}
+
+// parseSortParam chuyển đổi sort parameter sang ORDER BY clause
+// Hỗ trợ: updatedAt,desc | price,desc | price,asc | area,desc | area,asc
+func parseSortParam(sort string) string {
+	if sort == "" {
+		return "products.updated_at DESC"
+	}
+
+	switch sort {
+	case "updatedAt,desc":
+		return "products.updated_at DESC"
+	case "price,desc":
+		return "pp.sale_price DESC NULLS LAST"
+	case "price,asc":
+		return "pp.sale_price ASC NULLS LAST"
+	case "area,desc":
+		return "products.area DESC"
+	case "area,asc":
+		return "products.area ASC"
+	default:
+		// Default fallback
+		return "products.updated_at DESC"
 	}
 }
 
@@ -83,6 +108,7 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"asset_id":         entity.AssetId,
 		"property_type_id": entity.PropertyTypeId,
 		"doc_type_id":      entity.DocTypeId,
+		"project_id":       entity.ProjectID,
 		"visibility":       entity.Visibility,
 		"name":             entity.Name,
 		"code":             entity.Code,
@@ -321,9 +347,29 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearch
 		query = query.Where("products.rent_status IN (?)", dto.RentStatus)
 	}
 
+	// Search theo sale visibility
+	if len(dto.SaleVisibilities) > 0 {
+		query = query.Where("products.sale_visibility IN (?)", dto.SaleVisibilities)
+	}
+
+	// Search theo rent visibility
+	if len(dto.RentVisibilities) > 0 {
+		query = query.Where("products.rent_visibility IN (?)", dto.RentVisibilities)
+	}
+
+	// Search theo visibilities (áp dụng cho cả sale_visibility và rent_visibility)
+	if len(dto.Visibilities) > 0 {
+		query = query.Where("(products.sale_visibility IN (?) OR products.rent_visibility IN (?))", dto.Visibilities, dto.Visibilities)
+	}
+
 	// Search theo property type
 	if dto.PropertyTypeIds != nil {
 		query = query.Where("products.property_type_id IN (?)", dto.PropertyTypeIds)
+	}
+
+	// Search theo project
+	if len(dto.ProjectIds) > 0 {
+		query = query.Where("products.project_id IN (?)", dto.ProjectIds)
 	}
 
 	// Search theo province
@@ -774,7 +820,7 @@ func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetI
 		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
 					FROM products WHERE deleted_at is null GROUP BY parent_id) 
 					AS child ON products.id = child.parent_id`).
-
+		Joins(`LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL`).
 		// Where("pa.user_id = ?", profileId).
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
 			return db.Order("product_price.created_at asc")
@@ -789,8 +835,9 @@ func (r *GormUserProductRepo) SearchByProductAccess(ctx context.Context, targetI
 		Where("pa.deleted_at is NULL and pa.target_id is not null")
 
 	var results []domain.Product
+	orderBy := parseSortParam(dto.Sort)
 	if err := query.
-		Order("created_at desc").
+		Order(orderBy).
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Find(&results).Error; err != nil {
@@ -835,6 +882,7 @@ func (r *GormUserProductRepo) GetGroupProducts(ctx context.Context, req *dto.Gro
 		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
 					FROM products WHERE deleted_at is null GROUP BY parent_id) 
 					AS child ON products.id = child.parent_id`).
+		Joins(`LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL`).
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
 			return db.Order("product_price.created_at asc")
 		}).
@@ -931,6 +979,7 @@ func (r *GormUserProductRepo) GetUserProducts(ctx context.Context, req *dto.User
 		Joins(`LEFT JOIN (SELECT parent_id, SUM(area) AS total_area 
 					FROM products WHERE deleted_at is null GROUP BY parent_id) 
 					AS child ON products.id = child.parent_id`).
+		Joins(`LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL`).
 		Preload("Price", func(db *gorm.DB) *gorm.DB {
 			return db.Order("product_price.created_at asc")
 		}).
@@ -1007,10 +1056,11 @@ func (r *GormUserProductRepo) GetUserProducts(ctx context.Context, req *dto.User
 		return nil, 0, err
 	}
 
-	// Get paginated results
+	// Get paginated results với sort
 	var products []domain.Product
+	orderBy := parseSortParam(req.Sort)
 	if err := query.
-		Order("products.created_at desc").
+		Order(orderBy).
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&products).Error; err != nil {
@@ -1052,13 +1102,21 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       products.area - COALESCE(child.total_area, 0) AS available_area,
 		       COALESCE(products.property_type_id, 0) AS property_type_id,
 		       COALESCE(products.doc_type_id, 0) AS doc_type_id,
+		       COALESCE(products.project_id, 0) AS project_id,
+		       COALESCE(proj.name, '') AS project_name,
 		       COALESCE(products.province_id, 0) AS province_id,
+		       COALESCE(prov.name, '') AS province_name,
+		       COALESCE(products.ward_id, 0) AS ward_id,
+		       COALESCE(ward.name, '') AS ward_name,
+		       products.address,
 		       products.transaction_type,
 		       products.sale_status,
 		       products.rent_status,
 		       products.sale_visibility,
 		       products.rent_visibility,
 		       products.source_type,
+		       hi.num_bedroom,
+		       hi.num_bathroom,
 		       COALESCE(pp.id, 0) AS price_id,
 		       COALESCE(pp.currency, '') AS price_currency,
 		       COALESCE(pp.sale_price, 0) AS price_sale_price,
@@ -1078,6 +1136,10 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			GROUP BY parent_id
 		) AS child ON products.id = child.parent_id
 		LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL
+		LEFT JOIN house_info hi ON products.id = hi.product_id AND hi.deleted_at IS NULL
+		LEFT JOIN projects proj ON products.project_id = proj.id AND proj.deleted_at IS NULL
+		LEFT JOIN province_v2 prov ON products.province_id = prov.id AND prov.deleted_at IS NULL
+		LEFT JOIN ward_v2 ward ON products.ward_id = ward.id AND ward.deleted_at IS NULL
 		LEFT JOIN LATERAL (
 			SELECT media_url 
 			FROM product_media 
@@ -1122,8 +1184,9 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		baseSQL += " AND " + strings.Join(whereClauses, " AND ")
 	}
 
-	// Add ORDER BY, LIMIT, OFFSET
-	baseSQL += " ORDER BY products.updated_at DESC LIMIT ? OFFSET ?"
+	// Add ORDER BY với sort parameter
+	orderBy := parseSortParam(payload.Sort)
+	baseSQL += " ORDER BY " + orderBy + " LIMIT ? OFFSET ?"
 	args = append(args, payload.GetLimit(), payload.GetOffset())
 
 	// Execute query - Price đã được LEFT JOIN trong SQL
@@ -1132,7 +1195,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		return nil, 0, err
 	}
 
-	// Populate Price struct từ các PriceXXX fields
+	// Populate Price struct và Address từ các fields
 	for i := range tempResults {
 		// Chỉ populate Price nếu có data (PriceID > 0)
 		if tempResults[i].PriceID > 0 {
@@ -1148,6 +1211,15 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 				RentPaymentCycle:   &tempResults[i].PriceRentPayCycle,
 			}
 			tempResults[i].Price.ID = tempResults[i].PriceID
+		}
+
+		// Populate Address
+		tempResults[i].Address = &sharepb.AddressV3Proto{
+			Detail:       tempResults[i].AddressDetail,
+			ProvinceId:   &tempResults[i].ProvinceId,
+			ProvinceName: tempResults[i].ProvinceName,
+			WardId:       &tempResults[i].WardId,
+			WardName:     tempResults[i].WardName,
 		}
 	}
 
@@ -1265,6 +1337,51 @@ func (r *GormUserProductRepo) buildQueryConditions(dto *dto.ProductSearchRequest
 			*args = append(*args, dto.PropertyTypeIds[i])
 		}
 		*whereClauses = append(*whereClauses, "products.property_type_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// ProjectIds
+	if len(dto.ProjectIds) > 0 {
+		placeholders := make([]string, len(dto.ProjectIds))
+		for i := range dto.ProjectIds {
+			placeholders[i] = "?"
+			*args = append(*args, dto.ProjectIds[i])
+		}
+		*whereClauses = append(*whereClauses, "products.project_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// SaleVisibilities
+	if len(dto.SaleVisibilities) > 0 {
+		placeholders := make([]string, len(dto.SaleVisibilities))
+		for i := range dto.SaleVisibilities {
+			placeholders[i] = "?"
+			*args = append(*args, dto.SaleVisibilities[i])
+		}
+		*whereClauses = append(*whereClauses, "products.sale_visibility IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// RentVisibilities
+	if len(dto.RentVisibilities) > 0 {
+		placeholders := make([]string, len(dto.RentVisibilities))
+		for i := range dto.RentVisibilities {
+			placeholders[i] = "?"
+			*args = append(*args, dto.RentVisibilities[i])
+		}
+		*whereClauses = append(*whereClauses, "products.rent_visibility IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	// Visibilities (áp dụng cho cả sale_visibility và rent_visibility)
+	if len(dto.Visibilities) > 0 {
+		placeholders := make([]string, len(dto.Visibilities))
+		for i := range dto.Visibilities {
+			placeholders[i] = "?"
+			*args = append(*args, dto.Visibilities[i])
+		}
+		placeholdersStr := strings.Join(placeholders, ",")
+		*whereClauses = append(*whereClauses, "(products.sale_visibility IN ("+placeholdersStr+") OR products.rent_visibility IN ("+placeholdersStr+"))")
+		// Append args một lần nữa cho rent_visibility
+		for i := range dto.Visibilities {
+			*args = append(*args, dto.Visibilities[i])
+		}
 	}
 
 	// ProvinceIds
@@ -1549,4 +1666,32 @@ func (r *GormUserProductRepo) GetRandomProducts(ctx context.Context, limit int) 
 		return nil, err
 	}
 	return products, nil
+}
+
+// GetProductSummary lấy thống kê tổng hợp sản phẩm của user với filters
+func (r *GormUserProductRepo) GetProductSummary(ctx context.Context, userID uint64, searchRequest dto.ProductSearchRequest) (*dto.ProductSummaryDTO, error) {
+	var result dto.ProductSummaryDTO
+
+	// Query để tính tổng số sản phẩm, số sản phẩm đang bán và tổng giá trị
+	// Selling products: chỉ tính sản phẩm có transaction_type = 10 (Sale) và sale_status = 20 (Đang bán)
+	query := r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Select(`
+			COUNT(*) as total_products,
+			COUNT(CASE WHEN transaction_type = 10 THEN 1 END) as selling_products,
+			COALESCE(SUM(pp.sale_price), 0) as total_value
+		`).
+		Joins("LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL").
+		Where("products.owner_id = ? AND products.owner_of = ? AND products.deleted_at IS NULL", userID, enums.EOwnerOfMember)
+
+	// Áp dụng filters từ searchRequest
+	query = r.QueryDomain(query, &searchRequest)
+
+	err := query.Scan(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }

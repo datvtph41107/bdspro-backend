@@ -156,7 +156,7 @@ func ListPOIsRequestToRepoRequest(req *dto.ListPOIsRequestDTO) *repo.ListPOIsReq
 	}
 
 	return &repo.ListPOIsRequest{
-		Search:     req.Search,
+		Text:       req.Text,
 		CategoryID: req.CategoryID,
 		IsActive:   req.IsActive,
 		MinLat:     req.MinLat,

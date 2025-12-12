@@ -48,4 +48,7 @@ type AssetRepo interface {
 
 	// Đếm tổng số asset hiện tại (không bị xóa)
 	CountCurrent(ctx context.Context) (int64, error)
+
+	// GetAssetsByProductID lấy danh sách assets liên kết với product (thông tin cơ bản)
+	GetAssetsByProductID(ctx context.Context, productID uint64) ([]domain.Asset, error)
 }

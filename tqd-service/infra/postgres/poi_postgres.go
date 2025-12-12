@@ -102,9 +102,9 @@ func (r *POIRepo) GetListWithFilters(ctx context.Context, req *_repo.ListPOIsReq
 	query := r.GetDB(ctx).Model(&domain.POI{}).Preload("Category").Where("deleted_at IS NULL")
 
 	// Apply filters
-	if req.Search != "" {
-		searchTerm := "%" + strings.ToLower(req.Search) + "%"
-		query = query.Where("LOWER(name) LIKE ? OR LOWER(address) LIKE ?", searchTerm, searchTerm)
+	if req.Text != "" {
+		searchTerm := "%" + strings.ToLower(req.Text) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR LOWER(address) LIKE ? OR LOWER(code) LIKE ?", searchTerm, searchTerm, searchTerm)
 	}
 
 	if req.CategoryID != nil {

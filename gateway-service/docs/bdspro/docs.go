@@ -2152,45 +2152,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/v1/bdspro/v2/org/product/archived": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Cập nhật sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ArchivedRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/v1/bdspro/v2/org/product/child/devide": {
             "post": {
                 "security": [
@@ -2315,703 +2276,6 @@ const docTemplate = `{
                         "description": "Product ID",
                         "name": "productId",
                         "in": "path"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/deposite/{depositeId}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Hủy cọc",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Deposite ID",
-                        "name": "depositeId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/export": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này dùng để xuất dữ liệu sản phẩm ra file Excel",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/octet-stream"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Xuất danh sách sản phẩm ra Excel",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bộ lọc sản phẩm (nếu có)",
-                        "name": "filter",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Excel file",
-                        "schema": {
-                            "type": "file"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/_routes.ResponseDTO"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/_routes.ResponseDTO"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/org/product/me": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of products based on search filters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách sản phẩm của user hiện tại",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product name",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product code",
-                        "name": "code",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Product area",
-                        "name": "area",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Product price",
-                        "name": "price",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "null=\u003eall; 0=\u003eparent; \u003e0=\u003echildrent",
-                        "name": "parentId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product description",
-                        "name": "description",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Additional notes",
-                        "name": "note",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Limit results",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Skip results",
-                        "name": "skip",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"price_asc\"",
-                        "description": "Sort order",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/new": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API để tạo một sản phẩm mới",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Tạo sản phẩm mới",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm",
-                        "name": "product",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.NewProductRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/rent-status": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Xóa sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.StatusUpdate"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/rent-visibility": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Trạng thái sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.VisibilityUpdate"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/sale-status": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Xóa sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.StatusUpdate"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/sale-visibility": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Trạng thái sản phẩm",
-                "parameters": [
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.VisibilityUpdate"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/suggest": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of products based on search filters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Gợi ý các trường thông tin",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product name",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product code",
-                        "name": "code",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Product area",
-                        "name": "area",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Product price",
-                        "name": "price",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product description",
-                        "name": "description",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Additional notes",
-                        "name": "note",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Limit results",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Skip results",
-                        "name": "skip",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"price_asc\"",
-                        "description": "Sort order",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/total": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of products based on search filters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Tìm kiếm tổng hợp",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Text",
-                        "name": "text",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Size results",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"price_asc\"",
-                        "description": "Sort order",
-                        "name": "sort",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Danh sách sản phẩm",
-                        "schema": {
-                            "$ref": "#/definitions/_routes.ResponseDTO"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/org/product/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API để tạo một sản phẩm mới",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Tạo sản phẩm mới",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của sản phẩm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Sản phẩm được tạo thành công",
-                        "schema": {
-                            "$ref": "#/definitions/domain.Product"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/org/product/{id}/history": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of history of a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách lịch sử của sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của sản phẩm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin lịch sử",
-                        "name": "history",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductHistorySearch"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Danh sách lịch sử",
-                        "schema": {
-                            "$ref": "#/definitions/domain.ProductHistory"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/org/product/{id}/members": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of members of a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách thành viên của sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của sản phẩm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin thành viên",
-                        "name": "members",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SharingAccessSearch"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/v1/bdspro/v2/org/product/{id}/posts": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns a list of posts related to a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Lấy danh sách bài viết liên quan",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID của sản phẩm",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin bài viết",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.PostLinkSearch"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Bài viết được tạo thành công",
-                        "schema": {
-                            "$ref": "#/definitions/domain.Post"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/bdspro/v2/org/product/{productId}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Cập nhật sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Thông tin sản phẩm cần cập nhật",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductSaveRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tổ chức: Sản phẩm"
-                ],
-                "summary": "Xóa sản phẩm",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {}
@@ -4843,6 +4107,172 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/bdspro/dashboard/count-of-user": {
+            "get": {
+                "description": "Lấy thống kê số lượng tin đã đăng, sản phẩm quan tâm và đã lưu",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Đếm số tin đã đăng, sản phẩm quan tâm và đã lưu của user",
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/dashboard/suggest/today": {
+            "get": {
+                "description": "Lấy ngẫu nhiên 5 sản phẩm để gợi ý",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Lấy danh sách sản phẩm gợi ý hôm nay",
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/public/product/user/{profileId}": {
+            "get": {
+                "description": "Lấy danh sách sản phẩm của một user cụ thể - API public không cần authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sản phẩm"
+                ],
+                "summary": "Lấy danh sách sản phẩm của user (Public API)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "profileId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Parent ID",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Property Type ID",
+                        "name": "propertyTypeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Document Type ID",
+                        "name": "docTypeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "projectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Province ID",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "District ID",
+                        "name": "districtId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Ward ID",
+                        "name": "wardId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Transaction Type",
+                        "name": "transactionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sale Status",
+                        "name": "saleStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Rent Status",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sale Visibility",
+                        "name": "saleVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Rent Visibility",
+                        "name": "rentVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Source Type",
+                        "name": "sourceType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Archived",
+                        "name": "archived",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SearchResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/asset": {
             "put": {
                 "security": [
@@ -5934,6 +5364,29 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/dashboard/today/post": {
+            "get": {
+                "description": "API trả ra ngẫu nhiên 5 bản ghi tin đăng đã được publish",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Lấy ngẫu nhiên 5 tin đăng",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.PostListResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/list/amenity": {
             "get": {
                 "description": "Lấy danh sách tiện ích",
@@ -6594,6 +6047,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/bdspro/v2/product/link-asset": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép liên kết sản phẩm với tài sản",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Liên kết sản phẩm với tài sản",
+                "parameters": [
+                    {
+                        "description": "Thông tin liên kết",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.LinkProductAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/bdspro/v2/product/market": {
             "get": {
                 "description": "Lấy danh sách sản phẩm thị trường",
@@ -7079,6 +6564,102 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/bdspro/v2/product/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép lấy thống kê tổng số sản phẩm, số sản phẩm đang bán và tổng giá trị của user hiện tại với filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy thống kê tổng hợp sản phẩm của user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Property type IDs (comma-separated)",
+                        "name": "propertyTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Project IDs (comma-separated)",
+                        "name": "projectIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Transaction types (comma-separated)",
+                        "name": "transactionTypes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sale statuses (comma-separated)",
+                        "name": "saleStatuses",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rent statuses (comma-separated)",
+                        "name": "rentStatuses",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sale visibilities (comma-separated)",
+                        "name": "saleVisibilities",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rent visibilities (comma-separated)",
+                        "name": "rentVisibilities",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Source type IDs (comma-separated)",
+                        "name": "sourceTypeIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "null=\u003eall; 0=\u003eparent; \u003e0=\u003echildrent",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Archived status",
+                        "name": "archived",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.ProductSummaryResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/product/total": {
             "get": {
                 "description": "Lấy tổng số lượng sản phẩm",
@@ -7110,6 +6691,172 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/unlink-asset": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép hủy liên kết sản phẩm với tài sản",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Hủy liên kết sản phẩm với tài sản",
+                "parameters": [
+                    {
+                        "description": "Thông tin hủy liên kết",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.UnlinkProductAssetRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/user/{userId}": {
+            "get": {
+                "description": "Lấy danh sách sản phẩm của một user cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Lấy danh sách sản phẩm của user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Parent ID",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Property Type ID",
+                        "name": "propertyTypeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Document Type ID",
+                        "name": "docTypeId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "projectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Province ID",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "District ID",
+                        "name": "districtId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Ward ID",
+                        "name": "wardId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Transaction Type",
+                        "name": "transactionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sale Status",
+                        "name": "saleStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Rent Status",
+                        "name": "rentStatus",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Sale Visibility",
+                        "name": "saleVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Rent Visibility",
+                        "name": "rentVisibility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Source Type",
+                        "name": "sourceType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Archived",
+                        "name": "archived",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.SearchResponse"
+                        }
+                    }
+                }
             }
         },
         "/v2/bdspro/v2/product/{id}": {
@@ -7172,6 +6919,36 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Product ID",
                         "name": "productId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/product/{id}/assets": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép lấy danh sách tài sản được liên kết với sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy danh sách tài sản theo sản phẩm",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -7450,6 +7227,56 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/sharepb.Empty"
+                        }
+                    }
+                }
+            }
+        },
+        "/v3/bdspro/post/personal/{id}": {
+            "get": {
+                "description": "Lấy danh sách post của user theo profileId với phân trang",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Lấy danh sách post của user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Trang hiện tại (mặc định: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng item trên mỗi trang (mặc định: 20)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tìm kiếm theo text",
+                        "name": "text",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.PostListResponse"
                         }
                     }
                 }
@@ -8460,6 +8287,17 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.LinkProductAssetRequest": {
+            "type": "object",
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
         "bdspropb.ListItemResponse": {
             "type": "object",
             "properties": {
@@ -8520,6 +8358,9 @@ const docTemplate = `{
         "bdspropb.Post": {
             "type": "object",
             "properties": {
+                "area": {
+                    "type": "number"
+                },
                 "comment": {
                     "type": "integer"
                 },
@@ -8586,6 +8427,9 @@ const docTemplate = `{
                 "productId": {
                     "type": "integer"
                 },
+                "provinceId": {
+                    "type": "integer"
+                },
                 "provinceName": {
                     "type": "string"
                 },
@@ -8611,6 +8455,9 @@ const docTemplate = `{
                 "visibleStatus": {
                     "type": "integer"
                 },
+                "wardId": {
+                    "type": "integer"
+                },
                 "wardName": {
                     "type": "string"
                 }
@@ -8623,6 +8470,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.PostListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.Post"
+                    }
+                },
+                "total": {
                     "type": "integer"
                 }
             }
@@ -8788,6 +8649,9 @@ const docTemplate = `{
                     "description": "1000000 -\u003e 10%",
                     "type": "number"
                 },
+                "rentCommissionType": {
+                    "type": "integer"
+                },
                 "rentPaymentCycle": {
                     "type": "integer"
                 },
@@ -8797,6 +8661,9 @@ const docTemplate = `{
                 "saleCommission": {
                     "description": "1000000 -\u003e 10%",
                     "type": "number"
+                },
+                "saleCommissionType": {
+                    "type": "integer"
                 },
                 "salePrice": {
                     "type": "number"
@@ -8833,7 +8700,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "type": "string"
+                    "$ref": "#/definitions/sharepb.AddressV3Proto"
                 },
                 "amenities": {
                     "type": "array",
@@ -8870,6 +8737,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/bdspropb.AttributeProduct"
                     }
+                },
+                "availableArea": {
+                    "type": "number"
                 },
                 "build": {
                     "$ref": "#/definitions/bdspropb.ProjectBuild"
@@ -8913,11 +8783,29 @@ const docTemplate = `{
                 "googleMapLink": {
                     "type": "string"
                 },
+                "hasAsset": {
+                    "description": "Có gắn với ít nhất 1 tài sản",
+                    "type": "boolean"
+                },
+                "hasDeal": {
+                    "description": "Đang ở ít nhất 1 thương vụ",
+                    "type": "boolean"
+                },
+                "hasInventory": {
+                    "description": "Thuộc bảng hàng",
+                    "type": "boolean"
+                },
                 "houseInfo": {
                     "$ref": "#/definitions/bdspropb.HouseInfo"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "imageId": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
                 },
                 "lastPriceId": {
                     "type": "integer"
@@ -8970,6 +8858,12 @@ const docTemplate = `{
                 "project": {
                     "$ref": "#/definitions/bdspropb.Project"
                 },
+                "projectId": {
+                    "type": "integer"
+                },
+                "projectName": {
+                    "type": "string"
+                },
                 "propertyType": {
                     "$ref": "#/definitions/bdspropb.ItemResponse"
                 },
@@ -8984,6 +8878,10 @@ const docTemplate = `{
                 },
                 "provinceName": {
                     "type": "string"
+                },
+                "publicListingCount": {
+                    "description": "Statistics fields",
+                    "type": "integer"
                 },
                 "rentStatus": {
                     "type": "integer"
@@ -9001,6 +8899,10 @@ const docTemplate = `{
                     "$ref": "#/definitions/bdspropb.Transaction"
                 },
                 "saleVisibility": {
+                    "type": "integer"
+                },
+                "shareCount": {
+                    "description": "Số lượt chia sẻ",
                     "type": "integer"
                 },
                 "sourceType": {
@@ -9062,6 +8964,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "imageId": {
+                    "type": "integer"
+                },
                 "mediaItems": {
                     "type": "array",
                     "items": {
@@ -9119,8 +9024,25 @@ const docTemplate = `{
                 "transactionType": {
                     "type": "integer"
                 },
+                "visibility": {
+                    "type": "integer"
+                },
                 "wardId": {
                     "type": "integer"
+                }
+            }
+        },
+        "bdspropb.ProductSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "sellingProducts": {
+                    "type": "integer"
+                },
+                "totalProducts": {
+                    "type": "integer"
+                },
+                "totalValue": {
+                    "type": "number"
                 }
             }
         },
@@ -9341,6 +9263,9 @@ const docTemplate = `{
                 "houseInfo": {
                     "$ref": "#/definitions/bdspropb.HouseInfo"
                 },
+                "imageId": {
+                    "type": "integer"
+                },
                 "mediaItems": {
                     "type": "array",
                     "items": {
@@ -9513,6 +9438,17 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "bdspropb.UnlinkProductAssetRequest": {
+            "type": "object",
+            "properties": {
+                "assetId": {
+                    "type": "integer"
+                },
+                "productId": {
+                    "type": "integer"
                 }
             }
         },
@@ -9728,8 +9664,8 @@ const docTemplate = `{
             "required": [
                 "area",
                 "name",
-                "purchasePrice",
-                "wardId"
+                "provinceId",
+                "purchasePrice"
             ],
             "properties": {
                 "address": {
@@ -9757,12 +9693,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "district": {
-                    "$ref": "#/definitions/domain.Region"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
                 "id": {
                     "type": "integer"
                 },
@@ -9784,7 +9714,7 @@ const docTemplate = `{
                 "ownerId": {
                     "type": "integer"
                 },
-                "ownerType": {
+                "ownerOf": {
                     "$ref": "#/definitions/enums.EOwnerOf"
                 },
                 "parentAssetId": {
@@ -9803,7 +9733,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "province": {
-                    "$ref": "#/definitions/domain.Region"
+                    "$ref": "#/definitions/domain.ProvinceV2"
                 },
                 "provinceId": {
                     "type": "integer"
@@ -9827,7 +9757,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "ward": {
-                    "$ref": "#/definitions/domain.Region"
+                    "$ref": "#/definitions/domain.WardV2"
                 },
                 "wardId": {
                     "type": "integer"
@@ -10148,6 +10078,10 @@ const docTemplate = `{
         "domain.HouseInfo": {
             "type": "object",
             "properties": {
+                "backWidth": {
+                    "description": "hậu ? m",
+                    "type": "number"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -10155,9 +10089,17 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
+                "frontWidth": {
+                    "description": "mặt tiền ? m",
+                    "type": "number"
+                },
                 "furniture": {
                     "description": "Nội thất: \"full\", \"partial\", \"none\"",
                     "type": "string"
+                },
+                "height": {
+                    "description": "dài ? m",
+                    "type": "number"
                 },
                 "numBathroom": {
                     "description": "Số WC (optional)",
@@ -10189,11 +10131,18 @@ const docTemplate = `{
                 "product_id": {
                     "type": "integer"
                 },
+                "roadType": {
+                    "type": "integer"
+                },
                 "updatedAt": {
                     "type": "string"
                 },
                 "updatedBy": {
                     "type": "integer"
+                },
+                "width": {
+                    "description": "rộng ? m",
+                    "type": "number"
                 }
             }
         },
@@ -10370,11 +10319,17 @@ const docTemplate = `{
                 "area": {
                     "type": "number"
                 },
+                "assetCount": {
+                    "type": "integer"
+                },
                 "assetId": {
                     "type": "integer"
                 },
                 "build": {
                     "$ref": "#/definitions/domain.ProjectBuild"
+                },
+                "buildCount": {
+                    "type": "integer"
                 },
                 "categoryId": {
                     "type": "integer"
@@ -10389,20 +10344,17 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
+                "crmCount": {
+                    "type": "integer"
+                },
+                "dealCount": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
                 "developer": {
                     "$ref": "#/definitions/domain.Developer"
-                },
-                "district": {
-                    "$ref": "#/definitions/domain.Region"
-                },
-                "districtId": {
-                    "type": "integer"
-                },
-                "districtName": {
-                    "type": "string"
                 },
                 "docType": {
                     "$ref": "#/definitions/domain.DocTypeItem"
@@ -10413,10 +10365,25 @@ const docTemplate = `{
                 "googleMapLink": {
                     "type": "string"
                 },
+                "hasAsset": {
+                    "description": "Có gắn với ít nhất 1 tài sản",
+                    "type": "boolean"
+                },
+                "hasDeal": {
+                    "description": "Đang ở ít nhất 1 thương vụ",
+                    "type": "boolean"
+                },
+                "hasInventory": {
+                    "description": "Thuộc bảng hàng",
+                    "type": "boolean"
+                },
                 "houseInfo": {
                     "$ref": "#/definitions/domain.HouseInfo"
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "imageId": {
                     "type": "integer"
                 },
                 "lastPriceId": {
@@ -10448,6 +10415,9 @@ const docTemplate = `{
                 "positionUrl": {
                     "type": "string"
                 },
+                "postCount": {
+                    "type": "integer"
+                },
                 "postIds": {
                     "type": "array",
                     "items": {
@@ -10468,6 +10438,9 @@ const docTemplate = `{
                 "project": {
                     "$ref": "#/definitions/domain.Project"
                 },
+                "projectId": {
+                    "type": "integer"
+                },
                 "propertyType": {
                     "$ref": "#/definitions/domain.PropertyTypeItem"
                 },
@@ -10478,13 +10451,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "province": {
-                    "$ref": "#/definitions/domain.Region"
+                    "$ref": "#/definitions/domain.ProvinceV2"
                 },
                 "provinceId": {
                     "type": "integer"
                 },
                 "provinceName": {
                     "type": "string"
+                },
+                "publicListingCount": {
+                    "description": "Statistics fields - computed fields, không lưu vào DB",
+                    "type": "integer"
                 },
                 "rentStatus": {
                     "description": "1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê",
@@ -10524,6 +10501,13 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "scheduleCount": {
+                    "type": "integer"
+                },
+                "shareCount": {
+                    "description": "Số lượt chia sẻ",
+                    "type": "integer"
+                },
                 "sourceType": {
                     "$ref": "#/definitions/enums.ESourceType"
                 },
@@ -10545,80 +10529,12 @@ const docTemplate = `{
                     ]
                 },
                 "ward": {
-                    "$ref": "#/definitions/domain.Region"
+                    "$ref": "#/definitions/domain.WardV2"
                 },
                 "wardId": {
                     "type": "integer"
                 },
                 "wardName": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.ProductHistory": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "$ref": "#/definitions/enums.EProductHistory"
-                },
-                "areas": {
-                    "type": "array",
-                    "items": {
-                        "type": "number"
-                    }
-                },
-                "childs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.ProductInfo"
-                    }
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "createdUser": {
-                    "$ref": "#/definitions/domain.ProfileInfo"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "parent": {
-                    "$ref": "#/definitions/domain.ProductInfo"
-                },
-                "product": {
-                    "$ref": "#/definitions/domain.ProductInfo"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "type": "integer"
-                }
-            }
-        },
-        "domain.ProductInfo": {
-            "type": "object",
-            "properties": {
-                "area": {
-                    "type": "number"
-                },
-                "categoryId": {
-                    "type": "integer"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "lastPriceId": {
-                    "type": "integer"
-                },
-                "name": {
                     "type": "string"
                 }
             }
@@ -10665,6 +10581,9 @@ const docTemplate = `{
                 "productId": {
                     "type": "integer"
                 },
+                "rentCommisionType": {
+                    "type": "integer"
+                },
                 "rentCommission": {
                     "type": "number"
                 },
@@ -10673,6 +10592,9 @@ const docTemplate = `{
                 },
                 "rentPrice": {
                     "type": "number"
+                },
+                "saleCommisionType": {
+                    "type": "integer"
                 },
                 "saleCommission": {
                     "type": "number"
@@ -10895,6 +10817,48 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.ProvinceV2": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "codename": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "divisionType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phoneCode": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "wards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.WardV2"
+                    }
+                }
+            }
+        },
         "domain.Region": {
             "type": "object",
             "properties": {
@@ -10934,17 +10898,44 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ArchivedRequest": {
+        "domain.WardV2": {
             "type": "object",
-            "required": [
-                "archived",
-                "productId"
-            ],
             "properties": {
-                "archived": {
-                    "type": "boolean"
+                "code": {
+                    "type": "integer"
                 },
-                "productId": {
+                "codename": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "divisionType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "provinceCode": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "shortCodename": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
                     "type": "integer"
                 }
             }
@@ -11105,29 +11096,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.NewProductRequest": {
-            "type": "object",
-            "properties": {
-                "area": {
-                    "type": "number"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "note": {
-                    "type": "string"
-                },
-                "price": {
-                    "$ref": "#/definitions/domain.ProductPrice"
-                }
-            }
-        },
         "dto.PostExpiredRequest": {
             "type": "object",
             "required": [
@@ -11140,23 +11108,6 @@ const docTemplate = `{
                 },
                 "postId": {
                     "type": "integer"
-                }
-            }
-        },
-        "dto.PostLinkSearch": {
-            "type": "object",
-            "properties": {
-                "page": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "string"
                 }
             }
         },
@@ -11265,20 +11216,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ProductHistorySearch": {
-            "type": "object",
-            "properties": {
-                "page": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.ProductSaveRequest": {
             "type": "object",
             "required": [
@@ -11305,9 +11242,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "districtId": {
-                    "type": "integer"
-                },
                 "docTypeId": {
                     "type": "integer"
                 },
@@ -11316,6 +11250,9 @@ const docTemplate = `{
                 },
                 "houseInfo": {
                     "$ref": "#/definitions/dto.HouseInfoUpdate"
+                },
+                "imageId": {
+                    "type": "integer"
                 },
                 "mediaItems": {
                     "type": "array",
@@ -11368,34 +11305,11 @@ const docTemplate = `{
                 "transactionType": {
                     "type": "integer"
                 },
+                "visibility": {
+                    "$ref": "#/definitions/enums.EVisibility"
+                },
                 "wardId": {
                     "type": "integer"
-                }
-            }
-        },
-        "dto.SharingAccessSearch": {
-            "type": "object",
-            "properties": {
-                "domain": {
-                    "$ref": "#/definitions/enums.EDomainAccess"
-                },
-                "domainId": {
-                    "type": "integer"
-                },
-                "fromType": {
-                    "$ref": "#/definitions/enums.EOwnerOf"
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "string"
-                },
-                "toType": {
-                    "$ref": "#/definitions/enums.EOwnerOf"
                 }
             }
         },
@@ -11530,21 +11444,6 @@ const docTemplate = `{
                 "ENotarizedRecord"
             ]
         },
-        "enums.EDomainAccess": {
-            "type": "integer",
-            "enum": [
-                10,
-                20
-            ],
-            "x-enum-comments": {
-                "EDomainAsset": "Asset",
-                "EDomainProduct": "Product"
-            },
-            "x-enum-varnames": [
-                "EDomainProduct",
-                "EDomainAsset"
-            ]
-        },
         "enums.EOwnerOf": {
             "type": "integer",
             "enum": [
@@ -11603,21 +11502,6 @@ const docTemplate = `{
                 "EPostTransactionSold",
                 "EPostTransactionRenting",
                 "EPostTransactionRented"
-            ]
-        },
-        "enums.EProductHistory": {
-            "type": "integer",
-            "enum": [
-                10,
-                20,
-                30,
-                40
-            ],
-            "x-enum-varnames": [
-                "EProductHistory_NewChild",
-                "EProductHistory_Merge",
-                "EProductHistory_MergeAll",
-                "EProductHistory_Devide"
             ]
         },
         "enums.EProductRentStatus": {
@@ -11688,6 +11572,32 @@ const docTemplate = `{
                 "TransactionTypeSale",
                 "TransactionTypeRent"
             ]
+        },
+        "sharepb.AddressV3Proto": {
+            "type": "object",
+            "properties": {
+                "detail": {
+                    "type": "string"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "districtName": {
+                    "type": "string"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
+                }
+            }
         },
         "sharepb.Empty": {
             "type": "object"

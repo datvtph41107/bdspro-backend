@@ -564,6 +564,23 @@ func (r *PostgreAsset) GetAssetPublish(profileId uint64) ([]domain.Asset, int64,
 	return assets, int64(len(assets)), nil
 }
 
+// GetAssetsByProductID lấy danh sách assets liên kết với product (thông tin cơ bản)
+func (r *PostgreAsset) GetAssetsByProductID(ctx context.Context, productID uint64) ([]domain.Asset, error) {
+	var assets []domain.Asset
+	err := r.DB.WithContext(ctx).
+		Model(&domain.Asset{}).
+		Select("assets.id, assets.name, assets.area, assets.province_id, assets.ward_id, assets.address, assets.purchase_price, assets.legal_status, assets.rent_status").
+		Joins("INNER JOIN product_asset pa ON pa.asset_id = assets.id AND pa.deleted_at IS NULL").
+		Where("pa.product_id = ? AND assets.deleted_at IS NULL", productID).
+		Preload("Province", "deleted_at IS NULL").
+		Preload("Ward", "deleted_at IS NULL").
+		Find(&assets).Error
+	if err != nil {
+		return nil, err
+	}
+	return assets, nil
+}
+
 func (r *PostgreAsset) SearchByAssetShare(ctx context.Context, targetID *uint64, targetType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 	var products []domain.Product
 	if err := r.DB.WithContext(ctx).Where("owner_user_id = ? and deleted_at is null", targetID).Find(&products).Error; err != nil {

@@ -1,0 +1,315 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/bds_domain.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "BdsDomainService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/bdspro/v2/bds/list": {
+      "get": {
+        "summary": "@Summary Lấy danh sách bất động sản\n@Description Lấy danh sách bất động sản với phân trang và bộ lọc\n@Tags User: Bất động sản\n@Accept json\n@Produce json\n@Security BearerAuth\n@Param page query int false \"Trang hiện tại\" default(1)\n@Param size query int false \"Số lượng item\" default(20)\n@Param sort query string false \"Sắp xếp\"\n@Param text query string false \"Tìm kiếm theo text\"\n@Param productId query int false \"Lọc theo Product ID\"\n@Param assetId query int false \"Lọc theo Asset ID\"\n@Param provinceId query int false \"Lọc theo Tỉnh/TP\"\n@Param wardId query int false \"Lọc theo Phường/Xã\"\n@Param districtId query int false \"Lọc theo Quận/Huyện\"\n@Success 200 {object} BdsDomainListResponse\n@Router /v2/bdspro/v2/bds/list [get]",
+        "operationId": "BdsDomainService_GetBdsDomainList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbBdsDomainListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "productId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "assetId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "provinceId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "wardId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "districtId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "BdsDomainService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "bdspropbBdsDomain": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaUse": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaBuild": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaLand": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaFloor": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaGreen": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaParking": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaBalcony": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaTerrace": {
+          "type": "number",
+          "format": "double"
+        },
+        "length": {
+          "type": "number",
+          "format": "double"
+        },
+        "width": {
+          "type": "number",
+          "format": "double"
+        },
+        "height": {
+          "type": "number",
+          "format": "double"
+        },
+        "frontWidth": {
+          "type": "number",
+          "format": "double"
+        },
+        "backWidth": {
+          "type": "number",
+          "format": "double"
+        },
+        "leftWidth": {
+          "type": "number",
+          "format": "double"
+        },
+        "rightWidth": {
+          "type": "number",
+          "format": "double"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "street": {
+          "type": "string"
+        },
+        "streetNumber": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double"
+        },
+        "roadType": {
+          "type": "string"
+        },
+        "roadAccess": {
+          "type": "string"
+        },
+        "distanceToRoad": {
+          "type": "number",
+          "format": "double"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "mainDirection": {
+          "type": "string"
+        },
+        "cornerLot": {
+          "type": "boolean"
+        },
+        "alleyAccess": {
+          "type": "boolean"
+        },
+        "alleyWidth": {
+          "type": "number",
+          "format": "double"
+        },
+        "shape": {
+          "type": "string"
+        },
+        "topography": {
+          "type": "string"
+        },
+        "elevation": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbBdsDomainListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbBdsDomain"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

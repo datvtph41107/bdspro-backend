@@ -77,13 +77,13 @@ type UpdatePOIRequestDTO struct {
 // ListPOIsRequestDTO represents the request DTO for listing POIs
 type ListPOIsRequestDTO struct {
 	_dto.Pagable
-	Search     string   `json:"search"`
-	CategoryID *uint64  `json:"categoryId"`
-	IsActive   *bool    `json:"isActive"`
-	MinLat     *float64 `json:"minLat"`
-	MaxLat     *float64 `json:"maxLat"`
-	MinLng     *float64 `json:"minLng"`
-	MaxLng     *float64 `json:"maxLng"`
+	Text       string   `json:"text" form:"text"`
+	CategoryID *uint64  `json:"categoryId" form:"categoryId"`
+	IsActive   *bool    `json:"isActive" form:"isActive"`
+	MinLat     *float64 `json:"minLat" form:"minLat"`
+	MaxLat     *float64 `json:"maxLat" form:"maxLat"`
+	MinLng     *float64 `json:"minLng" form:"minLng"`
+	MaxLng     *float64 `json:"maxLng" form:"maxLng"`
 }
 
 // ListPOIsResponseDTO represents the response DTO for listing POIs

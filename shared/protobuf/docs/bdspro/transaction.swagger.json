@@ -47,6 +47,70 @@
         ]
       }
     },
+    "/v2/bdspro/v2/transaction/calculate-loan-payment": {
+      "post": {
+        "operationId": "TransactionService_CalculateLoanPayment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbCalculateLoanPaymentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbCalculateLoanPaymentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TransactionService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/transaction/calculate-tax-fee": {
+      "post": {
+        "operationId": "TransactionService_CalculateTransferTaxFee",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbCalculateTransferTaxFeeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbCalculateTransferTaxFeeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TransactionService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/transaction/create": {
       "post": {
         "operationId": "TransactionService_CreateTransaction",
@@ -341,6 +405,152 @@
         }
       }
     },
+    "bdspropbCalculateLoanPaymentRequest": {
+      "type": "object",
+      "properties": {
+        "interestRate": {
+          "type": "number",
+          "format": "double",
+          "title": "Lãi suất năm đầu (%/năm) - thường là lãi suất ưu đãi"
+        },
+        "propertyValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị tài sản (VND)"
+        },
+        "loanAmount": {
+          "type": "number",
+          "format": "double",
+          "title": "Số tiền vay (VND)"
+        },
+        "term": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Kỳ hạn (tháng)"
+        },
+        "paymentMethod": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Phương thức trả nợ: 10=dư nợ giảm dần, 20=trả lãi định kỳ/gốc cuối kỳ"
+        },
+        "floatingInterestRate": {
+          "type": "number",
+          "format": "double",
+          "title": "Lãi suất thả nổi từ năm 2 (%/năm) - thường 10-11%"
+        }
+      }
+    },
+    "bdspropbCalculateLoanPaymentResponse": {
+      "type": "object",
+      "properties": {
+        "schedule": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbLoanPaymentScheduleItem"
+          },
+          "title": "Lịch trả nợ theo tháng"
+        },
+        "totalInterest": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng tiền lãi"
+        },
+        "totalPayment": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng tiền trả"
+        }
+      }
+    },
+    "bdspropbCalculateTransferTaxFeeRequest": {
+      "type": "object",
+      "properties": {
+        "transferValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị chuyển nhượng (VND)"
+        },
+        "isBusiness": {
+          "type": "boolean",
+          "title": "true nếu là doanh nghiệp, false nếu là cá nhân"
+        },
+        "originalPrice": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá gốc mua vào (để tính thuế TNCN nếu có)"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID tỉnh/thành phố (để tính lệ phí trước bạ theo từng địa phương)"
+        }
+      }
+    },
+    "bdspropbCalculateTransferTaxFeeResponse": {
+      "type": "object",
+      "properties": {
+        "transferValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị chuyển nhượng"
+        },
+        "personalIncomeTax": {
+          "type": "number",
+          "format": "double",
+          "title": "Thuế thu nhập cá nhân (TNCN) - 2% nếu là cá nhân"
+        },
+        "corporateTax": {
+          "type": "number",
+          "format": "double",
+          "title": "Thuế thu nhập doanh nghiệp - 2% nếu là doanh nghiệp"
+        },
+        "registrationFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Lệ phí trước bạ - 0.5%"
+        },
+        "notarizationFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Phí công chứng"
+        },
+        "dossierReviewFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Phí thẩm định hồ sơ"
+        },
+        "cadastralFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Lệ phí địa chính"
+        },
+        "certificateFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Lệ phí cấp GCN (Giấy chứng nhận)"
+        },
+        "surveyFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Phí đo vẽ/địa chính"
+        },
+        "totalTaxFee": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng thuế và phí"
+        },
+        "netAmount": {
+          "type": "number",
+          "format": "double",
+          "title": "Số tiền thực nhận sau khi trừ thuế phí"
+        },
+        "breakdown": {
+          "$ref": "#/definitions/bdspropbTaxFeeBreakdown",
+          "title": "Chi tiết từng khoản"
+        }
+      }
+    },
     "bdspropbCreateTransactionRequest": {
       "type": "object",
       "properties": {
@@ -423,6 +633,78 @@
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "bdspropbLoanPaymentScheduleItem": {
+      "type": "object",
+      "properties": {
+        "month": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Tháng"
+        },
+        "remainingPrincipal": {
+          "type": "number",
+          "format": "double",
+          "title": "Dư nợ còn lại"
+        },
+        "principalPayment": {
+          "type": "number",
+          "format": "double",
+          "title": "Tiền gốc trả trong tháng"
+        },
+        "interestPayment": {
+          "type": "number",
+          "format": "double",
+          "title": "Tiền lãi trả trong tháng"
+        },
+        "totalPayment": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng trả trong tháng"
+        },
+        "interestRate": {
+          "type": "number",
+          "format": "double",
+          "title": "Lãi suất áp dụng cho tháng này (%/năm)"
+        }
+      }
+    },
+    "bdspropbTaxFeeBreakdown": {
+      "type": "object",
+      "properties": {
+        "personalIncomeTaxNote": {
+          "type": "string",
+          "title": "Ghi chú thuế TNCN"
+        },
+        "corporateTaxNote": {
+          "type": "string",
+          "title": "Ghi chú thuế doanh nghiệp"
+        },
+        "registrationFeeNote": {
+          "type": "string",
+          "title": "Ghi chú lệ phí trước bạ"
+        },
+        "notarizationFeeNote": {
+          "type": "string",
+          "title": "Ghi chú phí công chứng"
+        },
+        "dossierReviewFeeNote": {
+          "type": "string",
+          "title": "Ghi chú phí thẩm định hồ sơ"
+        },
+        "cadastralFeeNote": {
+          "type": "string",
+          "title": "Ghi chú lệ phí địa chính"
+        },
+        "certificateFeeNote": {
+          "type": "string",
+          "title": "Ghi chú lệ phí cấp GCN"
+        },
+        "surveyFeeNote": {
+          "type": "string",
+          "title": "Ghi chú phí đo vẽ/địa chính"
         }
       }
     },

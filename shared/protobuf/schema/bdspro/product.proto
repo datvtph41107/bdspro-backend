@@ -8,6 +8,7 @@ import "user/profile.proto";
 import "bdspro/post.proto";
 import "bdspro/deposite.proto";
 import "bdspro/transaction.proto";
+import "shared/common.proto";
 option go_package = "pb/types/bdspro;bdspropb";
 
 service ProductService {
@@ -183,6 +184,32 @@ service ProductService {
       get: "/v2/bdspro/v2/product/user/{userId}"
     };
   };
+  rpc ProductSummary (ProductSearch) returns (ProductSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/summary"
+    };
+  };
+  
+  // API liên kết Product với Asset
+  rpc LinkProductAsset (LinkProductAssetRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/link-asset"
+      body: "*"
+    };
+  };
+  
+  rpc UnlinkProductAsset (UnlinkProductAssetRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/unlink-asset"
+      body: "*"
+    };
+  };
+  
+  rpc GetAssetsByProduct (sharepb.IdRequest) returns (ProductAssetListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/assets"
+    };
+  };
 }
 
 message PingResponse {}
@@ -248,9 +275,6 @@ message SaveChildRequest {
   optional uint64 imageId = 27;
 }
 
-
-
-
 message PostSaveWithProduct {
   uint64 productId = 1;
   string title = 2;
@@ -286,9 +310,9 @@ message ProductSearch {
   uint64 propertyTypeId = 8;
   uint64 docTypeId = 9;
   uint64 projectId = 10;
-  uint64 provinceId = 11;
-  uint64 districtId = 12;
-  uint64 wardId = 13;
+  optional uint64 provinceId = 11;
+  optional uint64 districtId = 12;
+  optional uint64 wardId = 13;
   int32 transactionType = 14;
   int32 saleStatus = 15;
   int32 rentStatus = 16;
@@ -302,6 +326,17 @@ message ProductSearch {
   int32 rentCommission = 24;
   int32 rentPaymentCycle = 25;
   optional bool archived = 26;
+  string transactionTypes = 27;
+  string propertyTypeIds = 28;
+  string projectIds = 29;
+  string saleStatuses = 30;
+  string rentStatuses = 31;
+  string saleVisibilities = 32;
+  string rentVisibilities = 33;
+  string sourceTypeIds = 34;
+  string visibilities = 35;
+  string provinceIds = 36;
+  string wardIds = 37;
 }
 
 message GroupProductSearch {
@@ -458,4 +493,27 @@ message CreateProductForOrgRequest {
 message CreateProductResponse {
   uint64 productId = 1;
   string message = 2;
+}
+
+message EmptyRequest {}
+
+message ProductSummaryResponse {
+  int64 totalProducts = 1;
+  int64 sellingProducts = 2;
+  double totalValue = 3;
+}
+
+// Messages cho Product-Asset linking
+message LinkProductAssetRequest {
+  repeated uint64 productIds = 1; // Nhiều sản phẩm
+  uint64 assetId = 2;             // 1 tài sản
+}
+
+message UnlinkProductAssetRequest {
+  uint64 productId = 1;
+  uint64 assetId = 2;
+}
+
+message ProductAssetListResponse {
+  repeated uint64 assetIds = 1;
 }

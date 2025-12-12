@@ -4,4 +4,6 @@ WORKDIR /
 
 ENV ENV_RUNTIME=production
 
-COPY . .
+COPY config config
+
+COPY main .

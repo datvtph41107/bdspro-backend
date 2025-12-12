@@ -13,7 +13,7 @@ type WardV2 struct {
 	DivisionType  string `gorm:"column:division_type;type:varchar(100)" json:"divisionType"`
 	ShortCodename string `gorm:"column:short_codename;type:varchar(100)" json:"shortCodename"`
 	ProvinceCode  int    `gorm:"column:province_code;type:int;not null;index" json:"provinceCode"`
-	ProvinceID    uint64 `gorm:"column:province_id;type:uint64;not null;index" json:"provinceId"`
+	ProvinceID    uint64 `gorm:"column:province_id;type:bigint;not null;index" json:"provinceId"`
 }
 
 // TableName specifies the table name for WardV2 entity

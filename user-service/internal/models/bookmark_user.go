@@ -6,7 +6,10 @@ type BookmarkUserEntity struct {
 	UserID  uint64 `gorm:"primaryKey;column:user_id;not null" json:"userId"`
 
 	// Relations
-	User *UserProfileEntity `gorm:"foreignKey:UserID;references:ProfileID" json:"user,omitempty"`
+	// Note: UserID references profile_id column in user_profile table
+	// Foreign key constraint is not used to avoid migration issues
+	// The relationship is maintained at application level
+	User *UserProfileEntity `gorm:"-" json:"user,omitempty"`
 }
 
 // TableName đặt tên bảng trong DB

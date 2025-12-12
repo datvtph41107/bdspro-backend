@@ -7,10 +7,12 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
+	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
 	"context"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
@@ -26,7 +28,8 @@ type ProductHandler struct {
 	UserClient       *client.UserClient
 	DepositeMapper   *mapper.DepositeMapper
 	// TransactionMapper mapper.TransactionTransformer
-	PostMapper *mapper.PostMapper
+	PostMapper     *mapper.PostMapper
+	ProductAssetUC *usecases.ProductAssetUsecase
 }
 
 func NewProductService(uc *shared_usecase.ProductUsecase,
@@ -37,6 +40,7 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 	depositeMapper *mapper.DepositeMapper,
 	// transactionMapper mapper.TransactionTransformer,
 	postMapper *mapper.PostMapper,
+	productAssetUC *usecases.ProductAssetUsecase,
 ) *ProductHandler {
 	return &ProductHandler{
 		UC:               uc,
@@ -46,7 +50,8 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 		UserClient:       userClient,
 		DepositeMapper:   depositeMapper,
 		// TransactionMapper: transactionMapper,
-		PostMapper: postMapper,
+		PostMapper:     postMapper,
+		ProductAssetUC: productAssetUC,
 	}
 }
 
@@ -270,10 +275,7 @@ func (s *ProductHandler) ExportProduct(context.Context, *bdspropb.IdRequest) (*b
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/me [get]
 func (s *ProductHandler) ProductMe(ctx context.Context, req *bdspropb.ProductSearch) (*bdspropb.SearchResponse, error) {
-	body := dto.ProductSearchRequest{}
-	if err := copier.Copy(&body, req); err != nil {
-		return nil, err
-	}
+	body := s.ProductMapper.PbSearchRequestToDTO(req)
 
 	result, total, err := s.UC.GetProductOfCurrentUser(ctx, body)
 	if err != nil {
@@ -854,5 +856,121 @@ func (s *ProductHandler) CreateOrganizationProduct(ctx context.Context, req *bds
 	return &bdspropb.Response{
 		Id:      id,
 		Message: "success",
+	}, nil
+}
+
+// @Summary Lấy thống kê tổng hợp sản phẩm của user
+// @Description API này cho phép lấy thống kê tổng số sản phẩm, số sản phẩm đang bán và tổng giá trị của user hiện tại với filters
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param propertyTypeIds query string false "Property type IDs (comma-separated)"
+// @Param projectIds query string false "Project IDs (comma-separated)"
+// @Param transactionTypes query string false "Transaction types (comma-separated)"
+// @Param saleStatuses query string false "Sale statuses (comma-separated)"
+// @Param rentStatuses query string false "Rent statuses (comma-separated)"
+// @Param saleVisibilities query string false "Sale visibilities (comma-separated)"
+// @Param rentVisibilities query string false "Rent visibilities (comma-separated)"
+// @Param sourceTypeIds query string false "Source type IDs (comma-separated)"
+// @Param text query string false "Search text"
+// @Param parentId query integer false "null=>all; 0=>parent; >0=>childrent"
+// @Param archived query boolean false "Archived status"
+// @Success 200 {object} bdspropb.ProductSummaryResponse
+// @Router /v2/bdspro/v2/product/summary [get]
+func (s *ProductHandler) ProductSummary(ctx context.Context, req *bdspropb.ProductSearch) (*bdspropb.ProductSummaryResponse, error) {
+	body := s.ProductMapper.PbSearchRequestToDTO(req)
+
+	summary, err := s.UC.GetProductSummary(ctx, body)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get product summary: %v", err)
+	}
+
+	return &bdspropb.ProductSummaryResponse{
+		TotalProducts:   summary.TotalProducts,
+		SellingProducts: summary.SellingProducts,
+		TotalValue:      summary.TotalValue,
+	}, nil
+}
+
+// @Summary Liên kết nhiều sản phẩm với tài sản
+// @Description API này cho phép liên kết nhiều sản phẩm với một tài sản
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body bdspropb.LinkProductAssetRequest true "Thông tin liên kết (nhiều productIds và 1 assetId)"
+// @Router /v2/bdspro/v2/product/link-asset [post]
+func (s *ProductHandler) LinkProductAsset(ctx context.Context, req *bdspropb.LinkProductAssetRequest) (*bdspropb.Response, error) {
+	if len(req.ProductIds) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "productIds không được để trống")
+	}
+	if req.AssetId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "assetId is required")
+	}
+
+	linkReq := &dto.LinkProductAssetRequest{
+		ProductIDs: req.ProductIds,
+		AssetID:    req.AssetId,
+	}
+
+	err := s.ProductAssetUC.LinkProductAsset(ctx, linkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.Response{
+		Message: "success",
+	}, nil
+}
+
+// @Summary Hủy liên kết sản phẩm với tài sản
+// @Description API này cho phép hủy liên kết sản phẩm với tài sản
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body bdspropb.UnlinkProductAssetRequest true "Thông tin hủy liên kết"
+// @Router /v2/bdspro/v2/product/unlink-asset [post]
+func (s *ProductHandler) UnlinkProductAsset(ctx context.Context, req *bdspropb.UnlinkProductAssetRequest) (*bdspropb.Response, error) {
+	if req.ProductId == 0 || req.AssetId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "productId and assetId are required")
+	}
+
+	unlinkReq := &dto.UnlinkProductAssetRequest{
+		ProductID: req.ProductId,
+		AssetID:   req.AssetId,
+	}
+
+	err := s.ProductAssetUC.UnlinkProductAsset(ctx, unlinkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.Response{
+		Message: "success",
+	}, nil
+}
+
+// @Summary Lấy danh sách tài sản theo sản phẩm
+// @Description API này cho phép lấy danh sách tài sản được liên kết với sản phẩm
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Router /v2/bdspro/v2/product/{id}/assets [get]
+func (s *ProductHandler) GetAssetsByProduct(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.ProductAssetListResponse, error) {
+	if req.Id == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "id is required")
+	}
+
+	assetIDs, err := s.ProductAssetUC.GetAssetsByProductID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.ProductAssetListResponse{
+		AssetIds: assetIDs,
 	}, nil
 }

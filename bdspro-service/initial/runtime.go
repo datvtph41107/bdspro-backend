@@ -32,6 +32,7 @@ type InitialApp struct {
 	AdminRegionHandler       *handler.AdminRegionHandler
 	InternalHandler          *handler.InternalHandler
 	BdsproDashboardHandler   *handler.BdsproDashboardHandler
+	BdsDomainHandler         *handler.BdsDomainHandler
 	AssetStatsJob            *job.AssetDashboardStatsJob
 	ProductStatsJob          *job.ProductDashboardStatsJob
 	PostStatsJob             *job.PostDashboardStatsJob
@@ -78,6 +79,7 @@ func NewInitialApp(
 	adminRegionHandler *handler.AdminRegionHandler,
 	internalHandler *handler.InternalHandler,
 	bdsproDashboardHandler *handler.BdsproDashboardHandler,
+	bdsDomainHandler *handler.BdsDomainHandler,
 	// @bind: register_server_new
 	assetStatsJob *job.AssetDashboardStatsJob,
 	productStatsJob *job.ProductDashboardStatsJob,
@@ -114,6 +116,7 @@ func NewInitialApp(
 		AdminRegionHandler:       adminRegionHandler,
 		InternalHandler:          internalHandler,
 		BdsproDashboardHandler:   bdsproDashboardHandler,
+		BdsDomainHandler:         bdsDomainHandler,
 		AssetStatsJob:            assetStatsJob,
 		ProductStatsJob:          productStatsJob,
 		PostStatsJob:             postStatsJob,

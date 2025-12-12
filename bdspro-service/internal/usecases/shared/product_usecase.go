@@ -54,6 +54,7 @@ type ProductUsecase struct {
 
 	ProductOrganizationRepo repo.ProductOrganizationRepo
 	ProductUserRepo         repo.ProductUserRepo
+	BdsDomainUsecase        *usecases.BdsDomainUsecase
 }
 
 func NewProductUsecase(
@@ -78,6 +79,7 @@ func NewProductUsecase(
 	productOrganizationRepo repo.ProductOrganizationRepo,
 	productUserRepo repo.ProductUserRepo,
 	deepseekClient provider.DeepseekProvider,
+	bdsDomainUsecase *usecases.BdsDomainUsecase,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -103,6 +105,7 @@ func NewProductUsecase(
 
 		ProductOrganizationRepo: productOrganizationRepo,
 		ProductUserRepo:         productUserRepo,
+		BdsDomainUsecase:        bdsDomainUsecase,
 		// OwnerType:    ownerType,
 	}
 
@@ -288,6 +291,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		}
 
 		// sản phẩm của tổ chức
+		var profileId uint64
 		if product.RequestOrganizationID != nil {
 			_, err = s.ProductOrganizationRepo.CreateOwner(c, entity.ID, *product.RequestOrganizationID)
 			if err != nil {
@@ -295,10 +299,33 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			}
 		} else {
 			// sản phẩm của người dùng
-			profileId := _utils.GetProfileIdWithContext(c)
+			profileId = _utils.GetProfileIdWithContext(c)
 			_, err = s.ProductUserRepo.CreateOwner(c, entity.ID, profileId)
 			if err != nil {
 				return err
+			}
+		}
+
+		// Tạo BDSDomain tương ứng cho Product
+		if s.BdsDomainUsecase != nil {
+			// Nếu chưa có profileId (tổ chức), lấy từ context
+			if profileId == 0 {
+				profileId = _utils.GetProfileIdWithContext(c)
+			}
+			// Set ProductID cho houseInfoEntity nếu chưa có
+			if houseInfoEntity != nil {
+				houseInfoEntity.ProductID = entity.ID
+				err = s.BdsDomainUsecase.CreateBdsDomainFromProduct(c, entity, houseInfoEntity, profileId)
+				// Log error nhưng không fail transaction nếu tạo BDSDomain thất bại
+				if err != nil {
+					log.Printf("Failed to create BDSDomain for product %d: %v", entity.ID, err)
+				}
+			} else {
+				// Tạo BDSDomain ngay cả khi không có HouseInfo
+				err = s.BdsDomainUsecase.CreateBdsDomainFromProduct(c, entity, nil, profileId)
+				if err != nil {
+					log.Printf("Failed to create BDSDomain for product %d: %v", entity.ID, err)
+				}
 			}
 		}
 
@@ -1413,4 +1440,21 @@ func (s *ProductUsecase) GetSupportToday(ctx context.Context) ([]domain.Product,
 		return nil, err
 	}
 	return products, nil
+}
+
+// GetProductSummary lấy thống kê tổng hợp sản phẩm của user hiện tại với filters
+func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dto.ProductSearchRequest) (*dto.ProductSummaryDTO, error) {
+	// Lấy profileID từ context
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return nil, fmt.Errorf("profile ID not found in context")
+	}
+
+	// Gọi repo để lấy thống kê với filters
+	summary, err := s.ProductRepo.GetProductSummary(ctx, profileID, searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return summary, nil
 }

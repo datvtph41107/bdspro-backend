@@ -813,6 +813,42 @@
         },
         "code": {
           "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
         }
       },
       "title": "AssetItem for product detail response"
@@ -1477,7 +1513,7 @@
           "$ref": "#/definitions/bdspropbRegion"
         },
         "address": {
-          "type": "string"
+          "$ref": "#/definitions/sharepbAddressV3Proto"
         },
         "googleMapLink": {
           "type": "string"
@@ -1554,6 +1590,36 @@
         "availableArea": {
           "type": "number",
           "format": "double"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "projectName": {
+          "type": "string"
+        },
+        "publicListingCount": {
+          "type": "string",
+          "format": "int64",
+          "description": "Số tin đăng công khai",
+          "title": "Statistics fields"
+        },
+        "shareCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "Số lượt chia sẻ"
+        },
+        "hasAsset": {
+          "type": "boolean",
+          "title": "Có gắn với ít nhất 1 tài sản"
+        },
+        "hasInventory": {
+          "type": "boolean",
+          "title": "Thuộc bảng hàng"
+        },
+        "hasDeal": {
+          "type": "boolean",
+          "title": "Đang ở ít nhất 1 thương vụ"
         }
       }
     },
@@ -1802,6 +1868,35 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
         }
       }
     },

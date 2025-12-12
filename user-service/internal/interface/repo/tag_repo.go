@@ -15,5 +15,5 @@ type ITagRepo interface {
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*models.TagEntity, error)
 	ListForUser(ctx context.Context, profileID uint64, tagType enums.TagType, pagable _dto.IPagable, searchText string) ([]models.TagEntity, uint32, error)
-	ListAdmin(ctx context.Context, tagTypes []enums.TagType, pagable _dto.IPagable, searchText string) ([]models.TagEntity, uint32, error)
+	ListAdmin(ctx context.Context, tagTypes []enums.TagType, pagable _dto.IPagable, searchText string, isDefault *bool) ([]models.TagEntity, uint32, error)
 }

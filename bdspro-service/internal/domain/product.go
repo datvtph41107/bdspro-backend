@@ -23,6 +23,7 @@ type Product struct {
 	PropertyType   *PropertyTypeItem   `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	DocTypeId      *uint64             `json:"docTypeId,omitempty"`
 	DocType        *DocTypeItem        `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
+	ProjectID      *uint64             `gorm:"type:int8" json:"projectId,omitempty"`
 	Amenities      []AmenityItem       `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
 	Visibility     enums.EVisibility   `json:"visibility,omitempty" gorm:"default:10"` //phạm vi
 	Name           string              `gorm:"size:255" json:"name,omitempty"`
@@ -67,6 +68,20 @@ type Product struct {
 	ProvinceName     string `gorm:"-" json:"provinceName,omitempty"`
 	WardName         string `gorm:"-" json:"wardName,omitempty"`
 	PropertyTypeName string `gorm:"-" json:"propertyTypeName,omitempty"`
+
+	// Statistics fields - computed fields, không lưu vào DB
+	PublicListingCount int64 `gorm:"-" json:"publicListingCount,omitempty"` // Số tin đăng công khai
+	ShareCount         int64 `gorm:"-" json:"shareCount,omitempty"`         // Số lượt chia sẻ
+	HasAsset           bool  `gorm:"-" json:"hasAsset,omitempty"`           // Có gắn với ít nhất 1 tài sản
+	HasInventory       bool  `gorm:"-" json:"hasInventory,omitempty"`       // Thuộc bảng hàng
+	HasDeal            bool  `gorm:"-" json:"hasDeal,omitempty"`            // Đang ở ít nhất 1 thương vụ
+
+	AssetCount    uint32 `gorm:"type:int8" json:"assetCount,omitempty"`
+	BuildCount    uint32 `gorm:"type:int8" json:"buildCount,omitempty"`
+	PostCount     uint32 `gorm:"type:int8" json:"postCount,omitempty"`
+	ScheduleCount uint32 `gorm:"type:int8" json:"scheduleCount,omitempty"`
+	DealCount     uint32 `gorm:"type:int8" json:"dealCount,omitempty"`
+	CrmCount      uint32 `gorm:"type:int8" json:"crmCount,omitempty"`
 
 	// CreatedUser       *ProfileInfo       `gorm:"-" json:"createdUser,omitempty"`
 	// UpdatedUser       *ProfileInfo       `gorm:"-" json:"updatedUser,omitempty"`

@@ -1,5 +1,96 @@
 package mapper
 
+import (
+	"bdspro/internal/dto"
+	bdspropb "pb/types/bdspro"
+)
+
+// MapCalculateTransferTaxFeeRequestToDTO Convert proto request to DTO
+func MapCalculateTransferTaxFeeRequestToDTO(req *bdspropb.CalculateTransferTaxFeeRequest) *dto.CalculateTransferTaxFeeRequest {
+	dtoReq := &dto.CalculateTransferTaxFeeRequest{
+		TransferValue: req.TransferValue,
+		IsBusiness:    req.IsBusiness,
+	}
+
+	if req.OriginalPrice != nil {
+		originalPrice := *req.OriginalPrice
+		dtoReq.OriginalPrice = &originalPrice
+	}
+
+	if req.ProvinceId != nil {
+		provinceID := *req.ProvinceId
+		dtoReq.ProvinceID = &provinceID
+	}
+
+	return dtoReq
+}
+
+// MapCalculateTransferTaxFeeResponseToProto Convert DTO response to proto
+func MapCalculateTransferTaxFeeResponseToProto(resp *dto.CalculateTransferTaxFeeResponse) *bdspropb.CalculateTransferTaxFeeResponse {
+	return &bdspropb.CalculateTransferTaxFeeResponse{
+		TransferValue:     resp.TransferValue,
+		PersonalIncomeTax: resp.PersonalIncomeTax,
+		CorporateTax:      resp.CorporateTax,
+		RegistrationFee:   resp.RegistrationFee,
+		NotarizationFee:   resp.NotarizationFee,
+		DossierReviewFee:  resp.DossierReviewFee,
+		CadastralFee:      resp.CadastralFee,
+		CertificateFee:    resp.CertificateFee,
+		SurveyFee:         resp.SurveyFee,
+		TotalTaxFee:       resp.TotalTaxFee,
+		NetAmount:         resp.NetAmount,
+		Breakdown: &bdspropb.TaxFeeBreakdown{
+			PersonalIncomeTaxNote: resp.Breakdown.PersonalIncomeTaxNote,
+			CorporateTaxNote:      resp.Breakdown.CorporateTaxNote,
+			RegistrationFeeNote:   resp.Breakdown.RegistrationFeeNote,
+			NotarizationFeeNote:   resp.Breakdown.NotarizationFeeNote,
+			DossierReviewFeeNote:  resp.Breakdown.DossierReviewFeeNote,
+			CadastralFeeNote:      resp.Breakdown.CadastralFeeNote,
+			CertificateFeeNote:    resp.Breakdown.CertificateFeeNote,
+			SurveyFeeNote:         resp.Breakdown.SurveyFeeNote,
+		},
+	}
+}
+
+// MapCalculateLoanPaymentRequestToDTO Convert proto request to DTO
+func MapCalculateLoanPaymentRequestToDTO(req *bdspropb.CalculateLoanPaymentRequest) *dto.CalculateLoanPaymentRequest {
+	dtoReq := &dto.CalculateLoanPaymentRequest{
+		InterestRate:  req.InterestRate,
+		PropertyValue: req.PropertyValue,
+		LoanAmount:    req.LoanAmount,
+		Term:          req.Term,
+		PaymentMethod: req.PaymentMethod,
+	}
+
+	if req.FloatingInterestRate != nil {
+		floatingRate := *req.FloatingInterestRate
+		dtoReq.FloatingInterestRate = &floatingRate
+	}
+
+	return dtoReq
+}
+
+// MapCalculateLoanPaymentResponseToProto Convert DTO response to proto
+func MapCalculateLoanPaymentResponseToProto(resp *dto.CalculateLoanPaymentResponse) *bdspropb.CalculateLoanPaymentResponse {
+	schedule := make([]*bdspropb.LoanPaymentScheduleItem, len(resp.Schedule))
+	for i, item := range resp.Schedule {
+		schedule[i] = &bdspropb.LoanPaymentScheduleItem{
+			Month:              item.Month,
+			RemainingPrincipal: item.RemainingPrincipal,
+			PrincipalPayment:   item.PrincipalPayment,
+			InterestPayment:    item.InterestPayment,
+			TotalPayment:       item.TotalPayment,
+			InterestRate:       item.InterestRate,
+		}
+	}
+
+	return &bdspropb.CalculateLoanPaymentResponse{
+		Schedule:      schedule,
+		TotalInterest: resp.TotalInterest,
+		TotalPayment:  resp.TotalPayment,
+	}
+}
+
 // type TransactionTransformer interface {
 // 	CreateTransactionRequestToEntity(req *bdspropb.CreateTransactionRequest) *tx_domain.Tx
 // 	UpdateTransactionRequestToEntity(req *bdspropb.UpdateTransactionRequest) *tx_domain.Tx

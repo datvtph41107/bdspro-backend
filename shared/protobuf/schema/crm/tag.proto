@@ -67,6 +67,8 @@ message TagItem {
   bool isActive = 4;
   optional uint64 ownerId = 5;
   optional int32 ownerOf = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
 }
 
 message TagListResponse {

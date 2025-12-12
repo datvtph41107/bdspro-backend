@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package v3pb;
+
+option go_package = "pb/types/v3;v3pb";
+
+message TotalBdsproV3Proto {
+    optional ProductV3Proto product = 1;
+    repeated ProductV3Proto products = 2;
+    optional AssetV3Proto asset = 3;
+    repeated AssetV3Proto assets = 4;
+    optional PostV3Proto post = 5;
+    repeated PostV3Proto posts = 6;
+}
+
+message ProductV3Proto {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message AssetV3Proto {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message PostV3Proto {
+  uint64 id = 1;
+  string name = 2;
+}

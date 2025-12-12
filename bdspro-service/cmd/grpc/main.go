@@ -2,6 +2,7 @@ package cmd_grpc
 
 import (
 	"bdspro/config"
+	"bdspro/infra/db"
 	"bdspro/initial"
 	"bdspro/wire"
 	_middleware "common/middleware"
@@ -30,7 +31,7 @@ var GrpcCmd = &cobra.Command{
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		app, _ := wire.InitializeApp()
-		// db.MigrateDomain()
+		db.MigrateDomain()
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
@@ -60,6 +61,7 @@ var GrpcCmd = &cobra.Command{
 		bdspropb.RegisterAdminRegionServiceServer(s, app.AdminRegionHandler)
 		bdspropb.RegisterBdsproInternalServiceServer(s, app.InternalHandler)
 		bdspropb.RegisterBdsproDashboardServiceServer(s, app.BdsproDashboardHandler)
+		bdspropb.RegisterBdsDomainServiceServer(s, app.BdsDomainHandler)
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 

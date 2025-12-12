@@ -15,6 +15,7 @@ type TagListRequest struct {
 	Page    uint32
 	Size    uint32
 	Text    string
+	Sort    string
 }
 
 type AdminTagListRequest struct {
@@ -22,4 +23,7 @@ type AdminTagListRequest struct {
 	Page     uint32
 	Size     uint32
 	Text     string
+	Sort     string
+
+	IsDefault *bool
 }

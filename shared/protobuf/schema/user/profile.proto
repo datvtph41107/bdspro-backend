@@ -326,6 +326,8 @@ message TagItem {
     uint32 tagType = 3;
     bool isDefault = 4;
     bool isActive = 5;
+    string createdAt = 6;
+    string updatedAt = 7;
 }
 
 message AdminTagRequest {
@@ -341,6 +343,7 @@ message TagListRequest {
     uint32 page = 2;
     uint32 size = 3;
     string text = 4;
+    string sort = 5;
 }
 
 message TagListResponse {
@@ -353,6 +356,8 @@ message AdminTagListRequest {
     uint32 page = 2;
     uint32 size = 3;
     string text = 4;
+    string sort = 5;
+    optional bool isDefault = 6;
 }
 
 message AdminTagListResponse {
