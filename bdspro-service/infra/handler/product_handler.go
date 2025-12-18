@@ -21,37 +21,43 @@ import (
 
 type ProductHandler struct {
 	bdspropb.UnimplementedProductServiceServer
-	UC               *shared_usecase.ProductUsecase
-	ProductRepo      repo.ProductRepo
-	ProductMapper    *mapper.ProductMapper
-	ProductValidator *validator.ProductValidator
-	UserClient       *client.UserClient
-	DepositeMapper   *mapper.DepositeMapper
+	UC                 *shared_usecase.ProductUsecase
+	ProductRepo        repo.ProductRepo
+	ProductMapper      *mapper.ProductMapper
+	ProductPriceMapper *mapper.ProductPriceMapper
+	ProductValidator   *validator.ProductValidator
+	UserClient         *client.UserClient
+	DepositeMapper     *mapper.DepositeMapper
 	// TransactionMapper mapper.TransactionTransformer
 	PostMapper     *mapper.PostMapper
 	ProductAssetUC *usecases.ProductAssetUsecase
+	AssetMapper    *mapper.AssetMapper
 }
 
 func NewProductService(uc *shared_usecase.ProductUsecase,
 	productRepo repo.ProductRepo,
 	productMapper *mapper.ProductMapper,
+	productPriceMapper *mapper.ProductPriceMapper,
 	productValidator *validator.ProductValidator,
 	userClient *client.UserClient,
 	depositeMapper *mapper.DepositeMapper,
 	// transactionMapper mapper.TransactionTransformer,
 	postMapper *mapper.PostMapper,
 	productAssetUC *usecases.ProductAssetUsecase,
+	assetMapper *mapper.AssetMapper,
 ) *ProductHandler {
 	return &ProductHandler{
-		UC:               uc,
-		ProductRepo:      productRepo,
-		ProductMapper:    productMapper,
-		ProductValidator: productValidator,
-		UserClient:       userClient,
-		DepositeMapper:   depositeMapper,
+		UC:                 uc,
+		ProductRepo:        productRepo,
+		ProductMapper:      productMapper,
+		ProductPriceMapper: productPriceMapper,
+		ProductValidator:   productValidator,
+		UserClient:         userClient,
+		DepositeMapper:     depositeMapper,
 		// TransactionMapper: transactionMapper,
 		PostMapper:     postMapper,
 		ProductAssetUC: productAssetUC,
+		AssetMapper:    assetMapper,
 	}
 }
 
@@ -506,6 +512,7 @@ func (s *ProductHandler) GetDetail(ctx context.Context, req *bdspropb.IdRequest)
 	if product.OwnerID != 0 && product.OwnerOf == enums.EOwnerOfMember {
 		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
 	}
+
 	return productResponse, nil
 }
 
@@ -965,12 +972,59 @@ func (s *ProductHandler) GetAssetsByProduct(ctx context.Context, req *sharepb.Id
 		return nil, status.Errorf(codes.InvalidArgument, "id is required")
 	}
 
-	assetIDs, err := s.ProductAssetUC.GetAssetsByProductID(ctx, req.Id)
+	// Lấy danh sách asset đầy đủ từ repo
+	assets, err := s.ProductMapper.AssetRepo.GetAssetsByProductID(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
+	// Map danh sách asset sang proto
+	assetList := s.AssetMapper.MapAssetPbList(assets)
+
 	return &bdspropb.ProductAssetListResponse{
-		AssetIds: assetIDs,
+		Data: assetList,
+	}, nil
+}
+
+// @Summary Lấy lịch sử cập nhật giá
+// @Description API này cho phép lấy lịch sử cập nhật giá của sản phẩm
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Param page query int false "Số trang" default(1)
+// @Param size query int false "Số lượng bản ghi trên trang" default(20)
+// @Router /v2/bdspro/v2/product/{id}/price-history [get]
+func (s *ProductHandler) GetPriceHistory(ctx context.Context, req *bdspropb.PriceHistoryRequest) (*bdspropb.PriceHistoryResponse, error) {
+	if req.Id == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "id is required")
+	}
+
+	// Default pagination
+	page := req.Page
+	if page == 0 {
+		page = 1
+	}
+	size := req.Size
+	if size == 0 {
+		size = 20
+	}
+
+	// Lấy lịch sử giá từ usecase
+	prices, total, err := s.UC.GetPriceHistory(ctx, req.Id, page, size)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert entities sang DTOs
+	dtos := s.ProductPriceMapper.EntityListToDTO(prices)
+
+	// Convert DTOs sang protobuf response
+	pbItems := s.ProductPriceMapper.DTOListToPb(dtos)
+
+	return &bdspropb.PriceHistoryResponse{
+		Data:  pbItems,
+		Total: total,
 	}, nil
 }

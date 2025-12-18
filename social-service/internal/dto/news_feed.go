@@ -46,3 +46,15 @@ type NewsFeedPublic struct {
 	FriendTagIds   []uint64            `db:"-" json:"friend_tag_ids"`
 	NewsFeedMedias []*NewsFeedMediaDTO `db:"-" json:"news_feed_medias"`
 }
+
+type AdminNewsFeedSearch struct {
+	_dto.Pagable
+	Text       string  `json:"text" form:"text"`
+	IsReel     *bool   `json:"isReel" form:"isReel"`
+	IsPost     *bool   `json:"isPost" form:"isPost"`
+	OwnerID    *uint64 `json:"ownerId" form:"ownerId"`
+	OwnerOf    *int    `json:"ownerOf" form:"ownerOf"` // enum OwnerOf
+	Visibility *int    `json:"visibility" form:"visibility"`
+	IsHidden   *bool   `json:"isHidden" form:"isHidden"` // Lọc theo removed_at
+	CreatedBy  *uint64 `json:"createdBy" form:"createdBy"`
+}

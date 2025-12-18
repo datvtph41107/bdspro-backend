@@ -36,13 +36,17 @@ type ProductSaveRequestDTO struct {
 	HouseInfo       *HouseInfoDTO      `json:"houseInfo,omitempty"`
 	ProductPrivate  *ProductPrivateDTO `json:"productPrivate,omitempty"`
 	GoogleMapLink   string             `json:"googleMapLink"`
-	SourceType      uint32             `json:"sourceType"`
 	SaleStatus      uint32             `json:"saleStatus"`
 	RentStatus      uint32             `json:"rentStatus"`
 	SaleVisibility  uint32             `json:"saleVisibility"`
 	RentVisibility  uint32             `json:"rentVisibility"`
 	OwnerType       uint32             `json:"ownerType"`
-	ID              uint64             `json:"id"`
+
+	ID uint64 `json:"id"`
+
+	SourceType        uint32  `json:"sourceType"`
+	SourceContactId   *uint64 `json:"sourceContactId,omitempty"`
+	SourceContactNote string  `json:"sourceContactNote,omitempty"`
 }
 
 // ProductPriceDTO DTO cho thông tin giá

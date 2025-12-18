@@ -51,6 +51,9 @@ func (r *PublicRouter) GetEnumByType(c *gin.Context) {
 		"poststatus":     EnumMapToList(enums.EPostStatusNames),
 		"doctype":        EnumMapToList(enums.EDocTypeNames),
 		"assetstatus":    EnumMapToList(enums.EAssetStatusNames),
+
+		"house_orient":      EnumMapToList(enums.EHouseOrientNames),
+		"house_certificate": EnumMapToList(enums.EHouseCertificateNames),
 		// Thêm các enum khác ở đây nếu cần
 	}
 

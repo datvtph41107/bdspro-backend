@@ -524,6 +524,16 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 
 	s.MapProductStatus(c, entity)
 
+	// Kiểm tra xem user có phải là người tạo không để load privateData
+	profileID := _utils.GetProfileIdWithContext(c)
+	if profileID > 0 && entity.CreatedBy != nil && *entity.CreatedBy == profileID {
+		// Lấy privateData từ repo và gán vào entity
+		privateData := s.ProductPrivate.FindByProductId(c, &entity.ID)
+		if privateData != nil {
+			entity.PrivateData = privateData
+		}
+	}
+
 	return entity, nil
 }
 
@@ -1457,4 +1467,21 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	}
 
 	return summary, nil
+}
+
+// GetPriceHistory lấy lịch sử cập nhật giá của sản phẩm
+func (s *ProductUsecase) GetPriceHistory(ctx context.Context, productID uint64, page, size uint32) ([]*domain.ProductPrice, int64, error) {
+	// Kiểm tra quyền truy cập sản phẩm
+	err := s.CheckPermission(ctx, &productID, enums.PermissionProductRead)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy lịch sử giá từ repo
+	prices, total, err := s.PriceRepo.GetPriceHistory(ctx, productID, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return prices, total, nil
 }

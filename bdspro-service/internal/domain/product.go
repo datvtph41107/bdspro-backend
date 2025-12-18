@@ -23,6 +23,7 @@ type Product struct {
 	PropertyType   *PropertyTypeItem   `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	DocTypeId      *uint64             `json:"docTypeId,omitempty"`
 	DocType        *DocTypeItem        `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
+	DocTypeNote    string              `gorm:"column:doc_type_note" json:"docTypeNote,omitempty"`
 	ProjectID      *uint64             `gorm:"type:int8" json:"projectId,omitempty"`
 	Amenities      []AmenityItem       `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
 	Visibility     enums.EVisibility   `json:"visibility,omitempty" gorm:"default:10"` //phạm vi
@@ -38,9 +39,12 @@ type Product struct {
 	Apartment      *Apartment          `gorm:"foreignKey:ApartmentID;references:ID" json:"apartment,omitempty"`
 	ApartmentAttr  *ApartmentAttribute `gorm:"-" json:"apartmentAttribute,omitempty"`
 	Build          *ProjectBuild       `gorm:"-" json:"build,omitempty"`
-	Project        *Project            `gorm:"-" json:"project,omitempty"`
+	Project        *Project            `gorm:"foreignKey:ProjectID;references:ID" json:"project,omitempty"`
 	Developer      *Developer          `gorm:"-" json:"developer,omitempty"`
-	SourceType     enums.ESourceType   `json:"sourceType,omitempty"`
+
+	SourceType        enums.ESourceType `json:"sourceType,omitempty"`
+	SourceContactId   *uint64           `gorm:"type:int8" json:"sourceContactId,omitempty"`
+	SourceContactNote string            `gorm:"type:text" json:"sourceContactNote,omitempty"`
 	// CustomerID        *uint64                  `json:"customerId,omitempty"`
 	PrivateData       *ProductPrivate          `json:"privateInfo,omitempty"`
 	Note              string                   `json:"note,omitempty"`
@@ -82,6 +86,8 @@ type Product struct {
 	ScheduleCount uint32 `gorm:"type:int8" json:"scheduleCount,omitempty"`
 	DealCount     uint32 `gorm:"type:int8" json:"dealCount,omitempty"`
 	CrmCount      uint32 `gorm:"type:int8" json:"crmCount,omitempty"`
+
+	CertificateHouseNote string `json:"certificateHouseNote,omitempty"`
 
 	// CreatedUser       *ProfileInfo       `gorm:"-" json:"createdUser,omitempty"`
 	// UpdatedUser       *ProfileInfo       `gorm:"-" json:"updatedUser,omitempty"`

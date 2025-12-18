@@ -1006,6 +1006,49 @@
         "numToilet": {
           "type": "integer",
           "format": "int32"
+        },
+        "orientationHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum hướng nhà"
+        },
+        "orientationName": {
+          "type": "string",
+          "title": "Tên hướng nhà (tự động map từ enum)"
+        },
+        "certificateHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum chứng nhận"
+        },
+        "certificateName": {
+          "type": "string",
+          "title": "Tên giấy chứng nhận (tự động map từ enum)"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Đường vào (m)"
+        },
+        "frontWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Mặt tiền (m)"
+        },
+        "backWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Hậu (m)"
+        },
+        "width": {
+          "type": "number",
+          "format": "double",
+          "title": "Rộng (m)"
+        },
+        "height": {
+          "type": "number",
+          "format": "double",
+          "title": "Dài (m)"
         }
       }
     },
@@ -1624,6 +1667,16 @@
         "hasDeal": {
           "type": "boolean",
           "title": "Đang ở ít nhất 1 thương vụ"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "certificateHouseNote": {
+          "type": "string"
         }
       }
     },

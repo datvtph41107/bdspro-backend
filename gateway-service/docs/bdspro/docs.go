@@ -4139,6 +4139,47 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/public/enums/{text}": {
+            "get": {
+                "description": "Lấy danh sách enum với value và name tương ứng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enum"
+                ],
+                "summary": "Lấy enum dạng name-value",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tên loại enum",
+                        "name": "text",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.GetEnumResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/public/product/user/{profileId}": {
             "get": {
                 "description": "Lấy danh sách sản phẩm của một user cụ thể - API public không cần authentication",
@@ -5364,6 +5405,92 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/bds/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách bất động sản với phân trang và bộ lọc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Bất động sản"
+                ],
+                "summary": "Lấy danh sách bất động sản",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Trang hiện tại",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Số lượng item",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sắp xếp",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tìm kiếm theo text",
+                        "name": "text",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo Product ID",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo Asset ID",
+                        "name": "assetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo Tỉnh/TP",
+                        "name": "provinceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo Phường/Xã",
+                        "name": "wardId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lọc theo Quận/Huyện",
+                        "name": "districtId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.BdsDomainListResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/bdspro/v2/dashboard/today/post": {
             "get": {
                 "description": "API trả ra ngẫu nhiên 5 bản ghi tin đăng đã được publish",
@@ -6054,7 +6181,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "API này cho phép liên kết sản phẩm với tài sản",
+                "description": "API này cho phép liên kết nhiều sản phẩm với một tài sản",
                 "consumes": [
                     "application/json"
                 ],
@@ -6064,10 +6191,10 @@ const docTemplate = `{
                 "tags": [
                     "User: Sản phẩm"
                 ],
-                "summary": "Liên kết sản phẩm với tài sản",
+                "summary": "Liên kết nhiều sản phẩm với tài sản",
                 "parameters": [
                     {
-                        "description": "Thông tin liên kết",
+                        "description": "Thông tin liên kết (nhiều productIds và 1 assetId)",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -6694,7 +6821,7 @@ const docTemplate = `{
             }
         },
         "/v2/bdspro/v2/product/unlink-asset": {
-            "delete": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -7053,6 +7180,50 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/v2/bdspro/v2/product/{id}/price-history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này cho phép lấy lịch sử cập nhật giá của sản phẩm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User: Sản phẩm"
+                ],
+                "summary": "Lấy lịch sử cập nhật giá",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Số trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Số lượng bản ghi trên trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/v2/bdspro/v2/project-build": {
             "post": {
                 "description": "Tạo mới tòa nhà",
@@ -7230,6 +7401,70 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/v2/bdspro/v2/transaction/calculate-loan-payment": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API tính toán lịch trả nợ vay ngân hàng theo 2 phương thức: dư nợ giảm dần (10) và trả lãi định kỳ/gốc cuối kỳ (20)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Tính lịch trả nợ vay ngân hàng",
+                "parameters": [
+                    {
+                        "description": "Thông tin tính vay",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.CalculateLoanPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v2/bdspro/v2/transaction/calculate-tax-fee": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API tính toán thuế và phí chuyển nhượng bất động sản bao gồm: thuế TNCN (nếu cá nhân), thuế TN doanh nghiệp (nếu doanh nghiệp), lệ phí trước bạ, phí công chứng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Giao dịch"
+                ],
+                "summary": "Tính thuế và phí chuyển nhượng",
+                "parameters": [
+                    {
+                        "description": "Thông tin tính thuế phí",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/bdspropb.CalculateTransferTaxFeeRequest"
+                        }
+                    }
+                ],
+                "responses": {}
             }
         },
         "/v3/bdspro/post/personal/{id}": {
@@ -8026,11 +8261,41 @@ const docTemplate = `{
         "bdspropb.AssetItem": {
             "type": "object",
             "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "area": {
+                    "type": "number"
+                },
                 "code": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "legalStatus": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "provinceName": {
+                    "type": "string"
+                },
+                "purchasePrice": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "wardName": {
+                    "type": "string"
                 }
             }
         },
@@ -8088,6 +8353,204 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "bdspropb.BdsDomain": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "alleyAccess": {
+                    "type": "boolean"
+                },
+                "alleyWidth": {
+                    "type": "number"
+                },
+                "area": {
+                    "type": "number"
+                },
+                "areaBalcony": {
+                    "type": "number"
+                },
+                "areaBuild": {
+                    "type": "number"
+                },
+                "areaFloor": {
+                    "type": "number"
+                },
+                "areaGreen": {
+                    "type": "number"
+                },
+                "areaLand": {
+                    "type": "number"
+                },
+                "areaParking": {
+                    "type": "number"
+                },
+                "areaTerrace": {
+                    "type": "number"
+                },
+                "areaUse": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "backWidth": {
+                    "type": "number"
+                },
+                "cornerLot": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "distanceToRoad": {
+                    "type": "number"
+                },
+                "districtId": {
+                    "type": "integer"
+                },
+                "elevation": {
+                    "type": "number"
+                },
+                "frontWidth": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "leftWidth": {
+                    "type": "number"
+                },
+                "length": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "mainDirection": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "orientation": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "profileId": {
+                    "type": "integer"
+                },
+                "provinceId": {
+                    "type": "integer"
+                },
+                "rightWidth": {
+                    "type": "number"
+                },
+                "roadAccess": {
+                    "type": "string"
+                },
+                "roadType": {
+                    "type": "string"
+                },
+                "roadWidth": {
+                    "type": "number"
+                },
+                "shape": {
+                    "type": "string"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "streetNumber": {
+                    "type": "string"
+                },
+                "topography": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "wardId": {
+                    "type": "integer"
+                },
+                "width": {
+                    "type": "number"
+                }
+            }
+        },
+        "bdspropb.BdsDomainListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.BdsDomain"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.CalculateLoanPaymentRequest": {
+            "type": "object",
+            "properties": {
+                "floatingInterestRate": {
+                    "description": "Lãi suất thả nổi từ năm 2 (%/năm) - thường 10-11%",
+                    "type": "number"
+                },
+                "interestRate": {
+                    "description": "Lãi suất năm đầu (%/năm) - thường là lãi suất ưu đãi",
+                    "type": "number"
+                },
+                "loanAmount": {
+                    "description": "Số tiền vay (VND)",
+                    "type": "number"
+                },
+                "paymentMethod": {
+                    "description": "Phương thức trả nợ: 10=dư nợ giảm dần, 20=trả lãi định kỳ/gốc cuối kỳ",
+                    "type": "integer"
+                },
+                "propertyValue": {
+                    "description": "Giá trị tài sản (VND)",
+                    "type": "number"
+                },
+                "term": {
+                    "description": "Kỳ hạn (tháng)",
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.CalculateTransferTaxFeeRequest": {
+            "type": "object",
+            "properties": {
+                "isBusiness": {
+                    "description": "true nếu là doanh nghiệp, false nếu là cá nhân",
+                    "type": "boolean"
+                },
+                "originalPrice": {
+                    "description": "Giá gốc mua vào (để tính thuế TNCN nếu có)",
+                    "type": "number"
+                },
+                "provinceId": {
+                    "description": "ID tỉnh/thành phố (để tính lệ phí trước bạ theo từng địa phương)",
+                    "type": "integer"
+                },
+                "transferValue": {
+                    "description": "Giá trị chuyển nhượng (VND)",
+                    "type": "number"
                 }
             }
         },
@@ -8186,9 +8649,39 @@ const docTemplate = `{
                 }
             }
         },
+        "bdspropb.EnumItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "bdspropb.GetEnumResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.EnumItem"
+                    }
+                }
+            }
+        },
         "bdspropb.HouseInfo": {
             "type": "object",
             "properties": {
+                "certificateHouse": {
+                    "description": "Enum chứng nhận",
+                    "type": "integer"
+                },
+                "certificateName": {
+                    "description": "Tên giấy chứng nhận (tự động map từ enum)",
+                    "type": "string"
+                },
                 "furniture": {
                     "type": "string"
                 },
@@ -8214,6 +8707,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "orientation": {
+                    "type": "string"
+                },
+                "orientationHouse": {
+                    "description": "Enum hướng nhà",
+                    "type": "integer"
+                },
+                "orientationName": {
+                    "description": "Tên hướng nhà (tự động map từ enum)",
                     "type": "string"
                 }
             }
@@ -8291,10 +8792,15 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "assetId": {
+                    "description": "1 tài sản",
                     "type": "integer"
                 },
-                "productId": {
-                    "type": "integer"
+                "productIds": {
+                    "description": "Nhiều sản phẩm",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -8905,6 +9411,12 @@ const docTemplate = `{
                     "description": "Số lượt chia sẻ",
                     "type": "integer"
                 },
+                "sourceContactId": {
+                    "type": "integer"
+                },
+                "sourceContactNote": {
+                    "type": "string"
+                },
                 "sourceType": {
                     "type": "integer"
                 },
@@ -9017,6 +9529,12 @@ const docTemplate = `{
                 },
                 "saleVisibility": {
                     "type": "integer"
+                },
+                "sourceContactId": {
+                    "type": "integer"
+                },
+                "sourceContactNote": {
+                    "type": "string"
                 },
                 "sourceType": {
                     "type": "integer"
@@ -9310,6 +9828,12 @@ const docTemplate = `{
                 },
                 "saleVisibility": {
                     "type": "integer"
+                },
+                "sourceContactId": {
+                    "type": "integer"
+                },
+                "sourceContactNote": {
+                    "type": "string"
                 },
                 "sourceType": {
                     "type": "integer"
@@ -10082,6 +10606,18 @@ const docTemplate = `{
                     "description": "hậu ? m",
                     "type": "number"
                 },
+                "certificateHouse": {
+                    "description": "Chứng nhận",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EHouseCertificate"
+                        }
+                    ]
+                },
+                "certificateName": {
+                    "description": "Tên giấy chứng nhận",
+                    "type": "string"
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -10126,6 +10662,18 @@ const docTemplate = `{
                 },
                 "orientation": {
                     "description": "Hướng nhà (Đông, Tây, Nam,...)",
+                    "type": "string"
+                },
+                "orientationHouse": {
+                    "description": "Hướng nhà",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.EHouseOrient"
+                        }
+                    ]
+                },
+                "orientationName": {
+                    "description": "Tên hướng nhà",
                     "type": "string"
                 },
                 "product_id": {
@@ -10362,6 +10910,9 @@ const docTemplate = `{
                 "docTypeId": {
                     "type": "integer"
                 },
+                "docTypeNote": {
+                    "type": "string"
+                },
                 "googleMapLink": {
                     "type": "string"
                 },
@@ -10507,6 +11058,12 @@ const docTemplate = `{
                 "shareCount": {
                     "description": "Số lượt chia sẻ",
                     "type": "integer"
+                },
+                "sourceContactId": {
+                    "type": "integer"
+                },
+                "sourceContactNote": {
+                    "type": "string"
                 },
                 "sourceType": {
                     "$ref": "#/definitions/enums.ESourceType"
@@ -11299,6 +11856,12 @@ const docTemplate = `{
                 "saleVisibility": {
                     "$ref": "#/definitions/enums.EVisibility"
                 },
+                "sourceContactId": {
+                    "type": "integer"
+                },
+                "sourceContactNote": {
+                    "type": "string"
+                },
                 "sourceType": {
                     "type": "integer"
                 },
@@ -11442,6 +12005,63 @@ const docTemplate = `{
                 "ERedBook",
                 "EPinkBook",
                 "ENotarizedRecord"
+            ]
+        },
+        "enums.EHouseCertificate": {
+            "type": "integer",
+            "enum": [
+                0,
+                10,
+                20,
+                30
+            ],
+            "x-enum-comments": {
+                "EHouseCertificateNone": "Chưa xác định",
+                "EHouseCertificateNotarizedRecord": "Vi bằng",
+                "EHouseCertificatePinkBook": "Sổ hồng",
+                "EHouseCertificateRedBook": "Sổ đỏ"
+            },
+            "x-enum-varnames": [
+                "EHouseCertificateNone",
+                "EHouseCertificateRedBook",
+                "EHouseCertificatePinkBook",
+                "EHouseCertificateNotarizedRecord"
+            ]
+        },
+        "enums.EHouseOrient": {
+            "type": "integer",
+            "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50,
+                60,
+                70,
+                80
+            ],
+            "x-enum-comments": {
+                "EHouseOrientEast": "Đông",
+                "EHouseOrientEastNorth": "Đông Bắc",
+                "EHouseOrientEastSouth": "Đông Nam",
+                "EHouseOrientNone": "Chưa xác định",
+                "EHouseOrientNorth": "Bắc",
+                "EHouseOrientSouth": "Nam",
+                "EHouseOrientWest": "Tây",
+                "EHouseOrientWestNorth": "Tây Bắc",
+                "EHouseOrientWestSouth": "Tây Nam"
+            },
+            "x-enum-varnames": [
+                "EHouseOrientNone",
+                "EHouseOrientEast",
+                "EHouseOrientWest",
+                "EHouseOrientSouth",
+                "EHouseOrientNorth",
+                "EHouseOrientEastSouth",
+                "EHouseOrientEastNorth",
+                "EHouseOrientWestSouth",
+                "EHouseOrientWestNorth"
             ]
         },
         "enums.EOwnerOf": {

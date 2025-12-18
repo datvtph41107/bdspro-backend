@@ -130,6 +130,10 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"address":          entity.Address,
 		"google_map_link":  entity.GoogleMapLink,
 		"archived":         entity.Archived,
+
+		"source_contact_id":      entity.SourceContactId,
+		"source_contact_note":    entity.SourceContactNote,
+		"certificate_house_note": entity.CertificateHouseNote,
 		// "district_id":      entity.DistrictID,
 	}
 
@@ -203,6 +207,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		Preload("Apartment", "deleted_at IS NULL").
 		Preload("MediaList", "deleted_at IS NULL").
 		Preload("HouseInfo", "deleted_at IS NULL").
+		Preload("Project", "deleted_at IS NULL").
 		// Preload("CreatedUser").
 		// Preload("UpdatedUser").
 		Preload("Province", "deleted_at IS NULL").

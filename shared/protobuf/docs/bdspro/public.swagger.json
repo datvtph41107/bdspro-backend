@@ -16,6 +16,74 @@
     "application/json"
   ],
   "paths": {
+    "/v2/bdspro/public/enums/{text}": {
+      "get": {
+        "operationId": "BdsproPublicService_GetEnumByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbGetEnumResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "text",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "BdsproPublicService"
+        ]
+      }
+    },
     "/v2/bdspro/public/product/user/{profileId}": {
       "get": {
         "operationId": "BdsproPublicService_GetUserProductsPublic",
@@ -920,6 +988,30 @@
         }
       }
     },
+    "bdspropbEnumItem": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbGetEnumResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbEnumItem"
+          }
+        }
+      }
+    },
     "bdspropbHouseInfo": {
       "type": "object",
       "properties": {
@@ -956,6 +1048,49 @@
         "numToilet": {
           "type": "integer",
           "format": "int32"
+        },
+        "orientationHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum hướng nhà"
+        },
+        "orientationName": {
+          "type": "string",
+          "title": "Tên hướng nhà (tự động map từ enum)"
+        },
+        "certificateHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum chứng nhận"
+        },
+        "certificateName": {
+          "type": "string",
+          "title": "Tên giấy chứng nhận (tự động map từ enum)"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Đường vào (m)"
+        },
+        "frontWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Mặt tiền (m)"
+        },
+        "backWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Hậu (m)"
+        },
+        "width": {
+          "type": "number",
+          "format": "double",
+          "title": "Rộng (m)"
+        },
+        "height": {
+          "type": "number",
+          "format": "double",
+          "title": "Dài (m)"
         }
       }
     },
@@ -1620,6 +1755,16 @@
         "hasDeal": {
           "type": "boolean",
           "title": "Đang ở ít nhất 1 thương vụ"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "certificateHouseNote": {
+          "type": "string"
         }
       }
     },

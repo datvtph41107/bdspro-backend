@@ -78,6 +78,15 @@ message HouseInfo {
     optional string furniture = 7;
     optional string orientation = 8;
     optional int32 numToilet = 9;
+    optional uint32 orientationHouse = 10; // Enum hướng nhà
+    optional string orientationName = 11; // Tên hướng nhà (tự động map từ enum)
+    optional uint32 certificateHouse = 12; // Enum chứng nhận
+    optional string certificateName = 13; // Tên giấy chứng nhận (tự động map từ enum)
+    optional double roadWidth = 14; // Đường vào (m)
+    optional double frontWidth = 15; // Mặt tiền (m)
+    optional double backWidth = 16; // Hậu (m)
+    optional double width = 17; // Rộng (m)
+    optional double height = 18; // Dài (m)
   }
   
   message ProductPrivate {
@@ -176,6 +185,9 @@ message ProductResponse {
     bool hasAsset = 67;            // Có gắn với ít nhất 1 tài sản
     bool hasInventory = 68;        // Thuộc bảng hàng
     bool hasDeal = 69;             // Đang ở ít nhất 1 thương vụ
+    optional uint64 sourceContactId = 70;
+    string sourceContactNote = 71;
+    string certificateHouseNote = 72;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

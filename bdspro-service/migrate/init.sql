@@ -1,5 +1,9 @@
 CREATE INDEX idx_rooms_build_floor_ordinal ON apartment(build_id, floor, ordinal);
 
+-- Add sourceContactId and sourceContactNote columns to products table
+ALTER TABLE products ADD COLUMN IF NOT EXISTS source_contact_id BIGINT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS source_contact_note TEXT;
+
 CREATE MATERIALIZED VIEW public.product_market
 TABLESPACE pg_default
 AS SELECT p.id,

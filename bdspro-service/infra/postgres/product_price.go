@@ -106,3 +106,34 @@ func (r *GormProductPriceRepo) UpdatePrice(ctx context.Context, priceId *uint64,
 func (r *GormProductPriceRepo) Create(c context.Context, entity *domain.ProductPrice) error {
 	return GetDB(c, r.DB).Create(entity).Error
 }
+
+func (r *GormProductPriceRepo) GetPriceHistory(ctx context.Context, productId uint64, page, size uint32) ([]*domain.ProductPrice, int64, error) {
+	var prices []*domain.ProductPrice
+	var total int64
+
+	// Default pagination
+	if size == 0 {
+		size = 20
+	}
+	if size > 100 {
+		size = 100
+	}
+	offset := (page - 1) * size
+
+	db := GetDB(ctx, r.DB).Where("product_id = ? AND deleted_at IS NULL", productId)
+
+	// Count total
+	if err := db.Model(&domain.ProductPrice{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get list with pagination
+	if err := db.Order("created_at DESC").
+		Offset(int(offset)).
+		Limit(int(size)).
+		Find(&prices).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return prices, total, nil
+}

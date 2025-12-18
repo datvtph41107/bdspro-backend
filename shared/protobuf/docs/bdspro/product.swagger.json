@@ -2396,6 +2396,51 @@
           "ProductService"
         ]
       }
+    },
+    "/v2/bdspro/v2/product/{id}/price-history": {
+      "get": {
+        "operationId": "ProductService_GetPriceHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbPriceHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -2570,6 +2615,116 @@
         "splitArea": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "bdspropbAsset": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "buyedDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "docStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "parentAssetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "splitMergeStatus": {
+          "type": "string"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "purchaseDate": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "legalItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbLegalItem"
+          }
+        },
+        "propertyTypeName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductResponse"
         }
       }
     },
@@ -2850,6 +3005,49 @@
         "numToilet": {
           "type": "integer",
           "format": "int32"
+        },
+        "orientationHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum hướng nhà"
+        },
+        "orientationName": {
+          "type": "string",
+          "title": "Tên hướng nhà (tự động map từ enum)"
+        },
+        "certificateHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum chứng nhận"
+        },
+        "certificateName": {
+          "type": "string",
+          "title": "Tên giấy chứng nhận (tự động map từ enum)"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Đường vào (m)"
+        },
+        "frontWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Mặt tiền (m)"
+        },
+        "backWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Hậu (m)"
+        },
+        "width": {
+          "type": "number",
+          "format": "double",
+          "title": "Rộng (m)"
+        },
+        "height": {
+          "type": "number",
+          "format": "double",
+          "title": "Dài (m)"
         }
       }
     },
@@ -3197,6 +3395,72 @@
         }
       }
     },
+    "bdspropbPriceHistoryItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "saleCommission": {
+          "type": "number",
+          "format": "double"
+        },
+        "saleCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "deposite": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommission": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentPaymentCycle": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbPriceHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPriceHistoryItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
     "bdspropbProductAccess": {
       "type": "object",
       "properties": {
@@ -3234,11 +3498,11 @@
     "bdspropbProductAssetListResponse": {
       "type": "object",
       "properties": {
-        "assetIds": {
+        "data": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "uint64"
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAsset"
           }
         }
       }
@@ -3667,6 +3931,16 @@
         "hasDeal": {
           "type": "boolean",
           "title": "Đang ở ít nhất 1 thương vụ"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "certificateHouseNote": {
+          "type": "string"
         }
       }
     },
@@ -3792,6 +4066,16 @@
         "imageId": {
           "type": "string",
           "format": "uint64"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "certificateHouseNote": {
+          "type": "string"
         }
       }
     },
@@ -3913,6 +4197,16 @@
         "imageId": {
           "type": "string",
           "format": "uint64"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "certificateHouseNote": {
+          "type": "string"
         }
       }
     },
@@ -4157,6 +4451,13 @@
         "imageId": {
           "type": "string",
           "format": "uint64"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
         }
       }
     },

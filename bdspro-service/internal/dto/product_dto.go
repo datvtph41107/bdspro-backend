@@ -23,36 +23,48 @@ type HouseInfoUpdate struct {
 	NumCarPark  *int32  `json:"numCarPark,omitempty"`  // Số chỗ để ôtô
 	Furniture   *string `json:"furniture,omitempty"`   // Nội thất: "full", "partial", "none"
 	Orientation *string `json:"orientation,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
+
+	OrientationHouse enums.EHouseOrient      `json:"orientationHouse,omitempty"` // Hướng nhà (Đông, Tây, Nam,...)
+	CertificateHouse enums.EHouseCertificate `json:"certificateHouse,omitempty"` // Chứng nhận
+	RoadWidth        *float64                `json:"roadWidth,omitempty"`        // Đường vào (m2)
+	FrontWidth       *float64                `json:"frontWidth,omitempty"`       // Mặt tiền (m)
+	BackWidth        *float64                `json:"backWidth,omitempty"`        // Hậu (m)
+	Width            *float64                `json:"width,omitempty"`            // Rộng (m)
+	Height           *float64                `json:"height,omitempty"`           // Dài (m)
 }
 
 type ProductSaveRequest struct {
-	ParentID        *uint64                 `gorm:"size:255" json:"parentId"`
-	Name            string                  `gorm:"size:255" json:"name" binding:"required"`
-	Code            string                  `gorm:"size:15" json:"code"`
-	Area            float64                 `json:"area" binding:"required"`
-	Description     string                  `json:"description"`
-	Note            string                  `json:"note"`
-	PropertyTypeId  *uint64                 `json:"propertyTypeId"`
-	DocTypeId       *uint64                 `json:"docTypeId"`
-	AmenityIds      []uint64                `json:"amenityIds"`
-	ProjectId       *uint64                 `json:"projectId"`
-	ProvinceID      *uint64                 `json:"provinceId"`
-	WardID          *uint64                 `json:"wardId"`
-	TransactionType int32                   `json:"transactionType"`
-	PriceData       *domain.ProductPrice    `json:"priceData" binding:"required"`
-	MediaItems      []MediaItem             `json:"mediaItems"`
-	HouseInfo       *HouseInfoUpdate        `json:"houseInfo"`
-	PrivateData     *domain.ProductPrivate  `json:"productPrivate"`
-	GoogleMapLink   string                  `json:"googleMapLink"`
-	SourceType      uint32                  `json:"sourceType"`
-	PostCreate      *PostSaveRequest        `json:"post"`
-	AssetCreate     *AssetCreateWithProduct `json:"asset"`
-	SaleVisibility  enums.EVisibility       `json:"saleVisibility"`
-	RentVisibility  enums.EVisibility       `json:"rentVisibility"`
-	Visibility      enums.EVisibility       `json:"visibility"`
-	OwnerType       enums.EOwnerOf          `json:"ownerType"`
-	OwnerId         uint64                  `json:"ownerId"`
-	ImageId         *uint64                 `json:"imageId"`
+	ParentID          *uint64                 `gorm:"size:255" json:"parentId"`
+	Name              string                  `gorm:"size:255" json:"name" binding:"required"`
+	Code              string                  `gorm:"size:15" json:"code"`
+	Area              float64                 `json:"area" binding:"required"`
+	Description       string                  `json:"description"`
+	Note              string                  `json:"note"`
+	PropertyTypeId    *uint64                 `json:"propertyTypeId"`
+	DocTypeId         *uint64                 `json:"docTypeId"`
+	AmenityIds        []uint64                `json:"amenityIds"`
+	ProjectId         *uint64                 `json:"projectId"`
+	ProvinceID        *uint64                 `json:"provinceId"`
+	WardID            *uint64                 `json:"wardId"`
+	TransactionType   int32                   `json:"transactionType"`
+	PriceData         *domain.ProductPrice    `json:"priceData" binding:"required"`
+	MediaItems        []MediaItem             `json:"mediaItems"`
+	HouseInfo         *HouseInfoUpdate        `json:"houseInfo"`
+	PrivateData       *domain.ProductPrivate  `json:"productPrivate"`
+	GoogleMapLink     string                  `json:"googleMapLink"`
+	SourceType        uint32                  `json:"sourceType"`
+	SourceContactId   *uint64                 `json:"sourceContactId,omitempty"`
+	SourceContactNote string                  `json:"sourceContactNote,omitempty"`
+	PostCreate        *PostSaveRequest        `json:"post"`
+	AssetCreate       *AssetCreateWithProduct `json:"asset"`
+	SaleVisibility    enums.EVisibility       `json:"saleVisibility"`
+	RentVisibility    enums.EVisibility       `json:"rentVisibility"`
+	Visibility        enums.EVisibility       `json:"visibility"`
+	OwnerType         enums.EOwnerOf          `json:"ownerType"`
+	OwnerId           uint64                  `json:"ownerId"`
+	ImageId           *uint64                 `json:"imageId"`
+
+	CertificateHouseNote string `json:"certificateHouseNote,omitempty"`
 	// SaleStatus      enums.EProductStatus    `json:"saleStatus"`
 	// RentStatus      enums.EProductStatus    `json:"rentStatus"`
 	// SaleStatus      enums.ProductStatus     `json:"saleStatus"`

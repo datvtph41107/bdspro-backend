@@ -204,6 +204,7 @@ var wireSet = wire.NewSet(
 	bdspro_internal_job.NewProductDashboardStatsJob,
 	bdspro_infra_mapper.NewProductMapper,
 	bdspro_infra_postgres.NewProductOfOrgPostgres,
+	bdspro_infra_mapper.NewProductPriceMapper,
 	bdspro_infra_handler.NewProductService,
 	bdspro_internal_usecases_shared.NewProductUsecase,
 	bdspro_infra_postgres.NewProductUserPostgres,

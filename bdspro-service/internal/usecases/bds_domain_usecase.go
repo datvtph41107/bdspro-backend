@@ -88,7 +88,7 @@ func (uc *BdsDomainUsecase) CreateBdsDomainFromProduct(ctx context.Context, prod
 			bds.Orientation = houseInfo.Orientation
 			bds.MainDirection = houseInfo.Orientation
 		}
-		if houseInfo.RoadType != nil {
+		if houseInfo.RoadWidth != nil {
 			roadTypeStr := ""
 			// Convert uint32 to string if needed, or use a mapping
 			// For now, just set as empty, can be enhanced later

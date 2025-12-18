@@ -365,3 +365,182 @@ func (u *NewsFeedUsecase) CountByOwner(ctx context.Context, ownerOf socialpb.Own
 	}
 	return uint32(count), nil
 }
+
+// AdminCreateNewsFeed - Admin tạo bài viết
+func (u *NewsFeedUsecase) AdminCreateNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
+	if !u.permissionUsecase.IsAdmin(ctx) {
+		return nil, &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "Bạn không có quyền admin",
+		}
+	}
+
+	// Lưu createdBy từ request (nếu có) để admin có thể set user khác làm creator
+	requestCreatedBy := newsFeed.CreatedBy
+
+	// Admin có thể tạo bài viết cho bất kỳ owner nào
+	ownerType := newsFeed.OwnerOf
+	ownerID := newsFeed.OwnerID
+	result, err := u.createNewsFeed(ctx, newsFeed, ownerType, ownerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Nếu admin đã set createdBy từ request, update lại sau khi create
+	// (vì GORM callback sẽ tự động set createdBy từ context)
+	if requestCreatedBy != nil && *requestCreatedBy > 0 {
+		err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+			return u.newsFeedRepo.UpdateCreatedBy(ctx, result.ID, *requestCreatedBy)
+		})
+		if err != nil {
+			return nil, err
+		}
+		result.CreatedBy = requestCreatedBy
+	}
+
+	return result, nil
+}
+
+// AdminUpdateNewsFeed - Admin sửa bài viết
+func (u *NewsFeedUsecase) AdminUpdateNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
+	if !u.permissionUsecase.IsAdmin(ctx) {
+		return nil, &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "Bạn không có quyền admin",
+		}
+	}
+
+	// Admin có thể sửa bất kỳ bài viết nào, không cần check owner
+	err := u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		if len(newsFeed.FriendTagIds) > 0 {
+			profileId := _utils.GetProfileIdWithContext(ctx)
+			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
+			if err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: err.Error(),
+				}
+			}
+			if !isFriends {
+				return &_routes.Except{
+					Code:    http.StatusForbidden,
+					Message: "not friends",
+				}
+			}
+			if err := u.friendTagRepo.UpdateFriendTag(ctx, newsFeed.ID, newsFeed.FriendTagIds); err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: err.Error(),
+				}
+			}
+		}
+
+		if len(newsFeed.NewsFeedMedias) > 0 {
+			if err := u.newsFeedMediaRepo.UpdateMedia(ctx, newsFeed.ID, newsFeed.NewsFeedMedias); err != nil {
+				return &_routes.Except{
+					Code:    http.StatusInternalServerError,
+					Message: err.Error(),
+				}
+			}
+		}
+		_, err := u.newsFeedRepo.Update(ctx, newsFeed)
+		if err != nil {
+			return &_routes.Except{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return newsFeed, nil
+}
+
+// AdminDeleteNewsFeed - Admin xóa bài viết
+func (u *NewsFeedUsecase) AdminDeleteNewsFeed(ctx context.Context, newsFeedID uint64) error {
+	if !u.permissionUsecase.IsAdmin(ctx) {
+		return &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "Bạn không có quyền admin",
+		}
+	}
+
+	newsfeed, err := u.newsFeedRepo.GetByID(ctx, newsFeedID)
+	if err != nil {
+		return err
+	}
+	// Admin có thể xóa bất kỳ bài viết nào
+	return u.newsFeedRepo.Delete(ctx, newsfeed)
+}
+
+// AdminHideNewsFeed - Admin ẩn/hiện bài viết
+func (u *NewsFeedUsecase) AdminHideNewsFeed(ctx context.Context, newsFeedID uint64, isHidden bool) (*domain.NewsFeed, error) {
+	if !u.permissionUsecase.IsAdmin(ctx) {
+		return nil, &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "Bạn không có quyền admin",
+		}
+	}
+
+	err := u.newsFeedRepo.HideNewsFeed(ctx, newsFeedID, isHidden)
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeed, err := u.newsFeedRepo.GetByID(ctx, newsFeedID)
+	if err != nil {
+		return nil, err
+	}
+	return newsFeed, nil
+}
+
+// AdminGetListNewsFeed - Admin lấy danh sách bài viết
+func (u *NewsFeedUsecase) AdminGetListNewsFeed(ctx context.Context, req *dto.AdminNewsFeedSearch) ([]*dto.NewsFeedPublic, int32, error) {
+	if !u.permissionUsecase.IsAdmin(ctx) {
+		return nil, 0, &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "Bạn không có quyền admin",
+		}
+	}
+
+	// Validate pagination
+	if req.Size > 100 || req.Size <= 0 {
+		req.Size = 100
+	}
+	if req.Page <= 0 {
+		req.Page = 0
+	}
+
+	newsFeeds, total, err := u.newsFeedRepo.AdminGetList(ctx, req)
+	if err != nil {
+		return nil, 0, err
+	}
+	return newsFeeds, total, nil
+}
+
+// AdminGetNewsFeedByID - Admin lấy chi tiết bài viết
+func (u *NewsFeedUsecase) AdminGetNewsFeedByID(ctx context.Context, newsFeedID uint64) (*domain.NewsFeed, error) {
+	if !u.permissionUsecase.IsAdmin(ctx) {
+		return nil, &_routes.Except{
+			Code:    http.StatusForbidden,
+			Message: "Bạn không có quyền admin",
+		}
+	}
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	newsFeed, err := u.newsFeedRepo.AdminGetByID(ctx, newsFeedID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lấy thông tin like của user hiện tại
+	like, err := u.likeRepo.GetByTargetIdAndTypeAndUserId(ctx, newsFeedID, enums.TargetTypeNewsFeed, profileId)
+	if like != nil && err == nil {
+		newsFeed.LikedAt = like.CreatedAt
+		newsFeed.DisLike = &like.DisLike
+	}
+
+	return newsFeed, nil
+}

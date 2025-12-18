@@ -246,9 +246,10 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		// Build:           product.Build,
 		// Project:         product.Project,
 		// Developer:       product.Developer,
-		SourceType: uint32(product.SourceType),
+		SourceType:        uint32(product.SourceType),
+		SourceContactId:   product.SourceContactId,
+		SourceContactNote: product.SourceContactNote,
 		// CustomerId: product.CustomerID,
-		// PrivateData:     product.PrivateData,
 		Note:            product.Note,
 		TransactionType: int32(product.TransactionType),
 		SaleStatus:      uint32(product.SaleStatus),
@@ -267,6 +268,8 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 			WardId:       product.WardID,
 			WardName:     cleanAddressUnit(product.WardName),
 		},
+		CertificateHouseNote: product.CertificateHouseNote,
+
 		GoogleMapLink: product.GoogleMapLink,
 		// Attributes:    product.Attributes,
 		// MediaList:     product.MediaList,
@@ -373,6 +376,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 			RentCommissionType: product.Price.RentCommissionType,
 		}
 
+	}
+
+	// Map privateData nếu có (chỉ khi user là người tạo)
+	if product.PrivateData != nil {
+		result.PrivateData = m.PrivateDataToPb(product.PrivateData)
 	}
 
 	// if product.SaleTransaction != nil {
@@ -683,10 +691,12 @@ func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto
 		ProjectId:      req.ProjectId,
 		ProvinceID:     req.ProvinceId,
 		// DistrictID:      req.DistrictId,
-		WardID:          req.WardId,
-		TransactionType: req.TransactionType,
-		GoogleMapLink:   req.GoogleMapLink,
-		SourceType:      req.SourceType,
+		WardID:            req.WardId,
+		TransactionType:   req.TransactionType,
+		GoogleMapLink:     req.GoogleMapLink,
+		SourceType:        req.SourceType,
+		SourceContactId:   req.SourceContactId,
+		SourceContactNote: req.SourceContactNote,
 		// SaleStatus:      enums.EProductStatus(req.SaleStatus),
 		// RentStatus:      enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
@@ -883,8 +893,10 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 		TransactionType: req.TransactionType,
 		// HouseInfo:       req.HouseInfo,
 		// PrivateData:    req.PrivateData,
-		GoogleMapLink: req.GoogleMapLink,
-		SourceType:    req.SourceType,
+		GoogleMapLink:     req.GoogleMapLink,
+		SourceType:        req.SourceType,
+		SourceContactId:   req.SourceContactId,
+		SourceContactNote: req.SourceContactNote,
 		// SaleStatus:     enums.EProductStatus(req.SaleStatus),
 		// RentStatus:     enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),
@@ -893,6 +905,8 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 		OwnerType:      req.OwnerType,
 		OwnerId:        req.OwnerId,
 		ImageId:        req.ImageId,
+
+		CertificateHouseNote: req.CertificateHouseNote,
 	}
 	if req.PriceData != nil {
 		result.PriceData = m.PriceDataToDomain(req.PriceData)
@@ -992,7 +1006,7 @@ func (m *ProductMapper) MediaItemsToDomain(req []*bdspropb.MediaItem) []dto.Medi
 }
 
 func (m *ProductMapper) HouseInfoToDomain(req *bdspropb.HouseInfo) *dto.HouseInfoUpdate {
-	return &dto.HouseInfoUpdate{
+	result := &dto.HouseInfoUpdate{
 		NumBedroom:  req.NumBedroom,
 		NumBathroom: req.NumBathroom,
 		NumFloor:    req.NumFloor,
@@ -1000,7 +1014,21 @@ func (m *ProductMapper) HouseInfoToDomain(req *bdspropb.HouseInfo) *dto.HouseInf
 		NumCarPark:  req.NumCarPark,
 		Furniture:   req.Furniture,
 		Orientation: req.Orientation,
+		RoadWidth:   req.RoadWidth,
+		FrontWidth:  req.FrontWidth,
+		BackWidth:   req.BackWidth,
+		Width:       req.Width,
+		Height:      req.Height,
 	}
+
+	if req.OrientationHouse != nil {
+		result.OrientationHouse = enums.EHouseOrient(*req.OrientationHouse)
+	}
+	if req.CertificateHouse != nil {
+		result.CertificateHouse = enums.EHouseCertificate(*req.CertificateHouse)
+	}
+
+	return result
 }
 
 func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *bdspropb.HouseInfo {
@@ -1035,6 +1063,39 @@ func (m *ProductMapper) HouseInfoToPb(req *domain.HouseInfo) *bdspropb.HouseInfo
 	if req.Orientation != nil {
 		result.Orientation = req.Orientation
 	}
+	if req.RoadWidth != nil {
+		result.RoadWidth = req.RoadWidth
+	}
+	if req.FrontWidth != nil {
+		result.FrontWidth = req.FrontWidth
+	}
+	if req.BackWidth != nil {
+		result.BackWidth = req.BackWidth
+	}
+	if req.Width != nil {
+		result.Width = req.Width
+	}
+	if req.Height != nil {
+		result.Height = req.Height
+	}
+
+	// Map OrientationHouse và tự động set OrientationName từ enum
+	orientationHouseUint32 := uint32(req.OrientationHouse)
+	result.OrientationHouse = &orientationHouseUint32
+
+	// Tự động map name từ enum
+	if name, ok := enums.EHouseOrientNames[req.OrientationHouse]; ok {
+		result.OrientationName = &name
+	}
+
+	// Map CertificateHouse và tự động set CertificateName từ enum
+	certificateHouseUint32 := uint32(req.CertificateHouse)
+	result.CertificateHouse = &certificateHouseUint32
+
+	// Tự động map name từ enum
+	if name, ok := enums.EHouseCertificateNames[req.CertificateHouse]; ok {
+		result.CertificateName = &name
+	}
 
 	return result
 }
@@ -1047,6 +1108,28 @@ func (m *ProductMapper) PrivateDataToDomain(req *bdspropb.ProductPrivate) *domai
 		InternalNote:  req.InternalNote,
 		TargetProfit:  &req.TargetProfit,
 	}
+}
+
+func (m *ProductMapper) PrivateDataToPb(privateData *domain.ProductPrivate) *bdspropb.ProductPrivate {
+	if privateData == nil {
+		return nil
+	}
+	result := &bdspropb.ProductPrivate{
+		Id:           privateData.ID,
+		ProductId:    privateData.ProductId,
+		InternalNote: privateData.InternalNote,
+		PrivateDocs:  privateData.PrivateDocs,
+	}
+	if privateData.ImportPrice != nil {
+		result.ImportPrice = *privateData.ImportPrice
+	}
+	if privateData.OperatingCost != nil {
+		result.OperatingCost = *privateData.OperatingCost
+	}
+	if privateData.TargetProfit != nil {
+		result.TargetProfit = *privateData.TargetProfit
+	}
+	return result
 }
 
 // cmd := exec.Command("ffmpeg",

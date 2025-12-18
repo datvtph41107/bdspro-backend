@@ -37,4 +37,10 @@ type NewsFeedRepo interface {
 
 	// Đếm số tin đăng theo ownerOf và ownerId
 	CountByOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId uint64) (int64, error)
+
+	// Admin methods
+	HideNewsFeed(ctx context.Context, newsFeedId uint64, isHidden bool) error
+	AdminGetList(ctx context.Context, req *dto.AdminNewsFeedSearch) ([]*dto.NewsFeedPublic, int32, error)
+	AdminGetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error)
+	UpdateCreatedBy(ctx context.Context, newsFeedId uint64, createdBy uint64) error
 }

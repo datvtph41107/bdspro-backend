@@ -502,10 +502,30 @@ definitions:
     type: object
   bdspropb.AssetItem:
     properties:
+      address:
+        type: string
+      area:
+        type: number
       code:
         type: string
       id:
         type: integer
+      legalStatus:
+        type: integer
+      name:
+        type: string
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      purchasePrice:
+        type: number
+      rentStatus:
+        type: integer
+      wardId:
+        type: integer
+      wardName:
+        type: string
     type: object
   bdspropb.AssetLegalDTO:
     properties:
@@ -543,6 +563,141 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  bdspropb.BdsDomain:
+    properties:
+      address:
+        type: string
+      alleyAccess:
+        type: boolean
+      alleyWidth:
+        type: number
+      area:
+        type: number
+      areaBalcony:
+        type: number
+      areaBuild:
+        type: number
+      areaFloor:
+        type: number
+      areaGreen:
+        type: number
+      areaLand:
+        type: number
+      areaParking:
+        type: number
+      areaTerrace:
+        type: number
+      areaUse:
+        type: number
+      assetId:
+        type: integer
+      backWidth:
+        type: number
+      cornerLot:
+        type: boolean
+      createdAt:
+        type: string
+      distanceToRoad:
+        type: number
+      districtId:
+        type: integer
+      elevation:
+        type: number
+      frontWidth:
+        type: number
+      height:
+        type: number
+      id:
+        type: integer
+      latitude:
+        type: number
+      leftWidth:
+        type: number
+      length:
+        type: number
+      longitude:
+        type: number
+      mainDirection:
+        type: string
+      note:
+        type: string
+      orientation:
+        type: string
+      productId:
+        type: integer
+      profileId:
+        type: integer
+      provinceId:
+        type: integer
+      rightWidth:
+        type: number
+      roadAccess:
+        type: string
+      roadType:
+        type: string
+      roadWidth:
+        type: number
+      shape:
+        type: string
+      street:
+        type: string
+      streetNumber:
+        type: string
+      topography:
+        type: string
+      updatedAt:
+        type: string
+      wardId:
+        type: integer
+      width:
+        type: number
+    type: object
+  bdspropb.BdsDomainListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.BdsDomain'
+        type: array
+      total:
+        type: integer
+    type: object
+  bdspropb.CalculateLoanPaymentRequest:
+    properties:
+      floatingInterestRate:
+        description: Lãi suất thả nổi từ năm 2 (%/năm) - thường 10-11%
+        type: number
+      interestRate:
+        description: Lãi suất năm đầu (%/năm) - thường là lãi suất ưu đãi
+        type: number
+      loanAmount:
+        description: Số tiền vay (VND)
+        type: number
+      paymentMethod:
+        description: 'Phương thức trả nợ: 10=dư nợ giảm dần, 20=trả lãi định kỳ/gốc
+          cuối kỳ'
+        type: integer
+      propertyValue:
+        description: Giá trị tài sản (VND)
+        type: number
+      term:
+        description: Kỳ hạn (tháng)
+        type: integer
+    type: object
+  bdspropb.CalculateTransferTaxFeeRequest:
+    properties:
+      isBusiness:
+        description: true nếu là doanh nghiệp, false nếu là cá nhân
+        type: boolean
+      originalPrice:
+        description: Giá gốc mua vào (để tính thuế TNCN nếu có)
+        type: number
+      provinceId:
+        description: ID tỉnh/thành phố (để tính lệ phí trước bạ theo từng địa phương)
+        type: integer
+      transferValue:
+        description: Giá trị chuyển nhượng (VND)
+        type: number
     type: object
   bdspropb.ContactInfo:
     properties:
@@ -606,8 +761,28 @@ definitions:
       name:
         type: string
     type: object
+  bdspropb.EnumItem:
+    properties:
+      name:
+        type: string
+      value:
+        type: integer
+    type: object
+  bdspropb.GetEnumResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.EnumItem'
+        type: array
+    type: object
   bdspropb.HouseInfo:
     properties:
+      certificateHouse:
+        description: Enum chứng nhận
+        type: integer
+      certificateName:
+        description: Tên giấy chứng nhận (tự động map từ enum)
+        type: string
       furniture:
         type: string
       id:
@@ -625,6 +800,12 @@ definitions:
       numToilet:
         type: integer
       orientation:
+        type: string
+      orientationHouse:
+        description: Enum hướng nhà
+        type: integer
+      orientationName:
+        description: Tên hướng nhà (tự động map từ enum)
         type: string
     type: object
   bdspropb.IdRequest:
@@ -675,9 +856,13 @@ definitions:
   bdspropb.LinkProductAssetRequest:
     properties:
       assetId:
+        description: 1 tài sản
         type: integer
-      productId:
-        type: integer
+      productIds:
+        description: Nhiều sản phẩm
+        items:
+          type: integer
+        type: array
     type: object
   bdspropb.ListItemResponse:
     properties:
@@ -1083,6 +1268,10 @@ definitions:
       shareCount:
         description: Số lượt chia sẻ
         type: integer
+      sourceContactId:
+        type: integer
+      sourceContactNote:
+        type: string
       sourceType:
         type: integer
       transactionType:
@@ -1158,6 +1347,10 @@ definitions:
         type: integer
       saleVisibility:
         type: integer
+      sourceContactId:
+        type: integer
+      sourceContactNote:
+        type: string
       sourceType:
         type: integer
       transactionType:
@@ -1351,6 +1544,10 @@ definitions:
         type: integer
       saleVisibility:
         type: integer
+      sourceContactId:
+        type: integer
+      sourceContactNote:
+        type: string
       sourceType:
         type: integer
       transactionType:
@@ -1870,6 +2067,13 @@ definitions:
       backWidth:
         description: hậu ? m
         type: number
+      certificateHouse:
+        allOf:
+        - $ref: '#/definitions/enums.EHouseCertificate'
+        description: Chứng nhận
+      certificateName:
+        description: Tên giấy chứng nhận
+        type: string
       createdAt:
         type: string
       createdBy:
@@ -1903,6 +2107,13 @@ definitions:
         type: integer
       orientation:
         description: Hướng nhà (Đông, Tây, Nam,...)
+        type: string
+      orientationHouse:
+        allOf:
+        - $ref: '#/definitions/enums.EHouseOrient'
+        description: Hướng nhà
+      orientationName:
+        description: Tên hướng nhà
         type: string
       product_id:
         type: integer
@@ -2059,6 +2270,8 @@ definitions:
         $ref: '#/definitions/domain.DocTypeItem'
       docTypeId:
         type: integer
+      docTypeNote:
+        type: string
       googleMapLink:
         type: string
       hasAsset:
@@ -2157,6 +2370,10 @@ definitions:
       shareCount:
         description: Số lượt chia sẻ
         type: integer
+      sourceContactId:
+        type: integer
+      sourceContactNote:
+        type: string
       sourceType:
         $ref: '#/definitions/enums.ESourceType'
       transactionType:
@@ -2679,6 +2896,10 @@ definitions:
         $ref: '#/definitions/enums.EVisibility'
       saleVisibility:
         $ref: '#/definitions/enums.EVisibility'
+      sourceContactId:
+        type: integer
+      sourceContactNote:
+        type: string
       sourceType:
         type: integer
       transactionType:
@@ -2786,6 +3007,55 @@ definitions:
     - ERedBook
     - EPinkBook
     - ENotarizedRecord
+  enums.EHouseCertificate:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      EHouseCertificateNone: Chưa xác định
+      EHouseCertificateNotarizedRecord: Vi bằng
+      EHouseCertificatePinkBook: Sổ hồng
+      EHouseCertificateRedBook: Sổ đỏ
+    x-enum-varnames:
+    - EHouseCertificateNone
+    - EHouseCertificateRedBook
+    - EHouseCertificatePinkBook
+    - EHouseCertificateNotarizedRecord
+  enums.EHouseOrient:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    - 70
+    - 80
+    type: integer
+    x-enum-comments:
+      EHouseOrientEast: Đông
+      EHouseOrientEastNorth: Đông Bắc
+      EHouseOrientEastSouth: Đông Nam
+      EHouseOrientNone: Chưa xác định
+      EHouseOrientNorth: Bắc
+      EHouseOrientSouth: Nam
+      EHouseOrientWest: Tây
+      EHouseOrientWestNorth: Tây Bắc
+      EHouseOrientWestSouth: Tây Nam
+    x-enum-varnames:
+    - EHouseOrientNone
+    - EHouseOrientEast
+    - EHouseOrientWest
+    - EHouseOrientSouth
+    - EHouseOrientNorth
+    - EHouseOrientEastSouth
+    - EHouseOrientEastNorth
+    - EHouseOrientWestSouth
+    - EHouseOrientWestNorth
   enums.EOwnerOf:
     enum:
     - 10
@@ -5540,6 +5810,33 @@ paths:
       summary: Lấy danh sách sản phẩm gợi ý hôm nay
       tags:
       - Dashboard
+  /v2/bdspro/public/enums/{text}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách enum với value và name tương ứng
+      parameters:
+      - description: Tên loại enum
+        in: path
+        name: text
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.GetEnumResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy enum dạng name-value
+      tags:
+      - Enum
   /v2/bdspro/public/product/user/{profileId}:
     get:
       consumes:
@@ -6312,6 +6609,62 @@ paths:
       summary: Tách tài sản
       tags:
       - 'User: Tài sản'
+  /v2/bdspro/v2/bds/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách bất động sản với phân trang và bộ lọc
+      parameters:
+      - default: 1
+        description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Số lượng item
+        in: query
+        name: size
+        type: integer
+      - description: Sắp xếp
+        in: query
+        name: sort
+        type: string
+      - description: Tìm kiếm theo text
+        in: query
+        name: text
+        type: string
+      - description: Lọc theo Product ID
+        in: query
+        name: productId
+        type: integer
+      - description: Lọc theo Asset ID
+        in: query
+        name: assetId
+        type: integer
+      - description: Lọc theo Tỉnh/TP
+        in: query
+        name: provinceId
+        type: integer
+      - description: Lọc theo Phường/Xã
+        in: query
+        name: wardId
+        type: integer
+      - description: Lọc theo Quận/Huyện
+        in: query
+        name: districtId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bdspropb.BdsDomainListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bất động sản
+      tags:
+      - 'User: Bất động sản'
   /v2/bdspro/v2/dashboard/today/post:
     get:
       consumes:
@@ -6595,6 +6948,35 @@ paths:
       summary: Lấy danh sách bài viết liên quan
       tags:
       - 'User: Sản phẩm'
+  /v2/bdspro/v2/product/{id}/price-history:
+    get:
+      consumes:
+      - application/json
+      description: API này cho phép lấy lịch sử cập nhật giá của sản phẩm
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Số trang
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Số lượng bản ghi trên trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử cập nhật giá
+      tags:
+      - 'User: Sản phẩm'
   /v2/bdspro/v2/product/archived:
     put:
       consumes:
@@ -6875,9 +7257,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: API này cho phép liên kết sản phẩm với tài sản
+      description: API này cho phép liên kết nhiều sản phẩm với một tài sản
       parameters:
-      - description: Thông tin liên kết
+      - description: Thông tin liên kết (nhiều productIds và 1 assetId)
         in: body
         name: body
         required: true
@@ -6888,7 +7270,7 @@ paths:
       responses: {}
       security:
       - BearerAuth: []
-      summary: Liên kết sản phẩm với tài sản
+      summary: Liên kết nhiều sản phẩm với tài sản
       tags:
       - 'User: Sản phẩm'
   /v2/bdspro/v2/product/market:
@@ -7284,7 +7666,7 @@ paths:
       tags:
       - Sản phẩm
   /v2/bdspro/v2/product/unlink-asset:
-    delete:
+    post:
       consumes:
       - application/json
       description: API này cho phép hủy liên kết sản phẩm với tài sản
@@ -7509,6 +7891,49 @@ paths:
             $ref: '#/definitions/bdspropb.ListItemResponse'
       tags:
       - ProjectBuild
+  /v2/bdspro/v2/transaction/calculate-loan-payment:
+    post:
+      consumes:
+      - application/json
+      description: 'API tính toán lịch trả nợ vay ngân hàng theo 2 phương thức: dư
+        nợ giảm dần (10) và trả lãi định kỳ/gốc cuối kỳ (20)'
+      parameters:
+      - description: Thông tin tính vay
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspropb.CalculateLoanPaymentRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tính lịch trả nợ vay ngân hàng
+      tags:
+      - Giao dịch
+  /v2/bdspro/v2/transaction/calculate-tax-fee:
+    post:
+      consumes:
+      - application/json
+      description: 'API tính toán thuế và phí chuyển nhượng bất động sản bao gồm:
+        thuế TNCN (nếu cá nhân), thuế TN doanh nghiệp (nếu doanh nghiệp), lệ phí trước
+        bạ, phí công chứng'
+      parameters:
+      - description: Thông tin tính thuế phí
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/bdspropb.CalculateTransferTaxFeeRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tính thuế và phí chuyển nhượng
+      tags:
+      - Giao dịch
   /v3/bdspro/post/personal/{id}:
     get:
       consumes:

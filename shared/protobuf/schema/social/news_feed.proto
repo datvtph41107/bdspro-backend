@@ -4,6 +4,7 @@ package pb_social;
 
 import "google/api/annotations.proto";
 import "bdspro/post.proto";
+import "bdspro/common.proto";
 import "shared/common.proto";
 
 option go_package = "pb/types/social;pb_social";
@@ -92,6 +93,41 @@ service NewsFeedService {
             get: "/v2/social/public/news-feed/user/{userId}"
         };
     };
+    
+    // Admin APIs
+    rpc AdminCreateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            post: "/v2/social/admin/news-feed"
+            body: "*"
+        };
+    };
+    rpc AdminUpdateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/admin/news-feed/{id}"
+            body: "*"
+        };
+    };
+    rpc AdminDeleteNewsFeed(sharepb.IdRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/social/admin/news-feed/{id}"
+        };
+    };
+    rpc AdminHideNewsFeed(AdminHideRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/admin/news-feed/{newsFeedId}/hide"
+            body: "*"
+        };
+    };
+    rpc AdminGetListNewsFeed(AdminNewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/admin/news-feed"
+        };
+    };
+    rpc AdminDetailNewsFeed(DetailRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/admin/news-feed/detail/{newsFeedId}"
+        };
+    };
 }
 
 message VisibilityRequest {
@@ -131,6 +167,7 @@ message NewsFeed {
     optional bool disLike = 21;
     optional uint64 groupId = 22;
     OwnerOf ownerOf = 23;
+    optional bdspropb.Project project = 24;
 }
 
 message NewsFeedSearch {
@@ -234,4 +271,22 @@ message PublicNewsFeedSearch {
     string text = 4;
     optional bool isReel = 5;
     optional bool isPost = 6;
+}
+
+message AdminHideRequest {
+    uint64 newsFeedId = 1;
+    bool isHidden = 2;
+}
+
+message AdminNewsFeedSearch {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    optional bool isReel = 4;
+    optional bool isPost = 5;
+    optional uint64 ownerId = 6;
+    optional OwnerOf ownerOf = 7;
+    optional int32 visibility = 8;
+    optional bool isHidden = 9; // Lọc theo trạng thái ẩn (removed_at)
+    optional uint64 createdBy = 10; // Lọc theo người tạo
 }

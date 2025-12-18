@@ -210,6 +210,12 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/assets"
     };
   };
+  
+  rpc GetPriceHistory (PriceHistoryRequest) returns (PriceHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/price-history"
+    };
+  };
 }
 
 message PingResponse {}
@@ -273,6 +279,8 @@ message SaveChildRequest {
   int32 saleVisibility = 25;
   int32 rentVisibility = 26;
   optional uint64 imageId = 27;
+  optional uint64 sourceContactId = 28;
+  string sourceContactNote = 29;
 }
 
 message PostSaveWithProduct {
@@ -469,6 +477,9 @@ message ProductSaveRequest {
   uint64 ownerId = 29;
   uint32 visibility = 30;
   optional uint64 imageId = 31;
+	optional uint64 sourceContactId = 32;
+	string sourceContactNote = 33;
+  string certificateHouseNote = 34;
 }
 
 
@@ -515,5 +526,31 @@ message UnlinkProductAssetRequest {
 }
 
 message ProductAssetListResponse {
-  repeated uint64 assetIds = 1;
+  repeated Asset data = 1;
+}
+
+message PriceHistoryRequest {
+  uint64 id = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message PriceHistoryResponse {
+  repeated PriceHistoryItem data = 1;
+  int64 total = 2;
+}
+
+message PriceHistoryItem {
+  uint64 id = 1;
+  string currency = 2;
+  double salePrice = 3;
+  double saleCommission = 4;
+  uint32 saleCommissionType = 5;
+  double deposite = 6;
+  double rentPrice = 7;
+  double rentCommission = 8;
+  uint32 rentCommissionType = 9;
+  uint32 rentPaymentCycle = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
 }

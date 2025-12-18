@@ -3,13 +3,19 @@ package handler
 import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
+	"bdspro/internal/enums"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
 	"context"
+	"fmt"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
+	"sort"
 
 	"github.com/jinzhu/copier"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type BdsproPublicService struct {
@@ -299,4 +305,62 @@ func (s *BdsproPublicService) GetUserProductsPublic(ctx context.Context, req *bd
 		Data:          productResponses,
 		TotalElements: total,
 	}, nil
+}
+
+// @Summary Lấy enum dạng name-value
+// @Description Lấy danh sách enum với value và name tương ứng
+// @Tags Enum
+// @Accept json
+// @Produce json
+// @Param text path string true "Tên loại enum"
+// @Success 200 {object} bdspropb.GetEnumResponse
+// @Failure 404 {object} map[string]string
+// @Router /v2/bdspro/public/enums/{text} [get]
+func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.GetEnumResponse, error) {
+	enumType := req.Text
+	fmt.Println("enumType: ", enumType)
+
+	// Khai báo enumProviders nội bộ
+	var enumProviders = map[string][]*bdspropb.EnumItem{
+		"product_sale_status": enumMapToList(enums.EProductSaleStatusNames),
+		"product_rent_status": enumMapToList(enums.EProductRentStatusNames),
+		"asset_history":       enumMapToList(enums.AssetHistoryNames),
+		"target_type":         enumMapToList(enums.TargetTypeNames),
+		"visibility":          enumMapToList(enums.EVisibilityNames),
+		"producthistory":      enumMapToList(enums.EProductHistoryNames),
+		"poststatus":          enumMapToList(enums.EPostStatusNames),
+		"doctype":             enumMapToList(enums.EDocTypeNames),
+		"assetstatus":         enumMapToList(enums.EAssetStatusNames),
+		"house_orient":        enumMapToList(enums.EHouseOrientNames),
+		"house_certificate":   enumMapToList(enums.EHouseCertificateNames),
+	}
+
+	if values, ok := enumProviders[enumType]; ok {
+		return &bdspropb.GetEnumResponse{
+			Data: values,
+		}, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, "enum not found: %s", enumType)
+}
+
+func enumMapToList[T ~uint32 | ~uint | ~int](enumMap map[T]string) []*bdspropb.EnumItem {
+	keys := make([]T, 0, len(enumMap))
+	for k := range enumMap {
+		keys = append(keys, k)
+	}
+
+	// Sắp xếp keys theo giá trị tăng dần
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	result := make([]*bdspropb.EnumItem, 0, len(keys))
+	for _, k := range keys {
+		result = append(result, &bdspropb.EnumItem{
+			Value: uint32(k),
+			Name:  enumMap[k],
+		})
+	}
+	return result
 }

@@ -301,6 +301,28 @@ func (r *PostgreNewsFeed) GetByID(ctx context.Context, id uint64) (*domain.NewsF
 	return newsFeed, err
 }
 
+// AdminGetByID lấy chi tiết bài viết cho admin (không filter deleted_at, visibility, removed_at)
+func (r *PostgreNewsFeed) AdminGetByID(ctx context.Context, id uint64) (*domain.NewsFeed, error) {
+	var newsFeed *domain.NewsFeed
+	err := r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Preload("NewsFeedMedias").
+		Preload("FriendTags").
+		Where("id = ?", id). // Admin có thể xem cả bài đã bị soft delete
+		First(&newsFeed).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeed.FriendTagIds = make([]uint64, len(newsFeed.FriendTags))
+	for i, friendTag := range newsFeed.FriendTags {
+		newsFeed.FriendTagIds[i] = friendTag.UserID
+	}
+
+	return newsFeed, err
+}
+
 func (r *PostgreNewsFeed) GetLastUpdated(ctx context.Context, id uint64) (*time.Time, error) {
 	var updatedTime time.Time
 	err := r.db.WithContext(ctx).
@@ -532,4 +554,164 @@ func (r *PostgreNewsFeed) CountByOwner(ctx context.Context, ownerOf socialpb.Own
 		Where("owner_of = ? AND owner_id = ? AND deleted_at IS NULL", ownerOf, ownerId).
 		Count(&count).Error
 	return count, err
+}
+
+// HideNewsFeed ẩn/hiện bài viết (admin only)
+func (r *PostgreNewsFeed) HideNewsFeed(ctx context.Context, newsFeedId uint64, isHidden bool) error {
+	var removedAt *time.Time
+	if isHidden {
+		now := time.Now()
+		removedAt = &now
+	}
+	return r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("id = ? AND deleted_at IS NULL", newsFeedId).
+		Update("removed_at", removedAt).Error
+}
+
+// AdminGetList lấy danh sách bài viết cho admin (không filter visibility và removed_at)
+func (r *PostgreNewsFeed) AdminGetList(ctx context.Context, req *dto.AdminNewsFeedSearch) ([]*dto.NewsFeedPublic, int32, error) {
+	var newsFeeds []*NewsFeedRawQuery
+	var total int64
+
+	// Base query - chỉ filter deleted_at (soft delete)
+	query := GetDB(ctx, r.db).
+		Debug().
+		Model(&domain.NewsFeed{}).
+		Where("deleted_at IS NULL")
+
+	// Filter theo text
+	if req.Text != "" {
+		query = query.Where("title LIKE ? OR content LIKE ?", "%"+req.Text+"%", "%"+req.Text+"%")
+	}
+
+	// Filter theo isReel
+	if req.IsReel != nil {
+		query = query.Where("is_reel = ?", *req.IsReel)
+	}
+
+	// Filter theo isPost
+	if req.IsPost != nil {
+		if *req.IsPost {
+			query = query.Where("post_id IS NOT NULL")
+		} else {
+			query = query.Where("post_id IS NULL")
+		}
+	}
+
+	// Filter theo ownerOf và ownerId
+	if req.OwnerOf != nil && req.OwnerID != nil {
+		query = query.Where("owner_of = ? AND owner_id = ?", *req.OwnerOf, *req.OwnerID)
+	}
+
+	// Filter theo visibility
+	if req.Visibility != nil {
+		query = query.Where("visibility = ?", *req.Visibility)
+	}
+
+	// Filter theo removed_at (isHidden)
+	if req.IsHidden != nil {
+		if *req.IsHidden {
+			query = query.Where("removed_at IS NOT NULL")
+		} else {
+			query = query.Where("removed_at IS NULL")
+		}
+	}
+
+	// Filter theo createdBy
+	if req.CreatedBy != nil {
+		query = query.Where("created_by = ?", *req.CreatedBy)
+	}
+
+	// Đếm total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	// Query chi tiết với join
+	detailQuery := GetDB(ctx, r.db).
+		Debug().
+		Model(&domain.NewsFeed{}).
+		Joins("left join tb_like tl on tl.target_id = news_feeds.id and tl.target_type = 20 and tl.user_id = ?", profileId).
+		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
+		Joins("left join friend_tag ft on ft.news_feed_id = news_feeds.id").
+		Where("news_feeds.deleted_at IS NULL")
+
+	// Apply filters cho query chi tiết
+	if req.Text != "" {
+		detailQuery = detailQuery.Where("news_feeds.title LIKE ? OR news_feeds.content LIKE ?", "%"+req.Text+"%", "%"+req.Text+"%")
+	}
+	if req.IsReel != nil {
+		detailQuery = detailQuery.Where("news_feeds.is_reel = ?", *req.IsReel)
+	}
+	if req.IsPost != nil {
+		if *req.IsPost {
+			detailQuery = detailQuery.Where("news_feeds.post_id IS NOT NULL")
+		} else {
+			detailQuery = detailQuery.Where("news_feeds.post_id IS NULL")
+		}
+	}
+	if req.OwnerOf != nil && req.OwnerID != nil {
+		detailQuery = detailQuery.Where("news_feeds.owner_of = ? AND news_feeds.owner_id = ?", *req.OwnerOf, *req.OwnerID)
+	}
+	if req.Visibility != nil {
+		detailQuery = detailQuery.Where("news_feeds.visibility = ?", *req.Visibility)
+	}
+	if req.IsHidden != nil {
+		if *req.IsHidden {
+			detailQuery = detailQuery.Where("news_feeds.removed_at IS NOT NULL")
+		} else {
+			detailQuery = detailQuery.Where("news_feeds.removed_at IS NULL")
+		}
+	}
+	if req.CreatedBy != nil {
+		detailQuery = detailQuery.Where("news_feeds.created_by = ?", *req.CreatedBy)
+	}
+
+	err := detailQuery.
+		Select(`
+            news_feeds.*, tl.created_at as liked_at, tl.dis_like,
+            COALESCE(
+              JSON_AGG(
+                DISTINCT JSONB_BUILD_OBJECT(
+                  'news_feed_id', nfm.news_feed_id,
+                  'url', nfm.url,
+                  'type', nfm.type,
+                  'order_number', nfm.order_number
+                )
+              ) FILTER (WHERE nfm.news_feed_id IS NOT NULL),
+              '[]'
+            ) AS news_feed_medias,
+            COALESCE(
+              JSON_AGG(
+                DISTINCT ft.user_id
+              ) FILTER (WHERE ft.user_id IS NOT NULL),
+              '[]'
+            ) AS friend_tag_ids
+        `).
+		Order("news_feeds.updated_at DESC").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Group("news_feeds.id, tl.created_at, tl.dis_like").
+		Scan(&newsFeeds).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	results, err := r.buildNewsFeedResults(newsFeeds)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, int32(total), nil
+}
+
+// UpdateCreatedBy cập nhật createdBy cho bài viết (admin only)
+func (r *PostgreNewsFeed) UpdateCreatedBy(ctx context.Context, newsFeedId uint64, createdBy uint64) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("id = ?", newsFeedId).
+		Update("created_by", createdBy).Error
 }

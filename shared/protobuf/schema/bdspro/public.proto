@@ -4,6 +4,8 @@ package bdspropb;
 
 import "bdspro/product.proto";
 import "bdspro/common.proto";
+import "shared/common.proto";
+
 option go_package = "pb/types/bdspro;bdspropb";
 
 import "google/api/annotations.proto";
@@ -52,6 +54,11 @@ service BdsproPublicService {
   rpc GetUserProductsPublic(PublicUserProductSearch) returns (SearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/public/product/user/{profileId}"
+    };
+  };
+  rpc GetEnumByName(sharepb.IdRequest) returns (GetEnumResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/public/enums/{text}"
     };
   };
 }
@@ -240,5 +247,14 @@ message PublicUserProductSearch {
   optional int32 rentCommission = 23;
   optional int32 rentPaymentCycle = 24;
   optional bool archived = 25;
+}
+
+message EnumItem {
+  uint32 value = 1;
+  string name = 2;
+}
+
+message GetEnumResponse {
+  repeated EnumItem data = 1;
 }
 

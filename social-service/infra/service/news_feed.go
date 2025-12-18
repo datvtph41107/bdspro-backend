@@ -391,6 +391,9 @@ func (s *NewsFeedService) PbPostToDomain(pbPost *socialpb.NewsFeed) *domain.News
 	}
 	return &domain.NewsFeed{
 		BaseEntity: _models.BaseEntity{
+			AuditBase: _models.AuditBase{
+				CreatedBy: pbPost.CreatedBy,
+			},
 			ID: pbPost.Id,
 		},
 		Title:          pbPost.Title,
@@ -676,4 +679,170 @@ func (s *NewsFeedService) CountByOwner(ctx context.Context, req *socialpb.CountB
 	return &socialpb.CountByOwnerResponse{
 		Count: count,
 	}, nil
+}
+
+// @Summary Admin tạo bài viết
+// @Description Admin tạo bài viết trong mạng xã hội
+// @Tags News Feed Admin
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param post body pb_social.NewsFeed true "NewsFeed"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /admin/news-feed [post]
+func (s *NewsFeedService) AdminCreateNewsFeed(ctx context.Context, req *socialpb.NewsFeed) (*socialpb.NewsFeed, error) {
+	if err := s.RequiredOwner(ctx, req.OwnerOf, req.GroupId); err != nil {
+		return nil, err
+	}
+
+	newsFeed := s.PbPostToDomain(req)
+	result, err := s.newsFeedUsecase.AdminCreateNewsFeed(ctx, newsFeed)
+	if err != nil {
+		return nil, err
+	}
+	return s.DomainPostToPb(result), nil
+}
+
+// @Summary Admin sửa bài viết
+// @Description Admin sửa bài viết trong mạng xã hội
+// @Tags News Feed Admin
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "NewsFeedId"
+// @Param post body pb_social.NewsFeed true "NewsFeed"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /admin/news-feed/{id} [put]
+func (s *NewsFeedService) AdminUpdateNewsFeed(ctx context.Context, req *socialpb.NewsFeed) (*socialpb.NewsFeed, error) {
+	post := s.PbPostToDomain(req)
+	post, err := s.newsFeedUsecase.AdminUpdateNewsFeed(ctx, post)
+	if err != nil {
+		return nil, err
+	}
+	return s.DomainPostToPb(post), nil
+}
+
+// @Summary Admin xóa bài viết
+// @Description Admin xóa bài viết trong mạng xã hội
+// @Tags News Feed Admin
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "NewsFeedId"
+// @Success 200 {object} sharepb.Empty
+// @Router /admin/news-feed/{id} [delete]
+func (s *NewsFeedService) AdminDeleteNewsFeed(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {
+	err := s.newsFeedUsecase.AdminDeleteNewsFeed(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.Empty{}, nil
+}
+
+// @Summary Admin ẩn bài viết
+// @Description Admin ẩn/hiện bài viết trong mạng xã hội
+// @Tags News Feed Admin
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param newsFeedId path uint64 true "NewsFeedId"
+// @Param hideRequest body pb_social.AdminHideRequest true "AdminHideRequest"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /admin/news-feed/{newsFeedId}/hide [put]
+func (s *NewsFeedService) AdminHideNewsFeed(ctx context.Context, req *socialpb.AdminHideRequest) (*socialpb.NewsFeed, error) {
+	newsFeed, err := s.newsFeedUsecase.AdminHideNewsFeed(ctx, req.NewsFeedId, req.IsHidden)
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeeds := []*socialpb.NewsFeed{s.DomainPostToPb(newsFeed)}
+	err = s.MappingPostAndUser(ctx, newsFeeds)
+	if err != nil {
+		return nil, err
+	}
+	return newsFeeds[0], nil
+}
+
+// @Summary Admin lấy danh sách bài viết
+// @Description Admin lấy danh sách bài viết trong mạng xã hội (có thể xem tất cả bài viết kể cả đã ẩn)
+// @Tags News Feed Admin
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param page query int32 false "Page number" default(1)
+// @Param size query int32 false "Page size" default(20)
+// @Param text query string false "Search text"
+// @Param isReel query bool false "Filter reel"
+// @Param isPost query bool false "Filter post"
+// @Param ownerId query uint64 false "Filter by owner ID"
+// @Param ownerOf query int false "Filter by owner type (10: user, 20: group, 30: organization)"
+// @Param visibility query int false "Filter by visibility"
+// @Param isHidden query bool false "Filter by hidden status (removed_at)"
+// @Param createdBy query uint64 false "Filter by creator ID"
+// @Success 200 {object} pb_social.ListNewsFeed
+// @Router /admin/news-feed [get]
+func (s *NewsFeedService) AdminGetListNewsFeed(ctx context.Context, req *socialpb.AdminNewsFeedSearch) (*socialpb.ListNewsFeed, error) {
+	// Convert proto request to DTO
+	adminSearch := &dto.AdminNewsFeedSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text: req.Text,
+	}
+
+	if req.IsReel != nil {
+		adminSearch.IsReel = req.IsReel
+	}
+	if req.IsPost != nil {
+		adminSearch.IsPost = req.IsPost
+	}
+	if req.OwnerId != nil {
+		adminSearch.OwnerID = req.OwnerId
+	}
+	if req.OwnerOf != nil {
+		ownerOfInt := int(*req.OwnerOf)
+		adminSearch.OwnerOf = &ownerOfInt
+	}
+	if req.Visibility != nil {
+		visibilityInt := int(*req.Visibility)
+		adminSearch.Visibility = &visibilityInt
+	}
+	if req.IsHidden != nil {
+		adminSearch.IsHidden = req.IsHidden
+	}
+	if req.CreatedBy != nil {
+		adminSearch.CreatedBy = req.CreatedBy
+	}
+
+	posts, total, err := s.newsFeedUsecase.AdminGetListNewsFeed(ctx, adminSearch)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.responseGlobalNewsFeed(ctx, posts, total)
+}
+
+// @Summary Admin lấy chi tiết bài viết
+// @Description Admin lấy chi tiết bài viết trong mạng xã hội (có thể xem cả bài đã ẩn hoặc đã xóa)
+// @Tags News Feed Admin
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param newsFeedId path uint64 true "NewsFeedId"
+// @Success 200 {object} pb_social.NewsFeed
+// @Router /admin/news-feed/detail/{newsFeedId} [get]
+func (s *NewsFeedService) AdminDetailNewsFeed(ctx context.Context, req *socialpb.DetailRequest) (*socialpb.NewsFeed, error) {
+	newsFeed, err := s.newsFeedUsecase.AdminGetNewsFeedByID(ctx, req.NewsFeedId)
+	if err != nil {
+		return nil, err
+	}
+
+	newsFeeds := []*socialpb.NewsFeed{s.DomainPostToPb(newsFeed)}
+	err = s.MappingPostAndUser(ctx, newsFeeds)
+	if err != nil {
+		return nil, err
+	}
+
+	return newsFeeds[0], nil
 }

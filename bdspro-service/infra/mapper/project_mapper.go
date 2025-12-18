@@ -3,6 +3,7 @@ package mapper
 import (
 	"bdspro/internal/domain"
 	_models "common/models"
+	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 )
 
@@ -14,13 +15,14 @@ func NewProjectMapper() *ProjectMapper {
 }
 
 func (m *ProjectMapper) MapProjectPbItem(project *domain.Project) *bdspropb.Project {
-	// todo: map thêm developer, description, builds
 	return &bdspropb.Project{
-		Id:   project.ID,
-		Name: project.Name,
-		// Developer:   project.Developer,
-		// Description: project.Description,
-		// Builds:      project.Builds,
+		Id:          project.ID,
+		Name:        project.Name,
+		DeveloperId: project.DeveloperID,
+		Description: project.Description,
+		CreatedAt:   _utils.FormatTimeToString(project.CreatedAt),
+		UpdatedAt:   _utils.FormatTimeToString(project.UpdatedAt),
+		Active:      project.DeletedAt == nil,
 	}
 }
 
