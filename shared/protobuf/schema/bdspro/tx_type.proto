@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+enum TransactionStatus {
+    TRANSACTION_STATUS_UNKNOWN = 0;
+    TRANSACTION_STATUS_PENDING = 10; // Chờ xác nhận
+    TRANSACTION_STATUS_APPROVED = 20; // Đã xác nhận
+    TRANSACTION_STATUS_REJECTED = 30; // Từ chối
+}
+
+enum TransactionAction {
+    TRANSACTION_ACTION_UNKNOWN = 0;
+    TRANSACTION_ACTION_SIGN = 10; // Ký
+    TRANSACTION_ACTION_APPROVE = 20; // Phê duyệt
+    TRANSACTION_ACTION_REJECT = 30; // Từ chối
+    TRANSACTION_ACTION_TRANSFER = 40; // Chuyển khoản
+}
+
+enum TransactionMethod {
+    TRANSACTION_METHOD_UNKNOWN = 0;
+    TRANSACTION_METHOD_SIGN = 10; // Ký hợp đồng
+    TRANSACTION_METHOD_COST = 20; // Chi phí
+    TRANSACTION_METHOD_REVENUE = 30; // Thu nhập
+    TRANSACTION_METHOD_INVESTMENT = 40; // Góp vốn
+    TRANSACTION_METHOD_DEPOSIT = 50; // Đặt cọc
+    TRANSACTION_METHOD_RENT = 60; // Cho thuê
+    TRANSACTION_METHOD_SALE = 70; // Bán
+    TRANSACTION_METHOD_BUY = 80; // Mua
+}
+
+enum OwnerType {
+    OWNER_TYPE_UNKNOWN = 0;
+    OWNER_TYPE_USER = 10; // Người dùng
+    OWNER_TYPE_GROUP = 20; // Nhóm
+    OWNER_TYPE_ORGANIZATION = 30; // Tổ chức
+    OWNER_TYPE_DEAL = 40; // Thương vụ
+}

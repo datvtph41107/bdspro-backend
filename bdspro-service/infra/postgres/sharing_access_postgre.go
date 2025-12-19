@@ -168,7 +168,7 @@ func (r *SharingAccessPostgre) UpdateCommission(c context.Context,
 func (r *SharingAccessPostgre) GetProductAccessByOrgID(ctx context.Context, orgID int64, dto dto.SharingAccessSearch) ([]*domain.SharingAccess, error) {
 	var entities []*domain.SharingAccess
 	err := r.DB.WithContext(ctx).
-		Where("deleted_at is null and to_type = ? and to_id = ?", enums.EOwnerOfOrgnization, orgID).
+		Where("deleted_at is null and to_type = ? and to_id = ?", enums.EOwnerOfOrganization, orgID).
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Find(&entities).Error

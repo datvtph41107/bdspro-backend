@@ -25,6 +25,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.9
+	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.31.0
 	pb v0.0.0-00010101000000-000000000000
 )
@@ -98,5 +99,4 @@ require (
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.11 // indirect
 )

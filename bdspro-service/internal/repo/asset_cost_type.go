@@ -6,6 +6,6 @@ import (
 	"bdspro/internal/dto"
 )
 
-type CostTypeRepo interface {
+type AssetCostTypeRepo interface {
 	common.IOwnerRepo[domain.AssetCostType, *dto.AssetCostTypeSearchDTO]
 }

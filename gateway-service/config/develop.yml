@@ -17,7 +17,6 @@ service:
     social: 8209
     map: 8210
     search: 8211
-    membership: 8212
     appointment: 8213
     marketing: 8214
     transaction: 8215

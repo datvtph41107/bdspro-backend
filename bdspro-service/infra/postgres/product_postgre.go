@@ -1531,7 +1531,7 @@ func (r *GormUserProductRepo) buildQueryConditions(dto *dto.ProductSearchRequest
 		*args = append(*args, *dto.RequestUserId, enums.EOwnerOfMember)
 	} else if dto.RequestOrganizationId != nil {
 		*whereClauses = append(*whereClauses, "products.owner_of = ? and products.owner_type = ?")
-		*args = append(*args, *dto.RequestOrganizationId, enums.EOwnerOfOrgnization)
+		*args = append(*args, *dto.RequestOrganizationId, enums.EOwnerOfOrganization)
 	}
 }
 

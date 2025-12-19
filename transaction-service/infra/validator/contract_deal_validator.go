@@ -3,7 +3,7 @@ package validator
 import (
 	"context"
 	"fmt"
-	transactionpb "pb/types/transaction"
+	bdspropb "pb/types/bdspro"
 )
 
 type ContractDealValidator struct{}
@@ -12,7 +12,7 @@ func NewContractDealValidator() *ContractDealValidator {
 	return &ContractDealValidator{}
 }
 
-func (v *ContractDealValidator) ValidateDealContractPaymentRequest(ctx context.Context, req *transactionpb.DealContractPaymentRequest) error {
+func (v *ContractDealValidator) ValidateDealContractPaymentRequest(ctx context.Context, req *bdspropb.DealContractPaymentRequest) error {
 	if req == nil {
 		return fmt.Errorf("request cannot be nil")
 	}
@@ -21,7 +21,7 @@ func (v *ContractDealValidator) ValidateDealContractPaymentRequest(ctx context.C
 		return fmt.Errorf("deal ID is required")
 	}
 
-	// if req.Type == transactionpb.ContractType_CONTRACT_TYPE_UNKNOWN {
+	// if req.Type == bdspropb.ContractType_CONTRACT_TYPE_UNKNOWN {
 	// 	return fmt.Errorf("transaction type is required")
 	// }
 
@@ -44,7 +44,7 @@ func (v *ContractDealValidator) ValidateDealContractPaymentRequest(ctx context.C
 	return nil
 }
 
-func (v *ContractDealValidator) ValidateUpdateRequest(req *transactionpb.UpdateDealContractRequest) error {
+func (v *ContractDealValidator) ValidateUpdateRequest(req *bdspropb.UpdateDealContractRequest) error {
 	if req == nil {
 		return fmt.Errorf("request cannot be nil")
 	}

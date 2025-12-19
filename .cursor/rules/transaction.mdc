@@ -8,7 +8,7 @@ alwaysApply: false
 ## 1. Ràng buộc dữ liệu giao dịch (`Tx`)
 - **Tên bảng**:
   - `Tx` → `"tx_transaction"`
-  - `TxAction` → `"tb_transaction_action"`
+  - `TxAction` → `"tx_transaction_action"`
 - **Enum bắt buộc**:
   - `Method` → `enums.EMethod` (check bằng `enums.IsValidMethod()`).
   - `FromOf`, `ToOf` → `enums.EOwnerType`.

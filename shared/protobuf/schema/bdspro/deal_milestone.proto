@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service DealMilestoneService {
+  rpc CreateDealMilestone(CreateDealMilestoneRequest) returns (DealMilestone) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deals/{dealId}/milestones"
+      body: "*"
+    };
+  }
+
+  rpc UpdateDealMilestone(UpdateDealMilestoneRequest) returns (DealMilestone) {
+    option (google.api.http) = {
+      put: "/v2.1/org/milestones/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteDealMilestone(DeleteDealMilestoneRequest) returns (DeleteDealMilestoneResponse) {
+    option (google.api.http) = {
+      delete: "/v2.1/org/milestones/{id}"
+    };
+  }
+
+  rpc GetDealMilestones(GetDealMilestonesRequest) returns (GetDealMilestonesResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/org/deals/{dealId}/milestones"
+    };
+  }
+
+  rpc UpdateMilestoneOrder(UpdateMilestoneOrderRequest) returns (UpdateMilestoneOrderResponse) {
+    option (google.api.http) = {
+      put: "/v2.1/org/deals/{dealId}/milestones/order"
+      body: "*"
+    };
+  }
+}
+
+message DealMilestone {
+  uint64 id = 1;
+  uint64 dealId = 2;
+  string title = 3;
+  string description = 4;
+  google.protobuf.Timestamp expectedDate = 5;
+  optional google.protobuf.Timestamp completedDate = 6;
+  uint32 status = 7;
+  uint32 orderIndex = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message CreateDealMilestoneRequest {
+  uint64 dealId = 1;
+  string title = 2;
+  string description = 3;
+  google.protobuf.Timestamp expectedDate = 4;
+}
+
+message UpdateDealMilestoneRequest {
+  uint64 id = 1;
+  string title = 2;
+  string description = 3;
+  google.protobuf.Timestamp expectedDate = 4;
+  optional google.protobuf.Timestamp completedDate = 5;
+  uint32 status = 6;
+}
+
+message DeleteDealMilestoneRequest {
+  uint64 id = 1;
+}
+
+message DeleteDealMilestoneResponse {
+  uint64 id = 1;
+}
+
+message GetDealMilestonesRequest {
+  uint64 dealId = 1;
+}
+
+message GetDealMilestonesResponse {
+  repeated DealMilestone milestones = 1;
+}
+
+message UpdateMilestoneOrderRequest {
+  uint64 dealId = 1;
+  repeated uint64 milestoneIds = 2;
+}
+
+message UpdateMilestoneOrderResponse {
+  bool success = 1;
+} 

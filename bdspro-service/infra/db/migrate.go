@@ -9,7 +9,7 @@ func MigrateDomain() {
 	_db.DB.AutoMigrate(
 		// Core entities
 		// &domain.Asset{},
-		&domain.Product{},
+		// &domain.Product{},
 		// &domain.Post{},
 		// &domain.Intent{},
 
@@ -21,6 +21,7 @@ func MigrateDomain() {
 		// &domain.AssetLegal{},
 		// &domain.AssetOrganization{},
 		// &domain.AssetUser{},
+		// &domain.AssetShare{},
 
 		// // Product related
 		// &domain.ProductUser{},
@@ -29,6 +30,7 @@ func MigrateDomain() {
 		// &domain.ProductPrice{},
 		// &domain.ProductMedia{},
 		// &domain.ProductPrivate{},
+		// &domain.ProductAsset{},
 
 		// // Post related
 		// &domain.PostMediaEntity{},
@@ -36,8 +38,8 @@ func MigrateDomain() {
 		// &domain.PostUser{},
 
 		// // Document related
-		// &domain.CostDocument{},
 		// &domain.IncomeDocument{},
+		// &domain.AttachDocument{},
 
 		// // Project related
 		// &domain.Project{},
@@ -45,25 +47,68 @@ func MigrateDomain() {
 		// &domain.ProjectInventory{},
 		// &domain.BuildRoom{},
 
-		// // Sharing and Access
-		// &domain.SharingAccess{},
-		// &domain.RecordHistory{},
-
-		// // Other entities
-		// &domain.Amenity{},
+		// // Apartment related
 		// &domain.Apartment{},
-		// &domain.Developer{},
-		// &domain.PropertyType{},
-		// // &domain.Region{},
-		// &domain.DocType{},
-		// &domain.PaymentMethod{},
-		// // &domain.Deposite{},
-		// &domain.Transaction{},
-		// // &domain.Plan{},
-		// &domain.Task{},
-		// &domain.Customer{},
-		// &domain.BDSDomain{},
-		// &domain.ProductAsset{},
-		// &domain.HouseInfo{},
+		// &domain.ApartmentAttribute{},
+
+		// Deal related
+		// &domain.Deal{},
+		&domain.DealMember{},
+		// &domain.DealMilestone{},
+		// &domain.DealProduct{},
+		// &domain.DealInvestment{},
+		// &domain.DealOfOrganization{},
+		// &domain.DealOfGroup{},
+		// &domain.DealOfBranch{},
+		&domain.AttachDocument{},
+		&domain.DealInternalNote{},
+
+	// Transaction related
+	// &domain.Transaction{},
+	// &domain.Tx{},
+	// &domain.TxTransaction{},
+	// &domain.TxTransactionHistory{},
+	// &domain.TxTransactionProduct{},
+	// &domain.TxTransactionGroup{},
+	// &domain.TxTransactionCategory{},
+	// &domain.TxAction{},
+	// &domain.TxContractDeal{},
+	// &domain.TxDealCost{},
+	// &domain.TxCostType{},
+
+	// Sharing and Access
+	// &domain.SharingAccess{},
+	// &domain.Sharing{},
+	// &domain.RecordHistory{},
+
+	// // Location entities
+	// &domain.Province{},
+	// &domain.ProvinceV2{},
+	// &domain.District{},
+	// &domain.Ward{},
+	// &domain.WardV2{},
+	// &domain.Region{},
+
+	// // Other entities
+	// &domain.Amenity{},
+	// &domain.Developer{},
+	// &domain.PropertyType{},
+	// &domain.DocType{},
+	// &domain.PaymentMethod{},
+	// &domain.Task{},
+	// &domain.Customer{},
+	// &domain.BDSDomain{},
+	// &domain.HouseInfo{},
+	// &domain.Action{},
+	// &domain.MemberPlan{},
+	// &domain.ProfileTransfer{},
+	// &domain.BankAccount{},
+	// &domain.Color{},
+	// &domain.CommissionStats{},
+
+	// // Attribute related
+	// &domain.Attribute{},
+	// &domain.AttributeValue{},
+	// &domain.AttributeProduct{},
 	)
 }

@@ -27,7 +27,7 @@ func (c *OrganizationClient) MapOrganizationToSharingAccess(
 
 	organizationIDSet := make(map[uint64]struct{})
 	for _, sharingAccess := range sharingAccesses {
-		if sharingAccess.ToType == enums.EOwnerOfOrgnization {
+		if sharingAccess.ToType == enums.EOwnerOfOrganization {
 			organizationIDSet[sharingAccess.ToId] = struct{}{}
 		}
 	}
@@ -37,7 +37,7 @@ func (c *OrganizationClient) MapOrganizationToSharingAccess(
 	}
 
 	for _, sharingAccess := range sharingAccesses {
-		if sharingAccess.ToType == enums.EOwnerOfOrgnization && organizations[sharingAccess.ToId] != nil {
+		if sharingAccess.ToType == enums.EOwnerOfOrganization && organizations[sharingAccess.ToId] != nil {
 			sharingAccess.Avatar = organizations[sharingAccess.ToId].Avatar
 			sharingAccess.ToName = organizations[sharingAccess.ToId].Name
 		}

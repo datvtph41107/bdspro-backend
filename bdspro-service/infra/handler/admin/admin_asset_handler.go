@@ -9,7 +9,6 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
-	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"time"
@@ -21,14 +20,14 @@ type AdminAssetHandler struct {
 	bdspropb.UnimplementedAdminAssetServiceServer
 	AdminAssetService *admin_usecases.AdminAssetUsecase
 	AssetMapper       *mapper.AssetMapper
-	AuthGrpcClient    *clients.AuthGrpcClient
+	AuthGrpcClient    *client.AuthClient
 	UserClient        *client.UserClient
 }
 
 func NewAdminAssetHandler(
 	uc *admin_usecases.AdminAssetUsecase,
 	assetMapper *mapper.AssetMapper,
-	authGrpcClient *clients.AuthGrpcClient,
+	authGrpcClient *client.AuthClient,
 	userClient *client.UserClient,
 ) *AdminAssetHandler {
 	return &AdminAssetHandler{

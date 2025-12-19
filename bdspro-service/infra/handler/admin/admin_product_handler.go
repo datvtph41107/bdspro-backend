@@ -7,7 +7,6 @@ import (
 	admin_usecases "bdspro/internal/usecases/admin"
 	_routes "common/routes"
 	"context"
-	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
@@ -16,14 +15,14 @@ type AdminProductHandler struct {
 	bdspropb.UnimplementedAdminProductServiceServer
 	AdminProductService *admin_usecases.AdminProductUsecase
 	ProductMapper       *mapper.ProductMapper
-	AuthGrpcClient      *clients.AuthGrpcClient
+	AuthGrpcClient      *client.AuthClient
 	UserClient          *client.UserClient
 }
 
 func NewAdminProductHandler(
 	uc *admin_usecases.AdminProductUsecase,
 	productMapper *mapper.ProductMapper,
-	authGrpcClient *clients.AuthGrpcClient,
+	authGrpcClient *client.AuthClient,
 	userClient *client.UserClient,
 ) *AdminProductHandler {
 	return &AdminProductHandler{

@@ -42,4 +42,19 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 	_ = bdspropb.RegisterAdminTransactionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = bdspropb.RegisterBdsproDashboardServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = bdspropb.RegisterBdsDomainServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+
+	// Transaction related
+	_ = bdspropb.RegisterAdminTxServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterTxServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterDealContractServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterCostTypeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterDealCostServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+
+	// Deal related
+	_ = bdspropb.RegisterDealServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterDealCommissionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterInvestmentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterDealMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterDealMilestoneServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = bdspropb.RegisterDealInternalNoteServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

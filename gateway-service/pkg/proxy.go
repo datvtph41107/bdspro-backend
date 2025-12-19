@@ -25,7 +25,6 @@ var servicePorts = map[string]int{
 	"notification": 8004,
 	"payment":      8005,
 	"crm":          8006,
-	"membership":   8007,
 	"search":       8008,
 	"map":          8101,
 	"bdspro":       8102,

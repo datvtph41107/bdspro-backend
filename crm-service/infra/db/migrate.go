@@ -41,6 +41,14 @@ func AutoMigrate() {
 		&domain.ReportReason{},
 		&domain.ReportProof{},
 		&domain.FeedbackAttachEntity{},
+
+		// Marketing entities
+		&domain.AdvertisingSettings{},
+		&domain.BudgetConfig{},
+		&domain.Campaign{},
+		&domain.Package{},
+		&domain.BudgetUsage{},
+		&domain.BudgetAlert{},
 	)
 
 	log.Println("Migrate success")

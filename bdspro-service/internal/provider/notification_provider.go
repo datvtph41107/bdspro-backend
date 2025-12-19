@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"bdspro/internal/dto"
 	_dto "common/domain/dto"
 	"context"
 )
@@ -10,4 +11,5 @@ type NotificationProvider interface {
 	SendNoti(ctx context.Context, noti *_dto.NotificationDTO) error
 	SendBatch(ctx context.Context, noti *_dto.NotificationBatchDTO) error
 	CreateHistory(ctx context.Context, history *_dto.HistoryDTO) error
+	HistoryDeal(ctx context.Context, history *dto.DealHistoryDTO) error
 }

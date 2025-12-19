@@ -58,10 +58,10 @@ func (c *ChatClient) RemoveUserFromConversation(ctx context.Context, in *dto.Rem
 
 func (c *ChatClient) AddUserToConversation(ctx context.Context, in *dto.AddUserRequest) error {
 	request := &chatpb.AddUserRequest{
-		ConversationId: int32(in.ConversationId),
-		UserId:         int32(in.UserId),
+		ConversationId: uint64(in.ConversationId),
+		UserIds:        []uint64{uint64(in.UserId)},
 	}
-	_, err := c.client.AddUser(ctx, request)
+	_, err := c.client.AddUsers(ctx, request)
 	if err != nil {
 		return err
 	}

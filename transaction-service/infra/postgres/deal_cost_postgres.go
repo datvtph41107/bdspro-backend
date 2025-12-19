@@ -147,13 +147,13 @@ func (r *DealCostPostgreRepo) GetStatisticsByDealID(ctx context.Context, dealID 
 func (r *DealCostPostgreRepo) GetStatisticsByDealIDs(ctx context.Context, dealIDs []uint64) (*dto.StatisticDealsDTO, error) {
 	var totalTx, totalRevenue, totalExpense float64
 
-	// 1. Transactions (cộng theo tb_transaction_action.value)
+	// 1. Transactions (cộng theo tx_transaction_action.value)
 	err := r.db.WithContext(ctx).
 		Debug().
 		Table("contract_deals cd").
 		Select("COALESCE(SUM(ta.value),0)").
 		Joins("JOIN tx_transaction t ON t.id = cd.transaction_id").
-		Joins("JOIN tb_transaction_action ta ON ta.tx_id = t.id").
+		Joins("JOIN tx_transaction_action ta ON ta.tx_id = t.id").
 		Where("cd.deal_id IN ? AND cd.deleted_at IS NULL AND ta.deleted_at IS NULL", dealIDs).
 		Scan(&totalTx).Error
 	if err != nil {

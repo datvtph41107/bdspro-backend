@@ -79,9 +79,8 @@ var publicRoutes = []string{
 	"/v1/map/swagger",
 	"/v1/map/locations/nearby",
 	"/v1/map/locations/find-by-polygon",
-	"/v1/membership/user/verify",
-	"/v1/membership/plan/list",
-	"/v1/membership/user/plans",
+	"/v2/user/membership/verify",
+	"/v2/user/plans",
 	"/v1/notification/swagger",
 	"/v1/notification/auth/otp",
 	"/v1/payment/swagger",
@@ -260,6 +259,7 @@ var HttpCmd = &cobra.Command{
 
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
+		r.Any("/v2.1/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 		r.Any("/v3/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 
 		// Swagger documentation

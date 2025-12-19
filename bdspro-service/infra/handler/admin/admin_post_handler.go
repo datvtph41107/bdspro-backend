@@ -8,7 +8,6 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
-	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
@@ -17,14 +16,14 @@ type AdminPostHandler struct {
 	bdspropb.UnimplementedAdminPostServiceServer
 	AdminPostService *admin_usecases.AdminPostUsecase
 	PostMapper       *mapper.PostMapper
-	AuthGrpcClient   *clients.AuthGrpcClient
+	AuthGrpcClient   *client.AuthClient
 	UserClient       *client.UserClient
 }
 
 func NewAdminPostHandler(
 	uc *admin_usecases.AdminPostUsecase,
 	postMapper *mapper.PostMapper,
-	authGrpcClient *clients.AuthGrpcClient,
+	authGrpcClient *client.AuthClient,
 	userClient *client.UserClient,
 ) *AdminPostHandler {
 	return &AdminPostHandler{

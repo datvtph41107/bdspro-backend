@@ -36,6 +36,20 @@ type InitialApp struct {
 	AssetStatsJob            *job.AssetDashboardStatsJob
 	ProductStatsJob          *job.ProductDashboardStatsJob
 	PostStatsJob             *job.PostDashboardStatsJob
+
+	DealHandler             *handler.DealHandler
+	DealCommissionHandler   *handler.DealCommissionHandler
+	DealInvestmentHandler   *handler.DealInvestmentHandler
+	DealMilestoneHandler    *handler.DealMilestoneHandler
+	DealInvitationHandler   *handler.DealInvitationHandler
+	DealInternalNoteHandler *handler.DealInternalNoteHandler
+
+	TxInternalHandler     *handler.InternalTransactionHandler
+	TxHandler             *handler.TxHandler
+	TxContractDealHandler *handler.TxContractDealHandler
+	TxCostTypeHandler     *handler.TxCostTypeHandler
+	TxDealCostHandler     *handler.TxDealCostHandler
+	AdminTxHandler        *admin_handler.AdminTxHandler
 	// @bind: register_server_config
 	// CostDocumentServer *handler.CostDocumentServer
 	// IncomeDocumentServer    *handler.IncomeDocumentServer
@@ -84,6 +98,19 @@ func NewInitialApp(
 	assetStatsJob *job.AssetDashboardStatsJob,
 	productStatsJob *job.ProductDashboardStatsJob,
 	postStatsJob *job.PostDashboardStatsJob,
+
+	dealHandler *handler.DealHandler,
+	dealCommissionHandler *handler.DealCommissionHandler,
+	dealInvestmentHandler *handler.DealInvestmentHandler,
+	dealMilestoneHandler *handler.DealMilestoneHandler,
+	dealInvitationHandler *handler.DealInvitationHandler,
+	dealInternalNoteHandler *handler.DealInternalNoteHandler,
+	txInternalHandler *handler.InternalTransactionHandler,
+	txHandler *handler.TxHandler,
+	txContractDealHandler *handler.TxContractDealHandler,
+	txCostTypeHandler *handler.TxCostTypeHandler,
+	txDealCostHandler *handler.TxDealCostHandler,
+	adminTxHandler *admin_handler.AdminTxHandler,
 	// CostDocumentServer: CostDocumentServer,
 	// IncomeDocumentServer:    IncomeDocumentServer,
 	// AssetIncomeTypeServer:   AssetIncomeTypeServer,
@@ -117,9 +144,24 @@ func NewInitialApp(
 		InternalHandler:          internalHandler,
 		BdsproDashboardHandler:   bdsproDashboardHandler,
 		BdsDomainHandler:         bdsDomainHandler,
-		AssetStatsJob:            assetStatsJob,
-		ProductStatsJob:          productStatsJob,
-		PostStatsJob:             postStatsJob,
+
+		DealHandler:             dealHandler,
+		DealCommissionHandler:   dealCommissionHandler,
+		DealInvestmentHandler:   dealInvestmentHandler,
+		DealMilestoneHandler:    dealMilestoneHandler,
+		DealInvitationHandler:   dealInvitationHandler,
+		DealInternalNoteHandler: dealInternalNoteHandler,
+
+		TxInternalHandler:     txInternalHandler,
+		TxHandler:             txHandler,
+		TxContractDealHandler: txContractDealHandler,
+		TxCostTypeHandler:     txCostTypeHandler,
+		TxDealCostHandler:     txDealCostHandler,
+		AdminTxHandler:        adminTxHandler,
+
+		AssetStatsJob:   assetStatsJob,
+		ProductStatsJob: productStatsJob,
+		PostStatsJob:    postStatsJob,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

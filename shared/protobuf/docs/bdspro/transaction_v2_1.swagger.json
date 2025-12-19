@@ -1,0 +1,728 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/transaction_v2_1.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "TxTransactionService"
+    },
+    {
+      "name": "AdminTxTransactionService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2.1/bdspro/tx-transaction": {
+      "post": {
+        "operationId": "TxTransactionService_CreateTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbCreateTxTransactionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TxTransactionService"
+        ]
+      }
+    },
+    "/v2.1/bdspro/tx-transaction/admin/list": {
+      "get": {
+        "operationId": "AdminTxTransactionService_AdminListTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "status",
+            "description": " - TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TRANSACTION_STATUS_UNKNOWN",
+              "TRANSACTION_STATUS_PENDING",
+              "TRANSACTION_STATUS_APPROVED",
+              "TRANSACTION_STATUS_REJECTED"
+            ],
+            "default": "TRANSACTION_STATUS_UNKNOWN"
+          },
+          {
+            "name": "method",
+            "description": " - TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TRANSACTION_METHOD_UNKNOWN",
+              "TRANSACTION_METHOD_SIGN",
+              "TRANSACTION_METHOD_COST",
+              "TRANSACTION_METHOD_REVENUE",
+              "TRANSACTION_METHOD_INVESTMENT",
+              "TRANSACTION_METHOD_DEPOSIT",
+              "TRANSACTION_METHOD_RENT",
+              "TRANSACTION_METHOD_SALE",
+              "TRANSACTION_METHOD_BUY"
+            ],
+            "default": "TRANSACTION_METHOD_UNKNOWN"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AdminTxTransactionService"
+        ]
+      }
+    },
+    "/v2.1/bdspro/tx-transaction/deal/{id}": {
+      "get": {
+        "operationId": "TxTransactionService_ListProductTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "TxTransactionService"
+        ]
+      }
+    },
+    "/v2.1/bdspro/tx-transaction/detail/{id}": {
+      "get": {
+        "operationId": "TxTransactionService_GetTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "TxTransactionService"
+        ]
+      }
+    },
+    "/v2.1/bdspro/tx-transaction/list": {
+      "get": {
+        "operationId": "TxTransactionService_ListTransactions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "toId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "toOf",
+            "description": " - OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "OWNER_TYPE_UNKNOWN",
+              "OWNER_TYPE_USER",
+              "OWNER_TYPE_GROUP",
+              "OWNER_TYPE_ORGANIZATION",
+              "OWNER_TYPE_DEAL"
+            ],
+            "default": "OWNER_TYPE_UNKNOWN"
+          },
+          {
+            "name": "status",
+            "description": " - TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TRANSACTION_STATUS_UNKNOWN",
+              "TRANSACTION_STATUS_PENDING",
+              "TRANSACTION_STATUS_APPROVED",
+              "TRANSACTION_STATUS_REJECTED"
+            ],
+            "default": "TRANSACTION_STATUS_UNKNOWN"
+          },
+          {
+            "name": "method",
+            "description": " - TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TRANSACTION_METHOD_UNKNOWN",
+              "TRANSACTION_METHOD_SIGN",
+              "TRANSACTION_METHOD_COST",
+              "TRANSACTION_METHOD_REVENUE",
+              "TRANSACTION_METHOD_INVESTMENT",
+              "TRANSACTION_METHOD_DEPOSIT",
+              "TRANSACTION_METHOD_RENT",
+              "TRANSACTION_METHOD_SALE",
+              "TRANSACTION_METHOD_BUY"
+            ],
+            "default": "TRANSACTION_METHOD_UNKNOWN"
+          }
+        ],
+        "tags": [
+          "TxTransactionService"
+        ]
+      }
+    },
+    "/v2.1/bdspro/tx-transaction/product/action": {
+      "post": {
+        "operationId": "TxTransactionService_CreateProductAction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxActionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbCreateTxProductActionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TxTransactionService"
+        ]
+      }
+    },
+    "/v2.1/bdspro/tx-transaction/{id}/approve": {
+      "post": {
+        "operationId": "TxTransactionService_ApproveTransaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbTxTransactionServiceApproveTransactionBody"
+            }
+          }
+        ],
+        "tags": [
+          "TxTransactionService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "bdspropbCreateTxProductActionRequest": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "action": {
+          "type": "string"
+        },
+        "actionStatus": {
+          "type": "string"
+        },
+        "actionDate": {
+          "type": "string"
+        },
+        "actionNote": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string"
+        },
+        "toId": {
+          "type": "string"
+        },
+        "actionAmount": {
+          "type": "string"
+        },
+        "actionCurrency": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbCreateTxTransactionRequest": {
+      "type": "object",
+      "properties": {
+        "transactionName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "string"
+        },
+        "transactionStatus": {
+          "type": "string"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "transactionAmount": {
+          "type": "string"
+        },
+        "transactionCurrency": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbOwnerType": {
+      "type": "string",
+      "enum": [
+        "OWNER_TYPE_UNKNOWN",
+        "OWNER_TYPE_USER",
+        "OWNER_TYPE_GROUP",
+        "OWNER_TYPE_ORGANIZATION",
+        "OWNER_TYPE_DEAL"
+      ],
+      "default": "OWNER_TYPE_UNKNOWN",
+      "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    },
+    "bdspropbTransactionMethod": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_METHOD_UNKNOWN",
+        "TRANSACTION_METHOD_SIGN",
+        "TRANSACTION_METHOD_COST",
+        "TRANSACTION_METHOD_REVENUE",
+        "TRANSACTION_METHOD_INVESTMENT",
+        "TRANSACTION_METHOD_DEPOSIT",
+        "TRANSACTION_METHOD_RENT",
+        "TRANSACTION_METHOD_SALE",
+        "TRANSACTION_METHOD_BUY"
+      ],
+      "default": "TRANSACTION_METHOD_UNKNOWN",
+      "title": "- TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua"
+    },
+    "bdspropbTransactionStatus": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_STATUS_UNKNOWN",
+        "TRANSACTION_STATUS_PENDING",
+        "TRANSACTION_STATUS_APPROVED",
+        "TRANSACTION_STATUS_REJECTED"
+      ],
+      "default": "TRANSACTION_STATUS_UNKNOWN",
+      "title": "- TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối"
+    },
+    "bdspropbTxActionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbTxTransactionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbTxTransactionResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbTxTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/bdspropbTransactionStatus"
+        },
+        "method": {
+          "$ref": "#/definitions/bdspropbTransactionMethod"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbTxActionResponse"
+          }
+        }
+      }
+    },
+    "bdspropbTxTransactionServiceApproveTransactionBody": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

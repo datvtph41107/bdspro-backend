@@ -1,11 +1,11 @@
 package admin_handler
 
 import (
+	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	admin_usecases "bdspro/internal/usecases/admin"
 	_routes "common/routes"
 	"context"
-	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
@@ -14,13 +14,13 @@ type AdminTransactionHandler struct {
 	bdspropb.UnimplementedAdminTransactionServiceServer
 	AdminTransactionUsecase *admin_usecases.AdminTransactionUsecase
 	TransactionMapper       *mapper.AdminTransactionMapper
-	AuthGrpcClient          *clients.AuthGrpcClient
+	AuthGrpcClient          *client.AuthClient
 }
 
 func NewAdminTransactionHandler(
 	uc *admin_usecases.AdminTransactionUsecase,
 	transactionMapper *mapper.AdminTransactionMapper,
-	authGrpcClient *clients.AuthGrpcClient,
+	authGrpcClient *client.AuthClient,
 ) *AdminTransactionHandler {
 	return &AdminTransactionHandler{
 		AdminTransactionUsecase: uc,

@@ -5,10 +5,10 @@ import (
 	"bdspro/internal/repo"
 	"context"
 	"math/rand"
+	bdspropb "pb/types/bdspro"
 	"time"
 
 	_enum "common/domain/enum"
-	bdspropb "pb/types/bdspro"
 )
 
 type DashboardUsecase struct {

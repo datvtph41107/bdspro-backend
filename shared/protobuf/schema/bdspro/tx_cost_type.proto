@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+message CostTypeDTO {
+    uint64 id = 1;
+    string typeName = 2;
+    bool isCustom = 3;
+    uint32 costType = 4;
+    string description = 5;
+}
+  
+message CostTypeListDTO {
+  repeated CostTypeDTO data = 1;
+  uint32 total = 2;
+}
+  
+  service CostTypeService {
+    rpc Create(CostTypeDTO) returns (CostTypeDTO){
+        option (google.api.http) = {
+            post: "/v2.1/transaction/cost-type"
+            body: "*"
+        };
+    };
+    rpc Update(CostTypeDTO) returns (CostTypeDTO){
+        option (google.api.http) = {
+            put: "/v2.1/transaction/cost-type/{id}"
+            body: "*"
+        };
+    };
+    rpc Delete(sharepb.IdRequest) returns (sharepb.Empty){
+        option (google.api.http) = {
+            delete: "/v2.1/transaction/cost-type/{id}"
+        };
+    };
+    rpc List(CostTypeSearchDTO) returns (CostTypeListDTO){
+        option (google.api.http) = {
+            get: "/v2.1/transaction/cost-type"
+        };
+    };
+}
+
+message CostTypeSearchDTO {
+    uint32 page = 1;
+    uint32 size = 2;
+    string typeName = 3;
+    uint32 costType = 4;
+}

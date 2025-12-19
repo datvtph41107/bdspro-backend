@@ -107,4 +107,4 @@ func (v *internalNoteValidator) ValidateGetDealHistoryRequest(req *organizationp
 	}
 
 	return nil
-} 
+}

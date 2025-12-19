@@ -156,7 +156,7 @@ func (r *GroupDealPostgresRepository) GetDeals(ctx context.Context, userID uint6
 	baseQuery := `
 		SELECT d.* 
 		FROM deals d 
-		WHERE d.is_deleted = false 
+		WHERE 1 = 1
 		AND (
 			d.owner_id = ? 
 			OR EXISTS (

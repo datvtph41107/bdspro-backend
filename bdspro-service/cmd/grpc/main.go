@@ -62,6 +62,21 @@ var GrpcCmd = &cobra.Command{
 		bdspropb.RegisterBdsproInternalServiceServer(s, app.InternalHandler)
 		bdspropb.RegisterBdsproDashboardServiceServer(s, app.BdsproDashboardHandler)
 		bdspropb.RegisterBdsDomainServiceServer(s, app.BdsDomainHandler)
+
+		bdspropb.RegisterAdminTxServiceServer(s, app.AdminTxHandler)
+		bdspropb.RegisterTxServiceServer(s, app.TxHandler)
+		bdspropb.RegisterDealContractServiceServer(s, app.TxContractDealHandler)
+		bdspropb.RegisterCostTypeServiceServer(s, app.TxCostTypeHandler)
+		bdspropb.RegisterDealCostServiceServer(s, app.TxDealCostHandler)
+		bdspropb.RegisterInternalTransactionServiceServer(s, app.TxInternalHandler)
+		bdspropb.RegisterDealInternalNoteServiceServer(s, app.DealInternalNoteHandler)
+
+		bdspropb.RegisterDealServiceServer(s, app.DealHandler)
+		bdspropb.RegisterDealCommissionServiceServer(s, app.DealCommissionHandler)
+		bdspropb.RegisterInvestmentServiceServer(s, app.DealInvestmentHandler)
+		bdspropb.RegisterDealMemberServiceServer(s, app.DealInvitationHandler)
+		bdspropb.RegisterDealMilestoneServiceServer(s, app.DealMilestoneHandler)
+
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 

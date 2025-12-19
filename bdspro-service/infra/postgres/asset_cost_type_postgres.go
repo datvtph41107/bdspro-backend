@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: bdspro/internal/repo.CostTypeRepo
+// @bind: bdspro/internal/repo.AssetCostTypeRepo
 type PostgreUserCostType struct {
 	shared.PostgreCrud[domain.AssetCostType, *dto.AssetCostTypeSearchDTO]
 }

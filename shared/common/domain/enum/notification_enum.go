@@ -60,6 +60,23 @@ const (
 	NotificationProductMerge       ENotificationType = 8100
 	NotificationProductDevide      ENotificationType = 8110
 	NotificationProductMergeAll    ENotificationType = 8120
+	// -- action for investment --
+	NotificationInvestmentCreated  ENotificationType = 8130
+	NotificationInvestmentApproved ENotificationType = 8140
+	NotificationInvestmentRejected ENotificationType = 8150
+	// -- action for deal --
+	NotificationDealInvitation         ENotificationType = 8160
+	NotificationDealInvitationAccepted ENotificationType = 8170
+	NotificationDealInvitationRejected ENotificationType = 8180
+	NotificationDealMemberWithdrawn    ENotificationType = 8190
+	NotificationDealMemberRemoved      ENotificationType = 8200
+	NotificationDealCreate             ENotificationType = 8210
+	// -- action for deal member --
+	NotificationMemberJoinDeal   ENotificationType = 8220
+	NotificationCustomerJoinDeal ENotificationType = 8230
+	NotificationPartnerJoinDeal  ENotificationType = 8240
+	// -- action for deal update status --
+	NotificationDealUpdateStatus ENotificationType = 8250
 
 	// -- action for advertising/marketing --
 	NotificationCampaignCreate   ENotificationType = 9010

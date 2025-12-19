@@ -13,10 +13,10 @@ import (
 
 type AssetCostTypeUsecase struct {
 	common.OwnerUsecase[domain.AssetCostType, *dto.AssetCostTypeSearchDTO]
-	repo repo.CostTypeRepo
+	repo repo.AssetCostTypeRepo
 }
 
-func NewAssetCostTypeUsecase(repo repo.CostTypeRepo) *AssetCostTypeUsecase {
+func NewAssetCostTypeUsecase(repo repo.AssetCostTypeRepo) *AssetCostTypeUsecase {
 	uc := &AssetCostTypeUsecase{
 		OwnerUsecase: common.OwnerUsecase[domain.AssetCostType, *dto.AssetCostTypeSearchDTO]{
 			OwnerRepo: repo,
