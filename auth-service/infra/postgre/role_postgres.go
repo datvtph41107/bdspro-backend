@@ -6,6 +6,7 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
+	"errors"
 	"time"
 
 	"auth/internal/domain"
@@ -121,6 +122,9 @@ func (r *RoleRepo) GetDetail(ctx context.Context, id uint64) (*domain.Role, erro
 		Preload("Permissions").
 		Where("id = ? AND deleted_at IS NULL", id).First(&role).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &role, nil

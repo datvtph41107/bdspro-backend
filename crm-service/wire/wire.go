@@ -8,10 +8,14 @@ import (
 	_db "common/db"
 	"crm/initial"
 	crm_infra_client "crm/infra/client"
+	crm_infra_email_sender "crm/infra/email_sender"
 	crm_infra_handler "crm/infra/handler"
 	crm_infra_impl "crm/infra/impl"
+	crm_infra_job "crm/infra/job"
+	crm_infra_job_appointment_reminder "crm/infra/job/appointment_reminder"
 	crm_infra_mapper "crm/infra/mapper"
 	crm_infra_postgre "crm/infra/postgre"
+	crm_infra_validator "crm/infra/validator"
 	crm_initial "crm/initial"
 	crm_internal_interface_provider "crm/internal/interface/provider"
 	crm_internal_repo "crm/internal/repo"
@@ -22,11 +26,13 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	wire.Bind(new(crm_internal_interface_provider.BdsproProvider), new(*crm_infra_client.BdsproClient)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
 	wire.Bind(new(crm_internal_interface_provider.UserClient), new(*crm_infra_client.UserClient)),
 	wire.Bind(new(crm_internal_interface_provider.ITransaction), new(*crm_infra_impl.TransactionGorm)),
 	wire.Bind(new(crm_internal_repo.BlockRepo), new(*crm_infra_postgre.BlockRepo)),
 	wire.Bind(new(crm_internal_repo.ContactRepo), new(*crm_infra_postgre.PostgreContact)),
+	wire.Bind(new(crm_internal_repo.ContactProductRepo), new(*crm_infra_postgre.ContactProductPostgre)),
 	wire.Bind(new(crm_internal_repo.DocumentRepo), new(*crm_infra_postgre.DocumentPostgre)),
 	wire.Bind(new(crm_internal_repo.FollowRepo), new(*crm_infra_postgre.FollowPostgre)),
 	wire.Bind(new(crm_internal_repo.FriendGroupRepo), new(*crm_infra_postgre.FriendGroupRepo)),
@@ -38,17 +44,35 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.RuleRepo), new(*crm_infra_postgre.PostgreRule)),
 	wire.Bind(new(crm_internal_repo.SharingAccessRepo), new(*crm_infra_postgre.SharingAccessPostgre)),
 	wire.Bind(new(crm_internal_repo.StageRepo), new(*crm_infra_postgre.PostgreStage)),
+	crm_infra_postgre.NewAdvertisingSettingsPostgresRepository,
+	crm_internal_usecase.NewAdvertisingSettingsUsecase,
+	crm_infra_handler.NewAppointmentHandler,
+	crm_infra_postgre.NewAppointmentPostgresRepository,
+	crm_infra_job_appointment_reminder.NewAppointmentReminderJob,
+	crm_infra_postgre.NewAppointmentReminderPostgresRepository,
+	crm_internal_usecase.NewAppointmentReminderUsecase,
+	crm_infra_mapper.NewAppointmentTransformer,
+	crm_internal_usecase.NewAppointmentUsecase,
+	crm_infra_validator.NewAppointmentValidator,
 	crm_infra_client.NewBdsproClient,
 	crm_infra_postgre.NewBlockRepo,
 	crm_infra_handler.NewBlockService,
 	crm_internal_usecase.NewBlockUsecase,
+	crm_infra_postgre.NewBudgetPostgresRepository,
+	crm_internal_usecase.NewBudgetUsecase,
+	crm_internal_usecase.NewCampaignDetailUsecase,
+	crm_infra_postgre.NewCampaignPostgresRepository,
+	crm_internal_usecase.NewCampaignUsecase,
 	crm_infra_client.NewChatClient,
 	crm_infra_mapper.NewContactMapper,
+	crm_infra_postgre.NewContactProductPostgre,
 	crm_infra_postgre.NewContactRepo,
 	crm_infra_handler.NewContactService,
 	crm_internal_usecase.NewContactUsecase,
 	crm_infra_handler.NewCrmInternalService,
+	crm_infra_job.NewDashboardStatsJob,
 	crm_infra_postgre.NewDocumentPostgre,
+	crm_infra_email_sender.NewEmailSender,
 	crm_infra_handler.NewEnumService,
 	crm_internal_usecase.NewEnumUsecase,
 	crm_infra_postgre.NewFollowPostgre,
@@ -68,9 +92,14 @@ var wireSet = wire.NewSet(
 	crm_infra_mapper.NewLeadMapper,
 	crm_infra_handler.NewLeadService,
 	crm_internal_usecase.NewLeadUsecase,
+	crm_infra_handler.NewMarketingGrpcHandler,
 	crm_infra_client.NewNotificationClient,
 	crm_infra_client.NewOrganizationClient,
 	crm_internal_usecase.NewOwnerUsecase,
+	crm_infra_postgre.NewPackagePostgresRepository,
+	crm_internal_usecase.NewPackageUsecase,
+	crm_infra_client.NewPaymentClient,
+	crm_internal_usecase.NewPaymentUsecase,
 	crm_infra_client.NewPermissionUsecase,
 	crm_infra_handler.NewPipelineService,
 	crm_internal_usecase.NewPipelineUsecase,

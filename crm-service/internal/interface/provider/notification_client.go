@@ -1,5 +1,14 @@
 package provider
 
+import (
+	"context"
+	notificationpb "pb/types/notification"
+)
+
+type NotificationProvider interface {
+	CreateHistory(ctx context.Context, history *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error)
+}
+
 // type INotificationClient interface {
 // 	SendReminder(c context.Context, customerID uint64) error
 // 	SendNoti(c context.Context, noti *delivery_dto.NotificationDTO) error

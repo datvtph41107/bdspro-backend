@@ -105,7 +105,7 @@ services:
       context: ./payment-service
       dockerfile: Dockerfile
     container_name: payment
-    command: ["/app/main", "grpc"]
+    command: ["./main", "grpc"]
     volumes:
       - ${PWD}/config:/app/config
     environment:

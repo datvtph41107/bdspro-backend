@@ -366,6 +366,12 @@
         "ownerOf": {
           "type": "integer",
           "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },

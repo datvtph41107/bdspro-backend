@@ -119,3 +119,226 @@ message GetStatsResponse {
   uint32 firstDateCount = 3;
   uint32 secondDateCount = 4;
 }
+
+message TagItem {
+  uint64 id = 1;
+  string name = 2;
+  string color = 3;
+}
+
+message Bank {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string logo = 4;
+  bool active = 5;
+  string description = 6;
+}
+
+message DocumentItem {
+  string name = 1;
+  string path = 2;
+  string type = 3;
+  int64 size = 4;
+}
+
+message BankAccountItem {
+  string name = 1;
+  string bankName = 2;
+  string accountNumber = 3;
+  string accountName = 4;
+  uint64 bankId = 5;
+  Bank bank = 6;
+}
+
+message ProductAttachment {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  double area = 4;
+  double price = 5;
+  string image = 6;
+  optional uint64 assetId = 7;
+  optional uint64 depositeId = 8;
+  uint32 rentStatus = 9;
+  uint32 saleStatus = 10;
+  int32 sourceType = 11;
+  string sourceTypeName = 12;
+}
+
+message Deal {
+  uint32 id = 1;
+  string name = 2;
+  double targetProfit = 3;
+  uint32 status = 4;
+  uint32 dealType = 5;
+  uint32 ownerId = 6;
+  uint32 ownerType = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+  double totalAmount = 10;
+  double profitAmount = 11;
+  uint32 numMember = 12;
+  repeated ProductAttachment products = 13;
+  string dealTypeName = 14;
+  string note = 15;
+  repeated DocumentItem documents = 16;
+  optional BankAccountItem bankAccount = 17;
+  repeated ProfileItem customers = 18;
+  repeated ProfileItem partners = 19;
+  repeated ProfileItem members = 20;
+  optional string cancelReason = 21;
+  bool isUnilateral = 22;  // Đơn phương (gỡ khỏi thương vụ)
+  bool isManual = 23;      // Nhập tay (dành cho doanh thu)
+  string statusName = 24;
+  string chargePersonName = 25;
+  uint64 chargePersonId = 26;
+  string fromDate = 27;
+  string toDate = 28; 
+  bool allowSharing = 29;
+  bool memberCanAddTransaction = 30;
+  bool onlyOwnerGetCommission = 31;
+  string internalNote = 32;
+  optional ProfileItem chargePerson = 33;
+  string code = 34;
+  optional Role role = 35;
+}
+
+// Permission message
+message Permission {
+  uint64 id = 1;
+  string name = 2;
+  string key = 3;
+  string description = 4;
+  string permissionType = 5;
+  string module = 6;
+  optional uint64 parentId = 7;
+  repeated Permission children = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+  uint32 priority = 11;
+}
+
+// Role message
+message Role {
+  uint64 id = 1;
+  string roleName = 2;
+  string roleDescription = 3;
+  string key = 4;
+  repeated uint64 permissionIds = 5;
+  uint64 organizationId = 6;
+  repeated Permission permissions = 7;
+  bool isDefault = 8;
+  string domainType = 9;
+  optional uint64 colorId = 10;
+  optional Color color = 11;
+  optional uint64 roleGroupId = 12;
+  optional string roleGroupName = 13;
+  bool allowAssign = 14;
+  uint32 roleKey = 15;
+  string createdAt = 16;
+  string updatedAt = 17;
+}
+
+message Color {
+  uint64 id = 1 [json_name = "id"];
+  string name = 2 [json_name = "name"];
+  string contentColor = 3 [json_name = "contentColor"];
+  string backgroundColor = 4 [json_name = "backgroundColor"];
+  string colorKey = 5 [json_name = "colorKey"];
+  string hexCode = 6 [json_name = "hexCode"];
+  optional string description = 7 [json_name = "description"];
+  bool isActive = 8 [json_name = "isActive"];
+  string createdAt = 9 [json_name = "createdAt"];
+  string updatedAt = 10 [json_name = "updatedAt"];
+  uint32 createdBy = 11 [json_name = "createdBy"];
+  uint32 updatedBy = 12 [json_name = "updatedBy"];
+} 
+
+// Message định nghĩa DealMember
+message DealMember {
+  uint64 id = 1;
+  uint64 dealId = 2;
+  uint64 inviterId = 3;
+  uint64 memberId = 4;
+  uint32 status = 5;
+  string message = 6;
+  optional Role role = 7;
+  string reason = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+  optional ProfileItem profile = 11;
+  optional Color color = 12;
+  optional uint64 roleId = 13;
+  string invitedAt = 14;       // Thời gian mời
+  string respondedAt = 15;     // Thời gian phản hồi
+  string withdrawnAt = 16;     // Thời gian rút khỏi
+  
+  double amountCommit = 17;
+  double commissionValue = 18;  // Giá trị hoa hồng
+  uint32 commissionType = 19;   // Loại hoa hồng (10: %, 20: VND)
+  string note = 20;             // Ghi chú
+  bool doneInvestment = 21;    // Đánh dấu đã đủ vốn góp
+  bool isOwner = 22;           // Đánh dấu là chủ thương vụ
+  uint32 roleKey = 23;         // Role key (400: Owner, 420: Admin, 430: Member)
+  optional Deal deal = 24;
+}
+
+
+message ContactDTO {
+  uint64 id = 1;
+  string phone = 2;
+  string fullName = 3;
+  uint64 ownerId = 4;
+  int32 ownerOf = 5;
+  string createdAt = 6;
+  optional uint64 createdBy = 7;
+  uint32 contactStatus = 8;
+  string statusName = 9;
+  FriendItem friendStatus = 10;
+  bool following = 11;
+  string avatar = 12;
+  ProfileItem profileInfo = 13;
+  optional uint64 profileId = 14;
+  bool blocked = 15;
+  string email = 16;
+  string zalo = 17;
+  string company = 18;
+  string note = 19;
+  string birthday = 20;
+  repeated TagItem tags = 21;
+  repeated uint64 productIds = 22;
+  optional DealMember dealMember = 23;
+  optional OrganizationMember organizationMember = 24;
+  optional GroupMember groupMember = 25;
+  optional ConversationMember conversationMember = 26;
+}
+
+message OrganizationMember {
+    uint32 id = 1 [json_name = "id"];
+    uint64 userId = 2 [json_name = "userId"];
+    uint32 role = 3 [json_name = "role"];
+    uint64 roleId = 4 [json_name = "roleId"];
+    uint32 roleKey = 5 [json_name = "roleKey"];
+    string roleName = 6 [json_name = "roleName"];
+    uint32 status = 7 [json_name = "status"];
+    optional ProfileItem profile = 8;
+}
+
+message GroupMember {
+  uint32 id = 1;
+  uint32 groupId = 2;
+  uint32 userId = 3;
+  string role = 4;
+  ProfileItem profile = 5;
+  optional uint64 roleId = 6;
+}
+
+
+message ConversationMember {
+  uint64 userId = 1;
+  string joinedAt = 2;
+  optional string leftAt = 3;
+  bool muteNotif = 4;
+  int32 role = 5; // 0: Member, 1: Admin, 2: Banned
+}

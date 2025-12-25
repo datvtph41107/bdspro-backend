@@ -20,7 +20,7 @@ import (
 type DealHandler struct {
 	bdspropb.UnimplementedDealServiceServer
 	DealUsecase        usecases.DealUsecase
-	DealTransformer    mapper.DealTransformer
+	DealTransformer    mapper.DealMapper
 	DealValidator      validator.DealValidator
 	OrganizationClient *client.OrganizationClient
 	UserClient         *client.UserClient
@@ -30,7 +30,7 @@ type DealHandler struct {
 
 func NewDealHandler(
 	dealUsecase usecases.DealUsecase,
-	dealTransformer mapper.DealTransformer,
+	dealTransformer mapper.DealMapper,
 	dealValidator validator.DealValidator,
 	organizationClient *client.OrganizationClient,
 	userClient *client.UserClient,
@@ -139,7 +139,7 @@ func (h *DealHandler) GetGroupDeal(ctx context.Context, req *bdspropb.GetGroupDe
 
 	response := h.DealTransformer.EntityToDealDetailResponse(deal)
 	// h.DealTransformer.MapProductToDealPb(ctx, []*bdspropb.GroupDeal{response})
-	// h.UserClient.MapMemberToDealPb(ctx, []*bdspropb.GroupDeal{response})
+	h.UserClient.MapMemberToDealPb(ctx, []*bdspropb.GroupDeal{response})
 	if response.BankAccount != nil {
 		bank, _ := h.PaymentClient.GetBankById(ctx, response.BankAccount.BankId)
 		response.BankAccount.Bank = bank
@@ -397,7 +397,7 @@ func (h *DealHandler) GetDealsUser(ctx context.Context, req *bdspropb.DealSearch
 	}
 
 	response := h.DealTransformer.EntityToGetDealsResponse(deals, total)
-	// h.OrganizationClient.MapMemberToDealPb(ctx, response.Data)
+	h.UserClient.MapMemberToDealPb(ctx, response.Data)
 	return response, nil
 }
 
@@ -565,9 +565,9 @@ func (h *DealHandler) Members(ctx context.Context, req *bdspropb.SearchDealMembe
 		return nil, err
 	}
 
-	response := make([]*bdspropb.DealMember, len(members))
+	response := make([]*sharepb.DealMember, len(members))
 	for i, member := range members {
-		response[i] = &bdspropb.DealMember{
+		response[i] = &sharepb.DealMember{
 			DealId:   member.DealID,
 			MemberId: member.MemberID,
 			// MemberType:      uint32(member.MemberType),
@@ -580,7 +580,7 @@ func (h *DealHandler) Members(ctx context.Context, req *bdspropb.SearchDealMembe
 			DoneInvestment:  member.DoneInvestment,
 		}
 	}
-	// h.UserClient.MapProfileToDealMember(ctx, response)
+	h.UserClient.MapToDealInvitationPb(ctx, response)
 	return &bdspropb.GetDealMembersResponse{Data: response}, nil
 }
 
@@ -620,12 +620,18 @@ func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdReques
 	if err != nil {
 		return nil, err
 	}
+	if len(products) == 0 {
+		return &bdspropb.GetDealProductsResponse{
+			Data: []*bdspropb.ProductAttachment{},
+		}, nil
+	}
+
 	productIds := make([]uint64, len(products))
 	for i, product := range products {
 		productIds[i] = product.ProductID
 	}
 	// productAttachments, err := h.BdsproClient.GetProductAttachmentByIds(ctx, productIds)
-	productDetails, err := h.ProductRepo.GetDetailByIds(ctx, req.Ids)
+	productDetails, err := h.ProductRepo.GetDetailByIds(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
@@ -633,8 +639,23 @@ func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdReques
 	productAttachments := make([]*bdspropb.ProductAttachment, len(productDetails))
 	for i, product := range productDetails {
 		productAttachments[i] = &bdspropb.ProductAttachment{
-			Id:   product.ID,
-			Name: product.Name,
+			Id:             product.ID,
+			Name:           product.Name,
+			Code:           product.Code,
+			Area:           product.Area,
+			AssetId:        product.AssetId,
+			RentStatus:     uint32(product.RentStatus),
+			SaleStatus:     uint32(product.SaleStatus),
+			SourceType:     int32(product.SourceType),
+			SourceTypeName: enums.SourceTypeMap[product.SourceType],
+		}
+		// Map price
+		if product.Price != nil && product.Price.SalePrice != nil {
+			productAttachments[i].Price = *product.Price.SalePrice
+		}
+		// Map image from MediaList
+		if len(product.MediaList) > 0 {
+			productAttachments[i].Image = product.MediaList[0].MediaURL
 		}
 	}
 	return &bdspropb.GetDealProductsResponse{

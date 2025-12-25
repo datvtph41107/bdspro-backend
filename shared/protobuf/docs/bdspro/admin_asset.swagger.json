@@ -1625,6 +1625,9 @@
         },
         "certificateHouseNote": {
           "type": "string"
+        },
+        "sourceContact": {
+          "$ref": "#/definitions/sharepbContactDTO"
         }
       }
     },
@@ -1996,6 +1999,653 @@
         }
       }
     },
+    "sharepbBank": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbBankAccountItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "bankId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bank": {
+          "$ref": "#/definitions/sharepbBank"
+        }
+      }
+    },
+    "sharepbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbContactDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "contactStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "friendStatus": {
+          "$ref": "#/definitions/sharepbFriendItem"
+        },
+        "following": {
+          "type": "boolean"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "profileInfo": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "blocked": {
+          "type": "boolean"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "birthday": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbTagItem"
+          }
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "dealMember": {
+          "$ref": "#/definitions/sharepbDealMember"
+        },
+        "organizationMember": {
+          "$ref": "#/definitions/sharepbOrganizationMember"
+        },
+        "groupMember": {
+          "$ref": "#/definitions/sharepbGroupMember"
+        },
+        "conversationMember": {
+          "$ref": "#/definitions/sharepbConversationMember"
+        }
+      }
+    },
+    "sharepbConversationMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "leftAt": {
+          "type": "string"
+        },
+        "muteNotif": {
+          "type": "boolean"
+        },
+        "role": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0: Member, 1: Admin, 2: Banned"
+        }
+      }
+    },
+    "sharepbDeal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "numMember": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProductAttachment"
+          }
+        },
+        "dealTypeName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbDocumentItem"
+          }
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/sharepbBankAccountItem"
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "partners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/sharepbRole"
+        }
+      }
+    },
+    "sharepbDealMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "inviterId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/sharepbRole"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "color": {
+          "$ref": "#/definitions/sharepbColor"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "invitedAt": {
+          "type": "string",
+          "title": "Thời gian mời"
+        },
+        "respondedAt": {
+          "type": "string",
+          "title": "Thời gian phản hồi"
+        },
+        "withdrawnAt": {
+          "type": "string",
+          "title": "Thời gian rút khỏi"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị hoa hồng"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại hoa hồng (10: %, 20: VND)"
+        },
+        "note": {
+          "type": "string",
+          "title": "Ghi chú"
+        },
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "isOwner": {
+          "type": "boolean",
+          "title": "Đánh dấu là chủ thương vụ"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Role key (400: Owner, 420: Admin, 430: Member)"
+        },
+        "deal": {
+          "$ref": "#/definitions/sharepbDeal"
+        }
+      },
+      "title": "Message định nghĩa DealMember"
+    },
+    "sharepbDocumentItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbFriendItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "receiverId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbGroupMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "role": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "sharepbOrganizationMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "role": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        }
+      }
+    },
+    "sharepbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "sharepbProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      }
+    },
     "sharepbProfileItem": {
       "type": "object",
       "properties": {
@@ -2019,6 +2669,91 @@
           "type": "boolean"
         },
         "joinedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "roleDescription": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "string"
+        },
+        "colorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "$ref": "#/definitions/sharepbColor"
+        },
+        "roleGroupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleGroupName": {
+          "type": "string"
+        },
+        "allowAssign": {
+          "type": "boolean"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Role message"
+    },
+    "sharepbTagItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
           "type": "string"
         }
       }

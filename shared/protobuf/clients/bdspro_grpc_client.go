@@ -158,3 +158,22 @@ func (c *BdsproGrpcClient) GetSuggest(ctx context.Context, content string) (*_dt
 
 	return result, nil
 }
+
+func (c *BdsproGrpcClient) GetDealMember(ctx context.Context, dealId uint64, userId uint64) (*sharepb.DealMember, error) {
+	if c.InternalClient == nil {
+		return nil, errors.New("bdspro internal client not available")
+	}
+
+	resp, err := c.InternalClient.GetDealMembers(ctx, &bdspropb.DealMemberRequest{
+		DealId:  dealId,
+		UserIds: []uint64{userId},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Data) == 0 {
+		return nil, nil
+	}
+
+	return resp.Data[0], nil
+}

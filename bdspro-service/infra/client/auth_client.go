@@ -5,7 +5,7 @@ import (
 	"context"
 	"pb/clients"
 	authpb "pb/types/auth"
-	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 )
 
 type AuthClient struct {
@@ -18,7 +18,7 @@ func NewAuthClient() *AuthClient {
 	}
 }
 
-func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations []*bdspropb.DealMember) {
+func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations []*sharepb.DealMember) {
 	roleIds := make([]uint32, len(invitations))
 	for i, r := range invitations {
 		if r.RoleKey != 0 {
@@ -31,9 +31,33 @@ func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations 
 		return
 	}
 
-	roleMap := make(map[uint32]*authpb.Role)
+	roleMap := make(map[uint32]*sharepb.Role)
 	for _, r := range roles.Data {
-		roleMap[r.RoleKey] = r
+		role := &sharepb.Role{
+			Id:              r.Id,
+			RoleName:        r.RoleName,
+			RoleKey:         r.RoleKey,
+			RoleDescription: r.RoleDescription,
+			Key:             r.Key,
+			PermissionIds:   r.PermissionIds,
+			OrganizationId:  r.OrganizationId,
+			IsDefault:       r.IsDefault,
+			DomainType:      r.DomainType,
+			AllowAssign:     r.AllowAssign,
+			CreatedAt:       r.CreatedAt,
+			UpdatedAt:       r.UpdatedAt,
+		}
+		if r.Color != nil {
+			role.Color = &sharepb.Color{
+				Id:              r.Color.Id,
+				Name:            r.Color.Name,
+				ContentColor:    r.Color.ContentColor,
+				BackgroundColor: r.Color.BackgroundColor,
+			}
+			role.ColorId = &r.Color.Id
+		}
+
+		roleMap[r.RoleKey] = role
 	}
 
 	for i, r := range invitations {

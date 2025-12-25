@@ -11,7 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.CampaignRepo
 type CampaignPostgresRepository struct {
 	db *gorm.DB
 }

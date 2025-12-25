@@ -54,7 +54,7 @@ func (w *notificationWorker) sendToNotificationService(ctx context.Context, tran
 		AttachData: []string{_utils.FormatVND(transaction.Amount)},
 		Type:       notificationType,
 		Title:      "Thông báo thanh toán",
-		Message:    message,
+		Message:    []string{message},
 		OwnerId:    uint64(transaction.WalletId),
 		TargetId:   uint64(transaction.Id),
 	}

@@ -33,6 +33,8 @@ type ContactEntity struct {
 
 	// transient
 	Tags []TagEntity `gorm:"-" json:"tags"`
+
+	ProductIDs []uint64 `gorm:"-" json:"productIds"`
 }
 
 func (ContactEntity) TableName() string {

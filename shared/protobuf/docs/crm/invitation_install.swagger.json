@@ -199,6 +199,13 @@
         },
         "member": {
           "$ref": "#/definitions/crmpbConversationMember"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -297,6 +304,12 @@
         "ownerOf": {
           "type": "integer",
           "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },

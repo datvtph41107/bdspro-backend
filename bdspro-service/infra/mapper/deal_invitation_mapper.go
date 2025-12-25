@@ -6,8 +6,8 @@ import (
 	"bdspro/internal/enums"
 	_models "common/models"
 	_utils "common/utils"
-	authpb "pb/types/auth"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 	"time"
 )
 
@@ -204,7 +204,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *do
 	// 	role = "member"
 	// }
 
-	invitationResponse := &bdspropb.DealMember{
+	invitationResponse := &sharepb.DealMember{
 		Id:        invitation.ID,
 		DealId:    invitation.DealID,
 		InviterId: invitation.InviterID,
@@ -219,7 +219,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *do
 	}
 
 	if invitation.Color != nil {
-		invitationResponse.Color = &authpb.Color{
+		invitationResponse.Color = &sharepb.Color{
 			Id:              invitation.Color.ID,
 			Name:            invitation.Color.Name,
 			ContentColor:    invitation.Color.ContentColor,
@@ -230,7 +230,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *do
 	}
 
 	return &bdspropb.GetDealInvitationResponse{
-		Member: &bdspropb.DealMember{
+		Member: &sharepb.DealMember{
 			Id:        invitation.ID,
 			DealId:    invitation.DealID,
 			InviterId: invitation.InviterID,
@@ -247,7 +247,7 @@ func (t *dealInvitationTransformer) EntityToGetInvitationResponse(invitation *do
 }
 
 func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members []*dto.DealInvitationWithProfile) *bdspropb.GetAcceptedMembersResponse {
-	result := make([]*bdspropb.DealMember, len(members))
+	result := make([]*sharepb.DealMember, len(members))
 	for i, member := range members {
 		// Convert DealMemberType to string
 		// var role string
@@ -262,7 +262,7 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 		// 	role = "member"
 		// }
 
-		result[i] = &bdspropb.DealMember{
+		result[i] = &sharepb.DealMember{
 			MemberId: member.DealMember.MemberID,
 			Profile:  member.Invitee,
 			// Name:     member.Invitee.FullName,
@@ -279,7 +279,7 @@ func (t *dealInvitationTransformer) EntitiesToGetAcceptedMembersResponse(members
 }
 
 func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*dto.DealInvitationWithProfile, total uint32) *bdspropb.SearchDealMembersResponse {
-	result := make([]*bdspropb.DealMember, len(members))
+	result := make([]*sharepb.DealMember, len(members))
 	for i, member := range members {
 		// Convert DealMemberType to string
 		// var role string
@@ -294,7 +294,7 @@ func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*d
 		// 	role = "member"
 		// }
 
-		result[i] = &bdspropb.DealMember{
+		result[i] = &sharepb.DealMember{
 			MemberId: member.DealMember.MemberID,
 			Profile:  member.Invitee,
 			// Name:     member.Invitee.FullName,
@@ -312,7 +312,7 @@ func (t *dealInvitationTransformer) EntitiesToSearchMembersResponse(members []*d
 }
 
 func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *bdspropb.GetPendingInvitationsResponse {
-	result := make([]*bdspropb.DealMember, len(invitations))
+	result := make([]*sharepb.DealMember, len(invitations))
 	for i, invitation := range invitations {
 		// Convert DealMemberType to string
 		// var role string
@@ -327,7 +327,7 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 		// 	role = "member"
 		// }
 
-		invitationResponse := &bdspropb.DealMember{
+		invitationResponse := &sharepb.DealMember{
 			Id:        invitation.DealMember.ID,
 			DealId:    invitation.DealMember.DealID,
 			InviterId: invitation.DealMember.InviterID,
@@ -342,7 +342,7 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 		}
 
 		if invitation.DealMember.Color != nil {
-			invitationResponse.Color = &authpb.Color{
+			invitationResponse.Color = &sharepb.Color{
 				Id:              invitation.DealMember.Color.ID,
 				Name:            invitation.DealMember.Color.Name,
 				ContentColor:    invitation.DealMember.Color.ContentColor,
@@ -361,7 +361,7 @@ func (t *dealInvitationTransformer) EntitiesToGetPendingInvitationsResponse(invi
 }
 
 func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invitations []*dto.DealInvitationWithProfile, total uint32) *bdspropb.GetDealInvitationsByDealResponse {
-	result := make([]*bdspropb.DealMember, len(invitations))
+	result := make([]*sharepb.DealMember, len(invitations))
 	for i, invitation := range invitations {
 		// Convert DealMemberType to string
 		// var role string
@@ -376,7 +376,7 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 		// 	role = "member"
 		// }
 
-		invitationResponse := &bdspropb.DealMember{
+		invitationResponse := &sharepb.DealMember{
 			Id:        invitation.DealMember.ID,
 			DealId:    invitation.DealMember.DealID,
 			InviterId: invitation.DealMember.InviterID,
@@ -395,7 +395,7 @@ func (t *dealInvitationTransformer) EntitiesToGetInvitationsByDealResponse(invit
 		// }
 
 		if invitation.DealMember.Color != nil {
-			invitationResponse.Color = &authpb.Color{
+			invitationResponse.Color = &sharepb.Color{
 				Id:              invitation.DealMember.Color.ID,
 				Name:            invitation.DealMember.Color.Name,
 				ContentColor:    invitation.DealMember.Color.ContentColor,

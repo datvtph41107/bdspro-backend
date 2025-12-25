@@ -14,6 +14,7 @@ type DealRepository interface {
 	Update(ctx context.Context, deal *domain.Deal) (*domain.Deal, error)
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*domain.Deal, error)
+	GetByIds(ctx context.Context, ids []uint64) ([]*domain.Deal, error)
 	DetailByID(ctx context.Context, id uint64) (*domain.Deal, error)
 	GetIdsByGroupID(ctx context.Context, groupID uint64) ([]uint64, error)
 	GetIdsByOrganizationID(ctx context.Context, bdsproID uint64) ([]uint64, error)
@@ -23,6 +24,7 @@ type DealRepository interface {
 	UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error
 	CreateDealProduct(ctx context.Context, dealProduct []*domain.DealProduct) ([]*domain.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*domain.DealProduct, error)
+	GetDealsByProductID(ctx context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 	GetDealProcess(ctx context.Context, dealID uint64, bdsproID uint64) ([]*dto.DealProcessItem, error)
 

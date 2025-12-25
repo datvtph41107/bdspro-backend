@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-// @bind: bdspro/internal/repo.DealRepository
 type DealPostgresRepository struct {
 	db              *gorm.DB
 	bankAccountRepo repo.BankAccountRepository
@@ -23,7 +23,7 @@ type DealPostgresRepository struct {
 func NewGroupDealPostgresRepository(db *gorm.DB,
 	bankAccountRepo repo.BankAccountRepository,
 	transactionRepo provider.TransactionProvider,
-) *DealPostgresRepository {
+) repo.DealRepository {
 	return &DealPostgresRepository{
 		db:              db,
 		bankAccountRepo: bankAccountRepo,
@@ -32,7 +32,16 @@ func NewGroupDealPostgresRepository(db *gorm.DB,
 }
 
 func (r *DealPostgresRepository) CreateDealProduct(ctx context.Context, dealProduct []*domain.DealProduct) ([]*domain.DealProduct, error) {
-	if err := GetDB(ctx, r.db).Create(&dealProduct).Error; err != nil {
+	// Sử dụng ON CONFLICT DO NOTHING để bỏ qua các bản ghi duplicate
+	if err := GetDB(ctx, r.db).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "deal_id"},
+				{Name: "product_id"},
+			},
+			DoNothing: true,
+		}).
+		Create(&dealProduct).Error; err != nil {
 		return nil, err
 	}
 	return dealProduct, nil
@@ -48,6 +57,35 @@ func (r *DealPostgresRepository) GetDealProducts(ctx context.Context, dealID uin
 		return nil, err
 	}
 	return dealProducts, nil
+}
+
+func (r *DealPostgresRepository) GetDealsByProductID(ctx context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error) {
+	var deals []*domain.Deal
+	var total int64
+
+	// Count total
+	countQuery := GetDB(ctx, r.db).
+		Model(&domain.DealProduct{}).
+		Joins("JOIN deals ON deals.id = deal_products.deal_id").
+		Where("deal_products.product_id = ? AND deals.deleted_at IS NULL", productID)
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get deals with pagination
+	if err := GetDB(ctx, r.db).
+		Model(&domain.Deal{}).
+		Joins("JOIN deal_products ON deal_products.deal_id = deals.id").
+		Where("deal_products.product_id = ? AND deals.deleted_at IS NULL", productID).
+		Preload("BankAccount", "deleted_at is null").
+		Offset(pagable.GetOffset()).
+		Limit(pagable.GetLimit()).
+		Order("deals.created_at DESC").
+		Find(&deals).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return deals, total, nil
 }
 
 func (r *DealPostgresRepository) Create(ctx context.Context, deal *domain.Deal) (*domain.Deal, error) {
@@ -458,4 +496,12 @@ func (r *DealPostgresRepository) GetAllDeals(ctx context.Context, searchRequest 
 	}
 
 	return deals, total, nil
+}
+
+func (r *DealPostgresRepository) GetByIds(ctx context.Context, ids []uint64) ([]*domain.Deal, error) {
+	var deals []*domain.Deal
+	if err := r.db.WithContext(ctx).Where("id IN (?) AND deleted_at IS NULL", ids).Find(&deals).Error; err != nil {
+		return nil, err
+	}
+	return deals, nil
 }

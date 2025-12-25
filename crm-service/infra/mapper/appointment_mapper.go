@@ -1,0 +1,112 @@
+package mapper
+
+import (
+	bdspropb "pb/types/bdspro"
+	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
+	"time"
+
+	"crm/internal/domain"
+	"crm/internal/dto"
+)
+
+type AppointmentTransformer interface {
+	CreateAppointmentRequestToEntity(req *crmpb.CreateAppointmentRequest) *domain.Appointment
+	UpdateAppointmentRequestToEntity(req *crmpb.UpdateAppointmentRequest) *domain.Appointment
+	EntityToAppointmentResponse(appointment *domain.Appointment, deal *bdspropb.GroupDeal, products []*bdspropb.ProductAttachment, participants []*sharepb.ProfileItem) *crmpb.Appointment
+	EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *crmpb.ListAppointmentsResponse
+	EntityToAdminListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *crmpb.AdminListAppointmentsResponse
+}
+
+type appointmentTransformer struct{}
+
+func NewAppointmentTransformer() AppointmentTransformer {
+	return &appointmentTransformer{}
+}
+
+func (t *appointmentTransformer) CreateAppointmentRequestToEntity(req *crmpb.CreateAppointmentRequest) *domain.Appointment {
+	startTime, _ := time.Parse(time.RFC3339, req.StartTime)
+	endTime, _ := time.Parse(time.RFC3339, req.EndTime)
+
+	return &domain.Appointment{
+		Title:            req.Title,
+		Description:      req.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Mode:             req.Mode,
+		Place:            req.Place,
+		ParticipantIds:   req.ParticipantIds,
+		DealId:           req.DealId,
+		ProductIds:       req.ProductIds,
+		ReminderSchedule: req.ReminderSchedule,
+		TransactionIds:   req.TransactionIds,
+		OptionExtend:     req.OptionExtend,
+		Status:           req.Status,
+	}
+}
+
+func (t *appointmentTransformer) UpdateAppointmentRequestToEntity(req *crmpb.UpdateAppointmentRequest) *domain.Appointment {
+	startTime, _ := time.Parse(time.RFC3339, req.StartTime)
+	endTime, _ := time.Parse(time.RFC3339, req.EndTime)
+	return &domain.Appointment{
+		Id:               req.Id,
+		Title:            req.Title,
+		Description:      req.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Mode:             req.Mode,
+		Place:            req.Place,
+		ParticipantIds:   req.ParticipantIds,
+		DealId:           req.DealId,
+		ProductIds:       req.ProductIds,
+		ReminderSchedule: req.ReminderSchedule,
+		OptionExtend:     req.OptionExtend,
+		TransactionIds:   req.TransactionIds,
+		Status:           req.Status,
+	}
+}
+
+func (t *appointmentTransformer) EntityToAppointmentResponse(appointment *domain.Appointment, deal *bdspropb.GroupDeal, products []*bdspropb.ProductAttachment, participants []*sharepb.ProfileItem) *crmpb.Appointment {
+	return &crmpb.Appointment{
+		Id:               appointment.Id,
+		Title:            appointment.Title,
+		Description:      appointment.Description,
+		StartTime:        appointment.StartTime.Format(time.RFC3339),
+		EndTime:          appointment.EndTime.Format(time.RFC3339),
+		Mode:             appointment.Mode,
+		Place:            appointment.Place,
+		ParticipantIds:   appointment.ParticipantIds,
+		DealId:           appointment.DealId,
+		ProductIds:       appointment.ProductIds,
+		ReminderSchedule: appointment.ReminderSchedule,
+		OptionExtend:     appointment.OptionExtend,
+		Status:           appointment.Status,
+		TransactionIds:   appointment.TransactionIds,
+		Deal:             deal,
+		Products:         products,
+		// DealTransactions: dealTransactions,
+		Participants: participants,
+	}
+}
+
+func (t *appointmentTransformer) EntityToListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *crmpb.ListAppointmentsResponse {
+	appointmentsResponse := make([]*crmpb.Appointment, len(appointments))
+	for i, appointment := range appointments {
+		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants)
+	}
+	return &crmpb.ListAppointmentsResponse{
+		Data:  appointmentsResponse,
+		Total: total,
+	}
+}
+
+func (t *appointmentTransformer) EntityToAdminListAppointmentsResponse(appointments []*dto.AppointmentDTO, total int32) *crmpb.AdminListAppointmentsResponse {
+	appointmentsResponse := make([]*crmpb.Appointment, len(appointments))
+	for i, appointment := range appointments {
+		appointmentsResponse[i] = t.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants)
+	}
+	return &crmpb.AdminListAppointmentsResponse{
+		Data:  appointmentsResponse,
+		Total: total,
+	}
+}

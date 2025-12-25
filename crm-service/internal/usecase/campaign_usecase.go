@@ -5,6 +5,7 @@ import (
 	"crm/infra/client"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 	"fmt"
 	"time"
@@ -35,11 +36,11 @@ type CampaignUsecase interface {
 type campaignUsecase struct {
 	campaignRepo       repo.CampaignRepo
 	paymentClient      *client.PaymentClient
-	notificationClient *client.NotificationClient
+	notificationClient provider.NotificationProvider
 	logger             *flogging.FabricLogger
 }
 
-func NewCampaignUsecase(campaignRepo repo.CampaignRepo, paymentClient *client.PaymentClient, notificationClient *client.NotificationClient) CampaignUsecase {
+func NewCampaignUsecase(campaignRepo repo.CampaignRepo, paymentClient *client.PaymentClient, notificationClient provider.NotificationProvider) CampaignUsecase {
 	return &campaignUsecase{
 		campaignRepo:       campaignRepo,
 		paymentClient:      paymentClient,

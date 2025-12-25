@@ -55,6 +55,7 @@ type ProductUsecase struct {
 	ProductOrganizationRepo repo.ProductOrganizationRepo
 	ProductUserRepo         repo.ProductUserRepo
 	BdsDomainUsecase        *usecases.BdsDomainUsecase
+	DealRepo                repo.DealRepository
 }
 
 func NewProductUsecase(
@@ -80,6 +81,7 @@ func NewProductUsecase(
 	productUserRepo repo.ProductUserRepo,
 	deepseekClient provider.DeepseekProvider,
 	bdsDomainUsecase *usecases.BdsDomainUsecase,
+	dealRepo repo.DealRepository,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -106,6 +108,7 @@ func NewProductUsecase(
 		ProductOrganizationRepo: productOrganizationRepo,
 		ProductUserRepo:         productUserRepo,
 		BdsDomainUsecase:        bdsDomainUsecase,
+		DealRepo:                dealRepo,
 		// OwnerType:    ownerType,
 	}
 
@@ -1114,6 +1117,22 @@ func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.SharingA
 
 	entities, err := uc.ProductAccessRepo.OwnerSearchProduct(c, id, enums.EOwnerOfMember, &dto)
 	return entities, err
+}
+
+func (uc *ProductUsecase) GetDealsByProduct(c context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error) {
+	if uc.DealRepo == nil {
+		return nil, 0, &_routes.Except{
+			Code:    500,
+			Message: "Deal repository not initialized",
+		}
+	}
+
+	deals, total, err := uc.DealRepo.GetDealsByProductID(c, productID, pagable)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return deals, total, nil
 }
 
 func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.ProductHistorySearch) (*[]domain.ProductHistory, int64, error) {

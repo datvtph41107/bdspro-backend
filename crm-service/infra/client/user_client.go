@@ -97,7 +97,7 @@ func (c *UserClient) PbUserToContact(ctx context.Context, contact *crmpb.Contact
 	}
 }
 
-func (c *UserClient) PbUserToContacts(ctx context.Context, contacts []*crmpb.ContactDTO) {
+func (c *UserClient) PbUserToContacts(ctx context.Context, contacts []*sharepb.ContactDTO) {
 	profileIDSet := make(map[uint64]struct{})
 	for _, contact := range contacts {
 		if contact.ProfileId != nil {
@@ -324,4 +324,16 @@ func (c *UserClient) MapToRulePb(ctx context.Context, rules []*crmpb.RuleDTO) {
 			}
 		}
 	}
+}
+
+func (c *UserClient) GetProfileByIds(ctx context.Context, ids []uint64) ([]*sharepb.ProfileItem, error) {
+	request := &sharepb.GetProfileByIdsRequest{
+		Ids: ids,
+	}
+	response, err := c.Client.GetProfileByIds(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Profiles, nil
 }

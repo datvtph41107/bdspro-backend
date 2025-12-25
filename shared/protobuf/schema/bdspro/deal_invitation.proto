@@ -144,7 +144,7 @@ message GetAcceptedMembersRequest {
 }
 
 message GetAcceptedMembersResponse {
-  repeated DealMember members = 1;
+  repeated sharepb.DealMember members = 1;
 }
 
 message WithdrawFromDealRequest {
@@ -177,7 +177,7 @@ message ConfirmWithdrawalResponse {
 }
 
 message SearchDealMembersResponse {
-    repeated DealMember members = 1;
+    repeated sharepb.DealMember members = 1;
     int64 total = 2;
 }
 
@@ -186,7 +186,7 @@ message GetDealInvitationRequest {
 }
 
 message GetDealInvitationResponse {
-    DealMember member = 1;
+    sharepb.DealMember member = 1;
 }
 
 message GetPendingInvitationsRequest {
@@ -196,7 +196,7 @@ message GetPendingInvitationsRequest {
 }
 
 message GetPendingInvitationsResponse {
-    repeated DealMember data = 1;
+    repeated sharepb.DealMember data = 1;
     int64 total = 2;
 }
 
@@ -207,6 +207,6 @@ message GetDealInvitationsByDealRequest {
 }
 
 message GetDealInvitationsByDealResponse {
-    repeated DealMember data = 1;
+    repeated sharepb.DealMember data = 1;
     int64 total = 2;
 }

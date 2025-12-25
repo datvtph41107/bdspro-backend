@@ -5,6 +5,8 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
+	"errors"
+	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -19,26 +21,32 @@ import (
 
 type ContactService struct {
 	crmpb.UnimplementedContactServiceServer
-	UC            *usecase.ContactUsecase
-	UserClient    *client.UserClient
-	ChatClient    *client.ChatClient
-	ContactMapper *mapper.ContactMapper
-	FriendMapper  *mapper.FriendMapper
+	UC                 *usecase.ContactUsecase
+	UserClient         *client.UserClient
+	ChatClient         *client.ChatClient
+	BdsproClient       *client.BdsproClient
+	OrganizationClient *client.OrganizationClient
+	ContactMapper      *mapper.ContactMapper
+	FriendMapper       *mapper.FriendMapper
 }
 
 func NewContactService(
 	uc *usecase.ContactUsecase,
 	userClient *client.UserClient,
 	chatClient *client.ChatClient,
+	bdsproClient *client.BdsproClient,
+	organizationClient *client.OrganizationClient,
 	contactMapper *mapper.ContactMapper,
 	friendMapper *mapper.FriendMapper,
 ) *ContactService {
 	return &ContactService{
-		UC:            uc,
-		UserClient:    userClient,
-		ChatClient:    chatClient,
-		ContactMapper: contactMapper,
-		FriendMapper:  friendMapper,
+		UC:                 uc,
+		UserClient:         userClient,
+		ChatClient:         chatClient,
+		BdsproClient:       bdsproClient,
+		OrganizationClient: organizationClient,
+		ContactMapper:      contactMapper,
+		FriendMapper:       friendMapper,
 	}
 }
 
@@ -264,4 +272,174 @@ func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRe
 	s.UserClient.PbUserToContact(ctx, contactPb)
 
 	return contactPb, nil
+}
+
+// @Summary Lấy danh sách contact quan tâm tới sản phẩm
+// @Description Lấy danh sách contact quan tâm tới một sản phẩm cụ thể
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param productId path int true "ID của sản phẩm"
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Security BearerAuth
+// @Router /contact/by-product/{productId} [get]
+func (s *ContactService) GetByProductId(ctx context.Context, req *crmpb.GetByProductIdRequest) (*crmpb.ContactListDTO, error) {
+	contacts, total, err := s.UC.GetByProductId(ctx, req.ProductId, dto.ContactSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
+	s.UserClient.PbUserToContacts(ctx, contactsPb)
+
+	return &crmpb.ContactListDTO{
+		Data:  contactsPb,
+		Total: uint32(total),
+	}, nil
+}
+
+// @Summary Cập nhật danh sách sản phẩm quan tâm cho contact
+// @Description Cập nhật danh sách sản phẩm quan tâm cho một contact (customer)
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param contactId path int true "ID của contact"
+// @Param body body crmpb.UpdateProductIdsRequest true "Danh sách product IDs"
+// @Security BearerAuth
+// @Router /contact/{contactId}/products [put]
+func (s *ContactService) UpdateProductIds(ctx context.Context, req *crmpb.UpdateProductIdsRequest) (*sharepb.SubmitResponse, error) {
+	err := s.UC.UpdateProductIds(ctx, req.ContactId, req.ProductIds)
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{
+		Id:      req.ContactId,
+		Message: "Cập nhật sản phẩm quan tâm thành công",
+	}, nil
+}
+
+// @Summary Lấy danh sách sản phẩm quan tâm của contact
+// @Description Lấy danh sách sản phẩm quan tâm của một contact với phân trang
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Param contactId path int true "ID của contact"
+// @Param page query int false "Số trang (mặc định: 1)"
+// @Param size query int false "Số lượng sản phẩm trên mỗi trang (mặc định: 20)"
+// @Security BearerAuth
+// @Router /contact/detail/{contactId}/products [get]
+func (s *ContactService) GetContactProducts(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.SearchResponse, error) {
+	productIds, total, err := s.UC.GetContactProducts(ctx, req.Id, _dto.Pagable{
+		Page: uint32(req.Page),
+		Size: uint32(req.Size),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	print("productIds", len(productIds))
+	// Lấy chi tiết products từ bdspro service
+	products, err := s.BdsproClient.GetProductByIds(ctx, productIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.SearchResponse{
+		Data:          products,
+		TotalElements: total,
+	}, nil
+}
+
+// @Summary Lấy danh sách contact kèm thông tin member
+// @Description Lấy danh sách contact (không check friend) kèm thông tin profile và member (deal, organization, group) nếu có
+// @Tags Liên hệ
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param text query string false "Tên hoặc số điện thoại"
+// @Param page query int false "Trang"
+// @Param size query int false "Kích thước trang"
+// @Param dealId query int false "ID của thương vụ"
+// @Param organizationId query int false "ID của tổ chức"
+// @Param groupId query int false "ID của nhóm"
+// @Success 200 {object} crmpb.FriendListResponse "Danh sách contact"
+// @Failure 400 {string} string "Yêu cầu không hợp lệ"
+// @Router /contact/with-member [get]
+func (s *ContactService) ContactListWithMember(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.ContactListDTO, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, errors.New("profileId not found")
+	}
+
+	// Lấy danh sách contact (không check friend status)
+	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOfMember, dto.ContactSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+		Text:    req.Text,
+		OwnerId: profileId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert contact sang ContactDTO
+	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
+
+	// Map profile info vào contact
+	s.UserClient.PbUserToContacts(ctx, contactsPb)
+
+	// Convert ContactDTO sang Friend format để trả về (vì response type là FriendListResponse)
+	// Chỉ lấy contact + profile, không check friend status
+	friends := make([]*sharepb.ContactDTO, 0, len(contactsPb))
+	for _, contact := range contactsPb {
+		friend := s.contactToFriend(ctx, contact, profileId)
+		friends = append(friends, friend)
+	}
+
+	// Map member info nếu có (deal, organization, group)
+	if req.DealId != nil {
+		s.BdsproClient.MapDealMemberToContacts(ctx, *req.DealId, friends)
+	}
+	if req.OrganizationId != nil {
+		s.OrganizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, friends)
+	}
+	if req.GroupId != nil {
+		s.OrganizationClient.MapGroupMemberToContact(ctx, *req.GroupId, friends)
+	}
+
+	return &crmpb.ContactListDTO{
+		Data:  friends,
+		Total: uint32(total),
+	}, nil
+}
+
+// contactToFriend converts ContactDTO to Friend format (chỉ lấy contact + profile, không check friend)
+func (s *ContactService) contactToFriend(ctx context.Context, contact *sharepb.ContactDTO, currentProfileId uint64) *sharepb.ContactDTO {
+	friend := &crmpb.Friend{
+		CreatedBy: currentProfileId,
+		Status:    0, // Không check friend status
+		CreatedAt: contact.CreatedAt,
+	}
+
+	// Set receiverId từ profileId của contact
+	if contact.ProfileId != nil {
+		friend.ReceiverId = *contact.ProfileId
+		friend.ReceiverUser = contact.ProfileInfo
+	}
+
+	// Set createdUser từ profile của user hiện tại
+	currentProfiles, _ := s.UserClient.GetProfileByIds(ctx, []uint64{currentProfileId})
+	if len(currentProfiles) > 0 {
+		friend.CreatedUser = currentProfiles[0]
+	}
+
+	return contact
 }

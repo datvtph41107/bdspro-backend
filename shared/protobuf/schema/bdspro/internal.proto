@@ -8,11 +8,28 @@ import "google/api/annotations.proto";
 import "shared/common.proto";
 import "bdspro/product.proto";
 import "shared/v3.proto";
+import "bdspro/deal.proto";
 
 service BdsproInternalService {
     rpc GetCountByOwner(GetCountByOwnerRequest) returns (GetCountByOwnerResponse);
     rpc GetSuggest(sharepb.RequestV3Proto) returns (sharepb.ProductV3Proto);
     rpc GetDashboardByProfileId(sharepb.IdRequest) returns (sharepb.BDSProDashboardProto);
+    rpc GetDealById(sharepb.IdRequest) returns (GroupDeal);
+    rpc GetDealsByIds(sharepb.IdRequest) returns (DealsResponse);
+    rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
+}
+
+message DealsResponse {
+    repeated GroupDeal data = 1;
+}
+
+message DealMemberRequest {
+    uint64 dealId = 1;
+    repeated uint64 userIds = 2;
+}
+
+message GetDealMemberByIdsResponse {
+    repeated sharepb.DealMember data = 1;
 }
 
 message GetCountByOwnerRequest {

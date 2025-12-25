@@ -27,6 +27,7 @@ type ProductMapper struct {
 	DepositeMapper           *DepositeMapper
 	CodeDataUsecase          *_usecase.CodeDataUsecase
 	UserClient               *client.UserClient
+	CrmClient                *client.CrmClient
 	AssetRepo                repo.AssetRepo
 	// TransactionMapper        TransactionTransformer
 }
@@ -40,6 +41,7 @@ func NewProductMapper(postMapper *PostMapper,
 	depositeMapper *DepositeMapper,
 	codeDataUsecase *_usecase.CodeDataUsecase,
 	userClient *client.UserClient,
+	crmClient *client.CrmClient,
 	assetRepo repo.AssetRepo,
 	// transactionMapper TransactionTransformer,
 ) *ProductMapper {
@@ -54,6 +56,7 @@ func NewProductMapper(postMapper *PostMapper,
 		DepositeMapper:           depositeMapper,
 		CodeDataUsecase:          codeDataUsecase,
 		UserClient:               userClient,
+		CrmClient:                crmClient,
 		AssetRepo:                assetRepo,
 		// TransactionMapper:        transactionMapper,
 	}
@@ -362,8 +365,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 	}
 
 	if product.Price != nil {
+		// Chỉ trả về PriceOwner nếu user request là chủ sở hữu của sản phẩm
+		profileId := _utils.GetProfileIdWithContext(ctx)
+		isOwner := product.OwnerID == profileId
+
 		result.Price = &bdspropb.ProductPrice{
-			// PriceOwner:     product.Price.PriceOwner,
 			Id:                 product.Price.ID,
 			Currency:           product.Price.Currency,
 			SalePrice:          product.Price.SalePrice,
@@ -374,6 +380,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 			RentPaymentCycle:   product.Price.RentPaymentCycle,
 			SaleCommissionType: product.Price.SaleCommissionType,
 			RentCommissionType: product.Price.RentCommissionType,
+		}
+
+		// Chỉ set PriceOwner nếu user là owner
+		if isOwner {
+			result.Price.PriceOwner = product.PrivateData.ImportPrice
 		}
 
 	}
@@ -394,6 +405,13 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 	if product.OwnerID != 0 && m.UserClient != nil {
 		if owner := m.UserClient.GetProfileById(ctx, product.OwnerID); owner != nil {
 			result.CreatedUser = owner
+		}
+	}
+
+	// Get source contact information if SourceContactId is available
+	if product.SourceContactId != nil && *product.SourceContactId > 0 && m.CrmClient != nil {
+		if contact, err := m.CrmClient.GetContactById(ctx, *product.SourceContactId); err == nil && contact != nil {
+			result.SourceContact = contact
 		}
 	}
 
@@ -549,8 +567,9 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	}
 
 	if product.Price != nil {
+		// MapProductPb không có context nên không trả về PriceOwner
+		// Chỉ MapDetailProductPb mới trả về PriceOwner khi user là owner
 		result.Price = &bdspropb.ProductPrice{
-			// PriceOwner:     product.Price.PriceOwner,
 			Id:                 product.Price.ID,
 			Currency:           product.Price.Currency,
 			SalePrice:          product.Price.SalePrice,
@@ -562,6 +581,7 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 			SaleCommissionType: product.Price.SaleCommissionType,
 			RentCommissionType: product.Price.RentCommissionType,
 		}
+		// PriceOwner không được trả về ở đây vì không có context để kiểm tra owner
 	}
 
 	// if product.SaleTransaction != nil {
@@ -710,7 +730,6 @@ func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto
 
 	if req.PriceData != nil {
 		result.PriceData = &domain.ProductPrice{
-			// PriceOwner:     req.PriceData.PriceOwner,
 			Currency:           req.PriceData.Currency,
 			SalePrice:          req.PriceData.SalePrice,
 			SaleCommission:     req.PriceData.SaleCommission,

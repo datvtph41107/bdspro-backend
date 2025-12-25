@@ -48,6 +48,51 @@
         ]
       }
     },
+    "/v2/crm/contact/by-product/{productId}": {
+      "get": {
+        "operationId": "ContactService_GetByProductId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
     "/v2/crm/contact/detail/{id}": {
       "get": {
         "operationId": "ContactService_Detail",
@@ -56,6 +101,74 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/crmpbContactDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/detail/{id}/products": {
+      "get": {
+        "operationId": "ContactService_GetContactProducts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbSearchResponse"
             }
           },
           "default": {
@@ -454,6 +567,110 @@
         ]
       }
     },
+    "/v2/crm/contact/with-member": {
+      "get": {
+        "operationId": "ContactService_ContactListWithMember",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "dealId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/{contactId}/products": {
+      "put": {
+        "operationId": "ContactService_UpdateProductIds",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ContactServiceUpdateProductIdsBody"
+            }
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
     "/v2/crm/contact/{id}": {
       "delete": {
         "operationId": "ContactService_Delete",
@@ -529,6 +746,942 @@
       "properties": {
         "note": {
           "type": "string"
+        }
+      }
+    },
+    "ContactServiceUpdateProductIdsBody": {
+      "type": "object",
+      "properties": {
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "bdspropbAmenityItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbApartment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "floor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "ordinal": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "buildId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "archived": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "apartmentAttrId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "bdspropbApartmentAttribute": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "numBedroom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "blueprintUrl": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "bdspropbAssetItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "purchasePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AssetItem for product detail response"
+    },
+    "bdspropbAttributeProduct": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbDeveloper": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string"
+        },
+        "backgroundUrl": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "foundedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "bdspropbDocType": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbHouseInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numBedroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numBathroom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numFront": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numCarPark": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "furniture": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "numToilet": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orientationHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum hướng nhà"
+        },
+        "orientationName": {
+          "type": "string",
+          "title": "Tên hướng nhà (tự động map từ enum)"
+        },
+        "certificateHouse": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Enum chứng nhận"
+        },
+        "certificateName": {
+          "type": "string",
+          "title": "Tên giấy chứng nhận (tự động map từ enum)"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Đường vào (m)"
+        },
+        "frontWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Mặt tiền (m)"
+        },
+        "backWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Hậu (m)"
+        },
+        "width": {
+          "type": "number",
+          "format": "double",
+          "title": "Rộng (m)"
+        },
+        "height": {
+          "type": "number",
+          "format": "double",
+          "title": "Dài (m)"
+        }
+      }
+    },
+    "bdspropbItemResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbMediaItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "isMain": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "bdspropbPostItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "PostItem for product detail response"
+    },
+    "bdspropbProductPrice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "priceOwner": {
+          "type": "number",
+          "format": "double"
+        },
+        "salePrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "saleCommission": {
+          "type": "number",
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
+        },
+        "deposite": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "rentCommission": {
+          "type": "number",
+          "format": "double",
+          "title": "1000000 -\u003e 10%"
+        },
+        "rentPaymentCycle": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentCommissionType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbProductPrivate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "importPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "operatingCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "privateDocs": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbProductResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyType": {
+          "$ref": "#/definitions/bdspropbItemResponse"
+        },
+        "docTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "docType": {
+          "$ref": "#/definitions/bdspropbDocType"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAmenityItem"
+          }
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "positionUrl": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "orgStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lastPriceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "price": {
+          "$ref": "#/definitions/bdspropbProductPrice"
+        },
+        "apartmentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "apartment": {
+          "$ref": "#/definitions/bdspropbApartment"
+        },
+        "apartmentAttribute": {
+          "$ref": "#/definitions/bdspropbApartmentAttribute"
+        },
+        "build": {
+          "$ref": "#/definitions/bdspropbProjectBuild"
+        },
+        "project": {
+          "$ref": "#/definitions/bdspropbProject"
+        },
+        "developer": {
+          "$ref": "#/definitions/bdspropbDeveloper"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "privateData": {
+          "$ref": "#/definitions/bdspropbProductPrivate"
+        },
+        "note": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rentVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "province": {
+          "$ref": "#/definitions/bdspropbRegion"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "district": {
+          "$ref": "#/definitions/bdspropbRegion"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ward": {
+          "$ref": "#/definitions/bdspropbRegion"
+        },
+        "address": {
+          "$ref": "#/definitions/sharepbAddressV3Proto"
+        },
+        "googleMapLink": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAttributeProduct"
+          }
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbMediaItem"
+          }
+        },
+        "houseInfo": {
+          "$ref": "#/definitions/bdspropbHouseInfo"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "priceSuggest": {
+          "type": "number",
+          "format": "double"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "createdUser": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "saleTransaction": {
+          "$ref": "#/definitions/bdspropbTransaction"
+        },
+        "rentTransaction": {
+          "$ref": "#/definitions/bdspropbTransaction"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAssetItem"
+          }
+        },
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPostItem"
+          }
+        },
+        "imageId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "availableArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "projectName": {
+          "type": "string"
+        },
+        "publicListingCount": {
+          "type": "string",
+          "format": "int64",
+          "description": "Số tin đăng công khai",
+          "title": "Statistics fields"
+        },
+        "shareCount": {
+          "type": "string",
+          "format": "int64",
+          "title": "Số lượt chia sẻ"
+        },
+        "hasAsset": {
+          "type": "boolean",
+          "title": "Có gắn với ít nhất 1 tài sản"
+        },
+        "hasInventory": {
+          "type": "boolean",
+          "title": "Thuộc bảng hàng"
+        },
+        "hasDeal": {
+          "type": "boolean",
+          "title": "Đang ở ít nhất 1 thương vụ"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "certificateHouseNote": {
+          "type": "string"
+        },
+        "sourceContact": {
+          "$ref": "#/definitions/sharepbContactDTO"
+        }
+      }
+    },
+    "bdspropbProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "developerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "bdspropbProjectBuild": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "numFloor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numApartment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "apartments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbApartment"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbApartmentAttribute"
+          }
+        }
+      }
+    },
+    "bdspropbRegion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "codeName": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Message definitions"
+    },
+    "bdspropbSearchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        },
+        "totalElements": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbTransaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "organizationId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "paymentMethodId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "relatedDealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "relatedTransactionId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvalStatus": {
+          "type": "string"
+        },
+        "approvedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvalDate": {
+          "type": "string"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "transactionDate": {
+          "type": "string"
+        },
+        "isDeleted": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "depositeAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "depositeNote": {
+          "type": "string"
+        },
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -610,6 +1763,13 @@
         },
         "member": {
           "$ref": "#/definitions/crmpbConversationMember"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -620,7 +1780,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/crmpbContactDTO"
+            "$ref": "#/definitions/sharepbContactDTO"
           }
         },
         "total": {
@@ -681,6 +1841,13 @@
             "type": "object",
             "$ref": "#/definitions/sharepbItemV3Proto"
           }
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },
@@ -731,6 +1898,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
           }
         }
       }
@@ -855,6 +2029,12 @@
         "ownerOf": {
           "type": "integer",
           "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -886,6 +2066,504 @@
         }
       }
     },
+    "sharepbAddressV3Proto": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardName": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbBank": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbBankAccountItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "bankId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bank": {
+          "$ref": "#/definitions/sharepbBank"
+        }
+      }
+    },
+    "sharepbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "sharepbContactDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "contactStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "friendStatus": {
+          "$ref": "#/definitions/sharepbFriendItem"
+        },
+        "following": {
+          "type": "boolean"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "profileInfo": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "blocked": {
+          "type": "boolean"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zalo": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "birthday": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbTagItem"
+          }
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "dealMember": {
+          "$ref": "#/definitions/sharepbDealMember"
+        },
+        "organizationMember": {
+          "$ref": "#/definitions/sharepbOrganizationMember"
+        },
+        "groupMember": {
+          "$ref": "#/definitions/sharepbGroupMember"
+        },
+        "conversationMember": {
+          "$ref": "#/definitions/sharepbConversationMember"
+        }
+      }
+    },
+    "sharepbConversationMember": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "joinedAt": {
+          "type": "string"
+        },
+        "leftAt": {
+          "type": "string"
+        },
+        "muteNotif": {
+          "type": "boolean"
+        },
+        "role": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0: Member, 1: Admin, 2: Banned"
+        }
+      }
+    },
+    "sharepbDeal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "numMember": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProductAttachment"
+          }
+        },
+        "dealTypeName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbDocumentItem"
+          }
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/sharepbBankAccountItem"
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "partners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/sharepbRole"
+        }
+      }
+    },
+    "sharepbDealMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "inviterId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/sharepbRole"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "color": {
+          "$ref": "#/definitions/sharepbColor"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "invitedAt": {
+          "type": "string",
+          "title": "Thời gian mời"
+        },
+        "respondedAt": {
+          "type": "string",
+          "title": "Thời gian phản hồi"
+        },
+        "withdrawnAt": {
+          "type": "string",
+          "title": "Thời gian rút khỏi"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double",
+          "title": "Giá trị hoa hồng"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại hoa hồng (10: %, 20: VND)"
+        },
+        "note": {
+          "type": "string",
+          "title": "Ghi chú"
+        },
+        "doneInvestment": {
+          "type": "boolean",
+          "title": "Đánh dấu đã đủ vốn góp"
+        },
+        "isOwner": {
+          "type": "boolean",
+          "title": "Đánh dấu là chủ thương vụ"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Role key (400: Owner, 420: Admin, 430: Member)"
+        },
+        "deal": {
+          "$ref": "#/definitions/sharepbDeal"
+        }
+      },
+      "title": "Message định nghĩa DealMember"
+    },
+    "sharepbDocumentItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
     "sharepbFriendItem": {
       "type": "object",
       "properties": {
@@ -904,6 +2582,33 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "sharepbGroupMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "role": {
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -946,6 +2651,41 @@
         }
       }
     },
+    "sharepbOrganizationMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "role": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        }
+      }
+    },
     "sharepbOwnerOf": {
       "type": "string",
       "enum": [
@@ -955,6 +2695,101 @@
         "organization"
       ],
       "default": "unknown"
+    },
+    "sharepbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "sharepbProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      }
     },
     "sharepbProfileItem": {
       "type": "object",
@@ -983,6 +2818,76 @@
         }
       }
     },
+    "sharepbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "roleDescription": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "string"
+        },
+        "colorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "$ref": "#/definitions/sharepbColor"
+        },
+        "roleGroupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleGroupName": {
+          "type": "string"
+        },
+        "allowAssign": {
+          "type": "boolean"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Role message"
+    },
     "sharepbSubmitResponse": {
       "type": "object",
       "properties": {
@@ -999,6 +2904,21 @@
             "type": "string",
             "format": "uint64"
           }
+        }
+      }
+    },
+    "sharepbTagItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
         }
       }
     }

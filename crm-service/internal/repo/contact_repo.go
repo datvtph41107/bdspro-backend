@@ -21,4 +21,6 @@ type ContactRepo interface {
 	ExistByProfile(c context.Context, profileId uint64) (bool, error)
 	UpdateNote(c context.Context, id uint64, note string) error
 	GetByPhone(c context.Context, profileId uint64, ownerType base_enum.EOwnerOf, phone string) (*domain.ContactEntity, error)
+	GetByProductId(c context.Context, productId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error)
+	GetByIDs(c context.Context, ids []uint64) ([]domain.ContactEntity, error)
 }

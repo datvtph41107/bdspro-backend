@@ -2,6 +2,7 @@ package usecase
 
 import (
 	base_enum "base/enum"
+	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_provider "common/domain/provider"
 	_errors "common/errors"
@@ -21,6 +22,7 @@ type ContactUsecase struct {
 	friendRepo         repo.FriendRepo
 	followRepo         repo.FollowRepo
 	leadUsecase        *LeadUsecase // forward reference
+	contactProductRepo repo.ContactProductRepo
 	userClient         provider.UserClient
 	ownerUsecase       *OwnerUsecase
 	tagUsecase         *TagUsecase
@@ -31,6 +33,7 @@ func NewContactUsecase(
 	repo repo.ContactRepo,
 	friendRepo repo.FriendRepo,
 	followRepo repo.FollowRepo,
+	contactProductRepo repo.ContactProductRepo,
 	userClient provider.UserClient,
 	ownerUsecase *OwnerUsecase,
 	tagUsecase *TagUsecase,
@@ -40,6 +43,7 @@ func NewContactUsecase(
 		repo:               repo,
 		friendRepo:         friendRepo,
 		followRepo:         followRepo,
+		contactProductRepo: contactProductRepo,
 		userClient:         userClient,
 		ownerUsecase:       ownerUsecase,
 		tagUsecase:         tagUsecase,
@@ -74,6 +78,34 @@ func (s *ContactUsecase) Search(c context.Context, ownerType base_enum.EOwnerOf,
 		return nil, 0, err
 	}
 	return contacts, total, nil
+}
+
+func (s *ContactUsecase) GetByProductId(c context.Context, productId uint64, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+	// Lấy ownerId từ context (thường là organizationId)
+	ownerId := _utils.GetProfileIdWithContext(c)
+	if ownerId == 0 {
+		return nil, 0, &_routes.Except{
+			Code:    400,
+			Message: "Không tìm thấy thông tin liên hệ",
+		}
+	}
+	ownerType := base_enum.EOwnerOfMember
+	contacts, total, err := s.repo.GetByProductId(c, productId, ownerId, ownerType, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return contacts, total, nil
+}
+
+func (s *ContactUsecase) UpdateProductIds(c context.Context, contactId uint64, productIds []uint64) error {
+	// Kiểm tra quyền truy cập contact
+	_, err := s.CheckPermission(c, contactId)
+	if err != nil {
+		return err
+	}
+
+	// Sync products vào bảng tb_contact_product
+	return s.contactProductRepo.Bulk(c, productIds, contactId)
 }
 
 func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
@@ -123,6 +155,14 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 		result.Tags = tags
 	}
 
+	// Xử lý products nếu có
+	if len(entity.ProductIDs) > 0 && result.ID > 0 {
+		// Sync products vào bảng tb_contact_product
+		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
+			return nil, err
+		}
+	}
+
 	// Tạo thông báo khi tạo liên hệ thành công
 	go func() {
 		s.notificationClient.CreateNotification(c,
@@ -163,6 +203,14 @@ func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Con
 		// Nếu không có tags trong request, vẫn load tags hiện có
 		tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
 		result.Tags = tags
+	}
+
+	// Xử lý products nếu có
+	if len(entity.ProductIDs) > 0 {
+		// Sync products vào bảng tb_contact_product
+		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, id); err != nil {
+			return nil, err
+		}
 	}
 
 	return result, nil
@@ -220,7 +268,27 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEn
 	tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
 	entity.Tags = tags
 
+	// Load products
+	productIds, _ := s.contactProductRepo.GetProductIds(c, id)
+	entity.ProductIDs = productIds
+
 	return entity, nil
+}
+
+func (s *ContactUsecase) GetContactProducts(c context.Context, contactId uint64, pagable _dto.Pagable) ([]uint64, int64, error) {
+	// Kiểm tra quyền truy cập contact
+	_, err := s.CheckPermission(c, contactId)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy product IDs với phân trang
+	productIds, total, err := s.contactProductRepo.GetProductIdsWithPagination(c, contactId, pagable)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return productIds, total, nil
 }
 
 func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *dto.RelationShipDTO {

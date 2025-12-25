@@ -9,6 +9,8 @@ import "bdspro/post.proto";
 import "bdspro/deposite.proto";
 import "bdspro/transaction.proto";
 import "shared/common.proto";
+import "bdspro/deal.proto";
+
 option go_package = "pb/types/bdspro;bdspropb";
 
 service ProductService {
@@ -143,6 +145,11 @@ service ProductService {
   rpc GetPosts (IdRequest) returns (PostResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/posts"
+    };
+  };
+  rpc GetDeals (IdRequest) returns (GetOrganizationDealsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/deals"
     };
   };
   rpc UpdateProduct (ProductSaveRequest) returns (Response) {

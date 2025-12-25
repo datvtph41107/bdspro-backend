@@ -58,6 +58,7 @@ var wireSet = wire.NewSet(
 	auth_infra_mapper.NewAuthSecurityMapper,
 	auth_internal_usecase.NewAuthSecurityUsecase,
 	auth_internal_usecase.NewAuthService,
+	auth_infra_client.NewBdsproClient,
 	auth_infra_client.NewChatClient,
 	auth_infra_cookie.NewCookieProvider,
 	auth_infra_mapper.NewDeviceMapper,

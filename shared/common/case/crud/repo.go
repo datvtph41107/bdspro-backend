@@ -4,7 +4,10 @@ import (
 	_db "common/db"
 	_dto "common/domain/dto"
 	"context"
+	"errors"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // là usecase cơ bản cho logic thêm sửa xóa 1 bản ghi thông thường
@@ -147,6 +150,9 @@ func (r *CrudRepo[T]) GetDetail(c context.Context, id uint64) (*T, error) {
 		First(&entity).
 		Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &entity, nil

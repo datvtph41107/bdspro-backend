@@ -32,6 +32,7 @@ type ProductHandler struct {
 	PostMapper     *mapper.PostMapper
 	ProductAssetUC *usecases.ProductAssetUsecase
 	AssetMapper    *mapper.AssetMapper
+	DealMapper     mapper.DealMapper
 }
 
 func NewProductService(uc *shared_usecase.ProductUsecase,
@@ -45,6 +46,7 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 	postMapper *mapper.PostMapper,
 	productAssetUC *usecases.ProductAssetUsecase,
 	assetMapper *mapper.AssetMapper,
+	dealMapper mapper.DealMapper,
 ) *ProductHandler {
 	return &ProductHandler{
 		UC:                 uc,
@@ -58,6 +60,7 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 		PostMapper:     postMapper,
 		ProductAssetUC: productAssetUC,
 		AssetMapper:    assetMapper,
+		DealMapper:     dealMapper,
 	}
 }
 
@@ -593,6 +596,32 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *bdspropb.IdRequest) 
 	return &bdspropb.PostResponse{
 		Data: postResponse,
 	}, nil
+}
+
+// @Summary Lấy danh sách thương vụ của sản phẩm
+// @Description Returns a list of deals related to a product
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Param page query int false "Page number"
+// @Param size query int false "Page size"
+// @Router /v2/bdspro/v2/product/{id}/deals [get]
+func (s *ProductHandler) GetDeals(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+	}
+
+	deals, total, err := s.UC.GetDealsByProduct(ctx, req.Id, pagable)
+	if err != nil {
+		return nil, err
+	}
+
+	dealItems := s.DealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(total))
+
+	return dealItems, nil
 }
 
 // @Summary Cập nhật sản phẩm

@@ -6,6 +6,7 @@ import (
 	"pb/clients"
 	crmpb "pb/types/crm"
 	organizationpb "pb/types/organization"
+	sharepb "pb/types/shared"
 
 	"crm/env"
 )
@@ -57,12 +58,12 @@ func (c *OrganizationClient) MapDealMemberToFriend(ctx context.Context, dealId u
 	return nil
 }
 
-func (c *OrganizationClient) MapGroupMemberToFriend(ctx context.Context, groupId uint64, userPbs []*crmpb.Friend) error {
-	profileId := _utils.GetProfileIdWithContext(ctx)
+func (c *OrganizationClient) MapGroupMemberToContact(ctx context.Context, groupId uint64, contacts []*sharepb.ContactDTO) error {
 	profileIDSet := make(map[uint64]struct{})
-	for _, userPb := range userPbs {
-		profileIDSet[userPb.ReceiverId] = struct{}{}
-		profileIDSet[userPb.CreatedBy] = struct{}{}
+	for _, contact := range contacts {
+		if contact.ProfileId != nil {
+			profileIDSet[*contact.ProfileId] = struct{}{}
+		}
 	}
 
 	userIds := make([]uint64, 0, len(profileIDSet))
@@ -75,26 +76,30 @@ func (c *OrganizationClient) MapGroupMemberToFriend(ctx context.Context, groupId
 		return err
 	}
 
-	for _, friend := range userPbs {
-		if friend.CreatedBy == profileId {
-			if profile, ok := groupMemberMap[friend.ReceiverId]; ok {
-				friend.GroupMember = profile
-			}
-		} else {
-			if profile, ok := groupMemberMap[friend.CreatedBy]; ok {
-				friend.GroupMember = profile
+	for _, contact := range contacts {
+		if contact.ProfileId != nil {
+			if profile, ok := groupMemberMap[*contact.ProfileId]; ok {
+				contact.GroupMember = &sharepb.GroupMember{
+					Id:      uint32(profile.Id),
+					GroupId: uint32(profile.GroupId),
+					UserId:  uint32(profile.UserId),
+					Role:    profile.Role,
+					RoleId:  profile.RoleId,
+					Profile: profile.Profile,
+				}
 			}
 		}
 	}
 	return nil
 }
 
-func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, organizationId uint64, userPbs []*crmpb.Friend) error {
-	profileId := _utils.GetProfileIdWithContext(ctx)
+func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, organizationId uint64, contacts []*sharepb.ContactDTO) error {
+	// profileId := _utils.GetProfileIdWithContext(ctx)
 	profileIDSet := make(map[uint64]struct{})
-	for _, userPb := range userPbs {
-		profileIDSet[userPb.ReceiverId] = struct{}{}
-		profileIDSet[userPb.CreatedBy] = struct{}{}
+	for _, contact := range contacts {
+		if contact.ProfileId != nil {
+			profileIDSet[*contact.ProfileId] = struct{}{}
+		}
 	}
 
 	userIds := make([]uint64, 0, len(profileIDSet))
@@ -107,14 +112,19 @@ func (c *OrganizationClient) GetOrganizationMemberByIds(ctx context.Context, org
 		return err
 	}
 
-	for _, friend := range userPbs {
-		if friend.CreatedBy == profileId {
-			if profile, ok := organizationMemberMap[friend.ReceiverId]; ok {
-				friend.OrganizationMember = profile
-			}
-		} else {
-			if profile, ok := organizationMemberMap[friend.CreatedBy]; ok {
-				friend.OrganizationMember = profile
+	for _, contact := range contacts {
+		if contact.ProfileId != nil {
+			if profile, ok := organizationMemberMap[*contact.ProfileId]; ok {
+				contact.OrganizationMember = &sharepb.OrganizationMember{
+					Id:       uint32(profile.Id),
+					UserId:   profile.UserId,
+					Role:     uint32(profile.Role),
+					RoleId:   uint64(profile.RoleId),
+					RoleKey:  uint32(profile.RoleKey),
+					RoleName: profile.RoleName,
+					Status:   uint32(profile.Status),
+					Profile:  profile.Profile,
+				}
 			}
 		}
 	}

@@ -20,21 +20,27 @@ import (
 type FriendService struct {
 	crmpb.UnimplementedFriendServiceServer
 	UC                 *usecase.FriendUsecase
+	ContactUC          *usecase.ContactUsecase
 	userClient         *client.UserClient
 	organizationClient *client.OrganizationClient
 	FriendMapper       *mapper.FriendMapper
+	ContactMapper      *mapper.ContactMapper
 }
 
 func NewFriendService(uc *usecase.FriendUsecase,
+	contactUC *usecase.ContactUsecase,
 	userClient *client.UserClient,
 	organizationClient *client.OrganizationClient,
 	friendMapper *mapper.FriendMapper,
+	contactMapper *mapper.ContactMapper,
 ) *FriendService {
 	return &FriendService{
 		UC:                 uc,
+		ContactUC:          contactUC,
 		userClient:         userClient,
 		organizationClient: organizationClient,
 		FriendMapper:       friendMapper,
+		ContactMapper:      contactMapper,
 	}
 }
 
@@ -115,6 +121,7 @@ func (s *FriendService) FriendList(ctx context.Context, req *sharepb.FriendListR
 // @Failure 400 {string} string "Yêu cầu không hợp lệ"
 // @Failure 404 {string} string "Không tìm thấy"
 // @Router /friend/with-member [get]
+// @Deprecated: use ContactListWithMember instead
 func (s *FriendService) FriendListWithMember(ctx context.Context, req *sharepb.FriendListRequest) (*crmpb.FriendListResponse, error) {
 	// if req.DealId == nil {
 	// 	return nil, errors.New("dealId is required")
@@ -132,15 +139,16 @@ func (s *FriendService) FriendListWithMember(ctx context.Context, req *sharepb.F
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
 	s.userClient.PbUserToReceiverFriends(ctx, pbs)
-	if req.DealId != nil {
-		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
-	}
-	if req.OrganizationId != nil {
-		s.organizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, pbs)
-	}
-	if req.GroupId != nil {
-		s.organizationClient.MapGroupMemberToFriend(ctx, *req.GroupId, pbs)
-	}
+	// deprecated:
+	// if req.DealId != nil {
+	// 	s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+	// }
+	// if req.OrganizationId != nil {
+	// 	s.organizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, pbs)
+	// }
+	// if req.GroupId != nil {
+	// 	s.organizationClient.MapGroupMemberToFriend(ctx, *req.GroupId, pbs)
+	// }
 
 	return &crmpb.FriendListResponse{
 		Data:  pbs,

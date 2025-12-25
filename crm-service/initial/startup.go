@@ -30,6 +30,7 @@ type InitialApp struct {
 	ReportAdminHandler  *handler.ReportAdminHandler
 	ReportReasonHandler *handler.ReportReasonHandler
 	RegistryHandler     *handler.RegistryHandler
+	AppointmentService  *handler.AppointmentHandler
 	Logger              *flogging.FabricLogger
 }
 
@@ -55,6 +56,7 @@ func NewInitialApp(
 	reportAdminHandler *handler.ReportAdminHandler,
 	reportReasonHandler *handler.ReportReasonHandler,
 	registryHandler *handler.RegistryHandler,
+	appointmentService *handler.AppointmentHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
@@ -78,6 +80,7 @@ func NewInitialApp(
 		ReportAdminHandler:  reportAdminHandler,
 		ReportReasonHandler: reportReasonHandler,
 		RegistryHandler:     registryHandler,
+		AppointmentService:  appointmentService,
 		Logger:              flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

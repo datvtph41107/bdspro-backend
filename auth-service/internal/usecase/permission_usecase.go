@@ -13,13 +13,20 @@ type PermissionUsecase struct {
 	permissionRepo       repo.PermissionRepository
 	roleRepo             repo.RoleRepository
 	organizationProvider provider.OrganizationProvider
+	bdsproProvider       provider.BdsproProvider
 }
 
-func NewPermissionUsecase(permissionRepo repo.PermissionRepository, roleRepo repo.RoleRepository, organizationProvider provider.OrganizationProvider) *PermissionUsecase {
+func NewPermissionUsecase(
+	permissionRepo repo.PermissionRepository,
+	roleRepo repo.RoleRepository,
+	organizationProvider provider.OrganizationProvider,
+	bdsproProvider provider.BdsproProvider,
+) *PermissionUsecase {
 	return &PermissionUsecase{
 		permissionRepo:       permissionRepo,
 		roleRepo:             roleRepo,
 		organizationProvider: organizationProvider,
+		bdsproProvider:       bdsproProvider,
 	}
 }
 
@@ -192,7 +199,7 @@ func (uc *PermissionUsecase) GetByGroupId(ctx context.Context, groupId uint64) (
 
 func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]string, *domain.Role, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
-	dealMember, err := uc.organizationProvider.GetDealMember(ctx, dealId, profileId)
+	dealMember, err := uc.bdsproProvider.GetDealMember(ctx, dealId, profileId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -205,12 +212,12 @@ func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]
 		return []string{}, nil, nil
 	}
 
-	permissions, err := uc.roleRepo.GetPermissionKeysByRoleId(ctx, *dealMember.RoleId)
+	permissions, err := uc.roleRepo.GetPermissionKeysByRoleKey(ctx, dealMember.RoleKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	role, err := uc.roleRepo.GetDetail(ctx, *dealMember.RoleId)
+	role, err := uc.roleRepo.GetRoleByRoleKey(ctx, dealMember.RoleKey)
 	if err != nil {
 		return nil, nil, err
 	}

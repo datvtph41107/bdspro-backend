@@ -35,7 +35,8 @@ func MakeCrmGrpcClient(env_runtime string) *CrmGrpcClient {
 			log.Fatalf("failed to dial: %v", err)
 		}
 
-		ctx, _ := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
@@ -96,4 +97,17 @@ func (c *CrmGrpcClient) GetFriendInfoByProfileId(ctx context.Context, profileId 
 	}
 
 	return resp, nil
+}
+
+func (c *CrmGrpcClient) GetContactById(ctx context.Context, id uint64) (*sharepb.ContactDTO, error) {
+	if c.CrmInternalServiceClient == nil {
+		return nil, errors.New("crm internal service client not available")
+	}
+	contact, err := c.CrmInternalServiceClient.GetContactById(ctx, &sharepb.IdRequest{
+		Id: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return contact, nil
 }

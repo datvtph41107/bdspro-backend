@@ -4,6 +4,7 @@ import (
 	base_enum "base/enum"
 	_models "common/models"
 	_utils "common/utils"
+	"crm/infra/client"
 	"crm/internal/domain"
 	"crm/internal/enums"
 
@@ -14,12 +15,14 @@ import (
 )
 
 type ContactMapper struct {
-	TagMapper *TagMapper
+	TagMapper    *TagMapper
+	BdsproClient *client.BdsproClient
 }
 
-func NewContactMapper(tagMapper *TagMapper) *ContactMapper {
+func NewContactMapper(tagMapper *TagMapper, bdsproClient *client.BdsproClient) *ContactMapper {
 	return &ContactMapper{
-		TagMapper: tagMapper,
+		TagMapper:    tagMapper,
+		BdsproClient: bdsproClient,
 	}
 }
 
@@ -56,6 +59,9 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 	// 	result.Tags = m.TagMapper.TagsToPb(contact.Tags)
 	// }
 
+	// Map productIds
+	result.ProductIds = contact.ProductIDs
+
 	return result
 }
 
@@ -77,6 +83,34 @@ func (m *ContactMapper) ListContactToPb(contacts []domain.ContactEntity) []*crmp
 		contactsPb[i] = m.ContactToPb(&contact)
 	}
 	return contactsPb
+}
+
+func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.ContactDTO {
+	result := &sharepb.ContactDTO{
+		Id:            contact.ID,
+		Following:     contact.Following,
+		FullName:      contact.FullName,
+		Phone:         contact.Phone,
+		OwnerId:       contact.OwnerID,
+		OwnerOf:       int32(contact.OwnerOf),
+		Avatar:        contact.Avatar,
+		ProfileId:     contact.ProfileID,
+		Blocked:       contact.Blocked,
+		ContactStatus: uint32(contact.Status),
+		StatusName:    enums.StatusContactMap[contact.Status],
+		Note:          contact.Note,
+		// todo: map in client
+		// ProfileInfo: &sharepb.ProfileItem
+	}
+	if contact.FriendID != 0 {
+		result.FriendStatus = &sharepb.FriendItem{
+			Id:         contact.FriendID,
+			Status:     uint32(contact.FriendStatus),
+			CreatedBy:  &contact.FriendCreatedBy,
+			ReceiverId: contact.FriendReceiverID,
+		}
+	}
+	return result
 }
 
 func (m *ContactMapper) ContactItemToPb(contact *domain.ContactItem) *crmpb.ContactDTO {
@@ -107,10 +141,10 @@ func (m *ContactMapper) ContactItemToPb(contact *domain.ContactItem) *crmpb.Cont
 	return result
 }
 
-func (m *ContactMapper) ListContactItemToPb(contacts []domain.ContactItem) []*crmpb.ContactDTO {
-	contactsPb := make([]*crmpb.ContactDTO, len(contacts))
+func (m *ContactMapper) ListContactItemToPb(contacts []domain.ContactItem) []*sharepb.ContactDTO {
+	contactsPb := make([]*sharepb.ContactDTO, len(contacts))
 	for i, contact := range contacts {
-		contactsPb[i] = m.ContactItemToPb(&contact)
+		contactsPb[i] = m.ContactItemToPb2(&contact)
 	}
 	return contactsPb
 }
@@ -145,6 +179,9 @@ func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contac
 	for _, tag := range pb.ContactTags {
 		entity.ContactTags = append(entity.ContactTags, int32(tag.Id))
 	}
+
+	// Map productIds
+	entity.ProductIDs = pb.ProductIds
 
 	// Map tags - uncomment after proto generation
 	// if len(pb.Tags) > 0 && m.TagMapper != nil {

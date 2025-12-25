@@ -61,7 +61,7 @@ message RoleRequest {
 }
 
 message RoleListResponse {
-  repeated Role data = 1;
+  repeated sharepb.Role data = 1;
   uint32 totalElements = 2;
 }
 

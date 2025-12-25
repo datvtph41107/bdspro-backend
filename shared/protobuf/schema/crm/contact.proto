@@ -8,6 +8,7 @@ import "shared/common.proto";
 import "crm/common.proto";
 import "crm/tag.proto";
 import "shared/v3.proto";
+import "bdspro/product.proto";
 
 service ContactService {
   rpc Search (ContactSearchRequest) returns (ContactListDTO) {
@@ -59,6 +60,27 @@ service ContactService {
       get: "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}"
     };
   };
+  rpc GetByProductId (GetByProductIdRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/by-product/{productId}"
+    };
+  };
+  rpc UpdateProductIds (UpdateProductIdsRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/contact/{contactId}/products"
+      body: "*"
+    };
+  };
+  rpc GetContactProducts (sharepb.IdRequest) returns (bdspropb.SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/detail/{id}/products"
+    };
+  };
+  rpc ContactListWithMember(sharepb.FriendListRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+        get: "/v2/crm/contact/with-member"
+    };
+};
 }
 
 message ContactSearchRequest {
@@ -90,10 +112,11 @@ message ContactSaveDTO {
   bool assignedCrm = 11;
   repeated TagItem tags = 12;
   repeated sharepb.ItemV3Proto contactTags = 13;
+  repeated uint64 productIds = 14;
 }
 
 message ContactListDTO {
-    repeated ContactDTO data = 1;
+    repeated sharepb.ContactDTO data = 1;
     uint32 total = 2;
 }
 
@@ -131,4 +154,15 @@ message CheckPhoneRequest {
 message CheckPhoneResponse {
   bool existed = 1;
   optional ContactDTO contact = 2;
+}
+
+message GetByProductIdRequest {
+  uint64 productId = 1;
+  uint64 page = 2;
+  uint32 size = 3;
+}
+
+message UpdateProductIdsRequest {
+  uint64 contactId = 1;
+  repeated uint64 productIds = 2;
 }

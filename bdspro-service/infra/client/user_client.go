@@ -107,7 +107,7 @@ func (c *UserClient) MapToInvestPb(ctx context.Context, invests []*bdspropb.Inve
 	}
 }
 
-func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*bdspropb.DealMember) {
+func (c *UserClient) MapToDealInvitationPb(ctx context.Context, invitations []*sharepb.DealMember) {
 	ids := make([]uint64, len(invitations))
 	for i, invitation := range invitations {
 		ids[i] = uint64(invitation.MemberId)
@@ -165,4 +165,66 @@ func (c *UserClient) GetMapProfileByIds(ctx context.Context, in *sharepb.GetProf
 		profileMap[profile.Id] = profile
 	}
 	return profileMap, nil
+}
+
+func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*bdspropb.GroupDeal) {
+	profileIds := make([]uint64, 0)
+	for _, deal := range deals {
+		if deal.ChargePersonId != 0 {
+			profileIds = append(profileIds, uint64(deal.ChargePersonId))
+		}
+		if deal.Members != nil {
+			for _, member := range deal.Members {
+				profileIds = append(profileIds, uint64(member.Id))
+			}
+		}
+		if deal.Customers != nil {
+			for _, customer := range deal.Customers {
+				profileIds = append(profileIds, uint64(customer.Id))
+			}
+		}
+		if deal.Partners != nil {
+			for _, partner := range deal.Partners {
+				profileIds = append(profileIds, uint64(partner.Id))
+			}
+		}
+	}
+
+	profiles, err := c.Client.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: profileIds})
+	if err != nil {
+		return
+	}
+	profileMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, profile := range profiles.Profiles {
+		profileMap[profile.Id] = profile
+	}
+
+	for _, deal := range deals {
+		if deal.Members != nil {
+			members := make([]*sharepb.ProfileItem, len(deal.Members))
+			for i, member := range deal.Members {
+				members[i] = profileMap[uint64(member.Id)]
+			}
+			deal.Members = members
+		}
+		if deal.Customers != nil {
+			customers := make([]*sharepb.ProfileItem, len(deal.Customers))
+			for i, customer := range deal.Customers {
+				customers[i] = profileMap[uint64(customer.Id)]
+			}
+			deal.Customers = customers
+		}
+		if deal.Partners != nil {
+			partners := make([]*sharepb.ProfileItem, len(deal.Partners))
+			for i, partner := range deal.Partners {
+				partners[i] = profileMap[uint64(partner.Id)]
+			}
+			deal.Partners = partners
+		}
+		chargePerson := profileMap[deal.ChargePersonId]
+		if chargePerson != nil {
+			deal.ChargePerson = chargePerson
+		}
+	}
+
 }

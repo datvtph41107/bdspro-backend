@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
 	"crm/infra/mapper"
 	"crm/internal/dto"
@@ -18,6 +19,8 @@ type CrmInternalService struct {
 	FriendUsecase   *usecase.FriendUsecase
 	RegistryUsecase *usecase.RegistryUsecase
 	RateUsecase     *usecase.RateUsecase
+	ContactRepo     repo.ContactRepo
+	ContactMapper   *mapper.ContactMapper
 }
 
 func NewCrmInternalService(
@@ -26,6 +29,8 @@ func NewCrmInternalService(
 	friendUsecase *usecase.FriendUsecase,
 	registryUsecase *usecase.RegistryUsecase,
 	rateUsecase *usecase.RateUsecase,
+	contactRepo repo.ContactRepo,
+	contactMapper *mapper.ContactMapper,
 ) *CrmInternalService {
 	return &CrmInternalService{
 		FriendRepo:      friendRepo,
@@ -33,6 +38,8 @@ func NewCrmInternalService(
 		FriendUsecase:   friendUsecase,
 		RegistryUsecase: registryUsecase,
 		RateUsecase:     rateUsecase,
+		ContactRepo:     contactRepo,
+		ContactMapper:   contactMapper,
 	}
 }
 
@@ -109,4 +116,36 @@ func (h *CrmInternalService) GetRateStats(ctx context.Context, req *sharepb.IdRe
 		Star4Count:   uint64(rateStats.Star4Count),
 		Star5Count:   uint64(rateStats.Star5Count),
 	}, nil
+}
+
+func (h *CrmInternalService) GetContactById(ctx context.Context, req *sharepb.IdRequest) (*sharepb.ContactDTO, error) {
+	contact, err := h.ContactRepo.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	result := &sharepb.ContactDTO{
+		Id:        contact.ID,
+		FullName:  contact.FullName,
+		Phone:     contact.Phone,
+		Email:     contact.Email,
+		Zalo:      contact.Zalo,
+		Company:   contact.Company,
+		Note:      contact.Note,
+		Birthday:  _utils.FormatTimeToString(contact.Birthday),
+		OwnerId:   contact.OwnerID,
+		OwnerOf:   int32(contact.OwnerOf),
+		ProfileId: contact.ProfileID,
+		CreatedAt: _utils.FormatTimeToString(contact.CreatedAt),
+		CreatedBy: contact.CreatedBy,
+	}
+	if contact.FriendStatus != nil {
+		result.FriendStatus = &sharepb.FriendItem{
+			Id:         contact.FriendStatus.ID,
+			Status:     uint32(contact.FriendStatus.Status),
+			CreatedBy:  contact.FriendStatus.CreatedBy,
+			ReceiverId: contact.FriendStatus.ReceiverID,
+		}
+	}
+
+	return result, nil
 }

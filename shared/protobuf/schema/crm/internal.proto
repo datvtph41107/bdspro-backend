@@ -10,6 +10,7 @@ import "shared/v3.proto";
 service CrmInternalService {
     rpc FriendStatusByProfileIds(FriendStatusByProfileIdsRequest) returns (FriendStatusByProfileIdsResponse);
     rpc GetFriendInfoByProfileId(sharepb.IdRequest) returns (sharepb.ContactInfoV3Proto);
+    rpc GetContactById(sharepb.IdRequest) returns (sharepb.ContactDTO);
 
     rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
     rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);

@@ -487,6 +487,23 @@ func (u *LeadUsecase) GetByContact(ctx context.Context, contactId uint64) (*doma
 	return lead, nil
 }
 
+// UpdateProductIds updates product IDs for a lead
+func (u *LeadUsecase) UpdateProductIds(ctx context.Context, leadId uint64, productIds []uint64) error {
+	// Verify lead exists
+	lead, err := u.leadRepo.GetByID(ctx, leadId)
+	if err != nil {
+		return err
+	}
+	if lead == nil {
+		return _errors.ReturnError(404, "Lead không tồn tại")
+	}
+
+	// Update products using transaction
+	return u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		return u.productCareRepo.Bulk(ctx, productIds, leadId)
+	})
+}
+
 func (u *LeadUsecase) AssignCrm(ctx context.Context, contactId uint64, personChargeId uint64, stageId uint64, note string) (*domain.LeadEntity, error) {
 	contact, err := u.contactUsecase.CheckPermission(ctx, contactId)
 	if err != nil {

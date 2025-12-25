@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
@@ -11,7 +12,7 @@ import (
 	"bdspro/internal/utils"
 )
 
-type DealTransformer interface {
+type DealMapper interface {
 	CreateGroupDealRequestToEntity(request *bdspropb.CreateGroupDealRequest) *domain.Deal
 	CreateOrganizationDealRequestToEntity(request *bdspropb.CreateOrganizationDealRequest) *domain.Deal
 	CreateGroupDealV2RequestToEntity(request *bdspropb.CreateGroupDealV2Request) *domain.Deal
@@ -24,13 +25,16 @@ type DealTransformer interface {
 	EntityToDealDetailResponse(deal *domain.Deal) *bdspropb.GroupDeal
 	EntityToGetOrganizationDealsResponse(deals []*domain.Deal, total uint32) *bdspropb.GetOrganizationDealsResponse
 	EntityToGetDealsResponse(deals []*domain.Deal, total uint32) *bdspropb.GetDealsResponse
-	EntityToDealMemberProto(member *domain.DealMember) *bdspropb.DealMember
+	EntityToDealMemberProto(member *domain.DealMember) *sharepb.DealMember
 	EntityToGetGroupDealsV2Response(deals []*domain.Deal, total uint32) *bdspropb.GetGroupDealsV2Response
 
 	// Admin API
 	AdminDealSearchRequestToDTO(req *bdspropb.AdminDealSearchRequest) *dto.AdminDealSearchRequest
 	EntityToAdminDealItem(deal *domain.Deal) *bdspropb.AdminDealItem
 	EntityToAdminDealSearchResponse(deals []*domain.Deal, total int64) *bdspropb.AdminDealSearchResponse
+
+	DealMemberToPb(dealMember *domain.DealMember) *sharepb.DealMember
+	DealMembersToPb(dealMembers []*domain.DealMember) []*sharepb.DealMember
 }
 
 type groupDealTransformer struct {
@@ -41,7 +45,7 @@ type groupDealTransformer struct {
 func NewGroupDealTransformer(
 	documentMapper *DocumentMapper,
 	bankAccountMapper *BankAccountMapper,
-) DealTransformer {
+) DealMapper {
 	return &groupDealTransformer{
 		DocumentMapper:    documentMapper,
 		BankAccountMapper: bankAccountMapper,
@@ -329,12 +333,12 @@ func (t *groupDealTransformer) EntityToGetDealsResponse(deals []*domain.Deal, to
 	return response
 }
 
-func (t *groupDealTransformer) EntityToDealMemberProto(member *domain.DealMember) *bdspropb.DealMember {
+func (t *groupDealTransformer) EntityToDealMemberProto(member *domain.DealMember) *sharepb.DealMember {
 	if member == nil {
 		return nil
 	}
 
-	proto := &bdspropb.DealMember{
+	proto := &sharepb.DealMember{
 		DealId:   member.DealID,
 		MemberId: member.MemberID,
 		// MemberType:      uint32(member.MemberType),
@@ -481,4 +485,22 @@ func (t *groupDealTransformer) MapProductToDealPb(ctx context.Context, deals []*
 	// 		}
 	// 	}
 	// }
+}
+
+func (m *groupDealTransformer) DealMemberToPb(dealMember *domain.DealMember) *sharepb.DealMember {
+	return &sharepb.DealMember{
+		DealId:   uint64(dealMember.DealID),
+		MemberId: uint64(dealMember.MemberID),
+		// MemberType: uint32(dealMember.MemberType),
+		RoleId:  &dealMember.RoleID,
+		RoleKey: uint32(dealMember.RoleKey),
+	}
+}
+
+func (t *groupDealTransformer) DealMembersToPb(dealMembers []*domain.DealMember) []*sharepb.DealMember {
+	pbDealMembers := make([]*sharepb.DealMember, len(dealMembers))
+	for i, dealMember := range dealMembers {
+		pbDealMembers[i] = t.DealMemberToPb(dealMember)
+	}
+	return pbDealMembers
 }

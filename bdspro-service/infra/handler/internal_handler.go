@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_enum "common/domain/enum"
@@ -16,17 +17,26 @@ type InternalHandler struct {
 	dashboardUsecase *usecases.DashboardUsecase
 	productUsecase   *shared_usecase.ProductUsecase
 	productMapper    *mapper.ProductMapper
+	dealUsecase      repo.DealRepository
+	dealMapper       mapper.DealMapper
+	dealMemberRepo   repo.DealMemberRepository
 }
 
 func NewInternalHandler(
 	dashboardUsecase *usecases.DashboardUsecase,
 	productUsecase *shared_usecase.ProductUsecase,
 	productMapper *mapper.ProductMapper,
+	dealUsecase repo.DealRepository,
+	dealMapper mapper.DealMapper,
+	dealMemberRepo repo.DealMemberRepository,
 ) *InternalHandler {
 	return &InternalHandler{
 		dashboardUsecase: dashboardUsecase,
 		productUsecase:   productUsecase,
 		productMapper:    productMapper,
+		dealUsecase:      dealUsecase,
+		dealMapper:       dealMapper,
+		dealMemberRepo:   dealMemberRepo,
 	}
 }
 
@@ -74,5 +84,35 @@ func (s *InternalHandler) GetDashboardByProfileId(ctx context.Context, req *shar
 		TotalAsset:   uint64(counts.TotalAsset),
 		TotalPost:    uint64(counts.TotalPost),
 		TotalProject: uint64(counts.TotalProject),
+	}, nil
+}
+
+func (s *InternalHandler) GetDealById(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.GroupDeal, error) {
+	deal, err := s.dealUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return s.dealMapper.EntityToGetGroupDealResponse(deal), nil
+}
+
+func (s *InternalHandler) GetDealsByIds(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.DealsResponse, error) {
+	deals, err := s.dealUsecase.GetByIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+	pbDeals := s.dealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(len(deals)))
+	return &bdspropb.DealsResponse{
+		Data: pbDeals.Data,
+	}, nil
+}
+
+func (s *InternalHandler) GetDealMembers(ctx context.Context, req *bdspropb.DealMemberRequest) (*bdspropb.GetDealMemberByIdsResponse, error) {
+	dealMembers, err := s.dealMemberRepo.GetDealMembersByUserIds(ctx, req.DealId, req.UserIds)
+	if err != nil {
+		return nil, err
+	}
+	pbDealMembers := s.dealMapper.DealMembersToPb(dealMembers)
+	return &bdspropb.GetDealMemberByIdsResponse{
+		Data: pbDealMembers,
 	}, nil
 }

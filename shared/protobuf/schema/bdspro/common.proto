@@ -188,6 +188,7 @@ message ProductResponse {
     optional uint64 sourceContactId = 70;
     string sourceContactNote = 71;
     string certificateHouseNote = 72;
+    optional sharepb.ContactDTO sourceContact = 73;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

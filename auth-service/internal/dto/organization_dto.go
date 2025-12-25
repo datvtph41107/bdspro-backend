@@ -29,6 +29,8 @@ type DealMember struct {
 	DealId uint64  `json:"dealId"`
 	UserId uint64  `json:"userId"`
 	RoleId *uint64 `json:"roleId"`
+
+	RoleKey uint32 `json:"roleKey"`
 }
 
 type BranchMember struct {

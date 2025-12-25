@@ -271,7 +271,8 @@ func (r *DealMemberPostgresRepository) GetDealMembersByUserIds(ctx context.Conte
 			DealID:   model.DealID,
 			MemberID: model.MemberID,
 			// MemberType: model.MemberType,
-			RoleID: model.RoleID,
+			RoleID:  model.RoleID,
+			RoleKey: model.RoleKey,
 		}
 	}
 

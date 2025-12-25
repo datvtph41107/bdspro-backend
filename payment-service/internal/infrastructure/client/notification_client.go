@@ -26,7 +26,7 @@ func NewNotificationClient() NotificationClient {
 }
 
 func (c *notificationClient) Create(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {
-	err := c.client.NotifyToUser(ctx, int32(req.Type), &req.OwnerId, []string{req.Message}, req.TargetId, req.IsMerge)
+	err := c.client.NotifyToUser(ctx, int32(req.Type), &req.OwnerId, req.Message, req.TargetId, req.IsMerge)
 	return nil, err
 }
 

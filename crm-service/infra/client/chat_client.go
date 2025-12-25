@@ -4,7 +4,6 @@ import (
 	"context"
 	"crm/env"
 	chatpb "pb/types/chat"
-	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
 	"pb/clients"
@@ -45,7 +44,7 @@ func (c *ChatClient) GetMembersOfRoom(ctx context.Context, conversationId uint64
 }
 
 // MapParticipantToContact maps participant info to contact if contact's profileId matches participant's userId
-func (c *ChatClient) MapParticipantToContact(ctx context.Context, conversationId uint64, contacts []*crmpb.ContactDTO) error {
+func (c *ChatClient) MapParticipantToContact(ctx context.Context, conversationId uint64, contacts []*sharepb.ContactDTO) error {
 	if conversationId == 0 {
 		return nil
 	}
@@ -66,7 +65,7 @@ func (c *ChatClient) MapParticipantToContact(ctx context.Context, conversationId
 	for _, contact := range contacts {
 		if contact.ProfileId != nil {
 			if participant, ok := participantMap[*contact.ProfileId]; ok {
-				contact.Member = &crmpb.ConversationMember{
+				contact.ConversationMember = &sharepb.ConversationMember{
 					UserId:    participant.UserId,
 					JoinedAt:  participant.JoinedAt,
 					LeftAt:    participant.LeftAt,
