@@ -32,6 +32,12 @@ type ZnsProvider struct {
 	mu             sync.RWMutex         // Mutex để đồng bộ khi đọc/ghi token
 }
 
+// Redis keys cho ZNS tokens
+const (
+	ZNSAccessTokenKey  = "zns:access_token"
+	ZNSRefreshTokenKey = "zns:refresh_token"
+)
+
 // NewZnsProvider tạo instance mới của ZnsProvider
 func NewZnsProvider(authConfigRepo repo.IAuthConfigRepo) *ZnsProvider {
 	// Khởi tạo Redis client
