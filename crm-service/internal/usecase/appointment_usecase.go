@@ -12,6 +12,7 @@ import (
 	"crm/infra/client"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/enums"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
 )
@@ -25,6 +26,7 @@ type AppointmentUsecase interface {
 	CountCurrent(ctx context.Context) (int64, error)
 	GetAppointmentsByProduct(ctx context.Context, productId uint64, page, size int) ([]*dto.AppointmentDTO, int64, error)
 	GetAppointmentsByDeal(ctx context.Context, dealId uint32, page, size int) ([]*dto.AppointmentDTO, int64, error)
+	UpdateAppointmentStatus(ctx context.Context, id uint32, action string) (*domain.Appointment, error)
 }
 
 type appointmentUsecase struct {
@@ -52,36 +54,47 @@ func NewAppointmentUsecase(
 }
 
 func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment *domain.Appointment) (*domain.Appointment, error) {
-	// Map ParticipantIds (profileId) -> ContactID
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
 		return nil, fmt.Errorf("profileId not found in context")
 	}
 
-	// Map participantIds (profileId) to contactIds
-	participantContactMap := make(map[int64]uint64) // map[profileId]contactId
-	for _, participantProfileId := range appointment.ParticipantIds {
-		// Lấy hoặc tạo contact từ profileId
-		contact, err := uc.contactRepo.GetOrCreateByProfileID(
-			ctx,
-			uint64(participantProfileId),
-			profileId,
-			base_enum.EOwnerOfMember,
-			"", // fullName - sẽ được update sau
-			"", // phone - sẽ được update sau
-			"", // avatar - sẽ được update sau
-		)
-		if err != nil {
-			// Log error nhưng tiếp tục với các participant khác
+	// Tạo/cập nhật Contact cho mỗi participant nếu cần
+	for i := range appointment.AppointmentParticipants {
+		participant := &appointment.AppointmentParticipants[i]
+
+		// Nếu đã có ContactID, bỏ qua
+		if participant.ContactID > 0 {
 			continue
 		}
-		if contact != nil && contact.ID > 0 {
-			participantContactMap[participantProfileId] = contact.ID
+
+		// Nếu có UserId (profileId), tìm hoặc tạo contact
+		if participant.UserId > 0 {
+			contact, err := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember)
+			if err != nil || contact == nil || contact.ID == 0 {
+				// Nếu chưa có, tạo mới
+				profileIdPtr := uint64(participant.UserId)
+				newContact := &domain.ContactEntity{
+					ProfileID: &profileIdPtr,
+					OwnerID:   profileId,
+					OwnerOf:   base_enum.EOwnerOfMember,
+				}
+				createdContact, err := uc.contactRepo.Create(ctx, newContact)
+				if err != nil {
+					// Nếu conflict, thử get lại
+					if contact, getErr := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember); getErr == nil && contact != nil && contact.ID > 0 {
+						participant.ContactID = uint32(contact.ID)
+					}
+					continue
+				}
+				if createdContact != nil && createdContact.ID > 0 {
+					participant.ContactID = uint32(createdContact.ID)
+				}
+			} else {
+				participant.ContactID = uint32(contact.ID)
+			}
 		}
 	}
-
-	// Lưu map vào context để repository sử dụng
-	ctx = context.WithValue(ctx, "participantContactMap", participantContactMap)
 
 	appointment, err := uc.appointmentRepo.Create(ctx, appointment)
 	if err != nil {
@@ -99,36 +112,47 @@ func (uc *appointmentUsecase) GetAppointment(ctx context.Context, id uint32) (*d
 }
 
 func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment *domain.Appointment) (*domain.Appointment, error) {
-	// Map ParticipantIds (profileId) -> ContactID
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
 		return nil, fmt.Errorf("profileId not found in context")
 	}
 
-	// Map participantIds (profileId) to contactIds
-	participantContactMap := make(map[int64]uint64) // map[profileId]contactId
-	for _, participantProfileId := range appointment.ParticipantIds {
-		// Lấy hoặc tạo contact từ profileId
-		contact, err := uc.contactRepo.GetOrCreateByProfileID(
-			ctx,
-			uint64(participantProfileId),
-			profileId,
-			base_enum.EOwnerOfMember,
-			"", // fullName - sẽ được update sau
-			"", // phone - sẽ được update sau
-			"", // avatar - sẽ được update sau
-		)
-		if err != nil {
-			// Log error nhưng tiếp tục với các participant khác
+	// Tạo/cập nhật Contact cho mỗi participant nếu cần
+	for i := range appointment.AppointmentParticipants {
+		participant := &appointment.AppointmentParticipants[i]
+
+		// Nếu đã có ContactID, bỏ qua
+		if participant.ContactID > 0 {
 			continue
 		}
-		if contact != nil && contact.ID > 0 {
-			participantContactMap[participantProfileId] = contact.ID
+
+		// Nếu có UserId (profileId), tìm hoặc tạo contact
+		if participant.UserId > 0 {
+			contact, err := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember)
+			if err != nil || contact == nil || contact.ID == 0 {
+				// Nếu chưa có, tạo mới
+				profileIdPtr := uint64(participant.UserId)
+				newContact := &domain.ContactEntity{
+					ProfileID: &profileIdPtr,
+					OwnerID:   profileId,
+					OwnerOf:   base_enum.EOwnerOfMember,
+				}
+				createdContact, err := uc.contactRepo.Create(ctx, newContact)
+				if err != nil {
+					// Nếu conflict, thử get lại
+					if contact, getErr := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember); getErr == nil && contact != nil && contact.ID > 0 {
+						participant.ContactID = uint32(contact.ID)
+					}
+					continue
+				}
+				if createdContact != nil && createdContact.ID > 0 {
+					participant.ContactID = uint32(createdContact.ID)
+				}
+			} else {
+				participant.ContactID = uint32(contact.ID)
+			}
 		}
 	}
-
-	// Lưu map vào context để repository sử dụng
-	ctx = context.WithValue(ctx, "participantContactMap", participantContactMap)
 
 	appointment, err := uc.appointmentRepo.Update(ctx, appointment)
 	if err != nil {
@@ -342,14 +366,19 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 
 	// Make concurrent API calls for better performance
 	type result struct {
-		deal     *bdspropb.GroupDeal
-		products *bdspropb.ProductAttachmentResponse
-		// dealTransactions []*bdspropb.DealTransactionResponse
+		deal            *bdspropb.GroupDeal
+		products        *bdspropb.ProductAttachmentResponse
+		dealContracts   []*bdspropb.DealContractItem
 		participantsMap map[uint64]*sharepb.ProfileItem
 		err             error
 	}
 
-	ch := make(chan result, 3)
+	// Determine number of goroutines
+	numGoroutines := 3
+	if appointment.TransactionId > 0 {
+		numGoroutines = 4
+	}
+	ch := make(chan result, numGoroutines)
 
 	// Concurrent API calls
 	go func() {
@@ -380,13 +409,22 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 		ch <- result{participantsMap: participantsMap, err: err}
 	}()
 
+	// Get DealContract if TransactionId exists
+	if appointment.TransactionId > 0 {
+		go func() {
+			transactionIds := []uint64{appointment.TransactionId}
+			dealContracts, err := uc.bdsproClient.GetDealContractsByIds(ctx, transactionIds)
+			ch <- result{dealContracts: dealContracts, err: err}
+		}()
+	}
+
 	// Collect results
 	var deal *bdspropb.GroupDeal
 	var products *bdspropb.ProductAttachmentResponse
-	// var dealTransactions []*bdspropb.DealTransactionResponse
+	var dealContract *bdspropb.DealContractItem
 	var participants []*sharepb.ProfileItem
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < numGoroutines; i++ {
 		res := <-ch
 		// if res.err != nil {
 		// 	return nil, res.err
@@ -397,9 +435,9 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 		if res.products != nil {
 			products = res.products
 		}
-		// if res.dealTransactions != nil {
-		// 	dealTransactions = res.dealTransactions
-		// }
+		if len(res.dealContracts) > 0 {
+			dealContract = res.dealContracts[0]
+		}
 		if res.participantsMap != nil {
 			for _, participant := range appointment.AppointmentParticipants {
 				if participant.Contact != nil && participant.Contact.ProfileID != nil {
@@ -425,10 +463,10 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 	}
 
 	out := &dto.AppointmentDTO{
-		Appointment: appointment,
-		Deal:        deal,
-		// DealTransactions: dealTransactions,
+		Appointment:  appointment,
+		Deal:         deal,
 		Participants: participantsArray,
+		DealContract: dealContract,
 	}
 
 	if products != nil {
@@ -474,4 +512,42 @@ func (uc *appointmentUsecase) GetAppointmentsByDeal(ctx context.Context, dealId 
 		appointmentsDTO = append(appointmentsDTO, appointmentDTO)
 	}
 	return appointmentsDTO, total, nil
+}
+
+func (uc *appointmentUsecase) UpdateAppointmentStatus(ctx context.Context, id uint32, action string) (*domain.Appointment, error) {
+	// Lấy appointment hiện tại
+	appointment, err := uc.appointmentRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("appointment not found: %v", err)
+	}
+
+	// Xác định status mới dựa trên action
+	var newStatus enums.EAppointmentStatus
+	switch action {
+	case "approve":
+		newStatus = enums.AppointmentStatusConfirmed
+	case "cancel":
+		newStatus = enums.AppointmentStatusCancelled
+	default:
+		return nil, fmt.Errorf("invalid action: %s. Action must be 'approve' or 'cancel'", action)
+	}
+
+	// Kiểm tra status hiện tại có thể chuyển sang status mới không
+	if appointment.Status != enums.AppointmentStatusPending {
+		return nil, fmt.Errorf("appointment status must be pending to update. Current status: %d", appointment.Status)
+	}
+
+	// Update status
+	err = uc.appointmentRepo.UpdateStatus(ctx, id, newStatus)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update appointment status: %v", err)
+	}
+
+	// Lấy lại appointment đã update
+	updatedAppointment, err := uc.appointmentRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get updated appointment: %v", err)
+	}
+
+	return updatedAppointment, nil
 }

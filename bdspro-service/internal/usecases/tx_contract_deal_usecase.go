@@ -67,6 +67,22 @@ func (uc *DealContractUsecase) GetDealContractByDealID(ctx context.Context, deal
 	return dealTransaction, total, nil
 }
 
+func (uc *DealContractUsecase) GetDealContractByProfileID(ctx context.Context, profileID uint64, req dto.TxDealSearch) ([]*dto.TxContractDealListResponse, int64, error) {
+	dealTransaction, total, err := uc.dealTransactionRepo.GetListByProfileID(ctx, profileID, req)
+	if err != nil {
+		return nil, 0, err
+	}
+	return dealTransaction, total, nil
+}
+
+func (uc *DealContractUsecase) GetDealContractByTransactionIds(ctx context.Context, transactionIds []uint64) ([]*dto.TxContractDealListResponse, error) {
+	dealTransactions, err := uc.dealTransactionRepo.GetListByTransactionIds(ctx, transactionIds)
+	if err != nil {
+		return nil, err
+	}
+	return dealTransactions, nil
+}
+
 // todo: map lại enum sau
 func (uc *DealContractUsecase) GetActionWhenSave(ctx context.Context, req *dto.TxDealContractPaymentRequest) (*domain.TxAction, error) {
 	action := &domain.TxAction{

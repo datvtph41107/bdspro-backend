@@ -59,7 +59,7 @@ func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *crmpb.C
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil), nil
+	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil, nil), nil
 }
 
 // @Summary Lấy lịch hẹn
@@ -81,7 +81,7 @@ func (h *AppointmentHandler) GetAppointment(ctx context.Context, req *crmpb.GetA
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants), nil
+	return h.Transformer.EntityToAppointmentResponse(appointment.Appointment, appointment.Deal, appointment.Products, appointment.Participants, appointment.DealContract), nil
 }
 
 // @Summary Cập nhật lịch hẹn
@@ -106,7 +106,7 @@ func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *crmpb.U
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil), nil
+	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil, nil), nil
 }
 
 // @Summary Xóa lịch hẹn
@@ -142,6 +142,7 @@ func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *crmpb.D
 // @Param startTime query string false "Thời gian bắt đầu"
 // @Param endTime query string false "Thời gian kết thúc"
 // @Param dealIds query []uint32 false "Danh sách ID deal"
+// @Param transactionId query uint64 false "ID giao dịch"
 // @Param page query int32 false "Trang"
 // @Param size query int32 false "Kích thước trang"
 // @Security BearerAuth
@@ -173,6 +174,9 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 		dealIds := make([]uint32, len(req.DealIds))
 		copy(dealIds, req.DealIds)
 		filter["deal_ids"] = dealIds
+	}
+	if req.TransactionId != nil && *req.TransactionId > 0 {
+		filter["transaction_id"] = *req.TransactionId
 	}
 
 	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, int(pagable.GetPage()), int(pagable.GetSize()))
@@ -290,4 +294,33 @@ func (h *AppointmentHandler) GetAppointmentsByDeal(ctx context.Context, req *sha
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
+}
+
+// @Summary Cập nhật trạng thái lịch hẹn
+// @Description Cập nhật trạng thái lịch hẹn (approve: Đã xác nhận, cancel: Đã hủy)
+// @Tags Lịch hẹn
+// @Accept json
+// @Produce json
+// @Param id path uint32 true "ID lịch hẹn"
+// @Param request body crmpb.UpdateAppointmentStatusRequest true "Thông tin cập nhật trạng thái"
+// @Security BearerAuth
+// @Success 200 {object} crmpb.Appointment "Thành công"
+// @Router /v2.1/appointment/{id}/status [patch]
+func (h *AppointmentHandler) UpdateAppointmentStatus(ctx context.Context, req *crmpb.UpdateAppointmentStatusRequest) (*crmpb.Appointment, error) {
+	if err := h.Validator.ValidateUpdateAppointmentStatusRequest(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	updatedAppointment, err := h.AppointmentUsecase.UpdateAppointmentStatus(ctx, req.Id, req.Action)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Lấy thông tin đầy đủ để trả về
+	appointmentDTO, err := h.AppointmentUsecase.GetAppointment(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, appointmentDTO.Deal, appointmentDTO.Products, appointmentDTO.Participants, appointmentDTO.DealContract), nil
 }

@@ -38,8 +38,9 @@ func (r *TransactionPostgresRepository) Create(ctx context.Context, tx *domain.T
 func (r *TransactionPostgresRepository) GetByID(ctx context.Context, id *uint64) (*domain.Tx, error) {
 	var model *domain.Tx
 	if err := GetDB(ctx, r.db).
-		// Preload("Deposite", "deleted_at IS NULL").
-		Preload("Actions").
+		Preload("Actions", func(db *gorm.DB) *gorm.DB {
+			return db.Order("timestamp ASC")
+		}).
 		Preload("LastAction").
 		First(&model, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

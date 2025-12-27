@@ -19,3 +19,18 @@ var TxActionNames = map[TxAction]string{
 	TxActionCancel:    "Hủy",
 	TxActionNegotiate: "Đàm phán",
 }
+
+// IsValid kiểm tra giá trị TxAction có hợp lệ không
+func (a TxAction) IsValid() bool {
+	switch a {
+	case TxActionDeposite,
+		TxActionSign,
+		TxActionPay,
+		TxActionHandOver,
+		TxActionCancel,
+		TxActionNegotiate:
+		return true
+	default:
+		return false
+	}
+}

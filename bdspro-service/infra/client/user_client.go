@@ -228,3 +228,33 @@ func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*bdspropb.Gr
 	}
 
 }
+
+func (c *UserClient) MapProfileToDealContractPbs(ctx context.Context, contracts []*bdspropb.DealContractItem) {
+	ids := make([]uint64, 0)
+	for _, contract := range contracts {
+		if contract.CustomerId != 0 {
+			ids = append(ids, contract.CustomerId)
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+
+	profiles, err := c.GetProfileByIds(ctx, &sharepb.GetProfileByIdsRequest{Ids: ids})
+	if err != nil {
+		return
+	}
+
+	profilesMap := make(map[uint64]*sharepb.ProfileItem)
+	for _, profile := range profiles.Profiles {
+		profile.Phone = ""
+		profilesMap[profile.Id] = profile
+	}
+
+	for _, contract := range contracts {
+		if profile, ok := profilesMap[contract.CustomerId]; ok {
+			contract.Customer = profile
+			contract.CustomerName = profile.FullName
+		}
+	}
+}

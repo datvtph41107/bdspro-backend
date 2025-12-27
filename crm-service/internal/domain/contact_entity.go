@@ -22,14 +22,14 @@ type ContactEntity struct {
 	Birthday *time.Time `gorm:"column:birthday" json:"birthday"`
 	Note     string     `gorm:"column:note" json:"note"`
 
-	Visibility   enums.EVisibility `gorm:"column:visibility;default:30" json:"visibility"`
-	LeadID       uint64            `gorm:"column:lead_id" json:"leadId"`
-	OwnerID      uint64            `gorm:"column:owner_id" json:"ownerId"`
-	ProfileID    *uint64           `gorm:"column:profile_id" json:"profileId"`
-	FriendStatus *FriendEntity     `gorm:"-" json:"friendStatus" binding:"required"`
+	Visibility   enums.EVisibility  `gorm:"column:visibility;default:30" json:"visibility"`
+	LeadID       uint64             `gorm:"column:lead_id" json:"leadId"`
+	OwnerID      uint64             `gorm:"column:owner_id;" json:"ownerId"`
+	OwnerOf      base_enum.EOwnerOf `gorm:"column:owner_of;default:30;" json:"ownerOf" binding:"required"`
+	ProfileID    *uint64            `gorm:"column:profile_id;" json:"profileId"`
+	FriendStatus *FriendEntity      `gorm:"-" json:"friendStatus" binding:"required"`
 
-	OwnerOf     base_enum.EOwnerOf `gorm:"column:owner_of;default:30" json:"ownerOf" binding:"required"`
-	ContactTags pq.Int32Array      `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
+	ContactTags pq.Int32Array `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
 
 	// transient
 	Tags []TagEntity `gorm:"-" json:"tags"`

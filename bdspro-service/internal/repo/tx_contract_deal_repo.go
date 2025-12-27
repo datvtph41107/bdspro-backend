@@ -17,6 +17,8 @@ type TxContractDealRepository interface {
 	Approve(ctx context.Context, id uint64, approvedBy uint64, status enums.TxApprovedStatus, rejectReason string) error
 	GetTotalAmountByType(ctx context.Context, dealID uint64, transactionType enums.TxTransactionType) (float64, error)
 	GetListByDealID(ctx context.Context, dealID uint64, req dto.TxDealSearch) ([]*dto.TxContractDealListResponse, int64, error)
+	GetListByProfileID(ctx context.Context, profileID uint64, req dto.TxDealSearch) ([]*dto.TxContractDealListResponse, int64, error)
+	GetListByTransactionIds(ctx context.Context, transactionIds []uint64) ([]*dto.TxContractDealListResponse, error)
 	GetTotalAmountByDealID(ctx context.Context, dealID uint64) (*dto.TxDealCostStatisticsDTO, error)
 	GetDealContractProcess(ctx context.Context, dealID uint64) ([]dto.TxProcessDTO, error)
 }

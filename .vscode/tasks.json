@@ -58,9 +58,6 @@
       "presentation": {
         "panel": "dedicated"
       },
-      "runOptions": {
-        "runOn": "folderOpen"
-      }
     },
     {
       "label": "💳 Payment gRPC (8205)",

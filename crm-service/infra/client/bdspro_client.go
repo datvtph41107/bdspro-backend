@@ -145,3 +145,14 @@ func (m *BdsproClient) MapDealMemberToContacts(ctx context.Context, dealId uint6
 
 	return nil
 }
+
+func (c *BdsproClient) GetDealContractsByIds(ctx context.Context, dealContractIds []uint64) ([]*bdspropb.DealContractItem, error) {
+	request := &sharepb.IdRequest{
+		Ids: dealContractIds,
+	}
+	response, err := c.InternalClient.GetDealContractsByIds(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return response.Data, nil
+}

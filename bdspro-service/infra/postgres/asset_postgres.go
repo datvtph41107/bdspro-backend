@@ -250,10 +250,10 @@ func (r *PostgreAsset) Update(ctx context.Context, id uint64, asset *domain.Asse
 			"purchase_date":      asset.PurchaseDate,
 			"legal_status":       asset.LegalStatus,
 			"property_type_id":   asset.PropertyTypeId,
-			"rent_status":        asset.RentStatus,
 			"area":               asset.Area,
 			"address":            asset.Address,
 			"description":        asset.Description,
+			// "rent_status":        asset.RentStatus,
 		}).Error; err != nil {
 		return err
 	}

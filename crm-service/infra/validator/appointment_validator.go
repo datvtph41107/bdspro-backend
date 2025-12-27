@@ -18,6 +18,7 @@ type AppointmentValidator interface {
 	ValidateDeleteAppointmentRequest(req *crmpb.DeleteAppointmentRequest) error
 	ValidateListAppointmentsRequest(req *crmpb.ListAppointmentsRequest) error
 	ValidateAdminListAppointmentsRequest(req *crmpb.AdminListAppointmentsRequest) error
+	ValidateUpdateAppointmentStatusRequest(req *crmpb.UpdateAppointmentStatusRequest) error
 }
 
 type appointmentValidator struct{}
@@ -220,6 +221,51 @@ func (v *appointmentValidator) ValidateAdminListAppointmentsRequest(req *crmpb.A
 
 	if req == nil {
 		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if len(details) > 0 {
+		return _errors.InvalidRequest(details...)
+	}
+
+	return nil
+}
+
+func (v *appointmentValidator) ValidateUpdateAppointmentStatusRequest(req *crmpb.UpdateAppointmentStatusRequest) error {
+	details := []protoadapt.MessageV1{}
+
+	if req == nil {
+		return status.Errorf(codes.InvalidArgument, "request cannot be nil")
+	}
+
+	if req.Id == 0 {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "id",
+					Description: "id is required",
+				},
+			},
+		})
+	}
+
+	if req.Action == "" {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "action",
+					Description: "action is required",
+				},
+			},
+		})
+	} else if req.Action != "approve" && req.Action != "cancel" {
+		details = append(details, &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "action",
+					Description: "action must be 'approve' or 'cancel'",
+				},
+			},
+		})
 	}
 
 	if len(details) > 0 {

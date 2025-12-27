@@ -136,6 +136,7 @@ type TxContractDealListResponse struct {
 	StatusName      string     `gorm:"-" json:"status_name"`
 	Amount          float64    `gorm:"column:amount" json:"amount"`
 	Timestamp       *time.Time `gorm:"column:timestamp" json:"timestamp"`
+	Code            string     `gorm:"-" json:"code"`
 }
 
 // DealAmountResponse represents the total amount response for a deal

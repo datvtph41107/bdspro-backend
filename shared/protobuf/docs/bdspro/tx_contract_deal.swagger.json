@@ -131,6 +131,75 @@
         ]
       }
     },
+    "/v2.1/transaction/contract/deal/me": {
+      "get": {
+        "summary": "Lấy danh sách contract của user hiện tại",
+        "operationId": "DealContractService_GetMyContracts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbDealContractListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "DealContractService"
+        ]
+      }
+    },
     "/v2.1/transaction/contract/deal/payment": {
       "post": {
         "summary": "Giao dịch mua/bán/thuê",
@@ -655,6 +724,9 @@
         "contractId": {
           "type": "string",
           "format": "uint64"
+        },
+        "code": {
+          "type": "string"
         }
       }
     },

@@ -8,9 +8,9 @@ import (
 )
 
 type AppointmentDTO struct {
-	Appointment *domain.Appointment
-	Deal        *bdspropb.GroupDeal
-	Products    []*bdspropb.ProductAttachment
-	// DealTransactions []*organizationpb.DealTransactionResponse
+	Appointment  *domain.Appointment
+	Deal         *bdspropb.GroupDeal
+	Products     []*bdspropb.ProductAttachment
 	Participants []*sharepb.ProfileItem
+	DealContract *bdspropb.DealContractItem
 }

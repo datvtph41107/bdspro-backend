@@ -56,7 +56,7 @@ service AppointmentService {
 
   rpc GetAppointmentStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
     option (google.api.http) = {
-        get: "/v2/appointment/stats"
+      get: "/v2/appointment/stats"
     };
   }
 }
@@ -154,5 +154,10 @@ message AdminListAppointmentsRequest {
 message AdminListAppointmentsResponse {
   repeated Appointment data = 1;
   int32 total = 2;
-} 
+}
+
+message UpdateAppointmentStatusRequest {
+  uint32 id = 1;
+  string action = 2; // "approve" hoặc "cancel"
+}
 

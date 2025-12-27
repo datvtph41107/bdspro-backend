@@ -17,3 +17,11 @@ var EAssetStatusNames = map[EAssetStatus]string{
 	EAssetStatusSelling: "Đang bán",
 	EAssetStatusNotSold: "Đang bán",
 }
+
+func (e EAssetStatus) IsValid() bool {
+	return e == EAssetStatusOwning ||
+		e == EAssetStatusRenting ||
+		e == EAssetStatusSold ||
+		e == EAssetStatusSelling ||
+		e == EAssetStatusNotSold
+}

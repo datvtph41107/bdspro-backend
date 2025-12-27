@@ -83,6 +83,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -458,6 +465,52 @@
           "AppointmentService"
         ]
       }
+    },
+    "/v2.1/appointment/{id}/status/{action}": {
+      "put": {
+        "operationId": "AppointmentService_UpdateAppointmentStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "action",
+            "description": "\"approve\" hoặc \"cancel\"",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AppointmentServiceUpdateAppointmentStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -505,10 +558,14 @@
           "type": "integer",
           "format": "int64"
         },
-        "transactionIds": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionSteps": {
           "type": "array",
           "items": {
-            "type": "string",
+            "type": "integer",
             "format": "int64"
           }
         },
@@ -521,6 +578,9 @@
           "format": "int64"
         }
       }
+    },
+    "AppointmentServiceUpdateAppointmentStatusBody": {
+      "type": "object"
     },
     "authpbColor": {
       "type": "object",
@@ -746,6 +806,49 @@
         },
         "bank": {
           "$ref": "#/definitions/paymentpbBank"
+        }
+      }
+    },
+    "bdspropbDealContractItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "contractId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
         }
       }
     },
@@ -1195,10 +1298,14 @@
           "type": "integer",
           "format": "int64"
         },
-        "transactionIds": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionSteps": {
           "type": "array",
           "items": {
-            "type": "string",
+            "type": "integer",
             "format": "int64"
           }
         },
@@ -1233,6 +1340,9 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        },
+        "dealContract": {
+          "$ref": "#/definitions/bdspropbDealContractItem"
         }
       }
     },
@@ -1284,10 +1394,14 @@
           "type": "integer",
           "format": "int64"
         },
-        "transactionIds": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionSteps": {
           "type": "array",
           "items": {
-            "type": "string",
+            "type": "integer",
             "format": "int64"
           }
         },

@@ -14,12 +14,14 @@ import (
 
 type InternalHandler struct {
 	bdspropb.UnimplementedBdsproInternalServiceServer
-	dashboardUsecase *usecases.DashboardUsecase
-	productUsecase   *shared_usecase.ProductUsecase
-	productMapper    *mapper.ProductMapper
-	dealUsecase      repo.DealRepository
-	dealMapper       mapper.DealMapper
-	dealMemberRepo   repo.DealMemberRepository
+	dashboardUsecase    *usecases.DashboardUsecase
+	productUsecase      *shared_usecase.ProductUsecase
+	productMapper       *mapper.ProductMapper
+	dealUsecase         repo.DealRepository
+	dealMapper          mapper.DealMapper
+	dealMemberRepo      repo.DealMemberRepository
+	contractDealUsecase *usecases.DealContractUsecase
+	contractDealMapper  *mapper.ContractDealMapper
 }
 
 func NewInternalHandler(
@@ -29,14 +31,18 @@ func NewInternalHandler(
 	dealUsecase repo.DealRepository,
 	dealMapper mapper.DealMapper,
 	dealMemberRepo repo.DealMemberRepository,
+	contractDealUsecase *usecases.DealContractUsecase,
+	contractDealMapper *mapper.ContractDealMapper,
 ) *InternalHandler {
 	return &InternalHandler{
-		dashboardUsecase: dashboardUsecase,
-		productUsecase:   productUsecase,
-		productMapper:    productMapper,
-		dealUsecase:      dealUsecase,
-		dealMapper:       dealMapper,
-		dealMemberRepo:   dealMemberRepo,
+		dashboardUsecase:    dashboardUsecase,
+		productUsecase:      productUsecase,
+		productMapper:       productMapper,
+		dealUsecase:         dealUsecase,
+		dealMapper:          dealMapper,
+		dealMemberRepo:      dealMemberRepo,
+		contractDealUsecase: contractDealUsecase,
+		contractDealMapper:  contractDealMapper,
 	}
 }
 
@@ -114,5 +120,26 @@ func (s *InternalHandler) GetDealMembers(ctx context.Context, req *bdspropb.Deal
 	pbDealMembers := s.dealMapper.DealMembersToPb(dealMembers)
 	return &bdspropb.GetDealMemberByIdsResponse{
 		Data: pbDealMembers,
+	}, nil
+}
+
+func (s *InternalHandler) GetDealContractsByIds(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.DealContractListResponse, error) {
+	if len(req.Ids) == 0 {
+		return &bdspropb.DealContractListResponse{
+			Data:  []*bdspropb.DealContractItem{},
+			Total: 0,
+		}, nil
+	}
+
+	contracts, err := s.contractDealUsecase.GetDealContractByTransactionIds(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+
+	data := s.contractDealMapper.DealContractItemToPbs(ctx, contracts)
+
+	return &bdspropb.DealContractListResponse{
+		Data:  data,
+		Total: int32(len(data)),
 	}, nil
 }

@@ -1,21 +1,26 @@
 package mapper
 
 import (
+	"context"
+	"time"
+
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	_usecase "common/domain/usecase"
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
-	"time"
 )
 
 type ContractDealMapper struct {
 	transactionMapper *TxMapper
+	codeDataUsecase   *_usecase.CodeDataUsecase
 }
 
-func NewContractDealMapper(transactionMapper *TxMapper) *ContractDealMapper {
+func NewContractDealMapper(transactionMapper *TxMapper, codeDataUsecase *_usecase.CodeDataUsecase) *ContractDealMapper {
 	return &ContractDealMapper{
 		transactionMapper: transactionMapper,
+		codeDataUsecase:   codeDataUsecase,
 	}
 }
 
@@ -141,7 +146,7 @@ func (t *ContractDealMapper) TransformTransactionType(protoType bdspropb.Contrac
 	}
 }
 
-func (t *ContractDealMapper) DealContractItemToPb(contract *dto.TxContractDealListResponse) *bdspropb.DealContractItem {
+func (t *ContractDealMapper) DealContractItemToPb(ctx context.Context, contract *dto.TxContractDealListResponse) *bdspropb.DealContractItem {
 	result := &bdspropb.DealContractItem{
 		Id:         contract.ContractID,
 		CustomerId: contract.CustomerID,
@@ -149,6 +154,10 @@ func (t *ContractDealMapper) DealContractItemToPb(contract *dto.TxContractDealLi
 		ContractId: contract.ContractID,
 		Amount:     contract.Amount,
 		Status:     uint64(contract.Status),
+	}
+
+	if t.codeDataUsecase != nil {
+		result.Code = t.codeDataUsecase.GetContractCode(ctx, contract.ContractID)
 	}
 
 	if contract.TransactionName == "" {
@@ -160,10 +169,10 @@ func (t *ContractDealMapper) DealContractItemToPb(contract *dto.TxContractDealLi
 	return result
 }
 
-func (t *ContractDealMapper) DealContractItemToPbs(contracts []*dto.TxContractDealListResponse) []*bdspropb.DealContractItem {
+func (t *ContractDealMapper) DealContractItemToPbs(ctx context.Context, contracts []*dto.TxContractDealListResponse) []*bdspropb.DealContractItem {
 	items := make([]*bdspropb.DealContractItem, len(contracts))
 	for i, contract := range contracts {
-		items[i] = t.DealContractItemToPb(contract)
+		items[i] = t.DealContractItemToPb(ctx, contract)
 	}
 	return items
 }

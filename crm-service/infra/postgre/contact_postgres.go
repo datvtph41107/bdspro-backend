@@ -9,10 +9,10 @@ import (
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // @bind: crm/internal/repo.ContactRepo
@@ -301,72 +301,99 @@ func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, cur
 	return &contact, nil
 }
 
-func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.ContactEntity, error) {
-	// Kiểm tra contact đã tồn tại chưa (tránh tạo trùng)
-	contact, err := r.GetByProfileID(c, profileId, ownerId, ownerType)
-	if err == nil && contact != nil && contact.ID > 0 {
-		// Contact đã tồn tại, cập nhật thông tin nếu có thay đổi
-		needUpdate := false
-		if contact.FullName != fullName && fullName != "" {
-			contact.FullName = fullName
-			needUpdate = true
+// restoreAndUpdateContact khôi phục và cập nhật thông tin contact nếu cần
+func (r *PostgreContact) restoreAndUpdateContact(c context.Context, contact *domain.ContactEntity, fullName, phone, avatar string) (*domain.ContactEntity, error) {
+	// Khôi phục nếu đã bị xóa
+	if contact.DeletedAt != nil {
+		if err := r.Restore(c, contact.ID); err != nil {
+			return nil, err
 		}
-		if contact.Avatar != avatar && avatar != "" {
-			contact.Avatar = avatar
-			needUpdate = true
-		}
-		if contact.Phone != phone && phone != "" {
-			contact.Phone = phone
-			needUpdate = true
-		}
-		if needUpdate {
-			_, _ = r.Update(c, contact.ID, contact)
-		}
-		return contact, nil
+		contact.DeletedAt = nil
 	}
 
-	// Nếu không tồn tại, tạo mới với ON CONFLICT để tránh race condition
+	// Cập nhật thông tin nếu có thay đổi
+	needUpdate := false
+	if contact.FullName != fullName && fullName != "" {
+		contact.FullName = fullName
+		needUpdate = true
+	}
+	if contact.Avatar != avatar && avatar != "" {
+		contact.Avatar = avatar
+		needUpdate = true
+	}
+	if contact.Phone != phone && phone != "" {
+		contact.Phone = phone
+		needUpdate = true
+	}
+
+	if needUpdate {
+		return r.Update(c, contact.ID, contact)
+	}
+	return contact, nil
+}
+
+// getContactByOwnerAndIdentifier lấy contact theo ownerId, ownerOf và (phone hoặc profileId) (bao gồm cả đã bị xóa)
+func (r *PostgreContact) getContactByOwnerAndIdentifier(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, phone string, profileId *uint64) (*domain.ContactEntity, error) {
+	var contact domain.ContactEntity
+	query := r.GetDB(c).Model(&domain.ContactEntity{}).
+		Where("owner_id = ? and owner_of = ?", ownerId, ownerType)
+
+	// Query theo phone hoặc profileId
+	conditions := make([]string, 0)
+	args := make([]interface{}, 0)
+
+	if phone != "" {
+		clearPhone := base_util.ClearPhone(phone)
+		conditions = append(conditions, "phone = ?")
+		args = append(args, clearPhone)
+	}
+
+	if profileId != nil && *profileId > 0 {
+		conditions = append(conditions, "profile_id = ?")
+		args = append(args, *profileId)
+	}
+
+	if len(conditions) == 0 {
+		return nil, nil
+	}
+
+	// Sử dụng OR để match phone hoặc profileId
+	query = query.Where("("+strings.Join(conditions, " OR ")+")", args...)
+
+	err := query.First(&contact).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &contact, nil
+}
+
+func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.ContactEntity, error) {
+	// Kiểm tra contact đã tồn tại chưa theo ownerId, ownerOf và (phone hoặc profileId)
+	profileIdPtr := &profileId
+	contact, err := r.getContactByOwnerAndIdentifier(c, ownerId, ownerType, phone, profileIdPtr)
+	if err != nil {
+		return nil, err
+	}
+	if contact != nil && contact.ID > 0 {
+		return r.restoreAndUpdateContact(c, contact, fullName, phone, avatar)
+	}
+
+	// Nếu không tồn tại, tạo mới
 	newContact := &domain.ContactEntity{
 		FullName:  fullName,
 		Phone:     phone,
 		Avatar:    avatar,
-		ProfileID: &profileId,
+		ProfileID: profileIdPtr,
 		OwnerID:   ownerId,
 		OwnerOf:   ownerType,
 	}
 
-	// Sử dụng ON CONFLICT để xử lý trường hợp contact đã được tạo bởi request khác đồng thời
-	// Unique constraint trên (profile_id, owner_id, owner_of) khi profile_id IS NOT NULL và deleted_at IS NULL
-	// Nếu contact đã tồn tại (conflict), cập nhật full_name, avatar, phone
-	result := r.GetDB(c).Clauses(
-		clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "profile_id"},
-				{Name: "owner_id"},
-				{Name: "owner_of"},
-			},
-			DoUpdates: clause.AssignmentColumns([]string{"full_name", "avatar", "phone"}),
-		},
-	).Create(newContact)
-
-	if result.Error != nil {
-		// Nếu lỗi unique constraint, thử get lại contact đã tồn tại
-		contact, err = r.GetByProfileID(c, profileId, ownerId, ownerType)
-		if err == nil && contact != nil && contact.ID > 0 {
-			return contact, nil
-		}
-		// Nếu vẫn lỗi, có thể do constraint chưa được định nghĩa hoặc lỗi khác
-		return nil, result.Error
-	}
-
-	// Nếu tạo thành công hoặc đã được update bởi ON CONFLICT, get lại để có đầy đủ thông tin (bao gồm ID)
-	if newContact.ID == 0 {
-		contact, err = r.GetByProfileID(c, profileId, ownerId, ownerType)
-		if err == nil && contact != nil && contact.ID > 0 {
-			return contact, nil
-		}
-		// Nếu vẫn không tìm thấy, trả về contact vừa tạo (có thể chưa có ID nếu ON CONFLICT)
-		return newContact, nil
+	err = r.GetDB(c).Create(newContact).Error
+	if err != nil {
+		return nil, err
 	}
 
 	return newContact, nil
@@ -395,6 +422,34 @@ func (r *PostgreContact) GetByPhone(c context.Context, profileId uint64, ownerTy
 		return nil, result.Error
 	}
 	return &contact, nil
+}
+
+func (r *PostgreContact) GetByPhoneIncludingDeleted(c context.Context, profileId uint64, ownerType base_enum.EOwnerOf, phone string) (*domain.ContactEntity, error) {
+	clearPhone := base_util.ClearPhone(phone)
+	var contact domain.ContactEntity
+	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+		Where("phone = ? and owner_id = ? and owner_of = ?", clearPhone, profileId, ownerType).
+		First(&contact)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &contact, nil
+}
+
+func (r *PostgreContact) Restore(c context.Context, id uint64) error {
+	result := r.GetDB(c).
+		Model(&domain.ContactEntity{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"deleted_at": nil,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func (r *PostgreContact) UpdateContactID(c context.Context, contactId uint64, leadId uint64) (*domain.ContactEntity, error) {

@@ -146,6 +146,81 @@ func (r *DealTransactionPostgresRepository) GetListByDealID(
 	return transactions, total, nil
 }
 
+func (r *DealTransactionPostgresRepository) GetListByProfileID(
+	ctx context.Context,
+	profileID uint64,
+	req dto.TxDealSearch,
+) ([]*dto.TxContractDealListResponse, int64, error) {
+	var transactions []*dto.TxContractDealListResponse
+	var total int64
+
+	db := GetDB(ctx, r.db).
+		Table("tx_contract_deals").
+		Select(`
+		tx_contract_deals.id as contract_id,
+		tx_contract_deals.deal_id,
+		txs.transaction_name AS transaction_name,
+		txs.method as method,
+		tx_contract_deals.customer_id AS customer_id,
+		txs.status as status,
+		COALESCE(SUM(tx_actions.value), 0) AS amount,
+		txs.timestamp
+	`).
+		Joins(`LEFT JOIN tx_transaction txs ON txs.id = tx_contract_deals.transaction_id`).
+		Joins(`LEFT JOIN tx_transaction_action tx_actions ON tx_actions.tx_id = txs.id`).
+		Where(`txs.from_id = ? AND tx_contract_deals.deleted_at IS NULL AND txs.deleted_at IS NULL`, profileID).
+		Group("tx_contract_deals.id, txs.method, txs.transaction_name, txs.status, txs.timestamp, tx_contract_deals.customer_id").
+		Order("tx_contract_deals.created_at DESC")
+
+	// Đếm tổng số hợp đồng (bỏ group để count)
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy dữ liệu
+	if err := db.Offset(req.GetOffset()).Limit(req.GetLimit()).Find(&transactions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return transactions, total, nil
+}
+
+func (r *DealTransactionPostgresRepository) GetListByTransactionIds(
+	ctx context.Context,
+	transactionIds []uint64,
+) ([]*dto.TxContractDealListResponse, error) {
+	if len(transactionIds) == 0 {
+		return []*dto.TxContractDealListResponse{}, nil
+	}
+
+	var transactions []*dto.TxContractDealListResponse
+
+	db := GetDB(ctx, r.db).
+		Table("tx_contract_deals").
+		Select(`
+		tx_contract_deals.id as contract_id,
+		tx_contract_deals.deal_id,
+		txs.transaction_name AS transaction_name,
+		txs.method as method,
+		tx_contract_deals.customer_id AS customer_id,
+		txs.status as status,
+		COALESCE(SUM(tx_actions.value), 0) AS amount,
+		txs.timestamp
+	`).
+		Joins(`LEFT JOIN tx_transaction txs ON txs.id = tx_contract_deals.transaction_id`).
+		Joins(`LEFT JOIN tx_transaction_action tx_actions ON tx_actions.tx_id = txs.id`).
+		Where(`tx_contract_deals.transaction_id IN ? AND tx_contract_deals.deleted_at IS NULL AND txs.deleted_at IS NULL`, transactionIds).
+		Group("tx_contract_deals.id, txs.method, txs.transaction_name, txs.status, txs.timestamp, tx_contract_deals.customer_id").
+		Order("tx_contract_deals.created_at DESC")
+
+	// Lấy dữ liệu
+	if err := db.Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
+}
+
 // GetTotalAmountByDealID calculates the total amount of all transactions for a specific deal
 func (r *DealTransactionPostgresRepository) GetTotalAmountByDealID(ctx context.Context, dealID uint64) (*dto.TxDealCostStatisticsDTO, error) {
 	type SaleRentAgg struct {

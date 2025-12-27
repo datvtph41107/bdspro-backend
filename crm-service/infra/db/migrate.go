@@ -9,7 +9,7 @@ import (
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
 		// Core CRM entities
-		// &domain.ContactEntity{},
+		&domain.ContactEntity{},
 		// &domain.LeadEntity{},
 		// &domain.LeadContactEntity{},
 
@@ -51,7 +51,7 @@ func AutoMigrate() {
 		// &domain.BudgetAlert{},
 
 		// &domain.Appointment{},
-		&domain.AppointmentParticipant{},
+		// &domain.AppointmentParticipant{},
 	// &domain.AppointmentReminder{},
 	// &domain.ContactProductEntity{},
 

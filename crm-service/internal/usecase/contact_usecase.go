@@ -338,3 +338,108 @@ func (s *ContactUsecase) SearchByPhone(c context.Context, ownerType base_enum.EO
 
 	return contact, true, nil
 }
+
+// CreateOrRestore tạo contact mới hoặc khôi phục contact đã bị xóa
+// Nếu contact đã tồn tại và đang bị xóa (deleted_at IS NOT NULL), sẽ khôi phục và cập nhật thông tin
+func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, entity.OwnerOf, entity.OwnerID)
+	if err != nil {
+		return nil, err
+	}
+	entity.OwnerID = ownerId
+
+	// Kiểm tra contact đã tồn tại chưa (bao gồm cả đã bị xóa)
+	if entity.Phone != "" {
+		existedContact, err := s.repo.GetByPhoneIncludingDeleted(c, ownerId, entity.OwnerOf, entity.Phone)
+		if err != nil {
+			return nil, err
+		}
+
+		// Nếu contact đã tồn tại và đang bị xóa, khôi phục và cập nhật
+		if existedContact != nil && existedContact.ID > 0 {
+			if existedContact.DeletedAt != nil {
+				// Khôi phục contact đã bị xóa
+				if err := s.repo.Restore(c, existedContact.ID); err != nil {
+					return nil, err
+				}
+				// Cập nhật thông tin contact
+				entity.ID = existedContact.ID
+				result, err := s.repo.Update(c, existedContact.ID, entity)
+				if err != nil {
+					return nil, err
+				}
+
+				// Xử lý tags nếu có
+				if len(entity.Tags) > 0 {
+					if err := s.tagUsecase.ReplaceContactTags(c, result.ID, entity.Tags); err != nil {
+						return nil, err
+					}
+					tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
+					result.Tags = tags
+				}
+
+				// Xử lý products nếu có
+				if len(entity.ProductIDs) > 0 {
+					if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
+						return nil, err
+					}
+				}
+
+				return result, nil
+			}
+			// Nếu contact đã tồn tại và chưa bị xóa, trả về lỗi hoặc contact hiện tại
+			return existedContact, nil
+		}
+	}
+
+	// Kiểm tra số điện thoại trong profile service
+	if entity.Phone != "" {
+		profiles, err := s.userClient.GetProfileByPhones(c, []string{entity.Phone})
+		if err == nil && len(profiles) > 0 {
+			if profile, exists := profiles[entity.Phone]; exists {
+				if profile.ProfileId == ownerId {
+					return nil, _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+				}
+				entity.ProfileID = &profile.ProfileId
+			}
+		}
+	}
+
+	// Tạo contact mới
+	result, err := s.repo.Create(c, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	// Xử lý tags nếu có
+	if len(entity.Tags) > 0 && result.ID > 0 {
+		if err := s.tagUsecase.ReplaceContactTags(c, result.ID, entity.Tags); err != nil {
+			return nil, err
+		}
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
+		result.Tags = tags
+	}
+
+	// Xử lý products nếu có
+	if len(entity.ProductIDs) > 0 && result.ID > 0 {
+		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
+			return nil, err
+		}
+	}
+
+	// Tạo thông báo khi tạo liên hệ thành công
+	go func() {
+		s.notificationClient.CreateNotification(c,
+			result.Avatar,
+			"Tạo liên hệ",
+			[]string{result.FullName},
+			_enum.NotificationContactCreate,
+			&result.ID,
+			ownerId,
+			_enum.EOwnerOfMember,
+			[]string{strconv.FormatUint(result.ID, 10)},
+		)
+	}()
+
+	return result, nil
+}

@@ -9,6 +9,7 @@ import "shared/common.proto";
 import "bdspro/product.proto";
 import "shared/v3.proto";
 import "bdspro/deal.proto";
+import "bdspro/tx_contract_deal.proto";
 
 service BdsproInternalService {
     rpc GetCountByOwner(GetCountByOwnerRequest) returns (GetCountByOwnerResponse);
@@ -17,6 +18,7 @@ service BdsproInternalService {
     rpc GetDealById(sharepb.IdRequest) returns (GroupDeal);
     rpc GetDealsByIds(sharepb.IdRequest) returns (DealsResponse);
     rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
+    rpc GetDealContractsByIds(sharepb.IdRequest) returns (DealContractListResponse);
 }
 
 message DealsResponse {

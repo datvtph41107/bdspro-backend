@@ -20,9 +20,9 @@ const (
 
 type AppointmentParticipant struct {
 	Id            uint32 `gorm:"primaryKey"`
-	AppointmentId uint32 `gorm:"index:idx_appointment_user"`
+	AppointmentId uint32 `gorm:"index:idx_appointment_user;uniqueIndex:idx_appointment_contact_unique"`
 	UserId        uint32 `gorm:"index:idx_appointment_user"`
-	ContactID     uint32 `gorm:"index:idx_appointment_contact"`
+	ContactID     uint32 `gorm:"index:idx_appointment_contact;uniqueIndex:idx_appointment_contact_unique"`
 
 	Contact  *ContactEntity               `gorm:"foreignKey:ContactID"`
 	Role     AppointmentParticipantRole   `gorm:"type:varchar(255);not null"`

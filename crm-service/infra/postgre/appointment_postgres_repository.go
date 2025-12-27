@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"crm/internal/domain"
+	"crm/internal/enums"
 	"crm/internal/repo"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type appointmentPostgresRepository struct {
@@ -29,22 +31,37 @@ func (r *appointmentPostgresRepository) Create(ctx context.Context, appointment 
 		return nil, err
 	}
 
-	// Lấy participantContactMap từ context
-	participantModels := make([]*domain.AppointmentParticipant, 0)
-	for _, participantProfileId := range appointment.ParticipantIds {
-		participantModel := &domain.AppointmentParticipant{
-			AppointmentId: appointment.Id,
-			ContactID:     uint32(participantProfileId),
-			Role:          domain.AppointmentParticipantRoleGuest,
-			Status:        domain.AppointmentParticipantStatusPending,
-			JoinedAt:      time.Now(),
+	// Tạo/cập nhật participants từ AppointmentParticipants array
+	if len(appointment.AppointmentParticipants) > 0 {
+		participantModels := make([]*domain.AppointmentParticipant, 0, len(appointment.AppointmentParticipants))
+		for _, participant := range appointment.AppointmentParticipants {
+			participant.AppointmentId = appointment.Id
+			if participant.JoinedAt.IsZero() {
+				participant.JoinedAt = time.Now()
+			}
+			participantModels = append(participantModels, &participant)
 		}
 
-		participantModels = append(participantModels, participantModel)
-	}
-
-	if len(participantModels) > 0 {
-		err = tx.Create(participantModels).Error
+		// Sử dụng upsert (ON CONFLICT) để tạo mới hoặc cập nhật
+		// Nếu record đã tồn tại (kể cả đã bị xóa), khôi phục và cập nhật
+		assignments := append(
+			clause.AssignmentColumns([]string{"role", "status", "joined_at"}),
+			clause.Assignment{
+				Column: clause.Column{Name: "deleted_at"},
+				Value:  gorm.Expr("NULL"),
+			},
+			clause.Assignment{
+				Column: clause.Column{Name: "is_deleted"},
+				Value:  gorm.Expr("false"),
+			},
+		)
+		err = tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "appointment_id"},
+				{Name: "contact_id"},
+			},
+			DoUpdates: clause.Set(assignments),
+		}).Create(participantModels).Error
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -73,35 +90,68 @@ func (r *appointmentPostgresRepository) GetByID(ctx context.Context, id uint32) 
 func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment *domain.Appointment) (*domain.Appointment, error) {
 	model := appointment
 	tx := r.db.WithContext(ctx).Begin()
-	err := tx.Save(model).Error
+
+	// Build update map to handle zero values properly
+	updateData := map[string]interface{}{
+		"title":             appointment.Title,
+		"description":       appointment.Description,
+		"start_time":        appointment.StartTime,
+		"end_time":          appointment.EndTime,
+		"mode":              appointment.Mode,
+		"place":             appointment.Place,
+		"deal_id":           appointment.DealId,
+		"product_ids":       appointment.ProductIds,
+		"reminder_schedule": appointment.ReminderSchedule,
+		"option_extend":     appointment.OptionExtend,
+		"transaction_id":    appointment.TransactionId,
+		"transaction_steps": appointment.TransactionSteps,
+	}
+
+	appointmentParticipants := appointment.AppointmentParticipants
+	appointment.AppointmentParticipants = nil
+
+	// Only update status if it's not zero value (0)
+	if appointment.Status != 0 {
+		updateData["status"] = appointment.Status
+	}
+
+	err := tx.Model(model).Where("id = ?", appointment.Id).Updates(updateData).Error
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	// Xóa participants cũ
-	if err := tx.Where("appointment_id = ? AND is_deleted = ?", appointment.Id, false).
-		Delete(&domain.AppointmentParticipant{}).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// Tạo participants mới với ContactID
-	participantModels := make([]*domain.AppointmentParticipant, 0)
-	for _, participantProfileId := range appointment.ParticipantIds {
-		participantModel := &domain.AppointmentParticipant{
-			AppointmentId: appointment.Id,
-			ContactID:     uint32(participantProfileId),
-			Role:          domain.AppointmentParticipantRoleGuest,
-			Status:        domain.AppointmentParticipantStatusPending,
-			JoinedAt:      time.Now(),
+	// Tạo/cập nhật participants từ AppointmentParticipants array
+	if len(appointmentParticipants) > 0 {
+		participantModels := make([]*domain.AppointmentParticipant, 0, len(appointmentParticipants))
+		for _, participant := range appointmentParticipants {
+			participant.AppointmentId = appointment.Id
+			if participant.JoinedAt.IsZero() {
+				participant.JoinedAt = time.Now()
+			}
+			participantModels = append(participantModels, &participant)
 		}
 
-		participantModels = append(participantModels, participantModel)
-	}
-
-	if len(participantModels) > 0 {
-		err = tx.Create(participantModels).Error
+		// Sử dụng upsert (ON CONFLICT) để tạo mới hoặc cập nhật
+		// Nếu record đã tồn tại (kể cả đã bị xóa), khôi phục và cập nhật
+		assignments := append(
+			clause.AssignmentColumns([]string{"role", "status", "joined_at"}),
+			clause.Assignment{
+				Column: clause.Column{Name: "deleted_at"},
+				Value:  gorm.Expr("NULL"),
+			},
+			clause.Assignment{
+				Column: clause.Column{Name: "is_deleted"},
+				Value:  gorm.Expr("false"),
+			},
+		)
+		err = tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "appointment_id"},
+				{Name: "contact_id"},
+			},
+			DoUpdates: clause.Set(assignments),
+		}).Create(participantModels).Error
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -147,6 +197,9 @@ func (r *appointmentPostgresRepository) List(ctx context.Context, filter map[str
 				query = query.Where("deal_id IN ?", dealIds)
 				countQuery = countQuery.Where("deal_id IN ?", dealIds)
 			}
+		} else if key == "transaction_id" {
+			query = query.Where("transaction_id = ?", value)
+			countQuery = countQuery.Where("transaction_id = ?", value)
 		} else {
 			query = query.Where(key+" = ?", value)
 			countQuery = countQuery.Where(key+" = ?", value)
@@ -225,4 +278,11 @@ func (r *appointmentPostgresRepository) GetByDealId(ctx context.Context, dealId 
 	}
 
 	return appointments, total, nil
+}
+
+func (r *appointmentPostgresRepository) UpdateStatus(ctx context.Context, id uint32, status enums.EAppointmentStatus) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Appointment{}).
+		Where("id = ? AND is_deleted = ?", id, false).
+		Update("status", status).Error
 }

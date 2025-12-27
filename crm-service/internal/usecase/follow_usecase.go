@@ -101,8 +101,8 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 		}
 
 		// Lấy thông tin contact để có targetId
-		_, err = s.contactRepo.GetByProfileID(ctxClone, followId, profileId, base_enum.EOwnerOfMember)
-		if err != nil {
+		contact, err := s.contactRepo.GetByProfileID(ctxClone, followId, profileId, base_enum.EOwnerOfMember)
+		if err != nil || contact == nil {
 			// Nếu chưa có contact thì tạo mới
 			targetUser, _ := s.userClient.GetProfileById(ctxClone, followId)
 			if targetUser != nil {

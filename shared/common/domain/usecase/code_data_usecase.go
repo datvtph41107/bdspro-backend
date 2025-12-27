@@ -48,3 +48,23 @@ func (uc *CodeDataUsecase) GetPostCodes(c context.Context, postIds []uint64) []s
 	}
 	return postCodes
 }
+
+func (uc *CodeDataUsecase) GetContractCode(c context.Context, contractId uint64) string {
+	return fmt.Sprintf("HD%06d", contractId)
+}
+
+func (uc *CodeDataUsecase) GetContractCodePtr(c context.Context, contractId *uint64) *string {
+	if contractId == nil {
+		return nil
+	}
+	code := fmt.Sprintf("HD%06d", *contractId)
+	return &code
+}
+
+func (uc *CodeDataUsecase) GetContractCodes(c context.Context, contractIds []uint64) []string {
+	contractCodes := make([]string, len(contractIds))
+	for i, contractId := range contractIds {
+		contractCodes[i] = fmt.Sprintf("HD%06d", contractId)
+	}
+	return contractCodes
+}

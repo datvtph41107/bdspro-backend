@@ -3,6 +3,8 @@ package domain
 import (
 	"time"
 
+	"crm/internal/enums"
+
 	"github.com/lib/pq"
 )
 
@@ -27,8 +29,9 @@ type Appointment struct {
 	ReminderSchedule uint32
 	Mode             uint32
 	OptionExtend     uint32
-	Status           uint32
-	TransactionIds   pq.Int64Array `gorm:"type:integer[]"`
+	Status           enums.EAppointmentStatus `gorm:"type:integer;default:10"`
+	TransactionId    uint64                   `gorm:"column:transaction_id"`
+	TransactionSteps pq.Int32Array            `gorm:"type:integer[];column:transaction_steps"`
 
 	AppointmentParticipants []AppointmentParticipant `gorm:"foreignKey:AppointmentId"`
 }

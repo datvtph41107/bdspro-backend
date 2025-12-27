@@ -201,6 +201,66 @@
         }
       }
     },
+    "bdspropbDealContractItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "contractId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbDealContractListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbDealContractItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Response cho danh sách giao dịch"
+    },
     "bdspropbDealsResponse": {
       "type": "object",
       "properties": {

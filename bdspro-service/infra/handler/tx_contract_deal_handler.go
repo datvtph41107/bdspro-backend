@@ -203,7 +203,7 @@ func (h *TxContractDealHandler) GetContracts(ctx context.Context, req *bdspropb.
 		return nil, status.Errorf(codes.Internal, "failed to get contracts: %v", err)
 	}
 
-	data := h.mapper.DealContractItemToPbs(response)
+	data := h.mapper.DealContractItemToPbs(ctx, response)
 	// todo:
 	// h.userClient.MapProfileToDealContractPbs(ctx, data)
 
@@ -252,4 +252,45 @@ func (h *TxContractDealHandler) GetStatistics(ctx context.Context, req *bdspropb
 		return nil, err
 	}
 	return h.mapper.StatisticsToPb(statistics), nil
+}
+
+// @Summary Lấy danh sách contract của user hiện tại
+// @Description Lấy danh sách contract của user hiện tại
+// @Tags Contract Deal
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int32 false "Page number" default(1)
+// @Param size query int32 false "Page size" default(20)
+// @Success 200 {object} bdspropb.DealContractListResponse "Danh sách contract của user"
+// @Failure 400 {object} status.Error "Lỗi yêu cầu không hợp lệ"
+// @Failure 500 {object} status.Error "Lỗi server"
+// @Router /contract/deal/me [get]
+func (h *TxContractDealHandler) GetMyContracts(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.DealContractListResponse, error) {
+	// Get user ID from context
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+
+	query := dto.TxDealSearch{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: uint32(req.Size),
+		},
+	}
+
+	// Get contracts
+	response, total, err := h.contractDealUsecase.GetDealContractByProfileID(ctx, userID, query)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get contracts: %v", err)
+	}
+
+	data := h.mapper.DealContractItemToPbs(ctx, response)
+	h.userClient.MapProfileToDealContractPbs(ctx, data)
+
+	return &bdspropb.DealContractListResponse{
+		Data:  data,
+		Total: int32(total),
+	}, nil
 }
