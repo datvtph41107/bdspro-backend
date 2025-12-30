@@ -1820,6 +1820,10 @@
         "isManual": {
           "type": "boolean",
           "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
         }
       },
       "title": "API cho nhóm"
@@ -1968,6 +1972,13 @@
           "format": "double"
         },
         "name": {
+          "type": "string"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
           "type": "string"
         }
       }
@@ -2972,6 +2983,13 @@
         },
         "role": {
           "$ref": "#/definitions/authpbRole"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

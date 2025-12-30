@@ -107,6 +107,7 @@ func (r *DealMemberPostgresRepository) GetByDealID(ctx context.Context, dealID u
 		// Preload("Role").
 		// Preload("Role.Color").
 		Where("deal_id = ?", dealID).
+		Order("CASE WHEN role_key = 410 THEN 0 ELSE 1 END ASC").
 		Order("created_at desc").
 		Offset(offset).
 		Limit(size).

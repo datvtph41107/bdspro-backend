@@ -3401,6 +3401,13 @@
         },
         "role": {
           "$ref": "#/definitions/authpbRole"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

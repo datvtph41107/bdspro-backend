@@ -160,6 +160,14 @@ message ListAppointmentsRequest {
   optional int32 page = 6;
   optional int32 size = 7;
   optional uint64 transactionId = 8;
+  optional string sort = 9; // Format: "field,order" ví dụ: "startTime,desc" hoặc "startTime,asc"
+  string participantIds = 10; // Filter theo user IDs của participants
+  optional string fromDate = 11; // Filter từ ngày (start_time >= fromDate)
+  optional string toDate = 12; // Filter đến ngày (start_time <= toDate)
+  optional bool containProduct = 13; // Filter theo có product (true = có, false = không có)
+  optional bool containDeal = 14; // Filter theo có deal (true = có, false = không có)
+  optional bool containTransaction = 15; // Filter theo có transaction (true = có, false = không có)
+  optional string statusFilters = 16; // Filter theo status (format: "10,20" - parse thành []int32)
 }
 
 message ListAppointmentsResponse {
@@ -175,6 +183,7 @@ message AdminListAppointmentsRequest {
   optional uint32 createdBy = 5;
   optional int32 page = 6;
   optional int32 size = 7;
+  optional string sort = 8; // Format: "field,order" ví dụ: "startTime,desc" hoặc "startTime,asc"
 }
 
 message AdminListAppointmentsResponse {

@@ -67,8 +67,9 @@ type dealUsecase struct {
 	transactionClient provider.TransactionProvider
 	userClient        provider.IUserProvider
 	// bdsproAuthUsecase OrganizationAuthUsecase
-	dealOfBranchRepo repo.DealOfBranchRepo
-	dealCostRepo     repo.TxDealCostRepository
+	dealOfBranchRepo    repo.DealOfBranchRepo
+	dealCostRepo        repo.TxDealCostRepository
+	dealTransactionRepo repo.TxContractDealRepository
 }
 
 func NewDealUsecase(
@@ -86,6 +87,7 @@ func NewDealUsecase(
 	// bdsproAuthUsecase OrganizationAuthUsecase,
 	dealOfBranchRepo repo.DealOfBranchRepo,
 	dealCostRepo repo.TxDealCostRepository,
+	dealTransactionRepo repo.TxContractDealRepository,
 ) DealUsecase {
 	return &dealUsecase{
 		dealRepository:        dealRepository,
@@ -100,7 +102,9 @@ func NewDealUsecase(
 		dealMemberRepository: dealMemberRepository,
 		userClient:           userClient,
 		// bdsproAuthUsecase:    bdsproAuthUsecase,
-		dealOfBranchRepo: dealOfBranchRepo,
+		dealOfBranchRepo:    dealOfBranchRepo,
+		dealCostRepo:        dealCostRepo,
+		dealTransactionRepo: dealTransactionRepo,
 	}
 }
 
@@ -506,6 +510,16 @@ func (u *dealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error {
 
 	if deal == nil {
 		return errors.New("deal not found")
+	}
+
+	// Kiểm tra xem deal có transaction hay không
+	_, total, err := u.dealTransactionRepo.GetByDealID(ctx, id, nil, 1, 1)
+	if err != nil {
+		return fmt.Errorf("lỗi khi kiểm tra giao dịch: %v", err)
+	}
+
+	if total > 0 {
+		return errors.New("không thể xóa thương vụ vì đã tồn tại giao dịch")
 	}
 
 	// currentUserId := _utils.GetProfileIdWithContext(ctx)

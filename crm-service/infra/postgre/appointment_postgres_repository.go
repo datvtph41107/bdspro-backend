@@ -3,6 +3,8 @@ package postgre
 import (
 	_dto "common/domain/dto"
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"crm/internal/domain"
@@ -45,8 +47,9 @@ func (r *appointmentPostgresRepository) Create(ctx context.Context, appointment 
 
 		// Sử dụng upsert (ON CONFLICT) để tạo mới hoặc cập nhật
 		// Nếu record đã tồn tại (kể cả đã bị xóa), khôi phục và cập nhật
+		// Sử dụng (appointment_id, user_id) thay vì (appointment_id, contact_id) vì không dùng contact nữa
 		assignments := append(
-			clause.AssignmentColumns([]string{"role", "status", "joined_at"}),
+			clause.AssignmentColumns([]string{"role", "status", "joined_at", "contact_id"}),
 			clause.Assignment{
 				Column: clause.Column{Name: "deleted_at"},
 				Value:  gorm.Expr("NULL"),
@@ -59,7 +62,7 @@ func (r *appointmentPostgresRepository) Create(ctx context.Context, appointment 
 		err = tx.Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "appointment_id"},
-				{Name: "contact_id"},
+				{Name: "user_id"},
 			},
 			DoUpdates: clause.Set(assignments),
 		}).Create(participantModels).Error
@@ -122,21 +125,23 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 		return nil, err
 	}
 
-	// Tạo/cập nhật participants từ AppointmentParticipants array
+	// Xử lý participants: chỉ cập nhật/thêm/xóa khi cần
 	if len(appointmentParticipants) > 0 {
 		participantModels := make([]*domain.AppointmentParticipant, 0, len(appointmentParticipants))
+		userIdsInNewList := make(map[uint32]bool)
+
 		for _, participant := range appointmentParticipants {
 			participant.AppointmentId = appointment.Id
 			if participant.JoinedAt.IsZero() {
 				participant.JoinedAt = time.Now()
 			}
 			participantModels = append(participantModels, &participant)
+			userIdsInNewList[participant.UserId] = true
 		}
 
-		// Sử dụng upsert (ON CONFLICT) để tạo mới hoặc cập nhật
-		// Nếu record đã tồn tại (kể cả đã bị xóa), khôi phục và cập nhật
+		// Sử dụng upsert (ON CONFLICT) để cập nhật hoặc thêm mới participants
 		assignments := append(
-			clause.AssignmentColumns([]string{"role", "status", "joined_at"}),
+			clause.AssignmentColumns([]string{"role", "status", "joined_at", "contact_id"}),
 			clause.Assignment{
 				Column: clause.Column{Name: "deleted_at"},
 				Value:  gorm.Expr("NULL"),
@@ -149,10 +154,39 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 		err = tx.Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "appointment_id"},
-				{Name: "contact_id"},
+				{Name: "user_id"},
 			},
 			DoUpdates: clause.Set(assignments),
 		}).Create(participantModels).Error
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		// Xóa soft delete những participants không còn trong danh sách mới
+		if len(userIdsInNewList) > 0 {
+			userIds := make([]uint32, 0, len(userIdsInNewList))
+			for userId := range userIdsInNewList {
+				userIds = append(userIds, userId)
+			}
+			err = tx.Where("appointment_id = ? AND user_id NOT IN ? AND is_deleted = ?",
+				appointment.Id, userIds, false).
+				Updates(map[string]interface{}{
+					"is_deleted": true,
+					"deleted_at": time.Now(),
+				}).Error
+			if err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+		}
+	} else {
+		// Nếu danh sách mới rỗng, xóa soft delete tất cả participants cũ
+		err = tx.Where("appointment_id = ? AND is_deleted = ?", appointment.Id, false).
+			Updates(map[string]interface{}{
+				"is_deleted": true,
+				"deleted_at": time.Now(),
+			}).Error
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -185,27 +219,142 @@ func (r *appointmentPostgresRepository) List(ctx context.Context, profileId uint
 	var query *gorm.DB
 	var countQuery *gorm.DB
 
-	// Query từ bảng participant, join sang appointment
+	// Query appointments mà user hiện tại là participant
+	// Sử dụng DISTINCT để tránh duplicate khi có nhiều participants match
 	query = r.db.WithContext(ctx).
-		Table("appointment_participants").
-		Select("appointments.*").
-		Joins("INNER JOIN appointments ON appointment_participants.appointment_id = appointments.id").
-		Where("appointment_participants.user_id = ?", profileId).
-		Where("appointment_participants.is_deleted = ?", false).
-		Where("appointments.is_deleted = ?", false)
+		Table("appointments").
+		Select("DISTINCT appointments.*").
+		Joins("INNER JOIN appointment_participants ap1 ON ap1.appointment_id = appointments.id").
+		Where("ap1.user_id = ?", profileId).
+		Where("ap1.deleted_at IS NULL").
+		Where("appointments.deleted_at IS NULL")
 
+	// Count query: build giống query chính, nhưng chỉ select DISTINCT appointments.id
 	countQuery = r.db.WithContext(ctx).
-		Table("appointment_participants").
-		Joins("INNER JOIN appointments ON appointment_participants.appointment_id = appointments.id").
-		Where("appointment_participants.user_id = ?", profileId).
-		Where("appointment_participants.is_deleted = ?", false).
-		Where("appointments.is_deleted = ?", false)
+		Table("appointments").
+		Select("DISTINCT appointments.id").
+		Joins("INNER JOIN appointment_participants ap1 ON ap1.appointment_id = appointments.id").
+		Where("ap1.user_id = ?", profileId).
+		Where("ap1.deleted_at IS NULL").
+		Where("appointments.deleted_at IS NULL")
 
-	// Áp dụng các filter khác với prefix "appointments."
-	for key, value := range filter {
-		query = query.Where("appointments."+key+" = ?", value)
-		countQuery = countQuery.Where("appointments."+key+" = ?", value)
+	// Áp dụng filter participantIds: chỉ lấy appointments có participant với user_id trong danh sách
+	if participantIds, ok := filter["participant_ids"].([]int64); ok && len(participantIds) > 0 {
+		// Convert []int64 sang []uint32 cho user_id
+		participantIdsUint32 := make([]uint32, len(participantIds))
+		for i, id := range participantIds {
+			participantIdsUint32[i] = uint32(id)
+		}
+		// Filter appointments mà có participant với user_id trong danh sách participantIds
+		query = query.Where("EXISTS (SELECT 1 FROM appointment_participants ap2 WHERE ap2.appointment_id = appointments.id AND ap2.user_id IN ? AND ap2.deleted_at IS NULL)", participantIdsUint32)
+		countQuery = countQuery.Where("EXISTS (SELECT 1 FROM appointment_participants ap2 WHERE ap2.appointment_id = appointments.id AND ap2.user_id IN ? AND ap2.deleted_at IS NULL)", participantIdsUint32)
 	}
+
+	if fromDate, ok := filter["from_date"].(string); ok && fromDate != "" {
+		// fromDate là string format YYYY-MM-DD, so sánh DATE với DATE
+		query = query.Where("DATE(appointments.start_time) >= DATE(?)", fromDate)
+		countQuery = countQuery.Where("DATE(appointments.start_time) >= DATE(?)", fromDate)
+	}
+
+	if toDate, ok := filter["to_date"].(string); ok && toDate != "" {
+		// toDate là string format YYYY-MM-DD, so sánh DATE với DATE
+		query = query.Where("DATE(appointments.start_time) <= DATE(?)", toDate)
+		countQuery = countQuery.Where("DATE(appointments.start_time) <= DATE(?)", toDate)
+	}
+
+	// Filter theo contain: check NOT NULL cho product_ids, deal_id, transaction_id
+	if containProduct, ok := filter["contain_product"].(bool); ok {
+		if containProduct {
+			query = query.Where("appointments.product_ids IS NOT NULL AND array_length(appointments.product_ids, 1) > 0")
+			countQuery = countQuery.Where("appointments.product_ids IS NOT NULL AND array_length(appointments.product_ids, 1) > 0")
+		} else {
+			query = query.Where("(appointments.product_ids IS NULL OR array_length(appointments.product_ids, 1) = 0)")
+			countQuery = countQuery.Where("(appointments.product_ids IS NULL OR array_length(appointments.product_ids, 1) = 0)")
+		}
+	}
+
+	if containDeal, ok := filter["contain_deal"].(bool); ok {
+		if containDeal {
+			query = query.Where("appointments.deal_id IS NOT NULL AND appointments.deal_id > 0")
+			countQuery = countQuery.Where("appointments.deal_id IS NOT NULL AND appointments.deal_id > 0")
+		} else {
+			query = query.Where("(appointments.deal_id IS NULL OR appointments.deal_id = 0)")
+			countQuery = countQuery.Where("(appointments.deal_id IS NULL OR appointments.deal_id = 0)")
+		}
+	}
+
+	if containTransaction, ok := filter["contain_transaction"].(bool); ok {
+		if containTransaction {
+			query = query.Where("appointments.transaction_id IS NOT NULL AND appointments.transaction_id > 0")
+			countQuery = countQuery.Where("appointments.transaction_id IS NOT NULL AND appointments.transaction_id > 0")
+		} else {
+			query = query.Where("(appointments.transaction_id IS NULL OR appointments.transaction_id = 0)")
+			countQuery = countQuery.Where("(appointments.transaction_id IS NULL OR appointments.transaction_id = 0)")
+		}
+	}
+
+	// Filter status: nếu có nhiều status, dùng IN
+	if statusArray, ok := filter["status_filters"].([]int64); ok && len(statusArray) > 0 {
+		query = query.Where("appointments.status IN (?)", statusArray)
+		countQuery = countQuery.Where("appointments.status IN (?)", statusArray)
+	}
+
+	// Áp dụng các filter khác với prefix "appointments." (title, deal_ids, transaction_id)
+	filterKeysToSkip := map[string]bool{
+		"participant_ids":     true,
+		"from_date":           true,
+		"to_date":             true,
+		"contain_product":     true,
+		"contain_deal":        true,
+		"contain_transaction": true,
+		"status_filters":      true, // Đã xử lý riêng ở trên
+	}
+	for key, value := range filter {
+		if filterKeysToSkip[key] {
+			continue
+		}
+		if key == "deal_ids" {
+			if dealIds, ok := value.([]uint32); ok && len(dealIds) > 0 {
+				query = query.Where("appointments.deal_id IN ?", dealIds)
+				countQuery = countQuery.Where("appointments.deal_id IN ?", dealIds)
+			}
+		} else {
+			query = query.Where("appointments."+key+" = ?", value)
+			countQuery = countQuery.Where("appointments."+key+" = ?", value)
+		}
+	}
+
+	// Áp dụng sort (format: "field,order" ví dụ: "startTime,desc")
+	sortField := "start_time" // Mặc định sort theo start_time
+	sortOrder := "DESC"       // Mặc định giảm dần (mới nhất trước)
+
+	if pagable.Sort != "" {
+		parts := strings.Split(pagable.Sort, ",")
+		if len(parts) == 2 {
+			field := strings.TrimSpace(parts[0])
+			order := strings.TrimSpace(strings.ToLower(parts[1]))
+
+			// Map field name từ camelCase sang snake_case
+			if field == "startTime" {
+				sortField = "start_time"
+			} else if field == "createdAt" {
+				sortField = "created_at"
+			} else if field == "updatedAt" {
+				sortField = "updated_at"
+			} else {
+				sortField = field
+			}
+
+			// Validate order
+			if order == "asc" {
+				sortOrder = "ASC"
+			} else if order == "desc" {
+				sortOrder = "DESC"
+			}
+		}
+	}
+
+	query = query.Order(fmt.Sprintf("appointments.%s %s", sortField, sortOrder))
 
 	// Áp dụng pagination và lấy dữ liệu
 	err := query.Offset(pagable.GetOffset()).Limit(pagable.GetLimit()).Scan(&appointments).Error
@@ -244,9 +393,11 @@ func (r *appointmentPostgresRepository) List(ctx context.Context, profileId uint
 		appointmentsEntities = append(appointmentsEntities, appointment)
 	}
 
-	// Đếm tổng số records
+	// Đếm tổng số records: wrap countQuery trong subquery để đếm DISTINCT appointments.id
 	var count int64
-	err = countQuery.Count(&count).Error
+	err = r.db.WithContext(ctx).
+		Table("(?) AS distinct_appointments", countQuery).
+		Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}

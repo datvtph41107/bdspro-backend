@@ -44,6 +44,8 @@ type Deal struct {
 	OnlyOwnerGetCommission  bool
 	InternalNote            string
 	AllowManualInput        bool
+	Description             string            `gorm:"column:description;type:text"`
+	ShareVisibility         enums.EVisibility `gorm:"column:share_visibility;default:10"` // Phạm vi chia sẻ
 }
 
 func (d *Deal) TableName() string {

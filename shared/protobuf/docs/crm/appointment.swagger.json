@@ -90,6 +90,62 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "sort",
+            "description": "Format: \"field,order\" ví dụ: \"startTime,desc\" hoặc \"startTime,asc\"",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "participantIds",
+            "description": "Filter theo user IDs của participants",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "fromDate",
+            "description": "Filter từ ngày (start_time \u003e= fromDate)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "description": "Filter đến ngày (start_time \u003c= toDate)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "containProduct",
+            "description": "Filter theo có product (true = có, false = không có)",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "containDeal",
+            "description": "Filter theo có deal (true = có, false = không có)",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "containTransaction",
+            "description": "Filter theo có transaction (true = có, false = không có)",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "statusFilters",
+            "description": "Filter theo status (format: \"10,20\" - parse thành []int32)",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -190,6 +246,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "sort",
+            "description": "Format: \"field,order\" ví dụ: \"startTime,desc\" hoặc \"startTime,asc\"",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1079,6 +1142,13 @@
         },
         "role": {
           "$ref": "#/definitions/authpbRole"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

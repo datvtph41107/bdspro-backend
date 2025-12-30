@@ -302,6 +302,8 @@ message UpdateGroupDealRequest {
     string name = 2;
     double amount = 3;
     uint32 status = 4;
+    uint32 shareVisibility = 5;
+    string description = 6;
 }
 
 message UpdateGroupDealResponse {
@@ -399,6 +401,8 @@ message GroupDeal {
     optional sharepb.ProfileItem chargePerson = 33;
     string code = 34;
     optional authpb.Role role = 35;
+    uint32 shareVisibility = 36;
+    string description = 37;
 }
 
 message DocumentItem {
@@ -610,6 +614,7 @@ message CreateGroupDealV2Request {
     uint64 groupId = 13;
     bool isUnilateral = 14;  // Đơn phương (gỡ khỏi thương vụ)
     bool isManual = 15;      // Nhập tay (dành cho doanh thu)
+    uint32 shareVisibility = 16;
 }
 
 message CreateGroupDealV2Response {
@@ -639,6 +644,8 @@ message UpdateDealSettingRequest {
     uint64 bankId = 14;
     double targetProfit = 15;
     string name = 16;
+    uint32 shareVisibility = 17;
+    string description = 18;
 }
 
 message UpdateDealSettingResponse {

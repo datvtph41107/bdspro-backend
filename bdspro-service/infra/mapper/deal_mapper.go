@@ -150,6 +150,8 @@ func (t *groupDealTransformer) CreateGroupDealV2RequestToEntity(request *bdsprop
 		ChargePersonID: &request.ChargePersonId,
 		IsUnilateral:   request.IsUnilateral,
 		IsManual:       request.IsManual,
+
+		ShareVisibility: enums.EVisibility(request.ShareVisibility),
 	}
 
 	if request.BankAccount != nil {
@@ -290,6 +292,8 @@ func (t *groupDealTransformer) EntityToDealDetailResponse(deal *domain.Deal) *bd
 		MemberCanAddTransaction: deal.MemberCanAddTransaction,
 		OnlyOwnerGetCommission:  deal.OnlyOwnerGetCommission,
 		InternalNote:            deal.InternalNote,
+		Description:             deal.Description,
+		ShareVisibility:         uint32(deal.ShareVisibility),
 		Code:                    utils.GenerateDealCode(deal.ID),
 		CreatedAt:               _utils.FormatTimeToString(deal.CreatedAt),
 	}

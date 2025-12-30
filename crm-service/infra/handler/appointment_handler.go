@@ -2,6 +2,7 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
@@ -145,6 +146,14 @@ func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *crmpb.D
 // @Param transactionId query uint64 false "ID giao dịch"
 // @Param page query int32 false "Trang"
 // @Param size query int32 false "Kích thước trang"
+// @Param sort query string false "Sắp xếp: 'startTime,asc' (tăng dần) hoặc 'startTime,desc' (giảm dần, mặc định)"
+// @Param participantIds query []uint32 false "Danh sách user IDs của participants"
+// @Param fromDate query string false "Lọc từ ngày (format: YYYY-MM-DD)"
+// @Param toDate query string false "Lọc đến ngày (format: YYYY-MM-DD)"
+// @Param containProduct query bool false "Lọc theo có product (true = có, false = không có)"
+// @Param containDeal query bool false "Lọc theo có deal (true = có, false = không có)"
+// @Param containTransaction query bool false "Lọc theo có transaction (true = có, false = không có)"
+// @Param statusFilter query string false "Lọc theo status (format: '10,20' - parse thành []int32)"
 // @Security BearerAuth
 // @Success 200 {object} crmpb.ListAppointmentsResponse "Thành công"
 // @Router /v2.1/appointment [get]
@@ -159,6 +168,9 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 	}
 	if req.Size != nil {
 		pagable.Size = uint32(*req.Size)
+	}
+	if req.Sort != nil && *req.Sort != "" {
+		pagable.Sort = *req.Sort
 	}
 
 	// Build filter từ request
@@ -177,6 +189,32 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 	}
 	if req.TransactionId != nil && *req.TransactionId > 0 {
 		filter["transaction_id"] = *req.TransactionId
+	}
+	if len(req.ParticipantIds) > 0 {
+		filter["participant_ids"] = _utils.ParseInt64Array(req.ParticipantIds)
+	}
+	if req.FromDate != nil && *req.FromDate != "" {
+		// Giữ nguyên string format YYYY-MM-DD để query DATE trực tiếp
+		filter["from_date"] = *req.FromDate
+	}
+	if req.ToDate != nil && *req.ToDate != "" {
+		// Giữ nguyên string format YYYY-MM-DD để query DATE trực tiếp
+		filter["to_date"] = *req.ToDate
+	}
+	if req.ContainProduct != nil {
+		filter["contain_product"] = *req.ContainProduct
+	}
+	if req.ContainDeal != nil {
+		filter["contain_deal"] = *req.ContainDeal
+	}
+	if req.ContainTransaction != nil {
+		filter["contain_transaction"] = *req.ContainTransaction
+	}
+	if req.StatusFilters != nil && *req.StatusFilters != "" {
+		statusArray := _utils.ParseInt64Array(*req.StatusFilters)
+		if len(statusArray) > 0 {
+			filter["status_filters"] = statusArray
+		}
 	}
 
 	appointments, total, err := h.AppointmentUsecase.ListAppointments(ctx, filter, pagable)
@@ -199,6 +237,7 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 // @Param createdBy query uint32 false "Lọc theo người tạo"
 // @Param page query int32 false "Trang"
 // @Param size query int32 false "Kích thước trang"
+// @Param sort query string false "Sắp xếp: 'startTime,asc' (tăng dần) hoặc 'startTime,desc' (giảm dần, mặc định)"
 // @Security BearerAuth
 // @Success 200 {object} crmpb.AdminListAppointmentsResponse "Thành công"
 // @Router /v2/admin/appointment [get]
@@ -213,6 +252,9 @@ func (h *AppointmentHandler) AdminListAppointments(ctx context.Context, req *crm
 			Page: uint32(*req.Page),
 			Size: uint32(*req.Size),
 		}
+	}
+	if req.Sort != nil && *req.Sort != "" {
+		pagable.Sort = *req.Sort
 	}
 
 	// Build filter từ request

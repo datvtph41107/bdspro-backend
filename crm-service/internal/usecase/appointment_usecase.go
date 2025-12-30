@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	base_enum "base/enum"
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
@@ -54,92 +53,71 @@ func NewAppointmentUsecase(
 	}
 }
 
+// uniqueUserIds loại bỏ các userId trùng lặp và trả về danh sách unique
+func (uc *appointmentUsecase) uniqueUserIds(userIds []uint64) []uint64 {
+	seen := make(map[uint64]bool)
+	unique := make([]uint64, 0)
+
+	for _, id := range userIds {
+		if id > 0 && !seen[id] {
+			seen[id] = true
+			unique = append(unique, id)
+		}
+	}
+
+	return unique
+}
+
 func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment *domain.Appointment) (*domain.Appointment, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
 		return nil, fmt.Errorf("profileId not found in context")
 	}
 
-	// Kiểm tra xem user request đã có trong danh sách participants chưa
-	userRequestExists := false
-	for _, participant := range appointment.AppointmentParticipants {
-		if uint64(participant.UserId) == profileId {
-			userRequestExists = true
-			break
+	// Lấy danh sách participantIds từ appointment
+	participantIds := make([]uint64, 0)
+	if appointment.ParticipantIds != nil {
+		for _, id := range appointment.ParticipantIds {
+			if id > 0 {
+				participantIds = append(participantIds, uint64(id))
+			}
 		}
 	}
 
-	// Nếu chưa có, tự động thêm user request vào danh sách participants với role "host"
-	if !userRequestExists {
-		// Tìm hoặc tạo contact cho user request
-		contact, err := uc.contactRepo.GetByProfileID(ctx, profileId, profileId, base_enum.EOwnerOfMember)
-		var contactID uint32
-		if err != nil || contact == nil || contact.ID == 0 {
-			// Nếu chưa có, tạo mới
-			profileIdPtr := profileId
-			newContact := &domain.ContactEntity{
-				ProfileID: &profileIdPtr,
-				OwnerID:   profileId,
-				OwnerOf:   base_enum.EOwnerOfMember,
-			}
-			createdContact, err := uc.contactRepo.Create(ctx, newContact)
-			if err != nil {
-				// Nếu conflict, thử get lại
-				if contact, getErr := uc.contactRepo.GetByProfileID(ctx, profileId, profileId, base_enum.EOwnerOfMember); getErr == nil && contact != nil && contact.ID > 0 {
-					contactID = uint32(contact.ID)
-				}
-			} else if createdContact != nil && createdContact.ID > 0 {
-				contactID = uint32(createdContact.ID)
-			}
-		} else {
-			contactID = uint32(contact.ID)
+	// Thêm userId của user request vào danh sách
+	participantIds = append(participantIds, profileId)
+
+	// Loại bỏ trùng lặp và unique danh sách
+	participantIds = uc.uniqueUserIds(participantIds)
+
+	// Tạo lại AppointmentParticipants từ danh sách userId đã unique
+	appointmentParticipants := make([]domain.AppointmentParticipant, 0, len(participantIds))
+	for _, userId := range participantIds {
+		role := domain.AppointmentParticipantRoleGuest
+		status := domain.AppointmentParticipantStatusPending
+
+		// User request sẽ có role "host" và status "confirmed"
+		if userId == profileId {
+			role = domain.AppointmentParticipantRoleHost
+			status = domain.AppointmentParticipantStatusConfirmed
 		}
 
-		// Thêm user request vào danh sách participants
-		appointment.AppointmentParticipants = append(appointment.AppointmentParticipants, domain.AppointmentParticipant{
-			UserId:    uint32(profileId),
-			ContactID: contactID,
-			Role:      domain.AppointmentParticipantRoleHost,
-			Status:    domain.AppointmentParticipantStatusConfirmed,
+		appointmentParticipants = append(appointmentParticipants, domain.AppointmentParticipant{
+			UserId:    uint32(userId),
+			ContactID: nil, // Không dùng contact nữa
+			Role:      role,
+			Status:    status,
 		})
 	}
 
-	// Tạo/cập nhật Contact cho mỗi participant nếu cần
-	for i := range appointment.AppointmentParticipants {
-		participant := &appointment.AppointmentParticipants[i]
-
-		// Nếu đã có ContactID, bỏ qua
-		if participant.ContactID > 0 {
-			continue
-		}
-
-		// Nếu có UserId (profileId), tìm hoặc tạo contact
-		if participant.UserId > 0 {
-			contact, err := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember)
-			if err != nil || contact == nil || contact.ID == 0 {
-				// Nếu chưa có, tạo mới
-				profileIdPtr := uint64(participant.UserId)
-				newContact := &domain.ContactEntity{
-					ProfileID: &profileIdPtr,
-					OwnerID:   profileId,
-					OwnerOf:   base_enum.EOwnerOfMember,
-				}
-				createdContact, err := uc.contactRepo.Create(ctx, newContact)
-				if err != nil {
-					// Nếu conflict, thử get lại
-					if contact, getErr := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember); getErr == nil && contact != nil && contact.ID > 0 {
-						participant.ContactID = uint32(contact.ID)
-					}
-					continue
-				}
-				if createdContact != nil && createdContact.ID > 0 {
-					participant.ContactID = uint32(createdContact.ID)
-				}
-			} else {
-				participant.ContactID = uint32(contact.ID)
-			}
-		}
+	// Cập nhật lại ParticipantIds và AppointmentParticipants
+	// Convert []uint64 sang pq.Int64Array
+	participantIdsInt64 := make([]int64, len(participantIds))
+	for i, id := range participantIds {
+		participantIdsInt64[i] = int64(id)
 	}
+	appointment.ParticipantIds = participantIdsInt64
+	appointment.AppointmentParticipants = appointmentParticipants
 
 	appointment, err := uc.appointmentRepo.Create(ctx, appointment)
 	if err != nil {
@@ -162,42 +140,50 @@ func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment
 		return nil, fmt.Errorf("profileId not found in context")
 	}
 
-	// Tạo/cập nhật Contact cho mỗi participant nếu cần
-	for i := range appointment.AppointmentParticipants {
-		participant := &appointment.AppointmentParticipants[i]
-
-		// Nếu đã có ContactID, bỏ qua
-		if participant.ContactID > 0 {
-			continue
-		}
-
-		// Nếu có UserId (profileId), tìm hoặc tạo contact
-		if participant.UserId > 0 {
-			contact, err := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember)
-			if err != nil || contact == nil || contact.ID == 0 {
-				// Nếu chưa có, tạo mới
-				profileIdPtr := uint64(participant.UserId)
-				newContact := &domain.ContactEntity{
-					ProfileID: &profileIdPtr,
-					OwnerID:   profileId,
-					OwnerOf:   base_enum.EOwnerOfMember,
-				}
-				createdContact, err := uc.contactRepo.Create(ctx, newContact)
-				if err != nil {
-					// Nếu conflict, thử get lại
-					if contact, getErr := uc.contactRepo.GetByProfileID(ctx, uint64(participant.UserId), profileId, base_enum.EOwnerOfMember); getErr == nil && contact != nil && contact.ID > 0 {
-						participant.ContactID = uint32(contact.ID)
-					}
-					continue
-				}
-				if createdContact != nil && createdContact.ID > 0 {
-					participant.ContactID = uint32(createdContact.ID)
-				}
-			} else {
-				participant.ContactID = uint32(contact.ID)
+	// Lấy danh sách participantIds từ appointment
+	participantIds := make([]uint64, 0)
+	if appointment.ParticipantIds != nil {
+		for _, id := range appointment.ParticipantIds {
+			if id > 0 {
+				participantIds = append(participantIds, uint64(id))
 			}
 		}
 	}
+
+	// Thêm userId của user request vào danh sách
+	participantIds = append(participantIds, profileId)
+
+	// Loại bỏ trùng lặp và unique danh sách
+	participantIds = uc.uniqueUserIds(participantIds)
+
+	// Tạo lại AppointmentParticipants từ danh sách userId đã unique
+	appointmentParticipants := make([]domain.AppointmentParticipant, 0, len(participantIds))
+	for _, userId := range participantIds {
+		role := domain.AppointmentParticipantRoleGuest
+		status := domain.AppointmentParticipantStatusPending
+
+		// User request sẽ có role "host" và status "confirmed"
+		if userId == profileId {
+			role = domain.AppointmentParticipantRoleHost
+			status = domain.AppointmentParticipantStatusConfirmed
+		}
+
+		appointmentParticipants = append(appointmentParticipants, domain.AppointmentParticipant{
+			UserId:    uint32(userId),
+			ContactID: nil, // Không dùng contact nữa
+			Role:      role,
+			Status:    status,
+		})
+	}
+
+	// Cập nhật lại ParticipantIds và AppointmentParticipants
+	// Convert []uint64 sang pq.Int64Array
+	participantIdsInt64 := make([]int64, len(participantIds))
+	for i, id := range participantIds {
+		participantIdsInt64[i] = int64(id)
+	}
+	appointment.ParticipantIds = participantIdsInt64
+	appointment.AppointmentParticipants = appointmentParticipants
 
 	appointment, err := uc.appointmentRepo.Update(ctx, appointment)
 	if err != nil {
@@ -489,16 +475,9 @@ func (uc *appointmentUsecase) mapAppointmentDTO(ctx context.Context, appointment
 		}
 		if res.participantsMap != nil {
 			for _, participant := range appointment.AppointmentParticipants {
-				if participant.Contact != nil && participant.Contact.ProfileID != nil {
-					if participantItem, ok := res.participantsMap[*participant.Contact.ProfileID]; ok {
+				if participant.UserId != 0 {
+					if participantItem, ok := res.participantsMap[uint64(participant.UserId)]; ok && participantItem != nil {
 						participants = append(participants, participantItem)
-					} else {
-						participants = append(participants, &sharepb.ProfileItem{
-							Id:       *participant.Contact.ProfileID,
-							FullName: participant.Contact.FullName,
-							Avatar:   participant.Contact.Avatar,
-							Phone:    participant.Contact.Phone,
-						})
 					}
 				}
 			}
