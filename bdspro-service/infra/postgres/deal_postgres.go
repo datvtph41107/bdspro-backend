@@ -320,6 +320,8 @@ func (r *DealPostgresRepository) UpdateSetting(ctx context.Context, id uint64, s
 				"bank_account_id":            bankAccount.ID,
 				"name":                       setting.Name,
 				"target_profit":              setting.TargetProfit,
+				"share_visibility":           setting.ShareVisibility,
+				"description":                setting.Description,
 				// "owner_id":                   setting.OwnerId,
 			}).Error
 		if err != nil {

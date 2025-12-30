@@ -72,6 +72,9 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *bdspropb.
 		IsManual:       request.IsManual,
 		FromDate:       _utils.ParseStringToTime(request.FromDate),
 		ToDate:         _utils.ParseStringToTime(request.ToDate),
+		Description:    request.Description,
+
+		ShareVisibility: enums.EVisibility(request.ShareVisibility),
 	}
 
 	if request.BankAccount != nil {

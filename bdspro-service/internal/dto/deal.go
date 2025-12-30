@@ -22,6 +22,8 @@ type DealSetting struct {
 	BankId                  uint64
 	AllowManualInput        bool
 	TargetProfit            float64
+	ShareVisibility         enums.EVisibility
+	Description             string
 }
 
 type SummaryRequest struct {

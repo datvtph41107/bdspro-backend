@@ -291,6 +291,8 @@ message CreateGroupDealRequest {
     uint32 ownerType = 19;
     string fromDate = 20;
     string toDate = 21; 
+    string description = 22;
+    uint32 shareVisibility = 23;
 }
 
 message CreateGroupDealResponse {

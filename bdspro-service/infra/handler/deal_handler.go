@@ -516,6 +516,8 @@ func (h *DealHandler) UpdateDealSetting(ctx context.Context, req *bdspropb.Updat
 		BankId:                  req.BankId,
 		TargetProfit:            req.TargetProfit,
 		Name:                    req.Name,
+		ShareVisibility:         enums.EVisibility(req.ShareVisibility),
+		Description:             req.Description,
 	}
 	err := h.DealUsecase.UpdateDealSetting(ctx, uint64(req.DealId), dto)
 	if err != nil {

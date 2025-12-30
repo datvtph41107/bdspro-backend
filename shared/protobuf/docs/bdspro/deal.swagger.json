@@ -1996,6 +1996,13 @@
         "status": {
           "type": "integer",
           "format": "int64"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -2482,6 +2489,13 @@
         },
         "toDate": {
           "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "shareVisibility": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
