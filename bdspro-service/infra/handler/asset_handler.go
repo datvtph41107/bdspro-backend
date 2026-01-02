@@ -48,8 +48,7 @@ func (s *AssetService) SearchInternal(ctx context.Context, req *bdspropb.AssetSe
 		return nil, err
 	}
 
-	assets := make([]*bdspropb.Asset, 0)
-	copier.Copy(&assets, &result)
+	assets := s.Mapper.MapAssetListPbList(result)
 
 	return &bdspropb.AssetSearchResponse{
 		Data:  assets,
@@ -74,8 +73,7 @@ func (s *AssetService) SearchShare(ctx context.Context, req *bdspropb.AssetSearc
 		return nil, err
 	}
 
-	assets := make([]*bdspropb.Asset, 0)
-	copier.Copy(&assets, &result)
+	assets := s.Mapper.MapAssetListPbList(result)
 
 	return &bdspropb.AssetSearchResponse{
 		Data:  assets,

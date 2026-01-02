@@ -1132,7 +1132,8 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       COALESCE(pp.rent_commission, 0) AS price_rent_commission,
 		       COALESCE(pp.rent_commission_type, 0) AS price_rent_commission_type,
 		       COALESCE(pp.rent_payment_cycle, 0) AS price_rent_payment_cycle,
-		       COALESCE(pm.media_url, '') AS image_url
+		       COALESCE(pm.media_url, '') AS image_url,
+		       COALESCE(pt.name, '') AS property_type_name
 		FROM products
 		LEFT JOIN (
 			SELECT parent_id, SUM(area) AS total_area 
@@ -1145,13 +1146,8 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		LEFT JOIN projects proj ON products.project_id = proj.id AND proj.deleted_at IS NULL
 		LEFT JOIN province_v2 prov ON products.province_id = prov.id AND prov.deleted_at IS NULL
 		LEFT JOIN ward_v2 ward ON products.ward_id = ward.id AND ward.deleted_at IS NULL
-		LEFT JOIN LATERAL (
-			SELECT media_url 
-			FROM product_media 
-			WHERE product_id = products.id AND deleted_at IS NULL
-			ORDER BY is_main DESC, "order" ASC, id ASC
-			LIMIT 1
-		) pm ON true
+		LEFT JOIN product_media pm ON products.image_id = pm.id AND pm.deleted_at IS NULL
+		LEFT JOIN property_type pt ON products.property_type_id = pt.id AND pt.deleted_at IS NULL
 		WHERE products.deleted_at IS NULL
 	`
 

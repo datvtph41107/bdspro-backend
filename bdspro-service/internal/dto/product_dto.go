@@ -285,6 +285,8 @@ type ProductListResponse struct {
 	SourceType      uint32              `gorm:"column:source_type" json:"sourceType"`
 	Price           domain.ProductPrice `gorm:"-" json:"price"`
 
+	PropertyTypeName string `gorm:"column:property_type_name" json:"propertyTypeName"`
+
 	NumBedroom  *int32                  `gorm:"column:num_bedroom" json:"numBedroom"`
 	NumBathroom *int32                  `gorm:"column:num_bathroom" json:"numBathroom"`
 	Address     *sharepb.AddressV3Proto `gorm:"-" json:"address"`

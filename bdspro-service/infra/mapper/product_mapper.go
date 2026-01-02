@@ -654,6 +654,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			SaleVisibility: product.SaleVisibility,
 			RentVisibility: product.RentVisibility,
 			// Statistics fields
+			PropertyTypeName:   &product.PropertyTypeName,
 			PublicListingCount: product.PublicListingCount,
 			ShareCount:         product.ShareCount,
 			HasAsset:           product.HasAsset,

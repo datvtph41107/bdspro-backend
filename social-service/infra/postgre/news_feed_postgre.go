@@ -139,43 +139,77 @@ func (r *PostgreNewsFeed) GetPublicByUserID(ctx context.Context, userId uint64, 
 func (r *PostgreNewsFeed) GetGlobal(ctx context.Context, req *dto.NewsFeedGlobalSearch) ([]*dto.NewsFeedPublic, int32, error) {
 	var newsFeeds []*NewsFeedRawQuery
 	var total int64
-	_query := r.db.WithContext(ctx).
-		Table("news_feed_global")
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	// Query để đếm total
+	countQuery := r.db.WithContext(ctx).
+		Model(&domain.NewsFeed{}).
+		Where("news_feeds.deleted_at IS NULL AND news_feeds.visibility = 10 AND news_feeds.removed_at IS NULL")
 
 	if req.IsReel != nil {
-		_query = _query.Where("is_reel = ?", req.IsReel)
+		countQuery = countQuery.Where("news_feeds.is_reel = ?", *req.IsReel)
 	}
 
-	err := _query.Count(&total).Error
+	if req.IsPost != nil {
+		if *req.IsPost {
+			countQuery = countQuery.Where("news_feeds.post_id IS NOT NULL")
+		} else {
+			countQuery = countQuery.Where("news_feeds.post_id IS NULL")
+		}
+	}
+
+	err := countQuery.Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	reelCondition := "1 = 1"
-	postCondition := "1 = 1"
+	// Query chi tiết với join
+	detailQuery := r.db.WithContext(ctx).
+		Debug().
+		Model(&domain.NewsFeed{}).
+		Joins("left join tb_like tl on tl.target_id = news_feeds.id and tl.target_type = 20 and tl.user_id = ?", profileId).
+		Joins("left join news_feed_medias nfm on nfm.news_feed_id = news_feeds.id").
+		Joins("left join friend_tag ft on ft.news_feed_id = news_feeds.id").
+		Where("news_feeds.deleted_at IS NULL AND news_feeds.visibility = 10 AND news_feeds.removed_at IS NULL")
+
 	if req.IsReel != nil {
-		reelCondition = fmt.Sprintf("is_reel = %t", *req.IsReel)
+		detailQuery = detailQuery.Where("news_feeds.is_reel = ?", *req.IsReel)
 	}
+
 	if req.IsPost != nil {
 		if *req.IsPost {
-			postCondition = "post_id is not null"
+			detailQuery = detailQuery.Where("news_feeds.post_id IS NOT NULL")
 		} else {
-			postCondition = "post_id is null"
+			detailQuery = detailQuery.Where("news_feeds.post_id IS NULL")
 		}
 	}
-	whereCondition := fmt.Sprintf("WHERE %s AND %s", reelCondition, postCondition)
 
-	query := `SELECT * FROM news_feed_global %s LIMIT ? OFFSET ?;`
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	if profileId != 0 {
-		query = fmt.Sprintf(`select g.*, tl.created_at as liked_at,tl.dis_like from public.news_feed_global g
-left join tb_like tl on tl.user_id = %d and tl.target_id  = g.id and tl.target_type = 20 %s LIMIT ? OFFSET ?;`, profileId, whereCondition)
-	} else {
-		query = fmt.Sprintf(query, whereCondition)
-	}
-
-	err = r.db.WithContext(ctx).
-		Raw(query, req.GetLimit(), req.GetOffset()).
+	err = detailQuery.
+		Select(`
+            news_feeds.*, tl.created_at as liked_at, tl.dis_like,
+            COALESCE(
+              JSON_AGG(
+                DISTINCT JSONB_BUILD_OBJECT(
+                  'news_feed_id', nfm.news_feed_id,
+                  'url', nfm.url,
+                  'type', nfm.type,
+                  'order_number', nfm.order_number
+                )
+              ) FILTER (WHERE nfm.news_feed_id IS NOT NULL),
+              '[]'
+            ) AS news_feed_medias,
+            COALESCE(
+              JSON_AGG(
+                DISTINCT ft.user_id
+              ) FILTER (WHERE ft.user_id IS NOT NULL),
+              '[]'
+            ) AS friend_tag_ids
+        `).
+		Order("news_feeds.created_at DESC").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Group("news_feeds.id, tl.created_at, tl.dis_like").
 		Scan(&newsFeeds).Error
 	if err != nil {
 		return nil, 0, err

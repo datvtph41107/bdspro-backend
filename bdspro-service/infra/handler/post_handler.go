@@ -115,7 +115,7 @@ func (s *PostService) GetDetail(ctx context.Context, req *bdspropb.IdRequest) (*
 		return nil, err
 	}
 
-	return s.PostMapper.PostDetailToPb(result), nil
+	return s.PostMapper.PostDetailToPb(ctx, result), nil
 }
 func (s *PostService) UpdatePost(ctx context.Context, req *bdspropb.PostSaveRequest) (*bdspropb.Post, error) {
 	body := s.PostMapper.PostUpdateRequestToDTO(req)

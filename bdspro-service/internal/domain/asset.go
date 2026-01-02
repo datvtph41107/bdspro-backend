@@ -44,6 +44,7 @@ type Asset struct {
 	PropertyType     *PropertyTypeItem  `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
 	Product          *Product           `gorm:"foreignKey:ProductID;references:ID" json:"product,omitempty"`
 	LegalItems       []AssetLegal       `gorm:"foreignKey:AssetID;references:ID" json:"legalItems,omitempty"`
+	ImageID          *uint64            `json:"imageId"` // ID của legal item đầu tiên (ảnh đại diện)
 	OwnerID          *uint64            `json:"ownerId"`
 	OwnerOf          enums.EOwnerOf     `json:"ownerOf"`
 	Owner            *ProfileInfo       `gorm:"-" json:"owner,omitempty"`
@@ -62,6 +63,7 @@ type AssetList struct {
 	WardName         string          `gorm:"column:ward_name" json:"wardName"`
 	Permissions      string          `gorm:"column:permissions" json:"permissions"`
 	LegalList        json.RawMessage `gorm:"column:legal_list" json:"legalList"` // raw json from query
+	ImageUrl         string          `gorm:"column:image_url" json:"imageUrl"`   // URL của legal item đầu tiên (ảnh đại diện)
 	// LegalItems       []LegalItem     `gorm:"-" json:"legalItems"`
 }
 

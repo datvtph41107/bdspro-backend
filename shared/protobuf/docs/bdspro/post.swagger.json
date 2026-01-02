@@ -994,6 +994,9 @@
         },
         "product": {
           "$ref": "#/definitions/bdspropbProductResponse"
+        },
+        "imageUrl": {
+          "type": "string"
         }
       }
     },
@@ -1427,6 +1430,9 @@
         },
         "assetInfo": {
           "$ref": "#/definitions/bdspropbAsset"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
         }
       }
     },
@@ -1973,6 +1979,9 @@
         },
         "sourceContact": {
           "$ref": "#/definitions/sharepbContactDTO"
+        },
+        "propertyTypeName": {
+          "type": "string"
         }
       }
     },

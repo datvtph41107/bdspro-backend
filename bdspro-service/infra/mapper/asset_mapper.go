@@ -75,6 +75,59 @@ func (m *AssetMapper) MapAssetPb(asset *domain.Asset) *bdspropb.Asset {
 	return result
 }
 
+// MapAssetListPb maps AssetList to protobuf Asset (for list responses)
+// Không trả legalItems, chỉ trả imageUrl
+func (m *AssetMapper) MapAssetListPb(asset *domain.AssetList) *bdspropb.Asset {
+	if asset == nil {
+		return nil
+	}
+
+	result := &bdspropb.Asset{
+		Id:               asset.ID,
+		Name:             asset.Name,
+		Area:             asset.Area,
+		ProductId:        asset.ProductID,
+		ParentAssetId:    asset.ParentAssetID,
+		SplitMergeStatus: asset.SplitMergeStatus,
+		PurchasePrice:    asset.PurchasePrice,
+		PurchaseDate:     _utils.FormatTimeToString(asset.PurchaseDate),
+		LegalStatus:      uint32(asset.LegalStatus),
+		Archived:         asset.Archived,
+		RentStatus:       uint32(asset.RentStatus),
+		Address:          asset.Address,
+		Description:      asset.Description,
+		PropertyTypeId:   asset.PropertyTypeId,
+		OwnerType:        &asset.OwnerOf,
+		PropertyTypeName: asset.PropertyTypeName,
+		ProvinceName:     asset.ProvinceName,
+		WardName:         asset.WardName,
+		ImageUrl:         asset.ImageUrl,
+		// Không map LegalItems trong danh sách
+		LegalItems: nil,
+	}
+
+	if asset.ProvinceID != nil {
+		result.ProvinceId = asset.ProvinceID
+	}
+	if asset.WardID != nil {
+		result.WardId = asset.WardID
+	}
+
+	return result
+}
+
+func (m *AssetMapper) MapAssetListPbList(assets []domain.AssetList) []*bdspropb.Asset {
+	if assets == nil {
+		return nil
+	}
+
+	result := make([]*bdspropb.Asset, len(assets))
+	for i, asset := range assets {
+		result[i] = m.MapAssetListPb(&asset)
+	}
+	return result
+}
+
 func (m *AssetMapper) AssetPbToDomain(asset *bdspropb.SaveAssetRequest) *domain.Asset {
 	result := &domain.Asset{
 		BaseEntity: _models.BaseEntity{

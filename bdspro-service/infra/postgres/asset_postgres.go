@@ -6,7 +6,6 @@ import (
 	"bdspro/internal/enums"
 	"common/case/crud3"
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -105,28 +104,43 @@ func (r *PostgreAsset) SearchOwnerQuery(ownerID uint64, ownerType uint32, dto dt
 		// Debug().
 		Table("assets").
 		// Preload("LegalItems", "deleted_at IS NULL").
-		Select(`assets.*,
+		Select(`assets.id,
+		assets.created_at,
+		assets.updated_at,
+		assets.deleted_at,
+		assets.created_by,
+		assets.updated_by,
+		assets.name,
+		assets.ward_id,
+		assets.province_id,
+		assets.product_id,
+		assets.parent_asset_id,
+		assets.split_merge_status,
+		assets.purchase_price,
+		assets.purchase_date,
+		assets.legal_status,
+		assets.archived,
+		assets.rent_status,
+		assets.address,
+		assets.area,
+		assets.property_type_id,
+		assets.image_id,
+		assets.owner_id,
+		assets.owner_of,
 		province_v2.name as province_name, 
 		'' as district_name, 
 		ward_v2.name as ward_name,
 		property_type.name as property_type_name,
-		COALESCE(json_agg(json_build_object(
-			'id', legal.id,
-			'documentName', legal.document_name,
-			'documentUrl', legal.document_url,
-			'issuedDate', COALESCE(legal.issued_date, NULL),
-			'expiryDate', COALESCE(legal.expiry_date, NULL),
-			'description', legal.description
-		)) FILTER (WHERE legal.asset_id = assets.id), '[]') AS legal_list`).
+		COALESCE(legal.document_url, '') as image_url`).
 		Joins("left join property_type on property_type.id = assets.property_type_id").
 		Joins("join ward_v2 on ward_v2.id = assets.ward_id").
 		Joins("join province_v2 on province_v2.id = assets.province_id").
 		// Joins("left join region province on province.id = assets.province_id").
 		// Joins("left join region district on district.id = assets.district_id").
 		// Joins("left join region ward on ward.id = assets.ward_id").
-		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id and legal.deleted_at is null").
+		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id and legal.deleted_at is null AND legal.id = assets.image_id").
 		Where("assets.deleted_at is null and assets.owner_id = ? and assets.owner_of = ?", ownerID, ownerType).
-		Group("assets.id, assets.created_by, province_v2.name, ward_v2.name, property_type.id")
+		Group("assets.id, assets.created_by, province_v2.name, ward_v2.name, property_type.id, legal.id")
 
 	return r.QuerySearch(query, dto)
 
@@ -144,24 +158,8 @@ func (r *PostgreAsset) SearchOwner(ctx context.Context, ownerID uint64, ownerTyp
 		Scan(&assets).Error; err != nil {
 		return nil, 0, err
 	}
-	for i, r := range assets {
-		list := []domain.AssetLegal{}
-		if r.LegalList != nil {
-			if err := json.Unmarshal(r.LegalList, &list); err != nil {
-				return nil, 0, err
-			}
-			// for _, l := range list {
-			// 	if l.IssuedDate != "" {
-			// 		l.IssuedDate = _utils.ParseStringToTime(l.IssuedDate)
-			// 	}
-			// 	if l.ExpiryDate != "" {
-			// 		l.ExpiryDate = _utils.ParseStringToTime(l.ExpiryDate)
-			// 	}
-			// }
-		}
-
-		assets[i].LegalItems = list
-	}
+	// Không trả legalItems trong danh sách nữa, chỉ trả imageUrl
+	// ImageUrl đã được lấy từ query
 
 	query = r.SearchOwnerQuery(ownerID, ownerType, dto)
 	if err := query.Count(&total).Error; err != nil {
@@ -200,12 +198,14 @@ func (r *PostgreAsset) SearchShare(ctx context.Context, ownerID uint64, ownerTyp
 	province.name as province_name, 
 	district.name as district_name, 
 	ward.name as ward_name,
-	property_type.name as property_type_name`).
+	property_type.name as property_type_name,
+	COALESCE(legal.document_url, '') as image_url`).
 		Joins("left join asset_shares as2 on as2.asset_id = assets.id and as2.target_id = ? and as2.type_share = ?", ownerID, ownerType).
 		Joins("left join property_type property_type on property_type.id = assets.property_type_id").
 		Joins("left join region province on province.id = assets.province_id").
 		Joins("left join region district  on district.id = assets.district_id").
 		Joins("left join region ward on ward.id = assets.ward_id").
+		Joins("LEFT JOIN asset_legals legal ON legal.asset_id = assets.id and legal.deleted_at is null AND legal.id = assets.image_id").
 		// Where("assets.owner_user_id = ?", ownerID).
 		Where("assets.deleted_at is null and as2.target_id = ? and as2.type_share = ?", ownerID, ownerType).
 		Order("assets.created_at desc")
@@ -237,24 +237,28 @@ func (r *PostgreAsset) BulkAction(ctx context.Context, action string, ids []uint
 }
 
 func (r *PostgreAsset) Update(ctx context.Context, id uint64, asset *domain.Asset) error {
+	updates := map[string]interface{}{
+		"name":               asset.Name,
+		"ward_id":            asset.WardID,
+		"province_id":        asset.ProvinceID,
+		"split_merge_status": asset.SplitMergeStatus,
+		"purchase_price":     asset.PurchasePrice,
+		"purchase_date":      asset.PurchaseDate,
+		"legal_status":       asset.LegalStatus,
+		"property_type_id":   asset.PropertyTypeId,
+		"area":               asset.Area,
+		"address":            asset.Address,
+		"description":        asset.Description,
+	}
+	if asset.ImageID != nil {
+		updates["image_id"] = asset.ImageID
+	} else {
+		updates["image_id"] = nil
+	}
 	if err := r.DB.WithContext(ctx).
 		Model(&domain.Asset{}).
 		Where("id = ? and deleted_at is null", id).
-		Updates(map[string]interface{}{
-			"name":    asset.Name,
-			"ward_id": asset.WardID,
-			// "district_id":        asset.DistrictID,
-			"province_id":        asset.ProvinceID,
-			"split_merge_status": asset.SplitMergeStatus,
-			"purchase_price":     asset.PurchasePrice,
-			"purchase_date":      asset.PurchaseDate,
-			"legal_status":       asset.LegalStatus,
-			"property_type_id":   asset.PropertyTypeId,
-			"area":               asset.Area,
-			"address":            asset.Address,
-			"description":        asset.Description,
-			// "rent_status":        asset.RentStatus,
-		}).Error; err != nil {
+		Updates(updates).Error; err != nil {
 		return err
 	}
 	return nil

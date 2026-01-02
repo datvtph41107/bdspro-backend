@@ -41,6 +41,7 @@ func (m *AssetLegalMapper) PbToDomain(entity *bdspropb.LegalItem) domain.AssetLe
 		},
 		DocumentName: entity.DocumentName,
 		DocumentURL:  entity.DocumentUrl,
+		DocumentType: entity.DocumentType,
 		IssuedDate:   _utils.ParseStringToTime(entity.IssuedDate),
 		ExpiryDate:   _utils.ParseStringToTime(entity.ExpiryDate),
 		Description:  entity.Description,

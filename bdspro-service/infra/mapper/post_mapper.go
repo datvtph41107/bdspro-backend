@@ -142,7 +142,7 @@ func (m *PostMapper) PostUpdateRequestToDTO(request *bdspropb.PostSaveRequest) *
 	}
 }
 
-func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *bdspropb.PostDetailResponse {
+func (m *PostMapper) PostDetailToPb(ctx context.Context, post *dto.PostDetail) *bdspropb.PostDetailResponse {
 	result := &bdspropb.PostDetailResponse{
 		Post: m.PostToPb(post.Post),
 	}
@@ -151,6 +151,13 @@ func (m *PostMapper) PostDetailToPb(post *dto.PostDetail) *bdspropb.PostDetailRe
 	}
 	if post.AssetInfo != nil {
 		result.AssetInfo = m.AssetMapper.MapAssetPb(post.AssetInfo)
+	}
+	// Lấy thông tin owner
+	if post.Post != nil && post.Post.OwnerID > 0 {
+		owner := m.UserClient.GetProfileById(ctx, post.Post.OwnerID)
+		if owner != nil {
+			result.Owner = owner
+		}
 	}
 	return result
 }

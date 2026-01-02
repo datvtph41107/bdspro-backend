@@ -189,6 +189,7 @@ message ProductResponse {
     string sourceContactNote = 71;
     string certificateHouseNote = 72;
     optional sharepb.ContactDTO sourceContact = 73;
+    optional string propertyTypeName = 74;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
@@ -236,6 +237,7 @@ message Asset {
     string wardName = 26;
     optional uint64 propertyTypeId = 27;
     optional bdspropb.ProductResponse product = 28;
+    string imageUrl = 29;
 }
 
 message LegalItem {

@@ -1203,6 +1203,21 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 
 	body.ParentID = &parent.ID
 	body.OwnerType = parent.OwnerOf
+
+	// Copy địa chỉ từ sản phẩm cha nếu chưa có
+	if body.ProvinceID == nil {
+		body.ProvinceID = parent.ProvinceID
+	}
+	if body.WardID == nil {
+		body.WardID = parent.WardID
+	}
+	if body.GoogleMapLink == "" {
+		body.GoogleMapLink = parent.GoogleMapLink
+	}
+	if body.ImageId == nil {
+		body.ImageId = parent.ImageId
+	}
+
 	result, err := s.CreateProduct(c, body)
 
 	go func() {
@@ -1349,10 +1364,35 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 		}
 	}
 
+	// Lấy sản phẩm cha để copy địa chỉ
+	parent, err := s.ProductRepo.GetByIDContext(c, *child.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	if parent == nil {
+		return nil, &_routes.Except{
+			Code:    404,
+			Message: "Không tìm thấy sản phẩm cha",
+		}
+	}
+
 	// devideu_product_dto.ProductSaveRequest.ParentID = child.ParentId
 	s.ProductRepo.UpdateArea(c, child.ID, child.Area-totalDevide)
 	var results []domain.Product
 	for i := 0; i < len(devideData.Childs); i++ {
+		// Copy địa chỉ từ sản phẩm cha sang sản phẩm con
+		if devideData.Childs[i].ProvinceID == nil {
+			devideData.Childs[i].ProvinceID = parent.ProvinceID
+		}
+		if devideData.Childs[i].WardID == nil {
+			devideData.Childs[i].WardID = parent.WardID
+		}
+		if devideData.Childs[i].GoogleMapLink == "" {
+			devideData.Childs[i].GoogleMapLink = parent.GoogleMapLink
+		}
+		if devideData.Childs[i].ImageId == nil {
+			devideData.Childs[i].ImageId = parent.ImageId
+		}
 		result, err := s.CreateProduct(c, &devideData.Childs[i])
 		if err != nil {
 			return nil, err

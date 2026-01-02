@@ -118,6 +118,19 @@ func (uc *AssetUsecase) UpdateAsset(ctx context.Context, id uint64, asset *domai
 
 	if len(legalItems) > 0 {
 		uc.AssetLegalRepo.UpdateLegalItems(ctx, asset.ID, legalItems)
+		// Lấy legal item đầu tiên và gán vào ImageID
+		legalList, _, err := uc.AssetLegalRepo.GetData(ctx, dto.AssetLegalGetDTO{
+			AssetID: asset.ID,
+		})
+		if err == nil && len(legalList) > 0 {
+			asset.ImageID = &legalList[0].ID
+			// Cập nhật lại ImageID vào database
+			uc.AssetRepo.Update(ctx, id, asset)
+		}
+	} else {
+		// Nếu không có legal items, xóa ImageID
+		asset.ImageID = nil
+		uc.AssetRepo.Update(ctx, id, asset)
 	}
 
 	go func() {
@@ -202,6 +215,15 @@ func (uc *AssetUsecase) CreateAsset(ctx context.Context, asset *domain.Asset) (*
 
 	if len(legalItems) > 0 {
 		uc.AssetLegalRepo.UpdateLegalItems(ctx, asset.ID, legalItems)
+		// Lấy legal item đầu tiên và gán vào ImageID
+		legalList, _, err := uc.AssetLegalRepo.GetData(ctx, dto.AssetLegalGetDTO{
+			AssetID: asset.ID,
+		})
+		if err == nil && len(legalList) > 0 {
+			asset.ImageID = &legalList[0].ID
+			// Cập nhật lại ImageID vào database
+			uc.AssetRepo.Update(ctx, asset.ID, asset)
+		}
 	}
 
 	if asset.RequestOrganizationID != nil {

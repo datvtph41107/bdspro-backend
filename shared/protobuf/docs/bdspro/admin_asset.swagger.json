@@ -959,6 +959,9 @@
         },
         "product": {
           "$ref": "#/definitions/bdspropbProductResponse"
+        },
+        "imageUrl": {
+          "type": "string"
         }
       }
     },
@@ -1628,6 +1631,9 @@
         },
         "sourceContact": {
           "$ref": "#/definitions/sharepbContactDTO"
+        },
+        "propertyTypeName": {
+          "type": "string"
         }
       }
     },

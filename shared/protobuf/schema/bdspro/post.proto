@@ -235,4 +235,5 @@ message PostDetailResponse {
 	Post post = 1;
 	ProductResponse productInfo = 2;
 	Asset assetInfo = 3;
+	sharepb.ProfileItem owner = 4;
 }
