@@ -353,14 +353,6 @@
         }
       }
     },
-    "organizationpbSwitchGroupResponse": {
-      "type": "object",
-      "properties": {
-        "isSuccess": {
-          "type": "boolean"
-        }
-      }
-    },
     "organizationpbUpdateGroupMemberResponse": {
       "type": "object",
       "properties": {

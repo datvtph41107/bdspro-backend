@@ -294,6 +294,12 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "friendStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -970,31 +976,6 @@
         },
         "dealMember": {
           "$ref": "#/definitions/organizationpbDealMember"
-        }
-      }
-    },
-    "organizationpbSwitchOrganizationResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isSuccess": {
-          "type": "boolean"
-        },
-        "role": {
-          "type": "string"
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       }
     },

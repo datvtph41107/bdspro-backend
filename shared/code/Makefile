@@ -2,19 +2,22 @@ ROOT_DIR := ../..
 CD_ROOT := cd $(ROOT_DIR)
 SCHEMA := cd ../protobuf/schema
 
-AIR_EXE=/Users/baphieu/go/bin/air
+AIR_EXE ?= air
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
-PORT := $(shell yq ".service.port.$(SERVICE)" ../../gateway-service/config/local.yml)
+PORT := $(shell yq e ".service.port.$(SERVICE)" ../../gateway-service/config/local.yml)
 
 # Debug info
 debug-info:
 	@echo "SERVICE = $(SERVICE)"
 	@echo "PORT = $(PORT)"
+	@echo "AIR_EXE = $(AIR_EXE)"
 
 run-dev:
-	@lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
-	@cd $(ROOT_DIR)/$(SERVICE)-service && $(AIR_EXE) $(ARGS)
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	cd $(ROOT_DIR)/$(SERVICE)-service && $(AIR_EXE) $(ARGS)
 
 %:
 	@:	
@@ -80,7 +83,7 @@ buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
 buf-hub:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path hub	
-buf-all: buf-social buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction buf-feedback buf-tqd buf-assistant
+buf-all: buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction buf-feedback buf-tqd buf-assistant
 	echo "done"	
 	
 init:

@@ -1656,18 +1656,6 @@
         }
       }
     },
-    "chatpbGetRoomMemberIdResponse": {
-      "type": "object",
-      "properties": {
-        "profileIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        }
-      }
-    },
     "chatpbGetSettingResponse": {
       "type": "object",
       "properties": {
@@ -2130,9 +2118,6 @@
           }
         }
       }
-    },
-    "sharepbEmpty": {
-      "type": "object"
     },
     "sharepbProfileItem": {
       "type": "object",

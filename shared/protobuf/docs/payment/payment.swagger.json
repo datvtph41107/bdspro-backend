@@ -683,15 +683,6 @@
         }
       }
     },
-    "paymentpbCreateWalletResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "paymentpbDashboardMetric": {
       "type": "object",
       "properties": {
@@ -920,59 +911,6 @@
           }
         }
       }
-    },
-    "paymentpbTransferBetweenWalletsResponse": {
-      "type": "object",
-      "properties": {
-        "fromTransactionId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "toTransactionId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "status": {
-          "type": "string"
-        },
-        "transactionCode": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string"
-        }
-      }
-    },
-    "paymentpbWallet": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "balance": {
-          "type": "number",
-          "format": "double"
-        },
-        "currency": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        }
-      },
-      "title": "Wallet related messages"
     },
     "paymentpbWalletDashboard": {
       "type": "object",

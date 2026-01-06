@@ -896,18 +896,6 @@
         }
       }
     },
-    "sharepbGetProfileByIdsResponse": {
-      "type": "object",
-      "properties": {
-        "profiles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/sharepbProfileItem"
-          }
-        }
-      }
-    },
     "sharepbItemV3Proto": {
       "type": "object",
       "properties": {
@@ -1004,33 +992,6 @@
         "expiryDate": {
           "type": "string",
           "title": "Ngày hết hạn (trả về nếu là owner)"
-        }
-      }
-    },
-    "sharepbProfileItem": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "tickVerified": {
-          "type": "boolean"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "isMember": {
-          "type": "boolean"
-        },
-        "joinedAt": {
-          "type": "string"
         }
       }
     },
@@ -1428,28 +1389,6 @@
         },
         "issueDate": {
           "type": "string"
-        }
-      }
-    },
-    "userpbCheckAccountStatusResponse": {
-      "type": "object",
-      "properties": {
-        "profileId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "status": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "statusText": {
-          "type": "string"
-        },
-        "isLocked": {
-          "type": "boolean"
-        },
-        "canLogin": {
-          "type": "boolean"
         }
       }
     },

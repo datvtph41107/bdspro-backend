@@ -1539,6 +1539,9 @@
         },
         "sourceContact": {
           "$ref": "#/definitions/sharepbContactDTO"
+        },
+        "propertyTypeName": {
+          "type": "string"
         }
       }
     },

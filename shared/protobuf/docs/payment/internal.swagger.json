@@ -17,30 +17,6 @@
   ],
   "paths": {},
   "definitions": {
-    "paymentpbBank": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "code": {
-          "type": "string"
-        },
-        "logo": {
-          "type": "string"
-        },
-        "active": {
-          "type": "boolean"
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
