@@ -61,7 +61,7 @@ func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) erro
 	return nil
 }
 
-func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*authpb.Role, error) {
+func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*sharepb.Role, error) {
 	return c.AuthInternalServiceClient.
 		GetRoleById(ctx, &sharepb.IdRequest{Id: id})
 }
