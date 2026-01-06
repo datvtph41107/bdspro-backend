@@ -182,7 +182,7 @@ func (h *InternalHandler) ResetPermission(ctx context.Context, roleId uint64) er
 	return nil
 }
 
-func (h *InternalHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
+func (h *InternalHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
 	role, err := h.roleRepo.GetByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -202,13 +202,13 @@ func (h *InternalHandler) GetRolesByIds(ctx context.Context, req *sharepb.IdRequ
 	}, nil
 }
 
-func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
+func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
 	role, err := h.roleRepo.GetAdminRoleIdByGroupKey(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	var pbRole *authpb.Role
+	var pbRole *sharepb.Role
 	if role != nil {
 		pbRole = h.roleMapper.MapRoleToPb(role)
 	}

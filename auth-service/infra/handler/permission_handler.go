@@ -34,9 +34,9 @@ func NewPermissionHandler(
 // @Accept json
 // @Produce json
 // @Param id path int true "Permission ID"
-// @Success 200 {object} authpb.Permission
+// @Success 200 {object} sharepb.Permission
 // @Router /permission/{id} [get]
-func (h *PermissionHandler) GetPermissionById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Permission, error) {
+func (h *PermissionHandler) GetPermissionById(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Permission, error) {
 	permission, err := h.permissionUsecase.GetByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (h *PermissionHandler) GetPermissionsByModule(ctx context.Context, req *sha
 		return nil, err
 	}
 
-	pbPermissions := make([]*authpb.Permission, len(permissions))
+	pbPermissions := make([]*sharepb.Permission, len(permissions))
 	for i, permission := range permissions {
 		pbPermissions[i] = h.roleMapper.MapPermissionListWithChild(permission)
 	}
@@ -87,7 +87,7 @@ func (h *PermissionHandler) GetAllPermissions(ctx context.Context, req *sharepb.
 		return nil, err
 	}
 
-	pbPermissions := make([]*authpb.Permission, len(permissions))
+	pbPermissions := make([]*sharepb.Permission, len(permissions))
 	for i, permission := range permissions {
 		pbPermissions[i] = h.roleMapper.MapPermissionListWithChild(permission)
 	}

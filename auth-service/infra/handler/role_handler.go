@@ -40,7 +40,7 @@ func NewRoleHandler(
 // @Param role body authpb.RoleRequest true "Role to create"
 // @Success 200 {object} authpb.Role
 // @Router /role [post]
-func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (*authpb.Role, error) {
+func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (*sharepb.Role, error) {
 	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_TAO"}); err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (
 // @Param role body authpb.RoleRequest true "Role to update"
 // @Success 200 {object} authpb.Role
 // @Router /role [put]
-func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (*authpb.Role, error) {
+func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (*sharepb.Role, error) {
 	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_SUA"}); err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (h *RoleHandler) DeleteRole(ctx context.Context, req *sharepb.IdRequest) (*
 // @Param id path int true "Role ID"
 // @Success 200 {object} authpb.Role
 // @Router /role/{id} [get]
-func (h *RoleHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*authpb.Role, error) {
+func (h *RoleHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
 	if err := h.internalHandler.HasPermissions(ctx, []string{"ADMIN_VT_XEM"}); err != nil {
 		return nil, err
 	}
@@ -334,8 +334,8 @@ func (h *RoleHandler) AssignRoleToUser(ctx context.Context, req *authpb.AssignRo
 }
 
 // convertRoleDTOToPb convert dto.RoleDTO to authpb.Role
-func (h *RoleHandler) convertRoleDTOToPb(role dto.RoleDTO) *authpb.Role {
-	pbRole := &authpb.Role{
+func (h *RoleHandler) convertRoleDTOToPb(role dto.RoleDTO) *sharepb.Role {
+	pbRole := &sharepb.Role{
 		Id:              role.ID,
 		RoleName:        role.RoleName,
 		RoleDescription: role.RoleDescription,
@@ -352,9 +352,9 @@ func (h *RoleHandler) convertRoleDTOToPb(role dto.RoleDTO) *authpb.Role {
 
 	// Convert permissions
 	if role.Permissions != nil {
-		permissions := make([]*authpb.Permission, len(role.Permissions))
+		permissions := make([]*sharepb.Permission, len(role.Permissions))
 		for i, perm := range role.Permissions {
-			permissions[i] = &authpb.Permission{
+			permissions[i] = &sharepb.Permission{
 				Id:             perm.ID,
 				Name:           perm.Name,
 				Key:            perm.Key,
@@ -372,7 +372,7 @@ func (h *RoleHandler) convertRoleDTOToPb(role dto.RoleDTO) *authpb.Role {
 
 	// Convert color
 	if role.Color != nil {
-		pbRole.Color = &authpb.Color{
+		pbRole.Color = &sharepb.Color{
 			Id:              role.Color.ID,
 			Name:            role.Color.Name,
 			ContentColor:    role.Color.ContentColor,

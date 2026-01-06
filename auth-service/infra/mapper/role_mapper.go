@@ -4,6 +4,7 @@ import (
 	"auth/internal/domain"
 	_utils "common/utils"
 	authpb "pb/types/auth"
+	sharepb "pb/types/shared"
 )
 
 type RoleMapper struct {
@@ -13,10 +14,10 @@ func NewRoleMapper() *RoleMapper {
 	return &RoleMapper{}
 }
 
-func (m *RoleMapper) MapRoleListToItemPb(roles []domain.Role) []*authpb.Role {
-	var pbRoles []*authpb.Role
+func (m *RoleMapper) MapRoleListToItemPb(roles []domain.Role) []*sharepb.Role {
+	var pbRoles []*sharepb.Role
 	for _, role := range roles {
-		pbRoles = append(pbRoles, &authpb.Role{
+		pbRoles = append(pbRoles, &sharepb.Role{
 			Id:       role.ID,
 			RoleName: role.RoleName,
 			RoleKey:  role.RoleKey,
@@ -25,8 +26,8 @@ func (m *RoleMapper) MapRoleListToItemPb(roles []domain.Role) []*authpb.Role {
 	return pbRoles
 }
 
-func (m *RoleMapper) MapRoleListToPb(roles []domain.Role) []*authpb.Role {
-	var pbRoles []*authpb.Role
+func (m *RoleMapper) MapRoleListToPb(roles []domain.Role) []*sharepb.Role {
+	var pbRoles []*sharepb.Role
 	for _, role := range roles {
 		pbRoles = append(pbRoles, m.MapRoleToPb(&role))
 	}
@@ -34,12 +35,12 @@ func (m *RoleMapper) MapRoleListToPb(roles []domain.Role) []*authpb.Role {
 }
 
 // mapRoleToPb chuyển domain Role sang protobuf Role
-func (m *RoleMapper) MapRoleToPb(role *domain.Role) *authpb.Role {
+func (m *RoleMapper) MapRoleToPb(role *domain.Role) *sharepb.Role {
 	if role == nil {
 		return nil
 	}
 
-	pbRole := &authpb.Role{
+	pbRole := &sharepb.Role{
 		Id:              role.ID,
 		RoleName:        role.RoleName,
 		RoleDescription: role.RoleDescription,
@@ -65,7 +66,7 @@ func (m *RoleMapper) MapRoleToPb(role *domain.Role) *authpb.Role {
 	// }
 
 	if role.Color != nil {
-		pbRole.Color = &authpb.Color{
+		pbRole.Color = &sharepb.Color{
 			Id:              role.Color.ID,
 			Name:            role.Color.Name,
 			ContentColor:    role.Color.ContentColor,
@@ -84,20 +85,20 @@ func (m *RoleMapper) MapRoleToPb(role *domain.Role) *authpb.Role {
 	return pbRole
 }
 
-func (m *RoleMapper) MapPermissionListToPb(permissions []*domain.Permission) []*authpb.Permission {
-	var pbPermissions []*authpb.Permission
+func (m *RoleMapper) MapPermissionListToPb(permissions []*domain.Permission) []*sharepb.Permission {
+	var pbPermissions []*sharepb.Permission
 	for _, permission := range permissions {
 		pbPermissions = append(pbPermissions, m.MapPermissionToPb(permission))
 	}
 	return pbPermissions
 }
 
-func (m *RoleMapper) MapPermissionToPb(permission *domain.Permission) *authpb.Permission {
+func (m *RoleMapper) MapPermissionToPb(permission *domain.Permission) *sharepb.Permission {
 	if permission == nil {
 		return nil
 	}
 
-	pbPermission := &authpb.Permission{
+	pbPermission := &sharepb.Permission{
 		Id:          permission.ID,
 		Name:        permission.Name,
 		Key:         permission.Key,
@@ -110,7 +111,7 @@ func (m *RoleMapper) MapPermissionToPb(permission *domain.Permission) *authpb.Pe
 	return pbPermission
 }
 
-func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *authpb.Permission {
+func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *sharepb.Permission {
 	if permission == nil {
 		return nil
 	}
@@ -118,7 +119,7 @@ func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *
 	pbPermission := m.MapPermissionToPb(permission)
 
 	if permission.Children != nil {
-		pbPermission.Children = make([]*authpb.Permission, len(permission.Children))
+		pbPermission.Children = make([]*sharepb.Permission, len(permission.Children))
 		for i, child := range permission.Children {
 			pbPermission.Children[i] = m.MapPermissionListWithChild(child)
 		}

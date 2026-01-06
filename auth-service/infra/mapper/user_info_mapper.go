@@ -4,6 +4,7 @@ import (
 	"auth/internal/domain"
 	_utils "common/utils"
 	authpb "pb/types/auth"
+	sharepb "pb/types/shared"
 )
 
 type UserInfoMapper struct {
@@ -29,13 +30,13 @@ func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *domain.AuthUser) *authp
 	}
 
 	if user.Role != nil {
-		result.Role = &authpb.Role{
+		result.Role = &sharepb.Role{
 			Id:       user.Role.ID,
 			RoleName: user.Role.RoleName,
 			RoleKey:  user.Role.RoleKey,
 		}
 		if user.Role.Color != nil {
-			result.Role.Color = &authpb.Color{
+			result.Role.Color = &sharepb.Color{
 				Id:              user.Role.Color.ID,
 				Name:            user.Role.Color.Name,
 				ContentColor:    user.Role.Color.ContentColor,

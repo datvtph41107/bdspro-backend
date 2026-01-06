@@ -185,7 +185,7 @@ func (h *RoleGroupHandler) GetPermissionsByGroupKey(ctx context.Context, req *au
 	}
 
 	// Sử dụng mapper giống như GetAllPermissions
-	pbPermissions := make([]*authpb.Permission, len(permissions))
+	pbPermissions := make([]*sharepb.Permission, len(permissions))
 	for i, permission := range permissions {
 		pbPermissions[i] = h.RoleMapper.MapPermissionListWithChild(permission)
 	}

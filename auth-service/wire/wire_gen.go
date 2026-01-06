@@ -25,8 +25,7 @@ import (
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
 	"auth/validator"
-	_db "common/db"
-
+	"common/db"
 	"github.com/google/wire"
 )
 

@@ -167,7 +167,6 @@ message NewsFeed {
     optional bool disLike = 21;
     optional uint64 groupId = 22;
     OwnerOf ownerOf = 23;
-    optional bdspropb.Project project = 24;
 }
 
 message NewsFeedSearch {

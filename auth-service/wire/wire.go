@@ -1,9 +1,12 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
+	_db "common/db"
+	"auth/initial"
 	auth_infra_client "auth/infra/client"
 	auth_infra_cookie "auth/infra/cookie"
 	auth_infra_handler "auth/infra/handler"
@@ -15,7 +18,6 @@ import (
 	auth_infra_scheduler "auth/infra/scheduler"
 	auth_infra_sms "auth/infra/sms"
 	auth_infra_zns "auth/infra/zns"
-	"auth/initial"
 	auth_initial "auth/initial"
 	auth_internal_domain "auth/internal/domain"
 	auth_internal_interface_factory "auth/internal/interface/factory"
@@ -23,9 +25,6 @@ import (
 	auth_internal_interface_repo "auth/internal/interface/repo"
 	auth_internal_usecase "auth/internal/usecase"
 	auth_validator "auth/validator"
-	_db "common/db"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -110,7 +109,6 @@ var wireSet = wire.NewSet(
 	auth_infra_zns.NewZnsProvider,
 	auth_infra_scheduler.NewZnsScheduler,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

@@ -12,9 +12,9 @@ import "auth/auth_method.proto";
 service AuthInternalService {
     rpc RequiredRoles(RequiredRolesRequest) returns (RequiredRolesResponse);
     rpc RequiredPermissions(RequiredPermissionsRequest) returns (RequiredPermissionsResponse);
-    rpc GetRoleById(sharepb.IdRequest) returns (Role);
+    rpc GetRoleById(sharepb.IdRequest) returns (sharepb.Role);
     rpc GetRolesByIds(sharepb.IdRequest) returns (RoleListResponse);
-    rpc GetAdminRoleIdByGroupKey(sharepb.IdRequest) returns (Role);
+    rpc GetAdminRoleIdByGroupKey(sharepb.IdRequest) returns (sharepb.Role);
     rpc GetRolesByRoleKeys(GetRolesByRoleKeysRequest) returns (RoleListResponse);
     rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
     rpc CreateAdmin(AuthMethod) returns (AuthMethod);
@@ -77,7 +77,7 @@ message GetAuthUsersByProfileIDsResponse {
 message AuthUserStatusInfo {
     uint64 profileId = 1;
     uint64 roleId = 2;
-    Role role = 3;
+    sharepb.Role role = 3;
     uint32 status = 4;
     string statusText = 5;
     bool isLocked = 6;
@@ -108,7 +108,7 @@ message AuthAdminWithRole {
     string phone = 6;
     string avatar = 7;
     uint32 roleKey = 8;
-    Role role = 9;
+    sharepb.Role role = 9;
     uint32 status = 10;
     string createdAt = 11;
     string updatedAt = 12;

@@ -15,32 +15,17 @@ message Role {
   string key = 4;
   repeated uint64 permissionIds = 5;
   uint64 organizationId = 6;
-  repeated Permission permissions = 7;
+  repeated sharepb.Permission permissions = 7;
   bool isDefault = 8;
   string domainType = 9;
   optional uint64 colorId = 10;
-  optional Color color = 11;
+  optional sharepb.Color color = 11;
   optional uint64 roleGroupId = 12;
   optional string roleGroupName = 13;
   bool allowAssign = 14;
   uint32 roleKey = 15;
   string createdAt = 16;
   string updatedAt = 17;
-}
-
-// Permission message
-message Permission {
-  uint64 id = 1;
-  string name = 2;
-  string key = 3;
-  string description = 4;
-  string permissionType = 5;
-  string module = 6;
-  optional uint64 parentId = 7;
-  repeated Permission children = 8;
-  string createdAt = 9;
-  string updatedAt = 10;
-  uint32 priority = 11;
 }
 
 // Role request/response messages
@@ -71,7 +56,7 @@ message AddPermissionToRoleRequest {
 }
 
 message PermissionListResponse {
-  repeated Permission data = 1;
+  repeated sharepb.Permission data = 1;
   uint64 totalElements = 2;
 }
 
@@ -92,13 +77,13 @@ service RoleService {
       get: "/v2/auth/role/list"
     };
   };
-  rpc CreateRole(RoleRequest) returns (Role) {
+  rpc CreateRole(RoleRequest) returns (sharepb.Role) {
     option (google.api.http) = {
       post: "/v2/auth/role"
       body: "*"
     };
   };
-  rpc UpdateRole(RoleRequest) returns (Role) {
+  rpc UpdateRole(RoleRequest) returns (sharepb.Role) {
     option (google.api.http) = {
       put: "/v2/auth/role/{id}"
       body: "*"
@@ -109,7 +94,7 @@ service RoleService {
       delete: "/v2/auth/role/{id}"
     };
   };
-  rpc GetRoleById(sharepb.IdRequest) returns (Role) {
+  rpc GetRoleById(sharepb.IdRequest) returns (sharepb.Role) {
     option (google.api.http) = {
       get: "/v2/auth/role/detail/{id}"
     };
@@ -144,7 +129,7 @@ service RoleService {
 
 // Permission Service
 service PermissionService {
-  rpc GetPermissionById(sharepb.IdRequest) returns (Permission);
+  rpc GetPermissionById(sharepb.IdRequest) returns (sharepb.Permission);
   rpc GetPermissionsByModule(sharepb.IdRequest) returns (PermissionListResponse) {
     option (google.api.http) = {
       get: "/v2/auth/permission/module/{id}"
@@ -189,7 +174,7 @@ service PermissionService {
 
 message PermissionKeysResponse {
   repeated string keys = 1;
-  optional Role role = 2;
+  optional sharepb.Role role = 2;
 }
 
 // Get roles by group key request
@@ -205,6 +190,6 @@ message AssignRoleToUserRequest {
 }
 
 message AssignRoleToUserResponse {
-  Role assignedRole = 1;
+  sharepb.Role assignedRole = 1;
   string message = 2;
 }
