@@ -77,6 +77,8 @@ var GrpcCmd = &cobra.Command{
 		bdspropb.RegisterDealMemberServiceServer(s, app.DealInvitationHandler)
 		bdspropb.RegisterDealMilestoneServiceServer(s, app.DealMilestoneHandler)
 
+		bdspropb.RegisterPropertyServiceServer(s, app.PropertyHandler)
+
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 

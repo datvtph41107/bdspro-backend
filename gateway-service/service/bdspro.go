@@ -57,4 +57,7 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 	_ = bdspropb.RegisterDealMemberServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = bdspropb.RegisterDealMilestoneServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = bdspropb.RegisterDealInternalNoteServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+
+	// Property related
+	_ = bdspropb.RegisterPropertyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

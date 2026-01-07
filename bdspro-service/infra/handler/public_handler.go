@@ -322,17 +322,23 @@ func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.Id
 
 	// Khai báo enumProviders nội bộ
 	var enumProviders = map[string][]*bdspropb.EnumItem{
-		"product_sale_status": enumMapToList(enums.EProductSaleStatusNames),
-		"product_rent_status": enumMapToList(enums.EProductRentStatusNames),
-		"asset_history":       enumMapToList(enums.AssetHistoryNames),
-		"target_type":         enumMapToList(enums.TargetTypeNames),
-		"visibility":          enumMapToList(enums.EVisibilityNames),
-		"producthistory":      enumMapToList(enums.EProductHistoryNames),
-		"poststatus":          enumMapToList(enums.EPostStatusNames),
-		"doctype":             enumMapToList(enums.EDocTypeNames),
-		"assetstatus":         enumMapToList(enums.EAssetStatusNames),
-		"house_orient":        enumMapToList(enums.EHouseOrientNames),
-		"house_certificate":   enumMapToList(enums.EHouseCertificateNames),
+		"product_sale_status":     enumMapToList(enums.EProductSaleStatusNames),
+		"product_rent_status":     enumMapToList(enums.EProductRentStatusNames),
+		"asset_history":           enumMapToList(enums.AssetHistoryNames),
+		"target_type":             enumMapToList(enums.TargetTypeNames),
+		"visibility":              enumMapToList(enums.EVisibilityNames),
+		"producthistory":          enumMapToList(enums.EProductHistoryNames),
+		"poststatus":              enumMapToList(enums.EPostStatusNames),
+		"doctype":                 enumMapToList(enums.EDocTypeNames),
+		"assetstatus":             enumMapToList(enums.EAssetStatusNames),
+		"house_orient":            enumMapToList(enums.EHouseOrientNames),
+		"house_certificate":       enumMapToList(enums.EHouseCertificateNames),
+		"property_status":         enumMapToList(enums.EPropertyStatusNames),
+		"building_type":           enumMapToList(enums.BuildingTypeNames),
+		"transaction_status":      enumMapToList(enums.TransactionStatusNames),
+		"transaction_type":        enumMapToList(enums.TransactionTypeNames),
+		"owner_type":              enumMapToList(enums.OwnerTypeNames),
+		"post_transaction_status": enumMapToList(enums.EPostTransactionStatusNames),
 	}
 
 	if values, ok := enumProviders[enumType]; ok {

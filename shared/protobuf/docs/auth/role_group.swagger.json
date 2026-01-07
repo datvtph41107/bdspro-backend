@@ -384,52 +384,6 @@
       },
       "title": "RoleGroup request/response messages"
     },
-    "authpbPermission": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "key": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "permissionType": {
-          "type": "string"
-        },
-        "module": {
-          "type": "string"
-        },
-        "parentId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/authpbPermission"
-          }
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "priority": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "title": "Permission message"
-    },
     "authpbPermissionListResponse": {
       "type": "object",
       "properties": {
@@ -437,7 +391,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/authpbPermission"
+            "$ref": "#/definitions/sharepbPermission"
           }
         },
         "totalElements": {
@@ -552,6 +506,52 @@
           }
         }
       }
+    },
+    "sharepbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
     },
     "sharepbSubmitResponse": {
       "type": "object",

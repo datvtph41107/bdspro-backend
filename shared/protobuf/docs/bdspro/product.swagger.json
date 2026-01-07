@@ -2579,96 +2579,6 @@
         }
       }
     },
-    "authpbColor": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "contentColor": {
-          "type": "string"
-        },
-        "backgroundColor": {
-          "type": "string"
-        },
-        "colorKey": {
-          "type": "string"
-        },
-        "hexCode": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "createdBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updatedBy": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "authpbPermission": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "key": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "permissionType": {
-          "type": "string"
-        },
-        "module": {
-          "type": "string"
-        },
-        "parentId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/authpbPermission"
-          }
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "priority": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "title": "Permission message"
-    },
     "authpbRole": {
       "type": "object",
       "properties": {
@@ -2700,7 +2610,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/authpbPermission"
+            "$ref": "#/definitions/sharepbPermission"
           }
         },
         "isDefault": {
@@ -2714,7 +2624,7 @@
           "format": "uint64"
         },
         "color": {
-          "$ref": "#/definitions/authpbColor"
+          "$ref": "#/definitions/sharepbColor"
         },
         "roleGroupId": {
           "type": "string",
@@ -4002,6 +3912,30 @@
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
+    "bdspropbProductAttachmentResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        }
+      }
+    },
+    "bdspropbProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        }
+      }
+    },
     "bdspropbProductPrice": {
       "type": "object",
       "properties": {
@@ -4368,6 +4302,10 @@
         },
         "propertyTypeName": {
           "type": "string"
+        },
+        "buildingInfo": {
+          "$ref": "#/definitions/bdspropbPropertyBuildingInfo",
+          "title": "Thông tin nhà/công trình từ PropertyBuildingInfo"
         }
       }
     },
@@ -4720,6 +4658,51 @@
             "type": "object",
             "$ref": "#/definitions/bdspropbApartmentAttribute"
           }
+        }
+      }
+    },
+    "bdspropbPropertyBuildingInfo": {
+      "type": "object",
+      "properties": {
+        "buildingType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại nhà (10=Nhà ở, 20=Nhà xưởng)"
+        },
+        "constructionArea": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích xây dựng (m²)"
+        },
+        "floorArea": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích sàn (m²)"
+        },
+        "floors": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số tầng"
+        },
+        "bedrooms": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng ngủ"
+        },
+        "bathrooms": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng tắm"
+        },
+        "direction": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hướng nhà (enum EHouseOrient)"
+        },
+        "balconyDirection": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hướng ban công (enum EHouseOrient)"
         }
       }
     },

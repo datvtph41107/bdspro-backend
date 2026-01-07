@@ -55,6 +55,7 @@ type ProductUsecase struct {
 	ProductOrganizationRepo repo.ProductOrganizationRepo
 	ProductUserRepo         repo.ProductUserRepo
 	BdsDomainUsecase        *usecases.BdsDomainUsecase
+	PropertyUsecase         *usecases.PropertyUsecase
 	DealRepo                repo.DealRepository
 }
 
@@ -81,6 +82,7 @@ func NewProductUsecase(
 	productUserRepo repo.ProductUserRepo,
 	deepseekClient provider.DeepseekProvider,
 	bdsDomainUsecase *usecases.BdsDomainUsecase,
+	propertyUsecase *usecases.PropertyUsecase,
 	dealRepo repo.DealRepository,
 ) *ProductUsecase {
 	result := &ProductUsecase{
@@ -108,6 +110,7 @@ func NewProductUsecase(
 		ProductOrganizationRepo: productOrganizationRepo,
 		ProductUserRepo:         productUserRepo,
 		BdsDomainUsecase:        bdsDomainUsecase,
+		PropertyUsecase:         propertyUsecase,
 		DealRepo:                dealRepo,
 		// OwnerType:    ownerType,
 	}
@@ -291,6 +294,17 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			if err != nil {
 				return err
 			}
+
+			// Link asset với property của product (nếu có)
+			if s.PropertyUsecase != nil {
+				go func() {
+					ctxClone := _utils.CloneContext(c)
+					err := s.PropertyUsecase.LinkAssetToProperty(ctxClone, assetEntity.ID, entity.ID)
+					if err != nil {
+						log.Printf("Failed to link asset %d to property: %v", assetEntity.ID, err)
+					}
+				}()
+			}
 		}
 
 		// sản phẩm của tổ chức
@@ -309,34 +323,23 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			}
 		}
 
-		// Tạo BDSDomain tương ứng cho Product
-		if s.BdsDomainUsecase != nil {
-			// Nếu chưa có profileId (tổ chức), lấy từ context
-			if profileId == 0 {
-				profileId = _utils.GetProfileIdWithContext(c)
-			}
-			// Set ProductID cho houseInfoEntity nếu chưa có
-			if houseInfoEntity != nil {
-				houseInfoEntity.ProductID = entity.ID
-				err = s.BdsDomainUsecase.CreateBdsDomainFromProduct(c, entity, houseInfoEntity, profileId)
-				// Log error nhưng không fail transaction nếu tạo BDSDomain thất bại
-				if err != nil {
-					log.Printf("Failed to create BDSDomain for product %d: %v", entity.ID, err)
-				}
-			} else {
-				// Tạo BDSDomain ngay cả khi không có HouseInfo
-				err = s.BdsDomainUsecase.CreateBdsDomainFromProduct(c, entity, nil, profileId)
-				if err != nil {
-					log.Printf("Failed to create BDSDomain for product %d: %v", entity.ID, err)
-				}
-			}
-		}
-
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
+	}
+
+	// Tạo Property tương ứng cho Product (async) - chỉ chạy nếu tạo Product thành công
+	if s.PropertyUsecase != nil {
+		go func() {
+			cloneCtx := _utils.CloneContext(c)
+			_, err := s.PropertyUsecase.CreateWithProduct(cloneCtx, entity)
+			// Log error nhưng không fail transaction nếu tạo Property thất bại
+			if err != nil {
+				log.Printf("Failed to create Property for product %d: %v", entity.ID, err)
+			}
+		}()
 	}
 
 	return &dto.CreateResponse{
@@ -1219,6 +1222,20 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 	}
 
 	result, err := s.CreateProduct(c, body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Link product con với property của product cha (nếu có)
+	if s.PropertyUsecase != nil && result.Product != nil {
+		go func() {
+			ctxClone := _utils.CloneContext(c)
+			err := s.PropertyUsecase.LinkProductToProperty(ctxClone, result.Product.ID, parent.ID)
+			if err != nil {
+				log.Printf("Failed to link child product %d to property: %v", result.Product.ID, err)
+			}
+		}()
+	}
 
 	go func() {
 		ctxClone := _utils.CloneContext(c)

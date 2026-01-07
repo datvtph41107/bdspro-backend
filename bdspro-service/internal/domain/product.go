@@ -17,6 +17,7 @@ type Product struct {
 	// Deposite        *Deposite           `gorm:"-" json:"deposite,omitempty"`
 	ParentId       *uint64             `gorm:"type:int8" json:"parentId,omitempty"`
 	AssetId        *uint64             `gorm:"type:int8" json:"assetId,omitempty"`
+	PropertyID     *uint64             `gorm:"type:int8" json:"propertyId,omitempty"`
 	PostIds        []uint64            `gorm:"-" json:"postIds,omitempty"`
 	ImageId        *uint64             `gorm:"type:int8" json:"imageId,omitempty"`
 	PropertyTypeId *uint64             `json:"propertyTypeId,omitempty"`

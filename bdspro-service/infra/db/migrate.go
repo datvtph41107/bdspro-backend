@@ -101,13 +101,14 @@ func MigrateDomain() {
 	// &domain.Action{},
 
 	// Property related
+	// &domain.Product{},
 	// &domain.Property{},
 	// &domain.PropertyLandInfo{},
 	// &domain.PropertyBuildingInfo{},
 	// &domain.PropertyMedia{},
-	// &domain.Tag{},
 	// &domain.PropertyTagLink{},
 	// &domain.PropertyRelation{},
+	// &domain.Tag{},
 	// &domain.MemberPlan{},
 	// &domain.ProfileTransfer{},
 	// &domain.BankAccount{},

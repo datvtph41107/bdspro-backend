@@ -12,7 +12,7 @@ import (
 
 type AdminProductUsecase struct {
 	crud.BaseUsecase[domain.Product, admin_repo.AdminProductRepo]
-	ProductUsecase *shared_usecase.ProductUsecase // @bind: internal/usecases/shared
+	ProductUsecase *shared_usecase.ProductUsecase
 	ProductRepo    repo.ProductRepo
 }
 

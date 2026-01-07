@@ -625,6 +625,24 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			}
 		}
 
+		// Map BuildingInfo nếu có
+		var buildingInfo *bdspropb.PropertyBuildingInfo
+		if product.BuildingInfo != nil {
+			buildingType := uint32(product.BuildingInfo.BuildingType)
+			direction := uint32(product.BuildingInfo.Direction)
+			balconyDirection := uint32(product.BuildingInfo.BalconyDirection)
+			buildingInfo = &bdspropb.PropertyBuildingInfo{
+				BuildingType:     &buildingType,
+				ConstructionArea: product.BuildingInfo.ConstructionArea,
+				FloorArea:        product.BuildingInfo.FloorArea,
+				Floors:           product.BuildingInfo.Floors,
+				Bedrooms:         product.BuildingInfo.Bedrooms,
+				Bathrooms:        product.BuildingInfo.Bathrooms,
+				Direction:        &direction,
+				BalconyDirection: &balconyDirection,
+			}
+		}
+
 		productList[i] = &bdspropb.ProductResponse{
 			Id:              product.ID,
 			Name:            product.Name,
@@ -646,6 +664,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			},
 			Address:        address,
 			HouseInfo:      houseInfo,
+			BuildingInfo:   buildingInfo,
 			ImageId:        product.ImageID,
 			ImageUrl:       product.ImageURL,
 			SourceType:     product.SourceType,

@@ -15,3 +15,14 @@ var EHouseCertificateNames = map[EHouseCertificate]string{
 	EHouseCertificatePinkBook:        "Sổ hồng",
 	EHouseCertificateNotarizedRecord: "Vi bằng",
 }
+
+func (e EHouseCertificate) String() string {
+	return EHouseCertificateNames[e]
+}
+
+func (e EHouseCertificate) IsValid() bool {
+	return e == EHouseCertificateNone ||
+		e == EHouseCertificateRedBook ||
+		e == EHouseCertificatePinkBook ||
+		e == EHouseCertificateNotarizedRecord
+}

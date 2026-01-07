@@ -1,0 +1,116 @@
+package postgres
+
+import (
+	"bdspro/internal/domain"
+	"bdspro/internal/dto"
+	"bdspro/internal/repo"
+	"common/case/crud3"
+	"context"
+	"strings"
+
+	"gorm.io/gorm"
+)
+
+type PostgrePropertyRepo struct {
+	crud3.BaseRepo[domain.Property]
+}
+
+func NewPostgrePropertyRepo(db *gorm.DB) repo.PropertyRepo {
+	return &PostgrePropertyRepo{
+		BaseRepo: crud3.BaseRepo[domain.Property]{DB: db},
+	}
+}
+
+func (r *PostgrePropertyRepo) Search(ctx context.Context, payload *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error) {
+	var properties []dto.PropertyWithCounts
+	var total int64
+
+	baseQuery := r.DB.WithContext(ctx).
+		Table("property").
+		Select(`property.*,
+			CASE WHEN pr.primary_product_id IS NOT NULL THEN 1 ELSE 0 END as product_count,
+			CASE WHEN pr.asset_id IS NOT NULL THEN 1 ELSE 0 END as asset_count,
+			COALESCE((SELECT COUNT(*) FROM posts WHERE posts.product_id = pr.primary_product_id AND posts.deleted_at IS NULL), 0) as post_count,
+			COALESCE(prov.name, '') as province_name,
+			COALESCE(ward.name, '') as ward_name,
+			COALESCE(proj.name, '') as project_name,
+			COALESCE(pt.name, '') as property_type_name,
+			pbi.building_type,
+			pbi.construction_area,
+			pbi.floor_area,
+			pbi.floors,
+			pbi.bedrooms,
+			pbi.bathrooms,
+			pbi.direction,
+			pbi.balcony_direction`).
+		Joins("LEFT JOIN property_relation pr ON property.id = pr.property_id").
+		Joins("LEFT JOIN province_v2 prov ON property.province_id = prov.id AND prov.deleted_at IS NULL").
+		Joins("LEFT JOIN ward_v2 ward ON property.ward_id = ward.id AND ward.deleted_at IS NULL").
+		Joins("LEFT JOIN projects proj ON property.project_id = proj.id AND proj.deleted_at IS NULL").
+		Joins("LEFT JOIN property_type pt ON property.property_type_id = pt.id AND pt.deleted_at IS NULL").
+		Joins("LEFT JOIN property_building_info pbi ON property.id = pbi.property_id AND pbi.deleted_at IS NULL").
+		Where("property.deleted_at IS NULL")
+
+	// Filter by text
+	if payload.Text != "" {
+		text := "%" + strings.ToLower(payload.Text) + "%"
+		baseQuery = baseQuery.Where("LOWER(property.title) LIKE ? OR LOWER(property.address_text) LIKE ?", text, text)
+	}
+
+	// Filter by propertyTypeId
+	if payload.PropertyTypeID != nil {
+		baseQuery = baseQuery.Where("property.property_type_id = ?", *payload.PropertyTypeID)
+	}
+
+	// Filter by locationId
+	if payload.LocationID != nil {
+		baseQuery = baseQuery.Where("property.location_id = ?", *payload.LocationID)
+	}
+
+	// Filter by projectId
+	if payload.ProjectID != nil {
+		baseQuery = baseQuery.Where("property.project_id = ?", *payload.ProjectID)
+	}
+
+	// Filter by recordStatus
+	if payload.RecordStatus != "" {
+		baseQuery = baseQuery.Where("property.record_status = ?", payload.RecordStatus)
+	}
+
+	// Count total (clone query để count)
+	countQuery := baseQuery
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination and ordering
+	offset := payload.GetOffset()
+	limit := payload.GetLimit()
+
+	// Default sort by updated_at DESC
+	sort := payload.Sort
+	if sort == "" {
+		sort = "property.updated_at DESC"
+	}
+
+	err := baseQuery.
+		Order(sort).
+		Offset(offset).
+		Limit(limit).
+		Scan(&properties).Error
+
+	return properties, total, err
+}
+
+func (r *PostgrePropertyRepo) GetDetail(ctx context.Context, id uint64) (*domain.Property, error) {
+	var property domain.Property
+	if err := r.DB.WithContext(ctx).
+		Preload("PropertyType").
+		Preload("Project").
+		Preload("Province").
+		Preload("Ward").
+		Where("id = ? and deleted_at is null", id).First(&property).Error; err != nil {
+		return nil, err
+	}
+	return &property, nil
+}

@@ -312,6 +312,18 @@ type ProductListResponse struct {
 	HasAsset           bool  `gorm:"-" json:"hasAsset,omitempty"`           // Có gắn với ít nhất 1 tài sản
 	HasInventory       bool  `gorm:"-" json:"hasInventory,omitempty"`       // Thuộc bảng hàng
 	HasDeal            bool  `gorm:"-" json:"hasDeal,omitempty"`            // Đang ở ít nhất 1 thương vụ
+
+	// BuildingInfo fields (from PropertyBuildingInfo)
+	BuildingInfo *domain.PropertyBuildingInfo `gorm:"-" json:"buildingInfo,omitempty"`
+	// Internal fields for building info mapping
+	BuildingType      *uint32  `gorm:"column:building_type" json:"-"`
+	ConstructionArea  *float64 `gorm:"column:construction_area" json:"-"`
+	FloorArea         *float64 `gorm:"column:floor_area" json:"-"`
+	Floors            *uint32  `gorm:"column:floors" json:"-"`
+	BuildingBedrooms  *uint32  `gorm:"column:building_bedrooms" json:"-"`
+	BuildingBathrooms *uint32  `gorm:"column:building_bathrooms" json:"-"`
+	Direction         *uint32  `gorm:"column:direction" json:"-"`
+	BalconyDirection  *uint32  `gorm:"column:balcony_direction" json:"-"`
 }
 
 type ProductSummaryDTO struct {

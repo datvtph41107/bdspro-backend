@@ -1103,8 +1103,8 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			   products.id,
 		       products.name,
 		       products.code,
-		       products.area,
-		       products.area - COALESCE(child.total_area, 0) AS available_area,
+		       p.area_total as area,
+		       p.area_total - COALESCE(child.total_area, 0) AS available_area,
 		       COALESCE(products.property_type_id, 0) AS property_type_id,
 		       COALESCE(products.doc_type_id, 0) AS doc_type_id,
 		       COALESCE(products.project_id, 0) AS project_id,
@@ -1133,7 +1133,15 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       COALESCE(pp.rent_commission_type, 0) AS price_rent_commission_type,
 		       COALESCE(pp.rent_payment_cycle, 0) AS price_rent_payment_cycle,
 		       COALESCE(pm.media_url, '') AS image_url,
-		       COALESCE(pt.name, '') AS property_type_name
+		       COALESCE(pt.name, '') AS property_type_name,
+		       pbi.building_type,
+		       pbi.construction_area,
+		       pbi.floor_area,
+		       pbi.floors,
+		       pbi.bedrooms AS building_bedrooms,
+		       pbi.bathrooms AS building_bathrooms,
+		       pbi.direction,
+		       pbi.balcony_direction
 		FROM products
 		LEFT JOIN (
 			SELECT parent_id, SUM(area) AS total_area 
@@ -1143,11 +1151,13 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		) AS child ON products.id = child.parent_id
 		LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL
 		LEFT JOIN house_info hi ON products.id = hi.product_id AND hi.deleted_at IS NULL
-		LEFT JOIN projects proj ON products.project_id = proj.id AND proj.deleted_at IS NULL
-		LEFT JOIN province_v2 prov ON products.province_id = prov.id AND prov.deleted_at IS NULL
-		LEFT JOIN ward_v2 ward ON products.ward_id = ward.id AND ward.deleted_at IS NULL
 		LEFT JOIN product_media pm ON products.image_id = pm.id AND pm.deleted_at IS NULL
-		LEFT JOIN property_type pt ON products.property_type_id = pt.id AND pt.deleted_at IS NULL
+		LEFT JOIN property p ON products.property_id = p.id AND p.deleted_at IS NULL
+		LEFT JOIN property_building_info pbi ON p.id = pbi.property_id AND pbi.deleted_at IS NULL
+		LEFT JOIN province_v2 prov ON p.province_id = prov.id AND prov.deleted_at IS NULL
+		LEFT JOIN ward_v2 ward ON p.ward_id = ward.id AND ward.deleted_at IS NULL
+		LEFT JOIN projects proj ON p.project_id = proj.id AND proj.deleted_at IS NULL
+		LEFT JOIN property_type pt ON p.property_type_id = pt.id AND pt.deleted_at IS NULL
 		WHERE products.deleted_at IS NULL
 	`
 
@@ -1221,6 +1231,25 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			ProvinceName: tempResults[i].ProvinceName,
 			WardId:       &tempResults[i].WardId,
 			WardName:     tempResults[i].WardName,
+		}
+
+		// Populate BuildingInfo nếu có data
+		if tempResults[i].BuildingType != nil {
+			buildingInfo := &domain.PropertyBuildingInfo{
+				BuildingType:     enums.EBuildingType(*tempResults[i].BuildingType),
+				ConstructionArea: tempResults[i].ConstructionArea,
+				FloorArea:        tempResults[i].FloorArea,
+				Floors:           tempResults[i].Floors,
+				Bedrooms:         tempResults[i].BuildingBedrooms,
+				Bathrooms:        tempResults[i].BuildingBathrooms,
+			}
+			if tempResults[i].Direction != nil {
+				buildingInfo.Direction = enums.EHouseOrient(*tempResults[i].Direction)
+			}
+			if tempResults[i].BalconyDirection != nil {
+				buildingInfo.BalconyDirection = enums.EHouseOrient(*tempResults[i].BalconyDirection)
+			}
+			tempResults[i].BuildingInfo = buildingInfo
 		}
 	}
 

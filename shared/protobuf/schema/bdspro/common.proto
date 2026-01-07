@@ -189,7 +189,8 @@ message ProductResponse {
     string sourceContactNote = 71;
     string certificateHouseNote = 72;
     optional sharepb.ContactDTO sourceContact = 73;
-    optional string propertyTypeName = 74;
+    optional string propertyTypeName = 75;
+    optional PropertyBuildingInfo buildingInfo = 76; // Thông tin nhà/công trình từ PropertyBuildingInfo
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
@@ -308,4 +309,15 @@ message AssetItem {
 message PostItem {
     uint64 id = 1;
     string code = 2;
+}
+
+message PropertyBuildingInfo {
+    optional uint32 buildingType = 1;        // Loại nhà (10=Nhà ở, 20=Nhà xưởng)
+    optional double constructionArea = 2;    // Diện tích xây dựng (m²)
+    optional double floorArea = 3;           // Diện tích sàn (m²)
+    optional uint32 floors = 4;              // Số tầng
+    optional uint32 bedrooms = 5;            // Số phòng ngủ
+    optional uint32 bathrooms = 6;          // Số phòng tắm
+    optional uint32 direction = 7;           // Hướng nhà (enum EHouseOrient)
+    optional uint32 balconyDirection = 8;    // Hướng ban công (enum EHouseOrient)
 }
