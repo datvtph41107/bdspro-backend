@@ -9,10 +9,10 @@ import (
 
 type DealHistoryHandler struct {
 	notificationpb.UnimplementedDealHistoryServiceServer
-	dealHistoryUsecase usecase.DealHistoryUsecase
+	dealHistoryUsecase *usecase.DealHistoryUsecase
 }
 
-func NewDealHistoryHandler(dealHistoryUsecase usecase.DealHistoryUsecase) *DealHistoryHandler {
+func NewDealHistoryHandler(dealHistoryUsecase *usecase.DealHistoryUsecase) *DealHistoryHandler {
 	return &DealHistoryHandler{
 		dealHistoryUsecase: dealHistoryUsecase,
 	}

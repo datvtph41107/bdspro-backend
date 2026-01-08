@@ -7,23 +7,17 @@ import (
 	"notification/internal/repo"
 )
 
-type DealHistoryUsecase interface {
-	CreateDealHistory(ctx context.Context, req *domain.DealHistoryRequest) (*domain.DealHistoryResponse, error)
-	GetDealHistory(ctx context.Context, dealID uint64, page, size int) ([]*domain.DealHistoryEntity, uint32, error)
-	GetDealHistoryByID(ctx context.Context, id uint64) (*domain.DealHistoryEntity, error)
-}
-
-type dealHistoryUsecase struct {
+type DealHistoryUsecase struct {
 	dealHistoryRepo repo.DealHistoryRepository
 }
 
-func NewDealHistoryUsecase(dealHistoryRepo repo.DealHistoryRepository) DealHistoryUsecase {
-	return &dealHistoryUsecase{
+func NewDealHistoryUsecase(dealHistoryRepo repo.DealHistoryRepository) *DealHistoryUsecase {
+	return &DealHistoryUsecase{
 		dealHistoryRepo: dealHistoryRepo,
 	}
 }
 
-func (u *dealHistoryUsecase) CreateDealHistory(ctx context.Context, req *domain.DealHistoryRequest) (*domain.DealHistoryResponse, error) {
+func (u *DealHistoryUsecase) CreateDealHistory(ctx context.Context, req *domain.DealHistoryRequest) (*domain.DealHistoryResponse, error) {
 	// Convert request to entity
 	history := &domain.DealHistoryEntity{
 		DealID:      req.DealID,
@@ -52,7 +46,7 @@ func (u *dealHistoryUsecase) CreateDealHistory(ctx context.Context, req *domain.
 	}, nil
 }
 
-func (u *dealHistoryUsecase) GetDealHistory(ctx context.Context, dealID uint64, page, size int) ([]*domain.DealHistoryEntity, uint32, error) {
+func (u *DealHistoryUsecase) GetDealHistory(ctx context.Context, dealID uint64, page, size int) ([]*domain.DealHistoryEntity, uint32, error) {
 	// Validate pagination parameters
 	if page < 1 {
 		page = 1
@@ -69,7 +63,7 @@ func (u *dealHistoryUsecase) GetDealHistory(ctx context.Context, dealID uint64, 
 	return histories, total, nil
 }
 
-func (u *dealHistoryUsecase) GetDealHistoryByID(ctx context.Context, id uint64) (*domain.DealHistoryEntity, error) {
+func (u *DealHistoryUsecase) GetDealHistoryByID(ctx context.Context, id uint64) (*domain.DealHistoryEntity, error) {
 	history, err := u.dealHistoryRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get deal history by id: %w", err)

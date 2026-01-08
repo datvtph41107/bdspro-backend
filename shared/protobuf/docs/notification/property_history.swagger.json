@@ -1,0 +1,288 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "notification/property_history.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PropertyHistoryService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/notification/property-history": {
+      "get": {
+        "operationId": "PropertyHistoryService_GetPropertyHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbGetPropertyHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PropertyHistoryService"
+        ]
+      },
+      "post": {
+        "operationId": "PropertyHistoryService_CreatePropertyHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbCreatePropertyHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/notificationpbCreatePropertyHistoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PropertyHistoryService"
+        ]
+      }
+    },
+    "/v2/notification/property-history/{id}": {
+      "get": {
+        "operationId": "PropertyHistoryService_GetPropertyHistoryByID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbGetPropertyHistoryByIDResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PropertyHistoryService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "notificationpbCreatePropertyHistoryRequest": {
+      "type": "object",
+      "properties": {
+        "subjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "subjectType": {
+          "type": "string"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "actorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "actorType": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "notificationpbCreatePropertyHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "notificationpbGetPropertyHistoryByIDResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/notificationpbPropertyHistoryItem"
+        }
+      }
+    },
+    "notificationpbGetPropertyHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/notificationpbPropertyHistoryItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "notificationpbPropertyHistoryItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "subjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "subjectType": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "actorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "actorType": {
+          "type": "string"
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

@@ -34,32 +34,33 @@
 
 ### 📝 Các handler khác có trong proto nhưng chưa có handler:
 
-- TaskService (task_v2_1.proto) - Chưa có handler
-- CustomerService (customer_v2_1.proto) - Chưa có handler
-- IntentService (intent_v2_1.proto) - Chưa có handler
-- DealContractService (contract_deal_v2_1.proto) - Chưa có handler
-- DealCostService (deal_cost_v2_1.proto) - Chưa có handler
-- CostTypeService (cost_type_v2_1.proto) - Chưa có handler
-- InternalTransactionService (transaction_internal_v2_1.proto) - Chưa có handler
+-   TaskService (task_v2_1.proto) - Chưa có handler
+-   CustomerService (customer_v2_1.proto) - Chưa có handler
+-   IntentService (intent_v2_1.proto) - Chưa có handler
+-   DealContractService (contract_deal_v2_1.proto) - Chưa có handler
+-   DealCostService (deal_cost_v2_1.proto) - Chưa có handler
+-   CostTypeService (cost_type_v2_1.proto) - Chưa có handler
+-   InternalTransactionService (transaction_internal_v2_1.proto) - Chưa có handler
 
 ### 💬 Các handler đã comment trong runtime.go (có thể không cần):
 
-- CostDocumentServer
-- IncomeDocumentServer
-- AssetIncomeTypeServer
-- AssetSplitHistoryServer
+-   CostDocumentServer
+-   IncomeDocumentServer
+-   AssetIncomeTypeServer
+-   AssetSplitHistoryServer
 
 ## Kết luận:
 
 ✅ **Tất cả handlers hiện có trong runtime.go đã được đăng ký đầy đủ:**
-- 20 handlers đã register và hoạt động
-- 4 handlers mới (Deal, Tx, TxTransaction, AdminTxTransaction) đã thêm vào runtime.go nhưng chưa register vì chờ generate protobuf code
+
+-   20 handlers đã register và hoạt động
+-   4 handlers mới (Deal, Tx, TxTransaction, AdminTxTransaction) đã thêm vào runtime.go nhưng chưa register vì chờ generate protobuf code
 
 ⚠️ **Cần uncomment 4 dòng register sau khi generate protobuf code:**
+
 ```go
 bdspropb.RegisterDealServiceServer(s, app.DealHandler)
 bdspropb.RegisterTxServiceServer(s, app.TxHandler)
 bdspropb.RegisterTxTransactionServiceServer(s, app.TxTransactionHandler)
 bdspropb.RegisterAdminTxTransactionServiceServer(s, app.AdminTxTransactionHandler)
 ```
-

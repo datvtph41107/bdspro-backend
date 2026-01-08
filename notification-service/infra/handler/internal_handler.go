@@ -23,7 +23,7 @@ type InternalHandler struct {
 	Mapper              *mapper.NotificationMapper
 	AdminHistoryUsecase *usecase.AdminHistoryUsecase
 	AdminHistoryMapper  *mapper.AdminHistoryMapper
-	DealHistoryUsecase  usecase.DealHistoryUsecase
+	DealHistoryUsecase  *usecase.DealHistoryUsecase
 	HistoryAuthUsecase  *usecase.HistoryAuthUsecase
 	HistoryAuthMapper   *mapper.HistoryAuthMapper
 	PersonConfigUsecase *usecase.PersonConfigUsecase
@@ -34,7 +34,7 @@ func NewInternalHandler(
 	mapper *mapper.NotificationMapper,
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
-	dealHistoryUsecase usecase.DealHistoryUsecase,
+	dealHistoryUsecase *usecase.DealHistoryUsecase,
 	historyAuthUsecase *usecase.HistoryAuthUsecase,
 	historyAuthMapper *mapper.HistoryAuthMapper,
 	personConfigUsecase *usecase.PersonConfigUsecase,

@@ -27,15 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 )
-
-// CustomMetadataMethod inject metadata vào gRPC context
-func CustomMetadataMethod(ctx context.Context, req *http.Request) metadata.MD {
-	md := metadata.Pairs("x-http-method", req.Method)
-	log.Printf("HTTP Method: %s", req.Method)
-	return md
-}
 
 // publicRoutes danh sách các route không cần authentication
 var publicRoutes = []string{

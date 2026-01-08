@@ -44,6 +44,7 @@ func startGRPCServer() {
 	notificationpb.RegisterInternalNotificationServiceServer(s, app.InternalHandler)
 	notificationpb.RegisterHistoryServiceServer(s, app.HistoryHandler)
 	notificationpb.RegisterDealHistoryServiceServer(s, app.DealHistoryHandler)
+	notificationpb.RegisterPropertyHistoryServiceServer(s, app.PropertyHistoryHandler)
 
 	log.Printf("gRPC server listening on %s", port)
 	if err := s.Serve(lis); err != nil {

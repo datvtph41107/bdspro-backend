@@ -19,4 +19,5 @@ func RegisterNotificationService(ctx context.Context, mux *runtime.ServeMux, env
 	fmt.Println("url", url, "endpoint", endpoint)
 	_ = notificationpb.RegisterGatewayNotificationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = notificationpb.RegisterHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = notificationpb.RegisterPropertyHistoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
