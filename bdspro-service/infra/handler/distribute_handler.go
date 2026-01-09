@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"time"
@@ -33,8 +34,8 @@ func (h *DistributionHandler) CreateDistribute(ctx context.Context, req *bdsprop
 		ProductID:  req.ProductId,
 		PartnerIDs: req.PartnerIds,
 		Policy:     h.mapper.ProtoToDistributionPolicy(req.Policy),
-		FromDate:   timestamppbToTimePtr(req.FromDate),
-		ToDate:     timestamppbToTimePtr(req.ToDate),
+		FromDate:   _utils.ParseStringToTime(req.FromDate),
+		ToDate:     _utils.ParseStringToTime(req.ToDate),
 	}
 
 	result, err := h.usecase.CreateDistribute(ctx, dtoReq)
@@ -54,8 +55,8 @@ func (h *DistributionHandler) UpdateDistribute(ctx context.Context, req *bdsprop
 		ProductID:  req.Id,
 		PartnerIDs: req.PartnerIds,
 		Policy:     h.mapper.ProtoToDistributionPolicy(req.Policy),
-		FromDate:   timestamppbToTimePtr(req.FromDate),
-		ToDate:     timestamppbToTimePtr(req.ToDate),
+		FromDate:   _utils.ParseStringToTime(req.FromDate),
+		ToDate:     _utils.ParseStringToTime(req.ToDate),
 	}
 
 	result, err := h.usecase.UpdateDistribute(ctx, req.Id, dtoReq)
@@ -78,15 +79,22 @@ func (h *DistributionHandler) GetDistribution(ctx context.Context, req *bdspropb
 	return h.mapper.DistributionEntityToProto(entity), nil
 }
 
-// ---------------- List ----------------
 func (h *DistributionHandler) ListDistributions(ctx context.Context, req *bdspropb.ListDistributionsRequest) (*bdspropb.ListDistributionsResponse, error) {
-	entities, err := h.usecase.GetListDistributes(ctx, req.ProductId)
+	// Chuyển các filter từ proto request sang DTO
+	filter := &dto.FilterDistributeDTO{
+		FromDate:     _utils.ParseStringToTime(req.FromDate),
+		ToDate:       _utils.ParseStringToTime(req.ToDate),
+		CanDeal:      req.CanDeal,
+		ChannelPrice: req.ChannelPrice,
+	}
+
+	entities, err := h.usecase.GetListDistributes(ctx, req.ProductId, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list distributions: %v", err)
 	}
 
 	return &bdspropb.ListDistributionsResponse{
-		Distributions: h.mapper.DistributionListToProto(entities),
+		Data: h.mapper.DistributionListToProto(entities),
 	}, nil
 }
 

@@ -21,12 +21,10 @@ type DistributionUsecase struct {
 func NewDistributionUsecase(
 	r repo.DistributeRepository,
 	transaction provider.TransactionProvider,
-	userGrpcClient iusecase.IUserClient,
 ) *DistributionUsecase {
 	return &DistributionUsecase{
 		distributionRepo: r,
 		transaction:      transaction,
-		userGrpcClient:   userGrpcClient,
 	}
 }
 
@@ -42,11 +40,10 @@ func (uc *DistributionUsecase) CreateDistribute(ctx context.Context, req *dto.Di
 		partnerCommission := calculatePartnerCommission(req.Policy)
 
 		dist := &domain.DistributionEntity{
-			ProductID:         req.ProductID,
 			Policy:            req.Policy,
-			DistributedAt:     now,
-			FromDate:          *req.FromDate,
-			ToDate:            *req.ToDate,
+			DistributedAt:     &now,
+			FromDate:          req.FromDate,
+			ToDate:            req.ToDate,
 			Status:            enums.DISTRIBUTION_STATUS_ACTIVE,
 			PartnerCommission: partnerCommission,
 		}
@@ -87,12 +84,12 @@ func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint
 		}
 
 		dist.Policy = req.Policy
-		dist.FromDate = *req.FromDate
-		dist.ToDate = *req.ToDate
+		dist.FromDate = req.FromDate
+		dist.ToDate = req.ToDate
 
 		dist.PartnerCommission = calculatePartnerCommission(req.Policy)
 
-		if dist.Status != enums.DISTRIBUTION_STATUS_REVOKED && time.Now().After(dist.ToDate) {
+		if dist.Status != enums.DISTRIBUTION_STATUS_REVOKED && time.Now().After(*dist.ToDate) {
 			dist.Status = enums.DISTRIBUTION_STATUS_EXPRIED
 		}
 
@@ -138,6 +135,7 @@ func (uc *DistributionUsecase) assignPartners(ctx context.Context, partnerIDs []
 			ProfileID:    pid,
 			ProductID:    productID,
 			DistributeID: distID,
+			IsOwner:      false,
 		})
 	}
 	if err := uc.distributionRepo.AssignPartner(ctx, partners...); err != nil {
@@ -164,8 +162,8 @@ func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, di
 	return dist, nil
 }
 
-func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64) ([]*domain.DistributionEntity, error) {
-	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID)
+func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*domain.DistributionEntity, error) {
+	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID, dto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distribute list: %w", err)
 	}

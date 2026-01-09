@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"bdspro/internal/domain"
@@ -101,12 +102,37 @@ func (r *DistributePostgres) FindActiveByProductAndPartner(ctx context.Context, 
 	return &entity, nil
 }
 
-func (r *DistributePostgres) GetListDistrByProduct(ctx context.Context, productID uint64) ([]*domain.DistributionEntity, error) {
+func (r *DistributePostgres) GetListDistrByProduct(ctx context.Context, productID uint64, filter *dto.FilterDistributeDTO) ([]*domain.DistributionEntity, error) {
 	var dists []*domain.DistributionEntity
-	if err := r.db.WithContext(ctx).Where("product_id = ?", productID).Order("distributed_at DESC").Find(&dists).Error; err != nil {
+
+	db := r.db.WithContext(ctx).Model(&domain.DistributionEntity{}).Where("product_id = ?", productID)
+
+	// Lọc theo FromDate >=
+	if filter.FromDate != nil {
+		db = db.Where("from_date >= ?", *filter.FromDate)
+	}
+
+	// Lọc theo ToDate <=
+	if filter.ToDate != nil {
+		db = db.Where("to_date <= ?", *filter.ToDate)
+	}
+
+	// Lọc theo policy.CanDeal (lưu trong JSON)
+	if filter.CanDeal != nil {
+		db = db.Where("policy->>'canDeal' = ?", fmt.Sprintf("%t", *filter.CanDeal))
+	}
+
+	// Lọc theo policy.ChannelPrice (lưu trong JSON)
+	if filter.ChannelPrice != nil {
+		db = db.Where("policy->>'channelPrice' = ?", fmt.Sprintf("%t", *filter.ChannelPrice))
+	}
+
+	// Sắp xếp theo DistributedAt giảm dần
+	if err := db.Order("distributed_at DESC").Find(&dists).Error; err != nil {
 		return nil, err
 	}
 
+	// Lấy partner IDs và đếm
 	for _, dist := range dists {
 		var partners []domain.ProductUser
 		if err := r.db.WithContext(ctx).Where("distribute_id = ?", dist.ID).Find(&partners).Error; err != nil {

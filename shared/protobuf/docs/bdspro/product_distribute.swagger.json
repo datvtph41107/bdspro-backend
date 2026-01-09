@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v2/distributions": {
+    "/v2/bdspro/distributions": {
       "post": {
         "operationId": "DistributionService_CreateDistribute",
         "responses": {
@@ -48,7 +48,7 @@
         ]
       }
     },
-    "/v2/distributions/all/{productId}": {
+    "/v2/bdspro/distributions/all/{productId}": {
       "get": {
         "operationId": "DistributionService_ListDistributions",
         "responses": {
@@ -72,6 +72,50 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "canDeal",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "channelPrice",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -79,7 +123,7 @@
         ]
       }
     },
-    "/v2/distributions/revoke": {
+    "/v2/bdspro/distributions/revoke": {
       "post": {
         "operationId": "DistributionService_RevokeDistribute",
         "responses": {
@@ -111,7 +155,7 @@
         ]
       }
     },
-    "/v2/distributions/{id}": {
+    "/v2/bdspro/distributions/{id}": {
       "get": {
         "operationId": "DistributionService_GetDistribution",
         "responses": {
@@ -195,12 +239,10 @@
           "$ref": "#/definitions/bdspropbDistributionPolicy"
         },
         "fromDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "toDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -231,12 +273,10 @@
           "$ref": "#/definitions/bdspropbDistributionPolicy"
         },
         "fromDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "toDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -248,12 +288,10 @@
           "format": "int32"
         },
         "fromDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "toDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -281,20 +319,16 @@
           "type": "string"
         },
         "distributedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "revokedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "fromDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "toDate": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "partnerIds": {
           "type": "array",
@@ -356,12 +390,16 @@
     "bdspropbListDistributionsResponse": {
       "type": "object",
       "properties": {
-        "distributions": {
+        "data": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/bdspropbDistributionEntity"
           }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

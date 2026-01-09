@@ -29,33 +29,33 @@ enum DistributionReason {
 service DistributionService {
     rpc CreateDistribute(DistributeRequest) returns (DistributeResponse) {
         option (google.api.http) = {
-            post: "/v2/distributions"
+            post: "/v2/bdspro/distributions"
             body: "*"
         };
     }
 
     rpc UpdateDistribute(UpdateDistributeRequest) returns (DistributeResponse) {
         option (google.api.http) = {
-            post: "/v2/distributions/{id}"
+            post: "/v2/bdspro/distributions/{id}"
             body: "*"
         };
     }
 
     rpc GetDistribution(GetDistributionRequest) returns (DistributionEntity) {
         option (google.api.http) = {
-            get: "/v2/distributions/{id}"
+            get: "/v2/bdspro/distributions/{id}"
         };
     }
 
     rpc ListDistributions(ListDistributionsRequest) returns (ListDistributionsResponse) {
         option (google.api.http) = {
-            get: "/v2/distributions/all/{product_id}"
+            get: "/v2/bdspro/distributions/all/{product_id}"
         };
     }
 
     rpc RevokeDistribute(RevokeDistributeRequest) returns (RevokeDistributeResponse) {
         option (google.api.http) = {
-            post: "/v2/distributions/revoke"
+            post: "/v2/bdspro/distributions/revoke"
             body: "*"
         };
     }
@@ -77,46 +77,54 @@ message DistributionEntity {
     DistributionStatus status = 4;
     DistributionReason reason = 5;
     string reason_other = 6;
-    google.protobuf.Timestamp distributed_at = 7;
-    google.protobuf.Timestamp revoked_at = 8;
-    google.protobuf.Timestamp from_date = 9;
-    google.protobuf.Timestamp to_date = 10;
+    string distributed_at = 7;
+    string revoked_at = 8;
+    string from_date = 9;
+    string to_date = 10;
     repeated uint64 partner_ids = 11;
     double partner_commission = 12;
+}
+
+message ListDistributionsRequest {
+    string from_date = 1;  
+    string to_date = 2;    
+    optional bool can_deal = 3;                  
+    optional bool channel_price = 4;                  
+    uint32 page = 5;                           
+    uint32 size = 6;                          
+    string sort = 7;
+    uint64 product_id = 8;
 }
 
 message DistributeRequest {
     uint64 product_id = 1;
     repeated uint64 partner_ids = 2;
     DistributionPolicy policy = 3;
-    google.protobuf.Timestamp from_date = 4;
-    google.protobuf.Timestamp to_date = 5;
+    string from_date = 4;
+    string to_date = 5;
 }
 
 message UpdateDistributeRequest {
     uint64 id = 1;
     repeated uint64 partner_ids = 2;
     DistributionPolicy policy = 3;
-    google.protobuf.Timestamp from_date = 4;
-    google.protobuf.Timestamp to_date = 5;
+    string from_date = 4;
+    string to_date = 5;
 }
 
 message DistributeResponse {
     int32 created_count = 1;
-    google.protobuf.Timestamp from_date = 2;
-    google.protobuf.Timestamp to_date = 3;
+    string from_date = 2;
+    string to_date = 3;
 }
 
 message GetDistributionRequest {
     uint64 id = 1;
 }
 
-message ListDistributionsRequest {
-    uint64 product_id = 1;
-}
-
 message ListDistributionsResponse {
-    repeated DistributionEntity distributions = 1;
+    repeated DistributionEntity data = 1;
+    int64 total = 2;
 }
 
 message RevokeDistributeRequest {

@@ -2,6 +2,7 @@ package dto
 
 import (
 	"bdspro/internal/domain"
+	_dto "common/domain/dto"
 	"errors"
 	"time"
 )
@@ -14,10 +15,18 @@ type DistributeDTO struct {
 	ToDate     *time.Time                `json:"toDate,omitempty"`
 }
 
+type FilterDistributeDTO struct {
+	_dto.Pagable            // page, limit, offset nếu có
+	FromDate     *time.Time `form:"fromDate"`     // lọc FromDate >=
+	ToDate       *time.Time `form:"toDate"`       // lọc ToDate <=
+	CanDeal      *bool      `form:"canDeal"`      // lọc policy.CanDeal
+	ChannelPrice *bool      `form:"channelPrice"` // lọc policy.ChannelPrice
+}
+
 type DistributeResultDTO struct {
-	CreatedCount int       `json:"createdCount"`
-	FromDate     time.Time `json:"fromDate"`
-	ToDate       time.Time `json:"toDate"`
+	CreatedCount int        `json:"createdCount"`
+	FromDate     *time.Time `json:"fromDate"`
+	ToDate       *time.Time `json:"toDate"`
 }
 
 type RevokeDTO struct {

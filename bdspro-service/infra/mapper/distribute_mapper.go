@@ -3,9 +3,8 @@ package mapper
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/enums"
+	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type DistributionMapper struct{}
@@ -15,11 +14,6 @@ func NewDistributionMapper() *DistributionMapper {
 }
 
 func (m *DistributionMapper) DistributionEntityToProto(entity *domain.DistributionEntity) *bdspropb.DistributionEntity {
-	var revokedAt *timestamppb.Timestamp
-	if entity.RevokedAt != nil {
-		revokedAt = timestamppb.New(*entity.RevokedAt)
-	}
-
 	return &bdspropb.DistributionEntity{
 		Id:                entity.ID,
 		ProductId:         entity.ProductID,
@@ -27,10 +21,10 @@ func (m *DistributionMapper) DistributionEntityToProto(entity *domain.Distributi
 		Status:            bdspropb.DistributionStatus(entity.Status),
 		Reason:            bdspropb.DistributionReason(entity.Reason),
 		ReasonOther:       entity.ReasonOther,
-		DistributedAt:     timestamppb.New(entity.DistributedAt),
-		RevokedAt:         revokedAt,
-		FromDate:          timestamppb.New(entity.FromDate),
-		ToDate:            timestamppb.New(entity.ToDate),
+		DistributedAt:     _utils.FormatTimeToString(entity.DistributedAt),
+		RevokedAt:         _utils.FormatTimeToString(entity.RevokedAt),
+		FromDate:          _utils.FormatTimeToString(entity.FromDate),
+		ToDate:            _utils.FormatTimeToString(entity.ToDate),
 		PartnerIds:        entity.PartnerIds,
 		PartnerCommission: entity.PartnerCommission,
 	}
