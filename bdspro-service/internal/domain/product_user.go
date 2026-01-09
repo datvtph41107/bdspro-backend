@@ -12,7 +12,7 @@ type ProductUser struct {
 	ProductID    uint64         `gorm:"not null;index" json:"productId"`
 	IsOwner      bool           `gorm:"not null;default:false" json:"isOwner"`
 	RoleID       uint64         `gorm:"not null;default:0" json:"roleId"`
-	DistributeID uint64         `gorm:"not null;index" json:"distributeId"`
+	DistributeID uint64         `gorm:"index" json:"distributeId"`
 	OwnerOf      enums.EOwnerOf `gorm:"not null;default:10" json:"ownerOf"`
 }
 
