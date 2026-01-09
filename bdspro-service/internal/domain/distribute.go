@@ -5,19 +5,24 @@ import (
 	"time"
 )
 
-type DistributionPolicy struct {
-	Price           int64                `json:"price"`
-	CanDeal         bool                 `json:"canDeal"`
-	ChannelPrice    bool                 `json:"channelPrice"`
-	CommissionType  enums.CommissionType `json:"commissionType"`
-	CommissionValue float64              `json:"commissionValue"`
-	Note            string               `json:"note,omitempty"`
-}
+// type DistributionPolicy struct {
+// 	Price           int64                `json:"price"`
+// 	CanDeal         bool                 `json:"canDeal"`
+// 	ChannelPrice    bool                 `json:"channelPrice"`
+// 	CommissionType  enums.CommissionType `json:"commissionType"`
+// 	CommissionValue float64              `json:"commissionValue"`
+// 	Note            string               `json:"note,omitempty"`
+// }
 
 type DistributionEntity struct {
 	ID                uint64                   `gorm:"primaryKey" json:"id"`
+	Price             int64                    `gorm:"column:price" json:"price"`
+	CanDeal           bool                     `gorm:"column:can_deal;default:false" json:"canDeal"`
+	ChannelPrice      bool                     `gorm:"column:channel_price;default:false" json:"channelPrice"`
+	CommissionType    enums.CommissionType     `gorm:"column:commission_type;default:10" json:"commissionType"`
+	CommissionValue   float64                  `gorm:"column:commission_value;default:0" json:"commissionValue"`
+	Note              string                   `gorm:"column:note" json:"note,omitempty"`
 	ProductID         uint64                   `gorm:"not null;index" json:"productId"`
-	Policy            DistributionPolicy       `gorm:"type:jsonb;not null" json:"policy"`
 	DistributedAt     *time.Time               `gorm:"not null" json:"distributedAt"`
 	RevokedAt         *time.Time               `json:"revokedAt,omitempty"`
 	Status            enums.DistributionStatus `gorm:"not null" json:"status"`

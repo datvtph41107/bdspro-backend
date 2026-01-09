@@ -38,15 +38,21 @@ func (uc *DistributionUsecase) CreateDistribute(ctx context.Context, req *dto.Di
 	err := uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		now := time.Now()
 
-		partnerCommission := calculatePartnerCommission(req.Policy)
+		partnerCommission := calculatePartnerCommission(req.Price, req.CommissionType, req.CommissionValue)
 
 		dist := &domain.DistributionEntity{
-			Policy:            req.Policy,
+			Price:             req.Price,
+			CanDeal:           req.CanDeal,
+			ChannelPrice:      req.ChannelPrice,
+			CommissionType:    req.CommissionType,
+			CommissionValue:   req.CommissionValue,
+			Note:              req.Note,
 			DistributedAt:     &now,
 			FromDate:          req.FromDate,
 			ToDate:            req.ToDate,
 			Status:            enums.DISTRIBUTION_STATUS_ACTIVE,
 			PartnerCommission: partnerCommission,
+			ProductID:         req.ProductID,
 		}
 
 		if err := uc.distributionRepo.Save(txCtx, []*domain.DistributionEntity{dist}); err != nil {
@@ -84,11 +90,16 @@ func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint
 			return fmt.Errorf("distribution not found: %w", err)
 		}
 
-		dist.Policy = req.Policy
+		dist.Price = req.Price
+		dist.CanDeal = req.CanDeal
+		dist.ChannelPrice = req.ChannelPrice
+		dist.CommissionType = req.CommissionType
+		dist.CommissionValue = req.CommissionValue
+		dist.Note = req.Note
 		dist.FromDate = req.FromDate
 		dist.ToDate = req.ToDate
 
-		dist.PartnerCommission = calculatePartnerCommission(req.Policy)
+		dist.PartnerCommission = calculatePartnerCommission(req.Price, req.CommissionType, req.CommissionValue)
 
 		if dist.Status != enums.DISTRIBUTION_STATUS_REVOKED && time.Now().After(*dist.ToDate) {
 			dist.Status = enums.DISTRIBUTION_STATUS_EXPRIED
@@ -109,7 +120,10 @@ func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint
 			_ = uc.distributionRepo.RemovePartnersFromDistribute(txCtx, dist.ID, toRemove)
 		}
 
-		createdCount, _ := uc.assignPartners(txCtx, req.PartnerIDs, req.ProductID, dist.ID)
+		createdCount, err := uc.assignPartners(txCtx, req.PartnerIDs, req.ProductID, dist.ID)
+		if err != nil {
+			return fmt.Errorf("failed to assign partners: %w", err)
+		}
 
 		resp.CreatedCount = createdCount
 		resp.FromDate = dist.FromDate
@@ -180,16 +194,16 @@ func (uc *DistributionUsecase) ListPartnersOfDistribute(ctx context.Context, dis
 	return partners, nil
 }
 
-func calculatePartnerCommission(policy domain.DistributionPolicy) float64 {
-	if policy.CommissionValue <= 0 {
+func calculatePartnerCommission(price int64, commissionType enums.CommissionType, commissionValue float64) float64 {
+	if commissionValue <= 0 {
 		return 0
 	}
 
-	switch policy.CommissionType {
+	switch commissionType {
 	case enums.CommissionTypePercent:
-		return float64(policy.Price) * policy.CommissionValue / 100
+		return float64(price) * commissionValue / 100
 	case enums.CommissionTypeVND:
-		return policy.CommissionValue
+		return commissionValue
 	default:
 		return 0
 	}

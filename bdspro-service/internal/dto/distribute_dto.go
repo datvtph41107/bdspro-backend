@@ -1,18 +1,23 @@
 package dto
 
 import (
-	"bdspro/internal/domain"
+	"bdspro/internal/enums"
 	_dto "common/domain/dto"
 	"errors"
 	"time"
 )
 
 type DistributeDTO struct {
-	ProductID  uint64                    `json:"productId"`
-	PartnerIDs []uint64                  `json:"partnerIds"`
-	Policy     domain.DistributionPolicy `json:"policy"`
-	FromDate   *time.Time                `json:"fromDate,omitempty"`
-	ToDate     *time.Time                `json:"toDate,omitempty"`
+	ProductID       uint64               `json:"productId"`
+	PartnerIDs      []uint64             `json:"partnerIds"`
+	FromDate        *time.Time           `json:"fromDate,omitempty"`
+	ToDate          *time.Time           `json:"toDate,omitempty"`
+	Price           int64                `json:"price"`
+	CanDeal         bool                 `json:"canDeal"`
+	ChannelPrice    bool                 `json:"channelPrice"`
+	CommissionType  enums.CommissionType `json:"commissionType"`
+	CommissionValue float64              `json:"commissionValue"`
+	Note            string               `json:"note,omitempty"`
 }
 
 type FilterDistributeDTO struct {
@@ -39,7 +44,7 @@ func (d *DistributeDTO) Validate() error {
 	if d.ProductID == 0 {
 		return errors.New("ProductID must be greater than 0")
 	}
-	if d.Policy.Price < 0 {
+	if d.Price < 0 {
 		return errors.New("Policy.Price must be >= 0")
 	}
 	if len(d.PartnerIDs) == 0 {

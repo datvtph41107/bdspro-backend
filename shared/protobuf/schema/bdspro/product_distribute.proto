@@ -73,7 +73,6 @@ message DistributionPolicy {
 message DistributionEntity {
     uint64 id = 1;
     uint64 product_id = 2;
-    DistributionPolicy policy = 3;
     DistributionStatus status = 4;
     DistributionReason reason = 5;
     string reason_other = 6;
@@ -83,6 +82,12 @@ message DistributionEntity {
     string to_date = 10;
     repeated uint64 partner_ids = 11;
     double partner_commission = 12;
+    int64 price = 13;
+    bool can_deal = 14;
+    bool channel_price = 15;
+    CommissionType commission_type = 16;
+    double commission_value = 17;
+    string note = 3;
 }
 
 message ListDistributionsRequest {

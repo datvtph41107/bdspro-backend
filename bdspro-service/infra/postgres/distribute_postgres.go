@@ -43,7 +43,6 @@ func (r *DistributePostgres) AssignPartner(ctx context.Context, partners ...*dom
 			Columns: []clause.Column{
 				{Name: "profile_id"},
 				{Name: "product_id"},
-				{Name: "distribute_id"},
 			},
 			DoNothing: true,
 		}).

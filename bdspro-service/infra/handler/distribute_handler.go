@@ -34,7 +34,6 @@ func (h *DistributionHandler) CreateDistribute(ctx context.Context, req *bdsprop
 	dtoReq := &dto.DistributeDTO{
 		ProductID:  req.ProductId,
 		PartnerIDs: req.PartnerIds,
-		Policy:     h.mapper.ProtoToDistributionPolicy(req.Policy),
 		FromDate:   _utils.ParseStringToTime(req.FromDate),
 		ToDate:     _utils.ParseStringToTime(req.ToDate),
 	}
@@ -55,7 +54,6 @@ func (h *DistributionHandler) UpdateDistribute(ctx context.Context, req *bdsprop
 	dtoReq := &dto.DistributeDTO{
 		ProductID:  req.Id,
 		PartnerIDs: req.PartnerIds,
-		Policy:     h.mapper.ProtoToDistributionPolicy(req.Policy),
 		FromDate:   _utils.ParseStringToTime(req.FromDate),
 		ToDate:     _utils.ParseStringToTime(req.ToDate),
 	}
