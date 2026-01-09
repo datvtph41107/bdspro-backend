@@ -49,7 +49,7 @@ service DistributionService {
 
     rpc ListDistributions(ListDistributionsRequest) returns (ListDistributionsResponse) {
         option (google.api.http) = {
-            get: "/v2/bdspro/distributions/all/{product_id}"
+            get: "/v2/bdspro/distributions/all/{productId}"
         };
     }
 
@@ -63,64 +63,64 @@ service DistributionService {
 
 message DistributionPolicy {
     int64 price = 1;
-    bool can_deal = 2;
-    bool channel_price = 3;
-    CommissionType commission_type = 4;
-    double commission_value = 5;
+    bool canDeal = 2;
+    bool channelPrice = 3;
+    CommissionType commissionType = 4;
+    double commissionValue = 5;
     string note = 6;
 }
 
 message DistributionEntity {
     uint64 id = 1;
-    uint64 product_id = 2;
+    uint64 productId = 2;
     DistributionStatus status = 4;
     DistributionReason reason = 5;
-    string reason_other = 6;
-    string distributed_at = 7;
-    string revoked_at = 8;
-    string from_date = 9;
-    string to_date = 10;
-    repeated uint64 partner_ids = 11;
-    double partner_commission = 12;
+    string reasonOther = 6;
+    string distributedAt = 7;
+    string revokedAt = 8;
+    string fromDate = 9;
+    string toDate = 10;
+    repeated uint64 partnerIds = 11;
+    double partnerCommission = 12;
     int64 price = 13;
-    bool can_deal = 14;
-    bool channel_price = 15;
-    CommissionType commission_type = 16;
-    double commission_value = 17;
+    bool canDeal = 14;
+    bool channelPrice = 15;
+    CommissionType commissionType = 16;
+    double commissionValue = 17;
     string note = 3;
 }
 
 message ListDistributionsRequest {
-    string from_date = 1;  
-    string to_date = 2;    
-    optional bool can_deal = 3;                  
-    optional bool channel_price = 4;                  
+    string fromDate = 1;  
+    string toDate = 2;    
+    optional bool canDeal = 3;                  
+    optional bool channelPrice = 4;                  
     uint32 page = 5;                           
     uint32 size = 6;                          
     string sort = 7;
-    uint64 product_id = 8;
+    uint64 productId = 8;
 }
 
 message DistributeRequest {
-    uint64 product_id = 1;
-    repeated uint64 partner_ids = 2;
+    uint64 productId = 1;
+    repeated uint64 partnerIds = 2;
     DistributionPolicy policy = 3;
-    string from_date = 4;
-    string to_date = 5;
+    string fromDate = 4;
+    string toDate = 5;
 }
 
 message UpdateDistributeRequest {
     uint64 id = 1;
-    repeated uint64 partner_ids = 2;
+    repeated uint64 partnerIds = 2;
     DistributionPolicy policy = 3;
-    string from_date = 4;
-    string to_date = 5;
+    string fromDate = 4;
+    string toDate = 5;
 }
 
 message DistributeResponse {
-    int32 created_count = 1;
-    string from_date = 2;
-    string to_date = 3;
+    int32 createdCount = 1;
+    string fromDate = 2;
+    string toDate = 3;
 }
 
 message GetDistributionRequest {
@@ -133,9 +133,9 @@ message ListDistributionsResponse {
 }
 
 message RevokeDistributeRequest {
-    uint64 distribute_id = 1;
+    uint64 distributeId = 1;
     DistributionReason reason = 2;
-    string reason_other = 3;
+    string reasonOther = 3;
 }
 
 message RevokeDistributeResponse {
