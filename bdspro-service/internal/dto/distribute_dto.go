@@ -26,6 +26,7 @@ type FilterDistributeDTO struct {
 	ToDate       *time.Time `form:"toDate"`
 	CanDeal      *bool      `form:"canDeal"`
 	ChannelPrice *bool      `form:"channelPrice"`
+	Text         string     `form:"query"`
 }
 
 type DistributeResultDTO struct {

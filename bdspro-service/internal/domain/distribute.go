@@ -33,6 +33,8 @@ type DistributionEntity struct {
 	PartnerCount      int32                    `gorm:"-" json:"partnerCount,omitempty"`
 	PartnerIds        []uint64                 `gorm:"-" json:"partnerIds,omitempty"`
 	PartnerCommission float64                  `gorm:"column:partner_commission;not null;default:0" json:"partnerCommission"`
+	CreatedAt         *time.Time               `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt         *time.Time               `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
 }
 
 func (DistributionEntity) TableName() string {

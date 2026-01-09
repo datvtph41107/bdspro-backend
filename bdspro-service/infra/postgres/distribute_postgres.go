@@ -126,6 +126,10 @@ func (r *DistributePostgres) GetListDistrByProduct(ctx context.Context, productI
 		db = db.Where("policy->>'channelPrice' = ?", fmt.Sprintf("%t", *filter.ChannelPrice))
 	}
 
+	// Lọc theo text note
+	if filter.Text != "" {
+		db = db.Where("policy->>'note' ILIKE ?", "%"+filter.Text+"%")
+	}
 	// Sắp xếp theo DistributedAt giảm dần
 	if err := db.Order("distributed_at DESC").Find(&dists).Error; err != nil {
 		return nil, err

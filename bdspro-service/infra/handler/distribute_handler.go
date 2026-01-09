@@ -9,6 +9,7 @@ import (
 
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
+	"bdspro/internal/enums"
 	"bdspro/internal/usecases"
 	bdspropb "pb/types/bdspro"
 
@@ -32,10 +33,16 @@ func NewDistributionHandler(usecase *usecases.DistributionUsecase, mapper *mappe
 
 func (h *DistributionHandler) CreateDistribute(ctx context.Context, req *bdspropb.DistributeRequest) (*bdspropb.DistributeResponse, error) {
 	dtoReq := &dto.DistributeDTO{
-		ProductID:  req.ProductId,
-		PartnerIDs: req.PartnerIds,
-		FromDate:   _utils.ParseStringToTime(req.FromDate),
-		ToDate:     _utils.ParseStringToTime(req.ToDate),
+		ProductID:       req.ProductId,
+		PartnerIDs:      req.PartnerIds,
+		FromDate:        _utils.ParseStringToTime(req.FromDate),
+		ToDate:          _utils.ParseStringToTime(req.ToDate),
+		Price:           req.Price,
+		CanDeal:         req.CanDeal,
+		ChannelPrice:    req.ChannelPrice,
+		CommissionType:  enums.CommissionType(req.CommissionType),
+		CommissionValue: req.CommissionValue,
+		Note:            req.Note,
 	}
 
 	result, err := h.usecase.CreateDistribute(ctx, dtoReq)
@@ -60,12 +67,17 @@ func (h *DistributionHandler) CreateDistribute(ctx context.Context, req *bdsprop
 
 func (h *DistributionHandler) UpdateDistribute(ctx context.Context, req *bdspropb.UpdateDistributeRequest) (*bdspropb.DistributeResponse, error) {
 	dtoReq := &dto.DistributeDTO{
-		ProductID:  req.Id,
-		PartnerIDs: req.PartnerIds,
-		FromDate:   _utils.ParseStringToTime(req.FromDate),
-		ToDate:     _utils.ParseStringToTime(req.ToDate),
+		ProductID:       req.Id,
+		PartnerIDs:      req.PartnerIds,
+		FromDate:        _utils.ParseStringToTime(req.FromDate),
+		ToDate:          _utils.ParseStringToTime(req.ToDate),
+		Price:           req.Price,
+		CanDeal:         req.CanDeal,
+		ChannelPrice:    req.ChannelPrice,
+		CommissionType:  enums.CommissionType(req.CommissionType),
+		CommissionValue: req.CommissionValue,
+		Note:            req.Note,
 	}
-
 	result, err := h.usecase.UpdateDistribute(ctx, req.Id, dtoReq)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update distribute: %v", err)
@@ -95,13 +107,13 @@ func (h *DistributionHandler) GetDistribution(ctx context.Context, req *bdspropb
 }
 
 func (h *DistributionHandler) ListDistributions(ctx context.Context, req *bdspropb.ListDistributionsRequest) (*bdspropb.ListDistributionsResponse, error) {
-	// Chuyển các filter từ proto request sang DTO
 	filter := &dto.FilterDistributeDTO{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
 			Sort: req.Sort,
 		},
+		Text:         req.Query,
 		FromDate:     _utils.ParseStringToTime(req.FromDate),
 		ToDate:       _utils.ParseStringToTime(req.ToDate),
 		CanDeal:      req.CanDeal,

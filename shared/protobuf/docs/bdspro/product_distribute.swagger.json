@@ -116,6 +116,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -235,8 +241,25 @@
             "format": "uint64"
           }
         },
-        "policy": {
-          "$ref": "#/definitions/bdspropbDistributionPolicy"
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "canDeal": {
+          "type": "boolean"
+        },
+        "channelPrice": {
+          "type": "boolean"
+        },
+        "commissionType": {
+          "$ref": "#/definitions/bdspropbCommissionType"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
         },
         "fromDate": {
           "type": "string"
@@ -269,8 +292,25 @@
             "format": "uint64"
           }
         },
-        "policy": {
-          "$ref": "#/definitions/bdspropbDistributionPolicy"
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "canDeal": {
+          "type": "boolean"
+        },
+        "channelPrice": {
+          "type": "boolean"
+        },
+        "commissionType": {
+          "$ref": "#/definitions/bdspropbCommissionType"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
         },
         "fromDate": {
           "type": "string"
@@ -365,31 +405,6 @@
           "type": "number",
           "format": "double"
         },
-        "price": {
-          "type": "string",
-          "format": "int64"
-        },
-        "canDeal": {
-          "type": "boolean"
-        },
-        "channelPrice": {
-          "type": "boolean"
-        },
-        "commissionType": {
-          "$ref": "#/definitions/bdspropbCommissionType"
-        },
-        "commissionValue": {
-          "type": "number",
-          "format": "double"
-        },
-        "note": {
-          "type": "string"
-        }
-      }
-    },
-    "bdspropbDistributionPolicy": {
-      "type": "object",
-      "properties": {
         "price": {
           "type": "string",
           "format": "int64"

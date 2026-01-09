@@ -99,22 +99,33 @@ message ListDistributionsRequest {
     uint32 size = 6;                          
     string sort = 7;
     uint64 productId = 8;
+    string query = 9;
 }
 
 message DistributeRequest {
     uint64 productId = 1;
     repeated uint64 partnerIds = 2;
-    DistributionPolicy policy = 3;
-    string fromDate = 4;
-    string toDate = 5;
+    int64 price = 3;
+    bool canDeal = 4;
+    bool channelPrice = 5;
+    CommissionType commissionType = 6;
+    double commissionValue = 7;
+    string note = 8;
+    string fromDate = 9;
+    string toDate = 10;
 }
 
 message UpdateDistributeRequest {
     uint64 id = 1;
     repeated uint64 partnerIds = 2;
-    DistributionPolicy policy = 3;
-    string fromDate = 4;
-    string toDate = 5;
+    int64 price = 3;
+    bool canDeal = 4;
+    bool channelPrice = 5;
+    CommissionType commissionType = 6;
+    double commissionValue = 7;
+    string note = 8;
+    string fromDate = 9;
+    string toDate = 10;
 }
 
 message DistributeResponse {
