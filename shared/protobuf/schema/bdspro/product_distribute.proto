@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+enum CommissionType {
+    COMMISSION_TYPE_UNSPECIFIED = 0;
+    COMMISSION_TYPE_PERCENT = 10;
+    COMMISSION_TYPE_VND = 20;
+}
+
+enum DistributionStatus {
+    DISTRIBUTION_STATUS_UNSPECIFIED = 0;
+    DISTRIBUTION_STATUS_ACTIVE = 10;
+    DISTRIBUTION_STATUS_REVOKED = 20;
+}
+
+enum DistributionReason {
+    DISTRIBUTION_REASON_UNSPECIFIED = 0;
+    DISTRIBUTION_REASON_PROMOTION = 10;
+    DISTRIBUTION_REASON_PARTNER = 20;
+    DISTRIBUTION_REASON_OTHER = 30;
+}
+
+service DistributionService {
+    rpc CreateDistribute(DistributeRequest) returns (DistributeResponse) {
+        option (google.api.http) = {
+            post: "/v2/distributions"
+            body: "*"
+        };
+    }
+
+    rpc UpdateDistribute(UpdateDistributeRequest) returns (DistributeResponse) {
+        option (google.api.http) = {
+            post: "/v2/distributions/{id}"
+            body: "*"
+        };
+    }
+
+    rpc GetDistribution(GetDistributionRequest) returns (DistributionEntity) {
+        option (google.api.http) = {
+            get: "/v2/distributions/{id}"
+        };
+    }
+
+    rpc ListDistributions(ListDistributionsRequest) returns (ListDistributionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/distributions/all/{product_id}"
+        };
+    }
+
+    rpc RevokeDistribute(RevokeDistributeRequest) returns (RevokeDistributeResponse) {
+        option (google.api.http) = {
+            post: "/v2/distributions/revoke"
+            body: "*"
+        };
+    }
+}
+
+message DistributionPolicy {
+    int64 price = 1;
+    bool can_deal = 2;
+    bool channel_price = 3;
+    CommissionType commission_type = 4;
+    double commission_value = 5;
+    string note = 6;
+}
+
+message DistributionEntity {
+    uint64 id = 1;
+    uint64 product_id = 2;
+    DistributionPolicy policy = 3;
+    DistributionStatus status = 4;
+    DistributionReason reason = 5;
+    string reason_other = 6;
+    google.protobuf.Timestamp distributed_at = 7;
+    google.protobuf.Timestamp revoked_at = 8;
+    google.protobuf.Timestamp from_date = 9;
+    google.protobuf.Timestamp to_date = 10;
+    repeated uint64 partner_ids = 11;
+    double partner_commission = 12;
+}
+
+message DistributeRequest {
+    uint64 product_id = 1;
+    repeated uint64 partner_ids = 2;
+    DistributionPolicy policy = 3;
+    google.protobuf.Timestamp from_date = 4;
+    google.protobuf.Timestamp to_date = 5;
+}
+
+message UpdateDistributeRequest {
+    uint64 id = 1;
+    repeated uint64 partner_ids = 2;
+    DistributionPolicy policy = 3;
+    google.protobuf.Timestamp from_date = 4;
+    google.protobuf.Timestamp to_date = 5;
+}
+
+message DistributeResponse {
+    int32 created_count = 1;
+    google.protobuf.Timestamp from_date = 2;
+    google.protobuf.Timestamp to_date = 3;
+}
+
+message GetDistributionRequest {
+    uint64 id = 1;
+}
+
+message ListDistributionsRequest {
+    uint64 product_id = 1;
+}
+
+message ListDistributionsResponse {
+    repeated DistributionEntity distributions = 1;
+}
+
+message RevokeDistributeRequest {
+    uint64 distribute_id = 1;
+    DistributionReason reason = 2;
+    string reason_other = 3;
+}
+
+message RevokeDistributeResponse {
+    bool success = 1;
+}

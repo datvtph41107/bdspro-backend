@@ -3,8 +3,8 @@ package enums
 type CommissionType uint
 
 const (
-	CommissionTypePercent CommissionType = 10 // Hoa hồng theo phần trăm
-	CommissionTypeVND     CommissionType = 20 // Hoa hồng theo tiền VND
+	CommissionTypePercent CommissionType = 10
+	CommissionTypeVND     CommissionType = 20
 )
 
 var CommissionTypeMap = map[CommissionType]string{

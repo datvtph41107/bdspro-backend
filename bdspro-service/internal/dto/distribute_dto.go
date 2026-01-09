@@ -1,0 +1,51 @@
+package dto
+
+import (
+	"bdspro/internal/domain"
+	"errors"
+	"time"
+)
+
+type DistributeDTO struct {
+	ProductID  uint64                    `json:"productId"`
+	PartnerIDs []uint64                  `json:"partnerIds"`
+	Policy     domain.DistributionPolicy `json:"policy"`
+	FromDate   *time.Time                `json:"fromDate,omitempty"`
+	ToDate     *time.Time                `json:"toDate,omitempty"`
+}
+
+type DistributeResultDTO struct {
+	CreatedCount int       `json:"createdCount"`
+	FromDate     time.Time `json:"fromDate"`
+	ToDate       time.Time `json:"toDate"`
+}
+
+type RevokeDTO struct {
+	Reason      uint32
+	ReasonOther string
+}
+
+func (d *DistributeDTO) Validate() error {
+	now := time.Now()
+	if d.ProductID == 0 {
+		return errors.New("ProductID must be greater than 0")
+	}
+	if d.Policy.Price < 0 {
+		return errors.New("Policy.Price must be >= 0")
+	}
+	if len(d.PartnerIDs) == 0 {
+		return errors.New("PartnerIDs cannot be empty")
+	}
+	if d.FromDate == nil {
+		d.FromDate = &now
+	}
+	if d.ToDate == nil {
+		t := now.AddDate(0, 1, 0)
+		d.ToDate = &t
+	}
+	if d.FromDate.After(*d.ToDate) {
+		return errors.New("FromDate cannot be after ToDate")
+	}
+
+	return nil
+}

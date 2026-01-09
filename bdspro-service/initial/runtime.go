@@ -51,6 +51,7 @@ type InitialApp struct {
 	TxDealCostHandler     *handler.TxDealCostHandler
 	AdminTxHandler        *admin_handler.AdminTxHandler
 	PropertyHandler       *handler.PropertyHandler
+	DistributeHandler     *handler.DistributionHandler
 	// @bind: register_server_config
 	// CostDocumentServer *handler.CostDocumentServer
 	// IncomeDocumentServer    *handler.IncomeDocumentServer

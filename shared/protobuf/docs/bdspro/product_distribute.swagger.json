@@ -1,0 +1,420 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/product_distribute.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "DistributionService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/distributions": {
+      "post": {
+        "operationId": "DistributionService_CreateDistribute",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbDistributeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbDistributeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DistributionService"
+        ]
+      }
+    },
+    "/v2/distributions/all/{productId}": {
+      "get": {
+        "operationId": "DistributionService_ListDistributions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbListDistributionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DistributionService"
+        ]
+      }
+    },
+    "/v2/distributions/revoke": {
+      "post": {
+        "operationId": "DistributionService_RevokeDistribute",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbRevokeDistributeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbRevokeDistributeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DistributionService"
+        ]
+      }
+    },
+    "/v2/distributions/{id}": {
+      "get": {
+        "operationId": "DistributionService_GetDistribution",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbDistributionEntity"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DistributionService"
+        ]
+      },
+      "post": {
+        "operationId": "DistributionService_UpdateDistribute",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbDistributeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DistributionServiceUpdateDistributeBody"
+            }
+          }
+        ],
+        "tags": [
+          "DistributionService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "DistributionServiceUpdateDistributeBody": {
+      "type": "object",
+      "properties": {
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "policy": {
+          "$ref": "#/definitions/bdspropbDistributionPolicy"
+        },
+        "fromDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "bdspropbCommissionType": {
+      "type": "string",
+      "enum": [
+        "COMMISSION_TYPE_UNSPECIFIED",
+        "COMMISSION_TYPE_PERCENT",
+        "COMMISSION_TYPE_VND"
+      ],
+      "default": "COMMISSION_TYPE_UNSPECIFIED"
+    },
+    "bdspropbDistributeRequest": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "policy": {
+          "$ref": "#/definitions/bdspropbDistributionPolicy"
+        },
+        "fromDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "bdspropbDistributeResponse": {
+      "type": "object",
+      "properties": {
+        "createdCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "fromDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "bdspropbDistributionEntity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "policy": {
+          "$ref": "#/definitions/bdspropbDistributionPolicy"
+        },
+        "status": {
+          "$ref": "#/definitions/bdspropbDistributionStatus"
+        },
+        "reason": {
+          "$ref": "#/definitions/bdspropbDistributionReason"
+        },
+        "reasonOther": {
+          "type": "string"
+        },
+        "distributedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "fromDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "partnerCommission": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "bdspropbDistributionPolicy": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "canDeal": {
+          "type": "boolean"
+        },
+        "channelPrice": {
+          "type": "boolean"
+        },
+        "commissionType": {
+          "$ref": "#/definitions/bdspropbCommissionType"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbDistributionReason": {
+      "type": "string",
+      "enum": [
+        "DISTRIBUTION_REASON_UNSPECIFIED",
+        "DISTRIBUTION_REASON_PROMOTION",
+        "DISTRIBUTION_REASON_PARTNER",
+        "DISTRIBUTION_REASON_OTHER"
+      ],
+      "default": "DISTRIBUTION_REASON_UNSPECIFIED"
+    },
+    "bdspropbDistributionStatus": {
+      "type": "string",
+      "enum": [
+        "DISTRIBUTION_STATUS_UNSPECIFIED",
+        "DISTRIBUTION_STATUS_ACTIVE",
+        "DISTRIBUTION_STATUS_REVOKED"
+      ],
+      "default": "DISTRIBUTION_STATUS_UNSPECIFIED"
+    },
+    "bdspropbListDistributionsResponse": {
+      "type": "object",
+      "properties": {
+        "distributions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbDistributionEntity"
+          }
+        }
+      }
+    },
+    "bdspropbRevokeDistributeRequest": {
+      "type": "object",
+      "properties": {
+        "distributeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "reason": {
+          "$ref": "#/definitions/bdspropbDistributionReason"
+        },
+        "reasonOther": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbRevokeDistributeResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
