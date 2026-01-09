@@ -26,7 +26,7 @@ func (r *DistributePostgres) Save(ctx context.Context, entities []*domain.Distri
 	for _, e := range entities {
 		if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"policy", "from_date", "to_date", "status", "reason", "reason_other", "partner_commission"}),
+			DoUpdates: clause.AssignmentColumns([]string{"from_date", "to_date", "status", "reason", "reason_other", "partner_commission"}),
 		}).Create(e).Error; err != nil {
 			return err
 		}
