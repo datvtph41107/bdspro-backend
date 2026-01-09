@@ -339,6 +339,7 @@ func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.Id
 		"transaction_type":        enumMapToList(enums.TransactionTypeNames),
 		"owner_type":              enumMapToList(enums.OwnerTypeNames),
 		"post_transaction_status": enumMapToList(enums.EPostTransactionStatusNames),
+		"distribution_status":     enumMapToList(enums.DistributionStatusNames),
 	}
 
 	if values, ok := enumProviders[enumType]; ok {

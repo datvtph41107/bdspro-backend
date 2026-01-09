@@ -8,8 +8,8 @@ const (
 	DISTRIBUTION_STATUS_EXPRIED DistributionStatus = 30 // Hết hiệu lực (tự nhiên)
 )
 
-var DistributionStatusMap = map[DistributionStatus]string{
-	DISTRIBUTION_STATUS_ACTIVE:  "active",
-	DISTRIBUTION_STATUS_REVOKED: "revoked",
-	DISTRIBUTION_STATUS_EXPRIED: "expired",
+var DistributionStatusNames = map[DistributionStatus]string{
+	DISTRIBUTION_STATUS_ACTIVE:  "Hiệu lực",
+	DISTRIBUTION_STATUS_REVOKED: "Hết hạn",
+	DISTRIBUTION_STATUS_EXPRIED: "Đã thu hồi",
 }
