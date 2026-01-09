@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -82,6 +83,11 @@ func (h *DistributionHandler) GetDistribution(ctx context.Context, req *bdspropb
 func (h *DistributionHandler) ListDistributions(ctx context.Context, req *bdspropb.ListDistributionsRequest) (*bdspropb.ListDistributionsResponse, error) {
 	// Chuyển các filter từ proto request sang DTO
 	filter := &dto.FilterDistributeDTO{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
 		FromDate:     _utils.ParseStringToTime(req.FromDate),
 		ToDate:       _utils.ParseStringToTime(req.ToDate),
 		CanDeal:      req.CanDeal,
