@@ -190,6 +190,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 
 	err := GetDB(ctx, r.DB).
 		Model(&domain.Product{}).
+		Preload("Property", "deleted_at IS NULL").
 		Select(`products.*, 
 			COALESCE(
 				(SELECT array_agg(id ORDER BY created_at DESC) 

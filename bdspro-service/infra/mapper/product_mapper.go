@@ -289,6 +289,9 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		AppointmentCount: product.AppointmentCount,
 	}
 
+	if result.Name == "" && product.Property != nil {
+		result.Name = product.Property.Title
+	}
 	// if product.Attributes != nil {
 	// 	result.Attributes = make([]*bdspropb.AttributeProduct, len(product.Attributes))
 	// 	for i, attribute := range product.Attributes {

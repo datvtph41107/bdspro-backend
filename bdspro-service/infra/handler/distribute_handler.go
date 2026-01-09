@@ -5,7 +5,6 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"time"
 
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
@@ -15,7 +14,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type DistributionHandler struct {
@@ -142,12 +140,4 @@ func (h *DistributionHandler) RevokeDistribute(ctx context.Context, req *bdsprop
 	}
 
 	return &bdspropb.RevokeDistributeResponse{Success: true}, nil
-}
-
-func timestamppbToTimePtr(ts *timestamppb.Timestamp) *time.Time {
-	if ts == nil {
-		return nil
-	}
-	t := ts.AsTime()
-	return &t
 }

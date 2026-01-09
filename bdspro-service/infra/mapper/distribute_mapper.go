@@ -31,6 +31,8 @@ func (m *DistributionMapper) DistributionEntityToProto(entity *domain.Distributi
 		ToDate:            _utils.FormatTimeToString(entity.ToDate),
 		PartnerIds:        entity.PartnerIds,
 		PartnerCommission: entity.PartnerCommission,
+		CreatedAt:         _utils.FormatTimeToString(entity.CreatedAt),
+		UpdatedAt:         _utils.FormatTimeToString(entity.UpdatedAt),
 	}
 }
 

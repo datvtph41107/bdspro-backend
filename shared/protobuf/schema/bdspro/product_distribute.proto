@@ -88,6 +88,8 @@ message DistributionEntity {
     CommissionType commissionType = 16;
     double commissionValue = 17;
     string note = 3;
+    string createdAt = 18;
+    string updatedAt = 19;
 }
 
 message ListDistributionsRequest {
