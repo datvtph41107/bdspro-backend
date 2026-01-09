@@ -169,7 +169,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	eventHistoryUsecase := usecases.NewEventHistoryUsecase(notificationClient)
 	dealOfBranchRepo := postgres.NewDealOfBranchPostgres(db)
 	txDealCostRepository := postgres.NewDealCostRepository(db)
-	dealUsecase := usecases.NewDealUsecase(dealRepository, investmentPostgres, bankAccountPostgresRepository, documentPostgresRepository, eventHistoryUsecase, transactionGorm, notificationClient, dealMemberPostgresRepository, userClient, dealOfBranchRepo, txDealCostRepository, txContractDealRepository)
+	dealUsecase := usecases.NewDealUsecase(dealRepository, investmentPostgres, bankAccountPostgresRepository, documentPostgresRepository, eventHistoryUsecase, transactionGorm, notificationClient, dealMemberPostgresRepository, userClient, dealOfBranchRepo, txDealCostRepository, txContractDealRepository, gormUserProductRepo)
 	dealContractUsecase := usecases.NewDealContractUsecase(txContractDealRepository, txActionRepository, transactionGorm, txTransactionUsecase, dealUsecase, txDealCostRepository)
 	txMapper := mapper.NewTxMapper()
 	contractDealMapper := mapper.NewContractDealMapper(txMapper, codeDataUsecase)

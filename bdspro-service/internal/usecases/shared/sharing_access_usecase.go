@@ -212,6 +212,21 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 		}
 	}()
 
+	// Đếm số sharing access của product và cập nhật ShareCount
+	if dto.Domain == enums.EDomainProduct {
+		shareCount, countErr := s.Repo.CountSharingAccessByProductID(c, id)
+		if countErr != nil {
+			// Log error nhưng không fail toàn bộ operation
+			// return nil, countErr
+		} else {
+			updateErr := s.ProductUsecase.ProductRepo.UpdateShareCount(c, id, shareCount)
+			if updateErr != nil {
+				// Log error nhưng không fail toàn bộ operation
+				// return nil, updateErr
+			}
+		}
+	}
+
 	return &entities, err
 }
 

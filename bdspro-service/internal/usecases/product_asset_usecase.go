@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	_routes "common/routes"
+	_utils "common/utils"
 	"context"
 	"fmt"
 )
@@ -102,6 +103,9 @@ func (uc *ProductAssetUsecase) LinkProductAsset(ctx context.Context, req *dto.Li
 		}
 	}
 
+	// Cập nhật AssetCount cho các products được liên kết
+	uc.updateAssetCountForProducts(ctx, productsToLink)
+
 	return nil
 }
 
@@ -131,6 +135,9 @@ func (uc *ProductAssetUsecase) UnlinkProductAsset(ctx context.Context, req *dto.
 		}
 	}
 
+	// Cập nhật AssetCount cho product sau khi hủy liên kết
+	uc.updateAssetCountForProducts(ctx, []uint64{req.ProductID})
+
 	return nil
 }
 
@@ -156,4 +163,17 @@ func (uc *ProductAssetUsecase) GetProductsByAssetID(ctx context.Context, assetID
 		}
 	}
 	return productIDs, nil
+}
+
+// updateAssetCountForProducts cập nhật AssetCount cho danh sách products
+func (uc *ProductAssetUsecase) updateAssetCountForProducts(ctx context.Context, productIDs []uint64) {
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		for _, productID := range productIDs {
+			count, err := uc.ProductAssetRepo.CountAssetsByProductID(cloneCtx, productID)
+			if err == nil {
+				_ = uc.ProductRepo.UpdateAssetCount(cloneCtx, productID, uint32(count))
+			}
+		}
+	}()
 }

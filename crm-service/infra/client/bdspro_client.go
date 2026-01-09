@@ -154,3 +154,19 @@ func (c *BdsproClient) GetDealContractsByIds(ctx context.Context, dealContractId
 	}
 	return response.Data, nil
 }
+
+func (c *BdsproClient) UpdateScheduleCount(ctx context.Context, productID uint64, count uint32) error {
+	_, err := c.InternalClient.UpdateScheduleCount(ctx, &bdspropb.UpdateScheduleCountRequest{
+		ProductId: productID,
+		Count:     count,
+	})
+	return err
+}
+
+func (c *BdsproClient) UpdateContactCount(ctx context.Context, productID uint64, count uint32) error {
+	_, err := c.InternalClient.UpdateContactCount(ctx, &bdspropb.UpdateContactCountRequest{
+		ProductId: productID,
+		Count:     count,
+	})
+	return err
+}

@@ -11,6 +11,7 @@ import (
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
 	"context"
+	"fmt"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
@@ -622,6 +623,31 @@ func (s *ProductHandler) GetDeals(ctx context.Context, req *bdspropb.IdRequest) 
 	dealItems := s.DealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(total))
 
 	return dealItems, nil
+}
+
+// @Summary Lấy previousId và nextId của sản phẩm
+// @Description Trả về ID sản phẩm trước và sau trong danh sách (sắp xếp theo created_at DESC)
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Router /v2/bdspro/v2/product/{id}/navigation [get]
+func (s *ProductHandler) GetProductNavigation(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.ProductNavigationResponse, error) {
+	fmt.Println("GetProductNavigation", req.Id)
+	if req.Id == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "id is required")
+	}
+
+	previousID, nextID, err := s.ProductRepo.GetProductNavigation(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.ProductNavigationResponse{
+		PreviousId: previousID,
+		NextId:     nextID,
+	}, nil
 }
 
 // @Summary Cập nhật sản phẩm

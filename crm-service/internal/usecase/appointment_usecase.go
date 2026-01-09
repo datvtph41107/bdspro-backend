@@ -123,6 +123,10 @@ func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment
 	if err != nil {
 		return nil, err
 	}
+
+	// Cập nhật ScheduleCount cho tất cả products trong appointment
+	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
+
 	return appointment, nil
 }
 
@@ -189,14 +193,28 @@ func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment
 	if err != nil {
 		return nil, err
 	}
+
+	// Cập nhật ScheduleCount cho tất cả products trong appointment
+	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
+
 	return appointment, nil
 }
 
 func (uc *appointmentUsecase) DeleteAppointment(ctx context.Context, id uint32) error {
-	err := uc.appointmentRepo.Delete(ctx, id)
+	// Lấy appointment trước khi xóa để biết ProductIds
+	appointment, err := uc.appointmentRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
+
+	err = uc.appointmentRepo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Cập nhật ScheduleCount cho tất cả products trong appointment
+	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
+
 	return nil
 }
 
@@ -578,4 +596,27 @@ func (uc *appointmentUsecase) UpdateAppointmentStatus(ctx context.Context, id ui
 	}
 
 	return updatedAppointment, nil
+}
+
+// updateScheduleCountsForProducts cập nhật ScheduleCount cho tất cả products
+func (uc *appointmentUsecase) updateScheduleCountsForProducts(ctx context.Context, productIds []int64) {
+	// Cập nhật ScheduleCount cho mỗi product
+	for _, productID := range productIds {
+		if productID <= 0 {
+			continue
+		}
+		// Đếm số appointment của product
+		count, err := uc.appointmentRepo.CountAppointmentsByProductID(ctx, uint64(productID))
+		if err != nil {
+			// Log error nhưng không fail toàn bộ operation
+			continue
+		}
+
+		// Gọi bdspro-service để cập nhật ScheduleCount
+		err = uc.bdsproClient.UpdateScheduleCount(ctx, uint64(productID), count)
+		if err != nil {
+			// Log error nhưng không fail toàn bộ operation
+			continue
+		}
+	}
 }

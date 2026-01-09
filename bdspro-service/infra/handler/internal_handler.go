@@ -143,3 +143,35 @@ func (s *InternalHandler) GetDealContractsByIds(ctx context.Context, req *sharep
 		Total: int32(len(data)),
 	}, nil
 }
+
+// UpdateScheduleCount cập nhật ScheduleCount cho product
+func (s *InternalHandler) UpdateScheduleCount(ctx context.Context, req *bdspropb.UpdateScheduleCountRequest) (*bdspropb.Response, error) {
+	err := s.productUsecase.ProductRepo.UpdateScheduleCount(ctx, req.ProductId, req.Count)
+	if err != nil {
+		return &bdspropb.Response{
+			Id:      0,
+			Message: err.Error(),
+		}, err
+	}
+
+	return &bdspropb.Response{
+		Id:      req.ProductId,
+		Message: "ScheduleCount updated successfully",
+	}, nil
+}
+
+// UpdateContactCount cập nhật ContactCount cho product
+func (s *InternalHandler) UpdateContactCount(ctx context.Context, req *bdspropb.UpdateContactCountRequest) (*bdspropb.Response, error) {
+	err := s.productUsecase.ProductRepo.UpdateContactCount(ctx, req.ProductId, req.Count)
+	if err != nil {
+		return &bdspropb.Response{
+			Id:      0,
+			Message: err.Error(),
+		}, err
+	}
+
+	return &bdspropb.Response{
+		Id:      req.ProductId,
+		Message: "ContactCount updated successfully",
+	}, nil
+}

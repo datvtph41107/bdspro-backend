@@ -645,96 +645,6 @@
     "AppointmentServiceUpdateAppointmentStatusBody": {
       "type": "object"
     },
-    "authpbColor": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "contentColor": {
-          "type": "string"
-        },
-        "backgroundColor": {
-          "type": "string"
-        },
-        "colorKey": {
-          "type": "string"
-        },
-        "hexCode": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "createdBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updatedBy": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "authpbPermission": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "key": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "permissionType": {
-          "type": "string"
-        },
-        "module": {
-          "type": "string"
-        },
-        "parentId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/authpbPermission"
-          }
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
-          "type": "string"
-        },
-        "priority": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "title": "Permission message"
-    },
     "authpbRole": {
       "type": "object",
       "properties": {
@@ -766,7 +676,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/authpbPermission"
+            "$ref": "#/definitions/sharepbPermission"
           }
         },
         "isDefault": {
@@ -780,7 +690,7 @@
           "format": "uint64"
         },
         "color": {
-          "$ref": "#/definitions/authpbColor"
+          "$ref": "#/definitions/sharepbColor"
         },
         "roleGroupId": {
           "type": "string",
@@ -1558,6 +1468,50 @@
         }
       }
     },
+    "sharepbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "sharepbGetStatsResponse": {
       "type": "object",
       "properties": {
@@ -1576,6 +1530,52 @@
           "format": "int64"
         }
       }
+    },
+    "sharepbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
     },
     "sharepbProfileItem": {
       "type": "object",

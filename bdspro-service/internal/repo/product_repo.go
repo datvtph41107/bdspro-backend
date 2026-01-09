@@ -100,4 +100,25 @@ type ProductRepo interface {
 
 	// Lấy thống kê tổng hợp sản phẩm của user
 	GetProductSummary(ctx context.Context, userID uint64, searchRequest dto.ProductSearchRequest) (*dto.ProductSummaryDTO, error)
+
+	// Cập nhật PostCount cho product
+	UpdatePostCount(ctx context.Context, productID uint64, count uint32) error
+
+	// Cập nhật ShareCount cho product
+	UpdateShareCount(ctx context.Context, productID uint64, count uint32) error
+
+	// Cập nhật ScheduleCount cho product
+	UpdateScheduleCount(ctx context.Context, productID uint64, count uint32) error
+
+	// Cập nhật DealCount cho product
+	UpdateDealCount(ctx context.Context, productID uint64, count uint32) error
+
+	// Cập nhật AssetCount cho product
+	UpdateAssetCount(ctx context.Context, productID uint64, count uint32) error
+
+	// Cập nhật ContactCount cho product
+	UpdateContactCount(ctx context.Context, productID uint64, count uint32) error
+
+	// GetProductNavigation lấy previousId và nextId của product
+	GetProductNavigation(ctx context.Context, productID uint64) (previousID uint64, nextID uint64, err error)
 }

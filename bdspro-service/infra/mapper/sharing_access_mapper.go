@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 )
 
@@ -59,6 +60,7 @@ func (m *SharingAccessMapper) SharingAccessToPb(dto *domain.SharingAccess) *bdsp
 		ToId:        dto.ToId,
 		Permissions: dto.Permissions,
 		Commission:  float64(dto.Commission),
+		SharedAt:    _utils.FormatTimeToString(dto.CreatedAt),
 	}
 }
 

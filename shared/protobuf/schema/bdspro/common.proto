@@ -181,16 +181,20 @@ message ProductResponse {
     string projectName = 64;
     // Statistics fields
     int64 publicListingCount = 65; // Số tin đăng công khai
-    int64 shareCount = 66;         // Số lượt chia sẻ
-    bool hasAsset = 67;            // Có gắn với ít nhất 1 tài sản
-    bool hasInventory = 68;        // Thuộc bảng hàng
-    bool hasDeal = 69;             // Đang ở ít nhất 1 thương vụ
     optional uint64 sourceContactId = 70;
     string sourceContactNote = 71;
     string certificateHouseNote = 72;
     optional sharepb.ContactDTO sourceContact = 73;
     optional string propertyTypeName = 75;
     optional PropertyBuildingInfo buildingInfo = 76; // Thông tin nhà/công trình từ PropertyBuildingInfo
+    
+    uint32 shareCount = 66;         // Số lượt chia sẻ
+    uint32 assetCount = 67;            // Có gắn với ít nhất 1 tài sản
+    bool hasInventory = 68;        // Thuộc bảng hàng
+    uint32 dealCount = 69;             // Đang ở ít nhất 1 thương vụ
+    uint32 postCount = 77;
+    uint32 appointmentCount = 78;
+    uint32 contactCount = 79;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

@@ -70,6 +70,7 @@ type dealUsecase struct {
 	dealOfBranchRepo    repo.DealOfBranchRepo
 	dealCostRepo        repo.TxDealCostRepository
 	dealTransactionRepo repo.TxContractDealRepository
+	productRepo         repo.ProductRepo
 }
 
 func NewDealUsecase(
@@ -88,6 +89,7 @@ func NewDealUsecase(
 	dealOfBranchRepo repo.DealOfBranchRepo,
 	dealCostRepo repo.TxDealCostRepository,
 	dealTransactionRepo repo.TxContractDealRepository,
+	productRepo repo.ProductRepo,
 ) DealUsecase {
 	return &dealUsecase{
 		dealRepository:        dealRepository,
@@ -105,6 +107,7 @@ func NewDealUsecase(
 		dealOfBranchRepo:    dealOfBranchRepo,
 		dealCostRepo:        dealCostRepo,
 		dealTransactionRepo: dealTransactionRepo,
+		productRepo:         productRepo,
 	}
 }
 
@@ -324,6 +327,11 @@ func (u *dealUsecase) CreateDeal(ctx context.Context, deal *domain.Deal) (*domai
 			"owner_type":    createdDeal.OwnerType,
 		})
 
+	// Cập nhật DealCount cho các products trong deal mới được tạo
+	if len(deal.ProductIds) > 0 {
+		u.updateDealCountForProducts(ctx, deal.ProductIds)
+	}
+
 	return createdDeal, nil
 }
 
@@ -528,9 +536,26 @@ func (u *dealUsecase) DeleteGroupDeal(ctx context.Context, id uint64) error {
 	// 	return custom_error.Forbidden("you are not allowed to delete deal")
 	// }
 
-	err = u.dealRepository.Delete(ctx, id)
-	if err != nil {
-		return err
+	// Lấy danh sách products trong deal trước khi xóa
+	dealProducts, err := u.dealRepository.GetDealProducts(ctx, id, _dto.Pagable{Page: 0, Size: 1000})
+	if err == nil {
+		productIDs := make([]uint64, 0, len(dealProducts))
+		for _, dp := range dealProducts {
+			productIDs = append(productIDs, dp.ProductID)
+		}
+
+		err = u.dealRepository.Delete(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		// Cập nhật DealCount cho các products trong deal bị xóa
+		u.updateDealCountForProducts(ctx, productIDs)
+	} else {
+		err = u.dealRepository.Delete(ctx, id)
+		if err != nil {
+			return err
+		}
 	}
 
 	// u.logWorker.Push(LogEvent{
@@ -1024,7 +1049,32 @@ func (u *dealUsecase) SaveDealProduct(ctx context.Context, dealID uint64, produc
 			ProductID: productID,
 		}
 	}
-	return u.dealRepository.CreateDealProduct(ctx, dealProducts)
+
+	createdProducts, err := u.dealRepository.CreateDealProduct(ctx, dealProducts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cập nhật ShareCount cho các products được thêm vào
+	fmt.Println("Cập nhật ShareCount cho các products được thêm vào", productIDs)
+
+	// Cập nhật DealCount cho các products được thêm vào
+	u.updateDealCountForProducts(ctx, productIDs)
+
+	return createdProducts, nil
+}
+
+// updateDealCountForProducts cập nhật DealCount cho danh sách products
+func (u *dealUsecase) updateDealCountForProducts(ctx context.Context, productIDs []uint64) {
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		for _, productID := range productIDs {
+			count, err := u.dealRepository.CountDealsByProductID(cloneCtx, productID)
+			if err == nil {
+				_ = u.productRepo.UpdateDealCount(cloneCtx, productID, uint32(count))
+			}
+		}
+	}()
 }
 
 func (u *dealUsecase) GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*domain.DealProduct, error) {

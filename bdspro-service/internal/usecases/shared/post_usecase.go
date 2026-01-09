@@ -125,6 +125,9 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 	}
 
 	err = s.Repo.CreatePost(c, entity)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := s.PostMediaRepo.UpdateMediaItems(c, entity.ID, dto.Medatadatas); err != nil {
 		return nil, err
@@ -135,6 +138,19 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 	} else {
 		profileId := _utils.GetProfileIdWithContext(c)
 		s.PostUserRepo.CreateOwner(c, entity.ID, profileId)
+	}
+
+	// Đếm số tin đăng của product và cập nhật PostCount
+	postCount, err := s.Repo.CountPostByProductID(c, dto.ProductID)
+	if err != nil {
+		// Log error nhưng không fail toàn bộ operation
+		// return nil, err
+	} else {
+		err = s.ProductRepo.UpdatePostCount(c, dto.ProductID, postCount)
+		if err != nil {
+			// Log error nhưng không fail toàn bộ operation
+			// return nil, err
+		}
 	}
 
 	// visibleAt := entity.ExpiredAt.Add(-3 * 24 * time.Hour)

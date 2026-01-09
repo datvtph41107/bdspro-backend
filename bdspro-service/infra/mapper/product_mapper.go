@@ -280,6 +280,13 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		Archived:  product.Archived,
 		CreatedAt: _utils.FormatTimeToString(product.CreatedAt),
 		UpdatedAt: _utils.FormatTimeToString(product.UpdatedAt),
+
+		PostCount:        product.PostCount,
+		ContactCount:     product.ContactCount,
+		ShareCount:       product.ShareCount,
+		AssetCount:       product.AssetCount,
+		DealCount:        product.DealCount,
+		AppointmentCount: product.AppointmentCount,
 	}
 
 	// if product.Attributes != nil {
@@ -593,10 +600,13 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 
 	// Statistics fields
 	result.PublicListingCount = product.PublicListingCount
+
+	result.PostCount = product.PostCount
+	result.ContactCount = product.ContactCount
 	result.ShareCount = product.ShareCount
-	result.HasAsset = product.HasAsset
-	result.HasInventory = product.HasInventory
-	result.HasDeal = product.HasDeal
+	result.AssetCount = product.AssetCount
+	result.DealCount = product.DealCount
+	result.AppointmentCount = product.AppointmentCount
 
 	return result
 }
@@ -676,9 +686,12 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			PropertyTypeName:   &product.PropertyTypeName,
 			PublicListingCount: product.PublicListingCount,
 			ShareCount:         product.ShareCount,
-			HasAsset:           product.HasAsset,
-			HasInventory:       product.HasInventory,
-			HasDeal:            product.HasDeal,
+			AssetCount:         product.AssetCount,
+			DealCount:          product.DealCount,
+			ContactCount:       product.ContactCount,
+			AppointmentCount:   product.AppointmentCount,
+			UpdatedAt:          _utils.FormatTimeToString(&product.UpdatedAt),
+			PostCount:          product.PostCount,
 		}
 	}
 	return productList

@@ -43,4 +43,7 @@ type PostRepo interface {
 
 	// Lấy ngẫu nhiên n bản ghi post
 	GetRandomPosts(ctx context.Context, limit int) ([]domain.PostItem, error)
+
+	// Đếm số post theo productId
+	CountPostByProductID(ctx context.Context, productID uint64) (uint32, error)
 }

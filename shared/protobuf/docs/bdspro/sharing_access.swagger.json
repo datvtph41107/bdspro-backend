@@ -328,6 +328,9 @@
         },
         "avatar": {
           "type": "string"
+        },
+        "sharedAt": {
+          "type": "string"
         }
       }
     },

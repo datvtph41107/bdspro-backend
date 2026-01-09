@@ -1171,23 +1171,6 @@
           "description": "Số tin đăng công khai",
           "title": "Statistics fields"
         },
-        "shareCount": {
-          "type": "string",
-          "format": "int64",
-          "title": "Số lượt chia sẻ"
-        },
-        "hasAsset": {
-          "type": "boolean",
-          "title": "Có gắn với ít nhất 1 tài sản"
-        },
-        "hasInventory": {
-          "type": "boolean",
-          "title": "Thuộc bảng hàng"
-        },
-        "hasDeal": {
-          "type": "boolean",
-          "title": "Đang ở ít nhất 1 thương vụ"
-        },
         "sourceContactId": {
           "type": "string",
           "format": "uint64"
@@ -1203,6 +1186,41 @@
         },
         "propertyTypeName": {
           "type": "string"
+        },
+        "buildingInfo": {
+          "$ref": "#/definitions/bdspropbPropertyBuildingInfo",
+          "title": "Thông tin nhà/công trình từ PropertyBuildingInfo"
+        },
+        "shareCount": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số lượt chia sẻ"
+        },
+        "assetCount": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Có gắn với ít nhất 1 tài sản"
+        },
+        "hasInventory": {
+          "type": "boolean",
+          "title": "Thuộc bảng hàng"
+        },
+        "dealCount": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Đang ở ít nhất 1 thương vụ"
+        },
+        "postCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "appointmentCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "contactCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1272,6 +1290,51 @@
             "type": "object",
             "$ref": "#/definitions/bdspropbApartmentAttribute"
           }
+        }
+      }
+    },
+    "bdspropbPropertyBuildingInfo": {
+      "type": "object",
+      "properties": {
+        "buildingType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại nhà (10=Nhà ở, 20=Nhà xưởng)"
+        },
+        "constructionArea": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích xây dựng (m²)"
+        },
+        "floorArea": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích sàn (m²)"
+        },
+        "floors": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số tầng"
+        },
+        "bedrooms": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng ngủ"
+        },
+        "bathrooms": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng tắm"
+        },
+        "direction": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hướng nhà (enum EHouseOrient)"
+        },
+        "balconyDirection": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Hướng ban công (enum EHouseOrient)"
         }
       }
     },

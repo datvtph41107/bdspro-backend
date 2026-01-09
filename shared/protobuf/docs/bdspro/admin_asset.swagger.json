@@ -1602,23 +1602,6 @@
           "description": "Số tin đăng công khai",
           "title": "Statistics fields"
         },
-        "shareCount": {
-          "type": "string",
-          "format": "int64",
-          "title": "Số lượt chia sẻ"
-        },
-        "hasAsset": {
-          "type": "boolean",
-          "title": "Có gắn với ít nhất 1 tài sản"
-        },
-        "hasInventory": {
-          "type": "boolean",
-          "title": "Thuộc bảng hàng"
-        },
-        "hasDeal": {
-          "type": "boolean",
-          "title": "Đang ở ít nhất 1 thương vụ"
-        },
         "sourceContactId": {
           "type": "string",
           "format": "uint64"
@@ -1638,6 +1621,37 @@
         "buildingInfo": {
           "$ref": "#/definitions/bdspropbPropertyBuildingInfo",
           "title": "Thông tin nhà/công trình từ PropertyBuildingInfo"
+        },
+        "shareCount": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số lượt chia sẻ"
+        },
+        "assetCount": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Có gắn với ít nhất 1 tài sản"
+        },
+        "hasInventory": {
+          "type": "boolean",
+          "title": "Thuộc bảng hàng"
+        },
+        "dealCount": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Đang ở ít nhất 1 thương vụ"
+        },
+        "postCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "appointmentCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "contactCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

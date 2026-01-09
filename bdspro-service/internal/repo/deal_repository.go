@@ -25,6 +25,7 @@ type DealRepository interface {
 	CreateDealProduct(ctx context.Context, dealProduct []*domain.DealProduct) ([]*domain.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*domain.DealProduct, error)
 	GetDealsByProductID(ctx context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error)
+	CountDealsByProductID(ctx context.Context, productID uint64) (int64, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 	GetDealProcess(ctx context.Context, dealID uint64, bdsproID uint64) ([]*dto.DealProcessItem, error)
 

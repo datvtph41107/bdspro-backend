@@ -7,6 +7,7 @@ import (
 	"common/case/crud3"
 	_utils "common/utils"
 	"context"
+	"errors"
 	sharepb "pb/types/shared"
 	"strings"
 
@@ -1141,7 +1142,14 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       pbi.bedrooms AS building_bedrooms,
 		       pbi.bathrooms AS building_bathrooms,
 		       pbi.direction,
-		       pbi.balcony_direction
+		       pbi.balcony_direction,
+		       products.updated_at,
+			   products.post_count,
+			   products.asset_count,
+			   products.appointment_count,
+			   products.deal_count,
+			   products.share_count,
+			   products.contact_count
 		FROM products
 		LEFT JOIN (
 			SELECT parent_id, SUM(area) AS total_area 
@@ -1696,6 +1704,100 @@ func (r *GormUserProductRepo) GetRandomProducts(ctx context.Context, limit int) 
 		return nil, err
 	}
 	return products, nil
+}
+
+// UpdatePostCount cập nhật PostCount cho product
+func (r *GormUserProductRepo) UpdatePostCount(ctx context.Context, productID uint64, count uint32) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("post_count", count).Error
+}
+
+// UpdateShareCount cập nhật ShareCount cho product
+func (r *GormUserProductRepo) UpdateShareCount(ctx context.Context, productID uint64, count uint32) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("share_count", count).Error
+}
+
+// UpdateScheduleCount cập nhật ScheduleCount cho product
+func (r *GormUserProductRepo) UpdateScheduleCount(ctx context.Context, productID uint64, count uint32) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("appointment_count", count).Error
+}
+
+// UpdateDealCount cập nhật DealCount cho product
+func (r *GormUserProductRepo) UpdateDealCount(ctx context.Context, productID uint64, count uint32) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("deal_count", count).Error
+}
+
+// UpdateAssetCount cập nhật AssetCount cho product
+func (r *GormUserProductRepo) UpdateAssetCount(ctx context.Context, productID uint64, count uint32) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("asset_count", count).Error
+}
+
+// UpdateContactCount cập nhật ContactCount cho product
+func (r *GormUserProductRepo) UpdateContactCount(ctx context.Context, productID uint64, count uint32) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("contact_count", count).Error
+}
+
+// GetProductNavigation lấy previousId và nextId của product
+// Sắp xếp theo created_at DESC, id DESC (thứ tự mặc định)
+func (r *GormUserProductRepo) GetProductNavigation(ctx context.Context, productID uint64) (previousID uint64, nextID uint64, err error) {
+	// Lấy thông tin product hiện tại
+	var currentProduct domain.Product
+	err = GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		First(&currentProduct).Error
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Tìm previous product (created_at lớn hơn hoặc bằng, nhưng id lớn hơn; hoặc created_at lớn hơn)
+	// Trong thứ tự DESC: previous là product có thứ tự cao hơn (created_at lớn hơn hoặc id lớn hơn)
+	var previousProduct domain.Product
+	err = GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("deleted_at IS NULL AND ((created_at > ?) OR (created_at = ? AND id > ?))",
+			currentProduct.CreatedAt, currentProduct.CreatedAt, productID).
+		Order("created_at ASC, id ASC").
+		First(&previousProduct).Error
+	if err == nil {
+		previousID = previousProduct.ID
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, 0, err
+	}
+
+	// Tìm next product (created_at nhỏ hơn hoặc bằng, nhưng id nhỏ hơn; hoặc created_at nhỏ hơn)
+	// Trong thứ tự DESC: next là product có thứ tự thấp hơn (created_at nhỏ hơn hoặc id nhỏ hơn)
+	var nextProduct domain.Product
+	err = GetDB(ctx, r.DB).
+		Model(&domain.Product{}).
+		Where("deleted_at IS NULL AND ((created_at < ?) OR (created_at = ? AND id < ?))",
+			currentProduct.CreatedAt, currentProduct.CreatedAt, productID).
+		Order("created_at DESC, id DESC").
+		First(&nextProduct).Error
+	if err == nil {
+		nextID = nextProduct.ID
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, 0, err
+	}
+
+	return previousID, nextID, nil
 }
 
 // GetProductSummary lấy thống kê tổng hợp sản phẩm của user với filters

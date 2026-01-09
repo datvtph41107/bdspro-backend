@@ -87,3 +87,12 @@ func (r *ProductAssetPostgres) GetProductIDsByAssetID(ctx context.Context, asset
 	}
 	return productIDs, nil
 }
+
+func (r *ProductAssetPostgres) CountAssetsByProductID(ctx context.Context, productID uint64) (int64, error) {
+	var count int64
+	err := GetDB(ctx, r.db).
+		Model(&domain.ProductAsset{}).
+		Where("product_id = ? AND deleted_at IS NULL", productID).
+		Count(&count).Error
+	return count, err
+}

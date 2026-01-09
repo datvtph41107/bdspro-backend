@@ -22,4 +22,7 @@ type SharingAccessRepo interface {
 	BulkSave(c context.Context, id uint64, dto dto.SharingAccessBulk) (*[]domain.SharingAccess, error)
 	Delete(c context.Context, id uint64) error
 	GetByID(c context.Context, id uint64) (*domain.SharingAccess, error)
+
+	// Đếm số sharing access theo productId
+	CountSharingAccessByProductID(ctx context.Context, productID uint64) (uint32, error)
 }

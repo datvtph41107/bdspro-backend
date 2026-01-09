@@ -52,6 +52,7 @@ message SharingAccess {
     string permissions = 10;
     string toName = 11;
     string avatar = 12;
+    string sharedAt = 13;
 }
 
 message BatchRequest {

@@ -13,6 +13,7 @@ import (
 	"crm/internal/dto"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -24,6 +25,7 @@ type ContactUsecase struct {
 	leadUsecase        *LeadUsecase // forward reference
 	contactProductRepo repo.ContactProductRepo
 	userClient         provider.UserClient
+	bdsproProvider     provider.BdsproProvider
 	ownerUsecase       *OwnerUsecase
 	tagUsecase         *TagUsecase
 	notificationClient _provider.NotificationProvider
@@ -35,6 +37,7 @@ func NewContactUsecase(
 	followRepo repo.FollowRepo,
 	contactProductRepo repo.ContactProductRepo,
 	userClient provider.UserClient,
+	bdsproProvider provider.BdsproProvider,
 	ownerUsecase *OwnerUsecase,
 	tagUsecase *TagUsecase,
 	notificationClient _provider.NotificationProvider,
@@ -45,10 +48,40 @@ func NewContactUsecase(
 		followRepo:         followRepo,
 		contactProductRepo: contactProductRepo,
 		userClient:         userClient,
+		bdsproProvider:     bdsproProvider,
 		ownerUsecase:       ownerUsecase,
 		tagUsecase:         tagUsecase,
 		notificationClient: notificationClient,
 	}
+}
+
+// updateContactCountForProducts cập nhật ContactCount cho các products bị ảnh hưởng
+func (s *ContactUsecase) updateContactCountForProducts(c context.Context, productIds []uint64) {
+	fmt.Println("updateContactCountForProducts", productIds)
+	if len(productIds) == 0 || s.bdsproProvider == nil {
+		return
+	}
+
+	// Lấy ContactCount cho các products
+	counts, err := s.contactProductRepo.GetContactCountsByProductIds(c, productIds)
+	if err != nil {
+		fmt.Println("error", err)
+		// Log error nhưng không fail transaction
+		return
+	}
+
+	fmt.Println("counts", counts)
+
+	// Update ContactCount cho từng product
+	go func() {
+		cloneCtx := _utils.CloneContext(c)
+		for productID, count := range counts {
+			fmt.Println("productID", productID, "count", count)
+			_ = s.bdsproProvider.UpdateContactCount(cloneCtx, productID, count)
+			fmt.Println("UpdateContactCount success", productID, count)
+
+		}
+	}()
 }
 
 func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*domain.ContactEntity, error) {
@@ -161,6 +194,8 @@ func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity)
 		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
 			return nil, err
 		}
+		// Cập nhật ContactCount cho các products
+		s.updateContactCountForProducts(c, entity.ProductIDs)
 	}
 
 	// Tạo thông báo khi tạo liên hệ thành công
@@ -207,10 +242,14 @@ func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Con
 
 	// Xử lý products nếu có
 	if len(entity.ProductIDs) > 0 {
+		// Lấy productIds bị ảnh hưởng (cũ và mới)
+		affectedProductIds, _ := s.contactProductRepo.GetAffectedProductIds(c, id, entity.ProductIDs)
 		// Sync products vào bảng tb_contact_product
 		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, id); err != nil {
 			return nil, err
 		}
+		// Cập nhật ContactCount cho các products bị ảnh hưởng
+		s.updateContactCountForProducts(c, affectedProductIds)
 	}
 
 	return result, nil
@@ -221,7 +260,22 @@ func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
 	if err != nil {
 		return err
 	}
-	return s.repo.Delete(c, id)
+
+	// Lấy productIds trước khi xóa để cập nhật ContactCount
+	productIds, _ := s.contactProductRepo.GetProductIds(c, id)
+
+	// Xóa contact
+	err = s.repo.Delete(c, id)
+	if err != nil {
+		return err
+	}
+
+	// Cập nhật ContactCount cho các products bị ảnh hưởng
+	if len(productIds) > 0 {
+		s.updateContactCountForProducts(c, productIds)
+	}
+
+	return nil
 }
 
 func (s *ContactUsecase) Sync(c context.Context, ownerType base_enum.EOwnerOf, contacts []domain.ContactEntity) ([]domain.ContactEntity, error) {
@@ -383,6 +437,8 @@ func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.Conta
 					if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
 						return nil, err
 					}
+					// Cập nhật ContactCount cho các products
+					s.updateContactCountForProducts(c, entity.ProductIDs)
 				}
 
 				return result, nil
@@ -425,6 +481,8 @@ func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.Conta
 		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
 			return nil, err
 		}
+		// Cập nhật ContactCount cho các products
+		s.updateContactCountForProducts(c, entity.ProductIDs)
 	}
 
 	// Tạo thông báo khi tạo liên hệ thành công

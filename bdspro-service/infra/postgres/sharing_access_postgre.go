@@ -214,3 +214,17 @@ func (r *SharingAccessPostgre) GetByID(c context.Context, id uint64) (*domain.Sh
 		First(&entity).Error
 	return entity, err
 }
+
+// CountSharingAccessByProductID đếm số sharing access theo productId
+func (r *SharingAccessPostgre) CountSharingAccessByProductID(ctx context.Context, productID uint64) (uint32, error) {
+	var count int64
+
+	err := r.DB.WithContext(ctx).Model(&domain.SharingAccess{}).
+		Where("domain_id = ? AND domain = ? AND deleted_at IS NULL", productID, enums.EDomainProduct).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(count), nil
+}

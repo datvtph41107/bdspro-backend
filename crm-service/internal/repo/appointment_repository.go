@@ -18,4 +18,5 @@ type AppointmentRepository interface {
 	GetByProductId(ctx context.Context, productId uint64, page, size int) ([]*domain.Appointment, int64, error)
 	GetByDealId(ctx context.Context, dealId uint32, page, size int) ([]*domain.Appointment, int64, error)
 	UpdateStatus(ctx context.Context, id uint32, status enums.EAppointmentStatus) error
+	CountAppointmentsByProductID(ctx context.Context, productID uint64) (uint32, error)
 }

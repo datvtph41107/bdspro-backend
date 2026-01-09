@@ -19,6 +19,8 @@ service BdsproInternalService {
     rpc GetDealsByIds(sharepb.IdRequest) returns (DealsResponse);
     rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
     rpc GetDealContractsByIds(sharepb.IdRequest) returns (DealContractListResponse);
+    rpc UpdateScheduleCount(UpdateScheduleCountRequest) returns (Response);
+    rpc UpdateContactCount(UpdateContactCountRequest) returns (Response);
 }
 
 message DealsResponse {
@@ -44,4 +46,14 @@ message GetCountByOwnerResponse {
     uint32 totalAsset = 2;
     uint32 totalPost = 3;
     uint32 totalProject = 4;
+}
+
+message UpdateScheduleCountRequest {
+    uint64 productId = 1;
+    uint32 count = 2;
+}
+
+message UpdateContactCountRequest {
+    uint64 productId = 1;
+    uint32 count = 2;
 }

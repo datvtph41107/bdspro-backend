@@ -759,3 +759,17 @@ func (r *GormPostRepo) GetRandomPosts(ctx context.Context, limit int) ([]domain.
 
 	return results, nil
 }
+
+// CountPostByProductID đếm số post theo productId
+func (r *GormPostRepo) CountPostByProductID(ctx context.Context, productID uint64) (uint32, error) {
+	var count int64
+
+	err := r.DB.WithContext(ctx).Model(&domain.Post{}).
+		Where("product_id = ? AND deleted_at IS NULL", productID).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(count), nil
+}

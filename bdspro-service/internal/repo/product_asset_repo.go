@@ -27,4 +27,7 @@ type ProductAssetRepo interface {
 
 	// GetProductIDsByAssetID lấy danh sách product ID theo asset ID
 	GetProductIDsByAssetID(ctx context.Context, assetID uint64) ([]uint64, error)
+
+	// CountAssetsByProductID đếm số asset liên kết với product
+	CountAssetsByProductID(ctx context.Context, productID uint64) (int64, error)
 }

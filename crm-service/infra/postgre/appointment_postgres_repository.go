@@ -151,7 +151,7 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 				Value:  gorm.Expr("false"),
 			},
 		)
-		err = tx.Clauses(clause.OnConflict{
+		err = tx.Model(&domain.AppointmentParticipant{}).Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "appointment_id"},
 				{Name: "user_id"},
@@ -169,7 +169,7 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 			for userId := range userIdsInNewList {
 				userIds = append(userIds, userId)
 			}
-			err = tx.Where("appointment_id = ? AND user_id NOT IN ? AND is_deleted = ?",
+			err = tx.Model(&domain.AppointmentParticipant{}).Where("appointment_id = ? AND user_id NOT IN ? AND is_deleted = ?",
 				appointment.Id, userIds, false).
 				Updates(map[string]interface{}{
 					"is_deleted": true,
@@ -182,7 +182,7 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 		}
 	} else {
 		// Nếu danh sách mới rỗng, xóa soft delete tất cả participants cũ
-		err = tx.Where("appointment_id = ? AND is_deleted = ?", appointment.Id, false).
+		err = tx.Model(&domain.AppointmentParticipant{}).Where("appointment_id = ? AND is_deleted = ?", appointment.Id, false).
 			Updates(map[string]interface{}{
 				"is_deleted": true,
 				"deleted_at": time.Now(),
@@ -462,4 +462,18 @@ func (r *appointmentPostgresRepository) UpdateStatus(ctx context.Context, id uin
 		Model(&domain.Appointment{}).
 		Where("id = ? AND is_deleted = ?", id, false).
 		Update("status", status).Error
+}
+
+// CountAppointmentsByProductID đếm số appointment theo productId
+func (r *appointmentPostgresRepository) CountAppointmentsByProductID(ctx context.Context, productID uint64) (uint32, error) {
+	var count int64
+
+	// Query để tìm các appointment có chứa productId trong ProductIds array
+	err := r.db.WithContext(ctx).Model(&domain.Appointment{}).
+		Where("is_deleted = ? AND ? = ANY(product_ids)", false, int64(productID)).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint32(count), nil
 }

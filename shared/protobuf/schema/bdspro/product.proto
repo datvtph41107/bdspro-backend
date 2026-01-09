@@ -223,6 +223,12 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/price-history"
     };
   };
+  
+  rpc GetProductNavigation (sharepb.IdRequest) returns (ProductNavigationResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/navigation"
+    };
+  };
 }
 
 message PingResponse {}
@@ -560,4 +566,9 @@ message PriceHistoryItem {
   uint32 rentPaymentCycle = 10;
   string createdAt = 11;
   string updatedAt = 12;
+}
+
+message ProductNavigationResponse {
+  uint64 previousId = 1; // ID sản phẩm trước đó (0 nếu không có)
+  uint64 nextId = 2;     // ID sản phẩm tiếp theo (0 nếu không có)
 }

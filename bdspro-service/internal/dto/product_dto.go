@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
+	"time"
 )
 
 // type MediaItem struct {
@@ -308,10 +309,6 @@ type ProductListResponse struct {
 
 	// Statistics fields
 	PublicListingCount int64 `gorm:"-" json:"publicListingCount,omitempty"` // Số tin đăng công khai
-	ShareCount         int64 `gorm:"-" json:"shareCount,omitempty"`         // Số lượt chia sẻ
-	HasAsset           bool  `gorm:"-" json:"hasAsset,omitempty"`           // Có gắn với ít nhất 1 tài sản
-	HasInventory       bool  `gorm:"-" json:"hasInventory,omitempty"`       // Thuộc bảng hàng
-	HasDeal            bool  `gorm:"-" json:"hasDeal,omitempty"`            // Đang ở ít nhất 1 thương vụ
 
 	// BuildingInfo fields (from PropertyBuildingInfo)
 	BuildingInfo *domain.PropertyBuildingInfo `gorm:"-" json:"buildingInfo,omitempty"`
@@ -324,6 +321,14 @@ type ProductListResponse struct {
 	BuildingBathrooms *uint32  `gorm:"column:building_bathrooms" json:"-"`
 	Direction         *uint32  `gorm:"column:direction" json:"-"`
 	BalconyDirection  *uint32  `gorm:"column:balcony_direction" json:"-"`
+
+	UpdatedAt        time.Time `gorm:"column:updated_at" json:"updatedAt"`
+	ShareCount       uint32    `gorm:"column:share_count" json:"shareCount,omitempty"`             // Số lượt chia sẻ
+	PostCount        uint32    `gorm:"column:post_count" json:"postCount,omitempty"`               // Số tin đăng
+	AssetCount       uint32    `gorm:"column:asset_count" json:"assetCount,omitempty"`             // Số tài sản
+	DealCount        uint32    `gorm:"column:deal_count" json:"dealCount,omitempty"`               // Số thương vụ
+	AppointmentCount uint32    `gorm:"column:appointment_count" json:"appointmentCount,omitempty"` // Số lịch hẹn
+	ContactCount     uint32    `gorm:"column:contact_count" json:"contactCount,omitempty"`         // Số người quan tâm
 }
 
 type ProductSummaryDTO struct {

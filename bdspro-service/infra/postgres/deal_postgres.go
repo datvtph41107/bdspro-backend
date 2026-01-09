@@ -88,6 +88,16 @@ func (r *DealPostgresRepository) GetDealsByProductID(ctx context.Context, produc
 	return deals, total, nil
 }
 
+func (r *DealPostgresRepository) CountDealsByProductID(ctx context.Context, productID uint64) (int64, error) {
+	var count int64
+	err := GetDB(ctx, r.db).
+		Model(&domain.DealProduct{}).
+		Joins("JOIN deals ON deals.id = deal_products.deal_id").
+		Where("deal_products.product_id = ? AND deals.deleted_at IS NULL", productID).
+		Count(&count).Error
+	return count, err
+}
+
 func (r *DealPostgresRepository) Create(ctx context.Context, deal *domain.Deal) (*domain.Deal, error) {
 	// model := GroupDealEntityToModel(deal)
 	deal.Products = make([]domain.DealProduct, len(deal.ProductIds))

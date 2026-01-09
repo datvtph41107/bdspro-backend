@@ -75,7 +75,7 @@ func (r *GroupDealPostgresRepository) Update(ctx context.Context, deal *entity.D
 }
 
 func (r *GroupDealPostgresRepository) Delete(ctx context.Context, id uint64) error {
-	return r.db.WithContext(ctx).Model(&entity.Deal{}).
+	return GetDB(ctx, r.db).Model(&entity.Deal{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"is_deleted": true,
