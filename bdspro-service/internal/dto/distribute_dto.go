@@ -21,17 +21,25 @@ type DistributeDTO struct {
 }
 
 type FilterDistributeDTO struct {
-	_dto.Pagable            // page, limit, offset nếu có
-	FromDate     *time.Time `form:"fromDate"`     // lọc FromDate >=
-	ToDate       *time.Time `form:"toDate"`       // lọc ToDate <=
-	CanDeal      *bool      `form:"canDeal"`      // lọc policy.CanDeal
-	ChannelPrice *bool      `form:"channelPrice"` // lọc policy.ChannelPrice
+	_dto.Pagable
+	FromDate     *time.Time `form:"fromDate"`
+	ToDate       *time.Time `form:"toDate"`
+	CanDeal      *bool      `form:"canDeal"`
+	ChannelPrice *bool      `form:"channelPrice"`
 }
 
 type DistributeResultDTO struct {
-	CreatedCount int        `json:"createdCount"`
-	FromDate     *time.Time `json:"fromDate"`
-	ToDate       *time.Time `json:"toDate"`
+	Price             int64                    `json:"price"`
+	CanDeal           bool                     `json:"canDeal"`
+	ChannelPrice      bool                     `json:"channelPrice"`
+	Status            enums.DistributionStatus `gorm:"not null" json:"status"`
+	CommissionType    enums.CommissionType     `json:"commissionType"`
+	CommissionValue   float64                  `json:"commissionValue"`
+	Note              string                   `json:"note"`
+	PartnerCommission float64                  `json:"partnerCommission"`
+	CreatedCount      int                      `json:"createdCount"`
+	FromDate          *time.Time               `json:"fromDate"`
+	ToDate            *time.Time               `json:"toDate"`
 }
 
 type RevokeDTO struct {

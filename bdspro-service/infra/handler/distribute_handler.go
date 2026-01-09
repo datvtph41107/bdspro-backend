@@ -44,9 +44,17 @@ func (h *DistributionHandler) CreateDistribute(ctx context.Context, req *bdsprop
 	}
 
 	return &bdspropb.DistributeResponse{
-		CreatedCount: int32(result.CreatedCount),
-		FromDate:     req.FromDate,
-		ToDate:       req.ToDate,
+		Price:             result.Price,
+		CanDeal:           result.CanDeal,
+		ChannelPrice:      result.ChannelPrice,
+		Status:            bdspropb.DistributionStatus(result.Status),
+		CommissionType:    bdspropb.CommissionType(result.CommissionType),
+		CommissionValue:   result.CommissionValue,
+		Note:              result.Note,
+		PartnerCommission: result.PartnerCommission,
+		CreatedCount:      int32(result.CreatedCount),
+		FromDate:          _utils.FormatTimeToString(result.FromDate),
+		ToDate:            _utils.FormatTimeToString(result.ToDate),
 	}, nil
 }
 
@@ -64,9 +72,17 @@ func (h *DistributionHandler) UpdateDistribute(ctx context.Context, req *bdsprop
 	}
 
 	return &bdspropb.DistributeResponse{
-		CreatedCount: int32(result.CreatedCount),
-		FromDate:     req.FromDate,
-		ToDate:       req.ToDate,
+		Price:             result.Price,
+		CanDeal:           result.CanDeal,
+		ChannelPrice:      result.ChannelPrice,
+		Status:            bdspropb.DistributionStatus(result.Status),
+		CommissionType:    bdspropb.CommissionType(result.CommissionType),
+		CommissionValue:   result.CommissionValue,
+		Note:              result.Note,
+		PartnerCommission: result.PartnerCommission,
+		CreatedCount:      int32(result.CreatedCount),
+		FromDate:          _utils.FormatTimeToString(result.FromDate),
+		ToDate:            _utils.FormatTimeToString(result.ToDate),
 	}, nil
 }
 

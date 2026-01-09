@@ -64,6 +64,15 @@ func (uc *DistributionUsecase) CreateDistribute(ctx context.Context, req *dto.Di
 			return fmt.Errorf("failed to assign partners: %w", err)
 		}
 
+		// Gán toàn bộ trường resultDTO
+		resp.Price = dist.Price
+		resp.CanDeal = dist.CanDeal
+		resp.ChannelPrice = dist.ChannelPrice
+		resp.Status = dist.Status
+		resp.CommissionType = dist.CommissionType
+		resp.CommissionValue = dist.CommissionValue
+		resp.Note = dist.Note
+		resp.PartnerCommission = dist.PartnerCommission
 		resp.CreatedCount = createdCount
 		resp.FromDate = dist.FromDate
 		resp.ToDate = dist.ToDate
@@ -90,6 +99,7 @@ func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint
 			return fmt.Errorf("distribution not found: %w", err)
 		}
 
+		// Cập nhật các trường
 		dist.Price = req.Price
 		dist.CanDeal = req.CanDeal
 		dist.ChannelPrice = req.ChannelPrice
@@ -98,7 +108,6 @@ func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint
 		dist.Note = req.Note
 		dist.FromDate = req.FromDate
 		dist.ToDate = req.ToDate
-
 		dist.PartnerCommission = calculatePartnerCommission(req.Price, req.CommissionType, req.CommissionValue)
 
 		if dist.Status != enums.DISTRIBUTION_STATUS_REVOKED && time.Now().After(*dist.ToDate) {
@@ -125,6 +134,15 @@ func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint
 			return fmt.Errorf("failed to assign partners: %w", err)
 		}
 
+		// Gán resultDTO
+		resp.Price = dist.Price
+		resp.CanDeal = dist.CanDeal
+		resp.ChannelPrice = dist.ChannelPrice
+		resp.Status = dist.Status
+		resp.CommissionType = dist.CommissionType
+		resp.CommissionValue = dist.CommissionValue
+		resp.Note = dist.Note
+		resp.PartnerCommission = dist.PartnerCommission
 		resp.CreatedCount = createdCount
 		resp.FromDate = dist.FromDate
 		resp.ToDate = dist.ToDate

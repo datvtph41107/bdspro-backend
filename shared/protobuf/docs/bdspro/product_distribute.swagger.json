@@ -283,6 +283,33 @@
     "bdspropbDistributeResponse": {
       "type": "object",
       "properties": {
+        "price": {
+          "type": "string",
+          "format": "int64"
+        },
+        "canDeal": {
+          "type": "boolean"
+        },
+        "channelPrice": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/definitions/bdspropbDistributionStatus"
+        },
+        "commissionType": {
+          "$ref": "#/definitions/bdspropbCommissionType"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "partnerCommission": {
+          "type": "number",
+          "format": "double"
+        },
         "createdCount": {
           "type": "integer",
           "format": "int32"

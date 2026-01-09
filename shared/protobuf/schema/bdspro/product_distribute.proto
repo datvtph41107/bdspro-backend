@@ -118,9 +118,17 @@ message UpdateDistributeRequest {
 }
 
 message DistributeResponse {
-    int32 createdCount = 1;
-    string fromDate = 2;
-    string toDate = 3;
+    int64 price = 1;
+    bool can_deal = 2;
+    bool channel_price = 3;
+    DistributionStatus status = 4;
+    CommissionType commission_type = 5;
+    double commission_value = 6;
+    string note = 7;
+    double partner_commission = 8;
+    int32 created_count = 9;
+    string from_date = 10;
+    string to_date = 11;
 }
 
 message GetDistributionRequest {
