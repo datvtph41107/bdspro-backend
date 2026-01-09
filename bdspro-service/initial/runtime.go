@@ -122,6 +122,7 @@ func NewInitialApp(
 	// AssetLegalServer:        AssetLegalServer,
 	// AssetSplitHistoryServer: AssetSplitHistoryServer,
 	propertyHandler *handler.PropertyHandler,
+	distributeHandler *handler.DistributionHandler,
 ) *InitialApp {
 	return &InitialApp{
 		// GrpcServer:        GrpcServer,
@@ -162,7 +163,8 @@ func NewInitialApp(
 		TxDealCostHandler:     txDealCostHandler,
 		AdminTxHandler:        adminTxHandler,
 
-		PropertyHandler: propertyHandler,
+		PropertyHandler:   propertyHandler,
+		DistributeHandler: distributeHandler,
 
 		AssetStatsJob:   assetStatsJob,
 		ProductStatsJob: productStatsJob,

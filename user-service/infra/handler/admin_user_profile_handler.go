@@ -175,7 +175,7 @@ func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.
 			}
 
 			if item.RoleColor != "" && item.RoleBgColor != "" {
-				protoItem.Role.Color = &authpb.Color{
+				protoItem.Role.Color = &sharepb.Color{
 					ContentColor:    item.RoleColor,
 					BackgroundColor: item.RoleBgColor,
 				}
@@ -571,7 +571,7 @@ func (h *AdminUserProfileHandler) GetUserDetail(ctx context.Context, req *userpb
 		}
 
 		if result.RoleColor != "" && result.RoleBgColor != "" {
-			response.Role.Color = &authpb.Color{
+			response.Role.Color = &sharepb.Color{
 				ContentColor:    result.RoleColor,
 				BackgroundColor: result.RoleBgColor,
 			}

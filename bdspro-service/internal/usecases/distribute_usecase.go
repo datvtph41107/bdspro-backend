@@ -4,7 +4,6 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	iusecase "bdspro/internal/interface"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	"context"
@@ -15,16 +14,18 @@ import (
 type DistributionUsecase struct {
 	distributionRepo repo.DistributeRepository
 	transaction      provider.TransactionProvider
-	userGrpcClient   iusecase.IUserClient
+	userProvider     provider.IUserProvider
 }
 
 func NewDistributionUsecase(
 	r repo.DistributeRepository,
 	transaction provider.TransactionProvider,
+	userProvider provider.IUserProvider,
 ) *DistributionUsecase {
 	return &DistributionUsecase{
 		distributionRepo: r,
 		transaction:      transaction,
+		userProvider:     userProvider,
 	}
 }
 

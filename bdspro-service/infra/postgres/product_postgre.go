@@ -1102,7 +1102,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 	baseSQL := `
 		SELECT 
 			   products.id,
-		       products.name,
+		       COALESCE(p.title, products.name) as name,
 		       products.code,
 		       p.area_total as area,
 		       p.area_total - COALESCE(child.total_area, 0) AS available_area,
