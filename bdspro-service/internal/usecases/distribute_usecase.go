@@ -64,7 +64,6 @@ func (uc *DistributionUsecase) CreateDistribute(ctx context.Context, req *dto.Di
 			return fmt.Errorf("failed to assign partners: %w", err)
 		}
 
-		// Gán toàn bộ trường resultDTO
 		resp.Price = dist.Price
 		resp.CanDeal = dist.CanDeal
 		resp.ChannelPrice = dist.ChannelPrice
@@ -183,7 +182,7 @@ func (uc *DistributionUsecase) RevokeDistribute(ctx context.Context, distributeI
 	return uc.distributionRepo.Revoke(ctx, distributeID, now, revoke)
 }
 
-func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, disID uint64) (*domain.DistributionEntity, error) {
+func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, disID uint64) (*dto.DistributionWithPartners, error) {
 	dist, err := uc.distributionRepo.FindByIdWithPartner(ctx, disID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distribution: %w", err)
@@ -195,7 +194,7 @@ func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, di
 	return dist, nil
 }
 
-func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*domain.DistributionEntity, error) {
+func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error) {
 	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID, dto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distribute list: %w", err)

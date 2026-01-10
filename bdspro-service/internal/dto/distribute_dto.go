@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
 	"errors"
@@ -27,6 +28,12 @@ type FilterDistributeDTO struct {
 	CanDeal      *bool      `form:"canDeal"`
 	ChannelPrice *bool      `form:"channelPrice"`
 	Text         string     `form:"query"`
+}
+
+type DistributionWithPartners struct {
+	domain.DistributionEntity
+	PartnerIds   []uint64 `gorm:"column:partner_ids;type:bigint[]" json:"partnerIds"`
+	PartnerCount int32    `gorm:"column:partner_count" json:"partnerCount"`
 }
 
 type DistributeResultDTO struct {

@@ -96,15 +96,22 @@ func (h *DistributionHandler) UpdateDistribute(ctx context.Context, req *bdsprop
 	}, nil
 }
 
-func (h *DistributionHandler) GetDistribution(ctx context.Context, req *bdspropb.GetDistributionRequest) (*bdspropb.DistributionEntity, error) {
-	entity, err := h.usecase.GetDistributeWithPartners(ctx, req.Id)
+func (h *DistributionHandler) GetDistribution(
+	ctx context.Context,
+	req *bdspropb.GetDistributionRequest,
+) (*bdspropb.DistributionWithPartners, error) {
+	result, err := h.usecase.GetDistributeWithPartners(ctx, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "distribution not found: %v", err)
 	}
-	return h.mapper.DistributionEntityToProto(entity), nil
+
+	return h.mapper.DistributionWithPartnersToProto(result), nil
 }
 
-func (h *DistributionHandler) ListDistributions(ctx context.Context, req *bdspropb.ListDistributionsRequest) (*bdspropb.ListDistributionsResponse, error) {
+func (h *DistributionHandler) ListDistributions(
+	ctx context.Context,
+	req *bdspropb.ListDistributionsRequest,
+) (*bdspropb.ListDistributionsResponse, error) {
 	filter := &dto.FilterDistributeDTO{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -118,13 +125,14 @@ func (h *DistributionHandler) ListDistributions(ctx context.Context, req *bdspro
 		ChannelPrice: req.ChannelPrice,
 	}
 
-	entities, err := h.usecase.GetListDistributes(ctx, req.ProductId, filter)
+	list, err := h.usecase.GetListDistributes(ctx, req.ProductId, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list distributions: %v", err)
 	}
 
 	return &bdspropb.ListDistributionsResponse{
-		Data: h.mapper.DistributionListToProto(entities),
+		Data:  h.mapper.DistributionWithPartnersListToProto(list),
+		Total: int64(len(list)),
 	}, nil
 }
 

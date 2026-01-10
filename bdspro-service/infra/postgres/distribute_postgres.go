@@ -59,24 +59,34 @@ func (r *DistributePostgres) RemovePartnersFromDistribute(ctx context.Context, d
 		Delete(&domain.ProductUser{}).Error
 }
 
-func (r *DistributePostgres) FindByIdWithPartner(ctx context.Context, disID uint64) (*domain.DistributionEntity, error) {
-	var dist domain.DistributionEntity
-	if err := r.db.WithContext(ctx).First(&dist, disID).Error; err != nil {
+func (r *DistributePostgres) FindByIdWithPartner(
+	ctx context.Context,
+	disID uint64,
+) (*dto.DistributionWithPartners, error) {
+	var result dto.DistributionWithPartners
+	if err := r.db.WithContext(ctx).
+		Table("distributions d").
+		Select(`
+			d.*,
+			COUNT(pu.profile_id) AS partner_count,
+			COALESCE(
+				ARRAY_AGG(pu.profile_id ORDER BY pu.profile_id)
+				FILTER (WHERE pu.profile_id IS NOT NULL),
+				'{}'
+			) AS partner_ids
+		`).
+		Joins(`
+			LEFT JOIN product_users pu
+			ON pu.distribute_id = d.id
+		`).
+		Where("d.id = ?", disID).
+		Group("d.id").
+		Scan(&result).Error; err != nil {
+
 		return nil, err
 	}
 
-	var partners []domain.ProductUser
-	if err := r.db.WithContext(ctx).Where("distribute_id = ?", disID).Find(&partners).Error; err != nil {
-		return nil, err
-	}
-
-	dist.PartnerCount = int32(len(partners))
-	dist.PartnerIds = make([]uint64, len(partners))
-	for i, p := range partners {
-		dist.PartnerIds[i] = p.ProfileID
-	}
-
-	return &dist, nil
+	return &result, nil
 }
 
 func (r *DistributePostgres) FindByID(ctx context.Context, id uint64) (*domain.DistributionEntity, error) {
@@ -101,57 +111,75 @@ func (r *DistributePostgres) FindActiveByProductAndPartner(ctx context.Context, 
 	return &entity, nil
 }
 
-func (r *DistributePostgres) GetListDistrByProduct(ctx context.Context, productID uint64, filter *dto.FilterDistributeDTO) ([]*domain.DistributionEntity, error) {
-	var dists []*domain.DistributionEntity
+func (r *DistributePostgres) GetListDistrByProduct(
+	ctx context.Context,
+	productID uint64,
+	filter *dto.FilterDistributeDTO,
+) ([]*dto.DistributionWithPartners, error) {
+	var result []*dto.DistributionWithPartners
+	db := r.db.WithContext(ctx).
+		Table("distributions d").
+		Select(`
+			d.*,
+			COUNT(pu.profile_id) AS partner_count,
+			COALESCE(
+				ARRAY_AGG(pu.profile_id ORDER BY pu.profile_id)
+				FILTER (WHERE pu.profile_id IS NOT NULL),
+				'{}'
+			) AS partner_ids
+		`).
+		Joins(`
+			LEFT JOIN product_users pu
+			ON pu.distribute_id = d.id
+		`).
+		Where("d.product_id = ?", productID)
 
-	db := r.db.WithContext(ctx).Model(&domain.DistributionEntity{}).Where("product_id = ?", productID)
-
-	// Lọc theo FromDate >=
 	if filter.FromDate != nil {
-		db = db.Where("from_date >= ?", *filter.FromDate)
+		db = db.Where("d.from_date >= ?", *filter.FromDate)
 	}
 
-	// Lọc theo ToDate <=
 	if filter.ToDate != nil {
-		db = db.Where("to_date <= ?", *filter.ToDate)
+		db = db.Where("d.to_date <= ?", *filter.ToDate)
 	}
 
-	// Lọc theo policy.CanDeal (lưu trong JSON)
 	if filter.CanDeal != nil {
-		db = db.Where("policy->>'canDeal' = ?", fmt.Sprintf("%t", *filter.CanDeal))
+		db = db.Where("d.policy->>'canDeal' = ?", fmt.Sprintf("%t", *filter.CanDeal))
 	}
 
-	// Lọc theo policy.ChannelPrice (lưu trong JSON)
 	if filter.ChannelPrice != nil {
-		db = db.Where("policy->>'channelPrice' = ?", fmt.Sprintf("%t", *filter.ChannelPrice))
+		db = db.Where("d.policy->>'channelPrice' = ?", fmt.Sprintf("%t", *filter.ChannelPrice))
 	}
 
-	// Lọc theo text note
 	if filter.Text != "" {
-		db = db.Where("policy->>'note' ILIKE ?", "%"+filter.Text+"%")
+		db = db.Where("d.policy->>'note' ILIKE ?", "%"+filter.Text+"%")
 	}
-	// Sắp xếp theo DistributedAt giảm dần
+
+	db = applyDistributionSort(db, filter.Sort)
+
 	if err := db.
-		Offset(filter.GetOffset()).
+		Group("d.id").
 		Limit(filter.GetLimit()).
-		Order("distributed_at DESC").Find(&dists).Error; err != nil {
+		Offset(filter.GetOffset()).
+		Scan(&result).Error; err != nil {
 		return nil, err
 	}
 
-	// Lấy partner IDs và đếm
-	for _, dist := range dists {
-		var partners []domain.ProductUser
-		if err := r.db.WithContext(ctx).Where("distribute_id = ?", dist.ID).Find(&partners).Error; err != nil {
-			return nil, err
-		}
-		dist.PartnerCount = int32(len(partners))
-		dist.PartnerIds = make([]uint64, len(partners))
-		for i, p := range partners {
-			dist.PartnerIds[i] = p.ProfileID
-		}
-	}
+	return result, nil
+}
 
-	return dists, nil
+func applyDistributionSort(db *gorm.DB, sort string) *gorm.DB {
+	switch sort {
+	case "createdAt_asc":
+		return db.Order("d.created_at ASC")
+	case "createdAt_desc":
+		return db.Order("d.created_at DESC")
+	case "price_asc":
+		return db.Order("d.price ASC")
+	case "price_desc":
+		return db.Order("d.price DESC")
+	default:
+		return db.Order("d.created_at DESC")
+	}
 }
 
 func (r *DistributePostgres) GetPartnersOfDistribute(ctx context.Context, disID uint64) ([]*domain.ProductUser, error) {

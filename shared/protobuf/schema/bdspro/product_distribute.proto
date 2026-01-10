@@ -3,7 +3,6 @@ syntax = "proto3";
 package bdspropb;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "pb/types/bdspro;bdspropb";
 
@@ -27,6 +26,7 @@ enum DistributionReason {
 }
 
 service DistributionService {
+
     rpc CreateDistribute(DistributeRequest) returns (DistributeResponse) {
         option (google.api.http) = {
             post: "/v2/bdspro/distributions"
@@ -41,7 +41,8 @@ service DistributionService {
         };
     }
 
-    rpc GetDistribution(GetDistributionRequest) returns (DistributionEntity) {
+    // 🔹 READ-ONLY with partners
+    rpc GetDistribution(GetDistributionRequest) returns (DistributionWithPartners) {
         option (google.api.http) = {
             get: "/v2/bdspro/distributions/{id}"
         };
@@ -61,47 +62,52 @@ service DistributionService {
     }
 }
 
-message DistributionPolicy {
-    int64 price = 1;
-    bool canDeal = 2;
-    bool channelPrice = 3;
-    CommissionType commissionType = 4;
-    double commissionValue = 5;
-    string note = 6;
-}
-
 message DistributionEntity {
     uint64 id = 1;
     uint64 productId = 2;
-    DistributionStatus status = 4;
-    DistributionReason reason = 5;
-    string reasonOther = 6;
-    string distributedAt = 7;
-    string revokedAt = 8;
-    string fromDate = 9;
-    string toDate = 10;
-    repeated uint64 partnerIds = 11;
-    double partnerCommission = 12;
-    int64 price = 13;
-    bool canDeal = 14;
-    bool channelPrice = 15;
-    CommissionType commissionType = 16;
-    double commissionValue = 17;
-    string note = 3;
-    string createdAt = 18;
-    string updatedAt = 19;
+    DistributionStatus status = 3;
+    DistributionReason reason = 4;
+    string reasonOther = 5;
+    string distributedAt = 6;
+    string revokedAt = 7;
+    string fromDate = 8;
+    string toDate = 9;
+    int64 price = 10;
+    bool canDeal = 11;
+    bool channelPrice = 12;
+    CommissionType commissionType = 13;
+    double commissionValue = 14;
+    double partnerCommission = 15;
+    string note = 16;
+    string createdAt = 17;
+    string updatedAt = 18;
+}
+
+message DistributionWithPartners {
+    DistributionEntity distribution = 1;
+    repeated uint64 partnerIds = 2;
+    int32 partnerCount = 3;
 }
 
 message ListDistributionsRequest {
-    string fromDate = 1;  
-    string toDate = 2;    
-    optional bool canDeal = 3;                  
-    optional bool channelPrice = 4;                  
-    uint32 page = 5;                           
-    uint32 size = 6;                          
+    string fromDate = 1;
+    string toDate = 2;
+    optional bool canDeal = 3;
+    optional bool channelPrice = 4;
+    uint32 page = 5;
+    uint32 size = 6;
     string sort = 7;
     uint64 productId = 8;
     string query = 9;
+}
+
+message ListDistributionsResponse {
+    repeated DistributionWithPartners data = 1;
+    int64 total = 2;
+}
+
+message GetDistributionRequest {
+    uint64 id = 1;
 }
 
 message DistributeRequest {
@@ -132,25 +138,16 @@ message UpdateDistributeRequest {
 
 message DistributeResponse {
     int64 price = 1;
-    bool can_deal = 2;
-    bool channel_price = 3;
+    bool canDeal = 2;
+    bool channelPrice = 3;
     DistributionStatus status = 4;
-    CommissionType commission_type = 5;
-    double commission_value = 6;
+    CommissionType commissionType = 5;
+    double commissionValue = 6;
     string note = 7;
-    double partner_commission = 8;
-    int32 created_count = 9;
-    string from_date = 10;
-    string to_date = 11;
-}
-
-message GetDistributionRequest {
-    uint64 id = 1;
-}
-
-message ListDistributionsResponse {
-    repeated DistributionEntity data = 1;
-    int64 total = 2;
+    double partnerCommission = 8;
+    int32 createdCount = 9;
+    string fromDate = 10;
+    string toDate = 11;
 }
 
 message RevokeDistributeRequest {

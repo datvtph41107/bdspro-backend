@@ -5,15 +5,6 @@ import (
 	"time"
 )
 
-// type DistributionPolicy struct {
-// 	Price           int64                `json:"price"`
-// 	CanDeal         bool                 `json:"canDeal"`
-// 	ChannelPrice    bool                 `json:"channelPrice"`
-// 	CommissionType  enums.CommissionType `json:"commissionType"`
-// 	CommissionValue float64              `json:"commissionValue"`
-// 	Note            string               `json:"note,omitempty"`
-// }
-
 type DistributionEntity struct {
 	ID                uint64                   `gorm:"primaryKey" json:"id"`
 	Price             int64                    `gorm:"column:price" json:"price"`
@@ -30,8 +21,6 @@ type DistributionEntity struct {
 	ReasonOther       string                   `gorm:"type:varchar(100)" json:"reasonOther"`
 	FromDate          *time.Time               `gorm:"column:from_date;not null" json:"fromDate"`
 	ToDate            *time.Time               `gorm:"column:to_date;not null" json:"toDate"`
-	PartnerCount      int32                    `gorm:"-" json:"partnerCount,omitempty"`
-	PartnerIds        []uint64                 `gorm:"-" json:"partnerIds,omitempty"`
 	PartnerCommission float64                  `gorm:"column:partner_commission;not null;default:0" json:"partnerCommission"`
 	CreatedAt         *time.Time               `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
 	UpdatedAt         *time.Time               `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`

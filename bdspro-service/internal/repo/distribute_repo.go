@@ -11,8 +11,8 @@ import (
 type DistributeRepository interface {
 	Save(ctx context.Context, entities []*domain.DistributionEntity) error
 	AssignPartner(ctx context.Context, partners ...*domain.ProductUser) error
-	FindByIdWithPartner(ctx context.Context, disId uint64) (*domain.DistributionEntity, error)                                       // đây sẽ là hàm handle lấy ra distribute và thông tin của các partner
-	GetListDistrByProduct(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*domain.DistributionEntity, error) // lấy ra list distribute với thông tin các user partner
+	FindByIdWithPartner(ctx context.Context, disId uint64) (*dto.DistributionWithPartners, error)
+	GetListDistrByProduct(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error)
 	GetPartnersOfDistribute(ctx context.Context, disId uint64) ([]*domain.ProductUser, error)
 	Revoke(ctx context.Context, id uint64, revokedAt time.Time, revoke dto.RevokeDTO) error
 	CountActiveByProduct(ctx context.Context, productID uint64) (int64, error)

@@ -163,12 +163,13 @@
     },
     "/v2/bdspro/distributions/{id}": {
       "get": {
+        "summary": "🔹 READ-ONLY with partners",
         "operationId": "DistributionService_GetDistribution",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbDistributionEntity"
+              "$ref": "#/definitions/bdspropbDistributionWithPartners"
             }
           },
           "default": {
@@ -394,17 +395,6 @@
         "toDate": {
           "type": "string"
         },
-        "partnerIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        },
-        "partnerCommission": {
-          "type": "number",
-          "format": "double"
-        },
         "price": {
           "type": "string",
           "format": "int64"
@@ -419,6 +409,10 @@
           "$ref": "#/definitions/bdspropbCommissionType"
         },
         "commissionValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "partnerCommission": {
           "type": "number",
           "format": "double"
         },
@@ -452,6 +446,25 @@
       ],
       "default": "DISTRIBUTION_STATUS_UNSPECIFIED"
     },
+    "bdspropbDistributionWithPartners": {
+      "type": "object",
+      "properties": {
+        "distribution": {
+          "$ref": "#/definitions/bdspropbDistributionEntity"
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "partnerCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "bdspropbListDistributionsResponse": {
       "type": "object",
       "properties": {
@@ -459,7 +472,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/bdspropbDistributionEntity"
+            "$ref": "#/definitions/bdspropbDistributionWithPartners"
           }
         },
         "total": {
