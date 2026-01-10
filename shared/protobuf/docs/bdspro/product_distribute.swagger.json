@@ -169,7 +169,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbDistributionWithPartners"
+              "$ref": "#/definitions/bdspropbDistributionEntity"
             }
           },
           "default": {
@@ -424,6 +424,17 @@
         },
         "updatedAt": {
           "type": "string"
+        },
+        "partnerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "partnerCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -446,25 +457,6 @@
       ],
       "default": "DISTRIBUTION_STATUS_UNSPECIFIED"
     },
-    "bdspropbDistributionWithPartners": {
-      "type": "object",
-      "properties": {
-        "distribution": {
-          "$ref": "#/definitions/bdspropbDistributionEntity"
-        },
-        "partnerIds": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uint64"
-          }
-        },
-        "partnerCount": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
     "bdspropbListDistributionsResponse": {
       "type": "object",
       "properties": {
@@ -472,7 +464,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/bdspropbDistributionWithPartners"
+            "$ref": "#/definitions/bdspropbDistributionEntity"
           }
         },
         "total": {

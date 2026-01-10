@@ -99,7 +99,7 @@ func (h *DistributionHandler) UpdateDistribute(ctx context.Context, req *bdsprop
 func (h *DistributionHandler) GetDistribution(
 	ctx context.Context,
 	req *bdspropb.GetDistributionRequest,
-) (*bdspropb.DistributionWithPartners, error) {
+) (*bdspropb.DistributionEntity, error) {
 	result, err := h.usecase.GetDistributeWithPartners(ctx, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "distribution not found: %v", err)

@@ -42,7 +42,7 @@ service DistributionService {
     }
 
     // 🔹 READ-ONLY with partners
-    rpc GetDistribution(GetDistributionRequest) returns (DistributionWithPartners) {
+    rpc GetDistribution(GetDistributionRequest) returns (DistributionEntity) {
         option (google.api.http) = {
             get: "/v2/bdspro/distributions/{id}"
         };
@@ -81,12 +81,9 @@ message DistributionEntity {
     string note = 16;
     string createdAt = 17;
     string updatedAt = 18;
-}
 
-message DistributionWithPartners {
-    DistributionEntity distribution = 1;
-    repeated uint64 partnerIds = 2;
-    int32 partnerCount = 3;
+    repeated uint64 partnerIds = 19;
+    int32 partnerCount = 20;
 }
 
 message ListDistributionsRequest {
@@ -102,7 +99,7 @@ message ListDistributionsRequest {
 }
 
 message ListDistributionsResponse {
-    repeated DistributionWithPartners data = 1;
+    repeated DistributionEntity data = 1;
     int64 total = 2;
 }
 
