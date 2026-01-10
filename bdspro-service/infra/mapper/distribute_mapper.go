@@ -42,10 +42,13 @@ func (m *DistributionMapper) distributionEntityToProto(
 func (m *DistributionMapper) DistributionWithPartnersToProto(
 	dto *dto.DistributionWithPartners,
 ) *bdspropb.DistributionWithPartners {
-
+	partnerIds := make([]uint64, len(dto.PartnerIds))
+	for i, id := range dto.PartnerIds {
+		partnerIds[i] = uint64(id)
+	}
 	return &bdspropb.DistributionWithPartners{
 		Distribution: m.distributionEntityToProto(&dto.DistributionEntity),
-		PartnerIds:   dto.PartnerIds,
+		PartnerIds:   partnerIds,
 		PartnerCount: dto.PartnerCount,
 	}
 }

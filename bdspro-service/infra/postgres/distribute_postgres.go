@@ -76,7 +76,7 @@ func (r *DistributePostgres) FindByIdWithPartner(
 			) AS partner_ids
 		`).
 		Joins(`
-			LEFT JOIN product_users pu
+			LEFT JOIN product_user pu
 			ON pu.distribute_id = d.id
 		`).
 		Where("d.id = ?", disID).
@@ -129,7 +129,7 @@ func (r *DistributePostgres) GetListDistrByProduct(
 			) AS partner_ids
 		`).
 		Joins(`
-			LEFT JOIN product_users pu
+			LEFT JOIN product_user pu
 			ON pu.distribute_id = d.id
 		`).
 		Where("d.product_id = ?", productID)

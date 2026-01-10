@@ -6,6 +6,8 @@ import (
 	_dto "common/domain/dto"
 	"errors"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type DistributeDTO struct {
@@ -32,8 +34,8 @@ type FilterDistributeDTO struct {
 
 type DistributionWithPartners struct {
 	domain.DistributionEntity
-	PartnerIds   []uint64 `gorm:"column:partner_ids;type:bigint[]" json:"partnerIds"`
-	PartnerCount int32    `gorm:"column:partner_count" json:"partnerCount"`
+	PartnerIds   pq.Int64Array `gorm:"column:partner_ids;type:bigint[]" json:"partnerIds"`
+	PartnerCount int32         `gorm:"column:partner_count" json:"partnerCount"`
 }
 
 type DistributeResultDTO struct {
