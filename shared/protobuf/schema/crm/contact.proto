@@ -121,8 +121,9 @@ message ContactSaveDTO {
 }
 
 message ContactListDTO {
-    repeated sharepb.ContactDTO data = 1;
-    uint32 total = 2;
+  repeated sharepb.ContactDTO data = 1;
+  uint64 originProfileID = 2;
+  uint32 total = 3;
 }
 
 message ContactSyncRequest {

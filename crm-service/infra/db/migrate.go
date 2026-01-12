@@ -12,7 +12,7 @@ func AutoMigrate() {
 		&domain.ContactEntity{},
 		// &domain.LeadEntity{},
 		// &domain.LeadContactEntity{},
-
+		&domain.OriginProfile{},
 		// // Pipeline management
 		// &domain.PipelineEntity{},
 		// &domain.StageEntity{},

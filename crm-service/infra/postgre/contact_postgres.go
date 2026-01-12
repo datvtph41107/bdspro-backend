@@ -93,13 +93,14 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 		return nil, 0, err
 	}
 	result := query.
-		Table("tb_contact").
+		Model(&domain.ContactItem{}).
+		Preload("OriginProfile").
 		Debug().
 		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_of = ?", ownerId, ownerType).
 		Order("CASE WHEN COALESCE(fr.status, 40) = 20 THEN 0 ELSE 1 END, CASE WHEN tb_contact.profile_id IS NOT NULL THEN 0 ELSE 1 END, tb_contact.created_at DESC").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
-		Scan(&contacts)
+		Find(&contacts)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}

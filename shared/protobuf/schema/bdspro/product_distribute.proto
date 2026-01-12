@@ -13,7 +13,7 @@ enum CommissionType {
 }
 
 enum DistributionStatus {
-    DISTRIBUTION_STATUS_UNSPECIFIED = 0;
+    DISTRIBUTION_STATUS_EXPRIED = 0;
     DISTRIBUTION_STATUS_ACTIVE = 10;
     DISTRIBUTION_STATUS_REVOKED = 20;
 }
@@ -26,7 +26,6 @@ enum DistributionReason {
 }
 
 service DistributionService {
-
     rpc CreateDistribute(DistributeRequest) returns (DistributeResponse) {
         option (google.api.http) = {
             post: "/v2/bdspro/distributions"
@@ -41,7 +40,6 @@ service DistributionService {
         };
     }
 
-    // 🔹 READ-ONLY with partners
     rpc GetDistribution(GetDistributionRequest) returns (DistributionEntity) {
         option (google.api.http) = {
             get: "/v2/bdspro/distributions/{id}"

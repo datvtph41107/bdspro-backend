@@ -10,6 +10,6 @@ const (
 
 var DistributionStatusNames = map[DistributionStatus]string{
 	DISTRIBUTION_STATUS_ACTIVE:  "Hiệu lực",
-	DISTRIBUTION_STATUS_REVOKED: "Hết hạn",
-	DISTRIBUTION_STATUS_EXPRIED: "Đã thu hồi",
+	DISTRIBUTION_STATUS_REVOKED: "Đã thu hồi",
+	DISTRIBUTION_STATUS_EXPRIED: "Hết hạn",
 }

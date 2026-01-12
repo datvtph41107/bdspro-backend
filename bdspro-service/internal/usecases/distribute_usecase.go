@@ -1,14 +1,16 @@
 package usecases
 
 import (
+	"context"
+	"log"
+	"time"
+
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
-	"context"
-	"fmt"
-	"time"
+	_errors "common/errors"
 )
 
 type DistributionUsecase struct {
@@ -29,184 +31,185 @@ func NewDistributionUsecase(
 	}
 }
 
-func (uc *DistributionUsecase) CreateDistribute(ctx context.Context, req *dto.DistributeDTO) (*dto.DistributeResultDTO, error) {
+func (uc *DistributionUsecase) CreateDistribute(
+	ctx context.Context,
+	req *dto.DistributeDTO,
+) (*dto.DistributeResultDTO, error) {
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return nil, _errors.BadRequestException(err.Error())
 	}
 
-	resp := &dto.DistributeResultDTO{}
+	var resp *dto.DistributeResultDTO
 	err := uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		now := time.Now()
 
-		partnerCommission := calculatePartnerCommission(req.Price, req.CommissionType, req.CommissionValue)
-
 		dist := &domain.DistributionEntity{
-			Price:             req.Price,
-			CanDeal:           req.CanDeal,
-			ChannelPrice:      req.ChannelPrice,
-			CommissionType:    req.CommissionType,
-			CommissionValue:   req.CommissionValue,
-			Note:              req.Note,
-			DistributedAt:     &now,
-			FromDate:          req.FromDate,
-			ToDate:            req.ToDate,
-			Status:            enums.DISTRIBUTION_STATUS_ACTIVE,
-			PartnerCommission: partnerCommission,
-			ProductID:         req.ProductID,
+			ProductID:       req.ProductID,
+			Price:           req.Price,
+			CanDeal:         req.CanDeal,
+			ChannelPrice:    req.ChannelPrice,
+			CommissionType:  req.CommissionType,
+			CommissionValue: req.CommissionValue,
+			PartnerCommission: calculatePartnerCommission(
+				req.Price,
+				req.CommissionType,
+				req.CommissionValue,
+			),
+			Note:          req.Note,
+			FromDate:      req.FromDate,
+			ToDate:        req.ToDate,
+			DistributedAt: &now,
 		}
 
-		if err := uc.distributionRepo.Save(txCtx, []*domain.DistributionEntity{dist}); err != nil {
-			return fmt.Errorf("failed to create distribution entity: %w", err)
+		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
+			log.Printf("create distribution failed: %v", err)
+			return _errors.InternalServerException("create distribution failed")
 		}
 
-		createdCount, err := uc.assignPartners(txCtx, req.PartnerIDs, req.ProductID, dist.ID)
-		if err != nil {
-			return fmt.Errorf("failed to assign partners: %w", err)
+		if err := uc.distributionRepo.AssignPartner(
+			txCtx,
+			dist.ID,
+			dist.ProductID,
+			req.PartnerIDs,
+		); err != nil {
+			return err
 		}
 
-		resp.Price = dist.Price
-		resp.CanDeal = dist.CanDeal
-		resp.ChannelPrice = dist.ChannelPrice
-		resp.Status = dist.Status
-		resp.CommissionType = dist.CommissionType
-		resp.CommissionValue = dist.CommissionValue
-		resp.Note = dist.Note
-		resp.PartnerCommission = dist.PartnerCommission
-		resp.CreatedCount = createdCount
-		resp.FromDate = dist.FromDate
-		resp.ToDate = dist.ToDate
-
+		resp = mapToResultDTO(dist, len(req.PartnerIDs))
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return resp, err
 }
 
-func (uc *DistributionUsecase) UpdateDistribute(ctx context.Context, distID uint64, req *dto.DistributeDTO) (*dto.DistributeResultDTO, error) {
+func (uc *DistributionUsecase) UpdateDistribute(
+	ctx context.Context,
+	distID uint64,
+	req *dto.DistributeDTO,
+) (*dto.DistributeResultDTO, error) {
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return nil, _errors.BadRequestException(err.Error())
 	}
 
-	resp := &dto.DistributeResultDTO{}
+	var resp *dto.DistributeResultDTO
 	err := uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		dist, err := uc.distributionRepo.FindByID(txCtx, distID)
 		if err != nil {
-			return fmt.Errorf("distribution not found: %w", err)
+			return _errors.InternalServerException("load distribution failed")
+		}
+		if dist == nil {
+			return _errors.NotFoundException("distribution not found")
 		}
 
-		// Cập nhật các trường
+		if dist.RevokedAt != nil {
+			return _errors.BadRequestException("distribution has been revoked")
+		}
+
 		dist.Price = req.Price
 		dist.CanDeal = req.CanDeal
 		dist.ChannelPrice = req.ChannelPrice
 		dist.CommissionType = req.CommissionType
 		dist.CommissionValue = req.CommissionValue
+		dist.PartnerCommission = calculatePartnerCommission(
+			req.Price,
+			req.CommissionType,
+			req.CommissionValue,
+		)
 		dist.Note = req.Note
 		dist.FromDate = req.FromDate
 		dist.ToDate = req.ToDate
-		dist.PartnerCommission = calculatePartnerCommission(req.Price, req.CommissionType, req.CommissionValue)
 
-		if dist.Status != enums.DISTRIBUTION_STATUS_REVOKED && time.Now().After(*dist.ToDate) {
-			dist.Status = enums.DISTRIBUTION_STATUS_EXPRIED
+		if time.Now().After(*dist.ToDate) {
+			resp.Status = enums.DISTRIBUTION_STATUS_EXPRIED
 		}
 
-		if err := uc.distributionRepo.Save(txCtx, []*domain.DistributionEntity{dist}); err != nil {
-			return fmt.Errorf("failed to update distribution entity: %w", err)
+		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
+			return _errors.InternalServerException("update distribution failed")
 		}
 
-		existingPartners, _ := uc.distributionRepo.GetPartnersOfDistribute(txCtx, dist.ID)
-		toRemove := []uint64{}
-		for _, p := range existingPartners {
-			if !contains(req.PartnerIDs, p.ProfileID) {
-				toRemove = append(toRemove, p.ProfileID)
-			}
-		}
-		if len(toRemove) > 0 {
-			_ = uc.distributionRepo.RemovePartnersFromDistribute(txCtx, dist.ID, toRemove)
+		if err := uc.distributionRepo.AssignPartner(
+			txCtx,
+			dist.ID,
+			dist.ProductID,
+			req.PartnerIDs,
+		); err != nil {
+			return err
 		}
 
-		createdCount, err := uc.assignPartners(txCtx, req.PartnerIDs, req.ProductID, dist.ID)
-		if err != nil {
-			return fmt.Errorf("failed to assign partners: %w", err)
-		}
-
-		// Gán resultDTO
-		resp.Price = dist.Price
-		resp.CanDeal = dist.CanDeal
-		resp.ChannelPrice = dist.ChannelPrice
-		resp.Status = dist.Status
-		resp.CommissionType = dist.CommissionType
-		resp.CommissionValue = dist.CommissionValue
-		resp.Note = dist.Note
-		resp.PartnerCommission = dist.PartnerCommission
-		resp.CreatedCount = createdCount
-		resp.FromDate = dist.FromDate
-		resp.ToDate = dist.ToDate
-
+		resp = mapToResultDTO(dist, len(req.PartnerIDs))
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return resp, err
 }
 
-func (uc *DistributionUsecase) assignPartners(ctx context.Context, partnerIDs []uint64, productID, distID uint64) (int, error) {
-	if len(partnerIDs) == 0 {
-		return 0, nil
+func mapToResultDTO(dist *domain.DistributionEntity, createdCount int) *dto.DistributeResultDTO {
+	return &dto.DistributeResultDTO{
+		Price:             dist.Price,
+		CanDeal:           dist.CanDeal,
+		ChannelPrice:      dist.ChannelPrice,
+		CommissionType:    dist.CommissionType,
+		CommissionValue:   dist.CommissionValue,
+		Note:              dist.Note,
+		PartnerCommission: dist.PartnerCommission,
+		Status:            enums.DISTRIBUTION_STATUS_ACTIVE,
+		CreatedCount:      createdCount,
+		FromDate:          dist.FromDate,
+		ToDate:            dist.ToDate,
 	}
-
-	partners := make([]*domain.ProductUser, 0, len(partnerIDs))
-	for _, pid := range partnerIDs {
-		partners = append(partners, &domain.ProductUser{
-			ProfileID:    pid,
-			ProductID:    productID,
-			DistributeID: distID,
-			IsOwner:      false,
-		})
-	}
-	if err := uc.distributionRepo.AssignPartner(ctx, partners...); err != nil {
-		return 0, err
-	}
-
-	return len(partners), nil
 }
 
 func (uc *DistributionUsecase) RevokeDistribute(ctx context.Context, distributeID uint64, revoke dto.RevokeDTO) error {
 	now := time.Now()
-	return uc.distributionRepo.Revoke(ctx, distributeID, now, revoke)
+	if err := uc.distributionRepo.Revoke(ctx, distributeID, now, revoke); err != nil {
+		return _errors.InternalServerException("Failed to revoke distribution")
+	}
+	return nil
 }
 
 func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, disID uint64) (*dto.DistributionWithPartners, error) {
 	dist, err := uc.distributionRepo.FindByIdWithPartner(ctx, disID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get distribution: %w", err)
+		return nil, _errors.InternalServerException("Failed to fetch distribution")
 	}
 	if dist == nil {
-		return nil, fmt.Errorf("distribution %d not found", disID)
+		return nil, _errors.NotFoundException("Distribution not found")
 	}
+	dist.Status = displayStatus(dist)
 
 	return dist, nil
 }
 
-func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error) {
-	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID, dto)
+func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64, filter *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error) {
+	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID, filter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get distribute list: %w", err)
+		return nil, _errors.InternalServerException("Failed to get distribution list")
 	}
 
+	for _, dist := range distributes {
+		dist.Status = displayStatus(dist)
+	}
 	return distributes, nil
 }
 
-func (uc *DistributionUsecase) ListPartnersOfDistribute(ctx context.Context, disID uint64) ([]*domain.ProductUser, error) {
-	partners, err := uc.distributionRepo.GetPartnersOfDistribute(ctx, disID)
+func displayStatus(dist *dto.DistributionWithPartners) enums.DistributionStatus {
+	now := time.Now()
+
+	if dist.RevokedAt != nil {
+		return enums.DISTRIBUTION_STATUS_REVOKED
+	}
+
+	if dist.ToDate != nil && now.After(*dist.ToDate) {
+		return enums.DISTRIBUTION_STATUS_EXPRIED
+	}
+
+	return enums.DISTRIBUTION_STATUS_ACTIVE
+}
+
+func (uc *DistributionUsecase) GetListPartnersOfDistribute(ctx context.Context, disID uint64) ([]*domain.ProductUser, error) {
+	partners, err := uc.distributionRepo.GetListPartnersOfDistribute(ctx, disID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get partners: %w", err)
+		return nil, _errors.InternalServerException("Failed to get partners")
 	}
 	return partners, nil
 }
@@ -215,7 +218,6 @@ func calculatePartnerCommission(price int64, commissionType enums.CommissionType
 	if commissionValue <= 0 {
 		return 0
 	}
-
 	switch commissionType {
 	case enums.CommissionTypePercent:
 		return float64(price) * commissionValue / 100
@@ -225,40 +227,3 @@ func calculatePartnerCommission(price int64, commissionType enums.CommissionType
 		return 0
 	}
 }
-
-func contains(slice []uint64, val uint64) bool {
-	for _, v := range slice {
-		if v == val {
-			return true
-		}
-	}
-	return false
-}
-
-// func (uc *DistributionUsecase) CreateDistribute(ctx context.Context, req *dto.DistributeDTO) (*dto.DistributeResultDTO, error) {
-// 	resp := &dto.DistributeResultDTO{}
-// 	now := time.Now()
-// 	err := uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-// 		var toCreate []*domain.DistributionEntity
-// 		for _, partnerID := range req.PartnerIDs {
-// 			toCreate = append(toCreate, &domain.DistributionEntity{
-// 				ProductID:     req.ProductID,
-// 				PartnerID:     partnerID,
-// 				Status:        enums.DistributionStatusActive,
-// 				Policy:        req.Policy,
-// 				DistributedAt: now,
-// 			})
-// 		}
-// 		if len(toCreate) > 0 {
-// 			if err := uc.distributionRepo.Create(txCtx, toCreate); err != nil {
-// 				return err
-// 			}
-// 			resp.CreatedCount = len(toCreate)
-// 		}
-// 		return nil
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return resp, nil
-// }

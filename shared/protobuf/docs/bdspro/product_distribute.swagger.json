@@ -163,7 +163,6 @@
     },
     "/v2/bdspro/distributions/{id}": {
       "get": {
-        "summary": "🔹 READ-ONLY with partners",
         "operationId": "DistributionService_GetDistribution",
         "responses": {
           "200": {
@@ -451,11 +450,11 @@
     "bdspropbDistributionStatus": {
       "type": "string",
       "enum": [
-        "DISTRIBUTION_STATUS_UNSPECIFIED",
+        "DISTRIBUTION_STATUS_EXPRIED",
         "DISTRIBUTION_STATUS_ACTIVE",
         "DISTRIBUTION_STATUS_REVOKED"
       ],
-      "default": "DISTRIBUTION_STATUS_UNSPECIFIED"
+      "default": "DISTRIBUTION_STATUS_EXPRIED"
     },
     "bdspropbListDistributionsResponse": {
       "type": "object",

@@ -10,6 +10,12 @@ import (
 	"github.com/lib/pq"
 )
 
+// type PartnerInfo struct {
+// 	ID      uint64         `json:"id"`
+// 	OwnerOf enums.EOwnerOf `json:"ownerOf"`
+// }
+//  Partners        []PartnerInfo `json:"partners"`
+
 type DistributeDTO struct {
 	ProductID       uint64               `json:"productId"`
 	PartnerIDs      []uint64             `json:"partnerIds"`
@@ -34,15 +40,16 @@ type FilterDistributeDTO struct {
 
 type DistributionWithPartners struct {
 	domain.DistributionEntity
-	PartnerIds   pq.Int64Array `gorm:"column:partner_ids;type:bigint[]" json:"partnerIds"`
-	PartnerCount int32         `gorm:"column:partner_count" json:"partnerCount"`
+	PartnerIds   pq.Int64Array            `gorm:"column:partner_ids;type:bigint[]" json:"partnerIds"`
+	PartnerCount int32                    `gorm:"column:partner_count" json:"partnerCount"`
+	Status       enums.DistributionStatus `json:"status"`
 }
 
 type DistributeResultDTO struct {
 	Price             int64                    `json:"price"`
 	CanDeal           bool                     `json:"canDeal"`
 	ChannelPrice      bool                     `json:"channelPrice"`
-	Status            enums.DistributionStatus `gorm:"not null" json:"status"`
+	Status            enums.DistributionStatus `json:"status"`
 	CommissionType    enums.CommissionType     `json:"commissionType"`
 	CommissionValue   float64                  `json:"commissionValue"`
 	Note              string                   `json:"note"`
@@ -63,7 +70,7 @@ func (d *DistributeDTO) Validate() error {
 		return errors.New("ProductID must be greater than 0")
 	}
 	if d.Price < 0 {
-		return errors.New("Policy.Price must be >= 0")
+		return errors.New("Price must be >= 0")
 	}
 	if len(d.PartnerIDs) == 0 {
 		return errors.New("PartnerIDs cannot be empty")

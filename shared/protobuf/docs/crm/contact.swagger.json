@@ -1926,6 +1926,10 @@
             "$ref": "#/definitions/sharepbContactDTO"
           }
         },
+        "originProfileID": {
+          "type": "string",
+          "format": "uint64"
+        },
         "total": {
           "type": "integer",
           "format": "int64"

@@ -16,7 +16,6 @@ type DistributionEntity struct {
 	ProductID         uint64                   `gorm:"not null;index" json:"productId"`
 	DistributedAt     *time.Time               `gorm:"not null" json:"distributedAt"`
 	RevokedAt         *time.Time               `json:"revokedAt,omitempty"`
-	Status            enums.DistributionStatus `gorm:"not null" json:"status"`
 	Reason            enums.DistributionReason `json:"reason"`
 	ReasonOther       string                   `gorm:"type:varchar(100)" json:"reasonOther"`
 	FromDate          *time.Time               `gorm:"column:from_date;not null" json:"fromDate"`

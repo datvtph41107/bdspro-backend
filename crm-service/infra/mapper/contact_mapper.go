@@ -61,7 +61,6 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 
 	// Map productIds
 	result.ProductIds = contact.ProductIDs
-
 	return result
 }
 
