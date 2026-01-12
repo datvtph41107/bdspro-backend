@@ -68,7 +68,6 @@ func NewContactService(
 // @Param appInstalled query bool false "Đã cài app"
 // @Router /contact/list/{ownerOf} [get]
 func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
-
 	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOf(req.OwnerOf), dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),

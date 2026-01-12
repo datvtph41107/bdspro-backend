@@ -1116,18 +1116,6 @@
         }
       }
     },
-    "bdspropbGetPostByIDsResponse": {
-      "type": "object",
-      "properties": {
-        "posts": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbPost"
-          }
-        }
-      }
-    },
     "bdspropbHouseInfo": {
       "type": "object",
       "properties": {
@@ -1280,14 +1268,6 @@
         "targetId": {
           "type": "string",
           "format": "uint64"
-        }
-      }
-    },
-    "bdspropbOwnerPostResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean"
         }
       }
     },
@@ -2522,6 +2502,10 @@
         },
         "conversationMember": {
           "$ref": "#/definitions/sharepbConversationMember"
+        },
+        "originProfile": {
+          "$ref": "#/definitions/sharepbOriginProfile",
+          "title": "BASIC INFORMATION USER"
         }
       }
     },
@@ -2885,6 +2869,28 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        }
+      }
+    },
+    "sharepbOriginProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "originId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

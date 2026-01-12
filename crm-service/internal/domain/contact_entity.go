@@ -32,11 +32,9 @@ type ContactEntity struct {
 	ContactTags  pq.Int32Array        `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
 
 	// transient
-	Tags       []TagEntity `gorm:"-" json:"tags"`
-	ProductIDs []uint64    `gorm:"-" json:"productIds"`
-
-	OriginProfileID *uint64        `gorm:"column:origin_profile_id"`
-	OriginProfile   *OriginProfile `gorm:"foreignKey:OriginProfileID;references:ID"`
+	Tags            []TagEntity `gorm:"-" json:"tags"`
+	ProductIDs      []uint64    `gorm:"-" json:"productIds"`
+	OriginProfileID *uint64     `gorm:"column:origin_profile_id"`
 }
 
 func (ContactEntity) TableName() string {
@@ -64,6 +62,11 @@ type ContactItem struct {
 	FriendReceiverID uint64               `gorm:"column:friend_receiver_id" json:"friendReceiverId"`
 	Blocked          bool                 `gorm:"column:blocked" json:"blocked"`
 	Status           enums.EStatusContact `gorm:"column:status" json:"status"`
-	OriginProfileID  *uint64              `gorm:"column:origin_profile_id" json:"originProfileId"`
-	OriginProfile    *OriginProfile       `gorm:"foreignKey:OriginProfileID;references:ID"`
+
+	// origin_profile
+	OriginProfileID   uint64  `gorm:"column:origin_profile_id" json:"originProfileId"`
+	OriginDisplayName string  `gorm:"column:display_name" json:"originDisplayName"`
+	OriginPhone       string  `gorm:"column:origin_phone" json:"originPhone"`
+	OriginAvatar      string  `gorm:"column:origin_avatar" json:"originAvatar"`
+	OriginOriginID    *uint64 `gorm:"column:origin_id" json:"originOriginId"`
 }

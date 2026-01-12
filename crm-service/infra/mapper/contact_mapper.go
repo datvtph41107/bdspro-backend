@@ -109,6 +109,13 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 			ReceiverId: contact.FriendReceiverID,
 		}
 	}
+
+	result.OriginProfile = &sharepb.OriginProfile{
+		Id:          contact.OriginProfileID,
+		DisplayName: contact.OriginDisplayName,
+		Phone:       contact.OriginPhone,
+		Avatar:      contact.OriginAvatar,
+	}
 	return result
 }
 

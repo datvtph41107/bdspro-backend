@@ -2393,6 +2393,10 @@
         },
         "conversationMember": {
           "$ref": "#/definitions/sharepbConversationMember"
+        },
+        "originProfile": {
+          "$ref": "#/definitions/sharepbOriginProfile",
+          "title": "BASIC INFORMATION USER"
         }
       }
     },
@@ -2756,6 +2760,28 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        }
+      }
+    },
+    "sharepbOriginProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "originId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

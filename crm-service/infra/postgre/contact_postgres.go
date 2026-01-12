@@ -88,24 +88,32 @@ func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType ba
 
 func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
 	var contacts []domain.ContactItem
-	query, err := r.QuerySearch(r.GetDB(c), ownerId, ownerType, dto)
+	db := r.GetDB(c)
+
+	baseQuery := db.Table("tb_contact tb").
+		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.id").
+		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", 280, ownerType)
+
+	var total int64
+	if err := baseQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := baseQuery.
+		Select(`tb.*,
+			op.id as origin_profile_id,
+			op.display_name as display_name,
+			op.phone as origin_phone,
+			op.avatar as origin_avatar,
+			op.origin_id as origin_id`).
+		Order("CASE WHEN tb.profile_id IS NOT NULL THEN 0 ELSE 1 END, tb.created_at DESC").
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Scan(&contacts).Error
 	if err != nil {
 		return nil, 0, err
 	}
-	result := query.
-		Model(&domain.ContactItem{}).
-		Preload("OriginProfile").
-		Debug().
-		Where("tb_contact.deleted_at IS NULL AND tb_contact.owner_id = ? and tb_contact.owner_of = ?", ownerId, ownerType).
-		Order("CASE WHEN COALESCE(fr.status, 40) = 20 THEN 0 ELSE 1 END, CASE WHEN tb_contact.profile_id IS NOT NULL THEN 0 ELSE 1 END, tb_contact.created_at DESC").
-		Offset(dto.GetOffset()).
-		Limit(dto.GetLimit()).
-		Find(&contacts)
-	if result.Error != nil {
-		return nil, 0, result.Error
-	}
-	var total int64
-	query.Count(&total)
+
 	return contacts, total, nil
 }
 

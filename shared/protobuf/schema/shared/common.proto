@@ -313,6 +313,17 @@ message ContactDTO {
   optional OrganizationMember organizationMember = 24;
   optional GroupMember groupMember = 25;
   optional ConversationMember conversationMember = 26;
+
+  // BASIC INFORMATION USER
+  OriginProfile originProfile = 27;
+}
+
+message OriginProfile {
+  uint64 id = 1;
+  string display_name = 2;
+  string phone = 3;
+  string avatar = 4;
+  uint64 origin_id = 5;
 }
 
 message OrganizationMember {

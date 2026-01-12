@@ -3980,30 +3980,6 @@
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
-    "bdspropbProductAttachmentResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductAttachment"
-          }
-        }
-      }
-    },
-    "bdspropbProductInternalResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductResponse"
-          }
-        }
-      }
-    },
     "bdspropbProductNavigationResponse": {
       "type": "object",
       "properties": {
@@ -5413,6 +5389,10 @@
         },
         "conversationMember": {
           "$ref": "#/definitions/sharepbConversationMember"
+        },
+        "originProfile": {
+          "$ref": "#/definitions/sharepbOriginProfile",
+          "title": "BASIC INFORMATION USER"
         }
       }
     },
@@ -5776,6 +5756,28 @@
         },
         "profile": {
           "$ref": "#/definitions/sharepbProfileItem"
+        }
+      }
+    },
+    "sharepbOriginProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "originId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
