@@ -94,7 +94,7 @@ message PropertyResponse {
   optional uint64 propertyTypeId = 2;
   string title = 3;
   optional uint64 locationId = 4;
-  string addressText = 5;
+  string addressDetail = 5;
   optional double latitude = 6;
   optional double longitude = 7;
   string mapUrl = 8;
@@ -107,7 +107,7 @@ message PropertyResponse {
   optional double areaResidential = 15;
   uint32 legalStatus = 16;
   string legalNote = 17;
-  optional bool hasBuilding = 18;
+  optional uint64 buildingInfoId = 18;
   uint32 recordStatus = 19;
   string createdAt = 20;
   string updatedAt = 21;
@@ -167,7 +167,6 @@ message CreatePropertyRequest {
   // Thông tin đất (PropertyLandInfo)
   PropertyLandInfo landInfo = 3;
   
-  // Thông tin nhà/công trình (PropertyBuildingInfo)
   PropertyBuildingInfo buildingInfo = 4;
   
   // Thông tin AssetLegal (giấy tờ pháp lý)
@@ -193,7 +192,7 @@ message PropertyInfo {
   optional uint64 propertyTypeId = 1;      // Loại BĐS
   string title = 2;                        // Tiêu đề Property
   optional uint64 locationId = 3;          // ID địa điểm
-  string addressText = 4;                  // Địa chỉ văn bản
+  string addressDetail = 4;                  // Địa chỉ văn bản
   optional double latitude = 5;             // Vĩ độ (GPS)
   optional double longitude = 6;            // Kinh độ (GPS)
   string mapUrl = 7;                       // URL bản đồ
@@ -205,7 +204,7 @@ message PropertyInfo {
   optional double areaResidential = 13;    // Diện tích ở (m²)
   uint32 legalStatus = 14;                 // Tình trạng pháp lý
   string legalNote = 15;                   // Ghi chú pháp lý
-  optional bool hasBuilding = 16;           // Có nhà/công trình
+  optional uint64 buildingInfoId = 16;           // Có nhà/công trình
   uint32 recordStatus = 17;                // Trạng thái bản ghi (active, inactive, etc.)
   optional uint64 provinceId = 18;         // ID tỉnh/thành phố
   optional uint64 wardId = 19;             // ID phường/xã
@@ -243,22 +242,22 @@ message UpdatePropertyRequest {
   
   // Thông tin Property cơ bản
   optional uint64 propertyTypeId = 2;        // Loại BĐS
-  optional string title = 3;                 // Tiêu đề Property
+  string title = 3;                 // Tiêu đề Property
   optional uint64 locationId = 4;             // ID địa điểm
-  optional string addressText = 5;           // Địa chỉ văn bản
+  string addressDetail = 5;           // Địa chỉ văn bản
   optional double latitude = 6;             // Vĩ độ (GPS)
   optional double longitude = 7;             // Kinh độ (GPS)
-  optional string mapUrl = 8;                // URL bản đồ
+  string mapUrl = 8;                // URL bản đồ
   optional uint64 projectId = 9;            // ID dự án
-  optional string level = 10;                // Tầng
-  optional string unitCode = 11;             // Mã căn hộ/đơn vị
+  string level = 10;                // Tầng
+  string unitCode = 11;             // Mã căn hộ/đơn vị
   optional double areaTotal = 12;            // Tổng diện tích (m²)
   optional double areaLand = 13;            // Diện tích đất (m²)
   optional double areaResidential = 14;      // Diện tích ở (m²)
-  optional uint32 legalStatus = 15;          // Tình trạng pháp lý
-  optional string legalNote = 16;            // Ghi chú pháp lý
-  optional bool hasBuilding = 17;            // Có nhà/công trình
-  optional uint32 recordStatus = 18;         // Trạng thái bản ghi
+  uint32 legalStatus = 15;          // Tình trạng pháp lý
+  string legalNote = 16;            // Ghi chú pháp lý
+  optional uint64 buildingInfoId = 17;            // Có nhà/công trình
+  uint32 recordStatus = 18;         // Trạng thái bản ghi
   optional uint64 provinceId = 19;           // ID tỉnh/thành phố
   optional uint64 wardId = 20;               // ID phường/xã
   optional sharepb.AddressV3Proto address = 21;  // Địa chỉ chi tiết
@@ -267,7 +266,6 @@ message UpdatePropertyRequest {
   // Thông tin đất (PropertyLandInfo) - optional
   optional PropertyLandInfo landInfo = 23;
   
-  // Thông tin nhà/công trình (PropertyBuildingInfo) - optional
   optional PropertyBuildingInfo buildingInfo = 24;
   repeated uint64 amenityIds = 25;
 }

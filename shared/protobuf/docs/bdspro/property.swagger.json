@@ -337,7 +337,7 @@
           "format": "uint64",
           "title": "ID địa điểm"
         },
-        "addressText": {
+        "addressDetail": {
           "type": "string",
           "title": "Địa chỉ văn bản"
         },
@@ -392,8 +392,9 @@
           "type": "string",
           "title": "Ghi chú pháp lý"
         },
-        "hasBuilding": {
-          "type": "boolean",
+        "buildingInfoId": {
+          "type": "string",
+          "format": "uint64",
           "title": "Có nhà/công trình"
         },
         "recordStatus": {
@@ -1913,7 +1914,7 @@
           "format": "uint64",
           "title": "ID địa điểm"
         },
-        "addressText": {
+        "addressDetail": {
           "type": "string",
           "title": "Địa chỉ văn bản"
         },
@@ -1968,8 +1969,9 @@
           "type": "string",
           "title": "Ghi chú pháp lý"
         },
-        "hasBuilding": {
-          "type": "boolean",
+        "buildingInfoId": {
+          "type": "string",
+          "format": "uint64",
           "title": "Có nhà/công trình"
         },
         "recordStatus": {
@@ -2141,7 +2143,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "addressText": {
+        "addressDetail": {
           "type": "string"
         },
         "latitude": {
@@ -2187,8 +2189,9 @@
         "legalNote": {
           "type": "string"
         },
-        "hasBuilding": {
-          "type": "boolean"
+        "buildingInfoId": {
+          "type": "string",
+          "format": "uint64"
         },
         "recordStatus": {
           "type": "integer",

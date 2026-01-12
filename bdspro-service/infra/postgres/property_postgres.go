@@ -124,3 +124,35 @@ func (r *PostgrePropertyRepo) GetDetail(ctx context.Context, id uint64) (*domain
 	}
 	return &property, nil
 }
+
+func (r *PostgrePropertyRepo) Update(c context.Context, id uint64, entity *domain.Property) error {
+	// Sử dụng map để update các trường, bao gồm cả khi giá trị là nil (để set về NULL trong DB)
+	updates := map[string]interface{}{
+		"property_type_id": entity.PropertyTypeID,
+		"title":            entity.Title,
+		"location_id":      entity.LocationID,
+		"address_detail":   entity.AddressDetail,
+		"latitude":         entity.Latitude,
+		"longitude":        entity.Longitude,
+		"map_url":          entity.MapURL,
+		"project_id":       entity.ProjectID,
+		"block_id":         entity.BlockID,
+		"level":            entity.Level,
+		"unit_code":        entity.UnitCode,
+		"area_total":       entity.AreaTotal,
+		"area_land":        entity.AreaLand,
+		"area_residential": entity.AreaResidential,
+		"legal_note":       entity.LegalNote,
+		"building_info_id": entity.BuildingInfoID, // Có thể là nil để set về NULL
+		"legal_status":     entity.LegalStatus,
+		"record_status":    entity.RecordStatus,
+		"avatar_id":        entity.AvatarID,
+		"province_id":      entity.ProvinceID,
+		"ward_id":          entity.WardID,
+	}
+
+	return r.DB.WithContext(c).
+		Model(&domain.Property{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).Error
+}

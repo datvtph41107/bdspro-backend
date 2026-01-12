@@ -158,7 +158,7 @@ func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.Upda
 
 	err := h.PropertyUsecase.Update(ctx, req.Id, property, landInfo, buildingInfo, req.AmenityIds)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update property: %v", err)
+		return nil, err
 	}
 
 	return &bdspropb.Response{

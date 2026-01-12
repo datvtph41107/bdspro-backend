@@ -72,10 +72,10 @@ func (m *PropertyMapper) PropertyToPb(property *domain.Property) *bdspropb.Prope
 func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.PropertyWithCounts) *bdspropb.PropertyResponse {
 	property := &propertyWithCounts.Property
 	result := &bdspropb.PropertyResponse{
-		Id:          property.ID,
-		Title:       property.Title,
-		AddressText: property.AddressText,
-		MapUrl:      property.MapURL,
+		Id:            property.ID,
+		Title:         property.Title,
+		AddressDetail: property.AddressDetail,
+		MapUrl:        property.MapURL,
 		// BuildingBlock: property.BuildingInfoID,
 		Level:            property.Level,
 		UnitCode:         property.UnitCode,
@@ -94,6 +94,7 @@ func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.Prope
 		AreaResidential:  property.AreaResidential,
 		CreatedAt:        _utils.FormatTimeToString(property.CreatedAt),
 		UpdatedAt:        _utils.FormatTimeToString(property.UpdatedAt),
+		BuildingInfoId:   property.BuildingInfoID,
 	}
 
 	// Add counts
@@ -101,15 +102,16 @@ func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.Prope
 	result.AssetCount = &propertyWithCounts.AssetCount
 	result.PostCount = &propertyWithCounts.PostCount
 
-	// Populate AddressV3Proto - use cleanAddressUnit from product_mapper (same package)
-	if property.ProvinceID != nil || property.WardID != nil || property.AddressText != "" {
-		result.Address = &sharepb.AddressV3Proto{
-			Detail:       property.AddressText,
-			ProvinceId:   property.ProvinceID,
-			ProvinceName: cleanAddressUnit(propertyWithCounts.ProvinceName),
-			WardId:       property.WardID,
-			WardName:     cleanAddressUnit(propertyWithCounts.WardName),
-		}
+	result.Address = &sharepb.AddressV3Proto{
+		Detail: property.AddressDetail,
+	}
+	if property.Province != nil {
+		result.Address.ProvinceName = cleanAddressUnit(property.Province.Name)
+		result.Address.ProvinceId = &property.Province.ID
+	}
+	if property.Ward != nil {
+		result.Address.WardName = cleanAddressUnit(property.Ward.Name)
+		result.Address.WardId = &property.Ward.ID
 	}
 
 	// Populate projectName
@@ -246,7 +248,7 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 			PropertyTypeID:  req.Property.PropertyTypeId,
 			Title:           req.Property.Title,
 			LocationID:      req.Property.LocationId,
-			AddressText:     req.Property.AddressText,
+			AddressDetail:   req.Property.AddressDetail,
 			Latitude:        req.Property.Latitude,
 			Longitude:       req.Property.Longitude,
 			MapURL:          req.Property.MapUrl,
@@ -380,61 +382,25 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 		BaseEntity: _models.BaseEntity{
 			ID: req.Id,
 		},
-	}
-
-	if req.PropertyTypeId != nil {
-		property.PropertyTypeID = req.PropertyTypeId
-	}
-	if req.Title != nil {
-		property.Title = *req.Title
-	}
-	if req.LocationId != nil {
-		property.LocationID = req.LocationId
-	}
-	if req.AddressText != nil {
-		property.AddressText = *req.AddressText
-	}
-	if req.Latitude != nil {
-		property.Latitude = req.Latitude
-	}
-	if req.Longitude != nil {
-		property.Longitude = req.Longitude
-	}
-	if req.MapUrl != nil {
-		property.MapURL = *req.MapUrl
-	}
-	if req.ProjectId != nil {
-		property.ProjectID = req.ProjectId
-	}
-	if req.Level != nil {
-		property.Level = *req.Level
-	}
-	if req.UnitCode != nil {
-		property.UnitCode = *req.UnitCode
-	}
-	if req.AreaTotal != nil {
-		property.AreaTotal = req.AreaTotal
-	}
-	if req.AreaLand != nil {
-		property.AreaLand = req.AreaLand
-	}
-	if req.AreaResidential != nil {
-		property.AreaResidential = req.AreaResidential
-	}
-	if req.LegalStatus != nil {
-		property.LegalStatus = enums.EHouseCertificate(*req.LegalStatus)
-	}
-	if req.LegalNote != nil {
-		property.LegalNote = *req.LegalNote
-	}
-	if req.RecordStatus != nil {
-		property.RecordStatus = enums.EPropertyStatus(*req.RecordStatus)
-	}
-	if req.ProvinceId != nil {
-		property.ProvinceID = req.ProvinceId
-	}
-	if req.WardId != nil {
-		property.WardID = req.WardId
+		BuildingInfoID:  req.BuildingInfoId,
+		Title:           req.Title,
+		PropertyTypeID:  req.PropertyTypeId,
+		LocationID:      req.LocationId,
+		AddressDetail:   req.AddressDetail,
+		Latitude:        req.Latitude,
+		Longitude:       req.Longitude,
+		MapURL:          req.MapUrl,
+		Level:           req.Level,
+		UnitCode:        req.UnitCode,
+		ProjectID:       req.ProjectId,
+		AreaTotal:       req.AreaTotal,
+		AreaLand:        req.AreaLand,
+		AreaResidential: req.AreaResidential,
+		LegalNote:       req.LegalNote,
+		ProvinceID:      req.ProvinceId,
+		WardID:          req.WardId,
+		RecordStatus:    enums.EPropertyStatus(req.RecordStatus),
+		LegalStatus:     enums.EHouseCertificate(req.LegalStatus),
 	}
 
 	// Map AddressV3Proto nếu có

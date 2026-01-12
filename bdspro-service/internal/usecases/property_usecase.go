@@ -414,7 +414,7 @@ func (u *PropertyUsecase) CreateWithProduct(ctx context.Context, product *domain
 		Title:          product.Name,
 		ProjectID:      product.ProjectID,
 		AreaTotal:      &product.Area,
-		AddressText:    product.Address,
+		AddressDetail:  product.Address,
 		MapURL:         product.GoogleMapLink,
 		RecordStatus:   enums.EPropertyStatusActive,
 	}
@@ -492,7 +492,7 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 		PropertyTypeID: asset.PropertyTypeId,
 		Title:          asset.Name,
 		AreaTotal:      &asset.Area,
-		AddressText:    asset.Address,
+		AddressDetail:  asset.Address,
 		RecordStatus:   enums.EPropertyStatusActive, // Default status
 	}
 
@@ -544,9 +544,49 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 		}
 
 		// 2. Update Property
+		// if property.BuildingInfoID == nil {
+		// 	existingProperty.PropertyTypeID = nil
+		// 	if err := u.PropertyRepo.Update(txCtx, propertyID, existingProperty); err != nil {
+		// 		return err
+		// 	}
+		// }
+
+		// 4. Update PropertyBuildingInfo nếu có
+		if buildingInfo != nil {
+			existingBuildingInfo, err := u.PropertyBuildingInfoRepo.GetByPropertyID(txCtx, propertyID)
+			if err != nil {
+				return err
+			}
+
+			if existingBuildingInfo != nil {
+				// Update existing
+				buildingInfo.ID = existingBuildingInfo.ID
+				buildingInfo.PropertyID = propertyID
+				existingProperty.BuildingInfoID = &existingBuildingInfo.ID
+				if err := u.PropertyBuildingInfoRepo.Update(txCtx, buildingInfo); err != nil {
+					return err
+				}
+			} else {
+				// Create new
+				buildingInfo.PropertyID = propertyID
+				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
+					return err
+				}
+				// Link BuildingInfoID vào Property
+				updateProperty := *existingProperty
+				updateProperty.BuildingInfoID = &buildingInfo.ID
+				if err := u.PropertyRepo.Update(txCtx, propertyID, &updateProperty); err != nil {
+					return err
+				}
+			}
+		} else {
+			existingProperty.BuildingInfoID = nil
+		}
+
 		if property != nil {
 			// Merge với existing property để giữ các field không được update
 			updateProperty := *existingProperty
+			// updateProperty.BuildingInfoID = property.BuildingInfoID
 			if property.PropertyTypeID != nil {
 				updateProperty.PropertyTypeID = property.PropertyTypeID
 			}
@@ -556,8 +596,8 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 			if property.LocationID != nil {
 				updateProperty.LocationID = property.LocationID
 			}
-			if property.AddressText != "" {
-				updateProperty.AddressText = property.AddressText
+			if property.AddressDetail != "" {
+				updateProperty.AddressDetail = property.AddressDetail
 			}
 			if property.Latitude != nil {
 				updateProperty.Latitude = property.Latitude
@@ -626,35 +666,6 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 				// Create new
 				landInfo.PropertyID = propertyID
 				if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
-					return err
-				}
-			}
-		}
-
-		// 4. Update PropertyBuildingInfo nếu có
-		if buildingInfo != nil {
-			existingBuildingInfo, err := u.PropertyBuildingInfoRepo.GetByPropertyID(txCtx, propertyID)
-			if err != nil {
-				return err
-			}
-
-			if existingBuildingInfo != nil {
-				// Update existing
-				buildingInfo.ID = existingBuildingInfo.ID
-				buildingInfo.PropertyID = propertyID
-				if err := u.PropertyBuildingInfoRepo.Update(txCtx, buildingInfo); err != nil {
-					return err
-				}
-			} else {
-				// Create new
-				buildingInfo.PropertyID = propertyID
-				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
-					return err
-				}
-				// Link BuildingInfoID vào Property
-				updateProperty := *existingProperty
-				updateProperty.BuildingInfoID = &buildingInfo.ID
-				if err := u.PropertyRepo.Update(txCtx, propertyID, &updateProperty); err != nil {
 					return err
 				}
 			}

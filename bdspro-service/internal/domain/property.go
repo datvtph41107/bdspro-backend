@@ -11,10 +11,10 @@ type Property struct {
 	PropertyTypeID  *uint64  `gorm:"type:int8;index" json:"propertyTypeId,omitempty"`     // Loại BĐS
 	Title           string   `gorm:"size:255" json:"title,omitempty"`                     // Tiêu đề
 	LocationID      *uint64  `gorm:"type:int8;index" json:"locationId,omitempty"`         // ID địa điểm
-	AddressText     string   `gorm:"size:500" json:"addressText,omitempty"`               // Địa chỉ văn bản
+	AddressDetail   string   `gorm:"size:100" json:"addressDetail,omitempty"`             // Địa chỉ văn bản
 	Latitude        *float64 `gorm:"type:decimal(10,8)" json:"latitude,omitempty"`        // Vĩ độ (GPS)
 	Longitude       *float64 `gorm:"type:decimal(11,8)" json:"longitude,omitempty"`       // Kinh độ (GPS)
-	MapURL          string   `gorm:"size:500" json:"mapUrl,omitempty"`                    // URL bản đồ
+	MapURL          string   `gorm:"size:100" json:"mapUrl,omitempty"`                    // URL bản đồ
 	ProjectID       *uint64  `gorm:"type:int8;index" json:"projectId,omitempty"`          // ID dự án
 	BlockID         *uint64  `gorm:"type:int8;index" json:"blockId,omitempty"`            // ID block
 	Level           string   `gorm:"size:100" json:"level,omitempty"`                     // Tầng

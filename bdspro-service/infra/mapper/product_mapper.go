@@ -524,6 +524,7 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	result := &bdspropb.ProductResponse{
 		Id:   product.ID,
 		Name: product.Name,
+		Code: m.CodeDataUsecase.GetProductCode(nil, product.ID),
 		Area: product.Area,
 		Address: &sharepb.AddressV3Proto{
 			Detail:       product.Address,
