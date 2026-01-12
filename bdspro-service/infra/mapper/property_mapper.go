@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
+	_models "common/models"
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -15,11 +16,13 @@ import (
 
 type PropertyMapper struct {
 	ProductMapper *ProductMapper
+	AssetMapper   *AssetMapper
 }
 
-func NewPropertyMapper(productMapper *ProductMapper) *PropertyMapper {
+func NewPropertyMapper(productMapper *ProductMapper, assetMapper *AssetMapper) *PropertyMapper {
 	return &PropertyMapper{
 		ProductMapper: productMapper,
+		AssetMapper:   assetMapper,
 	}
 }
 
@@ -81,47 +84,16 @@ func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.Prope
 		RecordStatus:     uint32(property.RecordStatus),
 		LegalStatusName:  property.LegalStatus.String(),
 		RecordStatusName: property.RecordStatus.String(),
-	}
-
-	if property.PropertyTypeID != nil {
-		result.PropertyTypeId = property.PropertyTypeID
-	}
-
-	if property.LocationID != nil {
-		result.LocationId = property.LocationID
-	}
-
-	if property.ProjectID != nil {
-		result.ProjectId = property.ProjectID
-	}
-
-	if property.Latitude != nil {
-		result.Latitude = property.Latitude
-	}
-
-	if property.Longitude != nil {
-		result.Longitude = property.Longitude
-	}
-
-	if property.AreaTotal != nil {
-		result.AreaTotal = property.AreaTotal
-	}
-
-	if property.AreaLand != nil {
-		result.AreaLand = property.AreaLand
-	}
-
-	if property.AreaResidential != nil {
-		result.AreaResidential = property.AreaResidential
-	}
-
-	// Convert timestamps
-	if property.CreatedAt != nil && !property.CreatedAt.IsZero() {
-		result.CreatedAt = _utils.FormatTimeToString(property.CreatedAt)
-	}
-
-	if property.UpdatedAt != nil && !property.UpdatedAt.IsZero() {
-		result.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
+		PropertyTypeId:   property.PropertyTypeID,
+		LocationId:       property.LocationID,
+		ProjectId:        property.ProjectID,
+		Latitude:         property.Latitude,
+		Longitude:        property.Longitude,
+		AreaTotal:        property.AreaTotal,
+		AreaLand:         property.AreaLand,
+		AreaResidential:  property.AreaResidential,
+		CreatedAt:        _utils.FormatTimeToString(property.CreatedAt),
+		UpdatedAt:        _utils.FormatTimeToString(property.UpdatedAt),
 	}
 
 	// Add counts
@@ -146,25 +118,98 @@ func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.Prope
 	} else if property.Project != nil {
 		result.ProjectName = &property.Project.Name
 	}
+
+	if property.Project != nil {
+		result.Project = &sharepb.TagItem{
+			Id:   property.Project.ID,
+			Name: property.Project.Name,
+		}
+	}
+
 	if property.PropertyType != nil {
 		result.PropertyTypeName = property.PropertyType.Name
 	} else {
 		result.PropertyTypeName = propertyWithCounts.PropertyTypeName
 	}
 
-	// Populate BuildingInfo
-	if propertyWithCounts.BuildingType != nil {
-		buildingInfo := &bdspropb.PropertyBuildingInfo{
-			BuildingType:     propertyWithCounts.BuildingType,
+	if property.PropertyType != nil {
+		result.PropertyType = &sharepb.TagItem{
+			Id:   property.PropertyType.ID,
+			Name: property.PropertyType.Name,
+		}
+	}
+
+	if property.BuildingInfo != nil {
+		result.BuildingInfo = &bdspropb.PropertyBuildingInfo{
+			BuildingType:     uint32(property.BuildingInfo.BuildingType),
+			ConstructionArea: property.BuildingInfo.ConstructionArea,
+			FloorArea:        property.BuildingInfo.FloorArea,
+			Floors:           property.BuildingInfo.Floors,
+			Bedrooms:         property.BuildingInfo.Bedrooms,
+			Bathrooms:        property.BuildingInfo.Bathrooms,
+			Direction:        uint32(property.BuildingInfo.Direction),
+			BalconyDirection: uint32(property.BuildingInfo.BalconyDirection),
+		}
+	} else {
+		result.BuildingInfo = &bdspropb.PropertyBuildingInfo{
 			ConstructionArea: propertyWithCounts.ConstructionArea,
 			FloorArea:        propertyWithCounts.FloorArea,
 			Floors:           propertyWithCounts.Floors,
 			Bedrooms:         propertyWithCounts.Bedrooms,
 			Bathrooms:        propertyWithCounts.Bathrooms,
-			Direction:        propertyWithCounts.Direction,
-			BalconyDirection: propertyWithCounts.BalconyDirection,
 		}
-		result.BuildingInfo = buildingInfo
+		if propertyWithCounts.BuildingType != nil {
+			result.BuildingInfo.BuildingType = *propertyWithCounts.BuildingType
+		}
+		if propertyWithCounts.ConstructionArea != nil {
+			result.BuildingInfo.ConstructionArea = propertyWithCounts.ConstructionArea
+		}
+		if propertyWithCounts.FloorArea != nil {
+			result.BuildingInfo.FloorArea = propertyWithCounts.FloorArea
+		}
+	}
+
+	// Populate Avatar
+	if propertyWithCounts.AvatarURL != "" {
+		result.Avatar = &bdspropb.PropertyMediaItem{
+			Url:       propertyWithCounts.AvatarURL,
+			ThumbUrl:  propertyWithCounts.AvatarThumbURL,
+			MediaType: propertyWithCounts.AvatarMediaType,
+			SortOrder: propertyWithCounts.AvatarSortOrder,
+		}
+	}
+
+	if len(propertyWithCounts.MediaList) > 0 {
+		mediaList := make([]*bdspropb.MediaItem, len(propertyWithCounts.MediaList))
+		for i, media := range propertyWithCounts.MediaList {
+			mediaList[i] = &bdspropb.MediaItem{
+				Id:        media.ID,
+				MediaUrl:  media.URL,
+				MediaType: media.MediaType,
+				Order:     int32(media.SortOrder),
+				IsMain:    media.IsCover,
+			}
+		}
+		result.MediaList = mediaList
+	}
+
+	if property.LandInfo != nil {
+		result.LandInfo = &bdspropb.PropertyLandInfo{
+			Frontage:  property.LandInfo.Frontage,
+			Depth:     property.LandInfo.Depth,
+			RoadWidth: property.LandInfo.RoadWidth,
+			LandNote:  property.LandInfo.LandNote,
+		}
+	}
+
+	if len(propertyWithCounts.Amenities) > 0 {
+		result.Amenities = make([]*sharepb.TagItem, len(propertyWithCounts.Amenities))
+		for i, amenity := range propertyWithCounts.Amenities {
+			result.Amenities[i] = &sharepb.TagItem{
+				Id:   amenity.ID,
+				Name: amenity.Name,
+			}
+		}
 	}
 
 	return result
@@ -239,8 +284,8 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 	// Map PropertyBuildingInfo
 	if req.BuildingInfo != nil {
 		buildingType := enums.EBuildingTypeResidential
-		if req.BuildingInfo.BuildingType != nil {
-			buildingType = enums.EBuildingType(*req.BuildingInfo.BuildingType)
+		if req.BuildingInfo.BuildingType != 0 {
+			buildingType = enums.EBuildingType(req.BuildingInfo.BuildingType)
 		}
 		buildingInfo := &domain.PropertyBuildingInfo{
 			BuildingType:     buildingType,
@@ -250,11 +295,11 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 			Bedrooms:         req.BuildingInfo.Bedrooms,
 			Bathrooms:        req.BuildingInfo.Bathrooms,
 		}
-		if req.BuildingInfo.Direction != nil {
-			buildingInfo.Direction = enums.EHouseOrient(*req.BuildingInfo.Direction)
+		if req.BuildingInfo.Direction != 0 {
+			buildingInfo.Direction = enums.EHouseOrient(req.BuildingInfo.Direction)
 		}
-		if req.BuildingInfo.BalconyDirection != nil {
-			buildingInfo.BalconyDirection = enums.EHouseOrient(*req.BuildingInfo.BalconyDirection)
+		if req.BuildingInfo.BalconyDirection != 0 {
+			buildingInfo.BalconyDirection = enums.EHouseOrient(req.BuildingInfo.BalconyDirection)
 		}
 		result.BuildingInfo = buildingInfo
 	}
@@ -321,5 +366,175 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 		result.Asset = asset
 	}
 
+	return result
+}
+
+// UpdatePropertyPbToDTO converts protobuf UpdatePropertyRequest to domain Property, PropertyLandInfo, PropertyBuildingInfo
+func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyRequest) (*domain.Property, *domain.PropertyLandInfo, *domain.PropertyBuildingInfo) {
+	var property *domain.Property
+	var landInfo *domain.PropertyLandInfo
+	var buildingInfo *domain.PropertyBuildingInfo
+
+	// Map Property - chỉ map các field được set (không nil)
+	property = &domain.Property{
+		BaseEntity: _models.BaseEntity{
+			ID: req.Id,
+		},
+	}
+
+	if req.PropertyTypeId != nil {
+		property.PropertyTypeID = req.PropertyTypeId
+	}
+	if req.Title != nil {
+		property.Title = *req.Title
+	}
+	if req.LocationId != nil {
+		property.LocationID = req.LocationId
+	}
+	if req.AddressText != nil {
+		property.AddressText = *req.AddressText
+	}
+	if req.Latitude != nil {
+		property.Latitude = req.Latitude
+	}
+	if req.Longitude != nil {
+		property.Longitude = req.Longitude
+	}
+	if req.MapUrl != nil {
+		property.MapURL = *req.MapUrl
+	}
+	if req.ProjectId != nil {
+		property.ProjectID = req.ProjectId
+	}
+	if req.Level != nil {
+		property.Level = *req.Level
+	}
+	if req.UnitCode != nil {
+		property.UnitCode = *req.UnitCode
+	}
+	if req.AreaTotal != nil {
+		property.AreaTotal = req.AreaTotal
+	}
+	if req.AreaLand != nil {
+		property.AreaLand = req.AreaLand
+	}
+	if req.AreaResidential != nil {
+		property.AreaResidential = req.AreaResidential
+	}
+	if req.LegalStatus != nil {
+		property.LegalStatus = enums.EHouseCertificate(*req.LegalStatus)
+	}
+	if req.LegalNote != nil {
+		property.LegalNote = *req.LegalNote
+	}
+	if req.RecordStatus != nil {
+		property.RecordStatus = enums.EPropertyStatus(*req.RecordStatus)
+	}
+	if req.ProvinceId != nil {
+		property.ProvinceID = req.ProvinceId
+	}
+	if req.WardId != nil {
+		property.WardID = req.WardId
+	}
+
+	// Map AddressV3Proto nếu có
+	if req.Address != nil {
+		if req.Address.ProvinceId != nil {
+			property.ProvinceID = req.Address.ProvinceId
+		}
+		if req.Address.WardId != nil {
+			property.WardID = req.Address.WardId
+		}
+	}
+
+	// Map PropertyLandInfo nếu có
+	if req.LandInfo != nil {
+		landInfo = &domain.PropertyLandInfo{
+			PropertyID: req.Id,
+		}
+		if req.LandInfo.Frontage != nil {
+			landInfo.Frontage = req.LandInfo.Frontage
+		}
+		if req.LandInfo.Depth != nil {
+			landInfo.Depth = req.LandInfo.Depth
+		}
+		if req.LandInfo.RoadWidth != nil {
+			landInfo.RoadWidth = req.LandInfo.RoadWidth
+		}
+		if req.LandInfo.LandNote != "" {
+			landInfo.LandNote = req.LandInfo.LandNote
+		}
+	}
+
+	// Map PropertyBuildingInfo nếu có
+	if req.BuildingInfo != nil {
+		buildingType := enums.EBuildingTypeResidential
+		if req.BuildingInfo.BuildingType != 0 {
+			buildingType = enums.EBuildingType(req.BuildingInfo.BuildingType)
+		}
+		buildingInfo = &domain.PropertyBuildingInfo{
+			PropertyID:       req.Id,
+			BuildingType:     buildingType,
+			Direction:        enums.EHouseOrient(req.BuildingInfo.Direction),
+			BalconyDirection: enums.EHouseOrient(req.BuildingInfo.BalconyDirection),
+		}
+		if req.BuildingInfo.ConstructionArea != nil {
+			buildingInfo.ConstructionArea = req.BuildingInfo.ConstructionArea
+		}
+		if req.BuildingInfo.FloorArea != nil {
+			buildingInfo.FloorArea = req.BuildingInfo.FloorArea
+		}
+		if req.BuildingInfo.Floors != nil {
+			buildingInfo.Floors = req.BuildingInfo.Floors
+		}
+		if req.BuildingInfo.Bedrooms != nil {
+			buildingInfo.Bedrooms = req.BuildingInfo.Bedrooms
+		}
+		if req.BuildingInfo.Bathrooms != nil {
+			buildingInfo.Bathrooms = req.BuildingInfo.Bathrooms
+		}
+	}
+
+	return property, landInfo, buildingInfo
+}
+
+// PropertyRelationToProto converts domain.PropertyRelation to proto PropertyRelation
+func (m *PropertyMapper) PropertyRelationToProto(item *domain.PropertyRelation) *bdspropb.PropertyRelation {
+	if item == nil {
+		return nil
+	}
+
+	result := &bdspropb.PropertyRelation{
+		PropertyId:   item.PropertyID,
+		RelationType: uint64(item.RelationType),
+	}
+
+	// Set id = relationID nếu có
+	if item.RelationID != nil {
+		result.Id = *item.RelationID
+		result.RelationId = *item.RelationID
+	}
+
+	// Map Asset nếu có
+	if item.Asset != nil && m.AssetMapper != nil {
+		result.Asset = m.AssetMapper.MapAssetPb(item.Asset)
+	}
+
+	// Map Product nếu có
+	if item.Product != nil && m.ProductMapper != nil {
+		result.Product = m.ProductMapper.MapProductPb(item.Product)
+	}
+
+	// Post sẽ được xử lý trong handler nếu cần (vì Post liên kết với Product, không phải Property trực tiếp)
+
+	return result
+}
+
+// PropertyRelationListToProto converts []domain.PropertyRelation to []PropertyRelation proto
+func (m *PropertyMapper) PropertyRelationListToProto(items []domain.PropertyRelation) []*bdspropb.PropertyRelation {
+	result := make([]*bdspropb.PropertyRelation, len(items))
+	for i := range items {
+		result[i] = m.PropertyRelationToProto(&items[i])
+	}
 	return result
 }

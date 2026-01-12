@@ -33,3 +33,14 @@ type ProductAmenity struct {
 func (ProductAmenity) TableName() string {
 	return "product_amenity"
 }
+
+// PropertyAmenity struct cho bảng PROPERTY_AMENITY (bảng liên kết nhiều-nhiều)
+type PropertyAmenity struct {
+	PropertyID uint64 `gorm:"primaryKey;not null" json:"propertyId"`
+	AmenityID  uint64 `gorm:"primaryKey;not null" json:"amenityId"`
+}
+
+// GORM table name override
+func (PropertyAmenity) TableName() string {
+	return "property_amenity"
+}

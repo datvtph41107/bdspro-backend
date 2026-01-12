@@ -9,6 +9,7 @@ import "bdspro/product.proto";
 import "google/api/annotations.proto";
 import "shared/common.proto";
 import "shared/v3.proto";
+import "bdspro/post.proto";
 
 service PropertyService {
   rpc GetList(PropertySearchRequest) returns (PropertyListResponse) {
@@ -35,9 +36,22 @@ service PropertyService {
     };
   };
   
+  rpc GetRelation(PropertyRelationRequest) returns (PropertyRelationResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{id}/relation"
+    };
+  };
+  
   rpc CreateProperty (CreatePropertyRequest) returns (Response) {
     option (google.api.http) = {
       post: "/v2/bdspro/property/new"
+      body: "*"
+    };
+  };
+  
+  rpc UpdateProperty (UpdatePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/property/{id}"
       body: "*"
     };
   };
@@ -106,6 +120,12 @@ message PropertyResponse {
   optional string projectName = 28;
   optional PropertyBuildingInfo buildingInfo = 29;
   string propertyTypeName = 30;
+  optional PropertyMediaItem avatar = 31;
+  repeated bdspropb.MediaItem mediaList = 32;
+  optional sharepb.TagItem project = 33;
+  optional sharepb.TagItem propertyType = 34;
+  optional PropertyLandInfo landInfo = 35;
+  repeated sharepb.TagItem amenities = 36;
 }
 
 message PropertyAssetsResponse {
@@ -118,6 +138,25 @@ message PropertyProductsResponse {
   int64 total = 2;
 }
 
+message PropertyRelationRequest {
+  uint64 id = 1;
+}
+
+message PropertyRelation {
+  uint64 id = 1;
+  uint64 propertyId = 2;
+  uint64 relationId = 3;
+  uint64 relationType = 4;
+  optional Asset asset = 5;
+  optional ProductResponse product = 6;
+  optional Post post = 7;
+}
+
+message PropertyRelationResponse {
+  repeated PropertyRelation data = 1;
+  int64 total = 2;
+}
+
 message CreatePropertyRequest {
   // Thông tin Product
   ProductSaveRequest product = 1;
@@ -126,7 +165,7 @@ message CreatePropertyRequest {
   PropertyInfo property = 2;
   
   // Thông tin đất (PropertyLandInfo)
-  PropertyLandInfoRequest landInfo = 3;
+  PropertyLandInfo landInfo = 3;
   
   // Thông tin nhà/công trình (PropertyBuildingInfo)
   PropertyBuildingInfo buildingInfo = 4;
@@ -174,7 +213,7 @@ message PropertyInfo {
   optional string projectName = 21;
 }
 
-message PropertyLandInfoRequest {
+message PropertyLandInfo {
   optional double frontage = 1;            // Mặt tiền (m)
   optional double depth = 2;               // Chiều sâu (m)
   optional double roadWidth = 3;           // Độ rộng đường (m)
@@ -197,4 +236,38 @@ message PropertyMediaItem {
   string thumbUrl = 3;                     // URL thumbnail
   int32 sortOrder = 4;                     // Thứ tự sắp xếp
   bool isCover = 5;                        // Ảnh bìa
+}
+
+message UpdatePropertyRequest {
+  uint64 id = 1;                            // ID Property cần cập nhật
+  
+  // Thông tin Property cơ bản
+  optional uint64 propertyTypeId = 2;        // Loại BĐS
+  optional string title = 3;                 // Tiêu đề Property
+  optional uint64 locationId = 4;             // ID địa điểm
+  optional string addressText = 5;           // Địa chỉ văn bản
+  optional double latitude = 6;             // Vĩ độ (GPS)
+  optional double longitude = 7;             // Kinh độ (GPS)
+  optional string mapUrl = 8;                // URL bản đồ
+  optional uint64 projectId = 9;            // ID dự án
+  optional string level = 10;                // Tầng
+  optional string unitCode = 11;             // Mã căn hộ/đơn vị
+  optional double areaTotal = 12;            // Tổng diện tích (m²)
+  optional double areaLand = 13;            // Diện tích đất (m²)
+  optional double areaResidential = 14;      // Diện tích ở (m²)
+  optional uint32 legalStatus = 15;          // Tình trạng pháp lý
+  optional string legalNote = 16;            // Ghi chú pháp lý
+  optional bool hasBuilding = 17;            // Có nhà/công trình
+  optional uint32 recordStatus = 18;         // Trạng thái bản ghi
+  optional uint64 provinceId = 19;           // ID tỉnh/thành phố
+  optional uint64 wardId = 20;               // ID phường/xã
+  optional sharepb.AddressV3Proto address = 21;  // Địa chỉ chi tiết
+  optional string projectName = 22;          // Tên dự án
+  
+  // Thông tin đất (PropertyLandInfo) - optional
+  optional PropertyLandInfo landInfo = 23;
+  
+  // Thông tin nhà/công trình (PropertyBuildingInfo) - optional
+  optional PropertyBuildingInfo buildingInfo = 24;
+  repeated uint64 amenityIds = 25;
 }

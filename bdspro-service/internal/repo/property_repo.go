@@ -17,6 +17,7 @@ type PropertyRelationRepo interface {
 	Create(ctx context.Context, relation *domain.PropertyRelation) error
 	Update(ctx context.Context, relation *domain.PropertyRelation) error
 	GetByPropertyID(ctx context.Context, propertyID uint64) (*domain.PropertyRelation, error)
+	GetAllByPropertyID(ctx context.Context, propertyID uint64) ([]domain.PropertyRelation, error)
 	GetByAssetID(ctx context.Context, assetID uint64) (*domain.PropertyRelation, error)
 	GetByProductID(ctx context.Context, productID uint64) (*domain.PropertyRelation, error)
 	GetCountsByPropertyID(ctx context.Context, propertyID uint64) (productCount uint32, assetCount uint32, postCount uint32, err error)
@@ -45,4 +46,8 @@ type PropertyMediaRepo interface {
 	CreateBatch(ctx context.Context, mediaList []domain.PropertyMedia) error
 	GetByPropertyID(ctx context.Context, propertyID uint64) ([]domain.PropertyMedia, error)
 	DeleteByPropertyID(ctx context.Context, propertyID uint64) error
+}
+
+type PropertyAmenityRepo interface {
+	UpdatePropertyAmenityIds(ctx context.Context, propertyID uint64, amenityIDs []uint64) error
 }

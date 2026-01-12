@@ -15,15 +15,18 @@ type PropertyHandler struct {
 	bdspropb.UnimplementedPropertyServiceServer
 	PropertyUsecase *usecases.PropertyUsecase
 	PropertyMapper  *mapper.PropertyMapper
+	AssetMapper     *mapper.AssetMapper
 }
 
 func NewPropertyHandler(
 	propertyUsecase *usecases.PropertyUsecase,
 	propertyMapper *mapper.PropertyMapper,
+	assetMapper *mapper.AssetMapper,
 ) *PropertyHandler {
 	return &PropertyHandler{
 		PropertyUsecase: propertyUsecase,
 		PropertyMapper:  propertyMapper,
+		AssetMapper:     assetMapper,
 	}
 }
 
@@ -72,7 +75,7 @@ func (h *PropertyHandler) GetList(ctx context.Context, req *bdspropb.PropertySea
 func (h *PropertyHandler) GetDetail(ctx context.Context, req *bdspropb.PropertyDetailRequest) (*bdspropb.PropertyResponse, error) {
 	property, err := h.PropertyUsecase.Detail(ctx, req.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get property detail: %v", err)
+		return nil, err
 	}
 	return h.PropertyMapper.PropertyToProto(property), nil
 }
@@ -94,6 +97,30 @@ func (h *PropertyHandler) GetProducts(ctx context.Context, req *bdspropb.Propert
 	return nil, nil
 }
 
+// @Summary Lấy danh sách Asset và Product liên quan đến Property
+// @Description API để lấy danh sách Asset và Product liên quan đến Property theo ID
+// @Tags Property
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của Property"
+// @Success 200 {object} bdspropb.PropertyRelationResponse "Danh sách Asset và Product liên quan đến Property"
+// @Router /v2/bdspro/v2/property/{id}/relation [get]
+func (h *PropertyHandler) GetRelation(ctx context.Context, req *bdspropb.PropertyRelationRequest) (*bdspropb.PropertyRelationResponse, error) {
+	relations, err := h.PropertyUsecase.GetRelation(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get property relation: %v", err)
+	}
+
+	// Convert relations to proto
+	relationList := h.PropertyMapper.PropertyRelationListToProto(relations)
+
+	return &bdspropb.PropertyRelationResponse{
+		Data:  relationList,
+		Total: int64(len(relationList)),
+	}, nil
+}
+
 // @Summary Tạo Property
 // @Description API để tạo một Property mới
 // @Tags Property
@@ -112,6 +139,30 @@ func (h *PropertyHandler) CreateProperty(ctx context.Context, req *bdspropb.Crea
 	}
 	return &bdspropb.Response{
 		Id:      property.ID,
+		Message: "successfully",
+	}, nil
+}
+
+// @Summary Cập nhật Property
+// @Description API để cập nhật thông tin Property
+// @Tags Property
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của Property"
+// @Param body body bdspropb.UpdatePropertyRequest true "Thông tin Property cần cập nhật"
+// @Success 200 {object} bdspropb.Response "Property được cập nhật thành công"
+// @Router /v2/bdspro/v2/property/{id} [put]
+func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.UpdatePropertyRequest) (*bdspropb.Response, error) {
+	property, landInfo, buildingInfo := h.PropertyMapper.UpdatePropertyPbToDTO(req)
+
+	err := h.PropertyUsecase.Update(ctx, req.Id, property, landInfo, buildingInfo, req.AmenityIds)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update property: %v", err)
+	}
+
+	return &bdspropb.Response{
+		Id:      req.Id,
 		Message: "successfully",
 	}, nil
 }

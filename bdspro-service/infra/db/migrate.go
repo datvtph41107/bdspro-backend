@@ -120,7 +120,11 @@ func MigrateDomain() {
 		// &domain.Attribute{},
 		// &domain.AttributeValue{},
 		// &domain.AttributeProduct{},
-		&domain.DistributionEntity{},
-		&domain.ProductUser{},
+		// &domain.DistributionEntity{},
+		// &domain.ProductUser{},
+		// &domain.PropertyAmenity{},
+		&domain.PropertyRelation{},
+		// &domain.ProvinceV2{},
+		// &domain.WardV2{},
 	)
 }

@@ -42,13 +42,18 @@ func (r *PostgrePropertyRepo) Search(ctx context.Context, payload *dto.PropertyS
 			pbi.bedrooms,
 			pbi.bathrooms,
 			pbi.direction,
-			pbi.balcony_direction`).
+			pbi.balcony_direction,
+			avatar.url as avatar_url,
+			avatar.thumb_url as avatar_thumb_url,
+			avatar.media_type as avatar_media_type,
+			avatar.sort_order as avatar_sort_order`).
 		Joins("LEFT JOIN property_relation pr ON property.id = pr.property_id").
 		Joins("LEFT JOIN province_v2 prov ON property.province_id = prov.id AND prov.deleted_at IS NULL").
 		Joins("LEFT JOIN ward_v2 ward ON property.ward_id = ward.id AND ward.deleted_at IS NULL").
 		Joins("LEFT JOIN projects proj ON property.project_id = proj.id AND proj.deleted_at IS NULL").
 		Joins("LEFT JOIN property_type pt ON property.property_type_id = pt.id AND pt.deleted_at IS NULL").
 		Joins("LEFT JOIN property_building_info pbi ON property.id = pbi.property_id AND pbi.deleted_at IS NULL").
+		Joins("LEFT JOIN property_media avatar ON property.id = avatar.property_id AND avatar.deleted_at IS NULL").
 		Where("property.deleted_at IS NULL")
 
 	// Filter by text
@@ -108,7 +113,12 @@ func (r *PostgrePropertyRepo) GetDetail(ctx context.Context, id uint64) (*domain
 		Preload("PropertyType").
 		Preload("Project").
 		Preload("Province").
+		Preload("MediaList").
 		Preload("Ward").
+		Preload("BuildingInfo").
+		Preload("LandInfo").
+		Preload("Avatar").
+		Preload("Amenities").
 		Where("id = ? and deleted_at is null", id).First(&property).Error; err != nil {
 		return nil, err
 	}

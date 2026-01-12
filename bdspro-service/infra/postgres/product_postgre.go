@@ -317,6 +317,20 @@ func (r *GormUserProductRepo) UpdateProductAmenityIds(ctx context.Context, produ
 	return nil
 }
 
+func (r *GormUserProductRepo) GetAmenityIDsByProductID(ctx context.Context, productID uint64) ([]uint64, error) {
+	var productAmenities []domain.ProductAmenity
+	tx := GetDB(ctx, r.DB)
+	err := tx.Where("product_id = ?", productID).Find(&productAmenities).Error
+	if err != nil {
+		return nil, err
+	}
+	amenityIDs := make([]uint64, 0, len(productAmenities))
+	for _, pa := range productAmenities {
+		amenityIDs = append(amenityIDs, pa.AmenityID)
+	}
+	return amenityIDs, nil
+}
+
 func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearchRequest) *gorm.DB {
 	if dto.ParentID != nil && *dto.ParentID == 0 {
 		query = query.Where("products.parent_id is null")
@@ -1134,7 +1148,10 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       COALESCE(pp.rent_commission, 0) AS price_rent_commission,
 		       COALESCE(pp.rent_commission_type, 0) AS price_rent_commission_type,
 		       COALESCE(pp.rent_payment_cycle, 0) AS price_rent_payment_cycle,
-		       COALESCE(pm.media_url, '') AS image_url,
+		       COALESCE(avatar.url, '') AS avatar_url,
+		       COALESCE(avatar.thumb_url, '') AS avatar_thumb_url,
+		       COALESCE(avatar.media_type, '') AS avatar_media_type,
+		       COALESCE(avatar.sort_order, 0) AS avatar_sort_order,
 		       COALESCE(pt.name, '') AS property_type_name,
 		       pbi.building_type,
 		       pbi.construction_area,
@@ -1163,6 +1180,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		LEFT JOIN product_media pm ON products.image_id = pm.id AND pm.deleted_at IS NULL
 		LEFT JOIN property p ON products.property_id = p.id AND p.deleted_at IS NULL
 		LEFT JOIN property_building_info pbi ON p.id = pbi.property_id AND pbi.deleted_at IS NULL
+		LEFT JOIN property_media avatar ON p.id = avatar.property_id AND avatar.deleted_at IS NULL
 		LEFT JOIN province_v2 prov ON p.province_id = prov.id AND prov.deleted_at IS NULL
 		LEFT JOIN ward_v2 ward ON p.ward_id = ward.id AND ward.deleted_at IS NULL
 		LEFT JOIN projects proj ON p.project_id = proj.id AND proj.deleted_at IS NULL

@@ -156,6 +156,46 @@
         ]
       }
     },
+    "/v2/bdspro/v2/property/{id}": {
+      "put": {
+        "operationId": "PropertyService_UpdateProperty",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "ID Property cần cập nhật",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PropertyServiceUpdatePropertyBody"
+            }
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/property/{id}/assets": {
       "get": {
         "operationId": "PropertyService_GetAssets",
@@ -245,9 +285,157 @@
           "PropertyService"
         ]
       }
+    },
+    "/v2/bdspro/v2/property/{id}/relation": {
+      "get": {
+        "operationId": "PropertyService_GetRelation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbPropertyRelationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
     }
   },
   "definitions": {
+    "PropertyServiceUpdatePropertyBody": {
+      "type": "object",
+      "properties": {
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Loại BĐS",
+          "title": "Thông tin Property cơ bản"
+        },
+        "title": {
+          "type": "string",
+          "title": "Tiêu đề Property"
+        },
+        "locationId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID địa điểm"
+        },
+        "addressText": {
+          "type": "string",
+          "title": "Địa chỉ văn bản"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double",
+          "title": "Vĩ độ (GPS)"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double",
+          "title": "Kinh độ (GPS)"
+        },
+        "mapUrl": {
+          "type": "string",
+          "title": "URL bản đồ"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID dự án"
+        },
+        "level": {
+          "type": "string",
+          "title": "Tầng"
+        },
+        "unitCode": {
+          "type": "string",
+          "title": "Mã căn hộ/đơn vị"
+        },
+        "areaTotal": {
+          "type": "number",
+          "format": "double",
+          "title": "Tổng diện tích (m²)"
+        },
+        "areaLand": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích đất (m²)"
+        },
+        "areaResidential": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích ở (m²)"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Tình trạng pháp lý"
+        },
+        "legalNote": {
+          "type": "string",
+          "title": "Ghi chú pháp lý"
+        },
+        "hasBuilding": {
+          "type": "boolean",
+          "title": "Có nhà/công trình"
+        },
+        "recordStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái bản ghi"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID tỉnh/thành phố"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "ID phường/xã"
+        },
+        "address": {
+          "$ref": "#/definitions/sharepbAddressV3Proto",
+          "title": "Địa chỉ chi tiết"
+        },
+        "projectName": {
+          "type": "string",
+          "title": "Tên dự án"
+        },
+        "landInfo": {
+          "$ref": "#/definitions/bdspropbPropertyLandInfo",
+          "title": "Thông tin đất (PropertyLandInfo) - optional"
+        },
+        "buildingInfo": {
+          "$ref": "#/definitions/bdspropbPropertyBuildingInfo",
+          "title": "Thông tin nhà/công trình (PropertyBuildingInfo) - optional"
+        },
+        "amenityIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
     "bdspropbAmenityItem": {
       "type": "object",
       "properties": {
@@ -586,7 +774,7 @@
           "title": "Thông tin Property"
         },
         "landInfo": {
-          "$ref": "#/definitions/bdspropbPropertyLandInfoRequest",
+          "$ref": "#/definitions/bdspropbPropertyLandInfo",
           "title": "Thông tin đất (PropertyLandInfo)"
         },
         "buildingInfo": {
@@ -841,6 +1029,134 @@
         }
       }
     },
+    "bdspropbPost": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "expiredAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibility": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "content": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "numDate": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string",
+          "title": "1: normal, 2: feed, 3: share"
+        },
+        "postPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "priceType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: chính thức, 2: thỏa thuận"
+        },
+        "packageVisible": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: thường, 2: VIP"
+        },
+        "like": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "comment": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "numView": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1: user, 2: admin"
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPostMedia"
+          }
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "wardName": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductResponse"
+        },
+        "transactionStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "wardId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
     "bdspropbPostItem": {
       "type": "object",
       "properties": {
@@ -853,6 +1169,28 @@
         }
       },
       "title": "PostItem for product detail response"
+    },
+    "bdspropbPostMedia": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "isMain": {
+          "type": "boolean"
+        },
+        "sortOrder": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
     },
     "bdspropbPostSaveWithProduct": {
       "type": "object",
@@ -1287,6 +1625,9 @@
         "contactCount": {
           "type": "integer",
           "format": "int64"
+        },
+        "avatar": {
+          "$ref": "#/definitions/bdspropbMediaItem"
         }
       }
     },
@@ -1654,7 +1995,7 @@
         }
       }
     },
-    "bdspropbPropertyLandInfoRequest": {
+    "bdspropbPropertyLandInfo": {
       "type": "object",
       "properties": {
         "frontage": {
@@ -1728,6 +2069,52 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbPropertyRelation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "relationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "relationType": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "asset": {
+          "$ref": "#/definitions/bdspropbAsset"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductResponse"
+        },
+        "post": {
+          "$ref": "#/definitions/bdspropbPost"
+        }
+      }
+    },
+    "bdspropbPropertyRelationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPropertyRelation"
           }
         },
         "total": {
@@ -1842,6 +2229,32 @@
         },
         "propertyTypeName": {
           "type": "string"
+        },
+        "avatar": {
+          "$ref": "#/definitions/bdspropbPropertyMediaItem"
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbMediaItem"
+          }
+        },
+        "project": {
+          "$ref": "#/definitions/sharepbTagItem"
+        },
+        "propertyType": {
+          "$ref": "#/definitions/sharepbTagItem"
+        },
+        "landInfo": {
+          "$ref": "#/definitions/bdspropbPropertyLandInfo"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbTagItem"
+          }
         }
       }
     },

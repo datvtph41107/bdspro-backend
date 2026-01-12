@@ -36,6 +36,11 @@ type PropertyWithCounts struct {
 	Bathrooms        *uint32  `gorm:"column:bathrooms" json:"-"`
 	Direction        *uint32  `gorm:"column:direction" json:"-"`
 	BalconyDirection *uint32  `gorm:"column:balcony_direction" json:"-"`
+	// Avatar field
+	AvatarURL       string `gorm:"column:avatar_url" json:"-"`
+	AvatarThumbURL  string `gorm:"column:avatar_thumb_url" json:"-"`
+	AvatarMediaType string `gorm:"column:avatar_media_type" json:"-"`
+	AvatarSortOrder int32  `gorm:"column:avatar_sort_order" json:"-"`
 }
 
 type CreatePropertyProductRequest struct {
@@ -44,6 +49,7 @@ type CreatePropertyProductRequest struct {
 	BuildingInfo *domain.PropertyBuildingInfo `json:"buildingInfo"`
 	LegalInfo    *domain.AssetLegal           `json:"legalInfo"`
 	MediaList    []domain.PropertyMedia       `json:"mediaList"`
+	AmenityIds   []uint64                     `json:"amenityIds"`
 	TagIDs       []uint64                     `json:"tagIds"`
 	Post         *domain.Post                 `json:"post"`
 	Product      *domain.Product              `json:"product"`

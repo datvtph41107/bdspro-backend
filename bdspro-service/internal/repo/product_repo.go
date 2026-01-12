@@ -121,4 +121,7 @@ type ProductRepo interface {
 
 	// GetProductNavigation lấy previousId và nextId của product
 	GetProductNavigation(ctx context.Context, productID uint64) (previousID uint64, nextID uint64, err error)
+
+	// GetAmenityIDsByProductID lấy danh sách amenity IDs của product
+	GetAmenityIDsByProductID(ctx context.Context, productID uint64) ([]uint64, error)
 }

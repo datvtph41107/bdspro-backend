@@ -638,6 +638,16 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			}
 		}
 
+		// Map Avatar nếu có
+		var avatar *bdspropb.MediaItem
+		if product.AvatarURL != "" {
+			avatar = &bdspropb.MediaItem{
+				MediaUrl:  product.AvatarURL,
+				MediaType: product.AvatarMediaType,
+				Order:     int32(product.AvatarSortOrder),
+			}
+		}
+
 		// Map BuildingInfo nếu có
 		var buildingInfo *bdspropb.PropertyBuildingInfo
 		if product.BuildingInfo != nil {
@@ -645,14 +655,14 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			direction := uint32(product.BuildingInfo.Direction)
 			balconyDirection := uint32(product.BuildingInfo.BalconyDirection)
 			buildingInfo = &bdspropb.PropertyBuildingInfo{
-				BuildingType:     &buildingType,
+				BuildingType:     buildingType,
 				ConstructionArea: product.BuildingInfo.ConstructionArea,
 				FloorArea:        product.BuildingInfo.FloorArea,
 				Floors:           product.BuildingInfo.Floors,
 				Bedrooms:         product.BuildingInfo.Bedrooms,
 				Bathrooms:        product.BuildingInfo.Bathrooms,
-				Direction:        &direction,
-				BalconyDirection: &balconyDirection,
+				Direction:        direction,
+				BalconyDirection: balconyDirection,
 			}
 		}
 
@@ -695,6 +705,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			AppointmentCount:   product.AppointmentCount,
 			UpdatedAt:          _utils.FormatTimeToString(&product.UpdatedAt),
 			PostCount:          product.PostCount,
+			Avatar:             avatar,
 		}
 	}
 	return productList

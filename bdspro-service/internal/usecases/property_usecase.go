@@ -8,6 +8,7 @@ import (
 	"bdspro/internal/repo"
 	_utils "common/utils"
 	"context"
+	"errors"
 )
 
 type PropertyUsecase struct {
@@ -17,10 +18,12 @@ type PropertyUsecase struct {
 	PropertyLandInfoRepo     repo.PropertyLandInfoRepo
 	PropertyBuildingInfoRepo repo.PropertyBuildingInfoRepo
 	PropertyMediaRepo        repo.PropertyMediaRepo
+	PropertyAmenityRepo      repo.PropertyAmenityRepo
 	AssetLegalRepo           repo.AssetLegalRepo
 	ProductRepo              repo.ProductRepo
 	ProductUserRepo          repo.ProductUserRepo
 	ProductPriceRepo         repo.ProductPriceRepo
+	ProductMediaRepo         repo.ProductMediaRepo
 	AssetRepo                repo.AssetRepo
 	Transaction              provider.TransactionProvider
 }
@@ -32,10 +35,12 @@ func NewPropertyUsecase(
 	propertyLandInfoRepo repo.PropertyLandInfoRepo,
 	propertyBuildingInfoRepo repo.PropertyBuildingInfoRepo,
 	propertyMediaRepo repo.PropertyMediaRepo,
+	propertyAmenityRepo repo.PropertyAmenityRepo,
 	assetLegalRepo repo.AssetLegalRepo,
 	productRepo repo.ProductRepo,
 	productUserRepo repo.ProductUserRepo,
 	productPriceRepo repo.ProductPriceRepo,
+	productMediaRepo repo.ProductMediaRepo,
 	assetRepo repo.AssetRepo,
 	transaction provider.TransactionProvider,
 ) *PropertyUsecase {
@@ -46,10 +51,12 @@ func NewPropertyUsecase(
 		PropertyLandInfoRepo:     propertyLandInfoRepo,
 		PropertyBuildingInfoRepo: propertyBuildingInfoRepo,
 		PropertyMediaRepo:        propertyMediaRepo,
+		PropertyAmenityRepo:      propertyAmenityRepo,
 		AssetLegalRepo:           assetLegalRepo,
 		ProductRepo:              productRepo,
 		ProductUserRepo:          productUserRepo,
 		ProductPriceRepo:         productPriceRepo,
+		ProductMediaRepo:         productMediaRepo,
 		AssetRepo:                assetRepo,
 		Transaction:              transaction,
 	}
@@ -90,8 +97,19 @@ func (u *PropertyUsecase) LinkAssetToProperty(ctx context.Context, assetID uint6
 		return nil
 	}
 
-	// Update PropertyRelation để thêm AssetID
-	productRelation.AssetID = &assetID
+	// Tạo relation mới với type Asset hoặc update existing relation nếu chưa có asset relation
+	if productRelation.RelationType == enums.ERelationTypeProduct {
+		// Nếu đã có product relation, tạo thêm asset relation mới
+		assetRelation := &domain.PropertyRelation{
+			PropertyID:   productRelation.PropertyID,
+			RelationID:   &assetID,
+			RelationType: enums.ERelationTypeAsset,
+		}
+		return u.PropertyRelationRepo.Create(ctx, assetRelation)
+	}
+	// Nếu chưa có relation, tạo mới
+	productRelation.RelationID = &assetID
+	productRelation.RelationType = enums.ERelationTypeAsset
 	return u.PropertyRelationRepo.Update(ctx, productRelation)
 }
 
@@ -107,6 +125,48 @@ func (u *PropertyUsecase) Detail(ctx context.Context, id uint64) (*domain.Proper
 		return nil, err
 	}
 	return property, nil
+}
+
+// GetRelation lấy danh sách PropertyRelation với đầy đủ thông tin Asset/Product/Post
+func (u *PropertyUsecase) GetRelation(ctx context.Context, propertyID uint64) ([]domain.PropertyRelation, error) {
+	// Lấy tất cả PropertyRelations với propertyID này
+	relations, err := u.PropertyRelationRepo.GetAllByPropertyID(ctx, propertyID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.PropertyRelation, 0, len(relations))
+
+	// Load thêm thông tin Asset/Product/Post cho mỗi relation
+	for _, relation := range relations {
+		item := domain.PropertyRelation{
+			PropertyID:   relation.PropertyID,
+			RelationID:   relation.RelationID,
+			RelationType: relation.RelationType,
+		}
+
+		if relation.RelationID == nil {
+			result = append(result, item)
+			continue
+		}
+
+		switch relation.RelationType {
+		case enums.ERelationTypeProduct:
+			// Load Product nếu có
+			if product, err := u.ProductRepo.GetByID(*relation.RelationID); err == nil && product != nil {
+				item.Product = product
+			}
+		case enums.ERelationTypeAsset:
+			// Load Asset nếu có
+			if asset, err := u.AssetRepo.GetByID(*relation.RelationID); err == nil && asset != nil {
+				item.Asset = asset
+			}
+		}
+
+		result = append(result, item)
+	}
+
+	return result, nil
 }
 
 // Create tạo Property mới cùng với Product, Asset, Post và các thông tin liên quan
@@ -191,18 +251,35 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 				}
 			}
 
-			// 4.4. Tạo PropertyRelation để liên kết với Product/Asset
-			relation := &domain.PropertyRelation{
-				PropertyID: property.ID,
+			// 4.4. Tạo PropertyAmenity nếu có
+			if len(req.AmenityIds) > 0 {
+				if err := u.UpdatePropertyAmenity(txCtx, property.ID, req.AmenityIds); err != nil {
+					return err
+				}
 			}
+
+			// 4.5. Tạo PropertyRelation để liên kết với Product/Asset
+			// Tạo relation với Product trước
 			if productID != nil {
-				relation.PrimaryProductID = productID
+				productRelation := &domain.PropertyRelation{
+					PropertyID:   property.ID,
+					RelationID:   productID,
+					RelationType: enums.ERelationTypeProduct,
+				}
+				if err := u.PropertyRelationRepo.Create(txCtx, productRelation); err != nil {
+					return err
+				}
 			}
+			// Tạo relation với Asset nếu có
 			if assetID != nil {
-				relation.AssetID = assetID
-			}
-			if err := u.PropertyRelationRepo.Create(txCtx, relation); err != nil {
-				return err
+				assetRelation := &domain.PropertyRelation{
+					PropertyID:   property.ID,
+					RelationID:   assetID,
+					RelationType: enums.ERelationTypeAsset,
+				}
+				if err := u.PropertyRelationRepo.Create(txCtx, assetRelation); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -347,20 +424,47 @@ func (u *PropertyUsecase) CreateWithProduct(ctx context.Context, product *domain
 		return nil, err
 	}
 
-	// Tạo PropertyRelation
+	// Tạo PropertyRelation với type Product
 	relation := &domain.PropertyRelation{
-		PropertyID:       property.ID,
-		PrimaryProductID: &product.ID,
-	}
-	if product.AssetId != nil {
-		relation.AssetID = product.AssetId
+		PropertyID:   property.ID,
+		RelationID:   &product.ID,
+		RelationType: enums.ERelationTypeProduct,
 	}
 
 	if err := u.PropertyRelationRepo.Create(ctx, relation); err != nil {
 		return nil, err
 	}
 
+	// Nếu product có AssetId, tạo thêm relation với Asset
+	if product.AssetId != nil {
+		assetRelation := &domain.PropertyRelation{
+			PropertyID:   property.ID,
+			RelationID:   product.AssetId,
+			RelationType: enums.ERelationTypeAsset,
+		}
+		if err := u.PropertyRelationRepo.Create(ctx, assetRelation); err != nil {
+			return nil, err
+		}
+	}
+
+	// Copy amenityIds từ Product sang Property nếu có
+	amenityIds, err := u.ProductRepo.GetAmenityIDsByProductID(ctx, product.ID)
+	if err == nil && len(amenityIds) > 0 {
+		if err := u.UpdatePropertyAmenity(ctx, property.ID, amenityIds); err != nil {
+			// Log error nhưng không fail transaction
+			// return nil, err
+		}
+	}
+
 	return property, nil
+}
+
+// UpdatePropertyAmenity cập nhật amenityIds cho Property
+func (u *PropertyUsecase) UpdatePropertyAmenity(ctx context.Context, propertyID uint64, amenityIDs []uint64) error {
+	if len(amenityIDs) > 0 {
+		return u.PropertyAmenityRepo.UpdatePropertyAmenityIds(ctx, propertyID, amenityIDs)
+	}
+	return nil
 }
 
 // CreateWithAsset tạo Property từ Asset
@@ -401,18 +505,168 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 		return nil, err
 	}
 
-	// Tạo PropertyRelation
-	relation := &domain.PropertyRelation{
-		PropertyID: property.ID,
-		AssetID:    &asset.ID,
-	}
-	if asset.ProductID != nil {
-		relation.PrimaryProductID = asset.ProductID
+	// Tạo PropertyRelation với type Asset
+	assetRelation := &domain.PropertyRelation{
+		PropertyID:   property.ID,
+		RelationID:   &asset.ID,
+		RelationType: enums.ERelationTypeAsset,
 	}
 
-	if err := u.PropertyRelationRepo.Create(ctx, relation); err != nil {
+	if err := u.PropertyRelationRepo.Create(ctx, assetRelation); err != nil {
 		return nil, err
 	}
 
+	// Nếu asset có ProductID, tạo thêm relation với Product
+	if asset.ProductID != nil {
+		productRelation := &domain.PropertyRelation{
+			PropertyID:   property.ID,
+			RelationID:   asset.ProductID,
+			RelationType: enums.ERelationTypeProduct,
+		}
+		if err := u.PropertyRelationRepo.Create(ctx, productRelation); err != nil {
+			return nil, err
+		}
+	}
+
 	return property, nil
+}
+
+// Update cập nhật Property và các thông tin liên quan (LandInfo, BuildingInfo)
+func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, property *domain.Property, landInfo *domain.PropertyLandInfo, buildingInfo *domain.PropertyBuildingInfo, amenityIDs []uint64) error {
+	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// 1. Kiểm tra Property có tồn tại không
+		existingProperty, err := u.PropertyRepo.GetByID(propertyID)
+		if err != nil {
+			return err
+		}
+		if existingProperty == nil {
+			return errors.New("property not found")
+		}
+
+		// 2. Update Property
+		if property != nil {
+			// Merge với existing property để giữ các field không được update
+			updateProperty := *existingProperty
+			if property.PropertyTypeID != nil {
+				updateProperty.PropertyTypeID = property.PropertyTypeID
+			}
+			if property.Title != "" {
+				updateProperty.Title = property.Title
+			}
+			if property.LocationID != nil {
+				updateProperty.LocationID = property.LocationID
+			}
+			if property.AddressText != "" {
+				updateProperty.AddressText = property.AddressText
+			}
+			if property.Latitude != nil {
+				updateProperty.Latitude = property.Latitude
+			}
+			if property.Longitude != nil {
+				updateProperty.Longitude = property.Longitude
+			}
+			if property.MapURL != "" {
+				updateProperty.MapURL = property.MapURL
+			}
+			if property.ProjectID != nil {
+				updateProperty.ProjectID = property.ProjectID
+			}
+			if property.Level != "" {
+				updateProperty.Level = property.Level
+			}
+			if property.UnitCode != "" {
+				updateProperty.UnitCode = property.UnitCode
+			}
+			if property.AreaTotal != nil {
+				updateProperty.AreaTotal = property.AreaTotal
+			}
+			if property.AreaLand != nil {
+				updateProperty.AreaLand = property.AreaLand
+			}
+			if property.AreaResidential != nil {
+				updateProperty.AreaResidential = property.AreaResidential
+			}
+			if property.LegalNote != "" {
+				updateProperty.LegalNote = property.LegalNote
+			}
+			if property.ProvinceID != nil {
+				updateProperty.ProvinceID = property.ProvinceID
+			}
+			if property.WardID != nil {
+				updateProperty.WardID = property.WardID
+			}
+			// Update enum fields nếu đã set
+			if property.LegalStatus != 0 {
+				updateProperty.LegalStatus = property.LegalStatus
+			}
+			if property.RecordStatus != 0 {
+				updateProperty.RecordStatus = property.RecordStatus
+			}
+
+			if err := u.PropertyRepo.Update(txCtx, propertyID, &updateProperty); err != nil {
+				return err
+			}
+		}
+
+		// 3. Update PropertyLandInfo nếu có
+		if landInfo != nil {
+			existingLandInfo, err := u.PropertyLandInfoRepo.GetByPropertyID(txCtx, propertyID)
+			if err != nil {
+				return err
+			}
+
+			if existingLandInfo != nil {
+				// Update existing
+				landInfo.ID = existingLandInfo.ID
+				landInfo.PropertyID = propertyID
+				if err := u.PropertyLandInfoRepo.Update(txCtx, landInfo); err != nil {
+					return err
+				}
+			} else {
+				// Create new
+				landInfo.PropertyID = propertyID
+				if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
+					return err
+				}
+			}
+		}
+
+		// 4. Update PropertyBuildingInfo nếu có
+		if buildingInfo != nil {
+			existingBuildingInfo, err := u.PropertyBuildingInfoRepo.GetByPropertyID(txCtx, propertyID)
+			if err != nil {
+				return err
+			}
+
+			if existingBuildingInfo != nil {
+				// Update existing
+				buildingInfo.ID = existingBuildingInfo.ID
+				buildingInfo.PropertyID = propertyID
+				if err := u.PropertyBuildingInfoRepo.Update(txCtx, buildingInfo); err != nil {
+					return err
+				}
+			} else {
+				// Create new
+				buildingInfo.PropertyID = propertyID
+				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
+					return err
+				}
+				// Link BuildingInfoID vào Property
+				updateProperty := *existingProperty
+				updateProperty.BuildingInfoID = &buildingInfo.ID
+				if err := u.PropertyRepo.Update(txCtx, propertyID, &updateProperty); err != nil {
+					return err
+				}
+			}
+		}
+
+		// 5. Update PropertyAmenity nếu có
+		if amenityIDs != nil {
+			if err := u.UpdatePropertyAmenity(txCtx, propertyID, amenityIDs); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

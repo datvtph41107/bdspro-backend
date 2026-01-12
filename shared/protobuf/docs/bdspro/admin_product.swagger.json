@@ -1748,6 +1748,9 @@
         "contactCount": {
           "type": "integer",
           "format": "int64"
+        },
+        "avatar": {
+          "$ref": "#/definitions/bdspropbMediaItem"
         }
       }
     },

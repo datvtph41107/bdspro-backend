@@ -195,6 +195,8 @@ message ProductResponse {
     uint32 postCount = 77;
     uint32 appointmentCount = 78;
     uint32 contactCount = 79;
+
+    optional MediaItem avatar = 80;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
@@ -316,12 +318,12 @@ message PostItem {
 }
 
 message PropertyBuildingInfo {
-    optional uint32 buildingType = 1;        // Loại nhà (10=Nhà ở, 20=Nhà xưởng)
+    uint32 buildingType = 1;        // Loại nhà (10=Nhà ở, 20=Nhà xưởng)
     optional double constructionArea = 2;    // Diện tích xây dựng (m²)
     optional double floorArea = 3;           // Diện tích sàn (m²)
     optional uint32 floors = 4;              // Số tầng
     optional uint32 bedrooms = 5;            // Số phòng ngủ
     optional uint32 bathrooms = 6;          // Số phòng tắm
-    optional uint32 direction = 7;           // Hướng nhà (enum EHouseOrient)
-    optional uint32 balconyDirection = 8;    // Hướng ban công (enum EHouseOrient)
+    uint32 direction = 7;           // Hướng nhà (enum EHouseOrient)
+    uint32 balconyDirection = 8;    // Hướng ban công (enum EHouseOrient)
 }

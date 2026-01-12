@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"context"
 
@@ -43,10 +44,21 @@ func (r *PostgrePropertyRelationRepo) GetByPropertyID(ctx context.Context, prope
 	return &relation, nil
 }
 
+func (r *PostgrePropertyRelationRepo) GetAllByPropertyID(ctx context.Context, propertyID uint64) ([]domain.PropertyRelation, error) {
+	var relations []domain.PropertyRelation
+	err := r.DB.WithContext(ctx).
+		Where("property_id = ?", propertyID).
+		Find(&relations).Error
+	if err != nil {
+		return nil, err
+	}
+	return relations, nil
+}
+
 func (r *PostgrePropertyRelationRepo) GetByAssetID(ctx context.Context, assetID uint64) (*domain.PropertyRelation, error) {
 	var relation domain.PropertyRelation
 	err := r.DB.WithContext(ctx).
-		Where("asset_id = ?", assetID).
+		Where("relation_id = ? AND relation_type = ?", assetID, enums.ERelationTypeAsset).
 		First(&relation).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -60,7 +72,7 @@ func (r *PostgrePropertyRelationRepo) GetByAssetID(ctx context.Context, assetID 
 func (r *PostgrePropertyRelationRepo) GetByProductID(ctx context.Context, productID uint64) (*domain.PropertyRelation, error) {
 	var relation domain.PropertyRelation
 	err := r.DB.WithContext(ctx).
-		Where("primary_product_id = ?", productID).
+		Where("relation_id = ? AND relation_type = ?", productID, enums.ERelationTypeProduct).
 		First(&relation).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -72,20 +84,20 @@ func (r *PostgrePropertyRelationRepo) GetByProductID(ctx context.Context, produc
 }
 
 func (r *PostgrePropertyRelationRepo) GetCountsByPropertyID(ctx context.Context, propertyID uint64) (productCount uint32, assetCount uint32, postCount uint32, err error) {
-	// Đếm số product (primary_product_id)
+	// Đếm số product (relation_type = 10)
 	var pCount int64
 	err = r.DB.WithContext(ctx).Model(&domain.PropertyRelation{}).
-		Where("property_id = ? AND primary_product_id IS NOT NULL", propertyID).
+		Where("property_id = ? AND relation_type = ? AND relation_id IS NOT NULL", propertyID, enums.ERelationTypeProduct).
 		Count(&pCount).Error
 	if err != nil {
 		return 0, 0, 0, err
 	}
 	productCount = uint32(pCount)
 
-	// Đếm số asset (asset_id)
+	// Đếm số asset (relation_type = 20)
 	var aCount int64
 	err = r.DB.WithContext(ctx).Model(&domain.PropertyRelation{}).
-		Where("property_id = ? AND asset_id IS NOT NULL", propertyID).
+		Where("property_id = ? AND relation_type = ? AND relation_id IS NOT NULL", propertyID, enums.ERelationTypeAsset).
 		Count(&aCount).Error
 	if err != nil {
 		return 0, 0, 0, err
@@ -93,10 +105,10 @@ func (r *PostgrePropertyRelationRepo) GetCountsByPropertyID(ctx context.Context,
 	assetCount = uint32(aCount)
 
 	// Đếm số post thông qua products liên quan đến property này
-	// Lấy primary_product_id từ property_relation
+	// Lấy relation_id từ property_relation với relation_type = product
 	var relation domain.PropertyRelation
 	err = r.DB.WithContext(ctx).
-		Where("property_id = ?", propertyID).
+		Where("property_id = ? AND relation_type = ?", propertyID, enums.ERelationTypeProduct).
 		First(&relation).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -106,11 +118,11 @@ func (r *PostgrePropertyRelationRepo) GetCountsByPropertyID(ctx context.Context,
 		return 0, 0, 0, err
 	}
 
-	// Nếu có primary_product_id, đếm posts của product đó
-	if relation.PrimaryProductID != nil {
+	// Nếu có relation_id (product ID), đếm posts của product đó
+	if relation.RelationID != nil {
 		var postCountInt int64
 		err = r.DB.WithContext(ctx).Table("posts").
-			Where("product_id = ? AND deleted_at IS NULL", *relation.PrimaryProductID).
+			Where("product_id = ? AND deleted_at IS NULL", *relation.RelationID).
 			Count(&postCountInt).Error
 		if err != nil {
 			return 0, 0, 0, err

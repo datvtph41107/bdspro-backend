@@ -329,6 +329,12 @@ type ProductListResponse struct {
 	DealCount        uint32    `gorm:"column:deal_count" json:"dealCount,omitempty"`               // Số thương vụ
 	AppointmentCount uint32    `gorm:"column:appointment_count" json:"appointmentCount,omitempty"` // Số lịch hẹn
 	ContactCount     uint32    `gorm:"column:contact_count" json:"contactCount,omitempty"`         // Số người quan tâm
+
+	// Avatar field
+	AvatarURL       string `gorm:"column:avatar_url" json:"avatarUrl"`
+	AvatarThumbURL  string `gorm:"column:avatar_thumb_url" json:"avatarThumbUrl"`
+	AvatarMediaType string `gorm:"column:avatar_media_type" json:"avatarMediaType"`
+	AvatarSortOrder int32  `gorm:"column:avatar_sort_order" json:"avatarSortOrder"`
 }
 
 type ProductSummaryDTO struct {

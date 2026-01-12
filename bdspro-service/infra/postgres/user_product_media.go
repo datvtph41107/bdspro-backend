@@ -81,3 +81,15 @@ func (r *GormProductMediaRepo) UpdateProductMediaItems(ctx context.Context, prod
 	// tx.Commit()
 	return mediaIDs, nil
 }
+
+func (r *GormProductMediaRepo) GetByProductID(ctx context.Context, productID uint64) ([]domain.ProductMedia, error) {
+	var mediaList []domain.ProductMedia
+	tx := GetDB(ctx, r.DB)
+	err := tx.Where("product_id = ? AND deleted_at IS NULL", productID).
+		Order("sort_order ASC, created_at ASC").
+		Find(&mediaList).Error
+	if err != nil {
+		return nil, err
+	}
+	return mediaList, nil
+}

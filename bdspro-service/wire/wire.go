@@ -1,12 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
-	_db "common/db"
-	"bdspro/initial"
 	bdspro_infra_client "bdspro/infra/client"
 	bdspro_infra_handler "bdspro/infra/handler"
 	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
@@ -19,6 +16,7 @@ import (
 	bdspro_infra_router_public "bdspro/infra/router/public"
 	bdspro_infra_router_user "bdspro/infra/router/user"
 	bdspro_infra_validator "bdspro/infra/validator"
+	"bdspro/initial"
 	bdspro_initial "bdspro/initial"
 	bdspro_internal_job "bdspro/internal/job"
 	bdspro_internal_provider "bdspro/internal/provider"
@@ -27,6 +25,9 @@ import (
 	bdspro_internal_usecases "bdspro/internal/usecases"
 	bdspro_internal_usecases_admin "bdspro/internal/usecases/admin"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
+	_db "common/db"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -77,6 +78,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo.ProjectBuildRepo), new(*bdspro_infra_postgres.PostgreProjectBuild)),
 	wire.Bind(new(bdspro_internal_repo.ProjectRepo), new(*bdspro_infra_postgres.PostgreProject)),
 	wire.Bind(new(bdspro_internal_repo.PropertyTypeRepo), new(*bdspro_infra_postgres.PostgrePropertyType)),
+	wire.Bind(new(bdspro_internal_repo.PropertyAmenityRepo), new(*bdspro_infra_postgres.PostgrePropertyAmenityRepo)),
 	wire.Bind(new(bdspro_internal_repo.RecordHistoryRepo), new(*bdspro_infra_postgres.PostgreReportHistory)),
 	wire.Bind(new(bdspro_internal_repo.RegionRepo), new(*bdspro_infra_postgres.PostgreRegion)),
 	wire.Bind(new(bdspro_internal_repo.SharingAccessRepo), new(*bdspro_infra_postgres.SharingAccessPostgre)),
@@ -260,6 +262,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres.NewPostgrePropertyBuildingInfoRepo,
 	bdspro_infra_postgres.NewPostgrePropertyLandInfoRepo,
 	bdspro_infra_postgres.NewPostgrePropertyMediaRepo,
+	bdspro_infra_postgres.NewPostgrePropertyAmenityRepo,
 	bdspro_infra_postgres.NewPostgrePropertyProductRepo,
 	bdspro_infra_postgres.NewPostgrePropertyRelationRepo,
 	bdspro_infra_postgres.NewPostgrePropertyRepo,
@@ -327,6 +330,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
