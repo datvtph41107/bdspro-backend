@@ -10,17 +10,21 @@ import (
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type CrmInternalService struct {
 	crmpb.UnimplementedCrmInternalServiceServer
-	FriendRepo      repo.FriendRepo
-	FriendMapper    *mapper.FriendMapper
-	FriendUsecase   *usecase.FriendUsecase
-	RegistryUsecase *usecase.RegistryUsecase
-	RateUsecase     *usecase.RateUsecase
-	ContactRepo     repo.ContactRepo
-	ContactMapper   *mapper.ContactMapper
+	FriendRepo        repo.FriendRepo
+	FriendMapper      *mapper.FriendMapper
+	FriendUsecase     *usecase.FriendUsecase
+	RegistryUsecase   *usecase.RegistryUsecase
+	RateUsecase       *usecase.RateUsecase
+	ContactRepo       repo.ContactRepo
+	ContactMapper     *mapper.ContactMapper
+	OriginProfileRepo repo.OriginProfileRepo
 }
 
 func NewCrmInternalService(
@@ -31,15 +35,17 @@ func NewCrmInternalService(
 	rateUsecase *usecase.RateUsecase,
 	contactRepo repo.ContactRepo,
 	contactMapper *mapper.ContactMapper,
+	originProfileRepo repo.OriginProfileRepo,
 ) *CrmInternalService {
 	return &CrmInternalService{
-		FriendRepo:      friendRepo,
-		FriendMapper:    friendMapper,
-		FriendUsecase:   friendUsecase,
-		RegistryUsecase: registryUsecase,
-		RateUsecase:     rateUsecase,
-		ContactRepo:     contactRepo,
-		ContactMapper:   contactMapper,
+		FriendRepo:        friendRepo,
+		FriendMapper:      friendMapper,
+		FriendUsecase:     friendUsecase,
+		RegistryUsecase:   registryUsecase,
+		RateUsecase:       rateUsecase,
+		ContactRepo:       contactRepo,
+		ContactMapper:     contactMapper,
+		OriginProfileRepo: originProfileRepo,
 	}
 }
 
@@ -148,4 +154,31 @@ func (h *CrmInternalService) GetContactById(ctx context.Context, req *sharepb.Id
 	}
 
 	return result, nil
+}
+
+func (h *CrmInternalService) GetOriginProfileByOriginIds(ctx context.Context, req *sharepb.IdRequest) (*crmpb.GetOriginProfileByOriginIdResponse, error) {
+	// Sử dụng req.Id hoặc req.Ids[0] nếu có
+	var originIDs []uint64
+	if len(req.Ids) > 0 {
+		originIDs = req.Ids
+	} else {
+		return nil, status.Errorf(codes.InvalidArgument, "origin_ids are required")
+	}
+
+	originProfiles, err := h.OriginProfileRepo.GetByOriginIDs(ctx, originIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	originProfilesPb := make([]*sharepb.OriginProfile, len(originProfiles))
+	for _, originProfile := range originProfiles {
+		originProfilesPb = append(originProfilesPb, &sharepb.OriginProfile{
+			Id:          originProfile.ID,
+			DisplayName: originProfile.DisplayName,
+			Phone:       originProfile.Phone,
+			Avatar:      originProfile.Avatar,
+			OriginId:    *originProfile.OriginID,
+		})
+	}
+	return &crmpb.GetOriginProfileByOriginIdResponse{Data: originProfilesPb}, nil
 }

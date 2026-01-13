@@ -20,10 +20,14 @@ type PropertyMapper struct {
 }
 
 func NewPropertyMapper(productMapper *ProductMapper, assetMapper *AssetMapper) *PropertyMapper {
-	return &PropertyMapper{
+	result := &PropertyMapper{
 		ProductMapper: productMapper,
 		AssetMapper:   assetMapper,
 	}
+
+	result.ProductMapper.PropertyMapper = result
+
+	return result
 }
 
 // PbToPropertySearchDTO converts protobuf request to DTO

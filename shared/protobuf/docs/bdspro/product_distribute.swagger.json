@@ -434,6 +434,13 @@
         "partnerCount": {
           "type": "integer",
           "format": "int32"
+        },
+        "partners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbOriginProfile"
+          }
         }
       }
     },
@@ -520,6 +527,28 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbOriginProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "originId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     }

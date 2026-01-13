@@ -3,6 +3,7 @@ syntax = "proto3";
 package bdspropb;
 
 import "google/api/annotations.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/bdspro;bdspropb";
 
@@ -82,6 +83,7 @@ message DistributionEntity {
 
     repeated uint64 partnerIds = 19;
     int32 partnerCount = 20;
+    repeated sharepb.OriginProfile partners = 21;
 }
 
 message ListDistributionsRequest {

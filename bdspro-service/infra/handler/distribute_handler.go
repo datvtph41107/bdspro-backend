@@ -131,7 +131,7 @@ func (h *DistributionHandler) ListDistributions(
 	}
 
 	return &bdspropb.ListDistributionsResponse{
-		Data:  h.mapper.DistributionWithPartnersListToProto(list),
+		Data:  h.mapper.DistributionWithPartnersListToProto(ctx, list),
 		Total: int64(len(list)),
 	}, nil
 }

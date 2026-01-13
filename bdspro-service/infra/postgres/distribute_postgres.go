@@ -181,7 +181,6 @@ func (r *DistributePostgres) GetListDistrByProduct(
 func (r *DistributePostgres) Revoke(ctx context.Context, id uint64, revokedAt time.Time, revoke dto.RevokeDTO) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		updateData := map[string]interface{}{
-			"status":     enums.DISTRIBUTION_STATUS_REVOKED,
 			"revoked_at": revokedAt,
 		}
 		if revoke.Reason != 0 {

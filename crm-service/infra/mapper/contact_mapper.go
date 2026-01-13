@@ -110,11 +110,14 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 		}
 	}
 
-	result.OriginProfile = &sharepb.OriginProfile{
-		Id:          contact.OriginProfileID,
-		DisplayName: contact.OriginDisplayName,
-		Phone:       contact.OriginPhone,
-		Avatar:      contact.OriginAvatar,
+	if contact.OriginProfileID != nil {
+		result.OriginProfile = &sharepb.OriginProfile{
+			Id:          *contact.OriginProfileID,
+			DisplayName: contact.OriginDisplayName,
+			Phone:       contact.OriginPhone,
+			Avatar:      contact.OriginAvatar,
+		}
+		result.OriginProfileId = contact.OriginProfileID
 	}
 	return result
 }

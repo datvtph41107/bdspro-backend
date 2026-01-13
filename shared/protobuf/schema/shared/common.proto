@@ -316,6 +316,7 @@ message ContactDTO {
 
   // BASIC INFORMATION USER
   OriginProfile originProfile = 27;
+  optional uint64 originProfileId = 28;
 }
 
 message OriginProfile {

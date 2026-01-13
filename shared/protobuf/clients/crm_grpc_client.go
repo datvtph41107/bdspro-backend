@@ -111,3 +111,14 @@ func (c *CrmGrpcClient) GetContactById(ctx context.Context, id uint64) (*sharepb
 	}
 	return contact, nil
 }
+
+func (c *CrmGrpcClient) GetOriginProfileByOriginIds(ctx context.Context, originIds []uint64) (map[uint64]*sharepb.OriginProfile, error) {
+	if c.CrmInternalServiceClient == nil {
+		return nil, errors.New("crm internal service client not available")
+	}
+	_, err := c.CrmInternalServiceClient.GetOriginProfileByOriginIds(ctx, &sharepb.IdRequest{Ids: originIds})
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}

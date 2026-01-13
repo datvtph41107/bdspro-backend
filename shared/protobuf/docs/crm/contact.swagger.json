@@ -1560,6 +1560,9 @@
         "contactCount": {
           "type": "integer",
           "format": "int64"
+        },
+        "avatar": {
+          "$ref": "#/definitions/bdspropbMediaItem"
         }
       }
     },
@@ -2428,6 +2431,10 @@
         "originProfile": {
           "$ref": "#/definitions/sharepbOriginProfile",
           "title": "BASIC INFORMATION USER"
+        },
+        "originProfileId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

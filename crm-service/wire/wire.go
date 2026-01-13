@@ -104,6 +104,7 @@ var wireSet = wire.NewSet(
 	crm_infra_handler.NewPipelineService,
 	crm_internal_usecase.NewPipelineUsecase,
 	crm_infra_postgre.NewPostgreCustomer,
+	crm_infra_postgre.NewPostgreOriginProfileRepo,
 	crm_infra_postgre.NewPostgrePipeline,
 	crm_infra_postgre.NewPostgreRule,
 	crm_infra_postgre.NewPostgreStage,

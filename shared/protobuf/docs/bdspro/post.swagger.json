@@ -1116,6 +1116,18 @@
         }
       }
     },
+    "bdspropbGetPostByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPost"
+          }
+        }
+      }
+    },
     "bdspropbHouseInfo": {
       "type": "object",
       "properties": {
@@ -1268,6 +1280,14 @@
         "targetId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "bdspropbOwnerPostResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
         }
       }
     },
@@ -1983,6 +2003,9 @@
         },
         "avatar": {
           "$ref": "#/definitions/bdspropbMediaItem"
+        },
+        "property": {
+          "$ref": "#/definitions/bdspropbPropertyResponse"
         }
       }
     },
@@ -2097,6 +2120,192 @@
           "type": "integer",
           "format": "int64",
           "title": "Hướng ban công (enum EHouseOrient)"
+        }
+      }
+    },
+    "bdspropbPropertyLandInfo": {
+      "type": "object",
+      "properties": {
+        "frontage": {
+          "type": "number",
+          "format": "double",
+          "title": "Mặt tiền (m)"
+        },
+        "depth": {
+          "type": "number",
+          "format": "double",
+          "title": "Chiều sâu (m)"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Độ rộng đường (m)"
+        },
+        "landNote": {
+          "type": "string",
+          "title": "Ghi chú về đất"
+        }
+      }
+    },
+    "bdspropbPropertyMediaItem": {
+      "type": "object",
+      "properties": {
+        "mediaType": {
+          "type": "string",
+          "title": "Loại media (image, video)"
+        },
+        "url": {
+          "type": "string",
+          "title": "URL ảnh/video"
+        },
+        "thumbUrl": {
+          "type": "string",
+          "title": "URL thumbnail"
+        },
+        "sortOrder": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Thứ tự sắp xếp"
+        },
+        "isCover": {
+          "type": "boolean",
+          "title": "Ảnh bìa"
+        }
+      }
+    },
+    "bdspropbPropertyResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "propertyTypeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "locationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "addressDetail": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "mapUrl": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "buildingBlock": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "unitCode": {
+          "type": "string"
+        },
+        "areaTotal": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaLand": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaResidential": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legalNote": {
+          "type": "string"
+        },
+        "buildingInfoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "recordStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "productCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "assetCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "postCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "recordStatusName": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/definitions/sharepbAddressV3Proto"
+        },
+        "projectName": {
+          "type": "string"
+        },
+        "buildingInfo": {
+          "$ref": "#/definitions/bdspropbPropertyBuildingInfo"
+        },
+        "propertyTypeName": {
+          "type": "string"
+        },
+        "avatar": {
+          "$ref": "#/definitions/bdspropbPropertyMediaItem"
+        },
+        "mediaList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbMediaItem"
+          }
+        },
+        "project": {
+          "$ref": "#/definitions/sharepbTagItem"
+        },
+        "propertyType": {
+          "$ref": "#/definitions/sharepbTagItem"
+        },
+        "landInfo": {
+          "$ref": "#/definitions/bdspropbPropertyLandInfo"
+        },
+        "amenities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbTagItem"
+          }
         }
       }
     },
@@ -2506,6 +2715,10 @@
         "originProfile": {
           "$ref": "#/definitions/sharepbOriginProfile",
           "title": "BASIC INFORMATION USER"
+        },
+        "originProfileId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

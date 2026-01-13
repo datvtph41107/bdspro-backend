@@ -29,6 +29,7 @@ type ProductMapper struct {
 	UserClient               *client.UserClient
 	CrmClient                *client.CrmClient
 	AssetRepo                repo.AssetRepo
+	PropertyMapper           *PropertyMapper
 	// TransactionMapper        TransactionTransformer
 }
 
@@ -58,6 +59,7 @@ func NewProductMapper(postMapper *PostMapper,
 		UserClient:               userClient,
 		CrmClient:                crmClient,
 		AssetRepo:                assetRepo,
+		// PropertyMapper:           propertyMapper,
 		// TransactionMapper:        transactionMapper,
 	}
 	postMapper.ProductMapper = result
@@ -228,6 +230,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		// Deposite:        product.Deposite,
 		AssetId:        product.AssetId,
 		PropertyTypeId: product.PropertyTypeId,
+		Property:       m.PropertyMapper.PropertyToPb(product.Property),
 		// PropertyType:    product.PropertyType,
 		DocTypeId: product.DocTypeId,
 		// DocType:         product.DocType,

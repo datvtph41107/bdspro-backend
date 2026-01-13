@@ -15,6 +15,7 @@ service CrmInternalService {
     rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
     rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
     rpc GetOrCreateContactByProfileIdWithNullOwner(sharepb.IdRequest) returns (GetOrCreateContactResponse);
+    rpc GetOriginProfileByOriginIds(sharepb.IdRequest) returns (GetOriginProfileByOriginIdResponse);
 }
 
 message FriendStatusByProfileIdsRequest {
@@ -40,4 +41,7 @@ message GetOrCreateContactResponse {
     uint64 ownerId = 3;
     int32 ownerOf = 4;
 }
-  
+
+message GetOriginProfileByOriginIdResponse {
+    repeated sharepb.OriginProfile data = 1;
+}

@@ -197,7 +197,62 @@ message ProductResponse {
     uint32 contactCount = 79;
 
     optional MediaItem avatar = 80;
+    optional PropertyResponse property = 81;
 }
+
+message PropertyLandInfo {
+    optional double frontage = 1;            // Mặt tiền (m)
+    optional double depth = 2;               // Chiều sâu (m)
+    optional double roadWidth = 3;           // Độ rộng đường (m)
+    string landNote = 4;                    // Ghi chú về đất
+  }
+
+message PropertyMediaItem {
+    string mediaType = 1;                     // Loại media (image, video)
+    string url = 2;                          // URL ảnh/video
+    string thumbUrl = 3;                     // URL thumbnail
+    int32 sortOrder = 4;                     // Thứ tự sắp xếp
+    bool isCover = 5;                        // Ảnh bìa
+}
+
+message PropertyResponse {
+    uint64 id = 1;
+    optional uint64 propertyTypeId = 2;
+    string title = 3;
+    optional uint64 locationId = 4;
+    string addressDetail = 5;
+    optional double latitude = 6;
+    optional double longitude = 7;
+    string mapUrl = 8;
+    optional uint64 projectId = 9;
+    string buildingBlock = 10;
+    string level = 11;
+    string unitCode = 12;
+    optional double areaTotal = 13;
+    optional double areaLand = 14;
+    optional double areaResidential = 15;
+    uint32 legalStatus = 16;
+    string legalNote = 17;
+    optional uint64 buildingInfoId = 18;
+    uint32 recordStatus = 19;
+    string createdAt = 20;
+    string updatedAt = 21;
+    optional uint32 productCount = 22;
+    optional uint32 assetCount = 23;
+    optional uint32 postCount = 24;
+    string legalStatusName = 25;
+    string recordStatusName = 26;
+    optional sharepb.AddressV3Proto address = 27;
+    optional string projectName = 28;
+    optional PropertyBuildingInfo buildingInfo = 29;
+    string propertyTypeName = 30;
+    optional PropertyMediaItem avatar = 31;
+    repeated bdspropb.MediaItem mediaList = 32;
+    optional sharepb.TagItem project = 33;
+    optional sharepb.TagItem propertyType = 34;
+    optional PropertyLandInfo landInfo = 35;
+    repeated sharepb.TagItem amenities = 36;
+  }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
 message ProductAttachment {

@@ -425,8 +425,7 @@
           "title": "Thông tin đất (PropertyLandInfo) - optional"
         },
         "buildingInfo": {
-          "$ref": "#/definitions/bdspropbPropertyBuildingInfo",
-          "title": "Thông tin nhà/công trình (PropertyBuildingInfo) - optional"
+          "$ref": "#/definitions/bdspropbPropertyBuildingInfo"
         },
         "amenityIds": {
           "type": "array",
@@ -779,8 +778,7 @@
           "title": "Thông tin đất (PropertyLandInfo)"
         },
         "buildingInfo": {
-          "$ref": "#/definitions/bdspropbPropertyBuildingInfo",
-          "title": "Thông tin nhà/công trình (PropertyBuildingInfo)"
+          "$ref": "#/definitions/bdspropbPropertyBuildingInfo"
         },
         "legalInfo": {
           "type": "array",
@@ -1629,6 +1627,9 @@
         },
         "avatar": {
           "$ref": "#/definitions/bdspropbMediaItem"
+        },
+        "property": {
+          "$ref": "#/definitions/bdspropbPropertyResponse"
         }
       }
     },
@@ -2655,6 +2656,10 @@
         "originProfile": {
           "$ref": "#/definitions/sharepbOriginProfile",
           "title": "BASIC INFORMATION USER"
+        },
+        "originProfileId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

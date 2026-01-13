@@ -191,14 +191,23 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 	err := GetDB(ctx, r.DB).
 		Model(&domain.Product{}).
 		Preload("Property", "deleted_at IS NULL").
-		Select(`products.*, 
-			COALESCE(
-				(SELECT array_agg(id ORDER BY created_at DESC) 
-				 FROM posts 
-				 WHERE product_id = products.id 
-				 AND deleted_at IS NULL), 	
-				ARRAY[]::bigint[]
-			) AS post_ids`).
+		Preload("Property.PropertyType").
+		Preload("Property.Project").
+		Preload("Property.Province").
+		Preload("Property.MediaList").
+		Preload("Property.Ward").
+		Preload("Property.BuildingInfo").
+		Preload("Property.LandInfo").
+		Preload("Property.Avatar").
+		Preload("Property.Amenities").
+		// Select(`products.*,
+		// 	COALESCE(
+		// 		(SELECT array_agg(id ORDER BY created_at DESC)
+		// 		 FROM posts
+		// 		 WHERE product_id = products.id
+		// 		 AND deleted_at IS NULL),
+		// 		ARRAY[]::bigint[]
+		// 	) AS post_ids`).
 		// Table("products p").
 		Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
         	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
@@ -1180,7 +1189,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		LEFT JOIN product_media pm ON products.image_id = pm.id AND pm.deleted_at IS NULL
 		LEFT JOIN property p ON products.property_id = p.id AND p.deleted_at IS NULL
 		LEFT JOIN property_building_info pbi ON p.id = pbi.property_id AND pbi.deleted_at IS NULL
-		LEFT JOIN property_media avatar ON p.id = avatar.property_id AND avatar.deleted_at IS NULL
+		LEFT JOIN property_media avatar ON p.avatar_id = avatar.id AND avatar.deleted_at IS NULL
 		LEFT JOIN province_v2 prov ON p.province_id = prov.id AND prov.deleted_at IS NULL
 		LEFT JOIN ward_v2 ward ON p.ward_id = ward.id AND ward.deleted_at IS NULL
 		LEFT JOIN projects proj ON p.project_id = proj.id AND proj.deleted_at IS NULL
