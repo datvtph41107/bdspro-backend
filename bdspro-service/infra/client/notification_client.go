@@ -4,8 +4,11 @@ import (
 	"bdspro/env"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	"context"
+	"log"
 	"pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
@@ -13,16 +16,30 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// @bind: bdspro/internal/provider.NotificationProvider
 type NotificationClient struct {
 	*clients.NotificationClient
 }
 
 // todo: triển khai nốt thông báo
-func NewNotificationClient() *NotificationClient {
+func NewNotificationClient() provider.NotificationProvider {
 	return &NotificationClient{
 		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
 	}
+}
+
+func (s *NotificationClient) RegistedEventProperty(ctx context.Context, req *dto.CreatePropertyActivityDTO) error {
+	if err := s.CreatePropertyHistoryActivity(ctx,
+		req.SubjectID,
+		uint32(req.SubjectType),
+		uint32(req.Action),
+		req.Description,
+		req.ActorID,
+	); err != nil {
+		log.Printf("create PropertyHistory failed: %v", err)
+		return _errors.InternalServerException("create PropertyHistory failed")
+	}
+
+	return nil
 }
 
 func (s *NotificationClient) UserInGroup(ctx context.Context, userID uint64, groupID uint64) (bool, error) {

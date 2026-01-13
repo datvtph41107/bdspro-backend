@@ -55,10 +55,6 @@ func (r *propertyHistoryPostgres) Search(
 		db = db.Where("actor_id = ?", *q.ActorID)
 	}
 
-	if q.ActorType != nil {
-		db = db.Where("actor_type = ?", *q.ActorType)
-	}
-
 	if q.Keyword != nil && *q.Keyword != "" {
 		kw := "%" + *q.Keyword + "%"
 		db = db.Where(`

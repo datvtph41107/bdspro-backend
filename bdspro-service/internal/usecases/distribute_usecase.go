@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -10,24 +11,27 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
+	_enum "common/domain/enum"
 	_errors "common/errors"
+	_utils "common/utils"
 )
 
 type DistributionUsecase struct {
 	distributionRepo repo.DistributeRepository
 	transaction      provider.TransactionProvider
-	userProvider     provider.IUserProvider
+	notifyProvider   provider.NotificationProvider
 }
 
 func NewDistributionUsecase(
 	r repo.DistributeRepository,
 	transaction provider.TransactionProvider,
-	userProvider provider.IUserProvider,
+	notificationProvider provider.NotificationProvider,
+
 ) *DistributionUsecase {
 	return &DistributionUsecase{
 		distributionRepo: r,
 		transaction:      transaction,
-		userProvider:     userProvider,
+		notifyProvider:   notificationProvider,
 	}
 }
 
@@ -76,6 +80,19 @@ func (uc *DistributionUsecase) CreateDistribute(
 		}
 
 		resp = mapToResultDTO(dist, len(req.PartnerIDs))
+
+		uc.notifyProvider.RegistedEventProperty(ctx,
+			&dto.CreatePropertyActivityDTO{
+				SubjectID:   dist.ID,
+				SubjectType: _enum.SUBJECT_TYPE_DISTRIBUTE,
+				Action:      _enum.ACTION_DISTRIBUTE_CREATE,
+				ActorID:     _utils.GetProfileIdWithContext(ctx),
+				Description: fmt.Sprintf(
+					"Sản phẩm %d được tạo kênh phân phối với %d đối tác",
+					dist.ProductID,
+					len(req.PartnerIDs),
+				),
+			})
 		return nil
 	})
 
@@ -101,7 +118,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 			return _errors.NotFoundException("distribution not found")
 		}
 
-		if dist.RevokedAt != nil {
+		if dist.RevokedAt != nil || time.Now().After(*dist.ToDate) {
 			return _errors.BadRequestException("distribution has been revoked")
 		}
 
@@ -180,7 +197,7 @@ func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, di
 	return dist, nil
 }
 
-func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID uint64, filter *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error) {
+func (uc *DistributionUsecase) GetListDistributesWithPartners(ctx context.Context, productID uint64, filter *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error) {
 	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID, filter)
 	if err != nil {
 		return nil, _errors.InternalServerException("Failed to get distribution list")
@@ -194,7 +211,6 @@ func (uc *DistributionUsecase) GetListDistributes(ctx context.Context, productID
 
 func displayStatus(dist *dto.DistributionWithPartners) enums.DistributionStatus {
 	now := time.Now()
-
 	if dist.RevokedAt != nil {
 		return enums.DISTRIBUTION_STATUS_REVOKED
 	}

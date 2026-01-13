@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"bdspro/internal/domain"
@@ -138,6 +139,30 @@ func (r *DistributePostgres) GetListDistrByProduct(
 
 	if filter.Text != "" {
 		db = db.Where("d.policy->>'note' ILIKE ?", "%"+filter.Text+"%")
+	}
+
+	if len(filter.Status) > 0 {
+		now := time.Now()
+
+		var conditions []string
+		var args []interface{}
+
+		for _, st := range filter.Status {
+			switch st {
+			case enums.DISTRIBUTION_STATUS_REVOKED:
+				conditions = append(conditions, "d.revoked_at IS NOT NULL")
+
+			case enums.DISTRIBUTION_STATUS_EXPRIED:
+				conditions = append(conditions, "(d.revoked_at IS NULL AND d.to_date < ?)")
+				args = append(args, now)
+
+			case enums.DISTRIBUTION_STATUS_ACTIVE:
+				conditions = append(conditions, "(d.revoked_at IS NULL AND (d.to_date IS NULL OR d.to_date >= ?))")
+				args = append(args, now)
+			}
+		}
+
+		db = db.Where(strings.Join(conditions, " OR "), args...)
 	}
 
 	db = applyDistributionSort(db, filter.Sort)

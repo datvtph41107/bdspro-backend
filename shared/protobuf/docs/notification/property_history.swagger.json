@@ -138,7 +138,8 @@
           "format": "uint64"
         },
         "subjectType": {
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "action": {
           "type": "integer",
@@ -147,16 +148,9 @@
         "description": {
           "type": "string"
         },
-        "metadata": {
-          "type": "object"
-        },
         "actorId": {
           "type": "string",
           "format": "uint64"
-        },
-        "actorType": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -165,9 +159,6 @@
       "properties": {
         "success": {
           "type": "boolean"
-        },
-        "message": {
-          "type": "string"
         },
         "id": {
           "type": "string",

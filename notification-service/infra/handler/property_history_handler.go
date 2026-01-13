@@ -35,14 +35,14 @@ func (h *PropertyHistoryHandler) CreatePropertyHistory(
 	if err != nil {
 		return &notificationpb.CreatePropertyHistoryResponse{
 			Success: false,
-			Message: err.Error(),
+			// Message: err.Error(),
 		}, err
 	}
 
 	return &notificationpb.CreatePropertyHistoryResponse{
 		Success: true,
-		Message: "success",
-		Id:      result.ID,
+		// Message: "success",
+		Id: result.ID,
 	}, nil
 }
 

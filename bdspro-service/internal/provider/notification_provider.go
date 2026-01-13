@@ -12,4 +12,5 @@ type NotificationProvider interface {
 	SendBatch(ctx context.Context, noti *_dto.NotificationBatchDTO) error
 	CreateHistory(ctx context.Context, history *_dto.HistoryDTO) error
 	HistoryDeal(ctx context.Context, history *dto.DealHistoryDTO) error
+	RegistedEventProperty(ctx context.Context, arg *dto.CreatePropertyActivityDTO) error
 }

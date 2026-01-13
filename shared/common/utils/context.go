@@ -31,6 +31,19 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 	return profileId.(uint64)
 }
 
+func GetrRoleWithContext(ctx context.Context) uint64 {
+	// clms := ctx.Value("claims")
+	// if claims, ok := clms.(*Principal); ok {
+	// 	return claims.ProfileId
+	// }
+	// return 0
+	roleKey := ctx.Value(_enums.RoleKey)
+	if roleKey == nil {
+		return 0
+	}
+	return roleKey.(uint64)
+}
+
 func GetOrganizationIdFromContext(c context.Context) uint64 {
 	// todo: đổi sang profile sau khi xong
 	organizationId := c.Value(_enums.OrganizationIDKey)

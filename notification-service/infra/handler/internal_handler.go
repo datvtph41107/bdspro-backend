@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"notification/infra/mapper"
+	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
 	"notification/internal/usecase"
@@ -19,14 +20,15 @@ import (
 
 type InternalHandler struct {
 	notificationpb.UnimplementedInternalNotificationServiceServer
-	Usecase             *usecase.NotificationUsecase
-	Mapper              *mapper.NotificationMapper
-	AdminHistoryUsecase *usecase.AdminHistoryUsecase
-	AdminHistoryMapper  *mapper.AdminHistoryMapper
-	DealHistoryUsecase  *usecase.DealHistoryUsecase
-	HistoryAuthUsecase  *usecase.HistoryAuthUsecase
-	HistoryAuthMapper   *mapper.HistoryAuthMapper
-	PersonConfigUsecase *usecase.PersonConfigUsecase
+	Usecase                *usecase.NotificationUsecase
+	Mapper                 *mapper.NotificationMapper
+	AdminHistoryUsecase    *usecase.AdminHistoryUsecase
+	AdminHistoryMapper     *mapper.AdminHistoryMapper
+	DealHistoryUsecase     *usecase.DealHistoryUsecase
+	HistoryAuthUsecase     *usecase.HistoryAuthUsecase
+	HistoryAuthMapper      *mapper.HistoryAuthMapper
+	PersonConfigUsecase    *usecase.PersonConfigUsecase
+	PropertyHistoryUsecase *usecase.PropertyHistoryUseCase
 }
 
 func NewInternalHandler(
@@ -38,16 +40,18 @@ func NewInternalHandler(
 	historyAuthUsecase *usecase.HistoryAuthUsecase,
 	historyAuthMapper *mapper.HistoryAuthMapper,
 	personConfigUsecase *usecase.PersonConfigUsecase,
+	propertyHistoryUsecase *usecase.PropertyHistoryUseCase,
 ) *InternalHandler {
 	return &InternalHandler{
-		Usecase:             uc,
-		Mapper:              mapper,
-		AdminHistoryUsecase: adminHistoryUsecase,
-		AdminHistoryMapper:  adminHistoryMapper,
-		DealHistoryUsecase:  dealHistoryUsecase,
-		HistoryAuthUsecase:  historyAuthUsecase,
-		HistoryAuthMapper:   historyAuthMapper,
-		PersonConfigUsecase: personConfigUsecase,
+		Usecase:                uc,
+		Mapper:                 mapper,
+		AdminHistoryUsecase:    adminHistoryUsecase,
+		AdminHistoryMapper:     adminHistoryMapper,
+		DealHistoryUsecase:     dealHistoryUsecase,
+		HistoryAuthUsecase:     historyAuthUsecase,
+		HistoryAuthMapper:      historyAuthMapper,
+		PersonConfigUsecase:    personConfigUsecase,
+		PropertyHistoryUsecase: propertyHistoryUsecase,
 	}
 }
 
@@ -388,4 +392,27 @@ func (s *InternalHandler) GetPersonConfigs(ctx context.Context, req *notificatio
 	}
 
 	return response, nil
+}
+
+func (s *InternalHandler) CreatePropertyHistoryActivity(
+	ctx context.Context,
+	req *notificationpb.CreatePropertyHistoryRequest,
+) (*notificationpb.CreatePropertyHistoryResponse, error) {
+	args := &domain.PropertyHistoryEntity{
+		SubjectID:   req.SubjectId,
+		SubjectType: _enum.SubjectTypeProperty(req.SubjectType),
+		Action:      _enum.PropertyAction(req.Action),
+		Description: req.Description,
+		ActorID:     req.ActorId,
+	}
+
+	property, err := s.PropertyHistoryUsecase.Create(ctx, args)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	return &notificationpb.CreatePropertyHistoryResponse{
+		Success: true,
+		Id:      property.ID,
+	}, nil
 }

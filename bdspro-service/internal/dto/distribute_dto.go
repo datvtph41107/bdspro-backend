@@ -31,11 +31,12 @@ type DistributeDTO struct {
 
 type FilterDistributeDTO struct {
 	_dto.Pagable
-	FromDate     *time.Time `form:"fromDate"`
-	ToDate       *time.Time `form:"toDate"`
-	CanDeal      *bool      `form:"canDeal"`
-	ChannelPrice *bool      `form:"channelPrice"`
-	Text         string     `form:"query"`
+	FromDate     *time.Time                 `form:"fromDate"`
+	ToDate       *time.Time                 `form:"toDate"`
+	CanDeal      *bool                      `form:"canDeal"`
+	ChannelPrice *bool                      `form:"channelPrice"`
+	Text         string                     `form:"query"`
+	Status       []enums.DistributionStatus `form:"status"`
 }
 
 type DistributionWithPartners struct {

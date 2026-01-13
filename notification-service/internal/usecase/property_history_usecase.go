@@ -6,8 +6,6 @@ import (
 	"notification/internal/dto"
 	"notification/internal/repo"
 	"time"
-
-	"gorm.io/datatypes"
 )
 
 type PropertyHistoryUseCase struct {
@@ -29,11 +27,14 @@ func (uc *PropertyHistoryUseCase) Create(
 		SubjectID:   data.SubjectID,
 		SubjectType: data.SubjectType,
 		Action:      data.Action,
-		Metadata:    datatypes.JSON(data.Metadata),
 		Description: data.Description,
 		ActorID:     data.ActorID,
-		ActorType:   data.ActorType,
 		OccurredAt:  &now,
+	}
+
+	if entity.OccurredAt == nil {
+		now := time.Now()
+		entity.OccurredAt = &now
 	}
 
 	return uc.Repo.Create(ctx, entity)
@@ -47,13 +48,12 @@ func (uc *PropertyHistoryUseCase) Search(
 	query := repo.PropertyHistoryQuery{
 		SubjectID:   q.SubjectID,
 		SubjectType: q.SubjectType,
-		Action:      q.Action,
-		ActorID:     q.ActorID,
-		ActorType:   q.ActorType,
-		Keyword:     q.Keyword,
-		Limit:       q.GetLimit(),
-		Offset:      q.GetOffset(),
-		Sort:        q.Sort,
+		// Action:      q.Action,
+		ActorID: q.ActorID,
+		Keyword: q.Keyword,
+		Limit:   q.GetLimit(),
+		Offset:  q.GetOffset(),
+		Sort:    q.Sort,
 	}
 
 	return uc.Repo.Search(ctx, query)

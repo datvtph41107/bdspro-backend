@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package notificationpb;
 option go_package = "pb/types/notification;notificationpb";
-
+import "notification/property_history.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "shared/common.proto";
@@ -28,6 +28,9 @@ service InternalNotificationService {
     rpc RemoveToOwner(sharepb.NotificationRequest) returns (NotificationDTO);
     rpc BatchPersonConfig(BatchPersonConfigRequest) returns (BatchPersonConfigResponse);
     rpc GetPersonConfigs(GetPersonConfigsRequest) returns (GetPersonConfigsResponse);
+
+    // property_history 
+    rpc CreatePropertyHistoryActivity(CreatePropertyHistoryRequest) returns (CreatePropertyHistoryResponse);
 }
 
 // ===== NOTIFICATION MESSAGES =====

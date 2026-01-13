@@ -1,17 +1,16 @@
 package repo
 
 import (
+	_enum "common/domain/enum"
 	"context"
 	"notification/internal/domain"
-	"notification/internal/enums"
 )
 
 type PropertyHistoryQuery struct {
 	SubjectID   *uint64
 	SubjectType *string
-	Action      *enums.PropertyAction
+	Action      *_enum.PropertyAction
 	ActorID     *uint64
-	ActorType   *enums.ActorType
 	Keyword     *string
 	Limit       int
 	Offset      int

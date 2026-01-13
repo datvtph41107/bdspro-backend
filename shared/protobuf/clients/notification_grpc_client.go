@@ -243,3 +243,21 @@ func (s *NotificationClient) PushByUserId(
 	})
 	return err
 }
+
+func (s *NotificationClient) CreatePropertyHistoryActivity(
+	ctx context.Context,
+	subjectId uint64,
+	subjectType uint32,
+	action uint32,
+	description string,
+	actorId uint64,
+) error {
+	_, err := s.Client.CreatePropertyHistoryActivity(ctx, &notificationpb.CreatePropertyHistoryRequest{
+		SubjectId:   subjectId,
+		SubjectType: subjectType,
+		Action:      action,
+		Description: description,
+		ActorId:     actorId,
+	})
+	return err
+}

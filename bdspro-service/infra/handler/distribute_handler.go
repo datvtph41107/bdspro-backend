@@ -125,7 +125,7 @@ func (h *DistributionHandler) ListDistributions(
 		ChannelPrice: req.ChannelPrice,
 	}
 
-	list, err := h.usecase.GetListDistributes(ctx, req.ProductId, filter)
+	list, err := h.usecase.GetListDistributesWithPartners(ctx, req.ProductId, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list distributions: %v", err)
 	}
