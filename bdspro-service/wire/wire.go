@@ -36,7 +36,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_provider.ChatProvider), new(*bdspro_infra_client.ChatClient)),
 	wire.Bind(new(bdspro_internal_provider.DeepseekProvider), new(*bdspro_infra_client.DeepseekClient)),
 	wire.Bind(new(bdspro_internal_provider.HubProvider), new(*bdspro_infra_client.HubClient)),
-	wire.Bind(new(bdspro_internal_provider.NotificationProvider), new(*bdspro_infra_client.NotificationClient)),
 	wire.Bind(new(bdspro_internal_provider.IUserProvider), new(*bdspro_infra_client.UserClient)),
 	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_handler.MemberPlanUsecase)),
 	wire.Bind(new(bdspro_internal_repo_admin.AdminAssetRepo), new(*bdspro_infra_postgres_admin.AdminAssetPostgres)),

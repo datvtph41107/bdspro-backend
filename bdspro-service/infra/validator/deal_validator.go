@@ -27,25 +27,26 @@ func NewGroupDealValidator() DealValidator {
 func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *bdspropb.CreateGroupDealRequest) error {
 	details := []protoadapt.MessageV1{}
 	if request.Name == "" {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "name",
-					Description: "name is required",
-				},
-			},
-		})
+		// details = append(details, &errdetails.BadRequest{
+		// 	FieldViolations: []*errdetails.BadRequest_FieldViolation{
+		// 		{
+		// 			Field:       "name",
+		// 			Description: "name is required",
+		// 		},
+		// 	},
+		// })
+		return _errors.ReturnError(400, "name is required")
 	}
-	if request.TargetProfit <= 0 {
-		details = append(details, &errdetails.BadRequest{
-			FieldViolations: []*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "targetProfit",
-					Description: "targetProfit must be greater than 0",
-				},
-			},
-		})
-	}
+	// if request.TargetProfit <= 0 {
+	// 	details = append(details, &errdetails.BadRequest{
+	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "targetProfit",
+	// 				Description: "targetProfit must be greater than 0",
+	// 			},
+	// 		},
+	// 	})
+	// }
 	// if request.Status == 0 {
 	// 	details = append(details, &errdetails.BadRequest{
 	// 		FieldViolations: []*errdetails.BadRequest_FieldViolation{

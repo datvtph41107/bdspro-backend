@@ -25,11 +25,13 @@ func NewRedisService() *RedisService {
 		Addr:     viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
 		Password: viper.GetString("redis.pass"),
 	})
+	// Không crash app nếu không connect được, chỉ log warning
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		log.Printf("Warning: Failed to connect to Redis at %s: %v. App will continue but Redis operations may fail.", viper.GetString("redis.host"), err)
+	} else {
+		log.Println("Connected to Redis at ", viper.GetString("redis.host"))
 	}
-	log.Println("Connected to Redis at ", viper.GetString("redis.host"))
 	return &RedisService{
 		Client: rdb,
 		Ctx:    context.Background(),

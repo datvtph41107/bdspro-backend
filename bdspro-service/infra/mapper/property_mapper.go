@@ -62,9 +62,12 @@ func (m *PropertyMapper) PbToPropertySearchDTO(req *bdspropb.PropertySearchReque
 
 // PropertyToProto converts domain Property to protobuf PropertyResponse
 func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.PropertyResponse {
-	return m.PropertyWithCountsToProto(&dto.PropertyWithCounts{
-		Property: *property,
-	})
+	if property != nil {
+		return m.PropertyWithCountsToProto(&dto.PropertyWithCounts{
+			Property: *property,
+		})
+	}
+	return nil
 }
 
 // PropertyToPb converts domain Property to protobuf PropertyResponse (alias for PropertyToProto)
@@ -182,6 +185,14 @@ func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.Prope
 			ThumbUrl:  propertyWithCounts.AvatarThumbURL,
 			MediaType: propertyWithCounts.AvatarMediaType,
 			SortOrder: propertyWithCounts.AvatarSortOrder,
+		}
+	}
+	if property.Avatar != nil {
+		result.Avatar = &bdspropb.PropertyMediaItem{
+			Url:       property.Avatar.URL,
+			ThumbUrl:  property.Avatar.ThumbURL,
+			MediaType: property.Avatar.MediaType,
+			SortOrder: property.Avatar.SortOrder,
 		}
 	}
 
@@ -341,7 +352,7 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 				MediaType: media.MediaType,
 				URL:       media.Url,
 				ThumbURL:  media.ThumbUrl,
-				SortOrder: int(media.SortOrder),
+				SortOrder: media.SortOrder,
 			}
 		}
 		result.MediaList = mediaList

@@ -1186,7 +1186,6 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		) AS child ON products.id = child.parent_id
 		LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL
 		LEFT JOIN house_info hi ON products.id = hi.product_id AND hi.deleted_at IS NULL
-		LEFT JOIN product_media pm ON products.image_id = pm.id AND pm.deleted_at IS NULL
 		LEFT JOIN property p ON products.property_id = p.id AND p.deleted_at IS NULL
 		LEFT JOIN property_building_info pbi ON p.id = pbi.property_id AND pbi.deleted_at IS NULL
 		LEFT JOIN property_media avatar ON p.avatar_id = avatar.id AND avatar.deleted_at IS NULL
@@ -1287,6 +1286,8 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			}
 			tempResults[i].BuildingInfo = buildingInfo
 		}
+
+		// tempResults[i].Code =
 	}
 
 	// Count total

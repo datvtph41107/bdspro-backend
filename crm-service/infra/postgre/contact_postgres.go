@@ -92,7 +92,7 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 
 	baseQuery := db.Table("tb_contact tb").
 		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.id").
-		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", 280, ownerType)
+		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", ownerId, ownerType)
 
 	var total int64
 	if err := baseQuery.Count(&total).Error; err != nil {

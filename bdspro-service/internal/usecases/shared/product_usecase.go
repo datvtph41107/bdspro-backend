@@ -11,6 +11,7 @@ import (
 	"bdspro/internal/utils"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_usecase "common/domain/usecase"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -57,6 +58,7 @@ type ProductUsecase struct {
 	BdsDomainUsecase        *usecases.BdsDomainUsecase
 	PropertyUsecase         *usecases.PropertyUsecase
 	DealRepo                repo.DealRepository
+	CodeDataUsecase         *_usecase.CodeDataUsecase
 }
 
 func NewProductUsecase(
@@ -84,6 +86,7 @@ func NewProductUsecase(
 	bdsDomainUsecase *usecases.BdsDomainUsecase,
 	propertyUsecase *usecases.PropertyUsecase,
 	dealRepo repo.DealRepository,
+	codeDataUsecase *_usecase.CodeDataUsecase,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -113,6 +116,7 @@ func NewProductUsecase(
 		PropertyUsecase:         propertyUsecase,
 		DealRepo:                dealRepo,
 		// OwnerType:    ownerType,
+		CodeDataUsecase: codeDataUsecase,
 	}
 
 	result.PostUsecase.ProductUsecase = result
@@ -472,6 +476,7 @@ func (s *ProductUsecase) searchProduct(c context.Context, payload dto.ProductSea
 	}
 	for i := 0; i < len(results); i++ {
 		s.MapProductStatusList(c, &results[i])
+		results[i].Code = s.CodeDataUsecase.GetProductCode(c, results[i].ID)
 	}
 	return results, total, nil
 }

@@ -39,43 +39,63 @@ func (r *RedisProvider) SaveToken(c context.Context, userID uint64, token string
 func (r *RedisProvider) GetToken(c context.Context, userID uint64) (string, error) {
 	key := fmt.Sprintf("user_token:%d", userID)
 
-	token, err := r.RedisService.Client.Get(c, key).Result()
-	if err != nil {
+	var token string
+	var err error
+	for i := 0; i < 3; i++ {
+		token, err = r.RedisService.Client.Get(c, key).Result()
+		if err == nil {
+			return token, nil
+		}
 		if err == redis.Nil {
 			return "", fmt.Errorf("token không tồn tại cho user %d", userID)
 		}
-		return "", fmt.Errorf("lỗi khi lấy token từ Redis: %v", err)
+		// Nếu là lỗi connection, thử lại sau 100ms
+		if i < 2 {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
-
-	return token, nil
+	return "", fmt.Errorf("lỗi khi lấy token từ Redis sau 3 lần thử: %v", err)
 }
 
 // IsTokenValid kiểm tra token có hợp lệ không
 func (r *RedisProvider) IsTokenValid(c context.Context, userID uint64, token string) (bool, error) {
 	key := fmt.Sprintf("user_token:%d", userID)
 
-	storedToken, err := r.RedisService.Client.Get(c, key).Result()
-	if err != nil {
+	var storedToken string
+	var err error
+	for i := 0; i < 3; i++ {
+		storedToken, err = r.RedisService.Client.Get(c, key).Result()
+		if err == nil {
+			// So sánh token
+			return storedToken == token, nil
+		}
 		if err == redis.Nil {
 			return false, nil // Token không tồn tại
 		}
-		return false, fmt.Errorf("lỗi khi kiểm tra token từ Redis: %v", err)
+		// Nếu là lỗi connection, thử lại sau 100ms
+		if i < 2 {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
-
-	// So sánh token
-	return storedToken == token, nil
+	return false, fmt.Errorf("lỗi khi kiểm tra token từ Redis sau 3 lần thử: %v", err)
 }
 
 // DeleteToken xóa token khỏi Redis
 func (r *RedisProvider) DeleteToken(c context.Context, userID uint64) error {
 	key := fmt.Sprintf("user_token:%d", userID)
 
-	err := r.RedisService.Client.Del(c, key).Err()
-	if err != nil {
-		return fmt.Errorf("lỗi khi xóa token từ Redis: %v", err)
+	var err error
+	for i := 0; i < 3; i++ {
+		err = r.RedisService.Client.Del(c, key).Err()
+		if err == nil {
+			return nil
+		}
+		// Nếu là lỗi connection, thử lại sau 100ms
+		if i < 2 {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
-
-	return nil
+	return fmt.Errorf("lỗi khi xóa token từ Redis sau 3 lần thử: %v", err)
 }
 
 // Close đóng Redis connection
@@ -85,15 +105,33 @@ func (r *RedisProvider) Close() error {
 
 // Ping kiểm tra kết nối Redis
 func (r *RedisProvider) Ping(c context.Context) error {
-	_, err := r.RedisService.Client.Ping(c).Result()
-	if err != nil {
-		return fmt.Errorf("lỗi kết nối Redis: %v", err)
+	var err error
+	for i := 0; i < 3; i++ {
+		_, err = r.RedisService.Client.Ping(c).Result()
+		if err == nil {
+			return nil
+		}
+		// Nếu là lỗi connection, thử lại sau 100ms
+		if i < 2 {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
-	return nil
+	return fmt.Errorf("lỗi kết nối Redis sau 3 lần thử: %v", err)
 }
 
 func (r *RedisProvider) Increment(c context.Context, key string) error {
-	return r.RedisService.Client.Incr(c, key).Err()
+	var err error
+	for i := 0; i < 3; i++ {
+		err = r.RedisService.Client.Incr(c, key).Err()
+		if err == nil {
+			return nil
+		}
+		// Nếu là lỗi connection, thử lại sau 100ms
+		if i < 2 {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+	return fmt.Errorf("lỗi khi increment key từ Redis sau 3 lần thử: %v", err)
 }
 
 // SaveAppState lưu trạng thái app (foreground/background) của user vào Redis
@@ -102,10 +140,16 @@ func (r *RedisProvider) SaveAppState(c context.Context, userID uint64, state str
 	timestamp := time.Now().Format(time.RFC3339)
 	status := state + "|" + timestamp
 
-	err := r.RedisService.Client.Set(c, key, status, 0).Err()
-	if err != nil {
-		return fmt.Errorf("lỗi khi lưu app state vào Redis: %v", err)
+	var err error
+	for i := 0; i < 3; i++ {
+		err = r.RedisService.Client.Set(c, key, status, 0).Err()
+		if err == nil {
+			return nil
+		}
+		// Nếu là lỗi connection, thử lại sau 100ms
+		if i < 2 {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
-
-	return nil
+	return fmt.Errorf("lỗi khi lưu app state vào Redis sau 3 lần thử: %v", err)
 }
