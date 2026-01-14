@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/enums"
 	"common/case/crud3"
 	_utils "common/utils"
 	"context"
@@ -107,30 +108,35 @@ func (r *GormProductPriceRepo) Create(c context.Context, entity *domain.ProductP
 	return GetDB(c, r.DB).Create(entity).Error
 }
 
-func (r *GormProductPriceRepo) GetPriceHistory(ctx context.Context, productId uint64, page, size uint32) ([]*domain.ProductPrice, int64, error) {
-	var prices []*domain.ProductPrice
-	var total int64
+func (r *GormProductPriceRepo) GetHistoryProductPrice(
+	ctx context.Context,
+	productID uint64,
+	transactionType enums.TransactionType,
+	offset, limit int,
+) ([]*domain.ProductPrice, int64, error) {
 
-	// Default pagination
-	if size == 0 {
-		size = 20
-	}
-	if size > 100 {
-		size = 100
-	}
-	offset := (page - 1) * size
+	var (
+		prices []*domain.ProductPrice
+		total  int64
+	)
 
-	db := GetDB(ctx, r.DB).Where("product_id = ? AND deleted_at IS NULL", productId)
+	db := r.DB.WithContext(ctx).
+		Table("product_price pp").
+		Joins("JOIN product p ON p.id = pp.product_id").
+		Where(`
+			p.id = ?
+			AND p.transaction_type = ?
+			AND pp.deleted_at IS NULL
+		`, productID, transactionType)
 
-	// Count total
-	if err := db.Model(&domain.ProductPrice{}).Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Get list with pagination
-	if err := db.Order("created_at DESC").
-		Offset(int(offset)).
-		Limit(int(size)).
+	if err := db.
+		Order("pp.created_at DESC, pp.id DESC").
+		Offset(offset).
+		Limit(limit).
 		Find(&prices).Error; err != nil {
 		return nil, 0, err
 	}

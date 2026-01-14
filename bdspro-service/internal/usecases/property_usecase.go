@@ -6,6 +6,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -60,6 +61,71 @@ func NewPropertyUsecase(
 		AssetRepo:                assetRepo,
 		Transaction:              transaction,
 	}
+}
+
+func (u *PropertyUsecase) ApplyPriceUpdate(
+	ctx context.Context,
+	req *dto.ApplyPriceUpdateRequest,
+) (*dto.ApplyPriceUpdateResponse, error) {
+	userId := _utils.GetProfileIdWithContext(ctx)
+	if userId == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+
+	var resp *dto.ApplyPriceUpdateResponse
+	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
+		if err != nil {
+			return _errors.InternalServerException("GetProduct fail", err.Error())
+		}
+		if product == nil {
+			return _errors.NotFoundException("Product not found")
+		}
+
+		var oldSalePrice *float64
+		if product.Price != nil {
+			oldSalePrice = product.Price.SalePrice
+		}
+
+		if req.Price == nil || *req.Price <= 0 {
+			return _errors.BadRequestException("Sale price must be greater than 0")
+		}
+
+		newPrice := &domain.ProductPrice{
+			ProductID: &product.ID,
+			Currency:  "VND",
+			SalePrice: req.Price,
+		}
+
+		if err := u.ProductPriceRepo.Create(txCtx, newPrice); err != nil {
+			return _errors.InternalServerException("Create product price fail", err.Error())
+		}
+
+		if err := u.ProductRepo.UpdateLastPrice(txCtx, product.ID, newPrice.ID); err != nil {
+			return _errors.InternalServerException("Update last price fail", err.Error())
+		}
+
+		var pricePerM2 *float64
+		if product.Area > 0 {
+			v := *req.Price / product.Area
+			pricePerM2 = &v
+		}
+
+		resp = &dto.ApplyPriceUpdateResponse{
+			ProductID:  product.ID,
+			OldPrice:   oldSalePrice,
+			NewPrice:   newPrice.SalePrice,
+			PricePerM2: pricePerM2,
+			UpdatedAt:  newPrice.CreatedAt,
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // LinkProductToProperty link product với property của product cha (nếu có)

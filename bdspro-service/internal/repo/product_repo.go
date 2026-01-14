@@ -12,6 +12,9 @@ import (
 // ProductRepo định nghĩa các phương thức mà GormUserProductRepo cung cấp
 type ProductRepo interface {
 	crud3.CrudRepo[domain.Product]
+
+	UpdateLastPrice(ctx context.Context, productID uint64, priceID uint64) error
+
 	UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductSaleStatus) error
 
 	// Cập nhật trạng thái cho thuê

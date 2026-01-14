@@ -3818,6 +3818,17 @@
         }
       }
     },
+    "bdspropbPrice": {
+      "type": "object",
+      "properties": {
+        "sale": {
+          "$ref": "#/definitions/bdspropbSalePrice"
+        },
+        "rent": {
+          "$ref": "#/definitions/bdspropbRentPrice"
+        }
+      }
+    },
     "bdspropbPriceHistoryItem": {
       "type": "object",
       "properties": {
@@ -3825,45 +3836,23 @@
           "type": "string",
           "format": "uint64"
         },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/bdspropbProductTransactionType"
+        },
         "currency": {
           "type": "string"
         },
-        "salePrice": {
-          "type": "number",
-          "format": "double"
+        "old": {
+          "$ref": "#/definitions/bdspropbPrice"
         },
-        "saleCommission": {
-          "type": "number",
-          "format": "double"
-        },
-        "saleCommissionType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "deposite": {
-          "type": "number",
-          "format": "double"
-        },
-        "rentPrice": {
-          "type": "number",
-          "format": "double"
-        },
-        "rentCommission": {
-          "type": "number",
-          "format": "double"
-        },
-        "rentCommissionType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "rentPaymentCycle": {
-          "type": "integer",
-          "format": "int64"
+        "new": {
+          "$ref": "#/definitions/bdspropbPrice"
         },
         "createdAt": {
-          "type": "string"
-        },
-        "updatedAt": {
           "type": "string"
         }
       }
@@ -3979,30 +3968,6 @@
         }
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
-    },
-    "bdspropbProductAttachmentResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductAttachment"
-          }
-        }
-      }
-    },
-    "bdspropbProductInternalResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductResponse"
-          }
-        }
-      }
     },
     "bdspropbProductNavigationResponse": {
       "type": "object",
@@ -4695,6 +4660,15 @@
         }
       }
     },
+    "bdspropbProductTransactionType": {
+      "type": "string",
+      "enum": [
+        "PRODUCT_TRANSACTION_TYPE_UNSPECIFIED",
+        "PRODUCT_TRANSACTION_TYPE_SALE",
+        "PRODUCT_TRANSACTION_TYPE_RENT"
+      ],
+      "default": "PRODUCT_TRANSACTION_TYPE_UNSPECIFIED"
+    },
     "bdspropbProject": {
       "type": "object",
       "properties": {
@@ -5032,6 +5006,27 @@
       },
       "title": "Message definitions"
     },
+    "bdspropbRentPrice": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "paymentCycle": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "bdspropbResponse": {
       "type": "object",
       "properties": {
@@ -5041,6 +5036,27 @@
         },
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "bdspropbSalePrice": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "deposit": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

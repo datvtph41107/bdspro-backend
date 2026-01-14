@@ -231,6 +231,12 @@ service ProductService {
   };
 }
 
+enum ProductTransactionType {
+  PRODUCT_TRANSACTION_TYPE_UNSPECIFIED = 0;
+  PRODUCT_TRANSACTION_TYPE_SALE = 10;
+  PRODUCT_TRANSACTION_TYPE_RENT = 20;
+}
+
 message PingResponse {}
 message ProductInternalRequest {
   int32 page = 1;
@@ -555,17 +561,31 @@ message PriceHistoryResponse {
 
 message PriceHistoryItem {
   uint64 id = 1;
-  string currency = 2;
-  double salePrice = 3;
-  double saleCommission = 4;
-  uint32 saleCommissionType = 5;
-  double deposite = 6;
-  double rentPrice = 7;
-  double rentCommission = 8;
-  uint32 rentCommissionType = 9;
-  uint32 rentPaymentCycle = 10;
-  string createdAt = 11;
-  string updatedAt = 12;
+  uint64 product_id = 2;
+  ProductTransactionType transaction_type = 3;
+  string currency = 4;
+  Price old = 5;
+  Price new = 6;
+  string created_at = 7;
+}
+
+message Price {
+  SalePrice sale = 1;
+  RentPrice rent = 2;
+}
+
+message SalePrice {
+  double price = 1;
+  double commission = 2;
+  uint32 commission_type = 3;
+  double deposit = 4;
+}
+
+message RentPrice {
+  double price = 1;
+  double commission = 2;
+  uint32 commission_type = 3;
+  uint32 payment_cycle = 4;
 }
 
 message ProductNavigationResponse {

@@ -3,6 +3,7 @@ package dto
 import (
 	"bdspro/internal/domain"
 	_dto "common/domain/dto"
+	"time"
 )
 
 type PropertySearchDTO struct {
@@ -55,4 +56,21 @@ type CreatePropertyProductRequest struct {
 	Product      *domain.Product              `json:"product"`
 	Asset        *domain.Asset                `json:"asset"`
 	Note         string                       `json:"note"`
+}
+
+type ApplyPriceUpdateRequest struct {
+	ProductID   uint64   `json:"productId" validate:"required"`
+	Price       *float64 `json:"price,omitempty"`
+	PriceStatus uint32   `json:"priceStatus,omitempty"`
+	ChangeNote  string   `json:"changeNote,omitempty"`
+	ChangedBy   uint64   `json:"changedBy"`
+}
+
+type ApplyPriceUpdateResponse struct {
+	ProductID uint64   `json:"productId"`
+	OldPrice  *float64 `json:"oldPrice,omitempty"`
+	NewPrice  *float64 `json:"newPrice,omitempty"`
+
+	PricePerM2 *float64   `json:"pricePerM2,omitempty"`
+	UpdatedAt  *time.Time `json:"updatedAt"`
 }

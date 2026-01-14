@@ -12,6 +12,7 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_usecase "common/domain/usecase"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -1550,19 +1551,90 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	return summary, nil
 }
 
-// GetPriceHistory lấy lịch sử cập nhật giá của sản phẩm
-func (s *ProductUsecase) GetPriceHistory(ctx context.Context, productID uint64, page, size uint32) ([]*domain.ProductPrice, int64, error) {
-	// Kiểm tra quyền truy cập sản phẩm
-	err := s.CheckPermission(ctx, &productID, enums.PermissionProductRead)
+func (u *ProductUsecase) GetPriceHistory(
+	ctx context.Context,
+	req *dto.PriceHistorySearch,
+) ([]*dto.PriceHistoryItemDTO, int64, error) {
+
+	if _utils.GetProfileIdWithContext(ctx) == 0 {
+		return nil, 0, _errors.UnauthorizedException()
+	}
+
+	product, err := u.ProductRepo.GetProductByID(ctx, &req.ProductID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if product == nil {
+		return nil, 0, _errors.NotFoundException("Product not found")
+	}
+
+	prices, total, err := u.PriceRepo.GetHistoryProductPrice(
+		ctx,
+		req.ProductID,
+		product.TransactionType,
+		req.GetOffset(),
+		req.GetLimit(),
+	)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Lấy lịch sử giá từ repo
-	prices, total, err := s.PriceRepo.GetPriceHistory(ctx, productID, page, size)
-	if err != nil {
-		return nil, 0, err
+	items := make([]*dto.PriceHistoryItemDTO, 0, len(prices))
+
+	var prev *domain.ProductPrice
+	for _, cur := range prices {
+
+		item := &dto.PriceHistoryItemDTO{
+			ID:              cur.ID,
+			ProductID:       *cur.ProductID,
+			TransactionType: product.TransactionType,
+			Currency:        cur.Currency,
+			New:             buildPriceDTO(cur, product.TransactionType),
+			CreatedAt:       _utils.FormatTimeToString(cur.CreatedAt),
+		}
+
+		if prev != nil {
+			item.Old = buildPriceDTO(prev, product.TransactionType)
+		}
+
+		items = append(items, item)
+		prev = cur
 	}
 
-	return prices, total, nil
+	return items, total, nil
+}
+
+func buildPriceDTO(
+	p *domain.ProductPrice,
+	txType enums.TransactionType,
+) *dto.PriceDTO {
+
+	if p == nil {
+		return nil
+	}
+
+	switch txType {
+
+	case enums.TransactionTypeSale:
+		return &dto.PriceDTO{
+			Sale: &dto.SalePriceDTO{
+				Price:          p.SalePrice,
+				Commission:     p.SaleCommission,
+				CommissionType: p.SaleCommissionType,
+				Deposite:       p.Deposite,
+			},
+		}
+
+	case enums.TransactionTypeRent:
+		return &dto.PriceDTO{
+			Rent: &dto.RentPriceDTO{
+				Price:          p.RentPrice,
+				Commission:     p.RentCommission,
+				CommissionType: p.RentCommissionType,
+				PaymentCycle:   p.RentPaymentCycle,
+			},
+		}
+	}
+
+	return nil
 }

@@ -50,7 +50,7 @@ type Product struct {
 	// CustomerID        *uint64                  `json:"customerId,omitempty"`
 	PrivateData       *ProductPrivate          `json:"privateInfo,omitempty"`
 	Note              string                   `json:"note,omitempty"`
-	TransactionType   uint                     `gorm:"type:smallint;default:10" json:"transactionType"`
+	TransactionType   enums.TransactionType    `gorm:"type:smallint;default:10" json:"transactionType"`
 	SaleStatus        enums.EProductSaleStatus `gorm:"type:smallint;not null;default:10" json:"saleStatus"` // 1=Chưa bán, 2=Đang bán, 3=Đã bán
 	SaleTransactionID *uint64                  `json:"saleTransactionId,omitempty"`
 	// SaleTransaction   *tx_domain.Tx            `gorm:"foreignKey:SaleTransactionID;references:ID" json:"saleTransaction,omitempty"`

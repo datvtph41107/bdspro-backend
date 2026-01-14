@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"bdspro/internal/enums"
 	_dto "common/domain/dto"
 )
 
@@ -9,17 +10,30 @@ type PriceHistorySearch struct {
 	ProductID uint64 `json:"productId"`
 }
 
-type PriceHistoryResponse struct {
-	ID                 uint64   `json:"id"`
-	Currency           string   `json:"currency"`
-	SalePrice          *float64 `json:"salePrice"`
-	SaleCommission     *float64 `json:"saleCommission"`
-	SaleCommissionType *uint32  `json:"saleCommissionType"`
-	Deposite           *float64 `json:"deposite"`
-	RentPrice          *float64 `json:"rentPrice"`
-	RentCommission     *float64 `json:"rentCommission"`
-	RentCommissionType *uint32  `json:"rentCommissionType"`
-	RentPaymentCycle   *uint32  `json:"rentPaymentCycle"`
-	CreatedAt          string   `json:"createdAt"`
-	UpdatedAt          string   `json:"updatedAt"`
+type PriceHistoryItemDTO struct {
+	ID              uint64                `json:"id"`
+	ProductID       uint64                `json:"productId"`
+	TransactionType enums.TransactionType `json:"transactionType"`
+	Currency        string                `json:"currency"`
+	Old             *PriceDTO             `json:"old,omitempty"`
+	New             *PriceDTO             `json:"new"`
+	CreatedAt       string                `json:"createdAt"`
+}
+type PriceDTO struct {
+	Sale *SalePriceDTO `json:"sale,omitempty"`
+	Rent *RentPriceDTO `json:"rent,omitempty"`
+}
+
+type SalePriceDTO struct {
+	Price          *float64 `json:"price"`
+	Commission     *float64 `json:"commission"`
+	CommissionType *uint32  `json:"commissionType"`
+	Deposite       *float64 `json:"deposite"`
+}
+
+type RentPriceDTO struct {
+	Price          *float64 `json:"price"`
+	Commission     *float64 `json:"commission"`
+	CommissionType *uint32  `json:"commissionType"`
+	PaymentCycle   *uint32  `json:"paymentCycle"`
 }

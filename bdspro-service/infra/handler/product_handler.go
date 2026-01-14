@@ -1051,12 +1051,14 @@ func (s *ProductHandler) GetAssetsByProduct(ctx context.Context, req *sharepb.Id
 // @Param page query int false "Số trang" default(1)
 // @Param size query int false "Số lượng bản ghi trên trang" default(20)
 // @Router /v2/bdspro/v2/product/{id}/price-history [get]
-func (s *ProductHandler) GetPriceHistory(ctx context.Context, req *bdspropb.PriceHistoryRequest) (*bdspropb.PriceHistoryResponse, error) {
+func (s *ProductHandler) GetPriceHistory(
+	ctx context.Context,
+	req *bdspropb.PriceHistoryRequest,
+) (*bdspropb.PriceHistoryResponse, error) {
 	if req.Id == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "id is required")
+		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
 
-	// Default pagination
 	page := req.Page
 	if page == 0 {
 		page = 1
@@ -1066,20 +1068,19 @@ func (s *ProductHandler) GetPriceHistory(ctx context.Context, req *bdspropb.Pric
 		size = 20
 	}
 
-	// Lấy lịch sử giá từ usecase
-	prices, total, err := s.UC.GetPriceHistory(ctx, req.Id, page, size)
+	items, total, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
+		ProductID: req.Id,
+		Pagable: _dto.Pagable{
+			Page: page,
+			Size: size,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert entities sang DTOs
-	dtos := s.ProductPriceMapper.EntityListToDTO(prices)
-
-	// Convert DTOs sang protobuf response
-	pbItems := s.ProductPriceMapper.DTOListToPb(dtos)
-
 	return &bdspropb.PriceHistoryResponse{
-		Data:  pbItems,
+		Data:  s.ProductPriceMapper.DTOListToPb(items),
 		Total: total,
 	}, nil
 }

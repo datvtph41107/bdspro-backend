@@ -95,6 +95,14 @@ func (r *GormUserProductRepo) UpdateArea(ctx context.Context, id uint64, area fl
 		Update("area", area).Error
 }
 
+func (r *GormUserProductRepo) UpdateLastPrice(ctx context.Context, productID uint64, priceID uint64) error {
+	return r.DB.WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ?", productID).
+		Update("last_price_id", priceID).
+		Error
+}
+
 func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity *domain.Product) error {
 	price := entity.Price
 	privateInfo := entity.PrivateData
