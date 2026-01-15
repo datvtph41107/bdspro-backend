@@ -235,7 +235,7 @@ func (uc *DistributionUsecase) RevokeUserFromDistribute(ctx context.Context, dis
 		// Xóa user khỏi product_user và lấy số lượng còn lại
 		remainingCount, err := uc.distributionRepo.RevokeUser(txCtx, distributeID, originProfileID)
 		if err != nil {
-			return _errors.InternalServerException("Failed to revoke user from distribute")
+			return _errors.InternalServerException(err.Error())
 		}
 
 		// Nếu distribute chỉ còn 0 product_user, revoke distribute

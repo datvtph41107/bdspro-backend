@@ -239,10 +239,17 @@ func (r *DistributePostgres) RevokeUser(ctx context.Context, distributeID uint64
 
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Xóa product_user với distribute_id và origin_profile_id
-		result := tx.Where("distribute_id = ? AND origin_profile_id = ? AND deleted_at IS NULL", distributeID, originProfileID).
-			Delete(&domain.ProductUser{})
-		if result.Error != nil {
-			return result.Error
+		// Set distribute_id = NULL và deleted_at = now
+		now := time.Now()
+		if err := tx.Exec(`
+			UPDATE product_user
+			SET distribute_id = NULL,
+			    deleted_at = ?
+			WHERE distribute_id = ? 
+			  AND origin_profile_id = ? 
+			  AND deleted_at IS NULL
+		`, now, distributeID, originProfileID).Error; err != nil {
+			return err
 		}
 
 		// Đếm số product_user còn lại của distribute này
