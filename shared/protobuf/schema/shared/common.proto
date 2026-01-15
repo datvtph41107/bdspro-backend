@@ -18,6 +18,8 @@ message FriendListRequest {
     optional uint64 dealId = 5;
     optional uint64 groupId = 6;
     string friendStatus = 7;
+    optional uint64 distributeId = 8;
+    optional uint64 shareProductId = 9;
 }
 
 message IdRequest {
@@ -285,6 +287,18 @@ message DealMember {
   optional Deal deal = 24;
 }
 
+message ProductUser {
+  uint64 id = 1;
+  uint64 profileId = 2;
+  uint64 productId = 3;
+  bool isOwner = 4;
+  uint64 roleId = 5;
+  optional uint64 distributeId = 6;
+  uint32 ownerOf = 7;
+  optional uint64 originProfileId = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
 
 message ContactDTO {
   uint64 id = 1;
@@ -317,6 +331,7 @@ message ContactDTO {
   // BASIC INFORMATION USER
   OriginProfile originProfile = 27;
   optional uint64 originProfileId = 28;
+  optional ProductUser productUser = 29;
 }
 
 message OriginProfile {

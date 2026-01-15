@@ -15,7 +15,7 @@ type ProductUser struct {
 	DistributeID *uint64        `gorm:"column:distribute_id;index" json:"distributeId"`
 	OwnerOf      enums.EOwnerOf `gorm:"default:10" json:"ownerOf"`
 
-	OriginProfileID *uint64 `gorm:"index" json:"originProfileId"`
+	OriginProfileID *uint64 `gorm:"index;" json:"originProfileId"`
 }
 
 func (ProductUser) TableName() string {

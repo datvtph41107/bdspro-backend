@@ -415,6 +415,29 @@ func (s *ContactService) ContactListWithMember(ctx context.Context, req *sharepb
 		s.OrganizationClient.MapGroupMemberToContact(ctx, *req.GroupId, contactPbs)
 	}
 
+	// Map productUser nếu có shareProductId
+	if req.ShareProductId != nil && *req.ShareProductId > 0 {
+		productUsers, err := s.BdsproClient.GetProductUsersByProductId(ctx, *req.ShareProductId)
+		if err == nil && len(productUsers) > 0 {
+			// Tạo map profileId -> ProductUser để map nhanh
+			productUserMap := make(map[uint64]*sharepb.ProductUser)
+			for _, productUser := range productUsers {
+				if productUser.OriginProfileId != nil {
+					productUserMap[*productUser.OriginProfileId] = productUser
+				}
+			}
+
+			// Map productUser vào contact theo profileId
+			for _, contact := range contactPbs {
+				if contact.OriginProfileId != nil {
+					if productUser, ok := productUserMap[*contact.OriginProfileId]; ok {
+						contact.ProductUser = productUser
+					}
+				}
+			}
+		}
+	}
+
 	return &crmpb.ContactListDTO{
 		Data:  contactPbs,
 		Total: uint32(total),

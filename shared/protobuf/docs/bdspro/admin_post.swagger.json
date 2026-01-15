@@ -2408,6 +2408,9 @@
         "originProfileId": {
           "type": "string",
           "format": "uint64"
+        },
+        "productUser": {
+          "$ref": "#/definitions/sharepbProductUser"
         }
       }
     },
@@ -2891,6 +2894,48 @@
           "format": "int32"
         },
         "sourceTypeName": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbProductUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isOwner": {
+          "type": "boolean"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "distributeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "originProfileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
           "type": "string"
         }
       }

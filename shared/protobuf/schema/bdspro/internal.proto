@@ -21,6 +21,8 @@ service BdsproInternalService {
     rpc GetDealContractsByIds(sharepb.IdRequest) returns (DealContractListResponse);
     rpc UpdateScheduleCount(UpdateScheduleCountRequest) returns (Response);
     rpc UpdateContactCount(UpdateContactCountRequest) returns (Response);
+    rpc GetProductUsersByDistributeId(sharepb.IdRequest) returns (GetProductUsersByDistributeIdResponse);
+    rpc GetProductUsersByProductId(sharepb.IdRequest) returns (GetProductUsersByDistributeIdResponse);
 }
 
 message DealsResponse {
@@ -56,4 +58,8 @@ message UpdateScheduleCountRequest {
 message UpdateContactCountRequest {
     uint64 productId = 1;
     uint32 count = 2;
+}
+
+message GetProductUsersByDistributeIdResponse {
+    repeated sharepb.ProductUser data = 1;
 }

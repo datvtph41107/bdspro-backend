@@ -6,6 +6,7 @@ import (
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_enum "common/domain/enum"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	bdspropb "pb/types/bdspro"
@@ -22,6 +23,7 @@ type InternalHandler struct {
 	dealMemberRepo      repo.DealMemberRepository
 	contractDealUsecase *usecases.DealContractUsecase
 	contractDealMapper  *mapper.ContractDealMapper
+	productUserRepo     repo.ProductUserRepo
 }
 
 func NewInternalHandler(
@@ -33,6 +35,7 @@ func NewInternalHandler(
 	dealMemberRepo repo.DealMemberRepository,
 	contractDealUsecase *usecases.DealContractUsecase,
 	contractDealMapper *mapper.ContractDealMapper,
+	productUserRepo repo.ProductUserRepo,
 ) *InternalHandler {
 	return &InternalHandler{
 		dashboardUsecase:    dashboardUsecase,
@@ -43,6 +46,7 @@ func NewInternalHandler(
 		dealMemberRepo:      dealMemberRepo,
 		contractDealUsecase: contractDealUsecase,
 		contractDealMapper:  contractDealMapper,
+		productUserRepo:     productUserRepo,
 	}
 }
 
@@ -173,5 +177,79 @@ func (s *InternalHandler) UpdateContactCount(ctx context.Context, req *bdspropb.
 	return &bdspropb.Response{
 		Id:      req.ProductId,
 		Message: "ContactCount updated successfully",
+	}, nil
+}
+
+// GetProductUsersByDistributeId lấy danh sách ProductUser theo distributeId
+func (s *InternalHandler) GetProductUsersByDistributeId(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.GetProductUsersByDistributeIdResponse, error) {
+	productUsers, err := s.productUserRepo.GetByDistributeID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	productUserPbs := make([]*sharepb.ProductUser, 0, len(productUsers))
+	for _, productUser := range productUsers {
+		pb := &sharepb.ProductUser{
+			Id:        productUser.ID,
+			ProfileId: productUser.ProfileID,
+			ProductId: productUser.ProductID,
+			IsOwner:   productUser.IsOwner,
+			RoleId:    productUser.RoleID,
+			OwnerOf:   uint32(productUser.OwnerOf),
+		}
+		if productUser.DistributeID != nil {
+			pb.DistributeId = productUser.DistributeID
+		}
+		if productUser.OriginProfileID != nil {
+			pb.OriginProfileId = productUser.OriginProfileID
+		}
+		if productUser.CreatedAt != nil {
+			pb.CreatedAt = _utils.FormatTimeToString(productUser.CreatedAt)
+		}
+		if productUser.UpdatedAt != nil {
+			pb.UpdatedAt = _utils.FormatTimeToString(productUser.UpdatedAt)
+		}
+		productUserPbs = append(productUserPbs, pb)
+	}
+
+	return &bdspropb.GetProductUsersByDistributeIdResponse{
+		Data: productUserPbs,
+	}, nil
+}
+
+// GetProductUsersByProductId lấy danh sách ProductUser theo productId
+func (s *InternalHandler) GetProductUsersByProductId(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.GetProductUsersByDistributeIdResponse, error) {
+	productUsers, err := s.productUserRepo.GetByProductID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	productUserPbs := make([]*sharepb.ProductUser, 0, len(productUsers))
+	for _, productUser := range productUsers {
+		pb := &sharepb.ProductUser{
+			Id:        productUser.ID,
+			ProfileId: productUser.ProfileID,
+			ProductId: productUser.ProductID,
+			IsOwner:   productUser.IsOwner,
+			RoleId:    productUser.RoleID,
+			OwnerOf:   uint32(productUser.OwnerOf),
+		}
+		if productUser.DistributeID != nil {
+			pb.DistributeId = productUser.DistributeID
+		}
+		if productUser.OriginProfileID != nil {
+			pb.OriginProfileId = productUser.OriginProfileID
+		}
+		if productUser.CreatedAt != nil {
+			pb.CreatedAt = _utils.FormatTimeToString(productUser.CreatedAt)
+		}
+		if productUser.UpdatedAt != nil {
+			pb.UpdatedAt = _utils.FormatTimeToString(productUser.UpdatedAt)
+		}
+		productUserPbs = append(productUserPbs, pb)
+	}
+
+	return &bdspropb.GetProductUsersByDistributeIdResponse{
+		Data: productUserPbs,
 	}, nil
 }

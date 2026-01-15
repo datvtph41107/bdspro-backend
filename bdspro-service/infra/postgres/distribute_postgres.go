@@ -11,7 +11,6 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -26,40 +25,22 @@ func NewDistributionPostgres(db *gorm.DB) repo.DistributeRepository {
 
 func (r *DistributePostgres) AssignPartner(ctx context.Context, distributeID uint64, productID uint64, partnerIDs []uint64) error {
 	if len(partnerIDs) == 0 {
-		// Nếu không có partnerIDs, chỉ xóa các product_user có distribute_id = distributeID
-		return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-			return tx.Exec(`
-				DELETE FROM product_user
-				WHERE distribute_id = ?
-				  AND deleted_at IS NULL
-			`, distributeID).Error
-		})
+		return nil
 	}
 
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Bước 1: Xóa các product_user có distribute_id = distributeID nhưng origin_profile_id không nằm trong partnerIDs
-		if err := tx.Exec(`
-			DELETE FROM product_user
-			WHERE distribute_id = $3
-			  AND product_id = $2
-			  AND (origin_profile_id IS NULL OR origin_profile_id <> ALL($1::BIGINT[]))
-			  AND deleted_at IS NULL
-		`, pq.Array(partnerIDs), productID, distributeID).Error; err != nil {
-			return err
+		// Tạo mới các product_user theo productID, distributeID và origin_profile_id
+		// Chỉ insert những record chưa tồn tại, không update bản ghi cũ
+		productUsers := make([]*domain.ProductUser, len(partnerIDs))
+		for i, partnerID := range partnerIDs {
+			productUsers[i] = &domain.ProductUser{
+				OriginProfileID: &partnerID,
+				ProductID:       productID,
+				DistributeID:    &distributeID,
+				IsOwner:         false,
+			}
 		}
-
-		// Bước 2: Tạo mới hoặc cập nhật các product_user có (origin_profile_id, product_id) trong partnerIDs
-		// Nếu đã tồn tại thì update distribute_id, nếu chưa có thì insert mới
-		if err := tx.Exec(`
-			INSERT INTO product_user (origin_profile_id, product_id, distribute_id, is_owner)
-			SELECT partner_id, $2, $3, false
-			FROM UNNEST($1::BIGINT[]) AS partner_id
-			ON CONFLICT (origin_profile_id, product_id) 
-			WHERE deleted_at IS NULL
-			DO UPDATE SET 
-				distribute_id = EXCLUDED.distribute_id,
-				updated_at = NOW()
-		`, pq.Array(partnerIDs), productID, distributeID).Error; err != nil {
+		if err := tx.Create(&productUsers).Error; err != nil {
 			return err
 		}
 

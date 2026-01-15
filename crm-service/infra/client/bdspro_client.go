@@ -36,7 +36,8 @@ func NewBdsproClient() *BdsproClient {
 			log.Fatalf("failed to dial: %v", err)
 		}
 
-		ctx, _ := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
@@ -169,4 +170,24 @@ func (c *BdsproClient) UpdateContactCount(ctx context.Context, productID uint64,
 		Count:     count,
 	})
 	return err
+}
+
+func (c *BdsproClient) GetProductUsersByDistributeId(ctx context.Context, distributeId uint64) ([]*sharepb.ProductUser, error) {
+	response, err := c.InternalClient.GetProductUsersByDistributeId(ctx, &sharepb.IdRequest{
+		Id: distributeId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return response.Data, nil
+}
+
+func (c *BdsproClient) GetProductUsersByProductId(ctx context.Context, productId uint64) ([]*sharepb.ProductUser, error) {
+	response, err := c.InternalClient.GetProductUsersByProductId(ctx, &sharepb.IdRequest{
+		Id: productId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return response.Data, nil
 }
