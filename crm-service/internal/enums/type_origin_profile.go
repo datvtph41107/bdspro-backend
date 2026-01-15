@@ -1,6 +1,6 @@
 package enums
 
-type EOriginProfileType int
+type EOriginProfileType uint32
 
 const (
 	OriginProfileUser         EOriginProfileType = 10

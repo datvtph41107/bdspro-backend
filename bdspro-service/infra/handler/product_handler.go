@@ -65,6 +65,35 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 	}
 }
 
+func (h *ProductHandler) ApplyPriceUpdate(
+	ctx context.Context,
+	req *bdspropb.ApplyPriceUpdateRequest,
+) (*bdspropb.ApplyPriceUpdateResponse, error) {
+	dtoReq := h.ProductMapper.ApplyPriceUpdatePbToDTO(req)
+
+	resp, err := h.UC.ApplyPriceUpdate(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.ProductMapper.ApplyPriceUpdateDTOToPb(resp), nil
+}
+
+func (h *ProductHandler) UpdateProductSource(
+	ctx context.Context,
+	req *bdspropb.UpdateProductSourceRequest,
+) (*bdspropb.Response, error) {
+	dtoReq := h.ProductMapper.PbToUpdateProductSourceDTO(req)
+	if err := h.UC.UpdateProductSource(ctx, dtoReq); err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.Response{
+		Id:      req.ProductId,
+		Message: "successfully",
+	}, nil
+}
+
 // @Summary Lưu trữ sản phẩm
 // @Description API này cho phép lưu trữ sản phẩm
 // @Tags User: Sản phẩm

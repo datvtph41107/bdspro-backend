@@ -2,7 +2,7 @@ package repo
 
 import (
 	"bdspro/internal/domain"
-	"bdspro/internal/enums"
+	"bdspro/internal/dto"
 	"context"
 )
 
@@ -12,5 +12,5 @@ type ProductPriceRepo interface {
 	UpdateProductID(c context.Context, productId *uint64, priceId *uint64) error
 	UpdatePrice(ctx context.Context, priceId *uint64, entity *domain.ProductPrice) error
 	Create(c context.Context, entity *domain.ProductPrice) error
-	GetHistoryProductPrice(ctx context.Context, productID uint64, transactionType enums.TransactionType, offset, limit int) ([]*domain.ProductPrice, int64, error)
+	GetHistoryProductPrice(ctx context.Context, req *dto.PriceHistorySearch) ([]*domain.ProductPrice, int64, error)
 }

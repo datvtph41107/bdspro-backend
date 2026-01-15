@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"bdspro/internal/domain"
-	"bdspro/internal/enums"
+	"bdspro/internal/dto"
 	"common/case/crud3"
 	_utils "common/utils"
 	"context"
@@ -110,9 +110,7 @@ func (r *GormProductPriceRepo) Create(c context.Context, entity *domain.ProductP
 
 func (r *GormProductPriceRepo) GetHistoryProductPrice(
 	ctx context.Context,
-	productID uint64,
-	transactionType enums.TransactionType,
-	offset, limit int,
+	req *dto.PriceHistorySearch,
 ) ([]*domain.ProductPrice, int64, error) {
 
 	var (
@@ -122,12 +120,12 @@ func (r *GormProductPriceRepo) GetHistoryProductPrice(
 
 	db := r.DB.WithContext(ctx).
 		Table("product_price pp").
-		Joins("JOIN product p ON p.id = pp.product_id").
+		Joins("JOIN products p ON p.id = pp.product_id").
 		Where(`
 			p.id = ?
 			AND p.transaction_type = ?
 			AND pp.deleted_at IS NULL
-		`, productID, transactionType)
+		`, req.ProductID, req.TransactionType)
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -135,8 +133,8 @@ func (r *GormProductPriceRepo) GetHistoryProductPrice(
 
 	if err := db.
 		Order("pp.created_at DESC, pp.id DESC").
-		Offset(offset).
-		Limit(limit).
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
 		Find(&prices).Error; err != nil {
 		return nil, 0, err
 	}

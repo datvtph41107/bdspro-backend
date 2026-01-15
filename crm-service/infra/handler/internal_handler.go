@@ -144,6 +144,18 @@ func (h *CrmInternalService) GetContactById(ctx context.Context, req *sharepb.Id
 		CreatedAt: _utils.FormatTimeToString(contact.CreatedAt),
 		CreatedBy: contact.CreatedBy,
 	}
+
+	if contact.OriginProfile != nil {
+		result.OriginProfile = &sharepb.OriginProfile{
+			DisplayName: contact.OriginProfile.DisplayName,
+			Phone:       contact.OriginProfile.Phone,
+			Avatar:      contact.OriginProfile.Avatar,
+			OriginId:    contact.OriginProfile.OriginID,
+			OwnerId:     contact.OriginProfile.OwnerID,
+			OwnerOf:     uint32(contact.OriginProfile.OwnerOf),
+		}
+	}
+
 	if contact.FriendStatus != nil {
 		result.FriendStatus = &sharepb.FriendItem{
 			Id:         contact.FriendStatus.ID,

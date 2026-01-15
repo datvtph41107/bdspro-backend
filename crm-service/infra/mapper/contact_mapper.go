@@ -100,6 +100,14 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 		Note:          contact.Note,
 		// todo: map in client
 		// ProfileInfo: &sharepb.ProfileItem
+		OriginProfile: &sharepb.OriginProfile{
+			OriginId:    *contact.OriginID,
+			DisplayName: contact.OriginDisplayName,
+			Phone:       contact.OriginPhone,
+			Avatar:      contact.OriginAvatar,
+			OwnerId:     contact.OwnerID,
+			OwnerOf:     uint32(contact.OwnerOf),
+		},
 	}
 	if contact.FriendID != 0 {
 		result.FriendStatus = &sharepb.FriendItem{
@@ -174,16 +182,15 @@ func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contac
 		BaseEntity: _models.BaseEntity{
 			ID: pb.Id,
 		},
-		FullName:   pb.FullName,
-		Phone:      pb.Phone,
-		Email:      pb.Email,
-		OwnerOf:    base_enum.EOwnerOf(pb.OwnerOf),
-		Note:       pb.Note,
-		Zalo:       pb.Zalo,
-		Company:    pb.Company,
-		Avatar:     pb.Avatar,
-		Visibility: enums.EVisibility(pb.Visibility),
-
+		FullName:    pb.FullName,
+		Phone:       pb.Phone,
+		Email:       pb.Email,
+		OwnerOf:     base_enum.EOwnerOf(pb.OwnerOf),
+		Note:        pb.Note,
+		Zalo:        pb.Zalo,
+		Company:     pb.Company,
+		Avatar:      pb.Avatar,
+		Visibility:  enums.EVisibility(pb.Visibility),
 		ContactTags: pq.Int32Array{},
 	}
 

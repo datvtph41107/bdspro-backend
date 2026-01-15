@@ -16,6 +16,45 @@
     "application/json"
   ],
   "paths": {
+    "/v1/products/{productId}/source": {
+      "put": {
+        "operationId": "ProductService_UpdateProductSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProductServiceUpdateProductSourceBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/archived": {
       "put": {
         "operationId": "ProductService_ArchiveProduct",
@@ -2584,9 +2623,63 @@
           "ProductService"
         ]
       }
+    },
+    "/v2/bdspro/v2/property/{productId}/apply-price": {
+      "post": {
+        "operationId": "ProductService_ApplyPriceUpdate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbApplyPriceUpdateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProductServiceApplyPriceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
     }
   },
   "definitions": {
+    "ProductServiceApplyPriceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "priceStatus": {
+          "$ref": "#/definitions/bdspropbProductPriceStatus"
+        },
+        "changeNote": {
+          "type": "string"
+        }
+      }
+    },
     "ProductServiceChildMergeAllBody": {
       "type": "object",
       "properties": {
@@ -2639,6 +2732,34 @@
           "format": "int64"
         },
         "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "ProductServiceUpdateProductSourceBody": {
+      "type": "object",
+      "properties": {
+        "sourceType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceContactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceContactNote": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64",
+          "title": "uint64 assignedUserId = 5;"
+        },
+        "sourceTagIds": {
           "type": "array",
           "items": {
             "type": "string",
@@ -2799,6 +2920,30 @@
         "price": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "bdspropbApplyPriceUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "oldPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "newPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "pricePerM2": {
+          "type": "number",
+          "format": "double"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },
@@ -3969,30 +4114,6 @@
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
-    "bdspropbProductAttachmentResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductAttachment"
-          }
-        }
-      }
-    },
-    "bdspropbProductInternalResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductResponse"
-          }
-        }
-      }
-    },
     "bdspropbProductNavigationResponse": {
       "type": "object",
       "properties": {
@@ -4061,6 +4182,16 @@
           "format": "int64"
         }
       }
+    },
+    "bdspropbProductPriceStatus": {
+      "type": "string",
+      "enum": [
+        "PRICE_STATUS_UNSPECIFIED",
+        "PRICE_STATUS_FIXED",
+        "PRICE_STATUS_NEGOTIABLE",
+        "PRICE_STATUS_CONTACT"
+      ],
+      "default": "PRICE_STATUS_UNSPECIFIED"
     },
     "bdspropbProductPrivate": {
       "type": "object",

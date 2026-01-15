@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	_dto "common/domain/dto"
 	_usecase "common/domain/usecase"
@@ -27,7 +28,7 @@ type ProductMapper struct {
 	DepositeMapper           *DepositeMapper
 	CodeDataUsecase          *_usecase.CodeDataUsecase
 	UserClient               *client.UserClient
-	CrmClient                *client.CrmClient
+	CrmClient                provider.CrmProvider
 	AssetRepo                repo.AssetRepo
 	PropertyMapper           *PropertyMapper
 	// TransactionMapper        TransactionTransformer
@@ -42,7 +43,7 @@ func NewProductMapper(postMapper *PostMapper,
 	depositeMapper *DepositeMapper,
 	codeDataUsecase *_usecase.CodeDataUsecase,
 	userClient *client.UserClient,
-	crmClient *client.CrmClient,
+	crmClient provider.CrmProvider,
 	assetRepo repo.AssetRepo,
 	// transactionMapper TransactionTransformer,
 ) *ProductMapper {
@@ -64,6 +65,64 @@ func NewProductMapper(postMapper *PostMapper,
 	}
 	postMapper.ProductMapper = result
 	return result
+}
+
+func (m *ProductMapper) ApplyPriceUpdatePbToDTO(
+	req *bdspropb.ApplyPriceUpdateRequest,
+) *dto.ApplyPriceUpdateRequest {
+	return &dto.ApplyPriceUpdateRequest{
+		ProductID:   req.ProductId,
+		Price:       req.Price,
+		PriceStatus: enums.ProductPriceStatus(req.Price),
+		ChangeNote:  *req.ChangeNote,
+	}
+}
+
+func (m *ProductMapper) ApplyPriceUpdateDTOToPb(
+	resp *dto.ApplyPriceUpdateResponse,
+) *bdspropb.ApplyPriceUpdateResponse {
+
+	pb := &bdspropb.ApplyPriceUpdateResponse{
+		ProductId: resp.ProductID,
+	}
+
+	if resp.OldPrice != nil {
+		pb.OldPrice = *resp.OldPrice
+	}
+	if resp.NewPrice != nil {
+		pb.NewPrice = *resp.NewPrice
+	}
+	if resp.PricePerM2 != nil {
+		pb.PricePerM2 = *resp.PricePerM2
+	}
+	pb.UpdatedAt = _utils.FormatTimeToString(&resp.UpdatedAt)
+
+	return pb
+}
+
+func (m *ProductMapper) PbToUpdateProductSourceDTO(
+	req *bdspropb.UpdateProductSourceRequest,
+) *dto.UpdateProductSourceRequest {
+
+	var sourceContactId uint64
+	if req.SourceContactId != 0 {
+		sourceContactId = req.SourceContactId
+	}
+
+	// var assignedUserId *uint64
+	// if req.AssignedUserId != 0 {
+	// 	assignedUserId = &req.AssignedUserId
+	// }
+
+	return &dto.UpdateProductSourceRequest{
+		ProductID:         req.ProductId,
+		SourceType:        enums.ESourceType(req.SourceType),
+		SourceContactId:   sourceContactId,
+		SourceContactNote: req.SourceContactNote,
+		// AssignedUserID:    assignedUserId,
+		Priority:     enums.EPriority(req.Priority),
+		SourceTagIDs: req.SourceTagIds,
+	}
 }
 
 // cleanAddressUnit loại bỏ các từ tiền tố địa chỉ như "Thành phố", "Tỉnh", "Phường", "Thị xã", "Huyện"
@@ -422,7 +481,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 	}
 
 	// Get source contact information if SourceContactId is available
-	if product.SourceContactId != nil && *product.SourceContactId > 0 && m.CrmClient != nil {
+	if product.SourceContactId != nil && *product.SourceContactId > 0 {
 		if contact, err := m.CrmClient.GetContactById(ctx, *product.SourceContactId); err == nil && contact != nil {
 			result.SourceContact = contact
 		}

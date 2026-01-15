@@ -229,6 +229,21 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/navigation"
     };
   };
+
+  rpc ApplyPriceUpdate(ApplyPriceUpdateRequest)
+    returns (ApplyPriceUpdateResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{productId}/apply-price"
+      body: "*"
+    };
+  };
+
+   rpc UpdateProductSource(UpdateProductSourceRequest) returns (Response) {
+      option (google.api.http) = {
+        put: "/v1/products/{productId}/source"
+        body: "*"
+      };
+  }
 }
 
 enum ProductTransactionType {
@@ -236,6 +251,40 @@ enum ProductTransactionType {
   PRODUCT_TRANSACTION_TYPE_SALE = 10;
   PRODUCT_TRANSACTION_TYPE_RENT = 20;
 }
+
+
+enum ProductPriceStatus {
+  PRICE_STATUS_UNSPECIFIED = 0;
+  PRICE_STATUS_FIXED = 1;     
+  PRICE_STATUS_NEGOTIABLE = 2;
+  PRICE_STATUS_CONTACT = 3;   
+}
+
+message ApplyPriceUpdateRequest {
+  uint64 productId = 1;
+  double price = 2;
+  ProductPriceStatus priceStatus = 3;
+  optional string changeNote = 4;
+}
+
+message ApplyPriceUpdateResponse {
+  uint64 productId = 1;
+  double oldPrice = 2;
+  double newPrice = 3;
+  double pricePerM2 = 4;
+  string updatedAt = 5;
+}
+
+message UpdateProductSourceRequest {
+  uint64 productId = 1;
+  uint32 sourceType = 2;
+  uint64 sourceContactId = 3;
+  string sourceContactNote = 4;
+  // uint64 assignedUserId = 5;
+  uint32 priority = 6;
+  repeated uint64 sourceTagIds = 7;
+}
+
 
 message PingResponse {}
 message ProductInternalRequest {

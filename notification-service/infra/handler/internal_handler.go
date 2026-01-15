@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"notification/infra/mapper"
-	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
 	"notification/internal/usecase"
@@ -398,7 +397,7 @@ func (s *InternalHandler) CreatePropertyHistoryActivity(
 	ctx context.Context,
 	req *notificationpb.CreatePropertyHistoryRequest,
 ) (*notificationpb.CreatePropertyHistoryResponse, error) {
-	args := &domain.PropertyHistoryEntity{
+	args := &dto.CreatePropertyHistoryDTO{
 		SubjectID:   req.SubjectId,
 		SubjectType: _enum.SubjectTypeProperty(req.SubjectType),
 		Action:      _enum.PropertyAction(req.Action),

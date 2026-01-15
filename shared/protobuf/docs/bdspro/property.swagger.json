@@ -316,9 +316,139 @@
           "PropertyService"
         ]
       }
+    },
+    "/v2/bdspro/v2/property/{propertyId}/amenities": {
+      "get": {
+        "operationId": "PropertyService_GetPropertyAmenities",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbGetPropertyAmenitiesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      },
+      "put": {
+        "operationId": "PropertyService_UpdatePropertyAmenities",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PropertyServiceUpdatePropertyAmenitiesBody"
+            }
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/tags/search": {
+      "get": {
+        "operationId": "PropertyService_SearchTags",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbTagListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
     }
   },
   "definitions": {
+    "PropertyServiceUpdatePropertyAmenitiesBody": {
+      "type": "object",
+      "properties": {
+        "amenityIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
     "PropertyServiceUpdatePropertyBody": {
       "type": "object",
       "properties": {
@@ -870,6 +1000,18 @@
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "bdspropbGetPropertyAmenitiesResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPropertyAmenityItem"
+          }
         }
       }
     },
@@ -1837,6 +1979,24 @@
         }
       }
     },
+    "bdspropbPropertyAmenityItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "checked": {
+          "type": "boolean"
+        }
+      }
+    },
     "bdspropbPropertyAssetsResponse": {
       "type": "object",
       "properties": {
@@ -2307,6 +2467,43 @@
           "format": "uint64"
         },
         "message": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbTagListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbTagResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbTagResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "icon": {
           "type": "string"
         }
       }

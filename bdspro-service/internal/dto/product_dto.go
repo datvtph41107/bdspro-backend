@@ -76,6 +76,21 @@ type ProductSaveRequest struct {
 	RequestOrganizationID *uint64 `json:"-"`
 }
 
+type ContactSourceProfileDTO struct {
+	ProfileId uint64
+}
+
+type UpdateProductSourceRequest struct {
+	ProductID         uint64              `json:"productId"`
+	SourceType        enums.ESourceType   `json:"sourceType"`
+	SourceContactId   uint64              `json:"sourceContactId,omitempty"`
+	SourceContactNote string              `json:"sourceContactNote,omitempty"`
+	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
+	Priority          enums.EPriority     `json:"priority"`
+	SourceTagIDs      []uint64            `json:"sourceTagIds"`
+	// AssignedUserID    *uint64           `json:"assignedUserId,omitempty"`
+}
+
 type ProductSaveDetect struct {
 	Content string `json:"content" form:"content"`
 }

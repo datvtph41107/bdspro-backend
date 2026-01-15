@@ -55,6 +55,68 @@ service PropertyService {
       body: "*"
     };
   };
+  
+  rpc SearchTags(TagSearchRequest) returns (TagListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/tags/search"
+    };
+  }
+
+  rpc GetPropertyAmenities(GetPropertyAmenitiesRequest)
+      returns (GetPropertyAmenitiesResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{propertyId}/amenities"
+    };
+  };
+
+  rpc UpdatePropertyAmenities(UpdatePropertyAmenitiesRequest)
+      returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/property/{propertyId}/amenities"
+      body: "*"
+    };
+  };
+}
+
+message PropertyAmenityItem {
+  uint64 id = 1;
+  string name = 2;
+  bool active = 3;   
+  bool checked = 4; 
+}
+
+message GetPropertyAmenitiesRequest {
+  uint64 propertyId = 1;
+}
+
+message GetPropertyAmenitiesResponse {
+  repeated PropertyAmenityItem data = 1;
+}
+
+message UpdatePropertyAmenitiesRequest {
+  uint64 propertyId = 1;
+  repeated uint64 amenityIds = 2;
+}
+
+
+message TagResponse {
+  uint64 id = 1;
+  string name = 2;
+  string type = 3;
+  string description = 4;
+  string icon = 5;
+}
+
+message TagSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string keyword = 3;
+  string type = 4;
+}
+
+message TagListResponse {
+  repeated TagResponse data = 1;
+  int64 total = 2;
 }
 
 message PropertySearchRequest {

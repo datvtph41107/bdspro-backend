@@ -1,6 +1,9 @@
 package domain
 
-import _models "common/models"
+import (
+	"bdspro/internal/enums"
+	_models "common/models"
+)
 
 type ProductPrice struct {
 	_models.BaseEntity
@@ -14,6 +17,11 @@ type ProductPrice struct {
 	RentCommission     *float64 `gorm:"type:DECIMAL(15,0)" json:"rentCommission,omitempty"`
 	RentCommissionType *uint32  `json:"rentCommisionType,omitempty"`
 	RentPaymentCycle   *uint32  `json:"rentPaymentCycle,omitempty"`
+
+	PriceStatus enums.ProductPriceStatus `json:"status,omitempty"`
+	ChangeNote  string                   `gorm:"type:text" json:"note,omitempty"`
+	ChangedBy   uint64                   `json:"changedBy"`
+	IsCurrent   bool                     `gorm:"default:true" json:"isCurrent"`
 	// PriceOwner       *float64 `json:"priceOwner,omitempty"` // deprecated
 	// SaleCommissionType uint     `json:"saleCommissionType,omitempty"`
 	// RentCommissionType uint     `json:"rentCommissionType,omitempty"`

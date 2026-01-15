@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/copier"
 )
@@ -43,16 +44,15 @@ type ProductUsecase struct {
 	Region             repo.RegionRepo
 	DocTypeRepo        repo.DocTypeRepo
 	PropertyType       repo.PropertyTypeRepo
-	Amenity            repo.AmenityRepo
+	Amenity            repo.PropertyAmenityRepo
 	ProductHistoryRepo repo.ProductHistoryRepo
+
 	MemberPlan         usecases.PlanUsecase
 	PostUsecase        *PostUsecase
 	OwnerType          enums.EOwnerOf
 	CacheProductMarket *providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]
 	NotificationClient provider.NotificationProvider
-	Transaction        provider.TransactionProvider
 	AssetUsecase       *AssetUsecase
-	DeepseekClient     provider.DeepseekProvider
 
 	ProductOrganizationRepo repo.ProductOrganizationRepo
 	ProductUserRepo         repo.ProductUserRepo
@@ -60,13 +60,17 @@ type ProductUsecase struct {
 	PropertyUsecase         *usecases.PropertyUsecase
 	DealRepo                repo.DealRepository
 	CodeDataUsecase         *_usecase.CodeDataUsecase
+
+	Transaction    provider.TransactionProvider
+	DeepseekClient provider.DeepseekProvider
+	CrmProvider    provider.CrmProvider
 }
 
 func NewProductUsecase(
 	productRepo repo.ProductRepo,
-	ProductHistoryRepo repo.ProductHistoryRepo,
 	assetRepo repo.AssetRepo,
 	mediaRepo repo.ProductMediaRepo,
+	ProductHistoryRepo repo.ProductHistoryRepo,
 	productAccessRepo repo.SharingAccessRepo,
 	houseInfoRepo repo.HouseInfoRepo,
 	priceRepo repo.ProductPriceRepo,
@@ -74,20 +78,22 @@ func NewProductUsecase(
 	region repo.RegionRepo,
 	docTypeRepo repo.DocTypeRepo,
 	propertyType repo.PropertyTypeRepo,
-	amenity repo.AmenityRepo,
-	memberPlan usecases.PlanUsecase,
-	PostUsecase *PostUsecase,
+	amenity repo.PropertyAmenityRepo,
+	dealRepo repo.DealRepository,
 	productChildRepo repo.UProductChildRepo,
-	notificationClient provider.NotificationProvider,
-	transaction provider.TransactionProvider,
-	assetUsecase *AssetUsecase,
 	productOrganizationRepo repo.ProductOrganizationRepo,
 	productUserRepo repo.ProductUserRepo,
-	deepseekClient provider.DeepseekProvider,
+
+	memberPlan usecases.PlanUsecase,
+	PostUsecase *PostUsecase,
+	assetUsecase *AssetUsecase,
 	bdsDomainUsecase *usecases.BdsDomainUsecase,
 	propertyUsecase *usecases.PropertyUsecase,
-	dealRepo repo.DealRepository,
 	codeDataUsecase *_usecase.CodeDataUsecase,
+	deepseekClient provider.DeepseekProvider,
+	transaction provider.TransactionProvider,
+	notificationClient provider.NotificationProvider,
+	crmProvider provider.CrmProvider,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -118,6 +124,7 @@ func NewProductUsecase(
 		DealRepo:                dealRepo,
 		// OwnerType:    ownerType,
 		CodeDataUsecase: codeDataUsecase,
+		CrmProvider:     crmProvider,
 	}
 
 	result.PostUsecase.ProductUsecase = result
@@ -1551,11 +1558,11 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	return summary, nil
 }
 
+// Price Product
 func (u *ProductUsecase) GetPriceHistory(
 	ctx context.Context,
 	req *dto.PriceHistorySearch,
 ) ([]*dto.PriceHistoryItemDTO, int64, error) {
-
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, 0, _errors.UnauthorizedException()
 	}
@@ -1568,43 +1575,34 @@ func (u *ProductUsecase) GetPriceHistory(
 		return nil, 0, _errors.NotFoundException("Product not found")
 	}
 
-	prices, total, err := u.PriceRepo.GetHistoryProductPrice(
-		ctx,
-		req.ProductID,
-		product.TransactionType,
-		req.GetOffset(),
-		req.GetLimit(),
-	)
+	prices, total, err := u.PriceRepo.GetHistoryProductPrice(ctx, req)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	items := make([]*dto.PriceHistoryItemDTO, 0, len(prices))
-
 	var prev *domain.ProductPrice
 	for _, cur := range prices {
-
 		item := &dto.PriceHistoryItemDTO{
 			ID:              cur.ID,
 			ProductID:       *cur.ProductID,
 			TransactionType: product.TransactionType,
 			Currency:        cur.Currency,
-			New:             buildPriceDTO(cur, product.TransactionType),
+			New:             priceBuilder(cur, product.TransactionType),
 			CreatedAt:       _utils.FormatTimeToString(cur.CreatedAt),
 		}
 
 		if prev != nil {
-			item.Old = buildPriceDTO(prev, product.TransactionType)
+			item.Old = priceBuilder(prev, product.TransactionType)
 		}
 
 		items = append(items, item)
 		prev = cur
 	}
-
 	return items, total, nil
 }
 
-func buildPriceDTO(
+func priceBuilder(
 	p *domain.ProductPrice,
 	txType enums.TransactionType,
 ) *dto.PriceDTO {
@@ -1637,4 +1635,129 @@ func buildPriceDTO(
 	}
 
 	return nil
+}
+
+func (u *ProductUsecase) ApplyPriceUpdate(
+	ctx context.Context,
+	req *dto.ApplyPriceUpdateRequest,
+) (*dto.ApplyPriceUpdateResponse, error) {
+	userId := _utils.GetProfileIdWithContext(ctx)
+	if userId == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+
+	var resp *dto.ApplyPriceUpdateResponse
+	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
+		if err != nil {
+			return err
+		}
+		if product == nil {
+			return _errors.NotFoundException("Product not found")
+		}
+		if userId != product.OwnerID {
+			return _errors.ForbiddenException("Only owner can update price")
+		}
+
+		var oldSalePrice *float64
+		if product.Price != nil {
+			oldSalePrice = product.Price.SalePrice
+		}
+
+		if req.Price <= 0 {
+			return _errors.BadRequestException("Sale price must be greater than 0")
+		}
+
+		newPrice := &domain.ProductPrice{
+			ProductID:   &product.ID,
+			Currency:    "VND",
+			SalePrice:   &req.Price,
+			PriceStatus: req.PriceStatus,
+			ChangeNote:  req.ChangeNote,
+			ChangedBy:   userId,
+		}
+
+		if err := u.PriceRepo.Create(txCtx, newPrice); err != nil {
+			return _errors.InternalServerException("Create product price fail", err.Error())
+		}
+
+		if err := u.ProductRepo.UpdateLastPrice(txCtx, product.ID, newPrice.ID); err != nil {
+			return _errors.InternalServerException("Update last price fail", err.Error())
+		}
+
+		var pricePerM2 *float64
+		if product.Area > 0 {
+			v := req.Price / product.Area
+			pricePerM2 = &v
+		}
+
+		resp = &dto.ApplyPriceUpdateResponse{
+			ProductID:  product.ID,
+			OldPrice:   oldSalePrice,
+			NewPrice:   newPrice.SalePrice,
+			PricePerM2: pricePerM2,
+			UpdatedAt:  time.Now(),
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (u *ProductUsecase) UpdateProductSource(
+	ctx context.Context,
+	req *dto.UpdateProductSourceRequest,
+) error {
+	userId := _utils.GetProfileIdWithContext(ctx)
+	if userId == 0 {
+		return _errors.UnauthorizedException()
+	}
+
+	pre, err := u.CrmProvider.GetContactById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if pre == nil || pre.OriginProfile.OriginId != req.SourceContactId {
+		return _errors.ForbiddenException("Cannot update source product")
+	}
+
+	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
+		if err != nil {
+			return err
+		}
+		if product == nil {
+			return _errors.NotFoundException("Product not found")
+		}
+
+		update := map[string]interface{}{
+			"source_contact_id":   req.SourceContactId,
+			"priority":            req.Priority,
+			"source_type":         req.SourceType,
+			"source_status":       req.SourceStatus,
+			"source_contact_note": req.SourceContactNote,
+		}
+
+		// if req.AssignedUserID != nil {
+		// 	update["owner_id"] = *req.AssignedUserID
+		// }
+
+		if err := u.ProductRepo.UpdateSourceFields(txCtx, product.ID, update); err != nil {
+			return err
+		}
+
+		// if err := u.Amenity.ReplacePropertyTags(
+		// 	txCtx,
+		// 	req.ProductID,
+		// 	req.SourceTagIDs,
+		// ); err != nil {
+		// 	return err
+		// }
+
+		return nil
+	})
 }

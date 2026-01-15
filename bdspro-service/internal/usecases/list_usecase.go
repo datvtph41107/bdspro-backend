@@ -13,7 +13,7 @@ type ListUsecase struct {
 	regionRepo       repo.RegionRepo
 	docTypeRepo      repo.DocTypeRepo
 	projectRepo      repo.ProjectRepo
-	amenityRepo      repo.AmenityRepo
+	amenityRepo      repo.PropertyAmenityRepo
 	projectBuildRepo repo.ProjectBuildRepo
 }
 
@@ -21,7 +21,7 @@ func NewListUsecase(propertyTypeRepo repo.PropertyTypeRepo,
 	regionRepo repo.RegionRepo,
 	docTypeRepo repo.DocTypeRepo,
 	projectRepo repo.ProjectRepo,
-	amenityRepo repo.AmenityRepo,
+	amenityRepo repo.PropertyAmenityRepo,
 	projectBuildRepo repo.ProjectBuildRepo,
 ) *ListUsecase {
 	return &ListUsecase{propertyTypeRepo: propertyTypeRepo,

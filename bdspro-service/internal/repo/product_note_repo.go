@@ -1,0 +1,26 @@
+package repo
+
+import (
+	"bdspro/internal/domain"
+	"bdspro/internal/dto"
+	"context"
+)
+
+type ProductNoteRepository interface {
+	//note
+	CreateNote(ctx context.Context, note *domain.ProductNote) error
+	GetByID(ctx context.Context, id uint64) (*domain.ProductNote, error)
+	GetListByProductID(ctx context.Context, filter *dto.GetProductNotesFilter) ([]*dto.ProductNoteItemRespone, int64, error)
+	UpdateContent(ctx context.Context, noteID uint64, content string) error
+	UpdatePin(ctx context.Context, noteID uint64, isPinned bool) error
+	DeleteNote(ctx context.Context, noteID uint64) error
+
+	//mention
+	CreateMention(ctx context.Context, mentions []domain.ProductNoteMention) error
+	DeleteMentionByNoteID(ctx context.Context, noteID uint64) error
+
+	//attach
+	AttachFilesToNote(ctx context.Context, noteID uint64, files []dto.ProductNoteFileItem) error
+	ListByNoteIDs(ctx context.Context, noteIDs []uint64) ([]*domain.ProductNoteFile, error)
+	DeleteFilesByNoteID(ctx context.Context, noteID uint64) error
+}

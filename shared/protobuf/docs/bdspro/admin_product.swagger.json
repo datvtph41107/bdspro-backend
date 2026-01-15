@@ -508,7 +508,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AdminProductServiceUpdateProductNoteBody"
+              "$ref": "#/definitions/bdspropbAdminProductServiceUpdateProductNoteBody"
             }
           }
         ],
@@ -587,15 +587,6 @@
     }
   },
   "definitions": {
-    "AdminProductServiceUpdateProductNoteBody": {
-      "type": "object",
-      "properties": {
-        "note": {
-          "type": "string"
-        }
-      },
-      "title": "Update Product Note Request"
-    },
     "bdspropbAdminProductItem": {
       "type": "object",
       "properties": {
@@ -821,6 +812,15 @@
           "type": "string"
         }
       }
+    },
+    "bdspropbAdminProductServiceUpdateProductNoteBody": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string"
+        }
+      },
+      "title": "Update Product Note Request"
     },
     "bdspropbAmenityItem": {
       "type": "object",

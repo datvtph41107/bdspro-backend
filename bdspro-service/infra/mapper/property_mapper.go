@@ -30,6 +30,54 @@ func NewPropertyMapper(productMapper *ProductMapper, assetMapper *AssetMapper) *
 	return result
 }
 
+func (m *PropertyMapper) PbToTagSearchDTO(
+	req *bdspropb.TagSearchRequest,
+) *dto.TagSearchDTO {
+	page := req.Page
+	if page == 0 {
+		page = 1
+	}
+	size := req.Size
+	if size == 0 {
+		size = 20
+	}
+	return &dto.TagSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: page,
+			Size: size,
+		},
+		Keyword: req.Keyword,
+		Type:    req.Type,
+	}
+}
+
+func (m *PropertyMapper) TagToProto(
+	item *dto.TagDTO,
+) *bdspropb.TagResponse {
+
+	if item == nil {
+		return nil
+	}
+
+	return &bdspropb.TagResponse{
+		Id:          item.ID,
+		Name:        item.Name,
+		Type:        item.Type,
+		Description: item.Description,
+		Icon:        item.Icon,
+	}
+}
+
+func (m *PropertyMapper) TagListToProto(
+	items []*dto.TagDTO,
+) []*bdspropb.TagResponse {
+	result := make([]*bdspropb.TagResponse, 0, len(items))
+	for _, item := range items {
+		result = append(result, m.TagToProto(item))
+	}
+	return result
+}
+
 // PbToPropertySearchDTO converts protobuf request to DTO
 func (m *PropertyMapper) PbToPropertySearchDTO(req *bdspropb.PropertySearchRequest) *dto.PropertySearchDTO {
 	result := &dto.PropertySearchDTO{

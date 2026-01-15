@@ -17,34 +17,6 @@
   ],
   "paths": {},
   "definitions": {
-    "bdspropbCostDocumentDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "archived": {
-          "type": "boolean"
-        }
-      }
-    },
-    "bdspropbCostDocumentListDTO": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbCostDocumentDTO"
-          }
-        },
-        "totalElements": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {

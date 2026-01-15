@@ -63,69 +63,180 @@ func NewPropertyUsecase(
 	}
 }
 
-func (u *PropertyUsecase) ApplyPriceUpdate(
+func (u *PropertyUsecase) GetPropertyAmenities(
 	ctx context.Context,
-	req *dto.ApplyPriceUpdateRequest,
-) (*dto.ApplyPriceUpdateResponse, error) {
-	userId := _utils.GetProfileIdWithContext(ctx)
-	if userId == 0 {
+	propertyID uint64,
+) ([]*dto.PropertyAmenityDTO, error) {
+	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
 
-	var resp *dto.ApplyPriceUpdateResponse
-	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
-		if err != nil {
-			return _errors.InternalServerException("GetProduct fail", err.Error())
-		}
-		if product == nil {
-			return _errors.NotFoundException("Product not found")
-		}
+	property, err := u.PropertyRepo.GetDetail(ctx, propertyID)
+	if err != nil {
+		return nil, err
+	}
+	if property == nil {
+		return nil, _errors.NotFoundException("Property not found")
+	}
 
-		var oldSalePrice *float64
-		if product.Price != nil {
-			oldSalePrice = product.Price.SalePrice
-		}
-
-		if req.Price == nil || *req.Price <= 0 {
-			return _errors.BadRequestException("Sale price must be greater than 0")
-		}
-
-		newPrice := &domain.ProductPrice{
-			ProductID: &product.ID,
-			Currency:  "VND",
-			SalePrice: req.Price,
-		}
-
-		if err := u.ProductPriceRepo.Create(txCtx, newPrice); err != nil {
-			return _errors.InternalServerException("Create product price fail", err.Error())
-		}
-
-		if err := u.ProductRepo.UpdateLastPrice(txCtx, product.ID, newPrice.ID); err != nil {
-			return _errors.InternalServerException("Update last price fail", err.Error())
-		}
-
-		var pricePerM2 *float64
-		if product.Area > 0 {
-			v := *req.Price / product.Area
-			pricePerM2 = &v
-		}
-
-		resp = &dto.ApplyPriceUpdateResponse{
-			ProductID:  product.ID,
-			OldPrice:   oldSalePrice,
-			NewPrice:   newPrice.SalePrice,
-			PricePerM2: pricePerM2,
-			UpdatedAt:  newPrice.CreatedAt,
-		}
-
-		return nil
-	})
+	amenities, err := u.PropertyAmenityRepo.GetAll(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	selectedIDs, err := u.PropertyAmenityRepo.GetAmenityIDsByProperty(ctx, propertyID)
+	if err != nil {
+		return nil, err
+	}
+
+	selectedMap := map[uint64]bool{}
+	for _, id := range selectedIDs {
+		selectedMap[id] = true
+	}
+
+	result := make([]*dto.PropertyAmenityDTO, 0, len(amenities))
+	for _, a := range amenities {
+		result = append(result, &dto.PropertyAmenityDTO{
+			ID:      a.ID,
+			Name:    a.Name,
+			Active:  true,
+			Checked: selectedMap[a.ID],
+		})
+	}
+
+	return result, nil
+}
+
+func (u *PropertyUsecase) UpdatePropertyAmenities(
+	ctx context.Context,
+	req *dto.UpdatePropertyAmenitiesRequest,
+) error {
+	if _utils.GetProfileIdWithContext(ctx) == 0 {
+		return _errors.UnauthorizedException()
+	}
+
+	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID)
+	if err != nil {
+		return err
+	}
+	if property == nil {
+		return _errors.NotFoundException("Property not found")
+	}
+
+	return u.PropertyAmenityRepo.UpdatePropertyAmenityIds(
+		ctx,
+		req.PropertyID,
+		req.AmenityIDs,
+	)
+}
+
+func (u *PropertyUsecase) GetPropertyTags(
+	ctx context.Context,
+	propertyID uint64,
+) ([]*dto.PropertyTagDTO, error) {
+
+	if _utils.GetProfileIdWithContext(ctx) == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+
+	property, err := u.PropertyRepo.GetDetail(ctx, propertyID)
+	if err != nil {
+		return nil, err
+	}
+	if property == nil {
+		return nil, _errors.NotFoundException("Property not found")
+	}
+
+	tagIDs, err := u.PropertyAmenityRepo.GetTagIDsByProperty(ctx, propertyID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tagIDs) == 0 {
+		return []*dto.PropertyTagDTO{}, nil
+	}
+
+	tags, err := u.PropertyAmenityRepo.FindByIDs(ctx, tagIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*dto.PropertyTagDTO, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, &dto.PropertyTagDTO{
+			ID:   tag.ID,
+			Name: tag.Name,
+			Type: tag.Type,
+			Icon: tag.Icon,
+		})
+	}
+
+	return result, nil
+}
+
+func (u *PropertyUsecase) SearchTags(
+	ctx context.Context,
+	search *dto.TagSearchDTO,
+) ([]*dto.TagDTO, int64, error) {
+	if _utils.GetProfileIdWithContext(ctx) == 0 {
+		return nil, 0, _errors.UnauthorizedException()
+	}
+
+	tags, total, err := u.PropertyAmenityRepo.Search(ctx, search)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	items := make([]*dto.TagDTO, 0, len(tags))
+	for _, tag := range tags {
+		items = append(items, &dto.TagDTO{
+			ID:          tag.ID,
+			Name:        tag.Name,
+			Type:        tag.Type,
+			Description: tag.Description,
+			Icon:        tag.Icon,
+		})
+	}
+
+	return items, total, nil
+}
+
+func (u *PropertyUsecase) UpdatePropertyTags(
+	ctx context.Context,
+	req *dto.UpdatePropertyTagsRequest,
+) error {
+	if _utils.GetProfileIdWithContext(ctx) == 0 {
+		return _errors.UnauthorizedException()
+	}
+
+	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID)
+	if err != nil {
+		return err
+	}
+	if property == nil {
+		return _errors.NotFoundException("Property not found")
+	}
+
+	// validate tag ids (nếu có)
+	if len(req.TagIDs) > 0 {
+		tags, err := u.PropertyAmenityRepo.FindByIDs(ctx, req.TagIDs)
+		if err != nil {
+			return err
+		}
+		if len(tags) != len(req.TagIDs) {
+			return _errors.BadRequestException("Invalid tag ids")
+		}
+	}
+
+	if err := u.PropertyAmenityRepo.ReplacePropertyTags(
+		ctx,
+		req.PropertyID,
+		req.TagIDs,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // LinkProductToProperty link product với property của product cha (nếu có)

@@ -2,6 +2,7 @@ package dto
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/enums"
 	_dto "common/domain/dto"
 	"time"
 )
@@ -59,18 +60,55 @@ type CreatePropertyProductRequest struct {
 }
 
 type ApplyPriceUpdateRequest struct {
-	ProductID   uint64   `json:"productId" validate:"required"`
-	Price       *float64 `json:"price,omitempty"`
-	PriceStatus uint32   `json:"priceStatus,omitempty"`
-	ChangeNote  string   `json:"changeNote,omitempty"`
-	ChangedBy   uint64   `json:"changedBy"`
+	ProductID   uint64                   `json:"productId" validate:"required"`
+	Price       float64                  `json:"price,omitempty"`
+	PriceStatus enums.ProductPriceStatus `json:"priceStatus,omitempty"`
+	ChangeNote  string                   `json:"changeNote,omitempty"`
 }
 
 type ApplyPriceUpdateResponse struct {
-	ProductID uint64   `json:"productId"`
-	OldPrice  *float64 `json:"oldPrice,omitempty"`
-	NewPrice  *float64 `json:"newPrice,omitempty"`
+	ProductID  uint64    `json:"productId"`
+	OldPrice   *float64  `json:"oldPrice,omitempty"`
+	NewPrice   *float64  `json:"newPrice,omitempty"`
+	PricePerM2 *float64  `json:"pricePerM2,omitempty"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+}
 
-	PricePerM2 *float64   `json:"pricePerM2,omitempty"`
-	UpdatedAt  *time.Time `json:"updatedAt"`
+// Amenities
+type TagDTO struct {
+	ID          uint64 `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+}
+
+type PropertyTagDTO struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Icon string `json:"icon"`
+}
+
+type TagSearchDTO struct {
+	_dto.Pagable
+	Keyword string
+	Type    string
+}
+
+type UpdatePropertyTagsRequest struct {
+	PropertyID uint64   `json:"propertyId"`
+	TagIDs     []uint64 `json:"tagIds"`
+}
+
+type PropertyAmenityDTO struct {
+	ID      uint64 `json:"id"`
+	Name    string `json:"name"`
+	Active  bool   `json:"active"`
+	Checked bool   `json:"checked"`
+}
+
+type UpdatePropertyAmenitiesRequest struct {
+	PropertyID uint64   `json:"propertyId"`
+	AmenityIDs []uint64 `json:"amenityIds"` // danh sách checkbox được tick
 }

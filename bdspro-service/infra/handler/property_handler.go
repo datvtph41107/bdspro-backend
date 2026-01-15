@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	"context"
 
@@ -28,6 +29,65 @@ func NewPropertyHandler(
 		PropertyMapper:  propertyMapper,
 		AssetMapper:     assetMapper,
 	}
+}
+
+func (h *PropertyHandler) SearchTags(
+	ctx context.Context,
+	req *bdspropb.TagSearchRequest,
+) (*bdspropb.TagListResponse, error) {
+	dtoReq := h.PropertyMapper.PbToTagSearchDTO(req)
+	items, total, err := h.PropertyUsecase.SearchTags(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.TagListResponse{
+		Data:  h.PropertyMapper.TagListToProto(items),
+		Total: total,
+	}, nil
+}
+
+func (h *PropertyHandler) GetPropertyAmenities(
+	ctx context.Context,
+	req *bdspropb.GetPropertyAmenitiesRequest,
+) (*bdspropb.GetPropertyAmenitiesResponse, error) {
+
+	items, err := h.PropertyUsecase.GetPropertyAmenities(ctx, req.PropertyId)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*bdspropb.PropertyAmenityItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, &bdspropb.PropertyAmenityItem{
+			Id:      item.ID,
+			Name:    item.Name,
+			Active:  item.Active,
+			Checked: item.Checked,
+		})
+	}
+
+	return &bdspropb.GetPropertyAmenitiesResponse{
+		Data: result,
+	}, nil
+}
+
+func (h *PropertyHandler) UpdatePropertyAmenities(
+	ctx context.Context,
+	req *bdspropb.UpdatePropertyAmenitiesRequest,
+) (*bdspropb.Response, error) {
+	err := h.PropertyUsecase.UpdatePropertyAmenities(ctx, &dto.UpdatePropertyAmenitiesRequest{
+		PropertyID: req.PropertyId,
+		AmenityIDs: req.AmenityIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.Response{
+		Id:      req.PropertyId,
+		Message: "successfully",
+	}, nil
 }
 
 // @Summary Lấy danh sách Property

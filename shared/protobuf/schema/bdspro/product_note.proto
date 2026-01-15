@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service ProductNoteService {
+    rpc CreateProductNote(CreateProductNoteRequest) returns (ProductNoteEntity) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/product-notes"
+            body: "*"
+        };
+    }
+
+    rpc UpdateProductNote(UpdateProductNoteReqClient) returns (ProductNoteEntity) {
+        option (google.api.http) = {
+            put: "/v2/bdspro/product-notes/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteProductNote(DeleteProductNoteRequest) returns (DeleteProductNoteResponse) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/product-notes/{noteId}"
+        };
+    }
+
+    rpc TogglePinProductNote(TogglePinProductNoteRequest) returns (TogglePinProductNoteResponse) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/product-notes/{id}/pin"
+            body: "*"
+        };
+    }
+
+    rpc ListProductNotes(ListProductNotesRequest) returns (ListProductNotesResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/product-notes/all/{productId}"
+        };
+    }
+}
+
+message ProductNoteEntity {
+    uint64 id = 1;
+    uint64 productId = 2;
+    ProductNoteMember author = 3;
+    string content = 4;
+    bool isPinned = 5;
+    repeated ProductNoteMember mentions = 6;
+    repeated ProductNoteFile files = 7;
+    string createdAt = 8;
+}
+
+message ProductNoteMember {
+    uint64 id = 1;
+    string name = 2;
+    string role = 3;
+    string avatar = 4;
+}
+
+message ProductNoteFile {
+    uint64 id = 1;
+    string fileName = 2;
+    string fileUrl = 3;
+    string fileType = 4;
+    int64 fileSize = 5;
+}
+
+message CreateProductNoteRequest {
+    uint64 productId = 1;
+    string content = 2;
+    repeated uint64 mentionIds = 3;
+    repeated ProductNoteFile files = 4;
+}
+
+message UpdateProductNoteReqClient {
+    uint64 id = 1;
+    string content = 2;
+    repeated uint64 mentionIds = 3;
+    repeated ProductNoteFile files = 4;
+}
+
+message DeleteProductNoteRequest {
+    uint64 noteId = 1;
+    uint64 requestUserID = 2;
+}
+
+message DeleteProductNoteResponse {
+    bool success = 1;
+}
+
+message TogglePinProductNoteRequest {
+    uint64 id = 1;
+    bool isPinned = 2;
+}
+
+message TogglePinProductNoteResponse {
+    bool success = 1;
+}
+
+message ListProductNotesRequest {
+    uint64 productId = 1;
+    optional bool onlyPinned = 2;
+    optional uint64 authorId = 3;
+    string query = 4;
+    uint32 page = 5;
+    uint32 size = 6;
+}
+
+message ListProductNotesResponse {
+    repeated ProductNoteEntity data = 1;
+    int64 total = 2;
+}

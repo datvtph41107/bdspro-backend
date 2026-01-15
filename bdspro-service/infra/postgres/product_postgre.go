@@ -103,6 +103,20 @@ func (r *GormUserProductRepo) UpdateLastPrice(ctx context.Context, productID uin
 		Error
 }
 
+func (r *GormUserProductRepo) UpdateSourceFields(ctx context.Context, productID uint64, fields map[string]interface{},
+) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	return r.DB.
+		WithContext(ctx).
+		Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Updates(fields).
+		Error
+}
+
 func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity *domain.Product) error {
 	price := entity.Price
 	privateInfo := entity.PrivateData

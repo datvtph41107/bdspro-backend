@@ -1,10 +1,10 @@
 package mapper
 
 import (
-	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/provider"
 	_usecase "common/domain/usecase"
 	_utils "common/utils"
 	"context"
@@ -13,11 +13,11 @@ import (
 )
 
 type DistributionMapper struct {
-	CrmClient       *client.CrmClient
+	CrmClient       provider.CrmProvider
 	CodeDataUsecase *_usecase.CodeDataUsecase
 }
 
-func NewDistributionMapper(crmClient *client.CrmClient, codeDataUsecase *_usecase.CodeDataUsecase) *DistributionMapper {
+func NewDistributionMapper(crmClient provider.CrmProvider, codeDataUsecase *_usecase.CodeDataUsecase) *DistributionMapper {
 	return &DistributionMapper{
 		CrmClient:       crmClient,
 		CodeDataUsecase: codeDataUsecase,

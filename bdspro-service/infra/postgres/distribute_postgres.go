@@ -199,8 +199,9 @@ func (r *DistributePostgres) Revoke(ctx context.Context, id uint64, revokedAt ti
 		updateData := map[string]interface{}{
 			"revoked_at": revokedAt,
 		}
-		if revoke.Reason != 0 {
-			updateData["reason"] = enums.DistributionReason(revoke.Reason)
+
+		updateData["reason"] = enums.DistributionReason(revoke.Reason)
+		if revoke.Reason == uint32(enums.DISTRIBUTION_REASON_OTHER) {
 			updateData["reason_other"] = revoke.ReasonOther
 		}
 

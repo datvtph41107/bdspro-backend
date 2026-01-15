@@ -126,6 +126,42 @@
         "tags": [
           "PropertyHistoryService"
         ]
+      },
+      "delete": {
+        "operationId": "PropertyHistoryService_SoftDeletePropertyHistoryId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbSoftDeletePropertyHistoryIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "actorId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PropertyHistoryService"
+        ]
       }
     }
   },
@@ -185,16 +221,8 @@
           }
         },
         "total": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
-        },
-        "page": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "size": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -225,9 +253,6 @@
           "type": "string",
           "format": "uint64"
         },
-        "actorType": {
-          "type": "string"
-        },
         "occurredAt": {
           "type": "string"
         },
@@ -236,6 +261,14 @@
         },
         "updatedAt": {
           "type": "string"
+        }
+      }
+    },
+    "notificationpbSoftDeletePropertyHistoryIdResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
         }
       }
     },

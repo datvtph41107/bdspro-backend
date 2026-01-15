@@ -2,6 +2,7 @@ package client
 
 import (
 	"bdspro/env"
+	"bdspro/internal/provider"
 	"context"
 	"pb/clients"
 	sharepb "pb/types/shared"
@@ -11,7 +12,7 @@ type CrmClient struct {
 	*clients.CrmGrpcClient
 }
 
-func NewCrmClient() *CrmClient {
+func NewCrmClient() provider.CrmProvider {
 	return &CrmClient{
 		clients.MakeCrmGrpcClient(env.ENV_RUNTIME),
 	}
@@ -39,3 +40,10 @@ func (c *CrmClient) GetOriginProfileByOriginIds(ctx context.Context, originIDs [
 
 // GetContactById retrieves contact information by ID using internal service
 // TODO: Uncomment sau khi generate proto code với method GetContactById
+func (c *CrmClient) GetContactById(ctx context.Context, id uint64) (*sharepb.ContactDTO, error) {
+	resp, err := c.GetContactById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

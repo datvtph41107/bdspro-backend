@@ -15,38 +15,42 @@ type Product struct {
 	// DepositeID      *uint64             `gorm:"type:int8" json:"depositeId,omitempty"`
 	// ID              uint64              `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
 	// Deposite        *Deposite           `gorm:"-" json:"deposite,omitempty"`
-	ParentId       *uint64             `gorm:"type:int8" json:"parentId,omitempty"`
-	AssetId        *uint64             `gorm:"type:int8" json:"assetId,omitempty"`
-	PropertyID     *uint64             `gorm:"type:int8" json:"propertyId,omitempty"`
-	Property       *Property           `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
-	PostIds        []uint64            `gorm:"-" json:"postIds,omitempty"`
-	ImageId        *uint64             `gorm:"type:int8" json:"imageId,omitempty"`
-	PropertyTypeId *uint64             `json:"propertyTypeId,omitempty"`
-	PropertyType   *PropertyTypeItem   `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
-	DocTypeId      *uint64             `json:"docTypeId,omitempty"`
-	DocType        *DocTypeItem        `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
-	DocTypeNote    string              `gorm:"column:doc_type_note" json:"docTypeNote,omitempty"`
-	ProjectID      *uint64             `gorm:"type:int8" json:"projectId,omitempty"`
-	Amenities      []AmenityItem       `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
-	Visibility     enums.EVisibility   `json:"visibility,omitempty" gorm:"default:10"` //phạm vi
-	Name           string              `gorm:"size:255" json:"name,omitempty"`
-	Code           string              `gorm:"size:15" json:"code,omitempty"`
-	CategoryID     *uint64             `json:"categoryId,omitempty"`
-	Area           float64             `json:"area"`
-	PositionUrl    string              `json:"positionUrl,omitempty"`
-	Description    string              `json:"description,omitempty"`
-	LastPriceID    *uint64             `json:"lastPriceId,omitempty"`
-	Price          *ProductPrice       `gorm:"foreignKey:LastPriceID;references:ID" json:"price,omitempty"`
-	ApartmentID    *uint64             `json:"apartmentId,omitempty"`
-	Apartment      *Apartment          `gorm:"foreignKey:ApartmentID;references:ID" json:"apartment,omitempty"`
-	ApartmentAttr  *ApartmentAttribute `gorm:"-" json:"apartmentAttribute,omitempty"`
-	Build          *ProjectBuild       `gorm:"-" json:"build,omitempty"`
-	Project        *Project            `gorm:"foreignKey:ProjectID;references:ID" json:"project,omitempty"`
-	Developer      *Developer          `gorm:"-" json:"developer,omitempty"`
+	ParentId       *uint64           `gorm:"type:int8" json:"parentId,omitempty"`
+	AssetId        *uint64           `gorm:"type:int8" json:"assetId,omitempty"`
+	PropertyID     *uint64           `gorm:"type:int8" json:"propertyId,omitempty"`
+	Property       *Property         `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
+	PostIds        []uint64          `gorm:"-" json:"postIds,omitempty"`
+	ImageId        *uint64           `gorm:"type:int8" json:"imageId,omitempty"`
+	PropertyTypeId *uint64           `json:"propertyTypeId,omitempty"`
+	PropertyType   *PropertyTypeItem `gorm:"foreignKey:PropertyTypeId;references:ID" json:"propertyType,omitempty"`
+	DocTypeId      *uint64           `json:"docTypeId,omitempty"`
+	DocType        *DocTypeItem      `gorm:"foreignKey:DocTypeId;references:ID" json:"docType,omitempty"`
+	DocTypeNote    string            `gorm:"column:doc_type_note" json:"docTypeNote,omitempty"`
+	ProjectID      *uint64           `gorm:"type:int8" json:"projectId,omitempty"`
+	Amenities      []AmenityItem     `gorm:"many2many:product_amenity;foreignKey:ID;joinForeignKey:ProductID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
+	Visibility     enums.EVisibility `json:"visibility,omitempty" gorm:"default:10"` //phạm vi
+	Name           string            `gorm:"size:255" json:"name,omitempty"`
+	Code           string            `gorm:"size:15" json:"code,omitempty"`
+	CategoryID     *uint64           `json:"categoryId,omitempty"`
+	Area           float64           `json:"area"`
+	PositionUrl    string            `json:"positionUrl,omitempty"`
+	Description    string            `json:"description,omitempty"`
+	LastPriceID    *uint64           `json:"lastPriceId,omitempty"`
+	Price          *ProductPrice     `gorm:"-:migration" json:"price,omitempty"`
 
-	SourceType        enums.ESourceType `json:"sourceType,omitempty"`
-	SourceContactId   *uint64           `gorm:"type:int8" json:"sourceContactId,omitempty"`
-	SourceContactNote string            `gorm:"type:text" json:"sourceContactNote,omitempty"`
+	ApartmentID   *uint64             `json:"apartmentId,omitempty"`
+	Apartment     *Apartment          `gorm:"foreignKey:ApartmentID;references:ID" json:"apartment,omitempty"`
+	ApartmentAttr *ApartmentAttribute `gorm:"-" json:"apartmentAttribute,omitempty"`
+	Build         *ProjectBuild       `gorm:"-" json:"build,omitempty"`
+	Project       *Project            `gorm:"foreignKey:ProjectID;references:ID" json:"project,omitempty"`
+	Developer     *Developer          `gorm:"-" json:"developer,omitempty"`
+
+	SourceType        enums.ESourceType   `json:"sourceType,omitempty"`
+	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
+	SourceContactId   *uint64             `gorm:"type:int8" json:"sourceContactId,omitempty"`
+	Priority          enums.EPriority     `gorm:"type:smallint;default:20" json:"priority"`
+	SourceContactNote string              `gorm:"type:text" json:"sourceContactNote,omitempty"`
+
 	// CustomerID        *uint64                  `json:"customerId,omitempty"`
 	PrivateData       *ProductPrivate          `json:"privateInfo,omitempty"`
 	Note              string                   `json:"note,omitempty"`

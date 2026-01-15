@@ -1,26 +1,14 @@
 package repo
 
 import (
-	_enum "common/domain/enum"
 	"context"
 	"notification/internal/domain"
+	"notification/internal/dto"
 )
-
-type PropertyHistoryQuery struct {
-	SubjectID   *uint64
-	SubjectType *string
-	Action      *_enum.PropertyAction
-	ActorID     *uint64
-	Keyword     *string
-	Limit       int
-	Offset      int
-	Sort        string
-}
 
 type PropertyHistoryRepo interface {
 	Create(ctx context.Context, entity *domain.PropertyHistoryEntity) (*domain.PropertyHistoryEntity, error)
-	Search(
-		ctx context.Context,
-		query PropertyHistoryQuery,
-	) ([]domain.PropertyHistoryEntity, error)
+	GetByID(ctx context.Context, id uint64) (*domain.PropertyHistoryEntity, error)
+	Delete(ctx context.Context, id uint64) error
+	Search(ctx context.Context, query dto.PropertyHistoryQueryDTO) ([]domain.PropertyHistoryEntity, int64, error)
 }

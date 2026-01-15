@@ -26,15 +26,16 @@ type ContactEntity struct {
 	OwnerID    uint64             `gorm:"column:owner_id;" json:"ownerId"`
 	OwnerOf    base_enum.EOwnerOf `gorm:"column:owner_of;default:30;" json:"ownerOf" binding:"required"`
 
-	ProfileID    *uint64              `gorm:"column:profile_id;" json:"profileId"`
-	FriendStatus *FriendEntity        `gorm:"-" json:"friendStatus" binding:"required"`
-	Status       enums.EStatusContact `gorm:"column:status;default:10" json:"status"`
-	ContactTags  pq.Int32Array        `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
+	ProfileID       *uint64              `gorm:"column:profile_id;" json:"profileId"`
+	FriendStatus    *FriendEntity        `gorm:"-" json:"friendStatus" binding:"required"`
+	Status          enums.EStatusContact `gorm:"column:status;default:10" json:"status"`
+	ContactTags     pq.Int32Array        `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
+	OriginProfileID *uint64              `gorm:"column:origin_profile_id"`
 
 	// transient
-	Tags            []TagEntity `gorm:"-" json:"tags"`
-	ProductIDs      []uint64    `gorm:"-" json:"productIds"`
-	OriginProfileID *uint64     `gorm:"column:origin_profile_id"`
+	Tags          []TagEntity    `gorm:"-" json:"tags"`
+	ProductIDs    []uint64       `gorm:"-" json:"productIds"`
+	OriginProfile *OriginProfile `gorm:"-" json:"originProfile"`
 }
 
 func (ContactEntity) TableName() string {

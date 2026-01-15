@@ -65,6 +65,7 @@ var wireSet = wire.NewSet(
 	notification_internal_usecase.NewPersonConfigUsecase,
 	notification_infra_postgres.NewPostgreNotification,
 	notification_infra_handler.NewPropertyHistoryHandler,
+	notification_infra_mapper.NewPropertyHistoryMapper,
 	notification_internal_usecase.NewPropertyHistoryUseCase,
 	notification_infra_cache.NewRedisClient,
 	notification_internal_dto.NewSendNotiResponse,

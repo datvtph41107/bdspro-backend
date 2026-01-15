@@ -15,6 +15,8 @@ type ProductRepo interface {
 
 	UpdateLastPrice(ctx context.Context, productID uint64, priceID uint64) error
 
+	UpdateSourceFields(ctx context.Context, productID uint64, fields map[string]interface{}) error
+
 	UpdateSaleStatus(ctx context.Context, id uint64, status enums.EProductSaleStatus) error
 
 	// Cập nhật trạng thái cho thuê

@@ -7,7 +7,8 @@ import (
 
 type PriceHistorySearch struct {
 	_dto.Pagable
-	ProductID uint64 `json:"productId"`
+	ProductID       uint64 `json:"productId"`
+	TransactionType *enums.TransactionType
 }
 
 type PriceHistoryItemDTO struct {

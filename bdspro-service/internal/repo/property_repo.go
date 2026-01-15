@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud3"
+	_dto "common/domain/dto"
 	"context"
 )
 
@@ -49,5 +50,15 @@ type PropertyMediaRepo interface {
 }
 
 type PropertyAmenityRepo interface {
+	GetAll(ctx context.Context, search *dto.AmenitySearchDTO) ([]domain.AmenityItem, error)
+	InterText(text string, limit int) ([]uint64, error)
+	InterTextToItem(text string, limit int) ([]_dto.ItemDTO, error)
+
+	GetAmenityIDsByProperty(ctx context.Context, propertyID uint64) ([]uint64, error)
+
 	UpdatePropertyAmenityIds(ctx context.Context, propertyID uint64, amenityIDs []uint64) error
+	GetTagIDsByProperty(ctx context.Context, propertyID uint64) ([]uint64, error)
+	ReplacePropertyTags(ctx context.Context, propertyID uint64, tagIDs []uint64) error
+	Search(ctx context.Context, search *dto.TagSearchDTO) ([]*domain.Tag, int64, error)
+	FindByIDs(ctx context.Context, ids []uint64) ([]*domain.Tag, error)
 }
