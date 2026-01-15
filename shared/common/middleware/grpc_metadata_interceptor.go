@@ -54,6 +54,7 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	}
 
 	appendIfExists(md, "profileId", claims.ProfileId)
+	appendIfExists(md, "originId", claims.OriginId)
 	if claims.OrganizationId != nil {
 		appendIfExists(md, "organizationId", *claims.OrganizationId)
 	}
@@ -119,6 +120,7 @@ func ParseGrpcMetadataContextMiddleware(
 	}
 
 	ctx = parseUint64Metadata(ctx, md, "profileId", _enums.ProfileIDKey)
+	ctx = parseUint64Metadata(ctx, md, "originId", _enums.OriginIDKey)
 	ctx = parseUint64Metadata(ctx, md, "organizationId", _enums.OrganizationIDKey)
 	ctx = parseUint64Metadata(ctx, md, "authId", _enums.AuthIDKey)
 	ctx = parseUint64Metadata(ctx, md, "session", _enums.SessionKey)
@@ -164,6 +166,7 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 	}
 	// Các key giống với middleware ở server
 	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
+	appendUint64IfExists(_enums.OriginIDKey, "originId")
 	appendUint64IfExists(_enums.OrganizationIDKey, "organizationId")
 	appendUint64IfExists(_enums.AuthIDKey, "authId")
 	appendUint64IfExists(_enums.SessionKey, "session")
@@ -216,6 +219,10 @@ func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 	}
 	if v, ok := parseUint64("profileId"); ok {
 		p.ProfileId = v
+	}
+
+	if v, ok := parseUint64("originId"); ok {
+		p.OriginId = v
 	}
 
 	p.OrganizationId = parseUintPtr("organizationId")

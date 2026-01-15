@@ -45,6 +45,7 @@ func UnaryClientInterceptor(
 
 	// Gắn các giá trị cần truyền sang service B
 	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
+	appendUint64IfExists(_enums.OriginIDKey, "originId")
 	appendUint64IfExists(_enums.OrganizationIDKey, "organizationId")
 	appendUint64IfExists(_enums.AuthIDKey, "authId")
 	appendUint64IfExists(_enums.SessionKey, "session")

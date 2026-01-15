@@ -24,6 +24,7 @@ type UserMetadata struct {
 type JwtTokenProperties struct {
 	AuthID         uint64                 `json:"authId"`
 	ProfileID      uint64                 `json:"profileId"`
+	OriginID       uint64                 `json:"originId"`
 	OrganizationID *uint64                `json:"organizationId"`
 	PlanID         *uint64                `json:"planId"`
 	Role           string                 `json:"role"`

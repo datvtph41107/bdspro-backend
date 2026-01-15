@@ -4,6 +4,7 @@ type ContextKey string
 
 const (
 	ProfileIDKey      ContextKey = "profileId"
+	OriginIDKey       ContextKey = "originId"
 	OrganizationIDKey ContextKey = "organizationId"
 	AuthIDKey         ContextKey = "authId"
 	SessionKey        ContextKey = "session"

@@ -31,6 +31,14 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 	return profileId.(uint64)
 }
 
+func GetOriginIdFromContext(ctx context.Context) uint64 {
+	profileId := ctx.Value(_enums.OriginIDKey)
+	if profileId == nil {
+		return 0
+	}
+	return profileId.(uint64)
+}
+
 func GetrRoleWithContext(ctx context.Context) uint64 {
 	// clms := ctx.Value("claims")
 	// if claims, ok := clms.(*Principal); ok {
@@ -91,8 +99,10 @@ func GetDeviceIdFromContext(c context.Context) string {
 func CloneContext(ctx context.Context) context.Context {
 	cloneCtx := context.Background()
 	profileId := GetProfileIdWithContext(ctx)
+	originId := GetOriginIdFromContext(ctx)
 	organizationId := GetOrganizationIdFromContext(ctx)
 	cloneCtx = context.WithValue(cloneCtx, _enums.ProfileIDKey, profileId)
+	cloneCtx = context.WithValue(cloneCtx, _enums.OriginIDKey, originId)
 	cloneCtx = context.WithValue(cloneCtx, _enums.OrganizationIDKey, organizationId)
 	return cloneCtx
 }
@@ -130,6 +140,12 @@ func CreateContextFromGin(c *gin.Context) context.Context {
 	if profileId, exists := c.Get("profileId"); exists {
 		if pid, ok := profileId.(uint64); ok {
 			ctx = context.WithValue(ctx, _enums.ProfileIDKey, pid)
+		}
+	}
+
+	if originId, exists := c.Get("originId"); exists {
+		if oid, ok := originId.(uint64); ok {
+			ctx = context.WithValue(ctx, _enums.OriginIDKey, oid)
 		}
 	}
 

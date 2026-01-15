@@ -18,6 +18,7 @@ import (
 type Principal struct {
 	AuthID         uint64           `json:"sub"`
 	ProfileId      uint64           `json:"profile"`
+	OriginId       uint64           `json:"origin"`
 	OrganizationId *uint64          `json:"organization"`
 	PlanId         *uint64          `json:"plan"`
 	Type           string           `json:"type"`
@@ -30,6 +31,7 @@ type Principal struct {
 func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 	claims := jwt.MapClaims{
 		"profile":      jwtTokenProperties.ProfileID,
+		"origin":       jwtTokenProperties.OriginID,
 		"organization": jwtTokenProperties.OrganizationID,
 		"role":         jwtTokenProperties.Role,
 		"type":         jwtTokenProperties.Type,
