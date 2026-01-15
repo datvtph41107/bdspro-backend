@@ -3963,17 +3963,6 @@
         }
       }
     },
-    "bdspropbPrice": {
-      "type": "object",
-      "properties": {
-        "sale": {
-          "$ref": "#/definitions/bdspropbSalePrice"
-        },
-        "rent": {
-          "$ref": "#/definitions/bdspropbRentPrice"
-        }
-      }
-    },
     "bdspropbPriceHistoryItem": {
       "type": "object",
       "properties": {
@@ -3992,12 +3981,20 @@
           "type": "string"
         },
         "old": {
-          "$ref": "#/definitions/bdspropbPrice"
+          "type": "number",
+          "format": "double"
         },
         "new": {
-          "$ref": "#/definitions/bdspropbPrice"
+          "type": "number",
+          "format": "double"
         },
         "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "changeNote": {
           "type": "string"
         }
       }
@@ -5185,27 +5182,6 @@
       },
       "title": "Message definitions"
     },
-    "bdspropbRentPrice": {
-      "type": "object",
-      "properties": {
-        "price": {
-          "type": "number",
-          "format": "double"
-        },
-        "commission": {
-          "type": "number",
-          "format": "double"
-        },
-        "commissionType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "paymentCycle": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "bdspropbResponse": {
       "type": "object",
       "properties": {
@@ -5215,27 +5191,6 @@
         },
         "message": {
           "type": "string"
-        }
-      }
-    },
-    "bdspropbSalePrice": {
-      "type": "object",
-      "properties": {
-        "price": {
-          "type": "number",
-          "format": "double"
-        },
-        "commission": {
-          "type": "number",
-          "format": "double"
-        },
-        "commissionType": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "deposit": {
-          "type": "number",
-          "format": "double"
         }
       }
     },

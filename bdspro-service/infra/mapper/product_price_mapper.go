@@ -24,6 +24,7 @@ func (m *ProductPriceMapper) DTOToPb(
 		TransactionType: bdspropb.ProductTransactionType(item.TransactionType),
 		Currency:        item.Currency,
 		CreatedAt:       item.CreatedAt,
+		ChangeNote:      item.ChangeNote,
 	}
 
 	if item.Old != nil {
@@ -39,20 +40,20 @@ func (m *ProductPriceMapper) DTOToPb(
 
 func (m *ProductPriceMapper) mapPriceSnapshot(
 	dto *dto.PriceDTO,
-) *bdspropb.Price {
+) float64 {
 
 	if dto == nil {
-		return nil
+		return 0
 	}
 
-	snapshot := &bdspropb.Price{}
+	snapshot := float64(0)
 
 	if dto.Sale != nil {
-		snapshot.Sale = m.mapSalePrice(dto.Sale)
+		snapshot = *dto.Sale.Price
 	}
 
 	if dto.Rent != nil {
-		snapshot.Rent = m.mapRentPrice(dto.Rent)
+		snapshot += *dto.Rent.Price
 	}
 
 	return snapshot

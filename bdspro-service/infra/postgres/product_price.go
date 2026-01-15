@@ -120,22 +120,21 @@ func (r *GormProductPriceRepo) GetHistoryProductPrice(
 
 	db := r.DB.WithContext(ctx).
 		Table("product_price pp").
-		Joins("JOIN products p ON p.id = pp.product_id").
+		// Joins("JOIN products p ON p.id = pp.product_id").
 		Where(`
-			p.id = ?
-			AND p.transaction_type = ?
+			pp.product_id = ?
 			AND pp.deleted_at IS NULL
-		`, req.ProductID, req.TransactionType)
+		`, req.ProductID)
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	if err := db.
-		Order("pp.created_at DESC, pp.id DESC").
+		Order("pp.created_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
-		Find(&prices).Error; err != nil {
+		Scan(&prices).Error; err != nil {
 		return nil, 0, err
 	}
 

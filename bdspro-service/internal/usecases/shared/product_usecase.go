@@ -1581,8 +1581,7 @@ func (u *ProductUsecase) GetPriceHistory(
 	}
 
 	items := make([]*dto.PriceHistoryItemDTO, 0, len(prices))
-	var prev *domain.ProductPrice
-	for _, cur := range prices {
+	for i, cur := range prices {
 		item := &dto.PriceHistoryItemDTO{
 			ID:              cur.ID,
 			ProductID:       *cur.ProductID,
@@ -1590,14 +1589,16 @@ func (u *ProductUsecase) GetPriceHistory(
 			Currency:        cur.Currency,
 			New:             priceBuilder(cur, product.TransactionType),
 			CreatedAt:       _utils.FormatTimeToString(cur.CreatedAt),
+			ChangeNote:      cur.ChangeNote,
 		}
 
-		if prev != nil {
+		// Lấy giá prev từ item trước đó trong danh sách
+		if i < len(prices)-1 {
+			prev := prices[i+1]
 			item.Old = priceBuilder(prev, product.TransactionType)
 		}
 
 		items = append(items, item)
-		prev = cur
 	}
 	return items, total, nil
 }

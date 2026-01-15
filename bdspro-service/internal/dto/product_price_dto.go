@@ -19,6 +19,7 @@ type PriceHistoryItemDTO struct {
 	Old             *PriceDTO             `json:"old,omitempty"`
 	New             *PriceDTO             `json:"new"`
 	CreatedAt       string                `json:"createdAt"`
+	ChangeNote      string                `json:"changeNote"`
 }
 type PriceDTO struct {
 	Sale *SalePriceDTO `json:"sale,omitempty"`

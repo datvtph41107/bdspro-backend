@@ -1088,20 +1088,11 @@ func (s *ProductHandler) GetPriceHistory(
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
 
-	page := req.Page
-	if page == 0 {
-		page = 1
-	}
-	size := req.Size
-	if size == 0 {
-		size = 20
-	}
-
 	items, total, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
 		ProductID: req.Id,
 		Pagable: _dto.Pagable{
-			Page: page,
-			Size: size,
+			Page: req.Page,
+			Size: req.Size,
 		},
 	})
 	if err != nil {
