@@ -125,5 +125,7 @@ func MigrateDomain() {
 	// &domain.PropertyRelation{},
 	// &domain.ProvinceV2{},
 	// &domain.WardV2{},
+
+	// &domain.ProductUser{},
 	)
 }

@@ -39,7 +39,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 	ctx context.Context,
 	req *dto.DistributeDTO,
 ) (*dto.DistributeResultDTO, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.Validate(false); err != nil {
 		return nil, _errors.BadRequestException(err.Error())
 	}
 
@@ -104,7 +104,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 	distID uint64,
 	req *dto.DistributeDTO,
 ) (*dto.DistributeResultDTO, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.Validate(true); err != nil {
 		return nil, _errors.BadRequestException(err.Error())
 	}
 
@@ -144,14 +144,14 @@ func (uc *DistributionUsecase) UpdateDistribute(
 			return _errors.InternalServerException("update distribution failed")
 		}
 
-		if err := uc.distributionRepo.AssignPartner(
-			txCtx,
-			dist.ID,
-			dist.ProductID,
-			req.PartnerIDs,
-		); err != nil {
-			return err
-		}
+		// if err := uc.distributionRepo.AssignPartner(
+		// 	txCtx,
+		// 	dist.ID,
+		// 	dist.ProductID,
+		// 	req.PartnerIDs,
+		// ); err != nil {
+		// 	return err
+		// }
 
 		resp = mapToResultDTO(dist, len(req.PartnerIDs))
 		return nil
@@ -228,6 +228,30 @@ func (uc *DistributionUsecase) GetListPartnersOfDistribute(ctx context.Context, 
 		return nil, _errors.InternalServerException("Failed to get partners")
 	}
 	return partners, nil
+}
+
+func (uc *DistributionUsecase) RevokeUserFromDistribute(ctx context.Context, distributeID uint64, originProfileID uint64) error {
+	return uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// Xóa user khỏi product_user và lấy số lượng còn lại
+		remainingCount, err := uc.distributionRepo.RevokeUser(txCtx, distributeID, originProfileID)
+		if err != nil {
+			return _errors.InternalServerException("Failed to revoke user from distribute")
+		}
+
+		// Nếu distribute chỉ còn 0 product_user, revoke distribute
+		if remainingCount == 0 {
+			now := time.Now()
+			revoke := dto.RevokeDTO{
+				Reason:      uint32(enums.DISTRIBUTION_REASON_OTHER),
+				ReasonOther: "Xóa đối tác",
+			}
+			if err := uc.distributionRepo.Revoke(txCtx, distributeID, now, revoke); err != nil {
+				return _errors.InternalServerException("Failed to revoke distribute")
+			}
+		}
+
+		return nil
+	})
 }
 
 func calculatePartnerCommission(price int64, commissionType enums.CommissionType, commissionValue float64) float64 {

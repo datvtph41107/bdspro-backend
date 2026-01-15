@@ -6,5 +6,5 @@ import (
 )
 
 type OriginProfileRepo interface {
-	GetByOriginIDs(ctx context.Context, originIDs []uint64) ([]*domain.OriginProfile, error)
+	GetByIDs(ctx context.Context, originIDs []uint64) ([]*domain.OriginProfile, error)
 }

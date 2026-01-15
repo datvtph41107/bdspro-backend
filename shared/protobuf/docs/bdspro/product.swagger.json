@@ -3969,6 +3969,30 @@
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
+    "bdspropbProductAttachmentResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        }
+      }
+    },
+    "bdspropbProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        }
+      }
+    },
     "bdspropbProductNavigationResponse": {
       "type": "object",
       "properties": {
@@ -5995,7 +6019,7 @@
     "sharepbOriginProfile": {
       "type": "object",
       "properties": {
-        "id": {
+        "originId": {
           "type": "string",
           "format": "uint64"
         },
@@ -6008,9 +6032,13 @@
         "avatar": {
           "type": "string"
         },
-        "originId": {
+        "ownerId": {
           "type": "string",
           "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

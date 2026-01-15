@@ -16,4 +16,5 @@ type DistributeRepository interface {
 	GetListDistrByProduct(ctx context.Context, productID uint64, dto *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error)
 	GetListPartnersOfDistribute(ctx context.Context, disId uint64) ([]*domain.ProductUser, error)
 	Revoke(ctx context.Context, id uint64, revokedAt time.Time, revoke dto.RevokeDTO) error
+	RevokeUser(ctx context.Context, distributeID uint64, originProfileID uint64) (int64, error)
 }

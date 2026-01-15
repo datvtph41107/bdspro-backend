@@ -91,7 +91,7 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 	db := r.GetDB(c)
 
 	baseQuery := db.Table("tb_contact tb").
-		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.id").
+		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.origin_id").
 		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", ownerId, ownerType)
 
 	var total int64
@@ -101,11 +101,12 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 
 	err := baseQuery.
 		Select(`tb.*,
-			op.id as origin_profile_id,
-			op.display_name as display_name,
+			op.origin_id as origin_id,
+			op.display_name as origin_display_name,
 			op.phone as origin_phone,
 			op.avatar as origin_avatar,
-			op.origin_id as origin_id`).
+			op.owner_id as origin_owner_id,
+			op.owner_of as origin_owner_of`).
 		Order("CASE WHEN tb.profile_id IS NOT NULL THEN 0 ELSE 1 END, tb.created_at DESC").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).

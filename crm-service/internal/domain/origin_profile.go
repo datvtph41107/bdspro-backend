@@ -6,12 +6,13 @@ import (
 )
 
 type OriginProfile struct {
-	_models.BaseEntity
-	OwnerOf     enums.EOriginProfileType `gorm:"column:type;not null;default:10" json:"ownerOf"`
+	_models.BaseEntityNotId
+	OriginID    uint64                   `gorm:"column:origin_id;primaryKey" json:"originId"`
 	DisplayName string                   `gorm:"column:display_name" json:"displayName"`
 	Phone       string                   `gorm:"column:phone" json:"phone"`
 	Avatar      string                   `gorm:"column:avatar" json:"avatar"`
-	OriginID    *uint64                  `gorm:"column:origin_id"` // references cua UserId
+	OwnerID     uint64                   `gorm:"column:owner_id"` // references cua UserId
+	OwnerOf     enums.EOriginProfileType `gorm:"column:owner_of;not null;default:10" json:"ownerOf"`
 }
 
 func (OriginProfile) TableName() string {

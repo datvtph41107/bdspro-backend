@@ -122,6 +122,22 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DISTRIBUTION_STATUS_UNKNOWN",
+                "DISTRIBUTION_STATUS_ACTIVE",
+                "DISTRIBUTION_STATUS_EXPRIED",
+                "DISTRIBUTION_STATUS_REVOKED"
+              ]
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -161,6 +177,44 @@
         ]
       }
     },
+    "/v2/bdspro/distributions/{distributeId}/users/{originProfileId}": {
+      "delete": {
+        "operationId": "DistributionService_RevokeUserFromDistribute",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbRevokeUserFromDistributeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "distributeId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "originProfileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DistributionService"
+        ]
+      }
+    },
     "/v2/bdspro/distributions/{id}": {
       "get": {
         "operationId": "DistributionService_GetDistribution",
@@ -191,7 +245,7 @@
           "DistributionService"
         ]
       },
-      "post": {
+      "put": {
         "operationId": "DistributionService_UpdateDistribute",
         "responses": {
           "200": {
@@ -441,6 +495,9 @@
             "type": "object",
             "$ref": "#/definitions/sharepbOriginProfile"
           }
+        },
+        "code": {
+          "type": "string"
         }
       }
     },
@@ -457,11 +514,12 @@
     "bdspropbDistributionStatus": {
       "type": "string",
       "enum": [
-        "DISTRIBUTION_STATUS_EXPRIED",
+        "DISTRIBUTION_STATUS_UNKNOWN",
         "DISTRIBUTION_STATUS_ACTIVE",
+        "DISTRIBUTION_STATUS_EXPRIED",
         "DISTRIBUTION_STATUS_REVOKED"
       ],
-      "default": "DISTRIBUTION_STATUS_EXPRIED"
+      "default": "DISTRIBUTION_STATUS_UNKNOWN"
     },
     "bdspropbListDistributionsResponse": {
       "type": "object",
@@ -502,6 +560,14 @@
         }
       }
     },
+    "bdspropbRevokeUserFromDistributeResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -533,7 +599,7 @@
     "sharepbOriginProfile": {
       "type": "object",
       "properties": {
-        "id": {
+        "originId": {
           "type": "string",
           "format": "uint64"
         },
@@ -546,9 +612,13 @@
         "avatar": {
           "type": "string"
         },
-        "originId": {
+        "ownerId": {
           "type": "string",
           "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

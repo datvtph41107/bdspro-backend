@@ -4,6 +4,8 @@ import (
 	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"bdspro/internal/enums"
+	_usecase "common/domain/usecase"
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
@@ -11,12 +13,14 @@ import (
 )
 
 type DistributionMapper struct {
-	CrmClient *client.CrmClient
+	CrmClient       *client.CrmClient
+	CodeDataUsecase *_usecase.CodeDataUsecase
 }
 
-func NewDistributionMapper(crmClient *client.CrmClient) *DistributionMapper {
+func NewDistributionMapper(crmClient *client.CrmClient, codeDataUsecase *_usecase.CodeDataUsecase) *DistributionMapper {
 	return &DistributionMapper{
-		CrmClient: crmClient,
+		CrmClient:       crmClient,
+		CodeDataUsecase: codeDataUsecase,
 	}
 }
 
@@ -46,6 +50,7 @@ func (m *DistributionMapper) distributionEntityToProto(
 }
 
 func (m *DistributionMapper) DistributionWithPartnersToProto(
+	ctx context.Context,
 	dto *dto.DistributionWithPartners,
 ) *bdspropb.DistributionEntity {
 	partnerIds := make([]uint64, len(dto.PartnerIds))
@@ -56,6 +61,44 @@ func (m *DistributionMapper) DistributionWithPartnersToProto(
 	pbResult.PartnerIds = partnerIds
 	pbResult.PartnerCount = int32(dto.PartnerCount)
 	pbResult.Status = bdspropb.DistributionStatus(dto.Status)
+
+	// Generate distribution code
+	pbResult.Code = m.generateDistributionCode(ctx, dto.ID)
+
+	// Call CRM service to get origin profiles for partners
+	if len(partnerIds) > 0 {
+		originIDs := make([]uint64, 0)
+		for _, id := range partnerIds {
+			if id != 0 {
+				originIDs = append(originIDs, id)
+			}
+		}
+
+		if len(originIDs) > 0 {
+			originProfiles, err := m.CrmClient.GetOriginProfileByOriginIds(ctx, originIDs)
+			if err == nil && len(originProfiles) > 0 {
+				// Create map for quick lookup
+				originProfileMap := make(map[uint64]*sharepb.OriginProfile, len(originProfiles))
+				for _, profile := range originProfiles {
+					if profile != nil && profile.OriginId != 0 {
+						originProfileMap[profile.OriginId] = profile
+					}
+				}
+
+				// Map partners to distribution entity
+				partners := make([]*sharepb.OriginProfile, 0)
+				for _, partnerId := range partnerIds {
+					if partnerId != 0 {
+						if profile, ok := originProfileMap[partnerId]; ok {
+							partners = append(partners, profile)
+						}
+					}
+				}
+				pbResult.Partners = partners
+			}
+		}
+	}
+
 	return pbResult
 }
 
@@ -63,60 +106,82 @@ func (m *DistributionMapper) DistributionWithPartnersListToProto(
 	ctx context.Context,
 	list []*dto.DistributionWithPartners,
 ) []*bdspropb.DistributionEntity {
-	result := make([]*bdspropb.DistributionEntity, len(list))
-	for i, e := range list {
-		result[i] = m.DistributionWithPartnersToProto(e)
-	}
-
-	// Collect unique origin IDs
+	// Collect unique origin IDs first for batch call
 	originIDSet := make(map[uint64]struct{})
-	for _, e := range result {
+	for _, e := range list {
 		for _, id := range e.PartnerIds {
-			if id != 0 {
-				originIDSet[id] = struct{}{}
+			if uint64(id) != 0 {
+				originIDSet[uint64(id)] = struct{}{}
 			}
 		}
 	}
 
 	// Convert map to slice for gRPC request
-	if len(originIDSet) == 0 {
-		return result
-	}
-
 	originIDs := make([]uint64, 0, len(originIDSet))
 	for id := range originIDSet {
 		originIDs = append(originIDs, id)
 	}
 
-	// Call gRPC to get origin profiles
-	originProfiles, err := m.CrmClient.GetOriginProfileByOriginIds(ctx, originIDs)
-	if err != nil {
-		// Log error but don't fail the entire request
-		return result
-	}
-
-	// Create map for quick lookup
-	originProfileMap := make(map[uint64]*sharepb.OriginProfile, len(originProfiles))
-	for _, profile := range originProfiles {
-		if profile != nil && profile.OriginId != 0 {
-			originProfileMap[profile.OriginId] = profile
-		}
-	}
-
-	// Map partners to each distribution entity
-	for _, e := range result {
-		partners := make([]*sharepb.OriginProfile, 0)
-		for _, partnerId := range e.PartnerIds {
-			if partnerId != 0 {
-				if profile, ok := originProfileMap[partnerId]; ok {
-					partners = append(partners, profile)
+	// Call gRPC to get origin profiles once for all items
+	var originProfileMap map[uint64]*sharepb.OriginProfile
+	if len(originIDs) > 0 {
+		originProfiles, err := m.CrmClient.GetOriginProfileByOriginIds(ctx, originIDs)
+		if err == nil && len(originProfiles) > 0 {
+			originProfileMap = make(map[uint64]*sharepb.OriginProfile, len(originProfiles))
+			for _, profile := range originProfiles {
+				if profile != nil && profile.OriginId != 0 {
+					originProfileMap[profile.OriginId] = profile
 				}
 			}
 		}
-		// TODO: Uncomment sau khi regenerate proto với field partners = 21
-		// e.Partners = partners
-		// e.PartnerCount = int32(len(partners))
-		e.Partners = partners
+	}
+
+	// Map each distribution entity with partners
+	result := make([]*bdspropb.DistributionEntity, len(list))
+	for i, e := range list {
+		partnerIds := make([]uint64, len(e.PartnerIds))
+		for j, id := range e.PartnerIds {
+			partnerIds[j] = uint64(id)
+		}
+		pbResult := m.distributionEntityToProto(&e.DistributionEntity)
+		pbResult.PartnerIds = partnerIds
+		pbResult.PartnerCount = int32(e.PartnerCount)
+		pbResult.Status = bdspropb.DistributionStatus(e.Status)
+
+		// Generate distribution code
+		pbResult.Code = m.generateDistributionCode(ctx, e.ID)
+
+		// Map partners from pre-fetched origin profiles
+		if originProfileMap != nil {
+			partners := make([]*sharepb.OriginProfile, 0)
+			for _, partnerId := range partnerIds {
+				if partnerId != 0 {
+					if profile, ok := originProfileMap[partnerId]; ok {
+						partners = append(partners, profile)
+					}
+				}
+			}
+			pbResult.Partners = partners
+		}
+
+		result[i] = pbResult
+	}
+
+	return result
+}
+
+// generateDistributionCode generates distribution code based on ID
+func (m *DistributionMapper) generateDistributionCode(ctx context.Context, distributionId uint64) string {
+	if m.CodeDataUsecase == nil {
+		return ""
+	}
+	return m.CodeDataUsecase.GetDistributionCode(ctx, distributionId)
+}
+
+func (m *DistributionMapper) ConvertDistributionStatus(status []bdspropb.DistributionStatus) []enums.DistributionStatus {
+	result := make([]enums.DistributionStatus, len(status))
+	for i, s := range status {
+		result[i] = enums.DistributionStatus(s)
 	}
 	return result
 }

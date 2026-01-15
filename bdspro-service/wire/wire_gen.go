@@ -222,7 +222,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	propertyHandler := handler.NewPropertyHandler(propertyUsecase, propertyMapper, assetMapper)
 	distributeRepository := postgres.NewDistributionPostgres(db)
 	distributionUsecase := usecases.NewDistributionUsecase(distributeRepository, transactionGorm, notificationProvider)
-	distributionMapper := mapper.NewDistributionMapper(crmClient)
+	distributionMapper := mapper.NewDistributionMapper(crmClient, codeDataUsecase)
 	distributionHandler := handler.NewDistributionHandler(distributionUsecase, distributionMapper)
 	initialApp := initial.NewInitialApp(postService, productHandler, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler, adminProductHandler, adminAssetHandler, adminPostHandler, adminPropertyTypeHandler, adminProjectHandler, adminRegionHandler, internalHandler, bdsproDashboardHandler, bdsDomainHandler, assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob, dealHandler, dealCommissionHandler, dealInvestmentHandler, dealMilestoneHandler, dealInvitationHandler, dealInternalNoteHandler, internalTransactionHandler, txHandler, txContractDealHandler, txCostTypeHandler, txDealCostHandler, adminTxHandler, propertyHandler, distributionHandler)
 	return initialApp, nil

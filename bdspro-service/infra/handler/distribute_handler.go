@@ -105,7 +105,7 @@ func (h *DistributionHandler) GetDistribution(
 		return nil, status.Errorf(codes.NotFound, "distribution not found: %v", err)
 	}
 
-	return h.mapper.DistributionWithPartnersToProto(result), nil
+	return h.mapper.DistributionWithPartnersToProto(ctx, result), nil
 }
 
 func (h *DistributionHandler) ListDistributions(
@@ -123,6 +123,8 @@ func (h *DistributionHandler) ListDistributions(
 		ToDate:       _utils.ParseStringToTime(req.ToDate),
 		CanDeal:      req.CanDeal,
 		ChannelPrice: req.ChannelPrice,
+		Sort:         req.Sort,
+		Status:       h.mapper.ConvertDistributionStatus(req.Status),
 	}
 
 	list, err := h.usecase.GetListDistributesWithPartners(ctx, req.ProductId, filter)
@@ -148,4 +150,15 @@ func (h *DistributionHandler) RevokeDistribute(ctx context.Context, req *bdsprop
 	}
 
 	return &bdspropb.RevokeDistributeResponse{Success: true}, nil
+}
+
+// RevokeUserFromDistribute xóa user khỏi product_user của distribute
+// Nếu distribute chỉ còn 0 product_user thì tự động revoke distribute
+func (h *DistributionHandler) RevokeUserFromDistribute(ctx context.Context, req *bdspropb.RevokeUserFromDistributeRequest) (*bdspropb.RevokeUserFromDistributeResponse, error) {
+	if err := h.usecase.RevokeUserFromDistribute(ctx, req.DistributeId, req.OriginProfileId); err != nil {
+		fmt.Printf("Failed to revoke user %d from distribute %d: %v\n", req.OriginProfileId, req.DistributeId, err)
+		return &bdspropb.RevokeUserFromDistributeResponse{Success: false}, status.Errorf(codes.Internal, "failed to revoke user from distribute: %v", err)
+	}
+
+	return &bdspropb.RevokeUserFromDistributeResponse{Success: true}, nil
 }

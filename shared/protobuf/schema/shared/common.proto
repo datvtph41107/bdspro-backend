@@ -320,11 +320,12 @@ message ContactDTO {
 }
 
 message OriginProfile {
-  uint64 id = 1;
-  string display_name = 2;
+  uint64 originId = 1;
+  string displayName = 2;
   string phone = 3;
   string avatar = 4;
-  uint64 origin_id = 5;
+  uint64 ownerId = 5;
+  uint32 ownerOf = 6;
 }
 
 message OrganizationMember {

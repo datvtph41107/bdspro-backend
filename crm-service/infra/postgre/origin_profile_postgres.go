@@ -30,7 +30,7 @@ func (r *PostgreOriginProfileRepo) GetByOriginID(ctx context.Context, originID u
 	return &profile, nil
 }
 
-func (r *PostgreOriginProfileRepo) GetByOriginIDs(ctx context.Context, originIDs []uint64) ([]*domain.OriginProfile, error) {
+func (r *PostgreOriginProfileRepo) GetByIDs(ctx context.Context, originIDs []uint64) ([]*domain.OriginProfile, error) {
 	var profiles []*domain.OriginProfile
 	err := r.DB.WithContext(ctx).
 		Where("origin_id IN (?) AND deleted_at IS NULL", originIDs).

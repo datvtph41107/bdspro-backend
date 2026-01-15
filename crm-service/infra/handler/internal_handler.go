@@ -165,7 +165,7 @@ func (h *CrmInternalService) GetOriginProfileByOriginIds(ctx context.Context, re
 		return nil, status.Errorf(codes.InvalidArgument, "origin_ids are required")
 	}
 
-	originProfiles, err := h.OriginProfileRepo.GetByOriginIDs(ctx, originIDs)
+	originProfiles, err := h.OriginProfileRepo.GetByIDs(ctx, originIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -173,11 +173,12 @@ func (h *CrmInternalService) GetOriginProfileByOriginIds(ctx context.Context, re
 	originProfilesPb := make([]*sharepb.OriginProfile, len(originProfiles))
 	for _, originProfile := range originProfiles {
 		originProfilesPb = append(originProfilesPb, &sharepb.OriginProfile{
-			Id:          originProfile.ID,
+			OriginId:    originProfile.OriginID,
 			DisplayName: originProfile.DisplayName,
 			Phone:       originProfile.Phone,
 			Avatar:      originProfile.Avatar,
-			OriginId:    *originProfile.OriginID,
+			OwnerId:     originProfile.OwnerID,
+			OwnerOf:     uint32(originProfile.OwnerOf),
 		})
 	}
 	return &crmpb.GetOriginProfileByOriginIdResponse{Data: originProfilesPb}, nil

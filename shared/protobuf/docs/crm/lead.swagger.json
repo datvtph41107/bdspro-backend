@@ -3046,7 +3046,7 @@
     "sharepbOriginProfile": {
       "type": "object",
       "properties": {
-        "id": {
+        "originId": {
           "type": "string",
           "format": "uint64"
         },
@@ -3059,9 +3059,13 @@
         "avatar": {
           "type": "string"
         },
-        "originId": {
+        "ownerId": {
           "type": "string",
           "format": "uint64"
+        },
+        "ownerOf": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

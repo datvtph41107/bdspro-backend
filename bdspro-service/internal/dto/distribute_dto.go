@@ -37,6 +37,7 @@ type FilterDistributeDTO struct {
 	ChannelPrice *bool                      `form:"channelPrice"`
 	Text         string                     `form:"query"`
 	Status       []enums.DistributionStatus `form:"status"`
+	Sort         string                     `form:"sort"`
 }
 
 type DistributionWithPartners struct {
@@ -65,7 +66,7 @@ type RevokeDTO struct {
 	ReasonOther string
 }
 
-func (d *DistributeDTO) Validate() error {
+func (d *DistributeDTO) Validate(isUpdate bool) error {
 	now := time.Now()
 	if d.ProductID == 0 {
 		return errors.New("ProductID must be greater than 0")
@@ -73,7 +74,7 @@ func (d *DistributeDTO) Validate() error {
 	if d.Price < 0 {
 		return errors.New("Price must be >= 0")
 	}
-	if len(d.PartnerIDs) == 0 {
+	if len(d.PartnerIDs) == 0 && !isUpdate {
 		return errors.New("PartnerIDs cannot be empty")
 	}
 	if d.FromDate == nil {

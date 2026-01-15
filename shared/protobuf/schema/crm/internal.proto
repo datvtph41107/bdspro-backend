@@ -16,6 +16,8 @@ service CrmInternalService {
     rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
     rpc GetOrCreateContactByProfileIdWithNullOwner(sharepb.IdRequest) returns (GetOrCreateContactResponse);
     rpc GetOriginProfileByOriginIds(sharepb.IdRequest) returns (GetOriginProfileByOriginIdResponse);
+    rpc MakeOriginProfile(sharepb.OriginProfile) returns (sharepb.OriginProfile);
+    
 }
 
 message FriendStatusByProfileIdsRequest {

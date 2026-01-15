@@ -24,25 +24,41 @@ func NewDistributionPostgres(db *gorm.DB) repo.DistributeRepository {
 	return &DistributePostgres{db: db}
 }
 
-func (r *DistributePostgres) AssignPartner(
-	ctx context.Context,
-	distributeID uint64,
-	productID uint64,
-	partnerIDs []uint64,
-) error {
+func (r *DistributePostgres) AssignPartner(ctx context.Context, distributeID uint64, productID uint64, partnerIDs []uint64) error {
+	if len(partnerIDs) == 0 {
+		// Nếu không có partnerIDs, chỉ xóa các product_user có distribute_id = distributeID
+		return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			return tx.Exec(`
+				DELETE FROM product_user
+				WHERE distribute_id = ?
+				  AND deleted_at IS NULL
+			`, distributeID).Error
+		})
+	}
+
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Bước 1: Xóa các product_user có distribute_id = distributeID nhưng origin_profile_id không nằm trong partnerIDs
 		if err := tx.Exec(`
 			DELETE FROM product_user
-			WHERE distribute_id = ?
-			  AND profile_id <> ALL(?)
-		`, distributeID, pq.Array(partnerIDs)).Error; err != nil {
+			WHERE distribute_id = $3
+			  AND product_id = $2
+			  AND (origin_profile_id IS NULL OR origin_profile_id <> ALL($1::BIGINT[]))
+			  AND deleted_at IS NULL
+		`, pq.Array(partnerIDs), productID, distributeID).Error; err != nil {
 			return err
 		}
 
+		// Bước 2: Tạo mới hoặc cập nhật các product_user có (origin_profile_id, product_id) trong partnerIDs
+		// Nếu đã tồn tại thì update distribute_id, nếu chưa có thì insert mới
 		if err := tx.Exec(`
-			INSERT INTO product_user (profile_id, product_id, distribute_id, is_owner)
-			SELECT UNNEST($1::BIGINT[]), $2, $3, false
-			ON CONFLICT (profile_id, product_id) DO NOTHING
+			INSERT INTO product_user (origin_profile_id, product_id, distribute_id, is_owner)
+			SELECT partner_id, $2, $3, false
+			FROM UNNEST($1::BIGINT[]) AS partner_id
+			ON CONFLICT (origin_profile_id, product_id) 
+			WHERE deleted_at IS NULL
+			DO UPDATE SET 
+				distribute_id = EXCLUDED.distribute_id,
+				updated_at = NOW()
 		`, pq.Array(partnerIDs), productID, distributeID).Error; err != nil {
 			return err
 		}
@@ -77,10 +93,10 @@ func (r *DistributePostgres) FindByIdWithPartner(
 		Table("distributions d").
 		Select(`
 			d.*,
-			COUNT(pu.profile_id) AS partner_count,
+			COUNT(pu.origin_profile_id) AS partner_count,
 			COALESCE(
-				ARRAY_AGG(pu.profile_id ORDER BY pu.profile_id)
-				FILTER (WHERE pu.profile_id IS NOT NULL),
+				ARRAY_AGG(pu.origin_profile_id ORDER BY pu.origin_profile_id)
+				FILTER (WHERE pu.origin_profile_id IS NOT NULL),
 				'{}'
 			) AS partner_ids
 		`).
@@ -108,10 +124,10 @@ func (r *DistributePostgres) GetListDistrByProduct(
 		Table("distributions d").
 		Select(`
 			d.*,
-			COUNT(pu.profile_id) AS partner_count,
+			COUNT(pu.origin_profile_id) AS partner_count,
 			COALESCE(
-				ARRAY_AGG(pu.profile_id ORDER BY pu.profile_id)
-				FILTER (WHERE pu.profile_id IS NOT NULL),
+				ARRAY_AGG(pu.origin_profile_id ORDER BY pu.origin_profile_id)
+				FILTER (WHERE pu.origin_profile_id IS NOT NULL),
 				'{}'
 			) AS partner_ids
 		`).
@@ -218,15 +234,39 @@ func (r *DistributePostgres) GetListPartnersOfDistribute(ctx context.Context, di
 	return partners, nil
 }
 
+func (r *DistributePostgres) RevokeUser(ctx context.Context, distributeID uint64, originProfileID uint64) (int64, error) {
+	var remainingCount int64
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Xóa product_user với distribute_id và origin_profile_id
+		result := tx.Where("distribute_id = ? AND origin_profile_id = ? AND deleted_at IS NULL", distributeID, originProfileID).
+			Delete(&domain.ProductUser{})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		// Đếm số product_user còn lại của distribute này
+		if err := tx.Model(&domain.ProductUser{}).
+			Where("distribute_id = ? AND deleted_at IS NULL", distributeID).
+			Count(&remainingCount).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return remainingCount, err
+}
+
 func applyDistributionSort(db *gorm.DB, sort string) *gorm.DB {
 	switch sort {
-	case "createdAt_asc":
+	case "createdAt,asc", "createdAt_asc":
 		return db.Order("d.created_at ASC")
-	case "createdAt_desc":
+	case "createdAt,desc", "createdAt_desc":
 		return db.Order("d.created_at DESC")
-	case "price_asc":
+	case "price,asc", "price_asc":
 		return db.Order("d.price ASC")
-	case "price_desc":
+	case "price,desc", "price_desc":
 		return db.Order("d.price DESC")
 	default:
 		return db.Order("d.created_at DESC")

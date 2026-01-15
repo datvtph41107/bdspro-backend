@@ -64,9 +64,11 @@ type ContactItem struct {
 	Status           enums.EStatusContact `gorm:"column:status" json:"status"`
 
 	// origin_profile
-	OriginProfileID   *uint64 `gorm:"column:origin_profile_id" json:"originProfileId"`
-	OriginDisplayName string  `gorm:"column:display_name" json:"originDisplayName"`
+	OriginID          *uint64 `gorm:"column:origin_id" json:"originId"`
+	OriginDisplayName string  `gorm:"column:origin_display_name" json:"originDisplayName"`
 	OriginPhone       string  `gorm:"column:origin_phone" json:"originPhone"`
 	OriginAvatar      string  `gorm:"column:origin_avatar" json:"originAvatar"`
-	OriginOriginID    *uint64 `gorm:"column:origin_id" json:"originOriginId"`
+	OriginOwnerID     uint64  `gorm:"column:origin_owner_id" json:"originOwnerId"`
+
+	OriginOwnerOf enums.EOwnerOf `gorm:"column:origin_owner_of" json:"originOwnerOf"`
 }

@@ -14,8 +14,9 @@ enum CommissionType {
 }
 
 enum DistributionStatus {
-    DISTRIBUTION_STATUS_EXPRIED = 0;
+    DISTRIBUTION_STATUS_UNKNOWN = 0;
     DISTRIBUTION_STATUS_ACTIVE = 10;
+    DISTRIBUTION_STATUS_EXPRIED = 30;
     DISTRIBUTION_STATUS_REVOKED = 20;
 }
 
@@ -36,7 +37,7 @@ service DistributionService {
 
     rpc UpdateDistribute(UpdateDistributeRequest) returns (DistributeResponse) {
         option (google.api.http) = {
-            post: "/v2/bdspro/distributions/{id}"
+            put: "/v2/bdspro/distributions/{id}"
             body: "*"
         };
     }
@@ -57,6 +58,12 @@ service DistributionService {
         option (google.api.http) = {
             post: "/v2/bdspro/distributions/revoke"
             body: "*"
+        };
+    }
+
+    rpc RevokeUserFromDistribute(RevokeUserFromDistributeRequest) returns (RevokeUserFromDistributeResponse) {
+        option (google.api.http) = {
+            delete: "/v2/bdspro/distributions/{distributeId}/users/{originProfileId}"
         };
     }
 }
@@ -84,6 +91,7 @@ message DistributionEntity {
     repeated uint64 partnerIds = 19;
     int32 partnerCount = 20;
     repeated sharepb.OriginProfile partners = 21;
+    string code = 22;
 }
 
 message ListDistributionsRequest {
@@ -96,6 +104,7 @@ message ListDistributionsRequest {
     string sort = 7;
     uint64 productId = 8;
     string query = 9;
+    repeated DistributionStatus status = 10;
 }
 
 message ListDistributionsResponse {
@@ -154,5 +163,14 @@ message RevokeDistributeRequest {
 }
 
 message RevokeDistributeResponse {
+    bool success = 1;
+}
+
+message RevokeUserFromDistributeRequest {
+    uint64 distributeId = 1;
+    uint64 originProfileId = 2;
+}
+
+message RevokeUserFromDistributeResponse {
     bool success = 1;
 }

@@ -68,3 +68,15 @@ func (uc *CodeDataUsecase) GetContractCodes(c context.Context, contractIds []uin
 	}
 	return contractCodes
 }
+
+func (uc *CodeDataUsecase) GetDistributionCode(c context.Context, distributionId uint64) string {
+	return fmt.Sprintf("DP%06d", distributionId)
+}
+
+func (uc *CodeDataUsecase) GetDistributionCodePtr(c context.Context, distributionId *uint64) *string {
+	if distributionId == nil {
+		return nil
+	}
+	code := fmt.Sprintf("DP%06d", *distributionId)
+	return &code
+}
