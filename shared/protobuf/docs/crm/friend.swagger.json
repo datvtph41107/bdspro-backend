@@ -255,6 +255,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "distributeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "shareProductId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -394,6 +408,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "distributeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "shareProductId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -465,6 +493,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "distributeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "shareProductId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -575,6 +617,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "distributeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "shareProductId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -646,6 +702,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "distributeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "shareProductId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [

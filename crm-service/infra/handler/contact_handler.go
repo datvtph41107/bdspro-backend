@@ -503,10 +503,10 @@ func (s *ContactService) contactToFriend(ctx context.Context, contact *sharepb.C
 	}
 
 	// Set createdUser từ profile của user hiện tại
-	currentProfiles, _ := s.UserClient.GetProfileByIds(ctx, []uint64{currentProfileId})
-	if len(currentProfiles) > 0 {
-		friend.CreatedUser = currentProfiles[0]
-	}
+	// currentProfiles, _ := s.UserClient.GetProfileByIds(ctx, []uint64{currentProfileId})
+	// if len(currentProfiles) > 0 {
+	// 	friend.CreatedUser = currentProfiles[0]
+	// }
 
 	return contact
 }

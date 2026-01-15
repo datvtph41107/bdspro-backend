@@ -100,14 +100,6 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 		Note:          contact.Note,
 		// todo: map in client
 		// ProfileInfo: &sharepb.ProfileItem
-		OriginProfile: &sharepb.OriginProfile{
-			OriginId:    *contact.OriginID,
-			DisplayName: contact.OriginDisplayName,
-			Phone:       contact.OriginPhone,
-			Avatar:      contact.OriginAvatar,
-			OwnerId:     contact.OwnerID,
-			OwnerOf:     uint32(contact.OwnerOf),
-		},
 	}
 	if contact.FriendID != 0 {
 		result.FriendStatus = &sharepb.FriendItem{
