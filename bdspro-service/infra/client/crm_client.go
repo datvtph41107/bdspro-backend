@@ -39,9 +39,10 @@ func (c *CrmClient) GetOriginProfileByOriginIds(ctx context.Context, originIDs [
 }
 
 // GetContactById retrieves contact information by ID using internal service
-// TODO: Uncomment sau khi generate proto code với method GetContactById
 func (c *CrmClient) GetContactById(ctx context.Context, id uint64) (*sharepb.ContactDTO, error) {
-	resp, err := c.GetContactById(ctx, id)
+	resp, err := c.CrmInternalServiceClient.GetContactById(ctx, &sharepb.IdRequest{
+		Id: id,
+	})
 	if err != nil {
 		return nil, err
 	}

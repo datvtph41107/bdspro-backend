@@ -16,6 +16,7 @@ import (
 )
 
 type ProductNoteHandler struct {
+	bdspropb.UnimplementedProductNoteServiceServer
 	ProductNoteUsecase *usecases.ProductNoteUsecase
 	ProductNoteMapper  *mapper.ProductNoteMapper
 	UserClient         *client.UserClient
@@ -69,7 +70,7 @@ func (h *ProductNoteHandler) ListProductNotes(
 func (h *ProductNoteHandler) CreateProductNote(
 	ctx context.Context,
 	req *bdspropb.CreateProductNoteRequest,
-) (*bdspropb.Response, error) {
+) (*bdspropb.ProductNoteEntity, error) {
 	files := make([]dto.ProductNoteFileItem, 0, len(req.Files))
 	for _, f := range req.Files {
 		files = append(files, dto.ProductNoteFileItem{
@@ -91,9 +92,8 @@ func (h *ProductNoteHandler) CreateProductNote(
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &bdspropb.Response{
-		Id:      req.ProductId,
-		Message: "success",
+	return &bdspropb.ProductNoteEntity{
+		Id: req.ProductId,
 	}, nil
 }
 
@@ -101,7 +101,7 @@ func (h *ProductNoteHandler) CreateProductNote(
 func (h *ProductNoteHandler) UpdateProductNote(
 	ctx context.Context,
 	req *bdspropb.UpdateProductNoteReqClient,
-) (*bdspropb.Response, error) {
+) (*bdspropb.ProductNoteEntity, error) {
 
 	files := make([]dto.ProductNoteFileItem, 0, len(req.Files))
 	for _, f := range req.Files {
@@ -124,39 +124,36 @@ func (h *ProductNoteHandler) UpdateProductNote(
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &bdspropb.Response{
-		Id:      req.Id,
-		Message: "success",
+	return &bdspropb.ProductNoteEntity{
+		Id: req.Id,
 	}, nil
 }
 
 func (h *ProductNoteHandler) DeleteProductNote(
 	ctx context.Context,
 	req *bdspropb.DeleteProductNoteRequest,
-) (*bdspropb.Response, error) {
+) (*bdspropb.DeleteProductNoteResponse, error) {
 
 	if err := h.ProductNoteUsecase.DeleteNote(ctx, req.NoteId, req.RequestUserID); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &bdspropb.Response{
-		Id:      req.NoteId,
-		Message: "success",
+	return &bdspropb.DeleteProductNoteResponse{
+		Success: true,
 	}, nil
 }
 
 func (h *ProductNoteHandler) TogglePinProductNote(
 	ctx context.Context,
 	req *bdspropb.TogglePinProductNoteRequest,
-) (*bdspropb.Response, error) {
+) (*bdspropb.TogglePinProductNoteResponse, error) {
 
 	if err := h.ProductNoteUsecase.TogglePin(ctx, req.Id, req.IsPinned); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &bdspropb.Response{
-		Id:      req.Id,
-		Message: "success",
+	return &bdspropb.TogglePinProductNoteResponse{
+		Success: true,
 	}, nil
 }
 

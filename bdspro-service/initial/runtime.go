@@ -52,6 +52,7 @@ type InitialApp struct {
 	AdminTxHandler        *admin_handler.AdminTxHandler
 	PropertyHandler       *handler.PropertyHandler
 	DistributeHandler     *handler.DistributionHandler
+	ProductNoteHandler    *handler.ProductNoteHandler
 	// @bind: register_server_config
 	// CostDocumentServer *handler.CostDocumentServer
 	// IncomeDocumentServer    *handler.IncomeDocumentServer
@@ -123,6 +124,7 @@ func NewInitialApp(
 	// AssetSplitHistoryServer: AssetSplitHistoryServer,
 	propertyHandler *handler.PropertyHandler,
 	distributeHandler *handler.DistributionHandler,
+	productNoteHandler *handler.ProductNoteHandler,
 ) *InitialApp {
 	return &InitialApp{
 		// GrpcServer:        GrpcServer,
@@ -163,12 +165,12 @@ func NewInitialApp(
 		TxDealCostHandler:     txDealCostHandler,
 		AdminTxHandler:        adminTxHandler,
 
-		PropertyHandler:   propertyHandler,
-		DistributeHandler: distributeHandler,
-
-		AssetStatsJob:   assetStatsJob,
-		ProductStatsJob: productStatsJob,
-		PostStatsJob:    postStatsJob,
+		PropertyHandler:    propertyHandler,
+		DistributeHandler:  distributeHandler,
+		ProductNoteHandler: productNoteHandler,
+		AssetStatsJob:      assetStatsJob,
+		ProductStatsJob:    productStatsJob,
+		PostStatsJob:       postStatsJob,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

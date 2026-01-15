@@ -223,7 +223,11 @@ func InitializeApp() (*initial.InitialApp, error) {
 	distributionUsecase := usecases.NewDistributionUsecase(distributeRepository, transactionGorm, notificationProvider)
 	distributionMapper := mapper.NewDistributionMapper(crmProvider, codeDataUsecase)
 	distributionHandler := handler.NewDistributionHandler(distributionUsecase, distributionMapper)
-	initialApp := initial.NewInitialApp(postService, productHandler, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler, adminProductHandler, adminAssetHandler, adminPostHandler, adminPropertyTypeHandler, adminProjectHandler, adminRegionHandler, internalHandler, bdsproDashboardHandler, bdsDomainHandler, assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob, dealHandler, dealCommissionHandler, dealInvestmentHandler, dealMilestoneHandler, dealInvitationHandler, dealInternalNoteHandler, internalTransactionHandler, txHandler, txContractDealHandler, txCostTypeHandler, txDealCostHandler, adminTxHandler, propertyHandler, distributionHandler)
+	productNoteRepository := postgres.NewPostgreProductNoteRepo(db)
+	productNoteUsecase := usecases.NewProductNoteUsecase(productNoteRepository, transactionGorm)
+	productNoteMapper := mapper.NewProductNoteMapper()
+	productNoteHandler := handler.NewProductNoteHandler(productNoteUsecase, productNoteMapper, userClient)
+	initialApp := initial.NewInitialApp(postService, productHandler, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler, adminProductHandler, adminAssetHandler, adminPostHandler, adminPropertyTypeHandler, adminProjectHandler, adminRegionHandler, internalHandler, bdsproDashboardHandler, bdsDomainHandler, assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob, dealHandler, dealCommissionHandler, dealInvestmentHandler, dealMilestoneHandler, dealInvitationHandler, dealInternalNoteHandler, internalTransactionHandler, txHandler, txContractDealHandler, txCostTypeHandler, txDealCostHandler, adminTxHandler, propertyHandler, distributionHandler, productNoteHandler)
 	return initialApp, nil
 }
 

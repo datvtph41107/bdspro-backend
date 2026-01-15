@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v1/products/{productId}/source": {
+    "/v2/bdspro/product/{productId}/source": {
       "put": {
         "operationId": "ProductService_UpdateProductSource",
         "responses": {

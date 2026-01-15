@@ -240,7 +240,7 @@ service ProductService {
 
    rpc UpdateProductSource(UpdateProductSourceRequest) returns (Response) {
       option (google.api.http) = {
-        put: "/v1/products/{productId}/source"
+        put: "/v2/bdspro/product/{productId}/source"
         body: "*"
       };
   }
