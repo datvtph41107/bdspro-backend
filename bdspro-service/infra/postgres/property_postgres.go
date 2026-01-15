@@ -151,7 +151,7 @@ func (r *PostgrePropertyRepo) Update(c context.Context, id uint64, entity *domai
 		"ward_id":          entity.WardID,
 	}
 
-	return r.DB.WithContext(c).
+	return GetDB(c, r.DB).
 		Model(&domain.Property{}).
 		Where("id = ? AND deleted_at IS NULL", id).
 		Updates(updates).Error

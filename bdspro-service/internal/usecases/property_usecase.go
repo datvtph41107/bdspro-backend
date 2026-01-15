@@ -406,9 +406,6 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 				}
 				// Link BuildingInfoID vào Property
 				property.BuildingInfoID = &buildingInfo.ID
-				if err := u.PropertyRepo.Update(txCtx, property.ID, property); err != nil {
-					return err
-				}
 			}
 
 			// 4.3. Tạo PropertyMedia nếu có
@@ -422,9 +419,6 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 				// Set ảnh đầu tiên làm background image
 				if len(req.MediaList) > 0 {
 					property.AvatarID = &req.MediaList[0].ID
-					if err := u.PropertyRepo.Update(txCtx, property.ID, property); err != nil {
-						return err
-					}
 				}
 			}
 
@@ -457,6 +451,10 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 				if err := u.PropertyRelationRepo.Create(txCtx, assetRelation); err != nil {
 					return err
 				}
+			}
+
+			if err := u.PropertyRepo.Update(txCtx, property.ID, property); err != nil {
+				return err
 			}
 		}
 
