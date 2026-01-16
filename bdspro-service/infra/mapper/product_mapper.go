@@ -1005,6 +1005,13 @@ func (m *ProductMapper) MapProductMarketPbList(ctx context.Context, products []d
 	return productList
 }
 
+func (m *ProductMapper) UpdateProductPbToDTO(req *bdspropb.UpdateProductRequest) *dto.ProductSaveRequest {
+	result := &dto.ProductSaveRequest{
+		// ID: req.Id,
+	}
+	return result
+}
+
 func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dto.ProductSaveRequest {
 	result := &dto.ProductSaveRequest{
 		ParentID:       req.ParentId,

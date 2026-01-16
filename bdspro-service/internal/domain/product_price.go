@@ -17,6 +17,7 @@ type ProductPrice struct {
 	RentCommission     *float64 `gorm:"type:DECIMAL(15,0)" json:"rentCommission,omitempty"`
 	RentCommissionType *uint32  `json:"rentCommisionType,omitempty"`
 	RentPaymentCycle   *uint32  `json:"rentPaymentCycle,omitempty"`
+	DistributeID       *uint64  `json:"distributeId,omitempty"` // id phân phối ban đầu
 
 	PriceStatus enums.ProductPriceStatus `json:"status,omitempty"`
 	ChangeNote  string                   `gorm:"type:text" json:"note,omitempty"`

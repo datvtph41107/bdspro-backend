@@ -856,7 +856,7 @@ func (r *GormUserProductRepo) SetSaleVisibility(ctx context.Context, id *uint64,
 
 func (r *GormUserProductRepo) GetProductByID(ctx context.Context, productID *uint64) (*domain.Product, error) {
 	var product domain.Product
-	if err := r.DB.WithContext(ctx).Where("id = ? and deleted_at is null", productID).First(&product).Error; err != nil {
+	if err := GetDB(ctx, r.DB).Where("id = ? and deleted_at is null", productID).First(&product).Error; err != nil {
 		return nil, err
 	}
 	return &product, nil

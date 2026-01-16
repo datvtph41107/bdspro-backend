@@ -14,6 +14,7 @@ type ProductUser struct {
 	RoleID       uint64         `gorm:"default:0" json:"roleId"`
 	DistributeID *uint64        `gorm:"column:distribute_id;index" json:"distributeId"`
 	OwnerOf      enums.EOwnerOf `gorm:"default:10" json:"ownerOf"`
+	PriceID      *uint64        `json:"priceId,omitempty"` // id của product_price
 
 	OriginProfileID *uint64 `gorm:"index;" json:"originProfileId"`
 }

@@ -688,8 +688,8 @@ func (s *ProductHandler) GetProductNavigation(ctx context.Context, req *sharepb.
 // @Security BearerAuth
 // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
 // @Router /v2/bdspro/v2/product/{id} [put]
-func (s *ProductHandler) UpdateProduct(ctx context.Context, req *bdspropb.ProductSaveRequest) (*bdspropb.Response, error) {
-	body := s.ProductMapper.ProductSavePbToDTO(req)
+func (s *ProductHandler) UpdateProduct(ctx context.Context, req *bdspropb.UpdateProductRequest) (*bdspropb.Response, error) {
+	body := s.ProductMapper.UpdateProductPbToDTO(req)
 	if err := s.ProductValidator.ValidateCreateProduct(body); err != nil {
 		return nil, err
 	}

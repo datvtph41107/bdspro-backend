@@ -49,7 +49,7 @@ func (r *DistributePostgres) AssignPartner(ctx context.Context, distributeID uin
 }
 
 func (r *DistributePostgres) Save(ctx context.Context, entity *domain.DistributionEntity) error {
-	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
+	return GetDB(ctx, r.db).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "id"}},
 		DoUpdates: clause.AssignmentColumns([]string{
 			"price",
@@ -61,6 +61,7 @@ func (r *DistributePostgres) Save(ctx context.Context, entity *domain.Distributi
 			"from_date",
 			"to_date",
 			"partner_commission",
+			"price_id",
 		}),
 	}).Create(entity).Error
 }
@@ -79,14 +80,21 @@ func (r *DistributePostgres) FindByIdWithPartner(
 				ARRAY_AGG(pu.origin_profile_id ORDER BY pu.origin_profile_id)
 				FILTER (WHERE pu.origin_profile_id IS NOT NULL),
 				'{}'
-			) AS partner_ids
+			) AS partner_ids,
+			pp.sale_price AS price,
+			pp.sale_commission_type AS commission_type,
+			pp.sale_commission AS commission_value
 		`).
 		Joins(`
 			LEFT JOIN product_user pu
 			ON pu.distribute_id = d.id
 		`).
+		Joins(`
+			LEFT JOIN product_price pp
+			ON pp.id = d.price_id
+		`).
 		Where("d.id = ?", disID).
-		Group("d.id").
+		Group("d.id, pp.id").
 		Scan(&result).Error; err != nil {
 
 		return nil, err
@@ -110,11 +118,18 @@ func (r *DistributePostgres) GetListDistrByProduct(
 				ARRAY_AGG(pu.origin_profile_id ORDER BY pu.origin_profile_id)
 				FILTER (WHERE pu.origin_profile_id IS NOT NULL),
 				'{}'
-			) AS partner_ids
+			) AS partner_ids,
+			pp.sale_price AS price,
+			pp.sale_commission_type AS commission_type,
+			pp.sale_commission AS commission_value
 		`).
 		Joins(`
 			LEFT JOIN product_user pu
 			ON pu.distribute_id = d.id
+		`).
+		Joins(`
+			LEFT JOIN product_price pp
+			ON pp.id = d.price_id
 		`).
 		Where("d.product_id = ?", productID)
 
@@ -165,7 +180,7 @@ func (r *DistributePostgres) GetListDistrByProduct(
 	db = applyDistributionSort(db, filter.Sort)
 
 	if err := db.
-		Group("d.id").
+		Group("d.id, pp.id").
 		Limit(filter.GetLimit()).
 		Offset(filter.GetOffset()).
 		Scan(&result).Error; err != nil {

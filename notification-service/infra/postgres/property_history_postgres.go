@@ -48,9 +48,9 @@ func (r *propertyHistoryPostgres) Search(
 		baseQuery = baseQuery.Where("subject_id = ?", *q.SubjectID)
 	}
 
-	if q.SubjectType != nil {
-		baseQuery = baseQuery.Where("subject_type = ?", *q.SubjectType)
-	}
+	// if q.SubjectType != nil {
+	// 	baseQuery = baseQuery.Where("subject_type = ?", *q.SubjectType)
+	// }
 
 	if q.Action != nil {
 		baseQuery = baseQuery.Where("action = ?", *q.Action)

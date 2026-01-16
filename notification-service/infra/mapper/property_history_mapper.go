@@ -51,9 +51,9 @@ func (m *PropertyHistoryMapper) EntityToItem(
 	}
 
 	return &notificationpb.PropertyHistoryItem{
-		Id:          entity.ID,
-		SubjectId:   entity.SubjectID,
-		SubjectType: entity.SubjectType.String(),
+		Id:        entity.ID,
+		SubjectId: entity.SubjectID,
+		// SubjectType: entity.SubjectType.String(),
 		Action:      entity.Action.String(),
 		Description: entity.Description,
 		ActorId:     entity.ActorID,

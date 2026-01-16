@@ -25,8 +25,8 @@ func (uc *PropertyHistoryUseCase) Create(
 ) (*domain.PropertyHistoryEntity, error) {
 	now := time.Now()
 	entity := &domain.PropertyHistoryEntity{
-		SubjectID:   dto.SubjectID,
-		SubjectType: dto.SubjectType,
+		SubjectID: dto.SubjectID,
+		// SubjectType: dto.SubjectType,
 		Action:      dto.Action,
 		Description: dto.Description,
 		Metadata:    dto.Metadata,

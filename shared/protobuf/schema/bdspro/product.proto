@@ -73,6 +73,7 @@ service ProductService {
       get: "/v2/bdspro/v2/product/me"
     };
   };
+  // deprecated
   rpc ProductNew (ProductSaveRequest) returns (Response) {
     option (google.api.http) = {
       post: "/v2/bdspro/v2/product/new"
@@ -152,7 +153,7 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/deals"
     };
   };
-  rpc UpdateProduct (ProductSaveRequest) returns (Response) {
+  rpc UpdateProduct(UpdateProductRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/product/edit/{id}"
       body: "*"
@@ -273,6 +274,77 @@ message ApplyPriceUpdateResponse {
   double newPrice = 3;
   double pricePerM2 = 4;
   string updatedAt = 5;
+}
+
+message UpdateProductRequest {
+  uint64 id = 1;
+  // Basic fields
+  optional string name = 2;
+  optional uint32 saleStatus = 3;
+  optional uint32 rentStatus = 4;
+  optional uint32 visibility = 5;
+  optional uint32 saleVisibility = 6;
+  optional uint32 rentVisibility = 7;
+  optional string description = 8;
+  optional string internalNote = 9;
+  optional string note = 10;
+  optional uint32 mode = 11;
+  optional uint32 scope = 12;
+  // Property fields
+  optional uint64 propertyId = 13;
+  optional PropertyUpdateRequest property = 14;
+  // Amenity
+  repeated uint64 amenityIds = 15;
+  // Price
+  optional ProductPrice priceData = 16;
+  // Private data
+  optional ProductPrivate productPrivate = 17;
+  // Commission (trong priceData, nhưng có thể override riêng)
+  optional double saleCommission = 18;
+  optional double rentCommission = 19;
+  // Channel
+  optional bool channelPrice = 20;
+  // Media
+  repeated MediaItem mediaList = 21;
+  // Source fields
+  optional uint32 sourceType = 22;
+  optional uint64 sourceContactId = 23;
+  optional string sourceContactNote = 24;
+  // Other fields from ProductSaveRequest
+  optional uint64 propertyTypeId = 25;
+  optional uint64 docTypeId = 26;
+  optional uint64 projectId = 27;
+  optional uint64 provinceId = 28;
+  optional uint64 districtId = 29;
+  optional uint64 wardId = 30;
+  optional int32 transactionType = 31;
+  optional HouseInfo houseInfo = 32;
+  optional string googleMapLink = 33;
+  optional uint64 imageId = 34;
+  optional string certificateHouseNote = 35;
+  optional PropertyBuildingInfo buildingInfo = 36;
+  optional PropertyLandInfo landInfo = 37;
+}
+
+message PropertyUpdateRequest {
+  optional uint64 propertyTypeId = 1;
+  optional string title = 2;
+  optional uint64 locationId = 3;
+  optional string addressDetail = 4;
+  optional double latitude = 5;
+  optional double longitude = 6;
+  optional string mapUrl = 7;
+  optional uint64 projectId = 8;
+  optional string buildingBlock = 9;
+  optional string level = 10;
+  optional string unitCode = 11;
+  optional double areaTotal = 12;
+  optional double areaLand = 13;
+  optional double areaResidential = 14;
+  optional uint32 legalStatus = 15;
+  optional string legalNote = 16;
+  optional uint64 buildingInfoId = 17;
+  optional uint32 recordStatus = 18;
 }
 
 message UpdateProductSourceRequest {

@@ -28,25 +28,33 @@ func (m *DistributionMapper) distributionEntityToProto(
 	entity *domain.DistributionEntity,
 ) *bdspropb.DistributionEntity {
 
-	return &bdspropb.DistributionEntity{
-		Id:                entity.ID,
-		ProductId:         entity.ProductID,
-		Reason:            bdspropb.DistributionReason(entity.Reason),
-		ReasonOther:       entity.ReasonOther,
-		DistributedAt:     _utils.FormatTimeToString(entity.DistributedAt),
-		RevokedAt:         _utils.FormatTimeToString(entity.RevokedAt),
-		FromDate:          _utils.FormatTimeToString(entity.FromDate),
-		ToDate:            _utils.FormatTimeToString(entity.ToDate),
-		Price:             entity.Price,
-		CanDeal:           entity.CanDeal,
-		ChannelPrice:      entity.ChannelPrice,
-		CommissionType:    bdspropb.CommissionType(entity.CommissionType),
-		CommissionValue:   entity.CommissionValue,
-		PartnerCommission: entity.PartnerCommission,
-		Note:              entity.Note,
-		CreatedAt:         _utils.FormatTimeToString(entity.CreatedAt),
-		UpdatedAt:         _utils.FormatTimeToString(entity.UpdatedAt),
+	result := &bdspropb.DistributionEntity{
+		Id:            entity.ID,
+		ProductId:     entity.ProductID,
+		Reason:        bdspropb.DistributionReason(entity.Reason),
+		ReasonOther:   entity.ReasonOther,
+		DistributedAt: _utils.FormatTimeToString(entity.DistributedAt),
+		RevokedAt:     _utils.FormatTimeToString(entity.RevokedAt),
+		FromDate:      _utils.FormatTimeToString(entity.FromDate),
+		ToDate:        _utils.FormatTimeToString(entity.ToDate),
+		CanDeal:       entity.CanDeal,
+		ChannelPrice:  entity.ChannelPrice,
+		// Price:             entity.Price,
+		// CommissionType:    bdspropb.CommissionType(entity.CommissionType),
+		// CommissionValue:   entity.CommissionValue,
+		// PartnerCommission: entity.PartnerCommission,
+		Note:      entity.Note,
+		CreatedAt: _utils.FormatTimeToString(entity.CreatedAt),
+		UpdatedAt: _utils.FormatTimeToString(entity.UpdatedAt),
 	}
+
+	if entity.ProductPrice != nil {
+		result.Price = int64(*entity.ProductPrice.SalePrice)
+		result.CommissionType = bdspropb.CommissionType(*entity.ProductPrice.SaleCommissionType)
+		result.CommissionValue = *entity.ProductPrice.SaleCommission
+	}
+
+	return result
 }
 
 func (m *DistributionMapper) DistributionWithPartnersToProto(
@@ -61,6 +69,9 @@ func (m *DistributionMapper) DistributionWithPartnersToProto(
 	pbResult.PartnerIds = partnerIds
 	pbResult.PartnerCount = int32(dto.PartnerCount)
 	pbResult.Status = bdspropb.DistributionStatus(dto.Status)
+	pbResult.Price = dto.Price
+	pbResult.CommissionType = bdspropb.CommissionType(dto.CommissionType)
+	pbResult.CommissionValue = dto.CommissionValue
 
 	// Generate distribution code
 	pbResult.Code = m.generateDistributionCode(ctx, dto.ID)
@@ -147,6 +158,9 @@ func (m *DistributionMapper) DistributionWithPartnersListToProto(
 		pbResult.PartnerIds = partnerIds
 		pbResult.PartnerCount = int32(e.PartnerCount)
 		pbResult.Status = bdspropb.DistributionStatus(e.Status)
+		pbResult.Price = e.Price
+		pbResult.CommissionType = bdspropb.CommissionType(e.CommissionType)
+		pbResult.CommissionValue = e.CommissionValue
 
 		// Generate distribution code
 		pbResult.Code = m.generateDistributionCode(ctx, e.ID)

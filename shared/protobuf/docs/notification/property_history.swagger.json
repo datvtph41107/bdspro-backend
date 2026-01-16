@@ -17,55 +17,6 @@
   ],
   "paths": {
     "/v2/notification/property-history": {
-      "get": {
-        "operationId": "PropertyHistoryService_GetPropertyHistory",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/notificationpbGetPropertyHistoryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "subjectType",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PropertyHistoryService"
-        ]
-      },
       "post": {
         "operationId": "PropertyHistoryService_CreatePropertyHistory",
         "responses": {
@@ -97,7 +48,7 @@
         ]
       }
     },
-    "/v2/notification/property-history/{id}": {
+    "/v2/notification/property-history/detail/{id}": {
       "get": {
         "operationId": "PropertyHistoryService_GetPropertyHistoryByID",
         "responses": {
@@ -126,7 +77,9 @@
         "tags": [
           "PropertyHistoryService"
         ]
-      },
+      }
+    },
+    "/v2/notification/property-history/{id}": {
       "delete": {
         "operationId": "PropertyHistoryService_SoftDeletePropertyHistoryId",
         "responses": {
@@ -157,6 +110,57 @@
             "required": false,
             "type": "string",
             "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PropertyHistoryService"
+        ]
+      }
+    },
+    "/v2/notification/property-history/{subjectId}": {
+      "get": {
+        "operationId": "PropertyHistoryService_GetPropertyHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/notificationpbGetPropertyHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [

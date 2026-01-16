@@ -220,7 +220,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	propertyMapper := mapper.NewPropertyMapper(productMapper, assetMapper)
 	propertyHandler := handler.NewPropertyHandler(propertyUsecase, propertyMapper, assetMapper)
 	distributeRepository := postgres.NewDistributionPostgres(db)
-	distributionUsecase := usecases.NewDistributionUsecase(distributeRepository, transactionGorm, notificationProvider)
+	distributionUsecase := usecases.NewDistributionUsecase(distributeRepository, gormProductPriceRepo, gormUserProductRepo, transactionGorm, notificationProvider)
 	distributionMapper := mapper.NewDistributionMapper(crmProvider, codeDataUsecase)
 	distributionHandler := handler.NewDistributionHandler(distributionUsecase, distributionMapper)
 	productNoteRepository := postgres.NewPostgreProductNoteRepo(db)

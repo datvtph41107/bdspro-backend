@@ -12,24 +12,31 @@ import (
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	_enum "common/domain/enum"
+	_util "common/domain/util"
 	_errors "common/errors"
 	_utils "common/utils"
 )
 
 type DistributionUsecase struct {
 	distributionRepo repo.DistributeRepository
+	productPriceRepo repo.ProductPriceRepo
+	productRepo      repo.ProductRepo
 	transaction      provider.TransactionProvider
 	notifyProvider   provider.NotificationProvider
 }
 
 func NewDistributionUsecase(
 	r repo.DistributeRepository,
+	productPriceRepo repo.ProductPriceRepo,
+	productRepo repo.ProductRepo,
 	transaction provider.TransactionProvider,
 	notificationProvider provider.NotificationProvider,
 
 ) *DistributionUsecase {
 	return &DistributionUsecase{
 		distributionRepo: r,
+		productPriceRepo: productPriceRepo,
+		productRepo:      productRepo,
 		transaction:      transaction,
 		notifyProvider:   notificationProvider,
 	}
@@ -48,17 +55,9 @@ func (uc *DistributionUsecase) CreateDistribute(
 		now := time.Now()
 
 		dist := &domain.DistributionEntity{
-			ProductID:       req.ProductID,
-			Price:           req.Price,
-			CanDeal:         req.CanDeal,
-			ChannelPrice:    req.ChannelPrice,
-			CommissionType:  req.CommissionType,
-			CommissionValue: req.CommissionValue,
-			PartnerCommission: calculatePartnerCommission(
-				req.Price,
-				req.CommissionType,
-				req.CommissionValue,
-			),
+			ProductID:     req.ProductID,
+			CanDeal:       req.CanDeal,
+			ChannelPrice:  req.ChannelPrice,
 			Note:          req.Note,
 			FromDate:      req.FromDate,
 			ToDate:        req.ToDate,
@@ -70,6 +69,27 @@ func (uc *DistributionUsecase) CreateDistribute(
 			return _errors.InternalServerException("create distribution failed")
 		}
 
+		// Tạo ProductPrice mới
+		productPrice := uc.createProductPriceFromDistribute(
+			req.ProductID,
+			dist.ID,
+			req.Price,
+			req.CommissionType,
+			req.CommissionValue,
+			_utils.GetProfileIdWithContext(ctx),
+		)
+		if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
+			log.Printf("create product price failed: %v", err)
+			return _errors.InternalServerException("create product price failed")
+		}
+
+		// Cập nhật PriceID vào distribution
+		dist.PriceID = &productPrice.ID
+		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
+			log.Printf("update distribution priceId failed: %v", err)
+			return _errors.InternalServerException("update distribution priceId failed")
+		}
+
 		if err := uc.distributionRepo.AssignPartner(
 			txCtx,
 			dist.ID,
@@ -79,17 +99,26 @@ func (uc *DistributionUsecase) CreateDistribute(
 			return err
 		}
 
-		resp = mapToResultDTO(dist, len(req.PartnerIDs))
+		resp = uc.mapToResultDTO(txCtx, dist, productPrice, len(req.PartnerIDs))
+
+		// Lấy PropertyID từ Product
+		var propertyID uint64
+		product, err := uc.productRepo.GetProductByID(txCtx, &dist.ProductID)
+		if err != nil || product == nil {
+			log.Printf("get product failed: %v", err)
+		} else if product.PropertyID != nil {
+			propertyID = *product.PropertyID
+		}
 
 		uc.notifyProvider.RegistedEventProperty(ctx,
 			&dto.CreatePropertyActivityDTO{
-				SubjectID:   dist.ID,
+				SubjectID:   propertyID,
 				SubjectType: _enum.SUBJECT_TYPE_DISTRIBUTE,
 				Action:      _enum.ACTION_DISTRIBUTE_CREATE,
 				ActorID:     _utils.GetProfileIdWithContext(ctx),
 				Description: fmt.Sprintf(
-					"Sản phẩm %d được tạo kênh phân phối với %d đối tác",
-					dist.ProductID,
+					"Sản phẩm %s được tạo kênh phân phối với %d đối tác",
+					_util.GetProductCode(dist.ProductID),
 					len(req.PartnerIDs),
 				),
 			})
@@ -122,22 +151,83 @@ func (uc *DistributionUsecase) UpdateDistribute(
 			return _errors.BadRequestException("distribution has been revoked")
 		}
 
-		dist.Price = req.Price
+		// Kiểm tra xem Price hoặc CommissionValue có thay đổi không
+		shouldCreateNewPrice := false
+		var oldPrice *domain.ProductPrice
+		if dist.PriceID != nil {
+			oldPrice, err = uc.productPriceRepo.GetByID(txCtx, *dist.PriceID)
+			if err != nil {
+				log.Printf("get old product price failed: %v", err)
+			}
+		}
+
+		// So sánh Price và CommissionValue
+		if oldPrice != nil {
+			oldPriceValue := int64(0)
+			if oldPrice.SalePrice != nil {
+				oldPriceValue = int64(*oldPrice.SalePrice)
+			}
+			oldCommissionType := enums.CommissionType(0)
+			if oldPrice.SaleCommissionType != nil {
+				oldCommissionType = enums.CommissionType(*oldPrice.SaleCommissionType)
+			}
+
+			// Tính CommissionValue cũ từ SaleCommission và SalePrice
+			oldCommissionValue := float64(0)
+			if oldPrice.SalePrice != nil && oldPrice.SaleCommission != nil {
+				if oldCommissionType == enums.CommissionTypePercent {
+					// CommissionValue = (SaleCommission / SalePrice) * 100
+					oldCommissionValue = (*oldPrice.SaleCommission / *oldPrice.SalePrice) * 100
+				} else if oldCommissionType == enums.CommissionTypeVND {
+					oldCommissionValue = *oldPrice.SaleCommission
+				}
+			}
+
+			// Kiểm tra xem Price hoặc CommissionValue có thay đổi không
+			if oldPriceValue != req.Price || oldCommissionType != req.CommissionType || oldCommissionValue != req.CommissionValue {
+				shouldCreateNewPrice = true
+			}
+		} else {
+			// Nếu chưa có PriceID, luôn tạo mới
+			shouldCreateNewPrice = true
+		}
+
 		dist.CanDeal = req.CanDeal
 		dist.ChannelPrice = req.ChannelPrice
-		dist.CommissionType = req.CommissionType
-		dist.CommissionValue = req.CommissionValue
-		dist.PartnerCommission = calculatePartnerCommission(
-			req.Price,
-			req.CommissionType,
-			req.CommissionValue,
-		)
 		dist.Note = req.Note
 		dist.FromDate = req.FromDate
 		dist.ToDate = req.ToDate
 
 		if time.Now().After(*dist.ToDate) {
 			resp.Status = enums.DISTRIBUTION_STATUS_EXPRIED
+		}
+
+		// Tạo ProductPrice mới nếu Price hoặc CommissionValue thay đổi
+		var productPrice *domain.ProductPrice
+		if shouldCreateNewPrice {
+			productPrice = uc.createProductPriceFromDistribute(
+				req.ProductID,
+				dist.ID,
+				req.Price,
+				req.CommissionType,
+				req.CommissionValue,
+				_utils.GetProfileIdWithContext(ctx),
+			)
+			if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
+				log.Printf("create product price failed: %v", err)
+				return _errors.InternalServerException("create product price failed")
+			}
+
+			// Cập nhật PriceID vào distribution
+			dist.PriceID = &productPrice.ID
+		} else {
+			// Lấy ProductPrice hiện tại nếu không tạo mới
+			if dist.PriceID != nil {
+				productPrice, err = uc.productPriceRepo.GetByID(txCtx, *dist.PriceID)
+				if err != nil {
+					log.Printf("get product price failed: %v", err)
+				}
+			}
 		}
 
 		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
@@ -153,27 +243,53 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		// 	return err
 		// }
 
-		resp = mapToResultDTO(dist, len(req.PartnerIDs))
+		resp = uc.mapToResultDTO(txCtx, dist, productPrice, len(req.PartnerIDs))
 		return nil
 	})
 
 	return resp, err
 }
 
-func mapToResultDTO(dist *domain.DistributionEntity, createdCount int) *dto.DistributeResultDTO {
-	return &dto.DistributeResultDTO{
-		Price:             dist.Price,
-		CanDeal:           dist.CanDeal,
-		ChannelPrice:      dist.ChannelPrice,
-		CommissionType:    dist.CommissionType,
-		CommissionValue:   dist.CommissionValue,
-		Note:              dist.Note,
-		PartnerCommission: dist.PartnerCommission,
-		Status:            enums.DISTRIBUTION_STATUS_ACTIVE,
-		CreatedCount:      createdCount,
-		FromDate:          dist.FromDate,
-		ToDate:            dist.ToDate,
+func (uc *DistributionUsecase) mapToResultDTO(
+	ctx context.Context,
+	dist *domain.DistributionEntity,
+	productPrice *domain.ProductPrice,
+	createdCount int,
+) *dto.DistributeResultDTO {
+	result := &dto.DistributeResultDTO{
+		CanDeal:      dist.CanDeal,
+		ChannelPrice: dist.ChannelPrice,
+		Note:         dist.Note,
+		Status:       enums.DISTRIBUTION_STATUS_ACTIVE,
+		CreatedCount: createdCount,
+		FromDate:     dist.FromDate,
+		ToDate:       dist.ToDate,
 	}
+
+	// Lấy giá trị từ ProductPrice nếu có
+	if productPrice != nil {
+		if productPrice.SalePrice != nil {
+			result.Price = int64(*productPrice.SalePrice)
+		}
+		if productPrice.SaleCommission != nil {
+			result.PartnerCommission = *productPrice.SaleCommission
+		}
+		if productPrice.SaleCommissionType != nil {
+			result.CommissionType = enums.CommissionType(*productPrice.SaleCommissionType)
+		}
+		// Tính CommissionValue từ SaleCommission và SalePrice
+		if productPrice.SalePrice != nil && productPrice.SaleCommission != nil && productPrice.SaleCommissionType != nil {
+			commissionType := enums.CommissionType(*productPrice.SaleCommissionType)
+			if commissionType == enums.CommissionTypePercent {
+				// CommissionValue = (SaleCommission / SalePrice) * 100
+				result.CommissionValue = (*productPrice.SaleCommission / *productPrice.SalePrice) * 100
+			} else if commissionType == enums.CommissionTypeVND {
+				result.CommissionValue = *productPrice.SaleCommission
+			}
+		}
+	}
+
+	return result
 }
 
 func (uc *DistributionUsecase) RevokeDistribute(ctx context.Context, distributeID uint64, revoke dto.RevokeDTO) error {
@@ -205,6 +321,16 @@ func (uc *DistributionUsecase) GetListDistributesWithPartners(ctx context.Contex
 
 	for _, dist := range distributes {
 		dist.Status = displayStatus(dist)
+
+		// if dist.Price != 0 {
+		// 	dist.Price = dist.Price
+		// }
+		// if dist.CommissionType != 0 {
+		// 	dist.CommissionType = dist.CommissionType
+		// }
+		// if dist.CommissionValue != 0 {
+		// 	dist.CommissionValue = dist.CommissionValue
+		// }
 	}
 	return distributes, nil
 }
@@ -265,5 +391,32 @@ func calculatePartnerCommission(price int64, commissionType enums.CommissionType
 		return commissionValue
 	default:
 		return 0
+	}
+}
+
+// createProductPriceFromDistribute tạo ProductPrice từ thông tin distribution
+func (uc *DistributionUsecase) createProductPriceFromDistribute(
+	productID uint64,
+	distributeID uint64,
+	price int64,
+	commissionType enums.CommissionType,
+	commissionValue float64,
+	changedBy uint64,
+) *domain.ProductPrice {
+	priceFloat := float64(price)
+	// commissionFloat := calculatePartnerCommission(price, commissionType, commissionValue)
+	commissionTypeUint32 := uint32(commissionType)
+
+	return &domain.ProductPrice{
+		ProductID:          &productID,
+		DistributeID:       &distributeID,
+		Currency:           "VND",
+		SalePrice:          &priceFloat,
+		SaleCommission:     &commissionValue,
+		SaleCommissionType: &commissionTypeUint32,
+		ChangedBy:          changedBy,
+		IsCurrent:          true,
+		PriceStatus:        enums.PriceStatusFixed,
+		ChangeNote:         "Tạo từ kênh phân phối",
 	}
 }

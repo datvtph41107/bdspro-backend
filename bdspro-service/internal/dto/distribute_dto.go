@@ -45,6 +45,10 @@ type DistributionWithPartners struct {
 	PartnerIds   pq.Int64Array            `gorm:"column:partner_ids;type:bigint[]" json:"partnerIds"`
 	PartnerCount int32                    `gorm:"column:partner_count" json:"partnerCount"`
 	Status       enums.DistributionStatus `json:"status"`
+
+	Price           int64                `gorm:"column:price" json:"price"`
+	CommissionType  enums.CommissionType `gorm:"column:commission_type" json:"commissionType"`
+	CommissionValue float64              `gorm:"column:commission_value" json:"commissionValue"`
 }
 
 type DistributeResultDTO struct {
@@ -59,6 +63,7 @@ type DistributeResultDTO struct {
 	CreatedCount      int                      `json:"createdCount"`
 	FromDate          *time.Time               `json:"fromDate"`
 	ToDate            *time.Time               `json:"toDate"`
+	ProductPrice      *ProductPriceDTO         `json:"productPrice"`
 }
 
 type RevokeDTO struct {
