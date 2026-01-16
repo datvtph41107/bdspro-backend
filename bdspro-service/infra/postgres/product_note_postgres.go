@@ -94,30 +94,14 @@ func (r *PostgreProductNoteRepo) DeleteMentionByNoteID(
 		Delete(&domain.ProductNoteMention{}).Error
 }
 
-func (r *PostgreProductNoteRepo) AttachFilesToNote(
+func (r *PostgreProductNoteRepo) CreateFiles(
 	ctx context.Context,
-	noteID uint64,
-	files []dto.ProductNoteFileItem,
+	files []domain.ProductNoteFile,
 ) error {
-
 	if len(files) == 0 {
 		return nil
 	}
-
-	records := make([]*domain.ProductNoteFile, 0, len(files))
-
-	for _, f := range files {
-		records = append(records, &domain.ProductNoteFile{
-			NoteID:   noteID,
-			FileName: f.FileName,
-			FileURL:  f.URL,
-			FileType: f.Type,
-			FileSize: f.Size,
-		})
-	}
-
-	return r.DB.WithContext(ctx).
-		Create(&records).Error
+	return r.DB.WithContext(ctx).Create(&files).Error
 }
 
 func (r *PostgreProductNoteRepo) DeleteFilesByNoteID(
@@ -149,9 +133,40 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 	ctx context.Context,
 	filter *dto.GetProductNotesFilter,
 ) ([]*dto.ProductNoteItemRespone, int64, error) {
-	var result []*dto.ProductNoteItemRespone
-	db := r.DB.WithContext(ctx).
+
+	var (
+		result []*dto.ProductNoteItemRespone
+		total  int64
+	)
+
+	baseQuery := GetDB(ctx, r.DB).
 		Table("product_notes pn").
+		Joins("LEFT JOIN product_note_mentions pm ON pm.note_id = pn.id").
+		Joins("LEFT JOIN product_note_files pf ON pf.note_id = pn.id").
+		Where("pn.product_id = ?", filter.ProductID)
+
+	if filter.OnlyPinned != nil {
+		baseQuery = baseQuery.Where("pn.is_pinned = ?", *filter.OnlyPinned)
+	}
+
+	if filter.AuthorID != nil {
+		baseQuery = baseQuery.Where("pn.author_id = ?", *filter.AuthorID)
+	}
+
+	if filter.Query != nil && *filter.Query != "" {
+		baseQuery = baseQuery.Where("pn.content ILIKE ?", "%"+*filter.Query+"%")
+	}
+
+	countSubQuery := baseQuery.
+		Select("pn.id").
+		Group("pn.id")
+
+	if err := r.DB.
+		Table("(?) AS t", countSubQuery).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := baseQuery.
 		Select(`
 			pn.id,
 			pn.content,
@@ -171,30 +186,6 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 				'{}'
 			) AS file_ids
 		`).
-		Joins("LEFT JOIN product_note_mentions pm ON pm.note_id = pn.id").
-		Joins("LEFT JOIN product_note_files pf ON pf.note_id = pn.id").
-		Where("pn.product_id = ?", filter.ProductID)
-
-	if filter.OnlyPinned != nil {
-		db = db.Where("pn.is_pinned = ?", *filter.OnlyPinned)
-	}
-
-	if filter.AuthorID != nil {
-		db = db.Where("pn.author_id = ?", *filter.AuthorID)
-	}
-
-	if filter.Query != nil && *filter.Query != "" {
-		db = db.Where("pn.content ILIKE ?", "%"+*filter.Query+"%")
-	}
-
-	var total int64
-	if err := db.
-		Distinct("pn.id").
-		Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := db.
 		Group("pn.id").
 		Order("pn.is_pinned DESC, pn.created_at DESC").
 		Limit(filter.GetLimit()).

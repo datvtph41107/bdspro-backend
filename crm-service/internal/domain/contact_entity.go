@@ -35,7 +35,7 @@ type ContactEntity struct {
 	// transient
 	Tags          []TagEntity    `gorm:"-" json:"tags"`
 	ProductIDs    []uint64       `gorm:"-" json:"productIds"`
-	OriginProfile *OriginProfile `gorm:"-" json:"originProfile"`
+	OriginProfile *OriginProfile `gorm:"foreignKey:OriginProfileID;references:ID"`
 }
 
 func (ContactEntity) TableName() string {

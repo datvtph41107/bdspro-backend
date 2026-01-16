@@ -23,6 +23,7 @@ func (m *ProductPriceMapper) DTOToPb(
 		ProductId:       item.ProductID,
 		TransactionType: bdspropb.ProductTransactionType(item.TransactionType),
 		Currency:        item.Currency,
+		IsCurrentPrice:  item.IsCurrent,
 		CreatedAt:       item.CreatedAt,
 		ChangeNote:      item.ChangeNote,
 	}
@@ -102,7 +103,6 @@ func value[T any](v *T) T {
 func (m *ProductPriceMapper) DTOListToPb(
 	items []*dto.PriceHistoryItemDTO,
 ) []*bdspropb.PriceHistoryItem {
-
 	if items == nil {
 		return []*bdspropb.PriceHistoryItem{}
 	}

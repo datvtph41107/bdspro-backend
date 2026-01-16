@@ -39,7 +39,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 		return nil, err
 	}
 	gormPostRepo := postgres.NewGormPostRepo(db)
-	gormProductPriceRepo := postgres.NewGormProductPriceRepo(db)
+	transactionRepo := _db.NewTransactionRepo(db)
+	gormProductPriceRepo := postgres.NewGormProductPriceRepo(transactionRepo)
 	sharingAccessPostgre := postgres.NewSharingAccessPostgre(db)
 	gormProductPrivateRepo := postgres.NewGormProductPrivateRepo(db, sharingAccessPostgre)
 	gormUserProductRepo := postgres.NewGormUserProductRepo(db, gormProductPriceRepo, sharingAccessPostgre, gormProductPrivateRepo)
@@ -57,7 +58,6 @@ func InitializeApp() (*initial.InitialApp, error) {
 	postgreHistoryRepo := postgres.NewPostgreHistoryRepo(db)
 	gormHouseInfoRepo := postgres.NewGormHouseInfoRepo(db)
 	postgreRegion := postgres.NewPostgreRegion(db)
-	transactionRepo := _db.NewTransactionRepo(db)
 	postgreDocType := postgres.NewPostgreDocType(transactionRepo)
 	postgrePropertyType := postgres.NewPostgrePropertyType(db)
 	propertyAmenityRepo := postgres.NewPostgrePropertyAmenityRepo(db)

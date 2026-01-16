@@ -167,10 +167,10 @@ func NewInitialApp(
 
 		PropertyHandler:    propertyHandler,
 		DistributeHandler:  distributeHandler,
-		ProductNoteHandler: productNoteHandler,
 		AssetStatsJob:      assetStatsJob,
 		ProductStatsJob:    productStatsJob,
 		PostStatsJob:       postStatsJob,
+		ProductNoteHandler: productNoteHandler,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

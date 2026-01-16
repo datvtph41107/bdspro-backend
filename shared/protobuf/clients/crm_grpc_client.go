@@ -112,6 +112,25 @@ func (c *CrmGrpcClient) GetContactById(ctx context.Context, id uint64) (*sharepb
 	return contact, nil
 }
 
+func (c *CrmGrpcClient) HasContactRelation(ctx context.Context, ownerID uint64, contactOriginProfileID uint64) (bool, error) {
+	if c.CrmInternalServiceClient == nil {
+		return false, errors.New("crm internal service client not available")
+	}
+
+	resp, err := c.CrmInternalServiceClient.HasContactRelation(
+		ctx,
+		&crmpb.HasContactRelationRequest{
+			OwnerId:                ownerID,
+			ContactOriginProfileId: contactOriginProfileID,
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return resp.Exists, nil
+}
+
 func (c *CrmGrpcClient) GetOriginProfileByOriginIds(ctx context.Context, originIds []uint64) (map[uint64]*sharepb.OriginProfile, error) {
 	if c.CrmInternalServiceClient == nil {
 		return nil, errors.New("crm internal service client not available")

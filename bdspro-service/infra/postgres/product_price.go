@@ -4,23 +4,19 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud3"
+	_db "common/db"
 	_utils "common/utils"
 	"context"
-
-	"gorm.io/gorm"
 )
 
 // @bind: bdspro/internal/repo.ProductPriceRepo
 type GormProductPriceRepo struct {
+	*_db.TransactionRepo
 	crud3.BaseRepo[domain.ProductPrice]
 }
 
-func NewGormProductPriceRepo(db *gorm.DB) *GormProductPriceRepo {
-	return &GormProductPriceRepo{
-		BaseRepo: crud3.BaseRepo[domain.ProductPrice]{
-			DB: db,
-		},
-	}
+func NewGormProductPriceRepo(db *_db.TransactionRepo) *GormProductPriceRepo {
+	return &GormProductPriceRepo{TransactionRepo: db}
 }
 
 func (r *GormProductPriceRepo) FindByProductId(ctx context.Context, productId *uint64) *domain.ProductPrice {
@@ -104,37 +100,31 @@ func (r *GormProductPriceRepo) UpdatePrice(ctx context.Context, priceId *uint64,
 	// })
 }
 
-func (r *GormProductPriceRepo) Create(c context.Context, entity *domain.ProductPrice) error {
-	return GetDB(c, r.DB).Create(entity).Error
-}
-
 func (r *GormProductPriceRepo) GetHistoryProductPrice(
 	ctx context.Context,
 	req *dto.PriceHistorySearch,
 ) ([]*domain.ProductPrice, int64, error) {
 
-	var (
-		prices []*domain.ProductPrice
-		total  int64
-	)
+	var total int64
+	prices := make([]*domain.ProductPrice, 0)
 
-	db := r.DB.WithContext(ctx).
-		Table("product_price pp").
-		// Joins("JOIN products p ON p.id = pp.product_id").
-		Where(`
-			pp.product_id = ?
-			AND pp.deleted_at IS NULL
-		`, req.ProductID)
+	db := r.GetDB(ctx).
+		Model(&domain.ProductPrice{}).
+		Joins("JOIN products ON products.id = product_price.product_id").
+		Where("products.id = ?", req.ProductID).
+		Where("product_price.deleted_at IS NULL")
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := db.
-		Order("pp.created_at DESC").
+	err := db.
+		Order("product_price.created_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
-		Scan(&prices).Error; err != nil {
+		Find(&prices).Error
+
+	if err != nil {
 		return nil, 0, err
 	}
 

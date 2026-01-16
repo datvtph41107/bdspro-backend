@@ -685,11 +685,10 @@ message PriceHistoryItem {
   uint64 productId = 2;
   ProductTransactionType transactionType = 3;
   string currency = 4;
-  double old = 5;
-  double new = 6;
-  string createdAt = 7;
-  sharepb.ProfileItem createdBy = 8;
-  string changeNote = 9;
+  Price old = 5;
+  Price new = 6;
+  bool isCurrentPrice = 8;
+  string created_at = 7;
 }
 
 message Price {

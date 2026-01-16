@@ -1559,10 +1559,12 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 }
 
 // Price Product
+// Price Product
 func (u *ProductUsecase) GetPriceHistory(
 	ctx context.Context,
 	req *dto.PriceHistorySearch,
 ) ([]*dto.PriceHistoryItemDTO, int64, error) {
+
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, 0, _errors.UnauthorizedException()
 	}
@@ -1587,19 +1589,22 @@ func (u *ProductUsecase) GetPriceHistory(
 			ProductID:       *cur.ProductID,
 			TransactionType: product.TransactionType,
 			Currency:        cur.Currency,
-			New:             priceBuilder(cur, product.TransactionType),
 			CreatedAt:       _utils.FormatTimeToString(cur.CreatedAt),
-			ChangeNote:      cur.ChangeNote,
+			New:             priceBuilder(cur, product.TransactionType),
 		}
 
-		// Lấy giá prev từ item trước đó trong danh sách
-		if i < len(prices)-1 {
+		if i+1 < len(prices) {
 			prev := prices[i+1]
 			item.Old = priceBuilder(prev, product.TransactionType)
 		}
 
+		if product.LastPriceID != nil && *product.LastPriceID == cur.ID {
+			item.IsCurrent = true
+		}
+
 		items = append(items, item)
 	}
+
 	return items, total, nil
 }
 
@@ -1607,7 +1612,6 @@ func priceBuilder(
 	p *domain.ProductPrice,
 	txType enums.TransactionType,
 ) *dto.PriceDTO {
-
 	if p == nil {
 		return nil
 	}
@@ -1713,17 +1717,17 @@ func (u *ProductUsecase) UpdateProductSource(
 	ctx context.Context,
 	req *dto.UpdateProductSourceRequest,
 ) error {
-	userId := _utils.GetProfileIdWithContext(ctx)
-	if userId == 0 {
+	ownerId := _utils.GetProfileIdWithContext(ctx)
+	if ownerId == 0 {
 		return _errors.UnauthorizedException()
 	}
 
-	pre, err := u.CrmProvider.GetContactById(ctx, userId)
+	hasRelation, err := u.CrmProvider.HasContactRelation(ctx, ownerId, req.SourceContactId)
 	if err != nil {
-		return err
+		return _errors.InternalServerException("hasRelation productUsecase error: ", err.Error())
 	}
-	if pre == nil || pre.OriginProfile.OriginId != req.SourceContactId {
-		return _errors.ForbiddenException("Cannot update source product")
+	if !hasRelation {
+		return _errors.ForbiddenException("You do not have permission to update this product source")
 	}
 
 	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {

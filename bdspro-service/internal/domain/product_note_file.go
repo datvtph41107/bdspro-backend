@@ -6,9 +6,8 @@ type ProductNoteFile struct {
 	_models.BaseEntity
 	NoteID   uint64 `gorm:"not null;index"`
 	FileName string `gorm:"type:varchar(255);not null"`
-	FileURL  string `gorm:"type:text;not null"`
-	FileType string `gorm:"type:varchar(100)"`
-	FileSize int64  `gorm:"not null"`
+	URL      string `gorm:"type:text;not null"`
+	Size     int64  `gorm:"not null"`
 }
 
 func (ProductNoteFile) TableName() string {

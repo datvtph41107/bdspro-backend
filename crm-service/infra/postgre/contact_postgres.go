@@ -224,13 +224,44 @@ func (r *PostgreContact) Delete(c context.Context, id uint64) error {
 	return nil
 }
 
-func (r *PostgreContact) GetByID(c context.Context, id uint64) (*domain.ContactEntity, error) {
+func (r *PostgreContact) GetByID(
+	c context.Context,
+	id uint64,
+) (*domain.ContactEntity, error) {
+
 	var contact domain.ContactEntity
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).Where("id = ? and deleted_at is null", id).First(&contact)
+	result := r.GetDB(c).
+		Preload("OriginProfile").
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&contact)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &contact, nil
+}
+
+func (r *PostgreContact) ExistsContactRelation(c context.Context, ownerID uint64, contactOriginProfileID uint64) (bool, error) {
+	var exists bool
+
+	err := r.GetDB(c).
+		Raw(`
+            SELECT EXISTS (
+                SELECT 1
+                FROM tb_contact
+                WHERE owner_id = ?
+                  AND origin_profile_id = ?
+                  AND origin_profile_id IS NOT NULL
+                  AND deleted_at IS NULL
+            )
+        `, ownerID, contactOriginProfileID).
+		Scan(&exists).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }
 
 // ExistsBy kiểm tra xem một ContactEntity có tồn tại không dựa trên điều kiện

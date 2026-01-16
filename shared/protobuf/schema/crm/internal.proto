@@ -18,7 +18,18 @@ service CrmInternalService {
     rpc GetOriginProfileByOriginIds(sharepb.IdRequest) returns (GetOriginProfileByOriginIdResponse);
     rpc MakeOriginProfile(sharepb.OriginProfile) returns (sharepb.OriginProfile);
     
+    rpc HasContactRelation(HasContactRelationRequest) returns (HasContactRelationResponse);
 }
+
+message HasContactRelationRequest {
+  uint64 ownerId = 1;                 
+  uint64 contactOriginProfile_id = 2; 
+}
+
+message HasContactRelationResponse {
+  bool exists = 1;
+}
+
 
 message FriendStatusByProfileIdsRequest {
     repeated uint64 profileIds = 1;

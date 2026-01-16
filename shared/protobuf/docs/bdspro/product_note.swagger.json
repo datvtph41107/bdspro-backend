@@ -23,7 +23,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbProductNoteEntity"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -113,13 +113,13 @@
       }
     },
     "/v2/bdspro/product-notes/{id}": {
-      "put": {
+      "post": {
         "operationId": "ProductNoteService_UpdateProductNote",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbProductNoteEntity"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -158,7 +158,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbTogglePinProductNoteResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -197,7 +197,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/bdspropbDeleteProductNoteResponse"
+              "$ref": "#/definitions/bdspropbResponse"
             }
           },
           "default": {
@@ -258,17 +258,8 @@
         "files": {
           "type": "array",
           "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductNoteFile"
+            "type": "string"
           }
-        }
-      }
-    },
-    "bdspropbDeleteProductNoteResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean"
         }
       }
     },
@@ -318,34 +309,11 @@
         "files": {
           "type": "array",
           "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductNoteFile"
+            "type": "string"
           }
         },
         "createdAt": {
           "type": "string"
-        }
-      }
-    },
-    "bdspropbProductNoteFile": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "fileName": {
-          "type": "string"
-        },
-        "fileUrl": {
-          "type": "string"
-        },
-        "fileType": {
-          "type": "string"
-        },
-        "fileSize": {
-          "type": "string",
-          "format": "int64"
         }
       }
     },
@@ -383,17 +351,20 @@
         "files": {
           "type": "array",
           "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductNoteFile"
+            "type": "string"
           }
         }
       }
     },
-    "bdspropbTogglePinProductNoteResponse": {
+    "bdspropbResponse": {
       "type": "object",
       "properties": {
-        "success": {
-          "type": "boolean"
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     },

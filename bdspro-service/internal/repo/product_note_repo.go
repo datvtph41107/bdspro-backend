@@ -20,7 +20,7 @@ type ProductNoteRepository interface {
 	DeleteMentionByNoteID(ctx context.Context, noteID uint64) error
 
 	//attach
-	AttachFilesToNote(ctx context.Context, noteID uint64, files []dto.ProductNoteFileItem) error
+	CreateFiles(ctx context.Context, files []domain.ProductNoteFile) error
 	ListByNoteIDs(ctx context.Context, noteIDs []uint64) ([]*domain.ProductNoteFile, error)
 	DeleteFilesByNoteID(ctx context.Context, noteID uint64) error
 }

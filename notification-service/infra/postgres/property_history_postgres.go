@@ -29,20 +29,12 @@ func (r *propertyHistoryPostgres) Create(
 	return entity, nil
 }
 
-func (r *propertyHistoryPostgres) Search(
-	ctx context.Context,
-	q dto.PropertyHistoryQueryDTO,
-) ([]domain.PropertyHistoryEntity, int64, error) {
-
+func (r *propertyHistoryPostgres) Search(ctx context.Context, q dto.PropertyHistoryQueryDTO) ([]domain.PropertyHistoryEntity, int64, error) {
 	var (
 		histories []domain.PropertyHistoryEntity
 		total     int64
 	)
-
-	baseQuery := r.db.WithContext(ctx).
-		Model(&domain.PropertyHistoryEntity{})
-
-	/* ---------- FILTER ---------- */
+	baseQuery := r.db.WithContext(ctx).Model(&domain.PropertyHistoryEntity{})
 
 	if q.SubjectID != nil {
 		baseQuery = baseQuery.Where("subject_id = ?", *q.SubjectID)
@@ -68,14 +60,12 @@ func (r *propertyHistoryPostgres) Search(
 		`, kw, kw)
 	}
 
-	if err := baseQuery.
-		Session(&gorm.Session{}).
-		Count(&total).Error; err != nil {
+	countSubQuery := baseQuery.Select("id")
 
-		return nil, 0, fmt.Errorf(
-			"property_history.count failed: %w",
-			err,
-		)
+	if err := r.db.
+		Table("(?) AS t", countSubQuery).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
 	order := "occurred_at DESC"
@@ -94,10 +84,7 @@ func (r *propertyHistoryPostgres) Search(
 	}
 
 	if err := query.Find(&histories).Error; err != nil {
-		return nil, 0, fmt.Errorf(
-			"property_history.search failed: %w",
-			err,
-		)
+		return nil, 0, err
 	}
 
 	return histories, total, nil
@@ -127,10 +114,8 @@ func (r *propertyHistoryPostgres) Delete(
 	ctx context.Context,
 	id uint64,
 ) error {
-
 	if err := r.db.WithContext(ctx).
 		Delete(&domain.PropertyHistoryEntity{}, id).Error; err != nil {
-		return fmt.Errorf("property_history.delete failed: %w", err)
 	}
 
 	return nil

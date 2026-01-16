@@ -125,9 +125,10 @@ func MigrateDomain() {
 	// &domain.PropertyRelation{},
 	// &domain.ProvinceV2{},
 	// &domain.WardV2{},
+	// &domain.ProductNote{},
+	// &domain.ProductNoteMention{},
+	// &domain.ProductNoteFile{},
 
 	// &domain.ProductUser{},
-	// &domain.ProductPrice{},
-	// &domain.DistributionEntity{},
 	)
 }

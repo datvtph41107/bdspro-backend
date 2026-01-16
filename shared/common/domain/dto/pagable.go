@@ -31,7 +31,10 @@ func (p *Pagable) GetOffset() int {
 	page := p.GetPage()
 	size := p.GetSize()
 
-	return int(page) * int(size)
+	if page <= 1 {
+		return 0
+	}
+	return int(page-1) * int(size)
 }
 
 func (p *Pagable) GetLimit() int {

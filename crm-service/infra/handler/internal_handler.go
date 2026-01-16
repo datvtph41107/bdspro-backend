@@ -1,6 +1,7 @@
 package handler
 
 import (
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"crm/infra/mapper"
@@ -145,7 +146,7 @@ func (h *CrmInternalService) GetContactById(ctx context.Context, req *sharepb.Id
 		CreatedBy: contact.CreatedBy,
 	}
 
-	if contact.OriginProfile != nil {
+	if contact.OriginProfileID != nil {
 		result.OriginProfile = &sharepb.OriginProfile{
 			DisplayName: contact.OriginProfile.DisplayName,
 			Phone:       contact.OriginProfile.Phone,
@@ -166,6 +167,24 @@ func (h *CrmInternalService) GetContactById(ctx context.Context, req *sharepb.Id
 	}
 
 	return result, nil
+}
+
+func (h *CrmInternalService) HasContactRelation(ctx context.Context, req *crmpb.HasContactRelationRequest) (*crmpb.HasContactRelationResponse, error) {
+	exists, err := h.ContactRepo.ExistsContactRelation(
+		ctx,
+		req.OwnerId,
+		req.ContactOriginProfileId,
+	)
+	if err != nil {
+		return nil, _errors.InternalServerException(
+			"HasContactRelation fail Error: ",
+			err.Error(),
+		)
+	}
+
+	return &crmpb.HasContactRelationResponse{
+		Exists: exists,
+	}, nil
 }
 
 func (h *CrmInternalService) GetOriginProfileByOriginIds(ctx context.Context, req *sharepb.IdRequest) (*crmpb.GetOriginProfileByOriginIdResponse, error) {

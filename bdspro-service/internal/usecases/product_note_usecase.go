@@ -8,6 +8,9 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"net/url"
+	"path"
+	"strings"
 )
 
 type ProductNoteUsecase struct {
@@ -25,12 +28,16 @@ func NewProductNoteUsecase(
 	}
 }
 
-func (u *ProductNoteUsecase) CreateNote(ctx context.Context, req *dto.CreateProductNoteRequest) (*domain.ProductNote, error) {
+func (u *ProductNoteUsecase) CreateNote(
+	ctx context.Context,
+	req *dto.CreateProductNoteRequest,
+) (*domain.ProductNote, error) {
 	authorID := _utils.GetProfileIdWithContext(ctx)
 	if authorID == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
-	if req.Content == "" {
+
+	if strings.TrimSpace(req.Content) == "" {
 		return nil, _errors.BadRequestException("note content is required")
 	}
 
@@ -42,14 +49,14 @@ func (u *ProductNoteUsecase) CreateNote(ctx context.Context, req *dto.CreateProd
 			Content:   req.Content,
 			IsPinned:  false,
 		}
+
 		if err := u.noteRepo.CreateNote(txCtx, note); err != nil {
 			return err
 		}
 
-		mentionIds := req.MentionIDs
-		if len(mentionIds) > 0 {
-			mentions := make([]domain.ProductNoteMention, 0, len(mentionIds))
-			for _, uid := range mentionIds {
+		if len(req.MentionIDs) > 0 {
+			mentions := make([]domain.ProductNoteMention, 0, len(req.MentionIDs))
+			for _, uid := range req.MentionIDs {
 				mentions = append(mentions, domain.ProductNoteMention{
 					NoteID: note.ID,
 					UserID: uid,
@@ -59,16 +66,36 @@ func (u *ProductNoteUsecase) CreateNote(ctx context.Context, req *dto.CreateProd
 				return err
 			}
 		}
+
 		if len(req.Files) > 0 {
-			if err := u.noteRepo.AttachFilesToNote(txCtx, note.ID, req.Files); err != nil {
+			files := make([]domain.ProductNoteFile, 0, len(req.Files))
+			for _, f := range req.Files {
+				files = append(files, domain.ProductNoteFile{
+					NoteID:   note.ID,
+					URL:      f,
+					FileName: extractFileName(f),
+					Size:     0,
+				})
+			}
+
+			if err := u.noteRepo.CreateFiles(txCtx, files); err != nil {
 				return err
 			}
 		}
+
 		createdNote = note
 		return nil
 	})
 
 	return createdNote, err
+}
+
+func extractFileName(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "unknown"
+	}
+	return path.Base(u.Path)
 }
 
 func (u *ProductNoteUsecase) TogglePin(ctx context.Context, noteID uint64, isPinned bool) error {
@@ -161,7 +188,17 @@ func (u *ProductNoteUsecase) UpdateNote(ctx context.Context, req *dto.UpdateProd
 				return err
 			}
 
-			if err := u.noteRepo.AttachFilesToNote(txCtx, req.NoteID, req.Files); err != nil {
+			files := make([]domain.ProductNoteFile, 0, len(req.Files))
+			for _, f := range req.Files {
+				files = append(files, domain.ProductNoteFile{
+					NoteID:   req.NoteID,
+					URL:      f,
+					FileName: extractFileName(f),
+					Size:     0,
+				})
+			}
+
+			if err := u.noteRepo.CreateFiles(txCtx, files); err != nil {
 				return err
 			}
 		}

@@ -26,12 +26,12 @@ func (m *ProductNoteMapper) ProductNoteListToProto(list []*dto.ProductNoteItemRe
 
 func (m *ProductNoteMapper) ProductNoteItemToProto(n *dto.ProductNoteItemRespone) *bdspropb.ProductNoteEntity {
 	return &bdspropb.ProductNoteEntity{
-		Id:        n.ID,
-		Content:   n.Content,
-		IsPinned:  n.IsPinned,
-		Author:    mapAuthorToProto(n.Author),
-		Mentions:  mapMentionsToProto(n.Mentions),
-		Files:     mapFilesToProto(n.Files),
+		Id:       n.ID,
+		Content:  n.Content,
+		IsPinned: n.IsPinned,
+		Author:   mapAuthorToProto(n.Author),
+		Mentions: mapMentionsToProto(n.Mentions),
+		// Files:     n.Files,
 		CreatedAt: n.CreatedAt,
 	}
 }
@@ -66,20 +66,22 @@ func mapMentionsToProto(list []dto.ProductNoteMentionItem) []*bdspropb.ProductNo
 	return res
 }
 
-func mapFilesToProto(list []dto.ProductNoteFileItem) []*bdspropb.ProductNoteFile {
+// func mapFilesToProto(list []domain.ProductNoteFile) []*bdspropb.ProductNoteFile {
+func mapFilesToProto(list []string) []string {
 	if len(list) == 0 {
 		return nil
 	}
 
-	res := make([]*bdspropb.ProductNoteFile, 0, len(list))
+	// res := make([]*bdspropb.ProductNoteFile, 0, len(list))
+	res := make([]string, 0, len(list))
 	for _, f := range list {
-		res = append(res, &bdspropb.ProductNoteFile{
-			Id:       f.ID,
-			FileName: f.FileName,
-			FileUrl:  f.URL,
-			FileType: f.Type,
-			FileSize: f.Size,
-		})
+		// res = append(res, &bdspropb.ProductNoteFile{
+		// 	Id:       f.ID,
+		// 	FileName: f.FileName,
+		// 	FileUrl:  f.URL,
+		// 	FileSize: f.Size,
+		// })
+		res = append(res, f)
 	}
 	return res
 }

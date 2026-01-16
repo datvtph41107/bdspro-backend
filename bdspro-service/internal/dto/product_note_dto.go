@@ -8,17 +8,17 @@ import (
 )
 
 type CreateProductNoteRequest struct {
-	ProductID  uint64                `json:"productId" validate:"required"`
-	Content    string                `json:"content" validate:"required"`
-	MentionIDs []uint64              `json:"mentionIds"`
-	Files      []ProductNoteFileItem `json:"fileIds"`
+	ProductID  uint64   `json:"productId" validate:"required"`
+	Content    string   `json:"content" validate:"required"`
+	MentionIDs []uint64 `json:"mentionIds"`
+	Files      []string `json:"files"`
 }
 
 type UpdateProductNoteRequest struct {
-	NoteID     uint64                `json:"noteId" validate:"required"`
-	Content    string                `json:"content" validate:"required"`
-	MentionIDs []uint64              `json:"mentionIds"`
-	Files      []ProductNoteFileItem `json:"fileIds"`
+	NoteID     uint64   `json:"noteId" validate:"required"`
+	Content    string   `json:"content" validate:"required"`
+	MentionIDs []uint64 `json:"mentionIds"`
+	Files      []string `json:"fileIds"`
 }
 
 type GetProductNotesFilter struct {
@@ -42,7 +42,7 @@ type ProductNoteItemRespone struct {
 	// enrich sau
 	Author   *sharepb.ProfileItem     `gorm:"-"`
 	Mentions []ProductNoteMentionItem `gorm:"-"`
-	Files    []ProductNoteFileItem    `gorm:"-"`
+	Files    []string                 `gorm:"-"`
 }
 
 type ProductNoteMentionItem struct {
@@ -50,12 +50,4 @@ type ProductNoteMentionItem struct {
 	Name   string `json:"name,omitempty"`
 	Avatar string `json:"avatar,omitempty"`
 	Role   string `json:"role,omitempty"`
-}
-
-type ProductNoteFileItem struct {
-	ID       uint64 `json:"id"`
-	FileName string `json:"fileName"`
-	URL      string `json:"url"`
-	Type     string `json:"type"`
-	Size     int64  `json:"size"`
 }
