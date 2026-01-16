@@ -84,7 +84,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	codeDataUsecase := providers.NewCodeDataUsecase()
 	deepseekClient := client.NewDeepseekClient()
 	crmProvider := client.NewCrmClient()
-	productUsecase := shared_usecase.NewProductUsecase(gormUserProductRepo, postgreAsset, gormProductMediaRepo, postgreHistoryRepo, sharingAccessPostgre, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, postgreRegion, postgreDocType, postgrePropertyType, propertyAmenityRepo, dealRepository, postgreProductChild, productOrganizationPostgres, productUserPostgres, memberPlanUsecase, postUsecase, assetUsecase, bdsDomainUsecase, propertyUsecase, codeDataUsecase, deepseekClient, transactionGorm, notificationProvider, crmProvider)
+	productUsecase := shared_usecase.NewProductUsecase(gormUserProductRepo, postgreAsset, gormProductMediaRepo, postgreHistoryRepo, sharingAccessPostgre, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, postgreRegion, postgreDocType, postgrePropertyType, propertyAmenityRepo, dealRepository, postgreProductChild, productOrganizationPostgres, productUserPostgres, memberPlanUsecase, postUsecase, assetUsecase, bdsDomainUsecase, propertyUsecase, codeDataUsecase, deepseekClient, transactionGorm, notificationProvider, crmProvider, userClient)
 	apartmentMapper := mapper.NewApartmentMapper()
 	apartmentAttributeMapper := mapper.NewApartmentAttributeMapper()
 	buildMapper := mapper.NewBuildMapper()

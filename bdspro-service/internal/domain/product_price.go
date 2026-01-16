@@ -2,27 +2,31 @@ package domain
 
 import (
 	"bdspro/internal/enums"
-	_models "common/models"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type ProductPrice struct {
-	_models.BaseEntity
-	ProductID          *uint64  `json:"productId,omitempty"`
-	Currency           string   `json:"currency,omitempty"`
-	SalePrice          *float64 `gorm:"type:DECIMAL(15,0)" json:"salePrice,omitempty"`
-	SaleCommission     *float64 `gorm:"type:DECIMAL(15,0)" json:"saleCommission,omitempty"`
-	SaleCommissionType *uint32  `json:"saleCommisionType,omitempty"`
-	Deposite           *float64 `gorm:"type:DECIMAL(15,0)" json:"deposite,omitempty"`
-	RentPrice          *float64 `gorm:"type:DECIMAL(15,0)" json:"rentPrice,omitempty"`
-	RentCommission     *float64 `gorm:"type:DECIMAL(15,0)" json:"rentCommission,omitempty"`
-	RentCommissionType *uint32  `json:"rentCommisionType,omitempty"`
-	RentPaymentCycle   *uint32  `json:"rentPaymentCycle,omitempty"`
-	DistributeID       *uint64  `json:"distributeId,omitempty"` // id phân phối ban đầu
+	ID                 uint64          `gorm:"primaryKey" json:"id"`
+	CreatedAt          *time.Time      `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt          *time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
+	DeletedAt          *gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
+	ProductID          *uint64         `json:"productId,omitempty"`
+	Currency           string          `json:"currency,omitempty"`
+	SalePrice          *float64        `gorm:"type:DECIMAL(15,0)" json:"salePrice,omitempty"`
+	SaleCommission     *float64        `gorm:"type:DECIMAL(15,0)" json:"saleCommission,omitempty"`
+	SaleCommissionType *uint32         `json:"saleCommisionType,omitempty"`
+	Deposite           *float64        `gorm:"type:DECIMAL(15,0)" json:"deposite,omitempty"`
+	RentPrice          *float64        `gorm:"type:DECIMAL(15,0)" json:"rentPrice,omitempty"`
+	RentCommission     *float64        `gorm:"type:DECIMAL(15,0)" json:"rentCommission,omitempty"`
+	RentCommissionType *uint32         `json:"rentCommisionType,omitempty"`
+	RentPaymentCycle   *uint32         `json:"rentPaymentCycle,omitempty"`
+	DistributeID       *uint64         `json:"distributeId,omitempty"` // id phân phối ban đầu
 
 	PriceStatus enums.ProductPriceStatus `json:"status,omitempty"`
 	ChangeNote  string                   `gorm:"type:text" json:"note,omitempty"`
 	ChangedBy   uint64                   `json:"changedBy"`
-	IsCurrent   bool                     `gorm:"default:true" json:"isCurrent"`
 	// PriceOwner       *float64 `json:"priceOwner,omitempty"` // deprecated
 	// SaleCommissionType uint     `json:"saleCommissionType,omitempty"`
 	// RentCommissionType uint     `json:"rentCommissionType,omitempty"`

@@ -1084,7 +1084,6 @@ func (s *ProductHandler) GetPriceHistory(
 	ctx context.Context,
 	req *bdspropb.PriceHistoryRequest,
 ) (*bdspropb.PriceHistoryResponse, error) {
-
 	if req.Id == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
@@ -1096,6 +1095,7 @@ func (s *ProductHandler) GetPriceHistory(
 			Size: req.Size,
 		},
 	})
+	fmt.Println(items[0])
 	if err != nil {
 		return nil, err
 	}

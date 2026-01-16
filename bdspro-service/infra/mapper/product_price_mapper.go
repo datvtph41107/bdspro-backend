@@ -11,84 +11,49 @@ func NewProductPriceMapper() *ProductPriceMapper {
 	return &ProductPriceMapper{}
 }
 
-func (m *ProductPriceMapper) DTOToPb(
-	item *dto.PriceHistoryItemDTO,
-) *bdspropb.PriceHistoryItem {
+func (m *ProductPriceMapper) DTOToPb(item *dto.PriceHistoryItemDTO) *bdspropb.PriceHistoryItem {
 	if item == nil {
 		return nil
 	}
 
-	pb := &bdspropb.PriceHistoryItem{
+	return &bdspropb.PriceHistoryItem{
 		Id:              item.ID,
 		ProductId:       item.ProductID,
 		TransactionType: bdspropb.ProductTransactionType(item.TransactionType),
 		Currency:        item.Currency,
+		Old:             m.mapPrice(item.Old),
+		New:             m.mapPrice(item.New),
 		IsCurrentPrice:  item.IsCurrent,
 		CreatedAt:       item.CreatedAt,
-		ChangeNote:      item.ChangeNote,
 	}
-
-	if item.Old != nil {
-		pb.Old = m.mapPriceSnapshot(item.Old)
-	}
-
-	if item.New != nil {
-		pb.New = m.mapPriceSnapshot(item.New)
-	}
-
-	return pb
 }
 
-func (m *ProductPriceMapper) mapPriceSnapshot(
-	dto *dto.PriceDTO,
-) float64 {
-
-	if dto == nil {
-		return 0
-	}
-
-	snapshot := float64(0)
-
-	if dto.Sale != nil {
-		snapshot = *dto.Sale.Price
-	}
-
-	if dto.Rent != nil {
-		snapshot += *dto.Rent.Price
-	}
-
-	return snapshot
-}
-
-func (m *ProductPriceMapper) mapSalePrice(
-	sale *dto.SalePriceDTO,
-) *bdspropb.SalePrice {
-
-	if sale == nil {
+func (m *ProductPriceMapper) mapPrice(price *dto.PriceDTO) *bdspropb.Price {
+	if price == nil {
 		return nil
 	}
 
-	return &bdspropb.SalePrice{
-		Price:          value(sale.Price),
-		Commission:     value(sale.Commission),
-		CommissionType: value(sale.CommissionType),
-		Deposit:        value(sale.Deposite),
+	return &bdspropb.Price{
+		Price:          value(price.Price),
+		Commission:     value(price.Commission),
+		CommissionType: value(price.CommissionType),
+		CreatedBy:      m.mapUser(price.CreatedBy),
 	}
 }
 
-func (m *ProductPriceMapper) mapRentPrice(
-	rent *dto.RentPriceDTO,
-) *bdspropb.RentPrice {
+func (m *ProductPriceMapper) mapUser(
+	user *dto.UserInfoDTO,
+) *bdspropb.UserInfo {
 
-	if rent == nil {
+	if user == nil {
 		return nil
 	}
 
-	return &bdspropb.RentPrice{
-		Price:          value(rent.Price),
-		Commission:     value(rent.Commission),
-		CommissionType: value(rent.CommissionType),
-		PaymentCycle:   value(rent.PaymentCycle),
+	return &bdspropb.UserInfo{
+		Id:     user.ID,
+		Name:   user.Name,
+		Avatar: user.Avatar,
+		Role:   user.Role,
 	}
 }
 
@@ -100,9 +65,7 @@ func value[T any](v *T) T {
 	return *v
 }
 
-func (m *ProductPriceMapper) DTOListToPb(
-	items []*dto.PriceHistoryItemDTO,
-) []*bdspropb.PriceHistoryItem {
+func (m *ProductPriceMapper) DTOListToPb(items []*dto.PriceHistoryItemDTO) []*bdspropb.PriceHistoryItem {
 	if items == nil {
 		return []*bdspropb.PriceHistoryItem{}
 	}

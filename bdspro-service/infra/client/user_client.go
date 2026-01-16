@@ -226,7 +226,6 @@ func (c *UserClient) MapMemberToDealPb(ctx context.Context, deals []*bdspropb.Gr
 			deal.ChargePerson = chargePerson
 		}
 	}
-
 }
 
 func (c *UserClient) MapProfileToDealContractPbs(ctx context.Context, contracts []*bdspropb.DealContractItem) {

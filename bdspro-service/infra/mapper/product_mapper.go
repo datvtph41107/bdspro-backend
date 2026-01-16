@@ -9,7 +9,6 @@ import (
 	"bdspro/internal/repo"
 	_dto "common/domain/dto"
 	_usecase "common/domain/usecase"
-	_models "common/models"
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
@@ -1112,9 +1111,7 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 
 func (m *ProductMapper) PriceDataToDomain(req *bdspropb.ProductPrice) *domain.ProductPrice {
 	result := &domain.ProductPrice{
-		BaseEntity: _models.BaseEntity{
-			ID: req.Id,
-		},
+		ID:        req.Id,
 		ProductID: &req.ProductId,
 		Currency:  req.Currency,
 		// PriceOwner:       req.PriceOwner,

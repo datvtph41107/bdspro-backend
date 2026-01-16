@@ -22,20 +22,29 @@ type PriceHistoryItemDTO struct {
 	CreatedAt       string                `json:"createdAt"`
 }
 type PriceDTO struct {
-	Sale *SalePriceDTO `json:"sale,omitempty"`
-	Rent *RentPriceDTO `json:"rent,omitempty"`
+	Price          *float64     `json:"price"`
+	Commission     *float64     `json:"commission"`
+	CommissionType *uint32      `json:"commissionType"`
+	CreatedBy      *UserInfoDTO `json:"createdBy,omitempty"`
 }
 
-type SalePriceDTO struct {
-	Price          *float64 `json:"price"`
-	Commission     *float64 `json:"commission"`
-	CommissionType *uint32  `json:"commissionType"`
-	Deposite       *float64 `json:"deposite"`
-}
+// type SalePriceDTO struct {
+// 	Price          *float64 `json:"price"`
+// 	Commission     *float64 `json:"commission"`
+// 	CommissionType *uint32  `json:"commissionType"`
+// 	Deposite       *float64 `json:"deposite"`
+// }
 
-type RentPriceDTO struct {
-	Price          *float64 `json:"price"`
-	Commission     *float64 `json:"commission"`
-	CommissionType *uint32  `json:"commissionType"`
-	PaymentCycle   *uint32  `json:"paymentCycle"`
+// type RentPriceDTO struct {
+// 	Price          *float64 `json:"price"`
+// 	Commission     *float64 `json:"commission"`
+// 	CommissionType *uint32  `json:"commissionType"`
+// 	PaymentCycle   *uint32  `json:"paymentCycle"`
+// }
+
+type UserInfoDTO struct {
+	ID     uint64
+	Name   string
+	Avatar string
+	Role   string
 }

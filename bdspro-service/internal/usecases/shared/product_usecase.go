@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	sharepb "pb/types/shared"
 	"strings"
 	"time"
 
@@ -64,6 +65,7 @@ type ProductUsecase struct {
 	Transaction    provider.TransactionProvider
 	DeepseekClient provider.DeepseekProvider
 	CrmProvider    provider.CrmProvider
+	UserProvider   provider.IUserProvider
 }
 
 func NewProductUsecase(
@@ -94,6 +96,7 @@ func NewProductUsecase(
 	transaction provider.TransactionProvider,
 	notificationClient provider.NotificationProvider,
 	crmProvider provider.CrmProvider,
+	userProvider provider.IUserProvider,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -125,6 +128,7 @@ func NewProductUsecase(
 		// OwnerType:    ownerType,
 		CodeDataUsecase: codeDataUsecase,
 		CrmProvider:     crmProvider,
+		UserProvider:    userProvider,
 	}
 
 	result.PostUsecase.ProductUsecase = result
@@ -1559,12 +1563,7 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 }
 
 // Price Product
-// Price Product
-func (u *ProductUsecase) GetPriceHistory(
-	ctx context.Context,
-	req *dto.PriceHistorySearch,
-) ([]*dto.PriceHistoryItemDTO, int64, error) {
-
+func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHistorySearch) ([]*dto.PriceHistoryItemDTO, int64, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, 0, _errors.UnauthorizedException()
 	}
@@ -1581,6 +1580,28 @@ func (u *ProductUsecase) GetPriceHistory(
 	if err != nil {
 		return nil, 0, err
 	}
+	if len(prices) == 0 {
+		return []*dto.PriceHistoryItemDTO{}, total, nil
+	}
+
+	userIDSet := make(map[uint64]struct{})
+	for _, p := range prices {
+		if p.ChangedBy != 0 {
+			userIDSet[p.ChangedBy] = struct{}{}
+		}
+	}
+
+	userIDs := make([]uint64, 0, len(userIDSet))
+	for id := range userIDSet {
+		userIDs = append(userIDs, id)
+	}
+
+	profiles, err := u.UserProvider.GetMapProfileByIds(ctx,
+		&sharepb.GetProfileByIdsRequest{Ids: userIDs},
+	)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	items := make([]*dto.PriceHistoryItemDTO, 0, len(prices))
 	for i, cur := range prices {
@@ -1590,12 +1611,20 @@ func (u *ProductUsecase) GetPriceHistory(
 			TransactionType: product.TransactionType,
 			Currency:        cur.Currency,
 			CreatedAt:       _utils.FormatTimeToString(cur.CreatedAt),
-			New:             priceBuilder(cur, product.TransactionType),
+			New: priceBuilder(
+				cur,
+				product.TransactionType,
+				convertUserProfile(profiles[cur.ChangedBy]),
+			),
 		}
 
 		if i+1 < len(prices) {
 			prev := prices[i+1]
-			item.Old = priceBuilder(prev, product.TransactionType)
+			item.Old = priceBuilder(
+				prev,
+				product.TransactionType,
+				convertUserProfile(profiles[prev.ChangedBy]),
+			)
 		}
 
 		if product.LastPriceID != nil && *product.LastPriceID == cur.ID {
@@ -1608,38 +1637,29 @@ func (u *ProductUsecase) GetPriceHistory(
 	return items, total, nil
 }
 
-func priceBuilder(
-	p *domain.ProductPrice,
-	txType enums.TransactionType,
-) *dto.PriceDTO {
+func convertUserProfile(p *sharepb.ProfileItem) *dto.UserInfoDTO {
 	if p == nil {
 		return nil
 	}
-
-	switch txType {
-
-	case enums.TransactionTypeSale:
-		return &dto.PriceDTO{
-			Sale: &dto.SalePriceDTO{
-				Price:          p.SalePrice,
-				Commission:     p.SaleCommission,
-				CommissionType: p.SaleCommissionType,
-				Deposite:       p.Deposite,
-			},
-		}
-
-	case enums.TransactionTypeRent:
-		return &dto.PriceDTO{
-			Rent: &dto.RentPriceDTO{
-				Price:          p.RentPrice,
-				Commission:     p.RentCommission,
-				CommissionType: p.RentCommissionType,
-				PaymentCycle:   p.RentPaymentCycle,
-			},
-		}
+	return &dto.UserInfoDTO{
+		ID:     p.Id,
+		Name:   p.FullName,
+		Avatar: p.Avatar,
+		Role:   "Empty",
 	}
+}
 
-	return nil
+func priceBuilder(p *domain.ProductPrice, txType enums.TransactionType, user *dto.UserInfoDTO) *dto.PriceDTO {
+	if p == nil {
+		return nil
+	}
+	price := &dto.PriceDTO{
+		Price:          p.SalePrice,
+		Commission:     p.SaleCommission,
+		CommissionType: p.SaleCommissionType,
+		CreatedBy:      user,
+	}
+	return price
 }
 
 func (u *ProductUsecase) ApplyPriceUpdate(
@@ -1679,7 +1699,6 @@ func (u *ProductUsecase) ApplyPriceUpdate(
 			SalePrice:   &req.Price,
 			PriceStatus: req.PriceStatus,
 			ChangeNote:  req.ChangeNote,
-			ChangedBy:   userId,
 		}
 
 		if err := u.PriceRepo.Create(txCtx, newPrice); err != nil {

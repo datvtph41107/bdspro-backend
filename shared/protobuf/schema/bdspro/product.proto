@@ -687,27 +687,22 @@ message PriceHistoryItem {
   string currency = 4;
   Price old = 5;
   Price new = 6;
-  bool isCurrentPrice = 8;
-  string created_at = 7;
+  bool isCurrentPrice = 7;
+  string created_at = 8;
 }
 
 message Price {
-  SalePrice sale = 1;
-  RentPrice rent = 2;
-}
-
-message SalePrice {
   double price = 1;
   double commission = 2;
   uint32 commission_type = 3;
-  double deposit = 4;
+  UserInfo createdBy = 4;
 }
 
-message RentPrice {
-  double price = 1;
-  double commission = 2;
-  uint32 commission_type = 3;
-  uint32 payment_cycle = 4;
+message UserInfo {
+  uint64 id = 1;
+  string name = 2;
+  string avatar = 3;
+  string role = 4;
 }
 
 message ProductNavigationResponse {

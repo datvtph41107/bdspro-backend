@@ -414,8 +414,6 @@ func (uc *DistributionUsecase) createProductPriceFromDistribute(
 		SalePrice:          &priceFloat,
 		SaleCommission:     &commissionValue,
 		SaleCommissionType: &commissionTypeUint32,
-		ChangedBy:          changedBy,
-		IsCurrent:          true,
 		PriceStatus:        enums.PriceStatusFixed,
 		ChangeNote:         "Tạo từ kênh phân phối",
 	}
