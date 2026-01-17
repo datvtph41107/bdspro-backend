@@ -31,6 +31,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	wire.Bind(new(auth_internal_interface_provider.CrmProvider), new(*auth_infra_client.CrmClient)),
 	wire.Bind(new(auth_internal_interface_provider.NotificationProvider), new(*auth_infra_client.NotificationClient)),
 	wire.Bind(new(auth_internal_interface_provider.OrganizationProvider), new(*auth_infra_client.OrganizationClient)),
 	wire.Bind(new(auth_internal_interface_provider.PaymentProvider), new(*auth_infra_client.PaymentClient)),
@@ -61,6 +62,7 @@ var wireSet = wire.NewSet(
 	auth_infra_client.NewBdsproClient,
 	auth_infra_client.NewChatClient,
 	auth_infra_cookie.NewCookieProvider,
+	auth_infra_client.NewCrmClient,
 	auth_infra_mapper.NewDeviceMapper,
 	auth_infra_postgre.NewDevicePostgresRepo,
 	auth_internal_usecase.NewDeviceUsecase,

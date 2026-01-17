@@ -18,7 +18,7 @@ service ProductNoteService {
 
     rpc UpdateProductNote(UpdateProductNoteReqClient) returns (Response) {
         option (google.api.http) = {
-            post: "/v2/bdspro/product-notes/{id}"
+            put: "/v2/bdspro/product-notes/{id}"
             body: "*"
         };
     }

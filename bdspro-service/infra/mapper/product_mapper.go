@@ -481,7 +481,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 
 	// Get source contact information if SourceContactId is available
 	if product.SourceContactId != nil && *product.SourceContactId > 0 {
-		if contact, err := m.CrmClient.GetContactById(ctx, *product.SourceContactId); err == nil && contact != nil {
+		if contact, err := m.CrmClient.GetContactByOriginId(ctx, *product.SourceContactId); err == nil && contact != nil {
 			result.SourceContact = contact
 		}
 	}

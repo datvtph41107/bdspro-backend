@@ -40,7 +40,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	}
 	gormPostRepo := postgres.NewGormPostRepo(db)
 	transactionRepo := _db.NewTransactionRepo(db)
-	gormProductPriceRepo := postgres.NewGormProductPriceRepo(transactionRepo)
+	gormProductPriceRepo := postgres.NewGormProductPriceRepo(db, transactionRepo)
 	sharingAccessPostgre := postgres.NewSharingAccessPostgre(db)
 	gormProductPrivateRepo := postgres.NewGormProductPrivateRepo(db, sharingAccessPostgre)
 	gormUserProductRepo := postgres.NewGormUserProductRepo(db, gormProductPriceRepo, sharingAccessPostgre, gormProductPrivateRepo)

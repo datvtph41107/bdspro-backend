@@ -4012,6 +4012,16 @@
         },
         "createdAt": {
           "type": "string"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "distributeId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -4126,6 +4136,30 @@
         }
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
+    },
+    "bdspropbProductAttachmentResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        }
+      }
+    },
+    "bdspropbProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        }
+      }
     },
     "bdspropbProductNavigationResponse": {
       "type": "object",

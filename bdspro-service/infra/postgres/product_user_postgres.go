@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"bdspro/internal/domain"
+	_utils "common/utils"
 	"context"
 
 	"gorm.io/gorm"
@@ -17,10 +18,13 @@ func NewProductUserPostgres(db *gorm.DB) *ProductUserPostgres {
 }
 
 func (r *ProductUserPostgres) CreateOwner(ctx context.Context, productID uint64, profileID uint64) (*domain.ProductUser, error) {
+	originId := _utils.GetOriginIdFromContext(ctx)
 	productOfUser := &domain.ProductUser{
 		ProductID: productID,
 		ProfileID: profileID,
 		IsOwner:   true,
+
+		OriginProfileID: &originId,
 	}
 	err := GetDB(ctx, r.db).Create(productOfUser).Error
 	if err != nil {

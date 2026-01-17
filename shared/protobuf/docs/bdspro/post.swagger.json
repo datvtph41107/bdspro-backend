@@ -1116,6 +1116,18 @@
         }
       }
     },
+    "bdspropbGetPostByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbPost"
+          }
+        }
+      }
+    },
     "bdspropbHouseInfo": {
       "type": "object",
       "properties": {
@@ -1268,6 +1280,14 @@
         "targetId": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "bdspropbOwnerPostResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
         }
       }
     },

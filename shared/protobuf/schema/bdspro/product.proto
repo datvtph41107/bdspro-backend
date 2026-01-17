@@ -688,7 +688,10 @@ message PriceHistoryItem {
   Price old = 5;
   Price new = 6;
   bool isCurrentPrice = 7;
-  string created_at = 8;
+  string createdAt = 8;
+  sharepb.ProfileItem createdBy = 9;
+  string changeNote = 10;
+  optional uint64 distributeId = 11;
 }
 
 message Price {

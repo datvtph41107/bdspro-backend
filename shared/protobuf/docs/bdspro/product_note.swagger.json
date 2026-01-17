@@ -113,7 +113,7 @@
       }
     },
     "/v2/bdspro/product-notes/{id}": {
-      "post": {
+      "put": {
         "operationId": "ProductNoteService_UpdateProductNote",
         "responses": {
           "200": {

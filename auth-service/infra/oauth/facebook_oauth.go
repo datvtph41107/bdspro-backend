@@ -193,7 +193,7 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	}
 
 	if existingUser.UserID == 0 {
-		return s.AuthService.ResponseLogin(existingUser, nil, 0), nil
+		return s.AuthService.ResponseLogin(c, existingUser, nil, 0), nil
 	}
 
 	// Nếu không có otpReq thì tạo mặc định
@@ -216,7 +216,7 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	// Ghi log admin history
 	s.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Facebook OAuth")
 
-	response := s.AuthService.ResponseLogin(existingUser, profile, session.SessionID)
+	response := s.AuthService.ResponseLogin(c, existingUser, profile, session.SessionID)
 	response.RefreshToken = refreshToken         // Set refreshToken vào response body
 	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	return response, nil

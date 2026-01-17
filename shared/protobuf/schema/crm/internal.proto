@@ -11,12 +11,14 @@ service CrmInternalService {
     rpc FriendStatusByProfileIds(FriendStatusByProfileIdsRequest) returns (FriendStatusByProfileIdsResponse);
     rpc GetFriendInfoByProfileId(sharepb.IdRequest) returns (sharepb.ContactInfoV3Proto);
     rpc GetContactById(sharepb.IdRequest) returns (sharepb.ContactDTO);
+    rpc GetContactByOriginId(sharepb.IdRequest) returns (sharepb.ContactDTO);
 
     rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
     rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
     rpc GetOrCreateContactByProfileIdWithNullOwner(sharepb.IdRequest) returns (GetOrCreateContactResponse);
     rpc GetOriginProfileByOriginIds(sharepb.IdRequest) returns (GetOriginProfileByOriginIdResponse);
     rpc MakeOriginProfile(sharepb.OriginProfile) returns (sharepb.OriginProfile);
+    rpc GetOriginProfileByProfileID(sharepb.IdRequest) returns (sharepb.OriginProfile);
     
     rpc HasContactRelation(HasContactRelationRequest) returns (HasContactRelationResponse);
 }

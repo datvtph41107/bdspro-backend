@@ -20,6 +20,8 @@ type PriceHistoryItemDTO struct {
 	New             *PriceDTO             `json:"new"`
 	IsCurrent       bool                  `json:"isCurrent"`
 	CreatedAt       string                `json:"createdAt"`
+	ChangeNote      string                `json:"changeNote"`
+	DistributeID    *uint64               `json:"distributeId,omitempty"`
 }
 type PriceDTO struct {
 	Price          *float64     `json:"price"`

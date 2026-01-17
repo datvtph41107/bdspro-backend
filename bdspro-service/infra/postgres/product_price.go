@@ -7,6 +7,8 @@ import (
 	_db "common/db"
 	_utils "common/utils"
 	"context"
+
+	"gorm.io/gorm"
 )
 
 // @bind: bdspro/internal/repo.ProductPriceRepo
@@ -15,8 +17,11 @@ type GormProductPriceRepo struct {
 	crud3.BaseRepo[domain.ProductPrice]
 }
 
-func NewGormProductPriceRepo(db *_db.TransactionRepo) *GormProductPriceRepo {
-	return &GormProductPriceRepo{TransactionRepo: db}
+func NewGormProductPriceRepo(gormDb *gorm.DB, db *_db.TransactionRepo) *GormProductPriceRepo {
+	return &GormProductPriceRepo{
+		TransactionRepo: db,
+		BaseRepo:        crud3.BaseRepo[domain.ProductPrice]{DB: gormDb},
+	}
 }
 
 func (r *GormProductPriceRepo) FindByProductId(ctx context.Context, productId *uint64) *domain.ProductPrice {
@@ -129,4 +134,44 @@ func (r *GormProductPriceRepo) GetHistoryProductPrice(
 	}
 
 	return prices, total, nil
+}
+
+func (r *GormProductPriceRepo) GetDistributePrice(ctx context.Context, productId *uint64) (*domain.ProductPrice, error) {
+	var price *domain.ProductPrice
+
+	originId := _utils.GetOriginIdFromContext(ctx)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+
+	// Query xử lý 3 trường hợp:
+	// 1. Nếu product_user có priceId thì join theo field này
+	// 2. Nếu product_user không có priceId thì vào distribution join theo priceId của distribution
+	// 3. Nếu product_user đó là isOwner=true thì join trực tiếp theo priceId trong product (LastPriceID)
+	query := `
+		SELECT DISTINCT pp.*
+		FROM product_user pu
+		LEFT JOIN distributions d ON d.id = pu.distribute_id
+		LEFT JOIN products p ON p.id = pu.product_id AND p.deleted_at IS NULL
+		INNER JOIN product_price pp ON pp.deleted_at IS NULL
+			AND pp.id = CASE
+				-- Trường hợp 3: Nếu isOwner=true thì ưu tiên dùng LastPriceID từ product
+				WHEN pu.is_owner = true AND p.last_price_id IS NOT NULL THEN p.last_price_id
+				-- Trường hợp 1: Nếu product_user có priceId thì dùng priceId này
+				WHEN pu.price_id IS NOT NULL THEN pu.price_id
+				-- Trường hợp 2: Nếu không có priceId trong product_user thì dùng priceId từ distribution
+				WHEN d.price_id IS NOT NULL THEN d.price_id
+				ELSE NULL
+			END
+		WHERE pu.product_id = ?
+			AND (pu.origin_profile_id = ? OR pu.profile_id = ?)
+			AND pu.deleted_at IS NULL
+			AND pp.id IS NOT NULL
+		ORDER BY pp.created_at DESC
+		LIMIT 1
+	`
+
+	err := r.GetDB(ctx).Raw(query, *productId, originId, profileId).Scan(&price).Error
+	if err != nil {
+		return nil, err
+	}
+	return price, nil
 }

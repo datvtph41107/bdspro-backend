@@ -4,6 +4,7 @@ import (
 	"common/case/crud3"
 	"context"
 	"crm/internal/domain"
+	"crm/internal/enums"
 	"crm/internal/repo"
 
 	"gorm.io/gorm"
@@ -39,4 +40,15 @@ func (r *PostgreOriginProfileRepo) GetByIDs(ctx context.Context, originIDs []uin
 		return nil, err
 	}
 	return profiles, nil
+}
+
+func (r *PostgreOriginProfileRepo) GetByProfileID(ctx context.Context, profileID uint64) (*domain.OriginProfile, error) {
+	var profile domain.OriginProfile
+	err := r.DB.WithContext(ctx).
+		Where("owner_id = ? AND owner_of = ? AND deleted_at IS NULL", profileID, uint32(enums.EOwnerOfMember)).
+		First(&profile).Error
+	if err != nil {
+		return nil, err
+	}
+	return &profile, nil
 }

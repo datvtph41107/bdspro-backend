@@ -46,6 +46,7 @@ type AuthUsecase struct {
 	ZnsProvider        provider.IZnsProvider
 	SMSProvider        provider.ISmsProvider
 	properties         dto.PropertiesDTO
+	CrmProvider        provider.CrmProvider
 }
 
 func NewAuthService(cookieProvider provider.CookieProvider,
@@ -67,6 +68,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 	znsProvider provider.IZnsProvider,
 	smsProvider provider.ISmsProvider,
 	properties factory.IFactory,
+	crmProvider provider.CrmProvider,
 ) *AuthUsecase {
 	planId := uint64(1)
 	return &AuthUsecase{
@@ -90,6 +92,7 @@ func NewAuthService(cookieProvider provider.CookieProvider,
 		ZnsProvider:        znsProvider,
 		SMSProvider:        smsProvider,
 		properties:         properties.GetProperties(),
+		CrmProvider:        crmProvider,
 	}
 }
 
@@ -411,7 +414,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	}
 
 	// Lấy passwordAuthId (auth_method có provider ADMIN)
-	response := s.ResponseLogin(e, infoEntity, newSession.SessionID)
+	response := s.ResponseLogin(c, e, infoEntity, newSession.SessionID)
 	response.RefreshToken = refreshToken            // Set refreshToken vào response body
 	response.ReferralCode = infoEntity.ReferralCode // Set mã giới thiệu vào response
 	if infoEntity.ProfileID != 0 {
@@ -752,7 +755,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 
 	// 10. Generate tokens
 	refreshToken := s.GenRefreshToken(c, e, newSession.SessionID)
-	response := s.ResponseLogin(e, infoEntity, newSession.SessionID)
+	response := s.ResponseLogin(c, e, infoEntity, newSession.SessionID)
 	response.RefreshToken = refreshToken
 	response.ReferralCode = infoEntity.ReferralCode
 	response.ServerPublicKey = ""
@@ -965,21 +968,20 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 			return nil, err
 		}
 
-		// Tạo access token mới
-		newAccessToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
-			AuthID:         props.AuthID,
-			ProfileID:      props.ProfileID,
-			Role:           props.Role,
-			SessionID:      props.SessionID,
-			OrganizationID: props.OrganizationID,
-			PlanID:         profile.PlanID,
-			PlanAt:         profile.PlanAt,
-			Type:           "ACCESS",
-		})
+		originID, err := s.CrmProvider.GetOriginID(c, props.ProfileID)
+		if err != nil {
+			return nil, err
+		}
+
+		newAccessToken, err := s.GenerateAccessToken(c, props.AuthID, props.SessionID, props.OrganizationID)
+		if err != nil {
+			return nil, err
+		}
 
 		// Tạo refresh token mới
 		newRefreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 			AuthID:         props.AuthID,
+			OriginID:       originID,
 			ProfileID:      props.ProfileID,
 			Role:           props.Role,
 			SessionID:      props.SessionID,
@@ -1639,7 +1641,7 @@ func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMeth
 	}, nil
 }
 
-func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethod, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
+func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *domain.AuthMethod, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
 	if authEntity.UserID == 0 {
 		return &dto.AuthLoginResponse{
 			AuthID:   authEntity.ID,
@@ -1650,30 +1652,37 @@ func (s *AuthUsecase) ResponseLogin(authEntity *domain.AuthMethod, profile *dto.
 	// Kiểm tra xem user đã có họ tên chưa
 	requireFullname := profile.FullName == ""
 	var accessToken string
-
-	if requireFullname {
-		// User chưa có họ tên, tạo TEMP token
-		accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
-			AuthID:    authEntity.ID,
-			ProfileID: authEntity.UserID,
-			SessionID: sessionID,
-			Role:      enums.RoleMap[profile.RoleType],
-			Type:      _jwt.TempToken, // Token tạm thời, hạn 10 phút
-			PlanID:    profile.PlanID,
-			PlanAt:    profile.PlanAt,
-		})
-	} else {
-		// User đã có họ tên, tạo ACCESS token bình thường
-		accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
-			AuthID:    authEntity.ID,
-			ProfileID: authEntity.UserID,
-			SessionID: sessionID,
-			Role:      enums.RoleMap[profile.RoleType],
-			Type:      _jwt.AccessToken,
-			PlanID:    profile.PlanID,
-			PlanAt:    profile.PlanAt,
-		})
+	accessToken, err := s.GenerateAccessToken(ctx, authEntity.ID, sessionID, nil)
+	if err != nil {
+		return &dto.AuthLoginResponse{
+			AuthID:   authEntity.ID,
+			FullName: authEntity.FullName,
+		}
 	}
+
+	// if requireFullname {
+	// 	// User chưa có họ tên, tạo TEMP token
+	// 	accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
+	// 		AuthID:    authEntity.ID,
+	// 		ProfileID: authEntity.UserID,
+	// 		SessionID: sessionID,
+	// 		Role:      enums.RoleMap[profile.RoleType],
+	// 		Type:      _jwt.TempToken, // Token tạm thời, hạn 10 phút
+	// 		PlanID:    profile.PlanID,
+	// 		PlanAt:    profile.PlanAt,
+	// 	})
+	// } else {
+	// 	// User đã có họ tên, tạo ACCESS token bình thường
+	// 	accessToken, _ = _jwt.GenerateToken(_jwt.JwtTokenProperties{
+	// 		AuthID:    authEntity.ID,
+	// 		ProfileID: authEntity.UserID,
+	// 		SessionID: sessionID,
+	// 		Role:      enums.RoleMap[profile.RoleType],
+	// 		Type:      _jwt.AccessToken,
+	// 		PlanID:    profile.PlanID,
+	// 		PlanAt:    profile.PlanAt,
+	// 	})
+	// }
 
 	response := dto.MakeAuthLoginResponse(accessToken, authEntity, enums.RoleMap[profile.RoleType])
 	response.RequireFullname = requireFullname
@@ -1897,7 +1906,7 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 		}
 	}()
 
-	response := s.ResponseLogin(authEntity, profile, sessionEntity.SessionID)
+	response := s.ResponseLogin(c, authEntity, profile, sessionEntity.SessionID)
 	response.RefreshToken = refreshToken         // Set refreshToken vào response body
 	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	return response, nil
@@ -2093,19 +2102,23 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 		}
 	}
 
-	payload := _jwt.JwtTokenProperties{
-		AuthID:    authId,
-		ProfileID: profileId,
-		SessionID: sessionId,
-		Role:      "ROLE_USER",
-		Type:      "ACCESS",
-		PlanID:    profile.PlanID,
-		PlanAt:    profile.PlanAt,
-	}
-	payload.AdditionalInfo = map[string]interface{}{
-		"organization": clientResponse.OrganizationId,
-	}
-	newAccessToken, err := _jwt.GenerateToken(payload)
+	// payload := _jwt.JwtTokenProperties{
+	// 	AuthID:    authId,
+	// 	ProfileID: profileId,
+	// 	SessionID: sessionId,
+	// 	Role:      "ROLE_USER",
+	// 	Type:      "ACCESS",
+	// 	PlanID:    profile.PlanID,
+	// 	PlanAt:    profile.PlanAt,
+	// }
+	// payload.AdditionalInfo = map[string]interface{}{
+	// 	"organization": clientResponse.OrganizationId,
+	// }
+	// newAccessToken, err := _jwt.GenerateToken(payload)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &clientResponse.OrganizationId)
 	if err != nil {
 		return nil, err
 	}
@@ -2228,7 +2241,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 
 	adminProfile.RoleType = enums.ERoleAdmin
 	// Tạo response với đầy đủ thông tin
-	response := s.ResponseLogin(adminAuthEntity, adminProfile, newSession.SessionID)
+	response := s.ResponseLogin(c, adminAuthEntity, adminProfile, newSession.SessionID)
 	response.RefreshToken = refreshToken              // Set refreshToken vào response body
 	response.ReferralCode = adminProfile.ReferralCode // Set mã giới thiệu vào response
 	response.Role = enums.RoleMap[adminProfile.RoleType]
@@ -2742,7 +2755,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	refreshToken := s.GenRefreshToken(ctx, authEntity, newSession.SessionID)
 
 	// Lấy passwordAuthId (chính là auth_method hiện tại)
-	response := s.ResponseLogin(authEntity, profile, newSession.SessionID)
+	response := s.ResponseLogin(ctx, authEntity, profile, newSession.SessionID)
 	response.RefreshToken = refreshToken         // Set refreshToken vào response body
 	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	response.PasswordAuthId = authEntity.ID
@@ -3182,4 +3195,38 @@ func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint
 	}
 
 	return true, &auth.ID, nil
+}
+
+func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, sessionId uint64, organizationId *uint64) (string, error) {
+	authMethod, err := s.AuthMethodRepo.FindByID(ctx, authId)
+	if err != nil {
+		return "", err
+	}
+
+	originID, err := s.CrmProvider.GetOriginID(ctx, authMethod.UserID)
+	if err != nil {
+		return "", err
+	}
+
+	profile, err := s.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
+	if err != nil {
+		return "", err
+	}
+
+	accessToken, err := _jwt.GenerateToken(_jwt.JwtTokenProperties{
+		AuthID:         authId,
+		OriginID:       originID,
+		ProfileID:      authMethod.UserID,
+		Role:           enums.RoleMap[enums.ERole(authMethod.RoleKey)],
+		SessionID:      sessionId,
+		OrganizationID: organizationId,
+		PlanID:         profile.PlanID,
+		PlanAt:         profile.PlanAt,
+		Type:           _jwt.AccessToken,
+	})
+	log.Printf("GenerateAccessToken: %s userID: %d", accessToken, authMethod.UserID)
+	if err != nil {
+		return "", err
+	}
+	return accessToken, nil
 }

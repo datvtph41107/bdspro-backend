@@ -139,7 +139,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	}
 
 	if existingUser.UserID == 0 {
-		return g.AuthService.ResponseLogin(existingUser, nil, 0), nil
+		return g.AuthService.ResponseLogin(c, existingUser, nil, 0), nil
 	}
 	// Nếu không có otpReq thì tạo mặc định
 	if otpReq == nil {
@@ -160,7 +160,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	// Ghi log admin history
 	g.AuthService.LogLoginHistory(c, existingUser, profile, "Đăng nhập hệ thống bằng Google OAuth")
 
-	response := g.AuthService.ResponseLogin(existingUser, profile, session.SessionID)
+	response := g.AuthService.ResponseLogin(c, existingUser, profile, session.SessionID)
 	response.RefreshToken = refreshToken         // Set refreshToken vào response body
 	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
 	return response, nil

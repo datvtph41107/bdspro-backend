@@ -51,3 +51,21 @@ func (c *CrmClient) GetContactById(ctx context.Context, id uint64) (*sharepb.Con
 	}
 	return resp, nil
 }
+
+// GetContactByOriginId retrieves contact information by originId using internal service
+func (c *CrmClient) GetContactByOriginId(ctx context.Context, originId uint64) (*sharepb.ContactDTO, error) {
+	if c.CrmInternalServiceClient == nil {
+		return nil, nil
+	}
+
+	resp, err := c.CrmInternalServiceClient.GetContactByOriginId(
+		ctx,
+		&sharepb.IdRequest{
+			Id: originId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

@@ -206,7 +206,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		var productPrice *domain.ProductPrice
 		if shouldCreateNewPrice {
 			productPrice = uc.createProductPriceFromDistribute(
-				req.ProductID,
+				dist.ProductID,
 				dist.ID,
 				req.Price,
 				req.CommissionType,
@@ -244,6 +244,27 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		// }
 
 		resp = uc.mapToResultDTO(txCtx, dist, productPrice, len(req.PartnerIDs))
+
+		// Lấy PropertyID từ Product
+		var propertyID uint64
+		product, err := uc.productRepo.GetProductByID(txCtx, &dist.ProductID)
+		if err != nil || product == nil {
+			log.Printf("get product failed: %v", err)
+		} else if product.PropertyID != nil {
+			propertyID = *product.PropertyID
+		}
+
+		uc.notifyProvider.RegistedEventProperty(ctx,
+			&dto.CreatePropertyActivityDTO{
+				SubjectID:   propertyID,
+				SubjectType: _enum.SUBJECT_TYPE_DISTRIBUTE,
+				Action:      _enum.ACTION_DISTRIBUTE_UPDATE,
+				ActorID:     _utils.GetProfileIdWithContext(ctx),
+				Description: fmt.Sprintf(
+					"Sản phẩm %s được cập nhật kênh phân phối",
+					_util.GetProductCode(dist.ProductID),
+				),
+			})
 		return nil
 	})
 

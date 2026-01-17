@@ -1616,6 +1616,8 @@ func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHist
 				product.TransactionType,
 				convertUserProfile(profiles[cur.ChangedBy]),
 			),
+			ChangeNote:   cur.ChangeNote,
+			DistributeID: cur.DistributeID,
 		}
 
 		if i+1 < len(prices) {

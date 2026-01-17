@@ -208,9 +208,14 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 	// }
 
 	var tempResult domain.Product
-	price := r.PriceRepo.FindByProductId(ctx, &id)
+	// price := r.PriceRepo.FindByProductId(ctx, &id)
 
-	err := GetDB(ctx, r.DB).
+	price, err := r.PriceRepo.GetDistributePrice(ctx, &id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = GetDB(ctx, r.DB).
 		Model(&domain.Product{}).
 		Preload("Property", "deleted_at IS NULL").
 		Preload("Property.PropertyType").
@@ -231,8 +236,8 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		// 		ARRAY[]::bigint[]
 		// 	) AS post_ids`).
 		// Table("products p").
-		Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
-        	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
+		// Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
+		// 	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
 		Preload("PropertyType", "deleted_at IS NULL").
 		// Preload("Deposite", "deleted_at IS NULL").
 		Preload("DocType", "deleted_at IS NULL").
@@ -1144,7 +1149,10 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 	// Struct tạm để scan raw SQL với flat fields
 	var tempResults []dto.ProductListResponse
 
-	// Build base SQL - SELECT các column match với ProductListResponse
+	// Lấy originId từ context
+	originId := _utils.GetOriginIdFromContext(c)
+
+	// Build base SQL - Bắt đầu từ product_user, sau đó join với products và các bảng khác
 	baseSQL := `
 		SELECT 
 			   products.id,
@@ -1199,14 +1207,25 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			   products.deal_count,
 			   products.share_count,
 			   products.contact_count
-		FROM products
+		FROM product_user pu
+		INNER JOIN products ON products.id = pu.product_id AND products.deleted_at IS NULL
 		LEFT JOIN (
 			SELECT parent_id, SUM(area) AS total_area 
 			FROM products 
 			WHERE deleted_at IS NULL 
 			GROUP BY parent_id
 		) AS child ON products.id = child.parent_id
-		LEFT JOIN product_price pp ON products.last_price_id = pp.id AND pp.deleted_at IS NULL
+		LEFT JOIN distributions d ON d.id = pu.distribute_id
+		LEFT JOIN product_price pp ON pp.deleted_at IS NULL
+			AND pp.id = CASE
+				-- Trường hợp 3: Nếu isOwner=true thì ưu tiên dùng LastPriceID từ product
+				WHEN pu.is_owner = true AND products.last_price_id IS NOT NULL THEN products.last_price_id
+				-- Trường hợp 1: Nếu product_user có priceId thì dùng priceId này
+				WHEN pu.price_id IS NOT NULL THEN pu.price_id
+				-- Trường hợp 2: Nếu không có priceId trong product_user thì dùng priceId từ distribution
+				WHEN d.price_id IS NOT NULL THEN d.price_id
+				ELSE NULL
+			END
 		LEFT JOIN house_info hi ON products.id = hi.product_id AND hi.deleted_at IS NULL
 		LEFT JOIN property p ON products.property_id = p.id AND p.deleted_at IS NULL
 		LEFT JOIN property_building_info pbi ON p.id = pbi.property_id AND pbi.deleted_at IS NULL
@@ -1215,12 +1234,18 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		LEFT JOIN ward_v2 ward ON p.ward_id = ward.id AND ward.deleted_at IS NULL
 		LEFT JOIN projects proj ON p.project_id = proj.id AND proj.deleted_at IS NULL
 		LEFT JOIN property_type pt ON p.property_type_id = pt.id AND pt.deleted_at IS NULL
-		WHERE products.deleted_at IS NULL
+		WHERE pu.deleted_at IS NULL
 	`
 
 	// Build WHERE conditions và args động
 	var whereClauses []string
 	var args []interface{}
+
+	// Lọc theo origin_profile_id nếu có
+	// if originId > 0 {
+	// 	whereClauses = append(whereClauses, `pu.origin_profile_id = ?`)
+	// 	args = append(args, originId)
+	// }
 
 	// EXISTS cho organization
 	if payload.RequestOrganizationId != nil {
@@ -1233,15 +1258,10 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		args = append(args, *payload.RequestOrganizationId)
 	}
 
-	// EXISTS cho user
+	// EXISTS cho user (nếu có RequestUserId thì lọc theo profile_id trong product_user)
 	if payload.RequestUserId != nil {
-		whereClauses = append(whereClauses, `EXISTS (
-			SELECT 1 FROM product_user pou 
-			WHERE pou.product_id = products.id 
-			AND pou.profile_id = ? 
-			AND pou.deleted_at IS NULL
-		)`)
-		args = append(args, *payload.RequestUserId)
+		whereClauses = append(whereClauses, `((pu.profile_id = ? and pu.is_owner = true) or (pu.origin_profile_id = ? and pu.is_owner = false))`)
+		args = append(args, *payload.RequestUserId, originId)
 	}
 
 	// Apply filters từ QueryDomain
@@ -1312,21 +1332,22 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		// tempResults[i].Code =
 	}
 
-	// Count total
+	// Count total - Bắt đầu từ product_user
 	countSQL := `
 		SELECT COUNT(DISTINCT products.id)
-		FROM products
-		LEFT JOIN (
-			SELECT parent_id, SUM(area) AS total_area 
-			FROM products 
-			WHERE deleted_at IS NULL 
-			GROUP BY parent_id
-		) AS child ON products.id = child.parent_id
-		WHERE products.deleted_at IS NULL
+		FROM product_user pu
+		INNER JOIN products ON products.id = pu.product_id AND products.deleted_at IS NULL
+		WHERE pu.deleted_at IS NULL
 	`
 
 	var countWhereClauses []string
 	var countArgs []interface{}
+
+	// Lọc theo origin_profile_id nếu có
+	if originId > 0 {
+		countWhereClauses = append(countWhereClauses, `pu.origin_profile_id = ?`)
+		countArgs = append(countArgs, originId)
+	}
 
 	if payload.RequestOrganizationId != nil {
 		countWhereClauses = append(countWhereClauses, `EXISTS (
@@ -1339,12 +1360,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 	}
 
 	if payload.RequestUserId != nil {
-		countWhereClauses = append(countWhereClauses, `EXISTS (
-			SELECT 1 FROM product_user pou 
-			WHERE pou.product_id = products.id 
-			AND pou.profile_id = ? 
-			AND pou.deleted_at IS NULL
-		)`)
+		countWhereClauses = append(countWhereClauses, `pu.profile_id = ?`)
 		countArgs = append(countArgs, *payload.RequestUserId)
 	}
 
@@ -1610,13 +1626,13 @@ func (r *GormUserProductRepo) buildQueryConditions(dto *dto.ProductSearchRequest
 	}
 
 	// UserId
-	if dto.RequestUserId != nil {
-		*whereClauses = append(*whereClauses, "products.owner_id = ? and products.owner_type = ?")
-		*args = append(*args, *dto.RequestUserId, enums.EOwnerOfMember)
-	} else if dto.RequestOrganizationId != nil {
-		*whereClauses = append(*whereClauses, "products.owner_of = ? and products.owner_type = ?")
-		*args = append(*args, *dto.RequestOrganizationId, enums.EOwnerOfOrganization)
-	}
+	// if dto.RequestUserId != nil {
+	// 	*whereClauses = append(*whereClauses, "products.owner_id = ? and products.owner_type = ?")
+	// 	*args = append(*args, *dto.RequestUserId, enums.EOwnerOfMember)
+	// } else if dto.RequestOrganizationId != nil {
+	// 	*whereClauses = append(*whereClauses, "products.owner_of = ? and products.owner_type = ?")
+	// 	*args = append(*args, *dto.RequestOrganizationId, enums.EOwnerOfOrganization)
+	// }
 }
 
 func (r *GormUserProductRepo) GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {

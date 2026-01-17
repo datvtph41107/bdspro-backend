@@ -214,3 +214,62 @@ func (h *CrmInternalService) GetOriginProfileByOriginIds(ctx context.Context, re
 	}
 	return &crmpb.GetOriginProfileByOriginIdResponse{Data: originProfilesPb}, nil
 }
+
+func (h *CrmInternalService) GetOriginProfileByProfileID(ctx context.Context, req *sharepb.IdRequest) (*sharepb.OriginProfile, error) {
+	originProfile, err := h.OriginProfileRepo.GetByProfileID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.OriginProfile{
+		OriginId:    originProfile.OriginID,
+		DisplayName: originProfile.DisplayName,
+		Phone:       originProfile.Phone,
+		Avatar:      originProfile.Avatar,
+		OwnerId:     originProfile.OwnerID,
+		OwnerOf:     uint32(originProfile.OwnerOf),
+	}, nil
+}
+
+func (h *CrmInternalService) GetContactByOriginId(ctx context.Context, req *sharepb.IdRequest) (*sharepb.ContactDTO, error) {
+	ownerId := _utils.GetProfileIdWithContext(ctx)
+	if ownerId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "owner_id is required")
+	}
+
+	contact, err := h.ContactRepo.GetByOriginProfileId(ctx, ownerId, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if contact == nil {
+		return nil, status.Errorf(codes.NotFound, "contact not found")
+	}
+
+	result := &sharepb.ContactDTO{
+		Id:        contact.ID,
+		FullName:  contact.FullName,
+		Phone:     contact.Phone,
+		Email:     contact.Email,
+		Zalo:      contact.Zalo,
+		Company:   contact.Company,
+		Note:      contact.Note,
+		Birthday:  _utils.FormatTimeToString(contact.Birthday),
+		OwnerId:   contact.OwnerID,
+		OwnerOf:   int32(contact.OwnerOf),
+		ProfileId: contact.ProfileID,
+		CreatedAt: _utils.FormatTimeToString(contact.CreatedAt),
+		CreatedBy: contact.CreatedBy,
+	}
+
+	if contact.OriginProfileID != nil && contact.OriginProfile != nil {
+		result.OriginProfile = &sharepb.OriginProfile{
+			DisplayName: contact.OriginProfile.DisplayName,
+			Phone:       contact.OriginProfile.Phone,
+			Avatar:      contact.OriginProfile.Avatar,
+			OriginId:    contact.OriginProfile.OriginID,
+			OwnerId:     contact.OriginProfile.OwnerID,
+			OwnerOf:     uint32(contact.OriginProfile.OwnerOf),
+		}
+	}
+
+	return result, nil
+}

@@ -62,6 +62,14 @@
         }
       }
     },
+    "crmpbHasContactRelationResponse": {
+      "type": "object",
+      "properties": {
+        "exists": {
+          "type": "boolean"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {

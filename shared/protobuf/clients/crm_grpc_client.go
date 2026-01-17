@@ -113,6 +113,11 @@ func (c *CrmGrpcClient) GetContactById(ctx context.Context, id uint64) (*sharepb
 }
 
 func (c *CrmGrpcClient) HasContactRelation(ctx context.Context, ownerID uint64, contactOriginProfileID uint64) (bool, error) {
+	if c.CrmInternalServiceClient == nil {
+		return false, errors.New("crm internal service client not available")
+	}
+
+	log.Println("ownerID", ownerID)
 	resp, err := c.CrmInternalServiceClient.HasContactRelation(
 		ctx,
 		&crmpb.HasContactRelationRequest{

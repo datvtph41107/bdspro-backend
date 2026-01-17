@@ -25,6 +25,8 @@ func (m *ProductPriceMapper) DTOToPb(item *dto.PriceHistoryItemDTO) *bdspropb.Pr
 		New:             m.mapPrice(item.New),
 		IsCurrentPrice:  item.IsCurrent,
 		CreatedAt:       item.CreatedAt,
+		ChangeNote:      item.ChangeNote,
+		DistributeId:    item.DistributeID,
 	}
 }
 

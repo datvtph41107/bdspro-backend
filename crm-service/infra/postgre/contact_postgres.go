@@ -527,3 +527,18 @@ func (r *PostgreContact) GetByProfileIDAndOwnerIdNull(c context.Context, profile
 	}
 	return &contact, nil
 }
+
+func (r *PostgreContact) GetByOriginProfileId(c context.Context, ownerId uint64, originProfileId uint64) (*domain.ContactEntity, error) {
+	var contact domain.ContactEntity
+	result := r.GetDB(c).
+		Preload("OriginProfile").
+		Where("owner_id = ? AND origin_profile_id = ? AND deleted_at IS NULL", ownerId, originProfileId).
+		First(&contact)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &contact, nil
+}
