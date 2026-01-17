@@ -254,7 +254,6 @@ func (s *NotificationClient) CreatePropertyHistoryActivity(
 ) error {
 	_, err := s.Client.CreatePropertyHistoryActivity(ctx, &notificationpb.CreatePropertyHistoryRequest{
 		SubjectId:   subjectId,
-		SubjectType: subjectType,
 		Action:      action,
 		Description: description,
 		ActorId:     actorId,

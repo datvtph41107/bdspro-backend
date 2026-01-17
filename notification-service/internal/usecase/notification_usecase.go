@@ -14,7 +14,7 @@ import (
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
-	iprovider "notification/internal/interface"
+	iprovider "notification/internal/provider"
 	"notification/internal/repo"
 	notificationpb "pb/types/notification"
 	"strconv"

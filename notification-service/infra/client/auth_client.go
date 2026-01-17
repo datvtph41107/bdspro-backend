@@ -7,7 +7,7 @@ import (
 	sharepb "pb/types/shared"
 )
 
-// @bind: notification/internal/interface.IAuthClient
+// @bind: notification/internal/provider.IAuthClient
 type AuthClient struct {
 	Client *clients.AuthGrpcClient
 }

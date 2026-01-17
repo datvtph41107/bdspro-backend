@@ -7,6 +7,8 @@ import (
 	"notification/internal/domain"
 	"notification/internal/dto"
 	notificationpb "pb/types/notification"
+	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 )
 
 type PropertyHistoryMapper struct{}
@@ -18,14 +20,12 @@ func NewPropertyHistoryMapper() *PropertyHistoryMapper {
 func (m *PropertyHistoryMapper) CreateProtoToDTO(
 	req *notificationpb.CreatePropertyHistoryRequest,
 ) *dto.CreatePropertyHistoryDTO {
-
 	if req == nil {
 		return nil
 	}
 
 	return &dto.CreatePropertyHistoryDTO{
 		SubjectID:   req.SubjectId,
-		SubjectType: _enum.SubjectTypeProperty(req.SubjectType),
 		Action:      _enum.PropertyAction(req.Action),
 		Description: req.Description,
 		ActorID:     req.ActorId,
@@ -34,46 +34,72 @@ func (m *PropertyHistoryMapper) CreateProtoToDTO(
 
 func (m *PropertyHistoryMapper) SearchProtoToDTO(
 	req *notificationpb.GetPropertyHistoryRequest,
-) dto.PropertyHistoryQueryDTO {
+) *dto.PropertyHistoryQueryDTO {
+	q := &dto.PropertyHistoryQueryDTO{}
+	if req != nil {
+		if req.Action != 0 {
+			action := _enum.PropertyAction(req.Action)
+			q.Action = &action
+		}
 
-	return dto.PropertyHistoryQueryDTO{
-		SubjectID:   &req.SubjectId,
-		SubjectType: &req.SubjectType,
+		if req.ActorId != 0 {
+			q.ActorID = &req.ActorId
+		}
+
+		if req.Keyword != "" {
+			q.Keyword = &req.Keyword
+		}
 	}
+
+	q.Page = req.Page
+	q.Size = req.Size
+	q.Sort = req.Sort
+
+	return q
 }
 
 func (m *PropertyHistoryMapper) EntityToItem(
-	entity *domain.PropertyHistoryEntity,
+	entity *domain.PropertyHistory,
+	actor *sharepb.ProfileItem,
 ) *notificationpb.PropertyHistoryItem {
-
 	if entity == nil {
 		return nil
 	}
 
-	return &notificationpb.PropertyHistoryItem{
-		Id:        entity.ID,
-		SubjectId: entity.SubjectID,
-		// SubjectType: entity.SubjectType.String(),
+	item := &notificationpb.PropertyHistoryItem{
+		Id:          entity.ID,
+		SubjectId:   entity.SubjectID,
 		Action:      entity.Action.String(),
 		Description: entity.Description,
-		ActorId:     entity.ActorID,
 		OccurredAt:  _utils.FormatTimeToString(entity.OccurredAt),
 		CreatedAt:   _utils.FormatTimeToString(entity.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(entity.UpdatedAt),
 	}
+
+	// nilpointer data k có actorId ; k cần check
+	if actor != nil {
+		item.Actor = &notificationpb.ActorInfo{
+			Id:       actor.Id,
+			FullName: actor.FullName,
+			Avatar:   actor.Avatar,
+		}
+	}
+
+	return item
 }
 
 func (m *PropertyHistoryMapper) EntitiesToListResponse(
-	entities []domain.PropertyHistoryEntity,
+	entities []*domain.PropertyHistory,
+	userMap map[uint64]*sharepb.ProfileItem,
 	total int64,
 	page, size int32,
 ) *notificationpb.GetPropertyHistoryResponse {
-
 	items := make([]*notificationpb.PropertyHistoryItem, 0, len(entities))
 
 	for _, e := range entities {
-		eCopy := e // 🧠 best practice (tránh pointer reuse bug)
-		items = append(items, m.EntityToItem(&eCopy))
+		items = append(items,
+			m.EntityToItem(e, userMap[e.ActorID]),
+		)
 	}
 
 	return &notificationpb.GetPropertyHistoryResponse{
@@ -83,10 +109,15 @@ func (m *PropertyHistoryMapper) EntitiesToListResponse(
 }
 
 func (m *PropertyHistoryMapper) EntityToDetailResponse(
-	entity *domain.PropertyHistoryEntity,
+	entity *domain.PropertyHistory,
+	actor *userpb.ProfileResponse,
 ) *notificationpb.GetPropertyHistoryByIDResponse {
-
+	profileItem := &sharepb.ProfileItem{
+		Id:       actor.ProfileId,
+		FullName: actor.FullName,
+		Avatar:   actor.Avatar,
+	}
 	return &notificationpb.GetPropertyHistoryByIDResponse{
-		Data: m.EntityToItem(entity), // ✅ dùng thẳng
+		Data: m.EntityToItem(entity, profileItem),
 	}
 }

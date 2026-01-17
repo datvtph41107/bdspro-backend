@@ -18,7 +18,7 @@ import (
 	notification_infra_postgres "notification/infra/postgres"
 	notification_initial "notification/initial"
 	notification_internal_dto "notification/internal/dto"
-	notification_internal_interface "notification/internal/interface"
+	notification_internal_provider "notification/internal/provider"
 	notification_internal_repo "notification/internal/repo"
 	notification_internal_usecase "notification/internal/usecase"
 )
@@ -27,9 +27,8 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
-	wire.Bind(new(notification_internal_interface.IAuthClient), new(*notification_infra_client.AuthClient)),
-	wire.Bind(new(notification_internal_interface.IUserClient), new(*notification_infra_client.UserClient)),
-	wire.Bind(new(notification_internal_interface.IFirebaseProvider), new(*notification_infra_firebase.FirebaseProvider)),
+	wire.Bind(new(notification_internal_provider.IAuthClient), new(*notification_infra_client.AuthClient)),
+	wire.Bind(new(notification_internal_provider.IFirebaseProvider), new(*notification_infra_firebase.FirebaseProvider)),
 	wire.Bind(new(notification_internal_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
 	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
 	wire.Bind(new(notification_internal_repo.HistoryAuthRepo), new(*notification_infra_postgres.HistoryAuthPostgres)),

@@ -1,4 +1,4 @@
-package iprovider
+package provider
 
 import "context"
 

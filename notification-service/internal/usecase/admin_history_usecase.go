@@ -9,16 +9,16 @@ import (
 
 	"notification/internal/domain"
 	"notification/internal/dto"
-	iprovider "notification/internal/interface"
+	provider "notification/internal/provider"
 	"notification/internal/repo"
 )
 
 type AdminHistoryUsecase struct {
 	adminHistoryRepo repo.AdminHistoryRepo
-	userClient       iprovider.IUserClient
+	userClient       provider.IUserProvider
 }
 
-func NewAdminHistoryUsecase(adminHistoryRepo repo.AdminHistoryRepo, userClient iprovider.IUserClient) *AdminHistoryUsecase {
+func NewAdminHistoryUsecase(adminHistoryRepo repo.AdminHistoryRepo, userClient provider.IUserProvider) *AdminHistoryUsecase {
 	return &AdminHistoryUsecase{
 		adminHistoryRepo: adminHistoryRepo,
 		userClient:       userClient,

@@ -20,7 +20,6 @@ type PropertyHistoryHandler struct {
 func NewPropertyHistoryHandler(
 	uc *usecase.PropertyHistoryUseCase,
 ) *PropertyHistoryHandler {
-
 	return &PropertyHistoryHandler{
 		usecase: uc,
 		mapper:  mapper.NewPropertyHistoryMapper(),
@@ -62,16 +61,15 @@ func (h *PropertyHistoryHandler) GetPropertyHistory(
 	ctx context.Context,
 	req *notificationpb.GetPropertyHistoryRequest,
 ) (*notificationpb.GetPropertyHistoryResponse, error) {
-
 	query := h.mapper.SearchProtoToDTO(req)
-
-	entities, total, err := h.usecase.Search(ctx, query)
+	histories, userMap, total, err := h.usecase.Search(ctx, query)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return h.mapper.EntitiesToListResponse(
-		entities,
+		histories,
+		userMap,
 		total,
 		int32(query.Page),
 		int32(query.Size),
@@ -83,10 +81,10 @@ func (h *PropertyHistoryHandler) GetPropertyHistoryByID(
 	req *notificationpb.GetPropertyHistoryByIDRequest,
 ) (*notificationpb.GetPropertyHistoryByIDResponse, error) {
 
-	entity, err := h.usecase.GetDetail(ctx, req.Id)
+	history, actor, err := h.usecase.GetDetail(ctx, req.Id)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	return h.mapper.EntityToDetailResponse(entity), nil
+	return h.mapper.EntityToDetailResponse(history, actor), nil
 }

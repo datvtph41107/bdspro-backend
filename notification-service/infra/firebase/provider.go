@@ -17,7 +17,7 @@ import (
 )
 
 // FirebaseProvider xử lý gửi thông báo đến Firebase
-// @bind: notification/internal/interface.IFirebaseProvider
+// @bind: notification/internal/provider.IFirebaseProvider
 type FirebaseProvider struct {
 	firebaseApp *firebase.App
 }

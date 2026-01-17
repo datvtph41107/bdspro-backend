@@ -399,7 +399,6 @@ func (s *InternalHandler) CreatePropertyHistoryActivity(
 ) (*notificationpb.CreatePropertyHistoryResponse, error) {
 	args := &dto.CreatePropertyHistoryDTO{
 		SubjectID:   req.SubjectId,
-		SubjectType: _enum.SubjectTypeProperty(req.SubjectType),
 		Action:      _enum.PropertyAction(req.Action),
 		Description: req.Description,
 		ActorID:     req.ActorId,

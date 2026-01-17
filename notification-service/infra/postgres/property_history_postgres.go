@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"notification/internal/domain"
 	"notification/internal/dto"
@@ -21,50 +22,44 @@ func NewActivityHistoryPostgres(db *gorm.DB) repo.PropertyHistoryRepo {
 
 func (r *propertyHistoryPostgres) Create(
 	ctx context.Context,
-	entity *domain.PropertyHistoryEntity,
-) (*domain.PropertyHistoryEntity, error) {
+	entity *domain.PropertyHistory,
+) (*domain.PropertyHistory, error) {
 	if err := r.db.WithContext(ctx).Create(entity).Error; err != nil {
 		return nil, fmt.Errorf("activity_history.create failed: %w", err)
 	}
 	return entity, nil
 }
 
-func (r *propertyHistoryPostgres) Search(ctx context.Context, q dto.PropertyHistoryQueryDTO) ([]domain.PropertyHistoryEntity, int64, error) {
+func (r *propertyHistoryPostgres) Search(
+	ctx context.Context,
+	q *dto.PropertyHistoryQueryDTO,
+) ([]*domain.PropertyHistory, int64, error) {
 	var (
-		histories []domain.PropertyHistoryEntity
+		histories []*domain.PropertyHistory
 		total     int64
 	)
-	baseQuery := r.db.WithContext(ctx).Model(&domain.PropertyHistoryEntity{})
 
-	if q.SubjectID != nil {
-		baseQuery = baseQuery.Where("subject_id = ?", *q.SubjectID)
-	}
-
-	// if q.SubjectType != nil {
-	// 	baseQuery = baseQuery.Where("subject_type = ?", *q.SubjectType)
-	// }
-
+	db := r.db.WithContext(ctx).Model(&domain.PropertyHistory{})
 	if q.Action != nil {
-		baseQuery = baseQuery.Where("action = ?", *q.Action)
+		db = db.Where("action = ?", *q.Action)
 	}
 
 	if q.ActorID != nil {
-		baseQuery = baseQuery.Where("actor_id = ?", *q.ActorID)
+		db = db.Where("actor_id = ?", *q.ActorID)
 	}
 
-	if q.Keyword != nil && *q.Keyword != "" {
-		kw := "%" + *q.Keyword + "%"
-		baseQuery = baseQuery.Where(`
-			description ILIKE ?
-			OR metadata::text ILIKE ?
-		`, kw, kw)
+	if q.Keyword != nil {
+		keyword := strings.TrimSpace(*q.Keyword)
+		if keyword != "" {
+			kw := "%" + keyword + "%"
+			db = db.Where(
+				"(description ILIKE ? OR metadata::text ILIKE ?)",
+				kw, kw,
+			)
+		}
 	}
 
-	countSubQuery := baseQuery.Select("id")
-
-	if err := r.db.
-		Table("(?) AS t", countSubQuery).
-		Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -73,17 +68,16 @@ func (r *propertyHistoryPostgres) Search(ctx context.Context, q dto.PropertyHist
 		order = q.Sort
 	}
 
-	query := baseQuery.Order(order)
-
 	if q.Limit > 0 {
-		query = query.Limit(q.Limit)
+		db = db.Limit(q.Limit)
 	}
 
 	if q.Offset >= 0 {
-		query = query.Offset(q.Offset)
+		db = db.Offset(q.Offset)
 	}
-
-	if err := query.Find(&histories).Error; err != nil {
+	if err := db.
+		Order(order).
+		Find(&histories).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -93,9 +87,9 @@ func (r *propertyHistoryPostgres) Search(ctx context.Context, q dto.PropertyHist
 func (r *propertyHistoryPostgres) GetByID(
 	ctx context.Context,
 	id uint64,
-) (*domain.PropertyHistoryEntity, error) {
+) (*domain.PropertyHistory, error) {
 
-	var entity domain.PropertyHistoryEntity
+	var entity domain.PropertyHistory
 
 	if err := r.db.WithContext(ctx).
 		Where("id = ? AND deleted_at IS NULL", id).
@@ -115,7 +109,7 @@ func (r *propertyHistoryPostgres) Delete(
 	id uint64,
 ) error {
 	if err := r.db.WithContext(ctx).
-		Delete(&domain.PropertyHistoryEntity{}, id).Error; err != nil {
+		Delete(&domain.PropertyHistory{}, id).Error; err != nil {
 	}
 
 	return nil

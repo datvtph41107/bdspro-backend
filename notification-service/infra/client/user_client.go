@@ -3,16 +3,17 @@ package client
 import (
 	"context"
 	"notification/env"
-	sharepb "pb/types/shared"
+	"notification/internal/provider"
 	clients "pb/clients"
+	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 )
 
-// @bind: notification/internal/interface.IUserClient
 type UserClient struct {
 	Client *clients.UserGrpcClient
 }
 
-func NewUserClient() *UserClient {
+func NewUserClient() provider.IUserProvider {
 	return &UserClient{
 		Client: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
@@ -28,4 +29,8 @@ func (c *UserClient) GetMapProfileByIds(ctx context.Context, in *sharepb.GetProf
 		profileIdSet[id] = struct{}{}
 	}
 	return c.Client.GetMapByIDs(ctx, profileIdSet)
+}
+
+func (c *UserClient) GetProfileByID(ctx context.Context, in *userpb.GetProfileByIDRequest) (*userpb.ProfileResponse, error) {
+	return c.Client.InternalClient.GetProfileByID(ctx, in)
 }

@@ -18,6 +18,6 @@ func AutoMigrate() {
 		&domain.HistoryAuthEntity{},
 		&domain.HistoryFcmEntity{},
 		&domain.PersonConfigEntity{},
-		&domain.PropertyHistoryEntity{},
+		&domain.PropertyHistory{},
 	)
 }

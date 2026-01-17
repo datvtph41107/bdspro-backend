@@ -5,26 +5,34 @@ import (
 	"context"
 	"notification/internal/domain"
 	"notification/internal/dto"
+	"notification/internal/provider"
 	"notification/internal/repo"
+	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 	"time"
 )
 
 type PropertyHistoryUseCase struct {
-	Repo repo.PropertyHistoryRepo
+	PropertyHistoryRepo repo.PropertyHistoryRepo
+	UserProvider        provider.IUserProvider
 }
 
-func NewPropertyHistoryUseCase(repo repo.PropertyHistoryRepo) *PropertyHistoryUseCase {
+func NewPropertyHistoryUseCase(
+	propertyHistoryRepo repo.PropertyHistoryRepo,
+	userProvider provider.IUserProvider,
+) *PropertyHistoryUseCase {
 	return &PropertyHistoryUseCase{
-		Repo: repo,
+		PropertyHistoryRepo: propertyHistoryRepo,
+		UserProvider:        userProvider,
 	}
 }
 
 func (uc *PropertyHistoryUseCase) Create(
 	ctx context.Context,
 	dto *dto.CreatePropertyHistoryDTO,
-) (*domain.PropertyHistoryEntity, error) {
+) (*domain.PropertyHistory, error) {
 	now := time.Now()
-	entity := &domain.PropertyHistoryEntity{
+	entity := &domain.PropertyHistory{
 		SubjectID: dto.SubjectID,
 		// SubjectType: dto.SubjectType,
 		Action:      dto.Action,
@@ -34,23 +42,34 @@ func (uc *PropertyHistoryUseCase) Create(
 		OccurredAt:  &now,
 	}
 
-	return uc.Repo.Create(ctx, entity)
+	return uc.PropertyHistoryRepo.Create(ctx, entity)
 }
 
 func (uc *PropertyHistoryUseCase) GetDetail(
 	ctx context.Context,
 	id uint64,
-) (*domain.PropertyHistoryEntity, error) {
-
-	history, err := uc.Repo.GetByID(ctx, id)
+) (*domain.PropertyHistory, *userpb.ProfileResponse, error) {
+	history, err := uc.PropertyHistoryRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if history == nil {
-		return nil, _errors.NotFoundException("History not found")
+		return nil, nil, _errors.NotFoundException("History not found")
 	}
 
-	return history, nil
+	actor, err := uc.UserProvider.GetProfileByID(
+		ctx,
+		&userpb.GetProfileByIDRequest{ProfileId: history.ActorID},
+	)
+	if err != nil {
+		return nil, nil,
+			_errors.InternalServerException(
+				"Get UserProfile property history [DETAIL] fail error: ",
+				err.Error(),
+			)
+	}
+
+	return history, actor, nil
 }
 
 func (uc *PropertyHistoryUseCase) SoftDelete(
@@ -59,7 +78,7 @@ func (uc *PropertyHistoryUseCase) SoftDelete(
 	actorID uint64,
 ) error {
 
-	history, err := uc.Repo.GetByID(ctx, id)
+	history, err := uc.PropertyHistoryRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -67,22 +86,38 @@ func (uc *PropertyHistoryUseCase) SoftDelete(
 		return _errors.NotFoundException("History not found")
 	}
 
-	return uc.Repo.Delete(ctx, id)
+	return uc.PropertyHistoryRepo.Delete(ctx, id)
 }
 
 func (uc *PropertyHistoryUseCase) Search(
 	ctx context.Context,
-	q dto.PropertyHistoryQueryDTO,
-) ([]domain.PropertyHistoryEntity, int64, error) {
-	query := dto.PropertyHistoryQueryDTO{
-		SubjectID:   q.SubjectID,
-		SubjectType: q.SubjectType,
-		Action:      q.Action,
-		ActorID:     q.ActorID,
-		Keyword:     q.Keyword,
-		Limit:       q.GetLimit(),
-		Offset:      q.GetOffset(),
+	q *dto.PropertyHistoryQueryDTO,
+) ([]*domain.PropertyHistory, map[uint64]*sharepb.ProfileItem, int64, error) {
+	histories, total, err := uc.PropertyHistoryRepo.Search(ctx, q)
+	if err != nil {
+		return nil, nil, 0,
+			_errors.InternalServerException("GetList PropertyHistory err: ", err.Error())
 	}
 
-	return uc.Repo.Search(ctx, query)
+	if len(histories) == 0 {
+		return histories, map[uint64]*sharepb.ProfileItem{}, total, nil
+	}
+
+	userIDs := make([]uint64, 0, len(histories))
+	for _, h := range histories {
+		userIDs = append(userIDs, h.ActorID)
+	}
+
+	userMap, err := uc.UserProvider.GetMapProfileByIds(
+		ctx,
+		&sharepb.GetProfileByIdsRequest{Ids: userIDs},
+	)
+	if err != nil {
+		return nil, nil, 0, _errors.InternalServerException("Get UserProfile property history [LIST] fail error: ", err.Error())
+	}
+	if len(userMap) == 0 {
+		userMap = map[uint64]*sharepb.ProfileItem{}
+	}
+
+	return histories, userMap, total, nil
 }
