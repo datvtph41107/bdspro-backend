@@ -231,6 +231,7 @@ func (r *PostgreContact) GetByID(
 
 	var contact domain.ContactEntity
 	result := r.GetDB(c).
+		Model(&domain.ContactEntity{}).
 		Preload("OriginProfile").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&contact)

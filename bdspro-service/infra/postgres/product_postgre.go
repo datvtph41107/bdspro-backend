@@ -261,6 +261,11 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		return nil, err
 	}
 
+	price, err = r.PriceRepo.GetDistributePrice(ctx, &id)
+	if err != nil {
+		return nil, err
+	}
+
 	// Convert PostIds from pq.Int64Array to []uint64
 	postIds := make([]uint64, len(tempResult.PostIds))
 	for i, id := range tempResult.PostIds {

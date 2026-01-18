@@ -40,6 +40,9 @@ func (r *propertyHistoryPostgres) Search(
 	)
 
 	db := r.db.WithContext(ctx).Model(&domain.PropertyHistory{})
+	if q.SubjectID != nil {
+		db = db.Where("subject_id = ?", *q.SubjectID)
+	}
 	if q.Action != nil {
 		db = db.Where("action = ?", *q.Action)
 	}

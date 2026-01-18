@@ -697,7 +697,7 @@ message PriceHistoryItem {
 message Price {
   double price = 1;
   double commission = 2;
-  uint32 commission_type = 3;
+  uint32 commissionType = 3;
   UserInfo createdBy = 4;
 }
 

@@ -1095,7 +1095,6 @@ func (s *ProductHandler) GetPriceHistory(
 			Size: req.Size,
 		},
 	})
-	fmt.Println(items[0])
 	if err != nil {
 		return nil, err
 	}

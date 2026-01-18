@@ -20,7 +20,7 @@ service PropertyHistoryService {
   rpc GetPropertyHistory(GetPropertyHistoryRequest)
       returns (GetPropertyHistoryResponse) {
     option (google.api.http) = {
-      get: "/v2/notification/property-history"
+      get: "/v2/notification/property-history/{subjectId}"
     };
   }
 
@@ -68,6 +68,7 @@ message GetPropertyHistoryRequest {
   uint32 page = 4;
   uint32 size = 5;
   string sort = 6;
+  uint64 subjectId = 7;
 }
 
 message GetPropertyHistoryResponse {

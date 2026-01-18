@@ -37,6 +37,10 @@ func (m *PropertyHistoryMapper) SearchProtoToDTO(
 ) *dto.PropertyHistoryQueryDTO {
 	q := &dto.PropertyHistoryQueryDTO{}
 	if req != nil {
+		if req.SubjectId != 0 {
+			q.SubjectID = &req.SubjectId
+		}
+
 		if req.Action != 0 {
 			action := _enum.PropertyAction(req.Action)
 			q.Action = &action

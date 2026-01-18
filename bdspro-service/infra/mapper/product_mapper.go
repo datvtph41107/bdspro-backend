@@ -69,12 +69,21 @@ func NewProductMapper(postMapper *PostMapper,
 func (m *ProductMapper) ApplyPriceUpdatePbToDTO(
 	req *bdspropb.ApplyPriceUpdateRequest,
 ) *dto.ApplyPriceUpdateRequest {
-	return &dto.ApplyPriceUpdateRequest{
+	result := &dto.ApplyPriceUpdateRequest{
 		ProductID:   req.ProductId,
 		Price:       req.Price,
 		PriceStatus: enums.ProductPriceStatus(req.Price),
-		ChangeNote:  *req.ChangeNote,
 	}
+
+	if req.PriceStatus != 0 {
+		result.PriceStatus = enums.ProductPriceStatus(req.PriceStatus)
+	}
+
+	if req.ChangeNote != nil {
+		result.ChangeNote = *req.ChangeNote
+	}
+
+	return result
 }
 
 func (m *ProductMapper) ApplyPriceUpdateDTOToPb(

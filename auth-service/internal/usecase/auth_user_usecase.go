@@ -3224,7 +3224,6 @@ func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, se
 		PlanAt:         profile.PlanAt,
 		Type:           _jwt.AccessToken,
 	})
-	log.Printf("GenerateAccessToken: %s userID: %d", accessToken, authMethod.UserID)
 	if err != nil {
 		return "", err
 	}

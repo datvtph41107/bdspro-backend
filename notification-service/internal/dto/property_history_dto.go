@@ -27,6 +27,8 @@ type PropertyHistoryDetailDTO struct {
 
 type PropertyHistoryQueryDTO struct {
 	_dto.Pagable
+	SubjectID *uint64
+
 	Action  *_enum.PropertyAction
 	ActorID *uint64
 	Keyword *string

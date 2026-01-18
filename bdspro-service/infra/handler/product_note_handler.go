@@ -52,10 +52,10 @@ func (h *ProductNoteHandler) ListProductNotes(
 
 	items, total, err := h.ProductNoteUsecase.GetNotesByProduct(ctx, filter)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, err
 	}
 	if items == nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, nil
 	}
 
 	h.enrichUsers(ctx, items)
