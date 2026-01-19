@@ -4,15 +4,16 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"context"
+	"time"
 )
 
 type ProductNoteRepository interface {
 	//note
 	CreateNote(ctx context.Context, note *domain.ProductNote) error
 	GetByID(ctx context.Context, id uint64) (*domain.ProductNote, error)
-	GetListByProductID(ctx context.Context, filter *dto.GetProductNotesFilter) ([]*dto.ProductNoteItemRespone, int64, error)
+	GetListByProductID(ctx context.Context, filter *dto.GetProductNotesFilter) ([]*dto.ProductNoteItemResponse, int64, error)
 	UpdateContent(ctx context.Context, noteID uint64, content string) error
-	UpdatePin(ctx context.Context, noteID uint64, isPinned bool) error
+	UpdatePinnedAt(ctx context.Context, noteID uint64, pinnedAt *time.Time) error
 	DeleteNote(ctx context.Context, noteID uint64) error
 
 	//mention

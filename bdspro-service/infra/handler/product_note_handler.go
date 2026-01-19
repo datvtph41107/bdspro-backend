@@ -6,13 +6,11 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	"context"
 
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ProductNoteHandler struct {
@@ -34,11 +32,15 @@ func NewProductNoteHandler(
 	}
 }
 
-// LIST
 func (h *ProductNoteHandler) ListProductNotes(
 	ctx context.Context,
 	req *bdspropb.ListProductNotesRequest,
 ) (*bdspropb.ListProductNotesResponse, error) {
+
+	if req.ProductId == 0 {
+		return nil, _errors.BadRequestException("productId is required")
+	}
+
 	filter := &dto.GetProductNotesFilter{
 		ProductID:  req.ProductId,
 		OnlyPinned: req.OnlyPinned,
@@ -54,31 +56,30 @@ func (h *ProductNoteHandler) ListProductNotes(
 	if err != nil {
 		return nil, err
 	}
-	if items == nil {
-		return nil, nil
-	}
 
 	h.enrichUsers(ctx, items)
-
 	return &bdspropb.ListProductNotesResponse{
 		Data:  h.ProductNoteMapper.ProductNoteListToProto(items),
 		Total: int64(total),
 	}, nil
 }
 
-// CREATE
 func (h *ProductNoteHandler) CreateProductNote(
 	ctx context.Context,
 	req *bdspropb.CreateProductNoteRequest,
 ) (*bdspropb.Response, error) {
+	if req.ProductId == 0 {
+		return nil, _errors.BadRequestException("productId is required")
+	}
+
 	_, err := h.ProductNoteUsecase.CreateNote(ctx, &dto.CreateProductNoteRequest{
-		ProductID:  req.ProductId,
-		Content:    req.Content,
-		MentionIDs: req.MentionIds,
-		Files:      req.Files,
+		ProductID: req.ProductId,
+		Content:   req.Content,
+		Mentions:  mapProtoMentionsToDTO(req.Mentions),
+		Files:     mapProtoFilesToDTO(req.Files),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	return &bdspropb.Response{
@@ -87,30 +88,22 @@ func (h *ProductNoteHandler) CreateProductNote(
 	}, nil
 }
 
-// UPDATE
 func (h *ProductNoteHandler) UpdateProductNote(
 	ctx context.Context,
 	req *bdspropb.UpdateProductNoteReqClient,
 ) (*bdspropb.Response, error) {
-	// files := make([]dto.ProductNoteFileItem, 0, len(req.Files))
-	// for _, f := range req.Files {
-	// 	files = append(files, dto.ProductNoteFileItem{
-	// 		ID:       f.Id,
-	// 		FileName: f.FileName,
-	// 		URL:      f.FileUrl,
-	// 		Type:     f.FileType,
-	// 		Size:     f.FileSize,
-	// 	})
-	// }
+	if req.Id == 0 {
+		return nil, _errors.BadRequestException("noteId is required")
+	}
 
 	err := h.ProductNoteUsecase.UpdateNote(ctx, &dto.UpdateProductNoteRequest{
-		NoteID:     req.Id,
-		Content:    req.Content,
-		MentionIDs: req.MentionIds,
-		Files:      req.Files,
+		NoteID:   req.Id,
+		Content:  req.Content,
+		Mentions: mapProtoMentionsToDTO(req.Mentions),
+		Files:    mapProtoFilesToDTO(req.Files),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	return &bdspropb.Response{
@@ -123,9 +116,12 @@ func (h *ProductNoteHandler) DeleteProductNote(
 	ctx context.Context,
 	req *bdspropb.DeleteProductNoteRequest,
 ) (*bdspropb.Response, error) {
+	if req.NoteId == 0 {
+		return nil, _errors.BadRequestException("noteId is required")
+	}
 
 	if err := h.ProductNoteUsecase.DeleteNote(ctx, req.NoteId, req.RequestUserID); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	return &bdspropb.Response{
@@ -138,9 +134,12 @@ func (h *ProductNoteHandler) TogglePinProductNote(
 	ctx context.Context,
 	req *bdspropb.TogglePinProductNoteRequest,
 ) (*bdspropb.Response, error) {
+	if req.Id == 0 {
+		return nil, _errors.BadRequestException("noteId is required")
+	}
 
 	if err := h.ProductNoteUsecase.TogglePin(ctx, req.Id, req.IsPinned); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	return &bdspropb.Response{
@@ -151,7 +150,7 @@ func (h *ProductNoteHandler) TogglePinProductNote(
 
 func (h *ProductNoteHandler) enrichUsers(
 	ctx context.Context,
-	notes []*dto.ProductNoteItemRespone,
+	notes []*dto.ProductNoteItemResponse,
 ) {
 	userIDs := make(map[uint64]struct{})
 
@@ -159,8 +158,8 @@ func (h *ProductNoteHandler) enrichUsers(
 		if n.AuthorId != 0 {
 			userIDs[n.AuthorId] = struct{}{}
 		}
-		for _, id := range n.MentionIDs {
-			userIDs[uint64(id)] = struct{}{}
+		for _, m := range n.Mentions {
+			userIDs[m.UserId] = struct{}{}
 		}
 	}
 
@@ -181,34 +180,53 @@ func (h *ProductNoteHandler) enrichUsers(
 			n.Author = p
 		}
 
-		for _, id := range n.MentionIDs {
-			uid := uint64(id)
-			if p, ok := profiles[uid]; ok {
-				n.Mentions = append(n.Mentions, dto.ProductNoteMentionItem{
-					UserId: uid,
-					Name:   p.FullName,
-					Avatar: p.Avatar,
-					Role:   "member",
-				})
+		for i := range n.Mentions {
+			m := &n.Mentions[i]
+			if p, ok := profiles[m.UserId]; ok {
+				m.Name = p.FullName
+				m.Avatar = p.Avatar
+				m.Role = "member"
 			}
 		}
 	}
 }
 
-func (h *ProductNoteHandler) getAuthorProfile(ctx context.Context, userID uint64) *sharepb.ProfileItem {
-	if userID == 0 {
+func mapProtoMentionsToDTO(
+	list []*bdspropb.ProductNoteMention,
+) []dto.MentionNoteDTO {
+
+	if len(list) == 0 {
 		return nil
 	}
 
-	resp, err := h.UserClient.GetProfileByIds(
-		ctx,
-		&sharepb.GetProfileByIdsRequest{Ids: []uint64{userID}},
-	)
-	if err != nil || len(resp.Profiles) == 0 {
+	res := make([]dto.MentionNoteDTO, 0, len(list))
+	for _, m := range list {
+		res = append(res, dto.MentionNoteDTO{
+			UserID:   m.UserId,
+			StartPos: m.StartPos,
+			Length:   m.Length,
+		})
+	}
+	return res
+}
+
+func mapProtoFilesToDTO(
+	list []*bdspropb.ProductNoteFileInput,
+) []dto.ProductNoteFileDTO {
+	if len(list) == 0 {
 		return nil
 	}
 
-	return resp.Profiles[0]
+	res := make([]dto.ProductNoteFileDTO, 0, len(list))
+	for _, f := range list {
+		res = append(res, dto.ProductNoteFileDTO{
+			URL:      f.Url,
+			FileName: f.FileName,
+			FileType: f.FileType,
+			Size:     f.Size,
+		})
+	}
+	return res
 }
 
 func mapKeys(m map[uint64]struct{}) []uint64 {

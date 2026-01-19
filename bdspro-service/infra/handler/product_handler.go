@@ -545,6 +545,7 @@ func (s *ProductHandler) GetDetail(ctx context.Context, req *bdspropb.IdRequest)
 	if product.OwnerID != 0 && product.OwnerOf == enums.EOwnerOfMember {
 		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
 	}
+	// product.SourceContactId
 
 	return productResponse, nil
 }

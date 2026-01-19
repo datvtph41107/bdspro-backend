@@ -248,17 +248,18 @@
         "content": {
           "type": "string"
         },
-        "mentionIds": {
+        "mentions": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "uint64"
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductNoteMention"
           }
         },
         "files": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductNoteFileInput"
           }
         }
       }
@@ -303,17 +304,54 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/bdspropbProductNoteMember"
+            "$ref": "#/definitions/bdspropbProductNoteMention"
           }
         },
         "files": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductNoteFile"
           }
         },
         "createdAt": {
           "type": "string"
+        }
+      }
+    },
+    "bdspropbProductNoteFile": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbProductNoteFileInput": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -335,23 +373,50 @@
         }
       }
     },
+    "bdspropbProductNoteMention": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "startPos": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "length": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        }
+      }
+    },
     "bdspropbProductNoteServiceUpdateProductNoteBody": {
       "type": "object",
       "properties": {
         "content": {
           "type": "string"
         },
-        "mentionIds": {
+        "mentions": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "uint64"
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductNoteMention"
           }
         },
         "files": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductNoteFileInput"
           }
         }
       }

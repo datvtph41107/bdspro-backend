@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -26,10 +27,7 @@ func (r *PostgreProductNoteRepo) CreateNote(
 	return r.DB.WithContext(ctx).Create(note).Error
 }
 
-func (r *PostgreProductNoteRepo) GetByID(
-	ctx context.Context,
-	id uint64,
-) (*domain.ProductNote, error) {
+func (r *PostgreProductNoteRepo) GetByID(ctx context.Context, id uint64) (*domain.ProductNote, error) {
 	var note domain.ProductNote
 	err := r.DB.WithContext(ctx).
 		Where("id = ? AND deleted_at IS NULL", id).
@@ -56,15 +54,15 @@ func (r *PostgreProductNoteRepo) UpdateContent(
 		Update("content", content).Error
 }
 
-func (r *PostgreProductNoteRepo) UpdatePin(
+func (r *PostgreProductNoteRepo) UpdatePinnedAt(
 	ctx context.Context,
 	noteID uint64,
-	isPinned bool,
+	pinnedAt *time.Time,
 ) error {
 	return r.DB.WithContext(ctx).
 		Model(&domain.ProductNote{}).
 		Where("id = ?", noteID).
-		Update("is_pinned", isPinned).Error
+		Update("pinned_at", pinnedAt).Error
 }
 
 func (r *PostgreProductNoteRepo) DeleteNote(
@@ -132,10 +130,10 @@ func (r *PostgreProductNoteRepo) ListByNoteIDs(
 func (r *PostgreProductNoteRepo) GetListByProductID(
 	ctx context.Context,
 	filter *dto.GetProductNotesFilter,
-) ([]*dto.ProductNoteItemRespone, int64, error) {
+) ([]*dto.ProductNoteItemResponse, int64, error) {
 
 	var (
-		result []*dto.ProductNoteItemRespone
+		result []*dto.ProductNoteItemResponse
 		total  int64
 	)
 
@@ -146,7 +144,11 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 		Where("pn.product_id = ?", filter.ProductID)
 
 	if filter.OnlyPinned != nil {
-		baseQuery = baseQuery.Where("pn.is_pinned = ?", *filter.OnlyPinned)
+		if *filter.OnlyPinned {
+			baseQuery = baseQuery.Where("pn.pinned_at IS NOT NULL")
+		} else {
+			baseQuery = baseQuery.Where("pn.pinned_at IS NULL")
+		}
 	}
 
 	if filter.AuthorID != nil {
@@ -170,7 +172,7 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 		Select(`
 			pn.id,
 			pn.content,
-			pn.is_pinned,
+			pn.pinned_at,
 			pn.author_id,
 			pn.created_at,
 
@@ -187,7 +189,7 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 			) AS file_ids
 		`).
 		Group("pn.id").
-		Order("pn.is_pinned DESC, pn.created_at DESC").
+		Order("pn.pinned_at DESC NULLS LAST, pn.created_at DESC").
 		Limit(filter.GetLimit()).
 		Offset(filter.GetOffset()).
 		Scan(&result).Error; err != nil {

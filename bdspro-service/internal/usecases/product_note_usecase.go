@@ -8,9 +8,12 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
+	"time"
 )
 
 type ProductNoteUsecase struct {
@@ -41,40 +44,53 @@ func (u *ProductNoteUsecase) CreateNote(
 		return nil, _errors.BadRequestException("note content is required")
 	}
 
+	if err := validateMentions(req.Content, req.Mentions); err != nil {
+		return nil, err
+	}
+
 	var createdNote *domain.ProductNote
+
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		note := &domain.ProductNote{
 			ProductID: req.ProductID,
 			AuthorID:  authorID,
 			Content:   req.Content,
-			IsPinned:  false,
+			PinnedAt:  nil,
 		}
 
 		if err := u.noteRepo.CreateNote(txCtx, note); err != nil {
 			return err
 		}
 
-		if len(req.MentionIDs) > 0 {
-			mentions := make([]domain.ProductNoteMention, 0, len(req.MentionIDs))
-			for _, uid := range req.MentionIDs {
+		// ===== Mentions =====
+		if len(req.Mentions) > 0 {
+			mentions := make([]domain.ProductNoteMention, 0, len(req.Mentions))
+
+			for _, m := range req.Mentions {
 				mentions = append(mentions, domain.ProductNoteMention{
-					NoteID: note.ID,
-					UserID: uid,
+					NoteID:   note.ID,
+					UserID:   m.UserID,
+					StartPos: m.StartPos,
+					Length:   m.Length,
 				})
 			}
+
 			if err := u.noteRepo.CreateMention(txCtx, mentions); err != nil {
 				return err
 			}
 		}
 
+		// ===== Files =====
 		if len(req.Files) > 0 {
 			files := make([]domain.ProductNoteFile, 0, len(req.Files))
+
 			for _, f := range req.Files {
 				files = append(files, domain.ProductNoteFile{
 					NoteID:   note.ID,
-					URL:      f,
-					FileName: extractFileName(f),
-					Size:     0,
+					URL:      f.URL,
+					FileName: f.FileName,
+					FileType: f.FileType,
+					Size:     f.Size,
 				})
 			}
 
@@ -107,13 +123,19 @@ func (u *ProductNoteUsecase) TogglePin(ctx context.Context, noteID uint64, isPin
 		return _errors.NotFoundException("note not found")
 	}
 
-	return u.noteRepo.UpdatePin(ctx, noteID, isPinned)
+	var pinnedAt *time.Time
+	if isPinned {
+		now := time.Now()
+		pinnedAt = &now
+	}
+
+	return u.noteRepo.UpdatePinnedAt(ctx, noteID, pinnedAt)
 }
 
 func (u *ProductNoteUsecase) GetNotesByProduct(
 	ctx context.Context,
 	filter *dto.GetProductNotesFilter,
-) ([]*dto.ProductNoteItemRespone, int, error) {
+) ([]*dto.ProductNoteItemResponse, int, error) {
 	resp, total, err := u.noteRepo.GetListByProductID(ctx, filter)
 	if err != nil {
 		return nil, 0, err
@@ -146,10 +168,17 @@ func (u *ProductNoteUsecase) DeleteNote(ctx context.Context, noteID uint64, requ
 	})
 }
 
-func (u *ProductNoteUsecase) UpdateNote(ctx context.Context, req *dto.UpdateProductNoteRequest) error {
+func (u *ProductNoteUsecase) UpdateNote(
+	ctx context.Context,
+	req *dto.UpdateProductNoteRequest,
+) error {
 	authorID := _utils.GetProfileIdWithContext(ctx)
 	if authorID == 0 {
 		return _errors.UnauthorizedException()
+	}
+
+	if err := validateMentions(req.Content, req.Mentions); err != nil {
+		return err
 	}
 
 	note, err := u.noteRepo.GetByID(ctx, req.NoteID)
@@ -167,34 +196,43 @@ func (u *ProductNoteUsecase) UpdateNote(ctx context.Context, req *dto.UpdateProd
 		if err := u.noteRepo.UpdateContent(txCtx, req.NoteID, req.Content); err != nil {
 			return err
 		}
-		if len(req.MentionIDs) > 0 {
-			if err := u.noteRepo.DeleteMentionByNoteID(txCtx, req.NoteID); err != nil {
-				return err
-			}
-			mentions := make([]domain.ProductNoteMention, 0, len(req.MentionIDs))
-			for _, uid := range req.MentionIDs {
+
+		if err := u.noteRepo.DeleteMentionByNoteID(txCtx, req.NoteID); err != nil {
+			return err
+		}
+
+		if len(req.Mentions) > 0 {
+			mentions := make([]domain.ProductNoteMention, 0, len(req.Mentions))
+
+			for _, m := range req.Mentions {
 				mentions = append(mentions, domain.ProductNoteMention{
-					NoteID: req.NoteID,
-					UserID: uid,
+					NoteID:   req.NoteID,
+					UserID:   m.UserID,
+					StartPos: m.StartPos,
+					Length:   m.Length,
 				})
 			}
+
 			if err := u.noteRepo.CreateMention(txCtx, mentions); err != nil {
 				return err
 			}
 		}
 
-		if len(req.Files) > 0 {
-			if err := u.noteRepo.DeleteFilesByNoteID(txCtx, req.NoteID); err != nil {
-				return err
-			}
+		// ===== Files =====
+		if err := u.noteRepo.DeleteFilesByNoteID(txCtx, req.NoteID); err != nil {
+			return err
+		}
 
+		if len(req.Files) > 0 {
 			files := make([]domain.ProductNoteFile, 0, len(req.Files))
+
 			for _, f := range req.Files {
 				files = append(files, domain.ProductNoteFile{
 					NoteID:   req.NoteID,
-					URL:      f,
-					FileName: extractFileName(f),
-					Size:     0,
+					URL:      f.URL,
+					FileName: f.FileName,
+					FileType: f.FileType,
+					Size:     f.Size,
 				})
 			}
 
@@ -205,4 +243,58 @@ func (u *ProductNoteUsecase) UpdateNote(ctx context.Context, req *dto.UpdateProd
 
 		return nil
 	})
+}
+
+func validateMentions(content string, mentions []dto.MentionNoteDTO) error {
+	contentRunes := []rune(content)
+	contentLen := int32(len(contentRunes))
+
+	if len(mentions) == 0 {
+		return nil
+	}
+	// mentions := []Mention{
+	// 	{StartPos: 10},
+	// 	{StartPos: 3},
+	// 	{StartPos: 7},
+	// }
+	sort.Slice(mentions, func(i, j int) bool {
+		return mentions[i].StartPos < mentions[j].StartPos
+	})
+	// mentions := []Mention{
+	// 	{StartPos: 3},
+	// 	{StartPos: 7},
+	// 	{StartPos: 10},
+	// }
+
+	var prevEnd int32 = 0
+	for _, m := range mentions {
+		if m.StartPos < 0 || m.Length <= 0 {
+			return _errors.BadRequestException("invalid mention position")
+		}
+
+		end := m.StartPos + m.Length
+		if end > contentLen {
+			return _errors.BadRequestException("mention out of content range")
+		}
+
+		if m.StartPos < prevEnd {
+			return _errors.BadRequestException(
+				fmt.Sprintf(
+					"mention overlap: userId=%d start=%d length=%d",
+					m.UserID,
+					m.StartPos,
+					m.Length,
+				),
+			)
+		}
+
+		text := string(contentRunes[m.StartPos:end])
+		if !strings.HasPrefix(text, "@") {
+			return _errors.BadRequestException("mention text must start with @")
+		}
+
+		prevEnd = end
+	}
+
+	return nil
 }

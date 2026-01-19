@@ -49,8 +49,8 @@ message ProductNoteEntity {
     ProductNoteMember author = 3;
     string content = 4;
     bool isPinned = 5;
-    repeated ProductNoteMember mentions = 6;
-    repeated string files = 7;
+    repeated ProductNoteMention mentions = 6;
+    repeated ProductNoteFile files = 7;
     string createdAt = 8;
 }
 
@@ -61,26 +61,42 @@ message ProductNoteMember {
     string avatar = 4;
 }
 
-message ProductNoteFile {
-    uint64 id = 1;
-    string fileName = 2;
-    string fileUrl = 3;
-    int64 fileSize = 5;
+message ProductNoteMention {
+    uint64 userId = 1;
+    int32 startPos = 2;
+    int32 length = 3;
+
+    string name = 4;
+    string role = 5;
+    string avatar = 6;
 }
 
 message CreateProductNoteRequest {
     uint64 productId = 1;
     string content = 2;
-    repeated uint64 mentionIds = 3;
-    repeated string files = 4;
+    repeated ProductNoteMention mentions = 3;
+    repeated ProductNoteFileInput files = 4;
 }
-
 
 message UpdateProductNoteReqClient {
     uint64 id = 1;
     string content = 2;
-    repeated uint64 mentionIds = 3;
-    repeated string files = 4; 
+    repeated ProductNoteMention mentions = 3;
+    repeated ProductNoteFileInput files = 4;
+}
+
+message ProductNoteFileInput {
+    string url = 1;
+    string fileName = 2;
+    string fileType = 3;
+    int64 size = 4;
+}
+
+message ProductNoteFile {
+    string url = 2;
+    string fileName = 3;
+    string fileType = 4;
+    int64 size = 5;
 }
 
 message DeleteProductNoteRequest {
