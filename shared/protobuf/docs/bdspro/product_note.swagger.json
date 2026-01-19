@@ -191,7 +191,7 @@
       }
     },
     "/v2/bdspro/product-notes/{noteId}": {
-      "post": {
+      "delete": {
         "operationId": "ProductNoteService_DeleteProductNote",
         "responses": {
           "200": {

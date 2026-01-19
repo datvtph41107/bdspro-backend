@@ -153,7 +153,8 @@ func (u *ProductNoteUsecase) DeleteNote(ctx context.Context, noteID uint64, requ
 		return _errors.NotFoundException("note not found")
 	}
 
-	if note.AuthorID != requestUserID {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId != note.AuthorID {
 		return _errors.ForbiddenException("permission denied")
 	}
 

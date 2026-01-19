@@ -141,7 +141,7 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 		Table("product_notes pn").
 		Joins("LEFT JOIN product_note_mentions pm ON pm.note_id = pn.id").
 		Joins("LEFT JOIN product_note_files pf ON pf.note_id = pn.id").
-		Where("pn.product_id = ?", filter.ProductID)
+		Where("pn.deleted_at IS NULL AND pn.product_id = ?", filter.ProductID)
 
 	if filter.OnlyPinned != nil {
 		if *filter.OnlyPinned {
