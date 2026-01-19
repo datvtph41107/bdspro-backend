@@ -130,5 +130,6 @@ func MigrateDomain() {
 	// &domain.ProductNoteFile{},
 
 	// &domain.ProductUser{},
+	// &domain.ProductNote{},
 	)
 }

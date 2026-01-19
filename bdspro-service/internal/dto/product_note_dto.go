@@ -56,7 +56,7 @@ type ProductNoteItemResponse struct {
 	// enrich sau
 	Author   *sharepb.ProfileItem     `gorm:"-"`
 	Mentions []ProductNoteMentionItem `gorm:"-"`
-	Files    []ProductNoteFileDTO     `json:"-"`
+	Files    []ProductNoteFileDTO     `gorm:"-"`
 }
 
 type ProductNoteMentionItem struct {

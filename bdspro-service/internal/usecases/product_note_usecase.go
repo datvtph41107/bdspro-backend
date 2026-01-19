@@ -289,10 +289,10 @@ func validateMentions(content string, mentions []dto.MentionNoteDTO) error {
 			)
 		}
 
-		text := string(contentRunes[m.StartPos:end])
-		if !strings.HasPrefix(text, "@") {
-			return _errors.BadRequestException("mention text must start with @")
-		}
+		// text := string(contentRunes[m.StartPos:end])
+		// if !strings.HasPrefix(text, "@") {
+		// 	return _errors.BadRequestException("mention text must start with @")
+		// }
 
 		prevEnd = end
 	}
