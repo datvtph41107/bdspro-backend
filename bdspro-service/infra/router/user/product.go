@@ -318,14 +318,14 @@ func (route *UserProductRouter) SuggestProduct(c *gin.Context) {
 // // @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
 // // @Router /v1/bdspro/v2/user/product/{productId} [put]
 func (route *UserProductRouter) Edit(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
-	if err != nil {
-		_routes.RouteResult(c, nil, err)
-		return
-	}
-	result, err := route.UC.Update(c, id, body)
-	_routes.RouteResult(c, result, err)
+	// id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	// body, err := _utils.ParseBody[dto.ProductSaveRequest](c)
+	// if err != nil {
+	// 	_routes.RouteResult(c, nil, err)
+	// 	return
+	// }
+	// result, err := route.UC.Update(c, id, body)
+	// _routes.RouteResult(c, result, err)
 }
 
 // .

@@ -258,6 +258,8 @@ func (h *CrmInternalService) GetContactByOriginId(ctx context.Context, req *shar
 		ProfileId: contact.ProfileID,
 		CreatedAt: _utils.FormatTimeToString(contact.CreatedAt),
 		CreatedBy: contact.CreatedBy,
+
+		OriginProfileId: contact.OriginProfileID,
 	}
 
 	if contact.OriginProfileID != nil && contact.OriginProfile != nil {

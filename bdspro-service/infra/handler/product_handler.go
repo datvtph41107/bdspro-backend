@@ -689,25 +689,32 @@ func (s *ProductHandler) GetProductNavigation(ctx context.Context, req *sharepb.
 }
 
 // @Summary Cập nhật sản phẩm
-// @Description API này cho phép cập nhật thông tin sản phẩm dựa trên dữ liệu được gửi lên.
+// @Description API để cập nhật thông tin sản phẩm
 // @Tags User: Sản phẩm
 // @Accept json
 // @Produce json
-// @Param id path int true "Product ID"
 // @Security BearerAuth
-// @Param body body dto.ProductSaveRequest true "Thông tin sản phẩm cần cập nhật"
-// @Router /v2/bdspro/v2/product/{id} [put]
+// @Param id path uint64 true "Product ID"
+// @Param body body dto.UpdateProductRequest true "Thông tin sản phẩm cần cập nhật"
+// @Success 200 {object} bdspropb.Response "Cập nhật thành công"
+// @Router /v2/bdspro/v2/product/edit/{id} [put]
 func (s *ProductHandler) UpdateProduct(ctx context.Context, req *bdspropb.UpdateProductRequest) (*bdspropb.Response, error) {
-	body := s.ProductMapper.UpdateProductPbToDTO(req)
-	if err := s.ProductValidator.ValidateCreateProduct(body); err != nil {
+	// Convert proto to UpdateProductRequest DTO
+	updateDto := s.ProductMapper.UpdateProductPbToDTO(req)
+
+	// Validate UpdateProductRequest
+	if err := s.ProductValidator.ValidateUpdateProduct(updateDto); err != nil {
 		return nil, err
 	}
 
-	_, err := s.UC.Update(ctx, req.Id, body)
+	// Call usecase Update
+	_, err := s.UC.Update(ctx, req.Id, updateDto)
 	if err != nil {
 		return nil, err
 	}
+
 	return &bdspropb.Response{
+		Id:      req.Id,
 		Message: "success",
 	}, nil
 	// id, _ := strconv.ParseUint(c.Param("id"), 10, 64)

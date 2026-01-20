@@ -642,6 +642,289 @@ func (u *PropertyUsecase) UpdatePropertyAmenity(ctx context.Context, propertyID 
 	return nil
 }
 
+// GetOrCreatePropertyFromProductID lấy PropertyID từ ProductID, nếu chưa có thì tạo mới
+// Trả về PropertyID và error
+func (u *PropertyUsecase) GetOrCreatePropertyFromProductID(ctx context.Context, productID uint64) (uint64, error) {
+	// Kiểm tra xem đã có PropertyRelation chưa
+	relation, err := u.PropertyRelationRepo.GetByProductID(ctx, productID)
+	if err != nil {
+		return 0, err
+	}
+
+	// Nếu đã có PropertyRelation, trả về PropertyID
+	if relation != nil {
+		return relation.PropertyID, nil
+	}
+
+	// Nếu chưa có, lấy Product để tạo Property
+	product, err := u.ProductRepo.GetByIDContext(ctx, productID)
+	if err != nil {
+		return 0, err
+	}
+	if product == nil {
+		return 0, errors.New("product not found")
+	}
+
+	// Tạo Property từ thông tin Product
+	property := &domain.Property{
+		PropertyTypeID: product.PropertyTypeId,
+		Title:          product.Name,
+		ProjectID:      product.ProjectID,
+		AreaTotal:      &product.Area,
+		AddressDetail:  product.Address,
+		MapURL:         product.GoogleMapLink,
+		RecordStatus:   enums.EPropertyStatusActive,
+	}
+
+	// Tạo Property
+	if err := u.PropertyRepo.Create(ctx, property); err != nil {
+		return 0, err
+	}
+
+	// Tạo PropertyRelation với type Product
+	relation = &domain.PropertyRelation{
+		PropertyID:   property.ID,
+		RelationID:   &productID,
+		RelationType: enums.ERelationTypeProduct,
+	}
+
+	if err := u.PropertyRelationRepo.Create(ctx, relation); err != nil {
+		return 0, err
+	}
+
+	// Nếu product có AssetId, tạo thêm relation với Asset
+	if product.AssetId != nil {
+		assetRelation := &domain.PropertyRelation{
+			PropertyID:   property.ID,
+			RelationID:   product.AssetId,
+			RelationType: enums.ERelationTypeAsset,
+		}
+		if err := u.PropertyRelationRepo.Create(ctx, assetRelation); err != nil {
+			return 0, err
+		}
+	}
+
+	// Copy amenityIds từ Product sang Property nếu có
+	amenityIds, err := u.ProductRepo.GetAmenityIDsByProductID(ctx, productID)
+	if err == nil && len(amenityIds) > 0 {
+		if err := u.UpdatePropertyAmenity(ctx, property.ID, amenityIds); err != nil {
+			// Log error nhưng không fail transaction
+		}
+	}
+
+	return property.ID, nil
+}
+
+// UpdatePropertyFromProduct cập nhật Property, BuildingInfo và LandInfo của Property từ ProductID
+func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, productID uint64, houseInfo *dto.UpdateProductRequest) error {
+	if houseInfo == nil {
+		return nil
+	}
+
+	// Lấy Property từ Product
+	propertyRelation, err := u.PropertyRelationRepo.GetByProductID(ctx, productID)
+	if err != nil {
+		return err
+	}
+
+	// Nếu không có Property, không làm gì
+	if propertyRelation == nil {
+		return nil
+	}
+
+	// Update Property với các field: AreaLand, AreaTotal, ProjectID, PropertyTypeID
+	property, err := u.PropertyRepo.GetDetail(ctx, propertyRelation.PropertyID)
+	if err != nil {
+		return err
+	}
+	if property != nil {
+		// Tạo property update chỉ với các field cần update
+		updateProperty := &domain.Property{
+			AreaLand:       &houseInfo.AreaLand,
+			AreaTotal:      &houseInfo.AreaTotal,
+			ProjectID:      houseInfo.ProjectID,
+			PropertyTypeID: houseInfo.PropertyTypeID,
+		}
+
+		// Update Property nếu có thay đổi
+		if err := u.PropertyRepo.UpdateOption(ctx, propertyRelation.PropertyID, updateProperty); err != nil {
+			return err
+		}
+	}
+
+	// Convert từ UpdateProductRequest sang PropertyBuildingInfo
+	buildingInfo := &domain.PropertyBuildingInfo{
+		PropertyID: propertyRelation.PropertyID,
+	}
+
+	// Map các field từ UpdateProductRequest sang PropertyBuildingInfo
+	if houseInfo.Floors != nil {
+		buildingInfo.Floors = houseInfo.Floors
+	}
+	if houseInfo.Bedrooms != nil {
+		buildingInfo.Bedrooms = houseInfo.Bedrooms
+	}
+	if houseInfo.Bathrooms != nil {
+		buildingInfo.Bathrooms = houseInfo.Bathrooms
+	}
+	if houseInfo.Direction != 0 {
+		buildingInfo.Direction = houseInfo.Direction
+	}
+	if houseInfo.BalconyDirection != 0 {
+		buildingInfo.BalconyDirection = houseInfo.BalconyDirection
+	}
+	// Lấy existing building info để update hoặc create
+	existingBuildingInfo, err := u.PropertyBuildingInfoRepo.GetByPropertyID(ctx, propertyRelation.PropertyID)
+	if err != nil {
+		return err
+	}
+
+	if existingBuildingInfo != nil {
+		// Update existing
+		buildingInfo.ID = existingBuildingInfo.ID
+		if err := u.PropertyBuildingInfoRepo.Update(ctx, buildingInfo); err != nil {
+			return err
+		}
+	} else {
+		// Create new
+		if err := u.PropertyBuildingInfoRepo.Create(ctx, buildingInfo); err != nil {
+			return err
+		}
+		// Link BuildingInfoID vào Property
+		property, err := u.PropertyRepo.GetByID(propertyRelation.PropertyID)
+		if err != nil {
+			return err
+		}
+		if property != nil {
+			property.BuildingInfoID = &buildingInfo.ID
+			if err := u.PropertyRepo.Update(ctx, propertyRelation.PropertyID, property); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Update LandInfo nếu có RoadWidth (RoadWidth lưu vào LandInfo, không phải BuildingInfo)
+	if houseInfo.RoadWidth != nil {
+		landInfo := &domain.PropertyLandInfo{
+			PropertyID: propertyRelation.PropertyID,
+			RoadWidth:  houseInfo.RoadWidth,
+		}
+
+		// Lấy existing land info để update hoặc create
+		existingLandInfo, err := u.PropertyLandInfoRepo.GetByPropertyID(ctx, propertyRelation.PropertyID)
+		if err != nil {
+			return err
+		}
+
+		if existingLandInfo != nil {
+			// Update existing
+			landInfo.ID = existingLandInfo.ID
+			// Giữ nguyên các field khác nếu có
+			if existingLandInfo.Frontage != nil {
+				landInfo.Frontage = existingLandInfo.Frontage
+			}
+			if existingLandInfo.Depth != nil {
+				landInfo.Depth = existingLandInfo.Depth
+			}
+			if existingLandInfo.LandNote != "" {
+				landInfo.LandNote = existingLandInfo.LandNote
+			}
+			if err := u.PropertyLandInfoRepo.Update(ctx, landInfo); err != nil {
+				return err
+			}
+		} else {
+			// Create new
+			if err := u.PropertyLandInfoRepo.Create(ctx, landInfo); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateMediaItems cập nhật danh sách media items cho Property
+// Dựa trên pattern từ đoạn code 411-423: xóa media cũ, tạo media mới, set ảnh đầu tiên làm avatar
+func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint64, mediaItems []dto.MediaItem) ([]uint64, error) {
+	// Xóa các media items cũ của property
+	if err := u.PropertyMediaRepo.DeleteByPropertyID(ctx, propertyID); err != nil {
+		return nil, err
+	}
+
+	// Nếu danh sách media items rỗng -> không cần thêm mới, chỉ cần xóa là đủ
+	if len(mediaItems) == 0 {
+		return nil, nil
+	}
+
+	// Convert từ dto.MediaItem sang domain.PropertyMedia và gán PropertyID
+	var propertyMediaList []domain.PropertyMedia
+	for i, mediaItem := range mediaItems {
+		propertyMedia := domain.PropertyMedia{
+			PropertyID: propertyID,
+			MediaType:  mediaItem.MediaType,
+			URL:        mediaItem.MediaURL,
+			SortOrder:  int32(i + 1), // Sử dụng Order từ MediaItem hoặc index + 1
+			IsCover:    mediaItem.IsMain,
+		}
+		// Sử dụng Order từ MediaItem nếu có
+		if mediaItem.Order > 0 {
+			propertyMedia.SortOrder = int32(mediaItem.Order)
+		}
+		propertyMediaList = append(propertyMediaList, propertyMedia)
+	}
+
+	// Tạo batch media items mới
+	if err := u.PropertyMediaRepo.CreateBatch(ctx, propertyMediaList); err != nil {
+		return nil, err
+	}
+
+	// Lấy danh sách ID đã tạo
+	var mediaIDs []uint64
+	var avatarID *uint64
+	for _, media := range propertyMediaList {
+		mediaIDs = append(mediaIDs, media.ID)
+		// Tìm ảnh có IsCover = true làm avatar, hoặc lấy ảnh đầu tiên
+		if avatarID == nil {
+			if media.IsCover {
+				avatarID = &media.ID
+			}
+		}
+	}
+
+	// Nếu không có ảnh IsCover, lấy ảnh đầu tiên
+	if avatarID == nil && len(mediaIDs) > 0 {
+		avatarID = &mediaIDs[0]
+	}
+
+	// Update AvatarID của Property
+	if avatarID != nil {
+		property, err := u.PropertyRepo.GetByID(propertyID)
+		if err != nil {
+			return nil, err
+		}
+		if property != nil {
+			property.AvatarID = avatarID
+			if err := u.PropertyRepo.Update(ctx, propertyID, property); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		// Nếu không có media items, xóa AvatarID
+		property, err := u.PropertyRepo.GetByID(propertyID)
+		if err != nil {
+			return nil, err
+		}
+		if property != nil {
+			property.AvatarID = nil
+			if err := u.PropertyRepo.Update(ctx, propertyID, property); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return mediaIDs, nil
+}
+
 // CreateWithAsset tạo Property từ Asset
 // Nếu Asset đã có ProductID thì không tạo Property mới (vì đã có PropertyRelation)
 func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Asset) (*domain.Property, error) {

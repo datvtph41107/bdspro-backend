@@ -71,8 +71,8 @@ func (r *GormProductPriceRepo) UpdatePrice(ctx context.Context, priceId *uint64,
 	// oldPrice := r.FindByProductId(productId)
 	oldPrice, _ := r.GetByID(ctx, *priceId)
 	if oldPrice != nil {
+		// Kiểm tra sự khác biệt về các field giá
 		diff := !_utils.CompareEqual(&oldPrice.Currency, &entity.Currency) ||
-			// !_utils.CompareEqual(&oldPrice.PriceOwner, &entity.PriceOwner) ||
 			!_utils.CompareEqual(&oldPrice.SalePrice, &entity.SalePrice) ||
 			!_utils.CompareEqual(&oldPrice.SaleCommission, &entity.SaleCommission) ||
 			!_utils.CompareEqual(&oldPrice.RentPrice, &entity.RentPrice) ||
@@ -80,12 +80,28 @@ func (r *GormProductPriceRepo) UpdatePrice(ctx context.Context, priceId *uint64,
 			!_utils.CompareEqual(&oldPrice.Deposite, &entity.Deposite) ||
 			!_utils.CompareEqual(&oldPrice.RentPaymentCycle, &entity.RentPaymentCycle) ||
 			!_utils.CompareEqual(&oldPrice.RentCommissionType, &entity.RentCommissionType) ||
-			!_utils.CompareEqual(&oldPrice.SaleCommissionType, &entity.SaleCommissionType)
-			// oldPrice.SaleCommissionType != entity.Price.SaleCommissionType ||
-			// oldPrice.RentCommissionType != entity.Price.RentCommissionType ||
+			!_utils.CompareEqual(&oldPrice.SaleCommissionType, &entity.SaleCommissionType) ||
+			oldPrice.ChannelPrice != entity.ChannelPrice
 
+		// Kiểm tra sự khác biệt về ChangeNote
+		diffNote := oldPrice.ChangeNote != entity.ChangeNote
+
+		// Nếu không có sự khác biệt nào, không làm gì
 		if !diff {
 			entity.ID = oldPrice.ID
+
+			// Nếu chỉ có ChangeNote khác, chỉ cập nhật ChangeNote của price hiện tại
+			if diffNote {
+				err := GetDB(ctx, r.DB).
+					Model(&domain.ProductPrice{}).
+					Where("id = ? AND deleted_at IS NULL", *priceId).
+					Updates(map[string]interface{}{
+						"change_note": entity.ChangeNote,
+					}).Error
+				if err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 	}

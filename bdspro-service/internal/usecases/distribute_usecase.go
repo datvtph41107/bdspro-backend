@@ -57,7 +57,6 @@ func (uc *DistributionUsecase) CreateDistribute(
 		dist := &domain.DistributionEntity{
 			ProductID:     req.ProductID,
 			CanDeal:       req.CanDeal,
-			ChannelPrice:  req.ChannelPrice,
 			Note:          req.Note,
 			FromDate:      req.FromDate,
 			ToDate:        req.ToDate,
@@ -76,6 +75,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 			req.Price,
 			req.CommissionType,
 			req.CommissionValue,
+			req.ChannelPrice,
 			_utils.GetProfileIdWithContext(ctx),
 		)
 		if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
@@ -193,7 +193,6 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		}
 
 		dist.CanDeal = req.CanDeal
-		dist.ChannelPrice = req.ChannelPrice
 		dist.Note = req.Note
 		dist.FromDate = req.FromDate
 		dist.ToDate = req.ToDate
@@ -202,7 +201,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 			resp.Status = enums.DISTRIBUTION_STATUS_EXPRIED
 		}
 
-		// Tạo ProductPrice mới nếu Price hoặc CommissionValue thay đổi
+		// Tạo ProductPrice mới nếu Price, CommissionValue hoặc ChannelPrice thay đổi
 		var productPrice *domain.ProductPrice
 		if shouldCreateNewPrice {
 			productPrice = uc.createProductPriceFromDistribute(
@@ -211,6 +210,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 				req.Price,
 				req.CommissionType,
 				req.CommissionValue,
+				req.ChannelPrice,
 				_utils.GetProfileIdWithContext(ctx),
 			)
 			if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
@@ -226,6 +226,12 @@ func (uc *DistributionUsecase) UpdateDistribute(
 				productPrice, err = uc.productPriceRepo.GetByID(txCtx, *dist.PriceID)
 				if err != nil {
 					log.Printf("get product price failed: %v", err)
+				} else if productPrice != nil {
+					// Cập nhật ChannelPrice vào ProductPrice hiện tại
+					productPrice.ChannelPrice = req.ChannelPrice
+					if err := uc.productPriceRepo.UpdatePrice(txCtx, dist.PriceID, productPrice); err != nil {
+						log.Printf("update product price channel price failed: %v", err)
+					}
 				}
 			}
 		}
@@ -279,7 +285,6 @@ func (uc *DistributionUsecase) mapToResultDTO(
 ) *dto.DistributeResultDTO {
 	result := &dto.DistributeResultDTO{
 		CanDeal:      dist.CanDeal,
-		ChannelPrice: dist.ChannelPrice,
 		Note:         dist.Note,
 		Status:       enums.DISTRIBUTION_STATUS_ACTIVE,
 		CreatedCount: createdCount,
@@ -289,6 +294,7 @@ func (uc *DistributionUsecase) mapToResultDTO(
 
 	// Lấy giá trị từ ProductPrice nếu có
 	if productPrice != nil {
+		result.ChannelPrice = productPrice.ChannelPrice
 		if productPrice.SalePrice != nil {
 			result.Price = int64(*productPrice.SalePrice)
 		}
@@ -422,6 +428,7 @@ func (uc *DistributionUsecase) createProductPriceFromDistribute(
 	price int64,
 	commissionType enums.CommissionType,
 	commissionValue float64,
+	channelPrice bool,
 	changedBy uint64,
 ) *domain.ProductPrice {
 	priceFloat := float64(price)
@@ -435,7 +442,9 @@ func (uc *DistributionUsecase) createProductPriceFromDistribute(
 		SalePrice:          &priceFloat,
 		SaleCommission:     &commissionValue,
 		SaleCommissionType: &commissionTypeUint32,
+		ChannelPrice:       channelPrice,
 		PriceStatus:        enums.PriceStatusFixed,
 		ChangeNote:         "Tạo từ kênh phân phối",
+		ChangedBy:          changedBy,
 	}
 }

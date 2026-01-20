@@ -38,7 +38,6 @@ func (m *DistributionMapper) distributionEntityToProto(
 		FromDate:      _utils.FormatTimeToString(entity.FromDate),
 		ToDate:        _utils.FormatTimeToString(entity.ToDate),
 		CanDeal:       entity.CanDeal,
-		ChannelPrice:  entity.ChannelPrice,
 		// Price:             entity.Price,
 		// CommissionType:    bdspropb.CommissionType(entity.CommissionType),
 		// CommissionValue:   entity.CommissionValue,
@@ -52,6 +51,7 @@ func (m *DistributionMapper) distributionEntityToProto(
 		result.Price = int64(*entity.ProductPrice.SalePrice)
 		result.CommissionType = bdspropb.CommissionType(*entity.ProductPrice.SaleCommissionType)
 		result.CommissionValue = *entity.ProductPrice.SaleCommission
+		result.ChannelPrice = entity.ProductPrice.ChannelPrice
 	}
 
 	return result

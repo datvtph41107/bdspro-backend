@@ -1161,6 +1161,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 	baseSQL := `
 		SELECT 
 			   products.id,
+			   products.property_id,
 		       COALESCE(p.title, products.name) as name,
 		       products.code,
 		       p.area_total as area,

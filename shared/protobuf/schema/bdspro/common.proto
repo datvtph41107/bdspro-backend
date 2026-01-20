@@ -112,6 +112,8 @@ message HouseInfo {
       optional uint32 rentPaymentCycle = 10;
       optional uint32 saleCommissionType = 11;
       optional uint32 rentCommissionType = 12;
+      string changeNote = 13;
+      bool channelPrice = 14;
   }
 
 message ProductResponse {
@@ -202,6 +204,7 @@ message ProductResponse {
     // SOUURCE UPDATE RESPONE
     uint32 sourceStatus = 82;  
     uint32 priority = 83;  
+    optional uint64 propertyId = 84;
 }
 
 message PropertyLandInfo {

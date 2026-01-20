@@ -8,7 +8,6 @@ import (
 type DistributionEntity struct {
 	ID            uint64                   `gorm:"primaryKey" json:"id"`
 	CanDeal       bool                     `gorm:"column:can_deal;default:false" json:"canDeal"`
-	ChannelPrice  bool                     `gorm:"column:channel_price;default:false" json:"channelPrice"`
 	Note          string                   `gorm:"column:note" json:"note,omitempty"`
 	ProductID     uint64                   `gorm:"not null;index" json:"productId"`
 	DistributedAt *time.Time               `gorm:"not null" json:"distributedAt"`

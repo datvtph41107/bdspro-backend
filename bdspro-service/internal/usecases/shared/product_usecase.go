@@ -203,6 +203,7 @@ func (s *ProductUsecase) CreateOrganizationProduct(c context.Context, product *d
 	return s.CreateProduct(c, product)
 }
 
+// deprecated
 func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSaveRequest) (*dto.CreateResponse, error) {
 	var err error
 	err = s.CheckPermission(c, nil, enums.PermissionProductCreate)
@@ -368,69 +369,132 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	}, nil
 }
 
-func (s *ProductUsecase) updateProduct(contextTx context.Context, id uint64, product *dto.ProductSaveRequest) error {
-	entity, err := s.ProductRepo.GetByIDContext(contextTx, id)
-	if err != nil {
-		return err
-	}
-
-	copier.Copy(&entity, &product)
-
-	// err = s.productRepo.UpdateProduct(c, id, product)
-	// s.UpdateReference(c, product, dto)
-	if product.PriceData != nil {
-		product.PriceData.ProductID = &id
-	}
-	if err := s.UpdatePrice(contextTx, entity.LastPriceID, product.PriceData); err != nil {
-		return err
-	}
-	if err := s.UpdateAmenity(contextTx, entity.ID, product.AmenityIds); err != nil {
-		return err
-	}
-	mediaIDs, err := s.UpdateMediaItems(contextTx, entity.ID, product.MediaItems)
-	if err != nil {
-		return err
-	}
-	// Gán ID của ảnh đầu tiên vào ImageId
-	if len(mediaIDs) > 0 {
-		entity.ImageId = &mediaIDs[0]
-		if err := s.ProductRepo.UpdateImageID(contextTx, entity.ID, entity.ImageId); err != nil {
-			return err
-		}
-	}
-
-	houseInfoEntity := &domain.HouseInfo{}
-	copier.Copy(&houseInfoEntity, &product.HouseInfo)
-	if err := s.UpdateHouseInfo(contextTx, entity.ID, houseInfoEntity); err != nil {
-		return err
-	}
-	if err := s.UpdatePrivateData(contextTx, entity.ID, product.PrivateData); err != nil {
-		return err
-	}
-	entity.LastPriceID = &product.PriceData.ID
-	if err = s.ProductRepo.UpdateProduct(contextTx, id, entity); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.ProductSaveRequest) (*domain.Product, error) {
-	// profileId := _jwt.GetProfileId(c)
+func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.UpdateProductRequest) (*domain.Product, error) {
 	err := s.CheckPermission(c, &id, enums.PermissionProductUpdate)
 	if err != nil {
 		return nil, err
 	}
-	// ownerId, err := s.ProductUsecase.GetOwnerID(c)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// entity, err := s.CheckAccessProduct(c, ownerId, id)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	contextTx := s.Transaction.StartTransaction(c)
-	if err = s.updateProduct(contextTx, id, product); err != nil {
+
+	// Get product entity
+	entity, err := s.ProductRepo.GetByIDContext(contextTx, id)
+	if err != nil {
+		s.Transaction.RollbackTransaction(contextTx)
+		return nil, err
+	}
+
+	// Get or create Property từ ProductID
+	if s.PropertyUsecase != nil {
+		propertyID, err := s.PropertyUsecase.GetOrCreatePropertyFromProductID(contextTx, id)
+		if err != nil {
+			s.Transaction.RollbackTransaction(contextTx)
+			return nil, err
+		}
+		// Cập nhật PropertyID vào entity
+		entity.PropertyID = &propertyID
+	}
+
+	// Update basic fields
+	if updateData.Name != "" {
+		entity.Name = updateData.Name
+	}
+	if updateData.Visibility != 0 {
+		entity.Visibility = updateData.Visibility
+	}
+	if updateData.Description != "" {
+		entity.Description = updateData.Description
+	}
+	if updateData.Note != "" {
+		entity.Note = updateData.Note
+	}
+	if updateData.PropertyTypeID != nil {
+		entity.PropertyTypeId = updateData.PropertyTypeID
+	}
+	if updateData.ProjectID != nil {
+		entity.ProjectID = updateData.ProjectID
+	}
+	// Update source fields
+	if updateData.SourceType != 0 {
+		entity.SourceType = updateData.SourceType
+	}
+	if updateData.SourceStatus != 0 {
+		entity.SourceStatus = updateData.SourceStatus
+	}
+	if updateData.SourceContactId > 0 {
+		entity.SourceContactId = &updateData.SourceContactId
+	}
+	if updateData.SourceContactNote != "" {
+		entity.SourceContactNote = updateData.SourceContactNote
+	}
+	if updateData.Priority != 0 {
+		entity.Priority = updateData.Priority
+	}
+
+	// Update price
+	if updateData.Price != nil || updateData.CommissionValue != nil || updateData.ChannelPrice {
+		priceData := &domain.ProductPrice{
+			ProductID:          &id,
+			SalePrice:          updateData.Price,
+			SaleCommission:     updateData.CommissionValue,
+			SaleCommissionType: &updateData.CommissionType,
+			ChannelPrice:       updateData.ChannelPrice,
+			ChangeNote:         updateData.ChangeNote,
+		}
+		if err := s.UpdatePrice(contextTx, entity.LastPriceID, priceData); err != nil {
+			s.Transaction.RollbackTransaction(contextTx)
+			return nil, err
+		}
+		entity.LastPriceID = &priceData.ID
+	}
+
+	// Update private data
+	if updateData.ImportPrice != nil {
+		privateData := &domain.ProductPrivate{
+			ProductId:   id,
+			ImportPrice: updateData.ImportPrice,
+		}
+		if err := s.UpdatePrivateData(contextTx, entity.ID, privateData); err != nil {
+			s.Transaction.RollbackTransaction(contextTx)
+			return nil, err
+		}
+	}
+
+	// Update amenity
+	if len(updateData.AmenityIDs) > 0 {
+		if err := s.UpdateAmenity(contextTx, entity.ID, updateData.AmenityIDs); err != nil {
+			s.Transaction.RollbackTransaction(contextTx)
+			return nil, err
+		}
+	}
+
+	// Update media items - sử dụng PropertyID từ entity
+	if len(updateData.MediaItems) > 0 && entity.PropertyID != nil && s.PropertyUsecase != nil {
+		mediaIDs, err := s.UpdateMediaItems(contextTx, *entity.PropertyID, updateData.MediaItems)
+		if err != nil {
+			s.Transaction.RollbackTransaction(contextTx)
+			return nil, err
+		}
+		// Gán ID của ảnh đầu tiên vào ImageId
+		if len(mediaIDs) > 0 {
+			entity.ImageId = &mediaIDs[0]
+			if err := s.ProductRepo.UpdateImageID(contextTx, entity.ID, entity.ImageId); err != nil {
+				s.Transaction.RollbackTransaction(contextTx)
+				return nil, err
+			}
+		}
+	}
+
+	// Update Property từ Product (bao gồm Property fields, BuildingInfo và LandInfo)
+	if s.PropertyUsecase != nil {
+		if err := s.PropertyUsecase.UpdatePropertyFromProduct(contextTx, entity.ID, updateData); err != nil {
+			s.Transaction.RollbackTransaction(contextTx)
+			return nil, err
+		}
+	}
+
+	// Update product entity
+	if err = s.ProductRepo.UpdateProduct(contextTx, id, entity); err != nil {
 		s.Transaction.RollbackTransaction(contextTx)
 		return nil, err
 	}
@@ -439,7 +503,7 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, product *dto.Produ
 		return nil, err
 	}
 
-	return nil, nil
+	return entity, nil
 }
 
 // func (s *ProductUsecase) CheckAccessProduct(c context.Context, profileId, productId uint64) (*domain.Product, error) {
@@ -601,8 +665,8 @@ func (s *ProductUsecase) UpdateAmenity(ctx context.Context, productID uint64, id
 	return nil
 }
 
-func (s *ProductUsecase) UpdateMediaItems(ctx context.Context, productID uint64, items []dto.MediaItem) ([]uint64, error) {
-	return s.MediaRepo.UpdateProductMediaItems(ctx, productID, items)
+func (s *ProductUsecase) UpdateMediaItems(ctx context.Context, propertyId uint64, items []dto.MediaItem) ([]uint64, error) {
+	return s.PropertyUsecase.UpdateMediaItems(ctx, propertyId, items)
 }
 
 func (s *ProductUsecase) UpdateHouseInfo(ctx context.Context, productId uint64, houseInfo *domain.HouseInfo) error {
@@ -1214,7 +1278,7 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 		return nil, err
 	}
 	totalAreaDevide := s.ProductChildRepo.TotalAreaDevide(body.ParentID)
-	if totalAreaDevide+body.Area > parent.Area {
+	if totalAreaDevide+body.AreaLand > parent.Area {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Diện tích không hợp lệ",
@@ -1379,7 +1443,7 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 	totalDevide := 0.0
 	if devideData.Childs != nil {
 		for i := 0; i < len(devideData.Childs); i++ {
-			totalDevide += devideData.Childs[i].Area
+			totalDevide += devideData.Childs[i].AreaLand
 			devideData.Childs[i].ParentID = child.ParentId
 		}
 	}
@@ -1754,9 +1818,9 @@ func (u *ProductUsecase) resolvePriceUpdateContext(ctx context.Context, product 
 		return nil, _errors.ForbiddenException("Distribution not found")
 	}
 
-	if !distribution.ChannelPrice {
-		return nil, _errors.ForbiddenException("Channel price is not allowed")
-	}
+	// if !distribution.CanDeal {
+	// 	return nil, _errors.ForbiddenException("Distribution is not allowed to deal")
+	// }
 
 	return &dto.PriceUpdateContext{
 		IsOwner:      false,

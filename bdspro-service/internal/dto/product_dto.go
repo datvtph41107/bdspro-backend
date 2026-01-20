@@ -38,7 +38,9 @@ type ProductSaveRequest struct {
 	ParentID          *uint64                 `gorm:"size:255" json:"parentId"`
 	Name              string                  `gorm:"size:255" json:"name" binding:"required"`
 	Code              string                  `gorm:"size:15" json:"code"`
-	Area              float64                 `json:"area" binding:"required"`
+	Status            uint32                  `json:"status" binding:"required"`
+	AreaLand          float64                 `json:"areaLand" binding:"required"`
+	AreaTotal         float64                 `json:"areaTotal"`
 	Description       string                  `json:"description"`
 	Note              string                  `json:"note"`
 	PropertyTypeId    *uint64                 `json:"propertyTypeId"`
@@ -74,6 +76,48 @@ type ProductSaveRequest struct {
 	// RentVisibility  uint                    `json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
 
 	RequestOrganizationID *uint64 `json:"-"`
+}
+
+type UpdateProductRequest struct {
+	ProductID   *uint64           `json:"productId"`
+	Name        string            `json:"name"`
+	Status      uint32            `json:"status"`
+	Visibility  enums.EVisibility `json:"visibility"`
+	Description string            `json:"description"`
+	Note        string            `json:"note"`
+
+	//
+	PropertyTypeID   *uint64            `json:"propertyTypeId"`
+	AreaLand         float64            `json:"area"`
+	AreaTotal        float64            `json:"areaTotal"`
+	Direction        enums.EHouseOrient `json:"direction"`
+	BalconyDirection enums.EHouseOrient `json:"balconyDirection"`
+	Bedrooms         *uint32            `json:"bedrooms,omitempty"`  // Số phòng ngủ
+	Bathrooms        *uint32            `json:"bathrooms,omitempty"` // Số phòng tắm
+	RoadWidth        *float64           `json:"roadWidth,omitempty"` // Đường vào (m2)
+	Floors           *uint32            `json:"floors,omitempty"`    // Số tầng
+
+	AmenityIDs []uint64 `json:"amenityIds"`
+
+	Price           *float64 `json:"price"`
+	ImportPrice     *float64 `json:"importPrice"`
+	CommissionValue *float64 `json:"commissionValue"`
+	CommissionType  uint32   `json:"commissionType"`
+	ChannelPrice    bool     `json:"channelPrice"`
+	ChangeNote      string   `json:"changeNote"`
+
+	MediaItems []MediaItem `json:"mediaItems"`
+
+	// Nguồn
+	SourceType        enums.ESourceType   `json:"sourceType"`
+	SourceContactId   uint64              `json:"sourceContactId,omitempty"`
+	SourceContactNote string              `json:"sourceContactNote,omitempty"`
+	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
+	Priority          enums.EPriority     `json:"priority"`
+	SourceTagIDs      []uint64            `json:"sourceTagIds"`
+
+	// dự án
+	ProjectID *uint64 `json:"projectId"`
 }
 
 type ContactSourceProfileDTO struct {
@@ -279,6 +323,7 @@ type UserProductSearchRequest struct {
 
 type ProductListResponse struct {
 	ID              uint64              `gorm:"column:id" json:"id"`
+	PropertyId      uint64              `gorm:"column:property_id" json:"propertyId"`
 	ImageID         *uint64             `gorm:"column:image_id" json:"imageId"`
 	ImageURL        string              `gorm:"column:image_url" json:"imageUrl"`
 	Name            string              `gorm:"column:name" json:"name"`

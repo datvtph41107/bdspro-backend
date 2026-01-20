@@ -478,6 +478,8 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 			RentPaymentCycle:   product.Price.RentPaymentCycle,
 			SaleCommissionType: product.Price.SaleCommissionType,
 			RentCommissionType: product.Price.RentCommissionType,
+			ChangeNote:         product.Price.ChangeNote,
+			ChannelPrice:       product.Price.ChannelPrice,
 		}
 
 		// Chỉ set PriceOwner nếu user là owner
@@ -757,6 +759,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 
 		productList[i] = &bdspropb.ProductResponse{
 			Id:              product.ID,
+			PropertyId:      &product.PropertyId,
 			Name:            product.Name,
 			Code:            product.Code,
 			Area:            product.Area,
@@ -839,7 +842,7 @@ func (m *ProductMapper) SaveProductToEntity(req *bdspropb.SaveChildRequest) *dto
 		ParentID:       &req.ParentId,
 		Name:           req.Name,
 		Code:           req.Code,
-		Area:           req.Area,
+		AreaLand:       req.Area,
 		Description:    req.Description,
 		Note:           req.Note,
 		PropertyTypeId: req.PropertyTypeId,
@@ -1031,10 +1034,116 @@ func (m *ProductMapper) MapProductMarketPbList(ctx context.Context, products []d
 	return productList
 }
 
-func (m *ProductMapper) UpdateProductPbToDTO(req *bdspropb.UpdateProductRequest) *dto.ProductSaveRequest {
-	result := &dto.ProductSaveRequest{
-		// ID: req.Id,
+func (m *ProductMapper) UpdateProductPbToDTO(req *bdspropb.UpdateProductRequest) *dto.UpdateProductRequest {
+	result := &dto.UpdateProductRequest{
+		Name:        req.Name,
+		Status:      req.Status,
+		Visibility:  enums.EVisibility(req.Visibility),
+		Description: req.Description,
+		Note:        req.Note,
+
+		// Property fields
+		PropertyTypeID:   req.PropertyTypeId,
+		AreaLand:         req.AreaLand,
+		AreaTotal:        req.AreaTotal,
+		Direction:        enums.EHouseOrient(req.Direction),
+		BalconyDirection: enums.EHouseOrient(req.BalconyDirection),
+		Bedrooms:         req.Bedrooms,
+		Bathrooms:        req.Bathrooms,
+		RoadWidth:        req.RoadWidth,
+		Floors:           req.Floors,
+
+		// Amenity
+		AmenityIDs: req.AmenityIds,
+
+		// Price
+		Price:           req.Price,
+		ImportPrice:     req.ImportPrice,
+		CommissionValue: req.CommissionValue,
+		CommissionType:  req.CommissionType,
+		ChannelPrice:    req.ChannelPrice,
+		ChangeNote:      req.ChangeNote,
+
+		// Media
+		MediaItems: m.MediaItemsToDomain(req.MediaItems),
+
+		// Nguồn
+		SourceType:        enums.ESourceType(req.SourceType),
+		SourceContactId:   req.SourceContactId,
+		SourceContactNote: req.SourceContactNote,
+		SourceStatus:      enums.ESourceStatus(req.SourceStatus),
+		Priority:          enums.EPriority(req.Priority),
+		SourceTagIDs:      req.SourceTagIds,
+
+		ProjectID: req.ProjectId,
 	}
+
+	return result
+}
+
+// UpdateProductRequestToProductSaveRequest converts UpdateProductRequest DTO to ProductSaveRequest DTO
+func (m *ProductMapper) UpdateProductRequestToProductSaveRequest(updateReq *dto.UpdateProductRequest) *dto.ProductSaveRequest {
+	result := &dto.ProductSaveRequest{
+		Name:              updateReq.Name,
+		Status:            updateReq.Status,
+		Visibility:        updateReq.Visibility,
+		Description:       updateReq.Description,
+		Note:              updateReq.Note,
+		AreaLand:          updateReq.AreaLand,
+		AreaTotal:         updateReq.AreaTotal,
+		AmenityIds:        updateReq.AmenityIDs,
+		SourceType:        uint32(updateReq.SourceType),
+		SourceContactNote: updateReq.SourceContactNote,
+	}
+
+	if updateReq.PropertyTypeID != nil {
+		result.PropertyTypeId = updateReq.PropertyTypeID
+	}
+
+	if updateReq.Bedrooms != nil || updateReq.Bathrooms != nil || updateReq.Floors != nil || updateReq.RoadWidth != nil {
+		result.HouseInfo = &dto.HouseInfoUpdate{
+			OrientationHouse: updateReq.Direction,
+		}
+		if updateReq.Bedrooms != nil {
+			bedrooms := int32(*updateReq.Bedrooms)
+			result.HouseInfo.NumBedroom = &bedrooms
+		}
+		if updateReq.Bathrooms != nil {
+			bathrooms := int32(*updateReq.Bathrooms)
+			result.HouseInfo.NumBathroom = &bathrooms
+		}
+		if updateReq.Floors != nil {
+			floors := int32(*updateReq.Floors)
+			result.HouseInfo.NumFloor = &floors
+		}
+		if updateReq.RoadWidth != nil {
+			result.HouseInfo.RoadWidth = updateReq.RoadWidth
+		}
+	}
+	if updateReq.SourceContactId > 0 {
+		result.SourceContactId = &updateReq.SourceContactId
+	}
+	if updateReq.ProjectID != nil {
+		result.ProjectId = updateReq.ProjectID
+	}
+	if updateReq.Price != nil || updateReq.CommissionValue != nil {
+		result.PriceData = &domain.ProductPrice{}
+		if updateReq.Price != nil {
+			result.PriceData.SalePrice = updateReq.Price
+		}
+		if updateReq.CommissionValue != nil {
+			// CommissionValue và CommissionType sẽ được xử lý riêng trong usecase
+		}
+	}
+	if updateReq.ImportPrice != nil {
+		result.PrivateData = &domain.ProductPrivate{
+			ImportPrice: updateReq.ImportPrice,
+		}
+	}
+	if len(updateReq.MediaItems) > 0 {
+		result.MediaItems = updateReq.MediaItems
+	}
+
 	return result
 }
 
@@ -1043,7 +1152,7 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 		ParentID:       req.ParentId,
 		Name:           req.Name,
 		Code:           req.Code,
-		Area:           req.Area,
+		AreaLand:       req.Area,
 		Description:    req.Description,
 		Note:           req.Note,
 		PropertyTypeId: req.PropertyTypeId,

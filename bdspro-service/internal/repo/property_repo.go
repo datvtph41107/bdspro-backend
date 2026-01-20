@@ -12,6 +12,7 @@ type PropertyRepo interface {
 	crud3.CrudRepo[domain.Property]
 	Search(ctx context.Context, dto *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error)
 	GetDetail(ctx context.Context, id uint64) (*domain.Property, error)
+	UpdateOption(ctx context.Context, id uint64, property *domain.Property) error
 }
 
 type PropertyRelationRepo interface {

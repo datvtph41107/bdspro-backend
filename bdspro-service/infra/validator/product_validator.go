@@ -30,7 +30,7 @@ func (v *ProductValidator) ValidateSaveProductChild(dto *dto.ProductSaveRequest)
 	if dto.ParentID == nil ||
 		*dto.ParentID == 0 ||
 		dto.Name == "" ||
-		dto.Area == 0 ||
+		dto.AreaLand == 0 ||
 		dto.PriceData == nil ||
 		(dto.PriceData.SalePrice == nil && dto.PriceData.RentPrice == nil) {
 		return &_routes.Except{
@@ -44,12 +44,12 @@ func (v *ProductValidator) ValidateSaveProductChild(dto *dto.ProductSaveRequest)
 
 func (v *ProductValidator) ValidateCreateProduct(dto *dto.ProductSaveRequest) error {
 	if dto.Name == "" ||
-		dto.Area <= 0 ||
-		dto.TransactionType == 0 ||
+		dto.AreaLand <= 0 ||
+		// dto.TransactionType == 0 ||
 		dto.PropertyTypeId == nil ||
 		dto.PriceData == nil ||
-		(dto.PriceData.SalePrice == nil && dto.PriceData.RentPrice == nil) ||
-		dto.ProvinceID == nil {
+		dto.ProvinceID == nil ||
+		(dto.PriceData.SalePrice == nil && dto.PriceData.RentPrice == nil) {
 		return &_routes.Except{
 			Code:    400,
 			Message: `name, area, transactionType, propertyTypeId, priceData, provinceId are required`,
@@ -58,20 +58,18 @@ func (v *ProductValidator) ValidateCreateProduct(dto *dto.ProductSaveRequest) er
 	return nil
 }
 
-// func (v *ProductValidator) ValidateUpdateProduct(dto *dto.ProductSaveRequest) error {
-// 	if dto.Name == "" ||
-// 		dto.Area <= 0 ||
-// 		dto.TransactionType == 0 ||
-// 		dto.PropertyTypeId == nil ||
-// 		dto.PriceData == nil ||
-// 		(dto.PriceData.SalePrice == nil && dto.PriceData.RentPrice == nil) ||
-// 		dto.WardID == nil ||
-// 		dto.DistrictID == nil ||
-// 		dto.ProvinceID == nil {
-// 		return &_routes.Except{
-// 			Code:    400,
-// 			Message: `name, area, transactionType, propertyTypeId, priceData, wardId, districtId, provinceId are required`,
-// 		}
-// 	}
-// 	return nil
-// }
+func (v *ProductValidator) ValidateUpdateProduct(dto *dto.UpdateProductRequest) error {
+	if dto.Name == "" {
+		return &_routes.Except{
+			Code:    400,
+			Message: "name is required",
+		}
+	}
+	if dto.AreaLand <= 0 {
+		return &_routes.Except{
+			Code:    400,
+			Message: "area must be greater than 0",
+		}
+	}
+	return nil
+}

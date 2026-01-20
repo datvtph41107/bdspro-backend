@@ -156,3 +156,35 @@ func (r *PostgrePropertyRepo) Update(c context.Context, id uint64, entity *domai
 		Where("id = ? AND deleted_at IS NULL", id).
 		Updates(updates).Error
 }
+
+func (r *PostgrePropertyRepo) Create(c context.Context, entity *domain.Property) error {
+	return GetDB(c, r.DB).Create(entity).Error
+}
+
+func (r *PostgrePropertyRepo) UpdateOption(c context.Context, id uint64, property *domain.Property) error {
+	// Chỉ update các field cụ thể: area_land, area_total, project_id, property_type_id
+	updates := map[string]interface{}{}
+
+	if property.AreaLand != nil {
+		updates["area_land"] = property.AreaLand
+	}
+	if property.AreaTotal != nil {
+		updates["area_total"] = property.AreaTotal
+	}
+	if property.ProjectID != nil {
+		updates["project_id"] = property.ProjectID
+	}
+	if property.PropertyTypeID != nil {
+		updates["property_type_id"] = property.PropertyTypeID
+	}
+
+	// Nếu không có field nào cần update, return nil
+	if len(updates) == 0 {
+		return nil
+	}
+
+	return GetDB(c, r.DB).
+		Model(&domain.Property{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).Error
+}

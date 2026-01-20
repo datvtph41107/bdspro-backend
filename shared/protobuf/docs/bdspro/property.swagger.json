@@ -1433,6 +1433,12 @@
         "rentCommissionType": {
           "type": "integer",
           "format": "int64"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "channelPrice": {
+          "type": "boolean"
         }
       }
     },
@@ -1781,6 +1787,10 @@
         "priority": {
           "type": "integer",
           "format": "int64"
+        },
+        "propertyId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

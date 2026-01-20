@@ -3985,6 +3985,12 @@
         },
         "createdBy": {
           "$ref": "#/definitions/bdspropbUserInfo"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "channelPrice": {
+          "type": "boolean"
         }
       }
     },
@@ -4231,6 +4237,12 @@
         "rentCommissionType": {
           "type": "integer",
           "format": "int64"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "channelPrice": {
+          "type": "boolean"
         }
       }
     },
@@ -4589,6 +4601,10 @@
         "priority": {
           "type": "integer",
           "format": "int64"
+        },
+        "propertyId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -4730,15 +4746,15 @@
     "bdspropbProductServiceUpdateProductBody": {
       "type": "object",
       "properties": {
-        "name": {
+        "productId": {
           "type": "string",
+          "format": "uint64",
           "title": "Basic fields"
         },
-        "saleStatus": {
-          "type": "integer",
-          "format": "int64"
+        "name": {
+          "type": "string"
         },
-        "rentStatus": {
+        "status": {
           "type": "integer",
           "format": "int64"
         },
@@ -4746,38 +4762,55 @@
           "type": "integer",
           "format": "int64"
         },
-        "saleVisibility": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "rentVisibility": {
-          "type": "integer",
-          "format": "int64"
-        },
         "description": {
-          "type": "string"
-        },
-        "internalNote": {
           "type": "string"
         },
         "note": {
           "type": "string"
         },
-        "mode": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "scope": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "propertyId": {
+        "propertyTypeId": {
           "type": "string",
           "format": "uint64",
           "title": "Property fields"
         },
-        "property": {
-          "$ref": "#/definitions/bdspropbPropertyUpdateRequest"
+        "areaLand": {
+          "type": "number",
+          "format": "double",
+          "title": "AreaLand"
+        },
+        "areaTotal": {
+          "type": "number",
+          "format": "double"
+        },
+        "direction": {
+          "type": "integer",
+          "format": "int64",
+          "title": "EHouseOrient"
+        },
+        "balconyDirection": {
+          "type": "integer",
+          "format": "int64",
+          "title": "EHouseOrient"
+        },
+        "bedrooms": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng ngủ"
+        },
+        "bathrooms": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng tắm"
+        },
+        "roadWidth": {
+          "type": "number",
+          "format": "double",
+          "title": "Đường vào (m2)"
+        },
+        "floors": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số tầng"
         },
         "amenityIds": {
           "type": "array",
@@ -4787,28 +4820,30 @@
           },
           "title": "Amenity"
         },
-        "priceData": {
-          "$ref": "#/definitions/bdspropbProductPrice",
-          "title": "Price"
-        },
-        "productPrivate": {
-          "$ref": "#/definitions/bdspropbProductPrivate",
-          "title": "Private data"
-        },
-        "saleCommission": {
+        "price": {
           "type": "number",
           "format": "double",
-          "title": "Commission (trong priceData, nhưng có thể override riêng)"
+          "title": "Price"
         },
-        "rentCommission": {
+        "importPrice": {
           "type": "number",
           "format": "double"
         },
-        "channelPrice": {
-          "type": "boolean",
-          "title": "Channel"
+        "commissionValue": {
+          "type": "number",
+          "format": "double"
         },
-        "mediaList": {
+        "commissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "channelPrice": {
+          "type": "boolean"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "mediaItems": {
           "type": "array",
           "items": {
             "type": "object",
@@ -4819,7 +4854,8 @@
         "sourceType": {
           "type": "integer",
           "format": "int64",
-          "title": "Source fields"
+          "description": "ESourceType",
+          "title": "Nguồn"
         },
         "sourceContactId": {
           "type": "string",
@@ -4828,53 +4864,27 @@
         "sourceContactNote": {
           "type": "string"
         },
-        "propertyTypeId": {
-          "type": "string",
-          "format": "uint64",
-          "title": "Other fields from ProductSaveRequest"
+        "sourceStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "ESourceStatus"
         },
-        "docTypeId": {
-          "type": "string",
-          "format": "uint64"
+        "priority": {
+          "type": "integer",
+          "format": "int64",
+          "title": "EPriority"
+        },
+        "sourceTagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         },
         "projectId": {
           "type": "string",
-          "format": "uint64"
-        },
-        "provinceId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "districtId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "wardId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "transactionType": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "houseInfo": {
-          "$ref": "#/definitions/bdspropbHouseInfo"
-        },
-        "googleMapLink": {
-          "type": "string"
-        },
-        "imageId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "certificateHouseNote": {
-          "type": "string"
-        },
-        "buildingInfo": {
-          "$ref": "#/definitions/bdspropbPropertyBuildingInfo"
-        },
-        "landInfo": {
-          "$ref": "#/definitions/bdspropbPropertyLandInfo"
+          "format": "uint64",
+          "title": "Dự án"
         }
       }
     },
@@ -5201,76 +5211,6 @@
             "type": "object",
             "$ref": "#/definitions/sharepbTagItem"
           }
-        }
-      }
-    },
-    "bdspropbPropertyUpdateRequest": {
-      "type": "object",
-      "properties": {
-        "propertyTypeId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "title": {
-          "type": "string"
-        },
-        "locationId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "addressDetail": {
-          "type": "string"
-        },
-        "latitude": {
-          "type": "number",
-          "format": "double"
-        },
-        "longitude": {
-          "type": "number",
-          "format": "double"
-        },
-        "mapUrl": {
-          "type": "string"
-        },
-        "projectId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "buildingBlock": {
-          "type": "string"
-        },
-        "level": {
-          "type": "string"
-        },
-        "unitCode": {
-          "type": "string"
-        },
-        "areaTotal": {
-          "type": "number",
-          "format": "double"
-        },
-        "areaLand": {
-          "type": "number",
-          "format": "double"
-        },
-        "areaResidential": {
-          "type": "number",
-          "format": "double"
-        },
-        "legalStatus": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "legalNote": {
-          "type": "string"
-        },
-        "buildingInfoId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "recordStatus": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
