@@ -74,12 +74,12 @@ func (r *PostgreProductNoteRepo) ListMentionsByNoteIDs(
 	noteIDs []uint64,
 ) ([]*dto.ProductNoteMentionItem, error) {
 	var mentions []*dto.ProductNoteMentionItem
-
 	if len(noteIDs) == 0 {
 		return mentions, nil
 	}
 
 	err := GetDB(ctx, r.DB).
+		Table("product_note_mentions").
 		Where("note_id IN ?", noteIDs).
 		Find(&mentions).Error
 
@@ -90,37 +90,20 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 	ctx context.Context,
 	filter *dto.GetProductNotesFilter,
 ) ([]*dto.ProductNoteRow, int64, error) {
-	var (
-		rows  []*dto.ProductNoteRow
-		total int64
-	)
+
+	var rows []*dto.ProductNoteRow
+	var total int64
 
 	baseDB := GetDB(ctx, r.DB).
 		Table("product_notes pn").
 		Where("pn.product_id = ?", filter.ProductID).
 		Where("pn.deleted_at IS NULL")
 
-	if filter.OnlyPinned != nil {
-		if *filter.OnlyPinned {
-			baseDB = baseDB.Where("pn.pinned_at IS NOT NULL")
-		} else {
-			baseDB = baseDB.Where("pn.pinned_at IS NULL")
-		}
-	}
-
-	if filter.AuthorID != nil {
-		baseDB = baseDB.Where("pn.author_id = ?", *filter.AuthorID)
-	}
-
-	if filter.Query != nil && *filter.Query != "" {
-		baseDB = baseDB.Where("pn.content ILIKE ?", "%"+*filter.Query+"%")
-	}
-
 	if err := baseDB.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := baseDB.
+	err := baseDB.
 		Select(`
 			pn.id,
 			pn.product_id,
@@ -132,11 +115,9 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 		Order("pn.pinned_at DESC NULLS LAST, pn.created_at DESC").
 		Limit(filter.GetLimit()).
 		Offset(filter.GetOffset()).
-		Scan(&rows).Error; err != nil {
-		return nil, 0, err
-	}
+		Scan(&rows).Error
 
-	return rows, total, nil
+	return rows, total, err
 }
 
 func (r *PostgreProductNoteRepo) DeleteNote(

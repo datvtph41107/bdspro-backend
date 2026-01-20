@@ -171,7 +171,10 @@ func (u *ProductNoteUsecase) GetNotesByProduct(
 
 	mentions, _ := u.noteRepo.ListMentionsByNoteIDs(ctx, noteIDs)
 	for _, m := range mentions {
-		noteMap[m.NoteID].Mentions = append(noteMap[m.NoteID].Mentions, m)
+		noteMap[m.NoteID].Mentions = append(
+			noteMap[m.NoteID].Mentions,
+			m,
+		)
 	}
 
 	files, _ := u.noteRepo.ListByNoteIDs(ctx, noteIDs)

@@ -42,14 +42,14 @@ type GetProductNotesFilter struct {
 }
 
 type ProductNoteMentionItem struct {
-	UserId   uint64 `json:"userId"`
-	StartPos int32  `json:"startPos"`
-	Length   int32  `json:"length"`
-	NoteID   uint64
+	UserId   uint64 `gorm:"column:user_id" json:"userId"`
+	StartPos int32  `gorm:"column:start_pos" json:"startPos"`
+	Length   int32  `gorm:"column:length" json:"length"`
+	NoteID   uint64 `gorm:"column:note_id"`
 
-	Name   string `json:"name,omitempty"`
-	Avatar string `json:"avatar,omitempty"`
-	Role   string `json:"role,omitempty"`
+	Name   string `gorm:"-" json:"name,omitempty"`
+	Avatar string `gorm:"-" json:"avatar,omitempty"`
+	Role   string `gorm:"-" json:"role,omitempty"`
 }
 
 type ProductNoteRow struct {
