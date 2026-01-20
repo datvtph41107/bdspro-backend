@@ -53,12 +53,12 @@ type ProductNoteMentionItem struct {
 }
 
 type ProductNoteRow struct {
-	ID        uint64               `gorm:"json:id"`
-	ProductID uint64               `gorm:"json:product_id"`
-	Content   string               `gorm:"json:content"`
-	IsPinned  bool                 `gorm:"json:is_pinned"`
-	AuthorId  uint64               `gorm:"json:author_id"`
-	CreatedAt string               `gorm:"json:created_at"`
+	ID        uint64               `gorm:"column:id"`
+	ProductID uint64               `gorm:"column:product_id"`
+	Content   string               `gorm:"column:content"`
+	IsPinned  bool                 `gorm:"column:is_pinned"`
+	AuthorId  uint64               `gorm:"column:author_id"`
+	CreatedAt string               `gorm:"column:created_at"`
 	Author    *sharepb.ProfileItem `gorm:"-"`
 }
 
