@@ -126,7 +126,7 @@ func (r *DealPostgresRepository) GetDealsWithoutProduct(
 			deals.name,
 			deals.status,
 			deals.owner_id,
-			deals.deal_type,
+			deals.deal_type
 		`).
 		Joins(`
 			LEFT JOIN deal_members dm 

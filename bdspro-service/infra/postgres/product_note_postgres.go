@@ -80,7 +80,7 @@ func (r *PostgreProductNoteRepo) ListMentionsByNoteIDs(
 
 	err := GetDB(ctx, r.DB).
 		Table("product_note_mentions").
-		Where("note_id IN ?", noteIDs).
+		Where("note_id IN ? AND deleted_at IS NULL", noteIDs).
 		Find(&mentions).Error
 
 	return mentions, err

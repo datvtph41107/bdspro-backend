@@ -224,7 +224,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	distributionMapper := mapper.NewDistributionMapper(crmProvider, codeDataUsecase)
 	distributionHandler := handler.NewDistributionHandler(distributionUsecase, distributionMapper)
 	productNoteRepository := postgres.NewPostgreProductNoteRepo(db)
-	productNoteUsecase := usecases.NewProductNoteUsecase(productNoteRepository, transactionGorm, notificationProvider)
+	productNoteUsecase := usecases.NewProductNoteUsecase(productNoteRepository, transactionGorm, notificationProvider, propertyRelationRepo, gormUserProductRepo)
 	productNoteMapper := mapper.NewProductNoteMapper()
 	productNoteHandler := handler.NewProductNoteHandler(productNoteUsecase, productNoteMapper, userClient)
 	initialApp := initial.NewInitialApp(postService, productHandler, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler, adminProductHandler, adminAssetHandler, adminPostHandler, adminPropertyTypeHandler, adminProjectHandler, adminRegionHandler, internalHandler, bdsproDashboardHandler, bdsDomainHandler, assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob, dealHandler, dealCommissionHandler, dealInvestmentHandler, dealMilestoneHandler, dealInvitationHandler, dealInternalNoteHandler, internalTransactionHandler, txHandler, txContractDealHandler, txCostTypeHandler, txDealCostHandler, adminTxHandler, propertyHandler, distributionHandler, productNoteHandler)

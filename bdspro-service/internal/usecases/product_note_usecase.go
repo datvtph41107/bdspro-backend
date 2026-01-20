@@ -18,20 +18,26 @@ import (
 )
 
 type ProductNoteUsecase struct {
-	noteRepo       repo.ProductNoteRepository
-	txManager      provider.TransactionProvider
-	NotifyProvider provider.NotificationProvider
+	noteRepo             repo.ProductNoteRepository
+	txManager            provider.TransactionProvider
+	NotifyProvider       provider.NotificationProvider
+	PropertyRelationRepo repo.PropertyRelationRepo
+	ProductRepo          repo.ProductRepo
 }
 
 func NewProductNoteUsecase(
 	noteRepo repo.ProductNoteRepository,
 	tx provider.TransactionProvider,
 	notifyProvider provider.NotificationProvider,
+	propertyRelationRepo repo.PropertyRelationRepo,
+	productRepo repo.ProductRepo,
 ) *ProductNoteUsecase {
 	return &ProductNoteUsecase{
-		noteRepo:       noteRepo,
-		txManager:      tx,
-		NotifyProvider: notifyProvider,
+		noteRepo:             noteRepo,
+		txManager:            tx,
+		NotifyProvider:       notifyProvider,
+		PropertyRelationRepo: propertyRelationRepo,
+		ProductRepo:          productRepo,
 	}
 }
 
@@ -103,17 +109,28 @@ func (u *ProductNoteUsecase) CreateNote(
 
 		createdNote = note
 
+		// Lấy PropertyID từ ProductID
+		var propertyID uint64
+		if u.PropertyRelationRepo != nil {
+			product, err := u.ProductRepo.GetProductByID(ctx, &req.ProductID)
+			if err == nil && product != nil && product.PropertyID != nil {
+				propertyID = *product.PropertyID
+			}
+		}
+
+		// Nếu không có PropertyID, sử dụng ProductID làm fallback
+		subjectID := propertyID
+		if subjectID == 0 {
+			subjectID = req.ProductID
+		}
+
 		u.NotifyProvider.RegistedEventProperty(
 			ctx,
 			&dto.CreatePropertyActivityDTO{
-				SubjectID: req.ProductID,
-				Action:    _enum.ACTION_ADD_PRODUCT_TODEAL,
-				ActorID:   authorID,
-				Description: fmt.Sprintf(
-					"Người dùng ID: %d Thêm ghi chú vào sản phẩm %d",
-					authorID,
-					req.ProductID,
-				),
+				SubjectID:   subjectID,
+				Action:      _enum.ACTION_ADD_PRODUCT_TODEAL,
+				ActorID:     authorID,
+				Description: "Đã có ghi chú mới được thêm",
 			},
 		)
 		return nil
