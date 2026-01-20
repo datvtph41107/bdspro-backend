@@ -25,9 +25,11 @@ var DealMemberStatusMap = map[DealMemberStatus]string{
 type DealMember struct {
 	_models.BaseEntity
 	// ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	DealID          uint64               `gorm:"primaryKey;not null"`
-	MemberID        uint64               `gorm:"primaryKey;index;not null"`
-	MemberType      enums.DealMemberType `gorm:"primaryKey;not null;default:10"`
+	DealID     uint64               `gorm:"not null;index:idx_dm_lookup,priority:1"`
+	MemberID   uint64               `gorm:"not null;index:idx_dm_lookup,priority:2"`
+	MemberType enums.DealMemberType `gorm:"not null;default:10"`
+	Status     DealMemberStatus     `gorm:"not null;default:10;index:idx_dm_lookup,priority:3"`
+
 	RoleID          uint64               `gorm:"column:role_id;not null" json:"role_id"`
 	AmountCommit    float64              `gorm:"default:0"`
 	CommissionValue float64              `gorm:"default:0"`     // Giá trị hoa hồng (tiền hoặc %)
@@ -39,14 +41,13 @@ type DealMember struct {
 	RoleKey enums.RoleKey `gorm:"column:role_key;not null;default:430" json:"role_key"`
 
 	// Thêm các trường từ DealInvitation
-	Status      DealMemberStatus `gorm:"not null;default:10"` // Trạng thái
-	Message     string           `gorm:"type:text"`           // Lời nhắn khi gửi lời mời
-	InvitedAt   time.Time        `gorm:""`                    // Thời gian mời
-	RespondedAt *time.Time       // Thời gian phản hồi
-	WithdrawnAt *time.Time       // Thời gian rút khỏi
-	InviterID   uint64           `gorm:""`                           // Người gửi lời mời
-	ColorId     *uint32          `gorm:"index"`                      // Màu sắc
-	IsOwner     bool             `gorm:"type:boolean;default:false"` // Đánh dấu là chủ thương vụ
+	Message     string     `gorm:"type:text"` // Lời nhắn khi gửi lời mời
+	InvitedAt   time.Time  `gorm:""`          // Thời gian mời
+	RespondedAt *time.Time // Thời gian phản hồi
+	WithdrawnAt *time.Time // Thời gian rút khỏi
+	InviterID   uint64     `gorm:""`                           // Người gửi lời mời
+	ColorId     *uint32    `gorm:"index"`                      // Màu sắc
+	IsOwner     bool       `gorm:"type:boolean;default:false"` // Đánh dấu là chủ thương vụ
 
 	// Relations
 	Deal  *Deal  `gorm:"foreignKey:DealID;references:ID"`

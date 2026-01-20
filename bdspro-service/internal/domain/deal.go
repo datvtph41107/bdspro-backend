@@ -51,3 +51,20 @@ type Deal struct {
 func (d *Deal) TableName() string {
 	return "deals"
 }
+
+func (d *Deal) IsModifiable() bool {
+	switch d.Status {
+	case enums.DealStatusCanceled, enums.DealStatusCompleted:
+		return false
+	default:
+		return true
+	}
+}
+
+func (d *Deal) IsOwner(userID uint64) bool {
+	return d.OwnerId == userID
+}
+
+func (d *Deal) IsChargePerson(userID uint64) bool {
+	return d.ChargePersonID != nil && *d.ChargePersonID == userID
+}

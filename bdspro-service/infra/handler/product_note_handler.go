@@ -120,7 +120,7 @@ func (h *ProductNoteHandler) DeleteProductNote(
 		return nil, _errors.BadRequestException("noteId is required")
 	}
 
-	if err := h.ProductNoteUsecase.DeleteNote(ctx, req.NoteId, req.RequestUserID); err != nil {
+	if err := h.ProductNoteUsecase.DeleteNote(ctx, req.NoteId); err != nil {
 		return nil, err
 	}
 
@@ -150,13 +150,13 @@ func (h *ProductNoteHandler) TogglePinProductNote(
 
 func (h *ProductNoteHandler) enrichUsers(
 	ctx context.Context,
-	notes []*dto.ProductNoteItemResponse,
+	notes []*dto.ProductNote,
 ) {
 	userIDs := make(map[uint64]struct{})
 
 	for _, n := range notes {
-		if n.AuthorId != 0 {
-			userIDs[n.AuthorId] = struct{}{}
+		if n.Note.AuthorId != 0 {
+			userIDs[n.Note.AuthorId] = struct{}{}
 		}
 		for _, m := range n.Mentions {
 			userIDs[m.UserId] = struct{}{}
@@ -176,12 +176,11 @@ func (h *ProductNoteHandler) enrichUsers(
 	}
 
 	for _, n := range notes {
-		if p, ok := profiles[n.AuthorId]; ok {
-			n.Author = p
+		if p, ok := profiles[n.Note.AuthorId]; ok {
+			n.Note.Author = p
 		}
 
-		for i := range n.Mentions {
-			m := &n.Mentions[i]
+		for _, m := range n.Mentions {
 			if p, ok := profiles[m.UserId]; ok {
 				m.Name = p.FullName
 				m.Avatar = p.Avatar

@@ -17,3 +17,12 @@ type DealOfBranchDTO struct {
 	DealID   uint64 `json:"dealId"`
 	BranchID uint64 `json:"branchId"`
 }
+
+// type DealWithoutProductResponseDTO struct {
+// 	ID       uint64           `json:"id"`
+// 	Name     string           `json:"name"`
+// 	Status   enums.DealStatus `json:"status"`
+// 	IsMember bool             `json:"isMember"`
+// 	OwnerId  uint64           `json:"ownerId"`
+// 	DealType enums.DealType   `json:"dealType"`
+// }

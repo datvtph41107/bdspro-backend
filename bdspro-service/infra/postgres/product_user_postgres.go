@@ -17,6 +17,22 @@ func NewProductUserPostgres(db *gorm.DB) *ProductUserPostgres {
 	return &ProductUserPostgres{db: db}
 }
 
+func (r *ProductUserPostgres) UpdatePriceID(
+	ctx context.Context,
+	productID uint64,
+	profileID uint64,
+	priceID uint64,
+) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.ProductUser{}).
+		Where(
+			"product_id = ? AND profile_id = ? AND deleted_at IS NULL",
+			productID, profileID,
+		).
+		Update("price_id", priceID).
+		Error
+}
+
 func (r *ProductUserPostgres) CreateOwner(ctx context.Context, productID uint64, profileID uint64) (*domain.ProductUser, error) {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	productOfUser := &domain.ProductUser{

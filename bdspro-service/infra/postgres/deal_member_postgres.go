@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -51,6 +52,26 @@ type DealMemberPostgresRepository struct {
 
 func NewDealMemberPostgresRepository(db *gorm.DB) *DealMemberPostgresRepository {
 	return &DealMemberPostgresRepository{db: db}
+}
+
+func (r *DealMemberPostgresRepository) GetByDealAndMember(
+	ctx context.Context,
+	dealID uint64,
+	memberID uint64,
+) (*domain.DealMember, error) {
+	var d domain.DealMember
+	err := r.db.WithContext(ctx).
+		Where("deal_id = ? AND member_id = ?", dealID, memberID).
+		First(&d).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &d, nil
 }
 
 func (r *DealMemberPostgresRepository) CreateMember(ctx context.Context, dealMember *domain.DealMember) (*domain.DealMember, error) {

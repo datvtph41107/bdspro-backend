@@ -2755,17 +2755,21 @@
         "sourceContactNote": {
           "type": "string"
         },
+        "sourceStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
         "priority": {
           "type": "integer",
-          "format": "int64",
-          "title": "uint64 assignedUserId = 5;"
+          "format": "int64"
         },
         "sourceTagIds": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uint64"
-          }
+          },
+          "title": "uint64 assignedUserId = 5;"
         }
       }
     },
@@ -4576,6 +4580,15 @@
         },
         "property": {
           "$ref": "#/definitions/bdspropbPropertyResponse"
+        },
+        "sourceStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "SOUURCE UPDATE RESPONE"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

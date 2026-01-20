@@ -22,6 +22,143 @@
     "application/json"
   ],
   "paths": {
+    "/v2.1/deal/{dealId}/product/{productId}": {
+      "post": {
+        "operationId": "DealService_AddProductToDeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbAddProductToDealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealService"
+        ]
+      }
+    },
+    "/v2.1/deals/without-product/{id}": {
+      "get": {
+        "operationId": "DealService_GetDealsWithoutProduct",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbGetDealsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "DealService"
+        ]
+      }
+    },
+    "/v2.1/deals/{dealId}/member/me": {
+      "get": {
+        "operationId": "DealService_GetByDealAndMember",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbGetDealMemberByDealAndMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "DealService"
+        ]
+      }
+    },
     "/v2.1/org/admin/deal/list": {
       "get": {
         "summary": "API admin lấy toàn bộ danh sách thương vụ trong hệ thống",
@@ -2152,6 +2289,14 @@
         }
       }
     },
+    "bdspropbAddProductToDealResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
     "bdspropbAdminDealItem": {
       "type": "object",
       "properties": {
@@ -2600,6 +2745,79 @@
           "type": "integer",
           "format": "int64",
           "title": "Tổng số item"
+        }
+      }
+    },
+    "bdspropbGetDealMemberByDealAndMemberResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "memberType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "roleId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amountCommit": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "commissionType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isOwner": {
+          "type": "boolean"
+        },
+        "isUnilateral": {
+          "type": "boolean"
+        },
+        "doneInvestment": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "inviterId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "invitedAt": {
+          "type": "string"
+        },
+        "respondedAt": {
+          "type": "string"
+        },
+        "withdrawnAt": {
+          "type": "string"
         }
       }
     },

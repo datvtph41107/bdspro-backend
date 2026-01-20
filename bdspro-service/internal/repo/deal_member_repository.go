@@ -8,6 +8,8 @@ import (
 )
 
 type DealMemberRepository interface {
+	GetByDealAndMember(ctx context.Context, dealID uint64, memberID uint64) (*domain.DealMember, error)
+
 	CreateMember(ctx context.Context, dealMember *domain.DealMember) (*domain.DealMember, error)
 	CreateMembers(ctx context.Context, dealMembers []domain.DealMember) ([]domain.DealMember, error)
 	GetByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (*domain.DealMember, error)

@@ -10,6 +10,11 @@ import (
 )
 
 type DealRepository interface {
+	IsAcceptedMember(ctx context.Context, userID uint64, dealID uint64) (bool, error)
+	AddProductToDeal(ctx context.Context, dealID uint64, productID uint64, createdBy uint64) error
+	GetDealsWithoutProduct(ctx context.Context, userID uint64, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error)
+	ExistsProductInDeal(ctx context.Context, dealID uint64, productID uint64) (bool, error)
+
 	Create(ctx context.Context, deal *domain.Deal) (*domain.Deal, error)
 	Update(ctx context.Context, deal *domain.Deal) (*domain.Deal, error)
 	Delete(ctx context.Context, id uint64) error

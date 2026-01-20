@@ -1,10 +1,9 @@
 package dto
 
 import (
+	"bdspro/internal/domain"
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
-
-	"github.com/lib/pq"
 )
 
 type CreateProductNoteRequest struct {
@@ -42,29 +41,42 @@ type GetProductNotesFilter struct {
 	Query      *string `json:"query"`
 }
 
-type ProductNoteItemResponse struct {
-	ID        uint64 `gorm:"column:id"`
-	ProductID uint64 `gorm:"column:productId"`
-	Content   string `gorm:"column:content"`
-	IsPinned  bool   `gorm:"column:is_pinned"`
-	AuthorId  uint64 `gorm:"column:author_id"`
-	CreatedAt string `gorm:"column:created_at"`
-
-	MentionIDs pq.Int64Array `gorm:"column:mention_ids;type:bigint[]"`
-	FileIDs    pq.Int64Array `gorm:"column:file_ids;type:bigint[]"`
-
-	// enrich sau
-	Author   *sharepb.ProfileItem     `gorm:"-"`
-	Mentions []ProductNoteMentionItem `gorm:"-"`
-	Files    []ProductNoteFileDTO     `gorm:"-"`
-}
-
 type ProductNoteMentionItem struct {
 	UserId   uint64 `json:"userId"`
 	StartPos int32  `json:"startPos"`
 	Length   int32  `json:"length"`
+	NoteID   uint64
 
 	Name   string `json:"name,omitempty"`
 	Avatar string `json:"avatar,omitempty"`
 	Role   string `json:"role,omitempty"`
 }
+
+type ProductNoteRow struct {
+	ID        uint64               `gorm:"json:id"`
+	ProductID uint64               `gorm:"json:product_id"`
+	Content   string               `gorm:"json:content"`
+	IsPinned  bool                 `gorm:"json:is_pinned"`
+	AuthorId  uint64               `gorm:"json:author_id"`
+	CreatedAt string               `gorm:"json:created_at"`
+	Author    *sharepb.ProfileItem `gorm:"-"`
+}
+
+type ProductNote struct {
+	Note     *ProductNoteRow
+	Mentions []*ProductNoteMentionItem
+	Files    []*domain.ProductNoteFile
+}
+
+// type ProductNoteItemResponse struct {
+// 	ID        uint64 `gorm:"json:id"`
+// 	ProductID uint64 `gorm:"json:product_id"`
+// 	Content   string `gorm:"json:content"`
+// 	IsPinned  bool   `gorm:"json:is_pinned"`
+// 	AuthorId  uint64 `gorm:"json:author_id"`
+// 	CreatedAt string `gorm:"json:created_at"`
+
+// 	Author   *sharepb.ProfileItem     `gorm:"-"`
+// 	Mentions []ProductNoteMentionItem `gorm:"-"`
+// 	Files    []ProductNoteFileDTO     `gorm:"-"`
+// }

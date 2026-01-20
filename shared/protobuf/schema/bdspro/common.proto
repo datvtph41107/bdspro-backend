@@ -198,6 +198,10 @@ message ProductResponse {
 
     optional MediaItem avatar = 80;
     optional PropertyResponse property = 81;
+
+    // SOUURCE UPDATE RESPONE
+    uint32 sourceStatus = 82;  
+    uint32 priority = 83;  
 }
 
 message PropertyLandInfo {

@@ -24,12 +24,38 @@ func (r *PostgreProductNoteRepo) CreateNote(
 	ctx context.Context,
 	note *domain.ProductNote,
 ) error {
-	return r.DB.WithContext(ctx).Create(note).Error
+	return GetDB(ctx, r.DB).Create(note).Error
 }
 
-func (r *PostgreProductNoteRepo) GetByID(ctx context.Context, id uint64) (*domain.ProductNote, error) {
+func (r *PostgreProductNoteRepo) UpdateContent(
+	ctx context.Context,
+	noteID uint64,
+	content string,
+) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.ProductNote{}).
+		Where("id = ? AND deleted_at IS NULL", noteID).
+		Update("content", content).Error
+}
+
+func (r *PostgreProductNoteRepo) UpdatePinnedAt(
+	ctx context.Context,
+	noteID uint64,
+	pinnedAt *time.Time,
+) error {
+	return GetDB(ctx, r.DB).
+		Model(&domain.ProductNote{}).
+		Where("id = ? AND deleted_at IS NULL", noteID).
+		Update("pinned_at", pinnedAt).Error
+}
+
+func (r *PostgreProductNoteRepo) GetByID(
+	ctx context.Context,
+	id uint64,
+) (*domain.ProductNote, error) {
 	var note domain.ProductNote
-	err := r.DB.WithContext(ctx).
+
+	err := GetDB(ctx, r.DB).
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&note).Error
 
@@ -43,34 +69,83 @@ func (r *PostgreProductNoteRepo) GetByID(ctx context.Context, id uint64) (*domai
 	return &note, nil
 }
 
-func (r *PostgreProductNoteRepo) UpdateContent(
+func (r *PostgreProductNoteRepo) ListMentionsByNoteIDs(
 	ctx context.Context,
-	noteID uint64,
-	content string,
-) error {
-	return r.DB.WithContext(ctx).
-		Model(&domain.ProductNote{}).
-		Where("id = ?", noteID).
-		Update("content", content).Error
+	noteIDs []uint64,
+) ([]*dto.ProductNoteMentionItem, error) {
+	var mentions []*dto.ProductNoteMentionItem
+
+	if len(noteIDs) == 0 {
+		return mentions, nil
+	}
+
+	err := GetDB(ctx, r.DB).
+		Where("note_id IN ?", noteIDs).
+		Find(&mentions).Error
+
+	return mentions, err
 }
 
-func (r *PostgreProductNoteRepo) UpdatePinnedAt(
+func (r *PostgreProductNoteRepo) GetListByProductID(
 	ctx context.Context,
-	noteID uint64,
-	pinnedAt *time.Time,
-) error {
-	return r.DB.WithContext(ctx).
-		Model(&domain.ProductNote{}).
-		Where("id = ?", noteID).
-		Update("pinned_at", pinnedAt).Error
+	filter *dto.GetProductNotesFilter,
+) ([]*dto.ProductNoteRow, int64, error) {
+	var (
+		rows  []*dto.ProductNoteRow
+		total int64
+	)
+
+	baseDB := GetDB(ctx, r.DB).
+		Table("product_notes pn").
+		Where("pn.product_id = ?", filter.ProductID).
+		Where("pn.deleted_at IS NULL")
+
+	if filter.OnlyPinned != nil {
+		if *filter.OnlyPinned {
+			baseDB = baseDB.Where("pn.pinned_at IS NOT NULL")
+		} else {
+			baseDB = baseDB.Where("pn.pinned_at IS NULL")
+		}
+	}
+
+	if filter.AuthorID != nil {
+		baseDB = baseDB.Where("pn.author_id = ?", *filter.AuthorID)
+	}
+
+	if filter.Query != nil && *filter.Query != "" {
+		baseDB = baseDB.Where("pn.content ILIKE ?", "%"+*filter.Query+"%")
+	}
+
+	if err := baseDB.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := baseDB.
+		Select(`
+			pn.id,
+			pn.product_id,
+			pn.content,
+			pn.author_id,
+			(pn.pinned_at IS NOT NULL) AS is_pinned,
+			pn.created_at
+		`).
+		Order("pn.pinned_at DESC NULLS LAST, pn.created_at DESC").
+		Limit(filter.GetLimit()).
+		Offset(filter.GetOffset()).
+		Scan(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return rows, total, nil
 }
 
 func (r *PostgreProductNoteRepo) DeleteNote(
 	ctx context.Context,
 	noteID uint64,
 ) error {
-	return r.DB.WithContext(ctx).
-		Delete(&domain.ProductNote{}, noteID).Error
+	return GetDB(ctx, r.DB).
+		Where("id = ?", noteID).
+		Delete(&domain.ProductNote{}).Error
 }
 
 func (r *PostgreProductNoteRepo) CreateMention(
@@ -80,14 +155,14 @@ func (r *PostgreProductNoteRepo) CreateMention(
 	if len(mentions) == 0 {
 		return nil
 	}
-	return r.DB.WithContext(ctx).Create(&mentions).Error
+	return GetDB(ctx, r.DB).Create(&mentions).Error
 }
 
 func (r *PostgreProductNoteRepo) DeleteMentionByNoteID(
 	ctx context.Context,
 	noteID uint64,
 ) error {
-	return r.DB.WithContext(ctx).
+	return GetDB(ctx, r.DB).
 		Where("note_id = ?", noteID).
 		Delete(&domain.ProductNoteMention{}).Error
 }
@@ -99,14 +174,14 @@ func (r *PostgreProductNoteRepo) CreateFiles(
 	if len(files) == 0 {
 		return nil
 	}
-	return r.DB.WithContext(ctx).Create(&files).Error
+	return GetDB(ctx, r.DB).Create(&files).Error
 }
 
 func (r *PostgreProductNoteRepo) DeleteFilesByNoteID(
 	ctx context.Context,
 	noteID uint64,
 ) error {
-	return r.DB.WithContext(ctx).
+	return GetDB(ctx, r.DB).
 		Where("note_id = ?", noteID).
 		Delete(&domain.ProductNoteFile{}).Error
 }
@@ -120,81 +195,9 @@ func (r *PostgreProductNoteRepo) ListByNoteIDs(
 		return files, nil
 	}
 
-	err := r.DB.WithContext(ctx).
+	err := GetDB(ctx, r.DB).
 		Where("note_id IN ?", noteIDs).
 		Find(&files).Error
 
 	return files, err
-}
-
-func (r *PostgreProductNoteRepo) GetListByProductID(
-	ctx context.Context,
-	filter *dto.GetProductNotesFilter,
-) ([]*dto.ProductNoteItemResponse, int64, error) {
-
-	var (
-		result []*dto.ProductNoteItemResponse
-		total  int64
-	)
-
-	baseQuery := GetDB(ctx, r.DB).
-		Table("product_notes pn").
-		Joins("LEFT JOIN product_note_mentions pm ON pm.note_id = pn.id").
-		Joins("LEFT JOIN product_note_files pf ON pf.note_id = pn.id").
-		Where("pn.deleted_at IS NULL AND pn.product_id = ?", filter.ProductID)
-
-	if filter.OnlyPinned != nil {
-		if *filter.OnlyPinned {
-			baseQuery = baseQuery.Where("pn.pinned_at IS NOT NULL")
-		} else {
-			baseQuery = baseQuery.Where("pn.pinned_at IS NULL")
-		}
-	}
-
-	if filter.AuthorID != nil {
-		baseQuery = baseQuery.Where("pn.author_id = ?", *filter.AuthorID)
-	}
-
-	if filter.Query != nil && *filter.Query != "" {
-		baseQuery = baseQuery.Where("pn.content ILIKE ?", "%"+*filter.Query+"%")
-	}
-
-	countSubQuery := baseQuery.
-		Select("pn.id").
-		Group("pn.id")
-
-	if err := r.DB.
-		Table("(?) AS t", countSubQuery).
-		Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	if err := baseQuery.
-		Select(`
-			pn.id,
-			pn.content,
-			pn.pinned_at,
-			pn.author_id,
-			pn.created_at,
-
-			COALESCE(
-				ARRAY_AGG(DISTINCT pm.user_id)
-				FILTER (WHERE pm.user_id IS NOT NULL),
-				'{}'
-			) AS mention_ids,
-
-			COALESCE(
-				ARRAY_AGG(DISTINCT pf.id)
-				FILTER (WHERE pf.id IS NOT NULL),
-				'{}'
-			) AS file_ids
-		`).
-		Group("pn.id").
-		Order("pn.pinned_at DESC NULLS LAST, pn.created_at DESC").
-		Limit(filter.GetLimit()).
-		Offset(filter.GetOffset()).
-		Scan(&result).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return result, total, nil
 }

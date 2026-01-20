@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
 )
@@ -9,6 +10,12 @@ type PriceHistorySearch struct {
 	_dto.Pagable
 	ProductID       uint64 `json:"productId"`
 	TransactionType *enums.TransactionType
+}
+
+type PriceUpdateContext struct {
+	IsOwner      bool
+	ProductUser  *domain.ProductUser
+	Distribution *domain.DistributionEntity
 }
 
 type PriceHistoryItemDTO struct {

@@ -25,7 +25,7 @@ type DealMapper interface {
 	EntityToDealDetailResponse(deal *domain.Deal) *bdspropb.GroupDeal
 	EntityToGetOrganizationDealsResponse(deals []*domain.Deal, total uint32) *bdspropb.GetOrganizationDealsResponse
 	EntityToGetDealsResponse(deals []*domain.Deal, total uint32) *bdspropb.GetDealsResponse
-	EntityToDealMemberProto(member *domain.DealMember) *sharepb.DealMember
+	EntityToDealMemberProto(member *domain.DealMember) *bdspropb.GetDealMemberByDealAndMemberResponse
 	EntityToGetGroupDealsV2Response(deals []*domain.Deal, total uint32) *bdspropb.GetGroupDealsV2Response
 
 	// Admin API
@@ -98,6 +98,49 @@ func (t *groupDealTransformer) CreateGroupDealRequestToEntity(request *bdspropb.
 	}
 
 	return result
+}
+
+func (t *groupDealTransformer) EntityToDealMemberProto(
+	member *domain.DealMember,
+) *bdspropb.GetDealMemberByDealAndMemberResponse {
+
+	if member == nil {
+		return nil
+	}
+
+	pb := &bdspropb.GetDealMemberByDealAndMemberResponse{
+		DealId:   member.DealID,
+		MemberId: member.MemberID,
+
+		RoleId:          member.RoleID,
+		RoleKey:         uint32(member.RoleKey),
+		Status:          uint32(member.Status),
+		AmountCommit:    member.AmountCommit,
+		CommissionValue: member.CommissionValue,
+		CommissionType:  uint32(member.CommissionType),
+		Note:            member.Note,
+		Message:         member.Message,
+
+		InviterId:      member.InviterID,
+		DoneInvestment: member.DoneInvestment,
+		IsOwner:        member.IsOwner,
+	}
+
+	if member.InvitedAt.IsZero() == false {
+		pb.InvitedAt = _utils.FormatTimeToString(&member.InvitedAt)
+	}
+
+	if member.RespondedAt != nil {
+		respondedAt := _utils.FormatTimeToString(member.RespondedAt)
+		pb.RespondedAt = respondedAt
+	}
+
+	if member.WithdrawnAt != nil {
+		withdrawnAt := _utils.FormatTimeToString(member.WithdrawnAt)
+		pb.WithdrawnAt = withdrawnAt
+	}
+
+	return pb
 }
 
 func (t *groupDealTransformer) CreateOrganizationDealRequestToEntity(request *bdspropb.CreateOrganizationDealRequest) *domain.Deal {
@@ -340,44 +383,44 @@ func (t *groupDealTransformer) EntityToGetDealsResponse(deals []*domain.Deal, to
 	return response
 }
 
-func (t *groupDealTransformer) EntityToDealMemberProto(member *domain.DealMember) *sharepb.DealMember {
-	if member == nil {
-		return nil
-	}
+// func (t *groupDealTransformer) EntityToDealMemberProto(member *domain.DealMember) *sharepb.DealMember {
+// 	if member == nil {
+// 		return nil
+// 	}
 
-	proto := &sharepb.DealMember{
-		DealId:   member.DealID,
-		MemberId: member.MemberID,
-		// MemberType:      uint32(member.MemberType),
-		AmountCommit:    member.AmountCommit,
-		CommissionValue: member.CommissionValue,
-		CommissionType:  uint32(member.CommissionType),
-		Note:            member.Note,
-		RoleId:          &member.RoleID,
-		Status:          uint32(member.Status),
-		Message:         member.Message,
-		InvitedAt:       _utils.FormatTimeToString(&member.InvitedAt),
-		InviterId:       member.InviterID,
-		// colorId:         &member.ColorId,
-		// IsUnilateral:    member.IsUnilateral,
-		DoneInvestment: member.DoneInvestment,
-		IsOwner:        member.IsOwner,
-	}
+// 	proto := &sharepb.DealMember{
+// 		DealId:   member.DealID,
+// 		MemberId: member.MemberID,
+// 		// MemberType:      uint32(member.MemberType),
+// 		AmountCommit:    member.AmountCommit,
+// 		CommissionValue: member.CommissionValue,
+// 		CommissionType:  uint32(member.CommissionType),
+// 		Note:            member.Note,
+// 		RoleId:          &member.RoleID,
+// 		Status:          uint32(member.Status),
+// 		Message:         member.Message,
+// 		InvitedAt:       _utils.FormatTimeToString(&member.InvitedAt),
+// 		InviterId:       member.InviterID,
+// 		// colorId:         &member.ColorId,
+// 		// IsUnilateral:    member.IsUnilateral,
+// 		DoneInvestment: member.DoneInvestment,
+// 		IsOwner:        member.IsOwner,
+// 	}
 
-	// Set responded_at if not nil
-	if member.RespondedAt != nil {
-		respondedAt := _utils.FormatTimeToString(member.RespondedAt)
-		proto.RespondedAt = respondedAt
-	}
+// 	// Set responded_at if not nil
+// 	if member.RespondedAt != nil {
+// 		respondedAt := _utils.FormatTimeToString(member.RespondedAt)
+// 		proto.RespondedAt = respondedAt
+// 	}
 
-	// Set withdrawn_at if not nil
-	if member.WithdrawnAt != nil {
-		withdrawnAt := _utils.FormatTimeToString(member.WithdrawnAt)
-		proto.WithdrawnAt = withdrawnAt
-	}
+// 	// Set withdrawn_at if not nil
+// 	if member.WithdrawnAt != nil {
+// 		withdrawnAt := _utils.FormatTimeToString(member.WithdrawnAt)
+// 		proto.WithdrawnAt = withdrawnAt
+// 	}
 
-	return proto
-}
+// 	return proto
+// }
 
 func (t *groupDealTransformer) EntityToGetGroupDealsV2Response(deals []*domain.Deal, total uint32) *bdspropb.GetGroupDealsV2Response {
 	response := &bdspropb.GetGroupDealsV2Response{

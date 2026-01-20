@@ -352,9 +352,10 @@ message UpdateProductSourceRequest {
   uint32 sourceType = 2;
   uint64 sourceContactId = 3;
   string sourceContactNote = 4;
-  // uint64 assignedUserId = 5;
+   uint32 sourceStatus = 5; 
   uint32 priority = 6;
   repeated uint64 sourceTagIds = 7;
+  // uint64 assignedUserId = 5;
 }
 
 

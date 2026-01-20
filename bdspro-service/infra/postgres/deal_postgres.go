@@ -7,6 +7,7 @@ import (
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	"context"
 	"time"
 
@@ -29,6 +30,132 @@ func NewGroupDealPostgresRepository(db *gorm.DB,
 		bankAccountRepo: bankAccountRepo,
 		transactionRepo: transactionRepo,
 	}
+}
+
+func (r *DealPostgresRepository) IsAcceptedMember(
+	ctx context.Context,
+	userID uint64,
+	dealID uint64,
+) (bool, error) {
+	var exists bool
+	err := GetDB(ctx, r.db).
+		Raw(`
+			SELECT EXISTS (
+				SELECT 1
+				FROM deal_members
+				WHERE deal_id = ?
+				  AND member_id = ?
+				  AND status = ?
+				  AND deleted_at IS NULL
+			)
+		`,
+			dealID,
+			userID,
+			domain.DealMemberStatusAccepted,
+		).
+		Scan(&exists).Error
+
+	return exists, err
+}
+
+func (r *DealPostgresRepository) ExistsProductInDeal(
+	ctx context.Context,
+	dealID uint64,
+	productID uint64,
+) (bool, error) {
+
+	var exists bool
+	err := GetDB(ctx, r.db).Raw(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM deal_products
+			WHERE deal_id = ?
+			  AND product_id = ?
+			  AND deleted_at IS NULL
+		)
+	`, dealID, productID).Scan(&exists).Error
+
+	return exists, err
+}
+
+func (r *DealPostgresRepository) AddProductToDeal(
+	ctx context.Context,
+	dealID, productID, userID uint64,
+) error {
+	dp := &domain.DealProduct{
+		DealID:    dealID,
+		ProductID: productID,
+	}
+
+	result := r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "deal_id"},
+				{Name: "product_id"},
+			},
+			DoNothing: true,
+		}).
+		Create(dp)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return _errors.ConflictException("product already exists in deal")
+	}
+
+	return nil
+}
+
+func (r *DealPostgresRepository) GetDealsWithoutProduct(
+	ctx context.Context,
+	userID uint64,
+	productID uint64,
+	pagable _dto.Pagable,
+) ([]*domain.Deal, int64, error) {
+	var (
+		items []*domain.Deal
+		total int64
+	)
+
+	baseQuery := r.db.WithContext(ctx).
+		Table("deals").
+		Select(`
+			deals.id,
+			deals.name,
+			deals.status,
+			deals.owner_id,
+			deals.deal_type,
+		`).
+		Joins(`
+			LEFT JOIN deal_members dm 
+				ON dm.deal_id = deals.id
+				AND dm.member_id = ?
+				AND dm.status = ?
+		`, userID, domain.DealMemberStatusAccepted).
+		Joins(`
+			LEFT JOIN deal_products dp 
+				ON dp.deal_id = deals.id
+		`).
+		Where("dp.id IS NULL").
+		Where("deals.deleted_at IS NULL")
+
+	// count
+	if err := baseQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// paging
+	if err := baseQuery.
+		Limit(pagable.GetLimit()).
+		Offset(pagable.GetOffset()).
+		Order("deals.created_at DESC").
+		Scan(&items).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return items, total, nil
 }
 
 func (r *DealPostgresRepository) CreateDealProduct(ctx context.Context, dealProduct []*domain.DealProduct) ([]*domain.DealProduct, error) {

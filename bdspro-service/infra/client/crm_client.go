@@ -6,6 +6,9 @@ import (
 	"context"
 	"pb/clients"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type CrmClient struct {
@@ -55,7 +58,7 @@ func (c *CrmClient) GetContactById(ctx context.Context, id uint64) (*sharepb.Con
 // GetContactByOriginId retrieves contact information by originId using internal service
 func (c *CrmClient) GetContactByOriginId(ctx context.Context, originId uint64) (*sharepb.ContactDTO, error) {
 	if c.CrmInternalServiceClient == nil {
-		return nil, nil
+		return nil, status.Error(codes.Unavailable, "crm service not initialized")
 	}
 
 	resp, err := c.CrmInternalServiceClient.GetContactByOriginId(

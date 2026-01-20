@@ -12,6 +12,25 @@ import "auth/color.proto";
 option go_package = "pb/types/bdspro;bdspropb";
 
 service DealService {
+   rpc GetByDealAndMember(GetDealMemberByDealAndMemberRequest)
+        returns (GetDealMemberByDealAndMemberResponse) {
+        option (google.api.http) = {
+            get: "/v2.1/deals/{dealId}/member/me"
+        };
+    }
+
+    rpc GetDealsWithoutProduct(sharepb.IdRequest) returns (GetDealsResponse) {
+        option (google.api.http) = {
+            get: "/v2.1/deals/without-product/{id}"
+        };
+    }
+
+    rpc AddProductToDeal(AddProductToDealRequest) returns (AddProductToDealResponse) {
+        option (google.api.http) = {
+            post: "/v2.1/deal/{dealId}/product/{productId}"
+        };
+    }
+
     rpc CreateGroupDeal(CreateGroupDealRequest) returns (CreateGroupDealResponse) {
         option (google.api.http) = {
             post: "/v2.1/org/deal"
@@ -266,6 +285,41 @@ service DealInternalNoteService {
             get: "/v2.1/org/deal/{dealId}/history"
         };
     }
+}
+
+message GetDealMemberByDealAndMemberRequest {
+    uint64 dealId = 1;
+}
+
+message GetDealMemberByDealAndMemberResponse {
+    uint64 id = 1;
+    uint64 dealId = 2;
+    uint64 memberId = 3;
+    uint32 memberType = 4;
+    uint32 status = 5;
+    uint64 roleId = 6;
+    uint32 roleKey = 7;
+    double amountCommit = 8;
+    double commissionValue = 9;
+    uint32 commissionType = 10;
+    bool isOwner = 11;
+    bool isUnilateral = 12;
+    bool doneInvestment = 13;
+    string note = 14;
+    string message = 15;
+    uint64 inviterId = 16;
+    string invitedAt = 17;
+    string respondedAt = 18;
+    string withdrawnAt = 19;
+}
+
+message AddProductToDealRequest {
+    uint64 dealId = 1;
+    uint64 productId = 2;
+}
+
+message AddProductToDealResponse {
+    bool success = 1;
 }
 
 

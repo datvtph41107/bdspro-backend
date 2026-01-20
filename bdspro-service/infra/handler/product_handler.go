@@ -541,13 +541,21 @@ func (s *ProductHandler) GetDetail(ctx context.Context, req *bdspropb.IdRequest)
 	if err != nil {
 		return nil, err
 	}
-	productResponse := s.ProductMapper.MapDetailProductPb(ctx, product)
-	if product.OwnerID != 0 && product.OwnerOf == enums.EOwnerOfMember {
-		productResponse.CreatedUser = s.UserClient.GetProfileById(ctx, product.OwnerID)
-	}
-	// product.SourceContactId
+	// var originProfile *sharepb.OriginProfile
+	// if product.SourceContactId != nil && *product.SourceContactId > 0 {
+	// 	pf, err := s.CrmProvider.GetContactByOriginId(ctx, *product.SourceContactId)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	} else if pf.OriginProfile != nil {
+	// 		originProfile = pf.OriginProfile
+	// 	}
+	// }
+	// if originProfile != nil {
+	// 	resp.OriginProfileContact = s.ProductMapper.MapOriginProfilePb(originProfile)
+	// }
 
-	return productResponse, nil
+	resp := s.ProductMapper.MapDetailProductPb(ctx, product)
+	return resp, nil
 }
 
 // // @Summary Lấy danh sách lịch sử của sản phẩm

@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 
 	bdspropb "pb/types/bdspro"
@@ -14,36 +15,44 @@ func NewProductNoteMapper() *ProductNoteMapper {
 }
 
 func (m *ProductNoteMapper) ProductNoteListToProto(
-	list []*dto.ProductNoteItemResponse,
+	list []*dto.ProductNote,
 ) []*bdspropb.ProductNoteEntity {
-
 	if len(list) == 0 {
 		return nil
 	}
 
 	res := make([]*bdspropb.ProductNoteEntity, 0, len(list))
 	for _, n := range list {
-		res = append(res, m.ProductNoteItemToProto(n))
+		res = append(res, m.ProductNoteToProto(n))
 	}
 	return res
 }
 
-func (m *ProductNoteMapper) ProductNoteItemToProto(
-	n *dto.ProductNoteItemResponse,
+func (m *ProductNoteMapper) ProductNoteToProto(
+	n *dto.ProductNote,
 ) *bdspropb.ProductNoteEntity {
+
+	if n == nil || n.Note == nil {
+		return nil
+	}
+
+	note := n.Note
+
 	return &bdspropb.ProductNoteEntity{
-		Id:        n.ID,
-		ProductId: n.ProductID,
-		Content:   n.Content,
-		IsPinned:  n.IsPinned,
-		Author:    mapAuthorToProto(n.Author),
+		Id:        note.ID,
+		ProductId: note.ProductID,
+		Content:   note.Content,
+		IsPinned:  note.IsPinned,
+		CreatedAt: note.CreatedAt,
+		Author:    mapAuthorToProto(note.Author),
 		Mentions:  mapMentionsToProto(n.Mentions),
 		Files:     mapFilesToProto(n.Files),
-		CreatedAt: n.CreatedAt,
 	}
 }
 
-func mapAuthorToProto(p *sharepb.ProfileItem) *bdspropb.ProductNoteMember {
+func mapAuthorToProto(
+	p *sharepb.ProfileItem,
+) *bdspropb.ProductNoteMember {
 	if p == nil {
 		return nil
 	}
@@ -57,7 +66,7 @@ func mapAuthorToProto(p *sharepb.ProfileItem) *bdspropb.ProductNoteMember {
 }
 
 func mapMentionsToProto(
-	list []dto.ProductNoteMentionItem,
+	list []*dto.ProductNoteMentionItem,
 ) []*bdspropb.ProductNoteMention {
 	if len(list) == 0 {
 		return nil
@@ -65,6 +74,10 @@ func mapMentionsToProto(
 
 	res := make([]*bdspropb.ProductNoteMention, 0, len(list))
 	for _, m := range list {
+		if m == nil {
+			continue
+		}
+
 		res = append(res, &bdspropb.ProductNoteMention{
 			UserId:   m.UserId,
 			StartPos: m.StartPos,
@@ -78,7 +91,7 @@ func mapMentionsToProto(
 }
 
 func mapFilesToProto(
-	list []dto.ProductNoteFileDTO,
+	list []*domain.ProductNoteFile,
 ) []*bdspropb.ProductNoteFile {
 	if len(list) == 0 {
 		return nil
@@ -86,6 +99,10 @@ func mapFilesToProto(
 
 	res := make([]*bdspropb.ProductNoteFile, 0, len(list))
 	for _, f := range list {
+		if f == nil {
+			continue
+		}
+
 		res = append(res, &bdspropb.ProductNoteFile{
 			Url:      f.URL,
 			FileName: f.FileName,

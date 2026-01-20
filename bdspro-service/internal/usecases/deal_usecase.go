@@ -3,6 +3,7 @@ package usecases
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -20,6 +21,10 @@ import (
 )
 
 type DealUsecase interface {
+	GetByDealAndMember(ctx context.Context, dealID, memberID uint64) (*domain.DealMember, error)
+	GetDealsWithoutProduct(ctx context.Context, userID, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error)
+	AddProductToDeal(ctx context.Context, dealID uint64, userID uint64, productID uint64) error
+
 	CreateDeal(ctx context.Context, deal *domain.Deal) (*domain.Deal, error)
 	CreateOrganizationDeal(ctx context.Context, bdsproId uint64, deal *domain.Deal) (*domain.Deal, error)
 	CreateGroupDeal(ctx context.Context, groupId uint64, deal *domain.Deal) (*domain.Deal, error)
@@ -74,7 +79,7 @@ type dealUsecase struct {
 }
 
 func NewDealUsecase(
-	dealRepository repo.DealRepository,
+	dealRepo repo.DealRepository,
 	investmentRepository repo.InvestmentRepository,
 	bankAccountRepository repo.BankAccountRepository,
 	documentRepository repo.DocumentRepository,
@@ -92,7 +97,7 @@ func NewDealUsecase(
 	productRepo repo.ProductRepo,
 ) DealUsecase {
 	return &dealUsecase{
-		dealRepository:        dealRepository,
+		dealRepository:        dealRepo,
 		investmentRepository:  investmentRepository,
 		bankAccountRepository: bankAccountRepository,
 		documentRepository:    documentRepository,
@@ -109,6 +114,98 @@ func NewDealUsecase(
 		dealTransactionRepo: dealTransactionRepo,
 		productRepo:         productRepo,
 	}
+}
+
+func (u *dealUsecase) GetByDealAndMember(
+	ctx context.Context,
+	dealID,
+	memberID uint64,
+) (*domain.DealMember, error) {
+	return u.dealMemberRepository.GetByDealAndMember(ctx, dealID, memberID)
+}
+
+func (u *dealUsecase) AddProductToDeal(
+	ctx context.Context,
+	dealID, userID, productID uint64,
+) error {
+	if userID == 0 {
+		return _errors.UnauthorizedException()
+	}
+	if dealID == 0 || productID == 0 {
+		return _errors.BadRequestException("deal_id and product_id are required")
+	}
+
+	var deal *domain.Deal
+
+	err := u.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+
+		var err error
+		deal, err = u.dealRepository.GetByID(txCtx, dealID)
+		if err != nil {
+			return err
+		}
+
+		if !deal.IsModifiable() {
+			return _errors.ConflictException("deal is not modifiable")
+		}
+
+		ok, err := u.dealRepository.IsAcceptedMember(txCtx, userID, dealID)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return _errors.ForbiddenException("user is not member of deal")
+		}
+
+		err = u.dealRepository.AddProductToDeal(
+			txCtx,
+			dealID,
+			productID,
+			userID,
+		)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	u.notiClient.RegistedEventProperty(
+		ctx,
+		&dto.CreatePropertyActivityDTO{
+			SubjectID: dealID,
+			Action:    _enum.ACTION_ADD_PRODUCT_TODEAL,
+			ActorID:   userID,
+			Description: fmt.Sprintf(
+				"Thêm sản phẩm %d vào thương vụ %d",
+				productID,
+				dealID,
+			),
+		},
+	)
+
+	return nil
+}
+
+func (u *dealUsecase) GetDealsWithoutProduct(
+	ctx context.Context,
+	userID, productID uint64,
+	pagable _dto.Pagable,
+) ([]*domain.Deal, int64, error) {
+	if productID == 0 {
+		return nil, 0, _errors.BadRequestException("productId is required")
+	}
+
+	return u.dealRepository.GetDealsWithoutProduct(
+		ctx,
+		userID,
+		productID,
+		pagable,
+	)
 }
 
 func (u *dealUsecase) IsMemberDeal(ctx context.Context, dealID, memberID uint64) error {
@@ -1131,6 +1228,7 @@ func (u *dealUsecase) Summary(ctx context.Context, req *dto.SummaryRequest) (*dt
 		// TotalPayment:    totalAmount.TotalPayment,
 	}, nil
 }
+
 func (u *dealUsecase) UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error {
 	err := u.dealRepository.UpdateAllowManualInput(ctx, dealID, allowManualInput)
 	if err != nil {

@@ -2006,6 +2006,15 @@
         },
         "property": {
           "$ref": "#/definitions/bdspropbPropertyResponse"
+        },
+        "sourceStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "SOUURCE UPDATE RESPONE"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

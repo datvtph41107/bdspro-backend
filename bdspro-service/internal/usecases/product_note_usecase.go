@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -17,17 +18,20 @@ import (
 )
 
 type ProductNoteUsecase struct {
-	noteRepo  repo.ProductNoteRepository
-	txManager provider.TransactionProvider
+	noteRepo       repo.ProductNoteRepository
+	txManager      provider.TransactionProvider
+	NotifyProvider provider.NotificationProvider
 }
 
 func NewProductNoteUsecase(
 	noteRepo repo.ProductNoteRepository,
 	tx provider.TransactionProvider,
+	notifyProvider provider.NotificationProvider,
 ) *ProductNoteUsecase {
 	return &ProductNoteUsecase{
-		noteRepo:  noteRepo,
-		txManager: tx,
+		noteRepo:       noteRepo,
+		txManager:      tx,
+		NotifyProvider: notifyProvider,
 	}
 }
 
@@ -62,7 +66,6 @@ func (u *ProductNoteUsecase) CreateNote(
 			return err
 		}
 
-		// ===== Mentions =====
 		if len(req.Mentions) > 0 {
 			mentions := make([]domain.ProductNoteMention, 0, len(req.Mentions))
 
@@ -80,7 +83,6 @@ func (u *ProductNoteUsecase) CreateNote(
 			}
 		}
 
-		// ===== Files =====
 		if len(req.Files) > 0 {
 			files := make([]domain.ProductNoteFile, 0, len(req.Files))
 
@@ -100,6 +102,20 @@ func (u *ProductNoteUsecase) CreateNote(
 		}
 
 		createdNote = note
+
+		u.NotifyProvider.RegistedEventProperty(
+			ctx,
+			&dto.CreatePropertyActivityDTO{
+				SubjectID: req.ProductID,
+				Action:    _enum.ACTION_ADD_PRODUCT_TODEAL,
+				ActorID:   authorID,
+				Description: fmt.Sprintf(
+					"Người dùng ID: %d Thêm ghi chú vào sản phẩm %d",
+					authorID,
+					req.ProductID,
+				),
+			},
+		)
 		return nil
 	})
 
@@ -135,16 +151,51 @@ func (u *ProductNoteUsecase) TogglePin(ctx context.Context, noteID uint64, isPin
 func (u *ProductNoteUsecase) GetNotesByProduct(
 	ctx context.Context,
 	filter *dto.GetProductNotesFilter,
-) ([]*dto.ProductNoteItemResponse, int, error) {
-	resp, total, err := u.noteRepo.GetListByProductID(ctx, filter)
-	if err != nil {
-		return nil, 0, err
+) ([]*dto.ProductNote, int, error) {
+	rows, total, err := u.noteRepo.GetListByProductID(ctx, filter)
+	if err != nil || len(rows) == 0 {
+		return nil, int(total), err
 	}
 
-	return resp, int(total), nil
+	noteIDs := make([]uint64, 0, len(rows))
+	noteMap := make(map[uint64]*dto.ProductNote)
+
+	for _, r := range rows {
+		noteIDs = append(noteIDs, r.ID)
+		noteMap[r.ID] = &dto.ProductNote{
+			Note:     r,
+			Mentions: []*dto.ProductNoteMentionItem{},
+			Files:    []*domain.ProductNoteFile{},
+		}
+	}
+
+	mentions, _ := u.noteRepo.ListMentionsByNoteIDs(ctx, noteIDs)
+	for _, m := range mentions {
+		noteMap[m.NoteID].Mentions = append(noteMap[m.NoteID].Mentions, m)
+	}
+
+	files, _ := u.noteRepo.ListByNoteIDs(ctx, noteIDs)
+	for _, f := range files {
+		noteMap[f.NoteID].Files = append(noteMap[f.NoteID].Files, f)
+	}
+
+	result := make([]*dto.ProductNote, 0, len(rows))
+	for _, r := range rows {
+		result = append(result, noteMap[r.ID])
+	}
+
+	return result, int(total), nil
 }
 
-func (u *ProductNoteUsecase) DeleteNote(ctx context.Context, noteID uint64, requestUserID uint64) error {
+func (u *ProductNoteUsecase) DeleteNote(
+	ctx context.Context,
+	noteID uint64,
+) error {
+	requestUserID := _utils.GetProfileIdWithContext(ctx)
+	if requestUserID == 0 {
+		return _errors.UnauthorizedException()
+	}
+
 	note, err := u.noteRepo.GetByID(ctx, noteID)
 	if err != nil {
 		return err
@@ -219,7 +270,6 @@ func (u *ProductNoteUsecase) UpdateNote(
 			}
 		}
 
-		// ===== Files =====
 		if err := u.noteRepo.DeleteFilesByNoteID(txCtx, req.NoteID); err != nil {
 			return err
 		}

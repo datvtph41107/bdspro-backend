@@ -127,6 +127,7 @@ func (m *ProductMapper) PbToUpdateProductSourceDTO(
 		SourceType:        enums.ESourceType(req.SourceType),
 		SourceContactId:   sourceContactId,
 		SourceContactNote: req.SourceContactNote,
+		SourceStatus:      enums.ESourceStatus(req.SourceStatus),
 		// AssignedUserID:    assignedUserId,
 		Priority:     enums.EPriority(req.Priority),
 		SourceTagIDs: req.SourceTagIds,
@@ -289,6 +290,20 @@ func cleanAddressUnitPtr(input *string) *string {
 // 	return result
 // }
 
+func (m *ProductMapper) MapOriginProfilePb(op *sharepb.OriginProfile) *sharepb.OriginProfile {
+	if op == nil {
+		return nil
+	}
+
+	return &sharepb.OriginProfile{
+		OriginId:    op.OriginId,
+		DisplayName: op.DisplayName,
+		Phone:       op.Phone,
+		Avatar:      op.Avatar,
+		OwnerOf:     uint32(op.OwnerOf),
+	}
+}
+
 func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.Product) *bdspropb.ProductResponse {
 	result := &bdspropb.ProductResponse{
 		Id:       product.ID,
@@ -319,7 +334,10 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		// Build:           product.Build,
 		// Project:         product.Project,
 		// Developer:       product.Developer,
-		SourceType:        uint32(product.SourceType),
+		SourceType: uint32(product.SourceType),
+		// UPDATE SOURCE RESPONSE
+		SourceStatus:      uint32(product.SourceStatus),
+		Priority:          uint32(product.Priority),
 		SourceContactId:   product.SourceContactId,
 		SourceContactNote: product.SourceContactNote,
 		// CustomerId: product.CustomerID,

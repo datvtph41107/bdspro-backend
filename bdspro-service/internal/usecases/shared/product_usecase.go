@@ -62,10 +62,11 @@ type ProductUsecase struct {
 	DealRepo                repo.DealRepository
 	CodeDataUsecase         *_usecase.CodeDataUsecase
 
-	Transaction    provider.TransactionProvider
-	DeepseekClient provider.DeepseekProvider
-	CrmProvider    provider.CrmProvider
-	UserProvider   provider.IUserProvider
+	Transaction      provider.TransactionProvider
+	DeepseekClient   provider.DeepseekProvider
+	CrmProvider      provider.CrmProvider
+	UserProvider     provider.IUserProvider
+	DistributionRepo repo.DistributeRepository
 }
 
 func NewProductUsecase(
@@ -97,6 +98,7 @@ func NewProductUsecase(
 	notificationClient provider.NotificationProvider,
 	crmProvider provider.CrmProvider,
 	userProvider provider.IUserProvider,
+	distributionRepo repo.DistributeRepository,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -126,9 +128,10 @@ func NewProductUsecase(
 		PropertyUsecase:         propertyUsecase,
 		DealRepo:                dealRepo,
 		// OwnerType:    ownerType,
-		CodeDataUsecase: codeDataUsecase,
-		CrmProvider:     crmProvider,
-		UserProvider:    userProvider,
+		CodeDataUsecase:  codeDataUsecase,
+		CrmProvider:      crmProvider,
+		UserProvider:     userProvider,
+		DistributionRepo: distributionRepo,
 	}
 
 	result.PostUsecase.ProductUsecase = result
@@ -539,24 +542,21 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 
 	entity, err := s.ProductRepo.GetByIDContext(c, id)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy dữ liệu",
-		}
+		return nil, err
+	}
+	if entity == nil {
+		return nil, _errors.NotFoundException("Product not found")
 	}
 
 	s.MapProductStatus(c, entity)
 
-	// Kiểm tra xem user có phải là người tạo không để load privateData
+	// Load privateData
 	profileID := _utils.GetProfileIdWithContext(c)
 	if profileID > 0 && entity.CreatedBy != nil && *entity.CreatedBy == profileID {
-		// Lấy privateData từ repo và gán vào entity
-		privateData := s.ProductPrivate.FindByProductId(c, &entity.ID)
-		if privateData != nil {
+		if privateData := s.ProductPrivate.FindByProductId(c, &entity.ID); privateData != nil {
 			entity.PrivateData = privateData
 		}
 	}
-
 	return entity, nil
 }
 
@@ -1664,51 +1664,36 @@ func priceBuilder(p *domain.ProductPrice, txType enums.TransactionType, user *dt
 	return price
 }
 
-func (u *ProductUsecase) ApplyPriceUpdate(
-	ctx context.Context,
-	req *dto.ApplyPriceUpdateRequest,
-) (*dto.ApplyPriceUpdateResponse, error) {
+func (u *ProductUsecase) ApplyPriceUpdate(ctx context.Context, req *dto.ApplyPriceUpdateRequest) (*dto.ApplyPriceUpdateResponse, error) {
 	userId := _utils.GetProfileIdWithContext(ctx)
 	if userId == 0 {
 		return nil, _errors.UnauthorizedException()
+	}
+	if req.Price <= 0 {
+		return nil, _errors.BadRequestException("Sale price must be greater than 0")
 	}
 
 	var resp *dto.ApplyPriceUpdateResponse
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
+		if err != nil || product == nil {
+			return _errors.NotFoundException("Product not found")
+		}
+
+		priceCtx, err := u.resolvePriceUpdateContext(
+			txCtx, product, userId,
+		)
 		if err != nil {
 			return err
 		}
-		if product == nil {
-			return _errors.NotFoundException("Product not found")
-		}
-		if userId != product.OwnerID {
-			return _errors.ForbiddenException("Only owner can update price")
+
+		newPrice, err := u.createProductPrice(txCtx, product.ID, userId, req, priceCtx)
+		if err != nil {
+			return err
 		}
 
-		var oldSalePrice *float64
-		if product.Price != nil {
-			oldSalePrice = product.Price.SalePrice
-		}
-
-		if req.Price <= 0 {
-			return _errors.BadRequestException("Sale price must be greater than 0")
-		}
-
-		newPrice := &domain.ProductPrice{
-			ProductID:   &product.ID,
-			Currency:    "VND",
-			SalePrice:   &req.Price,
-			PriceStatus: req.PriceStatus,
-			ChangeNote:  req.ChangeNote,
-		}
-
-		if err := u.PriceRepo.Create(txCtx, newPrice); err != nil {
-			return _errors.InternalServerException("Create product price fail", err.Error())
-		}
-
-		if err := u.ProductRepo.UpdateLastPrice(txCtx, product.ID, newPrice.ID); err != nil {
-			return _errors.InternalServerException("Update last price fail", err.Error())
+		if err := u.applyPriceByContext(txCtx, product, userId, newPrice, priceCtx); err != nil {
+			return err
 		}
 
 		var pricePerM2 *float64
@@ -1719,19 +1704,129 @@ func (u *ProductUsecase) ApplyPriceUpdate(
 
 		resp = &dto.ApplyPriceUpdateResponse{
 			ProductID:  product.ID,
-			OldPrice:   oldSalePrice,
 			NewPrice:   newPrice.SalePrice,
 			PricePerM2: pricePerM2,
 			UpdatedAt:  time.Now(),
 		}
+
+		description := priceUpdateDescription(
+			product,
+			newPrice,
+			nil, // hoặc oldPrice nếu có
+			priceCtx,
+		)
+
+		u.NotificationClient.RegistedEventProperty(ctx,
+			&dto.CreatePropertyActivityDTO{
+				SubjectID:   newPrice.ID,
+				Action:      _enum.ACTION_APPLY_UPDATE_PRICE,
+				ActorID:     userId,
+				Description: description,
+			})
 
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	return resp, nil
+}
+
+func (u *ProductUsecase) resolvePriceUpdateContext(ctx context.Context, product *domain.Product, userId uint64) (*dto.PriceUpdateContext, error) {
+	if product.OwnerID == userId {
+		return &dto.PriceUpdateContext{
+			IsOwner: true,
+		}, nil
+	}
+
+	productUser, err := u.ProductUserRepo.GetByProductAndProfile(ctx, product.ID, userId)
+	if err != nil || productUser == nil {
+		return nil, _errors.ForbiddenException("User has no access to product")
+	}
+
+	if productUser.DistributeID == nil {
+		return nil, _errors.ForbiddenException("Product is not distributed to this user")
+	}
+
+	// Distribution phải cho phép channel price
+	distribution, err := u.DistributionRepo.FindByID(ctx, *productUser.DistributeID)
+	if err != nil || distribution == nil {
+		return nil, _errors.ForbiddenException("Distribution not found")
+	}
+
+	if !distribution.ChannelPrice {
+		return nil, _errors.ForbiddenException("Channel price is not allowed")
+	}
+
+	return &dto.PriceUpdateContext{
+		IsOwner:      false,
+		ProductUser:  productUser,
+		Distribution: distribution,
+	}, nil
+}
+
+func (u *ProductUsecase) createProductPrice(ctx context.Context, productID uint64, userId uint64, req *dto.ApplyPriceUpdateRequest, priceCtx *dto.PriceUpdateContext) (*domain.ProductPrice, error) {
+	price := &domain.ProductPrice{
+		ProductID:   &productID,
+		Currency:    "VND",
+		SalePrice:   &req.Price,
+		PriceStatus: req.PriceStatus,
+		ChangeNote:  req.ChangeNote,
+		ChangedBy:   userId,
+	}
+
+	// Giá theo kênh → gắn distribute_id
+	if !priceCtx.IsOwner && priceCtx.ProductUser != nil {
+		price.DistributeID = priceCtx.ProductUser.DistributeID
+	}
+
+	if err := u.PriceRepo.Create(ctx, price); err != nil {
+		return nil, _errors.InternalServerException(
+			"Create product price failed",
+			err.Error(),
+		)
+	}
+
+	return price, nil
+}
+
+func (u *ProductUsecase) applyPriceByContext(ctx context.Context, product *domain.Product, userId uint64, price *domain.ProductPrice, priceCtx *dto.PriceUpdateContext) error {
+	if priceCtx.IsOwner {
+		return u.ProductRepo.
+			UpdateLastPrice(ctx, product.ID, price.ID)
+	}
+
+	return u.ProductUserRepo.UpdatePriceID(ctx, product.ID, userId, price.ID)
+}
+
+func priceUpdateDescription(
+	product *domain.Product,
+	newPrice *domain.ProductPrice,
+	oldPrice *float64,
+	priceCtx *dto.PriceUpdateContext,
+) string {
+
+	if priceCtx.IsOwner {
+		if oldPrice != nil {
+			return fmt.Sprintf(
+				"Cập nhật giá sản phẩm #%d từ %s → %s",
+				product.ID,
+				*oldPrice,
+				*newPrice.SalePrice,
+			)
+		}
+		return fmt.Sprintf(
+			"Cập nhật giá sản phẩm #%d: %s",
+			product.ID,
+			*newPrice.SalePrice,
+		)
+	}
+
+	return fmt.Sprintf(
+		"Cập nhật giá kênh cho sản phẩm #%d: %s",
+		product.ID,
+		*newPrice.SalePrice,
+	)
 }
 
 func (u *ProductUsecase) UpdateProductSource(

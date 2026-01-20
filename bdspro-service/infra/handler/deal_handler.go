@@ -48,6 +48,83 @@ func NewDealHandler(
 	}
 }
 
+func (h *DealHandler) GetDealsWithoutProduct(
+	ctx context.Context,
+	req *sharepb.IdRequest,
+) (*bdspropb.GetDealsResponse, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, errors.New("unauthorized")
+	}
+
+	productID := req.Id
+	deals, total, err := h.DealUsecase.GetDealsWithoutProduct(
+		ctx,
+		userID,
+		productID,
+		_dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.DealTransformer.EntityToGetDealsResponse(
+		deals,
+		uint32(total),
+	), nil
+}
+
+func (h *DealHandler) AddProductToDeal(ctx context.Context, req *bdspropb.AddProductToDealRequest) (*bdspropb.AddProductToDealResponse, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, errors.New("unauthorized")
+	}
+
+	err := h.DealUsecase.AddProductToDeal(
+		ctx,
+		req.DealId,
+		userID,
+		req.ProductId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.AddProductToDealResponse{
+		Success: true,
+	}, nil
+}
+
+func (h *DealHandler) GetByDealAndMember(
+	ctx context.Context,
+	req *bdspropb.GetDealMemberByDealAndMemberRequest,
+) (*bdspropb.GetDealMemberByDealAndMemberResponse, error) {
+
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, errors.New("unauthorized")
+	}
+
+	dealMember, err := h.DealUsecase.GetByDealAndMember(
+		ctx,
+		req.DealId,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Không có → trả response rỗng
+	if dealMember == nil {
+		return &bdspropb.GetDealMemberByDealAndMemberResponse{}, nil
+	}
+
+	return h.DealTransformer.EntityToDealMemberProto(dealMember), nil
+}
+
 // @Summary Tạo thương vụ
 // @Description Tạo thương vụ
 // @Tags Thương vụ
