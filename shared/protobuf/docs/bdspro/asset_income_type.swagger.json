@@ -17,6 +17,37 @@
   ],
   "paths": {},
   "definitions": {
+    "bdspropbAssetIncomeTypeDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "isCustom": {
+          "type": "boolean"
+        }
+      }
+    },
+    "bdspropbAssetIncomeTypeListDTO": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAssetIncomeTypeDTO"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {

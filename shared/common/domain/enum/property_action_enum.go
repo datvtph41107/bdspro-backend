@@ -9,6 +9,7 @@ const (
 
 	ACTION_CREATE_NOTE_PRODUCT PropertyAction = 4
 	ACTION_APPLY_UPDATE_PRICE  PropertyAction = 5
+	ACTION_PROPERTY_CREATE     PropertyAction = 6
 )
 
 var PropertyActionText = map[PropertyAction]string{
@@ -17,6 +18,7 @@ var PropertyActionText = map[PropertyAction]string{
 	ACTION_ADD_PRODUCT_TODEAL:  "Thêm sản phẩm vào thương vụ",
 	ACTION_CREATE_NOTE_PRODUCT: "Ghi chú vào sản phẩm",
 	ACTION_APPLY_UPDATE_PRICE:  "Cập nhật giá sản phẩm/kênh giá",
+	ACTION_PROPERTY_CREATE:     "Sản phẩm được tạo ở đây",
 }
 
 func (a PropertyAction) String() string {

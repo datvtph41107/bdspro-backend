@@ -225,9 +225,9 @@ service ProductService {
     };
   };
   
-  rpc GetProductNavigation (sharepb.IdRequest) returns (ProductNavigationResponse) {
+  rpc GetProductNavigation (ProductSearch) returns (ProductNavigationResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/v2/product/{id}/navigation"
+      get: "/v2/bdspro/v2/product/navigation"
     };
   };
 
@@ -484,6 +484,7 @@ message ProductSearch {
   string visibilities = 35;
   string provinceIds = 36;
   string wardIds = 37;
+  optional uint64 id = 38;
 }
 
 message GroupProductSearch {

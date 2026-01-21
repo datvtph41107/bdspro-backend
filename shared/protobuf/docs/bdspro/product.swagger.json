@@ -1038,6 +1038,289 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/product/navigation": {
+      "get": {
+        "operationId": "ProductService_GetProductNavigation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbProductNavigationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "propertyTypeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "docTypeId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "provinceId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "districtId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "wardId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "transactionType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleStatus",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentStatus",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleVisibility",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentVisibility",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sourceType",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "transactionPrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "salePrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentPrice",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "saleCommission",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentCommission",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "rentPaymentCycle",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "transactionTypes",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "propertyTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentStatuses",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "saleVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "rentVisibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sourceTypeIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "visibilities",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "wardIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -1372,6 +1655,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -1833,6 +2123,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -2419,74 +2716,6 @@
             "required": false,
             "type": "integer",
             "format": "int64"
-          },
-          {
-            "name": "ids",
-            "in": "query",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uint64"
-            },
-            "collectionFormat": "multi"
-          }
-        ],
-        "tags": [
-          "ProductService"
-        ]
-      }
-    },
-    "/v2/bdspro/v2/product/{id}/navigation": {
-      "get": {
-        "operationId": "ProductService_GetProductNavigation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/bdspropbProductNavigationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "text",
-            "in": "query",
-            "required": false,
-            "type": "string"
           },
           {
             "name": "ids",
@@ -4146,6 +4375,30 @@
         }
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
+    },
+    "bdspropbProductAttachmentResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        }
+      }
+    },
+    "bdspropbProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        }
+      }
     },
     "bdspropbProductNavigationResponse": {
       "type": "object",

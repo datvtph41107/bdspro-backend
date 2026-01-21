@@ -343,6 +343,9 @@ func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.Id
 		"distribution_reason":     enumMapToList(enums.DistributionReasonNameMap),
 		"deal_type":               enumMapToList(enums.DealTypeNames),
 		"source_status":           enumMapToList(enums.SourceStatusNames),
+		"source_type":             enumMapToList(enums.SourceTypeMap),
+		"mining_mode":             enumMapToList(enums.MiningModeNames),
+		"mining_scope":            enumMapToList(enums.MiningScopeNames),
 	}
 
 	if values, ok := enumProviders[enumType]; ok {

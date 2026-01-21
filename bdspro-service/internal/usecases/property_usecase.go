@@ -6,6 +6,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -27,6 +28,7 @@ type PropertyUsecase struct {
 	ProductMediaRepo         repo.ProductMediaRepo
 	AssetRepo                repo.AssetRepo
 	Transaction              provider.TransactionProvider
+	NotifyProvider           provider.NotificationProvider
 }
 
 func NewPropertyUsecase(
@@ -44,6 +46,7 @@ func NewPropertyUsecase(
 	productMediaRepo repo.ProductMediaRepo,
 	assetRepo repo.AssetRepo,
 	transaction provider.TransactionProvider,
+	notifyProvider provider.NotificationProvider,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
@@ -60,6 +63,7 @@ func NewPropertyUsecase(
 		ProductMediaRepo:         productMediaRepo,
 		AssetRepo:                assetRepo,
 		Transaction:              transaction,
+		NotifyProvider:           notifyProvider,
 	}
 }
 
@@ -472,6 +476,18 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 
 	if err != nil {
 		return nil, err
+	}
+
+	// Tạo property history sau khi tạo property thành công
+	if property != nil && u.NotifyProvider != nil {
+		u.NotifyProvider.RegistedEventProperty(ctx,
+			&dto.CreatePropertyActivityDTO{
+				SubjectID:   property.ID,
+				SubjectType: _enum.SUBJECT_TYPE_PROPERTY,
+				Action:      _enum.ACTION_PROPERTY_CREATE,
+				ActorID:     _utils.GetProfileIdWithContext(ctx),
+				Description: "Sản phẩm được tạo ở đây",
+			})
 	}
 
 	return property, nil

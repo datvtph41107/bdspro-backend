@@ -141,7 +141,6 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"description":      entity.Description,
 		"last_price_id":    entity.LastPriceID,
 		"apartment_id":     entity.ApartmentID,
-		"source_type":      entity.SourceType,
 		"note":             entity.Note,
 		"transaction_type": entity.TransactionType,
 		"sale_status":      entity.SaleStatus,
@@ -155,6 +154,9 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"archived":         entity.Archived,
 		"property_id":      entity.PropertyID,
 
+		"source_type":            entity.SourceType,
+		"source_status":          entity.SourceStatus,
+		"priority":               entity.Priority,
 		"source_contact_id":      entity.SourceContactId,
 		"source_contact_note":    entity.SourceContactNote,
 		"certificate_house_note": entity.CertificateHouseNote,

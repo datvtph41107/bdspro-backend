@@ -462,7 +462,7 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 
 	// Update amenity
 	if len(updateData.AmenityIDs) > 0 {
-		if err := s.UpdateAmenity(contextTx, entity.ID, updateData.AmenityIDs); err != nil {
+		if err := s.UpdateAmenity(contextTx, *entity.PropertyID, updateData.AmenityIDs); err != nil {
 			s.Transaction.RollbackTransaction(contextTx)
 			return nil, err
 		}
@@ -501,6 +501,25 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 
 	if err = s.Transaction.CommitTransaction(contextTx); err != nil {
 		return nil, err
+	}
+
+	// Ghi lịch sử cho property trong goroutine
+	if s.NotificationClient != nil && entity.PropertyID != nil {
+		go func() {
+			cloneCtx := _utils.CloneContext(c)
+			actorID := _utils.GetProfileIdWithContext(cloneCtx)
+			if actorID > 0 {
+				s.NotificationClient.RegistedEventProperty(
+					cloneCtx,
+					&dto.CreatePropertyActivityDTO{
+						SubjectID:   *entity.PropertyID,
+						Action:      _enum.ACTION_APPLY_UPDATE_PRICE,
+						ActorID:     actorID,
+						Description: fmt.Sprintf("Cập nhật thông tin sản phẩm %s", entity.Name),
+					},
+				)
+			}
+		}()
 	}
 
 	return entity, nil
@@ -660,7 +679,8 @@ func (s *ProductUsecase) UpdatePrice(c context.Context, priceID *uint64, entity 
 
 func (s *ProductUsecase) UpdateAmenity(ctx context.Context, productID uint64, ids []uint64) error {
 	if len(ids) > 0 {
-		return s.ProductRepo.UpdateProductAmenityIds(ctx, productID, ids)
+		// return s.ProductRepo.UpdateProductAmenityIds(ctx, productID, ids)
+		return s.PropertyUsecase.UpdatePropertyAmenity(ctx, productID, ids)
 	}
 	return nil
 }
