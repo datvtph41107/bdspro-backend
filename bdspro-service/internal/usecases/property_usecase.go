@@ -330,7 +330,7 @@ func (u *PropertyUsecase) GetRelation(ctx context.Context, propertyID uint64) ([
 		switch relation.RelationType {
 		case enums.ERelationTypeProduct:
 			// Load Product nếu có
-			if product, err := u.ProductRepo.GetByID(*relation.RelationID); err == nil && product != nil {
+			if product, err := u.ProductRepo.GetProductByID(ctx, relation.RelationID); err == nil && product != nil {
 				item.Product = product
 			}
 		case enums.ERelationTypeAsset:
@@ -791,7 +791,7 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 			return err
 		}
 		// Link BuildingInfoID vào Property
-		property, err := u.PropertyRepo.GetByID(propertyRelation.PropertyID)
+		property, err := u.PropertyRepo.GetOneByID(ctx, propertyRelation.PropertyID)
 		if err != nil {
 			return err
 		}
@@ -898,7 +898,7 @@ func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint6
 
 	// Update AvatarID của Property
 	if avatarID != nil {
-		property, err := u.PropertyRepo.GetByID(propertyID)
+		property, err := u.PropertyRepo.GetOneByID(ctx, propertyID)
 		if err != nil {
 			return nil, err
 		}
@@ -910,7 +910,7 @@ func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint6
 		}
 	} else {
 		// Nếu không có media items, xóa AvatarID
-		property, err := u.PropertyRepo.GetByID(propertyID)
+		property, err := u.PropertyRepo.GetOneByID(ctx, propertyID)
 		if err != nil {
 			return nil, err
 		}
@@ -937,7 +937,7 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 		// Nếu đã có PropertyRelation, không tạo Property mới
 		if relation != nil {
 			// Lấy Property hiện có
-			property, err := u.PropertyRepo.GetByID(relation.PropertyID)
+			property, err := u.PropertyRepo.GetOneByID(ctx, relation.PropertyID)
 			if err != nil {
 				return nil, err
 			}
@@ -993,7 +993,7 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, property *domain.Property, landInfo *domain.PropertyLandInfo, buildingInfo *domain.PropertyBuildingInfo, amenityIDs []uint64) error {
 	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		// 1. Kiểm tra Property có tồn tại không
-		existingProperty, err := u.PropertyRepo.GetByID(propertyID)
+		existingProperty, err := u.PropertyRepo.GetOneByID(txCtx, propertyID)
 		if err != nil {
 			return err
 		}

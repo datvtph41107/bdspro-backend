@@ -274,7 +274,7 @@
         "panel": "dedicated"
       },
       "runOptions": {
-        "runOn": "folderOpen"
+        // "runOn": "folderOpen"
       }
     }
   ]

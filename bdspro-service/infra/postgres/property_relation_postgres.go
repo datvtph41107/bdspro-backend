@@ -20,7 +20,7 @@ func NewPostgrePropertyRelationRepo(db *gorm.DB) repo.PropertyRelationRepo {
 }
 
 func (r *PostgrePropertyRelationRepo) Create(ctx context.Context, relation *domain.PropertyRelation) error {
-	return r.DB.WithContext(ctx).Create(relation).Error
+	return GetDB(ctx, r.DB).Create(relation).Error
 }
 
 func (r *PostgrePropertyRelationRepo) Update(ctx context.Context, relation *domain.PropertyRelation) error {

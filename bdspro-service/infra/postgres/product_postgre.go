@@ -153,6 +153,7 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"address":          entity.Address,
 		"google_map_link":  entity.GoogleMapLink,
 		"archived":         entity.Archived,
+		"property_id":      entity.PropertyID,
 
 		"source_contact_id":      entity.SourceContactId,
 		"source_contact_note":    entity.SourceContactNote,

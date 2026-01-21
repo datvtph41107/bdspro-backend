@@ -188,3 +188,14 @@ func (r *PostgrePropertyRepo) UpdateOption(c context.Context, id uint64, propert
 		Where("id = ? AND deleted_at IS NULL", id).
 		Updates(updates).Error
 }
+
+func (r *PostgrePropertyRepo) GetOneByID(c context.Context, id uint64) (*domain.Property, error) {
+	var property domain.Property
+	if err := GetDB(c, r.DB).
+		Model(&domain.Property{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&property).Error; err != nil {
+		return nil, err
+	}
+	return &property, nil
+}

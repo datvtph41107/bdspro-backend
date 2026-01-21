@@ -13,6 +13,7 @@ type PropertyRepo interface {
 	Search(ctx context.Context, dto *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error)
 	GetDetail(ctx context.Context, id uint64) (*domain.Property, error)
 	UpdateOption(ctx context.Context, id uint64, property *domain.Property) error
+	GetOneByID(c context.Context, id uint64) (*domain.Property, error)
 }
 
 type PropertyRelationRepo interface {
