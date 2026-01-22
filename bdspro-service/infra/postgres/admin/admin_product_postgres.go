@@ -1,9 +1,9 @@
 package admin_postgres
 
 import (
-	"bdspro/infra/postgres"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
+	"bdspro/internal/repo"
 	case_archived "common/case/archived"
 	"common/case/crud"
 	_db "common/db"
@@ -18,10 +18,10 @@ import (
 type AdminProductPostgres struct {
 	*crud.CrudRepo[domain.Product]
 	*case_archived.ArchivedRepo[domain.Product]
-	ProductRepo *postgres.GormUserProductRepo
+	ProductRepo repo.ProductRepo
 }
 
-func NewAdminProductPostgres(db *_db.TransactionRepo, productRepo *postgres.GormUserProductRepo) *AdminProductPostgres {
+func NewAdminProductPostgres(db *_db.TransactionRepo, productRepo repo.ProductRepo) *AdminProductPostgres {
 	x := &AdminProductPostgres{
 		CrudRepo:     &crud.CrudRepo[domain.Product]{},
 		ArchivedRepo: &case_archived.ArchivedRepo[domain.Product]{},

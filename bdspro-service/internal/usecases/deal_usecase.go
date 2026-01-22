@@ -136,9 +136,7 @@ func (u *dealUsecase) AddProductToDeal(
 	}
 
 	var deal *domain.Deal
-
 	err := u.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-
 		var err error
 		deal, err = u.dealRepository.GetByID(txCtx, dealID)
 		if err != nil {
@@ -166,7 +164,6 @@ func (u *dealUsecase) AddProductToDeal(
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 

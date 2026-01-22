@@ -64,35 +64,6 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 	}
 }
 
-func (h *ProductHandler) ApplyPriceUpdate(
-	ctx context.Context,
-	req *bdspropb.ApplyPriceUpdateRequest,
-) (*bdspropb.ApplyPriceUpdateResponse, error) {
-	dtoReq := h.ProductMapper.ApplyPriceUpdatePbToDTO(req)
-
-	resp, err := h.UC.ApplyPriceUpdate(ctx, dtoReq)
-	if err != nil {
-		return nil, err
-	}
-
-	return h.ProductMapper.ApplyPriceUpdateDTOToPb(resp), nil
-}
-
-func (h *ProductHandler) UpdateProductSource(
-	ctx context.Context,
-	req *bdspropb.UpdateProductSourceRequest,
-) (*bdspropb.Response, error) {
-	dtoReq := h.ProductMapper.PbToUpdateProductSourceDTO(req)
-	if err := h.UC.UpdateProductSource(ctx, dtoReq); err != nil {
-		return nil, err
-	}
-
-	return &bdspropb.Response{
-		Id:      req.ProductId,
-		Message: "successfully",
-	}, nil
-}
-
 // @Summary Lưu trữ sản phẩm
 // @Description API này cho phép lưu trữ sản phẩm
 // @Tags User: Sản phẩm
@@ -1094,16 +1065,46 @@ func (s *ProductHandler) GetAssetsByProduct(ctx context.Context, req *sharepb.Id
 // @Param page query int false "Số trang" default(1)
 // @Param size query int false "Số lượng bản ghi trên trang" default(20)
 // @Router /v2/bdspro/v2/product/{id}/price-history [get]
+
+func (h *ProductHandler) ApplyPriceUpdate(
+	ctx context.Context,
+	req *bdspropb.ApplyPriceUpdateRequest,
+) (*bdspropb.ApplyPriceUpdateResponse, error) {
+	dtoReq := h.ProductMapper.ApplyPriceUpdatePbToDTO(req)
+
+	resp, err := h.UC.ApplyPriceUpdate(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.ProductMapper.ApplyPriceUpdateDTOToPb(resp), nil
+}
+
+func (h *ProductHandler) UpdateProductSource(
+	ctx context.Context,
+	req *bdspropb.UpdateProductSourceRequest,
+) (*bdspropb.Response, error) {
+	dtoReq := h.ProductMapper.PbToUpdateProductSourceDTO(req)
+	if err := h.UC.UpdateProductSource(ctx, dtoReq); err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.Response{
+		Id:      req.ProductId,
+		Message: "successfully",
+	}, nil
+}
+
 func (s *ProductHandler) GetPriceHistory(
 	ctx context.Context,
 	req *bdspropb.PriceHistoryRequest,
 ) (*bdspropb.PriceHistoryResponse, error) {
-	if req.Id == 0 {
+	if req.ProductId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
 
 	items, total, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
-		ProductID: req.Id,
+		ProductID: req.ProductId,
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
@@ -1116,5 +1117,24 @@ func (s *ProductHandler) GetPriceHistory(
 	return &bdspropb.PriceHistoryResponse{
 		Data:  s.ProductPriceMapper.DTOListToPb(items),
 		Total: total,
+	}, nil
+}
+
+func (h *ProductHandler) GetProductPriceDetail(
+	ctx context.Context,
+	req *bdspropb.ProductPriceDetailRequest,
+) (*bdspropb.ProductPriceDetailResponse, error) {
+
+	if req.ProductId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "productId is required")
+	}
+
+	result, err := h.UC.GetProductPricedDetail(ctx, req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.ProductPriceDetailResponse{
+		Data: h.ProductPriceMapper.DTOToPbDetail(result),
 	}, nil
 }

@@ -888,6 +888,12 @@
         "rentCommissionType": {
           "type": "integer",
           "format": "int64"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "channelPrice": {
+          "type": "boolean"
         }
       }
     },
@@ -1227,6 +1233,19 @@
         },
         "property": {
           "$ref": "#/definitions/bdspropbPropertyResponse"
+        },
+        "sourceStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "SOUURCE UPDATE RESPONE"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "propertyId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

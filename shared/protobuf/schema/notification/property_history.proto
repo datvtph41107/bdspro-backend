@@ -8,7 +8,6 @@ import "google/protobuf/struct.proto";
 option go_package = "pb/types/notification;notificationpb";
 
 service PropertyHistoryService {
-
   rpc CreatePropertyHistory(CreatePropertyHistoryRequest)
       returns (CreatePropertyHistoryResponse) {
     option (google.api.http) = {
@@ -33,7 +32,7 @@ service PropertyHistoryService {
 
   rpc SoftDeletePropertyHistoryId(SoftDeletePropertyHistoryIdRequest) returns (SoftDeletePropertyHistoryIdResponse) {
     option (google.api.http) = {
-      delete: "/v2/notification/property-history/{id}"
+      post: "/v2/notification/property-history/{id}"
     };
   }
 }

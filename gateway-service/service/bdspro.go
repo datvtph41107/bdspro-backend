@@ -62,4 +62,7 @@ func RegisterBdsproService(ctx context.Context, mux *runtime.ServeMux, env strin
 	// Distribute
 	_ = bdspropb.RegisterDistributionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = bdspropb.RegisterProductNoteServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+
+	// OBSERVATION
+	_ = bdspropb.RegisterObservationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

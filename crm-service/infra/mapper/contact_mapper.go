@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"crm/infra/client"
 	"crm/internal/domain"
+	"crm/internal/dto"
 	"crm/internal/enums"
 
 	crmpb "pb/types/crm"
@@ -23,6 +24,49 @@ func NewContactMapper(tagMapper *TagMapper, bdsproClient *client.BdsproClient) *
 	return &ContactMapper{
 		TagMapper:    tagMapper,
 		BdsproClient: bdsproClient,
+	}
+}
+
+// mapper/contact_mapper.go
+func (m *ContactMapper) ContactProductInterestedToPb(
+	items []*dto.ContactProductInterestedDTO,
+) []*crmpb.ContactProductInterestItem {
+	result := make([]*crmpb.ContactProductInterestItem, 0, len(items))
+
+	for _, it := range items {
+		pb := &crmpb.ContactProductInterestItem{
+			DisplayName: it.DisplayName,
+			Phone:       it.Phone,
+			Avatar:      it.Avatar,
+			Status:      it.Status,
+			HasContact:  it.HasContact,
+			Pinned:      it.Pinned,
+			CreatedAt:   _utils.FormatTimeToString(&it.CreatedAt),
+		}
+
+		if it.ContactID != nil {
+			pb.ContactId = it.ContactID
+		}
+
+		if it.OriginID != nil {
+			pb.OriginProfileId = it.OriginID
+		}
+		result = append(result, pb)
+	}
+
+	return result
+}
+
+func (m *ContactMapper) PinReqPbToDTO(req *crmpb.PinRequest) *dto.PinRequestDTO {
+	if req == nil {
+		return nil
+	}
+
+	return &dto.PinRequestDTO{
+		Target:    enums.PinTarget(req.Target),
+		TargetIDs: req.TargetIds,
+		NameSpace: req.Namespace,
+		Action:    req.Action,
 	}
 }
 
@@ -98,6 +142,7 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 		ContactStatus: uint32(contact.Status),
 		StatusName:    enums.StatusContactMap[contact.Status],
 		Note:          contact.Note,
+		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
 		// todo: map in client
 		// ProfileInfo: &sharepb.ProfileItem
 	}

@@ -117,7 +117,6 @@ func (h *DealHandler) GetByDealAndMember(
 		return nil, err
 	}
 
-	// Không có → trả response rỗng
 	if dealMember == nil {
 		return &bdspropb.GetDealMemberByDealAndMemberResponse{}, nil
 	}

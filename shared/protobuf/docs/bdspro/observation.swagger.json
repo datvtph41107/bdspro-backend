@@ -1,0 +1,156 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bdspro/observation.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ObservationService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/bdspro/v2/observation": {
+      "post": {
+        "operationId": "ObservationService_TrackObservation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbTrackObservationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ObservationService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/product/{productId}/stats": {
+      "get": {
+        "operationId": "ObservationService_GetProductStatsObservation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbProductStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ObservationService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "bdspropbProductStatsResponse": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "viewCount": {
+          "type": "string",
+          "format": "uint64",
+          "title": "số người xem unique"
+        },
+        "totalDuration": {
+          "type": "string",
+          "format": "uint64",
+          "title": "tổng thời gian xem (giây)"
+        }
+      }
+    },
+    "bdspropbTrackObservationRequest": {
+      "type": "object",
+      "properties": {
+        "entityType": {
+          "type": "string",
+          "title": "product | asset | post | blog | project | agency"
+        },
+        "entityId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "id của entity"
+        },
+        "action": {
+          "type": "string",
+          "title": "view | save | click | share | submit_lead"
+        },
+        "duration": {
+          "type": "integer",
+          "format": "int64",
+          "title": "số giây"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

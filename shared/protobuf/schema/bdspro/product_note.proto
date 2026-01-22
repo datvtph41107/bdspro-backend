@@ -25,7 +25,7 @@ service ProductNoteService {
 
     rpc DeleteProductNote(DeleteProductNoteRequest) returns (Response) {
         option (google.api.http) = {
-            delete: "/v2/bdspro/product-notes/{noteId}"
+            post: "/v2/bdspro/product-notes/{noteId}"
         };
     }
 

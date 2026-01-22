@@ -60,10 +60,11 @@ type CreatePropertyProductRequest struct {
 }
 
 type ApplyPriceUpdateRequest struct {
-	ProductID   uint64                   `json:"productId" validate:"required"`
-	Price       float64                  `json:"price,omitempty"`
-	PriceStatus enums.ProductPriceStatus `json:"priceStatus,omitempty"`
-	ChangeNote  string                   `json:"changeNote,omitempty"`
+	ProductID    uint64                   `json:"productId" validate:"required"`
+	Price        float64                  `json:"price,omitempty"`
+	PriceStatus  enums.ProductPriceStatus `json:"priceStatus,omitempty"`
+	ChangeNote   string                   `json:"changeNote,omitempty"`
+	ChannelPrice bool                     `json:"channelPrice"`
 }
 
 type ApplyPriceUpdateResponse struct {

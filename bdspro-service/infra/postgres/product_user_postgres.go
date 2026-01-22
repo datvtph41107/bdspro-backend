@@ -82,6 +82,24 @@ func (r *ProductUserPostgres) GetByProductAndProfile(ctx context.Context, produc
 	return &productOfUser, nil
 }
 
+func (r *ProductUserPostgres) GetByProductAndOriginProfile(
+	ctx context.Context,
+	productID, originProfileId uint64,
+) (*domain.ProductUser, error) {
+	var pu domain.ProductUser
+	err := GetDB(ctx, r.db).
+		Where(
+			"product_id = ? AND origin_profile_id = ? AND deleted_at IS NULL",
+			productID, originProfileId,
+		).
+		First(&pu).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &pu, nil
+}
+
 func (r *ProductUserPostgres) GetByDistributeID(ctx context.Context, distributeID uint64) ([]*domain.ProductUser, error) {
 	var productOfUsers []*domain.ProductUser
 	err := r.db.WithContext(ctx).

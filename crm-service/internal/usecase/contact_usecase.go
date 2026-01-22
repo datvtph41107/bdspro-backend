@@ -11,11 +11,14 @@ import (
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/enums"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ContactUsecase struct {
@@ -53,6 +56,43 @@ func NewContactUsecase(
 		tagUsecase:         tagUsecase,
 		notificationClient: notificationClient,
 	}
+}
+
+func (u *ContactUsecase) GetInterestedContactsByProduct(ctx context.Context, req *dto.ContactProductInterestedFilter) ([]*dto.ContactProductInterestedDTO, int64, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, 0, _errors.UnauthorizedException()
+	}
+
+	items, total, err := u.repo.GetInterestedContactsByProduct(
+		ctx,
+		&userID,
+		req,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	return items, total, nil
+}
+
+func (u *ContactUsecase) PinContact(ctx context.Context, req *dto.PinRequestDTO) error {
+	meta, ok := enums.PinTargetMetaMap[req.Target]
+	if !ok {
+		return errors.New("unsupported pin target")
+	}
+
+	var now *time.Time
+	if req.Action != "" && req.Action == "pin" {
+		t := time.Now()
+		now = &t
+	}
+
+	return u.repo.UpdatePinnedAtDynamic(
+		ctx,
+		meta,
+		req.TargetIDs,
+		now,
+	)
 }
 
 // updateContactCountForProducts cập nhật ContactCount cho các products bị ảnh hưởng
@@ -113,7 +153,7 @@ func (s *ContactUsecase) Search(c context.Context, ownerType base_enum.EOwnerOf,
 	return contacts, total, nil
 }
 
-func (s *ContactUsecase) GetByProductId(c context.Context, productId uint64, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+func (s *ContactUsecase) GetListContactByProductId(c context.Context, productId uint64, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
 	// Lấy ownerId từ context (thường là organizationId)
 	ownerId := _utils.GetProfileIdWithContext(c)
 	if ownerId == 0 {
@@ -123,7 +163,7 @@ func (s *ContactUsecase) GetByProductId(c context.Context, productId uint64, dto
 		}
 	}
 	ownerType := base_enum.EOwnerOfMember
-	contacts, total, err := s.repo.GetByProductId(c, productId, ownerId, ownerType, dto)
+	contacts, total, err := s.repo.GetListContactByProductId(c, productId, ownerId, ownerType, dto)
 	if err != nil {
 		return nil, 0, err
 	}

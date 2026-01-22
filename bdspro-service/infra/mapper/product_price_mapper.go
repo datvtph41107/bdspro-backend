@@ -11,6 +11,26 @@ func NewProductPriceMapper() *ProductPriceMapper {
 	return &ProductPriceMapper{}
 }
 
+func (m *ProductPriceMapper) DTOToPbDetail(
+	dto *dto.ProductPriceDetailDTO,
+) *bdspropb.ProductPriceDetail {
+	if dto == nil {
+		return nil
+	}
+
+	return &bdspropb.ProductPriceDetail{
+		Price:        dto.Price,
+		PricePerM2:   dto.PricePerM2,
+		Currency:     dto.Currency,
+		Cost:         dto.Cost,
+		Commission:   dto.Commission,
+		Channel:      dto.Channel,
+		ChannelValue: dto.ChannelValue,
+		Profit:       dto.Profit,
+		Note:         dto.Note,
+	}
+}
+
 func (m *ProductPriceMapper) DTOToPb(item *dto.PriceHistoryItemDTO) *bdspropb.PriceHistoryItem {
 	if item == nil {
 		return nil

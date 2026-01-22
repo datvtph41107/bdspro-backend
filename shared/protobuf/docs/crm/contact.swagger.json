@@ -50,7 +50,7 @@
     },
     "/v2/crm/contact/by-product/{productId}": {
       "get": {
-        "operationId": "ContactService_GetByProductId",
+        "operationId": "ContactService_GetListContactByProductId",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -353,6 +353,51 @@
         ]
       }
     },
+    "/v2/crm/contact/interested/product/{productId}": {
+      "get": {
+        "operationId": "ContactService_GetInterestedContactsByProduct",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbContactProductInterestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
     "/v2/crm/contact/list/{ownerOf}/{ownerId}": {
       "get": {
         "operationId": "ContactService_Search",
@@ -394,8 +439,8 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "integer",
+            "format": "int64"
           },
           {
             "name": "size",
@@ -551,6 +596,57 @@
             "name": "phone",
             "in": "path",
             "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ContactService"
+        ]
+      }
+    },
+    "/v2/crm/contact/pin": {
+      "post": {
+        "operationId": "ContactService_PinContact",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/crmpbPinResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "target",
+            "description": "kiểu của enum PinTarget",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "targetIds",
+            "description": "id theo các trường column riêng biệt",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -1262,6 +1358,12 @@
         "rentCommissionType": {
           "type": "integer",
           "format": "int64"
+        },
+        "changeNote": {
+          "type": "string"
+        },
+        "channelPrice": {
+          "type": "boolean"
         }
       }
     },
@@ -1601,6 +1703,19 @@
         },
         "property": {
           "$ref": "#/definitions/bdspropbPropertyResponse"
+        },
+        "sourceStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "SOUURCE UPDATE RESPONE"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "propertyId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -2159,6 +2274,57 @@
         }
       }
     },
+    "crmpbContactProductInterestItem": {
+      "type": "object",
+      "properties": {
+        "contactId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "originProfileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "hasContact": {
+          "type": "boolean"
+        },
+        "pinned": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "crmpbContactProductInterestResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/crmpbContactProductInterestItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "crmpbContactSaveDTO": {
       "type": "object",
       "properties": {
@@ -2347,6 +2513,14 @@
         },
         "note": {
           "type": "string"
+        }
+      }
+    },
+    "crmpbPinResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
         }
       }
     },

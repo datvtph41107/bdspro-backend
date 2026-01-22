@@ -36,6 +36,11 @@ type ContactEntity struct {
 	Tags          []TagEntity    `gorm:"-" json:"tags"`
 	ProductIDs    []uint64       `gorm:"-" json:"productIds"`
 	OriginProfile *OriginProfile `gorm:"foreignKey:OriginProfileID;references:OriginID"`
+
+	// reorderPinAt
+	PriorityPinAt *time.Time `gorm:"column:priority_pin_at;index"`
+	// Tác động cuối như gọi trường này sinh ra dể reorder lại list
+	LastInteractionAt *time.Time `gorm:"column:last_interaction_at;index"`
 }
 
 func (ContactEntity) TableName() string {
@@ -72,4 +77,5 @@ type ContactItem struct {
 	OriginOwnerID     uint64  `gorm:"column:origin_owner_id" json:"originOwnerId"`
 
 	OriginOwnerOf enums.EOwnerOf `gorm:"column:origin_owner_of" json:"originOwnerOf"`
+	CreatedAt     *time.Time     `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
 }

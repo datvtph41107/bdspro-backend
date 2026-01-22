@@ -1076,6 +1076,11 @@ func (m *ProductMapper) UpdateProductPbToDTO(req *bdspropb.UpdateProductRequest)
 		SourceTagIDs:      req.SourceTagIds,
 
 		ProjectID: req.ProjectId,
+
+		// Mining
+		MiningMode:        enums.EMiningMode(req.MiningMode),
+		MiningScope:       req.MiningScope,
+		MiningDescription: req.MiningDescription,
 	}
 
 	return result

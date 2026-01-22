@@ -117,7 +117,10 @@ type UpdateProductRequest struct {
 	SourceTagIDs      []uint64            `json:"sourceTagIds"`
 
 	// dự án
-	ProjectID *uint64 `json:"projectId"`
+	ProjectID         *uint64 `json:"projectId"`
+	MiningMode        enums.EMiningMode
+	MiningScope       string
+	MiningDescription string
 }
 
 type ContactSourceProfileDTO struct {

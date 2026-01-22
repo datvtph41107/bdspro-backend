@@ -221,7 +221,7 @@ service ProductService {
   
   rpc GetPriceHistory (PriceHistoryRequest) returns (PriceHistoryResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/v2/product/{id}/price-history"
+      get: "/v2/bdspro/v2/product/{productId}/price-history"
     };
   };
   
@@ -244,6 +244,12 @@ service ProductService {
         put: "/v2/bdspro/product/{productId}/source"
         body: "*"
       };
+  }
+
+  rpc GetProductPriceDetail(ProductPriceDetailRequest ) returns (ProductPriceDetailResponse) {
+    option (google.api.http) = {
+        get: "/v2/bdspro/products/{productId}/price-detail"
+    };
   }
 }
 
@@ -321,6 +327,11 @@ message UpdateProductRequest {
   
   // Dự án
   optional uint64 projectId = 31;
+
+  // mining
+  uint32 miningMode = 32;   
+  string miningScope = 33;
+  string miningDescription = 34;
 }
 
 message PropertyUpdateRequest {
@@ -384,6 +395,26 @@ message StatusRequest {
 message VisibilityRequest {
   uint64 id = 1;
   int32 visibility = 2;
+}
+
+message ProductPriceDetailRequest {
+  uint64 productId = 1;
+}
+
+message ProductPriceDetailResponse {
+  ProductPriceDetail data = 1;
+}
+
+message ProductPriceDetail {
+  optional double price = 1;
+  int64 pricePerM2 = 2;
+  string currency = 3;
+  optional double cost = 4;
+  optional double commission = 5;
+  optional bool channel = 6;
+  optional int64 channelValue = 7;
+  optional double profit = 8;
+  optional string note = 9;
 }
 
 message DeleteDepositeRequest {
@@ -670,7 +701,7 @@ message ProductAssetListResponse {
 }
 
 message PriceHistoryRequest {
-  uint64 id = 1;
+  uint64 productId = 1;
   uint32 page = 2;
   uint32 size = 3;
 }
@@ -689,9 +720,8 @@ message PriceHistoryItem {
   Price new = 6;
   bool isCurrentPrice = 7;
   string createdAt = 8;
-  sharepb.ProfileItem createdBy = 9;
-  string changeNote = 10;
-  optional uint64 distributeId = 11;
+  string changeNote = 9;
+  optional uint64 distributeId = 10;
 }
 
 message Price {

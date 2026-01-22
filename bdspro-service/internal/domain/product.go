@@ -95,6 +95,10 @@ type Product struct {
 	AppointmentCount     uint32 `gorm:"type:int8" json:"appointmentCount,omitempty"` // Số lịch hẹn
 	CertificateHouseNote string `json:"certificateHouseNote,omitempty"`
 
+	MiningMode        enums.EMiningMode `gorm:"column:mining_mode;not null;default:10" json:"miningMode"`
+	MiningScope       string            `gorm:"column:mining_scope;type:text" json:"miningScope,omitempty"`
+	MiningDescription string            `gorm:"column:mining_description;type:text" json:"miningDescription,omitempty"`
+
 	// CreatedUser       *ProfileInfo       `gorm:"-" json:"createdUser,omitempty"`
 	// UpdatedUser       *ProfileInfo       `gorm:"-" json:"updatedUser,omitempty"`
 	// OwnerOrgID      *uint64              `gorm:"type:int8" json:"ownerOrgId,omitempty"`                   // Tổ chức sở hữu (nếu cty mua)

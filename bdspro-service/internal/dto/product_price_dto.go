@@ -13,9 +13,38 @@ type PriceHistorySearch struct {
 }
 
 type PriceUpdateContext struct {
-	IsOwner      bool
-	ProductUser  *domain.ProductUser
-	Distribution *domain.DistributionEntity
+	IsOwner        bool
+	CanUpdatePrice bool
+	ProductUser    *domain.ProductUser
+	Distribution   *domain.DistributionEntity
+	ProducutPrice  *domain.ProductPrice
+	Product        *domain.Product
+}
+
+type PriceRow struct {
+	ProductID     uint64  `gorm:"column:product_id"`
+	OwnerID       uint64  `gorm:"column:owner_id"`
+	LastPriceID   *uint64 `gorm:"column:last_price_id"`
+	Area          float64 `gorm:"column:area"`
+	ProductUserID *uint64 `gorm:"column:product_user_id"`
+	DistributeID  *uint64 `gorm:"column:distribute_id"`
+	PriceID       *uint64 `gorm:"column:price_id"`
+	ChannelPrice  *bool   `gorm:"column:channel_price"`
+}
+
+type PriceBenefitItem struct {
+	ActorType   string // OWNER | DISTRIBUTION | USER
+	ActorID     uint64
+	BuyPrice    float64
+	SellPrice   float64
+	Benefit     float64
+	BenefitRate float64 // %
+}
+
+type PriceBenefitDetail struct {
+	ProductID     uint64
+	Chain         []PriceBenefitItem
+	SystemBenefit float64
 }
 
 type PriceHistoryItemDTO struct {
@@ -56,4 +85,16 @@ type UserInfoDTO struct {
 	Name   string
 	Avatar string
 	Role   string
+}
+
+type ProductPriceDetailDTO struct {
+	Price        *float64 `json:"price"`
+	PricePerM2   int64    `json:"pricePerM2"`
+	Currency     string   `json:"currency"`
+	Cost         *float64 `json:"cost,omitempty"`
+	Commission   *float64 `json:"commission,omitempty"`
+	Channel      *bool    `json:"channel,omitempty"`
+	ChannelValue *int64   `json:"channelValue,omitempty"`
+	Profit       *float64 `json:"profit,omitempty"`
+	Note         *string  `json:"note,omitempty"`
 }

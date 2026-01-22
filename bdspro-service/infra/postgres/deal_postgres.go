@@ -133,6 +133,7 @@ func (r *DealPostgresRepository) GetDealsWithoutProduct(
 				ON dm.deal_id = deals.id
 				AND dm.member_id = ?
 				AND dm.status = ?
+				AND dm.deleted_at IS NULL
 		`, userID, domain.DealMemberStatusAccepted).
 		Joins(`
 			LEFT JOIN deal_products dp 
@@ -141,12 +142,10 @@ func (r *DealPostgresRepository) GetDealsWithoutProduct(
 		Where("dp.id IS NULL").
 		Where("deals.deleted_at IS NULL")
 
-	// count
 	if err := baseQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// paging
 	if err := baseQuery.
 		Limit(pagable.GetLimit()).
 		Offset(pagable.GetOffset()).
@@ -154,7 +153,6 @@ func (r *DealPostgresRepository) GetDealsWithoutProduct(
 		Scan(&items).Error; err != nil {
 		return nil, 0, err
 	}
-
 	return items, total, nil
 }
 

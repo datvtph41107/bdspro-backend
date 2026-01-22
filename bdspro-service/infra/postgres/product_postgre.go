@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/repo"
 	"common/case/crud3"
 	_utils "common/utils"
 	"context"
@@ -15,9 +16,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: bdspro/internal/repo.ProductRepo
 type GormUserProductRepo struct {
 	crud3.BaseRepo[domain.Product]
+	db             *gorm.DB
 	PriceRepo      *GormProductPriceRepo
 	ProductAccess  *SharingAccessPostgre
 	ProductPrivate *GormProductPrivateRepo
@@ -29,14 +30,116 @@ func NewGormUserProductRepo(db *gorm.DB,
 	ProductAccess *SharingAccessPostgre,
 	ProductPrivate *GormProductPrivateRepo,
 	// TransactionRepo repo.TransactionRepository,
-) *GormUserProductRepo {
+) repo.ProductRepo {
 	return &GormUserProductRepo{
 		BaseRepo:       crud3.BaseRepo[domain.Product]{DB: db},
 		PriceRepo:      PriceRepo,
 		ProductAccess:  ProductAccess,
 		ProductPrivate: ProductPrivate,
+		db:             db,
 		// TransactionRepo: TransactionRepo,
 	}
+}
+
+func (r *GormUserProductRepo) GetPrivateByProductID(
+	ctx context.Context,
+	productID uint64,
+) (*domain.ProductPrivate, error) {
+	var private domain.ProductPrivate
+	err := GetDB(ctx, r.db).
+		Where("product_id = ?", productID).
+		First(&private).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &private, nil
+}
+
+func (r *GormUserProductRepo) GetProductWithCurrentPrice(
+	ctx context.Context,
+	productID uint64,
+) (*domain.Product, error) {
+	var product domain.Product
+	err := GetDB(ctx, r.db).
+		Model(&domain.Product{}).
+		Select(`
+			products.*,
+			pp.id            AS "Price.ID",
+			pp.price         AS "Price.Price",
+			pp.currency      AS "Price.Currency",
+			pp.commission    AS "Price.Commission",
+			pp.commission_type AS "Price.CommissionType",
+			pp.note          AS "Price.Note",
+			pp.created_at    AS "Price.CreatedAt",
+			pp.updated_at    AS "Price.UpdatedAt"
+		`).
+		Joins(`
+			LEFT JOIN product_price pp
+				ON pp.id = products.last_price_id
+				AND pp.deleted_at IS NULL
+		`).
+		Where("products.id = ?", productID).
+		Where("products.deleted_at IS NULL").
+		First(&product).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &product, nil
+}
+
+func (r *GormUserProductRepo) GetPriceProductCurrentUser(
+	ctx context.Context,
+	productID uint64,
+	originProfileID uint64,
+) (*dto.PriceRow, error) {
+	var rsl dto.PriceRow
+	err := GetDB(ctx, r.db).
+		Table("product AS p").
+		Select(`
+			p.id as product_id,
+			p.owner_id,
+			p.last_price_id,
+			p.area,
+
+			pu.id as product_user_id,
+			pp.id as price_id,
+			pp.channel_price
+		`).
+		Joins(`
+			LEFT JOIN product_user pu
+				ON pu.product_id = p.id
+			   AND pu.origin_profile_id = ?
+		`, originProfileID).
+		Joins(`
+			LEFT JOIN distribution d
+				ON d.id = pu.distribute_id
+		`).
+		Joins(`
+			LEFT JOIN product_price pp
+				ON pp.id = COALESCE(
+					pu.price_id,
+					d.price_id,
+					p.last_price_id
+				)
+		`).
+		Where("p.id = ?", productID).
+		Limit(1).
+		Scan(&rsl).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &rsl, nil
 }
 
 // parseSortParam chuyển đổi sort parameter sang ORDER BY clause

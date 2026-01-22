@@ -4,6 +4,8 @@ import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
 	"crm/internal/domain"
+	"crm/internal/enums"
+	"time"
 )
 
 type ContactSearchDTO struct {
@@ -27,4 +29,30 @@ type RelationShipDTO struct {
 	NumFollower  int64
 	NumFollowing int64
 	NumFriend    int64
+}
+
+type PinRequestDTO struct {
+	Target    enums.PinTarget
+	TargetIDs map[string]uint64
+	NameSpace string
+	Action    string
+}
+
+type ContactProductInterestedDTO struct {
+	ContactID   *uint64   `gorm:"column:contact_id"`
+	OriginID    *uint64   `gorm:"column:origin_profile_id"`
+	DisplayName string    `gorm:"column:display_name"`
+	Phone       string    `gorm:"column:phone"`
+	Avatar      string    `gorm:"column:avatar"`
+	Status      uint32    `gorm:"column:status"`
+	Pinned      bool      `gorm:"column:pinned"`
+	CreatedAt   time.Time `gorm:"column:created_at"`
+	HasContact  bool
+}
+
+type ContactProductInterestedFilter struct {
+	_dto.Pagable
+	// OwnerID   uint64
+	// OwnerOf   base_enum.EOwnerOf
+	ProductID uint64
 }

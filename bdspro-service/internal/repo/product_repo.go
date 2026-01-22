@@ -7,11 +7,23 @@ import (
 	"common/case/crud3"
 	_enum "common/domain/enum"
 	"context"
+
+	"gorm.io/gorm"
 )
 
 // ProductRepo định nghĩa các phương thức mà GormUserProductRepo cung cấp
 type ProductRepo interface {
 	crud3.CrudRepo[domain.Product]
+
+	GetPrivateByProductID(ctx context.Context, productID uint64) (*domain.ProductPrivate, error)
+
+	// LastPriceId Product Owner
+	GetProductWithCurrentPrice(ctx context.Context, productID uint64) (*domain.Product, error)
+
+	// OriginProfile -> origin_profile, profileId -> user
+	GetPriceProductCurrentUser(ctx context.Context, productID uint64, originProfileID uint64) (*dto.PriceRow, error)
+
+	QueryDomain(query *gorm.DB, dto *dto.ProductSearchRequest) *gorm.DB
 
 	UpdateLastPrice(ctx context.Context, productID uint64, priceID uint64) error
 

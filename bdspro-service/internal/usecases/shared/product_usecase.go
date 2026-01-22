@@ -13,6 +13,7 @@ import (
 	_enum "common/domain/enum"
 	_usecase "common/domain/usecase"
 	_errors "common/errors"
+	_models "common/models"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -429,6 +430,17 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 	}
 	if updateData.Priority != 0 {
 		entity.Priority = updateData.Priority
+	}
+
+	// mining
+	if updateData.MiningMode != 0 {
+		entity.MiningMode = updateData.MiningMode
+	}
+	if updateData.MiningScope != "" {
+		entity.MiningScope = updateData.MiningScope
+	}
+	if updateData.MiningDescription != "" {
+		entity.MiningDescription = updateData.MiningDescription
 	}
 
 	// Update price
@@ -1646,7 +1658,146 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	return summary, nil
 }
 
-// Price Product
+
+
+// GetProductPricedDetail GET PRICE DETAIL INFO ////////////////
+func (uc *ProductUsecase) GetProductPricedDetail(
+	ctx context.Context,
+	productID uint64,
+) (*dto.ProductPriceDetailDTO, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+
+	product, err := uc.ProductRepo.GetProductWithCurrentPrice(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, _errors.NotFoundException("Product not found")
+	}
+
+	// OWNER
+	if product.OwnerID == userID {
+		private, err := uc.ProductRepo.GetPrivateByProductID(ctx, productID)
+		if err != nil {
+			return nil, err
+		}
+		return uc.buildOwnerPrice(product, private)
+	}
+
+	// PRODUCT_USER (DISTRIBUTE)
+	productUser, err := uc.ProductUserRepo.GetByProductAndProfile(
+		ctx,
+		userID,
+		productID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if productUser != nil && productUser.DistributeID != nil {
+		distribute, err := uc.DistributionRepo.FindByID(
+			ctx,
+			*productUser.DistributeID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return uc.buildProductUserPrice(product, distribute)
+	}
+
+	// PUBLIC
+	return uc.buildPublicPrice(product)
+}
+
+func (uc *ProductUsecase) buildOwnerPrice(
+	product *domain.Product,
+	private *domain.ProductPrivate,
+) (*dto.ProductPriceDetailDTO, error) {
+	if product == nil || product.Price == nil {
+		return nil, _errors.NotFoundException("Price not found")
+	}
+	price := product.Price.SalePrice
+	area := product.Area
+
+	dto := &dto.ProductPriceDetailDTO{
+		Price:      price,
+		PricePerM2: calcPricePerM2(*price, area),
+		Currency:   product.Price.Currency,
+	}
+
+	if private != nil {
+		if private.ImportPrice != nil {
+			cost := float64(*private.ImportPrice)
+			dto.Cost = &cost
+
+			profit := *price - cost
+			dto.Profit = &profit
+		}
+
+		if private.InternalNote != "" {
+			note := private.InternalNote
+			dto.Note = &note
+		}
+	}
+
+	return dto, nil
+}
+
+func (uc *ProductUsecase) buildProductUserPrice(
+	product *domain.Product,
+	distribute *domain.DistributionEntity,
+) (*dto.ProductPriceDetailDTO, error) {
+	if distribute == nil || distribute.ProductPrice == nil {
+		return nil, _errors.NotFoundException("Distribute price not found")
+	}
+	price := distribute.ProductPrice.SalePrice
+	area := product.Area
+
+	dto := &dto.ProductPriceDetailDTO{
+		Price:      price,
+		PricePerM2: calcPricePerM2(*price, area),
+		Currency:   distribute.ProductPrice.Currency,
+	}
+
+	if distribute.Note != "" {
+		note := distribute.Note
+		dto.Note = &note
+	}
+
+	return dto, nil
+}
+
+func (uc *ProductUsecase) buildPublicPrice(
+	product *domain.Product,
+) (*dto.ProductPriceDetailDTO, error) {
+
+	if product == nil || product.Price == nil {
+		return nil, _errors.NotFoundException("Price not found")
+	}
+
+	price := product.Price.SalePrice
+	area := product.Area
+
+	return &dto.ProductPriceDetailDTO{
+		Price:      price,
+		PricePerM2: calcPricePerM2(*price, area),
+		Currency:   product.Price.Currency,
+	}, nil
+}
+
+func calcPricePerM2(price float64, area float64) int64 {
+	if area <= 0 {
+		return 0
+	}
+	return int64(float64(price) / area)
+}
+
+// GetProductPricedDetail GET PRICE DETAIL INFO //////////////
+
+// GetPriceHistory HISTORY APPLY PRICE CHANGE ////////////////
 func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHistorySearch) ([]*dto.PriceHistoryItemDTO, int64, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, 0, _errors.UnauthorizedException()
@@ -1748,9 +1899,13 @@ func priceBuilder(p *domain.ProductPrice, txType enums.TransactionType, user *dt
 	return price
 }
 
-func (u *ProductUsecase) ApplyPriceUpdate(ctx context.Context, req *dto.ApplyPriceUpdateRequest) (*dto.ApplyPriceUpdateResponse, error) {
-	userId := _utils.GetProfileIdWithContext(ctx)
-	if userId == 0 {
+// ApplyPriceUpdate Thay đổi giá valid với owner và distribute product-user
+func (u *ProductUsecase) ApplyPriceUpdate(
+	ctx context.Context,
+	req *dto.ApplyPriceUpdateRequest,
+) (*dto.ApplyPriceUpdateResponse, error) {
+	originProfileId := _utils.GetOriginIdFromContext(ctx)
+	if originProfileId == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
 	if req.Price <= 0 {
@@ -1759,24 +1914,32 @@ func (u *ProductUsecase) ApplyPriceUpdate(ctx context.Context, req *dto.ApplyPri
 
 	var resp *dto.ApplyPriceUpdateResponse
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
-		if err != nil || product == nil {
-			return _errors.NotFoundException("Product not found")
-		}
-
-		priceCtx, err := u.resolvePriceUpdateContext(
-			txCtx, product, userId,
+		priceCtx, err := u.resolvePriceUpdateValid(
+			txCtx, req.ProductID, originProfileId,
 		)
 		if err != nil {
 			return err
 		}
 
-		newPrice, err := u.createProductPrice(txCtx, product.ID, userId, req, priceCtx)
+		product := priceCtx.Product
+		newPrice, err := u.createProductPrice(
+			txCtx,
+			product.ID,
+			originProfileId,
+			req,
+			priceCtx,
+		)
 		if err != nil {
 			return err
 		}
 
-		if err := u.applyPriceByContext(txCtx, product, userId, newPrice, priceCtx); err != nil {
+		if err := u.applyPrice(
+			txCtx,
+			product,
+			originProfileId,
+			newPrice,
+			priceCtx,
+		); err != nil {
 			return err
 		}
 
@@ -1793,63 +1956,102 @@ func (u *ProductUsecase) ApplyPriceUpdate(ctx context.Context, req *dto.ApplyPri
 			UpdatedAt:  time.Now(),
 		}
 
-		description := priceUpdateDescription(
+		// event
+		desc := priceUpdateDescription(
 			product,
 			newPrice,
-			nil, // hoặc oldPrice nếu có
+			priceCtx.ProducutPrice,
 			priceCtx,
 		)
-
 		u.NotificationClient.RegistedEventProperty(ctx,
 			&dto.CreatePropertyActivityDTO{
 				SubjectID:   newPrice.ID,
 				Action:      _enum.ACTION_APPLY_UPDATE_PRICE,
-				ActorID:     userId,
-				Description: description,
-			})
+				ActorID:     originProfileId,
+				Description: desc,
+			},
+		)
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (u *ProductUsecase) resolvePriceUpdateContext(ctx context.Context, product *domain.Product, userId uint64) (*dto.PriceUpdateContext, error) {
-	if product.OwnerID == userId {
+func (u *ProductUsecase) resolvePriceUpdateValid(
+	ctx context.Context,
+	productId uint64,
+	originProfileId uint64,
+) (*dto.PriceUpdateContext, error) {
+	rsl, err := u.ProductRepo.GetPriceProductCurrentUser(
+		ctx,
+		productId,
+		originProfileId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if rsl == nil {
+		return nil, _errors.NotFoundException("Product not found")
+	}
+
+	product := &domain.Product{
+		BaseEntity: _models.BaseEntity{
+			ID: rsl.ProductID,
+		},
+		OwnerID:     rsl.OwnerID,
+		LastPriceID: rsl.LastPriceID,
+		Area:        rsl.Area,
+	}
+
+	if rsl.OwnerID == originProfileId {
+		var productPrice *domain.ProductPrice
+		if rsl.PriceID != nil {
+			productPrice, _ = u.PriceRepo.GetByID(ctx, *rsl.PriceID)
+		}
+
 		return &dto.PriceUpdateContext{
-			IsOwner: true,
+			IsOwner:        true,
+			CanUpdatePrice: true,
+			Product:        product,
+			ProducutPrice:  productPrice,
 		}, nil
 	}
 
-	productUser, err := u.ProductUserRepo.GetByProductAndProfile(ctx, product.ID, userId)
-	if err != nil || productUser == nil {
+	if rsl.ProductUserID == nil {
 		return nil, _errors.ForbiddenException("User has no access to product")
 	}
 
-	if productUser.DistributeID == nil {
-		return nil, _errors.ForbiddenException("Product is not distributed to this user")
+	if rsl.PriceID == nil {
+		return nil, _errors.ForbiddenException("Product price has not been set")
 	}
 
-	// Distribution phải cho phép channel price
-	distribution, err := u.DistributionRepo.FindByID(ctx, *productUser.DistributeID)
-	if err != nil || distribution == nil {
-		return nil, _errors.ForbiddenException("Distribution not found")
+	if rsl.ChannelPrice == nil || !*rsl.ChannelPrice {
+		return nil, _errors.ForbiddenException("Price is not channel price")
 	}
 
-	// if !distribution.CanDeal {
-	// 	return nil, _errors.ForbiddenException("Distribution is not allowed to deal")
-	// }
+	productUser, _ := u.ProductUserRepo.GetByProductAndOriginProfile(ctx, rsl.ProductID, originProfileId)
+	price, _ := u.PriceRepo.GetByID(ctx, *rsl.PriceID)
 
 	return &dto.PriceUpdateContext{
-		IsOwner:      false,
-		ProductUser:  productUser,
-		Distribution: distribution,
+		IsOwner:        false,
+		CanUpdatePrice: true,
+		Product:        product,
+		ProductUser:    productUser,
+		ProducutPrice:  price,
 	}, nil
 }
 
-func (u *ProductUsecase) createProductPrice(ctx context.Context, productID uint64, userId uint64, req *dto.ApplyPriceUpdateRequest, priceCtx *dto.PriceUpdateContext) (*domain.ProductPrice, error) {
+func (u *ProductUsecase) createProductPrice(
+	ctx context.Context,
+	productID uint64,
+	userId uint64,
+	req *dto.ApplyPriceUpdateRequest,
+	priceCtx *dto.PriceUpdateContext,
+) (*domain.ProductPrice, error) {
 	price := &domain.ProductPrice{
 		ProductID:   &productID,
 		Currency:    "VND",
@@ -1859,8 +2061,11 @@ func (u *ProductUsecase) createProductPrice(ctx context.Context, productID uint6
 		ChangedBy:   userId,
 	}
 
-	// Giá theo kênh → gắn distribute_id
-	if !priceCtx.IsOwner && priceCtx.ProductUser != nil {
+	// Channel price
+	if priceCtx.IsOwner {
+		price.ChannelPrice = req.ChannelPrice
+	} else {
+		price.ChannelPrice = true // user sửa luôn là channel
 		price.DistributeID = priceCtx.ProductUser.DistributeID
 	}
 
@@ -1874,45 +2079,91 @@ func (u *ProductUsecase) createProductPrice(ctx context.Context, productID uint6
 	return price, nil
 }
 
-func (u *ProductUsecase) applyPriceByContext(ctx context.Context, product *domain.Product, userId uint64, price *domain.ProductPrice, priceCtx *dto.PriceUpdateContext) error {
+func (u *ProductUsecase) applyPrice(
+	ctx context.Context,
+	product *domain.Product,
+	userId uint64,
+	price *domain.ProductPrice,
+	priceCtx *dto.PriceUpdateContext,
+) error {
 	if priceCtx.IsOwner {
-		return u.ProductRepo.
-			UpdateLastPrice(ctx, product.ID, price.ID)
+		return u.ProductRepo.UpdateLastPrice(
+			ctx,
+			product.ID,
+			price.ID,
+		)
 	}
 
-	return u.ProductUserRepo.UpdatePriceID(ctx, product.ID, userId, price.ID)
+	return u.ProductUserRepo.UpdatePriceID(
+		ctx,
+		product.ID,
+		userId,
+		price.ID,
+	)
 }
 
 func priceUpdateDescription(
 	product *domain.Product,
 	newPrice *domain.ProductPrice,
-	oldPrice *float64,
+	oldPrice *domain.ProductPrice,
 	priceCtx *dto.PriceUpdateContext,
 ) string {
-
 	if priceCtx.IsOwner {
-		if oldPrice != nil {
+		if oldPrice != nil && oldPrice.SalePrice != nil {
 			return fmt.Sprintf(
-				"Cập nhật giá sản phẩm #%d từ %s → %s",
+				"Cập nhật giá sản phẩm #%d từ %v → %v",
 				product.ID,
-				*oldPrice,
+				*oldPrice.SalePrice,
 				*newPrice.SalePrice,
 			)
 		}
 		return fmt.Sprintf(
-			"Cập nhật giá sản phẩm #%d: %s",
+			"Cập nhật giá sản phẩm #%d: %v",
 			product.ID,
 			*newPrice.SalePrice,
 		)
 	}
 
 	return fmt.Sprintf(
-		"Cập nhật giá kênh cho sản phẩm #%d: %s",
+		"Cập nhật giá kênh cho sản phẩm #%d: %v",
 		product.ID,
 		*newPrice.SalePrice,
 	)
 }
 
+// func CalculatePriceBenefit(chain []*domain.ProductPrice) *dto.PriceBenefitDetail {
+// 	var result dto.PriceBenefitDetail
+// 	for i := 1; i < len(chain); i++ {
+// 		prev := chain[i-1]
+// 		curr := chain[i]
+// 		if prev.SalePrice == nil || curr.SalePrice == nil {
+// 			continue
+// 		}
+// 		buy := *prev.SalePrice
+// 		sell := *curr.SalePrice
+// 		benefit := sell - buy
+// 		item := dto.PriceBenefitItem{
+// 			// ActorType:   detectActor(curr),
+// 			ActorID:     curr.ChangedBy,
+// 			BuyPrice:    buy,
+// 			SellPrice:   sell,
+// 			Benefit:     benefit,
+// 			BenefitRate: (benefit / buy) * 100,
+// 		}
+
+// 		result.Chain = append(result.Chain, item)
+// 	}
+
+// 	if len(result.Chain) > 0 {
+// 		first := result.Chain[0]
+// 		last := result.Chain[len(result.Chain)-1]
+// 		result.SystemBenefit = last.SellPrice - first.BuyPrice
+// 	}
+
+// 	return &result
+// }
+
+// UpdateProductSource cập nhật source
 func (u *ProductUsecase) UpdateProductSource(
 	ctx context.Context,
 	req *dto.UpdateProductSourceRequest,

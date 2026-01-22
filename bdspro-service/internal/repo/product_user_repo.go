@@ -16,4 +16,5 @@ type ProductUserRepo interface {
 	DeleteByProductID(ctx context.Context, productID uint64) error
 
 	UpdatePriceID(ctx context.Context, productID uint64, profileID uint64, priceID uint64) error
+	GetByProductAndOriginProfile(ctx context.Context, productID, originProfileId uint64) (*domain.ProductUser, error)
 }

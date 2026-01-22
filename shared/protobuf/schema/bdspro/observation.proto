@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service ObservationService {
+  rpc TrackObservation(TrackObservationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/observation"
+      body: "*"
+    };
+  };
+
+  rpc GetProductStatsObservation(GetProductStatsRequest) returns (ProductStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{productId}/stats"
+    };
+  };
+}
+
+message TrackObservationRequest {
+  string entityType = 1; // product | asset | post | blog | project | agency
+  uint64 entityId   = 2; // id của entity
+  string action     = 3; // view | save | click | share | submit_lead
+  uint32 duration   = 4; // số giây 
+}
+
+message GetProductStatsRequest {
+  uint64 productId = 1;
+}
+
+message ProductStatsResponse {
+  uint64 productId     = 1;
+  uint64 viewCount     = 2; // số người xem unique
+  uint64 totalDuration = 3; // tổng thời gian xem (giây)
+}

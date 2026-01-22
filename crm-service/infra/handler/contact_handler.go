@@ -3,6 +3,7 @@ package handler
 import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -49,6 +50,39 @@ func NewContactService(
 		FriendMapper:       friendMapper,
 	}
 }
+
+func (s *ContactService) GetInterestedContactsByProduct(
+	ctx context.Context,
+	req *crmpb.ContactProductInterestRequest,
+) (*crmpb.ContactProductInterestResponse, error) {
+	items, total, err := s.UC.GetInterestedContactsByProduct(ctx,
+		&dto.ContactProductInterestedFilter{
+			ProductID: req.ProductId,
+			Pagable: _dto.Pagable{
+				Page: req.Page,
+				Size: req.Size,
+			},
+		},
+	)
+	if err != nil {
+		return nil, _errors.InternalServerException("GetInterestedContactsByProduct Error: ", err.Error())
+	}
+
+	return &crmpb.ContactProductInterestResponse{
+		Data:  s.ContactMapper.ContactProductInterestedToPb(items),
+		Total: uint32(total),
+	}, nil
+}
+
+func (s *ContactService) PinContact(ctx context.Context, req *crmpb.PinRequest) (*crmpb.PinResponse, error) {
+	err := s.UC.PinContact(ctx, s.ContactMapper.PinReqPbToDTO(req))
+	return &crmpb.PinResponse{Success: err == nil}, err
+}
+
+// func (s *ContactService) Unpin(ctx context.Context, req *crmpb.PinRequest) (*crmpb.PinResponse, error) {
+// 	err := s.UC.Unpin(ctx, s.ContactMapper.PinReqPbToDTO(req))
+// 	return &crmpb.PinResponse{Success: err == nil}, err
+// }
 
 // @Summary Lấy danh sách liên hệ
 // @Description Lấy danh sách
@@ -283,8 +317,8 @@ func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRe
 // @Param size query int false "Kích thước trang"
 // @Security BearerAuth
 // @Router /contact/by-product/{productId} [get]
-func (s *ContactService) GetByProductId(ctx context.Context, req *crmpb.GetByProductIdRequest) (*crmpb.ContactListDTO, error) {
-	contacts, total, err := s.UC.GetByProductId(ctx, req.ProductId, dto.ContactSearchDTO{
+func (s *ContactService) GetListContactByProductId(ctx context.Context, req *crmpb.GetByProductIdRequest) (*crmpb.ContactListDTO, error) {
+	contacts, total, err := s.UC.GetListContactByProductId(ctx, req.ProductId, dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
 			Size: uint32(req.Size),

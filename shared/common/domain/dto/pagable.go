@@ -14,8 +14,8 @@ type Pagable struct {
 }
 
 func (p *Pagable) GetPage() uint32 {
-	if p.Page <= 0 {
-		return 0
+	if p.Page < 1 {
+		return 1
 	}
 	return p.Page
 }
@@ -24,6 +24,9 @@ func (p *Pagable) GetSize() uint32 {
 	if p.Size <= 0 {
 		return 20
 	}
+	if p.Size > 100 {
+		return 100
+	}
 	return p.Size
 }
 
@@ -31,18 +34,9 @@ func (p *Pagable) GetOffset() int {
 	page := p.GetPage()
 	size := p.GetSize()
 
-	if page <= 1 {
-		return 0
-	}
-	return int(page-1) * int(size)
+	return int((page - 1) * size)
 }
 
 func (p *Pagable) GetLimit() int {
-	if p.Size <= 0 {
-		return 20
-	}
-	if p.Size >= 100 {
-		return 100
-	}
-	return int(p.Size)
+	return int(p.GetSize())
 }

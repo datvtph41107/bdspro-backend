@@ -67,16 +67,3 @@ type ProductNote struct {
 	Mentions []*ProductNoteMentionItem
 	Files    []*domain.ProductNoteFile
 }
-
-// type ProductNoteItemResponse struct {
-// 	ID        uint64 `gorm:"json:id"`
-// 	ProductID uint64 `gorm:"json:product_id"`
-// 	Content   string `gorm:"json:content"`
-// 	IsPinned  bool   `gorm:"json:is_pinned"`
-// 	AuthorId  uint64 `gorm:"json:author_id"`
-// 	CreatedAt string `gorm:"json:created_at"`
-
-// 	Author   *sharepb.ProfileItem     `gorm:"-"`
-// 	Mentions []ProductNoteMentionItem `gorm:"-"`
-// 	Files    []ProductNoteFileDTO     `gorm:"-"`
-// }

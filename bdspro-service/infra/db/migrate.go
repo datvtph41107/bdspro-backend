@@ -1,12 +1,14 @@
 package db
 
 import (
+	"bdspro/internal/domain"
 	_db "common/db"
 )
 
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
-	// Core entities
+		// Core entities
+		&domain.Observation{},
 	// &domain.Asset{},
 	// &domain.Product{},
 	// &domain.Post{},

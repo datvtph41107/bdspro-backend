@@ -55,6 +55,37 @@
         ]
       }
     },
+    "/v2/bdspro/products/{productId}/price-detail": {
+      "get": {
+        "operationId": "ProductService_GetProductPriceDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbProductPriceDetailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/archived": {
       "put": {
         "operationId": "ProductService_ArchiveProduct",
@@ -2809,7 +2840,7 @@
         ]
       }
     },
-    "/v2/bdspro/v2/product/{id}/price-history": {
+    "/v2/bdspro/v2/product/{productId}/price-history": {
       "get": {
         "operationId": "ProductService_GetPriceHistory",
         "responses": {
@@ -2828,7 +2859,7 @@
         },
         "parameters": [
           {
-            "name": "id",
+            "name": "productId",
             "in": "path",
             "required": true,
             "type": "string",
@@ -4252,9 +4283,6 @@
         "createdAt": {
           "type": "string"
         },
-        "createdBy": {
-          "$ref": "#/definitions/sharepbProfileItem"
-        },
         "changeNote": {
           "type": "string"
         },
@@ -4376,30 +4404,6 @@
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
     },
-    "bdspropbProductAttachmentResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductAttachment"
-          }
-        }
-      }
-    },
-    "bdspropbProductInternalResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductResponse"
-          }
-        }
-      }
-    },
     "bdspropbProductNavigationResponse": {
       "type": "object",
       "properties": {
@@ -4472,6 +4476,52 @@
         },
         "channelPrice": {
           "type": "boolean"
+        }
+      }
+    },
+    "bdspropbProductPriceDetail": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "pricePerM2": {
+          "type": "string",
+          "format": "int64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "cost": {
+          "type": "number",
+          "format": "double"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double"
+        },
+        "channel": {
+          "type": "boolean"
+        },
+        "channelValue": {
+          "type": "string",
+          "format": "int64"
+        },
+        "profit": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbProductPriceDetailResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/bdspropbProductPriceDetail"
         }
       }
     },
@@ -5114,6 +5164,17 @@
           "type": "string",
           "format": "uint64",
           "title": "Dự án"
+        },
+        "miningMode": {
+          "type": "integer",
+          "format": "int64",
+          "title": "mining"
+        },
+        "miningScope": {
+          "type": "string"
+        },
+        "miningDescription": {
+          "type": "string"
         }
       }
     },

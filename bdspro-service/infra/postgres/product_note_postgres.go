@@ -90,7 +90,6 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 	ctx context.Context,
 	filter *dto.GetProductNotesFilter,
 ) ([]*dto.ProductNoteRow, int64, error) {
-
 	var rows []*dto.ProductNoteRow
 	var total int64
 
@@ -178,6 +177,7 @@ func (r *PostgreProductNoteRepo) ListByNoteIDs(
 
 	err := GetDB(ctx, r.DB).
 		Where("note_id IN ?", noteIDs).
+		Where("deleted_at IS NULL").
 		Find(&files).Error
 
 	return files, err

@@ -9,6 +9,9 @@ import (
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/enums"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -24,6 +27,75 @@ func NewContactRepo(db *gorm.DB) *PostgreContact {
 	return &PostgreContact{
 		BaseRepo: _db.NewBaseRepo(db),
 	}
+}
+
+func (r *PostgreContact) UpdatePinnedAtDynamic(
+	ctx context.Context,
+	meta enums.PinTargetMeta,
+	targetIDs map[string]uint64,
+	pinAt *time.Time,
+) error {
+	db := r.GetDB(ctx).Table(meta.TableName)
+	for _, col := range meta.IDColumns {
+		val, ok := targetIDs[col]
+		if !ok {
+			return errors.New("missing target id: " + col)
+		}
+		db = db.Where(fmt.Sprintf("%s = ?", col), val)
+	}
+	return db.Update(meta.PinColumn, pinAt).Error
+}
+
+func (r *PostgreContact) GetInterestedContactsByProduct(
+	ctx context.Context,
+	userId *uint64,
+	req *dto.ContactProductInterestedFilter,
+) ([]*dto.ContactProductInterestedDTO, int64, error) {
+	var (
+		items []*dto.ContactProductInterestedDTO
+		total int64
+	)
+	db := r.GetDB(ctx).
+		Table("tb_contact_product cp").
+		Where("cp.product_id = ?", req.ProductID)
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := db.
+		Select(`
+			cp.contact_id,
+			cp.origin_profile_id,
+
+			COALESCE(c.full_name, op.display_name) AS display_name,
+			COALESCE(c.phone, op.phone) AS phone,
+			COALESCE(c.avatar, op.avatar) AS avatar,
+
+			CASE
+				WHEN c.id IS NULL THEN ?
+				ELSE c.status
+			END AS status,
+
+			CASE
+				WHEN c.id IS NULL THEN false
+				ELSE true
+			END AS has_contact,
+
+			cp.priority_pin_at IS NOT NULL AS pinned,
+			cp.created_at
+		`, enums.StatusContactNotSaved).
+		Joins(`LEFT JOIN tb_contact c 
+			ON c.id = cp.contact_id 
+			AND c.owner_id = ?`, *userId).
+		Joins(`LEFT JOIN origin_profile op 
+			ON op.origin_id = cp.origin_profile_id`).
+		Order("cp.priority_pin_at DESC NULLS LAST").
+		Order("cp.last_interaction_at DESC NULLS LAST").
+		Order("cp.created_at DESC").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Scan(&items).Error
+	return items, total, err
 }
 
 func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) (*gorm.DB, error) {
@@ -118,7 +190,7 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 	return contacts, total, nil
 }
 
-func (r *PostgreContact) GetByProductId(c context.Context, productId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+func (r *PostgreContact) GetListContactByProductId(c context.Context, productId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
 	// Lấy profileId từ context (user hiện tại) để join với friend/follow/block
 	profileId := _utils.GetProfileIdWithContext(c)
 
