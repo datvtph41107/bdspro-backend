@@ -76,6 +76,13 @@ service PropertyService {
       body: "*"
     };
   };
+
+  rpc DeleteProperties(DeletePropertiesRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/batch"
+      body: "*"
+    };
+  };
 }
 
 message PropertyAmenityItem {
@@ -98,6 +105,9 @@ message UpdatePropertyAmenitiesRequest {
   repeated uint64 amenityIds = 2;
 }
 
+message DeletePropertiesRequest {
+  repeated uint64 ids = 1;
+}
 
 message TagResponse {
   uint64 id = 1;

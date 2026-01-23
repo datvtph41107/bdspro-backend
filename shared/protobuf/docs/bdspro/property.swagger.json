@@ -48,6 +48,38 @@
         ]
       }
     },
+    "/v2/bdspro/v2/property/batch": {
+      "post": {
+        "operationId": "PropertyService_DeleteProperties",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbDeletePropertiesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/property/detail/{id}": {
       "get": {
         "operationId": "PropertyService_GetDetail",
@@ -945,6 +977,18 @@
         "note": {
           "type": "string",
           "title": "Ghi chú"
+        }
+      }
+    },
+    "bdspropbDeletePropertiesRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
         }
       }
     },

@@ -226,3 +226,23 @@ func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.Upda
 		Message: "successfully",
 	}, nil
 }
+
+// @Summary Xóa nhiều Property
+// @Description API để xóa nhiều Property theo danh sách ID
+// @Tags Property
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body bdspropb.DeletePropertiesRequest true "Danh sách ID Property cần xóa"
+// @Success 200 {object} bdspropb.Response "Xóa thành công"
+// @Router /v2/bdspro/v2/property/batch [delete]
+func (h *PropertyHandler) DeleteProperties(ctx context.Context, req *bdspropb.DeletePropertiesRequest) (*bdspropb.Response, error) {
+	err := h.PropertyUsecase.DeleteProperties(ctx, req.Ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete properties: %v", err)
+	}
+
+	return &bdspropb.Response{
+		Message: "Properties deleted successfully",
+	}, nil
+}

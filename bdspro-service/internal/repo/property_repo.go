@@ -14,6 +14,7 @@ type PropertyRepo interface {
 	GetDetail(ctx context.Context, id uint64) (*domain.Property, error)
 	UpdateOption(ctx context.Context, id uint64, property *domain.Property) error
 	GetOneByID(c context.Context, id uint64) (*domain.Property, error)
+	DeleteBatchProperties(ctx context.Context, ids []uint64) error
 }
 
 type PropertyRelationRepo interface {

@@ -1155,3 +1155,18 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 		return nil
 	})
 }
+
+// DeleteProperties xóa nhiều Property theo danh sách ID
+func (u *PropertyUsecase) DeleteProperties(ctx context.Context, ids []uint64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		if err := u.PropertyRepo.DeleteBatchProperties(txCtx, ids); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

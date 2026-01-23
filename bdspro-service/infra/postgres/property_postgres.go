@@ -199,3 +199,12 @@ func (r *PostgrePropertyRepo) GetOneByID(c context.Context, id uint64) (*domain.
 	}
 	return &property, nil
 }
+
+func (r *PostgrePropertyRepo) DeleteBatchProperties(ctx context.Context, ids []uint64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return GetDB(ctx, r.DB).
+		Where("id IN (?) AND deleted_at IS NULL", ids).
+		Delete(&domain.Property{}).Error
+}
