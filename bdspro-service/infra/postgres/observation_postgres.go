@@ -35,7 +35,7 @@ func (r *PostgreObservationRepo) GetProductStats(
 		Table("observations").
 		Select(`
 			entity_id as product_id,
-			count(distinct client_id) as view_count,
+			count(distinct profile_id) as view_count,
 			sum(duration) as total_duration
 		`).
 		Where("entity_type = 'product'").

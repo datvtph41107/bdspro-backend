@@ -1,10 +1,9 @@
 package dto
 
+import bdspropb "pb/types/bdspro"
+
 type TrackObservationRequest struct {
-	EntityType string
-	EntityID   uint64
-	Action     string
-	Duration   uint32
+	Events []*bdspropb.ObservationEvent
 }
 
 type ProductStats struct {

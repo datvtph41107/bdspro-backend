@@ -25,20 +25,33 @@ func (u *ObservationUsecase) Track(
 	req *dto.TrackObservationRequest,
 ) error {
 	profileID := _utils.GetProfileIdWithContext(ctx)
-	// clientID := utils.GetClientID(ctx)
+	// clientID := _utils.GetClientIDFromContext(ctx)
 	// sessionID := _utils.GetSessionIdFromContext(ctx)
 
-	o := &domain.Observation{
-		EntityID: req.EntityID,
-		// EntityType: req.EntityType,
-		Action:    req.Action,
-		Duration:  req.Duration,
-		ProfileID: &profileID,
-		// ClientID:   clientID,
-		// SessionID: sessionID,
+	for _, event := range req.Events {
+		duration := event.Duration
+		if duration == 0 && event.EndTime > 0 && event.StartTime > 0 {
+			duration = uint32((event.EndTime - event.StartTime) / 1000)
+		}
+
+		o := &domain.Observation{
+			EntityType: &event.Event,
+			EntityID:   event.RefId,
+			ProfileID:  &profileID,
+			Action:     event.Event,
+			Duration:   duration,
+			StartTime:  event.StartTime,
+			EndTime:    event.EndTime,
+			Screen:     &event.Screen,
+		}
+
+		err := u.ObservationRepo.Insert(ctx, o)
+		if err != nil {
+			return err
+		}
 	}
 
-	return u.ObservationRepo.Insert(ctx, o)
+	return nil
 }
 
 func (u *ObservationUsecase) GetProductStats(

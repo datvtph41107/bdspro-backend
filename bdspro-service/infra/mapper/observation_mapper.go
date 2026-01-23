@@ -1,7 +1,6 @@
 package mapper
 
 import (
-	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	bdspropb "pb/types/bdspro"
 )
@@ -21,63 +20,21 @@ func (m *ObservationMapper) MapTrackObservationReq(
 	}
 
 	return &dto.TrackObservationRequest{
-		EntityType: req.EntityType,
-		EntityID:   req.EntityId,
-		Action:     req.Action,
-		Duration:   req.Duration,
-	}
-}
-
-func (m *ObservationMapper) MapTrackObservationDTOToDomain(
-	dtoReq *dto.TrackObservationRequest,
-	profileID *uint64,
-	clientID *string,
-	sessionID *string,
-	role *string,
-	orgID *uint64,
-	pageURL *string,
-	referrer *string,
-	device *string,
-	userAgent *string,
-	geo *string,
-) *domain.Observation {
-
-	if dtoReq == nil {
-		return nil
-	}
-
-	entityType := dtoReq.EntityType
-
-	return &domain.Observation{
-		EntityType: &entityType,
-		EntityID:   dtoReq.EntityID,
-		ProfileID:  profileID,
-		ClientID:   clientID,
-		SessionID:  sessionID,
-		Role:       role,
-		OrgID:      orgID,
-		Action:     dtoReq.Action,
-		Duration:   dtoReq.Duration,
-		PageURL:    pageURL,
-		Referrer:   referrer,
-		Device:     device,
-		UserAgent:  userAgent,
-		Geo:        geo,
+		Events: req.Events,
 	}
 }
 
 func (m *ObservationMapper) MapProductStatsToPB(
-	stats *dto.ProductStats,
+	ps *dto.ProductStats,
 ) *bdspropb.ProductStatsResponse {
-
-	if stats == nil {
+	if ps == nil {
 		return nil
 	}
 
 	return &bdspropb.ProductStatsResponse{
-		ProductId:     stats.ProductID,
-		ViewCount:     stats.ViewCount,
-		TotalDuration: stats.TotalDuration,
+		ProductId:     ps.ProductID,
+		ViewCount:     ps.ViewCount,
+		TotalDuration: ps.TotalDuration,
 	}
 }
 

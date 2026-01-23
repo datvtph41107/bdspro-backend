@@ -36,11 +36,16 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "events",
+            "description": "danh sách các events",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/bdspropbTrackObservationRequest"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "$ref": "#/definitions/bdspropbObservationEvent"
+              }
             }
           }
         ],
@@ -82,6 +87,39 @@
     }
   },
   "definitions": {
+    "bdspropbObservationEvent": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "type": "string",
+          "description": "view_post | view_profile | etc."
+        },
+        "refId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "id của entity được reference"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "uint64",
+          "title": "timestamp bắt đầu event"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "uint64",
+          "title": "timestamp kết thúc event (optional)"
+        },
+        "duration": {
+          "type": "integer",
+          "format": "int64",
+          "title": "thời gian duration (ms) (optional)"
+        },
+        "screen": {
+          "type": "string",
+          "title": "tên screen (optional)"
+        }
+      }
+    },
     "bdspropbProductStatsResponse": {
       "type": "object",
       "properties": {
@@ -98,29 +136,6 @@
           "type": "string",
           "format": "uint64",
           "title": "tổng thời gian xem (giây)"
-        }
-      }
-    },
-    "bdspropbTrackObservationRequest": {
-      "type": "object",
-      "properties": {
-        "entityType": {
-          "type": "string",
-          "title": "product | asset | post | blog | project | agency"
-        },
-        "entityId": {
-          "type": "string",
-          "format": "uint64",
-          "title": "id của entity"
-        },
-        "action": {
-          "type": "string",
-          "title": "view | save | click | share | submit_lead"
-        },
-        "duration": {
-          "type": "integer",
-          "format": "int64",
-          "title": "số giây"
         }
       }
     },

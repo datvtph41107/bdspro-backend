@@ -12,7 +12,7 @@ service ObservationService {
   rpc TrackObservation(TrackObservationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/bdspro/v2/observation"
-      body: "*"
+      body: "events"
     };
   };
 
@@ -23,11 +23,17 @@ service ObservationService {
   };
 }
 
+message ObservationEvent {
+  string event      = 1; // view_post | view_profile | etc.
+  uint64 ref_id     = 2; // id của entity được reference
+  uint64 start_time = 3; // timestamp bắt đầu event
+  uint64 end_time   = 4; // timestamp kết thúc event (optional)
+  uint32 duration   = 5; // thời gian duration (ms) (optional)
+  string screen     = 6; // tên screen (optional)
+}
+
 message TrackObservationRequest {
-  string entityType = 1; // product | asset | post | blog | project | agency
-  uint64 entityId   = 2; // id của entity
-  string action     = 3; // view | save | click | share | submit_lead
-  uint32 duration   = 4; // số giây 
+  repeated ObservationEvent events = 1; // danh sách các events
 }
 
 message GetProductStatsRequest {

@@ -29,7 +29,6 @@ func (h *ObservationHandler) TrackObservation(
 	ctx context.Context,
 	req *bdspropb.TrackObservationRequest,
 ) (*emptypb.Empty, error) {
-
 	dtoReq := h.ObservationMapper.MapTrackObservationReq(req)
 
 	err := h.ObservationUsecase.Track(ctx, dtoReq)
