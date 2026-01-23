@@ -53,7 +53,7 @@ func (r *PostgrePropertyRepo) Search(ctx context.Context, payload *dto.PropertyS
 		Joins("LEFT JOIN projects proj ON property.project_id = proj.id AND proj.deleted_at IS NULL").
 		Joins("LEFT JOIN property_type pt ON property.property_type_id = pt.id AND pt.deleted_at IS NULL").
 		Joins("LEFT JOIN property_building_info pbi ON property.id = pbi.property_id AND pbi.deleted_at IS NULL").
-		Joins("LEFT JOIN property_media avatar ON property.id = avatar.property_id AND avatar.deleted_at IS NULL").
+		Joins("LEFT JOIN property_media avatar ON property.avatar_id = avatar.id AND avatar.deleted_at IS NULL").
 		Where("property.deleted_at IS NULL")
 
 	// Filter by text

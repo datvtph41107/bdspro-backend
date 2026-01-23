@@ -83,8 +83,29 @@ buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
 buf-hub:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path hub	
-buf-all: buf-notification buf-user buf-bdspro buf-shared buf-org buf-appointment buf-payment buf-payment buf-crm buf-chat buf-task buf-marketing buf-auth buf-transaction buf-feedback buf-tqd buf-assistant
-	echo "done"	
+buf-all:
+	$(MAKE) buf-crm
+	$(MAKE) buf-group
+	$(MAKE) buf-document
+	$(MAKE) buf-social
+	$(MAKE) buf-notification
+	$(MAKE) buf-user
+	$(MAKE) buf-bdspro
+	$(MAKE) buf-shared
+	$(MAKE) buf-org
+	$(MAKE) buf-organization
+	$(MAKE) buf-appointment
+	$(MAKE) buf-payment
+	$(MAKE) buf-chat
+	$(MAKE) buf-task
+	$(MAKE) buf-marketing
+	$(MAKE) buf-transaction
+	$(MAKE) buf-auth
+	$(MAKE) buf-feedback
+	$(MAKE) buf-tqd
+	$(MAKE) buf-assistant
+	$(MAKE) buf-hub
+	echo "done"
 	
 init:
 	$(CD_ROOT) && cd gateway-service && go mod tidy

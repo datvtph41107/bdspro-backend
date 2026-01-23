@@ -158,7 +158,11 @@ func (m *PropertyMapper) PropertyWithCountsToProto(propertyWithCounts *dto.Prope
 	result.PostCount = &propertyWithCounts.PostCount
 
 	result.Address = &sharepb.AddressV3Proto{
-		Detail: property.AddressDetail,
+		Detail:       property.AddressDetail,
+		ProvinceName: propertyWithCounts.ProvinceName,
+		ProvinceId:   property.ProvinceID,
+		WardName:     propertyWithCounts.WardName,
+		WardId:       propertyWithCounts.WardID,
 	}
 	if property.Province != nil {
 		result.Address.ProvinceName = cleanAddressUnit(property.Province.Name)

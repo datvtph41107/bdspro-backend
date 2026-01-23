@@ -238,7 +238,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterOrganizationService(ctx, mux, env, opts)
 		service.RegisterBdsproService(ctx, mux, env, opts)
 		service.RegisterCrmService(ctx, mux, env, opts)
-		// service.RegisterSocialService(ctx, mux, env, opts)
+		service.RegisterSocialService(ctx, mux, env, opts)
 		service.RegisterAppointmentService(ctx, mux, env, opts)
 		service.RegisterUserService(ctx, mux, env, opts)
 		service.RegisterChatService(ctx, mux, env, opts)
