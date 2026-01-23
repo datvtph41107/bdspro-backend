@@ -19,6 +19,7 @@ func AutoMigrate() {
 		&domain.VersionEntity{},
 		&domain.ApiKeyEntity{},
 		&domain.UserGuideStepEntity{},
+		&domain.InteractiveEvent{},
 		// &domain.UserGuideGroupEntity{},
 	)
 

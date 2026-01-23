@@ -9,18 +9,19 @@ import (
 )
 
 type InitialApp struct {
-	EventQueueService   *handler.EventQueueService
-	InternalHandler     *handler.InternalHandler
-	LocationHandler     *handler.LocationHandler
-	LocationV2Handler   *handler.LocationV2Handler
-	UserGuideHandler    *handler.UserGuideHandler
-	FAQHandler          *handler.FAQHandler
-	SystemConfigHandler *handler.SystemConfigHandler
-	VersionHandler      *handler.VersionHandler
-	ApiKeyHandler       *handler.ApiKeyHandler
-	SystemConfigUsecase *usecase.SystemConfigUsecase
-	ApiKeyUsecase       usecase.IApiKeyUsecase
-	Logger              *flogging.FabricLogger
+	EventQueueService       *handler.EventQueueService
+	InternalHandler         *handler.InternalHandler
+	LocationHandler         *handler.LocationHandler
+	LocationV2Handler       *handler.LocationV2Handler
+	UserGuideHandler        *handler.UserGuideHandler
+	FAQHandler              *handler.FAQHandler
+	SystemConfigHandler     *handler.SystemConfigHandler
+	VersionHandler          *handler.VersionHandler
+	ApiKeyHandler           *handler.ApiKeyHandler
+	SystemConfigUsecase     *usecase.SystemConfigUsecase
+	ApiKeyUsecase           usecase.IApiKeyUsecase
+	Logger                  *flogging.FabricLogger
+	InteractiveEventHandler *handler.InteractiveEventHandler
 }
 
 func NewInitialApp(
@@ -35,19 +36,21 @@ func NewInitialApp(
 	apiKeyHandler *handler.ApiKeyHandler,
 	systemConfigUsecase *usecase.SystemConfigUsecase,
 	apiKeyUsecase usecase.IApiKeyUsecase,
+	interactiveEventHandler *handler.InteractiveEventHandler,
 ) *InitialApp {
 	return &InitialApp{
-		EventQueueService:   eventQueueService,
-		InternalHandler:     internalHandler,
-		LocationHandler:     locationHandler,
-		LocationV2Handler:   locationV2Handler,
-		UserGuideHandler:    userGuideHandler,
-		FAQHandler:          faqHandler,
-		SystemConfigHandler: systemConfigHandler,
-		VersionHandler:      versionHandler,
-		ApiKeyHandler:       apiKeyHandler,
-		SystemConfigUsecase: systemConfigUsecase,
-		ApiKeyUsecase:       apiKeyUsecase,
-		Logger:              flogging.MustGetLogger(viper.GetString("server.name")),
+		EventQueueService:       eventQueueService,
+		InternalHandler:         internalHandler,
+		LocationHandler:         locationHandler,
+		LocationV2Handler:       locationV2Handler,
+		UserGuideHandler:        userGuideHandler,
+		FAQHandler:              faqHandler,
+		SystemConfigHandler:     systemConfigHandler,
+		VersionHandler:          versionHandler,
+		ApiKeyHandler:           apiKeyHandler,
+		SystemConfigUsecase:     systemConfigUsecase,
+		ApiKeyUsecase:           apiKeyUsecase,
+		Logger:                  flogging.MustGetLogger(viper.GetString("server.name")),
+		InteractiveEventHandler: interactiveEventHandler,
 	}
 }
