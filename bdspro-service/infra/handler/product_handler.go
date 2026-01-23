@@ -1138,3 +1138,20 @@ func (h *ProductHandler) GetProductPriceDetail(
 		Data: h.ProductPriceMapper.DTOToPbDetail(result),
 	}, nil
 }
+
+func (h *ProductHandler) ArchiveProducts(ctx context.Context, req *bdspropb.ArchiveProductsRequest) (*bdspropb.Response, error) {
+	dtoReq := h.ProductMapper.PbToArchiveProductsDTO(req)
+	err := h.UC.ArchiveProducts(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to archive products: %v", err)
+	}
+
+	action := "archived"
+	if !req.Archived {
+		action = "unarchived"
+	}
+
+	return &bdspropb.Response{
+		Message: "Products " + action + " successfully",
+	}, nil
+}

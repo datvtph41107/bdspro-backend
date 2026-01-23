@@ -11,6 +11,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 )
 
 type PropertyUsecase struct {
@@ -1156,7 +1157,6 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 	})
 }
 
-// DeleteProperties xóa nhiều Property theo danh sách ID
 func (u *PropertyUsecase) DeleteProperties(ctx context.Context, ids []uint64) error {
 	if len(ids) == 0 {
 		return nil
@@ -1169,4 +1169,27 @@ func (u *PropertyUsecase) DeleteProperties(ctx context.Context, ids []uint64) er
 
 		return nil
 	})
+}
+
+func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.ArchivePropertiesDTO) error {
+	originId := _utils.GetOriginIdFromContext(ctx)
+
+	if originId == 0 {
+		return _errors.UnauthorizedException()
+	}
+
+	if len(req.IDs) == 0 {
+		return _errors.BadRequestException("No property IDs provided")
+	}
+
+	for _, id := range req.IDs {
+		property, err := u.PropertyRepo.GetOneByID(ctx, id)
+		if err != nil {
+			return _errors.InternalServerException("Failed to validate property ID: " + err.Error())
+		}
+		if property == nil {
+			return _errors.NotFoundException("Property with ID " + fmt.Sprintf("%d", id) + " not found")
+		}
+	}
+	return u.PropertyRepo.ArchiveBatchProperties(ctx, req.IDs, req.Archived)
 }

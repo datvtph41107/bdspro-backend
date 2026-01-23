@@ -113,3 +113,13 @@ type UpdatePropertyAmenitiesRequest struct {
 	PropertyID uint64   `json:"propertyId"`
 	AmenityIDs []uint64 `json:"amenityIds"` // danh sách checkbox được tick
 }
+
+type ArchivePropertiesDTO struct {
+	IDs      []uint64 `json:"ids"`
+	Archived bool     `json:"archived"`
+}
+
+type ArchiveProductsDTO struct {
+	IDs      []uint64 `json:"ids"`
+	Archived bool     `json:"archived"`
+}

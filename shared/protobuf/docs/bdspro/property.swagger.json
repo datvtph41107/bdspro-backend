@@ -48,6 +48,70 @@
         ]
       }
     },
+    "/v2/bdspro/v2/product/archive": {
+      "post": {
+        "operationId": "PropertyService_ArchiveProducts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbArchiveProductsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
+    },
+    "/v2/bdspro/v2/property/archive": {
+      "post": {
+        "operationId": "PropertyService_ArchiveProperties",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbArchivePropertiesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PropertyService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/property/batch": {
       "post": {
         "operationId": "PropertyService_DeleteProperties",
@@ -680,6 +744,36 @@
         "price": {
           "type": "number",
           "format": "double"
+        }
+      }
+    },
+    "bdspropbArchiveProductsRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "archived": {
+          "type": "boolean"
+        }
+      }
+    },
+    "bdspropbArchivePropertiesRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "archived": {
+          "type": "boolean"
         }
       }
     },

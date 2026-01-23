@@ -62,18 +62,19 @@ type Product struct {
 	RentStatus        enums.EProductRentStatus `gorm:"type:smallint;not null;default:40" json:"rentStatus"`     // 1=Chưa thuê, 2=Đang đăng tin, 3=Đang cho thuê
 	RentTransactionID *uint64                  `json:"rentTransactionId,omitempty"`
 	// RentTransaction   *tx_domain.Tx            `gorm:"foreignKey:RentTransactionID;references:ID" json:"rentTransaction,omitempty"`
-	RentVisibility enums.EVisibility  `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
-	OwnerID        uint64             `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
-	OwnerOf        enums.EOwnerOf     `gorm:"type:smallint;not null;default:10" json:"ownerOf"`
-	ProvinceID     *uint64            `json:"provinceId,omitempty"`
-	Province       *ProvinceV2        `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
-	WardID         *uint64            `json:"wardId,omitempty"`
-	Ward           *WardV2            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
-	Address        string             `gorm:"size:255" json:"address,omitempty"`
-	GoogleMapLink  string             `gorm:"size:255" json:"googleMapLink,omitempty"`
-	MediaList      []ProductMediaItem `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
-	HouseInfo      *HouseInfo         `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
-	Archived       bool               `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
+	RentVisibility  enums.EVisibility  `gorm:"type:smallint;not null;default:10" json:"rentVisibility"` // 1=Riêng tư, 2=Nội bộ, 3=Công khai
+	OwnerID         uint64             `gorm:"type:int8" json:"ownerId,omitempty"`                      // Ai sở hữu (nếu đã bán)
+	OwnerOf         enums.EOwnerOf     `gorm:"type:smallint;not null;default:10" json:"ownerOf"`
+	ProvinceID      *uint64            `json:"provinceId,omitempty"`
+	Province        *ProvinceV2        `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
+	WardID          *uint64            `json:"wardId,omitempty"`
+	Ward            *WardV2            `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
+	Address         string             `gorm:"size:255" json:"address,omitempty"`
+	GoogleMapLink   string             `gorm:"size:255" json:"googleMapLink,omitempty"`
+	MediaList       []ProductMediaItem `gorm:"foreignKey:ProductID" json:"mediaList,omitempty"`
+	HouseInfo       *HouseInfo         `gorm:"foreignKey:ProductID" json:"houseInfo,omitempty"`
+	Archived        bool               `gorm:"type:bool;not null;default:false" json:"archived"` // 0=chưa, 1=archive
+	OriginProfileID *uint64            `gorm:"type:int8;index" json:"originProfileId,omitempty"` // Origin profile ID (tổ chức sở hữu)
 
 	ProvinceName     string `gorm:"-" json:"provinceName,omitempty"`
 	WardName         string `gorm:"-" json:"wardName,omitempty"`

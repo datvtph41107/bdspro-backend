@@ -40,6 +40,7 @@ type Property struct {
 	MediaList    []PropertyMedia       `gorm:"foreignKey:PropertyID;references:ID" json:"mediaList,omitempty"`
 	Avatar       *PropertyMedia        `gorm:"foreignKey:AvatarID;references:ID" json:"avatar,omitempty"`
 	Amenities    []AmenityItem         `gorm:"many2many:property_amenity;foreignKey:ID;joinForeignKey:PropertyID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
+	Archived     bool                  `gorm:"default:false" json:"archived,omitempty"` // Trạng thái archived (true: đã lưu trữ, false: chưa)
 }
 
 // TableName override tên bảng

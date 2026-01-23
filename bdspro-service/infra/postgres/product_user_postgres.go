@@ -33,6 +33,22 @@ func (r *ProductUserPostgres) UpdatePriceID(
 		Error
 }
 
+func (r *ProductUserPostgres) UpdateArchivedStatus(
+	ctx context.Context,
+	productID uint64,
+	originProfileId uint64,
+	archived bool,
+) error {
+	return GetDB(ctx, r.db).
+		Model(&domain.ProductUser{}).
+		Where(
+			"product_id = ? AND origin_profile_id = ? AND deleted_at IS NULL",
+			productID, originProfileId,
+		).
+		Update("archived", archived).
+		Error
+}
+
 func (r *ProductUserPostgres) CreateOwner(ctx context.Context, productID uint64, profileID uint64) (*domain.ProductUser, error) {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	productOfUser := &domain.ProductUser{

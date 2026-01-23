@@ -1658,8 +1658,6 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	return summary, nil
 }
 
-
-
 // GetProductPricedDetail GET PRICE DETAIL INFO ////////////////
 func (uc *ProductUsecase) GetProductPricedDetail(
 	ctx context.Context,
@@ -2216,4 +2214,37 @@ func (u *ProductUsecase) UpdateProductSource(
 
 		return nil
 	})
+}
+
+func (u *ProductUsecase) ArchiveProducts(ctx context.Context, req *dto.ArchiveProductsDTO) error {
+	originId := _utils.GetOriginIdFromContext(ctx)
+	if originId == 0 {
+		return _errors.UnauthorizedException()
+	}
+	if len(req.IDs) == 0 {
+		return _errors.BadRequestException("No product IDs provided")
+	}
+
+	for _, productId := range req.IDs {
+		if err := u.archiveProductForUser(ctx, productId, originId, req.Archived); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (u *ProductUsecase) archiveProductForUser(ctx context.Context, productId, originId uint64, archived bool) error {
+	productUser, err := u.ProductUserRepo.GetByProductAndOriginProfile(ctx, productId, originId)
+	if err != nil {
+		return _errors.InternalServerException("Failed to get product user relation: " + err.Error())
+	}
+	if productUser == nil {
+		return _errors.NotFoundException("Product user relation not found")
+	}
+
+	if productUser.Archived == archived {
+		return nil
+	}
+	return u.ProductUserRepo.UpdateArchivedStatus(ctx, productId, originId, archived)
 }

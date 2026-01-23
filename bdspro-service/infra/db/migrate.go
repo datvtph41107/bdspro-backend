@@ -12,6 +12,8 @@ func MigrateDomain() {
 	// &domain.Product{},
 	// &domain.Post{},
 	// &domain.Intent{},
+	// &domain.Observation{},
+	// &domain.Property{},
 
 	// // Asset related
 	// &domain.AssetCost{},

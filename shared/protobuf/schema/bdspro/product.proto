@@ -246,9 +246,16 @@ service ProductService {
       };
   }
 
-  rpc GetProductPriceDetail(ProductPriceDetailRequest ) returns (ProductPriceDetailResponse) {
+  rpc GetProductPriceDetail(ProductPriceDetailRequest) returns (ProductPriceDetailResponse) {
     option (google.api.http) = {
         get: "/v2/bdspro/products/{productId}/price-detail"
+    };
+  }
+
+  rpc ArchiveProducts(ArchiveProductsRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/archive"
+      body: "*"
     };
   }
 }
@@ -743,4 +750,9 @@ message UserInfo {
 message ProductNavigationResponse {
   uint64 previousId = 1; // ID sản phẩm trước đó (0 nếu không có)
   uint64 nextId = 2;     // ID sản phẩm tiếp theo (0 nếu không có)
+}
+
+message ArchiveProductsRequest {
+  repeated uint64 ids = 1;
+  bool archived = 2;
 }

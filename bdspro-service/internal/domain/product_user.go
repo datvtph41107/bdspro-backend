@@ -17,6 +17,7 @@ type ProductUser struct {
 	PriceID      *uint64        `json:"priceId,omitempty"` // id của product_price
 
 	OriginProfileID *uint64 `gorm:"index;" json:"originProfileId"`
+	Archived        bool    `gorm:"default:false" json:"archived"` // Trạng thái archived cho user này
 }
 
 func (ProductUser) TableName() string {

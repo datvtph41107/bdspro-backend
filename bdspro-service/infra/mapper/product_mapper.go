@@ -1750,3 +1750,10 @@ func (m *ProductMapper) MapTotalSearchParserToProductV3Proto(parser *_dto.Produc
 	}
 	return response
 }
+
+func (m *ProductMapper) PbToArchiveProductsDTO(req *bdspropb.ArchiveProductsRequest) *dto.ArchiveProductsDTO {
+	return &dto.ArchiveProductsDTO{
+		IDs:      req.Ids,
+		Archived: req.Archived,
+	}
+}

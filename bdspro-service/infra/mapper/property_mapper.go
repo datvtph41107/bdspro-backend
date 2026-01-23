@@ -567,3 +567,19 @@ func (m *PropertyMapper) PropertyRelationListToProto(items []domain.PropertyRela
 	}
 	return result
 }
+
+// PbToArchivePropertiesDTO converts protobuf ArchivePropertiesRequest to DTO
+func (m *PropertyMapper) PbToArchivePropertiesDTO(req *bdspropb.ArchivePropertiesRequest) *dto.ArchivePropertiesDTO {
+	return &dto.ArchivePropertiesDTO{
+		IDs:      req.Ids,
+		Archived: req.Archived,
+	}
+}
+
+// PbToArchiveProductsDTO converts protobuf ArchiveProductsRequest to DTO
+func (m *PropertyMapper) PbToArchiveProductsDTO(req *bdspropb.ArchiveProductsRequest) *dto.ArchiveProductsDTO {
+	return &dto.ArchiveProductsDTO{
+		IDs:      req.Ids,
+		Archived: req.Archived,
+	}
+}

@@ -83,6 +83,20 @@ service PropertyService {
       body: "*"
     };
   };
+
+  rpc ArchiveProperties(ArchivePropertiesRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/archive"
+      body: "*"
+    };
+  };
+
+  rpc ArchiveProducts(ArchiveProductsRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/archive"
+      body: "*"
+    };
+  };
 }
 
 message PropertyAmenityItem {
@@ -107,6 +121,16 @@ message UpdatePropertyAmenitiesRequest {
 
 message DeletePropertiesRequest {
   repeated uint64 ids = 1;
+}
+
+message ArchivePropertiesRequest {
+  repeated uint64 ids = 1;
+  bool archived = 2;
+}
+
+message ArchiveProductsRequest {
+  repeated uint64 ids = 1;
+  bool archived = 2;
 }
 
 message TagResponse {

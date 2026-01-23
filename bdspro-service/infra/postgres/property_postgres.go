@@ -208,3 +208,13 @@ func (r *PostgrePropertyRepo) DeleteBatchProperties(ctx context.Context, ids []u
 		Where("id IN (?) AND deleted_at IS NULL", ids).
 		Delete(&domain.Property{}).Error
 }
+
+func (r *PostgrePropertyRepo) ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return GetDB(ctx, r.DB).
+		Model(&domain.Property{}).
+		Where("id IN (?) AND deleted_at IS NULL", ids).
+		Update("archived", archived).Error
+}

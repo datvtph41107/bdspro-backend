@@ -227,15 +227,6 @@ func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.Upda
 	}, nil
 }
 
-// @Summary Xóa nhiều Property
-// @Description API để xóa nhiều Property theo danh sách ID
-// @Tags Property
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body bdspropb.DeletePropertiesRequest true "Danh sách ID Property cần xóa"
-// @Success 200 {object} bdspropb.Response "Xóa thành công"
-// @Router /v2/bdspro/v2/property/batch [delete]
 func (h *PropertyHandler) DeleteProperties(ctx context.Context, req *bdspropb.DeletePropertiesRequest) (*bdspropb.Response, error) {
 	err := h.PropertyUsecase.DeleteProperties(ctx, req.Ids)
 	if err != nil {
@@ -244,5 +235,22 @@ func (h *PropertyHandler) DeleteProperties(ctx context.Context, req *bdspropb.De
 
 	return &bdspropb.Response{
 		Message: "Properties deleted successfully",
+	}, nil
+}
+
+func (h *PropertyHandler) ArchiveProperties(ctx context.Context, req *bdspropb.ArchivePropertiesRequest) (*bdspropb.Response, error) {
+	dtoReq := h.PropertyMapper.PbToArchivePropertiesDTO(req)
+	err := h.PropertyUsecase.ArchiveProperties(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to archive properties: %v", err)
+	}
+
+	action := "archived"
+	if !req.Archived {
+		action = "unarchived"
+	}
+
+	return &bdspropb.Response{
+		Message: "Properties " + action + " successfully",
 	}, nil
 }
