@@ -80,7 +80,7 @@
       }
     },
     "/v2/notification/property-history/{id}": {
-      "delete": {
+      "post": {
         "operationId": "PropertyHistoryService_SoftDeletePropertyHistoryId",
         "responses": {
           "200": {

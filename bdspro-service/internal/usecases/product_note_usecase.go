@@ -59,7 +59,6 @@ func (u *ProductNoteUsecase) CreateNote(
 	}
 
 	var createdNote *domain.ProductNote
-
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		note := &domain.ProductNote{
 			ProductID: req.ProductID,
@@ -74,7 +73,6 @@ func (u *ProductNoteUsecase) CreateNote(
 
 		if len(req.Mentions) > 0 {
 			mentions := make([]domain.ProductNoteMention, 0, len(req.Mentions))
-
 			for _, m := range req.Mentions {
 				mentions = append(mentions, domain.ProductNoteMention{
 					NoteID:   note.ID,
