@@ -19,6 +19,30 @@ func NewHubClient() *HubClient {
 	}
 }
 
+func (c *HubClient) GetProductStatsViewClient(
+	ctx context.Context,
+	productID uint64,
+	fromTime int64,
+) (*hubpb.GetProductStatsViewResponse, error) {
+	resp, err := c.HubGrpcClient.InternalClient.GetProductViewStats(ctx, &hubpb.GetProductStatsViewRequest{
+		ProductId: productID,
+		FromTime:  fromTime,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.ViewCount == 0 {
+		return nil, nil
+	}
+
+	return &hubpb.GetProductStatsViewResponse{
+		ViewCount:     resp.ViewCount,
+		TotalDuration: resp.TotalDuration,
+		MaxEventTime:  resp.MaxEventTime,
+	}, nil
+}
+
 // GetLocationsByIds retrieves locations (provinces, districts, wards) by IDs
 func (c *HubClient) GetLocationsByIds(ctx context.Context, ids []uint64) ([]*hubpb.Location, error) {
 	if len(ids) == 0 {

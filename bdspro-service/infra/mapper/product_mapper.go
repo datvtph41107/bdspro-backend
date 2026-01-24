@@ -369,11 +369,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		CreatedAt: _utils.FormatTimeToString(product.CreatedAt),
 		UpdatedAt: _utils.FormatTimeToString(product.UpdatedAt),
 
-		PostCount:        product.PostCount,
-		ContactCount:     product.ContactCount,
-		ShareCount:       product.ShareCount,
-		AssetCount:       product.AssetCount,
-		DealCount:        product.DealCount,
+		// PostCount:        product.PostCount,
+		// ContactCount:     product.ContactCount,
+		// ShareCount:       product.ShareCount,
+		// AssetCount:       product.AssetCount,
+		// DealCount:        product.DealCount,
 		AppointmentCount: product.AppointmentCount,
 	}
 
@@ -695,11 +695,11 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 	// Statistics fields
 	result.PublicListingCount = product.PublicListingCount
 
-	result.PostCount = product.PostCount
-	result.ContactCount = product.ContactCount
-	result.ShareCount = product.ShareCount
-	result.AssetCount = product.AssetCount
-	result.DealCount = product.DealCount
+	// result.PostCount = product.PostCount
+	// result.ContactCount = product.ContactCount
+	// result.ShareCount = product.ShareCount
+	// result.AssetCount = product.AssetCount
+	// result.DealCount = product.DealCount
 	result.AppointmentCount = product.AppointmentCount
 
 	return result

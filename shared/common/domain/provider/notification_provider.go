@@ -8,7 +8,7 @@ import (
 type NotificationProvider interface {
 	CreateNotification(
 		ctx context.Context,
-		avatar string,
+		avatar *string,
 		title string,
 		message []string,
 		notificationType _enum.ENotificationType,

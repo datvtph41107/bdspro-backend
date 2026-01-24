@@ -10,6 +10,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"path"
 	"sort"
@@ -23,6 +24,7 @@ type ProductNoteUsecase struct {
 	NotifyProvider       provider.NotificationProvider
 	PropertyRelationRepo repo.PropertyRelationRepo
 	ProductRepo          repo.ProductRepo
+	// NotificationClient   provider.NotificationProvider
 }
 
 func NewProductNoteUsecase(
@@ -31,6 +33,7 @@ func NewProductNoteUsecase(
 	notifyProvider provider.NotificationProvider,
 	propertyRelationRepo repo.PropertyRelationRepo,
 	productRepo repo.ProductRepo,
+	// notificationClient provider.NotificationProvider,
 ) *ProductNoteUsecase {
 	return &ProductNoteUsecase{
 		noteRepo:             noteRepo,
@@ -38,6 +41,7 @@ func NewProductNoteUsecase(
 		NotifyProvider:       notifyProvider,
 		PropertyRelationRepo: propertyRelationRepo,
 		ProductRepo:          productRepo,
+		// NotificationClient:   notificationClient,
 	}
 }
 
@@ -122,15 +126,44 @@ func (u *ProductNoteUsecase) CreateNote(
 			subjectID = req.ProductID
 		}
 
-		u.NotifyProvider.RegistedEventProperty(
-			ctx,
-			&dto.CreatePropertyActivityDTO{
-				SubjectID:   subjectID,
-				Action:      _enum.ACTION_ADD_PRODUCT_TODEAL,
-				ActorID:     authorID,
-				Description: "Đã có ghi chú mới được thêm",
-			},
-		)
+		go func() {
+			contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			err := u.NotifyProvider.RegistedEventProperty(
+				contextTimeout,
+				&dto.CreatePropertyActivityDTO{
+					SubjectID:   subjectID,
+					Action:      _enum.ACTION_ADD_PRODUCT_TODEAL,
+					ActorID:     authorID,
+					Description: "Đã có ghi chú mới được thêm",
+				},
+			)
+			if err != nil {
+				log.Printf("Failed to register property event: %v", err)
+			}
+		}()
+		// go func() {
+		// 	contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// 	defer cancel()
+
+		// 	err := u.NotificationClient.CreateNotification(
+		// 		contextTimeout,
+		// 		infoEntity.Avatar,
+		// 		"Chào mừng bạn đến với BDSPro",
+		// 		[]string{"Thiết lập tài khoản thành công"},
+		// 		_enum.NotificationSystem,
+		// 		&infoEntity.ProfileID,
+		// 		infoEntity.ProfileID,
+		// 		_enum.EOwnerOfMember,
+		// 		[]string{},
+		// 	)
+		// 	if err != nil {
+		// 		log.Printf("Failed to send welcome notification: %v", err)
+		// 	} else {
+		// 		log.Printf("Successfully sent welcome notification to user %d", infoEntity.ProfileID)
+		// 	}
+		// }()
 		return nil
 	})
 

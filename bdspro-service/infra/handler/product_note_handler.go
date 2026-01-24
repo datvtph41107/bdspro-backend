@@ -36,7 +36,6 @@ func (h *ProductNoteHandler) ListProductNotes(
 	ctx context.Context,
 	req *bdspropb.ListProductNotesRequest,
 ) (*bdspropb.ListProductNotesResponse, error) {
-
 	if req.ProductId == 0 {
 		return nil, _errors.BadRequestException("productId is required")
 	}

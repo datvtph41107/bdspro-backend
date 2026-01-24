@@ -3,7 +3,9 @@ package client
 import (
 	"context"
 	"errors"
+	"log"
 	"pb/clients"
+	"time"
 
 	"auth/env"
 	"auth/internal/dto"
@@ -117,7 +119,18 @@ func (c *NotificationClient) CreateNotification(
 	ownerOf _enum.EOwnerOf,
 	attachData []string,
 ) error {
-	return c.NotificationGrpcClient.CreateNotification(ctx, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
+	go func() {
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := c.NotificationGrpcClient.CreateNotification(contextTimeout, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
+		if err != nil {
+			log.Printf("Failed to send notification: %v", err)
+		} else {
+			log.Printf("Successfully sent notification to user %d", ownerId)
+		}
+	}()
+	return nil
 }
 
 func (c *NotificationClient) GetPersonConfigs(ctx context.Context, userID uint64) ([]*dto.PersonConfigDTO, error) {

@@ -53,7 +53,6 @@ type InitialApp struct {
 	PropertyHandler       *handler.PropertyHandler
 	DistributeHandler     *handler.DistributionHandler
 	ProductNoteHandler    *handler.ProductNoteHandler
-	ObservationHandler    *handler.ObservationHandler
 	// @bind: register_server_config
 	// CostDocumentServer *handler.CostDocumentServer
 	// IncomeDocumentServer    *handler.IncomeDocumentServer
@@ -126,7 +125,6 @@ func NewInitialApp(
 	propertyHandler *handler.PropertyHandler,
 	distributeHandler *handler.DistributionHandler,
 	productNoteHandler *handler.ProductNoteHandler,
-	observationHandler *handler.ObservationHandler,
 ) *InitialApp {
 	return &InitialApp{
 		// GrpcServer:        GrpcServer,
@@ -173,7 +171,6 @@ func NewInitialApp(
 		ProductStatsJob:    productStatsJob,
 		PostStatsJob:       postStatsJob,
 		ProductNoteHandler: productNoteHandler,
-		ObservationHandler: observationHandler,
 		// AdminRouter: adminRoute,
 		// @bind: register_server_new
 		// CostDocumentServer: CostDocumentServer,

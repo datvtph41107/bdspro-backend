@@ -396,7 +396,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 			err := s.NotificationClient.CreateNotification(
 				contextTimeout,
-				infoEntity.Avatar,
+				&infoEntity.Avatar,
 				"Chào mừng bạn đến với BDSPro",
 				[]string{"Thiết lập tài khoản thành công"},
 				_enum.NotificationSystem,

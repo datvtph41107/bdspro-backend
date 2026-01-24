@@ -3,24 +3,31 @@ package handler
 import (
 	"context"
 	"hub/infra/mapper"
+	"hub/internal/repo"
 	_usecase "hub/internal/usecase"
 	hubpb "pb/types/hub"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type InternalHandler struct {
 	hubpb.UnimplementedHubInternalServiceServer
-	locationUsecase _usecase.ILocationUsecase
-	locationMapper  *mapper.LocationMapper
+	locationUsecase      _usecase.ILocationUsecase
+	locationMapper       *mapper.LocationMapper
+	InteractiveEventRepo repo.IInteractiveEventRepo
 }
 
 func NewInternalHandler(
 	locationUsecase _usecase.ILocationUsecase,
 	locationMapper *mapper.LocationMapper,
+	interactiveEventRepo repo.IInteractiveEventRepo,
 ) *InternalHandler {
 	return &InternalHandler{
-		locationUsecase: locationUsecase,
-		locationMapper:  locationMapper,
+		locationUsecase:      locationUsecase,
+		locationMapper:       locationMapper,
+		InteractiveEventRepo: interactiveEventRepo,
 	}
 }
 
@@ -33,6 +40,30 @@ func NewInternalHandler(
 func (h *InternalHandler) HealthCheck(ctx context.Context, req *sharepb.Empty) (*sharepb.SubmitResponse, error) {
 	return &sharepb.SubmitResponse{
 		Message: "Hub service is running",
+	}, nil
+}
+
+func (s *InternalHandler) GetProductStatsView(
+	ctx context.Context,
+	req *hubpb.GetProductStatsViewRequest,
+) (*hubpb.GetProductStatsViewResponse, error) {
+	rsl, err := s.InteractiveEventRepo.GetProductStatsView(
+		ctx,
+		req.ProductId,
+		req.FromTime,
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	if rsl == nil {
+		return &hubpb.GetProductStatsViewResponse{}, nil
+	}
+
+	return &hubpb.GetProductStatsViewResponse{
+		ViewCount:     rsl.ViewCount,
+		TotalDuration: rsl.TotalDuration,
+		MaxEventTime:  rsl.MaxEventTime,
 	}, nil
 }
 

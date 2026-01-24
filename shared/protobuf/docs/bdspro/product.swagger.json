@@ -86,6 +86,38 @@
         ]
       }
     },
+    "/v2/bdspro/v2/product/archive": {
+      "post": {
+        "operationId": "ProductService_ArchiveProducts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbArchiveProductsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/archived": {
       "put": {
         "operationId": "ProductService_ArchiveProduct",
@@ -3212,6 +3244,21 @@
         }
       }
     },
+    "bdspropbArchiveProductsRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "archived": {
+          "type": "boolean"
+        }
+      }
+    },
     "bdspropbArchivedRequest": {
       "type": "object",
       "properties": {
@@ -4403,30 +4450,6 @@
         }
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
-    },
-    "bdspropbProductAttachmentResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductAttachment"
-          }
-        }
-      }
-    },
-    "bdspropbProductInternalResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/bdspropbProductResponse"
-          }
-        }
-      }
     },
     "bdspropbProductNavigationResponse": {
       "type": "object",

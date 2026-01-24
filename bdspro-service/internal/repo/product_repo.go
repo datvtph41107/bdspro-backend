@@ -15,6 +15,8 @@ import (
 type ProductRepo interface {
 	crud3.CrudRepo[domain.Product]
 
+	UpdateViewStats(ctx context.Context, stats *domain.ProductStats, oldLastTime int64) error
+
 	GetPrivateByProductID(ctx context.Context, productID uint64) (*domain.ProductPrivate, error)
 
 	// LastPriceId Product Owner

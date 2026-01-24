@@ -91,9 +91,9 @@ service PropertyService {
     };
   };
 
-  rpc ArchiveProducts(ArchiveProductsRequest) returns (Response) {
+  rpc ArchiveProducts(ArchiveProductUsersRequest) returns (Response) {
     option (google.api.http) = {
-      post: "/v2/bdspro/v2/product/archive"
+      post: "/v2/bdspro/v2/product/user/archive"
       body: "*"
     };
   };
@@ -128,7 +128,7 @@ message ArchivePropertiesRequest {
   bool archived = 2;
 }
 
-message ArchiveProductsRequest {
+message ArchiveProductUsersRequest {
   repeated uint64 ids = 1;
   bool archived = 2;
 }

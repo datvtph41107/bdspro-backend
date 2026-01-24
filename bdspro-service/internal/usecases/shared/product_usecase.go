@@ -68,6 +68,8 @@ type ProductUsecase struct {
 	CrmProvider      provider.CrmProvider
 	UserProvider     provider.IUserProvider
 	DistributionRepo repo.DistributeRepository
+
+	HubProvider provider.HubProvider
 }
 
 func NewProductUsecase(
@@ -100,6 +102,7 @@ func NewProductUsecase(
 	crmProvider provider.CrmProvider,
 	userProvider provider.IUserProvider,
 	distributionRepo repo.DistributeRepository,
+	hubProvider provider.HubProvider,
 ) *ProductUsecase {
 	result := &ProductUsecase{
 		ProductRepo:        productRepo,
@@ -133,11 +136,49 @@ func NewProductUsecase(
 		CrmProvider:      crmProvider,
 		UserProvider:     userProvider,
 		DistributionRepo: distributionRepo,
+		HubProvider:      hubProvider,
 	}
 
 	result.PostUsecase.ProductUsecase = result
 
 	return result
+}
+
+func (u *ProductUsecase) ViewProductStats(ctx context.Context, stats *domain.ProductStats) error {
+	lastTime := stats.LastViewEventTime
+	rsl, err := u.HubProvider.GetProductStatsViewClient(
+		ctx,
+		stats.ProductID,
+		lastTime,
+	)
+	if err != nil {
+		return err
+	}
+	if rsl == nil || rsl.ViewCount == 0 {
+		return nil
+	}
+	// tính total views mới
+	oldViews := stats.TotalViews
+	newTotalViews := oldViews + rsl.ViewCount
+
+	// tính duration
+	if rsl.TotalDuration > 0 {
+		oldDurationTotal := uint64(stats.DurationViews)
+		// oldAvg := uint64(stats.DurationViews)
+		// newAvg := float64(oldAvg*oldViews+rsl.TotalDuration) / float64(newTotalViews)
+		newDurationTotal := oldDurationTotal + rsl.TotalDuration
+		stats.DurationViews = uint32(newDurationTotal)
+	}
+
+	stats.TotalViews = newTotalViews
+	stats.LastViewEventTime = rsl.MaxEventTime
+	stats.LastUpdatedAt = time.Now().Unix()
+
+	return u.ProductRepo.UpdateViewStats(
+		ctx,
+		stats,
+		lastTime,
+	)
 }
 
 // func MakeProductUsecase(

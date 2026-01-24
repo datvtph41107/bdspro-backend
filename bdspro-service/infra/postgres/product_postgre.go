@@ -41,6 +41,31 @@ func NewGormUserProductRepo(db *gorm.DB,
 	}
 }
 
+func (r *GormUserProductRepo) UpdateViewStats(
+	ctx context.Context,
+	stats *domain.ProductStats,
+	oldLastTime int64,
+) error {
+	tx := GetDB(ctx, r.db).
+		Model(&domain.ProductStats{}).
+		Where(
+			"product_id = ? AND last_view_event_time = ?",
+			stats.ProductID,
+			oldLastTime,
+		).
+		Updates(map[string]interface{}{
+			"total_views":          stats.TotalViews,
+			"duration_views":       stats.DurationViews,
+			"last_view_event_time": stats.LastViewEventTime,
+			"last_updated_at":      stats.LastUpdatedAt,
+		})
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
 func (r *GormUserProductRepo) GetPrivateByProductID(
 	ctx context.Context,
 	productID uint64,

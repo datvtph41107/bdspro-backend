@@ -7,6 +7,7 @@ import (
 )
 
 type NotificationProvider interface {
+	// _provider.NotificationProvider
 	UserInGroup(ctx context.Context, userID uint64, groupID uint64) (bool, error)
 	SendNoti(ctx context.Context, noti *_dto.NotificationDTO) error
 	SendBatch(ctx context.Context, noti *_dto.NotificationBatchDTO) error

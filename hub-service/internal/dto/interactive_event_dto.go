@@ -12,3 +12,9 @@ type TrackInteractiveEventRequest struct {
 type TrackInteractiveEventBatchRequest struct {
 	Events []TrackInteractiveEventRequest `json:"events"`
 }
+
+type ViewStatsProduct struct {
+	ViewCount     uint64
+	TotalDuration uint64
+	MaxEventTime  int64
+}
