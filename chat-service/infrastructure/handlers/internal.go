@@ -29,6 +29,7 @@ type conversationUsecases interface {
 }
 
 type messageUsecases interface {
+	GetMessagesByIndex(ctx context.Context, conversationId uint64, fromIdx uint64, toIdx uint64) ([]*models.MessageModel, error)
 	SendMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error)
 	SendToReceiver(ctx context.Context, message *models.MessageModel, receiverID *uint64) (*models.MessageModel, error)
 	GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)

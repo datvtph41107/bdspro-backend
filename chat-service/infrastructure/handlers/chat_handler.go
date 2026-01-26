@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -18,7 +19,6 @@ import (
 	"chat/internal/constants"
 	"chat/models"
 	"chat/utils"
-	_errors "errors"
 
 	"github.com/hyperledger/fabric/common/flogging"
 )
@@ -175,56 +175,7 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRe
 		return nil, err
 	}
 
-	return s.ResponseMessage(ctx, message)
-}
-
-func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.MessageModel) (*chatpb.SendMessageResponse, error) {
-	event := &chatpb.SendMessage{
-		Type: constants.MESSAGE_TYPE,
-		Data: &chatpb.Message{
-			MessageId:   int32(message.ID),
-			SenderId:    int32(message.SenderID),
-			Content:     message.Content,
-			ContentType: string(message.ContentType),
-			FileUrl:     message.FileURL,
-			RoomId:      strconv.FormatUint(message.ConversationID, 10),
-			CreatedAt:   message.CreatedAt.Local().Format(time.RFC3339),
-			IsRecall:    message.Recall,
-			ExtraId:     message.ExtraId,
-		},
-	}
-	if message.ReplyMessage != nil {
-		event.Data.ReplyMessage = &chatpb.Message{
-			MessageId:   int32(message.ReplyMessage.ID),
-			SenderId:    int32(message.ReplyMessage.SenderID),
-			Content:     message.ReplyMessage.Content,
-			ContentType: string(message.ReplyMessage.ContentType),
-			FileUrl:     message.ReplyMessage.FileURL,
-			RoomId:      strconv.FormatUint(message.ReplyMessage.ConversationID, 10),
-			CreatedAt:   message.ReplyMessage.CreatedAt.Local().Format(time.RFC3339),
-			IsRecall:    message.ReplyMessage.Recall,
-		}
-	}
-
-	user, _ := s.userClient.GetUserById(ctx, message.SenderID)
-	if user != nil {
-		event.Data.FullName = &user.FullName
-		event.Data.Avatar = &user.Avatar
-	}
-
-	s.eventChannel <- event
-
-	updateRoomEvent := &chatpb.UpdateRoomMessage{
-		Type: constants.UPDATE_ROOM_TYPE,
-		Data: &chatpb.UpdateRoomMessageData{
-			RoomId: strconv.FormatUint(message.ConversationID, 10),
-		},
-	}
-	s.eventChannel <- updateRoomEvent
-	return &chatpb.SendMessageResponse{
-		MessageId: int32(message.ID),
-		CreatedAt: message.CreatedAt.Local().Format(time.RFC3339),
-	}, nil
+	return s.ResponseMessage(ctx, message, req.CmId)
 }
 
 // @Summary Gửi tin nhắn đến người nhận
@@ -237,23 +188,31 @@ func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.Messa
 // @Success 200 {object} chatpb.SendToReceiverResponse
 // @Router /messages/to-receiver [post]
 func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
-	receiverID := req.ReceiverId
-	if receiverID == nil {
-		return nil, _errors.New("receiverId is required")
+	if req.ReceiverId == nil {
+		return nil, _errors.BadRequestException("receiverId is required")
 	}
-	message, err := s.messageUsecases.SendToReceiver(ctx, &models.MessageModel{
-		ConversationID: uint64(req.ConversationId),
-		SenderID:       uint64(req.SenderId),
-		Content:        req.Content,
-		ContentType:    models.ContentTypeEnum(req.ContentType),
-		FileURL:        req.FileUrl,
-		ReplyId:        req.ReplyId,
-		ExtraId:        req.ExtraId,
-	}, req.ReceiverId)
+
+	message, err := s.messageUsecases.SendToReceiver(
+		ctx,
+		&models.MessageModel{
+			ConversationID: uint64(req.ConversationId),
+			SenderID:       uint64(req.SenderId),
+			Content:        req.Content,
+			ContentType:    models.ContentTypeEnum(req.ContentType),
+			FileURL:        req.FileUrl,
+			ReplyId:        req.ReplyId,
+			ExtraId:        req.ExtraId,
+		},
+		req.ReceiverId,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	return s.ResponseMessage(ctx, message, req.CmId)
+}
+
+func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.MessageModel, cmId int32) (*chatpb.SendMessageResponse, error) {
 	event := &chatpb.SendMessage{
 		Type: constants.MESSAGE_TYPE,
 		Data: &chatpb.Message{
@@ -265,6 +224,9 @@ func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessag
 			RoomId:      strconv.FormatUint(message.ConversationID, 10),
 			CreatedAt:   message.CreatedAt.Local().Format(time.RFC3339),
 			IsRecall:    message.Recall,
+			ExtraId:     message.ExtraId,
+			CmId:        cmId,
+			IndexKey:    message.IndexKey,
 		},
 	}
 	if message.ReplyMessage != nil {
@@ -298,7 +260,23 @@ func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessag
 	return &chatpb.SendMessageResponse{
 		MessageId: int32(message.ID),
 		CreatedAt: message.CreatedAt.Local().Format(time.RFC3339),
+		CmId:      cmId,
+		IndexKey:  message.IndexKey,
 	}, nil
+}
+
+func (s *chatHandler) GetMessagesByIndex(ctx context.Context, req *chatpb.GetMessagesByIndexRequest) (*chatpb.GetMessagesResponse, error) {
+	messages, err := s.messageUsecases.GetMessagesByIndex(
+		ctx,
+		req.ConversationId,
+		req.FromIdx,
+		req.ToIdx,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.buildGetMessagesResponse(ctx, messages), nil
 }
 
 // @Summary Lấy danh sách tin nhắn
@@ -311,44 +289,54 @@ func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessag
 // @Success 200 {object} chatpb.GetMessagesResponse
 // @Router /messages [get]
 func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
-	var limit, offset int64
-	var sort string
-	var fromDate, toDate *time.Time
+	limit := int64(10)
+	offset := int64(0)
+	sort := "desc"
+
 	if req.Limit != nil {
 		limit = int64(*req.Limit)
-	} else {
-		limit = 10
 	}
-
 	if req.Offset != nil {
 		offset = int64(*req.Offset)
-	} else {
-		offset = 0
 	}
-
 	if req.Sort != nil {
 		sort = *req.Sort
-	} else {
-		sort = "desc"
 	}
 
+	var fromDate, toDate *time.Time
 	if req.FromDate != nil {
-		tempFromDate := _utils.ParseStringToTime(*req.FromDate)
-		fromDate = tempFromDate
+		fromDate = _utils.ParseStringToTime(*req.FromDate)
 	}
-
 	if req.ToDate != nil {
-		tempToDate := _utils.ParseStringToTime(*req.ToDate)
-		toDate = tempToDate
+		toDate = _utils.ParseStringToTime(*req.ToDate)
 	}
 
-	messages, err := s.messageUsecases.GetMessages(ctx, limit, offset, uint64(req.ConversationId), sort, fromDate, toDate)
+	messages, err := s.messageUsecases.GetMessages(
+		ctx,
+		limit,
+		offset,
+		uint64(req.ConversationId),
+		sort,
+		fromDate,
+		toDate,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	return s.buildGetMessagesResponse(ctx, messages), nil
+}
+
+func (s *chatHandler) buildGetMessagesResponse(
+	ctx context.Context,
+	messages []*models.MessageModel,
+) *chatpb.GetMessagesResponse {
+
 	var pbMessages []*chatpb.Message
+
 	for _, msg := range messages {
+
+		// message đã recall
 		if msg.Recall {
 			pbMessages = append(pbMessages, &chatpb.Message{
 				MessageId: int32(msg.ID),
@@ -358,7 +346,8 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 			})
 			continue
 		}
-		newMessage := &chatpb.Message{
+
+		pbMsg := &chatpb.Message{
 			MessageId:   int32(msg.ID),
 			SenderId:    int32(msg.SenderID),
 			Content:     msg.Content,
@@ -369,8 +358,10 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 			IsRecall:    msg.Recall,
 			ExtraId:     msg.ExtraId,
 		}
+
+		// reply message
 		if msg.ReplyMessage != nil {
-			newMessage.ReplyMessage = &chatpb.Message{
+			pbMsg.ReplyMessage = &chatpb.Message{
 				MessageId:   int32(msg.ReplyMessage.ID),
 				SenderId:    int32(msg.ReplyMessage.SenderID),
 				Content:     msg.ReplyMessage.Content,
@@ -380,28 +371,31 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 				CreatedAt:   msg.ReplyMessage.CreatedAt.Local().Format(time.RFC3339),
 			}
 		}
-		if msg.Reactions != nil {
-			newMessage.Reactions = make([]*chatpb.MessageReaction, len(msg.Reactions))
-			for i, reaction := range msg.Reactions {
-				newMessage.Reactions[i] = &chatpb.MessageReaction{
-					UserId:    int32(reaction.UserID),
-					MessageId: int32(reaction.MessageID),
-					CreatedAt: reaction.CreatedAt.Local().Format(time.RFC3339),
-					Reaction:  reaction.Reaction,
-					Id:        uint64(reaction.ID),
-				}
+
+		// reactions
+		if len(msg.Reactions) > 0 {
+			pbMsg.Reactions = make([]*chatpb.MessageReaction, 0, len(msg.Reactions))
+			for _, r := range msg.Reactions {
+				pbMsg.Reactions = append(pbMsg.Reactions, &chatpb.MessageReaction{
+					Id:        uint64(r.ID),
+					UserId:    int32(r.UserID),
+					MessageId: int32(r.MessageID),
+					Reaction:  r.Reaction,
+					CreatedAt: r.CreatedAt.Local().Format(time.RFC3339),
+				})
 			}
 		}
 
-		pbMessages = append(pbMessages, newMessage)
+		pbMessages = append(pbMessages, pbMsg)
 	}
 
+	// enrich data
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, pbMessages)
 	s.bdsproClient.MapProductPbByIds(ctx, pbMessages)
 
 	return &chatpb.GetMessagesResponse{
 		Messages: pbMessages,
-	}, nil
+	}
 }
 
 // @Summary Chuyển tiếp tin nhắn

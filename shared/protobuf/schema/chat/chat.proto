@@ -180,6 +180,11 @@ service ChatService {
       get: "/v2/chat/unread-count"
     };
   };
+  rpc GetMessagesByIndex (GetMessagesByIndexRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/messages/{conversationId}"
+    };
+  };
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
   rpc GetMembersOfRoom(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
 }
@@ -255,11 +260,14 @@ message SendMessageRequest {
   optional uint64 replyId  = 6;
   optional uint64 extraId = 7;
   optional uint64 receiverId = 8;
+  int32 cmId = 9;
 }
 
 message SendMessageResponse {
   int32 messageId = 1;
   string createdAt = 2;
+  int32 cmId = 3;
+  uint64 indexKey = 4;
 }
 
 message GetMessagesRequest {
@@ -291,6 +299,14 @@ message Message {
   optional string avatar = 12;
   optional uint64 extraId = 13;
   optional bdspropb.ProductAttachment product = 14;
+  uint64 indexKey = 15;
+  int32 cmId = 16;
+}
+
+message GetMessagesByIndexRequest {
+  uint64 conversationId = 1;
+  uint64 fromIdx = 2;
+  uint64 toIdx = 3;
 }
 
 message ForwardMessageRequest {

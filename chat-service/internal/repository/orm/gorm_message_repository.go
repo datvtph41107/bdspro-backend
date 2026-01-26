@@ -8,7 +8,54 @@ import (
 	"chat/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+func (r *gormRepository) GetMessagesByIndex(
+	ctx context.Context,
+	conversationId uint64,
+	fromIdx uint64,
+	toIdx uint64,
+) ([]*models.MessageModel, error) {
+	var messages []*models.MessageModel
+
+	q := r.db.WithContext(ctx).
+		Where("conversation_id = ?", conversationId).
+		Where("index_key > ?", fromIdx).
+		Order("index_key ASC")
+
+	if toIdx > 0 {
+		q = q.Where("index_key <= ?", toIdx)
+	}
+
+	err := q.
+		Preload("ReplyMessage").
+		Preload("Reactions").
+		Find(&messages).Error
+
+	return messages, err
+}
+
+func (r *gormRepository) GetLastIndexKeyForUpdate(
+	ctx context.Context,
+	conversationId uint64,
+) (uint64, error) {
+	var last uint64
+	err := r.db.WithContext(ctx).
+		Model(&models.MessageModel{}).
+		Select("index_key").
+		Where("conversation_id = ?", conversationId).
+		Order("index_key DESC").
+		Limit(1).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Scan(&last).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return last, nil
+}
 
 func (r *gormRepository) CreateMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error) {
 	return message, r.db.WithContext(ctx).Create(message).Error

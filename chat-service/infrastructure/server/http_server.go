@@ -46,11 +46,12 @@ func NewHTTPServer(port string) *HTTPServer {
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
+	transactionGorm := repository.NewTransactionGorm(db)
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
 	bdsproClient := client.NewBdsproClient()
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
-	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase)
+	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase, transactionGorm)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)

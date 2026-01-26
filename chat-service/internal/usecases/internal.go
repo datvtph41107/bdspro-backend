@@ -18,6 +18,8 @@ type Repository interface {
 	GetMessageByTypeWithPagination(ctx context.Context, limit int64, offset int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error)
 	GetUnreadCount(ctx context.Context, userId uint64) (int64, error)
 
+	GetMessagesByIndex(ctx context.Context, uint64, fromIdx uint64, toIdx uint64) ([]*models.MessageModel, error)
+	GetLastIndexKeyForUpdate(ctx context.Context, conversationId uint64) (uint64, error)
 	CreateMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error)
 	CreateMessages(ctx context.Context, messages []*models.MessageModel) ([]*models.MessageModel, error)
 	GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)

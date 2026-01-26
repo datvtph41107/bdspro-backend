@@ -17,14 +17,15 @@ const (
 
 type MessageModel struct {
 	ID             uint64                  `json:"id" gorm:"primaryKey;autoIncrement"`
-	ConversationID uint64                  `json:"conversation_id" gorm:"index:idx_conversation_created"`
+	ConversationID uint64                  `json:"conversation_id" gorm:"index:idx_conversation_created,priority:1"`
+	IndexKey       uint64                  `json:"index_key" gorm:"index:idx_conversation_created,priority:2"`
 	SenderID       uint64                  `json:"sender_id"`
 	Content        string                  `json:"content" gorm:"type:text"`
 	ContentType    ContentTypeEnum         `json:"content_type" gorm:"type:varchar(50)"`
 	FileURL        *string                 `json:"file_url" gorm:"type:varchar(500)"`
 	ForwardFrom    *uint64                 `json:"forward_from"`
 	DeletedAt      *time.Time              `gorm:"index" json:"-"`
-	CreatedAt      time.Time               `json:"created_at" gorm:"index:idx_conversation_created;default:CURRENT_TIMESTAMP"`
+	CreatedAt      time.Time               `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
 	Pined          bool                    `json:"pin" gorm:"default:false"`
 	PinnedAt       *time.Time              `json:"pinned_at" gorm:"column:pinned_at"`
 	Recall         bool                    `json:"recall" gorm:"default:false"`

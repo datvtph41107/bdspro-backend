@@ -841,6 +841,51 @@
         ]
       }
     },
+    "/v2/chat/messages/{conversationId}": {
+      "get": {
+        "operationId": "ChatService_GetMessagesByIndex",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatpbGetMessagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "fromIdx",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "toIdx",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ChatService"
+        ]
+      }
+    },
     "/v2/chat/messages/{conversationId}/pinned": {
       "get": {
         "operationId": "ChatService_GetPinnedMessages",
@@ -1792,6 +1837,14 @@
         },
         "product": {
           "$ref": "#/definitions/bdspropbProductAttachment"
+        },
+        "indexKey": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "cmId": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2044,6 +2097,10 @@
         "receiverId": {
           "type": "string",
           "format": "uint64"
+        },
+        "cmId": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2056,6 +2113,14 @@
         },
         "createdAt": {
           "type": "string"
+        },
+        "cmId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "indexKey": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },

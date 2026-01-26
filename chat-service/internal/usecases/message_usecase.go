@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"chat/infrastructure/delivery/errors"
+	"chat/infrastructure/provider"
 	_utils "common/utils"
 	"context"
 	"time"
@@ -13,12 +14,14 @@ import (
 type messageUsecases struct {
 	repo                 Repository
 	conversationUsecases *conversationUsecases
+	transaction          provider.TransactionProvider
 }
 
-func NewMessageUsecases(repository Repository, conversationUsecases *conversationUsecases) *messageUsecases {
+func NewMessageUsecases(repository Repository, conversationUsecases *conversationUsecases, transaction provider.TransactionProvider) *messageUsecases {
 	return &messageUsecases{
 		repo:                 repository,
 		conversationUsecases: conversationUsecases,
+		transaction:          transaction,
 	}
 }
 
@@ -52,24 +55,51 @@ func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.Me
 }
 
 func (c *messageUsecases) SendMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error) {
-	err := c.validateConversationAndCurrentUser(ctx, message.ConversationID)
-	if err != nil {
+	if err := c.validateConversationAndCurrentUser(ctx, message.ConversationID); err != nil {
 		return nil, err
 	}
 	message.SenderID = utils.GetCurrentUserID(ctx)
 
-	data, err := c.repo.CreateMessage(ctx, message)
+	var result *models.MessageModel
+	err := c.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		indexKey, err := c.repo.GetLastIndexKeyForUpdate(
+			txCtx,
+			message.ConversationID,
+		)
+		if err != nil {
+			return err
+		}
+
+		message.IndexKey = indexKey
+		data, err := c.repo.CreateMessage(txCtx, message)
+		if err != nil {
+			return err
+		}
+		if data.ReplyId != nil {
+			reply, err := c.repo.FindMessageByID(txCtx, *data.ReplyId)
+			if err != nil {
+				return err
+			}
+			data.ReplyMessage = reply
+		}
+
+		result = data
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	if message.ReplyId != nil {
-		replyMessage, err := c.repo.FindMessageByID(ctx, *message.ReplyId)
-		if err != nil {
-			return nil, err
-		}
-		data.ReplyMessage = replyMessage
+
+	return result, nil
+}
+
+func (c *messageUsecases) GetMessagesByIndex(ctx context.Context, conversationId uint64, fromIdx uint64, toIdx uint64) ([]*models.MessageModel, error) {
+	if err := c.validateConversationAndCurrentUser(ctx, conversationId); err != nil {
+		return nil, err
 	}
-	return data, nil
+
+	return c.repo.GetMessagesByIndex(ctx, conversationId, fromIdx, toIdx)
 }
 
 func (c *messageUsecases) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {

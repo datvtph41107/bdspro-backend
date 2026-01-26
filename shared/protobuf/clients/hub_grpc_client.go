@@ -53,8 +53,6 @@ func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
 	return hubClient
 }
 
-
-
 func (c *HubGrpcClient) InferAddressFromText(ctx context.Context, text string) (*_dto.AddressV3DTO, error) {
 	if c == nil || c.InternalClient == nil {
 		return nil, _errors.ReturnError(500, "hub client not avaiable")
