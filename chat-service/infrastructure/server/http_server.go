@@ -16,6 +16,7 @@ import (
 	"chat/infrastructure/mapper"
 	middlewares "chat/infrastructure/middleware"
 	"chat/internal/repository"
+	"chat/internal/repository/orm"
 	"chat/internal/usecases"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -46,7 +47,7 @@ func NewHTTPServer(port string) *HTTPServer {
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
-	transactionGorm := repository.NewTransactionGorm(db)
+	transactionGorm := orm.NewTransactionGorm(db)
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
 	bdsproClient := client.NewBdsproClient()

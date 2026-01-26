@@ -1,4 +1,4 @@
-package repository
+package orm
 
 import (
 	"chat/infrastructure/provider"

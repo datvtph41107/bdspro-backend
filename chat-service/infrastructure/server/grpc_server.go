@@ -16,6 +16,7 @@ import (
 	"chat/infrastructure/handlers"
 	"chat/infrastructure/mapper"
 	"chat/internal/repository"
+	"chat/internal/repository/orm"
 	"chat/internal/usecases"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -42,7 +43,7 @@ func NewGRPCServer(port string) *GRPCServer {
 	userClient := client.NewUserClient()
 	bdsproClient := client.NewBdsproClient()
 	// conversationMapper := mapper.NewConversationMapper()
-	transactionGorm := repository.NewTransactionGorm(db)
+	transactionGorm := orm.NewTransactionGorm(db)
 
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
 	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase, transactionGorm)
