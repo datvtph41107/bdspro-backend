@@ -1177,6 +1177,38 @@
         ]
       }
     },
+    "/v2/chat/typing": {
+      "post": {
+        "operationId": "ChatService_GetStateTyping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatpbStateTypingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/chatpbStateTypingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChatService"
+        ]
+      }
+    },
     "/v2/chat/unread-count": {
       "get": {
         "operationId": "ChatService_UnreadCount",
@@ -2138,6 +2170,26 @@
       }
     },
     "chatpbSetBackgroundImageResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "chatpbStateTypingRequest": {
+      "type": "object",
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isTyping": {
+          "type": "boolean"
+        }
+      }
+    },
+    "chatpbStateTypingResponse": {
       "type": "object",
       "properties": {
         "success": {

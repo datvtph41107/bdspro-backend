@@ -230,6 +230,14 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 				}
 			}
 		}
+	case constants.TYPING_MESSAGE_TYPE:
+		var roomID string
+		if id, ok := m["roomId"].(string); ok {
+			roomID = id
+		}
+		if roomID != "" {
+			h.sendToRoom(roomID, data)
+		}
 
 	case constants.RECALL_MESSAGE_TYPE,
 		constants.EDIT_MESSAGE_TYPE,

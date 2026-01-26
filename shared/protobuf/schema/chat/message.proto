@@ -174,3 +174,14 @@ message ReactionMessage {
   string type = 1;
   MessageReaction data = 2;
 }
+
+message TypingData {
+  uint64 roomId = 1;
+  uint64 userId = 2;
+  bool isTyping = 3;
+}
+
+message TypingMessage {
+  string type = 1;
+  TypingData data = 2;
+}

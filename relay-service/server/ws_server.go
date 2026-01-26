@@ -53,6 +53,7 @@ func NewWSServer(port string) *WSServer {
 		WriteTimeout:   parseTimeout(config.AppProperties.Timeout.Write),
 		MaxHeaderBytes: 1 << 20,
 	}
+	// start runner wshandle
 	go wsHandler.SubscribeToRedisChannel(constants.API_WS_CHANNEL)
 	return &WSServer{
 		server: server,

@@ -185,8 +185,23 @@ service ChatService {
       get: "/v2/chat/messages/{conversationId}"
     };
   };
+  rpc GetStateTyping (StateTypingRequest) returns (StateTypingResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/typing"
+      body: "*"
+    };
+  }
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
   rpc GetMembersOfRoom(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
+}
+
+message StateTypingRequest {
+  uint64 conversationId = 1;
+  bool isTyping = 2;
+}
+
+message StateTypingResponse {
+  bool success = 1;
 }
 
 message UnreadCountResponse {

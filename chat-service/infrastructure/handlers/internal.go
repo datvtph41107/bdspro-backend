@@ -5,10 +5,14 @@ import (
 	"time"
 
 	"chat/models"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type redisClient interface {
 	Publish(ctx context.Context, channel string, message string) error
+	Subscribe(ctx context.Context, channel string) *redis.PubSub
+	Close() error
 }
 type conversationUsecases interface {
 	CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error)

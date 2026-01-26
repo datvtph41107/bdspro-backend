@@ -105,3 +105,7 @@ func (r *RedisClient) ReadStream(ctx context.Context, stream, consumerGroup, con
 
 	return messages, nil
 }
+
+func (r *RedisClient) Close() error {
+	return r.client.Close()
+}

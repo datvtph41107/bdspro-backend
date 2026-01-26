@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -30,46 +31,55 @@ func NewRedisClientWorker(parent *chatHandler, redisClient redisClient, logger *
 }
 
 func (r *redisClientWorker) serve() {
-	for event := range r.parent.eventChannel {
-		r.parent.logger.Infof("Received event: %v", event)
+	for {
+		select {
+		case event := <-r.parent.eventChannel:
+			r.handleEvent(event)
 
-		switch v := event.(type) {
-
-		case *chatpb.UpdateRoomMessage:
-			members, err := r.parent.participantUsecases.InternalGetListParticipant(r.ctx, v.Data.RoomId)
-			if err != nil {
-				r.parent.logger.Errorf("Failed to get list participant: %v", err)
-				continue
-			}
-
-			// Gán UserIds nếu field có trong protobuf
-			if v.Data != nil {
-				userIds := make([]string, 0, len(members))
-				for _, member := range members {
-					userIds = append(userIds, strconv.FormatUint(member.UserID, 10))
-				}
-				v.Data.Members = userIds
-			}
-
-			r.publishToRedis(v)
-
-		default:
-			r.publishToRedis(v)
+		case <-r.ctx.Done():
+			r.parent.logger.Info("Redis worker stopped")
+			return
 		}
 	}
 }
 
-func (s *redisClientWorker) publishToRedis(event any) {
+func (r *redisClientWorker) handleEvent(event any) {
+	switch v := event.(type) {
+
+	case *chatpb.UpdateRoomMessage:
+		fmt.Println("EVENT IS UpdateRoomMessage")
+		members, err := r.parent.participantUsecases.InternalGetListParticipant(r.ctx, v.Data.RoomId)
+		if err != nil {
+			r.parent.logger.Errorf("Get participants error: %v", err)
+			return
+		}
+
+		userIds := make([]string, 0, len(members))
+		for _, m := range members {
+			userIds = append(userIds, strconv.FormatUint(m.UserID, 10))
+		}
+		v.Data.Members = userIds
+
+		r.publish(v)
+	default:
+		fmt.Println("EVENT IS SendMessage")
+		r.publish(v)
+	}
+}
+
+func (r *redisClientWorker) publish(event any) {
+	fmt.Printf("REDIS PUBLISSHHSHSSHSHHSH WORKER HANDLE EVENT: %T\n", event)
+
 	data, err := json.Marshal(event)
 	if err != nil {
-		s.parent.logger.Errorf("Failed to marshal message: %v", err)
+		r.parent.logger.Errorf("Marshal error: %v", err)
+		return
 	}
 
-	redisCtx, cancel := context.WithTimeout(context.Background(), s.requestRedisTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), r.requestRedisTimeout)
 	defer cancel()
 
-	err = s.redisClient.Publish(redisCtx, constants.API_WS_CHANNEL, string(data))
-	if err != nil {
-		s.parent.logger.Errorf("Failed to publish message to Redis: %v", err)
+	if err := r.redisClient.Publish(ctx, constants.API_WS_CHANNEL, string(data)); err != nil {
+		r.parent.logger.Errorf("Redis publish error: %v", err)
 	}
 }

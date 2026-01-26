@@ -18,7 +18,7 @@ const (
 type MessageModel struct {
 	ID             uint64                  `json:"id" gorm:"primaryKey;autoIncrement"`
 	ConversationID uint64                  `json:"conversation_id" gorm:"index:idx_conversation_created,priority:1"`
-	IndexKey       uint64                  `json:"index_key" gorm:"index:idx_conversation_created,priority:2"`
+	IndexKey       uint64                  `json:"index_key" gorm:"index:idx_conversation_created;priority:2;default:0"`
 	SenderID       uint64                  `json:"sender_id"`
 	Content        string                  `json:"content" gorm:"type:text"`
 	ContentType    ContentTypeEnum         `json:"content_type" gorm:"type:varchar(50)"`

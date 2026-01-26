@@ -161,7 +161,6 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConve
 // @Success 200 {object} chatpb.SendMessageResponse
 // @Router /messages [post]
 func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
-	fmt.Println("req", req)
 	message, err := s.messageUsecases.SendMessage(ctx, &models.MessageModel{
 		ConversationID: uint64(req.ConversationId),
 		SenderID:       uint64(req.SenderId),
@@ -277,6 +276,30 @@ func (s *chatHandler) GetMessagesByIndex(ctx context.Context, req *chatpb.GetMes
 	}
 
 	return s.buildGetMessagesResponse(ctx, messages), nil
+}
+
+func (s *chatHandler) GetStateTyping(ctx context.Context, req *chatpb.StateTypingRequest) (*chatpb.StateTypingResponse, error) {
+	userId := utils.GetCurrentUserID(ctx)
+	if userId == 0 {
+		return nil, _errors.UnauthorizedException("missing user_id")
+	}
+
+	err := s.conversationUsecases.ValidateConversationAndCurrentUser(ctx, req.ConversationId)
+	if err != nil {
+		return nil, err
+	}
+
+	event := &chatpb.TypingMessage{
+		Type: constants.TYPING_MESSAGE_TYPE,
+		Data: &chatpb.TypingData{
+			RoomId:   req.ConversationId,
+			UserId:   userId,
+			IsTyping: req.IsTyping,
+		},
+	}
+	s.eventChannel <- event
+
+	return &chatpb.StateTypingResponse{Success: true}, nil
 }
 
 // @Summary Lấy danh sách tin nhắn

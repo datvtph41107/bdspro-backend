@@ -3,6 +3,7 @@ package wshandler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -209,7 +210,7 @@ func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
 				wsLogger.Errorf("Invalid JSON format: %v", err)
 				continue
 			}
-
+			fmt.Printf("redisMsg REDIS MESSSAGEGEGEEGEGEGE  FFDDFF: %v", redisMsg)
 			h.broadcastMessage(redisMsg)
 		}
 	}()
@@ -339,6 +340,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 			wsLogger.Errorf("Failed to parse roomId or userId in REMOVE_MEMBER_TYPE")
 		}
 	case constants.UPDATE_ROOM_TYPE:
+		fmt.Printf("UPDDATEETETETE ROROOOMMMMMM TPPYPYPYP")
 		if rawMembers, ok := m["members"].([]any); ok {
 			members, err := utils.ParseUint64Slice(rawMembers)
 			if err != nil {
@@ -366,7 +368,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		constants.DELETE_VIOLATION_MESSAGE_TYPE,
 		constants.READ_TYPE,
 		constants.MESSAGE_TYPE:
-
+		fmt.Printf("MESSAGEGEGEG TPYEEPEPEPEPEPEP CALLL")
 		// Truyền tin nhắn đến phòng theo loại sự kiện
 		if roomID, ok := utils.ParseUint64(m["roomId"]); ok {
 			h.sendToRoom(roomID, data)
@@ -461,17 +463,17 @@ func (h *WebSocketHandler) loadMemberOfRoom(roomID uint64) {
 }
 
 func (h *WebSocketHandler) loadRoomsOfMember(userId uint64) {
-	// roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
-	// if err != nil {
-	// 	wsLogger.Errorf("Invalid roomId format: %v", err)
-	// 	return
-	// }
-	members, err := h.chatClient.GetRoomsOfMember(context.Background(), userId)
+	roomIDs, err := h.chatClient.GetRoomsOfMember(context.Background(), userId)
 	if err != nil {
-		wsLogger.Errorf("Failed to get room members: %v", err)
+		wsLogger.Errorf("Failed to get rooms of member: %v", err)
 		return
 	}
-	h.rooms[userId] = members
+
+	for _, roomID := range roomIDs {
+		if _, ok := h.rooms[roomID]; !ok {
+			h.loadMemberOfRoom(roomID)
+		}
+	}
 }
 
 func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
@@ -601,6 +603,7 @@ func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userI
 	}
 
 	// Chỉ gửi notification cho message type
+	wsLogger.Errorf("Failed : %v", msg.Type)
 	if msg.Type != constants.MESSAGE_TYPE {
 		return
 	}
@@ -635,7 +638,7 @@ func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userI
 		},
 	)
 	if err != nil {
-		wsLogger.Errorf("Failed to send notification to user %d: %v", userID, err)
+		// wsLogger.Errorf("Failed to send notification to user %d: %v", userID, err)
 	} else {
 		wsLogger.Infof("Sent notification to user %d for message in room %d", userID, roomID)
 	}
