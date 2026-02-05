@@ -5,24 +5,27 @@ import (
 	"strconv"
 	"time"
 
-	"chat/infrastructure/delivery/errors"
-	"chat/models"
+	"chat/infra/delivery/errors"
+	"chat/internal/domain"
+	_repo "chat/internal/repo"
 	"chat/utils"
 )
 
-type participantUsecases struct {
-	repo Repository
+type ParticipantUsecases struct {
+	conversationRepo _repo.ConversationRepo
+	participantRepo  _repo.ParticipantRepo
 }
 
-func NewParticipantUsecases(repository Repository) *participantUsecases {
-	return &participantUsecases{
-		repo: repository,
+func NewParticipantUsecases(conversationRepo _repo.ConversationRepo, participantRepo _repo.ParticipantRepo) *ParticipantUsecases {
+	return &ParticipantUsecases{
+		conversationRepo: conversationRepo,
+		participantRepo:  participantRepo,
 	}
 }
 
-func (p *participantUsecases) RemoveUser(ctx context.Context, conversationId uint64, userId uint64) error {
+func (p *ParticipantUsecases) RemoveUser(ctx context.Context, conversationId uint64, userId uint64) error {
 	// Lấy thông tin conversation để kiểm tra loại
-	conversation, err := p.repo.GetConversationByID(ctx, conversationId)
+	conversation, err := p.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -31,11 +34,11 @@ func (p *participantUsecases) RemoveUser(ctx context.Context, conversationId uin
 	}
 
 	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép xóa thành viên
-	if conversation.Type == models.ConversationTypePrivate {
+	if conversation.Type == domain.ConversationTypePrivate {
 		return errors.CannotModifyPrivateChat()
 	}
 
-	participant, err := p.repo.FindParticipant(ctx, conversationId, userId)
+	participant, err := p.participantRepo.FindParticipant(ctx, conversationId, userId)
 	if err != nil {
 		return err
 	}
@@ -43,17 +46,17 @@ func (p *participantUsecases) RemoveUser(ctx context.Context, conversationId uin
 		return errors.NotParticipant()
 	}
 
-	currentUser, err := p.repo.FindParticipant(ctx, participant.ConversationID, utils.GetCurrentUserID(ctx))
+	currentUser, err := p.participantRepo.FindParticipant(ctx, participant.ConversationID, utils.GetCurrentUserID(ctx))
 	if err != nil {
 		return err
 	}
-	if currentUser.Role != models.ParticipantRoleAdmin {
+	if currentUser.Role != domain.ParticipantRoleAdmin {
 		return errors.PermissionDenied()
 	}
-	return p.repo.RemoveParticipant(ctx, conversationId, userId)
+	return p.participantRepo.RemoveParticipant(ctx, conversationId, userId)
 }
 
-func (c *participantUsecases) MuteConversation(ctx context.Context, conversationId uint64, isMute bool) error {
+func (c *ParticipantUsecases) MuteConversation(ctx context.Context, conversationId uint64, isMute bool) error {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return err
@@ -61,20 +64,20 @@ func (c *participantUsecases) MuteConversation(ctx context.Context, conversation
 
 	currentUserId := utils.GetCurrentUserID(ctx)
 
-	return c.repo.UpdateMuteNotification(ctx, conversationId, currentUserId, isMute)
+	return c.participantRepo.UpdateMuteNotification(ctx, conversationId, currentUserId, isMute)
 }
 
-func (p *participantUsecases) GetListParticipant(ctx context.Context, conversationId uint64) ([]*models.ParticipantModel, int64, error) {
+func (p *ParticipantUsecases) GetListParticipant(ctx context.Context, conversationId uint64) ([]*domain.Participant, int64, error) {
 	err := p.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return nil, 0, err
 	}
-	return p.repo.GetListParticipant(ctx, conversationId)
+	return p.participantRepo.GetListParticipant(ctx, conversationId)
 }
 
-func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint64, userIds []uint64) (int, error) {
+func (p *ParticipantUsecases) AddUsers(ctx context.Context, conversationId uint64, userIds []uint64) (int, error) {
 	// Lấy thông tin conversation để kiểm tra loại
-	conversation, err := p.repo.GetConversationByID(ctx, conversationId)
+	conversation, err := p.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return 0, err
 	}
@@ -83,7 +86,7 @@ func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint6
 	}
 
 	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép thêm thành viên
-	if conversation.Type == models.ConversationTypePrivate {
+	if conversation.Type == domain.ConversationTypePrivate {
 		return 0, errors.CannotModifyPrivateChat()
 	}
 
@@ -93,7 +96,7 @@ func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint6
 	}
 
 	// Lấy danh sách participant hiện tại để check trùng
-	existingParticipants, _, err := p.repo.GetListParticipant(ctx, conversationId)
+	existingParticipants, _, err := p.participantRepo.GetListParticipant(ctx, conversationId)
 	if err != nil {
 		return 0, err
 	}
@@ -113,13 +116,13 @@ func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint6
 			continue
 		}
 
-		participant := &models.ParticipantModel{
+		participant := &domain.Participant{
 			UserID:         userId,
 			ConversationID: conversationId,
-			Role:           models.ParticipantRoleMember,
+			Role:           domain.ParticipantRoleMember,
 			JoinedAt:       now,
 		}
-		err = p.repo.AddParticipant(ctx, participant)
+		err = p.participantRepo.AddParticipant(ctx, participant)
 		if err == nil {
 			totalAdded++
 		}
@@ -128,20 +131,20 @@ func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint6
 	return totalAdded, nil
 }
 
-func (p *participantUsecases) InternalGetListParticipant(ctx context.Context, conversationId string) ([]*models.ParticipantModel, error) {
+func (p *ParticipantUsecases) InternalGetListParticipant(ctx context.Context, conversationId string) ([]*domain.Participant, error) {
 	conversationIdUint64, err := strconv.ParseUint(conversationId, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	participants, _, err := p.repo.GetListParticipant(ctx, conversationIdUint64)
+	participants, _, err := p.participantRepo.GetListParticipant(ctx, conversationIdUint64)
 	if err != nil {
 		return nil, err
 	}
 	return participants, nil
 }
 
-func (c *participantUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+func (c *ParticipantUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -149,7 +152,7 @@ func (c *participantUsecases) validateConversationAndCurrentUser(ctx context.Con
 	if conversation == nil {
 		return errors.ConversationNotFound()
 	}
-	isParticipant, err := c.repo.ExistParticipant(ctx, conversationId, currentUserId)
+	isParticipant, err := c.participantRepo.ExistParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err
 	}

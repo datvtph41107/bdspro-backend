@@ -1,37 +1,47 @@
 package usecases
 
 import (
-	"chat/infrastructure/delivery/errors"
-	"chat/infrastructure/provider"
+	"chat/infra/delivery/errors"
+	_db "common/db"
 	_utils "common/utils"
 	"context"
 	"time"
 
-	"chat/models"
+	"chat/internal/domain"
+	_repo "chat/internal/repo"
 	"chat/utils"
 )
 
-type messageUsecases struct {
-	repo                 Repository
-	conversationUsecases *conversationUsecases
-	transaction          provider.TransactionProvider
+type MessageUsecases struct {
+	messageRepo          _repo.MessageRepo
+	conversationRepo     _repo.ConversationRepo
+	participantRepo      _repo.ParticipantRepo
+	conversationUsecases *ConversationUsecases
+	transactionRepo      *_db.TransactionRepo
 }
 
-func NewMessageUsecases(repository Repository, conversationUsecases *conversationUsecases, transaction provider.TransactionProvider) *messageUsecases {
-	return &messageUsecases{
-		repo:                 repository,
+func NewMessageUsecases(messageRepo _repo.MessageRepo,
+	conversationRepo _repo.ConversationRepo,
+	participantRepo _repo.ParticipantRepo,
+	conversationUsecases *ConversationUsecases,
+	transactionRepo *_db.TransactionRepo,
+) *MessageUsecases {
+	return &MessageUsecases{
+		messageRepo:          messageRepo,
+		conversationRepo:     conversationRepo,
+		participantRepo:      participantRepo,
 		conversationUsecases: conversationUsecases,
-		transaction:          transaction,
+		transactionRepo:      transactionRepo,
 	}
 }
 
-func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.MessageModel, receiverID *uint64) (*models.MessageModel, error) {
-	conversation, err := c.repo.GetConversationWithReceiverID(ctx, message.SenderID, *receiverID)
+func (c *MessageUsecases) SendToReceiver(ctx context.Context, message *domain.Message, receiverID *uint64) (*domain.Message, error) {
+	conversation, err := c.conversationRepo.GetConversationWithReceiverID(ctx, message.SenderID, *receiverID)
 	if err != nil {
 		return nil, err
 	}
 	if conversation == nil {
-		conversation, err = c.conversationUsecases.CreateConversation(ctx, &models.ConversationModel{
+		conversation, err = c.conversationUsecases.CreateConversation(ctx, &domain.Conversation{
 			ReceiverId: receiverID,
 		}, []uint64{})
 		if err != nil {
@@ -40,12 +50,12 @@ func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.Me
 	}
 	message.ConversationID = conversation.ID
 
-	data, err := c.repo.CreateMessage(ctx, message)
+	data, err := c.messageRepo.CreateMessage(ctx, message)
 	if err != nil {
 		return nil, err
 	}
 	if message.ReplyId != nil {
-		replyMessage, err := c.repo.FindMessageByID(ctx, *message.ReplyId)
+		replyMessage, err := c.messageRepo.FindMessageByID(ctx, *message.ReplyId)
 		if err != nil {
 			return nil, err
 		}
@@ -54,15 +64,15 @@ func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.Me
 	return data, nil
 }
 
-func (c *messageUsecases) SendMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error) {
+func (c *MessageUsecases) SendMessage(ctx context.Context, message *domain.Message) (*domain.Message, error) {
 	if err := c.validateConversationAndCurrentUser(ctx, message.ConversationID); err != nil {
 		return nil, err
 	}
 	message.SenderID = utils.GetCurrentUserID(ctx)
 
-	var result *models.MessageModel
-	err := c.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		indexKey, err := c.repo.GetLastIndexKeyForUpdate(
+	var result *domain.Message
+	err := c.transactionRepo.WithTransaction(ctx, func(txCtx context.Context) error {
+		indexKey, err := c.messageRepo.GetLastIndexKeyForUpdate(
 			txCtx,
 			message.ConversationID,
 		)
@@ -70,13 +80,13 @@ func (c *messageUsecases) SendMessage(ctx context.Context, message *models.Messa
 			return err
 		}
 
-		message.IndexKey = indexKey
-		data, err := c.repo.CreateMessage(txCtx, message)
+		message.IndexKey = indexKey + 1
+		data, err := c.messageRepo.CreateMessage(txCtx, message)
 		if err != nil {
 			return err
 		}
 		if data.ReplyId != nil {
-			reply, err := c.repo.FindMessageByID(txCtx, *data.ReplyId)
+			reply, err := c.messageRepo.FindMessageByID(txCtx, *data.ReplyId)
 			if err != nil {
 				return err
 			}
@@ -94,24 +104,24 @@ func (c *messageUsecases) SendMessage(ctx context.Context, message *models.Messa
 	return result, nil
 }
 
-func (c *messageUsecases) GetMessagesByIndex(ctx context.Context, conversationId uint64, fromIdx uint64, toIdx uint64) ([]*models.MessageModel, error) {
+func (c *MessageUsecases) GetMessagesByIndex(ctx context.Context, conversationId uint64, fromIdx uint64, toIdx uint64) ([]*domain.Message, error) {
 	if err := c.validateConversationAndCurrentUser(ctx, conversationId); err != nil {
 		return nil, err
 	}
 
-	return c.repo.GetMessagesByIndex(ctx, conversationId, fromIdx, toIdx)
+	return c.messageRepo.GetMessagesByIndex(ctx, conversationId, fromIdx, toIdx)
 }
 
-func (c *messageUsecases) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
+func (c *MessageUsecases) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*domain.Message, error) {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
-	return c.repo.GetMessages(ctx, limit, offset, conversationId, sort, fromDate, toDate)
+	return c.messageRepo.GetMessages(ctx, limit, offset, conversationId, sort, fromDate, toDate)
 }
 
-func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*models.MessageModel, error) {
-	conversations, err := c.repo.GetConversationsByIDs(ctx, conversationIds)
+func (c *MessageUsecases) ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*domain.Message, error) {
+	conversations, err := c.conversationRepo.GetConversationsByIDs(ctx, conversationIds)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +130,7 @@ func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, 
 	}
 
 	currentUserId := _utils.GetProfileIdWithContext(ctx)
-	existParticipant, err := c.repo.ExistParticipants(ctx, conversationIds, currentUserId)
+	existParticipant, err := c.participantRepo.ExistParticipants(ctx, conversationIds, currentUserId)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +138,7 @@ func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, 
 		return nil, errors.NotParticipant()
 	}
 
-	existMessage, err := c.repo.FindMessageByID(ctx, messageId)
+	existMessage, err := c.messageRepo.FindMessageByID(ctx, messageId)
 	if err != nil {
 		return nil, err
 	}
@@ -136,26 +146,27 @@ func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, 
 		return nil, errors.MessageNotFound()
 	}
 
-	messages := make([]*models.MessageModel, 0)
+	messages := make([]*domain.Message, 0)
 	for _, conversation := range conversations {
 		model := *existMessage
 		model.ID = 0
 		model.ForwardFrom = &messageId
 		model.ConversationID = conversation.ID
-		model.CreatedAt = time.Now()
+		now := time.Now()
+		model.CreatedAt = &now
 		model.SenderID = utils.GetCurrentUserID(ctx)
 		messages = append(messages, &model)
 	}
 
-	return c.repo.CreateMessages(ctx, messages)
+	return c.messageRepo.CreateMessages(ctx, messages)
 }
 
-func (c *messageUsecases) PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*models.MessageModel, error) {
+func (c *MessageUsecases) PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*domain.Message, error) {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
-	existMessage, err := c.repo.FindMessageByID(ctx, messageId)
+	existMessage, err := c.messageRepo.FindMessageByID(ctx, messageId)
 	if err != nil {
 		return nil, err
 	}
@@ -165,11 +176,11 @@ func (c *messageUsecases) PinMessage(ctx context.Context, messageId uint64, conv
 	if existMessage.ConversationID != conversationId {
 		return nil, errors.MessageNotInConversation()
 	}
-	return c.repo.UpdatePinMessage(ctx, messageId, pin)
+	return c.messageRepo.UpdatePinMessage(ctx, messageId, pin)
 }
 
-func (c *messageUsecases) RecallMessage(ctx context.Context, messageId uint64) (*models.MessageModel, error) {
-	existMessage, err := c.repo.FindMessageByID(ctx, messageId)
+func (c *MessageUsecases) RecallMessage(ctx context.Context, messageId uint64) (*domain.Message, error) {
+	existMessage, err := c.messageRepo.FindMessageByID(ctx, messageId)
 	if err != nil {
 		return nil, err
 	}
@@ -180,23 +191,23 @@ func (c *messageUsecases) RecallMessage(ctx context.Context, messageId uint64) (
 	if existMessage.SenderID != utils.GetCurrentUserID(ctx) {
 		return nil, errors.CannotRecall()
 	}
-	_, err = c.repo.UpdateRecallMessage(ctx, messageId, true)
+	_, err = c.messageRepo.UpdateRecallMessage(ctx, messageId, true)
 	if err != nil {
 		return nil, err
 	}
 	return existMessage, nil
 }
 
-func (c *messageUsecases) GetPinnedMessages(ctx context.Context, conversationId uint64) ([]*models.MessageModel, error) {
+func (c *MessageUsecases) GetPinnedMessages(ctx context.Context, conversationId uint64) ([]*domain.Message, error) {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
-	return c.repo.GetPinnedMessages(ctx, conversationId)
+	return c.messageRepo.GetPinnedMessages(ctx, conversationId)
 }
 
-func (c *messageUsecases) DeleteViolation(ctx context.Context, messageId uint64) error {
-	message, err := c.repo.FindMessageByID(ctx, messageId)
+func (c *MessageUsecases) DeleteViolation(ctx context.Context, messageId uint64) error {
+	message, err := c.messageRepo.FindMessageByID(ctx, messageId)
 	if err != nil {
 		return err
 	}
@@ -209,11 +220,11 @@ func (c *messageUsecases) DeleteViolation(ctx context.Context, messageId uint64)
 	if error != nil {
 		return error
 	}
-	return c.repo.DeleteViolation(ctx, messageId)
+	return c.messageRepo.DeleteViolation(ctx, messageId)
 }
 
-func (c *messageUsecases) DeleteConversation(ctx context.Context, conversationId uint64) (uint64, error) {
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+func (c *MessageUsecases) DeleteConversation(ctx context.Context, conversationId uint64) (uint64, error) {
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return 0, err
 	}
@@ -222,7 +233,7 @@ func (c *messageUsecases) DeleteConversation(ctx context.Context, conversationId
 		return 0, errors.ConversationNotFound()
 	}
 
-	if conversation.Type != models.ConversationTypePrivate {
+	if conversation.Type != domain.ConversationTypePrivate {
 		return 0, errors.PermissionDenied()
 	}
 
@@ -235,8 +246,8 @@ func (c *messageUsecases) DeleteConversation(ctx context.Context, conversationId
 	return conversationId, nil
 }
 
-func (c *messageUsecases) EditMessage(ctx context.Context, messageId uint64, content string) (*models.MessageModel, error) {
-	message, err := c.repo.FindMessageByID(ctx, messageId)
+func (c *MessageUsecases) EditMessage(ctx context.Context, messageId uint64, content string) (*domain.Message, error) {
+	message, err := c.messageRepo.FindMessageByID(ctx, messageId)
 	if err != nil {
 		return nil, err
 	}
@@ -250,39 +261,23 @@ func (c *messageUsecases) EditMessage(ctx context.Context, messageId uint64, con
 	}
 
 	message.Content = content
-	_, err = c.repo.UpdateMessage(ctx, messageId, content)
+	_, err = c.messageRepo.UpdateMessage(ctx, messageId, content)
 	if err != nil {
 		return nil, err
 	}
 	return message, nil
 }
 
-func (c *messageUsecases) GetMessageByTypeWithPagination(ctx context.Context, limit int64, offset int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error) {
+func (c *MessageUsecases) GetMessageByTypeWithPagination(ctx context.Context, limit int64, offset int64, conversationId uint64, types []string) ([]*domain.Message, int64, error) {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return nil, 0, err
 	}
-	return c.repo.GetMessageByTypeWithPagination(ctx, limit, offset, conversationId, types)
+	return c.messageRepo.GetMessageByTypeWithPagination(ctx, limit, offset, conversationId, types)
 }
 
-func (c *conversationUsecases) GetSetting(ctx context.Context, conversationId uint64) (*models.ConversationModel, *models.ParticipantModel, error) {
-	err := c.validateConversationAndCurrentUser(ctx, conversationId)
-	if err != nil {
-		return nil, nil, err
-	}
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
-	if err != nil {
-		return nil, nil, err
-	}
-	participant, err := c.repo.FindParticipant(ctx, conversationId, utils.GetCurrentUserID(ctx))
-	if err != nil {
-		return nil, nil, err
-	}
-	return conversation, participant, nil
-}
-
-func (c *messageUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+func (c *MessageUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -290,7 +285,7 @@ func (c *messageUsecases) validateConversationAndCurrentUser(ctx context.Context
 	if conversation == nil {
 		return errors.ConversationNotFound()
 	}
-	isParticipant, err := c.repo.ExistParticipant(ctx, conversationId, currentUserId)
+	isParticipant, err := c.participantRepo.ExistParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err
 	}
@@ -300,17 +295,17 @@ func (c *messageUsecases) validateConversationAndCurrentUser(ctx context.Context
 	return nil
 }
 
-func (c *messageUsecases) isConversationAdmin(ctx context.Context, conversationId uint64) error {
+func (c *MessageUsecases) isConversationAdmin(ctx context.Context, conversationId uint64) error {
 	currentUserId := utils.GetCurrentUserID(ctx)
 
-	participant, err := c.repo.FindParticipant(ctx, conversationId, currentUserId)
+	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err
 	}
 	if participant == nil {
 		return errors.NotParticipant()
 	}
-	if participant.Role != models.ParticipantRoleAdmin {
+	if participant.Role != domain.ParticipantRoleAdmin {
 		return errors.SenderNotAdmin()
 	}
 	return nil

@@ -48,7 +48,8 @@ type ChatProperties struct {
 		Number int `mapstructure:"number"`
 	} `mapstructure:"worker"`
 
-	MaxParticipant int `mapstructure:"max_participant"`
+	MaxParticipant       int `mapstructure:"max_participant"`
+	RequiredParticipants int `mapstructure:"required_participants"`
 
 	Services struct {
 		User struct {

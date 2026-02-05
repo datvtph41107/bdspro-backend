@@ -52,6 +52,7 @@ message ReadMessageData {
   string roomId = 3;
   optional string fullName = 4;
   optional string avatar = 5;
+  uint64 LastMessageId = 6;
 }
 
 message ReadMessage {

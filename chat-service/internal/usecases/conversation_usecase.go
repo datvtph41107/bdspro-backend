@@ -3,27 +3,34 @@ package usecases
 import (
 	"context"
 	"strings"
-	"time"
 
-	"chat/infrastructure/delivery/errors"
+	"chat/infra/delivery/errors"
+	"chat/internal/domain"
+	"chat/internal/dto"
 	iusecase "chat/internal/interface"
-	"chat/models"
+	_repo "chat/internal/repo"
 	"chat/utils"
 )
 
-type conversationUsecases struct {
-	repo       Repository
-	userClient iusecase.IUserClient
+type ConversationUsecases struct {
+	conversationRepo _repo.ConversationRepo
+	participantRepo  _repo.ParticipantRepo
+	userClient       iusecase.IUserClient
 }
 
-func NewConversationUsecases(repo Repository, userClient iusecase.IUserClient) *conversationUsecases {
-	return &conversationUsecases{
-		repo:       repo,
-		userClient: userClient,
+func NewConversationUsecases(
+	conversationRepo _repo.ConversationRepo,
+	participantRepo _repo.ParticipantRepo,
+	userClient iusecase.IUserClient,
+) *ConversationUsecases {
+	return &ConversationUsecases{
+		conversationRepo: conversationRepo,
+		participantRepo:  participantRepo,
+		userClient:       userClient,
 	}
 }
 
-func (c *conversationUsecases) GetFullNamesJoined(ctx context.Context, ids []uint64) (string, error) {
+func (c *ConversationUsecases) GetFullNamesJoined(ctx context.Context, ids []uint64) (string, error) {
 	users, err := c.userClient.GetUserByIds(ctx, ids)
 	if err != nil {
 		return "", err
@@ -39,77 +46,29 @@ func (c *conversationUsecases) GetFullNamesJoined(ctx context.Context, ids []uin
 	return strings.Join(names, ", "), nil
 }
 
-func (c *conversationUsecases) CreateConversation(ctx context.Context, conversation *models.ConversationModel, members []uint64) (*models.ConversationModel, error) {
-	conversation.CreatedBy = utils.GetCurrentUserID(ctx)
-	if conversation.Name == nil || *conversation.Name == "" {
-		fullNames, _ := c.GetFullNamesJoined(ctx, members)
-		conversation.Name = &fullNames
-	}
-
-	now := time.Now()
-	currentUserId := utils.GetCurrentUserID(ctx)
-	var participants []models.ParticipantModel
-	allMember := append(members, currentUserId)
-	var existedConversation *models.ConversationModel
-	var err error
-	if conversation.ReceiverId != nil {
-		existedConversation, err = c.repo.GetConversationWithReceiverID(ctx, currentUserId, *conversation.ReceiverId)
-	} else if len(members) > 1 {
-		existedConversation, err = c.repo.HasExactConversationWithUserIDs(ctx, allMember)
-	}
-	print("existedConversation: ", existedConversation)
-	if err != nil {
-		return nil, err
-	}
-	if existedConversation != nil {
-		return existedConversation, nil
-		// return nil, errors.ConversationAlreadyExists(
-		// 	&chatpb.ExistedConversationResponse{
-		// 		ConversationId: int32(existedConversation.ID),
-		// 	},
-		// )
-	}
-
-	for _, member := range members {
-		participants = append(participants, models.ParticipantModel{
-			UserID:   member,
-			Role:     models.ParticipantRoleMember,
-			JoinedAt: now,
-		})
-	}
-	if conversation.ReceiverId != nil {
-		participants = append(participants, models.ParticipantModel{
-			UserID:   *conversation.ReceiverId,
-			Role:     models.ParticipantRoleMember,
-			JoinedAt: now,
-		})
-	}
-	admin := models.ParticipantModel{
-		UserID:   currentUserId,
-		Role:     models.ParticipantRoleAdmin,
-		JoinedAt: now,
-	}
-	conversation.Participants = append(participants, admin)
-	return c.repo.CreateConversation(ctx, conversation)
+func (c *ConversationUsecases) CreateConversation(ctx context.Context, req *dto.CreateConversationDTO) (*domain.Conversation, error) {
+	// 1. có 2 trường hợp xử lý để tái sử dụng cho tạo với 1, 1, và tạo nhóm
+	// hãy xử lý với nhóm vì khi tạo v
+	return c.conversationRepo.CreateConversation(ctx, req)
 }
 
-func (c *conversationUsecases) GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*models.ConversationModel, error) {
+func (c *ConversationUsecases) GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*domain.Conversation, error) {
 	userId := utils.GetCurrentUserID(ctx)
 	if userId == 0 {
 		return nil, errors.Unauthorized()
 	}
-	return c.repo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
+	return c.conversationRepo.GetConversations(ctx, limit, offset, conversationType, userId, keyword)
 }
 
-func (c *conversationUsecases) GetUnreadCount(ctx context.Context) (int64, error) {
+func (c *ConversationUsecases) GetUnreadCount(ctx context.Context) (int64, error) {
 	userId := utils.GetCurrentUserID(ctx)
 	if userId == 0 {
 		return 0, errors.Unauthorized()
 	}
-	return c.repo.GetUnreadCount(ctx, userId)
+	return c.conversationRepo.GetUnreadCount(ctx, userId)
 }
 
-func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImageId *uint64) error {
+func (c *ConversationUsecases) EditChannel(ctx context.Context, conversationId uint64, isBroadcast, forbidForward *bool, name *string, backgroundImageId *uint64) error {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return err
@@ -145,19 +104,19 @@ func (c *conversationUsecases) EditChannel(ctx context.Context, conversationId u
 		bgImageVal = nil
 	}
 
-	return c.repo.UpdateConversation(ctx, conversationId, broadcastVal, forbidForwardVal, nameVal, bgImageVal)
+	return c.conversationRepo.UpdateConversation(ctx, conversationId, broadcastVal, forbidForwardVal, nameVal, bgImageVal)
 }
 
-func (c *conversationUsecases) CreateOrgChannel(ctx context.Context, conversation *models.ConversationModel) (*models.ConversationModel, error) {
+func (c *ConversationUsecases) CreateOrgChannel(ctx context.Context, conversation *domain.Conversation) (*domain.Conversation, error) {
 	panic("unimplemented")
 }
 
-func (c *conversationUsecases) Search(ctx context.Context, keyword string, searchType int, limit int64, offset int64) ([]*models.ConversationModel, []*models.MessageModel, error) {
-	return c.repo.GetMessageOrConversation(ctx, keyword, searchType, limit, offset)
+func (c *ConversationUsecases) Search(ctx context.Context, keyword string, searchType int, limit int64, offset int64) ([]*domain.Conversation, []*domain.Message, error) {
+	return c.conversationRepo.GetMessageOrConversation(ctx, keyword, searchType, limit, offset)
 }
 
-func (c *conversationUsecases) DeleteRoom(ctx context.Context, conversationId uint64) error {
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+func (c *ConversationUsecases) DeleteRoom(ctx context.Context, conversationId uint64) error {
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -168,7 +127,7 @@ func (c *conversationUsecases) DeleteRoom(ctx context.Context, conversationId ui
 	currentUserId := utils.GetCurrentUserID(ctx)
 
 	// Nếu không phải private chat (type != 1), thì check admin
-	if conversation.Type != models.ConversationTypePrivate {
+	if conversation.Type != domain.ConversationTypePrivate {
 		err := c.isConversationAdmin(ctx, conversationId)
 		if err != nil {
 			return err
@@ -182,14 +141,14 @@ func (c *conversationUsecases) DeleteRoom(ctx context.Context, conversationId ui
 		}
 	}
 
-	return c.repo.DeleteConversation(ctx, conversationId)
+	return c.conversationRepo.DeleteConversation(ctx, conversationId)
 }
 
-func (c *conversationUsecases) LeaveRoom(ctx context.Context, conversationId uint64) error {
+func (c *ConversationUsecases) LeaveRoom(ctx context.Context, conversationId uint64) error {
 	currentUserId := utils.GetCurrentUserID(ctx)
 
 	// Lấy thông tin conversation để kiểm tra loại
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -198,11 +157,11 @@ func (c *conversationUsecases) LeaveRoom(ctx context.Context, conversationId uin
 	}
 
 	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép rời
-	if conversation.Type == models.ConversationTypePrivate {
+	if conversation.Type == domain.ConversationTypePrivate {
 		return errors.CannotLeavePrivateChat()
 	}
 
-	participant, err := c.repo.FindParticipant(ctx, conversationId, currentUserId)
+	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err
 	}
@@ -210,38 +169,38 @@ func (c *conversationUsecases) LeaveRoom(ctx context.Context, conversationId uin
 		return errors.NotParticipant()
 	}
 
-	return c.repo.RemoveParticipant(ctx, conversationId, currentUserId)
+	return c.participantRepo.RemoveParticipant(ctx, conversationId, currentUserId)
 }
 
-func (c *conversationUsecases) GetConversationById(ctx context.Context, conversationId uint64, includesMember bool) (*models.ConversationModel, error) {
+func (c *ConversationUsecases) GetConversationById(ctx context.Context, conversationId uint64, includesMember bool) (*domain.Conversation, error) {
 	if includesMember {
-		return c.repo.GetConversationByIDWithMember(ctx, conversationId)
+		return c.conversationRepo.GetConversationByIDWithMember(ctx, conversationId)
 	}
-	return c.repo.GetConversationByID(ctx, conversationId)
+	return c.conversationRepo.GetConversationByID(ctx, conversationId)
 }
 
-func (c *conversationUsecases) ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
+func (c *ConversationUsecases) ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
 	return c.validateConversationAndCurrentUser(ctx, conversationId)
 }
 
-func (c *conversationUsecases) isConversationAdmin(ctx context.Context, conversationId uint64) error {
+func (c *ConversationUsecases) isConversationAdmin(ctx context.Context, conversationId uint64) error {
 	currentUserId := utils.GetCurrentUserID(ctx)
 
-	participant, err := c.repo.FindParticipant(ctx, conversationId, currentUserId)
+	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err
 	}
 	if participant == nil {
 		return errors.NotParticipant()
 	}
-	if participant.Role != models.ParticipantRoleAdmin {
+	if participant.Role != domain.ParticipantRoleAdmin {
 		return errors.SenderNotAdmin()
 	}
 	return nil
 }
 
-func (c *conversationUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+func (c *ConversationUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -249,7 +208,7 @@ func (c *conversationUsecases) validateConversationAndCurrentUser(ctx context.Co
 	if conversation == nil {
 		return errors.ConversationNotFound()
 	}
-	isParticipant, err := c.repo.ExistParticipant(ctx, conversationId, currentUserId)
+	isParticipant, err := c.participantRepo.ExistParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return err
 	}
@@ -259,10 +218,8 @@ func (c *conversationUsecases) validateConversationAndCurrentUser(ctx context.Co
 	return nil
 }
 
-func (c *conversationUsecases) GetMembersOfRoom(ctx context.Context, conversationId uint64) ([]uint64, error) {
-	// currentUserId := utils.GetCurrentUserID(ctx)
-
-	participants, _, err := c.repo.GetListParticipant(ctx, conversationId)
+func (c *ConversationUsecases) GetMembersOfRoom(ctx context.Context, conversationId uint64) ([]uint64, error) {
+	participants, _, err := c.participantRepo.GetListParticipant(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
@@ -273,21 +230,37 @@ func (c *conversationUsecases) GetMembersOfRoom(ctx context.Context, conversatio
 	return memberIds, nil
 }
 
-func (c *conversationUsecases) SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*models.ConversationModel, error) {
+func (c *ConversationUsecases) GetSetting(ctx context.Context, conversationId uint64) (*domain.Conversation, *domain.Participant, error) {
+	err := c.validateConversationAndCurrentUser(ctx, conversationId)
+	if err != nil {
+		return nil, nil, err
+	}
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
+	if err != nil {
+		return nil, nil, err
+	}
+	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, utils.GetCurrentUserID(ctx))
+	if err != nil {
+		return nil, nil, err
+	}
+	return conversation, participant, nil
+}
+
+func (c *ConversationUsecases) SetBackgroundImage(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*domain.Conversation, error) {
 	currentUserId := utils.GetCurrentUserID(ctx)
 
-	participant, err := c.repo.FindParticipant(ctx, conversationId, currentUserId)
+	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, currentUserId)
 	if err != nil {
 		return nil, err
 	}
 	if participant == nil {
 		return nil, errors.NotParticipant()
 	}
-	err = c.repo.SetBackgroundImage(ctx, conversationId, backgroundImageId)
+	err = c.conversationRepo.SetBackgroundImage(ctx, conversationId, backgroundImageId)
 	if err != nil {
 		return nil, err
 	}
-	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
+	conversation, err := c.conversationRepo.GetConversationByID(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}

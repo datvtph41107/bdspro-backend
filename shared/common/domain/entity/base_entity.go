@@ -22,3 +22,10 @@ type BaseEntityNotId struct {
 	UpdatedAt *time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
 	DeletedAt *gorm.DeletedAt `gorm:"index" json:"-"` // Hỗ trợ soft delete
 }
+
+type BaseEntityNotAuth struct {
+	ID        uint64         `gorm:"primaryKey"`
+	CreatedAt time.Time      `gorm:"not null;index"`
+	UpdatedAt time.Time      `gorm:"not null"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
