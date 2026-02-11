@@ -743,6 +743,8 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 		}()
 	}
 
+	s.MarkProductChanged(c, entity.ID, entity.OwnerID)
+
 	return entity, nil
 }
 
