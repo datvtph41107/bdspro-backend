@@ -13,6 +13,10 @@ const C_SESSION_ID = "C_SESSION_ID"
 
 // UserProperties chứa cấu hình của ứng dụng
 type UserProperties struct {
+	Redis struct {
+		Host     string `mapstructure:"host"`
+		Password string `mapstructure:"password"`
+	} `mapstructure:"redis"`
 	Jwt struct {
 		SecretKey           string   `mapstructure:"key-generate"`
 		TokenPrefix         string   `mapstructure:"tokenPrefix"`

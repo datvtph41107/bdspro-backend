@@ -14,7 +14,9 @@ import (
 	bdspro_infra_postgre "bdspro/infra/postgre"
 	bdspro_infra_postgres "bdspro/infra/postgres"
 	bdspro_infra_postgres_admin "bdspro/infra/postgres/admin"
+	bdspro_infra_postgres_audit "bdspro/infra/postgres/audit"
 	bdspro_infra_providers "bdspro/infra/providers"
+	bdspro_infra_redis "bdspro/infra/redis"
 	bdspro_infra_router_org "bdspro/infra/router/org"
 	bdspro_infra_router_public "bdspro/infra/router/public"
 	bdspro_infra_router_user "bdspro/infra/router/user"
@@ -70,7 +72,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo.ProductOrganizationRepo), new(*bdspro_infra_postgres.ProductOrganizationPostgres)),
 	wire.Bind(new(bdspro_internal_repo.ProductPriceRepo), new(*bdspro_infra_postgres.GormProductPriceRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductPrivateRepo), new(*bdspro_infra_postgres.GormProductPrivateRepo)),
-	wire.Bind(new(bdspro_internal_repo.ProductUserRepo), new(*bdspro_infra_postgres.ProductUserPostgres)),
 	wire.Bind(new(bdspro_internal_repo.ProjectBuildRepo), new(*bdspro_infra_postgres.PostgreProjectBuild)),
 	wire.Bind(new(bdspro_internal_repo.ProjectRepo), new(*bdspro_infra_postgres.PostgreProject)),
 	wire.Bind(new(bdspro_internal_repo.PropertyTypeRepo), new(*bdspro_infra_postgres.PostgrePropertyType)),
@@ -139,6 +140,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewBdsproPublicService,
 	bdspro_infra_mapper.NewBuildMapper,
 	bdspro_infra_client.NewChatClient,
+	bdspro_infra_redis.NewClient,
 	bdspro_infra_providers.NewCodeDataUsecase,
 	bdspro_infra_mapper.NewCommonMapper,
 	bdspro_infra_mapper.NewContractDealMapper,
@@ -289,6 +291,7 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases.NewPropertyUsecase,
 	bdspro_infra_mapper.NewPublicMapper,
 	bdspro_infra_router_public.NewPublicRouter,
+	bdspro_infra_postgres_audit.NewPushRepo,
 	bdspro_internal_usecases.NewRecordHistoryUsecase,
 	bdspro_infra_providers.NewRedisProvider,
 	bdspro_infra_mapper.NewRegionMapper,
@@ -327,6 +330,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductChildRouter,
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
+	bdspro_infra_postgres_audit.NewVersionRepo,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)

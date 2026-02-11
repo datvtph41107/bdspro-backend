@@ -8,12 +8,9 @@ replace common => ../shared/common
 
 replace base => ../shared/base
 
-replace core => ../shared/core
-
 require (
 	base v0.0.0-00010101000000-000000000000
 	common v0.0.0
-	core v0.0.0-00011110111-00000
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-playground/validator/v10 v10.25.0
@@ -25,6 +22,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/xuri/excelize/v2 v2.9.0
+	go.uber.org/zap v1.27.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.9
@@ -92,7 +90,6 @@ require (
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.15.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/net v0.37.0 // indirect

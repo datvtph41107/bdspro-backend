@@ -30,7 +30,13 @@ var GrpcCmd = &cobra.Command{
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, _ := wire.InitializeApp()
+		app, err := wire.InitializeApp()
+		if err != nil {
+			log.Fatalf("failed to initialize app: %v", err)
+		}
+		if app == nil {
+			log.Fatal("app is nil after InitializeApp")
+		}
 		db.MigrateDomain()
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))

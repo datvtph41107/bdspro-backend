@@ -2,6 +2,7 @@ package shared_usecase
 
 import (
 	"bdspro/infra/providers"
+	redis_cli "bdspro/infra/redis"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -20,10 +21,12 @@ import (
 	"fmt"
 	"log"
 	sharepb "pb/types/shared"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/jinzhu/copier"
+	"github.com/redis/go-redis/v9"
 )
 
 type IProductUsecase interface {
@@ -68,8 +71,8 @@ type ProductUsecase struct {
 	CrmProvider      provider.CrmProvider
 	UserProvider     provider.IUserProvider
 	DistributionRepo repo.DistributeRepository
-
-	HubProvider provider.HubProvider
+	HubProvider      provider.HubProvider
+	redisClient      *redis_cli.RedisClient
 }
 
 func NewProductUsecase(
@@ -89,7 +92,7 @@ func NewProductUsecase(
 	productChildRepo repo.UProductChildRepo,
 	productOrganizationRepo repo.ProductOrganizationRepo,
 	productUserRepo repo.ProductUserRepo,
-
+	redisClient *redis_cli.RedisClient,
 	memberPlan usecases.PlanUsecase,
 	PostUsecase *PostUsecase,
 	assetUsecase *AssetUsecase,
@@ -105,32 +108,32 @@ func NewProductUsecase(
 	hubProvider provider.HubProvider,
 ) *ProductUsecase {
 	result := &ProductUsecase{
-		ProductRepo:        productRepo,
-		AssetRepo:          assetRepo,
-		ProductAccessRepo:  productAccessRepo,
-		MediaRepo:          mediaRepo,
-		HouseInfoRepo:      houseInfoRepo,
-		PriceRepo:          priceRepo,
-		ProductPrivate:     productPrivate,
-		Region:             region,
-		DocTypeRepo:        docTypeRepo,
-		PropertyType:       propertyType,
-		Amenity:            amenity,
-		MemberPlan:         memberPlan,
-		ProductHistoryRepo: ProductHistoryRepo,
-		PostUsecase:        PostUsecase,
-		ProductChildRepo:   productChildRepo,
-		CacheProductMarket: &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
-		NotificationClient: notificationClient,
-		Transaction:        transaction,
-		AssetUsecase:       assetUsecase,
-		DeepseekClient:     deepseekClient,
-
+		ProductRepo:             productRepo,
+		AssetRepo:               assetRepo,
+		ProductAccessRepo:       productAccessRepo,
+		MediaRepo:               mediaRepo,
+		HouseInfoRepo:           houseInfoRepo,
+		PriceRepo:               priceRepo,
+		ProductPrivate:          productPrivate,
+		Region:                  region,
+		DocTypeRepo:             docTypeRepo,
+		PropertyType:            propertyType,
+		Amenity:                 amenity,
+		MemberPlan:              memberPlan,
+		ProductHistoryRepo:      ProductHistoryRepo,
+		PostUsecase:             PostUsecase,
+		ProductChildRepo:        productChildRepo,
+		CacheProductMarket:      &providers.ListCacheProvider[domain.ProductMarket, dto.ProductSearchRequest]{},
+		NotificationClient:      notificationClient,
+		Transaction:             transaction,
+		AssetUsecase:            assetUsecase,
+		DeepseekClient:          deepseekClient,
 		ProductOrganizationRepo: productOrganizationRepo,
 		ProductUserRepo:         productUserRepo,
 		BdsDomainUsecase:        bdsDomainUsecase,
 		PropertyUsecase:         propertyUsecase,
 		DealRepo:                dealRepo,
+		redisClient:             redisClient,
 		// OwnerType:    ownerType,
 		CodeDataUsecase:  codeDataUsecase,
 		CrmProvider:      crmProvider,
@@ -142,6 +145,171 @@ func NewProductUsecase(
 	result.PostUsecase.ProductUsecase = result
 
 	return result
+}
+
+// Redis key patterns
+const (
+	// bdspro:sync:product:{owner_id}:timestamp - Lưu timestamp mới nhất
+	keySyncTimestamp = "bdspro:sync:product:%d:timestamp"
+
+	// bdspro:sync:product:{owner_id}:changed - Lưu set các product ID đã thay đổi
+	keyChangedProducts = "bdspro:sync:product:%d:changed"
+
+	// TTL 24 giờ
+	redisTTL = 24 * time.Hour
+)
+
+// CheckVersionSync - CHỈ check trong Redis, không query database
+func (uc *ProductUsecase) CheckVersionSync(
+	ctx context.Context,
+	req *dto.CheckVersionSyncRequest,
+) (*dto.CheckVersionSyncResponse, error) {
+	if req.Resource != "product" {
+		return nil, fmt.Errorf("unsupported resource: %s", req.Resource)
+	}
+
+	// 1. Lấy timestamp hiện tại từ Redis
+	currentTimestamp, err := uc.getSyncTimestamp(ctx, req.OwnerID)
+	if err != nil {
+		return nil, fmt.Errorf("get sync timestamp error: %w", err)
+	}
+
+	// 2. Nếu chưa có timestamp trong Redis, tạo mới (lần đầu)
+	if currentTimestamp == 0 {
+		currentTimestamp = time.Now().Unix()
+		if err := uc.setSyncTimestamp(ctx, req.OwnerID, currentTimestamp); err != nil {
+			return nil, fmt.Errorf("set sync timestamp error: %w", err)
+		}
+
+		// Lần đầu sync, không có thay đổi vì chưa có dữ liệu trong Redis
+		return &dto.CheckVersionSyncResponse{
+			NeedSync:       false, // Không cần sync vì chưa có gì thay đổi
+			CurrentVersion: currentTimestamp,
+			ChangeCount:    0,
+			ChangedIDs:     []uint64{},
+		}, nil
+	}
+
+	//  Kiểm tra nếu không cần đồng bộ
+	// last_sync >= currentTimestamp → client đã có data mới nhất
+	if req.LastSync >= currentTimestamp {
+
+		return &dto.CheckVersionSyncResponse{
+			NeedSync:       false,
+			CurrentVersion: currentTimestamp,
+			ChangeCount:    0,
+			ChangedIDs:     []uint64{},
+		}, nil
+	}
+
+	// Lấy danh sách product đã thay đổi từ Redis
+	changedProductIDs, err := uc.getChangedProducts(ctx, req.OwnerID)
+	if err != nil {
+		return nil, fmt.Errorf("get changed products error: %w", err)
+	}
+
+	changeCount := len(changedProductIDs)
+
+	return &dto.CheckVersionSyncResponse{
+		NeedSync:       changeCount > 0,
+		CurrentVersion: currentTimestamp,
+		ChangeCount:    changeCount,
+		ChangedIDs:     changedProductIDs,
+	}, nil
+}
+
+// MarkProductChanged - Khi product được update
+func (uc *ProductUsecase) MarkProductChanged(ctx context.Context, productID, ownerID uint64) error {
+	if err := uc.addChangedProduct(ctx, ownerID, productID); err != nil {
+		return fmt.Errorf("add changed product error: %w", err)
+	}
+
+	currentTime := time.Now().Unix()
+	if err := uc.setSyncTimestamp(ctx, ownerID, currentTime); err != nil {
+		return fmt.Errorf("update sync timestamp error: %w", err)
+	}
+	return nil
+}
+
+// getSyncTimestamp lấy timestamp từ Redis
+func (uc *ProductUsecase) getSyncTimestamp(ctx context.Context, ownerID uint64) (int64, error) {
+	key := fmt.Sprintf(keySyncTimestamp, ownerID)
+	result, err := uc.redisClient.Get(ctx, key).Int64()
+	if err == redis.Nil {
+		return 0, nil
+	}
+	return result, err
+}
+
+// setSyncTimestamp lưu timestamp vào Redis
+func (uc *ProductUsecase) setSyncTimestamp(ctx context.Context, ownerID uint64, timestamp int64) error {
+	key := fmt.Sprintf(keySyncTimestamp, ownerID)
+	return uc.redisClient.Set(ctx, key, timestamp, redisTTL).Err()
+}
+
+// addChangedProduct thêm product vào danh sách thay đổi
+func (uc *ProductUsecase) addChangedProduct(ctx context.Context, ownerID uint64, productID uint64) error {
+	key := fmt.Sprintf(keyChangedProducts, ownerID)
+	// Sử dụng Redis Set để lưu danh sách product IDs
+	err := uc.redisClient.SAdd(ctx, key, productID).Err()
+	if err != nil {
+		return err
+	}
+
+	// Set TTL cho key
+	return uc.redisClient.Expire(ctx, key, redisTTL).Err()
+}
+
+// getChangedProducts lấy danh sách product đã thay đổi
+func (uc *ProductUsecase) getChangedProducts(ctx context.Context, ownerID uint64) ([]uint64, error) {
+	key := fmt.Sprintf(keyChangedProducts, ownerID)
+
+	// Lấy tất cả members của Set
+	members, err := uc.redisClient.SMembers(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert string sang uint64
+	productIDs := make([]uint64, 0, len(members))
+	for _, member := range members {
+		id, err := strconv.ParseUint(member, 10, 64)
+		if err != nil {
+			continue
+		}
+		productIDs = append(productIDs, id)
+	}
+
+	return productIDs, nil
+}
+
+// clearChangedProducts xóa danh sách product thay đổi (sau khi đồng bộ xong)
+func (uc *ProductUsecase) clearChangedProducts(ctx context.Context, ownerID uint64) error {
+	key := fmt.Sprintf(keyChangedProducts, ownerID)
+	return uc.redisClient.Del(ctx, key).Err()
+}
+
+// GetChangeCount lấy số lượng product thay đổi
+func (uc *ProductUsecase) GetChangeCount(ctx context.Context, ownerID uint64) (int, error) {
+	key := fmt.Sprintf(keyChangedProducts, ownerID)
+	count, err := uc.redisClient.SCard(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
+// ClearAllForUser xóa tất cả cache sync của user
+func (uc *ProductUsecase) ClearAllForUser(ctx context.Context, ownerID uint64) error {
+	timestampKey := fmt.Sprintf(keySyncTimestamp, ownerID)
+	changedKey := fmt.Sprintf(keyChangedProducts, ownerID)
+
+	pipe := uc.redisClient.Pipeline()
+	pipe.Del(ctx, timestampKey)
+	pipe.Del(ctx, changedKey)
+
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
 func (u *ProductUsecase) ViewProductStats(ctx context.Context, stats *domain.ProductStats) error {
@@ -688,7 +856,7 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 
 	// Load privateData
 	profileID := _utils.GetProfileIdWithContext(c)
-	if profileID > 0 && entity.CreatedBy != nil && *entity.CreatedBy == profileID {
+	if profileID > 0 && entity.OwnerID != 0 && entity.OwnerID == profileID {
 		if privateData := s.ProductPrivate.FindByProductId(c, &entity.ID); privateData != nil {
 			entity.PrivateData = privateData
 		}
@@ -2284,8 +2452,8 @@ func (u *ProductUsecase) archiveProductForUser(ctx context.Context, productId, o
 		return _errors.NotFoundException("Product user relation not found")
 	}
 
-	if productUser.Archived == archived {
-		return nil
-	}
+	// if productUser.Archived == archived {
+	// 	return nil
+	// }
 	return u.ProductUserRepo.UpdateArchivedStatus(ctx, productId, originId, archived)
 }

@@ -15,6 +15,12 @@ import (
 // 	Order     int    `json:"order"`
 // }
 
+type ProductCacheVersionResponse struct {
+	HasChanged    bool
+	ProductIds    []uint64
+	LastUpdatedAt int64
+}
+
 type HouseInfoUpdate struct {
 	// house info
 	NumBedroom  *int32  `json:"numBedroom,omitempty"`  // Số phòng ngủ (optional)

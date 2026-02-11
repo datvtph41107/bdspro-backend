@@ -2,18 +2,18 @@ package postgres
 
 import (
 	"bdspro/internal/domain"
+	"bdspro/internal/repo"
 	_utils "common/utils"
 	"context"
 
 	"gorm.io/gorm"
 )
 
-// @bind: bdspro/internal/repo.ProductUserRepo
 type ProductUserPostgres struct {
 	db *gorm.DB
 }
 
-func NewProductUserPostgres(db *gorm.DB) *ProductUserPostgres {
+func NewProductUserPostgres(db *gorm.DB) repo.ProductUserRepo {
 	return &ProductUserPostgres{db: db}
 }
 
@@ -114,6 +114,23 @@ func (r *ProductUserPostgres) GetByProductAndOriginProfile(
 	}
 
 	return &pu, nil
+}
+
+func (r *ProductUserPostgres) GetByOriginProfile(
+	ctx context.Context,
+	originProfileId uint64,
+) ([]*domain.ProductUser, error) {
+	var pus []*domain.ProductUser
+	err := GetDB(ctx, r.db).
+		Where("origin_profile_id = ? AND deleted_at IS NULL",
+			originProfileId,
+		).
+		Find(&pus).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return pus, nil
 }
 
 func (r *ProductUserPostgres) GetByDistributeID(ctx context.Context, distributeID uint64) ([]*domain.ProductUser, error) {

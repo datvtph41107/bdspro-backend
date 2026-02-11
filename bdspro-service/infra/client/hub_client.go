@@ -23,8 +23,8 @@ func (c *HubClient) GetProductStatsViewClient(
 	ctx context.Context,
 	productID uint64,
 	fromTime int64,
-) (*hubpb.GetProductStatsViewResponse, error) {
-	resp, err := c.HubGrpcClient.InternalClient.GetProductViewStats(ctx, &hubpb.GetProductStatsViewRequest{
+) (*hubpb.ProductStatsViewResponse, error) {
+	resp, err := c.HubGrpcClient.InternalClient.GetProductViewStats(ctx, &hubpb.ProductStatsViewRequest{
 		ProductId: productID,
 		FromTime:  fromTime,
 	})
@@ -36,7 +36,7 @@ func (c *HubClient) GetProductStatsViewClient(
 		return nil, nil
 	}
 
-	return &hubpb.GetProductStatsViewResponse{
+	return &hubpb.ProductStatsViewResponse{
 		ViewCount:     resp.ViewCount,
 		TotalDuration: resp.TotalDuration,
 		MaxEventTime:  resp.MaxEventTime,

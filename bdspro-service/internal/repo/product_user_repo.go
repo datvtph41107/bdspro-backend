@@ -17,5 +17,6 @@ type ProductUserRepo interface {
 
 	UpdatePriceID(ctx context.Context, productID uint64, profileID uint64, priceID uint64) error
 	GetByProductAndOriginProfile(ctx context.Context, productID, originProfileId uint64) (*domain.ProductUser, error)
+	GetByOriginProfile(ctx context.Context, originProfileId uint64) ([]*domain.ProductUser, error)
 	UpdateArchivedStatus(ctx context.Context, productID uint64, originProfileId uint64, archived bool) error
 }

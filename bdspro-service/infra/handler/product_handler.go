@@ -35,7 +35,8 @@ type ProductHandler struct {
 	DealMapper     mapper.DealMapper
 }
 
-func NewProductService(uc *shared_usecase.ProductUsecase,
+func NewProductService(
+	uc *shared_usecase.ProductUsecase,
 	productRepo repo.ProductRepo,
 	productMapper *mapper.ProductMapper,
 	productPriceMapper *mapper.ProductPriceMapper,
@@ -62,6 +63,40 @@ func NewProductService(uc *shared_usecase.ProductUsecase,
 		AssetMapper:    assetMapper,
 		DealMapper:     dealMapper,
 	}
+}
+
+func (h *ProductHandler) CheckVersionSync(
+	ctx context.Context,
+	req *bdspropb.CheckVersionSyncRequest,
+) (*bdspropb.CheckVersionSyncResponse, error) {
+	// Validate request
+	if req.Resource == "" {
+		return nil, status.Error(codes.InvalidArgument, "resource is required")
+	}
+	if req.OwnerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "owner_id is required")
+	}
+
+	// Convert từ proto sang DTO
+	dtoReq := &dto.CheckVersionSyncRequest{
+		Resource: req.Resource,
+		OwnerID:  req.OwnerId,
+		LastSync: req.LastSync,
+	}
+
+	// Gọi usecase - CHỈ check Redis
+	resp, err := h.UC.CheckVersionSync(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Convert từ DTO sang proto
+	return &bdspropb.CheckVersionSyncResponse{
+		NeedSync:       resp.NeedSync,
+		CurrentVersion: resp.CurrentVersion,
+		ChangeCount:    int32(resp.ChangeCount),
+		ChangedIds:     resp.ChangedIDs,
+	}, nil
 }
 
 // @Summary Lưu trữ sản phẩm
