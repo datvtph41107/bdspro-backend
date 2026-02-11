@@ -14,6 +14,17 @@ import "bdspro/deal.proto";
 option go_package = "pb/types/bdspro;bdspropb";
 
 service ProductService {
+  rpc CheckVersionSync(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/version/{resource}/sync/status"
+    };
+  }
+  
+  rpc GetVersionData(GetVersionDataRequest) returns (GetVersionDataResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspropb/version/{resource}/sync/data"
+    };
+  }
   rpc GetDetailByIds (IdRequest) returns (ProductInternalResponse);
   rpc GetProductAttachmentByIds (IdRequest) returns (ProductAttachmentResponse);
   rpc ArchiveProduct (ArchivedRequest) returns (Response) {
@@ -273,6 +284,32 @@ enum ProductPriceStatus {
   PRICE_STATUS_NEGOTIABLE = 2;
   PRICE_STATUS_CONTACT = 3;   
 }
+
+
+message CheckVersionSyncRequest {
+  string resource = 1;  
+  uint64 ownerId = 2; 
+  int64 lastSync = 3; 
+}
+
+message CheckVersionSyncResponse {
+  bool needSync = 1;          
+  int64 currentVersion = 2;    
+  int32 changeCount = 3;      
+  repeated uint64 changedIds = 4; 
+}
+
+message GetVersionDataRequest {
+  string resource = 1;          
+  uint64 ownerId = 2;          
+  repeated uint64 resourceIds = 3;
+}
+
+message GetVersionDataResponse {
+  repeated ProductResponse data = 1;  
+  int32 total = 2;        
+}
+
 
 message ApplyPriceUpdateRequest {
   uint64 productId = 1;
