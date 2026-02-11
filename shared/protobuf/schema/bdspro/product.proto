@@ -288,7 +288,6 @@ enum ProductPriceStatus {
 
 message CheckVersionSyncRequest {
   string resource = 1;  
-  uint64 ownerId = 2; 
   int64 lastSync = 3; 
 }
 
@@ -301,7 +300,6 @@ message CheckVersionSyncResponse {
 
 message GetVersionDataRequest {
   string resource = 1;          
-  uint64 ownerId = 2;          
   repeated uint64 resourceIds = 3;
 }
 

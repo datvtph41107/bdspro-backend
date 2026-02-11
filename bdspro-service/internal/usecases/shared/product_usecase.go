@@ -162,6 +162,7 @@ const (
 // CheckVersionSync - CHỈ check trong Redis, không query database
 func (uc *ProductUsecase) CheckVersionSync(
 	ctx context.Context,
+	ownerID uint64,
 	req *dto.CheckVersionSyncRequest,
 ) (*dto.CheckVersionSyncResponse, error) {
 	if req.Resource != "product" {
@@ -169,7 +170,7 @@ func (uc *ProductUsecase) CheckVersionSync(
 	}
 
 	// 1. Lấy timestamp hiện tại từ Redis
-	currentTimestamp, err := uc.getSyncTimestamp(ctx, req.OwnerID)
+	currentTimestamp, err := uc.getSyncTimestamp(ctx, ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("get sync timestamp error: %w", err)
 	}
@@ -177,7 +178,7 @@ func (uc *ProductUsecase) CheckVersionSync(
 	// 2. Nếu chưa có timestamp trong Redis, tạo mới (lần đầu)
 	if currentTimestamp == 0 {
 		currentTimestamp = time.Now().Unix()
-		if err := uc.setSyncTimestamp(ctx, req.OwnerID, currentTimestamp); err != nil {
+		if err := uc.setSyncTimestamp(ctx, ownerID, currentTimestamp); err != nil {
 			return nil, fmt.Errorf("set sync timestamp error: %w", err)
 		}
 
@@ -203,7 +204,7 @@ func (uc *ProductUsecase) CheckVersionSync(
 	}
 
 	// Lấy danh sách product đã thay đổi từ Redis
-	changedProductIDs, err := uc.getChangedProducts(ctx, req.OwnerID)
+	changedProductIDs, err := uc.getChangedProducts(ctx, ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("get changed products error: %w", err)
 	}

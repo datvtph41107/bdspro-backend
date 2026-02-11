@@ -10,6 +10,7 @@ import (
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -69,23 +70,23 @@ func (h *ProductHandler) CheckVersionSync(
 	ctx context.Context,
 	req *bdspropb.CheckVersionSyncRequest,
 ) (*bdspropb.CheckVersionSyncResponse, error) {
+	ownerId := _utils.GetProfileIdWithContext(ctx)
 	// Validate request
 	if req.Resource == "" {
 		return nil, status.Error(codes.InvalidArgument, "resource is required")
 	}
-	if req.OwnerId == 0 {
+	if ownerId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "owner_id is required")
 	}
 
 	// Convert từ proto sang DTO
 	dtoReq := &dto.CheckVersionSyncRequest{
 		Resource: req.Resource,
-		OwnerID:  req.OwnerId,
 		LastSync: req.LastSync,
 	}
 
 	// Gọi usecase - CHỈ check Redis
-	resp, err := h.UC.CheckVersionSync(ctx, dtoReq)
+	resp, err := h.UC.CheckVersionSync(ctx, ownerId, dtoReq)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
