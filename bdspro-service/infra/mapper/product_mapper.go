@@ -369,11 +369,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		CreatedAt: _utils.FormatTimeToString(product.CreatedAt),
 		UpdatedAt: _utils.FormatTimeToString(product.UpdatedAt),
 
-		// PostCount:        product.PostCount,
-		// ContactCount:     product.ContactCount,
-		// ShareCount:       product.ShareCount,
-		// AssetCount:       product.AssetCount,
-		// DealCount:        product.DealCount,
+		PostCount:        product.PostCount,
+		ContactCount:     product.ContactCount,
+		ShareCount:       product.ShareCount,
+		AssetCount:       product.AssetCount,
+		DealCount:        product.DealCount,
 		AppointmentCount: product.AppointmentCount,
 	}
 
@@ -453,6 +453,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 
 	if len(product.MediaList) > 0 {
 		result.MediaList = make([]*bdspropb.MediaItem, len(product.MediaList))
+		result.Avatar = &bdspropb.MediaItem{
+			Id:        product.MediaList[0].ID,
+			MediaUrl:  product.MediaList[0].MediaURL,
+			MediaType: product.MediaList[0].MediaType,
+		}
 		for i, media := range product.MediaList {
 			result.MediaList[i] = &bdspropb.MediaItem{
 				Id:        media.ID,
