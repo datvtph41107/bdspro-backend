@@ -83,6 +83,7 @@ func (h *ProductHandler) CheckVersionSync(
 	dtoReq := &dto.CheckVersionSyncRequest{
 		Resource: req.Resource,
 		LastSync: req.LastSync,
+		Id:       req.Id,
 	}
 
 	// Gọi usecase - CHỈ check Redis

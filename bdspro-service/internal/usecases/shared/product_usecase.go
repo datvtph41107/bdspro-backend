@@ -155,79 +155,143 @@ const (
 	// bdspro:sync:product:{owner_id}:changed - Lưu set các product ID đã thay đổi
 	keyChangedProducts = "bdspro:sync:product:%d:changed"
 
+	// bdspro:product:{product_id}:timestamp - Lưu timestamp của từng product
+	keyProductTimestamp = "bdspro:product:%d:timestamp"
 	// TTL 24 giờ
 	redisTTL = 24 * time.Hour
 )
 
-// CheckVersionSync - CHỈ check trong Redis, không query database
 func (uc *ProductUsecase) CheckVersionSync(
 	ctx context.Context,
-	ownerID uint64,
+	ownerId uint64,
 	req *dto.CheckVersionSyncRequest,
 ) (*dto.CheckVersionSyncResponse, error) {
-	if req.Resource != "product" {
-		return nil, fmt.Errorf("unsupported resource: %s", req.Resource)
+	// Nếu có id resouce thif cjeck sync 1 resource product
+	if req.Id != 0 && req.Id > 0 {
+		return uc.checkSingleProductSync(ctx, req, ownerId)
 	}
 
-	// 1. Lấy timestamp hiện tại từ Redis
-	currentTimestamp, err := uc.getSyncTimestamp(ctx, ownerID)
+	return uc.checkAllProductsSync(ctx, req, ownerId)
+}
+
+func (uc *ProductUsecase) checkSingleProductSync(
+	ctx context.Context,
+	req *dto.CheckVersionSyncRequest,
+	ownerId uint64,
+) (*dto.CheckVersionSyncResponse, error) {
+	productID := req.Id
+	productTimestamp, err := uc.getProductTimestamp(ctx, productID)
 	if err != nil {
-		return nil, fmt.Errorf("get sync timestamp error: %w", err)
+		return nil, _errors.InternalServerException("get product timestamp error: %w", err.Error())
 	}
 
-	// 2. Nếu chưa có timestamp trong Redis, tạo mới (lần đầu)
-	if currentTimestamp == 0 {
-		currentTimestamp = time.Now().Unix()
-		if err := uc.setSyncTimestamp(ctx, ownerID, currentTimestamp); err != nil {
-			return nil, fmt.Errorf("set sync timestamp error: %w", err)
+	currentTimestamp, err := uc.getSyncTimestamp(ctx, ownerId)
+	if err != nil {
+		return nil, _errors.InternalServerException("get sync timestamp error: %w", err.Error())
+	}
+
+	if productTimestamp == 0 {
+		product, err := uc.ProductRepo.GetProductByID(ctx, &productID)
+		if err != nil {
+			return nil, _errors.InternalServerException("product not found or no permission")
 		}
 
-		// Lần đầu sync, không có thay đổi vì chưa có dữ liệu trong Redis
-		return &dto.CheckVersionSyncResponse{
-			NeedSync:       false, // Không cần sync vì chưa có gì thay đổi
-			CurrentVersion: currentTimestamp,
-			ChangeCount:    0,
-			ChangedIDs:     []uint64{},
-		}, nil
+		productTimestamp = product.UpdatedAt.Unix()
+		if err := uc.setProductTimestamp(ctx, productID, productTimestamp); err != nil {
+			log.Println("Failed to cache product timestamp:", err)
+		}
 	}
 
-	//  Kiểm tra nếu không cần đồng bộ
-	// last_sync >= currentTimestamp → client đã có data mới nhất
-	if req.LastSync >= currentTimestamp {
+	needSyncForProduct := req.LastSync < productTimestamp
 
-		return &dto.CheckVersionSyncResponse{
-			NeedSync:       false,
-			CurrentVersion: currentTimestamp,
-			ChangeCount:    0,
-			ChangedIDs:     []uint64{},
-		}, nil
-	}
+	needSyncGeneral := req.LastSync < currentTimestamp
 
-	// Lấy danh sách product đã thay đổi từ Redis
-	changedProductIDs, err := uc.getChangedProducts(ctx, ownerID)
+	return &dto.CheckVersionSyncResponse{
+		NeedSync:        needSyncGeneral || needSyncForProduct,
+		CurrentVersion:  currentTimestamp,
+		ResourceVersion: &productTimestamp,
+		ChangeCount:     0,
+		ChangedIDs:      []uint64{},
+	}, nil
+}
+
+func (uc *ProductUsecase) checkAllProductsSync(
+	ctx context.Context,
+	req *dto.CheckVersionSyncRequest,
+	ownerId uint64,
+) (*dto.CheckVersionSyncResponse, error) {
+
+	// Lấy current timestamp từ Redis
+	currentTimestamp, err := uc.getSyncTimestamp(ctx, ownerId)
 	if err != nil {
-		return nil, fmt.Errorf("get changed products error: %w", err)
+		return nil, _errors.InternalServerException("get sync timestamp error: %w", err.Error())
+	}
+
+	//  Nếu chưa có timestamp, tạo mới
+	if currentTimestamp == 0 {
+		currentTimestamp = time.Now().Unix()
+		if err := uc.setSyncTimestamp(ctx, ownerId, currentTimestamp); err != nil {
+			return nil, _errors.InternalServerException("set sync timestamp error: %w", err.Error())
+		}
+
+		return &dto.CheckVersionSyncResponse{
+			NeedSync:        false,
+			CurrentVersion:  currentTimestamp,
+			ResourceVersion: nil,
+			ChangeCount:     0,
+			ChangedIDs:      []uint64{},
+		}, nil
+	}
+
+	if req.LastSync >= currentTimestamp {
+		return &dto.CheckVersionSyncResponse{
+			NeedSync:        false,
+			CurrentVersion:  currentTimestamp,
+			ResourceVersion: nil,
+			ChangeCount:     0,
+			ChangedIDs:      []uint64{},
+		}, nil
+	}
+
+	changedProductIDs, err := uc.getChangedProducts(ctx, ownerId)
+	if err != nil {
+		return nil, _errors.InternalServerException("get changed products error: %w", err.Error())
 	}
 
 	changeCount := len(changedProductIDs)
 
 	return &dto.CheckVersionSyncResponse{
-		NeedSync:       changeCount > 0,
-		CurrentVersion: currentTimestamp,
-		ChangeCount:    changeCount,
-		ChangedIDs:     changedProductIDs,
+		NeedSync:        changeCount > 0,
+		CurrentVersion:  currentTimestamp,
+		ResourceVersion: nil,
+		ChangeCount:     changeCount,
+		ChangedIDs:      changedProductIDs,
 	}, nil
+}
+
+func (uc *ProductUsecase) setProductTimestamp(ctx context.Context, productID uint64, timestamp int64) error {
+	key := fmt.Sprintf(keyProductTimestamp, productID)
+	return uc.redisClient.Set(ctx, key, timestamp, redisTTL).Err()
+}
+
+func (uc *ProductUsecase) getProductTimestamp(ctx context.Context, productID uint64) (int64, error) {
+	key := fmt.Sprintf(keyProductTimestamp, productID)
+	result, err := uc.redisClient.Get(ctx, key).Int64()
+	if err == redis.Nil {
+		return 0, nil
+	}
+	return result, err
 }
 
 // MarkProductChanged - Khi product được update
 func (uc *ProductUsecase) MarkProductChanged(ctx context.Context, productID, ownerID uint64) error {
 	if err := uc.addChangedProduct(ctx, ownerID, productID); err != nil {
-		return fmt.Errorf("add changed product error: %w", err)
+		return _errors.InternalServerException("add changed product error: %w", err.Error())
 	}
 
 	currentTime := time.Now().Unix()
 	if err := uc.setSyncTimestamp(ctx, ownerID, currentTime); err != nil {
-		return fmt.Errorf("update sync timestamp error: %w", err)
+		return _errors.InternalServerException("update sync timestamp error: %w", err.Error())
 	}
 	return nil
 }
@@ -1858,7 +1922,7 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	// Lấy profileID từ context
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, fmt.Errorf("profile ID not found in context")
+		return nil, _errors.InternalServerException("profile ID not found in context")
 	}
 
 	// Gọi repo để lấy thống kê với filters

@@ -16,7 +16,7 @@ option go_package = "pb/types/bdspro;bdspropb";
 service ProductService {
   rpc CheckVersionSync(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/version/{resource}/sync/status"
+      get: "/v2/bdspro/version/{resource}/{id}/sync/status"
     };
   }
   
@@ -288,6 +288,7 @@ enum ProductPriceStatus {
 
 message CheckVersionSyncRequest {
   string resource = 1;  
+  uint64 id = 2;
   int64 lastSync = 3; 
 }
 
