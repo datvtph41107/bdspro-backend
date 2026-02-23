@@ -11,6 +11,7 @@ import (
 	"errors"
 	sharepb "pb/types/shared"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -39,6 +40,92 @@ func NewGormUserProductRepo(db *gorm.DB,
 		db:             db,
 		// TransactionRepo: TransactionRepo,
 	}
+}
+
+type userProductTimestampRow struct {
+	ProductID uint64    `gorm:"column:id"`
+	UpdatedAt time.Time `gorm:"column:updated_at"`
+}
+
+func (r *GormUserProductRepo) GetAllTimestampsForSync(
+	ctx context.Context,
+	profileID uint64,
+	lastID uint64,
+	limit int,
+) ([]repo.ProductTimestamp, error) {
+	var rows []repo.ProductTimestamp
+
+	err := r.db.WithContext(ctx).
+		Model(&domain.ProductUser{}).
+		Select("product_id as id, updated_at").
+		Where("profile_id = ?", profileID).
+		Where("product_id > ?", lastID).
+		Order("product_id ASC").
+		Limit(limit).
+		Scan(&rows).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
+}
+
+func (r *GormUserProductRepo) GetChangedProducts(
+	ctx context.Context,
+	profileID uint64,
+	lastSyncTime int64,
+	lastID uint64,
+	limit int,
+	productIDs []uint64,
+) ([]domain.Product, error) {
+	db := GetDB(ctx, r.db).
+		Model(&domain.Product{}).
+		Where("profile_id = ?", profileID).
+		Where("updated_at > ?", lastSyncTime)
+
+	// optional filter
+	if len(productIDs) > 0 {
+		db = db.Where("id IN ?", productIDs)
+	}
+
+	db = db.Where("id > ?", lastID).
+		Order("id ASC").
+		Limit(limit)
+
+	var products []domain.Product
+	err := db.Find(&products).Error
+	return products, err
+}
+
+func (r *GormUserProductRepo) BatchGetTimestamps(ctx context.Context, ids []uint64) (map[uint64]int64, error) {
+	if len(ids) == 0 {
+		return map[uint64]int64{}, nil
+	}
+	if len(ids) > 100 {
+		ids = ids[:100]
+	}
+
+	type result struct {
+		ID        uint64
+		UpdatedAt int64
+	}
+
+	var rows []result
+	err := r.db.WithContext(ctx).
+		Table("products").
+		Select("id, EXTRACT(EPOCH FROM updated_at)*1000 as updated_at").
+		Where("id IN ? AND deleted_at IS NULL", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	timestamps := make(map[uint64]int64, len(rows))
+	for _, row := range rows {
+		timestamps[row.ID] = row.UpdatedAt
+	}
+	return timestamps, nil
 }
 
 func (r *GormUserProductRepo) UpdateViewStats(
@@ -1515,6 +1602,16 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 
 // Helper function để build WHERE conditions từ dto
 func (r *GormUserProductRepo) buildQueryConditions(dto *dto.ProductSearchRequest, whereClauses *[]string, args *[]interface{}) {
+	// THÊM FILTER THEO IDs - ĐẶT LÊN ĐẦU
+	if len(dto.IDs) > 0 {
+		placeholders := make([]string, len(dto.IDs))
+		for i := range dto.IDs {
+			placeholders[i] = "?"
+			*args = append(*args, dto.IDs[i])
+		}
+		*whereClauses = append(*whereClauses, "products.id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
 	// ParentID
 	if dto.ParentID != nil && *dto.ParentID == 0 {
 		*whereClauses = append(*whereClauses, "products.parent_id IS NULL")

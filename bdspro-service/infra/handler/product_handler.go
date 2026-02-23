@@ -66,38 +66,158 @@ func NewProductService(
 	}
 }
 
-func (h *ProductHandler) CheckVersionSync(
-	ctx context.Context,
-	req *bdspropb.CheckVersionSyncRequest,
-) (*bdspropb.CheckVersionSyncResponse, error) {
-	ownerId := _utils.GetProfileIdWithContext(ctx)
-	// Validate request
-	if req.Resource == "" {
-		return nil, status.Error(codes.InvalidArgument, "resource is required")
-	}
-	if ownerId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "owner_id is required")
+// GetCurrentVersion
+// func (h *ProductHandler) GetCurrentVersion(ctx context.Context, req *bdspropb.GetCurrentVersionRequest) (*bdspropb.GetCurrentVersionResponse, error) {
+// 	// 1. Validate
+// 	if req == nil {
+// 		return nil, status.Error(codes.InvalidArgument, "request required")
+// 	}
+
+// 	// 2. Lấy profileId từ context nếu request không có
+// 	profileID := req.ProfileId
+// 	if profileID == 0 {
+// 		profileID = _utils.GetProfileIdWithContext(ctx)
+// 		if profileID == 0 {
+// 			return nil, status.Error(codes.Unauthenticated, "profile_id not found")
+// 		}
+// 	}
+
+// 	// 3. Lấy timestamp từ Redis
+// 	key := cache.UserSyncTimeKey(profileID)
+// 	timestamp, err := h.syncUsecase.GetRedis().Get(ctx, key).Int64()
+// 	if err != nil {
+// 		// Không có cache thì trả về 0
+// 		return &bdspropb.GetCurrentVersionResponse{
+// 			CurrentVersionTimestamp: 0,
+// 		}, nil
+// 	}
+
+// 	return &bdspropb.GetCurrentVersionResponse{
+// 		CurrentVersionTimestamp: timestamp,
+// 	}, nil
+// }
+
+// SyncProducts
+func (h *ProductHandler) SyncProducts(ctx context.Context, req *bdspropb.SyncProductsRequest) (*bdspropb.SyncProductsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request required")
 	}
 
-	// Convert từ proto sang DTO
-	dtoReq := &dto.CheckVersionSyncRequest{
-		Resource: req.Resource,
-		LastSync: req.LastSync,
-		Id:       req.Id,
+	profileID := req.ProfileId
+	if profileID == 0 {
+		profileID = _utils.GetProfileIdWithContext(ctx)
+		if profileID == 0 {
+			return nil, status.Error(codes.Unauthenticated, "profile_id not found")
+		}
+	}
+	pageSize := req.PageSize
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
 	}
 
-	// Gọi usecase - CHỈ check Redis
-	resp, err := h.UC.CheckVersionSync(ctx, ownerId, dtoReq)
+	syncReq := &dto.SyncProductsRequest{
+		ProfileID:    profileID,
+		LastSyncTime: req.LastVersionTimestamp,
+		PageSize:     int(pageSize),
+		PageToken:    req.PageToken,
+		ProductIDs:   req.Ids,
+	}
+
+	resp, err := h.UC.SyncProducts(ctx, syncReq)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "sync failed: %v", err)
 	}
 
-	// Convert từ DTO sang proto
-	return &bdspropb.CheckVersionSyncResponse{
-		NeedSync:       resp.NeedSync,
-		CurrentVersion: resp.CurrentVersion,
-		ChangeCount:    int32(resp.ChangeCount),
-		ChangedIds:     resp.ChangedIDs,
+	changedProducts := make([]*bdspropb.ChangedProduct, len(resp.ProductIDs))
+	for i, p := range resp.ProductIDs {
+		changedProducts[i] = &bdspropb.ChangedProduct{
+			Id:         p.ID,
+			UpdatedAt:  p.UpdatedAt,
+			ChangeType: p.ChangeType,
+		}
+	}
+
+	return &bdspropb.SyncProductsResponse{
+		ProductIds:      changedProducts,
+		RemovedIds:      resp.RemovedIDs,
+		CurrentSyncTime: resp.CurrentSyncTime,
+		NextToken:       resp.NextToken,
+		HasMore:         resp.HasMore,
+	}, nil
+}
+
+func uniqueUint64(ids []uint64) []uint64 {
+	seen := make(map[uint64]struct{}, len(ids))
+	out := make([]uint64, 0, len(ids))
+
+	for _, id := range ids {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
+}
+
+func (h *ProductHandler) BatchGetProducts(
+	ctx context.Context,
+	req *bdspropb.BatchGetProductsRequest,
+) (*bdspropb.BatchGetProductsResponse, error) {
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request required")
+	}
+
+	if len(req.Ids) == 0 {
+		return &bdspropb.BatchGetProductsResponse{
+			Products: map[uint64]*bdspropb.ProductResponse{},
+		}, nil
+	}
+
+	ids := uniqueUint64(req.Ids)
+
+	if len(ids) > 100 {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			"max 100 ids per request",
+		)
+	}
+
+	// resolve profile
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, status.Error(codes.Unauthenticated, "profile_id not found")
+	}
+
+	// build search request
+	searchReq := &dto.ProductSearchRequest{
+		IDs:           ids,
+		RequestUserId: &profileId,
+		Pagable: _dto.Pagable{
+			Page: 1,
+			Size: uint32(len(ids)),
+		},
+	}
+
+	// call usecase
+	result, _, err := h.UC.GetProductOfCurrentUser(ctx, *searchReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to batch get products: %v", err)
+	}
+
+	products := h.ProductMapper.MapProductPbListResponse(result)
+
+	respMap := make(map[uint64]*bdspropb.ProductResponse, len(products))
+	for _, p := range products {
+		respMap[p.Id] = p
+	}
+
+	return &bdspropb.BatchGetProductsResponse{
+		Products: respMap,
 	}, nil
 }
 

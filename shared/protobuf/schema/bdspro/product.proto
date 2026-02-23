@@ -14,17 +14,25 @@ import "bdspro/deal.proto";
 option go_package = "pb/types/bdspro;bdspropb";
 
 service ProductService {
-  rpc CheckVersionSync(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
+  // New sync methods
+  rpc SyncProducts(SyncProductsRequest) returns (SyncProductsResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/version/{resource}/{id}/sync/status"
+      post: "/v2/bdspro/v2/{resource}/sync"
+      body: "*"
+    };
+  }
+  rpc GetCurrentVersion(GetCurrentVersionRequest) returns (GetCurrentVersionResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/version/{profileId}"
+    };
+  }
+  rpc BatchGetProducts(BatchGetProductsRequest) returns (BatchGetProductsResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/batch"
+      body: "*"
     };
   }
   
-  rpc GetVersionData(GetVersionDataRequest) returns (GetVersionDataResponse) {
-    option (google.api.http) = {
-      get: "/v2/bdspropb/version/{resource}/sync/data"
-    };
-  }
   rpc GetDetailByIds (IdRequest) returns (ProductInternalResponse);
   rpc GetProductAttachmentByIds (IdRequest) returns (ProductAttachmentResponse);
   rpc ArchiveProduct (ArchivedRequest) returns (Response) {
@@ -285,30 +293,44 @@ enum ProductPriceStatus {
   PRICE_STATUS_CONTACT = 3;   
 }
 
-
-message CheckVersionSyncRequest {
-  string resource = 1;  
-  uint64 id = 2;
-  int64 lastSync = 3; 
+message SyncProductsRequest {
+  string resource = 1;
+  uint64 profileId = 2;
+  int64 lastVersionTimestamp =3;
+  int32 pageSize = 4;
+  string pageToken = 5;
+  repeated uint64 ids = 6;
 }
 
-message CheckVersionSyncResponse {
-  bool needSync = 1;          
-  int64 currentVersion = 2;    
-  int32 changeCount = 3;      
-  repeated uint64 changedIds = 4; 
+message SyncProductsResponse {
+  repeated ChangedProduct productIds = 1;
+  repeated uint64 removedIds = 2;
+  int64 currentSyncTime  = 3;
+  string nextToken = 4;
+  bool hasMore = 5;
 }
 
-message GetVersionDataRequest {
-  string resource = 1;          
-  repeated uint64 resourceIds = 3;
+message ChangedProduct {
+  uint64 id = 1;
+  int64 updatedAt = 2;
+  int32 changeType = 3;
 }
 
-message GetVersionDataResponse {
-  repeated ProductResponse data = 1;  
-  int32 total = 2;        
+message GetCurrentVersionRequest {
+  uint64 profileId = 1;
 }
 
+message GetCurrentVersionResponse {
+  int64 currentVersionTimestamp = 1;
+}
+
+message BatchGetProductsRequest {
+  repeated uint64 ids = 1;
+}
+
+message BatchGetProductsResponse {
+  map<uint64, ProductResponse> products = 1;  
+}
 
 message ApplyPriceUpdateRequest {
   uint64 productId = 1;

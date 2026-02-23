@@ -17,6 +17,44 @@ func NewProductUserPostgres(db *gorm.DB) repo.ProductUserRepo {
 	return &ProductUserPostgres{db: db}
 }
 
+func (r *ProductUserPostgres) GetProfileIDsByProduct(ctx context.Context, productID uint64) ([]uint64, error) {
+	var ids []uint64
+	err := r.db.WithContext(ctx).
+		Table("product_user").
+		Select("profile_id").
+		Where("product_id = ? AND deleted_at IS NULL", productID).
+		Scan(&ids).Error
+	return ids, err
+}
+
+// GetUserProductsWithTimestamp - Lấy TẤT CẢ sản phẩm kèm timestamp
+func (r *ProductUserPostgres) GetUserProductsWithTimestamp(ctx context.Context, profileID uint64) (map[uint64]int64, error) {
+	type rowResult struct {
+		ProductID uint64
+		UpdatedAt int64
+	}
+
+	var rows []rowResult
+	err := r.db.WithContext(ctx).
+		Table("product_user pu").
+		Select(`
+			pu.product_id,
+			(EXTRACT(EPOCH FROM COALESCE(p.updated_at, pu.updated_at)) * 1000)::bigint as updated_at
+		`).
+		Joins("LEFT JOIN products p ON p.id = pu.product_id AND p.deleted_at IS NULL").
+		Where("pu.profile_id = ? AND pu.deleted_at IS NULL", profileID).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	resultMap := make(map[uint64]int64, len(rows))
+	for _, row := range rows {
+		resultMap[row.ProductID] = row.UpdatedAt
+	}
+	return resultMap, nil
+}
+
 func (r *ProductUserPostgres) UpdatePriceID(
 	ctx context.Context,
 	productID uint64,

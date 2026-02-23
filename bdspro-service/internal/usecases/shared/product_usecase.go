@@ -3,6 +3,8 @@ package shared_usecase
 import (
 	"bdspro/infra/providers"
 	redis_cli "bdspro/infra/redis"
+	"bdspro/infra/redis/cache"
+	"bdspro/internal/common/token"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -21,6 +23,7 @@ import (
 	"fmt"
 	"log"
 	sharepb "pb/types/shared"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -66,13 +69,16 @@ type ProductUsecase struct {
 	DealRepo                repo.DealRepository
 	CodeDataUsecase         *_usecase.CodeDataUsecase
 
-	Transaction      provider.TransactionProvider
-	DeepseekClient   provider.DeepseekProvider
-	CrmProvider      provider.CrmProvider
-	UserProvider     provider.IUserProvider
-	DistributionRepo repo.DistributeRepository
-	HubProvider      provider.HubProvider
-	redisClient      *redis_cli.RedisClient
+	Transaction            provider.TransactionProvider
+	DeepseekClient         provider.DeepseekProvider
+	CrmProvider            provider.CrmProvider
+	UserProvider           provider.IUserProvider
+	DistributionRepo       repo.DistributeRepository
+	HubProvider            provider.HubProvider
+	CacheTTLProductIDs     time.Duration
+	CacheTTLProductVersion time.Duration
+	CacheTTLProductDetail  time.Duration
+	redisClient            *redis_cli.RedisClient
 }
 
 func NewProductUsecase(
@@ -147,234 +153,286 @@ func NewProductUsecase(
 	return result
 }
 
-// Redis key patterns
-const (
-	// bdspro:sync:product:{owner_id}:timestamp - Lưu timestamp mới nhất
-	keySyncTimestamp = "bdspro:sync:product:%d:timestamp"
-
-	// bdspro:sync:product:{owner_id}:changed - Lưu set các product ID đã thay đổi
-	keyChangedProducts = "bdspro:sync:product:%d:changed"
-
-	// bdspro:product:{product_id}:timestamp - Lưu timestamp của từng product
-	keyProductTimestamp = "bdspro:product:%d:timestamp"
-	// TTL 24 giờ
-	redisTTL = 24 * time.Hour
-)
-
-func (uc *ProductUsecase) CheckVersionSync(
+func (uc *ProductUsecase) SyncProducts(
 	ctx context.Context,
-	ownerId uint64,
-	req *dto.CheckVersionSyncRequest,
-) (*dto.CheckVersionSyncResponse, error) {
-	// Nếu có id resouce thif cjeck sync 1 resource product
-	if req.Id != 0 && req.Id > 0 {
-		return uc.checkSingleProductSync(ctx, req, ownerId)
+	req *dto.SyncProductsRequest,
+) (*dto.SyncProductsResponse, error) {
+	// specific check
+	if len(req.ProductIDs) > 0 {
+		return uc.checkSpecificProducts(
+			ctx,
+			req.ProfileID,
+			req.ProductIDs,
+			req.LastSyncTime,
+		)
 	}
 
-	return uc.checkAllProductsSync(ctx, req, ownerId)
+	return uc.syncAllProducts(
+		ctx,
+		req.ProfileID,
+		req.LastSyncTime,
+		req.PageSize,
+		req.PageToken,
+	)
 }
 
-func (uc *ProductUsecase) checkSingleProductSync(
+func parseUint64(s string) uint64 {
+	v, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
+func parseInt64(s string) int64 {
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
+func (uc *ProductUsecase) checkSpecificProducts(
 	ctx context.Context,
-	req *dto.CheckVersionSyncRequest,
-	ownerId uint64,
-) (*dto.CheckVersionSyncResponse, error) {
-	productID := req.Id
-	productTimestamp, err := uc.getProductTimestamp(ctx, productID)
-	if err != nil {
-		return nil, _errors.InternalServerException("get product timestamp error: %w", err.Error())
+	profileID uint64,
+	productIDs []uint64,
+	lastSync int64,
+) (*dto.SyncProductsResponse, error) {
+	if len(productIDs) == 0 {
+		return &dto.SyncProductsResponse{}, nil
 	}
 
-	currentTimestamp, err := uc.getSyncTimestamp(ctx, ownerId)
-	if err != nil {
-		return nil, _errors.InternalServerException("get sync timestamp error: %w", err.Error())
+	userProductsKey := cache.UserSyncProductsKey(profileID)
+	fields := make([]string, len(productIDs))
+	for i, id := range productIDs {
+		fields[i] = strconv.FormatUint(id, 10)
 	}
 
-	if productTimestamp == 0 {
-		product, err := uc.ProductRepo.GetProductByID(ctx, &productID)
+	vals, err := uc.redisClient.HMGet(ctx, userProductsKey, fields...).Result()
+	if err != nil && err != redis.Nil {
+		return nil, err
+	}
+
+	cachedTS := make(map[uint64]int64)
+	var missIDs []uint64
+
+	for i, v := range vals {
+		if v == nil {
+			missIDs = append(missIDs, productIDs[i])
+			continue
+		}
+		cachedTS[productIDs[i]] = parseInt64(fmt.Sprint(v))
+	}
+
+	if len(missIDs) > 0 {
+		dbTS, err := uc.ProductRepo.BatchGetTimestamps(ctx, missIDs)
 		if err != nil {
-			return nil, _errors.InternalServerException("product not found or no permission")
+			return nil, err
 		}
 
-		productTimestamp = product.UpdatedAt.Unix()
-		if err := uc.setProductTimestamp(ctx, productID, productTimestamp); err != nil {
-			log.Println("Failed to cache product timestamp:", err)
+		pipe := uc.redisClient.Pipeline()
+		for id, ts := range dbTS {
+			cachedTS[id] = ts
+			pipe.HSet(ctx, userProductsKey, strconv.FormatUint(id, 10), ts)
+		}
+
+		pipe.ExpireNX(ctx, userProductsKey, cache.TTLUserSync)
+		_, _ = pipe.Exec(ctx)
+	}
+
+	changed := make([]*dto.ChangedProduct, 0)
+
+	for id, ts := range cachedTS {
+		if lastSync == 0 || ts > lastSync {
+			changed = append(changed, &dto.ChangedProduct{
+				ID:         id,
+				UpdatedAt:  ts,
+				ChangeType: 2,
+			})
 		}
 	}
 
-	needSyncForProduct := req.LastSync < productTimestamp
+	sort.Slice(changed, func(i, j int) bool {
+		return changed[i].ID < changed[j].ID
+	})
 
-	needSyncGeneral := req.LastSync < currentTimestamp
-
-	return &dto.CheckVersionSyncResponse{
-		NeedSync:        needSyncGeneral || needSyncForProduct,
-		CurrentVersion:  currentTimestamp,
-		ResourceVersion: &productTimestamp,
-		ChangeCount:     0,
-		ChangedIDs:      []uint64{},
+	return &dto.SyncProductsResponse{
+		ProductIDs:      changed,
+		RemovedIDs:      []uint64{},
+		CurrentSyncTime: time.Now().UnixMilli(),
 	}, nil
 }
 
-func (uc *ProductUsecase) checkAllProductsSync(
+func (uc *ProductUsecase) syncAllProducts(
 	ctx context.Context,
-	req *dto.CheckVersionSyncRequest,
-	ownerId uint64,
-) (*dto.CheckVersionSyncResponse, error) {
-
-	// Lấy current timestamp từ Redis
-	currentTimestamp, err := uc.getSyncTimestamp(ctx, ownerId)
-	if err != nil {
-		return nil, _errors.InternalServerException("get sync timestamp error: %w", err.Error())
-	}
-
-	//  Nếu chưa có timestamp, tạo mới
-	if currentTimestamp == 0 {
-		currentTimestamp = time.Now().Unix()
-		if err := uc.setSyncTimestamp(ctx, ownerId, currentTimestamp); err != nil {
-			return nil, _errors.InternalServerException("set sync timestamp error: %w", err.Error())
-		}
-
-		return &dto.CheckVersionSyncResponse{
-			NeedSync:        false,
-			CurrentVersion:  currentTimestamp,
-			ResourceVersion: nil,
-			ChangeCount:     0,
-			ChangedIDs:      []uint64{},
-		}, nil
-	}
-
-	if req.LastSync >= currentTimestamp {
-		return &dto.CheckVersionSyncResponse{
-			NeedSync:        false,
-			CurrentVersion:  currentTimestamp,
-			ResourceVersion: nil,
-			ChangeCount:     0,
-			ChangedIDs:      []uint64{},
-		}, nil
-	}
-
-	changedProductIDs, err := uc.getChangedProducts(ctx, ownerId)
-	if err != nil {
-		return nil, _errors.InternalServerException("get changed products error: %w", err.Error())
-	}
-
-	changeCount := len(changedProductIDs)
-
-	return &dto.CheckVersionSyncResponse{
-		NeedSync:        changeCount > 0,
-		CurrentVersion:  currentTimestamp,
-		ResourceVersion: nil,
-		ChangeCount:     changeCount,
-		ChangedIDs:      changedProductIDs,
-	}, nil
-}
-
-func (uc *ProductUsecase) setProductTimestamp(ctx context.Context, productID uint64, timestamp int64) error {
-	key := fmt.Sprintf(keyProductTimestamp, productID)
-	return uc.redisClient.Set(ctx, key, timestamp, redisTTL).Err()
-}
-
-func (uc *ProductUsecase) getProductTimestamp(ctx context.Context, productID uint64) (int64, error) {
-	key := fmt.Sprintf(keyProductTimestamp, productID)
-	result, err := uc.redisClient.Get(ctx, key).Int64()
-	if err == redis.Nil {
-		return 0, nil
-	}
-	return result, err
-}
-
-// MarkProductChanged - Khi product được update
-func (uc *ProductUsecase) MarkProductChanged(ctx context.Context, productID, ownerID uint64) error {
-	if err := uc.addChangedProduct(ctx, ownerID, productID); err != nil {
-		return _errors.InternalServerException("add changed product error: %w", err.Error())
-	}
-
-	currentTime := time.Now().Unix()
-	if err := uc.setSyncTimestamp(ctx, ownerID, currentTime); err != nil {
-		return _errors.InternalServerException("update sync timestamp error: %w", err.Error())
-	}
-	return nil
-}
-
-// getSyncTimestamp lấy timestamp từ Redis
-func (uc *ProductUsecase) getSyncTimestamp(ctx context.Context, ownerID uint64) (int64, error) {
-	key := fmt.Sprintf(keySyncTimestamp, ownerID)
-	result, err := uc.redisClient.Get(ctx, key).Int64()
-	if err == redis.Nil {
-		return 0, nil
-	}
-	return result, err
-}
-
-// setSyncTimestamp lưu timestamp vào Redis
-func (uc *ProductUsecase) setSyncTimestamp(ctx context.Context, ownerID uint64, timestamp int64) error {
-	key := fmt.Sprintf(keySyncTimestamp, ownerID)
-	return uc.redisClient.Set(ctx, key, timestamp, redisTTL).Err()
-}
-
-// addChangedProduct thêm product vào danh sách thay đổi
-func (uc *ProductUsecase) addChangedProduct(ctx context.Context, ownerID uint64, productID uint64) error {
-	key := fmt.Sprintf(keyChangedProducts, ownerID)
-	// Sử dụng Redis Set để lưu danh sách product IDs
-	err := uc.redisClient.SAdd(ctx, key, productID).Err()
-	if err != nil {
-		return err
-	}
-
-	// Set TTL cho key
-	return uc.redisClient.Expire(ctx, key, redisTTL).Err()
-}
-
-// getChangedProducts lấy danh sách product đã thay đổi
-func (uc *ProductUsecase) getChangedProducts(ctx context.Context, ownerID uint64) ([]uint64, error) {
-	key := fmt.Sprintf(keyChangedProducts, ownerID)
-
-	// Lấy tất cả members của Set
-	members, err := uc.redisClient.SMembers(ctx, key).Result()
+	profileID uint64,
+	lastSync int64,
+	pageSize int,
+	pageToken string,
+) (*dto.SyncProductsResponse, error) {
+	tk, err := token.DecodeZSetPageToken(pageToken)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert string sang uint64
-	productIDs := make([]uint64, 0, len(members))
-	for _, member := range members {
-		id, err := strconv.ParseUint(member, 10, 64)
-		if err != nil {
-			continue
-		}
-		productIDs = append(productIDs, id)
+	startScore := lastSync
+	if tk.LastScore > 0 {
+		startScore = tk.LastScore
 	}
 
-	return productIDs, nil
-}
-
-// clearChangedProducts xóa danh sách product thay đổi (sau khi đồng bộ xong)
-func (uc *ProductUsecase) clearChangedProducts(ctx context.Context, ownerID uint64) error {
-	key := fmt.Sprintf(keyChangedProducts, ownerID)
-	return uc.redisClient.Del(ctx, key).Err()
-}
-
-// GetChangeCount lấy số lượng product thay đổi
-func (uc *ProductUsecase) GetChangeCount(ctx context.Context, ownerID uint64) (int, error) {
-	key := fmt.Sprintf(keyChangedProducts, ownerID)
-	count, err := uc.redisClient.SCard(ctx, key).Result()
+	changeKey := cache.UserProductsChangeKey(profileID)
+	results, err := uc.redisClient.ZRangeByScoreWithScores(
+		ctx,
+		changeKey,
+		&redis.ZRangeBy{
+			Min:    fmt.Sprintf("(%d", startScore),
+			Max:    "+inf",
+			Offset: 0,
+			Count:  int64(pageSize * 2),
+		},
+	).Result()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return int(count), nil
+
+	if len(results) == 0 && pageToken == "" && lastSync == 0 {
+		if err := uc.seedFromDB(ctx, profileID); err != nil {
+			return nil, err
+		}
+		return uc.syncAllProducts(ctx, profileID, lastSync, pageSize, pageToken)
+	}
+
+	changed := make([]*dto.ChangedProduct, 0, pageSize)
+
+	var lastScore int64
+	var lastID uint64
+
+	for _, z := range results {
+		id := parseUint64(fmt.Sprint(z.Member))
+		ts := int64(z.Score)
+
+		if tk.LastScore > 0 {
+			if ts < tk.LastScore {
+				continue
+			}
+			if ts == tk.LastScore && id <= tk.LastID {
+				continue
+			}
+		}
+
+		lastScore = ts
+		lastID = id
+
+		changed = append(changed, &dto.ChangedProduct{
+			ID:         id,
+			UpdatedAt:  ts,
+			ChangeType: 2,
+		})
+
+		if len(changed) == pageSize {
+			break
+		}
+	}
+
+	hasMore := len(changed) == pageSize
+
+	nextToken := ""
+	if hasMore {
+		nextToken, _ = token.EncodeZSetPageToken(token.ZSetPageToken{
+			LastScore: lastScore,
+			LastID:    lastID,
+		})
+	}
+
+	return &dto.SyncProductsResponse{
+		ProductIDs:      changed,
+		RemovedIDs:      []uint64{},
+		CurrentSyncTime: time.Now().UnixMilli(),
+		NextToken:       nextToken,
+		HasMore:         hasMore,
+	}, nil
 }
 
-// ClearAllForUser xóa tất cả cache sync của user
-func (uc *ProductUsecase) ClearAllForUser(ctx context.Context, ownerID uint64) error {
-	timestampKey := fmt.Sprintf(keySyncTimestamp, ownerID)
-	changedKey := fmt.Sprintf(keyChangedProducts, ownerID)
+func (uc *ProductUsecase) seedFromDB(
+	ctx context.Context,
+	profileID uint64,
+) error {
+	const batchSize = 500
+
+	userHash := cache.UserSyncProductsKey(profileID)
+	changeZSet := cache.UserProductsChangeKey(profileID)
+
+	var lastID uint64
+	for {
+		items, err := uc.ProductRepo.GetAllTimestampsForSync(
+			ctx,
+			profileID,
+			lastID,
+			batchSize,
+		)
+		if err != nil {
+			return err
+		}
+
+		if len(items) == 0 {
+			break
+		}
+
+		pipe := uc.redisClient.Pipeline()
+
+		for _, it := range items {
+			idStr := strconv.FormatUint(it.ID, 10)
+			ts := it.UpdatedAt.UnixMilli()
+
+			pipe.HSet(ctx, userHash, idStr, ts)
+
+			pipe.ZAdd(ctx, changeZSet, redis.Z{
+				Score:  float64(ts),
+				Member: it.ID,
+			})
+
+			lastID = it.ID
+		}
+
+		if _, err := pipe.Exec(ctx); err != nil {
+			return err
+		}
+
+		if len(items) < batchSize {
+			break
+		}
+	}
+
+	return nil
+}
+
+func (uc *ProductUsecase) onProductChanged(
+	ctx context.Context,
+	profileID uint64,
+	productID uint64,
+	updatedAt *time.Time,
+) {
+	userHash := cache.UserSyncProductsKey(profileID)
+	changeZSet := cache.UserProductsChangeKey(profileID)
+
+	ts := updatedAt.UnixMilli()
 
 	pipe := uc.redisClient.Pipeline()
-	pipe.Del(ctx, timestampKey)
-	pipe.Del(ctx, changedKey)
 
-	_, err := pipe.Exec(ctx)
-	return err
+	pipe.HSet(ctx, userHash,
+		strconv.FormatUint(productID, 10),
+		ts,
+	)
+
+	pipe.ZAdd(ctx, changeZSet, redis.Z{
+		Score:  float64(ts),
+		Member: productID,
+	})
+
+	pipe.ExpireNX(ctx, userHash, cache.TTLUserSync)
+	pipe.ExpireNX(ctx, changeZSet, cache.TTLUserSync)
+
+	_, _ = pipe.Exec(ctx)
 }
 
 func (u *ProductUsecase) ViewProductStats(ctx context.Context, stats *domain.ProductStats) error {
@@ -789,6 +847,18 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 		return nil, err
 	}
 
+	profileID := _utils.GetProfileIdWithContext(c)
+	if profileID > 0 {
+		now := time.Now()
+
+		s.onProductChanged(
+			c,
+			uint64(profileID),
+			entity.ID,
+			&now,
+		)
+	}
+
 	// Ghi lịch sử cho property trong goroutine
 	if s.NotificationClient != nil && entity.PropertyID != nil {
 		go func() {
@@ -807,8 +877,6 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 			}
 		}()
 	}
-
-	s.MarkProductChanged(c, entity.ID, entity.OwnerID)
 
 	return entity, nil
 }
@@ -845,6 +913,7 @@ func (s *ProductUsecase) GetProductOfGroup(c context.Context, groupId uint64, dt
 
 func (s *ProductUsecase) GetProductOfCurrentUser(c context.Context, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
+	profileId = 285
 	dto.RequestUserId = &profileId
 	return s.searchProduct(c, dto)
 }
