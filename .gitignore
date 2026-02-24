@@ -5,7 +5,7 @@ __debug_bin**
 /research
 /protobuf/googleapis
 /protobuf/types
-
+shared/protobuf/docs
 # Ignore all tmp folders
 **/tmp/
 **/tmp/*
