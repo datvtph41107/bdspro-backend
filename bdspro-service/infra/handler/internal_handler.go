@@ -25,6 +25,8 @@ type InternalHandler struct {
 	contractDealUsecase *usecases.DealContractUsecase
 	contractDealMapper  *mapper.ContractDealMapper
 	productUserRepo     repo.ProductUserRepo
+	productRepo         repo.ProductRepo
+	propertyRepo        repo.PropertyRepo
 }
 
 func NewInternalHandler(
@@ -37,6 +39,8 @@ func NewInternalHandler(
 	contractDealUsecase *usecases.DealContractUsecase,
 	contractDealMapper *mapper.ContractDealMapper,
 	productUserRepo repo.ProductUserRepo,
+	productRepo repo.ProductRepo,
+	propertyRepo repo.PropertyRepo,
 ) *InternalHandler {
 	return &InternalHandler{
 		dashboardUsecase:    dashboardUsecase,
@@ -48,6 +52,8 @@ func NewInternalHandler(
 		contractDealUsecase: contractDealUsecase,
 		contractDealMapper:  contractDealMapper,
 		productUserRepo:     productUserRepo,
+		productRepo:         productRepo,
+		propertyRepo:        propertyRepo,
 	}
 }
 
@@ -256,11 +262,16 @@ func (s *InternalHandler) GetProductUsersByProductId(ctx context.Context, req *s
 }
 
 func (s *InternalHandler) GetResourceIds(ctx context.Context, req *bdspropb.ResourceRequest) (*bdspropb.ResourceResponse, error) {
-	resp, err := s.productUsecase.ProductRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{
-		Resource: req.Resource,
-		// LastSync: req.LastSync,
-		// Id:       req.Id,
-	})
+	var resp []uint64
+	var err error
+
+	switch req.Resource {
+	case "product":
+		resp, err = s.productRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{})
+	case "property":
+		resp, err = s.propertyRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{})
+	}
+
 	if err != nil {
 		return nil, err
 	}

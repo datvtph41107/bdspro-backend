@@ -26,14 +26,6 @@
       "args": ["grpc"]
     },
     {
-      "name": "🧪 Debug BDSPro HTTP",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "${workspaceFolder}/bdspro-service",
-      "args": ["http"]
-    },
-    {
       "name": "🧪 Debug BDSPro gRPC",
       "type": "go",
       "request": "launch",
@@ -162,14 +154,6 @@
       "mode": "auto",
       "program": "${workspaceFolder}/feedback-service",
       "args": ["grpc"]
-    },
-    {
-      "name": "🧪 Debug TQD HTTP",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "${workspaceFolder}/tqd-service",
-      "args": ["http"]
     },
     {
       "name": "🧪 Debug Assistant HTTP",

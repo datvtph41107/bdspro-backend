@@ -181,7 +181,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	dealContractUsecase := usecases.NewDealContractUsecase(txContractDealRepository, txActionRepository, transactionGorm, txTransactionUsecase, dealUsecase, txDealCostRepository)
 	txMapper := mapper.NewTxMapper()
 	contractDealMapper := mapper.NewContractDealMapper(txMapper, codeDataUsecase)
-	internalHandler := handler.NewInternalHandler(dashboardUsecase, productUsecase, productMapper, dealRepository, dealMapper, dealMemberPostgresRepository, dealContractUsecase, contractDealMapper, productUserRepo)
+	internalHandler := handler.NewInternalHandler(dashboardUsecase, productUsecase, productMapper, dealRepository, dealMapper, dealMemberPostgresRepository, dealContractUsecase, contractDealMapper, productUserRepo, productRepo, propertyRepo)
 	assetDashboardStatsJob := job.NewAssetDashboardStatsJob(postgreAsset, db)
 	productDashboardStatsJob := job.NewProductDashboardStatsJob(productRepo, db)
 	postDashboardStatsJob := job.NewPostDashboardStatsJob(gormPostRepo, db)

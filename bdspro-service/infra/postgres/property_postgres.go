@@ -22,6 +22,24 @@ func NewPostgrePropertyRepo(db *gorm.DB) repo.PropertyRepo {
 	}
 }
 
+func (r *PostgrePropertyRepo) GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error) {
+	// profileId := _utils.GetProfileIdWithContext(c)
+	// originId := _utils.GetOriginIdFromContext(c)
+	var propertyIds []uint64
+	err := r.DB.WithContext(c).
+		Model(&domain.Property{}).
+		// Joins(`LEFT JOIN product_user pu ON (pu.product_id = products.id AND pu.deleted_at IS NULL)`).
+		Where(`property.deleted_at is null `).
+		Order("property.id desc").
+		Pluck("property.id", &propertyIds).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return propertyIds, nil
+}
+
 func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error) {
 	var properties []dto.PropertyWithCounts
 	var total int64

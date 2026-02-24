@@ -16,6 +16,7 @@ type PropertyRepo interface {
 	GetOneByID(c context.Context, id uint64) (*domain.Property, error)
 	DeleteBatchProperties(ctx context.Context, ids []uint64) error
 	ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool) error
+	GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
 }
 
 type PropertyRelationRepo interface {
