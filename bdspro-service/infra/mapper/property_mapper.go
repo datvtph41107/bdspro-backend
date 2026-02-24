@@ -198,6 +198,7 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		p.AvatarMediaType = property.Avatar.MediaType
 		p.AvatarSortOrder = property.Avatar.SortOrder
 	}
+
 	return m.PropertyWithCountsToProto(p)
 }
 
@@ -377,6 +378,17 @@ func (m *PropertyMapper) PropertyWithCountsToProto(p *dto.PropertyWithCounts) *b
 			}
 		}
 		result.Amenities = amenities
+	}
+
+	if len(p.MediaList) > 0 {
+		mediaList := make([]*bdspropb.MediaItem, len(p.MediaList))
+		for i, media := range p.MediaList {
+			mediaList[i] = &bdspropb.MediaItem{
+				MediaType: media.MediaType,
+				MediaUrl:  media.URL,
+			}
+		}
+		result.MediaList = mediaList
 	}
 
 	return result
