@@ -96,7 +96,6 @@ func (c *ConversationUsecases) EditChannel(ctx context.Context, conversationId u
 	} else {
 		nameVal = ""
 	}
-
 	var bgImageVal *uint64
 	if backgroundImageId != nil {
 		bgImageVal = backgroundImageId

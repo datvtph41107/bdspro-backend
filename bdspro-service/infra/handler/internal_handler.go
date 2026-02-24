@@ -275,6 +275,7 @@ func (s *InternalHandler) GetResourceIds(ctx context.Context, req *bdspropb.Reso
 	if err != nil {
 		return nil, err
 	}
+
 	return &bdspropb.ResourceResponse{
 		Ids: resp,
 	}, nil
