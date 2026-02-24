@@ -15,6 +15,9 @@ import (
 type ProductRepo interface {
 	crud3.CrudRepo[domain.Product]
 
+	GetAllTimestampsForSync(ctx context.Context, profileID uint64, lastID uint64, limit int) ([]domain.ProductUser, error)
+	BatchGetTimestamps(ctx context.Context, ids []uint64) (map[uint64]int64, error)
+
 	UpdateViewStats(ctx context.Context, stats *domain.ProductStats, oldLastTime int64) error
 
 	GetPrivateByProductID(ctx context.Context, productID uint64) (*domain.ProductPrivate, error)
@@ -102,11 +105,14 @@ type ProductRepo interface {
 	GetGroupProducts(ctx context.Context, req *dto.GroupProductSearchRequest) ([]domain.Product, int64, error)
 	GetUserProducts(ctx context.Context, req *dto.UserProductSearchRequest) ([]domain.Product, int64, error)
 
+	GetNextProductId(c context.Context, currentId *uint64) (uint64, error)
 	GetProducts(c context.Context, payload dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error)
 	GetProductsByAdmin(c context.Context, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error)
 
 	// Đếm số sản phẩm theo ownerOf và ownerId
 	CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error)
+
+	GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
 
 	// Cập nhật ghi chú sản phẩm
 	UpdateNote(ctx context.Context, id uint64, note string) error

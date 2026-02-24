@@ -5,16 +5,21 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
+	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
 
 // RedisService định nghĩa cấu trúc và phương thức thao tác với Redis
 type RedisService struct {
-	Client *redis.Client
-	Ctx    context.Context
+	Client    *redis.Client
+	Ctx       context.Context
+	logger    *flogging.FabricLogger
+	connected bool
+	mu        sync.RWMutex
 }
 
 const userPrefix = "USER_"
@@ -38,9 +43,52 @@ func NewRedisService() *RedisService {
 	}
 }
 
+// Client returns the underlying Redis client
+func (r *RedisService) Instance() (*redis.Client, error) {
+	r.mu.RLock()
+	connected := r.connected
+	r.mu.RUnlock()
+
+	if connected {
+		// Kiểm tra kết nối còn hoạt động không
+		_, err := r.Client.Ping(r.Ctx).Result()
+		if err == nil {
+			return r.Client, nil
+		}
+		// Kết nối bị mất, đánh dấu là chưa kết nối
+		r.mu.Lock()
+		r.connected = false
+		r.mu.Unlock()
+		r.logger.Warnf("Redis connection lost: %v", err)
+	}
+
+	// Thử kết nối lại
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Double check sau khi lock
+	if r.connected {
+		return r.Client, nil
+	}
+
+	_, err := r.Client.Ping(r.Ctx).Result()
+	if err != nil {
+		r.logger.Warnf("Failed to reconnect to Redis: %v", err)
+		return nil, err
+	}
+
+	r.connected = true
+	r.logger.Info("Reconnected to Redis successfully")
+	return r.Client, nil
+}
+
 // SaveToken lưu token với thời gian hết hạn (TTL)
 func (r *RedisService) SaveToken(userID uint64, token string, expirationInSeconds uint64) error {
-	return r.Client.Set(r.Ctx, userPrefix+strconv.FormatUint(userID, 10), token, time.Duration(expirationInSeconds)*time.Second).Err()
+	client, err := r.Instance()
+	if err != nil {
+		return err
+	}
+	return client.Set(r.Ctx, userPrefix+strconv.FormatUint(userID, 10), token, time.Duration(expirationInSeconds)*time.Second).Err()
 }
 
 // GetToken lấy token từ Redis

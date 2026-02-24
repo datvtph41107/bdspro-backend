@@ -17,6 +17,368 @@
   ],
   "paths": {},
   "definitions": {
+    "bdspropbActionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbCreateActionRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "bdspropbDealContractResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductAttachment"
+        },
+        "staffId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "staffName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "transaction": {
+          "$ref": "#/definitions/bdspropbTransactionResponse"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/bdspropbTransactionType"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "contractId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    },
+    "bdspropbGetDealTransactionsByIdsResponse": {
+      "type": "object",
+      "properties": {
+        "dealTransactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbDealContractResponse"
+          }
+        }
+      }
+    },
+    "bdspropbOwnerType": {
+      "type": "string",
+      "enum": [
+        "OWNER_TYPE_UNKNOWN",
+        "OWNER_TYPE_USER",
+        "OWNER_TYPE_GROUP",
+        "OWNER_TYPE_ORGANIZATION",
+        "OWNER_TYPE_DEAL"
+      ],
+      "default": "OWNER_TYPE_UNKNOWN",
+      "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    },
+    "bdspropbProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      },
+      "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
+    },
+    "bdspropbStatisticDealsResponse": {
+      "type": "object",
+      "properties": {
+        "dealIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "amountTxt": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountRevenue": {
+          "type": "number",
+          "format": "double"
+        },
+        "amountCost": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalProfit": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "bdspropbTransactionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbTransactionResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbTransactionMethod": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_METHOD_UNKNOWN",
+        "TRANSACTION_METHOD_SIGN",
+        "TRANSACTION_METHOD_COST",
+        "TRANSACTION_METHOD_REVENUE",
+        "TRANSACTION_METHOD_INVESTMENT",
+        "TRANSACTION_METHOD_DEPOSIT",
+        "TRANSACTION_METHOD_RENT",
+        "TRANSACTION_METHOD_SALE",
+        "TRANSACTION_METHOD_BUY"
+      ],
+      "default": "TRANSACTION_METHOD_UNKNOWN",
+      "title": "- TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua"
+    },
+    "bdspropbTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/bdspropbTransactionStatus"
+        },
+        "method": {
+          "$ref": "#/definitions/bdspropbTransactionMethod"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/bdspropbOwnerType"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbActionResponse"
+          }
+        }
+      }
+    },
+    "bdspropbTransactionStatus": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_STATUS_UNKNOWN",
+        "TRANSACTION_STATUS_PENDING",
+        "TRANSACTION_STATUS_APPROVED",
+        "TRANSACTION_STATUS_REJECTED"
+      ],
+      "default": "TRANSACTION_STATUS_UNKNOWN",
+      "title": "- TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối"
+    },
+    "bdspropbTransactionType": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_TYPE_UNKNOWN",
+        "TRANSACTION_TYPE_EXPENSE",
+        "TRANSACTION_TYPE_REVENUE",
+        "TRANSACTION_TYPE_BUY",
+        "TRANSACTION_TYPE_SELL",
+        "TRANSACTION_TYPE_RENT",
+        "TRANSACTION_TYPE_NEGOTIATE"
+      ],
+      "default": "TRANSACTION_TYPE_UNKNOWN",
+      "title": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu\n - TRANSACTION_TYPE_BUY: Mua\n - TRANSACTION_TYPE_SELL: Bán\n - TRANSACTION_TYPE_RENT: Thuê\n - TRANSACTION_TYPE_NEGOTIATE: Góp vốn"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -42,6 +404,33 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
         }
       }
     }

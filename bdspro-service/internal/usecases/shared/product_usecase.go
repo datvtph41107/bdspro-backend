@@ -176,6 +176,111 @@ func (uc *ProductUsecase) SyncProducts(
 	)
 }
 
+// Redis key patterns
+const (
+	// bdspro:sync:product:{owner_id}:timestamp - Lưu timestamp mới nhất
+	keySyncTimestamp = "bdspro:sync:product:%d:timestamp"
+
+	// bdspro:sync:product:{owner_id}:changed - Lưu set các product ID đã thay đổi
+	keyChangedProducts = "bdspro:sync:product:%d:changed"
+
+	// bdspro:product:{product_id}:timestamp - Lưu timestamp của từng product
+	keyProductTimestamp = "bdspro:product:%d:timestamp"
+
+	// map lưu ds product của user
+	keyUserProducts = "bdspro:sync:user:%d:product"
+	// lưu thời gian đồng bộ gần nhất của sản phẩm đầu tiên
+
+	// TTL 24 giờ
+	redisTTL = 24 * time.Hour
+)
+
+func (uc *ProductUsecase) CheckVersionSync(
+	ctx context.Context,
+	ownerId uint64,
+	req *dto.CheckVersionSyncRequest,
+) (*dto.CheckVersionSyncResponse, error) {
+	// Nếu có id resouce thif cjeck sync 1 resource product
+	// if req.Id != 0 && req.Id > 0 {
+	// 	return uc.checkSingleProductSync(ctx, req, ownerId)
+	// }
+	key := fmt.Sprintf(keyUserProducts, ownerId)
+	client, err := uc.redisClient.Client(ctx)
+	if err != nil {
+		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+	}
+	productIds, err := client.LRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+	}
+	// if len(productIds) == 0 {
+	// 	return nil, _errors.NotFoundException("User products not found")
+	// }
+	productIdsUint64 := make([]uint64, len(productIds))
+	for i, productId := range productIds {
+		productIdsUint64[i], err = strconv.ParseUint(productId, 10, 64)
+		if err != nil {
+			return nil, _errors.InternalServerException("parse product id error: %w", err.Error())
+		}
+	}
+	return &dto.CheckVersionSyncResponse{
+		NeedSync:        len(productIds) > 0,
+		CurrentVersion:  time.Now().Unix(),
+		ResourceVersion: nil,
+		ChangeCount:     len(productIds),
+		ChangedIDs:      productIdsUint64,
+	}, nil
+}
+
+func (uc *ProductUsecase) FlushSyncIds(ctx context.Context, limit int64) error {
+	ownerId := _utils.GetOriginIdFromContext(ctx)
+	if ownerId == 0 {
+		return _errors.ReturnError(400, "owner_id is required")
+	}
+	key := fmt.Sprintf(keyUserProducts, ownerId)
+	log.Println("key_trimmed", key, limit)
+	client, err := uc.redisClient.Client(context.Background())
+	if err != nil {
+		return _errors.InternalServerException("get user products error: %w", err.Error())
+	}
+	return client.LTrim(ctx, key, limit, -1).Err()
+}
+
+func (uc *ProductUsecase) GetVersionData(
+	ctx context.Context,
+	req *dto.CheckVersionSyncRequest,
+) (*domain.Product, *uint64, error) {
+	// nextProductId, err := uc.ProductRepo.GetNextProductId(ctx, &req.Id)
+	// if err != nil {
+	// 	return nil, nil, _errors.InternalServerException("get next product id error: %w", err.Error())
+	// }
+
+	idDetail := req.Id
+	// if req.Id > 0 {
+	// 	idDetail = req.Id
+	// } else {
+	// 	idDetail = nextProductId
+	// }
+	entity, err := uc.ProductRepo.GetByIDContext(ctx, idDetail)
+	if err != nil {
+		return nil, nil, _errors.InternalServerException("get product error: %w", err.Error())
+	}
+	if entity == nil {
+		return nil, nil, _errors.NotFoundException("Product not found")
+	}
+
+	uc.MapProductStatus(ctx, entity)
+
+	// Load privateData
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID > 0 && entity.OwnerID != 0 && entity.OwnerID == profileID {
+		if privateData := uc.ProductPrivate.FindByProductId(ctx, &entity.ID); privateData != nil {
+			entity.PrivateData = privateData
+		}
+	}
+	return entity, nil, nil
+}
+
 func parseUint64(s string) uint64 {
 	v, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
@@ -847,17 +952,17 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 		return nil, err
 	}
 
-	profileID := _utils.GetProfileIdWithContext(c)
-	if profileID > 0 {
-		now := time.Now()
+	// profileID := _utils.GetProfileIdWithContext(c)
+	// if profileID > 0 {
+	// 	now := time.Now()
 
-		s.onProductChanged(
-			c,
-			uint64(profileID),
-			entity.ID,
-			&now,
-		)
-	}
+	// 	s.onProductChanged(
+	// 		c,
+	// 		uint64(profileID),
+	// 		entity.ID,
+	// 		&now,
+	// 	)
+	// }
 
 	// Ghi lịch sử cho property trong goroutine
 	if s.NotificationClient != nil && entity.PropertyID != nil {
@@ -877,6 +982,37 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 			}
 		}()
 	}
+
+	go func() {
+		cloneCtx := _utils.CloneContext(c)
+		// actorID := _utils.GetProfileIdWithContext(cloneCtx)
+		productUsers, err := s.ProductUserRepo.GetByProductID(cloneCtx, entity.ID)
+		if err != nil {
+			return
+		}
+		ids := make([]uint64, len(productUsers))
+		for idx, productUser := range productUsers {
+			if productUser.OriginProfileID != nil {
+				ids[idx] = *productUser.OriginProfileID
+
+				// key := fmt.Sprintf(keyUserProducts, *productUser.OriginProfileID)
+				// // Sử dụng Redis Set để lưu danh sách product IDs
+				// client, err := s.redisClient.Client(cloneCtx)
+				// if err != nil {
+				// 	return
+				// }
+				// client.RPush(cloneCtx, key, entity.ID).Err()
+			}
+			// if err != nil {
+			// 	return err
+			// }
+
+			// Set TTL cho key
+			// return uc.redisClient.Expire(ctx, key, redisTTL).Err()
+			// keyUserProducts
+		}
+		s.HubProvider.PutUpdate(cloneCtx, "product", entity.ID, ids, time.Now().Unix())
+	}()
 
 	return entity, nil
 }

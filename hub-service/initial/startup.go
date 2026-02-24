@@ -11,6 +11,7 @@ import (
 type InitialApp struct {
 	EventQueueService       *handler.EventQueueService
 	InternalHandler         *handler.InternalHandler
+	UpdateDataHandler       *handler.UpdateDataHandler
 	LocationHandler         *handler.LocationHandler
 	LocationV2Handler       *handler.LocationV2Handler
 	UserGuideHandler        *handler.UserGuideHandler
@@ -27,6 +28,7 @@ type InitialApp struct {
 func NewInitialApp(
 	eventQueueService *handler.EventQueueService,
 	internalHandler *handler.InternalHandler,
+	updateDataHandler *handler.UpdateDataHandler,
 	locationHandler *handler.LocationHandler,
 	locationV2Handler *handler.LocationV2Handler,
 	userGuideHandler *handler.UserGuideHandler,
@@ -41,6 +43,7 @@ func NewInitialApp(
 	return &InitialApp{
 		EventQueueService:       eventQueueService,
 		InternalHandler:         internalHandler,
+		UpdateDataHandler:       updateDataHandler,
 		LocationHandler:         locationHandler,
 		LocationV2Handler:       locationV2Handler,
 		UserGuideHandler:        userGuideHandler,

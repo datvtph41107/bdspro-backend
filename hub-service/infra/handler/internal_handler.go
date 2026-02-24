@@ -17,17 +17,20 @@ type InternalHandler struct {
 	locationUsecase      _usecase.ILocationUsecase
 	locationMapper       *mapper.LocationMapper
 	InteractiveEventRepo repo.IInteractiveEventRepo
+	UpdateUsecase        _usecase.IUpdateDataUsecase
 }
 
 func NewInternalHandler(
 	locationUsecase _usecase.ILocationUsecase,
 	locationMapper *mapper.LocationMapper,
 	interactiveEventRepo repo.IInteractiveEventRepo,
+	UpdateUsecase _usecase.IUpdateDataUsecase,
 ) *InternalHandler {
 	return &InternalHandler{
 		locationUsecase:      locationUsecase,
 		locationMapper:       locationMapper,
 		InteractiveEventRepo: interactiveEventRepo,
+		UpdateUsecase:        UpdateUsecase,
 	}
 }
 
@@ -43,10 +46,10 @@ func (h *InternalHandler) HealthCheck(ctx context.Context, req *sharepb.Empty) (
 	}, nil
 }
 
-func (s *InternalHandler) GetProductStatsView(
+func (s *InternalHandler) GetProductViewStats(
 	ctx context.Context,
-	req *hubpb.GetProductStatsViewRequest,
-) (*hubpb.GetProductStatsViewResponse, error) {
+	req *hubpb.ProductStatsViewRequest,
+) (*hubpb.ProductStatsViewResponse, error) {
 	rsl, err := s.InteractiveEventRepo.GetProductStatsView(
 		ctx,
 		req.ProductId,
@@ -57,10 +60,10 @@ func (s *InternalHandler) GetProductStatsView(
 	}
 
 	if rsl == nil {
-		return &hubpb.GetProductStatsViewResponse{}, nil
+		return &hubpb.ProductStatsViewResponse{}, nil
 	}
 
-	return &hubpb.GetProductStatsViewResponse{
+	return &hubpb.ProductStatsViewResponse{
 		ViewCount:     rsl.ViewCount,
 		TotalDuration: rsl.TotalDuration,
 		MaxEventTime:  rsl.MaxEventTime,
@@ -135,4 +138,13 @@ func (h *InternalHandler) InferAddressFromText(ctx context.Context, req *sharepb
 		ProvinceName: addressInfo.ProvinceName,
 		WardName:     addressInfo.WardName,
 	}, nil
+}
+
+func (h *InternalHandler) PutUpdate(ctx context.Context, pb *hubpb.PutUpdateRequest) (*hubpb.PutUpdateResponse, error) {
+	h.UpdateUsecase.Put(ctx, pb.OwnerIds, pb.Resource, pb.Id)
+	return nil, nil
+}
+
+func (h *InternalHandler) DelUpdate(ctx context.Context, pb *hubpb.DelUpdateRequest) (*hubpb.DelUpdateResponse, error) {
+	return nil, nil
 }

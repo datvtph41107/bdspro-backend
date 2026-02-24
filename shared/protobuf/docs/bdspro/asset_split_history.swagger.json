@@ -17,6 +17,34 @@
   ],
   "paths": {},
   "definitions": {
+    "bdspropbAssetSplitHistoryDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "archived": {
+          "type": "boolean"
+        }
+      }
+    },
+    "bdspropbAssetSplitHistoryListDTO": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbAssetSplitHistoryDTO"
+          }
+        },
+        "totalElements": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {

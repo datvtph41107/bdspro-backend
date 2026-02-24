@@ -177,3 +177,10 @@ func (c *BdsproGrpcClient) GetDealMember(ctx context.Context, dealId uint64, use
 
 	return resp.Data[0], nil
 }
+
+func (c *BdsproGrpcClient) GetResourceIds(ctx context.Context, resource string, ids uint64) ([]uint64, error) {
+	resp, err := c.InternalClient.GetResourceIds(ctx, &bdspropb.ResourceRequest{
+		Resource: resource,
+	})
+	return resp.Ids, err
+}

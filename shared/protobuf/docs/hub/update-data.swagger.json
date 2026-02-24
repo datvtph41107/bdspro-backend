@@ -1,0 +1,255 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "hub/update-data.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "UpdateDataService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/hub/update/{resource}/flush/ids": {
+      "post": {
+        "operationId": "UpdateDataService_FlushSyncIds",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbFlushSyncIdsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDataServiceFlushSyncIdsBody"
+            }
+          }
+        ],
+        "tags": [
+          "UpdateDataService"
+        ]
+      }
+    },
+    "/v2/hub/update/{resource}/refresh/ids": {
+      "get": {
+        "operationId": "UpdateDataService_RefreshSyncIds",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbRefreshSyncIdsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "lastSync",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "UpdateDataService"
+        ]
+      }
+    },
+    "/v2/hub/update/{resource}/sync/status": {
+      "get": {
+        "operationId": "UpdateDataService_CheckVersionSync",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/hubpbCheckVersionSyncResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "lastSync",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "UpdateDataService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "UpdateDataServiceFlushSyncIdsBody": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "FlushSyncIds"
+    },
+    "hubpbCheckVersionSyncResponse": {
+      "type": "object",
+      "properties": {
+        "needSync": {
+          "type": "boolean"
+        },
+        "currentVersion": {
+          "type": "string",
+          "format": "int64"
+        },
+        "changeCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "changedIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "next": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "hubpbFlushSyncIdsResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "hubpbRefreshSyncIdsResponse": {
+      "type": "object",
+      "properties": {
+        "needSync": {
+          "type": "boolean"
+        },
+        "currentVersion": {
+          "type": "string",
+          "format": "int64"
+        },
+        "changeCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "changedIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "next": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

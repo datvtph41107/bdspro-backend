@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
@@ -251,5 +252,19 @@ func (s *InternalHandler) GetProductUsersByProductId(ctx context.Context, req *s
 
 	return &bdspropb.GetProductUsersByDistributeIdResponse{
 		Data: productUserPbs,
+	}, nil
+}
+
+func (s *InternalHandler) GetResourceIds(ctx context.Context, req *bdspropb.ResourceRequest) (*bdspropb.ResourceResponse, error) {
+	resp, err := s.productUsecase.ProductRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{
+		Resource: req.Resource,
+		// LastSync: req.LastSync,
+		// Id:       req.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.ResourceResponse{
+		Ids: resp,
 	}, nil
 }

@@ -3,49 +3,107 @@ package redis_cli
 
 import (
 	"context"
-	"fmt"
+	"sync"
 	"time"
 
 	configs "bdspro/config"
 
+	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
 // RedisClient wraps Redis connection
 type RedisClient struct {
-	client *redis.Client
-	logger *zap.Logger
+	client    *redis.Client
+	logger    *flogging.FabricLogger
+	connected bool
+	mu        sync.RWMutex
 }
 
 // NewClient creates a new Redis client
 func NewClient() (*RedisClient, error) {
+	logger := flogging.MustGetLogger("redis")
 	client := redis.NewClient(&redis.Options{
 		Addr:     configs.AppProperties.Redis.Host,
 		Password: configs.AppProperties.Redis.Password,
+		DB:       0,
 	})
 
-	// Test connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+	rc := &RedisClient{
+		client:    client,
+		logger:    logger,
+		connected: false,
 	}
 
-	return &RedisClient{
-		client: client,
-	}, nil
+	// Thử kết nối nhưng không crash nếu lỗi
+	_, err := client.Ping(context.Background()).Result()
+	if err != nil {
+		logger.Warn("Failed to connect to Redis on startup: %v. App will continue running and retry on next operation.", zap.Error(err))
+		rc.connected = false
+	} else {
+		logger.Info("Connected to Redis")
+		rc.connected = true
+	}
+
+	return rc, nil
+}
+
+// ensureConnection kiểm tra và kết nối lại nếu cần
+func (r *RedisClient) ensureConnection(ctx context.Context) error {
+	r.mu.RLock()
+	connected := r.connected
+	r.mu.RUnlock()
+
+	if connected {
+		// Kiểm tra kết nối còn hoạt động không
+		_, err := r.client.Ping(ctx).Result()
+		if err == nil {
+			return nil
+		}
+		// Kết nối bị mất, đánh dấu là chưa kết nối
+		r.mu.Lock()
+		r.connected = false
+		r.mu.Unlock()
+		r.logger.Warnf("Redis connection lost: %v", err)
+	}
+
+	// Thử kết nối lại
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Double check sau khi lock
+	if r.connected {
+		return nil
+	}
+
+	_, err := r.client.Ping(ctx).Result()
+	if err != nil {
+		r.logger.Warnf("Failed to reconnect to Redis: %v", err)
+		return err
+	}
+
+	r.connected = true
+	r.logger.Info("Reconnected to Redis successfully")
+	return nil
 }
 
 // Client returns the underlying Redis client
-func (r *RedisClient) Client() *redis.Client {
-	return r.client
+func (r *RedisClient) Client(ctx context.Context) (*redis.Client, error) {
+	if err := r.ensureConnection(ctx); err != nil {
+		r.logger.Warnf("Cannot get Redis client: connection unavailable")
+		return nil, err
+	}
+	return r.client, nil
 }
 
 // Close closes the Redis connection
 func (r *RedisClient) Close() error {
-	return r.client.Close()
+	client, err := r.Client(context.Background())
+	if err != nil {
+		return err
+	}
+	return client.Close()
 }
 
 // =====================================================================
@@ -54,15 +112,27 @@ func (r *RedisClient) Close() error {
 
 // ---------- STRING OPERATIONS ----------
 func (r *RedisClient) Get(ctx context.Context, key string) *redis.StringCmd {
-	return r.client.Get(ctx, key)
+	client, err := r.Client(ctx)
+	if err != nil {
+		return nil
+	}
+	return client.Get(ctx, key)
 }
 
 func (r *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
-	return r.client.Set(ctx, key, value, expiration)
+	client, err := r.Client(ctx)
+	if err != nil {
+		return nil
+	}
+	return client.Set(ctx, key, value, expiration)
 }
 
 func (r *RedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd {
-	return r.client.Del(ctx, keys...)
+	client, err := r.Client(ctx)
+	if err != nil {
+		return nil
+	}
+	return client.Del(ctx, keys...)
 }
 
 // ---------- HASH OPERATIONS ----------
@@ -142,11 +212,19 @@ func (r *RedisClient) ZRem(ctx context.Context, key string, members ...interface
 
 // ---------- KEY OPERATIONS ----------
 func (r *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
-	return r.client.Expire(ctx, key, expiration)
+	client, err := r.Client(ctx)
+	if err != nil {
+		return nil
+	}
+	return client.Expire(ctx, key, expiration)
 }
 
 func (r *RedisClient) TTL(ctx context.Context, key string) *redis.DurationCmd {
-	return r.client.TTL(ctx, key)
+	client, err := r.Client(ctx)
+	if err != nil {
+		return nil
+	}
+	return client.TTL(ctx, key)
 }
 
 func (r *RedisClient) Keys(ctx context.Context, pattern string) *redis.StringSliceCmd {

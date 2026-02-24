@@ -58,9 +58,10 @@ type ProductSearchRequest struct {
 	AreaFrom *float64   `form:"areaFrom"`
 	AreaTo   *float64   `form:"areaTo"`
 
-	RequestOrganizationId *uint64 `form:"-"`
-	RequestUserId         *uint64 `form:"-"`
-	RequestGroupId        *uint64 `form:"-"`
+	RequestOrganizationId *uint64  `form:"-"`
+	RequestUserId         *uint64  `form:"-"`
+	RequestGroupId        *uint64  `form:"-"`
+	IDs                   []uint64 `form:"ids"`
 	// IsParent         *bool      `form:"isParent"`
 }
 

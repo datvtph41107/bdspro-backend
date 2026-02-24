@@ -12,6 +12,8 @@ import (
 	hub_infra_mapper "hub/infra/mapper"
 	hub_infra_middleware "hub/infra/middleware"
 	hub_infra_postgre "hub/infra/postgre"
+	hub_infra_provider "hub/infra/provider"
+	hub_infra_redis "hub/infra/redis"
 	hub_infra_setting "hub/infra/setting"
 	hub_initial "hub/initial"
 	hub_internal_interface "hub/internal/interface"
@@ -28,11 +30,13 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
 	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
+	wire.Bind(new(hub_internal_repo.IUpdateDataRepo), new(*hub_infra_postgre.UpdateDataRepo)),
 	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
 	hub_infra_handler.NewApiKeyHandler,
 	hub_infra_mapper.NewApiKeyMapper,
 	hub_infra_postgre.NewApiKeyRepo,
 	hub_internal_usecase.NewApiKeyUsecase,
+	hub_infra_client.NewBDSProClient,
 	hub_infra_postgre.NewDistrictRepo,
 	hub_infra_mapper.NewEventQueueMapper,
 	hub_infra_postgre.NewEventQueueRepo,
@@ -57,10 +61,15 @@ var wireSet = wire.NewSet(
 	hub_infra_client.NewNotificationClient,
 	hub_infra_postgre.NewProvinceRepo,
 	hub_infra_postgre.NewProvinceV2Repo,
+	hub_infra_redis.NewRedisProvider,
 	hub_infra_handler.NewSystemConfigHandler,
 	hub_infra_setting.NewSystemConfigPersist,
 	hub_infra_postgre.NewSystemConfigPostgres,
 	hub_internal_usecase.NewSystemConfigUsecase,
+	hub_infra_handler.NewUpdateDataHandler,
+	hub_infra_provider.NewUpdateDataProviderImpl,
+	hub_infra_postgre.NewUpdateDataRepo,
+	hub_internal_usecase.NewUpdateDataUsecase,
 	hub_infra_client.NewUserClient,
 	hub_infra_handler.NewUserGuideHandler,
 	hub_infra_mapper.NewUserGuideMapper,

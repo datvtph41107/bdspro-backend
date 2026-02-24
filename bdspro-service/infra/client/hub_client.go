@@ -8,7 +8,6 @@ import (
 )
 
 // @bind: bdspro/internal/provider.HubProvider
-
 type HubClient struct {
 	*clients.HubGrpcClient
 }
@@ -73,3 +72,11 @@ func (c *HubClient) GetLocationsByIdsMap(ctx context.Context, ids []uint64) (map
 
 	return result, nil
 }
+
+// func (c *HubClient) PutUpdate(ctx context.Context, resource string, resourceId uint64, ownerIds []uint64, updatedAt int64) error {
+
+// 	return c.PutUpdate(ctx, resource, resourceId, )
+// }
+// func (c *HubClient) DelUpdate(ctx context.Context, resource string, id uint64, ownerId uint64) error {
+// 	return nil
+// }

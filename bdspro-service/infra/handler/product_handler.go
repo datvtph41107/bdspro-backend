@@ -14,6 +14,7 @@ import (
 	"context"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+	"time"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
@@ -66,38 +67,41 @@ func NewProductService(
 	}
 }
 
-// GetCurrentVersion
-// func (h *ProductHandler) GetCurrentVersion(ctx context.Context, req *bdspropb.GetCurrentVersionRequest) (*bdspropb.GetCurrentVersionResponse, error) {
-// 	// 1. Validate
-// 	if req == nil {
-// 		return nil, status.Error(codes.InvalidArgument, "request required")
-// 	}
+func (h *ProductHandler) CheckVersionSync(
+	ctx context.Context,
+	req *bdspropb.CheckVersionSyncRequest,
+) (*bdspropb.CheckVersionSyncResponse, error) {
+	ownerId := _utils.GetProfileIdWithContext(ctx)
+	// Validate request
+	if req.Resource == "" {
+		return nil, status.Error(codes.InvalidArgument, "resource is required")
+	}
+	if ownerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "owner_id is required")
+	}
 
-// 	// 2. Lấy profileId từ context nếu request không có
-// 	profileID := req.ProfileId
-// 	if profileID == 0 {
-// 		profileID = _utils.GetProfileIdWithContext(ctx)
-// 		if profileID == 0 {
-// 			return nil, status.Error(codes.Unauthenticated, "profile_id not found")
-// 		}
-// 	}
+	// Convert từ proto sang DTO
+	dtoReq := &dto.CheckVersionSyncRequest{
+		Resource: req.Resource,
+		LastSync: req.LastSync,
+		Id:       req.Id,
+	}
 
-// 	// 3. Lấy timestamp từ Redis
-// 	key := cache.UserSyncTimeKey(profileID)
-// 	timestamp, err := h.syncUsecase.GetRedis().Get(ctx, key).Int64()
-// 	if err != nil {
-// 		// Không có cache thì trả về 0
-// 		return &bdspropb.GetCurrentVersionResponse{
-// 			CurrentVersionTimestamp: 0,
-// 		}, nil
-// 	}
+	// Gọi usecase - CHỈ check Redis
+	resp, err := h.UC.CheckVersionSync(ctx, ownerId, dtoReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
-// 	return &bdspropb.GetCurrentVersionResponse{
-// 		CurrentVersionTimestamp: timestamp,
-// 	}, nil
-// }
+	// Convert từ DTO sang proto
+	return &bdspropb.CheckVersionSyncResponse{
+		NeedSync:       resp.NeedSync,
+		CurrentVersion: resp.CurrentVersion,
+		ChangeCount:    int32(resp.ChangeCount),
+		ChangedIds:     resp.ChangedIDs,
+	}, nil
+}
 
-// SyncProducts
 func (h *ProductHandler) SyncProducts(ctx context.Context, req *bdspropb.SyncProductsRequest) (*bdspropb.SyncProductsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request required")
@@ -219,6 +223,58 @@ func (h *ProductHandler) BatchGetProducts(
 	return &bdspropb.BatchGetProductsResponse{
 		Products: respMap,
 	}, nil
+}
+
+func (h *ProductHandler) FlushSyncIds(
+	ctx context.Context,
+	req *bdspropb.CheckVersionSyncRequest,
+) (*bdspropb.Response, error) {
+	err := h.UC.FlushSyncIds(ctx, req.Limit)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.Response{
+		Message: "success",
+	}, nil
+}
+
+func (h *ProductHandler) GetRefreshSyncIds(
+	ctx context.Context,
+	req *bdspropb.CheckVersionSyncRequest,
+) (*bdspropb.CheckVersionSyncResponse, error) {
+	resp, err := h.ProductRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{
+		Resource: req.Resource,
+		LastSync: req.LastSync,
+		Id:       req.Id,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &bdspropb.CheckVersionSyncResponse{
+		NeedSync:       true,
+		CurrentVersion: time.Now().Unix(),
+		ChangeCount:    0,
+		ChangedIds:     resp,
+		Next:           nil,
+	}, nil
+}
+
+func (h *ProductHandler) GetVersionData(
+	ctx context.Context,
+	req *bdspropb.GetVersionDataRequest,
+) (*bdspropb.GetVersionDataResponse, error) {
+	ownerId := _utils.GetProfileIdWithContext(ctx)
+	if ownerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "owner_id is required")
+	}
+	dtoReq := &dto.CheckVersionSyncRequest{
+		Resource: req.Resource,
+	}
+	_, _, err := h.UC.GetVersionData(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return nil, nil
 }
 
 // @Summary Lưu trữ sản phẩm

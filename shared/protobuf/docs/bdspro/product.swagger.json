@@ -225,6 +225,38 @@
         ]
       }
     },
+    "/v2/bdspro/v2/product/batch": {
+      "post": {
+        "operationId": "ProductService_BatchGetProducts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbBatchGetProductsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bdspropbBatchGetProductsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/child/devide": {
       "post": {
         "operationId": "ProductService_ChildDevideProduct",
@@ -2428,6 +2460,37 @@
         ]
       }
     },
+    "/v2/bdspro/v2/product/version/{profileId}": {
+      "get": {
+        "operationId": "ProductService_GetCurrentVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbGetCurrentVersionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
     "/v2/bdspro/v2/product/{id}": {
       "delete": {
         "operationId": "ProductService_DeleteProduct",
@@ -2955,6 +3018,96 @@
           "ProductService"
         ]
       }
+    },
+    "/v2/bdspro/v2/{resource}/sync": {
+      "post": {
+        "operationId": "ProductService_SyncProducts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbSyncProductsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProductServiceSyncProductsBody"
+            }
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
+    },
+    "/v2/bdspro/version/{resource}/{id}/sync/status": {
+      "get": {
+        "summary": "New sync methods",
+        "operationId": "ProductService_CheckVersionSync",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bdspropbCheckVersionSyncResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "lastSync",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ProductService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -3023,6 +3176,33 @@
         "ownerType": {
           "type": "integer",
           "format": "int64"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "ProductServiceSyncProductsBody": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lastVersionTimestamp": {
+          "type": "string",
+          "format": "int64"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageToken": {
+          "type": "string"
         },
         "ids": {
           "type": "array",
@@ -3517,6 +3697,73 @@
         }
       }
     },
+    "bdspropbBatchGetProductsRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "bdspropbBatchGetProductsResponse": {
+      "type": "object",
+      "properties": {
+        "products": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        }
+      }
+    },
+    "bdspropbChangedProduct": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "changeType": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "bdspropbCheckVersionSyncResponse": {
+      "type": "object",
+      "properties": {
+        "needSync": {
+          "type": "boolean"
+        },
+        "currentVersion": {
+          "type": "string",
+          "format": "int64"
+        },
+        "changeCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "changedIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "next": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
     "bdspropbCreateProductForOrgRequest": {
       "type": "object",
       "properties": {
@@ -3679,6 +3926,15 @@
           "type": "string"
         },
         "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "bdspropbGetCurrentVersionResponse": {
+      "type": "object",
+      "properties": {
+        "currentVersionTimestamp": {
           "type": "string",
           "format": "int64"
         }
@@ -4450,6 +4706,30 @@
         }
       },
       "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
+    },
+    "bdspropbProductAttachmentResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        }
+      }
+    },
+    "bdspropbProductInternalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductResponse"
+          }
+        }
+      }
     },
     "bdspropbProductNavigationResponse": {
       "type": "object",
@@ -5764,6 +6044,35 @@
       "properties": {
         "content": {
           "type": "string"
+        }
+      }
+    },
+    "bdspropbSyncProductsResponse": {
+      "type": "object",
+      "properties": {
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbChangedProduct"
+          }
+        },
+        "removedIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "currentSyncTime": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nextToken": {
+          "type": "string"
+        },
+        "hasMore": {
+          "type": "boolean"
         }
       }
     },

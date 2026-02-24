@@ -83,3 +83,17 @@ func (c *HubGrpcClient) VerifyApiKey(ctx context.Context, apiKey string) (*hubpb
 
 	return c.ApiKeyClient.VerifyApiKey(ctx, &hubpb.VerifyApiKeyRequest{ApiKey: apiKey})
 }
+
+func (c *HubGrpcClient) PutUpdate(ctx context.Context, resource string, resourceId uint64, ownerIds []uint64, updatedAt int64) error {
+	_, err := c.InternalClient.PutUpdate(ctx, &hubpb.PutUpdateRequest{
+		Resource:  resource,
+		Id:        resourceId,
+		OwnerIds:  ownerIds,
+		UpdatedAt: updatedAt,
+	})
+	return err
+}
+
+func (c *HubGrpcClient) DelUpdate(ctx context.Context, resource string, id uint64, ownerId uint64) error {
+	return nil
+}

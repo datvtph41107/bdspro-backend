@@ -9,7 +9,7 @@ fi
 
 # Cấu hình thông tin server
 REMOTE_USER="root"
-REMOTE_HOST="14.225.205.222"
+REMOTE_HOST="14.225.210.29"
 WORKSPACE_NAME=backend-microservice
 REMOTE_PATH=/root/$WORKSPACE_NAME
 

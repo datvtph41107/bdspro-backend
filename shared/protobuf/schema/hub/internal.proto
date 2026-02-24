@@ -69,6 +69,31 @@ message ProductStatsViewResponse {
   int64  max_event_time = 3;
 }
 
+// PutUpdate - Internal: Service khác gọi để ghi nhận đã update (sync tracking)
+message PutUpdateRequest {
+  string resource = 1;    // Tên resource: product, asset, contact, ...
+  uint64 id = 2;          // ID bản ghi được update (resource_id)
+  int64 updatedAt = 3;    // Timestamp (Unix) khi update
+  repeated uint64 ownerIds = 4;  // Owner/Profile ID - bắt buộc cho sync per-user
+}
+
+message PutUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// DelUpdate - Internal: Service khác gọi để xóa khỏi sync tracking (khi soft-delete/remove)
+message DelUpdateRequest {
+  string resource = 1;   // Tên resource: product, asset, contact, ...
+  uint64 id = 2;         // ID bản ghi bị xóa (resource_id)
+  optional uint64 ownerId = 3;  // Owner/Profile ID - bắt buộc cho sync per-user
+}
+
+message DelUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 // ========== Service Definition ==========
 
 service HubInternalService {
@@ -89,5 +114,11 @@ service HubInternalService {
 
   // Infer address information (province, ward, etc.) from free text input
   rpc InferAddressFromText (sharepb.RequestV3Proto) returns (sharepb.AddressV3Proto);
+
+  // PutUpdate - Internal: Service khác gọi để ghi nhận đã update (sync tracking)
+  rpc PutUpdate (PutUpdateRequest) returns (PutUpdateResponse);
+
+  // DelUpdate - Internal: Service khác gọi để xóa khỏi sync tracking
+  rpc DelUpdate (DelUpdateRequest) returns (DelUpdateResponse);
 }
 

@@ -52,8 +52,8 @@ func (r *GormUserProductRepo) GetAllTimestampsForSync(
 	profileID uint64,
 	lastID uint64,
 	limit int,
-) ([]repo.ProductTimestamp, error) {
-	var rows []repo.ProductTimestamp
+) ([]domain.ProductUser, error) {
+	var rows []domain.ProductUser
 
 	err := r.db.WithContext(ctx).
 		Model(&domain.ProductUser{}).
@@ -1366,6 +1366,46 @@ func (r *GormUserProductRepo) UpdateRentTransactionID(c context.Context, id uint
 		Model(&domain.Product{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("rent_transaction_id", transactionID).Error
+}
+
+func (r *GormUserProductRepo) GetNextProductId(c context.Context, currentId *uint64) (uint64, error) {
+	var productId uint64
+	err := r.DB.WithContext(c).
+		Model(&domain.Product{}).
+		Joins(`LEFT JOIN product_user pu ON (pu.product_id = products.id AND pu.deleted_at IS NULL)`).
+		Where(`(? is null OR id > ?) 
+		and deleted_at is null 
+		and ((pu.profile_id = ? and pu.is_owner = true) 
+			or (pu.origin_profile_id = ? and pu.is_owner = false))`, currentId, currentId).
+		Order("id desc").
+		Limit(1).
+		Pluck("id", &productId).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return productId, nil
+}
+
+func (r *GormUserProductRepo) GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error) {
+	profileId := _utils.GetProfileIdWithContext(c)
+	originId := _utils.GetOriginIdFromContext(c)
+	var productIds []uint64
+	err := r.DB.WithContext(c).
+		Model(&domain.Product{}).
+		Joins(`LEFT JOIN product_user pu ON (pu.product_id = products.id AND pu.deleted_at IS NULL)`).
+		Where(`products.deleted_at is null 
+		and ((pu.profile_id = ? and pu.is_owner = true) 
+			or (pu.origin_profile_id = ? and pu.is_owner = false))`, profileId, originId).
+		Order("products.id desc").
+		Pluck("products.id", &productIds).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return productIds, nil
 }
 
 func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {

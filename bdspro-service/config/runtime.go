@@ -15,7 +15,7 @@ const C_SESSION_ID = "C_SESSION_ID"
 type UserProperties struct {
 	Redis struct {
 		Host     string `mapstructure:"host"`
-		Password string `mapstructure:"password"`
+		Password string `mapstructure:"pass"`
 	} `mapstructure:"redis"`
 	Jwt struct {
 		SecretKey           string   `mapstructure:"key-generate"`
