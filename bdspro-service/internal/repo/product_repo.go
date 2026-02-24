@@ -7,15 +7,22 @@ import (
 	"common/case/crud3"
 	_enum "common/domain/enum"
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 )
+
+type ProductTimestamp struct {
+	ID        uint64
+	UpdatedAt time.Time // millisecond
+}
 
 // ProductRepo định nghĩa các phương thức mà GormUserProductRepo cung cấp
 type ProductRepo interface {
 	crud3.CrudRepo[domain.Product]
 
 	GetAllTimestampsForSync(ctx context.Context, profileID uint64, lastID uint64, limit int) ([]domain.ProductUser, error)
+
 	BatchGetTimestamps(ctx context.Context, ids []uint64) (map[uint64]int64, error)
 
 	UpdateViewStats(ctx context.Context, stats *domain.ProductStats, oldLastTime int64) error

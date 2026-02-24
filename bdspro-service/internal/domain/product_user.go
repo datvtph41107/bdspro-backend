@@ -5,20 +5,17 @@ import (
 	_models "common/models"
 )
 
-// ProductUser đại diện cho bảng liên kết sản phẩm với user
 type ProductUser struct {
 	_models.BaseEntity
-	ProfileID    uint64         `gorm:"index" json:"profileId"`
-	ProductID    uint64         `gorm:"not null;index" json:"productId"`
-	IsOwner      bool           `gorm:"not null;default:false" json:"isOwner"`
-	RoleID       uint64         `gorm:"default:0" json:"roleId"`
-	DistributeID *uint64        `gorm:"column:distribute_id;index" json:"distributeId"`
-	OwnerOf      enums.EOwnerOf `gorm:"default:10" json:"ownerOf"`
-	PriceID      *uint64        `json:"priceId,omitempty"` // id của product_price
+	ProfileID uint64 `gorm:"column:profile_id;type:bigint;not null;index:idx_product_user_profile,priority:1"`
+	ProductID uint64 `gorm:"column:product_id;type:bigint;not null;index:idx_product_user_profile,priority:2"`
 
-	OriginProfileID *uint64 `gorm:"index;" json:"originProfileId"`
+	IsOwner         bool           `gorm:"column:is_owner;type:boolean;not null;default:false"`
+	RoleID          uint64         `gorm:"column:role_id;type:bigint;not null;default:0"`
+	DistributeID    *uint64        `gorm:"column:distribute_id;type:bigint;index:idx_product_user_distribute"`
+	OwnerOf         enums.EOwnerOf `gorm:"column:owner_of;type:smallint;not null;default:10"`
+	PriceID         *uint64        `gorm:"column:price_id;type:bigint"`
+	OriginProfileID *uint64        `gorm:"column:origin_profile_id;type:bigint;index:idx_product_user_origin"`
 }
 
-func (ProductUser) TableName() string {
-	return "product_user"
-}
+func (ProductUser) TableName() string { return "product_user" }

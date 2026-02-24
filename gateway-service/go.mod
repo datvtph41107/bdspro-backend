@@ -6,11 +6,8 @@ replace common => ../shared/common
 
 replace pb => ../shared/protobuf
 
-replace core => ../shared/core
-
 require (
 	common v0.0.0-00010101000000-000000000000
-	core v0.0.0-00010101000000-000000000000
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-resty/resty/v2 v2.16.5

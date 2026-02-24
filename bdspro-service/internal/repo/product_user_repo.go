@@ -19,4 +19,6 @@ type ProductUserRepo interface {
 	GetByProductAndOriginProfile(ctx context.Context, productID, originProfileId uint64) (*domain.ProductUser, error)
 	GetByOriginProfile(ctx context.Context, originProfileId uint64) ([]*domain.ProductUser, error)
 	UpdateArchivedStatus(ctx context.Context, productID uint64, originProfileId uint64, archived bool) error
+	GetProfileIDsByProduct(ctx context.Context, productID uint64) ([]uint64, error)
+	GetUserProductsWithTimestamp(ctx context.Context, profileID uint64) (map[uint64]int64, error)
 }

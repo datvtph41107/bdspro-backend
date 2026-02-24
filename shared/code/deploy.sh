@@ -257,7 +257,6 @@ if [ $? -ne 0 ]; then
 fi
 
 
-
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}
 docker compose build --no-cache ${payload_build}

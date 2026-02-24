@@ -80,17 +80,16 @@ type Product struct {
 	PropertyTypeName string `gorm:"-" json:"propertyTypeName,omitempty"`
 
 	// Statistics fields - computed fields, không lưu vào DB
-	PublicListingCount int64 `gorm:"-" json:"publicListingCount,omitempty"` // Số tin đăng công khai
-	HasAsset           bool  `gorm:"-" json:"hasAsset,omitempty"`           // Có gắn với ít nhất 1 tài sản
-	HasInventory       bool  `gorm:"-" json:"hasInventory,omitempty"`       // Thuộc bảng hàng
-	HasDeal            bool  `gorm:"-" json:"hasDeal,omitempty"`            // Đang ở ít nhất 1 thương vụ
-
-	ShareCount   uint32 `gorm:"type:int8" json:"shareCount,omitempty"`   // Số lượt chia sẻ
-	AssetCount   uint32 `gorm:"type:int8" json:"assetCount,omitempty"`   // Số tài sản
-	BuildCount   uint32 `gorm:"type:int8" json:"buildCount,omitempty"`   // Số tòa nhà
-	PostCount    uint32 `gorm:"type:int8" json:"postCount,omitempty"`    // Số tin đăng
-	DealCount    uint32 `gorm:"type:int8" json:"dealCount,omitempty"`    // Số thương vụ
-	ContactCount uint32 `gorm:"type:int8" json:"contactCount,omitempty"` // Số người quan tâm
+	PublicListingCount int64  `gorm:"-" json:"publicListingCount,omitempty"`   // Số tin đăng công khai
+	HasAsset           bool   `gorm:"-" json:"hasAsset,omitempty"`             // Có gắn với ít nhất 1 tài sản
+	HasInventory       bool   `gorm:"-" json:"hasInventory,omitempty"`         // Thuộc bảng hàng
+	HasDeal            bool   `gorm:"-" json:"hasDeal,omitempty"`              // Đang ở ít nhất 1 thương vụ
+	ShareCount         uint32 `gorm:"type:int8" json:"shareCount,omitempty"`   // Số lượt chia sẻ
+	AssetCount         uint32 `gorm:"type:int8" json:"assetCount,omitempty"`   // Số tài sản
+	BuildCount         uint32 `gorm:"type:int8" json:"buildCount,omitempty"`   // Số tòa nhà
+	PostCount          uint32 `gorm:"type:int8" json:"postCount,omitempty"`    // Số tin đăng
+	DealCount          uint32 `gorm:"type:int8" json:"dealCount,omitempty"`    // Số thương vụ
+	ContactCount       uint32 `gorm:"type:int8" json:"contactCount,omitempty"` // Số người quan tâm
 
 	AppointmentCount     uint32 `gorm:"type:int8" json:"appointmentCount,omitempty"` // Số lịch hẹn
 	CertificateHouseNote string `json:"certificateHouseNote,omitempty"`

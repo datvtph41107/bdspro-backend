@@ -212,7 +212,7 @@ message PropertyLandInfo {
     optional double depth = 2;               // Chiều sâu (m)
     optional double roadWidth = 3;           // Độ rộng đường (m)
     string landNote = 4;                    // Ghi chú về đất
-  }
+}
 
 message PropertyMediaItem {
     string mediaType = 1;                     // Loại media (image, video)
@@ -226,24 +226,24 @@ message PropertyResponse {
     uint64 id = 1;
     optional uint64 propertyTypeId = 2;
     string title = 3;
-    optional uint64 locationId = 4;
+    optional uint64 locationId = 4;               // deprecated
     string addressDetail = 5;
     optional double latitude = 6;
     optional double longitude = 7;
     string mapUrl = 8;
     optional uint64 projectId = 9;
-    string buildingBlock = 10;
-    string level = 11;
-    string unitCode = 12;
+    string buildingBlock = 10;                     // tên block/tòa nhà (có thể redundant)
+    string level = 11;                             // tầng
+    string unitCode = 12;                          // mã căn hộ
     optional double areaTotal = 13;
     optional double areaLand = 14;
     optional double areaResidential = 15;
-    uint32 legalStatus = 16;
+    uint32 legalStatus = 16;                       // enum EHouseCertificate
     string legalNote = 17;
-    optional uint64 buildingInfoId = 18;
-    uint32 recordStatus = 19;
-    string createdAt = 20;
-    string updatedAt = 21;
+    optional uint64 buildingInfoId = 18;           // ID thông tin nhà
+    uint32 recordStatus = 19;                      // enum EPropertyStatus
+    string createdAt = 20;                          // ISO string
+    string updatedAt = 21;                          // ISO string
     optional uint32 productCount = 22;
     optional uint32 assetCount = 23;
     optional uint32 postCount = 24;
@@ -254,12 +254,28 @@ message PropertyResponse {
     optional PropertyBuildingInfo buildingInfo = 29;
     string propertyTypeName = 30;
     optional PropertyMediaItem avatar = 31;
-    repeated bdspropb.MediaItem mediaList = 32;
-    optional sharepb.TagItem project = 33;
-    optional sharepb.TagItem propertyType = 34;
+    repeated bdspropb.MediaItem mediaList = 32;     // cần import hoặc định nghĩa MediaItem
+    optional sharepb.TagItem project = 33;          // dạng tag cho project
+    optional sharepb.TagItem propertyType = 34;     // dạng tag cho loại BĐS
     optional PropertyLandInfo landInfo = 35;
     repeated sharepb.TagItem amenities = 36;
-  }
+
+    // [ADDED] Các trường mới theo UI
+    string scope = 37;                              // "private", "shared", "public"
+    string identifier = 38;                          // mã BDSPro
+    string nationalId = 39;                          // mã QG
+    bool nationalIdVerified = 40;
+    uint64 provinceId = 41;
+    string provinceName = 42;
+    uint64 districtId = 43;
+    string districtName = 44;
+    uint64 wardId = 45;
+    string wardName = 46;
+    uint64 blockId = 47;
+    string blockName = 48;
+    uint64 buildingId = 49;
+    string buildingName = 50;
+}
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
 message ProductAttachment {

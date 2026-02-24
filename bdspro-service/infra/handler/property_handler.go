@@ -31,32 +31,23 @@ func NewPropertyHandler(
 	}
 }
 
-func (h *PropertyHandler) SearchTags(
-	ctx context.Context,
-	req *bdspropb.TagSearchRequest,
-) (*bdspropb.TagListResponse, error) {
+func (h *PropertyHandler) SearchTags(ctx context.Context, req *bdspropb.TagSearchRequest) (*bdspropb.TagListResponse, error) {
 	dtoReq := h.PropertyMapper.PbToTagSearchDTO(req)
 	items, total, err := h.PropertyUsecase.SearchTags(ctx, dtoReq)
 	if err != nil {
 		return nil, err
 	}
-
 	return &bdspropb.TagListResponse{
 		Data:  h.PropertyMapper.TagListToProto(items),
 		Total: total,
 	}, nil
 }
 
-func (h *PropertyHandler) GetPropertyAmenities(
-	ctx context.Context,
-	req *bdspropb.GetPropertyAmenitiesRequest,
-) (*bdspropb.GetPropertyAmenitiesResponse, error) {
-
+func (h *PropertyHandler) GetPropertyAmenities(ctx context.Context, req *bdspropb.GetPropertyAmenitiesRequest) (*bdspropb.GetPropertyAmenitiesResponse, error) {
 	items, err := h.PropertyUsecase.GetPropertyAmenities(ctx, req.PropertyId)
 	if err != nil {
 		return nil, err
 	}
-
 	result := make([]*bdspropb.PropertyAmenityItem, 0, len(items))
 	for _, item := range items {
 		result = append(result, &bdspropb.PropertyAmenityItem{
@@ -66,16 +57,10 @@ func (h *PropertyHandler) GetPropertyAmenities(
 			Checked: item.Checked,
 		})
 	}
-
-	return &bdspropb.GetPropertyAmenitiesResponse{
-		Data: result,
-	}, nil
+	return &bdspropb.GetPropertyAmenitiesResponse{Data: result}, nil
 }
 
-func (h *PropertyHandler) UpdatePropertyAmenities(
-	ctx context.Context,
-	req *bdspropb.UpdatePropertyAmenitiesRequest,
-) (*bdspropb.Response, error) {
+func (h *PropertyHandler) UpdatePropertyAmenities(ctx context.Context, req *bdspropb.UpdatePropertyAmenitiesRequest) (*bdspropb.Response, error) {
 	err := h.PropertyUsecase.UpdatePropertyAmenities(ctx, &dto.UpdatePropertyAmenitiesRequest{
 		PropertyID: req.PropertyId,
 		AmenityIDs: req.AmenityIds,
@@ -83,7 +68,6 @@ func (h *PropertyHandler) UpdatePropertyAmenities(
 	if err != nil {
 		return nil, err
 	}
-
 	return &bdspropb.Response{
 		Id:      req.PropertyId,
 		Message: "successfully",
@@ -106,7 +90,20 @@ func (h *PropertyHandler) UpdatePropertyAmenities(
 // @Router /v2/bdspro/v2/property/list [get]
 func (h *PropertyHandler) GetList(ctx context.Context, req *bdspropb.PropertySearchRequest) (*bdspropb.PropertyListResponse, error) {
 	// Convert proto request to DTO
-	dtoReq := h.PropertyMapper.PbToPropertySearchDTO(req)
+	dtoReq, err := h.PropertyMapper.PbToPropertySearchDTO(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter parameters: %v", err)
+	}
+
+	// Set default pagination
+	page := int32(req.Page)
+	if page == 0 {
+		page = 1
+	}
+	size := int32(req.Size)
+	if size == 0 {
+		size = 20
+	}
 
 	// Call usecase
 	properties, total, err := h.PropertyUsecase.GetList(ctx, dtoReq)
@@ -114,10 +111,30 @@ func (h *PropertyHandler) GetList(ctx context.Context, req *bdspropb.PropertySea
 		return nil, status.Errorf(codes.Internal, "failed to get property list: %v", err)
 	}
 
+	// Calculate pagination info
+	totalPages := int32(0)
+	hasNext := false
+	hasPrevious := page > 1
+
+	if size > 0 {
+		totalPages = int32((total + int64(size) - 1) / int64(size))
+		hasNext = page < totalPages
+	}
+
+	// Create pagination object
+	pagination := &bdspropb.Pagination{
+		Page:        page,
+		Size:        size,
+		Total:       total,
+		Pages:       totalPages,
+		HasNext:     hasNext,
+		HasPrevious: hasPrevious,
+	}
+
 	// Convert to proto response
 	response := &bdspropb.PropertyListResponse{
-		Data:  h.PropertyMapper.PropertyListToProto(properties),
-		Total: total,
+		Data:       h.PropertyMapper.PropertyListToProto(properties),
+		Pagination: pagination,
 	}
 
 	return response, nil

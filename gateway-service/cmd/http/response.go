@@ -11,59 +11,127 @@ import (
 
 type CustomMarshaler struct{}
 
-type ListResponse struct {
-	Data          interface{} `json:"data"`
-	TotalElements int         `json:"totalElements"`
+// PaginationInfo chứa thông tin phân trang
+type PaginationInfo struct {
+	Page    int32 `json:"page"`    // Trang hiện tại
+	Size    int32 `json:"size"`    // Kích thước trang
+	Total   int64 `json:"total"`   // Tổng số bản ghi (totalElements)
+	Pages   int32 `json:"pages"`   // Tổng số trang
+	HasNext bool  `json:"hasNext"` // Có trang tiếp không
+}
+
+// StandardResponse với hỗ trợ cả format cũ và mới
+type StandardResponse struct {
+	Code    int         `json:"code"`           // 0 = success, >0 = error code
+	Message string      `json:"message"`        // success message or error message
+	Data    interface{} `json:"data,omitempty"` // Giữ nguyên field data (backward compatible)
+	// Các field cũ -
+	TotalElements int64 `json:"totalElements,omitempty"`
+	Total         int64 `json:"total,omitempty"`
+	// pagination object
+	Pagination *PaginationInfo `json:"pagination,omitempty"` // Thông tin phân trang đầy đủ
 }
 
 func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
-	// Convert v thành map nếu có thể
-	m, _ := v.(proto.Message)
-	// log.Println("m", v, ok, m)
-	val := reflect.ValueOf(m)
+	// Default response
+	resp := StandardResponse{
+		Code:    0,
+		Message: "success",
+	}
+
+	// Try to convert to proto.Message
+	msg, ok := v.(proto.Message)
+	if !ok {
+		return json.Marshal(v)
+	}
+
+	val := reflect.ValueOf(msg)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
-	// Lấy trường theo tên
-	fieldVal := val.FieldByName("Data")
-	if !fieldVal.IsValid() || !fieldVal.CanInterface() || val.Kind() == reflect.Array {
-		return json.Marshal(map[string]interface{}{
-			"code":    0,
-			"message": "success",
-			"data":    v,
-		})
-	}
+	// Kiểm tra field Data
+	dataField := val.FieldByName("Data")
+	if dataField.IsValid() && dataField.CanInterface() {
+		resp.Data = dataField.Interface()
 
-	var data, totalElements interface{}
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Type().Field(i)
-		fieldVal := val.Field(i)
+		// Khởi tạo pagination info
+		pagination := &PaginationInfo{}
 
-		switch field.Name {
-		case "Data":
-			if fieldVal.CanInterface() {
-				data = fieldVal.Interface()
-			}
-		case "TotalElements":
-			if fieldVal.CanInterface() {
-				totalElements = fieldVal.Interface()
-			}
-		case "Total":
-			if fieldVal.CanInterface() {
-				totalElements = fieldVal.Interface()
+		// Tìm trực tiếp Total, Page, Size fields
+		totalField := val.FieldByName("Total")
+		if totalField.IsValid() && totalField.CanInterface() {
+			if total, ok := totalField.Interface().(int64); ok {
+				resp.Total = total
+				resp.TotalElements = total
+				pagination.Total = total
 			}
 		}
+
+		pageField := val.FieldByName("Page")
+		if pageField.IsValid() && pageField.CanInterface() {
+			if page, ok := pageField.Interface().(int32); ok {
+				pagination.Page = page
+			}
+		}
+
+		sizeField := val.FieldByName("Size")
+		if sizeField.IsValid() && sizeField.CanInterface() {
+			if size, ok := sizeField.Interface().(int32); ok {
+				pagination.Size = size
+			}
+		}
+
+		// Pagination key
+		paginationField := val.FieldByName("Pagination")
+		if paginationField.IsValid() && paginationField.CanInterface() {
+			if paginationField.Kind() == reflect.Ptr {
+				paginationField = paginationField.Elem()
+			}
+
+			if pageField := paginationField.FieldByName("Page"); pageField.IsValid() {
+				if page, ok := pageField.Interface().(int32); ok {
+					pagination.Page = page
+				}
+			}
+			if sizeField := paginationField.FieldByName("Size"); sizeField.IsValid() {
+				if size, ok := sizeField.Interface().(int32); ok {
+					pagination.Size = size
+				}
+			}
+			if totalField := paginationField.FieldByName("Total"); totalField.IsValid() {
+				if total, ok := totalField.Interface().(int64); ok {
+					pagination.Total = total
+					resp.Total = total
+					resp.TotalElements = total
+				}
+			}
+			if pagesField := paginationField.FieldByName("Pages"); pagesField.IsValid() {
+				if pages, ok := pagesField.Interface().(int32); ok {
+					pagination.Pages = pages
+				}
+			}
+			if hasNextField := paginationField.FieldByName("HasNext"); hasNextField.IsValid() {
+				if hasNext, ok := hasNextField.Interface().(bool); ok {
+					pagination.HasNext = hasNext
+				}
+			}
+		}
+
+		if pagination.Size > 0 && pagination.Total > 0 && pagination.Pages == 0 {
+			pagination.Pages = int32((pagination.Total + int64(pagination.Size) - 1) / int64(pagination.Size))
+			pagination.HasNext = pagination.Page < pagination.Pages
+		}
+
+		if pagination.Page > 0 || pagination.Size > 0 || pagination.Total > 0 {
+			resp.Pagination = pagination
+		}
+
+		return json.Marshal(resp)
 	}
 
-	// fallback default
-	return json.Marshal(map[string]interface{}{
-		"code":          0,
-		"message":       "success",
-		"data":          data,
-		"totalElements": totalElements,
-		"total":         totalElements,
-	})
+	resp.Data = v
+	return json.Marshal(resp)
 }
 
 func (c *CustomMarshaler) Unmarshal(data []byte, v interface{}) error {

@@ -12,6 +12,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"gorm.io/gorm"
 )
 
 type PropertyUsecase struct {
@@ -297,6 +299,9 @@ func (u *PropertyUsecase) LinkAssetToProperty(ctx context.Context, assetID uint6
 
 // GetList lấy danh sách Property với phân trang
 func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error) {
+	if searchDTO == nil {
+		searchDTO = &dto.PropertySearchDTO{}
+	}
 	return u.PropertyRepo.Search(ctx, searchDTO)
 }
 
@@ -824,7 +829,7 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 	if houseInfo.RoadWidth != nil {
 		landInfo := &domain.PropertyLandInfo{
 			PropertyID: propertyRelation.PropertyID,
-			RoadWidth:  houseInfo.RoadWidth,
+			// RoadWidth:  houseInfo.RoadWidth,
 		}
 
 		// Lấy existing land info để update hoặc create
@@ -837,9 +842,9 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 			// Update existing
 			landInfo.ID = existingLandInfo.ID
 			// Giữ nguyên các field khác nếu có
-			if existingLandInfo.Frontage != nil {
-				landInfo.Frontage = existingLandInfo.Frontage
-			}
+			// if existingLandInfo.Frontage != nil {
+			// 	landInfo.Frontage = existingLandInfo.Frontage
+			// }
 			if existingLandInfo.Depth != nil {
 				landInfo.Depth = existingLandInfo.Depth
 			}
@@ -1009,146 +1014,64 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 // Update cập nhật Property và các thông tin liên quan (LandInfo, BuildingInfo)
 func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, property *domain.Property, landInfo *domain.PropertyLandInfo, buildingInfo *domain.PropertyBuildingInfo, amenityIDs []uint64) error {
 	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		// 1. Kiểm tra Property có tồn tại không
-		existingProperty, err := u.PropertyRepo.GetOneByID(txCtx, propertyID)
+		existing, err := u.PropertyRepo.GetOneByID(txCtx, propertyID)
 		if err != nil {
 			return err
 		}
-		if existingProperty == nil {
+		if existing == nil {
 			return errors.New("property not found")
 		}
 
-		// 2. Update Property
-		// if property.BuildingInfoID == nil {
-		// 	existingProperty.PropertyTypeID = nil
-		// 	if err := u.PropertyRepo.Update(txCtx, propertyID, existingProperty); err != nil {
-		// 		return err
-		// 	}
-		// }
-
-		// 4. Update PropertyBuildingInfo nếu có
-		if buildingInfo != nil {
-			existingBuildingInfo, err := u.PropertyBuildingInfoRepo.GetByPropertyID(txCtx, propertyID)
-			if err != nil {
-				return err
-			}
-
-			if existingBuildingInfo != nil {
-				// Update existing
-				buildingInfo.ID = existingBuildingInfo.ID
-				buildingInfo.PropertyID = propertyID
-				existingProperty.BuildingInfoID = &existingBuildingInfo.ID
-				if err := u.PropertyBuildingInfoRepo.Update(txCtx, buildingInfo); err != nil {
-					return err
-				}
-			} else {
-				// Create new
-				buildingInfo.PropertyID = propertyID
-				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
-					return err
-				}
-				// Link BuildingInfoID vào Property
-				updateProperty := *existingProperty
-				updateProperty.BuildingInfoID = &buildingInfo.ID
-				if err := u.PropertyRepo.Update(txCtx, propertyID, &updateProperty); err != nil {
-					return err
-				}
-			}
-		} else {
-			existingProperty.BuildingInfoID = nil
-		}
-
+		// Ta gọi Update của repo, nó sẽ chỉ update các field không nil
 		if property != nil {
-			// Merge với existing property để giữ các field không được update
-			updateProperty := *existingProperty
-			// updateProperty.BuildingInfoID = property.BuildingInfoID
-			if property.PropertyTypeID != nil {
-				updateProperty.PropertyTypeID = property.PropertyTypeID
-			}
-			if property.Title != "" {
-				updateProperty.Title = property.Title
-			}
-			if property.LocationID != nil {
-				updateProperty.LocationID = property.LocationID
-			}
-			if property.AddressDetail != "" {
-				updateProperty.AddressDetail = property.AddressDetail
-			}
-			if property.Latitude != nil {
-				updateProperty.Latitude = property.Latitude
-			}
-			if property.Longitude != nil {
-				updateProperty.Longitude = property.Longitude
-			}
-			if property.MapURL != "" {
-				updateProperty.MapURL = property.MapURL
-			}
-			if property.ProjectID != nil {
-				updateProperty.ProjectID = property.ProjectID
-			}
-			if property.Level != "" {
-				updateProperty.Level = property.Level
-			}
-			if property.UnitCode != "" {
-				updateProperty.UnitCode = property.UnitCode
-			}
-			if property.AreaTotal != nil {
-				updateProperty.AreaTotal = property.AreaTotal
-			}
-			if property.AreaLand != nil {
-				updateProperty.AreaLand = property.AreaLand
-			}
-			if property.AreaResidential != nil {
-				updateProperty.AreaResidential = property.AreaResidential
-			}
-			if property.LegalNote != "" {
-				updateProperty.LegalNote = property.LegalNote
-			}
-			if property.ProvinceID != nil {
-				updateProperty.ProvinceID = property.ProvinceID
-			}
-			if property.WardID != nil {
-				updateProperty.WardID = property.WardID
-			}
-			// Update enum fields nếu đã set
-			if property.LegalStatus != 0 {
-				updateProperty.LegalStatus = property.LegalStatus
-			}
-			if property.RecordStatus != 0 {
-				updateProperty.RecordStatus = property.RecordStatus
-			}
-
-			if err := u.PropertyRepo.Update(txCtx, propertyID, &updateProperty); err != nil {
+			property.ID = propertyID // đảm bảo ID
+			if err := u.PropertyRepo.Update(txCtx, propertyID, property); err != nil {
 				return err
 			}
 		}
 
-		// 3. Update PropertyLandInfo nếu có
 		if landInfo != nil {
-			existingLandInfo, err := u.PropertyLandInfoRepo.GetByPropertyID(txCtx, propertyID)
-			if err != nil {
+			existingLand, err := u.PropertyLandInfoRepo.GetByPropertyID(txCtx, propertyID)
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
-
-			if existingLandInfo != nil {
-				// Update existing
-				landInfo.ID = existingLandInfo.ID
-				landInfo.PropertyID = propertyID
-				if err := u.PropertyLandInfoRepo.Update(txCtx, landInfo); err != nil {
-					return err
-				}
-			} else {
-				// Create new
-				landInfo.PropertyID = propertyID
+			landInfo.PropertyID = propertyID
+			if existingLand == nil {
 				if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
 					return err
 				}
+			} else {
+				landInfo.ID = existingLand.ID
+				if err := u.PropertyLandInfoRepo.Update(txCtx, landInfo); err != nil {
+					return err
+				}
 			}
 		}
 
-		// 5. Update PropertyAmenity nếu có
+		if buildingInfo != nil {
+			existingBuilding, err := u.PropertyBuildingInfoRepo.GetByPropertyID(txCtx, propertyID)
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+			buildingInfo.PropertyID = propertyID
+			if existingBuilding == nil {
+				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
+					return err
+				}
+				// Cập nhật building_info_id trong property
+				if err := u.PropertyRepo.Update(txCtx, propertyID, &domain.Property{BuildingInfoID: &buildingInfo.ID}); err != nil {
+					return err
+				}
+			} else {
+				buildingInfo.ID = existingBuilding.ID
+				if err := u.PropertyBuildingInfoRepo.Update(txCtx, buildingInfo); err != nil {
+					return err
+				}
+			}
+		}
+
 		if amenityIDs != nil {
-			if err := u.UpdatePropertyAmenity(txCtx, propertyID, amenityIDs); err != nil {
+			if err := u.PropertyAmenityRepo.UpdatePropertyAmenityIds(txCtx, propertyID, amenityIDs); err != nil {
 				return err
 			}
 		}

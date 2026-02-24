@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package chatpb.v2;
-
+option go_package = "pb/types/chatv2;chatpb";
 import "google/api/annotations.proto";
 
 message ID {
@@ -48,7 +48,7 @@ message SystemContent {
 
 service ChatService {
     rpc SendMessage(SendMessageReq) returns (SendMessageResp);
-    rpc LoadLastestMessages(LoadMessagesReq) returns (LoadMessagesResp);
+    // rpc LoadLastestMessages(LoadMessagesReq) returns (LoadMessagesResp);
     rpc LoadMessageBefore(LoadPositionMessageReq) returns (LoadMessagesResp);
     rpc JumpToMessage(JumpMessageReq) returns (LoadMessagesResp);
     rpc UpdateRead(UpdateReadReq) returns (Empty);
@@ -69,7 +69,7 @@ message SendMessageResp {
 
 message LoadReq { 
     uint64 conversationID = 1; 
-    int limit = 2; 
+    int32 limit = 2; 
 }
 message LoadPositionMessageReq { 
     uint64 conversationID = 1; 

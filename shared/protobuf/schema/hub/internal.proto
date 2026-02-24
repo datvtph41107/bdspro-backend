@@ -54,19 +54,21 @@ message InferAddressFromTextRequest {
   string text = 1; // Raw address text to analyze
 }
 
+message ProductStatsViewRequest {
+  uint64 productId = 1;
+  int64  fromTime  = 2;
+}
+
 message InferAddressFromTextResponse {
   repeated AddressV2Info data = 1; // List of inferred address candidates
 }
 
-message ProductStatsViewRequest {
-  uint64 product_id = 1;
-  int64  from_time  = 2;
-}
+
 
 message ProductStatsViewResponse {
-  uint64 view_count     = 1;
-  uint64 total_duration = 2;
-  int64  max_event_time = 3;
+  uint64 viewCount     = 1;
+  uint64 totalDuration = 2;
+  int64  maxEventTime = 3;
 }
 
 // PutUpdate - Internal: Service khác gọi để ghi nhận đã update (sync tracking)

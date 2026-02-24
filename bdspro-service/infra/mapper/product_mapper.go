@@ -360,8 +360,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 			WardName:     cleanAddressUnit(product.WardName),
 		},
 		CertificateHouseNote: product.CertificateHouseNote,
-
-		GoogleMapLink: product.GoogleMapLink,
+		GoogleMapLink:        product.GoogleMapLink,
 		// Attributes:    product.Attributes,
 		// MediaList:     product.MediaList,
 		// HouseInfo:     product.HouseInfo,

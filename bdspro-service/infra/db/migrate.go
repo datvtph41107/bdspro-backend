@@ -1,134 +1,139 @@
 package db
 
 import (
+	"bdspro/internal/domain"
 	_db "common/db"
 )
 
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
-	// Core entities
-	// &domain.Observation{},
-	// &domain.Asset{},
-	// &domain.Product{},
-	// &domain.Post{},
-	// &domain.Intent{},
-	// &domain.Observation{},
-	// &domain.Property{},
-	// &domain.ProductStats{},
+		// Core entities
+		// &domain.Observation{},
+		// &domain.Asset{},
+		// &domain.Product{},
+		// &domain.Post{},
+		// &domain.Intent{},
+		// &domain.Observation{},
+		// &domain.Property{},
+		// &domain.Block{},
+		// &domain.Building{},
+		// &domain.DistrictV2{},
 
-	// // Asset related
-	// &domain.AssetCost{},
-	// &domain.AssetCostType{},
-	// &domain.AssetIncomeType{},
-	// &domain.AssetExploitation{},
-	// &domain.AssetLegal{},
-	// &domain.AssetOrganization{},
-	// &domain.AssetUser{},
-	// &domain.AssetShare{},
+		// &domain.ProductStats{},
 
-	// // Product related
-	// &domain.ProductUser{},
-	// &domain.ProductOrganization{},
-	// &domain.ProductHistory{},
-	// &domain.ProductPrice{},
-	// &domain.ProductMedia{},
-	// &domain.ProductPrivate{},
-	// &domain.ProductAsset{},
+		// // Asset related
+		// &domain.AssetCost{},
+		// &domain.AssetCostType{},
+		// &domain.AssetIncomeType{},
+		// &domain.AssetExploitation{},
+		// &domain.AssetLegal{},
+		// &domain.AssetOrganization{},
+		// &domain.AssetUser{},
+		// &domain.AssetShare{},
 
-	// // Post related
-	// &domain.PostMediaEntity{},
-	// &domain.PostOrganization{},
-	// &domain.PostUser{},
+		// // Product related
+		// &domain.ProductUser{},
+		// &domain.ProductOrganization{},
+		// &domain.ProductHistory{},
+		// &domain.ProductPrice{},
+		// &domain.ProductMedia{},
+		// &domain.ProductPrivate{},
+		// &domain.ProductAsset{},
 
-	// // Document related
-	// &domain.IncomeDocument{},
-	// &domain.AttachDocument{},
+		// // Post related
+		// &domain.PostMediaEntity{},
+		// &domain.PostOrganization{},
+		// &domain.PostUser{},
 
-	// // Project related
-	// &domain.Project{},
-	// &domain.ProjectBuild{},
-	// &domain.ProjectInventory{},
-	// &domain.BuildRoom{},
+		// // Document related
+		// &domain.IncomeDocument{},
+		// &domain.AttachDocument{},
 
-	// // Apartment related
-	// &domain.Apartment{},
-	// &domain.ApartmentAttribute{},
+		// // Project related
+		// &domain.Project{},
+		// &domain.ProjectBuild{},
+		// &domain.ProjectInventory{},
+		// &domain.BuildRoom{},
 
-	// Deal related
-	// &domain.Deal{},
-	// &domain.DealMember{},
-	// &domain.DealMilestone{},
-	// &domain.DealProduct{},
-	// &domain.DealInvestment{},
-	// &domain.DealOfOrganization{},
-	// &domain.DealOfGroup{},
-	// &domain.DealOfBranch{},
-	// &domain.AttachDocument{},
-	// &domain.DealInternalNote{},
+		// // Apartment related
+		// &domain.Apartment{},
+		// &domain.ApartmentAttribute{},
 
-	// Transaction related
-	// &domain.Transaction{},
-	// &domain.Tx{},
-	// &domain.TxTransaction{},
-	// &domain.TxTransactionHistory{},
-	// &domain.TxTransactionProduct{},
-	// &domain.TxTransactionGroup{},
-	// &domain.TxTransactionCategory{},
-	// &domain.TxAction{},
-	// &domain.TxContractDeal{},
-	// &domain.TxDealCost{},
-	// &domain.TxCostType{},
+		// Deal related
+		// &domain.Deal{},
+		// &domain.DealMember{},
+		// &domain.DealMilestone{},
+		// &domain.DealProduct{},
+		// &domain.DealInvestment{},
+		// &domain.DealOfOrganization{},
+		// &domain.DealOfGroup{},
+		// &domain.DealOfBranch{},
+		// &domain.AttachDocument{},
+		// &domain.DealInternalNote{},
 
-	// Sharing and Access
-	// &domain.SharingAccess{},
-	// &domain.Sharing{},
-	// &domain.RecordHistory{},
+		// Transaction related
+		// &domain.Transaction{},
+		// &domain.Tx{},
+		// &domain.TxTransaction{},
+		// &domain.TxTransactionHistory{},
+		// &domain.TxTransactionProduct{},
+		// &domain.TxTransactionGroup{},
+		// &domain.TxTransactionCategory{},
+		// &domain.TxAction{},
+		// &domain.TxContractDeal{},
+		// &domain.TxDealCost{},
+		// &domain.TxCostType{},
 
-	// // Location entities
-	// &domain.Province{},
-	// &domain.ProvinceV2{},
-	// &domain.District{},
-	// &domain.Ward{},
-	// &domain.WardV2{},
-	// &domain.Region{},
+		// Sharing and Access
+		// &domain.SharingAccess{},
+		// &domain.Sharing{},
+		// &domain.RecordHistory{},
 
-	// // Other entities
-	// &domain.Amenity{},
-	// &domain.Developer{},
-	// &domain.PropertyType{},
-	// &domain.DocType{},
-	// &domain.PaymentMethod{},
-	// &domain.Task{},
-	// &domain.Customer{},
-	// &domain.BDSDomain{},
-	// &domain.HouseInfo{},
-	// &domain.Action{},
+		// // Location entities
+		// &domain.Province{},
+		// &domain.ProvinceV2{},
+		// &domain.District{},
+		// &domain.Ward{},
+		// &domain.WardV2{},
+		// &domain.Region{},
 
-	// Property related
-	// &domain.Product{},
-	// &domain.Property{},
-	// &domain.PropertyLandInfo{},
-	// &domain.PropertyBuildingInfo{},
-	// &domain.PropertyMedia{},
-	// &domain.PropertyTagLink{},
-	// &domain.PropertyRelation{},
-	// &domain.Tag{},
-	// &domain.MemberPlan{},
-	// &domain.ProfileTransfer{},
-	// &domain.BankAccount{},
-	// &domain.Color{},
-	// &domain.CommissionStats{},
+		// // Other entities
+		// &domain.Amenity{},
+		// &domain.Developer{},
+		// &domain.PropertyType{},
+		// &domain.DocType{},
+		// &domain.PaymentMethod{},
+		// &domain.Task{},
+		// &domain.Customer{},
+		// &domain.BDSDomain{},
+		// &domain.HouseInfo{},
+		// &domain.Action{},
 
-	// // Attribute related
-	// &domain.Attribute{},
-	// &domain.AttributeValue{},
-	// &domain.AttributeProduct{},
-	// &domain.DistributionEntity{},
-	// &domain.ProductUser{},
-	// &domain.PropertyAmenity{},
-	// &domain.PropertyRelation{},
-	// &domain.ProvinceV2{},
-	// &domain.WardV2{},
+		// Property related
+		// &domain.Product{},
+		// &domain.Property{},
+		// &domain.PropertyLandInfo{},
+		// &domain.PropertyBuildingInfo{},
+		// &domain.PropertyMedia{},
+		// &domain.PropertyTagLink{},
+		&domain.PropertyRelation{},
+		// &domain.Tag{},
+		// &domain.MemberPlan{},
+		// &domain.ProfileTransfer{},
+		// &domain.BankAccount{},
+		// &domain.Color{},
+		// &domain.CommissionStats{},
+
+		// // Attribute related
+		// &domain.Attribute{},
+		// &domain.AttributeValue{},
+		// &domain.AttributeProduct{},
+		// &domain.DistributionEntity{},
+		// &domain.ProductUser{},
+		// &domain.PropertyAmenity{},
+		// &domain.PropertyRelation{},
+		// &domain.ProvinceV2{},
+		// &domain.WardV2{},
 	// &domain.ProductNote{},
 	// &domain.ProductNoteMention{},
 	// &domain.ProductNoteFile{},
