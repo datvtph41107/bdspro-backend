@@ -42,14 +42,14 @@ service PropertyService {
     };
   };
   
-  rpc CreateProperty (CreatePropertyRequest) returns (Response) {
+  rpc CreateProperty(CreatePropertyRequest) returns (Response) {
     option (google.api.http) = {
       post: "/v2/bdspro/property/new"
       body: "*"
     };
   };
   
-  rpc UpdateProperty (UpdatePropertyRequest) returns (Response) {
+  rpc UpdateProperty(UpdatePropertyRequest) returns (Response) {
     option (google.api.http) = {
       put: "/v2/bdspro/v2/property/{id}"
       body: "*"

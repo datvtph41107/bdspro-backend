@@ -33,24 +33,19 @@ type Property struct {
 	AreaTotal       *float64 `gorm:"type:decimal(15,2)" json:"areaTotal,omitempty"`       // Tổng diện tích sàn (nếu có)
 	AreaLand        *float64 `gorm:"type:decimal(15,2)" json:"areaLand,omitempty"`        // Diện tích đất (m²)
 	AreaResidential *float64 `gorm:"type:decimal(15,2)" json:"areaResidential,omitempty"` // Diện tích ở (m²)
-
 	// Pháp lý
 	LegalNote   string                  `gorm:"type:text" json:"legalNote,omitempty"`
 	LegalStatus enums.EHouseCertificate `gorm:"type:int8;index" json:"legalStatus,omitempty"`
-
 	// Trạng thái
 	RecordStatus enums.EPropertyStatus `gorm:"type:int8;not null;default:10" json:"recordStatus"`
 	Scope        enums.EPropertyScope  `gorm:"type:int8;not null;default:10" json:"scope"` // THÊM: phạm vi
-
 	// Liên kết khóa ngoại
 	AvatarID       *uint64 `gorm:"type:int8;index" json:"avatarId,omitempty"`
 	BuildingInfoID *uint64 `gorm:"type:int8" json:"buildingInfoId,omitempty"`
-
 	// Địa chỉ hành chính (bổ sung District)
 	ProvinceID *uint64 `gorm:"type:int8;index" json:"provinceId,omitempty"`
 	DistrictID *uint64 `gorm:"type:int8;index" json:"districtId,omitempty"` // THÊM
 	WardID     *uint64 `gorm:"type:int8;index" json:"wardId,omitempty"`
-
 	// Quan hệ
 	Province     *ProvinceV2           `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
 	District     *DistrictV2           `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"` // THÊM

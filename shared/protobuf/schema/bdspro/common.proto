@@ -261,7 +261,7 @@ message PropertyResponse {
     repeated sharepb.TagItem amenities = 36;
 
     // [ADDED] Các trường mới theo UI
-    string scope = 37;                              // "private", "shared", "public"
+    uint32 scope = 37;                              // "private", "shared", "public"
     string identifier = 38;                          // mã BDSPro
     string nationalId = 39;                          // mã QG
     bool nationalIdVerified = 40;

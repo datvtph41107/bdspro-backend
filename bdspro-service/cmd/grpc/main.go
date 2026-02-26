@@ -86,6 +86,7 @@ var GrpcCmd = &cobra.Command{
 		bdspropb.RegisterPropertyServiceServer(s, app.PropertyHandler)
 		bdspropb.RegisterDistributionServiceServer(s, app.DistributeHandler)
 		bdspropb.RegisterProductNoteServiceServer(s, app.ProductNoteHandler)
+		bdspropb.RegisterIdentifierServiceServer(s, app.PropertyIdentifier)
 		startScheduler(app)
 		// pb_generic.RegisterGenericServiceServer(s, app.GrpcGenericServer)
 

@@ -282,7 +282,7 @@ func (m *PropertyMapper) PropertyWithCountsToProto(p *dto.PropertyWithCounts) *b
 		BuildingInfoId:   property.BuildingInfoID,
 
 		// NEW fields
-		Scope:              scopeToString(property.Scope),
+		Scope:              uint32(enums.EPropertyScope(property.Scope)),
 		Identifier:         property.Identifier,
 		NationalId:         property.NationalID,
 		NationalIdVerified: property.NationalIDVerified,

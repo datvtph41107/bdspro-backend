@@ -21,17 +21,20 @@ type DistributionUsecase struct {
 	distributionRepo repo.DistributeRepository
 	productPriceRepo repo.ProductPriceRepo
 	productRepo      repo.ProductRepo
+	productUserRepo  repo.ProductUserRepo
 	transaction      provider.TransactionProvider
 	notifyProvider   provider.NotificationProvider
+	hubProvider      provider.HubProvider
 }
 
 func NewDistributionUsecase(
 	r repo.DistributeRepository,
 	productPriceRepo repo.ProductPriceRepo,
 	productRepo repo.ProductRepo,
+	productUserRepo repo.ProductUserRepo,
 	transaction provider.TransactionProvider,
 	notificationProvider provider.NotificationProvider,
-
+	hubProvider provider.HubProvider,
 ) *DistributionUsecase {
 	return &DistributionUsecase{
 		distributionRepo: r,
@@ -39,6 +42,7 @@ func NewDistributionUsecase(
 		productRepo:      productRepo,
 		transaction:      transaction,
 		notifyProvider:   notificationProvider,
+		hubProvider:      hubProvider,
 	}
 }
 
@@ -47,7 +51,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 	req *dto.DistributeDTO,
 ) (*dto.DistributeResultDTO, error) {
 	if err := req.Validate(false); err != nil {
-		return nil, _errors.BadRequestException(err.Error())
+		return nil, _errors.BadRequestException("Validate: ", err.Error())
 	}
 
 	var resp *dto.DistributeResultDTO
@@ -122,6 +126,21 @@ func (uc *DistributionUsecase) CreateDistribute(
 					len(req.PartnerIDs),
 				),
 			})
+		go func() {
+			cloneCtx := _utils.CloneContext(ctx)
+			// actorID := _utils.GetProfileIdWithContext(cloneCtx)
+			productUsers, err := uc.productUserRepo.GetByDistributeID(cloneCtx, dist.ID)
+			if err != nil {
+				return
+			}
+			ids := make([]uint64, len(productUsers))
+			for idx, productUser := range productUsers {
+				if productUser.OriginProfileID != nil {
+					ids[idx] = *productUser.OriginProfileID
+				}
+			}
+			uc.hubProvider.PutUpdate(cloneCtx, "distribute", dist.ID, ids, time.Now().Unix())
+		}()
 		return nil
 	})
 
@@ -271,6 +290,22 @@ func (uc *DistributionUsecase) UpdateDistribute(
 					_util.GetProductCode(dist.ProductID),
 				),
 			})
+
+		go func() {
+			cloneCtx := _utils.CloneContext(ctx)
+			// actorID := _utils.GetProfileIdWithContext(cloneCtx)
+			productUsers, err := uc.productUserRepo.GetByDistributeID(cloneCtx, dist.ID)
+			if err != nil {
+				return
+			}
+			ids := make([]uint64, len(productUsers))
+			for idx, productUser := range productUsers {
+				if productUser.OriginProfileID != nil {
+					ids[idx] = *productUser.OriginProfileID
+				}
+			}
+			uc.hubProvider.PutUpdate(cloneCtx, "distribute", dist.ID, ids, time.Now().Unix())
+		}()
 		return nil
 	})
 
