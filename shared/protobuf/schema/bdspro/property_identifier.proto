@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+option go_package = "pb/types/bdspro;bdspropb";
+
+service IdentifierService {
+    rpc registerIdentifier(RegisterIdentifierRequest) returns (RegisterIdentifierResponse) {
+        option (google.api.http) = {
+            post: "/bdspro/api/v2/identifiers"
+            body: "identifier"
+        };
+    }
+
+    rpc getIdentifier(GetIdentifierRequest) returns (GetIdentifierResponse) {
+        option (google.api.http) = {
+            get: "/bdspro/api/v2/identifiers/{id}"
+        };
+    }
+
+    rpc updateIdentifier(UpdateIdentifierRequest) returns (UpdateIdentifierResponse) {
+        option (google.api.http) = {
+            put: "/bdspro/api/v2/identifiers/{identifier.id}"
+            body: "identifier"
+        };
+    }
+
+    rpc deleteIdentifier(DeleteIdentifierRequest) returns (DeleteIdentifierResponse) {
+        option (google.api.http) = {
+            delete: "/bdspro/api/v2/identifiers/{id}"
+        };
+    }
+
+    rpc searchIdentifier(SearchIdentifierRequest) returns (SearchIdentifierResponse) {
+        option (google.api.http) = {
+            post: "/bdspro/api/v2/identifiers/search"
+            body: "*"
+        };
+    }
+
+    rpc validateIdentifier(ValidateIdentifierRequest) returns (ValidateIdentifierResponse) {
+        option (google.api.http) = {
+            get: "/bdspro/api/v2/identifiers/validate/{code}"
+        };
+    }
+}
+
+message Identifier {
+    // Mã định danh duy nhất toàn quốc (hệ thống tự sinh)
+    string id = 1;
+    
+    // Mã thửa đất từ cơ sở dữ liệu đất đai
+    string landParcelCode = 2;
+    
+    // Mã dự án (nếu có)
+    string projectCode = 3;
+    
+    // Mã tỉnh/thành phố
+    string provinceId = 4;
+    
+    // Mã quận/huyện
+    string districtId = 5;
+    
+    // Mã xã/phường
+    string wardId = 6;
+    
+    // Vĩ độ (WGS84)
+    double latitude = 7;
+    
+    // Kinh độ (WGS84)
+    double longitude = 8;
+    
+    // Loại bất động sản: APT (Căn hộ), HSE (Nhà ở), LND (Đất)
+    string type = 9;
+    
+    // Trạng thái pháp lý: AVL (Sẵn sàng), MTG (Đang thế chấp), DSP (Đang tranh chấp)
+    string legalStatus = 10;
+    
+    // Mã định danh chủ sở hữu hiện tại
+    string currentOwnerId = 11;
+    
+    // Thời gian tạo (format: 2006-01-02 15:04:05)
+    string createdAt = 12;
+    
+    // Thời gian cập nhật gần nhất
+    string updatedAt = 13;
+}
+
+// Request: Đăng ký mã định danh mới
+message RegisterIdentifierRequest {
+    Identifier identifier = 1;
+    string requestedBy = 2;
+}
+
+// Response: Đăng ký mã định danh mới
+message RegisterIdentifierResponse {
+    Identifier identifier = 1;
+    string message = 2;
+}
+
+// Request: Lấy thông tin mã định danh theo ID
+message GetIdentifierRequest {
+    string id = 1;
+}
+
+// Response: Lấy thông tin mã định danh
+message GetIdentifierResponse {
+    Identifier identifier = 1;
+}
+
+// Request: Cập nhật thông tin mã định danh
+message UpdateIdentifierRequest {
+    Identifier identifier = 1;
+    string requestedBy = 2;
+}
+
+// Response: Cập nhật thông tin mã định danh
+message UpdateIdentifierResponse {
+    Identifier identifier = 1;
+    string message = 2;
+}
+
+// Request: Xóa mã định danh
+message DeleteIdentifierRequest {
+    string id = 1;
+    string requestedBy = 2;
+}
+
+// Response: Xóa mã định danh
+message DeleteIdentifierResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Tiêu chí tìm kiếm mã định danh
+message SearchCriteria {
+    string provinceId = 1;
+    string districtId = 2;
+    string wardId = 3;
+    string type = 4;
+    string legalStatus = 5;
+    string ownerId = 6;
+    string keyword = 7;
+    string createdFrom = 8;
+    string createdTo = 9;
+    double radiusKm = 10;
+    double centerLat = 11;
+    double centerLng = 12;
+}
+
+// Phân trang
+message IdentifierPagination {
+    int32 page = 1;
+    int32 limit = 2;
+}
+
+message SearchIdentifierRequest {
+    SearchCriteria criteria = 1;
+    IdentifierPagination pagination = 2;
+}
+
+message SearchIdentifierResponse {
+    repeated Identifier identifiers = 1;
+    int64 total = 2;
+    int32 page = 3;
+    int32 limit = 4;
+}
+
+// Request: Kiểm tra tính hợp lệ của mã định danh
+message ValidateIdentifierRequest {
+    string code = 1; // Mã định danh cần kiểm tra
+}
+
+// Response: Kết quả kiểm tra
+message ValidateIdentifierResponse {
+    bool valid = 1;
+    string message = 2;
+    Identifier identifier = 3;
+}
