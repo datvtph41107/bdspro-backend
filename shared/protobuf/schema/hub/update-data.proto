@@ -53,6 +53,11 @@ service UpdateDataService {
       get: "/v2/hub/update/{resource}/sync/status"
     };
   }
+  rpc CheckVersionSyncById(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/update/{resource}/sync/status/{id}"
+    };
+  }
   rpc RefreshSyncIds(RefreshSyncIdsRequest) returns (RefreshSyncIdsResponse) {
     option (google.api.http) = {
       get: "/v2/hub/update/{resource}/refresh/ids"

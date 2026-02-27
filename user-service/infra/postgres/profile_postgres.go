@@ -52,9 +52,9 @@ func (r *ProfilePostgres) GlobalSearchProfile(c context.Context, text string, pa
 
 	// Then fetch data with pagination
 	err = query.Debug().
+		Order("updated_at DESC").
 		Offset(pageable.GetOffset()).
 		Limit(pageable.GetLimit()).
-		Order("updated_at DESC").
 		Find(&profiles).
 		Error
 	if err != nil {

@@ -182,5 +182,21 @@ func (c *BdsproGrpcClient) GetResourceIds(ctx context.Context, resource string, 
 	resp, err := c.InternalClient.GetResourceIds(ctx, &bdspropb.ResourceRequest{
 		Resource: resource,
 	})
+	if err != nil {
+		log.Printf("err: %s", err)
+		return nil, err
+	}
 	return resp.Ids, err
+}
+
+func (c *BdsproGrpcClient) GetUpdatedAtOfId(ctx context.Context, resource string, id uint64) (int64, error) {
+	resp, err := c.InternalClient.GetUpdatedAtOfId(ctx, &bdspropb.ResourceRequest{
+		Resource: resource,
+		Id:       id,
+	})
+	if err != nil {
+		log.Printf("err: %s", err)
+		return 0, err
+	}
+	return resp.Timestamp, err
 }

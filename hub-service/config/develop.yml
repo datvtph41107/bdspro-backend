@@ -26,3 +26,7 @@ security:
   api_key: "develop-hub-api-key"
   protected_methods:
     - "/hubpb.VersionService/CreateVersionFromDev"
+
+redis:
+  host: redis:6379
+  pass: protected_redis_secure_password

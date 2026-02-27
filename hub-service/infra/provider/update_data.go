@@ -26,3 +26,14 @@ func (p *UpdateDataProviderImpl) GetRefreshIds(c context.Context, resource strin
 
 	return nil, nil
 }
+
+func (p *UpdateDataProviderImpl) GetUpdatedAtOfId(c context.Context, resource string, id uint64) (int64, error) {
+	switch resource {
+	case "product", "property":
+		return p.BdsproClient.GetUpdatedAtOfId(c, resource, id)
+	default:
+		break
+	}
+
+	return 0, nil
+}

@@ -8,6 +8,7 @@ import (
 	"common/case/crud3"
 	"context"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -483,4 +484,20 @@ func (r *PostgrePropertyRepo) ArchiveBatchProperties(ctx context.Context, ids []
 		Model(&domain.Property{}).
 		Where("id IN (?) AND deleted_at IS NULL", ids).
 		Update("record_status", status).Error
+}
+
+func (r *PostgrePropertyRepo) GetUpdatedAt(c context.Context, id uint64) (int64, error) {
+	var result time.Time
+
+	err := GetDB(c, r.DB).
+		Model(&domain.Property{}).
+		Select("updated_at").
+		Where("id = ?", id).
+		First(&result).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.Unix(), nil
 }

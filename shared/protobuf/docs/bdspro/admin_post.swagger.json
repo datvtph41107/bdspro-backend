@@ -1726,6 +1726,13 @@
         "propertyId": {
           "type": "string",
           "format": "uint64"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -2040,7 +2047,8 @@
           }
         },
         "scope": {
-          "type": "string",
+          "type": "integer",
+          "format": "int64",
           "description": "\"private\", \"shared\", \"public\"",
           "title": "[ADDED] Các trường mới theo UI"
         },

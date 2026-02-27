@@ -45,3 +45,4 @@ tqd-service/tqd-service
 .gitbe
 /config/
 **/config/product.yml
+**/app/logs

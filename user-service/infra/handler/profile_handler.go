@@ -429,6 +429,7 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 	infos := s.ProfileMapper.UserSearchItemToPbs(results)
 
 	s.CrmClient.MapFriendStatusToSearchItemPb(ctx, infos)
+	fmt.Printf("total=%d", total)
 
 	return &userpb.SearchProfilePublicResponse{
 		Data:  infos,

@@ -280,3 +280,23 @@ func (s *InternalHandler) GetResourceIds(ctx context.Context, req *bdspropb.Reso
 		Ids: resp,
 	}, nil
 }
+
+func (s *InternalHandler) GetUpdatedAtOfId(ctx context.Context, req *bdspropb.ResourceRequest) (*bdspropb.ResourceResponse, error) {
+	var resp int64
+	var err error
+
+	switch req.Resource {
+	case "product":
+		resp, err = s.productRepo.GetUpdatedAt(ctx, req.Id)
+	case "property":
+		resp, err = s.propertyRepo.GetUpdatedAt(ctx, req.Id)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &bdspropb.ResourceResponse{
+		Timestamp: resp,
+	}, nil
+}

@@ -16,6 +16,7 @@ import (
 // IUpdateDataUsecase interface cho UpdateDataService (sync tracking)
 type IUpdateDataUsecase interface {
 	CheckVersionSync(ctx context.Context, resource string, lastSync int64, limit int64) ([]uint64, error)
+	CheckVersionSyncById(ctx context.Context, resource string, lastSync int64, id uint64) (int64, error)
 	RefreshSyncIds(ctx context.Context, ownerID uint64, resource string, lastSync int64, limit int64) (needSync bool, currentVersion int64, changeCount int32, changedIds []uint64, next *int64, err error)
 	FlushSyncIds(ctx context.Context, ownerID uint64, resource string, limit int64) error
 	Put(ctx context.Context, ownerIDs []uint64, resource string, resourceId uint64) error
@@ -27,7 +28,13 @@ type UpdateDataUsecase struct {
 	updateProvider providers.UpdateDataProvider
 }
 
-const keyUserUpdate = "hub:sync:user:%d:%s"
+const (
+	// lưu danh sách id cần update
+	keyUserUpdate = "u:%s:%d"
+
+	// lưu update time của entity
+	keyResourceUpdate = "time:%s:%d"
+)
 
 func NewUpdateDataUsecase(repo _repo.IUpdateDataRepo,
 	cacheProvider providers.CacheProvider,
@@ -41,7 +48,7 @@ func NewUpdateDataUsecase(repo _repo.IUpdateDataRepo,
 
 func (uc *UpdateDataUsecase) CheckVersionSync(ctx context.Context, resource string, lastSync int64, limit int64) ([]uint64, error) {
 	ownerId := _utils.GetOriginIdFromContext(ctx)
-	key := fmt.Sprintf(keyUserUpdate, ownerId, resource)
+	key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
 	// client, err := u.cacheProvider.Client(ctx)
 	// if err != nil {
 	// 	return nil, _errors.InternalServerException("get user update data error: %w", err.Error())
@@ -63,6 +70,29 @@ func (uc *UpdateDataUsecase) CheckVersionSync(ctx context.Context, resource stri
 	return resourceIds, nil
 }
 
+func (uc *UpdateDataUsecase) CheckVersionSyncById(ctx context.Context, resource string, lastSync int64, id uint64) (int64, error) {
+	key := fmt.Sprintf(keyResourceUpdate, resource, id)
+	// client, err := u.cacheProvider.Client(ctx)
+	// if err != nil {
+	// 	return nil, _errors.InternalServerException("get user update data error: %w", err.Error())
+	// }
+	lastUpdateStr, err := uc.cacheProvider.Get(ctx, key)
+	if err != nil {
+		return -1, _errors.InternalServerException("get user update data error: %w", err.Error())
+	}
+	lastUD := _utils.ParseInt64(lastUpdateStr)
+	if lastUD < 1 {
+		timestamp, err := uc.updateProvider.GetUpdatedAtOfId(ctx, resource, id)
+		if err != nil {
+			return -1, err
+		}
+		uc.cacheProvider.Set(ctx, key, strconv.FormatInt(timestamp, 10))
+		return timestamp, nil
+	}
+
+	return lastUD, nil
+}
+
 func (uc *UpdateDataUsecase) RefreshSyncIds(ctx context.Context, ownerID uint64, resource string, lastSync int64, limit int64) (bool, int64, int32, []uint64, *int64, error) {
 	changedIds, err := uc.updateProvider.GetRefreshIds(ctx, resource, ownerID)
 	if err != nil {
@@ -79,7 +109,7 @@ func (uc *UpdateDataUsecase) FlushSyncIds(ctx context.Context, ownerID uint64, r
 	if ownerId == 0 {
 		return _errors.ReturnError(400, "owner_id is required")
 	}
-	key := fmt.Sprintf(keyUserUpdate, ownerId, resource)
+	key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
 	log.Println("key_trimmed", key, limit)
 	err := uc.cacheProvider.LTrim(ctx, key, limit, -1)
 	// if err != nil {
@@ -91,7 +121,7 @@ func (uc *UpdateDataUsecase) FlushSyncIds(ctx context.Context, ownerID uint64, r
 func (uc *UpdateDataUsecase) Put(ctx context.Context, ownerIDs []uint64, resource string, resourceId uint64) error {
 	log.Printf("ABCD")
 	for _, ownerId := range ownerIDs {
-		key := fmt.Sprintf(keyUserUpdate, ownerId, resource)
+		key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
 		// Sử dụng Redis Set để lưu danh sách product IDs
 		err := uc.cacheProvider.RPush(ctx, key, resourceId)
 		if err != nil {

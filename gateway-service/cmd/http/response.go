@@ -61,7 +61,15 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 		// Tìm trực tiếp Total, Page, Size fields
 		totalField := val.FieldByName("Total")
 		if totalField.IsValid() && totalField.CanInterface() {
-			if total, ok := totalField.Interface().(int64); ok {
+			switch totalField.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				total := totalField.Int() // luôn trả về int64
+				resp.Total = total
+				resp.TotalElements = total
+				pagination.Total = total
+
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				total := int64(totalField.Uint())
 				resp.Total = total
 				resp.TotalElements = total
 				pagination.Total = total

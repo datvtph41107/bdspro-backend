@@ -24,14 +24,17 @@ service BdsproInternalService {
     rpc GetProductUsersByDistributeId(sharepb.IdRequest) returns (GetProductUsersByDistributeIdResponse);
     rpc GetProductUsersByProductId(sharepb.IdRequest) returns (GetProductUsersByDistributeIdResponse);
     rpc GetResourceIds(ResourceRequest) returns (ResourceResponse);
+    rpc GetUpdatedAtOfId(ResourceRequest) returns (ResourceResponse);
 }
 
 message ResourceRequest {
     string resource = 1;
+    uint64 id = 2;
 }
 
 message ResourceResponse {
     repeated uint64 ids = 1;
+    int64 timestamp = 2;
 }
 
 message DealsResponse {

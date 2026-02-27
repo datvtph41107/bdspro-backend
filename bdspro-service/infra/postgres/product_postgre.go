@@ -2168,3 +2168,19 @@ func (r *GormUserProductRepo) GetProductSummary(ctx context.Context, userID uint
 
 	return &result, nil
 }
+
+func (r *GormUserProductRepo) GetUpdatedAt(c context.Context, id uint64) (int64, error) {
+	var result time.Time
+
+	err := GetDB(c, r.DB).
+		Model(&domain.Product{}).
+		Select("updated_at").
+		Where("id = ?", id).
+		First(&result).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.Unix(), nil
+}

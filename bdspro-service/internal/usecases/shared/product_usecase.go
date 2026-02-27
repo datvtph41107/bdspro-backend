@@ -232,6 +232,43 @@ func (uc *ProductUsecase) CheckVersionSync(
 	}, nil
 }
 
+func (uc *ProductUsecase) CheckVersionSyncById(
+	ctx context.Context,
+	id uint64,
+	req *dto.CheckVersionSyncRequest,
+) (*dto.CheckVersionSyncResponse, error) {
+	// Nếu có id resouce thif cjeck sync 1 resource product
+	// if req.Id != 0 && req.Id > 0 {
+	// 	return uc.checkSingleProductSync(ctx, req, ownerId)
+	// }
+	key := fmt.Sprintf(keyUserProducts, id)
+	client, err := uc.redisClient.Client(ctx)
+	if err != nil {
+		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+	}
+	productIds, err := client.LRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+	}
+	// if len(productIds) == 0 {
+	// 	return nil, _errors.NotFoundException("User products not found")
+	// }
+	productIdsUint64 := make([]uint64, len(productIds))
+	for i, productId := range productIds {
+		productIdsUint64[i], err = strconv.ParseUint(productId, 10, 64)
+		if err != nil {
+			return nil, _errors.InternalServerException("parse product id error: %w", err.Error())
+		}
+	}
+	return &dto.CheckVersionSyncResponse{
+		NeedSync:        len(productIds) > 0,
+		CurrentVersion:  time.Now().Unix(),
+		ResourceVersion: nil,
+		ChangeCount:     len(productIds),
+		ChangedIDs:      productIdsUint64,
+	}, nil
+}
+
 func (uc *ProductUsecase) FlushSyncIds(ctx context.Context, limit int64) error {
 	ownerId := _utils.GetOriginIdFromContext(ctx)
 	if ownerId == 0 {

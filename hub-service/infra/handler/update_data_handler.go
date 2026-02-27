@@ -67,6 +67,34 @@ func (h *UpdateDataHandler) CheckVersionSync(
 	return resp, nil
 }
 
+func (h *UpdateDataHandler) CheckVersionSyncById(
+	ctx context.Context,
+	req *hubpb.CheckVersionSyncRequest,
+) (*hubpb.CheckVersionSyncResponse, error) {
+	if req == nil || req.Resource == "" {
+		return nil, status.Error(codes.InvalidArgument, "resource is required")
+	}
+
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "owner_id is required (id in request or profile in context)")
+	}
+
+	timestamp, err := h.updateDataUsecase.CheckVersionSyncById(
+		ctx, req.Resource, req.LastSync, req.Id,
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "check version sync failed: %v", err)
+	}
+
+	resp := &hubpb.CheckVersionSyncResponse{
+		NeedSync:       req.LastSync < timestamp,
+		CurrentVersion: timestamp,
+		ChangeCount:    0,
+		ChangedIds:     nil,
+	}
+	return resp, nil
+}
+
 // RefreshSyncIds lấy danh sách IDs đã thay đổi cần sync
 // @Summary Lấy danh sách IDs cần refresh
 // @Description Lấy danh sách resource IDs đã thay đổi từ lastSync

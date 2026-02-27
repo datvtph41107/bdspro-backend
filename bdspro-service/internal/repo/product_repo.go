@@ -120,6 +120,7 @@ type ProductRepo interface {
 	CountByOwner(ctx context.Context, ownerOf _enum.EOwnerOf, ownerId uint64) (uint32, error)
 
 	GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
+	GetUpdatedAt(c context.Context, id uint64) (int64, error)
 
 	// Cập nhật ghi chú sản phẩm
 	UpdateNote(ctx context.Context, id uint64, note string) error

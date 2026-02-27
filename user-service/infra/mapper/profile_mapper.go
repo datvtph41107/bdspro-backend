@@ -255,13 +255,16 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, ky
 
 func (m *ProfileMapper) UserSearchItemToPbs(profiles *[]models.UserProfileSearch) []*userpb.UserSearchItem {
 	infos := []*userpb.UserSearchItem{}
-	for _, profile := range *profiles {
-		infos = append(infos, &userpb.UserSearchItem{
-			ProfileId: profile.ProfileID,
-			FullName:  profile.FullName,
-			Avatar:    profile.Avatar,
-		})
+	if profiles != nil {
+		for _, profile := range *profiles {
+			infos = append(infos, &userpb.UserSearchItem{
+				ProfileId: profile.ProfileID,
+				FullName:  profile.FullName,
+				Avatar:    profile.Avatar,
+			})
+		}
 	}
+
 	return infos
 }
 

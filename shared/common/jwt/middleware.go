@@ -121,7 +121,7 @@ func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string) gin.HandlerFunc 
 		if apiKey != "" {
 			c.Set("api-key", apiKey)
 		}
-		fmt.Printf("request: %s _ api-key: %s\n", c.Request.URL.Path, apiKey)
+		// fmt.Printf("request: %s _ api-key: %s\n", c.Request.URL.Path, apiKey)
 		// fmt.Printf("pubRoutes: %v\n", pubRoutes)
 		// Lấy token từ header Authorization
 		tokenString := c.GetHeader("Authorization")
@@ -144,7 +144,7 @@ func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string) gin.HandlerFunc 
 
 		// Parse và xác thực token
 		claims, err := ParseJWT(tokenString)
-		log.Printf("claims=%v, ignoreToken=%v, err=%v", claims, ignoreToken, err)
+		// log.Printf("claims=%v, ignoreToken=%v, err=%v", claims, ignoreToken, err)
 		if err != nil && !ignoreToken {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    401,

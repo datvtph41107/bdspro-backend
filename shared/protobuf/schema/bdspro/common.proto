@@ -205,6 +205,8 @@ message ProductResponse {
     uint32 sourceStatus = 82;  
     uint32 priority = 83;  
     optional uint64 propertyId = 84;
+    string sourceTypeName = 85;
+    optional uint64 createdBy = 86;
 }
 
 message PropertyLandInfo {

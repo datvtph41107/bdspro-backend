@@ -5,6 +5,7 @@ import (
 	_middleware "common/middleware"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -151,6 +152,17 @@ var HttpCmd = &cobra.Command{
 		// Set timezone
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
+
+		// Tạo thư mục nếu chưa có
+		os.MkdirAll("./app/logs", os.ModePerm)
+
+		// Mở file log
+		f, err := os.OpenFile("./app/logs/app.log",
+			os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			panic(err)
+		}
+		gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
 		r := gin.Default()
 

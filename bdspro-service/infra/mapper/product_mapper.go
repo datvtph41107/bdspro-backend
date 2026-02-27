@@ -334,7 +334,8 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		// Build:           product.Build,
 		// Project:         product.Project,
 		// Developer:       product.Developer,
-		SourceType: uint32(product.SourceType),
+		SourceType:     uint32(product.SourceType),
+		SourceTypeName: enums.SourceTypeMap[product.SourceType],
 		// UPDATE SOURCE RESPONSE
 		SourceStatus:      uint32(product.SourceStatus),
 		Priority:          uint32(product.Priority),
@@ -367,6 +368,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		Archived:  product.Archived,
 		CreatedAt: _utils.FormatTimeToString(product.CreatedAt),
 		UpdatedAt: _utils.FormatTimeToString(product.UpdatedAt),
+		CreatedBy: product.CreatedBy,
 
 		PostCount:        product.PostCount,
 		ContactCount:     product.ContactCount,
