@@ -49,12 +49,7 @@ service PropertyService {
     };
   };
   
-  rpc UpdateProperty(UpdatePropertyRequest) returns (Response) {
-    option (google.api.http) = {
-      put: "/v2/bdspro/v2/property/{id}"
-      body: "*"
-    };
-  };
+
   
   rpc SearchTags(TagSearchRequest) returns (TagListResponse) {
     option (google.api.http) = {
@@ -66,6 +61,13 @@ service PropertyService {
       returns (GetPropertyAmenitiesResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/property/{propertyId}/amenities"
+    };
+  };
+
+  rpc UpdateProperty(UpdatePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/property/{id}"
+      body: "*"
     };
   };
 
@@ -130,6 +132,7 @@ message PropertySearchRequest {
   optional string createdTo = 19;
   optional string updatedFrom = 20;
   optional string updatedTo = 21;
+  optional uint32 sourceType = 22;
 }
 
 message UpdatePropertyRequest {
@@ -170,6 +173,7 @@ message UpdatePropertyRequest {
   optional bool nationalIdVerified = 28;     // Đã xác thực quốc gia?
   optional uint64 districtId = 29;           // ID quận/huyện
   optional uint64 buildingId = 30;           // ID tòa nhà (nếu có)
+  uint32 sourceType = 31;
 }
 
 message PropertyAmenityItem {
@@ -181,6 +185,7 @@ message PropertyAmenityItem {
 
 message GetPropertyAmenitiesRequest {
   uint64 propertyId = 1;
+  uint32 sourceType = 2;
 }
 
 message GetPropertyAmenitiesResponse {
@@ -199,6 +204,7 @@ message DeletePropertiesRequest {
 message ArchivePropertiesRequest {
   repeated uint64 ids = 1;
   bool archived = 2;
+  uint32 sourceType = 3;
 }
 
 message ArchiveProductUsersRequest {
@@ -228,6 +234,7 @@ message TagListResponse {
 
 message PropertyDetailRequest {
   uint64 id = 1;
+  uint32 sourceType = 2;
 }
 
 message PropertyAssetsRequest {
@@ -338,6 +345,7 @@ message PropertyInfo {
   optional uint64 wardId = 19;             // ID phường/xã
   optional sharepb.AddressV3Proto address = 20;
   optional string projectName = 21;
+  uint32 sourceType = 22;
 }
 
 message AssetLegalItem {

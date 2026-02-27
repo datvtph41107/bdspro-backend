@@ -1072,7 +1072,7 @@ func (m *ProductMapper) UpdateProductPbToDTO(req *bdspropb.UpdateProductRequest)
 		MediaItems: m.MediaItemsToDomain(req.MediaItems),
 
 		// Nguồn
-		SourceType:        enums.ESourceType(req.SourceType),
+		ResourceType:      enums.ESourceType(req.SourceType),
 		SourceContactId:   req.SourceContactId,
 		SourceContactNote: req.SourceContactNote,
 		SourceStatus:      enums.ESourceStatus(req.SourceStatus),
@@ -1101,7 +1101,7 @@ func (m *ProductMapper) UpdateProductRequestToProductSaveRequest(updateReq *dto.
 		AreaLand:          updateReq.AreaLand,
 		AreaTotal:         updateReq.AreaTotal,
 		AmenityIds:        updateReq.AmenityIDs,
-		SourceType:        uint32(updateReq.SourceType),
+		SourceType:        uint32(updateReq.ResourceType),
 		SourceContactNote: updateReq.SourceContactNote,
 	}
 

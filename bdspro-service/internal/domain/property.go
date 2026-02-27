@@ -4,66 +4,71 @@ package domain
 import (
 	"bdspro/internal/enums"
 	_models "common/models"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type Property struct {
 	_models.BaseEntity
-	PropertyTypeID *uint64 `gorm:"type:int8;index" json:"propertyTypeId,omitempty"`
+	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
+	// ===== BASIC =====
+	PropertyTypeID *uint64 `gorm:"type:bigint;index" json:"propertyTypeId,omitempty"`
 	Title          string  `gorm:"size:255" json:"title,omitempty"`
-	// LocationID có thể loại bỏ nếu không còn dùng, nhưng giữ lại để tương thích (đánh dấu deprecated)
-	LocationID    *uint64  `gorm:"type:int8;index" json:"locationId,omitempty"` // Deprecated: dùng Province/District/Ward thay thế
+
+	LocationID    *uint64  `gorm:"type:bigint;index" json:"locationId,omitempty"`
 	AddressDetail string   `gorm:"size:100" json:"addressDetail,omitempty"`
 	Latitude      *float64 `gorm:"type:decimal(10,8)" json:"latitude,omitempty"`
 	Longitude     *float64 `gorm:"type:decimal(11,8)" json:"longitude,omitempty"`
 	MapURL        string   `gorm:"size:100" json:"mapUrl,omitempty"`
+	// ===== PROJECT =====
+	ProjectID *uint64 `gorm:"type:bigint;index" json:"projectId,omitempty"`
+	Level     string  `gorm:"size:100" json:"level,omitempty"`
 
-	// Dự án
-	ProjectID  *uint64 `gorm:"type:int8;index" json:"projectId,omitempty"`
-	BlockID    *uint64 `gorm:"type:int8;index" json:"blockId,omitempty"`
-	BuildingID *uint64 `gorm:"type:int8;index" json:"buildingId,omitempty"` // THÊM: tòa nhà
-	Level      string  `gorm:"size:100" json:"level,omitempty"`             // Tầng
+	// ===== IDENTIFIER =====
+	UnitCode           string `gorm:"size:50" json:"unitCode,omitempty"`
+	Identifier         string `gorm:"size:50" json:"identifier,omitempty"`
+	NationalID         string `gorm:"size:50;index" json:"nationalId,omitempty"`
+	NationalIDVerified bool   `gorm:"default:false" json:"nationalIdVerified"`
 
-	// Mã định danh
-	UnitCode           string `gorm:"size:50" json:"unitCode,omitempty"`               // Mã căn hộ/đơn vị
-	Identifier         string `gorm:"size:50;uniqueIndex" json:"identifier,omitempty"` // Mã BDSPro tự sinh
-	NationalID         string `gorm:"size:50;index" json:"nationalId,omitempty"`       // Mã định danh quốc gia
-	NationalIDVerified bool   `json:"nationalIdVerified"`                              // Đã xác thực với cơ sở dữ liệu quốc gia?
-
-	// Diện tích (tóm tắt)
-	AreaTotal       *float64 `gorm:"type:decimal(15,2)" json:"areaTotal,omitempty"`       // Tổng diện tích sàn (nếu có)
-	AreaLand        *float64 `gorm:"type:decimal(15,2)" json:"areaLand,omitempty"`        // Diện tích đất (m²)
-	AreaResidential *float64 `gorm:"type:decimal(15,2)" json:"areaResidential,omitempty"` // Diện tích ở (m²)
-	// Pháp lý
+	// ===== AREA =====
+	AreaTotal       *float64 `gorm:"type:decimal(15,2)" json:"areaTotal,omitempty"`
+	AreaLand        *float64 `gorm:"type:decimal(15,2)" json:"areaLand,omitempty"`
+	AreaResidential *float64 `gorm:"type:decimal(15,2)" json:"areaResidential,omitempty"`
+	// ===== LEGAL =====
 	LegalNote   string                  `gorm:"type:text" json:"legalNote,omitempty"`
-	LegalStatus enums.EHouseCertificate `gorm:"type:int8;index" json:"legalStatus,omitempty"`
-	// Trạng thái
-	RecordStatus enums.EPropertyStatus `gorm:"type:int8;not null;default:10" json:"recordStatus"`
-	Scope        enums.EPropertyScope  `gorm:"type:int8;not null;default:10" json:"scope"` // THÊM: phạm vi
-	// Liên kết khóa ngoại
-	AvatarID       *uint64 `gorm:"type:int8;index" json:"avatarId,omitempty"`
-	BuildingInfoID *uint64 `gorm:"type:int8" json:"buildingInfoId,omitempty"`
-	// Địa chỉ hành chính (bổ sung District)
-	ProvinceID *uint64 `gorm:"type:int8;index" json:"provinceId,omitempty"`
-	DistrictID *uint64 `gorm:"type:int8;index" json:"districtId,omitempty"` // THÊM
-	WardID     *uint64 `gorm:"type:int8;index" json:"wardId,omitempty"`
-	// Quan hệ
-	Province     *ProvinceV2           `gorm:"foreignKey:ProvinceID;references:ID" json:"province,omitempty"`
-	District     *DistrictV2           `gorm:"foreignKey:DistrictID;references:ID" json:"district,omitempty"` // THÊM
-	Ward         *WardV2               `gorm:"foreignKey:WardID;references:ID" json:"ward,omitempty"`
-	Project      *Project              `gorm:"foreignKey:ProjectID;references:ID" json:"project,omitempty"`
-	Block        *Block                `gorm:"foreignKey:BlockID;references:ID" json:"block,omitempty"`       // THÊM
-	Building     *Building             `gorm:"foreignKey:BuildingID;references:ID" json:"building,omitempty"` // THÊM
-	PropertyType *PropertyTypeItem     `gorm:"foreignKey:PropertyTypeID;references:ID" json:"propertyType,omitempty"`
-	BuildingInfo *PropertyBuildingInfo `gorm:"foreignKey:BuildingInfoID;references:ID" json:"buildingInfo,omitempty"`
-	LandInfo     *PropertyLandInfo     `gorm:"foreignKey:PropertyID;references:ID" json:"propertyLandInfo,omitempty"`
-	MediaList    []PropertyMedia       `gorm:"foreignKey:PropertyID;references:ID" json:"mediaList,omitempty"`
-	Avatar       *PropertyMedia        `gorm:"foreignKey:AvatarID;references:ID" json:"avatar,omitempty"`
-	Amenities    []AmenityItem         `gorm:"many2many:property_amenity;foreignKey:ID;joinForeignKey:PropertyID;References:ID;joinReferences:AmenityID" json:"amenities,omitempty"`
+	LegalStatus enums.EHouseCertificate `gorm:"type:smallint;index" json:"legalStatus,omitempty"`
+	// ===== STATUS =====
+	RecordStatus enums.EPropertyStatus     `gorm:"type:smallint;default:10" json:"recordStatus"`
+	Scope        enums.EPropertyScope      `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`
+	SourceType   enums.EPropertySourceType `gorm:"type:smallint;not null;index:idx_source_created,priority:1"`
+	CreatedAt    time.Time                 `gorm:"column:created_at;autoCreateTime;index:idx_source_created,priority:2"`
+	UpdatedAt    time.Time                 `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
+	DeletedAt    gorm.DeletedAt            `gorm:"column:deleted_at;index" json:"-"` // Hỗ trợ soft de
+	CreatedBy    *uint64                   `gorm:"column:created_by" json:"createdBy,omitempty"`
+	UpdatedBy    *uint64                   `gorm:"column:updated_by" json:"updatedBy,omitempty"`
+	// ===== RELATION IDS =====
+	AvatarID       *uint64 `gorm:"type:bigint;index" json:"avatarId,omitempty"`
+	BuildingInfoID *uint64 `gorm:"type:bigint" json:"buildingInfoId,omitempty"`
+	ProvinceID     *uint64 `gorm:"type:bigint;index" json:"provinceId,omitempty"`
+	DistrictID     *uint64 `gorm:"type:bigint;index" json:"districtId,omitempty"`
+	WardID         *uint64 `gorm:"type:bigint;index" json:"wardId,omitempty"`
 
-	// Các trường không lưu trong DB (dùng cho response)
-	ProductCount int64 `json:"productCount,omitempty" gorm:"-"`
-	AssetCount   int64 `json:"assetCount,omitempty" gorm:"-"`
-	ListingCount int64 `json:"listingCount,omitempty" gorm:"-"`
+	// ===== RELATIONS =====
+	Province     *ProvinceV2           `gorm:"foreignKey:ProvinceID"`
+	District     *DistrictV2           `gorm:"foreignKey:DistrictID"`
+	Ward         *WardV2               `gorm:"foreignKey:WardID"`
+	Project      *Project              `gorm:"foreignKey:ProjectID"`
+	PropertyType *PropertyTypeItem     `gorm:"foreignKey:PropertyTypeID"`
+	BuildingInfo *PropertyBuildingInfo `gorm:"foreignKey:BuildingInfoID"`
+	LandInfo     *PropertyLandInfo     `gorm:"foreignKey:PropertyID"`
+	MediaList    []PropertyMedia       `gorm:"foreignKey:PropertyID"`
+	Avatar       *PropertyMedia        `gorm:"foreignKey:AvatarID"`
+	Amenities    []AmenityItem         `gorm:"many2many:property_amenity"`
+	// ===== COMPUTED =====
+	ProductCount int64 `gorm:"-" json:"productCount,omitempty"`
+	AssetCount   int64 `gorm:"-" json:"assetCount,omitempty"`
+	ListingCount int64 `gorm:"-" json:"listingCount,omitempty"`
 }
 
 func (Property) TableName() string {

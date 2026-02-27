@@ -44,7 +44,7 @@ func (h *PropertyHandler) SearchTags(ctx context.Context, req *bdspropb.TagSearc
 }
 
 func (h *PropertyHandler) GetPropertyAmenities(ctx context.Context, req *bdspropb.GetPropertyAmenitiesRequest) (*bdspropb.GetPropertyAmenitiesResponse, error) {
-	items, err := h.PropertyUsecase.GetPropertyAmenities(ctx, req.PropertyId)
+	items, err := h.PropertyUsecase.GetPropertyAmenities(ctx, req.PropertyId, req.SourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -149,8 +149,15 @@ func (h *PropertyHandler) GetList(ctx context.Context, req *bdspropb.PropertySea
 // @Param id path int true "ID của Property"
 // @Success 200 {object} bdspropb.PropertyResponse "Chi tiết Property"
 // @Router /v2/bdspro/v2/property/detail/{id} [get]
-func (h *PropertyHandler) GetDetail(ctx context.Context, req *bdspropb.PropertyDetailRequest) (*bdspropb.PropertyResponse, error) {
-	property, err := h.PropertyUsecase.Detail(ctx, req.Id)
+func (h *PropertyHandler) GetDetail(
+	ctx context.Context,
+	req *bdspropb.PropertyDetailRequest,
+) (*bdspropb.PropertyResponse, error) {
+	property, err := h.PropertyUsecase.Detail(
+		ctx,
+		req.Id,
+		req.SourceType,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +216,6 @@ func (h *PropertyHandler) GetRelation(ctx context.Context, req *bdspropb.Propert
 // @Router /v2/bdspro/property/new [post]
 func (h *PropertyHandler) CreateProperty(ctx context.Context, req *bdspropb.CreatePropertyRequest) (*bdspropb.Response, error) {
 	body := h.PropertyMapper.CreatePropertyPbToDTO(req)
-
 	property, err := h.PropertyUsecase.Create(ctx, body)
 	if err != nil {
 		return nil, err

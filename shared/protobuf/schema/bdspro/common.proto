@@ -244,9 +244,9 @@ message PropertyResponse {
     uint32 recordStatus = 19;                      // enum EPropertyStatus
     string createdAt = 20;                          // ISO string
     string updatedAt = 21;                          // ISO string
-    optional uint32 productCount = 22;
-    optional uint32 assetCount = 23;
-    optional uint32 postCount = 24;
+    optional int64 productCount = 22;
+    optional int64 assetCount = 23;
+    optional int64 postCount = 24;
     string legalStatusName = 25;
     string recordStatusName = 26;
     optional sharepb.AddressV3Proto address = 27;
@@ -265,16 +265,11 @@ message PropertyResponse {
     string identifier = 38;                          // mã BDSPro
     string nationalId = 39;                          // mã QG
     bool nationalIdVerified = 40;
-    uint64 provinceId = 41;
-    string provinceName = 42;
-    uint64 districtId = 43;
-    string districtName = 44;
-    uint64 wardId = 45;
-    string wardName = 46;
-    uint64 blockId = 47;
-    string blockName = 48;
-    uint64 buildingId = 49;
-    string buildingName = 50;
+    uint32 sourceType = 41;
+    uint64 blockId = 42;
+    string blockName = 43;
+    uint64 buildingId = 44;
+    string buildingName = 45;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

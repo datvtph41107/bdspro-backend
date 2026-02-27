@@ -115,7 +115,7 @@ type UpdateProductRequest struct {
 	MediaItems []MediaItem `json:"mediaItems"`
 
 	// Nguồn
-	SourceType        enums.ESourceType   `json:"sourceType"`
+	ResourceType      enums.ESourceType   `json:"sourceType"`
 	SourceContactId   uint64              `json:"sourceContactId,omitempty"`
 	SourceContactNote string              `json:"sourceContactNote,omitempty"`
 	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
@@ -127,6 +127,7 @@ type UpdateProductRequest struct {
 	MiningMode        enums.EMiningMode
 	MiningScope       string
 	MiningDescription string
+	SourceType        uint32
 }
 
 type ContactSourceProfileDTO struct {

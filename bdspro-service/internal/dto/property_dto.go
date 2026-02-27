@@ -17,7 +17,7 @@ type PropertySearchDTO struct {
 	LocationID     *uint64 `json:"locationId,omitempty"` // deprecated, giữ để tương thích
 	ProjectID      *uint64 `json:"projectId,omitempty"`
 	RecordStatus   string  `json:"recordStatus,omitempty"` // "active", "inactive", "archived"
-
+	SourceType     *uint32 `json:"sourceType,omitempty"`
 	// NEW: Các filter mới từ UI
 	Scope            *string `json:"scope,omitempty"`            // "private", "shared", "public"
 	Identified       *bool   `json:"identified,omitempty"`       // true: đã định danh, false: chưa
@@ -45,41 +45,43 @@ type PropertySearchDTO struct {
 // Đã bổ sung các trường mới từ domain (Identifier, NationalID, NationalIDVerified, Scope, DistrictID, BuildingID...)
 // và các trường tên (districtName, blockName, buildingName) phục vụ hiển thị
 type PropertyWithCounts struct {
-	domain.Property // Kế thừa tất cả trường từ domain.Property (đã bao gồm các trường mới)
+	ID             uint64    `gorm:"column:id"`
+	Title          string    `gorm:"column:title"`
+	AddressDetail  string    `gorm:"column:address_detail"`
+	ProvinceID     *uint64   `gorm:"column:province_id"`
+	DistrictID     *uint64   `gorm:"column:district_id"`
+	WardID         *uint64   `gorm:"column:ward_id"`
+	ProjectID      *uint64   `gorm:"column:project_id"`
+	PropertyTypeID *uint64   `gorm:"column:property_type_id"`
+	Scope          int16     `gorm:"column:scope"`
+	CreatedAt      time.Time `gorm:"column:created_at"`
+	UpdatedAt      time.Time `gorm:"column:updated_at"`
 
-	// Các trường counts (từ subquery)
-	ProductCount uint32 `gorm:"column:product_count" json:"productCount"`
-	AssetCount   uint32 `gorm:"column:asset_count" json:"assetCount"`
-	PostCount    uint32 `gorm:"column:post_count" json:"postCount"`
+	// ===== NAME (alias) =====
+	ProvinceName     string `gorm:"column:province_name"`
+	DistrictName     string `gorm:"column:district_name"`
+	WardName         string `gorm:"column:ward_name"`
+	ProjectName      string `gorm:"column:project_name"`
+	PropertyTypeName string `gorm:"column:property_type_name"`
 
-	// NEW: Thông tin địa chỉ (từ JOIN)
-	ProvinceName string `gorm:"column:province_name" json:"provinceName,omitempty"`
-	DistrictName string `gorm:"column:district_name" json:"districtName,omitempty"`
-	WardName     string `gorm:"column:ward_name" json:"wardName,omitempty"`
+	// ===== BUILDING INFO =====
+	BuildingType     *int32   `gorm:"column:building_type"`
+	ConstructionArea *float64 `gorm:"column:construction_area"`
+	FloorArea        *float64 `gorm:"column:floor_area"`
+	Floors           *int32   `gorm:"column:floors"`
+	Bedrooms         *int32   `gorm:"column:bedrooms"`
+	Bathrooms        *int32   `gorm:"column:bathrooms"`
+	Direction        *int32   `gorm:"column:direction"`
+	BalconyDirection *int32   `gorm:"column:balcony_direction"`
 
-	// NEW: Thông tin dự án (từ JOIN)
-	ProjectName  string `gorm:"column:project_name" json:"projectName,omitempty"`
-	BlockName    string `gorm:"column:block_name" json:"blockName,omitempty"`
-	BuildingName string `gorm:"column:building_name" json:"buildingName,omitempty"`
+	// ===== AVATAR =====
+	AvatarURL      string `gorm:"column:avatar_url"`
+	AvatarThumbURL string `gorm:"column:avatar_thumb_url"`
 
-	// Thông tin loại BĐS
-	PropertyTypeName string `gorm:"column:property_type_name" json:"propertyTypeName,omitempty"`
-
-	// Thông tin BuildingInfo (từ property_building_info)
-	BuildingType     *uint32  `gorm:"column:building_type" json:"buildingType,omitempty"`
-	ConstructionArea *float64 `gorm:"column:construction_area" json:"constructionArea,omitempty"`
-	FloorArea        *float64 `gorm:"column:floor_area" json:"floorArea,omitempty"`
-	Floors           *uint32  `gorm:"column:floors" json:"floors,omitempty"`
-	Bedrooms         *uint32  `gorm:"column:bedrooms" json:"bedrooms,omitempty"`
-	Bathrooms        *uint32  `gorm:"column:bathrooms" json:"bathrooms,omitempty"`
-	Direction        *uint32  `gorm:"column:direction" json:"direction,omitempty"`
-	BalconyDirection *uint32  `gorm:"column:balcony_direction" json:"balconyDirection,omitempty"`
-
-	// Thông tin Avatar (từ property_media)
-	AvatarURL       string `gorm:"column:avatar_url" json:"avatarUrl,omitempty"`
-	AvatarThumbURL  string `gorm:"column:avatar_thumb_url" json:"avatarThumbUrl,omitempty"`
-	AvatarMediaType string `gorm:"column:avatar_media_type" json:"-"`
-	AvatarSortOrder int32  `gorm:"column:avatar_sort_order" json:"-"`
+	// ===== COUNTS =====
+	AssetCount   int64 `gorm:"column:asset_count"`
+	ProductCount int64 `gorm:"column:product_count"`
+	ListingCount int64 `gorm:"column:listing_count"`
 }
 
 type CreatePropertyProductRequest struct {
@@ -137,6 +139,7 @@ type TagSearchDTO struct {
 type UpdatePropertyTagsRequest struct {
 	PropertyID uint64   `json:"propertyId"`
 	TagIDs     []uint64 `json:"tagIds"`
+	SourceType uint32   `json:"sourceType"`
 }
 
 type PropertyAmenityDTO struct {
@@ -149,6 +152,7 @@ type PropertyAmenityDTO struct {
 type UpdatePropertyAmenitiesRequest struct {
 	PropertyID uint64   `json:"propertyId"`
 	AmenityIDs []uint64 `json:"amenityIds"`
+	SourceType uint32   `json:"sourceType"`
 }
 
 type ArchivePropertiesDTO struct {

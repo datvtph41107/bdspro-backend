@@ -853,8 +853,8 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 		entity.ProjectID = updateData.ProjectID
 	}
 	// Update source fields
-	if updateData.SourceType != 0 {
-		entity.SourceType = updateData.SourceType
+	if updateData.ResourceType != 0 {
+		entity.SourceType = updateData.ResourceType
 	}
 	if updateData.SourceStatus != 0 {
 		entity.SourceStatus = updateData.SourceStatus

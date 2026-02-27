@@ -40,142 +40,172 @@ func (r *PostgrePropertyRepo) GetRefreshSyncIds(c context.Context, req *dto.Chec
 	return propertyIds, nil
 }
 
-func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error) {
-	var properties []dto.PropertyWithCounts
+func (r *PostgrePropertyRepo) Search(
+	ctx context.Context,
+	req *dto.PropertySearchDTO,
+) ([]*domain.Property, int64, error) {
+	var rows []dto.PropertyWithCounts
 	var total int64
 
-	db := r.DB.WithContext(ctx).Table("property").
-		Select(`
-			property.*,
-			COALESCE(prov.name, '') as province_name,
-            COALESCE(dist.name, '') as district_name,
-            COALESCE(ward.name, '') as ward_name,
-            COALESCE(proj.name, '') as project_name,
-            COALESCE(blk.name, '') as block_name,
-            COALESCE(bld.name, '') as building_name,
-            COALESCE(pt.name, '') as property_type_name,
-            pbi.building_type,
-            pbi.construction_area,
-            pbi.floor_area,
-            pbi.floors,
-            pbi.bedrooms,
-            pbi.bathrooms,
-            pbi.direction,
-            pbi.balcony_direction,
-            avatar.url as avatar_url,
-            avatar.thumb_url as avatar_thumb_url,
-            avatar.media_type as avatar_media_type,
-            avatar.sort_order as avatar_sort_order,
-            (SELECT COUNT(*) FROM property_relation pr WHERE pr.property_id = property.id AND pr.relation_type = ? AND pr.deleted_at IS NULL) as asset_count,
-            (SELECT COUNT(*) FROM property_relation pr WHERE pr.property_id = property.id AND pr.relation_type = ? AND pr.deleted_at IS NULL) as product_count,
-            (SELECT COUNT(*) FROM property_relation pr 
-                LEFT JOIN posts ON pr.relation_id = posts.product_id 
-                WHERE pr.property_id = property.id AND pr.relation_type = ? AND posts.deleted_at IS NULL) as post_count
-        `, enums.ERelationTypeAsset, enums.ERelationTypeProduct, enums.ERelationTypeProduct).
+	baseDB := r.DB.WithContext(ctx).
+		Table("property").
+		Where("property.deleted_at IS NULL")
+
+	baseDB = r.applyFilters(baseDB, req)
+
+	// ===== COUNT =====
+	if err := baseDB.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// ===== SELECT =====
+	db := baseDB.Select(`
+		property.*,
+
+		COALESCE(prov.name, '') as province_name,
+		COALESCE(dist.name, '') as district_name,
+		COALESCE(ward.name, '') as ward_name,
+		COALESCE(proj.name, '') as project_name,
+		COALESCE(pt.name, '') as property_type_name,
+
+		pbi.building_type,
+		pbi.construction_area,
+		pbi.floor_area,
+		pbi.floors,
+		pbi.bedrooms,
+		pbi.bathrooms,
+		pbi.direction,
+		pbi.balcony_direction,
+
+		avatar.url as avatar_url,
+		avatar.thumb_url as avatar_thumb_url,
+
+		(
+			SELECT COUNT(*) 
+			FROM property_relation pr 
+			WHERE pr.property_id = property.id 
+			  AND pr.relation_type = ?
+			  AND pr.deleted_at IS NULL
+		) as asset_count,
+
+		(
+			SELECT COUNT(*) 
+			FROM property_relation pr 
+			WHERE pr.property_id = property.id 
+			  AND pr.relation_type = ?
+			  AND pr.deleted_at IS NULL
+		) as product_count,
+
+		(
+			SELECT COUNT(*) 
+			FROM property_relation pr
+			JOIN posts ON pr.relation_id = posts.product_id
+			WHERE pr.property_id = property.id
+			  AND pr.relation_type = ?
+			  AND posts.deleted_at IS NULL
+		) as listing_count
+	`,
+		enums.ERelationTypeAsset,
+		enums.ERelationTypeProduct,
+		enums.ERelationTypeProduct,
+	)
+
+	db = db.
 		Joins("LEFT JOIN province_v2 prov ON property.province_id = prov.id AND prov.deleted_at IS NULL").
 		Joins("LEFT JOIN district_v2 dist ON property.district_id = dist.id AND dist.deleted_at IS NULL").
 		Joins("LEFT JOIN ward_v2 ward ON property.ward_id = ward.id AND ward.deleted_at IS NULL").
 		Joins("LEFT JOIN projects proj ON property.project_id = proj.id AND proj.deleted_at IS NULL").
-		Joins("LEFT JOIN blocks blk ON property.block_id = blk.id AND blk.deleted_at IS NULL").
-		Joins("LEFT JOIN buildings bld ON property.building_id = bld.id AND bld.deleted_at IS NULL").
 		Joins("LEFT JOIN property_type pt ON property.property_type_id = pt.id AND pt.deleted_at IS NULL").
 		Joins("LEFT JOIN property_building_info pbi ON property.id = pbi.property_id AND pbi.deleted_at IS NULL").
-		Joins("LEFT JOIN property_media avatar ON property.avatar_id = avatar.id AND avatar.deleted_at IS NULL").
-		Where("property.deleted_at IS NULL")
+		Joins("LEFT JOIN property_media avatar ON property.avatar_id = avatar.id AND avatar.deleted_at IS NULL")
 
-	db = r.applyFilters(db, req)
-
-	var countDB *gorm.DB
-	countDB = r.DB.WithContext(ctx).Table("property").
-		Where("property.deleted_at IS NULL")
-	countDB = r.applyFiltersForCount(countDB, req)
-	if err := countDB.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Apply sorting
 	db = r.applySorting(db, req.Sort)
 
-	// Pagination
+	// pagination
 	offset := req.GetOffset()
 	limit := req.GetLimit()
 	if limit > 0 {
 		db = db.Offset(offset).Limit(limit)
 	}
 
-	// Execute query
-	err := db.Scan(&properties).Error
-	if err != nil {
+	if err := db.Scan(&rows).Error; err != nil {
 		return nil, 0, err
+	}
+
+	// ===== MAP → DOMAIN =====
+	properties := make([]*domain.Property, 0, len(rows))
+
+	for _, row := range rows {
+		p := &domain.Property{
+			ID:             row.ID,
+			Title:          row.Title,
+			AddressDetail:  row.AddressDetail,
+			ProvinceID:     row.ProvinceID,
+			DistrictID:     row.DistrictID,
+			WardID:         row.WardID,
+			ProjectID:      row.ProjectID,
+			PropertyTypeID: row.PropertyTypeID,
+			Scope:          enums.EPropertyScope(row.Scope),
+			CreatedAt:      row.CreatedAt,
+			UpdatedAt:      row.UpdatedAt,
+			ProductCount:   row.ProductCount,
+			AssetCount:     row.AssetCount,
+			ListingCount:   row.ListingCount,
+		}
+
+		// ===== ADDRESS REL =====
+		if row.ProvinceName != "" {
+			p.Province = &domain.ProvinceV2{Name: row.ProvinceName}
+		}
+		if row.DistrictName != "" {
+			p.District = &domain.DistrictV2{Name: row.DistrictName}
+		}
+		if row.WardName != "" {
+			p.Ward = &domain.WardV2{Name: row.WardName}
+		}
+
+		// ===== PROPERTY TYPE =====
+		if row.PropertyTypeName != "" {
+			p.PropertyType = &domain.PropertyTypeItem{
+				Name: row.PropertyTypeName,
+			}
+		}
+
+		// ===== AVATAR =====
+		if row.AvatarURL != "" {
+			p.Avatar = &domain.PropertyMedia{
+				URL: row.AvatarURL,
+			}
+		}
+
+		properties = append(properties, p)
 	}
 
 	return properties, total, nil
 }
 
 func (r *PostgrePropertyRepo) applyFilters(db *gorm.DB, p *dto.PropertySearchDTO) *gorm.DB {
-	// Text search
-	if p.Text != "" {
-		text := "%" + strings.ToLower(p.Text) + "%"
-		db = db.Where("(LOWER(property.title) LIKE ? OR LOWER(property.address_detail) LIKE ? OR LOWER(property.unit_code) LIKE ?)", text, text, text)
+	if p.SourceType != nil {
+		db = db.Where("property.source_type = ?", *p.SourceType)
 	}
 
-	// Property type
+	if p.Text != "" {
+		text := "%" + strings.ToLower(p.Text) + "%"
+		db = db.Where(`
+			LOWER(property.title) LIKE ? OR 
+			LOWER(property.address_detail) LIKE ? OR 
+			LOWER(property.unit_code) LIKE ?`,
+			text, text, text)
+	}
+
 	if p.PropertyTypeID != nil {
 		db = db.Where("property.property_type_id = ?", *p.PropertyTypeID)
 	}
 
-	// Project
 	if p.ProjectID != nil {
 		db = db.Where("property.project_id = ?", *p.ProjectID)
 	}
 
-	// Record status
-	if p.RecordStatus != "" {
-		var statusVal int
-		switch p.RecordStatus {
-		case "active":
-			statusVal = int(enums.EPropertyStatusActive)
-		case "inactive":
-			statusVal = int(enums.EPropertyStatusInactive)
-		case "archived":
-			statusVal = int(enums.EPropertyStatusArchived)
-		}
-		if statusVal != 0 {
-			db = db.Where("property.record_status = ?", statusVal)
-		}
-	}
-
-	// Scope
-	if p.Scope != nil {
-		var scopeVal int
-		switch *p.Scope {
-		case "private":
-			scopeVal = int(enums.PropertyScopePrivate)
-		case "shared":
-			scopeVal = int(enums.PropertyScopeShared)
-		case "public":
-			scopeVal = int(enums.PropertyScopePublic)
-		}
-		if scopeVal != 0 {
-			db = db.Where("property.scope = ?", scopeVal)
-		}
-	}
-
-	// Identified (có identifier hoặc national_id)
-	if p.Identified != nil {
-		if *p.Identified {
-			db = db.Where("(property.identifier != '' OR property.national_id != '')")
-		} else {
-			db = db.Where("(property.identifier = '' OR property.identifier IS NULL) AND (property.national_id = '' OR property.national_id IS NULL)")
-		}
-	}
-
-	// National verified
-	if p.NationalVerified != nil {
-		db = db.Where("property.national_id_verified = ?", *p.NationalVerified)
-	}
-
-	// Địa chỉ hành chính
 	if p.ProvinceID != nil {
 		db = db.Where("property.province_id = ?", *p.ProvinceID)
 	}
@@ -186,30 +216,7 @@ func (r *PostgrePropertyRepo) applyFilters(db *gorm.DB, p *dto.PropertySearchDTO
 		db = db.Where("property.ward_id = ?", *p.WardID)
 	}
 
-	// HasAsset, HasProduct, HasListing - sử dụng subquery
-	if p.HasAsset != nil {
-		if *p.HasAsset {
-			db = db.Where("EXISTS (SELECT 1 FROM property_relation WHERE property_id = property.id AND relation_type = ? AND deleted_at IS NULL)", enums.ERelationTypeAsset)
-		} else {
-			db = db.Where("NOT EXISTS (SELECT 1 FROM property_relation WHERE property_id = property.id AND relation_type = ? AND deleted_at IS NULL)", enums.ERelationTypeAsset)
-		}
-	}
-	if p.HasProduct != nil {
-		if *p.HasProduct {
-			db = db.Where("EXISTS (SELECT 1 FROM property_relation WHERE property_id = property.id AND relation_type = ? AND deleted_at IS NULL)", enums.ERelationTypeProduct)
-		} else {
-			db = db.Where("NOT EXISTS (SELECT 1 FROM property_relation WHERE property_id = property.id AND relation_type = ? AND deleted_at IS NULL)", enums.ERelationTypeProduct)
-		}
-	}
-	if p.HasListing != nil {
-		if *p.HasListing {
-			db = db.Where("EXISTS (SELECT 1 FROM property_relation pr JOIN posts ON pr.relation_id = posts.product_id WHERE pr.property_id = property.id AND pr.relation_type = ? AND posts.deleted_at IS NULL)", enums.ERelationTypeProduct)
-		} else {
-			db = db.Where("NOT EXISTS (SELECT 1 FROM property_relation pr JOIN posts ON pr.relation_id = posts.product_id WHERE pr.property_id = property.id AND pr.relation_type = ? AND posts.deleted_at IS NULL)", enums.ERelationTypeProduct)
-		}
-	}
-
-	// Thời gian
+	// Time filter
 	if p.CreatedFrom != nil {
 		db = db.Where("property.created_at >= ?", *p.CreatedFrom)
 	}
@@ -292,9 +299,14 @@ func (r *PostgrePropertyRepo) applySorting(db *gorm.DB, sort string) *gorm.DB {
 	return db
 }
 
-func (r *PostgrePropertyRepo) GetDetail(ctx context.Context, id uint64) (*domain.Property, error) {
+func (r *PostgrePropertyRepo) GetDetail(
+	ctx context.Context,
+	id uint64,
+	sourceType uint32,
+) (*domain.Property, error) {
 	var property domain.Property
-	if err := r.DB.WithContext(ctx).
+
+	db := r.DB.WithContext(ctx).
 		Preload("PropertyType").
 		Preload("Project").
 		Preload("Province").
@@ -304,7 +316,10 @@ func (r *PostgrePropertyRepo) GetDetail(ctx context.Context, id uint64) (*domain
 		Preload("LandInfo").
 		Preload("Avatar").
 		Preload("Amenities").
-		Where("id = ? and deleted_at is null", id).First(&property).Error; err != nil {
+		Where("id = ? AND deleted_at IS NULL", id).
+		Where("source_type = ?", sourceType)
+
+	if err := db.First(&property).Error; err != nil {
 		return nil, err
 	}
 	return &property, nil
@@ -336,12 +351,6 @@ func (r *PostgrePropertyRepo) Update(ctx context.Context, id uint64, entity *dom
 	}
 	if entity.ProjectID != nil {
 		updates["project_id"] = entity.ProjectID
-	}
-	if entity.BlockID != nil {
-		updates["block_id"] = entity.BlockID
-	}
-	if entity.BuildingID != nil {
-		updates["building_id"] = entity.BuildingID
 	}
 	if entity.Level != "" {
 		updates["level"] = entity.Level

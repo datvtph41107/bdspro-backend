@@ -12,6 +12,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -73,12 +75,13 @@ func NewPropertyUsecase(
 func (u *PropertyUsecase) GetPropertyAmenities(
 	ctx context.Context,
 	propertyID uint64,
+	sourceType uint32,
 ) ([]*dto.PropertyAmenityDTO, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
 
-	property, err := u.PropertyRepo.GetDetail(ctx, propertyID)
+	property, err := u.PropertyRepo.GetDetail(ctx, propertyID, sourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +125,7 @@ func (u *PropertyUsecase) UpdatePropertyAmenities(
 		return _errors.UnauthorizedException()
 	}
 
-	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID)
+	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID, req.SourceType)
 	if err != nil {
 		return err
 	}
@@ -140,13 +143,13 @@ func (u *PropertyUsecase) UpdatePropertyAmenities(
 func (u *PropertyUsecase) GetPropertyTags(
 	ctx context.Context,
 	propertyID uint64,
+	sourceType uint32,
 ) ([]*dto.PropertyTagDTO, error) {
-
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
 
-	property, err := u.PropertyRepo.GetDetail(ctx, propertyID)
+	property, err := u.PropertyRepo.GetDetail(ctx, propertyID, sourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +219,7 @@ func (u *PropertyUsecase) UpdatePropertyTags(
 		return _errors.UnauthorizedException()
 	}
 
-	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID)
+	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID, req.SourceType)
 	if err != nil {
 		return err
 	}
@@ -298,19 +301,32 @@ func (u *PropertyUsecase) LinkAssetToProperty(ctx context.Context, assetID uint6
 }
 
 // GetList lấy danh sách Property với phân trang
-func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySearchDTO) ([]dto.PropertyWithCounts, int64, error) {
+func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySearchDTO) ([]*domain.Property, int64, error) {
 	if searchDTO == nil {
 		searchDTO = &dto.PropertySearchDTO{}
 	}
-	return u.PropertyRepo.Search(ctx, searchDTO)
+	list, total, err := u.PropertyRepo.Search(ctx, searchDTO)
+	if err != nil {
+		return nil, 0, err
+	}
+	return list, total, nil
 }
 
 // Detail lấy chi tiết Property theo ID
-func (u *PropertyUsecase) Detail(ctx context.Context, id uint64) (*domain.Property, error) {
-	property, err := u.PropertyRepo.GetDetail(ctx, id)
+func (u *PropertyUsecase) Detail(
+	ctx context.Context,
+	id uint64,
+	sourceType uint32,
+) (*domain.Property, error) {
+	if id == 0 {
+		return nil, _errors.BadRequestException("id is required")
+	}
+
+	property, err := u.PropertyRepo.GetDetail(ctx, id, sourceType)
 	if err != nil {
 		return nil, err
 	}
+
 	return property, nil
 }
 
@@ -359,20 +375,24 @@ func (u *PropertyUsecase) GetRelation(ctx context.Context, propertyID uint64) ([
 // Create tạo Property mới cùng với Product, Asset, Post và các thông tin liên quan
 // Lưu ý: Product, Asset, Post sẽ được tạo ở handler layer trước khi gọi usecase này
 func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyProductRequest) (*domain.Property, error) {
-	var property *domain.Property
-	var productID *uint64
-	var assetID *uint64
+	var (
+		property  *domain.Property
+		productID *uint64
+		assetID   *uint64
+	)
 
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		// 1. Tạo Property trước
 		if req.Property != nil {
-			property = req.Property
-			// Set default recordStatus nếu chưa có
-			if property.RecordStatus == 0 {
-				property.RecordStatus = enums.EPropertyStatusActive
-			}
-			if err := u.PropertyRepo.Create(txCtx, property); err != nil {
+			var err error
+			property, err = u.buildProperty(req.Property)
+			if err != nil {
 				return err
+			}
+			log.Println(property)
+			fmt.Println("ƠPREPREPRPE: ",
+				property)
+			if err := u.PropertyRepo.Create(txCtx, property); err != nil {
+				return _errors.InternalServerException("Create Property Error: ", err.Error())
 			}
 		}
 
@@ -494,6 +514,50 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 				ActorID:     _utils.GetProfileIdWithContext(ctx),
 				Description: "Sản phẩm được tạo ở đây",
 			})
+	}
+
+	return property, nil
+}
+
+func (u *PropertyUsecase) buildProperty(req *domain.Property) (*domain.Property, error) {
+	if req.SourceType == 0 {
+		return nil, errors.New("source_type is required")
+	}
+
+	if req.CreatedAt.IsZero() {
+		req.CreatedAt = time.Now()
+	}
+
+	if req.RecordStatus == 0 {
+		req.RecordStatus = enums.EPropertyStatusActive
+	}
+
+	property := &domain.Property{
+		Title:              req.Title,
+		PropertyTypeID:     req.PropertyTypeID,
+		AddressDetail:      req.AddressDetail,
+		Latitude:           req.Latitude,
+		Longitude:          req.Longitude,
+		MapURL:             req.MapURL,
+		ProjectID:          req.ProjectID,
+		Level:              req.Level,
+		UnitCode:           req.UnitCode,
+		Identifier:         req.Identifier,
+		NationalID:         req.NationalID,
+		NationalIDVerified: req.NationalIDVerified,
+		AreaTotal:          req.AreaTotal,
+		AreaLand:           req.AreaLand,
+		AreaResidential:    req.AreaResidential,
+		LegalNote:          req.LegalNote,
+		LegalStatus:        req.LegalStatus,
+		ProvinceID:         req.ProvinceID,
+		DistrictID:         req.DistrictID,
+		WardID:             req.WardID,
+		AvatarID:           req.AvatarID,
+		BuildingInfoID:     req.BuildingInfoID,
+		SourceType:         req.SourceType,
+		RecordStatus:       enums.EPropertyStatusActive,
+		Scope:              req.Scope,
 	}
 
 	return property, nil
@@ -755,7 +819,7 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 	}
 
 	// Update Property với các field: AreaLand, AreaTotal, ProjectID, PropertyTypeID
-	property, err := u.PropertyRepo.GetDetail(ctx, propertyRelation.PropertyID)
+	property, err := u.PropertyRepo.GetDetail(ctx, propertyRelation.PropertyID, houseInfo.SourceType)
 	if err != nil {
 		return err
 	}
