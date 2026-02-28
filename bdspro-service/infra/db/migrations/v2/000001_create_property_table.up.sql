@@ -42,6 +42,7 @@ CREATE TABLE property (
     province_id BIGINT,
     district_id BIGINT,
     ward_id BIGINT,
+    region_id BIGINT,
     PRIMARY KEY (id, source_type, created_at)
 ) PARTITION BY LIST (source_type);
 
@@ -51,3 +52,4 @@ CREATE INDEX idx_property_province ON property (province_id);
 CREATE INDEX idx_property_scope_created ON property (scope, created_at);
 CREATE INDEX idx_property_filter ON property (source_type, scope, created_at DESC);
 CREATE INDEX idx_property_not_deleted ON property (deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_property_region ON property(region_id);

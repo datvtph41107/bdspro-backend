@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -12,7 +13,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -34,6 +34,7 @@ type PropertyUsecase struct {
 	AssetRepo                repo.AssetRepo
 	Transaction              provider.TransactionProvider
 	NotifyProvider           provider.NotificationProvider
+	HubClient                *client.HubClient
 }
 
 func NewPropertyUsecase(
@@ -52,6 +53,7 @@ func NewPropertyUsecase(
 	assetRepo repo.AssetRepo,
 	transaction provider.TransactionProvider,
 	notifyProvider provider.NotificationProvider,
+	HubClient *client.HubClient,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
@@ -69,6 +71,7 @@ func NewPropertyUsecase(
 		AssetRepo:                assetRepo,
 		Transaction:              transaction,
 		NotifyProvider:           notifyProvider,
+		HubClient:                HubClient,
 	}
 }
 
@@ -305,10 +308,45 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 	if searchDTO == nil {
 		searchDTO = &dto.PropertySearchDTO{}
 	}
-	list, total, err := u.PropertyRepo.Search(ctx, searchDTO)
+	var userId uint64
+	if searchDTO.Owned {
+		userId = _utils.GetOriginIdFromContext(ctx)
+	}
+	list, total, err := u.PropertyRepo.Search(ctx, searchDTO, userId)
 	if err != nil {
 		return nil, 0, err
 	}
+	regionIDsMap := make(map[uint64]struct{})
+	for _, p := range list {
+		if p.RegionID != nil {
+			regionIDsMap[*p.RegionID] = struct{}{}
+		}
+	}
+
+	var regionIDs []uint64
+	for id := range regionIDsMap {
+		regionIDs = append(regionIDs, id)
+	}
+
+	regionsMap, err := u.HubClient.GetRegionsByIdsMap(ctx, regionIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	for _, p := range list {
+		if p.RegionID == nil {
+			continue
+		}
+
+		region, ok := regionsMap[*p.RegionID]
+		if !ok || region == nil {
+			continue
+		}
+
+		p.RegionName = region.Name
+		p.RegionCode = region.Code
+	}
+
 	return list, total, nil
 }
 
@@ -381,16 +419,14 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 		assetID   *uint64
 	)
 
+	userId := _utils.GetProfileIdWithContext(ctx)
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		if req.Property != nil {
 			var err error
-			property, err = u.buildProperty(req.Property)
+			property, err = u.buildProperty(req.Property, userId)
 			if err != nil {
 				return err
 			}
-			log.Println(property)
-			fmt.Println("ƠPREPREPRPE: ",
-				property)
 			if err := u.PropertyRepo.Create(txCtx, property); err != nil {
 				return _errors.InternalServerException("Create Property Error: ", err.Error())
 			}
@@ -519,7 +555,7 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 	return property, nil
 }
 
-func (u *PropertyUsecase) buildProperty(req *domain.Property) (*domain.Property, error) {
+func (u *PropertyUsecase) buildProperty(req *domain.Property, userId uint64) (*domain.Property, error) {
 	if req.SourceType == 0 {
 		return nil, errors.New("source_type is required")
 	}
@@ -558,6 +594,7 @@ func (u *PropertyUsecase) buildProperty(req *domain.Property) (*domain.Property,
 		SourceType:         req.SourceType,
 		RecordStatus:       enums.EPropertyStatusActive,
 		Scope:              req.Scope,
+		CreatedBy:          userId,
 	}
 
 	return property, nil

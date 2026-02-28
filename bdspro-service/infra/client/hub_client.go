@@ -18,6 +18,26 @@ func NewHubClient() *HubClient {
 	}
 }
 
+func (c *HubClient) GetRegionsByIdsMap(ctx context.Context, ids []uint64) (map[uint64]*hubpb.Region, error) {
+	if len(ids) == 0 {
+		return map[uint64]*hubpb.Region{}, nil
+	}
+
+	resp, err := c.InternalClient.GetByIDs(ctx, &hubpb.GetRegionsRequest{
+		Ids: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uint64]*hubpb.Region)
+	for _, r := range resp.Regions {
+		result[r.Id] = r
+	}
+
+	return result, nil
+}
+
 func (c *HubClient) GetProductStatsViewClient(
 	ctx context.Context,
 	productID uint64,

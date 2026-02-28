@@ -44,6 +44,7 @@ func (r *PostgrePropertyRepo) GetRefreshSyncIds(c context.Context, req *dto.Chec
 func (r *PostgrePropertyRepo) Search(
 	ctx context.Context,
 	req *dto.PropertySearchDTO,
+	userId uint64,
 ) ([]*domain.Property, int64, error) {
 	var rows []dto.PropertyWithCounts
 	var total int64
@@ -52,23 +53,20 @@ func (r *PostgrePropertyRepo) Search(
 		Table("property").
 		Where("property.deleted_at IS NULL")
 
-	baseDB = r.applyFilters(baseDB, req)
+	baseDB = r.applyFilters(baseDB, req, userId)
 
-	// ===== COUNT =====
 	if err := baseDB.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// ===== SELECT =====
 	db := baseDB.Select(`
 		property.*,
-
+		property.region_id,
 		COALESCE(prov.name, '') as province_name,
 		COALESCE(dist.name, '') as district_name,
 		COALESCE(ward.name, '') as ward_name,
 		COALESCE(proj.name, '') as project_name,
 		COALESCE(pt.name, '') as property_type_name,
-
 		pbi.building_type,
 		pbi.construction_area,
 		pbi.floor_area,
@@ -77,7 +75,6 @@ func (r *PostgrePropertyRepo) Search(
 		pbi.bathrooms,
 		pbi.direction,
 		pbi.balcony_direction,
-
 		avatar.url as avatar_url,
 		avatar.thumb_url as avatar_thumb_url,
 
@@ -185,9 +182,13 @@ func (r *PostgrePropertyRepo) Search(
 	return properties, total, nil
 }
 
-func (r *PostgrePropertyRepo) applyFilters(db *gorm.DB, p *dto.PropertySearchDTO) *gorm.DB {
+func (r *PostgrePropertyRepo) applyFilters(db *gorm.DB, p *dto.PropertySearchDTO, userId uint64) *gorm.DB {
 	if p.SourceType != nil {
 		db = db.Where("property.source_type = ?", *p.SourceType)
+	}
+
+	if p.Owned {
+		db = db.Where("property.created_by = ?", userId)
 	}
 
 	if p.Text != "" {
@@ -232,13 +233,6 @@ func (r *PostgrePropertyRepo) applyFilters(db *gorm.DB, p *dto.PropertySearchDTO
 	}
 
 	return db
-}
-
-// applyFiltersForCount phiên bản đơn giản để đếm, chỉ áp dụng filter không liên quan đến JOIN phức tạp
-func (r *PostgrePropertyRepo) applyFiltersForCount(db *gorm.DB, p *dto.PropertySearchDTO) *gorm.DB {
-	// Chỉ cần lọc trên bảng property, nhưng vẫn cần các subquery cho hasAsset, hasProduct, hasListing
-	// Nên ta dùng cùng logic applyFilters, nhưng với Table("property")
-	return r.applyFilters(db, p)
 }
 
 // applySorting xử lý sort

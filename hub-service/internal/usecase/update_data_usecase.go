@@ -119,7 +119,6 @@ func (uc *UpdateDataUsecase) FlushSyncIds(ctx context.Context, ownerID uint64, r
 }
 
 func (uc *UpdateDataUsecase) Put(ctx context.Context, ownerIDs []uint64, resource string, resourceId uint64) error {
-	log.Printf("ABCD")
 	for _, ownerId := range ownerIDs {
 		key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
 		// Sử dụng Redis Set để lưu danh sách product IDs

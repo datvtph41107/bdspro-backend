@@ -5,9 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
-	_models "common/models"
 	_utils "common/utils"
-	"log"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"time"
@@ -87,13 +85,19 @@ func (m *PropertyMapper) PbToPropertySearchDTO(req *bdspropb.PropertySearchReque
 			Size: req.Size,
 			Sort: req.Sort,
 		},
-		Text: req.Text,
+		Text:     req.Text,
+		RegionID: &req.RegionID,
 	}
 
 	if req.SourceType != nil {
 		val := uint32(*req.SourceType)
 		result.SourceType = &val
 	}
+
+	if req.Owned == "owned" {
+		result.Owned = true
+	}
+	result.Owned = false
 
 	if req.PropertyTypeId != nil {
 		result.PropertyTypeID = req.PropertyTypeId
@@ -194,7 +198,6 @@ func (m *PropertyMapper) PropertyToPb(property *domain.Property) *bdspropb.Prope
 
 // PropertyWithCountsToProto converts PropertyWithCounts to protobuf PropertyResponse
 func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.PropertyResponse {
-	log.Println("REDQ: ", property)
 	result := &bdspropb.PropertyResponse{
 		Id:    property.ID,
 		Title: property.Title,
@@ -250,6 +253,14 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 
 		result.Address = addr
 	}
+
+	// if property.RegionID != nil && property.RegionName != "" {
+	// 	result.Region = &bdspropb.Region{
+	// 		Id:   *property.RegionID,
+	// 		Name: property.RegionName,
+	// 		Code: property.RegionCode,
+	// 	}
+	// }
 
 	// Project Tag
 	if property.Project != nil && property.ProjectID != nil {
@@ -482,9 +493,7 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 
 	// Map Property - chỉ map các field được set (không nil)
 	property = &domain.Property{
-		BaseEntity: _models.BaseEntity{
-			ID: req.Id,
-		},
+		ID:              req.Id,
 		BuildingInfoID:  req.BuildingInfoId,
 		Title:           req.Title,
 		PropertyTypeID:  req.PropertyTypeId,

@@ -272,6 +272,7 @@ message PropertyResponse {
     string blockName = 43;
     uint64 buildingId = 44;
     string buildingName = 45;
+    optional Region region = 46;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

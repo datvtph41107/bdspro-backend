@@ -18,6 +18,7 @@ type InternalHandler struct {
 	locationMapper       *mapper.LocationMapper
 	InteractiveEventRepo repo.IInteractiveEventRepo
 	UpdateUsecase        _usecase.IUpdateDataUsecase
+	regionRepo           repo.RegionRepository
 }
 
 func NewInternalHandler(
@@ -25,13 +26,46 @@ func NewInternalHandler(
 	locationMapper *mapper.LocationMapper,
 	interactiveEventRepo repo.IInteractiveEventRepo,
 	UpdateUsecase _usecase.IUpdateDataUsecase,
+	RegionRepo repo.RegionRepository,
 ) *InternalHandler {
 	return &InternalHandler{
 		locationUsecase:      locationUsecase,
 		locationMapper:       locationMapper,
 		InteractiveEventRepo: interactiveEventRepo,
 		UpdateUsecase:        UpdateUsecase,
+		regionRepo:           RegionRepo,
 	}
+}
+
+func (h *InternalHandler) GetByIDs(
+	ctx context.Context,
+	req *hubpb.GetRegionsRequest,
+) (*hubpb.GetRegionsResponse, error) {
+	if req == nil || len(req.Ids) == 0 {
+		return &hubpb.GetRegionsResponse{
+			Regions: []*hubpb.Region{},
+		}, nil
+	}
+
+	regions, err := h.regionRepo.GetByIDs(ctx, req.Ids)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &hubpb.GetRegionsResponse{
+		Regions: make([]*hubpb.Region, 0, len(regions)),
+	}
+
+	for _, r := range regions {
+		resp.Regions = append(resp.Regions, &hubpb.Region{
+			Id:     r.ID,
+			Name:   r.Name,
+			Code:   r.Code,
+			Active: r.Active,
+		})
+	}
+
+	return resp, nil
 }
 
 // @Summary Health check

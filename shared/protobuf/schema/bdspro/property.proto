@@ -14,7 +14,7 @@ import "bdspro/post.proto";
 service PropertyService {
   rpc GetList(PropertySearchRequest) returns (PropertyListResponse) {
     option (google.api.http) = {
-      get: "/v2/bdspro/v2/property/list"
+      get: "/v2/bdspro/v2/property/list/{owned}"
     };
   };
   
@@ -122,17 +122,17 @@ message PropertySearchRequest {
   optional uint64 districtId = 13;
   optional uint64 wardId = 14;
 
-  // [ADDED] Lọc theo sự tồn tại của thực thể liên quan
   optional bool hasAsset = 15;           // Có tài sản
   optional bool hasProduct = 16;         // Có sản phẩm
   optional bool hasListing = 17;          // Có tin đăng
 
-  // [ADDED] Khoảng thời gian (dùng string thay vì google.protobuf.Timestamp)
-  optional string createdFrom = 18;       // ISO string
+  optional string createdFrom = 18;      
   optional string createdTo = 19;
   optional string updatedFrom = 20;
   optional string updatedTo = 21;
   optional uint32 sourceType = 22;
+  string owned = 23;
+  uint64 regionID = 24;
 }
 
 message UpdatePropertyRequest {

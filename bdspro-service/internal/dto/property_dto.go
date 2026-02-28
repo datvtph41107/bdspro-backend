@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type Region struct {
+	ID     uint64
+	Name   string
+	Code   uint32
+	Active bool
+}
+
 // ==================== PropertySearchDTO (UPDATED) ====================
 // PropertySearchDTO chứa các tham số tìm kiếm và lọc danh sách Property
 // Đã bổ sung các trường filter mới từ UI (scope, identified, nationalVerified, địa chỉ, thực thể liên quan, thời gian)
@@ -38,6 +45,8 @@ type PropertySearchDTO struct {
 	CreatedTo   *time.Time `json:"createdTo,omitempty"`
 	UpdatedFrom *time.Time `json:"updatedFrom,omitempty"`
 	UpdatedTo   *time.Time `json:"updatedTo,omitempty"`
+	Owned       bool       `json:"owned"`
+	RegionID    *uint64    `json:"regionId"`
 }
 
 // ==================== PropertyWithCounts (UPDATED) ====================

@@ -96,6 +96,21 @@ message DelUpdateResponse {
   string message = 2;
 }
 
+message GetRegionsRequest {
+  repeated uint64 ids = 1;
+}
+
+message Region {
+  uint64 id = 1;
+  string name = 2;
+  uint32 code = 3;
+  bool active = 4;
+}
+
+message GetRegionsResponse {
+  repeated Region regions = 1;
+}
+
 // ========== Service Definition ==========
 
 service HubInternalService {
@@ -104,6 +119,8 @@ service HubInternalService {
       get: "/v2/hub/health"
     };
   };
+
+  rpc GetByIDs(GetRegionsRequest) returns (GetRegionsResponse);
 
   // Get Product View Stats - Internal RPC for other services
   rpc GetProductViewStats(ProductStatsViewRequest)returns (ProductStatsViewResponse);

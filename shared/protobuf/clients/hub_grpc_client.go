@@ -53,6 +53,26 @@ func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
 	return hubClient
 }
 
+func (c *HubGrpcClient) GetByIDs(ctx context.Context, req *hubpb.GetRegionsRequest) (*hubpb.GetRegionsResponse, error) {
+	if c == nil || c.InternalClient == nil {
+		return nil, _errors.ReturnError(500, "hub client not available")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	resp, err := c.InternalClient.GetByIDs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil {
+		return nil, _errors.ReturnError(500, "empty response from hub service")
+	}
+
+	return resp, nil
+}
+
 func (c *HubGrpcClient) InferAddressFromText(ctx context.Context, text string) (*_dto.AddressV3DTO, error) {
 	if c == nil || c.InternalClient == nil {
 		return nil, _errors.ReturnError(500, "hub client not avaiable")

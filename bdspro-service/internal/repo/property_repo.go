@@ -10,7 +10,7 @@ import (
 
 type PropertyRepo interface {
 	crud3.CrudRepo[domain.Property]
-	Search(ctx context.Context, dto *dto.PropertySearchDTO) ([]*domain.Property, int64, error)
+	Search(ctx context.Context, dto *dto.PropertySearchDTO, userId uint64) ([]*domain.Property, int64, error)
 	GetDetail(ctx context.Context, id uint64, sourceType uint32) (*domain.Property, error)
 	UpdateOption(ctx context.Context, id uint64, property *domain.Property) error
 	GetOneByID(c context.Context, id uint64) (*domain.Property, error)
