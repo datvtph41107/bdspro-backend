@@ -1988,15 +1988,15 @@
           "title": "ISO string"
         },
         "productCount": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
         },
         "assetCount": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
         },
         "postCount": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
         },
         "legalStatusName": {
@@ -2063,26 +2063,9 @@
         "nationalIdVerified": {
           "type": "boolean"
         },
-        "provinceId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "provinceName": {
-          "type": "string"
-        },
-        "districtId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "districtName": {
-          "type": "string"
-        },
-        "wardId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "wardName": {
-          "type": "string"
+        "sourceType": {
+          "type": "integer",
+          "format": "int64"
         },
         "blockId": {
           "type": "string",
@@ -2097,6 +2080,9 @@
         },
         "buildingName": {
           "type": "string"
+        },
+        "region": {
+          "$ref": "#/definitions/bdspropbRegion"
         }
       }
     },
