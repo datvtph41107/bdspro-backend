@@ -2487,6 +2487,10 @@
         },
         "productUser": {
           "$ref": "#/definitions/sharepbProductUser"
+        },
+        "friendId": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
