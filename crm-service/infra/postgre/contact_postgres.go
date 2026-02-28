@@ -164,6 +164,7 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 
 	baseQuery := db.Table("tb_contact tb").
 		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.origin_id").
+		Joins("LEFT JOIN friend fr ON fr.id = tb.friend_id").
 		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", ownerId, ownerType)
 
 	var total int64
@@ -178,13 +179,28 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 			op.phone as origin_phone,
 			op.avatar as origin_avatar,
 			op.owner_id as origin_owner_id,
-			op.owner_of as origin_owner_of`).
+			op.owner_of as origin_owner_of,
+			fr.id as friend_id,
+			fr.status as friend_status,
+			fr.created_by as friend_created_by,
+			fr.receiver_id as friend_receiver_id
+			`).
 		Order("CASE WHEN tb.profile_id IS NOT NULL THEN 0 ELSE 1 END, tb.created_at DESC").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Scan(&contacts).Error
 	if err != nil {
 		return nil, 0, err
+	}
+
+	for idx, ct := range contacts {
+		status := enums.StatusContactUnknown
+		if ct.FriendStatus == uint64(enums.FriendStatusAccepted) {
+			status = enums.StatusContactFriend
+		} else if ct.ProfileID != nil {
+			status = enums.StatusContactAppInstalled
+		}
+		contacts[idx].Status = status
 	}
 
 	return contacts, total, nil

@@ -27,6 +27,7 @@ type ContactEntity struct {
 	OwnerOf    base_enum.EOwnerOf `gorm:"column:owner_of;default:30;" json:"ownerOf" binding:"required"`
 
 	ProfileID       *uint64              `gorm:"column:profile_id;" json:"profileId"`
+	FriendID        *uint64              `gorm:"column:friend_id;" json:"friendId"`
 	FriendStatus    *FriendEntity        `gorm:"-" json:"friendStatus" binding:"required"`
 	Status          enums.EStatusContact `gorm:"column:status;default:10" json:"status"`
 	ContactTags     pq.Int32Array        `gorm:"type:integer[];column:contact_tags" json:"contactTags"`

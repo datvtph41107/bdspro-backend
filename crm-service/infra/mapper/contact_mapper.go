@@ -147,6 +147,7 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 		// ProfileInfo: &sharepb.ProfileItem
 	}
 	if contact.FriendID != 0 {
+		result.FriendId = &contact.FriendID
 		result.FriendStatus = &sharepb.FriendItem{
 			Id:         contact.FriendID,
 			Status:     uint32(contact.FriendStatus),
