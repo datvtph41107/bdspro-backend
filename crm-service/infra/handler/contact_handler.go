@@ -4,12 +4,15 @@ import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
+	"time"
 
 	"crm/infra/client"
 	"crm/infra/mapper"
@@ -29,6 +32,7 @@ type ContactService struct {
 	OrganizationClient *client.OrganizationClient
 	ContactMapper      *mapper.ContactMapper
 	FriendMapper       *mapper.FriendMapper
+	SyncProvider       *_provider.SyncProvider
 }
 
 func NewContactService(
@@ -39,6 +43,7 @@ func NewContactService(
 	organizationClient *client.OrganizationClient,
 	contactMapper *mapper.ContactMapper,
 	friendMapper *mapper.FriendMapper,
+	SyncProvider *_provider.SyncProvider,
 ) *ContactService {
 	return &ContactService{
 		UC:                 uc,
@@ -48,6 +53,7 @@ func NewContactService(
 		OrganizationClient: organizationClient,
 		ContactMapper:      contactMapper,
 		FriendMapper:       friendMapper,
+		SyncProvider:       SyncProvider,
 	}
 }
 
@@ -134,6 +140,35 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 	}, nil
 }
 
+func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:contact:%d", profileId), req.Timestamp)
+	if !updated {
+		return &crmpb.ContactListDTO{}, nil
+	}
+	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOfMember, dto.ContactSearchDTO{})
+	if err != nil {
+		return nil, err
+	}
+
+	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
+	s.UserClient.PbUserToContacts(ctx, contactsPb)
+
+	// Nếu có conversationId, map thông tin member vào contact
+	// if req.ConversationId != nil && *req.ConversationId > 0 {
+	// 	s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
+	// }
+
+	if req.EndId == nil && len(contacts) > 0 {
+		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:contact:%d", profileId), contacts[0].UpdatedAt.UnixMilli())
+	}
+
+	return &crmpb.ContactListDTO{
+		Data:  contactsPb,
+		Total: uint32(total),
+	}, nil
+}
+
 // @Summary Lấy thông tin liên hệ
 // @Description Lấy thông tin liên hệ
 // @Tags Liên hệ
@@ -142,7 +177,12 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 // @Param id path int true "ID của liên hệ"
 // @Security BearerAuth
 // @Router /contact/detail/{id} [get]
-func (s *ContactService) Detail(ctx context.Context, req *sharepb.IdRequest) (*crmpb.ContactDTO, error) {
+func (s *ContactService) Detail(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactDTO, error) {
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:contact:%d", req.Id), req.Timestamp)
+	if !updated {
+		return &crmpb.ContactDTO{}, nil
+	}
+
 	contact, err := s.UC.Detail(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -150,6 +190,8 @@ func (s *ContactService) Detail(ctx context.Context, req *sharepb.IdRequest) (*c
 
 	contactPb := s.ContactMapper.ContactToPb(contact)
 	s.UserClient.PbUserToContact(ctx, contactPb)
+
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), contact.UpdatedAt.UnixMilli())
 
 	return contactPb, nil
 }
@@ -194,6 +236,7 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) 
 	if err != nil {
 		return nil, err
 	}
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), result.UpdatedAt.UnixMilli())
 	return s.ContactMapper.ContactToPb(result), nil
 }
 
@@ -210,6 +253,7 @@ func (s *ContactService) Delete(ctx context.Context, req *sharepb.IdRequest) (*s
 	if err != nil {
 		return nil, err
 	}
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), time.Now().UnixMilli())
 	return &sharepb.SubmitResponse{
 		Id:      req.Id,
 		Message: "Delete contact success",
@@ -270,6 +314,7 @@ func (s *ContactService) Note(ctx context.Context, req *crmpb.NoteContactDTO) (*
 	if err != nil {
 		return nil, err
 	}
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), time.Now().UnixMilli())
 	return &crmpb.NoteContactDTO{
 		Id:   req.Id,
 		Note: req.Note,

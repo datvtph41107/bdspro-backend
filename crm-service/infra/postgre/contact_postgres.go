@@ -161,10 +161,12 @@ func (r *PostgreContact) QuerySearch(tx *gorm.DB, profileId uint64, ownerType ba
 func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
 	var contacts []domain.ContactItem
 	db := r.GetDB(c)
+	profileId := _utils.GetProfileIdWithContext(c)
 
 	baseQuery := db.Table("tb_contact tb").
 		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.origin_id").
 		Joins("LEFT JOIN friend fr ON fr.id = tb.friend_id").
+		Joins("LEFT JOIN follow fl ON fl.following_id = tb.profile_id and fl.created_by = ? and fl.deleted_at is null", profileId).
 		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", ownerId, ownerType)
 
 	var total int64
@@ -183,7 +185,8 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 			fr.id as friend_id,
 			fr.status as friend_status,
 			fr.created_by as friend_created_by,
-			fr.receiver_id as friend_receiver_id
+			fr.receiver_id as friend_receiver_id,
+			fl.id IS NOT NULL AS following
 			`).
 		Order("CASE WHEN tb.profile_id IS NOT NULL THEN 0 ELSE 1 END, tb.created_at DESC").
 		Offset(dto.GetOffset()).

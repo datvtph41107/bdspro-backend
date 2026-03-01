@@ -28,7 +28,7 @@ func TimestampToTime(t *timestamppb.Timestamp) *time.Time {
 
 func FormatTimeToString(t *time.Time) string {
 	if t != nil {
-		return t.Format(time.RFC3339)
+		return t.Format("2006-01-02T15:04:05.000Z07:00")
 	}
 	return ""
 }

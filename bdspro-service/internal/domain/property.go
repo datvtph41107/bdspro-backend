@@ -38,8 +38,8 @@ type Property struct {
 	// STATUS
 	RecordStatus enums.EPropertyStatus     `gorm:"type:smallint;default:10" json:"recordStatus"`
 	Scope        enums.EPropertyScope      `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`
-	SourceType   enums.EPropertySourceType `gorm:"type:smallint;not null;index:idx_source_created,priority:1"`
-	CreatedAt    time.Time                 `gorm:"column:created_at;autoCreateTime;index:idx_source_created,priority:2"`
+	SourceType   enums.EPropertySourceType `gorm:"type:smallint;not null;"`
+	CreatedAt    time.Time                 `gorm:"column:created_at;autoCreateTime;"`
 	UpdatedAt    time.Time                 `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
 	DeletedAt    gorm.DeletedAt            `gorm:"column:deleted_at;index" json:"-"` // Hỗ trợ soft de
 	CreatedBy    uint64                    `gorm:"column:created_by" json:"createdBy,omitempty"`
@@ -51,6 +51,10 @@ type Property struct {
 	DistrictID     *uint64 `gorm:"type:bigint;index" json:"districtId,omitempty"`
 	WardID         *uint64 `gorm:"type:bigint;index" json:"wardId,omitempty"`
 	RegionID       *uint64 `gorm:"type:bigint;index" json:"regionId,omitempty"`
+
+	Visibility enums.EVisibility `gorm:"type:smallint;default:10" json:"visibility,omitempty"`
+
+	OriginProfileId *uint64 `gorm:"type:bigint;index" json:"originProfileId,omitempty"`
 	// RELATIONS
 	Province     *ProvinceV2           `gorm:"foreignKey:ProvinceID"`
 	District     *DistrictV2           `gorm:"foreignKey:DistrictID"`
@@ -58,7 +62,8 @@ type Property struct {
 	Project      *Project              `gorm:"foreignKey:ProjectID"`
 	PropertyType *PropertyTypeItem     `gorm:"foreignKey:PropertyTypeID"`
 	BuildingInfo *PropertyBuildingInfo `gorm:"foreignKey:BuildingInfoID"`
-	LandInfo     *PropertyLandInfo     `gorm:"foreignKey:PropertyID"`
+	LandInfoID   *uint64               `gorm:"column:land_info_id"`
+	LandInfo     *PropertyLandInfo     `gorm:"foreignKey:LandInfoID;references:ID"`
 	MediaList    []PropertyMedia       `gorm:"foreignKey:PropertyID"`
 	Avatar       *PropertyMedia        `gorm:"foreignKey:AvatarID"`
 	Amenities    []AmenityItem         `gorm:"many2many:property_amenity"`

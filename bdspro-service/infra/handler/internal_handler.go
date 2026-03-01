@@ -265,11 +265,23 @@ func (s *InternalHandler) GetProductUsersByProductId(ctx context.Context, req *s
 }
 
 func (s *InternalHandler) GetResourceIds(ctx context.Context, req *bdspropb.ResourceRequest) (*bdspropb.ResourceResponse, error) {
-	resp, err := s.productUsecase.ProductRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{
-		Resource: req.Resource,
-		// LastSync: req.LastSync,
-		// Id:       req.Id,
-	})
+	var err error
+	var resp []uint64
+	switch req.Resource {
+	case "product":
+		resp, err = s.productUsecase.ProductRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{
+			Resource: req.Resource,
+			// LastSync: req.LastSync,
+			// Id:       req.Id,
+		})
+	case "property":
+		resp, err = s.propertyRepo.GetRefreshSyncIds(ctx, &dto.CheckVersionSyncRequest{
+			Resource: req.Resource,
+			// LastSync: req.LastSync,
+			// Id:       req.Id,
+		})
+	}
+
 	if err != nil {
 		return nil, err
 	}

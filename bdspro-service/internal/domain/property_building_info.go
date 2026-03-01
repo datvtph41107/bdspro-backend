@@ -8,8 +8,8 @@ import (
 // PropertyBuildingInfo chứa thông tin nhà/công trình (mở rộng của Property, chỉ có khi có nhà)
 type PropertyBuildingInfo struct {
 	_models.BaseEntity
-	PropertyID uint64    `gorm:"type:int8;not null;index" json:"propertyId"` // Liên kết với Property
-	Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
+	PropertyID uint64 `gorm:"type:int8;not null;index" json:"propertyId"` // Liên kết với Property
+	// Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
 
 	BuildingType     enums.EBuildingType `gorm:"type:int8;not null;default:10" json:"buildingType"`    // Loại nhà (Nhà ở, Nhà xưởng)
 	ConstructionArea *float64            `gorm:"type:decimal(15,2)" json:"constructionArea,omitempty"` // Diện tích xây dựng (m²)

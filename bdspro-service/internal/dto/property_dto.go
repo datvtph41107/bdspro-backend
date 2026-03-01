@@ -47,6 +47,8 @@ type PropertySearchDTO struct {
 	UpdatedTo   *time.Time `json:"updatedTo,omitempty"`
 	Owned       bool       `json:"owned"`
 	RegionID    *uint64    `json:"regionId"`
+
+	RequestUserId *uint64 `json:"-"`
 }
 
 // ==================== PropertyWithCounts (UPDATED) ====================
@@ -65,6 +67,10 @@ type PropertyWithCounts struct {
 	Scope          int16     `gorm:"column:scope"`
 	CreatedAt      time.Time `gorm:"column:created_at"`
 	UpdatedAt      time.Time `gorm:"column:updated_at"`
+	AreaTotal      float64   `gorm:"column:area_total"`
+	SourceType     uint32    `gorm:"column:source_type"`
+	StatusRecord   uint32    `gorm:"column:record_status"`
+	Visibility     uint32    `gorm:"column:visibility"`
 
 	// ===== NAME (alias) =====
 	ProvinceName     string `gorm:"column:province_name"`

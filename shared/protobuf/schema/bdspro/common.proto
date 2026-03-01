@@ -40,6 +40,8 @@ message IdRequest {
     string text = 5;
     uint32 ownerType = 6;
     repeated uint64 ids = 7;
+    int64 timestamp = 8;
+    uint64 endId = 9;
 }
 
 
@@ -273,6 +275,7 @@ message PropertyResponse {
     uint64 buildingId = 44;
     string buildingName = 45;
     optional Region region = 46;
+    uint32 visibility = 47;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

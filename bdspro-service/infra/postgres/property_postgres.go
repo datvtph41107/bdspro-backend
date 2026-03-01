@@ -6,6 +6,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"common/case/crud3"
+	_utils "common/utils"
 	"context"
 	"strings"
 	"time"
@@ -107,8 +108,9 @@ func (r *PostgrePropertyRepo) Search(
 		enums.ERelationTypeProduct,
 		enums.ERelationTypeProduct,
 	)
-
+	originId := _utils.GetOriginIdFromContext(ctx)
 	db = db.
+		Joins("LEFT JOIN property_user pu ON pu.property_id = property.id AND pu.deleted_at IS NULL AND pu.owner_origin_id = ?", originId).
 		Joins("LEFT JOIN province_v2 prov ON property.province_id = prov.id AND prov.deleted_at IS NULL").
 		Joins("LEFT JOIN district_v2 dist ON property.district_id = dist.id AND dist.deleted_at IS NULL").
 		Joins("LEFT JOIN ward_v2 ward ON property.ward_id = ward.id AND ward.deleted_at IS NULL").
@@ -116,6 +118,15 @@ func (r *PostgrePropertyRepo) Search(
 		Joins("LEFT JOIN property_type pt ON property.property_type_id = pt.id AND pt.deleted_at IS NULL").
 		Joins("LEFT JOIN property_building_info pbi ON property.id = pbi.property_id AND pbi.deleted_at IS NULL").
 		Joins("LEFT JOIN property_media avatar ON property.avatar_id = avatar.id AND avatar.deleted_at IS NULL")
+
+	if req.RequestUserId != nil {
+		db.Where("(pu.owner_origin_id = ?)", req.RequestUserId)
+	} else {
+		db.Where("(property.source_type = 10)")
+	}
+	// if len(whereClauses) > 0 {
+	// 	db.Where(strings.Join(whereClauses, " AND "))
+	// }
 
 	db = r.applySorting(db, req.Sort)
 
@@ -149,6 +160,10 @@ func (r *PostgrePropertyRepo) Search(
 			ProductCount:   row.ProductCount,
 			AssetCount:     row.AssetCount,
 			ListingCount:   row.ListingCount,
+			AreaTotal:      &row.AreaTotal,
+			SourceType:     enums.EPropertySourceType(row.SourceType),
+			RecordStatus:   enums.EPropertyStatus(row.StatusRecord),
+			Visibility:     enums.EVisibility(row.Visibility),
 		}
 
 		// ===== ADDRESS REL =====
@@ -311,8 +326,8 @@ func (r *PostgrePropertyRepo) GetDetail(
 		Preload("LandInfo").
 		Preload("Avatar").
 		Preload("Amenities").
-		Where("id = ? AND deleted_at IS NULL", id).
-		Where("source_type = ?", sourceType)
+		Where("id = ? AND deleted_at IS NULL", id)
+		// Where("source_type = ?", sourceType)
 
 	if err := db.First(&property).Error; err != nil {
 		return nil, err

@@ -4,9 +4,13 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
+	_provider "common/provider"
+	_utils "common/utils"
 	"context"
+	"fmt"
 
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,17 +21,20 @@ type PropertyHandler struct {
 	PropertyUsecase *usecases.PropertyUsecase
 	PropertyMapper  *mapper.PropertyMapper
 	AssetMapper     *mapper.AssetMapper
+	SyncProvider    *_provider.SyncProvider
 }
 
 func NewPropertyHandler(
 	propertyUsecase *usecases.PropertyUsecase,
 	propertyMapper *mapper.PropertyMapper,
 	assetMapper *mapper.AssetMapper,
+	SyncProvider *_provider.SyncProvider,
 ) *PropertyHandler {
 	return &PropertyHandler{
 		PropertyUsecase: propertyUsecase,
 		PropertyMapper:  propertyMapper,
 		AssetMapper:     assetMapper,
+		SyncProvider:    SyncProvider,
 	}
 }
 
@@ -148,19 +155,110 @@ func (h *PropertyHandler) GetList(ctx context.Context, req *bdspropb.PropertySea
 // @Security BearerAuth
 // @Param id path int true "ID của Property"
 // @Success 200 {object} bdspropb.PropertyResponse "Chi tiết Property"
+// @Router /v2/bdspro/v2/property/me [get]
+func (h *PropertyHandler) ListMe(
+	ctx context.Context,
+	req *sharepb.SyncRequest,
+) (*bdspropb.PropertyListResponse, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:property:%d", profileId), req.Timestamp)
+	if !updated {
+		return &bdspropb.PropertyListResponse{
+			Pagination: &bdspropb.Pagination{
+				// Page:        page,
+				// Size:        size,
+				Total:   0,
+				Pages:   0,
+				HasNext: false,
+				// HasPrevious: hasPrevious,
+			}}, nil
+	}
+
+	// Convert proto request to DTO
+	dtoReq, err := h.PropertyMapper.PbToPropertySearchDTO(&bdspropb.PropertySearchRequest{})
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter parameters: %v", err)
+	}
+
+	// Set default pagination
+	// page := int32(req.Page)
+	// if page == 0 {
+	// 	page = 1
+	// }
+	// size := int32(req.Size)
+	// if size == 0 {
+	// 	size = 20
+	// }
+
+	// Call usecase
+	originId := _utils.GetOriginIdFromContext(ctx)
+	dtoReq.RequestUserId = &originId
+	properties, total, err := h.PropertyUsecase.GetList(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get property list: %v", err)
+	}
+
+	// Calculate pagination info
+	totalPages := int32(0)
+	hasNext := false
+	// hasPrevious := page > 1
+
+	// if size > 0 {
+	// 	totalPages = int32((total + int64(size) - 1) / int64(size))
+	// 	hasNext = page < totalPages
+	// }
+
+	// Create pagination object
+	pagination := &bdspropb.Pagination{
+		// Page:        page,
+		// Size:        size,
+		Total:   total,
+		Pages:   totalPages,
+		HasNext: hasNext,
+		// HasPrevious: hasPrevious,
+	}
+
+	// Convert to proto response
+	response := &bdspropb.PropertyListResponse{
+		Data:       h.PropertyMapper.PropertyListToProto(properties),
+		Pagination: pagination,
+	}
+
+	if req.EndId == nil && len(properties) > 0 {
+		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:property:%d", profileId), properties[0].UpdatedAt.UnixMilli())
+	}
+
+	return response, nil
+}
+
+// @Summary Lấy chi tiết Property
+// @Description API để lấy chi tiết Property theo ID
+// @Tags Property
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID của Property"
+// @Success 200 {object} bdspropb.PropertyResponse "Chi tiết Property"
 // @Router /v2/bdspro/v2/property/detail/{id} [get]
 func (h *PropertyHandler) GetDetail(
 	ctx context.Context,
-	req *bdspropb.PropertyDetailRequest,
+	req *sharepb.SyncRequest,
 ) (*bdspropb.PropertyResponse, error) {
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:property:%d", req.Id), req.Timestamp)
+	if !updated {
+		return &bdspropb.PropertyResponse{}, nil
+	}
 	property, err := h.PropertyUsecase.Detail(
 		ctx,
 		req.Id,
-		req.SourceType,
+		10,
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:property:%d", req.Id), property.UpdatedAt.UnixMilli())
+
 	return h.PropertyMapper.PropertyToProto(property), nil
 }
 

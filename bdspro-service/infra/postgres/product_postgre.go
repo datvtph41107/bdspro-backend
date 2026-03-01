@@ -1456,6 +1456,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       COALESCE(avatar.media_type, '') AS avatar_media_type,
 		       COALESCE(avatar.sort_order, 0) AS avatar_sort_order,
 		       COALESCE(pt.name, '') AS property_type_name,
+			   COALESCE(pt.id, 0) AS property_type_id,
 		       pbi.building_type,
 		       pbi.construction_area,
 		       pbi.floor_area,
@@ -1524,7 +1525,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 
 	// EXISTS cho user (nếu có RequestUserId thì lọc theo profile_id trong product_user)
 	if payload.RequestUserId != nil {
-		whereClauses = append(whereClauses, `((pu.profile_id = ? and pu.is_owner = true) or (pu.origin_profile_id = ? and pu.is_owner = false))`)
+		whereClauses = append(whereClauses, `((pu.profile_id = ? and pu.is_owner = true) or (pu.origin_profile_id = ?))`)
 		args = append(args, *payload.RequestUserId, originId)
 	}
 

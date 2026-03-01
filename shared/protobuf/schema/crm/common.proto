@@ -107,6 +107,7 @@ message ContactDTO {
   repeated TagItem tags = 21;
   optional ConversationMember member = 22;
   repeated uint64 productIds = 23;
+  string updatedAt = 24;
 }
 
 message ConversationMember {

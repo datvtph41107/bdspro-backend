@@ -1,7 +1,6 @@
 package usecases
 
 import (
-	"bdspro/infra/client"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -9,6 +8,7 @@ import (
 	"bdspro/internal/repo"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -20,6 +20,7 @@ import (
 
 type PropertyUsecase struct {
 	PropertyRepo             repo.PropertyRepo
+	PropertyUserRepo         repo.PropertyUserRepo
 	PropertyRelationRepo     repo.PropertyRelationRepo
 	PropertyProductRepo      repo.PropertyProductRepo
 	PropertyLandInfoRepo     repo.PropertyLandInfoRepo
@@ -34,7 +35,8 @@ type PropertyUsecase struct {
 	AssetRepo                repo.AssetRepo
 	Transaction              provider.TransactionProvider
 	NotifyProvider           provider.NotificationProvider
-	HubClient                *client.HubClient
+	HubProvider              provider.HubProvider
+	SyncProvider             *_provider.SyncProvider
 }
 
 func NewPropertyUsecase(
@@ -53,7 +55,9 @@ func NewPropertyUsecase(
 	assetRepo repo.AssetRepo,
 	transaction provider.TransactionProvider,
 	notifyProvider provider.NotificationProvider,
-	HubClient *client.HubClient,
+	HubProvider provider.HubProvider,
+	PropertyUserRepo repo.PropertyUserRepo,
+	SyncProvider *_provider.SyncProvider,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
@@ -71,7 +75,9 @@ func NewPropertyUsecase(
 		AssetRepo:                assetRepo,
 		Transaction:              transaction,
 		NotifyProvider:           notifyProvider,
-		HubClient:                HubClient,
+		HubProvider:              HubProvider,
+		PropertyUserRepo:         PropertyUserRepo,
+		SyncProvider:             SyncProvider,
 	}
 }
 
@@ -328,7 +334,7 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 		regionIDs = append(regionIDs, id)
 	}
 
-	regionsMap, err := u.HubClient.GetRegionsByIdsMap(ctx, regionIDs)
+	regionsMap, err := u.HubProvider.GetRegionsByIdsMap(ctx, regionIDs)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -419,15 +425,22 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 		assetID   *uint64
 	)
 
+	originId := _utils.GetOriginIdFromContext(ctx)
 	userId := _utils.GetProfileIdWithContext(ctx)
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		if req.Property != nil {
 			var err error
+			req.Property.SourceType = enums.PropertySourceUser
 			property, err = u.buildProperty(req.Property, userId)
+			property.OriginProfileId = &originId
 			if err != nil {
 				return err
 			}
 			if err := u.PropertyRepo.Create(txCtx, property); err != nil {
+				return _errors.InternalServerException("Create Property Error: ", err.Error())
+			}
+
+			if _, err := u.PropertyUserRepo.CreateOwner(txCtx, property.ID, originId); err != nil {
 				return _errors.InternalServerException("Create Property Error: ", err.Error())
 			}
 		}
@@ -478,6 +491,7 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 			if len(req.MediaList) > 0 {
 				for i := range req.MediaList {
 					req.MediaList[i].PropertyID = property.ID
+					// req.MediaList[i].SourceType = enums.PropertySourceUser
 				}
 				if err := u.PropertyMediaRepo.CreateBatch(txCtx, req.MediaList); err != nil {
 					return err
@@ -532,6 +546,28 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 				return err
 			}
 		}
+
+		go func() {
+			cloneCtx := _utils.CloneContext(ctx)
+			// actorID := _utils.GetProfileIdWithContext(cloneCtx)
+			// productUsers, err := u.ProductUserRepo.GetByProductID(cloneCtx, entity.ID)
+			// if err != nil {
+			// 	return
+			// }
+			// ids := make([]uint64, 1)
+			// for idx, productUser := range productUsers {
+
+			// }
+			// if originId > 0 {
+			// 	ids[0] = originId
+			// }
+			// u.HubProvider.PutUpdate(cloneCtx, "property", property.ID, ids, time.Now().Unix())
+			u.SyncProvider.PutTimestamp(cloneCtx, fmt.Sprintf("u:property:%d", property.ID), property.UpdatedAt.UnixMilli())
+			if productID != nil {
+				u.SyncProvider.PutTimestamp(cloneCtx, fmt.Sprintf("u:product:%d", *productID), property.UpdatedAt.UnixMilli())
+			}
+
+		}()
 
 		return nil
 	})

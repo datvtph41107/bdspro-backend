@@ -29,6 +29,15 @@ message IdRequest {
   string sort = 4;
   string text = 5;
   repeated uint64 ids = 6;
+  int64 timestamp = 7;
+  uint64 endId = 8;
+}
+
+message SyncRequest {
+  uint64 id = 1;
+  repeated uint64 ids = 2;
+  int64 timestamp = 3;
+  optional uint64 endId = 4;
 }
 
 message IdDTO {
@@ -333,6 +342,7 @@ message ContactDTO {
   optional uint64 originProfileId = 28;
   optional ProductUser productUser = 29;
   optional uint64 friendId = 30;
+  string updatedAt = 31;
 }
 
 message OriginProfile {

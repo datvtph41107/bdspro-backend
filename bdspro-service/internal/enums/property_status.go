@@ -4,14 +4,14 @@ type EPropertyStatus uint32
 
 const (
 	EPropertyStatusActive   EPropertyStatus = 10 // Hoạt động
-	EPropertyStatusInactive EPropertyStatus = 20 // Không hoạt động
+	EPropertyStatusHide     EPropertyStatus = 20 // Ẩn
 	EPropertyStatusArchived EPropertyStatus = 30 // Đã lưu trữ
 )
 
 var EPropertyStatusNames = map[EPropertyStatus]string{
 	EPropertyStatusActive:   "Hoạt động",
-	EPropertyStatusInactive: "Không hoạt động",
-	EPropertyStatusArchived: "Đã lưu trữ",
+	EPropertyStatusHide:     "Tạm ẩn",
+	EPropertyStatusArchived: "Lưu trữ",
 }
 
 func (e EPropertyStatus) String() string {
@@ -19,5 +19,5 @@ func (e EPropertyStatus) String() string {
 }
 
 func (e EPropertyStatus) IsValid() bool {
-	return e == EPropertyStatusActive || e == EPropertyStatusInactive || e == EPropertyStatusArchived
+	return e == EPropertyStatusActive || e == EPropertyStatusHide || e == EPropertyStatusArchived
 }

@@ -79,4 +79,5 @@ type ContactItem struct {
 
 	OriginOwnerOf enums.EOwnerOf `gorm:"column:origin_owner_of" json:"originOwnerOf"`
 	CreatedAt     *time.Time     `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt     *time.Time     `gorm:"column:updated_at" json:"updatedAt"`
 }

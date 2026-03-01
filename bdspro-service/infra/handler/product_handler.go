@@ -10,8 +10,10 @@ import (
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"time"
@@ -35,6 +37,7 @@ type ProductHandler struct {
 	ProductAssetUC *usecases.ProductAssetUsecase
 	AssetMapper    *mapper.AssetMapper
 	DealMapper     mapper.DealMapper
+	SyncProvider   *_provider.SyncProvider
 }
 
 func NewProductService(
@@ -50,6 +53,7 @@ func NewProductService(
 	productAssetUC *usecases.ProductAssetUsecase,
 	assetMapper *mapper.AssetMapper,
 	dealMapper mapper.DealMapper,
+	SyncProvider *_provider.SyncProvider,
 ) *ProductHandler {
 	return &ProductHandler{
 		UC:                 uc,
@@ -64,6 +68,7 @@ func NewProductService(
 		ProductAssetUC: productAssetUC,
 		AssetMapper:    assetMapper,
 		DealMapper:     dealMapper,
+		SyncProvider:   SyncProvider,
 	}
 }
 
@@ -252,7 +257,7 @@ func (h *ProductHandler) GetRefreshSyncIds(
 	}
 	return &bdspropb.CheckVersionSyncResponse{
 		NeedSync:       true,
-		CurrentVersion: time.Now().Unix(),
+		CurrentVersion: time.Now().UnixMilli(),
 		ChangeCount:    0,
 		ChangedIds:     resp,
 		Next:           nil,
@@ -496,12 +501,21 @@ func (s *ProductHandler) ExportProduct(context.Context, *bdspropb.IdRequest) (*b
 // @Param skip query int false "Skip results" default(0)
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/me [get]
-func (s *ProductHandler) ProductMe(ctx context.Context, req *bdspropb.ProductSearch) (*bdspropb.SearchResponse, error) {
-	body := s.ProductMapper.PbSearchRequestToDTO(req)
+func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.SearchResponse, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:product:%d", profileId), req.Timestamp)
+	if !updated {
+		return &bdspropb.SearchResponse{}, nil
+	}
+	body := s.ProductMapper.PbSearchRequestToDTO(&bdspropb.ProductSearch{})
 
 	result, total, err := s.UC.GetProductOfCurrentUser(ctx, body)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.EndId == nil && len(result) > 0 {
+		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:product:%d", profileId), result[0].UpdatedAt.UnixMilli())
 	}
 
 	products := s.ProductMapper.MapProductPbListResponse(result)
@@ -719,11 +733,17 @@ func (s *ProductHandler) SuggestDeepseek(ctx context.Context, req *bdspropb.Sugg
 // @Param id path string true "ID của sản phẩm"
 // @Success 200 {object} bdspropb.IdRequest "Chi tiết sản phẩm"
 // @Router /v2/bdspro/v2/product/{id}/detail [get]
-func (s *ProductHandler) GetDetail(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.ProductResponse, error) {
+func (s *ProductHandler) GetDetail(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.ProductResponse, error) {
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product:%d", req.Id), req.Timestamp)
+	if !updated {
+		return &bdspropb.ProductResponse{}, nil
+	}
+
 	product, err := s.UC.Detail(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product:%d", req.Id), product.UpdatedAt.UnixMilli())
 	// var originProfile *sharepb.OriginProfile
 	// if product.SourceContactId != nil && *product.SourceContactId > 0 {
 	// 	pf, err := s.CrmProvider.GetContactByOriginId(ctx, *product.SourceContactId)

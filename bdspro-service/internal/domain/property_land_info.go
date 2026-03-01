@@ -5,8 +5,8 @@ import _models "common/models"
 // PropertyLandInfo chứa thông tin đất (mở rộng của Property)
 type PropertyLandInfo struct {
 	_models.BaseEntity
-	PropertyID uint64    `gorm:"type:int8;not null;index" json:"propertyId"`
-	Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
+	PropertyID uint64 `gorm:"type:int8;not null;index" json:"propertyId"`
+	// Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
 
 	FrontWidth  *float64 `gorm:"type:decimal(10,2)" json:"frontWidth,omitempty"`  // Mặt tiền (m) - đổi tên từ Frontage
 	Depth       *float64 `gorm:"type:decimal(10,2)" json:"depth,omitempty"`       // Chiều sâu (m)

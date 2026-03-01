@@ -80,6 +80,7 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 		Birthday:      _utils.FormatTimeToString(contact.Birthday),
 		OwnerOf:       int32(contact.OwnerOf),
 		ProfileId:     contact.ProfileID,
+		UpdatedAt:     _utils.FormatTimeToString(contact.UpdatedAt),
 		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
 		CreatedBy:     contact.CreatedBy,
 		ContactStatus: 20, // todo status
@@ -143,6 +144,7 @@ func (m *ContactMapper) ContactItemToPb2(contact *domain.ContactItem) *sharepb.C
 		StatusName:    enums.StatusContactMap[contact.Status],
 		Note:          contact.Note,
 		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
+		UpdatedAt:     _utils.FormatTimeToString(contact.UpdatedAt),
 		// todo: map in client
 		// ProfileInfo: &sharepb.ProfileItem
 	}

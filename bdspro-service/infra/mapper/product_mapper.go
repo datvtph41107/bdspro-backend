@@ -783,6 +783,10 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 				SalePrice: &product.PriceSalePrice,
 				RentPrice: &product.PriceRentPrice,
 			},
+			PropertyType: &bdspropb.ItemResponse{
+				Id:   product.PropertyTypeId,
+				Name: product.PropertyTypeName,
+			},
 			Address:        address,
 			HouseInfo:      houseInfo,
 			BuildingInfo:   buildingInfo,

@@ -92,7 +92,7 @@ service ProductService {
       body: "*"
     };
   };
-  rpc ProductMe(ProductSearch) returns (SearchResponse) {
+  rpc ProductMe(sharepb.SyncRequest) returns (SearchResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/me"
     };
@@ -140,7 +140,7 @@ service ProductService {
       body: "*"
     };
   };
-  rpc GetDetail (IdRequest) returns (ProductResponse) {
+  rpc GetDetail (sharepb.SyncRequest) returns (ProductResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/detail"
     };

@@ -11,12 +11,17 @@ import "shared/v3.proto";
 import "bdspro/product.proto";
 
 service ContactService {
+  rpc ListMe (sharepb.SyncRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/list/me"
+    };
+  };
   rpc Search (ContactSearchRequest) returns (ContactListDTO) {
     option (google.api.http) = {
       get: "/v2/crm/contact/list/{ownerOf}/{ownerId}"
     };
   };
-  rpc Detail (sharepb.IdRequest) returns (ContactDTO) {
+  rpc Detail (sharepb.SyncRequest) returns (ContactDTO) {
     option (google.api.http) = {
       get: "/v2/crm/contact/detail/{id}"
     };

@@ -17,8 +17,14 @@ service PropertyService {
       get: "/v2/bdspro/v2/property/list/{owned}"
     };
   };
+
+  rpc ListMe(sharepb.SyncRequest) returns (PropertyListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/me"
+    };
+  };
   
-  rpc GetDetail(PropertyDetailRequest) returns (PropertyResponse) {
+  rpc GetDetail(sharepb.SyncRequest) returns (PropertyResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/property/detail/{id}"
     };

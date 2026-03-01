@@ -142,5 +142,9 @@ func MigrateDomain() {
 	// &domain.DistributionEntity{},
 	// &domain.ProductPrice{},
 	// &domain.Product{},
+	// &domain.Property{},
+	// &domain.PropertyLandInfo{},
+	// &domain.PropertyMedia{},
+	// &domain.PropertyUser{},
 	)
 }
