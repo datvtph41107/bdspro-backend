@@ -9,6 +9,7 @@ import (
 	"user/initial"
 	user_infra_client "user/infra/client"
 	user_infra_handler "user/infra/handler"
+	user_infra_implement "user/infra/implement"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_postgres "user/infra/postgres"
 	user_infra_routes "user/infra/routes"
@@ -55,6 +56,7 @@ var wireSet = wire.NewSet(
 	user_internal_usecases.NewBookmarkUserUsecase,
 	user_infra_postgres.NewCertificationPostgres,
 	user_internal_usecases.NewCertificationUsecase,
+	user_infra_implement.NewCommonRedisProvider,
 	user_infra_postgres.NewContactPostgres,
 	user_infra_client.NewCrmClient,
 	user_infra_client.NewFeedbackClient,
@@ -104,6 +106,7 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewPurposeUseMapper,
 	user_infra_postgres.NewPurposeUseRepo,
 	user_internal_dto.NewRefreshResponse,
+	user_infra_implement.NewSyncProvider,
 	user_infra_handler.NewTagHandler,
 	user_infra_mapper.NewTagMapper,
 	user_infra_postgres.NewTagPostgres,

@@ -164,6 +164,7 @@ func (r *PostgrePropertyRepo) Search(
 			SourceType:     enums.EPropertySourceType(row.SourceType),
 			RecordStatus:   enums.EPropertyStatus(row.StatusRecord),
 			Visibility:     enums.EVisibility(row.Visibility),
+			CreatedBy:      row.CreatedBy,
 		}
 
 		// ===== ADDRESS REL =====

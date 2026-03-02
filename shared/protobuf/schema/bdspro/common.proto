@@ -276,6 +276,7 @@ message PropertyResponse {
     string buildingName = 45;
     optional Region region = 46;
     uint32 visibility = 47;
+    uint64 createdBy = 48;
 }
 
 // dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết

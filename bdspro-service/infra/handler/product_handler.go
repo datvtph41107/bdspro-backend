@@ -504,10 +504,13 @@ func (s *ProductHandler) ExportProduct(context.Context, *bdspropb.IdRequest) (*b
 func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.SearchResponse, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:product:%d", profileId), req.Timestamp)
-	if !updated {
+	if !updated && req.Page == 0 {
 		return &bdspropb.SearchResponse{}, nil
 	}
-	body := s.ProductMapper.PbSearchRequestToDTO(&bdspropb.ProductSearch{})
+	body := s.ProductMapper.PbSearchRequestToDTO(&bdspropb.ProductSearch{
+		Page: req.Page,
+		Size: req.Size,
+	})
 
 	result, total, err := s.UC.GetProductOfCurrentUser(ctx, body)
 	if err != nil {

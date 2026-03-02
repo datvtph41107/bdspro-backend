@@ -1511,6 +1511,10 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 	// 	whereClauses = append(whereClauses, `pu.origin_profile_id = ?`)
 	// 	args = append(args, originId)
 	// }
+	if payload.EndId != nil {
+		whereClauses = append(whereClauses, `products.id > ?`)
+		args = append(args, *payload.EndId)
+	}
 
 	// EXISTS cho organization
 	if payload.RequestOrganizationId != nil {

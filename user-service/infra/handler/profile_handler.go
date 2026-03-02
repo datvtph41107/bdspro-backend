@@ -3,9 +3,11 @@ package handler
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"log"
 	orgpb "pb/types/organization"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -37,6 +39,7 @@ type GrpcProfileService struct {
 	HubClient             *client.HubClient
 	BdsproClient          *client.BdsproClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
+	SyncProvider          *_provider.SyncProvider
 }
 
 // @bind: internal/usecases.IKYCUsecase
@@ -53,6 +56,7 @@ func NewGrpcProfileService(
 	hubClient *client.HubClient,
 	bdsproClient *client.BdsproClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
+	SyncProvider *_provider.SyncProvider,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
 		ProfileRepo:           profileRepo,
@@ -68,6 +72,7 @@ func NewGrpcProfileService(
 		HubClient:             hubClient,
 		BdsproClient:          bdsproClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
+		SyncProvider:          SyncProvider,
 	}
 }
 
@@ -181,12 +186,19 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 // @Security BearerAuth
 // @Param id path int true "ID của Profile"
 // @Success 200 {object} sharepb.TotalResponseProto "Thông tin công khai của người dùng"
-// @Router /v3/user/profile/info/{id} [get]
-func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.TotalResponseProto, error) {
+// @Router /v3/user/profile/{access}/{id} [get]
+func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.SyncRequest) (*sharepb.TotalResponseProto, error) {
+	log.Printf("OKOK1")
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:profile:%d", req.Id), req.Timestamp)
+	if !updated {
+		return &sharepb.TotalResponseProto{}, nil
+	}
 	result, err := s.ProfileUsecase.UserInfoV3(ctx, req.Id, req.Access)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
+	log.Printf("OKOK")
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:profile:%d", req.Id), result.User.UpdatedAt.UnixMilli())
 
 	// Lấy tên province và ward từ hub service
 	if result.User != nil && (result.User.ProvinceID != nil || result.User.WardID != nil) {

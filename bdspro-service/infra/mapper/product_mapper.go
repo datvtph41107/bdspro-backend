@@ -1445,6 +1445,7 @@ func (m *ProductMapper) PbSearchRequestToDTO(req *bdspropb.ProductSearch) dto.Pr
 		Archived:   req.Archived,
 		ProvinceId: req.ProvinceId,
 		WardId:     req.WardId,
+		// EndId:      endId,
 	}
 
 	// Parse string fields thành arrays (hỗ trợ query params dạng "1,2,3")

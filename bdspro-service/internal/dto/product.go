@@ -21,6 +21,7 @@ type TextSearchRequest struct {
 }
 type ProductSearchRequest struct {
 	_dto.Pagable
+	EndId            *uint64
 	Name             string     `form:"name"`
 	Code             string     `form:"code"`
 	Area             float64    `form:"area"`

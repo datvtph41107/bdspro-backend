@@ -1086,7 +1086,6 @@ func (s *ProductUsecase) GetProductOfGroup(c context.Context, groupId uint64, dt
 
 func (s *ProductUsecase) GetProductOfCurrentUser(c context.Context, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
-	profileId = 285
 	dto.RequestUserId = &profileId
 	return s.searchProduct(c, dto)
 }

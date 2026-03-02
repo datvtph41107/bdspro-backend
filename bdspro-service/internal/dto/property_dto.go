@@ -67,6 +67,7 @@ type PropertyWithCounts struct {
 	Scope          int16     `gorm:"column:scope"`
 	CreatedAt      time.Time `gorm:"column:created_at"`
 	UpdatedAt      time.Time `gorm:"column:updated_at"`
+	CreatedBy      uint64    `gorm:"column:created_by"`
 	AreaTotal      float64   `gorm:"column:area_total"`
 	SourceType     uint32    `gorm:"column:source_type"`
 	StatusRecord   uint32    `gorm:"column:record_status"`

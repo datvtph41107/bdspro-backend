@@ -16,7 +16,7 @@ service ProfileService {
             get: "/v2/user/profile/info/{id}"
         };
     }
-    rpc GetProfileInfoV3(sharepb.RequestV3Proto) returns (sharepb.TotalResponseProto) {
+    rpc GetProfileInfoV3(sharepb.SyncRequest) returns (sharepb.TotalResponseProto) {
         option (google.api.http) = {
             get: "/v3/user/profile/{access}/{id}"
         };

@@ -162,7 +162,7 @@ func (h *PropertyHandler) ListMe(
 ) (*bdspropb.PropertyListResponse, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:property:%d", profileId), req.Timestamp)
-	if !updated {
+	if !updated && req.Page == 0 {
 		return &bdspropb.PropertyListResponse{
 			Pagination: &bdspropb.Pagination{
 				// Page:        page,
@@ -175,7 +175,10 @@ func (h *PropertyHandler) ListMe(
 	}
 
 	// Convert proto request to DTO
-	dtoReq, err := h.PropertyMapper.PbToPropertySearchDTO(&bdspropb.PropertySearchRequest{})
+	dtoReq, err := h.PropertyMapper.PbToPropertySearchDTO(&bdspropb.PropertySearchRequest{
+		Page: req.Page,
+		Size: req.Size,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid filter parameters: %v", err)
 	}

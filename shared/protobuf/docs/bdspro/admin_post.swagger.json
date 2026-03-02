@@ -2171,6 +2171,10 @@
         "visibility": {
           "type": "integer",
           "format": "int64"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
