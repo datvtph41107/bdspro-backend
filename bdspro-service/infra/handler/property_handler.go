@@ -231,6 +231,33 @@ func (h *PropertyHandler) ListMe(
 	return response, nil
 }
 
+func (h *PropertyHandler) CreatePropertyUser(
+	ctx context.Context,
+	req *bdspropb.ClonePropertyRequest,
+) (*bdspropb.Response, error) {
+	if req.GetPropertyId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "property_id is required")
+	}
+
+	userId := _utils.GetProfileIdWithContext(ctx)
+	if userId == 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+
+	prop, err := h.PropertyUsecase.CloneProperty(
+		ctx,
+		req.GetPropertyId(),
+		userId,
+	)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &bdspropb.Response{
+		Id:      prop.ID,
+		Message: "successfully",
+	}, nil
+}
+
 // @Summary Lấy chi tiết Property
 // @Description API để lấy chi tiết Property theo ID
 // @Tags Property

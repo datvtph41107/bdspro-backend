@@ -12,6 +12,11 @@ import "shared/v3.proto";
 import "bdspro/post.proto";
 
 service PropertyService {
+  rpc CreatePropertyUser(ClonePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{propertyId}/clone"
+    };
+  }
   rpc GetList(PropertySearchRequest) returns (PropertyListResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/property/list/{owned}"
@@ -106,6 +111,11 @@ service PropertyService {
     };
   };
 }
+
+message ClonePropertyRequest {
+  uint64 propertyId = 1;
+}
+
 message PropertySearchRequest {
   uint32 page = 1;
   uint32 size = 2;

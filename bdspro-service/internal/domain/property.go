@@ -40,7 +40,7 @@ type Property struct {
 	Scope        enums.EPropertyScope      `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`
 	SourceType   enums.EPropertySourceType `gorm:"type:smallint;not null;"`
 	CreatedAt    time.Time                 `gorm:"column:created_at;autoCreateTime;"`
-	UpdatedAt    time.Time                 `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
+	UpdatedAt    *time.Time                `gorm:"column:updated_at;" json:"updatedAt"`
 	DeletedAt    gorm.DeletedAt            `gorm:"column:deleted_at;index" json:"-"` // Hỗ trợ soft de
 	CreatedBy    uint64                    `gorm:"column:created_by" json:"createdBy,omitempty"`
 	UpdatedBy    *uint64                   `gorm:"column:updated_by" json:"updatedBy,omitempty"`

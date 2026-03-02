@@ -2579,6 +2579,9 @@
         "friendId": {
           "type": "string",
           "format": "uint64"
+        },
+        "updatedAt": {
+          "type": "string"
         }
       }
     },

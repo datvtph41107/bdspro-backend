@@ -126,6 +126,56 @@ func (u *PropertyUsecase) GetPropertyAmenities(
 	return result, nil
 }
 
+func (u *PropertyUsecase) CloneProperty(
+	ctx context.Context,
+	propertyID, userID uint64,
+) (*domain.Property, error) {
+	var result *domain.Property
+	err := u.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
+		prop, err := u.PropertyRepo.GetOneByID(ctx, propertyID)
+		if err != nil {
+			return err
+		}
+		if prop.SourceType != enums.PropertySourceSystem {
+			return _errors.InternalServerException("Invalid property is not system")
+		}
+		newProp := u.cloneBase(prop, userID)
+		if err := u.PropertyRepo.Create(ctx, newProp); err != nil {
+			return err
+		}
+		if _, err := u.PropertyUserRepo.CreateOwner(ctx, newProp.ID, userID); err != nil {
+			return err
+		}
+		result = newProp
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (u *PropertyUsecase) cloneBase(prop *domain.Property, userID uint64) *domain.Property {
+	newProp := *prop
+	newProp.ID = 0
+
+	newProp.SourceType = enums.PropertySourceUser
+	newProp.CreatedBy = userID
+
+	newProp.OriginProfileId = &prop.ID
+	newProp.CreatedAt = time.Now()
+	newProp.UpdatedAt = nil
+	newProp.DeletedAt = gorm.DeletedAt{}
+
+	newProp.Province = nil
+	newProp.District = nil
+	newProp.Ward = nil
+	newProp.Project = nil
+	newProp.MediaList = nil
+	newProp.Amenities = nil
+	return &newProp
+}
+
 func (u *PropertyUsecase) UpdatePropertyAmenities(
 	ctx context.Context,
 	req *dto.UpdatePropertyAmenitiesRequest,

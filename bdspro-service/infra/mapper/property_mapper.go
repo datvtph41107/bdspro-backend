@@ -218,7 +218,7 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		AreaLand:  property.AreaLand,
 		// AreaResidential:  property.AreaResidential,
 		CreatedAt:        _utils.FormatTimeToString(&property.CreatedAt),
-		UpdatedAt:        _utils.FormatTimeToString(&property.UpdatedAt),
+		UpdatedAt:        _utils.FormatTimeToString(property.UpdatedAt),
 		RecordStatus:     uint32(property.RecordStatus),
 		RecordStatusName: property.RecordStatus.String(),
 		Visibility:       uint32(property.Visibility),

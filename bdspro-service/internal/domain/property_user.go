@@ -16,4 +16,6 @@ type PropertyUser struct {
 	OriginProfileID *uint64 `gorm:"column:origin_id;type:bigint;index:idx_property_origin"`
 }
 
-func (PropertyUser) TableName() string { return "property_user" }
+func (PropertyUser) TableName() string {
+	return "property_user"
+}

@@ -156,7 +156,7 @@ func (r *PostgrePropertyRepo) Search(
 			PropertyTypeID: row.PropertyTypeID,
 			Scope:          enums.EPropertyScope(row.Scope),
 			CreatedAt:      row.CreatedAt,
-			UpdatedAt:      row.UpdatedAt,
+			UpdatedAt:      &row.UpdatedAt,
 			ProductCount:   row.ProductCount,
 			AssetCount:     row.AssetCount,
 			ListingCount:   row.ListingCount,
