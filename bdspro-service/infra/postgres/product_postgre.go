@@ -1414,11 +1414,16 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 
 	// Lấy originId từ context
 	originId := _utils.GetOriginIdFromContext(c)
+	syncQr := "AND products.deleted_at IS NULL"
+	if payload.Sync {
+		syncQr = ""
+	}
 
 	// Build base SQL - Bắt đầu từ product_user, sau đó join với products và các bảng khác
 	baseSQL := `
 		SELECT 
 			   products.id,
+			   products.deleted_at,
 			   products.property_id,
 		       COALESCE(p.title, products.name) as name,
 		       products.code,
@@ -1473,7 +1478,7 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			   products.share_count,
 			   products.contact_count
 		FROM product_user pu
-		INNER JOIN products ON products.id = pu.product_id AND products.deleted_at IS NULL
+		INNER JOIN products ON products.id = pu.product_id ` + syncQr + `
 		LEFT JOIN (
 			SELECT parent_id, SUM(area) AS total_area 
 			FROM products 

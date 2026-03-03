@@ -183,19 +183,10 @@ func (h *PropertyHandler) ListMe(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid filter parameters: %v", err)
 	}
 
-	// Set default pagination
-	// page := int32(req.Page)
-	// if page == 0 {
-	// 	page = 1
-	// }
-	// size := int32(req.Size)
-	// if size == 0 {
-	// 	size = 20
-	// }
-
 	// Call usecase
 	originId := _utils.GetOriginIdFromContext(ctx)
 	dtoReq.RequestUserId = &originId
+	dtoReq.Sync = true
 	properties, total, err := h.PropertyUsecase.GetList(ctx, dtoReq)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get property list: %v", err)
@@ -204,13 +195,6 @@ func (h *PropertyHandler) ListMe(
 	// Calculate pagination info
 	totalPages := int32(0)
 	hasNext := false
-	// hasPrevious := page > 1
-
-	// if size > 0 {
-	// 	totalPages = int32((total + int64(size) - 1) / int64(size))
-	// 	hasNext = page < totalPages
-	// }
-
 	// Create pagination object
 	pagination := &bdspropb.Pagination{
 		// Page:        page,

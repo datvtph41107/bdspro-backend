@@ -714,6 +714,15 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListResponse) []*bdspropb.ProductResponse {
 	productList := make([]*bdspropb.ProductResponse, len(products))
 	for i, product := range products {
+
+		if product.DeletedAt != nil {
+			delAt := _utils.FormatTimeToString(product.DeletedAt)
+			productList[i] = &bdspropb.ProductResponse{
+				Id:        product.ID,
+				DeletedAt: &delAt,
+			}
+			continue
+		}
 		// Clean address data nếu có
 		var address *sharepb.AddressV3Proto
 		if product.Address != nil {

@@ -198,6 +198,9 @@ func (m *PropertyMapper) PropertyToPb(property *domain.Property) *bdspropb.Prope
 
 // PropertyWithCountsToProto converts PropertyWithCounts to protobuf PropertyResponse
 func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.PropertyResponse {
+	if property == nil {
+		return nil
+	}
 	result := &bdspropb.PropertyResponse{
 		Id:    property.ID,
 		Title: property.Title,
@@ -217,12 +220,10 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		AreaTotal: property.AreaTotal,
 		AreaLand:  property.AreaLand,
 		// AreaResidential:  property.AreaResidential,
-		CreatedAt:        _utils.FormatTimeToString(&property.CreatedAt),
-		UpdatedAt:        _utils.FormatTimeToString(property.UpdatedAt),
-		CreatedBy:        property.CreatedBy,
-		RecordStatus:     uint32(property.RecordStatus),
-		RecordStatusName: property.RecordStatus.String(),
-		Visibility:       uint32(property.Visibility),
+
+		CreatedBy:    property.CreatedBy,
+		RecordStatus: uint32(property.RecordStatus),
+		Visibility:   uint32(property.Visibility),
 		// BuildingInfoId:   property.BuildingInfoID,
 
 		// NEW fields
@@ -235,6 +236,17 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		ProductCount: &property.ProductCount,
 		AssetCount:   &property.AssetCount,
 		PostCount:    &property.ListingCount,
+	}
+
+	if property.RecordStatus.IsValid() {
+		result.RecordStatusName = property.RecordStatus.String()
+
+	}
+	if !property.CreatedAt.IsZero() {
+		result.CreatedAt = _utils.FormatTimeToString(&property.CreatedAt)
+	}
+	if property.UpdatedAt != nil {
+		result.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
 	}
 
 	// AddressV3Proto

@@ -61,6 +61,11 @@ service BdsproPublicService {
       get: "/v2/bdspro/public/enums/{text}"
     };
   };
+  rpc GetEnums(sharepb.SyncRequest) returns (GetEnumsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/public/enums"
+    };
+  };
 }
 
 message ProductTotalRequest {
@@ -256,5 +261,11 @@ message EnumItem {
 
 message GetEnumResponse {
   repeated EnumItem data = 1;
+  string key = 2;
 }
 
+message GetEnumsResponse {
+  repeated GetEnumResponse enums = 1;
+  int64 timestamp = 2;
+  bool lastest = 3;
+}

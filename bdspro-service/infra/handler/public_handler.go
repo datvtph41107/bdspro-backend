@@ -12,6 +12,7 @@ import (
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"sort"
+	"time"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,7 @@ type BdsproPublicService struct {
 	ListUC        *usecases.ListUsecase
 	Mapper        *mapper.PublicMapper
 	ProductMapper *mapper.ProductMapper
+	StartUpTime   int64
 }
 
 func NewBdsproPublicService(
@@ -36,6 +38,7 @@ func NewBdsproPublicService(
 		ListUC:        listUC,
 		Mapper:        mapper,
 		ProductMapper: productMapper,
+		StartUpTime:   time.Now().UnixMilli(),
 	}
 }
 
@@ -307,6 +310,33 @@ func (s *BdsproPublicService) GetUserProductsPublic(ctx context.Context, req *bd
 	}, nil
 }
 
+var enumProviders = map[string][]*bdspropb.EnumItem{
+	"product_sale_status":     enumMapToList(enums.EProductSaleStatusNames),
+	"product_rent_status":     enumMapToList(enums.EProductRentStatusNames),
+	"asset_history":           enumMapToList(enums.AssetHistoryNames),
+	"target_type":             enumMapToList(enums.TargetTypeNames),
+	"visibility":              enumMapToList(enums.EVisibilityNames),
+	"producthistory":          enumMapToList(enums.EProductHistoryNames),
+	"poststatus":              enumMapToList(enums.EPostStatusNames),
+	"doctype":                 enumMapToList(enums.EDocTypeNames),
+	"assetstatus":             enumMapToList(enums.EAssetStatusNames),
+	"house_orient":            enumMapToList(enums.EHouseOrientNames),
+	"house_certificate":       enumMapToList(enums.EHouseCertificateNames),
+	"property_status":         enumMapToList(enums.EPropertyStatusNames),
+	"building_type":           enumMapToList(enums.BuildingTypeNames),
+	"transaction_status":      enumMapToList(enums.TransactionStatusNames),
+	"transaction_type":        enumMapToList(enums.TransactionTypeNames),
+	"owner_type":              enumMapToList(enums.OwnerTypeNames),
+	"post_transaction_status": enumMapToList(enums.EPostTransactionStatusNames),
+	"distribution_status":     enumMapToList(enums.DistributionStatusNames),
+	"distribution_reason":     enumMapToList(enums.DistributionReasonNameMap),
+	"deal_type":               enumMapToList(enums.DealTypeNames),
+	"source_status":           enumMapToList(enums.SourceStatusNames),
+	"source_type":             enumMapToList(enums.SourceTypeMap),
+	"mining_mode":             enumMapToList(enums.MiningModeNames),
+	"mining_scope":            enumMapToList(enums.MiningScopeNames),
+}
+
 // @Summary Lấy enum dạng name-value
 // @Description Lấy danh sách enum với value và name tương ứng
 // @Tags Enum
@@ -321,32 +351,6 @@ func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.Id
 	fmt.Println("enumType: ", enumType)
 
 	// Khai báo enumProviders nội bộ
-	var enumProviders = map[string][]*bdspropb.EnumItem{
-		"product_sale_status":     enumMapToList(enums.EProductSaleStatusNames),
-		"product_rent_status":     enumMapToList(enums.EProductRentStatusNames),
-		"asset_history":           enumMapToList(enums.AssetHistoryNames),
-		"target_type":             enumMapToList(enums.TargetTypeNames),
-		"visibility":              enumMapToList(enums.EVisibilityNames),
-		"producthistory":          enumMapToList(enums.EProductHistoryNames),
-		"poststatus":              enumMapToList(enums.EPostStatusNames),
-		"doctype":                 enumMapToList(enums.EDocTypeNames),
-		"assetstatus":             enumMapToList(enums.EAssetStatusNames),
-		"house_orient":            enumMapToList(enums.EHouseOrientNames),
-		"house_certificate":       enumMapToList(enums.EHouseCertificateNames),
-		"property_status":         enumMapToList(enums.EPropertyStatusNames),
-		"building_type":           enumMapToList(enums.BuildingTypeNames),
-		"transaction_status":      enumMapToList(enums.TransactionStatusNames),
-		"transaction_type":        enumMapToList(enums.TransactionTypeNames),
-		"owner_type":              enumMapToList(enums.OwnerTypeNames),
-		"post_transaction_status": enumMapToList(enums.EPostTransactionStatusNames),
-		"distribution_status":     enumMapToList(enums.DistributionStatusNames),
-		"distribution_reason":     enumMapToList(enums.DistributionReasonNameMap),
-		"deal_type":               enumMapToList(enums.DealTypeNames),
-		"source_status":           enumMapToList(enums.SourceStatusNames),
-		"source_type":             enumMapToList(enums.SourceTypeMap),
-		"mining_mode":             enumMapToList(enums.MiningModeNames),
-		"mining_scope":            enumMapToList(enums.MiningScopeNames),
-	}
 
 	if values, ok := enumProviders[enumType]; ok {
 		return &bdspropb.GetEnumResponse{
@@ -355,6 +359,27 @@ func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.Id
 	}
 
 	return nil, status.Errorf(codes.NotFound, "enum not found: %s", enumType)
+}
+
+func (s *BdsproPublicService) GetEnums(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetEnumsResponse, error) {
+	if req.Timestamp > 0 && req.Timestamp < s.StartUpTime {
+		return &bdspropb.GetEnumsResponse{
+			Timestamp: s.StartUpTime,
+			Lastest:   false,
+		}, nil
+	}
+	result := []*bdspropb.GetEnumResponse{}
+	for k, v := range enumProviders {
+		result = append(result, &bdspropb.GetEnumResponse{
+			Key:  k,
+			Data: v,
+		})
+	}
+	return &bdspropb.GetEnumsResponse{
+		Enums:     result,
+		Timestamp: s.StartUpTime,
+		Lastest:   true,
+	}, nil
 }
 
 func enumMapToList[T ~uint32 | ~uint | ~int](enumMap map[T]string) []*bdspropb.EnumItem {

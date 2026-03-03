@@ -63,6 +63,7 @@ type ProductSearchRequest struct {
 	RequestUserId         *uint64  `form:"-"`
 	RequestGroupId        *uint64  `form:"-"`
 	IDs                   []uint64 `form:"ids"`
+	Sync                  bool
 	// IsParent         *bool      `form:"isParent"`
 }
 

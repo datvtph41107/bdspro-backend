@@ -236,7 +236,7 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) 
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), result.UpdatedAt.UnixMilli())
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), time.Now().UnixMilli())
 	return s.ContactMapper.ContactToPb(result), nil
 }
 

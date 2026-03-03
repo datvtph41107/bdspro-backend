@@ -511,6 +511,7 @@ func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest
 		Page: req.Page,
 		Size: req.Size,
 	})
+	body.Sync = true
 
 	result, total, err := s.UC.GetProductOfCurrentUser(ctx, body)
 	if err != nil {
@@ -854,6 +855,7 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *bdspropb.IdRequest) 
 // @Param size query int false "Page size"
 // @Router /v2/bdspro/v2/product/{id}/deals [get]
 func (s *ProductHandler) GetDeals(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
+
 	pagable := _dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
@@ -945,6 +947,8 @@ func (s *ProductHandler) DeleteProduct(ctx context.Context, req *bdspropb.IdRequ
 	if err != nil {
 		return nil, err
 	}
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:product:%d", profileId), time.Now().UnixMilli())
 	return &bdspropb.Response{
 		Message: "ok",
 	}, nil

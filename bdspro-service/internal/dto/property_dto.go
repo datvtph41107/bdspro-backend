@@ -49,6 +49,7 @@ type PropertySearchDTO struct {
 	RegionID    *uint64    `json:"regionId"`
 
 	RequestUserId *uint64 `json:"-"`
+	Sync          bool
 }
 
 // ==================== PropertyWithCounts (UPDATED) ====================

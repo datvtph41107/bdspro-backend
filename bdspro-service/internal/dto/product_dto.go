@@ -392,6 +392,8 @@ type ProductListResponse struct {
 	Direction         *uint32  `gorm:"column:direction" json:"-"`
 	BalconyDirection  *uint32  `gorm:"column:balcony_direction" json:"-"`
 
+	DeletedAt *time.Time `gorm:"column:deleted_at" json:"deletedAt"`
+
 	UpdatedAt        time.Time `gorm:"column:updated_at" json:"updatedAt"`
 	ShareCount       uint32    `gorm:"column:share_count" json:"shareCount,omitempty"`             // Số lượt chia sẻ
 	PostCount        uint32    `gorm:"column:post_count" json:"postCount,omitempty"`               // Số tin đăng

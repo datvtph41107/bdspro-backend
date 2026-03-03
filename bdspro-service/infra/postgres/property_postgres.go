@@ -51,8 +51,11 @@ func (r *PostgrePropertyRepo) Search(
 	var total int64
 
 	baseDB := r.DB.WithContext(ctx).
-		Table("property").
-		Where("property.deleted_at IS NULL")
+		Table("property")
+
+	if !req.Sync {
+		baseDB = baseDB.Where("property.deleted_at IS NULL")
+	}
 
 	baseDB = r.applyFilters(baseDB, req, userId)
 
