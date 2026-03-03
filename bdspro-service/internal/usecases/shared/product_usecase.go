@@ -1739,7 +1739,6 @@ func (uc *ProductUsecase) Posts(
 	id uint64,
 	dto dto.PostLinkSearch,
 ) ([]domain.PostItem, error) {
-
 	if uc.PostUsecase != nil {
 		results, err := uc.PostUsecase.ProductPostLink(c, id, &dto)
 		if err != nil {

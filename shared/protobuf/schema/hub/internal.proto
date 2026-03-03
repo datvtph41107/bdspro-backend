@@ -111,7 +111,39 @@ message GetRegionsResponse {
   repeated Region regions = 1;
 }
 
-// ========== Service Definition ==========
+// Regions api
+message CreateRegionRequest {
+  string name = 1;
+  uint32 code = 2;
+  bool active = 3;
+}
+
+message UpdateRegionRequest {
+  uint64 id = 1;
+  string name = 2;
+  uint32 code = 3;
+  bool active = 4;
+}
+
+message DeleteRegionRequest {
+  uint64 id = 1;
+}
+
+message GetRegionByIDRequest {
+  uint64 id = 1;
+}
+
+message RegionResponse {
+  Region region = 1;
+}
+
+message DeleteRegionResponse {
+  bool success = 1;
+}
+
+message ListRegionsRequest {}
+message ListRegionsResponse { repeated Region regions = 1; }
+
 
 service HubInternalService {
   rpc HealthCheck (sharepb.Empty) returns (sharepb.SubmitResponse) {
@@ -121,6 +153,38 @@ service HubInternalService {
   };
 
   rpc GetByIDs(GetRegionsRequest) returns (GetRegionsResponse);
+
+  rpc CreateRegion(CreateRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/regions"
+      body: "*"
+    };
+  };
+
+  rpc UpdateRegion(UpdateRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      put: "/v2/hub/regions/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeleteRegion(DeleteRegionRequest) returns (DeleteRegionResponse) {
+    option (google.api.http) = {
+      delete: "/v2/hub/regions/{id}"
+    };
+  };
+
+  rpc GetRegionByID(GetRegionByIDRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/regions/{id}"
+    };
+  };
+
+  rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/regions"
+    };
+  };
 
   // Get Product View Stats - Internal RPC for other services
   rpc GetProductViewStats(ProductStatsViewRequest)returns (ProductStatsViewResponse);

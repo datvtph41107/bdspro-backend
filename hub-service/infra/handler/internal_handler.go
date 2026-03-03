@@ -19,6 +19,8 @@ type InternalHandler struct {
 	InteractiveEventRepo repo.IInteractiveEventRepo
 	UpdateUsecase        _usecase.IUpdateDataUsecase
 	regionRepo           repo.RegionRepository
+	regionUsecase        _usecase.IRegionUsecase
+	regionMapper         *mapper.RegionMapper
 }
 
 func NewInternalHandler(
@@ -27,6 +29,8 @@ func NewInternalHandler(
 	interactiveEventRepo repo.IInteractiveEventRepo,
 	UpdateUsecase _usecase.IUpdateDataUsecase,
 	RegionRepo repo.RegionRepository,
+	RegionUsecase _usecase.IRegionUsecase,
+	regionMapper *mapper.RegionMapper,
 ) *InternalHandler {
 	return &InternalHandler{
 		locationUsecase:      locationUsecase,
@@ -34,6 +38,8 @@ func NewInternalHandler(
 		InteractiveEventRepo: interactiveEventRepo,
 		UpdateUsecase:        UpdateUsecase,
 		regionRepo:           RegionRepo,
+		regionUsecase:        RegionUsecase,
+		regionMapper:         regionMapper,
 	}
 }
 
