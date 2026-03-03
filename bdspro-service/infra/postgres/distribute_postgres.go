@@ -83,7 +83,8 @@ func (r *DistributePostgres) FindByIdWithPartner(
 			) AS partner_ids,
 			pp.sale_price AS price,
 			pp.sale_commission_type AS commission_type,
-			pp.sale_commission AS commission_value
+			pp.sale_commission AS commission_value,
+			 p.updated_at AS product_updated_at
 		`).
 		Joins(`
 			LEFT JOIN product_user pu
@@ -94,7 +95,7 @@ func (r *DistributePostgres) FindByIdWithPartner(
 			ON pp.id = d.price_id
 		`).
 		Where("d.id = ?", disID).
-		Group("d.id, pp.id").
+		Group("d.id, pp.id, p.updated_at").
 		Scan(&result).Error; err != nil {
 
 		return nil, err

@@ -109,7 +109,8 @@ func (r *PostgreProductNoteRepo) GetListByProductID(
 			pn.content,
 			pn.author_id,
 			(pn.pinned_at IS NOT NULL) AS is_pinned,
-			pn.created_at
+			pn.created_at,
+			pn.updated_at AS product_note_updated_at
 		`).
 		Order("pn.pinned_at DESC NULLS LAST, pn.created_at DESC").
 		Limit(filter.GetLimit()).

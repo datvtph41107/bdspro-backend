@@ -8,6 +8,7 @@ type Options struct {
 	EnvPrefix   string   // prefix cho env
 	ReadEnv     bool     // có đọc env không
 	Validate    bool     // có validate không
+	Watch       bool
 }
 
 type Option func(*Options)
@@ -39,6 +40,10 @@ func WithEnvPrefix(prefix string) Option {
 
 func WithValidation(enabled bool) Option {
 	return func(o *Options) { o.Validate = enabled }
+}
+
+func WithWatch() Option {
+	return func(o *Options) { o.Watch = true }
 }
 
 func DefaultOptions() *Options {

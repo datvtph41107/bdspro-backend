@@ -3,6 +3,7 @@ package repo
 import (
 	_dto "common/domain/dto"
 	"context"
+	"time"
 
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
@@ -29,7 +30,7 @@ type DealRepository interface {
 	UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error
 	CreateDealProduct(ctx context.Context, dealProduct []*domain.DealProduct) ([]*domain.DealProduct, error)
 	GetDealProducts(ctx context.Context, dealID uint64, pagable _dto.Pagable) ([]*domain.DealProduct, error)
-	GetDealsByProductID(ctx context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error)
+	GetDealsByProductID(ctx context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, *time.Time, error)
 	CountDealsByProductID(ctx context.Context, productID uint64) (int64, error)
 	UpdateAllowManualInput(ctx context.Context, dealID uint64, allowManualInput bool) error
 	GetDealProcess(ctx context.Context, dealID uint64, bdsproID uint64) ([]*dto.DealProcessItem, error)

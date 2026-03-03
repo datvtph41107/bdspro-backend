@@ -362,8 +362,12 @@ func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRe
 // @Param size query int false "Kích thước trang"
 // @Security BearerAuth
 // @Router /contact/by-product/{productId} [get]
-func (s *ContactService) GetListContactByProductId(ctx context.Context, req *crmpb.GetByProductIdRequest) (*crmpb.ContactListDTO, error) {
-	contacts, total, err := s.UC.GetListContactByProductId(ctx, req.ProductId, dto.ContactSearchDTO{
+func (s *ContactService) GetListContactByProductId(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_crm_contacts:%d", req.Id), req.Timestamp) // req.ID = productId
+	if !updated && req.Page == 0 {
+		return &crmpb.ContactListDTO{}, nil
+	}
+	contacts, total, err := s.UC.GetListContactByProductId(ctx, req.Id, dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
 			Size: uint32(req.Size),
@@ -372,7 +376,9 @@ func (s *ContactService) GetListContactByProductId(ctx context.Context, req *crm
 	if err != nil {
 		return nil, err
 	}
-
+	if req.Page == 0 && len(contacts) > 0 {
+		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_crm_contacts:%d", req.Id), contacts[0].ContactProductUpdatedAt.UnixMilli())
+	}
 	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
 

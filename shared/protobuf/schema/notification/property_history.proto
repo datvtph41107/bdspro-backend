@@ -68,6 +68,7 @@ message GetPropertyHistoryRequest {
   uint32 size = 5;
   string sort = 6;
   uint64 subjectId = 7;
+  int64 timeStamp = 8;
 }
 
 message GetPropertyHistoryResponse {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -18,14 +19,20 @@ import (
 
 type DistributionHandler struct {
 	bdspropb.UnimplementedDistributionServiceServer
-	usecase *usecases.DistributionUsecase
-	mapper  *mapper.DistributionMapper
+	usecase      *usecases.DistributionUsecase
+	mapper       *mapper.DistributionMapper
+	SyncProvider *_provider.SyncProvider
 }
 
-func NewDistributionHandler(usecase *usecases.DistributionUsecase, mapper *mapper.DistributionMapper) *DistributionHandler {
+func NewDistributionHandler(
+	usecase *usecases.DistributionUsecase,
+	mapper *mapper.DistributionMapper,
+	SyncProvider *_provider.SyncProvider,
+) *DistributionHandler {
 	return &DistributionHandler{
-		usecase: usecase,
-		mapper:  mapper,
+		usecase:      usecase,
+		mapper:       mapper,
+		SyncProvider: SyncProvider,
 	}
 }
 
@@ -112,6 +119,11 @@ func (h *DistributionHandler) ListDistributions(
 	ctx context.Context,
 	req *bdspropb.ListDistributionsRequest,
 ) (*bdspropb.ListDistributionsResponse, error) {
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_distributions:%d", req.ProductId), req.TimeStamp)
+	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
+	if !updated && req.Page == 0 {
+		return &bdspropb.ListDistributionsResponse{}, nil
+	}
 	filter := &dto.FilterDistributeDTO{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -127,14 +139,17 @@ func (h *DistributionHandler) ListDistributions(
 		Status:       h.mapper.ConvertDistributionStatus(req.Status),
 	}
 
-	list, err := h.usecase.GetListDistributesWithPartners(ctx, req.ProductId, filter)
+	lists, err := h.usecase.GetListDistributesWithPartners(ctx, req.ProductId, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list distributions: %v", err)
 	}
+	if req.Page == 0 && len(lists) > 0 {
+		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_distributions:%d", req.ProductId), lists[0].ProductUpdatedAt.UnixMilli())
+	}
 
 	return &bdspropb.ListDistributionsResponse{
-		Data:  h.mapper.DistributionWithPartnersListToProto(ctx, list),
-		Total: int64(len(list)),
+		Data:  h.mapper.DistributionWithPartnersListToProto(ctx, lists),
+		Total: int64(len(lists)),
 	}, nil
 }
 

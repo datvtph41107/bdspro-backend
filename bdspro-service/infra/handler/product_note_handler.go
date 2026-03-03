@@ -7,7 +7,9 @@ import (
 	"bdspro/internal/usecases"
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	"context"
+	"fmt"
 
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -18,17 +20,20 @@ type ProductNoteHandler struct {
 	ProductNoteUsecase *usecases.ProductNoteUsecase
 	ProductNoteMapper  *mapper.ProductNoteMapper
 	UserClient         *client.UserClient
+	SyncProvider       *_provider.SyncProvider
 }
 
 func NewProductNoteHandler(
 	usecase *usecases.ProductNoteUsecase,
 	mapper *mapper.ProductNoteMapper,
 	userClient *client.UserClient,
+	SyncProvider *_provider.SyncProvider,
 ) *ProductNoteHandler {
 	return &ProductNoteHandler{
 		ProductNoteUsecase: usecase,
 		ProductNoteMapper:  mapper,
 		UserClient:         userClient,
+		SyncProvider:       SyncProvider,
 	}
 }
 
@@ -39,7 +44,11 @@ func (h *ProductNoteHandler) ListProductNotes(
 	if req.ProductId == 0 {
 		return nil, _errors.BadRequestException("productId is required")
 	}
-
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_notes:%d", req.ProductId), req.TimeStamp)
+	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
+	if !updated && req.Page == 0 {
+		return &bdspropb.ListProductNotesResponse{}, nil
+	}
 	filter := &dto.GetProductNotesFilter{
 		ProductID:  req.ProductId,
 		OnlyPinned: req.OnlyPinned,
@@ -55,7 +64,9 @@ func (h *ProductNoteHandler) ListProductNotes(
 	if err != nil {
 		return nil, err
 	}
-
+	if req.Page == 0 && len(items) > 0 {
+		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_posts:%d", req.ProductId), items[0].Note.ProductNoteUpdatedAt.UnixMilli())
+	}
 	h.enrichUsers(ctx, items)
 	return &bdspropb.ListProductNotesResponse{
 		Data:  h.ProductNoteMapper.ProductNoteListToProto(items),

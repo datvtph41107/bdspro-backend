@@ -65,7 +65,7 @@ service ContactService {
       get: "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}"
     };
   };
-  rpc GetListContactByProductId (GetByProductIdRequest) returns (ContactListDTO) {
+  rpc GetListContactByProductId (sharepb.SyncRequest) returns (ContactListDTO) {
     option (google.api.http) = {
       get: "/v2/crm/contact/by-product/{productId}"
     };
@@ -218,6 +218,7 @@ message GetByProductIdRequest {
   uint64 productId = 1;
   uint64 page = 2;
   uint32 size = 3;
+  int64 timestamp = 4;
 }
 
 message UpdateProductIdsRequest {

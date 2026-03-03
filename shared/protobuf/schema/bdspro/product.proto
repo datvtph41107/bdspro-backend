@@ -167,12 +167,12 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{id}/members"
     };
   };
-  rpc GetPosts (IdRequest) returns (PostResponse) {
+  rpc GetPosts (sharepb.SyncRequest) returns (PostResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/posts"
     };
   };
-  rpc GetDeals (IdRequest) returns (GetOrganizationDealsResponse) {
+  rpc GetDeals (sharepb.SyncRequest) returns (GetOrganizationDealsResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/deals"
     };
@@ -801,6 +801,7 @@ message PriceHistoryRequest {
   uint64 productId = 1;
   uint32 page = 2;
   uint32 size = 3;
+  int64 timestamp = 4;
 }
 
 message PriceHistoryResponse {

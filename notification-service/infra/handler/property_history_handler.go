@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
+	_provider "common/provider"
 	"notification/infra/mapper"
 	"notification/internal/usecase"
 	notificationpb "pb/types/notification"
@@ -13,16 +15,19 @@ import (
 
 type PropertyHistoryHandler struct {
 	notificationpb.UnimplementedPropertyHistoryServiceServer
-	usecase *usecase.PropertyHistoryUseCase
-	mapper  *mapper.PropertyHistoryMapper
+	usecase      *usecase.PropertyHistoryUseCase
+	mapper       *mapper.PropertyHistoryMapper
+	SyncProvider *_provider.SyncProvider
 }
 
 func NewPropertyHistoryHandler(
 	uc *usecase.PropertyHistoryUseCase,
+	SyncProvider *_provider.SyncProvider,
 ) *PropertyHistoryHandler {
 	return &PropertyHistoryHandler{
-		usecase: uc,
-		mapper:  mapper.NewPropertyHistoryMapper(),
+		usecase:      uc,
+		mapper:       mapper.NewPropertyHistoryMapper(),
+		SyncProvider: SyncProvider,
 	}
 }
 
@@ -61,10 +66,18 @@ func (h *PropertyHistoryHandler) GetPropertyHistory(
 	ctx context.Context,
 	req *notificationpb.GetPropertyHistoryRequest,
 ) (*notificationpb.GetPropertyHistoryResponse, error) {
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_property_histories:%d", req.SubjectId), req.TimeStamp)
+	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
+	if !updated && req.Page == 0 {
+		return &notificationpb.GetPropertyHistoryResponse{}, nil
+	}
 	query := h.mapper.SearchProtoToDTO(req)
 	histories, userMap, total, err := h.usecase.Search(ctx, query)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if req.Page == 0 && len(histories) > 0 {
+		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_property_histories:%d", req.SubjectId), histories[0].UpdatedAt.UnixMilli())
 	}
 
 	return h.mapper.EntitiesToListResponse(

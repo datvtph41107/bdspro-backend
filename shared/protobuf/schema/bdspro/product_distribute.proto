@@ -105,6 +105,7 @@ message ListDistributionsRequest {
     uint64 productId = 8;
     string query = 9;
     repeated DistributionStatus status = 10;
+    int64 timeStamp = 11;
 }
 
 message ListDistributionsResponse {

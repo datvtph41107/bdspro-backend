@@ -77,7 +77,8 @@ type ContactItem struct {
 	OriginAvatar      string  `gorm:"column:origin_avatar" json:"originAvatar"`
 	OriginOwnerID     uint64  `gorm:"column:origin_owner_id" json:"originOwnerId"`
 
-	OriginOwnerOf enums.EOwnerOf `gorm:"column:origin_owner_of" json:"originOwnerOf"`
-	CreatedAt     *time.Time     `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
-	UpdatedAt     *time.Time     `gorm:"column:updated_at" json:"updatedAt"`
+	OriginOwnerOf           enums.EOwnerOf `gorm:"column:origin_owner_of" json:"originOwnerOf"`
+	CreatedAt               *time.Time     `gorm:"column:created_at;autoCreateTime" json:"createdAt"`
+	UpdatedAt               *time.Time     `gorm:"column:updated_at" json:"updatedAt"`
+	ContactProductUpdatedAt *time.Time     `gorm:"column:contact_product_updated_at" json:"contactProductUpdatedAt"`
 }

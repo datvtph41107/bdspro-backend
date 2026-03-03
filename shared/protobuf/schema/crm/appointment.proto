@@ -61,7 +61,7 @@ service AppointmentService {
     };
   }
 
-  rpc GetAppointmentsByProduct (sharepb.IdRequest) returns (ListAppointmentsResponse) {
+  rpc GetAppointmentsByProduct (sharepb.SyncRequest) returns (ListAppointmentsResponse) {
     option (google.api.http) = {
       get: "/v2.1/appointment/list/by-product/{id}"
     };

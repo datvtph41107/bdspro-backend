@@ -518,7 +518,7 @@ func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest
 		return nil, err
 	}
 
-	if req.EndId == nil && len(result) > 0 {
+	if req.Page == 0 && len(result) > 0 {
 		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:product:%d", profileId), result[0].UpdatedAt.UnixMilli())
 	}
 
@@ -823,7 +823,13 @@ func (s *ProductHandler) GetMembers(ctx context.Context, req *bdspropb.IdRequest
 // @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/posts [get]
-func (s *ProductHandler) GetPosts(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.PostResponse, error) {
+func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.PostResponse, error) {
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_posts:%d", req.Id), req.Timestamp)
+	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
+	if !updated && req.Page == 0 {
+		return &bdspropb.PostResponse{}, nil
+	}
+
 	query := dto.PostLinkSearch{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -835,8 +841,10 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *bdspropb.IdRequest) 
 	if err != nil {
 		return nil, err
 	}
-
-	postResponse := s.PostMapper.PostToPbList(posts)
+	if req.Page == 0 && len(posts) > 0 {
+		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_posts:%d", req.Id), posts[0].ProductUpdatedAt.UnixMilli())
+	}
+	postResponse := s.PostMapper.PostToPbList(&posts)
 	// postResponse := make([]*bdspropb.PostItem, 0)
 	// copier.Copy(&postResponse, &posts)
 	return &bdspropb.PostResponse{
@@ -854,18 +862,24 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *bdspropb.IdRequest) 
 // @Param page query int false "Page number"
 // @Param size query int false "Page size"
 // @Router /v2/bdspro/v2/product/{id}/deals [get]
-func (s *ProductHandler) GetDeals(ctx context.Context, req *bdspropb.IdRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
-
+func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_deals:%d", req.Id), req.Timestamp)
+	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
+	if !updated && req.Page == 0 {
+		return &bdspropb.GetOrganizationDealsResponse{}, nil
+	}
 	pagable := _dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
 	}
 
-	deals, total, err := s.UC.GetDealsByProduct(ctx, req.Id, pagable)
+	deals, total, prdUpdatedAt, err := s.UC.GetDealsByProduct(ctx, req.Id, pagable)
 	if err != nil {
 		return nil, err
 	}
-
+	if req.Page == 0 && len(deals) > 0 {
+		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_deals:%d", req.Id), prdUpdatedAt.UnixMilli())
+	}
 	dealItems := s.DealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(total))
 
 	return dealItems, nil
@@ -1342,8 +1356,12 @@ func (s *ProductHandler) GetPriceHistory(
 	if req.ProductId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:price_product_history:%d", req.ProductId), req.Timestamp)
+	if !updated {
+		return &bdspropb.PriceHistoryResponse{}, nil
+	}
 
-	items, total, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
+	items, total, productUpdatedTime, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
 		ProductID: req.ProductId,
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -1353,6 +1371,7 @@ func (s *ProductHandler) GetPriceHistory(
 	if err != nil {
 		return nil, err
 	}
+	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:price_product_history:%d", req.ProductId), productUpdatedTime.UnixMilli())
 
 	return &bdspropb.PriceHistoryResponse{
 		Data:  s.ProductPriceMapper.DTOListToPb(items),

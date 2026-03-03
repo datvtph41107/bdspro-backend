@@ -1734,11 +1734,25 @@ func (s *ProductUsecase) CancelDeposite(c context.Context, transactionId uint64)
 	return nil
 }
 
-func (uc *ProductUsecase) Posts(c context.Context, id uint64, dto dto.PostLinkSearch) (*[]domain.PostItem, error) {
+func (uc *ProductUsecase) Posts(
+	c context.Context,
+	id uint64,
+	dto dto.PostLinkSearch,
+) ([]domain.PostItem, error) {
+
 	if uc.PostUsecase != nil {
 		results, err := uc.PostUsecase.ProductPostLink(c, id, &dto)
-		return results, err
+		if err != nil {
+			return nil, err
+		}
+
+		if results == nil {
+			return nil, nil
+		}
+
+		return *results, nil
 	}
+
 	return nil, nil
 }
 
@@ -1752,20 +1766,20 @@ func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.SharingA
 	return entities, err
 }
 
-func (uc *ProductUsecase) GetDealsByProduct(c context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error) {
+func (uc *ProductUsecase) GetDealsByProduct(c context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, *time.Time, error) {
 	if uc.DealRepo == nil {
-		return nil, 0, &_routes.Except{
+		return nil, 0, &time.Time{}, &_routes.Except{
 			Code:    500,
 			Message: "Deal repository not initialized",
 		}
 	}
 
-	deals, total, err := uc.DealRepo.GetDealsByProductID(c, productID, pagable)
+	deals, total, productUpdatedAt, err := uc.DealRepo.GetDealsByProductID(c, productID, pagable)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, &time.Time{}, err
 	}
 
-	return deals, total, nil
+	return deals, total, productUpdatedAt, nil
 }
 
 func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.ProductHistorySearch) (*[]domain.ProductHistory, int64, error) {
@@ -2313,25 +2327,25 @@ func calcPricePerM2(price float64, area float64) int64 {
 // GetProductPricedDetail GET PRICE DETAIL INFO //////////////
 
 // GetPriceHistory HISTORY APPLY PRICE CHANGE ////////////////
-func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHistorySearch) ([]*dto.PriceHistoryItemDTO, int64, error) {
+func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHistorySearch) ([]*dto.PriceHistoryItemDTO, int64, *time.Time, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return nil, 0, _errors.UnauthorizedException()
+		return nil, 0, &time.Time{}, _errors.UnauthorizedException()
 	}
 
 	product, err := u.ProductRepo.GetProductByID(ctx, &req.ProductID)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, &time.Time{}, err
 	}
 	if product == nil {
-		return nil, 0, _errors.NotFoundException("Product not found")
+		return nil, 0, &time.Time{}, _errors.NotFoundException("Product not found")
 	}
 
 	prices, total, err := u.PriceRepo.GetHistoryProductPrice(ctx, req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, &time.Time{}, err
 	}
 	if len(prices) == 0 {
-		return []*dto.PriceHistoryItemDTO{}, total, nil
+		return []*dto.PriceHistoryItemDTO{}, total, &time.Time{}, nil
 	}
 
 	userIDSet := make(map[uint64]struct{})
@@ -2350,7 +2364,7 @@ func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHist
 		&sharepb.GetProfileByIdsRequest{Ids: userIDs},
 	)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, &time.Time{}, err
 	}
 
 	items := make([]*dto.PriceHistoryItemDTO, 0, len(prices))
@@ -2386,7 +2400,7 @@ func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHist
 		items = append(items, item)
 	}
 
-	return items, total, nil
+	return items, total, product.UpdatedAt, nil
 }
 
 func convertUserProfile(p *sharepb.ProfileItem) *dto.UserInfoDTO {

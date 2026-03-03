@@ -184,33 +184,50 @@ func (r *DealPostgresRepository) GetDealProducts(ctx context.Context, dealID uin
 	return dealProducts, nil
 }
 
-func (r *DealPostgresRepository) GetDealsByProductID(ctx context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, error) {
+func (r *DealPostgresRepository) GetDealsByProductID(
+	ctx context.Context,
+	productID uint64,
+	pagable _dto.Pagable,
+) ([]*domain.Deal, int64, *time.Time, error) {
+
 	var deals []*domain.Deal
 	var total int64
+	var productUpdatedAt *time.Time
 
-	// Count total
-	countQuery := GetDB(ctx, r.db).
+	db := GetDB(ctx, r.db)
+
+	if err := db.
 		Model(&domain.DealProduct{}).
 		Joins("JOIN deals ON deals.id = deal_products.deal_id").
-		Where("deal_products.product_id = ? AND deals.deleted_at IS NULL", productID)
-	if err := countQuery.Count(&total).Error; err != nil {
-		return nil, 0, err
+		Where("deal_products.product_id = ? AND deals.deleted_at IS NULL", productID).
+		Count(&total).Error; err != nil {
+		return nil, 0, nil, err
 	}
 
-	// Get deals with pagination
-	if err := GetDB(ctx, r.db).
+	if err := db.
+		Model(&domain.Product{}).
+		Select("updated_at").
+		Where("id = ?", productID).
+		Scan(&productUpdatedAt).Error; err != nil {
+		return nil, 0, nil, err
+	}
+
+	if err := db.
 		Model(&domain.Deal{}).
-		Joins("JOIN deal_products ON deal_products.deal_id = deals.id").
-		Where("deal_products.product_id = ? AND deals.deleted_at IS NULL", productID).
-		Preload("BankAccount", "deleted_at is null").
+		Joins("JOIN deal_products dp ON dp.deal_id = deals.id").
+		Where(`
+			dp.product_id = ? 
+			AND deals.deleted_at IS NULL
+		`, productID).
+		Preload("BankAccount", "deleted_at IS NULL").
 		Offset(pagable.GetOffset()).
 		Limit(pagable.GetLimit()).
 		Order("deals.created_at DESC").
 		Find(&deals).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
-	return deals, total, nil
+	return deals, total, productUpdatedAt, nil
 }
 
 func (r *DealPostgresRepository) CountDealsByProductID(ctx context.Context, productID uint64) (int64, error) {

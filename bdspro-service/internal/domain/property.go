@@ -1,4 +1,3 @@
-// internal/domain/property.go
 package domain
 
 import (

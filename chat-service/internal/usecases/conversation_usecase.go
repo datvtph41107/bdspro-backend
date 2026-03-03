@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	_errors "common/errors"
 	"context"
 	"strings"
 
@@ -264,4 +265,13 @@ func (c *ConversationUsecases) SetBackgroundImage(ctx context.Context, conversat
 		return nil, err
 	}
 	return conversation, nil
+}
+
+func (c *ConversationUsecases) SetBackgroundImageI(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*domain.Conversation, error) {
+	currentUserId := utils.GetCurrentUserID(ctx)
+
+	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, conversationId)
+	if err != nil {
+		return nil, _errors.InternalServerException("Get Participant not found")
+	}
 }

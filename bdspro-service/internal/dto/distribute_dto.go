@@ -46,9 +46,10 @@ type DistributionWithPartners struct {
 	PartnerCount int32                    `gorm:"column:partner_count" json:"partnerCount"`
 	Status       enums.DistributionStatus `json:"status"`
 
-	Price           int64                `gorm:"column:price" json:"price"`
-	CommissionType  enums.CommissionType `gorm:"column:commission_type" json:"commissionType"`
-	CommissionValue float64              `gorm:"column:commission_value" json:"commissionValue"`
+	Price            int64                `gorm:"column:price" json:"price"`
+	CommissionType   enums.CommissionType `gorm:"column:commission_type" json:"commissionType"`
+	CommissionValue  float64              `gorm:"column:commission_value" json:"commissionValue"`
+	ProductUpdatedAt *time.Time           `gorm:"column:product_updated_at;->;-:migration" json:"productUpdatedAt"`
 }
 
 type DistributeResultDTO struct {

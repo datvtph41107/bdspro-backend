@@ -235,6 +235,7 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		ward.id as ward_id,
 		province.name as province_name, 
 		ward.name as ward_name,
+		products.updated_at AS product_updated_at,
 		CASE
 			WHEN posts.transaction_type = 10 THEN COALESCE(prices.sale_price, 0)
 			ELSE COALESCE(prices.rent_price, 0)
@@ -287,7 +288,7 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 	query.Count(&total)
 
 	err := query.
-		Order("posts.created_at desc").
+		Order("product_updated_at DESC").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
 		Find(&results).Error

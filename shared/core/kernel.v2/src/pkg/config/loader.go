@@ -14,10 +14,6 @@ type Loader struct {
 	env  Env
 }
 
-type Validator interface {
-	Validate() error
-}
-
 func New(opts ...Option) (*Loader, error) {
 	options := DefaultOptions()
 	for _, opt := range opts {
@@ -43,7 +39,7 @@ func New(opts ...Option) (*Loader, error) {
 func (l *Loader) Load(ctx context.Context, out interface{}) error {
 	v := viper.New()
 
-	// ===== 1. Base config =====
+	// ===== base =====
 	v.SetConfigName(l.opts.ConfigName)
 	v.SetConfigType(l.opts.ConfigType)
 
@@ -52,10 +48,10 @@ func (l *Loader) Load(ctx context.Context, out interface{}) error {
 	}
 
 	if err := v.ReadInConfig(); err != nil {
-		return fmt.Errorf("load base config failed: %w", err)
+		return fmt.Errorf("base config: %w", err)
 	}
 
-	// ===== 2. Env config ===== config.local
+	// ===== env file =====
 	envFile := fmt.Sprintf("%s.%s", l.opts.ConfigName, l.env)
 
 	vEnv := viper.New()
@@ -66,30 +62,27 @@ func (l *Loader) Load(ctx context.Context, out interface{}) error {
 		vEnv.AddConfigPath(path)
 	}
 
-	if err := vEnv.ReadInConfig(); err != nil {
-		return fmt.Errorf("load env config (%s) failed: %w", envFile, err)
+	if err := vEnv.ReadInConfig(); err == nil {
+		_ = v.MergeConfigMap(vEnv.AllSettings())
 	}
 
-	// merge
-	if err := v.MergeConfigMap(vEnv.AllSettings()); err != nil {
-		return fmt.Errorf("merge config failed: %w", err)
-	}
-
-	// ===== 3. ENV override =====
+	// ===== env override =====
 	if l.opts.ReadEnv {
 		v.SetEnvPrefix(l.opts.EnvPrefix)
-		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		v.AutomaticEnv()
 	}
 
+	// ===== unmarshal =====
 	if err := v.Unmarshal(out); err != nil {
-		return fmt.Errorf("unmarshal failed: %w", err)
+		return fmt.Errorf("unmarshal: %w", err)
 	}
 
+	// ===== validate =====
 	if l.opts.Validate {
 		if validator, ok := out.(Validator); ok {
 			if err := validator.Validate(); err != nil {
-				return fmt.Errorf("validation failed: %w", err)
+				return err
 			}
 		}
 	}

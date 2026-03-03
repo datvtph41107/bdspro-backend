@@ -415,23 +415,43 @@ func (r *appointmentPostgresRepository) CountCurrent(ctx context.Context) (int64
 	return count, nil
 }
 
-func (r *appointmentPostgresRepository) GetByProductId(ctx context.Context, productId uint64, page, size int) ([]*domain.Appointment, int64, error) {
+func (r *appointmentPostgresRepository) GetByProductId(
+	ctx context.Context,
+	productId uint64,
+	page, size int,
+) ([]*domain.Appointment, int64, error) {
 	var appointments []*domain.Appointment
-	query := r.db.WithContext(ctx).
-		Model(&domain.Appointment{}).
-		Preload("AppointmentParticipants").
-		Preload("AppointmentParticipants.Contact").
-		Where("is_deleted = ? AND ? = ANY(product_ids)", false, int64(productId)).
-		Order("start_time DESC")
-
 	var total int64
-	err := query.Count(&total).Error
-	if err != nil {
+
+	baseQuery := r.db.WithContext(ctx).
+		Model(&domain.Appointment{}).
+		Select(`
+            appointments.*,
+            p.updated_at AS product_updated_at
+        `).
+		Joins(`
+            LEFT JOIN products p
+            ON p.id = ?
+        `, productId).
+		Where(`
+            appointments.is_deleted = ?
+            AND ? = ANY(appointments.product_ids)
+        `, false, int64(productId)).
+		Order("appointments.start_time DESC")
+
+	// Count
+	if err := baseQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err = query.Offset(page * size).Limit(size).Find(&appointments).Error
-	if err != nil {
+	// Data
+	if err := baseQuery.
+		Offset(page * size).
+		Limit(size).
+		Preload("AppointmentParticipants").
+		Preload("AppointmentParticipants.Contact").
+		Find(&appointments).Error; err != nil {
+
 		return nil, 0, err
 	}
 

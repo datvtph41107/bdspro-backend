@@ -2,8 +2,10 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	"time"
@@ -23,6 +25,7 @@ type AppointmentHandler struct {
 	Transformer        mapper.AppointmentTransformer
 	Validator          validator.AppointmentValidator
 	DashboardStatsJob  *job.DashboardStatsJob
+	SyncProvider       *_provider.SyncProvider
 }
 
 func NewAppointmentHandler(
@@ -30,12 +33,14 @@ func NewAppointmentHandler(
 	transformer mapper.AppointmentTransformer,
 	validator validator.AppointmentValidator,
 	dashboardStatsJob *job.DashboardStatsJob,
+	SyncProvider *_provider.SyncProvider,
 ) *AppointmentHandler {
 	return &AppointmentHandler{
 		AppointmentUsecase: appointmentUsecase,
 		Transformer:        transformer,
 		Validator:          validator,
 		DashboardStatsJob:  dashboardStatsJob,
+		SyncProvider:       SyncProvider,
 	}
 }
 
@@ -308,7 +313,12 @@ func (h *AppointmentHandler) GetAppointmentStats(ctx context.Context, req *share
 // @Security BearerAuth
 // @Success 200 {object} crmpb.ListAppointmentsResponse "Thành công"
 // @Router /v2.1/appointment/list/by-product/{id} [get]
-func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *sharepb.IdRequest) (*crmpb.ListAppointmentsResponse, error) {
+func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ListAppointmentsResponse, error) {
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_appointments:%d", req.Id), req.Timestamp)
+	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
+	if !updated && req.Page == 0 {
+		return &crmpb.ListAppointmentsResponse{}, nil
+	}
 	pagable := _dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
@@ -316,6 +326,9 @@ func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *
 	appointments, total, err := h.AppointmentUsecase.GetAppointmentsByProduct(ctx, req.Id, pagable)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if req.Page == 0 && len(appointments) > 0 {
+		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_appointments:%d", req.Id), appointments[0].ProductUpdatedAt.UnixMilli())
 	}
 	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
 }

@@ -59,6 +59,9 @@ type PostItem struct {
 	VisibleStatusName     string                   `gorm:"-" json:"visibleStatusName"`
 
 	Area float64 `gorm:"column:area" json:"area"`
+
+	// is not column
+	ProductUpdatedAt *time.Time `gorm:"column:product_updated_at;->;-:migration" json:"productUpdatedAt"`
 }
 
 func (PostItem) TableName() string {

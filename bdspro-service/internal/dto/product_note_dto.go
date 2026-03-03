@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
+	"time"
 )
 
 type CreateProductNoteRequest struct {
@@ -53,13 +54,14 @@ type ProductNoteMentionItem struct {
 }
 
 type ProductNoteRow struct {
-	ID        uint64               `gorm:"column:id"`
-	ProductID uint64               `gorm:"column:product_id"`
-	Content   string               `gorm:"column:content"`
-	IsPinned  bool                 `gorm:"column:is_pinned"`
-	AuthorId  uint64               `gorm:"column:author_id"`
-	CreatedAt string               `gorm:"column:created_at"`
-	Author    *sharepb.ProfileItem `gorm:"-"`
+	ID                   uint64               `gorm:"column:id"`
+	ProductID            uint64               `gorm:"column:product_id"`
+	Content              string               `gorm:"column:content"`
+	IsPinned             bool                 `gorm:"column:is_pinned"`
+	AuthorId             uint64               `gorm:"column:author_id"`
+	CreatedAt            string               `gorm:"column:created_at"`
+	ProductNoteUpdatedAt *time.Time           `gorm:"column:product_note_updated_at"`
+	Author               *sharepb.ProfileItem `gorm:"-"`
 }
 
 type ProductNote struct {
