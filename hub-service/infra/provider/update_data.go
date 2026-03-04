@@ -23,7 +23,6 @@ func (p *UpdateDataProviderImpl) GetRefreshIds(c context.Context, resource strin
 	default:
 		break
 	}
-
 	return nil, nil
 }
 

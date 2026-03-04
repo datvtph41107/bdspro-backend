@@ -42,11 +42,7 @@ func (r *PostgrePropertyRepo) GetRefreshSyncIds(c context.Context, req *dto.Chec
 	return propertyIds, nil
 }
 
-func (r *PostgrePropertyRepo) Search(
-	ctx context.Context,
-	req *dto.PropertySearchDTO,
-	userId uint64,
-) ([]*domain.Property, int64, error) {
+func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearchDTO, userId uint64) ([]*domain.Property, int64, error) {
 	var rows []dto.PropertyWithCounts
 	var total int64
 

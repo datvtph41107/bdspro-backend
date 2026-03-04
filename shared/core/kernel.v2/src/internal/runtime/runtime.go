@@ -9,14 +9,14 @@ import (
 )
 
 type entry struct {
-	comp   contract_runtime.Component
-	get    contract_runtime.GetComponent
-	status contract_runtime.ComponentStatus
+	comp   contract_runtime.Service
+	get    contract_runtime.ServiceDependency
+	status contract_runtime.ServiceStatus
 	mu     sync.RWMutex
 }
 
 type orch struct {
-	comps map[contract_runtime.ComponentType]*entry
+	comps map[contract_runtime.ServiceType]*entry
 	order []contract_runtime.ComponentType
 	mu    sync.RWMutex
 	state contract_runtime.OrchestratorStatus

@@ -50,7 +50,7 @@ func (h *ProductNoteHandler) ListProductNotes(
 	if req.ProductId == 0 {
 		return nil, _errors.BadRequestException("productId is required")
 	}
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf(key, req.ProductId, userId), req.TimeStamp)
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf(key, req.ProductId, userId), req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.ListProductNotesResponse{}, nil

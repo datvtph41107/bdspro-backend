@@ -20,7 +20,6 @@ type PropertyRepo interface {
 	GetUpdatedAt(c context.Context, id uint64) (int64, error)
 
 	// Property User
-	
 }
 
 type PropertyRelationRepo interface {
