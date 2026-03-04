@@ -10,6 +10,7 @@ import (
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
@@ -869,9 +870,11 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest)
 // @Param size query int false "Page size"
 // @Router /v2/bdspro/v2/product/{id}/deals [get]
 func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	key := fmt.Sprintf("time:product_deals:%d:%d", profileId, req.Id)
-	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	userId := _utils.GetOriginIdFromContext(ctx)
+	if userId == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_deals:%d", req.Id), req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.GetOrganizationDealsResponse{}, nil
@@ -886,7 +889,7 @@ func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest)
 		return nil, err
 	}
 	if req.Page == 0 && len(deals) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_deals:%d", req.Id), prdUpdatedAt.UnixMilli())
+		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_deals:%d:user:%d", req.Id, userId), prdUpdatedAt.UnixMilli())
 	}
 	dealItems := s.DealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(total))
 

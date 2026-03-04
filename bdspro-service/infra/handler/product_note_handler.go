@@ -8,6 +8,7 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	_provider "common/provider"
+	_utils "common/utils"
 	"context"
 	"fmt"
 
@@ -41,10 +42,15 @@ func (h *ProductNoteHandler) ListProductNotes(
 	ctx context.Context,
 	req *bdspropb.ListProductNotesRequest,
 ) (*bdspropb.ListProductNotesResponse, error) {
+	key := "time:product_posts:%d:user:%d"
+	userId := _utils.GetOriginIdFromContext(ctx)
+	if userId == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
 	if req.ProductId == 0 {
 		return nil, _errors.BadRequestException("productId is required")
 	}
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_notes:%d", req.ProductId), req.Timestamp)
+	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf(key, req.ProductId, userId), req.TimeStamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.ListProductNotesResponse{}, nil
@@ -65,7 +71,7 @@ func (h *ProductNoteHandler) ListProductNotes(
 		return nil, err
 	}
 	if req.Page == 0 && len(items) > 0 {
-		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_posts:%d", req.ProductId), items[0].Note.ProductNoteUpdatedAt.UnixMilli())
+		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf(key, req.ProductId, userId), items[0].Note.ProductNoteUpdatedAt.UnixMilli())
 	}
 	h.enrichUsers(ctx, items)
 	return &bdspropb.ListProductNotesResponse{
