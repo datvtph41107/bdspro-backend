@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"time"
 
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
@@ -119,11 +120,14 @@ func (h *DistributionHandler) ListDistributions(
 	ctx context.Context,
 	req *bdspropb.ListDistributionsRequest,
 ) (*bdspropb.ListDistributionsResponse, error) {
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_distributions:%d", req.ProductId), req.TimeStamp)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	key := fmt.Sprintf("time:product_distributions:%d:%d", profileId, req.ProductId)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.ListDistributionsResponse{}, nil
 	}
+	fmt.Println("DEBUG=%d", req.Timestamp)
 	filter := &dto.FilterDistributeDTO{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -143,8 +147,12 @@ func (h *DistributionHandler) ListDistributions(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list distributions: %v", err)
 	}
-	if req.Page == 0 && len(lists) > 0 {
-		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_distributions:%d", req.ProductId), lists[0].ProductUpdatedAt.UnixMilli())
+	if req.Page == 0 {
+		time := time.Now().UnixMilli() - 24*60*60*1000 // trừ hẳn 1 ngày nếu ds đang rỗng
+		if len(lists) > 0 {
+			time = lists[0].ProductUpdatedAt.UnixMilli()
+		}
+		h.SyncProvider.PutTimestamp(ctx, key, time)
 	}
 
 	return &bdspropb.ListDistributionsResponse{

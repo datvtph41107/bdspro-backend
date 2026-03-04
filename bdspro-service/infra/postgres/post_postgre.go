@@ -265,7 +265,7 @@ func (r *GormPostRepo) Search(ctx context.Context, profileId uint64, dto *dto.Po
 		Joins("left join ward_v2 ward on ward.id = products.ward_id").
 		Joins("LEFT JOIN post_media post_media ON post_media.post_id = posts.id and post_media.deleted_at is null").
 		Where("posts.deleted_at is null").
-		Group("posts.id, posts.created_by, province.id, ward.id, province.name, ward.name, prices.id, products.sale_status, products.rent_status, products.area")
+		Group("products.updated_at, posts.id, posts.created_by, province.id, ward.id, province.name, ward.name, prices.id, products.sale_status, products.rent_status, products.area")
 
 	if profileId != 0 {
 		query = query.Where("posts.created_by = ?", profileId)

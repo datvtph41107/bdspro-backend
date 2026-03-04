@@ -116,7 +116,7 @@ message ListProductNotesRequest {
     string query = 4;
     uint32 page = 5;
     uint32 size = 6;
-    int64 timeStamp = 7;
+    int64 timestamp = 7;
 }
 
 message ListProductNotesResponse {

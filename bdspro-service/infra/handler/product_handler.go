@@ -824,7 +824,9 @@ func (s *ProductHandler) GetMembers(ctx context.Context, req *bdspropb.IdRequest
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/posts [get]
 func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.PostResponse, error) {
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_posts:%d", req.Id), req.Timestamp)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	key := fmt.Sprintf("time:product_posts:%d:%d", profileId, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.PostResponse{}, nil
@@ -841,8 +843,12 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest)
 	if err != nil {
 		return nil, err
 	}
-	if req.Page == 0 && len(posts) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_posts:%d", req.Id), posts[0].ProductUpdatedAt.UnixMilli())
+	if req.Page == 0 {
+		time := time.Now().UnixMilli() - 24*60*60*1000
+		if len(posts) > 0 {
+			time = posts[0].ProductUpdatedAt.UnixMilli()
+		}
+		s.SyncProvider.PutTimestamp(ctx, key, time)
 	}
 	postResponse := s.PostMapper.PostToPbList(&posts)
 	// postResponse := make([]*bdspropb.PostItem, 0)
@@ -863,7 +869,9 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest)
 // @Param size query int false "Page size"
 // @Router /v2/bdspro/v2/product/{id}/deals [get]
 func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_deals:%d", req.Id), req.Timestamp)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	key := fmt.Sprintf("time:product_deals:%d:%d", profileId, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.GetOrganizationDealsResponse{}, nil
@@ -1356,7 +1364,9 @@ func (s *ProductHandler) GetPriceHistory(
 	if req.ProductId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:price_product_history:%d", req.ProductId), req.Timestamp)
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	key := fmt.Sprintf("time:price_product_history:%d:%d", profileId, req.ProductId)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	if !updated {
 		return &bdspropb.PriceHistoryResponse{}, nil
 	}
@@ -1371,7 +1381,13 @@ func (s *ProductHandler) GetPriceHistory(
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:price_product_history:%d", req.ProductId), productUpdatedTime.UnixMilli())
+	if req.Page == 0 {
+		time := time.Now().UnixMilli() - 24*60*60*1000
+		if len(items) > 0 {
+			time = productUpdatedTime.UnixMilli()
+		}
+		s.SyncProvider.PutTimestamp(ctx, key, time)
+	}
 
 	return &bdspropb.PriceHistoryResponse{
 		Data:  s.ProductPriceMapper.DTOListToPb(items),
