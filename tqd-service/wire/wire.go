@@ -1,21 +1,21 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
+	"tqd/initial"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_http "tqd/infra/handler/http"
 	tqd_infra_mapper "tqd/infra/mapper"
 	tqd_infra_postgres "tqd/infra/postgres"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
-	"tqd/initial"
 	tqd_initial "tqd/initial"
 	tqd_internal_usecase "tqd/internal/usecase"
-
-	"github.com/google/wire"
+	tqd_map "tqd/map"
 )
 
 // Inject dependencies
@@ -50,6 +50,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewDirectorySupplierUsecase,
 	tqd_infra_providers.NewFileProvider,
 	tqd_infra_providers.NewGeoProvider,
+	tqd_map.NewMapManager,
 	tqd_infra_client.NewNotificationClient,
 	tqd_infra_handler_http.NewOpenHourHandler,
 	tqd_infra_postgres.NewOpenHourPostgres,
@@ -65,7 +66,6 @@ var wireSet = wire.NewSet(
 	tqd_infra_providers.NewTransactionProvider,
 	tqd_infra_client.NewUserClient,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

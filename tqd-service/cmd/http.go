@@ -36,6 +36,7 @@ var publicRoutes = []string{
 	// "/v2/tqd/service/categories",
 	// "/v2/tqd/directory/sources",
 	// "/v2/tqd/directory/suppliers",
+	"/v2/tqd/pois/nearby",
 }
 
 var tempRoutes = []string{}

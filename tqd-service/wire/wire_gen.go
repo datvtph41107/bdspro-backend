@@ -17,6 +17,7 @@ import (
 	"tqd/infra/validator"
 	"tqd/initial"
 	"tqd/internal/usecase"
+	"tqd/map"
 )
 
 // Injectors from wire.go:
@@ -52,7 +53,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 	poiCategoryUsecase := usecase.NewPoiCategoryUsecase(iPoiCategoryRepo)
 	poiCategoryHandler := handler_http.NewPoiCategoryHandler(poiCategoryUsecase)
 	ipoiRepo := postgres.NewPOIRepo(transactionRepo)
-	ipoiUsecase := usecase.NewPOIUsecase(ipoiRepo)
+	mapManager := _map.NewMapManager()
+	ipoiUsecase := usecase.NewPOIUsecase(ipoiRepo, mapManager)
 	poihttpHandler := handler_http.NewPOIHTTPHandler(ipoiUsecase)
 	iOpenHourRepo := postgres.NewOpenHourPostgres(transactionRepo)
 	openHourUsecase := usecase.NewOpenHourUsecase(iOpenHourRepo)
@@ -68,4 +70,4 @@ func InitializeApp() (*initial.InitialApp, error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, handler_http.NewAmenityHandler, mapper.NewAmenityMapper, postgres.NewAmenityRepo, usecase.NewAmenityUsecase, initial.NewApp, usecase.NewBaseUsecase, providers.NewCacheProvider, handler_http.NewContactLabelHandler, mapper.NewContactLabelMapper, postgres.NewContactLabelPostgresRepo, usecase.NewContactLabelUsecase, validator.NewContactLabelValidator, handler_http.NewDirectoryCategoryHandler, mapper.NewDirectoryCategoryMapper, postgres.NewDirectoryCategoryPostgresRepo, usecase.NewDirectoryCategoryUsecase, validator.NewDirectoryCategoryValidator, handler_http.NewDirectorySourceHandler, mapper.NewDirectorySourceMapper, postgres.NewDirectorySourcePostgres, usecase.NewDirectorySourceUsecase, validator.NewDirectorySourceValidator, handler_http.NewDirectorySupplierHandler, mapper.NewDirectorySupplierMapper, postgres.NewDirectorySupplierPostgres, usecase.NewDirectorySupplierUsecase, providers.NewFileProvider, providers.NewGeoProvider, client.NewNotificationClient, handler_http.NewOpenHourHandler, postgres.NewOpenHourPostgres, usecase.NewOpenHourUsecase, handler_http.NewPOIHTTPHandler, postgres.NewPOIRepo, usecase.NewPOIUsecase, client.NewPermissionClient, handler_http.NewPoiCategoryHandler, postgres.NewPoiCategoryPostgres, usecase.NewPoiCategoryUsecase, initial.NewRedisService, providers.NewTransactionProvider, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, handler_http.NewAmenityHandler, mapper.NewAmenityMapper, postgres.NewAmenityRepo, usecase.NewAmenityUsecase, initial.NewApp, usecase.NewBaseUsecase, providers.NewCacheProvider, handler_http.NewContactLabelHandler, mapper.NewContactLabelMapper, postgres.NewContactLabelPostgresRepo, usecase.NewContactLabelUsecase, validator.NewContactLabelValidator, handler_http.NewDirectoryCategoryHandler, mapper.NewDirectoryCategoryMapper, postgres.NewDirectoryCategoryPostgresRepo, usecase.NewDirectoryCategoryUsecase, validator.NewDirectoryCategoryValidator, handler_http.NewDirectorySourceHandler, mapper.NewDirectorySourceMapper, postgres.NewDirectorySourcePostgres, usecase.NewDirectorySourceUsecase, validator.NewDirectorySourceValidator, handler_http.NewDirectorySupplierHandler, mapper.NewDirectorySupplierMapper, postgres.NewDirectorySupplierPostgres, usecase.NewDirectorySupplierUsecase, providers.NewFileProvider, providers.NewGeoProvider, _map.NewMapManager, client.NewNotificationClient, handler_http.NewOpenHourHandler, postgres.NewOpenHourPostgres, usecase.NewOpenHourUsecase, handler_http.NewPOIHTTPHandler, postgres.NewPOIRepo, usecase.NewPOIUsecase, client.NewPermissionClient, handler_http.NewPoiCategoryHandler, postgres.NewPoiCategoryPostgres, usecase.NewPoiCategoryUsecase, initial.NewRedisService, providers.NewTransactionProvider, client.NewUserClient)

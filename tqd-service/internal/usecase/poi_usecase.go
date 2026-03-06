@@ -7,6 +7,7 @@ import (
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
+	_map "tqd/map"
 )
 
 // IPOIUsecase defines the interface for POI usecase operations
@@ -18,20 +19,22 @@ type IPOIUsecase interface {
 	GetPOIByCode(ctx context.Context, code string) (*dto.POIDTO, *_err.ErrorDTO)
 	GetPOIList(ctx context.Context, req *dto.ListPOIsRequestDTO) (*dto.ListPOIsResponseDTO, *_err.ErrorDTO)
 	GetPOIsByCategory(ctx context.Context, categoryID uint64, limit int) ([]dto.POIDTO, *_err.ErrorDTO)
-	GetNearbyPOIs(ctx context.Context, lat, lng, radius float64, limit int) ([]dto.POIDTO, *_err.ErrorDTO)
+	GetNearbyPOIs(ctx context.Context, lat, lng float64, radius int32, limit int) ([]dto.POIDTO, *_err.ErrorDTO)
 	UpdatePOIRating(ctx context.Context, id uint64, ratingPoint float64, ratingCount int) *_err.ErrorDTO
 }
 
 // POIUsecase implements the POI usecase interface
 type POIUsecase struct {
 	poiRepo repo.IPOIRepo
+	mm      *_map.MapManager
 }
 
 // NewPOIUsecase creates a new POI usecase instance
 // @bind: internal/usecase/poi_usecase.go
-func NewPOIUsecase(poiRepo repo.IPOIRepo) IPOIUsecase {
+func NewPOIUsecase(poiRepo repo.IPOIRepo, mm *_map.MapManager) IPOIUsecase {
 	return &POIUsecase{
 		poiRepo: poiRepo,
+		mm:      mm,
 	}
 }
 
@@ -203,7 +206,7 @@ func (u *POIUsecase) GetPOIsByCategory(ctx context.Context, categoryID uint64, l
 }
 
 // GetNearbyPOIs retrieves POIs within a certain radius
-func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng, radius float64, limit int) ([]dto.POIDTO, *_err.ErrorDTO) {
+func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng float64, radius int32, limit int) ([]dto.POIDTO, *_err.ErrorDTO) {
 	// Validate coordinates
 	if lat < -90 || lat > 90 {
 		return nil, &_err.ErrorDTO{
@@ -218,7 +221,9 @@ func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng, radius float64
 		}
 	}
 
-	pois, err := u.poiRepo.GetNearby(ctx, lat, lng, radius, limit)
+	pois, err := u.mm.Nearby(ctx, lat, lng, radius)
+
+	// pois, err := u.poiRepo.GetNearby(ctx, lat, lng, radius, limit)
 	if err != nil {
 		return nil, &_err.ErrorDTO{
 			Code:    500,
@@ -226,7 +231,18 @@ func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng, radius float64
 		}
 	}
 
-	poiDTOs := mapper.POIListToDTO(pois)
+	// poiDTOs := mapper.POIListToDTO(pois)
+	poiDTOs := make([]dto.POIDTO, len(pois))
+	for i, poi := range pois {
+		poiDTO := &dto.POIDTO{
+			Lat: float64(poi.Lat),
+			Lng: float64(poi.Lon),
+		}
+		if poiDTO != nil {
+			poiDTOs[i] = *poiDTO
+		}
+	}
+
 	return poiDTOs, nil
 }
 

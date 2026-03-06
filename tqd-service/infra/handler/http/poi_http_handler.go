@@ -309,20 +309,23 @@ func (h *POIHTTPHandler) GetNearbyPOIs(c *gin.Context) {
 	latStr := c.Query("lat")
 	lngStr := c.Query("lng")
 
-	lat, err := strconv.ParseFloat(latStr, 64)
+	lat, err := strconv.ParseFloat(latStr, 32)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Vĩ độ không hợp lệ"})
 		return
 	}
+	// lat := float32(_lat)
 
-	lng, err := strconv.ParseFloat(lngStr, 64)
+	lng, err := strconv.ParseFloat(lngStr, 32)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Kinh độ không hợp lệ"})
 		return
 	}
+	// lng := float32(_lng)
 
 	radiusStr := c.DefaultQuery("radius", "10")
-	radius, err := strconv.ParseFloat(radiusStr, 64)
+	_radius, err := strconv.ParseInt(radiusStr, 10, 32)
+	radius := int32(_radius)
 	if err != nil || radius <= 0 {
 		radius = 10
 	}
