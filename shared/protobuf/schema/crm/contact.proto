@@ -67,7 +67,7 @@ service ContactService {
   };
   rpc GetListContactByProductId (sharepb.SyncRequest) returns (ContactListDTO) {
     option (google.api.http) = {
-      get: "/v2/crm/contact/by-product/{productId}"
+      get: "/v2/crm/contact/by-product/{id}"
     };
   };
   rpc UpdateProductIds (UpdateProductIdsRequest) returns (sharepb.SubmitResponse) {

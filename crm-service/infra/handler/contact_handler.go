@@ -361,7 +361,7 @@ func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRe
 // @Param page query int false "Trang"
 // @Param size query int false "Kích thước trang"
 // @Security BearerAuth
-// @Router /contact/by-product/{productId} [get]
+// @Router /contact/by-product/{id} [get]
 func (s *ContactService) GetListContactByProductId(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
 	key := "time:product_crm_contacts:%d:user:%d"
 	userId := _utils.GetOriginIdFromContext(ctx)

@@ -109,7 +109,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	appointmentTransformer := mapper.NewAppointmentTransformer()
 	appointmentValidator := validator.NewAppointmentValidator()
 	dashboardStatsJob := job.NewDashboardStatsJob(appointmentUsecase, db)
-	appointmentHandler := handler.NewAppointmentHandler(appointmentUsecase, appointmentTransformer, appointmentValidator, dashboardStatsJob)
+	appointmentHandler := handler.NewAppointmentHandler(appointmentUsecase, appointmentTransformer, appointmentValidator, dashboardStatsJob, syncProvider)
 	initialApp := initial.NewInitialApp(ruleUsecase, ruleEventUsecase, pipelineService, contactService, leadService, stageService, ruleService, followService, blockService, friendGroupService, friendService, sharingAccessService, invitationInstallService, crmInternalService, enumService, rateHandler, reportHandler, reportAdminHandler, reportReasonHandler, registryHandler, appointmentHandler)
 	return initialApp, nil
 }

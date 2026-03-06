@@ -425,14 +425,13 @@ func (r *appointmentPostgresRepository) GetByProductId(
 
 	baseQuery := r.db.WithContext(ctx).
 		Model(&domain.Appointment{}).
-		Select(`
-            appointments.*,
-            p.updated_at AS product_updated_at
-        `).
-		Joins(`
-            LEFT JOIN products p
-            ON p.id = ?
-        `, productId).
+		// Select(`
+		//     appointments.*
+		// `).
+		// Joins(`
+		//     LEFT JOIN products p
+		//     ON p.id = ?
+		// `, productId).
 		Where(`
             appointments.is_deleted = ?
             AND ? = ANY(appointments.product_ids)
