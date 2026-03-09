@@ -2,11 +2,9 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	_errors "common/errors"
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
-	"fmt"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	"time"
@@ -315,12 +313,9 @@ func (h *AppointmentHandler) GetAppointmentStats(ctx context.Context, req *share
 // @Success 200 {object} crmpb.ListAppointmentsResponse "Thành công"
 // @Router /v2.1/appointment/list/by-product/{id} [get]
 func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ListAppointmentsResponse, error) {
-	key := "time:product_appointments:%d:user:%d"
-	userId := _utils.GetOriginIdFromContext(ctx)
-	if userId == 0 {
-		return nil, _errors.UnauthorizedException()
-	}
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf(key, req.Id, userId), req.Timestamp)
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductAppointments, req.Id)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &crmpb.ListAppointmentsResponse{}, nil
@@ -333,13 +328,13 @@ func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if req.Page == 0 {
-		time := time.Now().UnixMilli() - 24*60*60*1000
-		if len(appointments) > 0 && appointments[0].ProductUpdatedAt != nil {
-			time = appointments[0].ProductUpdatedAt.UnixMilli()
-		}
-		h.SyncProvider.PutTimestamp(ctx, key, time)
-	}
+	// if req.Page == 0 {
+	// 	time := time.Now().UnixMilli() - 24*60*60*1000
+	// 	if len(appointments) > 0 && appointments[0].ProductUpdatedAt != nil {
+	// 		time = appointments[0].ProductUpdatedAt.UnixMilli()
+	// 	}
+	// 	h.SyncProvider.PutTimestamp(ctx, key, time)
+	// }
 	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
 }
 

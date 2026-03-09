@@ -612,9 +612,9 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 			// 	ids[0] = originId
 			// }
 			// u.HubProvider.PutUpdate(cloneCtx, "property", property.ID, ids, time.Now().Unix())
-			u.SyncProvider.PutTimestamp(cloneCtx, fmt.Sprintf("u:property:%d", property.ID), property.UpdatedAt.UnixMilli())
+			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, property.ID), property.UpdatedAt.UnixMilli())
 			if productID != nil {
-				u.SyncProvider.PutTimestamp(cloneCtx, fmt.Sprintf("u:product:%d", *productID), property.UpdatedAt.UnixMilli())
+				u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyProductMe, *productID), property.UpdatedAt.UnixMilli())
 			}
 
 		}()
@@ -667,20 +667,20 @@ func (u *PropertyUsecase) buildProperty(req *domain.Property, userId uint64) (*d
 		Identifier:         req.Identifier,
 		NationalID:         req.NationalID,
 		NationalIDVerified: req.NationalIDVerified,
-		AreaTotal:          req.AreaTotal,
-		AreaLand:           req.AreaLand,
-		AreaResidential:    req.AreaResidential,
-		LegalNote:          req.LegalNote,
-		LegalStatus:        req.LegalStatus,
-		ProvinceID:         req.ProvinceID,
-		DistrictID:         req.DistrictID,
-		WardID:             req.WardID,
-		AvatarID:           req.AvatarID,
-		BuildingInfoID:     req.BuildingInfoID,
-		SourceType:         req.SourceType,
-		RecordStatus:       enums.EPropertyStatusActive,
-		Scope:              req.Scope,
-		CreatedBy:          userId,
+		// AreaTotal:          req.AreaTotal,
+		// AreaLand:           req.AreaLand,
+		// AreaResidential:    req.AreaResidential,
+		// LegalNote:      req.LegalNote,
+		// LegalStatus:    req.LegalStatus,
+		ProvinceID:     req.ProvinceID,
+		DistrictID:     req.DistrictID,
+		WardID:         req.WardID,
+		AvatarID:       req.AvatarID,
+		BuildingInfoID: req.BuildingInfoID,
+		SourceType:     req.SourceType,
+		RecordStatus:   enums.EPropertyStatusActive,
+		Scope:          req.Scope,
+		CreatedBy:      userId,
 	}
 
 	return property, nil
@@ -797,10 +797,10 @@ func (u *PropertyUsecase) CreateWithProduct(ctx context.Context, product *domain
 		PropertyTypeID: product.PropertyTypeId,
 		Title:          product.Name,
 		ProjectID:      product.ProjectID,
-		AreaTotal:      &product.Area,
-		AddressDetail:  product.Address,
-		MapURL:         product.GoogleMapLink,
-		RecordStatus:   enums.EPropertyStatusActive,
+		// AreaTotal:      &product.Area,
+		AddressDetail: product.Address,
+		MapURL:        product.GoogleMapLink,
+		RecordStatus:  enums.EPropertyStatusActive,
 	}
 
 	// Tạo Property
@@ -879,10 +879,10 @@ func (u *PropertyUsecase) GetOrCreatePropertyFromProductID(ctx context.Context, 
 		PropertyTypeID: product.PropertyTypeId,
 		Title:          product.Name,
 		ProjectID:      product.ProjectID,
-		AreaTotal:      &product.Area,
-		AddressDetail:  product.Address,
-		MapURL:         product.GoogleMapLink,
-		RecordStatus:   enums.EPropertyStatusActive,
+		// AreaTotal:      &product.Area,
+		AddressDetail: product.Address,
+		MapURL:        product.GoogleMapLink,
+		RecordStatus:  enums.EPropertyStatusActive,
 	}
 
 	// Tạo Property
@@ -949,8 +949,8 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 	if property != nil {
 		// Tạo property update chỉ với các field cần update
 		updateProperty := &domain.Property{
-			AreaLand:       &houseInfo.AreaLand,
-			AreaTotal:      &houseInfo.AreaTotal,
+			// AreaLand:       &houseInfo.AreaLand,
+			// AreaTotal:      &houseInfo.AreaTotal,
 			ProjectID:      houseInfo.ProjectID,
 			PropertyTypeID: houseInfo.PropertyTypeID,
 		}
@@ -1158,9 +1158,9 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 	property := &domain.Property{
 		PropertyTypeID: asset.PropertyTypeId,
 		Title:          asset.Name,
-		AreaTotal:      &asset.Area,
-		AddressDetail:  asset.Address,
-		RecordStatus:   enums.EPropertyStatusActive, // Default status
+		// AreaTotal:      &asset.Area,
+		AddressDetail: asset.Address,
+		RecordStatus:  enums.EPropertyStatusActive, // Default status
 	}
 
 	// Map legal status từ Asset - giữ nguyên dạng số hoặc convert nếu cần

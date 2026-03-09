@@ -116,6 +116,11 @@ func (r *RedisService) Set(key, value string) error {
 	return r.Client.Set(r.Ctx, key, value, 15*time.Minute).Err()
 }
 
+// Set lưu một key-value vào Redis
+func (r *RedisService) SetWithTime(key string, value int64, expiration time.Duration) error {
+	return r.Client.Set(r.Ctx, key, value, expiration).Err()
+}
+
 // Get lấy giá trị từ Redis
 func (r *RedisService) Get(key string) (string, error) {
 	return r.Client.Get(r.Ctx, key).Result()

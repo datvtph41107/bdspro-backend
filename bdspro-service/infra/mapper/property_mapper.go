@@ -218,7 +218,7 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		// Latitude:         property.Latitude,
 		// Longitude:        property.Longitude,
 		AreaTotal: property.AreaTotal,
-		AreaLand:  property.AreaLand,
+		// AreaLand:  property.AreaLand,
 		// AreaResidential:  property.AreaResidential,
 
 		CreatedBy:    property.CreatedBy,
@@ -375,28 +375,28 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 	// Map Property
 	if req.Property != nil {
 		property := &domain.Property{
-			PropertyTypeID:  req.Property.PropertyTypeId,
-			Title:           req.Property.Title,
-			LocationID:      req.Property.LocationId,
-			AddressDetail:   req.Property.AddressDetail,
-			Latitude:        req.Property.Latitude,
-			Longitude:       req.Property.Longitude,
-			MapURL:          req.Property.MapUrl,
-			ProjectID:       req.Property.ProjectId,
-			Level:           req.Property.Level,
-			UnitCode:        req.Property.UnitCode,
-			AreaTotal:       req.Property.AreaTotal,
-			AreaLand:        req.Property.AreaLand,
-			AreaResidential: req.Property.AreaResidential,
-			LegalNote:       req.Property.LegalNote,
-			ProvinceID:      req.Property.ProvinceId,
-			WardID:          req.Property.WardId,
-			SourceType:      enums.EPropertySourceType(req.Property.SourceType),
+			PropertyTypeID: req.Property.PropertyTypeId,
+			Title:          req.Property.Title,
+			LocationID:     req.Property.LocationId,
+			AddressDetail:  req.Property.AddressDetail,
+			Latitude:       req.Property.Latitude,
+			Longitude:      req.Property.Longitude,
+			MapURL:         req.Property.MapUrl,
+			ProjectID:      req.Property.ProjectId,
+			Level:          req.Property.Level,
+			UnitCode:       req.Property.UnitCode,
+			AreaTotal:      req.Property.AreaTotal,
+			// AreaLand:        req.Property.AreaLand,
+			// AreaResidential: req.Property.AreaResidential,
+			// LegalNote:       req.Property.LegalNote,
+			ProvinceID: req.Property.ProvinceId,
+			WardID:     req.Property.WardId,
+			SourceType: enums.EPropertySourceType(req.Property.SourceType),
 		}
 		// Convert LegalStatus string to enum (nếu có)
-		if req.Property.LegalStatus != 0 {
-			property.LegalStatus = enums.EHouseCertificate(req.Property.LegalStatus)
-		}
+		// if req.Property.LegalStatus != 0 {
+		// 	property.LegalStatus = enums.EHouseCertificate(req.Property.LegalStatus)
+		// }
 		if req.Property.RecordStatus != 0 {
 			property.RecordStatus = enums.EPropertyStatus(req.Property.RecordStatus)
 		}
@@ -510,26 +510,26 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 
 	// Map Property - chỉ map các field được set (không nil)
 	property = &domain.Property{
-		ID:              req.Id,
-		BuildingInfoID:  req.BuildingInfoId,
-		Title:           req.Title,
-		PropertyTypeID:  req.PropertyTypeId,
-		LocationID:      req.LocationId,
-		AddressDetail:   req.AddressDetail,
-		Latitude:        req.Latitude,
-		Longitude:       req.Longitude,
-		MapURL:          req.MapUrl,
-		Level:           req.Level,
-		UnitCode:        req.UnitCode,
-		ProjectID:       req.ProjectId,
-		AreaTotal:       req.AreaTotal,
-		AreaLand:        req.AreaLand,
-		AreaResidential: req.AreaResidential,
-		LegalNote:       req.LegalNote,
-		ProvinceID:      req.ProvinceId,
-		WardID:          req.WardId,
-		RecordStatus:    enums.EPropertyStatus(req.RecordStatus),
-		LegalStatus:     enums.EHouseCertificate(req.LegalStatus),
+		ID:             req.Id,
+		BuildingInfoID: req.BuildingInfoId,
+		Title:          req.Title,
+		PropertyTypeID: req.PropertyTypeId,
+		LocationID:     req.LocationId,
+		AddressDetail:  req.AddressDetail,
+		Latitude:       req.Latitude,
+		Longitude:      req.Longitude,
+		MapURL:         req.MapUrl,
+		Level:          req.Level,
+		UnitCode:       req.UnitCode,
+		ProjectID:      req.ProjectId,
+		AreaTotal:      req.AreaTotal,
+		ProvinceID:     req.ProvinceId,
+		WardID:         req.WardId,
+		RecordStatus:   enums.EPropertyStatus(req.RecordStatus),
+		// AreaLand:        req.AreaLand,
+		// AreaResidential: req.AreaResidential,
+		// LegalNote:       req.LegalNote,
+		// LegalStatus:     enums.EHouseCertificate(req.LegalStatus),
 	}
 
 	// Map AddressV3Proto nếu có

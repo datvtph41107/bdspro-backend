@@ -772,6 +772,8 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			}
 		}
 
+		println("product.BuildingInfo", product.PropertyId)
+
 		productList[i] = &bdspropb.ProductResponse{
 			Id:              product.ID,
 			PropertyId:      &product.PropertyId,

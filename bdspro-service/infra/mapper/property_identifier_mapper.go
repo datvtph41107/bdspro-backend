@@ -14,7 +14,7 @@ func NewIdentifierMapper() *PropertyIdentifierMapper {
 	return &PropertyIdentifierMapper{}
 }
 
-func (m *PropertyIdentifierMapper) ToDTO(identifier *domain.Identifier) *dto.IdentifierDTO {
+func (m *PropertyIdentifierMapper) ToDTO(identifier *domain.CountryIdentifier) *dto.IdentifierDTO {
 	if identifier == nil {
 		return nil
 	}
@@ -36,7 +36,7 @@ func (m *PropertyIdentifierMapper) ToDTO(identifier *domain.Identifier) *dto.Ide
 	}
 }
 
-func (m *PropertyIdentifierMapper) ToDTOList(identifiers []*domain.Identifier) []*dto.IdentifierDTO {
+func (m *PropertyIdentifierMapper) ToDTOList(identifiers []*domain.CountryIdentifier) []*dto.IdentifierDTO {
 	if identifiers == nil {
 		return nil
 	}
@@ -48,12 +48,12 @@ func (m *PropertyIdentifierMapper) ToDTOList(identifiers []*domain.Identifier) [
 	return result
 }
 
-func (m *PropertyIdentifierMapper) ToDomain(dto *dto.IdentifierDTO) *domain.Identifier {
+func (m *PropertyIdentifierMapper) ToDomain(dto *dto.IdentifierDTO) *domain.CountryIdentifier {
 	if dto == nil {
 		return nil
 	}
 
-	identifier := &domain.Identifier{
+	identifier := &domain.CountryIdentifier{
 		ID:             dto.ID,
 		LandParcelCode: dto.LandParcelCode,
 		ProjectCode:    dto.ProjectCode,

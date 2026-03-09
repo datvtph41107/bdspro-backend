@@ -8,10 +8,13 @@ import (
 )
 
 type Property struct {
-	ID             uint64  `gorm:"primaryKey;autoIncrement" json:"id"`
-	PropertyTypeID *uint64 `gorm:"type:bigint;index" json:"propertyTypeId,omitempty"`
-	Title          string  `gorm:"size:255" json:"title,omitempty"`
+	ID      uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
+	Title   string `gorm:"size:255" json:"title,omitempty"`
+	Version uint32 `gorm:"type:int2" json:"version,omitempty"`
 
+	PropertyTypeID *uint64 `gorm:"type:bigint;index" json:"propertyTypeId,omitempty"`
+
+	// SpatialID      *uint64 `gorm:"type:bigint;index" json:"spatialId,omitempty"`
 	LocationID    *uint64  `gorm:"type:bigint;index" json:"locationId,omitempty"`
 	AddressDetail string   `gorm:"size:100" json:"addressDetail,omitempty"`
 	Latitude      *float64 `gorm:"type:decimal(10,8)" json:"latitude,omitempty"`
@@ -28,12 +31,12 @@ type Property struct {
 	NationalIDVerified bool   `gorm:"default:false" json:"nationalIdVerified"`
 
 	// AREA
-	AreaTotal       *float64 `gorm:"type:decimal(15,2)" json:"areaTotal,omitempty"`
-	AreaLand        *float64 `gorm:"type:decimal(15,2)" json:"areaLand,omitempty"`
-	AreaResidential *float64 `gorm:"type:decimal(15,2)" json:"areaResidential,omitempty"`
+	AreaTotal *float64 `gorm:"type:decimal(15,2)" json:"areaTotal,omitempty"`
+	// AreaLand *float64 `gorm:"type:decimal(15,2)" json:"areaLand,omitempty"`
+	// AreaResidential *float64 `gorm:"type:decimal(15,2)" json:"areaResidential,omitempty"`
 	// LEGAL
-	LegalNote   string                  `gorm:"type:text" json:"legalNote,omitempty"`
-	LegalStatus enums.EHouseCertificate `gorm:"type:smallint;index" json:"legalStatus,omitempty"`
+	// LegalNote   string                  `gorm:"type:text" json:"legalNote,omitempty"`
+	// LegalStatus enums.EHouseCertificate `gorm:"type:smallint;index" json:"legalStatus,omitempty"`
 	// STATUS
 	RecordStatus enums.EPropertyStatus     `gorm:"type:smallint;default:10" json:"recordStatus"`
 	Scope        enums.EPropertyScope      `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`

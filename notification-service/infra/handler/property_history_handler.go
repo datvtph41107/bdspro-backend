@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 
 	_provider "common/provider"
 	"notification/infra/mapper"
@@ -66,7 +65,9 @@ func (h *PropertyHistoryHandler) GetPropertyHistory(
 	ctx context.Context,
 	req *notificationpb.GetPropertyHistoryRequest,
 ) (*notificationpb.GetPropertyHistoryResponse, error) {
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_property_histories:%d", req.SubjectId), req.TimeStamp)
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyHistories, req.SubjectId)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &notificationpb.GetPropertyHistoryResponse{}, nil
@@ -76,9 +77,13 @@ func (h *PropertyHistoryHandler) GetPropertyHistory(
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if req.Page == 0 && len(histories) > 0 {
-		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_property_histories:%d", req.SubjectId), histories[0].UpdatedAt.UnixMilli())
-	}
+	// if req.Page == 0 && len(histories) > 0 {
+	// 	time := time.Now().UnixMilli() - 24*60*60*1000
+	// 	if len(histories) > 0 {
+	// 		time = histories[0].UpdatedAt.UnixMilli()
+	// 	}
+	// 	h.SyncProvider.PutTimestamp(ctx, key, time)
+	// }
 
 	return h.mapper.EntitiesToListResponse(
 		histories,

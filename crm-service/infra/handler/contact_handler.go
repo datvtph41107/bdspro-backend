@@ -141,8 +141,9 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 }
 
 func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:contact:%d", profileId), req.Timestamp)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyContactMe, 0)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
 		return &crmpb.ContactListDTO{}, nil
 	}
@@ -159,9 +160,9 @@ func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (
 	// 	s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
 	// }
 
-	if req.EndId == nil && len(contacts) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:contact:%d", profileId), contacts[0].UpdatedAt.UnixMilli())
-	}
+	// if req.EndId == nil && len(contacts) > 0 {
+	// 	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:contact:%d", profileId), contacts[0].UpdatedAt.UnixMilli())
+	// }
 
 	return &crmpb.ContactListDTO{
 		Data:  contactsPb,
@@ -178,7 +179,9 @@ func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (
 // @Security BearerAuth
 // @Router /contact/detail/{id} [get]
 func (s *ContactService) Detail(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactDTO, error) {
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:contact:%d", req.Id), req.Timestamp)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyContactDetail, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
 		return &crmpb.ContactDTO{}, nil
 	}
@@ -190,8 +193,6 @@ func (s *ContactService) Detail(ctx context.Context, req *sharepb.SyncRequest) (
 
 	contactPb := s.ContactMapper.ContactToPb(contact)
 	s.UserClient.PbUserToContact(ctx, contactPb)
-
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), contact.UpdatedAt.UnixMilli())
 
 	return contactPb, nil
 }
@@ -363,12 +364,9 @@ func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRe
 // @Security BearerAuth
 // @Router /contact/by-product/{id} [get]
 func (s *ContactService) GetListContactByProductId(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
-	key := "time:product_crm_contacts:%d:user:%d"
-	userId := _utils.GetOriginIdFromContext(ctx)
-	if userId == 0 {
-		return nil, _errors.UnauthorizedException()
-	}
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf(key, req.Id, userId), req.Timestamp) // req.ID = productId
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductContacts, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {
 		return &crmpb.ContactListDTO{}, nil
 	}
@@ -381,9 +379,13 @@ func (s *ContactService) GetListContactByProductId(ctx context.Context, req *sha
 	if err != nil {
 		return nil, err
 	}
-	if req.Page == 0 && len(contacts) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf(key, req.Id, userId), contacts[0].ContactProductUpdatedAt.UnixMilli())
-	}
+	// if req.Page == 0 && len(contacts) > 0 {
+	// 	time := time.Now().UnixMilli() - 24*60*60*1000
+	// 	if contacts[0].ContactProductUpdatedAt != nil {
+	// 		time = contacts[0].ContactProductUpdatedAt.UnixMilli()
+	// 	}
+	// 	s.SyncProvider.PutTimestamp(ctx, key, time)
+	// }
 	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
 

@@ -248,6 +248,14 @@ service ProductService {
       get: "/v2/bdspro/v2/product/{productId}/price-history"
     };
   };
+
+  // GetProductTimestamps trả về timestamp của các loại data liên quan đến product.
+  // FE dùng để check thay đổi trước khi gọi các API detail, giảm tải server.
+  rpc GetProductTimestamps (sharepb.IdRequest) returns (ProductTimestampsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/timestamp"
+    };
+  };
   
   rpc GetProductNavigation (ProductSearch) returns (ProductNavigationResponse) {
     option (google.api.http) = {
@@ -846,4 +854,10 @@ message ProductNavigationResponse {
 message ArchiveProductsRequest {
   repeated uint64 ids = 1;
   bool archived = 2;
+}
+
+// ProductTimestampsResponse: map key -> timestamp (ms) cho FE check cache
+// Keys: detail, priceHistory, distributions, posts, deals, productNotes, appointments, contacts, propertyHistory
+message ProductTimestampsResponse {
+  map<string, int64> timestamps = 1;
 }

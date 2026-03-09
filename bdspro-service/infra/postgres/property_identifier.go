@@ -21,7 +21,7 @@ func NewIdentifierRepository(db *gorm.DB) repo.PropertyIdentifierRepo {
 	}
 }
 
-func (r *PropertyIdentifierPostgres) Create(ctx context.Context, identifier *domain.Identifier) error {
+func (r *PropertyIdentifierPostgres) Create(ctx context.Context, identifier *domain.CountryIdentifier) error {
 	result := r.db.WithContext(ctx).Create(identifier)
 	if result.Error != nil {
 		return fmt.Errorf("db create failed: %w", result.Error)
@@ -29,8 +29,8 @@ func (r *PropertyIdentifierPostgres) Create(ctx context.Context, identifier *dom
 	return nil
 }
 
-func (r *PropertyIdentifierPostgres) GetByID(ctx context.Context, id string) (*domain.Identifier, error) {
-	var identifier domain.Identifier
+func (r *PropertyIdentifierPostgres) GetByID(ctx context.Context, id string) (*domain.CountryIdentifier, error) {
+	var identifier domain.CountryIdentifier
 	result := r.db.WithContext(ctx).
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&identifier)
@@ -45,9 +45,9 @@ func (r *PropertyIdentifierPostgres) GetByID(ctx context.Context, id string) (*d
 }
 
 // Update - ONLY updates data
-func (r *PropertyIdentifierPostgres) Update(ctx context.Context, identifier *domain.Identifier) error {
+func (r *PropertyIdentifierPostgres) Update(ctx context.Context, identifier *domain.CountryIdentifier) error {
 	result := r.db.WithContext(ctx).
-		Model(&domain.Identifier{}).
+		Model(&domain.CountryIdentifier{}).
 		Where("id = ?", identifier.ID).
 		Updates(map[string]interface{}{
 			"land_parcel_code": identifier.LandParcelCode,
@@ -76,7 +76,7 @@ func (r *PropertyIdentifierPostgres) Update(ctx context.Context, identifier *dom
 func (r *PropertyIdentifierPostgres) Delete(ctx context.Context, id string) error {
 	result := r.db.WithContext(ctx).
 		Where("id = ?", id).
-		Delete(&domain.Identifier{})
+		Delete(&domain.CountryIdentifier{})
 
 	if result.Error != nil {
 		return fmt.Errorf("db delete failed: %w", result.Error)
@@ -88,11 +88,11 @@ func (r *PropertyIdentifierPostgres) Delete(ctx context.Context, id string) erro
 }
 
 // Search - ONLY builds and executes search query
-func (r *PropertyIdentifierPostgres) Search(ctx context.Context, filters map[string]interface{}, page, limit int32) ([]*domain.Identifier, int64, error) {
-	var identifiers []*domain.Identifier
+func (r *PropertyIdentifierPostgres) Search(ctx context.Context, filters map[string]interface{}, page, limit int32) ([]*domain.CountryIdentifier, int64, error) {
+	var identifiers []*domain.CountryIdentifier
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Identifier{}).Where("deleted_at IS NULL")
+	query := r.db.WithContext(ctx).Model(&domain.CountryIdentifier{}).Where("deleted_at IS NULL")
 
 	// Apply filters (purely mechanical, no logic)
 	for field, value := range filters {
@@ -121,8 +121,8 @@ func (r *PropertyIdentifierPostgres) Search(ctx context.Context, filters map[str
 }
 
 // GetByLocation - ONLY spatial query
-func (r *PropertyIdentifierPostgres) GetByLocation(ctx context.Context, lat, lng float64, radiusKm float64) ([]*domain.Identifier, error) {
-	var identifiers []*domain.Identifier
+func (r *PropertyIdentifierPostgres) GetByLocation(ctx context.Context, lat, lng float64, radiusKm float64) ([]*domain.CountryIdentifier, error) {
+	var identifiers []*domain.CountryIdentifier
 
 	// Pure spatial query - no business logic
 	point := fmt.Sprintf("POINT(%f %f)", lng, lat)
@@ -138,8 +138,8 @@ func (r *PropertyIdentifierPostgres) GetByLocation(ctx context.Context, lat, lng
 }
 
 // GetByOwner - ONLY query by owner
-func (r *PropertyIdentifierPostgres) GetByOwner(ctx context.Context, ownerID string) ([]*domain.Identifier, error) {
-	var identifiers []*domain.Identifier
+func (r *PropertyIdentifierPostgres) GetByOwner(ctx context.Context, ownerID string) ([]*domain.CountryIdentifier, error) {
+	var identifiers []*domain.CountryIdentifier
 
 	err := r.db.WithContext(ctx).
 		Where("current_owner_id = ? AND deleted_at IS NULL", ownerID).
@@ -156,7 +156,7 @@ func (r *PropertyIdentifierPostgres) GetByOwner(ctx context.Context, ownerID str
 func (r *PropertyIdentifierPostgres) CheckExists(ctx context.Context, landParcelCode string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
-		Model(&domain.Identifier{}).
+		Model(&domain.CountryIdentifier{}).
 		Where("land_parcel_code = ? AND deleted_at IS NULL", landParcelCode).
 		Count(&count).Error
 

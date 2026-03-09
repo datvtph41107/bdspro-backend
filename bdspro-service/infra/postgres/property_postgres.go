@@ -371,24 +371,24 @@ func (r *PostgrePropertyRepo) Update(ctx context.Context, id uint64, entity *dom
 	if entity.AreaTotal != nil {
 		updates["area_total"] = entity.AreaTotal
 	}
-	if entity.AreaLand != nil {
-		updates["area_land"] = entity.AreaLand
-	}
-	if entity.AreaResidential != nil {
-		updates["area_residential"] = entity.AreaResidential
-	}
-	if entity.LegalNote != "" {
-		updates["legal_note"] = entity.LegalNote
-	}
+	// if entity.AreaLand != nil {
+	// 	updates["area_land"] = entity.AreaLand
+	// }
+	// if entity.AreaResidential != nil {
+	// 	updates["area_residential"] = entity.AreaResidential
+	// }
+	// if entity.LegalNote != "" {
+	// 	updates["legal_note"] = entity.LegalNote
+	// }
 	if entity.BuildingInfoID != nil {
 		updates["building_info_id"] = entity.BuildingInfoID
 	} else {
 		// Cho phép set NULL
 		updates["building_info_id"] = nil
 	}
-	if entity.LegalStatus != 0 {
-		updates["legal_status"] = entity.LegalStatus
-	}
+	// if entity.LegalStatus != 0 {
+	// 	updates["legal_status"] = entity.LegalStatus
+	// }
 	if entity.RecordStatus != 0 {
 		updates["record_status"] = entity.RecordStatus
 	}
@@ -437,9 +437,9 @@ func (r *PostgrePropertyRepo) UpdateOption(c context.Context, id uint64, propert
 	// Chỉ update các field cụ thể: area_land, area_total, project_id, property_type_id
 	updates := map[string]interface{}{}
 
-	if property.AreaLand != nil {
-		updates["area_land"] = property.AreaLand
-	}
+	// if property.AreaLand != nil {
+	// 	updates["area_land"] = property.AreaLand
+	// }
 	if property.AreaTotal != nil {
 		updates["area_total"] = property.AreaTotal
 	}

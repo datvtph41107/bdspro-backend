@@ -14,9 +14,9 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
-	"fmt"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+	"strconv"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -503,8 +503,8 @@ func (s *ProductHandler) ExportProduct(context.Context, *bdspropb.IdRequest) (*b
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/me [get]
 func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.SearchResponse, error) {
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:product:%d", profileId), req.Timestamp)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductMe, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {
 		return &bdspropb.SearchResponse{}, nil
 	}
@@ -520,7 +520,7 @@ func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest
 	}
 
 	if req.Page == 0 && len(result) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:product:%d", profileId), result[0].UpdatedAt.UnixMilli())
+		s.SyncProvider.PutTimestamp(ctx, key, result[0].UpdatedAt.UnixMilli())
 	}
 
 	products := s.ProductMapper.MapProductPbListResponse(result)
@@ -737,9 +737,70 @@ func (s *ProductHandler) SuggestDeepseek(ctx context.Context, req *bdspropb.Sugg
 // @Security BearerAuth
 // @Param id path string true "ID của sản phẩm"
 // @Success 200 {object} bdspropb.IdRequest "Chi tiết sản phẩm"
-// @Router /v2/bdspro/v2/product/{id}/detail [get]
+// @Summary Lấy timestamps các loại data của sản phẩm (chỉ đọc Redis)
+// @Description API check sync - lấy timestamp từ Redis cho từng key, FE so sánh với cache và chỉ gọi API detail khi có thay đổi. Không gọi DB.
+// @Tags User: Sản phẩm
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Product ID"
+// @Success 200 {object} bdspropb.ProductTimestampsResponse "Map key -> timestamp (ms)"
+// @Router /v2/bdspro/v2/product/{id}/timestamp [get]
+func (s *ProductHandler) GetProductTimestamps(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.ProductTimestampsResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "product id is required")
+	}
+
+	redisKeys := []string{
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDetail, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPriceHist, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDistrs, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPosts, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDeals, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductNotes, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductAppointments, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductContacts, req.Id),
+		s.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyHistories, req.Id),
+	}
+
+	vals, err := s.SyncProvider.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.InternalServerException("error: %v", err.Error())
+	}
+
+	names := []string{
+		"detail",
+		"price_history",
+		"distributions",
+		"posts",
+		"deals",
+		"notes",
+		"appointments",
+		"contacts",
+		"histories",
+	}
+
+	timestamps := make(map[string]int64, len(names))
+
+	for i, v := range vals {
+		if v == nil {
+			timestamps[names[i]] = 0
+			continue
+		}
+
+		ts, _ := strconv.ParseInt(v.(string), 10, 64)
+		timestamps[names[i]] = ts
+	}
+
+	return &bdspropb.ProductTimestampsResponse{
+		Timestamps: timestamps,
+	}, nil
+}
+
 func (s *ProductHandler) GetDetail(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.ProductResponse, error) {
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product:%d", req.Id), req.Timestamp)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDetail, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
 		return &bdspropb.ProductResponse{}, nil
 	}
@@ -748,7 +809,6 @@ func (s *ProductHandler) GetDetail(ctx context.Context, req *sharepb.SyncRequest
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product:%d", req.Id), product.UpdatedAt.UnixMilli())
 	// var originProfile *sharepb.OriginProfile
 	// if product.SourceContactId != nil && *product.SourceContactId > 0 {
 	// 	pf, err := s.CrmProvider.GetContactByOriginId(ctx, *product.SourceContactId)
@@ -825,9 +885,9 @@ func (s *ProductHandler) GetMembers(ctx context.Context, req *bdspropb.IdRequest
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/posts [get]
 func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.PostResponse, error) {
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	key := fmt.Sprintf("time:product_posts:%d:%d", profileId, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPosts, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.PostResponse{}, nil
@@ -870,11 +930,9 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest)
 // @Param size query int false "Page size"
 // @Router /v2/bdspro/v2/product/{id}/deals [get]
 func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
-	userId := _utils.GetOriginIdFromContext(ctx)
-	if userId == 0 {
-		return nil, _errors.UnauthorizedException()
-	}
-	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:product_deals:%d", req.Id), req.Timestamp)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDeals, req.Id)
+	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.GetOrganizationDealsResponse{}, nil
@@ -884,13 +942,17 @@ func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest)
 		Size: req.Size,
 	}
 
-	deals, total, prdUpdatedAt, err := s.UC.GetDealsByProduct(ctx, req.Id, pagable)
+	deals, total, _, err := s.UC.GetDealsByProduct(ctx, req.Id, pagable)
 	if err != nil {
 		return nil, err
 	}
-	if req.Page == 0 && len(deals) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:product_deals:%d:user:%d", req.Id, userId), prdUpdatedAt.UnixMilli())
-	}
+	// if req.Page == 0 {
+	// 	time := time.Now().UnixMilli() - 24*60*60*1000
+	// 	if len(deals) > 0 {
+	// 		time = deals[0].UpdatedAt.UnixMilli()
+	// 	}
+	// 	s.SyncProvider.PutTimestamp(ctx, key, time)
+	// }
 	dealItems := s.DealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(total))
 
 	return dealItems, nil
@@ -972,8 +1034,8 @@ func (s *ProductHandler) DeleteProduct(ctx context.Context, req *bdspropb.IdRequ
 	if err != nil {
 		return nil, err
 	}
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:product:%d", profileId), time.Now().UnixMilli())
+	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDetail, req.Id), time.Now().UnixMilli())
+	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductMe, req.Id), time.Now().UnixMilli())
 	return &bdspropb.Response{
 		Message: "ok",
 	}, nil
@@ -1367,14 +1429,14 @@ func (s *ProductHandler) GetPriceHistory(
 	if req.ProductId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	key := fmt.Sprintf("time:price_product_history:%d:%d", profileId, req.ProductId)
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPriceHist, req.ProductId)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
 		return &bdspropb.PriceHistoryResponse{}, nil
 	}
 
-	items, total, productUpdatedTime, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
+	items, total, _, err := s.UC.GetPriceHistory(ctx, &dto.PriceHistorySearch{
 		ProductID: req.ProductId,
 		Pagable: _dto.Pagable{
 			Page: req.Page,
@@ -1384,13 +1446,13 @@ func (s *ProductHandler) GetPriceHistory(
 	if err != nil {
 		return nil, err
 	}
-	if req.Page == 0 {
-		time := time.Now().UnixMilli() - 24*60*60*1000
-		if len(items) > 0 {
-			time = productUpdatedTime.UnixMilli()
-		}
-		s.SyncProvider.PutTimestamp(ctx, key, time)
-	}
+	// if req.Page == 0 {
+	// 	time := time.Now().UnixMilli() - 24*60*60*1000
+	// 	if len(items) > 0 {
+	// 		time = productUpdatedTime.UnixMilli()
+	// 	}
+	// 	s.SyncProvider.PutTimestamp(ctx, key, req.Timestamp)
+	// }
 
 	return &bdspropb.PriceHistoryResponse{
 		Data:  s.ProductPriceMapper.DTOListToPb(items),

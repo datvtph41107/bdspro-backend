@@ -8,9 +8,7 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	_provider "common/provider"
-	_utils "common/utils"
 	"context"
-	"fmt"
 
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -42,15 +40,9 @@ func (h *ProductNoteHandler) ListProductNotes(
 	ctx context.Context,
 	req *bdspropb.ListProductNotesRequest,
 ) (*bdspropb.ListProductNotesResponse, error) {
-	key := "time:product_posts:%d:user:%d"
-	userId := _utils.GetOriginIdFromContext(ctx)
-	if userId == 0 {
-		return nil, _errors.UnauthorizedException()
-	}
-	if req.ProductId == 0 {
-		return nil, _errors.BadRequestException("productId is required")
-	}
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf(key, req.ProductId, userId), req.Timestamp)
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductNotes, req.ProductId)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
 	if !updated && req.Page == 0 {
 		return &bdspropb.ListProductNotesResponse{}, nil
@@ -70,9 +62,14 @@ func (h *ProductNoteHandler) ListProductNotes(
 	if err != nil {
 		return nil, err
 	}
-	if req.Page == 0 && len(items) > 0 {
-		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf(key, req.ProductId, userId), items[0].Note.ProductNoteUpdatedAt.UnixMilli())
-	}
+	// if req.Page == 0 && len(items) > 0 {
+	// 	time := time.Now().UnixMilli() - 24*60*60*1000
+	// 	if len(items) > 0 {
+	// 		time = items[0].Note.ProductNoteUpdatedAt.UnixMilli()
+	// 	}
+	// 	h.SyncProvider.PutTimestamp(ctx, key, time)
+	// 	// h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf(key, req.ProductId, userId), items[0].Note.ProductNoteUpdatedAt.UnixMilli())
+	// }
 	h.enrichUsers(ctx, items)
 	return &bdspropb.ListProductNotesResponse{
 		Data:  h.ProductNoteMapper.ProductNoteListToProto(items),
@@ -88,7 +85,7 @@ func (h *ProductNoteHandler) CreateProductNote(
 		return nil, _errors.BadRequestException("productId is required")
 	}
 
-	_, err := h.ProductNoteUsecase.CreateNote(ctx, &dto.CreateProductNoteRequest{
+	result, err := h.ProductNoteUsecase.CreateNote(ctx, &dto.CreateProductNoteRequest{
 		ProductID: req.ProductId,
 		Content:   req.Content,
 		Mentions:  mapProtoMentionsToDTO(req.Mentions),
@@ -97,7 +94,8 @@ func (h *ProductNoteHandler) CreateProductNote(
 	if err != nil {
 		return nil, err
 	}
-
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductNotes, req.ProductId)
+	h.SyncProvider.PutTimestamp(ctx, key, result.UpdatedAt.UnixMilli())
 	return &bdspropb.Response{
 		Id:      req.ProductId,
 		Message: "success",

@@ -6,7 +6,7 @@ type InteractiveEvent struct {
 	EndTime   *int64  `gorm:"index;comment:Thời gian kết thúc (timestamp)"`         // Thời gian kết thúc (timestamp, optional)
 	Event     string  `gorm:"type:varchar(30);not null;index;comment:Tên sự kiện"`  // Tên sự kiện
 	RefID     uint64  `gorm:"index;comment:ID tham chiếu"`                          // ID tham chiếu (ref_id)
-	Screen    *string `gorm:"type:varchar(30);comment:Màn hình/trang"`              // Màn hình/trang (optional)
+	Screen    *string `gorm:"type:varchar(40);comment:Màn hình/trang"`              // Màn hình/trang (optional)
 	Duration  *int64  `gorm:"comment:Thời lượng (giây)"`                            // Thời lượng (giây, optional)
 	ProfileID *uint64 `gorm:"index;comment:ID người dùng nếu đã đăng nhập"`         // ID user trong hệ thống, null nếu là guest
 }

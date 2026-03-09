@@ -20,7 +20,7 @@ func NewIdentifierUsecase(repo repo.PropertyIdentifierRepo) *PropertyIdentifierU
 	}
 }
 
-func (u *PropertyIdentifierUsecase) Create(ctx context.Context, identifier *domain.Identifier, requestedBy string) (*domain.Identifier, error) {
+func (u *PropertyIdentifierUsecase) Create(ctx context.Context, identifier *domain.CountryIdentifier, requestedBy string) (*domain.CountryIdentifier, error) {
 	if identifier == nil {
 		return nil, fmt.Errorf("%w: identifier cannot be nil", domain.ErrInvalidInput)
 	}
@@ -90,7 +90,7 @@ func (u *PropertyIdentifierUsecase) Create(ctx context.Context, identifier *doma
 	return identifier, nil
 }
 
-func (u *PropertyIdentifierUsecase) GetByID(ctx context.Context, id string) (*domain.Identifier, error) {
+func (u *PropertyIdentifierUsecase) GetByID(ctx context.Context, id string) (*domain.CountryIdentifier, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", domain.ErrInvalidInput)
 	}
@@ -109,7 +109,7 @@ func (u *PropertyIdentifierUsecase) GetByID(ctx context.Context, id string) (*do
 	return identifier, nil
 }
 
-func (u *PropertyIdentifierUsecase) Update(ctx context.Context, identifier *domain.Identifier, requestedBy string) (*domain.Identifier, error) {
+func (u *PropertyIdentifierUsecase) Update(ctx context.Context, identifier *domain.CountryIdentifier, requestedBy string) (*domain.CountryIdentifier, error) {
 	if identifier == nil || identifier.ID == "" {
 		return nil, fmt.Errorf("%w: identifier with id is required", domain.ErrInvalidInput)
 	}
@@ -166,7 +166,7 @@ func (u *PropertyIdentifierUsecase) Delete(ctx context.Context, id string, reque
 	return nil
 }
 
-func (u *PropertyIdentifierUsecase) Search(ctx context.Context, criteria *dto.SearchCriteriaDTO, pagination *dto.PaginationDTO) ([]*domain.Identifier, int64, error) {
+func (u *PropertyIdentifierUsecase) Search(ctx context.Context, criteria *dto.SearchCriteriaDTO, pagination *dto.PaginationDTO) ([]*domain.CountryIdentifier, int64, error) {
 	if pagination == nil {
 		pagination = &dto.PaginationDTO{Page: 1, Limit: 10}
 	}
@@ -207,7 +207,7 @@ func (u *PropertyIdentifierUsecase) Search(ctx context.Context, criteria *dto.Se
 	return identifiers, total, nil
 }
 
-func (u *PropertyIdentifierUsecase) TransferOwnership(ctx context.Context, id string, newOwnerID string, requestedBy string) (*domain.Identifier, error) {
+func (u *PropertyIdentifierUsecase) TransferOwnership(ctx context.Context, id string, newOwnerID string, requestedBy string) (*domain.CountryIdentifier, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", domain.ErrInvalidInput)
 	}
@@ -248,7 +248,7 @@ func (u *PropertyIdentifierUsecase) TransferOwnership(ctx context.Context, id st
 	return identifier, nil
 }
 
-func (u *PropertyIdentifierUsecase) UpdateLegalStatus(ctx context.Context, id string, status string, requestedBy string) (*domain.Identifier, error) {
+func (u *PropertyIdentifierUsecase) UpdateLegalStatus(ctx context.Context, id string, status string, requestedBy string) (*domain.CountryIdentifier, error) {
 	if id == "" {
 		return nil, fmt.Errorf("%w: id is required", domain.ErrInvalidInput)
 	}
@@ -285,7 +285,7 @@ func (u *PropertyIdentifierUsecase) UpdateLegalStatus(ctx context.Context, id st
 	return identifier, nil
 }
 
-func (u *PropertyIdentifierUsecase) ValidateIdentifier(ctx context.Context, code string) (*domain.Identifier, bool, error) {
+func (u *PropertyIdentifierUsecase) ValidateIdentifier(ctx context.Context, code string) (*domain.CountryIdentifier, bool, error) {
 	if code == "" {
 		return nil, false, fmt.Errorf("%w: code is required", domain.ErrInvalidInput)
 	}

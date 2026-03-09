@@ -14,6 +14,7 @@ import (
 	notification_infra_client "notification/infra/client"
 	notification_infra_firebase "notification/infra/firebase"
 	notification_infra_handler "notification/infra/handler"
+	notification_infra_impl "notification/infra/impl"
 	notification_infra_mapper "notification/infra/mapper"
 	notification_infra_postgres "notification/infra/postgres"
 	notification_initial "notification/initial"
@@ -42,6 +43,7 @@ var wireSet = wire.NewSet(
 	notification_infra_postgres.NewAdminHistoryPostgres,
 	notification_internal_usecase.NewAdminHistoryUsecase,
 	notification_infra_client.NewAuthClient,
+	notification_infra_impl.NewCommonRedisProvider,
 	notification_infra_handler.NewDealHistoryHandler,
 	notification_infra_postgres.NewDealHistoryPostgres,
 	notification_internal_usecase.NewDealHistoryUsecase,
@@ -68,6 +70,7 @@ var wireSet = wire.NewSet(
 	notification_internal_usecase.NewPropertyHistoryUseCase,
 	notification_infra_cache.NewRedisClient,
 	notification_internal_dto.NewSendNotiResponse,
+	notification_infra_impl.NewSyncProvider,
 	notification_infra_client.NewUserClient,
 )
 func InitializeApp() (*initial.InitialApp, error) {

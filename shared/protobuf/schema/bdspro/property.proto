@@ -34,6 +34,13 @@ service PropertyService {
       get: "/v2/bdspro/v2/property/detail/{id}"
     };
   };
+
+  // GetPropertyTimestamps trả về timestamp của detail và history cho FE check cache/sync.
+  rpc GetPropertyTimestamps(sharepb.IdRequest) returns (PropertyTimestampsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{id}/timestamp"
+    };
+  };
   
   rpc GetAssets(PropertyAssetsRequest) returns (PropertyAssetsResponse) {
     option (google.api.http) = {
@@ -110,6 +117,11 @@ service PropertyService {
       body: "*"
     };
   };
+}
+
+// PropertyTimestampsResponse: map key -> timestamp (ms) cho FE check cache
+message PropertyTimestampsResponse {
+  map<string, int64> timestamps = 1;
 }
 
 message ClonePropertyRequest {

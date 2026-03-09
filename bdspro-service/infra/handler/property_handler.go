@@ -4,10 +4,11 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
+	_errors "common/errors"
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
-	"fmt"
+	"strconv"
 
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -160,8 +161,9 @@ func (h *PropertyHandler) ListMe(
 	ctx context.Context,
 	req *sharepb.SyncRequest,
 ) (*bdspropb.PropertyListResponse, error) {
-	profileId := _utils.GetProfileIdWithContext(ctx)
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("u:property:%d", profileId), req.Timestamp)
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {
 		return &bdspropb.PropertyListResponse{
 			Pagination: &bdspropb.Pagination{
@@ -211,9 +213,9 @@ func (h *PropertyHandler) ListMe(
 		Pagination: pagination,
 	}
 
-	if req.EndId == nil && len(properties) > 0 {
-		h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:property:%d", profileId), properties[0].UpdatedAt.UnixMilli())
-	}
+	// if req.EndId == nil && len(properties) > 0 {
+	// 	h.SyncProvider.PutTimestamp(ctx, key, properties[0].UpdatedAt.UnixMilli())
+	// }
 
 	return response, nil
 }
@@ -246,7 +248,7 @@ func (h *PropertyHandler) CreatePropertyUser(
 }
 
 // @Summary Lấy chi tiết Property
-// @Description API để lấy chi tiết Property theo ID
+// @Description API để lấy chi tiết Property theo ID, dùng sync_provider để check cache
 // @Tags Property
 // @Accept json
 // @Produce json
@@ -258,10 +260,13 @@ func (h *PropertyHandler) GetDetail(
 	ctx context.Context,
 	req *sharepb.SyncRequest,
 ) (*bdspropb.PropertyResponse, error) {
-	updated := h.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:property:%d", req.Id), req.Timestamp)
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, req.Id)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
 		return &bdspropb.PropertyResponse{}, nil
 	}
+
 	property, err := h.PropertyUsecase.Detail(
 		ctx,
 		req.Id,
@@ -271,9 +276,47 @@ func (h *PropertyHandler) GetDetail(
 		return nil, err
 	}
 
-	h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:property:%d", req.Id), property.UpdatedAt.UnixMilli())
-
 	return h.PropertyMapper.PropertyToProto(property), nil
+}
+
+// @Summary Lấy timestamps detail và history của Property
+// @Description API check sync - lấy timestamp từ Redis cho detail và history, FE so sánh với cache và chỉ gọi API khi có thay đổi
+// @Tags Property
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Property ID"
+// @Success 200 {object} bdspropb.PropertyTimestampsResponse "Map key -> timestamp (ms): detail, history"
+// @Router /v2/bdspro/v2/property/{id}/timestamp [get]
+func (h *PropertyHandler) GetPropertyTimestamps(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.PropertyTimestampsResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "property id is required")
+	}
+	redisKeys := []string{
+		h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, req.Id),
+		h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyHistories, req.Id),
+	}
+
+	vals, err := h.SyncProvider.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.InternalServerException("error: %v", err.Error())
+	}
+
+	names := []string{"property_detail", "property_histories"}
+	timestamps := make(map[string]int64, len(names))
+
+	for i, v := range vals {
+		if v == nil {
+			timestamps[names[i]] = 0
+			continue
+		}
+		ts, _ := strconv.ParseInt(v.(string), 10, 64)
+		timestamps[names[i]] = ts
+	}
+
+	return &bdspropb.PropertyTimestampsResponse{
+		Timestamps: timestamps,
+	}, nil
 }
 
 // @Summary Lấy danh sách Asset liên quan đến Property

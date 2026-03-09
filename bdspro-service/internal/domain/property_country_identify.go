@@ -7,8 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Identifier represents the core identifier entity
-type Identifier struct {
+// CountryIdentifier represents the core identifier entity
+type CountryIdentifier struct {
 	ID             string         `gorm:"column:id;primaryKey;size:40"`
 	LandParcelCode string         `gorm:"column:land_parcel_code;size:30;index"`
 	ProjectCode    string         `gorm:"column:project_code;size:30;index"`
@@ -26,12 +26,12 @@ type Identifier struct {
 }
 
 // TableName specifies the table name
-func (Identifier) TableName() string {
+func (CountryIdentifier) TableName() string {
 	return "property_identifiers"
 }
 
 // BeforeCreate GORM hook để sinh ID
-func (i *Identifier) BeforeCreate(tx *gorm.DB) error {
+func (i *CountryIdentifier) BeforeCreate(tx *gorm.DB) error {
 	if i.ID == "" {
 		// Gọi function PostgreSQL để sinh mã định danh
 		return tx.Raw("SELECT generate_identifier_id(?, ?) as id",
