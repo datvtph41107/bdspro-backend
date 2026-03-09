@@ -10,6 +10,7 @@ func AutoMigrate() {
 	db := _db.DB
 
 	err := db.AutoMigrate(
+		&domain.Applink{},
 		&domain.EventQueueEntity{},
 		&domain.Province{},
 		&domain.District{},

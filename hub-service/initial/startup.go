@@ -23,6 +23,7 @@ type InitialApp struct {
 	ApiKeyUsecase           usecase.IApiKeyUsecase
 	Logger                  *flogging.FabricLogger
 	InteractiveEventHandler *handler.InteractiveEventHandler
+	ApplinkHandler          *handler.ApplinkHandler
 }
 
 func NewInitialApp(
@@ -39,6 +40,7 @@ func NewInitialApp(
 	systemConfigUsecase *usecase.SystemConfigUsecase,
 	apiKeyUsecase usecase.IApiKeyUsecase,
 	interactiveEventHandler *handler.InteractiveEventHandler,
+	appLinkHandler *handler.ApplinkHandler,
 ) *InitialApp {
 	return &InitialApp{
 		EventQueueService:       eventQueueService,
@@ -55,5 +57,6 @@ func NewInitialApp(
 		ApiKeyUsecase:           apiKeyUsecase,
 		Logger:                  flogging.MustGetLogger(viper.GetString("server.name")),
 		InteractiveEventHandler: interactiveEventHandler,
+		ApplinkHandler:          appLinkHandler,
 	}
 }

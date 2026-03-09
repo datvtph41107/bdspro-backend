@@ -1,4 +1,4 @@
-CREATE TABLE regions (
+CREATE TABLE IF NOT EXISTS regions (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255),
     code VARCHAR(50),
