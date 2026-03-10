@@ -89,3 +89,10 @@ help:
 	@echo "Examples:"
 	@echo "  make run-http-port PORT=8080"
 	@echo "  make run-grpc-port PORT=9090"
+
+migrateup:
+	migrate -path infra/db/migrations/v2 -database "postgresql://postgres:password@localhost:5432/postgres?sslmode=disable" -verbose up
+
+migratedown:
+	migrate -path infra/db/migrations/v2 -database "postgresql://postgres:password@localhost:5432/postgres?sslmode=disable" -verbose down
+

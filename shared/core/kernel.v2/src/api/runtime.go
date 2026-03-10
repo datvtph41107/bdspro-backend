@@ -2,17 +2,51 @@ package api
 
 import (
 	"context"
-	"core/kernel.v2/src/internal/runtime/signal"
 	"reflect"
-	"syscall"
+
+	contract_runtime "core/kernel.v2/src/contracts/runtime"
+	"core/kernel.v2/src/internal/registry"
+	"core/kernel.v2/src/internal/runtime/orchestrator"
+	"core/kernel.v2/src/internal/runtime/signal"
+	"core/kernel.v2/src/modules/database"
+	"core/kernel.v2/src/modules/http"
+	"core/kernel.v2/src/modules/logger"
+
+	"github.com/google/martian/v3/h2/grpc"
 )
 
-// Run tự động phát hiện các component trong app và chạy.
-// app: struct chứa các field implement runtime.Component
-func Run(ctx context.Context, app interface{}) error {
-	orch := orchestrator.New()
+var (
+	procRegistry contract_runtime.ProcessorRegistry
+)
 
-	// Dùng reflection để tìm tất cả component
+func init() {
+	procRegistry = registry.NewProcessorRegistry()
+	// Đăng ký tất cả processors từ các modules
+	registerProcessors()
+}
+
+func registerProcessors() {
+	// Logger
+	procRegistry.Register(&logger.Processor{})
+	// Tracer
+	procRegistry.Register(&tracer.Processor{})
+	// Metrics
+	procRegistry.Register(&metrics.Processor{})
+	// Database
+	procRegistry.Register(&database.Processor{})
+	// HTTP
+	procRegistry.Register(&http.Processor{})
+	// gRPC
+	procRegistry.Register(&grpc.Processor{})
+	// Job
+	procRegistry.Register(&job.Processor{})
+}
+
+// Run tự động phát hiện các component trong app và chạy.
+func Run(ctx context.Context, app interface{}) error {
+	orch := orchestrator.New(procRegistry)
+
+	// Dùng reflection để tìm tất cả các field implement Component
 	if err := registerComponents(orch, app); err != nil {
 		return err
 	}
@@ -21,32 +55,27 @@ func Run(ctx context.Context, app interface{}) error {
 		return err
 	}
 
-	waiter := signal.NewWaiter(syscall.SIGINT, syscall.SIGTERM)
+	waiter := signal.NewWaiter()
 	return waiter.Wait(ctx, orch.Shutdown)
 }
 
-// registerComponents đệ quy tìm các field implement Component
 func registerComponents(orch runtime.Orchestrator, app interface{}) error {
 	val := reflect.ValueOf(app)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
-
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		if field.IsNil() {
 			continue
 		}
-
-		// Nếu field implement Component
+		// Nếu field implement runtime.Component
 		if comp, ok := field.Interface().(runtime.Component); ok {
 			if err := orch.RegisterComponent(comp); err != nil {
 				return err
 			}
-			continue
 		}
-
-		// Nếu field là struct, đệ quy vào trong
+		// Nếu field là struct, đệ quy (hỗ trợ lồng)
 		if field.Kind() == reflect.Struct {
 			if err := registerComponents(orch, field.Interface()); err != nil {
 				return err

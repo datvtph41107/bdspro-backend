@@ -13,13 +13,13 @@ type ServiceDependency struct {
 	Timeout      int
 }
 
-const (
-	StatusIdle ServiceStatus = iota
-	StatusRunning
-	StatusStopping
-	StatusStopped
-	StatusFailed
-)
+// const (
+// 	StatusIdle ServiceStatus = iota
+// 	StatusRunning
+// 	StatusStopping
+// 	StatusStopped
+// 	StatusFailed
+// )
 
 type Service interface {
 	Get() ServiceDependency

@@ -1,13 +1,19 @@
 package logger
 
-import "context"
+import (
+	"context"
+	"net/http"
+
+	"google.golang.org/grpc"
+)
 
 type Logger interface {
-	Debug(ctx context.Context, msg string, fields ...Field)
-	Info(ctx context.Context, msg string, fields ...Field)
-	Warn(ctx context.Context, msg string, fields ...Field)
-	Error(ctx context.Context, msg string, fields ...Field)
-	Fatal(ctx context.Context, msg string, fields ...Field)
-	With(fields ...Field) Logger
+	Debug(ctx context.Context, msg string, fields ...any)
+	Info(ctx context.Context, msg string, fields ...any)
+	Warn(ctx context.Context, msg string, fields ...any)
+	Error(ctx context.Context, msg string, fields ...any)
+	With(fields ...any) Logger
 	Sync() error
+	HTTPMiddleware() func(http.Handler) http.Handler
+	GRPCInterceptor() grpc.UnaryServerInterceptor
 }
