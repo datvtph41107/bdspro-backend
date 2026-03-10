@@ -4,12 +4,14 @@ package bdspropb;
 option go_package = "pb/types/bdspro;bdspropb";
 import "google/protobuf/timestamp.proto";
 import "bdspro/common.proto";
+import "bdspro/developer.proto";
 import "bdspro/asset.proto";
 import "bdspro/product.proto";
 import "google/api/annotations.proto";
 import "shared/common.proto";
 import "shared/v3.proto";
 import "bdspro/post.proto";
+import "bdspro/project.proto";
 
 service PropertyService {
   rpc CreatePropertyUser(ClonePropertyRequest) returns (Response) {
@@ -276,11 +278,19 @@ message PropertyDetailResponse {
   PropertyLineageInfo lineage = 7;                // nationalId, verifiedNationalAt
   repeated bdspropb.MediaItem mediaList = 8;
   repeated sharepb.TagItem amenities = 9;
-  int64 productCount = 10;
-  int64 assetCount = 11;
-  int64 listingCount = 12;
-  string createdAt = 13;
-  string updatedAt = 14;
+  optional PropertyStatistic statistic = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+  optional MediaItem avatar = 13;
+  optional Project project = 14;
+  optional Developer developer = 15;  // Chủ đầu tư (từ project)
+}
+
+message PropertyStatistic {
+  uint64 id = 1;
+  optional int64 productCount = 2;
+  optional int64 assetCount = 3;
+  optional int64 listingCount = 4;
 }
 
 message PropertyIdentify {
@@ -292,7 +302,7 @@ message PropertyIdentify {
 
 message PropertyLocationInfo {
   uint64 id = 1;
-  string addressDetail = 2;
+  string detail = 2;
   optional uint64 regionId = 3;
   optional uint64 provinceId = 4;
   optional uint64 districtId = 5;
@@ -300,7 +310,9 @@ message PropertyLocationInfo {
   optional double latitude = 7;
   optional double longitude = 8;
   string mapUrl = 9;
-  optional sharepb.AddressV3Proto address = 10;
+  string provinceName = 10;
+  string districtName = 11; 
+  string wardName = 12;
 }
 
 message PropertyLandInfoDetail {
@@ -348,7 +360,7 @@ message PropertyProductsRequest {
 }
 
 message PropertyListResponse {
-  repeated PropertyResponse data = 1;
+  repeated PropertyDetailResponse data = 1;
   Pagination pagination = 2; 
 }
 
@@ -513,6 +525,7 @@ message PropertyInfo {
 	optional string scope = 13;
 	optional uint32 visibility = 14;
   optional string title = 15;
+  optional bdspropb.MediaItem avatar = 16;
 }
 
 message AssetLegalItem {

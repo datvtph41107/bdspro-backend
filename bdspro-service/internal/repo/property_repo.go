@@ -11,6 +11,7 @@ import (
 type PropertyRepo interface {
 	crud3.CrudRepo[domain.PropertyLineage]
 	Search(ctx context.Context, dto *dto.PropertySearchDTO, userId uint64) ([]*domain.PropertyLineage, int64, error)
+	ListMe(ctx context.Context, originId uint64, pagable _dto.Pagable) ([]*domain.PropertyLineage, int64, error)
 	GetDetail(ctx context.Context, id uint64, sourceType uint32) (*domain.PropertyLineage, error)
 	GetDetail2(ctx context.Context, id uint64, sourceType uint32) (*domain.PropertyLineage, error)
 	UpdateOption(ctx context.Context, id uint64, property *domain.PropertyLineage) error

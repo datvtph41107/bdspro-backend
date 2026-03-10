@@ -4,6 +4,7 @@ import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_provider "common/provider"
 	_utils "common/utils"
@@ -139,9 +140,9 @@ func (h *PropertyHandler) GetList(ctx context.Context, req *bdspropb.PropertySea
 		HasPrevious: hasPrevious,
 	}
 
-	// Convert to proto response
+	// Convert to proto response (PropertyDetailResponse format)
 	response := &bdspropb.PropertyListResponse{
-		Data:       h.PropertyMapper.PropertyListToProto(properties),
+		Data:       h.PropertyMapper.PropertyListToDetailProto(properties),
 		Pagination: pagination,
 	}
 
@@ -176,20 +177,8 @@ func (h *PropertyHandler) ListMe(
 			}}, nil
 	}
 
-	// Convert proto request to DTO
-	dtoReq, err := h.PropertyMapper.PbToPropertySearchDTO(&bdspropb.PropertySearchRequest{
-		Page: req.Page,
-		Size: req.Size,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid filter parameters: %v", err)
-	}
-
-	// Call usecase
-	originId := _utils.GetOriginIdFromContext(ctx)
-	dtoReq.RequestUserId = &originId
-	dtoReq.Sync = true
-	properties, total, err := h.PropertyUsecase.GetList(ctx, dtoReq)
+	// Call usecase - raw SQL ListMe chỉ trả title, address, project, buildingInfo, avatar
+	properties, total, err := h.PropertyUsecase.ListMe(ctx, req.Page, req.Size)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get property list: %v", err)
 	}
@@ -207,9 +196,9 @@ func (h *PropertyHandler) ListMe(
 		// HasPrevious: hasPrevious,
 	}
 
-	// Convert to proto response
+	// Convert to proto response (PropertyDetailResponse format)
 	response := &bdspropb.PropertyListResponse{
-		Data:       h.PropertyMapper.PropertyListToProto(properties),
+		Data:       h.PropertyMapper.PropertyListToDetailProto(properties),
 		Pagination: pagination,
 	}
 
@@ -279,7 +268,7 @@ func (h *PropertyHandler) GetDetail(
 		return &bdspropb.PropertyDetailResponse{}, nil
 	}
 
-	return h.PropertyMapper.PropertyDetailToProto(property), nil
+	return h.PropertyMapper.PropertyDetailToProto(property, _enum.EDataModeFull), nil
 }
 
 // @Summary Lấy timestamps detail và history của Property

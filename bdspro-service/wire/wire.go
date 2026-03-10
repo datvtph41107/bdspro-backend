@@ -273,6 +273,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres.NewPostgrePropertyProductRepo,
 	bdspro_infra_postgres.NewPostgrePropertyRelationRepo,
 	bdspro_infra_postgres.NewPostgrePropertyRepo,
+	bdspro_infra_postgres.NewPostgrePropertyStatisticRepo,
 	bdspro_infra_postgres.NewPostgrePropertyType,
 	bdspro_infra_postgres.NewPostgreRegion,
 	bdspro_infra_postgres.NewPostgreReportHistory,

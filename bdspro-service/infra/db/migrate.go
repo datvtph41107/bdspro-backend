@@ -157,5 +157,7 @@ func MigrateDomain() {
 	// &domain.PropertyEdvidence{},
 	// &domain.PropertyTagLink{},
 	// &domain.PropertyRelation{},
+	// &domain.PropertyStatistic{},
+	// &domain.PropertyLineage{},
 	)
 }

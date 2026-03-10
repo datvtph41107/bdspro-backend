@@ -39,6 +39,9 @@ type PropertyLineage struct {
 	BuildingInfoID *uint64               `gorm:"type:bigint" json:"buildingInfoId,omitempty"`
 	BuildingInfo   *PropertyBuildingInfo `gorm:"foreignKey:BuildingInfoID;references:ID"`
 
+	StatisticID *uint64            `gorm:"column:statistic_id"`
+	Statistic   *PropertyStatistic `gorm:"foreignKey:StatisticID;references:ID"`
+
 	// link BDS quốc gia
 	NationalID string `gorm:"size:50;index" json:"nationalId,omitempty"`
 	// ngày xác minh định danh quốc gia
@@ -49,12 +52,10 @@ type PropertyLineage struct {
 	// tiện ích
 	Amenities []AmenityItem `gorm:"many2many:property_amenity"`
 
-	// COMPUTED
-	RegionName   string `gorm:"-"`
-	RegionCode   uint32 `gorm:"-"`
-	ProductCount int64  `gorm:"-" json:"productCount,omitempty"`
-	AssetCount   int64  `gorm:"-" json:"assetCount,omitempty"`
-	ListingCount int64  `gorm:"-" json:"listingCount,omitempty"`
+	// COMPUTED (cho API response)
+	RegionName string     `gorm:"-"`
+	RegionCode uint32     `gorm:"-"`
+	Developer  *Developer `gorm:"-"`
 
 	// LineageID uint64            `gorm:"type:bigint" json:"lineageId"`
 	// Lineage   *PropertyLineage1 `gorm:"foreignKey:LineageID;references:ID"`

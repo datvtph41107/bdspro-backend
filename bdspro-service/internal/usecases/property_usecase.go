@@ -6,6 +6,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
+	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
 	_provider "common/provider"
@@ -21,6 +22,7 @@ type PropertyUsecase struct {
 	PropertyRepo             repo.PropertyRepo
 	PropertyUserRepo         repo.PropertyUserRepo
 	PropertyInfoRepo         repo.PropertyInfoRepo
+	PropertyStatisticRepo    repo.PropertyStatisticRepo
 	PropertyIdentifyRepo     repo.PropertyIdentifyRepo
 	PropertyLocationRepo     repo.PropertyLocationRepo
 	PropertyExternalRefRepo  repo.PropertyExternalRefRepo
@@ -47,6 +49,7 @@ func NewPropertyUsecase(
 	propertyRepo repo.PropertyRepo,
 	propertyUserRepo repo.PropertyUserRepo,
 	propertyInfoRepo repo.PropertyInfoRepo,
+	propertyStatisticRepo repo.PropertyStatisticRepo,
 	propertyIdentifyRepo repo.PropertyIdentifyRepo,
 	propertyLocationRepo repo.PropertyLocationRepo,
 	propertyExternalRefRepo repo.PropertyExternalRefRepo,
@@ -72,6 +75,7 @@ func NewPropertyUsecase(
 		PropertyRepo:             propertyRepo,
 		PropertyUserRepo:         propertyUserRepo,
 		PropertyInfoRepo:         propertyInfoRepo,
+		PropertyStatisticRepo:    propertyStatisticRepo,
 		PropertyIdentifyRepo:     propertyIdentifyRepo,
 		PropertyLocationRepo:     propertyLocationRepo,
 		PropertyExternalRefRepo:  propertyExternalRefRepo,
@@ -420,6 +424,15 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 	return list, total, nil
 }
 
+// ListMe lấy danh sách Property của user (raw SQL), chỉ trả title, address, project, buildingInfo, avatar
+func (u *PropertyUsecase) ListMe(ctx context.Context, page, size uint32) ([]*domain.PropertyLineage, int64, error) {
+	originId := _utils.GetOriginIdFromContext(ctx)
+	if originId == 0 {
+		return nil, 0, _errors.UnauthorizedException("origin_id required")
+	}
+	return u.PropertyRepo.ListMe(ctx, originId, _dto.Pagable{Page: page, Size: size})
+}
+
 // Detail lấy chi tiết Property theo ID
 func (u *PropertyUsecase) Detail(
 	ctx context.Context,
@@ -491,6 +504,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 		identifyID    *uint64
 		locationID    *uint64
 		infoID        *uint64
+		statisticID   *uint64
 		landInfoID    *uint64
 		buildingID    *uint64
 		edvidenceID   *uint64
@@ -575,6 +589,29 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			externalRefID = &extRef.ID
 		}
 
+		productCount := int64(0)
+		assetCount := int64(0)
+		listCount := int64(0)
+		if req.Product != nil {
+			productCount = 1
+		}
+		if req.Asset != nil {
+			assetCount = 1
+		}
+		if req.Post != nil {
+			listCount = 1
+		}
+		// 7. Tạo PropertyStatistic
+		statistic := &domain.PropertyStatistic{
+			ProductCount: productCount,
+			AssetCount:   assetCount,
+			ListingCount: listCount,
+		}
+		if err := u.PropertyStatisticRepo.Save(txCtx, statistic); err != nil {
+			return _errors.InternalServerException("Create PropertyStatistic Error: ", err.Error())
+		}
+		statisticID = &statistic.ID
+
 		// 8. Tạo PropertyLineage cuối cùng - chứa ID của các bảng trên
 		lineageData := &domain.PropertyLineage{}
 		property = &domain.PropertyLineage{
@@ -586,6 +623,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			EdvidenceID:        edvidenceID,
 			ExternalRefID:      externalRefID,
 			NationalID:         lineageData.NationalID,
+			StatisticID:        statisticID,
 			VerifiedNationalAt: lineageData.VerifiedNationalAt,
 		}
 

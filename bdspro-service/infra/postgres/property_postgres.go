@@ -6,6 +6,8 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"common/case/crud3"
+	_dto "common/domain/dto"
+	_domain "common/domain/entity"
 	_models "common/models"
 	_utils "common/utils"
 	"context"
@@ -49,10 +51,10 @@ func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearc
 	var total int64
 
 	baseDB := r.DB.WithContext(ctx).
-		Table("property")
+		Table("property_lineage pl")
 
 	if !req.Sync {
-		baseDB = baseDB.Where("property.deleted_at IS NULL")
+		baseDB = baseDB.Where("pl.property_identify_id IS NULL AND pl.deleted_at IS NULL")
 	}
 
 	baseDB = r.applyFilters(baseDB, req, userId)
@@ -65,9 +67,9 @@ func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearc
 		property.id,
 		property.title,
 		property.address_detail,
-		property.area_total,
-		property.record_status,
-		property.created_at,
+		pl.area_total,
+		pl.record_status,
+		pl.created_at,
 		property.updated_at,
 		property.created_by,
 		property.province_id,
@@ -175,6 +177,272 @@ func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearc
 	// }
 
 	return properties, total, nil
+}
+
+// ListMe dùng raw SQL lấy danh sách property của user, chỉ trả title, address, project, buildingInfo, avatar
+func (r *PostgrePropertyRepo) ListMe(ctx context.Context, originId uint64, pagable _dto.Pagable) ([]*domain.PropertyLineage, int64, error) {
+	const countQ = `
+SELECT COUNT(*)
+FROM property_lineage pl
+INNER JOIN property_user pu ON pu.property_lineage_id = pl.id AND pu.deleted_at IS NULL
+WHERE pu.owner_origin_id = ? AND pl.deleted_at IS NULL`
+
+	var total int64
+	if err := r.DB.WithContext(ctx).Raw(countQ, originId).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	const listQ = `
+SELECT
+	pl.id,
+	pif.title,
+	loc.address_detail,
+	loc.province_id, loc.district_id, loc.ward_id,
+	prov.name AS province_name,
+	dist.name AS district_name,
+	ward.name AS ward_name,
+	pif.project_id AS project_id,
+	proj.name AS project_name,
+	dev.id AS developer_id, dev.name AS developer_name, dev.slug AS developer_slug, dev.logo_url AS developer_logo_url,
+	dev.phone AS developer_phone, dev.email AS developer_email, dev.website AS developer_website,
+	bi.id AS bi_id, bi.area_actual, bi.area_floor, bi.area_construction,
+	li.area_total AS land_area_total,
+	bi.floors, bi.room_number, bi.bedrooms, bi.bathrooms,
+	bi.build_status, bi.building_type, bi.direction, bi.balcony_direction, bi.note AS bi_note,
+	avatar.id AS avatar_id,
+	avatar.media_url AS avatar_url,
+	avatar.thumb_url AS avatar_thumb_url,
+	avatar.media_type AS avatar_media_type,
+	(SELECT COALESCE(json_agg(json_build_object(
+		'id', pm.id, 'mediaUrl', pm.media_url, 'thumbUrl', pm.thumb_url,
+		'mediaType', pm.media_type, 'sortOrder', pm.sort_order
+	) ORDER BY pm.sort_order), '[]'::json)
+	FROM property_media pm
+	WHERE pm.lineage_id = pl.id AND pm.deleted_at IS NULL
+	) AS media_list_raw,
+	ps.id AS statistic_id, ps.product_count, ps.asset_count, ps.listing_count,
+	pl.updated_at
+FROM property_lineage pl
+INNER JOIN property_user pu ON pu.property_lineage_id = pl.id AND pu.deleted_at IS NULL
+LEFT JOIN property_info pif ON pl.property_info_id = pif.id AND pif.deleted_at IS NULL
+LEFT JOIN property_identify pi ON pl.property_identify_id = pi.id AND pi.deleted_at IS NULL
+LEFT JOIN property_location loc ON pl.location_id = loc.id
+LEFT JOIN province_v2 prov ON loc.province_id = prov.id AND prov.deleted_at IS NULL
+LEFT JOIN district_v2 dist ON loc.district_id = dist.id AND dist.deleted_at IS NULL
+LEFT JOIN ward_v2 ward ON loc.ward_id = ward.id AND ward.deleted_at IS NULL
+LEFT JOIN projects proj ON pif.project_id = proj.id AND proj.deleted_at IS NULL
+LEFT JOIN developer dev ON proj.developer_id = dev.id AND dev.deleted_at IS NULL
+LEFT JOIN property_building_info bi ON pl.building_info_id = bi.id AND bi.deleted_at IS NULL
+LEFT JOIN property_land_info li ON pl.land_info_id = li.id AND li.deleted_at IS NULL
+LEFT JOIN property_statistic ps ON pl.statistic_id = ps.id AND ps.deleted_at IS NULL
+LEFT JOIN LATERAL (
+	SELECT pm.id, pm.media_url, pm.thumb_url, pm.media_type
+	FROM property_media pm
+	WHERE (pm.id = pif.avatar_id OR (pif.avatar_id IS NULL AND pm.lineage_id = pl.id))
+	  AND pm.deleted_at IS NULL
+	ORDER BY CASE WHEN pm.id = pif.avatar_id THEN 0 ELSE 1 END, pm.sort_order
+	LIMIT 1
+) avatar ON true
+WHERE pu.owner_origin_id = ? AND pl.deleted_at IS NULL
+ORDER BY pl.updated_at DESC NULLS LAST`
+
+	limit := pagable.GetLimit()
+	offset := pagable.GetOffset()
+
+	var rows []struct {
+		ID               uint64           `gorm:"column:id"`
+		Title            *string          `gorm:"column:title"`
+		AddressDetail    *string          `gorm:"column:address_detail"`
+		ProvinceID       *uint64          `gorm:"column:province_id"`
+		DistrictID       *uint64          `gorm:"column:district_id"`
+		WardID           *uint64          `gorm:"column:ward_id"`
+		ProvinceName     *string          `gorm:"column:province_name"`
+		DistrictName     *string          `gorm:"column:district_name"`
+		WardName         *string          `gorm:"column:ward_name"`
+		ProjectID        *uint64          `gorm:"column:project_id"`
+		ProjectName      *string          `gorm:"column:project_name"`
+		DeveloperID      *uint64          `gorm:"column:developer_id"`
+		DeveloperName    *string          `gorm:"column:developer_name"`
+		DeveloperSlug    *string          `gorm:"column:developer_slug"`
+		DeveloperLogoURL *string          `gorm:"column:developer_logo_url"`
+		DeveloperPhone   *string          `gorm:"column:developer_phone"`
+		DeveloperEmail   *string          `gorm:"column:developer_email"`
+		DeveloperWebsite *string          `gorm:"column:developer_website"`
+		BiID             *uint64          `gorm:"column:bi_id"`
+		AreaActual       *float64         `gorm:"column:area_actual"`
+		AreaFloor        *float64         `gorm:"column:area_floor"`
+		AreaConstruction *float64         `gorm:"column:area_construction"`
+		Floors           *uint32          `gorm:"column:floors"`
+		RoomNumber       *uint32          `gorm:"column:room_number"`
+		Bedrooms         *uint32          `gorm:"column:bedrooms"`
+		Bathrooms        *uint32          `gorm:"column:bathrooms"`
+		BuildStatus      *int             `gorm:"column:build_status"`
+		BuildingType     *int             `gorm:"column:building_type"`
+		Direction        *int             `gorm:"column:direction"`
+		BalconyDir       *int             `gorm:"column:balcony_direction"`
+		BiNote           *string          `gorm:"column:bi_note"`
+		LandAreaTotal    *float64         `gorm:"column:land_area_total"`
+		AvatarID         *uint64          `gorm:"column:avatar_id"`
+		AvatarURL        *string          `gorm:"column:avatar_url"`
+		AvatarThumbURL   *string          `gorm:"column:avatar_thumb_url"`
+		AvatarMediaType  *string          `gorm:"column:avatar_media_type"`
+		MediaListRaw     *json.RawMessage `gorm:"column:media_list_raw"`
+		StatisticID      *uint64          `gorm:"column:statistic_id"`
+		ProductCount     int64            `gorm:"column:product_count"`
+		AssetCount       int64            `gorm:"column:asset_count"`
+		ListingCount     int64            `gorm:"column:listing_count"`
+		UpdatedAt        *time.Time       `gorm:"column:updated_at"`
+	}
+
+	if err := r.DB.WithContext(ctx).Raw(listQ+" LIMIT ? OFFSET ?", originId, limit, offset).Scan(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	list := make([]*domain.PropertyLineage, 0, len(rows))
+	for _, row := range rows {
+		p := &domain.PropertyLineage{
+			BaseEntity: _domain.BaseEntity{ID: row.ID},
+		}
+		if row.UpdatedAt != nil {
+			p.UpdatedAt = row.UpdatedAt
+		}
+
+		if row.StatisticID != nil {
+			p.Statistic = &domain.PropertyStatistic{
+				BaseEntity:   _domain.BaseEntity{ID: *row.StatisticID},
+				ProductCount: row.ProductCount,
+				AssetCount:   row.AssetCount,
+				ListingCount: row.ListingCount,
+			}
+		}
+
+		if row.Title != nil || row.ProjectID != nil {
+			info := &domain.PropertyInfo{
+				// BaseEntity: _domain.BaseEntity{ID: *row.I},
+				Title:    ptrStr(row.Title),
+				AvatarID: row.AvatarID,
+			}
+			if row.ProjectID != nil {
+				info.ProjectID = row.ProjectID
+				info.Project = &domain.Project{
+					BaseEntity: _models.BaseEntity{ID: *row.ProjectID},
+					Name:       ptrStr(row.ProjectName),
+				}
+			}
+
+			if row.AvatarURL != nil && *row.AvatarURL != "" {
+				info.Avatar = &domain.PropertyMedia{
+					BaseEntity: _domain.BaseEntity{ID: *row.AvatarID},
+					MediaURL:   *row.AvatarURL,
+					ThumbURL:   ptrStr(row.AvatarThumbURL),
+					MediaType:  *row.AvatarMediaType,
+				}
+			}
+			p.PropertyInfo = info
+		}
+		if row.DeveloperID != nil && *row.DeveloperID > 0 {
+			p.Developer = &domain.Developer{
+				BaseEntity: _models.BaseEntity{ID: *row.DeveloperID},
+				Name:       ptrStr(row.DeveloperName),
+				Slug:       ptrStr(row.DeveloperSlug),
+				LogoUrl:    ptrStr(row.DeveloperLogoURL),
+				Phone:      ptrStr(row.DeveloperPhone),
+				Email:      ptrStr(row.DeveloperEmail),
+				Website:    ptrStr(row.DeveloperWebsite),
+			}
+		}
+
+		if row.AddressDetail != nil || row.ProvinceID != nil || row.ProvinceName != nil || row.DistrictName != nil || row.WardName != nil {
+			loc := &domain.PropertyLocation{}
+			if row.AddressDetail != nil {
+				loc.AddressDetail = *row.AddressDetail
+			}
+			loc.ProvinceID = row.ProvinceID
+			loc.DistrictID = row.DistrictID
+			loc.WardID = row.WardID
+			if row.ProvinceName != nil {
+				loc.Province = &domain.ProvinceV2{Name: *row.ProvinceName}
+			}
+			if row.DistrictName != nil {
+				loc.District = &domain.DistrictV2{Name: *row.DistrictName}
+			}
+			if row.WardName != nil {
+				loc.Ward = &domain.WardV2{Name: *row.WardName}
+			}
+			p.Location = loc
+		}
+
+		if row.LandAreaTotal != nil {
+			p.LandInfo = &domain.PropertyLandInfo{AreaTotal: row.LandAreaTotal}
+		}
+
+		if row.BiID != nil || row.AreaActual != nil || row.Floors != nil || row.Bedrooms != nil {
+			bi := &domain.PropertyBuildingInfo{}
+			bi.AreaActual = row.AreaActual
+			bi.AreaFloor = row.AreaFloor
+			bi.AreaConstruction = row.AreaConstruction
+			bi.Floors = row.Floors
+			bi.RoomNumber = row.RoomNumber
+			bi.Bedrooms = row.Bedrooms
+			bi.Bathrooms = row.Bathrooms
+			bi.Note = ptrStr(row.BiNote)
+			if row.BuildStatus != nil {
+				bi.BuildStatus = enums.EBuildStatus(*row.BuildStatus)
+			}
+			if row.BuildingType != nil {
+				bi.BuildingType = enums.EBuildingType(*row.BuildingType)
+			}
+			if row.Direction != nil {
+				bi.Direction = enums.EHouseOrient(*row.Direction)
+			}
+			if row.BalconyDir != nil {
+				bi.BalconyDirection = enums.EHouseOrient(*row.BalconyDir)
+			}
+			p.BuildingInfo = bi
+		}
+
+		// MediaList: ưu tiên danh sách đầy đủ, không có thì dùng avatar
+		if row.MediaListRaw != nil {
+			var mediaList []struct {
+				ID        uint64 `json:"id"`
+				MediaURL  string `json:"mediaUrl"`
+				ThumbURL  string `json:"thumbUrl"`
+				MediaType string `json:"mediaType"`
+				SortOrder int32  `json:"sortOrder"`
+			}
+			if err := json.Unmarshal(*row.MediaListRaw, &mediaList); err == nil && len(mediaList) > 0 {
+				p.MediaList = make([]domain.PropertyMedia, len(mediaList))
+				for i, m := range mediaList {
+					p.MediaList[i] = domain.PropertyMedia{
+						BaseEntity: _domain.BaseEntity{ID: m.ID},
+						MediaURL:   m.MediaURL,
+						ThumbURL:   m.ThumbURL,
+						MediaType:  m.MediaType,
+						SortOrder:  m.SortOrder,
+					}
+				}
+			}
+		}
+		if len(p.MediaList) == 0 && row.AvatarURL != nil && *row.AvatarURL != "" {
+			mt := "image"
+			if row.AvatarMediaType != nil {
+				mt = *row.AvatarMediaType
+			}
+			thumb := ""
+			if row.AvatarThumbURL != nil {
+				thumb = *row.AvatarThumbURL
+			}
+			p.MediaList = []domain.PropertyMedia{{
+				MediaURL:  *row.AvatarURL,
+				ThumbURL:  thumb,
+				MediaType: mt,
+			}}
+		}
+
+		list = append(list, p)
+	}
+
+	return list, total, nil
 }
 
 func (r *PostgrePropertyRepo) applyFilters(db *gorm.DB, p *dto.PropertySearchDTO, userId uint64) *gorm.DB {
@@ -317,18 +585,18 @@ func (r *PostgrePropertyRepo) GetDetail(
 	}
 
 	// Load counts
-	r.DB.WithContext(ctx).Raw(
-		"SELECT COUNT(*) FROM property_relation WHERE property_id = ? AND relation_type = ? AND deleted_at IS NULL",
-		id, enums.ERelationTypeAsset,
-	).Scan(&property.AssetCount)
-	r.DB.WithContext(ctx).Raw(
-		"SELECT COUNT(*) FROM property_relation WHERE property_id = ? AND relation_type = ? AND deleted_at IS NULL",
-		id, enums.ERelationTypeProduct,
-	).Scan(&property.ProductCount)
-	r.DB.WithContext(ctx).Raw(
-		"SELECT COUNT(*) FROM property_relation pr JOIN posts ON pr.relation_id = posts.product_id WHERE pr.property_id = ? AND pr.relation_type = ? AND pr.deleted_at IS NULL AND posts.deleted_at IS NULL",
-		id, enums.ERelationTypeProduct,
-	).Scan(&property.ListingCount)
+	// r.DB.WithContext(ctx).Raw(
+	// 	"SELECT COUNT(*) FROM property_relation WHERE property_id = ? AND relation_type = ? AND deleted_at IS NULL",
+	// 	id, enums.ERelationTypeAsset,
+	// ).Scan(&property.AssetCount)
+	// r.DB.WithContext(ctx).Raw(
+	// 	"SELECT COUNT(*) FROM property_relation WHERE property_id = ? AND relation_type = ? AND deleted_at IS NULL",
+	// 	id, enums.ERelationTypeProduct,
+	// ).Scan(&property.ProductCount)
+	// r.DB.WithContext(ctx).Raw(
+	// 	"SELECT COUNT(*) FROM property_relation pr JOIN posts ON pr.relation_id = posts.product_id WHERE pr.property_id = ? AND pr.relation_type = ? AND pr.deleted_at IS NULL AND posts.deleted_at IS NULL",
+	// 	id, enums.ERelationTypeProduct,
+	// ).Scan(&property.ListingCount)
 
 	return &property, nil
 }
@@ -345,7 +613,10 @@ SELECT
 	pl.national_id, pl.verified_national_at, pl.created_at, pl.updated_at,
 	pl.deleted_at, pl.created_by, pl.updated_by,
 	pif.id AS info_id, pif.title, pif.unit_code, pif.identifier, pif.level, pif.note, pif.source_type, pif.record_status, pif.visibility, pif.legal_status, pif.privacy_level, pif.origin_profile_id, pif.project_id,
-	COALESCE(pt.id, 0) AS project_id, COALESCE(pt.name, '') AS project_name,
+	pt.id AS project_id, pt.name AS project_name,
+	dev.id AS developer_id, dev.name AS developer_name, dev.slug AS developer_slug, dev.logo_url AS developer_logo_url,
+	dev.phone AS developer_phone, dev.email AS developer_email, dev.website AS developer_website,
+	avatar.id AS avatar_id, avatar.media_url AS avatar_url, avatar.thumb_url AS avatar_thumb_url, avatar.media_type AS avatar_media_type,
 	COALESCE(pi.id, 0) AS pi_id, COALESCE(pi.p_id, 0) AS pi_pid, COALESCE(pi.version, 0) AS pi_version, COALESCE(pi.created_at, CURRENT_TIMESTAMP) AS pi_created_at, COALESCE(pi.updated_at, CURRENT_TIMESTAMP) AS pi_updated_at,
 	loc.id AS loc_id, loc.address_detail, loc.province_id, loc.district_id, loc.ward_id,
 	loc.latitude, loc.longitude, loc.map_url, loc.region_id,
@@ -359,6 +630,7 @@ SELECT
 	bi.room_number, bi.bedrooms, bi.bathrooms, bi.build_status, bi.building_type,
 	bi.direction, bi.balcony_direction, bi.note AS bi_note,
 	ev.id AS ev_id, ev.title AS ev_title, ev.file_id, ev.description AS ev_description,
+	ps.id AS statistic_id, ps.product_count, ps.asset_count, ps.listing_count,
 	(SELECT COALESCE(json_agg(json_build_object(
 			'id', pm.id,
 			'mediaUrl', pm.media_url,
@@ -393,6 +665,16 @@ LEFT JOIN property_land_info li ON pl.land_info_id = li.id AND li.deleted_at IS 
 LEFT JOIN property_building_info bi ON pl.building_info_id = bi.id AND bi.deleted_at IS NULL
 LEFT JOIN property_edvidence ev ON pl.edvidence_id = ev.id AND ev.deleted_at IS NULL
 LEFT JOIN projects pt ON pif.project_id = pt.id AND pt.deleted_at IS NULL
+LEFT JOIN developer dev ON pt.developer_id = dev.id AND dev.deleted_at IS NULL
+LEFT JOIN property_statistic ps ON pl.statistic_id = ps.id AND ps.deleted_at IS NULL
+LEFT JOIN LATERAL (
+	SELECT pm.id, pm.media_url, pm.thumb_url, pm.media_type
+	FROM property_media pm
+	WHERE (pm.id = pif.avatar_id OR (pif.avatar_id IS NULL AND pm.lineage_id = pl.id))
+	  AND pm.deleted_at IS NULL
+	ORDER BY CASE WHEN pm.id = pif.avatar_id THEN 0 ELSE 1 END, pm.sort_order
+	LIMIT 1
+) avatar ON true
 WHERE pl.id = ? AND pl.deleted_at IS NULL`
 	var row struct {
 		ID                 uint64
@@ -414,20 +696,32 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 		MediaListRaw *json.RawMessage
 		AmenitiesRaw *json.RawMessage
 		// PropertyInfo
-		InfoID          *uint64
-		Title           *string
-		UnitCode        *string
-		Identifier      *string
-		Level           *string
-		Note            *string
-		SourceType      *uint32
-		RecordStatus    *uint32
-		Visibility      *uint32
-		LegalStatus     *uint32
-		PrivacyLevel    *uint32
-		OriginProfileId *uint64
-		ProjectID       *uint64
-		ProjectName     *string
+		InfoID           *uint64
+		Title            *string
+		UnitCode         *string
+		Identifier       *string
+		Level            *string
+		Note             *string
+		SourceType       *uint32
+		RecordStatus     *uint32
+		Visibility       *uint32
+		LegalStatus      *uint32
+		PrivacyLevel     *uint32
+		OriginProfileId  *uint64
+		ProjectID        *uint64
+		ProjectName      *string
+		DeveloperID      *uint64
+		DeveloperName    *string
+		DeveloperSlug    *string
+		DeveloperLogoURL *string
+		DeveloperPhone   *string
+		DeveloperEmail   *string
+		DeveloperWebsite *string
+		// Avatar
+		AvatarID        *uint64
+		AvatarURL       *string
+		AvatarThumbURL  *string
+		AvatarMediaType *string
 		// PropertyIdentify
 		PiID        *uint64
 		PiPid       *uint64
@@ -450,6 +744,11 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 		DistrictCode  *int
 		WardName      *string
 		WardCode      *int
+		// Statistic
+		StatisticID  *uint64
+		ProductCount int64
+		AssetCount   int64
+		ListingCount int64
 		// LandInfo
 		LandID        *uint64
 		DocumentType  *uint32
@@ -487,9 +786,6 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 		EvTitle       *string
 		EvFileID      *uint64
 		EvDescription *string
-		AssetCount    int64
-		ProductCount  int64
-		ListingCount  int64
 	}
 	if err := r.DB.WithContext(ctx).Raw(q,
 		enums.ERelationTypeAsset, enums.ERelationTypeProduct, enums.ERelationTypeProduct, id,
@@ -510,9 +806,17 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 	p.ExternalRefID = row.ExternalRefID
 	p.NationalID = row.NationalID
 	p.VerifiedNationalAt = row.VerifiedNationalAt
-	p.AssetCount = row.AssetCount
-	p.ProductCount = row.ProductCount
-	p.ListingCount = row.ListingCount
+	// p.AssetCount = row.AssetCount
+	// p.ProductCount = row.ProductCount
+	// p.ListingCount = row.ListingCount
+	if row.StatisticID != nil {
+		p.Statistic = &domain.PropertyStatistic{
+			BaseEntity:   _domain.BaseEntity{ID: *row.StatisticID},
+			ProductCount: row.ProductCount,
+			AssetCount:   row.AssetCount,
+			ListingCount: row.ListingCount,
+		}
+	}
 	if row.PiID != nil {
 		pi := &domain.PropertyIdentify{}
 		pi.ID = *row.PiID
@@ -544,16 +848,40 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 			ProjectID:       row.ProjectID,
 			Title:           ptrStr(row.Title),
 		}
-		if row.ProjectID != nil {
+		if row.ProjectID != nil && *row.ProjectID > 0 {
 			info.Project = &domain.Project{
-				BaseEntity: _models.BaseEntity{
-					ID: *row.ProjectID,
-				},
-				Name: ptrStr(row.ProjectName),
+				BaseEntity: _models.BaseEntity{ID: *row.ProjectID},
+				Name:       ptrStr(row.ProjectName),
 			}
+		}
+		if row.AvatarURL != nil && *row.AvatarURL != "" {
+			mt := "image"
+			if row.AvatarMediaType != nil {
+				mt = *row.AvatarMediaType
+			}
+			avatar := &domain.PropertyMedia{
+				MediaURL:  *row.AvatarURL,
+				ThumbURL:  ptrStr(row.AvatarThumbURL),
+				MediaType: mt,
+			}
+			if row.AvatarID != nil {
+				avatar.BaseEntity = _domain.BaseEntity{ID: *row.AvatarID}
+			}
+			info.Avatar = avatar
 		}
 		info.ID = *row.InfoID
 		p.PropertyInfo = info
+	}
+	if row.DeveloperID != nil && *row.DeveloperID > 0 {
+		p.Developer = &domain.Developer{
+			BaseEntity: _models.BaseEntity{ID: *row.DeveloperID},
+			Name:       ptrStr(row.DeveloperName),
+			Slug:       ptrStr(row.DeveloperSlug),
+			LogoUrl:    ptrStr(row.DeveloperLogoURL),
+			Phone:      ptrStr(row.DeveloperPhone),
+			Email:      ptrStr(row.DeveloperEmail),
+			Website:    ptrStr(row.DeveloperWebsite),
+		}
 	}
 	if row.LocID != nil {
 		loc := &domain.PropertyLocation{

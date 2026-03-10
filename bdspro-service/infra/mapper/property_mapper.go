@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -203,7 +204,6 @@ func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdsp
 	}
 	result := &bdspropb.PropertyResponse{
 		Id: property.ID,
-		// Title: property.Title,
 		// MapUrl:           property.MapURL,
 		// Level:            property.Level,
 		// UnitCode:         property.UnitCode,
@@ -233,9 +233,13 @@ func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdsp
 		// NationalId:         property.NationalID,
 		// NationalIdVerified: property.NationalIDVerified,
 		// Add counts
-		ProductCount: &property.ProductCount,
-		AssetCount:   &property.AssetCount,
-		PostCount:    &property.ListingCount,
+
+	}
+
+	if property.Statistic != nil {
+		result.ProductCount = &property.Statistic.ProductCount
+		result.AssetCount = &property.Statistic.AssetCount
+		result.PostCount = &property.Statistic.ListingCount
 	}
 
 	// if property.RecordStatus.IsValid() {
@@ -246,6 +250,51 @@ func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdsp
 	// }
 	if property.UpdatedAt != nil {
 		result.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
+	}
+
+	// Info: title, project (ListMe format)
+	if property.PropertyInfo != nil {
+		if property.PropertyInfo.Title != "" {
+			result.Title = property.PropertyInfo.Title
+		}
+		if property.PropertyInfo.Project != nil {
+			result.ProjectName = &property.PropertyInfo.Project.Name
+			result.Project = &sharepb.TagItem{
+				Id:   property.PropertyInfo.Project.ID,
+				Name: property.PropertyInfo.Project.Name,
+			}
+		}
+		if property.PropertyInfo.ProjectID != nil {
+			result.ProjectId = property.PropertyInfo.ProjectID
+		}
+	}
+
+	// LandInfo: areaTotal (ListMe format)
+	if property.LandInfo != nil && property.LandInfo.AreaTotal != nil {
+		result.AreaTotal = property.LandInfo.AreaTotal
+	}
+
+	// Location: address (ListMe format)
+	if property.Location != nil {
+		result.AddressDetail = property.Location.AddressDetail
+		if property.Location.AddressDetail != "" || property.Location.ProvinceID != nil || property.Location.WardID != nil {
+			addr := &sharepb.AddressV3Proto{
+				Detail:     property.Location.AddressDetail,
+				ProvinceId: property.Location.ProvinceID,
+				DistrictId: property.Location.DistrictID,
+				WardId:     property.Location.WardID,
+			}
+			if property.Location.Province != nil {
+				addr.ProvinceName = property.Location.Province.Name
+			}
+			if property.Location.District != nil {
+				addr.DistrictName = property.Location.District.Name
+			}
+			if property.Location.Ward != nil {
+				addr.WardName = property.Location.Ward.Name
+			}
+			result.Address = addr
+		}
 	}
 
 	// AddressV3Proto
@@ -296,26 +345,32 @@ func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdsp
 	// }
 
 	if property.BuildingInfo != nil {
+		bi := property.BuildingInfo
 		result.BuildingInfo = &bdspropb.PropertyBuildingInfo{
-			BuildingType: uint32(property.BuildingInfo.BuildingType),
-			// ConstructionArea: property.BuildingInfo.ConstructionArea,
-			// FloorArea:        property.BuildingInfo.FloorArea,
-			Note:             property.BuildingInfo.Note,
-			Floors:           property.BuildingInfo.Floors,
-			Bedrooms:         property.BuildingInfo.Bedrooms,
-			Bathrooms:        property.BuildingInfo.Bathrooms,
-			Direction:        uint32(property.BuildingInfo.Direction),
-			BalconyDirection: uint32(property.BuildingInfo.BalconyDirection),
+			BuildingType:     uint32(bi.BuildingType),
+			AreaActual:       bi.AreaActual,
+			AreaFloor:        bi.AreaFloor,
+			AreaConstruction: bi.AreaConstruction,
+			Note:             bi.Note,
+			Floors:           bi.Floors,
+			RoomNumber:       bi.RoomNumber,
+			Bedrooms:         bi.Bedrooms,
+			Bathrooms:        bi.Bathrooms,
+			BuildStatus:      uint32(bi.BuildStatus),
+			Direction:        uint32(bi.Direction),
+			BalconyDirection: uint32(bi.BalconyDirection),
 		}
 	}
 
-	// if property.Avatar != nil && property.Avatar.URL != "" {
-	// 	result.Avatar = &bdspropb.PropertyMediaItem{
-	// 		Url:       property.Avatar.URL,
-	// 		MediaType: property.Avatar.MediaType,
-	// 		SortOrder: property.Avatar.SortOrder,
-	// 	}
-	// }
+	// Avatar (ListMe format - từ MediaList[0])
+	if len(property.MediaList) > 0 {
+		media := &property.MediaList[0]
+		result.Avatar = &bdspropb.PropertyMediaItem{
+			Url:       media.MediaURL,
+			ThumbUrl:  media.ThumbURL,
+			MediaType: media.MediaType,
+		}
+	}
 
 	// Amenities
 	if len(property.Amenities) > 0 {
@@ -343,7 +398,7 @@ func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdsp
 	return result
 }
 
-// PropertyListToProto converts list of PropertyWithCounts to protobuf PropertyResponse list
+// PropertyListToProto converts list to protobuf PropertyResponse list (legacy)
 func (m *PropertyMapper) PropertyListToProto(properties []*domain.PropertyLineage) []*bdspropb.PropertyResponse {
 	result := make([]*bdspropb.PropertyResponse, 0, len(properties))
 	for _, property := range properties {
@@ -352,19 +407,25 @@ func (m *PropertyMapper) PropertyListToProto(properties []*domain.PropertyLineag
 	return result
 }
 
+// PropertyListToDetailProto converts list to PropertyDetailResponse list (format giống GetDetail)
+func (m *PropertyMapper) PropertyListToDetailProto(properties []*domain.PropertyLineage) []*bdspropb.PropertyDetailResponse {
+	result := make([]*bdspropb.PropertyDetailResponse, 0, len(properties))
+	for _, property := range properties {
+		result = append(result, m.PropertyDetailToProto(property, _enum.EDataModePartial))
+	}
+	return result
+}
+
 // PropertyDetailToProto converts PropertyLineage to PropertyDetailResponse
-func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage) *bdspropb.PropertyDetailResponse {
+func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage, mode _enum.EDataMode) *bdspropb.PropertyDetailResponse {
 	if property == nil {
 		return nil
 	}
 	res := &bdspropb.PropertyDetailResponse{
-		Id:           property.ID,
-		ProductCount: property.ProductCount,
-		AssetCount:   property.AssetCount,
-		ListingCount: property.ListingCount,
-		Lineage: &bdspropb.PropertyLineageInfo{
-			NationalId: property.NationalID,
-		},
+		Id: property.ID,
+		// Lineage: &bdspropb.PropertyLineageInfo{
+		// 	NationalId: property.NationalID,
+		// },
 	}
 	if property.CreatedAt != nil {
 		res.CreatedAt = _utils.FormatTimeToString(property.CreatedAt)
@@ -376,6 +437,49 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage)
 		ms := property.VerifiedNationalAt.UnixMilli()
 		res.Lineage.VerifiedNationalAt = &ms
 	}
+
+	if property.Statistic != nil {
+		res.Statistic = &bdspropb.PropertyStatistic{
+			Id:           property.Statistic.ID,
+			ProductCount: &property.Statistic.ProductCount,
+			AssetCount:   &property.Statistic.AssetCount,
+			ListingCount: &property.Statistic.ListingCount,
+		}
+	}
+
+	if property.PropertyInfo != nil {
+		if property.PropertyInfo.Avatar != nil {
+			res.Avatar = &bdspropb.MediaItem{
+				Id:        property.PropertyInfo.Avatar.ID,
+				MediaType: property.PropertyInfo.Avatar.MediaType,
+				MediaUrl:  property.PropertyInfo.Avatar.MediaURL,
+			}
+		}
+		if property.PropertyInfo.Project != nil {
+			res.Project = &bdspropb.Project{
+				Id:   property.PropertyInfo.Project.ID,
+				Name: property.PropertyInfo.Project.Name,
+			}
+		}
+	}
+	if property.Developer != nil {
+		res.Developer = &bdspropb.Developer{
+			Id:      property.Developer.ID,
+			Name:    property.Developer.Name,
+			Slug:    property.Developer.Slug,
+			LogoUrl: property.Developer.LogoUrl,
+			Phone:   property.Developer.Phone,
+			Email:   property.Developer.Email,
+			Website: property.Developer.Website,
+		}
+	}
+	// areaTotal từ landInfo, areaActual từ buildingInfo
+	// if property.LandInfo != nil && property.LandInfo.AreaTotal != nil {
+	// 	res.AreaTotal = property.LandInfo.AreaTotal
+	// }
+	// if property.BuildingInfo != nil && property.BuildingInfo.AreaActual != nil {
+	// 	res.AreaActual = property.BuildingInfo.AreaActual
+	// }
 
 	// BasicInfo (PropertyIdentify)
 	if property.PropertyInfo != nil {
@@ -423,41 +527,51 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage)
 		if pi.Title != "" {
 			res.Info.Title = &pi.Title
 		}
+
+		// if property.PropertyInfo.Avatar != nil {
+		// 	res.Info.Avatar = &bdspropb.MediaItem{
+		// 		Id:        property.PropertyInfo.Avatar.ID,
+		// 		MediaType: property.PropertyInfo.Avatar.MediaType,
+		// 		MediaUrl:  property.PropertyInfo.Avatar.MediaURL,
+		// 		Order:     int32(property.PropertyInfo.Avatar.SortOrder),
+		// 	}
+		// }
 	}
 
 	// Location
 	if property.Location != nil {
 		loc := property.Location
-		info := &bdspropb.PropertyLocationInfo{
-			Id:            loc.ID,
-			AddressDetail: loc.AddressDetail,
-			MapUrl:        loc.MapURL,
-			RegionId:      loc.RegionID,
-			ProvinceId:    loc.ProvinceID,
-			DistrictId:    loc.DistrictID,
-			WardId:        loc.WardID,
-			Latitude:      loc.Latitude,
-			Longitude:     loc.Longitude,
+		location := &bdspropb.PropertyLocationInfo{
+			Id:         loc.ID,
+			Detail:     loc.AddressDetail,
+			MapUrl:     loc.MapURL,
+			RegionId:   loc.RegionID,
+			ProvinceId: loc.ProvinceID,
+			DistrictId: loc.DistrictID,
+			WardId:     loc.WardID,
+			Latitude:   loc.Latitude,
+			Longitude:  loc.Longitude,
 		}
-		if loc.Province != nil || loc.District != nil || loc.Ward != nil {
-			addr := &sharepb.AddressV3Proto{
-				Detail:     loc.AddressDetail,
-				ProvinceId: loc.ProvinceID,
-				DistrictId: loc.DistrictID,
-				WardId:     loc.WardID,
-			}
-			if loc.Province != nil {
-				addr.ProvinceName = loc.Province.Name
-			}
-			if loc.District != nil {
-				addr.DistrictName = loc.District.Name
-			}
-			if loc.Ward != nil {
-				addr.WardName = loc.Ward.Name
-			}
-			info.Address = addr
+		if loc.Province != nil {
+			location.ProvinceName = loc.Province.Name
 		}
-		res.Location = info
+		if loc.District != nil {
+			location.DistrictName = loc.District.Name
+		}
+		if loc.Ward != nil {
+			location.WardName = loc.Ward.Name
+		}
+		// if loc.Province != nil || loc.District != nil || loc.Ward != nil {
+		// 	addr := &sharepb.AddressV3Proto{
+		// 		Detail:     loc.AddressDetail,
+		// 		ProvinceId: loc.ProvinceID,
+		// 		DistrictId: loc.DistrictID,
+		// 		WardId:     loc.WardID,
+		// 	}
+
+		// 	info.Address = addr
+		// }
+		res.Location = location
 	}
 
 	// LandInfo
@@ -547,6 +661,17 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage)
 			}
 		}
 		res.Amenities = amenities
+	}
+
+	if property.UpdatedAt != nil {
+		res.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
+	}
+	if property.CreatedAt != nil {
+		res.CreatedAt = _utils.FormatTimeToString(property.CreatedAt)
+	}
+	if property.VerifiedNationalAt != nil {
+		ms := property.VerifiedNationalAt.UnixMilli()
+		res.Lineage.VerifiedNationalAt = &ms
 	}
 
 	return res
