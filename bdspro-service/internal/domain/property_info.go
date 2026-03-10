@@ -27,10 +27,10 @@ type PropertyInfo struct {
 	ProjectID *uint64  `gorm:"type:bigint;index" json:"projectId,omitempty"`
 	Project   *Project `gorm:"foreignKey:ProjectID"`
 
-	LegalStatus  enums.EHouseCertificate `gorm:"type:smallint;index" json:"legalStatus,omitempty"`
-	PrivacyLevel enums.EVisibility       `gorm:"type:smallint;default:30" json:"privacyLevel,omitempty"`
-	RecordStatus enums.EPropertyStatus   `gorm:"type:smallint;default:10" json:"recordStatus,omitempty"`
-	Note         string                  `gorm:"size:255" json:"note,omitempty"` // Ghi chú
+	LegalStatus enums.EHouseCertificate `gorm:"type:smallint;index" json:"legalStatus,omitempty"`
+	// PrivacyLevel enums.EVisibility       `gorm:"type:smallint;default:30" json:"privacyLevel,omitempty"`
+	RecordStatus enums.EPropertyStatus `gorm:"type:smallint;default:10" json:"recordStatus,omitempty"`
+	Note         string                `gorm:"size:255" json:"note,omitempty"` // Ghi chú
 
 	// IDENTIFIER
 	UnitCode   string `gorm:"size:50" json:"unitCode,omitempty"`
@@ -38,8 +38,8 @@ type PropertyInfo struct {
 	Level      string `gorm:"size:100" json:"level,omitempty"`
 
 	// AREA
-	Scope      enums.EPropertyScope `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`
-	Visibility enums.EVisibility    `gorm:"type:smallint;default:10" json:"visibility,omitempty"`
+	Scope enums.EPropertyScope `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`
+	// Visibility enums.EVisibility    `gorm:"type:smallint;default:10" json:"visibility,omitempty"`
 
 	OriginProfileId *uint64 `gorm:"type:bigint;index" json:"originProfileId,omitempty"`
 	// COMPUTED

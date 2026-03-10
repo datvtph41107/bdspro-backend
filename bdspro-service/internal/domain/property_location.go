@@ -1,8 +1,9 @@
 package domain
 
-type PropertyLocation struct {
-	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
+import _models "common/models"
 
+type PropertyLocation struct {
+	_models.BaseEntity
 	// đối với bds định danh sẽ có id này
 	PropertyIdentifyID *uint64 `gorm:"type:int8;index" json:"propertyIdentifyId"` // Liên kết với Property
 	// Để lấy được thông tin của property identify

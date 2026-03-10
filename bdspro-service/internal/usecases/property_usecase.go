@@ -6,6 +6,7 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
+	property_repo "bdspro/internal/repo/property"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
@@ -14,8 +15,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"gorm.io/gorm"
+	"strings"
+	"time"
 )
 
 type PropertyUsecase struct {
@@ -43,6 +44,15 @@ type PropertyUsecase struct {
 	NotifyProvider           provider.NotificationProvider
 	HubProvider              provider.HubProvider
 	SyncProvider             *_provider.SyncProvider
+	LineageRepo              property_repo.PropertyLineageRepository
+	InfoRepo                 property_repo.PropertyInfoRepository
+	LocationRepo             property_repo.PropertyLocationRepository
+	LandInfoRepo             property_repo.PropertyLandInfoRepository
+	BuildingInfoRepo         property_repo.PropertyBuildingInfoRepository
+	EvidenceRepo             property_repo.PropertyEvidenceRepository
+	MediaRepo                property_repo.PropertyMediaRepository
+	AmenityRepo              property_repo.PropertyAmenityRepository
+	ExternalRefRepo          property_repo.PropertyExternalRefRepository
 }
 
 func NewPropertyUsecase(
@@ -70,6 +80,15 @@ func NewPropertyUsecase(
 	notifyProvider provider.NotificationProvider,
 	hubProvider provider.HubProvider,
 	syncProvider *_provider.SyncProvider,
+	lineageRepo property_repo.PropertyLineageRepository,
+	inforRepo property_repo.PropertyInfoRepository,
+	locationRepo property_repo.PropertyLocationRepository,
+	landInforRepo property_repo.PropertyLandInfoRepository,
+	buildingInforRepo property_repo.PropertyBuildingInfoRepository,
+	evidenceRepo property_repo.PropertyEvidenceRepository,
+	mediaRepo property_repo.PropertyMediaRepository,
+	amenityRepo property_repo.PropertyAmenityRepository,
+	externalRefRepo property_repo.PropertyExternalRefRepository,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
@@ -96,6 +115,14 @@ func NewPropertyUsecase(
 		NotifyProvider:           notifyProvider,
 		HubProvider:              hubProvider,
 		SyncProvider:             syncProvider,
+		LineageRepo:              lineageRepo,
+		InfoRepo:                 inforRepo,
+		LocationRepo:             locationRepo,
+		LandInfoRepo:             landInforRepo,
+		BuildingInfoRepo:         buildingInforRepo,
+		EvidenceRepo:             evidenceRepo,
+		MediaRepo:                mediaRepo,
+		ExternalRefRepo:          externalRefRepo,
 	}
 }
 
@@ -498,17 +525,16 @@ func (u *PropertyUsecase) GetRelation(ctx context.Context, propertyID uint64) ([
 // Lưu ý: Product, Asset, Post sẽ được tạo ở handler layer trước khi gọi usecase này
 func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropertyProductRequest) (*domain.PropertyLineage, error) {
 	var (
-		property      *domain.PropertyLineage
-		productID     *uint64
-		assetID       *uint64
-		identifyID    *uint64
-		locationID    *uint64
-		infoID        *uint64
-		statisticID   *uint64
-		landInfoID    *uint64
-		buildingID    *uint64
-		edvidenceID   *uint64
-		externalRefID *uint64
+		property    *domain.PropertyLineage
+		productID   *uint64
+		assetID     *uint64
+		identifyID  *uint64
+		locationID  *uint64
+		infoID      *uint64
+		landInfoID  *uint64
+		buildingID  *uint64
+		edvidenceID *uint64
+		// externalRefID *uint64
 	)
 
 	originId := _utils.GetOriginIdFromContext(ctx)
@@ -522,11 +548,11 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			info = req.Info
 		} else {
 			info = &domain.PropertyInfo{
-				SourceType:      enums.EPropertySourceType(enums.SourceTypeOther),
-				Visibility:      enums.EVisiblePrivate,
-				RecordStatus:    enums.EPropertyStatusActive,
-				LegalStatus:     enums.EHouseCertificateNone,
-				PrivacyLevel:    enums.EVisiblePublic,
+				SourceType: enums.EPropertySourceType(enums.SourceTypeOther),
+				// Visibility:      enums.EVisiblePrivate,
+				RecordStatus: enums.EPropertyStatusActive,
+				LegalStatus:  enums.EHouseCertificateNone,
+				// PrivacyLevel:    enums.EVisiblePublic,
 				Note:            "Note",
 				UnitCode:        "UnitCode",
 				Identifier:      "Identifier",
@@ -586,7 +612,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			if err := u.PropertyExternalRefRepo.Create(txCtx, extRef); err != nil {
 				return _errors.InternalServerException("Create PropertyExternalRef Error: ", err.Error())
 			}
-			externalRefID = &extRef.ID
+			// externalRefID = &extRef.ID
 		}
 
 		productCount := int64(0)
@@ -621,7 +647,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			LandInfoID:         landInfoID,
 			BuildingInfoID:     buildingID,
 			EdvidenceID:        edvidenceID,
-			ExternalRefID:      externalRefID,
+			// ExternalRefID:      externalRefID,
 			NationalID:         lineageData.NationalID,
 			StatisticID:        statisticID,
 			VerifiedNationalAt: lineageData.VerifiedNationalAt,
@@ -1291,74 +1317,6 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 }
 
 // Update cập nhật Property và các thông tin liên quan (LandInfo, BuildingInfo)
-func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, property *domain.PropertyLineage, landInfo *domain.PropertyLandInfo, buildingInfo *domain.PropertyBuildingInfo, amenityIDs []uint64) error {
-	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		existing, err := u.PropertyRepo.GetOneByID(txCtx, propertyID)
-		if err != nil {
-			return err
-		}
-		if existing == nil {
-			return errors.New("property not found")
-		}
-
-		// Ta gọi Update của repo, nó sẽ chỉ update các field không nil
-		if property != nil {
-			property.ID = propertyID // đảm bảo ID
-			if err := u.PropertyRepo.Update(txCtx, propertyID, property); err != nil {
-				return err
-			}
-		}
-
-		if landInfo != nil {
-			existingLand, err := u.PropertyLandInfoRepo.GetByPropertyID(txCtx, propertyID)
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return err
-			}
-			landInfo.PropertyIdentifyID = &propertyID
-			if existingLand == nil {
-				if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
-					return err
-				}
-			} else {
-				landInfo.ID = existingLand.ID
-				if err := u.PropertyLandInfoRepo.Update(txCtx, landInfo); err != nil {
-					return err
-				}
-			}
-		}
-
-		if buildingInfo != nil {
-			existingBuilding, err := u.PropertyBuildingInfoRepo.GetByPropertyID(txCtx, propertyID)
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return err
-			}
-			buildingInfo.PropertyIdentifyID = &propertyID
-			if existingBuilding == nil {
-				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
-					return err
-				}
-				// Cập nhật building_info_id trong property
-				if err := u.PropertyRepo.Update(txCtx, propertyID, &domain.PropertyLineage{BuildingInfoID: &buildingInfo.ID}); err != nil {
-					return err
-				}
-			} else {
-				buildingInfo.ID = existingBuilding.ID
-				if err := u.PropertyBuildingInfoRepo.Update(txCtx, buildingInfo); err != nil {
-					return err
-				}
-			}
-		}
-
-		if amenityIDs != nil {
-			if err := u.PropertyAmenityRepo.UpdatePropertyAmenityIds(txCtx, propertyID, amenityIDs); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
 func (u *PropertyUsecase) DeleteProperties(ctx context.Context, ids []uint64) error {
 	if len(ids) == 0 {
 		return nil
@@ -1394,4 +1352,767 @@ func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.Archiv
 		}
 	}
 	return u.PropertyRepo.ArchiveBatchProperties(ctx, req.IDs, req.Archived)
+}
+
+// // UPDATE V2 PROPERTY
+// UpdateProperty — entry point
+//
+// Flow:
+//  1. Load existing PropertyLineage (bao gồm FK IDs của các sub-domain)
+//  2. Với mỗi sub-domain có trong DTO: build update map → diff với DB → chỉ
+//     write nếu thực sự có thay đổi
+//  3. Toàn bộ chạy trong 1 transaction
+//
+// ─────────────────────────────────────────────────────────────────────────────
+func (u *PropertyUsecase) UpdateProperty(
+	ctx context.Context,
+	c *dto.UpdatePropertyDTO,
+) (*dto.UpdatePropertyResult, error) {
+	var result *dto.UpdatePropertyResult
+
+	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		existing, err := u.LineageRepo.GetByID(txCtx, c.LineageID)
+		if err != nil {
+			return err
+		}
+		if existing == nil {
+			return errors.New("property lineage not found")
+		}
+
+		result = &dto.UpdatePropertyResult{
+			LineageID: existing.ID,
+			UpdatedAt: time.Now().UTC().Format(time.RFC3339),
+		}
+
+		if c.Info != nil {
+			if err := u.handleInfo(txCtx, c.LineageID, existing.PropertyInfoID, c.Info, c.FieldMask); err != nil {
+				return err
+			}
+			result.Info, _ = u.InfoRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.Location != nil {
+			if err := u.handleLocation(txCtx, c.LineageID, existing.LocationID, c.Location, c.FieldMask); err != nil {
+				return err
+			}
+			result.Location, _ = u.LocationRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.LandInfo != nil {
+			if err := u.handleLandInfo(txCtx, c.LineageID, existing.LandInfoID, c.LandInfo, c.FieldMask); err != nil {
+				return err
+			}
+			result.LandInfo, _ = u.LandInfoRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.BuildingInfo != nil {
+			newBuildingID, err := u.handleBuildingInfo(txCtx, c.LineageID, existing.BuildingInfoID, c.BuildingInfo, c.FieldMask)
+			if err != nil {
+				return err
+			}
+			if newBuildingID != nil {
+				if err := u.LineageRepo.UpdateFields(txCtx, c.LineageID, map[string]any{
+					"building_info_id": *newBuildingID,
+				}); err != nil {
+					return err
+				}
+			}
+			result.BuildingInfo, _ = u.BuildingInfoRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.Evidence != nil {
+			if err := u.handleEvidence(txCtx, c.LineageID, existing.EdvidenceID, c.Evidence, c.FieldMask); err != nil {
+				return err
+			}
+			result.Evidence, _ = u.EvidenceRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.Media != nil {
+			if err := u.handleMedia(txCtx, c.LineageID, c.Media); err != nil {
+				return err
+			}
+			result.Media, _ = u.MediaRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.Amenities != nil {
+			if err := u.AmenityRepo.ReplaceAmenities(txCtx, c.LineageID, c.Amenities.AmenityIDs); err != nil {
+				return err
+			}
+			ids, _ := u.AmenityRepo.GetAmenityIDsByLineageID(txCtx, c.LineageID)
+			items := make([]domain.AmenityItem, 0, len(ids))
+			for _, id := range ids {
+				items = append(items, domain.AmenityItem{ID: id})
+			}
+			result.Amenities = items
+		}
+
+		if c.ExternalRefs != nil {
+			if err := u.handleExternalRefs(txCtx, c.LineageID, c.ExternalRefs); err != nil {
+				return err
+			}
+			result.ExternalRefs, _ = u.ExternalRefRepo.GetByLineageID(txCtx, c.LineageID)
+		}
+
+		if c.LineageMeta != nil {
+			if err := u.handleLineageMeta(txCtx, c.LineageID, existing, c.LineageMeta, c.FieldMask); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-domain handlers
+// Pattern: build update map → diff với existing record → write nếu có thay đổi
+// ─────────────────────────────────────────────────────────────────────────────
+
+func (u *PropertyUsecase) handleInfo(
+	ctx context.Context,
+	lineageID uint64,
+	infoID *uint64,
+	c *dto.UpdateInfoDTO,
+	mask []string,
+) error {
+	if infoID == nil {
+		// Record chưa tồn tại → insert, không cần diff
+		entity := mapInfoDTOToEntity(lineageID, c)
+		if err := u.InfoRepo.Create(ctx, entity); err != nil {
+			return err
+		}
+		return u.LineageRepo.UpdateFields(ctx, lineageID, map[string]any{
+			"property_info_id": entity.ID,
+		})
+	}
+
+	// Load existing để diff
+	existing, err := u.InfoRepo.GetByID(ctx, *infoID)
+	if err != nil {
+		return err
+	}
+
+	updates := buildInfoUpdates(c, mask, existing)
+	if len(updates) == 0 {
+		return nil // Không có gì thay đổi
+	}
+	return u.InfoRepo.UpdateFields(ctx, *infoID, updates)
+}
+
+func (u *PropertyUsecase) handleLocation(
+	ctx context.Context,
+	lineageID uint64,
+	locationID *uint64,
+	c *dto.UpdateLocationDTO,
+	mask []string,
+) error {
+	if locationID == nil {
+		entity := mapLocationDTOToEntity(lineageID, c)
+		if err := u.LocationRepo.Create(ctx, entity); err != nil {
+			return err
+		}
+		return u.LineageRepo.UpdateFields(ctx, lineageID, map[string]any{
+			"location_id": entity.ID,
+		})
+	}
+
+	existing, err := u.LocationRepo.GetByID(ctx, *locationID)
+	if err != nil {
+		return err
+	}
+
+	updates := buildLocationUpdates(c, mask, existing)
+	if len(updates) == 0 {
+		return nil
+	}
+	return u.LocationRepo.UpdateFields(ctx, *locationID, updates)
+}
+
+func (u *PropertyUsecase) handleLandInfo(
+	ctx context.Context,
+	lineageID uint64,
+	landInfoID *uint64,
+	c *dto.UpdateLandInfoDTO,
+	mask []string,
+) error {
+	if landInfoID == nil {
+		entity := mapLandInfoDTOToEntity(lineageID, c)
+		if err := u.LandInfoRepo.Create(ctx, entity); err != nil {
+			return err
+		}
+		return u.LineageRepo.UpdateFields(ctx, lineageID, map[string]any{
+			"land_info_id": entity.ID,
+		})
+	}
+
+	existing, err := u.LandInfoRepo.GetByID(ctx, *landInfoID)
+	if err != nil {
+		return err
+	}
+
+	updates := buildLandInfoUpdates(c, mask, existing)
+	if len(updates) == 0 {
+		return nil
+	}
+	return u.LandInfoRepo.UpdateFields(ctx, *landInfoID, updates)
+}
+
+// handleBuildingInfo trả về newID nếu record được insert mới.
+func (u *PropertyUsecase) handleBuildingInfo(
+	ctx context.Context,
+	lineageID uint64,
+	buildingID *uint64,
+	c *dto.UpdateBuildingDTO,
+	mask []string,
+) (*uint64, error) {
+	if buildingID == nil {
+		entity := mapBuildingDTOToEntity(lineageID, c)
+		if err := u.BuildingInfoRepo.Create(ctx, entity); err != nil {
+			return nil, err
+		}
+		return &entity.ID, nil
+	}
+
+	existing, err := u.BuildingInfoRepo.GetByID(ctx, *buildingID)
+	if err != nil {
+		return nil, err
+	}
+
+	updates := buildBuildingUpdates(c, mask, existing)
+	if len(updates) == 0 {
+		return nil, nil
+	}
+	return nil, u.BuildingInfoRepo.UpdateFields(ctx, *buildingID, updates)
+}
+
+func (u *PropertyUsecase) handleEvidence(
+	ctx context.Context,
+	lineageID uint64,
+	evidenceID *uint64,
+	c *dto.UpdateEvidenceDTO,
+	mask []string,
+) error {
+	if evidenceID == nil {
+		entity := &domain.PropertyEdvidence{
+			Title:       derefStr(c.Title),
+			Description: derefStr(c.Description),
+			FileID:      c.FileID,
+		}
+		if err := u.EvidenceRepo.Create(ctx, entity); err != nil {
+			return err
+		}
+		return u.LineageRepo.UpdateFields(ctx, lineageID, map[string]any{
+			"edvidence_id": entity.ID,
+		})
+	}
+
+	existing, err := u.EvidenceRepo.GetByID(ctx, *evidenceID)
+	if err != nil {
+		return err
+	}
+
+	updates := buildEvidenceUpdates(c, mask, existing)
+	if len(updates) == 0 {
+		return nil
+	}
+	return u.EvidenceRepo.UpdateFields(ctx, *evidenceID, updates)
+}
+
+func (u *PropertyUsecase) handleMedia(
+	ctx context.Context,
+	lineageID uint64,
+	c *dto.UpdateMediaDTO,
+) error {
+	for _, item := range c.Items {
+		if item.ID == 0 {
+			entity := &domain.PropertyMedia{
+				LineageID: &lineageID,
+				MediaType: item.MediaType,
+				MediaURL:  item.MediaURL,
+				ThumbURL:  item.ThumbURL,
+				SortOrder: item.SortOrder,
+				IsCover:   item.IsCover,
+			}
+			if err := u.MediaRepo.Create(ctx, entity); err != nil {
+				return err
+			}
+		} else {
+			// Load existing để diff
+			existing, err := u.MediaRepo.GetByID(ctx, item.ID)
+			if err != nil {
+				return err
+			}
+			updates := map[string]any{}
+			if item.MediaURL != "" && item.MediaURL != existing.MediaURL {
+				updates["media_url"] = item.MediaURL
+			}
+			if item.ThumbURL != "" && item.ThumbURL != existing.ThumbURL {
+				updates["thumb_url"] = item.ThumbURL
+			}
+			if item.SortOrder != existing.SortOrder {
+				updates["sort_order"] = item.SortOrder
+			}
+			if item.IsCover != existing.IsCover {
+				updates["is_cover"] = item.IsCover
+			}
+			if len(updates) == 0 {
+				continue
+			}
+			if err := u.MediaRepo.UpdateFields(ctx, item.ID, updates); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (u *PropertyUsecase) handleExternalRefs(
+	ctx context.Context,
+	lineageID uint64,
+	c *dto.UpdateExternalRefDTO,
+) error {
+	for _, item := range c.Items {
+		if item.ID == 0 {
+			entity := &domain.PropertyExternalRef{
+				ExternalRefID: item.ExternalRefID,
+				SourceSystem:  enums.ERefSourceSys(item.SourceSystem),
+				SourceCode:    item.SourceCode,
+				Confidence:    item.Confidence,
+				SyncStatus:    enums.ESyncStatus(item.SyncStatus),
+				Note:          item.Note,
+			}
+			if err := u.ExternalRefRepo.Create(ctx, entity); err != nil {
+				return err
+			}
+		} else {
+			existing, err := u.ExternalRefRepo.GetByID(ctx, item.ID)
+			if err != nil {
+				return err
+			}
+			updates := map[string]any{}
+			if item.SourceCode != existing.SourceCode {
+				updates["source_code"] = item.SourceCode
+			}
+			if item.Confidence != existing.Confidence {
+				updates["confidence"] = item.Confidence
+			}
+			if item.SyncStatus != int32(existing.SyncStatus) {
+				updates["sync_status"] = item.SyncStatus
+			}
+			if item.Note != existing.Note {
+				updates["note"] = item.Note
+			}
+			if len(updates) == 0 {
+				continue
+			}
+			if err := u.ExternalRefRepo.UpdateFields(ctx, item.ID, updates); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (u *PropertyUsecase) handleLineageMeta(
+	ctx context.Context,
+	lineageID uint64,
+	existing *domain.PropertyLineage,
+	c *dto.UpdateLineageMetaDTO,
+	mask []string,
+) error {
+	updates := map[string]any{}
+
+	if inMask(mask, "lineage_meta.national_id") && c.NationalID != nil {
+		if *c.NationalID != existing.NationalID {
+			updates["national_id"] = *c.NationalID
+		}
+	}
+
+	if inMask(mask, "lineage_meta.lineage_status") && c.LineageStatus != nil && *c.LineageStatus != 0 {
+		updates["lineage_status"] = *c.LineageStatus
+	}
+
+	if inMask(mask, "lineage_meta.verified_national_at") && c.VerifiedNationalAt != nil {
+		if *c.VerifiedNationalAt == "" {
+			// Clear
+			if existing.VerifiedNationalAt != nil {
+				updates["verified_national_at"] = nil
+			}
+		} else {
+			t, err := time.Parse(time.RFC3339, *c.VerifiedNationalAt)
+			if err != nil {
+				return errors.New("invalid verified_national_at format, expected RFC3339")
+			}
+			if existing.VerifiedNationalAt == nil || !t.Equal(*existing.VerifiedNationalAt) {
+				updates["verified_national_at"] = t
+			}
+		}
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+	return u.LineageRepo.UpdateFields(ctx, lineageID, updates)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Field update builders — diff-aware
+//
+// Nhận DTO + mask + existing record.
+// Chỉ thêm vào map nếu:
+//   1. Path nằm trong mask (hoặc mask rỗng)
+//   2. Giá trị thực sự khác với DB (diff check)
+// ─────────────────────────────────────────────────────────────────────────────
+
+func buildInfoUpdates(c *dto.UpdateInfoDTO, mask []string, ex *domain.PropertyInfo) map[string]any {
+	u := make(map[string]any)
+
+	diffStr(u, mask, "info.title", "title", c.Title, &ex.Title)
+	diffStr(u, mask, "info.note", "note", c.Note, &ex.Note)
+	diffStr(u, mask, "info.unit_code", "unit_code", c.UnitCode, &ex.UnitCode)
+	diffStr(u, mask, "info.identifier", "identifier", c.Identifier, &ex.Identifier)
+	diffStr(u, mask, "info.level", "level", c.Level, &ex.Level)
+	diffInt32(u, mask, "info.scope", "scope", c.Scope, int32(ex.Scope))
+	diffInt32(u, mask, "info.source_type", "source_type", c.SourceType, int32(ex.SourceType))
+	diffInt32(u, mask, "info.legal_status", "legal_status", c.LegalStatus, int32(ex.LegalStatus))
+	diffInt32(u, mask, "info.record_status", "record_status", c.RecordStatus, int32(ex.RecordStatus))
+
+	// Nullable FK: nil = bỏ qua, *0 = clear
+	diffNullableUint64(u, mask, "info.avatar_id", "avatar_id", c.AvatarID, ex.AvatarID)
+	diffNullableUint64(u, mask, "info.property_type_id", "property_type_id", c.PropertyTypeID, ex.PropertyTypeID)
+	diffNullableUint64(u, mask, "info.project_id", "project_id", c.ProjectID, ex.ProjectID)
+	diffNullableUint64(u, mask, "info.origin_profile_id", "origin_profile_id", c.OriginProfileID, ex.OriginProfileId)
+
+	return u
+}
+
+func buildLocationUpdates(c *dto.UpdateLocationDTO, mask []string, ex *domain.PropertyLocation) map[string]any {
+	u := make(map[string]any)
+
+	diffStr(u, mask, "location.address_detail", "address_detail", c.AddressDetail, &ex.AddressDetail)
+	diffStr(u, mask, "location.map_url", "map_url", c.MapURL, &ex.MapURL)
+	diffNullableFloat64(u, mask, "location.latitude", "latitude", c.Latitude, ex.Latitude)
+	diffNullableFloat64(u, mask, "location.longitude", "longitude", c.Longitude, ex.Longitude)
+	diffNullableUint64(u, mask, "location.region_id", "region_id", c.RegionID, ex.RegionID)
+	diffNullableUint64(u, mask, "location.province_id", "province_id", c.ProvinceID, ex.ProvinceID)
+	diffNullableUint64(u, mask, "location.district_id", "district_id", c.DistrictID, ex.DistrictID)
+	diffNullableUint64(u, mask, "location.ward_id", "ward_id", c.WardID, ex.WardID)
+
+	return u
+}
+
+func buildLandInfoUpdates(c *dto.UpdateLandInfoDTO, mask []string, ex *domain.PropertyLandInfo) map[string]any {
+	u := make(map[string]any)
+
+	diffStr(u, mask, "land_info.note", "note", c.Note, &ex.Note)
+	diffStr(u, mask, "land_info.land_note", "land_note", c.LandNote, &ex.LandNote)
+	diffInt32(u, mask, "land_info.purpose_used", "purpose_used", c.PurposeUsed, int32(ex.PurposeUsed))
+
+	if c.Basic != nil {
+		diffStr(u, mask, "land_info.basic.document_no", "document_no", c.Basic.DocumentNo, &ex.DocumentNo)
+		diffStr(u, mask, "land_info.basic.issuring_auth", "issuring_auth", c.Basic.IssuringAuth, &ex.IssuringAuth)
+		diffUint32(u, mask, "land_info.basic.document_type", "document_type", c.Basic.DocumentType, &ex.DocumentType)
+		diffUint32(u, mask, "land_info.basic.plot", "plot", c.Basic.Plot, &ex.Plot)
+		diffUint32(u, mask, "land_info.basic.sheet", "sheet", c.Basic.Sheet, &ex.Sheet)
+	}
+
+	if c.Area != nil {
+		diffNullableFloat64(u, mask, "land_info.area.area_total", "area_total", c.Area.AreaTotal, ex.AreaTotal)
+		diffNullableFloat64(u, mask, "land_info.area.area_land", "area_land", c.Area.AreaLand, ex.AreaLand)
+		diffNullableFloat64(u, mask, "land_info.area.area_plant", "area_plant", c.Area.AreaPlant, ex.AreaPlant)
+	}
+
+	if c.Dimension != nil {
+		diffNullableFloat64(u, mask, "land_info.dimension.front_width", "front_width", c.Dimension.FrontWidth, ex.FrontWidth)
+		diffNullableFloat64(u, mask, "land_info.dimension.depth", "depth", c.Dimension.Depth, ex.Depth)
+		diffNullableFloat64(u, mask, "land_info.dimension.street_width", "street_width", c.Dimension.StreetWidth, ex.StreetWidth)
+	}
+
+	if c.Expiry != nil {
+		diffDateStr(u, mask, "land_info.expiry.expired_land", "expired_land", c.Expiry.ExpiredLand, ex.ExpiredLand)
+		diffDateStr(u, mask, "land_info.expiry.expired_plant", "expired_plant", c.Expiry.ExpiredPlant, ex.ExpiredPlant)
+	}
+
+	return u
+}
+
+func buildBuildingUpdates(c *dto.UpdateBuildingDTO, mask []string, ex *domain.PropertyBuildingInfo) map[string]any {
+	u := make(map[string]any)
+
+	diffStr(u, mask, "building_info.note", "note", c.Note, &ex.Note)
+	diffInt32(u, mask, "building_info.build_status", "build_status", c.BuildStatus, int32(ex.BuildStatus))
+	diffInt32(u, mask, "building_info.building_type", "building_type", c.BuildingType, int32(ex.BuildingType))
+	diffInt32(u, mask, "building_info.direction", "direction", c.Direction, int32(ex.Direction))
+	diffInt32(u, mask, "building_info.balcony_direction", "balcony_direction", c.BalconyDir, int32(ex.BalconyDirection))
+
+	diffNullableFloat64(u, mask, "building_info.area_actual", "area_actual", c.AreaActual, ex.AreaActual)
+	diffNullableFloat64(u, mask, "building_info.area_floor", "area_floor", c.AreaFloor, ex.AreaFloor)
+	diffNullableFloat64(u, mask, "building_info.area_construction", "area_construction", c.AreaConstruction, ex.AreaConstruction)
+	diffNullableUint32(u, mask, "building_info.floors", "floors", c.Floors, ex.Floors)
+	diffNullableUint32(u, mask, "building_info.room_number", "room_number", c.RoomNumber, ex.RoomNumber)
+	diffNullableUint32(u, mask, "building_info.bedrooms", "bedrooms", c.Bedrooms, ex.Bedrooms)
+	diffNullableUint32(u, mask, "building_info.bathrooms", "bathrooms", c.Bathrooms, ex.Bathrooms)
+
+	return u
+}
+
+func buildEvidenceUpdates(c *dto.UpdateEvidenceDTO, mask []string, ex *domain.PropertyEdvidence) map[string]any {
+	u := make(map[string]any)
+
+	diffStr(u, mask, "evidence.title", "title", c.Title, &ex.Title)
+	diffStr(u, mask, "evidence.description", "description", c.Description, &ex.Description)
+	diffNullableUint64(u, mask, "evidence.file_id", "file_id", c.FileID, ex.FileID)
+
+	return u
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Domain mappers (DTO → domain entity khi INSERT mới)
+// ─────────────────────────────────────────────────────────────────────────────
+
+func mapInfoDTOToEntity(lineageID uint64, c *dto.UpdateInfoDTO) *domain.PropertyInfo {
+	e := &domain.PropertyInfo{
+		Title:           derefStr(c.Title),
+		Note:            derefStr(c.Note),
+		UnitCode:        derefStr(c.UnitCode),
+		Identifier:      derefStr(c.Identifier),
+		Level:           derefStr(c.Level),
+		AvatarID:        c.AvatarID,
+		PropertyTypeID:  c.PropertyTypeID,
+		ProjectID:       c.ProjectID,
+		OriginProfileId: c.OriginProfileID,
+	}
+	if c.SourceType != nil {
+		e.SourceType = enums.EPropertySourceType(*c.SourceType)
+	}
+	if c.LegalStatus != nil {
+		e.LegalStatus = enums.EHouseCertificate(*c.LegalStatus)
+	}
+	if c.RecordStatus != nil {
+		e.RecordStatus = enums.EPropertyStatus(*c.RecordStatus)
+	}
+	if c.Scope != nil {
+		e.Scope = enums.EPropertyScope(*c.Scope)
+	}
+	return e
+}
+
+func mapLocationDTOToEntity(lineageID uint64, c *dto.UpdateLocationDTO) *domain.PropertyLocation {
+	return &domain.PropertyLocation{
+		AddressDetail: derefStr(c.AddressDetail),
+		MapURL:        derefStr(c.MapURL),
+		Latitude:      c.Latitude,
+		Longitude:     c.Longitude,
+		RegionID:      c.RegionID,
+		ProvinceID:    c.ProvinceID,
+		DistrictID:    c.DistrictID,
+		WardID:        c.WardID,
+	}
+}
+
+func mapLandInfoDTOToEntity(lineageID uint64, c *dto.UpdateLandInfoDTO) *domain.PropertyLandInfo {
+	e := &domain.PropertyLandInfo{
+		Note:     derefStr(c.Note),
+		LandNote: derefStr(c.LandNote),
+	}
+	if c.PurposeUsed != nil {
+		e.PurposeUsed = enums.EPurposeUsed(*c.PurposeUsed)
+	}
+	if c.Basic != nil {
+		e.DocumentNo = derefStr(c.Basic.DocumentNo)
+		e.IssuringAuth = derefStr(c.Basic.IssuringAuth)
+		e.DocumentType = derefUint32(c.Basic.DocumentType)
+		e.Plot = derefUint32(c.Basic.Plot)
+		e.Sheet = derefUint32(c.Basic.Sheet)
+	}
+	if c.Area != nil {
+		e.AreaTotal = c.Area.AreaTotal
+		e.AreaLand = c.Area.AreaLand
+		e.AreaPlant = c.Area.AreaPlant
+	}
+	if c.Dimension != nil {
+		e.FrontWidth = c.Dimension.FrontWidth
+		e.Depth = c.Dimension.Depth
+		e.StreetWidth = c.Dimension.StreetWidth
+	}
+	if c.Expiry != nil {
+		if c.Expiry.ExpiredLand != nil && *c.Expiry.ExpiredLand != "" {
+			if t, err := time.Parse(time.RFC3339, *c.Expiry.ExpiredLand); err == nil {
+				e.ExpiredLand = &t
+			}
+		}
+		if c.Expiry.ExpiredPlant != nil && *c.Expiry.ExpiredPlant != "" {
+			if t, err := time.Parse(time.RFC3339, *c.Expiry.ExpiredPlant); err == nil {
+				e.ExpiredPlant = &t
+			}
+		}
+	}
+	return e
+}
+
+func mapBuildingDTOToEntity(lineageID uint64, c *dto.UpdateBuildingDTO) *domain.PropertyBuildingInfo {
+	e := &domain.PropertyBuildingInfo{
+		Note:             derefStr(c.Note),
+		AreaActual:       c.AreaActual,
+		AreaFloor:        c.AreaFloor,
+		AreaConstruction: c.AreaConstruction,
+		Floors:           c.Floors,
+		RoomNumber:       c.RoomNumber,
+		Bedrooms:         c.Bedrooms,
+		Bathrooms:        c.Bathrooms,
+	}
+	if c.BuildStatus != nil {
+		e.BuildStatus = enums.EBuildStatus(*c.BuildStatus)
+	}
+	if c.BuildingType != nil {
+		e.BuildingType = enums.EBuildingType(*c.BuildingType)
+	}
+	if c.Direction != nil {
+		e.Direction = enums.EHouseOrient(*c.Direction)
+	}
+	if c.BalconyDir != nil {
+		e.BalconyDirection = enums.EHouseOrient(*c.BalconyDir)
+	}
+	return e
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Diff helpers
+//
+// Convention:
+//   diffXxx(updates, mask, maskPath, col, incoming, existing)
+//   - Chỉ thêm vào updates nếu maskPath khớp VÀ giá trị thực sự thay đổi
+// ─────────────────────────────────────────────────────────────────────────────
+
+// diffStr: incoming *string nil = bỏ qua; non-nil = so sánh với existing
+func diffStr(u map[string]any, mask []string, path, col string, incoming *string, existing *string) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	exVal := ""
+	if existing != nil {
+		exVal = *existing
+	}
+	if *incoming != exVal {
+		u[col] = *incoming
+	}
+}
+
+func diffInt32(u map[string]any, mask []string, path, col string, incoming *int32, existing int32) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	if *incoming != existing {
+		u[col] = *incoming
+	}
+}
+
+func diffUint32(u map[string]any, mask []string, path, col string, incoming *uint32, existing *uint32) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	exVal := uint32(0)
+	if existing != nil {
+		exVal = *existing
+	}
+	if *incoming != exVal {
+		u[col] = *incoming
+	}
+}
+
+// diffNullableUint64: nil incoming = bỏ qua; *0 incoming = set NULL; *non0 = set value
+func diffNullableUint64(u map[string]any, mask []string, path, col string, incoming *uint64, existing *uint64) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	// incoming not nil → so sánh với existing
+	if existing == nil && *incoming == 0 {
+		return // both null, no change
+	}
+	if existing != nil && *incoming == *existing {
+		return // same value
+	}
+	if *incoming == 0 {
+		u[col] = nil // clear FK
+	} else {
+		u[col] = *incoming
+	}
+}
+
+func diffNullableFloat64(u map[string]any, mask []string, path, col string, incoming *float64, existing *float64) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	if existing == nil {
+		u[col] = *incoming
+		return
+	}
+	if *incoming != *existing {
+		u[col] = *incoming
+	}
+}
+
+func diffNullableUint32(u map[string]any, mask []string, path, col string, incoming *uint32, existing *uint32) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	if existing == nil || *incoming != *existing {
+		u[col] = *incoming
+	}
+}
+
+// diffDateStr: incoming nil = bỏ qua; "" = clear (set NULL); ISO8601 = so sánh & set
+func diffDateStr(u map[string]any, mask []string, path, col string, incoming *string, existing *time.Time) {
+	if !inMask(mask, path) || incoming == nil {
+		return
+	}
+	if *incoming == "" {
+		if existing != nil {
+			u[col] = nil // clear
+		}
+		return
+	}
+	t, err := time.Parse(time.RFC3339, *incoming)
+	if err != nil {
+		return // invalid format → bỏ qua, không lỗi hard (caller có thể validate trước)
+	}
+	if existing == nil || !t.Equal(*existing) {
+		u[col] = t
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────────────────────────
+
+// inMask: mask rỗng = cho phép tất cả (backward compat).
+func inMask(mask []string, path string) bool {
+	if len(mask) == 0 {
+		return true
+	}
+	for _, p := range mask {
+		if p == path || strings.HasPrefix(p, path+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func derefStr(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
+func derefUint32(p *uint32) uint32 {
+	if p == nil {
+		return 0
+	}
+	return *p
 }

@@ -8,6 +8,7 @@ import (
 // PropertyExternalRef chứa thông tin tham chiếu ngoài (mở rộng của Property)
 type PropertyExternalRef struct {
 	_models.BaseEntity
+	LineageID uint64 `gorm:"type:bigint;not null;index"`
 	// đối với bds định danh sẽ có id này
 	PropertyIdentifyID *uint64 `gorm:"type:int8;index" json:"propertyIdentifyId"` // Liên kết với Property
 	// Để lấy được thông tin của property identify

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bdspro/internal/enums"
 	_models "common/domain/entity"
 	"time"
 )
@@ -9,7 +10,11 @@ type PropertyLineage struct {
 	_models.BaseEntity
 	// ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
 	// Title string `gorm:"size:255" json:"title,omitempty"`
-
+	SourceType    enums.EPropertySourceType `gorm:"type:smallint;not null;index"`
+	LineageStatus enums.ELineageStatus      `gorm:"type:smallint;default:10;index"`
+	EffectiveAt   *time.Time                `gorm:"index"`
+	ExpiredAt     *time.Time                `gorm:"index"`
+	IsPrimary     bool                      `gorm:"default:false;index"`
 	// đối với bds định danh sẽ có id này
 	PropertyIdentifyID *uint64 `gorm:"type:int8;index" json:"propertyIdentifyId"` // Liên kết với Property
 	// Để lấy được thông tin của property identify
@@ -32,8 +37,8 @@ type PropertyLineage struct {
 	Edvidence   *PropertyEdvidence `gorm:"foreignKey:EdvidenceID;references:ID"`
 
 	// thông tin liên kết ngoài
-	ExternalRefID *uint64                `gorm:"column:external_ref_id"`
-	ExternalRef   []*PropertyExternalRef `gorm:"foreignKey:ExternalRefID;references:ID"`
+	// ExternalRefID *uint64                `gorm:"column:external_ref_id"`
+	// ExternalRef   []*PropertyExternalRef `gorm:"foreignKey:ExternalRefID;references:ID"`
 
 	// thông tin nhà/công trình
 	BuildingInfoID *uint64               `gorm:"type:bigint" json:"buildingInfoId,omitempty"`

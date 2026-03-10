@@ -504,10 +504,10 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 			v := uint32(pi.LegalStatus)
 			res.Info.LegalStatus = &v
 		}
-		if pi.PrivacyLevel != 0 {
-			v := uint32(pi.PrivacyLevel)
-			res.Info.PrivacyLevel = &v
-		}
+		// if pi.PrivacyLevel != 0 {
+		// 	v := uint32(pi.PrivacyLevel)
+		// 	res.Info.PrivacyLevel = &v
+		// }
 		if pi.RecordStatus != 0 {
 			v := uint32(pi.RecordStatus)
 			res.Info.RecordStatus = &v
@@ -701,9 +701,9 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 		if bi.LegalStatus != nil {
 			result.Info.LegalStatus = enums.EHouseCertificate(*bi.LegalStatus)
 		}
-		if bi.PrivacyLevel != nil {
-			result.Info.PrivacyLevel = enums.EVisibility(*bi.PrivacyLevel)
-		}
+		// if bi.PrivacyLevel != nil {
+		// 	result.Info.PrivacyLevel = enums.EVisibility(*bi.PrivacyLevel)
+		// }
 		if bi.RecordStatus != nil {
 			result.Info.RecordStatus = enums.EPropertyStatus(*bi.RecordStatus)
 		}
@@ -965,9 +965,9 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 		// if req.LandInfo.Frontage != nil {
 		// 	landInfo.Frontage = req.LandInfo.Frontage
 		// }
-		if req.LandInfo.Depth != nil {
-			landInfo.Depth = req.LandInfo.Depth
-		}
+		// if req.LandInfo.Depth != nil {
+		// 	landInfo.Depth = req.LandInfo.Depth
+		// }
 		// if req.LandInfo.RoadWidth != nil {
 		// 	landInfo.RoadWidth = req.LandInfo.RoadWidth
 		// }
@@ -994,15 +994,15 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 		// if req.BuildingInfo.FloorArea != nil {
 		// 	buildingInfo.FloorArea = req.BuildingInfo.FloorArea
 		// }
-		if req.BuildingInfo.Floors != nil {
-			buildingInfo.Floors = req.BuildingInfo.Floors
-		}
-		if req.BuildingInfo.Bedrooms != nil {
-			buildingInfo.Bedrooms = req.BuildingInfo.Bedrooms
-		}
-		if req.BuildingInfo.Bathrooms != nil {
-			buildingInfo.Bathrooms = req.BuildingInfo.Bathrooms
-		}
+		// if req.BuildingInfo.Floors != nil {
+		// 	buildingInfo.Floors = req.BuildingInfo.Floors
+		// }
+		// if req.BuildingInfo.Bedrooms != nil {
+		// 	buildingInfo.Bedrooms = req.BuildingInfo.Bedrooms
+		// }
+		// if req.BuildingInfo.Bathrooms != nil {
+		// 	buildingInfo.Bathrooms = req.BuildingInfo.Bathrooms
+		// }
 	}
 
 	return property, landInfo, buildingInfo

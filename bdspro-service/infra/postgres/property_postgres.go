@@ -803,7 +803,7 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 	p.LandInfoID = row.LandInfoID
 	p.EdvidenceID = row.EdvidenceID
 	p.BuildingInfoID = row.BuildingInfoID
-	p.ExternalRefID = row.ExternalRefID
+	// p.ExternalRefID = row.ExternalRefID
 	p.NationalID = row.NationalID
 	p.VerifiedNationalAt = row.VerifiedNationalAt
 	// p.AssetCount = row.AssetCount
@@ -839,11 +839,11 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 			UnitCode:   ptrStr(row.UnitCode),
 			Identifier: ptrStr(row.Identifier),
 			Level:      ptrStr(row.Level), Note: ptrStr(row.Note),
-			SourceType:      enums.EPropertySourceType(*row.SourceType),
-			RecordStatus:    enums.EPropertyStatus(*row.RecordStatus),
-			Visibility:      enums.EVisibility(*row.Visibility),
-			LegalStatus:     enums.EHouseCertificate(*row.LegalStatus),
-			PrivacyLevel:    enums.EVisibility(*row.PrivacyLevel),
+			SourceType:   enums.EPropertySourceType(*row.SourceType),
+			RecordStatus: enums.EPropertyStatus(*row.RecordStatus),
+			// Visibility:      enums.EVisibility(*row.Visibility),
+			LegalStatus: enums.EHouseCertificate(*row.LegalStatus),
+			// PrivacyLevel:    enums.EVisibility(*row.PrivacyLevel),
 			OriginProfileId: row.OriginProfileId,
 			ProjectID:       row.ProjectID,
 			Title:           ptrStr(row.Title),
@@ -885,8 +885,11 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 	}
 	if row.LocID != nil {
 		loc := &domain.PropertyLocation{
-			ID: *row.LocID, AddressDetail: ptrStr(row.AddressDetail),
-			ProvinceID: row.ProvinceID, DistrictID: row.DistrictID, WardID: row.WardID,
+			BaseEntity: _models.BaseEntity{
+				ID: *row.LocID,
+			},
+			AddressDetail: ptrStr(row.AddressDetail),
+			ProvinceID:    row.ProvinceID, DistrictID: row.DistrictID, WardID: row.WardID,
 			Latitude: row.Latitude, Longitude: row.Longitude, MapURL: ptrStr(row.MapURL), RegionID: row.RegionID,
 		}
 		if row.ProvinceName != nil {
