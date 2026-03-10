@@ -379,7 +379,7 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 	}
 
 	if result.Name == "" && product.Property != nil {
-		result.Name = product.Property.Title
+		// result.Name = product.Property.Title
 	}
 	// if product.Attributes != nil {
 	// 	result.Attributes = make([]*bdspropb.AttributeProduct, len(product.Attributes))
@@ -761,9 +761,9 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			direction := uint32(product.BuildingInfo.Direction)
 			balconyDirection := uint32(product.BuildingInfo.BalconyDirection)
 			buildingInfo = &bdspropb.PropertyBuildingInfo{
-				BuildingType:     buildingType,
-				ConstructionArea: product.BuildingInfo.ConstructionArea,
-				FloorArea:        product.BuildingInfo.FloorArea,
+				BuildingType: buildingType,
+				// ConstructionArea: product.BuildingInfo.ConstructionArea,
+				// FloorArea:        product.BuildingInfo.FloorArea,
 				Floors:           product.BuildingInfo.Floors,
 				Bedrooms:         product.BuildingInfo.Bedrooms,
 				Bathrooms:        product.BuildingInfo.Bathrooms,

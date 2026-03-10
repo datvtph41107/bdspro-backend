@@ -29,7 +29,7 @@ service PropertyService {
     };
   };
   
-  rpc GetDetail(sharepb.SyncRequest) returns (PropertyResponse) {
+  rpc GetDetail(sharepb.SyncRequest) returns (PropertyDetailResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/property/detail/{id}"
     };
@@ -265,6 +265,76 @@ message PropertyDetailRequest {
   uint32 sourceType = 2;
 }
 
+// PropertyDetailResponse - chi tiết đầy đủ BĐS cho màn detail
+message PropertyDetailResponse {
+  uint64 id = 1;
+  optional PropertyInfo info = 2;    // PID, version - mã BDSPro
+  optional PropertyLocationInfo location = 3;     // Địa chỉ chi tiết
+  optional PropertyLandInfoDetail landInfo = 4;   // Thông tin đất/GCN
+  optional PropertyBuildingInfo buildingInfo = 5; // Thông tin nhà/công trình
+  optional PropertyEdvidenceInfo edvidence = 6;   // Chứng minh thực tế
+  PropertyLineageInfo lineage = 7;                // nationalId, verifiedNationalAt
+  repeated bdspropb.MediaItem mediaList = 8;
+  repeated sharepb.TagItem amenities = 9;
+  int64 productCount = 10;
+  int64 assetCount = 11;
+  int64 listingCount = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+message PropertyIdentify {
+  uint64 id = 1;
+  uint64 pid = 2;
+  uint32 version = 3;
+  string identifier = 4;  // mã BDSPro format: BDS{pid}
+}
+
+message PropertyLocationInfo {
+  uint64 id = 1;
+  string addressDetail = 2;
+  optional uint64 regionId = 3;
+  optional uint64 provinceId = 4;
+  optional uint64 districtId = 5;
+  optional uint64 wardId = 6;
+  optional double latitude = 7;
+  optional double longitude = 8;
+  string mapUrl = 9;
+  optional sharepb.AddressV3Proto address = 10;
+}
+
+message PropertyLandInfoDetail {
+  uint64 id = 1;
+  optional uint32 documentType = 2;
+  string documentNo = 3;
+  string issuringAuth = 4;
+  optional uint32 plot = 5;
+  optional uint32 sheet = 6;
+  optional double areaTotal = 7;
+  optional double areaLand = 8;
+  optional double areaPlant = 9;
+  optional string expiredLand = 10;
+  optional string expiredPlant = 11;
+  optional uint32 purposeUsed = 12;
+  string note = 13;
+  optional double frontWidth = 14;
+  optional double depth = 15;
+  optional double streetWidth = 16;
+  string landNote = 17;
+}
+
+message PropertyEdvidenceInfo {
+  uint64 id = 1;
+  string title = 2;
+  optional uint64 fileId = 3;
+  string description = 4;
+}
+
+message PropertyLineageInfo {
+  string nationalId = 1;
+  optional int64 verifiedNationalAt = 2;
+}
+
 message PropertyAssetsRequest {
   uint64 id = 1;
   uint32 page = 2;
@@ -320,60 +390,129 @@ message PropertyRelationResponse {
   int64 total = 2;
 }
 
+// CreatePropertyRequest - khớp với dto.CreatePropertyProductRequest
 message CreatePropertyRequest {
-  // Thông tin Product
-  ProductSaveRequest product = 1;
-  
-  // Thông tin Property
-  PropertyInfo property = 2;
-  
+  // BasicInfo (PropertyIdentify) - optional, server tạo default nếu null
+  optional PropertyInfo info = 1;
+  // Location - địa chỉ BĐS
+  optional PropertyLocationCreate location = 2;
   // Thông tin đất (PropertyLandInfo)
-  PropertyLandInfo landInfo = 3;
-  
-  PropertyBuildingInfo buildingInfo = 4;
-  
-  // Thông tin AssetLegal (giấy tờ pháp lý)
-  repeated AssetLegalItem legalInfo = 5;
-  
+  optional PropertyLandInfoCreate landInfo = 3;
+  // Thông tin nhà/công trình
+  optional PropertyBuildingInfoCreate buildingInfo = 4;
+  // Tham chiếu ngoài
+  optional PropertyExternalRefCreate externalRef = 5;
+  // Chứng minh thực tế
+  optional PropertyEdvidenceCreate edvidence = 6;
+  // Lineage - nationalId, verifiedAt (tạo cuối)
+  optional PropertyLineageCreate lineage = 7;
   // Thông tin PropertyMedia
-  repeated PropertyMediaItem mediaList = 6;
-  
-  // Tags
-  repeated uint64 tagIds = 7;
-  
-  // Thông tin Post
-  PostSaveWithProduct post = 8;
-  
-  // Thông tin Asset
-  AssetCreateWithProduct asset = 9;
-  
-  // Ghi chú
-  string note = 10;
+  repeated PropertyMediaItem mediaList = 8;
+  // Thông tin AssetLegal (giấy tờ pháp lý)
+  repeated AssetLegalItem legalInfo = 9;
+  repeated uint64 amenityIds = 10;
+  repeated uint64 tagIds = 11;
+  PostSaveWithProduct post = 12;
+  ProductSaveRequest product = 13;
+  AssetCreateWithProduct asset = 14;
+  string note = 15;
+}
+
+// PropertyIdentifyCreate - PID, Version (server set default nếu không có)
+message PropertyIdentifyCreate {
+  optional uint64 pid = 1;
+  optional uint32 version = 2;
+}
+
+// PropertyLocationCreate - địa chỉ chi tiết
+message PropertyLocationCreate {
+  string addressDetail = 1;
+  optional uint64 regionId = 2;
+  optional uint64 provinceId = 3;
+  optional uint64 districtId = 4;
+  optional uint64 wardId = 5;
+  optional double latitude = 6;
+  optional double longitude = 7;
+  string mapUrl = 8;
+  optional sharepb.AddressV3Proto address = 9;
+}
+
+// PropertyLandInfoCreate - thông tin đất/GCN
+message PropertyLandInfoCreate {
+  optional uint32 documentType = 1;
+  string documentNo = 2;
+  string issuringAuth = 3;
+  optional uint32 plot = 4;
+  optional uint32 sheet = 5;
+  optional double areaTotal = 6;
+  optional double areaLand = 7;
+  optional double areaPlant = 8;
+  optional string expiredLand = 9;   // timestamp ms
+  optional string expiredPlant = 10; // timestamp ms
+  optional uint32 purposeUsed = 11; // enum EPurposeUsed
+  string note = 12;
+  optional double frontWidth = 13;  // Mặt tiền
+  optional double depth = 14;
+  optional double streetWidth = 15;
+  string landNote = 16;
+}
+
+// PropertyBuildingInfoCreate - thông tin nhà/công trình
+message PropertyBuildingInfoCreate {
+  optional uint32 buildingType = 1;     // enum EBuildingType
+  optional uint32 buildStatus = 2;      // enum EBuildStatus
+  optional double areaActual = 3;
+  optional double areaFloor = 4;
+  optional double areaConstruction = 5;
+  optional uint32 floors = 6;
+  optional uint32 roomNumber = 7;
+  optional uint32 bedrooms = 8;
+  optional uint32 bathrooms = 9;
+  optional uint32 direction = 10;       // enum EHouseOrient
+  optional uint32 balconyDirection = 11;
+  string note = 12;
+}
+
+// PropertyExternalRefCreate - tham chiếu nguồn ngoài
+message PropertyExternalRefCreate {
+  optional uint64 externalRefId = 1;
+  optional uint32 sourceSystem = 2;     // enum ERefSourceSys
+  string sourceCode = 3;
+  optional uint32 confidence = 4;
+  optional uint32 syncStatus = 5;       // enum ESyncStatus
+  string note = 6;
+}
+
+// PropertyEdvidenceCreate - chứng minh thực tế
+message PropertyEdvidenceCreate {
+  string title = 1;
+  optional uint64 fileId = 2;
+  string description = 3;
+}
+
+// PropertyLineageCreate - NationalID, VerifiedAt
+message PropertyLineageCreate {
+  optional string nationalId = 1;
+  optional int64 verifiedNationalAt = 2;  // timestamp ms
 }
 
 message PropertyInfo {
-  optional uint64 propertyTypeId = 1;      // Loại BĐS
-  string title = 2;                        // Tiêu đề Property
-  optional uint64 locationId = 3;          // ID địa điểm
-  string addressDetail = 4;                  // Địa chỉ văn bản
-  optional double latitude = 5;             // Vĩ độ (GPS)
-  optional double longitude = 6;            // Kinh độ (GPS)
-  string mapUrl = 7;                       // URL bản đồ
-  optional uint64 projectId = 8;            // ID dự án
-  string level = 9;                       // Tầng
-  string unitCode = 10;                    // Mã căn hộ/đơn vị
-  optional double areaTotal = 11;           // Tổng diện tích (m²)
-  optional double areaLand = 12;            // Diện tích đất (m²)
-  optional double areaResidential = 13;    // Diện tích ở (m²)
-  uint32 legalStatus = 14;                 // Tình trạng pháp lý
-  string legalNote = 15;                   // Ghi chú pháp lý
-  optional uint64 buildingInfoId = 16;           // Có nhà/công trình
-  uint32 recordStatus = 17;                // Trạng thái bản ghi (active, inactive, etc.)
-  optional uint64 provinceId = 18;         // ID tỉnh/thành phố
-  optional uint64 wardId = 19;             // ID phường/xã
-  optional sharepb.AddressV3Proto address = 20;
-  optional string projectName = 21;
-  uint32 sourceType = 22;
+  optional uint64 propertyIdentifyId = 1; // Liên kết với Property
+	// Để lấy được thông tin của property identify
+	optional uint32 sourceType = 2;
+	optional uint64 propertyTypeId = 3;
+	optional uint64 projectId = 4;
+	optional uint32 legalStatus = 5;
+	optional uint32 privacyLevel = 6;
+	optional uint32 recordStatus = 7;
+	optional string note = 8;
+	optional string unitCode = 9;
+	optional string identifier = 10;
+	optional string level = 11;
+	optional uint64 avatarId = 12;
+	optional string scope = 13;
+	optional uint32 visibility = 14;
+  optional string title = 15;
 }
 
 message AssetLegalItem {

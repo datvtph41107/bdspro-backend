@@ -1900,20 +1900,30 @@
           "format": "int64",
           "title": "Loại nhà (10=Nhà ở, 20=Nhà xưởng)"
         },
-        "constructionArea": {
+        "areaActual": {
           "type": "number",
           "format": "double",
           "title": "Diện tích xây dựng (m²)"
         },
-        "floorArea": {
+        "areaFloor": {
           "type": "number",
           "format": "double",
           "title": "Diện tích sàn (m²)"
+        },
+        "areaConstruction": {
+          "type": "number",
+          "format": "double",
+          "title": "Diện tích xây dựng (m²)"
         },
         "floors": {
           "type": "integer",
           "format": "int64",
           "title": "Số tầng"
+        },
+        "roomNumber": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Số phòng"
         },
         "bedrooms": {
           "type": "integer",
@@ -1925,6 +1935,11 @@
           "format": "int64",
           "title": "Số phòng tắm"
         },
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Trạng thái công trình (enum EBuildStatus)"
+        },
         "direction": {
           "type": "integer",
           "format": "int64",
@@ -1934,6 +1949,9 @@
           "type": "integer",
           "format": "int64",
           "title": "Hướng ban công (enum EHouseOrient)"
+        },
+        "note": {
+          "type": "string"
         }
       }
     },

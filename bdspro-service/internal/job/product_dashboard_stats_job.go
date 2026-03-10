@@ -25,11 +25,11 @@ func NewProductDashboardStatsJob(
 		"product_stats", // table name
 		func() int64 {
 			// Lấy count từ product repo
-			count, err := productRepo.CountCurrent(context.Background())
-			if err != nil {
-				return 0
-			}
-			return count
+			// count, err := productRepo.CountCurrent(context.Background())
+			// if err != nil {
+			// 	return 0
+			// }
+			return 0
 		},
 	)
 

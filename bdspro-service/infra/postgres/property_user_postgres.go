@@ -21,9 +21,9 @@ func NewPropertyUserPostgres(db *gorm.DB) repo.PropertyUserRepo {
 func (r *PropertyUserPostgres) CreateOwner(ctx context.Context, propertyId uint64, profileID uint64) (*domain.PropertyUser, error) {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	propertyOfUser := &domain.PropertyUser{
-		PropertyID:    propertyId,
-		OwnerOriginID: profileID,
-		OwnerAt:       time.Now(),
+		PropertyLineageID: &propertyId,
+		OwnerOriginID:     profileID,
+		OwnerAt:           time.Now(),
 
 		OriginProfileID: &originId,
 	}

@@ -7,11 +7,18 @@ import (
 // PropertyMedia chứa ảnh hồ sơ BĐS (không phải ảnh marketing)
 type PropertyMedia struct {
 	_models.BaseEntity
-	PropertyID uint64 `gorm:"type:int8;not null;index" json:"propertyId"`
-	// Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
+	// đối với bds định danh sẽ có id này
+	PropertyIdentifyID *uint64 `gorm:"type:int8;index" json:"propertyIdentifyId"` // Liên kết với Property
+	// Để lấy được thông tin của property identify
+	PropertyIdentify *PropertyIdentify `gorm:"foreignKey:PropertyIdentifyID;references:ID"`
+
+	LineageID *uint64 `gorm:"type:bigint" json:"lineageId"`
+
+	// LineageID *uint64          `gorm:"type:bigint" json:"lineageId"`
+	// Lineage   *PropertyLineage `gorm:"foreignKey:LineageID;references:ID"`
 
 	MediaType string `gorm:"type:VARCHAR(20);not null" json:"mediaType"`  // Loại media (image, video)
-	URL       string `gorm:"type:VARCHAR(500);not null" json:"url"`       // URL ảnh/video
+	MediaURL  string `gorm:"type:VARCHAR(500);not null" json:"mediaUrl"`  // URL ảnh/video
 	ThumbURL  string `gorm:"type:VARCHAR(500)" json:"thumbUrl,omitempty"` // URL thumbnail
 	SortOrder int32  `gorm:"default:0" json:"sortOrder"`                  // Thứ tự sắp xếp
 

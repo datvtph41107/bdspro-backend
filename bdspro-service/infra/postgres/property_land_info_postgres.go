@@ -25,7 +25,7 @@ func (r *PostgrePropertyLandInfoRepo) Create(ctx context.Context, landInfo *doma
 func (r *PostgrePropertyLandInfoRepo) Update(ctx context.Context, landInfo *domain.PropertyLandInfo) error {
 	return GetDB(ctx, r.DB).
 		Model(&domain.PropertyLandInfo{}).
-		Where("property_id = ? AND deleted_at IS NULL", landInfo.PropertyID).
+		Where("id = ? AND deleted_at IS NULL", landInfo.ID).
 		Updates(landInfo).Error
 }
 

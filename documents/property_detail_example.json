@@ -1,0 +1,94 @@
+{
+  "id": 123456,
+  "basicInfo": {
+    "id": 1,
+    "pid": 100001,
+    "version": 1,
+    "identifier": "BDS100001"
+  },
+  "location": {
+    "id": 10,
+    "addressDetail": "123 Đường ABC, Phường XYZ",
+    "regionId": 1,
+    "provinceId": 79,
+    "districtId": 760,
+    "wardId": 26734,
+    "latitude": 10.8231,
+    "longitude": 106.6297,
+    "mapUrl": "https://maps.google.com/...",
+    "address": {
+      "detail": "123 Đường ABC, Phường XYZ",
+      "provinceId": 79,
+      "provinceName": "Hồ Chí Minh",
+      "districtId": 760,
+      "districtName": "Quận 7",
+      "wardId": 26734,
+      "wardName": "Phường Tân Phú"
+    }
+  },
+  "landInfo": {
+    "id": 5,
+    "documentType": 10,
+    "documentNo": "123/2024/QSDD",
+    "issuringAuth": "UBND Quận 7",
+    "plot": 15,
+    "sheet": 3,
+    "areaTotal": 120.5,
+    "areaLand": 100.0,
+    "areaPlant": 20.5,
+    "expiredLand": 1767225600000,
+    "expiredPlant": null,
+    "purposeUsed": 10,
+    "note": "Đất ở đô thị",
+    "frontWidth": 10.5,
+    "depth": 12.0,
+    "streetWidth": 6.0,
+    "landNote": "Mặt tiền đường nhựa"
+  },
+  "buildingInfo": {
+    "buildingType": 10,
+    "constructionArea": 85.0,
+    "floorArea": 120.0,
+    "floors": 3,
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "direction": 20,
+    "balconyDirection": 20
+  },
+  "edvidence": {
+    "id": 2,
+    "title": "Ảnh chụp thực tế",
+    "fileId": 999,
+    "description": "Ảnh chụp BĐS thực tế ngày 01/01/2024"
+  },
+  "lineage": {
+    "nationalId": "QG-2024-001234",
+    "verifiedNationalAt": 1704067200000
+  },
+  "mediaList": [
+    {
+      "id": 1001,
+      "mediaUrl": "https://cdn.example.com/property/1/avatar.jpg",
+      "mediaType": "image",
+      "isMain": true,
+      "order": 0
+    },
+    {
+      "id": 1002,
+      "mediaUrl": "https://cdn.example.com/property/1/photo2.jpg",
+      "mediaType": "image",
+      "isMain": false,
+      "order": 1
+    }
+  ],
+  "amenities": [
+    { "id": 1, "name": "Gara ô tô" },
+    { "id": 2, "name": "Hồ bơi" },
+    { "id": 3, "name": "Phòng gym" }
+  ],
+  "productCount": 2,
+  "assetCount": 1,
+  "listingCount": 1,
+  "createdAt": "2024-01-01T08:00:00Z",
+  "updatedAt": "2024-03-07T10:30:00Z"
+}

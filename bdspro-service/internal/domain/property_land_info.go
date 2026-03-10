@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bdspro/internal/enums"
 	_models "common/models"
 	"time"
 )
@@ -9,12 +10,21 @@ import (
 // sổ đỏ
 type PropertyLandInfo struct {
 	_models.BaseEntity
-	PropertyID uint64 `gorm:"type:int8;not null;index" json:"propertyId"`
-	// Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
+	// đối với bds định danh sẽ có id này
+	PropertyIdentifyID *uint64 `gorm:"type:int8;index" json:"propertyIdentifyId"` // Liên kết với Property
+	// Để lấy được thông tin của property identify
+	PropertyIdentify *PropertyIdentify `gorm:"foreignKey:PropertyIdentifyID;references:ID"`
+
+	// loại giấy tờ
+	DocumentType uint32 `gorm:"type:smallint;index" json:"documentType,omitempty"`
+	// số giấy tờ
+	DocumentNo string `gorm:"size:50" json:"documentNo,omitempty"`
+	// cơ quan cấp
+	IssuringAuth string `gorm:"size:50" json:"issuringAuth,omitempty"`
 	// thửa
-	Plot uint32 `gorm:"type:int4" json:"Plot"`
+	Plot uint32 `gorm:"type:int4" json:"plot"`
 	// tờ số
-	Sheet uint32 `gorm:"type:int4" json:"Sheet"`
+	Sheet uint32 `gorm:"type:int4" json:"sheet"`
 
 	// tổng diện tích
 	AreaTotal *float64 `gorm:"type:decimal(15,2)" json:"areaTotal,omitempty"`
@@ -23,16 +33,24 @@ type PropertyLandInfo struct {
 	// diện tích trồng cây lâu năm
 	AreaPlant *float64 `gorm:"type:decimal(15,2)" json:"areaPlant,omitempty"`
 
-	ExpiredLand  *time.Time `gorm:"" json:"expiredLand,omitempty"`
+	// ngày hết hạn
+	ExpiredLand *time.Time `gorm:"" json:"expiredLand,omitempty"`
+	// ngày hết hạn
 	ExpiredPlant *time.Time `gorm:"" json:"expiredPlant,omitempty"`
 
-	SourceUsed uint32 `gorm:"" json:"sourceUsed,omitempty"`
-	Note       string `gorm:"" json:"note,omitempty"`
+	// mục đích sử dụng
+	PurposeUsed enums.EPurposeUsed `gorm:"type:smallint;default:10" json:"purposeUsed,omitempty"`
 
-	FrontWidth  *float64 `gorm:"type:decimal(10,2)" json:"frontWidth,omitempty"`  // Mặt tiền (m) - đổi tên từ Frontage
-	Depth       *float64 `gorm:"type:decimal(10,2)" json:"depth,omitempty"`       // Chiều sâu (m)
-	StreetWidth *float64 `gorm:"type:decimal(10,2)" json:"streetWidth,omitempty"` // Độ rộng đường (m) - đổi tên từ RoadWidth
-	LandNote    string   `gorm:"type:text" json:"landNote,omitempty"`
+	Note string `gorm:"" json:"note,omitempty"`
+
+	// Mặt tiền (m) - đổi tên từ Frontage
+	FrontWidth *float64 `gorm:"type:decimal(10,2)" json:"frontWidth,omitempty"`
+	// Chiều sâu (m)
+	Depth *float64 `gorm:"type:decimal(10,2)" json:"depth,omitempty"`
+	// Độ rộng đường (m) - đổi tên từ RoadWidth
+	StreetWidth *float64 `gorm:"type:decimal(10,2)" json:"streetWidth,omitempty"`
+	// ghi chú
+	LandNote string `gorm:"type:text" json:"landNote,omitempty"`
 }
 
 // TableName override tên bảng

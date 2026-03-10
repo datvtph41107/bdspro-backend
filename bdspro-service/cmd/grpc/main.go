@@ -122,8 +122,8 @@ func startScheduler(app *initial.InitialApp) {
 		})
 		s.StartAsync()
 	})
-	go app.AssetStatsJob.Run(context.Background())
-	go app.ProductStatsJob.Run(context.Background())
-	go app.PostStatsJob.Run(context.Background())
+	// go app.AssetStatsJob.Run(context.Background())
+	// go app.ProductStatsJob.Run(context.Background())
+	// go app.PostStatsJob.Run(context.Background())
 
 }

@@ -9,11 +9,12 @@ import (
 )
 
 type PropertyRepo interface {
-	crud3.CrudRepo[domain.Property]
-	Search(ctx context.Context, dto *dto.PropertySearchDTO, userId uint64) ([]*domain.Property, int64, error)
-	GetDetail(ctx context.Context, id uint64, sourceType uint32) (*domain.Property, error)
-	UpdateOption(ctx context.Context, id uint64, property *domain.Property) error
-	GetOneByID(c context.Context, id uint64) (*domain.Property, error)
+	crud3.CrudRepo[domain.PropertyLineage]
+	Search(ctx context.Context, dto *dto.PropertySearchDTO, userId uint64) ([]*domain.PropertyLineage, int64, error)
+	GetDetail(ctx context.Context, id uint64, sourceType uint32) (*domain.PropertyLineage, error)
+	GetDetail2(ctx context.Context, id uint64, sourceType uint32) (*domain.PropertyLineage, error)
+	UpdateOption(ctx context.Context, id uint64, property *domain.PropertyLineage) error
+	GetOneByID(c context.Context, id uint64) (*domain.PropertyLineage, error)
 	DeleteBatchProperties(ctx context.Context, ids []uint64) error
 	ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool) error
 	GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
@@ -55,6 +56,22 @@ type PropertyMediaRepo interface {
 	CreateBatch(ctx context.Context, mediaList []domain.PropertyMedia) error
 	GetByPropertyID(ctx context.Context, propertyID uint64) ([]domain.PropertyMedia, error)
 	DeleteByPropertyID(ctx context.Context, propertyID uint64) error
+}
+
+type PropertyIdentifyRepo interface {
+	Create(ctx context.Context, entity *domain.PropertyIdentify) error
+}
+
+type PropertyLocationRepo interface {
+	Create(ctx context.Context, entity *domain.PropertyLocation) error
+}
+
+type PropertyExternalRefRepo interface {
+	Create(ctx context.Context, entity *domain.PropertyExternalRef) error
+}
+
+type PropertyEdvidenceRepo interface {
+	Create(ctx context.Context, entity *domain.PropertyEdvidence) error
 }
 
 type PropertyAmenityRepo interface {

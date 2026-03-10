@@ -102,17 +102,22 @@ type PropertyWithCounts struct {
 }
 
 type CreatePropertyProductRequest struct {
-	Property     *domain.Property             `json:"property"`
+	Lineage      *domain.PropertyLineage      `json:"lineage"`
+	Info         *domain.PropertyInfo         `json:"info"`
 	LandInfo     *domain.PropertyLandInfo     `json:"landInfo"`
 	BuildingInfo *domain.PropertyBuildingInfo `json:"buildingInfo"`
-	LegalInfo    *domain.AssetLegal           `json:"legalInfo"`
+	ExternalRef  *domain.PropertyExternalRef  `json:"externalRef"`
+	Edvidence    *domain.PropertyEdvidence    `json:"edvidence"`
 	MediaList    []domain.PropertyMedia       `json:"mediaList"`
-	AmenityIds   []uint64                     `json:"amenityIds"`
-	TagIDs       []uint64                     `json:"tagIds"`
-	Post         *domain.Post                 `json:"post"`
-	Product      *domain.Product              `json:"product"`
-	Asset        *domain.Asset                `json:"asset"`
-	Note         string                       `json:"note"`
+	Location     *domain.PropertyLocation     `json:"location"`
+
+	LegalInfo  *domain.AssetLegal `json:"legalInfo"`
+	AmenityIds []uint64           `json:"amenityIds"`
+	TagIDs     []uint64           `json:"tagIds"`
+	Post       *domain.Post       `json:"post"`
+	Product    *domain.Product    `json:"product"`
+	Asset      *domain.Asset      `json:"asset"`
+	Note       string             `json:"note"`
 }
 
 type ApplyPriceUpdateRequest struct {

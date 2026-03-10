@@ -254,17 +254,17 @@ func (h *PropertyHandler) CreatePropertyUser(
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "ID của Property"
-// @Success 200 {object} bdspropb.PropertyResponse "Chi tiết Property"
+// @Success 200 {object} bdspropb.PropertyDetailResponse "Chi tiết Property"
 // @Router /v2/bdspro/v2/property/detail/{id} [get]
 func (h *PropertyHandler) GetDetail(
 	ctx context.Context,
 	req *sharepb.SyncRequest,
-) (*bdspropb.PropertyResponse, error) {
+) (*bdspropb.PropertyDetailResponse, error) {
 	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
-		return &bdspropb.PropertyResponse{}, nil
+		return &bdspropb.PropertyDetailResponse{}, nil
 	}
 
 	property, err := h.PropertyUsecase.Detail(
@@ -275,8 +275,11 @@ func (h *PropertyHandler) GetDetail(
 	if err != nil {
 		return nil, err
 	}
+	if property == nil {
+		return &bdspropb.PropertyDetailResponse{}, nil
+	}
 
-	return h.PropertyMapper.PropertyToProto(property), nil
+	return h.PropertyMapper.PropertyDetailToProto(property), nil
 }
 
 // @Summary Lấy timestamps detail và history của Property
@@ -371,7 +374,7 @@ func (h *PropertyHandler) GetRelation(ctx context.Context, req *bdspropb.Propert
 // @Router /v2/bdspro/property/new [post]
 func (h *PropertyHandler) CreateProperty(ctx context.Context, req *bdspropb.CreatePropertyRequest) (*bdspropb.Response, error) {
 	body := h.PropertyMapper.CreatePropertyPbToDTO(req)
-	property, err := h.PropertyUsecase.Create(ctx, body)
+	property, err := h.PropertyUsecase.UserCreate(ctx, body)
 	if err != nil {
 		return nil, err
 	}

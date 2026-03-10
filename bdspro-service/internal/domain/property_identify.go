@@ -7,10 +7,12 @@ import (
 // PropertyMedia chứa ảnh hồ sơ BĐS (không phải ảnh marketing)
 type PropertyIdentify struct {
 	_models.BaseEntity
-	PID        uint64 `gorm:"type:int8;not null;index" json:"PID"`
-	Version    uint32 `gorm:"type:int4;not null" json:"versionId"`
-	PropertyID uint64 `gorm:"type:int8;not null" json:"propertyId"`
+	PID     uint64 `gorm:"type:int8;not null;index" json:"PID"`
+	Version uint32 `gorm:"type:int4;not null" json:"versionId"`
 
+	// PropertyID uint64 `gorm:"type:int8;not null" json:"propertyId"`
+
+	Lineages []*PropertyLineage `gorm:"foreignKey:PropertyIdentifyID;references:ID" json:"lineages,omitempty"`
 	// OwnerOriginID uint32 `gorm:"type:int4;not null" json:"ownerOriginId"`
 	// Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
 

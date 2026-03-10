@@ -400,11 +400,15 @@ message PostItem {
 
 message PropertyBuildingInfo {
     uint32 buildingType = 1;        // Loại nhà (10=Nhà ở, 20=Nhà xưởng)
-    optional double constructionArea = 2;    // Diện tích xây dựng (m²)
-    optional double floorArea = 3;           // Diện tích sàn (m²)
-    optional uint32 floors = 4;              // Số tầng
-    optional uint32 bedrooms = 5;            // Số phòng ngủ
-    optional uint32 bathrooms = 6;          // Số phòng tắm
-    uint32 direction = 7;           // Hướng nhà (enum EHouseOrient)
-    uint32 balconyDirection = 8;    // Hướng ban công (enum EHouseOrient)
+    optional double areaActual = 2;    // Diện tích xây dựng (m²)
+    optional double areaFloor = 3;           // Diện tích sàn (m²)
+    optional double areaConstruction = 4;    // Diện tích xây dựng (m²)
+    optional uint32 floors = 5;              // Số tầng
+    optional uint32 roomNumber = 6;            // Số phòng
+    optional uint32 bedrooms = 7;            // Số phòng ngủ
+    optional uint32 bathrooms = 8;          // Số phòng tắm
+    uint32 buildStatus = 9;           // Trạng thái công trình (enum EBuildStatus)
+    uint32 direction = 10;           // Hướng nhà (enum EHouseOrient)
+    uint32 balconyDirection = 11;    // Hướng ban công (enum EHouseOrient)
+    string note = 12;
 }

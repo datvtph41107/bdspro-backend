@@ -22,12 +22,12 @@ type dashboardStatsJob struct {
 
 func NewDashboardStatsJob(db *gorm.DB, tableName string, getValue func() int64) DashboardStatsJob {
 	// Auto migrate table trước khi tạo job
-	err := db.Table(tableName).AutoMigrate(&DashboardStats{})
-	if err != nil {
-		log.Printf("Error auto migrating table %s: %v", tableName, err)
-	} else {
-		log.Printf("Successfully auto migrated table %s", tableName)
-	}
+	// err := db.Table(tableName).AutoMigrate(&DashboardStats{})
+	// if err != nil {
+	// 	log.Printf("Error auto migrating table %s: %v", tableName, err)
+	// } else {
+	// 	log.Printf("Successfully auto migrated table %s", tableName)
+	// }
 
 	repo := NewDashboardStatsPostgresRepository(db)
 	usecase := NewDashboardStatsUsecase(repo)
@@ -65,7 +65,7 @@ func (j *dashboardStatsJob) Run(ctx context.Context) error {
 
 // RunDailyAtMidnight chạy job hàng ngày vào 0h00
 func (j *dashboardStatsJob) RunDailyAtMidnight(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Minute) // Check mỗi phút
+	ticker := time.NewTicker(10 * time.Minute) // Check mỗi phút
 	defer ticker.Stop()
 
 	for {

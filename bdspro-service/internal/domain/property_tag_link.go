@@ -4,8 +4,8 @@ import _models "common/models"
 
 // PropertyTagLink liên kết Property với Tag (tiện ích/đặc điểm)
 type PropertyTagLink struct {
-	PropertyID uint64    `gorm:"type:int8;not null;primaryKey" json:"propertyId"` // Liên kết với Property
-	Property   *Property `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
+	PropertyID uint64           `gorm:"type:int8;not null;primaryKey" json:"propertyId"` // Liên kết với Property
+	Property   *PropertyLineage `gorm:"foreignKey:PropertyID;references:ID" json:"property,omitempty"`
 
 	TagID uint64 `gorm:"type:int8;not null;primaryKey" json:"tagId"` // Liên kết với Tag
 	Tag   *Tag   `gorm:"foreignKey:TagID;references:ID" json:"tag,omitempty"`

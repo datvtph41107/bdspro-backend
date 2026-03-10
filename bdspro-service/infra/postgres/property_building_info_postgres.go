@@ -25,11 +25,11 @@ func (r *PostgrePropertyBuildingInfoRepo) Create(ctx context.Context, buildingIn
 func (r *PostgrePropertyBuildingInfoRepo) Update(ctx context.Context, buildingInfo *domain.PropertyBuildingInfo) error {
 	err := GetDB(ctx, r.DB).
 		Model(&domain.PropertyBuildingInfo{}).
-		Where("property_id = ? AND deleted_at IS NULL", buildingInfo.PropertyID).
+		Where("property_identify_id = ? AND deleted_at IS NULL", buildingInfo.PropertyIdentifyID).
 		Updates(map[string]interface{}{
-			"building_type":     buildingInfo.BuildingType,
-			"construction_area": buildingInfo.ConstructionArea,
-			"floor_area":        buildingInfo.FloorArea,
+			"building_type": buildingInfo.BuildingType,
+			// "construction_area": buildingInfo.ConstructionArea,
+			// "floor_area":        buildingInfo.FloorArea,
 			"floors":            buildingInfo.Floors,
 			"bedrooms":          buildingInfo.Bedrooms,
 			"bathrooms":         buildingInfo.Bathrooms,

@@ -3,13 +3,13 @@ package enums
 type EPropertySourceType uint32
 
 const (
-	PropertySourceSystem EPropertySourceType = 10 // System
-	PropertySourceUser   EPropertySourceType = 20 // User
+	PropertySourceCanonical EPropertySourceType = 10 // System
+	PropertySourceBase      EPropertySourceType = 20 // User
 )
 
 var EPropertySourceTypeNames = map[EPropertySourceType]string{
-	PropertySourceSystem: "system",
-	PropertySourceUser:   "user",
+	PropertySourceCanonical: "canonical", // system
+	PropertySourceBase:      "base",      // user
 }
 
 func (e EPropertySourceType) String() string {
@@ -18,7 +18,7 @@ func (e EPropertySourceType) String() string {
 
 func (e EPropertySourceType) IsValid() bool {
 	switch e {
-	case PropertySourceSystem, PropertySourceUser:
+	case PropertySourceCanonical, PropertySourceBase:
 		return true
 	}
 	return false

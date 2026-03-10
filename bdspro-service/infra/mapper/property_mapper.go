@@ -192,18 +192,18 @@ func emptyThenDefault(s, def string) string {
 }
 
 // PropertyToPb converts domain Property to protobuf PropertyResponse (alias for PropertyToProto)
-func (m *PropertyMapper) PropertyToPb(property *domain.Property) *bdspropb.PropertyResponse {
+func (m *PropertyMapper) PropertyToPb(property *domain.PropertyLineage) *bdspropb.PropertyResponse {
 	return m.PropertyToProto(property)
 }
 
 // PropertyWithCountsToProto converts PropertyWithCounts to protobuf PropertyResponse
-func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.PropertyResponse {
+func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdspropb.PropertyResponse {
 	if property == nil {
 		return nil
 	}
 	result := &bdspropb.PropertyResponse{
-		Id:    property.ID,
-		Title: property.Title,
+		Id: property.ID,
+		// Title: property.Title,
 		// MapUrl:           property.MapURL,
 		// Level:            property.Level,
 		// UnitCode:         property.UnitCode,
@@ -217,18 +217,18 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		// ProjectId:        property.ProjectID,
 		// Latitude:         property.Latitude,
 		// Longitude:        property.Longitude,
-		AreaTotal: property.AreaTotal,
+		// AreaTotal: property.AreaTotal,
 		// AreaLand:  property.AreaLand,
 		// AreaResidential:  property.AreaResidential,
 
-		CreatedBy:    property.CreatedBy,
-		RecordStatus: uint32(property.RecordStatus),
-		Visibility:   uint32(property.Visibility),
+		// CreatedBy:    property.CreatedBy,
+		// RecordStatus: uint32(property.RecordStatus),
+		// Visibility:   uint32(property.Visibility),
 		// BuildingInfoId:   property.BuildingInfoID,
 
 		// NEW fields
-		Scope:      uint32(enums.EPropertyScope(property.Scope)),
-		SourceType: uint32(property.SourceType),
+		// Scope:      uint32(enums.EPropertyScope(property.Scope)),
+		// SourceType: uint32(property.SourceType),
 		// Identifier:         property.Identifier,
 		// NationalId:         property.NationalID,
 		// NationalIdVerified: property.NationalIDVerified,
@@ -238,38 +238,37 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		PostCount:    &property.ListingCount,
 	}
 
-	if property.RecordStatus.IsValid() {
-		result.RecordStatusName = property.RecordStatus.String()
-
-	}
-	if !property.CreatedAt.IsZero() {
-		result.CreatedAt = _utils.FormatTimeToString(&property.CreatedAt)
-	}
+	// if property.RecordStatus.IsValid() {
+	// 	result.RecordStatusName = property.RecordStatus.String()
+	// }
+	// if !property.CreatedAt.IsZero() {
+	// 	result.CreatedAt = _utils.FormatTimeToString(&property.CreatedAt)
+	// }
 	if property.UpdatedAt != nil {
 		result.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
 	}
 
 	// AddressV3Proto
-	if property.AddressDetail != "" || property.ProvinceID != nil || property.WardID != nil {
-		addr := &sharepb.AddressV3Proto{
-			Detail:     property.AddressDetail,
-			ProvinceId: property.ProvinceID,
-			DistrictId: property.DistrictID,
-			WardId:     property.WardID,
-		}
+	// if property.AddressDetail != "" || property.ProvinceID != nil || property.WardID != nil {
+	// 	addr := &sharepb.AddressV3Proto{
+	// 		Detail:     property.AddressDetail,
+	// 		ProvinceId: property.ProvinceID,
+	// 		DistrictId: property.DistrictID,
+	// 		WardId:     property.WardID,
+	// 	}
 
-		if property.Province != nil {
-			addr.ProvinceName = property.Province.Name
-		}
-		if property.District != nil {
-			addr.DistrictName = property.District.Name
-		}
-		if property.Ward != nil {
-			addr.WardName = property.Ward.Name
-		}
+	// 	if property.Province != nil {
+	// 		addr.ProvinceName = property.Province.Name
+	// 	}
+	// 	if property.District != nil {
+	// 		addr.DistrictName = property.District.Name
+	// 	}
+	// 	if property.Ward != nil {
+	// 		addr.WardName = property.Ward.Name
+	// 	}
 
-		result.Address = addr
-	}
+	// 	result.Address = addr
+	// }
 
 	// if property.RegionID != nil && property.RegionName != "" {
 	// 	result.Region = &bdspropb.Region{
@@ -280,27 +279,28 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 	// }
 
 	// Project Tag
-	if property.Project != nil && property.ProjectID != nil {
-		result.Project = &sharepb.TagItem{
-			Id:   *property.ProjectID,
-			Name: property.Project.Name,
-		}
-	}
+	// if property.Project != nil && property.ProjectID != nil {
+	// 	result.Project = &sharepb.TagItem{
+	// 		Id:   *property.ProjectID,
+	// 		Name: property.Project.Name,
+	// 	}
+	// }
 
-	// PropertyType Tag
-	result.PropertyTypeName = property.PropertyType.Name
-	if property.PropertyTypeID != nil && property.PropertyType.Name != "" {
-		result.PropertyType = &sharepb.TagItem{
-			Id:   *property.PropertyTypeID,
-			Name: property.PropertyType.Name,
-		}
-	}
+	// // PropertyType Tag
+	// result.PropertyTypeName = property.PropertyType.Name
+	// if property.PropertyTypeID != nil && property.PropertyType.Name != "" {
+	// 	result.PropertyType = &sharepb.TagItem{
+	// 		Id:   *property.PropertyTypeID,
+	// 		Name: property.PropertyType.Name,
+	// 	}
+	// }
 
 	if property.BuildingInfo != nil {
 		result.BuildingInfo = &bdspropb.PropertyBuildingInfo{
-			BuildingType:     uint32(property.BuildingInfo.BuildingType),
-			ConstructionArea: property.BuildingInfo.ConstructionArea,
-			FloorArea:        property.BuildingInfo.FloorArea,
+			BuildingType: uint32(property.BuildingInfo.BuildingType),
+			// ConstructionArea: property.BuildingInfo.ConstructionArea,
+			// FloorArea:        property.BuildingInfo.FloorArea,
+			Note:             property.BuildingInfo.Note,
 			Floors:           property.BuildingInfo.Floors,
 			Bedrooms:         property.BuildingInfo.Bedrooms,
 			Bathrooms:        property.BuildingInfo.Bathrooms,
@@ -309,13 +309,13 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		}
 	}
 
-	if property.Avatar != nil && property.Avatar.URL != "" {
-		result.Avatar = &bdspropb.PropertyMediaItem{
-			Url:       property.Avatar.URL,
-			MediaType: property.Avatar.MediaType,
-			SortOrder: property.Avatar.SortOrder,
-		}
-	}
+	// if property.Avatar != nil && property.Avatar.URL != "" {
+	// 	result.Avatar = &bdspropb.PropertyMediaItem{
+	// 		Url:       property.Avatar.URL,
+	// 		MediaType: property.Avatar.MediaType,
+	// 		SortOrder: property.Avatar.SortOrder,
+	// 	}
+	// }
 
 	// Amenities
 	if len(property.Amenities) > 0 {
@@ -334,7 +334,7 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 		for i, media := range property.MediaList {
 			mediaList[i] = &bdspropb.MediaItem{
 				MediaType: media.MediaType,
-				MediaUrl:  media.URL,
+				MediaUrl:  media.MediaURL,
 			}
 		}
 		result.MediaList = mediaList
@@ -344,7 +344,7 @@ func (m *PropertyMapper) PropertyToProto(property *domain.Property) *bdspropb.Pr
 }
 
 // PropertyListToProto converts list of PropertyWithCounts to protobuf PropertyResponse list
-func (m *PropertyMapper) PropertyListToProto(properties []*domain.Property) []*bdspropb.PropertyResponse {
+func (m *PropertyMapper) PropertyListToProto(properties []*domain.PropertyLineage) []*bdspropb.PropertyResponse {
 	result := make([]*bdspropb.PropertyResponse, 0, len(properties))
 	for _, property := range properties {
 		result = append(result, m.PropertyToProto(property))
@@ -352,149 +352,439 @@ func (m *PropertyMapper) PropertyListToProto(properties []*domain.Property) []*b
 	return result
 }
 
-// CreateProductPropertyPbToDTO map CreateProductPropertyRequest (pb) sang CreatePropertyProductRequest (DTO)
+// PropertyDetailToProto converts PropertyLineage to PropertyDetailResponse
+func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage) *bdspropb.PropertyDetailResponse {
+	if property == nil {
+		return nil
+	}
+	res := &bdspropb.PropertyDetailResponse{
+		Id:           property.ID,
+		ProductCount: property.ProductCount,
+		AssetCount:   property.AssetCount,
+		ListingCount: property.ListingCount,
+		Lineage: &bdspropb.PropertyLineageInfo{
+			NationalId: property.NationalID,
+		},
+	}
+	if property.CreatedAt != nil {
+		res.CreatedAt = _utils.FormatTimeToString(property.CreatedAt)
+	}
+	if property.UpdatedAt != nil {
+		res.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
+	}
+	if property.VerifiedNationalAt != nil {
+		ms := property.VerifiedNationalAt.UnixMilli()
+		res.Lineage.VerifiedNationalAt = &ms
+	}
+
+	// BasicInfo (PropertyIdentify)
+	if property.PropertyInfo != nil {
+		pi := property.PropertyInfo
+		res.Info = &bdspropb.PropertyInfo{
+			PropertyIdentifyId: &pi.ID,
+			PropertyTypeId:     pi.PropertyTypeID,
+			ProjectId:          pi.ProjectID,
+			Note:               &pi.Note,
+			UnitCode:           &pi.UnitCode,
+			Identifier:         &pi.Identifier,
+			Level:              &pi.Level,
+			Title:              &pi.Title,
+		}
+		if pi.PropertyTypeID != nil {
+			res.Info.PropertyTypeId = pi.PropertyTypeID
+		}
+		if pi.ProjectID != nil {
+			res.Info.ProjectId = pi.ProjectID
+		}
+		if pi.LegalStatus != 0 {
+			v := uint32(pi.LegalStatus)
+			res.Info.LegalStatus = &v
+		}
+		if pi.PrivacyLevel != 0 {
+			v := uint32(pi.PrivacyLevel)
+			res.Info.PrivacyLevel = &v
+		}
+		if pi.RecordStatus != 0 {
+			v := uint32(pi.RecordStatus)
+			res.Info.RecordStatus = &v
+		}
+		if pi.Note != "" {
+			res.Info.Note = &pi.Note
+		}
+		if pi.UnitCode != "" {
+			res.Info.UnitCode = &pi.UnitCode
+		}
+		if pi.Identifier != "" {
+			res.Info.Identifier = &pi.Identifier
+		}
+		if pi.Level != "" {
+			res.Info.Level = &pi.Level
+		}
+		if pi.Title != "" {
+			res.Info.Title = &pi.Title
+		}
+	}
+
+	// Location
+	if property.Location != nil {
+		loc := property.Location
+		info := &bdspropb.PropertyLocationInfo{
+			Id:            loc.ID,
+			AddressDetail: loc.AddressDetail,
+			MapUrl:        loc.MapURL,
+			RegionId:      loc.RegionID,
+			ProvinceId:    loc.ProvinceID,
+			DistrictId:    loc.DistrictID,
+			WardId:        loc.WardID,
+			Latitude:      loc.Latitude,
+			Longitude:     loc.Longitude,
+		}
+		if loc.Province != nil || loc.District != nil || loc.Ward != nil {
+			addr := &sharepb.AddressV3Proto{
+				Detail:     loc.AddressDetail,
+				ProvinceId: loc.ProvinceID,
+				DistrictId: loc.DistrictID,
+				WardId:     loc.WardID,
+			}
+			if loc.Province != nil {
+				addr.ProvinceName = loc.Province.Name
+			}
+			if loc.District != nil {
+				addr.DistrictName = loc.District.Name
+			}
+			if loc.Ward != nil {
+				addr.WardName = loc.Ward.Name
+			}
+			info.Address = addr
+		}
+		res.Location = info
+	}
+
+	// LandInfo
+	if property.LandInfo != nil {
+		li := property.LandInfo
+		land := &bdspropb.PropertyLandInfoDetail{
+			Id:           li.ID,
+			DocumentNo:   li.DocumentNo,
+			IssuringAuth: li.IssuringAuth,
+			Note:         li.Note,
+			LandNote:     li.LandNote,
+			Plot:         &li.Plot,
+			Sheet:        &li.Sheet,
+			DocumentType: &li.DocumentType,
+			AreaTotal:    li.AreaTotal,
+			AreaLand:     li.AreaLand,
+			AreaPlant:    li.AreaPlant,
+			FrontWidth:   li.FrontWidth,
+			Depth:        li.Depth,
+			StreetWidth:  li.StreetWidth,
+		}
+		if li.PurposeUsed != 0 {
+			v := uint32(li.PurposeUsed)
+			land.PurposeUsed = &v
+		}
+		if li.ExpiredLand != nil {
+			ms := _utils.FormatTimeToString(li.ExpiredLand)
+			land.ExpiredLand = &ms
+		}
+		if li.ExpiredPlant != nil {
+			ms := _utils.FormatTimeToString(li.ExpiredPlant)
+			land.ExpiredPlant = &ms
+		}
+		res.LandInfo = land
+	}
+
+	// BuildingInfo
+	if property.BuildingInfo != nil {
+		bi := property.BuildingInfo
+		res.BuildingInfo = &bdspropb.PropertyBuildingInfo{
+			BuildingType:     uint32(bi.BuildingType),
+			AreaActual:       bi.AreaActual,
+			AreaFloor:        bi.AreaFloor,
+			AreaConstruction: bi.AreaConstruction,
+			Floors:           bi.Floors,
+			RoomNumber:       bi.RoomNumber,
+			Bedrooms:         bi.Bedrooms,
+			Bathrooms:        bi.Bathrooms,
+			BuildStatus:      uint32(bi.BuildStatus),
+			Direction:        uint32(bi.Direction),
+			BalconyDirection: uint32(bi.BalconyDirection),
+			Note:             bi.Note,
+		}
+	}
+
+	// Edvidence
+	if property.Edvidence != nil {
+		ed := property.Edvidence
+		res.Edvidence = &bdspropb.PropertyEdvidenceInfo{
+			Id:          ed.ID,
+			Title:       ed.Title,
+			FileId:      ed.FileID,
+			Description: ed.Description,
+		}
+	}
+
+	// MediaList
+	if len(property.MediaList) > 0 {
+		mediaList := make([]*bdspropb.MediaItem, len(property.MediaList))
+		for i, media := range property.MediaList {
+			mediaList[i] = &bdspropb.MediaItem{
+				Id:        media.ID,
+				MediaType: media.MediaType,
+				MediaUrl:  media.MediaURL,
+			}
+		}
+		res.MediaList = mediaList
+	}
+
+	// Amenities
+	if len(property.Amenities) > 0 {
+		amenities := make([]*sharepb.TagItem, len(property.Amenities))
+		for i, a := range property.Amenities {
+			amenities[i] = &sharepb.TagItem{
+				Id:   a.ID,
+				Name: a.Name,
+			}
+		}
+		res.Amenities = amenities
+	}
+
+	return res
+}
+
+// CreatePropertyPbToDTO map CreatePropertyRequest (pb) sang CreatePropertyProductRequest (DTO)
 func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyRequest) *dto.CreatePropertyProductRequest {
 	result := &dto.CreatePropertyProductRequest{
-		Note: req.Note,
+		Note:       req.Note,
+		TagIDs:     req.TagIds,
+		AmenityIds: req.AmenityIds,
 	}
 
-	// Map Product
-	if req.Product != nil {
-		productDTO := m.ProductMapper.ProductSavePbToDTO(req.Product)
-
-		product := &domain.Product{}
-		copier.Copy(product, productDTO)
-
-		if req.Product.PriceData != nil {
-			product.Price = m.ProductMapper.PriceDataToDomain(req.Product.PriceData)
+	// BasicInfo (PropertyIdentify)
+	if req.GetInfo() != nil {
+		bi := req.GetInfo()
+		result.Info = &domain.PropertyInfo{}
+		if bi.SourceType != nil {
+			result.Info.SourceType = enums.EPropertySourceType(*bi.SourceType)
 		}
-
-		result.Product = product
+		if bi.PropertyTypeId != nil {
+			result.Info.PropertyTypeID = bi.PropertyTypeId
+		}
+		if bi.ProjectId != nil {
+			result.Info.ProjectID = bi.ProjectId
+		}
+		if bi.LegalStatus != nil {
+			result.Info.LegalStatus = enums.EHouseCertificate(*bi.LegalStatus)
+		}
+		if bi.PrivacyLevel != nil {
+			result.Info.PrivacyLevel = enums.EVisibility(*bi.PrivacyLevel)
+		}
+		if bi.RecordStatus != nil {
+			result.Info.RecordStatus = enums.EPropertyStatus(*bi.RecordStatus)
+		}
+		if bi.Note != nil {
+			result.Info.Note = *bi.Note
+		}
+		if bi.UnitCode != nil {
+			result.Info.UnitCode = *bi.UnitCode
+		}
+		if bi.Identifier != nil {
+			result.Info.Identifier = *bi.Identifier
+		}
+		if bi.Level != nil {
+			result.Info.Level = *bi.Level
+		}
+		if bi.Title != nil {
+			result.Info.Title = *bi.Title
+		}
 	}
 
-	// Map Property
-	if req.Property != nil {
-		property := &domain.Property{
-			PropertyTypeID: req.Property.PropertyTypeId,
-			Title:          req.Property.Title,
-			LocationID:     req.Property.LocationId,
-			AddressDetail:  req.Property.AddressDetail,
-			Latitude:       req.Property.Latitude,
-			Longitude:      req.Property.Longitude,
-			MapURL:         req.Property.MapUrl,
-			ProjectID:      req.Property.ProjectId,
-			Level:          req.Property.Level,
-			UnitCode:       req.Property.UnitCode,
-			AreaTotal:      req.Property.AreaTotal,
-			// AreaLand:        req.Property.AreaLand,
-			// AreaResidential: req.Property.AreaResidential,
-			// LegalNote:       req.Property.LegalNote,
-			ProvinceID: req.Property.ProvinceId,
-			WardID:     req.Property.WardId,
-			SourceType: enums.EPropertySourceType(req.Property.SourceType),
+	// Location
+	if req.GetLocation() != nil {
+		loc := req.GetLocation()
+		result.Location = &domain.PropertyLocation{
+			AddressDetail: loc.AddressDetail,
+			MapURL:        loc.MapUrl,
 		}
-		// Convert LegalStatus string to enum (nếu có)
-		// if req.Property.LegalStatus != 0 {
-		// 	property.LegalStatus = enums.EHouseCertificate(req.Property.LegalStatus)
-		// }
-		if req.Property.RecordStatus != 0 {
-			property.RecordStatus = enums.EPropertyStatus(req.Property.RecordStatus)
-		}
-		result.Property = property
+		result.Location.RegionID = loc.RegionId
+		result.Location.ProvinceID = loc.ProvinceId
+		result.Location.DistrictID = loc.DistrictId
+		result.Location.WardID = loc.WardId
+		result.Location.Latitude = loc.Latitude
+		result.Location.Longitude = loc.Longitude
 	}
 
-	// Map PropertyLandInfo
-	if req.LandInfo != nil {
+	// LandInfo
+	if req.GetLandInfo() != nil {
+		li := req.GetLandInfo()
 		landInfo := &domain.PropertyLandInfo{
-			// Frontage:  req.LandInfo.Frontage,
-			Depth: req.LandInfo.Depth,
-			// RoadWidth: req.LandInfo.RoadWidth,
-			LandNote: req.LandInfo.LandNote,
+			DocumentNo:   li.DocumentNo,
+			IssuringAuth: li.IssuringAuth,
+			Note:         li.Note,
+			LandNote:     li.LandNote,
+		}
+		if li.DocumentType != nil {
+			landInfo.DocumentType = *li.DocumentType
+		}
+		if li.Plot != nil {
+			landInfo.Plot = *li.Plot
+		}
+		if li.Sheet != nil {
+			landInfo.Sheet = *li.Sheet
+		}
+		landInfo.AreaTotal = li.AreaTotal
+		landInfo.AreaLand = li.AreaLand
+		landInfo.AreaPlant = li.AreaPlant
+		landInfo.FrontWidth = li.FrontWidth
+		landInfo.Depth = li.Depth
+		landInfo.StreetWidth = li.StreetWidth
+		if li.PurposeUsed != nil {
+			landInfo.PurposeUsed = enums.EPurposeUsed(*li.PurposeUsed)
+		}
+		if li.ExpiredLand != nil {
+			landInfo.ExpiredLand = _utils.ParseStringToTime(*li.ExpiredLand)
+		}
+		if li.ExpiredPlant != nil {
+			landInfo.ExpiredPlant = _utils.ParseStringToTime(*li.ExpiredPlant)
 		}
 		result.LandInfo = landInfo
 	}
 
-	// Map PropertyBuildingInfo
-	if req.BuildingInfo != nil {
+	// BuildingInfo
+	if req.GetBuildingInfo() != nil {
+		bi := req.GetBuildingInfo()
 		buildingType := enums.EBuildingTypeResidential
-		if req.BuildingInfo.BuildingType != 0 {
-			buildingType = enums.EBuildingType(req.BuildingInfo.BuildingType)
+		if bi.BuildingType != nil && *bi.BuildingType != 0 {
+			buildingType = enums.EBuildingType(*bi.BuildingType)
 		}
 		buildingInfo := &domain.PropertyBuildingInfo{
-			BuildingType:     buildingType,
-			ConstructionArea: req.BuildingInfo.ConstructionArea,
-			FloorArea:        req.BuildingInfo.FloorArea,
-			Floors:           req.BuildingInfo.Floors,
-			Bedrooms:         req.BuildingInfo.Bedrooms,
-			Bathrooms:        req.BuildingInfo.Bathrooms,
+			BuildingType: buildingType,
+			Note:         bi.Note,
 		}
-		if req.BuildingInfo.Direction != 0 {
-			buildingInfo.Direction = enums.EHouseOrient(req.BuildingInfo.Direction)
+		buildingInfo.AreaActual = bi.AreaActual
+		buildingInfo.AreaFloor = bi.AreaFloor
+		buildingInfo.AreaConstruction = bi.AreaConstruction
+		buildingInfo.Floors = bi.Floors
+		buildingInfo.RoomNumber = bi.RoomNumber
+		buildingInfo.Bedrooms = bi.Bedrooms
+		buildingInfo.Bathrooms = bi.Bathrooms
+		if bi.BuildStatus != nil {
+			buildingInfo.BuildStatus = enums.EBuildStatus(*bi.BuildStatus)
 		}
-		if req.BuildingInfo.BalconyDirection != 0 {
-			buildingInfo.BalconyDirection = enums.EHouseOrient(req.BuildingInfo.BalconyDirection)
+		if bi.Direction != nil && *bi.Direction != 0 {
+			buildingInfo.Direction = enums.EHouseOrient(*bi.Direction)
+		}
+		if bi.BalconyDirection != nil && *bi.BalconyDirection != 0 {
+			buildingInfo.BalconyDirection = enums.EHouseOrient(*bi.BalconyDirection)
 		}
 		result.BuildingInfo = buildingInfo
 	}
 
-	// Map AssetLegal
-	if len(req.LegalInfo) > 0 {
-		legalInfo := &domain.AssetLegal{}
-		// Lấy legal item đầu tiên (nếu có)
-		if len(req.LegalInfo) > 0 {
-			legal := req.LegalInfo[0]
-			legalInfo.DocumentName = legal.DocumentName
-			legalInfo.DocumentURL = legal.DocumentUrl
-			legalInfo.DocumentType = legal.DocumentType
-			legalInfo.Description = legal.Description
+	// ExternalRef
+	if req.GetExternalRef() != nil {
+		er := req.GetExternalRef()
+		extRef := &domain.PropertyExternalRef{
+			SourceCode: er.SourceCode,
+			Note:       er.Note,
+		}
+		if er.ExternalRefId != nil {
+			extRef.ExternalRefID = *er.ExternalRefId
+		}
+		if er.SourceSystem != nil {
+			extRef.SourceSystem = enums.ERefSourceSys(*er.SourceSystem)
+		}
+		if er.Confidence != nil {
+			extRef.Confidence = *er.Confidence
+		}
+		if er.SyncStatus != nil {
+			extRef.SyncStatus = enums.ESyncStatus(*er.SyncStatus)
+		}
+		result.ExternalRef = extRef
+	}
+
+	// Edvidence
+	if req.GetEdvidence() != nil {
+		ev := req.GetEdvidence()
+		result.Edvidence = &domain.PropertyEdvidence{
+			Title:       ev.Title,
+			Description: ev.Description,
+		}
+		result.Edvidence.FileID = ev.FileId
+	}
+
+	// Lineage
+	if req.GetLineage() != nil {
+		ln := req.GetLineage()
+		result.Lineage = &domain.PropertyLineage{NationalID: ln.GetNationalId()}
+		if ln.VerifiedNationalAt != nil {
+			t := time.UnixMilli(*ln.VerifiedNationalAt)
+			result.Lineage.VerifiedNationalAt = &t
+		}
+	}
+
+	// MediaList
+	for _, media := range req.GetMediaList() {
+		result.MediaList = append(result.MediaList, domain.PropertyMedia{
+			MediaType: media.MediaType,
+			MediaURL:  media.Url,
+			ThumbURL:  media.ThumbUrl,
+			SortOrder: media.SortOrder,
+		})
+	}
+
+	// LegalInfo
+	if len(req.GetLegalInfo()) > 0 {
+		legal := req.GetLegalInfo()[0]
+		legalInfo := &domain.AssetLegal{
+			DocumentName: legal.DocumentName,
+			DocumentURL:  legal.DocumentUrl,
+			DocumentType: legal.DocumentType,
+			Description:  legal.Description,
+		}
+		if legal.RelatedSplitMergeId != nil {
 			legalInfo.RelatedSplitMergeID = legal.RelatedSplitMergeId
-			if legal.IssuedDate != nil {
-				issuedDate := time.Unix(*legal.IssuedDate, 0)
-				legalInfo.IssuedDate = &issuedDate
-			}
-			if legal.ExpiryDate != nil {
-				expiryDate := time.Unix(*legal.ExpiryDate, 0)
-				legalInfo.ExpiryDate = &expiryDate
-			}
+		}
+		if legal.IssuedDate != nil {
+			t := time.UnixMilli(*legal.IssuedDate)
+			legalInfo.IssuedDate = &t
+		}
+		if legal.ExpiryDate != nil {
+			t := time.UnixMilli(*legal.ExpiryDate)
+			legalInfo.ExpiryDate = &t
 		}
 		result.LegalInfo = legalInfo
 	}
 
-	// Map PropertyMedia
-	if len(req.MediaList) > 0 {
-		mediaList := make([]domain.PropertyMedia, len(req.MediaList))
-		for i, media := range req.MediaList {
-			mediaList[i] = domain.PropertyMedia{
-				MediaType: media.MediaType,
-				URL:       media.Url,
-				ThumbURL:  media.ThumbUrl,
-				SortOrder: media.SortOrder,
-			}
+	// Product
+	if req.GetProduct() != nil {
+		productDTO := m.ProductMapper.ProductSavePbToDTO(req.GetProduct())
+		product := &domain.Product{}
+		copier.Copy(product, productDTO)
+		if req.GetProduct().PriceData != nil {
+			product.Price = m.ProductMapper.PriceDataToDomain(req.GetProduct().PriceData)
 		}
-		result.MediaList = mediaList
+		result.Product = product
 	}
 
-	// Map TagIDs
-	result.TagIDs = req.TagIds
-
-	// Map Post
-	if req.Post != nil {
+	// Post
+	if req.GetPost() != nil {
 		post := &domain.Post{}
-		copier.Copy(post, req.Post)
+		copier.Copy(post, req.GetPost())
 		result.Post = post
 	}
 
-	// Map Asset
-	if req.Asset != nil {
+	// Asset
+	if req.GetAsset() != nil {
+		a := req.GetAsset()
 		asset := &domain.Asset{
-			PurchasePrice: req.Asset.PurchasePrice,
-			LegalStatus:   enums.EDocType(req.Asset.LegalStatus),
-			RentStatus:    enums.EAssetStatus(req.Asset.RentStatus),
-			Description:   req.Asset.Description,
+			PurchasePrice: a.PurchasePrice,
+			LegalStatus:   enums.EDocType(a.LegalStatus),
+			RentStatus:    enums.EAssetStatus(a.RentStatus),
+			Description:   a.Description,
 		}
-		if req.Asset.PurchaseDate > 0 {
-			purchaseDate := time.Unix(int64(req.Asset.PurchaseDate), 0)
-			asset.PurchaseDate = &purchaseDate
+		if a.PurchaseDate > 0 {
+			t := time.Unix(int64(a.PurchaseDate), 0)
+			asset.PurchaseDate = &t
 		}
 		result.Asset = asset
 	}
@@ -503,29 +793,29 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 }
 
 // UpdatePropertyPbToDTO converts protobuf UpdatePropertyRequest to domain Property, PropertyLandInfo, PropertyBuildingInfo
-func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyRequest) (*domain.Property, *domain.PropertyLandInfo, *domain.PropertyBuildingInfo) {
-	var property *domain.Property
+func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyRequest) (*domain.PropertyLineage, *domain.PropertyLandInfo, *domain.PropertyBuildingInfo) {
+	var property *domain.PropertyLineage
 	var landInfo *domain.PropertyLandInfo
 	var buildingInfo *domain.PropertyBuildingInfo
 
 	// Map Property - chỉ map các field được set (không nil)
-	property = &domain.Property{
-		ID:             req.Id,
-		BuildingInfoID: req.BuildingInfoId,
-		Title:          req.Title,
-		PropertyTypeID: req.PropertyTypeId,
-		LocationID:     req.LocationId,
-		AddressDetail:  req.AddressDetail,
-		Latitude:       req.Latitude,
-		Longitude:      req.Longitude,
-		MapURL:         req.MapUrl,
-		Level:          req.Level,
-		UnitCode:       req.UnitCode,
-		ProjectID:      req.ProjectId,
-		AreaTotal:      req.AreaTotal,
-		ProvinceID:     req.ProvinceId,
-		WardID:         req.WardId,
-		RecordStatus:   enums.EPropertyStatus(req.RecordStatus),
+	property = &domain.PropertyLineage{
+		// ID:             req.Id,
+		// BuildingInfoID: req.BuildingInfoId,
+		// Title:          req.Title,
+		// PropertyTypeID: req.PropertyTypeId,
+		// LocationID:     req.LocationId,
+		// AddressDetail:  req.AddressDetail,
+		// Latitude:       req.Latitude,
+		// Longitude:      req.Longitude,
+		// MapURL:         req.MapUrl,
+		// Level:          req.Level,
+		// UnitCode:       req.UnitCode,
+		// ProjectID:      req.ProjectId,
+		// AreaTotal:      req.AreaTotal,
+		// ProvinceID:     req.ProvinceId,
+		// WardID:         req.WardId,
+		// RecordStatus:   enums.EPropertyStatus(req.RecordStatus),
 		// AreaLand:        req.AreaLand,
 		// AreaResidential: req.AreaResidential,
 		// LegalNote:       req.LegalNote,
@@ -533,19 +823,19 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 	}
 
 	// Map AddressV3Proto nếu có
-	if req.Address != nil {
-		if req.Address.ProvinceId != nil {
-			property.ProvinceID = req.Address.ProvinceId
-		}
-		if req.Address.WardId != nil {
-			property.WardID = req.Address.WardId
-		}
-	}
+	// if req.Address != nil {
+	// 	if req.Address.ProvinceId != nil {
+	// 		property.ProvinceID = req.Address.ProvinceId
+	// 	}
+	// 	if req.Address.WardId != nil {
+	// 		property.WardID = req.Address.WardId
+	// 	}
+	// }
 
 	// Map PropertyLandInfo nếu có
 	if req.LandInfo != nil {
 		landInfo = &domain.PropertyLandInfo{
-			PropertyID: req.Id,
+			// PropertyID: req.Id,
 		}
 		// if req.LandInfo.Frontage != nil {
 		// 	landInfo.Frontage = req.LandInfo.Frontage
@@ -568,17 +858,17 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 			buildingType = enums.EBuildingType(req.BuildingInfo.BuildingType)
 		}
 		buildingInfo = &domain.PropertyBuildingInfo{
-			PropertyID:       req.Id,
+			// PropertyID:       req.Id,
 			BuildingType:     buildingType,
 			Direction:        enums.EHouseOrient(req.BuildingInfo.Direction),
 			BalconyDirection: enums.EHouseOrient(req.BuildingInfo.BalconyDirection),
 		}
-		if req.BuildingInfo.ConstructionArea != nil {
-			buildingInfo.ConstructionArea = req.BuildingInfo.ConstructionArea
-		}
-		if req.BuildingInfo.FloorArea != nil {
-			buildingInfo.FloorArea = req.BuildingInfo.FloorArea
-		}
+		// if req.BuildingInfo.ConstructionArea != nil {
+		// 	buildingInfo.ConstructionArea = req.BuildingInfo.ConstructionArea
+		// }
+		// if req.BuildingInfo.FloorArea != nil {
+		// 	buildingInfo.FloorArea = req.BuildingInfo.FloorArea
+		// }
 		if req.BuildingInfo.Floors != nil {
 			buildingInfo.Floors = req.BuildingInfo.Floors
 		}

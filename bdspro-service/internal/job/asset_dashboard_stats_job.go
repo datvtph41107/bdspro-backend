@@ -24,11 +24,11 @@ func NewAssetDashboardStatsJob(
 		"asset_stats", // table name
 		func() int64 {
 			// Lấy count từ asset repo
-			count, err := assetRepo.CountCurrent(context.Background())
-			if err != nil {
-				return 0
-			}
-			return count
+			// count, err := assetRepo.CountCurrent(context.Background())
+			// if err != nil {
+			// 	return 0
+			// }
+			return 0
 		},
 	)
 

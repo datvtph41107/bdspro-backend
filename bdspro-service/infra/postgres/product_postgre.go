@@ -642,7 +642,7 @@ func (r *GormUserProductRepo) QueryDomain(query *gorm.DB, dto *dto.ProductSearch
 		query = query.Where("(products.sale_visibility IN (?) OR products.rent_visibility IN (?))", dto.Visibilities, dto.Visibilities)
 	}
 
-	// Search theo property type
+	// Search theo property_lineage type
 	if dto.PropertyTypeIds != nil {
 		query = query.Where("products.property_type_id IN (?)", dto.PropertyTypeIds)
 	}
@@ -1425,17 +1425,17 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 			   products.id,
 			   products.deleted_at,
 			   products.property_id,
-		       COALESCE(p.title, products.name) as name,
+		       COALESCE(pi.property_name, products.name) AS name,
 		       products.code,
-		       p.area_total as area,
-		       p.area_total - COALESCE(child.total_area, 0) AS available_area,
-		       COALESCE(products.property_type_id, 0) AS property_type_id,
+		       COALESCE(pli.area_total, pbi.area_floor, pbi.area_actual, products.area, 0) AS area,
+		       COALESCE(pli.area_total, pbi.area_floor, pbi.area_actual, products.area, 0) - COALESCE(child.total_area, 0) AS available_area,
+		       COALESCE(pi.property_type_id, products.property_type_id, 0) AS property_type_id,
 		       COALESCE(products.doc_type_id, 0) AS doc_type_id,
-		       COALESCE(products.project_id, 0) AS project_id,
+		       COALESCE(pi.project_id, products.project_id, 0) AS project_id,
 		       COALESCE(proj.name, '') AS project_name,
-		       COALESCE(products.province_id, 0) AS province_id,
+		       COALESCE(ploc.province_id, products.province_id, 0) AS province_id,
 		       COALESCE(prov.name, '') AS province_name,
-		       COALESCE(products.ward_id, 0) AS ward_id,
+		       COALESCE(ploc.ward_id, products.ward_id, 0) AS ward_id,
 		       COALESCE(ward.name, '') AS ward_name,
 		       products.address,
 		       products.transaction_type,
@@ -1461,22 +1461,22 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       COALESCE(avatar.media_type, '') AS avatar_media_type,
 		       COALESCE(avatar.sort_order, 0) AS avatar_sort_order,
 		       COALESCE(pt.name, '') AS property_type_name,
-			   COALESCE(pt.id, 0) AS property_type_id,
+		       COALESCE(pt.id, 0) AS property_type_id,
 		       pbi.building_type,
-		       pbi.construction_area,
-		       pbi.floor_area,
+		       pbi.area_actual as construction_area,
+		       pbi.area_floor as floor_area,
 		       pbi.floors,
 		       pbi.bedrooms AS building_bedrooms,
 		       pbi.bathrooms AS building_bathrooms,
 		       pbi.direction,
 		       pbi.balcony_direction,
 		       products.updated_at,
-			   products.post_count,
-			   products.asset_count,
-			   products.appointment_count,
-			   products.deal_count,
-			   products.share_count,
-			   products.contact_count
+		       products.post_count,
+		       products.asset_count,
+		       products.appointment_count,
+		       products.deal_count,
+		       products.share_count,
+		       products.contact_count
 		FROM product_user pu
 		INNER JOIN products ON products.id = pu.product_id ` + syncQr + `
 		LEFT JOIN (
@@ -1488,22 +1488,22 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		LEFT JOIN distributions d ON d.id = pu.distribute_id
 		LEFT JOIN product_price pp ON pp.deleted_at IS NULL
 			AND pp.id = CASE
-				-- Trường hợp 3: Nếu isOwner=true thì ưu tiên dùng LastPriceID từ product
 				WHEN pu.is_owner = true AND products.last_price_id IS NOT NULL THEN products.last_price_id
-				-- Trường hợp 1: Nếu product_user có priceId thì dùng priceId này
 				WHEN pu.price_id IS NOT NULL THEN pu.price_id
-				-- Trường hợp 2: Nếu không có priceId trong product_user thì dùng priceId từ distribution
 				WHEN d.price_id IS NOT NULL THEN d.price_id
 				ELSE NULL
 			END
 		LEFT JOIN house_info hi ON products.id = hi.product_id AND hi.deleted_at IS NULL
-		LEFT JOIN property p ON products.property_id = p.id AND p.deleted_at IS NULL
-		LEFT JOIN property_building_info pbi ON p.id = pbi.property_id AND pbi.deleted_at IS NULL
-		LEFT JOIN property_media avatar ON p.avatar_id = avatar.id AND avatar.deleted_at IS NULL
-		LEFT JOIN province_v2 prov ON p.province_id = prov.id AND prov.deleted_at IS NULL
-		LEFT JOIN ward_v2 ward ON p.ward_id = ward.id AND ward.deleted_at IS NULL
-		LEFT JOIN projects proj ON p.project_id = proj.id AND proj.deleted_at IS NULL
-		LEFT JOIN property_type pt ON p.property_type_id = pt.id AND pt.deleted_at IS NULL
+		LEFT JOIN property_lineage p ON products.property_id = p.id AND p.deleted_at IS NULL
+		LEFT JOIN property_info pi ON p.property_info_id = pi.id AND pi.deleted_at IS NULL
+		LEFT JOIN property_location ploc ON p.location_id = ploc.id
+		LEFT JOIN property_land_info pli ON p.land_info_id = pli.id AND pli.deleted_at IS NULL
+		LEFT JOIN property_building_info pbi ON p.building_info_id = pbi.id AND pbi.deleted_at IS NULL
+		LEFT JOIN property_media avatar ON pi.avatar_id = avatar.id AND avatar.deleted_at IS NULL
+		LEFT JOIN province_v2 prov ON COALESCE(ploc.province_id, products.province_id) = prov.id AND prov.deleted_at IS NULL
+		LEFT JOIN ward_v2 ward ON COALESCE(ploc.ward_id, products.ward_id) = ward.id AND ward.deleted_at IS NULL
+		LEFT JOIN projects proj ON COALESCE(pi.project_id, products.project_id) = proj.id AND proj.deleted_at IS NULL
+		LEFT JOIN property_type pt ON COALESCE(pi.property_type_id, products.property_type_id) = pt.id AND pt.deleted_at IS NULL
 		WHERE pu.deleted_at IS NULL
 	`
 
@@ -1587,12 +1587,12 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		// Populate BuildingInfo nếu có data
 		if tempResults[i].BuildingType != nil {
 			buildingInfo := &domain.PropertyBuildingInfo{
-				BuildingType:     enums.EBuildingType(*tempResults[i].BuildingType),
-				ConstructionArea: tempResults[i].ConstructionArea,
-				FloorArea:        tempResults[i].FloorArea,
-				Floors:           tempResults[i].Floors,
-				Bedrooms:         tempResults[i].BuildingBedrooms,
-				Bathrooms:        tempResults[i].BuildingBathrooms,
+				BuildingType: enums.EBuildingType(*tempResults[i].BuildingType),
+				// ConstructionArea: tempResults[i].ConstructionArea,
+				// FloorArea:        tempResults[i].FloorArea,
+				Floors:    tempResults[i].Floors,
+				Bedrooms:  tempResults[i].BuildingBedrooms,
+				Bathrooms: tempResults[i].BuildingBathrooms,
 			}
 			if tempResults[i].Direction != nil {
 				buildingInfo.Direction = enums.EHouseOrient(*tempResults[i].Direction)

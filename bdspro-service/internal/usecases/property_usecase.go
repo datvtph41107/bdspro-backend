@@ -13,7 +13,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +20,11 @@ import (
 type PropertyUsecase struct {
 	PropertyRepo             repo.PropertyRepo
 	PropertyUserRepo         repo.PropertyUserRepo
+	PropertyInfoRepo         repo.PropertyInfoRepo
+	PropertyIdentifyRepo     repo.PropertyIdentifyRepo
+	PropertyLocationRepo     repo.PropertyLocationRepo
+	PropertyExternalRefRepo  repo.PropertyExternalRefRepo
+	PropertyEdvidenceRepo    repo.PropertyEdvidenceRepo
 	PropertyRelationRepo     repo.PropertyRelationRepo
 	PropertyProductRepo      repo.PropertyProductRepo
 	PropertyLandInfoRepo     repo.PropertyLandInfoRepo
@@ -41,6 +45,12 @@ type PropertyUsecase struct {
 
 func NewPropertyUsecase(
 	propertyRepo repo.PropertyRepo,
+	propertyUserRepo repo.PropertyUserRepo,
+	propertyInfoRepo repo.PropertyInfoRepo,
+	propertyIdentifyRepo repo.PropertyIdentifyRepo,
+	propertyLocationRepo repo.PropertyLocationRepo,
+	propertyExternalRefRepo repo.PropertyExternalRefRepo,
+	propertyEdvidenceRepo repo.PropertyEdvidenceRepo,
 	propertyRelationRepo repo.PropertyRelationRepo,
 	propertyProductRepo repo.PropertyProductRepo,
 	propertyLandInfoRepo repo.PropertyLandInfoRepo,
@@ -55,12 +65,17 @@ func NewPropertyUsecase(
 	assetRepo repo.AssetRepo,
 	transaction provider.TransactionProvider,
 	notifyProvider provider.NotificationProvider,
-	HubProvider provider.HubProvider,
-	PropertyUserRepo repo.PropertyUserRepo,
-	SyncProvider *_provider.SyncProvider,
+	hubProvider provider.HubProvider,
+	syncProvider *_provider.SyncProvider,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
+		PropertyUserRepo:         propertyUserRepo,
+		PropertyInfoRepo:         propertyInfoRepo,
+		PropertyIdentifyRepo:     propertyIdentifyRepo,
+		PropertyLocationRepo:     propertyLocationRepo,
+		PropertyExternalRefRepo:  propertyExternalRefRepo,
+		PropertyEdvidenceRepo:    propertyEdvidenceRepo,
 		PropertyRelationRepo:     propertyRelationRepo,
 		PropertyProductRepo:      propertyProductRepo,
 		PropertyLandInfoRepo:     propertyLandInfoRepo,
@@ -75,9 +90,8 @@ func NewPropertyUsecase(
 		AssetRepo:                assetRepo,
 		Transaction:              transaction,
 		NotifyProvider:           notifyProvider,
-		HubProvider:              HubProvider,
-		PropertyUserRepo:         PropertyUserRepo,
-		SyncProvider:             SyncProvider,
+		HubProvider:              hubProvider,
+		SyncProvider:             syncProvider,
 	}
 }
 
@@ -129,16 +143,16 @@ func (u *PropertyUsecase) GetPropertyAmenities(
 func (u *PropertyUsecase) CloneProperty(
 	ctx context.Context,
 	propertyID, userID uint64,
-) (*domain.Property, error) {
-	var result *domain.Property
+) (*domain.PropertyLineage, error) {
+	var result *domain.PropertyLineage
 	err := u.Transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		prop, err := u.PropertyRepo.GetOneByID(ctx, propertyID)
 		if err != nil {
 			return err
 		}
-		if prop.SourceType != enums.PropertySourceSystem {
-			return _errors.InternalServerException("Invalid property is not system")
-		}
+		// if prop.SourceType != enums.PropertySourceCanonical {
+		// 	return _errors.InternalServerException("Invalid property is not system")
+		// }
 		newProp := u.cloneBase(prop, userID)
 		if err := u.PropertyRepo.Create(ctx, newProp); err != nil {
 			return err
@@ -155,24 +169,24 @@ func (u *PropertyUsecase) CloneProperty(
 	return result, nil
 }
 
-func (u *PropertyUsecase) cloneBase(prop *domain.Property, userID uint64) *domain.Property {
+func (u *PropertyUsecase) cloneBase(prop *domain.PropertyLineage, userID uint64) *domain.PropertyLineage {
 	newProp := *prop
 	newProp.ID = 0
 
-	newProp.SourceType = enums.PropertySourceUser
-	newProp.CreatedBy = userID
+	// newProp.SourceType = enums.PropertySourceBase
+	// newProp.CreatedBy = userID
 
-	newProp.OriginProfileId = &prop.ID
-	newProp.CreatedAt = time.Now()
-	newProp.UpdatedAt = nil
-	newProp.DeletedAt = gorm.DeletedAt{}
+	// newProp.OriginProfileId = &prop.ID
+	// newProp.CreatedAt = time.Now()
+	// newProp.UpdatedAt = nil
+	// newProp.DeletedAt = gorm.DeletedAt{}
 
-	newProp.Province = nil
-	newProp.District = nil
-	newProp.Ward = nil
-	newProp.Project = nil
-	newProp.MediaList = nil
-	newProp.Amenities = nil
+	// newProp.Province = nil
+	// newProp.District = nil
+	// newProp.Ward = nil
+	// newProp.Project = nil
+	// // newProp.MediaList = nil
+	// newProp.Amenities = nil
 	return &newProp
 }
 
@@ -360,7 +374,7 @@ func (u *PropertyUsecase) LinkAssetToProperty(ctx context.Context, assetID uint6
 }
 
 // GetList lấy danh sách Property với phân trang
-func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySearchDTO) ([]*domain.Property, int64, error) {
+func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySearchDTO) ([]*domain.PropertyLineage, int64, error) {
 	if searchDTO == nil {
 		searchDTO = &dto.PropertySearchDTO{}
 	}
@@ -373,35 +387,35 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 		return nil, 0, err
 	}
 	regionIDsMap := make(map[uint64]struct{})
-	for _, p := range list {
-		if p.RegionID != nil {
-			regionIDsMap[*p.RegionID] = struct{}{}
-		}
-	}
+	// for _, p := range list {
+	// 	if p.RegionID != nil {
+	// 		regionIDsMap[*p.RegionID] = struct{}{}
+	// 	}
+	// }
 
 	var regionIDs []uint64
 	for id := range regionIDsMap {
 		regionIDs = append(regionIDs, id)
 	}
 
-	regionsMap, err := u.HubProvider.GetRegionsByIdsMap(ctx, regionIDs)
-	if err != nil {
-		return nil, 0, err
-	}
+	// regionsMap, err := u.HubProvider.GetRegionsByIdsMap(ctx, regionIDs)
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
 
-	for _, p := range list {
-		if p.RegionID == nil {
-			continue
-		}
+	// for _, p := range list {
+	// 	if p.RegionID == nil {
+	// 		continue
+	// 	}
 
-		region, ok := regionsMap[*p.RegionID]
-		if !ok || region == nil {
-			continue
-		}
+	// 	region, ok := regionsMap[*p.RegionID]
+	// 	if !ok || region == nil {
+	// 		continue
+	// 	}
 
-		p.RegionName = region.Name
-		p.RegionCode = region.Code
-	}
+	// 	p.RegionName = region.Name
+	// 	p.RegionCode = region.Code
+	// }
 
 	return list, total, nil
 }
@@ -411,12 +425,12 @@ func (u *PropertyUsecase) Detail(
 	ctx context.Context,
 	id uint64,
 	sourceType uint32,
-) (*domain.Property, error) {
+) (*domain.PropertyLineage, error) {
 	if id == 0 {
 		return nil, _errors.BadRequestException("id is required")
 	}
 
-	property, err := u.PropertyRepo.GetDetail(ctx, id, sourceType)
+	property, err := u.PropertyRepo.GetDetail2(ctx, id, sourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -466,48 +480,151 @@ func (u *PropertyUsecase) GetRelation(ctx context.Context, propertyID uint64) ([
 	return result, nil
 }
 
-// Create tạo Property mới cùng với Product, Asset, Post và các thông tin liên quan
+// UserCreate tạo Property mới cùng với Product, Asset, Post và các thông tin liên quan
+// Thứ tự tạo: BasicInfo (Identify) -> Location, LandInfo, BuildingInfo, ExternalRef, Edvidence, MediaList -> Lineage (cuối) -> PropertyUser
 // Lưu ý: Product, Asset, Post sẽ được tạo ở handler layer trước khi gọi usecase này
-func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyProductRequest) (*domain.Property, error) {
+func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropertyProductRequest) (*domain.PropertyLineage, error) {
 	var (
-		property  *domain.Property
-		productID *uint64
-		assetID   *uint64
+		property      *domain.PropertyLineage
+		productID     *uint64
+		assetID       *uint64
+		identifyID    *uint64
+		locationID    *uint64
+		infoID        *uint64
+		landInfoID    *uint64
+		buildingID    *uint64
+		edvidenceID   *uint64
+		externalRefID *uint64
 	)
 
 	originId := _utils.GetOriginIdFromContext(ctx)
-	userId := _utils.GetProfileIdWithContext(ctx)
-	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		if req.Property != nil {
-			var err error
-			req.Property.SourceType = enums.PropertySourceUser
-			property, err = u.buildProperty(req.Property, userId)
-			property.OriginProfileId = &originId
-			if err != nil {
-				return err
-			}
-			if err := u.PropertyRepo.Create(txCtx, property); err != nil {
-				return _errors.InternalServerException("Create Property Error: ", err.Error())
-			}
+	_ = _utils.GetProfileIdWithContext(ctx)
 
-			if _, err := u.PropertyUserRepo.CreateOwner(txCtx, property.ID, originId); err != nil {
-				return _errors.InternalServerException("Create Property Error: ", err.Error())
+	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+
+		// 1. Tạo PropertyIdentify (BasicInfo) đầu tiên - bắt buộc để có ID cho các bảng con
+		var info *domain.PropertyInfo
+		if req.Info != nil {
+			info = req.Info
+		} else {
+			info = &domain.PropertyInfo{
+				SourceType:      enums.EPropertySourceType(enums.SourceTypeOther),
+				Visibility:      enums.EVisiblePrivate,
+				RecordStatus:    enums.EPropertyStatusActive,
+				LegalStatus:     enums.EHouseCertificateNone,
+				PrivacyLevel:    enums.EVisiblePublic,
+				Note:            "Note",
+				UnitCode:        "UnitCode",
+				Identifier:      "Identifier",
+				Level:           "Level",
+				OriginProfileId: &originId,
+			}
+		}
+		if err := u.PropertyInfoRepo.Save(txCtx, info); err != nil {
+			return _errors.InternalServerException("Create PropertyInfo Error: ", err.Error())
+		}
+
+		// 2. Tạo Location
+		if req.Location != nil {
+			loc := req.Location
+			loc.PropertyIdentifyID = identifyID
+			if err := u.PropertyLocationRepo.Create(txCtx, loc); err != nil {
+				return _errors.InternalServerException("Create PropertyLocation Error: ", err.Error())
+			}
+			locationID = &loc.ID
+			infoID = &info.ID
+		}
+
+		// 3. Tạo LandInfo
+		if req.LandInfo != nil {
+			landInfo := req.LandInfo
+			landInfo.PropertyIdentifyID = identifyID
+			if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
+				return _errors.InternalServerException("Create PropertyLandInfo Error: ", err.Error())
+			}
+			landInfoID = &landInfo.ID
+		}
+
+		// 4. Tạo BuildingInfo
+		if req.BuildingInfo != nil {
+			buildingInfo := req.BuildingInfo
+			buildingInfo.PropertyIdentifyID = identifyID
+			if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
+				return _errors.InternalServerException("Create PropertyBuildingInfo Error: ", err.Error())
+			}
+			buildingID = &buildingInfo.ID
+		}
+
+		// 5. Tạo Edvidence
+		if req.Edvidence != nil {
+			edv := req.Edvidence
+			edv.PropertyIdentifyID = identifyID
+			if err := u.PropertyEdvidenceRepo.Create(txCtx, edv); err != nil {
+				return _errors.InternalServerException("Create PropertyEdvidence Error: ", err.Error())
+			}
+			edvidenceID = &edv.ID
+		}
+
+		// 6. Tạo ExternalRef
+		if req.ExternalRef != nil {
+			extRef := req.ExternalRef
+			extRef.PropertyIdentifyID = identifyID
+			if err := u.PropertyExternalRefRepo.Create(txCtx, extRef); err != nil {
+				return _errors.InternalServerException("Create PropertyExternalRef Error: ", err.Error())
+			}
+			externalRefID = &extRef.ID
+		}
+
+		// 8. Tạo PropertyLineage cuối cùng - chứa ID của các bảng trên
+		lineageData := &domain.PropertyLineage{}
+		property = &domain.PropertyLineage{
+			PropertyIdentifyID: identifyID,
+			PropertyInfoID:     infoID,
+			LocationID:         locationID,
+			LandInfoID:         landInfoID,
+			BuildingInfoID:     buildingID,
+			EdvidenceID:        edvidenceID,
+			ExternalRefID:      externalRefID,
+			NationalID:         lineageData.NationalID,
+			VerifiedNationalAt: lineageData.VerifiedNationalAt,
+		}
+
+		if err := u.PropertyRepo.Create(txCtx, property); err != nil {
+			return _errors.InternalServerException("Create PropertyLineage Error: ", err.Error())
+		}
+
+		// 9. Tạo PropertyUser
+		if _, err := u.PropertyUserRepo.CreateOwner(txCtx, property.ID, originId); err != nil {
+			return _errors.InternalServerException("Create PropertyUser Error: ", err.Error())
+		}
+
+		// 7. Tạo MediaList
+		if len(req.MediaList) > 0 {
+			for i := range req.MediaList {
+				req.MediaList[i].LineageID = &property.ID
+			}
+			if err := u.PropertyMediaRepo.CreateBatch(txCtx, req.MediaList); err != nil {
+				return _errors.InternalServerException("Create PropertyMedia Error: ", err.Error())
+			}
+			avatarID := req.MediaList[0].ID
+
+			info.AvatarID = &avatarID
+			if err := u.PropertyInfoRepo.Save(txCtx, info); err != nil {
+				return _errors.InternalServerException("Create PropertyInfo Error: ", err.Error())
 			}
 		}
 
-		// 2. Tạo Product nếu có trong request và chưa có ID
+		// 10. Tạo Product
 		var err error
 		if req.Product != nil {
-			// Gán PropertyID vào Product nếu đã tạo Property
-			if property != nil {
-				req.Product.PropertyID = &property.ID
-			}
+			req.Product.PropertyID = &property.ID
 			productID, err = u.CreateProductFromProperty(txCtx, req.Product)
 			if err != nil {
 				return err
 			}
 		}
-		// 3. Tạo Asset nếu có trong request và chưa có ID
+
+		// 11. Tạo Asset
 		if req.Asset != nil {
 			assetID, err = u.CreateAssetFromProperty(txCtx, req.Asset)
 			if err != nil {
@@ -515,80 +632,34 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 			}
 		}
 
-		// 4. Tạo các thông tin liên quan đến Property
-		if property != nil {
-			// 4.1. Tạo PropertyLandInfo nếu có
-			if req.LandInfo != nil {
-				landInfo := req.LandInfo
-				landInfo.PropertyID = property.ID
-				if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
-					return err
-				}
+		// 12. PropertyRelation
+		if productID != nil {
+			if err := u.PropertyRelationRepo.Create(txCtx, &domain.PropertyRelation{
+				PropertyID:   property.ID,
+				RelationID:   productID,
+				RelationType: enums.ERelationTypeProduct,
+			}); err != nil {
+				return err
 			}
-
-			// 4.2. Tạo PropertyBuildingInfo nếu có
-			if req.BuildingInfo != nil {
-				buildingInfo := req.BuildingInfo
-				buildingInfo.PropertyID = property.ID
-				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
-					return err
-				}
-				// Link BuildingInfoID vào Property
-				property.BuildingInfoID = &buildingInfo.ID
-			}
-
-			// 4.3. Tạo PropertyMedia nếu có
-			if len(req.MediaList) > 0 {
-				for i := range req.MediaList {
-					req.MediaList[i].PropertyID = property.ID
-					// req.MediaList[i].SourceType = enums.PropertySourceUser
-				}
-				if err := u.PropertyMediaRepo.CreateBatch(txCtx, req.MediaList); err != nil {
-					return err
-				}
-				// Set ảnh đầu tiên làm background image
-				if len(req.MediaList) > 0 {
-					property.AvatarID = &req.MediaList[0].ID
-				}
-			}
-
-			// 4.4. Tạo PropertyAmenity nếu có
-			if len(req.AmenityIds) > 0 {
-				if err := u.UpdatePropertyAmenity(txCtx, property.ID, req.AmenityIds); err != nil {
-					return err
-				}
-			}
-
-			// 4.5. Tạo PropertyRelation để liên kết với Product/Asset
-			// Tạo relation với Product trước
-			if productID != nil {
-				productRelation := &domain.PropertyRelation{
-					PropertyID:   property.ID,
-					RelationID:   productID,
-					RelationType: enums.ERelationTypeProduct,
-				}
-				if err := u.PropertyRelationRepo.Create(txCtx, productRelation); err != nil {
-					return err
-				}
-			}
-			// Tạo relation với Asset nếu có
-			if assetID != nil {
-				assetRelation := &domain.PropertyRelation{
-					PropertyID:   property.ID,
-					RelationID:   assetID,
-					RelationType: enums.ERelationTypeAsset,
-				}
-				if err := u.PropertyRelationRepo.Create(txCtx, assetRelation); err != nil {
-					return err
-				}
-			}
-
-			if err := u.PropertyRepo.Update(txCtx, property.ID, property); err != nil {
+		}
+		if assetID != nil {
+			if err := u.PropertyRelationRepo.Create(txCtx, &domain.PropertyRelation{
+				PropertyID:   property.ID,
+				RelationID:   assetID,
+				RelationType: enums.ERelationTypeAsset,
+			}); err != nil {
 				return err
 			}
 		}
 
-		// 8. Tạo AssetLegal nếu có
+		// 13. Amenity
+		if len(req.AmenityIds) > 0 {
+			if err := u.UpdatePropertyAmenity(txCtx, property.ID, req.AmenityIds); err != nil {
+				return err
+			}
+		}
+
+		// 14. AssetLegal
 		if req.LegalInfo != nil && assetID != nil {
 			legalInfo := req.LegalInfo
 			legalInfo.AssetID = *assetID
@@ -599,24 +670,8 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 
 		go func() {
 			cloneCtx := _utils.CloneContext(ctx)
-			// actorID := _utils.GetProfileIdWithContext(cloneCtx)
-			// productUsers, err := u.ProductUserRepo.GetByProductID(cloneCtx, entity.ID)
-			// if err != nil {
-			// 	return
-			// }
-			// ids := make([]uint64, 1)
-			// for idx, productUser := range productUsers {
-
-			// }
-			// if originId > 0 {
-			// 	ids[0] = originId
-			// }
-			// u.HubProvider.PutUpdate(cloneCtx, "property", property.ID, ids, time.Now().Unix())
-			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, property.ID), property.UpdatedAt.UnixMilli())
-			if productID != nil {
-				u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyProductMe, *productID), property.UpdatedAt.UnixMilli())
-			}
-
+			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, 0), property.UpdatedAt.UnixMilli())
+			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyProductMe, 0), property.UpdatedAt.UnixMilli())
 		}()
 
 		return nil
@@ -626,7 +681,6 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 		return nil, err
 	}
 
-	// Tạo property history sau khi tạo property thành công
 	if property != nil && u.NotifyProvider != nil {
 		u.NotifyProvider.RegistedEventProperty(ctx,
 			&dto.CreatePropertyActivityDTO{
@@ -641,46 +695,46 @@ func (u *PropertyUsecase) Create(ctx context.Context, req *dto.CreatePropertyPro
 	return property, nil
 }
 
-func (u *PropertyUsecase) buildProperty(req *domain.Property, userId uint64) (*domain.Property, error) {
-	if req.SourceType == 0 {
-		return nil, errors.New("source_type is required")
-	}
+func (u *PropertyUsecase) buildProperty(req *domain.PropertyLineage, userId uint64) (*domain.PropertyLineage, error) {
+	// if req.SourceType == 0 {
+	// 	return nil, errors.New("source_type is required")
+	// }
 
-	if req.CreatedAt.IsZero() {
-		req.CreatedAt = time.Now()
-	}
+	// if req.CreatedAt.IsZero() {
+	// 	req.CreatedAt = time.Now()
+	// }
 
-	if req.RecordStatus == 0 {
-		req.RecordStatus = enums.EPropertyStatusActive
-	}
+	// if req.RecordStatus == 0 {
+	// 	req.RecordStatus = enums.EPropertyStatusActive
+	// }
 
-	property := &domain.Property{
-		Title:              req.Title,
-		PropertyTypeID:     req.PropertyTypeID,
-		AddressDetail:      req.AddressDetail,
-		Latitude:           req.Latitude,
-		Longitude:          req.Longitude,
-		MapURL:             req.MapURL,
-		ProjectID:          req.ProjectID,
-		Level:              req.Level,
-		UnitCode:           req.UnitCode,
-		Identifier:         req.Identifier,
-		NationalID:         req.NationalID,
-		NationalIDVerified: req.NationalIDVerified,
+	property := &domain.PropertyLineage{
+		// Title:              req.Title,
+		// PropertyTypeID:     req.PropertyTypeID,
+		// AddressDetail:      req.AddressDetail,
+		// Latitude:           req.Latitude,
+		// Longitude:          req.Longitude,
+		// MapURL:             req.MapURL,
+		// ProjectID:          req.ProjectID,
+		// Level:              req.Level,
+		// UnitCode:           req.UnitCode,
+		// Identifier:         req.Identifier,
+		NationalID: req.NationalID,
+		// NationalIDVerified: req.NationalIDVerified,
 		// AreaTotal:          req.AreaTotal,
 		// AreaLand:           req.AreaLand,
 		// AreaResidential:    req.AreaResidential,
 		// LegalNote:      req.LegalNote,
 		// LegalStatus:    req.LegalStatus,
-		ProvinceID:     req.ProvinceID,
-		DistrictID:     req.DistrictID,
-		WardID:         req.WardID,
-		AvatarID:       req.AvatarID,
+		// ProvinceID:     req.ProvinceID,
+		// DistrictID:     req.DistrictID,
+		// WardID:         req.WardID,
+		// AvatarID:       req.AvatarID,
 		BuildingInfoID: req.BuildingInfoID,
-		SourceType:     req.SourceType,
-		RecordStatus:   enums.EPropertyStatusActive,
-		Scope:          req.Scope,
-		CreatedBy:      userId,
+		// SourceType:     req.SourceType,
+		// RecordStatus:   enums.EPropertyStatusActive,
+		// Scope:          req.Scope,
+		// CreatedBy:      userId,
 	}
 
 	return property, nil
@@ -774,7 +828,7 @@ func (u *PropertyUsecase) CreateAssetFromProperty(txCtx context.Context, asset *
 
 // CreateWithProduct tạo Property từ Product
 // Nếu Product đã có AssetId thì không tạo Property mới (vì đã có PropertyRelation)
-func (u *PropertyUsecase) CreateWithProduct(ctx context.Context, product *domain.Product) (*domain.Property, error) {
+func (u *PropertyUsecase) CreateWithProduct(ctx context.Context, product *domain.Product) (*domain.PropertyLineage, error) {
 	// Nếu Product đã có AssetId, kiểm tra xem đã có PropertyRelation chưa
 	if product.AssetId != nil {
 		relation, err := u.PropertyRelationRepo.GetByAssetID(ctx, *product.AssetId)
@@ -793,14 +847,14 @@ func (u *PropertyUsecase) CreateWithProduct(ctx context.Context, product *domain
 	}
 
 	// Tạo Property từ thông tin Product
-	property := &domain.Property{
-		PropertyTypeID: product.PropertyTypeId,
-		Title:          product.Name,
-		ProjectID:      product.ProjectID,
-		// AreaTotal:      &product.Area,
-		AddressDetail: product.Address,
-		MapURL:        product.GoogleMapLink,
-		RecordStatus:  enums.EPropertyStatusActive,
+	property := &domain.PropertyLineage{
+		// PropertyTypeID: product.PropertyTypeId,
+		// Title:          product.Name,
+		// ProjectID:      product.ProjectID,
+		// // AreaTotal:      &product.Area,
+		// AddressDetail: product.Address,
+		// MapURL:        product.GoogleMapLink,
+		// RecordStatus:  enums.EPropertyStatusActive,
 	}
 
 	// Tạo Property
@@ -875,14 +929,14 @@ func (u *PropertyUsecase) GetOrCreatePropertyFromProductID(ctx context.Context, 
 	}
 
 	// Tạo Property từ thông tin Product
-	property := &domain.Property{
-		PropertyTypeID: product.PropertyTypeId,
-		Title:          product.Name,
-		ProjectID:      product.ProjectID,
+	property := &domain.PropertyLineage{
+		// PropertyTypeID: product.PropertyTypeId,
+		// Title:          product.Name,
+		// ProjectID:      product.ProjectID,
 		// AreaTotal:      &product.Area,
-		AddressDetail: product.Address,
-		MapURL:        product.GoogleMapLink,
-		RecordStatus:  enums.EPropertyStatusActive,
+		// AddressDetail: product.Address,
+		// MapURL:        product.GoogleMapLink,
+		// RecordStatus:  enums.EPropertyStatusActive,
 	}
 
 	// Tạo Property
@@ -948,11 +1002,11 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 	}
 	if property != nil {
 		// Tạo property update chỉ với các field cần update
-		updateProperty := &domain.Property{
+		updateProperty := &domain.PropertyLineage{
 			// AreaLand:       &houseInfo.AreaLand,
 			// AreaTotal:      &houseInfo.AreaTotal,
-			ProjectID:      houseInfo.ProjectID,
-			PropertyTypeID: houseInfo.PropertyTypeID,
+			// ProjectID:      houseInfo.ProjectID,
+			// PropertyTypeID: houseInfo.PropertyTypeID,
 		}
 
 		// Update Property nếu có thay đổi
@@ -963,7 +1017,7 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 
 	// Convert từ UpdateProductRequest sang PropertyBuildingInfo
 	buildingInfo := &domain.PropertyBuildingInfo{
-		PropertyID: propertyRelation.PropertyID,
+		// PropertyID: propertyRelation.PropertyID,
 	}
 
 	// Map các field từ UpdateProductRequest sang PropertyBuildingInfo
@@ -1015,7 +1069,7 @@ func (u *PropertyUsecase) UpdatePropertyFromProduct(ctx context.Context, product
 	// Update LandInfo nếu có RoadWidth (RoadWidth lưu vào LandInfo, không phải BuildingInfo)
 	if houseInfo.RoadWidth != nil {
 		landInfo := &domain.PropertyLandInfo{
-			PropertyID: propertyRelation.PropertyID,
+			// PropertyID: propertyRelation.PropertyID,
 			// RoadWidth:  houseInfo.RoadWidth,
 		}
 
@@ -1069,11 +1123,11 @@ func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint6
 	var propertyMediaList []domain.PropertyMedia
 	for i, mediaItem := range mediaItems {
 		propertyMedia := domain.PropertyMedia{
-			PropertyID: propertyID,
-			MediaType:  mediaItem.MediaType,
-			URL:        mediaItem.MediaURL,
-			SortOrder:  int32(i + 1), // Sử dụng Order từ MediaItem hoặc index + 1
-			IsCover:    mediaItem.IsMain,
+			// PropertyID: propertyID,
+			MediaType: mediaItem.MediaType,
+			MediaURL:  mediaItem.MediaURL,
+			SortOrder: int32(i + 1), // Sử dụng Order từ MediaItem hoặc index + 1
+			IsCover:   mediaItem.IsMain,
 		}
 		// Sử dụng Order từ MediaItem nếu có
 		if mediaItem.Order > 0 {
@@ -1112,7 +1166,7 @@ func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint6
 			return nil, err
 		}
 		if property != nil {
-			property.AvatarID = avatarID
+			// property.AvatarID = avatarID
 			if err := u.PropertyRepo.Update(ctx, propertyID, property); err != nil {
 				return nil, err
 			}
@@ -1124,7 +1178,7 @@ func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint6
 			return nil, err
 		}
 		if property != nil {
-			property.AvatarID = nil
+			// property.AvatarID = nil
 			if err := u.PropertyRepo.Update(ctx, propertyID, property); err != nil {
 				return nil, err
 			}
@@ -1136,7 +1190,7 @@ func (u *PropertyUsecase) UpdateMediaItems(ctx context.Context, propertyID uint6
 
 // CreateWithAsset tạo Property từ Asset
 // Nếu Asset đã có ProductID thì không tạo Property mới (vì đã có PropertyRelation)
-func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Asset) (*domain.Property, error) {
+func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Asset) (*domain.PropertyLineage, error) {
 	// Nếu Asset đã có ProductID, kiểm tra xem đã có PropertyRelation chưa
 	if asset.ProductID != nil {
 		relation, err := u.PropertyRelationRepo.GetByProductID(ctx, *asset.ProductID)
@@ -1155,12 +1209,12 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 	}
 
 	// Tạo Property từ thông tin Asset
-	property := &domain.Property{
-		PropertyTypeID: asset.PropertyTypeId,
-		Title:          asset.Name,
+	property := &domain.PropertyLineage{
+		// PropertyTypeID: asset.PropertyTypeId,
+		// Title:          asset.Name,
 		// AreaTotal:      &asset.Area,
-		AddressDetail: asset.Address,
-		RecordStatus:  enums.EPropertyStatusActive, // Default status
+		// AddressDetail: asset.Address,
+		// RecordStatus:  enums.EPropertyStatusActive, // Default status
 	}
 
 	// Map legal status từ Asset - giữ nguyên dạng số hoặc convert nếu cần
@@ -1199,7 +1253,7 @@ func (u *PropertyUsecase) CreateWithAsset(ctx context.Context, asset *domain.Ass
 }
 
 // Update cập nhật Property và các thông tin liên quan (LandInfo, BuildingInfo)
-func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, property *domain.Property, landInfo *domain.PropertyLandInfo, buildingInfo *domain.PropertyBuildingInfo, amenityIDs []uint64) error {
+func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, property *domain.PropertyLineage, landInfo *domain.PropertyLandInfo, buildingInfo *domain.PropertyBuildingInfo, amenityIDs []uint64) error {
 	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		existing, err := u.PropertyRepo.GetOneByID(txCtx, propertyID)
 		if err != nil {
@@ -1222,7 +1276,7 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
-			landInfo.PropertyID = propertyID
+			landInfo.PropertyIdentifyID = &propertyID
 			if existingLand == nil {
 				if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
 					return err
@@ -1240,13 +1294,13 @@ func (u *PropertyUsecase) Update(ctx context.Context, propertyID uint64, propert
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
-			buildingInfo.PropertyID = propertyID
+			buildingInfo.PropertyIdentifyID = &propertyID
 			if existingBuilding == nil {
 				if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
 					return err
 				}
 				// Cập nhật building_info_id trong property
-				if err := u.PropertyRepo.Update(txCtx, propertyID, &domain.Property{BuildingInfoID: &buildingInfo.ID}); err != nil {
+				if err := u.PropertyRepo.Update(txCtx, propertyID, &domain.PropertyLineage{BuildingInfoID: &buildingInfo.ID}); err != nil {
 					return err
 				}
 			} else {

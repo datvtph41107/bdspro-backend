@@ -146,5 +146,16 @@ func MigrateDomain() {
 	// &domain.PropertyLandInfo{},
 	// &domain.PropertyMedia{},
 	// &domain.PropertyUser{},
+	// &domain.PropertyLineage{},
+	// &domain.PropertyIdentify{},
+	// &domain.PropertyInfo{},
+	// &domain.PropertyLocation{},
+	// &domain.PropertyLandInfo{},
+	// &domain.PropertyBuildingInfo{},
+	// &domain.PropertyMedia{},
+	// &domain.PropertyExternalRef{},
+	// &domain.PropertyEdvidence{},
+	// &domain.PropertyTagLink{},
+	// &domain.PropertyRelation{},
 	)
 }
