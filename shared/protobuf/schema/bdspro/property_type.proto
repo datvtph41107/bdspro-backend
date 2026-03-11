@@ -32,16 +32,3 @@ service AdminPropertyTypeService {
     };
   };
 }
-
-message PropertyType {
-  uint64 id = 1;
-  string name = 2;
-  string createdAt = 3;
-  string updatedAt = 4;
-  bool active = 5;
-}
-
-message PropertyTypeListResponse {
-  repeated PropertyType data = 1;
-  int64 totalElements = 2;
-}

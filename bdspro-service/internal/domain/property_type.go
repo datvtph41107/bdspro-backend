@@ -1,13 +1,18 @@
 package domain
 
-import _models "common/models"
+import (
+	"bdspro/internal/enums"
+	_models "common/models"
+)
 
 // PropertyType struct cho bảng property_type (Loại BĐS)
 type PropertyType struct {
 	_models.BaseEntity
-	ID     uint64 `gorm:"primaryKey;autoIncrement;not null" json:"id"`
+	// ID     uint64 `gorm:"primaryKey;autoIncrement;not null" json:"id"`
 	Name   string `gorm:"type:VARCHAR(100);not null" json:"name"`
 	Active bool   `gorm:"default:true" json:"active"` // true = đang sử dụng, false = ẩn
+
+	ClassifyProperty enums.EClassifyProperty `gorm:"type:smallint;not null;default:10" json:"classifyProperty"`
 }
 
 // GORM table name override

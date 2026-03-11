@@ -22,7 +22,7 @@ type PropertyInfo struct {
 	// PropertyName   string  `gorm:"*" json:"propertyName,omitempty"`
 	PropertyTypeID *uint64 `gorm:"type:bigint;index" json:"propertyTypeId,omitempty"`
 
-	PropertyType *PropertyTypeItem `gorm:"foreignKey:PropertyTypeID"`
+	PropertyType *PropertyType `gorm:"foreignKey:PropertyTypeID"`
 
 	ProjectID *uint64  `gorm:"type:bigint;index" json:"projectId,omitempty"`
 	Project   *Project `gorm:"foreignKey:ProjectID"`

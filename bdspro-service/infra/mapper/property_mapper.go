@@ -461,6 +461,12 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 				Name: property.PropertyInfo.Project.Name,
 			}
 		}
+		if property.PropertyInfo.PropertyType != nil {
+			res.PropertyType = &bdspropb.PropertyType{
+				Id:   property.PropertyInfo.PropertyType.ID,
+				Name: property.PropertyInfo.PropertyType.Name,
+			}
+		}
 	}
 	if property.Developer != nil {
 		res.Developer = &bdspropb.Developer{
@@ -536,6 +542,13 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 		// 		Order:     int32(property.PropertyInfo.Avatar.SortOrder),
 		// 	}
 		// }
+
+		if property.PropertyInfo.PropertyType != nil {
+			res.PropertyType = &bdspropb.PropertyType{
+				Id:   property.PropertyInfo.PropertyType.ID,
+				Name: property.PropertyInfo.PropertyType.Name,
+			}
+		}
 	}
 
 	// Location
@@ -585,7 +598,7 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 			LandNote:     li.LandNote,
 			Plot:         &li.Plot,
 			Sheet:        &li.Sheet,
-			DocumentType: &li.DocumentType,
+			DocumentType: uint32(li.DocumentType),
 			AreaTotal:    li.AreaTotal,
 			AreaLand:     li.AreaLand,
 			AreaPlant:    li.AreaPlant,
@@ -749,7 +762,7 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 			LandNote:     li.LandNote,
 		}
 		if li.DocumentType != nil {
-			landInfo.DocumentType = *li.DocumentType
+			landInfo.DocumentType = enums.EDocUnknown.Parse(li.DocumentType)
 		}
 		if li.Plot != nil {
 			landInfo.Plot = *li.Plot

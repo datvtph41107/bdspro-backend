@@ -17,7 +17,7 @@ service BdsproPublicService {
       get: "/v2/bdspro/v2/product/market"
     };
   };
-  rpc GetPropertyType(SearchQueryRequest) returns (ListItemResponse) {
+  rpc GetPropertyType(SearchQueryRequest) returns (PropertyTypeListResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/list/property-type"
     };
@@ -274,4 +274,18 @@ message GetEnumsResponse {
   repeated GetEnumResponse enums = 1;
   int64 timestamp = 2;
   bool lastest = 3;
+}
+
+message PropertyType {
+  uint64 id = 1;
+  string name = 2;
+  string createdAt = 3;
+  string updatedAt = 4;
+  bool active = 5;
+  uint32 classifyProperty = 6;
+}
+
+message PropertyTypeListResponse {
+  repeated PropertyType data = 1;
+  int64 totalElements = 2;
 }

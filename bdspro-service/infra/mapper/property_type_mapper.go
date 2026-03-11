@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"bdspro/internal/domain"
+	_models "common/models"
 	_utils "common/utils"
 
 	bdspropb "pb/types/bdspro"
@@ -34,8 +35,8 @@ func (m *PropertyTypeMapper) MapPropertyTypePb(propertyType *domain.PropertyType
 
 func (m *PropertyTypeMapper) PropertyTypePbToDomain(propertyType *bdspropb.PropertyType) *domain.PropertyType {
 	return &domain.PropertyType{
-		ID:     propertyType.Id,
-		Name:   propertyType.Name,
-		Active: propertyType.Active,
+		BaseEntity: _models.BaseEntity{ID: propertyType.Id},
+		Name:       propertyType.Name,
+		Active:     propertyType.Active,
 	}
 }

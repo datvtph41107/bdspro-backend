@@ -37,7 +37,7 @@ func NewListUsecase(propertyTypeRepo repo.PropertyTypeRepo,
 	}
 }
 
-func (s *ListUsecase) ListPropertyType(c context.Context, dto *dto.PropertyTypeSearchDTO) ([]domain.PropertyTypeItem, error) {
+func (s *ListUsecase) ListPropertyType(c context.Context, dto *dto.PropertyTypeSearchDTO) ([]domain.PropertyType, error) {
 	return s.propertyTypeRepo.GetAllItem(c, dto)
 }
 

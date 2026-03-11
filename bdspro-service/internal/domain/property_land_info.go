@@ -16,7 +16,7 @@ type PropertyLandInfo struct {
 	PropertyIdentify *PropertyIdentify `gorm:"foreignKey:PropertyIdentifyID;references:ID"`
 
 	// loại giấy tờ
-	DocumentType uint32 `gorm:"type:smallint;index" json:"documentType,omitempty"`
+	DocumentType enums.EDocType `gorm:"type:smallint;index;default:10" json:"documentType,omitempty"`
 	// số giấy tờ
 	DocumentNo string `gorm:"size:50" json:"documentNo,omitempty"`
 	// cơ quan cấp

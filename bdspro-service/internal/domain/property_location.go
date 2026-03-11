@@ -1,6 +1,9 @@
 package domain
 
-import _models "common/models"
+import (
+	"bdspro/internal/enums"
+	_models "common/models"
+)
 
 type PropertyLocation struct {
 	_models.BaseEntity
@@ -33,11 +36,8 @@ type PropertyLocation struct {
 	// URL bản đồ
 	MapURL string `gorm:"size:100" json:"mapUrl,omitempty"`
 
-	// vị trí tương đối
-	PositionRelative *float64 `gorm:"type:decimal(10,8)" json:"position_relative,omitempty"`
-
-	// vị trí tuyệt đối
-	PositionAbsolute *float64 `gorm:"type:decimal(10,8)" json:"position_absolute,omitempty"`
+	// vị trí tương đối/tuyệt đối
+	PositionType enums.EPositionType `gorm:"type:int8;not null;default:10" json:"positionType"`
 }
 
 func (PropertyLocation) TableName() string {

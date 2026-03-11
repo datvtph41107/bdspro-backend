@@ -8,6 +8,7 @@ import (
 	admin_usecases "bdspro/internal/usecases/admin"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	bdspropb "pb/types/bdspro"
@@ -78,7 +79,7 @@ func (s *BdsproPublicService) GetProductMarket(ctx context.Context, req *bdsprop
 // @Produce json
 // @Param req query bdspropb.SearchQueryRequest true "Request"
 // @Router /v2/bdspro/v2/list/property-type [get]
-func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
+func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.PropertyTypeListResponse, error) {
 	query := dto.PropertyTypeSearchDTO{}
 	if err := copier.Copy(&query, req); err != nil {
 		return nil, err
@@ -87,11 +88,20 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *bdspropb
 	if err != nil {
 		return nil, err
 	}
-	items := make([]*bdspropb.ItemResponse, 0)
-	copier.Copy(&items, &result)
-	return &bdspropb.ListItemResponse{
-		Data:  items,
-		Total: uint32(len(result)),
+	items := make([]*bdspropb.PropertyType, 0)
+	for _, item := range result {
+		items = append(items, &bdspropb.PropertyType{
+			Id:               item.ID,
+			Name:             item.Name,
+			CreatedAt:        _utils.FormatTimeToString(item.CreatedAt),
+			UpdatedAt:        _utils.FormatTimeToString(item.UpdatedAt),
+			Active:           item.Active,
+			ClassifyProperty: uint32(item.ClassifyProperty),
+		})
+	}
+	return &bdspropb.PropertyTypeListResponse{
+		Data:          items,
+		TotalElements: int64(len(result)),
 	}, nil
 }
 
@@ -389,6 +399,7 @@ var enumProviders = map[string][]*bdspropb.EnumItem{
 	"source_type":             enumMapToList(enums.SourceTypeMap),
 	"mining_mode":             enumMapToList(enums.MiningModeNames),
 	"mining_scope":            enumMapToList(enums.MiningScopeNames),
+	"classify_property":       enumMapToList(enums.EClassifyPropertyNames),
 }
 
 // @Summary Lấy enum dạng name-value

@@ -29,3 +29,7 @@ type BaseEntityDefault struct {
 	UpdatedAt time.Time      `gorm:"column:updated_at;not null;default:now();type:timestamptz"`
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;type:timestamptz;index"`
 }
+
+func (p *BaseEntity) GetId() uint64 {
+	return p.ID
+}

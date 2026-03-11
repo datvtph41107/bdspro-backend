@@ -55,8 +55,8 @@ func (r *PostgrePropertyType) InterTextToItem(text string, limit int) (*_dto.Ite
 	}, nil
 }
 
-func (r *PostgrePropertyType) GetAllItem(c context.Context, dto *dto.PropertyTypeSearchDTO) ([]domain.PropertyTypeItem, error) {
-	var items []domain.PropertyTypeItem
+func (r *PostgrePropertyType) GetAllItem(c context.Context, dto *dto.PropertyTypeSearchDTO) ([]domain.PropertyType, error) {
+	var items []domain.PropertyType
 
 	query := r.DB.
 		Model(&domain.PropertyType{}).

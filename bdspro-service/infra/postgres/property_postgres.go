@@ -221,7 +221,7 @@ SELECT
 	WHERE pm.lineage_id = pl.id AND pm.deleted_at IS NULL
 	) AS media_list_raw,
 	ps.id AS statistic_id, ps.product_count, ps.asset_count, ps.listing_count,
-	pl.updated_at
+	pl.updated_at, pt.id AS property_type_id, pt.name AS property_type_name
 FROM property_lineage pl
 INNER JOIN property_user pu ON pu.property_lineage_id = pl.id AND pu.deleted_at IS NULL
 LEFT JOIN property_info pif ON pl.property_info_id = pif.id AND pif.deleted_at IS NULL
@@ -235,6 +235,7 @@ LEFT JOIN developer dev ON proj.developer_id = dev.id AND dev.deleted_at IS NULL
 LEFT JOIN property_building_info bi ON pl.building_info_id = bi.id AND bi.deleted_at IS NULL
 LEFT JOIN property_land_info li ON pl.land_info_id = li.id AND li.deleted_at IS NULL
 LEFT JOIN property_statistic ps ON pl.statistic_id = ps.id AND ps.deleted_at IS NULL
+LEFT JOIN property_type pt ON pif.property_type_id = pt.id AND pt.deleted_at IS NULL
 LEFT JOIN LATERAL (
 	SELECT pm.id, pm.media_url, pm.thumb_url, pm.media_type
 	FROM property_media pm
@@ -292,6 +293,8 @@ ORDER BY pl.updated_at DESC NULLS LAST`
 		AssetCount       int64            `gorm:"column:asset_count"`
 		ListingCount     int64            `gorm:"column:listing_count"`
 		UpdatedAt        *time.Time       `gorm:"column:updated_at"`
+		PropertyTypeID   *uint64          `gorm:"column:property_type_id"`
+		PropertyTypeName *string          `gorm:"column:property_type_name"`
 	}
 
 	if err := r.DB.WithContext(ctx).Raw(listQ+" LIMIT ? OFFSET ?", originId, limit, offset).Scan(&rows).Error; err != nil {
@@ -336,6 +339,12 @@ ORDER BY pl.updated_at DESC NULLS LAST`
 					MediaURL:   *row.AvatarURL,
 					ThumbURL:   ptrStr(row.AvatarThumbURL),
 					MediaType:  *row.AvatarMediaType,
+				}
+			}
+			if row.PropertyTypeID != nil {
+				info.PropertyType = &domain.PropertyType{
+					BaseEntity: _models.BaseEntity{ID: *row.PropertyTypeID},
+					Name:       ptrStr(row.PropertyTypeName),
 				}
 			}
 			p.PropertyInfo = info
@@ -612,8 +621,9 @@ SELECT
 	pl.land_info_id, pl.edvidence_id, pl.building_info_id, pl.external_ref_id,
 	pl.national_id, pl.verified_national_at, pl.created_at, pl.updated_at,
 	pl.deleted_at, pl.created_by, pl.updated_by,
+	pt.id AS property_type_id, pt.name AS property_type_name,
 	pif.id AS info_id, pif.title, pif.unit_code, pif.identifier, pif.level, pif.note, pif.source_type, pif.record_status, pif.visibility, pif.legal_status, pif.privacy_level, pif.origin_profile_id, pif.project_id,
-	pt.id AS project_id, pt.name AS project_name,
+	pj.id AS project_id, pj.name AS project_name,
 	dev.id AS developer_id, dev.name AS developer_name, dev.slug AS developer_slug, dev.logo_url AS developer_logo_url,
 	dev.phone AS developer_phone, dev.email AS developer_email, dev.website AS developer_website,
 	avatar.id AS avatar_id, avatar.media_url AS avatar_url, avatar.thumb_url AS avatar_thumb_url, avatar.media_type AS avatar_media_type,
@@ -658,14 +668,15 @@ FROM property_lineage pl
 LEFT JOIN property_identify pi ON pl.property_identify_id = pi.id AND pi.deleted_at IS NULL
 LEFT JOIN property_info pif ON pl.property_info_id = pif.id AND pif.deleted_at IS NULL
 LEFT JOIN property_location loc ON pl.location_id = loc.id
+LEFT JOIN property_type pt ON pif.property_type_id = pt.id AND pt.deleted_at IS NULL
 LEFT JOIN province_v2 prov ON loc.province_id = prov.id AND prov.deleted_at IS NULL
 LEFT JOIN district_v2 dist ON loc.district_id = dist.id AND dist.deleted_at IS NULL
 LEFT JOIN ward_v2 ward ON loc.ward_id = ward.id AND ward.deleted_at IS NULL
 LEFT JOIN property_land_info li ON pl.land_info_id = li.id AND li.deleted_at IS NULL
 LEFT JOIN property_building_info bi ON pl.building_info_id = bi.id AND bi.deleted_at IS NULL
 LEFT JOIN property_edvidence ev ON pl.edvidence_id = ev.id AND ev.deleted_at IS NULL
-LEFT JOIN projects pt ON pif.project_id = pt.id AND pt.deleted_at IS NULL
-LEFT JOIN developer dev ON pt.developer_id = dev.id AND dev.deleted_at IS NULL
+LEFT JOIN projects pj ON pif.project_id = pj.id AND pj.deleted_at IS NULL
+LEFT JOIN developer dev ON pj.developer_id = dev.id AND dev.deleted_at IS NULL
 LEFT JOIN property_statistic ps ON pl.statistic_id = ps.id AND ps.deleted_at IS NULL
 LEFT JOIN LATERAL (
 	SELECT pm.id, pm.media_url, pm.thumb_url, pm.media_type
@@ -692,6 +703,8 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 		DeletedAt          *time.Time
 		CreatedBy          *uint64
 		UpdatedBy          *uint64
+		PropertyTypeID     *uint64
+		PropertyTypeName   *string
 		// Media
 		MediaListRaw *json.RawMessage
 		AmenitiesRaw *json.RawMessage
@@ -871,6 +884,12 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 			}
 			info.Avatar = avatar
 		}
+		if row.PropertyTypeID != nil {
+			info.PropertyType = &domain.PropertyType{
+				BaseEntity: _models.BaseEntity{ID: *row.PropertyTypeID},
+				Name:       ptrStr(row.PropertyTypeName),
+			}
+		}
 		info.ID = *row.InfoID
 		p.PropertyInfo = info
 	}
@@ -916,7 +935,7 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 	}
 	if row.LandID != nil {
 		li := &domain.PropertyLandInfo{
-			DocumentType: ptrU32(row.DocumentType),
+			DocumentType: enums.EDocUnknown.Parse(row.DocumentType),
 			DocumentNo:   ptrStr(row.DocumentNo),
 			IssuringAuth: ptrStr(row.IssuringAuth),
 			Plot:         ptrU32(row.Plot),

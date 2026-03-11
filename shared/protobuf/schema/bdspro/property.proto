@@ -14,7 +14,7 @@ import "shared/v3.proto";
 import "bdspro/post.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/wrappers.proto";
-import "bdspro/project.proto";
+import "bdspro/public.proto";
 
 service PropertyService {
   rpc CreatePropertyUser(ClonePropertyRequest) returns (Response) {
@@ -418,6 +418,7 @@ message PropertyDetailResponse {
   optional MediaItem avatar = 13;
   optional Project project = 14;
   optional Developer developer = 15;  // Chủ đầu tư (từ project)
+  optional PropertyType propertyType = 16;
 }
 
 message PropertyStatistic {
@@ -451,7 +452,7 @@ message PropertyLocationInfo {
 
 message PropertyLandInfoDetail {
   uint64 id = 1;
-  optional uint32 documentType = 2;
+  uint32 documentType = 2;
   string documentNo = 3;
   string issuringAuth = 4;
   optional uint32 plot = 5;

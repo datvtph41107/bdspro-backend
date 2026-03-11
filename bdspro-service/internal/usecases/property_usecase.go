@@ -534,7 +534,6 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 		landInfoID  *uint64
 		buildingID  *uint64
 		edvidenceID *uint64
-		statisticID *uint64
 		// externalRefID *uint64
 	)
 
@@ -1831,7 +1830,8 @@ func buildLandInfoUpdates(c *dto.UpdateLandInfoDTO, mask []string, ex *domain.Pr
 	if c.Basic != nil {
 		diffStr(u, mask, "land_info.basic.document_no", "document_no", c.Basic.DocumentNo, &ex.DocumentNo)
 		diffStr(u, mask, "land_info.basic.issuring_auth", "issuring_auth", c.Basic.IssuringAuth, &ex.IssuringAuth)
-		diffUint32(u, mask, "land_info.basic.document_type", "document_type", c.Basic.DocumentType, &ex.DocumentType)
+		docType := ex.DocumentType.Value()
+		diffUint32(u, mask, "land_info.basic.document_type", "document_type", c.Basic.DocumentType, &docType)
 		diffUint32(u, mask, "land_info.basic.plot", "plot", c.Basic.Plot, &ex.Plot)
 		diffUint32(u, mask, "land_info.basic.sheet", "sheet", c.Basic.Sheet, &ex.Sheet)
 	}
@@ -1941,7 +1941,7 @@ func mapLandInfoDTOToEntity(lineageID uint64, c *dto.UpdateLandInfoDTO) *domain.
 	if c.Basic != nil {
 		e.DocumentNo = derefStr(c.Basic.DocumentNo)
 		e.IssuringAuth = derefStr(c.Basic.IssuringAuth)
-		e.DocumentType = derefUint32(c.Basic.DocumentType)
+		e.DocumentType = enums.EDocUnknown.Parse(c.Basic.DocumentType)
 		e.Plot = derefUint32(c.Basic.Plot)
 		e.Sheet = derefUint32(c.Basic.Sheet)
 	}
