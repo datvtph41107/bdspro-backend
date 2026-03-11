@@ -534,6 +534,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 		landInfoID  *uint64
 		buildingID  *uint64
 		edvidenceID *uint64
+		statisticID *uint64
 		// externalRefID *uint64
 	)
 
@@ -1465,6 +1466,13 @@ func (u *PropertyUsecase) UpdateProperty(
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		profileId := _utils.GetProfileIdWithContext(cloneCtx)
+		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileId), time.Now().UnixMilli())
+		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), time.Now().UnixMilli())
+	}()
 	return result, nil
 }
 

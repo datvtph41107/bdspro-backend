@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
+	_dto "common/domain/dto"
 	"context"
 )
 
@@ -11,6 +12,7 @@ type ListUsecase struct {
 	// Repo repo.ListRepo
 	propertyTypeRepo repo.PropertyTypeRepo
 	regionRepo       repo.RegionRepo
+	areaRegionRepo   repo.AreaRegionRepo
 	docTypeRepo      repo.DocTypeRepo
 	projectRepo      repo.ProjectRepo
 	amenityRepo      repo.PropertyAmenityRepo
@@ -19,6 +21,7 @@ type ListUsecase struct {
 
 func NewListUsecase(propertyTypeRepo repo.PropertyTypeRepo,
 	regionRepo repo.RegionRepo,
+	areaRegionRepo repo.AreaRegionRepo,
 	docTypeRepo repo.DocTypeRepo,
 	projectRepo repo.ProjectRepo,
 	amenityRepo repo.PropertyAmenityRepo,
@@ -26,6 +29,7 @@ func NewListUsecase(propertyTypeRepo repo.PropertyTypeRepo,
 ) *ListUsecase {
 	return &ListUsecase{propertyTypeRepo: propertyTypeRepo,
 		regionRepo:       regionRepo,
+		areaRegionRepo:   areaRegionRepo,
 		docTypeRepo:      docTypeRepo,
 		projectRepo:      projectRepo,
 		amenityRepo:      amenityRepo,
@@ -39,6 +43,10 @@ func (s *ListUsecase) ListPropertyType(c context.Context, dto *dto.PropertyTypeS
 
 func (s *ListUsecase) ListRegion(c context.Context, dto *dto.RegionRequest) ([]domain.Region, int64, error) {
 	return s.regionRepo.Search(c, dto)
+}
+
+func (s *ListUsecase) ListAreaRegion(c context.Context, dto *_dto.Pagable) ([]domain.AreaRegion, int64, error) {
+	return s.areaRegionRepo.Search(c, dto)
 }
 
 func (s *ListUsecase) ListDocType(c context.Context, dto *dto.DocTypeSearchDTO) ([]domain.DocTypeItem, error) {

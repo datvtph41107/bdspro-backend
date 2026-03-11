@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/usecases"
+	admin_usecases "bdspro/internal/usecases/admin"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
 	"context"
@@ -21,24 +22,31 @@ import (
 
 type BdsproPublicService struct {
 	bdspropb.UnimplementedBdsproPublicServiceServer
-	UC            *shared_usecase.ProductUsecase
-	ListUC        *usecases.ListUsecase
-	Mapper        *mapper.PublicMapper
-	ProductMapper *mapper.ProductMapper
-	StartUpTime   int64
+	UC                *shared_usecase.ProductUsecase
+	ListUC            *usecases.ListUsecase
+	AreaRegionUsecase *admin_usecases.AreaRegionUsecase
+	Mapper            *mapper.PublicMapper
+	ProductMapper     *mapper.ProductMapper
+	AreaRegionMapper  *mapper.AreaRegionMapper
+	StartUpTime       int64
 }
 
 func NewBdsproPublicService(
 	uc *shared_usecase.ProductUsecase,
 	listUC *usecases.ListUsecase,
+	areaRegionUsecase *admin_usecases.AreaRegionUsecase,
 	mapper *mapper.PublicMapper,
-	productMapper *mapper.ProductMapper) *BdsproPublicService {
+	productMapper *mapper.ProductMapper,
+	areaRegionMapper *mapper.AreaRegionMapper,
+) *BdsproPublicService {
 	return &BdsproPublicService{
-		UC:            uc,
-		ListUC:        listUC,
-		Mapper:        mapper,
-		ProductMapper: productMapper,
-		StartUpTime:   time.Now().UnixMilli(),
+		UC:                uc,
+		ListUC:            listUC,
+		AreaRegionUsecase: areaRegionUsecase,
+		Mapper:            mapper,
+		ProductMapper:     productMapper,
+		AreaRegionMapper:  areaRegionMapper,
+		StartUpTime:       time.Now().UnixMilli(),
 	}
 }
 
@@ -87,6 +95,22 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *bdspropb
 	}, nil
 }
 
+// @Summary Lấy danh sách area-region (khu vực - bảng regions)
+// @Description Lấy toàn bộ danh sách area-region (public, không cần auth)
+// @Tags Sản phẩm
+// @Accept json
+// @Produce json
+// @Router /v2/bdspro/v2/list/area-region [get]
+func (s *BdsproPublicService) GetAreaRegions(ctx context.Context, req *sharepb.Empty) (*bdspropb.ListAreaRegionsResponse, error) {
+	regions, err := s.AreaRegionUsecase.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.ListAreaRegionsResponse{
+		Data: s.AreaRegionMapper.ToProtoList(regions),
+	}, nil
+}
+
 // @Summary Lấy danh sách khu vực
 // @Description Lấy danh sách khu vực
 // @Tags Sản phẩm
@@ -102,6 +126,36 @@ func (s *BdsproPublicService) GetRegion(ctx context.Context, req *bdspropb.Searc
 	}
 	items := make([]*bdspropb.ItemResponse, 0)
 	copier.Copy(&items, &result)
+	return &bdspropb.ListItemResponse{
+		Data:  items,
+		Total: uint32(total),
+	}, nil
+}
+
+// @Summary Lấy danh sách khu vực
+// @Description Lấy danh sách khu vực
+// @Tags Sản phẩm
+// @Accept json
+// @Produce json
+// @Param req query bdspropb.SearchQueryRequest true "Request"
+// @Router /v2/bdspro/v2/list/area-region [get]
+func (s *BdsproPublicService) GetAreaRegion(ctx context.Context, req *bdspropb.SearchQueryRequest) (*bdspropb.ListItemResponse, error) {
+	query := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+		Text: req.Text,
+	}
+	result, total, err := s.ListUC.ListAreaRegion(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*bdspropb.ItemResponse, len(result))
+	for i, region := range result {
+		items[i] = &bdspropb.ItemResponse{
+			Id:   region.ID,
+			Name: region.Name,
+		}
+	}
 	return &bdspropb.ListItemResponse{
 		Data:  items,
 		Total: uint32(total),

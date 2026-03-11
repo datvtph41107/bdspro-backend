@@ -5,16 +5,20 @@ import (
 	"context"
 	"pb/clients"
 	hubpb "pb/types/hub"
+
+	admin_usecases "bdspro/internal/usecases/admin"
 )
 
 // @bind: bdspro/internal/provider.HubProvider
 type HubClient struct {
 	*clients.HubGrpcClient
+	areaRegionUsecase *admin_usecases.AreaRegionUsecase
 }
 
-func NewHubClient() *HubClient {
+func NewHubClient(areaRegionUsecase *admin_usecases.AreaRegionUsecase) *HubClient {
 	return &HubClient{
-		HubGrpcClient: clients.MakeHubGrpcClient(env.ENV_RUNTIME),
+		HubGrpcClient:     clients.MakeHubGrpcClient(env.ENV_RUNTIME),
+		areaRegionUsecase: areaRegionUsecase,
 	}
 }
 
@@ -22,19 +26,32 @@ func (c *HubClient) GetRegionsByIdsMap(ctx context.Context, ids []uint64) (map[u
 	if len(ids) == 0 {
 		return map[uint64]*hubpb.Region{}, nil
 	}
-
-	resp, err := c.InternalClient.GetByIDs(ctx, &hubpb.GetRegionsRequest{
-		Ids: ids,
-	})
+	// Use local AreaRegion (bdspro) instead of calling hub
+	if c.areaRegionUsecase != nil {
+		regions, err := c.areaRegionUsecase.GetByIDs(ctx, ids)
+		if err != nil {
+			return nil, err
+		}
+		result := make(map[uint64]*hubpb.Region)
+		for i := range regions {
+			r := &regions[i]
+			result[r.ID] = &hubpb.Region{
+				Id:     r.ID,
+				Name:   r.Name,
+				Code:   r.Code,
+				Active: r.Active,
+			}
+		}
+		return result, nil
+	}
+	resp, err := c.InternalClient.GetByIDs(ctx, &hubpb.GetRegionsRequest{Ids: ids})
 	if err != nil {
 		return nil, err
 	}
-
 	result := make(map[uint64]*hubpb.Region)
 	for _, r := range resp.Regions {
 		result[r.Id] = r
 	}
-
 	return result, nil
 }
 

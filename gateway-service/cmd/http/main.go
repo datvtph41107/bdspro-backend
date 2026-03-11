@@ -105,6 +105,7 @@ var publicRoutes = []string{
 	"/v2/auth/admin/login",
 	"/v2/auth/phone/check",
 	"/v2/bdspro/v2/product/market",
+	"/v2/bdspro/v2/list/area-region",
 	"/v2/bdspro/public/enums/",
 
 	// Feedback public routes

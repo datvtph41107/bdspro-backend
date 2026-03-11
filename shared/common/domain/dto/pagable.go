@@ -8,6 +8,7 @@ type IPagable interface {
 }
 
 type Pagable struct {
+	Text string `form:"text"`
 	Page uint32 `form:"page"`
 	Size uint32 `form:"size"`
 	Sort string `form:"sort"`

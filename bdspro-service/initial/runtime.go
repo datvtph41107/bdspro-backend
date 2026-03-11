@@ -29,6 +29,7 @@ type InitialApp struct {
 	AdminPostHandler         *admin_handler.AdminPostHandler
 	AdminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler
 	AdminProjectHandler      *admin_handler.AdminProjectHandler
+	AdminAreaRegionHandler   *handler.AdminAreaRegionHandler
 	AdminRegionHandler       *handler.AdminRegionHandler
 	InternalHandler          *handler.InternalHandler
 	BdsproDashboardHandler   *handler.BdsproDashboardHandler
@@ -94,6 +95,7 @@ func NewInitialApp(
 	adminPostHandler *admin_handler.AdminPostHandler,
 	adminPropertyTypeHandler *admin_handler.AdminPropertyTypeHandler,
 	adminProjectHandler *admin_handler.AdminProjectHandler,
+	adminAreaRegionHandler *handler.AdminAreaRegionHandler,
 	adminRegionHandler *handler.AdminRegionHandler,
 	internalHandler *handler.InternalHandler,
 	bdsproDashboardHandler *handler.BdsproDashboardHandler,
@@ -148,6 +150,7 @@ func NewInitialApp(
 		AdminPostHandler:         adminPostHandler,
 		AdminPropertyTypeHandler: adminPropertyTypeHandler,
 		AdminProjectHandler:      adminProjectHandler,
+		AdminAreaRegionHandler:   adminAreaRegionHandler,
 		AdminRegionHandler:       adminRegionHandler,
 		InternalHandler:          internalHandler,
 		BdsproDashboardHandler:   bdsproDashboardHandler,

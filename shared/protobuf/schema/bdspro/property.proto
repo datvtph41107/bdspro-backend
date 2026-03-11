@@ -13,6 +13,7 @@ import "shared/v3.proto";
 import "bdspro/post.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/wrappers.proto";
+import "bdspro/project.proto";
 
 service PropertyService {
   rpc CreatePropertyUser(ClonePropertyRequest) returns (Response) {

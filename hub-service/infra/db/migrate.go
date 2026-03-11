@@ -22,7 +22,6 @@ func AutoMigrate() {
 		&domain.UserGuideStepEntity{},
 		&domain.InteractiveEvent{},
 		&domain.UpdateData{},
-		&domain.Region{},
 		// &domain.UserGuideGroupEntity{},
 	)
 

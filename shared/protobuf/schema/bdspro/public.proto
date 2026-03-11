@@ -4,6 +4,7 @@ package bdspropb;
 
 import "bdspro/product.proto";
 import "bdspro/common.proto";
+import "bdspro/region.proto";
 import "shared/common.proto";
 
 option go_package = "pb/types/bdspro;bdspropb";
@@ -24,6 +25,11 @@ service BdsproPublicService {
   rpc GetRegion(SearchQueryRequest) returns (ListItemResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/list/region"
+    };
+  };
+  rpc GetAreaRegion(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/area-region"
     };
   };
   rpc GetDocType(SearchQueryRequest) returns (ListItemResponse) {
