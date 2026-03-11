@@ -32,6 +32,12 @@ type PropertyLocation struct {
 	Longitude *float64 `gorm:"type:decimal(11,8)" json:"longitude,omitempty"`
 	// URL bản đồ
 	MapURL string `gorm:"size:100" json:"mapUrl,omitempty"`
+
+	// vị trí tương đối
+	PositionRelative *float64 `gorm:"type:decimal(10,8)" json:"position_relative,omitempty"`
+
+	// vị trí tuyệt đối
+	PositionAbsolute *float64 `gorm:"type:decimal(10,8)" json:"position_absolute,omitempty"`
 }
 
 func (PropertyLocation) TableName() string {

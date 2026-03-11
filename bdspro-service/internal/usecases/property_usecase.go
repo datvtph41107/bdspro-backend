@@ -637,7 +637,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 		if err := u.PropertyStatisticRepo.Save(txCtx, statistic); err != nil {
 			return _errors.InternalServerException("Create PropertyStatistic Error: ", err.Error())
 		}
-		statisticID = &statistic.ID
+		statisticID := &statistic.ID
 
 		// 8. Tạo PropertyLineage cuối cùng - chứa ID của các bảng trên
 		lineageData := &domain.PropertyLineage{}
@@ -1362,9 +1362,7 @@ func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.Archiv
 //  1. Load existing PropertyLineage (bao gồm FK IDs của các sub-domain)
 //  2. Với mỗi sub-domain có trong DTO: build update map → diff với DB → chỉ
 //     write nếu thực sự có thay đổi
-//  3. Toàn bộ chạy trong 1 transaction
-//
-// ─────────────────────────────────────────────────────────────────────────────
+
 func (u *PropertyUsecase) UpdateProperty(
 	ctx context.Context,
 	c *dto.UpdatePropertyDTO,
@@ -1383,6 +1381,11 @@ func (u *PropertyUsecase) UpdateProperty(
 		result = &dto.UpdatePropertyResult{
 			LineageID: existing.ID,
 			UpdatedAt: time.Now().UTC().Format(time.RFC3339),
+		}
+
+		if existing.PropertyIdentifyID != nil {
+			// tạo đề xuất thay đổi với bản chính định danh
+			proposeChangePropertyIdentify()
 		}
 
 		if c.Info != nil {
@@ -1474,6 +1477,10 @@ func (u *PropertyUsecase) UpdateProperty(
 		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), time.Now().UnixMilli())
 	}()
 	return result, nil
+}
+
+func proposeChangePropertyIdentify() {
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
