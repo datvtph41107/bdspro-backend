@@ -23,7 +23,7 @@ func (r *AmenityRepo) ReplaceAmenities(ctx context.Context, lineageID uint64, am
 
 	// 1. Xóa toàn bộ liên kết cũ
 	if err := db.
-		Where("property_id = ?", lineageID).
+		Where("property_lineage_id = ?", lineageID).
 		Delete(&domain.PropertyAmenity{}).Error; err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (r *AmenityRepo) ReplaceAmenities(ctx context.Context, lineageID uint64, am
 func (r *AmenityRepo) GetAmenityIDsByLineageID(ctx context.Context, lineageID uint64) ([]uint64, error) {
 	var rows []domain.PropertyAmenity
 	err := GetDB(ctx, r.DB).
-		Where("property_id = ?", lineageID).
+		Where("property_lineage_id = ?", lineageID).
 		Find(&rows).Error
 	if err != nil {
 		return nil, err

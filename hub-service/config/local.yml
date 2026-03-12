@@ -1,3 +1,7 @@
+# Base URL cho deep link — nối với code tạo link đầy đủ (vd: https://app.bdspro.com/dl/)
+applink:
+  base_url: "https://bdspro.com/app/link/"
+
 server:
   name: hub-service
   http_port: 8030

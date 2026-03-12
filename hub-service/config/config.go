@@ -12,6 +12,9 @@ import (
 const C_SESSION_ID = "C_SESSION_ID"
 
 type HubProperties struct {
+	Applink struct {
+		BaseURL string `mapstructure:"base_url"`
+	} `mapstructure:"applink"`
 	Jwt struct {
 		SecretKey           string   `mapstructure:"key-generate"`
 		TokenPrefix         string   `mapstructure:"tokenPrefix"`

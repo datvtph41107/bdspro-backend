@@ -1398,6 +1398,13 @@ func (u *PropertyUsecase) UpdateProperty(
 		return err
 	})
 
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		profileId := _utils.GetProfileIdWithContext(cloneCtx)
+		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileId), time.Now().UnixMilli())
+		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), time.Now().UnixMilli())
+	}()
+
 	return result, err
 }
 

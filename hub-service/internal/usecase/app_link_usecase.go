@@ -28,7 +28,7 @@ func NewApplinkUsecase(applinkRepo repo.IApplinkRepo) IApplinkUsecase {
 	return &applinkUsecase{applinkRepo: applinkRepo}
 }
 
-// CreateApplink sinh code unique, lưu DB, trả về entity đầy đủ
+// CreateApplink nếu đã có applink với refID + action thì return luôn, không thì tạo mới
 func (u *applinkUsecase) CreateApplink(
 	ctx context.Context,
 	refID uint64,
@@ -38,11 +38,20 @@ func (u *applinkUsecase) CreateApplink(
 		return nil, helpers.ErrApplinkInvalidCode
 	}
 
+	// Đã có rồi thì return code hiện tại
+	existing, err := u.applinkRepo.GetByRefIDAndAction(ctx, refID, int(action))
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return existing, nil
+	}
+
+	// Chưa có thì tạo mới
 	code, err := u.generateUniqueCode(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	a := &domain.Applink{
 		Code:   code,
 		RefID:  refID,

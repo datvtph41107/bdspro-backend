@@ -10,13 +10,17 @@ import (
 
 // ── domain → proto ────────────────────────────────────────────────────────────
 
-func ApplinkToProto(a *domain.Applink) *hubpb.ApplinkInfo {
+// ApplinkToProto baseURL từ config — link = baseURL + code
+func ApplinkToProto(a *domain.Applink, baseURL string) *hubpb.ApplinkInfo {
+	code := helpers.ApplinkCodeToBase64(a.Code)
+	link := baseURL + code
 	return &hubpb.ApplinkInfo{
-		Code:       helpers.ApplinkCodeToBase64(a.Code), // uint64 → base64 khi expose
+		Code:       code,
 		RefId:      a.RefID,
 		Action:     int32(a.Action),
-		ActionName: a.Action.String(), // "user_profile", "chat_room"...
+		ActionName: a.Action.String(),
 		CreatedAt:  _utils.FormatTimeToString(&a.CreatedAt),
+		Link:       link,
 	}
 }
 

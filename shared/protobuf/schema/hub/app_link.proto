@@ -19,10 +19,11 @@ message ApplinkInfo {
   int32 action = 3; // enums.ApplinkAction (100, 201, 801...)
   string actionName = 4; // "user_profile", "bdspro_property", "chat_room"...
   string createdAt  = 5;
+  string link = 6;   // base_url + code — URL deep link đầy đủ
 }
 
 message CreateApplinkRequest {
-  string refId = 1;
+  uint64 refId = 1;
   int32  action = 2;
 }
 
@@ -43,14 +44,14 @@ service ApplinkService {
   // Public — QR share gọi để sinh code
   rpc CreateApplink(CreateApplinkRequest) returns (CreateApplinkResponse) {
     option (google.api.http) = {
-      post: "/v1/applinks"
+      post: "/v2/hub/applinks"
       body: "*"
     };
   }
 
   rpc GetApplinkByCode(GetApplinkByCodeRequest) returns (GetApplinkByCodeResponse) {
     option (google.api.http) = {
-      get: "/v1/applinks/{code}"
+      get: "/v2/hub/applinks/{code}"
     };
   }
 }

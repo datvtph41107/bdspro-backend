@@ -14,4 +14,7 @@ type IApplinkRepo interface {
 
 	// GetByCode tìm applink theo code (uint64) — hit index idx_applink_code
 	GetByCode(ctx context.Context, code uint64) (*domain.Applink, error)
+
+	// GetByRefIDAndAction tìm applink theo ref_id + action — nếu có thì return, dùng để tránh tạo trùng
+	GetByRefIDAndAction(ctx context.Context, refID uint64, action int) (*domain.Applink, error)
 }

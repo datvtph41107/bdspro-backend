@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"hub/config"
 	"hub/helpers"
 	"hub/infra/mapper"
 	"hub/internal/usecase"
@@ -47,7 +48,7 @@ func (h *ApplinkHandler) CreateApplink(
 	}
 
 	return &hubpb.CreateApplinkResponse{
-		Applink: mapper.ApplinkToProto(applink),
+		Applink: mapper.ApplinkToProto(applink, config.AppProperties.Applink.BaseURL),
 	}, nil
 }
 
@@ -70,7 +71,7 @@ func (h *ApplinkHandler) GetApplinkByCode(
 	}
 
 	return &hubpb.GetApplinkByCodeResponse{
-		Applink: mapper.ApplinkToProto(applink),
+		Applink: mapper.ApplinkToProto(applink, config.AppProperties.Applink.BaseURL),
 	}, nil
 }
 

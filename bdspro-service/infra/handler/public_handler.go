@@ -97,6 +97,7 @@ func (s *BdsproPublicService) GetPropertyType(ctx context.Context, req *bdspropb
 			UpdatedAt:        _utils.FormatTimeToString(item.UpdatedAt),
 			Active:           item.Active,
 			ClassifyProperty: uint32(item.ClassifyProperty),
+			FieldStrs:        item.FieldStrs,
 		})
 	}
 	return &bdspropb.PropertyTypeListResponse{
