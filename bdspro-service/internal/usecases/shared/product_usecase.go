@@ -11,6 +11,7 @@ import (
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
+	property_usecases "bdspro/internal/usecases/property"
 	"bdspro/internal/utils"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
@@ -65,7 +66,7 @@ type ProductUsecase struct {
 	ProductOrganizationRepo repo.ProductOrganizationRepo
 	ProductUserRepo         repo.ProductUserRepo
 	BdsDomainUsecase        *usecases.BdsDomainUsecase
-	PropertyUsecase         *usecases.PropertyUsecase
+	PropertyUsecase         *property_usecases.PropertyUsecase
 	DealRepo                repo.DealRepository
 	CodeDataUsecase         *_usecase.CodeDataUsecase
 
@@ -103,7 +104,7 @@ func NewProductUsecase(
 	PostUsecase *PostUsecase,
 	assetUsecase *AssetUsecase,
 	bdsDomainUsecase *usecases.BdsDomainUsecase,
-	propertyUsecase *usecases.PropertyUsecase,
+	propertyUsecase *property_usecases.PropertyUsecase,
 	codeDataUsecase *_usecase.CodeDataUsecase,
 	deepseekClient provider.DeepseekProvider,
 	transaction provider.TransactionProvider,

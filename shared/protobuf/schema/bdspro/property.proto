@@ -87,7 +87,7 @@ service PropertyService {
 
   rpc UpdateProperty(UpdatePropertyRequest) returns (UpdatePropertyResponse) {
     option (google.api.http) = {
-      put: "/v2/bdspro/v2/property/{id}"
+      patch: "/v2/bdspro/v2/property/{id}"
       body: "*"
     };
   };
@@ -125,14 +125,6 @@ service PropertyService {
 message UpdatePropertyRequest {
   // ID của PropertyLineage
   uint64 id = 1;
-
-  // paths ví dụ:
-  //   "info.title"
-  //   "land_info.area.area_total"
-  //   "land_info.expiry.expired_land"
-  //   "lineage_meta.verified_national_at"
-  google.protobuf.FieldMask field_mask = 2;
-
   // Sub-domain payloads — null = không update domain đó
   UpdateInfoPayload        info          = 3;
   UpdateLocationPayload    location      = 4;
@@ -143,107 +135,103 @@ message UpdatePropertyRequest {
   UpdateAmenityPayload     amenities     = 9;
   UpdateExternalRefPayload external_refs = 10;
   UpdateLineageMetaPayload lineage_meta  = 11;
+  UpdateAreaRegionPayload area_region = 12;
 }
 
 // ─── info.* ──────────────────────────────────────────────────────────────────
 message UpdateInfoPayload {
-  string title      = 1;  // info.title
-  string note       = 2;  // info.note
-  string unit_code  = 3;  // info.unit_code
-  string identifier = 4;  // info.identifier
-  string level      = 5;  // info.level
-  int32  scope      = 6;  // info.scope
+  optional string title = 1;
+  optional string note = 2;
+  optional string unit_code = 3;
+  optional string identifier = 4;
+  optional string level = 5;
 
-  int32  source_type    = 7;  // info.source_type
-  int32  legal_status   = 8;  // info.legal_status
-  int32  record_status  = 9;  // info.record_status
+  optional uint32 scope = 6;
+  optional uint32 source_type = 7;
+  optional uint32 legal_status = 8;
+  optional uint32 record_status = 9;
 
-  // optional → nil khi không gửi, 0 = gửi null có chủ đích (clear FK)
-  google.protobuf.UInt64Value avatar_id         = 10; // info.avatar_id
-  google.protobuf.UInt64Value property_type_id  = 11; // info.property_type_id
-  google.protobuf.UInt64Value project_id        = 12; // info.project_id
-  google.protobuf.UInt64Value origin_profile_id = 13; // info.origin_profile_id
+  optional uint64 avatar_id = 10;
+  optional uint64 property_type_id = 11;
+  optional uint64 project_id = 12;
+  optional uint64 origin_profile_id = 13;
 }
 
 // ─── location.* ──────────────────────────────────────────────────────────────
 message UpdateLocationPayload {
-  string address_detail = 1; // location.address_detail
-  string map_url        = 2; // location.map_url
+  optional string address_detail = 1;
+  optional string map_url = 2;
 
-  google.protobuf.DoubleValue latitude  = 3; // location.latitude
-  google.protobuf.DoubleValue longitude = 4; // location.longitude
+  optional double latitude = 3;
+  optional double longitude = 4;
 
-  google.protobuf.UInt64Value region_id   = 5; // location.region_id
-  google.protobuf.UInt64Value province_id = 6; // location.province_id
-  google.protobuf.UInt64Value district_id = 7; // location.district_id
-  google.protobuf.UInt64Value ward_id     = 8; // location.ward_id
+  optional uint64 region_id = 5;
+  optional uint64 province_id = 6;
+  optional uint64 district_id = 7;
+  optional uint64 ward_id = 8;
 }
 
 // ─── land_info.* ─────────────────────────────────────────────────────────────
-// Được nhóm thành 4 sub-group để field_mask granular hơn:
-//   land_info.basic.*     → giấy tờ pháp lý
-//   land_info.area.*      → diện tích
-//   land_info.dimension.* → kích thước thực địa
-//   land_info.expiry.*    → thời hạn sử dụng đất
 message UpdateLandInfoPayload {
-  LandInfoBasic     basic     = 1;
-  LandInfoArea      area      = 2;
+  LandInfoBasic basic = 1;
+  LandInfoArea area = 2;
   LandInfoDimension dimension = 3;
-  LandInfoExpiry    expiry    = 4;
+  LandInfoExpiry expiry = 4;
 
-  string note      = 5; // land_info.note
-  string land_note = 6; // land_info.land_note
-  int32  purpose_used = 7; // land_info.purpose_used
+  optional string note = 5;
+  optional string land_note = 6;
+  optional int32 purpose_used = 7;
 }
 
 message LandInfoBasic {
-  string document_no    = 1; // land_info.basic.document_no
-  string issuring_auth  = 2; // land_info.basic.issuring_auth
-  uint32 document_type  = 3; // land_info.basic.document_type
-  uint32 plot           = 4; // land_info.basic.plot
-  uint32 sheet          = 5; // land_info.basic.sheet
+  optional string document_no = 1;
+  optional string issuring_auth = 2;
+  optional uint32 document_type = 3;
+  optional uint32 plot = 4;
+  optional uint32 sheet = 5;
 }
 
 message LandInfoArea {
-  google.protobuf.DoubleValue area_total = 1; // land_info.area.area_total
-  google.protobuf.DoubleValue area_land  = 2; // land_info.area.area_land
-  google.protobuf.DoubleValue area_plant = 3; // land_info.area.area_plant
+  optional double area_total = 1;
+  optional double area_land = 2;
+  optional double area_plant = 3;
 }
 
 message LandInfoDimension {
-  google.protobuf.DoubleValue front_width  = 1; // land_info.dimension.front_width
-  google.protobuf.DoubleValue depth        = 2; // land_info.dimension.depth
-  google.protobuf.DoubleValue street_width = 3; // land_info.dimension.street_width
+  optional double front_width = 1;
+  optional double depth = 2;
+  optional double street_width = 3;
 }
 
 message LandInfoExpiry {
-  // ISO8601 string | "" = clear về null
-  google.protobuf.StringValue expired_land  = 1; // land_info.expiry.expired_land
-  google.protobuf.StringValue expired_plant = 2; // land_info.expiry.expired_plant
+  optional string expired_land = 1;
+  optional string expired_plant = 2;
 }
 
 // ─── building_info.* ─────────────────────────────────────────────────────────
 message UpdateBuildingPayload {
-  string note            = 1; // building_info.note
-  int32  build_status    = 2; // building_info.build_status
-  int32  building_type   = 3; // building_info.building_type
-  int32  direction       = 4; // building_info.direction
-  int32  balcony_direction = 5; // building_info.balcony_direction
+  optional string note = 1;
 
-  google.protobuf.DoubleValue area_actual        = 6;  // building_info.area_actual
-  google.protobuf.DoubleValue area_floor         = 7;  // building_info.area_floor
-  google.protobuf.DoubleValue area_construction  = 8;  // building_info.area_construction
-  google.protobuf.UInt32Value floors             = 9;  // building_info.floors
-  google.protobuf.UInt32Value room_number        = 10; // building_info.room_number
-  google.protobuf.UInt32Value bedrooms           = 11; // building_info.bedrooms
-  google.protobuf.UInt32Value bathrooms          = 12; // building_info.bathrooms
+  optional uint32 build_status = 2;
+  optional uint32 building_type = 3;
+  optional uint32 direction = 4;
+  optional uint32 balcony_direction = 5;
+
+  optional double area_actual = 6;
+  optional double area_floor = 7;
+  optional double area_construction = 8;
+
+  optional uint32 floors = 9;
+  optional uint32 room_number = 10;
+  optional uint32 bedrooms = 11;
+  optional uint32 bathrooms = 12;
 }
 
 // ─── evidence.* ──────────────────────────────────────────────────────────────
 message UpdateEvidencePayload {
-  string                      title       = 1; // evidence.title
-  string                      description = 2; // evidence.description
-  google.protobuf.UInt64Value file_id     = 3; // evidence.file_id  (null = xóa file)
+  optional string title = 1;
+  optional string description = 2;
+  optional uint64 file_id = 3;
 }
 
 // ─── media (list upsert — không dùng field_mask) ─────────────────────────────
@@ -254,17 +242,21 @@ message UpdateMediaPayload {
 }
 
 message UpdateMediaItem {
-  uint64 id         = 1; // 0 = new
-  string media_type = 2; // "image" | "video"
-  string media_url  = 3;
-  string thumb_url  = 4;
-  int32  sort_order = 5;
-  bool   is_cover   = 6;
+  uint64 id = 1;
+  string media_type = 2;
+  string media_url = 3;
+  string thumb_url = 4;
+  int32 sort_order = 5;
+  bool is_cover = 6;
 }
 
 // ─── amenities (REPLACE list — không dùng field_mask) ────────────────────────
 message UpdateAmenityPayload {
   repeated uint64 amenity_ids = 1;
+}
+
+message UpdateAreaRegionPayload {
+  repeated uint64 area_region_ids = 1;
 }
 
 // ─── external_refs (list upsert — không dùng field_mask) ─────────────────────
@@ -273,22 +265,20 @@ message UpdateExternalRefPayload {
 }
 
 message UpdateExternalRefItem {
-  uint64 id             = 1; // 0 = new
-  string source_code    = 2;
-  string note           = 3;
+  uint64 id = 1;
+  string source_code = 2;
+  string note = 3;
   uint64 external_ref_id = 4;
-  int32  source_system  = 5;
-  uint32 confidence     = 6;
-  int32  sync_status    = 7;
+  int32 source_system = 5;
+  uint32 confidence = 6;
+  int32 sync_status = 7;
 }
-
 // ─── lineage_meta.* (admin/system only) ──────────────────────────────────────
 message UpdateLineageMetaPayload {
-  string                      national_id          = 1; // lineage_meta.national_id
-  int32                       lineage_status       = 2; // lineage_meta.lineage_status
-  google.protobuf.StringValue verified_national_at = 3; // lineage_meta.verified_national_at
+  optional string national_id = 1;
+  optional int32 lineage_status = 2;
+  optional string verified_national_at = 3;
 }
-
 // ─── Response ────────────────────────────────────────────────────────────────
 message UpdatePropertyResponse {
   uint64 lineage_id = 1;

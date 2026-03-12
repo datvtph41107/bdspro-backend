@@ -37,3 +37,8 @@ type PropertyExternalRefRepository interface {
 	Create(ctx context.Context, entity *domain.PropertyExternalRef) error
 	UpdateFields(ctx context.Context, id uint64, fields map[string]any) error
 }
+
+type AreaRegionRepository interface {
+	ReplaceAreaRegions(ctx context.Context, lineageID uint64, regionIDs []uint64) error
+	GetAreaRegionIDsByLineageID(ctx context.Context, lineageID uint64) ([]uint64, error)
+}

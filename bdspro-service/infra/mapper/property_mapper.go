@@ -984,22 +984,22 @@ func (m *PropertyMapper) UpdatePropertyPbToDTO(req *bdspropb.UpdatePropertyReque
 		// if req.LandInfo.RoadWidth != nil {
 		// 	landInfo.RoadWidth = req.LandInfo.RoadWidth
 		// }
-		if req.LandInfo.LandNote != "" {
-			landInfo.LandNote = req.LandInfo.LandNote
+		if req.LandInfo.LandNote != nil {
+			landInfo.LandNote = *req.LandInfo.LandNote
 		}
 	}
 
 	// Map PropertyBuildingInfo nếu có
 	if req.BuildingInfo != nil {
 		buildingType := enums.EBuildingTypeResidential
-		if req.BuildingInfo.BuildingType != 0 {
-			buildingType = enums.EBuildingType(req.BuildingInfo.BuildingType)
+		if req.BuildingInfo.BuildingType != nil {
+			buildingType = enums.EBuildingType(*req.BuildingInfo.BuildingType)
 		}
 		buildingInfo = &domain.PropertyBuildingInfo{
 			// PropertyID:       req.Id,
 			BuildingType:     buildingType,
-			Direction:        enums.EHouseOrient(req.BuildingInfo.Direction),
-			BalconyDirection: enums.EHouseOrient(req.BuildingInfo.BalconyDirection),
+			Direction:        enums.EHouseOrient(*req.BuildingInfo.Direction),
+			BalconyDirection: enums.EHouseOrient(*req.BuildingInfo.BalconyDirection),
 		}
 		// if req.BuildingInfo.ConstructionArea != nil {
 		// 	buildingInfo.ConstructionArea = req.BuildingInfo.ConstructionArea

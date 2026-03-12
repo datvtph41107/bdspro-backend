@@ -859,9 +859,8 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 			// Visibility:      enums.EVisibility(*row.Visibility),
 			LegalStatus: enums.EHouseCertificate(*row.LegalStatus),
 			// PrivacyLevel:    enums.EVisibility(*row.PrivacyLevel),
-			OriginProfileId: row.OriginProfileId,
-			ProjectID:       row.ProjectID,
-			Title:           ptrStr(row.Title),
+			ProjectID: row.ProjectID,
+			Title:     ptrStr(row.Title),
 		}
 		if row.ProjectID != nil && *row.ProjectID > 0 {
 			info.Project = &domain.Project{

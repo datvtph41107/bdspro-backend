@@ -205,8 +205,8 @@ func (r *PostgrePropertyAmenityRepo) UpdatePropertyAmenityIds(
 		records := make([]domain.PropertyAmenity, 0, len(amenityIDs))
 		for _, id := range amenityIDs {
 			records = append(records, domain.PropertyAmenity{
-				PropertyID: propertyID,
-				AmenityID:  id,
+				PropertyLineageID: propertyID,
+				AmenityItemID:     id,
 			})
 		}
 

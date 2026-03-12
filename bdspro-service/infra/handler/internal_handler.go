@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
+	property_usecases "bdspro/internal/usecases/property"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_enum "common/domain/enum"
 	_utils "common/utils"
@@ -18,7 +19,7 @@ type InternalHandler struct {
 	bdspropb.UnimplementedBdsproInternalServiceServer
 	dashboardUsecase    *usecases.DashboardUsecase
 	productUsecase      *shared_usecase.ProductUsecase
-	propertyUsecase     *usecases.PropertyUsecase
+	propertyUsecase     *property_usecases.PropertyUsecase
 	productMapper       *mapper.ProductMapper
 	dealUsecase         repo.DealRepository
 	dealMapper          mapper.DealMapper
@@ -33,7 +34,7 @@ type InternalHandler struct {
 func NewInternalHandler(
 	dashboardUsecase *usecases.DashboardUsecase,
 	productUsecase *shared_usecase.ProductUsecase,
-	propertyUsecase *usecases.PropertyUsecase,
+	propertyUsecase *property_usecases.PropertyUsecase,
 	productMapper *mapper.ProductMapper,
 	dealUsecase repo.DealRepository,
 	dealMapper mapper.DealMapper,

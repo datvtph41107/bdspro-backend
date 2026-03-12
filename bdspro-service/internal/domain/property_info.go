@@ -41,7 +41,6 @@ type PropertyInfo struct {
 	Scope enums.EPropertyScope `gorm:"type:smallint;default:10;index:idx_filter" json:"scope"`
 	// Visibility enums.EVisibility    `gorm:"type:smallint;default:10" json:"visibility,omitempty"`
 
-	OriginProfileId *uint64 `gorm:"type:bigint;index" json:"originProfileId,omitempty"`
 	// COMPUTED
 	ProductCount int64 `gorm:"-" json:"productCount,omitempty"`
 	AssetCount   int64 `gorm:"-" json:"assetCount,omitempty"`

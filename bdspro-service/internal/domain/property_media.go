@@ -12,8 +12,8 @@ type PropertyMedia struct {
 	// Để lấy được thông tin của property identify
 	PropertyIdentify *PropertyIdentify `gorm:"foreignKey:PropertyIdentifyID;references:ID"`
 
-	LineageID *uint64 `gorm:"type:bigint" json:"lineageId"`
-
+	// LineageID *uint64           `gorm:"type:bigint" json:"lineageId"`
+	Lineages []PropertyLineage `gorm:"many2many:lineage_media"`
 	// LineageID *uint64          `gorm:"type:bigint" json:"lineageId"`
 	// Lineage   *PropertyLineage `gorm:"foreignKey:LineageID;references:ID"`
 
@@ -28,4 +28,16 @@ type PropertyMedia struct {
 // TableName override tên bảng
 func (PropertyMedia) TableName() string {
 	return "property_media"
+}
+
+type LineageMedia struct {
+	PropertyLineageID uint64 `gorm:"primaryKey"`
+	PropertyMediaID   uint64 `gorm:"primaryKey"`
+
+	IsCover   bool
+	SortOrder int32
+}
+
+func (LineageMedia) TableName() string {
+	return "lineage_media"
 }

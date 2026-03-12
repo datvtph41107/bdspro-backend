@@ -15,8 +15,9 @@ func (Amenity) TableName() string {
 }
 
 type AmenityItem struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
+	ID         uint64            `json:"id"`
+	Name       string            `json:"name"`
+	Properties []PropertyLineage `gorm:"many2many:property_amenity"`
 }
 
 func (AmenityItem) TableName() string {
@@ -36,8 +37,8 @@ func (ProductAmenity) TableName() string {
 
 // PropertyAmenity struct cho bảng PROPERTY_AMENITY (bảng liên kết nhiều-nhiều)
 type PropertyAmenity struct {
-	PropertyID uint64 `gorm:"primaryKey;not null" json:"propertyId"`
-	AmenityID  uint64 `gorm:"primaryKey;not null" json:"amenityId"`
+	PropertyLineageID uint64 `gorm:"primaryKey;not null" json:"propertyId"`
+	AmenityItemID     uint64 `gorm:"primaryKey;not null" json:"amenityId"`
 }
 
 // GORM table name override

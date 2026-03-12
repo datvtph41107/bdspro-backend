@@ -1,6 +1,9 @@
 package dto
 
-import "bdspro/internal/domain"
+import (
+	"bdspro/internal/domain"
+	"common/pkg/optional" // thay bằng path thật
+)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UpdatePropertyDTO — command object duy nhất Handler → Usecase.
@@ -14,7 +17,6 @@ import "bdspro/internal/domain"
 // ─────────────────────────────────────────────────────────────────────────────
 type UpdatePropertyDTO struct {
 	LineageID uint64
-
 	// FieldMask: danh sách path được phép update.
 	// Rỗng = update tất cả field có trong payload.
 	// Có giá trị = chỉ update đúng path được liệt kê.
@@ -28,6 +30,7 @@ type UpdatePropertyDTO struct {
 	Media        *UpdateMediaDTO
 	Amenities    *UpdateAmenityDTO
 	ExternalRefs *UpdateExternalRefDTO
+	AreaRegions  *UpdateAreaRegionsDTO
 	LineageMeta  *UpdateLineageMetaDTO
 }
 
@@ -39,10 +42,10 @@ type UpdateInfoDTO struct {
 	UnitCode     *string
 	Identifier   *string
 	Level        *string
-	Scope        *int32
-	SourceType   *int32
-	LegalStatus  *int32
-	RecordStatus *int32
+	Scope        *uint32
+	SourceType   *uint32
+	LegalStatus  *uint32
+	RecordStatus *uint32
 
 	// *uint64 nil = bỏ qua; *uint64 value=0 = clear FK về NULL
 	AvatarID        *uint64
@@ -102,10 +105,10 @@ type LandInfoExpiryDTO struct {
 
 type UpdateBuildingDTO struct {
 	Note             *string
-	BuildStatus      *int32
-	BuildingType     *int32
-	Direction        *int32
-	BalconyDir       *int32
+	BuildStatus      *uint32
+	BuildingType     *uint32
+	Direction        *uint32
+	BalconyDir       *uint32
 	AreaActual       *float64
 	AreaFloor        *float64
 	AreaConstruction *float64
@@ -142,6 +145,10 @@ type UpdateExternalRefDTO struct {
 	Items []UpdateExternalRefItemDTO
 }
 
+type UpdateAreaRegionsDTO struct {
+	AreaRegionIDs []uint64
+}
+
 type UpdateExternalRefItemDTO struct {
 	ID            uint64 // 0 = insert mới
 	ExternalRefID uint64
@@ -173,4 +180,143 @@ type UpdatePropertyResult struct {
 	Media        []domain.PropertyMedia
 	Amenities    []domain.AmenityItem
 	ExternalRefs []*domain.PropertyExternalRef
+}
+
+type UpdatePropertyCommand struct {
+	LineageID uint64
+
+	Info         *InfoUpdate
+	Location     *LocationUpdate
+	LandInfo     *LandInfoUpdate
+	BuildingInfo *BuildingUpdate
+	Evidence     *EvidenceUpdate
+	Media        *MediaUpdate
+	Amenities    *AmenitiesUpdate
+	ExternalRefs *ExternalRefsUpdate
+	AreaRegions  *AreaRegionsUpdate
+	LineageMeta  *LineageMetaUpdate
+}
+
+type InfoUpdate struct {
+	Title           optional.String
+	Note            optional.String
+	UnitCode        optional.String
+	Identifier      optional.String
+	Level           optional.String
+	Scope           optional.Uint32
+	SourceType      optional.Uint32
+	LegalStatus     optional.Uint32
+	RecordStatus    optional.Uint32
+	AvatarID        optional.Uint64
+	PropertyTypeID  optional.Uint64
+	ProjectID       optional.Uint64
+	OriginProfileID optional.Uint64
+}
+
+type LocationUpdate struct {
+	AddressDetail optional.String
+	MapURL        optional.String
+	Latitude      optional.Float64
+	Longitude     optional.Float64
+	RegionID      optional.Uint64
+	ProvinceID    optional.Uint64
+	DistrictID    optional.Uint64
+	WardID        optional.Uint64
+}
+
+type LandInfoUpdate struct {
+	Basic       *LandInfoBasicUpdate
+	Area        *LandInfoAreaUpdate
+	Dimension   *LandInfoDimensionUpdate
+	Expiry      *LandInfoExpiryUpdate
+	Note        optional.String
+	LandNote    optional.String
+	PurposeUsed optional.Int32
+}
+
+type LandInfoBasicUpdate struct {
+	DocumentNo   optional.String
+	IssuringAuth optional.String
+	DocumentType optional.Uint32
+	Plot         optional.Uint32
+	Sheet        optional.Uint32
+}
+
+type LandInfoAreaUpdate struct {
+	AreaTotal optional.Float64
+	AreaLand  optional.Float64
+	AreaPlant optional.Float64
+}
+
+type LandInfoDimensionUpdate struct {
+	FrontWidth  optional.Float64
+	Depth       optional.Float64
+	StreetWidth optional.Float64
+}
+
+type LandInfoExpiryUpdate struct {
+	ExpiredLand  optional.String // ISO datetime
+	ExpiredPlant optional.String
+}
+
+type BuildingUpdate struct {
+	Note             optional.String
+	BuildStatus      optional.Uint32
+	BuildingType     optional.Uint32
+	Direction        optional.Uint32
+	BalconyDir       optional.Uint32
+	AreaActual       optional.Float64
+	AreaFloor        optional.Float64
+	AreaConstruction optional.Float64
+	Floors           optional.Uint32
+	RoomNumber       optional.Uint32
+	Bedrooms         optional.Uint32
+	Bathrooms        optional.Uint32
+}
+
+type EvidenceUpdate struct {
+	Title       optional.String
+	Description optional.String
+	FileID      optional.Uint64
+}
+
+type MediaUpdate struct {
+	Items optional.Slice[MediaItemUpdate]
+}
+
+type MediaItemUpdate struct {
+	ID        optional.Uint64
+	MediaType optional.String
+	MediaURL  optional.String
+	ThumbURL  optional.String
+	SortOrder optional.Int32
+	IsCover   optional.Bool
+}
+
+type AmenitiesUpdate struct {
+	AmenityIDs optional.Slice[uint64]
+}
+
+type ExternalRefsUpdate struct {
+	Items optional.Slice[ExternalRefItemUpdate]
+}
+
+type ExternalRefItemUpdate struct {
+	ID            optional.Uint64
+	ExternalRefID optional.Uint64
+	SourceSystem  optional.Int32
+	SourceCode    optional.String
+	Confidence    optional.Uint32
+	SyncStatus    optional.Int32
+	Note          optional.String
+}
+
+type AreaRegionsUpdate struct {
+	AreaRegionIDs optional.Slice[uint64]
+}
+
+type LineageMetaUpdate struct {
+	NationalID         optional.String
+	LineageStatus      optional.Int32
+	VerifiedNationalAt optional.String
 }

@@ -10,11 +10,11 @@ type PropertyLineage struct {
 	_models.BaseEntity
 	// ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
 	// Title string `gorm:"size:255" json:"title,omitempty"`
-	SourceType    enums.EPropertySourceType `gorm:"type:smallint;not null;index"`
-	LineageStatus enums.ELineageStatus      `gorm:"type:smallint;default:10;index"`
-	EffectiveAt   *time.Time                `gorm:"index"`
-	ExpiredAt     *time.Time                `gorm:"index"`
-	IsPrimary     bool                      `gorm:"default:false;index"`
+	OriginProfileId *uint64 `gorm:"column: origin_profile_id;type:bigint;index" json:"originProfileId"`
+
+	LineageStatus enums.ELineageStatus `gorm:"type:smallint;default:10;index"`
+	EffectiveAt   *time.Time           `gorm:"index"`
+	ExpiredAt     *time.Time           `gorm:"index"`
 	// đối với bds định danh sẽ có id này
 	PropertyIdentifyID *uint64 `gorm:"type:int8;index" json:"propertyIdentifyId"` // Liên kết với Property
 	// Để lấy được thông tin của property identify
@@ -57,6 +57,7 @@ type PropertyLineage struct {
 	// tiện ích
 	Amenities []AmenityItem `gorm:"many2many:property_amenity"`
 
+	Region []AreaRegion `gorm:"many2many:property_area_region"`
 	// COMPUTED (cho API response)
 	RegionName string     `gorm:"-"`
 	RegionCode uint32     `gorm:"-"`
@@ -132,4 +133,24 @@ type PropertyLineage struct {
 
 func (PropertyLineage) TableName() string {
 	return "property_lineage"
+}
+
+func (l *PropertyLineage) IsIdentifyProperty() bool {
+	return l.PropertyIdentifyID != nil
+}
+
+func (l *PropertyLineage) IsOwner(ownerID *uint64, userID uint64) bool {
+	return ownerID != nil && *ownerID == userID
+}
+
+func (l *PropertyLineage) IsActive(at time.Time) bool {
+	if l.EffectiveAt != nil && at.Before(*l.EffectiveAt) {
+		return false
+	}
+
+	if l.ExpiredAt != nil && at.After(*l.ExpiredAt) {
+		return false
+	}
+
+	return true
 }

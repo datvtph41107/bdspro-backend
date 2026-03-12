@@ -36,8 +36,8 @@ func (r *AmenityRepo) ReplaceAmenities(ctx context.Context, lineageID uint64, am
 	rows := make([]domain.PropertyAmenity, 0, len(amenityIDs))
 	for _, id := range amenityIDs {
 		rows = append(rows, domain.PropertyAmenity{
-			PropertyID: lineageID,
-			AmenityID:  id,
+			PropertyLineageID: lineageID,
+			AmenityItemID:     id,
 		})
 	}
 
@@ -56,7 +56,7 @@ func (r *AmenityRepo) GetAmenityIDsByLineageID(ctx context.Context, lineageID ui
 
 	ids := make([]uint64, 0, len(rows))
 	for _, row := range rows {
-		ids = append(ids, row.AmenityID)
+		ids = append(ids, row.AmenityItemID)
 	}
 	return ids, nil
 }

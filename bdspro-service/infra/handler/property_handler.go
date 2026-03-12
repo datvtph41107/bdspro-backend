@@ -3,9 +3,10 @@ package handler
 import (
 	"bdspro/infra/mapper"
 	"bdspro/internal/dto"
-	"bdspro/internal/usecases"
+	property_usecases "bdspro/internal/usecases/property"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	"common/pkg/optional"
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
@@ -16,19 +17,18 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type PropertyHandler struct {
 	bdspropb.UnimplementedPropertyServiceServer
-	PropertyUsecase *usecases.PropertyUsecase
+	PropertyUsecase *property_usecases.PropertyUsecase
 	PropertyMapper  *mapper.PropertyMapper
 	AssetMapper     *mapper.AssetMapper
 	SyncProvider    *_provider.SyncProvider
 }
 
 func NewPropertyHandler(
-	propertyUsecase *usecases.PropertyUsecase,
+	propertyUsecase *property_usecases.PropertyUsecase,
 	propertyMapper *mapper.PropertyMapper,
 	assetMapper *mapper.AssetMapper,
 	SyncProvider *_provider.SyncProvider,
@@ -388,10 +388,14 @@ func (h *PropertyHandler) UpdateProperty(
 	ctx context.Context,
 	req *bdspropb.UpdatePropertyRequest,
 ) (*bdspropb.UpdatePropertyResponse, error) {
-
+	authenID := _utils.GetOriginIdFromContext(ctx)
+	authenID = 280
+	if authenID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
 	cmd := mapUpdateRequestToCmd(req)
 
-	result, err := h.PropertyUsecase.UpdateProperty(ctx, cmd)
+	result, err := h.PropertyUsecase.UpdateProperty(ctx, cmd, authenID)
 	if err != nil {
 		return nil, err
 	}
@@ -403,15 +407,9 @@ func (h *PropertyHandler) UpdateProperty(
 	}, nil
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mapper: proto request → DTO
-// Nguyên tắc: wrapper nil = field không được gửi = không thay đổi
-// ─────────────────────────────────────────────────────────────────────────────
-
-func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePropertyDTO {
-	cmd := &dto.UpdatePropertyDTO{
+func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePropertyCommand {
+	cmd := &dto.UpdatePropertyCommand{
 		LineageID: req.Id,
-		FieldMask: req.GetFieldMask().GetPaths(),
 	}
 
 	if req.Info != nil {
@@ -433,8 +431,13 @@ func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePrope
 		cmd.Media = mapMediaPayload(req.Media)
 	}
 	if req.Amenities != nil {
-		cmd.Amenities = &dto.UpdateAmenityDTO{
-			AmenityIDs: req.Amenities.AmenityIds,
+		cmd.Amenities = &dto.AmenitiesUpdate{
+			AmenityIDs: optional.NewSlice(req.Amenities.AmenityIds),
+		}
+	}
+	if req.AreaRegion != nil {
+		cmd.AreaRegions = &dto.AreaRegionsUpdate{
+			AreaRegionIDs: optional.NewSlice(req.AreaRegion.AreaRegionIds),
 		}
 	}
 	if req.ExternalRefs != nil {
@@ -447,225 +450,152 @@ func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePrope
 	return cmd
 }
 
-// ─── info ─────────────────────────────────────────────────────────────────────
-
-func mapInfoPayload(p *bdspropb.UpdateInfoPayload) *dto.UpdateInfoDTO {
-	c := &dto.UpdateInfoDTO{}
-
-	setStr(&c.Title, p.Title)
-	setStr(&c.Note, p.Note)
-	setStr(&c.UnitCode, p.UnitCode)
-	setStr(&c.Identifier, p.Identifier)
-	setStr(&c.Level, p.Level)
-	setInt32(&c.Scope, p.Scope)
-	setInt32(&c.SourceType, p.SourceType)
-	setInt32(&c.LegalStatus, p.LegalStatus)
-	setInt32(&c.RecordStatus, p.RecordStatus)
-
-	// WrapperValue: nil = không gửi, value=0 = gửi null có chủ đích
-	c.AvatarID = wrapUint64(p.AvatarId)
-	c.PropertyTypeID = wrapUint64(p.PropertyTypeId)
-	c.ProjectID = wrapUint64(p.ProjectId)
-	c.OriginProfileID = wrapUint64(p.OriginProfileId)
-
-	return c
+func mapInfoPayload(p *bdspropb.UpdateInfoPayload) *dto.InfoUpdate {
+	return &dto.InfoUpdate{
+		Title:           optional.FromStringPtr(p.Title),
+		Note:            optional.FromStringPtr(p.Note),
+		UnitCode:        optional.FromStringPtr(p.UnitCode),
+		Identifier:      optional.FromStringPtr(p.Identifier),
+		Level:           optional.FromStringPtr(p.Level),
+		Scope:           optional.FromUint32Ptr(p.Scope),
+		SourceType:      optional.FromUint32Ptr(p.SourceType),
+		LegalStatus:     optional.FromUint32Ptr(p.LegalStatus),
+		RecordStatus:    optional.FromUint32Ptr(p.RecordStatus),
+		AvatarID:        optional.FromUint64Ptr(p.AvatarId),
+		PropertyTypeID:  optional.FromUint64Ptr(p.PropertyTypeId),
+		ProjectID:       optional.FromUint64Ptr(p.ProjectId),
+		OriginProfileID: optional.FromUint64Ptr(p.OriginProfileId),
+	}
 }
 
-// ─── location ────────────────────────────────────────────────────────────────
-
-func mapLocationPayload(p *bdspropb.UpdateLocationPayload) *dto.UpdateLocationDTO {
-	c := &dto.UpdateLocationDTO{}
-
-	setStr(&c.AddressDetail, p.AddressDetail)
-	setStr(&c.MapURL, p.MapUrl)
-
-	c.Latitude = wrapDouble(p.Latitude)
-	c.Longitude = wrapDouble(p.Longitude)
-	c.RegionID = wrapUint64(p.RegionId)
-	c.ProvinceID = wrapUint64(p.ProvinceId)
-	c.DistrictID = wrapUint64(p.DistrictId)
-	c.WardID = wrapUint64(p.WardId)
-
-	return c
+func mapLocationPayload(p *bdspropb.UpdateLocationPayload) *dto.LocationUpdate {
+	return &dto.LocationUpdate{
+		AddressDetail: optional.FromStringPtr(p.AddressDetail),
+		MapURL:        optional.FromStringPtr(p.MapUrl),
+		Latitude:      optional.FromFloat64Ptr(p.Latitude),
+		Longitude:     optional.FromFloat64Ptr(p.Longitude),
+		RegionID:      optional.FromUint64Ptr(p.RegionId),
+		ProvinceID:    optional.FromUint64Ptr(p.ProvinceId),
+		DistrictID:    optional.FromUint64Ptr(p.DistrictId),
+		WardID:        optional.FromUint64Ptr(p.WardId),
+	}
 }
 
-// ─── land_info ────────────────────────────────────────────────────────────────
-
-func mapLandInfoPayload(p *bdspropb.UpdateLandInfoPayload) *dto.UpdateLandInfoDTO {
-	c := &dto.UpdateLandInfoDTO{}
-
-	setStr(&c.Note, p.Note)
-	setStr(&c.LandNote, p.LandNote)
-	setInt32(&c.PurposeUsed, p.PurposeUsed)
+func mapLandInfoPayload(p *bdspropb.UpdateLandInfoPayload) *dto.LandInfoUpdate {
+	upd := &dto.LandInfoUpdate{
+		Note:        optional.FromStringPtr(p.Note),
+		LandNote:    optional.FromStringPtr(p.LandNote),
+		PurposeUsed: optional.FromInt32Ptr(p.PurposeUsed),
+	}
 
 	if p.Basic != nil {
-		c.Basic = &dto.LandInfoBasicDTO{}
-		setStr(&c.Basic.DocumentNo, p.Basic.DocumentNo)
-		setStr(&c.Basic.IssuringAuth, p.Basic.IssuringAuth)
-		setUint32(&c.Basic.DocumentType, p.Basic.DocumentType)
-		setUint32(&c.Basic.Plot, p.Basic.Plot)
-		setUint32(&c.Basic.Sheet, p.Basic.Sheet)
+		upd.Basic = &dto.LandInfoBasicUpdate{
+			DocumentNo:   optional.FromStringPtr(p.Basic.DocumentNo),
+			IssuringAuth: optional.FromStringPtr(p.Basic.IssuringAuth),
+			DocumentType: optional.FromUint32Ptr(p.Basic.DocumentType),
+			Plot:         optional.FromUint32Ptr(p.Basic.Plot),
+			Sheet:        optional.FromUint32Ptr(p.Basic.Sheet),
+		}
 	}
 
 	if p.Area != nil {
-		c.Area = &dto.LandInfoAreaDTO{
-			AreaTotal: wrapDouble(p.Area.AreaTotal),
-			AreaLand:  wrapDouble(p.Area.AreaLand),
-			AreaPlant: wrapDouble(p.Area.AreaPlant),
+		upd.Area = &dto.LandInfoAreaUpdate{
+			AreaTotal: optional.FromFloat64Ptr(p.Area.AreaTotal),
+			AreaLand:  optional.FromFloat64Ptr(p.Area.AreaLand),
+			AreaPlant: optional.FromFloat64Ptr(p.Area.AreaPlant),
 		}
 	}
 
 	if p.Dimension != nil {
-		c.Dimension = &dto.LandInfoDimensionDTO{
-			FrontWidth:  wrapDouble(p.Dimension.FrontWidth),
-			Depth:       wrapDouble(p.Dimension.Depth),
-			StreetWidth: wrapDouble(p.Dimension.StreetWidth),
+		upd.Dimension = &dto.LandInfoDimensionUpdate{
+			FrontWidth:  optional.FromFloat64Ptr(p.Dimension.FrontWidth),
+			Depth:       optional.FromFloat64Ptr(p.Dimension.Depth),
+			StreetWidth: optional.FromFloat64Ptr(p.Dimension.StreetWidth),
 		}
 	}
 
 	if p.Expiry != nil {
-		c.Expiry = &dto.LandInfoExpiryDTO{
-			ExpiredLand:  wrapString(p.Expiry.ExpiredLand),
-			ExpiredPlant: wrapString(p.Expiry.ExpiredPlant),
+		upd.Expiry = &dto.LandInfoExpiryUpdate{
+			ExpiredLand:  optional.FromStringPtr(p.Expiry.ExpiredLand),
+			ExpiredPlant: optional.FromStringPtr(p.Expiry.ExpiredPlant),
 		}
 	}
 
-	return c
+	return upd
 }
 
-// ─── building_info ────────────────────────────────────────────────────────────
-
-func mapBuildingPayload(p *bdspropb.UpdateBuildingPayload) *dto.UpdateBuildingDTO {
-	c := &dto.UpdateBuildingDTO{}
-
-	setStr(&c.Note, p.Note)
-	setInt32(&c.BuildStatus, p.BuildStatus)
-	setInt32(&c.BuildingType, p.BuildingType)
-	setInt32(&c.Direction, p.Direction)
-	setInt32(&c.BalconyDir, p.BalconyDirection)
-
-	c.AreaActual = wrapDouble(p.AreaActual)
-	c.AreaFloor = wrapDouble(p.AreaFloor)
-	c.AreaConstruction = wrapDouble(p.AreaConstruction)
-	c.Floors = wrapUint32(p.Floors)
-	c.RoomNumber = wrapUint32(p.RoomNumber)
-	c.Bedrooms = wrapUint32(p.Bedrooms)
-	c.Bathrooms = wrapUint32(p.Bathrooms)
-
-	return c
-}
-
-// ─── evidence ─────────────────────────────────────────────────────────────────
-
-func mapEvidencePayload(p *bdspropb.UpdateEvidencePayload) *dto.UpdateEvidenceDTO {
-	c := &dto.UpdateEvidenceDTO{}
-	setStr(&c.Title, p.Title)
-	setStr(&c.Description, p.Description)
-	c.FileID = wrapUint64(p.FileId)
-	return c
-}
-
-// ─── media ────────────────────────────────────────────────────────────────────
-
-func mapMediaPayload(p *bdspropb.UpdateMediaPayload) *dto.UpdateMediaDTO {
-	items := make([]dto.UpdateMediaItemDTO, 0, len(p.Items))
-	for _, item := range p.Items {
-		items = append(items, dto.UpdateMediaItemDTO{
-			ID:        item.Id,
-			MediaType: item.MediaType,
-			MediaURL:  item.MediaUrl,
-			ThumbURL:  item.ThumbUrl,
-			SortOrder: item.SortOrder,
-			IsCover:   item.IsCover,
-		})
-	}
-	return &dto.UpdateMediaDTO{Items: items}
-}
-
-// ─── external_refs ────────────────────────────────────────────────────────────
-
-func mapExternalRefPayload(p *bdspropb.UpdateExternalRefPayload) *dto.UpdateExternalRefDTO {
-	items := make([]dto.UpdateExternalRefItemDTO, 0, len(p.Items))
-	for _, item := range p.Items {
-		items = append(items, dto.UpdateExternalRefItemDTO{
-			ID:            item.Id,
-			ExternalRefID: item.ExternalRefId,
-			SourceSystem:  item.SourceSystem,
-			SourceCode:    item.SourceCode,
-			Confidence:    item.Confidence,
-			SyncStatus:    item.SyncStatus,
-			Note:          item.Note,
-		})
-	}
-	return &dto.UpdateExternalRefDTO{Items: items}
-}
-
-// ─── lineage_meta ─────────────────────────────────────────────────────────────
-
-func mapLineageMetaPayload(p *bdspropb.UpdateLineageMetaPayload) *dto.UpdateLineageMetaDTO {
-	c := &dto.UpdateLineageMetaDTO{}
-	setStr(&c.NationalID, p.NationalId)
-	setInt32(&c.LineageStatus, p.LineageStatus)
-	c.VerifiedNationalAt = wrapString(p.VerifiedNationalAt)
-	return c
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Proto WrapperValue helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-// setStr: chỉ set nếu proto field có giá trị non-empty.
-// Scalar string proto3 không phân biệt "không gửi" vs "gửi rỗng"
-// → chỉ update khi non-empty (string rỗng = không thay đổi).
-func setStr(dst **string, v string) {
-	if v != "" {
-		*dst = &v
+func mapBuildingPayload(p *bdspropb.UpdateBuildingPayload) *dto.BuildingUpdate {
+	return &dto.BuildingUpdate{
+		Note:             optional.FromStringPtr(p.Note),
+		BuildStatus:      optional.FromUint32Ptr(p.BuildStatus),
+		BuildingType:     optional.FromUint32Ptr(p.BuildingType),
+		Direction:        optional.FromUint32Ptr(p.Direction),
+		BalconyDir:       optional.FromUint32Ptr(p.BalconyDirection),
+		AreaActual:       optional.FromFloat64Ptr(p.AreaActual),
+		AreaFloor:        optional.FromFloat64Ptr(p.AreaFloor),
+		AreaConstruction: optional.FromFloat64Ptr(p.AreaConstruction),
+		Floors:           optional.FromUint32Ptr(p.Floors),
+		RoomNumber:       optional.FromUint32Ptr(p.RoomNumber),
+		Bedrooms:         optional.FromUint32Ptr(p.Bedrooms),
+		Bathrooms:        optional.FromUint32Ptr(p.Bathrooms),
 	}
 }
 
-func setInt32(dst **int32, v int32) {
-	if v != 0 {
-		*dst = &v
+func mapEvidencePayload(p *bdspropb.UpdateEvidencePayload) *dto.EvidenceUpdate {
+	return &dto.EvidenceUpdate{
+		Title:       optional.FromStringPtr(p.Title),
+		Description: optional.FromStringPtr(p.Description),
+		FileID:      optional.FromUint64Ptr(p.FileId),
 	}
 }
 
-func setUint32(dst **uint32, v uint32) {
-	if v != 0 {
-		*dst = &v
-	}
-}
-
-// wrapUint64: WrapperValue nil → nil; có value → *uint64 (kể cả 0 = clear FK)
-func wrapUint64(w *wrapperspb.UInt64Value) *uint64 {
-	if w == nil {
+func mapMediaPayload(p *bdspropb.UpdateMediaPayload) *dto.MediaUpdate {
+	if p == nil || len(p.Items) == 0 {
 		return nil
 	}
-	v := w.Value
-	return &v
+	items := make([]dto.MediaItemUpdate, len(p.Items))
+	for i, item := range p.Items {
+		items[i] = dto.MediaItemUpdate{
+			ID:        optional.NewUint64(item.Id),
+			MediaType: optional.NewString(item.MediaType),
+			MediaURL:  optional.NewString(item.MediaUrl),
+			ThumbURL:  optional.NewString(item.ThumbUrl),
+			SortOrder: optional.NewInt32(item.SortOrder),
+			IsCover:   optional.NewBool(item.IsCover),
+		}
+	}
+	return &dto.MediaUpdate{
+		Items: optional.NewSlice(items),
+	}
 }
 
-func wrapDouble(w *wrapperspb.DoubleValue) *float64 {
-	if w == nil {
+func mapExternalRefPayload(p *bdspropb.UpdateExternalRefPayload) *dto.ExternalRefsUpdate {
+	if p == nil || len(p.Items) == 0 {
 		return nil
 	}
-	v := w.Value
-	return &v
+	items := make([]dto.ExternalRefItemUpdate, len(p.Items))
+	for i, item := range p.Items {
+		items[i] = dto.ExternalRefItemUpdate{
+			ID:            optional.NewUint64(item.Id),
+			ExternalRefID: optional.NewUint64(item.ExternalRefId),
+			SourceSystem:  optional.NewInt32(item.SourceSystem),
+			SourceCode:    optional.NewString(item.SourceCode),
+			Confidence:    optional.NewUint32(item.Confidence),
+			SyncStatus:    optional.NewInt32(item.SyncStatus),
+			Note:          optional.NewString(item.Note),
+		}
+	}
+	return &dto.ExternalRefsUpdate{
+		Items: optional.NewSlice(items),
+	}
 }
 
-func wrapUint32(w *wrapperspb.UInt32Value) *uint32 {
-	if w == nil {
-		return nil
+func mapLineageMetaPayload(p *bdspropb.UpdateLineageMetaPayload) *dto.LineageMetaUpdate {
+	return &dto.LineageMetaUpdate{
+		NationalID:         optional.FromStringPtr(p.NationalId),
+		LineageStatus:      optional.FromInt32Ptr(p.LineageStatus),
+		VerifiedNationalAt: optional.FromStringPtr(p.VerifiedNationalAt),
 	}
-	v := w.Value
-	return &v
-}
-
-func wrapString(w *wrapperspb.StringValue) *string {
-	if w == nil {
-		return nil
-	}
-	v := w.Value
-	return &v
 }
 
 func (h *PropertyHandler) DeleteProperties(ctx context.Context, req *bdspropb.DeletePropertiesRequest) (*bdspropb.Response, error) {
