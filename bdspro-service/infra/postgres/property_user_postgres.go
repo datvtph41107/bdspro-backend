@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/repo"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -32,4 +33,57 @@ func (r *PropertyUserPostgres) CreateOwner(ctx context.Context, propertyId uint6
 		return nil, err
 	}
 	return propertyOfUser, nil
+}
+
+func (r *PropertyUserPostgres) GetByLineageAndOwner(
+	ctx context.Context,
+	propertyId uint64,
+	ownerOriginID uint64,
+) (*domain.PropertyUser, error) {
+	var propertyUser domain.PropertyUser
+	err := GetDB(ctx, r.db).
+		Where("property_lineage_id = ? AND owner_origin_id = ? AND deleted_at IS NULL", propertyId, ownerOriginID).
+		First(&propertyUser).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &propertyUser, nil
+}
+
+func (r *PropertyUserPostgres) UpdateFieldsByLineageAndOwner(
+	ctx context.Context,
+	propertyId uint64,
+	ownerOriginID uint64,
+	fields map[string]any,
+) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	db := GetDB(ctx, r.db)
+	var propertyUser domain.PropertyUser
+	err := db.
+		Where("property_lineage_id = ? AND owner_origin_id = ? AND deleted_at IS NULL", propertyId, ownerOriginID).
+		First(&propertyUser).Error
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+
+		originId := _utils.GetOriginIdFromContext(ctx)
+		propertyUser = domain.PropertyUser{
+			PropertyLineageID: &propertyId,
+			OwnerOriginID:     ownerOriginID,
+			OwnerAt:           time.Now(),
+			OriginProfileID:   &originId,
+		}
+		if err := db.Create(&propertyUser).Error; err != nil {
+			return err
+		}
+	}
+
+	return db.Model(&propertyUser).Updates(fields).Error
 }

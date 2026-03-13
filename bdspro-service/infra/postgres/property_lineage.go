@@ -52,6 +52,17 @@ func (r *LineageRepo) GetByID(ctx context.Context, id uint64) (*domain.PropertyL
 	return &entity, err
 }
 
+func (r *LineageRepo) GetByPropertyIdentifyID(ctx context.Context, propertyIdentifyID uint64) (*domain.PropertyLineage, error) {
+	var entity domain.PropertyLineage
+	err := GetDB(ctx, r.DB).
+		Where("property_identify_id = ? AND deleted_at IS NULL", propertyIdentifyID).
+		First(&entity).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &entity, err
+}
+
 func (r *LineageRepo) UpdateFields(ctx context.Context, id uint64, fields map[string]any) error {
 	return GetDB(ctx, r.DB).
 		Model(&domain.PropertyLineage{}).

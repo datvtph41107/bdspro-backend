@@ -17,6 +17,12 @@ import "google/protobuf/wrappers.proto";
 import "bdspro/public.proto";
 
 service PropertyService {
+  rpc AddPropertyUser(AddPropertyUserRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/add"
+      body: "*"
+    };
+  }
   rpc CreatePropertyUser(ClonePropertyRequest) returns (Response) {
     option (google.api.http) = {
       post: "/v2/bdspro/v2/property/{propertyId}/clone"
@@ -138,6 +144,7 @@ message UpdatePropertyRequest {
   UpdateExternalRefPayload external_refs = 10;
   UpdateLineageMetaPayload lineage_meta  = 11;
   UpdateAreaRegionPayload area_region = 12;
+  UpdatePersonalizationPayload personalization = 13;
 }
 
 // ─── info.* ──────────────────────────────────────────────────────────────────
@@ -281,6 +288,11 @@ message UpdateLineageMetaPayload {
   optional int32 lineage_status = 2;
   optional string verified_national_at = 3;
 }
+
+message UpdatePersonalizationPayload {
+  optional string archived_at = 1;
+  optional string hidden_at = 2;
+}
 // ─── Response ────────────────────────────────────────────────────────────────
 message UpdatePropertyResponse {
   uint64 lineage_id = 1;
@@ -295,6 +307,10 @@ message PropertyTimestampsResponse {
 
 message ClonePropertyRequest {
   uint64 propertyId = 1;
+}
+
+message AddPropertyUserRequest {
+  uint64 propertyIdentifierId = 1;
 }
 
 message PropertySearchRequest {
@@ -411,6 +427,8 @@ message PropertyDetailResponse {
   optional Project project = 14;
   optional Developer developer = 15;  // Chủ đầu tư (từ project)
   optional PropertyType propertyType = 16;
+  optional PropertyPersonalization personalization = 17;
+  optional PropertyIdentify identifier = 18;
 }
 
 message PropertyStatistic {
@@ -424,7 +442,8 @@ message PropertyIdentify {
   uint64 id = 1;
   uint64 pid = 2;
   uint32 version = 3;
-  string identifier = 4;  // mã BDSPro format: BDS{pid}
+  string code = 4;  // mã BDSPro format: BDS{pid}
+  uint64 lineageId = 5;
 }
 
 message PropertyLocationInfo {
@@ -472,6 +491,18 @@ message PropertyEdvidenceInfo {
 message PropertyLineageInfo {
   string nationalId = 1;
   optional int64 verifiedNationalAt = 2;
+}
+
+message PropertyPersonalization {
+  uint64 id = 1;
+  uint64 ownerOriginId = 2;
+  optional uint64 propertyLineageId = 3;
+  optional string ownerAt = 4;
+  optional uint64 roleId = 5;
+  optional uint64 originProfileId = 6;
+  optional string archivedAt = 7;
+  optional string hiddenAt = 8;
+  optional uint32 recordStatus = 9;
 }
 
 message PropertyAssetsRequest {

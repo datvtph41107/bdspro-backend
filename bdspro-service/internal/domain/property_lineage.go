@@ -63,6 +63,8 @@ type PropertyLineage struct {
 	RegionCode uint32     `gorm:"-"`
 	Developer  *Developer `gorm:"-"`
 
+	Personalization *PropertyUser `gorm:"-" json:"personalization,omitempty"`
+
 	// LineageID uint64            `gorm:"type:bigint" json:"lineageId"`
 	// Lineage   *PropertyLineage1 `gorm:"foreignKey:LineageID;references:ID"`
 

@@ -29,8 +29,9 @@ type PropertyInfo struct {
 
 	LegalStatus enums.EHouseCertificate `gorm:"type:smallint;index" json:"legalStatus,omitempty"`
 	// PrivacyLevel enums.EVisibility       `gorm:"type:smallint;default:30" json:"privacyLevel,omitempty"`
-	RecordStatus enums.EPropertyStatus `gorm:"type:smallint;default:10" json:"recordStatus,omitempty"`
-	Note         string                `gorm:"size:255" json:"note,omitempty"` // Ghi chú
+	// RecordStatus enums.EPropertyStatus `gorm:"type:smallint;default:10" json:"recordStatus,omitempty"`
+
+	Note string `gorm:"size:255" json:"note,omitempty"` // Ghi chú
 
 	// IDENTIFIER
 	UnitCode   string `gorm:"size:50" json:"unitCode,omitempty"`

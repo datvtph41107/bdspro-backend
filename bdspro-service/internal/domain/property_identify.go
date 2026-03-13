@@ -10,6 +10,8 @@ type PropertyIdentify struct {
 	PID     uint64 `gorm:"type:int8;not null;index" json:"PID"`
 	Version uint32 `gorm:"type:int4;not null" json:"versionId"`
 
+	LineageID *uint64          `gorm:"type:int8" json:"lineageId"`
+	Lineage   *PropertyLineage `gorm:"foreignKey:LineageID;references:ID" json:"lineage,omitempty"`
 	// PropertyID uint64 `gorm:"type:int8;not null" json:"propertyId"`
 
 	Lineages []*PropertyLineage `gorm:"foreignKey:PropertyIdentifyID;references:ID" json:"lineages,omitempty"`

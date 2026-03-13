@@ -1,6 +1,8 @@
 package dto
 
-import "common/pkg/fieldmask"
+import (
+	"common/pkg/fieldmask"
+)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UpdatePropertyDTO — command object duy nhất Handler → Usecase.
@@ -48,6 +50,8 @@ type UpdatePropertyDTO struct {
 	ExternalRefs *UpdateExternalRefDTO // list upsert — không dùng Mask
 	AreaRegions  *UpdateAreaRegionsDTO // REPLACE list — không dùng Mask
 	LineageMeta  *UpdateLineageMetaDTO // admin only — gateway đã strip
+
+	Personalization *UpdatePersonalizationDTO
 }
 
 // ─── UpdateInfoDTO ────────────────────────────────────────────────────────────
@@ -208,6 +212,11 @@ type UpdateLineageMetaDTO struct {
 	LineageStatus *int32
 	// nil=absent | ""=CLEAR→NULL | RFC3339=set
 	VerifiedNationalAt *string
+}
+
+type UpdatePersonalizationDTO struct {
+	ArchivedAt *string
+	HiddenAt   *string
 }
 
 // ─── Result ───────────────────────────────────────────────────────────────────

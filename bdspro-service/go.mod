@@ -1,6 +1,6 @@
 module bdspro
 
-go 1.25.0
+go 1.24.1
 
 replace pb => ../shared/protobuf
 
@@ -10,10 +10,10 @@ replace base => ../shared/base
 
 require (
 	base v0.0.0-00010101000000-000000000000
-	common v0.0.0-00010101000000-000000000000
+	common v0.0.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron v1.37.0
-	github.com/go-playground/validator/v10 v10.23.0
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/wire v0.6.0
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/jinzhu/copier v0.4.0
@@ -22,7 +22,7 @@ require (
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
-	github.com/xuri/excelize/v2 v2.8.1
+	github.com/xuri/excelize/v2 v2.9.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9
 	google.golang.org/grpc v1.72.0
@@ -93,8 +93,8 @@ require (
 	golang.org/x/arch v0.15.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect

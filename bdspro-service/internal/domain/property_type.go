@@ -13,7 +13,7 @@ type PropertyType struct {
 	Active bool   `gorm:"default:true" json:"active"` // true = đang sử dụng, false = ẩn
 
 	ClassifyProperty enums.EClassifyProperty `gorm:"type:smallint;not null;default:10" json:"classifyProperty"`
-	FieldStrs        string                  `gorm:"type:text" json:"fieldStrs"`
+	FieldStrs        string                  `gorm:"column:field_strs;type:text" json:"fieldStrs"`
 }
 
 // GORM table name override

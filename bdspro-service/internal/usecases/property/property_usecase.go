@@ -127,6 +127,7 @@ func NewPropertyUsecase(
 		MediaRepo:                mediaRepo,
 		ExternalRefRepo:          externalRefRepo,
 		AreaRegionRepo:           areaRegionRepo,
+		AmenityRepo:              amenityRepo,
 	}
 }
 
@@ -202,6 +203,33 @@ func (u *PropertyUsecase) CloneProperty(
 		return nil, err
 	}
 	return result, nil
+}
+
+func (u *PropertyUsecase) AddPropertyUser(
+	ctx context.Context,
+	propertyIdentifyID, userID uint64,
+) (*domain.PropertyLineage, error) {
+	lineage, err := u.LineageRepo.GetByPropertyIdentifyID(ctx, propertyIdentifyID)
+	if err != nil {
+		return nil, err
+	}
+	if lineage == nil {
+		return nil, _errors.NotFoundException("Property not found")
+	}
+
+	existed, err := u.PropertyUserRepo.GetByLineageAndOwner(ctx, lineage.ID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if existed != nil {
+		return lineage, nil
+	}
+
+	if _, err := u.PropertyUserRepo.CreateOwner(ctx, lineage.ID, userID); err != nil {
+		return nil, err
+	}
+
+	return lineage, nil
 }
 
 func (u *PropertyUsecase) cloneBase(prop *domain.PropertyLineage, userID uint64) *domain.PropertyLineage {
@@ -555,8 +583,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			info = &domain.PropertyInfo{
 				SourceType: enums.EPropertySourceType(enums.SourceTypeOther),
 				// Visibility:      enums.EVisiblePrivate,
-				RecordStatus: enums.EPropertyStatusActive,
-				LegalStatus:  enums.EHouseCertificateNone,
+				LegalStatus: enums.EHouseCertificateNone,
 				// PrivacyLevel:    enums.EVisiblePublic,
 				Note:       "Note",
 				UnitCode:   "UnitCode",
@@ -1394,8 +1421,13 @@ func (u *PropertyUsecase) UpdateProperty(
 		if lineage == nil {
 			return fmt.Errorf("property lineage id=%d not found", c.LineageID)
 		}
-		if !lineage.IsOwner(lineage.OriginProfileId, userID) {
-			return _errors.ForbiddenException("you don't have permission to update this property")
+
+		propertyUser, err := u.PropertyUserRepo.GetByLineageAndOwner(txCtx, lineage.ID, userID)
+		if err != nil {
+			return err
+		}
+		if propertyUser == nil {
+			return _errors.ForbiddenException("You dont have permission action")
 		}
 
 		// Dispatch flow — mở rộng ở đây khi có propose/report flow
@@ -1579,6 +1611,10 @@ func (u *PropertyUsecase) handleSideBlocks(
 	cmd *dto.UpdatePropertyDTO,
 	fkPatch FKPatch,
 ) error {
+	originID := _utils.GetOriginIdFromContext(ctx)
+	if originID == 0 {
+		return _errors.UnauthorizedException("origin_id required")
+	}
 	if cmd.Media != nil {
 		if err := u.handleMedia(ctx, lineageID, cmd.Media); err != nil {
 			return fmt.Errorf("media: %w", err)
@@ -1602,6 +1638,11 @@ func (u *PropertyUsecase) handleSideBlocks(
 	if cmd.LineageMeta != nil {
 		// Merge vào fkPatch — cùng UPDATE lineage record cuối cùng
 		u.applyLineageMeta(cmd.LineageMeta, cmd.Mask, fkPatch)
+	}
+	if cmd.Personalization != nil {
+		if err := u.updatePersonalization(ctx, cmd.Mask, lineageID, originID, cmd.Personalization); err != nil {
+			return fmt.Errorf("personalization: %w", err)
+		}
 	}
 	return nil
 }
@@ -1737,4 +1778,18 @@ func (u *PropertyUsecase) applyLineageMeta(
 	for k, v := range fields {
 		fkPatch[k] = v
 	}
+}
+func (u *PropertyUsecase) updatePersonalization(
+	ctx context.Context,
+	mask fieldmask.FieldMask,
+	lineageID uint64,
+	originID uint64,
+	data *dto.UpdatePersonalizationDTO,
+) error {
+	fields := patch.WithMask(mask).
+		DateString("lineage_meta.archived_at", "archived_at", data.ArchivedAt, nil).
+		DateString("lineage_meta.hidden_at", "hidden_at", data.HiddenAt, nil).
+		Build()
+
+	return u.PropertyUserRepo.UpdateFieldsByLineageAndOwner(ctx, lineageID, originID, fields)
 }

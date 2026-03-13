@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	internalutils "bdspro/internal/utils"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_utils "common/utils"
@@ -438,6 +439,18 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 		res.Lineage.VerifiedNationalAt = &ms
 	}
 
+	if property.PropertyIdentify != nil && property.PropertyIdentify.ID != 0 {
+		res.Identifier = &bdspropb.PropertyIdentify{
+			Id:      property.PropertyIdentify.ID,
+			Pid:     property.PropertyIdentify.PID,
+			Version: property.PropertyIdentify.Version,
+			Code:    internalutils.ConvertToBDS(property.PropertyIdentify.PID),
+		}
+		if property.PropertyIdentify.LineageID != nil {
+			res.Identifier.LineageId = *property.PropertyIdentify.LineageID
+		}
+	}
+
 	if property.Statistic != nil {
 		res.Statistic = &bdspropb.PropertyStatistic{
 			Id:           property.Statistic.ID,
@@ -479,6 +492,29 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 			Website: property.Developer.Website,
 		}
 	}
+	if property.Personalization != nil {
+		res.Personalization = &bdspropb.PropertyPersonalization{
+			Id:                property.Personalization.ID,
+			OwnerOriginId:     property.Personalization.OwnerOriginID,
+			RoleId:            property.Personalization.RoleID,
+			PropertyLineageId: property.Personalization.PropertyLineageID,
+			OriginProfileId:   property.Personalization.OriginProfileID,
+		}
+		if !property.Personalization.OwnerAt.IsZero() {
+			ownerAt := _utils.FormatTimeToString(&property.Personalization.OwnerAt)
+			res.Personalization.OwnerAt = &ownerAt
+		}
+		if property.Personalization.ArchivedAt != nil {
+			archivedAt := _utils.FormatTimeToString(property.Personalization.ArchivedAt)
+			res.Personalization.ArchivedAt = &archivedAt
+		}
+		if property.Personalization.HiddenAt != nil {
+			hiddenAt := _utils.FormatTimeToString(property.Personalization.HiddenAt)
+			res.Personalization.HiddenAt = &hiddenAt
+		}
+		recordStatus := uint32(property.Personalization.ResolveRecordStatus())
+		res.Personalization.RecordStatus = &recordStatus
+	}
 	// areaTotal từ landInfo, areaActual từ buildingInfo
 	// if property.LandInfo != nil && property.LandInfo.AreaTotal != nil {
 	// 	res.AreaTotal = property.LandInfo.AreaTotal
@@ -514,8 +550,8 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 		// 	v := uint32(pi.PrivacyLevel)
 		// 	res.Info.PrivacyLevel = &v
 		// }
-		if pi.RecordStatus != 0 {
-			v := uint32(pi.RecordStatus)
+		if property.Personalization != nil {
+			v := uint32(property.Personalization.ResolveRecordStatus())
 			res.Info.RecordStatus = &v
 		}
 		if pi.Note != "" {
@@ -717,9 +753,6 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 		// if bi.PrivacyLevel != nil {
 		// 	result.Info.PrivacyLevel = enums.EVisibility(*bi.PrivacyLevel)
 		// }
-		if bi.RecordStatus != nil {
-			result.Info.RecordStatus = enums.EPropertyStatus(*bi.RecordStatus)
-		}
 		if bi.Note != nil {
 			result.Info.Note = *bi.Note
 		}

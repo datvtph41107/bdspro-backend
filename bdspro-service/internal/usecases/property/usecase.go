@@ -37,7 +37,6 @@ func (h *InfoHandler) Insert(ctx context.Context) (uint64, error) {
 		Scope:          enums.EPropertyScope(derefUint32(h.Patch.Scope)),
 		SourceType:     enums.EPropertySourceType(derefUint32(h.Patch.SourceType)),
 		LegalStatus:    enums.EHouseCertificate(derefUint32(h.Patch.LegalStatus)),
-		RecordStatus:   enums.EPropertyStatus(derefUint32(h.Patch.RecordStatus)),
 		AvatarID:       derefUint64Ptr(h.Patch.AvatarID),
 		PropertyTypeID: derefUint64Ptr(h.Patch.PropertyTypeID),
 		ProjectID:      derefUint64Ptr(h.Patch.ProjectID),

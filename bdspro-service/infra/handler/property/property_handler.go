@@ -237,6 +237,44 @@ func (h *PropertyHandler) CreatePropertyUser(
 	}, nil
 }
 
+// @Summary Gắn Property vào user
+// @Description API tạo property_user từ propertyIdentifierId
+// @Tags Property
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body bdspropb.AddPropertyUserRequest true "Property identifier ID"
+// @Success 200 {object} bdspropb.Response
+// @Router /v2/bdspro/v2/property/add [post]
+func (h *PropertyHandler) AddPropertyUser(
+	ctx context.Context,
+	req *bdspropb.AddPropertyUserRequest,
+) (*bdspropb.Response, error) {
+	if req.GetPropertyIdentifierId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "property_identifier_id is required")
+	}
+
+	userId := _utils.GetOriginIdFromContext(ctx)
+	if userId == 0 {
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+
+	prop, err := h.PropertyUsecase.AddPropertyUser(
+		ctx,
+		req.GetPropertyIdentifierId(),
+		userId,
+	)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, userId)
+	h.SyncProvider.PutTimestamp(ctx, key, prop.UpdatedAt.UnixMilli())
+	return &bdspropb.Response{
+		Id:      prop.ID,
+		Message: "successfully",
+	}, nil
+}
+
 // @Summary Lấy chi tiết Property
 // @Description API để lấy chi tiết Property theo ID, dùng sync_provider để check cache
 // @Tags Property
