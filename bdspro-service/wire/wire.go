@@ -10,6 +10,7 @@ import (
 	bdspro_infra_client "bdspro/infra/client"
 	bdspro_infra_handler "bdspro/infra/handler"
 	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
+	bdspro_infra_handler_property "bdspro/infra/handler/property"
 	bdspro_infra_mapper "bdspro/infra/mapper"
 	bdspro_infra_postgre "bdspro/infra/postgre"
 	bdspro_infra_postgres "bdspro/infra/postgres"
@@ -310,7 +311,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewProjectBuildService,
 	bdspro_internal_usecases.NewProjectBuildUsecase,
 	bdspro_infra_mapper.NewProjectMapper,
-	bdspro_infra_handler.NewPropertyHandler,
+	bdspro_infra_handler_property.NewPropertyHandler,
 	bdspro_infra_mapper.NewPropertyMapper,
 	bdspro_infra_mapper.NewPropertyTypeMapper,
 	bdspro_internal_usecases.NewPropertyTypeUsecase,

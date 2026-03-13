@@ -1,71 +1,92 @@
 package dto
 
-import (
-	"bdspro/internal/domain"
-	"common/pkg/optional" // thay bằng path thật
-)
+import "common/pkg/fieldmask"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UpdatePropertyDTO — command object duy nhất Handler → Usecase.
 //
-// Quy ước con trỏ:
-//   - Sub-domain nil  = domain này KHÔNG được update
-//   - Sub-domain !nil = domain này cần upsert
-//   - Field *T nil    = field không thay đổi
-//   - Field *T != nil = field cần update (kể cả khi value = zero/null)
+// Quy ước con trỏ toàn hệ:
+//
+//	Sub-domain:
+//	  nil  = client không gửi domain này = KHÔNG update domain đó
+//	  !nil = client gửi domain = cần upsert
+//
+//	Field *string / *uint32 / *int32 / *float64 / *bool:
+//	  nil  = absent = KHÔNG update field
+//	  &v   = present = UPDATE field (kể cả "" / 0 / false đều hợp lệ)
+//
+//	Field *uint64 (FK nullable):
+//	  nil  = absent = KHÔNG update
+//	  &0   = CLEAR FK → set NULL trong DB
+//	  &>0  = set id
+//
+//	Field *string (DateString):
+//	  nil  = absent = KHÔNG update
+//	  &""  = CLEAR date → set NULL trong DB
+//	  &RFC3339 = set date
+//
+//	Mask:
+//	  Khởi tạo 1 lần tại Handler từ req.FieldMask.Paths.
+//	  Truyền xuống qua DTO, tiêu thụ tại patch.Builder trong Usecase.
+//	  Zero value (FieldMask{}) = AllowAll — không bao giờ nil.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 type UpdatePropertyDTO struct {
 	LineageID uint64
-	// FieldMask: danh sách path được phép update.
-	// Rỗng = update tất cả field có trong payload.
-	// Có giá trị = chỉ update đúng path được liệt kê.
-	FieldMask []string
+
+	// Mask: value object bất biến, khởi tạo 1 lần tại handler.
+	// fieldmask.FieldMask{} = AllowAll (backward compat khi client không gửi mask)
+	Mask fieldmask.FieldMask
 
 	Info         *UpdateInfoDTO
 	Location     *UpdateLocationDTO
 	LandInfo     *UpdateLandInfoDTO
 	BuildingInfo *UpdateBuildingDTO
 	Evidence     *UpdateEvidenceDTO
-	Media        *UpdateMediaDTO
-	Amenities    *UpdateAmenityDTO
-	ExternalRefs *UpdateExternalRefDTO
-	AreaRegions  *UpdateAreaRegionsDTO
-	LineageMeta  *UpdateLineageMetaDTO
+	Media        *UpdateMediaDTO       // list upsert — không dùng Mask
+	Amenities    *UpdateAmenityDTO     // REPLACE list — không dùng Mask
+	ExternalRefs *UpdateExternalRefDTO // list upsert — không dùng Mask
+	AreaRegions  *UpdateAreaRegionsDTO // REPLACE list — không dùng Mask
+	LineageMeta  *UpdateLineageMetaDTO // admin only — gateway đã strip
 }
 
-// ─── Sub-commands ─────────────────────────────────────────────────────────────
-
+// ─── UpdateInfoDTO ────────────────────────────────────────────────────────────
 type UpdateInfoDTO struct {
-	Title        *string
-	Note         *string
-	UnitCode     *string
-	Identifier   *string
-	Level        *string
+	Title      *string
+	Note       *string
+	UnitCode   *string
+	Identifier *string
+	Level      *string
+
 	Scope        *uint32
 	SourceType   *uint32
 	LegalStatus  *uint32
 	RecordStatus *uint32
 
-	// *uint64 nil = bỏ qua; *uint64 value=0 = clear FK về NULL
+	// FK: nil=absent | &0=CLEAR→NULL | &>0=set
 	AvatarID        *uint64
 	PropertyTypeID  *uint64
 	ProjectID       *uint64
 	OriginProfileID *uint64
 }
 
+// ─── UpdateLocationDTO ───────────────────────────────────────────────────────
 type UpdateLocationDTO struct {
 	AddressDetail *string
 	MapURL        *string
-	Latitude      *float64
-	Longitude     *float64
-	RegionID      *uint64
-	ProvinceID    *uint64
-	DistrictID    *uint64
-	WardID        *uint64
+
+	Latitude  *float64
+	Longitude *float64
+
+	// FK: nil=absent | &0=CLEAR→NULL | &>0=set
+	RegionID   *uint64
+	ProvinceID *uint64
+	DistrictID *uint64
+	WardID     *uint64
 }
 
-// UpdateLandInfoDTO gom nhóm theo sub-group để align với proto và field_mask.
+// ─── UpdateLandInfoDTO ───────────────────────────────────────────────────────
+// Sub-group nil = sub-group không được gửi = không update cả group
 type UpdateLandInfoDTO struct {
 	Basic     *LandInfoBasicDTO
 	Area      *LandInfoAreaDTO
@@ -86,6 +107,7 @@ type LandInfoBasicDTO struct {
 }
 
 type LandInfoAreaDTO struct {
+	// nil=absent | present=set (0.0 là diện tích hợp lệ → không dùng 0=CLEAR)
 	AreaTotal *float64
 	AreaLand  *float64
 	AreaPlant *float64
@@ -98,32 +120,41 @@ type LandInfoDimensionDTO struct {
 }
 
 type LandInfoExpiryDTO struct {
-	// *string nil = bỏ qua; "" = clear về NULL; ISO8601 = set giá trị
+	// nil=absent | ""=CLEAR date→NULL | RFC3339=set date
 	ExpiredLand  *string
 	ExpiredPlant *string
 }
 
+// ─── UpdateBuildingDTO ───────────────────────────────────────────────────────
 type UpdateBuildingDTO struct {
-	Note             *string
-	BuildStatus      *uint32
-	BuildingType     *uint32
-	Direction        *uint32
-	BalconyDir       *uint32
+	Note *string
+
+	BuildStatus  *uint32
+	BuildingType *uint32
+	Direction    *uint32
+	BalconyDir   *uint32
+
 	AreaActual       *float64
 	AreaFloor        *float64
 	AreaConstruction *float64
-	Floors           *uint32
-	RoomNumber       *uint32
-	Bedrooms         *uint32
-	Bathrooms        *uint32
+
+	Floors     *uint32
+	RoomNumber *uint32
+	Bedrooms   *uint32
+	Bathrooms  *uint32
 }
 
+// ─── UpdateEvidenceDTO ───────────────────────────────────────────────────────
 type UpdateEvidenceDTO struct {
 	Title       *string
 	Description *string
-	FileID      *uint64 // nil = bỏ qua; 0 = clear
+	// FK: nil=absent | &0=CLEAR→NULL | &>0=set
+	FileID *uint64
 }
 
+// ─── UpdateMediaDTO ───────────────────────────────────────────────────────────
+// List upsert — Mask không áp dụng, tự quản lý qua ID.
+// ID=0 → INSERT | ID>0 → UPDATE record đó.
 type UpdateMediaDTO struct {
 	Items []UpdateMediaItemDTO
 }
@@ -137,16 +168,27 @@ type UpdateMediaItemDTO struct {
 	IsCover   bool
 }
 
+// ─── UpdateAmenityDTO ─────────────────────────────────────────────────────────
+// REPLACE toàn bộ list — Mask không áp dụng.
+// AmenityIDs = [] → xóa hết amenities.
 type UpdateAmenityDTO struct {
-	AmenityIDs []uint64 // replace toàn bộ
+	AmenityIDs []uint64
 }
 
-type UpdateExternalRefDTO struct {
-	Items []UpdateExternalRefItemDTO
-}
-
+// ─── UpdateAreaRegionsDTO ─────────────────────────────────────────────────────
+// REPLACE toàn bộ list — Mask không áp dụng.
 type UpdateAreaRegionsDTO struct {
 	AreaRegionIDs []uint64
+}
+
+// ─── UpdateExternalRefDTO ─────────────────────────────────────────────────────
+// List upsert — Mask không áp dụng, tự quản lý qua ID.
+// ID=0 → INSERT | ID>0 → UPDATE record đó.
+//
+// Scalar fields (không *T) vì external_ref là upsert hoàn toàn:
+// khi UPDATE, toàn bộ field được ghi lại — không cần partial update.
+type UpdateExternalRefDTO struct {
+	Items []UpdateExternalRefItemDTO
 }
 
 type UpdateExternalRefItemDTO struct {
@@ -159,10 +201,13 @@ type UpdateExternalRefItemDTO struct {
 	Note          string
 }
 
+// ─── UpdateLineageMetaDTO ─────────────────────────────────────────────────────
+// Admin/system only — gateway đã strip paths này cho non-admin.
 type UpdateLineageMetaDTO struct {
-	NationalID         *string
-	LineageStatus      *int32
-	VerifiedNationalAt *string // nil = bỏ qua; "" = clear; ISO8601 = set
+	NationalID    *string
+	LineageStatus *int32
+	// nil=absent | ""=CLEAR→NULL | RFC3339=set
+	VerifiedNationalAt *string
 }
 
 // ─── Result ───────────────────────────────────────────────────────────────────
@@ -170,153 +215,4 @@ type UpdateLineageMetaDTO struct {
 type UpdatePropertyResult struct {
 	LineageID uint64
 	UpdatedAt string
-
-	// nil nếu domain không được update trong request này
-	Info         *domain.PropertyInfo
-	Location     *domain.PropertyLocation
-	LandInfo     *domain.PropertyLandInfo
-	BuildingInfo *domain.PropertyBuildingInfo
-	Evidence     *domain.PropertyEdvidence
-	Media        []domain.PropertyMedia
-	Amenities    []domain.AmenityItem
-	ExternalRefs []*domain.PropertyExternalRef
-}
-
-type UpdatePropertyCommand struct {
-	LineageID uint64
-
-	Info         *InfoUpdate
-	Location     *LocationUpdate
-	LandInfo     *LandInfoUpdate
-	BuildingInfo *BuildingUpdate
-	Evidence     *EvidenceUpdate
-	Media        *MediaUpdate
-	Amenities    *AmenitiesUpdate
-	ExternalRefs *ExternalRefsUpdate
-	AreaRegions  *AreaRegionsUpdate
-	LineageMeta  *LineageMetaUpdate
-}
-
-type InfoUpdate struct {
-	Title           optional.String
-	Note            optional.String
-	UnitCode        optional.String
-	Identifier      optional.String
-	Level           optional.String
-	Scope           optional.Uint32
-	SourceType      optional.Uint32
-	LegalStatus     optional.Uint32
-	RecordStatus    optional.Uint32
-	AvatarID        optional.Uint64
-	PropertyTypeID  optional.Uint64
-	ProjectID       optional.Uint64
-	OriginProfileID optional.Uint64
-}
-
-type LocationUpdate struct {
-	AddressDetail optional.String
-	MapURL        optional.String
-	Latitude      optional.Float64
-	Longitude     optional.Float64
-	RegionID      optional.Uint64
-	ProvinceID    optional.Uint64
-	DistrictID    optional.Uint64
-	WardID        optional.Uint64
-}
-
-type LandInfoUpdate struct {
-	Basic       *LandInfoBasicUpdate
-	Area        *LandInfoAreaUpdate
-	Dimension   *LandInfoDimensionUpdate
-	Expiry      *LandInfoExpiryUpdate
-	Note        optional.String
-	LandNote    optional.String
-	PurposeUsed optional.Int32
-}
-
-type LandInfoBasicUpdate struct {
-	DocumentNo   optional.String
-	IssuringAuth optional.String
-	DocumentType optional.Uint32
-	Plot         optional.Uint32
-	Sheet        optional.Uint32
-}
-
-type LandInfoAreaUpdate struct {
-	AreaTotal optional.Float64
-	AreaLand  optional.Float64
-	AreaPlant optional.Float64
-}
-
-type LandInfoDimensionUpdate struct {
-	FrontWidth  optional.Float64
-	Depth       optional.Float64
-	StreetWidth optional.Float64
-}
-
-type LandInfoExpiryUpdate struct {
-	ExpiredLand  optional.String // ISO datetime
-	ExpiredPlant optional.String
-}
-
-type BuildingUpdate struct {
-	Note             optional.String
-	BuildStatus      optional.Uint32
-	BuildingType     optional.Uint32
-	Direction        optional.Uint32
-	BalconyDir       optional.Uint32
-	AreaActual       optional.Float64
-	AreaFloor        optional.Float64
-	AreaConstruction optional.Float64
-	Floors           optional.Uint32
-	RoomNumber       optional.Uint32
-	Bedrooms         optional.Uint32
-	Bathrooms        optional.Uint32
-}
-
-type EvidenceUpdate struct {
-	Title       optional.String
-	Description optional.String
-	FileID      optional.Uint64
-}
-
-type MediaUpdate struct {
-	Items optional.Slice[MediaItemUpdate]
-}
-
-type MediaItemUpdate struct {
-	ID        optional.Uint64
-	MediaType optional.String
-	MediaURL  optional.String
-	ThumbURL  optional.String
-	SortOrder optional.Int32
-	IsCover   optional.Bool
-}
-
-type AmenitiesUpdate struct {
-	AmenityIDs optional.Slice[uint64]
-}
-
-type ExternalRefsUpdate struct {
-	Items optional.Slice[ExternalRefItemUpdate]
-}
-
-type ExternalRefItemUpdate struct {
-	ID            optional.Uint64
-	ExternalRefID optional.Uint64
-	SourceSystem  optional.Int32
-	SourceCode    optional.String
-	Confidence    optional.Uint32
-	SyncStatus    optional.Int32
-	Note          optional.String
-}
-
-type AreaRegionsUpdate struct {
-	AreaRegionIDs optional.Slice[uint64]
-}
-
-type LineageMetaUpdate struct {
-	NationalID         optional.String
-	LineageStatus      optional.Int32
-	VerifiedNationalAt optional.String
 }

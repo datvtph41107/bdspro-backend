@@ -1,12 +1,12 @@
-package handler
+package property_handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/infra/validator"
 	"bdspro/internal/dto"
 	property_usecases "bdspro/internal/usecases/property"
 	_enum "common/domain/enum"
 	_errors "common/errors"
-	"common/pkg/optional"
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
@@ -388,214 +388,32 @@ func (h *PropertyHandler) UpdateProperty(
 	ctx context.Context,
 	req *bdspropb.UpdatePropertyRequest,
 ) (*bdspropb.UpdatePropertyResponse, error) {
+
+	// 1. Auth
 	authenID := _utils.GetOriginIdFromContext(ctx)
-	authenID = 280
 	if authenID == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
+
+	if err := validator.ValidateUpdateRequest(req); err != nil {
+		return nil, err
+	}
+
+	// 3. Map — pure copy
 	cmd := mapUpdateRequestToCmd(req)
 
+	// 4. Usecase
 	result, err := h.PropertyUsecase.UpdateProperty(ctx, cmd, authenID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 5. Response
 	return &bdspropb.UpdatePropertyResponse{
 		LineageId: result.LineageID,
 		UpdatedAt: result.UpdatedAt,
 		Message:   "updated successfully",
 	}, nil
-}
-
-func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePropertyCommand {
-	cmd := &dto.UpdatePropertyCommand{
-		LineageID: req.Id,
-	}
-
-	if req.Info != nil {
-		cmd.Info = mapInfoPayload(req.Info)
-	}
-	if req.Location != nil {
-		cmd.Location = mapLocationPayload(req.Location)
-	}
-	if req.LandInfo != nil {
-		cmd.LandInfo = mapLandInfoPayload(req.LandInfo)
-	}
-	if req.BuildingInfo != nil {
-		cmd.BuildingInfo = mapBuildingPayload(req.BuildingInfo)
-	}
-	if req.Evidence != nil {
-		cmd.Evidence = mapEvidencePayload(req.Evidence)
-	}
-	if req.Media != nil {
-		cmd.Media = mapMediaPayload(req.Media)
-	}
-	if req.Amenities != nil {
-		cmd.Amenities = &dto.AmenitiesUpdate{
-			AmenityIDs: optional.NewSlice(req.Amenities.AmenityIds),
-		}
-	}
-	if req.AreaRegion != nil {
-		cmd.AreaRegions = &dto.AreaRegionsUpdate{
-			AreaRegionIDs: optional.NewSlice(req.AreaRegion.AreaRegionIds),
-		}
-	}
-	if req.ExternalRefs != nil {
-		cmd.ExternalRefs = mapExternalRefPayload(req.ExternalRefs)
-	}
-	if req.LineageMeta != nil {
-		cmd.LineageMeta = mapLineageMetaPayload(req.LineageMeta)
-	}
-
-	return cmd
-}
-
-func mapInfoPayload(p *bdspropb.UpdateInfoPayload) *dto.InfoUpdate {
-	return &dto.InfoUpdate{
-		Title:           optional.FromStringPtr(p.Title),
-		Note:            optional.FromStringPtr(p.Note),
-		UnitCode:        optional.FromStringPtr(p.UnitCode),
-		Identifier:      optional.FromStringPtr(p.Identifier),
-		Level:           optional.FromStringPtr(p.Level),
-		Scope:           optional.FromUint32Ptr(p.Scope),
-		SourceType:      optional.FromUint32Ptr(p.SourceType),
-		LegalStatus:     optional.FromUint32Ptr(p.LegalStatus),
-		RecordStatus:    optional.FromUint32Ptr(p.RecordStatus),
-		AvatarID:        optional.FromUint64Ptr(p.AvatarId),
-		PropertyTypeID:  optional.FromUint64Ptr(p.PropertyTypeId),
-		ProjectID:       optional.FromUint64Ptr(p.ProjectId),
-		OriginProfileID: optional.FromUint64Ptr(p.OriginProfileId),
-	}
-}
-
-func mapLocationPayload(p *bdspropb.UpdateLocationPayload) *dto.LocationUpdate {
-	return &dto.LocationUpdate{
-		AddressDetail: optional.FromStringPtr(p.AddressDetail),
-		MapURL:        optional.FromStringPtr(p.MapUrl),
-		Latitude:      optional.FromFloat64Ptr(p.Latitude),
-		Longitude:     optional.FromFloat64Ptr(p.Longitude),
-		RegionID:      optional.FromUint64Ptr(p.RegionId),
-		ProvinceID:    optional.FromUint64Ptr(p.ProvinceId),
-		DistrictID:    optional.FromUint64Ptr(p.DistrictId),
-		WardID:        optional.FromUint64Ptr(p.WardId),
-	}
-}
-
-func mapLandInfoPayload(p *bdspropb.UpdateLandInfoPayload) *dto.LandInfoUpdate {
-	upd := &dto.LandInfoUpdate{
-		Note:        optional.FromStringPtr(p.Note),
-		LandNote:    optional.FromStringPtr(p.LandNote),
-		PurposeUsed: optional.FromInt32Ptr(p.PurposeUsed),
-	}
-
-	if p.Basic != nil {
-		upd.Basic = &dto.LandInfoBasicUpdate{
-			DocumentNo:   optional.FromStringPtr(p.Basic.DocumentNo),
-			IssuringAuth: optional.FromStringPtr(p.Basic.IssuringAuth),
-			DocumentType: optional.FromUint32Ptr(p.Basic.DocumentType),
-			Plot:         optional.FromUint32Ptr(p.Basic.Plot),
-			Sheet:        optional.FromUint32Ptr(p.Basic.Sheet),
-		}
-	}
-
-	if p.Area != nil {
-		upd.Area = &dto.LandInfoAreaUpdate{
-			AreaTotal: optional.FromFloat64Ptr(p.Area.AreaTotal),
-			AreaLand:  optional.FromFloat64Ptr(p.Area.AreaLand),
-			AreaPlant: optional.FromFloat64Ptr(p.Area.AreaPlant),
-		}
-	}
-
-	if p.Dimension != nil {
-		upd.Dimension = &dto.LandInfoDimensionUpdate{
-			FrontWidth:  optional.FromFloat64Ptr(p.Dimension.FrontWidth),
-			Depth:       optional.FromFloat64Ptr(p.Dimension.Depth),
-			StreetWidth: optional.FromFloat64Ptr(p.Dimension.StreetWidth),
-		}
-	}
-
-	if p.Expiry != nil {
-		upd.Expiry = &dto.LandInfoExpiryUpdate{
-			ExpiredLand:  optional.FromStringPtr(p.Expiry.ExpiredLand),
-			ExpiredPlant: optional.FromStringPtr(p.Expiry.ExpiredPlant),
-		}
-	}
-
-	return upd
-}
-
-func mapBuildingPayload(p *bdspropb.UpdateBuildingPayload) *dto.BuildingUpdate {
-	return &dto.BuildingUpdate{
-		Note:             optional.FromStringPtr(p.Note),
-		BuildStatus:      optional.FromUint32Ptr(p.BuildStatus),
-		BuildingType:     optional.FromUint32Ptr(p.BuildingType),
-		Direction:        optional.FromUint32Ptr(p.Direction),
-		BalconyDir:       optional.FromUint32Ptr(p.BalconyDirection),
-		AreaActual:       optional.FromFloat64Ptr(p.AreaActual),
-		AreaFloor:        optional.FromFloat64Ptr(p.AreaFloor),
-		AreaConstruction: optional.FromFloat64Ptr(p.AreaConstruction),
-		Floors:           optional.FromUint32Ptr(p.Floors),
-		RoomNumber:       optional.FromUint32Ptr(p.RoomNumber),
-		Bedrooms:         optional.FromUint32Ptr(p.Bedrooms),
-		Bathrooms:        optional.FromUint32Ptr(p.Bathrooms),
-	}
-}
-
-func mapEvidencePayload(p *bdspropb.UpdateEvidencePayload) *dto.EvidenceUpdate {
-	return &dto.EvidenceUpdate{
-		Title:       optional.FromStringPtr(p.Title),
-		Description: optional.FromStringPtr(p.Description),
-		FileID:      optional.FromUint64Ptr(p.FileId),
-	}
-}
-
-func mapMediaPayload(p *bdspropb.UpdateMediaPayload) *dto.MediaUpdate {
-	if p == nil || len(p.Items) == 0 {
-		return nil
-	}
-	items := make([]dto.MediaItemUpdate, len(p.Items))
-	for i, item := range p.Items {
-		items[i] = dto.MediaItemUpdate{
-			ID:        optional.NewUint64(item.Id),
-			MediaType: optional.NewString(item.MediaType),
-			MediaURL:  optional.NewString(item.MediaUrl),
-			ThumbURL:  optional.NewString(item.ThumbUrl),
-			SortOrder: optional.NewInt32(item.SortOrder),
-			IsCover:   optional.NewBool(item.IsCover),
-		}
-	}
-	return &dto.MediaUpdate{
-		Items: optional.NewSlice(items),
-	}
-}
-
-func mapExternalRefPayload(p *bdspropb.UpdateExternalRefPayload) *dto.ExternalRefsUpdate {
-	if p == nil || len(p.Items) == 0 {
-		return nil
-	}
-	items := make([]dto.ExternalRefItemUpdate, len(p.Items))
-	for i, item := range p.Items {
-		items[i] = dto.ExternalRefItemUpdate{
-			ID:            optional.NewUint64(item.Id),
-			ExternalRefID: optional.NewUint64(item.ExternalRefId),
-			SourceSystem:  optional.NewInt32(item.SourceSystem),
-			SourceCode:    optional.NewString(item.SourceCode),
-			Confidence:    optional.NewUint32(item.Confidence),
-			SyncStatus:    optional.NewInt32(item.SyncStatus),
-			Note:          optional.NewString(item.Note),
-		}
-	}
-	return &dto.ExternalRefsUpdate{
-		Items: optional.NewSlice(items),
-	}
-}
-
-func mapLineageMetaPayload(p *bdspropb.UpdateLineageMetaPayload) *dto.LineageMetaUpdate {
-	return &dto.LineageMetaUpdate{
-		NationalID:         optional.FromStringPtr(p.NationalId),
-		LineageStatus:      optional.FromInt32Ptr(p.LineageStatus),
-		VerifiedNationalAt: optional.FromStringPtr(p.VerifiedNationalAt),
-	}
 }
 
 func (h *PropertyHandler) DeleteProperties(ctx context.Context, req *bdspropb.DeletePropertiesRequest) (*bdspropb.Response, error) {

@@ -12,8 +12,8 @@ type PropertyMedia struct {
 	// Để lấy được thông tin của property identify
 	PropertyIdentify *PropertyIdentify `gorm:"foreignKey:PropertyIdentifyID;references:ID"`
 
-	// LineageID *uint64           `gorm:"type:bigint" json:"lineageId"`
-	Lineages []PropertyLineage `gorm:"many2many:lineage_media"`
+	LineageID uint64            `gorm:"type:bigint" json:"lineageId"`
+	Lineages  []PropertyLineage `gorm:"many2many:lineage_media"`
 	// LineageID *uint64          `gorm:"type:bigint" json:"lineageId"`
 	// Lineage   *PropertyLineage `gorm:"foreignKey:LineageID;references:ID"`
 
@@ -23,6 +23,7 @@ type PropertyMedia struct {
 	SortOrder int32  `gorm:"default:0" json:"sortOrder"`                  // Thứ tự sắp xếp
 
 	IsCover bool `gorm:"-" json:"isCover"` // Ảnh bìa
+
 }
 
 // TableName override tên bảng

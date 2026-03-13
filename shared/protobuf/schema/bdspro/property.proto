@@ -125,6 +125,8 @@ service PropertyService {
 message UpdatePropertyRequest {
   // ID của PropertyLineage
   uint64 id = 1;
+
+  google.protobuf.FieldMask field_mask = 2;
   // Sub-domain payloads — null = không update domain đó
   UpdateInfoPayload        info          = 3;
   UpdateLocationPayload    location      = 4;

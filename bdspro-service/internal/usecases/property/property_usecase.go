@@ -10,6 +10,8 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	"common/pkg/fieldmask"
+	"common/pkg/patch"
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
@@ -1367,9 +1369,19 @@ func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.Archiv
 //   3. Delegate xuống proposeChange hoặc directUpdate
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UpdateProperty — entry point của usecase
+//
+// Trách nhiệm:
+//  1. Transaction boundary
+//  2. Load lineage + auth check
+//  3. Dispatch đúng flow: directUpdate hoặc proposeChange
+//  4. Side effect async: sync timestamp (không block response)
+// ─────────────────────────────────────────────────────────────────────────────
+
 func (u *PropertyUsecase) UpdateProperty(
 	ctx context.Context,
-	c *dto.UpdatePropertyCommand,
+	c *dto.UpdatePropertyDTO,
 	userID uint64,
 ) (*dto.UpdatePropertyResult, error) {
 	var result *dto.UpdatePropertyResult
@@ -1380,60 +1392,82 @@ func (u *PropertyUsecase) UpdateProperty(
 			return err
 		}
 		if lineage == nil {
-			// return _errors.InternalServerException("Property lineage not found")
-			return fmt.Errorf("Property lineage id=%d not found", c.LineageID)
+			return fmt.Errorf("property lineage id=%d not found", c.LineageID)
 		}
-		if !lineage.IsOwner(lineage.OriginProfileId, userID) { // || admin
-			return _errors.ForbiddenException("You dont have permission action")
+		if !lineage.IsOwner(lineage.OriginProfileId, userID) {
+			return _errors.ForbiddenException("you don't have permission to update this property")
 		}
-		result, err = u.directUpdate(txCtx, lineage, c)
-		// switch {
-		// case lineage.IsIdentifyProperty() && c.Get == enums.LineageReport:
-		// 	result, err = u.proposeChange(txCtx, lineage, c)
-		// case lineage.IsIdentifyProperty()
-		// 	result, err = u.proposeChange(txCtx, lineage, c)
-		// default:
 
-		// }
+		// Dispatch flow — mở rộng ở đây khi có propose/report flow
+		result, err = u.directUpdate(txCtx, lineage, c)
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
 
+	// Async side effect — không block response, không affect transaction
 	go func() {
 		cloneCtx := _utils.CloneContext(ctx)
-		profileId := _utils.GetProfileIdWithContext(cloneCtx)
-		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileId), time.Now().UnixMilli())
-		u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), time.Now().UnixMilli())
+		profileID := _utils.GetProfileIdWithContext(cloneCtx)
+		now := time.Now().UnixMilli()
+		u.SyncProvider.PutTimestamp(cloneCtx,
+			u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileID), now)
+		u.SyncProvider.PutTimestamp(cloneCtx,
+			u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), now)
 	}()
 
-	return result, err
+	return result, nil
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// LUỒNG 1 — DirectUpdate
+// FLOW 1 — DirectUpdate
 //
-// Dùng RunDirect cho từng block:
-//   FK có  → Update (partial: chỉ field được gửi)
-//   FK nil → Insert (tạo record mới)
+// Dùng cho: owner update bất động sản của mình.
 //
-// Gom tất cả FK mới → 1 UPDATE lineage duy nhất cuối cùng.
+// Logic:
+//   Mỗi sub-domain chạy qua RunDirect:
+//     FK nil → Insert (tạo record mới) → thêm FK vào patch
+//     FK có  → Update (partial, chỉ field được gửi)
+//     absent → skip hoàn toàn
 //
-// Tình huống:
-//   User gửi { info: { title: "X", source_type: 20 } }
-//   → Chỉ UPDATE 2 field đó, các field khác giữ nguyên DB
+//   Side blocks (media, amenities, refs, meta) xử lý riêng.
+//   Gom tất cả FK mới → 1 UPDATE lineage duy nhất cuối cùng.
 // ═════════════════════════════════════════════════════════════════════════════
 
-func (u *PropertyUsecase) directUpdate(ctx context.Context, lineage *domain.PropertyLineage, cmd *dto.UpdatePropertyCommand) (*dto.UpdatePropertyResult, error) {
-	patch := make(FKPatch)
+func (u *PropertyUsecase) directUpdate(
+	ctx context.Context,
+	lineage *domain.PropertyLineage,
+	cmd *dto.UpdatePropertyDTO,
+) (*dto.UpdatePropertyResult, error) {
+	fkPatch := make(FKPatch)
 
+	// Khai báo handlers — thứ tự không quan trọng, độc lập nhau
+	// Mask được truyền vào từng handler để patch.Builder guard đúng
 	handlers := []struct {
 		currentFK *uint64
 		h         Handler
 	}{
-		{lineage.PropertyInfoID, &InfoHandler{Patch: cmd.Info, Repo: u.InfoRepo}},
-		{lineage.LocationID, &LocationHandler{Patch: cmd.Location, Repo: u.LocationRepo}},
-		{lineage.LandInfoID, &LandInfoHandler{Patch: cmd.LandInfo, Repo: u.LandInfoRepo}},
-		{lineage.BuildingInfoID, &BuildingHandler{Patch: cmd.BuildingInfo, Repo: u.BuildingInfoRepo}},
-		{lineage.EdvidenceID, &EvidenceHandler{Patch: cmd.Evidence, Repo: u.EvidenceRepo}},
+		{
+			lineage.PropertyInfoID,
+			&InfoHandler{Patch: cmd.Info, Mask: cmd.Mask, Repo: u.InfoRepo},
+		},
+		{
+			lineage.LocationID,
+			&LocationHandler{Patch: cmd.Location, Mask: cmd.Mask, Repo: u.LocationRepo},
+		},
+		{
+			lineage.LandInfoID,
+			&LandInfoHandler{Patch: cmd.LandInfo, Mask: cmd.Mask, Repo: u.LandInfoRepo},
+		},
+		{
+			lineage.BuildingInfoID,
+			&BuildingHandler{Patch: cmd.BuildingInfo, Mask: cmd.Mask, Repo: u.BuildingInfoRepo},
+		},
+		{
+			lineage.EdvidenceID,
+			&EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo},
+		},
 	}
 
 	for _, entry := range handlers {
@@ -1441,17 +1475,17 @@ func (u *PropertyUsecase) directUpdate(ctx context.Context, lineage *domain.Prop
 		if err != nil {
 			return nil, err
 		}
-		if newFK != nil {
-			patch[entry.h.FKColumn()] = *newFK
-		}
+		fkPatch.Set(entry.h.FKColumn(), newFK)
 	}
 
-	if err := u.handleSideBlocks(ctx, lineage.ID, cmd, patch); err != nil {
+	// Side blocks: media, amenities, refs, area_regions, lineage_meta
+	if err := u.handleSideBlocks(ctx, lineage.ID, cmd, fkPatch); err != nil {
 		return nil, err
 	}
 
-	if len(patch) > 0 {
-		if err := u.LineageRepo.UpdateFields(ctx, lineage.ID, patch); err != nil {
+	// Flush tất cả FK + lineage_meta fields vào lineage — 1 UPDATE duy nhất
+	if len(fkPatch) > 0 {
+		if err := u.LineageRepo.UpdateFields(ctx, lineage.ID, fkPatch); err != nil {
 			return nil, fmt.Errorf("lineage update: %w", err)
 		}
 	}
@@ -1463,46 +1497,43 @@ func (u *PropertyUsecase) directUpdate(ctx context.Context, lineage *domain.Prop
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// LUỒNG 2 — ProposeChange
+// FLOW 2 — ProposeChange
 //
-// Dùng RunPropose cho từng block: luôn Insert mới.
-// Block không có trong request → giữ FK từ bản gốc (shared read, không tốn storage).
+// Dùng cho: user đề xuất thay đổi bất động sản của người khác (report/contribute).
 //
-// Tình huống:
-//   User muốn đề xuất sửa land_info.area của bản gốc
-//   → Chỉ gửi { land_info: { area: { area_total: 125.5 } } }
-//   → propose lineage: land_info_id = record mới, còn lại copy FK từ gốc
-//
-// Tình huống:
-//   User propose với form đầy đủ, trường project_id để trống
-//   → propose record: project_id = nil (có chủ đích, không phải bỏ qua)
+// Logic:
+//   Tạo lineage mới (propose), copy tất cả FK từ origin.
+//   Các sub-domain có dữ liệu → Insert record mới → update FK propose.
+//   Sub-domain absent → giữ FK từ origin (shared read, không tốn storage).
 // ═════════════════════════════════════════════════════════════════════════════
 
-// / report đóng góp
-func (u *PropertyUsecase) proposeChange(ctx context.Context, origin *domain.PropertyLineage, cmd *dto.UpdatePropertyCommand) (*dto.UpdatePropertyResult, error) {
-	now := time.Now().UTC()
-
+func (u *PropertyUsecase) proposeChange(
+	ctx context.Context,
+	origin *domain.PropertyLineage,
+	cmd *dto.UpdatePropertyDTO,
+) (*dto.UpdatePropertyResult, error) {
+	// Tạo propose lineage — copy FK từ origin làm base
 	propose := &domain.PropertyLineage{
 		PropertyInfoID: origin.PropertyInfoID,
 		LocationID:     origin.LocationID,
 		LandInfoID:     origin.LandInfoID,
 		BuildingInfoID: origin.BuildingInfoID,
 		EdvidenceID:    origin.EdvidenceID,
-		// ... other fields like status, proposed_at
+		// Status, proposed_at, proposed_by, ref_origin_id... set ở đây
 	}
 	if err := u.LineageRepo.Create(ctx, propose); err != nil {
 		return nil, fmt.Errorf("create propose lineage: %w", err)
 	}
 
-	patch := make(FKPatch)
+	fkPatch := make(FKPatch)
 
-	// Các block có FK: luôn insert mới nếu có dữ liệu
+	// Propose: luôn Insert mới nếu có dữ liệu (không Update origin)
 	proposeHandlers := []Handler{
-		&InfoHandler{Patch: cmd.Info, Repo: u.InfoRepo},
-		&LocationHandler{Patch: cmd.Location, Repo: u.LocationRepo},
-		&LandInfoHandler{Patch: cmd.LandInfo, Repo: u.LandInfoRepo},
-		&BuildingHandler{Patch: cmd.BuildingInfo, Repo: u.BuildingInfoRepo},
-		&EvidenceHandler{Patch: cmd.Evidence, Repo: u.EvidenceRepo},
+		&InfoHandler{Patch: cmd.Info, Mask: cmd.Mask, Repo: u.InfoRepo},
+		&LocationHandler{Patch: cmd.Location, Mask: cmd.Mask, Repo: u.LocationRepo},
+		&LandInfoHandler{Patch: cmd.LandInfo, Mask: cmd.Mask, Repo: u.LandInfoRepo},
+		&BuildingHandler{Patch: cmd.BuildingInfo, Mask: cmd.Mask, Repo: u.BuildingInfoRepo},
+		&EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo},
 	}
 
 	for _, h := range proposeHandlers {
@@ -1511,174 +1542,199 @@ func (u *PropertyUsecase) proposeChange(ctx context.Context, origin *domain.Prop
 			return nil, err
 		}
 		if newID != 0 {
-			patch[h.FKColumn()] = newID
+			fkPatch[h.FKColumn()] = newID
 		}
 	}
 
-	// Side blocks cũng cần xử lý (có thể copy hoặc tạo mới)
-	if err := u.handleSideBlocks(ctx, propose.ID, cmd, patch); err != nil {
+	if err := u.handleSideBlocks(ctx, propose.ID, cmd, fkPatch); err != nil {
 		return nil, err
 	}
 
-	if len(patch) > 0 {
-		if err := u.LineageRepo.UpdateFields(ctx, propose.ID, patch); err != nil {
+	if len(fkPatch) > 0 {
+		if err := u.LineageRepo.UpdateFields(ctx, propose.ID, fkPatch); err != nil {
 			return nil, fmt.Errorf("propose fk update: %w", err)
 		}
 	}
 
 	return &dto.UpdatePropertyResult{
 		LineageID: propose.ID,
-		UpdatedAt: now.Format(time.RFC3339),
+		UpdatedAt: _utils.TimeNowRFC3339(),
 	}, nil
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// handleSideBlocks — blocks không theo FK pattern (media, amenities, external refs, meta)
+// handleSideBlocks
 //
-// Tách riêng khỏi block handler vì chúng có semantic khác:
-//   media/external_refs: upsert per item theo lineage_id, không có FK trên lineage
-//   amenities: replace-all
-//   lineage_meta: update trực tiếp lineage record (không phải sub-record)
+// Side blocks có semantic khác với FK blocks:
+//   media/external_refs : upsert per item theo lineage_id
+//   amenities/area_regions: REPLACE toàn bộ list
+//   lineage_meta        : update trực tiếp vào fkPatch (cùng lineage record)
+//
+// fkPatch được truyền vào để lineage_meta merge vào cùng 1 UPDATE.
 // ─────────────────────────────────────────────────────────────────────────────
 
-func (u *PropertyUsecase) handleSideBlocks(ctx context.Context, lineageID uint64, cmd *dto.UpdatePropertyCommand, patch map[string]any) error {
+func (u *PropertyUsecase) handleSideBlocks(
+	ctx context.Context,
+	lineageID uint64,
+	cmd *dto.UpdatePropertyDTO,
+	fkPatch FKPatch,
+) error {
 	if cmd.Media != nil {
-		if err := u.updateMedia(ctx, lineageID, cmd.Media); err != nil {
+		if err := u.handleMedia(ctx, lineageID, cmd.Media); err != nil {
 			return fmt.Errorf("media: %w", err)
 		}
 	}
 	if cmd.Amenities != nil {
-		if err := u.updateAmenities(ctx, lineageID, cmd.Amenities); err != nil {
+		if err := u.handleAmenities(ctx, lineageID, cmd.Amenities); err != nil {
 			return fmt.Errorf("amenities: %w", err)
 		}
 	}
-	if cmd.ExternalRefs != nil {
-		if err := u.updateExternalRefs(ctx, cmd.ExternalRefs); err != nil {
-			return fmt.Errorf("external_refs: %w", err)
-		}
-	}
 	if cmd.AreaRegions != nil {
-		if err := u.updateAreaRegions(ctx, lineageID, cmd.AreaRegions); err != nil {
+		if err := u.handleAreaRegions(ctx, lineageID, cmd.AreaRegions); err != nil {
 			return fmt.Errorf("area_regions: %w", err)
 		}
 	}
+	if cmd.ExternalRefs != nil {
+		if err := u.handleExternalRefs(ctx, cmd.ExternalRefs); err != nil {
+			return fmt.Errorf("external_refs: %w", err)
+		}
+	}
 	if cmd.LineageMeta != nil {
-		// LineageMeta cập nhật trực tiếp vào patch
-		cmd.LineageMeta.NationalID.ApplyTo(patch, "national_id")
-		cmd.LineageMeta.LineageStatus.ApplyTo(patch, "lineage_status")
-		applyTimeField(patch, "verified_national_at", cmd.LineageMeta.VerifiedNationalAt)
+		// Merge vào fkPatch — cùng UPDATE lineage record cuối cùng
+		u.applyLineageMeta(cmd.LineageMeta, cmd.Mask, fkPatch)
 	}
 	return nil
 }
 
-func (u *PropertyUsecase) updateMedia(ctx context.Context, lineageID uint64, data *dto.MediaUpdate) error {
-	if data.Items.IsAbsent() {
-		return nil
-	}
-	if data.Items.IsNull() {
-		// Xoá toàn bộ media của lineage này
-		// return u.MediaRepo.DeleteByLineageID(ctx, lineageID)
-	}
-	items := data.Items.Value()
-	for _, item := range items {
-		if item.ID.IsPresent() && item.ID.Value() != 0 {
-			fields := make(map[string]any)
-			item.MediaType.ApplyTo(fields, "media_type")
-			item.MediaURL.ApplyTo(fields, "media_url")
-			item.ThumbURL.ApplyTo(fields, "thumb_url")
-			item.SortOrder.ApplyTo(fields, "sort_order")
-			item.IsCover.ApplyTo(fields, "is_cover")
-			if len(fields) > 0 {
-				if err := u.MediaRepo.UpdateFields(ctx, item.ID.Value(), fields); err != nil {
-					return err
-				}
+// ─────────────────────────────────────────────────────────────────────────────
+// handleMedia — upsert per item
+//
+// id=0 → INSERT mới
+// id>0 → UPDATE record đó (chỉ field được gửi qua patch.Builder)
+// ─────────────────────────────────────────────────────────────────────────────
+
+func (u *PropertyUsecase) handleMedia(
+	ctx context.Context,
+	lineageID uint64,
+	data *dto.UpdateMediaDTO,
+) error {
+	for _, item := range data.Items {
+		if item.ID > 0 {
+			// UPDATE — partial update, chỉ field non-zero
+			// Media dùng scalar (không *T) → update tất cả field có trong item
+			fields := map[string]any{
+				"media_type": item.MediaType,
+				"media_url":  item.MediaURL,
+				"thumb_url":  item.ThumbURL,
+				"sort_order": item.SortOrder,
+				"is_cover":   item.IsCover,
+			}
+			if err := u.MediaRepo.UpdateFields(ctx, item.ID, fields); err != nil {
+				return fmt.Errorf("update media id=%d: %w", item.ID, err)
 			}
 		} else {
+			// INSERT mới
 			entity := &domain.PropertyMedia{
-				MediaType: item.MediaType.OrElse(""),
-				MediaURL:  item.MediaURL.OrElse(""),
-				ThumbURL:  item.ThumbURL.OrElse(""),
-				SortOrder: item.SortOrder.OrElse(0),
-				IsCover:   item.IsCover.OrElse(false),
+				LineageID: lineageID,
+				MediaType: item.MediaType,
+				MediaURL:  item.MediaURL,
+				ThumbURL:  item.ThumbURL,
+				SortOrder: item.SortOrder,
+				IsCover:   item.IsCover,
 			}
 			if err := u.MediaRepo.Create(ctx, entity); err != nil {
-				return err
+				return fmt.Errorf("create media: %w", err)
 			}
-			// Tạo liên kết với lineage
-			// if err := u.MediaRepo.LinkToLineage(ctx, entity.ID, lineageID); err != nil {
-			// 	return err
-			// }
 		}
 	}
 	return nil
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Amenities replace
+// handleAmenities — REPLACE toàn bộ list
 // ─────────────────────────────────────────────────────────────────────────────
-func (u *PropertyUsecase) updateAmenities(ctx context.Context, lineageID uint64, data *dto.AmenitiesUpdate) error {
-	if data.AmenityIDs.IsAbsent() {
-		return nil
-	}
-	if data.AmenityIDs.IsNull() {
-		return u.AmenityRepo.ReplaceAmenities(ctx, lineageID, []uint64{})
-	}
-	return u.AmenityRepo.ReplaceAmenities(ctx, lineageID, data.AmenityIDs.Value())
+
+func (u *PropertyUsecase) handleAmenities(
+	ctx context.Context,
+	lineageID uint64,
+	data *dto.UpdateAmenityDTO,
+) error {
+	// AmenityIDs nil = sub-domain không gửi → đã skip ở handleSideBlocks
+	// AmenityIDs [] = gửi list rỗng = xóa hết
+	return u.AmenityRepo.ReplaceAmenities(ctx, lineageID, data.AmenityIDs)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AreaRegions replace
+// handleAreaRegions — REPLACE toàn bộ list
 // ─────────────────────────────────────────────────────────────────────────────
-func (u *PropertyUsecase) updateAreaRegions(ctx context.Context, lineageID uint64, data *dto.AreaRegionsUpdate) error {
-	if data.AreaRegionIDs.IsAbsent() {
-		return nil
-	}
-	if data.AreaRegionIDs.IsNull() {
-		return u.AreaRegionRepo.ReplaceAreaRegions(ctx, lineageID, []uint64{})
-	}
-	return u.AreaRegionRepo.ReplaceAreaRegions(ctx, lineageID, data.AreaRegionIDs.Value())
+
+func (u *PropertyUsecase) handleAreaRegions(
+	ctx context.Context,
+	lineageID uint64,
+	data *dto.UpdateAreaRegionsDTO,
+) error {
+	return u.AreaRegionRepo.ReplaceAreaRegions(ctx, lineageID, data.AreaRegionIDs)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ExternalRefs upsert
+// handleExternalRefs — upsert per item
 // ─────────────────────────────────────────────────────────────────────────────
-func (u *PropertyUsecase) updateExternalRefs(ctx context.Context, data *dto.ExternalRefsUpdate) error {
-	if data.Items.IsAbsent() {
-		return nil
-	}
-	if data.Items.IsNull() {
-		// Có thể xoá hết? Tuỳ logic
-		return nil
-	}
-	items := data.Items.Value()
-	for _, item := range items {
-		if item.ID.IsPresent() && item.ID.Value() != 0 {
-			fields := make(map[string]any)
-			item.ExternalRefID.ApplyTo(fields, "external_ref_id")
-			item.SourceSystem.ApplyTo(fields, "source_system")
-			item.SourceCode.ApplyTo(fields, "source_code")
-			item.Confidence.ApplyTo(fields, "confidence")
-			item.SyncStatus.ApplyTo(fields, "sync_status")
-			item.Note.ApplyTo(fields, "note")
-			if len(fields) > 0 {
-				if err := u.ExternalRefRepo.UpdateFields(ctx, item.ID.Value(), fields); err != nil {
-					return err
-				}
+
+func (u *PropertyUsecase) handleExternalRefs(
+	ctx context.Context,
+	data *dto.UpdateExternalRefDTO,
+) error {
+	for _, item := range data.Items {
+		if item.ID > 0 {
+			// UPDATE — scalar fields, update tất cả
+			fields := map[string]any{
+				"external_ref_id": item.ExternalRefID,
+				"source_system":   item.SourceSystem,
+				"source_code":     item.SourceCode,
+				"confidence":      item.Confidence,
+				"sync_status":     item.SyncStatus,
+				"note":            item.Note,
+			}
+			if err := u.ExternalRefRepo.UpdateFields(ctx, item.ID, fields); err != nil {
+				return fmt.Errorf("update external_ref id=%d: %w", item.ID, err)
 			}
 		} else {
+			// INSERT mới
 			entity := &domain.PropertyExternalRef{
-				ExternalRefID: item.ExternalRefID.OrElse(0),
-				SourceSystem:  enums.ERefSourceSys(item.SourceSystem.OrElse(10)),
-				SourceCode:    item.SourceCode.OrElse(""),
-				Confidence:    item.Confidence.OrElse(0),
-				SyncStatus:    enums.ESyncStatus(int(item.SyncStatus.OrElse(10))),
-				Note:          item.Note.OrElse(""),
+				ExternalRefID: item.ExternalRefID,
+				SourceSystem:  enums.ERefSourceSys(item.SourceSystem),
+				SourceCode:    item.SourceCode,
+				Confidence:    item.Confidence,
+				SyncStatus:    enums.ESyncStatus(item.SyncStatus),
+				Note:          item.Note,
 			}
 			if err := u.ExternalRefRepo.Create(ctx, entity); err != nil {
-				return err
+				return fmt.Errorf("create external_ref: %w", err)
 			}
-			// Cần liên kết với lineage? Tuỳ model
 		}
 	}
 	return nil
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// applyLineageMeta — merge lineage_meta fields vào fkPatch
+//
+// Dùng patch.Builder để đảm bảo cùng quy chuẩn presence + diff + mask.
+// Merge vào fkPatch → cùng 1 UPDATE lineage record cuối cùng.
+// ─────────────────────────────────────────────────────────────────────────────
+
+func (u *PropertyUsecase) applyLineageMeta(
+	meta *dto.UpdateLineageMetaDTO,
+	mask fieldmask.FieldMask,
+	fkPatch FKPatch,
+) {
+	fields := patch.WithMask(mask).
+		String("lineage_meta.national_id", "national_id", meta.NationalID, "").
+		Int32("lineage_meta.lineage_status", "lineage_status", meta.LineageStatus, 10).
+		DateString("lineage_meta.verified_national_at", "verified_national_at", meta.VerifiedNationalAt, nil).
+		Build()
+
+	for k, v := range fields {
+		fkPatch[k] = v
+	}
 }

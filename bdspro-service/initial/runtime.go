@@ -3,6 +3,7 @@ package initial
 import (
 	"bdspro/infra/handler"
 	admin_handler "bdspro/infra/handler/admin"
+	property_handler "bdspro/infra/handler/property"
 	"bdspro/internal/job"
 	shared_usecase "bdspro/internal/usecases/shared"
 )
@@ -51,7 +52,7 @@ type InitialApp struct {
 	TxCostTypeHandler     *handler.TxCostTypeHandler
 	TxDealCostHandler     *handler.TxDealCostHandler
 	AdminTxHandler        *admin_handler.AdminTxHandler
-	PropertyHandler       *handler.PropertyHandler
+	PropertyHandler       *property_handler.PropertyHandler
 	DistributeHandler     *handler.DistributionHandler
 	ProductNoteHandler    *handler.ProductNoteHandler
 	PropertyIdentifier    *handler.PropertyIdentifierHandler
@@ -125,7 +126,7 @@ func NewInitialApp(
 	// AssetCostServer:         AssetCostServer,
 	// AssetLegalServer:        AssetLegalServer,
 	// AssetSplitHistoryServer: AssetSplitHistoryServer,
-	propertyHandler *handler.PropertyHandler,
+	propertyHandler *property_handler.PropertyHandler,
 	distributeHandler *handler.DistributionHandler,
 	productNoteHandler *handler.ProductNoteHandler,
 	propertyIdentifier *handler.PropertyIdentifierHandler,
