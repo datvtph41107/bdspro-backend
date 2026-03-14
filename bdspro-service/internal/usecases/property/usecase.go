@@ -57,11 +57,11 @@ func (h *InfoHandler) Update(ctx context.Context, id uint64) error {
 		String("info.level", "level", h.Patch.Level, "").
 		Uint32("info.scope", "scope", h.Patch.Scope, 0).
 		Uint32("info.source_type", "source_type", h.Patch.SourceType, 0).
-		Uint32("info.legal_status", "legal_status", h.Patch.LegalStatus, 0).
+		Uint32("info.legalStatus", "legal_status", h.Patch.LegalStatus, 0).
 		Uint32("info.record_status", "record_status", h.Patch.RecordStatus, 0).
-		ForeignKey("info.avatar_id", "avatar_id", h.Patch.AvatarID, nil).
-		ForeignKey("info.property_type_id", "property_type_id", h.Patch.PropertyTypeID, nil).
-		ForeignKey("info.project_id", "project_id", h.Patch.ProjectID, nil).
+		ForeignKey("info.avatarId", "avatar_id", h.Patch.AvatarID, nil).
+		ForeignKey("info.propertyTypeId", "property_type_id", h.Patch.PropertyTypeID, nil).
+		ForeignKey("info.projectId", "project_id", h.Patch.ProjectID, nil).
 		ForeignKey("info.origin_profile_id", "origin_profile_id", h.Patch.OriginProfileID, nil).
 		Build()
 
