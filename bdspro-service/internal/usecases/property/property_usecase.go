@@ -217,12 +217,18 @@ func (u *PropertyUsecase) AddPropertyUser(
 		return nil, _errors.NotFoundException("Property not found")
 	}
 
-	existed, err := u.PropertyUserRepo.GetByLineageAndOwner(ctx, lineage.ID, userID)
+	existed, err := u.PropertyUserRepo.GetByLineageAndOwnerUnscoped(ctx, lineage.ID, userID)
 	if err != nil {
 		return nil, err
 	}
 	if existed != nil {
-		return lineage, nil
+		if existed.DeletedAt != nil {
+			if err := u.PropertyUserRepo.RestoreByID(ctx, existed.ID); err != nil {
+				return nil, err
+			}
+			return lineage, nil
+		}
+		return nil, _errors.ConflictException("Property already added")
 	}
 
 	if _, err := u.PropertyUserRepo.CreateOwner(ctx, lineage.ID, userID); err != nil {

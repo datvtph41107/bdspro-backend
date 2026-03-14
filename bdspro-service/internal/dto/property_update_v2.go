@@ -92,41 +92,26 @@ type UpdateLocationDTO struct {
 // ─── UpdateLandInfoDTO ───────────────────────────────────────────────────────
 // Sub-group nil = sub-group không được gửi = không update cả group
 type UpdateLandInfoDTO struct {
-	Basic     *LandInfoBasicDTO
-	Area      *LandInfoAreaDTO
-	Dimension *LandInfoDimensionDTO
-	Expiry    *LandInfoExpiryDTO
-
-	Note        *string
-	LandNote    *string
-	PurposeUsed *int32
-}
-
-type LandInfoBasicDTO struct {
 	DocumentNo   *string
 	IssuringAuth *string
 	DocumentType *uint32
 	Plot         *uint32
 	Sheet        *uint32
-}
 
-type LandInfoAreaDTO struct {
-	// nil=absent | present=set (0.0 là diện tích hợp lệ → không dùng 0=CLEAR)
 	AreaTotal *float64
 	AreaLand  *float64
 	AreaPlant *float64
-}
 
-type LandInfoDimensionDTO struct {
 	FrontWidth  *float64
 	Depth       *float64
 	StreetWidth *float64
-}
 
-type LandInfoExpiryDTO struct {
-	// nil=absent | ""=CLEAR date→NULL | RFC3339=set date
 	ExpiredLand  *string
 	ExpiredPlant *string
+
+	Note        *string
+	LandNote    *string
+	PurposeUsed *int32
 }
 
 // ─── UpdateBuildingDTO ───────────────────────────────────────────────────────

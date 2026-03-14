@@ -18,7 +18,7 @@
 // snake_case, dot-separated, align với proto field name:
 //
 //	"info.title"                   → UpdateInfoPayload.title
-//	"land_info.area.area_total"    → UpdateLandInfoPayload.area.area_total
+//	"landInfo.area.area_total"    → UpdateLandInfoPayload.area.area_total
 //	"lineage_meta.national_id"     → UpdateLineageMetaPayload.national_id
 //
 // # Thread safety
@@ -72,7 +72,7 @@ func Only(paths ...string) FieldMask {
 //
 // Hỗ trợ 2 kiểu match:
 //  1. Exact:  paths=["info.title"]     → Allows("info.title") = true
-//  2. Prefix: paths=["land_info.area"] → Allows("land_info.area.area_total") = true
+//  2. Prefix: paths=["landInfo.area"] → Allows("landInfo.area.area_total") = true
 //
 // Prefix match cho phép allow cả sub-group với 1 path ngắn hơn.
 func (f FieldMask) Allows(path string) bool {
@@ -82,7 +82,7 @@ func (f FieldMask) Allows(path string) bool {
 	if _, ok := f.paths[path]; ok {
 		return true
 	}
-	// prefix match: "land_info.area" covers "land_info.area.area_total"
+	// prefix match: "landInfo.area" covers "landInfo.area.area_total"
 	for p := range f.paths {
 		if strings.HasPrefix(path, p+".") {
 			return true

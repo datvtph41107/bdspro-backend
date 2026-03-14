@@ -67,30 +67,24 @@ func validateLandInfoPayload(p *bdspropb.UpdateLandInfoPayload) *validate.Error 
 	if p == nil {
 		return e
 	}
-	validate.StringMaxLen(e, "land_info.note", p.Note, 1000)
-	validate.StringMaxLen(e, "land_info.land_note", p.LandNote, 1000)
+	validate.StringMaxLen(e, "landInfo.note", p.Note, 1000)
+	validate.StringMaxLen(e, "landInfo.landNote", p.LandNote, 1000)
 
-	if p.Area != nil {
-		validate.Float64NonNegative(e, "land_info.area.area_total", p.Area.AreaTotal)
-		validate.Float64NonNegative(e, "land_info.area.area_land", p.Area.AreaLand)
-		validate.Float64NonNegative(e, "land_info.area.area_plant", p.Area.AreaPlant)
-	}
-	if p.Dimension != nil {
-		validate.Float64NonNegative(e, "land_info.dimension.front_width", p.Dimension.FrontWidth)
-		validate.Float64NonNegative(e, "land_info.dimension.depth", p.Dimension.Depth)
-		validate.Float64NonNegative(e, "land_info.dimension.street_width", p.Dimension.StreetWidth)
-	}
-	if p.Expiry != nil {
-		validate.DateStringOpt(e, "land_info.expiry.expired_land", p.Expiry.ExpiredLand)
-		validate.DateStringOpt(e, "land_info.expiry.expired_plant", p.Expiry.ExpiredPlant)
-		// Cross-field: nếu cả 2 có giá trị → land phải trước plant
-		validate.DateOrder(e,
-			"land_info.expiry.expired_land",
-			"land_info.expiry.expired_plant",
-			p.Expiry.ExpiredLand,
-			p.Expiry.ExpiredPlant,
-		)
-	}
+	validate.DateStringOpt(e, "landInfo.expiredLand", p.ExpiredLand)
+	validate.DateStringOpt(e, "landInfo.expiredPlant", p.ExpiredPlant)
+	// Cross-field: nếu cả 2 có giá trị → land phải trước plant
+	validate.DateOrder(e,
+		"landInfo.expiredLand",
+		"landInfo.expiredPlant",
+		p.ExpiredLand,
+		p.ExpiredPlant,
+	)
+	validate.Float64NonNegative(e, "landInfo.areaTotal", p.AreaTotal)
+	validate.Float64NonNegative(e, "landInfo.areaLand", p.AreaLand)
+	validate.Float64NonNegative(e, "landInfo.areaPlant", p.AreaPlant)
+	validate.Float64NonNegative(e, "landInfo.frontWidth", p.FrontWidth)
+	validate.Float64NonNegative(e, "landInfo.depth", p.Depth)
+	validate.Float64NonNegative(e, "landInfo.streetWidth", p.StreetWidth)
 	return e
 }
 
@@ -99,10 +93,10 @@ func validateBuildingPayload(p *bdspropb.UpdateBuildingPayload) *validate.Error 
 	if p == nil {
 		return e
 	}
-	validate.StringMaxLen(e, "building_info.note", p.Note, 1000)
-	validate.Float64NonNegative(e, "building_info.area_actual", p.AreaActual)
-	validate.Float64NonNegative(e, "building_info.area_floor", p.AreaFloor)
-	validate.Float64NonNegative(e, "building_info.area_construction", p.AreaConstruction)
+	validate.StringMaxLen(e, "buildingInfo.note", p.Note, 1000)
+	validate.Float64NonNegative(e, "buildingInfo.area_actual", p.AreaActual)
+	validate.Float64NonNegative(e, "buildingInfo.area_floor", p.AreaFloor)
+	validate.Float64NonNegative(e, "buildingInfo.area_construction", p.AreaConstruction)
 	return e
 }
 

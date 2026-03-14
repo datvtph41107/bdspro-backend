@@ -41,13 +41,13 @@ func TestFromPaths_WithPaths_StrictWhitelist(t *testing.T) {
 	assert.True(t, mask.Allows("info.title"))
 	assert.True(t, mask.Allows("info.note"))
 	assert.False(t, mask.Allows("info.scope")) // không có trong mask
-	assert.False(t, mask.Allows("land_info.area_total"))
+	assert.False(t, mask.Allows("landInfo.area_total"))
 }
 
 // ─── Only ─────────────────────────────────────────────────────────────────────
 
 func TestOnly(t *testing.T) {
-	mask := fieldmask.Only("info.title", "land_info.area")
+	mask := fieldmask.Only("info.title", "landInfo.area")
 
 	assert.True(t, mask.Allows("info.title"))
 	assert.False(t, mask.Allows("info.note"))
@@ -66,15 +66,15 @@ func TestAllows_ExactMatch(t *testing.T) {
 // ─── Allows — prefix match ────────────────────────────────────────────────────
 
 func TestAllows_PrefixMatch(t *testing.T) {
-	// mask có "land_info.area" → cover tất cả children
-	mask := fieldmask.Only("land_info.area")
+	// mask có "landInfo.area" → cover tất cả children
+	mask := fieldmask.Only("landInfo.area")
 
-	assert.True(t, mask.Allows("land_info.area"))            // exact
-	assert.True(t, mask.Allows("land_info.area.area_total")) // child
-	assert.True(t, mask.Allows("land_info.area.area_land"))  // child
-	assert.False(t, mask.Allows("land_info.areaXXX"))        // không phải child
-	assert.False(t, mask.Allows("land_info.expiry"))         // sibling
-	assert.False(t, mask.Allows("info.title"))               // khác domain
+	assert.True(t, mask.Allows("landInfo.area"))            // exact
+	assert.True(t, mask.Allows("landInfo.area.area_total")) // child
+	assert.True(t, mask.Allows("landInfo.area.area_land"))  // child
+	assert.False(t, mask.Allows("landInfo.areaXXX"))        // không phải child
+	assert.False(t, mask.Allows("landInfo.expiry"))         // sibling
+	assert.False(t, mask.Allows("info.title"))              // khác domain
 }
 
 // ─── AllowsAny ────────────────────────────────────────────────────────────────
@@ -119,23 +119,23 @@ func TestIntersect_AllowAll_ClipsToAllowed(t *testing.T) {
 
 func TestIntersect_NoOverlap_Empty(t *testing.T) {
 	mask := fieldmask.Only("info.title")
-	result := mask.Intersect([]string{"land_info.area_total"})
+	result := mask.Intersect([]string{"landInfo.area_total"})
 
 	assert.False(t, result.Allows("info.title"))
-	assert.False(t, result.Allows("land_info.area_total"))
+	assert.False(t, result.Allows("landInfo.area_total"))
 }
 
 // ─── Paths — deterministic order ─────────────────────────────────────────────
 
 func TestPaths_Sorted(t *testing.T) {
-	mask := fieldmask.Only("info.title", "info.note", "land_info.area_total")
+	mask := fieldmask.Only("info.title", "info.note", "landInfo.area_total")
 	paths := mask.Paths()
 
 	// Sorted → deterministic, test không bao giờ flaky
 	assert.Equal(t, []string{
 		"info.note",
 		"info.title",
-		"land_info.area_total",
+		"landInfo.area_total",
 	}, paths)
 }
 

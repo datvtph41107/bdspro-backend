@@ -145,27 +145,20 @@ func (h *LandInfoHandler) Insert(ctx context.Context) (uint64, error) {
 			return *h.Patch.PurposeUsed
 		}()),
 	}
-	if h.Patch.Basic != nil {
-		e.DocumentNo = derefStr(h.Patch.Basic.DocumentNo)
-		e.IssuringAuth = derefStr(h.Patch.Basic.IssuringAuth)
-		e.DocumentType = enums.EDocType(derefUint32(h.Patch.Basic.DocumentType))
-		e.Plot = derefUint32(h.Patch.Basic.Plot)
-		e.Sheet = derefUint32(h.Patch.Basic.Sheet)
-	}
-	if h.Patch.Area != nil {
-		e.AreaTotal = h.Patch.Area.AreaTotal
-		e.AreaLand = h.Patch.Area.AreaLand
-		e.AreaPlant = h.Patch.Area.AreaPlant
-	}
-	if h.Patch.Dimension != nil {
-		e.FrontWidth = h.Patch.Dimension.FrontWidth
-		e.Depth = h.Patch.Dimension.Depth
-		e.StreetWidth = h.Patch.Dimension.StreetWidth
-	}
-	if h.Patch.Expiry != nil {
-		e.ExpiredLand = ParseDate(h.Patch.Expiry.ExpiredLand)
-		e.ExpiredPlant = ParseDate(h.Patch.Expiry.ExpiredPlant)
-	}
+	e.DocumentNo = derefStr(h.Patch.DocumentNo)
+	e.IssuringAuth = derefStr(h.Patch.IssuringAuth)
+	e.DocumentType = enums.EDocType(derefUint32(h.Patch.DocumentType))
+	e.Plot = derefUint32(h.Patch.Plot)
+	e.Sheet = derefUint32(h.Patch.Sheet)
+	e.AreaTotal = h.Patch.AreaTotal
+	e.AreaLand = h.Patch.AreaLand
+	e.AreaPlant = h.Patch.AreaPlant
+	e.FrontWidth = h.Patch.FrontWidth
+	e.Depth = h.Patch.Depth
+	e.StreetWidth = h.Patch.StreetWidth
+	e.ExpiredLand = ParseDate(h.Patch.ExpiredLand)
+	e.ExpiredPlant = ParseDate(h.Patch.ExpiredPlant)
+
 	if err := h.Repo.Create(ctx, e); err != nil {
 		return 0, err
 	}
@@ -174,31 +167,22 @@ func (h *LandInfoHandler) Insert(ctx context.Context) (uint64, error) {
 
 func (h *LandInfoHandler) Update(ctx context.Context, id uint64) error {
 	b := patch.WithMask(h.Mask).
-		String("land_info.note", "note", h.Patch.Note, "").
-		String("land_info.land_note", "land_note", h.Patch.LandNote, "").
-		Int32("land_info.purpose_used", "purpose_used", h.Patch.PurposeUsed, 0)
-
-	if h.Patch.Basic != nil {
-		b.String("land_info.basic.document_no", "document_no", h.Patch.Basic.DocumentNo, "").
-			String("land_info.basic.issuring_auth", "issuring_auth", h.Patch.Basic.IssuringAuth, "").
-			Uint32("land_info.basic.document_type", "document_type", h.Patch.Basic.DocumentType, 0).
-			Uint32("land_info.basic.plot", "plot", h.Patch.Basic.Plot, 0).
-			Uint32("land_info.basic.sheet", "sheet", h.Patch.Basic.Sheet, 0)
-	}
-	if h.Patch.Area != nil {
-		b.NullableFloat("land_info.area.area_total", "area_total", h.Patch.Area.AreaTotal, nil).
-			NullableFloat("land_info.area.area_land", "area_land", h.Patch.Area.AreaLand, nil).
-			NullableFloat("land_info.area.area_plant", "area_plant", h.Patch.Area.AreaPlant, nil)
-	}
-	if h.Patch.Dimension != nil {
-		b.NullableFloat("land_info.dimension.front_width", "front_width", h.Patch.Dimension.FrontWidth, nil).
-			NullableFloat("land_info.dimension.depth", "depth", h.Patch.Dimension.Depth, nil).
-			NullableFloat("land_info.dimension.street_width", "street_width", h.Patch.Dimension.StreetWidth, nil)
-	}
-	if h.Patch.Expiry != nil {
-		b.DateString("land_info.expiry.expired_land", "expired_land", h.Patch.Expiry.ExpiredLand, nil).
-			DateString("land_info.expiry.expired_plant", "expired_plant", h.Patch.Expiry.ExpiredPlant, nil)
-	}
+		String("landInfo.note", "note", h.Patch.Note, "").
+		String("landInfo.landNote", "land_note", h.Patch.LandNote, "").
+		Int32("landInfo.purposeUsed", "purpose_used", h.Patch.PurposeUsed, 0).
+		String("landInfo.documentNo", "document_no", h.Patch.DocumentNo, "").
+		String("landInfo.issuringAuth", "issuring_auth", h.Patch.IssuringAuth, "").
+		Uint32("landInfo.documentType", "document_type", h.Patch.DocumentType, 0).
+		Uint32("landInfo.plot", "plot", h.Patch.Plot, 0).
+		Uint32("landInfo.sheet", "sheet", h.Patch.Sheet, 0).
+		NullableFloat("landInfo.areaTotal", "area_total", h.Patch.AreaTotal, nil).
+		NullableFloat("landInfo.areaLand", "area_land", h.Patch.AreaLand, nil).
+		NullableFloat("landInfo.areaPlant", "area_plant", h.Patch.AreaPlant, nil).
+		NullableFloat("landInfo.frontWidth", "front_width", h.Patch.FrontWidth, nil).
+		NullableFloat("landInfo.depth", "depth", h.Patch.Depth, nil).
+		NullableFloat("landInfo.streetWidth", "street_width", h.Patch.StreetWidth, nil).
+		DateString("landInfo.expiredLand", "expired_land", h.Patch.ExpiredLand, nil).
+		DateString("landInfo.expiredPlant", "expired_plant", h.Patch.ExpiredPlant, nil)
 
 	fields, err := b.Result()
 	if err != nil {
@@ -220,7 +204,7 @@ type BuildingHandler struct {
 	Repo  property_repo.PropertyBuildingInfoRepository
 }
 
-func (h *BuildingHandler) Name() string     { return "property_building_info" }
+func (h *BuildingHandler) Name() string     { return "building_info" }
 func (h *BuildingHandler) FKColumn() string { return "building_info_id" }
 func (h *BuildingHandler) Present() bool    { return h.Patch != nil }
 
@@ -247,18 +231,18 @@ func (h *BuildingHandler) Insert(ctx context.Context) (uint64, error) {
 
 func (h *BuildingHandler) Update(ctx context.Context, id uint64) error {
 	fields := patch.WithMask(h.Mask).
-		String("building_info.note", "note", h.Patch.Note, "").
-		Uint32("building_info.build_status", "build_status", h.Patch.BuildStatus, 0).
-		Uint32("building_info.building_type", "building_type", h.Patch.BuildingType, 0).
-		Uint32("building_info.direction", "direction", h.Patch.Direction, 0).
-		Uint32("building_info.balcony_direction", "balcony_direction", h.Patch.BalconyDir, 0).
-		NullableFloat("building_info.area_actual", "area_actual", h.Patch.AreaActual, nil).
-		NullableFloat("building_info.area_floor", "area_floor", h.Patch.AreaFloor, nil).
-		NullableFloat("building_info.area_construction", "area_construction", h.Patch.AreaConstruction, nil).
-		NullableUint32("building_info.floors", "floors", h.Patch.Floors, nil).
-		NullableUint32("building_info.room_number", "room_number", h.Patch.RoomNumber, nil).
-		NullableUint32("building_info.bedrooms", "bedrooms", h.Patch.Bedrooms, nil).
-		NullableUint32("building_info.bathrooms", "bathrooms", h.Patch.Bathrooms, nil).
+		String("buildingInfo.note", "note", h.Patch.Note, "").
+		Uint32("buildingInfo.buildStatus", "build_status", h.Patch.BuildStatus, 0).
+		Uint32("buildingInfo.building_type", "building_type", h.Patch.BuildingType, 0).
+		Uint32("buildingInfo.direction", "direction", h.Patch.Direction, 0).
+		Uint32("buildingInfo.balconyDirection", "balcony_direction", h.Patch.BalconyDir, 0).
+		NullableFloat("buildingInfo.areaActual", "area_actual", h.Patch.AreaActual, nil).
+		NullableFloat("buildingInfo.areaFloor", "area_floor", h.Patch.AreaFloor, nil).
+		NullableFloat("buildingInfo.areaConstruction", "area_construction", h.Patch.AreaConstruction, nil).
+		NullableUint32("buildingInfo.floors", "floors", h.Patch.Floors, nil).
+		NullableUint32("buildingInfo.roomNumber", "room_number", h.Patch.RoomNumber, nil).
+		NullableUint32("buildingInfo.bedrooms", "bedrooms", h.Patch.Bedrooms, nil).
+		NullableUint32("buildingInfo.bathrooms", "bathrooms", h.Patch.Bathrooms, nil).
 		Build()
 
 	if len(fields) == 0 {

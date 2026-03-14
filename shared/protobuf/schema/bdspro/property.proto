@@ -136,8 +136,8 @@ message UpdatePropertyRequest {
   // Sub-domain payloads — null = không update domain đó
   UpdateInfoPayload        info          = 3;
   UpdateLocationPayload    location      = 4;
-  UpdateLandInfoPayload    land_info     = 5;
-  UpdateBuildingPayload    building_info = 6;
+  UpdateLandInfoPayload    landInfo     = 5;
+  UpdateBuildingPayload    buildingInfo = 6;
   UpdateEvidencePayload    evidence      = 7;
   UpdateMediaPayload       media         = 8;
   UpdateAmenityPayload     amenities     = 9;
@@ -180,58 +180,41 @@ message UpdateLocationPayload {
   optional uint64 ward_id = 8;
 }
 
-// ─── land_info.* ─────────────────────────────────────────────────────────────
+// ─── landInfo.* ─────────────────────────────────────────────────────────────
 message UpdateLandInfoPayload {
-  LandInfoBasic basic = 1;
-  LandInfoArea area = 2;
-  LandInfoDimension dimension = 3;
-  LandInfoExpiry expiry = 4;
-
-  optional string note = 5;
-  optional string land_note = 6;
-  optional int32 purpose_used = 7;
-}
-
-message LandInfoBasic {
-  optional string document_no = 1;
-  optional string issuring_auth = 2;
-  optional uint32 document_type = 3;
+  optional string documentNo = 1;
+  optional string issuringAuth = 2;
+  optional uint32 documentType = 3;
   optional uint32 plot = 4;
   optional uint32 sheet = 5;
+  optional double areaTotal = 6;
+  optional double areaLand = 7;
+  optional double areaPlant = 8;
+  optional double frontWidth = 9;
+  optional double depth = 10;
+  optional double streetWidth = 11;
+  optional string expiredLand = 12;
+  optional string expiredPlant = 13;
+  optional string note = 14;
+  optional string landNote = 15;
+  optional int32 purposeUsed = 16;
 }
 
-message LandInfoArea {
-  optional double area_total = 1;
-  optional double area_land = 2;
-  optional double area_plant = 3;
-}
-
-message LandInfoDimension {
-  optional double front_width = 1;
-  optional double depth = 2;
-  optional double street_width = 3;
-}
-
-message LandInfoExpiry {
-  optional string expired_land = 1;
-  optional string expired_plant = 2;
-}
-
-// ─── building_info.* ─────────────────────────────────────────────────────────
+// ─── buildingInfo.* ─────────────────────────────────────────────────────────
 message UpdateBuildingPayload {
   optional string note = 1;
 
-  optional uint32 build_status = 2;
-  optional uint32 building_type = 3;
+  optional uint32 buildStatus = 2;
+  optional uint32 buildingType = 3;
   optional uint32 direction = 4;
-  optional uint32 balcony_direction = 5;
+  optional uint32 balconyDirection = 5;
 
-  optional double area_actual = 6;
-  optional double area_floor = 7;
-  optional double area_construction = 8;
+  optional double areaActual = 6;
+  optional double areaFloor = 7;
+  optional double areaConstruction = 8;
 
   optional uint32 floors = 9;
-  optional uint32 room_number = 10;
+  optional uint32 roomNumber = 10;
   optional uint32 bedrooms = 11;
   optional uint32 bathrooms = 12;
 }
@@ -240,7 +223,7 @@ message UpdateBuildingPayload {
 message UpdateEvidencePayload {
   optional string title = 1;
   optional string description = 2;
-  optional uint64 file_id = 3;
+  optional uint64 fileId = 3;
 }
 
 // ─── media (list upsert — không dùng field_mask) ─────────────────────────────

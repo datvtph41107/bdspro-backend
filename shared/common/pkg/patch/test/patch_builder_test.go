@@ -245,14 +245,14 @@ func TestDateString(t *testing.T) {
 
 func TestFieldMask_Granular_Update(t *testing.T) {
 	// Scenario: client chỉ muốn update title và area_total
-	mask := fieldmask.Only("info.title", "land_info.area.area_total")
+	mask := fieldmask.Only("info.title", "landInfo.area.area_total")
 
 	got := patch.WithMask(mask).
-		String("info.title", "title", pStr("new"), "old").                                // allowed
-		String("info.note", "note", pStr("note"), "").                                    // not in mask
-		Int32("info.scope", "scope", pI32(2), 1).                                         // not in mask
-		NullableFloat("land_info.area.area_total", "area_total", pF64(90.0), pF64(85.0)). // allowed
-		NullableFloat("land_info.area.area_land", "area_land", pF64(50.0), pF64(40.0)).   // not in mask
+		String("info.title", "title", pStr("new"), "old").                               // allowed
+		String("info.note", "note", pStr("note"), "").                                   // not in mask
+		Int32("info.scope", "scope", pI32(2), 1).                                        // not in mask
+		NullableFloat("landInfo.area.area_total", "area_total", pF64(90.0), pF64(85.0)). // allowed
+		NullableFloat("landInfo.area.area_land", "area_land", pF64(50.0), pF64(40.0)).   // not in mask
 		Build()
 
 	assert.Equal(t, map[string]any{
@@ -262,13 +262,13 @@ func TestFieldMask_Granular_Update(t *testing.T) {
 }
 
 func TestFieldMask_PrefixMatch(t *testing.T) {
-	// "land_info.area" cover tất cả children
-	mask := fieldmask.Only("land_info.area")
+	// "landInfo.area" cover tất cả children
+	mask := fieldmask.Only("landInfo.area")
 
 	got := patch.WithMask(mask).
-		NullableFloat("land_info.area.area_total", "area_total", pF64(90.0), nil).
-		NullableFloat("land_info.area.area_land", "area_land", pF64(50.0), nil).
-		NullableFloat("land_info.expiry.expired", "expired", pF64(1.0), nil). // not under area
+		NullableFloat("landInfo.area.area_total", "area_total", pF64(90.0), nil).
+		NullableFloat("landInfo.area.area_land", "area_land", pF64(50.0), nil).
+		NullableFloat("landInfo.expiry.expired", "expired", pF64(1.0), nil). // not under area
 		Build()
 
 	assert.Equal(t, map[string]any{

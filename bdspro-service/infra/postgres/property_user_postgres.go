@@ -53,6 +53,33 @@ func (r *PropertyUserPostgres) GetByLineageAndOwner(
 	return &propertyUser, nil
 }
 
+func (r *PropertyUserPostgres) GetByLineageAndOwnerUnscoped(
+	ctx context.Context,
+	propertyId uint64,
+	ownerOriginID uint64,
+) (*domain.PropertyUser, error) {
+	var propertyUser domain.PropertyUser
+	err := GetDB(ctx, r.db).
+		Unscoped().
+		Where("property_lineage_id = ? AND owner_origin_id = ?", propertyId, ownerOriginID).
+		First(&propertyUser).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &propertyUser, nil
+}
+
+func (r *PropertyUserPostgres) RestoreByID(ctx context.Context, id uint64) error {
+	return GetDB(ctx, r.db).
+		Unscoped().
+		Model(&domain.PropertyUser{}).
+		Where("id = ?", id).
+		Update("deleted_at", nil).Error
+}
+
 func (r *PropertyUserPostgres) UpdateFieldsByLineageAndOwner(
 	ctx context.Context,
 	propertyId uint64,

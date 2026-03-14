@@ -79,40 +79,24 @@ func mapLandInfoPayload(p *bdspropb.UpdateLandInfoPayload) *dto.UpdateLandInfoDT
 		return nil
 	}
 	c := &dto.UpdateLandInfoDTO{
-		Note:        p.Note,
-		LandNote:    p.LandNote,
-		PurposeUsed: p.PurposeUsed,
+		Note:         p.Note,
+		LandNote:     p.LandNote,
+		PurposeUsed:  p.PurposeUsed,
+		ExpiredLand:  p.ExpiredLand,
+		ExpiredPlant: p.ExpiredPlant,
+		AreaTotal:    p.AreaTotal,
+		AreaLand:     p.AreaLand,
+		AreaPlant:    p.AreaPlant,
+		FrontWidth:   p.FrontWidth,
+		Depth:        p.Depth,
+		StreetWidth:  p.StreetWidth,
+		DocumentNo:   p.DocumentNo,
+		IssuringAuth: p.IssuringAuth,
+		DocumentType: p.DocumentType,
+		Plot:         p.Plot,
+		Sheet:        p.Sheet,
 	}
-	// Sub-group: nil check → không tạo struct rỗng
-	if p.Basic != nil {
-		c.Basic = &dto.LandInfoBasicDTO{
-			DocumentNo:   p.Basic.DocumentNo,
-			IssuringAuth: p.Basic.IssuringAuth,
-			DocumentType: p.Basic.DocumentType,
-			Plot:         p.Basic.Plot,
-			Sheet:        p.Basic.Sheet,
-		}
-	}
-	if p.Area != nil {
-		c.Area = &dto.LandInfoAreaDTO{
-			AreaTotal: p.Area.AreaTotal,
-			AreaLand:  p.Area.AreaLand,
-			AreaPlant: p.Area.AreaPlant,
-		}
-	}
-	if p.Dimension != nil {
-		c.Dimension = &dto.LandInfoDimensionDTO{
-			FrontWidth:  p.Dimension.FrontWidth,
-			Depth:       p.Dimension.Depth,
-			StreetWidth: p.Dimension.StreetWidth,
-		}
-	}
-	if p.Expiry != nil {
-		c.Expiry = &dto.LandInfoExpiryDTO{
-			ExpiredLand:  p.Expiry.ExpiredLand,
-			ExpiredPlant: p.Expiry.ExpiredPlant,
-		}
-	}
+
 	return c
 }
 
