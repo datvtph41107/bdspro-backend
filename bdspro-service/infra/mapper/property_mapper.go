@@ -712,6 +712,18 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 		res.Amenities = amenities
 	}
 
+	// AreaRegions
+	if len(property.AreaRegions) > 0 {
+		areaRegions := make([]*sharepb.TagItem, len(property.AreaRegions))
+		for i, ar := range property.AreaRegions {
+			areaRegions[i] = &sharepb.TagItem{
+				Id:   ar.ID,
+				Name: ar.Name,
+			}
+		}
+		res.AreaRegions = areaRegions
+	}
+
 	if property.UpdatedAt != nil {
 		res.UpdatedAt = _utils.FormatTimeToString(property.UpdatedAt)
 	}

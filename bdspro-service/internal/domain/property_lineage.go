@@ -57,7 +57,7 @@ type PropertyLineage struct {
 	// tiện ích
 	Amenities []AmenityItem `gorm:"many2many:property_amenity"`
 
-	Region []AreaRegion `gorm:"many2many:property_area_region"`
+	AreaRegions []AreaRegion `gorm:"many2many:property_area_region"`
 	// COMPUTED (cho API response)
 	RegionName string     `gorm:"-"`
 	RegionCode uint32     `gorm:"-"`

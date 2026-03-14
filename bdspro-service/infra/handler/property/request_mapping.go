@@ -30,7 +30,7 @@ func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePrope
 		Media:        mapMediaPayload(req.Media),
 		Amenities:    mapAmenityPayload(req.Amenities),
 		ExternalRefs: mapExternalRefPayload(req.ExternalRefs),
-		AreaRegions:  mapAreaRegionPayload(req.AreaRegion),
+		AreaRegions:  mapAreaRegionPayload(req.AreaRegions),
 		LineageMeta:  mapLineageMetaPayload(req.LineageMeta),
 	}
 }

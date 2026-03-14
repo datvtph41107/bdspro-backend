@@ -20,7 +20,7 @@ func (r *AreaRegionRepo) ReplaceAreaRegions(ctx context.Context, lineageID uint6
 	db := GetDB(ctx, r.DB)
 
 	if err := db.
-		Where("property_id = ?", lineageID).
+		Where("property_lineage_id = ?", lineageID).
 		Delete(&domain.PropertyAreaRegion{}).Error; err != nil {
 		return err
 	}

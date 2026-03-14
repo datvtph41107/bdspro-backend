@@ -143,7 +143,7 @@ message UpdatePropertyRequest {
   UpdateAmenityPayload     amenities     = 9;
   UpdateExternalRefPayload external_refs = 10;
   UpdateLineageMetaPayload lineage_meta  = 11;
-  UpdateAreaRegionPayload area_region = 12;
+  UpdateAreaRegionPayload areaRegions = 12;
   UpdatePersonalizationPayload personalization = 13;
 }
 
@@ -244,11 +244,11 @@ message UpdateMediaItem {
 
 // ─── amenities (REPLACE list — không dùng field_mask) ────────────────────────
 message UpdateAmenityPayload {
-  repeated uint64 amenity_ids = 1;
+  repeated uint64 amenityIds = 1;
 }
 
 message UpdateAreaRegionPayload {
-  repeated uint64 area_region_ids = 1;
+  repeated uint64 areaRegionIds = 1;
 }
 
 // ─── external_refs (list upsert — không dùng field_mask) ─────────────────────
@@ -412,6 +412,7 @@ message PropertyDetailResponse {
   optional PropertyType propertyType = 16;
   optional PropertyPersonalization personalization = 17;
   optional PropertyIdentify identifier = 18;
+  repeated sharepb.TagItem areaRegions = 19;
 }
 
 message PropertyStatistic {

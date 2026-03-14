@@ -1088,6 +1088,15 @@ SELECT
 		WHERE pa.property_lineage_id = pl.id
 		AND a.active = true
 	) AS amenities_raw,
+	(SELECT COALESCE(json_agg(json_build_object(
+		'id', ar.id,
+		'name', ar.name
+	)), '[]')
+	FROM property_area_region par
+	LEFT JOIN area_regions ar ON par.area_region_id = ar.id AND ar.deleted_at IS NULL
+	WHERE par.property_lineage_id = pl.id
+	AND ar.active = true
+	) AS area_regions_raw,
 	(SELECT COUNT(*) FROM property_relation WHERE property_id = pl.id AND relation_type = ? AND deleted_at IS NULL) AS asset_count,
 	(SELECT COUNT(*) FROM property_relation WHERE property_id = pl.id AND relation_type = ? AND deleted_at IS NULL) AS product_count,
 	(SELECT COUNT(*) FROM property_relation pr JOIN posts ON pr.relation_id = posts.product_id
@@ -1143,8 +1152,9 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 		PropertyTypeID                   *uint64
 		PropertyTypeName                 *string
 		// Media
-		MediaListRaw *json.RawMessage
-		AmenitiesRaw *json.RawMessage
+		MediaListRaw   *json.RawMessage
+		AmenitiesRaw   *json.RawMessage
+		AreaRegionsRaw *json.RawMessage
 		// PropertyInfo
 		InfoID           *uint64
 		Title            *string
@@ -1439,6 +1449,7 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 	// MediaList + Amenities: 2 query nhỏ
 	var media []domain.PropertyMedia
 	var amenities []domain.AmenityItem
+	var areaRegions []domain.AreaRegion
 	if row.MediaListRaw != nil {
 		if err := json.Unmarshal(*row.MediaListRaw, &media); err != nil {
 			return nil, err
@@ -1449,8 +1460,14 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 			return nil, err
 		}
 	}
+	if row.AreaRegionsRaw != nil {
+		if err := json.Unmarshal(*row.AreaRegionsRaw, &areaRegions); err != nil {
+			return nil, err
+		}
+	}
 	p.MediaList = media
 	p.Amenities = amenities
+	p.AreaRegions = areaRegions
 	return p, nil
 }
 
