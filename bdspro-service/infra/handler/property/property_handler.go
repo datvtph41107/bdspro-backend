@@ -2,7 +2,7 @@ package property_handler
 
 import (
 	"bdspro/infra/mapper"
-	"bdspro/infra/validator"
+	property_validator "bdspro/infra/validator/property"
 	"bdspro/internal/dto"
 	property_usecases "bdspro/internal/usecases/property"
 	_enum "common/domain/enum"
@@ -443,14 +443,12 @@ func (h *PropertyHandler) UpdateProperty(
 	ctx context.Context,
 	req *bdspropb.UpdatePropertyRequest,
 ) (*bdspropb.UpdatePropertyResponse, error) {
-
-	// 1. Auth
 	authenID := _utils.GetOriginIdFromContext(ctx)
 	if authenID == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
 
-	if err := validator.ValidateUpdateRequest(req); err != nil {
+	if err := property_validator.ValidateUpdateRequest(req); err != nil {
 		return nil, err
 	}
 

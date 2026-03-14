@@ -19,7 +19,7 @@ import (
 //   - ContributeStatus → Approved
 // ─────────────────────────────────────────────────────────────────────────────
 
-type PropertyContribute struct {
+type PropertyReport struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
 
 	// ── Target — BĐS nào đang được đóng góp ─────────────────────────────────
@@ -53,4 +53,6 @@ type PropertyContribute struct {
 	DeletedAt *time.Time `gorm:"column:deleted_at;index"          json:"deleted_at,omitempty"`
 }
 
-func (PropertyContribute) TableName() string { return "property_contribute" }
+func (PropertyReport) TableName() string {
+	return "property_contribute"
+}

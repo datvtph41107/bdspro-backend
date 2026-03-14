@@ -19,7 +19,6 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	golang.org/x/time v0.8.0
-	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
 	pb v0.0.0-00010101000000-000000000000
 )
@@ -91,4 +90,5 @@ require (
 	google.golang.org/grpc v1.72.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/driver/postgres v1.5.11 // indirect
 )

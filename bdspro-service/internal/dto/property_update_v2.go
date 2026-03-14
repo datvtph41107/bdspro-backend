@@ -97,10 +97,9 @@ type UpdateLandInfoDTO struct {
 	DocumentType *uint32
 	Plot         *uint32
 	Sheet        *uint32
-
-	AreaTotal *float64
-	AreaLand  *float64
-	AreaPlant *float64
+	AreaTotal    *float64
+	AreaLand     *float64
+	AreaPlant    *float64
 
 	FrontWidth  *float64
 	Depth       *float64

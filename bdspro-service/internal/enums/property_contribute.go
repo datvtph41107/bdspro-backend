@@ -2,7 +2,7 @@ package enums
 
 // ContributeType — loại đóng góp của user
 // Hiển thị trên UI "Chọn loại báo cáo"
-type ContributeType int32
+type ContributeType uint32
 
 const (
 	ContributeTypeCorrectInfo   ContributeType = 10 // Cung cấp thông tin chính xác
