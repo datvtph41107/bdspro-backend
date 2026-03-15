@@ -11,6 +11,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"strconv"
+	"time"
 
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -265,10 +266,13 @@ func (h *PropertyHandler) AddPropertyUser(
 		userId,
 	)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, userId)
-	h.SyncProvider.PutTimestamp(ctx, key, prop.UpdatedAt.UnixMilli())
+	t := time.Now()
+	keyList := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, userId)
+	keyItem := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, prop.ID)
+	h.SyncProvider.PutTimeRequest(ctx, keyList, t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, keyItem, t.UnixMilli())
 	return &bdspropb.Response{
 		Id:      prop.ID,
 		Message: "successfully",
@@ -409,6 +413,19 @@ func (h *PropertyHandler) CreateProperty(ctx context.Context, req *bdspropb.Crea
 	return &bdspropb.Response{
 		Id:      property.ID,
 		Message: "successfully",
+	}, nil
+}
+
+// ImportProperty tạo identifier trước, rồi lineage, sau đó update identifier.lineage_id. Dùng cho import data.
+func (h *PropertyHandler) ImportProperty(ctx context.Context, req *bdspropb.CreatePropertyRequest) (*bdspropb.Response, error) {
+	body := h.PropertyMapper.CreatePropertyPbToDTO(req)
+	property, err := h.PropertyUsecase.ImportProperty(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.Response{
+		Id:      property.ID,
+		Message: "import successfully",
 	}, nil
 }
 

@@ -327,6 +327,8 @@ SELECT
 	li.document_no,
 	li.issuring_auth,
 	li.area_total AS land_area_total,
+	li.plot,
+	li.sheet,
 	li.note AS land_note,
 	li.land_note AS land_note2,
 	avatar.id AS avatar_id,
@@ -384,6 +386,8 @@ SELECT
 		DocumentNo                       *string
 		IssuringAuth                     *string
 		LandAreaTotal                    *float64
+		Plot                             uint32
+		Sheet                            uint32
 		LandNote                         *string
 		LandNote2                        *string
 		AvatarID                         *uint64
@@ -517,6 +521,8 @@ SELECT
 				DocumentNo:   ptrStr(row.DocumentNo),
 				IssuringAuth: ptrStr(row.IssuringAuth),
 				AreaTotal:    row.LandAreaTotal,
+				Plot:         row.Plot,
+				Sheet:        row.Sheet,
 				Note:         ptrStr(row.LandNote),
 				LandNote:     ptrStr(row.LandNote2),
 			}
@@ -1069,12 +1075,16 @@ SELECT
 	bi.direction, bi.balcony_direction, bi.note AS bi_note,
 	ev.id AS ev_id, ev.title AS ev_title, ev.file_id, ev.description AS ev_description,
 	ps.id AS statistic_id, ps.product_count, ps.asset_count, ps.listing_count,
-	(SELECT COALESCE(json_agg(json_build_object(
-			'id', pm.id,
-			'mediaUrl', pm.media_url,
-			'mediaType', pm.media_type,
-			'sortOrder', pm.sort_order
-		)), '[]')
+	(SELECT COALESCE(
+			json_agg(
+				json_build_object(
+					'id', pm.id,
+					'mediaUrl', pm.media_url,
+					'mediaType', pm.media_type,
+					'sortOrder', pm.sort_order
+				)
+				ORDER BY pm.sort_order ASC
+			), '[]')
 		FROM property_media pm
 		WHERE pm.lineage_id = pl.id
 		AND pm.deleted_at IS NULL

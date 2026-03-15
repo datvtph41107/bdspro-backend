@@ -401,6 +401,7 @@ var enumProviders = map[string][]*bdspropb.EnumItem{
 	"mining_mode":             enumMapToList(enums.MiningModeNames),
 	"mining_scope":            enumMapToList(enums.MiningScopeNames),
 	"classify_property":       enumMapToList(enums.EClassifyPropertyNames),
+	"purpose_used":            enumMapToList(enums.EPurposeUsedNames),
 }
 
 // @Summary Lấy enum dạng name-value

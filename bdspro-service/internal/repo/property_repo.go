@@ -61,6 +61,8 @@ type PropertyMediaRepo interface {
 
 type PropertyIdentifyRepo interface {
 	Create(ctx context.Context, entity *domain.PropertyIdentify) error
+	GetByID(ctx context.Context, id uint64) (*domain.PropertyIdentify, error)
+	UpdateFields(ctx context.Context, id uint64, fields map[string]any) error
 }
 
 type PropertyLocationRepo interface {

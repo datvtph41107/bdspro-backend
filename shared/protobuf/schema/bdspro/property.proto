@@ -77,6 +77,14 @@ service PropertyService {
       body: "*"
     };
   };
+
+  // ImportProperty: tạo identifier trước, rồi lineage, sau đó update identifier.lineage_id (dùng cho import data).
+  rpc ImportProperty(CreatePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/property/import"
+      body: "*"
+    };
+  };
   
   rpc SearchTags(TagSearchRequest) returns (TagListResponse) {
     option (google.api.http) = {
@@ -235,11 +243,11 @@ message UpdateMediaPayload {
 
 message UpdateMediaItem {
   uint64 id = 1;
-  string media_type = 2;
-  string media_url = 3;
-  string thumb_url = 4;
-  int32 sort_order = 5;
-  bool is_cover = 6;
+  string mediaType = 2;
+  string mediaUrl = 3;
+  string thumbUrl = 4;
+  int32 sortOrder = 5;
+  bool isCover = 6;
 }
 
 // ─── amenities (REPLACE list — không dùng field_mask) ────────────────────────

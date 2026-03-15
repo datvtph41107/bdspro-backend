@@ -5,6 +5,7 @@ import (
 	property_repo "bdspro/internal/repo/property"
 	"context"
 	"errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -45,4 +46,12 @@ func (r *MediaRepo) UpdateFields(ctx context.Context, id uint64, fields map[stri
 		Model(&domain.PropertyMedia{}).
 		Where("id = ?", id).
 		Updates(fields).Error
+}
+
+func (r *MediaRepo) DeleteByLineageIDExcept(ctx context.Context, lineageID uint64, keepIDs []uint64) error {
+	q := GetDB(ctx, r.DB).Where("lineage_id = ?", lineageID)
+	if len(keepIDs) > 0 {
+		q = q.Where("id NOT IN (?)", keepIDs)
+	}
+	return q.Model(&domain.PropertyMedia{}).Update("deleted_at", time.Now()).Error
 }

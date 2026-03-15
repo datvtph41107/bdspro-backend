@@ -214,7 +214,7 @@ func (u *PropertyUsecase) AddPropertyUser(
 		return nil, err
 	}
 	if lineage == nil {
-		return nil, _errors.NotFoundException("Property not found")
+		return nil, _errors.NotFoundException("Không tìm thấy BĐS")
 	}
 
 	existed, err := u.PropertyUserRepo.GetByLineageAndOwnerUnscoped(ctx, lineage.ID, userID)
@@ -228,7 +228,7 @@ func (u *PropertyUsecase) AddPropertyUser(
 			}
 			return lineage, nil
 		}
-		return nil, _errors.ConflictException("Property already added")
+		return nil, _errors.ConflictException("Đã thêm BĐS này")
 	}
 
 	if _, err := u.PropertyUserRepo.CreateOwner(ctx, lineage.ID, userID); err != nil {
@@ -1480,6 +1480,29 @@ func (u *PropertyUsecase) directUpdate(
 ) (*dto.UpdatePropertyResult, error) {
 	fkPatch := make(FKPatch)
 
+	// Side blocks: media, amenities, refs, area_regions, lineage_meta
+	if err := u.handleSideBlocks(ctx, lineage.ID, cmd, fkPatch); err != nil {
+		return nil, err
+	}
+
+	// Lấy ảnh đầu tiên trong media làm avatar, gán ID vào info
+	if list, err := u.MediaRepo.GetByLineageID(ctx, lineage.ID); err == nil && len(list) > 0 {
+		var avatarID uint64
+		for i := range list {
+			if list[i].MediaType == "image" {
+				avatarID = list[i].ID
+				break
+			}
+		}
+		if avatarID == 0 {
+			avatarID = list[0].ID // không có image thì lấy media đầu tiên
+		}
+		if cmd.Info == nil {
+			cmd.Info = &dto.UpdateInfoDTO{}
+		}
+		cmd.Info.AvatarID = &avatarID
+	}
+
 	// Khai báo handlers — thứ tự không quan trọng, độc lập nhau
 	// Mask được truyền vào từng handler để patch.Builder guard đúng
 	handlers := []struct {
@@ -1514,11 +1537,6 @@ func (u *PropertyUsecase) directUpdate(
 			return nil, err
 		}
 		fkPatch.Set(entry.h.FKColumn(), newFK)
-	}
-
-	// Side blocks: media, amenities, refs, area_regions, lineage_meta
-	if err := u.handleSideBlocks(ctx, lineage.ID, cmd, fkPatch); err != nil {
-		return nil, err
 	}
 
 	// Flush tất cả FK + lineage_meta fields vào lineage — 1 UPDATE duy nhất
@@ -1654,10 +1672,11 @@ func (u *PropertyUsecase) handleSideBlocks(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// handleMedia — upsert per item
+// handleMedia — xóa media không còn trong list, rồi upsert per item
 //
 // id=0 → INSERT mới
-// id>0 → UPDATE record đó (chỉ field được gửi qua patch.Builder)
+// id>0 → UPDATE record đó
+// Media có lineage_id nhưng không nằm trong data.Items → DELETE
 // ─────────────────────────────────────────────────────────────────────────────
 
 func (u *PropertyUsecase) handleMedia(
@@ -1665,7 +1684,16 @@ func (u *PropertyUsecase) handleMedia(
 	lineageID uint64,
 	data *dto.UpdateMediaDTO,
 ) error {
+	keepIDs := make([]uint64, 0, len(data.Items))
 	for _, item := range data.Items {
+		if item.ID > 0 {
+			keepIDs = append(keepIDs, item.ID)
+		}
+	}
+	if err := u.MediaRepo.DeleteByLineageIDExcept(ctx, lineageID, keepIDs); err != nil {
+		return fmt.Errorf("delete media: %w", err)
+	}
+	for orderIdx, item := range data.Items {
 		if item.ID > 0 {
 			// UPDATE — partial update, chỉ field non-zero
 			// Media dùng scalar (không *T) → update tất cả field có trong item
@@ -1673,8 +1701,8 @@ func (u *PropertyUsecase) handleMedia(
 				"media_type": item.MediaType,
 				"media_url":  item.MediaURL,
 				"thumb_url":  item.ThumbURL,
-				"sort_order": item.SortOrder,
-				"is_cover":   item.IsCover,
+				"sort_order": orderIdx + 1,
+				// "is_cover":   item.IsCover,
 			}
 			if err := u.MediaRepo.UpdateFields(ctx, item.ID, fields); err != nil {
 				return fmt.Errorf("update media id=%d: %w", item.ID, err)
@@ -1686,7 +1714,7 @@ func (u *PropertyUsecase) handleMedia(
 				MediaType: item.MediaType,
 				MediaURL:  item.MediaURL,
 				ThumbURL:  item.ThumbURL,
-				SortOrder: item.SortOrder,
+				SortOrder: int32(orderIdx + 1),
 				IsCover:   item.IsCover,
 			}
 			if err := u.MediaRepo.Create(ctx, entity); err != nil {
