@@ -15,6 +15,7 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -55,6 +56,7 @@ type PropertyUsecase struct {
 	AmenityRepo              property_repo.PropertyAmenityRepository
 	AreaRegionRepo           property_repo.AreaRegionRepository
 	ExternalRefRepo          property_repo.PropertyExternalRefRepository
+	ReportRepo               property_repo.PropertyReportRepository
 }
 
 func NewPropertyUsecase(
@@ -92,6 +94,7 @@ func NewPropertyUsecase(
 	amenityRepo property_repo.PropertyAmenityRepository,
 	areaRegionRepo property_repo.AreaRegionRepository,
 	externalRefRepo property_repo.PropertyExternalRefRepository,
+	reportRepo property_repo.PropertyReportRepository,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
@@ -128,6 +131,7 @@ func NewPropertyUsecase(
 		ExternalRefRepo:          externalRefRepo,
 		AreaRegionRepo:           areaRegionRepo,
 		AmenityRepo:              amenityRepo,
+		ReportRepo:               reportRepo,
 	}
 }
 
@@ -1529,6 +1533,10 @@ func (u *PropertyUsecase) directUpdate(
 			lineage.EdvidenceID,
 			&EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo},
 		},
+		{
+			lineage.EdvidenceID,
+			&EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo},
+		},
 	}
 
 	for _, entry := range handlers {
@@ -1826,4 +1834,118 @@ func (u *PropertyUsecase) updatePersonalization(
 		Build()
 
 	return u.PropertyUserRepo.UpdateFieldsByLineageAndOwner(ctx, lineageID, originID, fields)
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SubmitReport — API báo cáo sai / gắn cờ / đóng góp BĐS
+//
+// Flow:
+//  1. Load lineage gốc, verify tồn tại.
+//  2. Check duplicate report (cùng reporter + lineage + status pending/reviewing).
+//  3. Nếu có propose data → chạy proposeChange (tái sử dụng flow hiện tại)
+//     tạo propose lineage mới copy từ origin.
+//  4. Tạo bản ghi property_report liên kết lineage gốc + propose lineage.
+//  5. Async: bump sync timestamp.
+//
+// NOTE:
+//   - Reporter KHÔNG cần là owner của lineage (khác với UpdateProperty).
+//   - proposeChange được tái sử dụng nguyên vẹn — không sửa.
+//   - Usecase này chỉ thêm orchestration layer (report record) bên ngoài.
+//
+// ═════════════════════════════════════════════════════════════════════════════
+func (u *PropertyUsecase) SubmitReport(
+	ctx context.Context,
+	cmd *dto.SubmitReportDTO,
+	reporterOriginID uint64,
+) (*dto.SubmitReportResult, error) {
+	var result *dto.SubmitReportResult
+
+	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		lineage, err := u.LineageRepo.GetByID(txCtx, cmd.LineageID)
+		if err != nil {
+			return err
+		}
+		if lineage == nil {
+			return fmt.Errorf("property lineage id=%d not found", cmd.LineageID)
+		}
+
+		existing, err := u.ReportRepo.GetByLineageAndReporter(txCtx, lineage.ID, reporterOriginID)
+		if err != nil {
+			return err
+		}
+		if existing != nil {
+			return _errors.ConflictException("you already have a pending report for this property")
+		}
+
+		var proposeLineageID *uint64
+		if cmd.ContributeData != nil {
+			proposeResult, err := u.proposeChange(txCtx, lineage, cmd.ContributeData)
+			if err != nil {
+				return fmt.Errorf("propose change: %w", err)
+			}
+			proposeLineageID = &proposeResult.LineageID
+		}
+
+		report := &domain.PropertyReport{
+			LineageID:          lineage.ID,
+			ReporterOriginID:   reporterOriginID,
+			ReportType:         enums.EReportType(cmd.ReportType),
+			SubIssues:          marshalJSONSafe(cmd.SubIssues),
+			Status:             enums.EReportStatusPending,
+			Description:        derefStr(cmd.Note),
+			AttachmentMediaIDs: marshalJSONSafe(cmd.AttachmentMediaIDs),
+			AttachmentFileIDs:  marshalJSONSafe(cmd.AttachmentFileIDs),
+		}
+		if err := u.ReportRepo.Create(txCtx, report); err != nil {
+			return fmt.Errorf("create report: %w", err)
+		}
+
+		result = &dto.SubmitReportResult{
+			ReportID:         report.ID,
+			LineageID:        lineage.ID,
+			ProposeLineageID: proposeLineageID,
+			ReportType:       cmd.ReportType,
+			Note:             derefStr(cmd.Note),
+			CreatedAt:        _utils.TimeNowRFC3339(),
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		cloneCtx := _utils.CloneContext(ctx)
+		now := time.Now().UnixMilli()
+		u.SyncProvider.PutTimestamp(cloneCtx,
+			u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), now)
+	}()
+
+	return result, nil
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+func marshalJSONSafe(v any) string {
+	switch val := v.(type) {
+	case []string:
+		if len(val) == 0 {
+			return ""
+		}
+	case []uint64:
+		if len(val) == 0 {
+			return ""
+		}
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		return ""
+	}
+	s := string(b)
+	if s == "null" || s == "[]" {
+		return ""
+	}
+	return s
 }

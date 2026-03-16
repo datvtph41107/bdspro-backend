@@ -496,3 +496,46 @@ func (h *PropertyHandler) ArchiveProperties(ctx context.Context, req *bdspropb.A
 		Message: "Properties " + action + " successfully",
 	}, nil
 }
+
+// SubmitReport — gRPC handler cho API báo cáo sai / gắn cờ / đóng góp BĐS.
+//
+// Flow:
+//  1. Auth guard — lấy originID từ context.
+//  2. Validate proto request — fail fast trước khi map.
+//  3. Map proto → DTO — pure copy, không logic.
+//  4. Gọi usecase.
+//  5. Build response.
+func (h *PropertyHandler) SendPropertyReport(
+	ctx context.Context,
+	req *bdspropb.SendReportPropertyRequest,
+) (*bdspropb.ReportPropertyResponse, error) {
+	reporterOriginID := _utils.GetOriginIdFromContext(ctx)
+	if reporterOriginID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+
+	if err := property_validator.ValidateSubmitReportRequest(req); err != nil {
+		return nil, err
+	}
+
+	cmd := mapReportRequestToCmd(req)
+
+	result, err := h.PropertyUsecase.SubmitReport(ctx, cmd, reporterOriginID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &bdspropb.ReportPropertyResponse{
+		ReportId:  result.ReportID,
+		LineageId: result.LineageID,
+		Type:      uint32(result.ReportType),
+		Note:      result.Note,
+		CreatedAt: result.CreatedAt,
+		Message:   "report submitted successfully",
+	}
+	if result.ProposeLineageID != nil {
+		resp.ProposeLineageId = *result.ProposeLineageID
+	}
+
+	return resp, nil
+}

@@ -6,17 +6,6 @@ import (
 	bdspropb "pb/types/bdspro"
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mapper layer — proto → DTO
-//
-// Quy tắc cứng (vi phạm = bug):
-//   1. Không có if/else logic — chỉ copy
-//   2. Không validate — đã làm ở layer trên
-//   3. Không transform — copy pointer trực tiếp (proto optional *T → DTO *T)
-//   4. Sub-domain nil proto → return nil (không khởi tạo struct rỗng)
-//   5. Sub-group lồng nhau (Basic/Area/...) → nil check trước khi map
-// ─────────────────────────────────────────────────────────────────────────────
-
 func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePropertyDTO {
 	return &dto.UpdatePropertyDTO{
 		LineageID: req.Id,
@@ -39,8 +28,6 @@ func mapInfoPayload(p *bdspropb.UpdateInfoPayload) *dto.UpdateInfoDTO {
 	if p == nil {
 		return nil
 	}
-	// proto3 optional field → Go *T (generated code)
-	// Copy pointer trực tiếp — nil=absent được giữ nguyên
 	return &dto.UpdateInfoDTO{
 		Title:           p.Title,
 		Note:            p.Note,
@@ -192,4 +179,31 @@ func mapLineageMetaPayload(p *bdspropb.UpdateLineageMetaPayload) *dto.UpdateLine
 		LineageStatus:      p.LineageStatus,
 		VerifiedNationalAt: p.VerifiedNationalAt,
 	}
+}
+
+func mapReportRequestToCmd(req *bdspropb.SendReportPropertyRequest) *dto.SubmitReportDTO {
+	cmd := &dto.SubmitReportDTO{
+		LineageID:          req.Id,
+		ReportType:         int32(req.Type),
+		SubIssues:          req.SubIssues,
+		AttachmentMediaIDs: req.AttachmentMediaIds,
+		AttachmentFileIDs:  req.AttachmentFileIds,
+	}
+
+	if req.Note != nil {
+		cmd.Note = req.Note
+	}
+
+	if req.RelatedLineageId != nil {
+		id := *req.RelatedLineageId
+		cmd.RelatedLineageID = &id
+	}
+
+	if req.ContributeData != nil {
+		updateDTO := mapUpdateRequestToCmd(req.ContributeData)
+		updateDTO.LineageID = req.Id
+		cmd.ContributeData = updateDTO
+	}
+
+	return cmd
 }

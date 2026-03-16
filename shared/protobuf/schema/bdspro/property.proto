@@ -147,15 +147,31 @@ message SendReportPropertyRequest {
   uint64 id = 1;
   uint32 type = 2;
   optional string note = 3;
-  optional UpdatePropertyRequest contributeData = 4;
+  optional UpdatePropertyRequest contribute_data = 4;
+  // Sub-issues chi tiết người dùng chọn (string constants).
+  // VD: ["wrong_name", "wrong_area", "wrong_coords"]
+  // Danh sách constant định nghĩa ở enums/report.go phía server.
+  repeated string sub_issues = 5;
+
+  // BĐS liên quan — bắt buộc khi type=30 (duplicate/trùng)
+  optional uint64 related_lineage_id = 6;
+
+  // Media IDs làm bằng chứng (đã upload qua media endpoint)
+  repeated uint64 attachment_media_ids = 7;
+
+  // File IDs tài liệu đính kèm (đã upload)
+  repeated uint64 attachment_file_ids = 8;
 }
 
+// message mới:
 message ReportPropertyResponse {
-  uint32 type = 1;
-  string note =2;
-  uint64 lineage_id = 3;
-  string updated_at = 4;
-  string message    = 5;
+  uint64 report_id         = 1; // ID của property_report vừa tạo
+  uint64 lineage_id        = 2; // lineage gốc được báo cáo
+  uint64 propose_lineage_id = 3; // propose lineage (0 nếu không có contribute_data)
+  uint32 type              = 4; // echo lại report_type
+  string note              = 5; // echo lại note
+  string created_at        = 6;
+  string message           = 7;
 }
 
 message UpdatePropertyRequest {

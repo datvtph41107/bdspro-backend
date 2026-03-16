@@ -313,6 +313,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_mapper.NewProjectMapper,
 	bdspro_infra_handler_property.NewPropertyHandler,
 	bdspro_infra_mapper.NewPropertyMapper,
+	bdspro_infra_postgres.NewPropertyReportRepository,
 	bdspro_infra_mapper.NewPropertyTypeMapper,
 	bdspro_internal_usecases.NewPropertyTypeUsecase,
 	bdspro_internal_usecases_property.NewPropertyUsecase,

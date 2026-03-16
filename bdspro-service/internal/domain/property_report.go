@@ -2,57 +2,45 @@ package domain
 
 import (
 	"bdspro/internal/enums"
-	"time"
+	_models "common/domain/entity"
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PropertyContribute — bản ghi đóng góp / báo cáo của user
-//
-// Hai trường hợp:
-//   1. Báo cáo thuần (WrongInfo, Spam...): ProposeLineageID = nil
-//   2. Đóng góp có dữ liệu (CorrectInfo): ProposeLineageID trỏ đến
-//      PropertyLineage mới được tạo bởi proposeChange()
-//
-// Khi VerifyContribute (approve):
-//   - ProposeLineage trở thành bản gốc mới
-//   - OriginLineage được lưu lịch sử (IdentifyPropertyID không đổi, IsArchived=true)
-//   - ContributeStatus → Approved
-// ─────────────────────────────────────────────────────────────────────────────
-
 type PropertyReport struct {
-	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
+	_models.BaseEntity
 
-	// ── Target — BĐS nào đang được đóng góp ─────────────────────────────────
-	LineageID uint64 `gorm:"column:lineage_id;not null;index" json:"lineage_id"`
+	// FK đến lineage gốc được báo cáo
+	LineageID uint64           `gorm:"column:lineage_id;type:bigint;not null;index" json:"lineageId"`
+	Lineage   *PropertyLineage `gorm:"foreignKey:LineageID;references:ID" json:"lineage,omitempty"`
 
-	// ── Contributor ───────────────────────────────────────────────────────────
-	ContributorID uint64 `gorm:"column:contributor_id;not null;index" json:"contributor_id"`
+	// Người báo cáo (origin_id từ context)
+	ReporterOriginID uint64 `gorm:"column:reporter_origin_id;type:bigint;not null;index" json:"reporterOriginId"`
 
-	// ── Loại đóng góp ─────────────────────────────────────────────────────────
-	ContributeType enums.ContributeType `gorm:"column:contribute_type;not null" json:"contribute_type"`
+	// Loại báo cáo chính
+	ReportType enums.EReportType `gorm:"column:report_type;type:smallint;not null;index" json:"reportType"`
 
-	// ── Nội dung báo cáo / mô tả đóng góp ────────────────────────────────────
-	Note string `gorm:"column:note;type:text" json:"note"`
+	// Sub-issues được check (bitmask hoặc JSON array string)
+	// VD: "wrong_name,wrong_area,wrong_location"
+	SubIssues string `gorm:"column:sub_issues;type:text" json:"subIssues,omitempty"`
 
-	// ── Link đến propose lineage (chỉ khi ContributeType = CorrectInfo) ───────
-	// nil = báo cáo thuần, không có dữ liệu đề xuất
-	// non-nil = đóng góp có dữ liệu, trỏ đến PropertyLineage được tạo bởi proposeChange()
-	ProposeLineageID *uint64 `gorm:"column:propose_lineage_id;index" json:"propose_lineage_id,omitempty"`
+	// Trạng thái xử lý
+	Status enums.EReportStatus `gorm:"column:status;type:smallint;not null;default:10;index" json:"status"`
 
-	// ── Trạng thái xử lý ──────────────────────────────────────────────────────
-	Status enums.ContributeStatus `gorm:"column:status;not null;default:10" json:"status"`
+	// Mô tả chi tiết từ người báo cáo
+	Description string `gorm:"column:description;type:text" json:"description,omitempty"`
 
-	// ── Review ────────────────────────────────────────────────────────────────
-	ReviewedByID *uint64    `gorm:"column:reviewed_by_id"          json:"reviewed_by_id,omitempty"`
-	ReviewedAt   *time.Time `gorm:"column:reviewed_at"             json:"reviewed_at,omitempty"`
-	ReviewNote   string     `gorm:"column:review_note;type:text"   json:"review_note,omitempty"`
+	// Ảnh đính kèm (JSON array of media IDs hoặc URLs)
+	AttachmentMediaIDs string `gorm:"column:attachment_media_ids;type:text" json:"attachmentMediaIds,omitempty"`
 
-	// ── Timestamps ────────────────────────────────────────────────────────────
-	CreatedAt time.Time  `gorm:"column:created_at;autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
-	DeletedAt *time.Time `gorm:"column:deleted_at;index"          json:"deleted_at,omitempty"`
+	// File đính kèm tài liệu (JSON array)
+	AttachmentFileIDs string `gorm:"column:attachment_file_ids;type:text" json:"attachmentFileIds,omitempty"`
+
+	// Ghi chú của admin khi xử lý
+	AdminNote string `gorm:"column:admin_note;type:text" json:"adminNote,omitempty"`
+
+	// Admin xử lý
+	ReviewerOriginID *uint64 `gorm:"column:reviewer_origin_id;type:bigint;index" json:"reviewerOriginId,omitempty"`
 }
 
 func (PropertyReport) TableName() string {
-	return "property_contribute"
+	return "property_report"
 }
