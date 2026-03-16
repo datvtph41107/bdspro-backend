@@ -18,8 +18,8 @@ type ContactLabelDTO struct {
 	Color        string `json:"color"`
 	Icon         string `json:"icon"`
 	IsActive     bool   `json:"isActive"`
-	SortOrder    int    `json:"sortOrder"`
-	ContactCount int    `json:"contactCount"`
+	SortOrder    int32  `json:"sortOrder"`
+	ContactCount int32  `json:"contactCount"`
 	IsSystem     bool   `json:"isSystem"`
 	Status       int    `json:"status"`
 	Type         int    `json:"type"`
@@ -35,9 +35,9 @@ type CreateContactLabelRequestDTO struct {
 	Color       string `json:"color" validate:"max=7"`
 	Icon        string `json:"icon" validate:"max=100"`
 	IsActive    bool   `json:"isActive"`
-	SortOrder   int    `json:"sortOrder"`
+	SortOrder   int32  `json:"sortOrder"`
 	IsSystem    bool   `json:"isSystem"`
-	Type        int    `json:"type"`
+	Type        int32  `json:"type"`
 }
 
 // UpdateContactLabelRequestDTO represents the request DTO for updating contact label
@@ -48,9 +48,9 @@ type UpdateContactLabelRequestDTO struct {
 	Color       string `json:"color" validate:"max=7"`
 	Icon        string `json:"icon" validate:"max=100"`
 	IsActive    bool   `json:"isActive"`
-	SortOrder   int    `json:"sortOrder"`
+	SortOrder   int32  `json:"sortOrder"`
 	IsSystem    bool   `json:"isSystem"`
-	Type        int    `json:"type"`
+	Type        int32  `json:"type"`
 }
 
 // ListContactLabelsRequestDTO represents the request DTO for listing contact labels
@@ -107,4 +107,13 @@ func (d *ContactLabelDTO) FromDomain(contactLabel *domain.ContactLabel) {
 	d.Type = int(contactLabel.Type)
 	d.CreatedAt = _utils.FormatTimeToString(contactLabel.CreatedAt)
 	d.UpdatedAt = _utils.FormatTimeToString(contactLabel.UpdatedAt)
+}
+
+// ContactLabelFilterDTO represents the filter DTO for listing contact labels
+type ContactLabelFilterDTO struct {
+	Page     int    `json:"page"`
+	Size     int    `json:"size"`
+	Search   string `json:"search"`
+	IsActive bool   `json:"isActive"`
+	IsSystem bool   `json:"isSystem"`
 }

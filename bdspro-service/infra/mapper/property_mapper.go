@@ -1115,6 +1115,14 @@ func (m *PropertyMapper) PbToArchivePropertiesDTO(req *bdspropb.ArchivePropertie
 	}
 }
 
+// PbToHiddenPropertiesDTO converts protobuf HiddenPropertiesRequest to DTO
+func (m *PropertyMapper) PbToHiddenPropertiesDTO(req *bdspropb.HiddenPropertiesRequest) *dto.HiddenPropertiesDTO {
+	return &dto.HiddenPropertiesDTO{
+		IDs:    req.Ids,
+		Hidden: req.Hidden,
+	}
+}
+
 // PbToArchiveProductsDTO converts protobuf ArchiveProductsRequest to DTO
 func (m *PropertyMapper) PbToArchiveProductsDTO(req *bdspropb.ArchiveProductsRequest) *dto.ArchiveProductsDTO {
 	return &dto.ArchiveProductsDTO{

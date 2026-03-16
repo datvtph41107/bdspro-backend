@@ -5,6 +5,7 @@ import (
 	"tqd/internal/domain"
 
 	_utils "common/utils"
+	tqdpb "pb/types/tqd"
 )
 
 // DirectorySupplierMapper handles mapping between domain and response
@@ -167,5 +168,52 @@ func (m *DirectorySupplierMapper) ToListResponse(suppliers []domain.DirectorySup
 	return map[string]interface{}{
 		"data":  data,
 		"total": total,
+	}
+}
+
+// ToProto converts domain DirectorySupplier to proto DirectorySupplier
+func (m *DirectorySupplierMapper) ToProto(supplier *domain.DirectorySupplier) *tqdpb.DirectorySupplier {
+	if supplier == nil {
+		return nil
+	}
+
+	// Parse tags from JSON string
+	var tags []string
+	if supplier.RawTags != "" {
+		json.Unmarshal([]byte(supplier.RawTags), &tags)
+	}
+
+	// Parse categories from JSON string
+	var categories []string
+	if supplier.RawCategories != "" {
+		json.Unmarshal([]byte(supplier.RawCategories), &categories)
+	}
+
+	return &tqdpb.DirectorySupplier{
+		Id:              supplier.ID,
+		Name:            supplier.Name,
+		Code:            supplier.Code,
+		Description:     supplier.Description,
+		ContactPerson:   supplier.ContactPerson,
+		Phone:           supplier.Phone,
+		Email:           supplier.Email,
+		Address:         supplier.Address,
+		Website:         supplier.Website,
+		TaxCode:         supplier.TaxCode,
+		BusinessLicense: supplier.BusinessLicense,
+		Rating:          supplier.Rating,
+		IsActive:        supplier.IsActive,
+		ServiceCount:    supplier.ServiceCount,
+		ContractCount:   supplier.ContractCount,
+		TotalValue:      supplier.TotalValue,
+		JoinDate:        _utils.FormatTimeToString(supplier.JoinDate),
+		LastContactDate: _utils.FormatTimeToString(supplier.LastContactDate),
+		Notes:           supplier.Notes,
+		Tags:            tags,
+		Categories:      categories,
+		CreatedAt:       _utils.FormatTimeToString(supplier.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(supplier.UpdatedAt),
+		CreatedBy:       *supplier.CreatedBy,
+		UpdatedBy:       *supplier.UpdatedBy,
 	}
 }

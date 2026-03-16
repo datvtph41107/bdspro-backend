@@ -25,3 +25,43 @@ type ListDirectoryCategoriesRequest struct {
 	Search   string `json:"search"`
 	IsActive *bool  `json:"is_active"`
 }
+
+// CreateDirectoryCategoryRequestDTO represents the request DTO for creating directory category
+type CreateDirectoryCategoryRequestDTO struct {
+Name        string `json:"name" validate:"required"`
+Description string `json:"description"`
+Code        string `json:"code"`
+Icon        string `json:"icon"`
+Color       string `json:"color"`
+IsActive    bool   `json:"isActive"`
+SortOrder   uint32 `json:"sortOrder"`
+Level       uint32 `json:"level"`
+}
+
+// DirectoryCategoryDTO represents the DTO for directory category
+type DirectoryCategoryDTO struct {
+ID             uint64 `json:"id"`
+Name           string `json:"name"`
+Description    string `json:"description"`
+Code           string `json:"code"`
+Icon           string `json:"icon"`
+Color          string `json:"color"`
+IsActive       bool   `json:"isActive"`
+SortOrder      uint32 `json:"sortOrder"`
+Level          uint32 `json:"level"`
+Path           string `json:"path"`
+DirectoryCount uint32 `json:"directoryCount"`
+CreatedAt      string `json:"createdAt"`
+UpdatedAt      string `json:"updatedAt"`
+CreatedBy      uint64 `json:"createdBy"`
+UpdatedBy      uint64 `json:"updatedBy"`
+}
+
+// DirectoryCategoryFilterDTO represents the filter DTO for listing directory categories
+type DirectoryCategoryFilterDTO struct {
+Page     int    `json:"page"`
+Size     int    `json:"size"`
+Search   string `json:"search"`
+IsActive bool   `json:"isActive"`
+Level    uint32 `json:"level"`
+}

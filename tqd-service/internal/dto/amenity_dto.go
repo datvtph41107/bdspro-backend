@@ -2,41 +2,45 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	"tqd/internal/domain"
 )
 
-// AmenityDTO represents the data transfer object for amenity
+// AmenityDTO represents the amenity data transfer object
 type AmenityDTO struct {
 	ID          uint64 `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Icon        string `json:"icon"`
+	Category    string `json:"category"`
+	SortOrder   int    `json:"sortOrder"`
+	IsActive    bool   `json:"isActive"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`
 }
 
-// CreateAmenityRequestDTO represents the request DTO for creating amenity
+// CreateAmenityRequestDTO represents the request for creating an amenity
 type CreateAmenityRequestDTO struct {
-	Name        string `json:"name" validate:"required,min=1,max=255"`
-	Description string `json:"description" validate:"max=1000"`
-	Icon        string `json:"icon" validate:"max=255"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+	Category    string `json:"category"`
+	SortOrder   int    `json:"sortOrder"`
+	IsActive    bool   `json:"isActive"`
 }
 
-// UpdateAmenityRequestDTO represents the request DTO for updating amenity
+// UpdateAmenityRequestDTO represents the request for updating an amenity
 type UpdateAmenityRequestDTO struct {
-	Name        string `json:"name" validate:"required,min=1,max=255"`
-	Description string `json:"description" validate:"max=1000"`
-	Icon        string `json:"icon" validate:"max=255"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+	Category    string `json:"category"`
+	SortOrder   int    `json:"sortOrder"`
+	IsActive    bool   `json:"isActive"`
 }
 
-// ListAmenitiesRequestDTO represents the request DTO for listing amenities
-type ListAmenitiesRequestDTO struct {
+// AmenityFilterDTO represents the filter for listing amenities
+type AmenityFilterDTO struct {
 	_dto.Pagable
-	Search string `json:"search"`
-}
-
-// ListAmenitiesResponseDTO represents the response DTO for listing amenities
-type ListAmenitiesResponseDTO struct {
-	Data  []domain.Amenity `json:"data"`
-	Total int64            `json:"total"`
+	Search   string `json:"search"`
+	Category string `json:"category"`
+	IsActive *bool  `json:"isActive"`
 }

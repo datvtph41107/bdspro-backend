@@ -128,7 +128,7 @@ func (r *openHourPostgres) GetAll(ctx context.Context) ([]domain.OpenHour, error
 }
 
 // GetGroupedByDayOfWeek lấy danh sách open hours và group theo day_of_week bằng raw SQL
-func (r *openHourPostgres) GetGroupedByDayOfWeek(ctx context.Context, poiID *uint64) (map[int][]domain.OpenHour, error) {
+func (r *openHourPostgres) GetGroupedByDayOfWeek(ctx context.Context, poiID *uint64) (map[string][]domain.OpenHour, error) {
 	type TimeSlot struct {
 		ID        uint64  `json:"id"`
 		Name      string  `json:"name"`
@@ -139,7 +139,7 @@ func (r *openHourPostgres) GetGroupedByDayOfWeek(ctx context.Context, poiID *uin
 		IsOpen    bool    `json:"is_open"`
 		Status    uint32  `json:"status"`
 		Type      uint32  `json:"type"`
-		DayOfWeek int     `json:"day_of_week"`
+		DayOfWeek string  `json:"day_of_week"`
 	}
 
 	sqlQuery := `
@@ -166,7 +166,7 @@ func (r *openHourPostgres) GetGroupedByDayOfWeek(ctx context.Context, poiID *uin
 	}
 
 	// Map kết quả vào grouped map
-	grouped := make(map[int][]domain.OpenHour)
+	grouped := make(map[string][]domain.OpenHour)
 	for _, slot := range timeSlots {
 		hour := domain.OpenHour{
 			Name:      slot.Name,

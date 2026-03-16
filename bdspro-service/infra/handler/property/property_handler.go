@@ -482,14 +482,30 @@ func (h *PropertyHandler) DeleteProperties(ctx context.Context, req *bdspropb.De
 
 func (h *PropertyHandler) ArchiveProperties(ctx context.Context, req *bdspropb.ArchivePropertiesRequest) (*bdspropb.Response, error) {
 	dtoReq := h.PropertyMapper.PbToArchivePropertiesDTO(req)
-	err := h.PropertyUsecase.ArchiveProperties(ctx, dtoReq)
-	if err != nil {
+
+	if err := h.PropertyUsecase.ArchiveProperties(ctx, dtoReq); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to archive properties: %v", err)
 	}
 
 	action := "archived"
 	if !req.Archived {
 		action = "unarchived"
+	}
+
+	return &bdspropb.Response{
+		Message: "Properties " + action + " successfully",
+	}, nil
+}
+func (h *PropertyHandler) HideProperties(ctx context.Context, req *bdspropb.HiddenPropertiesRequest) (*bdspropb.Response, error) {
+	dtoReq := h.PropertyMapper.PbToHiddenPropertiesDTO(req)
+
+	if err := h.PropertyUsecase.HideProperties(ctx, dtoReq.IDs, dtoReq.Hidden); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update hidden status of properties: %v", err)
+	}
+
+	action := "hidden"
+	if !dtoReq.Hidden {
+		action = "unhidden"
 	}
 
 	return &bdspropb.Response{

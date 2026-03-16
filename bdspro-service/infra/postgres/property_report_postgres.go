@@ -9,12 +9,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// propertyReportRepo — GORM implementation của PropertyReportRepository.
 type propertyReportRepo struct {
 	db *gorm.DB
 }
 
-// NewPropertyReportRepository khởi tạo repo.
 func NewPropertyReportRepository(db *gorm.DB) property_repo.PropertyReportRepository {
 	return &propertyReportRepo{db: db}
 }

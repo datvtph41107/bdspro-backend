@@ -40,15 +40,8 @@ func NewPOIUsecase(poiRepo repo.IPOIRepo, mm *_map.MapManager) IPOIUsecase {
 
 // CreatePOI creates a new POI
 func (u *POIUsecase) CreatePOI(ctx context.Context, req *dto.CreatePOIRequestDTO) (*dto.POIDTO, *_err.ErrorDTO) {
-	// Validate category if provided
-	if req.CategoryID != nil {
-		if _, err := u.poiRepo.GetByID(ctx, *req.CategoryID); err != nil {
-			return nil, &_err.ErrorDTO{
-				Code:    400,
-				Message: "Danh mục không tồn tại",
-			}
-		}
-	}
+	// Note: Category validation should be done at handler/service layer
+	// as this usecase doesn't have access to category repository
 
 	// Convert request to domain
 	poi := mapper.CreatePOIRequestToDomain(req)
@@ -84,15 +77,8 @@ func (u *POIUsecase) UpdatePOI(ctx context.Context, id uint64, req *dto.UpdatePO
 		}
 	}
 
-	// Validate category if provided
-	if req.CategoryID != nil {
-		if _, err := u.poiRepo.GetByID(ctx, *req.CategoryID); err != nil {
-			return nil, &_err.ErrorDTO{
-				Code:    400,
-				Message: "Danh mục không tồn tại",
-			}
-		}
-	}
+	// Note: Category validation should be done at handler/service layer
+	// as this usecase doesn't have access to category repository
 
 	// Convert request to domain
 	updatedPOI := mapper.UpdatePOIRequestToDomain(req, existingPOI)
@@ -222,8 +208,6 @@ func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng float64, radius
 	}
 
 	pois, err := u.mm.Nearby(ctx, lat, lng, radius)
-
-	// pois, err := u.poiRepo.GetNearby(ctx, lat, lng, radius, limit)
 	if err != nil {
 		return nil, &_err.ErrorDTO{
 			Code:    500,
@@ -231,17 +215,8 @@ func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng float64, radius
 		}
 	}
 
-	// poiDTOs := mapper.POIListToDTO(pois)
-	poiDTOs := make([]dto.POIDTO, len(pois))
-	for i, poi := range pois {
-		poiDTO := &dto.POIDTO{
-			Lat: float64(poi.Lat),
-			Lng: float64(poi.Lon),
-		}
-		if poiDTO != nil {
-			poiDTOs[i] = *poiDTO
-		}
-	}
+	// Use mapper to correctly convert all fields
+	poiDTOs := mapper.POIListToDTO(pois)
 
 	return poiDTOs, nil
 }

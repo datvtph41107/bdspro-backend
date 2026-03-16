@@ -7,6 +7,7 @@ import (
 
 	_entity "common/domain/entity"
 	_utils "common/utils"
+	tqdpb "pb/types/tqd"
 )
 
 // ContactLabelMapper handles mapping between domain and DTO
@@ -117,4 +118,28 @@ func (m *ContactLabelMapper) ToDTOList(contactLabels []domain.ContactLabel) []dt
 		result[i] = *m.ToDTO(&contactLabel)
 	}
 	return result
+}
+
+// ToProto converts domain ContactLabel to proto ContactLabel
+func (m *ContactLabelMapper) ToProto(contactLabel *dto.ContactLabelDTO) *tqdpb.ContactLabel {
+	if contactLabel == nil {
+		return nil
+	}
+
+	return &tqdpb.ContactLabel{
+		Id:           contactLabel.ID,
+		Name:         contactLabel.Name,
+		Code:         contactLabel.Code,
+		Description:  contactLabel.Description,
+		Color:        contactLabel.Color,
+		Icon:         contactLabel.Icon,
+		IsActive:     contactLabel.IsActive,
+		SortOrder:    contactLabel.SortOrder,
+		ContactCount: int32(contactLabel.ContactCount),
+		IsSystem:     contactLabel.IsSystem,
+		Status:       int32(contactLabel.Status),
+		Type:         int32(contactLabel.Type),
+		CreatedAt:    contactLabel.CreatedAt,
+		UpdatedAt:    contactLabel.UpdatedAt,
+	}
 }

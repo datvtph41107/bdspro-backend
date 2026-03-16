@@ -59,9 +59,9 @@ func (h *ContactLabelHandler) CreateContactLabel(ctx context.Context, req *tqdpb
 		Color:       req.Color,
 		Icon:        req.Icon,
 		IsActive:    req.IsActive,
-		SortOrder:   int(req.SortOrder),
-		IsSystem:    req.IsSystem,
-		Type:        int(req.Type),
+		// SortOrder:   int(req.SortOrder),
+		IsSystem: req.IsSystem,
+		// Type:        int(req.Type),
 	}
 
 	// Validate request
@@ -150,9 +150,9 @@ func (h *ContactLabelHandler) UpdateContactLabel(ctx context.Context, req *tqdpb
 		Color:       req.Color,
 		Icon:        req.Icon,
 		IsActive:    req.IsActive,
-		SortOrder:   int(req.SortOrder),
-		IsSystem:    req.IsSystem,
-		Type:        int(req.Type),
+		// SortOrder:   int(req.SortOrder),
+		IsSystem: req.IsSystem,
+		Type:     req.Type,
 	}
 
 	// Update contact label
@@ -291,9 +291,9 @@ func (h *ContactLabelHandler) CreateContactLabelHTTP(c *gin.Context) {
 		Color:       req.Color,
 		Icon:        req.Icon,
 		IsActive:    req.IsActive,
-		SortOrder:   int(req.SortOrder),
-		IsSystem:    req.IsSystem,
-		Type:        int(req.Type),
+		// SortOrder:   int(req.SortOrder),
+		IsSystem: req.IsSystem,
+		// Type:        int(req.Type),
 	}
 
 	// Validate request
@@ -413,9 +413,9 @@ func (h *ContactLabelHandler) UpdateContactLabelHTTP(c *gin.Context) {
 		Color:       req.Color,
 		Icon:        req.Icon,
 		IsActive:    req.IsActive,
-		SortOrder:   int(req.SortOrder),
-		IsSystem:    req.IsSystem,
-		Type:        int(req.Type),
+		// SortOrder:   int(req.SortOrder),
+		IsSystem: req.IsSystem,
+		Type:     req.Type,
 	}
 
 	// Validate request

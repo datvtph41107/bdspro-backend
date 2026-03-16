@@ -3,10 +3,19 @@ package mapper
 import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
+	tqdpb "pb/types/tqd"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 )
+
+// PoiMapper handles mapping between domain and proto
+type PoiMapper struct{}
+
+// NewPoiMapper creates a new PoiMapper
+func NewPoiMapper() *PoiMapper {
+	return &PoiMapper{}
+}
 
 // POIToDTO converts POI domain entity to POI DTO
 func POIToDTO(poi *domain.POI) *dto.POIDTO {
@@ -168,4 +177,39 @@ func ListPOIsRequestToRepoRequest(req *dto.ListPOIsRequestDTO) *repo.ListPOIsReq
 			Size: req.Size,
 		},
 	}
+}
+
+// ToProto converts domain POI to proto Poi
+func (m *PoiMapper) ToProto(poi *domain.POI) *tqdpb.Poi {
+	if poi == nil {
+		return nil
+	}
+
+	protoPoi := &tqdpb.Poi{
+		Id:          poi.ID,
+		Code:        poi.Code,
+		Name:        poi.Name,
+		Address:     poi.Address,
+		Latitude:    poi.Lat,
+		Longitude:   poi.Lng,
+		CategoryId:  *poi.CategoryID,
+		Phone:       poi.Phone,
+		Website:     poi.Website,
+		Rating:      float64(poi.RatingPoint),
+		ReviewCount: uint32(poi.RatingCount),
+		IsActive:    poi.IsActive,
+		CreatedAt:   _utils.FormatTimeToString(poi.CreatedAt),
+		UpdatedAt:   _utils.FormatTimeToString(poi.UpdatedAt),
+	}
+
+	return protoPoi
+}
+
+// ToProtoList converts a list of POI domain entities to proto list
+func (m *PoiMapper) ToProtoList(pois []domain.POI) []*tqdpb.Poi {
+	protoPoints := make([]*tqdpb.Poi, len(pois))
+	for i, poi := range pois {
+		protoPoints[i] = m.ToProto(&poi)
+	}
+	return protoPoints
 }

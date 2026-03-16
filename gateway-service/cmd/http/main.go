@@ -261,7 +261,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
 		service.RegisterHubService(ctx, mux, env, opts)
-		// service.RegisterTqdService(ctx, mux, env, opts)
+		service.RegisterTqdService(ctx, mux, env, opts)
 
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))

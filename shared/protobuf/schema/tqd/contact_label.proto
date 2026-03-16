@@ -88,8 +88,8 @@ message DeleteContactLabelRequest {
 }
 
 message ListContactLabelsRequest {
-  int32 page = 1;
-  int32 size = 2;
+  uint32 page = 1;
+  uint32 size = 2;
   string search = 3;
   bool is_active = 4;
   bool is_system = 5;

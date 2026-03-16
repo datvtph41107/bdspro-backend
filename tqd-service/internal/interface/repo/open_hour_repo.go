@@ -8,5 +8,5 @@ import (
 
 type IOpenHourRepo interface {
 	_crud.ICrudRepo[domain.OpenHour]
-	GetGroupedByDayOfWeek(ctx context.Context, poiID *uint64) (map[int][]domain.OpenHour, error)
+	GetGroupedByDayOfWeek(ctx context.Context, poiID *uint64) (map[string][]domain.OpenHour, error)
 }

@@ -15,7 +15,6 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -494,12 +493,12 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 }
 
 // ListMe lấy danh sách Property của user (raw SQL), chỉ trả title, address, project, buildingInfo, avatar
-func (u *PropertyUsecase) ListMe(ctx context.Context, page, size uint32) ([]*domain.PropertyLineage, int64, error) {
+func (u *PropertyUsecase) ListMe(ctx context.Context, page, size uint32, filterStatus ...string) ([]*domain.PropertyLineage, int64, error) {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	if originId == 0 {
 		return nil, 0, _errors.UnauthorizedException("origin_id required")
 	}
-	return u.PropertyRepo.ListMe(ctx, originId, _dto.Pagable{Page: page, Size: size})
+	return u.PropertyRepo.ListMe(ctx, originId, _dto.Pagable{Page: page, Size: size}, filterStatus...)
 }
 
 // Detail lấy chi tiết Property theo ID
@@ -1375,7 +1374,6 @@ func (u *PropertyUsecase) DeleteProperties(ctx context.Context, ids []uint64) er
 
 func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.ArchivePropertiesDTO) error {
 	originId := _utils.GetOriginIdFromContext(ctx)
-
 	if originId == 0 {
 		return _errors.UnauthorizedException()
 	}
@@ -1390,10 +1388,29 @@ func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.Archiv
 			return _errors.InternalServerException("Failed to validate property ID: " + err.Error())
 		}
 		if property == nil {
-			return _errors.NotFoundException("Property with ID " + fmt.Sprintf("%d", id) + " not found")
+			return _errors.NotFoundException(fmt.Sprintf("Property with ID %d not found", id))
 		}
 	}
+
 	return u.PropertyRepo.ArchiveBatchProperties(ctx, req.IDs, req.Archived)
+}
+
+func (u *PropertyUsecase) HideProperties(ctx context.Context, ids []uint64, hidden bool) error {
+	if len(ids) == 0 {
+		return _errors.BadRequestException("No property IDs provided")
+	}
+
+	for _, id := range ids {
+		property, err := u.PropertyRepo.GetOneByID(ctx, id)
+		if err != nil {
+			return _errors.InternalServerException("Failed to validate property ID: " + err.Error())
+		}
+		if property == nil {
+			return _errors.NotFoundException(fmt.Sprintf("Property with ID %d not found", id))
+		}
+	}
+
+	return u.PropertyRepo.HideBatchProperties(ctx, ids, hidden)
 }
 
 // // UPDATE V2 PROPERTY
@@ -1890,11 +1907,12 @@ func (u *PropertyUsecase) SubmitReport(
 			LineageID:          lineage.ID,
 			ReporterOriginID:   reporterOriginID,
 			ReportType:         enums.EReportType(cmd.ReportType),
-			SubIssues:          marshalJSONSafe(cmd.SubIssues),
+			SubIssues:          marshalJSON(cmd.SubIssues),
 			Status:             enums.EReportStatusPending,
 			Description:        derefStr(cmd.Note),
-			AttachmentMediaIDs: marshalJSONSafe(cmd.AttachmentMediaIDs),
-			AttachmentFileIDs:  marshalJSONSafe(cmd.AttachmentFileIDs),
+			RelatedLineageID:   cmd.RelatedLineageID,
+			AttachmentMediaIDs: marshalJSON(cmd.AttachmentMediaIDs),
+			AttachmentFileIDs:  marshalJSON(cmd.AttachmentFileIDs),
 		}
 		if err := u.ReportRepo.Create(txCtx, report); err != nil {
 			return fmt.Errorf("create report: %w", err)
@@ -1922,30 +1940,4 @@ func (u *PropertyUsecase) SubmitReport(
 	}()
 
 	return result, nil
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-func marshalJSONSafe(v any) string {
-	switch val := v.(type) {
-	case []string:
-		if len(val) == 0 {
-			return ""
-		}
-	case []uint64:
-		if len(val) == 0 {
-			return ""
-		}
-	}
-	b, err := json.Marshal(v)
-	if err != nil {
-		return ""
-	}
-	s := string(b)
-	if s == "null" || s == "[]" {
-		return ""
-	}
-	return s
 }

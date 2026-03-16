@@ -18,7 +18,7 @@ type OpenHourListRequest struct {
 type OpenHourCreateRequest struct {
 	Name      string  `json:"name" binding:"required"`
 	POIID     *uint64 `json:"poiId"`
-	DayOfWeek int     `json:"dayOfWeek" binding:"required,min=2,max=8"` // 2=Monday, ..., 8=Sunday
+	DayOfWeek string  `json:"dayOfWeek" binding:"required,min=2,max=8"` // 2=Monday, ..., 8=Sunday
 	OpenTime  string  `json:"openTime" binding:"required"`              // TIME format HH:MM:SS
 	CloseTime string  `json:"closeTime" binding:"required"`             // TIME format HH:MM:SS
 	Note      string  `json:"note"`
@@ -31,7 +31,7 @@ type OpenHourCreateRequest struct {
 type OpenHourUpdateRequest struct {
 	Name      *string `json:"name"`
 	POIID     *uint64 `json:"poiId"`
-	DayOfWeek *int    `json:"dayOfWeek" binding:"omitempty,min=2,max=8"`
+	DayOfWeek *string `json:"dayOfWeek" binding:"omitempty,min=2,max=8"`
 	OpenTime  *string `json:"openTime"`
 	CloseTime *string `json:"closeTime"`
 	Note      *string `json:"note"`
@@ -111,4 +111,40 @@ type OpenHourBulkSaveResponse struct {
 	Failed  int                          `json:"failed"`
 	Total   int                          `json:"total"`
 	Results []OpenHourBulkSaveResultItem `json:"results"` // Chi tiết kết quả từng item
+}
+
+// CreateOpenHourRequestDTO represents the request DTO for creating open hour
+type CreateOpenHourRequestDTO struct {
+	PoiID       uint64 `json:"poiId" validate:"required"`
+	DayOfWeek   string `json:"dayOfWeek" validate:"required"`
+	StartTime   string `json:"startTime" validate:"required"`
+	EndTime     string `json:"endTime" validate:"required"`
+	IsOpen      bool   `json:"isOpen"`
+	IsRecurring bool   `json:"isRecurring"`
+	StartDate   string `json:"startDate"`
+	EndDate     string `json:"endDate"`
+	Notes       string `json:"notes"`
+}
+
+// OpenHourDTO represents the DTO for open hour
+type OpenHourDTO struct {
+	ID          uint64 `json:"id"`
+	PoiID       uint64 `json:"poiId"`
+	DayOfWeek   string `json:"dayOfWeek"`
+	StartTime   string `json:"startTime"`
+	EndTime     string `json:"endTime"`
+	IsOpen      bool   `json:"isOpen"`
+	IsRecurring bool   `json:"isRecurring"`
+	StartDate   string `json:"startDate"`
+	EndDate     string `json:"endDate"`
+	Notes       string `json:"notes"`
+}
+
+// OpenHourFilterDTO represents the filter DTO for listing open hours
+type OpenHourFilterDTO struct {
+	Page      int    `json:"page"`
+	Size      int    `json:"size"`
+	PoiID     uint64 `json:"poiId"`
+	DayOfWeek string `json:"dayOfWeek"`
+	IsOpen    *bool  `json:"isOpen"`
 }

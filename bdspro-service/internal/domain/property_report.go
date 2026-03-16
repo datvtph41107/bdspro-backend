@@ -34,6 +34,9 @@ type PropertyReport struct {
 	// File đính kèm tài liệu (JSON array)
 	AttachmentFileIDs string `gorm:"column:attachment_file_ids;type:text" json:"attachmentFileIds,omitempty"`
 
+	// BDS trùng lặp liên quan
+	RelatedLineageID *uint64 `gorm:"column:related_lineage_id;type:bigint;index" json:"relatedLineageId,omitempty"`
+
 	// Ghi chú của admin khi xử lý
 	AdminNote string `gorm:"column:admin_note;type:text" json:"adminNote,omitempty"`
 

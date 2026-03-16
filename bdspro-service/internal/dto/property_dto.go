@@ -182,6 +182,11 @@ type ArchivePropertiesDTO struct {
 	Archived bool     `json:"archived"`
 }
 
+type HiddenPropertiesDTO struct {
+	IDs    []uint64 `json:"ids"`
+	Hidden bool     `json:"hidden"`
+}
+
 type ArchiveProductsDTO struct {
 	IDs      []uint64 `json:"ids"`
 	Archived bool     `json:"archived"`

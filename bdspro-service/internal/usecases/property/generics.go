@@ -2,6 +2,7 @@ package property_usecases
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -138,4 +139,26 @@ func derefUint64Ptr(p *uint64) *uint64 {
 		return nil // absent hoặc clear → NULL trong DB
 	}
 	return p
+}
+
+func marshalJSON(v any) string {
+	switch val := v.(type) {
+	case []string:
+		if len(val) == 0 {
+			return ""
+		}
+	case []uint64:
+		if len(val) == 0 {
+			return ""
+		}
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		return ""
+	}
+	s := string(b)
+	if s == "null" || s == "[]" {
+		return ""
+	}
+	return s
 }

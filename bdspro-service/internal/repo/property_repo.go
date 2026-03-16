@@ -10,18 +10,23 @@ import (
 
 type PropertyRepo interface {
 	crud3.CrudRepo[domain.PropertyLineage]
+
 	Search(ctx context.Context, dto *dto.PropertySearchDTO, userId uint64) ([]*domain.PropertyLineage, int64, error)
 	ListMe(ctx context.Context, originId uint64, pagable _dto.Pagable) ([]*domain.PropertyLineage, int64, error)
+
 	GetDetail(ctx context.Context, id uint64, sourceType uint32) (*domain.PropertyLineage, error)
 	GetDetail2(ctx context.Context, id uint64, sourceType uint32) (*domain.PropertyLineage, error)
+
 	UpdateOption(ctx context.Context, id uint64, property *domain.PropertyLineage) error
-	GetOneByID(c context.Context, id uint64) (*domain.PropertyLineage, error)
+
+	GetOneByID(ctx context.Context, id uint64) (*domain.PropertyLineage, error)
+
 	DeleteBatchProperties(ctx context.Context, ids []uint64) error
 	ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool) error
-	GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
-	GetUpdatedAt(c context.Context, id uint64) (int64, error)
+	HideBatchProperties(ctx context.Context, ids []uint64, hidden bool) error
 
-	// Property User
+	GetRefreshSyncIds(ctx context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
+	GetUpdatedAt(ctx context.Context, id uint64) (int64, error)
 }
 
 type PropertyRelationRepo interface {

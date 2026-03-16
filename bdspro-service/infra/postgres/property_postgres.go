@@ -189,6 +189,7 @@ func (r *PostgrePropertyRepo) Search(ctx context.Context, req *dto.PropertySearc
 			}
 			args = append(args, enums.ERelationTypeProduct)
 		}
+		// In the Search method, update the RecordStatus filter section:
 		if req.RecordStatus != "" {
 			switch strings.ToLower(req.RecordStatus) {
 			case "archived":
@@ -1644,14 +1645,42 @@ func (r *PostgrePropertyRepo) ArchiveBatchProperties(ctx context.Context, ids []
 	if len(ids) == 0 {
 		return nil
 	}
-	status := enums.EPropertyStatusActive
+
+	db := GetDB(ctx, r.DB)
+
 	if archived {
-		status = enums.EPropertyStatusArchived
+		// Update property_user records where property_lineage_id IN ids
+		return db.
+			Model(&domain.PropertyUser{}).
+			Where("property_lineage_id IN (?) AND deleted_at IS NULL", ids).
+			Update("archived_at", time.Now()).Error
 	}
-	return GetDB(ctx, r.DB).
-		Model(&domain.PropertyLineage{}).
+
+	// Unarchive - set archived_at to NULL
+	return db.
+		Model(&domain.PropertyUser{}).
+		Where("property_lineage_id IN (?) AND deleted_at IS NULL", ids).
+		Update("archived_at", nil).Error
+}
+
+func (r *PostgrePropertyRepo) HideBatchProperties(ctx context.Context, ids []uint64, hidden bool) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	db := GetDB(ctx, r.DB)
+
+	if hidden {
+		return db.
+			Model(&domain.PropertyUser{}).
+			Where("id IN (?) AND deleted_at IS NULL", ids).
+			Update("hidden_at", time.Now()).Error
+	}
+
+	return db.
+		Model(&domain.PropertyUser{}).
 		Where("id IN (?) AND deleted_at IS NULL", ids).
-		Update("record_status", status).Error
+		Update("hidden_at", nil).Error
 }
 
 func (r *PostgrePropertyRepo) GetUpdatedAt(c context.Context, id uint64) (int64, error) {

@@ -97,21 +97,18 @@ func (u *DirectorySourceUsecase) Update(ctx context.Context, req *domain.Directo
 		return nil, fmt.Errorf("permission denied")
 	}
 
-	// 3. Convert DTO to Domain
-	// domainSource := req.ToDomain()
+	// 3. Validate domain
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("validation failed: %v", err)
+	}
 
-	// 4. Validate domain
-	// if err := domainSource.Validate(); err != nil {
-	// 	return nil, fmt.Errorf("validation failed: %v", err)
-	// }
-
-	// 5. Call repository
+	// 4. Call repository
 	err = u.directorySourceRepo.Update(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update directory source: %v", err)
 	}
 
-	// 6. Convert Domain to DTO
+	// 5. Convert Domain to DTO
 	result := &dto.DirectorySourceDTO{}
 	result.FromDomain(req)
 

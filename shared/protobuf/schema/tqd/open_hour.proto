@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// OpenHourService service
+service OpenHourService {
+  // Create a new open hour
+  rpc CreateOpenHour(OpenHour) returns (OpenHour) {
+    option (google.api.http) = {
+      post: "/v2/tqd/open-hours"
+      body: "*"
+    };
+  }
+
+  // Get open hour by ID
+  rpc GetOpenHour(sharepb.IdRequest) returns (OpenHour) {
+    option (google.api.http) = {
+      get: "/v2/tqd/open-hours/{id}"
+    };
+  }
+
+  // Update open hour
+  rpc UpdateOpenHour(OpenHour) returns (OpenHour) {
+    option (google.api.http) = {
+      put: "/v2/tqd/open-hours/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete open hour
+  rpc DeleteOpenHour(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/open-hours/{id}"
+    };
+  }
+
+  // List open hours
+  rpc ListOpenHours(ListOpenHoursRequest) returns (ListOpenHoursResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/open-hours"
+    };
+  }
+
+  // Get open hour times by day
+  rpc GetOpenHourTimesByDay(GetOpenHourTimesByDayRequest) returns (GetOpenHourTimesByDayResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/open-hours/by-day/{dayOfWeek}"
+    };
+  }
+}
+
+// OpenHour message
+message OpenHour {
+  uint64 id = 1;
+  optional uint64 poiId = 2;
+  string dayOfWeek = 3;
+  string startTime = 4;
+  string endTime = 5;
+  bool isOpen = 6;
+  bool isRecurring = 7;
+  string startDate = 8;
+  string endDate = 9;
+  string notes = 10;
+  int32 status = 11;
+  int32 type = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+// Request/Response messages
+message ListOpenHoursRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 poiId = 3;
+  string dayOfWeek = 4;
+  bool isOpen = 5;
+}
+
+message ListOpenHoursResponse {
+  repeated OpenHour data = 1;
+  int64 total = 2;
+}
+
+message GetOpenHourTimesByDayRequest {
+  string dayOfWeek = 1;
+}
+
+message OpenHourTimesByDay {
+  string dayOfWeek = 1;
+  repeated OpenHourTime times = 2;
+}
+
+message OpenHourTime {
+  uint64 id = 1;
+  uint64 poiId = 2;
+  string startTime = 3;
+  string endTime = 4;
+  bool isOpen = 5;
+  string notes = 6;
+}
+
+message GetOpenHourTimesByDayResponse {
+  repeated OpenHourTimesByDay data = 1;
+}

@@ -219,8 +219,20 @@ func (u *contactLabelUsecase) List(ctx context.Context, req *dto.ListContactLabe
 }
 
 func (u *contactLabelUsecase) UpdateContactCount(ctx context.Context, id uint64, count int) error {
+	// Get user info
+	profileID := _utils.GetProfileIdWithContext(ctx)
+
+	// Check permission
+	hasPermission, err := u.permissionProvider.CheckPermission(ctx, profileID, enums.PermissionContactLabelUpdate)
+	if err != nil {
+		return fmt.Errorf("failed to check permission: %v", err)
+	}
+	if !hasPermission {
+		return fmt.Errorf("insufficient permissions")
+	}
+
 	// Update contact count in repository
-	err := u.contactLabelRepo.UpdateContactCount(ctx, id, count)
+	err = u.contactLabelRepo.UpdateContactCount(ctx, id, count)
 	if err != nil {
 		return fmt.Errorf("failed to update contact count: %v", err)
 	}

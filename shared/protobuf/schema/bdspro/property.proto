@@ -130,7 +130,14 @@ service PropertyService {
 
   rpc ArchiveProperties(ArchivePropertiesRequest) returns (Response) {
     option (google.api.http) = {
-      post: "/v2/bdspro/v2/property/archive"
+      post: "/v2/bdspro/property/archive"
+      body: "*"
+    };
+  };
+
+  rpc HideProperties(HiddenPropertiesRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/property/hide"
       body: "*"
     };
   };
@@ -405,7 +412,11 @@ message DeletePropertiesRequest {
 message ArchivePropertiesRequest {
   repeated uint64 ids = 1;
   bool archived = 2;
-  uint32 sourceType = 3;
+}
+
+message HiddenPropertiesRequest {
+  repeated uint64 ids = 1;
+  bool hidden = 2;
 }
 
 message ArchiveProductUsersRequest {

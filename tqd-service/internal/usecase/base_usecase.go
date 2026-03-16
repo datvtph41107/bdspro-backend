@@ -115,17 +115,17 @@ func (b *AuthorizationUsecase) IsSuperAdmin(ctx context.Context) (bool, error) {
 
 // RequirePermission requires current user to have specific permission, returns error if not
 func (b *AuthorizationUsecase) RequirePermission(ctx context.Context, permission enums.Permission) error {
-	// hasPermission, err := b.CheckPermission(ctx, permission)
-	// if err != nil {
-	// 	return err
-	// }
+	hasPermission, err := b.CheckPermission(ctx, permission)
+	if err != nil {
+		return err
+	}
 
-	// if !hasPermission {
-	// 	return &PermissionError{
-	// 		Permission: permission.String(),
-	// 		Message:    "Insufficient permissions",
-	// 	}
-	// }
+	if !hasPermission {
+		return &PermissionError{
+			Permission: permission.String(),
+			Message:    "Insufficient permissions",
+		}
+	}
 
 	return nil
 }

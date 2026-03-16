@@ -71,8 +71,8 @@ message DeleteAmenityRequest {
 }
 
 message ListAmenitiesRequest {
-  int32 page = 1;
-  int32 size = 2;
+  uint32 page = 1;
+  uint32 size = 2;
   string search = 3;
   optional bool isActive = 4;
   optional string category = 5;
