@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -14,269 +15,290 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// PoiGrpcHandler implements gRPC handlers for Poi service
+// PoiGrpcHandler handles gRPC requests for POI
 type PoiGrpcHandler struct {
 	tqdpb.UnimplementedPoiServiceServer
-	poiUsecase *usecase.PoiUsecase
-	poiMapper  *mapper.PoiMapper
+	usecase usecase.PoiUsecase
+	mapper  *mapper.PoiMapper
 }
 
-// NewPoiGrpcHandler creates a new PoiGrpcHandler
+// NewPoiGrpcHandler creates new handler
 func NewPoiGrpcHandler(
-	poiUsecase *usecase.PoiUsecase,
-	poiMapper *mapper.PoiMapper,
+	usecase usecase.PoiUsecase,
+	mapper *mapper.PoiMapper,
 ) *PoiGrpcHandler {
 	return &PoiGrpcHandler{
-		poiUsecase: poiUsecase,
-		poiMapper:  poiMapper,
+		usecase: usecase,
+		mapper:  mapper,
 	}
 }
 
-// CreatePoi handles gRPC CreatePoi request
+// CreatePoi handles create request
 func (h *PoiGrpcHandler) CreatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.Poi, error) {
+	// Validate required fields
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "poi name is required")
 	}
-
-	createReq := &dto.CreatePoiRequestDTO{
-		Name:       req.Name,
-		Code:       req.Code,
-		Description: req.Description,
-		Address:    req.Address,
-		Phone:      req.Phone,
-		Email:      req.Email,
-		Website:    req.Website,
-		Latitude:   req.Latitude,
-		Longitude:  req.Longitude,
-		CategoryId: req.CategoryId,
-		IsActive:   req.IsActive,
-		IsFeatured: req.IsFeatured,
-		CoverImage: req.CoverImage,
-		Images:     req.Images,
-		Tags:       req.Tags,
+	if req.Address == "" {
+		return nil, status.Error(codes.InvalidArgument, "address is required")
+	}
+	if req.CategoryId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "category ID is required")
 	}
 
-	result, err := h.poiUsecase.CreatePoi(ctx, createReq)
+	// Convert proto to create request
+	createReq := &dto.CreatePoiRequest{
+		Name:        req.Name,
+		Code:        req.Code,
+		Description: req.Description,
+		Address:     req.Address,
+		Phone:       req.Phone,
+		Email:       req.Email,
+		Website:     req.Website,
+		Latitude:    req.Latitude,
+		Longitude:   req.Longitude,
+		CategoryID:  req.CategoryId,
+		IsActive:    req.IsActive,
+		IsFeatured:  req.IsFeatured,
+		CoverImage:  req.CoverImage,
+		Images:      req.Images,
+		Tags:        req.Tags,
+	}
+
+	// Call usecase
+	result, err := h.usecase.Create(ctx, createReq)
 	if err != nil {
 		log.Printf("error creating poi: %v", err)
-		return nil, status.Error(codes.Internal, "failed to create poi")
+		return nil, status.Errorf(codes.Internal, "failed to create poi: %v", err)
 	}
 
-	return h.poiMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// GetPoi handles gRPC GetPoi request
+// GetPoi handles get by ID request
 func (h *PoiGrpcHandler) GetPoi(ctx context.Context, req *sharepb.IdRequest) (*tqdpb.Poi, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi id is required")
 	}
 
-	result, err := h.poiUsecase.GetPoiByID(ctx, req.Id)
+	result, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
 		log.Printf("error getting poi: %v", err)
-		return nil, status.Error(codes.NotFound, "poi not found")
+		return nil, status.Errorf(codes.NotFound, "poi not found: %v", err)
 	}
 
-	return h.poiMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// GetPoiByCode handles gRPC GetPoiByCode request
+// GetPoiByCode handles get by code request
 func (h *PoiGrpcHandler) GetPoiByCode(ctx context.Context, req *tqdpb.GetPoiByCodeRequest) (*tqdpb.Poi, error) {
 	if req.Code == "" {
 		return nil, status.Error(codes.InvalidArgument, "poi code is required")
 	}
 
-	result, err := h.poiUsecase.GetPoiByCode(ctx, req.Code)
+	result, err := h.usecase.GetByCode(ctx, req.Code)
 	if err != nil {
 		log.Printf("error getting poi by code: %v", err)
-		return nil, status.Error(codes.NotFound, "poi not found")
+		return nil, status.Errorf(codes.NotFound, "poi not found: %v", err)
 	}
 
-	return h.poiMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// GetNearbyPois handles gRPC GetNearbyPois request
+// GetNearbyPois handles nearby search request
 func (h *PoiGrpcHandler) GetNearbyPois(ctx context.Context, req *tqdpb.GetNearbyPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	if req.Latitude == 0 || req.Longitude == 0 {
+	if req.Latitude == 0 && req.Longitude == 0 {
 		return nil, status.Error(codes.InvalidArgument, "latitude and longitude are required")
 	}
 
-	if req.Page <= 0 {
-		req.Page = 1
-	}
-	if req.Size <= 0 {
-		req.Size = 10
-	}
-
-	filters := &dto.GetNearbyPoisFilterDTO{
-		Page:        int(req.Page),
-		Size:        int(req.Size),
+	// Create nearby request
+	nearbyReq := &dto.NearbyPoiRequest{
+		Pagable: _dto.Pagable{
+			Page: normalizePage(req.Page),
+			Size: normalizeSize(req.Size),
+		},
 		Latitude:    req.Latitude,
 		Longitude:   req.Longitude,
 		Radius:      req.Radius,
-		CategoryIds: req.CategoryIds,
+		CategoryIDs: req.CategoryIds,
 	}
 
-	results, total, err := h.poiUsecase.GetNearbyPois(ctx, filters)
+	// Call usecase
+	result, err := h.usecase.ListNearby(ctx, nearbyReq)
 	if err != nil {
 		log.Printf("error getting nearby pois: %v", err)
-		return nil, status.Error(codes.Internal, "failed to get nearby pois")
+		return nil, status.Errorf(codes.Internal, "failed to get nearby pois: %v", err)
 	}
 
-	pois := make([]*tqdpb.Poi, len(results))
-	for i, result := range results {
-		pois[i] = h.poiMapper.ToProto(result)
-	}
+	// Convert to proto
+	pois := h.mapper.ToProtoListFromResponses(result.Data)
 
 	return &tqdpb.ListPoisResponse{
 		Data:  pois,
-		Total: int64(total),
+		Total: result.Total,
 	}, nil
 }
 
-// GetPoisByCategory handles gRPC GetPoisByCategory request
+// GetPoisByCategory handles get by category request
 func (h *PoiGrpcHandler) GetPoisByCategory(ctx context.Context, req *tqdpb.GetPoisByCategoryRequest) (*tqdpb.ListPoisResponse, error) {
 	if req.CategoryId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "category id is required")
 	}
 
-	if req.Page <= 0 {
-		req.Page = 1
+	limit := int(req.Size)
+	if limit < 1 {
+		limit = 10
 	}
-	if req.Size <= 0 {
-		req.Size = 10
-	}
-
-	filters := &dto.PoiFilterDTO{
-		Page:       int(req.Page),
-		Size:       int(req.Size),
-		Search:     req.Search,
-		CategoryId: req.CategoryId,
+	if limit > 100 {
+		limit = 100
 	}
 
-	results, total, err := h.poiUsecase.ListPois(ctx, filters)
+	results, err := h.usecase.ListByCategory(ctx, req.CategoryId, limit)
 	if err != nil {
 		log.Printf("error getting pois by category: %v", err)
-		return nil, status.Error(codes.Internal, "failed to get pois by category")
+		return nil, status.Errorf(codes.Internal, "failed to get pois by category: %v", err)
 	}
 
-	pois := make([]*tqdpb.Poi, len(results))
-	for i, result := range results {
-		pois[i] = h.poiMapper.ToProto(result)
-	}
+	pois := h.mapper.ToProtoListFromResponses(results)
 
 	return &tqdpb.ListPoisResponse{
 		Data:  pois,
-		Total: int64(total),
+		Total: int64(len(pois)),
 	}, nil
 }
 
-// UpdatePoi handles gRPC UpdatePoi request
+// UpdatePoi handles update request
 func (h *PoiGrpcHandler) UpdatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.Poi, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi id is required")
 	}
 
-	updateReq := &dto.PoiDTO{
-		ID:         req.Id,
-		Name:       req.Name,
-		Code:       req.Code,
-		Description: req.Description,
-		Address:    req.Address,
-		Phone:      req.Phone,
-		Email:      req.Email,
-		Website:    req.Website,
-		Latitude:   req.Latitude,
-		Longitude:  req.Longitude,
-		CategoryId: req.CategoryId,
-		IsActive:   req.IsActive,
-		IsFeatured: req.IsFeatured,
-		CoverImage: req.CoverImage,
-		Images:     req.Images,
-		Tags:       req.Tags,
+	// Build update request
+	updateReq := &dto.UpdatePoiRequest{}
+
+	if req.Name != "" {
+		updateReq.Name = &req.Name
+	}
+	if req.Code != "" {
+		updateReq.Code = &req.Code
+	}
+	if req.Description != "" {
+		updateReq.Description = &req.Description
+	}
+	if req.Address != "" {
+		updateReq.Address = &req.Address
+	}
+	if req.Phone != "" {
+		updateReq.Phone = &req.Phone
+	}
+	if req.Email != "" {
+		updateReq.Email = &req.Email
+	}
+	if req.Website != "" {
+		updateReq.Website = &req.Website
+	}
+	if req.Latitude != 0 {
+		updateReq.Latitude = &req.Latitude
+	}
+	if req.Longitude != 0 {
+		updateReq.Longitude = &req.Longitude
+	}
+	if req.CategoryId != 0 {
+		updateReq.CategoryID = &req.CategoryId
+	}
+	updateReq.IsActive = &req.IsActive
+	updateReq.IsFeatured = &req.IsFeatured
+
+	if req.CoverImage != "" {
+		updateReq.CoverImage = &req.CoverImage
+	}
+	if len(req.Images) > 0 {
+		updateReq.Images = req.Images
+	}
+	if len(req.Tags) > 0 {
+		updateReq.Tags = req.Tags
 	}
 
-	result, err := h.poiUsecase.UpdatePoi(ctx, updateReq)
+	// Call usecase
+	result, err := h.usecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
 		log.Printf("error updating poi: %v", err)
-		return nil, status.Error(codes.Internal, "failed to update poi")
+		return nil, status.Errorf(codes.Internal, "failed to update poi: %v", err)
 	}
 
-	return h.poiMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// UpdatePoiRating handles gRPC UpdatePoiRating request
+// UpdatePoiRating handles update rating request
 func (h *PoiGrpcHandler) UpdatePoiRating(ctx context.Context, req *tqdpb.UpdatePoiRatingRequest) (*tqdpb.Poi, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi id is required")
 	}
 
-	result, err := h.poiUsecase.UpdatePoiRating(ctx, req.Id, req.Rating, uint32(req.ReviewCount))
+	result, err := h.usecase.UpdateRating(ctx, req.Id, req.Rating, req.ReviewCount)
 	if err != nil {
 		log.Printf("error updating poi rating: %v", err)
-		return nil, status.Error(codes.Internal, "failed to update poi rating")
+		return nil, status.Errorf(codes.Internal, "failed to update poi rating: %v", err)
 	}
 
-	return h.poiMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// DeletePoi handles gRPC DeletePoi request
+// DeletePoi handles delete request
 func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi id is required")
 	}
 
-	err := h.poiUsecase.DeletePoi(ctx, req.Id)
-	if err != nil {
+	if err := h.usecase.Delete(ctx, req.Id); err != nil {
 		log.Printf("error deleting poi: %v", err)
-		return nil, status.Error(codes.Internal, "failed to delete poi")
+		return nil, status.Errorf(codes.Internal, "failed to delete poi: %v", err)
 	}
 
 	return &sharepb.SubmitResponse{
-		Code:    200,
 		Message: "POI deleted successfully",
-		Data:    "",
 	}, nil
 }
 
-// ListPois handles gRPC ListPois request
+// ListPois handles list request
 func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	if req.Page <= 0 {
-		req.Page = 1
-	}
-	if req.Size <= 0 {
-		req.Size = 10
-	}
-
-	filters := &dto.PoiFilterDTO{
-		Page:        int(req.Page),
-		Size:        int(req.Size),
+	// Build filter
+	filter := &dto.PoiFilter{
+		Pagable: _dto.Pagable{
+			Page: normalizePage(req.Page),
+			Size: normalizeSize(req.Size),
+		},
 		Search:      req.Search,
-		CategoryId:  req.CategoryId,
-		CategoryIds: req.CategoryIds,
-		IsActive:    req.IsActive,
-		IsVerified:  req.IsVerified,
-		MinRating:   req.MinRating,
-		MaxRating:   req.MaxRating,
-		Latitude:    req.Latitude,
-		Longitude:   req.Longitude,
-		Radius:      req.Radius,
+		CategoryIDs: req.CategoryIds,
 		SortBy:      req.SortBy,
 	}
 
-	results, total, err := h.poiUsecase.ListPois(ctx, filters)
-	if err != nil {
-		log.Printf("error listing pois: %v", err)
-		return nil, status.Error(codes.Internal, "failed to list pois")
+	// Set optional filters
+	if req.CategoryId != 0 {
+		filter.CategoryID = &req.CategoryId
+	}
+	filter.IsActive = &req.IsActive
+	filter.IsVerified = &req.IsVerified
+
+	if req.MinRating > 0 {
+		filter.MinRating = &req.MinRating
+	}
+	if req.MaxRating > 0 {
+		filter.MaxRating = &req.MaxRating
 	}
 
-	pois := make([]*tqdpb.Poi, len(results))
-	for i, result := range results {
-		pois[i] = h.poiMapper.ToProto(result)
+	// Call usecase
+	result, err := h.usecase.List(ctx, filter)
+	if err != nil {
+		log.Printf("error listing pois: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to list pois: %v", err)
 	}
+
+	// Convert to proto
+	pois := h.mapper.ToProtoListFromResponses(result.Data)
 
 	return &tqdpb.ListPoisResponse{
 		Data:  pois,
-		Total: int64(total),
+		Total: result.Total,
 	}, nil
 }

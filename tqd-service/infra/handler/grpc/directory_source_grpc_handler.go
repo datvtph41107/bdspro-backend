@@ -8,11 +8,10 @@ import (
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
+	"tqd/infra/validator"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
-
-	"tqd/internal/validator"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

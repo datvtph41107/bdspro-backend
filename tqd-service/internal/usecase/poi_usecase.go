@@ -2,259 +2,407 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"math"
 
-	_err "common/domain/err"
+	_dto "common/domain/dto"
+	_utils "common/utils"
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
-	_map "tqd/map"
 )
 
-// IPOIUsecase defines the interface for POI usecase operations
-type IPOIUsecase interface {
-	CreatePOI(ctx context.Context, req *dto.CreatePOIRequestDTO) (*dto.POIDTO, *_err.ErrorDTO)
-	UpdatePOI(ctx context.Context, id uint64, req *dto.UpdatePOIRequestDTO) (*dto.POIDTO, *_err.ErrorDTO)
-	DeletePOI(ctx context.Context, id uint64) *_err.ErrorDTO
-	GetPOIByID(ctx context.Context, id uint64) (*dto.POIDTO, *_err.ErrorDTO)
-	GetPOIByCode(ctx context.Context, code string) (*dto.POIDTO, *_err.ErrorDTO)
-	GetPOIList(ctx context.Context, req *dto.ListPOIsRequestDTO) (*dto.ListPOIsResponseDTO, *_err.ErrorDTO)
-	GetPOIsByCategory(ctx context.Context, categoryID uint64, limit int) ([]dto.POIDTO, *_err.ErrorDTO)
-	GetNearbyPOIs(ctx context.Context, lat, lng float64, radius int32, limit int) ([]dto.POIDTO, *_err.ErrorDTO)
-	UpdatePOIRating(ctx context.Context, id uint64, ratingPoint float64, ratingCount int) *_err.ErrorDTO
+// PoiUsecase defines business logic for POI
+type PoiUsecase interface {
+	// CRUD operations
+	Create(ctx context.Context, req *dto.CreatePoiRequest) (*dto.PoiResponse, error)
+	GetByID(ctx context.Context, id uint64) (*dto.PoiResponse, error)
+	GetByCode(ctx context.Context, code string) (*dto.PoiResponse, error)
+	Update(ctx context.Context, id uint64, req *dto.UpdatePoiRequest) (*dto.PoiResponse, error)
+	Delete(ctx context.Context, id uint64) error
+
+	// List operations
+	List(ctx context.Context, filter *dto.PoiFilter) (*dto.ListPoisResponse, error)
+	ListByCategory(ctx context.Context, categoryID uint64, limit int) ([]dto.PoiResponse, error)
+	ListNearby(ctx context.Context, req *dto.NearbyPoiRequest) (*dto.ListPoisResponse, error)
+
+	// Rating operations
+	UpdateRating(ctx context.Context, id uint64, rating float64, reviewCount uint32) (*dto.PoiResponse, error)
+
+	// View/Like operations
+	IncrementViewCount(ctx context.Context, id uint64) error
+	IncrementLikeCount(ctx context.Context, id uint64) error
+	DecrementLikeCount(ctx context.Context, id uint64) error
+
+	// Verification
+	VerifyPOI(ctx context.Context, id uint64, verified bool) (*dto.PoiResponse, error)
 }
 
-// POIUsecase implements the POI usecase interface
-type POIUsecase struct {
-	poiRepo repo.IPOIRepo
-	mm      *_map.MapManager
+// poiUsecase implements PoiUsecase
+type poiUsecase struct {
+	repo   repo.IPOIRepo
+	mapper *mapper.PoiMapper
 }
 
-// NewPOIUsecase creates a new POI usecase instance
-// @bind: internal/usecase/poi_usecase.go
-func NewPOIUsecase(poiRepo repo.IPOIRepo, mm *_map.MapManager) IPOIUsecase {
-	return &POIUsecase{
-		poiRepo: poiRepo,
-		mm:      mm,
+// NewPoiUsecase creates new POI usecase
+func NewPoiUsecase(
+	repo repo.IPOIRepo,
+	mapper *mapper.PoiMapper,
+) PoiUsecase {
+	return &poiUsecase{
+		repo:   repo,
+		mapper: mapper,
 	}
 }
 
-// CreatePOI creates a new POI
-func (u *POIUsecase) CreatePOI(ctx context.Context, req *dto.CreatePOIRequestDTO) (*dto.POIDTO, *_err.ErrorDTO) {
-	// Note: Category validation should be done at handler/service layer
-	// as this usecase doesn't have access to category repository
+// Create implements PoiUsecase.Create
+func (u *poiUsecase) Create(ctx context.Context, req *dto.CreatePoiRequest) (*dto.PoiResponse, error) {
+	// Get user ID
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
 
-	// Convert request to domain
-	poi := mapper.CreatePOIRequestToDomain(req)
+	// Validate required fields
+	if req.Name == "" {
+		return nil, fmt.Errorf("name is required")
+	}
+	if req.Address == "" {
+		return nil, fmt.Errorf("address is required")
+	}
+	if req.CategoryID == 0 {
+		return nil, fmt.Errorf("category ID is required")
+	}
+	if req.Latitude < -90 || req.Latitude > 90 {
+		return nil, fmt.Errorf("latitude must be between -90 and 90")
+	}
+	if req.Longitude < -180 || req.Longitude > 180 {
+		return nil, fmt.Errorf("longitude must be between -180 and 180")
+	}
+
+	// Check if category exists
+	// This would require category repository injection
+
+	// Convert to domain
+	poi, err := u.mapper.ToDomainFromCreate(req, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map request: %v", err)
+	}
+
+	// Create in repository
+	if err := u.repo.Create(ctx, poi); err != nil {
+		return nil, fmt.Errorf("failed to create POI: %v", err)
+	}
+
+	// Get created POI
+	created, err := u.repo.GetByID(ctx, poi.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get created POI: %v", err)
+	}
+
+	return u.mapper.ToResponse(created), nil
+}
+
+// GetByID implements PoiUsecase.GetByID
+func (u *poiUsecase) GetByID(ctx context.Context, id uint64) (*dto.PoiResponse, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid POI ID")
+	}
+
+	poi, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get POI: %v", err)
+	}
 	if poi == nil {
-		return nil, &_err.ErrorDTO{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		}
+		return nil, fmt.Errorf("POI not found")
 	}
 
-	// Create POI
-	err := u.poiRepo.Create(ctx, poi)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể tạo điểm quan tâm",
-		}
-	}
+	// Increment view count
+	u.repo.IncrementViewCount(ctx, id)
 
-	// Convert to DTO
-	poiDTO := mapper.POIToDTO(poi)
-	return poiDTO, nil
+	return u.mapper.ToResponse(poi), nil
 }
 
-// UpdatePOI updates an existing POI
-func (u *POIUsecase) UpdatePOI(ctx context.Context, id uint64, req *dto.UpdatePOIRequestDTO) (*dto.POIDTO, *_err.ErrorDTO) {
+// GetByCode implements PoiUsecase.GetByCode
+func (u *poiUsecase) GetByCode(ctx context.Context, code string) (*dto.PoiResponse, error) {
+	if code == "" {
+		return nil, fmt.Errorf("code is required")
+	}
+
+	poi, err := u.repo.GetByCode(ctx, code)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get POI: %v", err)
+	}
+	if poi == nil {
+		return nil, fmt.Errorf("POI not found")
+	}
+
+	return u.mapper.ToResponse(poi), nil
+}
+
+// Update implements PoiUsecase.Update
+func (u *poiUsecase) Update(ctx context.Context, id uint64, req *dto.UpdatePoiRequest) (*dto.PoiResponse, error) {
+	// Get user ID
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
 	// Get existing POI
-	existingPOI, err := u.poiRepo.GetByID(ctx, id)
+	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Điểm quan tâm không tồn tại",
-		}
+		return nil, fmt.Errorf("failed to get POI: %v", err)
+	}
+	if existing == nil {
+		return nil, fmt.Errorf("POI not found")
 	}
 
-	// Note: Category validation should be done at handler/service layer
-	// as this usecase doesn't have access to category repository
-
-	// Convert request to domain
-	updatedPOI := mapper.UpdatePOIRequestToDomain(req, existingPOI)
-	if updatedPOI == nil {
-		return nil, &_err.ErrorDTO{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		}
-	}
-
-	// Update POI
-	err = u.poiRepo.Update(ctx, id, updatedPOI)
+	// Convert to domain
+	updated, err := u.mapper.ToDomainFromUpdate(req, existing, userID)
 	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể cập nhật điểm quan tâm",
-		}
+		return nil, fmt.Errorf("failed to map request: %v", err)
 	}
 
-	// Convert to DTO
-	poiDTO := mapper.POIToDTO(updatedPOI)
-	return poiDTO, nil
+	// Update in repository
+	if err := u.repo.Update(ctx, id, updated); err != nil {
+		return nil, fmt.Errorf("failed to update POI: %v", err)
+	}
+
+	// Get updated POI
+	result, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get updated POI: %v", err)
+	}
+
+	return u.mapper.ToResponse(result), nil
 }
 
-// DeletePOI deletes a POI
-func (u *POIUsecase) DeletePOI(ctx context.Context, id uint64) *_err.ErrorDTO {
-	// Check if POI exists
-	_, err := u.poiRepo.GetByID(ctx, id)
-	if err != nil {
-		return &_err.ErrorDTO{
-			Code:    404,
-			Message: "Điểm quan tâm không tồn tại",
-		}
+// Delete implements PoiUsecase.Delete
+func (u *poiUsecase) Delete(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return fmt.Errorf("invalid POI ID")
 	}
 
-	// Delete POI
-	err = u.poiRepo.Delete(ctx, id)
+	// Check if exists
+	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
-		return &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể xóa điểm quan tâm",
-		}
+		return fmt.Errorf("failed to get POI: %v", err)
+	}
+	if existing == nil {
+		return fmt.Errorf("POI not found")
+	}
+
+	// Delete from repository
+	if err := u.repo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete POI: %v", err)
 	}
 
 	return nil
 }
 
-// GetPOIByID retrieves a POI by ID
-func (u *POIUsecase) GetPOIByID(ctx context.Context, id uint64) (*dto.POIDTO, *_err.ErrorDTO) {
-	poi, err := u.poiRepo.GetByID(ctx, id)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Điểm quan tâm không tồn tại",
-		}
+// List implements PoiUsecase.List
+func (u *poiUsecase) List(ctx context.Context, filter *dto.PoiFilter) (*dto.ListPoisResponse, error) {
+	// Validate pagination
+	if filter.Page < 1 {
+		filter.Page = 1
+	}
+	if filter.Size < 1 {
+		filter.Size = 10
+	}
+	if filter.Size > 100 {
+		filter.Size = 100
 	}
 
-	poiDTO := mapper.POIToDTO(poi)
-	return poiDTO, nil
-}
-
-// GetPOIByCode retrieves a POI by code
-func (u *POIUsecase) GetPOIByCode(ctx context.Context, code string) (*dto.POIDTO, *_err.ErrorDTO) {
-	poi, err := u.poiRepo.GetByCode(ctx, code)
+	// Get from repository
+	pois, total, err := u.repo.List(ctx, filter)
 	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Điểm quan tâm không tồn tại",
-		}
+		return nil, fmt.Errorf("failed to list POIs: %v", err)
 	}
 
-	poiDTO := mapper.POIToDTO(poi)
-	return poiDTO, nil
-}
-
-// GetPOIList retrieves a paginated list of POIs
-func (u *POIUsecase) GetPOIList(ctx context.Context, req *dto.ListPOIsRequestDTO) (*dto.ListPOIsResponseDTO, *_err.ErrorDTO) {
-	// Convert DTO to repo request
-	repoReq := mapper.ListPOIsRequestToRepoRequest(req)
-
-	// Get POIs from repository
-	resp, err := u.poiRepo.GetListInterface(ctx, repoReq)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể lấy danh sách điểm quan tâm",
-		}
-	}
-
-	// Convert to DTO
-	poiDTOs := mapper.POIListToDTO(resp.Data)
-	return &dto.ListPOIsResponseDTO{
-		Data:  poiDTOs,
-		Total: resp.Total,
-		Code:  0,
+	return &dto.ListPoisResponse{
+		Data:  u.mapper.ToResponseList(pois),
+		Total: total,
+		Page:  filter.Page,
+		Size:  filter.Size,
 	}, nil
 }
 
-// GetPOIsByCategory retrieves POIs by category
-func (u *POIUsecase) GetPOIsByCategory(ctx context.Context, categoryID uint64, limit int) ([]dto.POIDTO, *_err.ErrorDTO) {
-	pois, err := u.poiRepo.GetListByCategory(ctx, categoryID, limit)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể lấy danh sách điểm quan tâm theo danh mục",
-		}
+// ListByCategory implements PoiUsecase.ListByCategory
+func (u *poiUsecase) ListByCategory(ctx context.Context, categoryID uint64, limit int) ([]dto.PoiResponse, error) {
+	if categoryID == 0 {
+		return nil, fmt.Errorf("category ID is required")
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
-	poiDTOs := mapper.POIListToDTO(pois)
-	return poiDTOs, nil
+	pois, err := u.repo.ListByCategory(ctx, categoryID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list POIs by category: %v", err)
+	}
+
+	return u.mapper.ToResponseList(pois), nil
 }
 
-// GetNearbyPOIs retrieves POIs within a certain radius
-func (u *POIUsecase) GetNearbyPOIs(ctx context.Context, lat, lng float64, radius int32, limit int) ([]dto.POIDTO, *_err.ErrorDTO) {
-	// Validate coordinates
-	if lat < -90 || lat > 90 {
-		return nil, &_err.ErrorDTO{
-			Code:    400,
-			Message: "Vĩ độ không hợp lệ",
-		}
+// ListNearby implements PoiUsecase.ListNearby
+func (u *poiUsecase) ListNearby(ctx context.Context, req *dto.NearbyPoiRequest) (*dto.ListPoisResponse, error) {
+	// Validate pagination
+	if req.Page < 1 {
+		req.Page = 1
 	}
-	if lng < -180 || lng > 180 {
-		return nil, &_err.ErrorDTO{
-			Code:    400,
-			Message: "Kinh độ không hợp lệ",
-		}
+	if req.Size < 1 {
+		req.Size = 10
+	}
+	if req.Size > 100 {
+		req.Size = 100
 	}
 
-	pois, err := u.mm.Nearby(ctx, lat, lng, radius)
+	// Create filter
+	filter := &dto.PoiFilter{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		CategoryIDs: req.CategoryIDs,
+	}
+
+	// Get from repository
+	pois, total, err := u.repo.ListNearby(ctx, req.Latitude, req.Longitude, req.Radius, filter)
 	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể lấy danh sách điểm quan tâm gần đây",
-		}
+		return nil, fmt.Errorf("failed to list nearby POIs: %v", err)
 	}
 
-	// Use mapper to correctly convert all fields
-	poiDTOs := mapper.POIListToDTO(pois)
+	// Add distance to each POI
+	responses := u.mapper.ToResponseList(pois)
+	for i := range responses {
+		distance := calculateDistance(req.Latitude, req.Longitude,
+			responses[i].Latitude, responses[i].Longitude)
+		responses[i].Distance = &distance
+	}
 
-	return poiDTOs, nil
+	return &dto.ListPoisResponse{
+		Data:  responses,
+		Total: total,
+		Page:  req.Page,
+		Size:  req.Size,
+	}, nil
 }
 
-// UpdatePOIRating updates the rating information for a POI
-func (u *POIUsecase) UpdatePOIRating(ctx context.Context, id uint64, ratingPoint float64, ratingCount int) *_err.ErrorDTO {
+// UpdateRating implements PoiUsecase.UpdateRating
+func (u *poiUsecase) UpdateRating(ctx context.Context, id uint64, rating float64, reviewCount uint32) (*dto.PoiResponse, error) {
 	// Validate rating
-	if ratingPoint < 0 || ratingPoint > 5 {
-		return &_err.ErrorDTO{
-			Code:    400,
-			Message: "Điểm đánh giá phải từ 0 đến 5",
-		}
-	}
-
-	if ratingCount < 0 {
-		return &_err.ErrorDTO{
-			Code:    400,
-			Message: "Số lượng đánh giá không hợp lệ",
-		}
+	if rating < 0 || rating > 5 {
+		return nil, fmt.Errorf("rating must be between 0 and 5")
 	}
 
 	// Check if POI exists
-	_, err := u.poiRepo.GetByID(ctx, id)
+	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
-		return &_err.ErrorDTO{
-			Code:    404,
-			Message: "Điểm quan tâm không tồn tại",
-		}
+		return nil, fmt.Errorf("failed to get POI: %v", err)
+	}
+	if existing == nil {
+		return nil, fmt.Errorf("POI not found")
 	}
 
 	// Update rating
-	err = u.poiRepo.UpdateRating(ctx, id, ratingPoint, ratingCount)
+	if err := u.repo.UpdateRating(ctx, id, rating, reviewCount); err != nil {
+		return nil, fmt.Errorf("failed to update rating: %v", err)
+	}
+
+	// Get updated POI
+	updated, err := u.repo.GetByID(ctx, id)
 	if err != nil {
-		return &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể cập nhật đánh giá",
-		}
+		return nil, fmt.Errorf("failed to get updated POI: %v", err)
+	}
+
+	return u.mapper.ToResponse(updated), nil
+}
+
+// IncrementViewCount implements PoiUsecase.IncrementViewCount
+func (u *poiUsecase) IncrementViewCount(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return fmt.Errorf("invalid POI ID")
+	}
+
+	if err := u.repo.IncrementViewCount(ctx, id); err != nil {
+		return fmt.Errorf("failed to increment view count: %v", err)
 	}
 
 	return nil
+}
+
+// IncrementLikeCount implements PoiUsecase.IncrementLikeCount
+func (u *poiUsecase) IncrementLikeCount(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return fmt.Errorf("invalid POI ID")
+	}
+
+	if err := u.repo.IncrementLikeCount(ctx, id); err != nil {
+		return fmt.Errorf("failed to increment like count: %v", err)
+	}
+
+	return nil
+}
+
+// DecrementLikeCount implements PoiUsecase.DecrementLikeCount
+func (u *poiUsecase) DecrementLikeCount(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return fmt.Errorf("invalid POI ID")
+	}
+
+	if err := u.repo.DecrementLikeCount(ctx, id); err != nil {
+		return fmt.Errorf("failed to decrement like count: %v", err)
+	}
+
+	return nil
+}
+
+// VerifyPOI implements PoiUsecase.VerifyPOI
+func (u *poiUsecase) VerifyPOI(ctx context.Context, id uint64, verified bool) (*dto.PoiResponse, error) {
+	// Get user ID
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	// Check if POI exists
+	existing, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get POI: %v", err)
+	}
+	if existing == nil {
+		return nil, fmt.Errorf("POI not found")
+	}
+
+	// Update verification
+	if err := u.repo.VerifyPOI(ctx, id, verified); err != nil {
+		return nil, fmt.Errorf("failed to verify POI: %v", err)
+	}
+
+	// Get updated POI
+	updated, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get updated POI: %v", err)
+	}
+
+	return u.mapper.ToResponse(updated), nil
+}
+
+// Helper function
+func calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
+	const earthRadius = 6371 // km
+
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLng := (lng2 - lng1) * math.Pi / 180
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*math.Pi/180)*math.Cos(lat2*math.Pi/180)*
+			math.Sin(dLng/2)*math.Sin(dLng/2)
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return earthRadius * c
 }

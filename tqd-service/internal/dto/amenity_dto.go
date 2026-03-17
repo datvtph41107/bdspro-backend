@@ -2,6 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
+	"tqd/internal/domain"
 )
 
 // AmenityDTO represents the amenity data transfer object
@@ -43,4 +44,9 @@ type AmenityFilterDTO struct {
 	Search   string `json:"search"`
 	Category string `json:"category"`
 	IsActive *bool  `json:"isActive"`
+}
+
+type ListAmenitiesResponseDTO struct {
+	Data  []domain.Amenity `json:"data"`
+	Total int64            `json:"total"`
 }

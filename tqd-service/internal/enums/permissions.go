@@ -54,11 +54,21 @@ const (
 	PermissionDirectorySourceRead
 	PermissionDirectorySourceUpdate
 	PermissionDirectorySourceDelete
+
+	// Directory Supplier Permissions
+	PermissionDirectorySupplierCreate
+	PermissionDirectorySupplierRead
+	PermissionDirectorySupplierUpdate
+	PermissionDirectorySupplierDelete
+	PermissionDirectorySupplierList
+	PermissionDirectorySupplierExport
+	PermissionDirectorySupplierImport
 )
 
 // PermissionString returns the string representation of permission
 func (p Permission) String() string {
 	switch p {
+	// POI Permissions
 	case PermissionPOICreate:
 		return "poi_create"
 	case PermissionPOIRead:
@@ -73,6 +83,8 @@ func (p Permission) String() string {
 		return "poi_update_status"
 	case PermissionPOIUpdateVisibility:
 		return "poi_update_visibility"
+
+	// POI Category Permissions
 	case PermissionPOICategoryCreate:
 		return "poi_category_create"
 	case PermissionPOICategoryRead:
@@ -81,6 +93,8 @@ func (p Permission) String() string {
 		return "poi_category_update"
 	case PermissionPOICategoryDelete:
 		return "poi_category_delete"
+
+	// Amenity Permissions
 	case PermissionAmenityCreate:
 		return "amenity_create"
 	case PermissionAmenityRead:
@@ -89,6 +103,8 @@ func (p Permission) String() string {
 		return "amenity_update"
 	case PermissionAmenityDelete:
 		return "amenity_delete"
+
+	// POI Media Permissions
 	case PermissionPOIMediaCreate:
 		return "poi_media_create"
 	case PermissionPOIMediaRead:
@@ -97,6 +113,8 @@ func (p Permission) String() string {
 		return "poi_media_update"
 	case PermissionPOIMediaDelete:
 		return "poi_media_delete"
+
+	// Open Hour Permissions
 	case PermissionOpenHourCreate:
 		return "open_hour_create"
 	case PermissionOpenHourRead:
@@ -105,6 +123,8 @@ func (p Permission) String() string {
 		return "open_hour_update"
 	case PermissionOpenHourDelete:
 		return "open_hour_delete"
+
+	// Contact Label Permissions
 	case PermissionContactLabelCreate:
 		return "contact_label_create"
 	case PermissionContactLabelRead:
@@ -113,14 +133,18 @@ func (p Permission) String() string {
 		return "contact_label_update"
 	case PermissionContactLabelDelete:
 		return "contact_label_delete"
+
+	// Directory Category Permissions
 	case PermissionDirectoryCategoryCreate:
-		return "service_category_create"
+		return "directory_category_create"
 	case PermissionDirectoryCategoryRead:
-		return "service_category_read"
+		return "directory_category_read"
 	case PermissionDirectoryCategoryUpdate:
-		return "service_category_update"
+		return "directory_category_update"
 	case PermissionDirectoryCategoryDelete:
-		return "service_category_delete"
+		return "directory_category_delete"
+
+	// Directory Source Permissions
 	case PermissionDirectorySourceCreate:
 		return "directory_source_create"
 	case PermissionDirectorySourceRead:
@@ -129,6 +153,23 @@ func (p Permission) String() string {
 		return "directory_source_update"
 	case PermissionDirectorySourceDelete:
 		return "directory_source_delete"
+
+	// Directory Supplier Permissions
+	case PermissionDirectorySupplierCreate:
+		return "directory_supplier_create"
+	case PermissionDirectorySupplierRead:
+		return "directory_supplier_read"
+	case PermissionDirectorySupplierUpdate:
+		return "directory_supplier_update"
+	case PermissionDirectorySupplierDelete:
+		return "directory_supplier_delete"
+	case PermissionDirectorySupplierList:
+		return "directory_supplier_list"
+	case PermissionDirectorySupplierExport:
+		return "directory_supplier_export"
+	case PermissionDirectorySupplierImport:
+		return "directory_supplier_import"
+
 	default:
 		return "unknown"
 	}

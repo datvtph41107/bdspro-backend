@@ -4,25 +4,28 @@ import (
 	"net/http"
 	"strconv"
 
-	"tqd/internal/domain"
+	_dto "common/domain/dto"
+	"tqd/infra/mapper"
 	"tqd/internal/dto"
-	"tqd/internal/enums"
 	"tqd/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 )
 
+// OpenHourHandler handles HTTP requests for open hour
 type OpenHourHandler struct {
-	openHourUsecase usecase.OpenHourUsecase
+	usecase usecase.OpenHourUsecase
+	mapper  *mapper.OpenHourMapper
 }
 
 // NewOpenHourHandler creates a new OpenHourHandler
-// @bind: *handler_http.OpenHourHandler
 func NewOpenHourHandler(
-	openHourUsecase usecase.OpenHourUsecase,
+	usecase usecase.OpenHourUsecase,
+	mapper *mapper.OpenHourMapper,
 ) *OpenHourHandler {
 	return &OpenHourHandler{
-		openHourUsecase: openHourUsecase,
+		usecase: usecase,
+		mapper:  mapper,
 	}
 }
 
@@ -33,11 +36,11 @@ func NewOpenHourHandler(
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body dto.OpenHourCreateRequest true "Open hour data"
+// @Param request body dto.CreateOpenHourRequest true "Open hour data"
 // @Success 200 {object} map[string]interface{} "Open hour created successfully"
 // @Router /v2/tqd/open-hours [post]
 func (h *OpenHourHandler) CreateOpenHourHTTP(c *gin.Context) {
-	var req dto.OpenHourCreateRequest
+	var req dto.CreateOpenHourRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
@@ -47,20 +50,7 @@ func (h *OpenHourHandler) CreateOpenHourHTTP(c *gin.Context) {
 		return
 	}
 
-	// Map request to domain
-	openHour := &domain.OpenHour{
-		Name:      req.Name,
-		POIID:     req.POIID,
-		DayOfWeek: req.DayOfWeek,
-		OpenTime:  req.OpenTime,
-		CloseTime: req.CloseTime,
-		Note:      req.Note,
-		IsOpen:    req.IsOpen,
-		Status:    enums.OpenHourStatus(req.Status),
-		Type:      enums.OpenHourType(req.Type),
-	}
-
-	createdOpenHour, err := h.openHourUsecase.Create(c.Request.Context(), openHour)
+	result, err := h.usecase.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -73,7 +63,7 @@ func (h *OpenHourHandler) CreateOpenHourHTTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Open hour created successfully",
-		"data":    createdOpenHour,
+		"data":    result,
 	})
 }
 
@@ -93,13 +83,13 @@ func (h *OpenHourHandler) GetOpenHourHTTP(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
-			"message": "Invalid ID",
+			"message": "Invalid ID format",
 			"details": err.Error(),
 		})
 		return
 	}
 
-	openHour, err := h.openHourUsecase.GetByID(c.Request.Context(), id)
+	result, err := h.usecase.GetByID(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"code":    404,
@@ -112,7 +102,7 @@ func (h *OpenHourHandler) GetOpenHourHTTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Open hour retrieved successfully",
-		"data":    openHour,
+		"data":    result,
 	})
 }
 
@@ -124,7 +114,7 @@ func (h *OpenHourHandler) GetOpenHourHTTP(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Open hour ID"
-// @Param request body dto.OpenHourUpdateRequest true "Open hour data"
+// @Param request body dto.UpdateOpenHourRequest true "Open hour data"
 // @Success 200 {object} map[string]interface{} "Open hour updated successfully"
 // @Router /v2/tqd/open-hours/{id} [put]
 func (h *OpenHourHandler) UpdateOpenHourHTTP(c *gin.Context) {
@@ -133,13 +123,13 @@ func (h *OpenHourHandler) UpdateOpenHourHTTP(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
-			"message": "Invalid ID",
+			"message": "Invalid ID format",
 			"details": err.Error(),
 		})
 		return
 	}
 
-	var req dto.OpenHourUpdateRequest
+	var req dto.UpdateOpenHourRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
@@ -149,47 +139,7 @@ func (h *OpenHourHandler) UpdateOpenHourHTTP(c *gin.Context) {
 		return
 	}
 
-	// Get existing open hour
-	existingOpenHour, err := h.openHourUsecase.GetByID(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"code":    404,
-			"message": "Open hour not found",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Update fields if provided
-	if req.Name != nil {
-		existingOpenHour.Name = *req.Name
-	}
-	if req.POIID != nil {
-		existingOpenHour.POIID = req.POIID
-	}
-	if req.DayOfWeek != nil {
-		existingOpenHour.DayOfWeek = *req.DayOfWeek
-	}
-	if req.OpenTime != nil {
-		existingOpenHour.OpenTime = *req.OpenTime
-	}
-	if req.CloseTime != nil {
-		existingOpenHour.CloseTime = *req.CloseTime
-	}
-	if req.Note != nil {
-		existingOpenHour.Note = *req.Note
-	}
-	if req.IsOpen != nil {
-		existingOpenHour.IsOpen = *req.IsOpen
-	}
-	if req.Status != nil {
-		existingOpenHour.Status = enums.OpenHourStatus(*req.Status)
-	}
-	if req.Type != nil {
-		existingOpenHour.Type = enums.OpenHourType(*req.Type)
-	}
-
-	updatedOpenHour, err := h.openHourUsecase.Update(c.Request.Context(), id, existingOpenHour)
+	result, err := h.usecase.Update(c.Request.Context(), id, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -202,13 +152,13 @@ func (h *OpenHourHandler) UpdateOpenHourHTTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Open hour updated successfully",
-		"data":    updatedOpenHour,
+		"data":    result,
 	})
 }
 
 // DeleteOpenHourHTTP handles HTTP DELETE request for deleting open hour
 // @Summary Delete open hour
-// @Description Delete open hour by ID (soft delete)
+// @Description Delete open hour by ID
 // @Tags Open Hour
 // @Accept json
 // @Produce json
@@ -222,14 +172,13 @@ func (h *OpenHourHandler) DeleteOpenHourHTTP(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
-			"message": "Invalid ID",
+			"message": "Invalid ID format",
 			"details": err.Error(),
 		})
 		return
 	}
 
-	ok, err := h.openHourUsecase.Delete(c.Request.Context(), id)
-	if err != nil {
+	if err := h.usecase.Delete(c.Request.Context(), id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
 			"message": "Failed to delete open hour",
@@ -241,7 +190,6 @@ func (h *OpenHourHandler) DeleteOpenHourHTTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Open hour deleted successfully",
-		"data":    ok,
 	})
 }
 
@@ -252,27 +200,48 @@ func (h *OpenHourHandler) DeleteOpenHourHTTP(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param page query int false "Page number"
-// @Param size query int false "Page size"
+// @Param page query int false "Page number" default(1)
+// @Param size query int false "Page size" default(10)
 // @Param poiId query int false "Filter by POI ID"
 // @Param dayOfWeek query int false "Filter by day of week (2-8)"
 // @Param isOpen query bool false "Filter by is open status"
-// @Param status query int false "Filter by status"
-// @Param type query int false "Filter by type"
 // @Success 200 {object} map[string]interface{} "Open hours list"
 // @Router /v2/tqd/open-hours [get]
 func (h *OpenHourHandler) ListOpenHoursHTTP(c *gin.Context) {
-	var req dto.OpenHourListRequest
-	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    400,
-			"message": "Invalid query parameters",
-			"details": err.Error(),
-		})
-		return
+	// Parse pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+
+	// Create filter
+	filter := &dto.OpenHourFilter{
+		Pagable: _dto.Pagable{
+			Page: uint32(page),
+			Size: uint32(size),
+		},
 	}
 
-	response, total, err := h.openHourUsecase.GetList(c.Request.Context(), &req)
+	// Parse poiId
+	if poiIdStr := c.Query("poiId"); poiIdStr != "" {
+		if poiId, err := strconv.ParseUint(poiIdStr, 10, 64); err == nil {
+			filter.POIID = poiId
+		}
+	}
+
+	// Parse dayOfWeek
+	if dayStr := c.Query("dayOfWeek"); dayStr != "" {
+		if day, err := strconv.Atoi(dayStr); err == nil && day >= 2 && day <= 8 {
+			filter.DayOfWeek = &day
+		}
+	}
+
+	// Parse isOpen
+	if isOpenStr := c.Query("isOpen"); isOpenStr != "" {
+		if isOpen, err := strconv.ParseBool(isOpenStr); err == nil {
+			filter.IsOpen = &isOpen
+		}
+	}
+
+	result, err := h.usecase.List(c.Request.Context(), filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -285,37 +254,48 @@ func (h *OpenHourHandler) ListOpenHoursHTTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Open hours retrieved successfully",
-		"data":    response,
-		"total":   total,
+		"data": gin.H{
+			"items": result.Data,
+			"total": result.Total,
+			"page":  result.Page,
+			"size":  result.Size,
+			"pages": (result.Total + int64(result.Size) - 1) / int64(result.Size),
+		},
 	})
 }
 
-// GetOpenHourTimesByDayHTTP handles HTTP GET request for getting open hours grouped by day of week
-// @Summary Get open hours grouped by day of week
-// @Description Get unique days with their time slots
+// GetOpenHourTimesByDayHTTP handles HTTP GET request for getting open hours grouped by day
+// @Summary Get open hours grouped by day
+// @Description Get open hours grouped by day of week
 // @Tags Open Hour
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param dayOfWeek query string true "Day of week (Monday, Tuesday, etc.)"
 // @Param poiId query int false "Filter by POI ID"
-// @Success 200 {object} map[string]interface{} "Open hours grouped by day"
-// @Router /v2/tqd/open-hours/times [get]
+// @Success 200 {object} map[string]interface{} "Open hours by day"
+// @Router /v2/tqd/open-hours/times/by-day [get]
 func (h *OpenHourHandler) GetOpenHourTimesByDayHTTP(c *gin.Context) {
-	var poiID *uint64
-	if poiIDStr := c.Query("poiId"); poiIDStr != "" {
-		id, err := strconv.ParseUint(poiIDStr, 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    400,
-				"message": "Invalid POI ID",
-				"details": err.Error(),
-			})
-			return
-		}
-		poiID = &id
+	dayOfWeek := c.Query("dayOfWeek")
+	if dayOfWeek == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "dayOfWeek is required",
+		})
+		return
 	}
 
-	result, err := h.openHourUsecase.GetTimesByDayOfWeek(c.Request.Context(), poiID)
+	req := &dto.GetTimesByDayRequest{
+		DayOfWeek: dayOfWeek,
+	}
+
+	if poiIdStr := c.Query("poiId"); poiIdStr != "" {
+		if poiId, err := strconv.ParseUint(poiIdStr, 10, 64); err == nil {
+			req.POIID = poiId
+		}
+	}
+
+	result, err := h.usecase.GetTimesByDay(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -332,18 +312,18 @@ func (h *OpenHourHandler) GetOpenHourTimesByDayHTTP(c *gin.Context) {
 	})
 }
 
-// BulkSaveOpenHoursHTTP handles HTTP POST request for bulk operations (create, update, delete)
+// BulkSaveOpenHoursHTTP handles HTTP POST request for bulk operations
 // @Summary Bulk save/delete open hours
-// @Description Create, update, and delete multiple open hours at once. Items with ID will be updated, without ID will be created, and IDs in deleteIds will be deleted
+// @Description Create, update, and delete multiple open hours at once
 // @Tags Open Hour
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body dto.OpenHourBulkSaveRequest true "Bulk save request"
+// @Param request body dto.BulkSaveOpenHourRequest true "Bulk save request"
 // @Success 200 {object} map[string]interface{} "Bulk operation result"
 // @Router /v2/tqd/open-hours/bulk [post]
 func (h *OpenHourHandler) BulkSaveOpenHoursHTTP(c *gin.Context) {
-	var req dto.OpenHourBulkSaveRequest
+	var req dto.BulkSaveOpenHourRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
@@ -353,7 +333,7 @@ func (h *OpenHourHandler) BulkSaveOpenHoursHTTP(c *gin.Context) {
 		return
 	}
 
-	result, err := h.openHourUsecase.BulkSave(c.Request.Context(), &req)
+	result, err := h.usecase.BulkSave(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,

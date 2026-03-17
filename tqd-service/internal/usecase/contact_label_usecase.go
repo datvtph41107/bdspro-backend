@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"tqd/internal/domain"
+	"tqd/infra/mapper"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/interface/provider"
@@ -26,6 +26,7 @@ type contactLabelUsecase struct {
 	contactLabelRepo   repo.ContactLabelRepository
 	userProvider       provider.UserProvider
 	permissionProvider provider.PermissionProvider
+	mapper             *mapper.ContactLabelMapper // Thêm mapper vào usecase
 }
 
 // NewContactLabelUsecase creates a new ContactLabelUsecase
@@ -33,11 +34,13 @@ func NewContactLabelUsecase(
 	contactLabelRepo repo.ContactLabelRepository,
 	userProvider provider.UserProvider,
 	permissionProvider provider.PermissionProvider,
+	mapper *mapper.ContactLabelMapper,
 ) ContactLabelUsecase {
 	return &contactLabelUsecase{
 		contactLabelRepo:   contactLabelRepo,
 		userProvider:       userProvider,
 		permissionProvider: permissionProvider,
+		mapper:             mapper,
 	}
 }
 
@@ -54,26 +57,22 @@ func (u *contactLabelUsecase) Create(ctx context.Context, req *dto.CreateContact
 		return nil, fmt.Errorf("insufficient permissions")
 	}
 
+	// Validate required fields
+	if req.Name == "" {
+		return nil, fmt.Errorf("name is required")
+	}
+	if req.Code == "" {
+		return nil, fmt.Errorf("code is required")
+	}
+
 	// Check if code already exists
 	existing, err := u.contactLabelRepo.GetByCode(ctx, req.Code)
 	if err == nil && existing != nil {
 		return nil, fmt.Errorf("contact label with code %s already exists", req.Code)
 	}
 
-	// Create domain object
-	contactLabel := &domain.ContactLabel{
-		Name:         req.Name,
-		Code:         req.Code,
-		Description:  req.Description,
-		Color:        req.Color,
-		Icon:         req.Icon,
-		IsActive:     req.IsActive,
-		SortOrder:    req.SortOrder,
-		ContactCount: 0,
-		IsSystem:     req.IsSystem,
-		Status:       0, // Active
-		Type:         enums.ContactLabelType(req.Type),
-	}
+	// Convert request to domain using mapper
+	contactLabel := u.mapper.ToDomainFromCreateRequest(req)
 
 	// Create in repository
 	err = u.contactLabelRepo.Create(ctx, contactLabel)
@@ -81,11 +80,8 @@ func (u *contactLabelUsecase) Create(ctx context.Context, req *dto.CreateContact
 		return nil, fmt.Errorf("failed to create contact label: %v", err)
 	}
 
-	// Convert to DTO
-	dto := &dto.ContactLabelDTO{}
-	dto.FromDomain(contactLabel)
-
-	return dto, nil
+	// Convert to DTO using mapper
+	return u.mapper.ToDTO(contactLabel), nil
 }
 
 func (u *contactLabelUsecase) GetByID(ctx context.Context, id uint64) (*dto.ContactLabelDTO, error) {
@@ -107,11 +103,8 @@ func (u *contactLabelUsecase) GetByID(ctx context.Context, id uint64) (*dto.Cont
 		return nil, fmt.Errorf("failed to get contact label: %v", err)
 	}
 
-	// Convert to DTO
-	dto := &dto.ContactLabelDTO{}
-	dto.FromDomain(contactLabel)
-
-	return dto, nil
+	// Convert to DTO using mapper
+	return u.mapper.ToDTO(contactLabel), nil
 }
 
 func (u *contactLabelUsecase) Update(ctx context.Context, id uint64, req *dto.UpdateContactLabelRequestDTO) (*dto.ContactLabelDTO, error) {
@@ -125,6 +118,14 @@ func (u *contactLabelUsecase) Update(ctx context.Context, id uint64, req *dto.Up
 	}
 	if !hasPermission {
 		return nil, fmt.Errorf("insufficient permissions")
+	}
+
+	// Validate required fields
+	if req.Name == "" {
+		return nil, fmt.Errorf("name is required")
+	}
+	if req.Code == "" {
+		return nil, fmt.Errorf("code is required")
 	}
 
 	// Get existing contact label
@@ -156,11 +157,8 @@ func (u *contactLabelUsecase) Update(ctx context.Context, id uint64, req *dto.Up
 		return nil, fmt.Errorf("failed to update contact label: %v", err)
 	}
 
-	// Convert to DTO
-	dto := &dto.ContactLabelDTO{}
-	dto.FromDomain(existing)
-
-	return dto, nil
+	// Convert to DTO using mapper
+	return u.mapper.ToDTO(existing), nil
 }
 
 func (u *contactLabelUsecase) Delete(ctx context.Context, id uint64) error {
@@ -174,6 +172,15 @@ func (u *contactLabelUsecase) Delete(ctx context.Context, id uint64) error {
 	}
 	if !hasPermission {
 		return fmt.Errorf("insufficient permissions")
+	}
+
+	// Check if it's a system label
+	existing, err := u.contactLabelRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to get contact label: %v", err)
+	}
+	if existing.IsSystem {
+		return fmt.Errorf("cannot delete system contact label")
 	}
 
 	// Delete from repository
@@ -198,23 +205,31 @@ func (u *contactLabelUsecase) List(ctx context.Context, req *dto.ListContactLabe
 		return nil, fmt.Errorf("insufficient permissions")
 	}
 
+	// Validate pagination
+	if req.Pagable.Page < 1 {
+		req.Pagable.Page = 1
+	}
+	if req.Pagable.Size < 1 {
+		req.Pagable.Size = 10
+	}
+	if req.Pagable.Size > 100 {
+		req.Pagable.Size = 100
+	}
+
 	// Get list from repository
 	contactLabels, total, err := u.contactLabelRepo.List(ctx, req.Pagable, req.Search, req.IsActive, req.IsSystem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list contact labels: %v", err)
 	}
 
-	// Convert to DTOs
-	dtoList := make([]dto.ContactLabelDTO, len(contactLabels))
-	for i, contactLabel := range contactLabels {
-		dto := &dto.ContactLabelDTO{}
-		dto.FromDomain(&contactLabel)
-		dtoList[i] = *dto
-	}
+	// Convert to DTOs using mapper
+	dtoList := u.mapper.ToDTOList(contactLabels)
 
 	return &dto.ListContactLabelsResponseDTO{
 		Data:  dtoList,
 		Total: total,
+		Page:  int(req.Pagable.Page),
+		Size:  int(req.Pagable.Size),
 	}, nil
 }
 

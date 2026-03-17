@@ -10,7 +10,7 @@ import (
 	tqdpb "pb/types/tqd"
 )
 
-// ContactLabelMapper handles mapping between domain and DTO
+// ContactLabelMapper handles mapping between domain, DTO and proto
 type ContactLabelMapper struct{}
 
 // NewContactLabelMapper creates a new ContactLabelMapper
@@ -32,8 +32,8 @@ func (m *ContactLabelMapper) ToDTO(contactLabel *domain.ContactLabel) *dto.Conta
 		Color:        contactLabel.Color,
 		Icon:         contactLabel.Icon,
 		IsActive:     contactLabel.IsActive,
-		SortOrder:    contactLabel.SortOrder,
-		ContactCount: contactLabel.ContactCount,
+		SortOrder:    int32(contactLabel.SortOrder),
+		ContactCount: int32(contactLabel.ContactCount),
 		IsSystem:     contactLabel.IsSystem,
 		Status:       int(contactLabel.Status),
 		Type:         int(contactLabel.Type),
@@ -60,8 +60,8 @@ func (m *ContactLabelMapper) ToDomain(dto *dto.ContactLabelDTO) *domain.ContactL
 		Color:        dto.Color,
 		Icon:         dto.Icon,
 		IsActive:     dto.IsActive,
-		SortOrder:    dto.SortOrder,
-		ContactCount: dto.ContactCount,
+		SortOrder:    int(dto.SortOrder),
+		ContactCount: int(dto.ContactCount),
 		IsSystem:     dto.IsSystem,
 		Status:       enums.ContactLabelStatus(dto.Status),
 		Type:         enums.ContactLabelType(dto.Type),
@@ -82,10 +82,10 @@ func (m *ContactLabelMapper) ToDomainFromCreateRequest(req *dto.CreateContactLab
 		Icon:         req.Icon,
 		IsActive:     req.IsActive,
 		SortOrder:    req.SortOrder,
+		ContactCount: 0,
 		IsSystem:     req.IsSystem,
 		Status:       enums.ContactLabelStatusActive,
 		Type:         enums.ContactLabelType(req.Type),
-		ContactCount: 0,
 	}
 }
 
@@ -113,15 +113,57 @@ func (m *ContactLabelMapper) ToDomainFromUpdateRequest(req *dto.UpdateContactLab
 
 // ToDTOList converts slice of domain ContactLabel to slice of ContactLabelDTO
 func (m *ContactLabelMapper) ToDTOList(contactLabels []domain.ContactLabel) []dto.ContactLabelDTO {
+	if contactLabels == nil {
+		return nil
+	}
 	result := make([]dto.ContactLabelDTO, len(contactLabels))
 	for i, contactLabel := range contactLabels {
-		result[i] = *m.ToDTO(&contactLabel)
+		dto := m.ToDTO(&contactLabel)
+		if dto != nil {
+			result[i] = *dto
+		}
 	}
 	return result
 }
 
-// ToProto converts domain ContactLabel to proto ContactLabel
-func (m *ContactLabelMapper) ToProto(contactLabel *dto.ContactLabelDTO) *tqdpb.ContactLabel {
+// ToDomainList converts slice of ContactLabelDTO to slice of domain ContactLabel
+func (m *ContactLabelMapper) ToDomainList(dtos []dto.ContactLabelDTO) []*domain.ContactLabel {
+	if dtos == nil {
+		return nil
+	}
+	result := make([]*domain.ContactLabel, len(dtos))
+	for i, dto := range dtos {
+		result[i] = m.ToDomain(&dto)
+	}
+	return result
+}
+
+// ToProto converts ContactLabelDTO to proto ContactLabel
+func (m *ContactLabelMapper) ToProto(dto *dto.ContactLabelDTO) *tqdpb.ContactLabel {
+	if dto == nil {
+		return nil
+	}
+
+	return &tqdpb.ContactLabel{
+		Id:           dto.ID,
+		Name:         dto.Name,
+		Code:         dto.Code,
+		Description:  dto.Description,
+		Color:        dto.Color,
+		Icon:         dto.Icon,
+		IsActive:     dto.IsActive,
+		SortOrder:    dto.SortOrder,
+		ContactCount: dto.ContactCount,
+		IsSystem:     dto.IsSystem,
+		Status:       int32(dto.Status),
+		Type:         int32(dto.Type),
+		CreatedAt:    dto.CreatedAt,
+		UpdatedAt:    dto.UpdatedAt,
+	}
+}
+
+// ToProtoFromDomain converts domain ContactLabel directly to proto ContactLabel
+func (m *ContactLabelMapper) ToProtoFromDomain(contactLabel *domain.ContactLabel) *tqdpb.ContactLabel {
 	if contactLabel == nil {
 		return nil
 	}
@@ -134,12 +176,24 @@ func (m *ContactLabelMapper) ToProto(contactLabel *dto.ContactLabelDTO) *tqdpb.C
 		Color:        contactLabel.Color,
 		Icon:         contactLabel.Icon,
 		IsActive:     contactLabel.IsActive,
-		SortOrder:    contactLabel.SortOrder,
+		SortOrder:    int32(contactLabel.SortOrder),
 		ContactCount: int32(contactLabel.ContactCount),
 		IsSystem:     contactLabel.IsSystem,
 		Status:       int32(contactLabel.Status),
 		Type:         int32(contactLabel.Type),
-		CreatedAt:    contactLabel.CreatedAt,
-		UpdatedAt:    contactLabel.UpdatedAt,
+		CreatedAt:    _utils.FormatTimeToString(contactLabel.CreatedAt),
+		UpdatedAt:    _utils.FormatTimeToString(contactLabel.UpdatedAt),
 	}
+}
+
+// ToProtoList converts slice of ContactLabelDTO to slice of proto ContactLabel
+func (m *ContactLabelMapper) ToProtoList(dtos []dto.ContactLabelDTO) []*tqdpb.ContactLabel {
+	if dtos == nil {
+		return nil
+	}
+	result := make([]*tqdpb.ContactLabel, len(dtos))
+	for i, dto := range dtos {
+		result[i] = m.ToProto(&dto)
+	}
+	return result
 }

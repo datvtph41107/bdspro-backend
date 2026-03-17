@@ -1,215 +1,343 @@
 package mapper
 
 import (
-	_dto "common/domain/dto"
+	"encoding/json"
+	"time"
+
+	_entity "common/domain/entity"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
-	"tqd/internal/interface/repo"
 )
 
-// PoiMapper handles mapping between domain and proto
+// PoiMapper handles mapping between domain, DTO and proto
 type PoiMapper struct{}
 
-// NewPoiMapper creates a new PoiMapper
 func NewPoiMapper() *PoiMapper {
 	return &PoiMapper{}
 }
 
-// POIToDTO converts POI domain entity to POI DTO
-func POIToDTO(poi *domain.POI) *dto.POIDTO {
-	if poi == nil {
+// ==================== DOMAIN -> RESPONSE ====================
+
+// ToResponse converts domain POI to response DTO
+func (m *PoiMapper) ToResponse(p *domain.POI) *dto.PoiResponse {
+	if p == nil {
 		return nil
 	}
-
-	poiDTO := &dto.POIDTO{
-		ID:          poi.ID,
-		Code:        poi.Code,
-		CategoryID:  poi.CategoryID,
-		Name:        poi.Name,
-		Address:     poi.Address,
-		Lat:         poi.Lat,
-		Lng:         poi.Lng,
-		GeoJSON:     poi.GeoJSON,
-		Phone:       poi.Phone,
-		Website:     poi.Website,
-		RatingPoint: poi.RatingPoint,
-		RatingCount: poi.RatingCount,
-		Source:      poi.Source,
-		Confidence:  poi.Confidence,
-		IsActive:    poi.IsActive,
-		CreatedAt:   _utils.FormatTimeToString(poi.CreatedAt),
-		UpdatedAt:   _utils.FormatTimeToString(poi.UpdatedAt),
-	}
-
-	// Handle optional time fields
-	if poi.LastVerifiedAt != nil {
-		lastVerifiedStr := _utils.FormatTimeToString(poi.LastVerifiedAt)
-		poiDTO.LastVerifiedAt = &lastVerifiedStr
-	}
-
-	if poi.NextReviewAt != nil {
-		nextReviewStr := _utils.FormatTimeToString(poi.NextReviewAt)
-		poiDTO.NextReviewAt = &nextReviewStr
-	}
-
-	// Map category if exists
-	if poi.Category != nil {
-		poiDTO.Category = &dto.PoiCategoryDTO{
-			ID:   poi.Category.ID,
-			Code: poi.Category.Code,
-			Name: poi.Category.Name,
-			Icon: poi.Category.Icon,
-		}
-	}
-
-	return poiDTO
+	resp := &dto.PoiResponse{}
+	resp.FromDomain(p)
+	return resp
 }
 
-// POIListToDTO converts a list of POI domain entities to DTO list
-func POIListToDTO(pois []domain.POI) []dto.POIDTO {
-	poiDTOs := make([]dto.POIDTO, len(pois))
-	for i, poi := range pois {
-		poiDTO := POIToDTO(&poi)
-		if poiDTO != nil {
-			poiDTOs[i] = *poiDTO
-		}
+// ToResponseList converts slice of domain POI to slice of response DTO
+func (m *PoiMapper) ToResponseList(pois []domain.POI) []dto.PoiResponse {
+	if pois == nil {
+		return nil
 	}
-	return poiDTOs
+	result := make([]dto.PoiResponse, len(pois))
+	for i, p := range pois {
+		result[i].FromDomain(&p)
+	}
+	return result
 }
 
-// CreatePOIRequestToDomain converts CreatePOIRequestDTO to POI domain entity
-func CreatePOIRequestToDomain(req *dto.CreatePOIRequestDTO) *domain.POI {
+// ==================== REQUEST -> DOMAIN ====================
+
+// ToDomainFromCreate converts create request to domain
+func (m *PoiMapper) ToDomainFromCreate(req *dto.CreatePoiRequest, userID uint64) (*domain.POI, error) {
 	if req == nil {
-		return nil
+		return nil, nil
 	}
 
-	poi := &domain.POI{
-		CategoryID:  req.CategoryID,
-		Name:        req.Name,
-		Address:     req.Address,
-		Lat:         req.Lat,
-		Lng:         req.Lng,
-		GeoJSON:     req.GeoJSON,
-		Phone:       req.Phone,
-		Website:     req.Website,
-		RatingPoint: req.RatingPoint,
-		RatingCount: req.RatingCount,
-		Source:      req.Source,
-		Confidence:  req.Confidence,
-		IsActive:    req.IsActive,
+	// Generate code if not provided
+	code := req.Code
+	if code == "" {
+		code = generatePoiCode() // Will be handled by repository
 	}
 
-	// Parse optional time fields
-	if req.LastVerifiedAt != nil {
-		if parsedTime := _utils.ParseStringToTime(*req.LastVerifiedAt); parsedTime != nil {
-			poi.LastVerifiedAt = parsedTime
-		}
+	// Convert images to JSON
+	imagesJSON := ""
+	if len(req.Images) > 0 {
+		imagesBytes, _ := json.Marshal(req.Images)
+		imagesJSON = string(imagesBytes)
 	}
 
-	if req.NextReviewAt != nil {
-		if parsedTime := _utils.ParseStringToTime(*req.NextReviewAt); parsedTime != nil {
-			poi.NextReviewAt = parsedTime
-		}
+	// Convert tags to JSON
+	tagsJSON := ""
+	if len(req.Tags) > 0 {
+		tagsBytes, _ := json.Marshal(req.Tags)
+		tagsJSON = string(tagsBytes)
 	}
 
-	return poi
-}
-
-// UpdatePOIRequestToDomain converts UpdatePOIRequestDTO to POI domain entity
-func UpdatePOIRequestToDomain(req *dto.UpdatePOIRequestDTO, existingPOI *domain.POI) *domain.POI {
-	if req == nil || existingPOI == nil {
-		return nil
+	// Convert amenity IDs to JSON
+	amenitiesJSON := ""
+	if len(req.AmenityIDs) > 0 {
+		amenitiesBytes, _ := json.Marshal(req.AmenityIDs)
+		amenitiesJSON = string(amenitiesBytes)
 	}
 
-	// Update fields from request
-	existingPOI.CategoryID = req.CategoryID
-	existingPOI.Name = req.Name
-	existingPOI.Address = req.Address
-	existingPOI.Lat = req.Lat
-	existingPOI.Lng = req.Lng
-	existingPOI.GeoJSON = req.GeoJSON
-	existingPOI.Phone = req.Phone
-	existingPOI.Website = req.Website
-	existingPOI.RatingPoint = req.RatingPoint
-	existingPOI.RatingCount = req.RatingCount
-	existingPOI.Source = req.Source
-	existingPOI.Confidence = req.Confidence
-	existingPOI.IsActive = req.IsActive
-
-	// Parse optional time fields
-	if req.LastVerifiedAt != nil {
-		if parsedTime := _utils.ParseStringToTime(*req.LastVerifiedAt); parsedTime != nil {
-			existingPOI.LastVerifiedAt = parsedTime
-		}
-	} else {
-		existingPOI.LastVerifiedAt = nil
-	}
-
-	if req.NextReviewAt != nil {
-		if parsedTime := _utils.ParseStringToTime(*req.NextReviewAt); parsedTime != nil {
-			existingPOI.NextReviewAt = parsedTime
-		}
-	} else {
-		existingPOI.NextReviewAt = nil
-	}
-
-	return existingPOI
-}
-
-// ListPOIsRequestToRepoRequest converts ListPOIsRequestDTO to repository request
-func ListPOIsRequestToRepoRequest(req *dto.ListPOIsRequestDTO) *repo.ListPOIsRequest {
-	if req == nil {
-		return nil
-	}
-
-	return &repo.ListPOIsRequest{
-		Text:       req.Text,
-		CategoryID: req.CategoryID,
-		IsActive:   req.IsActive,
-		MinLat:     req.MinLat,
-		MaxLat:     req.MaxLat,
-		MinLng:     req.MinLng,
-		MaxLng:     req.MaxLng,
-		Pagable: _dto.Pagable{
-			Page: req.Page,
-			Size: req.Size,
+	now := time.Now()
+	return &domain.POI{
+		BaseEntity: _entity.BaseEntity{
+			CreatedAt: &now,
+			UpdatedAt: &now,
 		},
-	}
+		Code:          code,
+		Name:          req.Name,
+		Description:   req.Description,
+		Address:       req.Address,
+		Phone:         req.Phone,
+		Email:         req.Email,
+		Website:       req.Website,
+		Latitude:      req.Latitude,
+		Longitude:     req.Longitude,
+		CategoryID:    req.CategoryID,
+		IsActive:      req.IsActive,
+		IsFeatured:    req.IsFeatured,
+		CoverImage:    req.CoverImage,
+		ImagesJSON:    imagesJSON,
+		TagsJSON:      tagsJSON,
+		AmenitiesJSON: amenitiesJSON,
+		Rating:        0,
+		ReviewCount:   0,
+		IsVerified:    false,
+		ViewCount:     0,
+		LikeCount:     0,
+		CreatedBy:     userID,
+		UpdatedBy:     userID,
+	}, nil
 }
 
-// ToProto converts domain POI to proto Poi
-func (m *PoiMapper) ToProto(poi *domain.POI) *tqdpb.Poi {
-	if poi == nil {
+// ToDomainFromUpdate converts update request to domain
+func (m *PoiMapper) ToDomainFromUpdate(req *dto.UpdatePoiRequest, existing *domain.POI, userID uint64) (*domain.POI, error) {
+	if req == nil {
+		return nil, nil
+	}
+
+	now := time.Now()
+	updated := &domain.POI{
+		BaseEntity: _entity.BaseEntity{
+			ID:        existing.ID,
+			CreatedAt: existing.CreatedAt,
+			UpdatedAt: &now,
+		},
+		Code:          existing.Code,
+		Name:          existing.Name,
+		Description:   existing.Description,
+		Address:       existing.Address,
+		Phone:         existing.Phone,
+		Email:         existing.Email,
+		Website:       existing.Website,
+		Latitude:      existing.Latitude,
+		Longitude:     existing.Longitude,
+		CategoryID:    existing.CategoryID,
+		Rating:        existing.Rating,
+		ReviewCount:   existing.ReviewCount,
+		IsVerified:    existing.IsVerified,
+		IsActive:      existing.IsActive,
+		IsFeatured:    existing.IsFeatured,
+		CoverImage:    existing.CoverImage,
+		ImagesJSON:    existing.ImagesJSON,
+		TagsJSON:      existing.TagsJSON,
+		AmenitiesJSON: existing.AmenitiesJSON,
+		ViewCount:     existing.ViewCount,
+		LikeCount:     existing.LikeCount,
+		CreatedBy:     existing.CreatedBy,
+		UpdatedBy:     userID,
+	}
+
+	// Update only provided fields
+	if req.Name != nil {
+		updated.Name = *req.Name
+	}
+	if req.Code != nil {
+		updated.Code = *req.Code
+	}
+	if req.Description != nil {
+		updated.Description = *req.Description
+	}
+	if req.Address != nil {
+		updated.Address = *req.Address
+	}
+	if req.Phone != nil {
+		updated.Phone = *req.Phone
+	}
+	if req.Email != nil {
+		updated.Email = *req.Email
+	}
+	if req.Website != nil {
+		updated.Website = *req.Website
+	}
+	if req.Latitude != nil {
+		updated.Latitude = *req.Latitude
+	}
+	if req.Longitude != nil {
+		updated.Longitude = *req.Longitude
+	}
+	if req.CategoryID != nil {
+		updated.CategoryID = *req.CategoryID
+	}
+	if req.IsActive != nil {
+		updated.IsActive = *req.IsActive
+	}
+	if req.IsFeatured != nil {
+		updated.IsFeatured = *req.IsFeatured
+	}
+	if req.CoverImage != nil {
+		updated.CoverImage = *req.CoverImage
+	}
+	if req.Images != nil {
+		imagesBytes, _ := json.Marshal(req.Images)
+		updated.ImagesJSON = string(imagesBytes)
+	}
+	if req.Tags != nil {
+		tagsBytes, _ := json.Marshal(req.Tags)
+		updated.TagsJSON = string(tagsBytes)
+	}
+	if req.AmenityIDs != nil {
+		amenitiesBytes, _ := json.Marshal(req.AmenityIDs)
+		updated.AmenitiesJSON = string(amenitiesBytes)
+	}
+
+	return updated, nil
+}
+
+// ==================== DOMAIN -> PROTO ====================
+
+// ToProto converts domain POI to proto
+func (m *PoiMapper) ToProto(p *domain.POI) *tqdpb.Poi {
+	if p == nil {
 		return nil
 	}
 
-	protoPoi := &tqdpb.Poi{
-		Id:          poi.ID,
-		Code:        poi.Code,
-		Name:        poi.Name,
-		Address:     poi.Address,
-		Latitude:    poi.Lat,
-		Longitude:   poi.Lng,
-		CategoryId:  *poi.CategoryID,
-		Phone:       poi.Phone,
-		Website:     poi.Website,
-		Rating:      float64(poi.RatingPoint),
-		ReviewCount: uint32(poi.RatingCount),
-		IsActive:    poi.IsActive,
-		CreatedAt:   _utils.FormatTimeToString(poi.CreatedAt),
-		UpdatedAt:   _utils.FormatTimeToString(poi.UpdatedAt),
+	// Parse images
+	var images []string
+	if p.ImagesJSON != "" {
+		json.Unmarshal([]byte(p.ImagesJSON), &images)
 	}
 
-	return protoPoi
+	// Parse tags
+	var tags []string
+	if p.TagsJSON != "" {
+		json.Unmarshal([]byte(p.TagsJSON), &tags)
+	}
+
+	return &tqdpb.Poi{
+		Id:          p.ID,
+		Name:        p.Name,
+		Code:        p.Code,
+		Description: p.Description,
+		Address:     p.Address,
+		Phone:       p.Phone,
+		Email:       p.Email,
+		Website:     p.Website,
+		Latitude:    p.Latitude,
+		Longitude:   p.Longitude,
+		CategoryId:  p.CategoryID,
+		Rating:      p.Rating,
+		ReviewCount: p.ReviewCount,
+		IsVerified:  p.IsVerified,
+		IsActive:    p.IsActive,
+		IsFeatured:  p.IsFeatured,
+		CoverImage:  p.CoverImage,
+		Images:      images,
+		Tags:        tags,
+		ViewCount:   p.ViewCount,
+		LikeCount:   p.LikeCount,
+		CreatedAt:   _utils.FormatTimeToString(p.CreatedAt),
+		UpdatedAt:   _utils.FormatTimeToString(p.UpdatedAt),
+		CreatedBy:   p.CreatedBy,
+		UpdatedBy:   p.UpdatedBy,
+	}
 }
 
-// ToProtoList converts a list of POI domain entities to proto list
-func (m *PoiMapper) ToProtoList(pois []domain.POI) []*tqdpb.Poi {
-	protoPoints := make([]*tqdpb.Poi, len(pois))
-	for i, poi := range pois {
-		protoPoints[i] = m.ToProto(&poi)
+// ToProtoFromResponse converts response DTO to proto
+func (m *PoiMapper) ToProtoFromResponse(resp *dto.PoiResponse) *tqdpb.Poi {
+	if resp == nil {
+		return nil
 	}
-	return protoPoints
+
+	return &tqdpb.Poi{
+		Id:          resp.ID,
+		Name:        resp.Name,
+		Code:        resp.Code,
+		Description: resp.Description,
+		Address:     resp.Address,
+		Phone:       resp.Phone,
+		Email:       resp.Email,
+		Website:     resp.Website,
+		Latitude:    resp.Latitude,
+		Longitude:   resp.Longitude,
+		CategoryId:  resp.CategoryID,
+		Rating:      resp.Rating,
+		ReviewCount: resp.ReviewCount,
+		IsVerified:  resp.IsVerified,
+		IsActive:    resp.IsActive,
+		IsFeatured:  resp.IsFeatured,
+		CoverImage:  resp.CoverImage,
+		Images:      resp.Images,
+		Tags:        resp.Tags,
+		ViewCount:   resp.ViewCount,
+		LikeCount:   resp.LikeCount,
+		CreatedAt:   _utils.FormatTimeToString(&resp.CreatedAt),
+		UpdatedAt:   _utils.FormatTimeToString(&resp.UpdatedAt),
+		CreatedBy:   resp.CreatedBy,
+		UpdatedBy:   resp.UpdatedBy,
+	}
+}
+
+// ToProtoList converts slice of domain POI to slice of proto
+func (m *PoiMapper) ToProtoList(pois []domain.POI) []*tqdpb.Poi {
+	if pois == nil {
+		return nil
+	}
+	result := make([]*tqdpb.Poi, len(pois))
+	for i, p := range pois {
+		result[i] = m.ToProto(&p)
+	}
+	return result
+}
+
+// ToProtoListFromResponses converts slice of response DTO to slice of proto
+func (m *PoiMapper) ToProtoListFromResponses(responses []dto.PoiResponse) []*tqdpb.Poi {
+	if responses == nil {
+		return nil
+	}
+	result := make([]*tqdpb.Poi, len(responses))
+	for i, resp := range responses {
+		result[i] = m.ToProtoFromResponse(&resp)
+	}
+	return result
+}
+
+// ==================== PROTO -> REQUEST ====================
+
+// FromProto converts proto to create request
+func (m *PoiMapper) FromProto(proto *tqdpb.Poi) (*dto.CreatePoiRequest, error) {
+	if proto == nil {
+		return nil, nil
+	}
+
+	return &dto.CreatePoiRequest{
+		Name:        proto.Name,
+		Code:        proto.Code,
+		Description: proto.Description,
+		Address:     proto.Address,
+		Phone:       proto.Phone,
+		Email:       proto.Email,
+		Website:     proto.Website,
+		Latitude:    proto.Latitude,
+		Longitude:   proto.Longitude,
+		CategoryID:  proto.CategoryId,
+		IsActive:    proto.IsActive,
+		IsFeatured:  proto.IsFeatured,
+		CoverImage:  proto.CoverImage,
+		Images:      proto.Images,
+		Tags:        proto.Tags,
+	}, nil
+}
+
+func generatePoiCode() string {
+	return "ABCD"
 }

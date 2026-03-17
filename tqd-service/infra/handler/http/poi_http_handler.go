@@ -1,9 +1,12 @@
 package handler_http
 
 import (
-	"context"
+	"net/http"
 	"strconv"
+	"strings"
 
+	_dto "common/domain/dto"
+	"tqd/infra/mapper"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
 
@@ -15,380 +18,673 @@ var validate = validator.New()
 
 // POIHTTPHandler handles HTTP requests for POI operations
 type POIHTTPHandler struct {
-	poiUsecase usecase.IPOIUsecase
+	usecase usecase.PoiUsecase
+	mapper  *mapper.PoiMapper
 }
 
 // NewPOIHTTPHandler creates a new POI HTTP handler
-// @bind: infra/handler/http/poi_http_handler.go
-func NewPOIHTTPHandler(poiUsecase usecase.IPOIUsecase) *POIHTTPHandler {
+func NewPOIHTTPHandler(
+	usecase usecase.PoiUsecase,
+	mapper *mapper.PoiMapper,
+) *POIHTTPHandler {
 	return &POIHTTPHandler{
-		poiUsecase: poiUsecase,
+		usecase: usecase,
+		mapper:  mapper,
 	}
 }
 
-// CreatePOI creates a new POI
+// CreatePOI handles HTTP POST request for creating POI
 // @Summary Create a new POI
 // @Description Create a new Point of Interest
 // @Tags POI
 // @Accept json
 // @Produce json
-// @Param request body dto.CreatePOIRequestDTO true "POI creation request"
-// @Success 201 {object} dto.POIDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois [post]
+// @Security BearerAuth
+// @Param request body dto.CreatePoiRequest true "POI creation request"
+// @Success 201 {object} map[string]interface{} "POI created successfully"
+// @Router /v2/tqd/pois [post]
 func (h *POIHTTPHandler) CreatePOI(c *gin.Context) {
-	var req dto.CreatePOIRequestDTO
+	var req dto.CreatePoiRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Dữ liệu không hợp lệ", "details": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+			"details": err.Error(),
+		})
 		return
 	}
 
 	// Validate request
 	if err := validate.Struct(req); err != nil {
-		c.JSON(400, gin.H{"error": "Dữ liệu không hợp lệ", "details": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Validation failed",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	ctx := context.Background()
-	poiDTO, errorDTO := h.poiUsecase.CreatePOI(ctx, &req)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
+	result, err := h.usecase.Create(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to create POI",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(201, poiDTO)
+	c.JSON(http.StatusCreated, gin.H{
+		"code":    201,
+		"message": "POI created successfully",
+		"data":    result,
+	})
 }
 
-// UpdatePOI updates an existing POI
+// GetPOIByID handles HTTP GET request for getting POI by ID
+// @Summary Get POI by ID
+// @Description Get a Point of Interest by its ID
+// @Tags POI
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "POI ID"
+// @Success 200 {object} map[string]interface{} "POI details"
+// @Router /v2/tqd/pois/{id} [get]
+func (h *POIHTTPHandler) GetPOIByID(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	result, err := h.usecase.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    404,
+			"message": "POI not found",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI retrieved successfully",
+		"data":    result,
+	})
+}
+
+// GetPOIByCode handles HTTP GET request for getting POI by code
+// @Summary Get POI by code
+// @Description Get a Point of Interest by its code
+// @Tags POI
+// @Produce json
+// @Security BearerAuth
+// @Param code path string true "POI Code"
+// @Success 200 {object} map[string]interface{} "POI details"
+// @Router /v2/tqd/pois/code/{code} [get]
+func (h *POIHTTPHandler) GetPOIByCode(c *gin.Context) {
+	code := c.Param("code")
+	if code == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Code is required",
+		})
+		return
+	}
+
+	result, err := h.usecase.GetByCode(c.Request.Context(), code)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    404,
+			"message": "POI not found",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI retrieved successfully",
+		"data":    result,
+	})
+}
+
+// UpdatePOI handles HTTP PUT request for updating POI
 // @Summary Update a POI
 // @Description Update an existing Point of Interest
 // @Tags POI
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path uint64 true "POI ID"
-// @Param request body dto.UpdatePOIRequestDTO true "POI update request"
-// @Success 200 {object} dto.POIDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/{id} [put]
+// @Param request body dto.UpdatePoiRequest true "POI update request"
+// @Success 200 {object} map[string]interface{} "POI updated successfully"
+// @Router /v2/tqd/pois/{id} [put]
 func (h *POIHTTPHandler) UpdatePOI(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "ID không hợp lệ"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	var req dto.UpdatePOIRequestDTO
+	var req dto.UpdatePoiRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Dữ liệu không hợp lệ", "details": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	// Validate request
-	if err := validate.Struct(req); err != nil {
-		c.JSON(400, gin.H{"error": "Dữ liệu không hợp lệ", "details": err.Error()})
+	// Validate request if needed
+	if req.Name != nil {
+		if err := validate.Var(*req.Name, "required,min=1,max=255"); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    400,
+				"message": "Invalid name",
+				"details": err.Error(),
+			})
+			return
+		}
+	}
+
+	result, err := h.usecase.Update(c.Request.Context(), id, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to update POI",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	ctx := context.Background()
-	poiDTO, errorDTO := h.poiUsecase.UpdatePOI(ctx, id, &req)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
-		return
-	}
-
-	c.JSON(200, poiDTO)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI updated successfully",
+		"data":    result,
+	})
 }
 
-// DeletePOI deletes a POI
+// DeletePOI handles HTTP DELETE request for deleting POI
 // @Summary Delete a POI
 // @Description Delete a Point of Interest
 // @Tags POI
+// @Security BearerAuth
 // @Param id path uint64 true "POI ID"
-// @Success 204
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/{id} [delete]
+// @Success 200 {object} map[string]interface{} "POI deleted successfully"
+// @Router /v2/tqd/pois/{id} [delete]
 func (h *POIHTTPHandler) DeletePOI(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "ID không hợp lệ"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	ctx := context.Background()
-	errorDTO := h.poiUsecase.DeletePOI(ctx, id)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
+	if err := h.usecase.Delete(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to delete POI",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.Status(204)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI deleted successfully",
+	})
 }
 
-// GetPOIByID retrieves a POI by ID
-// @Summary Get POI by ID
-// @Description Get a Point of Interest by its ID
-// @Tags POI
-// @Param id path uint64 true "POI ID"
-// @Success 200 {object} dto.POIDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/{id} [get]
-func (h *POIHTTPHandler) GetPOIByID(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		c.JSON(400, gin.H{"error": "ID không hợp lệ"})
-		return
-	}
-
-	ctx := context.Background()
-	poiDTO, errorDTO := h.poiUsecase.GetPOIByID(ctx, id)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
-		return
-	}
-
-	c.JSON(200, poiDTO)
-}
-
-// GetPOIByCode retrieves a POI by code
-// @Summary Get POI by code
-// @Description Get a Point of Interest by its code
-// @Tags POI
-// @Param code path string true "POI Code"
-// @Success 200 {object} dto.POIDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/code/{code} [get]
-func (h *POIHTTPHandler) GetPOIByCode(c *gin.Context) {
-	code := c.Param("code")
-	if code == "" {
-		c.JSON(400, gin.H{"error": "Mã POI không được để trống"})
-		return
-	}
-
-	ctx := context.Background()
-	poiDTO, errorDTO := h.poiUsecase.GetPOIByCode(ctx, code)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
-		return
-	}
-
-	c.JSON(200, poiDTO)
-}
-
-// GetPOIList retrieves a paginated list of POIs
-// @Summary Get POI list
+// ListPOIs handles HTTP GET request for listing POIs
+// @Summary List POIs
 // @Description Get a paginated list of Points of Interest with optional filters
 // @Tags POI
+// @Produce json
+// @Security BearerAuth
 // @Param page query int false "Page number" default(1)
-// @Param size query int false "Page size" default(20)
-// @Param text query string false "Search by name or address or code"
+// @Param size query int false "Page size" default(10)
+// @Param search query string false "Search by name or address or code"
 // @Param categoryId query int false "Category ID"
+// @Param categoryIds query string false "Category IDs (comma-separated)"
 // @Param isActive query bool false "Filter by active status"
-// @Param minLat query float64 false "Minimum latitude"
-// @Param maxLat query float64 false "Maximum latitude"
-// @Param minLng query float64 false "Minimum longitude"
-// @Param maxLng query float64 false "Maximum longitude"
-// @Success 200 {object} dto.ListPOIsResponseDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois [get]
-func (h *POIHTTPHandler) GetPOIList(c *gin.Context) {
-	var req dto.ListPOIsRequestDTO
+// @Param isVerified query bool false "Filter by verified status"
+// @Param isFeatured query bool false "Filter by featured status"
+// @Param minRating query float64 false "Minimum rating"
+// @Param maxRating query float64 false "Maximum rating"
+// @Param sortBy query string false "Sort by (rating, newest)"
+// @Success 200 {object} map[string]interface{} "POIs list"
+// @Router /v2/tqd/pois [get]
+func (h *POIHTTPHandler) ListPOIs(c *gin.Context) {
+	// Parse pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 
-	// Bind pagination parameters
-	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Tham số không hợp lệ", "details": err.Error()})
-		return
+	// Create filter
+	filter := &dto.PoiFilter{
+		Pagable: _dto.Pagable{
+			Page: uint32(page),
+			Size: uint32(size),
+		},
+		Search: c.Query("search"),
+		SortBy: c.Query("sortBy"),
 	}
 
-	// Parse optional filters
+	// Parse categoryId
 	if categoryIdStr := c.Query("categoryId"); categoryIdStr != "" {
 		if categoryId, err := strconv.ParseUint(categoryIdStr, 10, 64); err == nil {
-			req.CategoryID = &categoryId
+			filter.CategoryID = &categoryId
 		}
 	}
 
+	// Parse categoryIds
+	if categoryIdsStr := c.Query("categoryIds"); categoryIdsStr != "" {
+		ids := strings.Split(categoryIdsStr, ",")
+		for _, idStr := range ids {
+			if id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64); err == nil {
+				filter.CategoryIDs = append(filter.CategoryIDs, id)
+			}
+		}
+	}
+
+	// Parse boolean filters
 	if isActiveStr := c.Query("isActive"); isActiveStr != "" {
 		if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
-			req.IsActive = &isActive
+			filter.IsActive = &isActive
+		}
+	}
+	if isVerifiedStr := c.Query("isVerified"); isVerifiedStr != "" {
+		if isVerified, err := strconv.ParseBool(isVerifiedStr); err == nil {
+			filter.IsVerified = &isVerified
+		}
+	}
+	if isFeaturedStr := c.Query("isFeatured"); isFeaturedStr != "" {
+		if isFeatured, err := strconv.ParseBool(isFeaturedStr); err == nil {
+			filter.IsFeatured = &isFeatured
 		}
 	}
 
-	if minLatStr := c.Query("minLat"); minLatStr != "" {
-		if minLat, err := strconv.ParseFloat(minLatStr, 64); err == nil {
-			req.MinLat = &minLat
+	// Parse rating filters
+	if minRatingStr := c.Query("minRating"); minRatingStr != "" {
+		if minRating, err := strconv.ParseFloat(minRatingStr, 64); err == nil {
+			filter.MinRating = &minRating
+		}
+	}
+	if maxRatingStr := c.Query("maxRating"); maxRatingStr != "" {
+		if maxRating, err := strconv.ParseFloat(maxRatingStr, 64); err == nil {
+			filter.MaxRating = &maxRating
 		}
 	}
 
-	if maxLatStr := c.Query("maxLat"); maxLatStr != "" {
-		if maxLat, err := strconv.ParseFloat(maxLatStr, 64); err == nil {
-			req.MaxLat = &maxLat
-		}
-	}
-
-	if minLngStr := c.Query("minLng"); minLngStr != "" {
-		if minLng, err := strconv.ParseFloat(minLngStr, 64); err == nil {
-			req.MinLng = &minLng
-		}
-	}
-
-	if maxLngStr := c.Query("maxLng"); maxLngStr != "" {
-		if maxLng, err := strconv.ParseFloat(maxLngStr, 64); err == nil {
-			req.MaxLng = &maxLng
-		}
-	}
-
-	ctx := c.Request.Context()
-	response, errorDTO := h.poiUsecase.GetPOIList(ctx, &req)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
+	result, err := h.usecase.List(c.Request.Context(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to list POIs",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, response)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POIs retrieved successfully",
+		"data": gin.H{
+			"items": result.Data,
+			"total": result.Total,
+			"page":  result.Page,
+			"size":  result.Size,
+			"pages": (result.Total + int64(result.Size) - 1) / int64(result.Size),
+		},
+	})
 }
 
-// GetPOIsByCategory retrieves POIs by category
+// GetPOIsByCategory handles HTTP GET request for getting POIs by category
 // @Summary Get POIs by category
 // @Description Get POIs filtered by category
 // @Tags POI
+// @Produce json
+// @Security BearerAuth
 // @Param categoryId path uint64 true "Category ID"
-// @Param limit query int false "Limit" default(20)
-// @Success 200 {array} dto.POIDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/category/{categoryId} [get]
+// @Param limit query int false "Limit" default(10)
+// @Success 200 {object} map[string]interface{} "POIs list"
+// @Router /v2/tqd/pois/category/{categoryId} [get]
 func (h *POIHTTPHandler) GetPOIsByCategory(c *gin.Context) {
 	categoryIdStr := c.Param("categoryId")
 	categoryId, err := strconv.ParseUint(categoryIdStr, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "ID danh mục không hợp lệ"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid category ID",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	limitStr := c.DefaultQuery("limit", "20")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 20
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit < 1 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
 	}
 
-	ctx := context.Background()
-	poiDTOs, errorDTO := h.poiUsecase.GetPOIsByCategory(ctx, categoryId, limit)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
+	results, err := h.usecase.ListByCategory(c.Request.Context(), categoryId, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to get POIs by category",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, poiDTOs)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POIs retrieved successfully",
+		"data":    results,
+	})
 }
 
-// GetNearbyPOIs retrieves POIs within a certain radius
+// GetNearbyPOIs handles HTTP GET request for getting nearby POIs
 // @Summary Get nearby POIs
 // @Description Get POIs within a certain radius from given coordinates
 // @Tags POI
+// @Produce json
+// @Security BearerAuth
 // @Param lat query float64 true "Latitude"
 // @Param lng query float64 true "Longitude"
 // @Param radius query float64 false "Radius in kilometers" default(10)
-// @Param limit query int false "Limit" default(20)
-// @Success 200 {array} dto.POIDTO
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/nearby [get]
+// @Param page query int false "Page number" default(1)
+// @Param size query int false "Page size" default(10)
+// @Param categoryIds query string false "Category IDs (comma-separated)"
+// @Success 200 {object} map[string]interface{} "Nearby POIs list"
+// @Router /v2/tqd/pois/nearby [get]
 func (h *POIHTTPHandler) GetNearbyPOIs(c *gin.Context) {
+	// Parse coordinates
 	latStr := c.Query("lat")
 	lngStr := c.Query("lng")
 
-	lat, err := strconv.ParseFloat(latStr, 32)
+	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Vĩ độ không hợp lệ"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid latitude",
+			"details": err.Error(),
+		})
 		return
 	}
-	// lat := float32(_lat)
 
-	lng, err := strconv.ParseFloat(lngStr, 32)
+	lng, err := strconv.ParseFloat(lngStr, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Kinh độ không hợp lệ"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid longitude",
+			"details": err.Error(),
+		})
 		return
 	}
-	// lng := float32(_lng)
 
-	radiusStr := c.DefaultQuery("radius", "10")
-	_radius, err := strconv.ParseInt(radiusStr, 10, 32)
-	radius := int32(_radius)
-	if err != nil || radius <= 0 {
+	// Parse radius
+	radius, _ := strconv.ParseFloat(c.DefaultQuery("radius", "10"), 64)
+	if radius <= 0 {
 		radius = 10
 	}
 
-	limitStr := c.DefaultQuery("limit", "20")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 20
+	// Parse pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+
+	// Create nearby request
+	req := &dto.NearbyPoiRequest{
+		Pagable: _dto.Pagable{
+			Page: uint32(page),
+			Size: uint32(size),
+		},
+		Latitude:  lat,
+		Longitude: lng,
+		Radius:    radius,
 	}
 
-	ctx := context.Background()
-	poiDTOs, errorDTO := h.poiUsecase.GetNearbyPOIs(ctx, lat, lng, radius, limit)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
+	// Parse categoryIds
+	if categoryIdsStr := c.Query("categoryIds"); categoryIdsStr != "" {
+		ids := strings.Split(categoryIdsStr, ",")
+		for _, idStr := range ids {
+			if id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64); err == nil {
+				req.CategoryIDs = append(req.CategoryIDs, id)
+			}
+		}
+	}
+
+	result, err := h.usecase.ListNearby(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to get nearby POIs",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, poiDTOs)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Nearby POIs retrieved successfully",
+		"data": gin.H{
+			"items": result.Data,
+			"total": result.Total,
+			"page":  result.Page,
+			"size":  result.Size,
+			"pages": (result.Total + int64(result.Size) - 1) / int64(result.Size),
+		},
+	})
 }
 
-// UpdatePOIRating updates the rating for a POI
+// UpdatePOIRating handles HTTP PUT request for updating POI rating
 // @Summary Update POI rating
 // @Description Update the rating information for a POI
 // @Tags POI
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path uint64 true "POI ID"
-// @Param request body map[string]interface{} true "Rating update request"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/v1/pois/{id}/rating [put]
+// @Param request body UpdateRatingRequest true "Rating update request"
+// @Success 200 {object} map[string]interface{} "POI updated"
+// @Router /v2/tqd/pois/{id}/rating [put]
 func (h *POIHTTPHandler) UpdatePOIRating(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "ID không hợp lệ"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
 		return
 	}
 
 	var req struct {
-		RatingPoint float64 `json:"ratingPoint" validate:"required,min=0,max=5"`
-		RatingCount int     `json:"ratingCount" validate:"required,min=0"`
+		Rating      float64 `json:"rating" binding:"required,min=0,max=5"`
+		ReviewCount uint32  `json:"reviewCount" binding:"required,min=0"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Dữ liệu không hợp lệ", "details": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	// Validate request
-	if err := validate.Struct(req); err != nil {
-		c.JSON(400, gin.H{"error": "Dữ liệu không hợp lệ", "details": err.Error()})
+	result, err := h.usecase.UpdateRating(c.Request.Context(), id, req.Rating, req.ReviewCount)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to update POI rating",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	ctx := context.Background()
-	errorDTO := h.poiUsecase.UpdatePOIRating(ctx, id, req.RatingPoint, req.RatingCount)
-	if errorDTO != nil {
-		c.JSON(errorDTO.Code, gin.H{"error": errorDTO.Message})
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI rating updated successfully",
+		"data":    result,
+	})
+}
+
+// IncrementPOIViewCount handles HTTP POST request for incrementing view count
+// @Summary Increment POI view count
+// @Description Increment the view count for a POI
+// @Tags POI
+// @Security BearerAuth
+// @Param id path uint64 true "POI ID"
+// @Success 200 {object} map[string]interface{} "View count incremented"
+// @Router /v2/tqd/pois/{id}/view [post]
+func (h *POIHTTPHandler) IncrementPOIViewCount(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Cập nhật đánh giá thành công"})
+	if err := h.usecase.IncrementViewCount(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to increment view count",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "View count incremented successfully",
+	})
+}
+
+// TogglePOILike handles HTTP POST request for toggling like
+// @Summary Toggle POI like
+// @Description Increment or decrement like count for a POI
+// @Tags POI
+// @Security BearerAuth
+// @Param id path uint64 true "POI ID"
+// @Param action query string true "Action (like/unlike)"
+// @Success 200 {object} map[string]interface{} "Like toggled"
+// @Router /v2/tqd/pois/{id}/like [post]
+func (h *POIHTTPHandler) TogglePOILike(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	action := c.Query("action")
+	var likeErr error
+
+	switch action {
+	case "like":
+		likeErr = h.usecase.IncrementLikeCount(c.Request.Context(), id)
+	case "unlike":
+		likeErr = h.usecase.DecrementLikeCount(c.Request.Context(), id)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid action. Use 'like' or 'unlike'",
+		})
+		return
+	}
+
+	if likeErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to toggle like",
+			"details": likeErr.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Like toggled successfully",
+	})
+}
+
+// VerifyPOI handles HTTP PUT request for verifying POI
+// @Summary Verify POI
+// @Description Update verification status for a POI
+// @Tags POI
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "POI ID"
+// @Param request body VerifyRequest true "Verification request"
+// @Success 200 {object} map[string]interface{} "POI updated"
+// @Router /v2/tqd/pois/{id}/verify [put]
+func (h *POIHTTPHandler) VerifyPOI(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	var req struct {
+		Verified bool `json:"verified"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	result, err := h.usecase.VerifyPOI(c.Request.Context(), id, req.Verified)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to verify POI",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI verification updated successfully",
+		"data":    result,
+	})
 }

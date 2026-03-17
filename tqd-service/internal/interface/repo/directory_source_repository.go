@@ -15,5 +15,5 @@ type DirectorySourceRepository interface {
 	Delete(ctx context.Context, id uint64) error
 
 	// List Operations - sử dụng ListRequest DTO
-	List(ctx context.Context, req *dto.ListDirectorySourcesRequestDTO) ([]domain.DirectorySource, int64, error)
+	List(ctx context.Context, req *dto.ListDirectorySourcesRequestDTO) ([]dto.DirectorySourceDTO, int64, error)
 }

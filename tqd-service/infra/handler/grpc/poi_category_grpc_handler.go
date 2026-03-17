@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -15,157 +16,206 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// PoiCategoryGrpcHandler implements gRPC handlers for PoiCategory service
+// PoiCategoryGrpcHandler handles gRPC requests for POI category
 type PoiCategoryGrpcHandler struct {
 	tqdpb.UnimplementedPoiCategoryServiceServer
-	poiCategoryUsecase *usecase.PoiCategoryUsecase
-	poiCategoryMapper  *mapper.PoiCategoryMapper
+	usecase usecase.PoiCategoryUsecase
+	mapper  *mapper.PoiCategoryMapper
 }
 
-// NewPoiCategoryGrpcHandler creates a new PoiCategoryGrpcHandler
+// NewPoiCategoryGrpcHandler creates new handler
 func NewPoiCategoryGrpcHandler(
-	poiCategoryUsecase *usecase.PoiCategoryUsecase,
-	poiCategoryMapper *mapper.PoiCategoryMapper,
+	usecase usecase.PoiCategoryUsecase,
+	mapper *mapper.PoiCategoryMapper,
 ) *PoiCategoryGrpcHandler {
 	return &PoiCategoryGrpcHandler{
-		poiCategoryUsecase: poiCategoryUsecase,
-		poiCategoryMapper:  poiCategoryMapper,
+		usecase: usecase,
+		mapper:  mapper,
 	}
 }
 
-// CreatePoiCategory handles gRPC CreatePoiCategory request
+// CreatePoiCategory handles create request
 func (h *PoiCategoryGrpcHandler) CreatePoiCategory(ctx context.Context, req *tqdpb.PoiCategory) (*tqdpb.PoiCategory, error) {
+	// Validate required fields
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "poi category name is required")
 	}
-
-	createReq := &dto.CreatePoiCategoryRequestDTO{
-		Name:        req.Name,
-		Description: req.Description,
-		Code:        req.Code,
-		Icon:        req.Icon,
-		Color:       req.Color,
-		IsActive:    req.IsActive,
-		SortOrder:   req.SortOrder,
-		ParentId:    req.ParentId,
+	if req.Code == "" {
+		return nil, status.Error(codes.InvalidArgument, "poi category code is required")
 	}
 
-	result, err := h.poiCategoryUsecase.CreatePoiCategory(ctx, createReq)
+	// Convert proto to create request
+	createReq, err := h.mapper.FromProto(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+	}
+
+	// Call usecase
+	result, err := h.usecase.Create(ctx, createReq)
 	if err != nil {
 		log.Printf("error creating poi category: %v", err)
-		return nil, status.Error(codes.Internal, "failed to create poi category")
+		return nil, status.Errorf(codes.Internal, "failed to create poi category: %v", err)
 	}
 
-	return h.poiCategoryMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// GetPoiCategory handles gRPC GetPoiCategory request
+// GetPoiCategory handles get by ID request
 func (h *PoiCategoryGrpcHandler) GetPoiCategory(ctx context.Context, req *sharepb.IdRequest) (*tqdpb.PoiCategory, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi category id is required")
 	}
 
-	result, err := h.poiCategoryUsecase.GetPoiCategoryByID(ctx, req.Id)
+	result, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
 		log.Printf("error getting poi category: %v", err)
-		return nil, status.Error(codes.NotFound, "poi category not found")
+		return nil, status.Errorf(codes.NotFound, "poi category not found: %v", err)
 	}
 
-	return h.poiCategoryMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// UpdatePoiCategory handles gRPC UpdatePoiCategory request
+// UpdatePoiCategory handles update request
 func (h *PoiCategoryGrpcHandler) UpdatePoiCategory(ctx context.Context, req *tqdpb.PoiCategory) (*tqdpb.PoiCategory, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi category id is required")
 	}
 
-	updateReq := &dto.PoiCategoryDTO{
-		ID:          req.Id,
-		Name:        req.Name,
-		Description: req.Description,
-		Code:        req.Code,
-		Icon:        req.Icon,
-		Color:       req.Color,
-		IsActive:    req.IsActive,
-		SortOrder:   req.SortOrder,
-		ParentId:    req.ParentId,
-	}
+	// Build update request
+	updateReq := &dto.UpdatePoiCategoryRequest{}
 
-	result, err := h.poiCategoryUsecase.UpdatePoiCategory(ctx, updateReq)
+	if req.Code != "" {
+		updateReq.Code = &req.Code
+	}
+	if req.Name != "" {
+		updateReq.Name = &req.Name
+	}
+	if req.Description != "" {
+		updateReq.Description = &req.Description
+	}
+	if req.Icon != "" {
+		updateReq.Icon = &req.Icon
+	}
+	if req.Color != "" {
+		updateReq.Color = &req.Color
+	}
+	if req.ParentId != 0 {
+		updateReq.ParentID = &req.ParentId
+	}
+	if req.SortOrder != 0 {
+		sortOrder := int32(req.SortOrder)
+		updateReq.SortOrder = &sortOrder
+	}
+	updateReq.IsActive = &req.IsActive
+
+	// Call usecase
+	result, err := h.usecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
 		log.Printf("error updating poi category: %v", err)
-		return nil, status.Error(codes.Internal, "failed to update poi category")
+		return nil, status.Errorf(codes.Internal, "failed to update poi category: %v", err)
 	}
 
-	return h.poiCategoryMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// DeletePoiCategory handles gRPC DeletePoiCategory request
+// DeletePoiCategory handles delete request
 func (h *PoiCategoryGrpcHandler) DeletePoiCategory(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi category id is required")
 	}
 
-	err := h.poiCategoryUsecase.DeletePoiCategory(ctx, req.Id)
-	if err != nil {
+	if err := h.usecase.Delete(ctx, req.Id); err != nil {
 		log.Printf("error deleting poi category: %v", err)
-		return nil, status.Error(codes.Internal, "failed to delete poi category")
+		return nil, status.Errorf(codes.Internal, "failed to delete poi category: %v", err)
 	}
 
 	return &sharepb.SubmitResponse{
-		Code:    200,
 		Message: "POI category deleted successfully",
-		Data:    "",
 	}, nil
 }
 
-// ListPoiCategories handles gRPC ListPoiCategories request
+// ListPoiCategories handles list request
 func (h *PoiCategoryGrpcHandler) ListPoiCategories(ctx context.Context, req *tqdpb.ListPoiCategoriesRequest) (*tqdpb.ListPoiCategoriesResponse, error) {
-	if req.Page <= 0 {
-		req.Page = 1
-	}
-	if req.Size <= 0 {
-		req.Size = 10
-	}
-
-	filters := &dto.PoiCategoryFilterDTO{
-		Page:     int(req.Page),
-		Size:     int(req.Size),
+	// Build filter
+	filter := &dto.PoiCategoryFilter{
+		Pagable: _dto.Pagable{
+			Page: normalizePage(req.Page),
+			Size: normalizeSize(req.Size),
+		},
 		Search:   req.Search,
-		IsActive: req.IsActive,
-		ParentId: req.ParentId,
-		Level:    req.Level,
+		IsActive: &req.IsActive,
 	}
 
-	results, total, err := h.poiCategoryUsecase.ListPoiCategories(ctx, filters)
+	// Set optional filters
+	if req.ParentId != 0 {
+		filter.ParentID = &req.ParentId
+	}
+	if req.Level != 0 {
+		level := int(req.Level)
+		filter.Level = &level
+	}
+
+	// Call usecase
+	result, err := h.usecase.List(ctx, filter)
 	if err != nil {
 		log.Printf("error listing poi categories: %v", err)
-		return nil, status.Error(codes.Internal, "failed to list poi categories")
+		return nil, status.Errorf(codes.Internal, "failed to list poi categories: %v", err)
 	}
 
-	categories := make([]*tqdpb.PoiCategory, len(results))
-	for i, result := range results {
-		categories[i] = h.poiCategoryMapper.ToProto(result)
-	}
+	// Convert to proto
+	categories := h.mapper.ToProtoListFromResponses(result.Data)
 
 	return &tqdpb.ListPoiCategoriesResponse{
 		Data:  categories,
-		Total: int64(total),
+		Total: result.Total,
 	}, nil
 }
 
-// GetPoiCategoryTree handles gRPC GetPoiCategoryTree request
+// GetPoiCategoryTree handles get tree request
 func (h *PoiCategoryGrpcHandler) GetPoiCategoryTree(ctx context.Context, req *emptypb.Empty) (*tqdpb.GetPoiCategoryTreeResponse, error) {
-	results, err := h.poiCategoryUsecase.GetPoiCategoryTree(ctx)
+	results, err := h.usecase.GetTree(ctx)
 	if err != nil {
 		log.Printf("error getting poi category tree: %v", err)
-		return nil, status.Error(codes.Internal, "failed to get poi category tree")
+		return nil, status.Errorf(codes.Internal, "failed to get poi category tree: %v", err)
 	}
 
-	treeNodes := h.poiCategoryMapper.BuildTreeNodes(results)
+	// Build tree nodes
+	treeNodes := h.buildProtoTree(results)
 
 	return &tqdpb.GetPoiCategoryTreeResponse{
 		Data: treeNodes,
 	}, nil
+}
+
+// buildProtoTree builds proto tree from tree responses
+func (h *PoiCategoryGrpcHandler) buildProtoTree(treeResponses []dto.PoiCategoryTreeResponse) []*tqdpb.PoiCategoryTreeNode {
+	nodes := make([]*tqdpb.PoiCategoryTreeNode, len(treeResponses))
+	for i, resp := range treeResponses {
+		node := &tqdpb.PoiCategoryTreeNode{
+			Data: &tqdpb.PoiCategory{
+				Id:          resp.ID,
+				Name:        resp.Name,
+				Description: resp.Description,
+				Code:        resp.Code,
+				Icon:        resp.Icon,
+				Color:       resp.Color,
+				IsActive:    resp.IsActive,
+				SortOrder:   uint32(resp.SortOrder),
+				ParentId:    h.uint64PtrToValue(resp.ParentID),
+				Level:       uint32(resp.Level),
+				Path:        resp.Path,
+				PoiCount:    uint32(resp.POICount),
+			},
+			Children: h.buildProtoTree(resp.Children),
+		}
+		nodes[i] = node
+	}
+	return nodes
+}
+
+func (h *PoiCategoryGrpcHandler) uint64PtrToValue(ptr *uint64) uint64 {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
 }

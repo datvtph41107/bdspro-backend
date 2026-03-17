@@ -56,8 +56,8 @@ func (r *directorySourcePostgres) Delete(ctx context.Context, id uint64) error {
 }
 
 // List lists directory sources with pagination and filters
-func (r *directorySourcePostgres) List(ctx context.Context, req *dto.ListDirectorySourcesRequestDTO) ([]domain.DirectorySource, int64, error) {
-	var directorySources []domain.DirectorySource
+func (r *directorySourcePostgres) List(ctx context.Context, req *dto.ListDirectorySourcesRequestDTO) ([]dto.DirectorySourceDTO, int64, error) {
+	var directorySources []dto.DirectorySourceDTO
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&domain.DirectorySource{})

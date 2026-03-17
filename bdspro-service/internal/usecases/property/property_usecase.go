@@ -493,12 +493,12 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 }
 
 // ListMe lấy danh sách Property của user (raw SQL), chỉ trả title, address, project, buildingInfo, avatar
-func (u *PropertyUsecase) ListMe(ctx context.Context, page, size uint32, filterStatus ...string) ([]*domain.PropertyLineage, int64, error) {
+func (u *PropertyUsecase) ListMe(ctx context.Context, page, size uint32) ([]*domain.PropertyLineage, int64, error) {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	if originId == 0 {
 		return nil, 0, _errors.UnauthorizedException("origin_id required")
 	}
-	return u.PropertyRepo.ListMe(ctx, originId, _dto.Pagable{Page: page, Size: size}, filterStatus...)
+	return u.PropertyRepo.ListMe(ctx, originId, _dto.Pagable{Page: page, Size: size})
 }
 
 // Detail lấy chi tiết Property theo ID

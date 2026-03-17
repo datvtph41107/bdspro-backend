@@ -152,7 +152,7 @@ func (h *ContactLabelHandler) UpdateContactLabel(ctx context.Context, req *tqdpb
 		IsActive:    req.IsActive,
 		// SortOrder:   int(req.SortOrder),
 		IsSystem: req.IsSystem,
-		Type:     req.Type,
+		// Type:     req.Type,
 	}
 
 	// Update contact label
@@ -415,7 +415,7 @@ func (h *ContactLabelHandler) UpdateContactLabelHTTP(c *gin.Context) {
 		IsActive:    req.IsActive,
 		// SortOrder:   int(req.SortOrder),
 		IsSystem: req.IsSystem,
-		Type:     req.Type,
+		// Type:     req.Type,
 	}
 
 	// Validate request

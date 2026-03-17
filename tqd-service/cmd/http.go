@@ -203,7 +203,7 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 		pois := v2.Group("/pois")
 		{
 			pois.POST("", poiHandler.CreatePOI)
-			pois.GET("", poiHandler.GetPOIList)
+			pois.GET("", poiHandler.ListPOIs)
 			pois.GET("/:id", poiHandler.GetPOIByID)
 			pois.GET("/code/:code", poiHandler.GetPOIByCode)
 			pois.PUT("/:id", poiHandler.UpdatePOI)

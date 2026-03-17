@@ -1,6 +1,7 @@
 package handler_grpc
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	"log"
 
@@ -34,32 +35,46 @@ func NewDirectorySupplierGrpcHandler(
 
 // CreateDirectorySupplier handles gRPC CreateDirectorySupplier request
 func (h *DirectorySupplierGrpcHandler) CreateDirectorySupplier(ctx context.Context, req *tqdpb.DirectorySupplier) (*tqdpb.DirectorySupplier, error) {
+	// Validate required fields
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "directory supplier name is required")
 	}
-
-	createReq := &dto.CreateDirectorySupplierRequestDTO{
-		Name:             req.Name,
-		Code:             req.Code,
-		Description:      req.Description,
-		ContactPerson:    req.ContactPerson,
-		Phone:            req.Phone,
-		Email:            req.Email,
-		Address:          req.Address,
-		Website:          req.Website,
-		TaxCode:          req.TaxCode,
-		BusinessLicense:  req.BusinessLicense,
-		Rating:           req.Rating,
-		IsActive:         req.IsActive,
-		Notes:            req.Notes,
-		Tags:             req.Tags,
-		Categories:       req.Categories,
+	if req.Code == "" {
+		return nil, status.Error(codes.InvalidArgument, "directory supplier code is required")
 	}
 
-	result, err := h.directorySupplierUsecase.CreateDirectorySupplier(ctx, createReq)
+	// Convert proto to CreateDirectorySupplierRequestDTO
+	createReq := &dto.CreateDirectorySupplierRequestDTO{
+		Name:            req.Name,
+		Code:            req.Code,
+		Description:     req.Description,
+		ContactPerson:   req.ContactPerson,
+		Phone:           req.Phone,
+		Email:           req.Email,
+		Address:         req.Address,
+		Website:         req.Website,
+		TaxCode:         req.TaxCode,
+		BusinessLicense: req.BusinessLicense,
+		Rating:          req.Rating,
+		IsActive:        req.IsActive,
+		Notes:           req.Notes,
+		Tags:            req.Tags,
+		Categories:      req.Categories,
+	}
+
+	// Set dates if provided
+	if req.JoinDate != "" {
+		createReq.JoinDate = &req.JoinDate
+	}
+	if req.LastContactDate != "" {
+		createReq.LastContactDate = &req.LastContactDate
+	}
+
+	// Call usecase
+	result, err := h.directorySupplierUsecase.Create(ctx, createReq)
 	if err != nil {
 		log.Printf("error creating directory supplier: %v", err)
-		return nil, status.Error(codes.Internal, "failed to create directory supplier")
+		return nil, status.Errorf(codes.Internal, "failed to create directory supplier: %v", err)
 	}
 
 	return h.directorySupplierMapper.ToProto(result), nil
@@ -71,10 +86,10 @@ func (h *DirectorySupplierGrpcHandler) GetDirectorySupplier(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "directory supplier id is required")
 	}
 
-	result, err := h.directorySupplierUsecase.GetDirectorySupplierByID(ctx, req.Id)
+	result, err := h.directorySupplierUsecase.GetByID(ctx, req.Id)
 	if err != nil {
 		log.Printf("error getting directory supplier: %v", err)
-		return nil, status.Error(codes.NotFound, "directory supplier not found")
+		return nil, status.Errorf(codes.NotFound, "directory supplier not found: %v", err)
 	}
 
 	return h.directorySupplierMapper.ToProto(result), nil
@@ -86,29 +101,46 @@ func (h *DirectorySupplierGrpcHandler) UpdateDirectorySupplier(ctx context.Conte
 		return nil, status.Error(codes.InvalidArgument, "directory supplier id is required")
 	}
 
-	updateReq := &dto.DirectorySupplierDTO{
-		ID:               req.Id,
-		Name:             req.Name,
-		Code:             req.Code,
-		Description:      req.Description,
-		ContactPerson:    req.ContactPerson,
-		Phone:            req.Phone,
-		Email:            req.Email,
-		Address:          req.Address,
-		Website:          req.Website,
-		TaxCode:          req.TaxCode,
-		BusinessLicense:  req.BusinessLicense,
-		Rating:           req.Rating,
-		IsActive:         req.IsActive,
-		Notes:            req.Notes,
-		Tags:             req.Tags,
-		Categories:       req.Categories,
+	// Validate required fields
+	if req.Name == "" {
+		return nil, status.Error(codes.InvalidArgument, "directory supplier name is required")
+	}
+	if req.Code == "" {
+		return nil, status.Error(codes.InvalidArgument, "directory supplier code is required")
 	}
 
-	result, err := h.directorySupplierUsecase.UpdateDirectorySupplier(ctx, updateReq)
+	// Convert proto to UpdateDirectorySupplierRequestDTO
+	updateReq := &dto.UpdateDirectorySupplierRequestDTO{
+		Name:            req.Name,
+		Code:            req.Code,
+		Description:     req.Description,
+		ContactPerson:   req.ContactPerson,
+		Phone:           req.Phone,
+		Email:           req.Email,
+		Address:         req.Address,
+		Website:         req.Website,
+		TaxCode:         req.TaxCode,
+		BusinessLicense: req.BusinessLicense,
+		Rating:          req.Rating,
+		IsActive:        req.IsActive,
+		Notes:           req.Notes,
+		Tags:            req.Tags,
+		Categories:      req.Categories,
+	}
+
+	// Set dates if provided
+	if req.JoinDate != "" {
+		updateReq.JoinDate = &req.JoinDate
+	}
+	if req.LastContactDate != "" {
+		updateReq.LastContactDate = &req.LastContactDate
+	}
+
+	// Call usecase
+	result, err := h.directorySupplierUsecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
 		log.Printf("error updating directory supplier: %v", err)
-		return nil, status.Error(codes.Internal, "failed to update directory supplier")
+		return nil, status.Errorf(codes.Internal, "failed to update directory supplier: %v", err)
 	}
 
 	return h.directorySupplierMapper.ToProto(result), nil
@@ -120,51 +152,74 @@ func (h *DirectorySupplierGrpcHandler) DeleteDirectorySupplier(ctx context.Conte
 		return nil, status.Error(codes.InvalidArgument, "directory supplier id is required")
 	}
 
-	err := h.directorySupplierUsecase.DeleteDirectorySupplier(ctx, req.Id)
+	err := h.directorySupplierUsecase.Delete(ctx, req.Id)
 	if err != nil {
 		log.Printf("error deleting directory supplier: %v", err)
-		return nil, status.Error(codes.Internal, "failed to delete directory supplier")
+		return nil, status.Errorf(codes.Internal, "failed to delete directory supplier: %v", err)
 	}
 
 	return &sharepb.SubmitResponse{
-		Code:    200,
 		Message: "Directory supplier deleted successfully",
-		Data:    "",
 	}, nil
 }
 
 // ListDirectorySuppliers handles gRPC ListDirectorySuppliers request
 func (h *DirectorySupplierGrpcHandler) ListDirectorySuppliers(ctx context.Context, req *tqdpb.ListDirectorySuppliersRequest) (*tqdpb.ListDirectorySuppliersResponse, error) {
-	if req.Page <= 0 {
-		req.Page = 1
+	// Set default pagination
+	page := uint32(req.Page)
+	if page < 1 {
+		page = 1
 	}
-	if req.Size <= 0 {
-		req.Size = 10
+	size := uint32(req.Size)
+	if size < 1 {
+		size = 10
+	}
+	if size > 100 {
+		size = 100
 	}
 
+	// Create filter DTO
 	filters := &dto.DirectorySupplierFilterDTO{
-		Page:       int(req.Page),
-		Size:       int(req.Size),
-		Search:     req.Search,
-		Categories: req.Categories,
-		IsActive:   req.IsActive,
-		MinRating:  req.MinRating,
-		MaxRating:  req.MaxRating,
+		Pagable: _dto.Pagable{
+			Page: page,
+			Size: size,
+		},
+		Search: req.Search,
 	}
 
-	results, total, err := h.directorySupplierUsecase.ListDirectorySuppliers(ctx, filters)
+	// Set optional filters
+	if len(req.Categories) > 0 {
+		filters.Categories = req.Categories
+	}
+
+	// Handle boolean filters
+	if req.IsActive {
+		filters.IsActive = &req.IsActive
+	}
+
+	// Handle rating filters
+	if req.MinRating > 0 {
+		filters.MinRating = &req.MinRating
+	}
+	if req.MaxRating > 0 {
+		filters.MaxRating = &req.MaxRating
+	}
+
+	// Call usecase
+	result, err := h.directorySupplierUsecase.List(ctx, filters)
 	if err != nil {
 		log.Printf("error listing directory suppliers: %v", err)
-		return nil, status.Error(codes.Internal, "failed to list directory suppliers")
+		return nil, status.Errorf(codes.Internal, "failed to list directory suppliers: %v", err)
 	}
 
-	suppliers := make([]*tqdpb.DirectorySupplier, len(results))
-	for i, result := range results {
-		suppliers[i] = h.directorySupplierMapper.ToProto(result)
+	// Convert DTOs to proto
+	suppliers := make([]*tqdpb.DirectorySupplier, len(result.Data))
+	for i, item := range result.Data {
+		suppliers[i] = h.directorySupplierMapper.ToProto(&item)
 	}
 
 	return &tqdpb.ListDirectorySuppliersResponse{
 		Data:  suppliers,
-		Total: int64(total),
+		Total: result.Total,
 	}, nil
 }

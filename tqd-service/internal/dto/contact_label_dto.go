@@ -35,9 +35,9 @@ type CreateContactLabelRequestDTO struct {
 	Color       string `json:"color" validate:"max=7"`
 	Icon        string `json:"icon" validate:"max=100"`
 	IsActive    bool   `json:"isActive"`
-	SortOrder   int32  `json:"sortOrder"`
+	SortOrder   int    `json:"sortOrder"`
 	IsSystem    bool   `json:"isSystem"`
-	Type        int32  `json:"type"`
+	Type        int    `json:"type"`
 }
 
 // UpdateContactLabelRequestDTO represents the request DTO for updating contact label
@@ -48,9 +48,9 @@ type UpdateContactLabelRequestDTO struct {
 	Color       string `json:"color" validate:"max=7"`
 	Icon        string `json:"icon" validate:"max=100"`
 	IsActive    bool   `json:"isActive"`
-	SortOrder   int32  `json:"sortOrder"`
+	SortOrder   int    `json:"sortOrder"`
 	IsSystem    bool   `json:"isSystem"`
-	Type        int32  `json:"type"`
+	Type        int    `json:"type"`
 }
 
 // ListContactLabelsRequestDTO represents the request DTO for listing contact labels
@@ -83,8 +83,8 @@ func (d *ContactLabelDTO) ToDomain() *domain.ContactLabel {
 		Color:        d.Color,
 		Icon:         d.Icon,
 		IsActive:     d.IsActive,
-		SortOrder:    d.SortOrder,
-		ContactCount: d.ContactCount,
+		SortOrder:    int(d.SortOrder),
+		ContactCount: int(d.ContactCount),
 		IsSystem:     d.IsSystem,
 		Status:       enums.ContactLabelStatus(d.Status),
 		Type:         enums.ContactLabelType(d.Type),
@@ -93,6 +93,9 @@ func (d *ContactLabelDTO) ToDomain() *domain.ContactLabel {
 
 // FromDomain converts domain ContactLabel to ContactLabelDTO
 func (d *ContactLabelDTO) FromDomain(contactLabel *domain.ContactLabel) {
+	if contactLabel == nil {
+		return
+	}
 	d.ID = contactLabel.ID
 	d.Name = contactLabel.Name
 	d.Code = contactLabel.Code
@@ -100,20 +103,11 @@ func (d *ContactLabelDTO) FromDomain(contactLabel *domain.ContactLabel) {
 	d.Color = contactLabel.Color
 	d.Icon = contactLabel.Icon
 	d.IsActive = contactLabel.IsActive
-	d.SortOrder = contactLabel.SortOrder
-	d.ContactCount = contactLabel.ContactCount
+	d.SortOrder = int32(contactLabel.SortOrder)
+	d.ContactCount = int32(contactLabel.ContactCount)
 	d.IsSystem = contactLabel.IsSystem
 	d.Status = int(contactLabel.Status)
 	d.Type = int(contactLabel.Type)
 	d.CreatedAt = _utils.FormatTimeToString(contactLabel.CreatedAt)
 	d.UpdatedAt = _utils.FormatTimeToString(contactLabel.UpdatedAt)
-}
-
-// ContactLabelFilterDTO represents the filter DTO for listing contact labels
-type ContactLabelFilterDTO struct {
-	Page     int    `json:"page"`
-	Size     int    `json:"size"`
-	Search   string `json:"search"`
-	IsActive bool   `json:"isActive"`
-	IsSystem bool   `json:"isSystem"`
 }

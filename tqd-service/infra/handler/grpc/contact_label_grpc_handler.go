@@ -39,29 +39,31 @@ func (h *ContactLabelGrpcHandler) CreateContactLabel(ctx context.Context, req *t
 		return nil, status.Error(codes.InvalidArgument, "contact label name is required")
 	}
 
-	label := &dto.CreateContactLabelRequestDTO{
+	// Convert proto to CreateContactLabelRequestDTO
+	createReq := &dto.CreateContactLabelRequestDTO{
 		Name:        req.Name,
 		Code:        req.Code,
 		Description: req.Description,
 		Color:       req.Color,
 		Icon:        req.Icon,
 		IsActive:    req.IsActive,
-		SortOrder:   req.SortOrder,
+		SortOrder:   int(req.SortOrder),
 		IsSystem:    req.IsSystem,
-		Type:        req.Type,
+		Type:        int(req.Type),
 	}
 
-	result, err := h.contactLabelUsecase.Create(ctx, label)
+	// Call usecase
+	result, err := h.contactLabelUsecase.Create(ctx, createReq)
 	if err != nil {
 		log.Printf("error creating contact label: %v", err)
-		return nil, status.Error(codes.Internal, "failed to create contact label")
+		return nil, status.Errorf(codes.Internal, "failed to create contact label: %v", err)
 	}
 
 	return h.contactLabelMapper.ToProto(result), nil
 }
 
 // GetContactLabel handles gRPC GetContactLabel request
-func (h *ContactLabelGrpcHandler) GetContactLabel(ctx context.Context, req *sharepb.IdRequest) (*tqdpb.ContactLabel, error) {
+func (h *ContactLabelGrpcHandler) GetContactLabel(ctx context.Context, req *tqdpb.GetContactLabelRequest) (*tqdpb.ContactLabel, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "contact label id is required")
 	}
@@ -69,7 +71,7 @@ func (h *ContactLabelGrpcHandler) GetContactLabel(ctx context.Context, req *shar
 	result, err := h.contactLabelUsecase.GetByID(ctx, req.Id)
 	if err != nil {
 		log.Printf("error getting contact label: %v", err)
-		return nil, status.Error(codes.NotFound, "contact label not found")
+		return nil, status.Errorf(codes.NotFound, "contact label not found: %v", err)
 	}
 
 	return h.contactLabelMapper.ToProto(result), nil
@@ -81,29 +83,30 @@ func (h *ContactLabelGrpcHandler) UpdateContactLabel(ctx context.Context, req *t
 		return nil, status.Error(codes.InvalidArgument, "contact label id is required")
 	}
 
-	label := &dto.UpdateContactLabelRequestDTO{
+	// Convert proto to UpdateContactLabelRequestDTO
+	updateReq := &dto.UpdateContactLabelRequestDTO{
 		Name:        req.Name,
 		Code:        req.Code,
 		Description: req.Description,
 		Color:       req.Color,
 		Icon:        req.Icon,
 		IsActive:    req.IsActive,
-		SortOrder:   req.SortOrder,
+		SortOrder:   int(req.SortOrder),
 		IsSystem:    req.IsSystem,
-		Type:        req.Type,
+		Type:        int(req.Type),
 	}
 
-	result, err := h.contactLabelUsecase.Update(ctx, req.Id, label)
+	result, err := h.contactLabelUsecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
 		log.Printf("error updating contact label: %v", err)
-		return nil, status.Error(codes.Internal, "failed to update contact label")
+		return nil, status.Errorf(codes.Internal, "failed to update contact label: %v", err)
 	}
 
 	return h.contactLabelMapper.ToProto(result), nil
 }
 
 // DeleteContactLabel handles gRPC DeleteContactLabel request
-func (h *ContactLabelGrpcHandler) DeleteContactLabel(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+func (h *ContactLabelGrpcHandler) DeleteContactLabel(ctx context.Context, req *tqdpb.DeleteContactLabelRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "contact label id is required")
 	}
@@ -111,7 +114,7 @@ func (h *ContactLabelGrpcHandler) DeleteContactLabel(ctx context.Context, req *s
 	err := h.contactLabelUsecase.Delete(ctx, req.Id)
 	if err != nil {
 		log.Printf("error deleting contact label: %v", err)
-		return nil, status.Error(codes.Internal, "failed to delete contact label")
+		return nil, status.Errorf(codes.Internal, "failed to delete contact label: %v", err)
 	}
 
 	return &sharepb.SubmitResponse{
@@ -121,42 +124,46 @@ func (h *ContactLabelGrpcHandler) DeleteContactLabel(ctx context.Context, req *s
 
 // ListContactLabels handles gRPC ListContactLabels request
 func (h *ContactLabelGrpcHandler) ListContactLabels(ctx context.Context, req *tqdpb.ListContactLabelsRequest) (*tqdpb.ListContactLabelsResponse, error) {
+	page := uint32(req.Page)
+	if page < 1 {
+		page = 1
+	}
+	size := uint32(req.Size)
+	if size < 1 {
+		size = 10
+	}
+	if size > 100 {
+		size = 100
+	}
+
 	listReq := &dto.ListContactLabelsRequestDTO{
 		Pagable: _dto.Pagable{
-			Page: uint32(req.Page),
-			Size: uint32(req.Size),
+			Page: page,
+			Size: size,
 		},
-		Search:   req.Search,
-		IsActive: &req.IsActive,
-		IsSystem: &req.IsSystem,
+		Search: req.Search,
+	}
+
+	// Handle optional filters
+	if req.IsActive {
+		listReq.IsActive = &req.IsActive
+	}
+	if req.IsSystem {
+		listReq.IsSystem = &req.IsSystem
 	}
 
 	result, err := h.contactLabelUsecase.List(ctx, listReq)
 	if err != nil {
+		log.Printf("error listing contact labels: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to list contact labels: %v", err)
 	}
 
+	// Convert DTO list to proto list
 	contactLabels := make([]*tqdpb.ContactLabel, len(result.Data))
 	for i, item := range result.Data {
-		contactLabels[i] = &tqdpb.ContactLabel{
-			Id:           uint64(item.ID),
-			Name:         item.Name,
-			Code:         item.Code,
-			Description:  item.Description,
-			Color:        item.Color,
-			Icon:         item.Icon,
-			IsActive:     item.IsActive,
-			SortOrder:    int32(item.SortOrder),
-			ContactCount: int32(item.ContactCount),
-			IsSystem:     item.IsSystem,
-			Status:       int32(item.Status),
-			Type:         int32(item.Type),
-			CreatedAt:    item.CreatedAt,
-			UpdatedAt:    item.UpdatedAt,
-		}
+		contactLabels[i] = h.contactLabelMapper.ToProto(&item)
 	}
 
-	// Return response
 	return &tqdpb.ListContactLabelsResponse{
 		Data:  contactLabels,
 		Total: result.Total,

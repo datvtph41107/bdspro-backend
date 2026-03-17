@@ -1,15 +1,16 @@
 package postgres
 
 import (
-	_db "common/db"
-	_dto "common/domain/dto"
-	_provider "common/provider"
 	"context"
 	"fmt"
+
+	_db "common/db"
+	_provider "common/provider"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
-	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
+
+	"gorm.io/gorm"
 )
 
 type openHourPostgres struct {
@@ -22,166 +23,202 @@ func NewOpenHourPostgres(db *_db.TransactionRepo) repo.IOpenHourRepo {
 	return r
 }
 
-// BeforeSave validates time overlap before creating or updating
 func (r *openHourPostgres) BeforeSave(ctx context.Context, id *uint64, entity *domain.OpenHour) error {
-	// Kiểm tra: Lệch trong khoảng ±4 phút (cả open và close time)
-	similarQuery := `
-		SELECT COUNT(*) 
-		FROM open_hour 
-		WHERE deleted_at IS NULL 
-		AND day_of_week = ?
-		AND ABS(EXTRACT(EPOCH FROM (open_time::time - ?::time))) <= 240
-		AND ABS(EXTRACT(EPOCH FROM (close_time::time - ?::time))) <= 240
-	`
-
-	similarArgs := []interface{}{
-		entity.DayOfWeek,
-		entity.OpenTime,
-		entity.CloseTime,
-	}
-
-	// If POI ID is specified, check only for that POI
-	if entity.POIID != nil {
-		similarQuery += " AND poi_id = ?"
-		similarArgs = append(similarArgs, *entity.POIID)
-	} else {
-		similarQuery += " AND poi_id IS NULL"
-	}
-
-	// Exclude current record when updating
-	if id != nil {
-		similarQuery += " AND id != ?"
-		similarArgs = append(similarArgs, *id)
-	}
-
-	var similarCount int64
-	err := r.GetDB(ctx).Raw(similarQuery, similarArgs...).Scan(&similarCount).Error
-	if err != nil {
+	// Validate entity
+	if err := entity.Validate(); err != nil {
 		return err
 	}
 
-	if similarCount > 0 {
-		return fmt.Errorf("khung giờ đã tồn tại (lệch trong khoảng 4 phút)")
+	// Check time overlap
+	exists, err := r.CheckTimeOverlap(ctx, *entity.POIID, entity.DayOfWeek,
+		entity.OpenTime, entity.CloseTime, id)
+	if err != nil {
+		return fmt.Errorf("failed to check time overlap: %w", err)
+	}
+	if exists {
+		return fmt.Errorf("time slot overlaps with existing open hour")
 	}
 
 	return nil
 }
 
-// GetList override để thêm custom filters
-func (r *openHourPostgres) GetList(ctx context.Context, pagable _dto.IPagable) ([]domain.OpenHour, int64, error) {
-	var openHours []domain.OpenHour
-	var total int64
-
-	query := r.GetDB(ctx).Model(&domain.OpenHour{}).Where("deleted_at is null")
-
-	// Type assertion để lấy custom filters
-	if req, ok := pagable.(*dto.OpenHourListRequest); ok {
-		// Apply filters
-		if req.POIID != nil {
-			query = query.Where("poi_id = ?", *req.POIID)
-		}
-
-		if req.DayOfWeek != nil {
-			query = query.Where("day_of_week = ?", *req.DayOfWeek)
-		}
-
-		if req.IsOpen != nil {
-			query = query.Where("is_open = ?", *req.IsOpen)
-		}
-
-		if req.Status != nil {
-			query = query.Where("status = ?", *req.Status)
-		}
-
-		if req.Type != nil {
-			query = query.Where("type = ?", *req.Type)
-		}
-	}
-
-	// Count total
-	err := query.Count(&total).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Apply pagination and sorting
-	err = query.
-		Order("day_of_week ASC, open_time ASC, created_at DESC").
-		Offset(pagable.GetOffset()).
-		Limit(pagable.GetLimit()).
-		Find(&openHours).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return openHours, total, nil
+func (r *openHourPostgres) AfterSave(ctx context.Context, id *uint64, entity *domain.OpenHour) error {
+	return nil
 }
 
-// GetAll override để thêm sorting
-func (r *openHourPostgres) GetAll(ctx context.Context) ([]domain.OpenHour, error) {
+func (r *openHourPostgres) Create(ctx context.Context, entity *domain.OpenHour) error {
+	if err := r.BeforeSave(ctx, nil, entity); err != nil {
+		return err
+	}
+	return r.GetDB(ctx).Create(entity).Error
+}
+
+func (r *openHourPostgres) Update(ctx context.Context, id uint64, entity *domain.OpenHour) error {
+	existing, err := r.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	// Preserve immutable fields
+	entity.CreatedAt = existing.CreatedAt
+	entity.CreatedBy = existing.CreatedBy
+
+	if err := r.BeforeSave(ctx, &id, entity); err != nil {
+		return err
+	}
+	return r.GetDB(ctx).Save(entity).Error
+}
+
+func (r *openHourPostgres) FindByPOI(ctx context.Context, poiID uint64) ([]domain.OpenHour, error) {
 	var openHours []domain.OpenHour
 	err := r.GetDB(ctx).
-		Where("deleted_at is null").
+		Where("poi_id = ? AND deleted_at IS NULL", poiID).
 		Order("day_of_week ASC, open_time ASC").
 		Find(&openHours).Error
 	return openHours, err
 }
 
-// GetGroupedByDayOfWeek lấy danh sách open hours và group theo day_of_week bằng raw SQL
-func (r *openHourPostgres) GetGroupedByDayOfWeek(ctx context.Context, poiID *uint64) (map[string][]domain.OpenHour, error) {
-	type TimeSlot struct {
-		ID        uint64  `json:"id"`
-		Name      string  `json:"name"`
-		POIID     *uint64 `json:"poi_id"`
-		OpenTime  string  `json:"open_time"`
-		CloseTime string  `json:"close_time"`
-		Note      string  `json:"note"`
-		IsOpen    bool    `json:"is_open"`
-		Status    uint32  `json:"status"`
-		Type      uint32  `json:"type"`
-		DayOfWeek string  `json:"day_of_week"`
-	}
+func (r *openHourPostgres) FindByDayOfWeek(ctx context.Context, dayOfWeek int, poiID *uint64) ([]domain.OpenHour, error) {
+	var openHours []domain.OpenHour
+	query := r.GetDB(ctx).Where("day_of_week = ? AND deleted_at IS NULL", dayOfWeek)
 
-	sqlQuery := `
-		SELECT 
-			id, name, poi_id, day_of_week, 
-			open_time, close_time, note, 
-			is_open, status, type
-		FROM open_hour
-		WHERE deleted_at IS NULL
-	`
-
-	args := []interface{}{}
 	if poiID != nil {
-		sqlQuery += " AND poi_id = ?"
-		args = append(args, *poiID)
+		query = query.Where("poi_id = ?", *poiID)
 	}
 
-	sqlQuery += " ORDER BY day_of_week ASC, open_time ASC"
+	err := query.Order("open_time ASC").Find(&openHours).Error
+	return openHours, err
+}
 
-	var timeSlots []TimeSlot
-	err := r.GetDB(ctx).Raw(sqlQuery, args...).Scan(&timeSlots).Error
+func (r *openHourPostgres) FindByTimeRange(ctx context.Context, poiID uint64, dayOfWeek int, startTime, endTime string) ([]domain.OpenHour, error) {
+	var openHours []domain.OpenHour
+	err := r.GetDB(ctx).
+		Where("poi_id = ? AND day_of_week = ? AND deleted_at IS NULL", poiID, dayOfWeek).
+		Where("?::time < close_time AND ?::time > open_time", endTime, startTime).
+		Order("open_time ASC").
+		Find(&openHours).Error
+	return openHours, err
+}
+
+// CheckTimeOverlap checks if time slot overlaps with existing ones
+func (r *openHourPostgres) CheckTimeOverlap(ctx context.Context, poiID uint64, dayOfWeek int,
+	startTime, endTime string, excludeID *uint64) (bool, error) {
+
+	query := `
+		SELECT COUNT(*) 
+		FROM open_hours 
+		WHERE deleted_at IS NULL 
+		AND poi_id = $1
+		AND day_of_week = $2
+		AND (
+			(open_time <= $3::time AND close_time > $3::time) OR
+			(open_time < $4::time AND close_time >= $4::time) OR
+			(open_time >= $3::time AND close_time <= $4::time)
+		)
+	`
+	args := []interface{}{poiID, dayOfWeek, startTime, endTime}
+
+	if excludeID != nil {
+		query += " AND id != $5"
+		args = append(args, *excludeID)
+	}
+
+	var count int64
+	err := r.GetDB(ctx).Raw(query, args...).Scan(&count).Error
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+// ListWithFilter lists open hours with filters
+func (r *openHourPostgres) ListWithFilter(ctx context.Context, filter *dto.OpenHourFilter) ([]domain.OpenHour, int64, error) {
+	var openHours []domain.OpenHour
+	var total int64
+
+	query := r.GetDB(ctx).Model(&domain.OpenHour{}).Where("deleted_at IS NULL")
+
+	// Apply filters
+	if filter.POIID > 0 {
+		query = query.Where("poi_id = ?", filter.POIID)
+	}
+	if filter.DayOfWeek != nil {
+		query = query.Where("day_of_week = ?", *filter.DayOfWeek)
+	}
+	if filter.IsOpen != nil {
+		query = query.Where("is_open = ?", *filter.IsOpen)
+	}
+	if filter.Status != nil {
+		query = query.Where("status = ?", *filter.Status)
+	}
+	if filter.Type != nil {
+		query = query.Where("type = ?", *filter.Type)
+	}
+
+	// Count total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination and sorting
+	err := query.
+		Order("day_of_week ASC, open_time ASC").
+		Offset(filter.GetOffset()).
+		Limit(filter.GetLimit()).
+		Find(&openHours).Error
+
+	return openHours, total, err
+}
+
+// GetGroupedByDay gets open hours grouped by day
+func (r *openHourPostgres) GetGroupedByDay(ctx context.Context, poiID uint64) (map[int][]domain.OpenHour, error) {
+	openHours, err := r.FindByPOI(ctx, poiID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Map kết quả vào grouped map
-	grouped := make(map[string][]domain.OpenHour)
-	for _, slot := range timeSlots {
-		hour := domain.OpenHour{
-			Name:      slot.Name,
-			POIID:     slot.POIID,
-			DayOfWeek: slot.DayOfWeek,
-			OpenTime:  slot.OpenTime,
-			CloseTime: slot.CloseTime,
-			Note:      slot.Note,
-			IsOpen:    slot.IsOpen,
-		}
-		hour.ID = slot.ID
-		hour.Status = enums.OpenHourStatus(slot.Status)
-		hour.Type = enums.OpenHourType(slot.Type)
-		grouped[slot.DayOfWeek] = append(grouped[slot.DayOfWeek], hour)
+	grouped := make(map[int][]domain.OpenHour)
+	for _, oh := range openHours {
+		grouped[oh.DayOfWeek] = append(grouped[oh.DayOfWeek], oh)
+	}
+	return grouped, nil
+}
+
+// BulkCreate creates multiple open hours
+func (r *openHourPostgres) BulkCreate(ctx context.Context, items []domain.OpenHour) error {
+	if len(items) == 0 {
+		return nil
+	}
+	return r.GetDB(ctx).CreateInBatches(items, 100).Error
+}
+
+// BulkUpdate updates multiple open hours
+func (r *openHourPostgres) BulkUpdate(ctx context.Context, items []domain.OpenHour) error {
+	if len(items) == 0 {
+		return nil
 	}
 
-	return grouped, nil
+	// Use transaction for bulk update
+	return r.GetDB(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, item := range items {
+			if err := tx.Save(&item).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// BulkDelete deletes multiple open hours
+func (r *openHourPostgres) BulkDelete(ctx context.Context, ids []uint64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return r.GetDB(ctx).
+		Where("id IN ?", ids).
+		Delete(&domain.OpenHour{}).Error
 }

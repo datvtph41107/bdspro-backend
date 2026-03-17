@@ -1,150 +1,208 @@
 package dto
 
 import (
+	"fmt"
+	"time"
+	"tqd/internal/domain"
+
 	_dto "common/domain/dto"
 )
 
-// OpenHourListRequest represents the request for listing open hours with pagination
-type OpenHourListRequest struct {
+// ==================== REQUEST DTOs ====================
+
+// CreateOpenHourRequest represents request to create open hour
+type CreateOpenHourRequest struct {
+	POIID       uint64  `json:"poiId" binding:"required"`
+	DayOfWeek   int     `json:"dayOfWeek" binding:"required,min=2,max=8"`
+	OpenTime    string  `json:"openTime" binding:"required"`  // HH:MM:SS
+	CloseTime   string  `json:"closeTime" binding:"required"` // HH:MM:SS
+	Note        string  `json:"note"`
+	IsOpen      bool    `json:"isOpen"`
+	IsRecurring bool    `json:"isRecurring"`
+	StartDate   *string `json:"startDate"` // ISO format
+	EndDate     *string `json:"endDate"`   // ISO format
+	Type        int     `json:"type"`      // 0=regular, 1=holiday, 2=special
+}
+
+// UpdateOpenHourRequest represents request to update open hour
+type UpdateOpenHourRequest struct {
+	DayOfWeek   *int    `json:"dayOfWeek" binding:"omitempty,min=2,max=8"`
+	OpenTime    *string `json:"openTime"`  // HH:MM:SS
+	CloseTime   *string `json:"closeTime"` // HH:MM:SS
+	Note        *string `json:"note"`
+	IsOpen      *bool   `json:"isOpen"`
+	IsRecurring *bool   `json:"isRecurring"`
+	StartDate   *string `json:"startDate"` // ISO format
+	EndDate     *string `json:"endDate"`   // ISO format
+	Status      *int    `json:"status"`
+	Type        *int    `json:"type"`
+}
+
+// OpenHourFilter represents filter for listing open hours
+type OpenHourFilter struct {
 	_dto.Pagable
-	POIID     *uint64 `form:"poiId"`
-	DayOfWeek *int    `form:"dayOfWeek"`
-	IsOpen    *bool   `form:"isOpen"`
-	Status    *uint32 `form:"status"`
-	Type      *uint32 `form:"type"`
+	POIID     uint64 `json:"poiId" form:"poiId"`
+	DayOfWeek *int   `json:"dayOfWeek" form:"dayOfWeek"`
+	IsOpen    *bool  `json:"isOpen" form:"isOpen"`
+	Status    *int   `json:"status" form:"status"`
+	Type      *int   `json:"type" form:"type"`
 }
 
-// OpenHourCreateRequest represents the request for creating open hour
-type OpenHourCreateRequest struct {
-	Name      string  `json:"name" binding:"required"`
-	POIID     *uint64 `json:"poiId"`
-	DayOfWeek string  `json:"dayOfWeek" binding:"required,min=2,max=8"` // 2=Monday, ..., 8=Sunday
-	OpenTime  string  `json:"openTime" binding:"required"`              // TIME format HH:MM:SS
-	CloseTime string  `json:"closeTime" binding:"required"`             // TIME format HH:MM:SS
-	Note      string  `json:"note"`
-	IsOpen    bool    `json:"isOpen"`
-	Status    uint32  `json:"status"`
-	Type      uint32  `json:"type"`
+// GetTimesByDayRequest represents request for getting times by day
+type GetTimesByDayRequest struct {
+	DayOfWeek string `json:"dayOfWeek" binding:"required"` // Monday, Tuesday, etc.
+	POIID     uint64 `json:"poiId"`                        // optional
 }
 
-// OpenHourUpdateRequest represents the request for updating open hour
-type OpenHourUpdateRequest struct {
-	Name      *string `json:"name"`
-	POIID     *uint64 `json:"poiId"`
-	DayOfWeek *string `json:"dayOfWeek" binding:"omitempty,min=2,max=8"`
-	OpenTime  *string `json:"openTime"`
-	CloseTime *string `json:"closeTime"`
-	Note      *string `json:"note"`
-	IsOpen    *bool   `json:"isOpen"`
-	Status    *uint32 `json:"status"`
-	Type      *uint32 `json:"type"`
+// BulkSaveOpenHourItem represents single item in bulk save
+type BulkSaveOpenHourItem struct {
+	ID          *uint64 `json:"id,omitempty"` // nil = create, has value = update
+	POIID       uint64  `json:"poiId" binding:"required"`
+	DayOfWeek   int     `json:"dayOfWeek" binding:"required,min=2,max=8"`
+	OpenTime    string  `json:"openTime" binding:"required"`
+	CloseTime   string  `json:"closeTime" binding:"required"`
+	Note        string  `json:"note"`
+	IsOpen      bool    `json:"isOpen"`
+	IsRecurring bool    `json:"isRecurring"`
+	StartDate   *string `json:"startDate"`
+	EndDate     *string `json:"endDate"`
+	Type        int     `json:"type"`
 }
 
-// OpenHourResponse represents the response for open hour
+// BulkSaveOpenHourRequest represents bulk save request
+type BulkSaveOpenHourRequest struct {
+	Items     []BulkSaveOpenHourItem `json:"items"`
+	DeleteIDs []uint64               `json:"deleteIds"`
+}
+
+// ==================== RESPONSE DTOs ====================
+
+// OpenHourResponse represents open hour response
 type OpenHourResponse struct {
-	ID        uint64  `json:"id"`
-	Name      string  `json:"name"`
-	POIID     *uint64 `json:"poiId,omitempty"`
-	DayOfWeek int     `json:"dayOfWeek"`
-	OpenTime  string  `json:"openTime"`
-	CloseTime string  `json:"closeTime"`
-	Note      string  `json:"note"`
-	IsOpen    bool    `json:"isOpen"`
-	Status    uint32  `json:"status"`
-	Type      uint32  `json:"type"`
-	CreatedAt string  `json:"createdAt"`
-	UpdatedAt string  `json:"updatedAt"`
+	ID          uint64     `json:"id"`
+	POIID       *uint64    `json:"poiId"`
+	DayOfWeek   int        `json:"dayOfWeek"`
+	DayName     string     `json:"dayName"` // Monday, Tuesday, etc.
+	OpenTime    string     `json:"openTime"`
+	CloseTime   string     `json:"closeTime"`
+	Note        string     `json:"note"`
+	IsOpen      bool       `json:"isOpen"`
+	IsRecurring bool       `json:"isRecurring"`
+	StartDate   *time.Time `json:"startDate"`
+	EndDate     *time.Time `json:"endDate"`
+	Status      int        `json:"status"`
+	Type        int        `json:"type"`
+	CreatedAt   *time.Time `json:"createdAt"`
+	UpdatedAt   *time.Time `json:"updatedAt"`
+	CreatedBy   uint64     `json:"createdBy"`
+	UpdatedBy   uint64     `json:"updatedBy"`
 }
 
-// OpenHourTimeSlot represents a single time slot
+// OpenHourTimeSlot represents a single time slot for day view
 type OpenHourTimeSlot struct {
-	ID        uint64  `json:"id"`
-	Name      string  `json:"name"`
-	POIID     *uint64 `json:"poiId,omitempty"`
-	OpenTime  string  `json:"openTime"`
-	CloseTime string  `json:"closeTime"`
-	Note      string  `json:"note"`
-	IsOpen    bool    `json:"isOpen"`
-	Status    uint32  `json:"status"`
-	Type      uint32  `json:"type"`
+	ID        uint64 `json:"id"`
+	POIID     uint64 `json:"poiId"`
+	OpenTime  string `json:"openTime"`
+	CloseTime string `json:"closeTime"`
+	Note      string `json:"note"`
+	IsOpen    bool   `json:"isOpen"`
 }
 
-// OpenHourTimesByDayResponse represents open hours grouped by day of week
-type OpenHourTimesByDayResponse struct {
+// OpenHourTimesByDay represents open hours grouped by day
+type OpenHourTimesByDay struct {
 	DayOfWeek int                `json:"dayOfWeek"`
 	DayName   string             `json:"dayName"`
 	Times     []OpenHourTimeSlot `json:"times"`
 }
 
-// OpenHourBulkItem represents a single item in bulk save request
-type OpenHourBulkItem struct {
-	ID        *uint64 `json:"id,omitempty"` // Nếu có ID thì update, không có thì create
-	Name      string  `json:"name" binding:"required"`
-	POIID     *uint64 `json:"poiId"`
-	DayOfWeek int     `json:"dayOfWeek" binding:"required,min=2,max=8"`
-	OpenTime  string  `json:"openTime" binding:"required"`
-	CloseTime string  `json:"closeTime" binding:"required"`
-	Note      string  `json:"note"`
-	IsOpen    bool    `json:"isOpen"`
-	Status    uint32  `json:"status"`
-	Type      uint32  `json:"type"`
+// ListOpenHoursResponse represents paginated list response
+type ListOpenHoursResponse struct {
+	Data  []OpenHourResponse `json:"data"`
+	Total int64              `json:"total"`
+	Page  uint32             `json:"page"`
+	Size  uint32             `json:"size"`
 }
 
-// OpenHourBulkSaveRequest represents bulk save request (create, update, delete)
-type OpenHourBulkSaveRequest struct {
-	Items     []OpenHourBulkItem `json:"data"`       // Items to create or update
-	DeleteIDs []uint64           `json:"deletedIds"` // IDs to delete
+// BulkSaveOpenHourResult represents result for each item in bulk save
+type BulkSaveOpenHourResult struct {
+	ID      *uint64 `json:"id,omitempty"`
+	Status  string  `json:"status"` // success, failed
+	Message string  `json:"message,omitempty"`
 }
 
-// OpenHourBulkSaveResultItem represents result for each item
-type OpenHourBulkSaveResultItem struct {
-	Item    *OpenHourBulkItem `json:"item,omitempty"`    // Item gốc
-	Message string            `json:"message,omitempty"` // Lỗi nếu có
-	Status  string            `json:"status"`            // success | failed
+// BulkSaveOpenHourResponse represents bulk save response
+type BulkSaveOpenHourResponse struct {
+	Created int                      `json:"created"`
+	Updated int                      `json:"updated"`
+	Deleted int                      `json:"deleted"`
+	Failed  int                      `json:"failed"`
+	Total   int                      `json:"total"`
+	Results []BulkSaveOpenHourResult `json:"results"`
 }
 
-// OpenHourBulkSaveResponse represents bulk save response
-type OpenHourBulkSaveResponse struct {
-	Created int                          `json:"created"`
-	Updated int                          `json:"updated"`
-	Deleted int                          `json:"deleted"`
-	Failed  int                          `json:"failed"`
-	Total   int                          `json:"total"`
-	Results []OpenHourBulkSaveResultItem `json:"results"` // Chi tiết kết quả từng item
+// ==================== CONVERSION HELPERS ====================
+
+// ToResponse converts domain OpenHour to OpenHourResponse
+func (r *OpenHourResponse) FromDomain(oh *domain.OpenHour) {
+	r.ID = oh.ID
+	r.POIID = oh.POIID
+	r.DayOfWeek = oh.DayOfWeek
+	r.DayName = DayOfWeekToString(oh.DayOfWeek)
+	r.OpenTime = oh.OpenTime
+	r.CloseTime = oh.CloseTime
+	r.Note = oh.Note
+	r.IsOpen = oh.IsOpen
+	r.IsRecurring = oh.IsRecurring
+	r.StartDate = oh.StartDate
+	r.EndDate = oh.EndDate
+	r.Status = int(oh.Status)
+	r.Type = int(oh.Type)
+	r.CreatedAt = oh.CreatedAt
+	r.UpdatedAt = oh.UpdatedAt
+	r.CreatedBy = *oh.CreatedBy
+	r.UpdatedBy = *oh.UpdatedBy
 }
 
-// CreateOpenHourRequestDTO represents the request DTO for creating open hour
-type CreateOpenHourRequestDTO struct {
-	PoiID       uint64 `json:"poiId" validate:"required"`
-	DayOfWeek   string `json:"dayOfWeek" validate:"required"`
-	StartTime   string `json:"startTime" validate:"required"`
-	EndTime     string `json:"endTime" validate:"required"`
-	IsOpen      bool   `json:"isOpen"`
-	IsRecurring bool   `json:"isRecurring"`
-	StartDate   string `json:"startDate"`
-	EndDate     string `json:"endDate"`
-	Notes       string `json:"notes"`
+// DayOfWeekToString converts day number to name
+func DayOfWeekToString(day int) string {
+	switch day {
+	case 2:
+		return "Monday"
+	case 3:
+		return "Tuesday"
+	case 4:
+		return "Wednesday"
+	case 5:
+		return "Thursday"
+	case 6:
+		return "Friday"
+	case 7:
+		return "Saturday"
+	case 8:
+		return "Sunday"
+	default:
+		return ""
+	}
 }
 
-// OpenHourDTO represents the DTO for open hour
-type OpenHourDTO struct {
-	ID          uint64 `json:"id"`
-	PoiID       uint64 `json:"poiId"`
-	DayOfWeek   string `json:"dayOfWeek"`
-	StartTime   string `json:"startTime"`
-	EndTime     string `json:"endTime"`
-	IsOpen      bool   `json:"isOpen"`
-	IsRecurring bool   `json:"isRecurring"`
-	StartDate   string `json:"startDate"`
-	EndDate     string `json:"endDate"`
-	Notes       string `json:"notes"`
-}
-
-// OpenHourFilterDTO represents the filter DTO for listing open hours
-type OpenHourFilterDTO struct {
-	Page      int    `json:"page"`
-	Size      int    `json:"size"`
-	PoiID     uint64 `json:"poiId"`
-	DayOfWeek string `json:"dayOfWeek"`
-	IsOpen    *bool  `json:"isOpen"`
+// StringToDayOfWeek converts day name to number
+func StringToDayOfWeek(day string) (int, error) {
+	switch day {
+	case "Monday":
+		return 2, nil
+	case "Tuesday":
+		return 3, nil
+	case "Wednesday":
+		return 4, nil
+	case "Thursday":
+		return 5, nil
+	case "Friday":
+		return 6, nil
+	case "Saturday":
+		return 7, nil
+	case "Sunday":
+		return 8, nil
+	default:
+		return 0, fmt.Errorf("invalid day of week: %s", day)
+	}
 }

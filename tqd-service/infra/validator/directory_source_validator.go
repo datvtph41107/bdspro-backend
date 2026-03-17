@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"tqd/internal/domain"
 	"tqd/internal/dto"
 )
 
@@ -41,7 +42,7 @@ func (v *DirectorySourceValidator) ValidateCreateRequest(req *dto.DirectorySourc
 }
 
 // ValidateUpdateRequest validates UpdateDirectorySourceRequestDTO
-func (v *DirectorySourceValidator) ValidateUpdateRequest(req *dto.DirectorySourceDTO) error {
+func (v *DirectorySourceValidator) ValidateUpdateRequest(req *domain.DirectorySource) error {
 	if err := v.validateBasicFields(req.Name, req.Code); err != nil {
 		return err
 	}

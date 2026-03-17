@@ -46,7 +46,7 @@ func NewApp(
 	poiCategoryGrpcHandler *handler_grpc.PoiCategoryGrpcHandler,
 	poiGrpcHandler *handler_grpc.PoiGrpcHandler,
 	openHourGrpcHandler *handler_grpc.OpenHourGrpcHandler,
-	amenityGrpcHandler *handler_grpc.AmenityGrpcHandler,
+	amenityGrpcHandler *handler_grpc.AmenityGrpcHandlerImpl,
 ) *InitialApp {
 	return &InitialApp{
 		ContactLabelHandler:          contactLabelHandler,

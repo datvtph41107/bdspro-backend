@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"tqd/internal/domain"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -29,6 +30,22 @@ func (r *directorySupplierPostgres) GetByID(ctx context.Context, id uint64) (*do
 	var supplier domain.DirectorySupplier
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&supplier).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &supplier, nil
+}
+
+// GetByCode gets directory supplier by code
+func (r *directorySupplierPostgres) GetByCode(ctx context.Context, code string) (*domain.DirectorySupplier, error) {
+	var supplier domain.DirectorySupplier
+	err := r.db.WithContext(ctx).Where("code = ?", code).First(&supplier).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &supplier, nil
@@ -45,37 +62,37 @@ func (r *directorySupplierPostgres) Delete(ctx context.Context, id uint64) error
 }
 
 // List gets list of directory suppliers with filters
-func (r *directorySupplierPostgres) List(ctx context.Context, page, size int, search string, categories []string, isActive *bool, minRating, maxRating *float64) ([]domain.DirectorySupplier, int64, error) {
+func (r *directorySupplierPostgres) List(ctx context.Context, req *dto.DirectorySupplierFilterDTO) ([]domain.DirectorySupplier, int64, error) {
 	var suppliers []domain.DirectorySupplier
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&domain.DirectorySupplier{})
 
 	// Apply search filter
-	if search != "" {
-		searchPattern := "%" + strings.ToLower(search) + "%"
+	if req.Search != "" {
+		searchPattern := "%" + strings.ToLower(req.Search) + "%"
 		query = query.Where("LOWER(name) LIKE ? OR LOWER(code) LIKE ? OR LOWER(description) LIKE ? OR LOWER(contact_person) LIKE ?",
 			searchPattern, searchPattern, searchPattern, searchPattern)
 	}
 
-	// Apply categories filter
-	if len(categories) > 0 {
-		for _, category := range categories {
+	// Apply categories filter (JSON contains)
+	if len(req.Categories) > 0 {
+		for _, category := range req.Categories {
 			query = query.Where("categories LIKE ?", "%\""+category+"\"%")
 		}
 	}
 
 	// Apply isActive filter
-	if isActive != nil {
-		query = query.Where("is_active = ?", *isActive)
+	if req.IsActive != nil {
+		query = query.Where("is_active = ?", *req.IsActive)
 	}
 
 	// Apply rating filters
-	if minRating != nil {
-		query = query.Where("rating >= ?", *minRating)
+	if req.MinRating != nil {
+		query = query.Where("rating >= ?", *req.MinRating)
 	}
-	if maxRating != nil {
-		query = query.Where("rating <= ?", *maxRating)
+	if req.MaxRating != nil {
+		query = query.Where("rating <= ?", *req.MaxRating)
 	}
 
 	// Count total
@@ -83,9 +100,27 @@ func (r *directorySupplierPostgres) List(ctx context.Context, page, size int, se
 		return nil, 0, err
 	}
 
-	// Apply pagination and get results
-	offset := (page - 1) * size
-	err := query.Order("created_at DESC").Offset(offset).Limit(size).Find(&suppliers).Error
+	// Apply sorting
+	switch req.SortBy {
+	case "rating":
+		if req.SortOrder == "desc" {
+			query = query.Order("rating DESC")
+		} else {
+			query = query.Order("rating ASC")
+		}
+	case "name":
+		if req.SortOrder == "desc" {
+			query = query.Order("name DESC")
+		} else {
+			query = query.Order("name ASC")
+		}
+	default:
+		query = query.Order("created_at DESC")
+	}
+
+	// Apply pagination
+	offset := (req.Page - 1) * req.Size
+	err := query.Offset(int(offset)).Limit(int(req.Size)).Find(&suppliers).Error
 	if err != nil {
 		return nil, 0, err
 	}

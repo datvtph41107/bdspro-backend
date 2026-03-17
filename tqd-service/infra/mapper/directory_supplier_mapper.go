@@ -2,13 +2,16 @@ package mapper
 
 import (
 	"encoding/json"
+	"time"
 	"tqd/internal/domain"
+	"tqd/internal/dto"
 
+	_entity "common/domain/entity"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 )
 
-// DirectorySupplierMapper handles mapping between domain and response
+// DirectorySupplierMapper handles mapping between domain, DTO and proto
 type DirectorySupplierMapper struct{}
 
 // NewDirectorySupplierMapper creates a new DirectorySupplierMapper
@@ -16,8 +19,8 @@ func NewDirectorySupplierMapper() *DirectorySupplierMapper {
 	return &DirectorySupplierMapper{}
 }
 
-// ToResponse converts domain DirectorySupplier to response
-func (m *DirectorySupplierMapper) ToResponse(supplier *domain.DirectorySupplier) map[string]interface{} {
+// ToDTO converts domain DirectorySupplier to DirectorySupplierDTO
+func (m *DirectorySupplierMapper) ToDTO(supplier *domain.DirectorySupplier) *dto.DirectorySupplierDTO {
 	if supplier == nil {
 		return nil
 	}
@@ -34,163 +37,8 @@ func (m *DirectorySupplierMapper) ToResponse(supplier *domain.DirectorySupplier)
 		json.Unmarshal([]byte(supplier.RawCategories), &categories)
 	}
 
-	return map[string]interface{}{
-		"id":              supplier.ID,
-		"name":            supplier.Name,
-		"code":            supplier.Code,
-		"description":     supplier.Description,
-		"contactPerson":   supplier.ContactPerson,
-		"phone":           supplier.Phone,
-		"email":           supplier.Email,
-		"address":         supplier.Address,
-		"website":         supplier.Website,
-		"taxCode":         supplier.TaxCode,
-		"businessLicense": supplier.BusinessLicense,
-		"rating":          supplier.Rating,
-		"isActive":        supplier.IsActive,
-		"serviceCount":    supplier.ServiceCount,
-		"contractCount":   supplier.ContractCount,
-		"totalValue":      supplier.TotalValue,
-		"joinDate":        _utils.FormatTimeToString(supplier.JoinDate),
-		"lastContactDate": _utils.FormatTimeToString(supplier.LastContactDate),
-		"notes":           supplier.Notes,
-		"tags":            tags,
-		"categories":      categories,
-		"createdAt":       _utils.FormatTimeToString(supplier.CreatedAt),
-		"updatedAt":       _utils.FormatTimeToString(supplier.UpdatedAt),
-		"createdBy":       supplier.CreatedBy,
-		"updatedBy":       supplier.UpdatedBy,
-	}
-}
-
-// ToDomain converts request to domain DirectorySupplier
-func (m *DirectorySupplierMapper) ToDomain(data map[string]interface{}) *domain.DirectorySupplier {
-	if data == nil {
-		return nil
-	}
-
-	supplier := &domain.DirectorySupplier{}
-
-	if id, ok := data["id"].(float64); ok {
-		supplier.ID = uint64(id)
-	}
-	if name, ok := data["name"].(string); ok {
-		supplier.Name = name
-	}
-	if code, ok := data["code"].(string); ok {
-		supplier.Code = code
-	}
-	if description, ok := data["description"].(string); ok {
-		supplier.Description = description
-	}
-	if contactPerson, ok := data["contactPerson"].(string); ok {
-		supplier.ContactPerson = contactPerson
-	}
-	if phone, ok := data["phone"].(string); ok {
-		supplier.Phone = phone
-	}
-	if email, ok := data["email"].(string); ok {
-		supplier.Email = email
-	}
-	if address, ok := data["address"].(string); ok {
-		supplier.Address = address
-	}
-	if website, ok := data["website"].(string); ok {
-		supplier.Website = website
-	}
-	if taxCode, ok := data["taxCode"].(string); ok {
-		supplier.TaxCode = taxCode
-	}
-	if businessLicense, ok := data["businessLicense"].(string); ok {
-		supplier.BusinessLicense = businessLicense
-	}
-	if rating, ok := data["rating"].(float64); ok {
-		supplier.Rating = rating
-	}
-	if isActive, ok := data["isActive"].(bool); ok {
-		supplier.IsActive = isActive
-	}
-	if serviceCount, ok := data["serviceCount"].(float64); ok {
-		supplier.ServiceCount = uint32(serviceCount)
-	}
-	if contractCount, ok := data["contractCount"].(float64); ok {
-		supplier.ContractCount = uint32(contractCount)
-	}
-	if totalValue, ok := data["totalValue"].(float64); ok {
-		supplier.TotalValue = int64(totalValue)
-	}
-	if joinDate, ok := data["joinDate"].(string); ok {
-		supplier.JoinDate = _utils.ParseStringToTime(joinDate)
-	}
-	if lastContactDate, ok := data["lastContactDate"].(string); ok {
-		supplier.LastContactDate = _utils.ParseStringToTime(lastContactDate)
-	}
-	if notes, ok := data["notes"].(string); ok {
-		supplier.Notes = notes
-	}
-
-	// Handle tags
-	if tags, ok := data["tags"].([]interface{}); ok {
-		tagStrings := make([]string, len(tags))
-		for i, tag := range tags {
-			if tagStr, ok := tag.(string); ok {
-				tagStrings[i] = tagStr
-			}
-		}
-		if tagJSON, err := json.Marshal(tagStrings); err == nil {
-			supplier.RawTags = string(tagJSON)
-		}
-	}
-
-	// Handle categories
-	if categories, ok := data["categories"].([]interface{}); ok {
-		categoryStrings := make([]string, len(categories))
-		for i, category := range categories {
-			if categoryStr, ok := category.(string); ok {
-				categoryStrings[i] = categoryStr
-			}
-		}
-		if categoryJSON, err := json.Marshal(categoryStrings); err == nil {
-			supplier.RawCategories = string(categoryJSON)
-		}
-	}
-
-	return supplier
-}
-
-// ToListResponse converts list of domain DirectorySupplier to response
-func (m *DirectorySupplierMapper) ToListResponse(suppliers []domain.DirectorySupplier, total int64) map[string]interface{} {
-	data := make([]map[string]interface{}, len(suppliers))
-	for i, supplier := range suppliers {
-		data[i] = m.ToResponse(&supplier)
-	}
-
-	return map[string]interface{}{
-		"data":  data,
-		"total": total,
-	}
-}
-
-// ToProto converts domain DirectorySupplier to proto DirectorySupplier
-func (m *DirectorySupplierMapper) ToProto(supplier *domain.DirectorySupplier) *tqdpb.DirectorySupplier {
-	if supplier == nil {
-		return nil
-	}
-
-	// Parse tags from JSON string
-	var tags []string
-	if supplier.RawTags != "" {
-		json.Unmarshal([]byte(supplier.RawTags), &tags)
-	}
-
-	// Parse categories from JSON string
-	var categories []string
-	if supplier.RawCategories != "" {
-		json.Unmarshal([]byte(supplier.RawCategories), &categories)
-	}
-
-	return &tqdpb.DirectorySupplier{
-		Id:              supplier.ID,
+	return &dto.DirectorySupplierDTO{
+		ID:              supplier.ID,
 		Name:            supplier.Name,
 		Code:            supplier.Code,
 		Description:     supplier.Description,
@@ -206,14 +54,301 @@ func (m *DirectorySupplierMapper) ToProto(supplier *domain.DirectorySupplier) *t
 		ServiceCount:    supplier.ServiceCount,
 		ContractCount:   supplier.ContractCount,
 		TotalValue:      supplier.TotalValue,
-		JoinDate:        _utils.FormatTimeToString(supplier.JoinDate),
-		LastContactDate: _utils.FormatTimeToString(supplier.LastContactDate),
+		JoinDate:        supplier.JoinDate,
+		LastContactDate: supplier.LastContactDate,
 		Notes:           supplier.Notes,
 		Tags:            tags,
 		Categories:      categories,
-		CreatedAt:       _utils.FormatTimeToString(supplier.CreatedAt),
-		UpdatedAt:       _utils.FormatTimeToString(supplier.UpdatedAt),
-		CreatedBy:       *supplier.CreatedBy,
-		UpdatedBy:       *supplier.UpdatedBy,
+		CreatedAt:       supplier.CreatedAt,
+		UpdatedAt:       supplier.UpdatedAt,
+		CreatedBy:       supplier.CreatedBy,
+		UpdatedBy:       supplier.UpdatedBy,
 	}
+}
+
+// ToDomain converts DirectorySupplierDTO to domain DirectorySupplier
+func (m *DirectorySupplierMapper) ToDomain(dto *dto.DirectorySupplierDTO) *domain.DirectorySupplier {
+	if dto == nil {
+		return nil
+	}
+
+	// Convert tags to JSON string
+	var tagsJSON string
+	if dto.Tags != nil {
+		tagsBytes, _ := json.Marshal(dto.Tags)
+		tagsJSON = string(tagsBytes)
+	}
+
+	// Convert categories to JSON string
+	var categoriesJSON string
+	if dto.Categories != nil {
+		categoriesBytes, _ := json.Marshal(dto.Categories)
+		categoriesJSON = string(categoriesBytes)
+	}
+
+	return &domain.DirectorySupplier{
+		BaseEntity: _entity.BaseEntity{
+			ID:        dto.ID,
+			CreatedAt: dto.CreatedAt,
+			UpdatedAt: dto.UpdatedAt,
+		},
+		Name:            dto.Name,
+		Code:            dto.Code,
+		Description:     dto.Description,
+		ContactPerson:   dto.ContactPerson,
+		Phone:           dto.Phone,
+		Email:           dto.Email,
+		Address:         dto.Address,
+		Website:         dto.Website,
+		TaxCode:         dto.TaxCode,
+		BusinessLicense: dto.BusinessLicense,
+		Rating:          dto.Rating,
+		IsActive:        dto.IsActive,
+		ServiceCount:    dto.ServiceCount,
+		ContractCount:   dto.ContractCount,
+		TotalValue:      dto.TotalValue,
+		JoinDate:        dto.JoinDate,
+		LastContactDate: dto.LastContactDate,
+		Notes:           dto.Notes,
+		RawTags:         tagsJSON,
+		RawCategories:   categoriesJSON,
+	}
+}
+
+// ToDomainFromCreateRequest converts CreateDirectorySupplierRequestDTO to domain DirectorySupplier
+func (m *DirectorySupplierMapper) ToDomainFromCreateRequest(req *dto.CreateDirectorySupplierRequestDTO) (*domain.DirectorySupplier, error) {
+	if req == nil {
+		return nil, nil
+	}
+
+	// Parse join date if provided
+	var joinDate *time.Time
+	if req.JoinDate != nil && *req.JoinDate != "" {
+		joinDate = _utils.ParseStringToTime(*req.JoinDate)
+	}
+
+	// Parse last contact date if provided
+	var lastContactDate *time.Time
+	if req.LastContactDate != nil && *req.LastContactDate != "" {
+		lastContactDate = _utils.ParseStringToTime(*req.LastContactDate)
+	}
+
+	// Convert tags to JSON string
+	var tagsJSON string
+	if req.Tags != nil {
+		tagsBytes, err := json.Marshal(req.Tags)
+		if err != nil {
+			return nil, err
+		}
+		tagsJSON = string(tagsBytes)
+	}
+
+	// Convert categories to JSON string
+	var categoriesJSON string
+	if req.Categories != nil {
+		categoriesBytes, err := json.Marshal(req.Categories)
+		if err != nil {
+			return nil, err
+		}
+		categoriesJSON = string(categoriesBytes)
+	}
+
+	return &domain.DirectorySupplier{
+		Name:            req.Name,
+		Code:            req.Code,
+		Description:     req.Description,
+		ContactPerson:   req.ContactPerson,
+		Phone:           req.Phone,
+		Email:           req.Email,
+		Address:         req.Address,
+		Website:         req.Website,
+		TaxCode:         req.TaxCode,
+		BusinessLicense: req.BusinessLicense,
+		Rating:          req.Rating,
+		IsActive:        req.IsActive,
+		Notes:           req.Notes,
+		RawTags:         tagsJSON,
+		RawCategories:   categoriesJSON,
+		JoinDate:        joinDate,
+		LastContactDate: lastContactDate,
+		ServiceCount:    0,
+		ContractCount:   0,
+		TotalValue:      0,
+	}, nil
+}
+
+// ToDomainFromUpdateRequest converts UpdateDirectorySupplierRequestDTO to domain DirectorySupplier
+func (m *DirectorySupplierMapper) ToDomainFromUpdateRequest(req *dto.UpdateDirectorySupplierRequestDTO, id uint64) (*domain.DirectorySupplier, error) {
+	if req == nil {
+		return nil, nil
+	}
+
+	// Parse join date if provided
+	var joinDate *time.Time
+	if req.JoinDate != nil && *req.JoinDate != "" {
+		joinDate = _utils.ParseStringToTime(*req.JoinDate)
+	}
+
+	// Parse last contact date if provided
+	var lastContactDate *time.Time
+	if req.LastContactDate != nil && *req.LastContactDate != "" {
+		lastContactDate = _utils.ParseStringToTime(*req.LastContactDate)
+	}
+
+	// Convert tags to JSON string
+	var tagsJSON string
+	if req.Tags != nil {
+		tagsBytes, err := json.Marshal(req.Tags)
+		if err != nil {
+			return nil, err
+		}
+		tagsJSON = string(tagsBytes)
+	}
+
+	// Convert categories to JSON string
+	var categoriesJSON string
+	if req.Categories != nil {
+		categoriesBytes, err := json.Marshal(req.Categories)
+		if err != nil {
+			return nil, err
+		}
+		categoriesJSON = string(categoriesBytes)
+	}
+
+	return &domain.DirectorySupplier{
+		BaseEntity: _entity.BaseEntity{
+			ID: id,
+		},
+		Name:            req.Name,
+		Code:            req.Code,
+		Description:     req.Description,
+		ContactPerson:   req.ContactPerson,
+		Phone:           req.Phone,
+		Email:           req.Email,
+		Address:         req.Address,
+		Website:         req.Website,
+		TaxCode:         req.TaxCode,
+		BusinessLicense: req.BusinessLicense,
+		Rating:          req.Rating,
+		IsActive:        req.IsActive,
+		Notes:           req.Notes,
+		RawTags:         tagsJSON,
+		RawCategories:   categoriesJSON,
+		JoinDate:        joinDate,
+		LastContactDate: lastContactDate,
+	}, nil
+}
+
+// ToDTOList converts slice of domain DirectorySupplier to slice of DirectorySupplierDTO
+func (m *DirectorySupplierMapper) ToDTOList(suppliers []domain.DirectorySupplier) []dto.DirectorySupplierDTO {
+	if suppliers == nil {
+		return nil
+	}
+	result := make([]dto.DirectorySupplierDTO, len(suppliers))
+	for i, supplier := range suppliers {
+		dto := m.ToDTO(&supplier)
+		if dto != nil {
+			result[i] = *dto
+		}
+	}
+	return result
+}
+
+// ToProto converts DirectorySupplierDTO to proto DirectorySupplier
+func (m *DirectorySupplierMapper) ToProto(dto *dto.DirectorySupplierDTO) *tqdpb.DirectorySupplier {
+	if dto == nil {
+		return nil
+	}
+
+	return &tqdpb.DirectorySupplier{
+		Id:              dto.ID,
+		Name:            dto.Name,
+		Code:            dto.Code,
+		Description:     dto.Description,
+		ContactPerson:   dto.ContactPerson,
+		Phone:           dto.Phone,
+		Email:           dto.Email,
+		Address:         dto.Address,
+		Website:         dto.Website,
+		TaxCode:         dto.TaxCode,
+		BusinessLicense: dto.BusinessLicense,
+		Rating:          dto.Rating,
+		IsActive:        dto.IsActive,
+		ServiceCount:    dto.ServiceCount,
+		ContractCount:   dto.ContractCount,
+		TotalValue:      dto.TotalValue,
+		JoinDate:        _utils.FormatTimeToString(dto.JoinDate),
+		LastContactDate: _utils.FormatTimeToString(dto.LastContactDate),
+		Notes:           dto.Notes,
+		Tags:            dto.Tags,
+		Categories:      dto.Categories,
+		CreatedAt:       _utils.FormatTimeToString(dto.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(dto.UpdatedAt),
+		CreatedBy:       uint64Value(dto.CreatedBy),
+		UpdatedBy:       uint64Value(dto.UpdatedBy),
+	}
+}
+
+// FromProto converts proto DirectorySupplier to DirectorySupplierDTO
+func (m *DirectorySupplierMapper) FromProto(proto *tqdpb.DirectorySupplier) (*dto.DirectorySupplierDTO, error) {
+	if proto == nil {
+		return nil, nil
+	}
+
+	// Parse join date if provided
+	var joinDate *time.Time
+	if proto.JoinDate != "" {
+		joinDate = _utils.ParseStringToTime(proto.JoinDate)
+	}
+
+	// Parse last contact date if provided
+	var lastContactDate *time.Time
+	if proto.LastContactDate != "" {
+		lastContactDate = _utils.ParseStringToTime(proto.LastContactDate)
+	}
+
+	return &dto.DirectorySupplierDTO{
+		ID:              proto.Id,
+		Name:            proto.Name,
+		Code:            proto.Code,
+		Description:     proto.Description,
+		ContactPerson:   proto.ContactPerson,
+		Phone:           proto.Phone,
+		Email:           proto.Email,
+		Address:         proto.Address,
+		Website:         proto.Website,
+		TaxCode:         proto.TaxCode,
+		BusinessLicense: proto.BusinessLicense,
+		Rating:          proto.Rating,
+		IsActive:        proto.IsActive,
+		ServiceCount:    proto.ServiceCount,
+		ContractCount:   proto.ContractCount,
+		TotalValue:      proto.TotalValue,
+		JoinDate:        joinDate,
+		LastContactDate: lastContactDate,
+		Notes:           proto.Notes,
+		Tags:            proto.Tags,
+		Categories:      proto.Categories,
+		CreatedAt:       _utils.ParseStringToTime(proto.CreatedAt),
+		UpdatedAt:       _utils.ParseStringToTime(proto.UpdatedAt),
+		CreatedBy:       &proto.CreatedBy,
+		UpdatedBy:       &proto.UpdatedBy,
+	}, nil
+}
+
+// Helper function to convert *uint64 to uint64 (with default 0)
+func uint64Value(ptr *uint64) uint64 {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
+}
+
+// ToResponse converts slice of DirectorySupplierDTO to slice of proto DirectorySupplier
+func (m *DirectorySupplierMapper) ToResponse(responses *dto.DirectorySupplierDTO) []*dto.DirectorySupplierDTO {
+	if responses == nil {
+		return nil
+	}
+
+	return []*dto.DirectorySupplierDTO{responses}
 }

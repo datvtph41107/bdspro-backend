@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -14,180 +15,187 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// OpenHourGrpcHandler implements gRPC handlers for OpenHour service
 type OpenHourGrpcHandler struct {
 	tqdpb.UnimplementedOpenHourServiceServer
-	openHourUsecase *usecase.OpenHourUsecase
-	openHourMapper  *mapper.OpenHourMapper
+	usecase usecase.OpenHourUsecase
+	mapper  *mapper.OpenHourMapper
 }
 
-// NewOpenHourGrpcHandler creates a new OpenHourGrpcHandler
 func NewOpenHourGrpcHandler(
-	openHourUsecase *usecase.OpenHourUsecase,
-	openHourMapper *mapper.OpenHourMapper,
+	usecase usecase.OpenHourUsecase,
+	mapper *mapper.OpenHourMapper,
 ) *OpenHourGrpcHandler {
 	return &OpenHourGrpcHandler{
-		openHourUsecase: openHourUsecase,
-		openHourMapper:  openHourMapper,
+		usecase: usecase,
+		mapper:  mapper,
 	}
 }
 
-// CreateOpenHour handles gRPC CreateOpenHour request
 func (h *OpenHourGrpcHandler) CreateOpenHour(ctx context.Context, req *tqdpb.OpenHour) (*tqdpb.OpenHour, error) {
-	if req.PoiId == 0 {
+	// Validate required fields
+	if req.PoiId == nil || *req.PoiId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "poi id is required")
 	}
 
-	createReq := &dto.CreateOpenHourRequestDTO{
-		PoiID:       req.PoiId,
-		DayOfWeek:   req.DayOfWeek,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-		IsOpen:      req.IsOpen,
-		IsRecurring: req.IsRecurring,
-		StartDate:   req.StartDate,
-		EndDate:     req.EndDate,
-		Notes:       req.Notes,
+	// Convert proto to request DTO
+	createReq, err := h.mapper.FromProto(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}
 
-	result, err := h.openHourUsecase.CreateOpenHour(ctx, createReq)
+	// Call usecase
+	result, err := h.usecase.Create(ctx, createReq)
 	if err != nil {
 		log.Printf("error creating open hour: %v", err)
-		return nil, status.Error(codes.Internal, "failed to create open hour")
+		return nil, status.Errorf(codes.Internal, "failed to create open hour: %v", err)
 	}
 
-	return h.openHourMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// GetOpenHour handles gRPC GetOpenHour request
 func (h *OpenHourGrpcHandler) GetOpenHour(ctx context.Context, req *sharepb.IdRequest) (*tqdpb.OpenHour, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "open hour id is required")
 	}
 
-	result, err := h.openHourUsecase.GetOpenHourByID(ctx, req.Id)
+	result, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
 		log.Printf("error getting open hour: %v", err)
-		return nil, status.Error(codes.NotFound, "open hour not found")
+		return nil, status.Errorf(codes.NotFound, "open hour not found: %v", err)
 	}
 
-	return h.openHourMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// UpdateOpenHour handles gRPC UpdateOpenHour request
 func (h *OpenHourGrpcHandler) UpdateOpenHour(ctx context.Context, req *tqdpb.OpenHour) (*tqdpb.OpenHour, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "open hour id is required")
 	}
 
-	updateReq := &dto.OpenHourDTO{
-		ID:          req.Id,
-		PoiID:       req.PoiId,
-		DayOfWeek:   req.DayOfWeek,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-		IsOpen:      req.IsOpen,
-		IsRecurring: req.IsRecurring,
-		StartDate:   req.StartDate,
-		EndDate:     req.EndDate,
-		Notes:       req.Notes,
+	updateReq := &dto.UpdateOpenHourRequest{}
+
+	if req.DayOfWeek != "" {
+		day, err := dto.StringToDayOfWeek(req.DayOfWeek)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid day of week: %v", err)
+		}
+		updateReq.DayOfWeek = &day
+	}
+	if req.StartTime != "" {
+		updateReq.OpenTime = &req.StartTime
+	}
+	if req.EndTime != "" {
+		updateReq.CloseTime = &req.EndTime
+	}
+	if req.Notes != "" {
+		updateReq.Note = &req.Notes
+	}
+	updateReq.IsOpen = &req.IsOpen
+	updateReq.IsRecurring = &req.IsRecurring
+
+	if req.StartDate != "" {
+		updateReq.StartDate = &req.StartDate
+	}
+	if req.EndDate != "" {
+		updateReq.EndDate = &req.EndDate
+	}
+	if req.Status != 0 {
+		status := int(req.Status)
+		updateReq.Status = &status
+	}
+	if req.Type != 0 {
+		typ := int(req.Type)
+		updateReq.Type = &typ
 	}
 
-	result, err := h.openHourUsecase.UpdateOpenHour(ctx, updateReq)
+	result, err := h.usecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
 		log.Printf("error updating open hour: %v", err)
-		return nil, status.Error(codes.Internal, "failed to update open hour")
+		return nil, status.Errorf(codes.Internal, "failed to update open hour: %v", err)
 	}
 
-	return h.openHourMapper.ToProto(result), nil
+	return h.mapper.ToProtoFromResponse(result), nil
 }
 
-// DeleteOpenHour handles gRPC DeleteOpenHour request
 func (h *OpenHourGrpcHandler) DeleteOpenHour(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "open hour id is required")
 	}
 
-	err := h.openHourUsecase.DeleteOpenHour(ctx, req.Id)
-	if err != nil {
+	if err := h.usecase.Delete(ctx, req.Id); err != nil {
 		log.Printf("error deleting open hour: %v", err)
-		return nil, status.Error(codes.Internal, "failed to delete open hour")
+		return nil, status.Errorf(codes.Internal, "failed to delete open hour: %v", err)
 	}
 
 	return &sharepb.SubmitResponse{
-		Code:    200,
 		Message: "Open hour deleted successfully",
-		Data:    "",
 	}, nil
 }
 
-// ListOpenHours handles gRPC ListOpenHours request
 func (h *OpenHourGrpcHandler) ListOpenHours(ctx context.Context, req *tqdpb.ListOpenHoursRequest) (*tqdpb.ListOpenHoursResponse, error) {
-	if req.Page <= 0 {
-		req.Page = 1
-	}
-	if req.Size <= 0 {
-		req.Size = 10
-	}
-
-	filters := &dto.OpenHourFilterDTO{
-		Page:      int(req.Page),
-		Size:      int(req.Size),
-		PoiID:     req.PoiId,
-		DayOfWeek: req.DayOfWeek,
-		IsOpen:    req.IsOpen,
+	filter := &dto.OpenHourFilter{
+		Pagable: _dto.Pagable{
+			Page: normalizePage(req.Page),
+			Size: normalizeSize(req.Size),
+		},
+		POIID: req.PoiId,
 	}
 
-	results, total, err := h.openHourUsecase.ListOpenHours(ctx, filters)
+	if req.DayOfWeek != "" {
+		day, err := dto.StringToDayOfWeek(req.DayOfWeek)
+		if err == nil {
+			filter.DayOfWeek = &day
+		}
+	}
+
+	if req.IsOpen {
+		filter.IsOpen = &req.IsOpen
+	}
+
+	result, err := h.usecase.List(ctx, filter)
 	if err != nil {
 		log.Printf("error listing open hours: %v", err)
-		return nil, status.Error(codes.Internal, "failed to list open hours")
+		return nil, status.Errorf(codes.Internal, "failed to list open hours: %v", err)
 	}
 
-	hours := make([]*tqdpb.OpenHour, len(results))
-	for i, result := range results {
-		hours[i] = h.openHourMapper.ToProto(result)
-	}
+	hours := h.mapper.ToProtoListFromResponses(result.Data)
 
 	return &tqdpb.ListOpenHoursResponse{
 		Data:  hours,
-		Total: int64(total),
+		Total: result.Total,
 	}, nil
 }
 
-// GetOpenHourTimesByDay handles gRPC GetOpenHourTimesByDay request
 func (h *OpenHourGrpcHandler) GetOpenHourTimesByDay(ctx context.Context, req *tqdpb.GetOpenHourTimesByDayRequest) (*tqdpb.GetOpenHourTimesByDayResponse, error) {
 	if req.DayOfWeek == "" {
 		return nil, status.Error(codes.InvalidArgument, "day of week is required")
 	}
 
-	results, err := h.openHourUsecase.GetOpenHourTimesByDay(ctx, req.DayOfWeek)
-	if err != nil {
-		log.Printf("error getting open hour times by day: %v", err)
-		return nil, status.Error(codes.Internal, "failed to get open hour times by day")
+	getReq := &dto.GetTimesByDayRequest{
+		DayOfWeek: req.DayOfWeek,
 	}
 
-	// Group results by dayOfWeek
-	dayMap := make(map[string][]*tqdpb.OpenHourTime)
-	for _, result := range results {
-		day := result.DayOfWeek
-		if day == "" {
-			continue
-		}
-		dayMap[day] = append(dayMap[day], &tqdpb.OpenHourTime{
-			Id:        result.ID,
-			PoiId:     result.PoiID,
-			StartTime: result.StartTime,
-			EndTime:   result.EndTime,
-			IsOpen:    result.IsOpen,
-			Notes:     result.Notes,
-		})
+	results, err := h.usecase.GetTimesByDay(ctx, getReq)
+	if err != nil {
+		log.Printf("error getting open hour times: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to get open hour times: %v", err)
 	}
 
 	var response []*tqdpb.OpenHourTimesByDay
-	for day, times := range dayMap {
+	for _, dayGroup := range results {
+		times := make([]*tqdpb.OpenHourTime, len(dayGroup.Times))
+		for i, t := range dayGroup.Times {
+			times[i] = &tqdpb.OpenHourTime{
+				Id:        t.ID,
+				PoiId:     t.POIID,
+				StartTime: t.OpenTime,
+				EndTime:   t.CloseTime,
+				IsOpen:    t.IsOpen,
+				Notes:     t.Note,
+			}
+		}
 		response = append(response, &tqdpb.OpenHourTimesByDay{
-			DayOfWeek: day,
+			DayOfWeek: dayGroup.DayName,
 			Times:     times,
 		})
 	}
@@ -195,4 +203,22 @@ func (h *OpenHourGrpcHandler) GetOpenHourTimesByDay(ctx context.Context, req *tq
 	return &tqdpb.GetOpenHourTimesByDayResponse{
 		Data: response,
 	}, nil
+}
+
+// Helper functions
+func normalizePage(page uint32) uint32 {
+	if page < 1 {
+		return 1
+	}
+	return page
+}
+
+func normalizeSize(size uint32) uint32 {
+	if size < 1 {
+		return 10
+	}
+	if size > 100 {
+		return 100
+	}
+	return size
 }

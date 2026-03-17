@@ -200,7 +200,7 @@ func (h *AmenityHandler) ListAmenitiesHTTP(c *gin.Context) {
 	// search := c.Query("search")
 
 	// Convert to DTO
-	listReq := &dto.ListAmenitiesRequestDTO{
+	listReq := &dto.AmenityFilterDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(page),
 			Size: uint32(size),

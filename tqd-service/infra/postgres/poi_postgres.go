@@ -8,209 +8,343 @@ import (
 
 	_db "common/db"
 	_dto "common/domain/dto"
-	_errors "common/errors"
 	_provider "common/provider"
 	"tqd/internal/domain"
-	_repo "tqd/internal/interface/repo"
+	"tqd/internal/dto"
+	"tqd/internal/interface/repo"
+
+	"gorm.io/gorm"
 )
 
-// POIRepo implements the POI repository interface
+// POIRepo implements IPOIRepo
 type POIRepo struct {
 	_provider.CrudRepo[domain.POI]
 }
 
-// NewPOIRepo creates a new POI repository instance
-// @bind: infra/postgres/poi_postgres.go
-func NewPOIRepo(db *_db.TransactionRepo) _repo.IPOIRepo {
-	repo := &POIRepo{}
-	repo.Init(repo, db)
-	return repo
+// NewPOIRepo creates new POI repository
+func NewPOIRepo(db *_db.TransactionRepo) repo.IPOIRepo {
+	r := &POIRepo{}
+	r.Init(r, db)
+	return r
 }
 
-// Create creates a new POI
-func (r *POIRepo) Create(ctx context.Context, poi *domain.POI) error {
-	return r.CrudRepo.Create(ctx, poi)
-}
-
-// Update updates an existing POI
-func (r *POIRepo) Update(ctx context.Context, id uint64, poi *domain.POI) error {
-	return r.CrudRepo.Update(ctx, id, poi)
-}
-
-// GetListBase overrides the base GetList method to match CrudRepo signature
-func (r *POIRepo) GetListBase(ctx context.Context, pagable _dto.IPagable) ([]domain.POI, int64, error) {
-	// Convert pagable to our custom request format
-	dto, ok := pagable.(*_repo.ListPOIsRequest)
-	if !ok {
-		return nil, 0, _errors.ReturnError(400, "invalid pagable")
+// BeforeSave hook - called before create/update
+func (r *POIRepo) BeforeSave(ctx context.Context, id *uint64, entity *domain.POI) error {
+	// Validate entity
+	if err := entity.Validate(); err != nil {
+		return err
 	}
 
-	resp, err := r.GetListCustom(ctx, dto)
-	if err != nil {
-		return nil, 0, err
+	if entity.Code == "" {
+		var count int64
+		r.GetDB(ctx).Model(&domain.POI{}).Count(&count)
+		entity.Code = fmt.Sprintf("POI%06d", count+1)
 	}
 
-	return resp.Data, resp.Total, nil
+	// Check if code already exists (for new records or code change)
+	if id == nil || (id != nil && entity.Code != "") {
+		var existing domain.POI
+		err := r.GetDB(ctx).Where("code = ? AND deleted_at IS NULL", entity.Code).First(&existing).Error
+		if err == nil {
+			if id == nil || existing.ID != *id {
+				return fmt.Errorf("poi with code %s already exists", entity.Code)
+			}
+		}
+	}
+
+	return nil
 }
 
-// GetByCode retrieves a POI by its code
-func (r *POIRepo) GetByCode(ctx context.Context, code string) (*domain.POI, error) {
+// AfterSave hook - called after create/update
+func (r *POIRepo) AfterSave(ctx context.Context, id *uint64, entity *domain.POI) error {
+	// Update category POI count
+	if entity.CategoryID > 0 {
+		var count int64
+		r.GetDB(ctx).Model(&domain.POI{}).Where("category_id = ? AND deleted_at IS NULL", entity.CategoryID).Count(&count)
+		r.GetDB(ctx).Model(&domain.PoiCategory{}).Where("id = ?", entity.CategoryID).Update("poi_count", count)
+	}
+	return nil
+}
+
+// ==================== CRUD Operations ====================
+
+// Create overrides base Create
+func (r *POIRepo) Create(ctx context.Context, entity *domain.POI) error {
+	if err := r.BeforeSave(ctx, nil, entity); err != nil {
+		return err
+	}
+	if err := r.GetDB(ctx).Create(entity).Error; err != nil {
+		return err
+	}
+	return r.AfterSave(ctx, &entity.ID, entity)
+}
+
+// GetByID gets POI by ID
+func (r *POIRepo) GetByID(ctx context.Context, id uint64) (*domain.POI, error) {
 	var poi domain.POI
-	err := r.GetDB(ctx).Where("code = ? AND deleted_at IS NULL", code).First(&poi).Error
+	err := r.GetDB(ctx).
+		Preload("Category").
+		Preload("OpenHours").
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&poi).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &poi, nil
 }
 
-// GetList overrides the base GetList method to match CrudRepo signature
-func (r *POIRepo) GetList(ctx context.Context, pagable _dto.IPagable) ([]domain.POI, int64, error) {
-	// Convert pagable to our custom request format
-	dto, ok := pagable.(*_repo.ListPOIsRequest)
-	if !ok {
-		return nil, 0, _errors.ReturnError(400, "invalid pagable")
-	}
-
-	resp, err := r.GetListWithFilters(ctx, dto)
+// GetByCode gets POI by code
+func (r *POIRepo) GetByCode(ctx context.Context, code string) (*domain.POI, error) {
+	var poi domain.POI
+	err := r.GetDB(ctx).
+		Preload("Category").
+		Preload("OpenHours").
+		Where("code = ? AND deleted_at IS NULL", code).
+		First(&poi).Error
 	if err != nil {
-		return nil, 0, err
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &poi, nil
+}
+
+// Update overrides base Update
+func (r *POIRepo) Update(ctx context.Context, id uint64, entity *domain.POI) error {
+	// Get existing
+	existing, err := r.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return gorm.ErrRecordNotFound
 	}
 
-	return resp.Data, resp.Total, nil
+	// Preserve immutable fields
+	entity.CreatedAt = existing.CreatedAt
+	entity.CreatedBy = existing.CreatedBy
+
+	if err := r.BeforeSave(ctx, &id, entity); err != nil {
+		return err
+	}
+	if err := r.GetDB(ctx).Save(entity).Error; err != nil {
+		return err
+	}
+	return r.AfterSave(ctx, &id, entity)
 }
 
-// GetListCustom retrieves a paginated list of POIs with filters
-func (r *POIRepo) GetListCustom(ctx context.Context, req *_repo.ListPOIsRequest) (*_repo.ListPOIsResponse, error) {
-	return r.GetListWithFilters(ctx, req)
+// Delete deletes POI
+func (r *POIRepo) Delete(ctx context.Context, id uint64) error {
+	// Soft delete
+	return r.GetDB(ctx).Delete(&domain.POI{}, id).Error
 }
 
-// GetListWithFiltersInterface retrieves a paginated list of POIs with filters for interface
-func (r *POIRepo) GetListWithFiltersInterface(ctx context.Context, req *_repo.ListPOIsRequest) (*_repo.ListPOIsResponse, error) {
-	return r.GetListWithFilters(ctx, req)
-}
+// ==================== List Operations ====================
 
-// GetListInterface retrieves a paginated list of POIs with filters for interface
-func (r *POIRepo) GetListInterface(ctx context.Context, req *_repo.ListPOIsRequest) (*_repo.ListPOIsResponse, error) {
-	return r.GetListWithFilters(ctx, req)
-}
-
-// GetListWithFilters retrieves a paginated list of POIs with filters
-func (r *POIRepo) GetListWithFilters(ctx context.Context, req *_repo.ListPOIsRequest) (*_repo.ListPOIsResponse, error) {
+// List lists POIs with filters
+func (r *POIRepo) List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI, int64, error) {
 	var pois []domain.POI
 	var total int64
 
-	query := r.GetDB(ctx).Model(&domain.POI{}).Preload("Category").Where("deleted_at IS NULL")
+	query := r.GetDB(ctx).Model(&domain.POI{}).Where("deleted_at IS NULL")
 
-	// Apply filters
-	if req.Text != "" {
-		searchTerm := "%" + strings.ToLower(req.Text) + "%"
-		query = query.Where("LOWER(name) LIKE ? OR LOWER(address) LIKE ? OR LOWER(code) LIKE ?", searchTerm, searchTerm, searchTerm)
+	// Apply search filter
+	if filter.Search != "" {
+		searchPattern := "%" + strings.ToLower(filter.Search) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR LOWER(address) LIKE ? OR LOWER(code) LIKE ?",
+			searchPattern, searchPattern, searchPattern)
 	}
 
-	if req.CategoryID != nil {
-		query = query.Where("category_id = ?", *req.CategoryID)
+	// Apply category filters
+	if filter.CategoryID != nil && *filter.CategoryID > 0 {
+		query = query.Where("category_id = ?", *filter.CategoryID)
+	}
+	if len(filter.CategoryIDs) > 0 {
+		query = query.Where("category_id IN ?", filter.CategoryIDs)
 	}
 
-	if req.IsActive != nil {
-		query = query.Where("is_active = ?", *req.IsActive)
+	// Apply boolean filters
+	if filter.IsActive != nil {
+		query = query.Where("is_active = ?", *filter.IsActive)
+	}
+	if filter.IsVerified != nil {
+		query = query.Where("is_verified = ?", *filter.IsVerified)
+	}
+	if filter.IsFeatured != nil {
+		query = query.Where("is_featured = ?", *filter.IsFeatured)
 	}
 
-	if req.MinLat != nil && req.MaxLat != nil {
-		query = query.Where("lat BETWEEN ? AND ?", *req.MinLat, *req.MaxLat)
+	// Apply rating filters
+	if filter.MinRating != nil {
+		query = query.Where("rating >= ?", *filter.MinRating)
 	}
-
-	if req.MinLng != nil && req.MaxLng != nil {
-		query = query.Where("lng BETWEEN ? AND ?", *req.MinLng, *req.MaxLng)
+	if filter.MaxRating != nil {
+		query = query.Where("rating <= ?", *filter.MaxRating)
 	}
 
 	// Count total
 	if err := query.Count(&total).Error; err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	switch filter.SortBy {
+	case "rating":
+		query = query.Order("rating DESC, review_count DESC")
+	case "newest":
+		query = query.Order("created_at DESC")
+	default:
+		query = query.Order("created_at DESC")
 	}
 
 	// Apply pagination
-	query = query.
-		// Preload("Category").
-		Order("created_at DESC").
-		Offset(req.GetOffset()).
-		Limit(req.GetLimit())
+	err := query.
+		Preload("Category").
+		Offset(filter.GetOffset()).
+		Limit(filter.GetLimit()).
+		Find(&pois).Error
 
-	if err := query.Find(&pois).Error; err != nil {
-		return nil, err
-	}
-
-	return &_repo.ListPOIsResponse{
-		Data:  pois,
-		Total: total,
-	}, nil
+	return pois, total, err
 }
 
-// GetListByCategory retrieves POIs by category
-func (r *POIRepo) GetListByCategory(ctx context.Context, categoryID uint64, limit int) ([]domain.POI, error) {
+// ListByCategory lists POIs by category
+func (r *POIRepo) ListByCategory(ctx context.Context, categoryID uint64, limit int) ([]domain.POI, error) {
 	var pois []domain.POI
-	query := r.GetDB(ctx).
+	err := r.GetDB(ctx).
 		Where("category_id = ? AND deleted_at IS NULL AND is_active = ?", categoryID, true).
 		Preload("Category").
-		Order("rating_point DESC, rating_count DESC").
-		Limit(limit)
-
-	if err := query.Find(&pois).Error; err != nil {
-		return nil, err
-	}
-
-	return pois, nil
+		Order("rating DESC, review_count DESC").
+		Limit(limit).
+		Find(&pois).Error
+	return pois, err
 }
 
-// GetNearby retrieves POIs within a certain radius from given coordinates
-func (r *POIRepo) GetNearby(ctx context.Context, lat, lng, radius float64, limit int) ([]domain.POI, error) {
+// ListNearby lists POIs within radius
+func (r *POIRepo) ListNearby(ctx context.Context, lat, lng, radius float64, filter *dto.PoiFilter) ([]domain.POI, int64, error) {
 	var pois []domain.POI
+	var total int64
 
-	// Haversine formula for distance calculation
-	// Using a simplified approach with bounding box first, then filtering by distance
-	latRange := radius / 111.0                               // Approximate km per degree latitude
-	lngRange := radius / (111.0 * math.Cos(lat*math.Pi/180)) // Approximate km per degree longitude
+	// Calculate bounding box for rough filtering
+	latRange := radius / 111.0                               // ~111km per degree
+	lngRange := radius / (111.0 * math.Cos(lat*math.Pi/180)) // Adjust for latitude
 
-	query := r.GetDB(ctx).
-		Where(`deleted_at IS NULL AND is_active = ? AND 
-			lat BETWEEN ? AND ? AND 
-			lng BETWEEN ? AND ?`,
-			true,
-			lat-latRange, lat+latRange,
-			lng-lngRange, lng+lngRange).
-		Preload("Category").
-		Order("rating_point DESC, rating_count DESC").
-		Limit(limit)
+	query := r.GetDB(ctx).Model(&domain.POI{}).
+		Where("deleted_at IS NULL AND is_active = ?", true).
+		Where("latitude BETWEEN ? AND ?", lat-latRange, lat+latRange).
+		Where("longitude BETWEEN ? AND ?", lng-lngRange, lng+lngRange)
 
-	if err := query.Find(&pois).Error; err != nil {
-		return nil, err
+	// Apply category filter
+	if len(filter.CategoryIDs) > 0 {
+		query = query.Where("category_id IN ?", filter.CategoryIDs)
 	}
 
-	// Filter by actual distance (more precise)
-	var nearbyPOIs []domain.POI
-	for _, poi := range pois {
-		distance := r.calculateDistance(lat, lng, poi.Lat, poi.Lng)
+	// Count total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get results
+	err := query.
+		Preload("Category").
+		Offset(filter.GetOffset()).
+		Limit(filter.GetLimit()).
+		Find(&pois).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Filter by exact distance and add distance to each POI
+	var nearbyPois []domain.POI
+	for i := range pois {
+		distance := calculateDistance(lat, lng, pois[i].Latitude, pois[i].Longitude)
 		if distance <= radius {
-			nearbyPOIs = append(nearbyPOIs, poi)
+			// Store distance in a temporary field (will be added in service layer)
+			nearbyPois = append(nearbyPois, pois[i])
 		}
 	}
 
-	return nearbyPOIs, nil
+	return nearbyPois, int64(len(nearbyPois)), nil
 }
 
-// UpdateRating updates the rating information for a POI
-func (r *POIRepo) UpdateRating(ctx context.Context, id uint64, ratingPoint float64, ratingCount int) error {
-	return r.GetDB(ctx).
-		Model(&domain.POI{}).
+// ==================== Update Operations ====================
+
+// UpdateRating updates POI rating
+func (r *POIRepo) UpdateRating(ctx context.Context, id uint64, rating float64, reviewCount uint32) error {
+	return r.GetDB(ctx).Model(&domain.POI{}).
 		Where("id = ? AND deleted_at IS NULL", id).
 		Updates(map[string]interface{}{
-			"rating_point": ratingPoint,
-			"rating_count": ratingCount,
+			"rating":       rating,
+			"review_count": reviewCount,
 		}).Error
 }
 
-// calculateDistance calculates the distance between two coordinates using Haversine formula
-func (r *POIRepo) calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
-	const earthRadius = 6371 // Earth's radius in kilometers
+// IncrementViewCount increments view count
+func (r *POIRepo) IncrementViewCount(ctx context.Context, id uint64) error {
+	return r.GetDB(ctx).Model(&domain.POI{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		UpdateColumn("view_count", gorm.Expr("view_count + 1")).Error
+}
+
+// IncrementLikeCount increments like count
+func (r *POIRepo) IncrementLikeCount(ctx context.Context, id uint64) error {
+	return r.GetDB(ctx).Model(&domain.POI{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		UpdateColumn("like_count", gorm.Expr("like_count + 1")).Error
+}
+
+// DecrementLikeCount decrements like count
+func (r *POIRepo) DecrementLikeCount(ctx context.Context, id uint64) error {
+	return r.GetDB(ctx).Model(&domain.POI{}).
+		Where("id = ? AND like_count > 0 AND deleted_at IS NULL", id).
+		UpdateColumn("like_count", gorm.Expr("like_count - 1")).Error
+}
+
+// VerifyPOI updates verification status
+func (r *POIRepo) VerifyPOI(ctx context.Context, id uint64, verified bool) error {
+	return r.GetDB(ctx).Model(&domain.POI{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("is_verified", verified).Error
+}
+
+// ==================== Batch Operations ====================
+
+// BulkCreate creates multiple POIs
+func (r *POIRepo) BulkCreate(ctx context.Context, pois []domain.POI) error {
+	if len(pois) == 0 {
+		return nil
+	}
+	return r.GetDB(ctx).CreateInBatches(pois, 100).Error
+}
+
+// BulkUpdate updates multiple POIs
+func (r *POIRepo) BulkUpdate(ctx context.Context, pois []domain.POI) error {
+	if len(pois) == 0 {
+		return nil
+	}
+	return r.GetDB(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, poi := range pois {
+			if err := tx.Save(&poi).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (r *POIRepo) BulkDelete(ctx context.Context, ids []uint64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return r.GetDB(ctx).Where("id IN ?", ids).Delete(&domain.POI{}).Error
+}
+
+// calculateDistance calculates distance between two points using Haversine formula
+func calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
+	const earthRadius = 6371 // km
 
 	dLat := (lat2 - lat1) * math.Pi / 180
 	dLng := (lng2 - lng1) * math.Pi / 180
@@ -224,13 +358,27 @@ func (r *POIRepo) calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
 	return earthRadius * c
 }
 
-// BeforeSave generates code if not provided
-func (r *POIRepo) BeforeSave(ctx context.Context, id *uint64, entity *domain.POI) error {
-	if entity.Code == "" {
-		// Generate POI code
-		var count int64
-		r.GetDB(ctx).Model(&domain.POI{}).Count(&count)
-		entity.Code = fmt.Sprintf("POI%06d", count+1)
+func (r *POIRepo) GetListInterface(ctx context.Context, req *repo.ListPOIsRequest) (*repo.ListPOIsResponse, error) {
+	filter := &dto.PoiFilter{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		Search:   req.Text,
+		IsActive: req.IsActive,
 	}
-	return nil
+
+	if req.CategoryID != nil {
+		filter.CategoryID = req.CategoryID
+	}
+
+	pois, total, err := r.List(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &repo.ListPOIsResponse{
+		Data:  pois,
+		Total: total,
+	}, nil
 }

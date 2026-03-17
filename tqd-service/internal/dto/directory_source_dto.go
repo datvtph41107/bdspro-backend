@@ -30,6 +30,7 @@ type DirectorySourceDTO struct {
 	PaymentMethod  string     `json:"paymentMethod"`
 	Notes          string     `json:"notes"`
 	Tags           []string   `json:"tags"`
+	RawTags        string     `json:"-" gorm:"column:tags"` // JSON string array
 
 	Category domain.DirectoryCategory `json:"category"`
 }

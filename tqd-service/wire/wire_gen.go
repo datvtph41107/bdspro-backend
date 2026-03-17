@@ -10,6 +10,7 @@ import (
 	"common/db"
 	"github.com/google/wire"
 	"tqd/infra/client"
+	"tqd/infra/handler/grpc"
 	"tqd/infra/handler/http"
 	"tqd/infra/mapper"
 	"tqd/infra/postgres"
@@ -30,8 +31,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 	contactLabelRepository := postgres.NewContactLabelPostgresRepo(db)
 	userProvider := client.NewUserClient()
 	permissionProvider := client.NewPermissionClient()
-	contactLabelUsecase := usecase.NewContactLabelUsecase(contactLabelRepository, userProvider, permissionProvider)
 	contactLabelMapper := mapper.NewContactLabelMapper()
+	contactLabelUsecase := usecase.NewContactLabelUsecase(contactLabelRepository, userProvider, permissionProvider, contactLabelMapper)
 	contactLabelValidator := validator.NewContactLabelValidator()
 	contactLabelHandler := handler_http.NewContactLabelHandler(contactLabelUsecase, contactLabelMapper, contactLabelValidator)
 	directoryCategoryRepository := postgres.NewDirectoryCategoryPostgresRepo(db)
@@ -45,29 +46,39 @@ func InitializeApp() (*initial.InitialApp, error) {
 	directorySourceValidator := validator.NewDirectorySourceValidator()
 	directorySourceHandler := handler_http.NewDirectorySourceHandler(directorySourceUsecase, directorySourceMapper, directorySourceValidator)
 	directorySupplierRepository := postgres.NewDirectorySupplierPostgres(db)
-	directorySupplierUsecase := usecase.NewDirectorySupplierUsecase(directorySupplierRepository, userProvider, permissionProvider)
 	directorySupplierMapper := mapper.NewDirectorySupplierMapper()
+	directorySupplierUsecase := usecase.NewDirectorySupplierUsecase(directorySupplierRepository, userProvider, permissionProvider, directorySupplierMapper)
 	directorySupplierHandler := handler_http.NewDirectorySupplierHandler(directorySupplierUsecase, directorySupplierMapper)
 	transactionRepo := _db.NewTransactionRepo(db)
 	iPoiCategoryRepo := postgres.NewPoiCategoryPostgres(transactionRepo)
-	poiCategoryUsecase := usecase.NewPoiCategoryUsecase(iPoiCategoryRepo)
-	poiCategoryHandler := handler_http.NewPoiCategoryHandler(poiCategoryUsecase)
+	poiCategoryMapper := mapper.NewPoiCategoryMapper()
+	poiCategoryUsecase := usecase.NewPoiCategoryUsecase(iPoiCategoryRepo, poiCategoryMapper)
+	poiCategoryHandler := handler_http.NewPoiCategoryHandler(poiCategoryUsecase, poiCategoryMapper)
 	ipoiRepo := postgres.NewPOIRepo(transactionRepo)
-	mapManager := _map.NewMapManager()
-	ipoiUsecase := usecase.NewPOIUsecase(ipoiRepo, mapManager)
-	poihttpHandler := handler_http.NewPOIHTTPHandler(ipoiUsecase)
+	poiMapper := mapper.NewPoiMapper()
+	poiUsecase := usecase.NewPoiUsecase(ipoiRepo, poiMapper)
+	poihttpHandler := handler_http.NewPOIHTTPHandler(poiUsecase, poiMapper)
 	iOpenHourRepo := postgres.NewOpenHourPostgres(transactionRepo)
-	openHourUsecase := usecase.NewOpenHourUsecase(iOpenHourRepo)
-	openHourHandler := handler_http.NewOpenHourHandler(openHourUsecase)
+	openHourMapper := mapper.NewOpenHourMapper()
+	openHourUsecase := usecase.NewOpenHourUsecase(iOpenHourRepo, openHourMapper)
+	openHourHandler := handler_http.NewOpenHourHandler(openHourUsecase, openHourMapper)
 	iAmenityRepo := postgres.NewAmenityRepo(transactionRepo)
 	amenityUsecase := usecase.NewAmenityUsecase(iAmenityRepo)
 	amenityMapper := mapper.NewAmenityMapper()
 	amenityHandler := handler_http.NewAmenityHandler(amenityUsecase, amenityMapper)
-	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler)
+	contactLabelGrpcHandler := handler_grpc.NewContactLabelGrpcHandler(contactLabelUsecase, contactLabelMapper)
+	directoryCategoryGrpcHandler := handler_grpc.NewDirectoryCategoryGrpcHandler(directoryCategoryUsecase, directoryCategoryMapper, directoryCategoryValidator)
+	directorySourceGrpcHandler := handler_grpc.NewDirectorySourceGrpcHandler(directorySourceUsecase, directorySourceMapper, directorySourceValidator)
+	directorySupplierGrpcHandler := handler_grpc.NewDirectorySupplierGrpcHandler(directorySupplierUsecase, directorySupplierMapper)
+	poiCategoryGrpcHandler := handler_grpc.NewPoiCategoryGrpcHandler(poiCategoryUsecase, poiCategoryMapper)
+	poiGrpcHandler := handler_grpc.NewPoiGrpcHandler(poiUsecase, poiMapper)
+	openHourGrpcHandler := handler_grpc.NewOpenHourGrpcHandler(openHourUsecase, openHourMapper)
+	amenityGrpcHandlerImpl := handler_grpc.NewAmenityGrpcHandlerImpl(amenityUsecase, amenityMapper)
+	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl)
 	return initialApp, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, handler_http.NewAmenityHandler, mapper.NewAmenityMapper, postgres.NewAmenityRepo, usecase.NewAmenityUsecase, initial.NewApp, usecase.NewBaseUsecase, providers.NewCacheProvider, handler_http.NewContactLabelHandler, mapper.NewContactLabelMapper, postgres.NewContactLabelPostgresRepo, usecase.NewContactLabelUsecase, validator.NewContactLabelValidator, handler_http.NewDirectoryCategoryHandler, mapper.NewDirectoryCategoryMapper, postgres.NewDirectoryCategoryPostgresRepo, usecase.NewDirectoryCategoryUsecase, validator.NewDirectoryCategoryValidator, handler_http.NewDirectorySourceHandler, mapper.NewDirectorySourceMapper, postgres.NewDirectorySourcePostgres, usecase.NewDirectorySourceUsecase, validator.NewDirectorySourceValidator, handler_http.NewDirectorySupplierHandler, mapper.NewDirectorySupplierMapper, postgres.NewDirectorySupplierPostgres, usecase.NewDirectorySupplierUsecase, providers.NewFileProvider, providers.NewGeoProvider, _map.NewMapManager, client.NewNotificationClient, handler_http.NewOpenHourHandler, postgres.NewOpenHourPostgres, usecase.NewOpenHourUsecase, handler_http.NewPOIHTTPHandler, postgres.NewPOIRepo, usecase.NewPOIUsecase, client.NewPermissionClient, handler_http.NewPoiCategoryHandler, postgres.NewPoiCategoryPostgres, usecase.NewPoiCategoryUsecase, initial.NewRedisService, providers.NewTransactionProvider, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, handler_grpc.NewAmenityGrpcHandlerImpl, handler_http.NewAmenityHandler, mapper.NewAmenityMapper, postgres.NewAmenityRepo, usecase.NewAmenityUsecase, initial.NewApp, usecase.NewBaseUsecase, providers.NewCacheProvider, handler_grpc.NewContactLabelGrpcHandler, handler_http.NewContactLabelHandler, mapper.NewContactLabelMapper, postgres.NewContactLabelPostgresRepo, usecase.NewContactLabelUsecase, validator.NewContactLabelValidator, handler_grpc.NewDirectoryCategoryGrpcHandler, handler_http.NewDirectoryCategoryHandler, mapper.NewDirectoryCategoryMapper, postgres.NewDirectoryCategoryPostgresRepo, usecase.NewDirectoryCategoryUsecase, validator.NewDirectoryCategoryValidator, handler_grpc.NewDirectorySourceGrpcHandler, handler_http.NewDirectorySourceHandler, mapper.NewDirectorySourceMapper, postgres.NewDirectorySourcePostgres, usecase.NewDirectorySourceUsecase, validator.NewDirectorySourceValidator, handler_grpc.NewDirectorySupplierGrpcHandler, handler_http.NewDirectorySupplierHandler, mapper.NewDirectorySupplierMapper, postgres.NewDirectorySupplierPostgres, usecase.NewDirectorySupplierUsecase, providers.NewFileProvider, providers.NewGeoProvider, _map.NewMapManager, client.NewNotificationClient, handler_grpc.NewOpenHourGrpcHandler, handler_http.NewOpenHourHandler, mapper.NewOpenHourMapper, postgres.NewOpenHourPostgres, usecase.NewOpenHourUsecase, handler_http.NewPOIHTTPHandler, postgres.NewPOIRepo, client.NewPermissionClient, handler_grpc.NewPoiCategoryGrpcHandler, handler_http.NewPoiCategoryHandler, mapper.NewPoiCategoryMapper, postgres.NewPoiCategoryPostgres, usecase.NewPoiCategoryUsecase, handler_grpc.NewPoiGrpcHandler, mapper.NewPoiMapper, usecase.NewPoiUsecase, initial.NewRedisService, providers.NewTransactionProvider, client.NewUserClient)

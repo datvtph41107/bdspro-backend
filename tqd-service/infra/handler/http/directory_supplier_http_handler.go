@@ -5,25 +5,28 @@ import (
 	"strconv"
 	"strings"
 
+	_dto "common/domain/dto"
 	"tqd/infra/mapper"
-	"tqd/internal/domain"
+	"tqd/internal/dto"
 	"tqd/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 )
 
+// DirectorySupplierHandler handles HTTP requests for directory supplier
 type DirectorySupplierHandler struct {
-	directorySupplierUsecase *usecase.DirectorySupplierUsecase
-	mapper                   *mapper.DirectorySupplierMapper
+	usecase *usecase.DirectorySupplierUsecase
+	mapper  *mapper.DirectorySupplierMapper
 }
 
+// NewDirectorySupplierHandler creates new handler
 func NewDirectorySupplierHandler(
-	directorySupplierUsecase *usecase.DirectorySupplierUsecase,
+	usecase *usecase.DirectorySupplierUsecase,
 	mapper *mapper.DirectorySupplierMapper,
 ) *DirectorySupplierHandler {
 	return &DirectorySupplierHandler{
-		directorySupplierUsecase: directorySupplierUsecase,
-		mapper:                   mapper,
+		usecase: usecase,
+		mapper:  mapper,
 	}
 }
 
@@ -34,12 +37,12 @@ func NewDirectorySupplierHandler(
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body domain.DirectorySupplier true "Directory supplier"
+// @Param request body dto.CreateDirectorySupplierRequestDTO true "Directory supplier"
 // @Success 200 {object} map[string]interface{} "Directory supplier"
 // @Router /v2/tqd/directory/suppliers [post]
 func (h *DirectorySupplierHandler) CreateDirectorySupplierHTTP(c *gin.Context) {
-	var supplier domain.DirectorySupplier
-	if err := c.ShouldBindJSON(&supplier); err != nil {
+	var req dto.CreateDirectorySupplierRequestDTO
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
 			"message": "Invalid request body",
@@ -48,7 +51,7 @@ func (h *DirectorySupplierHandler) CreateDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	createdSupplier, err := h.directorySupplierUsecase.Create(c.Request.Context(), &supplier)
+	result, err := h.usecase.Create(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -58,11 +61,10 @@ func (h *DirectorySupplierHandler) CreateDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	response := h.mapper.ToResponse(createdSupplier)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Directory supplier created successfully",
-		"data":    response,
+		"data":    result,
 	})
 }
 
@@ -88,7 +90,7 @@ func (h *DirectorySupplierHandler) GetDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	supplier, err := h.directorySupplierUsecase.GetByID(c.Request.Context(), id)
+	result, err := h.usecase.GetByID(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"code":    404,
@@ -98,11 +100,47 @@ func (h *DirectorySupplierHandler) GetDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	response := h.mapper.ToResponse(supplier)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Directory supplier retrieved successfully",
-		"data":    response,
+		"data":    result,
+	})
+}
+
+// GetDirectorySupplierByCodeHTTP handles HTTP GET request for getting directory supplier by code
+// @Summary Get directory supplier by code
+// @Description Get directory supplier by code
+// @Tags Directory Supplier
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param code path string true "Directory supplier code"
+// @Success 200 {object} map[string]interface{} "Directory supplier"
+// @Router /v2/tqd/directory/suppliers/code/{code} [get]
+func (h *DirectorySupplierHandler) GetDirectorySupplierByCodeHTTP(c *gin.Context) {
+	code := c.Param("code")
+	if code == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Code is required",
+		})
+		return
+	}
+
+	result, err := h.usecase.GetByCode(c.Request.Context(), code)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    404,
+			"message": "Directory supplier not found",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Directory supplier retrieved successfully",
+		"data":    result,
 	})
 }
 
@@ -114,9 +152,9 @@ func (h *DirectorySupplierHandler) GetDirectorySupplierHTTP(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Directory supplier ID"
-// @Param request body domain.DirectorySupplier true "Directory supplier"
+// @Param request body dto.UpdateDirectorySupplierRequestDTO true "Directory supplier"
 // @Success 200 {object} map[string]interface{} "Directory supplier"
-// @Router /directory/suppliers/{id} [put]
+// @Router /v2/tqd/directory/suppliers/{id} [put]
 func (h *DirectorySupplierHandler) UpdateDirectorySupplierHTTP(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -129,8 +167,8 @@ func (h *DirectorySupplierHandler) UpdateDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	var supplier domain.DirectorySupplier
-	if err := c.ShouldBindJSON(&supplier); err != nil {
+	var req dto.UpdateDirectorySupplierRequestDTO
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":    400,
 			"message": "Invalid request body",
@@ -139,8 +177,7 @@ func (h *DirectorySupplierHandler) UpdateDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	supplier.ID = id
-	updatedSupplier, err := h.directorySupplierUsecase.Update(c.Request.Context(), &supplier)
+	result, err := h.usecase.Update(c.Request.Context(), id, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -150,11 +187,10 @@ func (h *DirectorySupplierHandler) UpdateDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	response := h.mapper.ToResponse(updatedSupplier)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "Directory supplier updated successfully",
-		"data":    response,
+		"data":    result,
 	})
 }
 
@@ -166,7 +202,7 @@ func (h *DirectorySupplierHandler) UpdateDirectorySupplierHTTP(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Directory supplier ID"
-// @Success 200 {object} _dto.SuccessResponse "Success response"
+// @Success 200 {object} map[string]interface{} "Success response"
 // @Router /v2/tqd/directory/suppliers/{id} [delete]
 func (h *DirectorySupplierHandler) DeleteDirectorySupplierHTTP(c *gin.Context) {
 	idStr := c.Param("id")
@@ -180,8 +216,7 @@ func (h *DirectorySupplierHandler) DeleteDirectorySupplierHTTP(c *gin.Context) {
 		return
 	}
 
-	err = h.directorySupplierUsecase.Delete(c.Request.Context(), id)
-	if err != nil {
+	if err := h.usecase.Delete(c.Request.Context(), id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
 			"message": "Failed to delete directory supplier",
@@ -210,44 +245,53 @@ func (h *DirectorySupplierHandler) DeleteDirectorySupplierHTTP(c *gin.Context) {
 // @Param isActive query bool false "Filter by active status"
 // @Param minRating query number false "Minimum rating"
 // @Param maxRating query number false "Maximum rating"
+// @Param sortBy query string false "Sort by field (name, rating, created_at)"
+// @Param sortOrder query string false "Sort order (asc, desc)"
 // @Success 200 {object} map[string]interface{} "Directory suppliers list"
 // @Router /v2/tqd/directory/suppliers [get]
 func (h *DirectorySupplierHandler) ListDirectorySuppliersHTTP(c *gin.Context) {
-	// Parse pagination parameters
+	// Parse pagination
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 
-	// Parse search parameter
-	search := c.Query("search")
-
-	// Parse categories parameter
-	var categories []string
-	if categoriesStr := c.Query("categories"); categoriesStr != "" {
-		categories = strings.Split(categoriesStr, ",")
+	// Create filter
+	filter := &dto.DirectorySupplierFilterDTO{
+		Pagable: _dto.Pagable{
+			Page: uint32(page),
+			Size: uint32(size),
+		},
+		Search:    c.Query("search"),
+		SortBy:    c.Query("sortBy"),
+		SortOrder: c.Query("sortOrder"),
 	}
 
-	// Parse isActive parameter
-	var isActive *bool
+	// Parse categories
+	if categoriesStr := c.Query("categories"); categoriesStr != "" {
+		filter.Categories = strings.Split(categoriesStr, ",")
+	}
+
+	// Parse isActive
 	if isActiveStr := c.Query("isActive"); isActiveStr != "" {
 		if val, err := strconv.ParseBool(isActiveStr); err == nil {
-			isActive = &val
+			filter.IsActive = &val
 		}
 	}
 
-	// Parse rating parameters
-	var minRating, maxRating *float64
+	// Parse minRating
 	if minRatingStr := c.Query("minRating"); minRatingStr != "" {
 		if val, err := strconv.ParseFloat(minRatingStr, 64); err == nil {
-			minRating = &val
-		}
-	}
-	if maxRatingStr := c.Query("maxRating"); maxRatingStr != "" {
-		if val, err := strconv.ParseFloat(maxRatingStr, 64); err == nil {
-			maxRating = &val
+			filter.MinRating = &val
 		}
 	}
 
-	suppliers, total, err := h.directorySupplierUsecase.List(c.Request.Context(), page, size, search, categories, isActive, minRating, maxRating)
+	// Parse maxRating
+	if maxRatingStr := c.Query("maxRating"); maxRatingStr != "" {
+		if val, err := strconv.ParseFloat(maxRatingStr, 64); err == nil {
+			filter.MaxRating = &val
+		}
+	}
+
+	result, err := h.usecase.List(c.Request.Context(), filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
@@ -257,9 +301,70 @@ func (h *DirectorySupplierHandler) ListDirectorySuppliersHTTP(c *gin.Context) {
 		return
 	}
 
-	response := h.mapper.ToListResponse(suppliers, total)
-	response["page"] = page
-	response["size"] = size
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Directory suppliers retrieved successfully",
+		"data": gin.H{
+			"items": result.Data,
+			"total": result.Total,
+			"page":  result.Page,
+			"size":  result.Size,
+			"pages": (result.Total + int64(result.Size) - 1) / int64(result.Size),
+		},
+	})
+}
 
-	c.JSON(http.StatusOK, response)
+// UpdateDirectorySupplierStatsHTTP handles HTTP PUT request for updating supplier stats
+// @Summary Update directory supplier statistics
+// @Description Update service count, contract count and total value
+// @Tags Directory Supplier
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Directory supplier ID"
+// @Param request body UpdateStatsRequest true "Statistics"
+// @Success 200 {object} map[string]interface{} "Directory supplier"
+// @Router /v2/tqd/directory/suppliers/{id}/stats [put]
+func (h *DirectorySupplierHandler) UpdateDirectorySupplierStatsHTTP(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid ID format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	var req struct {
+		ServiceCount  uint32 `json:"serviceCount"`
+		ContractCount uint32 `json:"contractCount"`
+		TotalValue    int64  `json:"totalValue"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	result, err := h.usecase.UpdateStats(c.Request.Context(), id, req.ServiceCount, req.ContractCount, req.TotalValue)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to update supplier statistics",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "Supplier statistics updated successfully",
+		"data":    result,
+	})
 }

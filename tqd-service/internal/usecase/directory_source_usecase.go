@@ -134,7 +134,7 @@ func (u *DirectorySourceUsecase) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (u *DirectorySourceUsecase) List(ctx context.Context, req *dto.ListDirectorySourcesRequestDTO) ([]domain.DirectorySource, int64, error) {
+func (u *DirectorySourceUsecase) List(ctx context.Context, req *dto.ListDirectorySourcesRequestDTO) ([]dto.DirectorySourceDTO, int64, error) {
 	// 1. Get user info
 	profileID := _utils.GetProfileIdWithContext(ctx)
 
