@@ -17,6 +17,7 @@ type IUserGuideUsecase interface {
 	GetGroups(ctx context.Context) ([]map[string]interface{}, *_err.ErrorDTO)
 	GetSimpleList(ctx context.Context, text string, groupKey string, pagable _dto.IPagable) ([]*domain.UserGuideEntity, int64, *_err.ErrorDTO)
 	GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error)
+	GetAllWithKey(ctx context.Context) ([]*domain.UserGuideEntity, error)
 }
 
 type UserGuideUsecase struct {
@@ -79,4 +80,9 @@ func (u *UserGuideUsecase) GetByKey(ctx context.Context, key string) (*domain.Us
 		return nil, _errors.ReturnError(404, "Không tìm thấy user guide với key: "+key)
 	}
 	return data, nil
+}
+
+// GetAllWithKey lấy toàn bộ user guide có key (cho API sync).
+func (u *UserGuideUsecase) GetAllWithKey(ctx context.Context) ([]*domain.UserGuideEntity, error) {
+	return u.Repo.GetAllWithKey(ctx)
 }

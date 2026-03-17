@@ -65,6 +65,7 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewProvinceRepo,
 	hub_infra_postgre.NewProvinceV2Repo,
 	hub_infra_redis.NewRedisProvider,
+	hub_infra_provider.NewSyncProvider,
 	hub_infra_handler.NewSystemConfigHandler,
 	hub_infra_setting.NewSystemConfigPersist,
 	hub_infra_postgre.NewSystemConfigPostgres,

@@ -39,6 +39,16 @@ var GrpcCmd = &cobra.Command{
 		}
 		db.MigrateDomain()
 
+		// Chạy IdentifierProperty với lineageID=23 lúc start (tạo property_identify và đính vào lineage + các bảng thuộc tính)
+		ids := []uint64{26, 27, 28}
+		for _, id := range ids {
+			if id, err := app.PropertyHandler.PropertyUsecase.IdentifierProperty(context.Background(), id); err != nil {
+				log.Printf("IdentifierProperty(lineageID=%d) failed: %v", id, err)
+			} else {
+				log.Printf("IdentifierProperty(lineageID=%d) ok, identifyID=%d", id, id)
+			}
+		}
+
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {

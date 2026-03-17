@@ -2,8 +2,10 @@ package handler
 
 import (
 	"context"
+	"time"
 
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	"hub/infra/mapper"
 	"hub/internal/domain"
 	"hub/internal/repo"
@@ -16,17 +18,20 @@ type UserGuideHandler struct {
 	userGuideUsecase _usecase.IUserGuideUsecase
 	userGuideMapper  *mapper.UserGuideMapper
 	stepRepo         repo.IUserGuideStepRepo
+	syncProvider     *_provider.SyncProvider
 }
 
 func NewUserGuideHandler(
 	userGuideUsecase _usecase.IUserGuideUsecase,
 	userGuideMapper *mapper.UserGuideMapper,
 	stepRepo repo.IUserGuideStepRepo,
+	syncProvider *_provider.SyncProvider,
 ) *UserGuideHandler {
 	return &UserGuideHandler{
 		userGuideUsecase: userGuideUsecase,
 		userGuideMapper:  userGuideMapper,
 		stepRepo:         stepRepo,
+		syncProvider:    syncProvider,
 	}
 }
 
@@ -61,6 +66,17 @@ func (h *UserGuideHandler) CreateUserGuide(ctx context.Context, req *hubpb.Creat
 
 	// Get steps for response
 	steps, _ := h.stepRepo.GetByUserGuideID(ctx, result.ID)
+
+	// Sync: khi tạo user guide có key thì cập nhật timestamp chung trong Redis
+	if result.Key != "" && h.syncProvider != nil {
+		ts := int64(0)
+		if result.UpdatedAt != nil {
+			ts = result.UpdatedAt.UnixMilli()
+		} else {
+			ts = time.Now().UnixMilli()
+		}
+		_ = h.syncProvider.PutTimestamp(ctx, _provider.SyncKeyUserGuideByKey, ts)
+	}
 
 	return &hubpb.CreateUserGuideResponse{
 		Data: h.userGuideMapper.EntityToDetailProto(result, steps),
@@ -111,6 +127,17 @@ func (h *UserGuideHandler) UpdateUserGuide(ctx context.Context, req *hubpb.Updat
 
 	// Get steps for response
 	steps, _ := h.stepRepo.GetByUserGuideID(ctx, result.ID)
+
+	// Sync: khi cập nhật user guide có key thì cập nhật timestamp chung trong Redis
+	if result.Key != "" && h.syncProvider != nil {
+		ts := int64(0)
+		if result.UpdatedAt != nil {
+			ts = result.UpdatedAt.UnixMilli()
+		} else {
+			ts = time.Now().UnixMilli()
+		}
+		_ = h.syncProvider.PutTimestamp(ctx, _provider.SyncKeyUserGuideByKey, ts)
+	}
 
 	return &hubpb.UpdateUserGuideResponse{
 		Data: h.userGuideMapper.EntityToDetailProto(result, steps),
@@ -285,5 +312,60 @@ func (h *UserGuideHandler) GetUserGuideByKey(ctx context.Context, req *hubpb.Get
 			Title: result.Title,
 			Mode:  hubpb.UserGuideMode(result.Mode),
 		},
+	}, nil
+}
+
+// @Summary Lấy toàn bộ user guide có key (sync theo timestamp)
+// @Description Một key Redis chung; client gửi timestamp lần trước, nếu bằng với Redis thì trả unchanged, không trả full data
+// @Tags UserGuide
+// @Accept json
+// @Produce json
+// @Param timestamp query int64 false "Timestamp lần sync trước (0 = luôn lấy full)"
+// @Success 200 {object} hubpb.GetAllUserGuidesByKeyResponse
+// @Router /v2/hub/user-guides/by-key [get]
+func (h *UserGuideHandler) GetAllUserGuidesByKey(ctx context.Context, req *hubpb.GetAllUserGuidesByKeyRequest) (*hubpb.GetAllUserGuidesByKeyResponse, error) {
+	key := _provider.SyncKeyUserGuideByKey
+	clientTs := req.GetTimestamp()
+
+	if h.syncProvider != nil && clientTs > 0 {
+		h.syncProvider.PutTimeRequest(ctx, key, clientTs)
+		updated := h.syncProvider.HasUpdated(ctx, key, clientTs)
+		if !updated {
+			// Client đã có bản mới, không cần trả full data
+			ts := h.syncProvider.GetTimestamp(ctx, key)
+			return &hubpb.GetAllUserGuidesByKeyResponse{
+				Data:      nil,
+				Timestamp: ts,
+				Unchanged: true,
+			}, nil
+		}
+	}
+
+	list, err := h.userGuideUsecase.GetAllWithKey(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var maxTs int64
+	for _, e := range list {
+		if e.UpdatedAt != nil {
+			ms := e.UpdatedAt.UnixMilli()
+			if ms > maxTs {
+				maxTs = ms
+			}
+		}
+	}
+	if maxTs == 0 {
+		maxTs = time.Now().UnixMilli()
+	}
+
+	if h.syncProvider != nil {
+		_ = h.syncProvider.PutTimestamp(ctx, key, maxTs)
+	}
+
+	return &hubpb.GetAllUserGuidesByKeyResponse{
+		Data:      h.userGuideMapper.EntitiesToProto(list),
+		Timestamp: maxTs,
+		Unchanged: false,
 	}, nil
 }

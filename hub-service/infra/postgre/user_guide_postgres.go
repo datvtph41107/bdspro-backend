@@ -134,3 +134,14 @@ func (r *UserGuideRepo) GetByKey(ctx context.Context, key string) (*domain.UserG
 	}
 	return &entity, nil
 }
+
+// GetAllWithKey lấy toàn bộ user guide có key không rỗng (để sync theo timestamp).
+func (r *UserGuideRepo) GetAllWithKey(ctx context.Context) ([]*domain.UserGuideEntity, error) {
+	var data []*domain.UserGuideEntity
+	err := r.GetDB(ctx).
+		Model(&domain.UserGuideEntity{}).
+		Where("deleted_at IS NULL AND key IS NOT NULL AND key != ''").
+		Order("updated_at DESC").
+		Find(&data).Error
+	return data, err
+}

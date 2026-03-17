@@ -25,6 +25,8 @@ const (
 	SyncKeyPropertyMe          = "ppt:me"
 	SyncKeyContactMe           = "ct:me"
 	SyncKeyContactDetail       = "ct:id"
+	// SyncKeyUserGuideByKey: 1 key chung cho toàn bộ user guides có key (timestamp = max updatedAt).
+	SyncKeyUserGuideByKey = "hub:ug:bykey"
 )
 
 type SyncProvider struct {

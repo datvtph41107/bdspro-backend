@@ -107,6 +107,17 @@ message GetUserGuideByKeyResponse {
   UserGuideDetail data = 1;
 }
 
+// Sync: lấy toàn bộ user guide có key; dùng 1 timestamp chung trong Redis.
+message GetAllUserGuidesByKeyRequest {
+  int64 timestamp = 1;  // client gửi timestamp lần trước; 0 = luôn lấy full
+}
+
+message GetAllUserGuidesByKeyResponse {
+  repeated UserGuide data = 1;
+  int64 timestamp = 2;   // timestamp của dữ liệu (max updatedAt)
+  bool unchanged = 3;   // true nếu client đã có bản mới, không cần trả full data
+}
+
 message GetUserGuideListRequest {
   string title = 1;      // Search by title (optional)
   string groupKey = 2;   // Filter by groupKey (optional)
@@ -274,6 +285,13 @@ service UserGuideService {
   rpc GetUserGuideByKey(GetUserGuideByKeyRequest) returns (GetUserGuideByKeyResponse) {
     option (google.api.http) = {
       get: "/v2/hub/user-guides/by-key/{key}"
+    };
+  };
+
+  // Lấy toàn bộ user guide có key; sync theo timestamp (1 key Redis chung).
+  rpc GetAllUserGuidesByKey(GetAllUserGuidesByKeyRequest) returns (GetAllUserGuidesByKeyResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides/by-key"
     };
   };
 
