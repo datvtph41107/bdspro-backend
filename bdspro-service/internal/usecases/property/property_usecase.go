@@ -1392,10 +1392,15 @@ func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.Archiv
 		}
 	}
 
-	return u.PropertyRepo.ArchiveBatchProperties(ctx, req.IDs, req.Archived)
+	return u.PropertyRepo.ArchiveBatchProperties(ctx, req.IDs, req.Archived, originId)
 }
 
 func (u *PropertyUsecase) HideProperties(ctx context.Context, ids []uint64, hidden bool) error {
+	originId := _utils.GetOriginIdFromContext(ctx)
+	if originId == 0 {
+		return _errors.UnauthorizedException()
+	}
+
 	if len(ids) == 0 {
 		return _errors.BadRequestException("No property IDs provided")
 	}
@@ -1410,7 +1415,7 @@ func (u *PropertyUsecase) HideProperties(ctx context.Context, ids []uint64, hidd
 		}
 	}
 
-	return u.PropertyRepo.HideBatchProperties(ctx, ids, hidden)
+	return u.PropertyRepo.HideBatchProperties(ctx, ids, hidden, originId)
 }
 
 // // UPDATE V2 PROPERTY

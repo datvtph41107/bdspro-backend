@@ -22,8 +22,8 @@ type PropertyRepo interface {
 	GetOneByID(ctx context.Context, id uint64) (*domain.PropertyLineage, error)
 
 	DeleteBatchProperties(ctx context.Context, ids []uint64) error
-	ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool) error
-	HideBatchProperties(ctx context.Context, ids []uint64, hidden bool) error
+	ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool, ownerOriginId uint64) error
+	HideBatchProperties(ctx context.Context, ids []uint64, hidden bool, ownerOriginId uint64) error
 
 	GetRefreshSyncIds(ctx context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
 	GetUpdatedAt(ctx context.Context, id uint64) (int64, error)

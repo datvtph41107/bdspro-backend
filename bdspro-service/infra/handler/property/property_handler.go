@@ -487,6 +487,9 @@ func (h *PropertyHandler) ArchiveProperties(ctx context.Context, req *bdspropb.A
 		return nil, status.Errorf(codes.Internal, "failed to archive properties: %v", err)
 	}
 
+	// Xóa key Redis ds + chi tiết để client sync lại
+	h.invalidatePropertySyncKeys(ctx, req.Ids)
+
 	action := "archived"
 	if !req.Archived {
 		action = "unarchived"
@@ -503,6 +506,9 @@ func (h *PropertyHandler) HideProperties(ctx context.Context, req *bdspropb.Hidd
 		return nil, status.Errorf(codes.Internal, "failed to update hidden status of properties: %v", err)
 	}
 
+	// Xóa key Redis ds + chi tiết để client sync lại
+	h.invalidatePropertySyncKeys(ctx, dtoReq.IDs)
+
 	action := "hidden"
 	if !dtoReq.Hidden {
 		action = "unhidden"
@@ -511,6 +517,19 @@ func (h *PropertyHandler) HideProperties(ctx context.Context, req *bdspropb.Hidd
 	return &bdspropb.Response{
 		Message: "Properties " + action + " successfully",
 	}, nil
+}
+
+// invalidatePropertySyncKeys xóa key Redis ds (PropertyMe) và từng key chi tiết (PropertyDetail) theo ids.
+func (h *PropertyHandler) invalidatePropertySyncKeys(ctx context.Context, ids []uint64) {
+	if h.SyncProvider == nil {
+		return
+	}
+	keyList := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, 0)
+	_ = h.SyncProvider.Del(ctx, keyList)
+	for _, id := range ids {
+		keyDetail := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, id)
+		_ = h.SyncProvider.Del(ctx, keyDetail)
+	}
 }
 
 // SubmitReport — gRPC handler cho API báo cáo sai / gắn cờ / đóng góp BĐS.

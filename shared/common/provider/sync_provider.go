@@ -27,6 +27,8 @@ const (
 	SyncKeyContactDetail       = "ct:id"
 	// SyncKeyUserGuideByKey: 1 key chung cho toàn bộ user guides có key (timestamp = max updatedAt).
 	SyncKeyUserGuideByKey = "hub:ug:bykey"
+	// SyncKeyNotificationMe: ds thông báo + count chưa đọc của user.
+	SyncKeyNotificationMe = "nt:me"
 )
 
 type SyncProvider struct {
@@ -70,6 +72,11 @@ func (s *SyncProvider) PutTimeRequest(ctx context.Context, key string, timestamp
 		ts = timestamp
 	}
 	s.PutTimestamp(ctx, key, ts)
+}
+
+// Del xóa key trong Redis (để client sync lại ds/chi tiết).
+func (s *SyncProvider) Del(ctx context.Context, key string) error {
+	return s.redis.Delete(key)
 }
 
 // GetTimestamp lấy timestamp từ Redis, trả về 0 nếu key không tồn tại

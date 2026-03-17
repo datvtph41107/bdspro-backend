@@ -2,6 +2,7 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -26,6 +27,7 @@ type NotificationHandler struct {
 	AccountWarningUsecase *usecase.AccountWarningUsecase
 	UserClient            provider.IUserProvider
 	Mapper                *mapper.NotificationMapper
+	SyncProvider          *_provider.SyncProvider
 	notipb.UnimplementedGatewayNotificationServiceServer
 }
 
@@ -36,6 +38,7 @@ func NewNotificationHandler(
 	accountWarningUsecase *usecase.AccountWarningUsecase,
 	userClient provider.IUserProvider,
 	mapper *mapper.NotificationMapper,
+	syncProvider *_provider.SyncProvider,
 ) *NotificationHandler {
 	return &NotificationHandler{
 		Usecase:               usecase,
@@ -44,6 +47,7 @@ func NewNotificationHandler(
 		AccountWarningUsecase: accountWarningUsecase,
 		UserClient:            userClient,
 		Mapper:                mapper,
+		SyncProvider:          syncProvider,
 	}
 }
 
@@ -68,7 +72,7 @@ func (s *NotificationHandler) Create(ctx context.Context, req *notipb.GatewayNot
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method Send not implemented")
 	}
-
+	s.invalidateNotificationSync(ctx)
 	response := s.Mapper.MapToPB(notification)
 	return response, nil
 }
@@ -79,13 +83,31 @@ func (s *NotificationHandler) Create(ctx context.Context, req *notipb.GatewayNot
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param timestamp query int64 false "Timestamp lần sync trước (0 = luôn lấy từ DB)"
 // @Success 200 {object} map[string]int "count"
 // @Failure 500 {object} map[string]string "error"
 // @Router /count [get]
-func (s *NotificationHandler) Count(ctx context.Context, req *notipb.EmptyRequest) (*notipb.CountResponse, error) {
+func (s *NotificationHandler) Count(ctx context.Context, req *notipb.CountRequest) (*notipb.CountResponse, error) {
+	clientTs := req.GetTimestamp()
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyNotificationMe, 0)
+	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
+	println("updated", updated)
+	if !updated {
+		ts := s.SyncProvider.GetTimestamp(ctx, key)
+		return &notipb.CountResponse{
+			Count:     0,
+			Unread:    0,
+			Timestamp: ts,
+			Unchanged: true,
+		}, nil
+	}
+
 	count := s.Usecase.Count(ctx)
+	s.SyncProvider.PutTimeRequest(ctx, key, 0)
+
 	return &notipb.CountResponse{
-		Count: count,
+		Count:  count,
+		Unread: count,
 	}, nil
 }
 
@@ -104,6 +126,7 @@ func (s *NotificationHandler) Read(ctx context.Context, req *notipb.IdRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method Read not implemented")
 	}
+	s.invalidateNotificationSync(ctx)
 	return &notipb.StatusResponse{
 		Success: true,
 		Message: "Thông báo đã được đánh dấu là đã đọc",
@@ -131,6 +154,7 @@ func (s *NotificationHandler) ReadMany(ctx context.Context, req *notipb.ReadMany
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to mark notifications as read: %v", err)
 	}
+	s.invalidateNotificationSync(ctx)
 	return &notipb.StatusResponse{
 		Success: true,
 		Message: fmt.Sprintf("Đã đánh dấu %d thông báo là đã đọc", count),
@@ -151,6 +175,7 @@ func (s *NotificationHandler) ReadAll(ctx context.Context, req *notipb.EmptyRequ
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method ReadAll not implemented")
 	}
+	s.invalidateNotificationSync(ctx)
 	return &notipb.StatusResponse{
 		Success: true,
 		Message: "Thông báo đã được đánh dấu là đã đọc",
@@ -170,6 +195,7 @@ func (s *NotificationHandler) Remove(ctx context.Context, req *notipb.IdRequest)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "method Remove not implemented")
 	}
+	s.invalidateNotificationSync(ctx)
 	return &notipb.StatusResponse{
 		Success: true,
 		Message: "Thông báo đã được xóa",
@@ -184,10 +210,26 @@ func (s *NotificationHandler) Remove(ctx context.Context, req *notipb.IdRequest)
 // @Security BearerAuth
 // @Param page query int false "Trang cần lấy (default = 0)"
 // @Param size query int false "Số lượng trên mỗi trang (default = 200)"
+// @Param timestamp query int64 false "Timestamp lần sync trước (0 = luôn lấy từ DB)"
 // @Success 200 {object} []notipb.NotificationDTO "Danh sách thông báo"
 // @Failure 500 {object} map[string]string "error"
 // @Router /list [get]
 func (s *NotificationHandler) List(ctx context.Context, req *notipb.ListRequest) (*notipb.ListResponse, error) {
+	clientTs := req.GetTimestamp()
+
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyNotificationMe, 0)
+	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
+	s.SyncProvider.PutTimeRequest(ctx, key, clientTs)
+	if !updated && req.Page == 0 {
+		ts := s.SyncProvider.GetTimestamp(ctx, key)
+		return &notipb.ListResponse{
+			Data:      nil,
+			Total:     0,
+			Timestamp: ts,
+			Unchanged: true,
+		}, nil
+	}
+
 	query := dto.SearchNotiRequest{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -196,15 +238,29 @@ func (s *NotificationHandler) List(ctx context.Context, req *notipb.ListRequest)
 		IsRead: &req.IsRead,
 	}
 	notifications, total, err := s.Usecase.Search(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
 	var responses []*notipb.NotificationDTO
 	for _, noti := range notifications {
 		responses = append(responses, s.Mapper.MapToPB(&noti))
 	}
 
-	return &notipb.ListResponse{
-		Data:  responses,
-		Total: int32(total),
-	}, err
+	resp := &notipb.ListResponse{
+		Data:      responses,
+		Total:     int32(total),
+		Unchanged: false,
+	}
+	return resp, nil
+}
+
+// invalidateNotificationSync cập nhật timestamp khi ds thông báo thay đổi (create/read/remove).
+func (s *NotificationHandler) invalidateNotificationSync(ctx context.Context) {
+	if s.SyncProvider == nil {
+		return
+	}
+	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyNotificationMe, 0)
+	_ = s.SyncProvider.PutTimestamp(ctx, key, time.Now().UnixMilli())
 }
 
 // todo: implement

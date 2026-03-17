@@ -1641,7 +1641,7 @@ func (r *PostgrePropertyRepo) DeleteBatchProperties(ctx context.Context, ids []u
 		Delete(&domain.PropertyLineage{}).Error
 }
 
-func (r *PostgrePropertyRepo) ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool) error {
+func (r *PostgrePropertyRepo) ArchiveBatchProperties(ctx context.Context, ids []uint64, archived bool, ownerOriginId uint64) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -1649,21 +1649,19 @@ func (r *PostgrePropertyRepo) ArchiveBatchProperties(ctx context.Context, ids []
 	db := GetDB(ctx, r.DB)
 
 	if archived {
-		// Update property_user records where property_lineage_id IN ids
 		return db.
 			Model(&domain.PropertyUser{}).
-			Where("property_lineage_id IN (?) AND deleted_at IS NULL", ids).
+			Where("property_lineage_id IN (?) AND owner_origin_id = ? AND deleted_at IS NULL", ids, ownerOriginId).
 			Update("archived_at", time.Now()).Error
 	}
 
-	// Unarchive - set archived_at to NULL
 	return db.
 		Model(&domain.PropertyUser{}).
-		Where("property_lineage_id IN (?) AND deleted_at IS NULL", ids).
+		Where("property_lineage_id IN (?) AND owner_origin_id = ? AND deleted_at IS NULL", ids, ownerOriginId).
 		Update("archived_at", nil).Error
 }
 
-func (r *PostgrePropertyRepo) HideBatchProperties(ctx context.Context, ids []uint64, hidden bool) error {
+func (r *PostgrePropertyRepo) HideBatchProperties(ctx context.Context, ids []uint64, hidden bool, ownerOriginId uint64) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -1673,13 +1671,13 @@ func (r *PostgrePropertyRepo) HideBatchProperties(ctx context.Context, ids []uin
 	if hidden {
 		return db.
 			Model(&domain.PropertyUser{}).
-			Where("id IN (?) AND deleted_at IS NULL", ids).
+			Where("property_lineage_id IN (?) AND owner_origin_id = ? AND deleted_at IS NULL", ids, ownerOriginId).
 			Update("hidden_at", time.Now()).Error
 	}
 
 	return db.
 		Model(&domain.PropertyUser{}).
-		Where("id IN (?) AND deleted_at IS NULL", ids).
+		Where("property_lineage_id IN (?) AND owner_origin_id = ? AND deleted_at IS NULL", ids, ownerOriginId).
 		Update("hidden_at", nil).Error
 }
 

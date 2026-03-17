@@ -13,7 +13,7 @@ service GatewayNotificationService {
       body: "*"
     };
   };
-  rpc Count (EmptyRequest) returns (CountResponse) {
+  rpc Count (CountRequest) returns (CountResponse) {
     option (google.api.http) = {
       get: "/v2/notification/count"
     };
@@ -163,10 +163,13 @@ message ListRequest {
     int32 size = 2;
     string sort = 3;
     bool isRead = 4;
+    int64 timestamp = 5;  // client gửi timestamp lần trước; 0 = luôn lấy từ DB
 }
 message ListResponse {
   repeated NotificationDTO data = 1;
   int32 total = 2;
+  int64 timestamp = 3;   // timestamp dữ liệu
+  bool unchanged = 4;    // true nếu client đã có bản mới, không cần cập nhật
 }
 
 message NotificationDTO {
@@ -194,9 +197,15 @@ message ReadManyRequest {
 message EmptyRequest {}
 message EmptyResponse {}
 
+message CountRequest {
+  int64 timestamp = 1;  // client gửi timestamp lần trước; 0 = luôn lấy từ DB
+}
+
 message CountResponse {
     int32 count = 1;
     int32 unread = 2;
+    int64 timestamp = 3;   // timestamp dữ liệu
+    bool unchanged = 4;    // true nếu client đã có bản mới, không cần cập nhật
 }
 
 message GatewayNotiNewRequest {
