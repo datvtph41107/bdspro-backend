@@ -52,7 +52,6 @@ message ReadMessageData {
   string roomId = 3;
   optional string fullName = 4;
   optional string avatar = 5;
-  uint64 LastMessageId = 6;
 }
 
 message ReadMessage {
@@ -174,15 +173,4 @@ message ExistedConversationResponse {
 message ReactionMessage {
   string type = 1;
   MessageReaction data = 2;
-}
-
-message TypingData {
-  uint64 roomId = 1;
-  uint64 userId = 2;
-  bool isTyping = 3;
-}
-
-message TypingMessage {
-  string type = 1;
-  TypingData data = 2;
 }

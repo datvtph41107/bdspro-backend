@@ -80,12 +80,18 @@ service ChatService {
       body: "*"
     };
   };
-  
+  rpc MuteConversation (MuteConversationRequest) returns (MuteConversationResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/mute"
+      body: "*"
+    };
+  };
   rpc Search (SearchRequest) returns (SearchResponse) {
     option (google.api.http) = {
       get: "/v2/chat/search"
     };
   };
+
   rpc GetConversationById (GetConversationByIdRequest) returns (GetConversationByIdResponse) {
     option (google.api.http) = {
       get: "/v2/chat/conversation/{conversationId}"
@@ -157,14 +163,6 @@ service ChatService {
     };
   };
 
-  // GetConversationTimestamps trả về timestamp các loại data của conversation.
-  // FE so sánh với cache để biết API nào cần gọi cập nhật (detail, files, links, images, members, setting, pinned, messages).
-  rpc GetConversationTimestamps (sharepb.IdRequest) returns (ConversationTimestampsResponse) {
-    option (google.api.http) = {
-      get: "/v2/chat/conversation/{id}/timestamp"
-    };
-  };
-
   rpc ReactionMessage(ReactionMessageRequest) returns (ReactionMessageResponse) {
     option (google.api.http) = {
       post: "/v2/chat/messages/reaction"
@@ -182,28 +180,8 @@ service ChatService {
       get: "/v2/chat/unread-count"
     };
   };
-  rpc GetMessagesByIndex (GetMessagesByIndexRequest) returns (GetMessagesResponse) {
-    option (google.api.http) = {
-      get: "/v2/chat/messages/{conversationId}"
-    };
-  };
-  rpc GetStateTyping (StateTypingRequest) returns (StateTypingResponse) {
-    option (google.api.http) = {
-      post: "/v2/chat/typing"
-      body: "*"
-    };
-  }
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
   rpc GetMembersOfRoom(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
-}
-
-message StateTypingRequest {
-  uint64 conversationId = 1;
-  bool isTyping = 2;
-}
-
-message StateTypingResponse {
-  bool success = 1;
 }
 
 message UnreadCountResponse {
@@ -277,14 +255,11 @@ message SendMessageRequest {
   optional uint64 replyId  = 6;
   optional uint64 extraId = 7;
   optional uint64 receiverId = 8;
-  int32 cmId = 9;
 }
 
 message SendMessageResponse {
   int32 messageId = 1;
   string createdAt = 2;
-  int32 cmId = 3;
-  uint64 indexKey = 4;
 }
 
 message GetMessagesRequest {
@@ -298,15 +273,7 @@ message GetMessagesRequest {
 
 message GetMessagesResponse {
   repeated Message messages = 1;
-  repeated ReadMarks readMarks = 2;
-  int64 total = 3;
-}
-
-message ReadMarks {
-  uint64 userId = 1;
-  uint64 lastMessageId = 2;
-  string fullName = 3;
-  string avatar = 4;
+  int64 total = 2;
 }
 
 message Message {
@@ -324,14 +291,6 @@ message Message {
   optional string avatar = 12;
   optional uint64 extraId = 13;
   optional bdspropb.ProductAttachment product = 14;
-  uint64 indexKey = 15;
-  int32 cmId = 16;
-}
-
-message GetMessagesByIndexRequest {
-  uint64 conversationId = 1;
-  uint64 fromIdx = 2;
-  uint64 toIdx = 3;
 }
 
 message ForwardMessageRequest {
@@ -345,8 +304,9 @@ message ForwardMessageResponse {
 }
 
 message MarkAsReadRequest {
-  uint64 conversationId = 1;
-  uint64 lastMessageId = 2;
+  int32 conversationId = 1;
+  int32 userId = 2;
+  repeated int32 messageIds = 3;
 }
 
 message MarkAsReadResponse {
@@ -619,10 +579,4 @@ message ReactionMessageResponse {
 
 message GetRoomMemberIdResponse {
   repeated uint64 profileIds = 1;
-}
-
-// ConversationTimestampsResponse: map key -> timestamp (ms) cho FE check cache.
-// Keys: detail, files, links, images, members, setting, pinned, messages
-message ConversationTimestampsResponse {
-  map<string, int64> timestamps = 1;
 }
