@@ -436,14 +436,14 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 	err = GetDB(ctx, r.DB).
 		Model(&domain.Product{}).
 		Preload("Property", "deleted_at IS NULL").
-		Preload("Property.PropertyType").
-		Preload("Property.Project").
-		Preload("Property.Province").
+		Preload("Property.PropertyInfo.PropertyType").
+		Preload("Property.PropertyInfo.Project").
+		Preload("Property.Location.Province").
 		Preload("Property.MediaList").
-		Preload("Property.Ward").
+		Preload("Property.Location.Ward").
 		Preload("Property.BuildingInfo").
 		Preload("Property.LandInfo").
-		Preload("Property.Avatar").
+		Preload("Property.PropertyInfo.Avatar").
 		Preload("Property.Amenities").
 		// Select(`products.*,
 		// 	COALESCE(
@@ -456,19 +456,19 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		// Table("products p").
 		// Joins(`LEFT JOIN product_price lp ON lp.product_id = ?
 		// 	AND lp.created_at = (SELECT MAX(created_at) FROM product_price p2 WHERE p2.product_id = lp.product_id)`, id).
-		Preload("PropertyType", "deleted_at IS NULL").
+		// Preload("PropertyType", "deleted_at IS NULL").
 		// Preload("Deposite", "deleted_at IS NULL").
-		Preload("DocType", "deleted_at IS NULL").
-		Preload("Amenities", "deleted_at IS NULL").
+		// Preload("DocType", "deleted_at IS NULL").
+		// Preload("Amenities", "deleted_at IS NULL").
 		Preload("Apartment", "deleted_at IS NULL").
-		Preload("MediaList", "deleted_at IS NULL").
-		Preload("HouseInfo", "deleted_at IS NULL").
-		Preload("Project", "deleted_at IS NULL").
+		// Preload("MediaList", "deleted_at IS NULL").
+		// Preload("HouseInfo", "deleted_at IS NULL").
+		// Preload("Project", "deleted_at IS NULL").
 		// Preload("CreatedUser").
 		// Preload("UpdatedUser").
-		Preload("Province", "deleted_at IS NULL").
+		// Preload("Province", "deleted_at IS NULL").
 		// Preload("District", "deleted_at IS NULL").
-		Preload("Ward", "deleted_at IS NULL").
+		// Preload("Ward", "deleted_at IS NULL").
 		// Preload("SaleTransaction", "deleted_at IS NULL").
 		// Preload("RentTransaction", "deleted_at IS NULL").
 		// Preload("PrivateData").
