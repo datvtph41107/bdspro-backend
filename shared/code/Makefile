@@ -67,6 +67,8 @@ buf-payment:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path payment
 buf-chat:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path chat
+buf-chat-v1:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path chat_v1
 buf-task:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path task
 buf-marketing:
