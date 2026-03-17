@@ -2,6 +2,7 @@ package handler
 
 import (
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -40,6 +41,7 @@ type chatHandler struct {
 	bdsproClient            *client.BdsproClient
 	conversationMapper      *mapper.ConversationMapper
 	backgroundMapper        *mapper.BackgroundMapper
+	syncProvider            *_provider.SyncProvider
 }
 
 func NewChatHandler(
@@ -52,6 +54,7 @@ func NewChatHandler(
 	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
 	backgroundMapper *mapper.BackgroundMapper,
+	syncProvider *_provider.SyncProvider,
 ) *chatHandler {
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
@@ -68,6 +71,7 @@ func NewChatHandler(
 		bdsproClient:            bdsproClient,
 		conversationMapper:      conversationMapper,
 		backgroundMapper:        backgroundMapper,
+		syncProvider:            syncProvider,
 	}
 }
 
@@ -1220,6 +1224,60 @@ func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest)
 	return &chatpb.GetLinksResponse{
 		Messages: pbMessage,
 		Total:    total,
+	}, nil
+}
+
+// @Summary Lấy timestamps các loại data của conversation
+// @Description API check sync - lấy timestamp từ Redis cho từng key, FE so sánh với cache và chỉ gọi API tương ứng khi có thay đổi. Keys: detail, files, links, images, members, setting, pinned, messages
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Conversation ID"
+// @Success 200 {object} chatpb.ConversationTimestampsResponse "Map key -> timestamp (ms)"
+// @Router /conversation/{id}/timestamp [get]
+func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharepb.IdRequest) (*chatpb.ConversationTimestampsResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.BadRequestException("conversation id is required")
+	}
+
+	if s.syncProvider == nil {
+		return &chatpb.ConversationTimestampsResponse{Timestamps: map[string]int64{}}, nil
+	}
+
+	convID := req.Id
+	redisKeys := []string{
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMembers, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMessages, convID),
+	}
+
+	vals, err := s.syncProvider.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.InternalServerException("error: %v", err.Error())
+	}
+
+	names := []string{
+		"detail", "files", "links", "images", "members", "setting", "pinned", "messages",
+	}
+
+	timestamps := make(map[string]int64, len(names))
+	for i, v := range vals {
+		if v == nil {
+			timestamps[names[i]] = 0
+			continue
+		}
+		ts, _ := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 64)
+		timestamps[names[i]] = ts
+	}
+
+	return &chatpb.ConversationTimestampsResponse{
+		Timestamps: timestamps,
 	}, nil
 }
 

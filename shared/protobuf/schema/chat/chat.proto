@@ -157,6 +157,14 @@ service ChatService {
     };
   };
 
+  // GetConversationTimestamps trả về timestamp các loại data của conversation.
+  // FE so sánh với cache để biết API nào cần gọi cập nhật (detail, files, links, images, members, setting, pinned, messages).
+  rpc GetConversationTimestamps (sharepb.IdRequest) returns (ConversationTimestampsResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{id}/timestamp"
+    };
+  };
+
   rpc ReactionMessage(ReactionMessageRequest) returns (ReactionMessageResponse) {
     option (google.api.http) = {
       post: "/v2/chat/messages/reaction"
@@ -611,4 +619,10 @@ message ReactionMessageResponse {
 
 message GetRoomMemberIdResponse {
   repeated uint64 profileIds = 1;
+}
+
+// ConversationTimestampsResponse: map key -> timestamp (ms) cho FE check cache.
+// Keys: detail, files, links, images, members, setting, pinned, messages
+message ConversationTimestampsResponse {
+  map<string, int64> timestamps = 1;
 }

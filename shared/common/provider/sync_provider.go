@@ -29,6 +29,15 @@ const (
 	SyncKeyUserGuideByKey = "hub:ug:bykey"
 	// SyncKeyNotificationMe: ds thông báo + count chưa đọc của user.
 	SyncKeyNotificationMe = "nt:me"
+	// Conversation sync keys - client so sánh timestamp để biết API nào cần gọi cập nhật
+	SyncKeyConversationDetail   = "cnv:id"
+	SyncKeyConversationFiles    = "cnv:fs"
+	SyncKeyConversationLinks    = "cnv:ls"
+	SyncKeyConversationImages   = "cnv:imgs"
+	SyncKeyConversationMembers  = "cnv:mems"
+	SyncKeyConversationSetting  = "cnv:set"
+	SyncKeyConversationPinned   = "cnv:pi"
+	SyncKeyConversationMessages = "cnv:msgs"
 )
 
 type SyncProvider struct {

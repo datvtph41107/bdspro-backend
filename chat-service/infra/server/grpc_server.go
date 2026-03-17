@@ -4,10 +4,12 @@ import (
 	"chat/config"
 	"chat/infra/db"
 	"chat/infra/handler"
+	"chat/infra/impl"
 	"chat/infra/postgre"
 	"chat/internal/usecases"
 	_db "common/db"
 	_middleware "common/middleware"
+	_redis "common/redis"
 	"context"
 	"fmt"
 	"net"
@@ -17,6 +19,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -32,6 +35,7 @@ func NewGRPCServer(port string) *GRPCServer {
 	grpcLogger.Info("Initializing gRPC server...")
 
 	config.LoadConfig()
+	viper.Set("redis.pass", config.AppProperties.Redis.Password)
 
 	// Initialize database using shared/common/db
 	dbInstance, err := _db.NewDB()
@@ -70,6 +74,9 @@ func NewGRPCServer(port string) *GRPCServer {
 	backgroundMapper := handler.NewBackgroundMapper()
 	conversationMapper := handler.NewConversationMapper(backgroundMapper)
 
+	redisService := _redis.NewRedisService()
+	syncProvider := impl.NewSyncProvider(redisService)
+
 	// Initialize handlers
 	chatHandler := handler.NewChatHandler(
 		conversationUsecase,
@@ -81,6 +88,7 @@ func NewGRPCServer(port string) *GRPCServer {
 		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
+		syncProvider,
 	)
 	go chatHandler.Start()
 
