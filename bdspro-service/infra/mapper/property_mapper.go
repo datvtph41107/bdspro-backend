@@ -282,15 +282,15 @@ func (m *PropertyMapper) PropertyToProto(property *domain.PropertyLineage) *bdsp
 			addr := &sharepb.AddressV3Proto{
 				Detail:     property.Location.AddressDetail,
 				ProvinceId: property.Location.ProvinceID,
-				DistrictId: property.Location.DistrictID,
-				WardId:     property.Location.WardID,
+				// DistrictId: property.Location.DistrictID,
+				WardId: property.Location.WardID,
 			}
 			if property.Location.Province != nil {
 				addr.ProvinceName = property.Location.Province.Name
 			}
-			if property.Location.District != nil {
-				addr.DistrictName = property.Location.District.Name
-			}
+			// if property.Location.District != nil {
+			// 	addr.DistrictName = property.Location.District.Name
+			// }
 			if property.Location.Ward != nil {
 				addr.WardName = property.Location.Ward.Name
 			}
@@ -596,17 +596,17 @@ func (m *PropertyMapper) PropertyDetailToProto(property *domain.PropertyLineage,
 			MapUrl:     loc.MapURL,
 			RegionId:   loc.RegionID,
 			ProvinceId: loc.ProvinceID,
-			DistrictId: loc.DistrictID,
-			WardId:     loc.WardID,
-			Latitude:   loc.Latitude,
-			Longitude:  loc.Longitude,
+			// DistrictId: loc.DistrictID,
+			WardId:    loc.WardID,
+			Latitude:  loc.Latitude,
+			Longitude: loc.Longitude,
 		}
 		if loc.Province != nil {
 			location.ProvinceName = loc.Province.Name
 		}
-		if loc.District != nil {
-			location.DistrictName = loc.District.Name
-		}
+		// if loc.District != nil {
+		// 	location.DistrictName = loc.District.Name
+		// }
 		if loc.Ward != nil {
 			location.WardName = loc.Ward.Name
 		}
@@ -791,7 +791,6 @@ func (m *PropertyMapper) CreatePropertyPbToDTO(req *bdspropb.CreatePropertyReque
 		}
 		result.Location.RegionID = loc.RegionId
 		result.Location.ProvinceID = loc.ProvinceId
-		result.Location.DistrictID = loc.DistrictId
 		result.Location.WardID = loc.WardId
 		result.Location.Latitude = loc.Latitude
 		result.Location.Longitude = loc.Longitude

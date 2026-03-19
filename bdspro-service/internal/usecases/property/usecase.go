@@ -4,6 +4,8 @@ import (
 	"common/pkg/fieldmask"
 	"common/pkg/patch"
 	"context"
+	"fmt"
+	"log"
 
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
@@ -75,50 +77,61 @@ func (h *InfoHandler) Update(ctx context.Context, id uint64) error {
 // LocationHandler
 // ─────────────────────────────────────────────────────────────────────────────
 
-type LocationHandler struct {
-	Patch *dto.UpdateLocationDTO
-	Mask  fieldmask.FieldMask
-	Repo  property_repo.PropertyLocationRepository
-}
+// type LocationHandler struct {
+// 	Patch *dto.UpdateLocationDTO
+// 	Mask  fieldmask.FieldMask
+// 	Repo  property_repo.PropertyLocationRepository
+// }
 
-func (h *LocationHandler) Name() string     { return "location" }
-func (h *LocationHandler) FKColumn() string { return "location_id" }
-func (h *LocationHandler) Present() bool    { return h.Patch != nil }
+// func (h *LocationHandler) Name() string     { return "location" }
+// func (h *LocationHandler) FKColumn() string { return "location_id" }
+// func (h *LocationHandler) Present() bool    { return h.Patch != nil }
 
-func (h *LocationHandler) Insert(ctx context.Context) (uint64, error) {
-	e := &domain.PropertyLocation{
-		AddressDetail: derefStr(h.Patch.AddressDetail),
-		MapURL:        derefStr(h.Patch.MapURL),
-		Latitude:      h.Patch.Latitude,
-		Longitude:     h.Patch.Longitude,
-		RegionID:      derefUint64Ptr(h.Patch.RegionID),
-		ProvinceID:    derefUint64Ptr(h.Patch.ProvinceID),
-		DistrictID:    derefUint64Ptr(h.Patch.DistrictID),
-		WardID:        derefUint64Ptr(h.Patch.WardID),
-	}
-	if err := h.Repo.Create(ctx, e); err != nil {
-		return 0, err
-	}
-	return e.ID, nil
-}
+// func (h *LocationHandler) Insert(ctx context.Context) (uint64, error) {
+// 	e := &domain.PropertyLocation{
+// 		AddressDetail: derefStr(h.Patch.AddressDetail),
+// 		MapURL:        derefStr(h.Patch.MapURL),
+// 		Latitude:      h.Patch.Latitude,
+// 		Longitude:     h.Patch.Longitude,
+// 		RegionID:      derefUint64Ptr(h.Patch.RegionID),
+// 		ProvinceID:    derefUint64Ptr(h.Patch.ProvinceID),
+// 		WardID:        derefUint64Ptr(h.Patch.WardID),
+// 	}
+// 	if err := h.Repo.Create(ctx, e); err != nil {
+// 		return 0, err
+// 	}
+// 	return e.ID, nil
+// }
 
-func (h *LocationHandler) Update(ctx context.Context, id uint64) error {
-	fields := patch.WithMask(h.Mask).
-		String("location.address_detail", "address_detail", h.Patch.AddressDetail, "").
-		String("location.map_url", "map_url", h.Patch.MapURL, "").
-		NullableFloat("location.latitude", "latitude", h.Patch.Latitude, nil).
-		NullableFloat("location.longitude", "longitude", h.Patch.Longitude, nil).
-		ForeignKey("location.region_id", "region_id", h.Patch.RegionID, nil).
-		ForeignKey("location.province_id", "province_id", h.Patch.ProvinceID, nil).
-		ForeignKey("location.district_id", "district_id", h.Patch.DistrictID, nil).
-		ForeignKey("location.ward_id", "ward_id", h.Patch.WardID, nil).
-		Build()
+// func (h *LocationHandler) Update(ctx context.Context, id uint64) error {
+// 	existing, err := h.Repo.GetByID(ctx, id)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if existing == nil {
+// 		return fmt.Errorf("location id=%d not found", id)
+// 	}
 
-	if len(fields) == 0 {
-		return nil
-	}
-	return h.Repo.UpdateFields(ctx, id, fields)
-}
+// 	fields, err := patch.WithMask(h.Mask).
+// 		String("location.address_detail", "address_detail", h.Patch.AddressDetail, existing.AddressDetail).
+// 		String("location.map_url", "map_url", h.Patch.MapURL, existing.MapURL).
+// 		NullableFloat("location.latitude", "latitude", h.Patch.Latitude, existing.Latitude).
+// 		NullableFloat("location.longitude", "longitude", h.Patch.Longitude, existing.Longitude).
+// 		ForeignKey("location.region_id", "region_id", h.Patch.RegionID, existing.RegionID).
+// 		ForeignKey("location.province_id", "province_id", h.Patch.ProvinceID, existing.ProvinceID).
+// 		ForeignKey("location.ward_id", "ward_id", h.Patch.WardID, existing.WardID).
+// 		Result()
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if len(fields) == 0 {
+// 		return nil
+// 	}
+
+// 	return h.Repo.UpdateFields(ctx, id, fields)
+// }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LandInfoHandler
@@ -288,4 +301,175 @@ func (h *EvidenceHandler) Update(ctx context.Context, id uint64) error {
 		return nil
 	}
 	return h.Repo.UpdateFields(ctx, id, fields)
+}
+
+type LocationHandler struct {
+	Patch *dto.UpdateLocationDTO
+	Mask  fieldmask.FieldMask
+	Repo  property_repo.PropertyLocationRepository
+}
+
+func (h *LocationHandler) Name() string     { return "location" }
+func (h *LocationHandler) FKColumn() string { return "location_id" }
+func (h *LocationHandler) Present() bool    { return h.Patch != nil }
+
+// Insert - Create new location
+func (h *LocationHandler) Insert(ctx context.Context) (uint64, error) {
+	if h.Patch.Latitude == nil || h.Patch.Longitude == nil {
+		return 0, fmt.Errorf("latitude and longitude are required for location")
+	}
+
+	location := &domain.PropertyLocation{
+		AddressDetail: derefStr(h.Patch.AddressDetail),
+		MapURL:        derefStr(h.Patch.MapURL),
+		Latitude:      h.Patch.Latitude,
+		Longitude:     h.Patch.Longitude,
+		PositionType:  h.getPositionType(),
+		RegionID:      derefUint64Ptr(h.Patch.RegionID),
+		ProvinceID:    h.Patch.ProvinceID,
+		WardID:        h.Patch.WardID,
+	}
+
+	if err := h.Repo.Create(ctx, location); err != nil {
+		return 0, fmt.Errorf("create location: %w", err)
+	}
+
+	log.Printf("✓ Created location ID=%d with province_id=%v, ward_id=%v",
+		location.ID, safeStr(location.ProvinceID), safeStr(location.WardID))
+
+	return location.ID, nil
+}
+
+// Update - Update existing location
+func (h *LocationHandler) Update(ctx context.Context, id uint64) error {
+	// Get existing location
+	existing, err := h.Repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return fmt.Errorf("location id=%d not found", id)
+	}
+
+	log.Printf("Updating location %d with mask: %v", id, h.Mask.Paths())
+
+	// Build fields to update
+	fields := make(map[string]interface{})
+
+	// AddressDetail
+	if h.Mask.Allows("location.address_detail") && h.Patch.AddressDetail != nil {
+		if *h.Patch.AddressDetail != existing.AddressDetail {
+			fields["address_detail"] = *h.Patch.AddressDetail
+			log.Printf("  - address_detail: '%s' -> '%s'",
+				existing.AddressDetail, *h.Patch.AddressDetail)
+		}
+	}
+
+	// MapURL
+	if h.Mask.Allows("location.map_url") && h.Patch.MapURL != nil {
+		if *h.Patch.MapURL != existing.MapURL {
+			fields["map_url"] = *h.Patch.MapURL
+		}
+	}
+
+	// Latitude
+	if h.Mask.Allows("location.latitude") && h.Patch.Latitude != nil {
+		if *h.Patch.Latitude != *existing.Latitude {
+			fields["latitude"] = *h.Patch.Latitude
+			log.Printf("  - latitude: %f -> %f", *existing.Latitude, *h.Patch.Latitude)
+		}
+	}
+
+	// Longitude
+	if h.Mask.Allows("location.longitude") && h.Patch.Longitude != nil {
+		if *h.Patch.Longitude != *existing.Longitude {
+			fields["longitude"] = *h.Patch.Longitude
+			log.Printf("  - longitude: %f -> %f", *existing.Longitude, *h.Patch.Longitude)
+		}
+	}
+
+	// RegionID
+	if h.Mask.Allows("location.region_id") {
+		if h.Patch.RegionID == nil {
+			if existing.RegionID != nil {
+				fields["region_id"] = nil
+				log.Printf("  - region_id: %d -> NULL", *existing.RegionID)
+			}
+		} else {
+			if existing.RegionID == nil || *h.Patch.RegionID != *existing.RegionID {
+				fields["region_id"] = *h.Patch.RegionID
+				log.Printf("  - region_id: %s -> %d",
+					safeStr(existing.RegionID), *h.Patch.RegionID)
+			}
+		}
+	}
+
+	// PositionType
+	if h.Mask.Allows("location.position_type") && h.Patch.PositionType != nil {
+		if *h.Patch.PositionType != existing.PositionType {
+			fields["position_type"] = *h.Patch.PositionType
+		}
+	}
+
+	// PROVINCE_ID - ONLY UPDATE IF IN MASK
+	if h.Mask.Allows("location.province_id") {
+		if h.Patch.ProvinceID == nil {
+			if existing.ProvinceID != nil {
+				fields["province_id"] = nil
+				log.Printf("  - province_id: %d -> NULL", *existing.ProvinceID)
+			}
+		} else {
+			if existing.ProvinceID == nil || *h.Patch.ProvinceID != *existing.ProvinceID {
+				fields["province_id"] = *h.Patch.ProvinceID
+				log.Printf("  - province_id: %s -> %d",
+					safeStr(existing.ProvinceID), *h.Patch.ProvinceID)
+			}
+		}
+	} else {
+		if h.Patch.ProvinceID != nil {
+			log.Printf("  ⚠ province_id=%d provided but not in mask - ignored", *h.Patch.ProvinceID)
+		}
+	}
+
+	// WARD_ID - ONLY UPDATE IF IN MASK
+	if h.Mask.Allows("location.ward_id") {
+		if h.Patch.WardID == nil {
+			if existing.WardID != nil {
+				fields["ward_id"] = nil
+				log.Printf("  - ward_id: %d -> NULL", *existing.WardID)
+			}
+		} else {
+			if existing.WardID == nil || *h.Patch.WardID != *existing.WardID {
+				fields["ward_id"] = *h.Patch.WardID
+				log.Printf("  - ward_id: %s -> %d",
+					safeStr(existing.WardID), *h.Patch.WardID)
+			}
+		}
+	} else {
+		if h.Patch.WardID != nil {
+			log.Printf("  ⚠ ward_id=%d provided but not in mask - ignored", *h.Patch.WardID)
+		}
+	}
+
+	if len(fields) == 0 {
+		log.Printf("No fields to update for location %d", id)
+		return nil
+	}
+
+	log.Printf("✓ Updating location %d with %d fields", id, len(fields))
+	return h.Repo.UpdateFields(ctx, id, fields)
+}
+
+func (h *LocationHandler) getPositionType() enums.EPositionType {
+	if h.Patch.PositionType != nil {
+		return *h.Patch.PositionType
+	}
+	return enums.EPositionType(10)
+}
+
+func safeStr(p *uint64) string {
+	if p == nil {
+		return "nil"
+	}
+	return fmt.Sprintf("%d", *p)
 }

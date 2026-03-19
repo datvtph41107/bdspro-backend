@@ -21,6 +21,7 @@ func ValidateUpdateRequest(req *bdspropb.UpdatePropertyRequest) error {
 
 	if req.Id == 0 {
 		e.Add("id", "required")
+		return grpcerror.FromValidation(e)
 	}
 
 	e.Merge(validateInfoPayload(req.Info))

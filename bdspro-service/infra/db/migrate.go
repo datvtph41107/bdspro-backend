@@ -7,8 +7,8 @@ import (
 
 func MigrateDomain() {
 	_db.DB.AutoMigrate(
-		&domain.AreaRegion{},
-		&domain.PropertyAreaRegion{},
+		// &domain.AreaRegion{},
+		// &domain.PropertyAreaRegion{},
 		// Core entities
 		// &domain.Observation{},
 		// &domain.Asset{},
@@ -93,10 +93,10 @@ func MigrateDomain() {
 
 		// // Location entities
 		// &domain.Province{},
-		// &domain.ProvinceV2{},
+		&domain.ProvinceV2{},
 		// &domain.District{},
 		// &domain.Ward{},
-		// &domain.WardV2{},
+		&domain.WardV2{},
 		// &domain.Region{},
 
 		// // Other entities
@@ -154,14 +154,14 @@ func MigrateDomain() {
 		// &domain.PropertyInfo{},
 		// &domain.PropertyLocation{},
 		// &domain.PropertyType{},
-	// &domain.PropertyLandInfo{},
-	// &domain.PropertyBuildingInfo{},
-	// &domain.PropertyMedia{},
-	// &domain.PropertyExternalRef{},
-	// &domain.PropertyEdvidence{},
-	// &domain.PropertyTagLink{},
-	// &domain.PropertyRelation{},
-	// &domain.PropertyStatistic{},
-	// &domain.PropertyLineage{},
+		// &domain.PropertyLandInfo{},
+		// &domain.PropertyBuildingInfo{},
+		// &domain.PropertyMedia{},
+		// &domain.PropertyExternalRef{},
+		// &domain.PropertyEdvidence{},
+		// &domain.PropertyTagLink{},
+		// &domain.PropertyRelation{},
+		// &domain.PropertyStatistic{},
+		// &domain.PropertyLineage{},
 	)
 }

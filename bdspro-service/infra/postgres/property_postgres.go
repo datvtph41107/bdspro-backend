@@ -498,18 +498,18 @@ SELECT
 				AddressDetail: ptrStr(row.AddressDetail),
 				RegionID:      row.RegionID,
 				ProvinceID:    row.ProvinceID,
-				DistrictID:    row.DistrictID,
-				WardID:        row.WardID,
-				Latitude:      row.Latitude,
-				Longitude:     row.Longitude,
-				MapURL:        ptrStr(row.MapURL),
+				// DistrictID:    row.DistrictID,
+				WardID:    row.WardID,
+				Latitude:  row.Latitude,
+				Longitude: row.Longitude,
+				MapURL:    ptrStr(row.MapURL),
 			}
 			if row.ProvinceName != nil {
 				loc.Province = &domain.ProvinceV2{Name: *row.ProvinceName}
 			}
-			if row.DistrictName != nil {
-				loc.District = &domain.DistrictV2{Name: *row.DistrictName}
-			}
+			// if row.DistrictName != nil {
+			// 	loc.District = &domain.DistrictV2{Name: *row.DistrictName}
+			// }
 			if row.WardName != nil {
 				loc.Ward = &domain.WardV2{Name: *row.WardName}
 			}
@@ -796,14 +796,14 @@ ORDER BY pl.updated_at DESC NULLS LAST`
 				loc.AddressDetail = *row.AddressDetail
 			}
 			loc.ProvinceID = row.ProvinceID
-			loc.DistrictID = row.DistrictID
+			// loc.DistrictID = row.DistrictID
 			loc.WardID = row.WardID
 			if row.ProvinceName != nil {
 				loc.Province = &domain.ProvinceV2{Name: *row.ProvinceName}
 			}
-			if row.DistrictName != nil {
-				loc.District = &domain.DistrictV2{Name: *row.DistrictName}
-			}
+			// if row.DistrictName != nil {
+			// 	loc.District = &domain.DistrictV2{Name: *row.DistrictName}
+			// }
 			if row.WardName != nil {
 				loc.Ward = &domain.WardV2{Name: *row.WardName}
 			}
@@ -1210,11 +1210,11 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 		MapURL        *string
 		RegionID      *uint64
 		ProvinceName  *string
-		ProvinceCode  *int
+		ProvinceCode  *string
 		DistrictName  *string
 		DistrictCode  *int
 		WardName      *string
-		WardCode      *int
+		WardCode      *string
 		// Statistic
 		StatisticID  *uint64
 		ProductCount int64
@@ -1384,7 +1384,9 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 				ID: *row.LocID,
 			},
 			AddressDetail: ptrStr(row.AddressDetail),
-			ProvinceID:    row.ProvinceID, DistrictID: row.DistrictID, WardID: row.WardID,
+			ProvinceID:    row.ProvinceID,
+			// DistrictID:    row.DistrictID,
+			WardID:   row.WardID,
 			Latitude: row.Latitude, Longitude: row.Longitude, MapURL: ptrStr(row.MapURL), RegionID: row.RegionID,
 		}
 		if row.ProvinceName != nil {
@@ -1393,12 +1395,12 @@ WHERE pl.id = ? AND pl.deleted_at IS NULL`
 				loc.Province.Code = *row.ProvinceCode
 			}
 		}
-		if row.DistrictName != nil {
-			loc.District = &domain.DistrictV2{Name: *row.DistrictName}
-			if row.DistrictCode != nil {
-				loc.District.Code = *row.DistrictCode
-			}
-		}
+		// if row.DistrictName != nil {
+		// 	loc.District = &domain.DistrictV2{Name: *row.DistrictName}
+		// 	if row.DistrictCode != nil {
+		// 		loc.District.Code = *row.DistrictCode
+		// 	}
+		// }
 		if row.WardName != nil {
 			loc.Ward = &domain.WardV2{Name: *row.WardName}
 			if row.WardCode != nil {

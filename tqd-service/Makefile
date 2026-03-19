@@ -91,8 +91,8 @@ help:
 	@echo "  make run-grpc-port PORT=9090"
 
 migrateup:
-	migrate -path infra/db/migrations/v2 -database "postgresql://postgres:password@localhost:5432/postgres?sslmode=disable" -verbose up
+	migrate -path infra/db/migrations/v2 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_tqd?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path infra/db/migrations/v2 -database "postgresql://postgres:password@localhost:5432/postgres?sslmode=disable" -verbose down
+	migrate -path infra/db/migrations/v2 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_tqd?sslmode=disable" -verbose down
 

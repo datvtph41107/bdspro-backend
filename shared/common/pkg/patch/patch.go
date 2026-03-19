@@ -188,17 +188,21 @@ func (b *Builder) ForeignKey(path, col string, in *uint64, ex *uint64) *Builder 
 	if !b.guard(path, in != nil) {
 		return b
 	}
+
+	// CASE 1: clear FK (0 → NULL)
 	if *in == 0 {
-		// Clear intent: chỉ write nếu DB chưa NULL (tránh write thừa)
+		// chỉ write nếu DB đang có value
 		if ex != nil {
 			b.m[col] = nil
 		}
 		return b
 	}
-	// Set value: chỉ write nếu khác existing
+
+	// CASE 2: set FK (>0)
 	if ex == nil || *in != *ex {
 		b.m[col] = *in
 	}
+
 	return b
 }
 

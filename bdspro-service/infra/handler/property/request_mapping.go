@@ -56,8 +56,8 @@ func mapLocationPayload(p *bdspropb.UpdateLocationPayload) *dto.UpdateLocationDT
 		Longitude:     p.Longitude,
 		RegionID:      p.RegionId,
 		ProvinceID:    p.ProvinceId,
-		DistrictID:    p.DistrictId,
-		WardID:        p.WardId,
+		// DistrictID:    p.DistrictId,
+		WardID: p.WardId,
 	}
 }
 

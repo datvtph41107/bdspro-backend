@@ -1,15 +1,14 @@
 server:
     port: 8230
-    http: 8030
+    tcp_port: 8219
 
 eureka:
     url: localhost
     port: 8761
 
 database:
-    dsn: host=localhost user=postgres password=password dbname=postgres port=5432 sslmode=disable
-
-    # dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5432 sslmode=disable
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5432 sslmode=disable
+    # dsn: host=localhost user=postgres password=password dbname=postgres port=5432 sslmode=disable
 
 key:
     jwt: key-generate-jwt-token-authentication

@@ -35,7 +35,6 @@ func FromValidation(e *validate.Error) error {
 			Description: v.Message,
 		})
 	}
-
 	st, _ = st.WithDetails(br)
 	return st.Err()
 }

@@ -10,6 +10,7 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -449,6 +450,7 @@ func (h *PropertyHandler) UpdateProperty(
 	}
 
 	if err := property_validator.ValidateUpdateRequest(req); err != nil {
+		log.Printf("validation error: %v", err)
 		return nil, err
 	}
 

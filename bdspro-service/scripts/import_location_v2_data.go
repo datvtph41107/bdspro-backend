@@ -92,25 +92,25 @@ func importLocationV2Data(db *gorm.DB) error {
 
 	for _, p := range provincesJSON {
 		province := domain.ProvinceV2{
-			BaseEntity:   _models.BaseEntity{},
-			Name:         p.Name,
-			Code:         p.Code,
+			BaseEntity: _models.BaseEntity{},
+			Name:       p.Name,
+			// Code:         p.Code,
 			Codename:     p.Codename,
 			DivisionType: p.DivisionType,
-			PhoneCode:    p.PhoneCode,
+			// PhoneCode:    p.PhoneCode,
 		}
 		provinces = append(provinces, province)
 
 		// Chuẩn bị wards cho province này
 		for _, w := range p.Wards {
 			ward := domain.WardV2{
-				BaseEntity:    _models.BaseEntity{},
-				Name:          w.Name,
-				Code:          w.Code,
+				BaseEntity: _models.BaseEntity{},
+				Name:       w.Name,
+				// Code:          w.Code,
 				Codename:      w.Codename,
 				DivisionType:  w.DivisionType,
 				ShortCodename: w.ShortCodename,
-				ProvinceCode:  p.Code, // Link tới province bằng code
+				// ProvinceCode:  p.Code, // Link tới province bằng code
 			}
 			allWards = append(allWards, ward)
 			wardCount++

@@ -229,7 +229,7 @@ message UpdateLocationPayload {
 
   optional uint64 regionId = 5;
   optional uint64 provinceId = 6;
-  optional uint64 districtId = 7;
+  // optional uint64 districtId = 7;
   optional uint64 wardId = 8;
 }
 

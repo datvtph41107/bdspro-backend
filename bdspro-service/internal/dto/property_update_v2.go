@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"bdspro/internal/enums"
 	"common/pkg/fieldmask"
 )
 
@@ -34,24 +35,23 @@ import (
 //
 // ─────────────────────────────────────────────────────────────────────────────
 type UpdatePropertyDTO struct {
-	LineageID uint64
+	LineageID uint64              `json:"lineageId" binding:"required"`
+	Mask      fieldmask.FieldMask `json:"mask"` // FieldMask từ client
 
-	// Mask: value object bất biến, khởi tạo 1 lần tại handler.
-	// fieldmask.FieldMask{} = AllowAll (backward compat khi client không gửi mask)
-	Mask fieldmask.FieldMask
+	// FK blocks - sub domains
+	Info         *UpdateInfoDTO     `json:"info,omitempty"`
+	Location     *UpdateLocationDTO `json:"location,omitempty"`
+	LandInfo     *UpdateLandInfoDTO `json:"landInfo,omitempty"`
+	BuildingInfo *UpdateBuildingDTO `json:"buildingInfo,omitempty"`
+	Evidence     *UpdateEvidenceDTO `json:"evidence,omitempty"`
 
-	Info         *UpdateInfoDTO
-	Location     *UpdateLocationDTO
-	LandInfo     *UpdateLandInfoDTO
-	BuildingInfo *UpdateBuildingDTO
-	Evidence     *UpdateEvidenceDTO
-	Media        *UpdateMediaDTO       // list upsert — không dùng Mask
-	Amenities    *UpdateAmenityDTO     // REPLACE list — không dùng Mask
-	ExternalRefs *UpdateExternalRefDTO // list upsert — không dùng Mask
-	AreaRegions  *UpdateAreaRegionsDTO // REPLACE list — không dùng Mask
-	LineageMeta  *UpdateLineageMetaDTO // admin only — gateway đã strip
-
-	Personalization *UpdatePersonalizationDTO
+	// Side blocks
+	Media           *UpdateMediaDTO           `json:"media,omitempty"`
+	Amenities       *UpdateAmenityDTO         `json:"amenities,omitempty"`
+	AreaRegions     *UpdateAreaRegionsDTO     `json:"areaRegions,omitempty"`
+	ExternalRefs    *UpdateExternalRefDTO     `json:"externalRefs,omitempty"`
+	LineageMeta     *UpdateLineageMetaDTO     `json:"lineageMeta,omitempty"`
+	Personalization *UpdatePersonalizationDTO `json:"personalization,omitempty"`
 }
 
 // ─── UpdateInfoDTO ────────────────────────────────────────────────────────────
@@ -76,17 +76,37 @@ type UpdateInfoDTO struct {
 
 // ─── UpdateLocationDTO ───────────────────────────────────────────────────────
 type UpdateLocationDTO struct {
-	AddressDetail *string
-	MapURL        *string
+	AddressDetail   *string              `json:"addressDetail"`
+	MapURL          *string              `json:"mapUrl"`
+	Latitude        *float64             `json:"latitude"`
+	Longitude       *float64             `json:"longitude"`
+	PositionType    *enums.EPositionType `json:"positionType"`
+	RegionID        *uint64              `json:"regionId"`
+	ProvinceID      *uint64              `json:"provinceId"`
+	WardID          *uint64              `json:"wardId"`
+	ResolvedFromTQD bool                 `json:"-"`
+}
 
-	Latitude  *float64
-	Longitude *float64
+type UpdateProvinceDTO struct {
+	ID           *uint64 `json:"id,omitempty"`
+	Code         *string `json:"code,omitempty"`
+	Name         *string `json:"name,omitempty"`
+	Codename     *string `json:"codename,omitempty"`
+	DivisionType *string `json:"divisionType,omitempty"`
+	PhoneCode    *string `json:"phoneCode,omitempty"`
+	TQDID        *string `json:"tqdId,omitempty"`
+}
 
-	// FK: nil=absent | &0=CLEAR→NULL | &>0=set
-	RegionID   *uint64
-	ProvinceID *uint64
-	DistrictID *uint64
-	WardID     *uint64
+type UpdateWardDTO struct {
+	ID            *uint64 `json:"id,omitempty"`
+	Code          *string `json:"code,omitempty"`
+	Name          *string `json:"name,omitempty"`
+	Codename      *string `json:"codename,omitempty"`
+	DivisionType  *string `json:"divisionType,omitempty"`
+	ShortCodename *string `json:"shortCodename,omitempty"`
+	ProvinceCode  *string `json:"provinceCode,omitempty"`
+	ProvinceID    *uint64 `json:"provinceId,omitempty"`
+	TQDID         *string `json:"tqdId,omitempty"`
 }
 
 // ─── UpdateLandInfoDTO ───────────────────────────────────────────────────────

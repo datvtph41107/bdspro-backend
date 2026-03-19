@@ -318,6 +318,7 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases.NewPropertyTypeUsecase,
 	bdspro_internal_usecases_property.NewPropertyUsecase,
 	bdspro_infra_postgres.NewPropertyUserPostgres,
+	bdspro_infra_postgres.NewProvinceV2Repository,
 	bdspro_infra_mapper.NewPublicMapper,
 	bdspro_infra_router_public.NewPublicRouter,
 	bdspro_infra_postgres_audit.NewPushRepo,
@@ -335,6 +336,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewSharingAccessService,
 	bdspro_infra_validator.NewSharingAccessValidator,
 	bdspro_infra_providers.NewSyncProvider,
+	bdspro_infra_providers.NewTQDClient,
 	bdspro_infra_postgres.NewTransactionActionPostgresRepository,
 	bdspro_infra_validator.NewTransactionActionValidator,
 	bdspro_infra_postgres.NewTransactionGorm,
@@ -361,6 +363,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
 	bdspro_infra_postgres_audit.NewVersionRepo,
+	bdspro_infra_postgres.NewWardV2Repository,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)

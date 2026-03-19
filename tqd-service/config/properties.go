@@ -21,7 +21,8 @@ type Properties struct {
 
 // ServerConfig holds server configuration
 type ServerConfig struct {
-	Port int `mapstructure:"port"`
+	GrpcPort int `mapstructure:"tcp_port"`
+	HttpPort int `mapstructure:"port"`
 }
 
 // DatabaseConfig holds database configuration

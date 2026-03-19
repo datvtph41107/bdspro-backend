@@ -56,7 +56,7 @@ func runGRPCServer() error {
 
 	// Override port if specified via flag
 	if GrpcPort > 0 {
-		cfg.Server.Port = GrpcPort
+		cfg.Server.GrpcPort = GrpcPort
 	}
 
 	// Set timezone
@@ -76,7 +76,7 @@ func runGRPCServer() error {
 	db.AutoMigrate()
 
 	// Create listener
-	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Server.Port)
+	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Server.GrpcPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
@@ -96,6 +96,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterOpenHourServiceServer(s, app.OpenHourGrpcHandler)
 	tqdpb.RegisterPoiCategoryServiceServer(s, app.PoiCategoryGrpcHandler)
 	tqdpb.RegisterPoiServiceServer(s, app.POIGrpcHandler)
+	tqdpb.RegisterLocationServiceServer(s, app.LocationGrpcHandler)
 
 	// Register reflection service on gRPC server (useful for grpcurl)
 	reflection.Register(s)

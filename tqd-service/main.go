@@ -23,7 +23,7 @@ func main() {
 		host       = flag.String("host", "", "Server host (default: all interfaces)")
 	)
 	flag.Parse()
-
+	fmt.Println("serverType =", *serverType)
 	switch *serverType {
 	case "http":
 		log.Println("Starting TQD HTTP Service...")

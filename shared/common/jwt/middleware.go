@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -259,7 +260,7 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 	if ae, ok := ctx.Value(authErrorKey).(AuthError); ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{
-			"code":    "500",
+			"code":    "401",
 			"message": ae.Message,
 		})
 		return
@@ -292,11 +293,28 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 
 	httpStatus := httpStatusFromCode(grpcErr.Code())
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	//
+	resp := map[string]interface{}{
 		"code":    grpcErr.Code(),
 		"message": grpcErr.Message(),
-		"details": grpcErr.Details(),
-	})
+	}
+
+	for _, d := range grpcErr.Details() {
+		switch br := d.(type) {
+
+		case *errdetails.BadRequest:
+			var errors []map[string]string
+			for _, v := range br.FieldViolations {
+				errors = append(errors, map[string]string{
+					"field": v.Field,
+					"error": v.Description,
+				})
+			}
+			resp["errors"] = errors
+		}
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
 
 func httpStatusFromCode(code codes.Code) int {

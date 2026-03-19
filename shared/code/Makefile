@@ -179,10 +179,12 @@ transaction-grpc:
 	$(CD_ROOT) && cd transaction-service && air grpc
 
 auth-grpc:
-	$(CD_ROOT) && cd auth-service && air grpc
+	$(CD_ROOT) && cd auth-service && air -server=grpc
 tqd-http:
-	$(CD_ROOT) && cd tqd-service && air http
-	
+	$(CD_ROOT) && cd tqd-service && air -- -server=http
+
+tqd-grpc:
+	$(CD_ROOT) && cd tqd-service && air -- -server=grpc
 
 start-all:
 	@echo "Starting all services..."

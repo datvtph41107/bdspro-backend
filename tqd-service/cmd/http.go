@@ -65,7 +65,7 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 
 	// Override port if specified via flag
 	if HttpPort > 0 {
-		cfg.Server.Port = HttpPort
+		cfg.Server.HttpPort = HttpPort
 	}
 
 	// Initialize dependencies
@@ -110,7 +110,7 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 
 	// Create HTTP server
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", HttpHost, cfg.Server.Port),
+		Addr:    fmt.Sprintf("%s:%d", HttpHost, cfg.Server.HttpPort),
 		Handler: router,
 	}
 

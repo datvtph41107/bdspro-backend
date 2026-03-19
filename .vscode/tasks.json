@@ -274,7 +274,22 @@
         {
             "label": "🔌 TQD HTTP (8230)",
             "type": "shell",
-            "command": "cd shared/code && make run-dev tqd http",
+            "command": "cd shared/code && make tqd-http",
+            "args": [],
+            "problemMatcher": [
+                "$go"
+            ],
+            "presentation": {
+                "panel": "dedicated"
+            },
+            "runOptions": {
+                // "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "🏘 TQD gRPC (8231)",
+            "type": "shell",
+            "command": "cd shared/code && make tqd-grpc",
             "args": [],
             "problemMatcher": [
                 "$go"

@@ -58,4 +58,5 @@ func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoin
 	_ = tqdpb.RegisterOpenHourServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterPoiCategoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterPoiServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = tqdpb.RegisterLocationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

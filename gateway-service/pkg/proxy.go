@@ -30,6 +30,7 @@ var servicePorts = map[string]int{
 	"bdspro":       8102,
 	"tho247":       8103,
 	"chat":         8104,
+	"tqd":          8219,
 }
 
 // ForwardingRequest xử lý forwarding request đến các service
