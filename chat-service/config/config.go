@@ -37,7 +37,7 @@ type ChatProperties struct {
 
 	Redis struct {
 		Host     string `mapstructure:"host"`
-		Password string `mapstructure:"password"`
+		Password string `mapstructure:"pass"`
 	} `mapstructure:"redis"`
 
 	Swagger struct {

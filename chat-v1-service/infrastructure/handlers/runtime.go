@@ -5,6 +5,8 @@ import (
 
 	"chat/infrastructure/client"
 	"chat/infrastructure/mapper"
+	"chat/internal/usecases"
+	_provider "common/provider"
 	chatpb "pb/types/chat"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -27,6 +29,8 @@ func NewDelivery(
 	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
 	backgroundMapper *mapper.BackgroundMapper,
+	syncProvider *_provider.SyncProvider,
+	messageRepository usecases.Repository,
 ) *Delivery {
 	chatHandler := NewChatHandler(conversationUsecases,
 		messageUsecases,
@@ -37,6 +41,8 @@ func NewDelivery(
 		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
+		syncProvider,
+		messageRepository,
 	)
 	go chatHandler.Start()
 

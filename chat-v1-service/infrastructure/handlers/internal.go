@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	"time"
 
@@ -31,13 +32,13 @@ type conversationUsecases interface {
 type messageUsecases interface {
 	SendMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error)
 	SendToReceiver(ctx context.Context, message *models.MessageModel, receiverID *uint64) (*models.MessageModel, error)
-	GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
+	GetMessages(ctx context.Context, pagable _dto.Pagable, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
 	ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*models.MessageModel, error)
 	PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*models.MessageModel, error)
 	RecallMessage(ctx context.Context, messageId uint64) (*models.MessageModel, error)
 	GetPinnedMessages(ctx context.Context, conversationId uint64) ([]*models.MessageModel, error)
 	EditMessage(ctx context.Context, messageId uint64, content string) (*models.MessageModel, error)
-	DeleteViolation(ctx context.Context, messageId uint64) error
+	DeleteViolation(ctx context.Context, messageId uint64) (*models.MessageModel, error)
 	DeleteConversation(ctx context.Context, conversationId uint64) (uint64, error)
 
 	GetMessageByTypeWithPagination(ctx context.Context, page, size int64, conversationId uint64, types []string) ([]*models.MessageModel, int64, error)

@@ -1,8 +1,8 @@
 package orm
 
 import (
+	_dto "common/domain/dto"
 	"context"
-	"fmt"
 	"time"
 
 	"chat/models"
@@ -18,17 +18,35 @@ func (r *gormRepository) CreateMessages(ctx context.Context, messages []*models.
 	return messages, r.db.WithContext(ctx).Create(messages).Error
 }
 
-func (r *gormRepository) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
+func (r *gormRepository) GetMessages(ctx context.Context, pagable _dto.Pagable, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
 	err := r.db.WithContext(ctx).
 		Preload("ReplyMessage").
 		Preload("Reactions").
 		Where("conversation_id = ? and (? is null or created_at >= ?) and (? is null or created_at <= ?)", conversationId, fromDate, fromDate, toDate, toDate).
-		Limit(int(limit)).
-		Offset(int(offset)).
-		Order(fmt.Sprintf("created_at %s", sort)).
+		Limit(pagable.GetLimit()).
+		Offset(pagable.GetOffset()).
+		Order(pagable.Sort).
 		Find(&messages).Error
 	return messages, err
+}
+
+func (r *gormRepository) GetLatestMessageCreatedAt(ctx context.Context, conversationId uint64) (*time.Time, error) {
+	var t time.Time
+	err := r.db.WithContext(ctx).
+		Model(&models.MessageModel{}).
+		Where("conversation_id = ?", conversationId).
+		Select("updated_at").
+		Order("updated_at DESC").
+		Limit(1).
+		Scan(&t).Error
+	if err != nil {
+		return nil, err
+	}
+	if t.IsZero() {
+		return nil, nil
+	}
+	return &t, nil
 }
 
 func (r *gormRepository) FindMessageByID(ctx context.Context, messageId uint64) (*models.MessageModel, error) {

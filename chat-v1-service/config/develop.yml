@@ -17,8 +17,8 @@ timeout:
   write: 60s
 
 redis:
-  host: "14.225.210.29:6379"
-  password: protected_redis_secure_password
+  host: redis:6379
+  pass: protected_redis_secure_password
 
 swagger:
   path: "./proto/docs/chat/chat.swagger.json"

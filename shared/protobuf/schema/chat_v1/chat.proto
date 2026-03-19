@@ -264,8 +264,8 @@ message SendMessageResponse {
 
 message GetMessagesRequest {
   int32 conversationId = 1;
-  optional int32 limit = 2;
-  optional int32 offset = 3;
+  optional int32 size = 2;
+  optional int32 page = 3;
   optional string sort = 4;
   optional string fromDate = 5;
   optional string toDate = 6;

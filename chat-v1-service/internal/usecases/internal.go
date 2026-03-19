@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"chat/models"
+	_dto "common/domain/dto"
 	"context"
 	"time"
 )
@@ -20,7 +21,8 @@ type Repository interface {
 
 	CreateMessage(ctx context.Context, message *models.MessageModel) (*models.MessageModel, error)
 	CreateMessages(ctx context.Context, messages []*models.MessageModel) ([]*models.MessageModel, error)
-	GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
+	GetMessages(ctx context.Context, pagable _dto.Pagable, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
+	GetLatestMessageCreatedAt(ctx context.Context, conversationId uint64) (*time.Time, error)
 	FindMessageByID(ctx context.Context, messageId uint64) (*models.MessageModel, error)
 	UpdatePinMessage(ctx context.Context, messageID uint64, isPin bool) (*models.MessageModel, error)
 	UpdateRecallMessage(ctx context.Context, messageID uint64, isRecall bool) (*models.MessageModel, error)

@@ -2,6 +2,10 @@ package usecases
 
 import (
 	"chat/infrastructure/delivery/errors"
+	_interface "chat/internal/interface"
+	iusecase "chat/internal/interface"
+	_dto "common/domain/dto"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"time"
@@ -13,12 +17,14 @@ import (
 type messageUsecases struct {
 	repo                 Repository
 	conversationUsecases *conversationUsecases
+	syncProvider         iusecase.SyncProvider
 }
 
-func NewMessageUsecases(repository Repository, conversationUsecases *conversationUsecases) *messageUsecases {
+func NewMessageUsecases(repository Repository, conversationUsecases *conversationUsecases, syncProvider _interface.SyncProvider) *messageUsecases {
 	return &messageUsecases{
 		repo:                 repository,
 		conversationUsecases: conversationUsecases,
+		syncProvider:         syncProvider,
 	}
 }
 
@@ -48,6 +54,11 @@ func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.Me
 		}
 		data.ReplyMessage = replyMessage
 	}
+	if c.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		key := c.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, message.ConversationID)
+		_ = c.syncProvider.PutTimestamp(ctx, key, ts)
+	}
 	return data, nil
 }
 
@@ -69,15 +80,26 @@ func (c *messageUsecases) SendMessage(ctx context.Context, message *models.Messa
 		}
 		data.ReplyMessage = replyMessage
 	}
+	if c.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		key := c.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, message.ConversationID)
+		_ = c.syncProvider.PutTimestamp(ctx, key, ts)
+	}
 	return data, nil
 }
 
-func (c *messageUsecases) GetMessages(ctx context.Context, limit, offset int64, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
+func (c *messageUsecases) GetMessages(ctx context.Context, pagable _dto.Pagable, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error) {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
-	return c.repo.GetMessages(ctx, limit, offset, conversationId, sort, fromDate, toDate)
+
+	messages, err := c.repo.GetMessages(ctx, pagable, conversationId, sort, fromDate, toDate)
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }
 
 func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*models.MessageModel, error) {
@@ -165,21 +187,21 @@ func (c *messageUsecases) GetPinnedMessages(ctx context.Context, conversationId 
 	return c.repo.GetPinnedMessages(ctx, conversationId)
 }
 
-func (c *messageUsecases) DeleteViolation(ctx context.Context, messageId uint64) error {
+func (c *messageUsecases) DeleteViolation(ctx context.Context, messageId uint64) (*models.MessageModel, error) {
 	message, err := c.repo.FindMessageByID(ctx, messageId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if message == nil {
-		return errors.MessageNotFound()
+		return nil, errors.MessageNotFound()
 	}
 
-	error := c.isConversationAdmin(ctx, message.ConversationID)
-	if error != nil {
-		return error
+	err = c.isConversationAdmin(ctx, message.ConversationID)
+	if err != nil {
+		return nil, err
 	}
-	return c.repo.DeleteViolation(ctx, messageId)
+	return message, c.repo.DeleteViolation(ctx, messageId)
 }
 
 func (c *messageUsecases) DeleteConversation(ctx context.Context, conversationId uint64) (uint64, error) {

@@ -6,6 +6,10 @@ import (
 	"google.golang.org/protobuf/protoadapt"
 )
 
+func CacheUnchanged() error {
+	return NewError(int32(CacheUnchangedCode), errors.New("Cache unchanged."))
+}
+
 func ConversationNotFound() error {
 	return NewError(int32(ConversationNotFoundCode), errors.New("Không tìm thấy conversation (ID không tồn tại)."))
 }

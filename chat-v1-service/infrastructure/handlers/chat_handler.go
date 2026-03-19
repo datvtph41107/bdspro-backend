@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	_dto "common/domain/dto"
+	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	chatpb "pb/types/chat"
@@ -16,9 +21,9 @@ import (
 	"chat/infrastructure/mapper"
 	"chat/infrastructure/redis"
 	"chat/internal/constants"
+	"chat/internal/usecases"
 	"chat/models"
 	"chat/utils"
-	_errors "errors"
 
 	"github.com/hyperledger/fabric/common/flogging"
 )
@@ -39,6 +44,8 @@ type chatHandler struct {
 	bdsproClient            *client.BdsproClient
 	conversationMapper      *mapper.ConversationMapper
 	backgroundMapper        *mapper.BackgroundMapper
+	syncProvider            *_provider.SyncProvider
+	messageRepository       usecases.Repository
 }
 
 func NewChatHandler(
@@ -51,6 +58,8 @@ func NewChatHandler(
 	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
 	backgroundMapper *mapper.BackgroundMapper,
+	syncProvider *_provider.SyncProvider,
+	messageRepository usecases.Repository,
 ) *chatHandler {
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
@@ -67,6 +76,8 @@ func NewChatHandler(
 		bdsproClient:            bdsproClient,
 		conversationMapper:      conversationMapper,
 		backgroundMapper:        backgroundMapper,
+		syncProvider:            syncProvider,
+		messageRepository:       messageRepository,
 	}
 }
 
@@ -110,13 +121,20 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 		},
 	}
 	s.eventChannel <- event
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, model.ID), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		memberIds := append(utils.Int32SliceToUint64Slice(req.Members), uint64(req.CreatedBy))
+		s.invalidateConversationsListSyncKeyForUsers(ctx, memberIds)
+	}
 	return &chatpb.CreateConversationResponse{
 		ConversationId: int32(model.ID),
 	}, nil
 }
 
 // @Summary Lấy danh sách đoạn hội thoại
-// @Description Lấy danh sách đoạn hội thoại theo các tiêu chí được chỉ định
+// @Description Lấy danh sách đoạn hội thoại theo các tiêu chí được chỉ định (sync: gửi timestamp lần trước, unchanged=true nếu dùng cache)
 // @Tags Chat
 // @Accept json
 // @Produce json
@@ -125,6 +143,15 @@ func (s *chatHandler) CreateConversation(ctx context.Context, req *chatpb.Create
 // @Success 200 {object} chatpb.GetConversationsResponse
 // @Router /conversations [get]
 func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConversationsRequest) (*chatpb.GetConversationsResponse, error) {
+	if s.syncProvider != nil && req != nil && req.Timestamp > 0 {
+		key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationsMe, 0)
+		updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+		s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+		if !updated {
+			return &chatpb.GetConversationsResponse{Conversations: nil, Unchanged: true}, nil
+		}
+	}
+
 	var limit, offset int64
 	if req.Limit != nil {
 		limit = int64(*req.Limit)
@@ -146,8 +173,10 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConve
 	pbConversations := s.conversationMapper.ConversationsToPb(conversations)
 	s.userClient.MapUserProfile(ctx, pbConversations)
 
+	ts := time.Now().UnixMilli()
 	return &chatpb.GetConversationsResponse{
 		Conversations: pbConversations,
+		Timestamp:     ts,
 	}, nil
 }
 
@@ -221,10 +250,81 @@ func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.Messa
 		},
 	}
 	s.eventChannel <- updateRoomEvent
+	s.invalidateMessageTypeSyncKeys(ctx, message.ConversationID, string(message.ContentType))
+	s.invalidateUnreadSyncKeysForReceivers(ctx, message.ConversationID, message.SenderID)
 	return &chatpb.SendMessageResponse{
 		MessageId: int32(message.ID),
 		CreatedAt: message.CreatedAt.Local().Format(time.RFC3339),
 	}, nil
+}
+
+// invalidateMessageTypeSyncKeys cập nhật timestamp khi có message file/image/link mới
+func (s *chatHandler) invalidateMessageTypeSyncKeys(ctx context.Context, conversationID uint64, contentType string) {
+	if s.syncProvider == nil {
+		return
+	}
+	ct := strings.ToLower(contentType)
+	ts := time.Now().UnixMilli()
+	switch ct {
+	case "image":
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, conversationID), ts)
+	case "link":
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, conversationID), ts)
+	case "file", "video", "audio", "pdf":
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, conversationID), ts)
+	}
+	_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+}
+
+// invalidateUnreadSyncKeysForReceivers cập nhật timestamp unread của các thành viên nhận tin nhắn (trừ sender)
+func (s *chatHandler) invalidateUnreadSyncKeysForReceivers(ctx context.Context, conversationID uint64, senderID uint64) {
+	if s.syncProvider == nil {
+		return
+	}
+	participants, _, err := s.participantUsecases.GetListParticipant(ctx, conversationID)
+	if err != nil {
+		return
+	}
+	ts := time.Now().UnixMilli()
+	for _, p := range participants {
+		if p.UserID != senderID {
+			key := s.syncProvider.GetKeyForProfile(p.UserID, 0, _provider.SyncKeyChatUnreadMe)
+			_ = s.syncProvider.PutTimestamp(ctx, key, ts)
+			// Danh sách conversations cũng thay đổi (lastMessage)
+			keyConv := s.syncProvider.GetKeyForProfile(p.UserID, 0, _provider.SyncKeyConversationsMe)
+			_ = s.syncProvider.PutTimestamp(ctx, keyConv, ts)
+		}
+	}
+}
+
+// invalidateConversationsListSyncKeyForUsers cập nhật timestamp danh sách conversations và conversation common của các user
+func (s *chatHandler) invalidateConversationsListSyncKeyForUsers(ctx context.Context, profileIds []uint64) {
+	if s.syncProvider == nil {
+		return
+	}
+	ts := time.Now().UnixMilli()
+	for _, id := range profileIds {
+		key := s.syncProvider.GetKeyForProfile(id, 0, _provider.SyncKeyConversationsMe)
+		_ = s.syncProvider.PutTimestamp(ctx, key, ts)
+		keyCommon := s.syncProvider.GetKeyForProfile(id, 0, _provider.SyncKeyConversationCommon)
+		_ = s.syncProvider.PutTimestamp(ctx, keyCommon, ts)
+	}
+}
+
+// invalidateConversationsListSyncKeyForParticipants cập nhật timestamp danh sách conversations của tất cả thành viên
+func (s *chatHandler) invalidateConversationsListSyncKeyForParticipants(ctx context.Context, conversationID uint64) {
+	if s.syncProvider == nil {
+		return
+	}
+	participants, _, err := s.participantUsecases.GetListParticipant(ctx, conversationID)
+	if err != nil {
+		return
+	}
+	profileIds := make([]uint64, 0, len(participants))
+	for _, p := range participants {
+		profileIds = append(profileIds, p.UserID)
+	}
+	s.invalidateConversationsListSyncKeyForUsers(ctx, profileIds)
 }
 
 // @Summary Gửi tin nhắn đến người nhận
@@ -239,7 +339,7 @@ func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.Messa
 func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
 	receiverID := req.ReceiverId
 	if receiverID == nil {
-		return nil, _errors.New("receiverId is required")
+		return nil, _errors.NewAppError(http.StatusBadRequest, "receiverId is required")
 	}
 	message, err := s.messageUsecases.SendToReceiver(ctx, &models.MessageModel{
 		ConversationID: uint64(req.ConversationId),
@@ -295,6 +395,8 @@ func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessag
 		},
 	}
 	s.eventChannel <- updateRoomEvent
+	s.invalidateMessageTypeSyncKeys(ctx, message.ConversationID, string(message.ContentType))
+	s.invalidateUnreadSyncKeysForReceivers(ctx, message.ConversationID, message.SenderID)
 	return &chatpb.SendMessageResponse{
 		MessageId: int32(message.ID),
 		CreatedAt: message.CreatedAt.Local().Format(time.RFC3339),
@@ -311,30 +413,58 @@ func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessag
 // @Success 200 {object} chatpb.GetMessagesResponse
 // @Router /messages [get]
 func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
-	var limit, offset int64
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
+	fmt.Println("cacheExists", cacheExists)
+
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			keyCommon := s.syncProvider.GetKeyWithoutMe(ctxClone, _provider.SyncKeyConversationCommon, uint64(req.ConversationId))
+			fmt.Println("keyCommon", keyCommon)
+			latestAt, errLatest := s.messageRepository.GetLatestMessageCreatedAt(ctxClone, uint64(req.ConversationId))
+			fmt.Println("latestAt", latestAt)
+			if errLatest == nil && latestAt != nil && !latestAt.IsZero() {
+				_ = s.syncProvider.PutTimestamp(ctxClone, keyCommon, latestAt.UnixMilli())
+			}
+		}()
+	}
+
+	// timestamp == 0: lấy mới; != 0: check key cnv:c (last), nếu chưa có thay đổi thì trả ErrCacheUnchanged
+	if !updated {
+		return &chatpb.GetMessagesResponse{Messages: nil, Total: 0, Unchanged: true}, nil
+	}
+
+	// var limit, offset int64
 	var sort string
 	var fromDate, toDate *time.Time
-	if req.Limit != nil {
-		limit = int64(*req.Limit)
-	} else {
-		limit = 10
+	// if req.Size != nil {
+	// 	limit = int64(*req.Size)
+	// } else {
+	// 	limit = 10
+	// }
+
+	// if req.Offset != nil {
+	// 	offset = int64(*req.Offset)
+	// } else {
+	// 	offset = 0
+	// }
+
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+		Sort: "created_at desc",
 	}
 
-	if req.Offset != nil {
-		offset = int64(*req.Offset)
-	} else {
-		offset = 0
-	}
+	// if req.Sort != nil {
+	// 	sort = *req.Sort
+	// } else {
+	// 	sort = "desc"
+	// }
 
-	if req.Sort != nil {
-		sort = *req.Sort
-	} else {
-		sort = "desc"
-	}
-
-	if req.FromDate != nil {
-		tempFromDate := _utils.ParseStringToTime(*req.FromDate)
-		fromDate = tempFromDate
+	if req.Timestamp != 0 {
+		tempFromDate := time.UnixMilli(req.Timestamp) // _utils.ParseStringToTime(strconv.FormatInt(req.Timestamp, 10))
+		fromDate = &tempFromDate
 	}
 
 	if req.ToDate != nil {
@@ -342,7 +472,7 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 		toDate = tempToDate
 	}
 
-	messages, err := s.messageUsecases.GetMessages(ctx, limit, offset, uint64(req.ConversationId), sort, fromDate, toDate)
+	messages, err := s.messageUsecases.GetMessages(ctx, pagable, uint64(req.ConversationId), sort, fromDate, toDate)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +495,8 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 			ContentType: string(msg.ContentType),
 			FileUrl:     msg.FileURL,
 			RoomId:      strconv.FormatUint(msg.ConversationID, 10),
-			CreatedAt:   msg.CreatedAt.Local().Format(time.RFC3339),
+			CreatedAt:   _utils.FormatTimeToString(&msg.CreatedAt),
+			UpdatedAt:   _utils.FormatTimeToString(&msg.UpdatedAt),
 			IsRecall:    msg.Recall,
 			ExtraId:     msg.ExtraId,
 		}
@@ -377,7 +508,8 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 				ContentType: string(msg.ReplyMessage.ContentType),
 				FileUrl:     msg.ReplyMessage.FileURL,
 				RoomId:      strconv.FormatUint(msg.ReplyMessage.ConversationID, 10),
-				CreatedAt:   msg.ReplyMessage.CreatedAt.Local().Format(time.RFC3339),
+				CreatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.CreatedAt),
+				UpdatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.UpdatedAt),
 			}
 		}
 		if msg.Reactions != nil {
@@ -400,7 +532,9 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 	s.bdsproClient.MapProductPbByIds(ctx, pbMessages)
 
 	return &chatpb.GetMessagesResponse{
-		Messages: pbMessages,
+		Messages:  pbMessages,
+		Total:     int64(len(pbMessages)),
+		Unchanged: false,
 	}, nil
 }
 
@@ -441,6 +575,10 @@ func (s *chatHandler) ForwardMessage(ctx context.Context, req *chatpb.ForwardMes
 		// }
 	}
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, pbMessages)
+	for _, message := range messages {
+		s.invalidateMessageTypeSyncKeys(ctx, message.ConversationID, string(message.ContentType))
+		s.invalidateUnreadSyncKeysForReceivers(ctx, message.ConversationID, message.SenderID)
+	}
 	for _, message := range pbMessages {
 		event := &chatpb.SendMessage{
 			Type: constants.MESSAGE_TYPE,
@@ -449,7 +587,6 @@ func (s *chatHandler) ForwardMessage(ctx context.Context, req *chatpb.ForwardMes
 		s.eventChannel <- event
 	}
 
-	// s.eventChannel <- event
 	return &chatpb.ForwardMessageResponse{
 		MessageIds: messageIds,
 	}, nil
@@ -486,6 +623,11 @@ func (s *chatHandler) MarkAsRead(ctx context.Context, req *chatpb.MarkAsReadRequ
 	}
 
 	s.eventChannel <- event
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyChatUnreadMe, 0), ts)
+		s.invalidateConversationsListSyncKeyForUsers(ctx, []uint64{utils.GetCurrentUserID(ctx)})
+	}
 	return &chatpb.MarkAsReadResponse{
 		Success: true,
 	}, nil
@@ -521,6 +663,11 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 	}
 
 	s.eventChannel <- event
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+	}
 
 	return &chatpb.PinMessageResponse{
 		Success: true,
@@ -549,6 +696,7 @@ func (s *chatHandler) RecallMessage(ctx context.Context, req *chatpb.RecallMessa
 		},
 	}
 	s.eventChannel <- event
+	s.invalidateMessageTypeSyncKeys(ctx, message.ConversationID, string(message.ContentType))
 
 	return &chatpb.RecallMessageResponse{
 		Success: true,
@@ -577,6 +725,12 @@ func (s *chatHandler) RemoveUser(ctx context.Context, req *chatpb.RemoveUserRequ
 		},
 	}
 	s.eventChannel <- event
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		s.invalidateConversationsListSyncKeyForUsers(ctx, []uint64{uint64(req.TargetUserId)})
+	}
 	return &chatpb.RemoveUserResponse{
 		Success: true,
 	}, nil
@@ -597,6 +751,14 @@ func (s *chatHandler) EditChannel(ctx context.Context, req *chatpb.EditChannelRe
 	if err != nil {
 		return nil, err
 	}
+	if s.syncProvider != nil {
+		key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId))
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, key, ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		s.invalidateConversationsListSyncKeyForParticipants(ctx, uint64(req.ConversationId))
+	}
 	return &chatpb.EditChannelResponse{
 		Success: true,
 	}, nil
@@ -616,7 +778,12 @@ func (s *chatHandler) CreateOrgChannel(ctx context.Context, req *chatpb.CreateOr
 	if err != nil {
 		return nil, err
 	}
-
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, channel.ID), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		s.invalidateConversationsListSyncKeyForParticipants(ctx, channel.ID)
+	}
 	return &chatpb.CreateOrgChannelResponse{
 		ConversationId: int32(channel.ID),
 	}, nil
@@ -636,9 +803,70 @@ func (s *chatHandler) MuteConversation(ctx context.Context, req *chatpb.MuteConv
 	if err != nil {
 		return nil, err
 	}
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		s.invalidateConversationsListSyncKeyForUsers(ctx, []uint64{utils.GetCurrentUserID(ctx)})
+	}
 
 	return &chatpb.MuteConversationResponse{
 		Success: true,
+	}, nil
+}
+
+// @Summary Lấy timestamps các loại data của conversation
+// @Description API check sync - lấy timestamp từ Redis cho từng key, FE so sánh với cache và chỉ gọi API tương ứng khi có thay đổi. Keys: detail, files, links, images, members, setting, pinned, messages, last (cnv:c - cập nhật khi có event conversation)
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Conversation ID"
+// @Success 200 {object} chatpb.ConversationTimestampsResponse "Map key -> timestamp (ms)"
+// @Router /conversation/{id}/timestamp [get]
+func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharepb.IdRequest) (*chatpb.ConversationTimestampsResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.BadRequestException("conversation id is required")
+	}
+
+	if s.syncProvider == nil {
+		return &chatpb.ConversationTimestampsResponse{Timestamps: map[string]int64{}}, nil
+	}
+
+	convID := req.Id
+	redisKeys := []string{
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMembers, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, convID),
+		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMessages, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, convID),
+	}
+
+	vals, err := s.syncProvider.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.NewAppError(http.StatusInternalServerError, err.Error())
+	}
+
+	names := []string{
+		"detail", "files", "links", "images", "members", "setting", "pinned", "messages", "last",
+	}
+
+	timestamps := make(map[string]int64, len(names))
+	for i, v := range vals {
+		if v == nil {
+			timestamps[names[i]] = 0
+			continue
+		}
+		ts, _ := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 64)
+		timestamps[names[i]] = ts
+	}
+
+	return &chatpb.ConversationTimestampsResponse{
+		Timestamps: timestamps,
 	}, nil
 }
 
@@ -707,6 +935,13 @@ func (s *chatHandler) Search(ctx context.Context, req *chatpb.SearchRequest) (*c
 // @Param id path int true "ID đoạn hội thoại"
 // @Router /conversation/{id} [get]
 func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetConversationByIdRequest) (*chatpb.GetConversationByIdResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId))
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetConversationByIdResponse{}, nil
+	}
+
 	req.IncludeMembers = true
 	conversation, err := s.conversationUsecases.GetConversationById(ctx, uint64(req.ConversationId), req.IncludeMembers)
 	if err != nil {
@@ -730,6 +965,12 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 // @Success 200 {object} chatpb.GetListParticipantResponse
 // @Router /conversation/members [get]
 func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetListParticipantRequest) (*chatpb.GetListParticipantResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMembers, uint64(req.ConversationId))
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetListParticipantResponse{Data: []*chatpb.Participant{}, Total: 0}, nil
+	}
 	participants, total, err := s.participantUsecases.GetListParticipant(ctx, req.ConversationId)
 	if err != nil {
 		return nil, err
@@ -813,6 +1054,12 @@ func (s *chatHandler) GetReadReceipt(ctx context.Context, req *chatpb.GetReadRec
 // @Success 200 {object} chatpb.GetMessagesResponse
 // @Router /messages/pinned [get]
 func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId))
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetMessagesResponse{Messages: []*chatpb.Message{}, Total: 0}, nil
+	}
 	messages, err := s.messageUsecases.GetPinnedMessages(ctx, uint64(req.ConversationId))
 	if err != nil {
 		return nil, err
@@ -888,7 +1135,12 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 		}
 		s.eventChannel <- event
 	}
-
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, req.ConversationId), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		s.invalidateConversationsListSyncKeyForUsers(ctx, req.UserIds)
+	}
 	return &chatpb.AddUserResponse{
 		Success:    totalAdded > 0,
 		TotalAdded: int32(totalAdded),
@@ -914,6 +1166,11 @@ func (s *chatHandler) LeaveRoom(ctx context.Context, req *chatpb.LeaveRoomReques
 		},
 	}
 	s.eventChannel <- event
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId)), ts)
+		s.invalidateConversationsListSyncKeyForUsers(ctx, []uint64{utils.GetCurrentUserID(ctx)})
+	}
 	return &chatpb.LeaveRoomResponse{
 		Success: true,
 	}, nil
@@ -957,9 +1214,12 @@ func (s *chatHandler) EditMessage(ctx context.Context, req *chatpb.EditMessageRe
 // @Success 200 {object} chatpb.DeleteViolationResponse
 // @Router /messages/delete-violation [post]
 func (s *chatHandler) DeleteViolation(ctx context.Context, req *chatpb.DeleteViolationRequest) (*chatpb.DeleteViolationResponse, error) {
-	err := s.messageUsecases.DeleteViolation(ctx, uint64(req.MessageId))
+	message, err := s.messageUsecases.DeleteViolation(ctx, uint64(req.MessageId))
 	if err != nil {
 		return nil, err
+	}
+	if message != nil {
+		s.invalidateMessageTypeSyncKeys(ctx, message.ConversationID, string(message.ContentType))
 	}
 	event := &chatpb.DeleteViolationMessage{
 		Type: constants.DELETE_VIOLATION_MESSAGE_TYPE,
@@ -994,6 +1254,12 @@ func (s *chatHandler) DeleteRoom(ctx context.Context, req *chatpb.DeleteRoomRequ
 		},
 	}
 	s.eventChannel <- event
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, uint64(req.ConversationId)), ts)
+		s.invalidateConversationsListSyncKeyForParticipants(ctx, uint64(req.ConversationId))
+	}
 	return &chatpb.DeleteRoomResponse{
 		Success: true,
 	}, nil
@@ -1009,6 +1275,13 @@ func (s *chatHandler) DeleteRoom(ctx context.Context, req *chatpb.DeleteRoomRequ
 // @Success 200 {object} chatpb.GetSettingResponse
 // @Router /conversation/{id}/setting [get]
 func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequest) (*chatpb.GetSettingResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, req.Id)
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetSettingResponse{}, nil
+	}
+
 	conversation, participant, err := s.conversationUsecases.GetSetting(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, err
@@ -1035,6 +1308,12 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequ
 // @Success 200 {object} chatpb.GetFilesResponse
 // @Router /messages/files [get]
 func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest) (*chatpb.GetFilesResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, uint64(req.ConversationId))
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetFilesResponse{Messages: []*chatpb.Message{}, Total: 0}, nil
+	}
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"FILE", "video", "audio", "pdf"})
 	if err != nil {
 		return nil, err
@@ -1070,6 +1349,12 @@ func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest)
 // @Success 200 {object} chatpb.GetImagesResponse
 // @Router /messages/images [get]
 func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesRequest) (*chatpb.GetImagesResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, uint64(req.ConversationId))
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetImagesResponse{Data: []*chatpb.Message{}, Total: 0}, nil
+	}
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"IMAGE"})
 	if err != nil {
 		return nil, err
@@ -1105,6 +1390,12 @@ func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesReques
 // @Success 200 {object} chatpb.GetLinksResponse
 // @Router /messages/links [get]
 func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest) (*chatpb.GetLinksResponse, error) {
+	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, uint64(req.ConversationId))
+	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &chatpb.GetLinksResponse{Messages: []*chatpb.Message{}, Total: 0}, nil
+	}
 	files, total, err := s.messageUsecases.GetMessageByTypeWithPagination(ctx, int64(req.Page), int64(req.Size), uint64(req.ConversationId), []string{"LINK"})
 	if err != nil {
 		return nil, err
@@ -1167,19 +1458,29 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 }
 
 // @Summary Lấy số lượng tin nhắn chưa đọc
-// @Description Lấy số lượng tin nhắn chưa đọc của người dùng hiện tại
+// @Description Lấy số lượng tin nhắn chưa đọc của người dùng hiện tại (sync: gửi timestamp lần trước, unchanged=true nếu dùng cache)
 // @Tags Chat
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param timestamp query int false "Client timestamp lần trước; 0 = luôn lấy từ DB"
 // @Success 200 {object} chatpb.UnreadCountResponse
 // @Router /unread-count [get]
-func (s *chatHandler) UnreadCount(ctx context.Context, req *sharepb.Empty) (*chatpb.UnreadCountResponse, error) {
+func (s *chatHandler) UnreadCount(ctx context.Context, req *chatpb.UnreadCountRequest) (*chatpb.UnreadCountResponse, error) {
+	if s.syncProvider != nil && req != nil && req.Timestamp > 0 {
+		key := s.syncProvider.GetKey(ctx, _provider.SyncKeyChatUnreadMe, 0)
+		updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
+		s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+		if !updated {
+			return &chatpb.UnreadCountResponse{UnreadCount: 0, Unchanged: true}, nil
+		}
+	}
 	unreadCount, err := s.conversationUsecases.GetUnreadCount(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &chatpb.UnreadCountResponse{UnreadCount: unreadCount}, nil
+	ts := time.Now().UnixMilli()
+	return &chatpb.UnreadCountResponse{UnreadCount: unreadCount, Timestamp: ts}, nil
 }
 
 func (s *chatHandler) Start() {
@@ -1220,7 +1521,12 @@ func (s *chatHandler) SetBackgroundImage(ctx context.Context, req *chatpb.SetBac
 	}
 
 	s.eventChannel <- event
-
+	if s.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, uint64(req.ConversationId)), ts)
+		s.invalidateConversationsListSyncKeyForParticipants(ctx, uint64(req.ConversationId))
+	}
 	return &chatpb.SetBackgroundImageResponse{
 		Success: true,
 	}, nil

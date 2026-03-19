@@ -29,7 +29,7 @@ func TimestampToTime(t *timestamppb.Timestamp) *time.Time {
 
 func FormatTimeToString(t *time.Time) string {
 	if t != nil {
-		return t.Format(RFC3339Milli)
+		return t.Format("2006-01-02T15:04:05.000+00:00")
 	}
 	return ""
 }

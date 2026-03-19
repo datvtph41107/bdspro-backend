@@ -101,6 +101,7 @@ case "$1" in
     path_jar=main
     ;;
   "chat")
+    local_path=chat-v1-service
     service_path=chat-service
     path_jar=main
     ;;
@@ -195,7 +196,12 @@ case "$1" in
     ;;
 esac
 
-cd $service_path
+if [ -n "$local_path" ]; then
+  cd "$local_path"
+else
+  cd "$service_path"
+fi
+
 REMOTE_DIR=${REMOTE_PATH}/${service_path}
 
 echo "--- GO BUILDING ---"

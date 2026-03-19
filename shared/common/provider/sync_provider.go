@@ -38,6 +38,9 @@ const (
 	SyncKeyConversationSetting  = "cnv:set"
 	SyncKeyConversationPinned   = "cnv:pi"
 	SyncKeyConversationMessages = "cnv:msgs"
+	SyncKeyChatUnreadMe         = "cnv:ur"
+	SyncKeyConversationsMe      = "cnv:me"
+	SyncKeyConversationCommon   = "cnv:c"
 )
 
 type SyncProvider struct {
@@ -50,11 +53,22 @@ func NewSyncProvider(rd *_redis.RedisService) *SyncProvider {
 	}
 }
 
-// GetKey trả về key Redis theo format {prefix}:{profileId}:{resourceId}
-// Ví dụ: GetKey(ctx, "product", 123) -> "product:1:123" (1 là profileId từ context)
+// GetKey trả về key Redis theo format {profileId}:{resourceId}:{prefix}
+// Ví dụ: GetKey(ctx, "product", 123) -> "1:123:product" (1 là profileId từ context)
 func (s *SyncProvider) GetKey(ctx context.Context, prefix string, resourceId uint64) string {
 	profileId := _utils.GetProfileIdWithContext(ctx)
-	return fmt.Sprintf("%s:%d:%d", prefix, profileId, resourceId)
+	return s.GetKeyForProfile(profileId, resourceId, prefix)
+}
+
+// GetKey trả về key Redis theo format {profileId}:{resourceId}:{prefix}
+// Ví dụ: GetKey(ctx, "product", 123) -> "1:123:product" (1 là profileId từ context)
+func (s *SyncProvider) GetKeyWithoutMe(ctx context.Context, prefix string, resourceId uint64) string {
+	return fmt.Sprintf("%d:%s", resourceId, prefix)
+}
+
+// GetKeyForProfile trả về key Redis theo profileId cụ thể (dùng khi cần invalidate key của user khác)
+func (s *SyncProvider) GetKeyForProfile(profileId, resourceId uint64, prefix string) string {
+	return fmt.Sprintf("%d:%d:%s", profileId, resourceId, prefix)
 }
 
 func (s *SyncProvider) HasUpdated(ctx context.Context, key string, timestamp int64) bool {
@@ -68,6 +82,20 @@ func (s *SyncProvider) HasUpdated(ctx context.Context, key string, timestamp int
 	}
 
 	return true
+}
+
+// return: isChanged, cache exists
+func (s *SyncProvider) IsCacheChanged(ctx context.Context, key string, timestamp int64) (bool, bool) {
+	str, err := s.redis.Get(key)
+	if err != nil {
+		return true, false
+	}
+	ts, err := strconv.ParseInt(str, 10, 64)
+	if ts > 0 {
+		return timestamp < ts, true
+	}
+
+	return true, false
 }
 
 func (s *SyncProvider) PutTimestamp(ctx context.Context, key string, timestamp int64) error {

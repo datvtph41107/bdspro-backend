@@ -78,8 +78,8 @@ func (m *ConversationMapper) ConversationToPbGetConversationById(conversation *m
 		CreatedBy:       int32(conversation.CreatedBy),
 		IsBroadcast:     conversation.IsBroadcast,
 		ForbidForward:   conversation.ForbidForward,
-		CreatedAt:       conversation.CreatedAt.Local().Format(time.RFC3339),
-		UpdatedAt:       conversation.UpdatedAt.Local().Format(time.RFC3339),
+		CreatedAt:       _utils.FormatTimeToString(&conversation.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(&conversation.UpdatedAt),
 		Participants:    participants,
 		BackgroundImage: m.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage),
 		Avatar:          conversation.Avatar,
@@ -88,6 +88,20 @@ func (m *ConversationMapper) ConversationToPbGetConversationById(conversation *m
 
 	if conversation.BackgroundImage != nil {
 		result.BackgroundImage = m.backgroundMapper.BackgroundImageToPb(conversation.BackgroundImage)
+	}
+
+	if conversation.LatestMessage.ID != 0 {
+		updateStr := _utils.FormatTimeToString(&conversation.LatestMessage.UpdatedAt)
+		result.LastMessage = &chatpb.Message{
+			MessageId:   int32(conversation.LatestMessage.ID),
+			SenderId:    int32(conversation.LatestMessage.SenderID),
+			Content:     conversation.LatestMessage.Content,
+			ContentType: string(conversation.LatestMessage.ContentType),
+			FileUrl:     conversation.LatestMessage.FileURL,
+			CreatedAt:   _utils.FormatTimeToString(&conversation.LatestMessage.CreatedAt),
+			UpdatedAt:   updateStr,
+		}
+		result.UpdatedAt = updateStr
 	}
 
 	return result

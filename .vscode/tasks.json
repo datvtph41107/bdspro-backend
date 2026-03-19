@@ -112,7 +112,7 @@
         {
             "label": "💬 Chat gRPC (8208)",
             "type": "shell",
-            "command": "cd shared/code && make run-dev chat",
+            "command": "cd shared/code && make run-dev chat-v1",
             "args": [],
             "problemMatcher": [
                 "$go"

@@ -47,3 +47,10 @@ func (p *Pagable) GetLimit() int {
 	}
 	return int(p.Size)
 }
+
+func (p *Pagable) GetSort() string {
+	if p.Sort == "" {
+		return "created_at desc"
+	}
+	return p.Sort
+}

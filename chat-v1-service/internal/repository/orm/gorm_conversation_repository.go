@@ -183,11 +183,24 @@ func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conv
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 	conversation.ParticipantIDs = make([]uint64, len(conversation.Participants))
 	for i, participant := range conversation.Participants {
 		conversation.ParticipantIDs[i] = participant.UserID
 	}
-	return &conversation, err
+	// Load lastMessage (tin nhắn mới nhất)
+	var lastMessage models.MessageModel
+	err = r.db.WithContext(ctx).
+		Where("conversation_id = ? AND deleted_at IS NULL", conversationID).
+		Order("created_at DESC").
+		Limit(1).
+		First(&lastMessage).Error
+	if err == nil && lastMessage.ID != 0 {
+		conversation.LatestMessage = lastMessage
+	}
+	return &conversation, nil
 }
 
 func (r *gormRepository) DeleteConversation(ctx context.Context, conversationID uint64) error {

@@ -19,4 +19,5 @@ var (
 	ConversationAlreadyExistsCode = 4016
 	CannotLeavePrivateChatCode    = 4017
 	CannotModifyPrivateChatCode   = 4018
+	CacheUnchangedCode            = 4019
 )

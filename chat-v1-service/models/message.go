@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type ContentTypeEnum string
 
@@ -25,6 +27,7 @@ type MessageModel struct {
 	ForwardFrom    *uint64                 `json:"forward_from"`
 	DeletedAt      *time.Time              `gorm:"index" json:"-"`
 	CreatedAt      time.Time               `json:"created_at" gorm:"index:idx_conversation_created;default:CURRENT_TIMESTAMP"`
+	UpdatedAt      time.Time               `json:"updated_at" gorm:"index:autoUpdateTime"`
 	Pined          bool                    `json:"pin" gorm:"default:false"`
 	PinnedAt       *time.Time              `json:"pinned_at" gorm:"column:pinned_at"`
 	Recall         bool                    `json:"recall" gorm:"default:false"`

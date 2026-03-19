@@ -2,6 +2,7 @@ package server
 
 import (
 	_middleware "common/middleware"
+	_redis "common/redis"
 	"context"
 	"fmt"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
 	"chat/infrastructure/handlers"
+	"chat/infrastructure/impl"
 	"chat/infrastructure/mapper"
 	"chat/internal/repository"
 	"chat/internal/usecases"
@@ -41,10 +43,12 @@ func NewGRPCServer(port string) *GRPCServer {
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
 	bdsproClient := client.NewBdsproClient()
+	redisClient := _redis.NewRedisService()
+	syncProvider := impl.NewSyncProvider(redisClient)
 	// conversationMapper := mapper.NewConversationMapper()
 
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
-	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase)
+	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase, syncProvider)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
@@ -63,6 +67,8 @@ func NewGRPCServer(port string) *GRPCServer {
 		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
+		syncProvider,
+		pRepository,
 	)
 
 	server := grpc.NewServer(

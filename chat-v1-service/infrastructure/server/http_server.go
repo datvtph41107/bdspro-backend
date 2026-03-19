@@ -1,6 +1,7 @@
 package server
 
 import (
+	_redis "common/redis"
 	"context"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
 	"chat/infrastructure/handlers"
+	"chat/infrastructure/impl"
 	"chat/infrastructure/mapper"
 	middlewares "chat/infrastructure/middleware"
 	"chat/internal/repository"
@@ -50,7 +52,9 @@ func NewHTTPServer(port string) *HTTPServer {
 	userClient := client.NewUserClient()
 	bdsproClient := client.NewBdsproClient()
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
-	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase)
+	redisClient := _redis.NewRedisService()
+	syncProvider := impl.NewSyncProvider(redisClient)
+	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase, syncProvider)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
@@ -69,6 +73,8 @@ func NewHTTPServer(port string) *HTTPServer {
 		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
+		syncProvider,
+		pRepository,
 	)
 	mux := runtime.NewServeMux()
 
