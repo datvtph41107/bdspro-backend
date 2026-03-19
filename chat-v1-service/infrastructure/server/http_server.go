@@ -60,7 +60,8 @@ func NewHTTPServer(port string) *HTTPServer {
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
 	backgroundImageUsecase := usecases.NewBackgroundImageUsecases(pRepository)
 	backgroundMapper := mapper.NewBackgroundMapper()
-	conversationMapper := mapper.NewConversationMapper(backgroundMapper)
+	messageMapper := mapper.NewMessageMapper()
+	conversationMapper := mapper.NewConversationMapper(backgroundMapper, messageMapper)
 
 	delivery := handlers.NewDelivery(
 		converstationUsecase,
@@ -72,6 +73,7 @@ func NewHTTPServer(port string) *HTTPServer {
 		userClient,
 		bdsproClient,
 		conversationMapper,
+		messageMapper,
 		backgroundMapper,
 		syncProvider,
 		pRepository,

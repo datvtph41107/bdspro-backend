@@ -54,7 +54,8 @@ func NewGRPCServer(port string) *GRPCServer {
 	messageReactionUsecase := usecases.NewMessageReactionUsecases(pRepository)
 	backgroundImageUsecase := usecases.NewBackgroundImageUsecases(pRepository)
 	backgroundMapper := mapper.NewBackgroundMapper()
-	conversationMapper := mapper.NewConversationMapper(backgroundMapper)
+	messageMapper := mapper.NewMessageMapper()
+	conversationMapper := mapper.NewConversationMapper(backgroundMapper, messageMapper)
 
 	delivery := handlers.NewDelivery(
 		converstationUsecase,
@@ -66,6 +67,7 @@ func NewGRPCServer(port string) *GRPCServer {
 		userClient,
 		bdsproClient,
 		conversationMapper,
+		messageMapper,
 		backgroundMapper,
 		syncProvider,
 		pRepository,

@@ -94,6 +94,7 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 	}
 
 	var conversations []*models.ConversationModel
+	var latestMessageIDs []uint64
 	for _, res := range results {
 		conv := res.ConversationModel
 		conv.UnreadCount = res.UnreadCount
@@ -110,14 +111,39 @@ func (r *gormRepository) GetConversations(ctx context.Context, limit, offset int
 				Pined:       res.LatestMessagePined,
 				Recall:      res.LatestMessageRecall,
 			}
+			latestMessageIDs = append(latestMessageIDs, res.LatestMessageID)
 		}
 
-		var result []uint64
+		var participantIDs []uint64
 		for _, id := range res.ParticipantIDs {
-			result = append(result, uint64(id))
+			participantIDs = append(participantIDs, uint64(id))
 		}
-		conv.ParticipantIDs = result
+		conv.ParticipantIDs = participantIDs
 		conversations = append(conversations, &conv)
+	}
+
+	// Load full LatestMessage (ReplyMessage, Reactions) giống GetMessages
+	if len(latestMessageIDs) > 0 {
+		var fullMessages []*models.MessageModel
+		err = r.db.WithContext(ctx).
+			Preload("ReplyMessage").
+			Preload("Reactions").
+			Where("id IN ?", latestMessageIDs).
+			Find(&fullMessages).Error
+		if err != nil {
+			return nil, err
+		}
+		messageByID := make(map[uint64]*models.MessageModel)
+		for _, m := range fullMessages {
+			messageByID[m.ID] = m
+		}
+		for _, conv := range conversations {
+			if conv.LatestMessage.ID != 0 {
+				if full, ok := messageByID[conv.LatestMessage.ID]; ok {
+					conv.LatestMessage = *full
+				}
+			}
+		}
 	}
 
 	return conversations, nil
@@ -190,9 +216,11 @@ func (r *gormRepository) GetConversationByIDWithMember(ctx context.Context, conv
 	for i, participant := range conversation.Participants {
 		conversation.ParticipantIDs[i] = participant.UserID
 	}
-	// Load lastMessage (tin nhắn mới nhất)
+	// Load lastMessage (tin nhắn mới nhất) đủ như GetMessages: ReplyMessage, Reactions
 	var lastMessage models.MessageModel
 	err = r.db.WithContext(ctx).
+		Preload("ReplyMessage").
+		Preload("Reactions").
 		Where("conversation_id = ? AND deleted_at IS NULL", conversationID).
 		Order("created_at DESC").
 		Limit(1).

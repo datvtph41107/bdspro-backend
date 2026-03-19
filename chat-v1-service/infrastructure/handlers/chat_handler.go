@@ -43,6 +43,7 @@ type chatHandler struct {
 	userClient              *client.UserClient
 	bdsproClient            *client.BdsproClient
 	conversationMapper      *mapper.ConversationMapper
+	messageMapper           *mapper.MessageMapper
 	backgroundMapper        *mapper.BackgroundMapper
 	syncProvider            *_provider.SyncProvider
 	messageRepository       usecases.Repository
@@ -68,6 +69,7 @@ func NewChatHandler(
 	userClient *client.UserClient,
 	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
+	messageMapper *mapper.MessageMapper,
 	backgroundMapper *mapper.BackgroundMapper,
 	syncProvider *_provider.SyncProvider,
 	messageRepository usecases.Repository,
@@ -86,6 +88,7 @@ func NewChatHandler(
 		userClient:              userClient,
 		bdsproClient:            bdsproClient,
 		conversationMapper:      conversationMapper,
+		messageMapper:           messageMapper,
 		backgroundMapper:        backgroundMapper,
 		syncProvider:            syncProvider,
 		messageRepository:       messageRepository,
@@ -488,53 +491,7 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 
 	var pbMessages []*chatpb.Message
 	for _, msg := range messages {
-		if msg.Recall {
-			pbMessages = append(pbMessages, &chatpb.Message{
-				MessageId: int32(msg.ID),
-				SenderId:  int32(msg.SenderID),
-				IsRecall:  true,
-				CreatedAt: _utils.FormatTimeToString(&msg.CreatedAt),
-			})
-			continue
-		}
-		newMessage := &chatpb.Message{
-			MessageId:   int32(msg.ID),
-			SenderId:    int32(msg.SenderID),
-			Content:     msg.Content,
-			ContentType: string(msg.ContentType),
-			FileUrl:     msg.FileURL,
-			RoomId:      strconv.FormatUint(msg.ConversationID, 10),
-			CreatedAt:   _utils.FormatTimeToString(&msg.CreatedAt),
-			UpdatedAt:   _utils.FormatTimeToString(&msg.UpdatedAt),
-			IsRecall:    msg.Recall,
-			ExtraId:     msg.ExtraId,
-		}
-		if msg.ReplyMessage != nil {
-			newMessage.ReplyMessage = &chatpb.Message{
-				MessageId:   int32(msg.ReplyMessage.ID),
-				SenderId:    int32(msg.ReplyMessage.SenderID),
-				Content:     msg.ReplyMessage.Content,
-				ContentType: string(msg.ReplyMessage.ContentType),
-				FileUrl:     msg.ReplyMessage.FileURL,
-				RoomId:      strconv.FormatUint(msg.ReplyMessage.ConversationID, 10),
-				CreatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.CreatedAt),
-				UpdatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.UpdatedAt),
-			}
-		}
-		if msg.Reactions != nil {
-			newMessage.Reactions = make([]*chatpb.MessageReaction, len(msg.Reactions))
-			for i, reaction := range msg.Reactions {
-				newMessage.Reactions[i] = &chatpb.MessageReaction{
-					UserId:    int32(reaction.UserID),
-					MessageId: int32(reaction.MessageID),
-					CreatedAt: reaction.CreatedAt.Local().Format(time.RFC3339),
-					Reaction:  reaction.Reaction,
-					Id:        uint64(reaction.ID),
-				}
-			}
-		}
-
-		pbMessages = append(pbMessages, newMessage)
+		pbMessages = append(pbMessages, s.messageMapper.MessageToPb(msg))
 	}
 
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, pbMessages)
@@ -1371,7 +1328,8 @@ func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest)
 			MessageId:   int32(file.ID),
 			FileUrl:     file.FileURL,
 			Content:     file.Content,
-			CreatedAt:   file.CreatedAt.Local().Format(time.RFC3339),
+			CreatedAt:   _utils.FormatTimeToString(&file.CreatedAt),
+			UpdatedAt:   _utils.FormatTimeToString(&file.UpdatedAt),
 			SenderId:    int32(file.SenderID),
 			ContentType: string(file.ContentType),
 			RoomId:      strconv.FormatUint(file.ConversationID, 10),
@@ -1422,7 +1380,8 @@ func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesReques
 			MessageId:   int32(file.ID),
 			FileUrl:     file.FileURL,
 			Content:     file.Content,
-			CreatedAt:   file.CreatedAt.Local().Format(time.RFC3339),
+			CreatedAt:   _utils.FormatTimeToString(&file.CreatedAt),
+			UpdatedAt:   _utils.FormatTimeToString(&file.UpdatedAt),
 			SenderId:    int32(file.SenderID),
 			ContentType: string(file.ContentType),
 			RoomId:      strconv.FormatUint(file.ConversationID, 10),
@@ -1473,7 +1432,8 @@ func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest)
 			MessageId:   int32(file.ID),
 			FileUrl:     file.FileURL,
 			Content:     file.Content,
-			CreatedAt:   file.CreatedAt.Local().Format(time.RFC3339),
+			CreatedAt:   _utils.FormatTimeToString(&file.CreatedAt),
+			UpdatedAt:   _utils.FormatTimeToString(&file.UpdatedAt),
 			SenderId:    int32(file.SenderID),
 			ContentType: string(file.ContentType),
 			RoomId:      strconv.FormatUint(file.ConversationID, 10),
@@ -1507,7 +1467,7 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 			MessageId: int32(model.MessageID),
 			UserId:    int32(model.UserID),
 			Reaction:  model.Reaction,
-			CreatedAt: model.CreatedAt.Local().Format(time.RFC3339),
+			CreatedAt: _utils.FormatTimeToString(&model.CreatedAt),
 			Id:        uint64(model.ID),
 			RoomId:    strconv.FormatUint(model.ConversationId, 10),
 		},

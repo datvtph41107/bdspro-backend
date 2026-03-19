@@ -346,6 +346,8 @@ message Message {
   uint64 indexKey = 15;
   int32 cmId = 16;
   string updatedAt = 17;
+  optional uint64 replyId = 18;
+  optional string pinnedAt = 19;
 }
 
 message GetMessagesByIndexRequest {

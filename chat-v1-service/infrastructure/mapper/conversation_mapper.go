@@ -9,13 +9,16 @@ import (
 
 type ConversationMapper struct {
 	backgroundMapper *BackgroundMapper
+	messageMapper    *MessageMapper
 }
 
 func NewConversationMapper(
 	backgroundMapper *BackgroundMapper,
+	messageMapper *MessageMapper,
 ) *ConversationMapper {
 	return &ConversationMapper{
 		backgroundMapper: backgroundMapper,
+		messageMapper:    messageMapper,
 	}
 }
 
@@ -37,14 +40,7 @@ func (m *ConversationMapper) ConversationToPb(conv *models.ConversationModel) *c
 	}
 
 	if conv.LatestMessage.ID != 0 {
-		result.LastMessage = &chatpb.Message{
-			MessageId:   int32(conv.LatestMessage.ID),
-			SenderId:    int32(conv.LatestMessage.SenderID),
-			Content:     conv.LatestMessage.Content,
-			ContentType: string(conv.LatestMessage.ContentType),
-			FileUrl:     conv.LatestMessage.FileURL,
-			CreatedAt:   conv.LatestMessage.CreatedAt.Local().Format(time.RFC3339),
-		}
+		result.LastMessage = m.messageMapper.MessageToPb(&conv.LatestMessage)
 		result.UpdatedAt = _utils.FormatTimeToString(&conv.LatestMessage.CreatedAt)
 	}
 
@@ -91,17 +87,8 @@ func (m *ConversationMapper) ConversationToPbGetConversationById(conversation *m
 	}
 
 	if conversation.LatestMessage.ID != 0 {
-		updateStr := _utils.FormatTimeToString(&conversation.LatestMessage.UpdatedAt)
-		result.LastMessage = &chatpb.Message{
-			MessageId:   int32(conversation.LatestMessage.ID),
-			SenderId:    int32(conversation.LatestMessage.SenderID),
-			Content:     conversation.LatestMessage.Content,
-			ContentType: string(conversation.LatestMessage.ContentType),
-			FileUrl:     conversation.LatestMessage.FileURL,
-			CreatedAt:   _utils.FormatTimeToString(&conversation.LatestMessage.CreatedAt),
-			UpdatedAt:   updateStr,
-		}
-		result.UpdatedAt = updateStr
+		result.LastMessage = m.messageMapper.MessageToPb(&conversation.LatestMessage)
+		result.UpdatedAt = _utils.FormatTimeToString(&conversation.LatestMessage.UpdatedAt)
 	}
 
 	return result

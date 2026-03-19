@@ -75,9 +75,9 @@ func (r *MessageRepo) GetMessages(ctx context.Context, limit, offset int64, conv
 		Preload("ReplyMessage").
 		Preload("Reactions").
 		Where("conversation_id = ? and (? is null or created_at >= ?) and (? is null or created_at <= ?)", conversationId, fromDate, fromDate, toDate, toDate).
-		Limit(int(limit)).
 		Offset(int(offset)).
-		Order(fmt.Sprintf("created_at %s", sort)).
+		Limit(int(limit)).
+		Order(fmt.Sprintf("updated_at %s", sort)).
 		Find(&messages).Error
 	return messages, err
 }
