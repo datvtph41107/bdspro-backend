@@ -11,9 +11,9 @@ type Ward struct {
 	ShortName    string    `json:"shortName" gorm:"column:short_name;size:100;index:idx_wards_short_name"`
 	Lat          float64   `json:"lat" gorm:"column:lat;type:decimal(10,8)"`
 	Lng          float64   `json:"lng" gorm:"column:lng;type:decimal(11,8)"`
-	Code         int32     `json:"code" gorm:"column:code;size:20;uniqueIndex;index:idx_wards_code"`
+	Code         string    `json:"code" gorm:"column:code;size:20;uniqueIndex;index:idx_wards_code"`
 	ProvinceID   string    `json:"provinceId" gorm:"column:province_id;size:50;not null;index:idx_wards_province_id"`
-	ProvinceCode int32     `json:"provinceCode" gorm:"column:province_code;size:20"`
+	ProvinceCode string    `json:"provinceCode" gorm:"column:province_code;size:20"`
 	CreatedAt    time.Time `json:"createdAt" gorm:"column:created_at;default:CURRENT_TIMESTAMP;index:idx_wards_created_at"`
 	UpdatedAt    time.Time `json:"updatedAt" gorm:"column:updated_at;default:CURRENT_TIMESTAMP"`
 

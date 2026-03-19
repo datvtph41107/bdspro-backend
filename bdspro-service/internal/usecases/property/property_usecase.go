@@ -8,6 +8,7 @@ import (
 	"bdspro/internal/repo"
 	property_repo "bdspro/internal/repo/property"
 	_dto "common/domain/dto"
+	_models "common/domain/entity"
 	_enum "common/domain/enum"
 	_errors "common/errors"
 	"common/pkg/fieldmask"
@@ -20,6 +21,7 @@ import (
 	"log"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -1461,7 +1463,6 @@ func (u *PropertyUsecase) UpdateProperty(
 	var result *dto.UpdatePropertyResult
 
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		// 1. Get lineage
 		lineage, err := u.LineageRepo.GetByID(txCtx, c.LineageID)
 		if err != nil {
 			return err
@@ -1470,7 +1471,6 @@ func (u *PropertyUsecase) UpdateProperty(
 			return fmt.Errorf("property lineage id=%d not found", c.LineageID)
 		}
 
-		// 2. Check permission
 		propertyUser, err := u.PropertyUserRepo.GetByLineageAndOwner(txCtx, lineage.ID, userID)
 		if err != nil {
 			return err
@@ -1479,22 +1479,18 @@ func (u *PropertyUsecase) UpdateProperty(
 			return _errors.ForbiddenException("You dont have permission action")
 		}
 
-		// 3. Validate location update trước khi xử lý
 		if err := u.validateLocationUpdate(txCtx, lineage, c); err != nil {
 			return fmt.Errorf("location validation failed: %w", err)
 		}
 
-		// 4. Execute direct update
-		result, err = u.directUpdate(txCtx, lineage, c)
+		result, err = u.directUpdate(txCtx, lineage, c, userID)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. Async side effects
 	go u.triggerSyncEvents(ctx, result.LineageID)
-
 	return result, nil
 }
 
@@ -1508,24 +1504,22 @@ func (u *PropertyUsecase) validateLocationUpdate(
 		return nil
 	}
 
-	// Rule 1: Nếu update ward_id thì phải có province_id trong mask
-	if cmd.Mask.Allows("location.ward_id") && !cmd.Mask.Allows("location.province_id") {
-		// Lấy existing location để kiểm tra
-		if lineage.LocationID != nil {
-			existing, err := u.LocationRepo.GetByID(ctx, *lineage.LocationID)
-			if err == nil && existing != nil && existing.ProvinceID != nil {
-				// OK - ward mới phải thuộc province hiện tại
-				if cmd.Location.WardID != nil {
-					ward, err := u.WardRepo.GetByID(ctx, *cmd.Location.WardID)
-					if err == nil && ward != nil {
-						if ward.ProvinceID != *existing.ProvinceID {
-							return fmt.Errorf("ward %d does not belong to current province %d",
-								*cmd.Location.WardID, *existing.ProvinceID)
-						}
+	// if cmd.Mask.Allows("location.ward_id") && !cmd.Mask.Allows("location.province_id") {
+	if lineage.LocationID != nil {
+		existing, err := u.LocationRepo.GetByID(ctx, *lineage.LocationID)
+		if err == nil && existing != nil && existing.ProvinceID != nil {
+			// OK - ward mới phải thuộc province hiện tại
+			if cmd.Location.WardID != nil {
+				ward, err := u.WardRepo.GetByID(ctx, *cmd.Location.WardID)
+				if err == nil && ward != nil {
+					if ward.ProvinceID != *existing.ProvinceID {
+						return fmt.Errorf("ward %d does not belong to current province %d",
+							*cmd.Location.WardID, *existing.ProvinceID)
 					}
 				}
 			}
 		}
+		// }
 	}
 
 	// Rule 2: Nếu update province_id mà không có trong mask -> warning
@@ -1536,10 +1530,25 @@ func (u *PropertyUsecase) validateLocationUpdate(
 	return nil
 }
 
+type ResolveLocationResult struct {
+	ProvinceID *uint64
+	WardID     *uint64
+	Error      error
+}
+
+type ResolveLocationFromTQD struct {
+	Latitude  float64
+	Longitude float64
+	Mask      fieldmask.FieldMask
+	Result    chan<- *ResolveLocationResult
+	userID    uint64
+}
+
 func (u *PropertyUsecase) directUpdate(
 	ctx context.Context,
 	lineage *domain.PropertyLineage,
 	cmd *dto.UpdatePropertyDTO,
+	userID uint64,
 ) (*dto.UpdatePropertyResult, error) {
 	fkPatch := make(FKPatch)
 
@@ -1551,10 +1560,282 @@ func (u *PropertyUsecase) directUpdate(
 		log.Printf("WARN: set avatar failed: %v", err)
 	}
 
-	if err := u.resolveLocationFromTQD(ctx, cmd); err != nil {
-		log.Printf("WARN: resolveLocationFromTQD failed: %v", err)
+	var currentLocation *domain.PropertyLocation
+	if lineage.LocationID != nil {
+		currentLocation, _ = u.LocationRepo.GetByID(ctx, *lineage.LocationID)
 	}
 
+	needResolve := u.needResolveLocation(cmd)
+
+	if needResolve {
+		ch := make(chan *ResolveLocationResult, 1)
+		lat, lng := *cmd.Location.Latitude, *cmd.Location.Longitude
+		mask := cmd.Mask
+		resolve := &ResolveLocationFromTQD{
+			Latitude:  lat,
+			Longitude: lng,
+			Mask:      mask,
+			Result:    ch,
+			userID:    userID,
+		}
+
+		go u.resolveLocationFromTQD(ctx, resolve)
+
+		select {
+		case result := <-ch:
+			if result.Error == nil {
+				u.applyResolveResult(cmd, result, currentLocation)
+			}
+		case <-time.After(3 * time.Second):
+			log.Printf("⚠ Resolve timeout")
+		}
+	}
+
+	handlers := u.buildHandlers(lineage, cmd)
+	for _, entry := range handlers {
+		newFK, err := RunDirect(ctx, entry.currentFK, entry.h)
+		if err != nil {
+			return nil, err
+		}
+		fkPatch.Set(entry.h.FKColumn(), newFK)
+	}
+
+	if len(fkPatch) > 0 {
+		if err := u.LineageRepo.UpdateFields(ctx, lineage.ID, fkPatch); err != nil {
+			return nil, err
+		}
+	}
+
+	return &dto.UpdatePropertyResult{
+		LineageID: lineage.ID,
+		UpdatedAt: _utils.TimeNowRFC3339(),
+	}, nil
+}
+
+// applyResolveResult - gán khi có thay đổi
+func (u *PropertyUsecase) applyResolveResult(
+	cmd *dto.UpdatePropertyDTO,
+	result *ResolveLocationResult,
+	currentLocation *domain.PropertyLocation,
+) {
+	if result.ProvinceID != nil && cmd.Mask.Allows("location.province_id") {
+		if currentLocation == nil ||
+			currentLocation.ProvinceID == nil ||
+			*result.ProvinceID != *currentLocation.ProvinceID {
+
+			cmd.Location.ProvinceID = result.ProvinceID
+			cmd.Location.ResolvedFromTQD = true
+			log.Printf("Province changed to ID=%d", *result.ProvinceID)
+		} else {
+			log.Printf("Province unchanged (ID=%d), skip assign, already exists data in Province_v2 table db", *result.ProvinceID)
+		}
+	}
+
+	if result.WardID != nil && cmd.Mask.Allows("location.ward_id") {
+		if currentLocation == nil ||
+			currentLocation.WardID == nil ||
+			*result.WardID != *currentLocation.WardID {
+
+			cmd.Location.WardID = result.WardID
+			log.Printf("Ward changed to ID=%d", *result.WardID)
+		} else {
+			log.Printf("Ward unchanged (ID=%d), skip assign, already exists data in Ward_v2 table db", *result.WardID)
+		}
+	}
+}
+
+func (u *PropertyUsecase) needResolveLocation(cmd *dto.UpdatePropertyDTO) bool {
+	if cmd.Location == nil {
+		return false
+	}
+	if cmd.Location.Latitude == nil || cmd.Location.Longitude == nil {
+		return false
+	}
+	if !cmd.Mask.Allows("location.latitude") && !cmd.Mask.Allows("location.longitude") {
+		return false
+	}
+	if cmd.Location.ProvinceID != nil {
+		return false
+	}
+	return true
+}
+
+func (u *PropertyUsecase) resolveLocationFromTQD(
+	ctx context.Context,
+	resolve *ResolveLocationFromTQD,
+) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result := &ResolveLocationResult{}
+
+	defer func() {
+		// 		package main
+		// import "fmt"
+		// func main() {
+		//     defer func() {
+		//         if r := recover(); r != nil {
+		//             fmt.Println("Recovered from:", r)
+		//         }
+		//     }()
+		//     fmt.Println("Start")
+		//     panic("Something went wrong!")
+		//     fmt.Println("This will NOT run")
+		// }
+		// Output:
+		// Start
+		// Recovered from: Something went wrong!
+		if r := recover(); r != nil {
+			log.Printf("CRITICAL: Panic in resolve goroutine: %v", r)
+			result.Error = fmt.Errorf("internal panic: %v", r)
+		}
+		select {
+		case resolve.Result <- result:
+		default:
+			log.Printf("WARN: Result channel full or closed")
+		}
+		close(resolve.Result)
+	}()
+
+	resp, err := u.tqdGRPCClient.GetNearestLocation(ctx, resolve.Latitude, resolve.Longitude)
+	if err != nil {
+		result.Error = fmt.Errorf("tqd error: %w", err)
+		return
+	}
+
+	if resp == nil || resp.Province == nil {
+		log.Printf("TQD returned no province for (%f, %f)", resolve.Latitude, resolve.Longitude)
+		return
+	}
+
+	log.Printf("TQD resolved: %s", resp)
+
+	province, err := u.findOrCreateProvince(ctx, resp.Province, resolve.userID)
+	if err != nil {
+		result.Error = fmt.Errorf("province error: %w", err)
+		return
+	}
+
+	if resolve.Mask.Allows("location.province_id") {
+		result.ProvinceID = &province.ID
+	}
+
+	if resp.Ward != nil && resolve.Mask.Allows("location.ward_id") {
+		ward, err := u.findOrCreateWard(ctx, resp.Ward, province.ID, resolve.userID)
+		if err == nil && ward != nil {
+			result.WardID = &ward.ID
+		} else if err != nil {
+			log.Printf("Ward error: %v", err)
+		}
+	}
+}
+
+func getFirstWord(input string) string {
+	parts := strings.SplitN(input, " ", 2)
+	return parts[0]
+}
+
+func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Province, userID uint64) (*domain.ProvinceV2, error) {
+	log.Println("Creating new province for TQD ID= ", p)
+	log.Println("User ID= ", userID)
+	province, err := u.ProvinceRepo.GetByTQDID(ctx, p.Id)
+	if err == nil && province != nil {
+		return province, nil
+	}
+
+	newProvince := &domain.ProvinceV2{
+		BaseEntity: _models.BaseEntity{
+			AuditBase: _models.AuditBase{
+				CreatedBy: &userID,
+				UpdatedBy: &userID,
+			},
+		},
+		TQDID:        p.Id,
+		Code:         p.Code,
+		Name:         p.FullName,
+		Codename:     p.ShortName,
+		DivisionType: getFirstWord(p.DivisionType),
+		PhoneCode:    p.PhoneCode,
+		Lat:          p.Latitude,
+		Lng:          p.Longitude,
+	}
+
+	log.Printf("Attempting to create province: %+v", newProvince)
+	err = u.ProvinceRepo.Create(ctx, newProvince)
+	if err == nil {
+		log.Printf("Created province ID=%d", newProvince.ID)
+		return newProvince, nil
+	}
+
+	if isDuplicateKeyError(err) {
+		log.Printf("⚠ Duplicate province, retry find...")
+		province, findErr := u.ProvinceRepo.GetByTQDID(ctx, p.Id)
+		if findErr == nil && province != nil {
+			return province, nil
+		}
+	}
+
+	return nil, err
+}
+
+func (u *PropertyUsecase) findOrCreateWard(ctx context.Context, w *tqdpb.Ward, provinceID uint64, userID uint64) (*domain.WardV2, error) {
+	ward, err := u.WardRepo.GetByTQDID(ctx, w.Id)
+	if err == nil && ward != nil {
+		if ward.ProvinceID == provinceID {
+			return ward, nil
+		}
+		return nil, fmt.Errorf("ward province mismatch")
+	}
+
+	newWard := &domain.WardV2{
+		BaseEntity: _models.BaseEntity{
+			AuditBase: _models.AuditBase{
+				CreatedBy: &userID,
+				UpdatedBy: &userID,
+			},
+		},
+		TQDID:         w.Id,
+		Code:          w.Code,
+		Name:          w.FullName,
+		Codename:      w.ShortName,
+		DivisionType:  getFirstWord(w.DivisionType),
+		ShortCodename: w.ShortName,
+		Lat:           w.Latitude,
+		Lng:           w.Longitude,
+		ProvinceID:    provinceID,
+	}
+
+	err = u.WardRepo.Create(ctx, newWard)
+	if err == nil {
+		log.Printf("Created ward ID=%d", newWard.ID)
+		return newWard, nil
+	}
+
+	if isDuplicateKeyError(err) {
+		ward, findErr := u.WardRepo.GetByTQDID(ctx, w.Id)
+		if findErr == nil && ward != nil && ward.ProvinceID == provinceID {
+			return ward, nil
+		}
+	}
+
+	return nil, err
+}
+
+func isDuplicateKeyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
+	return errors.Is(err, gorm.ErrDuplicatedKey)
+}
+
+func (u *PropertyUsecase) buildHandlers(lineage *domain.PropertyLineage, cmd *dto.UpdatePropertyDTO) []struct {
+	currentFK *uint64
+	h         Handler
+} {
 	handlers := []struct {
 		currentFK *uint64
 		h         Handler
@@ -1566,167 +1847,7 @@ func (u *PropertyUsecase) directUpdate(
 		{lineage.EdvidenceID, &EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo}},
 	}
 
-	for _, entry := range handlers {
-		newFK, err := RunDirect(ctx, entry.currentFK, entry.h)
-		if err != nil {
-			return nil, err
-		}
-		fkPatch.Set(entry.h.FKColumn(), newFK)
-	}
-
-	if len(fkPatch) > 0 {
-		if err := u.LineageRepo.UpdateFields(ctx, lineage.ID, fkPatch); err != nil {
-			return nil, fmt.Errorf("lineage update: %w", err)
-		}
-	}
-
-	return &dto.UpdatePropertyResult{
-		LineageID: lineage.ID,
-		UpdatedAt: _utils.TimeNowRFC3339(),
-	}, nil
-}
-
-func (u *PropertyUsecase) resolveLocationFromTQD(
-	ctx context.Context,
-	cmd *dto.UpdatePropertyDTO,
-) error {
-	if cmd.Location == nil || cmd.Location.Latitude == nil || cmd.Location.Longitude == nil {
-		return nil
-	}
-
-	if !cmd.Mask.Allows("location.latitude") && !cmd.Mask.Allows("location.longitude") {
-		log.Printf("Skipping TQD resolve - latitude/longitude not in mask")
-		return nil
-	}
-
-	if cmd.Location.ProvinceID != nil {
-		log.Printf("Client provided province_id=%d, skipping TQD resolve", *cmd.Location.ProvinceID)
-		return nil
-	}
-
-	resp, err := u.tqdGRPCClient.GetNearestLocation(
-		ctx,
-		*cmd.Location.Latitude,
-		*cmd.Location.Longitude,
-	)
-	if err != nil {
-		return fmt.Errorf("TQD service error: %w", err)
-	}
-
-	if resp == nil || resp.Province == nil {
-		log.Printf("TQD returned no province for coordinates (%f, %f)",
-			*cmd.Location.Latitude, *cmd.Location.Longitude)
-		return nil
-	}
-
-	log.Printf("TQD resolved to province: %s (ID=%s)", resp.Province.FullName, resp.Province.Id)
-
-	province, err := u.findOrCreateProvince(ctx, resp.Province)
-	if err != nil {
-		log.Printf("Error processing province: %v", err)
-		return err
-	}
-
-	if cmd.Mask.Allows("location.province_id") {
-		cmd.Location.ProvinceID = &province.ID
-		cmd.Location.ResolvedFromTQD = true
-		log.Printf("Set province_id=%d from TQD (allowed by mask)", province.ID)
-	} else {
-		log.Printf("Province_id=%d resolved but not in mask - ignoring", province.ID)
-	}
-
-	if resp.Ward != nil {
-		ward, err := u.findOrCreateWard(ctx, resp.Ward, province.ID)
-		if err != nil {
-			log.Printf("Error processing ward: %v", err)
-		} else if ward != nil && cmd.Mask.Allows("location.ward_id") {
-			cmd.Location.WardID = &ward.ID
-			log.Printf("✓ Set ward_id=%d from TQD", ward.ID)
-		} else if ward != nil {
-			log.Printf("⚠ Ward_id=%d resolved but not in mask - ignoring", ward.ID)
-		}
-	}
-
-	return nil
-}
-
-func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Province) (*domain.ProvinceV2, error) {
-	province := &domain.ProvinceV2{
-		TQDID:        p.Id,
-		Code:         p.Code,
-		Name:         p.FullName,
-		Codename:     p.ShortName,
-		DivisionType: p.DivisionType,
-		PhoneCode:    p.PhoneCode,
-		Lat:          p.Latitude,
-		Lng:          p.Longitude,
-	}
-
-	err := u.ProvinceRepo.FirstOrCreate(ctx, province)
-	if err != nil {
-		if isDuplicateKeyError(err) {
-			log.Printf("⚠ Duplicate key, trying to find existing...")
-			existing, findErr := u.ProvinceRepo.GetByTQDID(ctx, p.Id)
-			if findErr == nil && existing != nil {
-				return existing, nil
-			}
-		}
-		return nil, err
-	}
-
-	log.Printf("✅ Province ID=%d for %s", province.ID, p.FullName)
-	return province, nil
-}
-
-func (u *PropertyUsecase) findOrCreateWard(ctx context.Context, w *tqdpb.Ward, provinceID uint64) (*domain.WardV2, error) {
-	ward := &domain.WardV2{
-		TQDID:         w.Id,
-		Code:          w.Code,
-		Name:          w.FullName,
-		Codename:      w.ShortName,
-		DivisionType:  w.DivisionType,
-		ShortCodename: w.ShortName,
-		Lat:           w.Latitude,
-		Lng:           w.Longitude,
-		ProvinceID:    provinceID,
-	}
-
-	err := u.WardRepo.FirstOrCreate(ctx, ward)
-	if err != nil {
-		if isDuplicateKeyError(err) {
-			log.Printf("⚠ Duplicate key for ward, trying to find existing...")
-			existing, findErr := u.WardRepo.GetByTQDID(ctx, w.Id)
-			if findErr == nil && existing != nil && existing.ProvinceID == provinceID {
-				return existing, nil
-			}
-		}
-		return nil, err
-	}
-
-	log.Printf("Ward ID=%d for %s", ward.ID, w.FullName)
-	return ward, nil
-}
-
-func isDuplicateKeyError(err error) bool {
-	if err == nil {
-		return false
-	}
-	if pgErr, ok := err.(*pgconn.PgError); ok {
-		return pgErr.Code == "23505"
-	}
-	return errors.Is(err, gorm.ErrDuplicatedKey)
-}
-
-func (u *PropertyUsecase) warnProvinceMismatch(ctx context.Context, cmd *dto.UpdatePropertyDTO, resolvedProvince *domain.ProvinceV2) {
-	if cmd.Location == nil {
-		return
-	}
-	// Log warning
-	log.Printf("⚠️ LOCATION WARNING: Coordinates (%f, %f) resolve to province %s (ID=%d)",
-		*cmd.Location.Latitude, *cmd.Location.Longitude,
-		resolvedProvince.Name, resolvedProvince.ID)
-	log.Printf("   But province_id not in mask - will keep current province")
-	log.Printf("   If you want to change province, add 'location.province_id' to field_mask")
+	return handlers
 }
 
 func (u *PropertyUsecase) setAvatarFromMedia(ctx context.Context, lineageID uint64, cmd *dto.UpdatePropertyDTO) error {
@@ -1735,7 +1856,6 @@ func (u *PropertyUsecase) setAvatarFromMedia(ctx context.Context, lineageID uint
 		return nil
 	}
 
-	// Find first image as avatar
 	var avatarID uint64
 	for _, m := range mediaList {
 		if m.MediaType == "image" {

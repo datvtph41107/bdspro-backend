@@ -88,7 +88,7 @@ type ListWardsResponse struct {
 // ==================== DATA DTOs ====================
 type ProvinceDTO struct {
 	ID        string     `json:"id"`
-	Code      int32      `json:"code"`
+	Code      string     `json:"code"`
 	FullName  string     `json:"fullName"`
 	ShortName string     `json:"shortName"`
 	Lat       float64    `json:"lat"`
@@ -100,13 +100,13 @@ type ProvinceDTO struct {
 
 type WardDTO struct {
 	ID           string     `json:"id"`
-	Code         int32      `json:"code"`
+	Code         string     `json:"code"`
 	FullName     string     `json:"fullName"`
 	ShortName    string     `json:"shortName"`
 	Lat          float64    `json:"lat"`
 	Lng          float64    `json:"lng"`
 	ProvinceID   string     `json:"provinceId"`
-	ProvinceCode int32      `json:"provinceCode"`
+	ProvinceCode string     `json:"provinceCode"`
 	CreatedAt    *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
 }

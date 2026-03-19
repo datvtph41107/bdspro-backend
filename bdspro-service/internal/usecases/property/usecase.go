@@ -342,121 +342,56 @@ func (h *LocationHandler) Insert(ctx context.Context) (uint64, error) {
 
 // Update - Update existing location
 func (h *LocationHandler) Update(ctx context.Context, id uint64) error {
-	// Get existing location
 	existing, err := h.Repo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 	if existing == nil {
-		return fmt.Errorf("location id=%d not found", id)
+		return fmt.Errorf("location not found")
 	}
 
-	log.Printf("Updating location %d with mask: %v", id, h.Mask.Paths())
-
-	// Build fields to update
 	fields := make(map[string]interface{})
 
-	// AddressDetail
+	// Chỉ update các field được phép trong mask
 	if h.Mask.Allows("location.address_detail") && h.Patch.AddressDetail != nil {
 		if *h.Patch.AddressDetail != existing.AddressDetail {
 			fields["address_detail"] = *h.Patch.AddressDetail
-			log.Printf("  - address_detail: '%s' -> '%s'",
-				existing.AddressDetail, *h.Patch.AddressDetail)
 		}
 	}
 
-	// MapURL
-	if h.Mask.Allows("location.map_url") && h.Patch.MapURL != nil {
-		if *h.Patch.MapURL != existing.MapURL {
-			fields["map_url"] = *h.Patch.MapURL
-		}
-	}
-
-	// Latitude
 	if h.Mask.Allows("location.latitude") && h.Patch.Latitude != nil {
 		if *h.Patch.Latitude != *existing.Latitude {
 			fields["latitude"] = *h.Patch.Latitude
-			log.Printf("  - latitude: %f -> %f", *existing.Latitude, *h.Patch.Latitude)
 		}
 	}
 
-	// Longitude
 	if h.Mask.Allows("location.longitude") && h.Patch.Longitude != nil {
 		if *h.Patch.Longitude != *existing.Longitude {
 			fields["longitude"] = *h.Patch.Longitude
-			log.Printf("  - longitude: %f -> %f", *existing.Longitude, *h.Patch.Longitude)
 		}
 	}
 
-	// RegionID
-	if h.Mask.Allows("location.region_id") {
-		if h.Patch.RegionID == nil {
-			if existing.RegionID != nil {
-				fields["region_id"] = nil
-				log.Printf("  - region_id: %d -> NULL", *existing.RegionID)
-			}
-		} else {
-			if existing.RegionID == nil || *h.Patch.RegionID != *existing.RegionID {
-				fields["region_id"] = *h.Patch.RegionID
-				log.Printf("  - region_id: %s -> %d",
-					safeStr(existing.RegionID), *h.Patch.RegionID)
-			}
+	if h.Mask.Allows("location.province_id") && h.Patch.ProvinceID != nil {
+		if existing.ProvinceID == nil || *h.Patch.ProvinceID != *existing.ProvinceID {
+			fields["province_id"] = *h.Patch.ProvinceID
+			log.Printf("  - province_id: %v -> %d",
+				safeStr(existing.ProvinceID), *h.Patch.ProvinceID)
 		}
 	}
 
-	// PositionType
-	if h.Mask.Allows("location.position_type") && h.Patch.PositionType != nil {
-		if *h.Patch.PositionType != existing.PositionType {
-			fields["position_type"] = *h.Patch.PositionType
-		}
-	}
-
-	// PROVINCE_ID - ONLY UPDATE IF IN MASK
-	if h.Mask.Allows("location.province_id") {
-		if h.Patch.ProvinceID == nil {
-			if existing.ProvinceID != nil {
-				fields["province_id"] = nil
-				log.Printf("  - province_id: %d -> NULL", *existing.ProvinceID)
-			}
-		} else {
-			if existing.ProvinceID == nil || *h.Patch.ProvinceID != *existing.ProvinceID {
-				fields["province_id"] = *h.Patch.ProvinceID
-				log.Printf("  - province_id: %s -> %d",
-					safeStr(existing.ProvinceID), *h.Patch.ProvinceID)
-			}
-		}
-	} else {
-		if h.Patch.ProvinceID != nil {
-			log.Printf("  ⚠ province_id=%d provided but not in mask - ignored", *h.Patch.ProvinceID)
-		}
-	}
-
-	// WARD_ID - ONLY UPDATE IF IN MASK
-	if h.Mask.Allows("location.ward_id") {
-		if h.Patch.WardID == nil {
-			if existing.WardID != nil {
-				fields["ward_id"] = nil
-				log.Printf("  - ward_id: %d -> NULL", *existing.WardID)
-			}
-		} else {
-			if existing.WardID == nil || *h.Patch.WardID != *existing.WardID {
-				fields["ward_id"] = *h.Patch.WardID
-				log.Printf("  - ward_id: %s -> %d",
-					safeStr(existing.WardID), *h.Patch.WardID)
-			}
-		}
-	} else {
-		if h.Patch.WardID != nil {
-			log.Printf("  ⚠ ward_id=%d provided but not in mask - ignored", *h.Patch.WardID)
+	// WardID - tương tự
+	if h.Mask.Allows("location.ward_id") && h.Patch.WardID != nil {
+		if existing.WardID == nil || *h.Patch.WardID != *existing.WardID {
+			fields["ward_id"] = *h.Patch.WardID
+			log.Printf("  - ward_id: %v -> %d",
+				safeStr(existing.WardID), *h.Patch.WardID)
 		}
 	}
 
 	if len(fields) == 0 {
-		log.Printf("No fields to update for location %d", id)
 		return nil
 	}
 
-	log.Printf("✓ Updating location %d with %d fields", id, len(fields))
 	return h.Repo.UpdateFields(ctx, id, fields)
 }
 
