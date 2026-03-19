@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"time"
 
 	"chat/models"
 )
@@ -53,6 +54,24 @@ func (r *gormRepository) GetListParticipant(ctx context.Context, conversationID 
 		return nil, 0, err
 	}
 	return participants, count, nil
+}
+
+func (r *gormRepository) GetLatestParticipantJoinedAt(ctx context.Context, conversationID uint64) (*time.Time, error) {
+	var t time.Time
+	err := r.db.WithContext(ctx).
+		Model(&models.ParticipantModel{}).
+		Where("conversation_id = ?", conversationID).
+		Select("joined_at").
+		Order("joined_at DESC").
+		Limit(1).
+		Scan(&t).Error
+	if err != nil {
+		return nil, err
+	}
+	if t.IsZero() {
+		return nil, nil
+	}
+	return &t, nil
 }
 
 func (r *gormRepository) AddParticipant(ctx context.Context, participant *models.ParticipantModel) error {

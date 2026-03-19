@@ -18,6 +18,9 @@ type BackgroundImageModel struct {
 	ImageURL    string     `gorm:"type:varchar(255);not null" json:"image_url"`
 	Title       string     `gorm:"type:varchar(255);not null" json:"title"`
 	Color       string     `gorm:"type:varchar(20)" json:"color"`
+	Background  string     `gorm:"type:varchar(20)" json:"background"`
+	Text        string     `gorm:"type:varchar(20)" json:"text"`
+	Tint        string     `gorm:"type:varchar(20)" json:"tint"`
 	ImageType   ImageType  `gorm:"type:int;not null" json:"image_type"`
 	Description string     `gorm:"type:text" json:"description"`
 	CreatedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP"`

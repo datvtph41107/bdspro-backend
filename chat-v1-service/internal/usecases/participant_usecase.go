@@ -72,30 +72,30 @@ func (p *participantUsecases) GetListParticipant(ctx context.Context, conversati
 	return p.repo.GetListParticipant(ctx, conversationId)
 }
 
-func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint64, userIds []uint64) (int, error) {
+func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint64, userIds []uint64) (int, time.Time, error) {
 	// Lấy thông tin conversation để kiểm tra loại
 	conversation, err := p.repo.GetConversationByID(ctx, conversationId)
 	if err != nil {
-		return 0, err
+		return 0, time.Time{}, err
 	}
 	if conversation == nil {
-		return 0, errors.ConversationNotFound()
+		return 0, time.Time{}, errors.ConversationNotFound()
 	}
 
 	// Kiểm tra nếu là chat 1vs1 (Private) thì không cho phép thêm thành viên
 	if conversation.Type == models.ConversationTypePrivate {
-		return 0, errors.CannotModifyPrivateChat()
+		return 0, time.Time{}, errors.CannotModifyPrivateChat()
 	}
 
 	err = p.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {
-		return 0, err
+		return 0, time.Time{}, err
 	}
 
 	// Lấy danh sách participant hiện tại để check trùng
 	existingParticipants, _, err := p.repo.GetListParticipant(ctx, conversationId)
 	if err != nil {
-		return 0, err
+		return 0, time.Time{}, err
 	}
 
 	// Tạo map để check user đã tồn tại chưa
@@ -125,7 +125,10 @@ func (p *participantUsecases) AddUsers(ctx context.Context, conversationId uint6
 		}
 	}
 
-	return totalAdded, nil
+	if totalAdded == 0 {
+		return totalAdded, time.Time{}, nil
+	}
+	return totalAdded, now, nil
 }
 
 func (p *participantUsecases) InternalGetListParticipant(ctx context.Context, conversationId string) ([]*models.ParticipantModel, error) {

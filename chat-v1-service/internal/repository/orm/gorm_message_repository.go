@@ -49,6 +49,45 @@ func (r *gormRepository) GetLatestMessageCreatedAt(ctx context.Context, conversa
 	return &t, nil
 }
 
+func (r *gormRepository) GetLatestPinnedMessageUpdatedAt(ctx context.Context, conversationId uint64) (*time.Time, error) {
+	var t time.Time
+	err := r.db.WithContext(ctx).
+		Model(&models.MessageModel{}).
+		Where("conversation_id = ? AND pined = ?", conversationId, true).
+		Select("updated_at").
+		Order("updated_at DESC").
+		Limit(1).
+		Scan(&t).Error
+	if err != nil {
+		return nil, err
+	}
+	if t.IsZero() {
+		return nil, nil
+	}
+	return &t, nil
+}
+
+func (r *gormRepository) GetLatestMessageUpdatedAtByTypes(ctx context.Context, conversationId uint64, types []string) (*time.Time, error) {
+	if len(types) == 0 {
+		return nil, nil
+	}
+	var t time.Time
+	err := r.db.WithContext(ctx).
+		Model(&models.MessageModel{}).
+		Where("conversation_id = ? AND content_type IN (?)", conversationId, types).
+		Select("updated_at").
+		Order("updated_at DESC").
+		Limit(1).
+		Scan(&t).Error
+	if err != nil {
+		return nil, err
+	}
+	if t.IsZero() {
+		return nil, nil
+	}
+	return &t, nil
+}
+
 func (r *gormRepository) FindMessageByID(ctx context.Context, messageId uint64) (*models.MessageModel, error) {
 	var message models.MessageModel
 	err := r.db.WithContext(ctx).Where("id = ?", messageId).First(&message).Error

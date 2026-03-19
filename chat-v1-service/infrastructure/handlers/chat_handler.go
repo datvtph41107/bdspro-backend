@@ -48,6 +48,17 @@ type chatHandler struct {
 	messageRepository       usecases.Repository
 }
 
+func (s *chatHandler) putTimestampFromTimePtr(ctx context.Context, key string, t *time.Time) {
+	ts := int64(0)
+	if t != nil {
+		ts = t.UnixMilli()
+	}
+	if ts == 0 {
+		ts = 1
+	}
+	_ = s.syncProvider.PutTimestamp(ctx, key, ts)
+}
+
 func NewChatHandler(
 	conversationUsecases conversationUsecases,
 	messageUsecases messageUsecases,
@@ -421,9 +432,7 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 		go func() {
 			ctxClone := _utils.CloneContext(ctx)
 			keyCommon := s.syncProvider.GetKeyWithoutMe(ctxClone, _provider.SyncKeyConversationCommon, uint64(req.ConversationId))
-			fmt.Println("keyCommon", keyCommon)
 			latestAt, errLatest := s.messageRepository.GetLatestMessageCreatedAt(ctxClone, uint64(req.ConversationId))
-			fmt.Println("latestAt", latestAt)
 			if errLatest == nil && latestAt != nil && !latestAt.IsZero() {
 				_ = s.syncProvider.PutTimestamp(ctxClone, keyCommon, latestAt.UnixMilli())
 			}
@@ -835,13 +844,13 @@ func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharep
 
 	convID := req.Id
 	redisKeys := []string{
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMembers, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationDetail, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationFiles, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationLinks, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationImages, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationMembers, convID),
 		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, convID),
+		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationPinned, convID),
 		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMessages, convID),
 		s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, convID),
 	}
@@ -935,9 +944,8 @@ func (s *chatHandler) Search(ctx context.Context, req *chatpb.SearchRequest) (*c
 // @Param id path int true "ID đoạn hội thoại"
 // @Router /conversation/{id} [get]
 func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetConversationByIdRequest) (*chatpb.GetConversationByIdResponse, error) {
-	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId))
-	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
 	if !updated {
 		return &chatpb.GetConversationByIdResponse{}, nil
 	}
@@ -952,6 +960,13 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 
 	s.userClient.MapAvatarAndNameToPb(ctx, result)
 
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			s.syncProvider.PutTimestamp(ctxClone, key, conversation.UpdatedAt.UnixMilli())
+		}()
+	}
+
 	return result, nil
 }
 
@@ -965,9 +980,19 @@ func (s *chatHandler) GetConversationById(ctx context.Context, req *chatpb.GetCo
 // @Success 200 {object} chatpb.GetListParticipantResponse
 // @Router /conversation/members [get]
 func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetListParticipantRequest) (*chatpb.GetListParticipantResponse, error) {
-	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMembers, uint64(req.ConversationId))
-	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationMembers, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
+
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			latestJoinedAt, errLatest := s.messageRepository.GetLatestParticipantJoinedAt(ctxClone, uint64(req.ConversationId))
+			if errLatest == nil && latestJoinedAt != nil && !latestJoinedAt.IsZero() {
+				_ = s.syncProvider.PutTimestamp(ctxClone, key, latestJoinedAt.UnixMilli())
+			}
+		}()
+	}
+
 	if !updated {
 		return &chatpb.GetListParticipantResponse{Data: []*chatpb.Participant{}, Total: 0}, nil
 	}
@@ -999,7 +1024,7 @@ func (s *chatHandler) GetListParticipant(ctx context.Context, req *chatpb.GetLis
 		pbParticipant := &chatpb.Participant{
 			UserId:    participant.UserID,
 			Role:      chatpb.ParticipantRoleEnum(participant.Role),
-			JoinedAt:  participant.JoinedAt.Local().Format(time.RFC3339),
+			JoinedAt:  _utils.FormatTimeToString(&participant.JoinedAt),
 			MuteNotif: participant.MuteNotif,
 		}
 
@@ -1054,9 +1079,19 @@ func (s *chatHandler) GetReadReceipt(ctx context.Context, req *chatpb.GetReadRec
 // @Success 200 {object} chatpb.GetMessagesResponse
 // @Router /messages/pinned [get]
 func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMessagesRequest) (*chatpb.GetMessagesResponse, error) {
-	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId))
-	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
+
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			latestAt, errLatest := s.messageRepository.GetLatestPinnedMessageUpdatedAt(ctxClone, uint64(req.ConversationId))
+			if errLatest == nil {
+				s.putTimestampFromTimePtr(ctxClone, key, latestAt)
+			}
+		}()
+	}
+
 	if !updated {
 		return &chatpb.GetMessagesResponse{Messages: []*chatpb.Message{}, Total: 0}, nil
 	}
@@ -1105,7 +1140,7 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 	}
 
 	// Thêm users vào conversation
-	totalAdded, err := s.participantUsecases.AddUsers(ctx, req.ConversationId, req.UserIds)
+	totalAdded, joinedAt, err := s.participantUsecases.AddUsers(ctx, req.ConversationId, req.UserIds)
 	if err != nil {
 		return nil, err
 	}
@@ -1136,9 +1171,10 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 		s.eventChannel <- event
 	}
 	if s.syncProvider != nil {
-		ts := time.Now().UnixMilli()
-		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, req.ConversationId), ts)
-		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
+		ts := joinedAt.UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, req.ConversationId), ts)
+		// Key member cập nhật bằng joinedAt của thành viên thêm vào
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationMembers, req.ConversationId), ts)
 		s.invalidateConversationsListSyncKeyForUsers(ctx, req.UserIds)
 	}
 	return &chatpb.AddUserResponse{
@@ -1308,9 +1344,19 @@ func (s *chatHandler) GetSetting(ctx context.Context, req *chatpb.GetSettingRequ
 // @Success 200 {object} chatpb.GetFilesResponse
 // @Router /messages/files [get]
 func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest) (*chatpb.GetFilesResponse, error) {
-	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, uint64(req.ConversationId))
-	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationFiles, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
+
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			latestAt, errLatest := s.messageRepository.GetLatestMessageUpdatedAtByTypes(ctxClone, uint64(req.ConversationId), []string{"FILE", "video", "audio", "pdf"})
+			if errLatest == nil {
+				s.putTimestampFromTimePtr(ctxClone, key, latestAt)
+			}
+		}()
+	}
+
 	if !updated {
 		return &chatpb.GetFilesResponse{Messages: []*chatpb.Message{}, Total: 0}, nil
 	}
@@ -1349,9 +1395,19 @@ func (s *chatHandler) GetFiles(ctx context.Context, req *chatpb.GetFilesRequest)
 // @Success 200 {object} chatpb.GetImagesResponse
 // @Router /messages/images [get]
 func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesRequest) (*chatpb.GetImagesResponse, error) {
-	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, uint64(req.ConversationId))
-	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationImages, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
+
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			latestAt, errLatest := s.messageRepository.GetLatestMessageUpdatedAtByTypes(ctxClone, uint64(req.ConversationId), []string{"IMAGE"})
+			if errLatest == nil {
+				s.putTimestampFromTimePtr(ctxClone, key, latestAt)
+			}
+		}()
+	}
+
 	if !updated {
 		return &chatpb.GetImagesResponse{Data: []*chatpb.Message{}, Total: 0}, nil
 	}
@@ -1390,9 +1446,19 @@ func (s *chatHandler) GetImages(ctx context.Context, req *chatpb.GetImagesReques
 // @Success 200 {object} chatpb.GetLinksResponse
 // @Router /messages/links [get]
 func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest) (*chatpb.GetLinksResponse, error) {
-	key := s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, uint64(req.ConversationId))
-	updated := s.syncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.syncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	key := s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationLinks, uint64(req.ConversationId))
+	updated, cacheExists := s.syncProvider.IsCacheChanged(ctx, key, req.Timestamp)
+
+	if !cacheExists {
+		go func() {
+			ctxClone := _utils.CloneContext(ctx)
+			latestAt, errLatest := s.messageRepository.GetLatestMessageUpdatedAtByTypes(ctxClone, uint64(req.ConversationId), []string{"LINK"})
+			if errLatest == nil {
+				s.putTimestampFromTimePtr(ctxClone, key, latestAt)
+			}
+		}()
+	}
+
 	if !updated {
 		return &chatpb.GetLinksResponse{Messages: []*chatpb.Message{}, Total: 0}, nil
 	}
@@ -1522,9 +1588,9 @@ func (s *chatHandler) SetBackgroundImage(ctx context.Context, req *chatpb.SetBac
 
 	s.eventChannel <- event
 	if s.syncProvider != nil {
-		ts := time.Now().UnixMilli()
-		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId)), ts)
-		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, uint64(req.ConversationId)), ts)
+		ts := conversation.UpdatedAt.UnixMilli()
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationDetail, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationsMe, uint64(req.ConversationId)), ts)
 		s.invalidateConversationsListSyncKeyForParticipants(ctx, uint64(req.ConversationId))
 	}
 	return &chatpb.SetBackgroundImageResponse{

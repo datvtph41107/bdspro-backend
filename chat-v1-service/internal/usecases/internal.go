@@ -23,6 +23,8 @@ type Repository interface {
 	CreateMessages(ctx context.Context, messages []*models.MessageModel) ([]*models.MessageModel, error)
 	GetMessages(ctx context.Context, pagable _dto.Pagable, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
 	GetLatestMessageCreatedAt(ctx context.Context, conversationId uint64) (*time.Time, error)
+	GetLatestPinnedMessageUpdatedAt(ctx context.Context, conversationId uint64) (*time.Time, error)
+	GetLatestMessageUpdatedAtByTypes(ctx context.Context, conversationId uint64, types []string) (*time.Time, error)
 	FindMessageByID(ctx context.Context, messageId uint64) (*models.MessageModel, error)
 	UpdatePinMessage(ctx context.Context, messageID uint64, isPin bool) (*models.MessageModel, error)
 	UpdateRecallMessage(ctx context.Context, messageID uint64, isRecall bool) (*models.MessageModel, error)
@@ -37,6 +39,7 @@ type Repository interface {
 	RemoveParticipant(ctx context.Context, conversationID uint64, userID uint64) error
 	UpdateMuteNotification(ctx context.Context, conversationID uint64, userID uint64, isMute bool) error
 	GetListParticipant(ctx context.Context, conversationId uint64) ([]*models.ParticipantModel, int64, error)
+	GetLatestParticipantJoinedAt(ctx context.Context, conversationId uint64) (*time.Time, error)
 	AddParticipant(ctx context.Context, participant *models.ParticipantModel) error
 	HasExactConversationWithUserIDs(ctx context.Context, userIDs []uint64) (*models.ConversationModel, error)
 	GetConversationWithReceiverID(ctx context.Context, currentUserId uint64, receiverID uint64) (*models.ConversationModel, error)
