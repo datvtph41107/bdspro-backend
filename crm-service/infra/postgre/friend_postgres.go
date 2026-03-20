@@ -21,6 +21,18 @@ func NewFriendRepo(DB *gorm.DB) *FriendPostgre {
 	}
 }
 
+func (repo *FriendPostgre) GetFriendship(ctx context.Context, userID1, userID2 uint64) (*domain.FriendEntity, error) {
+	var friend domain.FriendEntity
+	err := repo.DB.WithContext(ctx).
+		Where("((created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?)) AND deleted_at IS NULL",
+			userID1, userID2, userID2, userID1).
+		First(&friend).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return &friend, err
+}
+
 func (repo *FriendPostgre) UpdateStatusById(ctx context.Context, status enums.FriendStatus, id uint64, respondedAt *time.Time) error {
 	return repo.DB.Model(&domain.FriendEntity{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"status":       status,

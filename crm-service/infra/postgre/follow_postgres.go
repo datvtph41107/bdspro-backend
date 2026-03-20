@@ -1,6 +1,8 @@
 package postgre
 
 import (
+	_errors "common/errors"
+	_models "common/models"
 	_routes "common/routes"
 	"context"
 	"crm/internal/domain"
@@ -18,6 +20,38 @@ func NewFollowPostgre(DB *gorm.DB) *FollowPostgre {
 	return &FollowPostgre{
 		DB: DB,
 	}
+}
+
+func (r *FollowPostgre) GetFollow(ctx context.Context, followerID, followingID uint64) (*domain.FollowEntity, error) {
+	var follow domain.FollowEntity
+	err := r.DB.WithContext(ctx).
+		Where("created_by = ? AND following_id = ? AND deleted_at IS NULL", followerID, followingID).
+		First(&follow).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return &follow, err
+}
+
+func (r *FollowPostgre) CreateFollow(ctx context.Context, followerID, followingID uint64) (*domain.FollowEntity, error) {
+	if followerID == followingID {
+		return nil, _errors.BadRequestException("cannot follow yourself")
+	}
+	follow := &domain.FollowEntity{
+		FollowingID: followingID,
+		BaseEntity: _models.BaseEntity{
+			AuditBase: _models.AuditBase{
+				CreatedBy: &followerID,
+			},
+		},
+		Status: 1,
+	}
+	err := r.DB.WithContext(ctx).Create(follow).Error
+	return follow, err
+}
+
+func (r *FollowPostgre) Update(ctx context.Context, follow *domain.FollowEntity) error {
+	return r.DB.WithContext(ctx).Save(follow).Error
 }
 
 // func (repo *FriendRepo) SearchFriend(currentId uint64, page int, pageSize int) ([]domain.ContactEntity, error) {

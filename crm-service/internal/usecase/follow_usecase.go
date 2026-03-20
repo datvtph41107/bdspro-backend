@@ -4,13 +4,17 @@ import (
 	base_enum "base/enum"
 	_enum "common/domain/enum"
 	_provider "common/domain/provider"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	"database/sql"
+	"fmt"
 	"strconv"
+	"time"
 )
 
 type FollowUsecase struct {
@@ -20,6 +24,7 @@ type FollowUsecase struct {
 	blockService       *BlockUsecase
 	userClient         provider.UserClient
 	notificationClient _provider.NotificationProvider
+	transaction        provider.ITransaction
 }
 
 func NewFollowUsecase(followRepo repo.FollowRepo,
@@ -27,6 +32,7 @@ func NewFollowUsecase(followRepo repo.FollowRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
 	client provider.UserClient,
+	transaction provider.ITransaction,
 	notificationClient _provider.NotificationProvider,
 ) *FollowUsecase {
 	return &FollowUsecase{
@@ -36,6 +42,7 @@ func NewFollowUsecase(followRepo repo.FollowRepo,
 		blockService:       blockService,
 		userClient:         client,
 		notificationClient: notificationClient,
+		transaction:        transaction,
 	}
 }
 
@@ -67,62 +74,149 @@ func (s *FollowUsecase) Existed(c context.Context, followId uint64) error {
 	return nil
 }
 
-func (s *FollowUsecase) ValidateFollowId(c context.Context, followId uint64) (uint64, uint64, error) {
-	err := s.blockService.BeforeRequest(c, followId)
+func (s *FollowUsecase) ValidateFollowId(ctx context.Context, followId uint64) (uint64, uint64, error) {
+	err := s.blockService.BeforeRequest(ctx, followId)
 	if err != nil {
 		return 0, 0, err
 	}
-	// err := s.contactRepo.Existed(c, followId)
-	// if err != nil {
-	// 	return 0, 0, err
-	// }
-	// profileId := _utils.GetProfileIdWithContext(c)
-	profileId := _utils.GetProfileIdWithContext(c)
-	return profileId, followId, err
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return 0, 0, _errors.UnauthorizedException("User not authenticated")
+	}
+
+	if followId == 0 {
+		return 0, 0, _errors.BadRequestException("Following ID is required")
+	}
+
+	return profileId, followId, nil
 }
 
-func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.FollowEntity, error) {
-	profileId, followId, err := s.ValidateFollowId(c, followId)
+func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domain.FollowEntity, error) {
+	var result *domain.FollowEntity
+	var profileId uint64
+
+	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// Lấy profileId của người follow từ context
+		profileId = _utils.GetProfileIdWithContext(txCtx)
+		if profileId == 0 {
+			return _errors.UnauthorizedException("missing profile id")
+		}
+
+		// Kiểm tra followId hợp lệ (người được follow tồn tại)
+		if err := s.validateUserExists(txCtx, followId); err != nil {
+			return err
+		}
+
+		// Không tự follow chính mình
+		if profileId == followId {
+			return _errors.BadRequestException("cannot follow yourself")
+		}
+
+		// Kiểm tra follow đã tồn tại chưa
+		existingFollow, err := s.followRepo.GetFollow(txCtx, profileId, followId)
+		if err != nil && err != sql.ErrNoRows {
+			return _errors.InternalServerException("failed to check follow: " + err.Error())
+		}
+
+		// Nếu đã follow active -> return luôn
+		if existingFollow != nil && existingFollow.Status == 1 {
+			result = existingFollow
+			return nil
+		}
+
+		// Nếu đã follow nhưng đã unfollow (status = 2) -> cập nhật lại status
+		if existingFollow != nil && existingFollow.Status == 2 {
+			existingFollow.Status = 1
+			if err := s.followRepo.Update(txCtx, existingFollow); err != nil {
+				return _errors.InternalServerException("failed to update follow: " + err.Error())
+			}
+			result = existingFollow
+			return nil
+		}
+
+		// Tạo follow mới
+		newFollow, err := s.followRepo.CreateFollow(txCtx, profileId, followId)
+		if err != nil {
+			return _errors.InternalServerException("failed to create follow: " + err.Error())
+		}
+		result = newFollow
+
+		if err := s.hasContact(txCtx, profileId, followId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := s.followRepo.FollowUser(c, profileId, followId)
+	// Sau khi commit thành công, chạy async tasks
+	s.sendNotificationAsync(ctx, profileId, followId)
+
+	return result, nil
+}
+
+func (s *FollowUsecase) hasContact(ctx context.Context, ownerID, profileID uint64) error {
+	targetUser, err := s.userClient.GetProfileById(ctx, profileID)
 	if err != nil {
-		return nil, err
+		return _errors.InternalServerException("failed to get target user: " + err.Error())
+	}
+	if targetUser == nil {
+		return _errors.NotFoundException("target user not found")
 	}
 
-	// Background tasks - Gửi notification cho người được theo dõi
-	ctxClone := _utils.CloneContext(c)
+	existingContact, err := s.contactRepo.GetByProfileID(ctx, profileID, ownerID, base_enum.EOwnerOfMember)
+	if err != nil && err != sql.ErrNoRows {
+		return _errors.InternalServerException("failed to check contact: " + err.Error())
+	}
+
+	if existingContact != nil {
+		return nil // đã có contact
+	}
+
+	// Tạo contact mới
+	_, err = s.contactRepo.Create(ctx, &domain.ContactEntity{
+		ProfileID: &profileID,
+		OwnerID:   ownerID,
+		OwnerOf:   base_enum.EOwnerOfMember,
+		FullName:  targetUser.FullName,
+		Phone:     targetUser.Phone,
+		Avatar:    targetUser.Avatar,
+		// Các trường khác có thể set mặc định
+	})
+	return err
+}
+
+func (s *FollowUsecase) validateUserExists(ctx context.Context, userID uint64) error {
+	// Gọi user service để kiểm tra user tồn tại
+	user, err := s.userClient.GetProfileById(ctx, userID)
+	if err != nil {
+		return _errors.InternalServerException("failed to validate user: " + err.Error())
+	}
+	if user == nil {
+		return _errors.NotFoundException("user not found")
+	}
+	return nil
+}
+
+func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, followId uint64) {
 	go func() {
-		currentUser, err := s.userClient.GetProfileById(ctxClone, profileId)
+		asyncCtx, cancel := context.WithTimeout(_utils.CloneContext(ctx), 10*time.Second)
+		defer cancel()
+
+		currentUser, err := s.userClient.GetProfileById(asyncCtx, profileId)
 		if err != nil || currentUser == nil {
+			fmt.Errorf("failed to get current user for notification", "error", err)
 			return
 		}
 
-		// Lấy thông tin contact để có targetId
-		contact, err := s.contactRepo.GetByProfileID(ctxClone, followId, profileId, base_enum.EOwnerOfMember)
-		if err != nil || contact == nil {
-			// Nếu chưa có contact thì tạo mới
-			targetUser, _ := s.userClient.GetProfileById(ctxClone, followId)
-			if targetUser != nil {
-				_, _ = s.contactRepo.GetOrCreateByProfileID(
-					ctxClone,
-					followId,
-					profileId,
-					base_enum.EOwnerOfMember,
-					targetUser.FullName,
-					targetUser.Phone,
-					targetUser.Avatar,
-				)
-			}
-		}
-
-		// Tạo notification cho người được theo dõi
 		err = s.notificationClient.CreateNotification(
-			ctxClone,
+			asyncCtx,
 			currentUser.Avatar,
-			"Theo dõi",
+			"Theo dõi mới",
 			[]string{"", currentUser.FullName, " đã theo dõi bạn"},
 			_enum.NotificationContactFollow,
 			&profileId,
@@ -131,28 +225,29 @@ func (s *FollowUsecase) FollowUser(c context.Context, followId uint64) (*domain.
 			[]string{strconv.FormatUint(followId, 10)},
 		)
 		if err != nil {
-			// Log error nhưng không ảnh hưởng đến flow chính
-			// Notification service sẽ tự động merge notification cũ nếu có
+			fmt.Errorf("failed to create notification", "error", err)
 		}
 	}()
-
-	return e, err
 }
 
-func (s *FollowUsecase) UnfollowUser(c context.Context, followId uint64) error {
-	profileId, followId, err := s.ValidateFollowId(c, followId)
+func (s *FollowUsecase) UnfollowUser(ctx context.Context, followId uint64) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return _errors.UnauthorizedException("missing profile id")
+	}
+
+	// Có thể dùng transaction nếu cần xóa contact hoặc các logic khác
+	err := s.followRepo.UnfollowUser(ctx, profileId, followId)
 	if err != nil {
 		return err
 	}
 
-	err = s.followRepo.UnfollowUser(c, profileId, followId)
-	if err != nil {
-		return err
-	}
+	// Async remove notification
 	go func() {
-		ctxClone := _utils.CloneContext(c)
-		s.notificationClient.RemoveNotification(
-			ctxClone,
+		asyncCtx, cancel := context.WithTimeout(_utils.CloneContext(ctx), 5*time.Second)
+		defer cancel()
+		_ = s.notificationClient.RemoveNotification(
+			asyncCtx,
 			_enum.EOwnerOfMember,
 			followId,
 			profileId,

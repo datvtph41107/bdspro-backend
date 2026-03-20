@@ -29,4 +29,5 @@ type FriendRepo interface {
 	GetRelationShip(ctx context.Context, currentId uint64, targetId uint64) (*domain.FriendItem, error)
 	CancelRequest(ctx context.Context, id uint64) error
 	GetCommonFriends(ctx context.Context, user1Id uint64, user2Id uint64, limit int) ([]uint64, int64, error)
+	GetFriendship(ctx context.Context, userID1, userID2 uint64) (*domain.FriendEntity, error)
 }

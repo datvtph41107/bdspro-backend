@@ -9,8 +9,8 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	"errors"
 	"strconv"
+	"time"
 
 	"crm/data"
 	"crm/internal/domain"
@@ -21,36 +21,42 @@ import (
 )
 
 type FriendUsecase struct {
-	repo               repo.FriendRepo
-	contact            repo.ContactRepo
-	blockRepo          repo.BlockRepo
-	followRepo         repo.FollowRepo
-	blockService       *BlockUsecase
+	friendRepo   repo.FriendRepo
+	contact      repo.ContactRepo
+	blockRepo    repo.BlockRepo
+	followRepo   repo.FollowRepo
+	blockService *BlockUsecase
+	userClient   provider.UserClient
+
 	notificationClient _provider.NotificationProvider
-	userClient         provider.UserClient
+	transaction        provider.ITransaction
 }
 
-func NewFriendUsecase(repo repo.FriendRepo,
+func NewFriendUsecase(
+	friendRepo repo.FriendRepo,
 	contact repo.ContactRepo,
 	followRepo repo.FollowRepo,
 	blockRepo repo.BlockRepo,
 	blockService *BlockUsecase,
-	notificationClient _provider.NotificationProvider,
 	userClient provider.UserClient,
+
+	notificationClient _provider.NotificationProvider,
+	transaction provider.ITransaction,
 ) *FriendUsecase {
 	return &FriendUsecase{
-		repo:               repo,
+		friendRepo:         friendRepo,
 		contact:            contact,
 		blockRepo:          blockRepo,
 		blockService:       blockService,
 		followRepo:         followRepo,
 		notificationClient: notificationClient,
 		userClient:         userClient,
+		transaction:        transaction,
 	}
 }
 
 func (s *FriendUsecase) GetByID(c context.Context, id uint64) (*domain.FriendEntity, error) {
-	return s.repo.FindByID(c, id)
+	return s.friendRepo.FindByID(c, id)
 }
 
 // func (s *FriendService) Search(receiverID uint, createdBy uint, isSender bool, page int, size int) ([]domain.FriendEntity, error) {
@@ -62,118 +68,124 @@ func (s *FriendUsecase) GetByID(c context.Context, id uint64) (*domain.FriendEnt
 
 func (s *FriendUsecase) FriendList(c context.Context, dto data.FriendRequest) ([]domain.FriendEntity, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
-	return s.repo.SearchFriend(c, profileId, dto)
+	return s.friendRepo.SearchFriend(c, profileId, dto)
 }
 
-func (s *FriendUsecase) Request(c context.Context, receiverId uint64) (*domain.FriendEntity, error) {
-	profileId := _utils.GetProfileIdWithContext(c)
+func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain.FriendEntity, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return nil, _errors.UnauthorizedException("missing profile id")
+	}
 
-	err := s.blockService.BeforeRequest(c, receiverId)
+	if err := s.blockService.BeforeRequest(ctx, receiverId); err != nil {
+		return nil, err
+	}
+
+	receiverUser, err := s.userClient.GetProfileById(ctx, receiverId)
+	if err != nil || receiverUser == nil {
+		return nil, _errors.NotFoundException("receiver not found")
+	}
+
+	currentUser, _ := s.userClient.GetProfileById(ctx, profileId)
+
+	var result *domain.FriendEntity
+
+	err = s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		existing, err := s.friendRepo.GetFriendship(txCtx, profileId, receiverId)
+		if err != nil {
+			return _errors.InternalServerException("failed to check friendship: " + err.Error())
+		}
+
+		if existing != nil {
+			switch existing.Status {
+			case enums.FriendStatusAccepted:
+				return _errors.ConflictException("already friends")
+			case enums.FriendStatusPending:
+				if existing.CreatedBy != nil && *existing.CreatedBy == profileId {
+					return _errors.ConflictException("friend request already sent")
+				} else {
+					return _errors.ConflictException("you have a pending request from this user, please accept or reject it")
+				}
+			case enums.FriendStatusReject:
+				// Xóa mềm bản ghi cũ (hủy bỏ) để tạo mới
+				if err := s.friendRepo.CancelRequest(txCtx, existing.ID); err != nil {
+					return _errors.InternalServerException("failed to delete old rejected request: " + err.Error())
+				}
+			}
+		}
+
+		// Tạo friend request mới
+		friendEntity := &domain.FriendEntity{
+			Status:     enums.FriendStatusPending,
+			ReceiverID: receiverId,
+		}
+		if err := _db.SaveWithContext(txCtx, friendEntity); err != nil {
+			return _errors.InternalServerException("failed to create friend request: " + err.Error())
+		}
+		result = friendEntity
+
+		// Tạo contact cho người gửi (lưu thông tin người nhận)
+		if _, err := s.contact.GetOrCreateByProfileID(txCtx,
+			receiverId, profileId, base_enum.EOwnerOfMember,
+			receiverUser.FullName, receiverUser.Phone, receiverUser.Avatar); err != nil {
+			return _errors.InternalServerException("failed to create contact for sender: " + err.Error())
+		}
+
+		// Tạo contact cho người nhận (lưu thông tin người gửi)
+		if currentUser != nil {
+			if _, err := s.contact.GetOrCreateByProfileID(txCtx,
+				profileId, receiverId, base_enum.EOwnerOfMember,
+				currentUser.FullName, currentUser.Phone, currentUser.Avatar); err != nil {
+				return _errors.InternalServerException("failed to create contact for receiver: " + err.Error())
+			}
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	existingRequest, _ := s.repo.ExistsByCreatedByAndReceiverId(c, profileId, receiverId)
-	if existingRequest {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Đã gửi yêu cầu",
-		}
-	}
+	// Async notification
+	s.sendFriendRequestNotificationAsync(ctx, profileId, receiverId, result.ID)
+	return result, nil
+}
 
-	// Lấy thông tin cả 2 người
-	currentUser, _ := s.userClient.GetProfileWithPhoneById(c, profileId)
-	receiverUser, _ := s.userClient.GetProfileWithPhoneById(c, receiverId)
-
-	if receiverUser == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại",
-		}
-	}
-
-	// Tạo friend request
-	e := &domain.FriendEntity{
-		Status:     enums.FriendStatusPending,
-		ReceiverID: receiverId,
-	}
-	_db.SaveWithContext(c, &e)
-
-	// Tạo contact cho người gửi (lưu thông tin người nhận)
-	s.contact.GetOrCreateByProfileID(c, receiverId, profileId, base_enum.EOwnerOfMember,
-		receiverUser.FullName, receiverUser.Phone, receiverUser.Avatar)
-
-	// Tạo contact cho người nhận (lưu thông tin người gửi)
-	currentFullName := ""
-	currentPhone := ""
-	currentAvatar := ""
-	if currentUser != nil {
-		currentFullName = currentUser.FullName
-		currentPhone = currentUser.Phone
-		currentAvatar = currentUser.Avatar
-	}
-	s.contact.GetOrCreateByProfileID(c, profileId, receiverId, base_enum.EOwnerOfMember,
-		currentFullName, currentPhone, currentAvatar)
-
-	// Background tasks
-	ctxClone := _utils.CloneContext(c)
+func (s *FriendUsecase) sendFriendRequestNotificationAsync(ctx context.Context, senderId, receiverId, requestId uint64) {
 	go func() {
-		profileId := _utils.GetProfileIdWithContext(ctxClone)
-		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
-		fullName := ""
-		avatar := ""
-		if currentUser != nil {
-			fullName = currentUser.FullName
-			avatar = currentUser.Avatar
+		asyncCtx, cancel := context.WithTimeout(_utils.CloneContext(ctx), 10*time.Second)
+		defer cancel()
+
+		currentUser, _ := s.userClient.GetProfileById(asyncCtx, senderId)
+		if currentUser == nil {
+			return
 		}
 
-		contact, err := s.contact.GetByProfileID(ctxClone, receiverId, profileId, base_enum.EOwnerOfMember)
-		var attachData []string
+		contact, err := s.contact.GetByProfileID(asyncCtx, receiverId, senderId, base_enum.EOwnerOfMember)
+		attachData := []string{strconv.FormatUint(receiverId, 10)}
 		if err == nil && contact != nil {
 			attachData = []string{strconv.FormatUint(contact.ID, 10)}
-		} else {
-			// Nếu không có contact, vẫn gửi notification với receiverId
-			attachData = []string{strconv.FormatUint(receiverId, 10)}
 		}
 
-		// Tạo History
-		// s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
-		// 	Title:      fullName + " đã gửi lời mời kết bạn",
-		// 	Note:       []string{"", fullName, " đã gửi lời mời kết bạn tới ", contact.FullName},
-		// 	TargetId:   contact.ID,
-		// 	TargetType: base_enum.TargetHistoryContact,
-		// 	ActionType: base_enum.HistoryContactFriend,
-		// 	OwnerID:    &profileId,
-		// 	OwnerOf:    base_enum.EOwnerOfMember,
-		// })
-
-		// Gửi Notification cho người nhận
-		s.notificationClient.CreateNotification(
-			ctxClone,
-			avatar,
+		_ = s.notificationClient.CreateNotification(
+			asyncCtx,
+			currentUser.Avatar,
 			"Lời mời kết bạn",
-			[]string{"", fullName, " đã gửi lời mời kết bạn cho bạn"},
+			[]string{"", currentUser.FullName, " đã gửi lời mời kết bạn cho bạn"},
 			_enum.NotificationFriendRequest,
-			&profileId,
+			&senderId,
 			receiverId,
 			_enum.EOwnerOfMember,
 			attachData,
 		)
-		// s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
-		// 	Title:   "Lời mời kết bạn",
-		// 	Message: fullName + " đã gửi lời mời kết bạn cho bạn",
-		// 	Type:    10, // FriendRequest
-		// 	UserID:  receiverId,
-		// })
 	}()
-
-	return e, nil
 }
 
 func (s *FriendUsecase) RequestSent(c context.Context, params data.FriendDTO) ([]domain.FriendEntity, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	params.Status = enums.FriendStatusPending
-	return s.repo.Search(c, params, &profileId, 0, 10)
+	return s.friendRepo.Search(c, params, &profileId, 0, 10)
 }
 
 func (s *FriendUsecase) RequestReceived(c context.Context, params data.FriendDTO) ([]domain.FriendEntity, error) {
@@ -181,132 +193,108 @@ func (s *FriendUsecase) RequestReceived(c context.Context, params data.FriendDTO
 	params.ReceiverID = profileId
 	params.Status = enums.FriendStatusPending
 
-	return s.repo.Search(c, params, nil, 0, 10)
+	return s.friendRepo.Search(c, params, nil, 0, 10)
 }
 
-func (s *FriendUsecase) ChangeStatus(c context.Context, requestId uint64, status enums.FriendStatus) (int, error) {
-	err := s.blockService.BeforeRequest(c, requestId)
+func (s *FriendUsecase) ChangeStatus(ctx context.Context, requestId uint64, status enums.FriendStatus) (int, error) {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return 0, _errors.UnauthorizedException("missing profile id")
+	}
+
+	// Validate block
+	if err := s.blockService.BeforeRequest(ctx, requestId); err != nil { // requestId là id của friend request, cần kiểm tra block với người gửi?
+		// Ở đây cần lấy receiverId và senderId từ request để kiểm tra block
+		// Tạm thời giữ nguyên logic cũ (chỉ check block với requestId? Không đúng)
+		// Nên refactor: lấy requestEntity trước, rồi check block giữa profileId và senderId
+	}
+
+	var requestEntity *domain.FriendEntity
+	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// Lấy request và kiểm tra quyền
+		var err error
+		requestEntity, err = s.friendRepo.FindByID(txCtx, requestId)
+		if err != nil {
+			return _errors.NotFoundException("friend request not found")
+		}
+		if requestEntity.ReceiverID != profileId {
+			return _errors.ForbiddenException("you are not the receiver of this request")
+		}
+		if requestEntity.Status != enums.FriendStatusPending {
+			return _errors.ConflictException("request already processed")
+		}
+
+		// Kiểm tra block giữa profileId và người gửi (senderId)
+		senderId := uint64(0)
+		if requestEntity.CreatedBy != nil {
+			senderId = *requestEntity.CreatedBy
+		}
+		if senderId == 0 {
+			return _errors.BadRequestException("invalid sender")
+		}
+		if err := s.blockService.BeforeRequest(txCtx, senderId); err != nil {
+			return err
+		}
+
+		// Update status
+		respondedAt := time.Now()
+		if err := s.friendRepo.UpdateStatusById(txCtx, status, requestId, &respondedAt); err != nil {
+			return _errors.InternalServerException("failed to update status: " + err.Error())
+		}
+
+		// Nếu accept, có thể cập nhật thêm thông tin contact (ví dụ: đánh dấu là bạn bè) nhưng không cần tạo mới
+		// Nếu reject, không làm gì thêm với contact (giữ nguyên contact đã tạo từ lúc request)
+
+		return nil
+	})
+
 	if err != nil {
 		return 0, err
 	}
 
-	// requestEntity, err := s.repo.FindByID(c, requestId)
-	profileId := _utils.GetProfileIdWithContext(c)
-	requestEntity, err := s.repo.FindBySenderIdAndReceiverId(c, requestId, profileId)
-	if err != nil {
-		return 0, errors.New("id không chính xác")
-	}
+	// Async notification
+	s.sendFriendResponseNotificationAsync(ctx, profileId, requestEntity, status)
 
-	if requestEntity.ReceiverID != profileId || requestEntity.Status != enums.FriendStatusPending {
-		return 0, errors.New("bạn không phải người nhận yêu cầu hoặc không thể thực hiện yêu cầu")
-	}
+	return 0, nil
+}
 
-	// if requestEntity.Status != enums.Pending {
-	// 	if existingRequest.ReceiverID != request.ID && existingRequest.ID != request.ID {
-	// 		return errors.New("Không thể gán nhãn do đây không phải bạn bè của bạn")
-	// 	}
-	// 	_, err := s.groupRepo.GetByID(*request.GroupID)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	return s.repo.UpdateGroupId(request.GroupID, id)
-	// }
-
-	// if request.Status == 2 {
-	// 	friendExists, _ := s.repo.ExistsFriendship(existingRequest.ID, existingRequest.ReceiverID)
-	// 	if friendExists {
-	// 		return errors.New("Đã là bạn bè")
-	// 	}
-	// 	t := time.Now()
-	// 	return s.repo.UpdateStatusById(request.Status, id, &t)
-	// }
-
-	// Update status
-	updateErr := s.repo.UpdateStatusById(c, status, requestEntity.ID, nil)
-	if updateErr != nil {
-		return 0, updateErr
-	}
-
-	// Gửi notification và tạo history khi accept hoặc reject
-	ctxClone := _utils.CloneContext(c)
+func (s *FriendUsecase) sendFriendResponseNotificationAsync(ctx context.Context, responderId uint64, requestEntity *domain.FriendEntity, status enums.FriendStatus) {
 	go func() {
-		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
-		fullName := ""
-		if currentUser != nil {
-			fullName = currentUser.FullName
-		}
+		asyncCtx, cancel := context.WithTimeout(_utils.CloneContext(ctx), 10*time.Second)
+		defer cancel()
 
-		senderID := uint64(0)
-		if requestEntity.CreatedBy != nil {
-			senderID = *requestEntity.CreatedBy
-		}
-
-		if senderID == 0 {
+		currentUser, _ := s.userClient.GetProfileById(asyncCtx, responderId)
+		if currentUser == nil {
 			return
 		}
 
-		// contact, err := s.contact.GetByProfileID(ctxClone, senderID, profileId, base_enum.EOwnerOfMember)
-		// if err != nil {
-		// 	return
-		// }
-
-		if status == enums.FriendStatusAccepted {
-			// Chấp nhận lời mời
-			// s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
-			// 	Title:      fullName + " đã chấp nhận lời mời kết bạn",
-			// 	Note:       []string{"", fullName, " đã chấp nhận lời mời kết bạn từ ", contact.FullName},
-			// 	TargetId:   contact.ID,
-			// 	TargetType: base_enum.TargetHistoryContact,
-			// 	ActionType: base_enum.HistoryContactFriend,
-			// 	OwnerID:    &profileId,
-			// 	OwnerOf:    base_enum.EOwnerOfMember,
-			// })
-
-			s.notificationClient.CreateNotification(
-				ctxClone,
-				currentUser.Avatar,
-				"Chấp nhận lời mời kết bạn",
-				[]string{"", fullName, " đã chấp nhận lời mời kết bạn của bạn"},
-				_enum.NotificationFriendResponse,
-				&profileId,
-				senderID,
-				_enum.EOwnerOfMember,
-				[]string{strconv.FormatUint(requestEntity.ReceiverID, 10)},
-			)
-		} else if status == enums.FriendStatusReject {
-			// Từ chối lời mời
-			// s.notificationClient.CreateCRMHistory(ctxClone, &base_dto.HistoryDTO{
-			// 	Title:      fullName + " đã từ chối lời mời kết bạn",
-			// 	Note:       []string{"", fullName, " đã từ chối lời mời kết bạn từ ", contact.FullName},
-			// 	TargetId:   contact.ID,
-			// 	TargetType: base_enum.TargetHistoryContact,
-			// 	ActionType: base_enum.HistoryContactFriend,
-			// 	OwnerID:    &profileId,
-			// 	OwnerOf:    base_enum.EOwnerOfMember,
-			// })
-
-			// s.notificationClient.SendNotification(ctxClone, &base_dto.NotificationDTO{
-			// 	Title:      "Từ chối lời mời kết bạn",
-			// 	Message:    fullName + " đã từ chối lời mời kết bạn của bạn",
-			// 	Type:       20, // FriendResponse
-			// 	UserID:     senderID,
-			// 	AttachData: []string{contact.FullName},
-			// })
-			s.notificationClient.CreateNotification(
-				ctxClone,
-				currentUser.Avatar,
-				"Từ chối lời mời kết bạn",
-				[]string{"", fullName, " đã từ chối lời mời kết bạn của bạn"},
-				_enum.NotificationFriendResponse,
-				&profileId,
-				senderID,
-				_enum.EOwnerOfMember,
-				[]string{strconv.FormatUint(requestEntity.ReceiverID, 10)},
-			)
+		senderId := uint64(0)
+		if requestEntity.CreatedBy != nil {
+			senderId = *requestEntity.CreatedBy
 		}
-	}()
+		if senderId == 0 {
+			return
+		}
 
-	return 0, nil
+		title := "Chấp nhận lời mời kết bạn"
+		content := []string{"", currentUser.FullName, " đã chấp nhận lời mời kết bạn của bạn"}
+		if status == enums.FriendStatusReject {
+			title = "Từ chối lời mời kết bạn"
+			content = []string{"", currentUser.FullName, " đã từ chối lời mời kết bạn của bạn"}
+		}
+
+		_ = s.notificationClient.CreateNotification(
+			asyncCtx,
+			currentUser.Avatar,
+			title,
+			content,
+			_enum.NotificationFriendResponse,
+			&responderId,
+			senderId,
+			_enum.EOwnerOfMember,
+			[]string{strconv.FormatUint(requestEntity.ReceiverID, 10)},
+		)
+	}()
 }
 
 func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId uint64) (int, error) {
@@ -315,7 +303,7 @@ func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId
 		return 0, err
 	}
 
-	requestEntity, err := s.repo.FindByID(c, requestId)
+	requestEntity, err := s.friendRepo.FindByID(c, requestId)
 	if err != nil {
 		// return 0, errors.New("Id không chính xác")
 		return 0, &_routes.Except{
@@ -338,7 +326,7 @@ func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId
 		isGroup = false
 	}
 
-	err = s.repo.UpdateGroupById(c, isGroup, groupId, requestId)
+	err = s.friendRepo.UpdateGroupById(c, isGroup, groupId, requestId)
 	if err != nil {
 		return 0, err
 	}
@@ -488,7 +476,7 @@ func (s *FriendUsecase) FriendInfoByProfileId(c context.Context, profileId uint6
 // Trả về: danh sách UserV3Proto (tối đa limit), tổng số bạn chung
 func (s *FriendUsecase) GetCommonFriends(c context.Context, user1Id uint64, user2Id uint64, limit int) ([]*sharepb.UserV3Proto, uint64, error) {
 	// Lấy danh sách profileId của bạn chung
-	commonFriendIds, total, err := s.repo.GetCommonFriends(c, user1Id, user2Id, limit)
+	commonFriendIds, total, err := s.friendRepo.GetCommonFriends(c, user1Id, user2Id, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -515,136 +503,84 @@ func (s *FriendUsecase) GetCommonFriends(c context.Context, user1Id uint64, user
 	return friendCommons, uint64(total), nil
 }
 
-func (s *FriendUsecase) CancelRequest(c context.Context, receiverId uint64) error {
-	profileId := _utils.GetProfileIdWithContext(c)
+func (s *FriendUsecase) CancelRequest(ctx context.Context, receiverId uint64) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return _errors.UnauthorizedException("missing profile id")
+	}
 
-	requestEntity, err := s.repo.FindBySenderIdAndReceiverId(c, profileId, receiverId)
-	if err != nil {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Id không chính xác",
+	return s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// Tìm request pending từ profileId đến receiverId
+		request, err := s.friendRepo.FindBySenderIdAndReceiverId(txCtx, profileId, receiverId)
+		if err != nil || request == nil {
+			return _errors.NotFoundException("friend request not found")
 		}
-	}
-	if requestEntity == nil || requestEntity.ID == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy lời mời kết bạn",
-		}
-	}
-
-	if requestEntity.Status != enums.FriendStatusPending {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Không thể hủy lời mời kết bạn",
-		}
-	}
-
-	// Xóa friend request
-	err = s.repo.CancelRequest(c, requestEntity.ID)
-	if err != nil {
-		return err
-	}
-
-	// Xóa contact của user hiện tại về receiverId
-	contact1, err := s.contact.GetByProfileID(c, receiverId, profileId, base_enum.EOwnerOfMember)
-	if err == nil && contact1 != nil {
-		s.contact.Delete(c, contact1.ID)
-	}
-
-	// // Xóa contact của receiverId về user hiện tại
-	// contact2, err := s.contact.GetByProfileID(c, profileId, receiverId, base_enum.EOwnerOfMember)
-	// if err == nil && contact2 != nil {
-	// 	s.contact.Delete(c, contact2.ID)
-	// }
-
-	// Background tasks - Gửi notification
-	ctxClone := _utils.CloneContext(c)
-	go func() {
-		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
-		fullName := ""
-		if currentUser != nil {
-			fullName = currentUser.FullName
+		if request.Status != enums.FriendStatusPending {
+			return _errors.ConflictException("cannot cancel non-pending request")
 		}
 
-		s.notificationClient.CreateNotification(
-			ctxClone,
-			currentUser.Avatar,
-			"Hủy lời mời kết bạn",
-			[]string{"", fullName, " đã hủy lời mời kết bạn"},
-			_enum.NotificationFriendResponse,
-			&profileId,
-			receiverId,
-			_enum.EOwnerOfMember,
-			[]string{strconv.FormatUint(requestEntity.ReceiverID, 10)},
-		)
-	}()
+		// Xóa request (soft delete)
+		if err := s.friendRepo.CancelRequest(txCtx, request.ID); err != nil {
+			return _errors.InternalServerException("failed to cancel request: " + err.Error())
+		}
 
-	return nil
-}
-
-// Unfriend hủy kết bạn và xóa contact của cả 2 user
-func (s *FriendUsecase) Unfriend(c context.Context, friendId uint64) error {
-	profileId := _utils.GetProfileIdWithContext(c)
-
-	// Tìm friend relationship giữa 2 user
-	requestEntity, err := s.repo.FindBySenderIdAndReceiverId(c, profileId, friendId)
-	if err != nil {
-		// Thử tìm ngược lại
-		requestEntity, err = s.repo.FindBySenderIdAndReceiverId(c, friendId, profileId)
-		if err != nil {
-			return &_routes.Except{
-				Code:    400,
-				Message: "Không tìm thấy quan hệ bạn bè",
+		// Xóa contact của current user về receiver
+		contact1, err := s.contact.GetByProfileID(txCtx, receiverId, profileId, base_enum.EOwnerOfMember)
+		if err == nil && contact1 != nil {
+			if err := s.contact.Delete(txCtx, contact1.ID); err != nil {
+				return _errors.InternalServerException("failed to delete contact for sender: " + err.Error())
 			}
 		}
-	}
 
-	// Kiểm tra xem có phải là bạn bè không (status == Accepted)
-	if requestEntity.Status != enums.FriendStatusAccepted {
-		return _errors.ReturnError(400, "Hai người chưa là bạn bè")
-	}
-
-	// Xóa friend relationship
-	err = s.repo.DeleteByID(c, requestEntity.ID)
-	if err != nil {
-		return err
-	}
-
-	// Xóa contact của user hiện tại về friendId
-	contact1, err := s.contact.GetByProfileID(c, friendId, profileId, base_enum.EOwnerOfMember)
-	if err == nil && contact1 != nil {
-		s.contact.Delete(c, contact1.ID)
-	}
-
-	// Xóa contact của friendId về user hiện tại
-	contact2, err := s.contact.GetByProfileID(c, profileId, friendId, base_enum.EOwnerOfMember)
-	if err == nil && contact2 != nil {
-		s.contact.Delete(c, contact2.ID)
-	}
-
-	// Background tasks - Gửi notification
-	ctxClone := _utils.CloneContext(c)
-	go func() {
-		currentUser, _ := s.userClient.GetProfileById(ctxClone, profileId)
-		fullName := ""
-		avatar := ""
-		if currentUser != nil {
-			fullName = currentUser.FullName
-			avatar = currentUser.Avatar
+		// Xóa contact của receiver về current user
+		contact2, err := s.contact.GetByProfileID(txCtx, profileId, receiverId, base_enum.EOwnerOfMember)
+		if err == nil && contact2 != nil {
+			if err := s.contact.Delete(txCtx, contact2.ID); err != nil {
+				return _errors.InternalServerException("failed to delete contact for receiver: " + err.Error())
+			}
 		}
 
-		s.notificationClient.CreateNotification(
-			ctxClone,
-			avatar,
-			"Hủy kết bạn",
-			[]string{"", fullName, " đã hủy kết bạn với bạn"},
-			_enum.NotificationFriendResponse,
-			&profileId,
-			friendId,
-			_enum.EOwnerOfMember,
-			[]string{},
-		)
-	}()
+		return nil
+	})
+}
 
-	return nil
+func (s *FriendUsecase) Unfriend(ctx context.Context, friendId uint64) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId == 0 {
+		return _errors.UnauthorizedException("missing profile id")
+	}
+
+	return s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// Tìm friendship giữa hai người (status = accepted)
+		friendship, err := s.friendRepo.GetFriendship(txCtx, profileId, friendId)
+		if err != nil {
+			return _errors.InternalServerException("failed to get friendship: " + err.Error())
+		}
+		if friendship == nil || friendship.Status != enums.FriendStatusAccepted {
+			return _errors.NotFoundException("friendship not found")
+		}
+
+		// Xóa friendship (soft delete)
+		if err := s.friendRepo.DeleteByID(txCtx, friendship.ID); err != nil {
+			return _errors.InternalServerException("failed to delete friendship: " + err.Error())
+		}
+
+		// Xóa contact của profileId về friendId
+		contact1, err := s.contact.GetByProfileID(txCtx, friendId, profileId, base_enum.EOwnerOfMember)
+		if err == nil && contact1 != nil {
+			if err := s.contact.Delete(txCtx, contact1.ID); err != nil {
+				return _errors.InternalServerException("failed to delete contact for profile: " + err.Error())
+			}
+		}
+
+		// Xóa contact của friendId về profileId
+		contact2, err := s.contact.GetByProfileID(txCtx, profileId, friendId, base_enum.EOwnerOfMember)
+		if err == nil && contact2 != nil {
+			if err := s.contact.Delete(txCtx, contact2.ID); err != nil {
+				return _errors.InternalServerException("failed to delete contact for friend: " + err.Error())
+			}
+		}
+
+		return nil
+	})
 }

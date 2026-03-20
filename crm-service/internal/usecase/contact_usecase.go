@@ -31,7 +31,9 @@ type ContactUsecase struct {
 	bdsproProvider     provider.BdsproProvider
 	ownerUsecase       *OwnerUsecase
 	tagUsecase         *TagUsecase
+
 	notificationClient _provider.NotificationProvider
+	transaction        provider.ITransaction
 }
 
 func NewContactUsecase(
@@ -43,7 +45,9 @@ func NewContactUsecase(
 	bdsproProvider provider.BdsproProvider,
 	ownerUsecase *OwnerUsecase,
 	tagUsecase *TagUsecase,
+
 	notificationClient _provider.NotificationProvider,
+	transaction provider.ITransaction,
 ) *ContactUsecase {
 	return &ContactUsecase{
 		repo:               repo,
@@ -55,6 +59,7 @@ func NewContactUsecase(
 		ownerUsecase:       ownerUsecase,
 		tagUsecase:         tagUsecase,
 		notificationClient: notificationClient,
+		transaction:        transaction,
 	}
 }
 
@@ -181,72 +186,84 @@ func (s *ContactUsecase) UpdateProductIds(c context.Context, contactId uint64, p
 	return s.contactProductRepo.Bulk(c, productIds, contactId)
 }
 
-func (s *ContactUsecase) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, entity.OwnerOf, entity.OwnerID)
-	if err != nil {
-		return nil, err
-	}
-	entity.OwnerID = ownerId
+func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+	var result *domain.ContactEntity
+	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		ownerId, err := s.ownerUsecase.GetOwnerInfo(txCtx, entity.OwnerOf, entity.OwnerID)
+		if err != nil {
+			return err
+		}
+		entity.OwnerID = ownerId
 
-	// Kiểm tra số điện thoại đã tồn tại trong hệ thống chưa
-	if entity.Phone != "" {
-		// existedContact, err := s.repo.GetByPhone(c, ownerId, entity.OwnerOf, entity.Phone)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// if existedContact != nil {
-		// 	return nil, &_routes.Except{
-		// 		Code:    400,
-		// 		Message: "Liên hệ với số điện thoại này đã tồn tại",
-		// 	}
-		// }
-
-		// Kiểm tra số điện thoại trong profile service
-		profiles, err := s.userClient.GetProfileByPhones(c, []string{entity.Phone})
-		if err == nil && len(profiles) > 0 {
-			if profile, exists := profiles[entity.Phone]; exists {
-				if profile.ProfileId == ownerId {
-					return nil, _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
-				}
-				entity.ProfileID = &profile.ProfileId
+		// Kiểm tra ProfileID đã tồn tại
+		if entity.ProfileID != nil && *entity.ProfileID != 0 {
+			existing, err := s.repo.GetByProfileID(txCtx, *entity.ProfileID, ownerId, entity.OwnerOf)
+			if err != nil {
+				return err
+			}
+			if existing != nil {
+				return _errors.ConflictException("Contact already exists for this profile")
 			}
 		}
-	}
 
-	result, err := s.repo.Create(c, entity)
+		// Kiểm tra phone và lấy ProfileID từ user service
+		if entity.Phone != "" {
+			profiles, err := s.userClient.GetProfileByPhones(txCtx, []string{entity.Phone})
+			if err == nil && len(profiles) > 0 {
+				if profile, exists := profiles[entity.Phone]; exists {
+					if profile.ProfileId == ownerId {
+						return _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+					}
+					entity.ProfileID = &profile.ProfileId
+				}
+			}
+		}
+
+		// Tạo contact
+		created, err := s.repo.Create(txCtx, entity)
+		if err != nil {
+			return err
+		}
+		result = created
+
+		// Xử lý tags
+		if len(entity.Tags) > 0 && result.ID > 0 {
+			if err := s.tagUsecase.ReplaceContactTags(txCtx, result.ID, entity.Tags); err != nil {
+				return err
+			}
+			tags, _ := s.tagUsecase.ListTagsByContactID(txCtx, result.ID)
+			result.Tags = tags
+		}
+
+		// Xử lý products
+		if len(entity.ProductIDs) > 0 && result.ID > 0 {
+			if err := s.contactProductRepo.Bulk(txCtx, entity.ProductIDs, result.ID); err != nil {
+				return err
+			}
+			// Cập nhật ContactCount sau commit (có thể để sau transaction)
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Xử lý tags nếu có
-	if len(entity.Tags) > 0 && result.ID > 0 {
-		if err := s.tagUsecase.ReplaceContactTags(c, result.ID, entity.Tags); err != nil {
-			return nil, err
-		}
-		// Load lại tags để trả về
-		tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
-		result.Tags = tags
+	// Async tasks sau commit
+	if len(entity.ProductIDs) > 0 {
+		s.updateContactCountForProducts(ctx, entity.ProductIDs)
 	}
 
-	// Xử lý products nếu có
-	if len(entity.ProductIDs) > 0 && result.ID > 0 {
-		// Sync products vào bảng tb_contact_product
-		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
-			return nil, err
-		}
-		// Cập nhật ContactCount cho các products
-		s.updateContactCountForProducts(c, entity.ProductIDs)
-	}
-
-	// Tạo thông báo khi tạo liên hệ thành công
+	// Tạo notification
 	go func() {
-		s.notificationClient.CreateNotification(c,
+		s.notificationClient.CreateNotification(ctx,
 			result.Avatar,
 			"Tạo liên hệ",
 			[]string{result.FullName},
 			_enum.NotificationContactCreate,
 			&result.ID,
-			ownerId,
+			result.OwnerID,
 			_enum.EOwnerOfMember,
 			[]string{strconv.FormatUint(result.ID, 10)},
 		)
