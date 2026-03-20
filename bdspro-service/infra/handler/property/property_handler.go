@@ -10,6 +10,7 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"log"
 	"strconv"
 	"time"
@@ -421,9 +422,17 @@ func (h *PropertyHandler) CreateProperty(ctx context.Context, req *bdspropb.Crea
 func (h *PropertyHandler) ImportProperty(ctx context.Context, req *bdspropb.CreatePropertyRequest) (*bdspropb.Response, error) {
 	body := h.PropertyMapper.CreatePropertyPbToDTO(req)
 	property, err := h.PropertyUsecase.ImportProperty(ctx, body)
+
 	if err != nil {
+		var dupErr *property_usecases.DuplicatePropertyError
+		if errors.As(err, &dupErr) {
+			// Trả về gRPC status AlreadyExists kèm danh sách ID trong message
+			return nil, status.Errorf(codes.AlreadyExists, "duplicate properties found: %v", dupErr.IDs)
+		}
+		// Các lỗi khác giữ nguyên
 		return nil, err
 	}
+
 	return &bdspropb.Response{
 		Id:      property.ID,
 		Message: "import successfully",

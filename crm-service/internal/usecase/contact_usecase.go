@@ -240,7 +240,6 @@ func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntit
 			if err := s.contactProductRepo.Bulk(txCtx, entity.ProductIDs, result.ID); err != nil {
 				return err
 			}
-			// Cập nhật ContactCount sau commit (có thể để sau transaction)
 		}
 
 		return nil
@@ -250,7 +249,6 @@ func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntit
 		return nil, err
 	}
 
-	// Async tasks sau commit
 	if len(entity.ProductIDs) > 0 {
 		s.updateContactCountForProducts(ctx, entity.ProductIDs)
 	}

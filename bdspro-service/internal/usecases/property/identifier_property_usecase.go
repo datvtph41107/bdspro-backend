@@ -7,7 +7,9 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"fmt"
+	"log"
 )
 
 // IdentifierProperty tạo bảng ghi property_identify, gán ID vào lineage và các bảng thuộc tính (info, location, land_info, building_info, evidence, external_ref, media).
@@ -72,8 +74,33 @@ func (u *PropertyUsecase) IdentifierProperty(ctx context.Context, lineageID uint
 	return identifyID, nil
 }
 
+type DuplicatePropertyError struct {
+	IDs []uint64
+}
+
+func (e *DuplicatePropertyError) Error() string {
+	return fmt.Sprintf("duplicate properties found: %v", e.IDs)
+}
+
 // ImportProperty tạo identifier trước, rồi lineage, sau đó update identifier.lineage_id. Dùng cho import data.
 func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePropertyProductRequest) (*domain.PropertyLineage, error) {
+	const (
+		DuplicateCheckRadiusMeters = 50.0
+		AreaTolerancePercent       = 0.1
+	)
+
+	log.Printf("[INFO] Starting property import - hasLocation=%v, hasInfo=%v, hasLandInfo=%v, mediaCount=%d",
+		req.Location != nil,
+		req.Info != nil,
+		req.LandInfo != nil,
+		len(req.MediaList),
+	)
+
+	if err := u.validateImportRequest(req); err != nil {
+		log.Printf("[ERROR] Validation failed: %v", err)
+		return nil, err
+	}
+
 	var (
 		property    *domain.PropertyLineage
 		identifyID  uint64
@@ -86,96 +113,112 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 	originID := _utils.GetOriginIdFromContext(ctx)
 
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		// 1. Tạo PropertyIdentify trước (chưa có lineage_id)
-		identify := &domain.PropertyIdentify{
-			PID:     0,
-			Version: 1,
-		}
+		identify := &domain.PropertyIdentify{PID: 0, Version: 1}
 		if err := u.PropertyIdentifyRepo.Create(txCtx, identify); err != nil {
+			log.Printf("[ERROR] Create property_identify failed: %v", err)
 			return fmt.Errorf("create property_identify: %w", err)
 		}
 		identifyID = identify.ID
 		identifyIDPtr := &identifyID
+		log.Printf("[DEBUG] Created property_identify id=%d", identifyID)
 
-		// 2. Tạo Info (có property_identify_id)
+		if err := u.checkDuplicates(txCtx, req, identifyID); err != nil {
+			return err
+		}
+
 		info := &domain.PropertyInfo{
 			SourceType:  enums.EPropertySourceType(enums.SourceTypeOther),
 			LegalStatus: enums.EHouseCertificateNone,
-			Note:        "Note",
-			UnitCode:    "UnitCode",
-			Identifier:  "Identifier",
-			Level:       "Level",
 		}
 		if req.Info != nil {
-			info = req.Info
+			info.Title = req.Info.Title
+			info.PropertyTypeID = req.Info.PropertyTypeID
+			info.ProjectID = req.Info.ProjectID
+			info.Note = req.Info.Note
+			info.UnitCode = req.Info.UnitCode
+			info.Identifier = req.Info.Identifier
+			info.Level = req.Info.Level
 		}
 		info.PropertyIdentifyID = identifyIDPtr
 		if err := u.PropertyInfoRepo.Save(txCtx, info); err != nil {
+			log.Printf("[ERROR] Create PropertyInfo failed: %v", err)
 			return _errors.InternalServerException("Create PropertyInfo: %s", err.Error())
 		}
 		infoID = &info.ID
+		log.Printf("[DEBUG] Created property_info id=%d", info.ID)
 
-		// 3. Location
 		if req.Location != nil {
 			loc := *req.Location
 			loc.PropertyIdentifyID = identifyIDPtr
 			if err := u.PropertyLocationRepo.Create(txCtx, &loc); err != nil {
+				log.Printf("[ERROR] Create PropertyLocation failed: %v", err)
 				return _errors.InternalServerException("Create PropertyLocation: %s", err.Error())
 			}
-			locationID = &loc.ID
+			idVal := loc.ID
+			locationID = &idVal
+			log.Printf("[DEBUG] Created property_location id=%d, lat=%v, lng=%v",
+				loc.ID, safeDerefFloat(loc.Latitude), safeDerefFloat(loc.Longitude))
 		}
 
-		// 4. LandInfo
 		if req.LandInfo != nil {
 			land := *req.LandInfo
 			land.PropertyIdentifyID = identifyIDPtr
 			if err := u.PropertyLandInfoRepo.Create(txCtx, &land); err != nil {
+				log.Printf("[ERROR] Create PropertyLandInfo failed: %v", err)
 				return _errors.InternalServerException("Create PropertyLandInfo: %s", err.Error())
 			}
-			landInfoID = &land.ID
+			idVal := land.ID
+			landInfoID = &idVal
+			log.Printf("[DEBUG] Created property_land_info id=%d, area=%.2f", land.ID, safeDerefFloat(land.AreaTotal))
 		}
 
-		// 5. BuildingInfo
 		if req.BuildingInfo != nil {
 			bld := *req.BuildingInfo
 			bld.PropertyIdentifyID = identifyIDPtr
 			if err := u.PropertyBuildingInfoRepo.Create(txCtx, &bld); err != nil {
+				log.Printf("[ERROR] Create PropertyBuildingInfo failed: %v", err)
 				return _errors.InternalServerException("Create PropertyBuildingInfo: %s", err.Error())
 			}
-			buildingID = &bld.ID
+			idVal := bld.ID
+			buildingID = &idVal
+			log.Printf("[DEBUG] Created property_building_info id=%d, floors=%v", bld.ID, derefUint32(bld.Floors))
 		}
 
-		// 6. Edvidence
 		if req.Edvidence != nil {
 			edv := *req.Edvidence
 			edv.PropertyIdentifyID = identifyIDPtr
 			if err := u.PropertyEdvidenceRepo.Create(txCtx, &edv); err != nil {
+				log.Printf("[ERROR] Create PropertyEdvidence failed: %v", err)
 				return _errors.InternalServerException("Create PropertyEdvidence: %s", err.Error())
 			}
-			edvidenceID = &edv.ID
+			idVal := edv.ID
+			edvidenceID = &idVal
+			log.Printf("[DEBUG] Created property_edvidence id=%d", edv.ID)
 		}
 
-		// 7. ExternalRef
 		if req.ExternalRef != nil {
 			ext := *req.ExternalRef
 			ext.PropertyIdentifyID = identifyIDPtr
 			if err := u.PropertyExternalRefRepo.Create(txCtx, &ext); err != nil {
+				log.Printf("[ERROR] Create PropertyExternalRef failed: %v", err)
 				return _errors.InternalServerException("Create PropertyExternalRef: %s", err.Error())
 			}
+			log.Printf("[DEBUG] Created property_external_ref id=%d", ext.ID)
 		}
 
-		// 8. Statistic
 		statistic := &domain.PropertyStatistic{
-			ProductCount: 0,
-			AssetCount:   0,
-			ListingCount: 0,
+			ProductCount:       0,
+			AssetCount:         0,
+			ListingCount:       0,
+			PropertyIdentifyID: identifyIDPtr,
 		}
 		if err := u.PropertyStatisticRepo.Save(txCtx, statistic); err != nil {
+			log.Printf("[ERROR] Create PropertyStatistic failed: %v", err)
 			return _errors.InternalServerException("Create PropertyStatistic: %s", err.Error())
 		}
 		statisticID := &statistic.ID
+		log.Printf("[DEBUG] Created property_statistic id=%d", statistic.ID)
 
-		// 9. Tạo Lineage (đã có property_identify_id)
 		property = &domain.PropertyLineage{
 			PropertyIdentifyID: identifyIDPtr,
 			PropertyInfoID:     infoID,
@@ -186,22 +229,29 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 			StatisticID:        statisticID,
 		}
 		if err := u.PropertyRepo.Create(txCtx, property); err != nil {
+			log.Printf("[ERROR] Create PropertyLineage failed: %v", err)
 			return _errors.InternalServerException("Create PropertyLineage: %s", err.Error())
 		}
+		log.Printf("[INFO] Created property_lineage id=%d", property.ID)
 
-		// 10. Update identifier: gán lineage_id
-		if err := u.PropertyIdentifyRepo.UpdateFields(txCtx, identifyID, map[string]any{"lineage_id": property.ID}); err != nil {
-			return fmt.Errorf("update property_identify lineage_id: %w", err)
+		if err := u.PropertyIdentifyRepo.UpdateFields(txCtx, identifyID, map[string]any{
+			"lineage_id": property.ID,
+			"pid":        property.ID,
+		}); err != nil {
+			log.Printf("[ERROR] Update property_identify failed: %v", err)
+			return fmt.Errorf("update property_identify: %w", err)
 		}
-		// Update PID = lineageID (optional, để đồng bộ)
-		_ = u.PropertyIdentifyRepo.UpdateFields(txCtx, identifyID, map[string]any{"pid": property.ID})
+		log.Printf("[DEBUG] Updated property_identify id=%d with lineage_id=%d", identifyID, property.ID)
 
-		// 11. PropertyUser (owner)
 		if originID > 0 {
-			_, _ = u.PropertyUserRepo.CreateOwner(txCtx, property.ID, originID)
+			if _, err := u.PropertyUserRepo.CreateOwner(txCtx, property.ID, originID); err != nil {
+				log.Printf("[WARN] Failed to create property user for origin %d: %v", originID, err)
+			} else {
+				log.Printf("[DEBUG] Created property_user for origin %d", originID)
+			}
 		}
 
-		// 12. Media (sau khi có lineage)
+		// 13. Media
 		if len(req.MediaList) > 0 {
 			mediaList := make([]domain.PropertyMedia, len(req.MediaList))
 			for i := range req.MediaList {
@@ -210,18 +260,145 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 				mediaList[i].PropertyIdentifyID = identifyIDPtr
 			}
 			if err := u.PropertyMediaRepo.CreateBatch(txCtx, mediaList); err != nil {
+				log.Printf("[ERROR] Create PropertyMedia batch failed: %v", err)
 				return _errors.InternalServerException("Create PropertyMedia: %s", err.Error())
 			}
+			log.Printf("[DEBUG] Created %d media items", len(mediaList))
+
 			if len(mediaList) > 0 {
 				info.AvatarID = &mediaList[0].ID
-				_ = u.PropertyInfoRepo.Save(txCtx, info)
+				if err := u.PropertyInfoRepo.Save(txCtx, info); err != nil {
+					log.Printf("[WARN] Failed to update avatar: %v", err)
+				} else {
+					log.Printf("[DEBUG] Updated avatar to media id=%d", mediaList[0].ID)
+				}
 			}
 		}
 
+		log.Printf("[INFO] Property imported successfully - property_id=%d, identify_id=%d",
+			property.ID, identifyID)
+
 		return nil
 	})
+
 	if err != nil {
+		var dupErr *DuplicatePropertyError
+		if errors.As(err, &dupErr) {
+			log.Printf("[WARN] Duplicate properties detected: %v", dupErr.IDs)
+		} else {
+			log.Printf("[ERROR] Transaction failed: %v", err)
+		}
 		return nil, err
 	}
+
 	return property, nil
+}
+
+func (u *PropertyUsecase) validateImportRequest(req *dto.CreatePropertyProductRequest) error {
+	if req == nil {
+		return _errors.BadRequestException("request cannot be nil")
+	}
+
+	// Kiểm tra Location
+	if req.Location == nil {
+		return _errors.BadRequestException("location is required")
+	}
+	if req.Location.Latitude == nil {
+		return _errors.BadRequestException("latitude is required")
+	}
+	if req.Location.Longitude == nil {
+		return _errors.BadRequestException("longitude is required")
+	}
+	if *req.Location.Latitude < -90 || *req.Location.Latitude > 90 {
+		return _errors.BadRequestException("latitude must be between -90 and 90")
+	}
+	if *req.Location.Longitude < -180 || *req.Location.Longitude > 180 {
+		return _errors.BadRequestException("longitude must be between -180 and 180")
+	}
+
+	// Kiểm tra Info
+	if req.Info == nil {
+		return _errors.BadRequestException("info is required")
+	}
+	if req.Info.PropertyTypeID == nil {
+		return _errors.BadRequestException("property_type_id is required")
+	}
+
+	// Kiểm tra diện tích
+	if req.LandInfo == nil && req.BuildingInfo == nil {
+		return _errors.BadRequestException("either land_info or building_info is required")
+	}
+
+	if req.LandInfo != nil && req.LandInfo.AreaTotal != nil {
+		if *req.LandInfo.AreaTotal <= 0 {
+			return _errors.BadRequestException("area_total must be positive")
+		}
+	}
+
+	if req.BuildingInfo != nil && req.BuildingInfo.AreaActual != nil {
+		if *req.BuildingInfo.AreaActual <= 0 {
+			return _errors.BadRequestException("area_actual must be positive")
+		}
+	}
+
+	return nil
+}
+
+func (u *PropertyUsecase) checkDuplicates(ctx context.Context, req *dto.CreatePropertyProductRequest, identifyID uint64) error {
+	// Kiểm tra điều kiện cần để check duplicate
+	if req.Location == nil || req.Location.Latitude == nil || req.Location.Longitude == nil ||
+		req.Info == nil || req.Info.PropertyTypeID == nil {
+		return nil // không đủ dữ liệu để check
+	}
+	const (
+		DuplicateCheckRadiusMeters = 50.0
+		AreaTolerancePercent       = 0.1
+	)
+	// Xác định diện tích
+	var (
+		area       float64
+		areaSource string
+		hasArea    bool
+	)
+
+	if req.LandInfo != nil && req.LandInfo.AreaTotal != nil {
+		area = *req.LandInfo.AreaTotal
+		areaSource = "land_info"
+		hasArea = true
+	} else if req.BuildingInfo != nil && req.BuildingInfo.AreaActual != nil {
+		area = *req.BuildingInfo.AreaActual
+		areaSource = "building_info"
+		hasArea = true
+	}
+
+	if !hasArea {
+		log.Printf("[WARN] Missing area for duplicate check, skipping - property_identify_id=%d", identifyID)
+		return nil
+	}
+
+	log.Printf("[INFO] Checking duplicates - lat=%.6f, lng=%.6f, area=%.2f, area_source=%s, property_type=%d",
+		*req.Location.Latitude, *req.Location.Longitude, area, areaSource, *req.Info.PropertyTypeID)
+
+	duplicates, err := u.PropertyRepo.FindDuplicates(ctx,
+		*req.Location.Latitude, *req.Location.Longitude,
+		DuplicateCheckRadiusMeters,
+		*req.Info.PropertyTypeID,
+		area, AreaTolerancePercent)
+
+	if err != nil {
+		log.Printf("[ERROR] Duplicate check failed: %v", err)
+		return fmt.Errorf("duplicate check failed: %w", err)
+	}
+
+	if len(duplicates) > 0 {
+		ids := make([]uint64, len(duplicates))
+		for i, d := range duplicates {
+			ids[i] = d.ID
+		}
+		log.Printf("[WARN] Found %d duplicate properties: %v", len(ids), ids)
+		return &DuplicatePropertyError{IDs: ids}
+	}
+
+	log.Printf("[DEBUG] No duplicates found")
+	return nil
 }

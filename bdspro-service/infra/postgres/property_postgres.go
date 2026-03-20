@@ -12,6 +12,8 @@ import (
 	_utils "common/utils"
 	"context"
 	"encoding/json"
+	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -26,6 +28,68 @@ func NewPostgrePropertyRepo(db *gorm.DB) repo.PropertyRepo {
 	return &PostgrePropertyRepo{
 		BaseRepo: crud3.BaseRepo[domain.PropertyLineage]{DB: db},
 	}
+}
+
+// FindDuplicates tìm các property trùng lặp dựa trên tọa độ, bán kính, loại BĐS và diện tích.
+// Công thức Haversine được dùng để tính khoảng cách.
+func (r *PostgrePropertyRepo) FindDuplicates(
+	ctx context.Context,
+	lat, lng float64,
+	radiusMeters float64,
+	propertyTypeID uint64,
+	area float64,
+	tolerancePercent float64,
+) ([]*domain.PropertyLineage, error) {
+	const MaxDuplicateReturn = 10
+	var lineages []*domain.PropertyLineage
+
+	radiusKm := radiusMeters / 1000.0
+
+	// Tính bounding box để giảm số bản ghi cần tính Haversine
+	latDiff := radiusKm / 111.0 // 1 độ ≈ 111km
+	lngDiff := radiusKm / (111.0 * math.Cos(lat*math.Pi/180))
+
+	query := `
+        SELECT pl.*
+        FROM property_lineage pl
+        JOIN property_location loc ON pl.location_id = loc.id
+        JOIN property_info pi ON pl.property_info_id = pi.id
+        LEFT JOIN property_land_info land ON pl.land_info_id = land.id
+        LEFT JOIN property_building_info build ON pl.building_info_id = build.id
+        WHERE pl.deleted_at IS NULL
+          AND pi.property_type_id = $1
+          AND COALESCE(land.area_total, build.area_actual) BETWEEN $2 * (1 - $3) AND $2 * (1 + $3)
+          -- Bounding box filter
+          AND loc.latitude BETWEEN $4 - $5 AND $4 + $5
+          AND loc.longitude BETWEEN $6 - $7 AND $6 + $7
+          -- Haversine chính xác
+          AND (
+              6371 * acos( 
+                  LEAST(1, GREATEST(-1,
+                      cos(radians($4)) * cos(radians(loc.latitude)) * 
+                      cos(radians(loc.longitude) - radians($6)) + 
+                      sin(radians($4)) * sin(radians(loc.latitude))
+                  ))
+              ) <= $8
+          )
+        LIMIT $9
+        FOR UPDATE SKIP LOCKED
+    `
+
+	err := r.DB.WithContext(ctx).Raw(query,
+		propertyTypeID,
+		area, tolerancePercent,
+		lat, latDiff,
+		lng, lngDiff,
+		radiusKm,
+		MaxDuplicateReturn,
+	).Scan(&lineages).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("FindDuplicates query failed: %w", err)
+	}
+
+	return lineages, nil
 }
 
 func (r *PostgrePropertyRepo) GetRefreshSyncIds(c context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error) {

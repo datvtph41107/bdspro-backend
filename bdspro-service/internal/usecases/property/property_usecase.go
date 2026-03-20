@@ -8,7 +8,6 @@ import (
 	"bdspro/internal/repo"
 	property_repo "bdspro/internal/repo/property"
 	_dto "common/domain/dto"
-	_models "common/domain/entity"
 	_enum "common/domain/enum"
 	_errors "common/errors"
 	"common/pkg/fieldmask"
@@ -1744,12 +1743,12 @@ func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Pro
 	}
 
 	newProvince := &domain.ProvinceV2{
-		BaseEntity: _models.BaseEntity{
-			AuditBase: _models.AuditBase{
-				CreatedBy: &userID,
-				UpdatedBy: &userID,
-			},
-		},
+		// BaseEntity: _models.BaseEntity{
+		// 	AuditBase: _models.AuditBase{
+		// 		CreatedBy: &userID,
+		// 		UpdatedBy: &userID,
+		// 	},
+		// },
 		TQDID:        p.Id,
 		Code:         p.Code,
 		Name:         p.FullName,
@@ -1788,12 +1787,12 @@ func (u *PropertyUsecase) findOrCreateWard(ctx context.Context, w *tqdpb.Ward, p
 	}
 
 	newWard := &domain.WardV2{
-		BaseEntity: _models.BaseEntity{
-			AuditBase: _models.AuditBase{
-				CreatedBy: &userID,
-				UpdatedBy: &userID,
-			},
-		},
+		// BaseEntity: _models.BaseEntity{
+		// 	AuditBase: _models.AuditBase{
+		// 		CreatedBy: &userID,
+		// 		UpdatedBy: &userID,
+		// 	},
+		// },
 		TQDID:         w.Id,
 		Code:          w.Code,
 		Name:          w.FullName,

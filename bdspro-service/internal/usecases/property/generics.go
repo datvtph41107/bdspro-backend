@@ -99,6 +99,14 @@ func derefInt(p *int) int {
 	return *p
 }
 
+// Helper function để safe log
+func safeDerefUint64(p *uint64) string {
+	if p == nil {
+		return "nil"
+	}
+	return fmt.Sprintf("%d", *p)
+}
+
 func safeDerefFloat(f *float64) float64 {
 	if f == nil {
 		return 0

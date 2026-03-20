@@ -27,6 +27,7 @@ type PropertyRepo interface {
 
 	GetRefreshSyncIds(ctx context.Context, req *dto.CheckVersionSyncRequest) ([]uint64, error)
 	GetUpdatedAt(ctx context.Context, id uint64) (int64, error)
+	FindDuplicates(ctx context.Context, lat, lng float64, radiusMeters float64, propertyTypeID uint64, area float64, tolerancePercent float64) ([]*domain.PropertyLineage, error)
 }
 
 type PropertyRelationRepo interface {
