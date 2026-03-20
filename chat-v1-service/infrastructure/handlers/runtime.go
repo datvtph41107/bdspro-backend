@@ -32,6 +32,7 @@ func NewDelivery(
 	backgroundMapper *mapper.BackgroundMapper,
 	syncProvider *_provider.SyncProvider,
 	messageRepository usecases.Repository,
+	systemMessageUsecase *usecases.SystemMessageUsecase,
 ) *Delivery {
 	chatHandler := NewChatHandler(conversationUsecases,
 		messageUsecases,
@@ -45,6 +46,7 @@ func NewDelivery(
 		backgroundMapper,
 		syncProvider,
 		messageRepository,
+		systemMessageUsecase,
 	)
 	go chatHandler.Start()
 

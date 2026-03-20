@@ -77,6 +77,7 @@ func NewHTTPServer(port string) *HTTPServer {
 		backgroundMapper,
 		syncProvider,
 		pRepository,
+		usecases.NewSystemMessageUsecase(pRepository, userClient),
 	)
 	mux := runtime.NewServeMux()
 

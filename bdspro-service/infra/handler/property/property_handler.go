@@ -426,10 +426,8 @@ func (h *PropertyHandler) ImportProperty(ctx context.Context, req *bdspropb.Crea
 	if err != nil {
 		var dupErr *property_usecases.DuplicatePropertyError
 		if errors.As(err, &dupErr) {
-			// Trả về gRPC status AlreadyExists kèm danh sách ID trong message
 			return nil, status.Errorf(codes.AlreadyExists, "duplicate properties found: %v", dupErr.IDs)
 		}
-		// Các lỗi khác giữ nguyên
 		return nil, err
 	}
 

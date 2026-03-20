@@ -15,6 +15,7 @@ const (
 	ContentTypeLink    ContentTypeEnum = "link"
 	ContentTypeProduct ContentTypeEnum = "product"
 	ContentTypeContact ContentTypeEnum = "contact"
+	ContentTypeSystem  ContentTypeEnum = "system"
 )
 
 type MessageModel struct {
@@ -35,6 +36,16 @@ type MessageModel struct {
 	ReplyMessage   *MessageModel           `json:"reply_message" gorm:"foreignKey:ReplyId;references:ID"`
 	Reactions      []*MessageReactionModel `json:"reactions" gorm:"foreignKey:MessageID;references:ID"`
 	ExtraId        *uint64                 `json:"extra_id"`
+	SystemMetadata *SystemMessageMetadata  `json:"system_metadata" gorm:"-"`
+}
+
+type SystemMessageMetadata struct {
+	Action      string      `json:"action"`       // "pin", "add_member", "remove_member", etc.
+	ActorID     uint64      `json:"actor_id"`     // Người thực hiện
+	TargetIDs   []uint64    `json:"target_ids"`   // IDs của đối tượng bị tác động
+	TargetNames []string    `json:"target_names"` // Tên hiển thị
+	Timestamp   time.Time   `json:"timestamp"`
+	Extra       interface{} `json:"extra,omitempty"` // Thông tin thêm
 }
 
 func (MessageModel) TableName() string {

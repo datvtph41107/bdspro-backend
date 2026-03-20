@@ -71,6 +71,7 @@ func NewGRPCServer(port string) *GRPCServer {
 		backgroundMapper,
 		syncProvider,
 		pRepository,
+		usecases.NewSystemMessageUsecase(pRepository, userClient),
 	)
 
 	server := grpc.NewServer(

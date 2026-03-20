@@ -276,6 +276,15 @@ message GetMessagesResponse {
   int64 total = 2;
 }
 
+message SystemMessageData {
+    string action = 1;          // "pin", "add_member", etc.
+    uint64 actorId = 2;        // Người thực hiện
+    repeated uint64 targetIds = 3;
+    repeated string targetNames = 4;
+    string extra = 5;           // JSON string cho extra data
+}
+
+
 message Message {
   int32 messageId = 1;
   int32 senderId = 2;
@@ -291,6 +300,7 @@ message Message {
   optional string avatar = 12;
   optional uint64 extraId = 13;
   optional bdspropb.ProductAttachment product = 14;
+  SystemMessageData systemData = 15; 
 }
 
 message ForwardMessageRequest {

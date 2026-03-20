@@ -47,6 +47,7 @@ type chatHandler struct {
 	backgroundMapper        *mapper.BackgroundMapper
 	syncProvider            *_provider.SyncProvider
 	messageRepository       usecases.Repository
+	systemMessageUsecase    *usecases.SystemMessageUsecase
 }
 
 func (s *chatHandler) putTimestampFromTimePtr(ctx context.Context, key string, t *time.Time) {
@@ -73,6 +74,7 @@ func NewChatHandler(
 	backgroundMapper *mapper.BackgroundMapper,
 	syncProvider *_provider.SyncProvider,
 	messageRepository usecases.Repository,
+	systemMessageUsecase *usecases.SystemMessageUsecase,
 ) *chatHandler {
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
@@ -92,6 +94,7 @@ func NewChatHandler(
 		backgroundMapper:        backgroundMapper,
 		syncProvider:            syncProvider,
 		messageRepository:       messageRepository,
+		systemMessageUsecase:    systemMessageUsecase,
 	}
 }
 
@@ -599,19 +602,24 @@ func (s *chatHandler) MarkAsRead(ctx context.Context, req *chatpb.MarkAsReadRequ
 	}, nil
 }
 
-// @Summary Đánh dấu tin nhắn đã đọc
-// @Description Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định
+// @Summary Ghim tin nhắn
+// @Description Ghim hoặc bỏ ghim tin nhắn trong đoạn hội thoại
 // @Tags Chat
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param message body chatpb.PinMessageRequest true "Đoạn hội thoại và tin nhắn cần đánh dấu"
+// @Param message body chatpb.PinMessageRequest true "Thông tin ghim tin nhắn"
 // @Success 200 {object} chatpb.PinMessageResponse
 // @Router /messages/pin [post]
 func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequest) (*chatpb.PinMessageResponse, error) {
+	// Existing logic
 	_, err := s.messageUsecases.PinMessage(ctx, uint64(req.MessageId), uint64(req.ConversationId), req.DoPin)
 	if err != nil {
 		return nil, err
+	}
+
+	if err := s.systemMessageUsecase.PinSystemMessage(ctx, uint64(req.ConversationId), uint64(req.MessageId), req.DoPin); err != nil {
+		s.logger.Errorf("Failed to create system message for pin: %v", err)
 	}
 
 	event := &chatpb.PinMessage{
@@ -629,6 +637,7 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 	}
 
 	s.eventChannel <- event
+
 	if s.syncProvider != nil {
 		ts := time.Now().UnixMilli()
 		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId)), ts)
@@ -1088,7 +1097,6 @@ func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMess
 // @Success 200 {object} chatpb.AddUserResponse
 // @Router /conversation/add-user [post]
 func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) (*chatpb.AddUserResponse, error) {
-	// Kiểm tra danh sách userIds
 	if len(req.UserIds) == 0 {
 		return &chatpb.AddUserResponse{
 			Success:    false,
@@ -1096,13 +1104,17 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 		}, nil
 	}
 
-	// Thêm users vào conversation
 	totalAdded, joinedAt, err := s.participantUsecases.AddUsers(ctx, req.ConversationId, req.UserIds)
 	if err != nil {
 		return nil, err
 	}
 
-	// Lấy thông tin users để gửi event join room
+	if totalAdded > 0 {
+		if err := s.systemMessageUsecase.AddMemberSystemMessage(ctx, req.ConversationId, req.UserIds); err != nil {
+			s.logger.Errorf("Failed to create system message for add users: %v", err)
+		}
+	}
+
 	users, _ := s.userClient.Client.GetProfileByIds(ctx, req.UserIds)
 	userMap := make(map[uint64]*sharepb.ProfileItem)
 	if users != nil {
@@ -1111,7 +1123,6 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 		}
 	}
 
-	// Gửi event join room cho từng user
 	roomId := strconv.FormatUint(req.ConversationId, 10)
 	for _, userId := range req.UserIds {
 		event := &chatpb.JoinRoom{
@@ -1127,13 +1138,14 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 		}
 		s.eventChannel <- event
 	}
+
 	if s.syncProvider != nil {
 		ts := joinedAt.UnixMilli()
 		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, req.ConversationId), ts)
-		// Key member cập nhật bằng joinedAt của thành viên thêm vào
 		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationMembers, req.ConversationId), ts)
 		s.invalidateConversationsListSyncKeyForUsers(ctx, req.UserIds)
 	}
+
 	return &chatpb.AddUserResponse{
 		Success:    totalAdded > 0,
 		TotalAdded: int32(totalAdded),

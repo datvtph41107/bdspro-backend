@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"chat/models"
-	_utils "common/utils"
+	"encoding/json"
 	chatpb "pb/types/chat"
 	"strconv"
 	"time"
@@ -15,55 +15,69 @@ func NewMessageMapper() *MessageMapper {
 }
 
 func (m *MessageMapper) MessageToPb(msg *models.MessageModel) *chatpb.Message {
-	if msg == nil {
-		return nil
-	}
-	if msg.Recall {
-		return &chatpb.Message{
-			MessageId: int32(msg.ID),
-			SenderId:  int32(msg.SenderID),
-			IsRecall:  true,
-			CreatedAt: _utils.FormatTimeToString(&msg.CreatedAt),
-		}
-	}
 	pb := &chatpb.Message{
 		MessageId:   int32(msg.ID),
 		SenderId:    int32(msg.SenderID),
 		Content:     msg.Content,
 		ContentType: string(msg.ContentType),
 		FileUrl:     msg.FileURL,
-		RoomId:      "",
-		CreatedAt:   _utils.FormatTimeToString(&msg.CreatedAt),
-		UpdatedAt:   _utils.FormatTimeToString(&msg.UpdatedAt),
+		RoomId:      strconv.FormatUint(msg.ConversationID, 10),
+		CreatedAt:   msg.CreatedAt.Format(time.RFC3339),
 		IsRecall:    msg.Recall,
 		ExtraId:     msg.ExtraId,
 	}
-	if msg.ConversationID != 0 {
-		pb.RoomId = strconv.FormatUint(msg.ConversationID, 10)
-	}
-	if msg.ReplyMessage != nil {
-		pb.ReplyMessage = &chatpb.Message{
-			MessageId:   int32(msg.ReplyMessage.ID),
-			SenderId:    int32(msg.ReplyMessage.SenderID),
-			Content:     msg.ReplyMessage.Content,
-			ContentType: string(msg.ReplyMessage.ContentType),
-			FileUrl:     msg.ReplyMessage.FileURL,
-			RoomId:      strconv.FormatUint(msg.ReplyMessage.ConversationID, 10),
-			CreatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.CreatedAt),
-			UpdatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.UpdatedAt),
-		}
-	}
-	if msg.Reactions != nil {
-		pb.Reactions = make([]*chatpb.MessageReaction, len(msg.Reactions))
-		for i, r := range msg.Reactions {
-			pb.Reactions[i] = &chatpb.MessageReaction{
-				UserId:    int32(r.UserID),
-				MessageId: int32(r.MessageID),
-				CreatedAt: r.CreatedAt.Local().Format(time.RFC3339),
-				Reaction:  r.Reaction,
-				Id:        uint64(r.ID),
+
+	// Parse system message data if content type is system
+	if msg.ContentType == models.ContentTypeSystem && msg.Content != "" {
+		var systemData map[string]interface{}
+		if err := json.Unmarshal([]byte(msg.Content), &systemData); err == nil {
+			// Convert to protobuf system message data
+			pb.SystemData = &chatpb.SystemMessageData{
+				Action:    getString(systemData, "action"),
+				ActorId:   getUint64(systemData, "actor_id"),
+				TargetIds: getUint64Slice(systemData, "target_ids"),
+				Extra:     getString(systemData, "extra"),
 			}
 		}
 	}
+
+	if msg.ReplyMessage != nil {
+		pb.ReplyMessage = m.MessageToPb(msg.ReplyMessage)
+	}
+
 	return pb
+}
+
+// Helper functions
+func getString(data map[string]interface{}, key string) string {
+	if val, ok := data[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return ""
+}
+
+func getUint64(data map[string]interface{}, key string) uint64 {
+	if val, ok := data[key]; ok {
+		if num, ok := val.(float64); ok {
+			return uint64(num)
+		}
+	}
+	return 0
+}
+
+func getUint64Slice(data map[string]interface{}, key string) []uint64 {
+	if val, ok := data[key]; ok {
+		if slice, ok := val.([]interface{}); ok {
+			result := make([]uint64, 0, len(slice))
+			for _, item := range slice {
+				if num, ok := item.(float64); ok {
+					result = append(result, uint64(num))
+				}
+			}
+			return result
+		}
+	}
+	return nil
 }
