@@ -18,7 +18,7 @@ type SubmitReportDTO struct {
 	LineageID uint64
 
 	// Loại báo cáo: map EReportType (10/20/30/40/50/60)
-	ReportType int32
+	ReportType uint32
 
 	// Mô tả thêm
 	Note *string
@@ -53,7 +53,7 @@ type SubmitReportResult struct {
 	// nil nếu ContributeData == nil (báo cáo thuần, không propose)
 	ProposeLineageID *uint64
 
-	ReportType int32
+	ReportType uint32
 	Note       string
 	CreatedAt  string
 }

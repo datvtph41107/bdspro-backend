@@ -447,34 +447,94 @@ func (h *PropertyHandler) ImportProperty(ctx context.Context, req *bdspropb.Crea
 // @Param body body bdspropb.UpdatePropertyRequest true "Thông tin Property cần cập nhật"
 // @Success 200 {object} bdspropb.Response "Property được cập nhật thành công"
 // @Router /v2/bdspro/v2/property/{id} [put]
-func (h *PropertyHandler) UpdateProperty(
-	ctx context.Context,
-	req *bdspropb.UpdatePropertyRequest,
-) (*bdspropb.UpdatePropertyResponse, error) {
+// UpdateProperty - xử lý update BĐS với impact assessment
+
+func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.UpdatePropertyRequest) (*bdspropb.UpdatePropertyResponse, error) {
 	authenID := _utils.GetOriginIdFromContext(ctx)
 	if authenID == 0 {
 		return nil, _errors.UnauthorizedException()
 	}
-
 	if err := property_validator.ValidateUpdateRequest(req); err != nil {
 		log.Printf("validation error: %v", err)
 		return nil, err
 	}
-
-	// 3. Map — pure copy
-	cmd := mapUpdateRequestToCmd(req)
-
-	// 4. Usecase
+	cmd := MapUpdateRequestToCmd(req)
 	result, err := h.PropertyUsecase.UpdateProperty(ctx, cmd, authenID)
 	if err != nil {
 		return nil, err
 	}
+	resp := &bdspropb.UpdatePropertyResponse{
+		LineageId:       result.LineageID,
+		UpdatedAt:       result.UpdatedAt,
+		Message:         "updated successfully",
+		RequiresConfirm: result.RequiresConfirm,
+	}
+	if result.ImpactEvaluation != nil {
+		resp.ImpactEvaluation = MapImpactEvaluationToProto(result.ImpactEvaluation)
+	}
+	return resp, nil
+}
 
-	// 5. Response
+func (h *PropertyHandler) PreviewPropertyUpdate(ctx context.Context, req *bdspropb.PreviewPropertyUpdateRequest) (*bdspropb.PreviewPropertyUpdateResponse, error) {
+	authenID := _utils.GetOriginIdFromContext(ctx)
+	if authenID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+	cmd := MapPreviewRequestToCmd(req)
+	cmd.ImpactAssessment = &dto.ImpactAssessmentDTO{PreviewOnly: true}
+	result, err := h.PropertyUsecase.UpdateProperty(ctx, cmd, authenID)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.PreviewPropertyUpdateResponse{
+		LineageId:        result.LineageID,
+		RequiresConfirm:  result.RequiresConfirm,
+		ImpactEvaluation: MapImpactEvaluationToProto(result.ImpactEvaluation),
+	}, nil
+}
+
+func (h *PropertyHandler) ConfirmPropertyUpdate(ctx context.Context, req *bdspropb.ConfirmPropertyUpdateRequest) (*bdspropb.UpdatePropertyResponse, error) {
+	authenID := _utils.GetOriginIdFromContext(ctx)
+	if authenID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+	cmd := &dto.UpdatePropertyDTO{
+		LineageID: req.Id,
+		ImpactAssessment: &dto.ImpactAssessmentDTO{
+			PreviewOnly: false,
+			Confirmed:   true,
+			SessionID:   req.SessionId,
+		},
+	}
+	result, err := h.PropertyUsecase.UpdateProperty(ctx, cmd, authenID)
+	if err != nil {
+		return nil, err
+	}
 	return &bdspropb.UpdatePropertyResponse{
 		LineageId: result.LineageID,
 		UpdatedAt: result.UpdatedAt,
 		Message:   "updated successfully",
+	}, nil
+}
+
+func (h *PropertyHandler) SendPropertyReport(ctx context.Context, req *bdspropb.SendReportPropertyRequest) (*bdspropb.ReportPropertyResponse, error) {
+	authenID := _utils.GetOriginIdFromContext(ctx)
+	if authenID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+	cmd := MapReportRequestToCmd(req)
+	result, err := h.PropertyUsecase.SubmitReport(ctx, cmd, authenID)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.ReportPropertyResponse{
+		ReportId:         result.ReportID,
+		LineageId:        result.LineageID,
+		ProposeLineageId: *result.ProposeLineageID,
+		Type:             result.ReportType,
+		Note:             result.Note,
+		CreatedAt:        result.CreatedAt,
+		Message:          "report submitted successfully",
 	}, nil
 }
 
@@ -539,47 +599,4 @@ func (h *PropertyHandler) invalidatePropertySyncKeys(ctx context.Context, ids []
 		keyDetail := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, id)
 		_ = h.SyncProvider.Del(ctx, keyDetail)
 	}
-}
-
-// SubmitReport — gRPC handler cho API báo cáo sai / gắn cờ / đóng góp BĐS.
-//
-// Flow:
-//  1. Auth guard — lấy originID từ context.
-//  2. Validate proto request — fail fast trước khi map.
-//  3. Map proto → DTO — pure copy, không logic.
-//  4. Gọi usecase.
-//  5. Build response.
-func (h *PropertyHandler) SendPropertyReport(
-	ctx context.Context,
-	req *bdspropb.SendReportPropertyRequest,
-) (*bdspropb.ReportPropertyResponse, error) {
-	reporterOriginID := _utils.GetOriginIdFromContext(ctx)
-	if reporterOriginID == 0 {
-		return nil, _errors.UnauthorizedException()
-	}
-
-	if err := property_validator.ValidateSubmitReportRequest(req); err != nil {
-		return nil, err
-	}
-
-	cmd := mapReportRequestToCmd(req)
-
-	result, err := h.PropertyUsecase.SubmitReport(ctx, cmd, reporterOriginID)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &bdspropb.ReportPropertyResponse{
-		ReportId:  result.ReportID,
-		LineageId: result.LineageID,
-		Type:      uint32(result.ReportType),
-		Note:      result.Note,
-		CreatedAt: result.CreatedAt,
-		Message:   "report submitted successfully",
-	}
-	if result.ProposeLineageID != nil {
-		resp.ProposeLineageId = *result.ProposeLineageID
-	}
-
-	return resp, nil
 }

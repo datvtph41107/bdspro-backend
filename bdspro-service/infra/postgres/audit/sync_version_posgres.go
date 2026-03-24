@@ -1,4 +1,4 @@
-package audit
+package postgres_audit
 
 import (
 	"context"

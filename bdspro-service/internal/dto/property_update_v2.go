@@ -52,6 +52,14 @@ type UpdatePropertyDTO struct {
 	ExternalRefs    *UpdateExternalRefDTO     `json:"externalRefs,omitempty"`
 	LineageMeta     *UpdateLineageMetaDTO     `json:"lineageMeta,omitempty"`
 	Personalization *UpdatePersonalizationDTO `json:"personalization,omitempty"`
+
+	ImpactAssessment *ImpactAssessmentDTO `json:"impactAssessment,omitempty"`
+}
+
+type ImpactAssessmentDTO struct {
+	PreviewOnly bool   `json:"previewOnly"`
+	Confirmed   bool   `json:"confirmed"`
+	SessionID   string `json:"sessionId,omitempty"`
 }
 
 // ─── UpdateInfoDTO ────────────────────────────────────────────────────────────
@@ -226,6 +234,61 @@ type UpdatePersonalizationDTO struct {
 // ─── Result ───────────────────────────────────────────────────────────────────
 
 type UpdatePropertyResult struct {
-	LineageID uint64
-	UpdatedAt string
+	LineageID        uint64                    `json:"lineageId"`
+	UpdatedAt        string                    `json:"updatedAt"`
+	RequiresConfirm  bool                      `json:"requiresConfirm,omitempty"`
+	ImpactEvaluation *ImpactEvaluationResponse `json:"impactEvaluation,omitempty"`
+}
+
+type ImpactEvaluationResponse struct {
+	ImpactLevel      string                   `json:"impactLevel"`
+	ActionPolicy     string                   `json:"actionPolicy"`
+	RequiresConfirm  bool                     `json:"requiresConfirm"`
+	BlockReason      string                   `json:"blockReason,omitempty"`
+	Warnings         []string                 `json:"warnings"`
+	Suggestions      []string                 `json:"suggestions"`
+	AffectedSummary  *AffectedSummaryResponse `json:"affectedSummary"`
+	ProjectedStates  *ProjectedStatesResponse `json:"projectedStates"`
+	ChangedFields    []FieldChangeResponse    `json:"changedFields,omitempty"`
+	AffectedEntities []AffectedEntityResponse `json:"affectedEntities,omitempty"`
+}
+
+type FieldChangeResponse struct {
+	FieldPath  string `json:"fieldPath"`
+	OldValue   string `json:"oldValue"`
+	NewValue   string `json:"newValue"`
+	ChangeType string `json:"changeType"`
+}
+
+type AffectedEntityResponse struct {
+	EntityID       uint64 `json:"entityId"`
+	EntityType     string `json:"entityType"`
+	EntityName     string `json:"entityName"`
+	CurrentState   string `json:"currentState"`
+	ProjectedState string `json:"projectedState"`
+	Reason         string `json:"reason"`
+}
+
+type AffectedSummaryResponse struct {
+	Products int `json:"products"`
+	Listings int `json:"listings"`
+	Assets   int `json:"assets"`
+	Deals    int `json:"deals"`
+	CrmNotes int `json:"crmNotes"`
+	Total    int `json:"total"`
+}
+
+type ProjectedStatesResponse struct {
+	Active     int `json:"active"`
+	Restricted int `json:"restricted"`
+	Frozen     int `json:"frozen"`
+	Archived   int `json:"archived"`
+}
+
+type AffectedEntities struct {
+	Products []uint64 `json:"products"`
+	Listings []uint64 `json:"listings"`
+	Assets   []uint64 `json:"assets"`
+	Deals    []uint64 `json:"deals"`
+	CrmNotes []uint64 `json:"crmNotes"`
 }

@@ -20,7 +20,8 @@ func MigrateDomain() {
 		// &domain.Block{},
 		// &domain.Building{},
 		// &domain.DistrictV2{},
-
+		&domain.PropertyImpactVersion{},
+		&domain.PropertyAuditLog{},
 		// &domain.ProductStats{},
 
 		// // Asset related

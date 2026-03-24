@@ -6,23 +6,83 @@ import (
 	bdspropb "pb/types/bdspro"
 )
 
-func mapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePropertyDTO {
-	return &dto.UpdatePropertyDTO{
+func MapUpdateRequestToCmd(req *bdspropb.UpdatePropertyRequest) *dto.UpdatePropertyDTO {
+	cmd := &dto.UpdatePropertyDTO{
 		LineageID: req.Id,
-		// FieldMask: khởi tạo 1 lần — value object truyền xuống usecase qua DTO
-		Mask:         fieldmask.FromPaths(req.GetFieldMask().GetPaths()),
-		Info:         mapInfoPayload(req.Info),
-		Location:     mapLocationPayload(req.Location),
-		LandInfo:     mapLandInfoPayload(req.LandInfo),
-		BuildingInfo: mapBuildingPayload(req.BuildingInfo),
-		Evidence:     mapEvidencePayload(req.Evidence),
-		Media:        mapMediaPayload(req.Media),
-		Amenities:    mapAmenityPayload(req.Amenities),
-		ExternalRefs: mapExternalRefPayload(req.ExternalRefs),
-		AreaRegions:  mapAreaRegionPayload(req.AreaRegions),
-		LineageMeta:  mapLineageMetaPayload(req.LineageMeta),
+		Mask:      fieldmask.FromPaths(req.GetFieldMask().GetPaths()),
 	}
+
+	// Impact assessment
+	if req.ImpactAssessment != nil {
+		cmd.ImpactAssessment = &dto.ImpactAssessmentDTO{
+			PreviewOnly: req.ImpactAssessment.PreviewOnly,
+			Confirmed:   req.ImpactAssessment.Confirmed,
+			SessionID:   req.ImpactAssessment.SessionId,
+		}
+	}
+
+	// Sub-domains
+	cmd.Info = mapInfoPayload(req.Info)
+	cmd.Location = mapLocationPayload(req.Location)
+	cmd.LandInfo = mapLandInfoPayload(req.LandInfo)
+	cmd.BuildingInfo = mapBuildingPayload(req.BuildingInfo)
+	cmd.Evidence = mapEvidencePayload(req.Evidence)
+
+	// Side blocks
+	cmd.Media = mapMediaPayload(req.Media)
+	cmd.Amenities = mapAmenityPayload(req.Amenities)
+	cmd.AreaRegions = mapAreaRegionPayload(req.AreaRegions)
+	cmd.ExternalRefs = mapExternalRefPayload(req.ExternalRefs)
+	cmd.LineageMeta = mapLineageMetaPayload(req.LineageMeta)
+	cmd.Personalization = mapPersonalizationPayload(req.Personalization)
+
+	return cmd
 }
+
+// MapPreviewRequestToCmd chuyển đổi PreviewPropertyUpdateRequest sang UpdatePropertyDTO
+func MapPreviewRequestToCmd(req *bdspropb.PreviewPropertyUpdateRequest) *dto.UpdatePropertyDTO {
+	cmd := &dto.UpdatePropertyDTO{
+		LineageID: req.Id,
+		Mask:      fieldmask.FromPaths(req.GetFieldMask().GetPaths()),
+		// Preview mode will be set by handler
+	}
+
+	// Map only fields needed for preview (can reuse full mapping or subset)
+	cmd.Info = mapInfoPayload(req.Info)
+	cmd.Location = mapLocationPayload(req.Location)
+	cmd.LandInfo = mapLandInfoPayload(req.LandInfo)
+	cmd.BuildingInfo = mapBuildingPayload(req.BuildingInfo)
+	cmd.Evidence = mapEvidencePayload(req.Evidence)
+	cmd.Media = mapMediaPayload(req.Media)
+	cmd.Amenities = mapAmenityPayload(req.Amenities)
+	cmd.AreaRegions = mapAreaRegionPayload(req.AreaRegions)
+	cmd.ExternalRefs = mapExternalRefPayload(req.ExternalRefs)
+	cmd.LineageMeta = mapLineageMetaPayload(req.LineageMeta)
+	cmd.Personalization = mapPersonalizationPayload(req.Personalization)
+
+	return cmd
+}
+
+// MapReportRequestToCmd chuyển đổi SendReportPropertyRequest sang SubmitReportDTO
+func MapReportRequestToCmd(req *bdspropb.SendReportPropertyRequest) *dto.SubmitReportDTO {
+	cmd := &dto.SubmitReportDTO{
+		LineageID:          req.Id,
+		ReportType:         req.Type,
+		SubIssues:          req.SubIssues,
+		Note:               req.Note,
+		RelatedLineageID:   req.RelatedLineageId,
+		AttachmentMediaIDs: req.AttachmentMediaIds,
+		AttachmentFileIDs:  req.AttachmentFileIds,
+	}
+	if req.ContributeData != nil {
+		cmd.ContributeData = MapUpdateRequestToCmd(req.ContributeData)
+	}
+	return cmd
+}
+
+// =============================================================================
+// PAYLOAD MAPPERS (reusable)
+// =============================================================================
 
 func mapInfoPayload(p *bdspropb.UpdateInfoPayload) *dto.UpdateInfoDTO {
 	if p == nil {
@@ -56,8 +116,7 @@ func mapLocationPayload(p *bdspropb.UpdateLocationPayload) *dto.UpdateLocationDT
 		Longitude:     p.Longitude,
 		RegionID:      p.RegionId,
 		ProvinceID:    p.ProvinceId,
-		// DistrictID:    p.DistrictId,
-		WardID: p.WardId,
+		WardID:        p.WardId,
 	}
 }
 
@@ -65,26 +124,24 @@ func mapLandInfoPayload(p *bdspropb.UpdateLandInfoPayload) *dto.UpdateLandInfoDT
 	if p == nil {
 		return nil
 	}
-	c := &dto.UpdateLandInfoDTO{
-		Note:         p.Note,
-		LandNote:     p.LandNote,
-		PurposeUsed:  p.PurposeUsed,
-		ExpiredLand:  p.ExpiredLand,
-		ExpiredPlant: p.ExpiredPlant,
+	return &dto.UpdateLandInfoDTO{
+		DocumentNo:   p.DocumentNo,
+		IssuringAuth: p.IssuringAuth,
+		DocumentType: p.DocumentType,
+		Plot:         p.Plot,
+		Sheet:        p.Sheet,
 		AreaTotal:    p.AreaTotal,
 		AreaLand:     p.AreaLand,
 		AreaPlant:    p.AreaPlant,
 		FrontWidth:   p.FrontWidth,
 		Depth:        p.Depth,
 		StreetWidth:  p.StreetWidth,
-		DocumentNo:   p.DocumentNo,
-		IssuringAuth: p.IssuringAuth,
-		DocumentType: p.DocumentType,
-		Plot:         p.Plot,
-		Sheet:        p.Sheet,
+		ExpiredLand:  p.ExpiredLand,
+		ExpiredPlant: p.ExpiredPlant,
+		Note:         p.Note,
+		LandNote:     p.LandNote,
+		PurposeUsed:  p.PurposeUsed,
 	}
-
-	return c
 }
 
 func mapBuildingPayload(p *bdspropb.UpdateBuildingPayload) *dto.UpdateBuildingDTO {
@@ -156,7 +213,6 @@ func mapExternalRefPayload(p *bdspropb.UpdateExternalRefPayload) *dto.UpdateExte
 	}
 	items := make([]dto.UpdateExternalRefItemDTO, 0, len(p.Items))
 	for _, item := range p.Items {
-		// Scalar copy — external_ref upsert toàn bộ field, không partial
 		items = append(items, dto.UpdateExternalRefItemDTO{
 			ID:            item.Id,
 			ExternalRefID: item.ExternalRefId,
@@ -181,29 +237,114 @@ func mapLineageMetaPayload(p *bdspropb.UpdateLineageMetaPayload) *dto.UpdateLine
 	}
 }
 
-func mapReportRequestToCmd(req *bdspropb.SendReportPropertyRequest) *dto.SubmitReportDTO {
-	cmd := &dto.SubmitReportDTO{
-		LineageID:          req.Id,
-		ReportType:         int32(req.Type),
-		SubIssues:          req.SubIssues,
-		AttachmentMediaIDs: req.AttachmentMediaIds,
-		AttachmentFileIDs:  req.AttachmentFileIds,
+func mapPersonalizationPayload(p *bdspropb.UpdatePersonalizationPayload) *dto.UpdatePersonalizationDTO {
+	if p == nil {
+		return nil
 	}
-
-	if req.Note != nil {
-		cmd.Note = req.Note
+	return &dto.UpdatePersonalizationDTO{
+		ArchivedAt: p.ArchivedAt,
+		HiddenAt:   p.HiddenAt,
 	}
+}
 
-	if req.RelatedLineageId != nil {
-		id := *req.RelatedLineageId
-		cmd.RelatedLineageID = &id
+// =============================================================================
+// RESPONSE MAPPERS
+// =============================================================================
+
+// MapUpdatePropertyResultToProto chuyển đổi UpdatePropertyResult sang UpdatePropertyResponse
+func MapUpdatePropertyResultToProto(result *dto.UpdatePropertyResult) *bdspropb.UpdatePropertyResponse {
+	if result == nil {
+		return nil
 	}
-
-	if req.ContributeData != nil {
-		updateDTO := mapUpdateRequestToCmd(req.ContributeData)
-		updateDTO.LineageID = req.Id
-		cmd.ContributeData = updateDTO
+	resp := &bdspropb.UpdatePropertyResponse{
+		LineageId:       result.LineageID,
+		UpdatedAt:       result.UpdatedAt,
+		RequiresConfirm: result.RequiresConfirm,
+		Message:         "updated successfully",
 	}
+	if result.ImpactEvaluation != nil {
+		resp.ImpactEvaluation = MapImpactEvaluationToProto(result.ImpactEvaluation)
+	}
+	return resp
+}
 
-	return cmd
+// MapPreviewResultToProto chuyển đổi UpdatePropertyResult sang PreviewPropertyUpdateResponse
+func MapPreviewResultToProto(result *dto.UpdatePropertyResult) *bdspropb.PreviewPropertyUpdateResponse {
+	if result == nil {
+		return nil
+	}
+	return &bdspropb.PreviewPropertyUpdateResponse{
+		LineageId:        result.LineageID,
+		RequiresConfirm:  result.RequiresConfirm,
+		ImpactEvaluation: MapImpactEvaluationToProto(result.ImpactEvaluation),
+	}
+}
+
+// MapReportResultToProto chuyển đổi SubmitReportResult sang ReportPropertyResponse
+func MapReportResultToProto(result *dto.SubmitReportResult) *bdspropb.ReportPropertyResponse {
+	if result == nil {
+		return nil
+	}
+	return &bdspropb.ReportPropertyResponse{
+		ReportId:         result.ReportID,
+		LineageId:        result.LineageID,
+		ProposeLineageId: derefUint64(result.ProposeLineageID),
+		Type:             result.ReportType,
+		Note:             result.Note,
+		CreatedAt:        result.CreatedAt,
+		Message:          "report submitted successfully",
+	}
+}
+
+// MapImpactEvaluationToProto chuyển đổi ImpactEvaluationResponse sang proto ImpactEvaluation
+func MapImpactEvaluationToProto(eval *dto.ImpactEvaluationResponse) *bdspropb.ImpactEvaluation {
+	if eval == nil {
+		return nil
+	}
+	proto := &bdspropb.ImpactEvaluation{
+		ImpactLevel:     eval.ImpactLevel,
+		ActionPolicy:    eval.ActionPolicy,
+		RequiresConfirm: eval.RequiresConfirm,
+		BlockReason:     eval.BlockReason,
+		Warnings:        eval.Warnings,
+		Suggestions:     eval.Suggestions,
+	}
+	if eval.AffectedSummary != nil {
+		proto.AffectedSummary = &bdspropb.AffectedSummary{
+			Products: int32(eval.AffectedSummary.Products),
+			Listings: int32(eval.AffectedSummary.Listings),
+			Assets:   int32(eval.AffectedSummary.Assets),
+			Deals:    int32(eval.AffectedSummary.Deals),
+			CrmNotes: int32(eval.AffectedSummary.CrmNotes),
+			Total:    int32(eval.AffectedSummary.Total),
+		}
+	}
+	if eval.ProjectedStates != nil {
+		proto.ProjectedStates = &bdspropb.ProjectedStates{
+			Active:     int32(eval.ProjectedStates.Active),
+			Restricted: int32(eval.ProjectedStates.Restricted),
+			Frozen:     int32(eval.ProjectedStates.Frozen),
+			Archived:   int32(eval.ProjectedStates.Archived),
+		}
+	}
+	if len(eval.ChangedFields) > 0 {
+		proto.ChangedFields = make([]*bdspropb.FieldChange, len(eval.ChangedFields))
+		for i, f := range eval.ChangedFields {
+			proto.ChangedFields[i] = &bdspropb.FieldChange{
+				FieldPath:  f.FieldPath,
+				OldValue:   f.OldValue,
+				NewValue:   f.NewValue,
+				ChangeType: f.ChangeType,
+			}
+		}
+	}
+	return proto
+}
+
+// Helper
+func derefUint64(p *uint64) uint64 {
+	if p == nil {
+		return 0
+	}
+	return *p
 }

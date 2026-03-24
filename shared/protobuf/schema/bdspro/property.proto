@@ -106,6 +106,13 @@ service PropertyService {
     };
   };
 
+   rpc ConfirmPropertyUpdate(ConfirmPropertyUpdateRequest) returns (UpdatePropertyResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{id}/confirm"
+      body: "*"
+    };
+  };
+
   rpc SendPropertyReport(SendReportPropertyRequest) returns (ReportPropertyResponse) {
     option (google.api.http) = {
       post: "/v2/bdspro/v2/property/{id}/report"
@@ -154,20 +161,20 @@ message SendReportPropertyRequest {
   uint64 id = 1;
   uint32 type = 2;
   optional string note = 3;
-  optional UpdatePropertyRequest contribute_data = 4;
+  optional UpdatePropertyRequest contributeData = 4;
   // Sub-issues chi tiết người dùng chọn (string constants).
   // VD: ["wrong_name", "wrong_area", "wrong_coords"]
   // Danh sách constant định nghĩa ở enums/report.go phía server.
-  repeated string sub_issues = 5;
+  repeated string subIssues = 5;
 
   // BĐS liên quan — bắt buộc khi type=30 (duplicate/trùng)
-  optional uint64 related_lineage_id = 6;
+  optional uint64 relatedLineage_id = 6;
 
   // Media IDs làm bằng chứng (đã upload qua media endpoint)
-  repeated uint64 attachment_media_ids = 7;
+  repeated uint64 attachmentMedia_ids = 7;
 
   // File IDs tài liệu đính kèm (đã upload)
-  repeated uint64 attachment_file_ids = 8;
+  repeated uint64 attachmentFileIds = 8;
 }
 
 // message mới:
@@ -198,6 +205,87 @@ message UpdatePropertyRequest {
   UpdateLineageMetaPayload lineage_meta  = 11;
   UpdateAreaRegionPayload areaRegions = 12;
   UpdatePersonalizationPayload personalization = 13;
+
+  ImpactAssessmentConfig impactAssessment = 14;
+}
+
+message ImpactAssessmentConfig {
+  bool previewOnly = 1;
+  bool confirmed = 2;
+  string sessionId = 3;
+}
+
+message PreviewPropertyUpdateRequest {
+  uint64 id = 1;
+  google.protobuf.FieldMask field_mask = 2;
+  UpdateInfoPayload        info          = 3;
+  UpdateLocationPayload    location      = 4;
+  UpdateLandInfoPayload    landInfo      = 5;
+  UpdateBuildingPayload    buildingInfo  = 6;
+  UpdateEvidencePayload    evidence      = 7;
+  UpdateMediaPayload       media         = 8;
+  UpdateAmenityPayload     amenities     = 9;
+  UpdateExternalRefPayload external_refs = 10;
+  UpdateLineageMetaPayload lineage_meta  = 11;
+  UpdateAreaRegionPayload  areaRegions   = 12;
+  UpdatePersonalizationPayload personalization = 13;
+}
+
+message ConfirmPropertyUpdateRequest {
+  uint64 id = 1;
+  string session_id = 2;
+  ImpactAssessmentConfig impact_assessment = 3;
+}
+
+message PreviewPropertyUpdateResponse {
+  uint64 lineage_id = 1;
+  bool requires_confirm = 2;
+  ImpactEvaluation impact_evaluation = 3;
+}
+
+message ImpactEvaluation {
+  string impact_level = 1;
+  string action_policy = 2;
+  bool requires_confirm = 3;
+  string block_reason = 4;
+  repeated string warnings = 5;
+  repeated string suggestions = 6;
+  AffectedSummary affected_summary = 7;
+  ProjectedStates projected_states = 8;
+  repeated FieldChange changed_fields = 9;
+  repeated AffectedEntityDetail affected_entities_detail = 10;
+}
+
+message AffectedSummary {
+  int32 products = 1;
+  int32 listings = 2;
+  int32 assets = 3;
+  int32 deals = 4;
+  int32 crm_notes = 5;
+  int32 total = 6;
+}
+
+message ProjectedStates {
+  int32 active = 1;
+  int32 restricted = 2;
+  int32 frozen = 3;
+  int32 archived = 4;
+}
+
+message FieldChange {
+  string field_path = 1;
+  string old_value = 2;
+  string new_value = 3;
+  string change_type = 4;
+}
+
+message AffectedEntityDetail {
+  uint64 entity_id = 1;
+  string entity_type = 2;
+  string entity_name = 3;
+  string current_state = 4;
+  string projected_state = 5;
+  string reason = 6;
 }
 
 // ─── info.* ──────────────────────────────────────────────────────────────────
@@ -217,6 +305,7 @@ message UpdateInfoPayload {
   optional uint64 propertyTypeId = 11;
   optional uint64 projectId = 12;
   optional uint64 originProfileId = 13;
+
 }
 
 // ─── location.* ──────────────────────────────────────────────────────────────
@@ -331,9 +420,11 @@ message UpdatePersonalizationPayload {
 }
 // ─── Response ────────────────────────────────────────────────────────────────
 message UpdatePropertyResponse {
-  uint64 lineage_id = 1;
-  string updated_at = 2;
-  string message    = 3;
+   uint64 lineageId = 1;
+  string updatedAt = 2;
+  string message = 3;
+  bool requiresConfirm = 4;
+  ImpactEvaluation impactEvaluation = 5;
 }
 
 // PropertyTimestampsResponse: map key -> timestamp (ms) cho FE check cache

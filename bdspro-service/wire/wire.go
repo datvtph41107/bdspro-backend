@@ -24,6 +24,7 @@ import (
 	bdspro_infra_validator "bdspro/infra/validator"
 	bdspro_initial "bdspro/initial"
 	bdspro_internal_job "bdspro/internal/job"
+	bdspro_internal_modules "bdspro/internal/modules"
 	bdspro_internal_provider "bdspro/internal/provider"
 	bdspro_internal_repo "bdspro/internal/repo"
 	bdspro_internal_repo_admin "bdspro/internal/repo/admin"
@@ -137,6 +138,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres.NewAssetShareRepo,
 	bdspro_infra_router_user.NewAssetShareRouter,
 	bdspro_internal_usecases.NewAssetShareUC,
+	bdspro_infra_postgres_audit.NewAuditLogRepository,
 	bdspro_infra_client.NewAuthClient,
 	bdspro_infra_mapper.NewBankAccountMapper,
 	bdspro_infra_postgres.NewBankAccountPostgresRepository,
@@ -226,6 +228,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_mapper.NewIdentifierMapper,
 	bdspro_infra_postgres.NewIdentifierRepository,
 	bdspro_internal_usecases.NewIdentifierUsecase,
+	bdspro_internal_modules.NewImpactDetectionEngine,
 	bdspro_infra_handler.NewIncomeDocumentServer,
 	bdspro_internal_usecases.NewIncomeDocumentUc,
 	bdspro_infra_postgres.NewInfoRepo,
@@ -328,6 +331,7 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases_admin.NewRegionUsecase,
 	bdspro_internal_usecases_shared.NewRequestUsecase,
 	bdspro_infra_router_user.NewRouterManager,
+	bdspro_internal_modules.NewRuleEngine,
 	bdspro_internal_usecases_shared.NewShareAccessUsecase,
 	bdspro_internal_usecases_shared.NewSharedAssetUsecase,
 	bdspro_internal_usecases_shared.NewSharedPostUsecase,
@@ -335,6 +339,8 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres.NewSharingAccessPostgre,
 	bdspro_infra_handler.NewSharingAccessService,
 	bdspro_infra_validator.NewSharingAccessValidator,
+	bdspro_internal_modules.NewSnapshotComparator,
+	bdspro_infra_postgres.NewSnapshotRepository,
 	bdspro_infra_providers.NewSyncProvider,
 	bdspro_infra_providers.NewTQDClient,
 	bdspro_infra_postgres.NewTransactionActionPostgresRepository,

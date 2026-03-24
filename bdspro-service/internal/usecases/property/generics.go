@@ -2,10 +2,15 @@
 package property_usecases
 
 import (
+	"bdspro/internal/modules"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
 )
 
 type Handler interface {
@@ -50,6 +55,26 @@ func (p FKPatch) Set(col string, id *uint64) {
 	if id != nil {
 		p[col] = *id
 	}
+}
+
+func isDuplicateKeyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
+	return errors.Is(err, gorm.ErrDuplicatedKey)
+}
+
+// ImpactRequiredError lỗi yêu cầu xác nhận
+type ImpactRequiredError struct {
+	Evaluation *modules.ImpactEvaluation
+}
+
+func (e *ImpactRequiredError) Error() string {
+	return "impact evaluation requires confirmation"
 }
 
 // Helper functions

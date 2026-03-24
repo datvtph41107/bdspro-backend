@@ -4,6 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
+	"bdspro/internal/modules"
 	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	property_repo "bdspro/internal/repo/property"
@@ -22,9 +23,6 @@ import (
 	tqdpb "pb/types/tqd"
 	"strings"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgconn"
-	"gorm.io/gorm"
 )
 
 type PropertyUsecase struct {
@@ -65,7 +63,11 @@ type PropertyUsecase struct {
 	ReportRepo               property_repo.PropertyReportRepository
 	ProvinceRepo             property_repo.ProvinceV2Repository
 	WardRepo                 property_repo.WardV2Repository
-	tqdGRPCClient            *clients.TQDGrpcClient
+	PropertyImpactRepo       property_repo.PropertyImpactRepository
+	AuditLogRepo             property_repo.AuditLogRepository
+
+	tqdGRPCClient *clients.TQDGrpcClient
+	impactEngine  modules.ImpactDetectionEngine
 }
 
 func NewPropertyUsecase(
@@ -106,7 +108,9 @@ func NewPropertyUsecase(
 	reportRepo property_repo.PropertyReportRepository,
 	provinceRepo property_repo.ProvinceV2Repository,
 	wardRepo property_repo.WardV2Repository,
+	propertyImpactRepo property_repo.PropertyImpactRepository,
 	tqdGRPCClient *clients.TQDGrpcClient,
+	impactEngine modules.ImpactDetectionEngine,
 ) *PropertyUsecase {
 	return &PropertyUsecase{
 		PropertyRepo:             propertyRepo,
@@ -146,7 +150,9 @@ func NewPropertyUsecase(
 		ReportRepo:               reportRepo,
 		ProvinceRepo:             provinceRepo,
 		WardRepo:                 wardRepo,
+		PropertyImpactRepo:       propertyImpactRepo,
 		tqdGRPCClient:            tqdGRPCClient,
+		impactEngine:             impactEngine,
 	}
 }
 
@@ -1460,40 +1466,200 @@ func (u *PropertyUsecase) UpdateProperty(
 	userID uint64,
 ) (*dto.UpdatePropertyResult, error) {
 	var result *dto.UpdatePropertyResult
+	var impactEval *modules.ImpactEvaluation
 
 	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		lineage, err := u.LineageRepo.GetByID(txCtx, c.LineageID)
+		// Step 1: Load current lineage
+		lineage, err := u.loadLineage(txCtx, c.LineageID)
 		if err != nil {
 			return err
 		}
-		if lineage == nil {
-			return fmt.Errorf("property lineage id=%d not found", c.LineageID)
-		}
 
-		propertyUser, err := u.PropertyUserRepo.GetByLineageAndOwner(txCtx, lineage.ID, userID)
+		// Step 2: Check permission and get actor role
+		actorRole, err := u.checkPermission(txCtx, lineage, userID)
 		if err != nil {
 			return err
 		}
-		if propertyUser == nil {
-			return _errors.ForbiddenException("You dont have permission action")
+
+		// Step 3: Evaluate impact before commit
+		evaluation, err := u.evaluateImpact(txCtx, lineage, c, userID, actorRole)
+		if err != nil {
+			return err
+		}
+		impactEval = evaluation
+
+		// Step 4: Apply action policy based on evaluation
+		if err := u.applyActionPolicy(evaluation, c.ImpactAssessment, actorRole); err != nil {
+			return err
 		}
 
+		// Step 5: Validate location update
 		if err := u.validateLocationUpdate(txCtx, lineage, c); err != nil {
 			return fmt.Errorf("location validation failed: %w", err)
 		}
 
-		result, err = u.directUpdate(txCtx, lineage, c, userID)
-		return err
+		// Step 6: Execute the update
+		result, err = u.executeUpdate(txCtx, lineage, c, userID)
+		if err != nil {
+			return err
+		}
+
+		// Step 7: Post-update tasks (async within transaction)
+		u.postUpdateTasks(txCtx, lineage.ID, userID, impactEval, c.ImpactAssessment)
+
+		return nil
 	})
+
+	// Handle require confirm error (return evaluation for UI)
+	if impactErr, ok := err.(*ImpactRequiredError); ok {
+		return &dto.UpdatePropertyResult{
+			LineageID:        c.LineageID,
+			RequiresConfirm:  true,
+			ImpactEvaluation: u.convertToResponse(impactErr.Evaluation),
+		}, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	go u.triggerSyncEvents(ctx, result.LineageID)
+	// Async sync events after transaction commit
+	go u.triggerSyncEvents(context.Background(), result.LineageID)
+
 	return result, nil
 }
 
-// validateLocationUpdate - Kiểm tra tính hợp lệ của location update
+// SubmitReport gửi báo cáo/đề xuất thay đổi
+func (u *PropertyUsecase) SubmitReport(
+	ctx context.Context,
+	cmd *dto.SubmitReportDTO,
+	reporterOriginID uint64,
+) (*dto.SubmitReportResult, error) {
+	var result *dto.SubmitReportResult
+
+	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		// Load original lineage
+		lineage, err := u.loadLineage(txCtx, cmd.LineageID)
+		if err != nil {
+			return err
+		}
+
+		// Check for duplicate report
+		if err := u.checkDuplicateReport(txCtx, lineage.ID, reporterOriginID); err != nil {
+			return err
+		}
+
+		// Create propose lineage if there's contribute data
+		proposeLineageID, err := u.createProposeIfNeeded(txCtx, lineage, cmd.ContributeData)
+		if err != nil {
+			return err
+		}
+
+		// Create report record
+		report, err := u.createReportRecord(txCtx, lineage, reporterOriginID, cmd, proposeLineageID)
+		if err != nil {
+			return err
+		}
+
+		result = u.buildReportResult(report, lineage.ID, proposeLineageID, cmd)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Async sync after transaction
+	go u.triggerReportSync(context.Background(), result.LineageID)
+
+	return result, nil
+}
+
+// =============================================================================
+// PRIVATE METHODS - LOAD & VALIDATION
+// =============================================================================
+
+func (u *PropertyUsecase) loadLineage(ctx context.Context, lineageID uint64) (*domain.PropertyLineage, error) {
+	lineage, err := u.LineageRepo.GetByID(ctx, lineageID)
+	if err != nil {
+		return nil, err
+	}
+	if lineage == nil {
+		return nil, fmt.Errorf("property lineage id=%d not found", lineageID)
+	}
+	return lineage, nil
+}
+
+func (u *PropertyUsecase) checkPermission(ctx context.Context, lineage *domain.PropertyLineage, userID uint64) (enums.ActorRole, error) {
+	propertyUser, err := u.PropertyUserRepo.GetByLineageAndOwner(ctx, lineage.ID, userID)
+	if err != nil {
+		return enums.ActorRoleCollaborator, err
+	}
+	if propertyUser == nil {
+		return enums.ActorRoleCollaborator, _errors.ForbiddenException("You don't have permission to update this property")
+	}
+	return u.determineActorRole(propertyUser, userID), nil
+}
+
+func (u *PropertyUsecase) determineActorRole(propertyUser *domain.PropertyUser, userID uint64) enums.ActorRole {
+	if propertyUser != nil && propertyUser.OwnerOriginID == userID {
+		return enums.ActorRoleOwner
+	}
+	// TODO: Check admin role from permission service
+	return enums.ActorRoleCollaborator
+}
+
+func (u *PropertyUsecase) evaluateImpact(
+	ctx context.Context,
+	lineage *domain.PropertyLineage,
+	c *dto.UpdatePropertyDTO,
+	userID uint64,
+	actorRole enums.ActorRole,
+) (*modules.ImpactEvaluation, error) {
+	evalReq := &modules.EvaluateRequest{
+		PropertyID:      lineage.ID,
+		CurrentVersion:  lineage,
+		ProposedChanges: c,
+		ActorID:         userID,
+		ActorRole:       actorRole,
+		PreviewMode:     c.ImpactAssessment != nil && c.ImpactAssessment.PreviewOnly,
+		Confirmed:       c.ImpactAssessment != nil && c.ImpactAssessment.Confirmed,
+	}
+
+	evaluation, err := u.impactEngine.Evaluate(ctx, evalReq)
+	if err != nil {
+		return nil, fmt.Errorf("impact evaluation failed: %w", err)
+	}
+	return evaluation, nil
+}
+
+func (u *PropertyUsecase) applyActionPolicy(
+	evaluation *modules.ImpactEvaluation,
+	assessment *dto.ImpactAssessmentDTO,
+	actorRole enums.ActorRole,
+) error {
+	switch evaluation.ActionPolicy {
+	case enums.ActionPolicyBlock:
+		return fmt.Errorf("%s", evaluation.BlockReason)
+
+	case enums.ActionPolicyRequireConfirm:
+		if assessment == nil || assessment.PreviewOnly {
+			return &ImpactRequiredError{Evaluation: evaluation}
+		}
+		if !assessment.Confirmed {
+			return &ImpactRequiredError{Evaluation: evaluation}
+		}
+
+	case enums.ActionPolicyRequireReview:
+		if !actorRole.HasFullAccess() {
+			return fmt.Errorf("Thay đổi này cần được admin xem xét trước khi áp dụng")
+		}
+		log.Printf("INFO: Admin override for critical change")
+	}
+
+	return nil
+}
+
 func (u *PropertyUsecase) validateLocationUpdate(
 	ctx context.Context,
 	lineage *domain.PropertyLineage,
@@ -1503,11 +1669,10 @@ func (u *PropertyUsecase) validateLocationUpdate(
 		return nil
 	}
 
-	// if cmd.Mask.Allows("location.ward_id") && !cmd.Mask.Allows("location.province_id") {
+	// Validate ward belongs to province
 	if lineage.LocationID != nil {
 		existing, err := u.LocationRepo.GetByID(ctx, *lineage.LocationID)
 		if err == nil && existing != nil && existing.ProvinceID != nil {
-			// OK - ward mới phải thuộc province hiện tại
 			if cmd.Location.WardID != nil {
 				ward, err := u.WardRepo.GetByID(ctx, *cmd.Location.WardID)
 				if err == nil && ward != nil {
@@ -1518,10 +1683,9 @@ func (u *PropertyUsecase) validateLocationUpdate(
 				}
 			}
 		}
-		// }
 	}
 
-	// Rule 2: Nếu update province_id mà không có trong mask -> warning
+	// Warning if province_id provided but not in mask
 	if cmd.Location.ProvinceID != nil && !cmd.Mask.Allows("location.province_id") {
 		log.Printf("WARNING: ProvinceID provided but not in mask - will be ignored")
 	}
@@ -1529,21 +1693,11 @@ func (u *PropertyUsecase) validateLocationUpdate(
 	return nil
 }
 
-type ResolveLocationResult struct {
-	ProvinceID *uint64
-	WardID     *uint64
-	Error      error
-}
+// =============================================================================
+// PRIVATE METHODS - UPDATE EXECUTION
+// =============================================================================
 
-type ResolveLocationFromTQD struct {
-	Latitude  float64
-	Longitude float64
-	Mask      fieldmask.FieldMask
-	Result    chan<- *ResolveLocationResult
-	userID    uint64
-}
-
-func (u *PropertyUsecase) directUpdate(
+func (u *PropertyUsecase) executeUpdate(
 	ctx context.Context,
 	lineage *domain.PropertyLineage,
 	cmd *dto.UpdatePropertyDTO,
@@ -1551,54 +1705,25 @@ func (u *PropertyUsecase) directUpdate(
 ) (*dto.UpdatePropertyResult, error) {
 	fkPatch := make(FKPatch)
 
+	// Handle side blocks (media, amenities, etc.)
 	if err := u.handleSideBlocks(ctx, lineage.ID, cmd, fkPatch); err != nil {
 		return nil, err
 	}
 
+	// Auto-set avatar from media if not provided
 	if err := u.setAvatarFromMedia(ctx, lineage.ID, cmd); err != nil {
 		log.Printf("WARN: set avatar failed: %v", err)
 	}
 
-	var currentLocation *domain.PropertyLocation
-	if lineage.LocationID != nil {
-		currentLocation, _ = u.LocationRepo.GetByID(ctx, *lineage.LocationID)
+	// Handle location resolution from TQD (async with timeout)
+	u.handleLocationResolution(ctx, lineage, cmd, userID)
+
+	// Handle FK blocks (info, location, land_info, etc.)
+	if err := u.handleFKBlocks(ctx, lineage, cmd, fkPatch); err != nil {
+		return nil, err
 	}
 
-	needResolve := u.needResolveLocation(cmd)
-
-	if needResolve {
-		ch := make(chan *ResolveLocationResult, 1)
-		lat, lng := *cmd.Location.Latitude, *cmd.Location.Longitude
-		mask := cmd.Mask
-		resolve := &ResolveLocationFromTQD{
-			Latitude:  lat,
-			Longitude: lng,
-			Mask:      mask,
-			Result:    ch,
-			userID:    userID,
-		}
-
-		go u.resolveLocationFromTQD(ctx, resolve)
-
-		select {
-		case result := <-ch:
-			if result.Error == nil {
-				u.applyResolveResult(cmd, result, currentLocation)
-			}
-		case <-time.After(3 * time.Second):
-			log.Printf("⚠ Resolve timeout")
-		}
-	}
-
-	handlers := u.buildHandlers(lineage, cmd)
-	for _, entry := range handlers {
-		newFK, err := RunDirect(ctx, entry.currentFK, entry.h)
-		if err != nil {
-			return nil, err
-		}
-		fkPatch.Set(entry.h.FKColumn(), newFK)
-	}
-
+	// Update lineage with new FK values
 	if len(fkPatch) > 0 {
 		if err := u.LineageRepo.UpdateFields(ctx, lineage.ID, fkPatch); err != nil {
 			return nil, err
@@ -1611,35 +1736,72 @@ func (u *PropertyUsecase) directUpdate(
 	}, nil
 }
 
-// applyResolveResult - gán khi có thay đổi
-func (u *PropertyUsecase) applyResolveResult(
+func (u *PropertyUsecase) handleFKBlocks(
+	ctx context.Context,
+	lineage *domain.PropertyLineage,
 	cmd *dto.UpdatePropertyDTO,
-	result *ResolveLocationResult,
-	currentLocation *domain.PropertyLocation,
-) {
-	if result.ProvinceID != nil && cmd.Mask.Allows("location.province_id") {
-		if currentLocation == nil ||
-			currentLocation.ProvinceID == nil ||
-			*result.ProvinceID != *currentLocation.ProvinceID {
-
-			cmd.Location.ProvinceID = result.ProvinceID
-			cmd.Location.ResolvedFromTQD = true
-			log.Printf("Province changed to ID=%d", *result.ProvinceID)
-		} else {
-			log.Printf("Province unchanged (ID=%d), skip assign, already exists data in Province_v2 table db", *result.ProvinceID)
+	fkPatch FKPatch,
+) error {
+	handlers := u.buildHandlers(lineage, cmd)
+	for _, entry := range handlers {
+		newFK, err := RunDirect(ctx, entry.currentFK, entry.h)
+		if err != nil {
+			return err
 		}
+		fkPatch.Set(entry.h.FKColumn(), newFK)
+	}
+	return nil
+}
+
+func (u *PropertyUsecase) buildHandlers(lineage *domain.PropertyLineage, cmd *dto.UpdatePropertyDTO) []struct {
+	currentFK *uint64
+	h         Handler
+} {
+	return []struct {
+		currentFK *uint64
+		h         Handler
+	}{
+		{lineage.PropertyInfoID, &InfoHandler{Patch: cmd.Info, Mask: cmd.Mask, Repo: u.InfoRepo}},
+		{lineage.LocationID, &LocationHandler{Patch: cmd.Location, Mask: cmd.Mask, Repo: u.LocationRepo}},
+		{lineage.LandInfoID, &LandInfoHandler{Patch: cmd.LandInfo, Mask: cmd.Mask, Repo: u.LandInfoRepo}},
+		{lineage.BuildingInfoID, &BuildingHandler{Patch: cmd.BuildingInfo, Mask: cmd.Mask, Repo: u.BuildingInfoRepo}},
+		{lineage.EdvidenceID, &EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo}},
+	}
+}
+
+func (u *PropertyUsecase) handleLocationResolution(
+	ctx context.Context,
+	lineage *domain.PropertyLineage,
+	cmd *dto.UpdatePropertyDTO,
+	userID uint64,
+) {
+	if !u.needResolveLocation(cmd) {
+		return
 	}
 
-	if result.WardID != nil && cmd.Mask.Allows("location.ward_id") {
-		if currentLocation == nil ||
-			currentLocation.WardID == nil ||
-			*result.WardID != *currentLocation.WardID {
+	var currentLocation *domain.PropertyLocation
+	if lineage.LocationID != nil {
+		currentLocation, _ = u.LocationRepo.GetByID(ctx, *lineage.LocationID)
+	}
 
-			cmd.Location.WardID = result.WardID
-			log.Printf("Ward changed to ID=%d", *result.WardID)
-		} else {
-			log.Printf("Ward unchanged (ID=%d), skip assign, already exists data in Ward_v2 table db", *result.WardID)
+	ch := make(chan *ResolveLocationResult, 1)
+	resolve := &ResolveLocationFromTQD{
+		Latitude:  *cmd.Location.Latitude,
+		Longitude: *cmd.Location.Longitude,
+		Mask:      cmd.Mask,
+		Result:    ch,
+		userID:    userID,
+	}
+
+	go u.resolveLocationFromTQD(ctx, resolve)
+
+	select {
+	case result := <-ch:
+		if result.Error == nil {
+			u.applyResolveResult(cmd, result, currentLocation)
 		}
+	case <-time.After(3 * time.Second):
+		log.Printf("⚠ Resolve location timeout")
 	}
 }
 
@@ -1669,21 +1831,6 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 	result := &ResolveLocationResult{}
 
 	defer func() {
-		// 		package main
-		// import "fmt"
-		// func main() {
-		//     defer func() {
-		//         if r := recover(); r != nil {
-		//             fmt.Println("Recovered from:", r)
-		//         }
-		//     }()
-		//     fmt.Println("Start")
-		//     panic("Something went wrong!")
-		//     fmt.Println("This will NOT run")
-		// }
-		// Output:
-		// Start
-		// Recovered from: Something went wrong!
 		if r := recover(); r != nil {
 			log.Printf("CRITICAL: Panic in resolve goroutine: %v", r)
 			result.Error = fmt.Errorf("internal panic: %v", r)
@@ -1707,8 +1854,6 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 		return
 	}
 
-	log.Printf("TQD resolved: %s", resp)
-
 	province, err := u.findOrCreateProvince(ctx, resp.Province, resolve.userID)
 	if err != nil {
 		result.Error = fmt.Errorf("province error: %w", err)
@@ -1729,9 +1874,29 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 	}
 }
 
-func getFirstWord(input string) string {
-	parts := strings.SplitN(input, " ", 2)
-	return parts[0]
+func (u *PropertyUsecase) applyResolveResult(
+	cmd *dto.UpdatePropertyDTO,
+	result *ResolveLocationResult,
+	currentLocation *domain.PropertyLocation,
+) {
+	if result.ProvinceID != nil && cmd.Mask.Allows("location.province_id") {
+		if currentLocation == nil ||
+			currentLocation.ProvinceID == nil ||
+			*result.ProvinceID != *currentLocation.ProvinceID {
+			cmd.Location.ProvinceID = result.ProvinceID
+			cmd.Location.ResolvedFromTQD = true
+			log.Printf("Province resolved to ID=%d", *result.ProvinceID)
+		}
+	}
+
+	if result.WardID != nil && cmd.Mask.Allows("location.ward_id") {
+		if currentLocation == nil ||
+			currentLocation.WardID == nil ||
+			*result.WardID != *currentLocation.WardID {
+			cmd.Location.WardID = result.WardID
+			log.Printf("Ward resolved to ID=%d", *result.WardID)
+		}
+	}
 }
 
 func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Province, userID uint64) (*domain.ProvinceV2, error) {
@@ -1820,33 +1985,159 @@ func (u *PropertyUsecase) findOrCreateWard(ctx context.Context, w *tqdpb.Ward, p
 	return nil, err
 }
 
-func isDuplicateKeyError(err error) bool {
-	if err == nil {
-		return false
+// =============================================================================
+// PRIVATE METHODS - SIDE BLOCKS
+// =============================================================================
+
+func (u *PropertyUsecase) handleSideBlocks(
+	ctx context.Context,
+	lineageID uint64,
+	cmd *dto.UpdatePropertyDTO,
+	fkPatch FKPatch,
+) error {
+	originID := _utils.GetOriginIdFromContext(ctx)
+	if originID == 0 {
+		return _errors.UnauthorizedException("origin_id required")
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "23505"
+
+	if cmd.Media != nil {
+		if err := u.handleMedia(ctx, lineageID, cmd.Media); err != nil {
+			return fmt.Errorf("media: %w", err)
+		}
 	}
-	return errors.Is(err, gorm.ErrDuplicatedKey)
+	if cmd.Amenities != nil {
+		if err := u.handleAmenities(ctx, lineageID, cmd.Amenities); err != nil {
+			return fmt.Errorf("amenities: %w", err)
+		}
+	}
+	if cmd.AreaRegions != nil {
+		if err := u.handleAreaRegions(ctx, lineageID, cmd.AreaRegions); err != nil {
+			return fmt.Errorf("area_regions: %w", err)
+		}
+	}
+	if cmd.ExternalRefs != nil {
+		if err := u.handleExternalRefs(ctx, cmd.ExternalRefs); err != nil {
+			return fmt.Errorf("external_refs: %w", err)
+		}
+	}
+	if cmd.LineageMeta != nil {
+		u.applyLineageMeta(cmd.LineageMeta, cmd.Mask, fkPatch)
+	}
+	if cmd.Personalization != nil {
+		if err := u.updatePersonalization(ctx, cmd.Mask, lineageID, originID, cmd.Personalization); err != nil {
+			return fmt.Errorf("personalization: %w", err)
+		}
+	}
+	return nil
 }
 
-func (u *PropertyUsecase) buildHandlers(lineage *domain.PropertyLineage, cmd *dto.UpdatePropertyDTO) []struct {
-	currentFK *uint64
-	h         Handler
-} {
-	handlers := []struct {
-		currentFK *uint64
-		h         Handler
-	}{
-		{lineage.PropertyInfoID, &InfoHandler{Patch: cmd.Info, Mask: cmd.Mask, Repo: u.InfoRepo}},
-		{lineage.LocationID, &LocationHandler{Patch: cmd.Location, Mask: cmd.Mask, Repo: u.LocationRepo}},
-		{lineage.LandInfoID, &LandInfoHandler{Patch: cmd.LandInfo, Mask: cmd.Mask, Repo: u.LandInfoRepo}},
-		{lineage.BuildingInfoID, &BuildingHandler{Patch: cmd.BuildingInfo, Mask: cmd.Mask, Repo: u.BuildingInfoRepo}},
-		{lineage.EdvidenceID, &EvidenceHandler{Patch: cmd.Evidence, Mask: cmd.Mask, Repo: u.EvidenceRepo}},
+func (u *PropertyUsecase) handleMedia(ctx context.Context, lineageID uint64, data *dto.UpdateMediaDTO) error {
+	keepIDs := make([]uint64, 0, len(data.Items))
+	for _, item := range data.Items {
+		if item.ID > 0 {
+			keepIDs = append(keepIDs, item.ID)
+		}
+	}
+	if err := u.MediaRepo.DeleteByLineageIDExcept(ctx, lineageID, keepIDs); err != nil {
+		return fmt.Errorf("delete media: %w", err)
 	}
 
-	return handlers
+	for orderIdx, item := range data.Items {
+		if item.ID > 0 {
+			fields := map[string]any{
+				"media_type": item.MediaType,
+				"media_url":  item.MediaURL,
+				"thumb_url":  item.ThumbURL,
+				"sort_order": orderIdx + 1,
+			}
+			if err := u.MediaRepo.UpdateFields(ctx, item.ID, fields); err != nil {
+				return fmt.Errorf("update media id=%d: %w", item.ID, err)
+			}
+		} else {
+			entity := &domain.PropertyMedia{
+				LineageID: lineageID,
+				MediaType: item.MediaType,
+				MediaURL:  item.MediaURL,
+				ThumbURL:  item.ThumbURL,
+				SortOrder: int32(orderIdx + 1),
+				IsCover:   item.IsCover,
+			}
+			if err := u.MediaRepo.Create(ctx, entity); err != nil {
+				return fmt.Errorf("create media: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (u *PropertyUsecase) handleAmenities(ctx context.Context, lineageID uint64, data *dto.UpdateAmenityDTO) error {
+	return u.AmenityRepo.ReplaceAmenities(ctx, lineageID, data.AmenityIDs)
+}
+
+func (u *PropertyUsecase) handleAreaRegions(ctx context.Context, lineageID uint64, data *dto.UpdateAreaRegionsDTO) error {
+	return u.AreaRegionRepo.ReplaceAreaRegions(ctx, lineageID, data.AreaRegionIDs)
+}
+
+func (u *PropertyUsecase) handleExternalRefs(ctx context.Context, data *dto.UpdateExternalRefDTO) error {
+	for _, item := range data.Items {
+		if item.ID > 0 {
+			fields := map[string]any{
+				"external_ref_id": item.ExternalRefID,
+				"source_system":   item.SourceSystem,
+				"source_code":     item.SourceCode,
+				"confidence":      item.Confidence,
+				"sync_status":     item.SyncStatus,
+				"note":            item.Note,
+			}
+			if err := u.ExternalRefRepo.UpdateFields(ctx, item.ID, fields); err != nil {
+				return fmt.Errorf("update external_ref id=%d: %w", item.ID, err)
+			}
+		} else {
+			entity := &domain.PropertyExternalRef{
+				ExternalRefID: item.ExternalRefID,
+				SourceSystem:  enums.ERefSourceSys(item.SourceSystem),
+				SourceCode:    item.SourceCode,
+				Confidence:    item.Confidence,
+				SyncStatus:    enums.ESyncStatus(item.SyncStatus),
+				Note:          item.Note,
+			}
+			if err := u.ExternalRefRepo.Create(ctx, entity); err != nil {
+				return fmt.Errorf("create external_ref: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (u *PropertyUsecase) applyLineageMeta(
+	meta *dto.UpdateLineageMetaDTO,
+	mask fieldmask.FieldMask,
+	fkPatch FKPatch,
+) {
+	fields := patch.WithMask(mask).
+		String("lineage_meta.national_id", "national_id", meta.NationalID, "").
+		Int32("lineage_meta.lineage_status", "lineage_status", meta.LineageStatus, 10).
+		DateString("lineage_meta.verified_national_at", "verified_national_at", meta.VerifiedNationalAt, nil).
+		Build()
+
+	for k, v := range fields {
+		fkPatch[k] = v
+	}
+}
+
+func (u *PropertyUsecase) updatePersonalization(
+	ctx context.Context,
+	mask fieldmask.FieldMask,
+	lineageID uint64,
+	originID uint64,
+	data *dto.UpdatePersonalizationDTO,
+) error {
+	fields := patch.WithMask(mask).
+		DateString("personalization.archived_at", "archived_at", data.ArchivedAt, nil).
+		DateString("personalization.hidden_at", "hidden_at", data.HiddenAt, nil).
+		Build()
+
+	return u.PropertyUserRepo.UpdateFieldsByLineageAndOwner(ctx, lineageID, originID, fields)
 }
 
 func (u *PropertyUsecase) setAvatarFromMedia(ctx context.Context, lineageID uint64, cmd *dto.UpdatePropertyDTO) error {
@@ -1863,7 +2154,7 @@ func (u *PropertyUsecase) setAvatarFromMedia(ctx context.Context, lineageID uint
 		}
 	}
 	if avatarID == 0 {
-		avatarID = mediaList[0].ID // fallback to first media
+		avatarID = mediaList[0].ID
 	}
 
 	if cmd.Info == nil {
@@ -1873,34 +2164,226 @@ func (u *PropertyUsecase) setAvatarFromMedia(ctx context.Context, lineageID uint
 	return nil
 }
 
-func (u *PropertyUsecase) triggerSyncEvents(ctx context.Context, lineageID uint64) {
-	cloneCtx := _utils.CloneContext(ctx)
-	profileID := _utils.GetProfileIdWithContext(cloneCtx)
-	now := time.Now().UnixMilli()
+// =============================================================================
+// PRIVATE METHODS - POST UPDATE
+// =============================================================================
 
-	u.SyncProvider.PutTimestamp(cloneCtx,
-		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileID), now)
-	u.SyncProvider.PutTimestamp(cloneCtx,
-		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, lineageID), now)
+func (u *PropertyUsecase) postUpdateTasks(
+	ctx context.Context,
+	propertyID uint64,
+	userID uint64,
+	evaluation *modules.ImpactEvaluation,
+	assessment *dto.ImpactAssessmentDTO,
+) {
+	// Update entity states based on projected states
+	if err := u.updateEntityStates(ctx, evaluation); err != nil {
+		log.Printf("WARN: Failed to update entity states: %v", err)
+	}
+
+	// Create new snapshots for affected entities
+	if err := u.createAffectedSnapshots(ctx, propertyID, evaluation); err != nil {
+		log.Printf("WARN: Failed to create snapshots: %v", err)
+	}
+
+	// Create audit log
+	if err := u.createAuditLog(ctx, propertyID, userID, evaluation, assessment); err != nil {
+		log.Printf("WARN: Failed to create audit log: %v", err)
+	}
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// FLOW 2 — ProposeChange
-//
-// Dùng cho: user đề xuất thay đổi bất động sản của người khác (report/contribute).
-//
-// Logic:
-//   Tạo lineage mới (propose), copy tất cả FK từ origin.
-//   Các sub-domain có dữ liệu → Insert record mới → update FK propose.
-//   Sub-domain absent → giữ FK từ origin (shared read, không tốn storage).
-// ═════════════════════════════════════════════════════════════════════════════
+func (u *PropertyUsecase) updateEntityStates(ctx context.Context, evaluation *modules.ImpactEvaluation) error {
+	if evaluation == nil || len(evaluation.SnapshotComparisons) == 0 {
+		return nil
+	}
+
+	for _, comp := range evaluation.SnapshotComparisons {
+		switch comp.EntityType {
+		case "product":
+			if err := u.updateProductState(ctx, comp.EntityID, comp.ProjectedState); err != nil {
+				log.Printf("Failed to update product %d state: %v", comp.EntityID, err)
+			}
+		case "listing":
+			if err := u.updateListingState(ctx, comp.EntityID, comp.ProjectedState); err != nil {
+				log.Printf("Failed to update listing %d state: %v", comp.EntityID, err)
+			}
+		}
+	}
+	return nil
+}
+
+func (u *PropertyUsecase) updateProductState(ctx context.Context, productID uint64, state enums.EffectiveState) error {
+	// TODO: Call product service to update state
+	log.Printf("Updating product %d to state %s", productID, state.String())
+	return nil
+}
+
+func (u *PropertyUsecase) updateListingState(ctx context.Context, listingID uint64, state enums.EffectiveState) error {
+	// TODO: Call listing service to update state
+	log.Printf("Updating listing %d to state %s", listingID, state.String())
+	return nil
+}
+
+func (u *PropertyUsecase) createAffectedSnapshots(ctx context.Context, propertyID uint64, evaluation *modules.ImpactEvaluation) error {
+	if evaluation == nil || len(evaluation.SnapshotComparisons) == 0 {
+		return nil
+	}
+
+	lineage, err := u.LineageRepo.GetByID(ctx, propertyID)
+	if err != nil {
+		return err
+	}
+
+	for _, comp := range evaluation.SnapshotComparisons {
+		snapshotData, err := u.buildSnapshotData(lineage, comp.EntityType)
+		if err != nil {
+			log.Printf("Failed to build snapshot data for %s %d: %v", comp.EntityType, comp.EntityID, err)
+			continue
+		}
+
+		snapshot := &domain.PropertyImpactVersion{
+			EntityType:   comp.EntityType,
+			EntityID:     comp.EntityID,
+			PropertyID:   propertyID,
+			SnapshotData: snapshotData,
+			Version:      u.getNextVersion(ctx, comp.EntityType, comp.EntityID),
+			ValidFrom:    time.Now(),
+			CreatedBy:    u.getCurrentUserID(ctx),
+		}
+
+		if err := u.PropertyImpactRepo.Create(ctx, snapshot); err != nil {
+			log.Printf("Failed to create snapshot for %s %d: %v", comp.EntityType, comp.EntityID, err)
+		}
+	}
+
+	return nil
+}
+
+func (u *PropertyUsecase) buildSnapshotData(lineage *domain.PropertyLineage, entityType string) (domain.JSONB, error) {
+	data := make(map[string]interface{})
+
+	if lineage.PropertyInfo != nil {
+		data["title"] = lineage.PropertyInfo.Title
+		data["property_type_id"] = lineage.PropertyInfo.PropertyTypeID
+		data["legal_status"] = lineage.PropertyInfo.LegalStatus
+	}
+
+	if lineage.Location != nil {
+		data["latitude"] = lineage.Location.Latitude
+		data["longitude"] = lineage.Location.Longitude
+		data["province_id"] = lineage.Location.ProvinceID
+		data["ward_id"] = lineage.Location.WardID
+	}
+
+	if lineage.LandInfo != nil {
+		data["area_total"] = lineage.LandInfo.AreaTotal
+		data["plot"] = lineage.LandInfo.Plot
+	}
+
+	if lineage.BuildingInfo != nil {
+		data["area_actual"] = lineage.BuildingInfo.AreaActual
+		data["floors"] = lineage.BuildingInfo.Floors
+	}
+
+	return domain.MarshalJSONB(data)
+}
+
+func (u *PropertyUsecase) getNextVersion(ctx context.Context, entityType string, entityID uint64) uint32 {
+	snapshot, err := u.PropertyImpactRepo.GetCurrent(ctx, entityType, entityID)
+	if err != nil || snapshot == nil {
+		return 1
+	}
+	return snapshot.Version + 1
+}
+
+func (u *PropertyUsecase) createAuditLog(
+	ctx context.Context,
+	propertyID, userID uint64,
+	evaluation *modules.ImpactEvaluation,
+	assessment *dto.ImpactAssessmentDTO,
+) error {
+	// Tạo map changes
+	changesMap := make(domain.AuditChangesJSON)
+	changesMap["changed_fields"] = len(evaluation.ChangeDetection.ChangedFields)
+	changesMap["impact_level"] = evaluation.ImpactLevel.String()
+	changesMap["action_policy"] = evaluation.ActionPolicy.String()
+
+	// Thêm thông tin chi tiết các field thay đổi nếu có
+	if len(evaluation.ChangeDetection.ChangedFields) > 0 {
+		fieldChanges := make([]map[string]interface{}, 0, len(evaluation.ChangeDetection.ChangedFields))
+		for _, change := range evaluation.ChangeDetection.ChangedFields {
+			fieldChanges = append(fieldChanges, map[string]interface{}{
+				"field":       change.FieldPath,
+				"old_value":   change.OldValue,
+				"new_value":   change.NewValue,
+				"change_type": change.ChangeType,
+			})
+		}
+		changesMap["field_changes"] = fieldChanges
+	}
+
+	// Thêm thông tin affected entities nếu có
+	if evaluation.AffectedSummary != nil {
+		changesMap["affected_summary"] = map[string]interface{}{
+			"products":  evaluation.AffectedSummary.Products,
+			"listings":  evaluation.AffectedSummary.Listings,
+			"assets":    evaluation.AffectedSummary.Assets,
+			"deals":     evaluation.AffectedSummary.Deals,
+			"crm_notes": evaluation.AffectedSummary.CrmNotes,
+			"total":     evaluation.AffectedSummary.Total,
+		}
+	}
+
+	// Thêm thông tin projected states nếu có
+	if evaluation.ProjectedStates != nil {
+		changesMap["projected_states"] = map[string]interface{}{
+			"active":     evaluation.ProjectedStates.Active,
+			"restricted": evaluation.ProjectedStates.Restricted,
+			"frozen":     evaluation.ProjectedStates.Frozen,
+			"archived":   evaluation.ProjectedStates.Archived,
+		}
+	}
+
+	auditLog := &domain.PropertyAuditLog{
+		PropertyID:       propertyID,
+		UserID:           userID,
+		Action:           "UPDATE",
+		ImpactLevel:      int32(evaluation.ImpactLevel),
+		AffectedProducts: evaluation.AffectedSummary.Products,
+		AffectedListings: evaluation.AffectedSummary.Listings,
+		AffectedAssets:   evaluation.AffectedSummary.Assets,
+		Changes:          changesMap, // Đây là domain.AuditChangesJSON, không phải []byte
+		CreatedAt:        time.Now(),
+	}
+
+	if assessment != nil {
+		if assessment.Confirmed {
+			now := time.Now()
+			auditLog.ConfirmedAt = &now
+		}
+		auditLog.SessionID = assessment.SessionID
+	}
+
+	if evaluation.ActionPolicy == enums.ActionPolicyBlock {
+		auditLog.BlockedReason = evaluation.BlockReason
+	}
+
+	return u.AuditLogRepo.Create(ctx, auditLog)
+}
+
+func (u *PropertyUsecase) getCurrentUserID(ctx context.Context) uint64 {
+	return _utils.GetProfileIdWithContext(ctx)
+}
+
+// =============================================================================
+// PRIVATE METHODS - PROPOSE & REPORT
+// =============================================================================
 
 func (u *PropertyUsecase) proposeChange(
 	ctx context.Context,
 	origin *domain.PropertyLineage,
 	cmd *dto.UpdatePropertyDTO,
 ) (*dto.UpdatePropertyResult, error) {
-	// Tạo propose lineage — copy FK từ origin làm base
+	// Create propose lineage with copied FKs from origin
 	propose := &domain.PropertyLineage{
 		PropertyInfoID: origin.PropertyInfoID,
 		LocationID:     origin.LocationID,
@@ -1914,7 +2397,7 @@ func (u *PropertyUsecase) proposeChange(
 
 	fkPatch := make(FKPatch)
 
-	// Propose: luôn Insert mới nếu có dữ liệu (không Update origin)
+	// Always insert new records for propose (no update)
 	proposeHandlers := []Handler{
 		&InfoHandler{Patch: cmd.Info, Mask: cmd.Mask, Repo: u.InfoRepo},
 		&LocationHandler{Patch: cmd.Location, Mask: cmd.Mask, Repo: u.LocationRepo},
@@ -1949,302 +2432,143 @@ func (u *PropertyUsecase) proposeChange(
 	}, nil
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// handleSideBlocks
-//
-// Side blocks có semantic khác với FK blocks:
-//   media/external_refs : upsert per item theo lineage_id
-//   amenities/area_regions: REPLACE toàn bộ list
-//   lineage_meta        : update trực tiếp vào fkPatch (cùng lineage record)
-//
-// fkPatch được truyền vào để lineage_meta merge vào cùng 1 UPDATE.
-// ─────────────────────────────────────────────────────────────────────────────
-
-func (u *PropertyUsecase) handleSideBlocks(
-	ctx context.Context,
-	lineageID uint64,
-	cmd *dto.UpdatePropertyDTO,
-	fkPatch FKPatch,
-) error {
-	originID := _utils.GetOriginIdFromContext(ctx)
-	if originID == 0 {
-		return _errors.UnauthorizedException("origin_id required")
-	}
-	if cmd.Media != nil {
-		if err := u.handleMedia(ctx, lineageID, cmd.Media); err != nil {
-			return fmt.Errorf("media: %w", err)
-		}
-	}
-	if cmd.Amenities != nil {
-		if err := u.handleAmenities(ctx, lineageID, cmd.Amenities); err != nil {
-			return fmt.Errorf("amenities: %w", err)
-		}
-	}
-	if cmd.AreaRegions != nil {
-		if err := u.handleAreaRegions(ctx, lineageID, cmd.AreaRegions); err != nil {
-			return fmt.Errorf("area_regions: %w", err)
-		}
-	}
-	if cmd.ExternalRefs != nil {
-		if err := u.handleExternalRefs(ctx, cmd.ExternalRefs); err != nil {
-			return fmt.Errorf("external_refs: %w", err)
-		}
-	}
-	if cmd.LineageMeta != nil {
-		// Merge vào fkPatch — cùng UPDATE lineage record cuối cùng
-		u.applyLineageMeta(cmd.LineageMeta, cmd.Mask, fkPatch)
-	}
-	if cmd.Personalization != nil {
-		if err := u.updatePersonalization(ctx, cmd.Mask, lineageID, originID, cmd.Personalization); err != nil {
-			return fmt.Errorf("personalization: %w", err)
-		}
-	}
-	return nil
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// handleMedia — xóa media không còn trong list, rồi upsert per item
-//
-// id=0 → INSERT mới
-// id>0 → UPDATE record đó
-// Media có lineage_id nhưng không nằm trong data.Items → DELETE
-// ─────────────────────────────────────────────────────────────────────────────
-
-func (u *PropertyUsecase) handleMedia(
-	ctx context.Context,
-	lineageID uint64,
-	data *dto.UpdateMediaDTO,
-) error {
-	keepIDs := make([]uint64, 0, len(data.Items))
-	for _, item := range data.Items {
-		if item.ID > 0 {
-			keepIDs = append(keepIDs, item.ID)
-		}
-	}
-	if err := u.MediaRepo.DeleteByLineageIDExcept(ctx, lineageID, keepIDs); err != nil {
-		return fmt.Errorf("delete media: %w", err)
-	}
-	for orderIdx, item := range data.Items {
-		if item.ID > 0 {
-			// UPDATE — partial update, chỉ field non-zero
-			// Media dùng scalar (không *T) → update tất cả field có trong item
-			fields := map[string]any{
-				"media_type": item.MediaType,
-				"media_url":  item.MediaURL,
-				"thumb_url":  item.ThumbURL,
-				"sort_order": orderIdx + 1,
-				// "is_cover":   item.IsCover,
-			}
-			if err := u.MediaRepo.UpdateFields(ctx, item.ID, fields); err != nil {
-				return fmt.Errorf("update media id=%d: %w", item.ID, err)
-			}
-		} else {
-			// INSERT mới
-			entity := &domain.PropertyMedia{
-				LineageID: lineageID,
-				MediaType: item.MediaType,
-				MediaURL:  item.MediaURL,
-				ThumbURL:  item.ThumbURL,
-				SortOrder: int32(orderIdx + 1),
-				IsCover:   item.IsCover,
-			}
-			if err := u.MediaRepo.Create(ctx, entity); err != nil {
-				return fmt.Errorf("create media: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// handleAmenities — REPLACE toàn bộ list
-// ─────────────────────────────────────────────────────────────────────────────
-
-func (u *PropertyUsecase) handleAmenities(
-	ctx context.Context,
-	lineageID uint64,
-	data *dto.UpdateAmenityDTO,
-) error {
-	// AmenityIDs nil = sub-domain không gửi → đã skip ở handleSideBlocks
-	// AmenityIDs [] = gửi list rỗng = xóa hết
-	return u.AmenityRepo.ReplaceAmenities(ctx, lineageID, data.AmenityIDs)
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// handleAreaRegions — REPLACE toàn bộ list
-// ─────────────────────────────────────────────────────────────────────────────
-
-func (u *PropertyUsecase) handleAreaRegions(
-	ctx context.Context,
-	lineageID uint64,
-	data *dto.UpdateAreaRegionsDTO,
-) error {
-	return u.AreaRegionRepo.ReplaceAreaRegions(ctx, lineageID, data.AreaRegionIDs)
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// handleExternalRefs — upsert per item
-// ─────────────────────────────────────────────────────────────────────────────
-
-func (u *PropertyUsecase) handleExternalRefs(
-	ctx context.Context,
-	data *dto.UpdateExternalRefDTO,
-) error {
-	for _, item := range data.Items {
-		if item.ID > 0 {
-			// UPDATE — scalar fields, update tất cả
-			fields := map[string]any{
-				"external_ref_id": item.ExternalRefID,
-				"source_system":   item.SourceSystem,
-				"source_code":     item.SourceCode,
-				"confidence":      item.Confidence,
-				"sync_status":     item.SyncStatus,
-				"note":            item.Note,
-			}
-			if err := u.ExternalRefRepo.UpdateFields(ctx, item.ID, fields); err != nil {
-				return fmt.Errorf("update external_ref id=%d: %w", item.ID, err)
-			}
-		} else {
-			// INSERT mới
-			entity := &domain.PropertyExternalRef{
-				ExternalRefID: item.ExternalRefID,
-				SourceSystem:  enums.ERefSourceSys(item.SourceSystem),
-				SourceCode:    item.SourceCode,
-				Confidence:    item.Confidence,
-				SyncStatus:    enums.ESyncStatus(item.SyncStatus),
-				Note:          item.Note,
-			}
-			if err := u.ExternalRefRepo.Create(ctx, entity); err != nil {
-				return fmt.Errorf("create external_ref: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// applyLineageMeta — merge lineage_meta fields vào fkPatch
-//
-// Dùng patch.Builder để đảm bảo cùng quy chuẩn presence + diff + mask.
-// Merge vào fkPatch → cùng 1 UPDATE lineage record cuối cùng.
-// ─────────────────────────────────────────────────────────────────────────────
-
-func (u *PropertyUsecase) applyLineageMeta(
-	meta *dto.UpdateLineageMetaDTO,
-	mask fieldmask.FieldMask,
-	fkPatch FKPatch,
-) {
-	fields := patch.WithMask(mask).
-		String("lineage_meta.national_id", "national_id", meta.NationalID, "").
-		Int32("lineage_meta.lineage_status", "lineage_status", meta.LineageStatus, 10).
-		DateString("lineage_meta.verified_national_at", "verified_national_at", meta.VerifiedNationalAt, nil).
-		Build()
-
-	for k, v := range fields {
-		fkPatch[k] = v
-	}
-}
-
-func (u *PropertyUsecase) updatePersonalization(
-	ctx context.Context,
-	mask fieldmask.FieldMask,
-	lineageID uint64,
-	originID uint64,
-	data *dto.UpdatePersonalizationDTO,
-) error {
-	fields := patch.WithMask(mask).
-		DateString("lineage_meta.archived_at", "archived_at", data.ArchivedAt, nil).
-		DateString("lineage_meta.hidden_at", "hidden_at", data.HiddenAt, nil).
-		Build()
-
-	return u.PropertyUserRepo.UpdateFieldsByLineageAndOwner(ctx, lineageID, originID, fields)
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-// SubmitReport — API báo cáo sai / gắn cờ / đóng góp BĐS
-//
-// Flow:
-//  1. Load lineage gốc, verify tồn tại.
-//  2. Check duplicate report (cùng reporter + lineage + status pending/reviewing).
-//  3. Nếu có propose data → chạy proposeChange (tái sử dụng flow hiện tại)
-//     tạo propose lineage mới copy từ origin.
-//  4. Tạo bản ghi property_report liên kết lineage gốc + propose lineage.
-//  5. Async: bump sync timestamp.
-//
-// NOTE:
-//   - Reporter KHÔNG cần là owner của lineage (khác với UpdateProperty).
-//   - proposeChange được tái sử dụng nguyên vẹn — không sửa.
-//   - Usecase này chỉ thêm orchestration layer (report record) bên ngoài.
-//
-// ═════════════════════════════════════════════════════════════════════════════
-func (u *PropertyUsecase) SubmitReport(
-	ctx context.Context,
-	cmd *dto.SubmitReportDTO,
-	reporterOriginID uint64,
-) (*dto.SubmitReportResult, error) {
-	var result *dto.SubmitReportResult
-
-	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		lineage, err := u.LineageRepo.GetByID(txCtx, cmd.LineageID)
-		if err != nil {
-			return err
-		}
-		if lineage == nil {
-			return fmt.Errorf("property lineage id=%d not found", cmd.LineageID)
-		}
-
-		existing, err := u.ReportRepo.GetByLineageAndReporter(txCtx, lineage.ID, reporterOriginID)
-		if err != nil {
-			return err
-		}
-		if existing != nil {
-			return _errors.ConflictException("you already have a pending report for this property")
-		}
-
-		var proposeLineageID *uint64
-		if cmd.ContributeData != nil {
-			proposeResult, err := u.proposeChange(txCtx, lineage, cmd.ContributeData)
-			if err != nil {
-				return fmt.Errorf("propose change: %w", err)
-			}
-			proposeLineageID = &proposeResult.LineageID
-		}
-
-		report := &domain.PropertyReport{
-			LineageID:          lineage.ID,
-			ReporterOriginID:   reporterOriginID,
-			ReportType:         enums.EReportType(cmd.ReportType),
-			SubIssues:          marshalJSON(cmd.SubIssues),
-			Status:             enums.EReportStatusPending,
-			Description:        derefStr(cmd.Note),
-			RelatedLineageID:   cmd.RelatedLineageID,
-			AttachmentMediaIDs: marshalJSON(cmd.AttachmentMediaIDs),
-			AttachmentFileIDs:  marshalJSON(cmd.AttachmentFileIDs),
-		}
-		if err := u.ReportRepo.Create(txCtx, report); err != nil {
-			return fmt.Errorf("create report: %w", err)
-		}
-
-		result = &dto.SubmitReportResult{
-			ReportID:         report.ID,
-			LineageID:        lineage.ID,
-			ProposeLineageID: proposeLineageID,
-			ReportType:       cmd.ReportType,
-			Note:             derefStr(cmd.Note),
-			CreatedAt:        _utils.TimeNowRFC3339(),
-		}
-		return nil
-	})
+func (u *PropertyUsecase) checkDuplicateReport(ctx context.Context, lineageID, reporterID uint64) error {
+	existing, err := u.ReportRepo.GetByLineageAndReporter(ctx, lineageID, reporterID)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	if existing != nil {
+		return _errors.ConflictException("you already have a pending report for this property")
+	}
+	return nil
+}
 
-	go func() {
-		cloneCtx := _utils.CloneContext(ctx)
-		now := time.Now().UnixMilli()
-		u.SyncProvider.PutTimestamp(cloneCtx,
-			u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, result.LineageID), now)
-	}()
+func (u *PropertyUsecase) createProposeIfNeeded(
+	ctx context.Context,
+	lineage *domain.PropertyLineage,
+	contributeData *dto.UpdatePropertyDTO,
+) (*uint64, error) {
+	if contributeData == nil {
+		return nil, nil
+	}
+	proposeResult, err := u.proposeChange(ctx, lineage, contributeData)
+	if err != nil {
+		return nil, fmt.Errorf("propose change: %w", err)
+	}
+	return &proposeResult.LineageID, nil
+}
 
-	return result, nil
+func (u *PropertyUsecase) createReportRecord(
+	ctx context.Context,
+	lineage *domain.PropertyLineage,
+	reporterOriginID uint64,
+	cmd *dto.SubmitReportDTO,
+	proposeLineageID *uint64,
+) (*domain.PropertyReport, error) {
+	report := &domain.PropertyReport{
+		LineageID:          lineage.ID,
+		ReporterOriginID:   reporterOriginID,
+		ReportType:         enums.EReportType(cmd.ReportType),
+		SubIssues:          marshalJSON(cmd.SubIssues),
+		Status:             enums.EReportStatusPending,
+		Description:        derefStr(cmd.Note),
+		RelatedLineageID:   cmd.RelatedLineageID,
+		AttachmentMediaIDs: marshalJSON(cmd.AttachmentMediaIDs),
+		AttachmentFileIDs:  marshalJSON(cmd.AttachmentFileIDs),
+	}
+	if err := u.ReportRepo.Create(ctx, report); err != nil {
+		return nil, fmt.Errorf("create report: %w", err)
+	}
+	return report, nil
+}
+
+func (u *PropertyUsecase) buildReportResult(
+	report *domain.PropertyReport,
+	lineageID uint64,
+	proposeLineageID *uint64,
+	cmd *dto.SubmitReportDTO,
+) *dto.SubmitReportResult {
+	return &dto.SubmitReportResult{
+		ReportID:         report.ID,
+		LineageID:        lineageID,
+		ProposeLineageID: proposeLineageID,
+		ReportType:       cmd.ReportType,
+		Note:             derefStr(cmd.Note),
+		CreatedAt:        _utils.TimeNowRFC3339(),
+	}
+}
+
+func (u *PropertyUsecase) triggerReportSync(ctx context.Context, lineageID uint64) {
+	cloneCtx := _utils.CloneContext(ctx)
+	now := time.Now().UnixMilli()
+	u.SyncProvider.PutTimestamp(cloneCtx,
+		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, lineageID), now)
+}
+
+// =============================================================================
+// PRIVATE METHODS - SYNC & UTILITIES
+// =============================================================================
+
+func (u *PropertyUsecase) triggerSyncEvents(ctx context.Context, lineageID uint64) {
+	cloneCtx := _utils.CloneContext(ctx)
+	profileID := _utils.GetProfileIdWithContext(cloneCtx)
+	now := time.Now().UnixMilli()
+
+	u.SyncProvider.PutTimestamp(cloneCtx,
+		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileID), now)
+	u.SyncProvider.PutTimestamp(cloneCtx,
+		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, lineageID), now)
+}
+
+func (u *PropertyUsecase) convertToResponse(evaluation *modules.ImpactEvaluation) *dto.ImpactEvaluationResponse {
+	if evaluation == nil {
+		return nil
+	}
+	return &dto.ImpactEvaluationResponse{
+		ImpactLevel:     evaluation.ImpactLevel.String(),
+		ActionPolicy:    evaluation.ActionPolicy.String(),
+		RequiresConfirm: evaluation.RequiresConfirm,
+		BlockReason:     evaluation.BlockReason,
+		Warnings:        evaluation.Warnings,
+		Suggestions:     evaluation.Suggestions,
+		AffectedSummary: &dto.AffectedSummaryResponse{
+			Products: evaluation.AffectedSummary.Products,
+			Listings: evaluation.AffectedSummary.Listings,
+			Assets:   evaluation.AffectedSummary.Assets,
+			Deals:    evaluation.AffectedSummary.Deals,
+			CrmNotes: evaluation.AffectedSummary.CrmNotes,
+			Total:    evaluation.AffectedSummary.Total,
+		},
+		ProjectedStates: &dto.ProjectedStatesResponse{
+			Active:     evaluation.ProjectedStates.Active,
+			Restricted: evaluation.ProjectedStates.Restricted,
+			Frozen:     evaluation.ProjectedStates.Frozen,
+			Archived:   evaluation.ProjectedStates.Archived,
+		},
+	}
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+func getFirstWord(input string) string {
+	parts := strings.SplitN(input, " ", 2)
+	return parts[0]
+}
+
+// ResolveLocationResult kết quả resolve location
+type ResolveLocationResult struct {
+	ProvinceID *uint64
+	WardID     *uint64
+	Error      error
+}
+
+// ResolveLocationFromTQD request resolve location
+type ResolveLocationFromTQD struct {
+	Latitude  float64
+	Longitude float64
+	Mask      fieldmask.FieldMask
+	Result    chan<- *ResolveLocationResult
+	userID    uint64
 }
