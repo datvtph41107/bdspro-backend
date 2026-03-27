@@ -42,6 +42,7 @@ func NewGRPCServer(port string) *GRPCServer {
 	}
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
+	crmClient := client.NewCrmClient()
 	bdsproClient := client.NewBdsproClient()
 	redisClient := _redis.NewRedisService()
 	syncProvider := impl.NewSyncProvider(redisClient)
@@ -65,6 +66,7 @@ func NewGRPCServer(port string) *GRPCServer {
 		messageReactionUsecase,
 		backgroundImageUsecase,
 		userClient,
+		crmClient,
 		bdsproClient,
 		conversationMapper,
 		messageMapper,

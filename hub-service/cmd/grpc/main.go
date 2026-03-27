@@ -61,6 +61,7 @@ var GrpcCmd = &cobra.Command{
 		hubpb.RegisterVersionServiceServer(s, app.VersionHandler)
 		hubpb.RegisterApiKeyServiceServer(s, app.ApiKeyHandler)
 		hubpb.RegisterInteractiveEventServiceServer(s, app.InteractiveEventHandler)
+		hubpb.RegisterErrorLogServiceServer(s, app.ErrorLogHandler)
 		hubpb.RegisterUpdateDataServiceServer(s, app.UpdateDataHandler)
 		hubpb.RegisterApplinkServiceServer(s, app.ApplinkHandler)
 

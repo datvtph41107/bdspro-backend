@@ -34,6 +34,7 @@ type messageUsecases interface {
 	SendToReceiver(ctx context.Context, message *models.MessageModel, receiverID *uint64) (*models.MessageModel, error)
 	GetMessages(ctx context.Context, pagable _dto.Pagable, conversationId uint64, sort string, fromDate, toDate *time.Time) ([]*models.MessageModel, error)
 	ForwardMessage(ctx context.Context, messageId uint64, conversationIds []uint64) ([]*models.MessageModel, error)
+	CreateSystemMessage(ctx context.Context, conversationId uint64, content string) (*models.MessageModel, error)
 	PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*models.MessageModel, error)
 	RecallMessage(ctx context.Context, messageId uint64) (*models.MessageModel, error)
 	GetPinnedMessages(ctx context.Context, conversationId uint64) ([]*models.MessageModel, error)

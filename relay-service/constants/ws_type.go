@@ -18,6 +18,7 @@ const (
 	DELETE_VIOLATION_MESSAGE_TYPE = "delete_violation_message"
 	UPDATE_ROOM_TYPE              = "update_room"
 	REACT_MESSAGE                 = "react_message" // unimplemented
+	SYSTEM_MESSAGE_TYPE           = "system"
 
 	// notification
 	NOTIFICATION_TYPE = "notification"

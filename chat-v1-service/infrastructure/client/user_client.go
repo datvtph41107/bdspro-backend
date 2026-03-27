@@ -3,11 +3,13 @@ package client
 import (
 	"chat/env"
 	"chat/internal/dto"
+	"chat/models"
 	_utils "common/utils"
 	"context"
 	"fmt"
 	"pb/clients"
 	chatpb "pb/types/chat"
+	"strings"
 )
 
 // @bind: chat/internal/interface.IUserClient
@@ -157,12 +159,20 @@ func (c *UserClient) MapAvatarAndNameToMessagePbList(ctx context.Context, messag
 	userIds := make(map[uint64]struct{}, len(messages))
 	for _, message := range messages {
 		userIds[uint64(message.SenderId)] = struct{}{}
+		if strings.EqualFold(message.ContentType, string(models.ContentTypeContact)) && message.ExtraId != nil {
+			userIds[*message.ExtraId] = struct{}{}
+		}
 	}
 	users, _ := c.Client.GetMapByIDs(ctx, userIds)
 	for _, message := range messages {
 		if user, ok := users[uint64(message.SenderId)]; ok {
 			message.Avatar = &user.Avatar
 			message.FullName = &user.FullName
+		}
+		if strings.EqualFold(message.ContentType, string(models.ContentTypeContact)) && message.ExtraId != nil {
+			if contact, ok := users[*message.ExtraId]; ok {
+				message.ContactUser = contact
+			}
 		}
 	}
 }

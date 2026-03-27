@@ -120,6 +120,8 @@ func (r *MessageRepo) GetPinnedMessages(ctx context.Context, conversationID uint
 	var messages []*domain.Message
 	err := r.GetDB(ctx).
 		Where("conversation_id = ? AND pined = ?", conversationID, true).
+		Preload("ReplyMessage").
+		Preload("Reactions").
 		Order("pinned_at DESC").
 		Find(&messages).
 		Error

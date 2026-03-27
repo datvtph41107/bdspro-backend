@@ -23,7 +23,7 @@ func NewSystemMessageUsecase(repo Repository, userClient iusecase.IUserClient) *
 	}
 }
 
-func (s *SystemMessageUsecase) PinSystemMessage(ctx context.Context, conversationID uint64, messageID uint64, isPin bool) error {
+func (s *SystemMessageUsecase) PinSystemMessage(ctx context.Context, conversationID uint64, messageID uint64, isPin bool) (*models.MessageModel, error) {
 	actorID := utils.GetCurrentUserID(ctx)
 
 	actorName, err := s.getUserName(ctx, actorID)
@@ -47,8 +47,12 @@ func (s *SystemMessageUsecase) PinSystemMessage(ctx context.Context, conversatio
 		UpdatedAt:      time.Now(),
 	}
 
-	_, err = s.repo.CreateMessage(ctx, systemMsg)
-	return err
+	message, err := s.repo.CreateMessage(ctx, systemMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
 }
 
 func (s *SystemMessageUsecase) AddMemberSystemMessage(ctx context.Context, conversationID uint64, newUserIDs []uint64) error {

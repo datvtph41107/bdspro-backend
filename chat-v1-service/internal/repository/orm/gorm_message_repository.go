@@ -53,9 +53,9 @@ func (r *gormRepository) GetLatestPinnedMessageUpdatedAt(ctx context.Context, co
 	var t time.Time
 	err := r.db.WithContext(ctx).
 		Model(&models.MessageModel{}).
-		Where("conversation_id = ? AND pined = ?", conversationId, true).
-		Select("updated_at").
-		Order("updated_at DESC").
+		Where("conversation_id = ? AND pinned_at IS NOT NULL", conversationId).
+		Select("pinned_at").
+		Order("pinned_at DESC").
 		Limit(1).
 		Scan(&t).Error
 	if err != nil {
@@ -121,6 +121,8 @@ func (r *gormRepository) UpdateRecallMessage(ctx context.Context, messageID uint
 func (r *gormRepository) GetPinnedMessages(ctx context.Context, conversationID uint64) ([]*models.MessageModel, error) {
 	var messages []*models.MessageModel
 	err := r.db.WithContext(ctx).
+		Preload("ReplyMessage").
+		Preload("Reactions").
 		Where("conversation_id = ? AND pined = ?", conversationID, true).
 		Order("pinned_at DESC").
 		Find(&messages).

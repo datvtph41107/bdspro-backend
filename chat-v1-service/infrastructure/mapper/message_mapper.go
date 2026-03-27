@@ -54,6 +54,8 @@ func (m *MessageMapper) MessageToPb(msg *models.MessageModel) *chatpb.Message {
 			RoomId:      strconv.FormatUint(msg.ReplyMessage.ConversationID, 10),
 			CreatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.CreatedAt),
 			UpdatedAt:   _utils.FormatTimeToString(&msg.ReplyMessage.UpdatedAt), // THÊM
+			IsRecall:    msg.ReplyMessage.Recall,
+			ExtraId:     msg.ReplyMessage.ExtraId,
 		}
 
 		if msg.ReplyMessage.Reactions != nil {
@@ -83,6 +85,9 @@ func (m *MessageMapper) MessageToPb(msg *models.MessageModel) *chatpb.Message {
 			}
 		}
 	}
-
+	if msg.PinnedAt != nil {
+		timeStr := _utils.FormatTimeToString(msg.PinnedAt)
+		pb.PinnedAt = &timeStr
+	}
 	return pb
 }

@@ -41,6 +41,7 @@ type chatHandler struct {
 	maxParticipant          int
 	redisClient             redisClient
 	userClient              *client.UserClient
+	crmClient               *client.CrmClient
 	bdsproClient            *client.BdsproClient
 	conversationMapper      *mapper.ConversationMapper
 	messageMapper           *mapper.MessageMapper
@@ -68,6 +69,7 @@ func NewChatHandler(
 	participantUsecases participantUsecases,
 	messageReactionUsecases messageReactionUsecases,
 	userClient *client.UserClient,
+	crmClient *client.CrmClient,
 	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
 	messageMapper *mapper.MessageMapper,
@@ -88,6 +90,7 @@ func NewChatHandler(
 		redisClient:             redis.NewRedisClient(),
 		eventChannel:            make(chan any),
 		userClient:              userClient,
+		crmClient:               crmClient,
 		bdsproClient:            bdsproClient,
 		conversationMapper:      conversationMapper,
 		messageMapper:           messageMapper,
@@ -225,38 +228,18 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRe
 }
 
 func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.MessageModel) (*chatpb.SendMessageResponse, error) {
+	pbMsg := s.messageMapper.MessageToPb(message)
 	event := &chatpb.SendMessage{
 		Type: constants.MESSAGE_TYPE,
-		Data: &chatpb.Message{
-			MessageId:   int32(message.ID),
-			SenderId:    int32(message.SenderID),
-			Content:     message.Content,
-			ContentType: string(message.ContentType),
-			FileUrl:     message.FileURL,
-			RoomId:      strconv.FormatUint(message.ConversationID, 10),
-			CreatedAt:   message.CreatedAt.Local().Format(time.RFC3339),
-			IsRecall:    message.Recall,
-			ExtraId:     message.ExtraId,
-		},
-	}
-	if message.ReplyMessage != nil {
-		event.Data.ReplyMessage = &chatpb.Message{
-			MessageId:   int32(message.ReplyMessage.ID),
-			SenderId:    int32(message.ReplyMessage.SenderID),
-			Content:     message.ReplyMessage.Content,
-			ContentType: string(message.ReplyMessage.ContentType),
-			FileUrl:     message.ReplyMessage.FileURL,
-			RoomId:      strconv.FormatUint(message.ReplyMessage.ConversationID, 10),
-			CreatedAt:   message.ReplyMessage.CreatedAt.Local().Format(time.RFC3339),
-			IsRecall:    message.ReplyMessage.Recall,
-		}
+		Data: pbMsg,
 	}
 
-	user, _ := s.userClient.GetUserById(ctx, message.SenderID)
-	if user != nil {
-		event.Data.FullName = &user.FullName
-		event.Data.Avatar = &user.Avatar
+	// Giống GetMessages: avatar, fullName, contactUser (tin contact) qua batch profile
+	toEnrich := []*chatpb.Message{pbMsg}
+	if pbMsg.ReplyMessage != nil {
+		toEnrich = append(toEnrich, pbMsg.ReplyMessage)
 	}
+	s.userClient.MapAvatarAndNameToMessagePbList(ctx, toEnrich)
 
 	s.eventChannel <- event
 
@@ -498,6 +481,7 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 	}
 
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, pbMessages)
+	// s.crmClient.MapContactToMessagePbList(ctx, pbMessages)
 	s.bdsproClient.MapProductPbByIds(ctx, pbMessages)
 
 	return &chatpb.GetMessagesResponse{
@@ -544,6 +528,7 @@ func (s *chatHandler) ForwardMessage(ctx context.Context, req *chatpb.ForwardMes
 		// }
 	}
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, pbMessages)
+	s.crmClient.MapContactToMessagePbList(ctx, pbMessages)
 	for _, message := range messages {
 		s.invalidateMessageTypeSyncKeys(ctx, message.ConversationID, string(message.ContentType))
 		s.invalidateUnreadSyncKeysForReceivers(ctx, message.ConversationID, message.SenderID)
@@ -618,16 +603,19 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 		return nil, err
 	}
 
-	if err := s.systemMessageUsecase.PinSystemMessage(ctx, uint64(req.ConversationId), uint64(req.MessageId), req.DoPin); err != nil {
-		s.logger.Errorf("Failed to create system message for pin: %v", err)
+	// content := "Đã bỏ ghim tin nhắn"
+	// if req.DoPin {
+	// 	content = "Đã ghim tin nhắn"
+	// }
+	message, err := s.systemMessageUsecase.PinSystemMessage(ctx, uint64(req.ConversationId), uint64(req.MessageId), req.DoPin)
+	if err != nil {
+		return nil, err
 	}
 
+	pbMsg := s.messageMapper.MessageToPb(message)
 	event := &chatpb.PinMessage{
 		Type: constants.PIN_MESSAGE_TYPE,
-		Data: &chatpb.PinMessageData{
-			RoomId:    strconv.Itoa(int(req.ConversationId)),
-			MessageId: strconv.Itoa(int(req.MessageId)),
-		},
+		Data: pbMsg,
 	}
 
 	user, _ := s.userClient.GetUserById(ctx, utils.GetCurrentUserID(ctx))
@@ -640,7 +628,7 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 
 	if s.syncProvider != nil {
 		ts := time.Now().UnixMilli()
-		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId)), ts)
+		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationPinned, uint64(req.ConversationId)), ts)
 		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, 0), ts)
 	}
 
@@ -1068,18 +1056,12 @@ func (s *chatHandler) GetPinnedMessages(ctx context.Context, req *chatpb.GetMess
 
 	var pbMessages []*chatpb.Message
 	for _, msg := range messages {
-		pbMessages = append(pbMessages, &chatpb.Message{
-			MessageId:   int32(msg.ID),
-			SenderId:    int32(msg.SenderID),
-			Content:     msg.Content,
-			ContentType: string(msg.ContentType),
-			FileUrl:     msg.FileURL,
-			RoomId:      strconv.FormatUint(msg.ConversationID, 10),
-			CreatedAt:   msg.CreatedAt.Local().Format(time.RFC3339),
-		})
+		pbMessages = append(pbMessages, s.messageMapper.MessageToPb(msg))
 	}
 
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, pbMessages)
+	s.crmClient.MapContactToMessagePbList(ctx, pbMessages)
+	s.bdsproClient.MapProductPbByIds(ctx, pbMessages)
 
 	return &chatpb.GetMessagesResponse{
 		Messages: pbMessages,
@@ -1138,7 +1120,6 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 		}
 		s.eventChannel <- event
 	}
-
 	if s.syncProvider != nil {
 		ts := joinedAt.UnixMilli()
 		_ = s.syncProvider.PutTimestamp(ctx, s.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, req.ConversationId), ts)

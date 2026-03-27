@@ -142,6 +142,29 @@ func (c *messageUsecases) ForwardMessage(ctx context.Context, messageId uint64, 
 	return c.repo.CreateMessages(ctx, messages)
 }
 
+func (c *messageUsecases) CreateSystemMessage(ctx context.Context, conversationId uint64, content string) (*models.MessageModel, error) {
+	err := c.validateConversationAndCurrentUser(ctx, conversationId)
+	if err != nil {
+		return nil, err
+	}
+	msg := &models.MessageModel{
+		ConversationID: conversationId,
+		SenderID:       utils.GetCurrentUserID(ctx),
+		Content:        content,
+		ContentType:    models.ContentTypeSystem,
+	}
+	data, err := c.repo.CreateMessage(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+	if c.syncProvider != nil {
+		ts := time.Now().UnixMilli()
+		key := c.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, conversationId)
+		_ = c.syncProvider.PutTimestamp(ctx, key, ts)
+	}
+	return data, nil
+}
+
 func (c *messageUsecases) PinMessage(ctx context.Context, messageId uint64, conversationId uint64, pin bool) (*models.MessageModel, error) {
 	err := c.validateConversationAndCurrentUser(ctx, conversationId)
 	if err != nil {

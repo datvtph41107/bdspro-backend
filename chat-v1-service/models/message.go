@@ -16,6 +16,8 @@ const (
 	ContentTypeProduct ContentTypeEnum = "product"
 	ContentTypeContact ContentTypeEnum = "contact"
 	ContentTypeSystem  ContentTypeEnum = "system"
+
+	ContentTypeLocation ContentTypeEnum = "location"
 )
 
 type MessageModel struct {

@@ -367,7 +367,8 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		constants.SEEN_TYPE,
 		constants.DELETE_VIOLATION_MESSAGE_TYPE,
 		constants.READ_TYPE,
-		constants.MESSAGE_TYPE:
+		constants.MESSAGE_TYPE,
+		constants.SYSTEM_MESSAGE_TYPE:
 		fmt.Printf("MESSAGEGEGEG TPYEEPEPEPEPEPEP CALLL")
 		// Truyền tin nhắn đến phòng theo loại sự kiện
 		if roomID, ok := utils.ParseUint64(m["roomId"]); ok {

@@ -90,7 +90,7 @@ message PinMessageData {
 
 message PinMessage {
   string type = 1;
-  PinMessageData data = 2;
+  Message data = 2;
 }
 
 message ReactMessageData {

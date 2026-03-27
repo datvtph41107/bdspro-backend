@@ -135,6 +135,7 @@ var publicRoutes = []string{
 	"/v2/assistant/national-card/extract",
 	"/v2/pub/user/profile/tags",
 	"/v2/hub/applinks",
+	"/v2/hub/error/log",
 }
 
 var tempRoutes = []string{

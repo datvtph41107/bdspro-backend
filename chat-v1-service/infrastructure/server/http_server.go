@@ -50,6 +50,7 @@ func NewHTTPServer(port string) *HTTPServer {
 	}
 	pRepository := repository.NewRepository(db)
 	userClient := client.NewUserClient()
+	crmClient := client.NewCrmClient()
 	bdsproClient := client.NewBdsproClient()
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
 	redisClient := _redis.NewRedisService()
@@ -71,6 +72,7 @@ func NewHTTPServer(port string) *HTTPServer {
 		messageReactionUsecase,
 		backgroundImageUsecase,
 		userClient,
+		crmClient,
 		bdsproClient,
 		conversationMapper,
 		messageMapper,

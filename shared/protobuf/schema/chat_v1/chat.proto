@@ -300,7 +300,8 @@ message Message {
   optional string avatar = 12;
   optional uint64 extraId = 13;
   optional bdspropb.ProductAttachment product = 14;
-  SystemMessageData systemData = 15; 
+  SystemMessageData systemData = 15;
+  optional sharepb.ProfileItem contactUser = 16;
 }
 
 message ForwardMessageRequest {
