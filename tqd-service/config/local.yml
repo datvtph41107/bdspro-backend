@@ -7,8 +7,8 @@ eureka:
     port: 8761
 
 database:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5432 sslmode=disable
-    # dsn: host=localhost user=postgres password=password dbname=postgres port=5432 sslmode=disable
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
+    # dsn: host=localhost user=admin password=123 dbname=postgres port=5432 sslmode=disable
 
 key:
     jwt: key-generate-jwt-token-authentication

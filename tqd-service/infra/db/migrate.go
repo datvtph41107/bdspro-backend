@@ -12,6 +12,7 @@ func AutoMigrate() {
 		&domain.PoiCategory{},
 		&domain.OpenHour{},
 		&domain.POIMedia{},
+		// &domain.Feature{},
 
 		// Amenity model
 		&domain.Amenity{},

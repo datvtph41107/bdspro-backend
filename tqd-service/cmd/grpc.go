@@ -97,6 +97,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterPoiCategoryServiceServer(s, app.PoiCategoryGrpcHandler)
 	tqdpb.RegisterPoiServiceServer(s, app.POIGrpcHandler)
 	tqdpb.RegisterLocationServiceServer(s, app.LocationGrpcHandler)
+	tqdpb.RegisterFeatureServiceServer(s, app.FeatureGrpcHandler)
 
 	// Register reflection service on gRPC server (useful for grpcurl)
 	reflection.Register(s)

@@ -28,6 +28,7 @@ type InitialApp struct {
 	OpenHourGrpcHandler          *handler_grpc.OpenHourGrpcHandler
 	AmenityGrpcHandler           *handler_grpc.AmenityGrpcHandlerImpl
 	LocationGrpcHandler          *handler_grpc.LocationHandler
+	FeatureGrpcHandler           *handler_grpc.FeatureGrpcHandler
 }
 
 // NewApp creates a new App instance
@@ -49,6 +50,7 @@ func NewApp(
 	openHourGrpcHandler *handler_grpc.OpenHourGrpcHandler,
 	amenityGrpcHandler *handler_grpc.AmenityGrpcHandlerImpl,
 	locationGrpcHandler *handler_grpc.LocationHandler,
+	featureGrpcHandler *handler_grpc.FeatureGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
 		ContactLabelHandler:          contactLabelHandler,
@@ -68,6 +70,7 @@ func NewApp(
 		OpenHourGrpcHandler:          openHourGrpcHandler,
 		AmenityGrpcHandler:           amenityGrpcHandler,
 		LocationGrpcHandler:          locationGrpcHandler,
+		FeatureGrpcHandler:           featureGrpcHandler,
 	}
 }
 
