@@ -38,6 +38,7 @@ type MessageModel struct {
 	ReplyMessage   *MessageModel           `json:"reply_message" gorm:"foreignKey:ReplyId;references:ID"`
 	Reactions      []*MessageReactionModel `json:"reactions" gorm:"foreignKey:MessageID;references:ID"`
 	ExtraId        *uint64                 `json:"extra_id"`
+	ReadAt         *time.Time              `json:"read_at" gorm:"-"`
 	SystemMetadata *SystemMessageMetadata  `json:"system_metadata" gorm:"-"`
 }
 

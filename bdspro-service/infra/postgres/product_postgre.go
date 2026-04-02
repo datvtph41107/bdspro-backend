@@ -1135,6 +1135,9 @@ func (r *GormUserProductRepo) GetDetailByIds(ctx context.Context, ids []uint64) 
 	if err := r.DB.WithContext(ctx).
 		Preload("Price").
 		Preload("MediaList", "deleted_at IS NULL").
+		Preload("Property", "deleted_at IS NULL").
+		Preload("Property.PropertyInfo", "deleted_at IS NULL").
+		Preload("Property.PropertyInfo.Avatar", "deleted_at IS NULL").
 		Preload("Province", "deleted_at IS NULL").
 		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").

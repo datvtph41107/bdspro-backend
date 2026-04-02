@@ -200,7 +200,7 @@ service ChatService {
       post: "/v2/chat/typing"
       body: "*"
     };
-  }
+  };
   rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
   rpc GetMembersOfRoom(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
 }
@@ -212,6 +212,8 @@ message StateTypingRequest {
 
 message StateTypingResponse {
   bool success = 1;
+  // Giá trị Redis sau INCR (isTyping=true) hoặc DECR (isTyping=false), key theo room+user.
+  int64 count = 2;
 }
 
 message UnreadCountRequest {
@@ -349,6 +351,7 @@ message Message {
   optional uint64 replyId = 18;
   optional string pinnedAt = 19;
   optional sharepb.ProfileItem contactUser = 20;
+  optional string readAt = 21;
 }
 
 message GetMessagesByIndexRequest {

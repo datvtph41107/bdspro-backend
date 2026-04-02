@@ -17,8 +17,8 @@ timeout:
     write: 60s
 
 redis:
-    host: "localhost:6379"
-    pass: ""
+    host: localhost:6379
+    pass: 
 
 swagger:
     path: "./proto/docs/chat/chat.swagger.json"

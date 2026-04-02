@@ -34,3 +34,20 @@ func (r *gormRepository) GetReadReceiptsByUserId(ctx context.Context, userId uin
 	}
 	return readReceipts, nil
 }
+
+func (r *gormRepository) GetReadReceiptsByUserAndMessageIDs(ctx context.Context, userId uint64, messageIDs []uint64) ([]*models.ReadReceptModel, error) {
+	if len(messageIDs) == 0 {
+		return []*models.ReadReceptModel{}, nil
+	}
+	var readReceipts []*models.ReadReceptModel
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND message_id IN (?)", userId, messageIDs).
+		Find(&readReceipts).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return []*models.ReadReceptModel{}, nil
+		}
+		return nil, err
+	}
+	return readReceipts, nil
+}

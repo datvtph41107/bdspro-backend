@@ -49,6 +49,7 @@ type chatHandler struct {
 	syncProvider            *_provider.SyncProvider
 	messageRepository       usecases.Repository
 	systemMessageUsecase    *usecases.SystemMessageUsecase
+	typingUsecases          *usecases.TypingUsecase
 }
 
 func (s *chatHandler) putTimestampFromTimePtr(ctx context.Context, key string, t *time.Time) {
@@ -60,6 +61,43 @@ func (s *chatHandler) putTimestampFromTimePtr(ctx context.Context, key string, t
 		ts = 1
 	}
 	_ = s.syncProvider.PutTimestamp(ctx, key, ts)
+}
+
+func (s *chatHandler) attachReadAtForCurrentUser(ctx context.Context, messages []*models.MessageModel) error {
+	if len(messages) == 0 {
+		return nil
+	}
+	messageIDs := make([]uint64, 0, len(messages))
+	for _, msg := range messages {
+		if msg == nil || msg.ID == 0 {
+			continue
+		}
+		messageIDs = append(messageIDs, msg.ID)
+	}
+	if len(messageIDs) == 0 {
+		return nil
+	}
+	receipts, err := s.readReceptUsecases.GetReadReceiptsByMessageIDsForCurrentUser(ctx, messageIDs)
+	if err != nil {
+		return err
+	}
+	readAtByMessageID := make(map[uint64]time.Time, len(receipts))
+	for _, receipt := range receipts {
+		if receipt == nil {
+			continue
+		}
+		readAtByMessageID[receipt.MessageID] = receipt.ReadAt
+	}
+	for _, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		if readAt, ok := readAtByMessageID[msg.ID]; ok {
+			tmp := readAt
+			msg.ReadAt = &tmp
+		}
+	}
+	return nil
 }
 
 func NewChatHandler(
@@ -78,6 +116,7 @@ func NewChatHandler(
 	messageRepository usecases.Repository,
 	systemMessageUsecase *usecases.SystemMessageUsecase,
 ) *chatHandler {
+	redisCli := redis.NewRedisClient()
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
 		messageUsecases:         messageUsecases,
@@ -87,7 +126,8 @@ func NewChatHandler(
 		logger:                  flogging.MustGetLogger("chat_handler"),
 		numberOfWorker:          config.AppProperties.Worker.Number,
 		maxParticipant:          config.AppProperties.MaxParticipant,
-		redisClient:             redis.NewRedisClient(),
+		redisClient:             redisCli,
+		typingUsecases:          usecases.NewTypingUsecase(conversationUsecases, redisCli),
 		eventChannel:            make(chan any),
 		userClient:              userClient,
 		crmClient:               crmClient,
@@ -189,6 +229,16 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConve
 	if err != nil {
 		return nil, err
 	}
+	latestMessages := make([]*models.MessageModel, 0, len(conversations))
+	for _, conversation := range conversations {
+		if conversation == nil || conversation.LatestMessage.ID == 0 {
+			continue
+		}
+		latestMessages = append(latestMessages, &conversation.LatestMessage)
+	}
+	if err = s.attachReadAtForCurrentUser(ctx, latestMessages); err != nil {
+		return nil, err
+	}
 
 	pbConversations := s.conversationMapper.ConversationsToPb(conversations)
 	s.userClient.MapUserProfile(ctx, pbConversations)
@@ -224,6 +274,11 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRe
 		return nil, err
 	}
 
+	go func() {
+		ctxClone := _utils.CloneContext(ctx)
+		key := s.syncProvider.GetKeyWithoutMe(ctxClone, _provider.SyncKeyConversationCommon, message.ConversationID)
+		s.syncProvider.PutTimestamp(ctxClone, key, message.UpdatedAt.UnixMilli())
+	}()
 	return s.ResponseMessage(ctx, message)
 }
 
@@ -240,6 +295,7 @@ func (s *chatHandler) ResponseMessage(ctx context.Context, message *models.Messa
 		toEnrich = append(toEnrich, pbMsg.ReplyMessage)
 	}
 	s.userClient.MapAvatarAndNameToMessagePbList(ctx, toEnrich)
+	s.bdsproClient.MapProductPbByIds(ctx, toEnrich)
 
 	s.eventChannel <- event
 
@@ -472,6 +528,9 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 
 	messages, err := s.messageUsecases.GetMessages(ctx, pagable, uint64(req.ConversationId), sort, fromDate, toDate)
 	if err != nil {
+		return nil, err
+	}
+	if err = s.attachReadAtForCurrentUser(ctx, messages); err != nil {
 		return nil, err
 	}
 
@@ -1148,7 +1207,8 @@ func (s *chatHandler) LeaveRoom(ctx context.Context, req *chatpb.LeaveRoomReques
 	event := &chatpb.LeaveRoom{
 		Type: constants.LEAVE_ROOM_TYPE,
 		Data: &chatpb.LeaveRoomData{
-			RoomId: strconv.Itoa(int(req.ConversationId)),
+			UserId: strconv.FormatUint(utils.GetCurrentUserID(ctx), 10),
+			RoomId: strconv.FormatUint(uint64(req.ConversationId), 10),
 		},
 	}
 	s.eventChannel <- event
@@ -1474,6 +1534,42 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 	return &chatpb.ReactionMessageResponse{
 		Success: true,
 	}, nil
+}
+
+// @Summary Cập nhật trạng thái đang gõ
+// @Description isTyping=true INCR, false DECR (Redis key theo phòng + user); fanout WebSocket type typing — data.count là giá trị Redis; không gửi notification khi nhận offline.
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message body chatpb.StateTypingRequest true "conversationId và isTyping"
+// @Success 200 {object} chatpb.StateTypingResponse
+// @Router /typing [post]
+func (s *chatHandler) GetStateTyping(ctx context.Context, req *chatpb.StateTypingRequest) (*chatpb.StateTypingResponse, error) {
+	if req == nil {
+		return nil, _errors.BadRequestException("request is required")
+	}
+	counter, err := s.typingUsecases.ApplyTypingState(ctx, req.ConversationId, req.IsTyping)
+	if err != nil {
+		return nil, err
+	}
+	userID := utils.GetCurrentUserID(ctx)
+	event := &chatpb.TypingIndicator{
+		Type: constants.TYPING_INDICATOR_TYPE,
+		Data: &chatpb.TypingIndicatorData{
+			RoomId:   strconv.FormatUint(req.ConversationId, 10),
+			UserId:   strconv.FormatUint(userID, 10),
+			IsTyping: req.IsTyping,
+			Count:    counter,
+		},
+	}
+	user, _ := s.userClient.GetUserById(ctx, userID)
+	if user != nil {
+		event.Data.FullName = &user.FullName
+		event.Data.Avatar = &user.Avatar
+	}
+	s.eventChannel <- event
+	return &chatpb.StateTypingResponse{Success: true, Count: counter}, nil
 }
 
 // @Summary Lấy số lượng tin nhắn chưa đọc

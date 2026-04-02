@@ -18,4 +18,6 @@ const (
 	UPDATE_ROOM_TYPE              = "update_room"
 	REACT_MESSAGE                 = "react_message" // unimplemented
 	SYSTEM_MESSAGE_TYPE           = "system_message"
+	// Typing — chỉ fanout WebSocket; relay không gửi notification khi user offline/background.
+	TYPING_INDICATOR_TYPE = "typing"
 )

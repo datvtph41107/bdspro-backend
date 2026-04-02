@@ -368,8 +368,8 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		constants.DELETE_VIOLATION_MESSAGE_TYPE,
 		constants.READ_TYPE,
 		constants.MESSAGE_TYPE,
-		constants.SYSTEM_MESSAGE_TYPE:
-		fmt.Printf("MESSAGEGEGEG TPYEEPEPEPEPEPEP CALLL")
+		constants.SYSTEM_MESSAGE_TYPE,
+		constants.TYPING_INDICATOR_TYPE:
 		// Truyền tin nhắn đến phòng theo loại sự kiện
 		if roomID, ok := utils.ParseUint64(m["roomId"]); ok {
 			h.sendToRoom(roomID, data)
@@ -408,7 +408,30 @@ func (h *WebSocketHandler) addUserToRoom(roomID uint64, userID uint64) {
 	if _, exists := h.rooms[roomID]; !exists {
 		h.rooms[roomID] = make([]uint64, 0)
 	}
-	h.rooms[roomID] = append(h.rooms[roomID], userID)
+	existsInRoom := false
+	for _, member := range h.rooms[roomID] {
+		if member == userID {
+			existsInRoom = true
+			break
+		}
+	}
+	if !existsInRoom {
+		h.rooms[roomID] = append(h.rooms[roomID], userID)
+	}
+
+	if _, exists := h.users[userID]; !exists {
+		h.users[userID] = make([]uint64, 0)
+	}
+	existsInUserRooms := false
+	for _, joinedRoomID := range h.users[userID] {
+		if joinedRoomID == roomID {
+			existsInUserRooms = true
+			break
+		}
+	}
+	if !existsInUserRooms {
+		h.users[userID] = append(h.users[userID], roomID)
+	}
 	// for uid, conn := range h.clients {
 	// 	if uid == userID {
 
@@ -418,11 +441,31 @@ func (h *WebSocketHandler) addUserToRoom(roomID uint64, userID uint64) {
 
 func (h *WebSocketHandler) removeUserFromRoom(roomID uint64, userID uint64) {
 	members := h.rooms[roomID]
-	for i, member := range members {
-		if member == userID {
-			h.rooms[roomID] = append(members[:i], members[i+1:]...)
+
+	filtered := members[:0] // reuse memory, không alloc mới
+
+	for _, member := range members {
+		if member != userID {
+			filtered = append(filtered, member)
+		}
+	}
+
+	h.rooms[roomID] = filtered
+
+	rooms := h.users[userID]
+	for i, joinedRoomID := range rooms {
+		if joinedRoomID == roomID {
+			h.users[userID] = append(rooms[:i], rooms[i+1:]...)
 			break
 		}
+	}
+
+	if len(h.users[userID]) == 0 {
+		delete(h.users, userID)
+	}
+
+	if len(h.rooms[roomID]) == 0 {
+		delete(h.rooms, roomID)
 	}
 	// for uid, conn := range h.clients {
 	// 	if uid == userID {
@@ -469,6 +512,8 @@ func (h *WebSocketHandler) loadRoomsOfMember(userId uint64) {
 		wsLogger.Errorf("Failed to get rooms of member: %v", err)
 		return
 	}
+
+	h.users[userId] = roomIDs
 
 	for _, roomID := range roomIDs {
 		if _, ok := h.rooms[roomID]; !ok {
@@ -600,6 +645,11 @@ func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userI
 
 	m, ok := msg.Data.(map[string]any)
 	if !ok {
+		return
+	}
+
+	// Typing chỉ fanout WS, không push notification (offline/background).
+	if msg.Type == constants.TYPING_INDICATOR_TYPE {
 		return
 	}
 

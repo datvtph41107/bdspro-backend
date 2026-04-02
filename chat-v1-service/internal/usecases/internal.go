@@ -47,6 +47,7 @@ type Repository interface {
 	CreateBatchRead(ctx context.Context, models []*models.ReadReceptModel) error
 	GetReadReceipts(ctx context.Context, limit, offset int64, messageID uint64) ([]*models.ReadReceptModel, int64, error)
 	GetReadReceiptsByUserId(ctx context.Context, userId uint64) ([]*models.ReadReceptModel, error)
+	GetReadReceiptsByUserAndMessageIDs(ctx context.Context, userId uint64, messageIDs []uint64) ([]*models.ReadReceptModel, error)
 
 	CreateMessageReaction(ctx context.Context, messageReaction *models.MessageReactionModel) (*models.MessageReactionModel, error)
 

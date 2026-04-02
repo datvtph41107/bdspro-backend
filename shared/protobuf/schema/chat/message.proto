@@ -174,3 +174,18 @@ message ReactionMessage {
   string type = 1;
   MessageReaction data = 2;
 }
+
+// Sự kiện typing qua relay — type WS = "typing" (không gửi push notification khi offline). count = giá trị Redis.
+message TypingIndicatorData {
+  string roomId = 1;
+  string userId = 2;
+  bool isTyping = 3;
+  optional string fullName = 4;
+  optional string avatar = 5;
+  int64 count = 6;
+}
+
+message TypingIndicator {
+  string type = 1;
+  TypingIndicatorData data = 2;
+}

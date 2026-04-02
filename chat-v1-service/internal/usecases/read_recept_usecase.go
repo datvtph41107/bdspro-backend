@@ -82,6 +82,14 @@ func (r *readReceptUsecases) GetReadReceipt(ctx context.Context, limit int64, of
 	return r.repo.GetReadReceipts(ctx, limit, offset, messageId)
 }
 
+func (r *readReceptUsecases) GetReadReceiptsByMessageIDsForCurrentUser(ctx context.Context, messageIDs []uint64) ([]*models.ReadReceptModel, error) {
+	if len(messageIDs) == 0 {
+		return []*models.ReadReceptModel{}, nil
+	}
+	userID := utils.GetCurrentUserID(ctx)
+	return r.repo.GetReadReceiptsByUserAndMessageIDs(ctx, userID, messageIDs)
+}
+
 func (c *readReceptUsecases) validateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {
 	conversation, err := c.repo.GetConversationByID(ctx, conversationId)
 	if err != nil {

@@ -25,4 +25,7 @@ const (
 
 	// app state
 	APP_STATE_TYPE = "app_state"
+
+	// typing — không gửi push notification (xử lý riêng trong sendNotificationForMessage)
+	TYPING_INDICATOR_TYPE = "typing"
 )

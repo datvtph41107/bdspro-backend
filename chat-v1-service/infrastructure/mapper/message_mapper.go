@@ -89,5 +89,9 @@ func (m *MessageMapper) MessageToPb(msg *models.MessageModel) *chatpb.Message {
 		timeStr := _utils.FormatTimeToString(msg.PinnedAt)
 		pb.PinnedAt = &timeStr
 	}
+	if msg.ReadAt != nil {
+		readAt := _utils.FormatTimeToString(msg.ReadAt)
+		pb.ReadAt = &readAt
+	}
 	return pb
 }

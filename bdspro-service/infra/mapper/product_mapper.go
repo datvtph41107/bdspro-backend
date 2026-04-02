@@ -851,7 +851,9 @@ func MapProductAttachmentPbList(ctx context.Context, codeDataUsecase *_usecase.C
 		if product.Price != nil {
 			productList[i].Price = *product.Price.SalePrice
 		}
-		if len(product.MediaList) > 0 {
+		if product.Property != nil && product.Property.PropertyInfo != nil && product.Property.PropertyInfo.Avatar != nil {
+			productList[i].Image = product.Property.PropertyInfo.Avatar.MediaURL
+		} else if len(product.MediaList) > 0 {
 			productList[i].Image = product.MediaList[0].MediaURL
 		}
 	}

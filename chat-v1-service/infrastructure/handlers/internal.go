@@ -56,6 +56,7 @@ type participantUsecases interface {
 type readReceptUsecases interface {
 	MarkAsRead(ctx context.Context, conversationId uint64, messageIds []uint64) error
 	GetReadReceipt(ctx context.Context, limit, offset int64, messageId uint64) ([]*models.ReadReceptModel, int64, error)
+	GetReadReceiptsByMessageIDsForCurrentUser(ctx context.Context, messageIDs []uint64) ([]*models.ReadReceptModel, error)
 }
 
 type messageReactionUsecases interface {

@@ -23,7 +23,7 @@ func (r *gormRepository) GetMessages(ctx context.Context, pagable _dto.Pagable, 
 	err := r.db.WithContext(ctx).
 		Preload("ReplyMessage").
 		Preload("Reactions").
-		Where("conversation_id = ? and (? is null or created_at >= ?) and (? is null or created_at <= ?)", conversationId, fromDate, fromDate, toDate, toDate).
+		Where("conversation_id = ? and (? is null or updated_at >= ?) and (? is null or updated_at <= ?)", conversationId, fromDate, fromDate, toDate, toDate).
 		Limit(pagable.GetLimit()).
 		Offset(pagable.GetOffset()).
 		Order(pagable.Sort).

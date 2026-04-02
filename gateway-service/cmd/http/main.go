@@ -136,6 +136,7 @@ var publicRoutes = []string{
 	"/v2/pub/user/profile/tags",
 	"/v2/hub/applinks",
 	"/v2/hub/error/log",
+	"/v2/bdspro/v2/property/list/all",
 }
 
 var tempRoutes = []string{

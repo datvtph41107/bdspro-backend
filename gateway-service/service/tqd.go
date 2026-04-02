@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	tqdpb "pb/types/tqd"
 
@@ -14,27 +13,22 @@ import (
 	"google.golang.org/grpc"
 )
 
-const tqdDialTimeout = 15 * time.Second
-
 // RegisterTqdService registers all TQD service handlers to the gateway mux.
-// Khi start gateway sẽ chủ động dial tới TQD (có timeout); nếu thành công dùng 1 conn chung, không thì fallback lazy connect.
+// Dùng grpc.NewClient (không block khi start): kết nối thật sự và reconnect diễn ra
+// khi có RPC; backend tạm tắt thì request sau vẫn thử lại theo ConnectParams ở main.
+// Nếu NewClient trả lỗi (cấu hình/target), fallback FromEndpoint; gateway vẫn khởi động bình thường.
 func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
 	port := viper.GetString("service.port.tqd")
 	url := common.GetPrefixProtobufUrl(env, "tqd")
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 
-	optsWithBlock := append([]grpc.DialOption{}, opts...)
-	optsWithBlock = append(optsWithBlock, grpc.WithBlock())
-	dialCtx, cancel := context.WithTimeout(ctx, tqdDialTimeout)
-	conn, err := grpc.DialContext(dialCtx, endpoint, optsWithBlock...)
-	cancel()
-
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
-		log.Printf("[TQD] Không kết nối được tới %s khi start (sẽ connect khi có request): %v", endpoint, err)
+		log.Printf("[TQD] Không tạo được client tới %s (đăng ký lazy theo endpoint): %v", endpoint, err)
 		registerTqdFromEndpoint(ctx, mux, endpoint, opts)
 		return
 	}
-	log.Printf("[TQD] Đã kết nối tới %s", endpoint)
+	log.Printf("[TQD] Đã tạo client tới %s (kết nối khi có request)", endpoint)
 	registerTqdWithConn(ctx, mux, conn)
 }
 
@@ -47,6 +41,7 @@ func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = tqdpb.RegisterOpenHourServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterPoiCategoryServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterPoiServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterLocationServiceHandler(ctx, mux, conn)
 }
 
 func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {

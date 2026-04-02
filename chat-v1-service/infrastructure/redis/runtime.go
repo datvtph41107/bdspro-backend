@@ -2,17 +2,22 @@ package redis
 
 import (
 	"context"
+	"fmt"
 
 	configs "chat/config"
+	_provider "chat/internal/interface/provider"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/hyperledger/fabric/common/flogging"
 )
 
+// @bind: infrastructure/redis
 type RedisClient struct {
 	client *redis.Client
 	logger *flogging.FabricLogger
 }
+
+var _ _provider.ITypingCounter = (*RedisClient)(nil)
 
 func NewRedisClient() *RedisClient {
 	logger := flogging.MustGetLogger("redis")
@@ -68,6 +73,25 @@ func (r *RedisClient) GetAndDeleteMessages(ctx context.Context, key string, maxR
 // Publish message to a Redis channel
 func (r *RedisClient) Publish(ctx context.Context, channel string, message string) error {
 	return r.client.Publish(ctx, channel, message).Err()
+}
+
+// AdjustTypingRef INCR khi đang gõ, DECR khi dừng; key theo conversation + user, DECR không âm.
+func (r *RedisClient) AdjustTypingRef(ctx context.Context, conversationID, userID uint64, increment bool) (int64, error) {
+	key := fmt.Sprintf("typing:%d", conversationID)
+	if increment {
+		return r.client.Incr(ctx, key).Result()
+	}
+	val, err := r.client.Decr(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+	if val < 0 {
+		if err := r.client.Set(ctx, key, 0, 0).Err(); err != nil {
+			return 0, err
+		}
+		return 0, nil
+	}
+	return val, nil
 }
 
 // Subscribe to a Redis channel
