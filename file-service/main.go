@@ -9,6 +9,12 @@ import (
 	"file/repositories"
 	"file/services"
 	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -36,10 +42,13 @@ var publicRoutes = []string{
 	"/v1/file/upload",
 	"/v1/file/load",
 	"/v1/file/video",
+	"/v1/map/*/*/*/*",
 	"/file/load",
 	"/file/upload",
 	"/v1/file/version/download",
 	"/v1/file/version/upload",
+	"/v1/map/layer",
+	"/v1/map/config",
 }
 
 type ConfigApp struct {
@@ -90,6 +99,8 @@ func main() {
 	RootApp := NewConfigApp(db, fileService, versionService)
 	// RootApp.
 
+	layerAllowedRe := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:3000",
@@ -133,6 +144,144 @@ func main() {
 	r.PUT("/v1/file/signature", RootApp.FileService.GenerateSignature)
 	r.POST("/v1/file/version/upload", RootApp.VersionService.UploadVersion)
 	r.GET("/v1/file/version/download/:p", RootApp.VersionService.DownloadVersion)
+
+	// Tile map: /v1/map/layer/:layer/:z/:x/:y
+	// Reads raster/vector tile files from: ./files/public/map/<layer>/<z>/<y>/<x>.(png|jpg|webp|pbf)
+	r.GET("/v1/map/layer/:layer/:z/:x/:y", func(c *gin.Context) {
+		layer := c.Param("layer")
+		zStr := c.Param("z")
+		xStr := c.Param("x")
+		yParam := c.Param("y")
+
+		if layer == "" || zStr == "" || xStr == "" || yParam == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "layer, z, y, x are required",
+			})
+			return
+		}
+		if !layerAllowedRe.MatchString(layer) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid layer",
+			})
+			return
+		}
+
+		// Validate tile coordinates are non-negative integers
+		z, err := strconv.ParseInt(zStr, 10, 64)
+		if err != nil || z < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid z",
+			})
+			return
+		}
+		x, err := strconv.ParseInt(xStr, 10, 64)
+		if err != nil || x < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid x",
+			})
+			return
+		}
+
+		// y can be either base name (e.g. "123") or a filename with extension (e.g. "123.png")
+		if yParam == "." || yParam == ".." {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid y",
+			})
+			return
+		}
+		if ext := filepath.Ext(yParam); ext == "" {
+			x, err := strconv.ParseInt(yParam, 10, 64)
+			if err != nil || x < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "invalid y",
+				})
+				return
+			}
+		}
+
+		baseDir := filepath.Join(".", "files", "public", "map", layer, strconv.FormatInt(z, 10), strconv.FormatInt(x, 10))
+
+		contentTypeByExt := map[string]string{
+			".png":  "image/png",
+			".jpg":  "image/jpeg",
+			".jpeg": "image/jpeg",
+			".webp": "image/webp",
+			".pbf":  "application/x-protobuf",
+		}
+		candidateExts := []string{".png", ".jpg", ".jpeg", ".webp", ".pbf"}
+		log.Printf("baseDir: %s", baseDir)
+
+		// 1) If client already passed x with extension, try exact match first.
+		if ext := filepath.Ext(yParam); ext != "" {
+			// Ensure base part is a non-negative integer to prevent traversal/path-like names.
+			base := strings.TrimSuffix(yParam, ext)
+			y, err := strconv.ParseInt(base, 10, 64)
+			if err != nil || y < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "invalid y",
+				})
+				return
+			}
+
+			candidate := filepath.Join(baseDir, yParam)
+			log.Printf("candidate: %s", candidate)
+			if _, statErr := os.Stat(candidate); statErr == nil {
+				if ct, ok := contentTypeByExt[ext]; ok {
+					c.Header("Content-Type", ct)
+				}
+				c.Header("Cache-Control", "public, max-age=86400")
+				c.File(candidate)
+				return
+			}
+		}
+
+		// 2) Otherwise try common raster/vector extensions.
+		for _, ext := range candidateExts {
+			candidate := filepath.Join(baseDir, yParam+ext)
+			if _, statErr := os.Stat(candidate); statErr == nil {
+				if ct, ok := contentTypeByExt[ext]; ok {
+					c.Header("Content-Type", ct)
+				}
+				c.Header("Cache-Control", "public, max-age=86400")
+				c.File(candidate)
+				return
+			}
+		}
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "tile not found",
+		})
+	})
+
+	// Config files: /v1/map/config/<name>.json
+	// Reads json config from: ./files/public/config/<name>.json
+	r.GET("/v1/map/config/:name", func(c *gin.Context) {
+		name := c.Param("name")
+		if name == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+			return
+		}
+
+		// allow only safe basename + ".json" (no slashes, no traversal)
+		if strings.Contains(name, "/") || strings.Contains(name, "\\") || strings.Contains(name, "..") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid name"})
+			return
+		}
+		if filepath.Ext(name) != ".json" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "only .json is allowed"})
+			return
+		}
+
+		fullPath := filepath.Join(".", "files", "public", "config", name)
+		if _, err := os.Stat(fullPath); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+			return
+		}
+
+		c.Header("Content-Type", "application/json; charset=utf-8")
+		c.Header("Cache-Control", "public, max-age=300")
+		c.File(fullPath)
+	})
 
 	r.Run(":8002")
 }

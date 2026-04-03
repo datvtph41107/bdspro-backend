@@ -16,6 +16,8 @@ type FileRepository interface {
 	Update(ctx context.Context, file *domain.File) error
 	Delete(ctx context.Context, id uint64) error
 	List(ctx context.Context, filter FileFilter, pagination Pagination) ([]*domain.File, int64, error)
+	UpdateThumbnail(ctx context.Context, fileID uint64, thumbnailPath string) error
+	UpdateStatus(ctx context.Context, fileID uint64, status string) error
 }
 
 // FileAccessRepository interface

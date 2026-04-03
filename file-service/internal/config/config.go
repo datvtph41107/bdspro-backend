@@ -1,4 +1,4 @@
-package internal_config
+package config
 
 import (
 	"os"
