@@ -10,8 +10,16 @@ import "shared/common.proto";
 option go_package = "pb/types/bdspro;bdspropb";
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 service BdsproPublicService {
+  // Cấu hình app quy hoạch (public): JSON object (map string → any) gồm backgroundMaps, qhLayers
+  rpc GetQhConfigApp(google.protobuf.Empty) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      get: "/v2/qh/config-app"
+    };
+  }
   rpc GetProductMarket(ProductMarketRequest) returns (ProductMarketResponse) {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/market"

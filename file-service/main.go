@@ -8,8 +8,10 @@ import (
 	"file/models"
 	"file/repositories"
 	"file/services"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -43,12 +45,14 @@ var publicRoutes = []string{
 	"/v1/file/load",
 	"/v1/file/video",
 	"/v1/map/*/*/*/*",
+	"/public/map/mid/*/*/*/*",
 	"/file/load",
 	"/file/upload",
 	"/v1/file/version/download",
 	"/v1/file/version/upload",
 	"/v1/map/layer",
 	"/v1/map/config",
+	"/v1/map/mid",
 }
 
 type ConfigApp struct {
@@ -115,6 +119,8 @@ func main() {
 			"http://103.145.63.185:3107",
 			"http://localhost:5173",
 			"http://192.168.100.76",
+			"http://192.168.100.76:3000",
+			"http://14.225.210.29:3103",
 			"https://admin.bdspro.com",
 			"https://bdspro.com",
 			"https://app.bdspro.com",
@@ -145,8 +151,8 @@ func main() {
 	r.POST("/v1/file/version/upload", RootApp.VersionService.UploadVersion)
 	r.GET("/v1/file/version/download/:p", RootApp.VersionService.DownloadVersion)
 
-	// Tile map: /v1/map/layer/:layer/:z/:x/:y
-	// Reads raster/vector tile files from: ./files/public/map/<layer>/<z>/<y>/<x>.(png|jpg|webp|pbf)
+	// Tile map: /v1/map/layer/:layer/:z/:x/:y  (XYZ: z / x / y)
+	// Reads files from: ./files/public/map/<layer>/<z>/<x>/<y>.(png|jpg|webp|pbf)
 	r.GET("/v1/map/layer/:layer/:z/:x/:y", func(c *gin.Context) {
 		layer := c.Param("layer")
 		zStr := c.Param("z")
@@ -190,8 +196,7 @@ func main() {
 			return
 		}
 		if ext := filepath.Ext(yParam); ext == "" {
-			x, err := strconv.ParseInt(yParam, 10, 64)
-			if err != nil || x < 0 {
+			if yNum, err := strconv.ParseInt(yParam, 10, 64); err != nil || yNum < 0 {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": "invalid y",
 				})
@@ -211,7 +216,7 @@ func main() {
 		candidateExts := []string{".png", ".jpg", ".jpeg", ".webp", ".pbf"}
 		log.Printf("baseDir: %s", baseDir)
 
-		// 1) If client already passed x with extension, try exact match first.
+		// 1) If client already passed y with extension, try exact match first.
 		if ext := filepath.Ext(yParam); ext != "" {
 			// Ensure base part is a non-negative integer to prevent traversal/path-like names.
 			base := strings.TrimSuffix(yParam, ext)
@@ -225,7 +230,8 @@ func main() {
 
 			candidate := filepath.Join(baseDir, yParam)
 			log.Printf("candidate: %s", candidate)
-			if _, statErr := os.Stat(candidate); statErr == nil {
+			// Chỉ serve file thường: nếu path là thư mục, http.ServeFile (c.File) trả 301 thêm "/" — client tile sẽ lỗi.
+			if fi, statErr := os.Stat(candidate); statErr == nil && fi.Mode().IsRegular() {
 				if ct, ok := contentTypeByExt[ext]; ok {
 					c.Header("Content-Type", ct)
 				}
@@ -238,7 +244,7 @@ func main() {
 		// 2) Otherwise try common raster/vector extensions.
 		for _, ext := range candidateExts {
 			candidate := filepath.Join(baseDir, yParam+ext)
-			if _, statErr := os.Stat(candidate); statErr == nil {
+			if fi, statErr := os.Stat(candidate); statErr == nil && fi.Mode().IsRegular() {
 				if ct, ok := contentTypeByExt[ext]; ok {
 					c.Header("Content-Type", ct)
 				}
@@ -283,7 +289,252 @@ func main() {
 		c.File(fullPath)
 	})
 
+	// Mid tile map: /public/map/mid/:layer/:z/:x/:y
+	// Cache files at: ./files/public/map/mid/<layer>/<z>/<x>/<y>.(png|jpg|webp|pbf)
+	// If missing, call download API (query `download`) to fetch then cache.
+	//
+	// download supports:
+	// - template: contains {layer}/{z}/{x}/{y} placeholders (y is numeric, no ext)
+	// - base url: append /<layer>/<z>/<x>/<filename>
+	r.GET("/v1/map/mid/:layer/:z/:x/:y", func(c *gin.Context) {
+		layer := c.Param("layer")
+		zStr := c.Param("z")
+		xStr := c.Param("x")
+		yParam := c.Param("y")
+
+		if layer == "" || zStr == "" || xStr == "" || yParam == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "layer, z, y, x are required"})
+			return
+		}
+		if !layerAllowedRe.MatchString(layer) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid layer"})
+			return
+		}
+
+		z, err := strconv.ParseInt(zStr, 10, 64)
+		if err != nil || z < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid z"})
+			return
+		}
+		x, err := strconv.ParseInt(xStr, 10, 64)
+		if err != nil || x < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid x"})
+			return
+		}
+		_ = z
+		_ = x
+
+		// y can be either "123" or "123.png"
+		if yParam == "." || yParam == ".." {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid y"})
+			return
+		}
+		if ext := filepath.Ext(yParam); ext == "" {
+			if yNum, err := strconv.ParseInt(yParam, 10, 64); err != nil || yNum < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid y"})
+				return
+			}
+		}
+
+		contentTypeByExt := map[string]string{
+			".png":  "image/png",
+			".jpg":  "image/jpeg",
+			".jpeg": "image/jpeg",
+			".webp": "image/webp",
+			".pbf":  "application/x-protobuf",
+		}
+		candidateExts := []string{".png", ".jpg", ".jpeg", ".webp", ".pbf"}
+
+		baseDir := filepath.Join(".", "files", "public", "map", layer, zStr, xStr)
+
+		// Candidate filenames.
+		var candidateNames []string
+		if ext := filepath.Ext(yParam); ext != "" {
+			base := strings.TrimSuffix(yParam, ext)
+			y, err := strconv.ParseInt(base, 10, 64)
+			if err != nil || y < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid y"})
+				return
+			}
+			_ = y
+			candidateNames = []string{yParam}
+		} else {
+			for _, ext := range candidateExts {
+				candidateNames = append(candidateNames, yParam+ext)
+			}
+		}
+
+		// 1) Serve cached tile if exists.
+		for _, name := range candidateNames {
+			fullPath := filepath.Join(baseDir, name)
+			if fi, statErr := os.Stat(fullPath); statErr == nil && fi.Mode().IsRegular() {
+				if ct, ok := contentTypeByExt[filepath.Ext(name)]; ok {
+					c.Header("Content-Type", ct)
+				}
+				c.Header("Cache-Control", "public, max-age=86400")
+				c.File(fullPath)
+				return
+			}
+		}
+
+		// 2) Cache miss: download then cache.
+		layerName := "HT_TOANQUOC"
+		if layer == "vn_v1" {
+			layerName = "vietnam-latest-v28"
+		}
+		download := "https://mapv3.meeymap.com/data/" + layerName + "/{z}/{x}/{y}.pbf"
+		if download == "" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "tile not found"})
+			return
+		}
+		println("download: ", layerName, z, x, yParam)
+
+		client := &http.Client{Timeout: 30 * time.Second}
+		buildDownloadURL := func(tileName string) (string, error) {
+			if strings.Contains(download, "{z}") || strings.Contains(download, "{x}") || strings.Contains(download, "{y}") || strings.Contains(download, "{layer}") {
+				u := download
+				u = strings.ReplaceAll(u, "{layer}", layer)
+				u = strings.ReplaceAll(u, "{z}", zStr)
+				u = strings.ReplaceAll(u, "{x}", xStr)
+				u = strings.ReplaceAll(u, "{y}", strings.TrimSuffix(tileName, filepath.Ext(tileName)))
+				return u, nil
+			}
+			base, err := url.Parse(download)
+			if err != nil {
+				return "", err
+			}
+			rel := &url.URL{Path: pathJoinURL(base.Path, layer, zStr, xStr, tileName)}
+			return base.ResolveReference(rel).String(), nil
+		}
+
+		for _, name := range candidateNames {
+			downloadURL, err := buildDownloadURL(name)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid download"})
+				return
+			}
+
+			req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, downloadURL, nil)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
+				return
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				continue
+			}
+			if resp.Body == nil {
+				resp.Body.Close()
+				continue
+			}
+			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+				resp.Body.Close()
+				continue
+			}
+
+			if err := os.MkdirAll(baseDir, 0o755); err != nil {
+				resp.Body.Close()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create cache dir"})
+				return
+			}
+
+			finalPath := filepath.Join(baseDir, name)
+			tmpPath := finalPath + ".tmp"
+			f, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+			if err != nil {
+				resp.Body.Close()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create cache file"})
+				return
+			}
+
+			if resp.StatusCode == http.StatusNoContent {
+				ext := strings.ToLower(filepath.Ext(name))
+				if ext == ".png" {
+					// 1x1 transparent PNG to avoid client-side image format/decode errors.
+					transparentPNG := []byte{
+						0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+						0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+						0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+						0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+						0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41,
+						0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+						0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
+						0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+						0x42, 0x60, 0x82,
+					}
+					if _, err := f.Write(transparentPNG); err != nil {
+						_ = f.Close()
+						_ = resp.Body.Close()
+						_ = os.Remove(tmpPath)
+						return
+					}
+					_ = f.Close()
+					_ = resp.Body.Close()
+
+					if err := os.Rename(tmpPath, finalPath); err != nil {
+						_ = os.Remove(tmpPath)
+					}
+					c.Header("Content-Type", "image/png")
+					c.Header("Cache-Control", "public, max-age=86400")
+					c.Data(http.StatusOK, "image/png", transparentPNG)
+					return
+				}
+
+				_ = f.Close()
+				_ = resp.Body.Close()
+
+				if err := os.Rename(tmpPath, finalPath); err != nil {
+					_ = os.Remove(tmpPath)
+				}
+				c.Status(http.StatusNoContent)
+				return
+			}
+
+			ct := resp.Header.Get("Content-Type")
+			if ct == "" {
+				if byExt, ok := contentTypeByExt[filepath.Ext(name)]; ok {
+					ct = byExt
+				} else {
+					ct = "application/octet-stream"
+				}
+			}
+			c.Header("Content-Type", ct)
+			c.Header("Cache-Control", "public, max-age=86400")
+
+			tee := io.TeeReader(resp.Body, f)
+			_, copyErr := io.Copy(c.Writer, tee)
+
+			_ = f.Close()
+			_ = resp.Body.Close()
+
+			if copyErr != nil {
+				_ = os.Remove(tmpPath)
+				return
+			}
+
+			if err := os.Rename(tmpPath, finalPath); err != nil {
+				_ = os.Remove(tmpPath)
+			}
+			return
+		}
+
+		c.JSON(http.StatusNotFound, gin.H{"error": "tile not found"})
+	})
+
 	r.Run(":8002")
+}
+
+func pathJoinURL(parts ...string) string {
+	var out []string
+	for _, p := range parts {
+		p = strings.Trim(p, "/")
+		if p == "" {
+			continue
+		}
+		out = append(out, p)
+	}
+	return "/" + strings.Join(out, "/")
 }
 
 // package main

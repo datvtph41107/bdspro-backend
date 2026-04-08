@@ -19,6 +19,8 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 type BdsproPublicService struct {
@@ -49,6 +51,32 @@ func NewBdsproPublicService(
 		AreaRegionMapper:  areaRegionMapper,
 		StartUpTime:       time.Now().UnixMilli(),
 	}
+}
+
+// @Summary Cấu hình app quy hoạch (public)
+// @Description Trả JSON object: backgroundMaps, qhLayers — mỗi phần tử có id, name, image
+// @Tags Quy hoạch
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /v2/qh/config-app [get]
+func (s *BdsproPublicService) GetQhConfigApp(ctx context.Context, _ *emptypb.Empty) (*structpb.Struct, error) {
+	payload := map[string]interface{}{
+		"backgroundMaps": []interface{}{
+			map[string]interface{}{"id": "basemap-light", "name": "Bản đồ nền sáng", "image": ""},
+			map[string]interface{}{"id": "basemap-dark", "name": "Bản đồ nền tối", "image": ""},
+			map[string]interface{}{"id": "satellite", "name": "Ảnh vệ tinh", "image": ""},
+		},
+		"qhLayers": []interface{}{
+			map[string]interface{}{"id": "planning-use", "name": "Quy hoạch sử dụng đất", "image": ""},
+			map[string]interface{}{"id": "planning-transport", "name": "Quy hoạch giao thông", "image": ""},
+		},
+	}
+	st, err := structpb.NewStruct(payload)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "qh config-app: %v", err)
+	}
+	return st, nil
 }
 
 // @Summary Lấy danh sách sản phẩm thị trường

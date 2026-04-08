@@ -20,6 +20,8 @@ var tempRoutes = []string{}
 // NewRouter creates a new router with all routes configured
 func NewRouter(mapPointHandler *handler.MapPointHandler) *gin.Engine {
 	r := gin.Default()
+	r.RedirectTrailingSlash = false
+	r.RedirectFixedPath = false
 
 	// JWT middleware
 	r.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))

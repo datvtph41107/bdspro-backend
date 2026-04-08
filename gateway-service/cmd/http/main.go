@@ -137,6 +137,7 @@ var publicRoutes = []string{
 	"/v2/hub/applinks",
 	"/v2/hub/error/log",
 	"/v2/bdspro/v2/property/list/all",
+	"/v2/qh/config-app",
 }
 
 var tempRoutes = []string{
@@ -169,6 +170,9 @@ var HttpCmd = &cobra.Command{
 		gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
 		r := gin.Default()
+		// Tránh 301/307 redirect tự thêm/xóa "/" cuối path (httprouter/Gin mặc định bật).
+		r.RedirectTrailingSlash = false
+		r.RedirectFixedPath = false
 
 		// CORS middleware
 		r.Use(cors.New(cors.Config{
