@@ -324,7 +324,6 @@ func main() {
 		_ = z
 		_ = x
 
-		// y can be either "123" or "123.png"
 		if yParam == "." || yParam == ".." {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid y"})
 			return
@@ -347,7 +346,6 @@ func main() {
 
 		baseDir := filepath.Join(".", "files", "public", "map", layer, zStr, xStr)
 
-		// Candidate filenames.
 		var candidateNames []string
 		if ext := filepath.Ext(yParam); ext != "" {
 			base := strings.TrimSuffix(yParam, ext)
@@ -377,17 +375,22 @@ func main() {
 			}
 		}
 
-		// 2) Cache miss: download then cache.
 		layerName := "HT_TOANQUOC"
 		if layer == "vn_v1" {
 			layerName = "vietnam-latest-v28"
+		} else if layer == "KHSDD_HANOI" {
+			layerName = "KHSDD_HANOI"
+		} else if layer == "QHSDD_HANOI" {
+			layerName = "QHSDD_HANOI"
 		}
+		// -----------------------------
+
 		download := "https://mapv3.meeymap.com/data/" + layerName + "/{z}/{x}/{y}.pbf"
 		if download == "" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "tile not found"})
 			return
 		}
-		println("download: ", layerName, z, x, yParam)
+		log.Printf("download: %s, z=%d, x=%d, y=%s", layerName, z, x, yParam)
 
 		client := &http.Client{Timeout: 30 * time.Second}
 		buildDownloadURL := func(tileName string) (string, error) {
@@ -451,17 +454,17 @@ func main() {
 			if resp.StatusCode == http.StatusNoContent {
 				ext := strings.ToLower(filepath.Ext(name))
 				if ext == ".png" {
-					// 1x1 transparent PNG to avoid client-side image format/decode errors.
+					// 1x1 transparent PNG
 					transparentPNG := []byte{
 						0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 						0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
 						0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
 						0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
-						0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41,
-						0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
-						0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
-						0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
-						0x42, 0x60, 0x82,
+						0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+						0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00,
+						0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4,
+						0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44,
+						0xae, 0x42, 0x60, 0x82,
 					}
 					if _, err := f.Write(transparentPNG); err != nil {
 						_ = f.Close()
