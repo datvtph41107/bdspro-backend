@@ -138,6 +138,8 @@ var publicRoutes = []string{
 	"/v2/hub/error/log",
 	"/v2/bdspro/v2/property/list/all",
 	"/v2/qh/config-app",
+	"/v2/tqd/parcels/batch",
+	"/v2/tqd/parcels/by-location",
 }
 
 var tempRoutes = []string{

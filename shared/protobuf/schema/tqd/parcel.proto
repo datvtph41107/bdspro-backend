@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service ParcelService {
+  rpc CreateBatchParcels(ParcelListDTO) returns (ParcelListDTO) {
+    option (google.api.http) = {
+      post: "/v2/tqd/parcels/batch"
+      body: "*"
+    };
+  }
+  rpc FindParcelByLocation(FindParcelByLocationRequest) returns (Parcel) {
+    option (google.api.http) = {
+      post: "/v2/tqd/parcels/by-location"
+      body: "*"
+    };
+  }
+}
+
+message FindParcelByLocationRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius = 3;
+}
+
+message Parcel {
+  uint64 id = 1;
+  string name = 2;
+  double latitude = 3;
+  double longitude = 4;
+  bytes geometry = 5;
+  double minLat = 6;
+  double minLng = 7;
+  double maxLat = 8;
+  double maxLng = 9;
+}
+
+message GetParcelRequest {
+  int32 id = 1;
+}
+
+message ListParcelsRequest {
+  int32 page = 1;
+  int32 pageSize = 2;
+}
+
+message ListParcelsResponse {
+  repeated Parcel parcels = 1;
+  int32 total = 2;
+}
+
+message ParcelListDTO {
+  repeated Parcel data = 1;
+}

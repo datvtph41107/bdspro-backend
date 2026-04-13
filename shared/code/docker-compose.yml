@@ -238,9 +238,7 @@ services:
   tqd:
     build: ./tqd-service
     container_name: tqd
-    command: ["./main", "http"]
-    ports:
-      - "8030:8230"
+    command: ["./main", "--server=grpc"]
     networks:
       - internal
 

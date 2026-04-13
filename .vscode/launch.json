@@ -178,6 +178,20 @@
       "mode": "auto",
       "program": "${workspaceFolder}/hub-service",
       "args": ["grpc"]
+    },
+    {
+      "name": "🧪 Debug TQD Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/tqd-service",
+      "args": ["--server=grpc"],
+      "env": {
+        "GOROOT": "/Users/baphieu/.gvm/gos/go1.25",
+        "GOPATH": "/Users/baphieu/go",
+        "PATH": "/usr/local/go/bin:/Users/baphieu/go/bin:${env:PATH}"
+      },
+      "dlvFlags": ["--check-go-version=false"]
     }
   ]
 }
