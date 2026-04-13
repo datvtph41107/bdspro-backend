@@ -121,6 +121,7 @@ func main() {
 			"http://192.168.100.76",
 			"http://192.168.100.76:3000",
 			"http://14.225.210.29:3103",
+			"http://14.225.210.29:3108",
 			"https://admin.bdspro.com",
 			"https://bdspro.com",
 			"https://app.bdspro.com",

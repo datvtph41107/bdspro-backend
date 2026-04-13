@@ -1,0 +1,10 @@
+[server]
+port = 8031
+
+[[sources]]
+id = "map"
+type = "pmtiles"
+path = "/data/output.pmtiles"
+
+[cache]
+capacity = 100000

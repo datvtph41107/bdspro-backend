@@ -1,0 +1,9 @@
+FROM maptiler/tileserver-gl
+
+WORKDIR /data
+
+# chỉ expose port
+EXPOSE 8031
+
+# chạy bằng config
+CMD ["--config", "/data/config.toml"]

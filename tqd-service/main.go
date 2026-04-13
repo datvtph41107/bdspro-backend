@@ -18,7 +18,7 @@ import (
 // @name Authorization
 func main() {
 	var (
-		serverType = flag.String("server", "http", "Server type: http, grpc, or migrate")
+		serverType = flag.String("server", "http", "Server type: http, grpc, pmtiles, or migrate")
 		port       = flag.Int("port", 0, "Server port (overrides config)")
 		host       = flag.String("host", "", "Server host (default: all interfaces)")
 	)
@@ -46,6 +46,11 @@ func main() {
 		}
 		if err := cmd.RunGRPCServer(); err != nil {
 			log.Fatalf("Failed to start gRPC server: %v", err)
+		}
+	case "pmtiles":
+		log.Println("Starting TQD PMTiles Server...")
+		if err := cmd.RunTileServer(*port); err != nil {
+			log.Fatalf("Failed to start PMTiles server: %v", err)
 		}
 	case "migrate":
 		log.Println("Running database migration...")

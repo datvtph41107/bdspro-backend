@@ -30,6 +30,25 @@ fi
 
 cd ../..
 
+# if [ "$1" = "pmtiles" ]; then
+#   echo "đẩy pmtiles file lên server..." $REMOTE_PATH
+#   ssh ${REMOTE_USER}@${REMOTE_HOST} "
+# mkdir -p ${REMOTE_PATH}/pmtiles
+# "
+#   cd tqd-service
+#   # scp output.pmtiles ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/pmtiles/output.pmtiles
+#   # scp config.toml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/pmtiles/config.toml
+#   # scp Dockerfile.pmtiles ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/pmtiles/Dockerfile
+
+#   ssh ${REMOTE_USER}@${REMOTE_HOST} "
+# cd ${REMOTE_PATH}/pmtiles
+# docker compose build --no-cache tileserver
+# docker rm -f tileserver
+# docker compose up -d tileserver
+# "
+
+#   exit 0
+# fi
 # if [ "$1" = "assistant" ]; then
 #   service_path=assistant-service
 #   REMOTE_DIR=${REMOTE_PATH}/${service_path}
@@ -169,6 +188,11 @@ case "$1" in
     service_path=tqd-service
     path_jar=main
     payload_build=tqd
+    ;;
+  "pmtiles")
+    service_path=tqd-service
+    path_jar=main
+    payload_build=pmtiles
     ;;
   "feedback")
     service_path=feedback-service
