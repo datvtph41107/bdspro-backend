@@ -38,6 +38,7 @@ message FindParcelsByPolygonRequest {
   int32 page = 3;
   int32 pageSize = 4;
   bool allowAutoShrink = 5;
+  bool intersect = 7;
 }
 
 message FindParcelsByPolygonResponse {

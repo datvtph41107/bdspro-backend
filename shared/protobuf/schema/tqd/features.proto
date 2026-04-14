@@ -21,7 +21,6 @@ message Feature {
   string updatedAt = 10;
 }
 
-// Request tìm theo tâm bán kính (hỗ trợ phân trang)
 message GetFeaturesByPointRadiusRequest {
   double lat = 1;
   double lng = 2;
@@ -30,7 +29,6 @@ message GetFeaturesByPointRadiusRequest {
   int32 offset = 5;          // number of features to skip (default 0)
 }
 
-// Request tìm theo đa giác (GeoJSON) + phân trang
 message GetFeaturesByPolygonRequest {
   // Cách 1: dùng mảng tọa độ (đơn giản)
   repeated Point coordinates = 1;
@@ -45,7 +43,6 @@ message Point {
   double lng = 2;
 }
 
-// Response danh sách feature
 message ListFeaturesResponse {
   repeated Feature features = 1;
   int64 total = 2;            // tổng số feature thỏa mãn (không bị giới hạn bởi limit)

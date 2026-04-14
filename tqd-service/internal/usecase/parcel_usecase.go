@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 
-	"common/pkg/geoutils"
 	"tqd/internal/config"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
@@ -17,7 +16,7 @@ type ParcelUsecase interface {
 	// CRUD operations
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
 	FindByLocation(ctx context.Context, lat, lng float64) (*domain.Parcel, error)
-	FindByPolygon(ctx context.Context, req *dto.PolygonQueryRequest) (*dto.PolygonQueryResponse, error)
+	FindParcelsByPolygon(ctx context.Context, points []dto.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]domain.Parcel, int64, error)
 }
 
 // parcelUsecase implements ParcelUsecase
@@ -71,99 +70,115 @@ func (u *parcelUsecase) FindByLocation(ctx context.Context, lat, lng float64) (*
 	return parcel, nil
 }
 
-func (u *parcelUsecase) FindByPolygon(ctx context.Context, req *dto.PolygonQueryRequest) (*dto.PolygonQueryResponse, error) {
-	// 1. Validate GeoJSON cơ bản
-	if req.GeoJSON == "" {
-		return nil, fmt.Errorf("geo_json is required")
+func (u *parcelUsecase) FindParcelsByPolygon(
+	ctx context.Context,
+	points []dto.Point,
+	intersect bool,
+	maxAreaKm2 float64,
+	page, pageSize int,
+) ([]domain.Parcel, int64, error) {
+	if len(points) < config.MinPolygonVertices {
+		return nil, 0, fmt.Errorf("polygon must have at least %d points, got %d", config.MinPolygonVertices, len(points))
 	}
-	if err := geoutils.ValidateGeoJSON(req.GeoJSON); err != nil {
-		return nil, fmt.Errorf("invalid polygon: %v", err)
+	if len(points) > config.MaxPolygonVertices {
+		return nil, 0, fmt.Errorf("polygon has %d vertices, maximum allowed is %d", len(points), config.MaxPolygonVertices)
 	}
 
-	// 2. Tính diện tích gốc và bán kính
-	originalArea, err := geoutils.CalcAreaKm2(req.GeoJSON)
+	if err := validatePolygon(points); err != nil {
+		return nil, 0, fmt.Errorf("invalid polygon: %v", err)
+	}
+
+	area := calculatePolygonAreaKm2(points)
+
+	allowedArea := config.MaxPolygonAreaKm2
+	if maxAreaKm2 > 0 && maxAreaKm2 < allowedArea {
+		allowedArea = maxAreaKm2
+	}
+	if area > allowedArea {
+		return nil, 0, fmt.Errorf("polygon area %.2f km² exceeds limit %.2f km²", area, allowedArea)
+	}
+
+	limit, offset := normalizePage(page, pageSize)
+
+	var parcels []domain.Parcel
+	var total int64
+	var err error
+
+	if intersect {
+		parcels, total, err = u.repo.FindIntersectPolygon(ctx, points, limit, offset)
+	} else {
+		parcels, total, err = u.repo.FindWithinPolygon(ctx, points, limit, offset)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to calculate area: %v", err)
-	}
-	originalRadius, err := geoutils.CalcRadiusKm(req.GeoJSON)
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate radius: %v", err)
+		return nil, 0, err
 	}
 
-	// 3. Xác định giới hạn diện tích (lấy min của client gợi ý và server max)
-	maxAllowedArea := config.MaxPolygonAreaKm2
-	if req.MaxAreaKm2 > 0 && req.MaxAreaKm2 < maxAllowedArea {
-		maxAllowedArea = req.MaxAreaKm2
-	}
-
-	// 4. Quyết định có cần scale hay không
-	adjustedGeoJSON := req.GeoJSON
-	adjustedArea := originalArea
-	adjustmentReason := "NONE"
-
-	// Kiểm tra diện tích
-	if originalArea > maxAllowedArea {
-		if !req.AllowAutoShrink {
-			return nil, fmt.Errorf("polygon area %.2f km² exceeds limit %.2f km² (auto-shrink disabled)", originalArea, maxAllowedArea)
-		}
-		// Scale để diện tích = maxAllowedArea
-		factor := math.Sqrt(maxAllowedArea / originalArea)
-		scaled, err := geoutils.ScalePolygon(req.GeoJSON, factor)
-		if err != nil {
-			return nil, fmt.Errorf("auto-shrink failed: %v", err)
-		}
-		adjustedGeoJSON = scaled
-		adjustedArea, _ = geoutils.CalcAreaKm2(adjustedGeoJSON)
-		adjustmentReason = fmt.Sprintf("SHRUNK_AREA from %.2f to %.2f km²", originalArea, adjustedArea)
-	} else if originalRadius > config.MaxPolygonRadiusKm {
-		// Kiểm tra bán kính (có thể áp dụng scale nếu cho phép)
-		if !req.AllowAutoShrink {
-			return nil, fmt.Errorf("polygon radius %.2f km exceeds limit %.2f km (auto-shrink disabled)", originalRadius, config.MaxPolygonRadiusKm)
-		}
-		factor := config.MaxPolygonRadiusKm / originalRadius
-		scaled, err := geoutils.ScalePolygon(req.GeoJSON, factor)
-		if err != nil {
-			return nil, fmt.Errorf("auto-shrink (radius) failed: %v", err)
-		}
-		adjustedGeoJSON = scaled
-		adjustedArea, _ = geoutils.CalcAreaKm2(adjustedGeoJSON)
-		adjustmentReason = fmt.Sprintf("SHRUNK_RADIUS from %.2f to %.2f km", originalRadius, config.MaxPolygonRadiusKm)
-	}
-
-	// 5. Chuẩn hóa phân trang
-	page, pageSize := pageParams(req.Page, req.PageSize)
-	limit := pageSize
-	offset := (page - 1) * pageSize
-
-	// 6. Gọi repository
-	parcels, total, err := u.repo.FindByPolygon(ctx, adjustedGeoJSON, limit, offset)
-	if err != nil {
-		return nil, fmt.Errorf("database query failed: %v", err)
-	}
-
-	var warning string
-	if total > 1000 {
-		warning = fmt.Sprintf("Có %d parcel trong vùng, hiển thị có thể chậm. Nên thu nhỏ vùng để cải thiện tốc độ.", total)
-	}
-	if total > config.MaxParcelReturn {
-		warning = fmt.Sprintf("Vùng chứa quá nhiều parcel (%d > %d). Chỉ trả về %d parcel đầu tiên.", total, config.MaxParcelReturn, limit)
-	}
-
-	return &dto.PolygonQueryResponse{
-		Parcels:           parcels,
-		Total:             total,
-		Page:              page,
-		PageSize:          pageSize,
-		AdjustedGeoJSON:   adjustedGeoJSON,
-		AdjustmentReason:  adjustmentReason,
-		OriginalAreaKm2:   originalArea,
-		AdjustedAreaKm2:   adjustedArea,
-		MaxAllowedAreaKm2: maxAllowedArea,
-		Warning:           warning,
-	}, nil
+	return parcels, total, nil
 }
 
-func pageParams(page, pageSize int) (int, int) {
+func calculatePolygonAreaKm2(points []dto.Point) float64 {
+	if len(points) < 3 {
+		return 0
+	}
+	area := 0.0
+	n := len(points)
+	for i := 0; i < n; i++ {
+		j := (i + 1) % n
+		area += points[i].Lng * points[j].Lat
+		area -= points[j].Lng * points[i].Lat
+	}
+	area = math.Abs(area) / 2.0
+	// 1 độ ~ 111 km
+	kmPerDegree := 111.0
+	return area * kmPerDegree * kmPerDegree
+}
+
+func validatePolygon(points []dto.Point) error {
+	n := len(points)
+	for i := 0; i < n; i++ {
+		for j := i + 2; j < n; j++ {
+			// Bỏ qua cạnh kề nhau
+			if i == 0 && j == n-1 {
+				continue
+			}
+			if i+1 == j {
+				continue
+			}
+			p1 := points[i]
+			p2 := points[(i+1)%n]
+			p3 := points[j]
+			p4 := points[(j+1)%n]
+			if segmentsIntersect(p1, p2, p3, p4) {
+				return fmt.Errorf("self-intersection between edges (%d,%d) and (%d,%d)", i, i+1, j, j+1)
+			}
+		}
+	}
+	return nil
+}
+
+func segmentsIntersect(a, b, c, d dto.Point) bool {
+	orient := func(p, q, r dto.Point) int {
+		val := (q.Lat-p.Lat)*(r.Lng-q.Lng) - (q.Lng-p.Lng)*(r.Lat-q.Lat)
+		if val == 0 {
+			return 0
+		}
+		if val > 0 {
+			return 1
+		}
+		return 2
+	}
+	o1 := orient(a, b, c)
+	o2 := orient(a, b, d)
+	o3 := orient(c, d, a)
+	o4 := orient(c, d, b)
+
+	if o1 != o2 && o3 != o4 {
+		return true
+	}
+	return false
+}
+
+func normalizePage(page, pageSize int) (limit, offset int) {
 	if page < 1 {
 		page = 1
 	}
@@ -173,5 +188,7 @@ func pageParams(page, pageSize int) (int, int) {
 	if pageSize > config.MaxPageSize {
 		pageSize = config.MaxPageSize
 	}
-	return page, pageSize
+	limit = pageSize
+	offset = (page - 1) * pageSize
+	return
 }

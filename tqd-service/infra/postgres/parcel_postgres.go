@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"tqd/internal/domain"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -87,32 +88,36 @@ func (p *ParcelPostgres) FindByLocation(
 	return &parcel, nil
 }
 
-func (p *ParcelPostgres) FindByPolygon(
+func (p *ParcelPostgres) FindWithinPolygon(
 	ctx context.Context,
-	geoJSON string,
+	points []dto.Point,
 	limit, offset int,
 ) ([]domain.Parcel, int64, error) {
+	if len(points) < 3 {
+		return nil, 0, fmt.Errorf("need at least 3 points")
+	}
+	wkt := buildPolygonWKT(points)
+
 	var parcels []domain.Parcel
 	var total int64
 
-	countQuery := `
+	countQuery := fmt.Sprintf(`
 		SELECT COUNT(*)
 		FROM parcels
 		WHERE ST_Within(
 			ST_Centroid(geometry),
-			ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)
+			ST_GeomFromText('%s', 4326)
 		)
-	`
-	if err := p.DB.WithContext(ctx).Raw(countQuery, geoJSON).Scan(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("count query failed: %w", err)
+	`, wkt)
+	if err := p.DB.WithContext(ctx).Raw(countQuery).Scan(&total).Error; err != nil {
+		return nil, 0, err
 	}
-
 	if total == 0 {
 		return []domain.Parcel{}, 0, nil
 	}
 
 	// Lấy dữ liệu phân trang
-	query := `
+	query := fmt.Sprintf(`
 		SELECT 
 			id,
 			ST_AsGeoJSON(geometry) as geometry,
@@ -125,15 +130,72 @@ func (p *ParcelPostgres) FindByPolygon(
 		FROM parcels
 		WHERE ST_Within(
 			ST_Centroid(geometry),
-			ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)
+			ST_GeomFromText('%s', 4326)
 		)
 		ORDER BY id
-		LIMIT ? OFFSET ?
-	`
-	err := p.DB.WithContext(ctx).Raw(query, geoJSON, limit, offset).Scan(&parcels).Error
-	if err != nil {
-		return nil, 0, fmt.Errorf("query failed: %w", err)
+		LIMIT %d OFFSET %d
+	`, wkt, limit, offset)
+
+	err := p.DB.WithContext(ctx).Raw(query).Scan(&parcels).Error
+	return parcels, total, err
+}
+
+func (p *ParcelPostgres) FindIntersectPolygon(
+	ctx context.Context,
+	points []dto.Point,
+	limit, offset int,
+) ([]domain.Parcel, int64, error) {
+	if len(points) < 3 {
+		return nil, 0, fmt.Errorf("need at least 3 points")
+	}
+	wkt := buildPolygonWKT(points)
+
+	var parcels []domain.Parcel
+	var total int64
+
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM parcels
+		WHERE ST_Intersects(
+			geometry,
+			ST_GeomFromText('%s', 4326)
+		)
+	`, wkt)
+	if err := p.DB.WithContext(ctx).Raw(countQuery).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if total == 0 {
+		return []domain.Parcel{}, 0, nil
 	}
 
-	return parcels, total, nil
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			ST_AsGeoJSON(geometry) as geometry,
+			lat,
+			lon,
+			ref_id,
+			ref_type,
+			created_at,
+			updated_at
+		FROM parcels
+		WHERE ST_Intersects(
+			geometry,
+			ST_GeomFromText('%s', 4326)
+		)
+		ORDER BY id
+		LIMIT %d OFFSET %d
+	`, wkt, limit, offset)
+
+	err := p.DB.WithContext(ctx).Raw(query).Scan(&parcels).Error
+	return parcels, total, err
+}
+
+func buildPolygonWKT(points []dto.Point) string {
+	coords := make([]string, len(points)+1)
+	for i, pt := range points {
+		coords[i] = fmt.Sprintf("%f %f", pt.Lng, pt.Lat)
+	}
+	coords[len(points)] = fmt.Sprintf("%f %f", points[0].Lng, points[0].Lat)
+	return fmt.Sprintf("POLYGON((%s))", strings.Join(coords, ","))
 }

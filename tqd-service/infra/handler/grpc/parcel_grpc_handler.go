@@ -2,11 +2,7 @@ package handler_grpc
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
-	"strings"
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -68,109 +64,44 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	ctx context.Context,
 	req *tqdpb.FindParcelsByPolygonRequest,
 ) (*tqdpb.FindParcelsByPolygonResponse, error) {
-	geoJSON, err := h.toGeoJSON(req)
+	// Ưu tiên dùng coordinates, nếu không có thì dùng geoJson (có thể bỏ)
+	var points []dto.Point
+	if len(req.Coordinates) > 0 {
+		points = make([]dto.Point, len(req.Coordinates))
+		for i, pt := range req.Coordinates {
+			points[i] = dto.Point{Lat: pt.Lat, Lng: pt.Lng}
+		}
+	} else if req.GeoJson != "" {
+		// Fallback: có thể parse GeoJson nhưng theo yêu cầu bỏ qua, trả lỗi
+		return nil, status.Error(codes.InvalidArgument, "only coordinates array is supported, geoJson not implemented")
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "coordinates are required")
+	}
+
+	// Gọi usecase
+	parcels, total, err := h.usecase.FindParcelsByPolygon(
+		ctx,
+		points,
+		req.Intersect,
+		req.MaxAreaKm2,
+		int(req.Page),
+		int(req.PageSize),
+	)
 	if err != nil {
-		log.Printf("Invalid polygon input: %v", err)
+		log.Printf("FindParcelsByPolygon error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Printf("Polygon request: area_limit=%.2f km², page=%d, pageSize=%d, autoShrink=%v",
-		req.MaxAreaKm2, req.Page, req.PageSize, req.AllowAutoShrink)
-
-	dtoReq := &dto.PolygonQueryRequest{
-		GeoJSON:         geoJSON,
-		MaxAreaKm2:      req.MaxAreaKm2,
-		Page:            int(req.Page),
-		PageSize:        int(req.PageSize),
-		AllowAutoShrink: req.AllowAutoShrink,
-	}
-
-	resp, err := h.usecase.FindByPolygon(ctx, dtoReq)
-	if err != nil {
-		log.Printf("FindByPolygon error: %v", err)
-		return nil, h.grpcError(err)
-	}
-
-	parcelsProto := make([]*tqdpb.Parcel, len(resp.Parcels))
-	for i, p := range resp.Parcels {
-		parcelsProto[i] = h.mapper.DomainToProto(&p)
+	// Chuyển domain -> proto
+	data := make([]*tqdpb.Parcel, len(parcels))
+	for i, p := range parcels {
+		data[i] = h.mapper.DomainToProto(&p)
 	}
 
 	return &tqdpb.FindParcelsByPolygonResponse{
-		Data:              parcelsProto,
-		Total:             int32(resp.Total),
-		Page:              int32(resp.Page),
-		PageSize:          int32(resp.PageSize),
-		AdjustedGeoJson:   resp.AdjustedGeoJSON,
-		AdjustmentReason:  resp.AdjustmentReason,
-		OriginalAreaKm2:   resp.OriginalAreaKm2,
-		AdjustedAreaKm2:   resp.AdjustedAreaKm2,
-		MaxAllowedAreaKm2: resp.MaxAllowedAreaKm2,
-		Warning:           resp.Warning,
+		Data:     data,
+		Total:    int32(total),
+		Page:     req.Page,
+		PageSize: req.PageSize,
 	}, nil
-}
-
-func (h *ParcelGrpcHandler) toGeoJSON(req *tqdpb.FindParcelsByPolygonRequest) (string, error) {
-	if req.GeoJson != "" {
-		if !isValidGeoJSON(req.GeoJson) {
-			return "", errors.New("invalid GeoJSON polygon")
-		}
-		return req.GeoJson, nil
-	}
-	if len(req.Coordinates) >= 3 {
-		return pointsToGeoJSON(req.Coordinates)
-	}
-	return "", errors.New("either geoJson or at least 3 coordinates are required")
-}
-
-func pointsToGeoJSON(points []*tqdpb.Point) (string, error) {
-	if len(points) < 3 {
-		return "", fmt.Errorf("need at least 3 points to form a polygon, got %d", len(points))
-	}
-	ring := make([][]float64, len(points)+1)
-	for i, pt := range points {
-		if pt == nil {
-			return "", fmt.Errorf("point at index %d is nil", i)
-		}
-		ring[i] = []float64{pt.Lng, pt.Lat}
-	}
-	// Đóng ring
-	ring[len(points)] = []float64{points[0].Lng, points[0].Lat}
-
-	// GeoJSON Polygon
-	polygon := map[string]interface{}{
-		"type":        "Polygon",
-		"coordinates": [][][]float64{ring},
-	}
-	jsonBytes, err := json.Marshal(polygon)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal GeoJSON: %v", err)
-	}
-	return string(jsonBytes), nil
-}
-
-func isValidGeoJSON(geoJSON string) bool {
-	var data map[string]interface{}
-	if err := json.Unmarshal([]byte(geoJSON), &data); err != nil {
-		return false
-	}
-	typ, _ := data["type"].(string)
-	if typ != "Polygon" {
-		return false
-	}
-	_, ok := data["coordinates"].([]interface{})
-	return ok
-}
-
-func (h *ParcelGrpcHandler) grpcError(err error) error {
-	msg := err.Error()
-	switch {
-	case strings.Contains(msg, "exceeds limit"),
-		strings.Contains(msg, "invalid polygon"),
-		strings.Contains(msg, "self-intersects"),
-		strings.Contains(msg, "must have at least"):
-		return status.Error(codes.InvalidArgument, msg)
-	default:
-		return status.Error(codes.Internal, msg)
-	}
 }

@@ -22,3 +22,8 @@ type PolygonQueryResponse struct {
 	MaxAllowedAreaKm2 float64         `json:"max_allowed_area_km2"`
 	Warning           string          `json:"warning,omitempty"`
 }
+
+type Point struct {
+	Lat float64
+	Lng float64
+}
