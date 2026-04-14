@@ -41,7 +41,7 @@ message FindParcelsByPolygonRequest {
 }
 
 message FindParcelsByPolygonResponse {
-  repeated Parcel parcels = 1;
+  repeated Parcel data = 1;
   int32 total = 2;
   int32 page = 3;
   int32 pageSize = 4;

@@ -97,7 +97,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	}
 
 	return &tqdpb.FindParcelsByPolygonResponse{
-		Parcels:           parcelsProto,
+		Data:              parcelsProto,
 		Total:             int32(resp.Total),
 		Page:              int32(resp.Page),
 		PageSize:          int32(resp.PageSize),
