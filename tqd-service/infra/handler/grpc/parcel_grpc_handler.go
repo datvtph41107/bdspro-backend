@@ -110,7 +110,6 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	}, nil
 }
 
-// toGeoJSON chuyển request về GeoJSON string (chỉ convert khi dùng linearRings)
 func (h *ParcelGrpcHandler) toGeoJSON(req *tqdpb.FindParcelsByPolygonRequest) (string, error) {
 	if req.GeoJson != "" {
 		if !isValidGeoJSON(req.GeoJson) {
@@ -118,56 +117,38 @@ func (h *ParcelGrpcHandler) toGeoJSON(req *tqdpb.FindParcelsByPolygonRequest) (s
 		}
 		return req.GeoJson, nil
 	}
-	if len(req.Coordinates) > 0 {
-		return linearRingsToGeoJSON(req.Coordinates)
+	if len(req.Coordinates) >= 3 {
+		return pointsToGeoJSON(req.Coordinates)
 	}
-	return "", errors.New("either geoJson or linearRings must be provided")
+	return "", errors.New("either geoJson or at least 3 coordinates are required")
 }
 
-// linearRingsToGeoJSON chuyển danh sách linear ring thành GeoJSON Polygon
-func linearRingsToGeoJSON(rings []*tqdpb.CoordinatePolygon) (string, error) {
-	if len(rings) == 0 {
-		return "", errors.New("linearRings cannot be empty")
+func pointsToGeoJSON(points []*tqdpb.Point) (string, error) {
+	if len(points) < 3 {
+		return "", fmt.Errorf("need at least 3 points to form a polygon, got %d", len(points))
 	}
-	// Kiểm tra outer ring
-	if rings[0] == nil || len(rings[0].Points) < 3 {
-		return "", fmt.Errorf("outer ring must have at least 3 points")
+	ring := make([][]float64, len(points)+1)
+	for i, pt := range points {
+		if pt == nil {
+			return "", fmt.Errorf("point at index %d is nil", i)
+		}
+		ring[i] = []float64{pt.Lng, pt.Lat}
 	}
+	// Đóng ring
+	ring[len(points)] = []float64{points[0].Lng, points[0].Lat}
 
-	// Tạo coordinates theo định dạng GeoJSON
-	coords := make([][][]float64, len(rings))
-	for i, ring := range rings {
-		if ring == nil {
-			return "", fmt.Errorf("ring %d is nil", i)
-		}
-		if len(ring.Points) < 3 {
-			return "", fmt.Errorf("ring %d has less than 3 points", i)
-		}
-		// Tạo mảng điểm cho ring (cần khép kín)
-		points := make([][]float64, len(ring.Points)+1)
-		for j, pt := range ring.Points {
-			if pt == nil {
-				return "", fmt.Errorf("ring %d has nil point at index %d", i, j)
-			}
-			points[j] = []float64{pt.Lng, pt.Lat}
-		}
-		// Đóng ring bằng điểm đầu tiên
-		points[len(ring.Points)] = []float64{ring.Points[0].Lng, ring.Points[0].Lat}
-		coords[i] = points
-	}
-
-	geoJSON := map[string]interface{}{
+	// GeoJSON Polygon
+	polygon := map[string]interface{}{
 		"type":        "Polygon",
-		"coordinates": coords,
+		"coordinates": [][][]float64{ring},
 	}
-	jsonBytes, err := json.Marshal(geoJSON)
+	jsonBytes, err := json.Marshal(polygon)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal GeoJSON: %v", err)
 	}
 	return string(jsonBytes), nil
 }
 
-// isValidGeoJSON kiểm tra nhanh GeoJSON polygon
 func isValidGeoJSON(geoJSON string) bool {
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(geoJSON), &data); err != nil {
@@ -181,7 +162,6 @@ func isValidGeoJSON(geoJSON string) bool {
 	return ok
 }
 
-// grpcError chuyển lỗi business sang mã gRPC
 func (h *ParcelGrpcHandler) grpcError(err error) error {
 	msg := err.Error()
 	switch {
