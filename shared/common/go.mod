@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/hyperledger/fabric v2.1.1+incompatible
+	github.com/paulmach/orb v0.13.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.36.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9

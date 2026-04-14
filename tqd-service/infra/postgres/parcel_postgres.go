@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"tqd/internal/domain"
 	"tqd/internal/interface/repo"
@@ -84,4 +85,55 @@ func (p *ParcelPostgres) FindByLocation(
 	}
 
 	return &parcel, nil
+}
+
+func (p *ParcelPostgres) FindByPolygon(
+	ctx context.Context,
+	geoJSON string,
+	limit, offset int,
+) ([]domain.Parcel, int64, error) {
+	var parcels []domain.Parcel
+	var total int64
+
+	countQuery := `
+		SELECT COUNT(*)
+		FROM parcels
+		WHERE ST_Within(
+			ST_Centroid(geometry),
+			ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)
+		)
+	`
+	if err := p.DB.WithContext(ctx).Raw(countQuery, geoJSON).Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count query failed: %w", err)
+	}
+
+	if total == 0 {
+		return []domain.Parcel{}, 0, nil
+	}
+
+	// Lấy dữ liệu phân trang
+	query := `
+		SELECT 
+			id,
+			ST_AsGeoJSON(geometry) as geometry,
+			lat,
+			lon,
+			ref_id,
+			ref_type,
+			created_at,
+			updated_at
+		FROM parcels
+		WHERE ST_Within(
+			ST_Centroid(geometry),
+			ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)
+		)
+		ORDER BY id
+		LIMIT ? OFFSET ?
+	`
+	err := p.DB.WithContext(ctx).Raw(query, geoJSON, limit, offset).Scan(&parcels).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("query failed: %w", err)
+	}
+
+	return parcels, total, nil
 }

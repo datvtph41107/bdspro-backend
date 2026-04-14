@@ -5,6 +5,7 @@ package tqdpb;
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "shared/common.proto";
+import "tqd/features.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -21,6 +22,39 @@ service ParcelService {
       body: "*"
     };
   }
+  rpc FindParcelsByPolygon(FindParcelsByPolygonRequest) returns (FindParcelsByPolygonResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/parcels/by-polygon"
+      body: "*"
+    };
+  }
+}
+
+message FindParcelsByPolygonRequest {
+  string geoJson = 1;
+  repeated CoordinatePolygon coordinates = 10;
+  
+  double maxAreaKm2 = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+  bool allowAutoShrink = 5;
+}
+
+message CoordinatePolygon {
+    repeated Point points = 1;
+}
+
+message FindParcelsByPolygonResponse {
+  repeated Parcel parcels = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+  string adjustedGeoJson = 5;
+  string adjustmentReason = 6;
+  double originalAreaKm2 = 7;
+  double adjustedAreaKm2 = 8;
+  double maxAllowedAreaKm2 = 9;
+  string warning = 10;
 }
 
 message FindParcelByLocationRequest {
