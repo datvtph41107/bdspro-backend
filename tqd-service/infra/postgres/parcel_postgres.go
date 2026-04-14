@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
@@ -109,27 +110,21 @@ func computeBBox(points []dto.Point) (minLon, minLat, maxLon, maxLat float64) {
 	return
 }
 
-func (p *ParcelPostgres) FindWithinPolygon(
+func (p *ParcelPostgres) FindIntersectPolygon(
 	ctx context.Context,
 	points []dto.Point,
 	limit, offset int,
 ) ([]domain.Parcel, int64, error) {
 
 	if len(points) < 3 {
-		return nil, 0, fmt.Errorf("need at least 3 points")
+		return nil, 0, fmt.Errorf("invalid polygon")
 	}
 
-	wkt := buildPolygonWKT(points)
-
-	// 👇 optional: compute bbox từ points để filter nhanh
-	minLon, minLat, maxLon, maxLat := computeBBox(points)
+	polygon := buildPolygonWKT(points)
 
 	var parcels []domain.Parcel
 	var total int64
 
-	// =========================
-	// COUNT QUERY (OPTIMIZED)
-	// =========================
 	countQuery := `
 		WITH poly AS (
 			SELECT ST_GeomFromText(?, 4326) AS geom
@@ -137,16 +132,12 @@ func (p *ParcelPostgres) FindWithinPolygon(
 		SELECT COUNT(*)
 		FROM parcels p, poly
 		WHERE 
-			p.lon BETWEEN ? AND ?
-			AND p.lat BETWEEN ? AND ?
-			AND ST_Contains(
-				poly.geom,
-				ST_SetSRID(ST_Point(p.lon, p.lat), 4326)
-			)
+			p.geometry && poly.geom
+			AND ST_Intersects(p.geometry, poly.geom)
 	`
 
 	if err := p.DB.WithContext(ctx).
-		Raw(countQuery, wkt, minLon, maxLon, minLat, maxLat).
+		Raw(countQuery, polygon).
 		Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -155,9 +146,6 @@ func (p *ParcelPostgres) FindWithinPolygon(
 		return []domain.Parcel{}, 0, nil
 	}
 
-	// =========================
-	// DATA QUERY (OPTIMIZED)
-	// =========================
 	query := `
 		WITH poly AS (
 			SELECT ST_GeomFromText(?, 4326) AS geom
@@ -173,84 +161,98 @@ func (p *ParcelPostgres) FindWithinPolygon(
 			p.updated_at
 		FROM parcels p, poly
 		WHERE 
-			p.lon BETWEEN ? AND ?
-			AND p.lat BETWEEN ? AND ?
-			AND ST_Contains(
-				poly.geom,
-				ST_SetSRID(ST_Point(p.lon, p.lat), 4326)
-			)
+			p.geometry && poly.geom
+			AND ST_Intersects(p.geometry, poly.geom)
 		ORDER BY p.id
 		LIMIT ? OFFSET ?
 	`
 
 	err := p.DB.WithContext(ctx).
-		Raw(query,
-			wkt,
-			minLon, maxLon,
-			minLat, maxLat,
-			limit, offset,
-		).
+		Raw(query, polygon, limit, offset).
 		Scan(&parcels).Error
 
 	return parcels, total, err
 }
 
-func (p *ParcelPostgres) FindIntersectPolygon(
+func (p *ParcelPostgres) FindWithinPolygon(
 	ctx context.Context,
 	points []dto.Point,
 	limit, offset int,
 ) ([]domain.Parcel, int64, error) {
 	if len(points) < 3 {
-		return nil, 0, fmt.Errorf("need at least 3 points")
+		return nil, 0, fmt.Errorf("invalid polygon")
 	}
-	wkt := buildPolygonWKT(points)
+
+	polygon := buildPolygonWKT(points)
 
 	var parcels []domain.Parcel
 	var total int64
 
-	countQuery := fmt.Sprintf(`
-		SELECT COUNT(*)
-		FROM parcels
-		WHERE ST_Intersects(
-			geometry,
-			ST_GeomFromText('%s', 4326)
+	countQuery := `
+		WITH poly AS (
+			SELECT ST_GeomFromText(?, 4326) AS geom
 		)
-	`, wkt)
-	if err := p.DB.WithContext(ctx).Raw(countQuery).Scan(&total).Error; err != nil {
+		SELECT COUNT(*)
+		FROM parcels p, poly
+		WHERE ST_Contains(poly.geom, p.geometry)
+	`
+
+	if err := p.DB.WithContext(ctx).
+		Raw(countQuery, polygon).
+		Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	if total == 0 {
-		return []domain.Parcel{}, 0, nil
-	}
 
-	query := fmt.Sprintf(`
-		SELECT 
-			id,
-			ST_AsGeoJSON(geometry) as geometry,
-			lat,
-			lon,
-			ref_id,
-			ref_type,
-			created_at,
-			updated_at
-		FROM parcels
-		WHERE ST_Intersects(
-			geometry,
-			ST_GeomFromText('%s', 4326)
+	query := `
+		WITH poly AS (
+			SELECT ST_GeomFromText(?, 4326) AS geom
 		)
-		ORDER BY id
-		LIMIT %d OFFSET %d
-	`, wkt, limit, offset)
+		SELECT 
+			p.id,
+			ST_AsGeoJSON(p.geometry) as geometry,
+			p.lat,
+			p.lon,
+			p.ref_id,
+			p.ref_type,
+			p.created_at,
+			p.updated_at
+		FROM parcels p, poly
+		WHERE ST_Contains(poly.geom, p.geometry)
+		ORDER BY p.id
+		LIMIT ? OFFSET ?
+	`
 
-	err := p.DB.WithContext(ctx).Raw(query).Scan(&parcels).Error
+	err := p.DB.WithContext(ctx).
+		Raw(query, polygon, limit, offset).
+		Scan(&parcels).Error
+
 	return parcels, total, err
 }
 
 func buildPolygonWKT(points []dto.Point) string {
-	coords := make([]string, len(points)+1)
-	for i, pt := range points {
-		coords[i] = fmt.Sprintf("%f %f", pt.Lng, pt.Lat)
+	var sb strings.Builder
+	sb.Grow(len(points) * 32)
+
+	sb.WriteString("POLYGON((")
+
+	for i := 0; i < len(points); i++ {
+		p := points[i]
+
+		sb.WriteString(strconv.FormatFloat(p.Lng, 'f', 6, 64))
+		sb.WriteByte(' ')
+		sb.WriteString(strconv.FormatFloat(p.Lat, 'f', 6, 64))
+
+		if i < len(points)-1 {
+			sb.WriteByte(',')
+		}
 	}
-	coords[len(points)] = fmt.Sprintf("%f %f", points[0].Lng, points[0].Lat)
-	return fmt.Sprintf("POLYGON((%s))", strings.Join(coords, ","))
+
+	sb.WriteByte(',')
+	sb.WriteString(strconv.FormatFloat(points[0].Lng, 'f', 6, 64))
+	sb.WriteByte(' ')
+	sb.WriteString(strconv.FormatFloat(points[0].Lat, 'f', 6, 64))
+
+	sb.WriteString("))")
+
+	return sb.String()
 }
