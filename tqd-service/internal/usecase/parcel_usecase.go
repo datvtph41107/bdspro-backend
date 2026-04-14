@@ -107,7 +107,7 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 	if intersect {
 		parcels, total, err = u.repo.FindIntersectPolygon(ctx, points, limit, offset)
 	} else {
-		parcels, total, err = u.repo.FindWithinPolygon(ctx, points, limit, offset)
+		parcels, total, err = u.repo.FindWithinPolygon(ctx, points, 9999, offset)
 	}
 	if err != nil {
 		return nil, 0, err

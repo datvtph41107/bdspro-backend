@@ -287,7 +287,7 @@
             }
         },
         {
-            "label": "🏘 TQD gRPC (8231)",
+            "label": "🏘 TQD gRPC (8219)",
             "type": "shell",
             "command": "cd shared/code && make tqd-grpc",
             "args": [],

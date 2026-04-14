@@ -88,55 +88,110 @@ func (p *ParcelPostgres) FindByLocation(
 	return &parcel, nil
 }
 
+func computeBBox(points []dto.Point) (minLon, minLat, maxLon, maxLat float64) {
+	minLon, minLat = points[0].Lng, points[0].Lat
+	maxLon, maxLat = points[0].Lng, points[0].Lat
+
+	for _, p := range points {
+		if p.Lng < minLon {
+			minLon = p.Lng
+		}
+		if p.Lng > maxLon {
+			maxLon = p.Lng
+		}
+		if p.Lat < minLat {
+			minLat = p.Lat
+		}
+		if p.Lat > maxLat {
+			maxLat = p.Lat
+		}
+	}
+	return
+}
+
 func (p *ParcelPostgres) FindWithinPolygon(
 	ctx context.Context,
 	points []dto.Point,
 	limit, offset int,
 ) ([]domain.Parcel, int64, error) {
+
 	if len(points) < 3 {
 		return nil, 0, fmt.Errorf("need at least 3 points")
 	}
+
 	wkt := buildPolygonWKT(points)
+
+	// 👇 optional: compute bbox từ points để filter nhanh
+	minLon, minLat, maxLon, maxLat := computeBBox(points)
 
 	var parcels []domain.Parcel
 	var total int64
 
-	countQuery := fmt.Sprintf(`
-		SELECT COUNT(*)
-		FROM parcels
-		WHERE ST_Within(
-			ST_Centroid(geometry),
-			ST_GeomFromText('%s', 4326)
+	// =========================
+	// COUNT QUERY (OPTIMIZED)
+	// =========================
+	countQuery := `
+		WITH poly AS (
+			SELECT ST_GeomFromText(?, 4326) AS geom
 		)
-	`, wkt)
-	if err := p.DB.WithContext(ctx).Raw(countQuery).Scan(&total).Error; err != nil {
+		SELECT COUNT(*)
+		FROM parcels p, poly
+		WHERE 
+			p.lon BETWEEN ? AND ?
+			AND p.lat BETWEEN ? AND ?
+			AND ST_Contains(
+				poly.geom,
+				ST_SetSRID(ST_Point(p.lon, p.lat), 4326)
+			)
+	`
+
+	if err := p.DB.WithContext(ctx).
+		Raw(countQuery, wkt, minLon, maxLon, minLat, maxLat).
+		Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
+
 	if total == 0 {
 		return []domain.Parcel{}, 0, nil
 	}
 
-	// Lấy dữ liệu phân trang
-	query := fmt.Sprintf(`
-		SELECT 
-			id,
-			ST_AsGeoJSON(geometry) as geometry,
-			lat,
-			lon,
-			ref_id,
-			ref_type,
-			created_at,
-			updated_at
-		FROM parcels
-		WHERE ST_Within(
-			ST_Centroid(geometry),
-			ST_GeomFromText('%s', 4326)
+	// =========================
+	// DATA QUERY (OPTIMIZED)
+	// =========================
+	query := `
+		WITH poly AS (
+			SELECT ST_GeomFromText(?, 4326) AS geom
 		)
-		ORDER BY id
-		LIMIT %d OFFSET %d
-	`, wkt, limit, offset)
+		SELECT 
+			p.id,
+			ST_AsGeoJSON(p.geometry) as geometry,
+			p.lat,
+			p.lon,
+			p.ref_id,
+			p.ref_type,
+			p.created_at,
+			p.updated_at
+		FROM parcels p, poly
+		WHERE 
+			p.lon BETWEEN ? AND ?
+			AND p.lat BETWEEN ? AND ?
+			AND ST_Contains(
+				poly.geom,
+				ST_SetSRID(ST_Point(p.lon, p.lat), 4326)
+			)
+		ORDER BY p.id
+		LIMIT ? OFFSET ?
+	`
 
-	err := p.DB.WithContext(ctx).Raw(query).Scan(&parcels).Error
+	err := p.DB.WithContext(ctx).
+		Raw(query,
+			wkt,
+			minLon, maxLon,
+			minLat, maxLat,
+			limit, offset,
+		).
+		Scan(&parcels).Error
+
 	return parcels, total, err
 }
 

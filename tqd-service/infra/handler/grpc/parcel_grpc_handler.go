@@ -71,9 +71,6 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		for i, pt := range req.Coordinates {
 			points[i] = dto.Point{Lat: pt.Lat, Lng: pt.Lng}
 		}
-	} else if req.GeoJson != "" {
-		// Fallback: có thể parse GeoJson nhưng theo yêu cầu bỏ qua, trả lỗi
-		return nil, status.Error(codes.InvalidArgument, "only coordinates array is supported, geoJson not implemented")
 	} else {
 		return nil, status.Error(codes.InvalidArgument, "coordinates are required")
 	}

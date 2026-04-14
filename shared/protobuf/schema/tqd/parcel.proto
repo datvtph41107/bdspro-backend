@@ -31,9 +31,8 @@ service ParcelService {
 }
 
 message FindParcelsByPolygonRequest {
-  string geoJson = 1;
-  repeated Point coordinates = 6;
-  
+  repeated Point coordinates = 1;
+
   double maxAreaKm2 = 2;
   int32 page = 3;
   int32 pageSize = 4;
