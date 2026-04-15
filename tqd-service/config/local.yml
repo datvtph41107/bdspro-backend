@@ -21,3 +21,7 @@ jwt:
     refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
     listPermit:
     authorizationHeader: Authorization
+
+quota:
+    enabled: true
+    policy_file: "config/quota_policy.yml"

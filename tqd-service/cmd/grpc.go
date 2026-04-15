@@ -1,21 +1,28 @@
 package cmd
 
 import (
-	_middleware "common/middleware"
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
-	tqdpb "pb/types/tqd"
 	"syscall"
 	"time"
+
 	"tqd/config"
 	"tqd/infra/db"
 	"tqd/wire"
 
+	_middleware "common/middleware"
+	"common/quota"
+	_redis "common/redis"
+
+	tqdpb "pb/types/tqd"
+
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -23,10 +30,6 @@ import (
 var grpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Start gRPC server",
-	Long: `Start the gRPC server for TQD Service.
-	
-The server will listen on the port specified in the configuration file.
-Default port is 8230 for gRPC (instead of HTTP).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runGRPCServer()
 	},
@@ -38,12 +41,10 @@ var (
 )
 
 func init() {
-	// gRPC specific flags
 	grpcCmd.Flags().IntVarP(&GrpcPort, "port", "p", 0, "gRPC server port (overrides config)")
 	grpcCmd.Flags().StringVar(&GrpcHost, "host", "", "gRPC server host (default: all interfaces)")
 }
 
-// RunGRPCServer starts the gRPC server (exported function for main.go)
 func RunGRPCServer() error {
 	return runGRPCServer()
 }
@@ -53,17 +54,13 @@ func runGRPCServer() error {
 
 	// Load configuration
 	cfg := config.LoadConfig()
-
-	// Override port if specified via flag
 	if GrpcPort > 0 {
 		cfg.Server.GrpcPort = GrpcPort
 	}
 
-	// Set timezone
 	os.Setenv("TZ", "Europe/London")
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-	// Initialize dependencies
 	app, err := wire.InitializeApp()
 	if err != nil {
 		return fmt.Errorf("failed to initialize app: %v", err)
@@ -72,22 +69,71 @@ func runGRPCServer() error {
 		log.Fatal("app is nil after InitializeApp")
 	}
 
-	// Run database migration if needed
 	db.AutoMigrate()
 
-	// Create listener
 	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Server.GrpcPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
-	// Create gRPC server with interceptors
+	// =================== QUOTA INTERCEPTOR INIT ===================
+	var quotaInterceptor grpc.UnaryServerInterceptor
+
+	// Khởi tạo quota logger
+	if err := quota.InitQuotaLogger("./app/logs/quota", true); err != nil {
+		log.Printf("Failed to init quota logger: %v", err)
+	}
+
+	quotaCfg, err := quota.LoadQuotaConfig()
+	if err == nil && quotaCfg != nil && quotaCfg.Enabled {
+		log.Println("[QUOTA] Initializing quota interceptor...")
+
+		redisService := _redis.NewRedisService()
+		storage := quota.NewRedisQuotaStorage(redisService)
+		policy, err := quota.NewDefaultPolicyEngine(quotaCfg.PolicyFile)
+		if err != nil {
+			log.Printf("[QUOTA] Failed to load policy: %v, quota disabled", err)
+		} else {
+			qm := quota.NewQuotaManager(storage, policy)
+
+			extractUserID := func(ctx context.Context) string {
+				if md, ok := metadata.FromIncomingContext(ctx); ok {
+					// Ưu tiên profileId
+					if vals := md.Get("profileId"); len(vals) > 0 && vals[0] != "" {
+						return vals[0]
+					}
+					if vals := md.Get("originId"); len(vals) > 0 && vals[0] != "" {
+						return vals[0]
+					}
+					if vals := md.Get("authId"); len(vals) > 0 && vals[0] != "" {
+						return vals[0]
+					}
+				}
+				return ""
+			}
+
+			quotaInterceptor = quota.UnaryServerInterceptor(qm, extractUserID)
+			log.Println("✅ Quota interceptor enabled for tqd-service")
+		}
+	} else {
+		log.Println("[QUOTA] Quota disabled or config error")
+	}
+
+	if quotaInterceptor == nil {
+		quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+			return handler(ctx, req)
+		}
+	}
+
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.ChainUnaryInterceptor(
+			_middleware.ParseGrpcMetadataContextMiddleware,
+			quotaInterceptor,
+		),
 	)
 
-	// Register all gRPC services
+	// Register services
 	tqdpb.RegisterAmenityServiceServer(s, app.AmenityGrpcHandler)
 	tqdpb.RegisterContactLabelServiceServer(s, app.ContactLabelGrpcHandler)
 	tqdpb.RegisterDirectoryCategoryServiceServer(s, app.DirectoryCategoryGrpcHandler)
@@ -100,10 +146,8 @@ func runGRPCServer() error {
 	tqdpb.RegisterFeatureServiceServer(s, app.FeatureGrpcHandler)
 	tqdpb.RegisterParcelServiceServer(s, app.ParcelGrpcHandler)
 
-	// Register reflection service on gRPC server (useful for grpcurl)
 	reflection.Register(s)
 
-	// Start server in a goroutine
 	go func() {
 		log.Printf("gRPC Server listening on %s", addr)
 		if err := s.Serve(lis); err != nil {
@@ -111,13 +155,10 @@ func runGRPCServer() error {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutting down gRPC server...")
-
-	// Graceful stop
 	s.GracefulStop()
 	log.Println("gRPC server exited")
 

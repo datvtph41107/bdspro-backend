@@ -7,26 +7,26 @@
 package wire
 
 import (
-	"common/db"
-	"github.com/google/wire"
+	_db "common/db"
 	"user/infra/client"
 	"user/infra/handler"
-	"user/infra/implement"
+	impl "user/infra/implement"
 	"user/infra/mapper"
 	"user/infra/postgres"
 	"user/infra/routes"
 	"user/initial"
 	"user/internal/dto"
-	"user/internal/interface"
+	iusecase "user/internal/interface"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 	"user/internal/job"
 	"user/internal/models"
 	"user/internal/usecases"
+
+	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
-
 func InitializeApp() (*initial.InitialApp, error) {
 	db, err := _db.NewDB()
 	if err != nil {

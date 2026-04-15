@@ -1,0 +1,15 @@
+# config/shared.yaml
+auth:
+    jwt_issuer: "myapp"
+    access_token_ttl: 15m
+    refresh_token_ttl: 129600m # 3 tháng
+    # jwt_secret được set qua env SHARED_AUTH_JWT_SECRET
+
+services:
+    chat_service_addr: "localhost:8208"
+    crm_service_addr: "localhost:8206"
+    post_service_addr: "localhost:8212"
+    gateway_service_addr: "localhost:8000"
+    auth_service_addr: "localhost:8216"
+    bdspro_service_addr: "localhost:8202"
+    # ... thêm các service khác

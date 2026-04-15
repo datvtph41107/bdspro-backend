@@ -165,3 +165,7 @@ func (r *RedisService) GetAsInt(key string) (int, error) {
 func (r *RedisService) Expire(key string, seconds int) error {
 	return r.Client.Expire(r.Ctx, key, time.Duration(seconds)*time.Second).Err()
 }
+
+func (r *RedisService) IncrementBy(key string, delta int64) error {
+    return r.Client.IncrBy(r.Ctx, key, delta).Err()
+}
