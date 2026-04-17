@@ -43,6 +43,7 @@ func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = tqdpb.RegisterPoiServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterLocationServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterParcelServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterOneHouseServiceHandler(ctx, mux, conn)
 }
 
 func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {
@@ -55,4 +56,5 @@ func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoin
 	_ = tqdpb.RegisterPoiCategoryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterPoiServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterLocationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = tqdpb.RegisterOneHouseServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

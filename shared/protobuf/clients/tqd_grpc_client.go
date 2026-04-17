@@ -25,6 +25,22 @@ var (
 	tqdOnce           sync.Once
 )
 
+// type TQDGrpcClient struct {
+//     *BaseGrpcClient
+//     Client tqdpb.LocationServiceClient
+// }
+
+// func NewTQDClient(ep config.ServiceEndpoint) (*TQDGrpcClient, error) {
+//     base, err := NewBaseGrpcClient(ep)
+//     if err != nil {
+//         return nil, err
+//     }
+//     return &TQDGrpcClient{
+//         BaseGrpcClient: base,
+//         Client:         tqdpb.NewLocationServiceClient(base.Conn()),
+//     }, nil
+// }
+
 // GetTQDClient - Singleton pattern giống user client của bạn
 func GetTQDClient(envRuntime string) *TQDGrpcClient {
 	tqdOnce.Do(func() {

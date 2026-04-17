@@ -33,3 +33,19 @@ jwt:
     refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
     listPermit:
     authorizationHeader: Authorization
+
+# config/local.yml - thêm cấu hình
+quota:
+    storage: redis # or local
+    redis:
+        addr: localhost:6379
+        db: 0
+    policies:
+        default:
+            limit: 1000
+            period: monthly # monthly/daily/weekly
+            extra_policy: charge_and_allow
+        premium:
+            limit: 10000
+            period: monthly
+            extra_policy: allow_and_notify

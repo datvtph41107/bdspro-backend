@@ -145,6 +145,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterLocationServiceServer(s, app.LocationGrpcHandler)
 	tqdpb.RegisterFeatureServiceServer(s, app.FeatureGrpcHandler)
 	tqdpb.RegisterParcelServiceServer(s, app.ParcelGrpcHandler)
+	tqdpb.RegisterOneHouseServiceServer(s, app.OneHouseGrpcHandler)
 
 	reflection.Register(s)
 

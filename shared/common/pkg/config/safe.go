@@ -1,65 +1,51 @@
-// shared/pkg/config/safe.go
-// Giải quyết vấn đề: muốn log config để debug, không muốn lộ secrets
 package config
 
 import (
+	"encoding/json"
 	"reflect"
 )
 
-// SafeString: interface để struct tự biết cách hiển thị an toàn
-// Bất kỳ config struct nào implement interface này sẽ được dùng khi log
-type SafeStringer interface {
-	SafeString() string
+// MaskSensitive returns a JSON string with sensitive fields replaced by "***".
+func MaskSensitive(cfg interface{}) string {
+	m := maskRecursive(reflect.ValueOf(cfg), reflect.TypeOf(cfg))
+	b, _ := json.MarshalIndent(m, "", "  ")
+	return string(b)
 }
 
-// MaskSensitive: tự động mask các field có tag `sensitive:"true"`
-// Không cần developer nhớ từng field nào là secret — struct tự khai báo
-//
-// Dùng reflection vì chúng ta không biết trước cấu trúc của từng service config.
-// Đây là trường hợp hợp lý để dùng reflection — generic behavior trên arbitrary structs.
-func MaskSensitive(cfg interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	maskRecursive(reflect.ValueOf(cfg), reflect.TypeOf(cfg), result, "")
-	return result
-}
-
-func maskRecursive(v reflect.Value, t reflect.Type, result map[string]interface{}, prefix string) {
+func maskRecursive(v reflect.Value, t reflect.Type) interface{} {
 	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return nil
+		}
 		v = v.Elem()
 		t = t.Elem()
 	}
 	if v.Kind() != reflect.Struct {
-		return
+		return v.Interface()
 	}
-
+	result := map[string]interface{}{}
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
 		fieldVal := v.Field(i)
-
-		mapKey := field.Tag.Get("mapstructure")
-		if mapKey == "" || mapKey == ",squash" {
-			// Squash: recurse vào embedded struct
-			if field.Anonymous || mapKey == ",squash" {
-				maskRecursive(fieldVal, field.Type, result, prefix)
+		key := field.Tag.Get("mapstructure")
+		if key == "" || key == ",squash" {
+			sub := maskRecursive(fieldVal, field.Type)
+			if subMap, ok := sub.(map[string]interface{}); ok {
+				for k, v := range subMap {
+					result[k] = v
+				}
 			}
 			continue
 		}
-
-		key := prefix + mapKey
-
 		if field.Tag.Get("sensitive") == "true" {
-			// Mask nhưng cho biết có giá trị hay không
-			if fieldVal.String() != "" {
+			if fieldVal.Kind() == reflect.String && fieldVal.String() != "" {
 				result[key] = "***SET***"
 			} else {
-				result[key] = "***NOT SET***" // Cảnh báo: field bắt buộc mà không có giá trị
+				result[key] = "***NOT SET***"
 			}
-		} else if fieldVal.Kind() == reflect.Struct {
-			sub := make(map[string]interface{})
-			maskRecursive(fieldVal, field.Type, sub, "")
-			result[key] = sub
 		} else {
-			result[key] = fieldVal.Interface()
+			result[key] = maskRecursive(fieldVal, field.Type)
 		}
 	}
+	return result
 }
