@@ -13,7 +13,7 @@ service OpenHourService {
   // Create a new open hour
   rpc CreateOpenHour(OpenHour) returns (OpenHour) {
     option (google.api.http) = {
-      post: "/v2/tqd/open-hours"
+      post: "/v2/tqd/propertype"
       body: "*"
     };
   }
