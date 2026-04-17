@@ -1,14 +1,12 @@
 package handler_grpc
 
 import (
+	_errors "common/errors"
 	"context"
-	"tqd/infra/mapper"
-	"tqd/internal/usecase"
 
 	pb "pb/types/tqd"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"tqd/infra/mapper"
+	"tqd/internal/usecase"
 )
 
 type OneHouseGrpcHandler struct {
@@ -22,29 +20,24 @@ func NewOneHouseGrpcHandler(oneHouseUsecase usecase.OneHouseUsecase) *OneHouseGr
 	}
 }
 
-func (h *OneHouseGrpcHandler) GetOneHouseDetail(ctx context.Context, req *pb.GetOneHouseDetailRequest) (*pb.OneHouseDetailResponse, error) {
+func (h *OneHouseGrpcHandler) GetOneHouseDetail(ctx context.Context, req *pb.GetOneHouseDetailRequest) (*pb.OneHouse, error) {
 	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, _errors.ReturnError(400, "id is required")
 	}
 
 	ohDomain, err := h.oneHouseUsecase.GetDetail(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, _errors.ReturnError(404, err.Error())
+	}
+
+	if ohDomain == nil {
+		return nil, _errors.ReturnError(404, "one_house not found")
 	}
 
 	protoOneHouse, err := mapper.ToProtoOneHouse(ohDomain)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, _errors.ReturnError(500, "internal error: "+err.Error())
 	}
 
-	res := &pb.OneHouseDetailResponse{
-		Id:  ohDomain.ID,
-		Lat: ohDomain.Lat,
-		Lng: ohDomain.Lng,
-		Res: &pb.OneHouseRes{
-			Data: protoOneHouse,
-			Meta: &pb.Meta{Code: "200"},
-		},
-	}
-	return res, nil
+	return protoOneHouse, nil
 }

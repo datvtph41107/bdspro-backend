@@ -8,13 +8,11 @@ import (
 	"tqd/internal/domain"
 )
 
-// ToProtoOneHouse chuyển đổi domain.OneHouse sang proto OneHouse
 func ToProtoOneHouse(oh *domain.OneHouse) (*pb.OneHouse, error) {
 	if oh == nil {
 		return nil, nil
 	}
 
-	// 1. PlanningInfos
 	planningInfos := make([]*pb.PlanningInfo, len(oh.PlanningInfos))
 	for i, info := range oh.PlanningInfos {
 		planningInfos[i] = &pb.PlanningInfo{
@@ -24,10 +22,8 @@ func ToProtoOneHouse(oh *domain.OneHouse) (*pb.OneHouse, error) {
 		}
 	}
 
-	// 2. Geometry (GeoJSON -> MultiPolygon)
 	var geometry *pb.Geometry
 	if oh.GeomGeoJSON != "" {
-		// Parse GeoJSON một cách an toàn với struct tạm
 		var geoJSON struct {
 			Type        string          `json:"type"`
 			Coordinates json.RawMessage `json:"coordinates"`
@@ -39,7 +35,6 @@ func ToProtoOneHouse(oh *domain.OneHouse) (*pb.OneHouse, error) {
 			return nil, fmt.Errorf("unsupported geometry type: %s", geoJSON.Type)
 		}
 
-		// coordinates có dạng [][][][]float64
 		var multiCoords [][][][]float64
 		if err := json.Unmarshal(geoJSON.Coordinates, &multiCoords); err != nil {
 			return nil, fmt.Errorf("unmarshal coordinates failed: %w", err)
@@ -49,7 +44,6 @@ func ToProtoOneHouse(oh *domain.OneHouse) (*pb.OneHouse, error) {
 			MultiPolygon: make([]*pb.MultiPolygon, len(multiCoords)),
 		}
 		for i, polygons := range multiCoords {
-			// polygons là [][][]float64: mảng các rings (outer + inner)
 			rings := make([]*pb.LineString, len(polygons))
 			for j, ringCoords := range polygons {
 				points := make([]*pb.PointTile, len(ringCoords))
@@ -61,14 +55,12 @@ func ToProtoOneHouse(oh *domain.OneHouse) (*pb.OneHouse, error) {
 				}
 				rings[j] = &pb.LineString{Points: points}
 			}
-			// Mỗi polygon có thể có nhiều rings, gộp thành một Polygon
 			geometry.MultiPolygon[i] = &pb.MultiPolygon{
 				Polygons: []*pb.Polygon{{Rings: rings}},
 			}
 		}
 	}
 
-	// 3. Tổng hợp kết quả
 	return &pb.OneHouse{
 		Id:                   oh.ID,
 		Lat:                  oh.Lat,

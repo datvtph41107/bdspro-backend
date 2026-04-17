@@ -7,28 +7,15 @@ import "google/api/annotations.proto";
 option go_package = "pb/types/tqd;tqdpb";
 
 service OneHouseService {
-  rpc GetOneHouseDetail(GetOneHouseDetailRequest) returns (OneHouseDetailResponse) {
+  rpc GetOneHouseDetail(GetOneHouseDetailRequest) returns (OneHouse) {
     option (google.api.http) = {
-      get: "/v2/tqd/one-house/{id}"
+      get: "/v2/tqd/properties/{id}"
     };
   }
 }
 
 message GetOneHouseDetailRequest {
   string id = 1;               // id dạng text, có thể là "2" hoặc property_uuid
-}
-
-// Response wrapper theo đúng format mẫu
-message OneHouseDetailResponse {
-  string id = 1;
-  double lat = 2;
-  double lng = 3;
-  OneHouseRes res = 4;
-}
-
-message OneHouseRes {
-  OneHouse data = 1;
-  Meta meta = 2;
 }
 
 message Meta {
