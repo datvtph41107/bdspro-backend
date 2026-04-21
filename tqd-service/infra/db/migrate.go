@@ -23,5 +23,6 @@ func AutoMigrate() {
 		// &domain.DirectorySource{},
 		// &domain.DirectorySupplier{},
 		&domain.Parcel{},
+		&domain.Layer{},
 	)
 }

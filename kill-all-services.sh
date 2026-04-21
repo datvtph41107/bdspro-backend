@@ -59,7 +59,7 @@ kill_by_port() {
     
     if [ ! -z "$pid" ]; then
         echo "🔴 Dừng service $service_name (port $port, PID: $pid)"
-        kill -9 $pid
+        kill -9 kill -9 $pid
         sleep 1
         
         # Kiểm tra lại xem process đã dừng chưa

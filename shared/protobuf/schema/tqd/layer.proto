@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package layerpb;
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service LayerService {
+  rpc CreateLayer(CreateLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      post: "/v2/admin/layers"
+      body: "*"
+    };
+  }
+  
+  rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      put: "/v2/admin/layers/{id}"
+      body: "*"
+    };
+  }
+  
+  rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/admin/layers/{id}"
+    };
+  }
+  
+  rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      get: "/v2/admin/layers/{id}"
+    };
+  }
+  
+  rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
+    option (google.api.http) = {
+      get: "/v2/admin/layers"
+    };
+  }
+}
+
+message CreateLayerRequest {
+  string name = 1;
+  string displayName = 2;
+  uint32 type = 3;
+  int32 order = 5;
+  int32 minZoom = 6;
+  int32 maxZoom = 7;
+  bool visible = 8;
+  string legalDoc = 9;
+  optional string effectiveDate = 10;
+  optional uint32 status = 11;
+}
+
+message UpdateLayerRequest {
+  uint32 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional uint32 type = 4;
+  optional uint32 status = 5;
+  optional int32 order = 7;
+  optional int32 minZoom = 8;
+  optional int32 maxZoom = 9;
+  optional bool visible = 10;
+  optional string legalDoc = 11;
+  optional string effectiveDate = 12;
+  google.protobuf.FieldMask update_mask = 13;
+}
+
+message DeleteLayerRequest {
+  uint32 id = 1;
+}
+
+message GetLayerRequest {
+  uint32 id = 1;
+}
+
+message ListLayersRequest {
+  optional uint32 status = 1;
+  optional int32 page = 2;
+  optional int32 limit = 3;
+  optional string search = 4;
+  optional uint32 type = 5;
+}
+
+message ListLayersResponse {
+  repeated LayerResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message LayerResponse {
+  uint32 id = 1;
+  string name = 2;
+  string displayName = 3;
+  uint32 type = 4;
+  optional uint32 status = 5;
+  int32 order = 7;
+  int32 minZoom = 8;
+  int32 maxZoom = 9;
+  bool visible = 10;
+  string legalDoc = 11;
+  optional string effectiveDate = 12;
+  string createdAt = 14;
+  string updatedAt = 15;
+}
