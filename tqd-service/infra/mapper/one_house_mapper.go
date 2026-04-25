@@ -3,12 +3,12 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
+	qh_domain "tqd/internal/domain/qh"
 
 	pb "pb/types/tqd"
-	"tqd/internal/domain"
 )
 
-func ToProtoOneHouse(oh *domain.OneHouse) (*pb.OneHouse, error) {
+func ToProtoOneHouse(oh *qh_domain.OneHouse) (*pb.OneHouse, error) {
 	if oh == nil {
 		return nil, nil
 	}

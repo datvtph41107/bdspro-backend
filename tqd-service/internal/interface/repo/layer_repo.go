@@ -3,17 +3,17 @@ package repo
 
 import (
 	"context"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 )
 
 type LayerRepository interface {
-	Create(ctx context.Context, layer *domain.Layer) error
-	Update(ctx context.Context, layer *domain.Layer) error
+	Create(ctx context.Context, layer *qh_domain.QHLayer) error
+	Update(ctx context.Context, layer *qh_domain.QHLayer) error
 	Delete(ctx context.Context, id uint) error
-	GetByID(ctx context.Context, id uint) (*domain.Layer, error)
-	GetByName(ctx context.Context, name string) (*domain.Layer, error)
-	List(ctx context.Context, filter *LayerFilter) ([]domain.Layer, int64, error)
+	GetByID(ctx context.Context, id uint) (*qh_domain.QHLayer, error)
+	GetByName(ctx context.Context, name string) (*qh_domain.QHLayer, error)
+	List(ctx context.Context, filter *LayerFilter) ([]qh_domain.QHLayer, int64, error)
 	UpdateStatus(ctx context.Context, id uint, status enums.LayerStatus) error
 }
 

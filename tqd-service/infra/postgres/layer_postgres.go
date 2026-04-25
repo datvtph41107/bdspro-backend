@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 
@@ -20,20 +20,20 @@ func NewLayerRepository(db *gorm.DB) repo.LayerRepository {
 	return &layerRepoImpl{db: db}
 }
 
-func (r *layerRepoImpl) Create(ctx context.Context, layer *domain.Layer) error {
+func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer) error {
 	return r.db.WithContext(ctx).Create(layer).Error
 }
 
-func (r *layerRepoImpl) Update(ctx context.Context, layer *domain.Layer) error {
+func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) error {
 	return r.db.WithContext(ctx).Save(layer).Error
 }
 
 func (r *layerRepoImpl) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&domain.Layer{}, id).Error
+	return r.db.WithContext(ctx).Delete(&qh_domain.QHLayer{}, id).Error
 }
 
-func (r *layerRepoImpl) GetByID(ctx context.Context, id uint) (*domain.Layer, error) {
-	var layer domain.Layer
+func (r *layerRepoImpl) GetByID(ctx context.Context, id uint) (*qh_domain.QHLayer, error) {
+	var layer qh_domain.QHLayer
 	err := r.db.WithContext(ctx).First(&layer, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -44,8 +44,8 @@ func (r *layerRepoImpl) GetByID(ctx context.Context, id uint) (*domain.Layer, er
 	return &layer, nil
 }
 
-func (r *layerRepoImpl) GetByName(ctx context.Context, name string) (*domain.Layer, error) {
-	var layer domain.Layer
+func (r *layerRepoImpl) GetByName(ctx context.Context, name string) (*qh_domain.QHLayer, error) {
+	var layer qh_domain.QHLayer
 	err := r.db.WithContext(ctx).Where("name = ?", name).First(&layer).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -56,11 +56,11 @@ func (r *layerRepoImpl) GetByName(ctx context.Context, name string) (*domain.Lay
 	return &layer, nil
 }
 
-func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]domain.Layer, int64, error) {
-	var layers []domain.Layer
+func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]qh_domain.QHLayer, int64, error) {
+	var layers []qh_domain.QHLayer
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Layer{})
+	query := r.db.WithContext(ctx).Model(&qh_domain.QHLayer{})
 
 	// Apply filters
 	if filter.Status != nil {
@@ -106,7 +106,7 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]d
 }
 
 func (r *layerRepoImpl) UpdateStatus(ctx context.Context, id uint, status enums.LayerStatus) error {
-	return r.db.WithContext(ctx).Model(&domain.Layer{}).
+	return r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
 		Where("id = ?", id).
 		Update("status", uint32(status)).Error
 }

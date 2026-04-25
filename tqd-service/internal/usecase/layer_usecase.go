@@ -5,17 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 )
 
 type LayerUsecase interface {
-	Create(ctx context.Context, layer *domain.Layer) (*domain.Layer, error)
-	Update(ctx context.Context, id uint, layer *domain.Layer) (*domain.Layer, error)
+	Create(ctx context.Context, layer *qh_domain.QHLayer) (*qh_domain.QHLayer, error)
+	Update(ctx context.Context, id uint, layer *qh_domain.QHLayer) (*qh_domain.QHLayer, error)
 	Delete(ctx context.Context, id uint) error
-	GetByID(ctx context.Context, id uint) (*domain.Layer, error)
-	List(ctx context.Context, status *uint32, layerType *uint32, search string, page int, limit int) ([]domain.Layer, int64, error)
+	GetByID(ctx context.Context, id uint) (*qh_domain.QHLayer, error)
+	List(ctx context.Context, status *uint32, layerType *uint32, search string, page int, limit int) ([]qh_domain.QHLayer, int64, error)
 	UpdateStatus(ctx context.Context, id uint, status enums.LayerStatus) error
 }
 
@@ -29,7 +29,7 @@ func NewLayerUsecase(layerRepo repo.LayerRepository) LayerUsecase {
 	}
 }
 
-func (u *layerUsecaseImpl) Create(ctx context.Context, layer *domain.Layer) (*domain.Layer, error) {
+func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer) (*qh_domain.QHLayer, error) {
 	if layer.Name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -66,7 +66,7 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *domain.Layer) (*do
 	return layer, nil
 }
 
-func (u *layerUsecaseImpl) Update(ctx context.Context, id uint, layer *domain.Layer) (*domain.Layer, error) {
+func (u *layerUsecaseImpl) Update(ctx context.Context, id uint, layer *qh_domain.QHLayer) (*qh_domain.QHLayer, error) {
 	existing, err := u.layerRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get layer failed: %w", err)
@@ -141,7 +141,7 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (u *layerUsecaseImpl) GetByID(ctx context.Context, id uint) (*domain.Layer, error) {
+func (u *layerUsecaseImpl) GetByID(ctx context.Context, id uint) (*qh_domain.QHLayer, error) {
 	layer, err := u.layerRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get layer failed: %w", err)
@@ -152,7 +152,7 @@ func (u *layerUsecaseImpl) GetByID(ctx context.Context, id uint) (*domain.Layer,
 	return layer, nil
 }
 
-func (u *layerUsecaseImpl) List(ctx context.Context, status *uint32, layerType *uint32, search string, page int, limit int) ([]domain.Layer, int64, error) {
+func (u *layerUsecaseImpl) List(ctx context.Context, status *uint32, layerType *uint32, search string, page int, limit int) ([]qh_domain.QHLayer, int64, error) {
 	filter := &repo.LayerFilter{
 		Page:  page,
 		Limit: limit,

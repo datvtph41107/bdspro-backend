@@ -15,6 +15,7 @@ import (
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
 	tqd_initial "tqd/initial"
+	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_map "tqd/map"
 )
@@ -59,6 +60,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewFeatureUsecase,
 	tqd_infra_providers.NewFileProvider,
 	tqd_infra_providers.NewGeoProvider,
+	tqd_internal_dto.NewGeometryParser,
 	tqd_infra_handler_grpc.NewLayerGrpcHandler,
 	tqd_infra_postgres.NewLayerRepository,
 	tqd_internal_usecase.NewLayerUsecase,
@@ -93,6 +95,10 @@ var wireSet = wire.NewSet(
 	tqd_infra_mapper.NewPoiMapper,
 	tqd_internal_usecase.NewPoiUsecase,
 	tqd_initial.NewRedisService,
+	tqd_infra_handler_grpc.NewRegionGrpcHandler,
+	tqd_infra_mapper.NewRegionMapper,
+	tqd_infra_postgres.NewRegionRepository,
+	tqd_internal_usecase.NewRegionUsecase,
 	tqd_infra_providers.NewTransactionProvider,
 	tqd_infra_client.NewUserClient,
 )

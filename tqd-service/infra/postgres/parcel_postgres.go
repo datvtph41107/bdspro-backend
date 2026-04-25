@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
@@ -20,7 +20,7 @@ func NewParcelPostgres(db *gorm.DB) repo.IParcelRepo {
 	return &ParcelPostgres{DB: db}
 }
 
-func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []domain.Parcel) error {
+func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error {
 	const batchSize = 500
 
 	return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -60,9 +60,9 @@ func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []domain.Parce
 func (p *ParcelPostgres) FindByLocation(
 	ctx context.Context,
 	lat, lng float64,
-) (*domain.Parcel, error) {
+) (*qh_domain.Parcel, error) {
 
-	var parcel domain.Parcel
+	var parcel qh_domain.Parcel
 
 	err := p.DB.WithContext(ctx).
 		Raw(`
@@ -114,7 +114,7 @@ func (p *ParcelPostgres) FindIntersectPolygon(
 	ctx context.Context,
 	points []dto.Point,
 	limit, offset int,
-) ([]domain.Parcel, int64, error) {
+) ([]qh_domain.Parcel, int64, error) {
 
 	if len(points) < 3 {
 		return nil, 0, fmt.Errorf("invalid polygon")
@@ -122,7 +122,7 @@ func (p *ParcelPostgres) FindIntersectPolygon(
 
 	polygon := buildPolygonWKT(points)
 
-	var parcels []domain.Parcel
+	var parcels []qh_domain.Parcel
 	var total int64
 
 	countQuery := `
@@ -143,7 +143,7 @@ func (p *ParcelPostgres) FindIntersectPolygon(
 	}
 
 	if total == 0 {
-		return []domain.Parcel{}, 0, nil
+		return []qh_domain.Parcel{}, 0, nil
 	}
 
 	query := `
@@ -178,14 +178,14 @@ func (p *ParcelPostgres) FindWithinPolygon(
 	ctx context.Context,
 	points []dto.Point,
 	limit, offset int,
-) ([]domain.Parcel, int64, error) {
+) ([]qh_domain.Parcel, int64, error) {
 	if len(points) < 3 {
 		return nil, 0, fmt.Errorf("invalid polygon")
 	}
 
 	polygon := buildPolygonWKT(points)
 
-	var parcels []domain.Parcel
+	var parcels []qh_domain.Parcel
 	var total int64
 
 	countQuery := `

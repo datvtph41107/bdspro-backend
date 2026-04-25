@@ -5,11 +5,11 @@ import (
 	"time"
 
 	tqdpb "pb/types/tqd"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 )
 
-func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*domain.Layer, error) {
+func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer, error) {
 	// Convert type
 	layerType := enums.LayerType(req.Type)
 	if !layerType.IsValid() {
@@ -24,7 +24,7 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*domain.Layer, erro
 		}
 	}
 
-	layer := &domain.Layer{
+	layer := &qh_domain.QHLayer{
 		Name:         req.Name,
 		DisplayName:  req.DisplayName,
 		Type:         layerType,
@@ -47,7 +47,7 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*domain.Layer, erro
 }
 
 // ToProtoLayer chuyển từ domain sang proto response
-func ToProtoLayer(layer *domain.Layer) (*tqdpb.LayerResponse, error) {
+func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	status := uint32(layer.Status)
 
 	resp := &tqdpb.LayerResponse{

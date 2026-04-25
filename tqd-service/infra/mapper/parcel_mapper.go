@@ -3,7 +3,7 @@ package mapper
 import (
 	"fmt"
 	tqdpb "pb/types/tqd"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 )
 
@@ -14,8 +14,8 @@ func NewParcelMapper() *ParcelMapper {
 	return &ParcelMapper{}
 }
 
-func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []domain.Parcel {
-	parcels := make([]domain.Parcel, 0, len(req.Data))
+func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []qh_domain.Parcel {
+	parcels := make([]qh_domain.Parcel, 0, len(req.Data))
 
 	for _, p := range req.Data {
 
@@ -26,11 +26,11 @@ func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []domain.Parcel 
 		// 	geom =
 		// }
 
-		parcels = append(parcels, domain.Parcel{
+		parcels = append(parcels, qh_domain.Parcel{
 			// Name:     p.Name,
 			Lat: p.Latitude,
 			Lng: p.Longitude,
-			Geometry: domain.RawGeometry{
+			Geometry: qh_domain.RawGeometry{
 				Raw: string(p.Geometry),
 			},
 		})
@@ -50,7 +50,7 @@ func (m *ParcelMapper) ToProtoFromDomainList(parcels *dto.ParcelList) []*tqdpb.P
 	return protoParcels
 }
 
-func (m *ParcelMapper) DomainToProto(p *domain.Parcel) *tqdpb.Parcel {
+func (m *ParcelMapper) DomainToProto(p *qh_domain.Parcel) *tqdpb.Parcel {
 	v := &tqdpb.Parcel{
 		Id: p.ID,
 		// Name:      p.Name,

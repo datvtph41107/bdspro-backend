@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -20,8 +20,8 @@ func NewOneHouseRepo(db *gorm.DB) repo.OneHouseRepo {
 	return &oneHouseRepo{db: db}
 }
 
-func (r *oneHouseRepo) GetByID(ctx context.Context, id uint64) (*domain.OneHouse, error) {
-	var result domain.OneHouse
+func (r *oneHouseRepo) GetByID(ctx context.Context, id uint64) (*qh_domain.OneHouse, error) {
+	var result qh_domain.OneHouse
 	query := `
 		SELECT 
 			id, lat, lng, address, district, district_code, city, city_code,
@@ -44,11 +44,11 @@ func (r *oneHouseRepo) GetByID(ctx context.Context, id uint64) (*domain.OneHouse
 	return &result, nil
 }
 
-func (r *oneHouseRepo) GetByPropertyUUID(ctx context.Context, uuid string) (*domain.OneHouse, error) {
+func (r *oneHouseRepo) GetByPropertyUUID(ctx context.Context, uuid string) (*qh_domain.OneHouse, error) {
 	if uuid == "" {
 		return nil, nil
 	}
-	var result domain.OneHouse
+	var result qh_domain.OneHouse
 	query := `
 		SELECT 
 			id, lat, lng, address, district, district_code, city, city_code,
@@ -71,7 +71,7 @@ func (r *oneHouseRepo) GetByPropertyUUID(ctx context.Context, uuid string) (*dom
 	return &result, nil
 }
 
-func (r *oneHouseRepo) scanOneHouse(row *sql.Row, oh *domain.OneHouse) error {
+func (r *oneHouseRepo) scanOneHouse(row *sql.Row, oh *qh_domain.OneHouse) error {
 	var geojsonStr string
 	err := row.Scan(
 		&oh.ID, &oh.Lat, &oh.Lng, &oh.Address, &oh.District, &oh.DistrictCode,

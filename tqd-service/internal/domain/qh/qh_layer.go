@@ -7,7 +7,7 @@ import (
 
 type QHLayer struct {
 	ID            uint              `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name          string            `gorm:"type:varchar(255);not null;uniqueIndex:idx_name" json:"name"`
+	Name          string            `gorm:"type:varchar(255);not null" json:"name"`
 	DisplayName   string            `gorm:"type:varchar(255);not null" json:"display_name"`
 	Type          enums.LayerType   `gorm:"type:int;not null;index" json:"type"`
 	Status        enums.LayerStatus `gorm:"type:int;default:10;index" json:"status"`
@@ -24,5 +24,5 @@ type QHLayer struct {
 }
 
 func (QHLayer) TableName() string {
-	return "layers"
+	return "qh_layers"
 }

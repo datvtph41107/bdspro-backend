@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"tqd/internal/config"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 )
@@ -15,8 +15,8 @@ import (
 type ParcelUsecase interface {
 	// CRUD operations
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
-	FindByLocation(ctx context.Context, lat, lng float64) (*domain.Parcel, error)
-	FindParcelsByPolygon(ctx context.Context, points []dto.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]domain.Parcel, int64, error)
+	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
+	FindParcelsByPolygon(ctx context.Context, points []dto.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
 }
 
 // parcelUsecase implements ParcelUsecase
@@ -58,7 +58,7 @@ func (u *parcelUsecase) CreateBatch(ctx context.Context, req *dto.ParcelList) (*
 }
 
 // GetByID implements ParcelUsecase.GetByID
-func (u *parcelUsecase) FindByLocation(ctx context.Context, lat, lng float64) (*domain.Parcel, error) {
+func (u *parcelUsecase) FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error) {
 	parcel, err := u.repo.FindByLocation(ctx, lat, lng)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get POI: %v", err)
@@ -76,7 +76,7 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 	intersect bool,
 	maxAreaKm2 float64,
 	page, pageSize int,
-) ([]domain.Parcel, int64, error) {
+) ([]qh_domain.Parcel, int64, error) {
 	if len(points) < config.MinPolygonVertices {
 		return nil, 0, fmt.Errorf("polygon must have at least %d points, got %d", config.MinPolygonVertices, len(points))
 	}
@@ -100,7 +100,7 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 
 	limit, offset := normalizePage(page, pageSize)
 
-	var parcels []domain.Parcel
+	var parcels []qh_domain.Parcel
 	var total int64
 	var err error
 

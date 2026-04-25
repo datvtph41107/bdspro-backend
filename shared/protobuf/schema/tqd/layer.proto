@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package layerpb;
 
-import "shared/common.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/field_mask.proto";
+import "shared/common.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -15,30 +15,24 @@ service LayerService {
       body: "*"
     };
   }
-  
+
   rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {
       put: "/v2/admin/layers/{id}"
       body: "*"
     };
   }
-  
+
   rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
-    option (google.api.http) = {
-      delete: "/v2/admin/layers/{id}"
-    };
+    option (google.api.http) = {delete: "/v2/admin/layers/{id}"};
   }
-  
+
   rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
-    option (google.api.http) = {
-      get: "/v2/admin/layers/{id}"
-    };
+    option (google.api.http) = {get: "/v2/admin/layers/{id}"};
   }
-  
+
   rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
-    option (google.api.http) = {
-      get: "/v2/admin/layers"
-    };
+    option (google.api.http) = {get: "/v2/admin/layers"};
   }
 }
 
@@ -49,7 +43,7 @@ message CreateLayerRequest {
   int32 order = 5;
   int32 minZoom = 6;
   int32 maxZoom = 7;
-  bool visible = 8;
+  int32 visible = 8;
   string legalDoc = 9;
   optional string effectiveDate = 10;
   optional uint32 status = 11;
@@ -64,7 +58,7 @@ message UpdateLayerRequest {
   optional int32 order = 7;
   optional int32 minZoom = 8;
   optional int32 maxZoom = 9;
-  optional bool visible = 10;
+  optional int32 visible = 10;
   optional string legalDoc = 11;
   optional string effectiveDate = 12;
   google.protobuf.FieldMask update_mask = 13;
@@ -102,7 +96,7 @@ message LayerResponse {
   int32 order = 7;
   int32 minZoom = 8;
   int32 maxZoom = 9;
-  bool visible = 10;
+  int32 visible = 10;
   string legalDoc = 11;
   optional string effectiveDate = 12;
   string createdAt = 14;

@@ -1,6 +1,6 @@
 package dto
 
-import "tqd/internal/domain"
+import qh_domain "tqd/internal/domain/qh"
 
 //	type ParcelDTO struct {
 //		ID       uint64  `json:"id"`
@@ -11,7 +11,7 @@ import "tqd/internal/domain"
 //		Longitude float64 `json:"longitude"`
 //	}
 type ParcelList struct {
-	Data []domain.Parcel `json:"data"`
+	Data []qh_domain.Parcel `json:"data"`
 }
 
 type ParcelResponse struct {

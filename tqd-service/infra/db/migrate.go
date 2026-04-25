@@ -2,7 +2,7 @@ package db
 
 import (
 	_db "common/db"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 )
 
 func AutoMigrate() {
@@ -22,7 +22,14 @@ func AutoMigrate() {
 		// &domain.DirectoryCategory{},
 		// &domain.DirectorySource{},
 		// &domain.DirectorySupplier{},
-		&domain.Parcel{},
-		&domain.Layer{},
+		&qh_domain.QHLabel{},
+		&qh_domain.QHLandType{},
+		&qh_domain.QHLayer{},
+		&qh_domain.QHParcelInfo{},
+		&qh_domain.QHParcelLabel{},
+		&qh_domain.Parcel{},
+		&qh_domain.QhRegionInfo{},
+		&qh_domain.Region{},
+		&qh_domain.QHShape{},
 	)
 }

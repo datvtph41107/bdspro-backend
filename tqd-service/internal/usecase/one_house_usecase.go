@@ -5,12 +5,12 @@ import (
 	"errors"
 	"regexp"
 
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
 )
 
 type OneHouseUsecase interface {
-	GetDetail(ctx context.Context, idOrUUID uint64) (*domain.OneHouse, error)
+	GetDetail(ctx context.Context, idOrUUID uint64) (*qh_domain.OneHouse, error)
 }
 
 type oneHouseUsecase struct {
@@ -27,7 +27,7 @@ func isUUID(s string) bool {
 	return uuidRegex.MatchString(s)
 }
 
-func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID uint64) (*domain.OneHouse, error) {
+func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID uint64) (*qh_domain.OneHouse, error) {
 	if idOrUUID == 0 {
 		return nil, errors.New("id or uuid is required")
 	}
