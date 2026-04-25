@@ -71,6 +71,8 @@ var wireSet = wire.NewSet(
 	tqd_infra_validator.NewLocationValidator,
 	tqd_map.NewMapManager,
 	tqd_infra_client.NewNotificationClient,
+	tqd_infra_postgres.NewNotificationRepository,
+	tqd_internal_usecase.NewNotificationUsecase,
 	tqd_infra_handler_grpc.NewOneHouseGrpcHandler,
 	tqd_infra_postgres.NewOneHouseRepo,
 	tqd_internal_usecase.NewOneHouseUsecase,
@@ -99,6 +101,15 @@ var wireSet = wire.NewSet(
 	tqd_infra_mapper.NewRegionMapper,
 	tqd_infra_postgres.NewRegionRepository,
 	tqd_internal_usecase.NewRegionUsecase,
+<<<<<<< Updated upstream
+=======
+	tqd_infra_handler_grpc.NewReportGrpcHandler,
+	tqd_infra_postgres.NewReportRepository,
+	tqd_internal_usecase.NewReportUsecase,
+	tqd_infra_handler_grpc.NewSubscriptionGrpcHandler,
+	tqd_infra_postgres.NewSubscriptionRepository,
+	tqd_internal_usecase.NewSubscriptionUsecase,
+>>>>>>> Stashed changes
 	tqd_infra_providers.NewTransactionProvider,
 	tqd_infra_client.NewUserClient,
 )

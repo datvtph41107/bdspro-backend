@@ -12,6 +12,10 @@ const (
 	SystemConfigParameter   ESystemConfigGroup = 40 // Upload file
 	SystemConfigPerformance ESystemConfigGroup = 50 // Email settings
 	SystemConfigContact     ESystemConfigGroup = 60 // Thông tin liên hệ
+
+	SystemConfigGroupDefault ESystemConfigGroup = 70 // Public config - không mã hóa
+	SystemConfigGroupSecret  ESystemConfigGroup = 80 // Secret config - mã hóa
+	SystemConfigGroupSystem  ESystemConfigGroup = 90 // System config - mã hóa theo key
 )
 
 var SystemComfigMap = map[string]ESystemConfigGroup{
@@ -21,6 +25,10 @@ var SystemComfigMap = map[string]ESystemConfigGroup{
 	"parameter":   SystemConfigParameter,
 	"performance": SystemConfigPerformance,
 	"contact":     SystemConfigContact,
+
+	"default": SystemConfigGroupDefault,
+	"secret":  SystemConfigGroupSecret,
+	"system":  SystemConfigGroupSystem,
 }
 
 // SystemConfigGroupEnumToKey map từ enum sang key string
@@ -31,6 +39,10 @@ var SystemConfigGroupEnumToKey = map[ESystemConfigGroup]string{
 	SystemConfigParameter:   "parameter",
 	SystemConfigPerformance: "performance",
 	SystemConfigContact:     "contact",
+
+	SystemConfigGroupDefault: "default",
+	SystemConfigGroupSecret:  "secret",
+	SystemConfigGroupSystem:  "system",
 }
 
 // SystemConfigGroupMap map từ enum sang tên tiếng Việt

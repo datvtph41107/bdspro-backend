@@ -24,4 +24,9 @@ type NotificationProvider interface {
 
 	// GetUnreadCount gets unread notification count for a user
 	GetUnreadCount(ctx context.Context, userID uint64) (int64, error)
+	SendWatchAlert(ctx context.Context, userID uint64, title string, message []string, targetID uint64, attachData []string) error
+	// Gửi thông báo khi báo cáo hoàn thành
+	SendReportReady(ctx context.Context, userID uint64, reportID uint64, fileURL string) error
+	// Gửi thông báo hệ thống
+	SendSystemNotification(ctx context.Context, userID uint64, title string, message []string) error
 }

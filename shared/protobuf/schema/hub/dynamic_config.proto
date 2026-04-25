@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DynamicConfig Service – quản lý cấu hình động (hot-reload)
+// Dùng cho map style, feature flags, UI config, ...
+// ─────────────────────────────────────────────────────────────────────────────
+
+message GetDynamicConfigRequest {
+  string name = 1;               // tên config, ví dụ "map-style-v2"
+  string ifNoneMatch = 2;      // etag hoặc version client đang có (optional)
+}
+
+message GetDynamicConfigResponse {
+  string name = 1;
+  string version = 2;            // version hiện tại (timestamp hoặc semver)
+  google.protobuf.Struct config = 3; // nội dung config dạng JSON object
+  string etag = 4;               // etag cho caching
+  bool fromCache = 5;           // đánh dấu có lấy từ cache không
+  bool fromFallback = 6;        // đánh dấu có dùng fallback không
+  string message = 7;            // thông báo phụ (nếu có)
+  string updatedAt = 8;
+}
+
+message CreateDynamicConfigRequest {
+  string name = 1;
+  string version = 2;            // optional, nếu không có sẽ tự sinh
+  google.protobuf.Struct config = 3;
+}
+
+message CreateDynamicConfigResponse {
+  bool success = 1;
+  string message = 2;
+  GetDynamicConfigResponse config = 3;
+}
+
+message UpdateDynamicConfigRequest {
+  string name = 1;
+  string version = 2;            // version cũ, để optimistic lock
+  google.protobuf.Struct config = 3;
+}
+
+message UpdateDynamicConfigResponse {
+  bool success = 1;
+  string message = 2;
+  GetDynamicConfigResponse config = 3;
+}
+
+message DeleteDynamicConfigRequest {
+  string name = 1;
+}
+
+message DeleteDynamicConfigResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListDynamicConfigRequest {
+    int32 page = 1;
+    int32 pageSize = 2;
+}
+
+message ListDynamicConfigResponse {
+    repeated GetDynamicConfigResponse configs = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 pageSize = 4;
+}
+
+service DynamicConfigService {
+    // Lấy config – public (hoặc có thể protected)
+    rpc GetDynamicConfig(GetDynamicConfigRequest) returns (GetDynamicConfigResponse) {
+        option (google.api.http) = {
+            get: "/v2/hub/dynamic/config/{name}"
+        };
+    }
+
+    // Tạo mới config (admin)
+    rpc CreateDynamicConfig(CreateDynamicConfigRequest) returns (CreateDynamicConfigResponse) {
+        option (google.api.http) = {
+            post: "/v2/hub/dynamic/config"
+            body: "*"
+        };
+    }
+
+    // Cập nhật config (admin)
+    rpc UpdateDynamicConfig(UpdateDynamicConfigRequest) returns (UpdateDynamicConfigResponse) {
+        option (google.api.http) = {
+            put: "/v2/hub/dynamic/config/{name}"
+            body: "*"
+        };
+    }
+
+    // Xóa config (admin)
+    rpc DeleteDynamicConfig(DeleteDynamicConfigRequest) returns (DeleteDynamicConfigResponse) {
+        option (google.api.http) = {
+            delete: "/v2/hub/dynamic/config/{name}"
+        };
+    }
+
+    // Liệt kê configs (admin)
+    rpc ListDynamicConfig(ListDynamicConfigRequest) returns (ListDynamicConfigResponse) {
+        option (google.api.http) = {
+            get: "/v2/hub/dynamic/configs"
+        };
+    }
+}

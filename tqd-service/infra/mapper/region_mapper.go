@@ -126,7 +126,7 @@ func (m *RegionMapper) ToCreateRegionDTO(req *tqdpb.CreateRegionRequest) *dto.Cr
 	}
 
 	if req.LayerId != nil {
-		layerID := uint(*req.LayerId)
+		layerID := uint64(*req.LayerId)
 		createReq.LayerID = &layerID
 	}
 
@@ -162,7 +162,7 @@ func (m *RegionMapper) ToUpdateRegionDTO(req *tqdpb.UpdateRegionRequest) *dto.Up
 		updateReq.Geometry = req.Geometry
 	}
 	if req.LayerId != nil {
-		layerID := uint(*req.LayerId)
+		layerID := uint64(*req.LayerId)
 		updateReq.LayerID = &layerID
 	}
 	if req.Properties != nil {
@@ -201,7 +201,7 @@ func (m *RegionMapper) ToListRegionDTO(req *tqdpb.ListRegionsRequest) *dto.ListR
 		listReq.Status = &s
 	}
 	if req.LayerId != nil {
-		id := uint(*req.LayerId)
+		id := uint64(*req.LayerId)
 		listReq.LayerID = &id
 	}
 	if req.Search != nil {
@@ -227,7 +227,7 @@ func (m *RegionMapper) ToImportGeoJSONDTO(req *tqdpb.ImportGeoJSONRequest) *dto.
 	}
 
 	if req.LayerId != nil {
-		layerID := uint(*req.LayerId)
+		layerID := uint64(*req.LayerId)
 		importReq.LayerID = &layerID
 	}
 
@@ -246,7 +246,7 @@ func (m *RegionMapper) ToIntersectionQueryDTO(req *tqdpb.GetRegionIntersectionsR
 	}
 
 	return &dto.IntersectionQueryRequest{
-		ID:     uint(req.Id),
+		ID:     uint64(req.Id),
 		Buffer: buffer,
 	}
 }
@@ -267,7 +267,7 @@ func (m *RegionMapper) ToPointQueryDTO(req *tqdpb.GetRegionByLocationRequest) *d
 		pointReq.Type = &t
 	}
 	if req.LayerId != nil && *req.LayerId > 0 {
-		id := uint(*req.LayerId)
+		id := uint64(*req.LayerId)
 		pointReq.LayerID = &id
 	}
 

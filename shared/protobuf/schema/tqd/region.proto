@@ -14,52 +14,52 @@ option go_package = "pb/types/tqd;tqdpb";
 service RegionService {
   rpc CreateRegion(CreateRegionRequest) returns (RegionResponse) {
     option (google.api.http) = {
-      post: "/v2/admin/regions"
+      post: "/v2/tqd/admin/regions"
       body: "*"
     };
   }
   
   rpc UpdateRegion(UpdateRegionRequest) returns (RegionResponse) {
     option (google.api.http) = {
-      put: "/v2/admin/regions/{id}"
+      put: "/v2/tqd/admin/regions/{id}"
       body: "*"
     };
   }
   
   rpc DeleteRegion(DeleteRegionRequest) returns (sharepb.Empty) {
     option (google.api.http) = {
-      delete: "/v2/admin/regions/{id}"
+      delete: "/v2/tqd/admin/regions/{id}"
     };
   }
   
   rpc GetRegion(GetRegionRequest) returns (RegionResponse) {
     option (google.api.http) = {
-      get: "/v2/admin/regions/{id}"
+      get: "/v2/tqd/admin/regions/{id}"
     };
   }
   
   rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
     option (google.api.http) = {
-      get: "/v2/admin/regions"
+      get: "/v2/tqd/admin/regions"
     };
   }
   
   rpc GetRegionByLocation(GetRegionByLocationRequest) returns (GetRegionByLocationResponse) {
     option (google.api.http) = {
-      get: "/v2/admin/regions/by-location"
+      get: "/v2/tqd/admin/regions/by-location"
     };
   }
   
   rpc ImportGeoJSON(ImportGeoJSONRequest) returns (ImportGeoJSONResponse) {
     option (google.api.http) = {
-      post: "/v2/admin/regions/import-geojson"
+      post: "/v2/tqd/admin/regions/import-geojson"
       body: "*"
     };
   }
   
   rpc GetRegionIntersections(GetRegionIntersectionsRequest) returns (GetRegionIntersectionsResponse) {
     option (google.api.http) = {
-      get: "/v2/admin/regions/{id}/intersections"
+      get: "/v2/tqd/admin/regions/{id}/intersections"
     };
   }
 }
@@ -72,7 +72,7 @@ message CreateRegionRequest {
   uint32 type = 4;
   uint32 status = 5;
   string geometry = 6;  // GeoJSON string
-  optional uint32 layerId = 7;
+  optional uint64 layerId = 7;
   google.protobuf.Struct properties = 8;
 }
 

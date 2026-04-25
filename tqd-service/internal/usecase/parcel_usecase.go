@@ -14,6 +14,8 @@ import (
 // ParcelUsecase defines business logic for POI
 type ParcelUsecase interface {
 	// CRUD operations
+	GetByIDs(ctx context.Context, ids []uint64) ([]domain.Parcel, error)
+
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	FindParcelsByPolygon(ctx context.Context, points []dto.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
@@ -24,13 +26,19 @@ type parcelUsecase struct {
 	repo repo.IParcelRepo
 }
 
-// NewParcelUsecase creates new POI usecase
 func NewParcelUsecase(
 	repo repo.IParcelRepo,
 ) ParcelUsecase {
 	return &parcelUsecase{
 		repo: repo,
 	}
+}
+
+func (u *parcelUsecase) GetByIDs(ctx context.Context, ids []uint64) ([]domain.Parcel, error) {
+	if len(ids) == 0 {
+		return []domain.Parcel{}, nil
+	}
+	return u.repo.GetByIDs(ctx, ids)
 }
 
 // Create implements ParcelUsecase.Create

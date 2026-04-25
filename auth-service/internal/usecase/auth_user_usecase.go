@@ -3200,16 +3200,20 @@ func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint
 func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, sessionId uint64, organizationId *uint64) (string, error) {
 	authMethod, err := s.AuthMethodRepo.FindByID(ctx, authId)
 	if err != nil {
+		log.Printf("GenerateAccessToken error - FindByID failed: %v", err)
 		return "", err
 	}
 
-	originID, err := s.CrmProvider.GetOriginID(ctx, authMethod.UserID)
+	var originID uint64
+	originID, err = s.CrmProvider.GetOriginID(ctx, authMethod.UserID)
 	if err != nil {
-		return "", err
+		log.Printf("Warning: Cannot get origin ID from CRM (service may be down), using 0: %v", err)
+		originID = 0
 	}
 
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
 	if err != nil {
+		log.Printf("GenerateAccessToken error - GetByProfileID failed: %v", err)
 		return "", err
 	}
 
@@ -3225,7 +3229,10 @@ func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, se
 		Type:           _jwt.AccessToken,
 	})
 	if err != nil {
+		log.Printf("GenerateAccessToken error - GenerateToken failed: %v", err)
 		return "", err
 	}
+
+	log.Printf("GenerateAccessToken success: authId=%d, originID=%d", authId, originID)
 	return accessToken, nil
 }

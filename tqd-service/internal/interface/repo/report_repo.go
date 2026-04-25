@@ -1,0 +1,18 @@
+package repo
+
+import (
+	"context"
+	"tqd/internal/domain"
+)
+
+type ReportRepository interface {
+	Create(ctx context.Context, report *domain.Report) error
+	Update(ctx context.Context, report *domain.Report) error
+	UpdateStatus(ctx context.Context, id uint64, status uint32, errorMsg *string) error
+	UpdateFileInfo(ctx context.Context, id uint64, fileURL *string, fileSize *int64, fileHash *string, completedAt *string) error
+	GetByID(ctx context.Context, id uint64) (*domain.Report, error)
+	ListByUser(ctx context.Context, userID uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error)
+	AdminList(ctx context.Context, userID *uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error)
+	Delete(ctx context.Context, id uint64) error
+	DeleteExpired(ctx context.Context) error
+}

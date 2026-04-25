@@ -1,7 +1,10 @@
+// internal/infra/postgres/parcel_postgres.go
+
 package postgres
 
 import (
-	"context"
+	"context" // THÊM IMPORT
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -23,38 +26,56 @@ func NewParcelPostgres(db *gorm.DB) repo.IParcelRepo {
 func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error {
 	const batchSize = 500
 
-	return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for i := 0; i < len(parcels); i += batchSize {
-			end := i + batchSize
-			if end > len(parcels) {
-				end = len(parcels)
-			}
+	query := `
+		SELECT 
+			id,
+			ST_AsGeoJSON(geometry) as geometry,
+			lat,
+			lon,
+			ref_id,
+			ref_type,
+			created_at,
+			updated_at
+		FROM parcels
+		WHERE id = ? AND deleted_at IS NULL
+	`
 
-			var values []string
-			var args []interface{}
+	err := r.DB.WithContext(ctx).Raw(query, id).Scan(&parcel).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &parcel, err
+}
 
-			for _, parcel := range parcels[i:end] {
-				values = append(values, `(ST_SetSRID(ST_GeomFromGeoJSON(?),4326), ?, ?, ?, ?)`)
+func (r *ParcelPostgres) GetByIDs(ctx context.Context, ids []uint64) ([]domain.Parcel, error) {
+	var parcels []domain.Parcel
+	if len(ids) == 0 {
+		return parcels, nil
+	}
 
-				args = append(args,
-					parcel.Geometry,
-					parcel.Lat,
-					parcel.Lng,
-					parcel.RefID,
-					parcel.RefType,
-				)
-			}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
 
-			query := `
-				INSERT INTO parcels (geometry, lat, lon, ref_id, ref_type)
-				VALUES ` + strings.Join(values, ",")
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			ST_AsGeoJSON(geometry) as geometry,
+			lat,
+			lon,
+			ref_id,
+			ref_type,
+			created_at,
+			updated_at
+		FROM parcels
+		WHERE id IN (%s) AND deleted_at IS NULL
+	`, strings.Join(placeholders, ","))
 
-			if err := tx.Exec(query, args...).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	err := r.DB.WithContext(ctx).Raw(query, args...).Scan(&parcels).Error
+	return parcels, err
 }
 
 func (p *ParcelPostgres) FindByLocation(
@@ -72,12 +93,15 @@ func (p *ParcelPostgres) FindByLocation(
 				lat,
 				lon,
 				ref_id,
-				ref_type
+				ref_type,
+				created_at,
+				updated_at
 			FROM parcels
 			WHERE ST_Intersects(
 				geometry,
 				ST_SetSRID(ST_Point(?, ?), 4326)
 			)
+			AND deleted_at IS NULL
 			LIMIT 1
 		`, lng, lat).
 		Scan(&parcel).Error
@@ -87,27 +111,6 @@ func (p *ParcelPostgres) FindByLocation(
 	}
 
 	return &parcel, nil
-}
-
-func computeBBox(points []dto.Point) (minLon, minLat, maxLon, maxLat float64) {
-	minLon, minLat = points[0].Lng, points[0].Lat
-	maxLon, maxLat = points[0].Lng, points[0].Lat
-
-	for _, p := range points {
-		if p.Lng < minLon {
-			minLon = p.Lng
-		}
-		if p.Lng > maxLon {
-			maxLon = p.Lng
-		}
-		if p.Lat < minLat {
-			minLat = p.Lat
-		}
-		if p.Lat > maxLat {
-			maxLat = p.Lat
-		}
-	}
-	return
 }
 
 func (p *ParcelPostgres) FindIntersectPolygon(
@@ -134,6 +137,7 @@ func (p *ParcelPostgres) FindIntersectPolygon(
 		WHERE 
 			p.geometry && poly.geom
 			AND ST_Intersects(p.geometry, poly.geom)
+			AND p.deleted_at IS NULL
 	`
 
 	if err := p.DB.WithContext(ctx).
@@ -163,6 +167,7 @@ func (p *ParcelPostgres) FindIntersectPolygon(
 		WHERE 
 			p.geometry && poly.geom
 			AND ST_Intersects(p.geometry, poly.geom)
+			AND p.deleted_at IS NULL
 		ORDER BY p.id
 		LIMIT ? OFFSET ?
 	`
@@ -195,6 +200,7 @@ func (p *ParcelPostgres) FindWithinPolygon(
 		SELECT COUNT(*)
 		FROM parcels p, poly
 		WHERE ST_Contains(poly.geom, p.geometry)
+			AND p.deleted_at IS NULL
 	`
 
 	if err := p.DB.WithContext(ctx).
@@ -218,6 +224,7 @@ func (p *ParcelPostgres) FindWithinPolygon(
 			p.updated_at
 		FROM parcels p, poly
 		WHERE ST_Contains(poly.geom, p.geometry)
+			AND p.deleted_at IS NULL
 		ORDER BY p.id
 		LIMIT ? OFFSET ?
 	`
@@ -229,6 +236,44 @@ func (p *ParcelPostgres) FindWithinPolygon(
 	return parcels, total, err
 }
 
+func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []domain.Parcel) error {
+	const batchSize = 500
+
+	return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for i := 0; i < len(parcels); i += batchSize {
+			end := i + batchSize
+			if end > len(parcels) {
+				end = len(parcels)
+			}
+
+			var values []string
+			var args []interface{}
+
+			for _, parcel := range parcels[i:end] {
+				values = append(values, `(ST_SetSRID(ST_GeomFromGeoJSON(?),4326), ?, ?, ?, ?)`)
+
+				args = append(args,
+					parcel.Geometry.Raw, // Raw GeoJSON string (chưa encode)
+					parcel.Lat,
+					parcel.Lng,
+					parcel.RefID,
+					parcel.RefType,
+				)
+			}
+
+			query := `
+				INSERT INTO parcels (geometry, lat, lon, ref_id, ref_type)
+				VALUES ` + strings.Join(values, ",")
+
+			if err := tx.Exec(query, args...).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// buildPolygonWKT giữ nguyên
 func buildPolygonWKT(points []dto.Point) string {
 	var sb strings.Builder
 	sb.Grow(len(points) * 32)

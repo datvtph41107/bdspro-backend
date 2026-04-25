@@ -14,7 +14,7 @@ type CreateRegionRequest struct {
 	Description string                 `json:"description"`
 	Type        uint32                 `json:"type" binding:"required,min=1,max=4"`
 	Status      uint32                 `json:"status" binding:"required,min=10,max=30"`
-	LayerID     *uint                  `json:"layer_id"`
+	LayerID     *uint64                `json:"layer_id"`
 	Properties  map[string]interface{} `json:"properties"`
 
 	// Geometry inputs
@@ -31,7 +31,7 @@ type CreateRegionRequest struct {
 	CenterLat float64       `json:"center_lat"`
 	CenterLng float64       `json:"center_lng"`
 	Radius    float64       `json:"radius"`
-	SourceID  uint          `json:"source_id"`
+	SourceID  uint64        `json:"source_id"`
 	Distance  float64       `json:"distance"`
 	Segments  int           `json:"segments"`
 }
@@ -42,7 +42,7 @@ type UpdateRegionRequest struct {
 	Description *string                `json:"description"`
 	Type        *uint32                `json:"type"`
 	Status      *uint32                `json:"status"`
-	LayerID     *uint                  `json:"layer_id"`
+	LayerID     *uint64                `json:"layer_id"`
 	Properties  map[string]interface{} `json:"properties"`
 	Geometry    *string                `json:"geometry"`
 }
@@ -50,7 +50,7 @@ type UpdateRegionRequest struct {
 type ListRegionRequest struct {
 	Type    *uint32 `form:"type"`
 	Status  *uint32 `form:"status"`
-	LayerID *uint   `form:"layer_id"`
+	LayerID *uint64 `form:"layer_id"`
 	Search  *string `form:"search"`
 	Page    int     `form:"page"`
 	Limit   int     `form:"limit"`
@@ -60,7 +60,7 @@ type PointQueryRequest struct {
 	Lat     float64  `form:"lat" binding:"required"`
 	Lng     float64  `form:"lng" binding:"required"`
 	Type    *uint32  `form:"type"`
-	LayerID *uint    `form:"layer_id"`
+	LayerID *uint64  `form:"layer_id"`
 	Buffer  *float64 `form:"buffer"`
 }
 
@@ -70,26 +70,26 @@ type BBoxQueryRequest struct {
 	MaxX    float64 `form:"max_x" binding:"required"`
 	MaxY    float64 `form:"max_y" binding:"required"`
 	Type    *uint32 `form:"type"`
-	LayerID *uint   `form:"layer_id"`
+	LayerID *uint64 `form:"layer_id"`
 }
 
 type IntersectionQueryRequest struct {
-	ID     uint    `uri:"id" binding:"required"`
+	ID     uint64  `uri:"id" binding:"required"`
 	Buffer float64 `form:"buffer"`
 }
 
 type ImportGeoJSONRequest struct {
-	Name        string `json:"name" binding:"required"`
-	DisplayName string `json:"display_name" binding:"required"`
-	Description string `json:"description"`
-	Type        uint32 `json:"type" binding:"required,min=1,max=4"`
-	Status      uint32 `json:"status" binding:"required,min=10,max=30"`
-	LayerID     *uint  `json:"layer_id"`
-	GeoJSON     string `json:"geo_json" binding:"required"`
+	Name        string  `json:"name" binding:"required"`
+	DisplayName string  `json:"display_name" binding:"required"`
+	Description string  `json:"description"`
+	Type        uint32  `json:"type" binding:"required,min=1,max=4"`
+	Status      uint32  `json:"status" binding:"required,min=10,max=30"`
+	LayerID     *uint64 `json:"layer_id"`
+	GeoJSON     string  `json:"geo_json" binding:"required"`
 }
 
 type RegionResponse struct {
-	ID          uint                   `json:"id"`
+	ID          uint64                 `json:"id"`
 	Name        string                 `json:"name"`
 	DisplayName string                 `json:"display_name"`
 	Description string                 `json:"description"`
@@ -102,7 +102,7 @@ type RegionResponse struct {
 	BBox        string                 `json:"bbox"`
 	Area        float64                `json:"area"`
 	Length      float64                `json:"length"`
-	LayerID     *uint                  `json:"layer_id"`
+	LayerID     *uint64                `json:"layer_id"`
 	Properties  map[string]interface{} `json:"properties"`
 	CreatedAt   string                 `json:"created_at"`
 	UpdatedAt   string                 `json:"updated_at"`

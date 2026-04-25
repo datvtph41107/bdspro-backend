@@ -1,108 +1,64 @@
-// internal/enums/layer_enums.go
 package enums
 
-// LayerStatus trạng thái lớp bản đồ (uint32)
-type LayerStatus uint32
-
-const (
-	LayerStatusActive   LayerStatus = 10 // Hoạt động
-	LayerStatusInactive LayerStatus = 20 // Không hoạt động
-	LayerStatusDeleted  LayerStatus = 30 // Đã xóa
-)
-
-// String trả về tên status
-func (s LayerStatus) String() string {
-	switch s {
-	case LayerStatusActive:
-		return "active"
-	case LayerStatusInactive:
-		return "inactive"
-	case LayerStatusDeleted:
-		return "deleted"
-	default:
-		return "unknown"
-	}
-}
-
-// IsValid kiểm tra status hợp lệ
-func (s LayerStatus) IsValid() bool {
-	switch s {
-	case LayerStatusActive, LayerStatusInactive, LayerStatusDeleted:
-		return true
-	default:
-		return false
-	}
-}
-
-// Value trả về giá trị uint32
-func (s LayerStatus) Value() uint32 {
-	return uint32(s)
-}
-
-// LayerType loại dữ liệu bản đồ (uint32)
+// LayerType - Loại layer (1-5)
 type LayerType uint32
 
 const (
-	LayerTypeVector LayerType = 1 // Vector data
-	LayerTypeRaster LayerType = 2 // Raster data
-	LayerTypeWMS    LayerType = 3 // WMS service
-	LayerTypeWMTS   LayerType = 4 // WMTS service
-	LayerTypeTMS    LayerType = 5 // TMS service
-	LayerTypeXYZ    LayerType = 6 // XYZ tiles
+	LayerTypeMasterPlan     LayerType = 1 // Quy hoạch tổng thể
+	LayerTypeZoning         LayerType = 2 // Quy hoạch phân khu
+	LayerTypeLandUse        LayerType = 3 // Quy hoạch sử dụng đất
+	LayerTypeInfrastructure LayerType = 4 // Quy hoạch hạ tầng
+	LayerTypeEnvironmental  LayerType = 5 // Quy hoạch môi trường
 )
 
-// String trả về tên type
+func (t LayerType) IsValid() bool {
+	return t >= 1 && t <= 5
+}
+
 func (t LayerType) String() string {
 	switch t {
-	case LayerTypeVector:
-		return "vector"
-	case LayerTypeRaster:
-		return "raster"
-	case LayerTypeWMS:
-		return "wms"
-	case LayerTypeWMTS:
-		return "wmts"
-	case LayerTypeTMS:
-		return "tms"
-	case LayerTypeXYZ:
-		return "xyz"
-	default:
-		return "unknown"
+	case LayerTypeMasterPlan:
+		return "master_plan"
+	case LayerTypeZoning:
+		return "zoning"
+	case LayerTypeLandUse:
+		return "land_use"
+	case LayerTypeInfrastructure:
+		return "infrastructure"
+	case LayerTypeEnvironmental:
+		return "environmental"
 	}
+	return "unknown"
 }
 
-// IsValid kiểm tra type hợp lệ
-func (t LayerType) IsValid() bool {
-	switch t {
-	case LayerTypeVector, LayerTypeRaster, LayerTypeWMS, LayerTypeWMTS, LayerTypeTMS, LayerTypeXYZ:
-		return true
-	default:
-		return false
-	}
+// LayerStatus - Trạng thái layer (1,10,20,30)
+type LayerStatus uint32
+
+const (
+	LayerStatusDraft    LayerStatus = 1  // Bản nháp (chỉ admin thấy)
+	LayerStatusActive   LayerStatus = 10 // Đang hiệu lực (client thấy)
+	LayerStatusExpired  LayerStatus = 20 // Hết hiệu lực
+	LayerStatusArchived LayerStatus = 30 // Đã lưu trữ
+)
+
+func (s LayerStatus) IsValid() bool {
+	return s == 1 || s == 10 || s == 20 || s == 30
 }
 
-// Value trả về giá trị uint32
-func (t LayerType) Value() uint32 {
-	return uint32(t)
+func (s LayerStatus) IsClientVisible() bool {
+	return s == LayerStatusActive
 }
 
-// FromString chuyển từ string sang enum
-func (t *LayerType) FromString(str string) bool {
-	switch str {
-	case "vector":
-		*t = LayerTypeVector
-	case "raster":
-		*t = LayerTypeRaster
-	case "wms":
-		*t = LayerTypeWMS
-	case "wmts":
-		*t = LayerTypeWMTS
-	case "tms":
-		*t = LayerTypeTMS
-	case "xyz":
-		*t = LayerTypeXYZ
-	default:
-		return false
+func (s LayerStatus) String() string {
+	switch s {
+	case LayerStatusDraft:
+		return "draft"
+	case LayerStatusActive:
+		return "active"
+	case LayerStatusExpired:
+		return "expired"
+	case LayerStatusArchived:
+		return "archived"
 	}
-	return true
+	return "unknown"
 }

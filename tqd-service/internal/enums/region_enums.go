@@ -7,6 +7,10 @@ const (
 	RegionTypePlanning RegionType = 2
 	RegionTypeBoundary RegionType = 3
 	RegionTypeZone     RegionType = 4
+	RegionTypeCustom   RegionType = 5
+	RegionTypeProvince RegionType = 6
+	RegionTypeDistrict RegionType = 7
+	RegionTypeWard     RegionType = 8
 )
 
 func (r RegionType) String() string {

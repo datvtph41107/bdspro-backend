@@ -8,7 +8,7 @@ import (
 )
 
 type Region struct {
-	ID          uint               `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID          uint64             `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name        string             `gorm:"type:varchar(255);not null;uniqueIndex:idx_region_name" json:"name"`
 	DisplayName string             `gorm:"type:varchar(255);not null" json:"display_name"`
 	Description string             `gorm:"type:text" json:"description"`
@@ -19,7 +19,7 @@ type Region struct {
 	BBox        string             `gorm:"type:text" json:"bbox"`
 	Area        float64            `gorm:"type:float" json:"area"`
 	Length      float64            `gorm:"type:float" json:"length"`
-	LayerID     *uint              `gorm:"index" json:"layer_id,omitempty"`
+	LayerID     *uint64            `gorm:"index" json:"layer_id,omitempty"`
 	Properties  JSONMap            `gorm:"type:jsonb" json:"properties"`
 	CreatedAt   time.Time          `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time          `gorm:"autoUpdateTime" json:"updated_at"`

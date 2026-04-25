@@ -148,6 +148,8 @@ func runGRPCServer() error {
 	tqdpb.RegisterOneHouseServiceServer(s, app.OneHouseGrpcHandler)
 	tqdpb.RegisterLayerServiceServer(s, app.LayerGrpcHandler)
 	tqdpb.RegisterRegionServiceServer(s, app.RegionGrpcHandler)
+	tqdpb.RegisterReportServiceServer(s, app.ReportGrpcHandler)
+	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
 
 	reflection.Register(s)
 

@@ -22,6 +22,15 @@ func NewRegionRepository(db *gorm.DB) repo.RegionRepository {
 	return &regionRepoImpl{db: db}
 }
 
+func (r *regionRepoImpl) GetByIDs(ctx context.Context, ids []uint64) ([]domain.Region, error) {
+	var regions []domain.Region
+	if len(ids) == 0 {
+		return regions, nil
+	}
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&regions).Error
+	return regions, err
+}
+
 func (r *regionRepoImpl) Create(ctx context.Context, region *domain.Region) error {
 	var geom map[string]interface{}
 	if err := json.Unmarshal([]byte(region.Geometry), &geom); err == nil {
@@ -38,11 +47,11 @@ func (r *regionRepoImpl) Update(ctx context.Context, region *domain.Region) erro
 	return r.db.WithContext(ctx).Save(region).Error
 }
 
-func (r *regionRepoImpl) Delete(ctx context.Context, id uint) error {
+func (r *regionRepoImpl) Delete(ctx context.Context, id uint64) error {
 	return r.db.WithContext(ctx).Delete(&domain.Region{}, id).Error
 }
 
-func (r *regionRepoImpl) GetByID(ctx context.Context, id uint) (*domain.Region, error) {
+func (r *regionRepoImpl) GetByID(ctx context.Context, id uint64) (*domain.Region, error) {
 	var region domain.Region
 	err := r.db.WithContext(ctx).First(&region, id).Error
 	if err != nil {
@@ -92,7 +101,7 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	return regions, total, err
 }
 
-func (r *regionRepoImpl) GetByPoint(ctx context.Context, lat, lng float64, bufferMeters float64, regionType *uint32, layerID *uint) ([]domain.Region, error) {
+func (r *regionRepoImpl) GetByPoint(ctx context.Context, lat, lng float64, bufferMeters float64, regionType *uint32, layerID *uint64) ([]domain.Region, error) {
 	var allRegions []domain.Region
 	query := r.db.WithContext(ctx).Model(&domain.Region{})
 	if regionType != nil && *regionType > 0 {
@@ -118,11 +127,11 @@ func (r *regionRepoImpl) GetByPoint(ctx context.Context, lat, lng float64, buffe
 	return result, nil
 }
 
-func (r *regionRepoImpl) GetByLocation(ctx context.Context, lat, lng float64, regionType *uint32, layerID *uint) ([]domain.Region, error) {
+func (r *regionRepoImpl) GetByLocation(ctx context.Context, lat, lng float64, regionType *uint32, layerID *uint64) ([]domain.Region, error) {
 	return r.GetByPoint(ctx, lat, lng, 0, regionType, layerID)
 }
 
-func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint) ([]domain.Region, error) {
+func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]domain.Region, error) {
 	var allRegions []domain.Region
 	query := r.db.WithContext(ctx).Model(&domain.Region{})
 	if regionType != nil && *regionType > 0 {
@@ -148,7 +157,7 @@ func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY f
 	return result, nil
 }
 
-func (r *regionRepoImpl) GetIntersections(ctx context.Context, id uint, bufferMeters float64) ([]domain.Region, error) {
+func (r *regionRepoImpl) GetIntersections(ctx context.Context, id uint64, bufferMeters float64) ([]domain.Region, error) {
 	sourceRegion, err := r.GetByID(ctx, id)
 	if err != nil || sourceRegion == nil {
 		return nil, err
@@ -172,7 +181,7 @@ func (r *regionRepoImpl) GetIntersections(ctx context.Context, id uint, bufferMe
 	return intersections, nil
 }
 
-func (r *regionRepoImpl) GetBufferGeometry(ctx context.Context, sourceID uint, distanceMeters float64) (string, error) {
+func (r *regionRepoImpl) GetBufferGeometry(ctx context.Context, sourceID uint64, distanceMeters float64) (string, error) {
 	sourceRegion, err := r.GetByID(ctx, sourceID)
 	if err != nil || sourceRegion == nil {
 		return "", errors.New("source region not found")

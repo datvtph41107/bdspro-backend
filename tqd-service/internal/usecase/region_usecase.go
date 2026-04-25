@@ -16,16 +16,16 @@ import (
 
 type RegionUsecase interface {
 	Create(ctx context.Context, req *dto.CreateRegionRequest) (*domain.Region, error)
-	Update(ctx context.Context, id uint, req *dto.UpdateRegionRequest) (*domain.Region, error)
-	Delete(ctx context.Context, id uint) error
-	GetByID(ctx context.Context, id uint) (*dto.RegionResponse, error)
+	Update(ctx context.Context, id uint64, req *dto.UpdateRegionRequest) (*domain.Region, error)
+	Delete(ctx context.Context, id uint64) error
+	GetByID(ctx context.Context, id uint64) (*dto.RegionResponse, error)
 	List(ctx context.Context, req *dto.ListRegionRequest) (*dto.ListRegionResponse, error)
-	GetByLocation(ctx context.Context, lat, lng float64, regionType *enums.RegionType, layerID *uint) ([]domain.Region, error)
+	GetByLocation(ctx context.Context, lat, lng float64, regionType *enums.RegionType, layerID *uint64) ([]domain.Region, error)
 	GetByPoint(ctx context.Context, req *dto.PointQueryRequest) ([]dto.RegionResponse, error)
 	GetByBBox(ctx context.Context, req *dto.BBoxQueryRequest) ([]dto.RegionResponse, error)
 	GetIntersections(ctx context.Context, req *dto.IntersectionQueryRequest) ([]dto.RegionResponse, error)
 	ImportGeoJSON(ctx context.Context, req *dto.ImportGeoJSONRequest) (*dto.ImportGeoJSONResponse, error)
-	CreateBuffer(ctx context.Context, sourceID uint, distanceMeters float64, name, displayName string, regionType uint32, status uint32, layerID *uint) (*domain.Region, error)
+	CreateBuffer(ctx context.Context, sourceID uint64, distanceMeters float64, name, displayName string, regionType uint32, status uint32, layerID *uint64) (*domain.Region, error)
 }
 
 type regionUsecaseImpl struct {
@@ -96,7 +96,7 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, req *dto.CreateRegionReq
 	return region, nil
 }
 
-func (u *regionUsecaseImpl) Update(ctx context.Context, id uint, req *dto.UpdateRegionRequest) (*domain.Region, error) {
+func (u *regionUsecaseImpl) Update(ctx context.Context, id uint64, req *dto.UpdateRegionRequest) (*domain.Region, error) {
 	existing, err := u.regionRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, id uint, req *dto.Update
 	return existing, nil
 }
 
-func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint) error {
+func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 	existing, err := u.regionRepo.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint) error {
 	return u.regionRepo.Delete(ctx, id)
 }
 
-func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint) (*dto.RegionResponse, error) {
+func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*dto.RegionResponse, error) {
 	region, err := u.regionRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (u *regionUsecaseImpl) List(ctx context.Context, req *dto.ListRegionRequest
 	return resp, nil
 }
 
-func (u *regionUsecaseImpl) GetByLocation(ctx context.Context, lat, lng float64, regionType *enums.RegionType, layerID *uint) ([]domain.Region, error) {
+func (u *regionUsecaseImpl) GetByLocation(ctx context.Context, lat, lng float64, regionType *enums.RegionType, layerID *uint64) ([]domain.Region, error) {
 	var typePtr *uint32
 	if regionType != nil {
 		t := uint32(*regionType)
@@ -314,7 +314,7 @@ func (u *regionUsecaseImpl) ImportGeoJSON(ctx context.Context, req *dto.ImportGe
 	}, nil
 }
 
-func (u *regionUsecaseImpl) CreateBuffer(ctx context.Context, sourceID uint, distanceMeters float64, name, displayName string, regionType uint32, status uint32, layerID *uint) (*domain.Region, error) {
+func (u *regionUsecaseImpl) CreateBuffer(ctx context.Context, sourceID uint64, distanceMeters float64, name, displayName string, regionType uint32, status uint32, layerID *uint64) (*domain.Region, error) {
 	bufferGeoJSON, err := u.regionRepo.GetBufferGeometry(ctx, sourceID, distanceMeters)
 	if err != nil {
 		return nil, err

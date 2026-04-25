@@ -60,7 +60,7 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 	// Convert to DTO using mapper
 	updateReq := h.regionMapper.ToUpdateRegionDTO(req)
 
-	region, err := h.regionUsecase.Update(ctx, uint(req.Id), updateReq)
+	region, err := h.regionUsecase.Update(ctx, uint64(req.Id), updateReq)
 	if err != nil {
 		return nil, _errors.ReturnError(500, err.Error())
 	}
@@ -73,7 +73,7 @@ func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteR
 		return nil, _errors.ReturnError(400, "id is required")
 	}
 
-	if err := h.regionUsecase.Delete(ctx, uint(req.Id)); err != nil {
+	if err := h.regionUsecase.Delete(ctx, uint64(req.Id)); err != nil {
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 	return &sharepb.Empty{}, nil
@@ -84,7 +84,7 @@ func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionR
 		return nil, _errors.ReturnError(400, "id is required")
 	}
 
-	region, err := h.regionUsecase.GetByID(ctx, uint(req.Id))
+	region, err := h.regionUsecase.GetByID(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, _errors.ReturnError(404, err.Error())
 	}
@@ -119,9 +119,9 @@ func (h *RegionGrpcHandler) GetRegionByLocation(ctx context.Context, req *tqdpb.
 		regionType = &t
 	}
 
-	var layerID *uint
+	var layerID *uint64
 	if req.LayerId != nil && *req.LayerId > 0 {
-		id := uint(*req.LayerId)
+		id := uint64(*req.LayerId)
 		layerID = &id
 	}
 
