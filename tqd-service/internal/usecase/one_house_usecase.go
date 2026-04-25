@@ -10,7 +10,7 @@ import (
 )
 
 type OneHouseUsecase interface {
-	GetDetail(ctx context.Context, idOrUUID string) (*domain.OneHouse, error)
+	GetDetail(ctx context.Context, idOrUUID uint64) (*domain.OneHouse, error)
 }
 
 type oneHouseUsecase struct {
@@ -27,30 +27,30 @@ func isUUID(s string) bool {
 	return uuidRegex.MatchString(s)
 }
 
-func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID string) (*domain.OneHouse, error) {
-	if idOrUUID == "" {
+func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID uint64) (*domain.OneHouse, error) {
+	if idOrUUID == 0 {
 		return nil, errors.New("id or uuid is required")
 	}
 
 	// Ưu tiên tìm theo property_uuid nếu đầu vào có dạng UUID
-	if isUUID(idOrUUID) {
-		oh, err := u.oneHouseRepo.GetByPropertyUUID(ctx, idOrUUID)
-		if err != nil {
-			return nil, err
-		}
-		if oh != nil {
-			return oh, nil
-		}
-		// Nếu không tìm thấy theo UUID, fallback tìm theo id (text)
-		oh, err = u.oneHouseRepo.GetByID(ctx, idOrUUID)
-		if err != nil {
-			return nil, err
-		}
-		if oh != nil {
-			return oh, nil
-		}
-		return nil, errors.New("one_house not found")
-	}
+	// if isUUID(idOrUUID) {
+	// 	oh, err := u.oneHouseRepo.GetByPropertyUUID(ctx, idOrUUID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if oh != nil {
+	// 		return oh, nil
+	// 	}
+	// 	// Nếu không tìm thấy theo UUID, fallback tìm theo id (text)
+	// 	oh, err = u.oneHouseRepo.GetByID(ctx, idOrUUID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if oh != nil {
+	// 		return oh, nil
+	// 	}
+	// 	return nil, errors.New("one_house not found")
+	// }
 
 	// Nếu không phải UUID, chỉ tìm theo id (text)
 	oh, err := u.oneHouseRepo.GetByID(ctx, idOrUUID)

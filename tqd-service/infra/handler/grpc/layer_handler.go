@@ -9,7 +9,7 @@ import (
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 	"tqd/internal/usecase"
 )
@@ -54,7 +54,7 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 	}
 
 	// Tạo domain object
-	layerDomain := &domain.Layer{
+	layerDomain := &qh_domain.QHLayer{
 		Name:         req.Name,
 		DisplayName:  req.DisplayName,
 		Type:         layerType,
@@ -97,7 +97,7 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 
 	// Convert to domain
-	layerDomain := &domain.Layer{
+	layerDomain := &qh_domain.QHLayer{
 		ID: uint(req.Id),
 	}
 

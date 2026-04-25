@@ -20,7 +20,7 @@ func NewOneHouseRepo(db *gorm.DB) repo.OneHouseRepo {
 	return &oneHouseRepo{db: db}
 }
 
-func (r *oneHouseRepo) GetByID(ctx context.Context, id string) (*domain.OneHouse, error) {
+func (r *oneHouseRepo) GetByID(ctx context.Context, id uint64) (*domain.OneHouse, error) {
 	var result domain.OneHouse
 	query := `
 		SELECT 

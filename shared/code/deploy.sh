@@ -30,6 +30,26 @@ fi
 
 cd ../..
 
+if [ "$1" = "nginx" ]; then
+ssh ${REMOTE_USER}@${REMOTE_HOST} "
+mkdir -p ${REMOTE_PATH}/nginx
+"
+cd nginx
+ scp -r conf ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/nginx/conf
+ 
+ ssh ${REMOTE_USER}@${REMOTE_HOST} "
+ mkdir -p ${REMOTE_PATH}
+cd ${REMOTE_PATH}
+docker stop nginx
+docker rm nginx
+docker compose up -d --build nginx
+"
+ exit 0
+fi
+
+if [ "$1" = "certbot" ]; then
+ exit 0
+fi
 # if [ "$1" = "pmtiles" ]; then
 #   echo "đẩy pmtiles file lên server..." $REMOTE_PATH
 #   ssh ${REMOTE_USER}@${REMOTE_HOST} "

@@ -53,6 +53,7 @@ var publicRoutes = []string{
 	"/v1/map/layer",
 	"/v1/map/config",
 	"/v1/map/mid",
+	"/v1/map/fonts",
 }
 
 type ConfigApp struct {
@@ -290,6 +291,36 @@ func main() {
 		c.File(fullPath)
 	})
 
+	r.GET("/v1/map/fonts/:fontstack/:range", func(c *gin.Context) {
+
+		fontstack := c.Param("fontstack")
+		rangeFile := c.Param("range")
+
+		if fontstack == "" || rangeFile == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid params"})
+			return
+		}
+
+		// sanitize basic
+		if strings.Contains(fontstack, "..") || strings.Contains(fontstack, "\\") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid fontstack"})
+			return
+		}
+
+		// path: ./files/public/fonts/{fontstack}/{range}.pbf
+		fullPath := filepath.Join(".", "files", "public", "fonts", fontstack, rangeFile)
+
+		if _, err := os.Stat(fullPath); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "font not found"})
+			return
+		}
+
+		c.Header("Content-Type", "application/x-protobuf")
+		c.Header("Cache-Control", "public, max-age=86400")
+
+		c.File(fullPath)
+	})
+
 	// Mid tile map: /public/map/mid/:layer/:z/:x/:y
 	// Cache files at: ./files/public/map/mid/<layer>/<z>/<x>/<y>.(png|jpg|webp|pbf)
 	// If missing, call download API (query `download`) to fetch then cache.
@@ -377,16 +408,19 @@ func main() {
 		}
 
 		layerName := "HT_TOANQUOC"
+		ext := "pbf"
 		if layer == "vn_v1" {
 			layerName = "vietnam-latest-v28"
 		} else if layer == "KHSDD_HANOI" {
 			layerName = "KHSDD_HANOI"
 		} else if layer == "QHSDD_HANOI" {
 			layerName = "QHSDD_HANOI"
+		} else if layer == "qh_sdd" {
+			layerName = "qh_sdd"
 		}
 		// -----------------------------
 
-		download := "https://mapv3.meeymap.com/data/" + layerName + "/{z}/{x}/{y}.pbf"
+		download := "https://mapv3.meeymap.com/data/" + layerName + "/{z}/{x}/{y}." + ext
 		if download == "" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "tile not found"})
 			return

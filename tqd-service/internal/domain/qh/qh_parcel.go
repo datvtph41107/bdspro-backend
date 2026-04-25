@@ -1,4 +1,4 @@
-package domain
+package qh_domain
 
 import (
 	"bytes"

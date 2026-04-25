@@ -8,14 +8,12 @@ option go_package = "pb/types/tqd;tqdpb";
 
 service OneHouseService {
   rpc GetOneHouseDetail(GetOneHouseDetailRequest) returns (OneHouse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/properties/{id}"
-    };
+    option (google.api.http) = {get: "/v2/tqd/properties/{id}"};
   }
 }
 
 message GetOneHouseDetailRequest {
-  string id = 1;               // id dạng text, có thể là "2" hoặc property_uuid
+  uint64 id = 1; // id dạng text, có thể là "2" hoặc property_uuid
 }
 
 message Meta {
@@ -61,7 +59,7 @@ message PlanningInfo {
 }
 
 message Geometry {
-  repeated MultiPolygon multiPolygon = 1;  
+  repeated MultiPolygon multiPolygon = 1;
 }
 
 message MultiPolygon {
@@ -72,11 +70,11 @@ message Polygon {
   repeated LineString rings = 1;
 }
 
-message LineString {
-  repeated PointTile points = 1;
-}
-
 message PointTile {
   double x = 1;
   double y = 2;
+}
+
+message LineString {
+  repeated PointTile points = 1;
 }

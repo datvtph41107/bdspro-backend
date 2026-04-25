@@ -21,7 +21,7 @@ func NewOneHouseGrpcHandler(oneHouseUsecase usecase.OneHouseUsecase) *OneHouseGr
 }
 
 func (h *OneHouseGrpcHandler) GetOneHouseDetail(ctx context.Context, req *pb.GetOneHouseDetailRequest) (*pb.OneHouse, error) {
-	if req.Id == "" {
+	if req.Id == 0 {
 		return nil, _errors.ReturnError(400, "id is required")
 	}
 
