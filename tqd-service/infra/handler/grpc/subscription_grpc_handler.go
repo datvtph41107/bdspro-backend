@@ -8,7 +8,7 @@ import (
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
 
@@ -77,10 +77,10 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 
 	parcels, err := h.parcelUsecase.GetByIDs(ctx, parcelIDs)
 	if err != nil {
-		parcels = []domain.Parcel{}
+		parcels = []qh_domain.Parcel{}
 	}
 
-	parcelMap := make(map[uint64]domain.Parcel)
+	parcelMap := make(map[uint64]qh_domain.Parcel)
 	for _, p := range parcels {
 		parcelMap[p.ID] = p
 	}

@@ -1,9 +1,11 @@
 package handler_grpc
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	"log"
 
+	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
@@ -101,4 +103,80 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		Page:     req.Page,
 		PageSize: req.PageSize,
 	}, nil
+}
+
+func (h *ParcelGrpcHandler) SearchTxtClientParcels(ctx context.Context, req *sharepb.RequestV3Proto) (*tqdpb.ListParcelResponse, error) {
+	searchText := req.Text
+
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+	}
+
+	parcels, total, err := h.usecase.Search(ctx, searchText, pagable)
+
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*tqdpb.ParcelInfo, len(parcels))
+
+	for i := 0; i < len(parcels); i++ {
+		p := parcels[i]
+
+		// mapNumber, _ := p.MapNumber
+		// landNumber, _ := strconv.ParseUint(p.LandNumber, 10, 32)
+
+		results[i] = &tqdpb.ParcelInfo{
+			Id:         p.ID,
+			AddressStr: p.AddressStr,
+			MapNumber:  p.MapNumber,
+			LandNumber: p.LandNumber,
+			Lat:        p.Latitude,
+			Lng:        p.Longitude,
+			Facade:     uint32(p.Facade),
+			TotalArea:  p.TotalArea,
+
+			// Direction (tuỳ bạn define enum hay item)
+			// Direction: convertDirection(p.Direction),
+
+			// Shape
+			Shape: func() *sharepb.ItemV3Proto {
+				if p.Shape == nil {
+					return nil
+				}
+				return &sharepb.ItemV3Proto{
+					Id:   p.ShapeId,
+					Name: p.Shape.Name, // giả sử có field Name
+				}
+			}(),
+
+			// LandType
+			LandType: func() *sharepb.ItemV3Proto {
+				if p.LandType == nil {
+					return nil
+				}
+				return &sharepb.ItemV3Proto{
+					Id:   *p.LandTypeId,
+					Name: p.LandType.Name,
+				}
+			}(),
+		}
+	}
+
+	return &tqdpb.ListParcelResponse{
+		Data:  results,
+		Total: uint32(total),
+	}, nil
+}
+
+func (h *ParcelGrpcHandler) PreviewParcelsById(
+	ctx context.Context,
+	req *sharepb.RequestV3Proto,
+) (*tqdpb.ParcelInfo, error) {
+	result, err := h.usecase.GetParcelDetail(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.mapper.ParcelInfoToProto(result), nil
 }

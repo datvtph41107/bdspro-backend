@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	"fmt"
 	"math"
@@ -14,8 +15,10 @@ import (
 // ParcelUsecase defines business logic for POI
 type ParcelUsecase interface {
 	// CRUD operations
-	GetByIDs(ctx context.Context, ids []uint64) ([]domain.Parcel, error)
+	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error)
+	Search(ctx context.Context, text string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error)
 
+	GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_domain.QHParcelInfo, error)
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	FindParcelsByPolygon(ctx context.Context, points []dto.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
@@ -34,9 +37,15 @@ func NewParcelUsecase(
 	}
 }
 
-func (u *parcelUsecase) GetByIDs(ctx context.Context, ids []uint64) ([]domain.Parcel, error) {
+func (u *parcelUsecase) Search(ctx context.Context, text string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error) {
+	parcels, total, err := u.repo.SearchByAddress(ctx, text, pagable)
+
+	return parcels, total, err
+}
+
+func (u *parcelUsecase) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error) {
 	if len(ids) == 0 {
-		return []domain.Parcel{}, nil
+		return []qh_domain.Parcel{}, nil
 	}
 	return u.repo.GetByIDs(ctx, ids)
 }
@@ -199,4 +208,12 @@ func normalizePage(page, pageSize int) (limit, offset int) {
 	limit = pageSize
 	offset = (page - 1) * pageSize
 	return
+}
+
+func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_domain.QHParcelInfo, error) {
+	sub, err := u.repo.GetParcelDetail(ctx, parcelID)
+	if err != nil || sub == nil {
+		return nil, err
+	}
+	return sub, nil
 }

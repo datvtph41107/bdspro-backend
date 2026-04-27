@@ -10,8 +10,8 @@ type QHParcelInfo struct {
 	DistrictV1Id *uint64 ``
 	WardV1Id     *uint64 ``
 	AddressStr   string  ``
-	MapNumber    string
-	LandNumber   string
+	MapNumber    uint32
+	LandNumber   uint32
 	Latitude     float64
 	Longitude    float64
 	Direction    uint32
@@ -21,6 +21,7 @@ type QHParcelInfo struct {
 	TotalArea    float64
 	LandTypeId   *uint64
 	LandType     *QHLandType
+	Geometry     *RawGeometry `gorm:"-"`
 }
 
 func (QHParcelInfo) TableName() string {

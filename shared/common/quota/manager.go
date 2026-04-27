@@ -20,7 +20,16 @@ func NewQuotaManager(storage QuotaStorage, policy PolicyEngine) QuotaManager {
 func (m *quotaManager) CheckOnly(ctx context.Context, userID, service, action string) (*QuotaInfo, error) {
 	start := time.Now()
 
-	pool, _, err := m.policy.Resolve(service, action)
+	pool, cost, err := m.policy.Resolve(service, action)
+	if cost == -1 {
+		return &QuotaInfo{
+			UserID:    userID,
+			Pool:      pool,
+			Used:      -1,
+			Limit:     -1,
+			Remaining: 1,
+		}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

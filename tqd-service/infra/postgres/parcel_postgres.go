@@ -3,8 +3,8 @@
 package postgres
 
 import (
+	_dto "common/domain/dto"
 	"context" // THÊM IMPORT
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -23,10 +23,49 @@ func NewParcelPostgres(db *gorm.DB) repo.IParcelRepo {
 	return &ParcelPostgres{DB: db}
 }
 
-func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error {
-	const batchSize = 500
+// internal/infra/postgres/parcel_postgres.go
 
-	query := `
+func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error) {
+	var parcels []qh_domain.QHParcelInfo
+	var total int64
+
+	searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
+
+	query := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{}).
+		Where("LOWER(address_str) LIKE ?", searchTerm)
+
+	// if err := query.Count(&total).Error; err != nil {
+	// 	return nil, 0, fmt.Errorf("count parcels: %w", err)
+	// }
+
+	if err := query.Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).Find(&parcels).Error; err != nil {
+		return nil, 0, fmt.Errorf("search parcels: %w", err)
+	}
+
+	return parcels, total, nil
+}
+
+func (r *ParcelPostgres) GetByID(ctx context.Context, id uint64) (*qh_domain.Parcel, error) {
+	// var parcels qh_domain.Parcel
+
+	return nil, nil
+}
+
+// internal/infra/postgres/parcel_postgres.go
+
+func (p *ParcelPostgres) GetParcelDetail(ctx context.Context, id uint64) (*qh_domain.QHParcelInfo, error) {
+	parcel := &qh_domain.QHParcelInfo{}
+	parcelGeo := &qh_domain.Parcel{}
+	err := p.DB.WithContext(ctx).
+		Preload("Shape").
+		Preload("LandType").
+		Where("id = ?", id).
+		First(parcel).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel detail: %w", err)
+	}
+
+	query := fmt.Sprintf(`
 		SELECT 
 			id,
 			ST_AsGeoJSON(geometry) as geometry,
@@ -37,18 +76,18 @@ func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Pa
 			created_at,
 			updated_at
 		FROM parcels
-		WHERE id = ? AND deleted_at IS NULL
-	`
+		WHERE id = %d AND deleted_at IS NULL
+	`, id)
 
-	err := r.DB.WithContext(ctx).Raw(query, id).Scan(&parcel).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	return &parcel, err
+	err = p.DB.WithContext(ctx).Raw(query).Scan(parcelGeo).Error
+
+	parcel.Geometry = &parcelGeo.Geometry
+
+	return parcel, nil
 }
 
-func (r *ParcelPostgres) GetByIDs(ctx context.Context, ids []uint64) ([]domain.Parcel, error) {
-	var parcels []domain.Parcel
+func (r *ParcelPostgres) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error) {
+	var parcels []qh_domain.Parcel
 	if len(ids) == 0 {
 		return parcels, nil
 	}
@@ -236,7 +275,7 @@ func (p *ParcelPostgres) FindWithinPolygon(
 	return parcels, total, err
 }
 
-func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []domain.Parcel) error {
+func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error {
 	const batchSize = 500
 
 	return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

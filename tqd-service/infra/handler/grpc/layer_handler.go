@@ -1,6 +1,7 @@
 package handler_grpc
 
 import (
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
@@ -8,6 +9,7 @@ import (
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
+	"tqd/infra/mapper"
 	"tqd/internal/domain/jsonb"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
@@ -41,6 +43,22 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 
 	// Parse dates
 	var effectiveDate *time.Time
+	// Tạo domain object
+	// layerDomain := &qh_domain.QHLayer{
+	// 	Name:         req.Name,
+	// 	DisplayName:  req.DisplayName,
+	// 	Type:         layerType,
+	// 	Status:       status,
+	// 	DisplayOrder: int(req.Order),
+	// 	MinZoom:      int(req.MinZoom),
+	// 	MaxZoom:      int(req.MaxZoom),
+	// 	Visible:      req.Visible,
+	// 	LegalDoc:     req.LegalDoc,
+	// 	Avatar:       req.Avatar,
+	// 	LayerURL:     req.LayerUrl,
+	// }
+
+	// Handle effectiveDate
 	if req.EffectiveDate != nil && *req.EffectiveDate != "" {
 		t, err := time.Parse("2006-01-02", *req.EffectiveDate)
 		if err != nil {
@@ -156,6 +174,12 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	if req.IssuingAuthority != nil {
 		layer.IssuingAuthority = *req.IssuingAuthority
 	}
+	if req.Avatar != nil {
+		layer.Avatar = *req.Avatar
+	}
+	if req.LayerUrl != nil {
+		layer.LayerURL = *req.LayerUrl
+	}
 	if req.EffectiveDate != nil && *req.EffectiveDate != "" {
 		t, err := time.Parse("2006-01-02", *req.EffectiveDate)
 		if err == nil {
@@ -199,8 +223,8 @@ func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequ
 
 func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayersRequest) (*tqdpb.ListLayersResponse, error) {
 	filter := &repo.LayerFilter{
-		Page:  int(*req.Page),
-		Limit: int(*req.Limit),
+		Page:  uint32(*req.Page),
+		Limit: uint32(*req.Limit),
 	}
 
 	if req.Status != nil {
@@ -247,43 +271,54 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 	}, nil
 }
 
-func (h *LayerGrpcHandler) UpdateLayerStatus(ctx context.Context, req *tqdpb.UpdateLayerStatusRequest) (*tqdpb.LayerResponse, error) {
-	userID := uint64(1)
+// func (h *LayerGrpcHandler) UpdateLayerStatus(ctx context.Context, req *tqdpb.UpdateLayerStatusRequest) (*tqdpb.LayerResponse, error) {
+// 	userID := uint64(1)
 
-	if err := h.layerUsecase.UpdateStatus(ctx, req.Id, enums.LayerStatus(req.Status), userID); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+// 	if err := h.layerUsecase.UpdateStatus(ctx, req.Id, enums.LayerStatus(req.Status), userID); err != nil {
+// 		return nil, status.Error(codes.Internal, err.Error())
+// 	}
+
+// 	layer, err := h.layerUsecase.GetByID(ctx, req.Id)
+// 	if err != nil {
+// 		return nil, status.Error(codes.NotFound, err.Error())
+// 	}
+
+// 	return h.toProtoLayer(layer, true)
+// }
+
+func (h *LayerGrpcHandler) GetListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	// Set default values
+	page := int32(1)
+	// limit := int32(20)
+
+	layerFilter := repo.LayerFilter{}
+
+	if req.Page != nil && *req.Page > 0 {
+		layerFilter.Page = uint32(*req.Page)
+	}
+	if req.Limit != nil && *req.Limit > 0 {
+		layerFilter.Limit = uint32(*req.Limit)
 	}
 
-	layer, err := h.layerUsecase.GetByID(ctx, req.Id)
+	// Get status filter
+	// if req.Status != nil && *req.Status > 0 {
+	// 	layerFilter.Status = (*enums.LayerStatus)(req.Status)
+	// }
+
+	if req.Search != nil {
+		layerFilter.Search = req.Search
+	}
+
+	// Call usecase
+	layers, total, err := h.layerUsecase.List(ctx, &layerFilter)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, _errors.ReturnError(500, err.Error())
 	}
 
-	return h.toProtoLayer(layer, true)
-}
-
-func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
-	filter := &repo.ClientLayerFilter{
-		Page:  int(*req.Page),
-		Limit: int(*req.Limit),
-	}
-
-	if req.Type != nil {
-		t := enums.LayerType(*req.Type)
-		filter.Type = &t
-	}
-	if req.Search != nil && *req.Search != "" {
-		filter.Search = req.Search
-	}
-
-	layers, total, err := h.layerUsecase.ListClient(ctx, filter)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
+	// Convert response
 	protoLayers := make([]*tqdpb.LayerResponse, 0, len(layers))
 	for _, layer := range layers {
-		protoLayer, err := h.toProtoLayer(&layer, false) // isAdmin = false
+		protoLayer, err := mapper.ToProtoLayer(&layer)
 		if err != nil {
 			continue
 		}
@@ -293,18 +328,32 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 	return &tqdpb.ListLayersResponse{
 		Data:  protoLayers,
 		Total: total,
-		Page:  int32(filter.Page),
-		Size:  int32(filter.Limit),
+		Page:  page,
+		// Limit: limit,
 	}, nil
 }
 
-func (h *LayerGrpcHandler) GetClientLayer(ctx context.Context, req *tqdpb.GetClientLayerRequest) (*tqdpb.LayerResponse, error) {
-	layer, err := h.layerUsecase.GetClientByID(ctx, req.Id)
+func (h *LayerGrpcHandler) SearchTxtClientLayer(ctx context.Context, req *tqdpb.GetClientLayerRequest) (*tqdpb.ListLayersResponse, error) {
+	layers, total, err := h.layerUsecase.List(ctx, &repo.LayerFilter{})
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, _errors.ReturnError(500, err.Error())
 	}
 
-	return h.toProtoLayer(layer, false)
+	protoLayers := make([]*tqdpb.LayerResponse, 0, len(layers))
+	for _, layer := range layers {
+		protoLayer, err := mapper.ToProtoLayer(&layer)
+		if err != nil {
+			continue
+		}
+		protoLayers = append(protoLayers, protoLayer)
+	}
+
+	return &tqdpb.ListLayersResponse{
+		Data:  protoLayers,
+		Total: total,
+		Page:  0,
+		// Limit: limit,
+	}, nil
 }
 
 func (h *LayerGrpcHandler) toProtoLayer(layer *qh_domain.QHLayer, isAdmin bool) (*tqdpb.LayerResponse, error) {

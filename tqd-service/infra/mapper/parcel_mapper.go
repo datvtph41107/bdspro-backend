@@ -1,7 +1,6 @@
 package mapper
 
 import (
-	"fmt"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
@@ -31,7 +30,7 @@ func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []qh_domain.Parc
 			Lat: p.Latitude,
 			Lng: p.Longitude,
 			Geometry: qh_domain.RawGeometry{
-				Raw: string(p.Geometry),
+				Raw: p.Geometry,
 			},
 		})
 	}
@@ -52,27 +51,27 @@ func (m *ParcelMapper) ToProtoFromDomainList(parcels *dto.ParcelList) []*tqdpb.P
 
 func (m *ParcelMapper) DomainToProto(p *qh_domain.Parcel) *tqdpb.Parcel {
 	v := &tqdpb.Parcel{
-		Id: p.ID,
-		// Name:      p.Name,
+		Id:        p.ID,
 		Latitude:  p.Lat,
 		Longitude: p.Lng,
-
-		// MinLat: p.MinLat,
-		// MinLng: p.MinLng,
-		// MaxLat: p.MaxLat,
-		// MaxLng: p.MaxLng,
+		// RefId:     p.RefID,
+		// RefType:   p.RefType,
+		Geometry: p.Geometry.Raw, // trực tiếp, không cần switch
 	}
-	if val, err := p.Geometry.Value(); err == nil && val != nil {
-		switch v2 := val.(type) {
-		case []byte:
-			v.Geometry = v2
-		case string:
-			v.Geometry = []byte(v2)
-		default:
-			// fallback (hiếm)
-			v.Geometry = []byte(fmt.Sprintf("%v", v2))
-		}
-	}
-
 	return v
+}
+
+func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.ParcelInfo {
+
+	return &tqdpb.ParcelInfo{
+		Id:         p.ID,
+		Lat:        p.Latitude,
+		Lng:        p.Longitude,
+		AddressStr: p.AddressStr,
+		// MapNumber:  p.MapNumber,
+		Geometry:   p.Geometry.Raw,
+		TotalArea:  p.TotalArea,
+		MapNumber:  p.MapNumber,
+		LandNumber: p.LandNumber,
+	}
 }

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"tqd/config"
-	"tqd/infra/db"
 	"tqd/wire"
 
 	_middleware "common/middleware"
@@ -69,7 +68,7 @@ func runGRPCServer() error {
 		log.Fatal("app is nil after InitializeApp")
 	}
 
-	db.AutoMigrate()
+	// db.AutoMigrate()
 
 	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Server.GrpcPort)
 	lis, err := net.Listen("tcp", addr)

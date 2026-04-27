@@ -6,7 +6,6 @@ import (
 	"fmt"
 	tqdpb "pb/types/tqd"
 	"time"
-	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 )
@@ -31,7 +30,7 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer,
 		DisplayName:  req.DisplayName,
 		Type:         layerType,
 		Status:       status,
-		DisplayOrder: int(req.Order),
+		DisplayOrder: int(req.DisplayOrder),
 		MinZoom:      int(req.MinZoom),
 		MaxZoom:      int(req.MaxZoom),
 		Visible:      req.Visible,
@@ -53,32 +52,27 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	status := uint32(layer.Status)
 
 	resp := &tqdpb.LayerResponse{
-		Id:               uint64(layer.ID),
-		Name:             layer.Name,
-		DisplayName:      layer.DisplayName,
-		Description:      layer.Description,
-		Type:             uint32(layer.Type),
-		Status:           uint32(layer.Status),
-		Visible:          layer.Visible,
-		DisplayOrder:     int32(layer.DisplayOrder),
-		MinZoom:          int32(layer.MinZoom),
-		MaxZoom:          int32(layer.MaxZoom),
-		LayerUrl:         layer.LayerURL,
-		ImageUrl:         layer.ImageURL,
-		ThumbnailUrl:     layer.ThumbnailURL,
-		LegalDoc:         layer.LegalDoc,
-		LegalDocUrl:      layer.LegalDocURL,
-		DocumentNumber:   layer.DocumentNumber,
-		IssuingAuthority: layer.IssuingAuthority,
-		CreatedAt:        _utils.FormatTimeToString(&layer.CreatedAt),
-		UpdatedAt:        _utils.FormatTimeToString(&layer.UpdatedAt),
+		Id:          layer.ID,
+		Name:        layer.Name,
+		DisplayName: layer.DisplayName,
+		Type:        uint32(layer.Type),
+		Status:      status,
+		// Order:       layer.DisplayOrder,
+		MinZoom:   int32(layer.MinZoom),
+		MaxZoom:   int32(layer.MaxZoom),
+		Visible:   layer.Visible,
+		LegalDoc:  layer.LegalDoc,
+		CreatedAt: layer.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: layer.UpdatedAt.Format(time.RFC3339),
+		Avatar:    layer.Avatar,
+		LayerUrl:  layer.LayerURL,
 	}
 
 	// Marshal metadata
-	if layer.Metadata != nil {
-		metadataBytes, _ := json.Marshal(layer.Metadata)
-		resp.Metadata = string(metadataBytes)
-	}
+	// if layer.Metadata != nil {
+	// 	metadataBytes, _ := json.Marshal(layer.Metadata)
+	// 	resp.Metadata = string(metadataBytes)
+	// }
 
 	// Marshal style config
 	if layer.StyleConfig != nil {
@@ -99,7 +93,7 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	return resp, nil
 }
 
-func (m *LayerMapper) ToProtoLayerClient(layer *domain.Layer) (*tqdpb.LayerResponse, error) {
+func ToProtoLayerClient(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	// Client chỉ nhận subset của admin response
 	resp := &tqdpb.LayerResponse{
 		Id:           uint64(layer.ID),
@@ -112,6 +106,7 @@ func (m *LayerMapper) ToProtoLayerClient(layer *domain.Layer) (*tqdpb.LayerRespo
 		LayerUrl:     layer.LayerURL,
 		ImageUrl:     layer.ImageURL,
 		ThumbnailUrl: layer.ThumbnailURL,
+		Visible:      layer.Visible,
 		CreatedAt:    _utils.FormatTimeToString(&layer.CreatedAt),
 		UpdatedAt:    _utils.FormatTimeToString(&layer.UpdatedAt),
 	}
@@ -123,7 +118,7 @@ func (m *LayerMapper) ToProtoLayerClient(layer *domain.Layer) (*tqdpb.LayerRespo
 	}
 
 	// Client không thấy: status (vì chỉ có active), legal_doc, metadata chi tiết
-	resp.Visible = true
+	// resp.Visible = true
 	resp.Status = uint32(enums.LayerStatusActive)
 
 	return resp, nil

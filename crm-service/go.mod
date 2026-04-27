@@ -8,7 +8,7 @@ replace pb => ../shared/protobuf
 
 replace crmpb => ../protobuf/types/crm
 
-go 1.24.1
+go 1.25.0
 
 require (
 	base v0.0.0-00010101000000-000000000000

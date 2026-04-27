@@ -135,8 +135,12 @@ func convertFeatureToProto(f *domain.Feature) (*tqdpb.Feature, error) {
 		return nil, err
 	}
 
+	propsBytes, err := json.Marshal(f.Properties)
+	if err != nil {
+		return nil, err
+	}
 	var propsMap map[string]interface{}
-	if err := json.Unmarshal(f.Properties, &propsMap); err != nil {
+	if err := json.Unmarshal(propsBytes, &propsMap); err != nil {
 		return nil, err
 	}
 	propsStruct, err := structpb.NewStruct(propsMap)

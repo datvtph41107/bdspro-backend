@@ -1,9 +1,10 @@
 package qh_domain
 
 import (
-	"bytes"
 	_models "common/domain/entity"
 	"database/sql/driver"
+	"encoding/base64"
+	"encoding/json"
 )
 
 type Parcel struct {
@@ -25,33 +26,40 @@ func (Parcel) TableName() string {
 }
 
 type RawGeometry struct {
-	Raw string
+	Raw []byte
 }
 
-func (r *RawGeometry) GetType() uint32 {
-	return 0 // hoặc type MultiPolygon nếu bạn define enum
-}
-
-func (r *RawGeometry) Write(buf *bytes.Buffer) error {
-	buf.WriteString(r.Raw)
-	return nil
-}
-
-// DB scan
 func (r *RawGeometry) Scan(value any) error {
 	if value == nil {
 		return nil
 	}
 	switch v := value.(type) {
 	case []byte:
-		r.Raw = string(v)
-	case string:
 		r.Raw = v
+	case string:
+		r.Raw = []byte(v)
 	}
 	return nil
 }
 
-// DB insert
 func (r RawGeometry) Value() (driver.Value, error) {
 	return r.Raw, nil
+}
+
+func (r RawGeometry) MarshalJSON() ([]byte, error) {
+	encoded := base64.StdEncoding.EncodeToString(r.Raw)
+	return json.Marshal(encoded)
+}
+
+func (r *RawGeometry) UnmarshalJSON(data []byte) error {
+	var encoded string
+	if err := json.Unmarshal(data, &encoded); err != nil {
+		return err
+	}
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return err
+	}
+	r.Raw = decoded
+	return nil
 }

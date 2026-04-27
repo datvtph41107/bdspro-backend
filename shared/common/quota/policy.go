@@ -64,7 +64,7 @@ func (e *DefaultPolicyEngine) Resolve(service, action string) (pool string, cost
 	key := service + "." + action
 	cost, ok = e.actions[key]
 	if !ok {
-		cost = 1
+		cost = -1
 	}
 	return pool, cost, nil
 }

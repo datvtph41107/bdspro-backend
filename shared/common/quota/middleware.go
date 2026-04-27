@@ -43,10 +43,13 @@ func UnaryServerInterceptor(qm QuotaManager, extractUserID func(ctx context.Cont
 			log.Printf("[QUOTA] CheckOnly error: %v", err)
 			return handler(ctx, req) // fail open
 		}
+		if quotaInfo.Remaining == 1 && quotaInfo.Limit == -1 {
+			return handler(ctx, req)
+		}
 
 		if quotaInfo.Remaining <= 0 {
 			LogReject(ctx, userID, service, action, quotaInfo.Pool, quotaInfo.Used, quotaInfo.Limit, "quota exceeded")
-			return nil, status.Errorf(codes.ResourceExhausted, "Quota exceeded for pool %s. Used %d/%d", quotaInfo.Pool, quotaInfo.Used, quotaInfo.Limit)
+			return nil, status.Errorf(codes.ResourceExhausted, "Quota exceeded for pool %s. Used %d/%d, action %s", quotaInfo.Pool, quotaInfo.Used, quotaInfo.Limit, action)
 		}
 
 		// 2. Gọi handler

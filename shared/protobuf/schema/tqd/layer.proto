@@ -9,178 +9,169 @@ import "shared/common.proto";
 option go_package = "pb/types/tqd;tqdpb";
 
 service LayerService {
-    // CreateLayer - Tạo layer mới (chỉ admin)
-    rpc CreateLayer(CreateLayerRequest) returns (LayerResponse) {
-        option (google.api.http) = {
-            post: "/v2/tqd/admin/layers"
-            body: "*"
-        };
-    }
-    
-    // UpdateLayer - Cập nhật layer (chỉ admin)
-    rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
-        option (google.api.http) = {
-            put: "/v2/tqd/admin/layers/{id}"
-            body: "*"
-        };
-    }
-    
-    // DeleteLayer - Xóa layer (soft delete, chỉ admin)
-    rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
-        option (google.api.http) = {
-            delete: "/v2/tqd/admin/layers/{id}"
-        };
-    }
-    
-    // GetLayer - Lấy chi tiết layer (chỉ admin)
-    rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
-        option (google.api.http) = {
-            get: "/v2/tqd/admin/layers/{id}"
-        };
-    }
-    
-    // ListLayers - Danh sách layers (chỉ admin, có filter)
-    rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
-        option (google.api.http) = {
-            get: "/v2/tqd/admin/layers"
-        };
-    }
-    
-    // UpdateLayerStatus - Cập nhật trạng thái (chỉ admin)
-    rpc UpdateLayerStatus(UpdateLayerStatusRequest) returns (LayerResponse) {
-        option (google.api.http) = {
-            patch: "/v2/tqd/admin/layers/{id}/status"
-            body: "*"
-        };
-    }
-    
-    // ListClientLayers - Danh sách layers cho client (public)
-    rpc ListClientLayers(ListClientLayersRequest) returns (ListLayersResponse) {
-        option (google.api.http) = {
-            get: "/v2/tqd/client/layers"
-        };
-    }
-    
-    // GetClientLayer - Chi tiết layer cho client (public)
-    rpc GetClientLayer(GetClientLayerRequest) returns (LayerResponse) {
-        option (google.api.http) = {
-            get: "/v2/tqd/client/layers/{id}"
-        };
-    }
+  // CreateLayer - Tạo layer mới (chỉ admin)
+  rpc CreateLayer(CreateLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/layers"
+      body: "*"
+    };
+  }
+
+  // UpdateLayer - Cập nhật layer (chỉ admin)
+  rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/layers/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteLayer - Xóa layer (soft delete, chỉ admin)
+  rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {delete: "/v2/tqd/admin/layers/{id}"};
+  }
+
+  // GetLayer - Lấy chi tiết layer (chỉ admin)
+  rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {get: "/v2/tqd/admin/layers/{id}"};
+  }
+
+  // ListLayers - Danh sách layers (chỉ admin, có filter)
+  rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
+    option (google.api.http) = {get: "/v2/tqd/admin/layers"};
+  }
+
+  // UpdateLayerStatus - Cập nhật trạng thái (chỉ admin)
+  rpc UpdateLayerStatus(UpdateLayerStatusRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/admin/layers/{id}/status"
+      body: "*"
+    };
+  }
+
+  // ListClientLayers - Danh sách layers cho client (public)
+  rpc GetListClientLayers(ListClientLayersRequest) returns (ListLayersResponse) {
+    option (google.api.http) = {get: "/v2/tqd/client/layers"};
+  }
+
+  // GetClientLayer - Chi tiết layer cho client (public)
+  rpc GetClientLayer(GetClientLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {get: "/v2/tqd/client/layers/{id}"};
+  }
 }
 
 message CreateLayerRequest {
-    string name = 1;                    // Tên kỹ thuật (unique)
-    string displayName = 2;             // Tên hiển thị
-    string description = 3;             // Mô tả
-    uint32 type = 4;                    // Loại layer (1-5)
-    optional uint32 status = 5;         // Trạng thái (1,10,20,30)
-    int32 visible = 6;                  // 0: ẩn, 1: hiển thị
-    int32 displayOrder = 7;             // Thứ tự hiển thị
-    int32 minZoom = 8;                  // Zoom tối thiểu
-    int32 maxZoom = 9;                  // Zoom tối đa
-    string layerUrl = 10;               // URL dữ liệu (PMTiles/GeoJSON)
-    string avatar = 11;                 // Ảnh đại diện
-    string imageUrl = 12;               // Ảnh preview
-    string thumbnailUrl = 13;           // Ảnh thumbnail
-    string styleConfig = 14;            // Cấu hình style (JSON string)
-    string legalDoc = 15;               // Văn bản pháp lý
-    string legalDocUrl = 16;            // URL văn bản
-    string documentNumber = 17;         // Số hiệu văn bản
-    string issuingAuthority = 18;       // Cơ quan ban hành
-    optional string effectiveDate = 19; // Ngày hiệu lực (YYYY-MM-DD)
-    optional string expiryDate = 20;    // Ngày hết hiệu lực (YYYY-MM-DD)
+  string name = 1; // Tên kỹ thuật (unique)
+  string displayName = 2; // Tên hiển thị
+  string description = 3; // Mô tả
+  uint32 type = 4; // Loại layer (1-5)
+  optional uint32 status = 5; // Trạng thái (1,10,20,30)
+  int32 visible = 6; // 0: ẩn, 1: hiển thị
+  int32 displayOrder = 7; // Thứ tự hiển thị
+  int32 minZoom = 8; // Zoom tối thiểu
+  int32 maxZoom = 9; // Zoom tối đa
+  string layerUrl = 10; // URL dữ liệu (PMTiles/GeoJSON)
+  string avatar = 11; // Ảnh đại diện
+  string imageUrl = 12; // Ảnh preview
+  string thumbnailUrl = 13; // Ảnh thumbnail
+  string styleConfig = 14; // Cấu hình style (JSON string)
+  string legalDoc = 15; // Văn bản pháp lý
+  string legalDocUrl = 16; // URL văn bản
+  string documentNumber = 17; // Số hiệu văn bản
+  string issuingAuthority = 18; // Cơ quan ban hành
+  optional string effectiveDate = 19; // Ngày hiệu lực (YYYY-MM-DD)
+  optional string expiryDate = 20; // Ngày hết hiệu lực (YYYY-MM-DD)
 }
 
 message UpdateLayerRequest {
-    uint64 id = 1;
-    optional string name = 2;
-    optional string displayName = 3;
-    optional string description = 4;
-    optional uint32 type = 5;
-    optional uint32 status = 6;
-    optional int32 visible = 7;
-    optional int32 displayOrder = 8;
-    optional int32 minZoom = 9;
-    optional int32 maxZoom = 10;
-    optional string layerUrl = 11;
-    optional string avatar = 12;
-    optional string imageUrl = 13;
-    optional string thumbnailUrl = 14;
-    optional string styleConfig = 15;
-    optional string legalDoc = 16;
-    optional string legalDocUrl = 17;
-    optional string documentNumber = 18;
-    optional string issuingAuthority = 19;
-    optional string effectiveDate = 20;
-    optional string expiryDate = 21;
-    google.protobuf.FieldMask updateMask = 22;
+  uint64 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional string description = 4;
+  optional uint32 type = 5;
+  optional uint32 status = 6;
+  optional int32 visible = 7;
+  optional int32 displayOrder = 8;
+  optional int32 minZoom = 9;
+  optional int32 maxZoom = 10;
+  optional string layerUrl = 11;
+  optional string avatar = 12;
+  optional string imageUrl = 13;
+  optional string thumbnailUrl = 14;
+  optional string styleConfig = 15;
+  optional string legalDoc = 16;
+  optional string legalDocUrl = 17;
+  optional string documentNumber = 18;
+  optional string issuingAuthority = 19;
+  optional string effectiveDate = 20;
+  optional string expiryDate = 21;
+  google.protobuf.FieldMask updateMask = 22;
 }
 
 message UpdateLayerStatusRequest {
-    uint64 id = 1;
-    uint32 status = 2;  // 1:Draft, 10:Active, 20:Expired, 30:Archived
+  uint64 id = 1;
+  uint32 status = 2; // 1:Draft, 10:Active, 20:Expired, 30:Archived
 }
 
 message DeleteLayerRequest {
-    uint64 id = 1;
+  uint64 id = 1;
 }
 
 message GetLayerRequest {
-    uint64 id = 1;
+  uint64 id = 1;
 }
 
 message GetClientLayerRequest {
-    uint64 id = 1;
+  uint64 id = 1;
+  string text = 2;
 }
 
 message ListLayersRequest {
-    optional uint32 status = 1;     // Lọc theo status
-    optional uint32 type = 2;       // Lọc theo type
-    optional int32 visible = 3;     // Lọc theo visible (0/1)
-    optional string search = 4;     // Tìm kiếm theo name/displayName
-    optional int32 page = 5;        // Trang (bắt đầu từ 1)
-    optional int32 limit = 6;    // Số lượng mỗi trang
-    optional string orderBy = 7;    // Sắp xếp theo field
-    optional string orderDir = 8;   // asc/desc
+  optional uint32 status = 1; // Lọc theo status
+  optional uint32 type = 2; // Lọc theo type
+  optional int32 visible = 3; // Lọc theo visible (0/1)
+  optional string search = 4; // Tìm kiếm theo name/displayName
+  optional int32 page = 5; // Trang (bắt đầu từ 1)
+  optional int32 limit = 6; // Số lượng mỗi trang
+  optional string orderBy = 7; // Sắp xếp theo field
+  optional string orderDir = 8; // asc/desc
 }
 
 message ListClientLayersRequest {
-    optional uint32 type = 1;       // Lọc theo type
-    optional string search = 2;     // Tìm kiếm
-    optional int32 page = 3;        // Trang
-    optional int32 limit = 4;    // Số lượng
+  optional uint32 type = 1; // Lọc theo type
+  optional string search = 2; // Tìm kiếm
+  optional int32 page = 3; // Trang
+  optional int32 limit = 4; // Số lượng
 }
 
 message ListLayersResponse {
-    repeated LayerResponse data = 1;
-    int64 total = 2;
-    int32 page = 3;
-    int32 size = 4;
+  repeated LayerResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
 }
 
 message LayerResponse {
-    uint64 id = 1;
-    string name = 2;
-    string displayName = 3;
-    string description = 4;
-    uint32 type = 5;
-    uint32 status = 6;
-    int32 visible = 7;
-    int32 displayOrder = 8;
-    int32 minZoom = 9;
-    int32 maxZoom = 10;
-    string layerUrl = 11;
-    string avatar = 12;
-    string imageUrl = 13;
-    string thumbnailUrl = 14;
-    string styleConfig = 15;
-    string legalDoc = 16;
-    string legalDocUrl = 17;
-    string documentNumber = 18;
-    string issuingAuthority = 19;
-    optional string effectiveDate = 20;
-    optional string expiryDate = 21;
-    string createdAt = 22;      
-    string updatedAt = 23;      
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string description = 4;
+  uint32 type = 5;
+  uint32 status = 6;
+  int32 visible = 7;
+  int32 displayOrder = 8;
+  int32 minZoom = 9;
+  int32 maxZoom = 10;
+  string layerUrl = 11;
+  string avatar = 12;
+  string imageUrl = 13;
+  string thumbnailUrl = 14;
+  string styleConfig = 15;
+  string legalDoc = 16;
+  string legalDocUrl = 17;
+  string documentNumber = 18;
+  string issuingAuthority = 19;
+  optional string effectiveDate = 20;
+  optional string expiryDate = 21;
+  string createdAt = 22;
+  string updatedAt = 23;
 }

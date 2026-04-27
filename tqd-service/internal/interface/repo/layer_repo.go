@@ -28,8 +28,8 @@ type LayerFilter struct {
 	Search   *string
 	OrderBy  string
 	OrderDir string // "ASC" or "DESC"
-	Page     int
-	Limit    int
+	Page     uint32
+	Limit    uint32
 }
 
 // Filter client list

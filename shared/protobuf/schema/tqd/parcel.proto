@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "shared/common.proto";
 import "tqd/features.proto";
+import "shared/v3.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -28,47 +29,74 @@ service ParcelService {
       body: "*"
     };
   }
+  rpc PreviewParcelsById(sharepb.RequestV3Proto) returns (ParcelInfo) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/preview/{id}"
+    };
+  }
+
+  // GetClientLayer - Chi tiết layer cho client (public)
+  rpc SearchTxtClientParcels(sharepb.RequestV3Proto) returns (ListParcelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/parcels/search"
+    };
+  }
 }
 
 message FindParcelsByPolygonRequest {
   repeated Point coordinates = 1;
 
-  double maxAreaKm2 = 2;
-  int32 page = 3;
-  int32 pageSize = 4;
-  bool allowAutoShrink = 5;
-  bool intersect = 7;
+  double maxAreaKm2      = 2;
+  int32  page            = 3;
+  int32  pageSize        = 4;
+  bool   allowAutoShrink = 5;
+  bool   intersect       = 7;
 }
 
 message FindParcelsByPolygonResponse {
-  repeated Parcel data = 1;
-  int32 total = 2;
-  int32 page = 3;
-  int32 pageSize = 4;
-  string adjustedGeoJson = 5;
-  string adjustmentReason = 6;
-  double originalAreaKm2 = 7;
-  double adjustedAreaKm2 = 8;
-  double maxAllowedAreaKm2 = 9;
-  string warning = 10;
+  repeated Parcel data              = 1;
+  int32           total             = 2;
+  int32           page              = 3;
+  int32           pageSize          = 4;
+  string          adjustedGeoJson   = 5;
+  string          adjustmentReason  = 6;
+  double          originalAreaKm2   = 7;
+  double          adjustedAreaKm2   = 8;
+  double          maxAllowedAreaKm2 = 9;
+  string          warning           = 10;
 }
 
 message FindParcelByLocationRequest {
-  double latitude = 1;
+  double latitude  = 1;
   double longitude = 2;
-  double radius = 3;
+  double radius    = 3;
 }
 
 message Parcel {
-  uint64 id = 1;
-  string name = 2;
-  double latitude = 3;
+  uint64 id        = 1;
+  string name      = 2;
+  double latitude  = 3;
   double longitude = 4;
-  bytes geometry = 5;
-  double minLat = 6;
-  double minLng = 7;
-  double maxLat = 8;
-  double maxLng = 9;
+  bytes  geometry  = 5;
+  double minLat    = 6;
+  double minLng    = 7;
+  double maxLat    = 8;
+  double maxLng    = 9;
+}
+
+message ParcelInfo {
+  uint64              id         = 1;
+  string              addressStr = 2;
+  uint32              mapNumber  = 3;
+  uint32              landNumber = 4;
+  double              lat        = 5;
+  double              lng        = 6;
+  sharepb.ItemV3Proto direction  = 7;
+  sharepb.ItemV3Proto shape      = 8;
+  uint32              facade     = 9;
+  double              totalArea  = 10;
+  sharepb.ItemV3Proto landType   = 11;
+  bytes               geometry   = 12;
 }
 
 message GetParcelRequest {
@@ -76,15 +104,20 @@ message GetParcelRequest {
 }
 
 message ListParcelsRequest {
-  int32 page = 1;
+  int32 page     = 1;
   int32 pageSize = 2;
 }
 
 message ListParcelsResponse {
   repeated Parcel parcels = 1;
-  int32 total = 2;
+  int32           total   = 2;
 }
 
 message ParcelListDTO {
   repeated Parcel data = 1;
+}
+
+message ListParcelResponse {
+  repeated ParcelInfo data  = 1;
+  uint32              total = 2;
 }

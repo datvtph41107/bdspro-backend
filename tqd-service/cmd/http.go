@@ -12,7 +12,6 @@ import (
 
 	_jwt "common/jwt"
 	"tqd/config"
-	"tqd/infra/db"
 	"tqd/initial"
 	"tqd/wire"
 
@@ -75,7 +74,7 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run database migration
-	db.AutoMigrate()
+	// db.AutoMigrate()
 
 	// Setup Gin router
 	router := gin.Default()
