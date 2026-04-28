@@ -15,20 +15,12 @@ import (
 )
 
 type RegionUsecase interface {
-	// Admin
-	Create(ctx context.Context, region *qh_domain.QHRegion) (*qh_domain.QHRegion, error)
-	CreateBatch(ctx context.Context, regions []*qh_domain.QHRegion) error
-	Update(ctx context.Context, id uint64, region *qh_domain.QHRegion) (*qh_domain.QHRegion, error)
+	Create(ctx context.Context, req *dto.CreateRegionRequest) (*qh_domain.QHRegion, error)
+	CreateBatch(ctx context.Context, req *dto.CreateRegionBatchRequest) (*dto.CreateRegionBatchResponse, error)
+	Update(ctx context.Context, id uint64, req *dto.UpdateRegionRequest) (*qh_domain.QHRegion, error)
 	Delete(ctx context.Context, id uint64) error
-	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
-	List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
-	GetStatsByLayer(ctx context.Context, layerID uint64) (*repo.RegionStats, error)
-
-	// Client
-	ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error)
-	GetClientByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
-	FindByPoint(ctx context.Context, lat, lng float64) (*qh_domain.QHRegion, error)
-	FindByBBox(ctx context.Context, minLng, minLat, maxLng, maxLat float64, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
+	GetByID(ctx context.Context, id uint64) (*dto.RegionResponse, error)
+	List(ctx context.Context, req *dto.ListRegionRequest) (*dto.ListRegionResponse, error)
 	GetByLocation(ctx context.Context, lat, lng float64, regionType *enums.RegionType, layerID *uint64) ([]qh_domain.QHRegion, error)
 	GetByPoint(ctx context.Context, req *dto.PointQueryRequest) ([]dto.RegionResponse, error)
 	GetByBBox(ctx context.Context, req *dto.BBoxQueryRequest) ([]dto.RegionResponse, error)
@@ -39,11 +31,15 @@ type RegionUsecase interface {
 
 type regionUsecaseImpl struct {
 	regionRepo repo.RegionRepository
+	layerRepo  repo.LayerRepository
+	geoParser  *dto.GeometryParser
 }
 
-func NewRegionUsecase(regionRepo repo.RegionRepository) RegionUsecase {
+func NewRegionUsecase(regionRepo repo.RegionRepository, layerRepo repo.LayerRepository) RegionUsecase {
 	return &regionUsecaseImpl{
 		regionRepo: regionRepo,
+		layerRepo:  layerRepo,
+		geoParser:  dto.NewGeometryParser(),
 	}
 }
 
@@ -51,33 +47,36 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, req *dto.CreateRegionReq
 	if req.Name == "" {
 		return nil, errors.New("name is required")
 	}
-	if region.Geometry == nil {
-		return nil, errors.New("geometry is required")
+	if req.DisplayName == "" {
+		return nil, errors.New("display_name is required")
 	}
 
-	if region.Status == 0 {
-		region.Status = 10
-	}
+	// geometryJSON, err := u.geoParser.Parse(req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("parse geometry failed: %w", err)
+	// }
 
-	geoInfo, err := geometry.ParseGeometry(geometryJSON)
-	if err != nil {
-		return nil, fmt.Errorf("calculate geometry info failed: %w", err)
-	}
+	// geoInfo, err := geometry.ParseGeometry(geometryJSON)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("calculate geometry info failed: %w", err)
+	// }
 
 	if req.LayerID != nil && *req.LayerID > 0 {
 		layer, err := u.layerRepo.GetByID(ctx, *req.LayerID)
 		if err != nil || layer == nil {
 			return nil, fmt.Errorf("layer with id %d not found", *req.LayerID)
 		}
+	} else {
+		return nil, fmt.Errorf("layerId is required")
 	}
 
-	if req.SourceID > 0 && req.Distance > 0 {
-		geometryJSON, err = u.regionRepo.GetBufferGeometry(ctx, req.SourceID, req.Distance)
-		if err != nil {
-			return nil, fmt.Errorf("create buffer failed: %w", err)
-		}
-		geoInfo, _ = geometry.ParseGeometry(geometryJSON)
-	}
+	// if req.SourceID > 0 && req.Distance > 0 {
+	// 	geometryJSON, err = u.regionRepo.GetBufferGeometry(ctx, req.SourceID, req.Distance)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("create buffer failed: %w", err)
+	// 	}
+	// 	geoInfo, _ = geometry.ParseGeometry(geometryJSON)
+	// }
 
 	region := &qh_domain.QHRegion{
 		Name:        req.Name,
@@ -87,12 +86,11 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, req *dto.CreateRegionReq
 		// Status:      enums.RegionStatus(req.Status),
 		// Geometry: geometryJSON,
 		// Centroid:    geometry.PointToGeoJSON(geoInfo.Centroid.Lat, geoInfo.Centroid.Lng),
-		Area:       geoInfo.Area,
-		Length:     geoInfo.Length,
-		LayerID:    req.LayerID,
-		Properties: req.Properties,
+		// Area:       geoInfo.Area,
+		// Length:     geoInfo.Length,
+		// LayerID:       req.LayerID,
+		RawProperties: req.Properties,
 	}
-	region.IsLatest = true
 
 	if err := u.regionRepo.Create(ctx, region); err != nil {
 		return nil, fmt.Errorf("create region failed: %w", err)
@@ -104,20 +102,20 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, req *dto.CreateRegionReq
 func (u *regionUsecaseImpl) Update(ctx context.Context, id uint64, req *dto.UpdateRegionRequest) (*qh_domain.QHRegion, error) {
 	existing, err := u.regionRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("get region failed: %w", err)
+		return nil, err
 	}
 	if existing == nil {
 		return nil, fmt.Errorf("region with id %d not found", id)
 	}
 
-	if region.Name != "" {
-		existing.Name = region.Name
+	if req.Name != nil {
+		existing.Name = *req.Name
 	}
-	if region.DisplayName != "" {
-		existing.DisplayName = region.DisplayName
+	if req.DisplayName != nil {
+		existing.DisplayName = *req.DisplayName
 	}
-	if region.Description != "" {
-		existing.Description = region.Description
+	if req.Description != nil {
+		existing.Description = *req.Description
 	}
 	// if req.Type != nil {
 	// 	existing.Type = enums.RegionType(*req.Type)
@@ -128,8 +126,8 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, id uint64, req *dto.Upda
 	if req.LayerID != nil {
 		existing.LayerID = req.LayerID
 	}
-	if region.StyleConfig != nil {
-		existing.StyleConfig = region.StyleConfig
+	if req.Properties != nil {
+		existing.RawProperties = req.Properties
 	}
 	if req.Geometry != nil {
 		geoInfo, err := geometry.ParseGeometry(*req.Geometry)
@@ -138,12 +136,9 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, id uint64, req *dto.Upda
 		}
 		// existing.Geometry = req.Geometry
 		// existing.Centroid = geometry.PointToGeoJSON(geoInfo.Centroid.Lat, geoInfo.Centroid.Lng)
-		existing.Area = geoInfo.Area
-		existing.Length = geoInfo.Length
+		existing.AreaSqm = geoInfo.Area
+		// existing.Length = geoInfo.Length
 	}
-
-	existing.Version++
-	existing.IsLatest = true
 
 	if err := u.regionRepo.Update(ctx, existing); err != nil {
 		return nil, fmt.Errorf("update region failed: %w", err)
@@ -155,18 +150,18 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, id uint64, req *dto.Upda
 func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 	existing, err := u.regionRepo.GetByID(ctx, id)
 	if err != nil {
-		return fmt.Errorf("get region failed: %w", err)
+		return err
 	}
 	if existing == nil {
-		return fmt.Errorf("region with id %d not found", id)
+		return fmt.Errorf("region not found")
 	}
 	return u.regionRepo.Delete(ctx, id)
 }
 
-func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
+func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*dto.RegionResponse, error) {
 	region, err := u.regionRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("get region failed: %w", err)
+		return nil, err
 	}
 	if region == nil {
 		return nil, fmt.Errorf("region not found")
@@ -176,12 +171,12 @@ func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.
 
 func (u *regionUsecaseImpl) List(ctx context.Context, req *dto.ListRegionRequest) (*dto.ListRegionResponse, error) {
 	filter := &repo.RegionFilter{
-		Type:    req.Type,
+		// Type:    req.Type,
 		Status:  req.Status,
 		LayerID: req.LayerID,
 		Search:  req.Search,
-		Page:    req.Page,
-		Limit:   req.Limit,
+		// Page:    req.Page,
+		// Limit:   req.Limit,
 	}
 
 	regions, total, err := u.regionRepo.List(ctx, filter)
@@ -279,16 +274,16 @@ func (u *regionUsecaseImpl) ImportGeoJSON(ctx context.Context, req *dto.ImportGe
 		return nil, errors.New("GeoJSON has no features")
 	}
 
-	feature := fc.Features[0]
-	geomBytes, err := json.Marshal(feature.Geometry)
-	if err != nil {
-		return nil, fmt.Errorf("marshal geometry failed: %w", err)
-	}
+	// feature := fc.Features[0]
+	// geomBytes, err := json.Marshal(feature.Geometry)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("marshal geometry failed: %w", err)
+	// }
 
-	geoInfo, err := geometry.ParseGeometry(string(geomBytes))
-	if err != nil {
-		return nil, fmt.Errorf("parse geometry failed: %w", err)
-	}
+	// geoInfo, err := geometry.ParseGeometry(string(geomBytes))
+	// if err != nil {
+	// 	return nil, fmt.Errorf("parse geometry failed: %w", err)
+	// }
 
 	if req.LayerID != nil && *req.LayerID > 0 {
 		layer, err := u.layerRepo.GetByID(ctx, *req.LayerID)
@@ -305,10 +300,10 @@ func (u *regionUsecaseImpl) ImportGeoJSON(ctx context.Context, req *dto.ImportGe
 		// Status:      enums.RegionStatus(req.Status),
 		// Geometry: string(geomBytes),
 		// Centroid:    geometry.PointToGeoJSON(geoInfo.Centroid.Lat, geoInfo.Centroid.Lng),
-		Area:       geoInfo.Area,
-		Length:     geoInfo.Length,
-		LayerID:    req.LayerID,
-		Properties: feature.Properties,
+		// Area:       geoInfo.Area,
+		// Length:     geoInfo.Length,
+		// LayerID:    req.LayerID,
+		// Properties: feature.Properties,
 	}
 
 	if err := u.regionRepo.Create(ctx, region); err != nil {
@@ -323,15 +318,15 @@ func (u *regionUsecaseImpl) ImportGeoJSON(ctx context.Context, req *dto.ImportGe
 }
 
 func (u *regionUsecaseImpl) CreateBuffer(ctx context.Context, sourceID uint64, distanceMeters float64, name, displayName string, regionType uint32, status uint32, layerID *uint64) (*qh_domain.QHRegion, error) {
-	bufferGeoJSON, err := u.regionRepo.GetBufferGeometry(ctx, sourceID, distanceMeters)
-	if err != nil {
-		return nil, err
-	}
+	// bufferGeoJSON, err := u.regionRepo.GetBufferGeometry(ctx, sourceID, distanceMeters)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	geoInfo, err := geometry.ParseGeometry(bufferGeoJSON)
-	if err != nil {
-		return nil, err
-	}
+	// geoInfo, err := geometry.ParseGeometry(bufferGeoJSON)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	region := &qh_domain.QHRegion{
 		Name:        name,
@@ -340,13 +335,13 @@ func (u *regionUsecaseImpl) CreateBuffer(ctx context.Context, sourceID uint64, d
 		// Status:      enums.RegionStatus(status),
 		// Geometry: bufferGeoJSON,
 		// Centroid:    geometry.PointToGeoJSON(geoInfo.Centroid.Lat, geoInfo.Centroid.Lng),
-		Area:    geoInfo.Area,
-		Length:  geoInfo.Length,
+		// Area:    geoInfo.Area,
+		// Length:  geoInfo.Length,
 		LayerID: layerID,
-		Properties: map[string]interface{}{
-			"source_id": sourceID,
-			"distance":  distanceMeters,
-		},
+		// Properties: map[string]interface{}{
+		// 	"source_id": sourceID,
+		// 	"distance":  distanceMeters,
+		// },
 	}
 
 	if err := u.regionRepo.Create(ctx, region); err != nil {
@@ -423,8 +418,8 @@ func (u *regionUsecaseImpl) CreateBatch(ctx context.Context, req *dto.CreateRegi
 			// Centroid:   geometry.PointToGeoJSON(geoInfo.Centroid.Lat, geoInfo.Centroid.Lng),
 			// Area:       geoInfo.Area,
 			// Length:     geoInfo.Length,
-			LayerID:    &layerID,
-			Properties: item.Properties,
+			LayerID:       &layerID,
+			RawProperties: item.Properties,
 		}
 
 		// regionResp := u.toResponse(region)
@@ -458,11 +453,11 @@ func (u *regionUsecaseImpl) toResponse(region *qh_domain.QHRegion) *dto.RegionRe
 		Geometry: string(region.Geometry.Raw),
 		// Centroid:   region.Centroid,
 		// BBox:       region.BBox,
-		Area:       region.Area,
-		Length:     region.Length,
-		LayerID:    region.LayerID,
-		Properties: region.Properties,
-		CreatedAt:  region.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:  region.UpdatedAt.Format(time.RFC3339),
+		// Area:       region.Area,
+		// Length:     region.Length,
+		LayerID: region.LayerID,
+		// Properties: region.Properties,
+		CreatedAt: region.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: region.UpdatedAt.Format(time.RFC3339),
 	}
 }
