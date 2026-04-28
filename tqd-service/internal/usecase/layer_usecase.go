@@ -23,15 +23,20 @@ type LayerUsecase interface {
 	// Client
 	ListClient(ctx context.Context, filter *repo.ClientLayerFilter) ([]qh_domain.QHLayer, int64, error)
 	GetClientByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
+
+	// PMTiles builder
+	BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom int32, outputDir string, progressFn func(BuildProgress)) error
 }
 
 type layerUsecaseImpl struct {
-	layerRepo repo.LayerRepository
+	layerRepo  repo.LayerRepository
+	regionRepo repo.RegionRepository
 }
 
-func NewLayerUsecase(layerRepo repo.LayerRepository) LayerUsecase {
+func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepository) LayerUsecase {
 	return &layerUsecaseImpl{
-		layerRepo: layerRepo,
+		layerRepo:  layerRepo,
+		regionRepo: regionRepo,
 	}
 }
 
@@ -243,4 +248,15 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 		return nil, fmt.Errorf("layer not available")
 	}
 	return layer, nil
+}
+
+func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom int32, outputDir string, progressFn func(BuildProgress)) error {
+	layer, err := u.layerRepo.GetByID(ctx, layerID)
+	if err != nil || layer == nil {
+		return fmt.Errorf("layer %d not found", layerID)
+	}
+	if outputDir == "" {
+		outputDir = "./files/tiles"
+	}
+	return BuildPMTilesFile(ctx, u.regionRepo, layerID, minZoom, maxZoom, outputDir, progressFn)
 }

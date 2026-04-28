@@ -57,6 +57,11 @@ service LayerService {
   rpc GetClientLayer(GetClientLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {get: "/v2/tqd/client/layers/{id}"};
   }
+
+  // BuildPMTiles - Build PMTiles file from layer's PostGIS data (server streaming)
+  rpc BuildPMTiles(BuildPMTilesRequest) returns (stream BuildPMTilesProgress) {
+    option (google.api.http) = {post: "/v2/tqd/client/layers/{layer_id}/build-tile"};
+  }
 }
 
 message CreateLayerRequest {
@@ -180,4 +185,20 @@ message LayerResponse {
   string updatedAt = 23;
   string sourceType = 24;
   string sourceCode = 25;
+}
+
+message BuildPMTilesRequest {
+  uint64 layer_id = 1;
+  int32 min_zoom = 2;
+  int32 max_zoom = 3;
+  optional string output_dir = 4;
+}
+
+message BuildPMTilesProgress {
+  string status = 1;        // "processing" | "done" | "error"
+  string message = 2;
+  int32 current_zoom = 3;
+  int64 tiles_written = 4;
+  int64 total_tiles = 5;
+  string output_path = 6;   // filled when done
 }

@@ -1,11 +1,16 @@
 package postgres
 
 import (
+	"bufio"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
+	"os"
+	"os/exec"
 	"strings"
 
 	qh_domain "tqd/internal/domain/qh"
@@ -436,4 +441,157 @@ func flattenCoords(coords interface{}, fn func(x, y float64)) {
 			fn(v[0], v[1])
 		}
 	}
+}
+
+type Feature struct {
+	Type       string                 `json:"type"`
+	Geometry   json.RawMessage        `json:"geometry"`
+	Properties map[string]interface{} `json:"properties"`
+}
+
+func (r *regionRepoImpl) BuildPMTiles(layerID int64, outputPath string) error {
+	ctx := context.Background()
+
+	rows, err := r.db.WithContext(ctx).
+		Raw(`
+			SELECT json_build_object(
+				'type','Feature',
+				'geometry', ST_AsGeoJSON(geometry)::json,
+				'properties', jsonb_build_object(
+					'id', id,
+					'name', name,
+					'display_name', display_name
+				)
+			)
+			FROM qh_regions
+			WHERE layer_id = ?
+		`, layerID).
+		Rows() // 👈 QUAN TRỌNG
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	// temp geojson file
+	tmpFile := fmt.Sprintf("/tmp/layer_%d.geojson", layerID)
+	f, err := os.Create(tmpFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+
+	writer.WriteString(`{"type":"FeatureCollection","features":[`)
+
+	first := true
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			return err
+		}
+
+		if !first {
+			writer.WriteString(",")
+		}
+		writer.Write(raw)
+		first = false
+	}
+
+	writer.WriteString(`]}`)
+	writer.Flush()
+
+	// build pmtiles bằng tippecanoe
+	cmd := exec.Command(
+		"tippecanoe",
+		"-o", outputPath,
+		"-zg",
+		"--force",
+		"--read-parallel",
+		tmpFile,
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	log.Println("Running tippecanoe...")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	log.Println("PMTiles created at:", outputPath)
+	return nil
+}
+
+func (r *regionRepoImpl) GetLayerBBox(ctx context.Context, layerID uint64) (minLon, minLat, maxLon, maxLat float64, err error) {
+	type bboxRow struct {
+		MinLon float64
+		MinLat float64
+		MaxLon float64
+		MaxLat float64
+	}
+	var row bboxRow
+	err = r.db.WithContext(ctx).Raw(`
+		SELECT
+			ST_XMin(ST_Extent(geometry)) AS min_lon,
+			ST_YMin(ST_Extent(geometry)) AS min_lat,
+			ST_XMax(ST_Extent(geometry)) AS max_lon,
+			ST_YMax(ST_Extent(geometry)) AS max_lat
+		FROM qh_regions
+		WHERE layer_id = ?
+	`, layerID).Scan(&row).Error
+	return row.MinLon, row.MinLat, row.MaxLon, row.MaxLat, err
+}
+
+func (r *regionRepoImpl) GetMVTTile(ctx context.Context, layerID uint64, z uint8, x, y uint32) ([]byte, error) {
+	// Use PostGIS ST_AsMVT — PostGIS handles clipping + simplification per tile.
+	// ST_TileEnvelope builds the tile bbox in Web Mercator (EPSG:3857).
+	// ST_AsMVTGeom reprojects + clips geometry to the tile extent.
+	type mvtRow struct {
+		Mvt []byte
+	}
+	var row mvtRow
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT ST_AsMVT(q, 'regions', 4096, 'geom') AS mvt
+		FROM (
+			SELECT
+				id,
+				name,
+				display_name,
+				layer_id,
+				ST_AsMVTGeom(
+					geometry,
+					ST_TileEnvelope(?, ?, ?),
+					4096, 64, true
+				) AS geom
+			FROM qh_regions
+			WHERE layer_id = ?
+			  AND geometry && ST_TileEnvelope(?, ?, ?)
+		) q
+		WHERE geom IS NOT NULL
+	`, z, x, y, layerID, z, x, y).Scan(&row).Error
+	return row.Mvt, err
+}
+
+func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sql.Rows, error) {
+	// ST_MakeValid fixes any invalid geometries before export.
+	// We do NOT use ST_CollectionExtract so that all geometry types are included.
+	return r.db.WithContext(ctx).
+		Raw(`
+			SELECT json_build_object(
+				'type', 'Feature',
+				'geometry', ST_AsGeoJSON(ST_MakeValid(geometry))::json,
+				'properties', jsonb_build_object(
+					'id',           id,
+					'name',         name,
+					'display_name', display_name,
+					'layer_id',     layer_id
+				)
+			)
+			FROM qh_regions
+			WHERE layer_id = ?
+			  AND geometry IS NOT NULL
+			  AND NOT ST_IsEmpty(ST_MakeValid(geometry))
+		`, layerID).
+		Rows()
 }

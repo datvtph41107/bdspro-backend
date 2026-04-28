@@ -3,6 +3,7 @@ package repo
 import (
 	_dto "common/domain/dto"
 	"context"
+	"database/sql"
 	qh_domain "tqd/internal/domain/qh"
 )
 
@@ -31,6 +32,11 @@ type RegionRepository interface {
 	GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error)
 	GetIntersections(ctx context.Context, id uint64, bufferMeters float64) ([]qh_domain.QHRegion, error)
 	GetBufferGeometry(ctx context.Context, sourceID uint64, distanceMeters float64) (string, error)
+	// GetLayerBBox returns the bounding box of all regions for a layer
+	GetLayerBBox(ctx context.Context, layerID uint64) (minLon, minLat, maxLon, maxLat float64, err error)
+	// GetMVTTile returns raw MVT bytes for a tile at z/x/y for a layer (PostGIS ST_AsMVT)
+	GetMVTTile(ctx context.Context, layerID uint64, z uint8, x, y uint32) ([]byte, error)
+	StreamGeoJSON(ctx context.Context, layerID uint64) (*sql.Rows, error)
 }
 
 // RegionFilter - Filter cho admin list

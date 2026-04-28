@@ -17,6 +17,7 @@ import (
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -378,6 +379,49 @@ func (h *LayerGrpcHandler) SearchTxtClientLayer(ctx context.Context, req *tqdpb.
 		Total: total,
 		// Limit: limit,
 	}, nil
+}
+
+func (h *LayerGrpcHandler) BuildPMTiles(req *tqdpb.BuildPMTilesRequest, stream grpc.ServerStreamingServer[tqdpb.BuildPMTilesProgress]) error {
+	ctx := stream.Context()
+
+	if req.LayerId == 0 {
+		return status.Error(codes.InvalidArgument, "layer_id is required")
+	}
+	minZoom := req.MinZoom
+	maxZoom := req.MaxZoom
+	if minZoom <= 0 {
+		minZoom = 0
+	}
+	if maxZoom <= 0 {
+		maxZoom = 14
+	}
+	if maxZoom > 18 {
+		maxZoom = 18
+	}
+	if minZoom > maxZoom {
+		minZoom = maxZoom
+	}
+
+	outputDir := "./files/tiles"
+	if req.OutputDir != nil && *req.OutputDir != "" {
+		outputDir = *req.OutputDir
+	}
+
+	progressFn := func(p usecase.BuildProgress) {
+		// _ = stream.Send(&tqdpb.BuildPMTilesProgress{
+		// 	Status:  p.Status,
+		// 	Message: p.Message,
+		// 	// CurrentZoom:  p.CurrentZoom,
+		// 	TilesWritten: p.TilesWritten,
+		// 	// TotalTiles:   p.TotalTiles,
+		// 	OutputPath: p.OutputPath,
+		// })
+	}
+
+	if err := h.layerUsecase.BuildPMTiles(ctx, req.LayerId, minZoom, maxZoom, outputDir, progressFn); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	return nil
 }
 
 func (h *LayerGrpcHandler) toProtoLayer(layer *qh_domain.QHLayer, isAdmin bool) (*tqdpb.LayerResponse, error) {

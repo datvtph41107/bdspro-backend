@@ -46,3 +46,4 @@ tqd-service/tqd-service
 /config/
 **/config/product.yml
 **/app/logs
+/tqd-service/files

@@ -104,7 +104,6 @@ var wireSet = wire.NewSet(
 	tqd_initial.NewRedisService,
 	tqd_infra_handler_grpc.NewRegionGrpcHandler,
 	tqd_infra_handler_http.NewRegionHttpHandler,
-	tqd_infra_mapper.NewRegionMapper,
 	tqd_infra_postgres.NewRegionRepository,
 	tqd_internal_usecase.NewRegionUsecase,
 	tqd_infra_handler_grpc.NewReportGrpcHandler,
