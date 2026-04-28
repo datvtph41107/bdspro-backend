@@ -2,6 +2,8 @@ package handler_grpc
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
+	_utils "common/utils"
 	"context"
 	"log"
 
@@ -9,6 +11,7 @@ import (
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
+	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -31,7 +34,55 @@ func NewParcelGrpcHandler(
 	}
 }
 
+// =====================================================
+// API Detail VIP - Get parcel detail information
+// =====================================================
+
+// GetParcelDetail - Lấy thông tin chi tiết của 1 thửa đất
+func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {
+	// Validate input
+	if req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	// Log request
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[GetParcelDetail] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+
+	// Call usecase
+	detail, err := h.usecase.GetParcelDetail(ctx, req.ParcelId)
+	if err != nil {
+		log.Printf("[GetParcelDetail] Usecase error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Check if parcel exists
+	if detail == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	// Convert to proto response
+	return h.mapper.ToProtoParcelDetail(detail), nil
+}
+
+// =====================================================
+// Batch Operations
+// =====================================================
+
+// CreateBatchParcels - Tạo batch parcels
 func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.ParcelListDTO) (*tqdpb.ParcelListDTO, error) {
+	// Get user ID from context
+	userID := _utils.GetOriginIdFromContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
+
+	// Validate request
+	if req == nil || len(req.Data) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "request data is required")
+	}
+
+	log.Printf("[CreateBatchParcels] UserID: %d, Batch size: %d", userID, len(req.Data))
 
 	// Convert proto to request DTO
 	createReq := h.mapper.ProtoToDomains(req)
@@ -41,57 +92,110 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 		Data: createReq,
 	})
 	if err != nil {
-		log.Printf("error creating parcel: %v", err)
+		log.Printf("[CreateBatchParcels] Error: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to create parcel: %v", err)
 	}
+
+	log.Printf("[CreateBatchParcels] Successfully created %d parcels", len(result.Data))
 
 	return &tqdpb.ParcelListDTO{
 		Data: h.mapper.ToProtoFromDomainList(result),
 	}, nil
 }
 
+// =====================================================
+// Location-based Queries
+// =====================================================
+
+// FindParcelByLocation - Tìm parcel theo tọa độ
 func (h *ParcelGrpcHandler) FindParcelByLocation(ctx context.Context, req *tqdpb.FindParcelByLocationRequest) (*tqdpb.Parcel, error) {
+	// Validate input
+	if req.Latitude == 0 && req.Longitude == 0 {
+		return nil, status.Error(codes.InvalidArgument, "latitude and longitude are required")
+	}
+
+	// Validate coordinate ranges
+	if req.Latitude < -90 || req.Latitude > 90 {
+		return nil, status.Error(codes.InvalidArgument, "latitude must be between -90 and 90")
+	}
+	if req.Longitude < -180 || req.Longitude > 180 {
+		return nil, status.Error(codes.InvalidArgument, "longitude must be between -180 and 180")
+	}
+
+	log.Printf("[FindParcelByLocation] Lat: %f, Lng: %f", req.Latitude, req.Longitude)
 
 	// Call usecase
 	result, err := h.usecase.FindByLocation(ctx, req.Latitude, req.Longitude)
 	if err != nil {
-		log.Printf("error finding parcel by location: %v", err)
+		log.Printf("[FindParcelByLocation] Error: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to find parcel by location: %v", err)
+	}
+
+	if result == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
 	}
 
 	return h.mapper.DomainToProto(result), nil
 }
 
+// =====================================================
+// Polygon-based Queries
+// =====================================================
+
+// FindParcelsByPolygon - Tìm parcels theo polygon
 func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	ctx context.Context,
 	req *tqdpb.FindParcelsByPolygonRequest,
 ) (*tqdpb.FindParcelsByPolygonResponse, error) {
-	// Ưu tiên dùng coordinates, nếu không có thì dùng geoJson (có thể bỏ)
-	var points []dto.Point
-	if len(req.Coordinates) > 0 {
-		points = make([]dto.Point, len(req.Coordinates))
-		for i, pt := range req.Coordinates {
-			points[i] = dto.Point{Lat: pt.Lat, Lng: pt.Lng}
-		}
-	} else {
+	// Validate coordinates
+	var points []repo.Point
+	if len(req.Coordinates) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "coordinates are required")
 	}
 
-	// Gọi usecase
+	// Build points list
+	points = make([]repo.Point, len(req.Coordinates))
+	for i, pt := range req.Coordinates {
+		// Validate each point
+		if pt.Lat < -90 || pt.Lat > 90 {
+			return nil, status.Error(codes.InvalidArgument, "latitude must be between -90 and 90")
+		}
+		if pt.Lng < -180 || pt.Lng > 180 {
+			return nil, status.Error(codes.InvalidArgument, "longitude must be between -180 and 180")
+		}
+		points[i] = repo.Point{Lat: pt.Lat, Lng: pt.Lng}
+	}
+
+	// Validate polygon has at least 3 points
+	if len(points) < 3 {
+		return nil, status.Error(codes.InvalidArgument, "polygon must have at least 3 points")
+	}
+
+	// Build pagable
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	log.Printf("[FindParcelsByPolygon] Points count: %d, Intersect: %v, MaxAreaKm2: %f, Page: %d, Size: %d",
+		len(points), req.Intersect, req.MaxAreaKm2, pagable.GetPage(), pagable.GetSize())
+
+	page := int(pagable.GetPage())
+	pageSize := int(pagable.GetSize())
+
 	parcels, total, err := h.usecase.FindParcelsByPolygon(
 		ctx,
 		points,
 		req.Intersect,
 		req.MaxAreaKm2,
-		int(req.Page),
-		int(req.PageSize),
+		page,
+		pageSize,
 	)
 	if err != nil {
-		log.Printf("FindParcelsByPolygon error: %v", err)
+		log.Printf("[FindParcelsByPolygon] Usecase error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Chuyển domain -> proto
+	log.Printf("[FindParcelsByPolygon] Found %d parcels, Total: %d", len(parcels), total)
+
+	// Convert domain to proto
 	data := make([]*tqdpb.Parcel, len(parcels))
 	for i, p := range parcels {
 		data[i] = h.mapper.DomainToProto(&p)
@@ -100,68 +204,40 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	return &tqdpb.FindParcelsByPolygonResponse{
 		Data:     data,
 		Total:    int32(total),
-		Page:     req.Page,
-		PageSize: req.PageSize,
+		Page:     int32(pagable.GetPage()),
+		PageSize: int32(pagable.GetSize()),
 	}, nil
 }
 
-func (h *ParcelGrpcHandler) SearchTxtClientParcels(ctx context.Context, req *sharepb.RequestV3Proto) (*tqdpb.ListParcelResponse, error) {
-	searchText := req.Text
+func (h *ParcelGrpcHandler) SearchTxtClientParcels(
+	ctx context.Context,
+	req *sharepb.RequestV3Proto,
+) (*tqdpb.ListParcelResponse, error) {
+	if req.Text == "" {
+		return nil, status.Error(codes.InvalidArgument, "search text is required")
+	}
+
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[SearchTxtClientParcels] UserID: %d, SearchText: %s, Page: %d, Size: %d",
+		userID, req.Text, req.Page, req.Size)
 
 	pagable := _dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
 	}
+	pagable.Normalize()
 
-	parcels, total, err := h.usecase.Search(ctx, searchText, pagable)
-
+	// Gọi đúng method SearchParcelsByText (không phải Search)
+	parcels, total, err := h.usecase.SearchParcelsByText(ctx, req.Text, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
-		return nil, err
+		log.Printf("[SearchTxtClientParcels] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	results := make([]*tqdpb.ParcelInfo, len(parcels))
-
-	for i := 0; i < len(parcels); i++ {
-		p := parcels[i]
-
-		// mapNumber, _ := p.MapNumber
-		// landNumber, _ := strconv.ParseUint(p.LandNumber, 10, 32)
-
-		results[i] = &tqdpb.ParcelInfo{
-			Id:         p.ID,
-			AddressStr: p.AddressStr,
-			MapNumber:  p.MapNumber,
-			LandNumber: p.LandNumber,
-			Lat:        p.Latitude,
-			Lng:        p.Longitude,
-			Facade:     uint32(p.Facade),
-			TotalArea:  p.TotalArea,
-
-			// Direction (tuỳ bạn define enum hay item)
-			// Direction: convertDirection(p.Direction),
-
-			// Shape
-			Shape: func() *sharepb.ItemV3Proto {
-				if p.Shape == nil {
-					return nil
-				}
-				return &sharepb.ItemV3Proto{
-					Id:   p.ShapeId,
-					Name: p.Shape.Name, // giả sử có field Name
-				}
-			}(),
-
-			// LandType
-			LandType: func() *sharepb.ItemV3Proto {
-				if p.LandType == nil {
-					return nil
-				}
-				return &sharepb.ItemV3Proto{
-					Id:   *p.LandTypeId,
-					Name: p.LandType.Name,
-				}
-			}(),
-		}
+	// Convert kết quả sang proto
+	results := make([]*tqdpb.ParcelInfo, 0, len(parcels))
+	for _, p := range parcels {
+		results = append(results, h.mapper.ToProtoParcelInfo(p))
 	}
 
 	return &tqdpb.ListParcelResponse{
@@ -170,13 +246,29 @@ func (h *ParcelGrpcHandler) SearchTxtClientParcels(ctx context.Context, req *sha
 	}, nil
 }
 
+// PreviewParcelsById - Xem trước thông tin parcel theo ID
 func (h *ParcelGrpcHandler) PreviewParcelsById(
 	ctx context.Context,
 	req *sharepb.RequestV3Proto,
 ) (*tqdpb.ParcelInfo, error) {
-	result, err := h.usecase.GetParcelDetail(ctx, req.Id)
-	if err != nil {
-		return nil, err
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
-	return h.mapper.ParcelInfoToProto(result), nil
+
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[PreviewParcelsById] UserID: %d, ParcelID: %d", userID, req.Id)
+
+	// Gọi đúng method GetParcelInfoByID (không phải GetParcelDetail)
+	info, err := h.usecase.GetParcelInfoByID(ctx, req.Id)
+	if err != nil {
+		log.Printf("[PreviewParcelsById] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if info == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	// Convert sang proto
+	return h.mapper.ToProtoParcelInfo(info), nil
 }

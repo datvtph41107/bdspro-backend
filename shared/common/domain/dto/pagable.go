@@ -54,3 +54,33 @@ func (p *Pagable) GetSort() string {
 	}
 	return p.Sort
 }
+
+func (p *Pagable) Normalize() {
+	if p.Page <= 0 {
+		p.Page = 1
+	}
+	if p.Size <= 0 {
+		p.Size = 20
+	}
+	if p.Size > 100 {
+		p.Size = 100
+	}
+}
+
+func NewPagableFromGrpc(page *uint32, size *uint32, sort *string) *Pagable {
+	p := &Pagable{}
+
+	if page != nil {
+		p.Page = *page
+	}
+	if size != nil {
+		p.Size = *size
+	}
+	if sort != nil {
+		p.Sort = *sort
+	}
+
+	p.Normalize()
+
+	return p
+}

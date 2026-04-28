@@ -1,166 +1,154 @@
-// proto/layer.proto
 syntax = "proto3";
 
-package layerpb;
+package regionpb;
 
-import "shared/common.proto";
 import "google/api/annotations.proto";
-import "google/protobuf/field_mask.proto";
-import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
-// Region Service
 service RegionService {
-  rpc CreateRegion(CreateRegionRequest) returns (RegionResponse) {
-    option (google.api.http) = {
-      post: "/v2/tqd/admin/regions"
-      body: "*"
-    };
-  }
-  
-  rpc UpdateRegion(UpdateRegionRequest) returns (RegionResponse) {
-    option (google.api.http) = {
-      put: "/v2/tqd/admin/regions/{id}"
-      body: "*"
-    };
-  }
-  
-  rpc DeleteRegion(DeleteRegionRequest) returns (sharepb.Empty) {
-    option (google.api.http) = {
-      delete: "/v2/tqd/admin/regions/{id}"
-    };
-  }
-  
-  rpc GetRegion(GetRegionRequest) returns (RegionResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/admin/regions/{id}"
-    };
-  }
-  
-  rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/admin/regions"
-    };
-  }
-  
-  rpc GetRegionByLocation(GetRegionByLocationRequest) returns (GetRegionByLocationResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/admin/regions/by-location"
-    };
-  }
-  
-  rpc ImportGeoJSON(ImportGeoJSONRequest) returns (ImportGeoJSONResponse) {
-    option (google.api.http) = {
-      post: "/v2/tqd/admin/regions/import-geojson"
-      body: "*"
-    };
-  }
-  
-  rpc GetRegionIntersections(GetRegionIntersectionsRequest) returns (GetRegionIntersectionsResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/admin/regions/{id}/intersections"
-    };
-  }
-}
-
-// Region Messages
-message CreateRegionRequest {
-  string name = 1;
-  string displayName = 2;
-  string description = 3;
-  uint32 type = 4;
-  uint32 status = 5;
-  string geometry = 6;  // GeoJSON string
-  optional uint64 layerId = 7;
-  google.protobuf.Struct properties = 8;
-}
-
-message UpdateRegionRequest {
-  uint32 id = 1;
-  optional string name = 2;
-  optional string displayName = 3;
-  optional string description = 4;
-  optional uint32 type = 5;
-  optional uint32 status = 6;
-  optional string geometry = 7;
-  optional uint32 layerId = 8;
-  google.protobuf.Struct properties = 9;
-  google.protobuf.FieldMask update_mask = 10;
-}
-
-message DeleteRegionRequest {
-  uint32 id = 1;
-}
-
-message GetRegionRequest {
-  uint32 id = 1;
+    // ==================== ADMIN APIS ====================
+    rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/admin/regions"
+        };
+    }
+    
+    rpc GetRegion(GetRegionRequest) returns (RegionResponse) {
+        option (google.api.http) = {
+            get: "/v2/admin/regions/{id}"
+        };
+    }
+    
+    rpc GetRegionStats(GetRegionStatsRequest) returns (RegionStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/admin/regions/stats/{layer_id}"
+        };
+    }
+    
+    // ==================== CLIENT APIS ====================
+    rpc ListClientRegions(ListClientRegionsRequest) returns (ListRegionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/client/regions"
+        };
+    }
+    
+    rpc GetClientRegion(GetClientRegionRequest) returns (RegionResponse) {
+        option (google.api.http) = {
+            get: "/v2/client/regions/{id}"
+        };
+    }
+    
+    rpc FindRegionByPoint(FindRegionByPointRequest) returns (RegionResponse) {
+        option (google.api.http) = {
+            get: "/v2/client/regions/find/by-point"
+        };
+    }
+    
+    rpc FindRegionsByBBox(FindRegionsByBBoxRequest) returns (ListRegionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/client/regions/find/by-bbox"
+        };
+    }
 }
 
 message ListRegionsRequest {
-  optional uint32 type = 1;
-  optional uint32 status = 2;
-  optional uint32 layerId = 3;
-  optional int32 page = 4;
-  optional int32 limit = 5;
-  optional string search = 6;
+    optional uint64 layerId = 1;
+    optional string landUseCode = 2;
+    optional uint32 status = 3;
+    optional string search = 4;
+    uint32 page = 5;
+    uint32 size = 6;
+    optional string orderBy = 7;
+    optional string orderDir = 8;
 }
+
+message ListClientRegionsRequest {
+    optional uint64 layerId = 1;
+    optional string landUseCode = 2;
+    optional BBox bbox = 3;
+    uint32 page = 4;
+    uint32 size = 5;
+}
+
+message GetRegionRequest {
+    uint64 id = 1;
+}
+
+message GetClientRegionRequest {
+    uint64 id = 1;
+}
+
+message GetRegionStatsRequest {
+    uint64 layer_id = 1;
+}
+
+message FindRegionByPointRequest {
+    double lat = 1;
+    double lng = 2;
+}
+
+message FindRegionsByBBoxRequest {
+    BBox bbox = 1;
+    optional string landUseCode = 2;
+    uint32 page = 3;
+    uint32 size = 4;
+}
+
+message BBox {
+    double minLng = 1;
+    double minLat = 2;
+    double maxLng = 3;
+    double maxLat = 4;
+}
+
+// =====================================================
+// RESPONSE MESSAGES
+// =====================================================
 
 message ListRegionsResponse {
-  repeated RegionResponse data = 1;
-  int64 total = 2;
-  int32 page = 3;
-  int32 limit = 4;
-}
-
-message GetRegionByLocationRequest {
-  double lat = 1;
-  double lng = 2;
-  optional uint32 type = 3;
-  optional uint32 layerId = 4;
-}
-
-message GetRegionByLocationResponse {
-  repeated RegionResponse data = 1;
-}
-
-message ImportGeoJSONRequest {
-  string name = 1;
-  string displayName = 2;
-  string description = 3;
-  uint32 type = 4;
-  uint32 status = 5;
-  string geoJSON = 6;
-  optional uint32 layerId = 7;
-}
-
-message ImportGeoJSONResponse {
-  RegionResponse region = 1;
-  int32 featureCount = 2;
-}
-
-message GetRegionIntersectionsRequest {
-  uint32 id = 1;
-  optional double buffer = 2;  // buffer in meters
-}
-
-message GetRegionIntersectionsResponse {
-  repeated RegionResponse data = 1;
+    repeated RegionResponse data = 1;
+    int64 total = 2;
+    int32 page = 3;
+    int32 size = 4;
 }
 
 message RegionResponse {
-  uint32 id = 1;
-  string name = 2;
-  string displayName = 3;
-  string description = 4;
-  uint32 type = 5;
-  uint32 status = 6;
-  string geometry = 7;  // GeoJSON
-  string centroid = 8;  // GeoJSON point
-  double area = 9;
-  double length = 10;
-  optional uint32 layerId = 11;
-  google.protobuf.Struct properties = 12;
-  string createdAt = 13;
-  string updatedAt = 14;
+    uint64 id = 1;
+    uint64 layer_id = 2;
+    string name = 3;
+    string displayName = 4;
+    string description = 5;
+    string landUseCode = 6;
+    string landUseName = 7;
+    string geometry_geojson = 8;
+    double area_ha = 9;
+    uint32 color_red = 10;
+    uint32 color_green = 11;
+    uint32 color_blue = 12;
+    string color_hex = 13;
+    string styleConfig = 14;
+    uint32 status = 15;
+    uint32 version = 16;
+    bool isLatest = 17;
+    string createdAt = 18;
+    string updatedAt = 19;
+}
+
+message RegionStatsResponse {
+    uint64 layer_id = 1;
+    int64 total_regions = 2;
+    double total_area_ha = 3;
+    double avg_area_ha = 4;
+    double min_area_ha = 5;
+    double max_area_ha = 6;
+    repeated LandUseStat landUseStats = 7;
+}
+
+message LandUseStat {
+    string land_use_code = 1;
+    string land_use_name = 2;
+    int64 count = 3;
+    double total_area_ha = 4;
 }

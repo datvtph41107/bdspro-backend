@@ -17,6 +17,7 @@ service ParcelService {
       body: "*"
     };
   }
+  
   rpc FindParcelByLocation(FindParcelByLocationRequest) returns (Parcel) {
     option (google.api.http) = {
       post: "/v2/tqd/parcels/by-location"
@@ -41,16 +42,111 @@ service ParcelService {
       get: "/v2/tqd/client/parcels/search"
     };
   }
+  
+  rpc GetParcelDetail(GetParcelDetailRequest) returns (ParcelDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/charge"
+    };
+  }
+}
+
+message GetParcelDetailRequest {
+  uint64 parcelId = 1;
+}
+
+message ParcelDetailResponse {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  bytes geometry = 6;  // GeoJSON
+  
+  string mapNumber = 7;
+  string landNumber = 8;
+  string propertyCode = 9;
+  string propertyUuid = 10;
+  string shape = 11;
+  string direction = 12;
+  
+  // === Loại đất hiện tại ===
+  string landUseCode = 13;
+  string landUseName = 14;
+  string landUseColor = 15;
+  
+  // === Hành chính ===
+  string province = 16;
+  string provinceCode = 17;
+  string wardCode = 18;
+  
+  // === Các layer quy hoạch ảnh hưởng ===
+  repeated Layer layers = 19;
+  
+  // === Thống kê ===
+  double totalOverlapArea = 20;
+  double totalOverlapPercent = 21;
+  uint32 layersAffected = 22;
+  uint32 labelsAffected = 23;
+  uint32 regionsAffected = 24;
+  bool hasConflict = 25;
+  string warning = 26;
+  
+  string riskLevel = 27;      // LOW, MEDIUM, HIGH, CRITICAL
+  uint32 riskScore = 28;
+  bool canBuild = 29;
+  repeated string riskReasons = 30;
+  string recommendation = 31;
+  
+  string dataSource = 32;
+  string queriedAt = 33;
+  int64 responseTimeMs = 34;
+}
+
+message Layer {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string effectiveDate = 4;
+  string legalDoc = 5;
+  repeated Label labels = 6;
+  double totalArea = 7;
+  double totalPercent = 8;
+}
+
+message Label {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string color = 4;
+  repeated Region regions = 5;
+  double totalArea = 6;
+  double totalPercent = 7;
+}
+
+message Region {
+  uint64 id = 1;
+  string name = 2;
+  string landUseCode = 3;
+  string landUseName = 4;
+  RGBColor color = 5;
+  double overlapArea = 6;
+  double overlapPercent = 7;
+  bytes geometry = 8;  // GeoJSON
+}
+
+message RGBColor {
+  uint32 red = 1;
+  uint32 green = 2;
+  uint32 blue = 3;
 }
 
 message FindParcelsByPolygonRequest {
   repeated Point coordinates = 1;
-
-  double maxAreaKm2      = 2;
-  int32  page            = 3;
-  int32  pageSize        = 4;
-  bool   allowAutoShrink = 5;
-  bool   intersect       = 7;
+  double maxAreaKm2 = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  bool allowAutoShrink = 5;
+  bool intersect = 6;
 }
 
 message FindParcelsByPolygonResponse {
@@ -104,8 +200,8 @@ message GetParcelRequest {
 }
 
 message ListParcelsRequest {
-  int32 page     = 1;
-  int32 pageSize = 2;
+  uint32 page = 1;
+  uint32 size = 2;
 }
 
 message ListParcelsResponse {

@@ -1,6 +1,7 @@
 package repo
 
 import (
+	_dto "common/domain/dto"
 	"context"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
@@ -20,22 +21,20 @@ type LayerRepository interface {
 	UpdateVisibility(ctx context.Context, id uint64, visible int32) error
 }
 
-// Filter admin list
+// LayerFilter - Filter cho admin list
 type LayerFilter struct {
 	Status   *enums.LayerStatus
 	Type     *enums.LayerType
-	Visible  *int32 // 0, 1, nil
+	Visible  *int32
 	Search   *string
 	OrderBy  string
-	OrderDir string // "ASC" or "DESC"
-	Page     uint32
-	Limit    uint32
+	OrderDir string
+	Pagable  *_dto.Pagable
 }
 
-// Filter client list
+// ClientLayerFilter - Filter cho client list
 type ClientLayerFilter struct {
-	Type   *enums.LayerType
-	Search *string
-	Page   int
-	Limit  int
+	Type    *enums.LayerType
+	Search  *string
+	Pagable *_dto.Pagable
 }

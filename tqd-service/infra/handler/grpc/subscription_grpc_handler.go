@@ -2,8 +2,10 @@ package handler_grpc
 
 import (
 	"context"
+	"log"
 	"time"
 
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
@@ -39,6 +41,11 @@ func NewSubscriptionGrpcHandler(
 	}
 }
 
+// =====================================================
+// PARCEL SUBSCRIPTIONS
+// =====================================================
+
+// ListParcelSubscriptions - Danh sách subscription theo dõi parcel
 func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 	ctx context.Context,
 	req *tqdpb.ListParcelSubscriptionsRequest,
@@ -47,17 +54,17 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
-	page := int32(1)
-	limit := int32(20)
-	if req.Page != nil && *req.Page > 0 {
-		page = *req.Page
-	}
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
 
-	subs, total, err := h.subUsecase.ListParcelSubscriptions(ctx, userID, req.Status, int(page), int(limit))
+	// Sử dụng Pagable
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
+
+	log.Printf("[ListParcelSubscriptions] UserID: %d, Page: %d, Limit: %d", userID, page, limit)
+
+	subs, total, err := h.subUsecase.ListParcelSubscriptions(ctx, userID, req.Status, page, limit)
 	if err != nil {
+		log.Printf("[ListParcelSubscriptions] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -65,11 +72,12 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 		return &tqdpb.ListParcelSubscriptionsResponse{
 			Data:  []*tqdpb.ParcelSubscriptionItem{},
 			Total: 0,
-			Page:  page,
-			Size:  limit,
+			Page:  int32(pagable.GetPage()),
+			Size:  int32(pagable.GetSize()),
 		}, nil
 	}
 
+	// Lấy thông tin parcels
 	parcelIDs := make([]uint64, 0, len(subs))
 	for _, sub := range subs {
 		parcelIDs = append(parcelIDs, sub.TargetID)
@@ -85,6 +93,7 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 		parcelMap[p.ID] = p
 	}
 
+	// Build response
 	items := make([]*tqdpb.ParcelSubscriptionItem, 0, len(subs))
 	for _, sub := range subs {
 		scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
@@ -100,8 +109,10 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 		if parcel, ok := parcelMap[sub.TargetID]; ok {
 			parcelProto := h.parcelMapper.DomainToProto(&parcel)
 			item.Geometry = parcelProto.Geometry
-			item.Lat = &parcel.Lat
-			item.Lng = &parcel.Lng
+			lat := parcel.Lat
+			lng := parcel.Lng
+			item.Lat = &lat
+			item.Lng = &lng
 		}
 
 		items = append(items, item)
@@ -110,11 +121,12 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 	return &tqdpb.ListParcelSubscriptionsResponse{
 		Data:  items,
 		Total: total,
-		Page:  page,
-		Size:  limit,
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
+// GetParcelSubscriptionStatus - Lấy trạng thái theo dõi parcel
 func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 	ctx context.Context,
 	req *tqdpb.GetParcelSubscriptionStatusRequest,
@@ -123,8 +135,16 @@ func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
+
+	if req.ParcelId == 0 {
+		return nil, _errors.ReturnError(400, "parcel_id is required")
+	}
+
+	log.Printf("[GetParcelSubscriptionStatus] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+
 	isFollowing, sub, err := h.subUsecase.GetParcelStatus(ctx, userID, req.ParcelId)
 	if err != nil {
+		log.Printf("[GetParcelSubscriptionStatus] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -133,7 +153,6 @@ func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 		subscriptionId := sub.ID
 		resp.SubscriptionId = &subscriptionId
 
-		// Convert từ datatypes.JSON sang proto
 		scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
 		resp.SubscriptionScope = scope
 
@@ -143,6 +162,7 @@ func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 	return resp, nil
 }
 
+// CreateParcelSubscription - Tạo subscription theo dõi parcel
 func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 	ctx context.Context,
 	req *tqdpb.CreateParcelSubscriptionRequest,
@@ -152,8 +172,15 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.ParcelId == 0 {
+		return nil, _errors.ReturnError(400, "parcel_id is required")
+	}
+
+	log.Printf("[CreateParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+
 	sub, err := h.subUsecase.CreateParcelSubscription(ctx, userID, req.ParcelId, req.SubscriptionScope, req.GetTriggerConfig())
 	if err != nil {
+		log.Printf("[CreateParcelSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -168,6 +195,7 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 	}, nil
 }
 
+// DeleteParcelSubscription - Xóa subscription theo dõi parcel
 func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 	ctx context.Context,
 	req *tqdpb.DeleteParcelSubscriptionRequest,
@@ -177,13 +205,18 @@ func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.ParcelId == 0 {
+		return nil, _errors.ReturnError(400, "parcel_id is required")
+	}
+
+	log.Printf("[DeleteParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+
 	if err := h.subUsecase.DeleteParcelSubscription(ctx, userID, req.ParcelId); err != nil {
+		log.Printf("[DeleteParcelSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 	return &emptypb.Empty{}, nil
 }
-
-// ==================== Region ====================
 
 func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 	ctx context.Context,
@@ -194,17 +227,16 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	page := int32(1)
-	limit := int32(20)
-	if req.Page != nil && *req.Page > 0 {
-		page = *req.Page
-	}
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
+	// Sử dụng Pagable
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
 
-	subs, regions, total, err := h.subUsecase.ListUserRegionSubscriptions(ctx, userID, int(page), int(limit))
+	log.Printf("[ListRegionSubscriptions] UserID: %d, Page: %d, Limit: %d", userID, page, limit)
+
+	subs, regions, total, err := h.subUsecase.ListUserRegionSubscriptions(ctx, userID, page, limit)
 	if err != nil {
+		log.Printf("[ListRegionSubscriptions] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -219,7 +251,11 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 		}
 		if i < len(regions) {
 			item.RegionName = regions[i].Name
-			item.Geometry = regions[i].Geometry
+			// Geometry is bytes, need to convert
+			if len(regions[i].Geometry) > 0 {
+				geom := string(regions[i].Geometry)
+				item.Geometry = geom
+			}
 		}
 		items = append(items, item)
 	}
@@ -227,11 +263,12 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 	return &tqdpb.ListRegionSubscriptionsResponse{
 		Data:  items,
 		Total: total,
-		Page:  page,
-		Size:  limit,
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
+// CreateRegionSubscription - Tạo subscription theo dõi region
 func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 	ctx context.Context,
 	req *tqdpb.CreateRegionSubscriptionRequest,
@@ -241,6 +278,12 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.RegionId == 0 {
+		return nil, _errors.ReturnError(400, "region_id is required")
+	}
+
+	log.Printf("[CreateRegionSubscription] UserID: %d, RegionID: %d", userID, req.RegionId)
+
 	_, err := h.regionUsecase.GetByID(ctx, req.RegionId)
 	if err != nil {
 		return nil, _errors.ReturnError(404, "region not found")
@@ -248,6 +291,7 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 
 	sub, err := h.subUsecase.CreateRegionSubscription(ctx, userID, req.RegionId, req.SubscriptionScope, req.GetTriggerConfig())
 	if err != nil {
+		log.Printf("[CreateRegionSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -262,6 +306,7 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 	}, nil
 }
 
+// DeleteRegionSubscription - Xóa subscription theo dõi region
 func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 	ctx context.Context,
 	req *tqdpb.DeleteRegionSubscriptionRequest,
@@ -271,14 +316,24 @@ func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.SubscriptionId == 0 {
+		return nil, _errors.ReturnError(400, "subscription_id is required")
+	}
+
+	log.Printf("[DeleteRegionSubscription] UserID: %d, SubscriptionID: %d", userID, req.SubscriptionId)
+
 	if err := h.subUsecase.DeleteRegionSubscription(ctx, userID, req.SubscriptionId); err != nil {
+		log.Printf("[DeleteRegionSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 	return &emptypb.Empty{}, nil
 }
 
-// ==================== Notifications ====================
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
 
+// ListNotifications - Danh sách thông báo
 func (h *SubscriptionGrpcHandler) ListNotifications(
 	ctx context.Context,
 	req *tqdpb.ListNotificationsRequest,
@@ -288,17 +343,16 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	page := int32(1)
-	limit := int32(20)
-	if req.Page != nil && *req.Page > 0 {
-		page = *req.Page
-	}
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
+	// Sử dụng Pagable
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
 
-	notifs, total, unread, err := h.notifUsecase.List(ctx, userID, req.Type, req.Read, int(page), int(limit))
+	log.Printf("[ListNotifications] UserID: %d, Page: %d, Limit: %d", userID, page, limit)
+
+	notifs, total, unread, err := h.notifUsecase.List(ctx, userID, req.Type, req.Read, page, limit)
 	if err != nil {
+		log.Printf("[ListNotifications] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -313,8 +367,9 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 			IsRead:           n.IsRead,
 			CreatedAt:        n.CreatedAt.Format(time.RFC3339),
 		}
-		if n.ActionLink != nil {
-			item.ActionLink = n.ActionLink
+		if n.ActionLink != nil && *n.ActionLink != "" {
+			actionLink := *n.ActionLink
+			item.ActionLink = &actionLink
 		}
 		items = append(items, item)
 	}
@@ -323,11 +378,12 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 		Data:        items,
 		Total:       total,
 		UnreadCount: unread,
-		Page:        page,
-		Size:        limit,
+		Page:        int32(pagable.GetPage()),
+		Size:        int32(pagable.GetSize()),
 	}, nil
 }
 
+// MarkNotificationRead - Đánh dấu đã đọc 1 thông báo
 func (h *SubscriptionGrpcHandler) MarkNotificationRead(
 	ctx context.Context,
 	req *tqdpb.MarkNotificationReadRequest,
@@ -337,12 +393,20 @@ func (h *SubscriptionGrpcHandler) MarkNotificationRead(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.NotificationId == 0 {
+		return nil, _errors.ReturnError(400, "notification_id is required")
+	}
+
+	log.Printf("[MarkNotificationRead] UserID: %d, NotificationID: %d", userID, req.NotificationId)
+
 	if err := h.notifUsecase.MarkRead(ctx, userID, req.NotificationId); err != nil {
+		log.Printf("[MarkNotificationRead] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 	return &emptypb.Empty{}, nil
 }
 
+// MarkAllNotificationsRead - Đánh dấu đã đọc tất cả thông báo
 func (h *SubscriptionGrpcHandler) MarkAllNotificationsRead(
 	ctx context.Context,
 	_ *emptypb.Empty,
@@ -352,29 +416,37 @@ func (h *SubscriptionGrpcHandler) MarkAllNotificationsRead(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	log.Printf("[MarkAllNotificationsRead] UserID: %d", userID)
+
 	if err := h.notifUsecase.MarkAllRead(ctx, userID); err != nil {
+		log.Printf("[MarkAllNotificationsRead] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 	return &emptypb.Empty{}, nil
 }
 
-// ==================== Admin ====================
+// =====================================================
+// ADMIN APIs
+// =====================================================
 
+// AdminListSubscriptions - Admin: Danh sách subscriptions
 func (h *SubscriptionGrpcHandler) AdminListSubscriptions(
 	ctx context.Context,
 	req *tqdpb.AdminListSubscriptionsRequest,
 ) (*tqdpb.ListSubscriptionsAdminResponse, error) {
-	page := int32(1)
-	limit := int32(20)
-	if req.Page != nil && *req.Page > 0 {
-		page = *req.Page
-	}
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[AdminListSubscriptions] AdminUserID: %d", userID)
 
-	subs, total, err := h.subUsecase.AdminList(ctx, req.UserId, req.TargetType, (*uint32)(req.Status), int(page), int(limit))
+	// Sử dụng Pagable
+	pagable := _dto.NewPagableFromGrpc(req.Page, req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
+
+	log.Printf("[AdminListSubscriptions] Page: %d, Limit: %d", page, limit)
+
+	subs, total, err := h.subUsecase.AdminList(ctx, req.UserId, req.TargetType, (*uint32)(req.Status), page, limit)
 	if err != nil {
+		log.Printf("[AdminListSubscriptions] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -396,16 +468,25 @@ func (h *SubscriptionGrpcHandler) AdminListSubscriptions(
 	return &tqdpb.ListSubscriptionsAdminResponse{
 		Data:  items,
 		Total: total,
-		Page:  page,
-		Size:  limit,
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
+// AdminDeleteSubscription - Admin: Xóa subscription
 func (h *SubscriptionGrpcHandler) AdminDeleteSubscription(
 	ctx context.Context,
 	req *tqdpb.AdminDeleteSubscriptionRequest,
 ) (*emptypb.Empty, error) {
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[AdminDeleteSubscription] AdminUserID: %d, SubscriptionID: %d", userID, req.SubscriptionId)
+
+	if req.SubscriptionId == 0 {
+		return nil, _errors.ReturnError(400, "subscription_id is required")
+	}
+
 	if err := h.subUsecase.AdminDelete(ctx, req.SubscriptionId); err != nil {
+		log.Printf("[AdminDeleteSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 	return &emptypb.Empty{}, nil

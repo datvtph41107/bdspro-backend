@@ -81,8 +81,8 @@ service SubscriptionService {
 
 message ListParcelSubscriptionsRequest {
   optional uint32 status = 1;   // 10=active, 20=paused, 30=deleted
-  optional int32 page = 2;
-  optional int32 limit = 3;
+  uint32 page = 2;
+  uint32 size = 3;
 }
 
 message ListParcelSubscriptionsResponse {
@@ -137,8 +137,8 @@ message DeleteRegionSubscriptionRequest {
 }
 
 message ListRegionSubscriptionsRequest {
-  optional int32 page = 1;
-  optional int32 limit = 2;
+  uint32 page = 1;
+  uint32 size = 2;
 }
 
 message ListRegionSubscriptionsResponse {
@@ -169,8 +169,8 @@ message SubscriptionResponse {
 message ListNotificationsRequest {
   optional uint32 type = 1;
   optional bool read = 2;
-  optional int32 page = 3;
-  optional int32 limit = 4;
+  uint32 page = 3;
+  uint32 size = 4;
 }
 
 message ListNotificationsResponse {
@@ -200,8 +200,8 @@ message AdminListSubscriptionsRequest {
   optional uint64 userId = 1;
   optional string targetType = 2;
   optional uint32 status = 3;
-  optional int32 page = 4;
-  optional int32 limit = 5;
+  optional uint32 page = 4;
+  optional uint32 size = 5;
 }
 
 message ListSubscriptionsAdminResponse {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	tqdpb "pb/types/tqd"
 	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
@@ -22,7 +23,7 @@ type SubscriptionUsecase interface {
 	// Region
 	CreateRegionSubscription(ctx context.Context, userID uint64, regionID uint64, scope *tqdpb.SubscriptionScopeMessage, triggerConfig string) (*domain.UserSubscription, error)
 	DeleteRegionSubscription(ctx context.Context, userID uint64, subscriptionID uint64) error
-	ListUserRegionSubscriptions(ctx context.Context, userID uint64, page, limit int) ([]domain.UserSubscription, []domain.Region, int64, error)
+	ListUserRegionSubscriptions(ctx context.Context, userID uint64, page, limit int) ([]domain.UserSubscription, []qh_domain.QHRegion, int64, error)
 
 	// General
 	ListUserSubscriptions(ctx context.Context, userID uint64, targetType *string, status *string, page, limit int) ([]domain.UserSubscription, int64, error)
@@ -185,7 +186,7 @@ func (u *subscriptionUsecase) DeleteRegionSubscription(ctx context.Context, user
 	return u.subRepo.Delete(ctx, subscriptionID)
 }
 
-func (u *subscriptionUsecase) ListUserRegionSubscriptions(ctx context.Context, userID uint64, page, limit int) ([]domain.UserSubscription, []domain.Region, int64, error) {
+func (u *subscriptionUsecase) ListUserRegionSubscriptions(ctx context.Context, userID uint64, page, limit int) ([]domain.UserSubscription, []qh_domain.QHRegion, int64, error) {
 	targetType := "region"
 	subs, total, err := u.subRepo.ListByUser(ctx, userID, &targetType, nil, page, limit)
 	if err != nil {
@@ -200,11 +201,11 @@ func (u *subscriptionUsecase) ListUserRegionSubscriptions(ctx context.Context, u
 	if err != nil {
 		return subs, nil, total, err
 	}
-	regionMap := make(map[uint64]domain.Region)
+	regionMap := make(map[uint64]qh_domain.QHRegion)
 	for _, r := range regions {
 		regionMap[r.ID] = r
 	}
-	orderedRegions := make([]domain.Region, 0, len(subs))
+	orderedRegions := make([]qh_domain.QHRegion, 0, len(subs))
 	for _, sub := range subs {
 		id := sub.TargetID
 		if r, ok := regionMap[id]; ok {

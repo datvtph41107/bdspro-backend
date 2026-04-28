@@ -87,16 +87,16 @@ message DownloadReportResponse {
 message ListReportsRequest {
   optional uint32 reportType = 1;
   optional uint32 status = 2;
-  optional int32 page = 3;
-  optional int32 limit = 4;
+  uint32 page = 3;
+  uint32 size = 4;
 }
 
 message AdminListReportsRequest {
   optional uint64 userId = 1;
   optional uint32 reportType = 2;
   optional uint32 status = 3;
-  optional int32 page = 4;
-  optional int32 limit = 5;
+  uint32 page = 4;
+  uint32 size = 5;
 }
 
 message ListReportsResponse {

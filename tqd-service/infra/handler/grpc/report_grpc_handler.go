@@ -3,8 +3,10 @@ package handler_grpc
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
@@ -22,6 +24,7 @@ func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase) *ReportGrpcHandle
 	return &ReportGrpcHandler{reportUsecase: reportUsecase}
 }
 
+// CreateReportAsync - Tạo báo cáo bất đồng bộ
 func (h *ReportGrpcHandler) CreateReportAsync(
 	ctx context.Context,
 	req *tqdpb.CreateReportAsyncRequest,
@@ -31,13 +34,19 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	log.Printf("[CreateReportAsync] UserID: %d, ReportType: %d, Profile: %d, Format: %d",
+		userID, req.ReportType, req.Profile, req.Format)
+
+	// Parse targetData if exists
 	var targetData interface{}
 	if req.TargetData != nil && *req.TargetData != "" {
 		if err := json.Unmarshal([]byte(*req.TargetData), &targetData); err != nil {
+			log.Printf("[CreateReportAsync] Invalid targetData: %v", err)
 			return nil, _errors.ReturnError(400, "invalid targetData json")
 		}
 	}
 
+	// Create report
 	reportID, err := h.reportUsecase.CreateAsync(
 		ctx,
 		userID,
@@ -49,16 +58,20 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 		req.GetIncludeMapImage(),
 	)
 	if err != nil {
+		log.Printf("[CreateReportAsync] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
+	log.Printf("[CreateReportAsync] Report created: %d", reportID)
+
 	return &tqdpb.CreateReportAsyncResponse{
 		ReportId:  reportID,
-		Status:    10,
+		Status:    10, // Processing
 		CreatedAt: time.Now().Format(time.RFC3339),
 	}, nil
 }
 
+// GetReportStatus - Lấy trạng thái báo cáo
 func (h *ReportGrpcHandler) GetReportStatus(
 	ctx context.Context,
 	req *tqdpb.GetReportStatusRequest,
@@ -68,8 +81,15 @@ func (h *ReportGrpcHandler) GetReportStatus(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.ReportId == 0 {
+		return nil, _errors.ReturnError(400, "report_id is required")
+	}
+
+	log.Printf("[GetReportStatus] UserID: %d, ReportID: %d", userID, req.ReportId)
+
 	report, err := h.reportUsecase.GetStatus(ctx, userID, req.ReportId)
 	if err != nil {
+		log.Printf("[GetReportStatus] Error: %v", err)
 		return nil, _errors.ReturnError(404, err.Error())
 	}
 
@@ -78,11 +98,14 @@ func (h *ReportGrpcHandler) GetReportStatus(
 		Status: uint32(report.Status),
 	}
 
-	if report.FileURL != nil {
-		resp.FileUrl = report.FileURL
+	// Convert string to *string for proto
+	if report.FileURL != nil && *report.FileURL != "" {
+		fileUrl := *report.FileURL
+		resp.FileUrl = &fileUrl
 	}
-	if report.ErrorMessage != nil {
-		resp.ErrorMessage = report.ErrorMessage
+	if report.ErrorMessage != nil && *report.ErrorMessage != "" {
+		errMsg := *report.ErrorMessage
+		resp.ErrorMessage = &errMsg
 	}
 	if report.CompletedAt != nil {
 		completed := report.CompletedAt.Format(time.RFC3339)
@@ -96,6 +119,11 @@ func (h *ReportGrpcHandler) GetReportStatus(
 	return resp, nil
 }
 
+// =====================================================
+// DOWNLOAD REPORT
+// =====================================================
+
+// DownloadReport - Tải báo cáo
 func (h *ReportGrpcHandler) DownloadReport(
 	ctx context.Context,
 	req *tqdpb.DownloadReportRequest,
@@ -105,10 +133,24 @@ func (h *ReportGrpcHandler) DownloadReport(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	_, err := h.reportUsecase.Download(ctx, userID, req.ReportId)
+	if req.ReportId == 0 {
+		return nil, _errors.ReturnError(400, "report_id is required")
+	}
+
+	log.Printf("[DownloadReport] UserID: %d, ReportID: %d", userID, req.ReportId)
+
+	report, err := h.reportUsecase.Download(ctx, userID, req.ReportId)
 	if err != nil {
+		log.Printf("[DownloadReport] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
+
+	if report == nil {
+		return nil, _errors.ReturnError(404, "report not found")
+	}
+
+	// TODO: Implement actual file download
+	// Currently returns placeholder
 
 	return &tqdpb.DownloadReportResponse{
 		FileContent: []byte{},
@@ -117,6 +159,11 @@ func (h *ReportGrpcHandler) DownloadReport(
 	}, nil
 }
 
+// =====================================================
+// LIST REPORTS (User)
+// =====================================================
+
+// ListReports - Danh sách báo cáo của user
 func (h *ReportGrpcHandler) ListReports(
 	ctx context.Context,
 	req *tqdpb.ListReportsRequest,
@@ -126,17 +173,17 @@ func (h *ReportGrpcHandler) ListReports(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	page := int32(1)
-	limit := int32(20)
-	if req.Page != nil && *req.Page > 0 {
-		page = *req.Page
-	}
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
+	// Sử dụng Pagable
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
 
-	reports, total, err := h.reportUsecase.ListUser(ctx, userID, req.ReportType, req.Status, int(page), int(limit))
+	log.Printf("[ListReports] UserID: %d, Page: %d, Limit: %d, ReportType: %v, Status: %v",
+		userID, page, limit, req.ReportType, req.Status)
+
+	reports, total, err := h.reportUsecase.ListUser(ctx, userID, req.ReportType, req.Status, page, limit)
 	if err != nil {
+		log.Printf("[ListReports] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -162,11 +209,16 @@ func (h *ReportGrpcHandler) ListReports(
 	return &tqdpb.ListReportsResponse{
 		Data:  items,
 		Total: total,
-		Page:  page,
-		Size:  limit,
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
+// =====================================================
+// DELETE REPORT (User)
+// =====================================================
+
+// DeleteReport - Xóa báo cáo của user
 func (h *ReportGrpcHandler) DeleteReport(
 	ctx context.Context,
 	req *tqdpb.DeleteReportRequest,
@@ -176,28 +228,44 @@ func (h *ReportGrpcHandler) DeleteReport(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
+	if req.ReportId == 0 {
+		return nil, _errors.ReturnError(400, "report_id is required")
+	}
+
+	log.Printf("[DeleteReport] UserID: %d, ReportID: %d", userID, req.ReportId)
+
 	if err := h.reportUsecase.Delete(ctx, userID, req.ReportId); err != nil {
+		log.Printf("[DeleteReport] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
+
 	return &emptypb.Empty{}, nil
 }
 
+// =====================================================
+// ADMIN APIs
+// =====================================================
+
+// AdminListReports - Admin: Danh sách tất cả báo cáo
 func (h *ReportGrpcHandler) AdminListReports(
 	ctx context.Context,
 	req *tqdpb.AdminListReportsRequest,
 ) (*tqdpb.ListReportsResponse, error) {
-	// Admin check tạm thời bỏ qua
-	page := int32(1)
-	limit := int32(20)
-	if req.Page != nil && *req.Page > 0 {
-		page = *req.Page
-	}
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
+	// TODO: Check admin permission
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[AdminListReports] AdminUserID: %d", userID)
 
-	reports, total, err := h.reportUsecase.AdminList(ctx, req.UserId, req.ReportType, req.Status, int(page), int(limit))
+	// Sử dụng Pagable
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
+
+	log.Printf("[AdminListReports] Page: %d, Limit: %d, UserID: %v, ReportType: %v, Status: %v",
+		page, limit, req.UserId, req.ReportType, req.Status)
+
+	reports, total, err := h.reportUsecase.AdminList(ctx, req.UserId, req.ReportType, req.Status, page, limit)
 	if err != nil {
+		log.Printf("[AdminListReports] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -223,17 +291,28 @@ func (h *ReportGrpcHandler) AdminListReports(
 	return &tqdpb.ListReportsResponse{
 		Data:  items,
 		Total: total,
-		Page:  page,
-		Size:  limit,
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
+// AdminDeleteReport - Admin: Xóa báo cáo
 func (h *ReportGrpcHandler) AdminDeleteReport(
 	ctx context.Context,
 	req *tqdpb.AdminDeleteReportRequest,
 ) (*emptypb.Empty, error) {
+	// TODO: Check admin permission
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[AdminDeleteReport] AdminUserID: %d, ReportID: %d", userID, req.ReportId)
+
+	if req.ReportId == 0 {
+		return nil, _errors.ReturnError(400, "report_id is required")
+	}
+
 	if err := h.reportUsecase.AdminDelete(ctx, req.ReportId); err != nil {
+		log.Printf("[AdminDeleteReport] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
+
 	return &emptypb.Empty{}, nil
 }

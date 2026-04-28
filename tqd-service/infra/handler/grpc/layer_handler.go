@@ -1,6 +1,7 @@
 package handler_grpc
 
 import (
+	_dto "common/domain/dto"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -32,7 +33,10 @@ func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase) *LayerGrpcHandler {
 }
 
 func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLayerRequest) (*tqdpb.LayerResponse, error) {
-	userID := uint64(342)
+	userID := _utils.GetOriginIdFromContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
 
 	var styleConfig jsonb.JSONB
 	if req.StyleConfig != "" {
@@ -113,7 +117,10 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 }
 
 func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLayerRequest) (*tqdpb.LayerResponse, error) {
-	userID := uint64(1)
+	userID := _utils.GetOriginIdFromContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
 
 	layer := &qh_domain.QHLayer{}
 
@@ -203,7 +210,10 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 
 func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLayerRequest) (*sharepb.Empty, error) {
 	// TODO: Get userID from auth context
-	userID := uint64(1)
+	userID := _utils.GetOriginIdFromContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
 
 	if err := h.layerUsecase.Delete(ctx, req.Id, userID); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -222,9 +232,10 @@ func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequ
 }
 
 func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
+
 	filter := &repo.LayerFilter{
-		Page:  uint32(*req.Page),
-		Limit: uint32(*req.Limit),
+		Pagable: pagable,
 	}
 
 	if req.Status != nil {
@@ -236,12 +247,12 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 		filter.Type = &t
 	}
 	if req.Visible != nil {
-		v := *req.Visible
-		filter.Visible = &v
+		filter.Visible = req.Visible
 	}
 	if req.Search != nil && *req.Search != "" {
 		filter.Search = req.Search
 	}
+
 	if req.OrderBy != nil {
 		filter.OrderBy = *req.OrderBy
 	}
@@ -266,8 +277,8 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 	return &tqdpb.ListLayersResponse{
 		Data:  protoLayers,
 		Total: total,
-		Page:  int32(filter.Page),
-		Size:  int32(filter.Limit),
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
@@ -286,33 +297,48 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 // 	return h.toProtoLayer(layer, true)
 // }
 
-func (h *LayerGrpcHandler) GetListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
-	// Set default values
-	page := int32(1)
-	// limit := int32(20)
+// func (h *LayerGrpcHandler) GetListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
+// 	// Set default values
+// 	page := int32(1)
+// 	// limit := int32(20)
 
-	layerFilter := repo.LayerFilter{}
+// 	layerFilter := repo.LayerFilter{}
 
-	if req.Page != nil && *req.Page > 0 {
-		layerFilter.Page = uint32(*req.Page)
+// 	if req.Page != nil && *req.Page > 0 {
+// 		layerFilter.Page = uint32(*req.Page)
+// 	}
+// 	if req.Limit != nil && *req.Limit > 0 {
+// 		layerFilter.Limit = uint32(*req.Limit)
+// 	}
+
+// 	// Get status filter
+// 	// if req.Status != nil && *req.Status > 0 {
+// 	// 	layerFilter.Status = (*enums.LayerStatus)(req.Status)
+// 	// }
+
+// 	if req.Search != nil {
+// 		layerFilter.Search = req.Search
+// 	}
+
+// 	// Call usecase
+// 	layers, total, err := h.layerUsecase.List(ctx, &layerFilter)
+// 	if err != nil {
+// 		return nil, status.Error(codes.NotFound, err.Error())
+// 	}
+
+// 	return h.toProtoLayer(layer, true)
+// }
+
+func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	filter := &repo.ClientLayerFilter{
+		Pagable: pagable,
 	}
-	if req.Limit != nil && *req.Limit > 0 {
-		layerFilter.Limit = uint32(*req.Limit)
-	}
 
-	// Get status filter
-	// if req.Status != nil && *req.Status > 0 {
-	// 	layerFilter.Status = (*enums.LayerStatus)(req.Status)
-	// }
-
-	if req.Search != nil {
-		layerFilter.Search = req.Search
-	}
-
-	// Call usecase
-	layers, total, err := h.layerUsecase.List(ctx, &layerFilter)
+	layers, total, err := h.layerUsecase.ListClient(ctx, filter)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// Convert response
@@ -328,8 +354,8 @@ func (h *LayerGrpcHandler) GetListClientLayers(ctx context.Context, req *tqdpb.L
 	return &tqdpb.ListLayersResponse{
 		Data:  protoLayers,
 		Total: total,
-		Page:  page,
-		// Limit: limit,
+		Page:  int32(filter.Pagable.GetPage()),
+		Size:  int32(filter.Pagable.GetLimit()),
 	}, nil
 }
 

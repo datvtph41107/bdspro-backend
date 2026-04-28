@@ -126,21 +126,21 @@ message GetClientLayerRequest {
 }
 
 message ListLayersRequest {
-  optional uint32 status = 1; // Lọc theo status
-  optional uint32 type = 2; // Lọc theo type
-  optional int32 visible = 3; // Lọc theo visible (0/1)
-  optional string search = 4; // Tìm kiếm theo name/displayName
-  optional int32 page = 5; // Trang (bắt đầu từ 1)
-  optional int32 limit = 6; // Số lượng mỗi trang
-  optional string orderBy = 7; // Sắp xếp theo field
-  optional string orderDir = 8; // asc/desc
+    optional uint32 status = 1;     // Lọc theo status
+    optional uint32 type = 2;       // Lọc theo type
+    optional int32 visible = 3;     // Lọc theo visible (0/1)
+    optional string search = 4;     // Tìm kiếm theo name/displayName
+    uint32 page = 5;
+    uint32 size = 6;
+    optional string orderBy = 7;    // Sắp xếp theo field
+    optional string orderDir = 8;   // asc/desc
 }
 
 message ListClientLayersRequest {
-  optional uint32 type = 1; // Lọc theo type
-  optional string search = 2; // Tìm kiếm
-  optional int32 page = 3; // Trang
-  optional int32 limit = 4; // Số lượng
+    optional uint32 type = 1;       // Lọc theo type
+    optional string search = 2;     // Tìm kiếm
+    uint32 page = 3;
+    uint32 size = 4;
 }
 
 message ListLayersResponse {

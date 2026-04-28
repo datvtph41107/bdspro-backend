@@ -30,14 +30,16 @@ func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer) er
 
 func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) error {
 	layer.UpdatedAt = time.Now()
-	// Use Select to only update non-zero fields
-	return r.db.WithContext(ctx).Model(layer).Omit("created_at", "created_by").Updates(layer).Error
+	return r.db.WithContext(ctx).
+		Omit("created_at", "created_by", "id").
+		Updates(layer).Error
 }
 
 func (r *layerRepoImpl) Delete(ctx context.Context, id uint64) error {
 	now := time.Now()
-	return r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
-		Where("id = ?", id).
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
+		Where("id = ? AND deleted_at IS NULL", id).
 		Update("deleted_at", now).Error
 }
 
@@ -73,7 +75,6 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 	var layers []qh_domain.QHLayer
 	var total int64
 
-	// Base query
 	query := r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
 		Where("deleted_at IS NULL")
 
@@ -90,36 +91,31 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 	if filter.Search != nil && *filter.Search != "" {
 		searchTerm := "%" + strings.ToLower(*filter.Search) + "%"
 		query = query.Where(
-			"LOWER(name) LIKE ? OR LOWER(display_name) LIKE ? OR LOWER(description) LIKE ?",
-			searchTerm, searchTerm, searchTerm,
+			"LOWER(name) LIKE ? OR LOWER(display_name) LIKE ?",
+			searchTerm, searchTerm,
 		)
 	}
 
-	// Count total
+	// Count
 	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("count layers failed: %w", err)
+		return nil, 0, err
 	}
 
 	// Pagination
-	if filter.Page < 1 {
-		filter.Page = 1
+	offset := 0
+	limit := 20
+	if filter.Pagable != nil {
+		offset = filter.Pagable.GetOffset()
+		limit = filter.Pagable.GetLimit()
 	}
-	if filter.Limit < 1 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 100 {
-		filter.Limit = 100
-	}
-	offset := (filter.Page - 1) * filter.Limit
 
 	// Order by
 	orderBy := "display_order"
 	if filter.OrderBy != "" {
-		// Whitelist allowed fields to prevent SQL injection
-		allowedFields := map[string]bool{
+		allowed := map[string]bool{
 			"display_order": true, "created_at": true, "name": true, "id": true,
 		}
-		if allowedFields[filter.OrderBy] {
+		if allowed[filter.OrderBy] {
 			orderBy = filter.OrderBy
 		}
 	}
@@ -130,8 +126,8 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 
 	err := query.
 		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
-		Offset(int(offset)).
-		Limit(int(filter.Limit)).
+		Offset(offset).
+		Limit(limit).
 		Find(&layers).Error
 
 	return layers, total, err
@@ -143,7 +139,6 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 
 	now := time.Now()
 
-	// Client chỉ thấy active, visible, còn hiệu lực
 	query := r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
 		Where("deleted_at IS NULL").
 		Where("status = ?", enums.LayerStatusActive).
@@ -151,7 +146,6 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 		Where("effective_date IS NULL OR effective_date <= ?", now).
 		Where("expiry_date IS NULL OR expiry_date >= ?", now)
 
-	// Apply filters
 	if filter.Type != nil {
 		query = query.Where("type = ?", *filter.Type)
 	}
@@ -163,40 +157,36 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 		)
 	}
 
-	// Count
 	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("count client layers failed: %w", err)
+		return nil, 0, err
 	}
 
-	// Pagination
-	if filter.Page < 1 {
-		filter.Page = 1
+	offset := 0
+	limit := 20
+	if filter.Pagable != nil {
+		offset = filter.Pagable.GetOffset()
+		limit = filter.Pagable.GetLimit()
 	}
-	if filter.Limit < 1 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 50 {
-		filter.Limit = 50
-	}
-	offset := (filter.Page - 1) * filter.Limit
 
 	err := query.
 		Order("display_order ASC, id ASC").
 		Offset(offset).
-		Limit(filter.Limit).
+		Limit(limit).
 		Find(&layers).Error
 
 	return layers, total, err
 }
 
 func (r *layerRepoImpl) UpdateStatus(ctx context.Context, id uint64, status enums.LayerStatus) error {
-	return r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
 		Where("id = ? AND deleted_at IS NULL", id).
 		Update("status", uint32(status)).Error
 }
 
 func (r *layerRepoImpl) UpdateVisibility(ctx context.Context, id uint64, visible int32) error {
-	return r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
 		Where("id = ? AND deleted_at IS NULL", id).
 		Update("visible", visible).Error
 }

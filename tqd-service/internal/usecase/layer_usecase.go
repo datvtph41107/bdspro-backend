@@ -12,7 +12,7 @@ import (
 )
 
 type LayerUsecase interface {
-	// Admin usecases
+	// Admin
 	Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error)
 	Update(ctx context.Context, id uint64, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error)
 	Delete(ctx context.Context, id uint64, userID uint64) error
@@ -20,7 +20,7 @@ type LayerUsecase interface {
 	List(ctx context.Context, filter *repo.LayerFilter) ([]qh_domain.QHLayer, int64, error)
 	UpdateStatus(ctx context.Context, id uint64, status enums.LayerStatus, userID uint64) error
 
-	// Client usecases
+	// Client
 	ListClient(ctx context.Context, filter *repo.ClientLayerFilter) ([]qh_domain.QHLayer, int64, error)
 	GetClientByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
 }
@@ -36,6 +36,7 @@ func NewLayerUsecase(layerRepo repo.LayerRepository) LayerUsecase {
 }
 
 func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error) {
+	// Validation
 	if layer.Name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -46,29 +47,28 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		return nil, errors.New("layer_url is required")
 	}
 	if !layer.Type.IsValid() {
-		return nil, fmt.Errorf("invalid type: %d, must be 1-5", layer.Type)
+		return nil, fmt.Errorf("invalid type: %d", layer.Type)
 	}
-
-	// Validate visible (0 or 1)
 	if layer.Visible != 0 && layer.Visible != 1 {
 		return nil, errors.New("visible must be 0 or 1")
 	}
 
-	// Set default status if not set
+	// Set defaults
 	if layer.Status == 0 {
 		layer.Status = enums.LayerStatusDraft
 	}
 	if !layer.Status.IsValid() {
-		return nil, fmt.Errorf("invalid status: %d, must be 1,10,20,30", layer.Status)
+		return nil, fmt.Errorf("invalid status: %d", layer.Status)
 	}
 
-	// Validate effective/expiry dates
+	// Validate dates
 	if layer.EffectiveDate != nil && layer.ExpiryDate != nil {
 		if layer.EffectiveDate.After(*layer.ExpiryDate) {
 			return nil, errors.New("effective_date must be before expiry_date")
 		}
 	}
 
+	// Check unique name
 	existing, err := u.layerRepo.GetByName(ctx, layer.Name)
 	if err != nil {
 		return nil, fmt.Errorf("check name failed: %w", err)
@@ -77,12 +77,12 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		return nil, fmt.Errorf("layer with name '%s' already exists", layer.Name)
 	}
 
+	// Set audit
 	layer.CreatedBy = userID
 	layer.UpdatedBy = userID
 	layer.CreatedAt = time.Now()
 	layer.UpdatedAt = time.Now()
 
-	// Create
 	if err := u.layerRepo.Create(ctx, layer); err != nil {
 		return nil, fmt.Errorf("create failed: %w", err)
 	}
@@ -99,6 +99,7 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 		return nil, fmt.Errorf("layer with id %d not found", id)
 	}
 
+	// Check name uniqueness if changed
 	if layer.Name != "" && layer.Name != existing.Name {
 		check, err := u.layerRepo.GetByName(ctx, layer.Name)
 		if err != nil {
@@ -110,7 +111,7 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 		existing.Name = layer.Name
 	}
 
-	// Update fields if provided
+	// Update fields
 	if layer.DisplayName != "" {
 		existing.DisplayName = layer.DisplayName
 	}
@@ -169,12 +170,6 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 		existing.ExpiryDate = layer.ExpiryDate
 	}
 
-	if existing.EffectiveDate != nil && existing.ExpiryDate != nil {
-		if existing.EffectiveDate.After(*existing.ExpiryDate) {
-			return nil, errors.New("effective_date must be before expiry_date")
-		}
-	}
-
 	existing.UpdatedBy = userID
 	existing.UpdatedAt = time.Now()
 
@@ -193,7 +188,6 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint64, userID uint64)
 	if existing == nil {
 		return fmt.Errorf("layer with id %d not found", id)
 	}
-
 	return u.layerRepo.Delete(ctx, id)
 }
 
@@ -209,24 +203,13 @@ func (u *layerUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.Q
 }
 
 func (u *layerUsecaseImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]qh_domain.QHLayer, int64, error) {
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.Limit < 1 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 100 {
-		filter.Limit = 100
-	}
-
 	return u.layerRepo.List(ctx, filter)
 }
 
 func (u *layerUsecaseImpl) UpdateStatus(ctx context.Context, id uint64, status enums.LayerStatus, userID uint64) error {
 	if !status.IsValid() {
-		return fmt.Errorf("invalid status: %d, must be 1,10,20,30", status)
+		return fmt.Errorf("invalid status: %d", status)
 	}
-
 	existing, err := u.layerRepo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get layer failed: %w", err)
@@ -234,24 +217,10 @@ func (u *layerUsecaseImpl) UpdateStatus(ctx context.Context, id uint64, status e
 	if existing == nil {
 		return fmt.Errorf("layer with id %d not found", id)
 	}
-
 	return u.layerRepo.UpdateStatus(ctx, id, status)
 }
 
-// ==================== CLIENT IMPLEMENTATIONS ====================
-
 func (u *layerUsecaseImpl) ListClient(ctx context.Context, filter *repo.ClientLayerFilter) ([]qh_domain.QHLayer, int64, error) {
-	// Validate pagination
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.Limit < 1 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 50 {
-		filter.Limit = 50
-	}
-
 	return u.layerRepo.ListClient(ctx, filter)
 }
 
@@ -263,11 +232,8 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 	if layer == nil {
 		return nil, fmt.Errorf("layer not found")
 	}
-
-	// Client chỉ được xem layer active
 	if !layer.IsClientVisible() {
 		return nil, fmt.Errorf("layer not available")
 	}
-
 	return layer, nil
 }

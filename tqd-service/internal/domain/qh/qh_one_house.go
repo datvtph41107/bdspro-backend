@@ -38,12 +38,6 @@ type OneHouse struct {
 	AcceptedTnc          bool          `gorm:"column:accepted_tnc"`
 }
 
-type PlanningInfo struct {
-	PlanningTypeCode string  `json:"planning_type_code"` // snake_case để scan từ DB
-	PlanningTypeName string  `json:"planning_type_name"`
-	PlanningArea     float64 `json:"planning_area"`
-}
-
 type PlanningInfos []PlanningInfo
 
 func (p PlanningInfos) Value() (driver.Value, error) {
