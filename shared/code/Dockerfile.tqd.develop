@@ -1,0 +1,24 @@
+FROM tippecanoe-builder AS builder
+
+FROM alpine:latest
+
+WORKDIR /
+
+ENV ENV_RUNTIME=develop
+
+# runtime libs cần cho tippecanoe chạy
+RUN apk add \
+    sqlite-libs \
+    zlib \
+    libstdc++
+
+# copy binary từ builder image
+COPY --from=tippecanoe-builder /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
+
+# app
+COPY config config
+COPY main .
+
+ENV ENV_RUNTIME=develop
+
+CMD ["./main"]

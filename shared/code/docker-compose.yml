@@ -239,6 +239,8 @@ services:
     build: ./tqd-service
     container_name: tqd
     command: ["./main", "--server=grpc"]
+    volumes:
+      - ${PWD}/files:/files
     networks:
       - internal
 

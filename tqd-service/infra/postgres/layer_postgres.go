@@ -29,10 +29,52 @@ func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer) er
 }
 
 func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) error {
-	layer.UpdatedAt = time.Now()
-	return r.db.WithContext(ctx).
-		Omit("created_at", "created_by", "id").
-		Updates(layer).Error
+	updates := map[string]interface{}{}
+
+	// string (cho phép update rỗng)
+	updates["name"] = layer.Name
+	updates["display_name"] = layer.DisplayName
+	updates["description"] = layer.Description
+	updates["layer_url"] = layer.LayerURL
+	updates["avatar"] = layer.Avatar
+	updates["image_url"] = layer.ImageURL
+	updates["thumbnail_url"] = layer.ThumbnailURL
+	updates["legal_doc"] = layer.LegalDoc
+	updates["legal_doc_url"] = layer.LegalDocURL
+	updates["document_number"] = layer.DocumentNumber
+	updates["issuing_authority"] = layer.IssuingAuthority
+	// updates["source_code"] = layer.SourceCode
+	updates["source_type"] = layer.SourceType
+
+	// number / enum
+	updates["type"] = layer.Type
+	updates["status"] = layer.Status
+	updates["display_order"] = layer.DisplayOrder
+	updates["visible"] = layer.Visible
+	updates["min_zoom"] = layer.MinZoom
+	updates["max_zoom"] = layer.MaxZoom
+
+	// jsonb
+	if len(layer.StyleConfig) > 0 {
+		updates["style_config"] = layer.StyleConfig
+	} else {
+		updates["style_config"] = []byte("{}") // reset về {}
+	}
+
+	// time (phải check nil)
+	if layer.EffectiveDate != nil {
+		updates["effective_date"] = layer.EffectiveDate
+	} else {
+		updates["effective_date"] = nil
+	}
+
+	if layer.ExpiryDate != nil {
+		updates["expiry_date"] = layer.ExpiryDate
+	} else {
+		updates["expiry_date"] = nil
+	}
+	// Use Select to only update non-zero fields
+	return r.db.WithContext(ctx).Model(layer).Omit("created_at", "created_by").Updates(updates).Error
 }
 
 func (r *layerRepoImpl) Delete(ctx context.Context, id uint64) error {

@@ -28,6 +28,17 @@ mkdir -p ${REMOTE_PATH}
   exit 0
 fi
 
+if [ "$1" = "tqd-tool" ]; then
+  REMOTE_DIR=$REMOTE_PATH/tqd-service
+  scp Dockerfile.tqd-tool ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.tqd-tool
+  ssh ${REMOTE_USER}@${REMOTE_HOST} "
+  mkdir -p ${REMOTE_DIR}
+  cd ${REMOTE_DIR}
+  docker build -f Dockerfile.tqd-tool -t tippecanoe-builder .
+"
+  exit 0
+fi
+
 cd ../..
 
 if [ "$1" = "nginx" ]; then

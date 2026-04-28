@@ -68,7 +68,10 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		}
 	}
 
-	// Check unique name
+	if len(layer.StyleConfig) == 0 {
+		layer.StyleConfig = qh_domain.GetDefaultStyleConfig()
+	}
+
 	existing, err := u.layerRepo.GetByName(ctx, layer.Name)
 	if err != nil {
 		return nil, fmt.Errorf("check name failed: %w", err)
@@ -130,6 +133,12 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.DisplayOrder > -1 {
 		existing.DisplayOrder = layer.DisplayOrder
 	}
+	if layer.SourceType != "" {
+		existing.SourceType = layer.SourceType
+	}
+	// if layer.SourceCode != "" {
+	// 	existing.SourceCode = layer.SourceCode
+	// }
 	if layer.MinZoom != 0 {
 		existing.MinZoom = layer.MinZoom
 	}

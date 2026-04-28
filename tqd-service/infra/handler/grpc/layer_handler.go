@@ -145,6 +145,12 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	if req.DisplayOrder != nil {
 		layer.DisplayOrder = int(*req.DisplayOrder)
 	}
+	if req.SourceType != "" {
+		layer.SourceType = req.SourceType
+	}
+	// if req.SourceCode != "" {
+	// 	layer.SourceCode = req.SourceCode
+	// }
 	if req.MinZoom != nil {
 		layer.MinZoom = int(*req.MinZoom)
 	}
@@ -385,6 +391,8 @@ func (h *LayerGrpcHandler) toProtoLayer(layer *qh_domain.QHLayer, isAdmin bool) 
 	resp := &tqdpb.LayerResponse{
 		Id:               layer.ID,
 		Name:             layer.Name,
+		SourceType:       layer.SourceType,
+		SourceCode:       layer.GetSourceCode(),
 		DisplayName:      layer.DisplayName,
 		Description:      layer.Description,
 		Type:             uint32(layer.Type),

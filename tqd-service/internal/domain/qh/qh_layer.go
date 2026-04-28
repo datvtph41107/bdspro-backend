@@ -2,6 +2,7 @@ package qh_domain
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 	"tqd/internal/domain/jsonb"
 	"tqd/internal/enums"
@@ -27,7 +28,9 @@ type QHLayer struct {
 	ThumbnailURL string `gorm:"type:text" json:"thumbnailUrl,omitempty"`
 
 	// Styling
-	StyleConfig jsonb.JSONB `gorm:"type:jsonb;default:'{}'" json:"styleConfig,omitempty"`
+	StyleConfig json.RawMessage `gorm:"type:jsonb;default:'{}'" json:"styleConfig,omitempty"`
+	SourceCode  string          `gorm:"-" json:"sourceCode,omitempty"`
+	SourceType  string          `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
 
 	LegalDoc         string `gorm:"type:text" json:"legalDoc,omitempty"`
 	LegalDocURL      string `gorm:"type:text" json:"legalDocUrl,omitempty"`
@@ -42,6 +45,10 @@ type QHLayer struct {
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt *time.Time `gorm:"index" json:"deletedAt,omitempty"`
+}
+
+func (l QHLayer) GetSourceCode() string {
+	return fmt.Sprintf("layer%d", l.ID)
 }
 
 func (QHLayer) TableName() string {
@@ -66,6 +73,31 @@ func (s StyleConfig) ToJSONB() jsonb.JSONB {
 	var result jsonb.JSONB
 	json.Unmarshal(data, &result)
 	return result
+}
+
+func GetDefaultStyleConfig() json.RawMessage {
+	return json.RawMessage(`[
+	  {
+	    "id": "layer68_fill",
+	    "type": "fill",
+	    "paint": {
+	      "fill-color": "rgba(255,0,0,0.4)",
+	      "fill-opacity": 0.2
+	    },
+	    "source": "layer68",
+	    "source-layer": "layer68"
+	  },
+	  {
+	    "id": "layer68_outline",
+	    "type": "line",
+	    "paint": {
+	      "line-color": "rgba(255,0,0,0.9)",
+	      "line-width": 2
+	    },
+	    "source": "layer68",
+	    "source-layer": "layer68"
+	  }
+	]`)
 }
 
 // Business logic methods
