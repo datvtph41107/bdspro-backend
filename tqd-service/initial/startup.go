@@ -17,6 +17,7 @@ type InitialApp struct {
 	POIHandler               *handler_http.POIHTTPHandler
 	OpenHourHandler          *handler_http.OpenHourHandler
 	AmenityHandler           *handler_http.AmenityHandler
+	QHLabelHandler           *handler_http.QHLabelHandler
 
 	// gRPC Handlers
 	ContactLabelGrpcHandler      *handler_grpc.ContactLabelGrpcHandler
@@ -47,6 +48,7 @@ func NewApp(
 	poiHandler *handler_http.POIHTTPHandler,
 	openHourHandler *handler_http.OpenHourHandler,
 	amenityHandler *handler_http.AmenityHandler,
+	qhLabelHandler *handler_http.QHLabelHandler,
 	contactLabelGrpcHandler *handler_grpc.ContactLabelGrpcHandler,
 	directoryCategoryGrpcHandler *handler_grpc.DirectoryCategoryGrpcHandler,
 	directorySourceGrpcHandler *handler_grpc.DirectorySourceGrpcHandler,
@@ -73,6 +75,7 @@ func NewApp(
 		POIHandler:                   poiHandler,
 		OpenHourHandler:              openHourHandler,
 		AmenityHandler:               amenityHandler,
+		QHLabelHandler:               qhLabelHandler,
 		ContactLabelGrpcHandler:      contactLabelGrpcHandler,
 		DirectoryCategoryGrpcHandler: directoryCategoryGrpcHandler,
 		DirectorySourceGrpcHandler:   directorySourceGrpcHandler,

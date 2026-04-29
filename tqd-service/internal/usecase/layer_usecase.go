@@ -124,10 +124,10 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.Status != 0 && layer.Status.IsValid() {
 		existing.Status = layer.Status
 	}
-	if layer.Visible == 0 || layer.Visible == 1 {
+	if layer.Visible > -1 {
 		existing.Visible = layer.Visible
 	}
-	if layer.DisplayOrder != 0 {
+	if layer.DisplayOrder > -1 {
 		existing.DisplayOrder = layer.DisplayOrder
 	}
 	if layer.MinZoom != 0 {

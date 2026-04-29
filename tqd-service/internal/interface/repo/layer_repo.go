@@ -23,13 +23,14 @@ type LayerRepository interface {
 
 // LayerFilter - Filter cho admin list
 type LayerFilter struct {
+	_dto.Pagable
 	Status   *enums.LayerStatus
 	Type     *enums.LayerType
 	Visible  *int32
 	Search   *string
 	OrderBy  string
 	OrderDir string
-	Pagable  *_dto.Pagable
+	// Pagable  *_dto.Pagable
 }
 
 // ClientLayerFilter - Filter cho client list

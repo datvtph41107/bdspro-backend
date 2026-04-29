@@ -14,6 +14,8 @@ type QHLabel struct {
 	MaxZoom     int        `gorm:"default:22" json:"maxZoom"`
 	IsVisible   bool       `gorm:"default:true" json:"isVisible"`
 	Status      int        `gorm:"default:10" json:"status"`
+	Description string     `gorm:"type:text" json:"description,omitempty"`
+	SortOrder   int        `gorm:"default:0;index" json:"sortOrder"`
 	CreatedAt   time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt   *time.Time `gorm:"index" json:"deletedAt,omitempty"`

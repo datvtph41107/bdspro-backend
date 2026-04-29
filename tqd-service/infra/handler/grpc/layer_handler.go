@@ -235,7 +235,7 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
 
 	filter := &repo.LayerFilter{
-		Pagable: pagable,
+		Pagable: *pagable,
 	}
 
 	if req.Status != nil {
@@ -256,9 +256,9 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 	if req.OrderBy != nil {
 		filter.OrderBy = *req.OrderBy
 	}
-	if req.OrderDir != nil {
-		filter.OrderDir = *req.OrderDir
-	}
+	// if req.OrderDir != nil {
+	// 	filter.OrderDir = *req.OrderDir
+	// }
 
 	layers, total, err := h.layerUsecase.List(ctx, filter)
 	if err != nil {
@@ -277,8 +277,8 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 	return &tqdpb.ListLayersResponse{
 		Data:  protoLayers,
 		Total: total,
-		Page:  int32(pagable.GetPage()),
-		Size:  int32(pagable.GetSize()),
+		// Page:  int32(pagable.GetPage()),
+		// Size:  int32(pagable.GetSize()),
 	}, nil
 }
 
@@ -354,8 +354,8 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 	return &tqdpb.ListLayersResponse{
 		Data:  protoLayers,
 		Total: total,
-		Page:  int32(filter.Pagable.GetPage()),
-		Size:  int32(filter.Pagable.GetLimit()),
+		// Page:  int32(filter.Pagable.GetPage()),
+		// Size:  int32(filter.Pagable.GetLimit()),
 	}, nil
 }
 
@@ -377,7 +377,6 @@ func (h *LayerGrpcHandler) SearchTxtClientLayer(ctx context.Context, req *tqdpb.
 	return &tqdpb.ListLayersResponse{
 		Data:  protoLayers,
 		Total: total,
-		Page:  0,
 		// Limit: limit,
 	}, nil
 }

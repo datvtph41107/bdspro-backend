@@ -248,6 +248,19 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 			amenities.DELETE("/:id", amenityHandler.DeleteAmenityHTTP)
 		}
 
+		// QH Label routes - ghép vào màn chi tiết lớp
+		qhLabelHandler := app.QHLabelHandler
+		// CRUD nhãn
+		qhLabels := v2.Group("/qh/labels")
+		{
+			qhLabels.POST("", qhLabelHandler.CreateQHLabelHTTP)
+			qhLabels.GET("/:id", qhLabelHandler.GetQHLabelHTTP)
+			qhLabels.PUT("/:id", qhLabelHandler.UpdateQHLabelHTTP)
+			qhLabels.DELETE("/:id", qhLabelHandler.DeleteQHLabelHTTP)
+		}
+		// Danh sách nhãn theo layer (dùng trong màn chi tiết lớp)
+		v2.GET("/qh/layers/:layerId/labels", qhLabelHandler.ListQHLabelsByLayerHTTP)
+
 		// Directory Entities routes
 		directoryEntities := v2.Group("/directory-entities")
 		{

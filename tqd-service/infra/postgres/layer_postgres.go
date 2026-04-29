@@ -102,15 +102,15 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 	}
 
 	// Pagination
-	offset := 0
-	limit := 20
-	if filter.Pagable != nil {
-		offset = filter.Pagable.GetOffset()
-		limit = filter.Pagable.GetLimit()
-	}
+	// offset := 0
+	// limit := 20
+	// if filter.Pagable != nil {
+	// 	offset = filter.Pagable.GetOffset()
+	// 	limit = filter.Pagable.GetLimit()
+	// }
 
 	// Order by
-	orderBy := "display_order"
+	orderBy := "updated_at"
 	if filter.OrderBy != "" {
 		allowed := map[string]bool{
 			"display_order": true, "created_at": true, "name": true, "id": true,
@@ -119,15 +119,15 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 			orderBy = filter.OrderBy
 		}
 	}
-	orderDir := "ASC"
-	if strings.ToUpper(filter.OrderDir) == "DESC" {
-		orderDir = "DESC"
+	orderDir := "DESC"
+	if strings.ToUpper(filter.OrderDir) == "ASC" {
+		orderDir = "ASC"
 	}
 
 	err := query.
 		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
-		Offset(offset).
-		Limit(limit).
+		Offset(filter.GetOffset()).
+		Limit(int(filter.GetLimit())).
 		Find(&layers).Error
 
 	return layers, total, err
