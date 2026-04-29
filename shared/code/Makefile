@@ -184,7 +184,10 @@ tqd-http:
 	$(CD_ROOT) && cd tqd-service && air -- -server=http
 
 tqd-grpc:
-	$(CD_ROOT) && cd tqd-service && air -- -server=grpc
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	$(CD_ROOT) && cd tqd-service && $(AIR_EXE) -- -server=grpc
 
 start-all:
 	@echo "Starting all services..."

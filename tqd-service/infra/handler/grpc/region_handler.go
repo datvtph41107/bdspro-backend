@@ -2,13 +2,16 @@ package handler_grpc
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
 	"log"
 
+	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
@@ -27,9 +30,106 @@ func NewRegionGrpcHandler(regionUsecase usecase.RegionUsecase) *RegionGrpcHandle
 	}
 }
 
-// =====================================================
-// ADMIN APIS
-// =====================================================
+func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateRegionRequest) (*tqdpb.RegionResponse, error) {
+	// Validate
+	if req.Name == "" {
+		return nil, _errors.ReturnError(400, "name is required")
+	}
+	if req.DisplayName == "" {
+		return nil, _errors.ReturnError(400, "displayName is required")
+	}
+	if req.Geometry == "" {
+		return nil, _errors.ReturnError(400, "geometry is required")
+	}
+	if req.Type < 1 || req.Type > 4 {
+		return nil, _errors.ReturnError(400, "type must be 1-4")
+	}
+	if req.Status < 10 || req.Status > 30 {
+		return nil, _errors.ReturnError(400, "status must be 10,20,30")
+	}
+
+	createReq := h.regionMapper.ToCreateRegionDTO(req)
+
+	region, err := h.regionUsecase.Create(ctx, createReq)
+	if err != nil {
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+
+	return h.regionMapper.ToProtoFromDomain(region), nil
+}
+
+func (h *RegionGrpcHandler) CreateBatchRegion(ctx context.Context, req *tqdpb.RegionBatchRequest) (*tqdpb.ListRegionsResponse, error) {
+	createReq := dto.CreateRegionBatchRequest{
+		Items: []dto.CreateRegionBatchItem{},
+	}
+	for i := 0; i < len(req.Geometry); i++ {
+		it := req.Geometry[i]
+		createReq.Items = append(createReq.Items, dto.CreateRegionBatchItem{
+			Geometry: it,
+			LayerID:  req.LayerId,
+		})
+	}
+
+	region, err := h.regionUsecase.CreateBatch(ctx, &createReq)
+	if err != nil {
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+
+	items := make([]*tqdpb.RegionResponse, len(region.Items))
+	// for i := 0; i < len(req.Geometry); i++ {
+	// it := region.Items[i]
+	// items[i] = &tqdpb.RegionResponse{
+	// 	Geometry: it.Region.Geometry,
+	// 	Id:       uint32(it.Region.ID),
+	// }
+	// }
+	return &tqdpb.ListRegionsResponse{
+		Data: items,
+	}, nil
+}
+
+func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateRegionRequest) (*tqdpb.RegionResponse, error) {
+	if req.Id == 0 {
+		return nil, _errors.ReturnError(400, "id is required")
+	}
+
+	// Convert to DTO using mapper
+	updateReq := h.regionMapper.ToUpdateRegionDTO(req)
+
+	region, err := h.regionUsecase.Update(ctx, uint64(req.Id), updateReq)
+	if err != nil {
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+
+	return h.regionMapper.ToProtoFromDomain(region), nil
+}
+
+func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteRegionRequest) (*sharepb.Empty, error) {
+	if req.Id == 0 {
+		return nil, _errors.ReturnError(400, "id is required")
+	}
+
+	if err := h.regionUsecase.Delete(ctx, uint64(req.Id)); err != nil {
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+	return &sharepb.Empty{}, nil
+}
+
+func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionRequest) (*tqdpb.RegionResponse, error) {
+	if req.Id == 0 {
+		return nil, _errors.ReturnError(400, "id is required")
+	}
+
+	region, err := h.regionUsecase.GetByID(ctx, uint64(req.Id))
+	if err != nil {
+		return nil, _errors.ReturnError(404, err.Error())
+	}
+	if region == nil {
+		return nil, _errors.ReturnError(404, "region not found")
+	}
+
+	return h.regionMapper.ToProtoFromDTO(region), nil
+}
 
 // ListRegions - Admin: Danh sách regions với filter
 func (h *RegionGrpcHandler) ListRegions(ctx context.Context, req *tqdpb.ListRegionsRequest) (*tqdpb.ListRegionsResponse, error) {

@@ -4,6 +4,7 @@ import (
 	_db "common/db"
 	"log"
 	"tqd/config"
+	"tqd/infra/db"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +35,7 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 	_db.NewDB()
 
 	// Run auto migration
-	// db.AutoMigrate()
+	db.AutoMigrate()
 
 	log.Println("Database migration completed successfully!")
 	return nil

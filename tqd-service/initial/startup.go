@@ -18,6 +18,7 @@ type InitialApp struct {
 	OpenHourHandler          *handler_http.OpenHourHandler
 	AmenityHandler           *handler_http.AmenityHandler
 	QHLabelHandler           *handler_http.QHLabelHandler
+	RegionHttpHandler        *handler_http.RegionHttpHandler
 
 	// gRPC Handlers
 	ContactLabelGrpcHandler      *handler_grpc.ContactLabelGrpcHandler
@@ -33,6 +34,7 @@ type InitialApp struct {
 	ParcelGrpcHandler            *handler_grpc.ParcelGrpcHandler
 	OneHouseGrpcHandler          *handler_grpc.OneHouseGrpcHandler
 	LayerGrpcHandler             *handler_grpc.LayerGrpcHandler
+	QHLabelGrpcHandler           *handler_grpc.QHLabelGrpcHandler
 	RegionGrpcHandler            *handler_grpc.RegionGrpcHandler
 	ReportGrpcHandler            *handler_grpc.ReportGrpcHandler
 	SubscriptionGrpcHandler      *handler_grpc.SubscriptionGrpcHandler
@@ -49,6 +51,7 @@ func NewApp(
 	openHourHandler *handler_http.OpenHourHandler,
 	amenityHandler *handler_http.AmenityHandler,
 	qhLabelHandler *handler_http.QHLabelHandler,
+	regionHttpHandler *handler_http.RegionHttpHandler,
 	contactLabelGrpcHandler *handler_grpc.ContactLabelGrpcHandler,
 	directoryCategoryGrpcHandler *handler_grpc.DirectoryCategoryGrpcHandler,
 	directorySourceGrpcHandler *handler_grpc.DirectorySourceGrpcHandler,
@@ -61,6 +64,7 @@ func NewApp(
 	featureGrpcHandler *handler_grpc.FeatureGrpcHandler,
 	oneHouseGrpcHandler *handler_grpc.OneHouseGrpcHandler,
 	layerGrpcHandler *handler_grpc.LayerGrpcHandler,
+	qhLabelGrpcHandler *handler_grpc.QHLabelGrpcHandler,
 	pa *handler_grpc.ParcelGrpcHandler,
 	regionGrpcHandler *handler_grpc.RegionGrpcHandler,
 	reportGrpcHandler *handler_grpc.ReportGrpcHandler,
@@ -76,6 +80,7 @@ func NewApp(
 		OpenHourHandler:              openHourHandler,
 		AmenityHandler:               amenityHandler,
 		QHLabelHandler:               qhLabelHandler,
+		RegionHttpHandler:            regionHttpHandler,
 		ContactLabelGrpcHandler:      contactLabelGrpcHandler,
 		DirectoryCategoryGrpcHandler: directoryCategoryGrpcHandler,
 		DirectorySourceGrpcHandler:   directorySourceGrpcHandler,
@@ -89,6 +94,7 @@ func NewApp(
 		ParcelGrpcHandler:            pa,
 		OneHouseGrpcHandler:          oneHouseGrpcHandler,
 		LayerGrpcHandler:             layerGrpcHandler,
+		QHLabelGrpcHandler:           qhLabelGrpcHandler,
 		RegionGrpcHandler:            regionGrpcHandler,
 		ReportGrpcHandler:            reportGrpcHandler,
 		SubscriptionGrpcHandler:      subscriptionGrpcHandler,

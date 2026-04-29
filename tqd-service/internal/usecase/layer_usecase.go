@@ -145,9 +145,7 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.MaxZoom != 0 {
 		existing.MaxZoom = layer.MaxZoom
 	}
-	if layer.LayerURL != "" {
-		existing.LayerURL = layer.LayerURL
-	}
+	existing.LayerURL = layer.LayerURL
 	if layer.Avatar != "" {
 		existing.Avatar = layer.Avatar
 	}

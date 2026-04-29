@@ -35,7 +35,9 @@ type LayerFilter struct {
 
 // ClientLayerFilter - Filter cho client list
 type ClientLayerFilter struct {
-	Type    *enums.LayerType
-	Search  *string
-	Pagable *_dto.Pagable
+	_dto.Pagable
+	Type   *enums.LayerType
+	Search *string
+	// Page   int
+	// Limit  int
 }

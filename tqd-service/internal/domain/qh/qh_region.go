@@ -16,8 +16,8 @@ type RegionStyleConfig struct {
 
 // QHRegion - Khu vực quy hoạch chi tiết
 type QHRegion struct {
-	ID      uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
-	LayerID uint64 `gorm:"not null;index;comment:Thuộc layer quy hoạch" json:"layerId"`
+	ID      uint64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	LayerID *uint64 `gorm:"not null;index;comment:Thuộc layer quy hoạch" json:"layerId"`
 
 	Name        string `gorm:"type:varchar(255)" json:"name,omitempty"`
 	DisplayName string `gorm:"type:varchar(255)" json:"displayName,omitempty"`
@@ -29,7 +29,7 @@ type QHRegion struct {
 	LegalDoc     string `gorm:"type:text;comment:Văn bản pháp lý" json:"legalDoc,omitempty"`
 	PlanningName string `gorm:"type:varchar(255);comment:Tên đồ án quy hoạch" json:"planningName,omitempty"`
 
-	Geometry []byte `gorm:"type:geometry(MultiPolygon,4326);not null" json:"-"`
+	Geometry RawGeometry `gorm:"type:geometry(MultiPolygon,4326);not null" json:"-"`
 
 	Centroid   []byte  `gorm:"type:geometry(Point,4326)" json:"-"`
 	AreaSqm    float64 `gorm:"default:0;comment:Diện tích mét vuông" json:"areaSqm"`

@@ -6,12 +6,12 @@ import (
 	_utils "common/utils"
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	"tqd/internal/domain/jsonb"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
@@ -38,7 +38,7 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	var styleConfig jsonb.JSONB
+	var styleConfig json.RawMessage
 	if req.StyleConfig != "" {
 		if err := json.Unmarshal([]byte(req.StyleConfig), &styleConfig); err != nil {
 			return nil, status.Error(codes.InvalidArgument, "invalid style_config JSON")
@@ -170,9 +170,12 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 		layer.ThumbnailURL = *req.ThumbnailUrl
 	}
 	if req.StyleConfig != nil {
-		var styleConfig jsonb.JSONB
+		log.Printf("req.StyleConfig: ", *req.StyleConfig)
+		var styleConfig json.RawMessage
 		if err := json.Unmarshal([]byte(*req.StyleConfig), &styleConfig); err == nil {
 			layer.StyleConfig = styleConfig
+		} else {
+			log.Printf("ERR", err)
 		}
 	}
 	if req.LegalDoc != nil {
@@ -308,41 +311,31 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 // 	page := int32(1)
 // 	// limit := int32(20)
 
-// 	layerFilter := repo.LayerFilter{}
-
-// 	if req.Page != nil && *req.Page > 0 {
-// 		layerFilter.Page = uint32(*req.Page)
-// 	}
-// 	if req.Limit != nil && *req.Limit > 0 {
-// 		layerFilter.Limit = uint32(*req.Limit)
-// 	}
-
-// 	// Get status filter
-// 	// if req.Status != nil && *req.Status > 0 {
-// 	// 	layerFilter.Status = (*enums.LayerStatus)(req.Status)
-// 	// }
-
-// 	if req.Search != nil {
-// 		layerFilter.Search = req.Search
-// 	}
-
-// 	// Call usecase
-// 	layers, total, err := h.layerUsecase.List(ctx, &layerFilter)
-// 	if err != nil {
-// 		return nil, status.Error(codes.NotFound, err.Error())
-// 	}
-
-// 	return h.toProtoLayer(layer, true)
-// }
-
-func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
-	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
-
-	filter := &repo.ClientLayerFilter{
-		Pagable: pagable,
+	layerFilter := repo.ClientLayerFilter{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
 	}
 
-	layers, total, err := h.layerUsecase.ListClient(ctx, filter)
+	// if req.Page != nil && *req.Page > 0 {
+	// 	layerFilter.Page = req.Page
+	// }
+	// if req.Limit != nil && *req.Limit > 0 {
+	// 	layerFilter.Limit = req.Limit
+	// }
+
+	// Get status filter
+	// if req.Status != nil && *req.Status > 0 {
+	// 	layerFilter.Status = (*enums.LayerStatus)(req.Status)
+	// }
+
+	if req.Search != nil {
+		layerFilter.Search = req.Search
+	}
+
+	// Call usecase
+	layers, total, err := h.layerUsecase.ListClient(ctx, &layerFilter)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

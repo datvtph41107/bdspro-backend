@@ -47,6 +47,8 @@ func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = tqdpb.RegisterLayerServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterReportServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterSubscriptionServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterQHLabelServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterRegionServiceHandler(ctx, mux, conn)
 }
 
 func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {

@@ -121,6 +121,38 @@ type ImportGeoJSONResponse struct {
 	Message      string         `json:"message"`
 }
 
+// CreateRegionBatchItem — một phần tử trong batch (geometry + layerId bắt buộc)
+type CreateRegionBatchItem struct {
+	Geometry    []byte                 `json:"geometry" binding:"required"`
+	LayerID     uint64                 `json:"layerId" binding:"required"`
+	Name        string                 `json:"name"`
+	DisplayName string                 `json:"displayName"`
+	Type        uint32                 `json:"type"`   // mặc định 1 (Road) nếu bỏ trống
+	Status      uint32                 `json:"status"` // mặc định 10 (Active) nếu bỏ trống
+	Properties  map[string]interface{} `json:"properties"`
+}
+
+// CreateRegionBatchRequest — body request cho batch create
+type CreateRegionBatchRequest struct {
+	Items []CreateRegionBatchItem `json:"items" binding:"required,min=1"`
+}
+
+// CreateRegionBatchResultItem — kết quả của từng phần tử trong batch
+type CreateRegionBatchResultItem struct {
+	Index   int             `json:"index"`
+	Success bool            `json:"success"`
+	Region  *RegionResponse `json:"region,omitempty"`
+	Error   string          `json:"error,omitempty"`
+}
+
+// CreateRegionBatchResponse — response tổng hợp batch create
+type CreateRegionBatchResponse struct {
+	Items        []CreateRegionBatchResultItem `json:"items"`
+	Total        int                           `json:"total"`
+	SuccessCount int                           `json:"successCount"`
+	FailureCount int                           `json:"failureCount"`
+}
+
 type GeometryParser struct{}
 
 func NewGeometryParser() *GeometryParser {

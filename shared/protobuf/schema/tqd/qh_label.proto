@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// QHLabelService - Quản lý nhãn quy hoạch, ghép vào màn chi tiết lớp
+service QHLabelService {
+  // CreateQHLabel - Tạo nhãn mới
+  rpc CreateQHLabel(CreateQHLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels"
+      body: "*"
+    };
+  }
+
+  // GetQHLabel - Lấy nhãn theo ID
+  rpc GetQHLabel(GetQHLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/labels/{id}"
+    };
+  }
+
+  // UpdateQHLabel - Cập nhật nhãn
+  rpc UpdateQHLabel(UpdateQHLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/labels/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteQHLabel - Xóa nhãn (soft delete)
+  rpc DeleteQHLabel(DeleteQHLabelRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/labels/{id}"
+    };
+  }
+
+  // ListQHLabelsByLayer - Danh sách nhãn theo layer (dùng cho màn chi tiết lớp)
+  rpc ListQHLabelsByLayer(ListQHLabelsByLayerRequest) returns (ListQHLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layers/{layerId}/labels"
+    };
+  }
+}
+
+// CreateQHLabelRequest - Request tạo nhãn
+message CreateQHLabelRequest {
+  uint64 layerId      = 1; // ID layer cha
+  string name         = 2; // Tên nhãn
+  string color        = 3; // Mã màu hex (vd: #1890ff)
+  string description  = 4; // Mô tả
+  int32  sortOrder    = 5; // Thứ tự hiển thị
+}
+
+// UpdateQHLabelRequest - Request cập nhật nhãn
+message UpdateQHLabelRequest {
+  uint64 id           = 1;
+  string name         = 2;
+  string color        = 3;
+  string description  = 4;
+  int32  sortOrder    = 5;
+}
+
+// GetQHLabelRequest
+message GetQHLabelRequest {
+  uint64 id = 1;
+}
+
+// DeleteQHLabelRequest
+message DeleteQHLabelRequest {
+  uint64 id = 1;
+}
+
+// ListQHLabelsByLayerRequest
+message ListQHLabelsByLayerRequest {
+  uint64 layerId = 1;
+}
+
+// QHLabelResponse - Response trả về cho 1 nhãn
+message QHLabelResponse {
+  uint64 id          = 1;
+  uint64 layerId     = 2;
+  string name        = 3;
+  string color       = 4;
+  string description = 5;
+  int32  sortOrder   = 6;
+  string createdAt   = 7;
+  string updatedAt   = 8;
+}
+
+// ListQHLabelsResponse - Response danh sách nhãn
+message ListQHLabelsResponse {
+  repeated QHLabelResponse data  = 1;
+  int32                    total = 2;
+}

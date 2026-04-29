@@ -25,7 +25,7 @@ func (r *qhLabelRepoImpl) Create(ctx context.Context, label *qh_domain.QHLabel) 
 }
 
 func (r *qhLabelRepoImpl) Update(ctx context.Context, label *qh_domain.QHLabel) error {
-	label.UpdatedAt = time.Now()
+	// label.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Model(label).
 		Omit("created_at", "layer_id").
 		Updates(label).Error
@@ -56,7 +56,7 @@ func (r *qhLabelRepoImpl) ListByLayerID(ctx context.Context, layerID uint64) ([]
 	var labels []qh_domain.QHLabel
 	err := r.db.WithContext(ctx).
 		Where("layer_id = ? AND deleted_at IS NULL", layerID).
-		Order("sort_order ASC, created_at ASC").
+		Order("updated_at ASC").
 		Find(&labels).Error
 	if err != nil {
 		return nil, fmt.Errorf("query qh_labels by layer failed: %w", err)

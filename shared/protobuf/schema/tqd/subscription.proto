@@ -151,7 +151,7 @@ message ListRegionSubscriptionsResponse {
 message RegionSubscriptionItem {
   uint64 subscriptionId = 1;
   string regionName = 2;
-  string geometry = 3;
+  bytes geometry = 3;
   SubscriptionScopeMessage subscriptionScope = 4;
   uint32 status = 5;
   string createdAt = 6;

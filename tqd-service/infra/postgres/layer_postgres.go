@@ -184,7 +184,7 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 	query := r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
 		Where("deleted_at IS NULL").
 		Where("status = ?", enums.LayerStatusActive).
-		Where("visible = ?", 1).
+		Where("display_order > 0").
 		Where("effective_date IS NULL OR effective_date <= ?", now).
 		Where("expiry_date IS NULL OR expiry_date >= ?", now)
 
@@ -203,17 +203,10 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 		return nil, 0, err
 	}
 
-	offset := 0
-	limit := 20
-	if filter.Pagable != nil {
-		offset = filter.Pagable.GetOffset()
-		limit = filter.Pagable.GetLimit()
-	}
-
 	err := query.
 		Order("display_order ASC, id ASC").
-		Offset(offset).
-		Limit(limit).
+		Offset(filter.GetOffset()).
+		Limit(filter.GetLimit()).
 		Find(&layers).Error
 
 	return layers, total, err

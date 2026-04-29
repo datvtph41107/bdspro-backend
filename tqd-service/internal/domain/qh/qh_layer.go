@@ -10,7 +10,7 @@ import (
 
 type QHLayer struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name        string `gorm:"type:varchar(255);not null;uniqueIndex:idx_name" json:"name"`
+	Name        string `gorm:"type:varchar(100);" json:"name"`
 	DisplayName string `gorm:"type:varchar(255);not null" json:"displayName"`
 	Description string `gorm:"type:text" json:"description,omitempty"`
 
@@ -18,11 +18,11 @@ type QHLayer struct {
 	Status enums.LayerStatus `gorm:"type:int;default:10;index" json:"status"`
 
 	DisplayOrder int   `gorm:"column:display_order;default:0;index" json:"displayOrder"`
-	Visible      int32 `gorm:"default:0;index" json:"visible"` // 0: ẩn, 1: hiển thị
+	Visible      int32 `gorm:"default:0;index" json:"visible"` // 0: ẩn, 1: hiển thị // bỏ field này chỉ cần displayOrder > 0 là hiển thị r
 	MinZoom      int   `gorm:"default:0" json:"minZoom"`
 	MaxZoom      int   `gorm:"default:22" json:"maxZoom"`
 
-	LayerURL     string `gorm:"type:text;not null" json:"layerUrl"`
+	LayerURL     string `gorm:"type:text" json:"layerUrl"`
 	Avatar       string `gorm:"type:text" json:"avatar,omitempty"`
 	ImageURL     string `gorm:"type:text" json:"imageUrl,omitempty"`
 	ThumbnailURL string `gorm:"type:text" json:"thumbnailUrl,omitempty"`

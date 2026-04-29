@@ -17,7 +17,6 @@ type RegionRepository interface {
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.QHRegion, error)
 
 	// List with filters
-	List(ctx context.Context, filter *RegionFilter) ([]qh_domain.QHRegion, int64, error)
 	ListClient(ctx context.Context, filter *ClientRegionFilter) ([]qh_domain.QHRegion, int64, error)
 
 	// Spatial queries
@@ -26,13 +25,19 @@ type RegionRepository interface {
 
 	// Statistics
 	GetStatsByLayer(ctx context.Context, layerID uint64) (*RegionStats, error)
+	List(ctx context.Context, filter *RegionFilter) ([]qh_domain.QHRegion, int64, error)
+	GetByPoint(ctx context.Context, lat, lng float64, bufferMeters float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error)
+	GetByLocation(ctx context.Context, lat, lng float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error)
+	GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error)
+	GetIntersections(ctx context.Context, id uint64, bufferMeters float64) ([]qh_domain.QHRegion, error)
+	GetBufferGeometry(ctx context.Context, sourceID uint64, distanceMeters float64) (string, error)
 }
 
 // RegionFilter - Filter cho admin list
 type RegionFilter struct {
 	LayerID     *uint64
 	LandUseCode *string
-	Status      *int
+	Status      *uint32
 	Search      *string
 	MinAreaHa   *float64
 	MaxAreaHa   *float64

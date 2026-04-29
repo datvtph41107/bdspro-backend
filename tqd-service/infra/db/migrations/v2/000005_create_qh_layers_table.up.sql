@@ -43,9 +43,9 @@ CREATE TABLE IF NOT EXISTS qh_layers (
 -- INDEXES
 -- =====================================================
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_qh_layers_name
-ON qh_layers(name)
-WHERE deleted_at IS NULL;
+-- CREATE UNIQUE INDEX IF NOT EXISTS idx_qh_layers_name
+-- ON qh_layers(name)
+-- WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_qh_layers_client
 ON qh_layers(display_order, id)

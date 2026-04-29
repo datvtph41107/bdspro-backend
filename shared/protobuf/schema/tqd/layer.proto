@@ -12,7 +12,7 @@ service LayerService {
   // CreateLayer - Tạo layer mới (chỉ admin)
   rpc CreateLayer(CreateLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      post: "/v2/tqd/admin/layers"
+      post: "/v2/tqd/qh/admin/layers"
       body: "*"
     };
   }
@@ -20,30 +20,30 @@ service LayerService {
   // UpdateLayer - Cập nhật layer (chỉ admin)
   rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      put: "/v2/tqd/admin/layers/{id}"
+      put: "/v2/tqd/qh/admin/layers/{id}"
       body: "*"
     };
   }
 
   // DeleteLayer - Xóa layer (soft delete, chỉ admin)
   rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
-    option (google.api.http) = {delete: "/v2/tqd/admin/layers/{id}"};
+    option (google.api.http) = {delete: "/v2/tqd/qh/admin/layers/{id}"};
   }
 
   // GetLayer - Lấy chi tiết layer (chỉ admin)
   rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
-    option (google.api.http) = {get: "/v2/tqd/admin/layers/{id}"};
+    option (google.api.http) = {get: "/v2/tqd/qh/admin/layers/{id}"};
   }
 
   // ListLayers - Danh sách layers (chỉ admin, có filter)
   rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
-    option (google.api.http) = {get: "/v2/tqd/admin/layers"};
+    option (google.api.http) = {get: "/v2/tqd/qh/admin/layers"};
   }
 
   // UpdateLayerStatus - Cập nhật trạng thái (chỉ admin)
   rpc UpdateLayerStatus(UpdateLayerStatusRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      patch: "/v2/tqd/admin/layers/{id}/status"
+      patch: "/v2/tqd/qh/admin/layers/{id}/status"
       body: "*"
     };
   }
@@ -80,6 +80,8 @@ message CreateLayerRequest {
   string issuingAuthority = 18; // Cơ quan ban hành
   optional string effectiveDate = 19; // Ngày hiệu lực (YYYY-MM-DD)
   optional string expiryDate = 20; // Ngày hết hiệu lực (YYYY-MM-DD)
+  string sourceType = 21;
+  string sourceCode = 22;
 }
 
 message UpdateLayerRequest {
@@ -105,6 +107,8 @@ message UpdateLayerRequest {
   optional string effectiveDate = 20;
   optional string expiryDate = 21;
   google.protobuf.FieldMask updateMask = 22;
+  string sourceType = 23;
+  string sourceCode = 24;
 }
 
 message UpdateLayerStatusRequest {
@@ -174,4 +178,6 @@ message LayerResponse {
   optional string expiryDate = 21;
   string createdAt = 22;
   string updatedAt = 23;
+  string sourceType = 24;
+  string sourceCode = 25;
 }
