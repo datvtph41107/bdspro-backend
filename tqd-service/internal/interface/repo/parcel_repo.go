@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	"context"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 )
 
 type IParcelRepo interface {
@@ -20,7 +21,9 @@ type IParcelRepo interface {
 	FindWithinPolygon(ctx context.Context, points []Point, limit, offset int) ([]qh_domain.Parcel, int64, error)
 
 	// Detail API
-	GetParcelDetail(ctx context.Context, parcelID uint64) (*ParcelDetailResult, error)
+	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
+	GetParcelLayerRows(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRow, error)
+
 	GetSpatialImpacts(ctx context.Context, parcelID uint64) ([]*SpatialImpactRow, error)
 	GetLandUseByCode(ctx context.Context, code string) (*qh_domain.LandUseDict, error)
 }

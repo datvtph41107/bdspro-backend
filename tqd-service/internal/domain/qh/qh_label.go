@@ -1,20 +1,25 @@
 package qh_domain
 
-import (
-	_models "common/domain/entity"
-)
+import "time"
 
 type QHLabel struct {
-	_models.BaseEntity
-	ID          uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
-	LayerID     uint64 `gorm:"type:bigint;not null;index" json:"layerId"`
-	Name        string `gorm:"type:varchar(255);not null" json:"name"`
-	Color       string `gorm:"type:varchar(20);default:'#1890ff'" json:"color"`
-	Description string `gorm:"type:varchar(255)" json:"description,omitempty"`
-	SortOrder   int    `gorm:"default:0;index" json:"sortOrder"`
-	// CreatedAt   time.Time  `gorm:"autoCreateTime" json:"createdAt"`
-	// UpdatedAt   time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
-	// DeletedAt   *time.Time `gorm:"index" json:"deletedAt,omitempty"`
+	ID          uint64     `gorm:"primaryKey;autoIncrement" json:"id"`
+	LayerID     uint64     `gorm:"not null;index" json:"layerId"`
+	Name        string     `gorm:"type:varchar(255);not null" json:"name"`
+	DisplayName string     `gorm:"type:varchar(255)" json:"displayName"`
+	LandUseCode string     `gorm:"type:varchar(20)" json:"landUseCode"`
+	Color       string     `gorm:"type:varchar(7);default:'#000000'" json:"color"`
+	FontSize    int        `gorm:"default:12" json:"fontSize"`
+	FontWeight  string     `gorm:"type:varchar(20);default:'normal'" json:"fontWeight"`
+	MinZoom     int        `gorm:"default:10" json:"minZoom"`
+	MaxZoom     int        `gorm:"default:22" json:"maxZoom"`
+	IsVisible   bool       `gorm:"default:true" json:"isVisible"`
+	Status      int        `gorm:"default:10" json:"status"`
+	Description string     `gorm:"type:varchar(255)" json:"description,omitempty"`
+	SortOrder   int        `gorm:"default:0;index" json:"sortOrder"`
+	CreatedAt   time.Time  `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
+	DeletedAt   *time.Time `gorm:"index" json:"deletedAt,omitempty"`
 }
 
 func (QHLabel) TableName() string {

@@ -66,106 +66,159 @@ func (m *ParcelMapper) ToProtoFromDomainList(parcels *dto.ParcelList) []*tqdpb.P
 	return protoParcels
 }
 
-func (m *ParcelMapper) ToProtoParcelDetail(resp *qh_domain.ParcelDetailResponse) *tqdpb.ParcelDetailResponse {
+func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tqdpb.ParcelInfoResponse {
 	if resp == nil {
 		return nil
 	}
 
-	// Build layers
-	layers := make([]*tqdpb.Layer, 0, len(resp.Layers))
-	for _, l := range resp.Layers {
-		labels := make([]*tqdpb.Label, 0, len(l.Labels))
-		for _, lb := range l.Labels {
-			regions := make([]*tqdpb.Region, 0, len(lb.Regions))
-			for _, r := range lb.Regions {
-				regions = append(regions, &tqdpb.Region{
-					Id:          r.ID,
-					Name:        r.Name,
-					LandUseCode: r.LandUseCode,
-					LandUseName: r.LandUseName,
-					Color: &tqdpb.RGBColor{
-						Red:   uint32(r.ColorRGB.Red),
-						Green: uint32(r.ColorRGB.Green),
-						Blue:  uint32(r.ColorRGB.Blue),
-					},
-					OverlapArea:    r.OverlapAreaSqm,
-					OverlapPercent: r.OverlapPct,
-					Geometry:       r.Geometry,
-				})
-			}
-			labels = append(labels, &tqdpb.Label{
-				Id:           lb.ID,
-				Name:         lb.Name,
-				DisplayName:  lb.DisplayName,
-				Color:        lb.Color,
-				Regions:      regions,
-				TotalArea:    lb.TotalArea,
-				TotalPercent: lb.TotalPct,
-			})
-		}
-		layers = append(layers, &tqdpb.Layer{
-			Id:            l.ID,
-			Name:          l.Name,
-			DisplayName:   l.DisplayName,
-			EffectiveDate: l.EffectiveDate,
-			LegalDoc:      l.LegalDoc,
-			Labels:        labels,
-			TotalArea:     l.TotalArea,
-			TotalPercent:  l.TotalPct,
-		})
-	}
-
-	// TRẢ VỀ TRỰC TIẾP, KHÔNG QUA NESTED MESSAGES
-	return &tqdpb.ParcelDetailResponse{
-		// Parcel cơ bản
-		ParcelId: resp.ParcelID,
-		Lat:      resp.Lat,
-		Lon:      resp.Lon,
-		AreaSqm:  resp.TotalAreaSqm,
-		Address:  resp.AddressText,
-		Geometry: resp.Geometry,
-
-		// Thông tin thửa đất
+	return &tqdpb.ParcelInfoResponse{
+		ParcelId:     resp.ParcelID,
+		Lat:          resp.Lat,
+		Lon:          resp.Lon,
+		AreaSqm:      resp.AreaSqm,
+		Address:      resp.AddressText,
+		Geometry:     resp.Geometry,
 		MapNumber:    resp.MapNumber,
 		LandNumber:   resp.LandNumber,
 		PropertyCode: resp.PropertyCode,
 		PropertyUuid: resp.PropertyUUID,
 		Shape:        resp.ShapeType,
 		Direction:    resp.Direction,
+		LandUseCode:  resp.LandUseCode,
+		LandUseName:  resp.LandUseName,
+		LandUseColor: resp.LandUseColor,
+		Province:     resp.Province,
+		ProvinceCode: resp.ProvinceCode,
+		WardCode:     resp.WardCode,
+	}
+}
 
-		// Loại đất hiện tại
-		LandUseCode:  resp.CurrentLandUse.Code,
-		LandUseName:  resp.CurrentLandUse.Name,
-		LandUseColor: resp.CurrentLandUse.Color,
+func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdpb.ParcelLayersResponse {
+	if resp == nil {
+		return nil
+	}
 
-		// Hành chính
-		Province:     resp.Administrative.Province,
-		ProvinceCode: resp.Administrative.ProvinceCode,
-		WardCode:     resp.Administrative.WardCode,
+	layers := make([]*tqdpb.Layer, 0, len(resp.Layers))
+	for _, layer := range resp.Layers {
+		if layer == nil {
+			continue
+		}
 
-		// Layers
-		Layers: layers,
+		labels := make([]*tqdpb.Label, 0, len(layer.Labels))
+		for _, label := range layer.Labels {
+			if label == nil {
+				continue
+			}
 
-		// Thống kê
-		TotalOverlapArea:    resp.Statistics.TotalOverlapArea,
-		TotalOverlapPercent: resp.Statistics.TotalOverlapPct,
-		LayersAffected:      resp.Statistics.LayersAffected,
-		LabelsAffected:      resp.Statistics.LabelsAffected,
-		RegionsAffected:     resp.Statistics.RegionsAffected,
-		HasConflict:         resp.Statistics.HasConflict,
-		Warning:             resp.Statistics.Warning,
+			regions := make([]*tqdpb.Region, 0, len(label.Regions))
+			for _, region := range label.Regions {
+				if region == nil {
+					continue
+				}
 
-		// Rủi ro
-		RiskLevel:      resp.Risk.Level,
-		RiskScore:      resp.Risk.Score,
-		CanBuild:       resp.Risk.CanBuild,
-		RiskReasons:    resp.Risk.Reasons,
-		Recommendation: resp.Risk.Recommendation,
+				var color *tqdpb.RGBColor
+				if region.ColorRGB != nil {
+					color = &tqdpb.RGBColor{
+						Red:   uint32(region.ColorRGB.Red),
+						Green: uint32(region.ColorRGB.Green),
+						Blue:  uint32(region.ColorRGB.Blue),
+					}
+				} else {
+					color = &tqdpb.RGBColor{}
+				}
 
-		// Meta
-		DataSource:     resp.Metadata.DataSource,
-		QueriedAt:      resp.Metadata.QueriedAt,
-		ResponseTimeMs: resp.Metadata.ResponseTimeMs,
+				regions = append(regions, &tqdpb.Region{
+					Id:             region.ID,
+					Name:           region.Name,
+					DisplayName:    region.DisplayName,
+					LandUseCode:    region.LandUseCode,
+					LandUseName:    region.LandUseName,
+					LandUseGroup:   region.LandUseGroup,
+					Color:          color,
+					OverlapArea:    region.OverlapAreaSqm,
+					OverlapPercent: region.OverlapPct,
+					CenterLat:      region.CenterLat,
+					CenterLng:      region.CenterLng,
+					Geometry:       region.Geometry,
+				})
+			}
+
+			labels = append(labels, &tqdpb.Label{
+				Id:           label.ID,
+				Name:         label.Name,
+				DisplayName:  label.DisplayName,
+				Color:        label.Color,
+				FontSize:     label.FontSize,
+				FontWeight:   label.FontWeight,
+				MinZoom:      label.MinZoom,
+				MaxZoom:      label.MaxZoom,
+				Regions:      regions,
+				TotalArea:    label.TotalArea,
+				TotalPercent: label.TotalPct,
+			})
+		}
+
+		layers = append(layers, &tqdpb.Layer{
+			Id:            layer.ID,
+			Name:          layer.Name,
+			DisplayName:   layer.DisplayName,
+			Type:          layer.Type,
+			Severity:      layer.Severity,
+			EffectiveDate: layer.EffectiveDate,
+			LegalDoc:      layer.LegalDoc,
+			Labels:        labels,
+			TotalArea:     layer.TotalArea,
+			TotalPercent:  layer.TotalPct,
+		})
+	}
+
+	summary := &tqdpb.ParcelSummary{}
+	if resp.Summary != nil {
+		summary = &tqdpb.ParcelSummary{
+			DominantLandUse:         resp.Summary.DominantLandUse,
+			DominantPercentage:      resp.Summary.DominantPercentage,
+			TotalAffectedPercentage: resp.Summary.TotalAffectedPercentage,
+			TopLayerName:            resp.Summary.TopLayerName,
+			Buildable:               resp.Summary.Buildable,
+		}
+	}
+
+	stats := &dto.ImpactStats{}
+	if resp.Statistics != nil {
+		stats = resp.Statistics
+	}
+
+	risk := &dto.RiskAssessment{}
+	if resp.Risk != nil {
+		risk = resp.Risk
+	}
+
+	meta := &dto.ResponseMeta{}
+	if resp.Metadata != nil {
+		meta = resp.Metadata
+	}
+
+	return &tqdpb.ParcelLayersResponse{
+		ParcelId:             resp.ParcelID,
+		ParcelAreaSqm:        resp.ParcelAreaSqm,
+		Summary:              summary,
+		Layers:               layers,
+		TotalOverlapArea:     stats.TotalOverlapArea,
+		TotalOverlapPercent:  stats.TotalOverlapPct,
+		LayersAffected:       stats.LayersAffected,
+		LabelsAffected:       stats.LabelsAffected,
+		RegionsAffected:      stats.RegionsAffected,
+		HasConflict:          stats.HasConflict,
+		Warning:              stats.Warning,
+		RiskLevel:            risk.Level,
+		RiskScore:            risk.Score,
+		CanBuild:             risk.CanBuild,
+		RiskReasons:          risk.Reasons,
+		Recommendation:       risk.Recommendation,
+		DataSource:           meta.DataSource,
+		QueriedAt:            meta.QueriedAt,
+		ResponseTimeMs:       meta.ResponseTimeMs,
+		SpatialDataAvailable: stats.SpatialDataAvailable,
 	}
 }
 
@@ -256,7 +309,7 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 // PROTO BUILDERS
 // =====================================================
 
-func (m *ParcelMapper) buildLayersProto(layers []*qh_domain.LayerImpact) []*tqdpb.Layer {
+func (m *ParcelMapper) buildLayersProto(layers []*dto.LayerImpact) []*tqdpb.Layer {
 	if len(layers) == 0 {
 		return nil
 	}
@@ -277,7 +330,7 @@ func (m *ParcelMapper) buildLayersProto(layers []*qh_domain.LayerImpact) []*tqdp
 	return result
 }
 
-func (m *ParcelMapper) buildLabelsProto(labels []*qh_domain.LabelImpact) []*tqdpb.Label {
+func (m *ParcelMapper) buildLabelsProto(labels []*dto.LabelImpact) []*tqdpb.Label {
 	if len(labels) == 0 {
 		return nil
 	}
@@ -297,7 +350,7 @@ func (m *ParcelMapper) buildLabelsProto(labels []*qh_domain.LabelImpact) []*tqdp
 	return result
 }
 
-func (m *ParcelMapper) buildRegionsProto(regions []*qh_domain.RegionImpact) []*tqdpb.Region {
+func (m *ParcelMapper) buildRegionsProto(regions []*dto.RegionImpact) []*tqdpb.Region {
 	if len(regions) == 0 {
 		return nil
 	}
@@ -385,4 +438,11 @@ func (m *ParcelMapper) parseShapeString(shape string) uint32 {
 		return val
 	}
 	return 0
+}
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

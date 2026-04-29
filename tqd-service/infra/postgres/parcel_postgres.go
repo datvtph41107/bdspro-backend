@@ -9,6 +9,7 @@ import (
 
 	_dto "common/domain/dto"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -214,39 +215,164 @@ func (p *ParcelPostgres) FindWithinPolygon(ctx context.Context, points []repo.Po
 	err := p.DB.WithContext(ctx).Raw(query, polygon, limit, offset).Scan(&parcels).Error
 	return parcels, total, err
 }
-
-// =====================================================
-// Detail API Methods
-// =====================================================
-
-func (p *ParcelPostgres) GetParcelDetail(ctx context.Context, parcelID uint64) (*repo.ParcelDetailResult, error) {
-	var result repo.ParcelDetailResult
+func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
+	var result dto.ParcelInfoResponse
 
 	query := `
-        SELECT 
-            p.id, p.lat, p.lon, ST_AsGeoJSON(p.geometry)::bytea as geometry,
-            pi.parcel_id, pi.property_code, pi.property_uuid, pi.map_number, pi.land_number,
-            pi.total_area_sqm, pi.shape_type, pi.direction, pi.actual_land_use_code,
-            pi.province_code, pi.district_code, pi.ward_code, pi.address_text,
-            COALESCE(prov.full_name, '') as province_name, COALESCE(ward.full_name, '') as ward_name
-        FROM parcels p
-        LEFT JOIN qh_parcel_info_v2 pi ON p.id = pi.parcel_id
-        LEFT JOIN provinces prov ON pi.province_code = prov.code
-        LEFT JOIN wards ward ON pi.ward_code = ward.code
-        WHERE p.id = $1 AND p.deleted_at IS NULL
-    `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(p.lat, 0) AS lat,
+			COALESCE(p.lon, 0) AS lon,
+			COALESCE(ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			ST_AsGeoJSON(p.geometry) AS geometry,
+
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
+			COALESCE(pi.shape_type, '') AS shape_type,
+			COALESCE(pi.direction, '') AS direction,
+
+			COALESCE(pi.actual_land_use_code, '') AS land_use_code,
+			COALESCE(lud.name, 'Chưa phân loại') AS land_use_name,
+			COALESCE(lud.color, '#CCCCCC') AS land_use_color,
+
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code
+		FROM parcels p
+		LEFT JOIN qh_parcel_info_v2 pi ON p.id = pi.parcel_id
+		LEFT JOIN land_use_dict lud
+			ON pi.actual_land_use_code = lud.code
+		   AND lud.is_active = true
+		LEFT JOIN provinces prov ON pi.province_code = prov.code
+		WHERE p.id = $1
+		  AND p.deleted_at IS NULL
+		LIMIT 1
+	`
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("get parcel detail failed: %w", err)
+		return nil, fmt.Errorf("get parcel info failed: %w", err)
 	}
-	if result.ID == 0 {
+
+	if result.ParcelID == 0 {
 		return nil, nil
 	}
+
 	return &result, nil
+}
+
+func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRow, error) {
+	var rows []dto.ParcelLayerRow
+
+	query := `
+		WITH parcel_base AS (
+			SELECT
+				p.id AS parcel_id,
+				p.geometry AS parcel_geometry,
+				COALESCE(ST_Area(p.geometry::geography), 0) AS parcel_area_sqm
+			FROM parcels p
+			WHERE p.id = $1
+			  AND p.deleted_at IS NULL
+			LIMIT 1
+		),
+
+		region_candidates AS (
+			SELECT
+				r.id AS region_id,
+				r.layer_id,
+				r.name AS region_name,
+				r.display_name AS region_display_name,
+				r.land_use_code AS region_land_use_code,
+				r.geometry AS region_geometry,
+				r.color_red,
+				r.color_green,
+				r.color_blue,
+
+				l.name AS layer_name,
+				l.display_name AS layer_display_name,
+				l.type AS layer_type,
+				COALESCE(TO_CHAR(l.effective_date, 'YYYY-MM-DD'), '') AS layer_effective_date,
+				COALESCE(l.legal_doc, '') AS layer_legal_doc,
+
+				pb.parcel_id,
+				pb.parcel_geometry,
+				pb.parcel_area_sqm
+			FROM parcel_base pb
+			JOIN qh_regions r
+				ON r.geometry && pb.parcel_geometry
+			   AND r.status = 10
+			   AND r.deleted_at IS NULL
+			JOIN qh_layers l
+				ON l.id = r.layer_id
+			   AND l.status = 10
+			   AND l.deleted_at IS NULL
+			WHERE ST_Intersects(r.geometry, pb.parcel_geometry)
+		),
+
+		region_intersections AS (
+			SELECT
+				rc.*,
+				inter.geom AS overlap_geom,
+				COALESCE(ST_Area(inter.geom::geography), 0) AS overlap_area_sqm,
+				CASE
+					WHEN rc.parcel_area_sqm > 0
+					THEN (COALESCE(ST_Area(inter.geom::geography), 0) / rc.parcel_area_sqm) * 100
+					ELSE 0
+				END AS overlap_pct
+			FROM region_candidates rc
+			CROSS JOIN LATERAL (
+				SELECT ST_Intersection(rc.parcel_geometry, rc.region_geometry) AS geom
+			) inter
+			WHERE NOT ST_IsEmpty(inter.geom)
+		)
+
+		SELECT
+			ri.parcel_id,
+			ri.parcel_area_sqm,
+
+			ri.layer_id,
+			ri.layer_name,
+			ri.layer_display_name,
+			ri.layer_type,
+			ri.layer_effective_date,
+			ri.layer_legal_doc,
+
+			ri.region_id,
+			ri.region_name,
+			ri.region_display_name,
+			ri.region_land_use_code,
+
+			COALESCE(lud.name, 'Chưa phân loại') AS region_land_use_name,
+			COALESCE(lud.group_name, 'Đất khác') AS region_land_use_group,
+			COALESCE(lud.color, '#CCCCCC') AS region_land_use_color,
+
+			ri.color_red,
+			ri.color_green,
+			ri.color_blue,
+
+			ri.overlap_area_sqm,
+			ri.overlap_pct,
+
+			COALESCE(ST_Y(ST_PointOnSurface(ri.overlap_geom)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(ri.overlap_geom)), 0) AS center_lng,
+
+			ST_AsGeoJSON(ST_Simplify(ri.overlap_geom, 0.5)) AS geometry
+		FROM region_intersections ri
+		LEFT JOIN land_use_dict lud
+			ON lud.code = ri.region_land_use_code
+		   AND lud.is_active = true
+		ORDER BY ri.layer_id, ri.region_land_use_code, ri.overlap_area_sqm DESC, ri.region_id
+	`
+
+	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layer rows failed: %w", err)
+	}
+
+	return rows, nil
 }
 
 func (p *ParcelPostgres) GetSpatialImpacts(ctx context.Context, parcelID uint64) ([]*repo.SpatialImpactRow, error) {

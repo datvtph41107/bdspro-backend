@@ -38,31 +38,38 @@ func NewParcelGrpcHandler(
 // API Detail VIP - Get parcel detail information
 // =====================================================
 
-// GetParcelDetail - Lấy thông tin chi tiết của 1 thửa đất
-func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {
-	// Validate input
-	if req.ParcelId == 0 {
+func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelInfoResponse, error) {
+	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
 	}
 
-	// Log request
-	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[GetParcelDetail] UserID: %d, ParcelID: %d", userID, req.ParcelId)
-
-	// Call usecase
-	detail, err := h.usecase.GetParcelDetail(ctx, req.ParcelId)
+	data, err := h.usecase.GetParcelInfo(ctx, req.ParcelId)
 	if err != nil {
-		log.Printf("[GetParcelDetail] Usecase error: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// Check if parcel exists
-	if detail == nil {
+	if data == nil {
 		return nil, status.Error(codes.NotFound, "parcel not found")
 	}
 
-	// Convert to proto response
-	return h.mapper.ToProtoParcelDetail(detail), nil
+	return h.mapper.ToProtoParcelInfoDetail(data), nil
+}
+
+func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelLayersResponse, error) {
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	data, err := h.usecase.GetParcelLayers(ctx, req.ParcelId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if data == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	return h.mapper.ToProtoParcelLayers(data), nil
 }
 
 // =====================================================

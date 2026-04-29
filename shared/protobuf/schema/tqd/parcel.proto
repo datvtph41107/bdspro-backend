@@ -42,75 +42,93 @@ service ParcelService {
       get: "/v2/tqd/client/parcels/search"
     };
   }
-  
-  rpc GetParcelDetail(GetParcelDetailRequest) returns (ParcelDetailResponse) {
+
+  rpc GetParcelInfo(GetParcelDetailRequest) returns (ParcelInfoResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/parcels/{parcelId}/charge"
+      get: "/v2/tqd/parcels/{parcelId}/info"
+    };
+  }
+  
+  rpc GetParcelLayers(GetParcelDetailRequest) returns (ParcelLayersResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/layers"
     };
   }
 }
-
 message GetParcelDetailRequest {
   uint64 parcelId = 1;
 }
 
-message ParcelDetailResponse {
+message ParcelInfoResponse {
   uint64 parcelId = 1;
   double lat = 2;
   double lon = 3;
   double areaSqm = 4;
   string address = 5;
-  bytes geometry = 6;  // GeoJSON
-  
+  bytes geometry = 6;
+
   string mapNumber = 7;
   string landNumber = 8;
   string propertyCode = 9;
   string propertyUuid = 10;
   string shape = 11;
   string direction = 12;
-  
-  // === Loại đất hiện tại ===
+
   string landUseCode = 13;
   string landUseName = 14;
   string landUseColor = 15;
-  
-  // === Hành chính ===
+
   string province = 16;
   string provinceCode = 17;
   string wardCode = 18;
-  
-  // === Các layer quy hoạch ảnh hưởng ===
-  repeated Layer layers = 19;
-  
-  // === Thống kê ===
-  double totalOverlapArea = 20;
-  double totalOverlapPercent = 21;
-  uint32 layersAffected = 22;
-  uint32 labelsAffected = 23;
-  uint32 regionsAffected = 24;
-  bool hasConflict = 25;
-  string warning = 26;
-  
-  string riskLevel = 27;      // LOW, MEDIUM, HIGH, CRITICAL
-  uint32 riskScore = 28;
-  bool canBuild = 29;
-  repeated string riskReasons = 30;
-  string recommendation = 31;
-  
-  string dataSource = 32;
-  string queriedAt = 33;
-  int64 responseTimeMs = 34;
+}
+
+message ParcelSummary {
+  string dominantLandUse = 1;
+  double dominantPercentage = 2;
+  double totalAffectedPercentage = 3;
+  string topLayerName = 4;
+  bool buildable = 5;
+}
+
+message ParcelLayersResponse {
+  uint64 parcelId = 1;
+  double parcelAreaSqm = 2;
+
+  ParcelSummary summary = 3;
+  repeated Layer layers = 4;
+
+  double totalOverlapArea = 5;
+  double totalOverlapPercent = 6;
+  uint32 layersAffected = 7;
+  uint32 labelsAffected = 8;
+  uint32 regionsAffected = 9;
+  bool hasConflict = 10;
+  string warning = 11;
+
+  string riskLevel = 12;
+  uint32 riskScore = 13;
+  bool canBuild = 14;
+  repeated string riskReasons = 15;
+  string recommendation = 16;
+
+  string dataSource = 17;
+  string queriedAt = 18;
+  int64 responseTimeMs = 19;
+  bool spatialDataAvailable = 20;
 }
 
 message Layer {
   uint64 id = 1;
   string name = 2;
   string displayName = 3;
-  string effectiveDate = 4;
-  string legalDoc = 5;
-  repeated Label labels = 6;
-  double totalArea = 7;
-  double totalPercent = 8;
+  uint32 type = 4;
+  string severity = 5;
+  string effectiveDate = 6;
+  string legalDoc = 7;
+  repeated Label labels = 8;
+  double totalArea = 9;
+  double totalPercent = 10;
 }
 
 message Label {
@@ -118,20 +136,28 @@ message Label {
   string name = 2;
   string displayName = 3;
   string color = 4;
-  repeated Region regions = 5;
-  double totalArea = 6;
-  double totalPercent = 7;
+  uint32 fontSize = 5;
+  string fontWeight = 6;
+  uint32 minZoom = 7;
+  uint32 maxZoom = 8;
+  repeated Region regions = 9;
+  double totalArea = 10;
+  double totalPercent = 11;
 }
 
 message Region {
   uint64 id = 1;
   string name = 2;
-  string landUseCode = 3;
-  string landUseName = 4;
-  RGBColor color = 5;
-  double overlapArea = 6;
-  double overlapPercent = 7;
-  bytes geometry = 8;  // GeoJSON
+  string displayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  string landUseGroup = 6;
+  RGBColor color = 7;
+  double overlapArea = 8;
+  double overlapPercent = 9;
+  double centerLat = 10;
+  double centerLng = 11;
+  bytes geometry = 12;
 }
 
 message RGBColor {

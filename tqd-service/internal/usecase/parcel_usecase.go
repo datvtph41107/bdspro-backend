@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	_dto "common/domain/dto"
@@ -28,7 +30,8 @@ type ParcelUsecase interface {
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
 
 	// Detail VIP
-	GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_domain.ParcelDetailResponse, error)
+	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
+	GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
 }
 
 type parcelUsecase struct {
@@ -42,10 +45,6 @@ func NewParcelUsecase(parcelRepo repo.IParcelRepo, landUseDictRepo repo.LandUseD
 		landUseDictRepo: landUseDictRepo,
 	}
 }
-
-// =====================================================
-// Preview & Search
-// =====================================================
 
 func (u *parcelUsecase) GetParcelInfoByID(ctx context.Context, parcelID uint64) (*qh_domain.ParcelInfoResponse, error) {
 	if parcelID == 0 {
@@ -122,10 +121,6 @@ func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, pa
 
 	return results, total, nil
 }
-
-// =====================================================
-// Helper Methods
-// =====================================================
 
 func (u *parcelUsecase) parseDirection(dir string) uint32 {
 	directions := map[string]uint32{
@@ -208,10 +203,6 @@ func (u *parcelUsecase) getLandUseDisplayName(code string) string {
 	return code
 }
 
-// =====================================================
-// Basic Operations
-// =====================================================
-
 func (u *parcelUsecase) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error) {
 	if len(ids) == 0 {
 		return []qh_domain.Parcel{}, nil
@@ -289,253 +280,6 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 	return parcels, total, nil
 }
 
-// =====================================================
-// Detail VIP
-// =====================================================
-
-func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_domain.ParcelDetailResponse, error) {
-	startTime := time.Now()
-
-	if parcelID == 0 {
-		return nil, errors.New("parcel_id is required")
-	}
-
-	baseInfo, err := u.parcelRepo.GetParcelDetail(ctx, parcelID)
-	if err != nil {
-		return nil, fmt.Errorf("get parcel detail failed: %w", err)
-	}
-	if baseInfo == nil || baseInfo.ID == 0 {
-		return nil, fmt.Errorf("parcel %d not found", parcelID)
-	}
-
-	spatialImpacts, _ := u.parcelRepo.GetSpatialImpacts(ctx, parcelID)
-	landUse, _ := u.landUseDictRepo.GetByCode(ctx, baseInfo.ActualLandUseCode)
-
-	response := &qh_domain.ParcelDetailResponse{
-		ParcelID:     baseInfo.ID,
-		Lat:          baseInfo.Lat,
-		Lon:          baseInfo.Lon,
-		TotalAreaSqm: baseInfo.TotalAreaSqm,
-		AddressText:  baseInfo.AddressText,
-		Geometry:     baseInfo.Geometry,
-		MapNumber:    baseInfo.MapNumber,
-		LandNumber:   baseInfo.LandNumber,
-		PropertyCode: baseInfo.PropertyCode,
-		PropertyUUID: baseInfo.PropertyUUID,
-		ShapeType:    baseInfo.ShapeType,
-		Direction:    baseInfo.Direction,
-		CurrentLandUse: &qh_domain.LandUseBrief{
-			Code:  baseInfo.ActualLandUseCode,
-			Name:  u.getLandUseName(landUse),
-			Group: u.getLandUseGroup(landUse),
-			Color: u.getLandUseColor(landUse),
-		},
-		Administrative: &qh_domain.AdminBrief{
-			Province:     baseInfo.ProvinceName,
-			ProvinceCode: baseInfo.ProvinceCode,
-			WardCode:     baseInfo.WardCode,
-			Address:      baseInfo.AddressText,
-		},
-	}
-
-	if len(spatialImpacts) > 0 {
-		response.Layers = u.buildLayers(spatialImpacts)
-		response.Statistics = u.calculateStats(response.Layers, baseInfo.TotalAreaSqm)
-		response.Risk = u.assessRisk(response.Layers, baseInfo.ActualLandUseCode, baseInfo.TotalAreaSqm)
-		response.Metadata = &qh_domain.ResponseMeta{
-			DataSource:     "qh_regions (spatial)",
-			QueriedAt:      time.Now().Format(time.RFC3339),
-			ResponseTimeMs: time.Since(startTime).Milliseconds(),
-			Cached:         false,
-		}
-	} else {
-		response.Statistics = &qh_domain.ImpactStats{SpatialDataAvailable: false}
-		response.Risk = &qh_domain.RiskAssessment{
-			Level:          "LOW",
-			Score:          0,
-			CanBuild:       true,
-			Reasons:        []string{"✅ Không phát hiện ảnh hưởng quy hoạch"},
-			Recommendation: "✅ Rủi ro thấp, có thể xem xét giao dịch.",
-		}
-		response.Metadata = &qh_domain.ResponseMeta{
-			DataSource:     "qh_regions (spatial)",
-			QueriedAt:      time.Now().Format(time.RFC3339),
-			ResponseTimeMs: time.Since(startTime).Milliseconds(),
-			Cached:         false,
-		}
-	}
-
-	return response, nil
-}
-
-// =====================================================
-// Build methods for Detail VIP
-// =====================================================
-
-func (u *parcelUsecase) buildLayers(impacts []*repo.SpatialImpactRow) []*qh_domain.LayerImpact {
-	layerMap := make(map[uint64]*qh_domain.LayerImpact)
-	for _, imp := range impacts {
-		layer, ok := layerMap[imp.LayerID]
-		if !ok {
-			layer = &qh_domain.LayerImpact{
-				ID:            imp.LayerID,
-				Name:          imp.LayerName,
-				DisplayName:   imp.LayerDisplayName,
-				Type:          imp.LayerType,
-				EffectiveDate: imp.EffectiveDate,
-				LegalDoc:      imp.LegalDoc,
-				Labels:        []*qh_domain.LabelImpact{},
-			}
-			layerMap[imp.LayerID] = layer
-		}
-
-		var label *qh_domain.LabelImpact
-		for _, lbl := range layer.Labels {
-			if lbl.ID == imp.LabelID {
-				label = lbl
-				break
-			}
-		}
-		if label == nil {
-			label = &qh_domain.LabelImpact{
-				ID:          imp.LabelID,
-				Name:        imp.LabelName,
-				DisplayName: imp.LabelDisplayName,
-				Color:       imp.LabelColor,
-				FontSize:    imp.LabelFontSize,
-				FontWeight:  imp.LabelFontWeight,
-				MinZoom:     imp.LabelMinZoom,
-				MaxZoom:     imp.LabelMaxZoom,
-				Regions:     []*qh_domain.RegionImpact{},
-			}
-			layer.Labels = append(layer.Labels, label)
-		}
-
-		region := &qh_domain.RegionImpact{
-			ID:           imp.RegionID,
-			Name:         imp.RegionName,
-			DisplayName:  imp.RegionDisplayName,
-			LandUseCode:  imp.LandUseCode,
-			LandUseName:  imp.LandUseName,
-			LandUseGroup: imp.LandUseGroup,
-			ColorRGB: &qh_domain.RGB{
-				Red:   imp.ColorRed,
-				Green: imp.ColorGreen,
-				Blue:  imp.ColorBlue,
-			},
-			OverlapAreaSqm: imp.OverlapArea,
-			OverlapPct:     imp.OverlapPct,
-			Geometry:       imp.Geometry,
-		}
-		label.Regions = append(label.Regions, region)
-		label.TotalArea += imp.OverlapArea
-		label.TotalPct += imp.OverlapPct
-	}
-
-	layers := make([]*qh_domain.LayerImpact, 0, len(layerMap))
-	for _, layer := range layerMap {
-		for _, label := range layer.Labels {
-			layer.TotalArea += label.TotalArea
-			layer.TotalPct += label.TotalPct
-			sort.Slice(label.Regions, func(i, j int) bool {
-				return label.Regions[i].OverlapPct > label.Regions[j].OverlapPct
-			})
-		}
-		layers = append(layers, layer)
-	}
-	sort.Slice(layers, func(i, j int) bool {
-		return layers[i].TotalArea > layers[j].TotalArea
-	})
-	return layers
-}
-
-func (u *parcelUsecase) calculateStats(layers []*qh_domain.LayerImpact, totalArea float64) *qh_domain.ImpactStats {
-	stats := &qh_domain.ImpactStats{SpatialDataAvailable: len(layers) > 0}
-	if len(layers) == 0 {
-		return stats
-	}
-	for _, layer := range layers {
-		stats.TotalOverlapArea += layer.TotalArea
-		stats.LayersAffected++
-		for _, label := range layer.Labels {
-			stats.LabelsAffected++
-			stats.RegionsAffected += uint32(len(label.Regions))
-		}
-	}
-	if totalArea > 0 {
-		stats.TotalOverlapPct = (stats.TotalOverlapArea / totalArea) * 100
-	}
-	stats.HasConflict = stats.TotalOverlapPct > 100
-	if stats.HasConflict {
-		stats.Warning = "⚠️ PHÁT HIỆN CHỒNG LẤN QUY HOẠCH! Tổng diện tích ảnh hưởng vượt quá diện tích thửa đất."
-	}
-	return stats
-}
-
-func (u *parcelUsecase) assessRisk(layers []*qh_domain.LayerImpact, landUseCode string, totalArea float64) *qh_domain.RiskAssessment {
-	risk := &qh_domain.RiskAssessment{
-		Level:          "LOW",
-		Score:          0,
-		CanBuild:       true,
-		Reasons:        []string{},
-		Recommendation: "✅ Rủi ro thấp, có thể xem xét giao dịch.",
-	}
-	if len(layers) == 0 {
-		risk.Reasons = append(risk.Reasons, "✅ Không phát hiện ảnh hưởng quy hoạch")
-		return risk
-	}
-
-	score := 0.0
-	landUseMap := make(map[string]float64)
-	for _, layer := range layers {
-		for _, label := range layer.Labels {
-			for _, region := range label.Regions {
-				landUseMap[region.LandUseCode] += region.OverlapAreaSqm
-			}
-		}
-	}
-
-	for code, area := range landUseMap {
-		pct := (area / totalArea) * 100
-		switch code {
-		case "DGT", "DHT":
-			score += pct * 2
-			risk.Reasons = append(risk.Reasons, fmt.Sprintf("⚠️ %.1f%% diện tích là %s - không được phép xây dựng", pct, u.getLandUseDisplayName(code)))
-		case "DCX", "DSH":
-			score += pct
-			risk.Reasons = append(risk.Reasons, fmt.Sprintf("⚠️ %.1f%% diện tích là %s - hạn chế xây dựng", pct, u.getLandUseDisplayName(code)))
-		case "ODT", "ONT":
-			score += pct * 0.5
-			risk.Reasons = append(risk.Reasons, fmt.Sprintf("✅ %.1f%% diện tích là %s - được phép xây dựng", pct, u.getLandUseDisplayName(code)))
-		default:
-			score += pct * 0.8
-			risk.Reasons = append(risk.Reasons, fmt.Sprintf("⚠️ %.1f%% diện tích là %s - cần kiểm tra thêm", pct, u.getLandUseDisplayName(code)))
-		}
-	}
-
-	if score > 150 {
-		risk.Level = "CRITICAL"
-		risk.Score = 95
-		risk.CanBuild = false
-		risk.Recommendation = "⚠️ RỦI RO CAO: KHÔNG NÊN GIAO DỊCH. Liên hệ cơ quan quy hoạch."
-	} else if score > 80 {
-		risk.Level = "HIGH"
-		risk.Score = 85
-		risk.CanBuild = false
-		risk.Recommendation = "⚠️ RỦI RO: Cần kiểm tra kỹ quy hoạch trước khi quyết định."
-	} else if score > 30 {
-		risk.Level = "MEDIUM"
-		risk.Score = 65
-		risk.CanBuild = true
-		risk.Recommendation = "⚠️ Có rủi ro quy hoạch, cần tìm hiểu thêm."
-	}
-	return risk
-}
-
-// =====================================================
-// Helper functions
-// =====================================================
-
 func calculatePolygonAreaKm2(points []repo.Point) float64 {
 	if len(points) < 3 {
 		return 0
@@ -602,4 +346,405 @@ func normalizePage(page, pageSize int) (limit, offset int) {
 	limit = pageSize
 	offset = (page - 1) * pageSize
 	return
+}
+func (u *parcelUsecase) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+
+	info, err := u.parcelRepo.GetParcelInfo(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel info failed: %w", err)
+	}
+
+	if info == nil || info.ParcelID == 0 {
+		return nil, fmt.Errorf("parcel %d not found", parcelID)
+	}
+
+	return info, nil
+}
+
+func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
+	start := time.Now()
+
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+
+	rows, err := u.parcelRepo.GetParcelLayerRows(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+	}
+
+	parcelArea := 0.0
+	if len(rows) > 0 {
+		parcelArea = rows[0].ParcelAreaSqm
+	} else {
+		info, infoErr := u.parcelRepo.GetParcelInfo(ctx, parcelID)
+		if infoErr != nil {
+			return nil, fmt.Errorf("get parcel info for empty layers failed: %w", infoErr)
+		}
+		if info == nil || info.ParcelID == 0 {
+			return nil, fmt.Errorf("parcel %d not found", parcelID)
+		}
+		parcelArea = info.AreaSqm
+	}
+
+	resp := buildParcelLayersResponse(parcelID, parcelArea, rows)
+	resp.Metadata = &dto.ResponseMeta{
+		DataSource:     "postgis real-time",
+		QueriedAt:      time.Now().UTC().Format(time.RFC3339),
+		ResponseTimeMs: time.Since(start).Milliseconds(),
+		Cached:         false,
+	}
+
+	return resp, nil
+}
+
+func buildParcelLayersResponse(parcelID uint64, parcelArea float64, rows []dto.ParcelLayerRow) *dto.ParcelLayersResponse {
+	layerMap := make(map[uint64]*dto.LayerImpact, 8)
+	labelSeen := make(map[string]struct{}, 32)
+	regionSeen := make(map[uint64]struct{}, 64)
+
+	var totalOverlapRaw float64
+
+	for _, r := range rows {
+		layer, ok := layerMap[r.LayerID]
+		if !ok {
+			layer = &dto.LayerImpact{
+				ID:            r.LayerID,
+				Name:          r.LayerName,
+				DisplayName:   r.LayerDisplayName,
+				Type:          r.LayerType,
+				EffectiveDate: r.LayerEffectiveDate,
+				LegalDoc:      r.LayerLegalDoc,
+				Labels:        []*dto.LabelImpact{},
+			}
+			layerMap[r.LayerID] = layer
+		}
+
+		labelKey := buildLabelKey(r.LayerID, r.RegionLandUseCode)
+
+		var label *dto.LabelImpact
+		for _, existing := range layer.Labels {
+			if buildLabelKey(r.LayerID, existing.Name) == labelKey {
+				label = existing
+				break
+			}
+		}
+
+		if label == nil {
+			label = &dto.LabelImpact{
+				ID:          stableLabelID(r.LayerID, r.RegionLandUseCode),
+				Name:        r.RegionLandUseCode,
+				DisplayName: r.RegionLandUseName,
+				Color:       r.RegionLandUseColor,
+				FontSize:    12,
+				FontWeight:  "normal",
+				MinZoom:     10,
+				MaxZoom:     22,
+				Regions:     []*dto.RegionImpact{},
+			}
+			layer.Labels = append(layer.Labels, label)
+			labelSeen[labelKey] = struct{}{}
+		}
+
+		region := &dto.RegionImpact{
+			ID:             r.RegionID,
+			Name:           r.RegionName,
+			DisplayName:    r.RegionDisplayName,
+			LandUseCode:    r.RegionLandUseCode,
+			LandUseName:    r.RegionLandUseName,
+			LandUseGroup:   r.RegionLandUseGroup,
+			ColorRGB:       regionRGB(r),
+			OverlapAreaSqm: r.OverlapAreaSqm,
+			OverlapPct:     r.OverlapPct,
+			CenterLat:      r.CenterLat,
+			CenterLng:      r.CenterLng,
+			Geometry:       r.Geometry,
+		}
+
+		label.Regions = append(label.Regions, region)
+
+		label.TotalArea += r.OverlapAreaSqm
+		layer.TotalArea += r.OverlapAreaSqm
+		totalOverlapRaw += r.OverlapAreaSqm
+
+		regionSeen[r.RegionID] = struct{}{}
+	}
+
+	layers := make([]*dto.LayerImpact, 0, len(layerMap))
+	for _, layer := range layerMap {
+		if parcelArea > 0 {
+			layer.TotalPct = minFloat((layer.TotalArea/parcelArea)*100, 100)
+		}
+		layer.Severity = computeLayerSeverity(layer)
+		sortLabelRegions(layer, parcelArea)
+		layers = append(layers, layer)
+	}
+
+	sort.Slice(layers, func(i, j int) bool {
+		if layers[i].TotalArea == layers[j].TotalArea {
+			return layers[i].ID < layers[j].ID
+		}
+		return layers[i].TotalArea > layers[j].TotalArea
+	})
+
+	totalOverlapArea := totalOverlapRaw
+	totalOverlapPct := 0.0
+	if parcelArea > 0 {
+		totalOverlapPct = minFloat((totalOverlapRaw/parcelArea)*100, 100)
+	}
+
+	layersAffected := uint32(len(layers))
+	labelsAffected := uint32(len(labelSeen))
+	regionsAffected := uint32(len(regionSeen))
+
+	hasConflict := parcelArea > 0 && totalOverlapRaw > parcelArea
+	stats := &dto.ImpactStats{
+		TotalOverlapArea:     totalOverlapArea,
+		TotalOverlapPct:      totalOverlapPct,
+		LayersAffected:       layersAffected,
+		LabelsAffected:       labelsAffected,
+		RegionsAffected:      regionsAffected,
+		HasConflict:          hasConflict,
+		SpatialDataAvailable: len(rows) > 0,
+		Warning:              buildWarning(totalOverlapPct, hasConflict, layersAffected),
+	}
+
+	risk := calculateRisk(rows, parcelArea, stats)
+	summary := buildSummary(layers, stats, risk)
+
+	return &dto.ParcelLayersResponse{
+		ParcelID:      parcelID,
+		ParcelAreaSqm: parcelArea,
+		Summary:       summary,
+		Layers:        layers,
+		Statistics:    stats,
+		Risk:          risk,
+	}
+}
+
+func buildLabelKey(layerID uint64, landUseCode string) string {
+	return fmt.Sprintf("%d:%s", layerID, strings.TrimSpace(landUseCode))
+}
+
+func stableLabelID(layerID uint64, landUseCode string) uint64 {
+	key := buildLabelKey(layerID, landUseCode)
+	return uint64(crc32.ChecksumIEEE([]byte(key)))
+}
+
+func sortLabelRegions(layer *dto.LayerImpact, parcelArea float64) {
+	for _, label := range layer.Labels {
+		if parcelArea > 0 {
+			label.TotalPct = minFloat((label.TotalArea/parcelArea)*100, 100)
+		}
+		sort.Slice(label.Regions, func(i, j int) bool {
+			if label.Regions[i].OverlapAreaSqm == label.Regions[j].OverlapAreaSqm {
+				return label.Regions[i].ID < label.Regions[j].ID
+			}
+			return label.Regions[i].OverlapAreaSqm > label.Regions[j].OverlapAreaSqm
+		})
+	}
+
+	sort.Slice(layer.Labels, func(i, j int) bool {
+		if layer.Labels[i].TotalArea == layer.Labels[j].TotalArea {
+			return layer.Labels[i].ID < layer.Labels[j].ID
+		}
+		return layer.Labels[i].TotalArea > layer.Labels[j].TotalArea
+	})
+}
+
+func buildSummary(layers []*dto.LayerImpact, stats *dto.ImpactStats, risk *dto.RiskAssessment) *dto.ParcelSummary {
+	summary := &dto.ParcelSummary{
+		DominantLandUse:         "",
+		DominantPercentage:      0,
+		TotalAffectedPercentage: 0,
+		TopLayerName:            "",
+		Buildable:               true,
+	}
+
+	if stats != nil {
+		summary.TotalAffectedPercentage = stats.TotalOverlapPct
+	}
+
+	var maxLabelPct float64
+	var maxLayerPct float64
+
+	for _, layer := range layers {
+		if layer.TotalPct > maxLayerPct {
+			maxLayerPct = layer.TotalPct
+			summary.TopLayerName = layer.DisplayName
+		}
+		for _, label := range layer.Labels {
+			if label.TotalPct > maxLabelPct {
+				maxLabelPct = label.TotalPct
+				summary.DominantLandUse = label.DisplayName
+				summary.DominantPercentage = label.TotalPct
+			}
+		}
+	}
+
+	if risk != nil {
+		summary.Buildable = risk.CanBuild
+	}
+
+	return summary
+}
+
+func buildWarning(totalPct float64, hasConflict bool, layersAffected uint32) string {
+	switch {
+	case totalPct <= 0:
+		return ""
+	case hasConflict:
+		return "Phát hiện chồng lấn quy hoạch vượt quá diện tích thửa đất"
+	case layersAffected > 1:
+		return "Thửa đất đang chịu ảnh hưởng từ nhiều layer quy hoạch"
+	default:
+		return "Thửa đất có ảnh hưởng quy hoạch"
+	}
+}
+
+func calculateRisk(rows []dto.ParcelLayerRow, parcelArea float64, stats *dto.ImpactStats) *dto.RiskAssessment {
+	risk := &dto.RiskAssessment{
+		Level:          "LOW",
+		Score:          0,
+		CanBuild:       true,
+		Reasons:        []string{},
+		Recommendation: "Rủi ro thấp, có thể xem xét tiếp các điều kiện khác.",
+	}
+
+	if parcelArea <= 0 || len(rows) == 0 {
+		risk.Reasons = append(risk.Reasons, "Không phát hiện ảnh hưởng quy hoạch")
+		return risk
+	}
+
+	score := 0.0
+	reasons := make([]string, 0, len(rows))
+
+	for _, row := range rows {
+		pct := (row.OverlapAreaSqm / parcelArea) * 100
+
+		switch row.RegionLandUseCode {
+		case "DGT", "DHT":
+			score += pct * 2.0
+			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - không được phép xây dựng", pct, row.RegionLandUseName))
+		case "DCX", "DSH":
+			score += pct * 1.0
+			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - hạn chế xây dựng", pct, row.RegionLandUseName))
+		case "ODT", "ONT":
+			score += pct * 0.35
+			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - phù hợp mục đích ở", pct, row.RegionLandUseName))
+		default:
+			score += pct * 0.8
+			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - cần kiểm tra thêm", pct, row.RegionLandUseName))
+		}
+	}
+
+	if stats != nil && stats.LayersAffected > 1 {
+		score += float64(stats.LayersAffected) * 5
+	}
+
+	switch {
+	case score >= 85:
+		risk.Level = "CRITICAL"
+		risk.Score = 95
+		risk.CanBuild = false
+		risk.Recommendation = "Rủi ro rất cao, không nên giao dịch trước khi xác minh quy hoạch."
+	case score >= 60:
+		risk.Level = "HIGH"
+		risk.Score = 85
+		risk.CanBuild = false
+		risk.Recommendation = "Rủi ro cao, cần kiểm tra kỹ quy hoạch trước khi quyết định."
+	case score >= 30:
+		risk.Level = "MEDIUM"
+		risk.Score = 65
+		risk.CanBuild = true
+		risk.Recommendation = "Có rủi ro quy hoạch, nên kiểm tra thêm hồ sơ pháp lý."
+	default:
+		risk.Level = "LOW"
+		risk.Score = uint32(score)
+		risk.CanBuild = true
+		risk.Recommendation = "Rủi ro thấp, có thể tiếp tục xem xét."
+	}
+
+	if len(reasons) == 0 {
+		reasons = append(reasons, "Không phát hiện ảnh hưởng quy hoạch đáng kể")
+	}
+
+	risk.Reasons = reasons
+	return risk
+}
+
+func computeLayerSeverity(layer *dto.LayerImpact) string {
+	if layer == nil {
+		return "LOW"
+	}
+
+	hasCritical := false
+	hasHigh := false
+	hasMedium := false
+
+	for _, label := range layer.Labels {
+		for _, region := range label.Regions {
+			switch region.LandUseCode {
+			case "DGT", "DHT":
+				hasCritical = true
+			case "DCX", "DSH":
+				hasHigh = true
+			case "ODT", "ONT":
+				hasMedium = true
+			}
+		}
+	}
+
+	switch {
+	case hasCritical:
+		return "CRITICAL"
+	case hasHigh:
+		return "HIGH"
+	case hasMedium && layer.TotalPct > 0:
+		return "MEDIUM"
+	default:
+		return "LOW"
+	}
+}
+
+func regionRGB(r dto.ParcelLayerRow) *dto.RGB {
+	if r.RegionLandUseColor != "" {
+		if rgb, ok := hexToRGB(r.RegionLandUseColor); ok {
+			return rgb
+		}
+	}
+
+	return &dto.RGB{
+		Red:   r.RegionColorRed,
+		Green: r.RegionColorGreen,
+		Blue:  r.RegionColorBlue,
+	}
+}
+
+func hexToRGB(hex string) (*dto.RGB, bool) {
+	hex = strings.TrimPrefix(strings.TrimSpace(hex), "#")
+	if len(hex) != 6 {
+		return nil, false
+	}
+
+	v, err := strconv.ParseUint(hex, 16, 32)
+	if err != nil {
+		return nil, false
+	}
+
+	return &dto.RGB{
+		Red:   uint8((v >> 16) & 0xFF),
+		Green: uint8((v >> 8) & 0xFF),
+		Blue:  uint8(v & 0xFF),
+	}, true
+}
+
+func minFloat(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
 }
