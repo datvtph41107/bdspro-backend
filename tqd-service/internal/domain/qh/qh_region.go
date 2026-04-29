@@ -16,8 +16,8 @@ type RegionStyleConfig struct {
 
 // QHRegion - Khu vực quy hoạch chi tiết
 type QHRegion struct {
-	ID      uint64  `gorm:"primaryKey;autoIncrement" json:"id"`
-	LayerID *uint64 `gorm:"not null;index;comment:Thuộc layer quy hoạch" json:"layerId"`
+	ID      uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
+	LayerID uint64 `gorm:"not null;index;comment:Thuộc layer quy hoạch" json:"layerId"`
 
 	Name        string `gorm:"type:varchar(255)" json:"name,omitempty"`
 	DisplayName string `gorm:"type:varchar(255)" json:"displayName,omitempty"`

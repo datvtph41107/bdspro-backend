@@ -307,10 +307,10 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 // 	return h.toProtoLayer(layer, true)
 // }
 
-// func (h *LayerGrpcHandler) GetListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
-// 	// Set default values
-// 	page := int32(1)
-// 	// limit := int32(20)
+func (h *LayerGrpcHandler) GetListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	// 	// Set default values
+	// 	page := int32(1)
+	// 	// limit := int32(20)
 
 	layerFilter := repo.ClientLayerFilter{
 		Pagable: _dto.Pagable{

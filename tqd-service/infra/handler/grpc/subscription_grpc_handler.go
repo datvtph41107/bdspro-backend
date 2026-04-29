@@ -252,10 +252,10 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 		if i < len(regions) {
 			item.RegionName = regions[i].Name
 			// Geometry is bytes, need to convert
-			if len(regions[i].Geometry) > 0 {
-				geom := string(regions[i].Geometry)
-				item.Geometry = geom
-			}
+			// if len(regions[i].RawGeometry) > 0 {
+			// 	geom := regions[i].RawGeometry.
+			// 	item.Geometry = geom
+			// }
 		}
 		items = append(items, item)
 	}

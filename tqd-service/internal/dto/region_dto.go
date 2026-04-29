@@ -42,7 +42,7 @@ type UpdateRegionRequest struct {
 	Description *string                `json:"description"`
 	Type        *uint32                `json:"type"`
 	Status      *uint32                `json:"status"`
-	LayerID     *uint64                `json:"layer_id"`
+	LayerID     uint64                 `json:"layer_id"`
 	Properties  map[string]interface{} `json:"properties"`
 	Geometry    *string                `json:"geometry"`
 }
@@ -102,7 +102,7 @@ type RegionResponse struct {
 	BBox        string                 `json:"bbox"`
 	Area        float64                `json:"area"`
 	Length      float64                `json:"length"`
-	LayerID     *uint64                `json:"layer_id"`
+	LayerID     uint64                 `json:"layer_id"`
 	Properties  map[string]interface{} `json:"properties"`
 	CreatedAt   string                 `json:"created_at"`
 	UpdatedAt   string                 `json:"updated_at"`

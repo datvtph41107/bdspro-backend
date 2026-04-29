@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/geometry"
@@ -28,84 +29,42 @@ func NewRegionRepository(db *gorm.DB) repo.RegionRepository {
 	return &regionRepoImpl{db: db}
 }
 
-func (r *regionRepoImpl) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.QHRegion, error) {
-	var regions []qh_domain.QHRegion
-	if len(ids) == 0 {
-		return regions, nil
-	}
-	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&regions).Error
-	return regions, err
-}
-
 func (r *regionRepoImpl) Create(ctx context.Context, region *qh_domain.QHRegion) error {
-	var geom map[string]interface{}
-	if err := json.Unmarshal(region.Geometry.Raw, &geom); err == nil {
-		// if coords, ok := geom["coordinates"]; ok {
-		// 	bbox := geometry.CalculateBBox(coords)
-		// 	bboxJSON, _ := json.Marshal(bbox)
-		// 	region.BBox = string(bboxJSON)
-		// }
-	}
+	region.CreatedAt = time.Now()
+	region.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Create(region).Error
 }
 
 func (r *regionRepoImpl) CreateBatch(ctx context.Context, regions []*qh_domain.QHRegion) error {
-	const batchSize = 500
-
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for i := 0; i < len(regions); i += batchSize {
-			end := i + batchSize
-			if end > len(regions) {
-				end = len(regions)
-			}
-
-			var placeholders []string
-			var args []interface{}
-
-			for _, region := range regions[i:end] {
-				propsJSON, err := region.Properties.Value()
-				if err != nil {
-					return err
-				}
-
-				placeholders = append(placeholders,
-					`(ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-				)
-				args = append(args,
-					string(region.Geometry.Raw),
-					region.Name,
-					region.DisplayName,
-					region.Description,
-					region.Area,
-					region.Length,
-					region.LayerID,
-					propsJSON,
-				)
-			}
-
-			query := `
-				INSERT INTO qh_regions (geometry, name, display_name, description, area, length, layer_id, properties, created_at, updated_at)
-				VALUES ` + strings.Join(placeholders, ", ")
-
-			if err := tx.Exec(query, args...).Error; err != nil {
-				return err
-			}
-		}
+	if len(regions) == 0 {
 		return nil
-	})
+	}
+	now := time.Now()
+	for _, region := range regions {
+		region.CreatedAt = now
+		region.UpdatedAt = now
+	}
+	return r.db.WithContext(ctx).CreateInBatches(regions, 500).Error
 }
 
 func (r *regionRepoImpl) Update(ctx context.Context, region *qh_domain.QHRegion) error {
+	region.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Save(region).Error
 }
 
 func (r *regionRepoImpl) Delete(ctx context.Context, id uint64) error {
-	return r.db.WithContext(ctx).Delete(&qh_domain.QHRegion{}, id).Error
+	now := time.Now()
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("id = ?", id).
+		Update("deleted_at", now).Error
 }
 
 func (r *regionRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
 	var region qh_domain.QHRegion
-	err := r.db.WithContext(ctx).First(&region, id).Error
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		First(&region, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -115,11 +74,24 @@ func (r *regionRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHR
 	return &region, nil
 }
 
+func (r *regionRepoImpl) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.QHRegion, error) {
+	var regions []qh_domain.QHRegion
+	if len(ids) == 0 {
+		return regions, nil
+	}
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("id IN ?", ids).
+		Find(&regions).Error
+	return regions, err
+}
+
 func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error) {
 	var regions []qh_domain.QHRegion
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{})
+	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).
+		Where("deleted_at IS NULL")
 
 	if filter.LayerID != nil {
 		query = query.Where("layer_id = ?", *filter.LayerID)
@@ -178,11 +150,17 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	return regions, total, err
 }
 
-func (r *regionRepoImpl) GetByPoint(ctx context.Context, lat, lng float64, bufferMeters float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error) {
-	var allRegions []qh_domain.QHRegion
-	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{})
-	if regionType != nil && *regionType > 0 {
-		query = query.Where("type = ?", *regionType)
+func (r *regionRepoImpl) ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error) {
+	var regions []qh_domain.QHRegion
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).
+		Where("deleted_at IS NULL").
+		Where("status = ?", 10).
+		Where("is_latest = ?", true)
+
+	if filter.LayerID != nil {
+		query = query.Where("layer_id = ?", *filter.LayerID)
 	}
 	if filter.LandUseCode != nil {
 		query = query.Where("land_use_code = ?", *filter.LandUseCode)
@@ -283,21 +261,24 @@ func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*
 		return nil, err
 	}
 
-	var result []qh_domain.QHRegion
-	// for _, region := range allRegions {
-	// 	inside, err := geometry.CheckPointInGeometry(region.Geometry, lat, lng)
-	// 	if err != nil {
-	// 		continue
-	// 	}
-	// 	if inside {
-	// 		result = append(result, region)
-	// 	}
-	// }
-	return result, nil
-}
+	var landUseStats []repo.LandUseStat
+	err = r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).
+		Where("layer_id = ? AND deleted_at IS NULL AND status = 10", layerID).
+		Select(`
+            land_use_code,
+            MAX(land_use_name) as land_use_name,
+            COUNT(*) as count,
+            COALESCE(SUM(area_ha), 0) as total_area_ha
+        `).
+		Group("land_use_code").
+		Order("total_area_ha DESC").
+		Scan(&landUseStats).Error
+	if err != nil {
+		return nil, err
+	}
+	stats.LandUseStats = landUseStats
 
-func (r *regionRepoImpl) GetByLocation(ctx context.Context, lat, lng float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error) {
-	return r.GetByPoint(ctx, lat, lng, 0, regionType, layerID)
+	return &stats, nil
 }
 
 func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error) {
@@ -312,7 +293,7 @@ func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY f
 	if err := query.Find(&allRegions).Error; err != nil {
 		return nil, err
 	}
-	stats.LandUseStats = landUseStats
+	// stats.LandUseStats = landUseStats
 
 	var result []qh_domain.QHRegion
 	// for _, region := range allRegions {
