@@ -310,7 +310,7 @@ if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
 if [ "$1" = "gateway" ]; then
-  scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+  # scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
   scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 fi
 if [ "$1" = "file" ]; then

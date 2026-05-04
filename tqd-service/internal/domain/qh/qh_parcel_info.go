@@ -1,6 +1,7 @@
 package qh_domain
 
 import (
+	_models "common/domain/entity"
 	"database/sql/driver"
 	"encoding/json"
 	"time"
@@ -10,15 +11,20 @@ import (
 // PLANNING INFO (QUY HOẠCH ẢNH HƯỞNG)
 // =====================================================
 
-// PlanningInfo - Thông tin quy hoạch ảnh hưởng từ one_house
-type PlanningInfo struct {
-	PlanningTypeCode string  `json:"planning_type_code"`
-	PlanningTypeName string  `json:"planning_type_name"`
-	PlanningArea     float64 `json:"planning_area"`
+// QHPlanningUse - Thông tin quy hoạch ảnh hưởng từ one_house
+type QHPlanningUse struct {
+	_models.BaseEntity
+	PlanningTypeCode string `json:"planning_type_code"`
+	PlanningTypeName string `json:"planning_type_name"`
+	// PlanningArea     float64 `json:"planning_area"`
+}
+
+func (QHPlanningUse) TableName() string {
+	return "qh_planning_land_use"
 }
 
 // PlanningInfoList - List planning info
-type PlanningInfoList []PlanningInfo
+type PlanningInfoList []QHPlanningUse
 
 func (p PlanningInfoList) Value() (driver.Value, error) {
 	if p == nil {
@@ -57,15 +63,11 @@ type QHParcelInfo struct {
 
 	// Physical characteristics
 	TotalAreaSqm float64 `gorm:"default:0" json:"totalAreaSqm"`
-	ShapeType    string  `gorm:"type:varchar(50)" json:"shapeType"`
-	Direction    string  `gorm:"type:varchar(50)" json:"direction"`
 
+	// ShapeType    string  `gorm:"type:varchar(50)" json:"shapeType"`
 	// Location (THÊM 2 TRƯỜNG NÀY)
 	Latitude  float64 `gorm:"column:lat" json:"latitude"`
 	Longitude float64 `gorm:"column:lon" json:"longitude"`
-
-	// Current land use
-	ActualLandUseCode string `gorm:"type:varchar(20);index" json:"actualLandUseCode"`
 
 	// Administrative info
 	ProvinceCode string `gorm:"type:varchar(20)" json:"provinceCode"`
@@ -81,13 +83,22 @@ type QHParcelInfo struct {
 	WardV2Id     *uint64 `gorm:"default:null" json:"wardV2Id,omitempty"`
 
 	// Planning info
-	PlanningInfos        PlanningInfoList `gorm:"type:jsonb" json:"planningInfos"`
-	PlanningLandType     string           `gorm:"type:text" json:"planningLandType"`
-	PlanningLandTypeCode string           `gorm:"type:varchar(20)" json:"planningLandTypeCode"`
-
+	PlanningInfos PlanningInfoList `gorm:"type:jsonb" json:"planningInfos"`
+	// PlanningLandType     string           `gorm:"type:text" json:"planningLandType"`
+	// PlanningLandTypeCode string           `gorm:"type:varchar(20)" json:"planningLandTypeCode"`
+	// // Current land use
+	// ActualLandUseCode string `gorm:"type:varchar(20);index" json:"actualLandUseCode"`
+	PlanningUseID *uint64        `gorm:"" json:"planning_use_id"`
+	PlanningUse   *QHPlanningUse `gorm:"foreignKey:PlanningUseID;references:ID" json:"planning_use"`
 	// Shape info
-	ShapeId uint64   `gorm:"default:0" json:"shapeId"`
-	Shape   *QHShape `gorm:"-" json:"shape,omitempty"`
+	ShapeId   *uint64  `gorm:"" json:"shapeId"`
+	ShapeName string   `gorm:"-:migration;column:shape_name" json:"shapeName"`
+	Shape     *QHShape `gorm:"-" json:"shape,omitempty"`
+
+	// DirectionID   *uint64      `gorm:"" json:"directionId"`
+	// DirectionName string       `gorm:"->;column:direction_name" json:"directionName"`
+	DirectionsRaw []byte        `gorm:"-:migration;column:directions"` // JSON từ DB
+	Directions    []QHDirection `gorm:"many2many:qh_parcel_direction;" json:"direction"`
 
 	// Facade
 	Facade uint64 `gorm:"default:0" json:"facade"`
@@ -110,7 +121,7 @@ type QHParcelInfo struct {
 }
 
 func (QHParcelInfo) TableName() string {
-	return "qh_parcel_info_v2"
+	return "qh_parcel_info"
 }
 
 type ParcelInfoResponse struct {
@@ -120,21 +131,22 @@ type ParcelInfoResponse struct {
 	LandNumber uint32  `json:"landNumber"`
 	Lat        float64 `json:"lat"`
 	Lng        float64 `json:"lng"`
-	Direction  uint32  `json:"direction"`
-	Shape      uint32  `json:"shape"`
-	ShapeId    uint64  `json:"shapeId"`
+	ShapeId    *uint64 `json:"shapeId"`
 	Facade     uint32  `json:"facade"`
 	TotalArea  float64 `json:"totalArea"`
 	LandTypeId uint64  `json:"landTypeId"`
 	Geometry   []byte  `json:"geometry,omitempty"`
+
+	Directions []QHDirection `json:"direction"`
+	Shape      *QHShape      `json:"shape"`
 }
 
 // GetTotalImpactArea - Tính tổng diện tích quy hoạch ảnh hưởng
 func (p *QHParcelInfo) GetTotalImpactArea() float64 {
 	var total float64
-	for _, info := range p.PlanningInfos {
-		total += info.PlanningArea
-	}
+	// for _, info := range p.PlanningInfos {
+	// 	total += info.PlanningArea
+	// }
 	return total
 }
 

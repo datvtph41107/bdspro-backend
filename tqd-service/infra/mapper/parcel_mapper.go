@@ -237,8 +237,8 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 	landNum, _ := strconv.ParseUint(p.LandNumber, 10, 32)
 
 	// Parse direction từ string sang uint32
-	directionVal := m.parseDirectionString(p.Direction)
-	shapeVal := m.parseShapeString(p.ShapeType)
+	// directionVal := m.parseDirectionString(p.Direction)
+	// shapeVal := m.parseShapeString(p.ShapeType)
 
 	// Xử lý LandTypeId
 	var landTypeId uint64
@@ -247,9 +247,9 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 	}
 
 	// Xử lý ShapeId (convert uint32 sang uint64)
-	shapeId := uint64(p.ShapeId)
+	// shapeId := uint64(p.ShapeId)
 
-	return &tqdpb.ParcelInfo{
+	result := &tqdpb.ParcelInfo{
 		Id:         p.ID,
 		AddressStr: p.AddressText,
 		MapNumber:  uint32(mapNum),
@@ -259,19 +259,35 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 		Facade:     uint32(p.Facade),
 		TotalArea:  p.TotalAreaSqm,
 		Geometry:   p.Geometry,
-		Direction: &sharepb.ItemV3Proto{
-			Id:   uint64(directionVal),
-			Name: m.getDirectionName(directionVal),
-		},
-		Shape: &sharepb.ItemV3Proto{
-			Id:   shapeId,
-			Name: m.getShapeName(shapeVal),
-		},
+		// Direction: &sharepb.ItemV3Proto{
+		// 	Id:   uint64(directionVal),
+		// 	Name: m.getDirectionName(directionVal),
+		// },
+		// Shape: &sharepb.ItemV3Proto{
+		// 	Id:   shapeId,
+		// 	Name: m.getShapeName(shapeVal),
+		// },
 		LandType: &sharepb.ItemV3Proto{
 			Id:   landTypeId,
 			Name: m.getLandTypeName(landTypeId),
 		},
 	}
+
+	if p.Shape != nil {
+		result.Shape = &sharepb.ItemV3Proto{
+			Id:   p.Shape.ID,
+			Name: p.Shape.Name,
+		}
+	}
+
+	// if p.Direction != nil {
+	// 	result.Direction = &sharepb.ItemV3Proto{
+	// 		Id:   p.Direction.ID,
+	// 		Name: p.Direction.Name,
+	// 	}
+	// }
+
+	return result
 }
 
 // ToProtoParcelInfo - Chuyển ParcelInfoResponse -> ParcelInfo proto
@@ -280,7 +296,7 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 		return nil
 	}
 
-	return &tqdpb.ParcelInfo{
+	result := &tqdpb.ParcelInfo{
 		Id:         p.ID,
 		AddressStr: p.AddressStr,
 		MapNumber:  p.MapNumber,
@@ -290,19 +306,39 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 		Facade:     p.Facade,
 		TotalArea:  p.TotalArea,
 		Geometry:   p.Geometry,
-		Direction: &sharepb.ItemV3Proto{
-			Id:   uint64(p.Direction),
-			Name: m.getDirectionName(p.Direction),
-		},
-		Shape: &sharepb.ItemV3Proto{
-			Id:   uint64(p.Shape), // SỬA: convert uint32 -> uint64
-			Name: m.getShapeName(p.Shape),
-		},
+		// Direction: &sharepb.ItemV3Proto{
+		// 	Id:   uint64(p.Direction),
+		// 	Name: m.getDirectionName(p.Direction),
+		// },
+		// Shape: &sharepb.ItemV3Proto{
+		// 	Id:   uint64(p.Shape), // SỬA: convert uint32 -> uint64
+		// 	Name: m.getShapeName(p.Shape),
+		// },
 		LandType: &sharepb.ItemV3Proto{
 			Id:   p.LandTypeId,
 			Name: m.getLandTypeName(p.LandTypeId),
 		},
 	}
+
+	if p.Shape != nil {
+		result.Shape = &sharepb.ItemV3Proto{
+			Id:   p.Shape.ID,
+			Name: p.Shape.Name,
+		}
+	}
+
+	if len(p.Directions) > 0 {
+		result.Directions = make([]*sharepb.ItemV3Proto, 0, len(p.Directions))
+
+		for _, d := range p.Directions {
+			result.Directions = append(result.Directions, &sharepb.ItemV3Proto{
+				Id:   d.ID,
+				Name: d.Name,
+			})
+		}
+	}
+
+	return result
 }
 
 // =====================================================

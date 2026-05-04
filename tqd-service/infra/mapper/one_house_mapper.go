@@ -18,7 +18,7 @@ func ToProtoOneHouse(oh *qh_domain.OneHouse) (*pb.OneHouse, error) {
 		planningInfos[i] = &pb.PlanningInfo{
 			PlanningTypeCode: info.PlanningTypeCode,
 			PlanningTypeName: info.PlanningTypeName,
-			PlanningArea:     info.PlanningArea,
+			// PlanningArea:     info.PlanningArea,
 		}
 	}
 

@@ -213,7 +213,7 @@ message ParcelInfo {
   uint32              landNumber = 4;
   double              lat        = 5;
   double              lng        = 6;
-  sharepb.ItemV3Proto direction  = 7;
+  repeated sharepb.ItemV3Proto directions  = 7;
   sharepb.ItemV3Proto shape      = 8;
   uint32              facade     = 9;
   double              totalArea  = 10;

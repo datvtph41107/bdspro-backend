@@ -38,7 +38,7 @@ type OneHouse struct {
 	AcceptedTnc          bool          `gorm:"column:accepted_tnc"`
 }
 
-type PlanningInfos []PlanningInfo
+type PlanningInfos []QHPlanningUse
 
 func (p PlanningInfos) Value() (driver.Value, error) {
 	return json.Marshal(p)

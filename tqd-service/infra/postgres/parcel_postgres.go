@@ -2,12 +2,14 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	_dto "common/domain/dto"
+	_models "common/domain/entity"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -38,16 +40,32 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
             COALESCE(pi.land_number, '0') as land_number,
             p.lat,
             p.lon,
-            COALESCE(pi.direction, '') as direction,
-            COALESCE(pi.shape_type, '') as shape_type,
+            
+			COALESCE(
+				json_agg(
+					DISTINCT jsonb_build_object(
+						'id', d.id,
+						'name', d.name
+					)
+				) FILTER (WHERE d.id IS NOT NULL),
+				'[]'
+			) as directions,
+
+            COALESCE(sh.name, '') as shape_name,
             pi.shape_id,
             COALESCE(pi.facade, 0) as facade,
             COALESCE(pi.total_area_sqm, 0) as total_area_sqm,
             pi.land_type_id,
             ST_AsGeoJSON(p.geometry)::bytea as geometry
         FROM parcels p
-        LEFT JOIN qh_parcel_info_v2 pi ON p.id = pi.parcel_id
+        LEFT JOIN qh_parcel_info pi ON p.id = pi.parcel_id
+        LEFT JOIN qh_shape sh ON sh.id = pi.shape_id
+
+		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = pi.id
+		LEFT JOIN qh_direction d ON d.id = pd.qh_direction_id
+
         WHERE p.id = $1 AND p.deleted_at IS NULL
+		GROUP BY p.id, pi.id, sh.id
     `
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
@@ -60,6 +78,22 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 
 	if result.ID == 0 {
 		return nil, nil
+	}
+
+	if result.ShapeId != nil {
+		result.Shape = &qh_domain.QHShape{
+			BaseEntity: _models.BaseEntity{
+				ID: *result.ShapeId,
+			},
+			Name: result.ShapeName,
+		}
+	}
+
+	// parse directions
+	if len(result.DirectionsRaw) > 0 {
+		if err := json.Unmarshal(result.DirectionsRaw, &result.Directions); err != nil {
+			return nil, err
+		}
 	}
 
 	return &result, nil
@@ -242,7 +276,7 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			COALESCE(pi.province_code, '') AS province_code,
 			COALESCE(pi.ward_code, '') AS ward_code
 		FROM parcels p
-		LEFT JOIN qh_parcel_info_v2 pi ON p.id = pi.parcel_id
+		LEFT JOIN qh_parcel_info pi ON p.id = pi.parcel_id
 		LEFT JOIN land_use_dict lud
 			ON pi.actual_land_use_code = lud.code
 		   AND lud.is_active = true
@@ -356,10 +390,10 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 			ri.overlap_area_sqm,
 			ri.overlap_pct,
 
-			COALESCE(ST_Y(ST_PointOnSurface(ri.overlap_geom)), 0) AS center_lat,
-			COALESCE(ST_X(ST_PointOnSurface(ri.overlap_geom)), 0) AS center_lng,
+			COALESCE(ST_Y(ST_PointOnSurface(ri.region_geometry)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(ri.region_geometry)), 0) AS center_lng,
 
-			ST_AsGeoJSON(ST_Simplify(ri.overlap_geom, 0.5)) AS geometry
+			ST_AsGeoJSON(ri.region_geometry) AS geometry
 		FROM region_intersections ri
 		LEFT JOIN land_use_dict lud
 			ON lud.code = ri.region_land_use_code

@@ -2,6 +2,7 @@ package handler_grpc
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
@@ -348,4 +350,34 @@ func (h *RegionGrpcHandler) toProtoRegionClient(region *qh_domain.QHRegion) *tqd
 	resp.Version = 0
 
 	return resp
+}
+
+func (h *RegionGrpcHandler) CreateBatchRegion(ctx context.Context, req *tqdpb.RegionBatchRequest) (*tqdpb.ListRegionsResponse, error) {
+	createReq := dto.CreateRegionBatchRequest{
+		Items: []dto.CreateRegionBatchItem{},
+	}
+	for i := 0; i < len(req.Geometry); i++ {
+		it := req.Geometry[i]
+		createReq.Items = append(createReq.Items, dto.CreateRegionBatchItem{
+			Geometry: it,
+			LayerID:  req.LayerId,
+		})
+	}
+
+	region, err := h.regionUsecase.CreateBatch(ctx, &createReq)
+	if err != nil {
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+
+	items := make([]*tqdpb.RegionResponse, len(region.Items))
+	// for i := 0; i < len(req.Geometry); i++ {
+	// it := region.Items[i]
+	// items[i] = &tqdpb.RegionResponse{
+	// 	Geometry: it.Region.Geometry,
+	// 	Id:       uint32(it.Region.ID),
+	// }
+	// }
+	return &tqdpb.ListRegionsResponse{
+		Data: items,
+	}, nil
 }

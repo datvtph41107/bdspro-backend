@@ -57,7 +57,7 @@ func (p *Pagable) GetSort() string {
 
 func (p *Pagable) Normalize() {
 	if p.Page <= 0 {
-		p.Page = 1
+		p.Page = 0
 	}
 	if p.Size <= 0 {
 		p.Size = 20

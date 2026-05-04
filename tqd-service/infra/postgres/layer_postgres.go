@@ -169,7 +169,7 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 	err := query.
 		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
 		Offset(filter.GetOffset()).
-		Limit(int(filter.GetLimit())).
+		Limit(filter.GetLimit()).
 		Find(&layers).Error
 
 	return layers, total, err

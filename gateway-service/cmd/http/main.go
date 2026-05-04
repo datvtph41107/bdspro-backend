@@ -142,6 +142,7 @@ var publicRoutes = []string{
 	"/v2/tqd/parcels/by-location",
 	"/v2/tqd/parcels/by-polygon",
 	"/v2/tqd/properties",
+	"/v2/tqd/client/layers",
 }
 
 var tempRoutes = []string{
@@ -191,6 +192,7 @@ var HttpCmd = &cobra.Command{
 				"http://14.225.205.222:8000",
 				"http://14.225.205.222:3107",
 				"http://14.225.205.222:3108",
+				"http://14.225.210.29:3110",
 				"http://103.145.63.185:3107",
 				"http://localhost:5173",
 				"https://admin.bdspro.com",
