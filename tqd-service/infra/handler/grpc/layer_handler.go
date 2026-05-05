@@ -119,9 +119,9 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 
 func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLayerRequest) (*tqdpb.LayerResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
-	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
-	}
+	// if userID == 0 {
+	// 	return nil, _errors.ReturnError(401, "unauthorized")
+	// }
 
 	layer := &qh_domain.QHLayer{}
 

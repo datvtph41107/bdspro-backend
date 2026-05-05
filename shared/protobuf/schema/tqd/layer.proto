@@ -60,7 +60,10 @@ service LayerService {
 
   // BuildPMTiles - Build PMTiles file from layer's PostGIS data (server streaming)
   rpc BuildPMTiles(BuildPMTilesRequest) returns (stream BuildPMTilesProgress) {
-    option (google.api.http) = {post: "/v2/tqd/client/layers/{layer_id}/build-tile"};
+    option (google.api.http) = {
+      post: "/v2/tqd/client/layers/{layer_id}/build-tile",
+      body: "*"
+    };
   }
 }
 

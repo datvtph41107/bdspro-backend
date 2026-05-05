@@ -3,11 +3,10 @@ package client
 import (
 	_utils "common/utils"
 	"context"
+	clients "pb/clients"
 	"tqd/env"
 	"tqd/internal/dto"
 	"tqd/internal/interface/provider"
-
-	clients "pb/clients"
 )
 
 // UserClient implements UserProvider interface

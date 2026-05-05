@@ -2,7 +2,6 @@ package handler_grpc
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"time"
 
@@ -10,6 +9,8 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
+	"tqd/internal/dto"
+	"tqd/internal/enums"
 	"tqd/internal/usecase"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -38,24 +39,26 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 		userID, req.ReportType, req.Profile, req.Format)
 
 	// Parse targetData if exists
-	var targetData interface{}
-	if req.TargetData != nil && *req.TargetData != "" {
-		if err := json.Unmarshal([]byte(*req.TargetData), &targetData); err != nil {
-			log.Printf("[CreateReportAsync] Invalid targetData: %v", err)
-			return nil, _errors.ReturnError(400, "invalid targetData json")
-		}
+	// if req.TargetData != nil && *req.TargetData != "" {
+	// 	var targetData interface{}
+	// 	if err := json.Unmarshal([]byte(*req.TargetData), &targetData); err != nil {
+	// 		log.Printf("[CreateReportAsync] Invalid targetData: %v", err)
+	// 		return nil, _errors.ReturnError(400, "invalid targetData json")
+	// 	}
+	// }
+
+	report := dto.ReportDTO{
+		ProblemReport: enums.ProblemReport(req.ProblemReport),
+		Description:   req.Description,
+		TargetId:      req.TargetId,
+		ReportType:    enums.ReportType(req.ReportType),
 	}
 
 	// Create report
 	reportID, err := h.reportUsecase.CreateAsync(
 		ctx,
 		userID,
-		req.ReportType,
-		req.TargetId,
-		targetData,
-		req.Profile,
-		req.Format,
-		req.GetIncludeMapImage(),
+		report,
 	)
 	if err != nil {
 		log.Printf("[CreateReportAsync] Error: %v", err)
@@ -191,7 +194,7 @@ func (h *ReportGrpcHandler) ListReports(
 	for _, r := range reports {
 		item := &tqdpb.ReportSummary{
 			Id:         r.ID,
-			ReportType: uint32(r.ReportType),
+			ReportType: uint32(r.ProblemReport),
 			Profile:    r.Profile,
 			Status:     uint32(r.Status),
 			CreatedAt:  r.CreatedAt.Format(time.RFC3339),
@@ -273,7 +276,7 @@ func (h *ReportGrpcHandler) AdminListReports(
 	for _, r := range reports {
 		item := &tqdpb.ReportSummary{
 			Id:         r.ID,
-			ReportType: uint32(r.ReportType),
+			ReportType: uint32(r.ProblemReport),
 			Profile:    r.Profile,
 			Status:     uint32(r.Status),
 			CreatedAt:  r.CreatedAt.Format(time.RFC3339),

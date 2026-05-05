@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package tqdpb;
+
+option go_package = "pb/types/tqd;tqdpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+import "shared/common.proto";
+
+service TqdPublicService {
+  // Config app quy hoạch
+  rpc GetQhConfigApp(google.protobuf.Empty) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      get: "/v2/qh/config-app"
+    };
+  }
+
+  rpc GetEnums(sharepb.SyncRequest) returns (sharepb.GetEnumsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/enums"
+    };
+  }
+}

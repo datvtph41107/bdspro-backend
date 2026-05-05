@@ -31,6 +31,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewAmenityUsecase,
 	tqd_initial.NewApp,
 	tqd_internal_usecase.NewBaseUsecase,
+	tqd_infra_handler_grpc.NewBdsproPublicService,
 	tqd_infra_providers.NewCacheProvider,
 	tqd_infra_handler_grpc.NewContactLabelGrpcHandler,
 	tqd_infra_handler_http.NewContactLabelHandler,

@@ -48,11 +48,13 @@ service ReportService {
 
 message CreateReportAsyncRequest {
   uint32 reportType = 1;
-  optional string targetId = 2;
+  optional uint64 targetId = 2;
   optional string targetData = 3;
   uint32 profile = 4;
   uint32 format = 5;
   optional bool includeMapImage = 6;
+  string description = 7;
+  uint32 problemReport = 8;
 }
 
 message CreateReportAsyncResponse {
@@ -114,6 +116,9 @@ message ReportSummary {
   string createdAt = 5;
   optional string completedAt = 6;
   optional string fileUrl = 7;
+  string description = 8;
+  uint32 problemReport = 9;
+  optional uint64 targetId = 10;
 }
 
 message DeleteReportRequest {

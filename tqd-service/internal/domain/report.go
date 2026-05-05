@@ -10,8 +10,7 @@ import (
 type Report struct {
 	ID                   uint64             `gorm:"primaryKey"`
 	UserID               uint64             `gorm:"column:user_id;not null;index:idx_report_user_status,priority:1"`
-	ReportType           enums.ReportType   `gorm:"column:report_type;not null"`
-	TargetID             *string            `gorm:"column:target_id;type:varchar(255)"`
+	TargetID             *uint64            `gorm:"column:target_id;"`
 	TargetSnapshot       datatypes.JSON     `gorm:"column:target_snapshot;type:jsonb"`
 	Profile              uint32             `gorm:"column:profile;not null"`
 	Format               uint32             `gorm:"column:format;default:10"`
@@ -25,6 +24,10 @@ type Report struct {
 	CompletedAt          *time.Time         `gorm:"column:completed_at"`
 	ExpiresAt            *time.Time         `gorm:"column:expires_at;index:idx_report_expires"`
 	DeletedAt            *time.Time         `gorm:"column:deleted_at"`
+
+	ProblemReport enums.ProblemReport `gorm:"column:problem_report;not null;default:10"`
+	ReportType    enums.ReportType    `gorm:"column:report_type;not null;default:10"`
+	Description   string              `gorm:"column:description"`
 }
 
 func (Report) TableName() string { return "reports" }

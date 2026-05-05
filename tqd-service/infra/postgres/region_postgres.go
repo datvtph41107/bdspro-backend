@@ -454,7 +454,7 @@ func (r *regionRepoImpl) BuildPMTiles(layerID int64, outputPath string) error {
 	defer rows.Close()
 
 	// temp geojson file
-	tmpFile := fmt.Sprintf("/tmp/layer_%d.geojson", layerID)
+	tmpFile := fmt.Sprintf("/tmp/layer%d.geojson", layerID)
 	f, err := os.Create(tmpFile)
 	if err != nil {
 		return err

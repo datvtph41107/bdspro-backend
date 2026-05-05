@@ -385,3 +385,19 @@ message ConversationMember {
   bool muteNotif = 4;
   int32 role = 5; // 0: Member, 1: Admin, 2: Banned
 }
+
+message EnumItem {
+  uint32 value = 1;
+  string name = 2;
+}
+
+message GetEnumResponse {
+  repeated EnumItem data = 1;
+  string key = 2;
+}
+
+message GetEnumsResponse {
+  repeated GetEnumResponse enums = 1;
+  int64 timestamp = 2;
+  bool lastest = 3;
+}

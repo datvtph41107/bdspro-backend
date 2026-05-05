@@ -6,8 +6,11 @@ WORKDIR /
 
 ENV ENV_RUNTIME=develop
 
-# runtime libs cần cho tippecanoe chạy
-RUN apk add \
+# 🔥 đổi mirror sang gần VN (Tsinghua / Aliyun đều ok)
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
+# cài lib (no-cache để nhanh + nhẹ)
+RUN apk add --no-cache \
     sqlite-libs \
     zlib \
     libstdc++
@@ -18,7 +21,5 @@ COPY --from=tippecanoe-builder /usr/local/bin/tippecanoe /usr/local/bin/tippecan
 # app
 COPY config config
 COPY main .
-
-ENV ENV_RUNTIME=develop
 
 CMD ["./main"]

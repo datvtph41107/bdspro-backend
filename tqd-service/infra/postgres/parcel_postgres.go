@@ -257,7 +257,7 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			p.id AS parcel_id,
 			COALESCE(p.lat, 0) AS lat,
 			COALESCE(p.lon, 0) AS lon,
-			COALESCE(ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.total_area_sqm, 0) AS area_sqm,
 			COALESCE(pi.address_text, '') AS address_text,
 			ST_AsGeoJSON(p.geometry) AS geometry,
 
@@ -265,22 +265,21 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			COALESCE(pi.land_number, '') AS land_number,
 			COALESCE(pi.property_code, '') AS property_code,
 			COALESCE(pi.property_uuid::text, '') AS property_uuid,
-			COALESCE(pi.shape_type, '') AS shape_type,
-			COALESCE(pi.direction, '') AS direction,
+			'' AS shape_type,
+			'' AS direction,
 
-			COALESCE(pi.actual_land_use_code, '') AS land_use_code,
-			COALESCE(lud.name, 'Chưa phân loại') AS land_use_name,
-			COALESCE(lud.color, '#CCCCCC') AS land_use_color,
+			'' AS land_use_code,
+			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
+			'#CCCCCC' AS land_use_color,
 
 			COALESCE(prov.full_name, '') AS province,
 			COALESCE(pi.province_code, '') AS province_code,
 			COALESCE(pi.ward_code, '') AS ward_code
 		FROM parcels p
 		LEFT JOIN qh_parcel_info pi ON p.id = pi.parcel_id
-		LEFT JOIN land_use_dict lud
-			ON pi.actual_land_use_code = lud.code
-		   AND lud.is_active = true
-		LEFT JOIN provinces prov ON pi.province_code = prov.code
+		LEFT JOIN qh_planning_land_use pu
+			ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1
@@ -319,7 +318,7 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 				r.layer_id,
 				r.name AS region_name,
 				r.display_name AS region_display_name,
-				r.land_use_code AS region_land_use_code,
+				'' AS region_land_use_code,
 				r.geometry AS region_geometry,
 				r.color_red,
 				r.color_green,
@@ -380,8 +379,8 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 			ri.region_land_use_code,
 
 			COALESCE(lud.name, 'Chưa phân loại') AS region_land_use_name,
-			COALESCE(lud.group_name, 'Đất khác') AS region_land_use_group,
-			COALESCE(lud.color, '#CCCCCC') AS region_land_use_color,
+			'Đất khác' AS region_land_use_group,
+			'#CCCCCC' AS region_land_use_color,
 
 			ri.color_red,
 			ri.color_green,
@@ -395,9 +394,8 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 
 			ST_AsGeoJSON(ri.region_geometry) AS geometry
 		FROM region_intersections ri
-		LEFT JOIN land_use_dict lud
+		LEFT JOIN qh_planning_land_use lud
 			ON lud.code = ri.region_land_use_code
-		   AND lud.is_active = true
 		ORDER BY ri.layer_id, ri.region_land_use_code, ri.overlap_area_sqm DESC, ri.region_id
 	`
 
@@ -421,8 +419,8 @@ func (p *ParcelPostgres) GetSpatialImpacts(ctx context.Context, parcelID uint64)
             COALESCE(lb.font_size, 12) as label_font_size, COALESCE(lb.font_weight, 'normal') as label_font_weight,
             COALESCE(lb.min_zoom, 10) as label_min_zoom, COALESCE(lb.max_zoom, 22) as label_max_zoom,
             r.id as region_id, r.name as region_name, r.display_name as region_display_name,
-            r.land_use_code, COALESCE(lud.name, 'Chưa phân loại') as land_use_name,
-            COALESCE(lud.group_name, 'Khác') as land_use_group,
+            r.code, COALESCE(lud.name, 'Chưa phân loại') as land_use_name,
+            'Khác' as land_use_group,
             r.color_red, r.color_green, r.color_blue,
             pri.intersection_area_sqm as overlap_area, pri.overlap_percentage as overlap_pct,
             ST_AsGeoJSON(r.geometry)::bytea as geometry
@@ -430,7 +428,7 @@ func (p *ParcelPostgres) GetSpatialImpacts(ctx context.Context, parcelID uint64)
         JOIN qh_regions r ON pri.region_id = r.id
         JOIN qh_layers l ON pri.layer_id = l.id
         LEFT JOIN qh_labels lb ON l.id = lb.layer_id AND lb.status = 10 AND lb.deleted_at IS NULL
-        LEFT JOIN land_use_dict lud ON r.land_use_code = lud.code
+        LEFT JOIN qh_planning_land_use lud ON r.code = lud.code
         WHERE pri.parcel_id = $1 AND pri.intersection_area_sqm > 0
           AND r.status = 10 AND l.status = 10
         ORDER BY l.display_order, pri.overlap_percentage DESC

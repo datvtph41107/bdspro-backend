@@ -16,8 +16,8 @@ func ToProtoOneHouse(oh *qh_domain.OneHouse) (*pb.OneHouse, error) {
 	planningInfos := make([]*pb.PlanningInfo, len(oh.PlanningInfos))
 	for i, info := range oh.PlanningInfos {
 		planningInfos[i] = &pb.PlanningInfo{
-			PlanningTypeCode: info.PlanningTypeCode,
-			PlanningTypeName: info.PlanningTypeName,
+			PlanningTypeCode: info.Code,
+			PlanningTypeName: info.Name,
 			// PlanningArea:     info.PlanningArea,
 		}
 	}

@@ -2,17 +2,16 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"tqd/internal/domain"
-	"tqd/internal/enums"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/datatypes"
 )
 
 type ReportUsecase interface {
-	CreateAsync(ctx context.Context, userID uint64, reportType uint32, targetID *string, targetData interface{}, profile, format uint32, includeMapImage bool) (uint64, error)
+	CreateAsync(ctx context.Context, userID uint64, reqDTO dto.ReportDTO) (uint64, error)
 	GetStatus(ctx context.Context, userID uint64, reportID uint64) (*domain.Report, error)
 	Download(ctx context.Context, userID uint64, reportID uint64) (*domain.Report, error)
 	ListUser(ctx context.Context, userID uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error)
@@ -29,28 +28,30 @@ func NewReportUsecase(repo repo.ReportRepository) ReportUsecase {
 	return &reportUsecase{repo: repo}
 }
 
-func (u *reportUsecase) CreateAsync(ctx context.Context, userID uint64, reportType uint32, targetID *string, targetData interface{}, profile, format uint32, includeMapImage bool) (uint64, error) {
+func (u *reportUsecase) CreateAsync(ctx context.Context, userID uint64, reqDTO dto.ReportDTO) (uint64, error) {
 	var targetSnapshot datatypes.JSON
-	if targetData != nil {
-		b, err := json.Marshal(targetData)
-		if err != nil {
-			return 0, err
-		}
-		targetSnapshot = datatypes.JSON(b)
-	}
+	// if targetData != nil {
+	// 	b, err := json.Marshal(targetData)
+	// 	if err != nil {
+	// 		return 0, err
+	// 	}
+	// 	targetSnapshot = datatypes.JSON(b)
+	// }
 	report := &domain.Report{
 		UserID:         userID,
-		ReportType:     enums.ReportType(reportType),
-		TargetID:       targetID,
+		ProblemReport:  reqDTO.ProblemReport,
+		ReportType:     reqDTO.ReportType,
+		Description:    reqDTO.Description,
+		TargetID:       reqDTO.TargetId,
 		TargetSnapshot: targetSnapshot,
-		Profile:        profile,
-		Format:         format,
-		Status:         10,
+		// Profile:        profile,
+		// Format:         format,
+		Status: 10,
 	}
 	if err := u.repo.Create(ctx, report); err != nil {
 		return 0, err
 	}
-	go u.processReport(report.ID, userID, reportType, targetID, targetData, profile, format, includeMapImage)
+	// go u.processReport(report.ID, userID, reportType, targetID, targetData, profile, format, includeMapImage)
 	return report.ID, nil
 }
 

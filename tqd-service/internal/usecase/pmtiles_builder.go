@@ -36,10 +36,10 @@ func BuildPMTilesFile(
 		return fmt.Errorf("mkdir %s: %w", outputDir, err)
 	}
 
-	outputPath := filepath.Join(outputDir, fmt.Sprintf("layer_%d.pmtiles", layerID))
+	outputPath := filepath.Join(outputDir, fmt.Sprintf("layer%d.pmtiles", layerID))
 
 	// Temp NDJSON file
-	tmpFile, err := os.CreateTemp(outputDir, fmt.Sprintf("layer_%d_*.ndjson", layerID))
+	tmpFile, err := os.CreateTemp(outputDir, fmt.Sprintf("layer%d_*.ndjson", layerID))
 	if err != nil {
 		return fmt.Errorf("create temp ndjson: %w", err)
 	}
@@ -113,7 +113,7 @@ func BuildPMTilesFile(
 	args := []string{
 		"-o", outputPath,
 		"--force",
-		"--layer", fmt.Sprintf("layer_%d", layerID),
+		"--layer", fmt.Sprintf("layer%d", layerID),
 		"--read-parallel",      // tốt khi input là file NDJSON
 		"--no-feature-limit",   // quan trọng với polygon phức tạp
 		"--no-tile-size-limit", // tránh drop quá mạnh ở low zoom
@@ -127,10 +127,11 @@ func BuildPMTilesFile(
 	} else {
 		args = append(args, "--minimum-zoom", "6")
 	}
+	log.Printf("maxZoom=%d", maxZoom)
 	if maxZoom > 0 {
 		args = append(args, "--maximum-zoom", fmt.Sprintf("%d", maxZoom))
 	} else {
-		args = append(args, "-zg") // tippecanoe tự guess maxzoom tốt hơn
+		args = append(args, "--maximum-zoom", "16") // tippecanoe tự guess maxzoom tốt hơn
 	}
 
 	args = append(args, tmpPath)
