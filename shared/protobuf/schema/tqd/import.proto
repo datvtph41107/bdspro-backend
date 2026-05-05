@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// =====================================================
+// IMPORT SERVICE
+// =====================================================
+
+service ImportService {
+  
+  // PreviewImport - Phân tích file GeoJSON trước khi import
+  rpc PreviewImport(PreviewImportRequest) returns (PreviewImportResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/import/preview"
+      body: "*"
+    };
+  }
+  
+  // ImportGeoJson - Import file GeoJSON vào hệ thống
+  rpc ImportGeoJson(ImportGeoJsonRequest) returns (ImportGeoJsonResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/import/geojson"
+      body: "*"
+    };
+  }
+  
+  // GetImportBatchStatus - Kiểm tra trạng thái batch import
+  rpc GetImportBatchStatus(GetImportBatchStatusRequest) returns (ImportBatchStatusResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/import/batches/{batchId}"
+    };
+  }
+  
+  // RollbackImport - Rollback batch import
+  rpc RollbackImport(RollbackImportRequest) returns (RollbackImportResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/import/batches/{batchId}"
+    };
+  }
+}
+
+// =====================================================
+// PREVIEW IMPORT
+// =====================================================
+
+message PreviewImportRequest {
+  string geoJson = 1;
+  uint64 layerId = 2;
+}
+
+message PreviewImportResponse {
+  int32 totalFeatures = 1;
+  repeated string availableFields = 2;
+  
+  message FieldStat {
+    string fieldName = 1;
+    int32 coverage = 2;
+    repeated string distinctValues = 3;
+  }
+  repeated FieldStat fieldStats = 3;
+  
+  message FeatureSample {
+    int32 index = 1;
+    string geometryType = 2;
+    google.protobuf.Struct properties = 3;
+  }
+  repeated FeatureSample samples = 4;
+}
+
+// =====================================================
+// IMPORT GEOJSON
+// =====================================================
+
+message ImportGeoJsonRequest {
+  string geoJson = 1;
+  uint64 layerId = 2;
+  
+  // Chiến lược xác định label
+  string labelField = 3;
+  map<string, uint64> labelMappings = 4;
+  optional uint64 defaultLabelId = 5;
+  
+  // Tùy chọn
+  optional string sourceFileName = 6;
+  bool validateGeometry = 7;
+  bool autoFixGeometry = 8;
+  bool skipInvalid = 9;
+}
+
+message ImportGeoJsonResponse {
+  string batchId = 1;
+  int32 totalFeatures = 2;
+  int32 successCount = 3;
+  int32 failedCount = 4;
+  
+  message FailureDetail {
+    int32 featureIndex = 1;
+    string reason = 2;
+  }
+  repeated FailureDetail failures = 5;
+  
+  map<uint64, int32> labelStatistics = 6;
+  double totalAreaHa = 7;
+  int32 totalRegionsCreated = 8;
+}
+
+// =====================================================
+// BATCH MANAGEMENT
+// =====================================================
+
+message GetImportBatchStatusRequest {
+  string batchId = 1;
+}
+
+message ImportBatchStatusResponse {
+  string batchId = 1;
+  string status = 2;                   // "completed", "failed", "processing"
+  int32 totalFeatures = 3;
+  int32 successCount = 4;
+  int32 failedCount = 5;
+  string createdAt = 6;
+  string completedAt = 7;
+  repeated string errorMessages = 8;
+}
+
+message RollbackImportRequest {
+  string batchId = 1;
+}
+
+message RollbackImportResponse {
+  bool success = 1;
+  string message = 2;
+  int32 deletedCount = 3;
+}

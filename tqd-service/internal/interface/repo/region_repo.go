@@ -1,13 +1,13 @@
 package repo
 
 import (
-	_dto "common/domain/dto"
 	"context"
 	"database/sql"
+
+	_dto "common/domain/dto"
 	qh_domain "tqd/internal/domain/qh"
 )
 
-// RegionRepository - Interface cho region repository
 type RegionRepository interface {
 	// Basic CRUD
 	Create(ctx context.Context, region *qh_domain.QHRegion) error
@@ -22,35 +22,33 @@ type RegionRepository interface {
 	ListClient(ctx context.Context, filter *ClientRegionFilter) ([]qh_domain.QHRegion, int64, error)
 
 	// Spatial queries
-	FindByPoint(ctx context.Context, lat, lng float64) (*qh_domain.QHRegion, error)
-	FindByBBox(ctx context.Context, minLng, minLat, maxLng, maxLat float64, filter *RegionFilter) ([]qh_domain.QHRegion, int64, error)
+	FindByPoint(ctx context.Context, lat, lng float64, layerID *uint64) (*qh_domain.QHRegion, error)
+	FindByBBox(ctx context.Context, minLng, minLat, maxLng, maxLat float64, layerID *uint64, labelID *uint64, limit, offset int) ([]qh_domain.QHRegion, int64, error)
 
 	// Statistics
 	GetStatsByLayer(ctx context.Context, layerID uint64) (*RegionStats, error)
 	GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error)
 	GetIntersections(ctx context.Context, id uint64, bufferMeters float64) ([]qh_domain.QHRegion, error)
 	GetBufferGeometry(ctx context.Context, sourceID uint64, distanceMeters float64) (string, error)
-	// GetLayerBBox returns the bounding box of all regions for a layer
 	GetLayerBBox(ctx context.Context, layerID uint64) (minLon, minLat, maxLon, maxLat float64, err error)
-	// GetMVTTile returns raw MVT bytes for a tile at z/x/y for a layer (PostGIS ST_AsMVT)
 	GetMVTTile(ctx context.Context, layerID uint64, z uint8, x, y uint32) ([]byte, error)
 	StreamGeoJSON(ctx context.Context, layerID uint64) (*sql.Rows, error)
 }
 
-// RegionFilter - Filter cho admin list
 type RegionFilter struct {
-	LayerID     *uint64
-	LandUseCode *string
-	Status      *uint32
-	Search      *string
-	MinAreaHa   *float64
-	MaxAreaHa   *float64
-	OrderBy     string
-	OrderDir    string
-	Pagable     *_dto.Pagable
+	LayerID          *uint64
+	LabelID          *uint64
+	LandUseCode      *string
+	Status           *uint32
+	ProcessingStatus *uint32 // THÊM: lọc theo trạng thái xử lý
+	Search           *string
+	MinAreaHa        *float64
+	MaxAreaHa        *float64
+	OrderBy          string
+	OrderDir         string
+	Pagable          *_dto.Pagable
 }
 
-// ClientRegionFilter - Filter cho client list
 type ClientRegionFilter struct {
 	LayerID     *uint64
 	LandUseCode *string
@@ -58,7 +56,6 @@ type ClientRegionFilter struct {
 	Pagable     *_dto.Pagable
 }
 
-// BBox - Bounding box
 type BBox struct {
 	MinLng float64
 	MinLat float64
@@ -66,7 +63,6 @@ type BBox struct {
 	MaxLat float64
 }
 
-// RegionStats - Thống kê regions
 type RegionStats struct {
 	LayerID      uint64        `json:"layerId"`
 	TotalRegions int64         `json:"totalRegions"`
@@ -77,7 +73,6 @@ type RegionStats struct {
 	LandUseStats []LandUseStat `json:"landUseStats"`
 }
 
-// LandUseStat - Thống kê theo loại đất
 type LandUseStat struct {
 	LandUseCode string  `json:"landUseCode"`
 	LandUseName string  `json:"landUseName"`

@@ -55,6 +55,10 @@ func (QHLayer) TableName() string {
 	return "qh_layers"
 }
 
+func (l *QHLayer) GetActiveLabelsQuery() string {
+	return "layer_id = ? AND status = 10 AND deleted_at IS NULL"
+}
+
 type StyleConfig struct {
 	FillColor     string  `json:"fillColor,omitempty"`
 	FillOpacity   float64 `json:"fillOpacity,omitempty"`

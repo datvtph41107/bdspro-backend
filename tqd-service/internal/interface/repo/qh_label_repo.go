@@ -10,5 +10,6 @@ type QHLabelRepository interface {
 	Update(ctx context.Context, label *qh_domain.QHLabel) error
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error)
-	ListByLayerID(ctx context.Context, layerID uint64) ([]qh_domain.QHLabel, error)
+	GetByLayerID(ctx context.Context, layerID uint64) ([]qh_domain.QHLabel, error)
+	GetByNameAndLayer(ctx context.Context, name string, layerID uint64) (*qh_domain.QHLabel, error)
 }

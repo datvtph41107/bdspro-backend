@@ -48,6 +48,8 @@ func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = tqdpb.RegisterReportServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterSubscriptionServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterQHLabelServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterRegionLabelServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterImportServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterRegionServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterTqdPublicServiceHandler(ctx, mux, conn)
 }
@@ -64,6 +66,8 @@ func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoin
 	_ = tqdpb.RegisterLocationServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterOneHouseServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterLayerServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = tqdpb.RegisterRegionLabelServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = tqdpb.RegisterImportServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterReportServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterSubscriptionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterTqdPublicServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

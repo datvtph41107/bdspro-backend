@@ -35,14 +35,12 @@ type ParcelUsecase interface {
 }
 
 type parcelUsecase struct {
-	parcelRepo      repo.IParcelRepo
-	landUseDictRepo repo.LandUseDictRepository
+	parcelRepo repo.IParcelRepo
 }
 
-func NewParcelUsecase(parcelRepo repo.IParcelRepo, landUseDictRepo repo.LandUseDictRepository) ParcelUsecase {
+func NewParcelUsecase(parcelRepo repo.IParcelRepo) ParcelUsecase {
 	return &parcelUsecase{
-		parcelRepo:      parcelRepo,
-		landUseDictRepo: landUseDictRepo,
+		parcelRepo: parcelRepo,
 	}
 }
 
@@ -75,12 +73,12 @@ func (u *parcelUsecase) GetParcelInfoByID(ctx context.Context, parcelID uint64) 
 		ShapeId:    info.ShapeId,
 		Facade:     uint32(info.Facade),
 		TotalArea:  info.TotalAreaSqm,
-		LandTypeId: func() uint64 {
-			if info.LandTypeId != nil {
-				return *info.LandTypeId
-			}
-			return 0
-		}(),
+		// LandTypeId: func() uint64 {
+		// 	if info.LandTypeId != nil {
+		// 		return *info.LandTypeId
+		// 	}
+		// 	return 0
+		// }(),
 		Geometry: info.Geometry,
 	}, nil
 }
@@ -152,27 +150,6 @@ func (u *parcelUsecase) parseShape(shape string) uint32 {
 		return val
 	}
 	return 0
-}
-
-func (u *parcelUsecase) getLandUseName(lu *qh_domain.LandUseDict) string {
-	if lu == nil {
-		return "Chưa phân loại"
-	}
-	return lu.Name
-}
-
-func (u *parcelUsecase) getLandUseGroup(lu *qh_domain.LandUseDict) string {
-	if lu == nil || lu.GroupName == "" {
-		return "Đất khác"
-	}
-	return lu.GroupName
-}
-
-func (u *parcelUsecase) getLandUseColor(lu *qh_domain.LandUseDict) string {
-	if lu == nil || lu.Color == "" {
-		return "#CCCCCC"
-	}
-	return lu.Color
 }
 
 func (u *parcelUsecase) getLandUseDisplayName(code string) string {

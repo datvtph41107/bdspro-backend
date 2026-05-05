@@ -14,8 +14,8 @@ import (
 // QHPlanningUse - Thông tin quy hoạch ảnh hưởng từ one_house
 type QHPlanningUse struct {
 	_models.BaseEntity
-	Code string `json:"code"`
-	Name string `json:"name"`
+	PlanningTypeCode string `json:"planning_type_code"`
+	PlanningTypeName string `json:"planning_type_name"`
 	// PlanningArea     float64 `json:"planning_area"`
 }
 
@@ -88,7 +88,7 @@ type QHParcelInfo struct {
 	// PlanningLandTypeCode string           `gorm:"type:varchar(20)" json:"planningLandTypeCode"`
 	// // Current land use
 	// ActualLandUseCode string `gorm:"type:varchar(20);index" json:"actualLandUseCode"`
-	PlanningUseID *uint64        `gorm:"column:planning_use_id" json:"planning_use_id"`
+	PlanningUseID *uint64        `gorm:"" json:"planning_use_id"`
 	PlanningUse   *QHPlanningUse `gorm:"foreignKey:PlanningUseID;references:ID" json:"planning_use"`
 	// Shape info
 	ShapeId   *uint64  `gorm:"" json:"shapeId"`
@@ -104,8 +104,8 @@ type QHParcelInfo struct {
 	Facade uint64 `gorm:"default:0" json:"facade"`
 
 	// Land type
-	LandTypeId *uint64     `gorm:"default:null" json:"landTypeId,omitempty"`
-	LandType   *QHLandType `gorm:"-" json:"landType,omitempty"`
+	LandTypeId *uint64 `gorm:"default:null" json:"landTypeId,omitempty"`
+	// LandType   *QHLandType `gorm:"-" json:"landType,omitempty"`
 
 	// Geometry (GeoJSON bytes)
 	Geometry []byte `gorm:"-" json:"geometry,omitempty"`

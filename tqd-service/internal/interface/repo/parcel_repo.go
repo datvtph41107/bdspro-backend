@@ -23,9 +23,6 @@ type IParcelRepo interface {
 	// Detail API
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
 	GetParcelLayerRows(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRow, error)
-
-	GetSpatialImpacts(ctx context.Context, parcelID uint64) ([]*SpatialImpactRow, error)
-	GetLandUseByCode(ctx context.Context, code string) (*qh_domain.LandUseDict, error)
 }
 
 type Point struct {

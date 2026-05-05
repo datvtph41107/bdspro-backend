@@ -407,52 +407,6 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 	return rows, nil
 }
 
-func (p *ParcelPostgres) GetSpatialImpacts(ctx context.Context, parcelID uint64) ([]*repo.SpatialImpactRow, error) {
-	var results []*repo.SpatialImpactRow
-
-	query := `
-        SELECT 
-            l.id as layer_id, l.name as layer_name, l.display_name as layer_display_name,
-            l.type as layer_type, TO_CHAR(l.effective_date, 'YYYY-MM-DD') as effective_date, l.legal_doc,
-            COALESCE(lb.id, 0) as label_id, COALESCE(lb.name, '') as label_name,
-            COALESCE(lb.display_name, '') as label_display_name, COALESCE(lb.color, '#CCCCCC') as label_color,
-            COALESCE(lb.font_size, 12) as label_font_size, COALESCE(lb.font_weight, 'normal') as label_font_weight,
-            COALESCE(lb.min_zoom, 10) as label_min_zoom, COALESCE(lb.max_zoom, 22) as label_max_zoom,
-            r.id as region_id, r.name as region_name, r.display_name as region_display_name,
-            r.code, COALESCE(lud.name, 'Chưa phân loại') as land_use_name,
-            'Khác' as land_use_group,
-            r.color_red, r.color_green, r.color_blue,
-            pri.intersection_area_sqm as overlap_area, pri.overlap_percentage as overlap_pct,
-            ST_AsGeoJSON(r.geometry)::bytea as geometry
-        FROM qh_parcel_region_impact pri
-        JOIN qh_regions r ON pri.region_id = r.id
-        JOIN qh_layers l ON pri.layer_id = l.id
-        LEFT JOIN qh_labels lb ON l.id = lb.layer_id AND lb.status = 10 AND lb.deleted_at IS NULL
-        LEFT JOIN qh_planning_land_use lud ON r.code = lud.code
-        WHERE pri.parcel_id = $1 AND pri.intersection_area_sqm > 0
-          AND r.status = 10 AND l.status = 10
-        ORDER BY l.display_order, pri.overlap_percentage DESC
-    `
-
-	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&results).Error
-	if err != nil {
-		return nil, fmt.Errorf("get spatial impacts failed: %w", err)
-	}
-	return results, nil
-}
-
-func (p *ParcelPostgres) GetLandUseByCode(ctx context.Context, code string) (*qh_domain.LandUseDict, error) {
-	var landUse qh_domain.LandUseDict
-	err := p.DB.WithContext(ctx).Where("code = ?", code).First(&landUse).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &landUse, nil
-}
-
 // Helper function
 func buildPolygonWKT(points []repo.Point) string {
 	var sb strings.Builder

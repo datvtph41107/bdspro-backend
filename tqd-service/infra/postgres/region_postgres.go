@@ -29,6 +29,10 @@ func NewRegionRepository(db *gorm.DB) repo.RegionRepository {
 	return &regionRepoImpl{db: db}
 }
 
+// =====================================================
+// BASIC CRUD
+// =====================================================
+
 func (r *regionRepoImpl) Create(ctx context.Context, region *qh_domain.QHRegion) error {
 	region.CreatedAt = time.Now()
 	region.UpdatedAt = time.Now()
@@ -56,7 +60,7 @@ func (r *regionRepoImpl) Delete(ctx context.Context, id uint64) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).
 		Model(&qh_domain.QHRegion{}).
-		Where("id = ?", id).
+		Where("id = ? AND deleted_at IS NULL", id).
 		Update("deleted_at", now).Error
 }
 
@@ -86,6 +90,10 @@ func (r *regionRepoImpl) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domai
 	return regions, err
 }
 
+// =====================================================
+// LIST WITH FILTERS
+// =====================================================
+
 func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error) {
 	var regions []qh_domain.QHRegion
 	var total int64
@@ -96,11 +104,15 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	if filter.LayerID != nil {
 		query = query.Where("layer_id = ?", *filter.LayerID)
 	}
-	if filter.LandUseCode != nil {
-		query = query.Where("land_use_code = ?", *filter.LandUseCode)
+	if filter.LabelID != nil {
+		query = query.Joins("JOIN qh_region_labels ON qh_region_labels.region_id = qh_regions.id").
+			Where("qh_region_labels.label_id = ?", *filter.LabelID)
 	}
 	if filter.Status != nil {
 		query = query.Where("status = ?", *filter.Status)
+	}
+	if filter.ProcessingStatus != nil {
+		query = query.Where("processing_status = ?", *filter.ProcessingStatus)
 	}
 	if filter.MinAreaHa != nil {
 		query = query.Where("area_ha >= ?", *filter.MinAreaHa)
@@ -111,8 +123,8 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	if filter.Search != nil && *filter.Search != "" {
 		searchTerm := "%" + strings.ToLower(*filter.Search) + "%"
 		query = query.Where(
-			"LOWER(name) LIKE ? OR LOWER(display_name) LIKE ? OR LOWER(land_use_name) LIKE ?",
-			searchTerm, searchTerm, searchTerm,
+			"LOWER(name) LIKE ? OR LOWER(display_name) LIKE ?",
+			searchTerm, searchTerm,
 		)
 	}
 
@@ -129,12 +141,7 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 
 	orderBy := "id"
 	if filter.OrderBy != "" {
-		allowedFields := map[string]bool{
-			"id": true, "area_ha": true, "created_at": true, "name": true,
-		}
-		if allowedFields[filter.OrderBy] {
-			orderBy = filter.OrderBy
-		}
+		orderBy = filter.OrderBy
 	}
 	orderDir := "ASC"
 	if strings.ToUpper(filter.OrderDir) == "DESC" {
@@ -193,14 +200,22 @@ func (r *regionRepoImpl) ListClient(ctx context.Context, filter *repo.ClientRegi
 	return regions, total, err
 }
 
-func (r *regionRepoImpl) FindByPoint(ctx context.Context, lat, lng float64) (*qh_domain.QHRegion, error) {
+// =====================================================
+// SPATIAL QUERIES
+// =====================================================
+
+func (r *regionRepoImpl) FindByPoint(ctx context.Context, lat, lng float64, layerID *uint64) (*qh_domain.QHRegion, error) {
 	var region qh_domain.QHRegion
-	err := r.db.WithContext(ctx).
+	query := r.db.WithContext(ctx).
 		Where("deleted_at IS NULL").
 		Where("status = ?", 10).
-		Where("ST_Intersects(geometry, ST_SetSRID(ST_Point(?, ?), 4326))", lng, lat).
-		Order("ST_Area(geometry) ASC").
-		First(&region).Error
+		Where("ST_Intersects(geometry, ST_SetSRID(ST_Point(?, ?), 4326))", lng, lat)
+
+	if layerID != nil && *layerID > 0 {
+		query = query.Where("layer_id = ?", *layerID)
+	}
+
+	err := query.Order("ST_Area(geometry) ASC").First(&region).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -210,38 +225,42 @@ func (r *regionRepoImpl) FindByPoint(ctx context.Context, lat, lng float64) (*qh
 	return &region, nil
 }
 
-func (r *regionRepoImpl) FindByBBox(ctx context.Context, minLng, minLat, maxLng, maxLat float64, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error) {
+func (r *regionRepoImpl) FindByBBox(ctx context.Context, minLng, minLat, maxLng, maxLat float64, layerID *uint64, labelID *uint64, limit, offset int) ([]qh_domain.QHRegion, int64, error) {
 	var regions []qh_domain.QHRegion
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).
 		Where("deleted_at IS NULL").
-		Where("ST_Intersects(geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326))", minLng, minLat, maxLng, maxLat)
+		Where("status = ?", 10).
+		Where("geometry && ST_MakeEnvelope(?, ?, ?, ?, 4326)", minLng, minLat, maxLng, maxLat)
 
-	if filter.LayerID != nil {
-		query = query.Where("layer_id = ?", *filter.LayerID)
+	if layerID != nil && *layerID > 0 {
+		query = query.Where("layer_id = ?", *layerID)
 	}
-	if filter.LandUseCode != nil {
-		query = query.Where("land_use_code = ?", *filter.LandUseCode)
+
+	if labelID != nil && *labelID > 0 {
+		query = query.Joins("INNER JOIN qh_region_labels ON qh_region_labels.region_id = qh_regions.id").
+			Where("qh_region_labels.label_id = ?", *labelID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	offset := 0
-	limit := 100
-	if filter.Pagable != nil {
-		offset = filter.Pagable.GetOffset()
-		limit = filter.Pagable.GetLimit()
+	if limit <= 0 {
+		limit = 100
 	}
-	err := query.
-		Offset(offset).
-		Limit(limit).
-		Find(&regions).Error
+	if offset < 0 {
+		offset = 0
+	}
 
+	err := query.Order("id ASC").Offset(offset).Limit(limit).Find(&regions).Error
 	return regions, total, err
 }
+
+// =====================================================
+// STATISTICS (GIỮ LẠI)
+// =====================================================
 
 func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*repo.RegionStats, error) {
 	var stats repo.RegionStats
@@ -281,55 +300,18 @@ func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*
 	return &stats, nil
 }
 
-func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error) {
-	var allRegions []qh_domain.QHRegion
-	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{})
-	if regionType != nil && *regionType > 0 {
-		query = query.Where("type = ?", *regionType)
-	}
-	if layerID != nil && *layerID > 0 {
-		query = query.Where("layer_id = ?", *layerID)
-	}
-	if err := query.Find(&allRegions).Error; err != nil {
-		return nil, err
-	}
-	// stats.LandUseStats = landUseStats
+// =====================================================
+// LEGACY METHODS (GIỮ CHO TƯƠNG THÍCH, NHƯNG CÓ THỂ XÓA SAU)
+// =====================================================
 
-	var result []qh_domain.QHRegion
-	// for _, region := range allRegions {
-	// 	var bbox geometry.BoundingBox
-	// 	if err := json.Unmarshal([]byte(region.BBox), &bbox); err != nil {
-	// 		continue
-	// 	}
-	// 	if bbox.MaxX >= minX && bbox.MinX <= maxX && bbox.MaxY >= minY && bbox.MinY <= maxY {
-	// 		result = append(result, region)
-	// 	}
-	// }
-	return result, nil
+func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error) {
+	// TODO: Implement hoặc xóa nếu không dùng
+	return []qh_domain.QHRegion{}, nil
 }
 
 func (r *regionRepoImpl) GetIntersections(ctx context.Context, id uint64, bufferMeters float64) ([]qh_domain.QHRegion, error) {
-	sourceRegion, err := r.GetByID(ctx, id)
-	if err != nil || sourceRegion == nil {
-		return nil, err
-	}
-
-	var allRegions []qh_domain.QHRegion
-	if err := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).Where("id != ?", id).Find(&allRegions).Error; err != nil {
-		return nil, err
-	}
-
-	var intersections []qh_domain.QHRegion
-	// for _, region := range allRegions {
-	// 	intersects, err := r.checkGeometryIntersection(sourceRegion.Geometry, region.Geometry)
-	// 	if err != nil {
-	// 		continue
-	// 	}
-	// 	if intersects {
-	// 		intersections = append(intersections, region)
-	// 	}
-	// }
-	return intersections, nil
+	// TODO: Implement hoặc xóa nếu không dùng
+	return []qh_domain.QHRegion{}, nil
 }
 
 func (r *regionRepoImpl) GetBufferGeometry(ctx context.Context, sourceID uint64, distanceMeters float64) (string, error) {
@@ -525,9 +507,6 @@ func (r *regionRepoImpl) GetLayerBBox(ctx context.Context, layerID uint64) (minL
 }
 
 func (r *regionRepoImpl) GetMVTTile(ctx context.Context, layerID uint64, z uint8, x, y uint32) ([]byte, error) {
-	// Use PostGIS ST_AsMVT — PostGIS handles clipping + simplification per tile.
-	// ST_TileEnvelope builds the tile bbox in Web Mercator (EPSG:3857).
-	// ST_AsMVTGeom reprojects + clips geometry to the tile extent.
 	type mvtRow struct {
 		Mvt []byte
 	}
@@ -555,18 +534,16 @@ func (r *regionRepoImpl) GetMVTTile(ctx context.Context, layerID uint64, z uint8
 }
 
 func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sql.Rows, error) {
-	// ST_MakeValid fixes any invalid geometries before export.
-	// We do NOT use ST_CollectionExtract so that all geometry types are included.
 	return r.db.WithContext(ctx).
 		Raw(`
 			SELECT json_build_object(
 				'type', 'Feature',
 				'geometry', ST_AsGeoJSON(ST_MakeValid(geometry))::json,
 				'properties', jsonb_build_object(
-					'id',           id,
-					'name',         name,
+					'id', id,
+					'name', name,
 					'display_name', display_name,
-					'layer_id',     layer_id
+					'layer_id', layer_id
 				)
 			)
 			FROM qh_regions

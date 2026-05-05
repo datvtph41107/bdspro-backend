@@ -3,97 +3,166 @@ syntax = "proto3";
 package tqdpb;
 
 import "google/api/annotations.proto";
-import "shared/common.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
-// QHLabelService - Quản lý nhãn quy hoạch, ghép vào màn chi tiết lớp
+// =====================================================
+// LABEL SERVICE
+// =====================================================
+
 service QHLabelService {
-  // CreateQHLabel - Tạo nhãn mới
-  rpc CreateQHLabel(CreateQHLabelRequest) returns (QHLabelResponse) {
+  
+  // ========== Admin APIs ==========
+  
+  // CreateLabel - Tạo label mới
+  rpc CreateLabel(CreateLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
-      post: "/v2/tqd/qh/admin/labels"
+      post: "/v2/tqd/admin/labels"
       body: "*"
     };
   }
-
-  // GetQHLabel - Lấy nhãn theo ID
-  rpc GetQHLabel(GetQHLabelRequest) returns (QHLabelResponse) {
+  
+  // GetLabel - Lấy chi tiết label
+  rpc GetLabel(GetLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/qh/admin/labels/{id}"
+      get: "/v2/tqd/admin/labels/{id}"
     };
   }
-
-  // UpdateQHLabel - Cập nhật nhãn
-  rpc UpdateQHLabel(UpdateQHLabelRequest) returns (QHLabelResponse) {
+  
+  // UpdateLabel - Cập nhật label
+  rpc UpdateLabel(UpdateLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
-      put: "/v2/tqd/qh/admin/labels/{id}"
+      put: "/v2/tqd/admin/labels/{id}"
       body: "*"
     };
   }
-
-  // DeleteQHLabel - Xóa nhãn (soft delete)
-  rpc DeleteQHLabel(DeleteQHLabelRequest) returns (sharepb.SubmitResponse) {
+  
+  // DeleteLabel - Xóa mềm label
+  rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v2/tqd/qh/admin/labels/{id}"
+      delete: "/v2/tqd/admin/labels/{id}"
     };
   }
-
-  // ListQHLabelsByLayer - Danh sách nhãn theo layer (dùng cho màn chi tiết lớp)
-  rpc ListQHLabelsByLayer(ListQHLabelsByLayerRequest) returns (ListQHLabelsResponse) {
+  
+  // ListLabelsByLayer - Danh sách label theo layer
+  rpc ListLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/qh/admin/layers/{layerId}/labels"
+      get: "/v2/tqd/admin/layers/{layerId}/labels"
+    };
+  }
+  
+  // ========== Client APIs ==========
+  
+  // ListClientLabelsByLayer - Danh sách label public
+  rpc ListClientLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/layers/{layerId}/labels"
+    };
+  }
+  
+  // GetClientLabel - Chi tiết label public
+  rpc GetClientLabel(GetLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/labels/{id}"
     };
   }
 }
 
-// CreateQHLabelRequest - Request tạo nhãn
-message CreateQHLabelRequest {
-  uint64 layerId      = 1; // ID layer cha
-  string name         = 2; // Tên nhãn
-  string color        = 3; // Mã màu hex (vd: #1890ff)
-  string description  = 4; // Mô tả
-  int32  sortOrder    = 5; // Thứ tự hiển thị
-}
+// =====================================================
+// REQUEST MESSAGES
+// =====================================================
 
-// UpdateQHLabelRequest - Request cập nhật nhãn
-message UpdateQHLabelRequest {
-  uint64 id           = 1;
-  string name         = 2;
-  string color        = 3;
-  string description  = 4;
-  int32  sortOrder    = 5;
-}
-
-// GetQHLabelRequest
-message GetQHLabelRequest {
-  uint64 id = 1;
-}
-
-// DeleteQHLabelRequest
-message DeleteQHLabelRequest {
-  uint64 id = 1;
-}
-
-// ListQHLabelsByLayerRequest
-message ListQHLabelsByLayerRequest {
+message CreateLabelRequest {
   uint64 layerId = 1;
+  string name = 2;                      // Tên kỹ thuật (unique trong layer)
+  string displayName = 3;              // Tên hiển thị
+  string description = 4;
+  
+  // Style
+  string color = 5;                    // Mã màu hex, mặc định #CCCCCC
+  double fillOpacity = 6;              // Độ mờ nền (0-1), mặc định 0.6
+  string strokeColor = 7;              // Màu viền, mặc định #000000
+  int32 strokeWidth = 8;               // Độ dày viền, mặc định 1
+  
+  // Hiển thị
+  int32 displayOrder = 9;              // Thứ tự hiển thị
+  bool isVisible = 10;                 // Hiển thị trên map không
+  int32 minZoom = 11;                  // Zoom tối thiểu
+  int32 maxZoom = 12;                  // Zoom tối đa
+  
+  // Trạng thái
+  optional uint32 status = 13;         // 10: active, 20: inactive, mặc định 10
 }
 
-// QHLabelResponse - Response trả về cho 1 nhãn
+message UpdateLabelRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional string description = 4;
+  optional string color = 5;
+  optional double fillOpacity = 6;
+  optional string strokeColor = 7;
+  optional int32 strokeWidth = 8;
+  optional int32 displayOrder = 9;
+  optional bool isVisible = 10;
+  optional int32 minZoom = 11;
+  optional int32 maxZoom = 12;
+  optional uint32 status = 13;
+}
+
+message GetLabelRequest {
+  uint64 id = 1;
+}
+
+message DeleteLabelRequest {
+  uint64 id = 1;
+}
+
+message ListLabelsByLayerRequest {
+  uint64 layerId = 1;
+  bool includeInactive = 2;            // Có bao gồm label inactive không
+  uint32 page = 3;
+  uint32 size = 4;
+}
+
+// =====================================================
+// RESPONSE MESSAGES
+// =====================================================
+
 message QHLabelResponse {
-  uint64 id          = 1;
-  uint64 layerId     = 2;
-  string name        = 3;
-  string color       = 4;
+  // Thông tin cơ bản
+  uint64 id = 1;
+  uint64 layerId = 2;
+  string name = 3;
+  string displayName = 4;
   string description = 5;
-  int32  sortOrder   = 6;
-  string createdAt   = 7;
-  string updatedAt   = 8;
+  
+  // Style
+  string color = 6;
+  double fillOpacity = 7;
+  string strokeColor = 8;
+  int32 strokeWidth = 9;
+  
+  // Hiển thị
+  int32 displayOrder = 10;
+  bool isVisible = 11;
+  int32 minZoom = 12;
+  int32 maxZoom = 13;
+  
+  // Metadata
+  uint32 status = 14;                  // 10: active, 20: inactive
+  string createdAt = 15;
+  string updatedAt = 16;
+  
+  // Thống kê (optional)
+  int64 regionCount = 17;
+  double totalAreaHa = 18;
 }
 
-// ListQHLabelsResponse - Response danh sách nhãn
-message ListQHLabelsResponse {
-  repeated QHLabelResponse data  = 1;
-  int32                    total = 2;
+message ListLabelsResponse {
+  repeated QHLabelResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
 }

@@ -249,8 +249,8 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 		}
 
 		// Region batch routes
-		regionHttpHandler := app.RegionHttpHandler
-		v2.POST("/admin/regions/batch", regionHttpHandler.CreateRegionBatch)
+		// regionHttpHandler := app.RegionHttpHandler
+		// v2.POST("/admin/regions/batch", regionHttpHandler.CreateRegionBatch)
 
 		// QH Label routes - ghép vào màn chi tiết lớp
 		qhLabelHandler := app.QHLabelHandler
