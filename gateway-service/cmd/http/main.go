@@ -143,6 +143,7 @@ var publicRoutes = []string{
 	"/v2/tqd/parcels/by-polygon",
 	"/v2/tqd/properties",
 	"/v2/tqd/client/layers",
+	"/v2/tqd/parcels/public",
 }
 
 var tempRoutes = []string{

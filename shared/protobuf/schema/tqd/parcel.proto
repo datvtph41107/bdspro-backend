@@ -36,6 +36,12 @@ service ParcelService {
     };
   }
 
+  rpc PublicParcelsById(sharepb.RequestV3Proto) returns (ParcelInfo) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/public/{id}"
+    };
+  }
+
   // GetClientLayer - Chi tiết layer cho client (public)
   rpc SearchTxtClientParcels(sharepb.RequestV3Proto) returns (ListParcelResponse) {
     option (google.api.http) = {

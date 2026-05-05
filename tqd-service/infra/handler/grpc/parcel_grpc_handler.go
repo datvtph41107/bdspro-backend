@@ -279,3 +279,29 @@ func (h *ParcelGrpcHandler) PreviewParcelsById(
 	// Convert sang proto
 	return h.mapper.ToProtoParcelInfo(info), nil
 }
+
+func (h *ParcelGrpcHandler) PublicParcelsById(
+	ctx context.Context,
+	req *sharepb.RequestV3Proto,
+) (*tqdpb.ParcelInfo, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	userID := _utils.GetOriginIdFromContext(ctx)
+	log.Printf("[PreviewParcelsById] UserID: %d, ParcelID: %d", userID, req.Id)
+
+	// Gọi đúng method GetParcelInfoByID (không phải GetParcelDetail)
+	info, err := h.usecase.GetParcelInfoByID(ctx, req.Id)
+	if err != nil {
+		log.Printf("[PreviewParcelsById] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if info == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	// Convert sang proto
+	return h.mapper.ToProtoParcelInfo(info), nil
+}
