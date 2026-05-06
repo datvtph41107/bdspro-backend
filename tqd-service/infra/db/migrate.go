@@ -26,7 +26,6 @@ func AutoMigrate() {
 		&qh_domain.QHParcelInfo{},
 		&qh_domain.QHLayer{},
 		&qh_domain.QHRegion{},
-		&qh_domain.QHRegionLabel{},
 		&qh_domain.QHLabel{},
 		&qh_domain.QHShape{},
 	)

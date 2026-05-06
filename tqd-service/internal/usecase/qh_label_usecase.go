@@ -28,14 +28,17 @@ type QHLabelUsecase interface {
 }
 
 type qhLabelUsecaseImpl struct {
-	labelRepo       repo.QHLabelRepository
-	regionLabelRepo repo.RegionLabelRepository
+	labelRepo  repo.QHLabelRepository
+	regionRepo repo.RegionRepository
 }
 
-func NewQHLabelUsecase(labelRepo repo.QHLabelRepository, regionLabelRepo repo.RegionLabelRepository) QHLabelUsecase {
+func NewQHLabelUsecase(
+	labelRepo repo.QHLabelRepository,
+	regionRepo repo.RegionRepository,
+) QHLabelUsecase {
 	return &qhLabelUsecaseImpl{
-		labelRepo:       labelRepo,
-		regionLabelRepo: regionLabelRepo,
+		labelRepo:  labelRepo,
+		regionRepo: regionRepo,
 	}
 }
 
@@ -128,10 +131,13 @@ func (u *qhLabelUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 	if existing == nil {
 		return fmt.Errorf("label %d not found", id)
 	}
-	// Xóa tất cả region-label relationships trước
-	if err := u.regionLabelRepo.DeleteByLabel(ctx, id); err != nil {
-		return err
+
+	// Cập nhật tất cả regions có label_id = id thành 0 (không có label)
+	// Thay vì xóa region_label relationships
+	if err := u.regionRepo.UpdateLabelForAllRegions(ctx, id, 0); err != nil {
+		// Log error but continue - không block việc xóa label
 	}
+
 	return u.labelRepo.Delete(ctx, id)
 }
 
@@ -141,8 +147,7 @@ func (u *qhLabelUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain
 		return nil, fmt.Errorf("get label failed: %w", err)
 	}
 	if label == nil {
-		// SỬA: Thêm dòng này để trả về error
-		return nil, fmt.Errorf("label %d not found", id) // ← THÊM DÒNG NÀY
+		return nil, fmt.Errorf("label %d not found", id)
 	}
 	return label, nil
 }
@@ -156,7 +161,7 @@ func (u *qhLabelUsecaseImpl) ListByLayerID(ctx context.Context, layerID uint64, 
 	// Filter by status if needed
 	filtered := make([]qh_domain.QHLabel, 0)
 	for _, l := range labels {
-		if !includeInactive && l.Status != 10 { // ← Status đang so sánh với số 10
+		if !includeInactive && l.Status != 10 {
 			continue
 		}
 		filtered = append(filtered, l)
@@ -181,10 +186,7 @@ func (u *qhLabelUsecaseImpl) ListByLayerID(ctx context.Context, layerID uint64, 
 	return filtered, total, nil
 }
 
-// =====================================================
-// Client Operations
-// =====================================================
-
+// Client
 func (u *qhLabelUsecaseImpl) ListClientByLayerID(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLabel, int64, error) {
 	labels, err := u.labelRepo.GetByLayerID(ctx, layerID)
 	if err != nil {
@@ -219,8 +221,11 @@ func (u *qhLabelUsecaseImpl) ListClientByLayerID(ctx context.Context, layerID ui
 
 func (u *qhLabelUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error) {
 	label, err := u.labelRepo.GetByID(ctx, id)
-	if err != nil || label == nil {
-		return nil, errors.New("label not found")
+	if err != nil {
+		return nil, fmt.Errorf("get label failed: %w", err)
+	}
+	if label == nil {
+		return nil, fmt.Errorf("label %d not found", id)
 	}
 	if label.Status != 10 || !label.IsVisible {
 		return nil, errors.New("label not available")

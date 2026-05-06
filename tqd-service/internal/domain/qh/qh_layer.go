@@ -2,7 +2,6 @@ package qh_domain
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 	"tqd/internal/domain/jsonb"
 	"tqd/internal/enums"
@@ -18,19 +17,15 @@ type QHLayer struct {
 	Status enums.LayerStatus `gorm:"type:int;default:10;index" json:"status"`
 
 	DisplayOrder int   `gorm:"column:display_order;default:0;index" json:"displayOrder"`
-	Visible      int32 `gorm:"default:0;index" json:"visible"` // 0: ẩn, 1: hiển thị // bỏ field này chỉ cần displayOrder > 0 là hiển thị r
+	Visible      int32 `gorm:"default:0;index" json:"visible"`
 	MinZoom      int   `gorm:"default:0" json:"minZoom"`
 	MaxZoom      int   `gorm:"default:22" json:"maxZoom"`
 
-	LayerURL     string `gorm:"type:text" json:"layerUrl"`
 	Avatar       string `gorm:"type:text" json:"avatar,omitempty"`
 	ImageURL     string `gorm:"type:text" json:"imageUrl,omitempty"`
 	ThumbnailURL string `gorm:"type:text" json:"thumbnailUrl,omitempty"`
 
-	// Styling
-	StyleConfig json.RawMessage `gorm:"type:jsonb;default:'{}'" json:"styleConfig,omitempty"`
-	SourceCode  string          `gorm:"-" json:"sourceCode,omitempty"`
-	SourceType  string          `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
+	SourceType string `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
 
 	LegalDoc         string `gorm:"type:text" json:"legalDoc,omitempty"`
 	LegalDocURL      string `gorm:"type:text" json:"legalDocUrl,omitempty"`
@@ -45,10 +40,6 @@ type QHLayer struct {
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt *time.Time `gorm:"index" json:"deletedAt,omitempty"`
-}
-
-func (l QHLayer) GetSourceCode() string {
-	return fmt.Sprintf("layer%d", l.ID)
 }
 
 func (QHLayer) TableName() string {
@@ -104,7 +95,6 @@ func GetDefaultStyleConfig() json.RawMessage {
 	]`)
 }
 
-// Business logic methods
 func (l *QHLayer) IsActive() bool {
 	if l.DeletedAt != nil {
 		return false
@@ -127,32 +117,4 @@ func (l *QHLayer) IsActive() bool {
 
 func (l *QHLayer) IsClientVisible() bool {
 	return l.IsActive() && l.Visible == 1
-}
-
-func (l *QHLayer) GetStyleConfig() StyleConfig {
-	if l.StyleConfig == nil {
-		// Default style theo type
-		defaults := map[enums.LayerType]StyleConfig{
-			enums.LayerTypeLandUse: {
-				FillColor:   "#CCCCCC",
-				FillOpacity: 0.6,
-				StrokeColor: "#000000",
-				StrokeWidth: 1,
-			},
-			enums.LayerTypeInfrastructure: {
-				LineColor:   "#0000FF",
-				LineWidth:   2,
-				LineOpacity: 0.8,
-			},
-		}
-		if def, ok := defaults[l.Type]; ok {
-			return def
-		}
-		return StyleConfig{}
-	}
-
-	var config StyleConfig
-	data, _ := json.Marshal(l.StyleConfig)
-	json.Unmarshal(data, &config)
-	return config
 }

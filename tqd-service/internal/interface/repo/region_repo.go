@@ -25,6 +25,10 @@ type RegionRepository interface {
 	FindByPoint(ctx context.Context, lat, lng float64, layerID *uint64) (*qh_domain.QHRegion, error)
 	FindByBBox(ctx context.Context, minLng, minLat, maxLng, maxLat float64, layerID *uint64, labelID *uint64, limit, offset int) ([]qh_domain.QHRegion, int64, error)
 
+	//Update regions label_id
+	UpdateLabelForAllRegions(ctx context.Context, oldLabelID uint64, newLabelID uint64) error
+	UpdateLabelForRegion(ctx context.Context, regionID uint64, labelID uint64) error
+
 	// Statistics
 	GetStatsByLayer(ctx context.Context, layerID uint64) (*RegionStats, error)
 	GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error)
@@ -40,7 +44,7 @@ type RegionFilter struct {
 	LabelID          *uint64
 	LandUseCode      *string
 	Status           *uint32
-	ProcessingStatus *uint32 // THÊM: lọc theo trạng thái xử lý
+	ProcessingStatus *uint32
 	Search           *string
 	MinAreaHa        *float64
 	MaxAreaHa        *float64
@@ -51,6 +55,7 @@ type RegionFilter struct {
 
 type ClientRegionFilter struct {
 	LayerID     *uint64
+	LabelID     *uint64
 	LandUseCode *string
 	BBox        *BBox
 	Pagable     *_dto.Pagable

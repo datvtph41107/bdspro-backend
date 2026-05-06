@@ -20,3 +20,80 @@ jwt:
     refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
     listPermit:
     authorizationHeader: Authorization
+
+# Layer configuration
+layer:
+    # Base URL configuration
+    base_url: "http://14.225.210.29:8032"
+
+    # Default style templates
+    default_styles:
+        vector:
+            - id: "{sourceCode}_fill"
+              type: "fill"
+              paint:
+                  fill-color: ["get", "hex_color"]
+                  fill-opacity: 0.3
+              source: "{sourceCode}"
+              source-layer: "{sourceCode}"
+            - id: "{sourceCode}_outline"
+              type: "line"
+              paint:
+                  line-color: "rgba(0,0,255,0.8)"
+                  line-width: 2
+              source: "{sourceCode}"
+              source-layer: "{sourceCode}"
+
+        raster:
+            - id: "{sourceCode}"
+              type: "raster"
+              paint:
+                  raster-opacity: 1.0
+              source: "{sourceCode}"
+
+    # Override configurations per layer (optional)
+    overrides:
+        # "1":
+        #     url_pattern: "/qhsdd_hn/{z}/{x}/{y}.pbf"
+        #     style_config: |
+        #         [
+        #           {
+        #             "id": "qhsdd_hn",
+        #             "type": "fill",
+        #             "paint": {
+        #               "fill-color": ["get", "hex_color"],
+        #               "fill-opacity": 0.3
+        #             },
+        #             "source": "qhsdd_hn",
+        #             "source-layer": "qhsdd_hn"
+        #           }
+        #         ]
+
+        # "2":
+        #     url_pattern: "/layer2/{z}/{x}/{y}.pbf"
+
+        # "67":
+        #     url_pattern: "/layer67/{z}/{x}/{y}.pbf"
+        #     style_config: |
+        #         [
+        #           {
+        #             "id": "layer67_fill",
+        #             "type": "fill",
+        #             "paint": {
+        #               "fill-color": ["match", ["get", "quyhoach"], "dtvt", "#22c55e", "phan_khu", "#f97316", "rgba(0,0,255,0.2)"],
+        #               "fill-opacity": 0.2
+        #             },
+        #             "source": "layer67",
+        #             "source-layer": "layer67"
+        #           },
+        #           {
+        #             "id": "layer67_outline",
+        #             "type": "line",
+        #             "paint": {
+        #               "line-color": ["match", ["get", "quyhoach"], "dtvt", "#16a34a", "qh_chung", "#1d4ed8", "phan_khu", "#ea580c", "rgba(0,0,255,0.8)"],
+        #               "line-width": 2
+        #             },
+        #             "source": "layer67",
+        #             "source-layer": "layer67"
+        #           }
+        #         ]

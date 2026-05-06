@@ -1,17 +1,16 @@
 package mapper
 
 import (
-	_utils "common/utils"
-	"encoding/json"
 	"fmt"
-	tqdpb "pb/types/tqd"
 	"time"
+
+	tqdpb "pb/types/tqd"
+	"tqd/config"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 )
 
 func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer, error) {
-	// Convert type
 	layerType := enums.LayerType(req.Type)
 	if !layerType.IsValid() {
 		return nil, fmt.Errorf("invalid type: %d", req.Type)
@@ -25,63 +24,82 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer,
 		}
 	}
 
-	layer := &qh_domain.QHLayer{
-		Name:         req.Name,
-		DisplayName:  req.DisplayName,
-		Type:         layerType,
-		Status:       status,
-		DisplayOrder: int(req.DisplayOrder),
-		SourceType:   req.SourceType,
-		MinZoom:      int(req.MinZoom),
-		MaxZoom:      int(req.MaxZoom),
-		Visible:      req.Visible,
-		LegalDoc:     req.LegalDoc,
-	}
-
+	var effectiveDate *time.Time
 	if req.EffectiveDate != nil && *req.EffectiveDate != "" {
-		parsedTime, err := time.Parse("2006-01-02", *req.EffectiveDate)
+		t, err := time.Parse("2006-01-02", *req.EffectiveDate)
 		if err == nil {
-			layer.EffectiveDate = &parsedTime
+			effectiveDate = &t
 		}
 	}
 
-	return layer, nil
-}
-
-// ToProtoLayer chuyển từ domain sang proto response
-func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
-	status := uint32(layer.Status)
-
-	resp := &tqdpb.LayerResponse{
-		Id:          layer.ID,
-		Name:        layer.Name,
-		DisplayName: layer.DisplayName,
-		Type:        uint32(layer.Type),
-		Status:      status,
-		// Order:       layer.DisplayOrder,
-		SourceType: layer.SourceType,
-		SourceCode: layer.GetSourceCode(),
-
-		MinZoom:   int32(layer.MinZoom),
-		MaxZoom:   int32(layer.MaxZoom),
-		Visible:   layer.Visible,
-		LegalDoc:  layer.LegalDoc,
-		CreatedAt: layer.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: layer.UpdatedAt.Format(time.RFC3339),
-		Avatar:    layer.Avatar,
-		LayerUrl:  layer.LayerURL,
+	var expiryDate *time.Time
+	if req.ExpiryDate != nil && *req.ExpiryDate != "" {
+		t, err := time.Parse("2006-01-02", *req.ExpiryDate)
+		if err == nil {
+			expiryDate = &t
+		}
 	}
 
-	// Marshal metadata
-	// if layer.Metadata != nil {
-	// 	metadataBytes, _ := json.Marshal(layer.Metadata)
-	// 	resp.Metadata = string(metadataBytes)
-	// }
+	return &qh_domain.QHLayer{
+		Name:             req.Name,
+		DisplayName:      req.DisplayName,
+		Description:      req.Description,
+		Type:             layerType,
+		Status:           status,
+		DisplayOrder:     int(req.DisplayOrder),
+		SourceType:       req.SourceType,
+		MinZoom:          int(req.MinZoom),
+		MaxZoom:          int(req.MaxZoom),
+		Visible:          req.Visible,
+		Avatar:           req.Avatar,
+		ImageURL:         req.ImageUrl,
+		ThumbnailURL:     req.ThumbnailUrl,
+		LegalDoc:         req.LegalDoc,
+		LegalDocURL:      req.LegalDocUrl,
+		DocumentNumber:   req.DocumentNumber,
+		IssuingAuthority: req.IssuingAuthority,
+		EffectiveDate:    effectiveDate,
+		ExpiryDate:       expiryDate,
+	}, nil
+}
 
-	// Marshal style config
-	if layer.StyleConfig != nil {
-		styleBytes, _ := json.Marshal(layer.StyleConfig)
-		resp.StyleConfig = string(styleBytes)
+func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
+	if layer == nil {
+		return nil, nil
+	}
+
+	sourceCode := config.LayerResolverInstance.GetSourceCode(layer.ID)
+	layerUrl := config.LayerResolverInstance.GetLayerURL(layer.ID, sourceCode)
+
+	styleConfig, err := config.LayerResolverInstance.GetStyleConfig(layer.ID, sourceCode, uint32(layer.Type))
+	if err != nil {
+		styleConfig = "[]" // Default empty array if error
+	}
+
+	resp := &tqdpb.LayerResponse{
+		Id:               layer.ID,
+		Name:             layer.Name,
+		DisplayName:      layer.DisplayName,
+		Description:      layer.Description,
+		Type:             uint32(layer.Type),
+		Status:           uint32(layer.Status),
+		Visible:          layer.Visible,
+		DisplayOrder:     int32(layer.DisplayOrder),
+		MinZoom:          int32(layer.MinZoom),
+		MaxZoom:          int32(layer.MaxZoom),
+		LayerUrl:         layerUrl,
+		Avatar:           layer.Avatar,
+		ImageUrl:         layer.ImageURL,
+		ThumbnailUrl:     layer.ThumbnailURL,
+		StyleConfig:      styleConfig,
+		LegalDoc:         layer.LegalDoc,
+		LegalDocUrl:      layer.LegalDocURL,
+		DocumentNumber:   layer.DocumentNumber,
+		IssuingAuthority: layer.IssuingAuthority,
+		SourceType:       layer.SourceType,
+		SourceCode:       sourceCode,
+		CreatedAt:        layer.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:        layer.UpdatedAt.Format(time.RFC3339),
 	}
 
 	// Format dates
@@ -93,39 +111,6 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		dateStr := layer.ExpiryDate.Format("2006-01-02")
 		resp.ExpiryDate = &dateStr
 	}
-
-	return resp, nil
-}
-
-func ToProtoLayerClient(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
-	// Client chỉ nhận subset của admin response
-	resp := &tqdpb.LayerResponse{
-		Id:           uint64(layer.ID),
-		Name:         layer.Name,
-		DisplayName:  layer.DisplayName,
-		Type:         uint32(layer.Type),
-		DisplayOrder: int32(layer.DisplayOrder),
-		SourceType:   layer.SourceType,
-		SourceCode:   layer.GetSourceCode(),
-		MinZoom:      int32(layer.MinZoom),
-		MaxZoom:      int32(layer.MaxZoom),
-		LayerUrl:     layer.LayerURL,
-		ImageUrl:     layer.ImageURL,
-		ThumbnailUrl: layer.ThumbnailURL,
-		Visible:      layer.Visible,
-		CreatedAt:    _utils.FormatTimeToString(&layer.CreatedAt),
-		UpdatedAt:    _utils.FormatTimeToString(&layer.UpdatedAt),
-	}
-
-	// Client cũng thấy style config để render
-	if layer.StyleConfig != nil {
-		styleBytes, _ := json.Marshal(layer.StyleConfig)
-		resp.StyleConfig = string(styleBytes)
-	}
-
-	// Client không thấy: status (vì chỉ có active), legal_doc, metadata chi tiết
-	// resp.Visible = true
-	resp.Status = uint32(enums.LayerStatusActive)
 
 	return resp, nil
 }

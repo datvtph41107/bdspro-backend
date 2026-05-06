@@ -41,15 +41,11 @@ func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepos
 }
 
 func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error) {
-	// Validation
 	if layer.Name == "" {
 		return nil, errors.New("name is required")
 	}
 	if layer.DisplayName == "" {
 		return nil, errors.New("display_name is required")
-	}
-	if layer.LayerURL == "" {
-		return nil, errors.New("layer_url is required")
 	}
 	if !layer.Type.IsValid() {
 		return nil, fmt.Errorf("invalid type: %d", layer.Type)
@@ -58,7 +54,6 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		return nil, errors.New("visible must be 0 or 1")
 	}
 
-	// Set defaults
 	if layer.Status == 0 {
 		layer.Status = enums.LayerStatusDraft
 	}
@@ -66,15 +61,10 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		return nil, fmt.Errorf("invalid status: %d", layer.Status)
 	}
 
-	// Validate dates
 	if layer.EffectiveDate != nil && layer.ExpiryDate != nil {
 		if layer.EffectiveDate.After(*layer.ExpiryDate) {
 			return nil, errors.New("effective_date must be before expiry_date")
 		}
-	}
-
-	if len(layer.StyleConfig) == 0 {
-		layer.StyleConfig = qh_domain.GetDefaultStyleConfig()
 	}
 
 	existing, err := u.layerRepo.GetByName(ctx, layer.Name)
@@ -85,7 +75,6 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		return nil, fmt.Errorf("layer with name '%s' already exists", layer.Name)
 	}
 
-	// Set audit
 	layer.CreatedBy = userID
 	layer.UpdatedBy = userID
 	layer.CreatedAt = time.Now()
@@ -107,7 +96,6 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 		return nil, fmt.Errorf("layer with id %d not found", id)
 	}
 
-	// Check name uniqueness if changed
 	if layer.Name != "" && layer.Name != existing.Name {
 		check, err := u.layerRepo.GetByName(ctx, layer.Name)
 		if err != nil {
@@ -119,7 +107,6 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 		existing.Name = layer.Name
 	}
 
-	// Update fields
 	if layer.DisplayName != "" {
 		existing.DisplayName = layer.DisplayName
 	}
@@ -132,25 +119,21 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.Status != 0 && layer.Status.IsValid() {
 		existing.Status = layer.Status
 	}
-	if layer.Visible > -1 {
+	if layer.Visible != 0 {
 		existing.Visible = layer.Visible
 	}
-	if layer.DisplayOrder > -1 {
+	if layer.DisplayOrder != 0 {
 		existing.DisplayOrder = layer.DisplayOrder
 	}
 	if layer.SourceType != "" {
 		existing.SourceType = layer.SourceType
 	}
-	// if layer.SourceCode != "" {
-	// 	existing.SourceCode = layer.SourceCode
-	// }
 	if layer.MinZoom != 0 {
 		existing.MinZoom = layer.MinZoom
 	}
 	if layer.MaxZoom != 0 {
 		existing.MaxZoom = layer.MaxZoom
 	}
-	existing.LayerURL = layer.LayerURL
 	if layer.Avatar != "" {
 		existing.Avatar = layer.Avatar
 	}
@@ -159,9 +142,6 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	}
 	if layer.ThumbnailURL != "" {
 		existing.ThumbnailURL = layer.ThumbnailURL
-	}
-	if layer.StyleConfig != nil {
-		existing.StyleConfig = layer.StyleConfig
 	}
 	if layer.LegalDoc != "" {
 		existing.LegalDoc = layer.LegalDoc

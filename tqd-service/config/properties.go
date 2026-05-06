@@ -3,9 +3,13 @@ package config
 import (
 	"common"
 	_ "embed"
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 	"tqd/env"
+	"tqd/internal/enums"
 
 	"github.com/spf13/viper"
 )
@@ -17,6 +21,83 @@ type Properties struct {
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	Eureka   EurekaConfig   `mapstructure:"eureka"`
 	Key      KeyConfig      `mapstructure:"key"`
+	Layer    LayerConfig    `mapstructure:"layer"`
+}
+
+type LayerConfig struct {
+	BaseURL       string                   `mapstructure:"base_url"`
+	DefaultStyles DefaultStylesConfig      `mapstructure:"default_styles"`
+	Overrides     map[string]LayerOverride `mapstructure:"overrides"`
+}
+
+type DefaultStylesConfig struct {
+	Vector []map[string]interface{} `mapstructure:"vector"`
+	Raster []map[string]interface{} `mapstructure:"raster"`
+}
+
+type LayerOverride struct {
+	URLPattern  string `mapstructure:"url_pattern"`
+	StyleConfig string `mapstructure:"style_config"`
+}
+
+type LayerResolver struct {
+	config *LayerConfig
+}
+
+func NewLayerResolver() *LayerResolver {
+	return &LayerResolver{
+		config: &AppConfig.Layer,
+	}
+}
+
+// GetLayerURL - Lấy URL cho layer theo id và sourceCode
+func (r *LayerResolver) GetLayerURL(layerID uint64, sourceCode string) string {
+	layerIDStr := fmt.Sprintf("%d", layerID)
+	// Kiểm tra override
+	if override, exists := r.config.Overrides[layerIDStr]; exists && override.URLPattern != "" {
+		return r.config.BaseURL + override.URLPattern
+	}
+
+	// Default pattern: /{sourceCode}/{z}/{x}/{y}.pbf
+	return fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", r.config.BaseURL, sourceCode)
+}
+
+// GetStyleConfig - Lấy style config cho layer
+func (r *LayerResolver) GetStyleConfig(layerID uint64, sourceCode string, layerType uint32) (string, error) {
+	layerIDStr := fmt.Sprintf("%d", layerID)
+
+	// override config
+	if override, exists := r.config.Overrides[layerIDStr]; exists && override.StyleConfig != "" {
+		return override.StyleConfig, nil
+	}
+
+	// Lấy default style theo type
+	var defaultStyle []map[string]interface{}
+
+	// LayerType: 1=landuse, 3=planning, 4=traffic
+	switch enums.LayerType(layerType) {
+	// case enums.LayerTypeLandUse, enums.LayerTypePlanning:
+	// 	defaultStyle = r.config.DefaultStyles.Vector
+	// case enums.LayerTypeTraffic:
+	// 	defaultStyle = r.config.DefaultStyles.Vector
+	default:
+		defaultStyle = r.config.DefaultStyles.Vector
+	}
+
+	// Replace placeholders
+	styleJSON, err := json.Marshal(defaultStyle)
+	if err != nil {
+		return "[]", err
+	}
+
+	styleStr := string(styleJSON)
+	styleStr = strings.ReplaceAll(styleStr, "{sourceCode}", sourceCode)
+
+	return styleStr, nil
+}
+
+func (r *LayerResolver) GetSourceCode(layerID uint64) string {
+	return fmt.Sprintf("layer%d", layerID)
 }
 
 // ServerConfig holds server configuration
@@ -53,6 +134,7 @@ type KeyConfig struct {
 }
 
 var AppConfig *Properties
+var LayerResolverInstance *LayerResolver
 
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() *Properties {
@@ -65,5 +147,6 @@ func LoadConfig() *Properties {
 		log.Fatalf("Error unmarshaling config: %v", err)
 	}
 
+	LayerResolverInstance = NewLayerResolver()
 	return AppConfig
 }

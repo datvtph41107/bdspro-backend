@@ -11,16 +11,15 @@ import (
 	"tqd/internal/interface/repo"
 )
 
-// RegionUsecase - Quản lý region
 type RegionUsecase interface {
-	// Basic Operations
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
 	List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
 	Delete(ctx context.Context, id uint64) error
 	UpdateProcessingStatus(ctx context.Context, regionID uint64, status enums.ProcessingStatus, userID uint64, notes string) error
 
-	// Label Operations
-	GetLabelsByRegion(ctx context.Context, regionID uint64) ([]qh_domain.QHLabel, error)
+	// Label Operations (1-1)
+	AssignLabel(ctx context.Context, regionID uint64, labelID uint64, userID uint64, sourceFile string) error
+	GetLabelByRegion(ctx context.Context, regionID uint64) (*qh_domain.QHLabel, error)
 
 	// Client Operations
 	ListClient(ctx context.Context, layerID uint64, bBox *BBox, page, size uint32) ([]qh_domain.QHRegion, int64, error)
@@ -33,26 +32,22 @@ type BBox struct {
 }
 
 type regionUsecaseImpl struct {
-	regionRepo      repo.RegionRepository
-	layerRepo       repo.LayerRepository
-	regionLabelRepo repo.RegionLabelRepository
+	regionRepo repo.RegionRepository
+	layerRepo  repo.LayerRepository
+	labelRepo  repo.QHLabelRepository
 }
 
 func NewRegionUsecase(
 	regionRepo repo.RegionRepository,
 	layerRepo repo.LayerRepository,
-	regionLabelRepo repo.RegionLabelRepository,
+	labelRepo repo.QHLabelRepository,
 ) RegionUsecase {
 	return &regionUsecaseImpl{
-		regionRepo:      regionRepo,
-		layerRepo:       layerRepo,
-		regionLabelRepo: regionLabelRepo,
+		regionRepo: regionRepo,
+		layerRepo:  layerRepo,
+		labelRepo:  labelRepo,
 	}
 }
-
-// =====================================================
-// Basic Operations
-// =====================================================
 
 func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
 	region, err := u.regionRepo.GetByID(ctx, id)
@@ -60,7 +55,6 @@ func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.
 		return nil, fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		// SỬA: Thêm dòng này để trả về error khi không tìm thấy
 		return nil, fmt.Errorf("region %d not found", id)
 	}
 	return region, nil
@@ -78,10 +72,6 @@ func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 	if region == nil {
 		return fmt.Errorf("region %d not found", id)
 	}
-	// Xóa tất cả label relationships trước
-	if err := u.regionLabelRepo.DeleteByRegion(ctx, id); err != nil {
-		return err
-	}
 	return u.regionRepo.Delete(ctx, id)
 }
 
@@ -93,18 +83,35 @@ func (u *regionUsecaseImpl) UpdateProcessingStatus(ctx context.Context, regionID
 	if region == nil {
 		return fmt.Errorf("region %d not found", regionID)
 	}
-
 	region.ProcessingStatus = status
-
 	return u.regionRepo.Update(ctx, region)
 }
 
-// =====================================================
-// Label Operations
-// =====================================================
+func (u *regionUsecaseImpl) AssignLabel(ctx context.Context, regionID uint64, labelID uint64, userID uint64, sourceFile string) error {
+	// Kiểm tra region tồn tại
+	region, err := u.regionRepo.GetByID(ctx, regionID)
+	if err != nil {
+		return fmt.Errorf("get region failed: %w", err)
+	}
+	if region == nil {
+		return fmt.Errorf("region %d not found", regionID)
+	}
 
-func (u *regionUsecaseImpl) GetLabelsByRegion(ctx context.Context, regionID uint64) ([]qh_domain.QHLabel, error) {
-	// Kiểm tra region tồn tại trước
+	// Kiểm tra label tồn tại
+	label, err := u.labelRepo.GetByID(ctx, labelID)
+	if err != nil {
+		return fmt.Errorf("get label failed: %w", err)
+	}
+	if label == nil {
+		return fmt.Errorf("label %d not found", labelID)
+	}
+
+	// Gán label trực tiếp vào region
+	region.LabelID = labelID
+	return u.regionRepo.Update(ctx, region)
+}
+
+func (u *regionUsecaseImpl) GetLabelByRegion(ctx context.Context, regionID uint64) (*qh_domain.QHLabel, error) {
 	region, err := u.regionRepo.GetByID(ctx, regionID)
 	if err != nil {
 		return nil, fmt.Errorf("get region failed: %w", err)
@@ -112,13 +119,13 @@ func (u *regionUsecaseImpl) GetLabelsByRegion(ctx context.Context, regionID uint
 	if region == nil {
 		return nil, fmt.Errorf("region %d not found", regionID)
 	}
-	return u.regionLabelRepo.GetLabelsByRegion(ctx, regionID)
+	if region.LabelID == 0 {
+		return nil, nil // Chưa có label
+	}
+	return u.labelRepo.GetByID(ctx, region.LabelID)
 }
 
-// =====================================================
-// Client Operations
-// =====================================================
-
+// Client
 func (u *regionUsecaseImpl) ListClient(ctx context.Context, layerID uint64, bBox *BBox, page, size uint32) ([]qh_domain.QHRegion, int64, error) {
 	offset := int((page - 1) * size)
 	limit := int(size)
@@ -146,7 +153,6 @@ func (u *regionUsecaseImpl) FindByPoint(ctx context.Context, lat, lng float64, l
 		return nil, fmt.Errorf("find by point failed: %w", err)
 	}
 	if region == nil {
-		// SỬA: Thêm dòng này để trả về error khi không tìm thấy
 		return nil, fmt.Errorf("no region found at location (%.6f, %.6f)", lat, lng)
 	}
 	return region, nil
@@ -169,43 +175,5 @@ func (u *regionUsecaseImpl) FindByBBox(ctx context.Context, minLng, minLat, maxL
 		limit = 100
 	}
 
-	// Nếu có labelID, lấy regionIDs từ label trước
-	if labelID != nil && *labelID > 0 {
-		regionIDs, err := u.regionLabelRepo.GetRegionIDsByLabel(ctx, *labelID)
-		if err != nil {
-			return nil, 0, err
-		}
-		if len(regionIDs) == 0 {
-			return []qh_domain.QHRegion{}, 0, nil
-		}
-		// Lọc theo bbox
-		regions, _, err := u.regionRepo.FindByBBox(ctx, minLng, minLat, maxLng, maxLat, layerID, nil, 10000, 0)
-		if err != nil {
-			return nil, 0, err
-		}
-		// Filter theo regionIDs
-		idMap := make(map[uint64]bool)
-		for _, id := range regionIDs {
-			idMap[id] = true
-		}
-		filtered := make([]qh_domain.QHRegion, 0)
-		for _, r := range regions {
-			if idMap[r.ID] {
-				filtered = append(filtered, r)
-			}
-		}
-		// Paginate
-		total := int64(len(filtered))
-		start := offset
-		end := offset + limit
-		if start > len(filtered) {
-			return []qh_domain.QHRegion{}, total, nil
-		}
-		if end > len(filtered) {
-			end = len(filtered)
-		}
-		return filtered[start:end], total, nil
-	}
-
-	return u.regionRepo.FindByBBox(ctx, minLng, minLat, maxLng, maxLat, layerID, nil, limit, offset)
+	return u.regionRepo.FindByBBox(ctx, minLng, minLat, maxLng, maxLat, layerID, labelID, limit, offset)
 }

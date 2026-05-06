@@ -23,20 +23,17 @@ type ImportUsecase interface {
 }
 
 type importUsecaseImpl struct {
-	regionRepo      repo.RegionRepository
-	labelRepo       repo.QHLabelRepository
-	regionLabelRepo repo.RegionLabelRepository
+	regionRepo repo.RegionRepository
+	labelRepo  repo.QHLabelRepository
 }
 
 func NewImportUsecase(
 	regionRepo repo.RegionRepository,
 	labelRepo repo.QHLabelRepository,
-	regionLabelRepo repo.RegionLabelRepository,
 ) ImportUsecase {
 	return &importUsecaseImpl{
-		regionRepo:      regionRepo,
-		labelRepo:       labelRepo,
-		regionLabelRepo: regionLabelRepo,
+		regionRepo: regionRepo,
+		labelRepo:  labelRepo,
 	}
 }
 
@@ -137,7 +134,6 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 			continue
 		}
 
-		// Tính diện tích
 		geomBytes, _ := json.Marshal(feat.Geometry)
 		geoInfo, err := geometry.ParseGeometry(string(geomBytes))
 		if err != nil && req.ValidateGeometry {
@@ -154,7 +150,6 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 		}
 		result.TotalAreaHa += area / 10000
 
-		// Xác định label
 		labelID, err := u.resolveLabelID(ctx, feat.Properties, req)
 		if err != nil {
 			if req.SkipInvalid {
@@ -168,10 +163,32 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 			continue
 		}
 
-		// Tạo region
+		// Tạo region - THÊM label_id TRỰC TIẾP
 		propsBytes, _ := json.Marshal(feat.Properties)
+
+		// Lấy màu từ properties nếu có
+		colorRed := uint8(200)
+		colorGreen := uint8(200)
+		colorBlue := uint8(200)
+		if props, ok := feat.Properties["red"]; ok {
+			if val, ok := props.(float64); ok {
+				colorRed = uint8(val)
+			}
+		}
+		if props, ok := feat.Properties["green"]; ok {
+			if val, ok := props.(float64); ok {
+				colorGreen = uint8(val)
+			}
+		}
+		if props, ok := feat.Properties["blue"]; ok {
+			if val, ok := props.(float64); ok {
+				colorBlue = uint8(val)
+			}
+		}
+
 		region := &qh_domain.QHRegion{
 			LayerID:            req.LayerID,
+			LabelID:            labelID, // ← THÊM LABEL_ID TRỰC TIẾP
 			Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
 			OriginalProperties: propsBytes,
 			AreaSqm:            area,
@@ -179,9 +196,12 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 			SourceFile:         req.SourceFileName,
 			ImportBatchID:      batchID,
 			Status:             10, // active
-			ProcessingStatus:   10, // THÊM: pending
+			ProcessingStatus:   10, // pending
 			Version:            1,
 			IsLatest:           true,
+			ColorRed:           colorRed,
+			ColorGreen:         colorGreen,
+			ColorBlue:          colorBlue,
 		}
 
 		// Lấy name từ properties nếu có
@@ -191,7 +211,14 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 		if displayName, ok := feat.Properties["display_name"]; ok {
 			region.DisplayName = fmt.Sprintf("%v", displayName)
 		}
+		if name, ok := feat.Properties["ten_khu"]; ok && region.Name == "" {
+			region.Name = fmt.Sprintf("%v", name)
+		}
+		if displayName, ok := feat.Properties["ten_khu"]; ok && region.DisplayName == "" {
+			region.DisplayName = fmt.Sprintf("%v", displayName)
+		}
 
+		// Insert region (đã có label_id)
 		if err := u.regionRepo.Create(ctx, region); err != nil {
 			if req.SkipInvalid {
 				continue
@@ -204,10 +231,8 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 			continue
 		}
 
-		// Gán label
-		if err := u.regionLabelRepo.AddLabels(ctx, region.ID, []uint64{labelID}, req.UserID, req.SourceFileName, ""); err != nil {
-			// Log error but continue
-		}
+		// KHÔNG CẦN gán label riêng nữa (vì đã có label_id trong region)
+		// ĐÃ XÓA: u.regionLabelRepo.AddLabels(...)
 
 		result.LabelStatistics[labelID]++
 		result.SuccessCount++
@@ -218,38 +243,62 @@ func (u *importUsecaseImpl) Import(ctx context.Context, req *dto.ImportRequest) 
 }
 
 func (u *importUsecaseImpl) resolveLabelID(ctx context.Context, properties map[string]interface{}, req *dto.ImportRequest) (uint64, error) {
-	if req.LabelField == "" {
-		if req.DefaultLabelID != nil {
-			return *req.DefaultLabelID, nil
+	// Ưu tiên dùng LabelField từ request
+	if req.LabelField != "" {
+		rawValue, ok := properties[req.LabelField]
+		if ok {
+			value := normalizeValue(rawValue)
+			// Kiểm tra mapping
+			if labelID, ok := req.LabelMappings[value]; ok {
+				return labelID, nil
+			}
+			// Tìm label theo tên
+			label, err := u.labelRepo.GetByNameAndLayer(ctx, value, req.LayerID)
+			if err == nil && label != nil {
+				return label.ID, nil
+			}
+			// Tạo label mới
+			return u.createNewLabel(ctx, value, req.LayerID)
 		}
-		return 0, fmt.Errorf("no label_field specified")
 	}
 
-	rawValue, ok := properties[req.LabelField]
-	if !ok {
-		if req.DefaultLabelID != nil {
-			return *req.DefaultLabelID, nil
+	// Fallback: tìm bất kỳ field nào có giá trị có nghĩa
+	for _, val := range properties {
+		// Bỏ qua các field không phải string hoặc quá dài
+		strVal, ok := val.(string)
+		if !ok || len(strVal) > 100 {
+			continue
 		}
-		return 0, fmt.Errorf("field '%s' not found", req.LabelField)
+		// Bỏ qua các field tọa độ, id, số
+		if isCoordinateOrNumeric(strVal) {
+			continue
+		}
+		value := normalizeValue(strVal)
+		if value == "" || value == "null" || value == "undefined" {
+			continue
+		}
+		// Tìm hoặc tạo label
+		label, err := u.labelRepo.GetByNameAndLayer(ctx, value, req.LayerID)
+		if err == nil && label != nil {
+			return label.ID, nil
+		}
+		return u.createNewLabel(ctx, value, req.LayerID)
 	}
 
-	value := strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", rawValue)))
-
-	if labelID, ok := req.LabelMappings[value]; ok {
-		return labelID, nil
+	// Default label
+	if req.DefaultLabelID != nil {
+		return *req.DefaultLabelID, nil
 	}
+	return u.createNewLabel(ctx, "Chưa phân loại", req.LayerID)
+}
 
-	label, err := u.labelRepo.GetByNameAndLayer(ctx, value, req.LayerID)
-	if err == nil && label != nil {
-		return label.ID, nil
-	}
-
-	// Auto create label
+func (u *importUsecaseImpl) createNewLabel(ctx context.Context, name string, layerID uint64) (uint64, error) {
+	normalizedName := normalizeLabelName(name)
 	newLabel := &qh_domain.QHLabel{
-		LayerID:     req.LayerID,
-		Name:        value,
-		DisplayName: value,
-		Color:       generateColorFromString(value),
+		LayerID:     layerID,
+		Name:        normalizedName,
+		DisplayName: normalizedName,
+		Color:       generateColorFromString(normalizedName),
 		FillOpacity: 0.6,
 		StrokeColor: "#000000",
 		StrokeWidth: 1,
@@ -313,4 +362,49 @@ func generateBatchID() string {
 func generateColorFromString(s string) string {
 	hash := md5.Sum([]byte(s))
 	return fmt.Sprintf("#%02X%02X%02X", hash[0], hash[1], hash[2])
+}
+
+func normalizeValue(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	str := strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", v)))
+	return str
+}
+
+func normalizeLabelName(rawName string) string {
+	if rawName == "" {
+		return "Chưa phân loại"
+	}
+	// Capitalize first letter of each word
+	words := strings.Split(rawName, " ")
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = strings.ToUpper(word[:1]) + strings.ToLower(word[1:])
+		}
+	}
+	return strings.Join(words, " ")
+}
+
+func isCoordinateOrNumeric(value string) bool {
+	// Kiểm tra nếu là số
+	if _, err := fmt.Sscanf(value, "%f", new(float64)); err == nil && len(value) < 20 {
+		return true
+	}
+	// Kiểm tra nếu là tọa độ (chứa dấu phẩy hoặc khoảng trắng và số)
+	if strings.ContainsAny(value, ", ") {
+		parts := strings.FieldsFunc(value, func(r rune) bool {
+			return r == ',' || r == ' '
+		})
+		numberCount := 0
+		for _, p := range parts {
+			if _, err := fmt.Sscanf(p, "%f", new(float64)); err == nil {
+				numberCount++
+			}
+		}
+		if numberCount >= 2 && numberCount <= 4 {
+			return true
+		}
+	}
+	return false
 }

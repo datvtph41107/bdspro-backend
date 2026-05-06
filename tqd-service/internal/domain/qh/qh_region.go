@@ -14,6 +14,7 @@ type QHRegion struct {
 	Name        string `gorm:"type:varchar(255)" json:"name"`
 	DisplayName string `gorm:"type:varchar(255)" json:"displayName"`
 	Description string `gorm:"type:text" json:"description"`
+	LabelID     uint64 `gorm:"index" json:"labelId"`
 
 	LegalDoc     string `gorm:"type:text" json:"legalDoc"`
 	PlanningName string `gorm:"type:varchar(255)" json:"planningName"`
@@ -95,4 +96,13 @@ func (r *QHRegion) IsActive() bool {
 // THÊM: Kiểm tra region đã được xác nhận chưa
 func (r *QHRegion) IsVerified() bool {
 	return r.ProcessingStatus == enums.ProcessingStatusVerified
+}
+
+func (r *QHRegion) GetLabelID() uint64 {
+	return r.LabelID
+}
+
+// Gán label cho region
+func (r *QHRegion) SetLabelID(labelID uint64) {
+	r.LabelID = labelID
 }

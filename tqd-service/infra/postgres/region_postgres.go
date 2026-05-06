@@ -8,14 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
-	"tqd/internal/geometry"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -105,8 +103,7 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 		query = query.Where("layer_id = ?", *filter.LayerID)
 	}
 	if filter.LabelID != nil {
-		query = query.Joins("JOIN qh_region_labels ON qh_region_labels.region_id = qh_regions.id").
-			Where("qh_region_labels.label_id = ?", *filter.LabelID)
+		query = query.Where("label_id = ?", *filter.LabelID)
 	}
 	if filter.Status != nil {
 		query = query.Where("status = ?", *filter.Status)
@@ -168,6 +165,9 @@ func (r *regionRepoImpl) ListClient(ctx context.Context, filter *repo.ClientRegi
 
 	if filter.LayerID != nil {
 		query = query.Where("layer_id = ?", *filter.LayerID)
+	}
+	if filter.LabelID != nil {
+		query = query.Where("label_id = ?", *filter.LabelID)
 	}
 	if filter.LandUseCode != nil {
 		query = query.Where("land_use_code = ?", *filter.LandUseCode)
@@ -239,8 +239,7 @@ func (r *regionRepoImpl) FindByBBox(ctx context.Context, minLng, minLat, maxLng,
 	}
 
 	if labelID != nil && *labelID > 0 {
-		query = query.Joins("INNER JOIN qh_region_labels ON qh_region_labels.region_id = qh_regions.id").
-			Where("qh_region_labels.label_id = ?", *labelID)
+		query = query.Where("label_id = ?", *labelID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -258,10 +257,7 @@ func (r *regionRepoImpl) FindByBBox(ctx context.Context, minLng, minLat, maxLng,
 	return regions, total, err
 }
 
-// =====================================================
-// STATISTICS (GIỮ LẠI)
-// =====================================================
-
+// STATISTICS
 func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*repo.RegionStats, error) {
 	var stats repo.RegionStats
 	stats.LayerID = layerID
@@ -300,17 +296,11 @@ func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*
 	return &stats, nil
 }
 
-// =====================================================
-// LEGACY METHODS (GIỮ CHO TƯƠNG THÍCH, NHƯNG CÓ THỂ XÓA SAU)
-// =====================================================
-
 func (r *regionRepoImpl) GetByBBox(ctx context.Context, minX, minY, maxX, maxY float64, regionType *uint32, layerID *uint64) ([]qh_domain.QHRegion, error) {
-	// TODO: Implement hoặc xóa nếu không dùng
 	return []qh_domain.QHRegion{}, nil
 }
 
 func (r *regionRepoImpl) GetIntersections(ctx context.Context, id uint64, bufferMeters float64) ([]qh_domain.QHRegion, error) {
-	// TODO: Implement hoặc xóa nếu không dùng
 	return []qh_domain.QHRegion{}, nil
 }
 
@@ -336,154 +326,6 @@ func (r *regionRepoImpl) GetBufferGeometry(ctx context.Context, sourceID uint64,
 
 	bytes, err := json.Marshal(geom)
 	return string(bytes), err
-}
-
-func (r *regionRepoImpl) checkGeometryIntersection(geo1, geo2 string) (bool, error) {
-	var geom1, geom2 map[string]interface{}
-	if err := json.Unmarshal([]byte(geo1), &geom1); err != nil {
-		return false, err
-	}
-	if err := json.Unmarshal([]byte(geo2), &geom2); err != nil {
-		return false, err
-	}
-
-	bbox1 := getBBoxFromGeometry(geom1)
-	bbox2 := getBBoxFromGeometry(geom2)
-
-	return bbox1.MaxX >= bbox2.MinX && bbox1.MinX <= bbox2.MaxX &&
-		bbox1.MaxY >= bbox2.MinY && bbox1.MinY <= bbox2.MaxY, nil
-}
-
-func getBBoxFromGeometry(geom map[string]interface{}) geometry.BoundingBox {
-	bbox := geometry.BoundingBox{MinX: math.Inf(1), MinY: math.Inf(1), MaxX: math.Inf(-1), MaxY: math.Inf(-1)}
-	if coords, ok := geom["coordinates"]; ok {
-		flattenCoords(coords, func(x, y float64) {
-			if x < bbox.MinX {
-				bbox.MinX = x
-			}
-			if y < bbox.MinY {
-				bbox.MinY = y
-			}
-			if x > bbox.MaxX {
-				bbox.MaxX = x
-			}
-			if y > bbox.MaxY {
-				bbox.MaxY = y
-			}
-		})
-	}
-	return bbox
-}
-
-func expandCoordinates(coords interface{}, distance float64) interface{} {
-	switch v := coords.(type) {
-	case []interface{}:
-		result := make([]interface{}, len(v))
-		for i, item := range v {
-			result[i] = expandCoordinates(item, distance)
-		}
-		return result
-	case []float64:
-		if len(v) >= 2 {
-			return []float64{v[0] + distance, v[1] + distance}
-		}
-		return v
-	default:
-		return coords
-	}
-}
-
-func flattenCoords(coords interface{}, fn func(x, y float64)) {
-	switch v := coords.(type) {
-	case []interface{}:
-		for _, item := range v {
-			flattenCoords(item, fn)
-		}
-	case []float64:
-		if len(v) >= 2 {
-			fn(v[0], v[1])
-		}
-	}
-}
-
-type Feature struct {
-	Type       string                 `json:"type"`
-	Geometry   json.RawMessage        `json:"geometry"`
-	Properties map[string]interface{} `json:"properties"`
-}
-
-func (r *regionRepoImpl) BuildPMTiles(layerID int64, outputPath string) error {
-	ctx := context.Background()
-
-	rows, err := r.db.WithContext(ctx).
-		Raw(`
-			SELECT json_build_object(
-				'type','Feature',
-				'geometry', ST_AsGeoJSON(geometry)::json,
-				'properties', jsonb_build_object(
-					'id', id,
-					'name', name,
-					'display_name', display_name
-				)
-			)
-			FROM qh_regions
-			WHERE layer_id = ?
-		`, layerID).
-		Rows() // 👈 QUAN TRỌNG
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	// temp geojson file
-	tmpFile := fmt.Sprintf("/tmp/layer%d.geojson", layerID)
-	f, err := os.Create(tmpFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	writer := bufio.NewWriter(f)
-
-	writer.WriteString(`{"type":"FeatureCollection","features":[`)
-
-	first := true
-	for rows.Next() {
-		var raw []byte
-		if err := rows.Scan(&raw); err != nil {
-			return err
-		}
-
-		if !first {
-			writer.WriteString(",")
-		}
-		writer.Write(raw)
-		first = false
-	}
-
-	writer.WriteString(`]}`)
-	writer.Flush()
-
-	// build pmtiles bằng tippecanoe
-	cmd := exec.Command(
-		"tippecanoe",
-		"-o", outputPath,
-		"-zg",
-		"--force",
-		"--read-parallel",
-		tmpFile,
-	)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	log.Println("Running tippecanoe...")
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	log.Println("PMTiles created at:", outputPath)
-	return nil
 }
 
 func (r *regionRepoImpl) GetLayerBBox(ctx context.Context, layerID uint64) (minLon, minLat, maxLon, maxLat float64, err error) {
@@ -552,4 +394,106 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 			  AND NOT ST_IsEmpty(ST_MakeValid(geometry))
 		`, layerID).
 		Rows()
+}
+
+func expandCoordinates(coords interface{}, distance float64) interface{} {
+	switch v := coords.(type) {
+	case []interface{}:
+		result := make([]interface{}, len(v))
+		for i, item := range v {
+			result[i] = expandCoordinates(item, distance)
+		}
+		return result
+	case []float64:
+		if len(v) >= 2 {
+			return []float64{v[0] + distance, v[1] + distance}
+		}
+		return v
+	default:
+		return coords
+	}
+}
+
+func (r *regionRepoImpl) BuildPMTiles(layerID int64, outputPath string) error {
+	ctx := context.Background()
+
+	rows, err := r.db.WithContext(ctx).
+		Raw(`
+			SELECT json_build_object(
+				'type','Feature',
+				'geometry', ST_AsGeoJSON(geometry)::json,
+				'properties', jsonb_build_object(
+					'id', id,
+					'name', name,
+					'display_name', display_name
+				)
+			)
+			FROM qh_regions
+			WHERE layer_id = ?
+		`, layerID).
+		Rows()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	tmpFile := fmt.Sprintf("/tmp/layer%d.geojson", layerID)
+	f, err := os.Create(tmpFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	writer.WriteString(`{"type":"FeatureCollection","features":[`)
+
+	first := true
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			return err
+		}
+		if !first {
+			writer.WriteString(",")
+		}
+		writer.Write(raw)
+		first = false
+	}
+
+	writer.WriteString(`]}`)
+	writer.Flush()
+
+	cmd := exec.Command(
+		"tippecanoe",
+		"-o", outputPath,
+		"-zg",
+		"--force",
+		"--read-parallel",
+		tmpFile,
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	log.Println("Running tippecanoe...")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	log.Println("PMTiles created at:", outputPath)
+	return nil
+}
+
+func (r *regionRepoImpl) UpdateLabelForAllRegions(ctx context.Context, oldLabelID uint64, newLabelID uint64) error {
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("label_id = ? AND deleted_at IS NULL", oldLabelID).
+		Update("label_id", newLabelID).Error
+}
+
+func (r *regionRepoImpl) UpdateLabelForRegion(ctx context.Context, regionID uint64, labelID uint64) error {
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("id = ? AND deleted_at IS NULL", regionID).
+		Update("label_id", labelID).Error
 }
