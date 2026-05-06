@@ -375,23 +375,40 @@ func (r *regionRepoImpl) GetMVTTile(ctx context.Context, layerID uint64, z uint8
 	return row.Mvt, err
 }
 
+// StreamGeoJSON - Xuất GeoJSON stream cho một layer, kèm thông tin label
 func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sql.Rows, error) {
 	return r.db.WithContext(ctx).
 		Raw(`
 			SELECT json_build_object(
 				'type', 'Feature',
-				'geometry', ST_AsGeoJSON(ST_MakeValid(geometry))::json,
+				'geometry', ST_AsGeoJSON(ST_MakeValid(r.geometry))::json,
 				'properties', jsonb_build_object(
-					'id', id,
-					'name', name,
-					'display_name', display_name,
-					'layer_id', layer_id
+					'id', r.id,
+					'name', r.name,
+					'display_name', r.display_name,
+					'layer_id', r.layer_id,
+
+					'label_fill_opacity', l.fill_opacity,
+					'label_stroke_color', l.stroke_color,
+					'label_stroke_width', l.stroke_width,
+					
+					'area_ha', r.area_ha,
+					'area_sqm', r.area_sqm,
+					'status', r.status,
+					'processing_status', r.processing_status,
+					'source_file', r.source_file,
+					'import_batch_id', r.import_batch_id,
+					'created_at', r.created_at,
+					'updated_at', r.updated_at
 				)
-			)
-			FROM qh_regions
-			WHERE layer_id = ?
-			  AND geometry IS NOT NULL
-			  AND NOT ST_IsEmpty(ST_MakeValid(geometry))
+			) as feature
+			FROM qh_regions r
+			LEFT JOIN qh_labels l ON r.label_id = l.id AND l.deleted_at IS NULL
+			WHERE r.layer_id = $1
+			  AND r.geometry IS NOT NULL
+			  AND r.deleted_at IS NULL
+			  AND NOT ST_IsEmpty(ST_MakeValid(r.geometry))
+			ORDER BY r.id ASC
 		`, layerID).
 		Rows()
 }
