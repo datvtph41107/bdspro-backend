@@ -143,18 +143,6 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.ThumbnailURL != "" {
 		existing.ThumbnailURL = layer.ThumbnailURL
 	}
-	if layer.LegalDoc != "" {
-		existing.LegalDoc = layer.LegalDoc
-	}
-	if layer.LegalDocURL != "" {
-		existing.LegalDocURL = layer.LegalDocURL
-	}
-	if layer.DocumentNumber != "" {
-		existing.DocumentNumber = layer.DocumentNumber
-	}
-	if layer.IssuingAuthority != "" {
-		existing.IssuingAuthority = layer.IssuingAuthority
-	}
 	if layer.EffectiveDate != nil {
 		existing.EffectiveDate = layer.EffectiveDate
 	}

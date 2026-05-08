@@ -83,8 +83,8 @@ type ParcelLayerRow struct {
 	LayerDisplayName   string
 	LayerType          uint32
 	LayerEffectiveDate string
+	LayerLegalDocs     string `gorm:"column:layer_legal_docs"`
 	LayerLegalDoc      string
-
 	RegionID           uint64
 	RegionName         string
 	RegionDisplayName  string
@@ -113,6 +113,7 @@ type LayerImpact struct {
 	Severity      string
 	EffectiveDate string
 	LegalDoc      string
+	LegalDocs     []*LayerLegalDTO
 	Labels        []*LabelImpact
 	TotalArea     float64
 	TotalPct      float64

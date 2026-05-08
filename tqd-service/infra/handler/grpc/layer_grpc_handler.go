@@ -68,24 +68,20 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 
 	// Build domain - KHÔNG gán LayerURL, StyleConfig
 	layer := &qh_domain.QHLayer{
-		Name:             req.Name,
-		DisplayName:      req.DisplayName,
-		Description:      req.Description,
-		Type:             enums.LayerType(req.Type),
-		Visible:          req.Visible,
-		DisplayOrder:     int(req.DisplayOrder),
-		MinZoom:          int(req.MinZoom),
-		MaxZoom:          int(req.MaxZoom),
-		Avatar:           req.Avatar,
-		ImageURL:         req.ImageUrl,
-		ThumbnailURL:     req.ThumbnailUrl,
-		SourceType:       req.SourceType,
-		LegalDoc:         req.LegalDoc,
-		LegalDocURL:      req.LegalDocUrl,
-		DocumentNumber:   req.DocumentNumber,
-		IssuingAuthority: req.IssuingAuthority,
-		EffectiveDate:    effectiveDate,
-		ExpiryDate:       expiryDate,
+		Name:          req.Name,
+		DisplayName:   req.DisplayName,
+		Description:   req.Description,
+		Type:          enums.LayerType(req.Type),
+		Visible:       req.Visible,
+		DisplayOrder:  int(req.DisplayOrder),
+		MinZoom:       int(req.MinZoom),
+		MaxZoom:       int(req.MaxZoom),
+		Avatar:        req.Avatar,
+		ImageURL:      req.ImageUrl,
+		ThumbnailURL:  req.ThumbnailUrl,
+		SourceType:    req.SourceType,
+		EffectiveDate: effectiveDate,
+		ExpiryDate:    expiryDate,
 	}
 
 	// Set status if provided
@@ -151,18 +147,6 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 	if req.ThumbnailUrl != nil {
 		existing.ThumbnailURL = *req.ThumbnailUrl
-	}
-	if req.LegalDoc != nil {
-		existing.LegalDoc = *req.LegalDoc
-	}
-	if req.LegalDocUrl != nil {
-		existing.LegalDocURL = *req.LegalDocUrl
-	}
-	if req.DocumentNumber != nil {
-		existing.DocumentNumber = *req.DocumentNumber
-	}
-	if req.IssuingAuthority != nil {
-		existing.IssuingAuthority = *req.IssuingAuthority
 	}
 	if req.EffectiveDate != nil && *req.EffectiveDate != "" {
 		t, err := time.Parse("2006-01-02", *req.EffectiveDate)

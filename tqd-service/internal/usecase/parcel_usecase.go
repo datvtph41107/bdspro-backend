@@ -35,12 +35,14 @@ type ParcelUsecase interface {
 }
 
 type parcelUsecase struct {
-	parcelRepo repo.IParcelRepo
+	parcelRepo     repo.IParcelRepo
+	layerLegalRepo repo.ILayerLegalRepo
 }
 
-func NewParcelUsecase(parcelRepo repo.IParcelRepo) ParcelUsecase {
+func NewParcelUsecase(parcelRepo repo.IParcelRepo, layerLegalRepo repo.ILayerLegalRepo) ParcelUsecase {
 	return &parcelUsecase{
-		parcelRepo: parcelRepo,
+		parcelRepo:     parcelRepo,
+		layerLegalRepo: layerLegalRepo,
 	}
 }
 
@@ -324,6 +326,7 @@ func normalizePage(page, pageSize int) (limit, offset int) {
 	offset = (page - 1) * pageSize
 	return
 }
+
 func (u *parcelUsecase) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	if parcelID == 0 {
 		return nil, fmt.Errorf("parcel_id is required")
@@ -367,7 +370,15 @@ func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*
 		parcelArea = info.AreaSqm
 	}
 
-	resp := buildParcelLayersResponse(parcelID, parcelArea, rows)
+	// THÊM MỚI: Lấy legal docs cho tất cả layer IDs
+	layerIDs := extractLayerIDs(rows)
+	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
+	if err != nil {
+		// Log error nhưng không fail request
+		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
+	}
+
+	resp := buildParcelLayersResponse(parcelID, parcelArea, rows, legalDocsMap)
 	resp.Metadata = &dto.ResponseMeta{
 		DataSource:     "postgis real-time",
 		QueriedAt:      time.Now().UTC().Format(time.RFC3339),
@@ -378,7 +389,30 @@ func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*
 	return resp, nil
 }
 
-func buildParcelLayersResponse(parcelID uint64, parcelArea float64, rows []dto.ParcelLayerRow) *dto.ParcelLayersResponse {
+// Helper function
+func extractLayerIDs(rows []dto.ParcelLayerRow) []uint64 {
+	if len(rows) == 0 {
+		return []uint64{}
+	}
+
+	layerIDMap := make(map[uint64]bool)
+	for _, row := range rows {
+		layerIDMap[row.LayerID] = true
+	}
+
+	layerIDs := make([]uint64, 0, len(layerIDMap))
+	for id := range layerIDMap {
+		layerIDs = append(layerIDs, id)
+	}
+
+	return layerIDs
+}
+
+func buildParcelLayersResponse(parcelID uint64,
+	parcelArea float64,
+	rows []dto.ParcelLayerRow,
+	legalDocsMap map[uint64][]*qh_domain.QHLayerLegal,
+) *dto.ParcelLayersResponse {
 	layerMap := make(map[uint64]*dto.LayerImpact, 8)
 	labelSeen := make(map[string]struct{}, 32)
 	regionSeen := make(map[uint64]struct{}, 64)
@@ -388,6 +422,20 @@ func buildParcelLayersResponse(parcelID uint64, parcelArea float64, rows []dto.P
 	for _, r := range rows {
 		layer, ok := layerMap[r.LayerID]
 		if !ok {
+			var legalDocs []*dto.LayerLegalDTO
+			if legals, exists := legalDocsMap[r.LayerID]; exists {
+				legalDocs = make([]*dto.LayerLegalDTO, 0, len(legals))
+				for _, legal := range legals {
+					legalDocs = append(legalDocs, &dto.LayerLegalDTO{
+						ID:       legal.ID,
+						LayerID:  legal.LayerID,
+						Name:     legal.Name,
+						FileUrl:  legal.FileURL,
+						FileType: legal.FileType,
+					})
+				}
+			}
+
 			layer = &dto.LayerImpact{
 				ID:            r.LayerID,
 				Name:          r.LayerName,
@@ -395,6 +443,7 @@ func buildParcelLayersResponse(parcelID uint64, parcelArea float64, rows []dto.P
 				Type:          r.LayerType,
 				EffectiveDate: r.LayerEffectiveDate,
 				LegalDoc:      r.LayerLegalDoc,
+				LegalDocs:     legalDocs,
 				Labels:        []*dto.LabelImpact{},
 			}
 			layerMap[r.LayerID] = layer
@@ -467,6 +516,7 @@ func buildParcelLayersResponse(parcelID uint64, parcelArea float64, rows []dto.P
 		return layers[i].TotalArea > layers[j].TotalArea
 	})
 
+	// ... rest of the existing code for stats, risk, summary remains the same ...
 	totalOverlapArea := totalOverlapRaw
 	totalOverlapPct := 0.0
 	if parcelArea > 0 {

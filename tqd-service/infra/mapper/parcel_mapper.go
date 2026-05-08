@@ -1,9 +1,11 @@
+// infra/mapper/parcel_mapper.go
 package mapper
 
 import (
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"strconv"
+	"strings"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 )
@@ -93,6 +95,7 @@ func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tq
 	}
 }
 
+// SỬA: Thêm logic xử lý legalDocStr
 func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdpb.ParcelLayersResponse {
 	if resp == nil {
 		return nil
@@ -102,6 +105,20 @@ func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdp
 	for _, layer := range resp.Layers {
 		if layer == nil {
 			continue
+		}
+
+		// Tạo legalDocStr từ LegalDocs
+		var legalDocStr string
+		if len(layer.LegalDocs) > 0 {
+			urls := make([]string, 0, len(layer.LegalDocs))
+			for _, legal := range layer.LegalDocs {
+				if legal.FileUrl != "" {
+					urls = append(urls, legal.FileUrl)
+				}
+			}
+			legalDocStr = strings.Join(urls, ",")
+		} else {
+			legalDocStr = layer.LegalDoc // Fallback to old field
 		}
 
 		labels := make([]*tqdpb.Label, 0, len(layer.Labels))
@@ -165,7 +182,7 @@ func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdp
 			Type:          layer.Type,
 			Severity:      layer.Severity,
 			EffectiveDate: layer.EffectiveDate,
-			LegalDoc:      layer.LegalDoc,
+			LegalDoc:      legalDocStr, // SỬA: sử dụng biến đã khai báo
 			Labels:        labels,
 			TotalArea:     layer.TotalArea,
 			TotalPercent:  layer.TotalPct,
@@ -236,18 +253,11 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 	mapNum, _ := strconv.ParseUint(p.MapNumber, 10, 32)
 	landNum, _ := strconv.ParseUint(p.LandNumber, 10, 32)
 
-	// Parse direction từ string sang uint32
-	// directionVal := m.parseDirectionString(p.Direction)
-	// shapeVal := m.parseShapeString(p.ShapeType)
-
 	// Xử lý LandTypeId
 	var landTypeId uint64
 	if p.LandTypeId != nil {
 		landTypeId = *p.LandTypeId
 	}
-
-	// Xử lý ShapeId (convert uint32 sang uint64)
-	// shapeId := uint64(p.ShapeId)
 
 	result := &tqdpb.ParcelInfo{
 		Id:         p.ID,
@@ -259,14 +269,6 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 		Facade:     uint32(p.Facade),
 		TotalArea:  p.TotalAreaSqm,
 		Geometry:   p.Geometry,
-		// Direction: &sharepb.ItemV3Proto{
-		// 	Id:   uint64(directionVal),
-		// 	Name: m.getDirectionName(directionVal),
-		// },
-		// Shape: &sharepb.ItemV3Proto{
-		// 	Id:   shapeId,
-		// 	Name: m.getShapeName(shapeVal),
-		// },
 		LandType: &sharepb.ItemV3Proto{
 			Id:   landTypeId,
 			Name: m.getLandTypeName(landTypeId),
@@ -279,13 +281,6 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 			Name: p.Shape.Name,
 		}
 	}
-
-	// if p.Direction != nil {
-	// 	result.Direction = &sharepb.ItemV3Proto{
-	// 		Id:   p.Direction.ID,
-	// 		Name: p.Direction.Name,
-	// 	}
-	// }
 
 	return result
 }
@@ -306,14 +301,6 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 		Facade:     p.Facade,
 		TotalArea:  p.TotalArea,
 		Geometry:   p.Geometry,
-		// Direction: &sharepb.ItemV3Proto{
-		// 	Id:   uint64(p.Direction),
-		// 	Name: m.getDirectionName(p.Direction),
-		// },
-		// Shape: &sharepb.ItemV3Proto{
-		// 	Id:   uint64(p.Shape), // SỬA: convert uint32 -> uint64
-		// 	Name: m.getShapeName(p.Shape),
-		// },
 		LandType: &sharepb.ItemV3Proto{
 			Id:   p.LandTypeId,
 			Name: m.getLandTypeName(p.LandTypeId),
@@ -329,7 +316,6 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 
 	if len(p.Directions) > 0 {
 		result.Directions = make([]*sharepb.ItemV3Proto, 0, len(p.Directions))
-
 		for _, d := range p.Directions {
 			result.Directions = append(result.Directions, &sharepb.ItemV3Proto{
 				Id:   d.ID,
@@ -352,12 +338,26 @@ func (m *ParcelMapper) buildLayersProto(layers []*dto.LayerImpact) []*tqdpb.Laye
 
 	result := make([]*tqdpb.Layer, 0, len(layers))
 	for _, l := range layers {
+		// Tạo legalDocStr từ LegalDocs
+		var legalDocStr string
+		if len(l.LegalDocs) > 0 {
+			urls := make([]string, 0, len(l.LegalDocs))
+			for _, legal := range l.LegalDocs {
+				if legal.FileUrl != "" {
+					urls = append(urls, legal.FileUrl)
+				}
+			}
+			legalDocStr = strings.Join(urls, ",")
+		} else {
+			legalDocStr = l.LegalDoc
+		}
+
 		result = append(result, &tqdpb.Layer{
 			Id:            l.ID,
 			Name:          l.Name,
 			DisplayName:   l.DisplayName,
 			EffectiveDate: l.EffectiveDate,
-			LegalDoc:      l.LegalDoc,
+			LegalDoc:      legalDocStr,
 			Labels:        m.buildLabelsProto(l.Labels),
 			TotalArea:     l.TotalArea,
 			TotalPercent:  l.TotalPct,

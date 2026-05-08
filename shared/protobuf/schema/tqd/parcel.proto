@@ -61,6 +61,7 @@ service ParcelService {
     };
   }
 }
+
 message GetParcelDetailRequest {
   uint64 parcelId = 1;
 }

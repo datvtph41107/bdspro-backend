@@ -7,6 +7,7 @@ import (
 	"github.com/google/wire"
 	_db "common/db"
 	"tqd/initial"
+	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
 	tqd_infra_handler_http "tqd/infra/handler/http"
@@ -67,7 +68,9 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewImportUsecase,
 	tqd_infra_mapper.NewLabelMapper,
 	tqd_infra_handler_grpc.NewLayerGrpcHandler,
+	tqd_infra_postgres.NewLayerLegalPostgres,
 	tqd_infra_postgres.NewLayerRepository,
+	tqd_config.NewLayerResolver,
 	tqd_internal_usecase.NewLayerUsecase,
 	tqd_infra_handler_grpc.NewLocationHandler,
 	tqd_infra_mapper.NewLocationMapper,

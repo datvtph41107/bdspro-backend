@@ -249,6 +249,7 @@ func (p *ParcelPostgres) FindWithinPolygon(ctx context.Context, points []repo.Po
 	err := p.DB.WithContext(ctx).Raw(query, polygon, limit, offset).Scan(&parcels).Error
 	return parcels, total, err
 }
+
 func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 
@@ -328,7 +329,27 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 				l.display_name AS layer_display_name,
 				l.type AS layer_type,
 				COALESCE(TO_CHAR(l.effective_date, 'YYYY-MM-DD'), '') AS layer_effective_date,
-				COALESCE(l.legal_doc, '') AS layer_legal_doc,
+				
+				COALESCE(
+					(
+						SELECT JSON_AGG(
+							JSON_BUILD_OBJECT(
+								'id', ll.id,
+								'layerId', ll.layer_id,
+								'name', ll.name,
+								'fileUrl', ll.file_url,
+								'fileType', ll.file_type,
+								'createdAt', ll.created_at
+							)
+							ORDER BY ll.display_order, ll.id
+						)
+						FROM qh_layer_legals ll
+						WHERE ll.layer_id = l.id
+						  AND ll.deleted_at IS NULL
+						  AND ll.is_public = 1
+					),
+					'[]'::json
+				) AS layer_legal_docs,
 
 				pb.parcel_id,
 				pb.parcel_geometry,
@@ -371,7 +392,7 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 			ri.layer_display_name,
 			ri.layer_type,
 			ri.layer_effective_date,
-			ri.layer_legal_doc,
+			ri.layer_legal_docs,  -- Thêm field này
 
 			ri.region_id,
 			ri.region_name,

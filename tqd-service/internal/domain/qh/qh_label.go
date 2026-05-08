@@ -24,7 +24,8 @@ type QHLabel struct {
 	MinZoom      int  `gorm:"default:0" json:"minZoom"`
 	MaxZoom      int  `gorm:"default:22" json:"maxZoom"`
 
-	Status enums.LabelStatus `gorm:"default:10" json:"status"`
+	RegionCount int64             `gorm:"default:0" json:"regionCount"`
+	Status      enums.LabelStatus `gorm:"default:10" json:"status"`
 
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`

@@ -27,11 +27,6 @@ type QHLayer struct {
 
 	SourceType string `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
 
-	LegalDoc         string `gorm:"type:text" json:"legalDoc,omitempty"`
-	LegalDocURL      string `gorm:"type:text" json:"legalDocUrl,omitempty"`
-	DocumentNumber   string `gorm:"type:varchar(100)" json:"documentNumber,omitempty"`
-	IssuingAuthority string `gorm:"type:varchar(255)" json:"issuingAuthority,omitempty"`
-
 	EffectiveDate *time.Time `gorm:"type:date;index" json:"effectiveDate,omitempty"`
 	ExpiryDate    *time.Time `gorm:"type:date;index" json:"expiryDate,omitempty"`
 
