@@ -11,9 +11,14 @@ import (
 	"tqd/internal/interface/repo"
 )
 
+// ErrLayerNotFound khi admin list region theo layer nhưng layer không tồn tại
+var ErrLayerNotFound = errors.New("layer not found")
+
 type RegionUsecase interface {
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
 	List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
+	// ListForAdminByLayer kiểm tra layer tồn tại rồi list regions (admin)
+	ListForAdminByLayer(ctx context.Context, layerID uint64, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
 	Delete(ctx context.Context, id uint64) error
 	UpdateProcessingStatus(ctx context.Context, regionID uint64, status enums.ProcessingStatus, userID uint64, notes string) error
 
@@ -61,6 +66,22 @@ func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.
 }
 
 func (u *regionUsecaseImpl) List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error) {
+	return u.regionRepo.List(ctx, filter)
+}
+
+func (u *regionUsecaseImpl) ListForAdminByLayer(ctx context.Context, layerID uint64, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error) {
+	if layerID == 0 {
+		return nil, 0, errors.New("layerId is required")
+	}
+	layer, err := u.layerRepo.GetByID(ctx, layerID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get layer failed: %w", err)
+	}
+	if layer == nil {
+		return nil, 0, fmt.Errorf("%w: id=%d", ErrLayerNotFound, layerID)
+	}
+	lid := layerID
+	filter.LayerID = &lid
 	return u.regionRepo.List(ctx, filter)
 }
 

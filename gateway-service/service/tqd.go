@@ -13,6 +13,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+// DialTQDGRPC tạo client tới tqd-service (dùng chung cho mux và route multipart).
+func DialTQDGRPC(env string, opts []grpc.DialOption) (*grpc.ClientConn, error) {
+	port := viper.GetString("service.port.tqd")
+	url := common.GetPrefixProtobufUrl(env, "tqd")
+	endpoint := fmt.Sprintf("%s:%s", url, port)
+	return grpc.NewClient(endpoint, opts...)
+}
+
 // RegisterTqdService registers all TQD service handlers to the gateway mux.
 // Dùng grpc.NewClient (không block khi start): kết nối thật sự và reconnect diễn ra
 // khi có RPC; backend tạm tắt thì request sau vẫn thử lại theo ConnectParams ở main.
@@ -22,7 +30,7 @@ func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	url := common.GetPrefixProtobufUrl(env, "tqd")
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 
-	conn, err := grpc.NewClient(endpoint, opts...)
+	conn, err := DialTQDGRPC(env, opts)
 	if err != nil {
 		log.Printf("[TQD] Không tạo được client tới %s (đăng ký lazy theo endpoint): %v", endpoint, err)
 		registerTqdFromEndpoint(ctx, mux, endpoint, opts)

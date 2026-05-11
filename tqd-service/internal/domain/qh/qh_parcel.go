@@ -1,10 +1,15 @@
 package qh_domain
 
 import (
+	"bytes"
+	"context"
 	_models "common/domain/entity"
 	"database/sql/driver"
 	"encoding/base64"
 	"encoding/json"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Parcel struct {
@@ -44,6 +49,21 @@ func (r *RawGeometry) Scan(value any) error {
 
 func (r RawGeometry) Value() (driver.Value, error) {
 	return r.Raw, nil
+}
+
+// GormValue binds GeoJSON bytes via PostGIS so inserts/updates are valid for geometry columns.
+// Raw GeoJSON text is not accepted as implicit geometry cast (unlike WKT/EWKB).
+func (r RawGeometry) GormValue(_ context.Context, _ *gorm.DB) clause.Expr {
+	raw := bytes.TrimSpace(r.Raw)
+	if len(raw) == 0 {
+		return clause.Expr{
+			SQL: "ST_SetSRID(ST_GeomFromText('MULTIPOLYGON EMPTY'),4326)::geometry(MultiPolygon,4326)",
+		}
+	}
+	return clause.Expr{
+		SQL: "ST_Multi(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(?),4326)))::geometry(MultiPolygon,4326)",
+		Vars: []interface{}{string(raw)},
+	}
 }
 
 func (r RawGeometry) MarshalJSON() ([]byte, error) {

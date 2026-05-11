@@ -293,6 +293,7 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 
 	result := &tqdpb.ParcelInfo{
 		Id:         p.ID,
+		ParcelId:   p.ParcelID,
 		AddressStr: p.AddressStr,
 		MapNumber:  p.MapNumber,
 		LandNumber: p.LandNumber,

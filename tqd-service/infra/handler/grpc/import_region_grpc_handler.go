@@ -5,6 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"log"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status" // Đây là package status của gRPC
@@ -49,27 +50,25 @@ func (h *ImportGrpcHandler) PreviewImport(ctx context.Context, req *tqdpb.Previe
 	return h.importMapper.ToProtoPreviewResponse(result), nil
 }
 
-// ImportGeoJson - Import file GeoJSON vào hệ thống
+// ImportGeoJson - Upload file JSON/GeoJSON/NDJSON; trả processing, xử lý nền theo chunk
 func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.ImportGeoJsonRequest) (*tqdpb.ImportGeoJsonResponse, error) {
-	if req.GeoJson == "" {
-		return nil, status.Error(codes.InvalidArgument, "geoJson is required")
+	log.Println("ImportGeoJson", req)
+	if len(req.GetFileContent()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "file_content is required")
 	}
 	if req.LayerId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "layerId is required")
 	}
 
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
-	// Convert *string sang string
-	sourceFileName := ""
-	if req.SourceFileName != nil {
-		sourceFileName = *req.SourceFileName
-	}
+	sourceFileName := req.GetSourceFileName()
 
-	importReq := &dto.ImportRequest{
-		GeoJSON:          req.GeoJson,
+	importReq := &dto.ImportFileRequest{
+		FileContent:      req.GetFileContent(),
+		FileFormat:       req.FileFormat,
 		LayerID:          req.LayerId,
 		LabelField:       req.LabelField,
 		LabelMappings:    req.LabelMappings,
@@ -81,16 +80,21 @@ func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.Import
 		SkipInvalid:      req.SkipInvalid,
 	}
 
-	result, err := h.importUsecase.Import(ctx, importReq)
+	result, err := h.importUsecase.EnqueueImportFromFile(ctx, importReq)
 	if err != nil {
 		log.Printf("[ImportGeoJson] Error: %v", err)
-		return nil, status.Error(codes.Internal, err.Error())
+		if strings.Contains(err.Error(), "already has an import") {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		if strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Printf("[ImportGeoJson] Completed: success=%d, failed=%d, batchId=%s",
-		result.SuccessCount, result.FailedCount, result.BatchID)
+	log.Printf("[ImportGeoJson] Enqueued batchId=%s status=%s", result.BatchID, result.Status)
 
-	return h.importMapper.ToProtoImportResponse(result), nil
+	return h.importMapper.ToProtoImportEnqueueResponse(result), nil
 }
 
 // GetImportBatchStatus - Kiểm tra trạng thái batch import

@@ -51,6 +51,11 @@ func (m *MockRegionRepository) List(ctx context.Context, filter *repo.RegionFilt
 	return args.Get(0).([]qh_domain.QHRegion), args.Get(1).(int64), args.Error(2)
 }
 
+func (m *MockRegionRepository) ListByImportBatchID(ctx context.Context, batchID string) ([]qh_domain.QHRegion, error) {
+	args := m.Called(ctx, batchID)
+	return args.Get(0).([]qh_domain.QHRegion), args.Error(1)
+}
+
 func (m *MockRegionRepository) ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).([]qh_domain.QHRegion), args.Get(1).(int64), args.Error(2)

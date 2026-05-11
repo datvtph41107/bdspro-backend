@@ -19,6 +19,7 @@ type InitialApp struct {
 	AmenityHandler           *handler_http.AmenityHandler
 	QHLabelHandler           *handler_http.QHLabelHandler
 	RegionHttpHandler        *handler_http.RegionHttpHandler
+	ImportHTTPHandler        *handler_http.ImportHTTPHandler
 
 	// gRPC Handlers
 	ContactLabelGrpcHandler      *handler_grpc.ContactLabelGrpcHandler
@@ -54,6 +55,7 @@ func NewApp(
 	amenityHandler *handler_http.AmenityHandler,
 	qhLabelHandler *handler_http.QHLabelHandler,
 	regionHttpHandler *handler_http.RegionHttpHandler,
+	importHTTPHandler *handler_http.ImportHTTPHandler,
 	contactLabelGrpcHandler *handler_grpc.ContactLabelGrpcHandler,
 	directoryCategoryGrpcHandler *handler_grpc.DirectoryCategoryGrpcHandler,
 	directorySourceGrpcHandler *handler_grpc.DirectorySourceGrpcHandler,
@@ -85,6 +87,7 @@ func NewApp(
 		AmenityHandler:               amenityHandler,
 		QHLabelHandler:               qhLabelHandler,
 		RegionHttpHandler:            regionHttpHandler,
+		ImportHTTPHandler:            importHTTPHandler,
 		ContactLabelGrpcHandler:      contactLabelGrpcHandler,
 		DirectoryCategoryGrpcHandler: directoryCategoryGrpcHandler,
 		DirectorySourceGrpcHandler:   directorySourceGrpcHandler,

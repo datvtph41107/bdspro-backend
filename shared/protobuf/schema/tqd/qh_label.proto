@@ -18,7 +18,7 @@ service QHLabelService {
   // CreateLabel - Tạo label mới
   rpc CreateLabel(CreateLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
-      post: "/v2/tqd/admin/labels"
+      post: "/v2/tqd/qh/admin/labels"
       body: "*"
     };
   }
@@ -26,14 +26,14 @@ service QHLabelService {
   // GetLabel - Lấy chi tiết label
   rpc GetLabel(GetLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/admin/labels/{id}"
+      get: "/v2/tqd/qh/admin/labels/{id}"
     };
   }
   
   // UpdateLabel - Cập nhật label
   rpc UpdateLabel(UpdateLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
-      put: "/v2/tqd/admin/labels/{id}"
+      put: "/v2/tqd/qh/admin/labels/{id}"
       body: "*"
     };
   }
@@ -41,14 +41,14 @@ service QHLabelService {
   // DeleteLabel - Xóa mềm label
   rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v2/tqd/admin/labels/{id}"
+      delete: "/v2/tqd/qh/admin/labels/{id}"
     };
   }
   
   // ListLabelsByLayer - Danh sách label theo layer
   rpc ListLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/admin/layers/{layerId}/labels"
+      get: "/v2/tqd/qh/admin/layers/{layerId}/labels"
     };
   }
   

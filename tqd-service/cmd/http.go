@@ -252,6 +252,13 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 		// regionHttpHandler := app.RegionHttpHandler
 		// v2.POST("/admin/regions/batch", regionHttpHandler.CreateRegionBatch)
 
+		// Admin import — multipart (stream → temp file, xóa sau job); cùng path chuẩn với proto HTTP
+		importHTTPHandler := app.ImportHTTPHandler
+		admin := v2.Group("/admin")
+		{
+			admin.POST("/import/geojson", importHTTPHandler.PostImportGeoJSONMultipart)
+		}
+
 		// QH Label routes - ghép vào màn chi tiết lớp
 		qhLabelHandler := app.QHLabelHandler
 		// CRUD nhãn

@@ -105,6 +105,7 @@ func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, pa
 
 		results = append(results, &qh_domain.ParcelInfoResponse{
 			ID:         p.ID,
+			ParcelID:   p.ParcelID,
 			AddressStr: p.AddressText,
 			MapNumber:  uint32(mapNum),
 			LandNumber: uint32(landNum),

@@ -144,6 +144,7 @@ var publicRoutes = []string{
 	"/v2/tqd/properties",
 	"/v2/tqd/client/layers",
 	"/v2/tqd/parcels/public",
+	"/v2/tqd/public/enums",
 }
 
 var tempRoutes = []string{
@@ -276,6 +277,10 @@ var HttpCmd = &cobra.Command{
 		service.RegisterAssistantService(ctx, mux, env, opts)
 		service.RegisterHubService(ctx, mux, env, opts)
 		service.RegisterTqdService(ctx, mux, env, opts)
+
+		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
+		v2Import := r.Group("/form", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
+		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))

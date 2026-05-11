@@ -21,7 +21,7 @@ service LayerService {
   // CreateLayer - Tạo layer mới
   rpc CreateLayer(CreateLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      post: "/v2/tqd/admin/layers"
+      post: "/v2/tqd/qh/admin/layers"
       body: "*"
     };
   }
@@ -29,7 +29,7 @@ service LayerService {
   // UpdateLayer - Cập nhật layer
   rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      put: "/v2/tqd/admin/layers/{id}"
+      put: "/v2/tqd/qh/admin/layers/{id}"
       body: "*"
     };
   }
@@ -37,28 +37,28 @@ service LayerService {
   // DeleteLayer - Xóa mềm layer
   rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
     option (google.api.http) = {
-      delete: "/v2/tqd/admin/layers/{id}"
+      delete: "/v2/tqd/qh/admin/layers/{id}"
     };
   }
   
   // GetLayer - Lấy chi tiết layer
   rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/admin/layers/{id}"
+      get: "/v2/tqd/qh/admin/layers/{id}"
     };
   }
   
   // ListLayers - Danh sách layers (có filter, phân trang)
   rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/admin/layers"
+      get: "/v2/tqd/qh/admin/layers"
     };
   }
   
   // UpdateLayerStatus - Cập nhật trạng thái layer
   rpc UpdateLayerStatus(UpdateLayerStatusRequest) returns (LayerResponse) {
     option (google.api.http) = {
-      patch: "/v2/tqd/admin/layers/{id}/status"
+      patch: "/v2/tqd/qh/admin/layers/{id}/status"
       body: "*"
     };
   }

@@ -2,6 +2,7 @@ package handler_grpc
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	_dto "common/domain/dto"
@@ -37,6 +38,67 @@ func NewRegionGrpcHandler(
 	}
 }
 
+func buildAdminRegionFilter(
+	pagable *_dto.Pagable,
+	layerID *uint64,
+	labelID *uint64,
+	status *uint32,
+	processingStatus *uint32,
+	search *string,
+	orderBy *string,
+	orderDir *string,
+) *repo.RegionFilter {
+	filter := &repo.RegionFilter{Pagable: pagable}
+	if layerID != nil {
+		filter.LayerID = layerID
+	}
+	if labelID != nil {
+		filter.LabelID = labelID
+	}
+	if status != nil {
+		s := *status
+		filter.Status = &s
+	}
+	if processingStatus != nil {
+		ps := *processingStatus
+		filter.ProcessingStatus = &ps
+	}
+	if search != nil && *search != "" {
+		filter.Search = search
+	}
+	if orderBy != nil {
+		filter.OrderBy = *orderBy
+	}
+	if orderDir != nil {
+		filter.OrderDir = *orderDir
+	}
+	return filter
+}
+
+func (h *RegionGrpcHandler) buildListRegionsAdminResponse(
+	ctx context.Context,
+	regions []qh_domain.QHRegion,
+	total int64,
+	pagable *_dto.Pagable,
+) *tqdpb.ListRegionsResponse {
+	protoRegions := make([]*tqdpb.RegionResponse, 0, len(regions))
+	for i := range regions {
+		region := &regions[i]
+		label, _ := h.regionUsecase.GetLabelByRegion(ctx, region.ID)
+		var labels []qh_domain.QHLabel
+		if label != nil {
+			labels = []qh_domain.QHLabel{*label}
+		}
+		protoRegions = append(protoRegions, h.regionMapper.ToProtoResponse(region, labels))
+	}
+	return &tqdpb.ListRegionsResponse{
+		Data:     protoRegions,
+		Total:    total,
+		Page:     int32(pagable.GetPage()),
+		PageSize: int32(pagable.GetSize()),
+	}
+}
+
 // =====================================================
 // ADMIN APIS
 // =====================================================
@@ -67,54 +129,54 @@ func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionR
 
 func (h *RegionGrpcHandler) ListRegions(ctx context.Context, req *tqdpb.ListRegionsRequest) (*tqdpb.ListRegionsResponse, error) {
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
-
-	filter := &repo.RegionFilter{Pagable: pagable}
-
-	if req.LayerId != nil {
-		filter.LayerID = req.LayerId
-	}
-	if req.LabelId != nil {
-		filter.LabelID = req.LabelId
-	}
-	if req.Status != nil {
-		statusVal := *req.Status
-		filter.Status = &statusVal
-	}
-	if req.ProcessingStatus != nil {
-		processingStatus := *req.ProcessingStatus
-		filter.ProcessingStatus = &processingStatus
-	}
-	if req.Search != nil && *req.Search != "" {
-		filter.Search = req.Search
-	}
-	if req.OrderBy != nil {
-		filter.OrderBy = *req.OrderBy
-	}
-	if req.OrderDir != nil {
-		filter.OrderDir = *req.OrderDir
-	}
+	filter := buildAdminRegionFilter(
+		pagable,
+		req.LayerId,
+		req.LabelId,
+		req.Status,
+		req.ProcessingStatus,
+		req.Search,
+		req.OrderBy,
+		req.OrderDir,
+	)
 
 	regions, total, err := h.regionUsecase.List(ctx, filter)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	protoRegions := make([]*tqdpb.RegionResponse, 0, len(regions))
-	for _, region := range regions {
-		label, _ := h.regionUsecase.GetLabelByRegion(ctx, region.ID)
-		var labels []qh_domain.QHLabel
-		if label != nil {
-			labels = []qh_domain.QHLabel{*label}
-		}
-		protoRegions = append(protoRegions, h.regionMapper.ToProtoResponse(&region, labels))
+	return h.buildListRegionsAdminResponse(ctx, regions, total, pagable), nil
+}
+
+// ListAdminRegionsByLayer - Danh sách region theo layer (admin), kiểm tra layer tồn tại
+func (h *RegionGrpcHandler) ListAdminRegionsByLayer(ctx context.Context, req *tqdpb.ListAdminRegionsByLayerRequest) (*tqdpb.ListRegionsResponse, error) {
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layer_id is required")
 	}
 
-	return &tqdpb.ListRegionsResponse{
-		Data:     protoRegions,
-		Total:    total,
-		Page:     int32(pagable.GetPage()),
-		PageSize: int32(pagable.GetSize()),
-	}, nil
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
+	layerID := req.LayerId
+	layerPtr := &layerID
+	filter := buildAdminRegionFilter(
+		pagable,
+		layerPtr,
+		req.LabelId,
+		req.Status,
+		req.ProcessingStatus,
+		req.Search,
+		req.OrderBy,
+		req.OrderDir,
+	)
+
+	regions, total, err := h.regionUsecase.ListForAdminByLayer(ctx, req.LayerId, filter)
+	if err != nil {
+		if errors.Is(err, usecase.ErrLayerNotFound) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.buildListRegionsAdminResponse(ctx, regions, total, pagable), nil
 }
 
 func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteRegionRequest) (*emptypb.Empty, error) {

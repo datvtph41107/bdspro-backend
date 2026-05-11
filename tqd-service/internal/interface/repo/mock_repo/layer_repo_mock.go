@@ -64,3 +64,21 @@ func (m *MockLayerRepository) UpdateVisibility(ctx context.Context, id uint64, v
 	args := m.Called(ctx, id, visible)
 	return args.Error(0)
 }
+
+func (m *MockLayerRepository) UpdateImportStatus(ctx context.Context, id uint64, st enums.LayerImportStatus, importBatchID *string) error {
+	args := m.Called(ctx, id, st, importBatchID)
+	return args.Error(0)
+}
+
+func (m *MockLayerRepository) GetByImportBatchID(ctx context.Context, batchID string) (*qh_domain.QHLayer, error) {
+	args := m.Called(ctx, batchID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*qh_domain.QHLayer), args.Error(1)
+}
+
+func (m *MockLayerRepository) ResetLayerImportTracking(ctx context.Context, id uint64) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}

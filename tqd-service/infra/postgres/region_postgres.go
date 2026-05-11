@@ -154,6 +154,16 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	return regions, total, err
 }
 
+func (r *regionRepoImpl) ListByImportBatchID(ctx context.Context, batchID string) ([]qh_domain.QHRegion, error) {
+	var regions []qh_domain.QHRegion
+	err := r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("deleted_at IS NULL AND import_batch_id = ?", batchID).
+		Order("id ASC").
+		Find(&regions).Error
+	return regions, err
+}
+
 func (r *regionRepoImpl) ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error) {
 	var regions []qh_domain.QHRegion
 	var total int64
@@ -389,7 +399,7 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 					'layer_id', r.layer_id,
 					
 					'label_fill_opacity', l.fill_opacity,
-					'label_stroke_color', l.stroke_color,
+					'label_stroke_color', l.color,
 					'label_stroke_width', l.stroke_width,
 					
 					'area_ha', r.area_ha,

@@ -63,7 +63,7 @@ func (r *LayerResolver) GetLayerURL(layerID uint64, sourceCode string) string {
 }
 
 // GetStyleConfig - Lấy style config cho layer
-func (r *LayerResolver) GetStyleConfig(layerID uint64, sourceCode string, layerType uint32) (string, error) {
+func (r *LayerResolver) GetStyleConfig(layerID uint64, sourceCode string, layerType uint32, minZoom int, maxZoom int) (string, error) {
 	layerIDStr := fmt.Sprintf("%d", layerID)
 
 	// override config
@@ -92,6 +92,8 @@ func (r *LayerResolver) GetStyleConfig(layerID uint64, sourceCode string, layerT
 
 	styleStr := string(styleJSON)
 	styleStr = strings.ReplaceAll(styleStr, "{sourceCode}", sourceCode)
+	styleStr = strings.ReplaceAll(styleStr, "{maxZoom}", fmt.Sprintf("%d", maxZoom))
+	styleStr = strings.ReplaceAll(styleStr, "{minZoom}", fmt.Sprintf("%d", minZoom))
 
 	return styleStr, nil
 }

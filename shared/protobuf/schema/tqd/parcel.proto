@@ -220,12 +220,13 @@ message ParcelInfo {
   uint32              landNumber = 4;
   double              lat        = 5;
   double              lng        = 6;
-  repeated sharepb.ItemV3Proto directions  = 7;
+  uint64              parcelId   = 7;
   sharepb.ItemV3Proto shape      = 8;
   uint32              facade     = 9;
   double              totalArea  = 10;
   sharepb.ItemV3Proto landType   = 11;
   bytes               geometry   = 12;
+  repeated sharepb.ItemV3Proto directions  = 13;
 }
 
 message GetParcelRequest {

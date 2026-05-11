@@ -108,7 +108,7 @@ type QHParcelInfo struct {
 	// LandType   *QHLandType `gorm:"-" json:"landType,omitempty"`
 
 	// Geometry (GeoJSON bytes)
-	Geometry []byte `gorm:"-" json:"geometry,omitempty"`
+	Geometry []byte `gorm:"type:geometry(MultiPolygon,4326)" json:"geometry,omitempty"`
 
 	// Metadata
 	SourceType int        `gorm:"default:2" json:"sourceType"`
@@ -126,6 +126,7 @@ func (QHParcelInfo) TableName() string {
 
 type ParcelInfoResponse struct {
 	ID         uint64  `json:"id"`
+	ParcelID   uint64  `json:"parcelId"`
 	AddressStr string  `json:"addressStr"`
 	MapNumber  uint32  `json:"mapNumber"`
 	LandNumber uint32  `json:"landNumber"`

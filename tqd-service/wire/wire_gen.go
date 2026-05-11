@@ -111,9 +111,10 @@ func InitializeApp() (*initial.InitialApp, error) {
 	notificationUsecase := usecase.NewNotificationUsecase(notificationRepository)
 	subscriptionGrpcHandler := handler_grpc.NewSubscriptionGrpcHandler(subscriptionUsecase, notificationUsecase, regionUsecase, parcelUsecase)
 	tqdPublicService := handler_grpc.NewBdsproPublicService()
-	importUsecase := usecase.NewImportUsecase(regionRepository, qhLabelRepository)
+	importUsecase := usecase.NewImportUsecase(regionRepository, qhLabelRepository, layerRepository)
 	importGrpcHandler := handler_grpc.NewImportGrpcHandler(importUsecase)
-	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler)
+	importHTTPHandler := handler_http.NewImportHTTPHandler(importUsecase)
+	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler)
 	return initialApp, nil
 }
 

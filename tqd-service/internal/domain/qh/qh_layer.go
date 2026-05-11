@@ -25,6 +25,9 @@ type QHLayer struct {
 	ImageURL     string `gorm:"type:text" json:"imageUrl,omitempty"`
 	ThumbnailURL string `gorm:"type:text" json:"thumbnailUrl,omitempty"`
 
+	ImportStatus  enums.LayerImportStatus `gorm:"column:import_status;type:int;default:20;index" json:"importStatus"`
+	ImportBatchID *string                  `gorm:"column:import_batch_id;type:varchar(64);index" json:"importBatchId,omitempty"`
+
 	SourceType string `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
 
 	EffectiveDate *time.Time `gorm:"type:date;index" json:"effectiveDate,omitempty"`

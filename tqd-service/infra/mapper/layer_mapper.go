@@ -67,7 +67,7 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	sourceCode := config.LayerResolverInstance.GetSourceCode(layer.ID)
 	layerUrl := config.LayerResolverInstance.GetLayerURL(layer.ID, sourceCode)
 
-	styleConfig, err := config.LayerResolverInstance.GetStyleConfig(layer.ID, sourceCode, uint32(layer.Type))
+	styleConfig, err := config.LayerResolverInstance.GetStyleConfig(layer.ID, sourceCode, uint32(layer.Type), layer.MinZoom, layer.MaxZoom)
 	if err != nil {
 		styleConfig = "[]" // Default empty array if error
 	}

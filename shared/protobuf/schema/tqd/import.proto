@@ -21,10 +21,10 @@ service ImportService {
     };
   }
   
-  // ImportGeoJson - Import file GeoJSON vào hệ thống
+  // ImportGeoJson - Upload file JSON/GeoJSON/NDJSON; server trả processing và xử lý nền theo chunk
   rpc ImportGeoJson(ImportGeoJsonRequest) returns (ImportGeoJsonResponse) {
     option (google.api.http) = {
-      post: "/v2/tqd/admin/import/geojson"
+      post: "/form/tqd/admin/import/geojson"
       body: "*"
     };
   }
@@ -76,37 +76,39 @@ message PreviewImportResponse {
 // IMPORT GEOJSON
 // =====================================================
 
+// ImportGeoJsonRequest
+//
+// Chuẩn upload file (giống file-service): REST trên **tqd-service HTTP** dùng
+//   Content-Type: multipart/form-data
+//   - file (bắt buộc): file .json / .geojson / .ndjson — stream vào file tạm, xóa sau khi job xong
+//   - file_format: auto | geojson | ndjson
+//   - layer_id (bắt buộc)
+//   - label_field, default_label_id, source_file_name (tuỳ chọn)
+//   - label_mappings: chuỗi JSON object map name -> id, ví dụ {"a":1,"b":2}
+//   - validate_geometry, auto_fix_geometry, skip_invalid: true / false
+//
+// GRPC / gateway JSON (transcoding): điền file_content (bytes, JSON base64).
 message ImportGeoJsonRequest {
-  string geoJson = 1;
-  uint64 layerId = 2;
-  
-  // Chiến lược xác định label
-  string labelField = 3;
-  map<string, uint64> labelMappings = 4;
-  optional uint64 defaultLabelId = 5;
-  
-  // Tùy chọn
-  optional string sourceFileName = 6;
-  bool validateGeometry = 7;
-  bool autoFixGeometry = 8;
-  bool skipInvalid = 9;
+  bytes file_content = 1;
+
+  string file_format = 2;
+  uint64 layer_id = 3;
+
+  string label_field = 4;
+  map<string, uint64> label_mappings = 5;
+  optional uint64 default_label_id = 6;
+
+  optional string source_file_name = 7;
+  bool validate_geometry = 8;
+  bool auto_fix_geometry = 9;
+  bool skip_invalid = 10;
 }
 
 message ImportGeoJsonResponse {
-  string batchId = 1;
-  int32 totalFeatures = 2;
-  int32 successCount = 3;
-  int32 failedCount = 4;
-  
-  message FailureDetail {
-    int32 featureIndex = 1;
-    string reason = 2;
-  }
-  repeated FailureDetail failures = 5;
-  
-  map<uint64, int32> labelStatistics = 6;
-  double totalAreaHa = 7;
-  int32 totalRegionsCreated = 8;
+  bool success = 1;
+  string batchId = 2;
+  string status = 3;               // processing (đồng bộ với qh_layers.import_status)
+  string message = 4;
 }
 
 // =====================================================

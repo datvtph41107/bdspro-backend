@@ -41,15 +41,15 @@ func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepos
 }
 
 func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error) {
-	if layer.Name == "" {
-		return nil, errors.New("name is required")
-	}
+	// if layer.Name == "" {
+	// 	return nil, errors.New("name is required")
+	// }
 	if layer.DisplayName == "" {
 		return nil, errors.New("display_name is required")
 	}
-	if !layer.Type.IsValid() {
-		return nil, fmt.Errorf("invalid type: %d", layer.Type)
-	}
+	// if !layer.Type.IsValid() {
+	// 	return nil, fmt.Errorf("invalid type: %d", layer.Type)
+	// }
 	if layer.Visible != 0 && layer.Visible != 1 {
 		return nil, errors.New("visible must be 0 or 1")
 	}
@@ -67,18 +67,18 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 		}
 	}
 
-	existing, err := u.layerRepo.GetByName(ctx, layer.Name)
-	if err != nil {
-		return nil, fmt.Errorf("check name failed: %w", err)
-	}
-	if existing != nil {
-		return nil, fmt.Errorf("layer with name '%s' already exists", layer.Name)
-	}
+	// existing, err := u.layerRepo.GetByName(ctx, layer.Name)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("check name failed: %w", err)
+	// }
+	// if existing != nil {
+	// 	return nil, fmt.Errorf("layer with name '%s' already exists", layer.Name)
+	// }
 
-	layer.CreatedBy = userID
-	layer.UpdatedBy = userID
-	layer.CreatedAt = time.Now()
-	layer.UpdatedAt = time.Now()
+	// layer.CreatedBy = userID
+	// layer.UpdatedBy = userID
+	// layer.CreatedAt = time.Now()
+	// layer.UpdatedAt = time.Now()
 
 	if err := u.layerRepo.Create(ctx, layer); err != nil {
 		return nil, fmt.Errorf("create failed: %w", err)
@@ -122,9 +122,9 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.Visible != 0 {
 		existing.Visible = layer.Visible
 	}
-	if layer.DisplayOrder != 0 {
-		existing.DisplayOrder = layer.DisplayOrder
-	}
+	existing.DisplayOrder = layer.DisplayOrder
+	// if layer.DisplayOrder != 0 {
+	// }
 	if layer.SourceType != "" {
 		existing.SourceType = layer.SourceType
 	}

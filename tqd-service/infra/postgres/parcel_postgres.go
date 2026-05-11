@@ -108,9 +108,9 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, pa
 	query := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{}).
 		Where("LOWER(address_text) LIKE ?", searchTerm)
 
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("count parcels: %w", err)
-	}
+	// if err := query.Count(&total).Error; err != nil {
+	// 	return nil, 0, fmt.Errorf("count parcels: %w", err)
+	// }
 
 	if err := query.Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).Find(&parcels).Error; err != nil {
 		return nil, 0, fmt.Errorf("search parcels: %w", err)

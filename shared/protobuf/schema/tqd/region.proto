@@ -37,6 +37,13 @@ service RegionService {
       get: "/v2/tqd/admin/regions"
     };
   }
+
+  // ListAdminRegionsByLayer - Danh sách regions theo layer (admin), layer_id bắt buộc trong path
+  rpc ListAdminRegionsByLayer(ListAdminRegionsByLayerRequest) returns (ListRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/layers/{layer_id}/regions"
+    };
+  }
   
   // UpdateRegionProcessingStatus - Cập nhật trạng thái xử lý của region
   rpc UpdateRegionProcessingStatus(UpdateProcessingStatusRequest) returns (RegionResponse) {
@@ -92,6 +99,18 @@ message ListRegionsRequest {
   uint32 size = 7;
   optional string orderBy = 8;          // id, name, areaHa, createdAt
   optional string orderDir = 9;         // asc, desc
+}
+
+message ListAdminRegionsByLayerRequest {
+  uint64 layer_id = 1;                  // path: id layer (bắt buộc)
+  optional uint64 labelId = 2;
+  optional uint32 status = 3;
+  optional uint32 processingStatus = 4;
+  optional string search = 5;
+  uint32 page = 6;
+  uint32 size = 7;
+  optional string orderBy = 8;
+  optional string orderDir = 9;
 }
 
 message ListClientRegionsRequest {

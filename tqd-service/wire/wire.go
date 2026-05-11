@@ -64,6 +64,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_providers.NewGeoProvider,
 	tqd_internal_dto.NewGeometryParser,
 	tqd_infra_handler_grpc.NewImportGrpcHandler,
+	tqd_infra_handler_http.NewImportHTTPHandler,
 	tqd_infra_mapper.NewImportMapper,
 	tqd_internal_usecase.NewImportUsecase,
 	tqd_infra_mapper.NewLabelMapper,

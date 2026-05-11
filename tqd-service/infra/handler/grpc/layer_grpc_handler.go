@@ -34,15 +34,15 @@ func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase) *LayerGrpcHandler {
 }
 
 func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLayerRequest) (*tqdpb.LayerResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
 	// Validate required fields
-	if req.Name == "" {
-		return nil, status.Error(codes.InvalidArgument, "name is required")
-	}
+	// if req.Name == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, "name is required")
+	// }
 	if req.DisplayName == "" {
 		return nil, status.Error(codes.InvalidArgument, "display_name is required")
 	}

@@ -1,8 +1,9 @@
 package dto
 
-// ImportRequest - Request import file GeoJSON
-type ImportRequest struct {
-	GeoJSON          string
+// ImportFileRequest — upload file + tùy chọn import (xử lý nền)
+type ImportFileRequest struct {
+	FileContent      []byte
+	FileFormat       string
 	LayerID          uint64
 	LabelField       string
 	LabelMappings    map[string]uint64
@@ -14,7 +15,28 @@ type ImportRequest struct {
 	SkipInvalid      bool
 }
 
-// ImportResult - Kết quả import
+// ImportEnqueueResult — phản hồi ngay sau khi ghi file và gắn job
+type ImportEnqueueResult struct {
+	Success bool
+	BatchID string
+	Status  string
+	Message string
+}
+
+// ImportRequest — tùy chọn xử lý feature (dùng nội bộ job)
+type ImportRequest struct {
+	LayerID          uint64
+	LabelField       string
+	LabelMappings    map[string]uint64
+	DefaultLabelID   *uint64
+	SourceFileName   string
+	UserID           uint64
+	ValidateGeometry bool
+	AutoFixGeometry  bool
+	SkipInvalid      bool
+}
+
+// ImportResult — tổng hợp sau khi job chạy xong (log / debug)
 type ImportResult struct {
 	BatchID             string
 	TotalFeatures       int

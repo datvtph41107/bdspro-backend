@@ -19,6 +19,10 @@ type LayerRepository interface {
 
 	UpdateStatus(ctx context.Context, id uint64, status enums.LayerStatus) error
 	UpdateVisibility(ctx context.Context, id uint64, visible int32) error
+
+	UpdateImportStatus(ctx context.Context, id uint64, st enums.LayerImportStatus, importBatchID *string) error
+	GetByImportBatchID(ctx context.Context, batchID string) (*qh_domain.QHLayer, error)
+	ResetLayerImportTracking(ctx context.Context, id uint64) error
 }
 
 // LayerFilter - Filter cho admin list

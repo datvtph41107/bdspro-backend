@@ -32,15 +32,15 @@ layer:
             - id: "{sourceCode}_fill"
               type: "fill"
               paint:
-                  fill-color: ["get", "hex_color"]
+                  fill-color: ["get", "label_stroke_color"]
                   fill-opacity: 0.3
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
             - id: "{sourceCode}_outline"
               type: "line"
               paint:
-                  line-color: "rgba(0,0,255,0.8)"
-                  line-width: 2
+                  line-color: ["get", "label_stroke_color"]
+                  line-width: 1
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
 

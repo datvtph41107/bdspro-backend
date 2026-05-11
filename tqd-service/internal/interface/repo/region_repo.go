@@ -19,6 +19,7 @@ type RegionRepository interface {
 
 	// List with filters
 	List(ctx context.Context, filter *RegionFilter) ([]qh_domain.QHRegion, int64, error)
+	ListByImportBatchID(ctx context.Context, batchID string) ([]qh_domain.QHRegion, error)
 	ListClient(ctx context.Context, filter *ClientRegionFilter) ([]qh_domain.QHRegion, int64, error)
 
 	// Spatial queries

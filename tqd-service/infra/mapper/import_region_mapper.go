@@ -46,30 +46,17 @@ func (m *ImportMapper) ToProtoPreviewResponse(result *dto.PreviewResult) *tqdpb.
 	return resp
 }
 
-// ToProtoImportResponse - Convert import result to proto response
-func (m *ImportMapper) ToProtoImportResponse(result *dto.ImportResult) *tqdpb.ImportGeoJsonResponse {
+// ToProtoImportEnqueueResponse — phản hồi sau upload (processing)
+func (m *ImportMapper) ToProtoImportEnqueueResponse(result *dto.ImportEnqueueResult) *tqdpb.ImportGeoJsonResponse {
 	if result == nil {
 		return nil
 	}
-
-	resp := &tqdpb.ImportGeoJsonResponse{
-		BatchId:             result.BatchID,
-		TotalFeatures:       int32(result.TotalFeatures),
-		SuccessCount:        int32(result.SuccessCount),
-		FailedCount:         int32(result.FailedCount),
-		LabelStatistics:     result.LabelStatistics,
-		TotalAreaHa:         result.TotalAreaHa,
-		TotalRegionsCreated: int32(result.TotalRegionsCreated),
+	return &tqdpb.ImportGeoJsonResponse{
+		Success: result.Success,
+		BatchId: result.BatchID,
+		Status:  result.Status,
+		Message: result.Message,
 	}
-
-	for _, f := range result.Failures {
-		resp.Failures = append(resp.Failures, &tqdpb.ImportGeoJsonResponse_FailureDetail{
-			FeatureIndex: int32(f.FeatureIndex),
-			Reason:       f.Reason,
-		})
-	}
-
-	return resp
 }
 
 // ToProtoBatchStatusResponse - Convert batch status to proto response

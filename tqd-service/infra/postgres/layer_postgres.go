@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ func NewLayerRepository(db *gorm.DB) repo.LayerRepository {
 func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer) error {
 	layer.CreatedAt = time.Now()
 	layer.UpdatedAt = time.Now()
+	log.Println("Creating layer:", layer.ID)
 	return r.db.WithContext(ctx).Create(layer).Error
 }
 
@@ -191,4 +193,43 @@ func (r *layerRepoImpl) UpdateVisibility(ctx context.Context, id uint64, visible
 		Model(&qh_domain.QHLayer{}).
 		Where("id = ? AND deleted_at IS NULL", id).
 		Update("visible", visible).Error
+}
+
+func (r *layerRepoImpl) UpdateImportStatus(ctx context.Context, id uint64, st enums.LayerImportStatus, importBatchID *string) error {
+	updates := map[string]interface{}{
+		"import_status": uint32(st),
+		"updated_at":    time.Now(),
+	}
+	if importBatchID != nil {
+		updates["import_batch_id"] = *importBatchID
+	}
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).Error
+}
+
+func (r *layerRepoImpl) GetByImportBatchID(ctx context.Context, batchID string) (*qh_domain.QHLayer, error) {
+	var layer qh_domain.QHLayer
+	err := r.db.WithContext(ctx).
+		Where("import_batch_id = ? AND deleted_at IS NULL", batchID).
+		First(&layer).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &layer, nil
+}
+
+func (r *layerRepoImpl) ResetLayerImportTracking(ctx context.Context, id uint64) error {
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(map[string]interface{}{
+			"import_status":   uint32(enums.LayerImportStatusDone),
+			"import_batch_id": nil,
+			"updated_at":      time.Now(),
+		}).Error
 }

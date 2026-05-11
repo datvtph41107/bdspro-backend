@@ -26,107 +26,32 @@ quota:
     enabled: true
     policy_file: "config/quota_policy.yml"
 
-layer_configs:
-    # Default config cho tất cả layers
-    defaults:
-        layer_url_pattern: "http://14.225.210.29:8032/{source_code}/{z}/{x}/{y}.pbf"
-        style_config_pattern: |
-            [
-              {
-                "id": "{source_code}",
-                "type": "fill",
-                "paint": {
-                  "fill-color": ["get", "hex_color"],
-                  "fill-opacity": 0.3
-                },
-                "source": "{source_code}",
-                "source-layer": "{source_code}"
-              }
-            ]
+layer:
+    # Base URL configuration
+    base_url: "http://14.225.210.29:8032"
 
-    # Specific config theo source_code pattern
-    overrides:
-        - source_pattern: "layer*"
-          layer_url: "http://14.225.210.29:8032/{source_code}/{z}/{x}/{y}.pbf"
-          style_config: |
-              [
-                {
-                  "id": "{source_code}_fill",
-                  "type": "fill",
-                  "paint": {
-                    "fill-color": ["get", "hex_color"],
-                    "fill-opacity": 0.3
-                  },
-                  "source": "{source_code}",
-                  "source-layer": "{source_code}"
-                }
-              ]
+    # Default style templates
+    default_styles:
+        vector:
+            - id: "{sourceCode}_fill"
+              type: "fill"
+              paint:
+                  fill-color: ["get", "label_stroke_color"]
+                  fill-opacity: 0.3
+              source: "{sourceCode}"
+              source-layer: "{sourceCode}"
+              maxzoom: "{maxZoom}"
+            - id: "{sourceCode}_outline"
+              type: "line"
+              paint:
+                  line-color: ["get", "label_stroke_color"]
+                  line-width: 1
+              source: "{sourceCode}"
+              source-layer: "{sourceCode}"
 
-        - source_pattern: "layer1"
-          layer_url: "http://14.225.210.29:8032/qhsdd_hn/{z}/{x}/{y}.pbf"
-          style_config: |
-              [
-                {
-                  "id": "qhsdd_hn",
-                  "type": "fill",
-                  "paint": {
-                    "fill-color": ["get", "hex_color"],
-                    "fill-opacity": 0.3
-                  },
-                  "source": "qhsdd_hn",
-                  "source-layer": "qhsdd_hn"
-                }
-              ]
-
-        - source_pattern: "layer67"
-          style_config: |
-              [
-                {
-                  "id": "{source_code}_fill",
-                  "type": "fill",
-                  "paint": {
-                    "fill-color": ["match", ["get", "quyhoach"], "dtvt", "#22c55e", "phan_khu", "#f97316", "rgba(0,0,255,0.2)"],
-                    "fill-opacity": 0.2
-                  },
-                  "source": "{source_code}",
-                  "source-layer": "{source_code}"
-                },
-                {
-                  "id": "{source_code}_outline",
-                  "type": "line",
-                  "paint": {
-                    "line-color": ["match", ["get", "quyhoach"], "dtvt", "#16a34a", "qh_chung", "#1d4ed8", "phan_khu", "#ea580c", "rgba(0,0,255,0.8)"],
-                    "line-width": 2
-                  },
-                  "source": "{source_code}",
-                  "source-layer": "{source_code}"
-                }
-              ]
-
-        - source_pattern: "layer68"
-          layer_url: "http://14.225.210.29:8032/{source_code}/{z}/{x}/{y}.pbf"
-          style_config: |
-              [
-                {
-                  "id": "{source_code}_fill",
-                  "type": "fill",
-                  "paint": {
-                    "fill-color": ["match", ["get", "quyhoach"], "dtvt", "#22c55e", "phan_khu", "#f97316", "rgba(0,0,255,0.2)"],
-                    "fill-opacity": 0.2
-                  },
-                  "source": "{source_code}",
-                  "maxzoom": 22,
-                  "source-layer": "{source_code}"
-                },
-                {
-                  "id": "{source_code}_outline",
-                  "type": "line",
-                  "paint": {
-                    "line-color": ["match", ["get", "quyhoach"], "dtvt", "#16a34a", "qh_chung", "#1d4ed8", "phan_khu", "#ea580c", "rgba(0,0,255,0.8)"],
-                    "line-width": 2
-                  },
-                  "source": "{source_code}",
-                  "maxzoom": 22,
-                  "source-layer": "{source_code}"
-                }
-              ]
+        raster:
+            - id: "{sourceCode}"
+              type: "raster"
+              paint:
+                  raster-opacity: 1.0
+              source: "{sourceCode}"
