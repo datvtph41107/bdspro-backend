@@ -22,6 +22,14 @@ service QHLabelService {
       body: "*"
     };
   }
+
+  // BatchCreateLabels - Tạo nhiều label trong một layer; bỏ qua item có name đã tồn tại (hoặc trùng name trong cùng request)
+  rpc BatchCreateLabels(BatchCreateLabelsRequest) returns (BatchCreateLabelsResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels/batch"
+      body: "*"
+    };
+  }
   
   // GetLabel - Lấy chi tiết label
   rpc GetLabel(GetLabelRequest) returns (QHLabelResponse) {
@@ -42,6 +50,22 @@ service QHLabelService {
   rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v2/tqd/qh/admin/labels/{id}"
+    };
+  }
+
+  // BatchDeleteLabels - Xóa mềm nhiều label theo danh sách id
+  rpc BatchDeleteLabels(BatchDeleteLabelsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels/batch-delete"
+      body: "*"
+    };
+  }
+
+  // MergeLabels - Gộp nhiều nhãn cũ thành một nhãn mới; cập nhật label_id trên region rồi xóa mềm nhãn nguồn
+  rpc MergeLabels(MergeLabelsRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels/merge"
+      body: "*"
     };
   }
   
@@ -95,6 +119,32 @@ message CreateLabelRequest {
   optional uint32 status = 13;         // 10: active, 20: inactive, mặc định 10
 }
 
+message BatchCreateLabelsRequest {
+  uint64 layerId = 1;
+  repeated BatchCreateLabelItem items = 2;
+}
+
+// Một phần tử batch (cùng layerId ở request cha)
+message BatchCreateLabelItem {
+  string name = 1;
+  string displayName = 2;
+  string description = 3;
+  string color = 4;
+  double fillOpacity = 5;
+  string strokeColor = 6;
+  int32 strokeWidth = 7;
+  int32 displayOrder = 8;
+  bool isVisible = 9;
+  int32 minZoom = 10;
+  int32 maxZoom = 11;
+  optional uint32 status = 12;
+}
+
+message BatchCreateLabelsResponse {
+  repeated QHLabelResponse created = 1;
+  repeated string skippedNames = 2; // name đã có trong layer hoặc trùng trước đó trong cùng batch
+}
+
 message UpdateLabelRequest {
   uint64 id = 1;
   optional string name = 2;
@@ -117,6 +167,33 @@ message GetLabelRequest {
 
 message DeleteLabelRequest {
   uint64 id = 1;
+}
+
+message BatchDeleteLabelsRequest {
+  repeated uint64 ids = 1;
+}
+
+// MergeLabelsRequest — layer_id + danh sách nhãn cần gộp + dữ liệu nhãn đích
+message MergeLabelsRequest {
+  uint64 layerId = 1;
+  repeated uint64 sourceLabelIds = 2;
+  MergeLabelsNewLabel newLabel = 3;
+}
+
+// Thông tin nhãn sau khi gộp (name unique trong layer, trừ các nhãn nguồn sẽ bị xóa)
+message MergeLabelsNewLabel {
+  string name = 1;
+  string displayName = 2;
+  string description = 3;
+  string color = 4;
+  double fillOpacity = 5;
+  string strokeColor = 6;
+  int32 strokeWidth = 7;
+  int32 displayOrder = 8;
+  bool isVisible = 9;
+  int32 minZoom = 10;
+  int32 maxZoom = 11;
+  optional uint32 status = 12;
 }
 
 message ListLabelsByLayerRequest {

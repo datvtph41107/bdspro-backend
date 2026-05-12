@@ -27,7 +27,7 @@ func BuildPMTilesFile(
 	ctx context.Context,
 	regionRepo repo.RegionRepository,
 	layerID uint64,
-	minZoom, maxZoom int32,
+	minZoom, maxZoom uint32,
 	outputDir string,
 	progressFn func(BuildProgress),
 ) error {

@@ -2,6 +2,7 @@ package handler_grpc
 
 import (
 	_errors "common/errors"
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
 	"log"
@@ -131,4 +132,51 @@ func (h *ImportGrpcHandler) RollbackImport(ctx context.Context, req *tqdpb.Rollb
 		Message:      "Rollback completed successfully",
 		DeletedCount: int32(deletedCount),
 	}, nil
+}
+
+// ListImportRegionErrors - Danh sách bản ghi lỗi import (qh_region_import_error_logs) theo layer (GET /v2/tqd/admin/layers/{layerId}/import/errors)
+func (h *ImportGrpcHandler) ListImportRegionErrors(ctx context.Context, req *tqdpb.ListImportRegionErrorsRequest) (*tqdpb.ListImportRegionErrorsResponse, error) {
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	rows, total, err := h.importUsecase.ListImportRegionErrors(ctx, req.LayerId, pagable)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.importMapper.ToProtoImportErrors(rows, total, int32(pagable.GetPage()), int32(pagable.GetSize())), nil
+}
+
+// RetryImportError - Retry insert từng region trong payload lỗi (POST /v2/tqd/admin/import/errors/{errorId}/retry)
+func (h *ImportGrpcHandler) RetryImportError(ctx context.Context, req *tqdpb.RetryImportErrorRequest) (*tqdpb.RetryImportErrorResponse, error) {
+	if req.ErrorId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "errorId is required")
+	}
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
+	res, err := h.importUsecase.RetryImportError(ctx, req.ErrorId)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		if strings.Contains(err.Error(), "already in progress") {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		if strings.Contains(err.Error(), "cannot be retried") {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		if strings.Contains(err.Error(), "could not be locked") {
+			return nil, status.Error(codes.Aborted, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	return h.importMapper.ToProtoRetryImportErrorResponse(res), nil
 }

@@ -74,8 +74,8 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 		Type:          enums.LayerType(req.Type),
 		Visible:       req.Visible,
 		DisplayOrder:  int(req.DisplayOrder),
-		MinZoom:       int(req.MinZoom),
-		MaxZoom:       int(req.MaxZoom),
+		MinZoom:       req.MinZoom,
+		MaxZoom:       req.MaxZoom,
 		Avatar:        req.Avatar,
 		ImageURL:      req.ImageUrl,
 		ThumbnailURL:  req.ThumbnailUrl,
@@ -134,10 +134,10 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 		existing.SourceType = req.SourceType
 	}
 	if req.MinZoom != nil {
-		existing.MinZoom = int(*req.MinZoom)
+		existing.MinZoom = *req.MinZoom
 	}
 	if req.MaxZoom != nil {
-		existing.MaxZoom = int(*req.MaxZoom)
+		existing.MaxZoom = *req.MaxZoom
 	}
 	if req.Avatar != nil {
 		existing.Avatar = *req.Avatar

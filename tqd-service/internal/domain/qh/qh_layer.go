@@ -18,15 +18,16 @@ type QHLayer struct {
 
 	DisplayOrder int   `gorm:"column:display_order;default:0;index" json:"displayOrder"`
 	Visible      int32 `gorm:"default:0;index" json:"visible"`
-	MinZoom      int   `gorm:"default:0" json:"minZoom"`
-	MaxZoom      int   `gorm:"default:22" json:"maxZoom"`
+
+	MinZoom uint32 `gorm:"default:0" json:"minZoom"`
+	MaxZoom uint32 `gorm:"default:22" json:"maxZoom"`
 
 	Avatar       string `gorm:"type:text" json:"avatar,omitempty"`
 	ImageURL     string `gorm:"type:text" json:"imageUrl,omitempty"`
 	ThumbnailURL string `gorm:"type:text" json:"thumbnailUrl,omitempty"`
 
 	ImportStatus  enums.LayerImportStatus `gorm:"column:import_status;type:int;default:20;index" json:"importStatus"`
-	ImportBatchID *string                  `gorm:"column:import_batch_id;type:varchar(64);index" json:"importBatchId,omitempty"`
+	ImportBatchID *string                 `gorm:"column:import_batch_id;type:varchar(64);index" json:"importBatchId,omitempty"`
 
 	SourceType string `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
 

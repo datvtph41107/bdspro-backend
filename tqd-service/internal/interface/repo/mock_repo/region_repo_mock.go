@@ -56,6 +56,38 @@ func (m *MockRegionRepository) ListByImportBatchID(ctx context.Context, batchID 
 	return args.Get(0).([]qh_domain.QHRegion), args.Error(1)
 }
 
+func (m *MockRegionRepository) ListImportErrorLogsByLayerID(ctx context.Context, layerID uint64, offset, limit int) ([]qh_domain.QHRegionImportErrorLog, int64, error) {
+	args := m.Called(ctx, layerID, offset, limit)
+	var rows []qh_domain.QHRegionImportErrorLog
+	if args.Get(0) != nil {
+		rows = args.Get(0).([]qh_domain.QHRegionImportErrorLog)
+	}
+	return rows, args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockRegionRepository) GetImportErrorLogByID(ctx context.Context, id uint64) (*qh_domain.QHRegionImportErrorLog, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*qh_domain.QHRegionImportErrorLog), args.Error(1)
+}
+
+func (m *MockRegionRepository) UpdateImportErrorLog(ctx context.Context, row *qh_domain.QHRegionImportErrorLog) error {
+	args := m.Called(ctx, row)
+	return args.Error(0)
+}
+
+func (m *MockRegionRepository) TryBeginImportErrorRetry(ctx context.Context, id uint64) (bool, error) {
+	args := m.Called(ctx, id)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRegionRepository) ResetImportErrorRetryIfProcessing(ctx context.Context, id uint64) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 func (m *MockRegionRepository) ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).([]qh_domain.QHRegion), args.Get(1).(int64), args.Error(2)
@@ -113,4 +145,19 @@ func (m *MockRegionRepository) StreamGeoJSON(ctx context.Context, layerID uint64
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*sql.Rows), args.Error(1)
+}
+
+func (m *MockRegionRepository) UpdateLabelForAllRegions(ctx context.Context, oldLabelID uint64, newLabelID uint64) error {
+	args := m.Called(ctx, oldLabelID, newLabelID)
+	return args.Error(0)
+}
+
+func (m *MockRegionRepository) UpdateLabelForRegionsWhereLabelIn(ctx context.Context, labelIDs []uint64, newLabelID uint64) error {
+	args := m.Called(ctx, labelIDs, newLabelID)
+	return args.Error(0)
+}
+
+func (m *MockRegionRepository) UpdateLabelForRegion(ctx context.Context, regionID uint64, labelID uint64) error {
+	args := m.Called(ctx, regionID, labelID)
+	return args.Error(0)
 }

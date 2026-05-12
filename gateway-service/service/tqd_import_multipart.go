@@ -23,7 +23,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const tqdImportMultipartMaxMemory = 512 << 20
+// Khớp TqdGRPCMaxMsgBytes: form phải đọc được file trước khi đóng gói một message gRPC.
+const tqdImportMultipartMaxMemory = TqdGRPCMaxMsgBytes
 
 // RegisterTqdImportGeoJSONMultipartOnV2 đăng ký POST multipart trước mux để không bị grpc-gateway
 // cố decode body thành JSON (lỗi "invalid character '-' in numeric literal").

@@ -13,12 +13,25 @@ import (
 	"google.golang.org/grpc"
 )
 
+// TqdGRPCMaxMsgBytes — vượt default gRPC 4MB cho ImportGeoJSON (file_content) và response lớn.
+// Giữ cùng mức với multipart ParseMultipartForm ở tqd_import_multipart.go (512 MiB).
+const TqdGRPCMaxMsgBytes = 512 << 20
+
+func mergeTqdDialOpts(opts []grpc.DialOption) []grpc.DialOption {
+	return append([]grpc.DialOption{
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(TqdGRPCMaxMsgBytes),
+			grpc.MaxCallSendMsgSize(TqdGRPCMaxMsgBytes),
+		),
+	}, opts...)
+}
+
 // DialTQDGRPC tạo client tới tqd-service (dùng chung cho mux và route multipart).
 func DialTQDGRPC(env string, opts []grpc.DialOption) (*grpc.ClientConn, error) {
 	port := viper.GetString("service.port.tqd")
 	url := common.GetPrefixProtobufUrl(env, "tqd")
 	endpoint := fmt.Sprintf("%s:%s", url, port)
-	return grpc.NewClient(endpoint, opts...)
+	return grpc.NewClient(endpoint, mergeTqdDialOpts(opts)...)
 }
 
 // RegisterTqdService registers all TQD service handlers to the gateway mux.
@@ -33,7 +46,7 @@ func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	conn, err := DialTQDGRPC(env, opts)
 	if err != nil {
 		log.Printf("[TQD] Không tạo được client tới %s (đăng ký lazy theo endpoint): %v", endpoint, err)
-		registerTqdFromEndpoint(ctx, mux, endpoint, opts)
+		registerTqdFromEndpoint(ctx, mux, endpoint, mergeTqdDialOpts(opts))
 		return
 	}
 	log.Printf("[TQD] Đã tạo client tới %s (kết nối khi có request)", endpoint)

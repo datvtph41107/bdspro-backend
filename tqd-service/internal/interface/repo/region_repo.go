@@ -20,6 +20,15 @@ type RegionRepository interface {
 	// List with filters
 	List(ctx context.Context, filter *RegionFilter) ([]qh_domain.QHRegion, int64, error)
 	ListByImportBatchID(ctx context.Context, batchID string) ([]qh_domain.QHRegion, error)
+	// ListImportErrorLogsByLayerID — log batch insert lỗi (regions_payload JSON), mới nhất trước
+	ListImportErrorLogsByLayerID(ctx context.Context, layerID uint64, offset, limit int) ([]qh_domain.QHRegionImportErrorLog, int64, error)
+	GetImportErrorLogByID(ctx context.Context, id uint64) (*qh_domain.QHRegionImportErrorLog, error)
+	UpdateImportErrorLog(ctx context.Context, row *qh_domain.QHRegionImportErrorLog) error
+	// TryBeginImportErrorRetry — CAS pending → processing; true nếu chiếm được lock
+	TryBeginImportErrorRetry(ctx context.Context, id uint64) (bool, error)
+	// ResetImportErrorRetryIfProcessing — processing → pending (rollback lock / lỗi giữa chừng)
+	ResetImportErrorRetryIfProcessing(ctx context.Context, id uint64) error
+
 	ListClient(ctx context.Context, filter *ClientRegionFilter) ([]qh_domain.QHRegion, int64, error)
 
 	// Spatial queries
@@ -28,6 +37,8 @@ type RegionRepository interface {
 
 	//Update regions label_id
 	UpdateLabelForAllRegions(ctx context.Context, oldLabelID uint64, newLabelID uint64) error
+	// UpdateLabelForRegionsWhereLabelIn set label_id cho mọi region đang trỏ tới một trong labelIDs (một query).
+	UpdateLabelForRegionsWhereLabelIn(ctx context.Context, labelIDs []uint64, newLabelID uint64) error
 	UpdateLabelForRegion(ctx context.Context, regionID uint64, labelID uint64) error
 
 	// Statistics

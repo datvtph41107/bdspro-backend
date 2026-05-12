@@ -2,6 +2,7 @@ package handler_grpc
 
 import (
 	"context"
+	"strings"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -81,6 +82,54 @@ func (h *QHLabelGrpcHandler) CreateLabel(ctx context.Context, req *tqdpb.CreateL
 	}
 
 	return toQHLabelResponse(result), nil
+}
+
+// BatchCreateLabels - Tạo nhiều label trong một layer; bỏ qua name đã tồn tại hoặc trùng trong cùng request
+func (h *QHLabelGrpcHandler) BatchCreateLabels(ctx context.Context, req *tqdpb.BatchCreateLabelsRequest) (*tqdpb.BatchCreateLabelsResponse, error) {
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	if len(req.Items) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "items is required")
+	}
+
+	items := make([]*qh_domain.QHLabel, 0, len(req.Items))
+	for _, it := range req.Items {
+		if it == nil {
+			continue
+		}
+		l := &qh_domain.QHLabel{
+			Name:         it.Name,
+			DisplayName:  it.DisplayName,
+			Description:  it.Description,
+			Color:        it.Color,
+			FillOpacity:  it.FillOpacity,
+			StrokeColor:  it.StrokeColor,
+			StrokeWidth:  int(it.StrokeWidth),
+			DisplayOrder: int(it.DisplayOrder),
+			IsVisible:    it.IsVisible,
+			MinZoom:      int(it.MinZoom),
+			MaxZoom:      int(it.MaxZoom),
+		}
+		if it.Status != nil {
+			l.Status = enums.LabelStatus(*it.Status)
+		}
+		items = append(items, l)
+	}
+
+	created, skipped, err := h.labelUsecase.BatchCreate(ctx, req.LayerId, items)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	out := make([]*tqdpb.QHLabelResponse, len(created))
+	for i, c := range created {
+		out[i] = toQHLabelResponse(c)
+	}
+	return &tqdpb.BatchCreateLabelsResponse{
+		Created:      out,
+		SkippedNames: skipped,
+	}, nil
 }
 
 // GetLabel - Lấy chi tiết label theo ID
@@ -164,6 +213,79 @@ func (h *QHLabelGrpcHandler) DeleteLabel(ctx context.Context, req *tqdpb.DeleteL
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+// BatchDeleteLabels - Xóa mềm nhiều label theo danh sách id (HTTP POST /v2/tqd/qh/admin/labels/batch-delete)
+func (h *QHLabelGrpcHandler) BatchDeleteLabels(ctx context.Context, req *tqdpb.BatchDeleteLabelsRequest) (*emptypb.Empty, error) {
+	if len(req.Ids) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "ids is required")
+	}
+	hasNonZero := false
+	for _, id := range req.Ids {
+		if id != 0 {
+			hasNonZero = true
+			break
+		}
+	}
+	if !hasNonZero {
+		return nil, status.Error(codes.InvalidArgument, "at least one valid id is required")
+	}
+
+	if err := h.labelUsecase.BatchDelete(ctx, req.Ids); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+// MergeLabels - Gộp nhiều nhãn thành một nhãn mới (HTTP POST /v2/tqd/qh/admin/labels/merge)
+func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLabelsRequest) (*tqdpb.QHLabelResponse, error) {
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	if len(req.SourceLabelIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "sourceLabelIds is required")
+	}
+	nl := req.NewLabel
+	if nl == nil {
+		return nil, status.Error(codes.InvalidArgument, "newLabel is required")
+	}
+	if strings.TrimSpace(nl.Name) == "" {
+		return nil, status.Error(codes.InvalidArgument, "newLabel.name is required")
+	}
+
+	label := &qh_domain.QHLabel{
+		Name:         nl.Name,
+		DisplayName:  nl.DisplayName,
+		Description:  nl.Description,
+		Color:        nl.Color,
+		FillOpacity:  nl.FillOpacity,
+		StrokeColor:  nl.StrokeColor,
+		StrokeWidth:  int(nl.StrokeWidth),
+		DisplayOrder: int(nl.DisplayOrder),
+		IsVisible:    nl.IsVisible,
+		MinZoom:      int(nl.MinZoom),
+		MaxZoom:      int(nl.MaxZoom),
+	}
+	if nl.Status != nil {
+		label.Status = enums.LabelStatus(*nl.Status)
+	}
+
+	result, err := h.labelUsecase.Merge(ctx, req.LayerId, req.SourceLabelIds, label)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		if strings.Contains(err.Error(), "already exists") {
+			return nil, status.Error(codes.AlreadyExists, err.Error())
+		}
+		if strings.Contains(err.Error(), "another layer") {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	return toQHLabelResponse(result), nil
 }
 
 // ListLabelsByLayer - Danh sách label theo layer (admin)
@@ -260,6 +382,7 @@ func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {
 		StrokeWidth:  int32(l.StrokeWidth),
 		DisplayOrder: int32(l.DisplayOrder),
 		IsVisible:    l.IsVisible,
+		RegionCount:  l.RegionCount,
 		MinZoom:      int32(l.MinZoom),
 		MaxZoom:      int32(l.MaxZoom),
 		Status:       uint32(l.Status),

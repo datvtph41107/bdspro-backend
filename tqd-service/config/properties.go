@@ -63,7 +63,7 @@ func (r *LayerResolver) GetLayerURL(layerID uint64, sourceCode string) string {
 }
 
 // GetStyleConfig - Lấy style config cho layer
-func (r *LayerResolver) GetStyleConfig(layerID uint64, sourceCode string, layerType uint32, minZoom int, maxZoom int) (string, error) {
+func (r *LayerResolver) GetStyleConfig(layerID uint64, sourceCode string, layerType uint32, minZoom uint32, maxZoom uint32) (string, error) {
 	layerIDStr := fmt.Sprintf("%d", layerID)
 
 	// override config

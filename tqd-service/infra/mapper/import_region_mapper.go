@@ -3,7 +3,9 @@ package mapper
 import (
 	"google.golang.org/protobuf/types/known/structpb"
 
+	_utils "common/utils"
 	tqdpb "pb/types/tqd"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 )
 
@@ -52,7 +54,7 @@ func (m *ImportMapper) ToProtoImportEnqueueResponse(result *dto.ImportEnqueueRes
 		return nil
 	}
 	return &tqdpb.ImportGeoJsonResponse{
-		Success: result.Success,
+		Code:    result.Code,
 		BatchId: result.BatchID,
 		Status:  result.Status,
 		Message: result.Message,
@@ -74,5 +76,51 @@ func (m *ImportMapper) ToProtoBatchStatusResponse(status *dto.BatchStatus) *tqdp
 		CreatedAt:     status.CreatedAt,
 		CompletedAt:   status.CompletedAt,
 		ErrorMessages: status.ErrorMessages,
+	}
+}
+
+func (m *ImportMapper) ToProtoImportErrors(rows []qh_domain.QHRegionImportErrorLog, total int64, page, pageSize int32) *tqdpb.ListImportRegionErrorsResponse {
+	resp := &tqdpb.ListImportRegionErrorsResponse{
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	}
+	for i := range rows {
+		resp.Data = append(resp.Data, toProtoImportError(&rows[i]))
+	}
+	return resp
+}
+
+func toProtoImportError(row *qh_domain.QHRegionImportErrorLog) *tqdpb.ImportError {
+	if row == nil {
+		return nil
+	}
+	ca := row.CreatedAt
+	ua := row.UpdatedAt
+	return &tqdpb.ImportError{
+		Id:             row.ID,
+		ImportBatchId:  row.ImportBatchID,
+		LayerId:        row.LayerID,
+		ErrorMessage:   row.ErrorMessage,
+		RegionsPayload: string(row.RegionsPayload),
+		BatchSize:      int32(row.BatchSize),
+		RetryCount:     int32(row.RetryCount),
+		Status:         string(row.Status),
+		CreatedAt:      _utils.FormatTimeToString(&ca),
+		UpdatedAt:      _utils.FormatTimeToString(&ua),
+	}
+}
+
+// ToProtoRetryImportErrorResponse maps retry result to proto
+func (m *ImportMapper) ToProtoRetryImportErrorResponse(r *dto.RetryImportErrorResult) *tqdpb.RetryImportErrorResponse {
+	if r == nil {
+		return nil
+	}
+	return &tqdpb.RetryImportErrorResponse{
+		Success:      r.Success,
+		Message:      r.Message,
+		TotalItems:   int32(r.TotalItems),
+		SuccessCount: int32(r.SuccessCount),
+		FailedCount:  int32(r.FailedCount),
 	}
 }

@@ -53,6 +53,7 @@ func (r RawGeometry) Value() (driver.Value, error) {
 
 // GormValue binds GeoJSON bytes via PostGIS so inserts/updates are valid for geometry columns.
 // Raw GeoJSON text is not accepted as implicit geometry cast (unlike WKT/EWKB).
+// ST_MakeValid có thể trả về GeometryCollection; ST_CollectionExtract(..., 3) gom phần polygon thành MultiPolygon.
 func (r RawGeometry) GormValue(_ context.Context, _ *gorm.DB) clause.Expr {
 	raw := bytes.TrimSpace(r.Raw)
 	if len(raw) == 0 {
@@ -61,7 +62,7 @@ func (r RawGeometry) GormValue(_ context.Context, _ *gorm.DB) clause.Expr {
 		}
 	}
 	return clause.Expr{
-		SQL: "ST_Multi(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(?),4326)))::geometry(MultiPolygon,4326)",
+		SQL: "ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(?),4326)), 3))::geometry(MultiPolygon,4326)",
 		Vars: []interface{}{string(raw)},
 	}
 }

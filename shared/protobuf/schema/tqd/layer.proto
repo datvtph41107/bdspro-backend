@@ -100,8 +100,8 @@ message CreateLayerRequest {
   optional uint32 status = 5;          // 1=draft, 10=active, 20=expired, 30=archived
   int32 visible = 6;                   // 0=ẩn, 1=hiển thị
   int32 displayOrder = 7;              // Thứ tự hiển thị (số càng nhỏ càng ở dưới)
-  int32 minZoom = 8;                   // Zoom tối thiểu (0-22)
-  int32 maxZoom = 9;                   // Zoom tối đa (0-22)
+  uint32 minZoom = 8;                   // Zoom tối thiểu (0-22)
+  uint32 maxZoom = 9;                   // Zoom tối đa (0-22)
   string layerUrl = 10;                // URL dữ liệu (PMTiles/GeoJSON/WMS)
   string avatar = 11;                  // URL ảnh đại diện
   string imageUrl = 12;                // URL ảnh preview
@@ -126,8 +126,8 @@ message UpdateLayerRequest {
   optional uint32 status = 6;
   optional int32 visible = 7;
   optional int32 displayOrder = 8;
-  optional int32 minZoom = 9;
-  optional int32 maxZoom = 10;
+  optional uint32 minZoom = 9;
+  optional uint32 maxZoom = 10;
   optional string layerUrl = 11;
   optional string avatar = 12;
   optional string imageUrl = 13;
@@ -181,8 +181,8 @@ message ListClientLayersRequest {
 
 message BuildPMTilesRequest {
   uint64 layerId = 1;                  // ID của layer
-  int32 minZoom = 2;                   // Zoom tối thiểu (mặc định 0)
-  int32 maxZoom = 3;                   // Zoom tối đa (mặc định 14, tối đa 18)
+  uint32 minZoom = 2;                   // Zoom tối thiểu (mặc định 0)
+  uint32 maxZoom = 3;                   // Zoom tối đa (mặc định 14, tối đa 18)
   optional string outputDir = 4;       // Thư mục output (mặc định ./files/tiles)
 }
 
@@ -199,8 +199,8 @@ message LayerResponse {
   uint32 status = 6;
   int32 visible = 7;
   int32 displayOrder = 8;
-  int32 minZoom = 9;
-  int32 maxZoom = 10;
+  uint32 minZoom = 9;
+  uint32 maxZoom = 10;
   string layerUrl = 11;
   string avatar = 12;
   string imageUrl = 13;

@@ -117,7 +117,7 @@ func (h *ImportHTTPHandler) PostImportGeoJSONMultipart(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": result.Success,
+		"code":    result.Code,
 		"batchId": result.BatchID,
 		"status":  result.Status,
 		"message": result.Message,

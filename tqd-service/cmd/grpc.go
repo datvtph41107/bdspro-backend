@@ -26,6 +26,10 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+// grpcMaxMsgBytes — default gRPC ~4MB; ImportGeoJSON gửi file_content lớn từ gateway.
+// Đồng bộ với gateway-service/service/tqd.go (TqdGRPCMaxMsgBytes).
+const grpcMaxMsgBytes = 512 << 20
+
 // grpcCmd represents the grpc command
 var grpcCmd = &cobra.Command{
 	Use:   "grpc",
@@ -127,6 +131,8 @@ func runGRPCServer() error {
 	}
 
 	s := grpc.NewServer(
+		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
+		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
 		grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
 			quotaInterceptor,

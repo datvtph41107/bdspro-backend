@@ -25,7 +25,7 @@ type LayerUsecase interface {
 	GetClientByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
 
 	// PMTiles builder
-	BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom int32, outputDir string, progressFn func(BuildProgress)) error
+	BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom uint32, outputDir string, progressFn func(BuildProgress)) error
 }
 
 type layerUsecaseImpl struct {
@@ -218,7 +218,7 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 	return layer, nil
 }
 
-func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom int32, outputDir string, progressFn func(BuildProgress)) error {
+func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom uint32, outputDir string, progressFn func(BuildProgress)) error {
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil || layer == nil {
 		return fmt.Errorf("layer %d not found", layerID)
@@ -226,5 +226,5 @@ func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, min
 	if outputDir == "" {
 		outputDir = "./files/tiles"
 	}
-	return BuildPMTilesFile(ctx, u.regionRepo, layerID, minZoom, maxZoom, outputDir, progressFn)
+	return BuildPMTilesFile(ctx, u.regionRepo, layerID, layer.MinZoom, layer.MaxZoom, outputDir, progressFn)
 }

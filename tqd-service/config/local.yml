@@ -40,7 +40,6 @@ layer:
                   fill-opacity: 0.3
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
-              maxzoom: "{maxZoom}"
             - id: "{sourceCode}_outline"
               type: "line"
               paint:

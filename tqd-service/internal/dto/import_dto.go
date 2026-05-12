@@ -17,7 +17,7 @@ type ImportFileRequest struct {
 
 // ImportEnqueueResult — phản hồi ngay sau khi ghi file và gắn job
 type ImportEnqueueResult struct {
-	Success bool
+	Code    uint32
 	BatchID string
 	Status  string
 	Message string
@@ -81,4 +81,13 @@ type BatchStatus struct {
 	CreatedAt     string
 	CompletedAt   string
 	ErrorMessages []string
+}
+
+// RetryImportErrorResult — kết quả retry một bản ghi qh_region_import_error_logs
+type RetryImportErrorResult struct {
+	Success      bool
+	Message      string
+	TotalItems   int
+	SuccessCount int
+	FailedCount  int
 }

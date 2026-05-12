@@ -46,7 +46,66 @@ func (r *regionRepoImpl) CreateBatch(ctx context.Context, regions []*qh_domain.Q
 		region.CreatedAt = now
 		region.UpdatedAt = now
 	}
-	return r.db.WithContext(ctx).CreateInBatches(regions, 500).Error
+
+	if err := r.db.WithContext(ctx).CreateInBatches(regions, 500).Error; err != nil {
+		r.logImportError(ctx, regions, err)
+		return err
+	}
+	return nil
+}
+
+// logImportError lưu các region thất bại vào bảng qh_region_import_error_logs để kiểm tra / retry sau.
+// Hàm này cố tình không trả lỗi ra ngoài — nếu ghi log cũng thất bại thì chỉ log stderr.
+func (r *regionRepoImpl) logImportError(ctx context.Context, regions []*qh_domain.QHRegion, insertErr error) {
+	// Lấy thông tin chung từ phần tử đầu tiên (nếu có)
+	var importBatchID string
+	var layerID uint64
+	if len(regions) > 0 {
+		importBatchID = regions[0].ImportBatchID
+		layerID = regions[0].LayerID
+	}
+
+	snapshots := make([]qh_domain.RegionSnapshot, 0, len(regions))
+	for _, reg := range regions {
+		if reg == nil {
+			continue
+		}
+		geom := ""
+		if len(reg.Geometry.Raw) > 0 {
+			geom = string(reg.Geometry.Raw)
+		}
+		snapshots = append(snapshots, qh_domain.RegionSnapshot{
+			ID:                 reg.ID,
+			LayerID:            reg.LayerID,
+			Name:               reg.Name,
+			DisplayName:        reg.DisplayName,
+			ImportBatchID:      reg.ImportBatchID,
+			SourceFile:         reg.SourceFile,
+			OriginalProperties: reg.OriginalProperties,
+			Geometry:           geom,
+		})
+	}
+
+	payload, marshalErr := json.Marshal(snapshots)
+	if marshalErr != nil {
+		log.Printf("[CreateBatch] failed to marshal error payload: %v (original error: %v)", marshalErr, insertErr)
+		return
+	}
+
+	errLog := &qh_domain.QHRegionImportErrorLog{
+		ImportBatchID:  importBatchID,
+		LayerID:        layerID,
+		ErrorMessage:   insertErr.Error(),
+		RegionsPayload: payload,
+		BatchSize:      len(regions),
+		RetryCount:     0,
+		Status:         qh_domain.ImportErrorStatusPending,
+	}
+
+	// Dùng background context để tránh bị cancel khi ctx đã hết hạn
+	if saveErr := r.db.WithContext(context.Background()).Create(errLog).Error; saveErr != nil {
+		log.Printf("[CreateBatch] failed to save import error log: %v (original error: %v)", saveErr, insertErr)
+	}
 }
 
 func (r *regionRepoImpl) Update(ctx context.Context, region *qh_domain.QHRegion) error {
@@ -162,6 +221,60 @@ func (r *regionRepoImpl) ListByImportBatchID(ctx context.Context, batchID string
 		Order("id ASC").
 		Find(&regions).Error
 	return regions, err
+}
+
+func (r *regionRepoImpl) ListImportErrorLogsByLayerID(ctx context.Context, layerID uint64, offset, limit int) ([]qh_domain.QHRegionImportErrorLog, int64, error) {
+	base := r.db.WithContext(ctx).Model(&qh_domain.QHRegionImportErrorLog{}).Where("layer_id = ?", layerID)
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count import error logs by layer: %w", err)
+	}
+	var rows []qh_domain.QHRegionImportErrorLog
+	err := r.db.WithContext(ctx).
+		Where("layer_id = ?", layerID).
+		Order("created_at DESC, id DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&rows).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("list import error logs by layer: %w", err)
+	}
+	return rows, total, nil
+}
+
+func (r *regionRepoImpl) GetImportErrorLogByID(ctx context.Context, id uint64) (*qh_domain.QHRegionImportErrorLog, error) {
+	var row qh_domain.QHRegionImportErrorLog
+	err := r.db.WithContext(ctx).First(&row, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get import error log: %w", err)
+	}
+	return &row, nil
+}
+
+func (r *regionRepoImpl) UpdateImportErrorLog(ctx context.Context, row *qh_domain.QHRegionImportErrorLog) error {
+	if row == nil {
+		return nil
+	}
+	return r.db.WithContext(ctx).Save(row).Error
+}
+
+func (r *regionRepoImpl) TryBeginImportErrorRetry(ctx context.Context, id uint64) (bool, error) {
+	res := r.db.WithContext(ctx).Model(&qh_domain.QHRegionImportErrorLog{}).
+		Where("id = ? AND status = ?", id, qh_domain.ImportErrorStatusPending).
+		Update("status", qh_domain.ImportErrorStatusProcessing)
+	if res.Error != nil {
+		return false, fmt.Errorf("try begin import error retry: %w", res.Error)
+	}
+	return res.RowsAffected > 0, nil
+}
+
+func (r *regionRepoImpl) ResetImportErrorRetryIfProcessing(ctx context.Context, id uint64) error {
+	return r.db.WithContext(ctx).Model(&qh_domain.QHRegionImportErrorLog{}).
+		Where("id = ? AND status = ?", id, qh_domain.ImportErrorStatusProcessing).
+		Update("status", qh_domain.ImportErrorStatusPending).Error
 }
 
 func (r *regionRepoImpl) ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error) {
@@ -515,6 +628,16 @@ func (r *regionRepoImpl) UpdateLabelForAllRegions(ctx context.Context, oldLabelI
 	return r.db.WithContext(ctx).
 		Model(&qh_domain.QHRegion{}).
 		Where("label_id = ? AND deleted_at IS NULL", oldLabelID).
+		Update("label_id", newLabelID).Error
+}
+
+func (r *regionRepoImpl) UpdateLabelForRegionsWhereLabelIn(ctx context.Context, labelIDs []uint64, newLabelID uint64) error {
+	if len(labelIDs) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("label_id IN ? AND deleted_at IS NULL", labelIDs).
 		Update("label_id", newLabelID).Error
 }
 
