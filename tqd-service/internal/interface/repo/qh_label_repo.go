@@ -11,6 +11,8 @@ type QHLabelRepository interface {
 	Delete(ctx context.Context, id uint64) error
 	// DeleteBatch soft-delete nhiều label còn active trong một câu lệnh (id IN (...)).
 	DeleteBatch(ctx context.Context, ids []uint64) error
+	// SoftDeleteAllByLayerID xóa mềm mọi qh_label thuộc layer.
+	SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error
 	// CountActiveByIDs đếm label chưa xóa mềm có id thuộc ids (phục vụ validate batch).
 	CountActiveByIDs(ctx context.Context, ids []uint64) (int64, error)
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error)

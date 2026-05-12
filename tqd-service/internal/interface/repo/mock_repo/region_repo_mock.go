@@ -33,6 +33,11 @@ func (m *MockRegionRepository) Delete(ctx context.Context, id uint64) error {
 	return args.Error(0)
 }
 
+func (m *MockRegionRepository) SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	args := m.Called(ctx, layerID)
+	return args.Error(0)
+}
+
 func (m *MockRegionRepository) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {

@@ -121,6 +121,20 @@ func (r *regionRepoImpl) Delete(ctx context.Context, id uint64) error {
 		Update("deleted_at", now).Error
 }
 
+func (r *regionRepoImpl) SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	now := time.Now()
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("layer_id = ? AND deleted_at IS NULL", layerID).
+		Updates(map[string]interface{}{
+			"deleted_at": now,
+			"updated_at": now,
+		}).Error
+}
+
 func (r *regionRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
 	var region qh_domain.QHRegion
 	err := r.db.WithContext(ctx).

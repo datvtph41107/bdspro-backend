@@ -93,7 +93,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	oneHouseRepo := postgres.NewOneHouseRepo(db)
 	oneHouseUsecase := usecase.NewOneHouseUsecase(oneHouseRepo)
 	oneHouseGrpcHandler := handler_grpc.NewOneHouseGrpcHandler(oneHouseUsecase)
-	layerUsecase := usecase.NewLayerUsecase(layerRepository, regionRepository)
+	layerUsecase := usecase.NewLayerUsecase(layerRepository, regionRepository, qhLabelRepository)
 	layerGrpcHandler := handler_grpc.NewLayerGrpcHandler(layerUsecase)
 	qhLabelGrpcHandler := handler_grpc.NewQHLabelGrpcHandler(qhLabelUsecase)
 	iParcelRepo := postgres.NewParcelPostgres(db)

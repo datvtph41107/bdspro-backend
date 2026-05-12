@@ -2,13 +2,12 @@ package db
 
 import (
 	_db "common/db"
-	qh_domain "tqd/internal/domain/qh"
 )
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
-		// Import error log — bảng theo dõi các batch insert thất bại
-		&qh_domain.QHRegionImportErrorLog{},
+	// Import error log — bảng theo dõi các batch insert thất bại
+	// &qh_domain.QHRegionImportErrorLog{},
 
 	// POI related models
 	// &domain.POI{},

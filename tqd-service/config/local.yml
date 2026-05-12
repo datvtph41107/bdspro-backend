@@ -35,6 +35,7 @@ layer:
         vector:
             - id: "{sourceCode}_fill"
               type: "fill"
+              maxzoom: 22
               paint:
                   fill-color: ["get", "label_stroke_color"]
                   fill-opacity: 0.3
@@ -42,6 +43,7 @@ layer:
               source-layer: "{sourceCode}"
             - id: "{sourceCode}_outline"
               type: "line"
+              minzoom: 16
               paint:
                   line-color: ["get", "label_stroke_color"]
                   line-width: 1

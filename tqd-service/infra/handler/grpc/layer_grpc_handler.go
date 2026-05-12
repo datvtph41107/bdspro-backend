@@ -7,6 +7,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	sharepb "pb/types/shared"
@@ -167,6 +168,26 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 
 	return h.toProtoLayer(updated, true)
+}
+
+// ToggleLayerBasicVisibility — đảo dấu displayOrder (âm ↔ dương) để ẩn/hiện layer cơ bản trên client.
+// @bind: internal/usecase.LayerUsecase.ToggleLayerBasicVisibility
+func (h *LayerGrpcHandler) ToggleLayerBasicVisibility(ctx context.Context, req *tqdpb.ToggleLayerBasicVisibilityRequest) (*tqdpb.LayerResponse, error) {
+	userID := _utils.GetOriginIdFromContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	layer, err := h.layerUsecase.ToggleLayerBasicVisibility(ctx, req.Id, userID)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return h.toProtoLayer(layer, true)
 }
 
 func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLayerRequest) (*sharepb.Empty, error) {

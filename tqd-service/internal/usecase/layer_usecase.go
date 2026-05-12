@@ -19,6 +19,7 @@ type LayerUsecase interface {
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
 	List(ctx context.Context, filter *repo.LayerFilter) ([]qh_domain.QHLayer, int64, error)
 	UpdateStatus(ctx context.Context, id uint64, status enums.LayerStatus, userID uint64) error
+	ToggleLayerBasicVisibility(ctx context.Context, id uint64, userID uint64) (*qh_domain.QHLayer, error)
 
 	// Client
 	ListClient(ctx context.Context, filter *repo.ClientLayerFilter) ([]qh_domain.QHLayer, int64, error)
@@ -31,12 +32,14 @@ type LayerUsecase interface {
 type layerUsecaseImpl struct {
 	layerRepo  repo.LayerRepository
 	regionRepo repo.RegionRepository
+	labelRepo  repo.QHLabelRepository
 }
 
-func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepository) LayerUsecase {
+func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepository, labelRepo repo.QHLabelRepository) LayerUsecase {
 	return &layerUsecaseImpl{
 		layerRepo:  layerRepo,
 		regionRepo: regionRepo,
+		labelRepo:  labelRepo,
 	}
 }
 
@@ -168,7 +171,16 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint64, userID uint64)
 	if existing == nil {
 		return fmt.Errorf("layer with id %d not found", id)
 	}
-	return u.layerRepo.Delete(ctx, id)
+	if err := u.regionRepo.SoftDeleteAllByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("soft delete regions by layer: %w", err)
+	}
+	if err := u.labelRepo.SoftDeleteAllByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("soft delete labels by layer: %w", err)
+	}
+	if err := u.layerRepo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("delete layer: %w", err)
+	}
+	return nil
 }
 
 func (u *layerUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error) {
@@ -198,6 +210,23 @@ func (u *layerUsecaseImpl) UpdateStatus(ctx context.Context, id uint64, status e
 		return fmt.Errorf("layer with id %d not found", id)
 	}
 	return u.layerRepo.UpdateStatus(ctx, id, status)
+}
+
+func (u *layerUsecaseImpl) ToggleLayerBasicVisibility(ctx context.Context, id uint64, userID uint64) (*qh_domain.QHLayer, error) {
+	existing, err := u.layerRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get layer failed: %w", err)
+	}
+	if existing == nil {
+		return nil, fmt.Errorf("layer with id %d not found", id)
+	}
+	existing.DisplayOrder = -existing.DisplayOrder
+	existing.UpdatedBy = userID
+	existing.UpdatedAt = time.Now()
+	if err := u.layerRepo.Update(ctx, existing); err != nil {
+		return nil, fmt.Errorf("update failed: %w", err)
+	}
+	return existing, nil
 }
 
 func (u *layerUsecaseImpl) ListClient(ctx context.Context, filter *repo.ClientLayerFilter) ([]qh_domain.QHLayer, int64, error) {

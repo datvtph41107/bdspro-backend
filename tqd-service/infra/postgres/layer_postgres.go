@@ -121,10 +121,10 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 		return nil, 0, err
 	}
 
-	orderBy := "updated_at"
+	orderBy := "display_order"
 	if filter.OrderBy != "" {
 		allowed := map[string]bool{
-			"display_order": true, "created_at": true, "name": true, "id": true,
+			"updated_at": true, "created_at": true, "name": true, "id": true,
 		}
 		if allowed[filter.OrderBy] {
 			orderBy = filter.OrderBy

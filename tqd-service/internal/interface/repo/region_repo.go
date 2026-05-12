@@ -14,6 +14,8 @@ type RegionRepository interface {
 	CreateBatch(ctx context.Context, regions []*qh_domain.QHRegion) error
 	Update(ctx context.Context, region *qh_domain.QHRegion) error
 	Delete(ctx context.Context, id uint64) error
+	// SoftDeleteAllByLayerID xóa mềm mọi region thuộc layer (layer_id).
+	SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.QHRegion, error)
 

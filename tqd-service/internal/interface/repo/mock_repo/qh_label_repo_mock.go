@@ -31,6 +31,11 @@ func (m *MockQHLabelRepository) DeleteBatch(ctx context.Context, ids []uint64) e
 	return args.Error(0)
 }
 
+func (m *MockQHLabelRepository) SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	args := m.Called(ctx, layerID)
+	return args.Error(0)
+}
+
 func (m *MockQHLabelRepository) CountActiveByIDs(ctx context.Context, ids []uint64) (int64, error) {
 	args := m.Called(ctx, ids)
 	return args.Get(0).(int64), args.Error(1)

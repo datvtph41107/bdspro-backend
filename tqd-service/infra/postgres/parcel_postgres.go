@@ -317,6 +317,7 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 			SELECT
 				r.id AS region_id,
 				r.layer_id,
+				r.label_id,
 				r.name AS region_name,
 				r.display_name AS region_display_name,
 				'' AS region_land_use_code,
@@ -341,12 +342,11 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 								'fileType', ll.file_type,
 								'createdAt', ll.created_at
 							)
-							ORDER BY ll.display_order, ll.id
+							ORDER BY ll.id
 						)
 						FROM qh_layer_legals ll
 						WHERE ll.layer_id = l.id
 						  AND ll.deleted_at IS NULL
-						  AND ll.is_public = 1
 					),
 					'[]'::json
 				) AS layer_legal_docs,
@@ -363,6 +363,9 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 				ON l.id = r.layer_id
 			   AND l.status = 10
 			   AND l.deleted_at IS NULL
+			JOIN qh_labels lb
+				ON lb.id = r.label_id
+			   AND lb.deleted_at IS NULL
 			WHERE ST_Intersects(r.geometry, pb.parcel_geometry)
 		),
 
@@ -399,9 +402,9 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 			ri.region_display_name,
 			ri.region_land_use_code,
 
-			COALESCE(lud.name, 'Chưa phân loại') AS region_land_use_name,
+			COALESCE(lb.name, 'Chưa phân loại') AS region_land_use_name,
 			'Đất khác' AS region_land_use_group,
-			'#CCCCCC' AS region_land_use_color,
+			lb.color AS region_land_use_color,
 
 			ri.color_red,
 			ri.color_green,
@@ -417,6 +420,8 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 		FROM region_intersections ri
 		LEFT JOIN qh_planning_land_use lud
 			ON lud.code = ri.region_land_use_code
+		LEFT JOIN qh_labels lb
+			ON lb.id = ri.label_id
 		ORDER BY ri.layer_id, ri.region_land_use_code, ri.overlap_area_sqm DESC, ri.region_id
 	`
 

@@ -47,6 +47,19 @@ func (r *qhLabelRepoImpl) DeleteBatch(ctx context.Context, ids []uint64) error {
 		Update("deleted_at", now).Error
 }
 
+func (r *qhLabelRepoImpl) SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).
+		Where("layer_id = ? AND deleted_at IS NULL", layerID).
+		Updates(map[string]interface{}{
+			"deleted_at": now,
+			"updated_at": now,
+		}).Error
+}
+
 func (r *qhLabelRepoImpl) CountActiveByIDs(ctx context.Context, ids []uint64) (int64, error) {
 	if len(ids) == 0 {
 		return 0, nil

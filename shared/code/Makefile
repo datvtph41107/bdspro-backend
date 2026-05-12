@@ -185,7 +185,7 @@ tqd-http:
 
 tqd-grpc:
 	@export PATH=$$PATH:$$HOME/go/bin && \
-	lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
+	lsof -i :$(PORT) | xargs kill -9 2>/dev/null || true
 	@export PATH=$$PATH:$$HOME/go/bin && \
 	$(CD_ROOT) && cd tqd-service && $(AIR_EXE) -- -server=grpc
 

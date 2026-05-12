@@ -62,6 +62,14 @@ service LayerService {
       body: "*"
     };
   }
+
+  // ToggleLayerBasicVisibility - Ẩn/hiện layer cơ bản: đảo dấu displayOrder (âm ↔ dương)
+  rpc ToggleLayerBasicVisibility(ToggleLayerBasicVisibilityRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layers/{id}/toggle-basic-visibility"
+      body: "*"
+    };
+  }
   
   // ========== Client APIs ==========
   
@@ -147,6 +155,10 @@ message UpdateLayerRequest {
 message UpdateLayerStatusRequest {
   uint64 id = 1;
   uint32 status = 2;                   // 1=draft, 10=active, 20=expired, 30=archived
+}
+
+message ToggleLayerBasicVisibilityRequest {
+  uint64 id = 1;
 }
 
 message DeleteLayerRequest {
