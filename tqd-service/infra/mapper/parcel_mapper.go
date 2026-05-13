@@ -95,6 +95,36 @@ func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tq
 	}
 }
 
+func regionImpactToProto(region *dto.RegionImpact) *tqdpb.Region {
+	if region == nil {
+		return nil
+	}
+	var color *tqdpb.RGBColor
+	if region.ColorRGB != nil {
+		color = &tqdpb.RGBColor{
+			Red:   uint32(region.ColorRGB.Red),
+			Green: uint32(region.ColorRGB.Green),
+			Blue:  uint32(region.ColorRGB.Blue),
+		}
+	} else {
+		color = &tqdpb.RGBColor{}
+	}
+	return &tqdpb.Region{
+		Id:             region.ID,
+		Name:           region.Name,
+		DisplayName:    region.DisplayName,
+		LandUseCode:    region.LandUseCode,
+		LandUseName:    region.LandUseName,
+		LandUseGroup:   region.LandUseGroup,
+		Color:          color,
+		OverlapArea:    region.OverlapAreaSqm,
+		OverlapPercent: region.OverlapPct,
+		CenterLat:      region.CenterLat,
+		CenterLng:      region.CenterLng,
+		Geometry:       region.Geometry,
+	}
+}
+
 // SỬA: Thêm logic xử lý legalDocStr
 func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdpb.ParcelLayersResponse {
 	if resp == nil {
@@ -132,32 +162,7 @@ func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdp
 				if region == nil {
 					continue
 				}
-
-				var color *tqdpb.RGBColor
-				if region.ColorRGB != nil {
-					color = &tqdpb.RGBColor{
-						Red:   uint32(region.ColorRGB.Red),
-						Green: uint32(region.ColorRGB.Green),
-						Blue:  uint32(region.ColorRGB.Blue),
-					}
-				} else {
-					color = &tqdpb.RGBColor{}
-				}
-
-				regions = append(regions, &tqdpb.Region{
-					Id:             region.ID,
-					Name:           region.Name,
-					DisplayName:    region.DisplayName,
-					LandUseCode:    region.LandUseCode,
-					LandUseName:    region.LandUseName,
-					LandUseGroup:   region.LandUseGroup,
-					Color:          color,
-					OverlapArea:    region.OverlapAreaSqm,
-					OverlapPercent: region.OverlapPct,
-					CenterLat:      region.CenterLat,
-					CenterLng:      region.CenterLng,
-					Geometry:       region.Geometry,
-				})
+				regions = append(regions, regionImpactToProto(region))
 			}
 
 			labels = append(labels, &tqdpb.Label{
@@ -236,6 +241,7 @@ func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdp
 		QueriedAt:            meta.QueriedAt,
 		ResponseTimeMs:       meta.ResponseTimeMs,
 		SpatialDataAvailable: stats.SpatialDataAvailable,
+		ConcludeLabel:        regionImpactToProto(resp.ConcludeLabel),
 	}
 }
 

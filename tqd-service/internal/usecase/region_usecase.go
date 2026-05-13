@@ -1,20 +1,37 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	_dto "common/domain/dto"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
+	"tqd/internal/geometry"
 	"tqd/internal/interface/repo"
 )
 
 // ErrLayerNotFound khi admin list region theo layer nhưng layer không tồn tại
 var ErrLayerNotFound = errors.New("layer not found")
 
+// RegionUpdatePatch — các field có thể sửa qua UpdateRegion (không gồm geometry).
+// Chỉ gán pointer cho field thực sự muốn đổi; LabelID = pointer tới 0 nghĩa là gỡ label.
+type RegionUpdatePatch struct {
+	RegionID    uint64
+	Name        *string
+	DisplayName *string
+	Description *string
+	Status      *enums.RegionStatus
+	LabelID     *uint64
+}
+
 type RegionUsecase interface {
+	Create(ctx context.Context, layerID uint64, name string, geometryBytes []byte, labelID uint64) (*qh_domain.QHRegion, error)
+	Update(ctx context.Context, patch RegionUpdatePatch) (*qh_domain.QHRegion, error)
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
 	List(ctx context.Context, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
 	// ListForAdminByLayer kiểm tra layer tồn tại rồi list regions (admin)
@@ -52,6 +69,156 @@ func NewRegionUsecase(
 		layerRepo:  layerRepo,
 		labelRepo:  labelRepo,
 	}
+}
+
+func extractGeometryObjectFromBytes(raw []byte) (map[string]interface{}, error) {
+	trim := bytes.TrimSpace(raw)
+	if len(trim) == 0 {
+		return nil, errors.New("geometry is empty")
+	}
+	var root map[string]interface{}
+	if err := json.Unmarshal(trim, &root); err != nil {
+		return nil, fmt.Errorf("geometry is not valid JSON: %w", err)
+	}
+	t, _ := root["type"].(string)
+	t = strings.TrimSpace(t)
+	switch t {
+	case "Feature":
+		g, ok := root["geometry"].(map[string]interface{})
+		if !ok || g == nil {
+			return nil, errors.New("GeoJSON Feature missing geometry object")
+		}
+		return g, nil
+	case "Polygon", "MultiPolygon":
+		return root, nil
+	default:
+		return nil, fmt.Errorf("unsupported GeoJSON type %q (expected Feature, Polygon, or MultiPolygon)", t)
+	}
+}
+
+func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name string, geometryBytes []byte, labelID uint64) (*qh_domain.QHRegion, error) {
+	if layerID == 0 {
+		return nil, errors.New("layerId is required")
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, errors.New("name is required")
+	}
+	layer, err := u.layerRepo.GetByID(ctx, layerID)
+	if err != nil {
+		return nil, fmt.Errorf("get layer failed: %w", err)
+	}
+	if layer == nil {
+		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, layerID)
+	}
+
+	geomObj, err := extractGeometryObjectFromBytes(geometryBytes)
+	if err != nil {
+		return nil, err
+	}
+	geomBytes, err := geometry.ToMultiPolygonGeoJSONBytes(geomObj)
+	if err != nil {
+		return nil, err
+	}
+	geoInfo, err := geometry.ParseGeometry(string(geomBytes))
+	if err != nil {
+		return nil, fmt.Errorf("invalid geometry: %w", err)
+	}
+
+	areaSqm := 0.0
+	if geoInfo != nil {
+		areaSqm = geoInfo.Area
+	}
+
+	propsBytes, _ := json.Marshal(map[string]interface{}{"source": "admin_create"})
+	region := &qh_domain.QHRegion{
+		LayerID:            layerID,
+		Name:               name,
+		DisplayName:        name,
+		LabelID:            labelID,
+		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
+		OriginalProperties: propsBytes,
+		AreaSqm:            areaSqm,
+		AreaHa:             areaSqm / 10000,
+		Status:             enums.RegionStatusActive,
+		ProcessingStatus:   enums.ProcessingStatusPending,
+		Version:            1,
+		IsLatest:           true,
+	}
+	if err := u.regionRepo.Create(ctx, region); err != nil {
+		return nil, fmt.Errorf("create region failed: %w", err)
+	}
+	if region.ID == 0 {
+		return nil, errors.New("create region failed: missing id")
+	}
+	created, err := u.regionRepo.GetByID(ctx, region.ID)
+	if err != nil {
+		return nil, fmt.Errorf("reload region failed: %w", err)
+	}
+	return created, nil
+}
+
+func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch) (*qh_domain.QHRegion, error) {
+	if patch.RegionID == 0 {
+		return nil, errors.New("id is required")
+	}
+	has := patch.Name != nil || patch.DisplayName != nil || patch.Description != nil ||
+		patch.Status != nil || patch.LabelID != nil
+	if !has {
+		return nil, errors.New("at least one field to update is required")
+	}
+
+	region, err := u.regionRepo.GetByID(ctx, patch.RegionID)
+	if err != nil {
+		return nil, fmt.Errorf("get region failed: %w", err)
+	}
+	if region == nil {
+		return nil, fmt.Errorf("region %d not found", patch.RegionID)
+	}
+
+	if patch.Name != nil {
+		v := strings.TrimSpace(*patch.Name)
+		if v == "" {
+			return nil, errors.New("name cannot be empty")
+		}
+		region.Name = v
+	}
+	if patch.DisplayName != nil {
+		region.DisplayName = strings.TrimSpace(*patch.DisplayName)
+	}
+	if patch.Description != nil {
+		region.Description = *patch.Description
+	}
+	if patch.Status != nil {
+		if !patch.Status.IsValid() {
+			return nil, fmt.Errorf("invalid status: %d", *patch.Status)
+		}
+		region.Status = *patch.Status
+	}
+	if patch.LabelID != nil {
+		lid := *patch.LabelID
+		if lid == 0 {
+			region.LabelID = 0
+		} else {
+			label, lerr := u.labelRepo.GetByID(ctx, lid)
+			if lerr != nil {
+				return nil, fmt.Errorf("get label failed: %w", lerr)
+			}
+			if label == nil {
+				return nil, fmt.Errorf("label %d not found", lid)
+			}
+			// if label.LayerID != region.LayerID {
+			// 	return nil, errors.New("label does not belong to region layer")
+			// }
+			region.LabelID = lid
+		}
+	}
+
+	if err := u.regionRepo.Update(ctx, region); err != nil {
+		return nil, fmt.Errorf("update region failed: %w", err)
+	}
+	u.labelRepo.EnsureLayerLink(ctx, region.LabelID, region.LayerID)
+	return u.regionRepo.GetByID(ctx, patch.RegionID)
 }
 
 func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {

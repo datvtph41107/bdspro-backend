@@ -434,24 +434,24 @@ func (u *importUsecaseImpl) buildRegion(ctx context.Context, batchID string, ind
 
 	propsBytes, _ := json.Marshal(props)
 
-	colorRed := uint8(200)
-	colorGreen := uint8(200)
-	colorBlue := uint8(200)
-	if v, ok := props["red"]; ok {
-		if f, ok := v.(float64); ok {
-			colorRed = uint8(f)
-		}
-	}
-	if v, ok := props["green"]; ok {
-		if f, ok := v.(float64); ok {
-			colorGreen = uint8(f)
-		}
-	}
-	if v, ok := props["blue"]; ok {
-		if f, ok := v.(float64); ok {
-			colorBlue = uint8(f)
-		}
-	}
+	// colorRed := uint8(200)
+	// colorGreen := uint8(200)
+	// colorBlue := uint8(200)
+	// if v, ok := props["red"]; ok {
+	// 	if f, ok := v.(float64); ok {
+	// 		colorRed = uint8(f)
+	// 	}
+	// }
+	// if v, ok := props["green"]; ok {
+	// 	if f, ok := v.(float64); ok {
+	// 		colorGreen = uint8(f)
+	// 	}
+	// }
+	// if v, ok := props["blue"]; ok {
+	// 	if f, ok := v.(float64); ok {
+	// 		colorBlue = uint8(f)
+	// 	}
+	// }
 
 	region := &qh_domain.QHRegion{
 		LayerID:            req.LayerID,
@@ -466,9 +466,9 @@ func (u *importUsecaseImpl) buildRegion(ctx context.Context, batchID string, ind
 		ProcessingStatus:   10,
 		Version:            1,
 		IsLatest:           true,
-		ColorRed:           colorRed,
-		ColorGreen:         colorGreen,
-		ColorBlue:          colorBlue,
+		// ColorRed:           colorRed,
+		// ColorGreen:         colorGreen,
+		// ColorBlue:          colorBlue,
 	}
 
 	if name, ok := props["name"]; ok {
@@ -817,22 +817,22 @@ func (u *importUsecaseImpl) regionFromRetrySnapshot(ctx context.Context, snap *q
 	area := geoInfo.Area
 	propsBytes, _ := json.Marshal(props)
 
-	colorRed, colorGreen, colorBlue := uint8(200), uint8(200), uint8(200)
-	if v, ok := props["red"]; ok {
-		if f, ok := v.(float64); ok {
-			colorRed = uint8(f)
-		}
-	}
-	if v, ok := props["green"]; ok {
-		if f, ok := v.(float64); ok {
-			colorGreen = uint8(f)
-		}
-	}
-	if v, ok := props["blue"]; ok {
-		if f, ok := v.(float64); ok {
-			colorBlue = uint8(f)
-		}
-	}
+	// colorRed, colorGreen, colorBlue := uint8(200), uint8(200), uint8(200)
+	// if v, ok := props["red"]; ok {
+	// 	if f, ok := v.(float64); ok {
+	// 		colorRed = uint8(f)
+	// 	}
+	// }
+	// if v, ok := props["green"]; ok {
+	// 	if f, ok := v.(float64); ok {
+	// 		colorGreen = uint8(f)
+	// 	}
+	// }
+	// if v, ok := props["blue"]; ok {
+	// 	if f, ok := v.(float64); ok {
+	// 		colorBlue = uint8(f)
+	// 	}
+	// }
 
 	region := &qh_domain.QHRegion{
 		LayerID:            snap.LayerID,
@@ -847,9 +847,9 @@ func (u *importUsecaseImpl) regionFromRetrySnapshot(ctx context.Context, snap *q
 		ProcessingStatus:   10,
 		Version:            1,
 		IsLatest:           true,
-		ColorRed:           colorRed,
-		ColorGreen:         colorGreen,
-		ColorBlue:          colorBlue,
+		// ColorRed:           colorRed,
+		// ColorGreen:         colorGreen,
+		// ColorBlue:          colorBlue,
 	}
 	region.Name = snap.Name
 	region.DisplayName = snap.DisplayName

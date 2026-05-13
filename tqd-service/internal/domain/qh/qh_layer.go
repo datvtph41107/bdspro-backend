@@ -41,6 +41,10 @@ type QHLayer struct {
 	DeletedAt *time.Time `gorm:"index" json:"deletedAt,omitempty"`
 
 	Labels []QHLabel `gorm:"many2many:qh_label_layers;" json:"labels,omitempty"`
+
+	TrustValue float32 `gorm:"default:0" json:"trustValue"`
+
+	LegalStatus enums.LegalStatus `gorm:"default:0" json:"legalStatus"`
 }
 
 func (QHLayer) TableName() string {

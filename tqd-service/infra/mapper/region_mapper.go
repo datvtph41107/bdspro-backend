@@ -18,7 +18,7 @@ func NewRegionMapper() *RegionMapper {
 }
 
 // ToProtoResponse - Convert domain QHRegion to proto RegionResponse (full version for admin)
-func (m *RegionMapper) ToProtoResponse(region *qh_domain.QHRegion, labels []qh_domain.QHLabel) *tqdpb.RegionResponse {
+func (m *RegionMapper) ToProtoResponse(region *qh_domain.QHRegion, label *qh_domain.QHLabel) *tqdpb.RegionResponse {
 	if region == nil {
 		return nil
 	}
@@ -39,17 +39,17 @@ func (m *RegionMapper) ToProtoResponse(region *qh_domain.QHRegion, labels []qh_d
 	}
 
 	resp := &tqdpb.RegionResponse{
-		Id:                 region.ID,
-		LayerId:            region.LayerID,
-		Name:               region.Name,
-		DisplayName:        region.DisplayName,
-		Description:        region.Description,
-		AreaHa:             region.AreaHa,
-		AreaSqm:            region.AreaSqm,
-		ColorRed:           uint32(region.ColorRed),
-		ColorGreen:         uint32(region.ColorGreen),
-		ColorBlue:          uint32(region.ColorBlue),
-		ColorHex:           region.CalculateColorHex(),
+		Id:          region.ID,
+		LayerId:     region.LayerID,
+		Name:        region.Name,
+		DisplayName: region.DisplayName,
+		Description: region.Description,
+		AreaHa:      region.AreaHa,
+		AreaSqm:     region.AreaSqm,
+		// ColorRed:           uint32(region.ColorRed),
+		// ColorGreen:         uint32(region.ColorGreen),
+		// ColorBlue:          uint32(region.ColorBlue),
+		// ColorHex:           region.CalculateColorHex(),
 		OriginalProperties: props,
 		SourceFile:         region.SourceFile,
 		ImportBatchId:      region.ImportBatchID,
@@ -59,17 +59,19 @@ func (m *RegionMapper) ToProtoResponse(region *qh_domain.QHRegion, labels []qh_d
 		IsLatest:           region.IsLatest,
 		CreatedAt:          _utils.FormatTimeToString(&region.CreatedAt),
 		UpdatedAt:          _utils.FormatTimeToString(&region.UpdatedAt),
+		Geometry:           region.Geometry.Raw,
 	}
 
 	// Add style config
-	styleConfig := region.GetStyleConfig()
-	styleJSON, _ := json.Marshal(styleConfig)
-	resp.StyleConfig = string(styleJSON)
+	// styleConfig := region.GetStyleConfig()
+	// styleJSON, _ := json.Marshal(styleConfig)
+	// resp.StyleConfig = string(styleJSON)
 
 	// Add labels
-	for _, label := range labels {
-		resp.Labels = append(resp.Labels, NewLabelMapper().ToProtoQHLabelResponse(&label))
-	}
+	// for _, label := range labels {
+	// 	resp.Labels = append(resp.Labels, NewLabelMapper().ToProtoQHLabelResponse(&label))
+	// }
+	resp.Label = NewLabelMapper().ToProtoQHLabelResponse(label)
 
 	return resp
 }
@@ -93,12 +95,13 @@ func (m *RegionMapper) ToProtoClientResponse(region *qh_domain.QHRegion) *tqdpb.
 		Version:     0,
 		CreatedAt:   _utils.FormatTimeToString(&region.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(&region.UpdatedAt),
+		Geometry:    region.Geometry.Raw,
 	}
 
 	// Add style config
-	styleConfig := region.GetStyleConfig()
-	styleJSON, _ := json.Marshal(styleConfig)
-	resp.StyleConfig = string(styleJSON)
+	// styleConfig := region.GetStyleConfig()
+	// styleJSON, _ := json.Marshal(styleConfig)
+	// resp.StyleConfig = string(styleJSON)
 
 	return resp
 }

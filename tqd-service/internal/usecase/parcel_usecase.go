@@ -548,9 +548,36 @@ func buildParcelLayersResponse(parcelID uint64,
 		ParcelAreaSqm: parcelArea,
 		Summary:       summary,
 		Layers:        layers,
+		ConcludeLabel: pickConcludeLabel(layers),
 		Statistics:    stats,
 		Risk:          risk,
 	}
+}
+
+// pickConcludeLabel chọn region có diện tích giao (overlap) với thửa lớn nhất.
+func pickConcludeLabel(layers []*dto.LayerImpact) *dto.RegionImpact {
+	var best *dto.RegionImpact
+	for _, layer := range layers {
+		if layer == nil {
+			continue
+		}
+		for _, label := range layer.Labels {
+			if label == nil {
+				continue
+			}
+			for _, reg := range label.Regions {
+				if reg == nil {
+					continue
+				}
+				if best == nil ||
+					reg.OverlapAreaSqm > best.OverlapAreaSqm ||
+					(reg.OverlapAreaSqm == best.OverlapAreaSqm && reg.ID < best.ID) {
+					best = reg
+				}
+			}
+		}
+	}
+	return best
 }
 
 func buildLabelKey(layerID uint64, landUseCode string) string {

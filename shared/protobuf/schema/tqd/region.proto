@@ -16,6 +16,22 @@ option go_package = "pb/types/tqd;tqdpb";
 service RegionService {
   
   // ========== Admin APIs ==========
+
+  // CreateRegion - Tạo region (layerId, name, geometry GeoJSON UTF-8 trong bytes; có thể gửi Polygon, MultiPolygon hoặc Feature)
+  rpc CreateRegion(CreateRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/regions"
+      body: "*"
+    };
+  }
+
+  // UpdateRegion - Cập nhật metadata region (không sửa geometry)
+  rpc UpdateRegion(UpdateRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/regions/{id}"
+      body: "*"
+    };
+  }
   
   // DeleteRegion - Xóa mềm region
   rpc DeleteRegion(DeleteRegionRequest) returns (google.protobuf.Empty) {
@@ -80,6 +96,22 @@ service RegionService {
 // =====================================================
 // REQUEST MESSAGES
 // =====================================================
+
+message CreateRegionRequest {
+  uint64 layerId = 1;
+  string name = 2;
+  bytes geometry = 3;
+  uint64 labelId = 4;
+}
+
+message UpdateRegionRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional string description = 4;
+  optional uint32 status = 5;
+  optional uint64 labelId = 6;
+}
 
 message DeleteRegionRequest {
   uint64 id = 1;
@@ -199,5 +231,6 @@ message RegionResponse {
   string updatedAt = 22;
   
   // ===== Labels =====
-  repeated QHLabelResponse labels = 23;
+  QHLabelResponse label = 23;
+  bytes geometry = 24;
 }

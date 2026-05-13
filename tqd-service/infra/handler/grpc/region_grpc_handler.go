@@ -1,9 +1,11 @@
 package handler_grpc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"log"
+	"strings"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -84,12 +86,15 @@ func (h *RegionGrpcHandler) buildListRegionsAdminResponse(
 	protoRegions := make([]*tqdpb.RegionResponse, 0, len(regions))
 	for i := range regions {
 		region := &regions[i]
-		label, _ := h.regionUsecase.GetLabelByRegion(ctx, region.ID)
-		var labels []qh_domain.QHLabel
-		if label != nil {
-			labels = []qh_domain.QHLabel{*label}
+		var label *qh_domain.QHLabel
+		if region.LabelName != "" {
+			label = &qh_domain.QHLabel{
+				ID:    region.LabelID,
+				Name:  region.LabelName,
+				Color: region.LabelColor,
+			}
 		}
-		protoRegions = append(protoRegions, h.regionMapper.ToProtoResponse(region, labels))
+		protoRegions = append(protoRegions, h.regionMapper.ToProtoResponse(region, label))
 	}
 	return &tqdpb.ListRegionsResponse{
 		Data:     protoRegions,
@@ -102,6 +107,91 @@ func (h *RegionGrpcHandler) buildListRegionsAdminResponse(
 // =====================================================
 // ADMIN APIS
 // =====================================================
+
+// CreateRegion — POST /v2/tqd/admin/regions — Tạo region (layerId, name, geometry GeoJSON: Polygon, MultiPolygon hoặc Feature).
+func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateRegionRequest) (*tqdpb.RegionResponse, error) {
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layer_id is required")
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		return nil, status.Error(codes.InvalidArgument, "name is required")
+	}
+	if len(bytes.TrimSpace(req.Geometry)) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "geometry is required")
+	}
+
+	log.Printf("[CreateRegion] LayerID: %d, Name: %s", req.LayerId, req.Name)
+
+	region, err := h.regionUsecase.Create(ctx, req.LayerId, req.Name, req.Geometry, req.LabelId)
+	if err != nil {
+		if errors.Is(err, usecase.ErrLayerNotFound) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		msg := err.Error()
+		if strings.Contains(msg, "create region failed") || strings.Contains(msg, "reload region failed") {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if region == nil {
+		return nil, status.Error(codes.Internal, "create region returned nil")
+	}
+
+	var label *qh_domain.QHLabel
+	if region.LabelID != 0 {
+		label, _ = h.regionUsecase.GetLabelByRegion(ctx, region.ID)
+	}
+	return h.regionMapper.ToProtoResponse(region, label), nil
+}
+
+// UpdateRegion — PATCH /v2/tqd/admin/regions/{id} — Cập nhật metadata (không đổi geometry).
+func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateRegionRequest) (*tqdpb.RegionResponse, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	patch := usecase.RegionUpdatePatch{RegionID: req.Id}
+	if req.Name != nil {
+		patch.Name = req.Name
+	}
+	if req.DisplayName != nil {
+		patch.DisplayName = req.DisplayName
+	}
+	if req.Description != nil {
+		patch.Description = req.Description
+	}
+	if req.Status != nil {
+		st := enums.RegionStatus(*req.Status)
+		patch.Status = &st
+	}
+	if req.LabelId != nil {
+		lid := *req.LabelId
+		patch.LabelID = &lid
+	}
+
+	log.Printf("[UpdateRegion] RegionID: %d", req.Id)
+
+	region, err := h.regionUsecase.Update(ctx, patch)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		if strings.Contains(msg, "update region failed") {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if region == nil {
+		return nil, status.Error(codes.Internal, "update region returned nil")
+	}
+
+	var label *qh_domain.QHLabel
+	if region.LabelID != 0 {
+		label, _ = h.regionUsecase.GetLabelByRegion(ctx, region.ID)
+	}
+	return h.regionMapper.ToProtoResponse(region, label), nil
+}
 
 func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionRequest) (*tqdpb.RegionResponse, error) {
 	if req.Id == 0 {
@@ -119,12 +209,8 @@ func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionR
 	}
 
 	label, _ := h.regionUsecase.GetLabelByRegion(ctx, req.Id)
-	var labels []qh_domain.QHLabel
-	if label != nil {
-		labels = []qh_domain.QHLabel{*label}
-	}
 
-	return h.regionMapper.ToProtoResponse(region, labels), nil
+	return h.regionMapper.ToProtoResponse(region, label), nil
 }
 
 func (h *RegionGrpcHandler) ListRegions(ctx context.Context, req *tqdpb.ListRegionsRequest) (*tqdpb.ListRegionsResponse, error) {
@@ -217,12 +303,8 @@ func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, re
 	}
 
 	label, _ := h.regionUsecase.GetLabelByRegion(ctx, req.RegionId)
-	var labels []qh_domain.QHLabel
-	if label != nil {
-		labels = []qh_domain.QHLabel{*label}
-	}
 
-	return h.regionMapper.ToProtoResponse(region, labels), nil
+	return h.regionMapper.ToProtoResponse(region, label), nil
 }
 
 // =====================================================

@@ -110,7 +110,15 @@ func (r *regionRepoImpl) logImportError(ctx context.Context, regions []*qh_domai
 
 func (r *regionRepoImpl) Update(ctx context.Context, region *qh_domain.QHRegion) error {
 	region.UpdatedAt = time.Now()
-	return r.db.WithContext(ctx).Save(region).Error
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("id = ? AND deleted_at IS NULL", region.ID).
+		Updates(map[string]interface{}{
+			"name":         region.Name,
+			"display_name": region.DisplayName,
+			"description":  region.Description,
+			"label_id":     region.LabelID,
+		}).Error
 }
 
 func (r *regionRepoImpl) Delete(ctx context.Context, id uint64) error {
@@ -169,36 +177,36 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	var regions []qh_domain.QHRegion
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).
-		Where("deleted_at IS NULL")
+	baseQuery := r.db.WithContext(ctx).Model(&qh_domain.QHRegion{}).
+		Where("qh_regions.deleted_at IS NULL")
 
 	if filter.LayerID != nil {
-		query = query.Where("layer_id = ?", *filter.LayerID)
+		baseQuery = baseQuery.Where("qh_regions.layer_id = ?", *filter.LayerID)
 	}
 	if filter.LabelID != nil {
-		query = query.Where("label_id = ?", *filter.LabelID)
+		baseQuery = baseQuery.Where("qh_regions.label_id = ?", *filter.LabelID)
 	}
 	if filter.Status != nil {
-		query = query.Where("status = ?", *filter.Status)
+		baseQuery = baseQuery.Where("qh_regions.status = ?", *filter.Status)
 	}
 	if filter.ProcessingStatus != nil {
-		query = query.Where("processing_status = ?", *filter.ProcessingStatus)
+		baseQuery = baseQuery.Where("qh_regions.processing_status = ?", *filter.ProcessingStatus)
 	}
 	if filter.MinAreaHa != nil {
-		query = query.Where("area_ha >= ?", *filter.MinAreaHa)
+		baseQuery = baseQuery.Where("qh_regions.area_ha >= ?", *filter.MinAreaHa)
 	}
 	if filter.MaxAreaHa != nil {
-		query = query.Where("area_ha <= ?", *filter.MaxAreaHa)
+		baseQuery = baseQuery.Where("qh_regions.area_ha <= ?", *filter.MaxAreaHa)
 	}
 	if filter.Search != nil && *filter.Search != "" {
 		searchTerm := "%" + strings.ToLower(*filter.Search) + "%"
-		query = query.Where(
-			"LOWER(name) LIKE ? OR LOWER(display_name) LIKE ?",
+		baseQuery = baseQuery.Where(
+			"LOWER(qh_regions.name) LIKE ? OR LOWER(qh_regions.display_name) LIKE ?",
 			searchTerm, searchTerm,
 		)
 	}
 
-	if err := query.Count(&total).Error; err != nil {
+	if err := baseQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -209,7 +217,7 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 		limit = filter.Pagable.GetLimit()
 	}
 
-	orderBy := "id"
+	orderBy := "qh_regions.id"
 	if filter.OrderBy != "" {
 		orderBy = filter.OrderBy
 	}
@@ -218,8 +226,23 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 		orderDir = "DESC"
 	}
 
-	err := query.
-		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
+	err := baseQuery.
+		Select(`
+			qh_regions.id, qh_regions.layer_id, qh_regions.name, qh_regions.display_name, 
+			qh_regions.description, qh_regions.label_id,
+			qh_regions.legal_doc, qh_regions.planning_name,
+			ST_AsGeoJSON(qh_regions.geometry) AS geometry,
+			qh_regions.area_sqm, qh_regions.area_ha, qh_regions.perimeter_m,
+			qh_regions.color_red, qh_regions.color_green, qh_regions.color_blue,
+			qh_regions.original_properties, qh_regions.source_file, qh_regions.import_batch_id,
+			qh_regions.style_config, qh_regions.status, qh_regions.processing_status,
+			qh_regions.version, qh_regions.is_latest,
+			qh_regions.created_at, qh_regions.updated_at, qh_regions.deleted_at,
+			qh_labels.name AS label_name,
+			qh_labels.color AS label_color
+		`).
+		Joins("LEFT JOIN qh_labels ON qh_labels.id = qh_regions.label_id AND qh_labels.deleted_at IS NULL").
+		Order(fmt.Sprintf("%s %s, qh_regions.id ASC", orderBy, orderDir)).
 		Offset(offset).
 		Limit(limit).
 		Find(&regions).Error

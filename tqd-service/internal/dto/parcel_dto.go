@@ -57,11 +57,12 @@ type ParcelLayersResponse struct {
 	ParcelID      uint64
 	ParcelAreaSqm float64
 
-	Summary    *ParcelSummary
-	Layers     []*LayerImpact
-	Statistics *ImpactStats
-	Risk       *RiskAssessment
-	Metadata   *ResponseMeta
+	Summary       *ParcelSummary
+	Layers        []*LayerImpact
+	ConcludeLabel *RegionImpact
+	Statistics    *ImpactStats
+	Risk          *RiskAssessment
+	Metadata      *ResponseMeta
 }
 
 type ParcelSummary struct {

@@ -123,6 +123,9 @@ message ParcelLayersResponse {
   string queriedAt = 18;
   int64 responseTimeMs = 19;
   bool spatialDataAvailable = 20;
+
+  // Region có overlapArea lớn nhất trên thửa (kết luận chủ đạo).
+  Region conclude_label = 21;
 }
 
 message Layer {
