@@ -101,7 +101,7 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 		layer.Status = enums.LayerStatusDraft
 	}
 
-	created, err := h.layerUsecase.Create(ctx, layer, userID)
+	created, err := h.layerUsecase.Create(ctx, layer, userID, req.ReplaceLayerIds)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

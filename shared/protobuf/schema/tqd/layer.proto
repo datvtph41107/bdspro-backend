@@ -125,6 +125,8 @@ message CreateLayerRequest {
   string sourceCode = 22;              // Mã nguồn (tự sinh)
   optional uint32 legalStatus = 23;
   optional double trustValue = 24;
+  // Các layer cũ sẽ được đánh dấu legalStatus=replaced và lưu id layer mới (replacedByLayerId) để truy vết
+  repeated uint64 replaceLayerIds = 25;
 }
 
 message UpdateLayerRequest {
@@ -234,6 +236,9 @@ message LayerResponse {
   string sourceCode = 25;
   uint32 legalStatus = 26;
   double trustValue = 27;
+  // Chỉ có giá trị khi layer này đã bị thay thế bởi layer khác (truy vết)
+  optional uint64 replacedByLayerId = 28;
+  string legalStatusName = 29;
 }
 
 message ListLayersResponse {

@@ -23,11 +23,65 @@ func NewLayerRepository(db *gorm.DB) repo.LayerRepository {
 	return &layerRepoImpl{db: db}
 }
 
-func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer) error {
-	layer.CreatedAt = time.Now()
-	layer.UpdatedAt = time.Now()
-	log.Println("Creating layer:", layer.ID)
-	return r.db.WithContext(ctx).Create(layer).Error
+func dedupeNonZeroUint64(ids []uint64) []uint64 {
+	seen := make(map[uint64]struct{}, len(ids))
+	out := make([]uint64, 0, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
+}
+
+func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, replaceLayerIDs []uint64, updatedBy uint64) error {
+	replaceLayerIDs = dedupeNonZeroUint64(replaceLayerIDs)
+	now := time.Now()
+	layer.CreatedAt = now
+	layer.UpdatedAt = now
+
+	if len(replaceLayerIDs) == 0 {
+		log.Println("Creating layer:", layer.ID)
+		return r.db.WithContext(ctx).Create(layer).Error
+	}
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.WithContext(ctx).Create(layer).Error; err != nil {
+			return err
+		}
+		newID := layer.ID
+
+		var count int64
+		if err := tx.WithContext(ctx).Model(&qh_domain.QHLayer{}).
+			Where("id IN ? AND deleted_at IS NULL", replaceLayerIDs).
+			Count(&count).Error; err != nil {
+			return err
+		}
+		if count != int64(len(replaceLayerIDs)) {
+			return fmt.Errorf("replace_layer_ids: một hoặc nhiều layer không tồn tại hoặc đã xóa")
+		}
+
+		res := tx.WithContext(ctx).Model(&qh_domain.QHLayer{}).
+			Where("id IN ? AND deleted_at IS NULL", replaceLayerIDs).
+			Updates(map[string]interface{}{
+				"legal_status":   uint32(enums.LegalStatusReplaced),
+				"replaced_by_id": newID,
+				"updated_by":     updatedBy,
+				"updated_at":     time.Now(),
+			})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != int64(len(replaceLayerIDs)) {
+			return fmt.Errorf("replace_layer_ids: không cập nhật đủ bản ghi layer cũ")
+		}
+		return nil
+	})
 }
 
 func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) error {
@@ -150,14 +204,12 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 	var layers []qh_domain.QHLayer
 	var total int64
 
-	now := time.Now()
-
 	query := r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
 		Where("deleted_at IS NULL").
 		Where("status = ?", enums.LayerStatusActive).
-		Where("display_order > 0").
-		Where("effective_date IS NULL OR effective_date <= ?", now).
-		Where("expiry_date IS NULL OR expiry_date >= ?", now)
+		Where("display_order > 0")
+		// Where("effective_date IS NULL OR effective_date <= ?", now).
+		// Where("expiry_date IS NULL OR expiry_date >= ?", now)
 
 	if filter.Type != nil {
 		query = query.Where("type = ?", *filter.Type)

@@ -13,7 +13,7 @@ import (
 
 type LayerUsecase interface {
 	// Admin
-	Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error)
+	Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64, replaceLayerIDs []uint64) (*qh_domain.QHLayer, error)
 	Update(ctx context.Context, id uint64, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error)
 	Delete(ctx context.Context, id uint64, userID uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
@@ -43,7 +43,7 @@ func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepos
 	}
 }
 
-func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error) {
+func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64, replaceLayerIDs []uint64) (*qh_domain.QHLayer, error) {
 	// if layer.Name == "" {
 	// 	return nil, errors.New("name is required")
 	// }
@@ -83,7 +83,7 @@ func (u *layerUsecaseImpl) Create(ctx context.Context, layer *qh_domain.QHLayer,
 	// layer.CreatedAt = time.Now()
 	// layer.UpdatedAt = time.Now()
 
-	if err := u.layerRepo.Create(ctx, layer); err != nil {
+	if err := u.layerRepo.Create(ctx, layer, replaceLayerIDs, userID); err != nil {
 		return nil, fmt.Errorf("create failed: %w", err)
 	}
 

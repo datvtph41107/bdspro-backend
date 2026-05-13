@@ -8,7 +8,8 @@ import (
 )
 
 type LayerRepository interface {
-	Create(ctx context.Context, layer *qh_domain.QHLayer) error
+	// Create: nếu replaceLayerIDs không rỗng, chạy trong transaction — tạo layer rồi đánh dấu các layer cũ bị thay thế.
+	Create(ctx context.Context, layer *qh_domain.QHLayer, replaceLayerIDs []uint64, updatedBy uint64) error
 	Update(ctx context.Context, layer *qh_domain.QHLayer) error
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)

@@ -45,6 +45,9 @@ type QHLayer struct {
 	TrustValue float32 `gorm:"default:0" json:"trustValue"`
 
 	LegalStatus enums.LegalStatus `gorm:"default:0" json:"legalStatus"`
+
+	// ReplacedByID: layer mới thay thế layer này (truy vết khi legalStatus = replaced)
+	ReplacedByID *uint64 `gorm:"column:replaced_by_id;index" json:"replaceLayerId,omitempty"`
 }
 
 func (QHLayer) TableName() string {

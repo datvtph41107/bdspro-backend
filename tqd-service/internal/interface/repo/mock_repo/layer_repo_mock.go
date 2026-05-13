@@ -14,8 +14,8 @@ type MockLayerRepository struct {
 	mock.Mock
 }
 
-func (m *MockLayerRepository) Create(ctx context.Context, layer *qh_domain.QHLayer) error {
-	args := m.Called(ctx, layer)
+func (m *MockLayerRepository) Create(ctx context.Context, layer *qh_domain.QHLayer, replaceLayerIDs []uint64, updatedBy uint64) error {
+	args := m.Called(ctx, layer, replaceLayerIDs, updatedBy)
 	return args.Error(0)
 }
 

@@ -73,27 +73,32 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	}
 
 	resp := &tqdpb.LayerResponse{
-		Id:           layer.ID,
-		Name:         layer.Name,
-		DisplayName:  layer.DisplayName,
-		Description:  layer.Description,
-		Type:         uint32(layer.Type),
-		Status:       uint32(layer.Status),
-		Visible:      layer.Visible,
-		DisplayOrder: int32(layer.DisplayOrder),
-		MinZoom:      layer.MinZoom,
-		MaxZoom:      layer.MaxZoom,
-		LayerUrl:     layerUrl,
-		Avatar:       layer.Avatar,
-		ImageUrl:     layer.ImageURL,
-		ThumbnailUrl: layer.ThumbnailURL,
-		StyleConfig:  styleConfig,
-		SourceType:   layer.SourceType,
-		SourceCode:   sourceCode,
-		CreatedAt:    layer.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    layer.UpdatedAt.Format(time.RFC3339),
-		LegalStatus:  uint32(layer.LegalStatus),
-		TrustValue:   float64(layer.TrustValue),
+		Id:              layer.ID,
+		Name:            layer.Name,
+		DisplayName:     layer.DisplayName,
+		Description:     layer.Description,
+		Type:            uint32(layer.Type),
+		Status:          uint32(layer.Status),
+		Visible:         layer.Visible,
+		DisplayOrder:    int32(layer.DisplayOrder),
+		MinZoom:         layer.MinZoom,
+		MaxZoom:         layer.MaxZoom,
+		LayerUrl:        layerUrl,
+		Avatar:          layer.Avatar,
+		ImageUrl:        layer.ImageURL,
+		ThumbnailUrl:    layer.ThumbnailURL,
+		StyleConfig:     styleConfig,
+		SourceType:      layer.SourceType,
+		SourceCode:      sourceCode,
+		CreatedAt:       layer.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       layer.UpdatedAt.Format(time.RFC3339),
+		LegalStatus:     uint32(layer.LegalStatus),
+		LegalStatusName: enums.LegalStatusMap[layer.LegalStatus],
+		TrustValue:      float64(layer.TrustValue),
+	}
+	if layer.ReplacedByID != nil {
+		rid := *layer.ReplacedByID
+		resp.ReplacedByLayerId = &rid
 	}
 
 	// Format dates

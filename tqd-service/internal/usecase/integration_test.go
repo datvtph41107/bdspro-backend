@@ -63,7 +63,7 @@ func TestIntegration_LabelLifecycle(t *testing.T) {
 		Status:      10,
 		Visible:     1,
 	}
-	err := layerRepo.Create(ctx, layer)
+	err := layerRepo.Create(ctx, layer, nil, 0)
 	require.NoError(t, err)
 
 	// Step 2: Create a label

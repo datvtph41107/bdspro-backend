@@ -20,7 +20,7 @@ var LegalStatusMap = map[LegalStatus]string{
 	LegalStatusReferenced: "Tham chiếu",
 	LegalStatusUnknown:    "Không xác định",
 	LegalStatusExpired:    "Hết hiệu lực",
-	LegalStatusReplaced:   "Không hiện hành",
+	LegalStatusReplaced:   "Bị thay thế", //"Không hiện hành",
 }
 
 func (s LegalStatus) IsValid() bool {
