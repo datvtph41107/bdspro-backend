@@ -83,6 +83,15 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 		SourceType:    req.SourceType,
 		EffectiveDate: effectiveDate,
 		ExpiryDate:    expiryDate,
+		LegalStatus:   enums.LegalStatusUnknown,
+		TrustValue:    0,
+	}
+
+	if req.LegalStatus != nil {
+		layer.LegalStatus = enums.LegalStatus(*req.LegalStatus)
+	}
+	if req.TrustValue != nil {
+		layer.TrustValue = float32(*req.TrustValue)
 	}
 
 	// Set status if provided
@@ -160,6 +169,12 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 		if err == nil {
 			existing.ExpiryDate = &t
 		}
+	}
+	if req.LegalStatus != nil {
+		existing.LegalStatus = enums.LegalStatus(*req.LegalStatus)
+	}
+	if req.TrustValue != nil {
+		existing.TrustValue = float32(*req.TrustValue)
 	}
 
 	updated, err := h.layerUsecase.Update(ctx, req.Id, existing, userID)

@@ -152,6 +152,12 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.ExpiryDate != nil {
 		existing.ExpiryDate = layer.ExpiryDate
 	}
+	if layer.LegalStatus.IsValid() {
+		existing.LegalStatus = layer.LegalStatus
+	}
+	if layer.TrustValue > -1 {
+		existing.TrustValue = layer.TrustValue
+	}
 
 	existing.UpdatedBy = userID
 	existing.UpdatedAt = time.Now()

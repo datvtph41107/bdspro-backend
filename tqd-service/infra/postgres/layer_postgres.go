@@ -49,6 +49,8 @@ func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) er
 		"expiry_date":    layer.ExpiryDate,
 		"updated_by":     layer.UpdatedBy,
 		"updated_at":     time.Now(),
+		"legal_status":   layer.LegalStatus,
+		"trust_value":    layer.TrustValue,
 	}
 
 	return r.db.WithContext(ctx).

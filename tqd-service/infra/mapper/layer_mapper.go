@@ -92,6 +92,8 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		SourceCode:   sourceCode,
 		CreatedAt:    layer.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:    layer.UpdatedAt.Format(time.RFC3339),
+		LegalStatus:  uint32(layer.LegalStatus),
+		TrustValue:   float64(layer.TrustValue),
 	}
 
 	// Format dates

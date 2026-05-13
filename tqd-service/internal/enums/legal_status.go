@@ -22,3 +22,11 @@ var LegalStatusMap = map[LegalStatus]string{
 	LegalStatusExpired:    "Hết hiệu lực",
 	LegalStatusReplaced:   "Không hiện hành",
 }
+
+func (s LegalStatus) IsValid() bool {
+	return s == LegalStatusEffective || s == LegalStatusApproved || s == LegalStatusDraft || s == LegalStatusReferenced || s == LegalStatusUnknown || s == LegalStatusExpired || s == LegalStatusReplaced
+}
+
+func (s LegalStatus) AvaiableToUpdate() bool {
+	return s == LegalStatusDraft || s == LegalStatusReferenced || s == LegalStatusUnknown
+}

@@ -41,6 +41,7 @@ type InitialApp struct {
 	SubscriptionGrpcHandler      *handler_grpc.SubscriptionGrpcHandler
 	TqdPublicService             *handler_grpc.TqdPublicService
 	ImportGrpcHandler            *handler_grpc.ImportGrpcHandler
+	LayerLegalGrpcHandler        *handler_grpc.LayerLegalGrpcHandler
 }
 
 // NewApp creates a new App instance
@@ -75,6 +76,7 @@ func NewApp(
 	subscriptionGrpcHandler *handler_grpc.SubscriptionGrpcHandler,
 	tqdPublicService *handler_grpc.TqdPublicService,
 	importGrpcHandler *handler_grpc.ImportGrpcHandler,
+	layerLegalGrpcHandler *handler_grpc.LayerLegalGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
 		ContactLabelHandler:          contactLabelHandler,
@@ -107,6 +109,7 @@ func NewApp(
 		SubscriptionGrpcHandler:      subscriptionGrpcHandler,
 		TqdPublicService:             tqdPublicService,
 		ImportGrpcHandler:            importGrpcHandler,
+		LayerLegalGrpcHandler:        layerLegalGrpcHandler,
 	}
 }
 

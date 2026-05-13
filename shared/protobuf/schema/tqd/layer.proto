@@ -123,6 +123,8 @@ message CreateLayerRequest {
   optional string expiryDate = 20;     // Ngày hết hiệu lực (YYYY-MM-DD)
   string sourceType = 21;              // raster, vector, pmtiles
   string sourceCode = 22;              // Mã nguồn (tự sinh)
+  optional uint32 legalStatus = 23;
+  optional double trustValue = 24;
 }
 
 message UpdateLayerRequest {
@@ -150,6 +152,8 @@ message UpdateLayerRequest {
   google.protobuf.FieldMask updateMask = 22;
   string sourceType = 23;
   string sourceCode = 24;
+  optional uint32 legalStatus = 25;
+  optional double trustValue = 26;
 }
 
 message UpdateLayerStatusRequest {
@@ -228,6 +232,8 @@ message LayerResponse {
   string updatedAt = 23;               // RFC3339
   string sourceType = 24;
   string sourceCode = 25;
+  uint32 legalStatus = 26;
+  double trustValue = 27;
 }
 
 message ListLayersResponse {
