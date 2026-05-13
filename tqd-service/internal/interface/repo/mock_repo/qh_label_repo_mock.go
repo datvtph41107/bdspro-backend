@@ -31,7 +31,7 @@ func (m *MockQHLabelRepository) DeleteBatch(ctx context.Context, ids []uint64) e
 	return args.Error(0)
 }
 
-func (m *MockQHLabelRepository) SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+func (m *MockQHLabelRepository) DeleteLabelLayerLinksByLayerID(ctx context.Context, layerID uint64) error {
 	args := m.Called(ctx, layerID)
 	return args.Error(0)
 }
@@ -54,12 +54,39 @@ func (m *MockQHLabelRepository) GetByLayerID(ctx context.Context, layerID uint64
 	return args.Get(0).([]qh_domain.QHLabel), args.Error(1)
 }
 
+func (m *MockQHLabelRepository) ListAdmin(ctx context.Context, layerID *uint64, offset, limit int, includeInactive bool) ([]qh_domain.QHLabel, int64, error) {
+	args := m.Called(ctx, layerID, offset, limit, includeInactive)
+	var labels []qh_domain.QHLabel
+	if v := args.Get(0); v != nil {
+		labels = v.([]qh_domain.QHLabel)
+	}
+	return labels, args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockQHLabelRepository) GetByName(ctx context.Context, name string) (*qh_domain.QHLabel, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*qh_domain.QHLabel), args.Error(1)
+}
+
 func (m *MockQHLabelRepository) GetByNameAndLayer(ctx context.Context, name string, layerID uint64) (*qh_domain.QHLabel, error) {
 	args := m.Called(ctx, name, layerID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*qh_domain.QHLabel), args.Error(1)
+}
+
+func (m *MockQHLabelRepository) EnsureLayerLink(ctx context.Context, labelID, layerID uint64) error {
+	args := m.Called(ctx, labelID, layerID)
+	return args.Error(0)
+}
+
+func (m *MockQHLabelRepository) EnsureLayerLinksBatch(ctx context.Context, layerID uint64, labelIDs []uint64) error {
+	args := m.Called(ctx, layerID, labelIDs)
+	return args.Error(0)
 }
 
 func (m *MockQHLabelRepository) GetNamesByLayerID(ctx context.Context, layerID uint64) (map[string]struct{}, error) {

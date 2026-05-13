@@ -27,6 +27,11 @@ type QHLabel struct {
 	RegionCount int64             `gorm:"default:0" json:"regionCount"`
 	Status      enums.LabelStatus `gorm:"default:10" json:"status"`
 
+	// StandardAt — thời điểm đánh dấu là nhãn tiêu chuẩn hệ thống; nil = không phải / chưa gán.
+	StandardAt *time.Time `gorm:"column:standard_at" json:"standardAt,omitempty"`
+	// ClearStandardAt chỉ dùng khi patch Update (không map DB): true = xóa standardAt.
+	ClearStandardAt bool `gorm:"-" json:"-"`
+
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt *time.Time `gorm:"index" json:"deletedAt,omitempty"`

@@ -76,6 +76,17 @@ func (h *QHLabelGrpcHandler) CreateLabel(ctx context.Context, req *tqdpb.CreateL
 		label.StrokeWidth = 1
 	}
 
+	if req.StandardAt != nil {
+		s := strings.TrimSpace(*req.StandardAt)
+		if s != "" {
+			t := _utils.ParseStringToTime(s)
+			if t == nil {
+				return nil, status.Error(codes.InvalidArgument, "standardAt must be RFC3339")
+			}
+			label.StandardAt = t
+		}
+	}
+
 	result, err := h.labelUsecase.Create(ctx, label)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -113,6 +124,16 @@ func (h *QHLabelGrpcHandler) BatchCreateLabels(ctx context.Context, req *tqdpb.B
 		}
 		if it.Status != nil {
 			l.Status = enums.LabelStatus(*it.Status)
+		}
+		if it.StandardAt != nil {
+			s := strings.TrimSpace(*it.StandardAt)
+			if s != "" {
+				t := _utils.ParseStringToTime(s)
+				if t == nil {
+					return nil, status.Error(codes.InvalidArgument, "standardAt must be RFC3339")
+				}
+				l.StandardAt = t
+			}
 		}
 		items = append(items, l)
 	}
@@ -193,6 +214,18 @@ func (h *QHLabelGrpcHandler) UpdateLabel(ctx context.Context, req *tqdpb.UpdateL
 	if req.Status != nil {
 		label.Status = enums.LabelStatus(*req.Status)
 	}
+	if req.StandardAt != nil {
+		s := strings.TrimSpace(*req.StandardAt)
+		if s == "" {
+			label.ClearStandardAt = true
+		} else {
+			t := _utils.ParseStringToTime(s)
+			if t == nil {
+				return nil, status.Error(codes.InvalidArgument, "standardAt must be RFC3339")
+			}
+			label.StandardAt = t
+		}
+	}
 
 	result, err := h.labelUsecase.Update(ctx, req.Id, label)
 	if err != nil {
@@ -270,6 +303,16 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 	if nl.Status != nil {
 		label.Status = enums.LabelStatus(*nl.Status)
 	}
+	if nl.StandardAt != nil {
+		s := strings.TrimSpace(*nl.StandardAt)
+		if s != "" {
+			t := _utils.ParseStringToTime(s)
+			if t == nil {
+				return nil, status.Error(codes.InvalidArgument, "standardAt must be RFC3339")
+			}
+			label.StandardAt = t
+		}
+	}
 
 	result, err := h.labelUsecase.Merge(ctx, req.LayerId, req.SourceLabelIds, label)
 	if err != nil {
@@ -286,6 +329,39 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 	}
 
 	return toQHLabelResponse(result), nil
+}
+
+// ListAdminLabels - Danh sách tất cả label (admin), phân trang (GET /v2/tqd/qh/admin/labels/list)
+func (h *QHLabelGrpcHandler) ListAdminLabels(ctx context.Context, req *tqdpb.ListAdminLabelsRequest) (*tqdpb.ListLabelsResponse, error) {
+	page := req.GetPage()
+	size := req.GetSize()
+	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
+
+	var layerID *uint64
+	if req.LayerId != nil {
+		lid := req.GetLayerId()
+		if lid != 0 {
+			v := lid
+			layerID = &v
+		}
+	}
+
+	labels, total, err := h.labelUsecase.ListAdmin(ctx, layerID, pagable, req.GetIncludeInactive())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	data := make([]*tqdpb.QHLabelResponse, len(labels))
+	for i := range labels {
+		data[i] = toQHLabelResponse(&labels[i])
+	}
+
+	return &tqdpb.ListLabelsResponse{
+		Data:     data,
+		Total:    total,
+		Page:     int32(pagable.GetPage()),
+		PageSize: int32(pagable.GetSize()),
+	}, nil
 }
 
 // ListLabelsByLayer - Danh sách label theo layer (admin)
@@ -370,7 +446,7 @@ func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {
 		return nil
 	}
 
-	return &tqdpb.QHLabelResponse{
+	resp := &tqdpb.QHLabelResponse{
 		Id:           l.ID,
 		LayerId:      l.LayerID,
 		Name:         l.Name,
@@ -389,4 +465,8 @@ func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {
 		CreatedAt:    _utils.FormatTimeToString(&l.CreatedAt),
 		UpdatedAt:    _utils.FormatTimeToString(&l.UpdatedAt),
 	}
+	if l.StandardAt != nil {
+		resp.StandardAt = _utils.FormatTimeToString(l.StandardAt)
+	}
+	return resp
 }

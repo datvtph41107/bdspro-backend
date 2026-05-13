@@ -68,6 +68,13 @@ service QHLabelService {
       body: "*"
     };
   }
+
+  // ListAdminLabels - Danh sách tất cả label (admin), phân trang; có thể lọc theo layer
+  rpc ListAdminLabels(ListAdminLabelsRequest) returns (ListLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/labels/list"
+    };
+  }
   
   // ListLabelsByLayer - Danh sách label theo layer
   rpc ListLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
@@ -117,6 +124,9 @@ message CreateLabelRequest {
   
   // Trạng thái
   optional uint32 status = 13;         // 10: active, 20: inactive, mặc định 10
+
+  // Tiêu chuẩn hệ thống — RFC3339; đặt để đánh dấu nhãn chuẩn
+  optional string standardAt = 14;
 }
 
 message BatchCreateLabelsRequest {
@@ -138,6 +148,7 @@ message BatchCreateLabelItem {
   int32 minZoom = 10;
   int32 maxZoom = 11;
   optional uint32 status = 12;
+  optional string standardAt = 13;
 }
 
 message BatchCreateLabelsResponse {
@@ -159,6 +170,7 @@ message UpdateLabelRequest {
   optional int32 minZoom = 11;
   optional int32 maxZoom = 12;
   optional uint32 status = 13;
+  optional string standardAt = 14;
 }
 
 message GetLabelRequest {
@@ -194,6 +206,15 @@ message MergeLabelsNewLabel {
   int32 minZoom = 10;
   int32 maxZoom = 11;
   optional uint32 status = 12;
+  optional string standardAt = 13;
+}
+
+// ListAdminLabelsRequest — query: layerId, includeInactive, page, size
+message ListAdminLabelsRequest {
+  optional uint64 layerId = 1;         // Lọc theo layer; không truyền = tất cả layer
+  bool includeInactive = 2;          // Có bao gồm label inactive không
+  uint32 page = 3;
+  uint32 size = 4;
 }
 
 message ListLabelsByLayerRequest {
@@ -235,6 +256,9 @@ message QHLabelResponse {
   // Thống kê (optional)
   int64 regionCount = 17;
   double totalAreaHa = 18;
+
+  // Thời điểm đánh dấu là nhãn tiêu chuẩn hệ thống (RFC3339); rỗng nếu không phải
+  string standardAt = 19;
 }
 
 message ListLabelsResponse {

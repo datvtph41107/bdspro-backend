@@ -20,44 +20,79 @@ func NewQHLabelRepository(db *gorm.DB) repo.QHLabelRepository {
 	return &qhLabelRepoImpl{db: db}
 }
 
+// qhLabelLayerInsert ghi bảng nối label–layer; idempotent (không dùng ON CONFLICT — tránh lệch constraint trên DB cũ).
+func qhLabelLayerInsert(db *gorm.DB, labelID, layerID uint64) error {
+	if labelID == 0 || layerID == 0 {
+		return nil
+	}
+	return db.Exec(`
+INSERT INTO qh_label_layers (label_id, layer_id)
+SELECT ?, ?
+WHERE NOT EXISTS (
+	SELECT 1 FROM qh_label_layers x
+	WHERE x.label_id = ? AND x.layer_id = ?
+)`, labelID, layerID, labelID, layerID).Error
+}
+
 func (r *qhLabelRepoImpl) Create(ctx context.Context, label *qh_domain.QHLabel) error {
-	return r.db.WithContext(ctx).Create(label).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(label).Error; err != nil {
+			return err
+		}
+		if label.LayerID == 0 {
+			return nil
+		}
+		return qhLabelLayerInsert(tx, label.ID, label.LayerID)
+	})
 }
 
 func (r *qhLabelRepoImpl) Update(ctx context.Context, label *qh_domain.QHLabel) error {
-	return r.db.WithContext(ctx).Model(label).
+	if err := r.db.WithContext(ctx).Model(label).
 		Omit("created_at", "layer_id").
-		Updates(label).Error
+		Updates(label).Error; err != nil {
+		return err
+	}
+	// GORM bỏ qua pointer nil trong Updates — ghi NULL khi xóa standard_at
+	if label.StandardAt == nil {
+		return r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).
+			Where("id = ?", label.ID).
+			UpdateColumn("standard_at", nil).Error
+	}
+	return nil
 }
 
 func (r *qhLabelRepoImpl) Delete(ctx context.Context, id uint64) error {
-	now := time.Now()
-	return r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).
-		Where("id = ? AND deleted_at IS NULL", id).
-		Update("deleted_at", now).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("label_id = ?", id).Delete(&qh_domain.QHLabelLayer{}).Error; err != nil {
+			return err
+		}
+		now := time.Now()
+		return tx.Model(&qh_domain.QHLabel{}).
+			Where("id = ? AND deleted_at IS NULL", id).
+			Update("deleted_at", now).Error
+	})
 }
 
 func (r *qhLabelRepoImpl) DeleteBatch(ctx context.Context, ids []uint64) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	now := time.Now()
-	return r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).
-		Where("id IN ? AND deleted_at IS NULL", ids).
-		Update("deleted_at", now).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("label_id IN ?", ids).Delete(&qh_domain.QHLabelLayer{}).Error; err != nil {
+			return err
+		}
+		now := time.Now()
+		return tx.Model(&qh_domain.QHLabel{}).
+			Where("id IN ? AND deleted_at IS NULL", ids).
+			Update("deleted_at", now).Error
+	})
 }
 
-func (r *qhLabelRepoImpl) SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+func (r *qhLabelRepoImpl) DeleteLabelLayerLinksByLayerID(ctx context.Context, layerID uint64) error {
 	if layerID == 0 {
 		return nil
 	}
-	now := time.Now()
-	return r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).
-		Where("layer_id = ? AND deleted_at IS NULL", layerID).
-		Updates(map[string]interface{}{
-			"deleted_at": now,
-			"updated_at": now,
-		}).Error
+	return r.db.WithContext(ctx).Where("layer_id = ?", layerID).Delete(&qh_domain.QHLabelLayer{}).Error
 }
 
 func (r *qhLabelRepoImpl) CountActiveByIDs(ctx context.Context, ids []uint64) (int64, error) {
@@ -85,11 +120,85 @@ func (r *qhLabelRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QH
 	return &label, nil
 }
 
-// GetByLayerID - Lấy danh sách labels theo layer ID
+// GetByName — một nhãn theo tên; trùng tên (legacy) thì lấy id nhỏ nhất.
+func (r *qhLabelRepoImpl) GetByName(ctx context.Context, name string) (*qh_domain.QHLabel, error) {
+	var label qh_domain.QHLabel
+	err := r.db.WithContext(ctx).
+		Where("name = ? AND deleted_at IS NULL", name).
+		Order("id ASC").
+		First(&label).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("query qh_label by name failed: %w", err)
+	}
+	return &label, nil
+}
+
+func (r *qhLabelRepoImpl) EnsureLayerLink(ctx context.Context, labelID, layerID uint64) error {
+	return qhLabelLayerInsert(r.db.WithContext(ctx), labelID, layerID)
+}
+
+func (r *qhLabelRepoImpl) EnsureLayerLinksBatch(ctx context.Context, layerID uint64, labelIDs []uint64) error {
+	if layerID == 0 || len(labelIDs) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, id := range labelIDs {
+			if id == 0 {
+				continue
+			}
+			if err := qhLabelLayerInsert(tx, id, layerID); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// ListAdmin — tất cả nhãn chưa xóa mềm; lọc layer giống GetByLayerID khi layerID != nil.
+func (r *qhLabelRepoImpl) ListAdmin(ctx context.Context, layerID *uint64, offset, limit int, includeInactive bool) ([]qh_domain.QHLabel, int64, error) {
+	build := func() *gorm.DB {
+		q := r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).Where("deleted_at IS NULL")
+		if layerID != nil && *layerID != 0 {
+			lid := *layerID
+			q = q.Where(`(
+				layer_id = ?
+				OR id IN (SELECT label_id FROM qh_label_layers WHERE layer_id = ?)
+			)`, lid, lid)
+		}
+		// if !includeInactive {
+		// 	q = q.Where("status = ?", uint32(enums.LabelStatusActive))
+		// }
+		return q
+	}
+
+	var total int64
+	if err := build().Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count qh_labels admin list failed: %w", err)
+	}
+
+	var labels []qh_domain.QHLabel
+	err := build().
+		Order("display_order ASC, id ASC").
+		Offset(offset).
+		Limit(limit).
+		Find(&labels).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("query qh_labels admin list failed: %w", err)
+	}
+	return labels, total, nil
+}
+
+// GetByLayerID — labels gắn với layer qua bảng nối hoặc cột layer_id (legacy).
 func (r *qhLabelRepoImpl) GetByLayerID(ctx context.Context, layerID uint64) ([]qh_domain.QHLabel, error) {
 	var labels []qh_domain.QHLabel
 	err := r.db.WithContext(ctx).
-		Where("layer_id = ? AND deleted_at IS NULL", layerID).
+		Where(`deleted_at IS NULL AND (
+			id IN (SELECT label_id FROM qh_label_layers WHERE layer_id = ?)
+			OR layer_id = ?
+		)`, layerID, layerID).
 		Order("display_order ASC, id ASC").
 		Find(&labels).Error
 	if err != nil {
@@ -102,7 +211,10 @@ func (r *qhLabelRepoImpl) GetByLayerID(ctx context.Context, layerID uint64) ([]q
 func (r *qhLabelRepoImpl) GetByNameAndLayer(ctx context.Context, name string, layerID uint64) (*qh_domain.QHLabel, error) {
 	var label qh_domain.QHLabel
 	err := r.db.WithContext(ctx).
-		Where("layer_id = ? AND name = ? AND deleted_at IS NULL", layerID, name).
+		Where(`name = ? AND deleted_at IS NULL AND (
+			layer_id = ?
+			OR id IN (SELECT label_id FROM qh_label_layers WHERE layer_id = ?)
+		)`, name, layerID, layerID).
 		First(&label).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -122,7 +234,10 @@ func (r *qhLabelRepoImpl) GetNamesByLayerID(ctx context.Context, layerID uint64)
 	var names []string
 	err := r.db.WithContext(ctx).
 		Model(&qh_domain.QHLabel{}).
-		Where("layer_id = ? AND deleted_at IS NULL", layerID).
+		Where(`deleted_at IS NULL AND (
+			layer_id = ?
+			OR id IN (SELECT label_id FROM qh_label_layers WHERE layer_id = ?)
+		)`, layerID, layerID).
 		Pluck("name", &names).Error
 	if err != nil {
 		return nil, fmt.Errorf("pluck label names failed: %w", err)
@@ -138,8 +253,20 @@ func (r *qhLabelRepoImpl) BulkCreate(ctx context.Context, labels []*qh_domain.QH
 	if len(labels) == 0 {
 		return nil
 	}
-	return r.db.WithContext(ctx).
-		CreateInBatches(labels, 100).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.CreateInBatches(labels, 100).Error; err != nil {
+			return err
+		}
+		// for _, lb := range labels {
+		// 	if lb == nil || lb.LayerID == 0 || lb.ID == 0 {
+		// 		continue
+		// 	}
+		// 	if err := qhLabelLayerInsert(tx, lb.ID, lb.LayerID); err != nil {
+		// 		return err
+		// 	}
+		// }
+		return nil
+	})
 }
 
 // SyncRegionCountByLayerID khớp batch trong qh_label_region_count.sql (reset rồi gán theo COUNT từ qh_regions).

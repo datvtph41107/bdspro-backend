@@ -39,6 +39,8 @@ type QHLayer struct {
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt *time.Time `gorm:"index" json:"deletedAt,omitempty"`
+
+	Labels []QHLabel `gorm:"many2many:qh_label_layers;" json:"labels,omitempty"`
 }
 
 func (QHLayer) TableName() string {

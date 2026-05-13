@@ -3,6 +3,9 @@ package handler_http
 import (
 	"net/http"
 	"strconv"
+	"strings"
+
+	_utils "common/utils"
 
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/usecase"
@@ -33,6 +36,7 @@ type createLabelRequest struct {
 	IsVisible    bool    `json:"isVisible"`
 	MinZoom      int     `json:"minZoom"`
 	MaxZoom      int     `json:"maxZoom"`
+	StandardAt   *string `json:"standardAt,omitempty"` // RFC3339; omit = không đổi (update) / không gán (create)
 }
 
 // CreateQHLabelHTTP godoc
@@ -78,6 +82,15 @@ func (h *QHLabelHandler) CreateQHLabelHTTP(c *gin.Context) {
 	}
 	if label.StrokeWidth == 0 {
 		label.StrokeWidth = 1
+	}
+
+	if req.StandardAt != nil {
+		s := strings.TrimSpace(*req.StandardAt)
+		if s != "" {
+			if t := _utils.ParseStringToTime(s); t != nil {
+				label.StandardAt = t
+			}
+		}
 	}
 
 	result, err := h.labelUsecase.Create(c.Request.Context(), label)
@@ -147,6 +160,14 @@ func (h *QHLabelHandler) UpdateQHLabelHTTP(c *gin.Context) {
 		IsVisible:    req.IsVisible,
 		MinZoom:      req.MinZoom,
 		MaxZoom:      req.MaxZoom,
+	}
+	if req.StandardAt != nil {
+		s := strings.TrimSpace(*req.StandardAt)
+		if s == "" {
+			label.ClearStandardAt = true
+		} else if t := _utils.ParseStringToTime(s); t != nil {
+			label.StandardAt = t
+		}
 	}
 
 	result, err := h.labelUsecase.Update(c.Request.Context(), id, label)

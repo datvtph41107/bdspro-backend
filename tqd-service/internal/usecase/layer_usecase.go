@@ -174,8 +174,8 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint64, userID uint64)
 	if err := u.regionRepo.SoftDeleteAllByLayerID(ctx, id); err != nil {
 		return fmt.Errorf("soft delete regions by layer: %w", err)
 	}
-	if err := u.labelRepo.SoftDeleteAllByLayerID(ctx, id); err != nil {
-		return fmt.Errorf("soft delete labels by layer: %w", err)
+	if err := u.labelRepo.DeleteLabelLayerLinksByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("unlink labels from layer (qh_label_layers): %w", err)
 	}
 	if err := u.layerRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete layer: %w", err)

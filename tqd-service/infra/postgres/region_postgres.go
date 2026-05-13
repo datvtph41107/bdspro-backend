@@ -521,8 +521,6 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 				'geometry', ST_AsGeoJSON(ST_MakeValid(r.geometry))::json,
 				'properties', jsonb_build_object(
 					'id', r.id,
-					'name', r.name,
-					'display_name', r.display_name,
 					'layer_id', r.layer_id,
 					
 					'label_fill_opacity', l.fill_opacity,

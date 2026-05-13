@@ -19,7 +19,7 @@ func (m *LabelMapper) ToProtoResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelRespon
 		return nil
 	}
 
-	return &tqdpb.QHLabelResponse{
+	resp := &tqdpb.QHLabelResponse{
 		Id:           l.ID,
 		LayerId:      l.LayerID,
 		Name:         l.Name,
@@ -37,6 +37,10 @@ func (m *LabelMapper) ToProtoResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelRespon
 		CreatedAt:    _utils.FormatTimeToString(&l.CreatedAt),
 		UpdatedAt:    _utils.FormatTimeToString(&l.UpdatedAt),
 	}
+	if l.StandardAt != nil {
+		resp.StandardAt = _utils.FormatTimeToString(l.StandardAt)
+	}
+	return resp
 }
 
 // ToProtoQHLabelResponse - Alias for ToProtoResponse (for embedding)

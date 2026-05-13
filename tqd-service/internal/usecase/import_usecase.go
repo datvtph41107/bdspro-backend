@@ -48,28 +48,22 @@ type ImportUsecase interface {
 
 type labelCache struct {
 	mu    sync.Mutex
-	cache map[string]uint64 // "layerID:normalizedName" → labelID
+	cache map[string]uint64 // normalizedName → labelID (không phụ thuộc layer)
 }
 
 func newLabelCache() *labelCache { return &labelCache{cache: make(map[string]uint64)} }
 
-// cacheKey normalises to lowercase+trim so "Đất Rừng", "đất rừng", "  đất rừng  "
-// all map to the same slot regardless of how the caller spells them.
-func (lc *labelCache) cacheKey(layerID uint64, name string) string {
-	return fmt.Sprintf("%d:%s", layerID, strings.ToLower(strings.TrimSpace(name)))
-}
-
-func (lc *labelCache) get(layerID uint64, name string) (uint64, bool) {
+func (lc *labelCache) get(normalized string) (uint64, bool) {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
-	id, ok := lc.cache[lc.cacheKey(layerID, name)]
+	id, ok := lc.cache[normalized]
 	return id, ok
 }
 
-func (lc *labelCache) set(layerID uint64, name string, id uint64) {
+func (lc *labelCache) set(normalized string, id uint64) {
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
-	lc.cache[lc.cacheKey(layerID, name)] = id
+	lc.cache[normalized] = id
 }
 
 // ─── impl ──────────────────────────────────────────────────────────────────
@@ -534,24 +528,31 @@ func (u *importUsecaseImpl) resolveLabelIDCached(ctx context.Context, properties
 	return u.labelByNameCached(ctx, "chưa phân loại", req.LayerID, lc)
 }
 
-// labelByNameCached looks up or creates a label, caching the result.
-func (u *importUsecaseImpl) labelByNameCached(ctx context.Context, rawName string, layerID uint64, lc *labelCache) (uint64, error) {
+// labelByNameCached resolves nhãn theo tên (toàn cục), gắn nhãn vào layer import qua qh_label_layers,
+// tạo mới nếu chưa có. Cache chỉ theo tên đã chuẩn hóa.
+func (u *importUsecaseImpl) labelByNameCached(ctx context.Context, rawName string, importLayerID uint64, lc *labelCache) (uint64, error) {
 	normalized := normalizeLabelName(rawName)
-	if id, ok := lc.get(layerID, normalized); ok {
+	if id, ok := lc.get(normalized); ok {
 		return id, nil
 	}
 
-	label, err := u.labelRepo.GetByNameAndLayer(ctx, normalized, layerID)
-	if err == nil && label != nil {
-		lc.set(layerID, normalized, label.ID)
-		return label.ID, nil
-	}
-
-	id, err := u.createNewLabel(ctx, normalized, layerID)
+	label, err := u.labelRepo.GetByName(ctx, normalized)
 	if err != nil {
 		return 0, err
 	}
-	lc.set(layerID, normalized, id)
+	if label != nil {
+		if err := u.labelRepo.EnsureLayerLink(ctx, label.ID, importLayerID); err != nil {
+			return 0, fmt.Errorf("ensure label-layer link: %w", err)
+		}
+		lc.set(normalized, label.ID)
+		return label.ID, nil
+	}
+
+	id, err := u.createNewLabel(ctx, normalized, importLayerID)
+	if err != nil {
+		return 0, err
+	}
+	lc.set(normalized, id)
 	return id, nil
 }
 

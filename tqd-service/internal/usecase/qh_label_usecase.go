@@ -19,13 +19,11 @@ type QHLabelUsecase interface {
 	BatchDelete(ctx context.Context, ids []uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error)
 	ListByLayerID(ctx context.Context, layerID uint64, pagable *_dto.Pagable, includeInactive bool) ([]qh_domain.QHLabel, int64, error)
+	ListAdmin(ctx context.Context, layerID *uint64, pagable *_dto.Pagable, includeInactive bool) ([]qh_domain.QHLabel, int64, error)
 
 	// Client Operations
 	ListClientByLayerID(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLabel, int64, error)
 	GetClientByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error)
-
-	// Helper
-	GetByNameAndLayer(ctx context.Context, name string, layerID uint64) (*qh_domain.QHLabel, error)
 
 	// BatchCreate - tạo nhiều label; name đã tồn tại trong layer hoặc trùng trong batch thì bỏ qua (trả về trong skippedNames)
 	BatchCreate(ctx context.Context, layerID uint64, labels []*qh_domain.QHLabel) (created []*qh_domain.QHLabel, skippedNames []string, err error)
@@ -108,6 +106,11 @@ func (u *qhLabelUsecaseImpl) Update(ctx context.Context, id uint64, label *qh_do
 	}
 	if label.Status > 0 {
 		existing.Status = label.Status
+	}
+	if label.ClearStandardAt {
+		existing.StandardAt = nil
+	} else if label.StandardAt != nil {
+		existing.StandardAt = label.StandardAt
 	}
 
 	if err := u.labelRepo.Update(ctx, existing); err != nil {
@@ -214,6 +217,16 @@ func (u *qhLabelUsecaseImpl) ListByLayerID(ctx context.Context, layerID uint64, 
 	return filtered, total, nil
 }
 
+func (u *qhLabelUsecaseImpl) ListAdmin(ctx context.Context, layerID *uint64, pagable *_dto.Pagable, includeInactive bool) ([]qh_domain.QHLabel, int64, error) {
+	offset := 0
+	limit := 100
+	if pagable != nil {
+		offset = pagable.GetOffset()
+		limit = pagable.GetLimit()
+	}
+	return u.labelRepo.ListAdmin(ctx, layerID, offset, limit, includeInactive)
+}
+
 // Client
 func (u *qhLabelUsecaseImpl) ListClientByLayerID(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLabel, int64, error) {
 	labels, err := u.labelRepo.GetByLayerID(ctx, layerID)
@@ -261,10 +274,6 @@ func (u *qhLabelUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_
 	return label, nil
 }
 
-func (u *qhLabelUsecaseImpl) GetByNameAndLayer(ctx context.Context, name string, layerID uint64) (*qh_domain.QHLabel, error) {
-	return u.labelRepo.GetByNameAndLayer(ctx, name, layerID)
-}
-
 func (u *qhLabelUsecaseImpl) BatchCreate(ctx context.Context, layerID uint64, labels []*qh_domain.QHLabel) ([]*qh_domain.QHLabel, []string, error) {
 	if layerID == 0 {
 		return nil, nil, errors.New("layerId is required")
@@ -273,14 +282,9 @@ func (u *qhLabelUsecaseImpl) BatchCreate(ctx context.Context, layerID uint64, la
 		return []*qh_domain.QHLabel{}, nil, nil
 	}
 
-	// 1 query — lấy toàn bộ names đang tồn tại trong layer
-	existingNames, err := u.labelRepo.GetNamesByLayerID(ctx, layerID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("fetch existing label names failed: %w", err)
-	}
-
 	seenInBatch := make(map[string]struct{})
 	var toCreate []*qh_domain.QHLabel
+	toCreateIDs := make([]uint64, 0)
 	var skipped []string
 
 	for _, label := range labels {
@@ -292,35 +296,57 @@ func (u *qhLabelUsecaseImpl) BatchCreate(ctx context.Context, layerID uint64, la
 			continue
 		}
 
-		// Trùng trong DB hoặc trùng trong batch → skip
-		if _, inDB := existingNames[name]; inDB {
-			skipped = append(skipped, name)
-			continue
-		}
 		if _, inBatch := seenInBatch[name]; inBatch {
 			skipped = append(skipped, name)
 			continue
 		}
-		seenInBatch[name] = struct{}{}
 
-		// Apply defaults (tái sử dụng logic của Create)
+		existing, err := u.labelRepo.GetByName(ctx, name)
+		if err != nil {
+			return nil, skipped, fmt.Errorf("check label name %q: %w", name, err)
+		}
+		if existing != nil {
+			toCreateIDs = append(toCreateIDs, existing.ID)
+			skipped = append(skipped, name)
+			continue
+		}
+
+		seenInBatch[name] = struct{}{}
 		label.LayerID = layerID
 		label.Name = name
 		applyLabelDefaults(label)
-
 		toCreate = append(toCreate, label)
 	}
 
 	if len(toCreate) == 0 {
+		if err := u.ensureBatchLayerLabelLinks(ctx, layerID, toCreateIDs); err != nil {
+			return nil, skipped, err
+		}
 		return []*qh_domain.QHLabel{}, skipped, nil
 	}
 
-	// 1 query — bulk insert
+	// BulkCreate: một transaction — insert qh_labels (CreateInBatches) rồi insert qh_label_layers nối label–layer.
 	if err := u.labelRepo.BulkCreate(ctx, toCreate); err != nil {
 		return nil, skipped, fmt.Errorf("bulk create labels failed: %w", err)
 	}
 
+	for _, label := range toCreate {
+		toCreateIDs = append(toCreateIDs, label.ID)
+	}
+
+	if err := u.ensureBatchLayerLabelLinks(ctx, layerID, toCreateIDs); err != nil {
+		return nil, skipped, err
+	}
+
 	return toCreate, skipped, nil
+}
+
+// ensureBatchLayerLabelLinks chắc chắn bảng qh_label_layers đã có (label_id, layer_id) cho mọi label vừa tạo.
+func (u *qhLabelUsecaseImpl) ensureBatchLayerLabelLinks(ctx context.Context, layerID uint64, ids []uint64) error {
+	if err := u.labelRepo.EnsureLayerLinksBatch(ctx, layerID, ids); err != nil {
+		return fmt.Errorf("ensure label-layer links: %w", err)
+	}
+	return nil
 }
 
 // Merge — tạo nhãn mới, chuyển mọi region đang dùng các nhãn nguồn sang nhãn mới, rồi xóa mềm các nhãn nguồn (DeleteBatch không gỡ region).
