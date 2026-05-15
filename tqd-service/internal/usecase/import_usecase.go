@@ -340,7 +340,7 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 			} else {
 				mu.Lock()
 				for _, r := range batch {
-					result.LabelStatistics[r.LabelID]++
+					result.LabelStatistics[*r.LabelID]++
 					result.SuccessCount++
 					result.TotalRegionsCreated++
 					result.TotalAreaHa += r.AreaHa // moved here, away from worker lock
@@ -455,7 +455,7 @@ func (u *importUsecaseImpl) buildRegion(ctx context.Context, batchID string, ind
 
 	region := &qh_domain.QHRegion{
 		LayerID:            req.LayerID,
-		LabelID:            labelID,
+		LabelID:            &labelID,
 		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
 		OriginalProperties: propsBytes,
 		AreaSqm:            area,
@@ -836,7 +836,7 @@ func (u *importUsecaseImpl) regionFromRetrySnapshot(ctx context.Context, snap *q
 
 	region := &qh_domain.QHRegion{
 		LayerID:            snap.LayerID,
-		LabelID:            labelID,
+		LabelID:            &labelID,
 		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
 		OriginalProperties: propsBytes,
 		AreaSqm:            area,

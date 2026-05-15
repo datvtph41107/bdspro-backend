@@ -1,0 +1,59 @@
+# internal/modules/resolver/layer_resolver/config/config.yaml
+# Cấu hình mặc định cho layer resolver
+
+# =====================================================
+# TRỌNG SỐ TÍNH ĐIỂM (tổng = 1.0)
+# =====================================================
+weights:
+    legal_weight: 0.60 # Trọng số pháp lý
+    priority_weight: 0.30 # Trọng số priority từ group
+    area_weight: 0.10 # Trọng số diện tích
+
+# =====================================================
+# THANG ĐIỂM PHÁP LÝ
+# =====================================================
+legal_scores:
+    1000: 100 # effective
+    900: 70 # approved
+    800: 30 # draft
+    700: 15 # referenced
+    400: 10 # expired
+    300: 10 # replaced
+
+# =====================================================
+# MA TRẬN XUNG ĐỘT GIỮA CÁC NHÓM
+# =====================================================
+conflict_matrix:
+    residential:
+        transport: true
+        public: true
+        green: true
+        water: true
+        cemetery: true
+        commercial: false
+    public:
+        green: false
+    commercial:
+        residential: false
+
+# =====================================================
+# PRIORITY MẶC ĐỊNH THEO NHÓM
+# =====================================================
+group_priority:
+    residential: 100
+    commercial: 85
+    public: 80
+    industrial: 70
+    green: 30
+    cemetery: 20
+    transport: 10
+    water: 10
+
+# =====================================================
+# NGƯỠNG ĐÁNH GIÁ
+# =====================================================
+thresholds:
+    min_overlap_percent: 5.0
+    conflict_warning_threshold: 30.0
+    high_risk_threshold: 50.0
+    critical_risk_threshold: 80.0

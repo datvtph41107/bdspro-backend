@@ -17,6 +17,11 @@ import (
 	tqd_infra_validator "tqd/infra/validator"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
+	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
+	tqd_internal_modules_resolver_layer_resolver_builder "tqd/internal/modules/resolver/layer_resolver/builder"
+	tqd_internal_modules_resolver_layer_resolver_db "tqd/internal/modules/resolver/layer_resolver/db"
+	tqd_internal_modules_resolver_layer_resolver_engine "tqd/internal/modules/resolver/layer_resolver/engine"
+	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_map "tqd/map"
 )
@@ -31,9 +36,14 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewAmenityRepo,
 	tqd_internal_usecase.NewAmenityUsecase,
 	tqd_initial.NewApp,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewAssessEngine,
 	tqd_internal_usecase.NewBaseUsecase,
 	tqd_infra_handler_grpc.NewBdsproPublicService,
 	tqd_infra_providers.NewCacheProvider,
+	tqd_internal_modules_resolver_layer_resolver_builder.NewCandidateBuilder,
+	tqd_internal_modules_resolver_layer_resolver_db.NewConfigLoader,
+	tqd_internal_modules_resolver_layer_resolver_db.NewConfigPostgres,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewConflictEngine,
 	tqd_infra_handler_grpc.NewContactLabelGrpcHandler,
 	tqd_infra_handler_http.NewContactLabelHandler,
 	tqd_infra_mapper.NewContactLabelMapper,
@@ -74,6 +84,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewLayerLegalUsecase,
 	tqd_infra_postgres.NewLayerRepository,
 	tqd_config.NewLayerResolver,
+	tqd_infra_postgres.NewLayerResolverConfigPostgres,
 	tqd_internal_usecase.NewLayerUsecase,
 	tqd_infra_handler_grpc.NewLocationHandler,
 	tqd_infra_mapper.NewLocationMapper,
@@ -107,6 +118,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewPoiGrpcHandler,
 	tqd_infra_mapper.NewPoiMapper,
 	tqd_internal_usecase.NewPoiUsecase,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewPriorityEngine,
 	tqd_infra_handler_grpc.NewQHLabelGrpcHandler,
 	tqd_infra_handler_http.NewQHLabelHandler,
 	tqd_infra_postgres.NewQHLabelRepository,
@@ -121,6 +133,9 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewReportGrpcHandler,
 	tqd_infra_postgres.NewReportRepository,
 	tqd_internal_usecase.NewReportUsecase,
+	tqd_internal_modules_resolver_layer_resolver.NewResolver,
+	tqd_internal_modules_resolver_layer_resolver_engine.NewResolverEngine,
+	tqd_internal_modules_resolver_layer_resolver.NewResolverWithDB,
 	tqd_infra_handler_grpc.NewSubscriptionGrpcHandler,
 	tqd_infra_postgres.NewSubscriptionRepository,
 	tqd_internal_usecase.NewSubscriptionUsecase,

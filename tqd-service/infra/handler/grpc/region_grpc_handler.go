@@ -87,9 +87,9 @@ func (h *RegionGrpcHandler) buildListRegionsAdminResponse(
 	for i := range regions {
 		region := &regions[i]
 		var label *qh_domain.QHLabel
-		if region.LabelName != "" {
+		if region.LabelID != nil && region.LabelName != "" {
 			label = &qh_domain.QHLabel{
-				ID:    region.LabelID,
+				ID:    *region.LabelID,
 				Name:  region.LabelName,
 				Color: region.LabelColor,
 			}
@@ -138,7 +138,7 @@ func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateR
 	}
 
 	var label *qh_domain.QHLabel
-	if region.LabelID != 0 {
+	if region.LabelID != nil {
 		label, _ = h.regionUsecase.GetLabelByRegion(ctx, region.ID)
 	}
 	return h.regionMapper.ToProtoResponse(region, label), nil
@@ -187,7 +187,7 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 	}
 
 	var label *qh_domain.QHLabel
-	if region.LabelID != 0 {
+	if region.LabelID != nil {
 		label, _ = h.regionUsecase.GetLabelByRegion(ctx, region.ID)
 	}
 	return h.regionMapper.ToProtoResponse(region, label), nil

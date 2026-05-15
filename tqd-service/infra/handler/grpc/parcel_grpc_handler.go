@@ -72,6 +72,26 @@ func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetP
 	return h.mapper.ToProtoParcelLayers(data), nil
 }
 
+func (h *ParcelGrpcHandler) GetParcelLayersV2(ctx context.Context, req *tqdpb.GetParcelLayersV2Request) (*tqdpb.ParcelLayersV2Response, error) {
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	dtoReq := &dto.GetParcelLayersV2Request{
+		ParcelID: req.ParcelId,
+		Mode:     req.Mode,
+		Preset:   req.Preset,
+		AsOfDate: req.AsOfDate,
+	}
+
+	result, err := h.usecase.GetParcelLayersV2(ctx, dtoReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.mapper.ResolveResultToProtoV2(result, req.ParcelId, req.Mode), nil
+}
+
 // =====================================================
 // Batch Operations
 // =====================================================

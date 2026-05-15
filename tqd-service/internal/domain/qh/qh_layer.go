@@ -42,20 +42,41 @@ type QHLayer struct {
 
 	Labels []QHLabel `gorm:"many2many:qh_label_layers;" json:"labels,omitempty"`
 
-	TrustValue float32 `gorm:"default:0" json:"trustValue"`
-
-	LegalStatus enums.LegalStatus `gorm:"default:0" json:"legalStatus"`
-
-	// ReplacedByID: layer mới thay thế layer này (truy vết khi legalStatus = replaced)
-	ReplacedByID *uint64 `gorm:"column:replaced_by_id;index" json:"replaceLayerId,omitempty"`
+	TrustValue   float32           `gorm:"default:0" json:"trustValue"`
+	LegalStatus  enums.LegalStatus `gorm:"default:0" json:"legalStatus"`
+	ReplacedByID *uint64           `gorm:"column:replaced_by_id;index" json:"replaceLayerId,omitempty"`
 }
 
 func (QHLayer) TableName() string {
 	return "qh_layers"
 }
 
+func (l *QHLayer) IsActive() bool {
+	if l.DeletedAt != nil {
+		return false
+	}
+	if l.Status != enums.LayerStatusActive {
+		return false
+	}
+	if l.Visible != 1 {
+		return false
+	}
+	now := time.Now()
+	if l.EffectiveDate != nil && l.EffectiveDate.After(now) {
+		return false
+	}
+	if l.ExpiryDate != nil && l.ExpiryDate.Before(now) {
+		return false
+	}
+	return true
+}
+
 func (l *QHLayer) GetActiveLabelsQuery() string {
 	return "layer_id = ? AND status = 10 AND deleted_at IS NULL"
+}
+
+func (l *QHLayer) GetCanonicalLegalStatus() string {
+	return l.LegalStatus.String()
 }
 
 type StyleConfig struct {
@@ -101,26 +122,6 @@ func GetDefaultStyleConfig() json.RawMessage {
 	    "source-layer": "layer68"
 	  }
 	]`)
-}
-
-func (l *QHLayer) IsActive() bool {
-	if l.DeletedAt != nil {
-		return false
-	}
-	if l.Status != enums.LayerStatusActive {
-		return false
-	}
-	if l.Visible != 1 {
-		return false
-	}
-	now := time.Now()
-	if l.EffectiveDate != nil && l.EffectiveDate.After(now) {
-		return false
-	}
-	if l.ExpiryDate != nil && l.ExpiryDate.Before(now) {
-		return false
-	}
-	return true
 }
 
 func (l *QHLayer) IsClientVisible() bool {

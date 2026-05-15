@@ -106,6 +106,51 @@ type ParcelLayerRow struct {
 	Geometry []byte
 }
 
+type ParcelLayerRowV2 struct {
+	ParcelID      uint64
+	ParcelAreaSqm float64
+
+	// Layer fields
+	LayerID            uint64
+	LayerName          string
+	LayerDisplayName   string
+	LayerType          uint32
+	LayerStatus        uint32
+	LayerLegalStatus   uint32
+	LayerTrustValue    float32
+	LayerEffectiveDate string
+	LayerExpiryDate    string
+	LayerAuthority     string
+
+	LabelID             uint64
+	LabelName           string
+	LabelDisplayName    string
+	LabelColor          string
+	LabelGroupCode      uint32
+	LabelCanBuild       bool
+	LabelPriority       int
+	LabelBuildCondition string
+
+	// Region fields
+	RegionID          uint64
+	RegionName        string
+	RegionDisplayName string
+	RegionLandUseCode string
+	RegionLandUseName string
+	RegionColorRed    uint8
+	RegionColorGreen  uint8
+	RegionColorBlue   uint8
+
+	// Impact
+	OverlapAreaSqm float64
+	OverlapPct     float64
+
+	// Spatial
+	CenterLat float64
+	CenterLng float64
+	Geometry  []byte
+}
+
 type LayerImpact struct {
 	ID            uint64
 	Name          string

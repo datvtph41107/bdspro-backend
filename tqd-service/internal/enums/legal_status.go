@@ -30,3 +30,53 @@ func (s LegalStatus) IsValid() bool {
 func (s LegalStatus) AvaiableToUpdate() bool {
 	return s == LegalStatusDraft || s == LegalStatusReferenced || s == LegalStatusUnknown
 }
+
+func (s LegalStatus) String() string {
+	switch s {
+	case LegalStatusEffective:
+		return "effective"
+	case LegalStatusApproved:
+		return "approved"
+	case LegalStatusDraft:
+		return "draft"
+	case LegalStatusReferenced:
+		return "reference"
+	case LegalStatusExpired, LegalStatusReplaced:
+		return "expired"
+	default:
+		return "unknown"
+	}
+}
+func (s LegalStatus) DisplayName() string {
+	switch s {
+	case LegalStatusEffective:
+		return "Đang hiệu lực"
+	case LegalStatusApproved:
+		return "Đã duyệt"
+	case LegalStatusDraft:
+		return "Dự thảo"
+	case LegalStatusReferenced:
+		return "Tham chiếu"
+	case LegalStatusExpired:
+		return "Hết hiệu lực"
+	case LegalStatusReplaced:
+		return "Đã thay thế"
+	default:
+		return "Không xác định"
+	}
+}
+
+func (s LegalStatus) GetPriority() int {
+	switch s {
+	case LegalStatusEffective:
+		return 100
+	case LegalStatusApproved:
+		return 70
+	case LegalStatusDraft:
+		return 30
+	case LegalStatusReferenced:
+		return 15
+	default:
+		return 10
+	}
+}

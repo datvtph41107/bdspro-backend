@@ -433,6 +433,174 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 	return rows, nil
 }
 
+func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRowV2, error) {
+	var rows []dto.ParcelLayerRowV2
+
+	query := `
+		WITH parcel_base AS (
+			SELECT
+				p.id AS parcel_id,
+				p.geometry AS parcel_geometry,
+				COALESCE(ST_Area(p.geometry::geography), 0) AS parcel_area_sqm
+			FROM parcels p
+			WHERE p.id = $1
+			  AND p.deleted_at IS NULL
+			LIMIT 1
+		),
+		region_candidates AS (
+			SELECT
+				-- Region fields
+				r.id AS region_id,
+				r.layer_id AS region_layer_id,
+				r.label_id AS region_label_id,
+				r.name AS region_name,
+				r.display_name AS region_display_name,
+				r.geometry AS region_geometry,
+				r.color_red AS region_color_red,
+				r.color_green AS region_color_green,
+				r.color_blue AS region_color_blue,
+				
+				-- Layer fields
+				l.id AS layer_id,
+				l.name AS layer_name,
+				l.display_name AS layer_display_name,
+				l.type AS layer_type,
+				l.status AS layer_status,
+				l.legal_status AS layer_legal_status,
+				l.trust_value AS layer_trust_value,
+				l.effective_date AS layer_effective_date,
+				l.expiry_date AS layer_expiry_date,
+				l.issuing_authority AS layer_authority,
+				
+				-- Label fields
+				lb.id AS label_id,
+				lb.name AS label_name,
+				lb.display_name AS label_display_name,
+				lb.color AS label_color,
+				lb.land_code_id AS label_land_code_id,
+				lb.source_type AS label_source_type,
+				lb.source_value AS label_source_value,
+				
+				-- Land use code fields
+				luc.id AS land_use_code_id,
+				luc.code AS land_use_code,
+				luc.name AS land_use_name,
+				luc.color AS land_use_color,
+				luc.can_build AS land_use_can_build,
+				luc.priority AS land_use_priority,
+				luc.build_condition AS land_use_build_condition,
+				luc.group_id AS land_use_group_id,
+				
+				-- Group fields
+				g.id AS group_id,
+				g.code AS group_code,
+				g.name AS group_name,
+				g.can_build AS group_can_build,
+				g.priority AS group_priority,
+				g.build_condition AS group_build_condition,
+				g.color AS group_color,
+				
+				pb.parcel_id,
+				pb.parcel_geometry,
+				pb.parcel_area_sqm
+			FROM parcel_base pb
+			JOIN qh_regions r 
+				ON r.geometry && pb.parcel_geometry
+				AND r.status = 10 
+				AND r.deleted_at IS NULL
+			JOIN qh_layers l 
+				ON l.id = r.layer_id 
+				AND l.deleted_at IS NULL
+			LEFT JOIN qh_labels lb 
+				ON lb.id = r.label_id 
+				AND lb.deleted_at IS NULL
+			LEFT JOIN land_use_codes luc 
+				ON luc.id = lb.land_code_id 
+				AND luc.is_active = true
+			LEFT JOIN land_use_groups g 
+				ON g.id = luc.group_id 
+				AND g.is_active = true
+			WHERE ST_Intersects(r.geometry, pb.parcel_geometry)
+		),
+		region_intersections AS (
+			SELECT
+				rc.*,
+				ST_Area(ST_Intersection(rc.parcel_geometry, rc.region_geometry)::geography) AS overlap_area_sqm,
+				CASE 
+					WHEN rc.parcel_area_sqm > 0 
+					THEN (ST_Area(ST_Intersection(rc.parcel_geometry, rc.region_geometry)::geography) / rc.parcel_area_sqm) * 100 
+					ELSE 0 
+				END AS overlap_pct,
+				ST_Y(ST_PointOnSurface(rc.region_geometry)) AS center_lat,
+				ST_X(ST_PointOnSurface(rc.region_geometry)) AS center_lng,
+				ST_AsGeoJSON(rc.region_geometry)::bytea AS geometry
+			FROM region_candidates rc
+			WHERE NOT ST_IsEmpty(ST_Intersection(rc.parcel_geometry, rc.region_geometry))
+		)
+		SELECT
+			-- Parcel fields
+			ri.parcel_id,
+			ri.parcel_area_sqm,
+			
+			-- Layer fields
+			ri.layer_id,
+			ri.layer_name,
+			ri.layer_display_name,
+			ri.layer_type,
+			ri.layer_status,
+			ri.layer_legal_status,
+			ri.layer_trust_value,
+			COALESCE(TO_CHAR(ri.layer_effective_date, 'YYYY-MM-DD'), '') AS layer_effective_date,
+			COALESCE(TO_CHAR(ri.layer_expiry_date, 'YYYY-MM-DD'), '') AS layer_expiry_date,
+			COALESCE(ri.layer_authority, '') AS layer_authority,
+			
+			-- Label fields
+			ri.label_id,
+			ri.label_name,
+			ri.label_display_name,
+			ri.label_color,
+			COALESCE(ri.label_source_type, 'unknown') AS label_source_type,
+			
+			-- Land use code fields (ưu tiên từ land_use_codes, fallback từ label)
+			COALESCE(ri.land_use_code, ri.label_name) AS land_use_code,
+			COALESCE(ri.land_use_name, ri.label_display_name) AS land_use_name,
+			COALESCE(ri.land_use_color, ri.label_color, '#CCCCCC') AS land_use_color,
+			COALESCE(ri.land_use_can_build, ri.group_can_build, TRUE) AS can_build,
+			COALESCE(ri.land_use_priority, ri.group_priority, 50) AS priority,
+			COALESCE(ri.land_use_build_condition, ri.group_build_condition, 'Chưa có thông tin') AS build_condition,
+			
+			-- Group fields
+			COALESCE(ri.group_code, 'unknown') AS group_code,
+			
+			-- Region fields
+			ri.region_id,
+			ri.region_name,
+			ri.region_display_name,
+			ri.region_color_red,
+			ri.region_color_green,
+			ri.region_color_blue,
+			
+			-- Impact fields
+			ri.overlap_area_sqm,
+			ri.overlap_pct,
+			
+			-- Spatial fields
+			ri.center_lat,
+			ri.center_lng,
+			ri.geometry
+			
+		FROM region_intersections ri
+		ORDER BY ri.overlap_area_sqm DESC
+	`
+
+	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layer rows v2 failed: %w", err)
+	}
+
+	return rows, nil
+}
+
 // Helper function
 func buildPolygonWKT(points []repo.Point) string {
 	var sb strings.Builder

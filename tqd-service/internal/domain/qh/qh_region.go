@@ -7,12 +7,12 @@ import (
 )
 
 type QHRegion struct {
-	ID          uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
-	LayerID     uint64 `gorm:"not null;index" json:"layerId"`
-	Name        string `gorm:"type:varchar(255)" json:"name"`
-	DisplayName string `gorm:"type:varchar(255)" json:"displayName"`
-	Description string `gorm:"type:text" json:"description"`
-	LabelID     uint64 `gorm:"index" json:"labelId"`
+	ID          uint64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	LayerID     uint64  `gorm:"not null;index" json:"layerId"`
+	Name        string  `gorm:"type:varchar(255)" json:"name"`
+	DisplayName string  `gorm:"type:varchar(255)" json:"displayName"`
+	Description string  `gorm:"type:text" json:"description"`
+	LabelID     *uint64 `gorm:"index" json:"labelId,omitempty"`
 
 	Label      *QHLabel `gorm:"foreignKey:LabelID" json:"label"`
 	LabelName  string   `gorm:"-:migration;->;column:label_name" json:"labelName"`
@@ -94,10 +94,10 @@ func (r *QHRegion) IsVerified() bool {
 }
 
 func (r *QHRegion) GetLabelID() uint64 {
-	return r.LabelID
+	return *r.LabelID
 }
 
 // Gán label cho region
 func (r *QHRegion) SetLabelID(labelID uint64) {
-	r.LabelID = labelID
+	r.LabelID = &labelID
 }

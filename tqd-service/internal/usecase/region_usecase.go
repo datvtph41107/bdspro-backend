@@ -135,7 +135,7 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name str
 		LayerID:            layerID,
 		Name:               name,
 		DisplayName:        name,
-		LabelID:            labelID,
+		LabelID:            &labelID,
 		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
 		OriginalProperties: propsBytes,
 		AreaSqm:            areaSqm,
@@ -198,7 +198,7 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch)
 	if patch.LabelID != nil {
 		lid := *patch.LabelID
 		if lid == 0 {
-			region.LabelID = 0
+			region.LabelID = nil
 		} else {
 			label, lerr := u.labelRepo.GetByID(ctx, lid)
 			if lerr != nil {
@@ -210,14 +210,16 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch)
 			// if label.LayerID != region.LayerID {
 			// 	return nil, errors.New("label does not belong to region layer")
 			// }
-			region.LabelID = lid
+			region.LabelID = &lid
 		}
 	}
 
 	if err := u.regionRepo.Update(ctx, region); err != nil {
 		return nil, fmt.Errorf("update region failed: %w", err)
 	}
-	u.labelRepo.EnsureLayerLink(ctx, region.LabelID, region.LayerID)
+	if region.LabelID != nil {
+		u.labelRepo.EnsureLayerLink(ctx, *region.LabelID, region.LayerID)
+	}
 	return u.regionRepo.GetByID(ctx, patch.RegionID)
 }
 
@@ -295,7 +297,7 @@ func (u *regionUsecaseImpl) AssignLabel(ctx context.Context, regionID uint64, la
 	}
 
 	// Gán label trực tiếp vào region
-	region.LabelID = labelID
+	region.LabelID = &labelID
 	return u.regionRepo.Update(ctx, region)
 }
 
@@ -307,10 +309,10 @@ func (u *regionUsecaseImpl) GetLabelByRegion(ctx context.Context, regionID uint6
 	if region == nil {
 		return nil, fmt.Errorf("region %d not found", regionID)
 	}
-	if region.LabelID == 0 {
+	if region.LabelID == nil {
 		return nil, nil // Chưa có label
 	}
-	return u.labelRepo.GetByID(ctx, region.LabelID)
+	return u.labelRepo.GetByID(ctx, *region.LabelID)
 }
 
 // Client

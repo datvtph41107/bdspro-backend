@@ -60,6 +60,71 @@ service ParcelService {
       get: "/v2/tqd/parcels/{parcelId}/layers"
     };
   }
+
+  rpc GetParcelLayersV2(GetParcelLayersV2Request) returns (ParcelLayersV2Response) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/v2/{parcelId}/layers"
+    };
+  }
+}
+
+message GetParcelLayersV2Request {
+  uint64 parcelId = 1;      // parcel_id
+  string mode = 2;          // popup, detail, compare
+  string preset = 3;        // active_only, all_layers
+  string asOfDate = 4;      // as_of_date (YYYY-MM-DD)
+}
+
+message ParcelLayersV2Response {
+  uint64 parcelId = 1;                // parcel_id
+  double parcelAreaSqm = 2;           // parcel_area_sqm
+  PlanDetailInfo currentPlan = 3;     // current_plan
+  repeated PlanDetailInfo otherPlans = 4;  // other_plans
+  bool hasConflict = 5;               // has_conflict
+  repeated ConflictDetail conflicts = 6;
+  AssessmentResponse assessment = 7;
+  ResponseMetadataInfo metadata = 8;
+}
+
+message PlanDetailInfo {
+  uint64 layerId = 1;           // layer_id
+  string layerName = 2;         // layer_name
+  string displayName = 3;       // display_name
+  string landUseCode = 4;       // land_use_code
+  string landUseName = 5;       // land_use_name
+  string landUseColor = 6;      // land_use_color
+  string groupCode = 7;         // group_code
+  double impactPercent = 8;     // impact_percent
+  double impactAreaSqm = 9;     // impact_area_sqm
+}
+
+message ConflictDetail {
+  string type = 1;
+  string severity = 2;
+  string description = 3;
+  string recommendation = 4;
+  string actionRequired = 5;        // action_required
+  double affectedPercent = 6;       // affected_percent
+}
+
+message AssessmentResponse {
+  BuildabilityResponse buildability = 1;
+  string summary = 2;
+  string verdict = 3;
+}
+
+message BuildabilityResponse {
+  bool canBuild = 1;                // can_build
+  string status = 2;
+  string reason = 3;
+  string recommendation = 4;
+}
+
+message ResponseMetadataInfo {
+  int64 responseTimeMs = 1;         // response_time_ms
+  string dataVersion = 2;           // data_version
+  bool isCached = 3;                // is_cached
+  string disclaimer = 4;
 }
 
 message GetParcelDetailRequest {

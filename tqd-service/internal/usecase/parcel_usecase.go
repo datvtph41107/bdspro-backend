@@ -16,6 +16,9 @@ import (
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
+	"tqd/internal/modules/resolver/layer_resolver"
+	"tqd/internal/modules/resolver/layer_resolver/builder"
+	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
 type ParcelUsecase interface {
@@ -32,17 +35,27 @@ type ParcelUsecase interface {
 	// Detail VIP
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
 	GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
+	GetParcelLayersV2(ctx context.Context, req *dto.GetParcelLayersV2Request) (*types.ResolveResult, error)
 }
 
 type parcelUsecase struct {
-	parcelRepo     repo.IParcelRepo
-	layerLegalRepo repo.ILayerLegalRepo
+	parcelRepo       repo.IParcelRepo
+	layerLegalRepo   repo.ILayerLegalRepo
+	layerResolver    layer_resolver.ILayerResolver
+	candidateBuilder *builder.CandidateBuilder
 }
 
-func NewParcelUsecase(parcelRepo repo.IParcelRepo, layerLegalRepo repo.ILayerLegalRepo) ParcelUsecase {
+func NewParcelUsecase(
+	parcelRepo repo.IParcelRepo,
+	layerLegalRepo repo.ILayerLegalRepo,
+	layerResolver layer_resolver.ILayerResolver,
+
+) ParcelUsecase {
 	return &parcelUsecase{
-		parcelRepo:     parcelRepo,
-		layerLegalRepo: layerLegalRepo,
+		parcelRepo:       parcelRepo,
+		layerLegalRepo:   layerLegalRepo,
+		layerResolver:    layerResolver,
+		candidateBuilder: builder.NewCandidateBuilder(),
 	}
 }
 
@@ -343,6 +356,34 @@ func (u *parcelUsecase) GetParcelInfo(ctx context.Context, parcelID uint64) (*dt
 	}
 
 	return info, nil
+}
+
+func (u *parcelUsecase) GetParcelLayersV2(ctx context.Context, req *dto.GetParcelLayersV2Request) (*types.ResolveResult, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, req.ParcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+	}
+
+	if len(rows) == 0 {
+		return &types.ResolveResult{
+			CanBuild: false,
+			Reason:   "Không có dữ liệu quy hoạch",
+		}, nil
+	}
+
+	candidates := u.candidateBuilder.BuildBatch(rows)
+	if len(candidates) == 0 {
+		return &types.ResolveResult{
+			CanBuild: false,
+			Reason:   "Không có dữ liệu quy hoạch",
+		}, nil
+	}
+
+	return u.layerResolver.Resolve(ctx, candidates, req.Mode), nil
 }
 
 func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {

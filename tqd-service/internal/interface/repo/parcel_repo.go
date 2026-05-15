@@ -23,6 +23,7 @@ type IParcelRepo interface {
 	// Detail API
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
 	GetParcelLayerRows(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRow, error)
+	GetParcelLayerRowsV2(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRowV2, error)
 }
 
 type Point struct {

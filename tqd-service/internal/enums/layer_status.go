@@ -49,6 +49,14 @@ func (s LayerStatus) IsClientVisible() bool {
 	return s == LayerStatusActive
 }
 
+func (s LayerStatus) IsActive() bool {
+	return s == LayerStatusActive
+}
+
+func (s LayerStatus) IsDraft() bool {
+	return s == LayerStatusDraft
+}
+
 func (s LayerStatus) String() string {
 	switch s {
 	case LayerStatusDraft:
@@ -61,4 +69,19 @@ func (s LayerStatus) String() string {
 		return "archived"
 	}
 	return "unknown"
+}
+
+func (s LayerStatus) DisplayName() string {
+	switch s {
+	case LayerStatusDraft:
+		return "Dự thảo"
+	case LayerStatusActive:
+		return "Đang hiệu lực"
+	case LayerStatusExpired:
+		return "Hết hiệu lực"
+	case LayerStatusArchived:
+		return "Lưu trữ"
+	default:
+		return "Không xác định"
+	}
 }

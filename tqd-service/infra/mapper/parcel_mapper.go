@@ -8,6 +8,7 @@ import (
 	"strings"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
+	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
 type ParcelMapper struct{}
@@ -16,9 +17,61 @@ func NewParcelMapper() *ParcelMapper {
 	return &ParcelMapper{}
 }
 
-// =====================================================
-// EXISTING METHODS
-// =====================================================
+func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parcelID uint64, mode string) *tqdpb.ParcelLayersV2Response {
+	resp := &tqdpb.ParcelLayersV2Response{
+		ParcelId:    parcelID,
+		HasConflict: result.HasConflict,
+		Assessment: &tqdpb.AssessmentResponse{
+			Buildability: &tqdpb.BuildabilityResponse{
+				CanBuild: result.CanBuild,
+				Status:   result.BuildStatus,
+				Reason:   result.Reason,
+			},
+		},
+	}
+
+	if result.Primary != nil {
+		resp.CurrentPlan = &tqdpb.PlanDetailInfo{
+			LayerId:       result.Primary.LayerID,
+			LayerName:     result.Primary.LayerName,
+			DisplayName:   result.Primary.LayerDisplayName,
+			LandUseCode:   result.Primary.LandUseCode,
+			LandUseName:   result.Primary.LandUseName,
+			LandUseColor:  result.Primary.LandUseColor,
+			GroupCode:     result.Primary.GroupCode,
+			ImpactPercent: result.Primary.OverlapPercent,
+			ImpactAreaSqm: result.Primary.OverlapAreaSqm,
+		}
+		resp.ParcelAreaSqm = result.Primary.ParcelAreaSqm
+	}
+
+	for _, sec := range result.Secondary {
+		resp.OtherPlans = append(resp.OtherPlans, &tqdpb.PlanDetailInfo{
+			LayerId:       sec.LayerID,
+			LayerName:     sec.LayerName,
+			DisplayName:   sec.LayerDisplayName,
+			LandUseCode:   sec.LandUseCode,
+			LandUseName:   sec.LandUseName,
+			LandUseColor:  sec.LandUseColor,
+			GroupCode:     sec.GroupCode,
+			ImpactPercent: sec.OverlapPercent,
+			ImpactAreaSqm: sec.OverlapAreaSqm,
+		})
+	}
+
+	for _, c := range result.CriticalConflicts {
+		resp.Conflicts = append(resp.Conflicts, &tqdpb.ConflictDetail{
+			Type:            c.Type,
+			Severity:        string(c.Severity),
+			Description:     c.Description,
+			Recommendation:  c.Recommendation,
+			ActionRequired:  c.ActionRequired,
+			AffectedPercent: c.AffectedPercent,
+		})
+	}
+
+	return resp
+}
 
 func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []qh_domain.Parcel {
 	if req == nil || len(req.Data) == 0 {
