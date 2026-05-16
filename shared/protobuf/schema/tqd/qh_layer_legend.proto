@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// QHLayerLegendService — CRUD chú giải (đính label với layer kèm note, bảng qh_layer_legends).
+service QHLayerLegendService {
+  // CreateLayerLegend — tạo chú giải
+  rpc CreateLayerLegend(CreateLayerLegendRequest) returns (QHLayerLegendResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layer-legends"
+      body: "*"
+    };
+  }
+
+  // GetLayerLegend — chi tiết theo id
+  rpc GetLayerLegend(GetLayerLegendRequest) returns (QHLayerLegendResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layer-legends/{id}"
+    };
+  }
+
+  // UpdateLayerLegend — cập nhật (chỉ các trường optional được gửi)
+  rpc UpdateLayerLegend(UpdateLayerLegendRequest) returns (QHLayerLegendResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/layer-legends/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteLayerLegend — xóa mềm
+  rpc DeleteLayerLegend(DeleteLayerLegendRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/layer-legends/{id}"
+    };
+  }
+
+  // ListLayerLegends — danh sách phân trang (filter: layerId, labelId)
+  rpc ListLayerLegends(ListLayerLegendsRequest) returns (ListLayerLegendsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layer-legends/list"
+    };
+  }
+}
+
+message CreateLayerLegendRequest {
+  uint64 layerId = 1;
+  uint64 labelId = 2;
+  string note = 3;
+}
+
+message UpdateLayerLegendRequest {
+  uint64 id = 1;
+  optional uint64 layerId = 2;
+  optional uint64 labelId = 3;
+  optional string note = 4;
+}
+
+message GetLayerLegendRequest {
+  uint64 id = 1;
+}
+
+message DeleteLayerLegendRequest {
+  uint64 id = 1;
+}
+
+message ListLayerLegendsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional uint64 layerId = 3;
+  optional uint64 labelId = 4;
+}
+
+message QHLayerLegendResponse {
+  uint64 id = 1;
+  uint64 layerId = 2;
+  uint64 labelId = 3;
+  string note = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message ListLayerLegendsResponse {
+  repeated QHLayerLegendResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}

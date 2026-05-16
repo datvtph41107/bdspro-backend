@@ -12,6 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/wire v0.7.0
+	github.com/lib/pq v1.10.9
 	github.com/protomaps/go-pmtiles v1.30.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.20.0
@@ -19,6 +20,7 @@ require (
 	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
 	gorm.io/datatypes v1.2.7
+	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.30.0
 	pb v0.0.0-00010101000000-000000000000
 )
@@ -169,7 +171,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.6 // indirect
-	gorm.io/driver/postgres v1.5.11 // indirect
 	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect

@@ -105,6 +105,8 @@ func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) er
 		"updated_at":     time.Now(),
 		"legal_status":   layer.LegalStatus,
 		"trust_value":    layer.TrustValue,
+		"family_id":      layer.FamilyID,
+		"publish_scopes": layer.PublishScopes,
 	}
 
 	return r.db.WithContext(ctx).
@@ -124,6 +126,7 @@ func (r *layerRepoImpl) Delete(ctx context.Context, id uint64) error {
 func (r *layerRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error) {
 	var layer qh_domain.QHLayer
 	err := r.db.WithContext(ctx).
+		Preload("Family").
 		Where("deleted_at IS NULL").
 		First(&layer, id).Error
 	if err != nil {

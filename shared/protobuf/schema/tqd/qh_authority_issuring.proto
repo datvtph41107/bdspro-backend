@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// QHAuthorityIssuringService — CRUD danh mục cơ quan ban hành (qh_authority_issuring).
+service QHAuthorityIssuringService {
+  // CreateAuthorityIssuring — tạo mới
+  rpc CreateAuthorityIssuring(CreateAuthorityIssuringRequest) returns (QHAuthorityIssuringResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/authority-issuring"
+      body: "*"
+    };
+  }
+
+  // GetAuthorityIssuring — chi tiết theo id
+  rpc GetAuthorityIssuring(GetAuthorityIssuringRequest) returns (QHAuthorityIssuringResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/authority-issuring/{id}"
+    };
+  }
+
+  // UpdateAuthorityIssuring — cập nhật (chỉ các trường optional được gửi)
+  rpc UpdateAuthorityIssuring(UpdateAuthorityIssuringRequest) returns (QHAuthorityIssuringResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/authority-issuring/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteAuthorityIssuring — xóa mềm
+  rpc DeleteAuthorityIssuring(DeleteAuthorityIssuringRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/authority-issuring/{id}"
+    };
+  }
+
+  // ListAuthorityIssuring — danh sách phân trang (query: page, size)
+  rpc ListAuthorityIssuring(ListAuthorityIssuringRequest) returns (ListAuthorityIssuringResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/authority-issuring/list"
+    };
+  }
+}
+
+message CreateAuthorityIssuringRequest {
+  string name = 1;
+  string code = 2;
+  string description = 3;
+}
+
+message UpdateAuthorityIssuringRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional string code = 3;
+  optional string description = 4;
+}
+
+message GetAuthorityIssuringRequest {
+  uint64 id = 1;
+}
+
+message DeleteAuthorityIssuringRequest {
+  uint64 id = 1;
+}
+
+message ListAuthorityIssuringRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+}
+
+message QHAuthorityIssuringResponse {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message ListAuthorityIssuringResponse {
+  repeated QHAuthorityIssuringResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}

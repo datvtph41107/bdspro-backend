@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// QHLayerFamilyService — CRUD danh mục họ lớp (nhóm layer, bảng qh_layer_families).
+service QHLayerFamilyService {
+  // CreateLayerFamily — tạo họ lớp
+  rpc CreateLayerFamily(CreateLayerFamilyRequest) returns (QHLayerFamilyResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layer-families"
+      body: "*"
+    };
+  }
+
+  // GetLayerFamily — chi tiết theo id
+  rpc GetLayerFamily(GetLayerFamilyRequest) returns (QHLayerFamilyResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layer-families/{id}"
+    };
+  }
+
+  // UpdateLayerFamily — cập nhật tên (optional được gửi)
+  rpc UpdateLayerFamily(UpdateLayerFamilyRequest) returns (QHLayerFamilyResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/layer-families/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteLayerFamily — xóa mềm
+  rpc DeleteLayerFamily(DeleteLayerFamilyRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/layer-families/{id}"
+    };
+  }
+
+  // ListLayerFamilies — danh sách phân trang
+  rpc ListLayerFamilies(ListLayerFamiliesRequest) returns (ListLayerFamiliesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layer-families/list"
+    };
+  }
+}
+
+message CreateLayerFamilyRequest {
+  string name = 1;
+}
+
+message UpdateLayerFamilyRequest {
+  uint64 id = 1;
+  optional string name = 2;
+}
+
+message GetLayerFamilyRequest {
+  uint64 id = 1;
+}
+
+message DeleteLayerFamilyRequest {
+  uint64 id = 1;
+}
+
+message ListLayerFamiliesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional string search = 3;
+}
+
+message QHLayerFamilyResponse {
+  uint64 id = 1;
+  string name = 2;
+  string createdAt = 3;
+  string updatedAt = 4;
+}
+
+message ListLayerFamiliesResponse {
+  repeated QHLayerFamilyResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}

@@ -5,6 +5,8 @@ import (
 	"time"
 	"tqd/internal/domain/jsonb"
 	"tqd/internal/enums"
+
+	"github.com/lib/pq"
 )
 
 type QHLayer struct {
@@ -31,8 +33,9 @@ type QHLayer struct {
 
 	SourceType string `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
 
-	EffectiveDate *time.Time `gorm:"type:date;index" json:"effectiveDate,omitempty"`
-	ExpiryDate    *time.Time `gorm:"type:date;index" json:"expiryDate,omitempty"`
+	InsuanceDate  *time.Time `gorm:"type:date;index" json:"insuanceDate,omitempty"`  // ngày ban hành
+	EffectiveDate *time.Time `gorm:"type:date;index" json:"effectiveDate,omitempty"` // ngày hiệu lực
+	ExpiryDate    *time.Time `gorm:"type:date;index" json:"expiryDate,omitempty"`    // ngày hết hiệu lực
 
 	CreatedBy uint64     `gorm:"default:0" json:"createdBy"`
 	UpdatedBy uint64     `gorm:"default:0" json:"updatedBy"`
@@ -45,6 +48,16 @@ type QHLayer struct {
 	TrustValue   float32           `gorm:"default:0" json:"trustValue"`
 	LegalStatus  enums.LegalStatus `gorm:"default:0" json:"legalStatus"`
 	ReplacedByID *uint64           `gorm:"column:replaced_by_id;index" json:"replaceLayerId,omitempty"`
+
+	LegalLevel  enums.LegalLevel `gorm:"default:0" json:"legalLevel"`
+	LegalNumber string           `gorm:"type:varchar(50)" json:"legalNumber,omitempty"` // số/ký hiệu văn bản
+
+	AuthorityIssuringID *uint64              `gorm:"type:bigint" json:"authorityIssuring,omitempty"` // cơ quan ban hành
+	AuthorityIssuring   *QHAuthorityIssuring `gorm:"foreignKey:AuthorityIssuringID;references:ID"`
+	PublishScopes       pq.Int32Array        `gorm:"type:integer[]" json:"publishScopes,omitempty"` // phạm vi áp dụng
+
+	FamilyID *uint64        `gorm:"column:family_id;index" json:"familyId,omitempty"`
+	Family   *QHLayerFamily `gorm:"foreignKey:FamilyID;references:ID"`
 }
 
 func (QHLayer) TableName() string {

@@ -29,6 +29,8 @@ func NewBdsproPublicService() *TqdPublicService {
 var enumProviders = map[string][]*sharepb.EnumItem{
 	"problem_report": _utils.EnumMapToList(enums.EProblemReportNames),
 	"legal_status":   _utils.EnumMapToList(enums.LegalStatusMap),
+	"legal_level":    _utils.EnumMapToList(enums.LegalLevelMap),
+	"scope_apply":    _utils.EnumMapToList(enums.ScopeApplyNames),
 }
 
 func (s *TqdPublicService) GetEnums(ctx context.Context, req *sharepb.SyncRequest) (*sharepb.GetEnumsResponse, error) {

@@ -18,6 +18,7 @@ import (
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
+	"github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -92,6 +93,10 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 	}
 	if req.TrustValue != nil {
 		layer.TrustValue = float32(*req.TrustValue)
+	}
+	if req.FamilyId != nil && *req.FamilyId != 0 {
+		fid := *req.FamilyId
+		layer.FamilyID = &fid
 	}
 
 	// Set status if provided
@@ -175,6 +180,17 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 	if req.TrustValue != nil {
 		existing.TrustValue = float32(*req.TrustValue)
+	}
+	if req.FamilyId != nil {
+		if *req.FamilyId == 0 {
+			existing.FamilyID = nil
+		} else {
+			fid := *req.FamilyId
+			existing.FamilyID = &fid
+		}
+	}
+	if req.PublishScopes != nil {
+		existing.PublishScopes = pq.Int32Array(req.PublishScopes)
 	}
 
 	updated, err := h.layerUsecase.Update(ctx, req.Id, existing, userID)

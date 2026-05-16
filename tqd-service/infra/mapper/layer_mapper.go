@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/config"
 	qh_domain "tqd/internal/domain/qh"
@@ -40,7 +41,7 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer,
 		}
 	}
 
-	return &qh_domain.QHLayer{
+	out := &qh_domain.QHLayer{
 		Name:          req.Name,
 		DisplayName:   req.DisplayName,
 		Description:   req.Description,
@@ -56,7 +57,12 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer,
 		ThumbnailURL:  req.ThumbnailUrl,
 		EffectiveDate: effectiveDate,
 		ExpiryDate:    expiryDate,
-	}, nil
+	}
+	if req.FamilyId != nil && *req.FamilyId != 0 {
+		fid := *req.FamilyId
+		out.FamilyID = &fid
+	}
+	return out, nil
 }
 
 func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
@@ -95,10 +101,19 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		LegalStatus:     uint32(layer.LegalStatus),
 		LegalStatusName: enums.LegalStatusMap[layer.LegalStatus],
 		TrustValue:      float64(layer.TrustValue),
+		FamilyId:        layer.FamilyID,
+		PublishScopes:   layer.PublishScopes,
 	}
 	if layer.ReplacedByID != nil {
 		rid := *layer.ReplacedByID
 		resp.ReplacedByLayerId = &rid
+	}
+	if layer.FamilyID != nil {
+		fid := *layer.FamilyID
+		resp.FamilyId = &fid
+	}
+	if layer.Family != nil {
+		resp.Family = ToProtoQHLayerFamily(layer.Family)
 	}
 
 	// Format dates
@@ -112,4 +127,24 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 	}
 
 	return resp, nil
+}
+
+// ToProtoQHLayerFamily map domain họ lớp → proto (dùng chung cho LayerResponse.family).
+func ToProtoQHLayerFamily(f *qh_domain.QHLayerFamily) *tqdpb.QHLayerFamilyResponse {
+	if f == nil {
+		return nil
+	}
+	var createdAt, updatedAt string
+	if f.CreatedAt != nil {
+		createdAt = _utils.FormatTimeToString(f.CreatedAt)
+	}
+	if f.UpdatedAt != nil {
+		updatedAt = _utils.FormatTimeToString(f.UpdatedAt)
+	}
+	return &tqdpb.QHLayerFamilyResponse{
+		Id:        f.ID,
+		Name:      f.Name,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}
 }

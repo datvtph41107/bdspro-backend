@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "shared/common.proto";
+import "tqd/qh_layer_family.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -127,6 +128,7 @@ message CreateLayerRequest {
   optional double trustValue = 24;
   // Các layer cũ sẽ được đánh dấu legalStatus=replaced và lưu id layer mới (replacedByLayerId) để truy vết
   repeated uint64 replaceLayerIds = 25;
+  optional uint64 familyId = 26; // FK → qh_layer_families (nhóm layer)
 }
 
 message UpdateLayerRequest {
@@ -156,6 +158,9 @@ message UpdateLayerRequest {
   string sourceCode = 24;
   optional uint32 legalStatus = 25;
   optional double trustValue = 26;
+  optional uint64 familyId = 27; // Gán đổi nhóm; gửi 0 để gỡ gán (NULL)
+  repeated int32 publishScopes = 28;
+  optional uint64 replacedByLayerId = 29;
 }
 
 message UpdateLayerStatusRequest {
@@ -239,6 +244,10 @@ message LayerResponse {
   // Chỉ có giá trị khi layer này đã bị thay thế bởi layer khác (truy vết)
   optional uint64 replacedByLayerId = 28;
   string legalStatusName = 29;
+  optional uint64 familyId = 30;
+  // Họ lớp (qh_layer_families); chỉ có khi load chi tiết kèm preload Family
+  optional QHLayerFamilyResponse family = 31;
+  repeated int32 publishScopes = 32;
 }
 
 message ListLayersResponse {

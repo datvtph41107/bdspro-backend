@@ -22,26 +22,29 @@ type InitialApp struct {
 	ImportHTTPHandler        *handler_http.ImportHTTPHandler
 
 	// gRPC Handlers
-	ContactLabelGrpcHandler      *handler_grpc.ContactLabelGrpcHandler
-	DirectoryCategoryGrpcHandler *handler_grpc.DirectoryCategoryGrpcHandler
-	DirectorySourceGrpcHandler   *handler_grpc.DirectorySourceGrpcHandler
-	DirectorySupplierGrpcHandler *handler_grpc.DirectorySupplierGrpcHandler
-	PoiCategoryGrpcHandler       *handler_grpc.PoiCategoryGrpcHandler
-	POIGrpcHandler               *handler_grpc.PoiGrpcHandler
-	OpenHourGrpcHandler          *handler_grpc.OpenHourGrpcHandler
-	AmenityGrpcHandler           *handler_grpc.AmenityGrpcHandlerImpl
-	LocationGrpcHandler          *handler_grpc.LocationHandler
-	FeatureGrpcHandler           *handler_grpc.FeatureGrpcHandler
-	ParcelGrpcHandler            *handler_grpc.ParcelGrpcHandler
-	OneHouseGrpcHandler          *handler_grpc.OneHouseGrpcHandler
-	LayerGrpcHandler             *handler_grpc.LayerGrpcHandler
-	QHLabelGrpcHandler           *handler_grpc.QHLabelGrpcHandler
-	RegionGrpcHandler            *handler_grpc.RegionGrpcHandler
-	ReportGrpcHandler            *handler_grpc.ReportGrpcHandler
-	SubscriptionGrpcHandler      *handler_grpc.SubscriptionGrpcHandler
-	TqdPublicService             *handler_grpc.TqdPublicService
-	ImportGrpcHandler            *handler_grpc.ImportGrpcHandler
-	LayerLegalGrpcHandler        *handler_grpc.LayerLegalGrpcHandler
+	ContactLabelGrpcHandler        *handler_grpc.ContactLabelGrpcHandler
+	DirectoryCategoryGrpcHandler   *handler_grpc.DirectoryCategoryGrpcHandler
+	DirectorySourceGrpcHandler     *handler_grpc.DirectorySourceGrpcHandler
+	DirectorySupplierGrpcHandler   *handler_grpc.DirectorySupplierGrpcHandler
+	PoiCategoryGrpcHandler         *handler_grpc.PoiCategoryGrpcHandler
+	POIGrpcHandler                 *handler_grpc.PoiGrpcHandler
+	OpenHourGrpcHandler            *handler_grpc.OpenHourGrpcHandler
+	AmenityGrpcHandler             *handler_grpc.AmenityGrpcHandlerImpl
+	LocationGrpcHandler            *handler_grpc.LocationHandler
+	FeatureGrpcHandler             *handler_grpc.FeatureGrpcHandler
+	ParcelGrpcHandler              *handler_grpc.ParcelGrpcHandler
+	OneHouseGrpcHandler            *handler_grpc.OneHouseGrpcHandler
+	LayerGrpcHandler               *handler_grpc.LayerGrpcHandler
+	QHLabelGrpcHandler             *handler_grpc.QHLabelGrpcHandler
+	QHAuthorityIssuringGrpcHandler *handler_grpc.QHAuthorityIssuringGrpcHandler
+	QHLayerFamilyGrpcHandler       *handler_grpc.QHLayerFamilyGrpcHandler
+	QHLayerLegendGrpcHandler       *handler_grpc.QHLayerLegendGrpcHandler
+	RegionGrpcHandler              *handler_grpc.RegionGrpcHandler
+	ReportGrpcHandler              *handler_grpc.ReportGrpcHandler
+	SubscriptionGrpcHandler        *handler_grpc.SubscriptionGrpcHandler
+	TqdPublicService               *handler_grpc.TqdPublicService
+	ImportGrpcHandler              *handler_grpc.ImportGrpcHandler
+	LayerLegalGrpcHandler          *handler_grpc.LayerLegalGrpcHandler
 }
 
 // NewApp creates a new App instance
@@ -70,6 +73,9 @@ func NewApp(
 	oneHouseGrpcHandler *handler_grpc.OneHouseGrpcHandler,
 	layerGrpcHandler *handler_grpc.LayerGrpcHandler,
 	qhLabelGrpcHandler *handler_grpc.QHLabelGrpcHandler,
+	qhAuthorityIssuringGrpcHandler *handler_grpc.QHAuthorityIssuringGrpcHandler,
+	qhLayerFamilyGrpcHandler *handler_grpc.QHLayerFamilyGrpcHandler,
+	qhLayerLegendGrpcHandler *handler_grpc.QHLayerLegendGrpcHandler,
 	pa *handler_grpc.ParcelGrpcHandler,
 	regionGrpcHandler *handler_grpc.RegionGrpcHandler,
 	reportGrpcHandler *handler_grpc.ReportGrpcHandler,
@@ -79,37 +85,40 @@ func NewApp(
 	layerLegalGrpcHandler *handler_grpc.LayerLegalGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
-		ContactLabelHandler:          contactLabelHandler,
-		DirectoryCategoryHandler:     directoryCategoryHandler,
-		DirectorySourceHandler:       directorySourceHandler,
-		DirectorySupplierHandler:     directorySupplierHandler,
-		PoiCategoryHandler:           poiCategoryHandler,
-		POIHandler:                   poiHandler,
-		OpenHourHandler:              openHourHandler,
-		AmenityHandler:               amenityHandler,
-		QHLabelHandler:               qhLabelHandler,
-		RegionHttpHandler:            regionHttpHandler,
-		ImportHTTPHandler:            importHTTPHandler,
-		ContactLabelGrpcHandler:      contactLabelGrpcHandler,
-		DirectoryCategoryGrpcHandler: directoryCategoryGrpcHandler,
-		DirectorySourceGrpcHandler:   directorySourceGrpcHandler,
-		DirectorySupplierGrpcHandler: directorySupplierGrpcHandler,
-		PoiCategoryGrpcHandler:       poiCategoryGrpcHandler,
-		POIGrpcHandler:               poiGrpcHandler,
-		OpenHourGrpcHandler:          openHourGrpcHandler,
-		AmenityGrpcHandler:           amenityGrpcHandler,
-		LocationGrpcHandler:          locationGrpcHandler,
-		FeatureGrpcHandler:           featureGrpcHandler,
-		ParcelGrpcHandler:            pa,
-		OneHouseGrpcHandler:          oneHouseGrpcHandler,
-		LayerGrpcHandler:             layerGrpcHandler,
-		QHLabelGrpcHandler:           qhLabelGrpcHandler,
-		RegionGrpcHandler:            regionGrpcHandler,
-		ReportGrpcHandler:            reportGrpcHandler,
-		SubscriptionGrpcHandler:      subscriptionGrpcHandler,
-		TqdPublicService:             tqdPublicService,
-		ImportGrpcHandler:            importGrpcHandler,
-		LayerLegalGrpcHandler:        layerLegalGrpcHandler,
+		ContactLabelHandler:            contactLabelHandler,
+		DirectoryCategoryHandler:       directoryCategoryHandler,
+		DirectorySourceHandler:         directorySourceHandler,
+		DirectorySupplierHandler:       directorySupplierHandler,
+		PoiCategoryHandler:             poiCategoryHandler,
+		POIHandler:                     poiHandler,
+		OpenHourHandler:                openHourHandler,
+		AmenityHandler:                 amenityHandler,
+		QHLabelHandler:                 qhLabelHandler,
+		RegionHttpHandler:              regionHttpHandler,
+		ImportHTTPHandler:              importHTTPHandler,
+		ContactLabelGrpcHandler:        contactLabelGrpcHandler,
+		DirectoryCategoryGrpcHandler:   directoryCategoryGrpcHandler,
+		DirectorySourceGrpcHandler:     directorySourceGrpcHandler,
+		DirectorySupplierGrpcHandler:   directorySupplierGrpcHandler,
+		PoiCategoryGrpcHandler:         poiCategoryGrpcHandler,
+		POIGrpcHandler:                 poiGrpcHandler,
+		OpenHourGrpcHandler:            openHourGrpcHandler,
+		AmenityGrpcHandler:             amenityGrpcHandler,
+		LocationGrpcHandler:            locationGrpcHandler,
+		FeatureGrpcHandler:             featureGrpcHandler,
+		ParcelGrpcHandler:              pa,
+		OneHouseGrpcHandler:            oneHouseGrpcHandler,
+		LayerGrpcHandler:               layerGrpcHandler,
+		QHLabelGrpcHandler:             qhLabelGrpcHandler,
+		QHAuthorityIssuringGrpcHandler: qhAuthorityIssuringGrpcHandler,
+		QHLayerFamilyGrpcHandler:       qhLayerFamilyGrpcHandler,
+		QHLayerLegendGrpcHandler:       qhLayerLegendGrpcHandler,
+		RegionGrpcHandler:              regionGrpcHandler,
+		ReportGrpcHandler:              reportGrpcHandler,
+		SubscriptionGrpcHandler:        subscriptionGrpcHandler,
+		TqdPublicService:               tqdPublicService,
+		ImportGrpcHandler:              importGrpcHandler,
+		LayerLegalGrpcHandler:          layerLegalGrpcHandler,
 	}
 }
 

@@ -158,7 +158,14 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 	if layer.TrustValue > -1 {
 		existing.TrustValue = layer.TrustValue
 	}
+	if layer.FamilyID != nil {
+		v := *layer.FamilyID
+		existing.FamilyID = &v
+	} else {
+		existing.FamilyID = nil
+	}
 
+	existing.PublishScopes = layer.PublishScopes
 	existing.UpdatedBy = userID
 	existing.UpdatedAt = time.Now()
 
