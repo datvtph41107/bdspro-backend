@@ -383,7 +383,54 @@ func (u *parcelUsecase) GetParcelLayersV2(ctx context.Context, req *dto.GetParce
 		}, nil
 	}
 
-	return u.layerResolver.Resolve(ctx, candidates, req.Mode), nil
+	result := u.layerResolver.Resolve(ctx, candidates, req.Mode)
+
+	result.LayerLandUseGroups = buildLayerLandUseGroups(candidates)
+
+	return result, nil
+}
+
+func buildLayerLandUseGroups(candidates []*types.LayerCandidate) map[uint64][]*types.LandUseGroupDetail {
+	groupMap := make(map[uint64]map[string]*types.LandUseGroupDetail)
+
+	for _, c := range candidates {
+		if c.GroupCode == "" || c.GroupCode == "unknown" {
+			continue
+		}
+		if _, ok := groupMap[c.LayerID]; !ok {
+			groupMap[c.LayerID] = make(map[string]*types.LandUseGroupDetail)
+		}
+
+		key := c.GroupCode + ":" + c.LandUseCode
+		existing, exists := groupMap[c.LayerID][key]
+		if exists {
+			existing.OverlapAreaSqm += c.OverlapAreaSqm
+			existing.OverlapPercent += c.OverlapPercent
+		} else {
+			groupMap[c.LayerID][key] = &types.LandUseGroupDetail{
+				Code:           c.GroupCode,
+				Name:           c.GroupName,
+				Color:          c.GroupColor,
+				CanBuild:       c.CanBuild,
+				Priority:       c.Priority,
+				LandUseCode:    c.LandUseCode,
+				LandUseName:    c.LandUseName,
+				LandUseColor:   c.LandUseColor,
+				OverlapPercent: c.OverlapPercent,
+				OverlapAreaSqm: c.OverlapAreaSqm,
+			}
+		}
+	}
+
+	result := make(map[uint64][]*types.LandUseGroupDetail, len(groupMap))
+	for layerID, groups := range groupMap {
+		list := make([]*types.LandUseGroupDetail, 0, len(groups))
+		for _, g := range groups {
+			list = append(list, g)
+		}
+		result[layerID] = list
+	}
+	return result
 }
 
 func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
@@ -478,15 +525,26 @@ func buildParcelLayersResponse(parcelID uint64,
 				}
 			}
 
+			var authority *dto.AuthorityIssuingDTO
+			if r.AuthorityIssuringID > 0 {
+				authority = &dto.AuthorityIssuingDTO{
+					ID:          r.AuthorityIssuringID,
+					Name:        r.AuthorityIssuringName,
+					Code:        r.AuthorityIssuringCode,
+					Description: r.AuthorityIssuringDesc,
+				}
+			}
+
 			layer = &dto.LayerImpact{
-				ID:            r.LayerID,
-				Name:          r.LayerName,
-				DisplayName:   r.LayerDisplayName,
-				Type:          r.LayerType,
-				EffectiveDate: r.LayerEffectiveDate,
-				LegalDoc:      r.LayerLegalDoc,
-				LegalDocs:     legalDocs,
-				Labels:        []*dto.LabelImpact{},
+				ID:               r.LayerID,
+				Name:             r.LayerName,
+				DisplayName:      r.LayerDisplayName,
+				Type:             r.LayerType,
+				EffectiveDate:    r.LayerEffectiveDate,
+				LegalDoc:         r.LayerLegalDoc,
+				LegalDocs:        legalDocs,
+				AuthorityIssuing: authority,
+				Labels:           []*dto.LabelImpact{},
 			}
 			layerMap[r.LayerID] = layer
 		}

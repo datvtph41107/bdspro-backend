@@ -7,12 +7,11 @@
 package wire
 
 import (
-	"common/db"
-	"github.com/google/wire"
+	_db "common/db"
 	"tqd/config"
 	"tqd/infra/client"
-	"tqd/infra/handler/grpc"
-	"tqd/infra/handler/http"
+	handler_grpc "tqd/infra/handler/grpc"
+	handler_http "tqd/infra/handler/http"
 	"tqd/infra/mapper"
 	"tqd/infra/postgres"
 	"tqd/infra/providers"
@@ -25,7 +24,9 @@ import (
 	"tqd/internal/modules/resolver/layer_resolver/engine"
 	"tqd/internal/modules/resolver/layer_resolver/rule"
 	"tqd/internal/usecase"
-	"tqd/map"
+	_map "tqd/map"
+
+	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
@@ -110,8 +111,12 @@ func InitializeApp() (*initial.InitialApp, error) {
 	qhLayerFamilyUsecase := usecase.NewQHLayerFamilyUsecase(qhLayerFamilyRepository)
 	qhLayerFamilyGrpcHandler := handler_grpc.NewQHLayerFamilyGrpcHandler(qhLayerFamilyUsecase)
 	qhLayerLegendRepository := postgres.NewQHLayerLegendRepository(db)
-	qhLayerLegendUsecase := usecase.NewQHLayerLegendUsecase(qhLayerLegendRepository, layerRepository, qhLabelRepository)
+	landUseGroupRepository := postgres.NewLandUseGroupRepository(db)
+	qhLayerLegendUsecase := usecase.NewQHLayerLegendUsecase(qhLayerLegendRepository, layerRepository, qhLabelRepository, landUseGroupRepository)
 	qhLayerLegendGrpcHandler := handler_grpc.NewQHLayerLegendGrpcHandler(qhLayerLegendUsecase)
+	qhLayerLandUseGroupRepository := postgres.NewQHLayerLandUseGroupRepository(db)
+	qhLayerLandUseGroupUsecase := usecase.NewQHLayerLandUseGroupUsecase(qhLayerLandUseGroupRepository, layerRepository, landUseGroupRepository)
+	qhLayerLandUseGroupGrpcHandler := handler_grpc.NewQHLayerLandUseGroupGrpcHandler(qhLayerLandUseGroupUsecase)
 	iParcelRepo := postgres.NewParcelPostgres(db)
 	iLayerLegalRepo := postgres.NewLayerLegalPostgres(db)
 	iLayerResolverConfigRepo := postgres.NewLayerResolverConfigPostgres(db)
@@ -131,7 +136,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	tqdPublicService := handler_grpc.NewBdsproPublicService()
 	importGrpcHandler := handler_grpc.NewImportGrpcHandler(importUsecase)
 	layerLegalGrpcHandler := handler_grpc.NewLayerLegalGrpcHandler(iLayerLegalRepo)
-	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler)
+	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLayerLandUseGroupGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler)
 	return initialApp, nil
 }
 

@@ -16,7 +16,6 @@ import (
 	"tqd/internal/usecase"
 )
 
-// QHLayerLegendGrpcHandler xử lý gRPC QHLayerLegendService.
 type QHLayerLegendGrpcHandler struct {
 	tqdpb.UnimplementedQHLayerLegendServiceServer
 	uc usecase.QHLayerLegendUsecase
@@ -26,100 +25,155 @@ func NewQHLayerLegendGrpcHandler(uc usecase.QHLayerLegendUsecase) *QHLayerLegend
 	return &QHLayerLegendGrpcHandler{uc: uc}
 }
 
-// CreateLayerLegend — POST /v2/tqd/qh/admin/layer-legends
 func (h *QHLayerLegendGrpcHandler) CreateLayerLegend(ctx context.Context, req *tqdpb.CreateLayerLegendRequest) (*tqdpb.QHLayerLegendResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
 	row := &qh_domain.QHLayerLegend{
-		LayerID: req.LayerId,
-		LabelID: req.LabelId,
-		Note:    req.Note,
+		LayerID:         req.LayerId,
+		LabelID:         req.LabelId,
+		Note:            req.Note,
+		DisplayOrder:    int(req.DisplayOrder),
+		IsVisible:       req.IsVisible,
+		LegendType:      req.LegendType,
+		GeometryType:    req.GeometryType,
+		StrokeDashArray: req.StrokeDashArray,
+		IconURL:         req.IconUrl,
+		ImageURL:        req.ImageUrl,
+	}
+	if req.LandUseGroupId != nil {
+		row.LandUseGroupID = req.LandUseGroupId
 	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
-		if strings.Contains(err.Error(), "already has legend") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, mapLegendError(err)
 	}
 	return toQHLayerLegendPB(out), nil
 }
 
-// GetLayerLegend — GET /v2/tqd/qh/admin/layer-legends/{id}
+func (h *QHLayerLegendGrpcHandler) BatchCreateLayerLegends(ctx context.Context, req *tqdpb.BatchCreateLayerLegendsRequest) (*tqdpb.BatchCreateLayerLegendsResponse, error) {
+	if req == nil || req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	items := make([]qh_domain.QHLayerLegend, len(req.Items))
+	for i, it := range req.Items {
+		items[i] = qh_domain.QHLayerLegend{
+			LabelID:         it.LabelId,
+			Note:            it.Note,
+			DisplayOrder:    int(it.DisplayOrder),
+			IsVisible:       it.IsVisible,
+			LegendType:      it.LegendType,
+			GeometryType:    it.GeometryType,
+			StrokeDashArray: it.StrokeDashArray,
+			IconURL:         it.IconUrl,
+			ImageURL:        it.ImageUrl,
+		}
+		if it.LandUseGroupId != nil {
+			items[i].LandUseGroupID = it.LandUseGroupId
+		}
+	}
+	created, skipped, err := h.uc.BatchCreate(ctx, req.LayerId, items)
+	if err != nil {
+		return nil, mapLegendError(err)
+	}
+	data := make([]*tqdpb.QHLayerLegendResponse, len(created))
+	for i := range created {
+		data[i] = toQHLayerLegendPB(&created[i])
+	}
+	return &tqdpb.BatchCreateLayerLegendsResponse{
+		Created:         data,
+		SkippedLabelIds: skipped,
+	}, nil
+}
+
 func (h *QHLayerLegendGrpcHandler) GetLayerLegend(ctx context.Context, req *tqdpb.GetLayerLegendRequest) (*tqdpb.QHLayerLegendResponse, error) {
 	if req == nil || req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, mapLegendError(err)
 	}
 	return toQHLayerLegendPB(out), nil
 }
 
-// UpdateLayerLegend — PUT /v2/tqd/qh/admin/layer-legends/{id}
 func (h *QHLayerLegendGrpcHandler) UpdateLayerLegend(ctx context.Context, req *tqdpb.UpdateLayerLegendRequest) (*tqdpb.QHLayerLegendResponse, error) {
 	if req == nil || req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	in := &usecase.QHLayerLegendUpdateInput{}
+	hasUpdate := false
 	if req.LayerId != nil {
 		in.LayerID = req.LayerId
+		hasUpdate = true
 	}
 	if req.LabelId != nil {
 		in.LabelID = req.LabelId
+		hasUpdate = true
 	}
 	if req.Note != nil {
 		in.Note = req.Note
+		hasUpdate = true
 	}
-	if in.LayerID == nil && in.LabelID == nil && in.Note == nil {
+	if req.DisplayOrder != nil {
+		v := int(*req.DisplayOrder)
+		in.DisplayOrder = &v
+		hasUpdate = true
+	}
+	if req.IsVisible != nil {
+		in.IsVisible = req.IsVisible
+		hasUpdate = true
+	}
+	if req.LegendType != nil {
+		in.LegendType = req.LegendType
+		hasUpdate = true
+	}
+	if req.GeometryType != nil {
+		in.GeometryType = req.GeometryType
+		hasUpdate = true
+	}
+	if req.StrokeDashArray != nil {
+		in.StrokeDashArray = req.StrokeDashArray
+		hasUpdate = true
+	}
+	if req.IconUrl != nil {
+		in.IconURL = req.IconUrl
+		hasUpdate = true
+	}
+	if req.ImageUrl != nil {
+		in.ImageURL = req.ImageUrl
+		hasUpdate = true
+	}
+	if req.LandUseGroupId != nil {
+		in.LandUseGroupID = req.LandUseGroupId
+		hasUpdate = true
+	}
+	if !hasUpdate {
 		return nil, status.Error(codes.InvalidArgument, "at least one field to update is required")
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already has legend") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, mapLegendError(err)
 	}
 	return toQHLayerLegendPB(out), nil
 }
 
-// DeleteLayerLegend — DELETE /v2/tqd/qh/admin/layer-legends/{id}
 func (h *QHLayerLegendGrpcHandler) DeleteLayerLegend(ctx context.Context, req *tqdpb.DeleteLayerLegendRequest) (*emptypb.Empty, error) {
 	if req == nil || req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, mapLegendError(err)
 	}
 	return &emptypb.Empty{}, nil
 }
 
-// ListLayerLegends — GET /v2/tqd/qh/admin/layer-legends/list
 func (h *QHLayerLegendGrpcHandler) ListLayerLegends(ctx context.Context, req *tqdpb.ListLayerLegendsRequest) (*tqdpb.ListLayerLegendsResponse, error) {
 	page := uint32(0)
 	size := uint32(0)
 	var layerID, labelID *uint64
+	var legendType *string
+	var landUseGroupID *uint64
 	if req != nil {
 		page = req.Page
 		size = req.Size
@@ -129,9 +183,15 @@ func (h *QHLayerLegendGrpcHandler) ListLayerLegends(ctx context.Context, req *tq
 		if req.LabelId != nil {
 			labelID = req.LabelId
 		}
+		if req.LegendType != nil {
+			legendType = req.LegendType
+		}
+		if req.LandUseGroupId != nil {
+			landUseGroupID = req.LandUseGroupId
+		}
 	}
 	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
-	rows, total, err := h.uc.List(ctx, pagable, layerID, labelID)
+	rows, total, err := h.uc.List(ctx, pagable, layerID, labelID, legendType, landUseGroupID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -147,16 +207,85 @@ func (h *QHLayerLegendGrpcHandler) ListLayerLegends(ctx context.Context, req *tq
 	}, nil
 }
 
+func (h *QHLayerLegendGrpcHandler) ListClientLayerLegends(ctx context.Context, req *tqdpb.ListClientLayerLegendsRequest) (*tqdpb.ListLayerLegendsResponse, error) {
+	if req == nil || req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	page := req.Page
+	size := req.Size
+	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
+	rows, total, err := h.uc.ListClientByLayer(ctx, req.LayerId, pagable)
+	if err != nil {
+		return nil, mapLegendError(err)
+	}
+	data := make([]*tqdpb.QHLayerLegendResponse, len(rows))
+	for i := range rows {
+		data[i] = toQHLayerLegendPB(&rows[i])
+	}
+	return &tqdpb.ListLayerLegendsResponse{
+		Data:     data,
+		Total:    total,
+		Page:     int32(pagable.GetPage()),
+		PageSize: int32(pagable.GetSize()),
+	}, nil
+}
+
+func mapLegendError(err error) error {
+	msg := err.Error()
+	if strings.Contains(msg, "already has legend") {
+		return status.Error(codes.AlreadyExists, msg)
+	}
+	if strings.Contains(msg, "not found") {
+		return status.Error(codes.NotFound, msg)
+	}
+	if strings.Contains(msg, "required") {
+		return status.Error(codes.InvalidArgument, msg)
+	}
+	return status.Error(codes.Internal, msg)
+}
+
 func toQHLayerLegendPB(e *qh_domain.QHLayerLegend) *tqdpb.QHLayerLegendResponse {
 	if e == nil {
 		return nil
 	}
-	return &tqdpb.QHLayerLegendResponse{
-		Id:        e.ID,
-		LayerId:   e.LayerID,
-		LabelId:   e.LabelID,
-		Note:      e.Note,
-		CreatedAt: _utils.FormatTimeToString(e.CreatedAt),
-		UpdatedAt: _utils.FormatTimeToString(e.UpdatedAt),
+	resp := &tqdpb.QHLayerLegendResponse{
+		Id:              e.ID,
+		LayerId:         e.LayerID,
+		LabelId:         e.LabelID,
+		Note:            e.Note,
+		DisplayOrder:    int32(e.DisplayOrder),
+		IsVisible:       e.IsVisible,
+		LegendType:      e.GetLegendType(),
+		GeometryType:    e.GetGeometryType(),
+		StrokeDashArray: e.GetEffectiveStrokeDash(),
+		IconUrl:         e.IconURL,
+		ImageUrl:        e.ImageURL,
+		LandUseGroupId:  e.LandUseGroupID,
+		CreatedAt:       _utils.FormatTimeToString(e.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(e.UpdatedAt),
 	}
+	if e.Label != nil {
+		resp.LabelStyle = &tqdpb.LegendLabelStyleInfo{
+			Id:          e.Label.ID,
+			Name:        e.Label.Name,
+			DisplayName: e.Label.DisplayName,
+			Color:       e.Label.Color,
+			FillOpacity: e.Label.FillOpacity,
+			StrokeColor: e.Label.StrokeColor,
+			StrokeWidth:     int32(e.Label.StrokeWidth),
+			StrokeDashArray: e.Label.StrokeDashArray,
+		}
+	}
+	if e.LandUseGroup != nil {
+		resp.LandUseGroupInfo = &tqdpb.LandUseGroupInfo{
+			Id:          e.LandUseGroup.ID,
+			Code:        e.LandUseGroup.Code,
+			Name:        e.LandUseGroup.Name,
+			Description: e.LandUseGroup.Description,
+			Color:       e.LandUseGroup.Color,
+			CanBuild:    e.LandUseGroup.CanBuild,
+			Priority:    int32(e.LandUseGroup.Priority),
+		}
+	}
+	return resp
 }

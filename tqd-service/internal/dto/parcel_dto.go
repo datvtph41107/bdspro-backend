@@ -86,6 +86,12 @@ type ParcelLayerRow struct {
 	LayerEffectiveDate string
 	LayerLegalDocs     string `gorm:"column:layer_legal_docs"`
 	LayerLegalDoc      string
+
+	AuthorityIssuringID   uint64 `gorm:"column:authority_issuring_id"`
+	AuthorityIssuringName string `gorm:"column:authority_issuring_name"`
+	AuthorityIssuringCode string `gorm:"column:authority_issuring_code"`
+	AuthorityIssuringDesc string `gorm:"column:authority_issuring_desc"`
+
 	RegionID           uint64
 	RegionName         string
 	RegionDisplayName  string
@@ -110,7 +116,6 @@ type ParcelLayerRowV2 struct {
 	ParcelID      uint64
 	ParcelAreaSqm float64
 
-	// Layer fields
 	LayerID            uint64
 	LayerName          string
 	LayerDisplayName   string
@@ -131,7 +136,12 @@ type ParcelLayerRowV2 struct {
 	LabelPriority       int
 	LabelBuildCondition string
 
-	// Region fields
+	GroupCode      string
+	GroupName      string
+	GroupColor     string
+	GroupCanBuild  bool
+	GroupPriority  int
+
 	RegionID          uint64
 	RegionName        string
 	RegionDisplayName string
@@ -141,28 +151,47 @@ type ParcelLayerRowV2 struct {
 	RegionColorGreen  uint8
 	RegionColorBlue   uint8
 
-	// Impact
 	OverlapAreaSqm float64
 	OverlapPct     float64
 
-	// Spatial
 	CenterLat float64
 	CenterLng float64
 	Geometry  []byte
 }
 
-type LayerImpact struct {
-	ID            uint64
+type PlanLandUseGroupDetail struct {
+	Code          string
 	Name          string
-	DisplayName   string
-	Type          uint32
-	Severity      string
-	EffectiveDate string
-	LegalDoc      string
-	LegalDocs     []*LayerLegalDTO
-	Labels        []*LabelImpact
-	TotalArea     float64
-	TotalPct      float64
+	Color         string
+	CanBuild      bool
+	Priority      int
+	LandUseCode   string
+	LandUseName   string
+	LandUseColor  string
+	OverlapPercent float64
+	OverlapAreaSqm float64
+}
+
+type AuthorityIssuingDTO struct {
+	ID          uint64 `json:"id"`
+	Name        string `json:"name"`
+	Code        string `json:"code"`
+	Description string `json:"description"`
+}
+
+type LayerImpact struct {
+	ID               uint64
+	Name             string
+	DisplayName      string
+	Type             uint32
+	Severity         string
+	EffectiveDate    string
+	LegalDoc         string
+	LegalDocs        []*LayerLegalDTO
+	AuthorityIssuing *AuthorityIssuingDTO
+	Labels           []*LabelImpact
+	TotalArea        float64
+	TotalPct         float64
 }
 
 type LabelImpact struct {

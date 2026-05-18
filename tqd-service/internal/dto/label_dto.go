@@ -7,13 +7,14 @@ type CreateLabelRequest struct {
 	Description  string  `json:"description"`
 	Color        string  `json:"color"`
 	FillOpacity  float64 `json:"fillOpacity"`
-	StrokeColor  string  `json:"strokeColor"`
-	StrokeWidth  int     `json:"strokeWidth"`
-	DisplayOrder int     `json:"displayOrder"`
-	IsVisible    bool    `json:"isVisible"`
-	MinZoom      int     `json:"minZoom"`
-	MaxZoom      int     `json:"maxZoom"`
-	Status       int     `json:"status,omitempty"`
+	StrokeColor     string `json:"strokeColor"`
+	StrokeWidth     int    `json:"strokeWidth"`
+	StrokeDashArray string `json:"strokeDashArray"`
+	DisplayOrder    int    `json:"displayOrder"`
+	IsVisible       bool   `json:"isVisible"`
+	MinZoom         int    `json:"minZoom"`
+	MaxZoom         int    `json:"maxZoom"`
+	Status          int    `json:"status,omitempty"`
 }
 
 type UpdateLabelRequest struct {
@@ -22,9 +23,10 @@ type UpdateLabelRequest struct {
 	Description  *string  `json:"description,omitempty"`
 	Color        *string  `json:"color,omitempty"`
 	FillOpacity  *float64 `json:"fillOpacity,omitempty"`
-	StrokeColor  *string  `json:"strokeColor,omitempty"`
-	StrokeWidth  *int     `json:"strokeWidth,omitempty"`
-	DisplayOrder *int     `json:"displayOrder,omitempty"`
+	StrokeColor     *string `json:"strokeColor,omitempty"`
+	StrokeWidth     *int    `json:"strokeWidth,omitempty"`
+	StrokeDashArray *string `json:"strokeDashArray,omitempty"`
+	DisplayOrder    *int    `json:"displayOrder,omitempty"`
 	IsVisible    *bool    `json:"isVisible,omitempty"`
 	MinZoom      *int     `json:"minZoom,omitempty"`
 	MaxZoom      *int     `json:"maxZoom,omitempty"`
@@ -39,15 +41,16 @@ type LabelResponse struct {
 	Description  string  `json:"description"`
 	Color        string  `json:"color"`
 	FillOpacity  float64 `json:"fillOpacity"`
-	StrokeColor  string  `json:"strokeColor"`
-	StrokeWidth  int     `json:"strokeWidth"`
-	DisplayOrder int     `json:"displayOrder"`
-	IsVisible    bool    `json:"isVisible"`
-	MinZoom      int     `json:"minZoom"`
-	MaxZoom      int     `json:"maxZoom"`
-	Status       int     `json:"status"`
-	CreatedAt    string  `json:"createdAt"`
-	UpdatedAt    string  `json:"updatedAt"`
+	StrokeColor     string `json:"strokeColor"`
+	StrokeWidth     int    `json:"strokeWidth"`
+	StrokeDashArray string `json:"strokeDashArray"`
+	DisplayOrder    int    `json:"displayOrder"`
+	IsVisible       bool   `json:"isVisible"`
+	MinZoom         int    `json:"minZoom"`
+	MaxZoom         int    `json:"maxZoom"`
+	Status          int    `json:"status"`
+	CreatedAt       string `json:"createdAt"`
+	UpdatedAt       string `json:"updatedAt"`
 }
 
 type ListLabelResponse struct {

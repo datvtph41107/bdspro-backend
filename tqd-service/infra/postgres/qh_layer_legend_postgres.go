@@ -16,7 +16,6 @@ type qhLayerLegendRepo struct {
 	db *gorm.DB
 }
 
-// NewQHLayerLegendRepository @bind: internal/interface/repo.QHLayerLegendRepository
 func NewQHLayerLegendRepository(db *gorm.DB) repo.QHLayerLegendRepository {
 	return &qhLayerLegendRepo{db: db}
 }
@@ -28,7 +27,11 @@ func (r *qhLayerLegendRepo) Create(ctx context.Context, row *qh_domain.QHLayerLe
 func (r *qhLayerLegendRepo) Update(ctx context.Context, row *qh_domain.QHLayerLegend) error {
 	return r.db.WithContext(ctx).Model(row).
 		Omit("created_at", "created_by", "id").
-		Select("LayerID", "LabelID", "Note").
+		Select("LayerID", "LabelID", "Note",
+			"DisplayOrder", "IsVisible",
+			"LegendType", "GeometryType",
+			"StrokeDashArray", "IconURL", "ImageURL",
+			"LandUseGroupID").
 		Updates(row).Error
 }
 
@@ -45,6 +48,8 @@ func (r *qhLayerLegendRepo) Delete(ctx context.Context, id uint64) error {
 func (r *qhLayerLegendRepo) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayerLegend, error) {
 	var row qh_domain.QHLayerLegend
 	err := r.db.WithContext(ctx).
+		Preload("Label").
+		Preload("LandUseGroup").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&row).Error
 	if err != nil {
@@ -73,13 +78,19 @@ func (r *qhLayerLegendRepo) GetByLayerAndLabel(ctx context.Context, layerID, lab
 	return &row, nil
 }
 
-func (r *qhLayerLegendRepo) List(ctx context.Context, offset, limit int, layerID, labelID *uint64) ([]qh_domain.QHLayerLegend, int64, error) {
+func (r *qhLayerLegendRepo) List(ctx context.Context, offset, limit int, layerID, labelID *uint64, legendType *string, landUseGroupID *uint64) ([]qh_domain.QHLayerLegend, int64, error) {
 	q := r.db.WithContext(ctx).Model(&qh_domain.QHLayerLegend{}).Where("deleted_at IS NULL")
 	if layerID != nil && *layerID > 0 {
 		q = q.Where("layer_id = ?", *layerID)
 	}
 	if labelID != nil && *labelID > 0 {
 		q = q.Where("label_id = ?", *labelID)
+	}
+	if legendType != nil && *legendType != "" {
+		q = q.Where("legend_type = ?", *legendType)
+	}
+	if landUseGroupID != nil && *landUseGroupID > 0 {
+		q = q.Where("land_use_group_id = ?", *landUseGroupID)
 	}
 
 	var total int64
@@ -88,9 +99,30 @@ func (r *qhLayerLegendRepo) List(ctx context.Context, offset, limit int, layerID
 	}
 
 	var rows []qh_domain.QHLayerLegend
-	err := q.Order("id ASC").Offset(offset).Limit(limit).Find(&rows).Error
+	err := q.Preload("Label").Preload("LandUseGroup").
+		Order("display_order ASC, id ASC").
+		Offset(offset).Limit(limit).Find(&rows).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("list qh_layer_legends: %w", err)
+	}
+	return rows, total, nil
+}
+
+func (r *qhLayerLegendRepo) ListVisibleByLayer(ctx context.Context, layerID uint64, offset, limit int) ([]qh_domain.QHLayerLegend, int64, error) {
+	q := r.db.WithContext(ctx).Model(&qh_domain.QHLayerLegend{}).
+		Where("layer_id = ? AND is_visible = true AND deleted_at IS NULL", layerID)
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count visible qh_layer_legends: %w", err)
+	}
+
+	var rows []qh_domain.QHLayerLegend
+	err := q.Preload("Label").Preload("LandUseGroup").
+		Order("display_order ASC, id ASC").
+		Offset(offset).Limit(limit).Find(&rows).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("list visible qh_layer_legends: %w", err)
 	}
 	return rows, total, nil
 }

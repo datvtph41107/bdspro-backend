@@ -36,6 +36,8 @@ func (b *CandidateBuilder) BuildFromRow(row dto.ParcelLayerRowV2) *types.LayerCa
 		LandUseName:    row.LabelDisplayName,
 		LandUseColor:   row.LabelColor,
 		GroupCode:      enums.GroupCode(row.LabelGroupCode).String(),
+		GroupName:      row.GroupName,
+		GroupColor:     row.GroupColor,
 		CanBuild:       row.LabelCanBuild,
 		Priority:       row.LabelPriority,
 		BuildCondition: row.LabelBuildCondition,

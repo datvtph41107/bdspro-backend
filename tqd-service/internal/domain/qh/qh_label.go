@@ -15,8 +15,9 @@ type QHLabel struct {
 	// Style
 	Color       string  `gorm:"type:varchar(7);default:'#CCCCCC'" json:"color"`
 	FillOpacity float64 `gorm:"default:0.6" json:"fillOpacity"`
-	StrokeColor string  `gorm:"type:varchar(7);default:'#000000'" json:"strokeColor"`
-	StrokeWidth int     `gorm:"default:1" json:"strokeWidth"`
+	StrokeColor     string `gorm:"type:varchar(7);default:'#000000'" json:"strokeColor"`
+	StrokeWidth     int    `gorm:"default:1" json:"strokeWidth"`
+	StrokeDashArray string `gorm:"type:varchar(50)" json:"strokeDashArray,omitempty"`
 
 	// Display
 	DisplayOrder int  `gorm:"default:0;index" json:"displayOrder"`

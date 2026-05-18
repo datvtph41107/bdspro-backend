@@ -87,15 +87,29 @@ message ParcelLayersV2Response {
 }
 
 message PlanDetailInfo {
-  uint64 layerId = 1;           // layer_id
-  string layerName = 2;         // layer_name
-  string displayName = 3;       // display_name
-  string landUseCode = 4;       // land_use_code
-  string landUseName = 5;       // land_use_name
-  string landUseColor = 6;      // land_use_color
-  string groupCode = 7;         // group_code
-  double impactPercent = 8;     // impact_percent
-  double impactAreaSqm = 9;     // impact_area_sqm
+  uint64 layerId = 1;
+  string layerName = 2;
+  string displayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  string landUseColor = 6;
+  string groupCode = 7;
+  double impactPercent = 8;
+  double impactAreaSqm = 9;
+  repeated PlanLandUseGroupDetail landUseGroups = 10;
+}
+
+message PlanLandUseGroupDetail {
+  string code = 1;
+  string name = 2;
+  string color = 3;
+  bool canBuild = 4;
+  int32 priority = 5;
+  string landUseCode = 6;
+  string landUseName = 7;
+  string landUseColor = 8;
+  double overlapPercent = 9;
+  double overlapAreaSqm = 10;
 }
 
 message ConflictDetail {
@@ -204,6 +218,22 @@ message Layer {
   repeated Label labels = 8;
   double totalArea = 9;
   double totalPercent = 10;
+  repeated LayerLegalDocInfo legalDocs = 11;
+  optional AuthorityIssuingInfo authorityIssuing = 12;
+}
+
+message LayerLegalDocInfo {
+  uint64 id = 1;
+  string name = 2;
+  string fileUrl = 3;
+  string fileType = 4;
+}
+
+message AuthorityIssuingInfo {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
 }
 
 message Label {

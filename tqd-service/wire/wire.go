@@ -1,12 +1,10 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
-	"tqd/initial"
 	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
@@ -15,6 +13,7 @@ import (
 	tqd_infra_postgres "tqd/infra/postgres"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
+	"tqd/initial"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
@@ -24,6 +23,8 @@ import (
 	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_map "tqd/map"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -132,6 +133,10 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewQHLayerLegendGrpcHandler,
 	tqd_infra_postgres.NewQHLayerLegendRepository,
 	tqd_internal_usecase.NewQHLayerLegendUsecase,
+	tqd_infra_handler_grpc.NewQHLayerLandUseGroupGrpcHandler,
+	tqd_infra_postgres.NewQHLayerLandUseGroupRepository,
+	tqd_internal_usecase.NewQHLayerLandUseGroupUsecase,
+	tqd_infra_postgres.NewLandUseGroupRepository,
 	tqd_initial.NewRedisService,
 	tqd_infra_handler_grpc.NewRegionGrpcHandler,
 	tqd_infra_handler_http.NewRegionHttpHandler,

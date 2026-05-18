@@ -7,15 +7,8 @@ import "google/protobuf/empty.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
-// =====================================================
-// LABEL SERVICE
-// =====================================================
-
 service QHLabelService {
-  
-  // ========== Admin APIs ==========
-  
-  // CreateLabel - Tạo label mới
+
   rpc CreateLabel(CreateLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/qh/admin/labels"
@@ -23,37 +16,32 @@ service QHLabelService {
     };
   }
 
-  // BatchCreateLabels - Tạo nhiều label trong một layer; bỏ qua item có name đã tồn tại (hoặc trùng name trong cùng request)
   rpc BatchCreateLabels(BatchCreateLabelsRequest) returns (BatchCreateLabelsResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/qh/admin/labels/batch"
       body: "*"
     };
   }
-  
-  // GetLabel - Lấy chi tiết label
+
   rpc GetLabel(GetLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/admin/labels/{id}"
     };
   }
-  
-  // UpdateLabel - Cập nhật label
+
   rpc UpdateLabel(UpdateLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
       put: "/v2/tqd/qh/admin/labels/{id}"
       body: "*"
     };
   }
-  
-  // DeleteLabel - Xóa mềm label
+
   rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v2/tqd/qh/admin/labels/{id}"
     };
   }
 
-  // BatchDeleteLabels - Xóa mềm nhiều label theo danh sách id
   rpc BatchDeleteLabels(BatchDeleteLabelsRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v2/tqd/qh/admin/labels/batch-delete"
@@ -61,7 +49,6 @@ service QHLabelService {
     };
   }
 
-  // MergeLabels - Gộp nhiều nhãn cũ thành một nhãn mới; cập nhật label_id trên region rồi xóa mềm nhãn nguồn
   rpc MergeLabels(MergeLabelsRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/qh/admin/labels/merge"
@@ -69,30 +56,24 @@ service QHLabelService {
     };
   }
 
-  // ListAdminLabels - Danh sách tất cả label (admin), phân trang; có thể lọc theo layer
   rpc ListAdminLabels(ListAdminLabelsRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/admin/labels/list"
     };
   }
-  
-  // ListLabelsByLayer - Danh sách label theo layer
+
   rpc ListLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/admin/layers/{layerId}/labels"
     };
   }
-  
-  // ========== Client APIs ==========
-  
-  // ListClientLabelsByLayer - Danh sách label public
+
   rpc ListClientLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/client/layers/{layerId}/labels"
     };
   }
-  
-  // GetClientLabel - Chi tiết label public
+
   rpc GetClientLabel(GetLabelRequest) returns (QHLabelResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/client/labels/{id}"
@@ -100,32 +81,21 @@ service QHLabelService {
   }
 }
 
-// =====================================================
-// REQUEST MESSAGES
-// =====================================================
-
 message CreateLabelRequest {
   uint64 layerId = 1;
-  string name = 2;                      // Tên kỹ thuật (unique trong layer)
-  string displayName = 3;              // Tên hiển thị
+  string name = 2;
+  string displayName = 3;
   string description = 4;
-  
-  // Style
-  string color = 5;                    // Mã màu hex, mặc định #CCCCCC
-  double fillOpacity = 6;              // Độ mờ nền (0-1), mặc định 0.6
-  string strokeColor = 7;              // Màu viền, mặc định #000000
-  int32 strokeWidth = 8;               // Độ dày viền, mặc định 1
-  
-  // Hiển thị
-  int32 displayOrder = 9;              // Thứ tự hiển thị
-  bool isVisible = 10;                 // Hiển thị trên map không
-  int32 minZoom = 11;                  // Zoom tối thiểu
-  int32 maxZoom = 12;                  // Zoom tối đa
-  
-  // Trạng thái
-  optional uint32 status = 13;         // 10: active, 20: inactive, mặc định 10
-
-  // Tiêu chuẩn hệ thống — RFC3339; đặt để đánh dấu nhãn chuẩn
+  string color = 5;
+  double fillOpacity = 6;
+  string strokeColor = 7;
+  int32 strokeWidth = 8;
+  string strokeDashArray = 20;
+  int32 displayOrder = 9;
+  bool isVisible = 10;
+  int32 minZoom = 11;
+  int32 maxZoom = 12;
+  optional uint32 status = 13;
   optional string standardAt = 14;
 }
 
@@ -134,7 +104,6 @@ message BatchCreateLabelsRequest {
   repeated BatchCreateLabelItem items = 2;
 }
 
-// Một phần tử batch (cùng layerId ở request cha)
 message BatchCreateLabelItem {
   string name = 1;
   string displayName = 2;
@@ -143,6 +112,7 @@ message BatchCreateLabelItem {
   double fillOpacity = 5;
   string strokeColor = 6;
   int32 strokeWidth = 7;
+  string strokeDashArray = 14;
   int32 displayOrder = 8;
   bool isVisible = 9;
   int32 minZoom = 10;
@@ -153,7 +123,7 @@ message BatchCreateLabelItem {
 
 message BatchCreateLabelsResponse {
   repeated QHLabelResponse created = 1;
-  repeated string skippedNames = 2; // name đã có trong layer hoặc trùng trước đó trong cùng batch
+  repeated string skippedNames = 2;
 }
 
 message UpdateLabelRequest {
@@ -165,6 +135,7 @@ message UpdateLabelRequest {
   optional double fillOpacity = 6;
   optional string strokeColor = 7;
   optional int32 strokeWidth = 8;
+  optional string strokeDashArray = 20;
   optional int32 displayOrder = 9;
   optional bool isVisible = 10;
   optional int32 minZoom = 11;
@@ -185,14 +156,12 @@ message BatchDeleteLabelsRequest {
   repeated uint64 ids = 1;
 }
 
-// MergeLabelsRequest — layer_id + danh sách nhãn cần gộp + dữ liệu nhãn đích
 message MergeLabelsRequest {
   uint64 layerId = 1;
   repeated uint64 sourceLabelIds = 2;
   MergeLabelsNewLabel newLabel = 3;
 }
 
-// Thông tin nhãn sau khi gộp (name unique trong layer, trừ các nhãn nguồn sẽ bị xóa)
 message MergeLabelsNewLabel {
   string name = 1;
   string displayName = 2;
@@ -201,6 +170,7 @@ message MergeLabelsNewLabel {
   double fillOpacity = 5;
   string strokeColor = 6;
   int32 strokeWidth = 7;
+  string strokeDashArray = 14;
   int32 displayOrder = 8;
   bool isVisible = 9;
   int32 minZoom = 10;
@@ -209,55 +179,40 @@ message MergeLabelsNewLabel {
   optional string standardAt = 13;
 }
 
-// ListAdminLabelsRequest — query: layerId, includeInactive, page, size
 message ListAdminLabelsRequest {
-  optional uint64 layerId = 1;         // Lọc theo layer; không truyền = tất cả layer
-  bool includeInactive = 2;          // Có bao gồm label inactive không
+  optional uint64 layerId = 1;
+  bool includeInactive = 2;
   uint32 page = 3;
   uint32 size = 4;
 }
 
 message ListLabelsByLayerRequest {
   uint64 layerId = 1;
-  bool includeInactive = 2;            // Có bao gồm label inactive không
+  bool includeInactive = 2;
   uint32 page = 3;
   uint32 size = 4;
 }
 
-// =====================================================
-// RESPONSE MESSAGES
-// =====================================================
-
 message QHLabelResponse {
-  // Thông tin cơ bản
   uint64 id = 1;
   uint64 layerId = 2;
   string name = 3;
   string displayName = 4;
   string description = 5;
-  
-  // Style
   string color = 6;
   double fillOpacity = 7;
   string strokeColor = 8;
   int32 strokeWidth = 9;
-  
-  // Hiển thị
+  string strokeDashArray = 20;
   int32 displayOrder = 10;
   bool isVisible = 11;
   int32 minZoom = 12;
   int32 maxZoom = 13;
-  
-  // Metadata
-  uint32 status = 14;                  // 10: active, 20: inactive
+  uint32 status = 14;
   string createdAt = 15;
   string updatedAt = 16;
-  
-  // Thống kê (optional)
   int64 regionCount = 17;
   double totalAreaHa = 18;
-
-  // Thời điểm đánh dấu là nhãn tiêu chuẩn hệ thống (RFC3339); rỗng nếu không phải
   string standardAt = 19;
 }
 

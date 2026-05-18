@@ -4,12 +4,12 @@ package tqdpb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "tqd/qh_layer_land_use_group.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
-// QHLayerLegendService — CRUD chú giải (đính label với layer kèm note, bảng qh_layer_legends).
 service QHLayerLegendService {
-  // CreateLayerLegend — tạo chú giải
+
   rpc CreateLayerLegend(CreateLayerLegendRequest) returns (QHLayerLegendResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/qh/admin/layer-legends"
@@ -17,14 +17,19 @@ service QHLayerLegendService {
     };
   }
 
-  // GetLayerLegend — chi tiết theo id
+  rpc BatchCreateLayerLegends(BatchCreateLayerLegendsRequest) returns (BatchCreateLayerLegendsResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layer-legends/batch"
+      body: "*"
+    };
+  }
+
   rpc GetLayerLegend(GetLayerLegendRequest) returns (QHLayerLegendResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/admin/layer-legends/{id}"
     };
   }
 
-  // UpdateLayerLegend — cập nhật (chỉ các trường optional được gửi)
   rpc UpdateLayerLegend(UpdateLayerLegendRequest) returns (QHLayerLegendResponse) {
     option (google.api.http) = {
       put: "/v2/tqd/qh/admin/layer-legends/{id}"
@@ -32,17 +37,21 @@ service QHLayerLegendService {
     };
   }
 
-  // DeleteLayerLegend — xóa mềm
   rpc DeleteLayerLegend(DeleteLayerLegendRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v2/tqd/qh/admin/layer-legends/{id}"
     };
   }
 
-  // ListLayerLegends — danh sách phân trang (filter: layerId, labelId)
   rpc ListLayerLegends(ListLayerLegendsRequest) returns (ListLayerLegendsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/admin/layer-legends/list"
+    };
+  }
+
+  rpc ListClientLayerLegends(ListClientLayerLegendsRequest) returns (ListLayerLegendsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/layers/{layerId}/legends"
     };
   }
 }
@@ -51,6 +60,41 @@ message CreateLayerLegendRequest {
   uint64 layerId = 1;
   uint64 labelId = 2;
   string note = 3;
+  int32 displayOrder = 4;
+  bool isVisible = 5;
+  string legendType = 6;
+  string geometryType = 7;
+  string strokeDashArray = 8;
+  string iconUrl = 9;
+  string imageUrl = 10;
+  optional uint64 landUseGroupId = 11;
+}
+
+message BatchCreateLayerLegendItem {
+  uint64 labelId = 1;
+  string note = 2;
+  int32 displayOrder = 3;
+  bool isVisible = 4;
+  string legendType = 5;
+  string geometryType = 6;
+  string strokeDashArray = 7;
+  string iconUrl = 8;
+  string imageUrl = 9;
+  optional uint64 landUseGroupId = 10;
+}
+
+message BatchCreateLayerLegendsRequest {
+  uint64 layerId = 1;
+  repeated BatchCreateLayerLegendItem items = 2;
+}
+
+message BatchCreateLayerLegendsResponse {
+  repeated QHLayerLegendResponse created = 1;
+  repeated uint64 skippedLabelIds = 2;
+}
+
+message GetLayerLegendRequest {
+  uint64 id = 1;
 }
 
 message UpdateLayerLegendRequest {
@@ -58,10 +102,14 @@ message UpdateLayerLegendRequest {
   optional uint64 layerId = 2;
   optional uint64 labelId = 3;
   optional string note = 4;
-}
-
-message GetLayerLegendRequest {
-  uint64 id = 1;
+  optional int32 displayOrder = 5;
+  optional bool isVisible = 6;
+  optional string legendType = 7;
+  optional string geometryType = 8;
+  optional string strokeDashArray = 9;
+  optional string iconUrl = 10;
+  optional string imageUrl = 11;
+  optional uint64 landUseGroupId = 12;
 }
 
 message DeleteLayerLegendRequest {
@@ -73,6 +121,14 @@ message ListLayerLegendsRequest {
   uint32 size = 2;
   optional uint64 layerId = 3;
   optional uint64 labelId = 4;
+  optional string legendType = 5;
+  optional uint64 landUseGroupId = 6;
+}
+
+message ListClientLayerLegendsRequest {
+  uint64 layerId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
 }
 
 message QHLayerLegendResponse {
@@ -80,8 +136,29 @@ message QHLayerLegendResponse {
   uint64 layerId = 2;
   uint64 labelId = 3;
   string note = 4;
-  string createdAt = 5;
-  string updatedAt = 6;
+  int32 displayOrder = 5;
+  bool isVisible = 6;
+  string legendType = 7;
+  string geometryType = 8;
+  string strokeDashArray = 9;
+  string iconUrl = 10;
+  string imageUrl = 11;
+  optional uint64 landUseGroupId = 12;
+  optional LandUseGroupInfo landUseGroupInfo = 13;
+  optional LegendLabelStyleInfo labelStyle = 14;
+  string createdAt = 15;
+  string updatedAt = 16;
+}
+
+message LegendLabelStyleInfo {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string color = 4;
+  double fillOpacity = 5;
+  string strokeColor = 6;
+  int32 strokeWidth = 7;
+  string strokeDashArray = 8;
 }
 
 message ListLayerLegendsResponse {

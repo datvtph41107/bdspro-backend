@@ -28,6 +28,8 @@ func AutoMigrate() {
 		// &qh_domain.Parcel{},
 		// &qh_domain.QHParcelInfo{},
 		&qh_domain.QHLayer{},
+		&qh_domain.QHLayerLegend{},
+		&qh_domain.QHLayerLandUseGroup{},
 	// &qh_domain.QHRegion{},
 	// &qh_domain.QHRegionLabel{},
 	// &qh_domain.QHLabel{},

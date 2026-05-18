@@ -41,6 +41,7 @@ func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parce
 			GroupCode:     result.Primary.GroupCode,
 			ImpactPercent: result.Primary.OverlapPercent,
 			ImpactAreaSqm: result.Primary.OverlapAreaSqm,
+			LandUseGroups: mapLandUseGroups(result.LayerLandUseGroups, result.Primary.LayerID),
 		}
 		resp.ParcelAreaSqm = result.Primary.ParcelAreaSqm
 	}
@@ -56,6 +57,7 @@ func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parce
 			GroupCode:     sec.GroupCode,
 			ImpactPercent: sec.OverlapPercent,
 			ImpactAreaSqm: sec.OverlapAreaSqm,
+			LandUseGroups: mapLandUseGroups(result.LayerLandUseGroups, sec.LayerID),
 		})
 	}
 
@@ -233,17 +235,39 @@ func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdp
 			})
 		}
 
+		var protoLegalDocs []*tqdpb.LayerLegalDocInfo
+		for _, ld := range layer.LegalDocs {
+			protoLegalDocs = append(protoLegalDocs, &tqdpb.LayerLegalDocInfo{
+				Id:       ld.ID,
+				Name:     ld.Name,
+				FileUrl:  ld.FileUrl,
+				FileType: ld.FileType,
+			})
+		}
+
+		var protoAuthority *tqdpb.AuthorityIssuingInfo
+		if layer.AuthorityIssuing != nil {
+			protoAuthority = &tqdpb.AuthorityIssuingInfo{
+				Id:          layer.AuthorityIssuing.ID,
+				Name:        layer.AuthorityIssuing.Name,
+				Code:        layer.AuthorityIssuing.Code,
+				Description: layer.AuthorityIssuing.Description,
+			}
+		}
+
 		layers = append(layers, &tqdpb.Layer{
-			Id:            layer.ID,
-			Name:          layer.Name,
-			DisplayName:   layer.DisplayName,
-			Type:          layer.Type,
-			Severity:      layer.Severity,
-			EffectiveDate: layer.EffectiveDate,
-			LegalDoc:      legalDocStr, // SỬA: sử dụng biến đã khai báo
-			Labels:        labels,
-			TotalArea:     layer.TotalArea,
-			TotalPercent:  layer.TotalPct,
+			Id:               layer.ID,
+			Name:             layer.Name,
+			DisplayName:      layer.DisplayName,
+			Type:             layer.Type,
+			Severity:         layer.Severity,
+			EffectiveDate:    layer.EffectiveDate,
+			LegalDoc:         legalDocStr,
+			Labels:           labels,
+			TotalArea:        layer.TotalArea,
+			TotalPercent:     layer.TotalPct,
+			LegalDocs:        protoLegalDocs,
+			AuthorityIssuing: protoAuthority,
 		})
 	}
 
@@ -541,4 +565,30 @@ func safeString(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+func mapLandUseGroups(groupsMap map[uint64][]*types.LandUseGroupDetail, layerID uint64) []*tqdpb.PlanLandUseGroupDetail {
+	if groupsMap == nil {
+		return nil
+	}
+	groups, ok := groupsMap[layerID]
+	if !ok || len(groups) == 0 {
+		return nil
+	}
+	result := make([]*tqdpb.PlanLandUseGroupDetail, 0, len(groups))
+	for _, g := range groups {
+		result = append(result, &tqdpb.PlanLandUseGroupDetail{
+			Code:           g.Code,
+			Name:           g.Name,
+			Color:          g.Color,
+			CanBuild:       g.CanBuild,
+			Priority:       int32(g.Priority),
+			LandUseCode:    g.LandUseCode,
+			LandUseName:    g.LandUseName,
+			LandUseColor:   g.LandUseColor,
+			OverlapPercent: g.OverlapPercent,
+			OverlapAreaSqm: g.OverlapAreaSqm,
+		})
+	}
+	return result
 }

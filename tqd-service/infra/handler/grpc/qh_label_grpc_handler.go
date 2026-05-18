@@ -47,9 +47,10 @@ func (h *QHLabelGrpcHandler) CreateLabel(ctx context.Context, req *tqdpb.CreateL
 		Description:  req.Description,
 		Color:        req.Color,
 		FillOpacity:  req.FillOpacity,
-		StrokeColor:  req.StrokeColor,
-		StrokeWidth:  int(req.StrokeWidth),
-		DisplayOrder: int(req.DisplayOrder),
+		StrokeColor:     req.StrokeColor,
+		StrokeWidth:     int(req.StrokeWidth),
+		StrokeDashArray: req.StrokeDashArray,
+		DisplayOrder:    int(req.DisplayOrder),
 		IsVisible:    req.IsVisible,
 		MinZoom:      int(req.MinZoom),
 		MaxZoom:      int(req.MaxZoom),
@@ -115,9 +116,10 @@ func (h *QHLabelGrpcHandler) BatchCreateLabels(ctx context.Context, req *tqdpb.B
 			Description:  it.Description,
 			Color:        it.Color,
 			FillOpacity:  it.FillOpacity,
-			StrokeColor:  it.StrokeColor,
-			StrokeWidth:  int(it.StrokeWidth),
-			DisplayOrder: int(it.DisplayOrder),
+			StrokeColor:     it.StrokeColor,
+			StrokeWidth:     int(it.StrokeWidth),
+			StrokeDashArray: it.StrokeDashArray,
+			DisplayOrder:    int(it.DisplayOrder),
 			IsVisible:    it.IsVisible,
 			MinZoom:      int(it.MinZoom),
 			MaxZoom:      int(it.MaxZoom),
@@ -198,6 +200,9 @@ func (h *QHLabelGrpcHandler) UpdateLabel(ctx context.Context, req *tqdpb.UpdateL
 	}
 	if req.StrokeWidth != nil {
 		label.StrokeWidth = int(*req.StrokeWidth)
+	}
+	if req.StrokeDashArray != nil {
+		label.StrokeDashArray = *req.StrokeDashArray
 	}
 	if req.DisplayOrder != nil {
 		label.DisplayOrder = int(*req.DisplayOrder)
@@ -293,9 +298,10 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 		Description:  nl.Description,
 		Color:        nl.Color,
 		FillOpacity:  nl.FillOpacity,
-		StrokeColor:  nl.StrokeColor,
-		StrokeWidth:  int(nl.StrokeWidth),
-		DisplayOrder: int(nl.DisplayOrder),
+		StrokeColor:     nl.StrokeColor,
+		StrokeWidth:     int(nl.StrokeWidth),
+		StrokeDashArray: nl.StrokeDashArray,
+		DisplayOrder:    int(nl.DisplayOrder),
 		IsVisible:    nl.IsVisible,
 		MinZoom:      int(nl.MinZoom),
 		MaxZoom:      int(nl.MaxZoom),
@@ -454,9 +460,10 @@ func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {
 		Description:  l.Description,
 		Color:        l.Color,
 		FillOpacity:  l.FillOpacity,
-		StrokeColor:  l.StrokeColor,
-		StrokeWidth:  int32(l.StrokeWidth),
-		DisplayOrder: int32(l.DisplayOrder),
+		StrokeColor:     l.StrokeColor,
+		StrokeWidth:     int32(l.StrokeWidth),
+		StrokeDashArray: l.StrokeDashArray,
+		DisplayOrder:    int32(l.DisplayOrder),
 		IsVisible:    l.IsVisible,
 		RegionCount:  l.RegionCount,
 		MinZoom:      int32(l.MinZoom),
