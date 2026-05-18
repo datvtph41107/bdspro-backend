@@ -47,3 +47,5 @@ tqd-service/tqd-service
 **/config/product.yml
 **/app/logs
 /tqd-service/files
+tqd-service/tqd
+user-service/user
