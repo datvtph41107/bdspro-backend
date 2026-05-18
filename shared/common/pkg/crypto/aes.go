@@ -196,6 +196,61 @@ func (e *AESEncryptor) DecryptBytes(ctx context.Context, ciphertext []byte) ([]b
 	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
+// EncryptBytesCTR mã hóa binary bằng AES-256-CTR: [nonce 16 bytes][ciphertext].
+func (e *AESEncryptor) EncryptBytesCTR(ctx context.Context, plaintext []byte) ([]byte, error) {
+	if len(plaintext) == 0 {
+		return nil, nil
+	}
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	block, err := aes.NewCipher(e.key)
+	if err != nil {
+		return nil, _errors.ReturnError(ErrCodeEncryptionFailed, err.Error())
+	}
+
+	nonce := make([]byte, CTRNonceSize)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, _errors.ReturnError(ErrCodeEncryptionFailed, "failed to generate ctr nonce")
+	}
+
+	stream := cipher.NewCTR(block, nonce)
+	ciphertext := make([]byte, len(plaintext))
+	stream.XORKeyStream(ciphertext, plaintext)
+
+	out := make([]byte, CTRNonceSize+len(ciphertext))
+	copy(out, nonce)
+	copy(out[CTRNonceSize:], ciphertext)
+	return out, nil
+}
+
+// DecryptBytesCTR giải mã binary AES-256-CTR: [nonce 16 bytes][ciphertext].
+func (e *AESEncryptor) DecryptBytesCTR(ctx context.Context, ciphertext []byte) ([]byte, error) {
+	if len(ciphertext) == 0 {
+		return nil, nil
+	}
+	if len(ciphertext) < CTRNonceSize {
+		return nil, _errors.ReturnError(ErrCodeInvalidCiphertext, "ciphertext too short")
+	}
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	block, err := aes.NewCipher(e.key)
+	if err != nil {
+		return nil, _errors.ReturnError(ErrCodeDecryptionFailed, err.Error())
+	}
+
+	nonce := ciphertext[:CTRNonceSize]
+	data := ciphertext[CTRNonceSize:]
+
+	stream := cipher.NewCTR(block, nonce)
+	plaintext := make([]byte, len(data))
+	stream.XORKeyStream(plaintext, data)
+	return plaintext, nil
+}
+
 func (e *AESEncryptor) GetKeyID() string {
 	return e.keyID
 }

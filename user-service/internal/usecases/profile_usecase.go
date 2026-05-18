@@ -338,12 +338,14 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	return infoEntity, nil
 }
 
-func (s *ProfileUsecase) UserInfoV3(c context.Context, profileId uint64, access string) (*_dto.TotalResponseDTO, error) {
+func (s *ProfileUsecase) UserInfoV3(c context.Context, _profileId uint64, access string) (*_dto.TotalResponseDTO, error) {
 	// var infoEntity models.UserProfileEntity
 	currentUserId := _utils.GetProfileIdWithContext(c)
 	isMe := false
-	if currentUserId == profileId {
+	profileId := _profileId
+	if currentUserId == _profileId || _profileId == 0 {
 		isMe = true
+		profileId = currentUserId
 	}
 
 	// Lấy thông tin user từ DB

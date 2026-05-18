@@ -7,26 +7,26 @@
 package wire
 
 import (
-	_db "common/db"
+	"common/db"
+	"github.com/google/wire"
 	"user/infra/client"
 	"user/infra/handler"
-	impl "user/infra/implement"
+	"user/infra/implement"
 	"user/infra/mapper"
 	"user/infra/postgres"
 	"user/infra/routes"
 	"user/initial"
 	"user/internal/dto"
-	iusecase "user/internal/interface"
+	"user/internal/interface"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 	"user/internal/job"
 	"user/internal/models"
 	"user/internal/usecases"
-
-	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
+
 func InitializeApp() (*initial.InitialApp, error) {
 	db, err := _db.NewDB()
 	if err != nil {
@@ -69,7 +69,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	userDashboardStatsJob := job.NewUserDashboardStatsJob(userUsecase, db)
 	redisService := impl.NewCommonRedisProvider()
 	syncProvider := impl.NewSyncProvider(redisService)
-	grpcProfileService := handler.NewGrpcProfileService(profilePostgres, adminUsecase, profileUsecase, ikycUsecase, organizationServiceClient, groupServiceClient, profileMapper, kycMapper, crmClient, hubClient, bdsproClient, userDashboardStatsJob, syncProvider)
+	grpcProfileService := handler.NewGrpcProfileService(profilePostgres, adminUsecase, profileUsecase, ikycUsecase, organizationServiceClient, groupServiceClient, profileMapper, kycMapper, crmClient, hubClient, bdsproClient, userDashboardStatsJob, syncProvider, redisService)
 	adminMapper := mapper.NewAdminMapper()
 	adminHandler := handler.NewAdminHandler(adminUsecase, adminMapper, notificationClient)
 	adminUserProfileHandler := handler.NewAdminUserProfileHandler(adminUsecase, profileUsecase, notificationClient, userDashboardStatsJob)

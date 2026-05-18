@@ -26,9 +26,13 @@ quota:
     enabled: true
     policy_file: "config/quota_policy.yml"
 
+redis:
+    host: localhost:6379
+    pass:
+
 layer:
     # Base URL configuration
-    base_url: "http://14.225.210.29:8032"
+    base_url: "ciproto://localhost:8032"
 
     # Default style templates
     default_styles:

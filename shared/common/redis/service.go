@@ -31,16 +31,19 @@ func NewRedisService() *RedisService {
 		Password: viper.GetString("redis.pass"),
 	})
 	// Không crash app nếu không connect được, chỉ log warning
+	svc := &RedisService{
+		Client: rdb,
+		Ctx:    context.Background(),
+		logger: flogging.MustGetLogger("redis"),
+	}
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
 		log.Printf("Warning: Failed to connect to Redis at %s: %v. App will continue but Redis operations may fail.", viper.GetString("redis.host"), err)
 	} else {
+		svc.connected = true
 		log.Println("Connected to Redis at ", viper.GetString("redis.host"))
 	}
-	return &RedisService{
-		Client: rdb,
-		Ctx:    context.Background(),
-	}
+	return svc
 }
 
 // Client returns the underlying Redis client
@@ -167,5 +170,5 @@ func (r *RedisService) Expire(key string, seconds int) error {
 }
 
 func (r *RedisService) IncrementBy(key string, delta int64) error {
-    return r.Client.IncrBy(r.Ctx, key, delta).Err()
+	return r.Client.IncrBy(r.Ctx, key, delta).Err()
 }

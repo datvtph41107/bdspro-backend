@@ -21,10 +21,14 @@ jwt:
     listPermit:
     authorizationHeader: Authorization
 
+redis:
+    host: redis:6379
+    pass: protected_redis_secure_password
+
 # Layer configuration
 layer:
     # Base URL configuration
-    base_url: "http://14.225.210.29:8032"
+    base_url: "ciproto://14.225.210.29:8032"
 
     # Default style templates
     default_styles:

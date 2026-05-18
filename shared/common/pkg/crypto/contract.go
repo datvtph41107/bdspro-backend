@@ -17,6 +17,10 @@ type Encryptor interface {
 	// DecryptBytes giải mã byte slice
 	DecryptBytes(ctx context.Context, ciphertext []byte) ([]byte, error)
 
+	// EncryptBytesCTR / DecryptBytesCTR — AES-256-CTR cho binary (tile); format: [nonce 16][ciphertext].
+	EncryptBytesCTR(ctx context.Context, plaintext []byte) ([]byte, error)
+	DecryptBytesCTR(ctx context.Context, ciphertext []byte) ([]byte, error)
+
 	// GetKeyID trả về ID của key đang dùng (cho audit)
 	GetKeyID() string
 }
@@ -34,9 +38,10 @@ type KeyManager interface {
 }
 
 const (
-	AESKeySize = 32 // AES-256
-	NonceSize  = 12 // GCM recommended nonce size
-	KeyVersion = "v1"
+	AESKeySize     = 32 // AES-256
+	NonceSize      = 12 // GCM recommended nonce size
+	CTRNonceSize   = 16 // AES block size — IV cho CTR (tile)
+	KeyVersion     = "v1"
 )
 
 // Custom error codes for encryption (HTTP-style codes)

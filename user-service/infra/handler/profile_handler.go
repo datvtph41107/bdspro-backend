@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	_provider "common/provider"
+	_redis "common/redis"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	orgpb "pb/types/organization"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
+	"strconv"
 	"time"
 
 	"user/infra/client"
@@ -40,6 +42,7 @@ type GrpcProfileService struct {
 	BdsproClient          *client.BdsproClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	SyncProvider          *_provider.SyncProvider
+	Redis                 *_redis.RedisService
 }
 
 // @bind: internal/usecases.IKYCUsecase
@@ -57,6 +60,7 @@ func NewGrpcProfileService(
 	bdsproClient *client.BdsproClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 	SyncProvider *_provider.SyncProvider,
+	redis *_redis.RedisService,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
 		ProfileRepo:           profileRepo,
@@ -73,6 +77,7 @@ func NewGrpcProfileService(
 		BdsproClient:          bdsproClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
 		SyncProvider:          SyncProvider,
+		Redis:                 redis,
 	}
 }
 
@@ -288,6 +293,24 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 	}
 
 	return profilePb, nil
+}
+
+// GenTileSessionToken — POST /v2/user/profile/session
+func (s *GrpcProfileService) GenTileSessionToken(ctx context.Context, _ *sharepb.Empty) (*userpb.GenTileSessionTokenResponse, error) {
+	if s.Redis == nil {
+		return nil, status.Error(codes.Internal, "redis not configured")
+	}
+	sessionK, sessionEncryptKey, expiresIn, err := s.genTileSession(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "gen tile session: %v", err)
+	}
+	sessionKStr := strconv.FormatUint(sessionK, 10)
+	log.Printf("gen tile session: %s, %s, %v", sessionKStr, sessionEncryptKey, expiresIn)
+	return &userpb.GenTileSessionTokenResponse{
+		SessionK:          sessionKStr,
+		SessionEncryptKey: sessionEncryptKey,
+		ExpiresIn:         expiresIn,
+	}, nil
 }
 
 // @Summary Lấy danh sách tài khoản của người dùng

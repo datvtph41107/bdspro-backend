@@ -12,6 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	_redis "common/redis"
+	"tqd/config"
+
 	"github.com/protomaps/go-pmtiles/pmtiles"
 )
 
@@ -26,10 +29,11 @@ func RunTileServer(port int) error {
 		*publicURL = fmt.Sprintf("http://localhost:%d", port)
 	}
 
+	config.LoadConfig()
 	logger := log.New(os.Stdout, "[pmtiles] ", log.LstdFlags)
+	redisSvc := _redis.NewRedisService()
 
 	// ── Khởi tạo PMTiles server ────────────────────────────────
-	// NewServer nhận bucket URL dạng file:///path/to/dir
 	bucketURL := fmt.Sprintf("file://%s", *tilesDir)
 
 	server, err := pmtiles.NewServer(bucketURL, "", logger, *cacheSize, *publicURL)
@@ -40,62 +44,76 @@ func RunTileServer(port int) error {
 	logger.Printf("PMTiles server đã khởi động")
 	logger.Printf("Thư mục tiles : %s", *tilesDir)
 	logger.Printf("Public URL    : %s", *publicURL)
+	logger.Printf("Tile ci_*     : header %s / query %s → Redis ss:k:{sessionK}", tileSessionIDHeader, tileSessionIDQuery)
 
 	// ── HTTP handler ───────────────────────────────────────────
+	corsHeaders := fmt.Sprintf("Content-Type, Range, %s", tileSessionIDHeader)
+	corsMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", corsHeaders)
+			w.Header().Set("Access-Control-Expose-Headers", tileEncryptedHeader)
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	mux := http.NewServeMux()
 
-	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `{"status":"ok"}`)
 	})
 
-	// Trang chủ: liệt kê các tileset có sẵn
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			// Start timer
 			start := time.Now()
 
-			// Gọi pmtiles server
 			statusCode, headers, body := server.Get(r.Context(), r.URL.Path)
+			tileset := tilesetNameFromPath(r.URL.Path)
+
+			if isCIEncryptedTileset(tileset) && statusCode >= 200 && statusCode < 300 && len(body) > 0 {
+				sId := sIdFromRequest(r)
+				enc, err := tileEncryptorFromSessionID(r.Context(), redisSvc, sId)
+				if err != nil || enc == nil {
+					logger.Printf("ci_* tile: invalid sId=%q err=%v", sId, err)
+					writeTileUnauthorized(w)
+					logTileRequest(logger, start, r, http.StatusUnauthorized, 0)
+					return
+				}
+				encrypted, err := encryptTileBody(r.Context(), enc, body)
+				if err != nil {
+					logger.Printf("AES encrypt failed for %s: %v", r.URL.Path, err)
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusInternalServerError)
+					_, _ = w.Write([]byte(`{"error":"tile encryption failed"}`))
+					return
+				}
+				body = encrypted
+				stripHeadersAfterEncrypt(headers)
+				headers[tileEncryptedHeader] = tileEncryptedHeaderVal
+			}
+
 			for k, v := range headers {
 				w.Header().Set(k, v)
 			}
-			// CORS
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Range")
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-
-			// Gửi response
 			w.WriteHeader(statusCode)
 			_, _ = w.Write(body)
-
-			// 🔹 Log 1 dòng giống Gin
-			duration := time.Since(start)
-			logger.Printf("%s | %v | %s %s | %d | %d bytes",
-				time.Now().Format(time.RFC3339),
-				duration,
-				r.Method,
-				r.URL.Path,
-				statusCode,
-				len(body),
-			)
+			logTileRequest(logger, start, r, statusCode, len(body))
 			return
 		}
 
-		// Trang index
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintf(w, indexHTML, *publicURL)
+		fmt.Fprintf(w, indexHTML, *publicURL, *publicURL, *publicURL)
 	})
 
-	// ── Graceful shutdown ──────────────────────────────────────
 	httpServer := &http.Server{
 		Addr:         ":" + strconv.Itoa(port),
-		Handler:      mux,
+		Handler:      corsMiddleware(mux),
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -122,7 +140,17 @@ func RunTileServer(port int) error {
 	return nil
 }
 
-// ── Template trang chủ ─────────────────────────────────────────
+func logTileRequest(logger *log.Logger, start time.Time, r *http.Request, statusCode, bodyLen int) {
+	logger.Printf("%s | %v | %s %s | %d | %d bytes",
+		time.Now().Format(time.RFC3339),
+		time.Since(start),
+		r.Method,
+		r.URL.Path,
+		statusCode,
+		bodyLen,
+	)
+}
+
 const indexHTML = `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -145,12 +173,13 @@ GET /{tileset}.json          → TileJSON metadata
 GET /{tileset}/{z}/{x}/{y}.mvt  → Vector tile
 GET /{tileset}/{z}/{x}/{y}.png  → Raster tile
 GET /health                  → Health check
+
+Tileset ci_*: header X-Session-Id hoặc query sId (= sessionK từ POST /v2/user/profile/session)
   </pre>
   <h2>Ví dụ</h2>
   <pre>
-curl %s/output1.json
-curl %s/output2.json
-curl %s/output1/0/0/0.mvt
+curl -H "X-Session-Id: 8472910384729103847" %s/ci_layer711.json
+curl "%s/ci_layer711.json?sId=8472910384729103847"
   </pre>
 </body>
 </html>

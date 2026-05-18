@@ -102,6 +102,10 @@ func (r *LayerResolver) GetSourceCode(layerID uint64) string {
 	return fmt.Sprintf("layer%d", layerID)
 }
 
+func (r *LayerResolver) GetTileName(layerID uint64) string {
+	return fmt.Sprintf("ci_layer%d", layerID)
+}
+
 // ServerConfig holds server configuration
 type ServerConfig struct {
 	GrpcPort int `mapstructure:"tcp_port"`

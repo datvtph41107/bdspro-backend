@@ -36,10 +36,10 @@ func BuildPMTilesFile(
 		return fmt.Errorf("mkdir %s: %w", outputDir, err)
 	}
 
-	outputPath := filepath.Join(outputDir, fmt.Sprintf("layer%d.pmtiles", layerID))
+	outputPath := filepath.Join(outputDir, fmt.Sprintf("ci_layer%d.pmtiles", layerID))
 
 	// Temp NDJSON file
-	tmpFile, err := os.CreateTemp(outputDir, fmt.Sprintf("layer%d_*.ndjson", layerID))
+	tmpFile, err := os.CreateTemp(outputDir, fmt.Sprintf("ci_layer%d_*.ndjson", layerID))
 	if err != nil {
 		return fmt.Errorf("create temp ndjson: %w", err)
 	}

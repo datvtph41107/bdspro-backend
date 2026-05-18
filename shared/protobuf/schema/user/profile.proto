@@ -26,6 +26,15 @@ service ProfileService {
             get: "/v2/user/profile/info/me"
         };
     }
+
+    // GenTileSessionToken — tạo sessionK + sessionEncryptKey, lưu Redis (TTL ~5 phút) cho tile ci_*.
+    rpc GenTileSessionToken(sharepb.Empty) returns (GenTileSessionTokenResponse) {
+        option (google.api.http) = {
+            post: "/v2/user/profile/session"
+            body: "*"
+        };
+    }
+
     rpc ListAccountMe(sharepb.Empty) returns (AccountInfoResponse) {
         option (google.api.http) = {
             get: "/v2/user/profile/accounts/me"
@@ -208,6 +217,14 @@ message RateStats {
 	uint64 star3Count = 5;
 	uint64 star4Count = 6;
 	uint64 star5Count = 7;
+}
+
+message GenTileSessionTokenResponse {
+    // sessionK — số ngẫu nhiên dạng string (tránh mất precision trên JS > 2^53-1).
+    string sessionK = 1;
+    int64 expiresIn = 2;
+    // sessionEncryptKey — AES-256 key base64; client gửi header X-Session-Encrypt-Key khi tải tile ci_*.
+    string sessionEncryptKey = 3;
 }
 
 message IdRequest {

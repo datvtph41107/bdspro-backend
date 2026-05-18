@@ -145,6 +145,7 @@ var publicRoutes = []string{
 	"/v2/tqd/client/layers",
 	"/v2/tqd/parcels/public",
 	"/v2/tqd/public/enums",
+	"/v2/user/profile/session",
 }
 
 var tempRoutes = []string{
