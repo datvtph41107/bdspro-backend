@@ -126,3 +126,23 @@ func (r *qhLayerLegendRepo) ListVisibleByLayer(ctx context.Context, layerID uint
 	}
 	return rows, total, nil
 }
+
+func (r *qhLayerLegendRepo) SoftDeleteByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&qh_domain.QHLayerLegend{}).
+		Where("layer_id = ? AND deleted_at IS NULL", layerID).
+		Update("deleted_at", now).Error
+}
+
+func (r *qhLayerLegendRepo) SoftDeleteByLabelID(ctx context.Context, labelID uint64) error {
+	if labelID == 0 {
+		return nil
+	}
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&qh_domain.QHLayerLegend{}).
+		Where("label_id = ? AND deleted_at IS NULL", labelID).
+		Update("deleted_at", now).Error
+}

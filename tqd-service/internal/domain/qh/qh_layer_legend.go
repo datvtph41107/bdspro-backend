@@ -10,12 +10,35 @@ const (
 	LegendTypeImage      = "image"
 )
 
+var validLegendTypes = map[string]bool{
+	LegendTypeColorFill:  true,
+	LegendTypeLineStroke: true,
+	LegendTypeIcon:       true,
+	LegendTypePattern:    true,
+	LegendTypeImage:      true,
+}
+
+func IsValidLegendType(t string) bool {
+	return validLegendTypes[t]
+}
+
 const (
 	GeometryTypePolygon = "polygon"
 	GeometryTypeLine    = "line"
 	GeometryTypePoint   = "point"
 	GeometryTypeMulti   = "multi"
 )
+
+var validGeometryTypes = map[string]bool{
+	GeometryTypePolygon: true,
+	GeometryTypeLine:    true,
+	GeometryTypePoint:   true,
+	GeometryTypeMulti:   true,
+}
+
+func IsValidGeometryType(t string) bool {
+	return validGeometryTypes[t]
+}
 
 type QHLayerLegend struct {
 	_models.BaseEntity

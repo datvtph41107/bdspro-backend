@@ -106,6 +106,16 @@ func (u *qhLayerLegendUsecase) validateLandUseGroupID(ctx context.Context, group
 	return nil
 }
 
+func (u *qhLayerLegendUsecase) validateLegendTypes(legendType, geometryType string) error {
+	if legendType != "" && !qh_domain.IsValidLegendType(legendType) {
+		return fmt.Errorf("invalid legendType: %s", legendType)
+	}
+	if geometryType != "" && !qh_domain.IsValidGeometryType(geometryType) {
+		return fmt.Errorf("invalid geometryType: %s", geometryType)
+	}
+	return nil
+}
+
 func (u *qhLayerLegendUsecase) Create(ctx context.Context, row *qh_domain.QHLayerLegend) (*qh_domain.QHLayerLegend, error) {
 	if row == nil {
 		return nil, errors.New("payload is required")
@@ -114,6 +124,9 @@ func (u *qhLayerLegendUsecase) Create(ctx context.Context, row *qh_domain.QHLaye
 		return nil, err
 	}
 	if err := u.validateLandUseGroupID(ctx, row.LandUseGroupID); err != nil {
+		return nil, err
+	}
+	if err := u.validateLegendTypes(row.LegendType, row.GeometryType); err != nil {
 		return nil, err
 	}
 	row.Note = strings.TrimSpace(row.Note)
@@ -165,6 +178,10 @@ func (u *qhLayerLegendUsecase) BatchCreate(ctx context.Context, layerID uint64, 
 			continue
 		}
 		if err := u.validateLandUseGroupID(ctx, item.LandUseGroupID); err != nil {
+			skipped = append(skipped, labelID)
+			continue
+		}
+		if err := u.validateLegendTypes(item.LegendType, item.GeometryType); err != nil {
 			skipped = append(skipped, labelID)
 			continue
 		}
@@ -238,9 +255,15 @@ func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 		existing.IsVisible = *in.IsVisible
 	}
 	if in.LegendType != nil {
+		if !qh_domain.IsValidLegendType(*in.LegendType) {
+			return nil, fmt.Errorf("invalid legendType: %s", *in.LegendType)
+		}
 		existing.LegendType = *in.LegendType
 	}
 	if in.GeometryType != nil {
+		if !qh_domain.IsValidGeometryType(*in.GeometryType) {
+			return nil, fmt.Errorf("invalid geometryType: %s", *in.GeometryType)
+		}
 		existing.GeometryType = *in.GeometryType
 	}
 	if in.StrokeDashArray != nil {

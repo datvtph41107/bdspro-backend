@@ -116,3 +116,13 @@ func (r *qhLayerLandUseGroupRepo) ListVisibleByLayer(ctx context.Context, layerI
 	}
 	return rows, total, nil
 }
+
+func (r *qhLayerLandUseGroupRepo) SoftDeleteByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&qh_domain.QHLayerLandUseGroup{}).
+		Where("layer_id = ? AND deleted_at IS NULL", layerID).
+		Update("deleted_at", now).Error
+}

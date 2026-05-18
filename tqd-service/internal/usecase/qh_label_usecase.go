@@ -34,15 +34,18 @@ type QHLabelUsecase interface {
 type qhLabelUsecaseImpl struct {
 	labelRepo  repo.QHLabelRepository
 	regionRepo repo.RegionRepository
+	legendRepo repo.QHLayerLegendRepository
 }
 
 func NewQHLabelUsecase(
 	labelRepo repo.QHLabelRepository,
 	regionRepo repo.RegionRepository,
+	legendRepo repo.QHLayerLegendRepository,
 ) QHLabelUsecase {
 	return &qhLabelUsecaseImpl{
 		labelRepo:  labelRepo,
 		regionRepo: regionRepo,
+		legendRepo: legendRepo,
 	}
 }
 
@@ -134,6 +137,11 @@ func (u *qhLabelUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 		// Log error but continue - không block việc xóa label
 	}
 
+	// Cascade: soft-delete legends tham chiếu label này
+	if err := u.legendRepo.SoftDeleteByLabelID(ctx, id); err != nil {
+		// Log error but continue - không block việc xóa label
+	}
+
 	return u.labelRepo.Delete(ctx, id)
 }
 
@@ -167,6 +175,13 @@ func (u *qhLabelUsecaseImpl) BatchDelete(ctx context.Context, ids []uint64) erro
 
 	if err := u.regionRepo.UpdateLabelForRegionsWhereLabelIn(ctx, unique, 0); err != nil {
 		// Giữ cùng hành vi Delete đơn: không chặn xóa label khi cập nhật region lỗi
+	}
+
+	// Cascade: soft-delete legends tham chiếu các labels này
+	for _, labelID := range unique {
+		if err := u.legendRepo.SoftDeleteByLabelID(ctx, labelID); err != nil {
+			// Log error but continue
+		}
 	}
 
 	return u.labelRepo.DeleteBatch(ctx, unique)

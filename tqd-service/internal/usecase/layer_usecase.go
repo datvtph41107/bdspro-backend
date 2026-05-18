@@ -30,16 +30,26 @@ type LayerUsecase interface {
 }
 
 type layerUsecaseImpl struct {
-	layerRepo  repo.LayerRepository
-	regionRepo repo.RegionRepository
-	labelRepo  repo.QHLabelRepository
+	layerRepo        repo.LayerRepository
+	regionRepo       repo.RegionRepository
+	labelRepo        repo.QHLabelRepository
+	legendRepo       repo.QHLayerLegendRepository
+	landUseGroupRepo repo.QHLayerLandUseGroupRepository
 }
 
-func NewLayerUsecase(layerRepo repo.LayerRepository, regionRepo repo.RegionRepository, labelRepo repo.QHLabelRepository) LayerUsecase {
+func NewLayerUsecase(
+	layerRepo repo.LayerRepository,
+	regionRepo repo.RegionRepository,
+	labelRepo repo.QHLabelRepository,
+	legendRepo repo.QHLayerLegendRepository,
+	landUseGroupRepo repo.QHLayerLandUseGroupRepository,
+) LayerUsecase {
 	return &layerUsecaseImpl{
-		layerRepo:  layerRepo,
-		regionRepo: regionRepo,
-		labelRepo:  labelRepo,
+		layerRepo:        layerRepo,
+		regionRepo:       regionRepo,
+		labelRepo:        labelRepo,
+		legendRepo:       legendRepo,
+		landUseGroupRepo: landUseGroupRepo,
 	}
 }
 
@@ -189,6 +199,12 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint64, userID uint64)
 	}
 	if err := u.labelRepo.DeleteLabelLayerLinksByLayerID(ctx, id); err != nil {
 		return fmt.Errorf("unlink labels from layer (qh_label_layers): %w", err)
+	}
+	if err := u.legendRepo.SoftDeleteByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("soft delete legends by layer: %w", err)
+	}
+	if err := u.landUseGroupRepo.SoftDeleteByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("soft delete land use groups by layer: %w", err)
 	}
 	if err := u.layerRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete layer: %w", err)

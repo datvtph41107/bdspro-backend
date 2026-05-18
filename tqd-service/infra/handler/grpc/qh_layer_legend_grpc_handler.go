@@ -238,7 +238,7 @@ func mapLegendError(err error) error {
 	if strings.Contains(msg, "not found") {
 		return status.Error(codes.NotFound, msg)
 	}
-	if strings.Contains(msg, "required") {
+	if strings.Contains(msg, "required") || strings.Contains(msg, "invalid") {
 		return status.Error(codes.InvalidArgument, msg)
 	}
 	return status.Error(codes.Internal, msg)
