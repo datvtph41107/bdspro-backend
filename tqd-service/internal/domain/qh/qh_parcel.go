@@ -2,8 +2,8 @@ package qh_domain
 
 import (
 	"bytes"
-	"context"
 	_models "common/domain/entity"
+	"context"
 	"database/sql/driver"
 	"encoding/base64"
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 
 type Parcel struct {
 	_models.BaseEntity
-	Geometry RawGeometry `gorm:"type:geometry(MultiPolygon,4326)"`
+	Geometry RawGeometry `gorm:"column:geometry;type:geometry(MultiPolygon,4326)"`
 	// Các thuộc tính khác có thể thêm vào đây
 	Lat     float64 `json:"lat" gorm:"column:lat"`
 	Lng     float64 `json:"lng" gorm:"column:lon"`
@@ -32,6 +32,11 @@ func (Parcel) TableName() string {
 
 type RawGeometry struct {
 	Raw []byte
+}
+
+// GormDataType — GORM dùng đúng geometry(MultiPolygon,4326), không suy ra GEOMETRY(Geometry,4326).
+func (RawGeometry) GormDataType() string {
+	return "geometry(MultiPolygon,4326)"
 }
 
 func (r *RawGeometry) Scan(value any) error {
@@ -62,7 +67,7 @@ func (r RawGeometry) GormValue(_ context.Context, _ *gorm.DB) clause.Expr {
 		}
 	}
 	return clause.Expr{
-		SQL: "ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(?),4326)), 3))::geometry(MultiPolygon,4326)",
+		SQL:  "ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(?),4326)), 3))::geometry(MultiPolygon,4326)",
 		Vars: []interface{}{string(raw)},
 	}
 }

@@ -197,6 +197,7 @@ var HttpCmd = &cobra.Command{
 				"http://14.225.205.222:3108",
 				"http://14.225.210.29:3110",
 				"http://103.145.63.185:3107",
+				"http://103.172.239.89:3108",
 				"http://localhost:5173",
 				"https://admin.bdspro.com",
 				"https://bdspro.com",

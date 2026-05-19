@@ -45,6 +45,7 @@ tqd-service/tqd-service
 .gitbe
 /config/
 **/config/product.yml
+**/config/production.yml
 **/app/logs
 /tqd-service/files
 tqd-service/tqd

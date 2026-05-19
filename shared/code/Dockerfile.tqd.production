@@ -1,0 +1,25 @@
+FROM tippecanoe-builder AS builder
+
+FROM alpine:latest
+
+WORKDIR /
+
+ENV ENV_RUNTIME=production
+
+# 🔥 đổi mirror sang gần VN (Tsinghua / Aliyun đều ok)
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
+# cài lib (no-cache để nhanh + nhẹ)
+RUN apk add --no-cache \
+    sqlite-libs \
+    zlib \
+    libstdc++
+
+# copy binary từ builder image
+COPY --from=tippecanoe-builder /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
+
+# app
+COPY config config
+COPY main .
+
+CMD ["./main"]

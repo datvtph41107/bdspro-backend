@@ -374,8 +374,8 @@ func (h *LayerGrpcHandler) BuildPMTiles(req *tqdpb.BuildPMTilesRequest, stream g
 	if maxZoom <= 0 {
 		maxZoom = 14
 	}
-	if maxZoom > 18 {
-		maxZoom = 18
+	if maxZoom > 16 {
+		maxZoom = 16
 	}
 	if minZoom > maxZoom {
 		minZoom = maxZoom

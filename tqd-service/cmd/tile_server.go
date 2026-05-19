@@ -33,6 +33,11 @@ func RunTileServer(port int) error {
 	logger := log.New(os.Stdout, "[pmtiles] ", log.LstdFlags)
 	redisSvc := _redis.NewRedisService()
 
+	blockedTilesets := make(map[string]struct{})
+	for _, name := range validatePMTilesDir(*tilesDir, logger) {
+		blockedTilesets[name] = struct{}{}
+	}
+
 	// ── Khởi tạo PMTiles server ────────────────────────────────
 	bucketURL := fmt.Sprintf("file://%s", *tilesDir)
 
@@ -72,9 +77,18 @@ func RunTileServer(port int) error {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			start := time.Now()
+			tileset := tilesetNameFromPath(r.URL.Path)
+			if tileset != "" {
+				if _, blocked := blockedTilesets[tileset]; blocked {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusServiceUnavailable)
+					_, _ = w.Write([]byte(`{"error":"tileset unavailable: archive failed validation"}`))
+					logTileRequest(logger, start, r, http.StatusServiceUnavailable, 0)
+					return
+				}
+			}
 
 			statusCode, headers, body := server.Get(r.Context(), r.URL.Path)
-			tileset := tilesetNameFromPath(r.URL.Path)
 
 			if isCIEncryptedTileset(tileset) && statusCode >= 200 && statusCode < 300 && len(body) > 0 {
 				sId := sIdFromRequest(r)
