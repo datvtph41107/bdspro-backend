@@ -85,6 +85,9 @@ message ParcelLayersV2Response {
   repeated ConflictDetail conflicts = 6;
   AssessmentResponse assessment = 7;
   ResponseMetadataInfo metadata = 8;
+  uint32 riskScore = 9;               // risk_score (0-100)
+  string riskLevel = 10;              // risk_level (LOW/MEDIUM/HIGH/CRITICAL)
+  repeated string riskReasons = 11;   // risk_reasons
 }
 
 message PlanDetailInfo {

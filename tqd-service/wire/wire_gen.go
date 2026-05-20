@@ -7,13 +7,12 @@
 package wire
 
 import (
-	"common/db"
-	"common/provider"
-	"github.com/google/wire"
+	_db "common/db"
+	_provider "common/provider"
 	"tqd/config"
 	"tqd/infra/client"
-	"tqd/infra/handler/grpc"
-	"tqd/infra/handler/http"
+	handler_grpc "tqd/infra/handler/grpc"
+	handler_http "tqd/infra/handler/http"
 	"tqd/infra/mapper"
 	"tqd/infra/postgres"
 	"tqd/infra/providers"
@@ -26,7 +25,9 @@ import (
 	"tqd/internal/modules/resolver/layer_resolver/engine"
 	"tqd/internal/modules/resolver/layer_resolver/rule"
 	"tqd/internal/usecase"
-	"tqd/map"
+	_map "tqd/map"
+
+	"github.com/google/wire"
 )
 
 // Injectors from wire.go:
@@ -121,9 +122,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	qhLayerLandUseGroupGrpcHandler := handler_grpc.NewQHLayerLandUseGroupGrpcHandler(qhLayerLandUseGroupUsecase)
 	iParcelRepo := postgres.NewParcelPostgres(db)
 	iLayerLegalRepo := postgres.NewLayerLegalPostgres(db)
-	iLayerResolverConfigRepo := postgres.NewLayerResolverConfigPostgres(db)
-	iLayerResolver := layer_resolver.NewResolver(iLayerResolverConfigRepo)
-	parcelUsecase := usecase.NewParcelUsecase(iParcelRepo, iLayerLegalRepo, iLayerResolver)
+	parcelUsecase := usecase.NewParcelUsecase(iParcelRepo, iLayerLegalRepo)
 	parcelMapper := mapper.NewParcelMapper()
 	parcelGrpcHandler := handler_grpc.NewParcelGrpcHandler(parcelUsecase, parcelMapper, syncProvider)
 	regionGrpcHandler := handler_grpc.NewRegionGrpcHandler(regionUsecase, qhLabelUsecase, syncProvider)

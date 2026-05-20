@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash/crc32"
+	"log"
 	"math"
-	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	_dto "common/domain/dto"
@@ -16,8 +14,7 @@ import (
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
-	"tqd/internal/modules/resolver/layer_resolver"
-	"tqd/internal/modules/resolver/layer_resolver/builder"
+	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
@@ -39,23 +36,19 @@ type ParcelUsecase interface {
 }
 
 type parcelUsecase struct {
-	parcelRepo       repo.IParcelRepo
-	layerLegalRepo   repo.ILayerLegalRepo
-	layerResolver    layer_resolver.ILayerResolver
-	candidateBuilder *builder.CandidateBuilder
+	parcelRepo     repo.IParcelRepo
+	layerLegalRepo repo.ILayerLegalRepo
+	parcelEngine   *parcel_engine.ParcelEngine
 }
 
 func NewParcelUsecase(
 	parcelRepo repo.IParcelRepo,
 	layerLegalRepo repo.ILayerLegalRepo,
-	layerResolver layer_resolver.ILayerResolver,
-
 ) ParcelUsecase {
 	return &parcelUsecase{
-		parcelRepo:       parcelRepo,
-		layerLegalRepo:   layerLegalRepo,
-		layerResolver:    layerResolver,
-		candidateBuilder: builder.NewCandidateBuilder(),
+		parcelRepo:     parcelRepo,
+		layerLegalRepo: layerLegalRepo,
+		parcelEngine:   parcel_engine.NewParcelEngine(parcel_engine.DefaultEngineConfig()),
 	}
 }
 
@@ -134,66 +127,6 @@ func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, pa
 	}
 
 	return results, total, nil
-}
-
-func (u *parcelUsecase) parseDirection(dir string) uint32 {
-	directions := map[string]uint32{
-		"Bắc":      1,
-		"Đông Bắc": 2,
-		"Đông":     3,
-		"Đông Nam": 4,
-		"Nam":      5,
-		"Tây Nam":  6,
-		"Tây":      7,
-		"Tây Bắc":  8,
-	}
-	if val, ok := directions[dir]; ok {
-		return val
-	}
-	return 0
-}
-
-func (u *parcelUsecase) parseShape(shape string) uint32 {
-	shapes := map[string]uint32{
-		"Vuông vức":     1,
-		"Chữ nhật":      2,
-		"Tóp hậu":       3,
-		"Nở hậu":        4,
-		"Hình thang":    5,
-		"Hình tam giác": 6,
-	}
-	if val, ok := shapes[shape]; ok {
-		return val
-	}
-	return 0
-}
-
-func (u *parcelUsecase) getLandUseDisplayName(code string) string {
-	names := map[string]string{
-		"ODT": "Đất ở đô thị",
-		"ONT": "Đất ở nông thôn",
-		"DGT": "Đất giao thông",
-		"DCX": "Đất cây xanh",
-		"DSH": "Đất sông hồ",
-		"DHT": "Đất hạ tầng kỹ thuật",
-		"DCC": "Đất công cộng",
-		"DLX": "Đất làng xóm",
-		"TMD": "Đất thương mại dịch vụ",
-		"LNP": "Đất lâm nghiệp",
-		"DCN": "Đất công nghiệp",
-		"DDT": "Đất di tích",
-		"DGD": "Đất giáo dục",
-		"DHH": "Đất hỗn hợp",
-		"BDX": "Bãi đỗ xe",
-		"DAN": "Đất an ninh quốc phòng",
-		"DNT": "Đất nghĩa trang",
-		"DDL": "Đất du lịch",
-		"DDR": "Đất dự trữ",
-	}
-	if name, ok := names[code]; ok {
-		return name
-	}
-	return code
 }
 
 func (u *parcelUsecase) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error) {
@@ -368,69 +301,24 @@ func (u *parcelUsecase) GetParcelLayersV2(ctx context.Context, req *dto.GetParce
 		return nil, fmt.Errorf("get parcel layers failed: %w", err)
 	}
 
-	if len(rows) == 0 {
-		return &types.ResolveResult{
-			CanBuild: false,
-			Reason:   "Không có dữ liệu quy hoạch",
-		}, nil
+	if req.Preset == "active_only" {
+		rows = filterActiveLayers(rows)
+	}
+	if req.AsOfDate != "" {
+		rows = filterByAsOfDate(rows, req.AsOfDate)
 	}
 
-	candidates := u.candidateBuilder.BuildBatch(rows)
-	if len(candidates) == 0 {
-		return &types.ResolveResult{
-			CanBuild: false,
-			Reason:   "Không có dữ liệu quy hoạch",
-		}, nil
-	}
+	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
 
-	result := u.layerResolver.Resolve(ctx, candidates, req.Mode)
+	parcelInfo, _ := u.parcelRepo.GetParcelInfo(ctx, req.ParcelID)
 
-	result.LayerLandUseGroups = buildLayerLandUseGroups(candidates)
+	layerIDs := extractLayerIDsV2(rows)
+	legalDocsMap, _ := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
+	legalDocsDTO := convertLegalDocs(legalDocsMap)
 
-	return result, nil
-}
+	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, legalDocsDTO, req.Mode)
 
-func buildLayerLandUseGroups(candidates []*types.LayerCandidate) map[uint64][]*types.LandUseGroupDetail {
-	groupMap := make(map[uint64]map[string]*types.LandUseGroupDetail)
-
-	for _, c := range candidates {
-		if c.GroupCode == "" || c.GroupCode == "unknown" {
-			continue
-		}
-		if _, ok := groupMap[c.LayerID]; !ok {
-			groupMap[c.LayerID] = make(map[string]*types.LandUseGroupDetail)
-		}
-
-		key := c.GroupCode + ":" + c.LandUseCode
-		existing, exists := groupMap[c.LayerID][key]
-		if exists {
-			existing.OverlapAreaSqm += c.OverlapAreaSqm
-			existing.OverlapPercent += c.OverlapPercent
-		} else {
-			groupMap[c.LayerID][key] = &types.LandUseGroupDetail{
-				Code:           c.GroupCode,
-				Name:           c.GroupName,
-				Color:          c.GroupColor,
-				CanBuild:       c.CanBuild,
-				Priority:       c.Priority,
-				LandUseCode:    c.LandUseCode,
-				LandUseName:    c.LandUseName,
-				LandUseColor:   c.LandUseColor,
-				OverlapPercent: c.OverlapPercent,
-				OverlapAreaSqm: c.OverlapAreaSqm,
-			}
-		}
-	}
-
-	result := make(map[uint64][]*types.LandUseGroupDetail, len(groupMap))
-	for layerID, groups := range groupMap {
-		list := make([]*types.LandUseGroupDetail, 0, len(groups))
-		for _, g := range groups {
-			list = append(list, g)
-		}
-		result[layerID] = list
-	}
-	return result
+	return u.unifiedToResolveResult(unified, req.Mode), nil
 }
 
 func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
@@ -445,29 +333,23 @@ func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*
 		return nil, fmt.Errorf("get parcel layers failed: %w", err)
 	}
 
-	parcelArea := 0.0
-	if len(rows) > 0 {
-		parcelArea = rows[0].ParcelAreaSqm
-	} else {
-		info, infoErr := u.parcelRepo.GetParcelInfo(ctx, parcelID)
-		if infoErr != nil {
-			return nil, fmt.Errorf("get parcel info for empty layers failed: %w", infoErr)
-		}
-		if info == nil || info.ParcelID == 0 {
-			return nil, fmt.Errorf("parcel %d not found", parcelID)
-		}
-		parcelArea = info.AreaSqm
-	}
-
-	// THÊM MỚI: Lấy legal docs cho tất cả layer IDs
 	layerIDs := extractLayerIDs(rows)
 	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if err != nil {
-		// Log error nhưng không fail request
+		log.Printf("[GetParcelLayers] Failed to fetch legal docs for parcel %d: %v", parcelID, err)
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
+	legalDocsDTO := convertLegalDocs(legalDocsMap)
 
-	resp := buildParcelLayersResponse(parcelID, parcelArea, rows, legalDocsMap)
+	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, parcelID)
+	if infoErr != nil {
+		log.Printf("[GetParcelLayers] Failed to fetch parcel info for parcel %d: %v", parcelID, infoErr)
+	}
+
+	unifiedRows := parcel_engine.ToUnifiedRowsFromV1(rows)
+	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, legalDocsDTO, "detail")
+
+	resp := u.unifiedToParcelLayersResponse(unified)
 	resp.Metadata = &dto.ResponseMeta{
 		DataSource:     "postgis real-time",
 		QueriedAt:      time.Now().UTC().Format(time.RFC3339),
@@ -478,200 +360,302 @@ func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*
 	return resp, nil
 }
 
-// Helper function
-func extractLayerIDs(rows []dto.ParcelLayerRow) []uint64 {
-	if len(rows) == 0 {
-		return []uint64{}
+// ============================================
+// CONVERSION HELPERS: UnifiedResult -> Legacy types
+// ============================================
+
+func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedResult) *dto.ParcelLayersResponse {
+	resp := &dto.ParcelLayersResponse{
+		ParcelID:      ur.ParcelID,
+		ParcelAreaSqm: ur.ParcelAreaSqm,
+		ParcelInfo:    ur.ParcelInfo,
 	}
 
-	layerIDMap := make(map[uint64]bool)
-	for _, row := range rows {
-		layerIDMap[row.LayerID] = true
+	if ur.Risk != nil {
+		resp.Risk = &dto.RiskAssessment{
+			Level:          ur.Risk.Level,
+			Score:          ur.Risk.Score,
+			CanBuild:       ur.Risk.CanBuild,
+			Reasons:        ur.Risk.Reasons,
+			Recommendation: ur.Risk.Recommendation,
+		}
 	}
 
-	layerIDs := make([]uint64, 0, len(layerIDMap))
-	for id := range layerIDMap {
-		layerIDs = append(layerIDs, id)
+	resp.Layers = convertLayers(ur.Layers)
+	resp.ConcludeLabel = pickConcludeLabelFromLayers(ur.Layers)
+
+	totalOverlapRaw := 0.0
+	for _, l := range ur.Layers {
+		totalOverlapRaw += l.TotalArea
+	}
+	totalOverlapPct := 0.0
+	if ur.ParcelAreaSqm > 0 {
+		totalOverlapPct = (totalOverlapRaw / ur.ParcelAreaSqm) * 100
 	}
 
-	return layerIDs
+	resp.Statistics = &dto.ImpactStats{
+		TotalOverlapArea:     totalOverlapRaw,
+		TotalOverlapPct:      totalOverlapPct,
+		LayersAffected:       uint32(len(ur.Layers)),
+		LabelsAffected:       countLabels(ur.Layers),
+		RegionsAffected:      countRegions(ur.Layers),
+		HasConflict:          ur.ParcelAreaSqm > 0 && totalOverlapRaw > ur.ParcelAreaSqm,
+		SpatialDataAvailable: len(ur.Layers) > 0,
+		Warning:              buildWarningFromUnified(ur),
+	}
+
+	resp.Summary = &dto.ParcelSummary{
+		TotalAffectedPercentage: totalOverlapPct,
+		Buildable:               ur.Risk != nil && ur.Risk.CanBuild,
+	}
+	if ur.PrimaryPlanning != nil {
+		resp.Summary.DominantLandUse = ur.PrimaryPlanning.Name
+		resp.Summary.DominantPercentage = ur.PrimaryPlanning.Ratio
+		resp.Summary.TopLayerName = ur.PrimaryPlanning.LayerName
+	}
+
+	return resp
 }
 
-func buildParcelLayersResponse(parcelID uint64,
-	parcelArea float64,
-	rows []dto.ParcelLayerRow,
-	legalDocsMap map[uint64][]*qh_domain.QHLayerLegal,
-) *dto.ParcelLayersResponse {
-	layerMap := make(map[uint64]*dto.LayerImpact, 8)
-	labelSeen := make(map[string]struct{}, 32)
-	regionSeen := make(map[uint64]struct{}, 64)
+func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, mode string) *types.ResolveResult {
+	result := &types.ResolveResult{
+		HasConflict:      len(ur.Conflicts) > 0,
+		Mode:             types.ResolveMode(mode),
+		ProcessingTimeMs: ur.Metadata.ResponseTimeMs,
+		ParcelAreaSqm:    ur.ParcelAreaSqm,
+	}
 
-	var totalOverlapRaw float64
+	if ur.Risk != nil {
+		result.CanBuild = ur.Risk.CanBuild
+		result.RiskScore = ur.Risk.Score
+		result.RiskLevel = ur.Risk.Level
+		result.RiskReasons = ur.Risk.Reasons
+		result.Recommendation = ur.Risk.Recommendation
+	}
 
-	for _, r := range rows {
-		layer, ok := layerMap[r.LayerID]
-		if !ok {
-			var legalDocs []*dto.LayerLegalDTO
-			if legals, exists := legalDocsMap[r.LayerID]; exists {
-				legalDocs = make([]*dto.LayerLegalDTO, 0, len(legals))
-				for _, legal := range legals {
-					legalDocs = append(legalDocs, &dto.LayerLegalDTO{
-						ID:       legal.ID,
-						LayerID:  legal.LayerID,
-						Name:     legal.Name,
-						FileUrl:  legal.FileURL,
-						FileType: legal.FileType,
-					})
+	if ur.PrimaryPlanning != nil {
+		result.BuildStatus = u.buildStatusFromRisk(ur.Risk, len(ur.Conflicts) > 0)
+		result.Reason = u.buildReasonFromPrimary(ur.PrimaryPlanning, len(ur.Conflicts) > 0)
+	}
+
+	for _, c := range ur.Conflicts {
+		result.CriticalConflicts = append(result.CriticalConflicts, &types.ConflictDetail{
+			Type:            c.Type,
+			Severity:        types.ConflictSeverity(c.Severity),
+			Between:         c.Between,
+			Description:     c.Description,
+			Recommendation:  c.Recommendation,
+			ActionRequired:  c.ActionRequired,
+			AffectedPercent: c.AffectedPercent,
+		})
+	}
+
+	result.Primary = buildRankedLayerFromPrimary(ur.PrimaryPlanning, ur.ParcelAreaSqm)
+	for _, g := range ur.LandUseGroups {
+		for _, d := range g.Details {
+			if result.Primary != nil && result.Primary.LayerID == ur.PrimaryPlanning.LayerID {
+				if result.LayerLandUseGroups == nil {
+					result.LayerLandUseGroups = make(map[uint64][]*types.LandUseGroupDetail)
 				}
-			}
-
-			var authority *dto.AuthorityIssuingDTO
-			if r.AuthorityIssuringID > 0 {
-				authority = &dto.AuthorityIssuingDTO{
-					ID:          r.AuthorityIssuringID,
-					Name:        r.AuthorityIssuringName,
-					Code:        r.AuthorityIssuringCode,
-					Description: r.AuthorityIssuringDesc,
-				}
-			}
-
-			layer = &dto.LayerImpact{
-				ID:               r.LayerID,
-				Name:             r.LayerName,
-				DisplayName:      r.LayerDisplayName,
-				Type:             r.LayerType,
-				EffectiveDate:    r.LayerEffectiveDate,
-				LegalDoc:         r.LayerLegalDoc,
-				LegalDocs:        legalDocs,
-				AuthorityIssuing: authority,
-				Labels:           []*dto.LabelImpact{},
-			}
-			layerMap[r.LayerID] = layer
-		}
-
-		labelKey := buildLabelKey(r.LayerID, r.RegionLandUseCode)
-
-		var label *dto.LabelImpact
-		for _, existing := range layer.Labels {
-			if buildLabelKey(r.LayerID, existing.Name) == labelKey {
-				label = existing
-				break
+				result.LayerLandUseGroups[ur.PrimaryPlanning.LayerID] = append(
+					result.LayerLandUseGroups[ur.PrimaryPlanning.LayerID],
+					&types.LandUseGroupDetail{
+						Code:           g.Code,
+						Name:           g.Name,
+						Color:          g.Color,
+						CanBuild:       g.CanBuild,
+						LandUseCode:    d.LandUseCode,
+						LandUseName:    d.LandUseName,
+						OverlapPercent: d.Ratio,
+						OverlapAreaSqm: d.AreaSqm,
+					},
+				)
 			}
 		}
+	}
 
-		if label == nil {
-			label = &dto.LabelImpact{
-				ID:          stableLabelID(r.LayerID, r.RegionLandUseCode),
-				Name:        r.RegionLandUseCode,
-				DisplayName: r.RegionLandUseName,
-				Color:       r.RegionLandUseColor,
+	for _, l := range ur.Layers {
+		if ur.PrimaryPlanning != nil && l.ID != ur.PrimaryPlanning.LayerID {
+			sec := buildRankedLayerFromLayerDetail(l, ur.ParcelAreaSqm)
+			if sec != nil {
+				result.Secondary = append(result.Secondary, sec)
+			}
+		}
+	}
+
+	return result
+}
+
+func buildRankedLayerFromPrimary(p *parcel_engine.PrimaryPlanningInfo, parcelArea float64) *types.RankedLayer {
+	if p == nil {
+		return nil
+	}
+	return &types.RankedLayer{
+		EvaluatedLayer: &types.EvaluatedLayer{
+			LayerCandidate: &types.LayerCandidate{
+				LayerID:          p.LayerID,
+				LayerDisplayName: p.LayerName,
+				LandUseCode:      p.Code,
+				LandUseName:      p.Name,
+				LandUseColor:     p.Color,
+				GroupCode:        p.GroupCode,
+				GroupName:        p.GroupName,
+				CanBuild:         p.CanBuild,
+				LegalStatus:      p.LegalStatus,
+				OverlapPercent:   p.Ratio,
+				OverlapAreaSqm:   p.AreaSqm,
+				ParcelAreaSqm:    parcelArea,
+			},
+		},
+		Rank:  1,
+		Score: 100,
+	}
+}
+
+func buildRankedLayerFromLayerDetail(l *parcel_engine.LayerDetail, parcelArea float64) *types.RankedLayer {
+	if l == nil {
+		return nil
+	}
+	code := ""
+	name := ""
+	color := ""
+	if len(l.Labels) > 0 {
+		code = l.Labels[0].Code
+		name = l.Labels[0].Name
+		color = l.Labels[0].Color
+	}
+	return &types.RankedLayer{
+		EvaluatedLayer: &types.EvaluatedLayer{
+			LayerCandidate: &types.LayerCandidate{
+				LayerID:          l.ID,
+				LayerName:        l.Name,
+				LayerDisplayName: l.DisplayName,
+				LandUseCode:      code,
+				LandUseName:      name,
+				LandUseColor:     color,
+				OverlapPercent:   l.TotalPct,
+				OverlapAreaSqm:   l.TotalArea,
+				ParcelAreaSqm:    parcelArea,
+			},
+		},
+		Rank:  2,
+		Score: 50,
+	}
+}
+
+func (u *parcelUsecase) buildStatusFromRisk(risk *parcel_engine.RiskInfo, hasConflict bool) string {
+	cfg := u.parcelEngine.GetConfig()
+	if risk == nil {
+		return "unknown"
+	}
+	if !risk.CanBuild && risk.Level == "CRITICAL" {
+		return cfg.StatusProhibited
+	}
+	if hasConflict {
+		return cfg.StatusConditional
+	}
+	return cfg.StatusAllowed
+}
+
+func (u *parcelUsecase) buildReasonFromPrimary(p *parcel_engine.PrimaryPlanningInfo, hasConflict bool) string {
+	if hasConflict {
+		return u.parcelEngine.GetConfig().ConflictStatusSuffix
+	}
+	return ""
+}
+
+func buildWarningFromUnified(u *parcel_engine.UnifiedResult) string {
+	if len(u.Warnings) > 0 {
+		return u.Warnings[0]
+	}
+	return ""
+}
+
+func convertLayers(layers []*parcel_engine.LayerDetail) []*dto.LayerImpact {
+	result := make([]*dto.LayerImpact, 0, len(layers))
+	for _, l := range layers {
+		impact := &dto.LayerImpact{
+			ID:            l.ID,
+			Name:          l.Name,
+			DisplayName:   l.DisplayName,
+			Type:          l.Type,
+			EffectiveDate: l.EffectiveDate,
+			TotalArea:     l.TotalArea,
+			TotalPct:      l.TotalPct,
+		}
+
+		if l.Authority != nil {
+			impact.AuthorityIssuing = &dto.AuthorityIssuingDTO{
+				ID:          l.Authority.ID,
+				Name:        l.Authority.Name,
+				Code:        l.Authority.Code,
+				Description: l.Authority.Description,
+			}
+		}
+
+		for _, doc := range l.Documents {
+			impact.LegalDocs = append(impact.LegalDocs, &dto.LayerLegalDTO{
+				ID:       doc.ID,
+				Name:     doc.Name,
+				FileUrl:  doc.FileUrl,
+				FileType: doc.FileType,
+			})
+		}
+
+		for _, lb := range l.Labels {
+			labelImpact := &dto.LabelImpact{
+				ID:          lb.ID,
+				Name:        lb.Code,
+				DisplayName: lb.Name,
+				Color:       lb.Color,
 				FontSize:    12,
 				FontWeight:  "normal",
 				MinZoom:     10,
 				MaxZoom:     22,
-				Regions:     []*dto.RegionImpact{},
+				TotalArea:   lb.AreaSqm,
+				TotalPct:    lb.Ratio,
 			}
-			layer.Labels = append(layer.Labels, label)
-			labelSeen[labelKey] = struct{}{}
+			for _, reg := range lb.Regions {
+				labelImpact.Regions = append(labelImpact.Regions, &dto.RegionImpact{
+					ID:             reg.ID,
+					Name:           reg.Name,
+					DisplayName:    reg.DisplayName,
+					LandUseCode:    reg.LandUseCode,
+					LandUseName:    reg.LandUseName,
+					ColorRGB:       reg.Color,
+					OverlapAreaSqm: reg.OverlapAreaSqm,
+					OverlapPct:     reg.OverlapPct,
+					CenterLat:      reg.CenterLat,
+					CenterLng:      reg.CenterLng,
+					Geometry:       reg.Geometry,
+				})
+			}
+			impact.Labels = append(impact.Labels, labelImpact)
 		}
-
-		region := &dto.RegionImpact{
-			ID:             r.RegionID,
-			Name:           r.RegionName,
-			DisplayName:    r.RegionDisplayName,
-			LandUseCode:    r.RegionLandUseCode,
-			LandUseName:    r.RegionLandUseName,
-			LandUseGroup:   r.RegionLandUseGroup,
-			ColorRGB:       regionRGB(r),
-			OverlapAreaSqm: r.OverlapAreaSqm,
-			OverlapPct:     r.OverlapPct,
-			CenterLat:      r.CenterLat,
-			CenterLng:      r.CenterLng,
-			Geometry:       r.Geometry,
-		}
-
-		label.Regions = append(label.Regions, region)
-
-		label.TotalArea += r.OverlapAreaSqm
-		layer.TotalArea += r.OverlapAreaSqm
-		totalOverlapRaw += r.OverlapAreaSqm
-
-		regionSeen[r.RegionID] = struct{}{}
+		result = append(result, impact)
 	}
-
-	layers := make([]*dto.LayerImpact, 0, len(layerMap))
-	for _, layer := range layerMap {
-		if parcelArea > 0 {
-			layer.TotalPct = minFloat((layer.TotalArea/parcelArea)*100, 100)
-		}
-		layer.Severity = computeLayerSeverity(layer)
-		sortLabelRegions(layer, parcelArea)
-		layers = append(layers, layer)
-	}
-
-	sort.Slice(layers, func(i, j int) bool {
-		if layers[i].TotalArea == layers[j].TotalArea {
-			return layers[i].ID < layers[j].ID
-		}
-		return layers[i].TotalArea > layers[j].TotalArea
-	})
-
-	// ... rest of the existing code for stats, risk, summary remains the same ...
-	totalOverlapArea := totalOverlapRaw
-	totalOverlapPct := 0.0
-	if parcelArea > 0 {
-		totalOverlapPct = minFloat((totalOverlapRaw/parcelArea)*100, 100)
-	}
-
-	layersAffected := uint32(len(layers))
-	labelsAffected := uint32(len(labelSeen))
-	regionsAffected := uint32(len(regionSeen))
-
-	hasConflict := parcelArea > 0 && totalOverlapRaw > parcelArea
-	stats := &dto.ImpactStats{
-		TotalOverlapArea:     totalOverlapArea,
-		TotalOverlapPct:      totalOverlapPct,
-		LayersAffected:       layersAffected,
-		LabelsAffected:       labelsAffected,
-		RegionsAffected:      regionsAffected,
-		HasConflict:          hasConflict,
-		SpatialDataAvailable: len(rows) > 0,
-		Warning:              buildWarning(totalOverlapPct, hasConflict, layersAffected),
-	}
-
-	risk := calculateRisk(rows, parcelArea, stats)
-	summary := buildSummary(layers, stats, risk)
-
-	return &dto.ParcelLayersResponse{
-		ParcelID:      parcelID,
-		ParcelAreaSqm: parcelArea,
-		Summary:       summary,
-		Layers:        layers,
-		ConcludeLabel: pickConcludeLabel(layers),
-		Statistics:    stats,
-		Risk:          risk,
-	}
+	return result
 }
 
-// pickConcludeLabel chọn region có diện tích giao (overlap) với thửa lớn nhất.
-func pickConcludeLabel(layers []*dto.LayerImpact) *dto.RegionImpact {
+func pickConcludeLabelFromLayers(layers []*parcel_engine.LayerDetail) *dto.RegionImpact {
 	var best *dto.RegionImpact
-	for _, layer := range layers {
-		if layer == nil {
-			continue
-		}
-		for _, label := range layer.Labels {
-			if label == nil {
-				continue
-			}
-			for _, reg := range label.Regions {
-				if reg == nil {
-					continue
-				}
-				if best == nil ||
-					reg.OverlapAreaSqm > best.OverlapAreaSqm ||
-					(reg.OverlapAreaSqm == best.OverlapAreaSqm && reg.ID < best.ID) {
-					best = reg
+	for _, l := range layers {
+		for _, lb := range l.Labels {
+			for _, reg := range lb.Regions {
+				if best == nil || reg.OverlapAreaSqm > best.OverlapAreaSqm {
+					best = &dto.RegionImpact{
+						ID:             reg.ID,
+						Name:           reg.Name,
+						DisplayName:    reg.DisplayName,
+						LandUseCode:    reg.LandUseCode,
+						LandUseName:    reg.LandUseName,
+						ColorRGB:       reg.Color,
+						OverlapAreaSqm: reg.OverlapAreaSqm,
+						OverlapPct:     reg.OverlapPct,
+						CenterLat:      reg.CenterLat,
+						CenterLng:      reg.CenterLng,
+						Geometry:       reg.Geometry,
+					}
 				}
 			}
 		}
@@ -679,226 +663,100 @@ func pickConcludeLabel(layers []*dto.LayerImpact) *dto.RegionImpact {
 	return best
 }
 
-func buildLabelKey(layerID uint64, landUseCode string) string {
-	return fmt.Sprintf("%d:%s", layerID, strings.TrimSpace(landUseCode))
+func countLabels(layers []*parcel_engine.LayerDetail) uint32 {
+	seen := make(map[uint64]bool)
+	for _, l := range layers {
+		for _, lb := range l.Labels {
+			seen[lb.ID] = true
+		}
+	}
+	return uint32(len(seen))
 }
 
-func stableLabelID(layerID uint64, landUseCode string) uint64 {
-	key := buildLabelKey(layerID, landUseCode)
-	return uint64(crc32.ChecksumIEEE([]byte(key)))
-}
-
-func sortLabelRegions(layer *dto.LayerImpact, parcelArea float64) {
-	for _, label := range layer.Labels {
-		if parcelArea > 0 {
-			label.TotalPct = minFloat((label.TotalArea/parcelArea)*100, 100)
-		}
-		sort.Slice(label.Regions, func(i, j int) bool {
-			if label.Regions[i].OverlapAreaSqm == label.Regions[j].OverlapAreaSqm {
-				return label.Regions[i].ID < label.Regions[j].ID
-			}
-			return label.Regions[i].OverlapAreaSqm > label.Regions[j].OverlapAreaSqm
-		})
-	}
-
-	sort.Slice(layer.Labels, func(i, j int) bool {
-		if layer.Labels[i].TotalArea == layer.Labels[j].TotalArea {
-			return layer.Labels[i].ID < layer.Labels[j].ID
-		}
-		return layer.Labels[i].TotalArea > layer.Labels[j].TotalArea
-	})
-}
-
-func buildSummary(layers []*dto.LayerImpact, stats *dto.ImpactStats, risk *dto.RiskAssessment) *dto.ParcelSummary {
-	summary := &dto.ParcelSummary{
-		DominantLandUse:         "",
-		DominantPercentage:      0,
-		TotalAffectedPercentage: 0,
-		TopLayerName:            "",
-		Buildable:               true,
-	}
-
-	if stats != nil {
-		summary.TotalAffectedPercentage = stats.TotalOverlapPct
-	}
-
-	var maxLabelPct float64
-	var maxLayerPct float64
-
-	for _, layer := range layers {
-		if layer.TotalPct > maxLayerPct {
-			maxLayerPct = layer.TotalPct
-			summary.TopLayerName = layer.DisplayName
-		}
-		for _, label := range layer.Labels {
-			if label.TotalPct > maxLabelPct {
-				maxLabelPct = label.TotalPct
-				summary.DominantLandUse = label.DisplayName
-				summary.DominantPercentage = label.TotalPct
+func countRegions(layers []*parcel_engine.LayerDetail) uint32 {
+	seen := make(map[uint64]bool)
+	for _, l := range layers {
+		for _, lb := range l.Labels {
+			for _, reg := range lb.Regions {
+				seen[reg.ID] = true
 			}
 		}
 	}
-
-	if risk != nil {
-		summary.Buildable = risk.CanBuild
-	}
-
-	return summary
+	return uint32(len(seen))
 }
 
-func buildWarning(totalPct float64, hasConflict bool, layersAffected uint32) string {
-	switch {
-	case totalPct <= 0:
-		return ""
-	case hasConflict:
-		return "Phát hiện chồng lấn quy hoạch vượt quá diện tích thửa đất"
-	case layersAffected > 1:
-		return "Thửa đất đang chịu ảnh hưởng từ nhiều layer quy hoạch"
-	default:
-		return "Thửa đất có ảnh hưởng quy hoạch"
+func convertLegalDocs(legalDocsMap map[uint64][]*qh_domain.QHLayerLegal) map[uint64][]*dto.LayerLegalDTO {
+	result := make(map[uint64][]*dto.LayerLegalDTO, len(legalDocsMap))
+	for layerID, legals := range legalDocsMap {
+		dtos := make([]*dto.LayerLegalDTO, 0, len(legals))
+		for _, l := range legals {
+			dtos = append(dtos, &dto.LayerLegalDTO{
+				ID:       l.ID,
+				LayerID:  l.LayerID,
+				Name:     l.Name,
+				FileUrl:  l.FileURL,
+				FileType: l.FileType,
+			})
+		}
+		result[layerID] = dtos
 	}
+	return result
 }
 
-func calculateRisk(rows []dto.ParcelLayerRow, parcelArea float64, stats *dto.ImpactStats) *dto.RiskAssessment {
-	risk := &dto.RiskAssessment{
-		Level:          "LOW",
-		Score:          0,
-		CanBuild:       true,
-		Reasons:        []string{},
-		Recommendation: "Rủi ro thấp, có thể xem xét tiếp các điều kiện khác.",
+func extractLayerIDs(rows []dto.ParcelLayerRow) []uint64 {
+	seen := make(map[uint64]bool)
+	for _, r := range rows {
+		seen[r.LayerID] = true
 	}
-
-	if parcelArea <= 0 || len(rows) == 0 {
-		risk.Reasons = append(risk.Reasons, "Không phát hiện ảnh hưởng quy hoạch")
-		return risk
+	ids := make([]uint64, 0, len(seen))
+	for id := range seen {
+		ids = append(ids, id)
 	}
+	return ids
+}
 
-	score := 0.0
-	reasons := make([]string, 0, len(rows))
+func extractLayerIDsV2(rows []dto.ParcelLayerRowV2) []uint64 {
+	seen := make(map[uint64]bool)
+	for _, r := range rows {
+		seen[r.LayerID] = true
+	}
+	ids := make([]uint64, 0, len(seen))
+	for id := range seen {
+		ids = append(ids, id)
+	}
+	return ids
+}
 
+func filterActiveLayers(rows []dto.ParcelLayerRowV2) []dto.ParcelLayerRowV2 {
+	now := time.Now()
+	filtered := make([]dto.ParcelLayerRowV2, 0, len(rows))
 	for _, row := range rows {
-		pct := (row.OverlapAreaSqm / parcelArea) * 100
-
-		switch row.RegionLandUseCode {
-		case "DGT", "DHT":
-			score += pct * 2.0
-			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - không được phép xây dựng", pct, row.RegionLandUseName))
-		case "DCX", "DSH":
-			score += pct * 1.0
-			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - hạn chế xây dựng", pct, row.RegionLandUseName))
-		case "ODT", "ONT":
-			score += pct * 0.35
-			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - phù hợp mục đích ở", pct, row.RegionLandUseName))
-		default:
-			score += pct * 0.8
-			reasons = append(reasons, fmt.Sprintf("%.1f%% diện tích thuộc %s - cần kiểm tra thêm", pct, row.RegionLandUseName))
-		}
-	}
-
-	if stats != nil && stats.LayersAffected > 1 {
-		score += float64(stats.LayersAffected) * 5
-	}
-
-	switch {
-	case score >= 85:
-		risk.Level = "CRITICAL"
-		risk.Score = 95
-		risk.CanBuild = false
-		risk.Recommendation = "Rủi ro rất cao, không nên giao dịch trước khi xác minh quy hoạch."
-	case score >= 60:
-		risk.Level = "HIGH"
-		risk.Score = 85
-		risk.CanBuild = false
-		risk.Recommendation = "Rủi ro cao, cần kiểm tra kỹ quy hoạch trước khi quyết định."
-	case score >= 30:
-		risk.Level = "MEDIUM"
-		risk.Score = 65
-		risk.CanBuild = true
-		risk.Recommendation = "Có rủi ro quy hoạch, nên kiểm tra thêm hồ sơ pháp lý."
-	default:
-		risk.Level = "LOW"
-		risk.Score = uint32(score)
-		risk.CanBuild = true
-		risk.Recommendation = "Rủi ro thấp, có thể tiếp tục xem xét."
-	}
-
-	if len(reasons) == 0 {
-		reasons = append(reasons, "Không phát hiện ảnh hưởng quy hoạch đáng kể")
-	}
-
-	risk.Reasons = reasons
-	return risk
-}
-
-func computeLayerSeverity(layer *dto.LayerImpact) string {
-	if layer == nil {
-		return "LOW"
-	}
-
-	hasCritical := false
-	hasHigh := false
-	hasMedium := false
-
-	for _, label := range layer.Labels {
-		for _, region := range label.Regions {
-			switch region.LandUseCode {
-			case "DGT", "DHT":
-				hasCritical = true
-			case "DCX", "DSH":
-				hasHigh = true
-			case "ODT", "ONT":
-				hasMedium = true
+		if row.LayerExpiryDate != "" {
+			expiry, err := time.Parse("2006-01-02", row.LayerExpiryDate)
+			if err == nil && expiry.Before(now) {
+				continue
 			}
 		}
+		filtered = append(filtered, row)
 	}
-
-	switch {
-	case hasCritical:
-		return "CRITICAL"
-	case hasHigh:
-		return "HIGH"
-	case hasMedium && layer.TotalPct > 0:
-		return "MEDIUM"
-	default:
-		return "LOW"
-	}
+	return filtered
 }
 
-func regionRGB(r dto.ParcelLayerRow) *dto.RGB {
-	if r.RegionLandUseColor != "" {
-		if rgb, ok := hexToRGB(r.RegionLandUseColor); ok {
-			return rgb
+func filterByAsOfDate(rows []dto.ParcelLayerRowV2, asOfDate string) []dto.ParcelLayerRowV2 {
+	targetDate, err := time.Parse("2006-01-02", asOfDate)
+	if err != nil {
+		return rows
+	}
+	filtered := make([]dto.ParcelLayerRowV2, 0, len(rows))
+	for _, row := range rows {
+		if row.LayerEffectiveDate == "" {
+			filtered = append(filtered, row)
+			continue
+		}
+		effectiveDate, err := time.Parse("2006-01-02", row.LayerEffectiveDate)
+		if err != nil || effectiveDate.Before(targetDate) || effectiveDate.Equal(targetDate) {
+			filtered = append(filtered, row)
 		}
 	}
-
-	return &dto.RGB{
-		Red:   r.RegionColorRed,
-		Green: r.RegionColorGreen,
-		Blue:  r.RegionColorBlue,
-	}
-}
-
-func hexToRGB(hex string) (*dto.RGB, bool) {
-	hex = strings.TrimPrefix(strings.TrimSpace(hex), "#")
-	if len(hex) != 6 {
-		return nil, false
-	}
-
-	v, err := strconv.ParseUint(hex, 16, 32)
-	if err != nil {
-		return nil, false
-	}
-
-	return &dto.RGB{
-		Red:   uint8((v >> 16) & 0xFF),
-		Green: uint8((v >> 8) & 0xFF),
-		Blue:  uint8(v & 0xFF),
-	}, true
-}
-
-func minFloat(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
+	return filtered
 }

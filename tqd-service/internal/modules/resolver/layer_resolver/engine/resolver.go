@@ -54,7 +54,7 @@ func (e *ResolverEngine) Resolve(candidates []*types.LayerCandidate, mode types.
 	criticalConflicts := e.detectConflicts(primary, secondary)
 	hasConflict := len(criticalConflicts) > 0
 
-	canBuild, reason, status := e.assessEngine.Assess(primary, hasConflict)
+	canBuild, reason, status, riskScore, riskLevel, riskReasons, recommendation := e.assessEngine.Assess(primary, secondary, hasConflict)
 
 	result := &types.ResolveResult{
 		Primary:           primary,
@@ -66,6 +66,11 @@ func (e *ResolverEngine) Resolve(candidates []*types.LayerCandidate, mode types.
 		Reason:            reason,
 		Mode:              mode,
 		ProcessingTimeMs:  time.Since(startTime).Milliseconds(),
+		ParcelAreaSqm:     primary.ParcelAreaSqm,
+		RiskScore:         riskScore,
+		RiskLevel:         riskLevel,
+		RiskReasons:       riskReasons,
+		Recommendation:    recommendation,
 	}
 
 	if mode == types.ModePopup {
@@ -104,12 +109,12 @@ func (e *ResolverEngine) detectConflicts(primary *types.RankedLayer, secondary [
 	for _, sec := range secondary {
 		if e.conflictEngine.HasConflict(primary.LayerCandidate, sec.LayerCandidate) {
 			conflicts = append(conflicts, &types.ConflictDetail{
-				Type:            "land_use_mismatch",
+				Type:            e.config.ConflictType,
 				Severity:        types.SeverityHigh,
 				Between:         []uint64{primary.LayerID, sec.LayerID},
 				Description:     primary.LandUseName + " vs " + sec.LandUseName,
-				Recommendation:  "Cần đối chiếu hồ sơ pháp lý gốc",
-				ActionRequired:  "verify",
+				Recommendation:  e.config.ConflictRecommendation,
+				ActionRequired:  e.config.ConflictActionRequired,
 				AffectedPercent: sec.OverlapPercent,
 			})
 		}

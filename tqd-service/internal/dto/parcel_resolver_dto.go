@@ -1,6 +1,9 @@
 package dto
 
-import "errors"
+import (
+	"errors"
+	"regexp"
+)
 
 // REQUEST
 type GetParcelLayersV2Request struct {
@@ -10,6 +13,8 @@ type GetParcelLayersV2Request struct {
 	AsOfDate string `json:"as_of_date"`
 }
 
+var dateRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+
 func (r *GetParcelLayersV2Request) Validate() error {
 	if r.ParcelID == 0 {
 		return errors.New("parcel_id is required")
@@ -18,7 +23,16 @@ func (r *GetParcelLayersV2Request) Validate() error {
 		r.Mode = "detail"
 	}
 	if r.Mode != "popup" && r.Mode != "detail" && r.Mode != "compare" {
-		return errors.New("invalid mode")
+		return errors.New("invalid mode: must be popup, detail, or compare")
+	}
+	if r.Preset == "" {
+		r.Preset = "all_layers"
+	}
+	if r.Preset != "active_only" && r.Preset != "all_layers" {
+		return errors.New("invalid preset: must be active_only or all_layers")
+	}
+	if r.AsOfDate != "" && !dateRegex.MatchString(r.AsOfDate) {
+		return errors.New("invalid as_of_date: must be YYYY-MM-DD format")
 	}
 	return nil
 }

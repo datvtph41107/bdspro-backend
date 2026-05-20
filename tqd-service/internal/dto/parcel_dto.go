@@ -57,6 +57,7 @@ type ParcelLayersResponse struct {
 	ParcelID      uint64
 	ParcelAreaSqm float64
 
+	ParcelInfo    *ParcelInfoResponse
 	Summary       *ParcelSummary
 	Layers        []*LayerImpact
 	ConcludeLabel *RegionImpact

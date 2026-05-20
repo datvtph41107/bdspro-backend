@@ -32,8 +32,8 @@ func (b *CandidateBuilder) BuildFromRow(row dto.ParcelLayerRowV2) *types.LayerCa
 		LabelDisplayName: row.LabelDisplayName,
 		LabelColor:       row.LabelColor,
 
-		LandUseCode:    row.LabelName,
-		LandUseName:    row.LabelDisplayName,
+		LandUseCode:    row.RegionLandUseCode,
+		LandUseName:    row.RegionLandUseName,
 		LandUseColor:   row.LabelColor,
 		GroupCode:      enums.GroupCode(row.LabelGroupCode).String(),
 		GroupName:      row.GroupName,

@@ -100,6 +100,118 @@ func (l *ConfigLoader) buildConfig() *types.Config {
 		}
 	}
 
+	if val, ok := l.cache["risk_weights"]; ok {
+		var rw map[string]*types.LandUseRiskWeight
+		if err := json.Unmarshal(val, &rw); err == nil {
+			cfg.LandUseRiskWeights = rw
+		}
+	}
+
+	if val, ok := l.cache["risk_thresholds"]; ok {
+		var rt []*types.RiskThreshold
+		if err := json.Unmarshal(val, &rt); err == nil {
+			cfg.RiskThresholds = rt
+		}
+	}
+
+	if val, ok := l.cache["conflict_labels"]; ok {
+		var cl struct {
+			Type           string `json:"type"`
+			Severity       string `json:"severity"`
+			Recommendation string `json:"recommendation"`
+			ActionRequired string `json:"action_required"`
+		}
+		if err := json.Unmarshal(val, &cl); err == nil {
+			if cl.Type != "" {
+				cfg.ConflictType = cl.Type
+			}
+			if cl.Severity != "" {
+				cfg.ConflictSeverity = cl.Severity
+			}
+			if cl.Recommendation != "" {
+				cfg.ConflictRecommendation = cl.Recommendation
+			}
+			if cl.ActionRequired != "" {
+				cfg.ConflictActionRequired = cl.ActionRequired
+			}
+		}
+	}
+
+	if val, ok := l.cache["warning_messages"]; ok {
+		var wm struct {
+			OverlapExceeded string `json:"overlap_exceeded"`
+			MultiLayer      string `json:"multi_layer"`
+			Conflict        string `json:"conflict"`
+		}
+		if err := json.Unmarshal(val, &wm); err == nil {
+			if wm.OverlapExceeded != "" {
+				cfg.WarningOverlapExceeded = wm.OverlapExceeded
+			}
+			if wm.MultiLayer != "" {
+				cfg.WarningMultiLayer = wm.MultiLayer
+			}
+			if wm.Conflict != "" {
+				cfg.WarningConflict = wm.Conflict
+			}
+		}
+	}
+
+	if val, ok := l.cache["assess_messages"]; ok {
+		var am struct {
+			NoPlanningImpact    string `json:"no_planning_impact"`
+			NoSignificantImpact string `json:"no_significant_impact"`
+		}
+		if err := json.Unmarshal(val, &am); err == nil {
+			if am.NoPlanningImpact != "" {
+				cfg.NoPlanningImpactMsg = am.NoPlanningImpact
+			}
+			if am.NoSignificantImpact != "" {
+				cfg.NoSignificantImpactMsg = am.NoSignificantImpact
+			}
+		}
+	}
+
+	if val, ok := l.cache["status_labels"]; ok {
+		var sl struct {
+			Prohibited     string `json:"prohibited"`
+			Conditional    string `json:"conditional"`
+			Allowed        string `json:"allowed"`
+			ConflictSuffix string `json:"conflict_suffix"`
+		}
+		if err := json.Unmarshal(val, &sl); err == nil {
+			if sl.Prohibited != "" {
+				cfg.StatusProhibited = sl.Prohibited
+			}
+			if sl.Conditional != "" {
+				cfg.StatusConditional = sl.Conditional
+			}
+			if sl.Allowed != "" {
+				cfg.StatusAllowed = sl.Allowed
+			}
+			if sl.ConflictSuffix != "" {
+				cfg.ConflictStatusSuffix = sl.ConflictSuffix
+			}
+		}
+	}
+
+	if val, ok := l.cache["land_type_names"]; ok {
+		var ltn map[uint64]string
+		if err := json.Unmarshal(val, &ltn); err == nil {
+			cfg.LandTypeNames = ltn
+		}
+	}
+
+	if val, ok := l.cache["summary_labels"]; ok {
+		var sl struct {
+			ConflictSuffix string `json:"conflict_suffix"`
+		}
+		if err := json.Unmarshal(val, &sl); err == nil {
+			if sl.ConflictSuffix != "" {
+				cfg.ConflictSummarySuffix = sl.ConflictSuffix
+			}
+		}
+	}
+
 	return cfg
 }
 

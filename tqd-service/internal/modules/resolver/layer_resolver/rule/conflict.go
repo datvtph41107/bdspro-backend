@@ -26,5 +26,5 @@ func (e *ConflictEngine) HasConflict(a, b *types.LayerCandidate) bool {
 			return val
 		}
 	}
-	return true
+	return false
 }

@@ -88,4 +88,10 @@ type ResolveResult struct {
 	Mode               ResolveMode
 	ProcessingTimeMs   int64
 	LayerLandUseGroups map[uint64][]*LandUseGroupDetail
+
+	ParcelAreaSqm  float64
+	RiskScore      uint32
+	RiskLevel      string
+	RiskReasons    []string
+	Recommendation string
 }

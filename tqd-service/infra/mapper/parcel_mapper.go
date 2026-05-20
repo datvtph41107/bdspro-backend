@@ -2,6 +2,7 @@
 package mapper
 
 import (
+	"fmt"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"strconv"
@@ -11,22 +12,41 @@ import (
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
-type ParcelMapper struct{}
+type ParcelMapper struct {
+	LandTypeNames         map[uint64]string
+	ConflictSummarySuffix string
+}
 
 func NewParcelMapper() *ParcelMapper {
-	return &ParcelMapper{}
+	landTypes := make(map[uint64]string, len(types.DefaultLandTypeNames))
+	for k, v := range types.DefaultLandTypeNames {
+		landTypes[k] = v
+	}
+	return &ParcelMapper{
+		LandTypeNames:         landTypes,
+		ConflictSummarySuffix: types.DefaultConflictSummarySuffix,
+	}
 }
 
 func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parcelID uint64, mode string) *tqdpb.ParcelLayersV2Response {
 	resp := &tqdpb.ParcelLayersV2Response{
 		ParcelId:    parcelID,
 		HasConflict: result.HasConflict,
+		RiskScore:   result.RiskScore,
+		RiskLevel:   result.RiskLevel,
+		RiskReasons: result.RiskReasons,
 		Assessment: &tqdpb.AssessmentResponse{
 			Buildability: &tqdpb.BuildabilityResponse{
-				CanBuild: result.CanBuild,
-				Status:   result.BuildStatus,
-				Reason:   result.Reason,
+				CanBuild:       result.CanBuild,
+				Status:         result.BuildStatus,
+				Reason:         result.Reason,
+				Recommendation: result.Recommendation,
 			},
+			Summary: m.buildAssessmentSummary(result),
+			Verdict: result.RiskLevel,
+		},
+		Metadata: &tqdpb.ResponseMetadataInfo{
+			ResponseTimeMs: result.ProcessingTimeMs,
 		},
 	}
 
@@ -495,69 +515,11 @@ func (m *ParcelMapper) buildRegionsProto(regions []*dto.RegionImpact) []*tqdpb.R
 	return result
 }
 
-// =====================================================
-// HELPER METHODS - NAMING
-// =====================================================
-
-func (m *ParcelMapper) getDirectionName(direction uint32) string {
-	names := map[uint32]string{
-		1: "Bắc", 2: "Đông Bắc", 3: "Đông", 4: "Đông Nam",
-		5: "Nam", 6: "Tây Nam", 7: "Tây", 8: "Tây Bắc",
-	}
-	if name, ok := names[direction]; ok {
-		return name
-	}
-	return "Không xác định"
-}
-
-func (m *ParcelMapper) getShapeName(shape uint32) string {
-	names := map[uint32]string{
-		1: "Vuông vức", 2: "Chữ nhật", 3: "Tóp hậu",
-		4: "Nở hậu", 5: "Hình thang", 6: "Hình tam giác",
-	}
-	if name, ok := names[shape]; ok {
-		return name
-	}
-	return "Hình dạng khác"
-}
-
 func (m *ParcelMapper) getLandTypeName(landTypeId uint64) string {
-	names := map[uint64]string{
-		1: "Đất ở đô thị", 2: "Đất ở nông thôn", 3: "Đất nông nghiệp",
-		4: "Đất lâm nghiệp", 5: "Đất thương mại", 6: "Đất dịch vụ",
-		7: "Đất công nghiệp", 8: "Đất cây xanh", 9: "Đất giao thông",
-		10: "Đất hạ tầng", 11: "Đất công cộng", 12: "Đất hỗn hợp",
-	}
-	if name, ok := names[landTypeId]; ok {
+	if name, ok := m.LandTypeNames[landTypeId]; ok {
 		return name
 	}
 	return "Đất khác"
-}
-
-// =====================================================
-// HELPER METHODS - PARSING
-// =====================================================
-
-func (m *ParcelMapper) parseDirectionString(dir string) uint32 {
-	directions := map[string]uint32{
-		"Bắc": 1, "Đông Bắc": 2, "Đông": 3, "Đông Nam": 4,
-		"Nam": 5, "Tây Nam": 6, "Tây": 7, "Tây Bắc": 8,
-	}
-	if val, ok := directions[dir]; ok {
-		return val
-	}
-	return 0
-}
-
-func (m *ParcelMapper) parseShapeString(shape string) uint32 {
-	shapes := map[string]uint32{
-		"Vuông vức": 1, "Chữ nhật": 2, "Tóp hậu": 3,
-		"Nở hậu": 4, "Hình thang": 5, "Hình tam giác": 6,
-	}
-	if val, ok := shapes[shape]; ok {
-		return val
-	}
-	return 0
 }
 
 func safeString(s *string) string {
@@ -591,4 +553,21 @@ func mapLandUseGroups(groupsMap map[uint64][]*types.LandUseGroupDetail, layerID 
 		})
 	}
 	return result
+}
+
+func (m *ParcelMapper) buildAssessmentSummary(result *types.ResolveResult) string {
+	if result == nil {
+		return ""
+	}
+	if result.Primary == nil {
+		return result.Reason
+	}
+	summary := result.Primary.LandUseName
+	if result.Primary.OverlapPercent > 0 {
+		summary += fmt.Sprintf(" (%.1f%%)", result.Primary.OverlapPercent)
+	}
+	if result.HasConflict {
+		summary += m.ConflictSummarySuffix
+	}
+	return summary
 }
