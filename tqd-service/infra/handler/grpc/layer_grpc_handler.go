@@ -4,8 +4,10 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"log"
 	"strings"
 	"time"
@@ -27,11 +29,13 @@ import (
 type LayerGrpcHandler struct {
 	tqdpb.UnimplementedLayerServiceServer
 	layerUsecase usecase.LayerUsecase
+	SyncProvider *_provider.SyncProvider
 }
 
-func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase) *LayerGrpcHandler {
+func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase, syncProvider *_provider.SyncProvider) *LayerGrpcHandler {
 	return &LayerGrpcHandler{
 		layerUsecase: layerUsecase,
+		SyncProvider: syncProvider,
 	}
 }
 
@@ -110,6 +114,10 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, created.ID), t.UnixMilli())
 
 	return h.toProtoLayer(created, true)
 }
@@ -198,6 +206,10 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+
 	return h.toProtoLayer(updated, true)
 }
 
@@ -218,6 +230,11 @@ func (h *LayerGrpcHandler) ToggleLayerBasicVisibility(ctx context.Context, req *
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+
 	return h.toProtoLayer(layer, true)
 }
 
@@ -231,10 +248,21 @@ func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLay
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+
 	return &sharepb.Empty{}, nil
 }
 
 func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequest) (*tqdpb.LayerResponse, error) {
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.LayerResponse{}, nil
+	}
+
 	layer, err := h.layerUsecase.GetByID(ctx, req.Id)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -244,6 +272,13 @@ func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequ
 }
 
 func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListLayersResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
 
 	filter := &repo.LayerFilter{
@@ -290,6 +325,13 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 }
 
 func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListLayersResponse{}, nil
+	}
+
 	layerFilter := repo.ClientLayerFilter{
 		Pagable: _dto.Pagable{
 			Page: req.GetPage(),
@@ -329,6 +371,13 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 }
 
 func (h *LayerGrpcHandler) GetClientLayer(ctx context.Context, req *tqdpb.GetClientLayerRequest) (*tqdpb.LayerResponse, error) {
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.LayerResponse{}, nil
+	}
+
 	layer, err := h.layerUsecase.GetClientByID(ctx, req.Id)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -366,6 +415,7 @@ func (h *LayerGrpcHandler) BuildPMTiles(req *tqdpb.BuildPMTilesRequest, stream g
 	if req.LayerId == 0 {
 		return status.Error(codes.InvalidArgument, "layer_id is required")
 	}
+
 	minZoom := req.MinZoom
 	maxZoom := req.MaxZoom
 	if minZoom <= 0 {
@@ -387,12 +437,39 @@ func (h *LayerGrpcHandler) BuildPMTiles(req *tqdpb.BuildPMTilesRequest, stream g
 	}
 
 	progressFn := func(p usecase.BuildProgress) {
+		stream.Send(&tqdpb.BuildPMTilesProgress{
+			Status:       p.Status,
+			Message:      p.Message,
+			CurrentZoom:  p.CurrentZoom,
+			TilesWritten: p.TilesWritten,
+			TotalTiles:   p.TotalTiles,
+			OutputPath:   p.OutputPath,
+		})
 	}
 
-	if err := h.layerUsecase.BuildPMTiles(ctx, req.LayerId, minZoom, maxZoom, outputDir, progressFn); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	err := h.layerUsecase.BuildPMTiles(ctx, req.LayerId, minZoom, maxZoom, outputDir, progressFn)
+	if err == nil {
+		return nil
 	}
-	return nil
+
+	var buildErr *usecase.ErrBuildInProgress
+	if errors.As(err, &buildErr) {
+		stream.Send(&tqdpb.BuildPMTilesProgress{
+			Status:       buildErr.Progress.Status,
+			Message:      "Another build is already in progress: " + buildErr.Progress.Message,
+			CurrentZoom:  buildErr.Progress.CurrentZoom,
+			TilesWritten: buildErr.Progress.TilesWritten,
+			TotalTiles:   buildErr.Progress.TotalTiles,
+			OutputPath:   buildErr.Progress.OutputPath,
+		})
+		return status.Error(codes.ResourceExhausted, err.Error())
+	}
+
+	stream.Send(&tqdpb.BuildPMTilesProgress{
+		Status:  "error",
+		Message: err.Error(),
+	})
+	return status.Error(codes.Internal, err.Error())
 }
 
 func (h *LayerGrpcHandler) toProtoLayer(layer *qh_domain.QHLayer, isAdmin bool) (*tqdpb.LayerResponse, error) {

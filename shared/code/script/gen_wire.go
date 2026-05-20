@@ -207,6 +207,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"%s/initial"
 `, moduleName))
 
@@ -240,6 +241,7 @@ import (
 	writer.WriteString(`var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 `)
 
 	// for _, f := range binds {

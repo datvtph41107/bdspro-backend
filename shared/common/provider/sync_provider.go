@@ -41,6 +41,22 @@ const (
 	SyncKeyChatUnreadMe         = "cnv:ur"
 	SyncKeyConversationsMe      = "cnv:me"
 	SyncKeyConversationCommon   = "cnv:c"
+	// TQD sync keys
+	SyncKeyTQDLayerDetail          = "tqd:layer:id"
+	SyncKeyTQDLayerList            = "tqd:layer:me"
+	SyncKeyTQDRegionDetail         = "tqd:region:id"
+	SyncKeyTQDRegionList           = "tqd:region:me"
+	SyncKeyTQDParcelDetail         = "tqd:parcel:id"
+	SyncKeyTQDParcelLayers         = "tqd:parcel:layers"
+	SyncKeyTQDLabelDetail          = "tqd:label:id"
+	SyncKeyTQDLabelList            = "tqd:label:me"
+	SyncKeyTQDSubscriptionList     = "tqd:sub:me"
+	SyncKeyTQDNotificationList     = "tqd:notif:me"
+	SyncKeyTQDPOIDetail            = "tqd:poi:id"
+	SyncKeyTQDPOIList              = "tqd:poi:me"
+	SyncKeyTQDLocationSearch       = "tqd:loc:me"
+	SyncKeyTQDReportList           = "tqd:report:me"
+	SyncKeyTQDFeatureList          = "tqd:feature:me"
 )
 
 type SyncProvider struct {

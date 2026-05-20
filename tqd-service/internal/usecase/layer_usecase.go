@@ -35,6 +35,7 @@ type layerUsecaseImpl struct {
 	labelRepo        repo.QHLabelRepository
 	legendRepo       repo.QHLayerLegendRepository
 	landUseGroupRepo repo.QHLayerLandUseGroupRepository
+	buildTracker     *buildTracker
 }
 
 func NewLayerUsecase(
@@ -50,6 +51,7 @@ func NewLayerUsecase(
 		labelRepo:        labelRepo,
 		legendRepo:       legendRepo,
 		landUseGroupRepo: landUseGroupRepo,
+		buildTracker:     newBuildTracker(),
 	}
 }
 
@@ -277,12 +279,25 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 }
 
 func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom uint32, outputDir string, progressFn func(BuildProgress)) error {
+	buildCtx, gen, err := u.buildTracker.tryStart(layerID)
+	if err != nil {
+		return err
+	}
+	defer u.buildTracker.finish(layerID, gen)
+
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil || layer == nil {
 		return fmt.Errorf("layer %d not found", layerID)
 	}
+
 	if outputDir == "" {
 		outputDir = "./files/tiles"
 	}
-	return BuildPMTilesFile(ctx, u.regionRepo, layerID, layer.MinZoom, layer.MaxZoom, outputDir, progressFn)
+
+	wrappedFn := func(p BuildProgress) {
+		u.buildTracker.updateProgress(layerID, gen, p)
+		progressFn(p)
+	}
+
+	return BuildPMTilesFile(buildCtx, u.regionRepo, layerID, layer.MinZoom, layer.MaxZoom, outputDir, wrappedFn)
 }

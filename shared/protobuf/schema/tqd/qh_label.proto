@@ -146,6 +146,7 @@ message UpdateLabelRequest {
 
 message GetLabelRequest {
   uint64 id = 1;
+  int64 timestamp = 2;
 }
 
 message DeleteLabelRequest {
@@ -184,6 +185,7 @@ message ListAdminLabelsRequest {
   bool includeInactive = 2;
   uint32 page = 3;
   uint32 size = 4;
+  int64 timestamp = 5;
 }
 
 message ListLabelsByLayerRequest {
@@ -191,6 +193,7 @@ message ListLabelsByLayerRequest {
   bool includeInactive = 2;
   uint32 page = 3;
   uint32 size = 4;
+  int64 timestamp = 5;
 }
 
 message QHLabelResponse {

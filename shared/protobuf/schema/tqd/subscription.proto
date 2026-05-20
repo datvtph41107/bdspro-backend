@@ -83,6 +83,7 @@ message ListParcelSubscriptionsRequest {
   optional uint32 status = 1;   // 10=active, 20=paused, 30=deleted
   uint32 page = 2;
   uint32 size = 3;
+  int64 timestamp = 4;
 }
 
 message ListParcelSubscriptionsResponse {
@@ -139,6 +140,7 @@ message DeleteRegionSubscriptionRequest {
 message ListRegionSubscriptionsRequest {
   uint32 page = 1;
   uint32 size = 2;
+  int64 timestamp = 3;
 }
 
 message ListRegionSubscriptionsResponse {
@@ -171,6 +173,7 @@ message ListNotificationsRequest {
   optional bool read = 2;
   uint32 page = 3;
   uint32 size = 4;
+  int64 timestamp = 5;
 }
 
 message ListNotificationsResponse {

@@ -120,6 +120,7 @@ message GetNearbyPoisRequest {
   uint32 page = 4;
   uint32 size = 5;
   repeated uint64 categoryIds = 6;
+  int64 timestamp = 7;
 }
 
 message GetPoisByCategoryRequest {
@@ -127,6 +128,7 @@ message GetPoisByCategoryRequest {
   uint32 page = 2;
   uint32 size = 3;
   string search = 4;
+  int64 timestamp = 5;
 }
 
 message UpdatePoiRatingRequest {
@@ -149,6 +151,7 @@ message ListPoisRequest {
   double longitude = 11;
   double radius = 12; // in km
   string sortBy = 13; // rating, distance, newest
+  int64 timestamp = 14;
 }
 
 message ListPoisResponse {

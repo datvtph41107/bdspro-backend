@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"tqd/initial"
 	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
@@ -30,6 +31,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	tqd_infra_handler_grpc.NewAmenityGrpcHandlerImpl,
 	tqd_infra_handler_http.NewAmenityHandler,
 	tqd_infra_mapper.NewAmenityMapper,
@@ -136,7 +138,6 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewQHLayerLegendGrpcHandler,
 	tqd_infra_postgres.NewQHLayerLegendRepository,
 	tqd_internal_usecase.NewQHLayerLegendUsecase,
-	tqd_initial.NewRedisService,
 	tqd_infra_handler_grpc.NewRegionGrpcHandler,
 	tqd_infra_handler_http.NewRegionHttpHandler,
 	tqd_infra_mapper.NewRegionLabelMapper,

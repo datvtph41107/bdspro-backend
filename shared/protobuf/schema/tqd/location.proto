@@ -58,12 +58,14 @@ message GetNearestLocationRequest {
     double longitude = 2;
     optional double maxDistanceKm = 3;  // Bán kính tìm kiếm (km), mặc định 100km
     optional int32 limit = 4;            // Số lượng kết quả, mặc định 1
+    int64 timestamp = 5;
 }
 
 message BatchGetNearestLocationsRequest {
     repeated Coordinate coordinates = 1;
     optional double maxDistanceKm = 2;
     optional int32 limit = 3;
+    int64 timestamp = 4;
 }
 
 message Coordinate {
@@ -90,6 +92,7 @@ message SearchLocationsRequest {
     optional string type = 2;       // "province", "ward", "all" (mặc định "all")
     optional int32 limit = 3;       // Số lượng kết quả, mặc định 20
     optional string provinceId = 4;  // Lọc theo province (nếu tìm ward)
+    int64 timestamp = 5;
 }
 
 message SearchLocationsResponse {
@@ -108,17 +111,20 @@ message SearchResult {
 message GetProvinceRequest {
     string id = 1;                    // ID của province
     optional string code = 2;         // Hoặc tìm theo code
+    int64 timestamp = 3;
 }
 
 message GetWardRequest {
     string id = 1;
     optional string code = 2;
+    int64 timestamp = 3;
 }
 
 message ListWardsByProvinceRequest {
     string provinceId = 1;
     optional int32 page = 2;           // Phân trang, mặc định 1
     optional int32 pageSize = 3;       // Mặc định 50
+    int64 timestamp = 4;
 }
 
 message ListWardsResponse {

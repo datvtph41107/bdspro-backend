@@ -7,6 +7,7 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -24,6 +25,7 @@ type SubscriptionGrpcHandler struct {
 	regionUsecase usecase.RegionUsecase
 	parcelUsecase usecase.ParcelUsecase
 	parcelMapper  *mapper.ParcelMapper
+	SyncProvider  *_provider.SyncProvider
 }
 
 func NewSubscriptionGrpcHandler(
@@ -31,6 +33,7 @@ func NewSubscriptionGrpcHandler(
 	notifUsecase usecase.NotificationUsecase,
 	regionUsecase usecase.RegionUsecase,
 	parcelUsecase usecase.ParcelUsecase,
+	syncProvider *_provider.SyncProvider,
 ) *SubscriptionGrpcHandler {
 	return &SubscriptionGrpcHandler{
 		subUsecase:    subUsecase,
@@ -38,6 +41,7 @@ func NewSubscriptionGrpcHandler(
 		regionUsecase: regionUsecase,
 		parcelUsecase: parcelUsecase,
 		parcelMapper:  mapper.NewParcelMapper(),
+		SyncProvider:  syncProvider,
 	}
 }
 
@@ -55,7 +59,13 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	// Sử dụng Pagable
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListParcelSubscriptionsResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
@@ -184,6 +194,9 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+
 	scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
 	return &tqdpb.SubscriptionResponse{
 		Id:                sub.ID,
@@ -215,6 +228,10 @@ func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 		log.Printf("[DeleteParcelSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+
 	return &emptypb.Empty{}, nil
 }
 
@@ -227,7 +244,13 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	// Sử dụng Pagable
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListRegionSubscriptionsResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
@@ -295,6 +318,9 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+
 	scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
 	return &tqdpb.SubscriptionResponse{
 		Id:                sub.ID,
@@ -326,6 +352,10 @@ func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 		log.Printf("[DeleteRegionSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(400, err.Error())
 	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+
 	return &emptypb.Empty{}, nil
 }
 
@@ -343,7 +373,13 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	// Sử dụng Pagable
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDNotificationList, userID)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListNotificationsResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
@@ -489,5 +525,9 @@ func (h *SubscriptionGrpcHandler) AdminDeleteSubscription(
 		log.Printf("[AdminDeleteSubscription] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, 0), t.UnixMilli())
+
 	return &emptypb.Empty{}, nil
 }

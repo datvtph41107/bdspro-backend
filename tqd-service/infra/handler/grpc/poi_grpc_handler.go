@@ -3,8 +3,10 @@ package handler_grpc
 import (
 	"context"
 	"log"
+	"time"
 
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -18,18 +20,21 @@ import (
 // PoiGrpcHandler handles gRPC requests for POI
 type PoiGrpcHandler struct {
 	tqdpb.UnimplementedPoiServiceServer
-	usecase usecase.PoiUsecase
-	mapper  *mapper.PoiMapper
+	usecase      usecase.PoiUsecase
+	mapper       *mapper.PoiMapper
+	SyncProvider *_provider.SyncProvider
 }
 
 // NewPoiGrpcHandler creates new handler
 func NewPoiGrpcHandler(
 	usecase usecase.PoiUsecase,
 	mapper *mapper.PoiMapper,
+	syncProvider *_provider.SyncProvider,
 ) *PoiGrpcHandler {
 	return &PoiGrpcHandler{
-		usecase: usecase,
-		mapper:  mapper,
+		usecase:      usecase,
+		mapper:       mapper,
+		SyncProvider: syncProvider,
 	}
 }
 
@@ -72,13 +77,23 @@ func (h *PoiGrpcHandler) CreatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 		return nil, status.Errorf(codes.Internal, "failed to create poi: %v", err)
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0), t.UnixMilli())
+
 	return h.mapper.ToProtoFromResponse(result), nil
 }
 
 // GetPoi handles get by ID request
 func (h *PoiGrpcHandler) GetPoi(ctx context.Context, req *sharepb.IdRequest) (*tqdpb.Poi, error) {
-	if req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "poi id is required")
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDPOIDetail, req.Id)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.Poi{}, nil
 	}
 
 	result, err := h.usecase.GetByID(ctx, req.Id)
@@ -107,7 +122,14 @@ func (h *PoiGrpcHandler) GetPoiByCode(ctx context.Context, req *tqdpb.GetPoiByCo
 
 // GetNearbyPois handles nearby search request
 func (h *PoiGrpcHandler) GetNearbyPois(ctx context.Context, req *tqdpb.GetNearbyPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	if req.Latitude == 0 && req.Longitude == 0 {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListPoisResponse{}, nil
+	}
+
+	if req.Latitude < -90 || req.Latitude > 90 || req.Longitude < -180 || req.Longitude > 180 {
 		return nil, status.Error(codes.InvalidArgument, "latitude and longitude are required")
 	}
 
@@ -141,6 +163,13 @@ func (h *PoiGrpcHandler) GetNearbyPois(ctx context.Context, req *tqdpb.GetNearby
 
 // GetPoisByCategory handles get by category request
 func (h *PoiGrpcHandler) GetPoisByCategory(ctx context.Context, req *tqdpb.GetPoisByCategoryRequest) (*tqdpb.ListPoisResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListPoisResponse{}, nil
+	}
+
 	if req.CategoryId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "category id is required")
 	}
@@ -226,6 +255,10 @@ func (h *PoiGrpcHandler) UpdatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 		return nil, status.Errorf(codes.Internal, "failed to update poi: %v", err)
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDPOIDetail, req.Id), t.UnixMilli())
+
 	return h.mapper.ToProtoFromResponse(result), nil
 }
 
@@ -255,6 +288,10 @@ func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) 
 		return nil, status.Errorf(codes.Internal, "failed to delete poi: %v", err)
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDPOIDetail, req.Id), t.UnixMilli())
+
 	return &sharepb.SubmitResponse{
 		Message: "POI deleted successfully",
 	}, nil
@@ -262,7 +299,13 @@ func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) 
 
 // ListPois handles list request
 func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	// Build filter
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListPoisResponse{}, nil
+	}
+
 	filter := &dto.PoiFilter{
 		Pagable: _dto.Pagable{
 			Page: normalizePage(req.Page),

@@ -1,6 +1,7 @@
 package handler_grpc
 
 import (
+	_provider "common/provider"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,13 +17,21 @@ import (
 type FeatureGrpcHandler struct {
 	tqdpb.UnimplementedFeatureServiceServer
 	featureUsecase *usecase.FeatureUsecase
+	SyncProvider   *_provider.SyncProvider
 }
 
-func NewFeatureGrpcHandler(usecase *usecase.FeatureUsecase) *FeatureGrpcHandler {
-	return &FeatureGrpcHandler{featureUsecase: usecase}
+func NewFeatureGrpcHandler(usecase *usecase.FeatureUsecase, syncProvider *_provider.SyncProvider) *FeatureGrpcHandler {
+	return &FeatureGrpcHandler{featureUsecase: usecase, SyncProvider: syncProvider}
 }
 
 func (h *FeatureGrpcHandler) GetFeaturesByPointRadius(ctx context.Context, req *tqdpb.GetFeaturesByPointRadiusRequest) (*tqdpb.ListFeaturesResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDFeatureList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListFeaturesResponse{}, nil
+	}
+
 	// Validate request
 	if req.Radius <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "radius must be positive")
@@ -70,6 +79,13 @@ func (h *FeatureGrpcHandler) GetFeaturesByPointRadius(ctx context.Context, req *
 }
 
 func (h *FeatureGrpcHandler) GetFeaturesByPolygon(ctx context.Context, req *tqdpb.GetFeaturesByPolygonRequest) (*tqdpb.ListFeaturesResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDFeatureList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListFeaturesResponse{}, nil
+	}
+
 	var geojson string
 	var err error
 

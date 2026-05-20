@@ -1,7 +1,6 @@
 package initial
 
 import (
-	_redis "common/redis"
 	handler_grpc "tqd/infra/handler/grpc"
 	handler_http "tqd/infra/handler/http"
 )
@@ -123,8 +122,4 @@ func NewApp(
 		ImportGrpcHandler:              importGrpcHandler,
 		LayerLegalGrpcHandler:          layerLegalGrpcHandler,
 	}
-}
-
-func NewRedisService() *_redis.RedisService {
-	return _redis.NewRedisService()
 }

@@ -73,6 +73,7 @@ message GetParcelLayersV2Request {
   string mode = 2;          // popup, detail, compare
   string preset = 3;        // active_only, all_layers
   string asOfDate = 4;      // as_of_date (YYYY-MM-DD)
+  int64 timestamp = 5;
 }
 
 message ParcelLayersV2Response {
@@ -143,6 +144,7 @@ message ResponseMetadataInfo {
 
 message GetParcelDetailRequest {
   uint64 parcelId = 1;
+  int64 timestamp = 2;
 }
 
 message ParcelInfoResponse {
@@ -278,6 +280,7 @@ message FindParcelsByPolygonRequest {
   uint32 size = 4;
   bool allowAutoShrink = 5;
   bool intersect = 6;
+  int64 timestamp = 7;
 }
 
 message FindParcelsByPolygonResponse {
@@ -297,6 +300,7 @@ message FindParcelByLocationRequest {
   double latitude  = 1;
   double longitude = 2;
   double radius    = 3;
+  int64 timestamp  = 4;
 }
 
 message Parcel {

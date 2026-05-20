@@ -47,9 +47,7 @@ func BuildPMTilesFile(
 	defer os.Remove(tmpPath)
 
 	// ── Stream from DB to temp file ─────────────────────────────────────
-	buildCtx := context.Background() // detach from gRPC deadline
-
-	rows, err := regionRepo.StreamGeoJSON(buildCtx, layerID)
+	rows, err := regionRepo.StreamGeoJSON(ctx, layerID)
 	if err != nil {
 		return fmt.Errorf("stream geojson: %w", err)
 	}
@@ -136,7 +134,7 @@ func BuildPMTilesFile(
 
 	args = append(args, tmpPath)
 
-	cmd := exec.CommandContext(buildCtx, "tippecanoe", args...)
+	cmd := exec.CommandContext(ctx, "tippecanoe", args...)
 
 	// Pipe stdout & stderr
 	stdoutPipe, _ := cmd.StdoutPipe()

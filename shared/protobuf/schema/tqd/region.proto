@@ -119,6 +119,7 @@ message DeleteRegionRequest {
 
 message GetRegionRequest {
   uint64 id = 1;
+  int64 timestamp = 2;
 }
 
 message ListRegionsRequest {
@@ -131,6 +132,7 @@ message ListRegionsRequest {
   uint32 size = 7;
   optional string orderBy = 8;          // id, name, areaHa, createdAt
   optional string orderDir = 9;         // asc, desc
+  int64 timestamp = 10;
 }
 
 message ListAdminRegionsByLayerRequest {
@@ -143,6 +145,7 @@ message ListAdminRegionsByLayerRequest {
   uint32 size = 7;
   optional string orderBy = 8;
   optional string orderDir = 9;
+  int64 timestamp = 10;
 }
 
 message ListClientRegionsRequest {
@@ -153,12 +156,14 @@ message ListClientRegionsRequest {
   optional double maxLat = 5;           // BBox: vĩ độ tối đa
   uint32 page = 6;
   uint32 size = 7;
+  int64 timestamp = 10;
 }
 
 message FindRegionByPointRequest {
   double lat = 1;
   double lng = 2;
   optional uint64 layerId = 3;
+  int64 timestamp = 4;
 }
 
 message FindRegionsByBBoxRequest {
@@ -167,6 +172,7 @@ message FindRegionsByBBoxRequest {
   optional uint64 labelId = 3;
   uint32 page = 4;
   uint32 size = 5;
+  int64 timestamp = 6;
 }
 
 message BBox {

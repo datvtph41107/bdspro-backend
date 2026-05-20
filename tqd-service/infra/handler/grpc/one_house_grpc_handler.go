@@ -17,11 +17,11 @@ type OneHouseGrpcHandler struct {
 func NewOneHouseGrpcHandler(oneHouseUsecase usecase.OneHouseUsecase) *OneHouseGrpcHandler {
 	return &OneHouseGrpcHandler{
 		oneHouseUsecase: oneHouseUsecase,
-	}
+		}
 }
 
 func (h *OneHouseGrpcHandler) GetOneHouseDetail(ctx context.Context, req *pb.GetOneHouseDetailRequest) (*pb.OneHouse, error) {
-	if req.Id == 0 {
+	if req == nil || req.Id == 0 {
 		return nil, _errors.ReturnError(400, "id is required")
 	}
 

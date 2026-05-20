@@ -7,6 +7,7 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/internal/dto"
@@ -19,10 +20,11 @@ import (
 type ReportGrpcHandler struct {
 	tqdpb.UnimplementedReportServiceServer
 	reportUsecase usecase.ReportUsecase
+	SyncProvider  *_provider.SyncProvider
 }
 
-func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase) *ReportGrpcHandler {
-	return &ReportGrpcHandler{reportUsecase: reportUsecase}
+func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase, syncProvider *_provider.SyncProvider) *ReportGrpcHandler {
+	return &ReportGrpcHandler{reportUsecase: reportUsecase, SyncProvider: syncProvider}
 }
 
 // CreateReportAsync - Tạo báo cáo bất đồng bộ
@@ -66,6 +68,9 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 	}
 
 	log.Printf("[CreateReportAsync] Report created: %d", reportID)
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, userID), t.UnixMilli())
 
 	return &tqdpb.CreateReportAsyncResponse{
 		ReportId:  reportID,
@@ -167,16 +172,19 @@ func (h *ReportGrpcHandler) DownloadReport(
 // =====================================================
 
 // ListReports - Danh sách báo cáo của user
-func (h *ReportGrpcHandler) ListReports(
-	ctx context.Context,
-	req *tqdpb.ListReportsRequest,
-) (*tqdpb.ListReportsResponse, error) {
+func (h *ReportGrpcHandler) ListReports(ctx context.Context, req *tqdpb.ListReportsRequest) (*tqdpb.ListReportsResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	// Sử dụng Pagable
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, userID)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListReportsResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
@@ -242,6 +250,9 @@ func (h *ReportGrpcHandler) DeleteReport(
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, userID), t.UnixMilli())
+
 	return &emptypb.Empty{}, nil
 }
 
@@ -250,15 +261,18 @@ func (h *ReportGrpcHandler) DeleteReport(
 // =====================================================
 
 // AdminListReports - Admin: Danh sách tất cả báo cáo
-func (h *ReportGrpcHandler) AdminListReports(
-	ctx context.Context,
-	req *tqdpb.AdminListReportsRequest,
-) (*tqdpb.ListReportsResponse, error) {
+func (h *ReportGrpcHandler) AdminListReports(ctx context.Context, req *tqdpb.AdminListReportsRequest) (*tqdpb.ListReportsResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListReportsResponse{}, nil
+	}
+
 	// TODO: Check admin permission
 	userID := _utils.GetOriginIdFromContext(ctx)
 	log.Printf("[AdminListReports] AdminUserID: %d", userID)
 
-	// Sử dụng Pagable
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
@@ -316,6 +330,9 @@ func (h *ReportGrpcHandler) AdminDeleteReport(
 		log.Printf("[AdminDeleteReport] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())
 	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, 0), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }

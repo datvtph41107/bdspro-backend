@@ -3,9 +3,11 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"log"
+	"time"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -20,17 +22,20 @@ import (
 
 type ParcelGrpcHandler struct {
 	tqdpb.UnimplementedParcelServiceServer
-	usecase usecase.ParcelUsecase
-	mapper  *mapper.ParcelMapper
+	usecase      usecase.ParcelUsecase
+	mapper       *mapper.ParcelMapper
+	SyncProvider *_provider.SyncProvider
 }
 
 func NewParcelGrpcHandler(
 	usecase usecase.ParcelUsecase,
 	mapper *mapper.ParcelMapper,
+	syncProvider *_provider.SyncProvider,
 ) *ParcelGrpcHandler {
 	return &ParcelGrpcHandler{
-		usecase: usecase,
-		mapper:  mapper,
+		usecase:      usecase,
+		mapper:       mapper,
+		SyncProvider: syncProvider,
 	}
 }
 
@@ -41,6 +46,13 @@ func NewParcelGrpcHandler(
 func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelInfoResponse, error) {
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDParcelDetail, req.ParcelId)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ParcelInfoResponse{}, nil
 	}
 
 	data, err := h.usecase.GetParcelInfo(ctx, req.ParcelId)
@@ -58,6 +70,13 @@ func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetPar
 func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelLayersResponse, error) {
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDParcelLayers, req.ParcelId)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ParcelLayersResponse{}, nil
 	}
 
 	data, err := h.usecase.GetParcelLayers(ctx, req.ParcelId)
@@ -125,6 +144,9 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 
 	log.Printf("[CreateBatchParcels] Successfully created %d parcels", len(result.Data))
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0), t.UnixMilli())
+
 	return &tqdpb.ParcelListDTO{
 		Data: h.mapper.ToProtoFromDomainList(result),
 	}, nil
@@ -136,6 +158,13 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 
 // FindParcelByLocation - Tìm parcel theo tọa độ
 func (h *ParcelGrpcHandler) FindParcelByLocation(ctx context.Context, req *tqdpb.FindParcelByLocationRequest) (*tqdpb.Parcel, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.Parcel{}, nil
+	}
+
 	// Validate input
 	if req.Latitude == 0 && req.Longitude == 0 {
 		return nil, status.Error(codes.InvalidArgument, "latitude and longitude are required")
@@ -174,6 +203,13 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	ctx context.Context,
 	req *tqdpb.FindParcelsByPolygonRequest,
 ) (*tqdpb.FindParcelsByPolygonResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.FindParcelsByPolygonResponse{}, nil
+	}
+
 	// Validate coordinates
 	var points []repo.Point
 	if len(req.Coordinates) == 0 {

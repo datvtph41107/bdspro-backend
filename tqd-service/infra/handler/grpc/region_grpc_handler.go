@@ -6,8 +6,10 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"time"
 
 	_dto "common/domain/dto"
+	_provider "common/provider"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -27,16 +29,19 @@ type RegionGrpcHandler struct {
 	regionUsecase usecase.RegionUsecase
 	labelUsecase  usecase.QHLabelUsecase
 	regionMapper  *mapper.RegionMapper
+	SyncProvider  *_provider.SyncProvider
 }
 
 func NewRegionGrpcHandler(
 	regionUsecase usecase.RegionUsecase,
 	labelUsecase usecase.QHLabelUsecase,
+	syncProvider *_provider.SyncProvider,
 ) *RegionGrpcHandler {
 	return &RegionGrpcHandler{
 		regionUsecase: regionUsecase,
 		labelUsecase:  labelUsecase,
 		regionMapper:  mapper.NewRegionMapper(),
+		SyncProvider:  syncProvider,
 	}
 }
 
@@ -137,6 +142,10 @@ func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateR
 		return nil, status.Error(codes.Internal, "create region returned nil")
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDRegionDetail, region.ID), t.UnixMilli())
+
 	var label *qh_domain.QHLabel
 	if region.LabelID != nil {
 		label, _ = h.regionUsecase.GetLabelByRegion(ctx, region.ID)
@@ -186,6 +195,10 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 		return nil, status.Error(codes.Internal, "update region returned nil")
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDRegionDetail, req.Id), t.UnixMilli())
+
 	var label *qh_domain.QHLabel
 	if region.LabelID != nil {
 		label, _ = h.regionUsecase.GetLabelByRegion(ctx, region.ID)
@@ -196,6 +209,13 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionRequest) (*tqdpb.RegionResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDRegionDetail, req.Id)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.RegionResponse{}, nil
 	}
 
 	log.Printf("[GetRegion] RegionID: %d", req.Id)
@@ -214,6 +234,13 @@ func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionR
 }
 
 func (h *RegionGrpcHandler) ListRegions(ctx context.Context, req *tqdpb.ListRegionsRequest) (*tqdpb.ListRegionsResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListRegionsResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
 	filter := buildAdminRegionFilter(
 		pagable,
@@ -238,6 +265,13 @@ func (h *RegionGrpcHandler) ListRegions(ctx context.Context, req *tqdpb.ListRegi
 func (h *RegionGrpcHandler) ListAdminRegionsByLayer(ctx context.Context, req *tqdpb.ListAdminRegionsByLayerRequest) (*tqdpb.ListRegionsResponse, error) {
 	if req.LayerId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "layer_id is required")
+	}
+
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListRegionsResponse{}, nil
 	}
 
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, req.OrderBy)
@@ -276,6 +310,10 @@ func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteR
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDRegionDetail, req.Id), t.UnixMilli())
+
 	return &emptypb.Empty{}, nil
 }
 
@@ -297,6 +335,10 @@ func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, re
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDRegionDetail, req.RegionId), t.UnixMilli())
+
 	region, err := h.regionUsecase.GetByID(ctx, req.RegionId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -312,6 +354,13 @@ func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, re
 // =====================================================
 
 func (h *RegionGrpcHandler) ListClientRegions(ctx context.Context, req *tqdpb.ListClientRegionsRequest) (*tqdpb.ListRegionsResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListRegionsResponse{}, nil
+	}
+
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 
 	var bBox *usecase.BBox
@@ -348,6 +397,13 @@ func (h *RegionGrpcHandler) ListClientRegions(ctx context.Context, req *tqdpb.Li
 }
 
 func (h *RegionGrpcHandler) FindRegionByPoint(ctx context.Context, req *tqdpb.FindRegionByPointRequest) (*tqdpb.RegionResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.RegionResponse{}, nil
+	}
+
 	if req.Lat < -90 || req.Lat > 90 || req.Lng < -180 || req.Lng > 180 {
 		return nil, status.Error(codes.InvalidArgument, "invalid coordinates")
 	}
@@ -370,6 +426,13 @@ func (h *RegionGrpcHandler) FindRegionByPoint(ctx context.Context, req *tqdpb.Fi
 }
 
 func (h *RegionGrpcHandler) FindRegionsByBBox(ctx context.Context, req *tqdpb.FindRegionsByBBoxRequest) (*tqdpb.ListRegionsResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+	if !updated {
+		return &tqdpb.ListRegionsResponse{}, nil
+	}
+
 	if req.Bbox == nil || req.Bbox.MinLng > req.Bbox.MaxLng || req.Bbox.MinLat > req.Bbox.MaxLat {
 		return nil, status.Error(codes.InvalidArgument, "invalid bbox")
 	}

@@ -27,6 +27,7 @@ message GetFeaturesByPointRadiusRequest {
   int32 radius = 3;          // meters
   int32 limit = 4;           // max number of features (default 1000)
   int32 offset = 5;          // number of features to skip (default 0)
+  int64 timestamp = 6;
 }
 
 message GetFeaturesByPolygonRequest {
@@ -36,6 +37,7 @@ message GetFeaturesByPolygonRequest {
   
   int32 limit = 3;
   int32 offset = 4;
+  int64 timestamp = 5;
 }
 
 message Point {

@@ -129,6 +129,7 @@ message CreateLayerRequest {
   // Các layer cũ sẽ được đánh dấu legalStatus=replaced và lưu id layer mới (replacedByLayerId) để truy vết
   repeated uint64 replaceLayerIds = 25;
   optional uint64 familyId = 26; // FK → qh_layer_families (nhóm layer)
+  int64 timestamp = 27;
 }
 
 message UpdateLayerRequest {
@@ -161,27 +162,33 @@ message UpdateLayerRequest {
   optional uint64 familyId = 27; // Gán đổi nhóm; gửi 0 để gỡ gán (NULL)
   repeated int32 publishScopes = 28;
   optional uint64 replacedByLayerId = 29;
+  int64 timestamp = 30;
 }
 
 message UpdateLayerStatusRequest {
   uint64 id = 1;
   uint32 status = 2;                   // 1=draft, 10=active, 20=expired, 30=archived
+  int64 timestamp = 3;
 }
 
 message ToggleLayerBasicVisibilityRequest {
   uint64 id = 1;
+  int64 timestamp = 2;
 }
 
 message DeleteLayerRequest {
   uint64 id = 1;
+  int64 timestamp = 2;
 }
 
 message GetLayerRequest {
   uint64 id = 1;
+  int64 timestamp = 2;
 }
 
 message GetClientLayerRequest {
   uint64 id = 1;
+  int64 timestamp = 2;
 }
 
 message ListLayersRequest {
@@ -193,6 +200,7 @@ message ListLayersRequest {
   uint32 size = 6;
   optional string orderBy = 7;         // displayOrder, createdAt, name
   optional string orderDir = 8;        // asc, desc
+  int64 timestamp = 9;
 }
 
 message ListClientLayersRequest {
@@ -200,6 +208,7 @@ message ListClientLayersRequest {
   optional string search = 2;          // Tìm kiếm
   uint32 page = 3;
   uint32 size = 4;
+  int64 timestamp = 5;
 }
 
 message BuildPMTilesRequest {
