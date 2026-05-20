@@ -22,7 +22,7 @@ func RunSQL(db *gorm.DB, path string) {
 }
 
 func AutoMigrate() {
-	return
+	// return
 	// RunSQL(_db.DB, "infra/db/migrate.sql")
 	// RunSQL(_db.DB, "infra/db/migrate_user_info.sql")
 	_db.DB.AutoMigrate(

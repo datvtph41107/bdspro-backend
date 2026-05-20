@@ -14,7 +14,7 @@ import (
 const (
 	// TileSessionAESPrefix — ss:k:{sessionK} → sessionEncryptKey (AES base64).
 	TileSessionAESPrefix = "ss:k:"
-	TileSessionTTL       = 5 * time.Minute
+	TileSessionTTL       = 24 * time.Hour
 )
 
 func tileSessionAESKey(sessionK uint64) string {

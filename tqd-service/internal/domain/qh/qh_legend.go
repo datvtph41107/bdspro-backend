@@ -43,9 +43,13 @@ func IsValidGeometryType(t string) bool {
 type QHLayerLegend struct {
 	_models.BaseEntity
 
-	LayerID uint64 `gorm:"column:layer_id;not null;uniqueIndex:idx_legend_layer_label" json:"layerId"`
-	LabelID uint64 `gorm:"column:label_id;not null;uniqueIndex:idx_legend_layer_label" json:"labelId"`
-	Note    string `gorm:"type:text" json:"note,omitempty"`
+	LayerID     uint64     `gorm:"column:layer_id;not null;" json:"layerId"`
+	LandUseID   *uint64    `gorm:"column:land_use_id;index" json:"landUseId,omitempty"`
+	LandUse     *QHLandUse `gorm:"foreignKey:LandUseID" json:"landUse,omitempty"`
+	LabelID     uint64     `gorm:"column:label_id;" json:"labelId"`
+	Description string     `gorm:"type:text" json:"description,omitempty"`
+	Note        string     `gorm:"type:text" json:"note,omitempty"`
+	Color       string     `gorm:"type:varchar(10)" json:"color,omitempty"`
 
 	DisplayOrder int  `gorm:"default:0" json:"displayOrder"`
 	IsVisible    bool `gorm:"default:true" json:"isVisible"`
@@ -57,13 +61,14 @@ type QHLayerLegend struct {
 	IconURL         string `gorm:"type:text" json:"iconUrl,omitempty"`
 	ImageURL        string `gorm:"type:text" json:"imageUrl,omitempty"`
 
-	LandUseGroupID *uint64       `gorm:"column:land_use_group_id;index" json:"landUseGroupId,omitempty"`
-	LandUseGroup   *LandUseGroup `gorm:"foreignKey:LandUseGroupID" json:"landUseGroup,omitempty"`
-	Label          *QHLabel      `gorm:"foreignKey:LabelID" json:"label,omitempty"`
+	// Label *QHLabel `gorm:"foreignKey:LabelID" json:"label,omitempty"`
+
+	// LandUseGroupID *uint64       `gorm:"column:land_use_group_id;index" json:"landUseGroupId,omitempty"`
+	// LandUseGroup   *LandUseGroup `gorm:"foreignKey:LandUseGroupID" json:"landUseGroup,omitempty"`
 }
 
 func (QHLayerLegend) TableName() string {
-	return "qh_layer_legends"
+	return "qh_legends"
 }
 
 func (e *QHLayerLegend) GetLegendType() string {
@@ -81,16 +86,19 @@ func (e *QHLayerLegend) GetGeometryType() string {
 }
 
 func (e *QHLayerLegend) GetDisplayColor() string {
-	if e.Label != nil && e.Label.Color != "" {
-		return e.Label.Color
+	if e.Color != "" {
+		return e.Color
+	}
+	if e.LandUse != nil && e.LandUse.Color != "" {
+		return e.LandUse.Color
 	}
 	return "#CCCCCC"
 }
 
 func (e *QHLayerLegend) GetStrokeColor() string {
-	if e.Label != nil && e.Label.StrokeColor != "" {
-		return e.Label.StrokeColor
-	}
+	// if e.Label != nil && e.Label.StrokeColor != "" {
+	// 	return e.Label.StrokeColor
+	// }
 	return "#000000"
 }
 
@@ -98,8 +106,8 @@ func (e *QHLayerLegend) GetEffectiveStrokeDash() string {
 	if e.StrokeDashArray != "" {
 		return e.StrokeDashArray
 	}
-	if e.Label != nil {
-		return e.Label.StrokeDashArray
-	}
+	// if e.Label != nil {
+	// 	return e.Label.StrokeDashArray
+	// }
 	return ""
 }

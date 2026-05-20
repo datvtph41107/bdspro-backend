@@ -13,11 +13,11 @@ type QHLabel struct {
 	Description string `gorm:"type:text" json:"description"`
 
 	// Style
-	Color       string  `gorm:"type:varchar(7);default:'#CCCCCC'" json:"color"`
-	FillOpacity float64 `gorm:"default:0.6" json:"fillOpacity"`
-	StrokeColor     string `gorm:"type:varchar(7);default:'#000000'" json:"strokeColor"`
-	StrokeWidth     int    `gorm:"default:1" json:"strokeWidth"`
-	StrokeDashArray string `gorm:"type:varchar(50)" json:"strokeDashArray,omitempty"`
+	Color           string  `gorm:"type:varchar(7);default:'#CCCCCC'" json:"color"`
+	FillOpacity     float64 `gorm:"default:0.6" json:"fillOpacity"`
+	StrokeColor     string  `gorm:"type:varchar(7);default:'#000000'" json:"strokeColor"`
+	StrokeWidth     int     `gorm:"default:1" json:"strokeWidth"`
+	StrokeDashArray string  `gorm:"type:varchar(50)" json:"strokeDashArray,omitempty"`
 
 	// Display
 	DisplayOrder int  `gorm:"default:0;index" json:"displayOrder"`
@@ -28,8 +28,9 @@ type QHLabel struct {
 	RegionCount int64             `gorm:"default:0" json:"regionCount"`
 	Status      enums.LabelStatus `gorm:"default:10" json:"status"`
 
-	LandCodeID *uint64      `gorm:"index" json:"standardId,omitempty"`
-	LandCode   *LandUseCode `gorm:"-" json:"standard,omitempty"`
+	LandCodeID *uint64 `gorm:"index" json:"standardId,omitempty"`
+
+	// LandCode   *LandUseCode `gorm:"-" json:"standard,omitempty"`
 
 	SourceType  string `gorm:"type:varchar(50);default:'unknown'" json:"sourceType"`
 	SourceValue string `gorm:"type:varchar(255)" json:"sourceValue"`

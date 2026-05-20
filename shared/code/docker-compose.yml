@@ -321,6 +321,8 @@ services:
     container_name: qhpro_web
     ports:
       - "3108:80"
+    environment:
+      - NODE_ENV=develop
     volumes:
       - ${PWD}/build:/usr/share/nginx/html:ro
       - ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro

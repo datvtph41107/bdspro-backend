@@ -18,5 +18,5 @@ type Province struct {
 }
 
 func (Province) TableName() string {
-	return "provinces"
+	return "province_v2"
 }

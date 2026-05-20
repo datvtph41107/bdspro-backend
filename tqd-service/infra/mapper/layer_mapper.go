@@ -104,6 +104,7 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		TrustValue:      float64(layer.TrustValue),
 		FamilyId:        layer.FamilyID,
 		PublishScopes:   layer.PublishScopes,
+		LegalDoc:        layer.LegalDoc,
 	}
 	if layer.ReplacedByID != nil {
 		rid := *layer.ReplacedByID

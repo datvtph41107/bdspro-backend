@@ -107,6 +107,7 @@ func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) er
 		"trust_value":    layer.TrustValue,
 		"family_id":      layer.FamilyID,
 		"publish_scopes": layer.PublishScopes,
+		"legal_doc":      layer.LegalDoc,
 	}
 
 	return r.db.WithContext(ctx).

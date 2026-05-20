@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS qh_layer_legends;
+DROP TABLE IF EXISTS qh_legends;

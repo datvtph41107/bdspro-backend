@@ -13,17 +13,17 @@ import (
 )
 
 type QHLayerLegendUpdateInput struct {
-	LayerID        *uint64
-	LabelID        *uint64
-	Note           *string
-	DisplayOrder   *int
-	IsVisible      *bool
-	LegendType     *string
-	GeometryType   *string
+	LayerID         *uint64
+	LabelID         *uint64
+	Note            *string
+	DisplayOrder    *int
+	IsVisible       *bool
+	LegendType      *string
+	GeometryType    *string
 	StrokeDashArray *string
-	IconURL        *string
-	ImageURL       *string
-	LandUseGroupID *uint64
+	IconURL         *string
+	ImageURL        *string
+	LandUseGroupID  *uint64
 }
 
 type QHLayerLegendUsecase interface {
@@ -40,20 +40,20 @@ type qhLayerLegendUsecase struct {
 	repo      repo.QHLayerLegendRepository
 	layerRepo repo.LayerRepository
 	labelRepo repo.QHLabelRepository
-	groupRepo repo.LandUseGroupRepository
+	// groupRepo repo.LandUseGroupRepository
 }
 
 func NewQHLayerLegendUsecase(
 	r repo.QHLayerLegendRepository,
 	layerRepo repo.LayerRepository,
 	labelRepo repo.QHLabelRepository,
-	groupRepo repo.LandUseGroupRepository,
+	// groupRepo repo.LandUseGroupRepository,
 ) QHLayerLegendUsecase {
 	return &qhLayerLegendUsecase{
 		repo:      r,
 		layerRepo: layerRepo,
 		labelRepo: labelRepo,
-		groupRepo: groupRepo,
+		// groupRepo: groupRepo,
 	}
 }
 
@@ -96,13 +96,13 @@ func (u *qhLayerLegendUsecase) validateLandUseGroupID(ctx context.Context, group
 	if groupID == nil || *groupID == 0 {
 		return nil
 	}
-	g, err := u.groupRepo.GetByID(ctx, *groupID)
-	if err != nil {
-		return fmt.Errorf("get land use group: %w", err)
-	}
-	if g == nil {
-		return fmt.Errorf("land use group %d not found", *groupID)
-	}
+	// g, err := u.groupRepo.GetByID(ctx, *groupID)
+	// if err != nil {
+	// 	return fmt.Errorf("get land use group: %w", err)
+	// }
+	// if g == nil {
+	// 	return fmt.Errorf("land use group %d not found", *groupID)
+	// }
 	return nil
 }
 
@@ -120,19 +120,19 @@ func (u *qhLayerLegendUsecase) Create(ctx context.Context, row *qh_domain.QHLaye
 	if row == nil {
 		return nil, errors.New("payload is required")
 	}
-	if err := u.validateLayerAndLabel(ctx, row.LayerID, row.LabelID); err != nil {
-		return nil, err
-	}
-	if err := u.validateLandUseGroupID(ctx, row.LandUseGroupID); err != nil {
-		return nil, err
-	}
+	// if err := u.validateLayerAndLabel(ctx, row.LayerID, row.LabelID); err != nil {
+	// 	return nil, err
+	// }
+	// if err := u.validateLandUseGroupID(ctx, row.LandUseGroupID); err != nil {
+	// 	return nil, err
+	// }
 	if err := u.validateLegendTypes(row.LegendType, row.GeometryType); err != nil {
 		return nil, err
 	}
 	row.Note = strings.TrimSpace(row.Note)
-	if err := u.checkDuplicate(ctx, row.LayerID, row.LabelID, 0); err != nil {
-		return nil, err
-	}
+	// if err := u.checkDuplicate(ctx, row.LayerID, row.LabelID, 0); err != nil {
+	// 	return nil, err
+	// }
 	if err := u.repo.Create(ctx, row); err != nil {
 		return nil, fmt.Errorf("create layer legend: %w", err)
 	}
@@ -157,38 +157,38 @@ func (u *qhLayerLegendUsecase) BatchCreate(ctx context.Context, layerID uint64, 
 
 	var created []qh_domain.QHLayerLegend
 	var skipped []uint64
-	seen := make(map[uint64]bool)
+	// seen := make(map[uint64]bool)
 
 	for _, item := range items {
-		labelID := item.LabelID
-		if labelID == 0 || seen[labelID] {
-			skipped = append(skipped, labelID)
-			continue
-		}
-		seen[labelID] = true
+		// labelID := item.LabelID
+		// if labelID == 0 || seen[labelID] {
+		// 	skipped = append(skipped, labelID)
+		// 	continue
+		// }
+		// seen[labelID] = true
 
-		label, err := u.labelRepo.GetByID(ctx, labelID)
-		if err != nil || label == nil || label.DeletedAt != nil {
-			skipped = append(skipped, labelID)
-			continue
-		}
-		dup, _ := u.repo.GetByLayerAndLabel(ctx, layerID, labelID)
-		if dup != nil {
-			skipped = append(skipped, labelID)
-			continue
-		}
-		if err := u.validateLandUseGroupID(ctx, item.LandUseGroupID); err != nil {
-			skipped = append(skipped, labelID)
-			continue
-		}
-		if err := u.validateLegendTypes(item.LegendType, item.GeometryType); err != nil {
-			skipped = append(skipped, labelID)
-			continue
-		}
+		// label, err := u.labelRepo.GetByID(ctx, labelID)
+		// if err != nil || label == nil || label.DeletedAt != nil {
+		// 	skipped = append(skipped, labelID)
+		// 	continue
+		// }
+		// dup, _ := u.repo.GetByLayerAndLabel(ctx, layerID, labelID)
+		// if dup != nil {
+		// 	skipped = append(skipped, labelID)
+		// 	continue
+		// }
+		// if err := u.validateLandUseGroupID(ctx, item.LandUseGroupID); err != nil {
+		// 	skipped = append(skipped, labelID)
+		// 	continue
+		// }
+		// if err := u.validateLegendTypes(item.LegendType, item.GeometryType); err != nil {
+		// 	skipped = append(skipped, labelID)
+		// 	continue
+		// }
 
 		row := &qh_domain.QHLayerLegend{
-			LayerID:         layerID,
-			LabelID:         labelID,
+			LayerID: layerID,
+			// LabelID:         labelID,
 			Note:            strings.TrimSpace(item.Note),
 			DisplayOrder:    item.DisplayOrder,
 			IsVisible:       item.IsVisible,
@@ -197,12 +197,12 @@ func (u *qhLayerLegendUsecase) BatchCreate(ctx context.Context, layerID uint64, 
 			StrokeDashArray: item.StrokeDashArray,
 			IconURL:         item.IconURL,
 			ImageURL:        item.ImageURL,
-			LandUseGroupID:  item.LandUseGroupID,
+			// LandUseGroupID:  item.LandUseGroupID,
 		}
-		if err := u.repo.Create(ctx, row); err != nil {
-			skipped = append(skipped, labelID)
-			continue
-		}
+		// if err := u.repo.Create(ctx, row); err != nil {
+		// 	skipped = append(skipped, labelID)
+		// 	continue
+		// }
 		if loaded, err := u.repo.GetByID(ctx, row.ID); err == nil && loaded != nil {
 			created = append(created, *loaded)
 		} else {
@@ -228,22 +228,22 @@ func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 	}
 
 	layerID := existing.LayerID
-	labelID := existing.LabelID
+	// labelID := existing.LabelID
 	if in.LayerID != nil {
 		layerID = *in.LayerID
 	}
-	if in.LabelID != nil {
-		labelID = *in.LabelID
-	}
+	// if in.LabelID != nil {
+	// 	labelID = *in.LabelID
+	// }
 	if in.LayerID != nil || in.LabelID != nil {
-		if err := u.validateLayerAndLabel(ctx, layerID, labelID); err != nil {
-			return nil, err
-		}
-		if err := u.checkDuplicate(ctx, layerID, labelID, id); err != nil {
-			return nil, err
-		}
+		// if err := u.validateLayerAndLabel(ctx, layerID, labelID); err != nil {
+		// 	return nil, err
+		// }
+		// if err := u.checkDuplicate(ctx, layerID, labelID, id); err != nil {
+		// 	return nil, err
+		// }
 		existing.LayerID = layerID
-		existing.LabelID = labelID
+		// existing.LabelID = labelID
 	}
 	if in.Note != nil {
 		existing.Note = strings.TrimSpace(*in.Note)
@@ -275,12 +275,12 @@ func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 	if in.ImageURL != nil {
 		existing.ImageURL = *in.ImageURL
 	}
-	if in.LandUseGroupID != nil {
-		if err := u.validateLandUseGroupID(ctx, in.LandUseGroupID); err != nil {
-			return nil, err
-		}
-		existing.LandUseGroupID = in.LandUseGroupID
-	}
+	// if in.LandUseGroupID != nil {
+	// 	if err := u.validateLandUseGroupID(ctx, in.LandUseGroupID); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	existing.LandUseGroupID = in.LandUseGroupID
+	// }
 
 	if err := u.repo.Update(ctx, existing); err != nil {
 		return nil, fmt.Errorf("update layer legend: %w", err)

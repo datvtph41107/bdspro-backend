@@ -51,6 +51,7 @@ type QHLayer struct {
 
 	LegalLevel  enums.LegalLevel `gorm:"default:0" json:"legalLevel"`
 	LegalNumber string           `gorm:"type:varchar(50)" json:"legalNumber,omitempty"` // số/ký hiệu văn bản
+	LegalDoc    string           `gorm:"type:text" json:"legalDoc,omitempty"`           // văn bản pháp lý (nội dung/mô tả)
 
 	AuthorityIssuringID *uint64              `gorm:"type:bigint" json:"authorityIssuring,omitempty"` // cơ quan ban hành
 	AuthorityIssuring   *QHAuthorityIssuring `gorm:"foreignKey:AuthorityIssuringID;references:ID"`
@@ -58,6 +59,8 @@ type QHLayer struct {
 
 	FamilyID *uint64        `gorm:"column:family_id;index" json:"familyId,omitempty"`
 	Family   *QHLayerFamily `gorm:"foreignKey:FamilyID;references:ID"`
+	ParentID *uint64        `gorm:"column:parent_id;index" json:"parentId,omitempty"`
+	Parent   *QHLayer       `gorm:"foreignKey:ParentID;references:ID"`
 }
 
 func (QHLayer) TableName() string {

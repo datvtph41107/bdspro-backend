@@ -322,10 +322,7 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 				r.display_name AS region_display_name,
 				'' AS region_land_use_code,
 				r.geometry AS region_geometry,
-				r.color_red,
-				r.color_green,
-				r.color_blue,
-
+				
 				l.name AS layer_name,
 				l.display_name AS layer_display_name,
 				l.type AS layer_type,
@@ -417,10 +414,6 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 			COALESCE(lb.name, 'Chưa phân loại') AS region_land_use_name,
 			'Đất khác' AS region_land_use_group,
 			lb.color AS region_land_use_color,
-
-			ri.color_red,
-			ri.color_green,
-			ri.color_blue,
 
 			ri.overlap_area_sqm,
 			ri.overlap_pct,

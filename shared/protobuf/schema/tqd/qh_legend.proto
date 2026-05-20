@@ -4,7 +4,7 @@ package tqdpb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "tqd/qh_layer_land_use_group.proto";
+import "tqd/qh_land_use.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -68,6 +68,8 @@ message CreateLayerLegendRequest {
   string iconUrl = 9;
   string imageUrl = 10;
   optional uint64 landUseGroupId = 11;
+  string description = 12;
+  string color = 13;
 }
 
 message BatchCreateLayerLegendItem {
@@ -81,6 +83,8 @@ message BatchCreateLayerLegendItem {
   string iconUrl = 8;
   string imageUrl = 9;
   optional uint64 landUseGroupId = 10;
+  string description = 11;
+  string color = 12;
 }
 
 message BatchCreateLayerLegendsRequest {
@@ -110,6 +114,8 @@ message UpdateLayerLegendRequest {
   optional string iconUrl = 10;
   optional string imageUrl = 11;
   optional uint64 landUseGroupId = 12;
+  string description = 13;
+  string color = 14;
 }
 
 message DeleteLayerLegendRequest {
@@ -148,6 +154,8 @@ message QHLayerLegendResponse {
   optional LegendLabelStyleInfo labelStyle = 14;
   string createdAt = 15;
   string updatedAt = 16;
+  string description = 17;
+  string color = 18;
 }
 
 message LegendLabelStyleInfo {

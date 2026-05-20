@@ -34,7 +34,7 @@ type layerUsecaseImpl struct {
 	regionRepo       repo.RegionRepository
 	labelRepo        repo.QHLabelRepository
 	legendRepo       repo.QHLayerLegendRepository
-	landUseGroupRepo repo.QHLayerLandUseGroupRepository
+	landUseGroupRepo repo.QHLandUseRepository
 	buildTracker     *buildTracker
 }
 
@@ -43,7 +43,7 @@ func NewLayerUsecase(
 	regionRepo repo.RegionRepository,
 	labelRepo repo.QHLabelRepository,
 	legendRepo repo.QHLayerLegendRepository,
-	landUseGroupRepo repo.QHLayerLandUseGroupRepository,
+	landUseGroupRepo repo.QHLandUseRepository,
 ) LayerUsecase {
 	return &layerUsecaseImpl{
 		layerRepo:        layerRepo,

@@ -37,8 +37,8 @@ type InitialApp struct {
 	QHLabelGrpcHandler             *handler_grpc.QHLabelGrpcHandler
 	QHAuthorityIssuringGrpcHandler *handler_grpc.QHAuthorityIssuringGrpcHandler
 	QHLayerFamilyGrpcHandler       *handler_grpc.QHLayerFamilyGrpcHandler
-	QHLayerLegendGrpcHandler          *handler_grpc.QHLayerLegendGrpcHandler
-	QHLayerLandUseGroupGrpcHandler *handler_grpc.QHLayerLandUseGroupGrpcHandler
+	QHLayerLegendGrpcHandler       *handler_grpc.QHLayerLegendGrpcHandler
+	QHLandUseGrpcHandler           *handler_grpc.QHLandUseGrpcHandler
 	RegionGrpcHandler              *handler_grpc.RegionGrpcHandler
 	ReportGrpcHandler              *handler_grpc.ReportGrpcHandler
 	SubscriptionGrpcHandler        *handler_grpc.SubscriptionGrpcHandler
@@ -76,7 +76,7 @@ func NewApp(
 	qhAuthorityIssuringGrpcHandler *handler_grpc.QHAuthorityIssuringGrpcHandler,
 	qhLayerFamilyGrpcHandler *handler_grpc.QHLayerFamilyGrpcHandler,
 	qhLayerLegendGrpcHandler *handler_grpc.QHLayerLegendGrpcHandler,
-	qhLayerLandUseGroupGrpcHandler *handler_grpc.QHLayerLandUseGroupGrpcHandler,
+	qhLandUseGrpcHandler *handler_grpc.QHLandUseGrpcHandler,
 	pa *handler_grpc.ParcelGrpcHandler,
 	regionGrpcHandler *handler_grpc.RegionGrpcHandler,
 	reportGrpcHandler *handler_grpc.ReportGrpcHandler,
@@ -113,8 +113,8 @@ func NewApp(
 		QHLabelGrpcHandler:             qhLabelGrpcHandler,
 		QHAuthorityIssuringGrpcHandler: qhAuthorityIssuringGrpcHandler,
 		QHLayerFamilyGrpcHandler:       qhLayerFamilyGrpcHandler,
-		QHLayerLegendGrpcHandler:          qhLayerLegendGrpcHandler,
-		QHLayerLandUseGroupGrpcHandler: qhLayerLandUseGroupGrpcHandler,
+		QHLayerLegendGrpcHandler:       qhLayerLegendGrpcHandler,
+		QHLandUseGrpcHandler:           qhLandUseGrpcHandler,
 		RegionGrpcHandler:              regionGrpcHandler,
 		ReportGrpcHandler:              reportGrpcHandler,
 		SubscriptionGrpcHandler:        subscriptionGrpcHandler,

@@ -21,5 +21,5 @@ type Ward struct {
 }
 
 func (Ward) TableName() string {
-	return "wards"
+	return "ward_v2"
 }

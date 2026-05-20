@@ -4,15 +4,19 @@ package enums
 type LayerType uint32
 
 const (
-	LayerTypeMasterPlan     LayerType = 1 // Quy hoạch tổng thể
-	LayerTypeZoning         LayerType = 2 // Quy hoạch phân khu
-	LayerTypeLandUse        LayerType = 3 // Quy hoạch sử dụng đất
-	LayerTypeInfrastructure LayerType = 4 // Quy hoạch hạ tầng
-	LayerTypeEnvironmental  LayerType = 5 // Quy hoạch môi trường
+	LayerTypeMasterPlan     LayerType = 10 // Quy hoạch tổng thể
+	LayerTypeZoning         LayerType = 20 // Quy hoạch phân khu
+	LayerTypeLandUse        LayerType = 30 // Quy hoạch sử dụng đất
+	LayerTypeInfrastructure LayerType = 40 // Quy hoạch hạ tầng
+	LayerTypeEnvironmental  LayerType = 50 // Quy hoạch môi trường
 )
 
 func (t LayerType) IsValid() bool {
-	return t >= 1 && t <= 5
+	return t == LayerTypeMasterPlan ||
+		t == LayerTypeZoning ||
+		t == LayerTypeLandUse ||
+		t == LayerTypeInfrastructure ||
+		t == LayerTypeEnvironmental
 }
 
 func (t LayerType) String() string {

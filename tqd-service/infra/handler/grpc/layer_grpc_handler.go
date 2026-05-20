@@ -102,6 +102,12 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 		fid := *req.FamilyId
 		layer.FamilyID = &fid
 	}
+	if req.LegalDoc != "" {
+		layer.LegalDoc = req.LegalDoc
+	}
+	if len(req.PublishScopes) > 0 {
+		layer.PublishScopes = pq.Int32Array(req.PublishScopes)
+	}
 
 	// Set status if provided
 	if req.Status != nil {
@@ -199,6 +205,9 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 	if req.PublishScopes != nil {
 		existing.PublishScopes = pq.Int32Array(req.PublishScopes)
+	}
+	if req.LegalDoc != nil {
+		existing.LegalDoc = *req.LegalDoc
 	}
 
 	updated, err := h.layerUsecase.Update(ctx, req.Id, existing, userID)

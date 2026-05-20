@@ -130,6 +130,7 @@ message CreateLayerRequest {
   repeated uint64 replaceLayerIds = 25;
   optional uint64 familyId = 26; // FK → qh_layer_families (nhóm layer)
   int64 timestamp = 27;
+  repeated int32 publishScopes = 28; // phạm vi áp dụng
 }
 
 message UpdateLayerRequest {
