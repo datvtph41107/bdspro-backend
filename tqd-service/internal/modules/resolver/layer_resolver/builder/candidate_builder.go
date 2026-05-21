@@ -3,7 +3,6 @@ package builder
 import (
 	_utils "common/utils"
 	"tqd/internal/dto"
-	"tqd/internal/enums"
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
@@ -35,7 +34,7 @@ func (b *CandidateBuilder) BuildFromRow(row dto.ParcelLayerRowV2) *types.LayerCa
 		LandUseCode:    row.RegionLandUseCode,
 		LandUseName:    row.RegionLandUseName,
 		LandUseColor:   row.LabelColor,
-		GroupCode:      enums.GroupCode(row.LabelGroupCode).String(),
+		GroupCode:      row.LabelGroupCode,
 		GroupName:      row.GroupName,
 		GroupColor:     row.GroupColor,
 		CanBuild:       row.LabelCanBuild,

@@ -38,6 +38,9 @@ type QHLabel struct {
 	StandardAt      *time.Time `gorm:"column:standard_at" json:"standardAt,omitempty"`
 	ClearStandardAt bool       `gorm:"-" json:"-"`
 
+	LandUseID *uint64 `gorm:"-:migration;->;column:land_use_id" json:"landUseId,omitempty"`
+	LegendID  *uint64 `gorm:"-:migration;->;column:legend_id" json:"legendId,omitempty"`
+
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 	DeletedAt *time.Time `gorm:"index" json:"deletedAt,omitempty"`

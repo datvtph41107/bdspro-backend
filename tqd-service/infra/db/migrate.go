@@ -2,6 +2,7 @@ package db
 
 import (
 	"log"
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 
 	_db "common/db"
@@ -52,42 +53,42 @@ func AutoMigrate() {
 	EnsurePostGIS()
 	_db.DB.AutoMigrate(
 		// Import error log — bảng theo dõi các batch insert thất bại
-		// &qh_domain.QHRegionImportErrorLog{},
+		&qh_domain.QHRegionImportErrorLog{},
 
-		// // POI related models
-		// &domain.POI{},
-		// &domain.PoiCategory{},
-		// &domain.OpenHour{},
-		// &domain.POIMedia{},
-		// // &domain.Feature{},
+		// POI related models
+		&domain.POI{},
+		&domain.PoiCategory{},
+		&domain.OpenHour{},
+		&domain.POIMedia{},
+		// &domain.Feature{},
 
-		// // Amenity model
-		// &domain.Amenity{},
+		// Amenity model
+		&domain.Amenity{},
 
-		// // Contact Label model
-		// &domain.ContactLabel{},
-		// &domain.DirectoryCategory{},
-		// &domain.DirectorySource{},
-		// &domain.DirectorySupplier{},
-		// &qh_domain.Parcel{},
-		// &qh_domain.QHParcelInfo{},
-		// &qh_domain.QHLayer{},
-		// &qh_domain.QHRegion{},
-		// // &qh_domain.QHRegionLabel{},
-		// &qh_domain.QHLabel{},
-		// &qh_domain.QHLabelLayer{},
-		// &qh_domain.QHShape{},
-		// &qh_domain.QHLayerFamily{},
-		// &qh_domain.QHLayerLegend{},
+		// Contact Label model
+		&domain.ContactLabel{},
+		&domain.DirectoryCategory{},
+		&domain.DirectorySource{},
+		&domain.DirectorySupplier{},
+		&qh_domain.Parcel{},
+		&qh_domain.QHParcelInfo{},
+		&qh_domain.QHLayer{},
+		&qh_domain.QHRegion{},
+		// &qh_domain.QHRegionLabel{},
+		&qh_domain.QHLabel{},
+		&qh_domain.QHLabelLayer{},
+		&qh_domain.QHShape{},
+		&qh_domain.QHLayerFamily{},
+		&qh_domain.QHLayerLegend{},
 		// &qh_domain.LandUseCode{},
 		// &qh_domain.LandUseGroup{},
-		// &domain.Province{},
-		// &domain.Ward{},
-		// &qh_domain.QHLayerLegal{},
+		&domain.Province{},
+		&domain.Ward{},
+		&qh_domain.QHLayerLegal{},
 		&qh_domain.QHLandUse{},
 		&qh_domain.QHLayerResolverConfig{},
-	// &qh_domain.QHLayerLandUse{},
-	// &qh_domain.QHAuthorityIssuring{},
-	// &qh_domain.QHLayerLegend{},
+		&qh_domain.QHLayerLandUse{},
+		&qh_domain.QHAuthorityIssuring{},
+		&qh_domain.QHLayerLegend{},
 	)
 }

@@ -42,6 +42,8 @@ type RegionRepository interface {
 	// UpdateLabelForRegionsWhereLabelIn set label_id cho mọi region đang trỏ tới một trong labelIDs (một query).
 	UpdateLabelForRegionsWhereLabelIn(ctx context.Context, labelIDs []uint64, newLabelID uint64) error
 	UpdateLabelForRegion(ctx context.Context, regionID uint64, labelID uint64) error
+	GetSyncReferenceByLayerLabel(ctx context.Context, layerID, labelID uint64) (*RegionSyncReference, error)
+	SyncLandUseAndLegendByLayerLabel(ctx context.Context, layerID, labelID, landUseID, legendID uint64) (int64, error)
 
 	// Statistics
 	GetStatsByLayer(ctx context.Context, layerID uint64) (*RegionStats, error)
@@ -90,6 +92,11 @@ type RegionStats struct {
 	MinAreaHa    float64       `json:"minAreaHa"`
 	MaxAreaHa    float64       `json:"maxAreaHa"`
 	LandUseStats []LandUseStat `json:"landUseStats"`
+}
+
+type RegionSyncReference struct {
+	LegendID  uint64
+	LandUseID uint64
 }
 
 type LandUseStat struct {

@@ -84,6 +84,11 @@ func (m *MockQHLabelRepository) EnsureLayerLink(ctx context.Context, labelID, la
 	return args.Error(0)
 }
 
+func (m *MockQHLabelRepository) UpdateLayerLinkMetadata(ctx context.Context, labelID, layerID uint64, landUseID, legendID *uint64) error {
+	args := m.Called(ctx, labelID, layerID, landUseID, legendID)
+	return args.Error(0)
+}
+
 func (m *MockQHLabelRepository) EnsureLayerLinksBatch(ctx context.Context, layerID uint64, labelIDs []uint64) error {
 	args := m.Called(ctx, layerID, labelIDs)
 	return args.Error(0)

@@ -15,6 +15,7 @@ type QHLabelUsecase interface {
 	// Admin Operations
 	Create(ctx context.Context, label *qh_domain.QHLabel) (*qh_domain.QHLabel, error)
 	Update(ctx context.Context, id uint64, label *qh_domain.QHLabel) (*qh_domain.QHLabel, error)
+	UpdateLayerLinkMetadata(ctx context.Context, labelID, layerID uint64, landUseID, legendID *uint64) error
 	Delete(ctx context.Context, id uint64) error
 	BatchDelete(ctx context.Context, ids []uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error)
@@ -120,6 +121,26 @@ func (u *qhLabelUsecaseImpl) Update(ctx context.Context, id uint64, label *qh_do
 		return nil, fmt.Errorf("update label failed: %w", err)
 	}
 	return existing, nil
+}
+
+func (u *qhLabelUsecaseImpl) UpdateLayerLinkMetadata(ctx context.Context, labelID, layerID uint64, landUseID, legendID *uint64) error {
+	if labelID == 0 {
+		return errors.New("labelId is required")
+	}
+	if layerID == 0 {
+		return errors.New("layerId is required")
+	}
+	existing, err := u.labelRepo.GetByID(ctx, labelID)
+	if err != nil {
+		return fmt.Errorf("get label failed: %w", err)
+	}
+	if existing == nil {
+		return fmt.Errorf("label %d not found", labelID)
+	}
+	if err := u.labelRepo.UpdateLayerLinkMetadata(ctx, labelID, layerID, landUseID, legendID); err != nil {
+		return fmt.Errorf("update label layer metadata failed: %w", err)
+	}
+	return nil
 }
 
 func (u *qhLabelUsecaseImpl) Delete(ctx context.Context, id uint64) error {

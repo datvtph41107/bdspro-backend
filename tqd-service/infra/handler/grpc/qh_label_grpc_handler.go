@@ -22,12 +22,13 @@ import (
 // QHLabelGrpcHandler xử lý gRPC cho QHLabelService
 type QHLabelGrpcHandler struct {
 	tqdpb.UnimplementedQHLabelServiceServer
-	labelUsecase usecase.QHLabelUsecase
-	SyncProvider *_provider.SyncProvider
+	labelUsecase  usecase.QHLabelUsecase
+	legendUsecase usecase.QHLayerLegendUsecase
+	SyncProvider  *_provider.SyncProvider
 }
 
-func NewQHLabelGrpcHandler(labelUsecase usecase.QHLabelUsecase, syncProvider *_provider.SyncProvider) *QHLabelGrpcHandler {
-	return &QHLabelGrpcHandler{labelUsecase: labelUsecase, SyncProvider: syncProvider}
+func NewQHLabelGrpcHandler(labelUsecase usecase.QHLabelUsecase, legendUsecase usecase.QHLayerLegendUsecase, syncProvider *_provider.SyncProvider) *QHLabelGrpcHandler {
+	return &QHLabelGrpcHandler{labelUsecase: labelUsecase, legendUsecase: legendUsecase, SyncProvider: syncProvider}
 }
 
 // =====================================================
@@ -44,19 +45,19 @@ func (h *QHLabelGrpcHandler) CreateLabel(ctx context.Context, req *tqdpb.CreateL
 	}
 
 	label := &qh_domain.QHLabel{
-		LayerID:      req.LayerId,
-		Name:         req.Name,
-		DisplayName:  req.DisplayName,
-		Description:  req.Description,
-		Color:        req.Color,
-		FillOpacity:  req.FillOpacity,
+		LayerID:         req.LayerId,
+		Name:            req.Name,
+		DisplayName:     req.DisplayName,
+		Description:     req.Description,
+		Color:           req.Color,
+		FillOpacity:     req.FillOpacity,
 		StrokeColor:     req.StrokeColor,
 		StrokeWidth:     int(req.StrokeWidth),
 		StrokeDashArray: req.StrokeDashArray,
 		DisplayOrder:    int(req.DisplayOrder),
-		IsVisible:    req.IsVisible,
-		MinZoom:      int(req.MinZoom),
-		MaxZoom:      int(req.MaxZoom),
+		IsVisible:       req.IsVisible,
+		MinZoom:         int(req.MinZoom),
+		MaxZoom:         int(req.MaxZoom),
 	}
 
 	// Set status from request or default to active
@@ -118,18 +119,18 @@ func (h *QHLabelGrpcHandler) BatchCreateLabels(ctx context.Context, req *tqdpb.B
 			continue
 		}
 		l := &qh_domain.QHLabel{
-			Name:         it.Name,
-			DisplayName:  it.DisplayName,
-			Description:  it.Description,
-			Color:        it.Color,
-			FillOpacity:  it.FillOpacity,
+			Name:            it.Name,
+			DisplayName:     it.DisplayName,
+			Description:     it.Description,
+			Color:           it.Color,
+			FillOpacity:     it.FillOpacity,
 			StrokeColor:     it.StrokeColor,
 			StrokeWidth:     int(it.StrokeWidth),
 			StrokeDashArray: it.StrokeDashArray,
 			DisplayOrder:    int(it.DisplayOrder),
-			IsVisible:    it.IsVisible,
-			MinZoom:      int(it.MinZoom),
-			MaxZoom:      int(it.MaxZoom),
+			IsVisible:       it.IsVisible,
+			MinZoom:         int(it.MinZoom),
+			MaxZoom:         int(it.MaxZoom),
 		}
 		if it.Status != nil {
 			l.Status = enums.LabelStatus(*it.Status)
@@ -254,11 +255,23 @@ func (h *QHLabelGrpcHandler) UpdateLabel(ctx context.Context, req *tqdpb.UpdateL
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	if req.LayerId != nil && *req.LayerId > 0 {
+		if err := h.labelUsecase.UpdateLayerLinkMetadata(ctx, req.Id, *req.LayerId, req.LandUseId, req.LegendId); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
 	t := time.Now()
 	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
 	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, req.Id), t.UnixMilli())
 
-	return toQHLabelResponse(result), nil
+	resp := toQHLabelResponse(result)
+	if req.LayerId != nil && *req.LayerId > 0 {
+		resp.LayerId = *req.LayerId
+		resp.LandUseId = req.LandUseId
+		resp.LegendId = req.LegendId
+	}
+	return resp, nil
 }
 
 // DeleteLabel - Xóa mềm label
@@ -321,18 +334,18 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 	}
 
 	label := &qh_domain.QHLabel{
-		Name:         nl.Name,
-		DisplayName:  nl.DisplayName,
-		Description:  nl.Description,
-		Color:        nl.Color,
-		FillOpacity:  nl.FillOpacity,
+		Name:            nl.Name,
+		DisplayName:     nl.DisplayName,
+		Description:     nl.Description,
+		Color:           nl.Color,
+		FillOpacity:     nl.FillOpacity,
 		StrokeColor:     nl.StrokeColor,
 		StrokeWidth:     int(nl.StrokeWidth),
 		StrokeDashArray: nl.StrokeDashArray,
 		DisplayOrder:    int(nl.DisplayOrder),
-		IsVisible:    nl.IsVisible,
-		MinZoom:      int(nl.MinZoom),
-		MaxZoom:      int(nl.MaxZoom),
+		IsVisible:       nl.IsVisible,
+		MinZoom:         int(nl.MinZoom),
+		MaxZoom:         int(nl.MaxZoom),
 	}
 	if nl.Status != nil {
 		label.Status = enums.LabelStatus(*nl.Status)
@@ -442,6 +455,19 @@ func (h *QHLabelGrpcHandler) ListLabelsByLayer(ctx context.Context, req *tqdpb.L
 	}, nil
 }
 
+// buildLegendMapByLayer trả về map labelID -> legend cho một layer.
+func (h *QHLabelGrpcHandler) buildLegendMapByLayer(ctx context.Context, layerID uint64) (map[uint64]*qh_domain.QHLayerLegend, error) {
+	legends, err := h.legendUsecase.ListAllByLayer(ctx, layerID)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[uint64]*qh_domain.QHLayerLegend, len(legends))
+	for i := range legends {
+		m[legends[i].LabelID] = &legends[i]
+	}
+	return m, nil
+}
+
 // =====================================================
 // CLIENT APIS
 // =====================================================
@@ -513,25 +539,27 @@ func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {
 	}
 
 	resp := &tqdpb.QHLabelResponse{
-		Id:           l.ID,
-		LayerId:      l.LayerID,
-		Name:         l.Name,
-		DisplayName:  l.DisplayName,
-		Description:  l.Description,
-		Color:        l.Color,
-		FillOpacity:  l.FillOpacity,
+		Id:              l.ID,
+		LayerId:         l.LayerID,
+		Name:            l.Name,
+		DisplayName:     l.DisplayName,
+		Description:     l.Description,
+		Color:           l.Color,
+		FillOpacity:     l.FillOpacity,
 		StrokeColor:     l.StrokeColor,
 		StrokeWidth:     int32(l.StrokeWidth),
 		StrokeDashArray: l.StrokeDashArray,
 		DisplayOrder:    int32(l.DisplayOrder),
-		IsVisible:    l.IsVisible,
-		RegionCount:  l.RegionCount,
-		MinZoom:      int32(l.MinZoom),
-		MaxZoom:      int32(l.MaxZoom),
-		Status:       uint32(l.Status),
-		CreatedAt:    _utils.FormatTimeToString(&l.CreatedAt),
-		UpdatedAt:    _utils.FormatTimeToString(&l.UpdatedAt),
+		IsVisible:       l.IsVisible,
+		RegionCount:     l.RegionCount,
+		MinZoom:         int32(l.MinZoom),
+		MaxZoom:         int32(l.MaxZoom),
+		Status:          uint32(l.Status),
+		CreatedAt:       _utils.FormatTimeToString(&l.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(&l.UpdatedAt),
 	}
+	resp.LandUseId = l.LandUseID
+	resp.LegendId = l.LegendID
 	if l.StandardAt != nil {
 		resp.StandardAt = _utils.FormatTimeToString(l.StandardAt)
 	}

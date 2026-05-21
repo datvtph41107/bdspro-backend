@@ -32,7 +32,7 @@ redis:
 
 layer:
     # Base URL configuration
-    base_url: "ciproto://localhost:8032"
+    base_url: "ciproto://14.225.210.29:8032"
 
     # Default style templates
     default_styles:
@@ -51,6 +51,20 @@ layer:
               paint:
                   line-color: ["get", "label_stroke_color"]
                   line-width: 1
+              source: "{sourceCode}"
+              source-layer: "{sourceCode}"
+            - id: "{sourceCode}_label"
+              type: "symbol"
+              maxzoom: 22
+              layout:
+                  text-field: ["get", "name"]
+                  text-size: 12
+                  text-allow-overlap: false
+                  text-padding: 12
+              paint:
+                  text-color: "#ff0000"
+                  text-halo-color: "#ffffff"
+                  text-halo-width: 2
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
 

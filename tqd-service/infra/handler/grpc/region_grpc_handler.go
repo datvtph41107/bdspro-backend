@@ -317,6 +317,37 @@ func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteR
 	return &emptypb.Empty{}, nil
 }
 
+// SyncRegion — POST /v2/tqd/admin/regions/sync-region — Đồng bộ landUseId/legendId cho regions theo layerId và labelId.
+func (h *RegionGrpcHandler) SyncRegion(ctx context.Context, req *tqdpb.SyncRegionRequest) (*tqdpb.SyncRegionResponse, error) {
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	if req.LabelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "labelId is required")
+	}
+
+	log.Printf("[SyncRegion] LayerID: %d, LabelID: %d", req.LayerId, req.LabelId)
+
+	result, err := h.regionUsecase.SyncRegion(ctx, req.LayerId, req.LabelId)
+	if err != nil {
+		if errors.Is(err, usecase.ErrLayerNotFound) || strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDRegionList, 0), t.UnixMilli())
+
+	return &tqdpb.SyncRegionResponse{
+		LayerId:   result.LayerID,
+		LabelId:   result.LabelID,
+		LandUseId: result.LandUseID,
+		LegendId:  result.LegendID,
+		Total:     result.SyncedCount,
+	}, nil
+}
+
 func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, req *tqdpb.UpdateProcessingStatusRequest) (*tqdpb.RegionResponse, error) {
 	if req.RegionId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "regionId is required")

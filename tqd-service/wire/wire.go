@@ -22,6 +22,7 @@ import (
 	tqd_internal_modules_resolver_layer_resolver_builder "tqd/internal/modules/resolver/layer_resolver/builder"
 	tqd_internal_modules_resolver_layer_resolver_db "tqd/internal/modules/resolver/layer_resolver/db"
 	tqd_internal_modules_resolver_layer_resolver_engine "tqd/internal/modules/resolver/layer_resolver/engine"
+	tqd_internal_modules_resolver_layer_resolver_engine_parcel_engine "tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
 	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_map "tqd/map"
@@ -107,6 +108,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewOpenHourUsecase,
 	tqd_infra_handler_http.NewPOIHTTPHandler,
 	tqd_infra_postgres.NewPOIRepo,
+	tqd_internal_modules_resolver_layer_resolver_engine_parcel_engine.NewParcelEngine,
 	tqd_infra_handler_grpc.NewParcelGrpcHandler,
 	tqd_infra_mapper.NewParcelMapper,
 	tqd_infra_postgres.NewParcelPostgres,

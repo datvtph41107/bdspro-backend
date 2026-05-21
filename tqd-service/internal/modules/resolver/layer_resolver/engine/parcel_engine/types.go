@@ -34,7 +34,7 @@ type UnifiedRow struct {
 	LabelName           string
 	LabelDisplayName    string
 	LabelColor          string
-	LabelGroupCode      uint32
+	LabelGroupCode      string
 	LabelCanBuild       bool
 	LabelPriority       int
 	LabelBuildCondition string
@@ -183,13 +183,13 @@ type DocumentInfo struct {
 }
 
 type LabelDetail struct {
-	ID          uint64
-	Code        string
-	Name        string
-	Color       string
-	Ratio       float64
-	AreaSqm     float64
-	Regions     []*RegionDetail
+	ID      uint64
+	Code    string
+	Name    string
+	Color   string
+	Ratio   float64
+	AreaSqm float64
+	Regions []*RegionDetail
 }
 
 type RegionDetail struct {
@@ -261,10 +261,10 @@ type EngineConfig struct {
 	DefaultPriority    int
 
 	// Conflict labels
-	ConflictType            string
-	ConflictSeverity        string
-	ConflictRecommendation  string
-	ConflictActionRequired  string
+	ConflictType           string
+	ConflictSeverity       string
+	ConflictRecommendation string
+	ConflictActionRequired string
 
 	// Warning messages
 	WarningOverlapExceeded string
@@ -272,16 +272,16 @@ type EngineConfig struct {
 	WarningConflict        string
 
 	// Assess messages
-	NoPlanningImpactMsg     string
-	NoSignificantImpactMsg  string
+	NoPlanningImpactMsg    string
+	NoSignificantImpactMsg string
 
 	// Land type display names (key: landTypeId)
 	LandTypeNames map[uint64]string
 
 	// Build status labels (for old AssessEngine compatibility)
-	StatusProhibited   string
-	StatusConditional  string
-	StatusAllowed      string
+	StatusProhibited     string
+	StatusConditional    string
+	StatusAllowed        string
 	ConflictStatusSuffix string
 
 	// Conflict summary suffix
@@ -303,32 +303,32 @@ func DefaultEngineConfig() *EngineConfig {
 	}
 
 	return &EngineConfig{
-		LegalWeight:          types.DefaultLegalWeight,
-		PriorityWeight:       types.DefaultPriorityWeight,
-		AreaWeight:           types.DefaultAreaWeight,
-		LegalScores:          types.DefaultLegalScores,
-		ConflictMatrix:       make(map[string]map[string]bool),
-		DefaultGroupPriority: make(map[string]int),
-		LandUseRiskWeights:   riskWeights,
-		DefaultRiskWeight:    &LandUseRiskWeight{Multiplier: types.DefaultRiskWeightValue.Multiplier, Label: types.DefaultRiskWeightValue.Label},
-		MultiLayerPenalty:    types.DefaultMultiLayerPenaltyValue,
-		RiskThresholds:       thresholds,
-		DefaultPriority:      types.DefaultPriorityValue,
-		ConflictType:            types.DefaultConflictType,
-		ConflictSeverity:        types.DefaultConflictSeverity,
-		ConflictRecommendation:  types.DefaultConflictRecommendation,
-		ConflictActionRequired:  types.DefaultConflictActionRequired,
-		WarningOverlapExceeded:  types.DefaultWarningOverlapExceeded,
-		WarningMultiLayer:       types.DefaultWarningMultiLayer,
-		WarningConflict:         types.DefaultWarningConflict,
-		NoPlanningImpactMsg:     types.DefaultNoPlanningImpactMsg,
-		NoSignificantImpactMsg:  types.DefaultNoSignificantImpactMsg,
-		LandTypeNames:           landTypes,
-		StatusProhibited:        types.DefaultStatusProhibited,
-		StatusConditional:       types.DefaultStatusConditional,
-		StatusAllowed:           types.DefaultStatusAllowed,
-		ConflictStatusSuffix:    types.DefaultConflictStatusSuffix,
-		ConflictSummarySuffix:   types.DefaultConflictSummarySuffix,
+		LegalWeight:            types.DefaultLegalWeight,
+		PriorityWeight:         types.DefaultPriorityWeight,
+		AreaWeight:             types.DefaultAreaWeight,
+		LegalScores:            types.DefaultLegalScores,
+		ConflictMatrix:         make(map[string]map[string]bool),
+		DefaultGroupPriority:   make(map[string]int),
+		LandUseRiskWeights:     riskWeights,
+		DefaultRiskWeight:      &LandUseRiskWeight{Multiplier: types.DefaultRiskWeightValue.Multiplier, Label: types.DefaultRiskWeightValue.Label},
+		MultiLayerPenalty:      types.DefaultMultiLayerPenaltyValue,
+		RiskThresholds:         thresholds,
+		DefaultPriority:        types.DefaultPriorityValue,
+		ConflictType:           types.DefaultConflictType,
+		ConflictSeverity:       types.DefaultConflictSeverity,
+		ConflictRecommendation: types.DefaultConflictRecommendation,
+		ConflictActionRequired: types.DefaultConflictActionRequired,
+		WarningOverlapExceeded: types.DefaultWarningOverlapExceeded,
+		WarningMultiLayer:      types.DefaultWarningMultiLayer,
+		WarningConflict:        types.DefaultWarningConflict,
+		NoPlanningImpactMsg:    types.DefaultNoPlanningImpactMsg,
+		NoSignificantImpactMsg: types.DefaultNoSignificantImpactMsg,
+		LandTypeNames:          landTypes,
+		StatusProhibited:       types.DefaultStatusProhibited,
+		StatusConditional:      types.DefaultStatusConditional,
+		StatusAllowed:          types.DefaultStatusAllowed,
+		ConflictStatusSuffix:   types.DefaultConflictStatusSuffix,
+		ConflictSummarySuffix:  types.DefaultConflictSummarySuffix,
 	}
 }
 
@@ -384,44 +384,44 @@ func ToUnifiedRowsFromV2(rows []dto.ParcelLayerRowV2) []UnifiedRow {
 	result := make([]UnifiedRow, len(rows))
 	for i, r := range rows {
 		result[i] = UnifiedRow{
-			ParcelID:              r.ParcelID,
-			ParcelAreaSqm:         r.ParcelAreaSqm,
-			LayerID:               r.LayerID,
-			LayerName:             r.LayerName,
-			LayerDisplayName:      r.LayerDisplayName,
-			LayerType:             r.LayerType,
-			LayerStatus:           r.LayerStatus,
-			LayerLegalStatus:      r.LayerLegalStatus,
-			LayerTrustValue:       r.LayerTrustValue,
-			LayerEffectiveDate:    r.LayerEffectiveDate,
-			LayerExpiryDate:       r.LayerExpiryDate,
-			LayerAuthority:        r.LayerAuthority,
-			LabelID:               r.LabelID,
-			LabelName:             r.LabelName,
-			LabelDisplayName:      r.LabelDisplayName,
-			LabelColor:            r.LabelColor,
-			LabelGroupCode:        r.LabelGroupCode,
-			LabelCanBuild:         r.LabelCanBuild,
-			LabelPriority:         r.LabelPriority,
-			LabelBuildCondition:   r.LabelBuildCondition,
-			GroupCode:             r.GroupCode,
-			GroupName:             r.GroupName,
-			GroupColor:            r.GroupColor,
-			GroupCanBuild:         r.GroupCanBuild,
-			GroupPriority:         r.GroupPriority,
-			RegionID:              r.RegionID,
-			RegionName:            r.RegionName,
-			RegionDisplayName:     r.RegionDisplayName,
-			RegionLandUseCode:     r.RegionLandUseCode,
-			RegionLandUseName:     r.RegionLandUseName,
-			RegionColorRed:        r.RegionColorRed,
-			RegionColorGreen:      r.RegionColorGreen,
-			RegionColorBlue:       r.RegionColorBlue,
-			OverlapAreaSqm:        r.OverlapAreaSqm,
-			OverlapPct:            r.OverlapPct,
-			CenterLat:             r.CenterLat,
-			CenterLng:             r.CenterLng,
-			Geometry:              r.Geometry,
+			ParcelID:            r.ParcelID,
+			ParcelAreaSqm:       r.ParcelAreaSqm,
+			LayerID:             r.LayerID,
+			LayerName:           r.LayerName,
+			LayerDisplayName:    r.LayerDisplayName,
+			LayerType:           r.LayerType,
+			LayerStatus:         r.LayerStatus,
+			LayerLegalStatus:    r.LayerLegalStatus,
+			LayerTrustValue:     r.LayerTrustValue,
+			LayerEffectiveDate:  r.LayerEffectiveDate,
+			LayerExpiryDate:     r.LayerExpiryDate,
+			LayerAuthority:      r.LayerAuthority,
+			LabelID:             r.LabelID,
+			LabelName:           r.LabelName,
+			LabelDisplayName:    r.LabelDisplayName,
+			LabelColor:          r.LabelColor,
+			LabelGroupCode:      r.LabelGroupCode,
+			LabelCanBuild:       r.LabelCanBuild,
+			LabelPriority:       r.LabelPriority,
+			LabelBuildCondition: r.LabelBuildCondition,
+			GroupCode:           r.GroupCode,
+			GroupName:           r.GroupName,
+			GroupColor:          r.GroupColor,
+			GroupCanBuild:       r.GroupCanBuild,
+			GroupPriority:       r.GroupPriority,
+			RegionID:            r.RegionID,
+			RegionName:          r.RegionName,
+			RegionDisplayName:   r.RegionDisplayName,
+			RegionLandUseCode:   r.RegionLandUseCode,
+			RegionLandUseName:   r.RegionLandUseName,
+			RegionColorRed:      r.RegionColorRed,
+			RegionColorGreen:    r.RegionColorGreen,
+			RegionColorBlue:     r.RegionColorBlue,
+			OverlapAreaSqm:      r.OverlapAreaSqm,
+			OverlapPct:          r.OverlapPct,
+			CenterLat:           r.CenterLat,
+			CenterLng:           r.CenterLng,
+			Geometry:            r.Geometry,
 		}
 	}
 	return result

@@ -33,6 +33,7 @@ type QHLayerLegendUsecase interface {
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayerLegend, error)
 	List(ctx context.Context, pagable *_dto.Pagable, layerID, labelID *uint64, legendType *string, landUseGroupID *uint64) ([]qh_domain.QHLayerLegend, int64, error)
+	ListAllByLayer(ctx context.Context, layerID uint64) ([]qh_domain.QHLayerLegend, error)
 	ListClientByLayer(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLayerLegend, int64, error)
 }
 
@@ -324,6 +325,11 @@ func (u *qhLayerLegendUsecase) List(ctx context.Context, pagable *_dto.Pagable, 
 		limit = pagable.GetLimit()
 	}
 	return u.repo.List(ctx, offset, limit, layerID, labelID, legendType, landUseGroupID)
+}
+
+func (u *qhLayerLegendUsecase) ListAllByLayer(ctx context.Context, layerID uint64) ([]qh_domain.QHLayerLegend, error) {
+	rows, _, err := u.repo.List(ctx, 0, 1000, &layerID, nil, nil, nil)
+	return rows, err
 }
 
 func (u *qhLayerLegendUsecase) ListClientByLayer(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLayerLegend, int64, error) {

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"tqd/internal/dto"
-	"tqd/internal/enums"
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
@@ -131,7 +130,7 @@ func (e *ParcelEngine) buildCandidates(rows []UnifiedRow) []*types.LayerCandidat
 			LandUseCode:      row.RegionLandUseCode,
 			LandUseName:      row.RegionLandUseName,
 			LandUseColor:     row.LabelColor,
-			GroupCode:        enums.GroupCode(row.LabelGroupCode).String(),
+			GroupCode:        row.LabelGroupCode,
 			GroupName:        row.GroupName,
 			GroupColor:       row.GroupColor,
 			CanBuild:         row.LabelCanBuild,

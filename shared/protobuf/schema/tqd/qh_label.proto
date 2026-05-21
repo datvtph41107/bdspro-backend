@@ -142,6 +142,9 @@ message UpdateLabelRequest {
   optional int32 maxZoom = 12;
   optional uint32 status = 13;
   optional string standardAt = 14;
+  optional uint64 landUseId = 15;
+  optional uint64 legendId = 16;
+  optional uint64 layerId = 17;
 }
 
 message GetLabelRequest {
@@ -217,6 +220,8 @@ message QHLabelResponse {
   int64 regionCount = 17;
   double totalAreaHa = 18;
   string standardAt = 19;
+  optional uint64 landUseId = 21;
+  optional uint64 legendId = 22;
 }
 
 message ListLabelsResponse {

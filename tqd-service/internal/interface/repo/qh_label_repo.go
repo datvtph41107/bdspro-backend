@@ -24,6 +24,7 @@ type QHLabelRepository interface {
 	GetByNameAndLayer(ctx context.Context, name string, layerID uint64) (*qh_domain.QHLabel, error)
 	// EnsureLayerLink thêm (label_id, layer_id) vào qh_label_layers nếu chưa có.
 	EnsureLayerLink(ctx context.Context, labelID, layerID uint64) error
+	UpdateLayerLinkMetadata(ctx context.Context, labelID, layerID uint64, landUseID, legendID *uint64) error
 	// EnsureLayerLinksBatch đảm bảo mọi label_id đều có bản ghi nối tới layer_id (idempotent, một transaction).
 	EnsureLayerLinksBatch(ctx context.Context, layerID uint64, labelIDs []uint64) error
 	GetNamesByLayerID(ctx context.Context, layerID uint64) (map[string]struct{}, error)

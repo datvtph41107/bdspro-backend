@@ -68,6 +68,14 @@ service RegionService {
       body: "*"
     };
   }
+
+  // SyncRegion - Đồng bộ landUseId/legendId cho regions theo layerId và labelId
+  rpc SyncRegion(SyncRegionRequest) returns (SyncRegionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/regions/sync-region"
+      body: "*"
+    };
+  }
   
   // ========== Client APIs ==========
   
@@ -186,6 +194,19 @@ message UpdateProcessingStatusRequest {
   uint64 regionId = 1;
   uint32 processingStatus = 2;          // 10=pending, 20=mapped, 30=verified, 40=rejected
   optional string notes = 3;
+}
+
+message SyncRegionRequest {
+  uint64 layerId = 1;
+  uint64 labelId = 2;
+}
+
+message SyncRegionResponse {
+  uint64 layerId = 1;
+  uint64 labelId = 2;
+  uint64 landUseId = 3;
+  uint64 legendId = 4;
+  int64 total = 5;
 }
 
 // =====================================================

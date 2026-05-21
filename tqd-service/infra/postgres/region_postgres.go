@@ -169,6 +169,47 @@ func (r *regionRepoImpl) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domai
 	return regions, err
 }
 
+func (r *regionRepoImpl) GetSyncReferenceByLayerLabel(ctx context.Context, layerID, labelID uint64) (*repo.RegionSyncReference, error) {
+	var ref repo.RegionSyncReference
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT
+			lg.id AS legend_id,
+			lu.id AS land_use_id
+		FROM qh_legends lg
+		JOIN qh_land_use lu
+			ON lu.id = lg.land_use_id
+			AND lu.deleted_at IS NULL
+			AND lu.is_active = true
+		WHERE lg.layer_id = ?
+			AND lg.label_id = ?
+			AND lg.deleted_at IS NULL
+		ORDER BY lg.id ASC
+		LIMIT 1
+	`, layerID, labelID).Scan(&ref).Error
+	if err != nil {
+		return nil, err
+	}
+	if ref.LegendID == 0 || ref.LandUseID == 0 {
+		return nil, nil
+	}
+	return &ref, nil
+}
+
+func (r *regionRepoImpl) SyncLandUseAndLegendByLayerLabel(ctx context.Context, layerID, labelID, landUseID, legendID uint64) (int64, error) {
+	res := r.db.WithContext(ctx).
+		Model(&qh_domain.QHRegion{}).
+		Where("layer_id = ? AND label_id = ? AND deleted_at IS NULL", layerID, labelID).
+		Updates(map[string]interface{}{
+			"land_use_id": landUseID,
+			"legend_id":   legendID,
+			"updated_at":  time.Now(),
+		})
+	if res.Error != nil {
+		return 0, res.Error
+	}
+	return res.RowsAffected, nil
+}
+
 // =====================================================
 // LIST WITH FILTERS
 // =====================================================
@@ -229,7 +270,7 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	err := baseQuery.
 		Select(`
 			qh_regions.id, qh_regions.layer_id, qh_regions.name, qh_regions.display_name, 
-			qh_regions.description, qh_regions.label_id,
+			qh_regions.description, qh_regions.label_id, qh_regions.land_use_id, qh_regions.legend_id,
 			qh_regions.legal_doc, qh_regions.planning_name,
 			ST_AsGeoJSON(qh_regions.geometry) AS geometry,
 			qh_regions.area_sqm, qh_regions.area_ha, qh_regions.perimeter_m,
@@ -544,22 +585,24 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 				'properties', jsonb_build_object(
 					'id', r.id,
 					'layer_id', r.layer_id,
+					'land_use_id', r.land_use_id,
+					'legend_id', r.legend_id,
+					'label_id', COALESCE(lg.label_id, r.label_id),
 					
-					'label_fill_opacity', l.fill_opacity,
-					'label_stroke_color', l.color,
-					'label_stroke_width', l.stroke_width,
+					'label_fill_opacity', 0.6,
+					'label_stroke_color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#000000'),
+					'label_stroke_width', 1,
+					'color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#CCCCCC'),
 					
 					'area_ha', r.area_ha,
 					'area_sqm', r.area_sqm,
-					'status', r.status,
-					'processing_status', r.processing_status,
-					'source_file', r.source_file,
-					'import_batch_id', r.import_batch_id,
-					'created_at', r.created_at,
-					'updated_at', r.updated_at
+					'name', COALESCE(NULLIF(lu.name, ''), NULLIF(l.name, ''), r.name)
 				)
 			) as feature
 			FROM qh_regions r
+			LEFT JOIN qh_label_layers qll ON qll.layer_id = r.layer_id and qll.label_id = r.label_id 
+			LEFT JOIN qh_land_use lu ON qll.land_use_id = lu.id AND lu.deleted_at IS NULL AND lu.is_active = true
+			LEFT JOIN qh_legends lg ON qll.legend_id = lg.id AND lg.deleted_at IS NULL
 			LEFT JOIN qh_labels l ON r.label_id = l.id AND l.deleted_at IS NULL
 			WHERE r.layer_id = $1
 			  AND r.geometry IS NOT NULL

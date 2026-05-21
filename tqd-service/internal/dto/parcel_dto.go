@@ -132,16 +132,16 @@ type ParcelLayerRowV2 struct {
 	LabelName           string
 	LabelDisplayName    string
 	LabelColor          string
-	LabelGroupCode      uint32
+	LabelGroupCode      string
 	LabelCanBuild       bool
 	LabelPriority       int
 	LabelBuildCondition string
 
-	GroupCode      string
-	GroupName      string
-	GroupColor     string
-	GroupCanBuild  bool
-	GroupPriority  int
+	GroupCode     string
+	GroupName     string
+	GroupColor    string
+	GroupCanBuild bool
+	GroupPriority int
 
 	RegionID          uint64
 	RegionName        string
@@ -161,14 +161,14 @@ type ParcelLayerRowV2 struct {
 }
 
 type PlanLandUseGroupDetail struct {
-	Code          string
-	Name          string
-	Color         string
-	CanBuild      bool
-	Priority      int
-	LandUseCode   string
-	LandUseName   string
-	LandUseColor  string
+	Code           string
+	Name           string
+	Color          string
+	CanBuild       bool
+	Priority       int
+	LandUseCode    string
+	LandUseName    string
+	LandUseColor   string
 	OverlapPercent float64
 	OverlapAreaSqm float64
 }

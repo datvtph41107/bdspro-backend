@@ -29,6 +29,14 @@ type RegionUpdatePatch struct {
 	LabelID     *uint64
 }
 
+type RegionSyncResult struct {
+	LayerID     uint64
+	LabelID     uint64
+	LandUseID   uint64
+	LegendID    uint64
+	SyncedCount int64
+}
+
 type RegionUsecase interface {
 	Create(ctx context.Context, layerID uint64, name string, geometryBytes []byte, labelID uint64) (*qh_domain.QHRegion, error)
 	Update(ctx context.Context, patch RegionUpdatePatch) (*qh_domain.QHRegion, error)
@@ -37,6 +45,7 @@ type RegionUsecase interface {
 	// ListForAdminByLayer kiểm tra layer tồn tại rồi list regions (admin)
 	ListForAdminByLayer(ctx context.Context, layerID uint64, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error)
 	Delete(ctx context.Context, id uint64) error
+	SyncRegion(ctx context.Context, layerID, labelID uint64) (*RegionSyncResult, error)
 	UpdateProcessingStatus(ctx context.Context, regionID uint64, status enums.ProcessingStatus, userID uint64, notes string) error
 
 	// Label Operations (1-1)
@@ -263,6 +272,52 @@ func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 		return fmt.Errorf("region %d not found", id)
 	}
 	return u.regionRepo.Delete(ctx, id)
+}
+
+func (u *regionUsecaseImpl) SyncRegion(ctx context.Context, layerID, labelID uint64) (*RegionSyncResult, error) {
+	if layerID == 0 {
+		return nil, errors.New("layerId is required")
+	}
+	if labelID == 0 {
+		return nil, errors.New("labelId is required")
+	}
+
+	layer, err := u.layerRepo.GetByID(ctx, layerID)
+	if err != nil {
+		return nil, fmt.Errorf("get layer failed: %w", err)
+	}
+	if layer == nil {
+		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, layerID)
+	}
+
+	label, err := u.labelRepo.GetByID(ctx, labelID)
+	if err != nil {
+		return nil, fmt.Errorf("get label failed: %w", err)
+	}
+	if label == nil {
+		return nil, fmt.Errorf("label %d not found", labelID)
+	}
+
+	ref, err := u.regionRepo.GetSyncReferenceByLayerLabel(ctx, layerID, labelID)
+	if err != nil {
+		return nil, fmt.Errorf("get region sync reference failed: %w", err)
+	}
+	if ref == nil {
+		return nil, fmt.Errorf("legend with landUse not found for layerId=%d labelId=%d", layerID, labelID)
+	}
+
+	total, err := u.regionRepo.SyncLandUseAndLegendByLayerLabel(ctx, layerID, labelID, ref.LandUseID, ref.LegendID)
+	if err != nil {
+		return nil, fmt.Errorf("sync region failed: %w", err)
+	}
+
+	return &RegionSyncResult{
+		LayerID:     layerID,
+		LabelID:     labelID,
+		LandUseID:   ref.LandUseID,
+		LegendID:    ref.LegendID,
+		SyncedCount: total,
+	}, nil
 }
 
 func (u *regionUsecaseImpl) UpdateProcessingStatus(ctx context.Context, regionID uint64, status enums.ProcessingStatus, userID uint64, notes string) error {

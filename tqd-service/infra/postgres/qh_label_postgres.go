@@ -140,6 +140,40 @@ func (r *qhLabelRepoImpl) EnsureLayerLink(ctx context.Context, labelID, layerID 
 	return qhLabelLayerInsert(r.db.WithContext(ctx), labelID, layerID)
 }
 
+func (r *qhLabelRepoImpl) UpdateLayerLinkMetadata(ctx context.Context, labelID, layerID uint64, landUseID, legendID *uint64) error {
+	if labelID == 0 || layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := qhLabelLayerInsert(tx, labelID, layerID); err != nil {
+			return err
+		}
+
+		updates := make(map[string]interface{})
+		if landUseID != nil {
+			if *landUseID == 0 {
+				updates["land_use_id"] = nil
+			} else {
+				updates["land_use_id"] = *landUseID
+			}
+		}
+		if legendID != nil {
+			if *legendID == 0 {
+				updates["legend_id"] = nil
+			} else {
+				updates["legend_id"] = *legendID
+			}
+		}
+		if len(updates) == 0 {
+			return nil
+		}
+
+		return tx.Model(&qh_domain.QHLabelLayer{}).
+			Where("label_id = ? AND layer_id = ?", labelID, layerID).
+			Updates(updates).Error
+	})
+}
+
 func (r *qhLabelRepoImpl) EnsureLayerLinksBatch(ctx context.Context, layerID uint64, labelIDs []uint64) error {
 	if layerID == 0 || len(labelIDs) == 0 {
 		return nil
@@ -160,13 +194,11 @@ func (r *qhLabelRepoImpl) EnsureLayerLinksBatch(ctx context.Context, layerID uin
 // ListAdmin — tất cả nhãn chưa xóa mềm; lọc layer giống GetByLayerID khi layerID != nil.
 func (r *qhLabelRepoImpl) ListAdmin(ctx context.Context, layerID *uint64, offset, limit int, includeInactive bool) ([]qh_domain.QHLabel, int64, error) {
 	build := func() *gorm.DB {
-		q := r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).Where("deleted_at IS NULL")
+		q := r.db.WithContext(ctx).Model(&qh_domain.QHLabel{}).Where("qh_labels.deleted_at IS NULL")
 		if layerID != nil && *layerID != 0 {
 			lid := *layerID
-			q = q.Where(`(
-				layer_id = ?
-				OR id IN (SELECT label_id FROM qh_label_layers WHERE layer_id = ?)
-			)`, lid, lid)
+			q = q.Joins("LEFT JOIN qh_label_layers qll ON qll.label_id = qh_labels.id AND qll.layer_id = ?", lid).
+				Where("(qh_labels.layer_id = ? OR qll.label_id IS NOT NULL)", lid)
 		}
 		// if !includeInactive {
 		// 	q = q.Where("status = ?", uint32(enums.LabelStatusActive))
@@ -180,7 +212,11 @@ func (r *qhLabelRepoImpl) ListAdmin(ctx context.Context, layerID *uint64, offset
 	}
 
 	var labels []qh_domain.QHLabel
-	err := build().
+	query := build()
+	if layerID != nil && *layerID != 0 {
+		query = query.Select("qh_labels.*, COALESCE(qll.layer_id, qh_labels.layer_id) AS layer_id, qll.land_use_id AS land_use_id, qll.legend_id AS legend_id")
+	}
+	err := query.
 		Order("display_order ASC, id ASC").
 		Offset(offset).
 		Limit(limit).
@@ -195,11 +231,11 @@ func (r *qhLabelRepoImpl) ListAdmin(ctx context.Context, layerID *uint64, offset
 func (r *qhLabelRepoImpl) GetByLayerID(ctx context.Context, layerID uint64) ([]qh_domain.QHLabel, error) {
 	var labels []qh_domain.QHLabel
 	err := r.db.WithContext(ctx).
-		Where(`deleted_at IS NULL AND (
-			id IN (SELECT label_id FROM qh_label_layers WHERE layer_id = ?)
-			OR layer_id = ?
-		)`, layerID, layerID).
-		Order("display_order ASC, id ASC").
+		Model(&qh_domain.QHLabel{}).
+		Select("qh_labels.*, COALESCE(qll.layer_id, qh_labels.layer_id) AS layer_id, qll.land_use_id AS land_use_id, qll.legend_id AS legend_id").
+		Joins("LEFT JOIN qh_label_layers qll ON qll.label_id = qh_labels.id AND qll.layer_id = ?", layerID).
+		Where("qh_labels.deleted_at IS NULL AND (qh_labels.layer_id = ? OR qll.label_id IS NOT NULL)", layerID).
+		Order("qh_labels.display_order ASC, qh_labels.id ASC").
 		Find(&labels).Error
 	if err != nil {
 		return nil, fmt.Errorf("query qh_labels by layer_id failed: %w", err)

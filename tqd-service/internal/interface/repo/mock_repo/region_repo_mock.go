@@ -166,3 +166,16 @@ func (m *MockRegionRepository) UpdateLabelForRegion(ctx context.Context, regionI
 	args := m.Called(ctx, regionID, labelID)
 	return args.Error(0)
 }
+
+func (m *MockRegionRepository) GetSyncReferenceByLayerLabel(ctx context.Context, layerID, labelID uint64) (*repo.RegionSyncReference, error) {
+	args := m.Called(ctx, layerID, labelID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*repo.RegionSyncReference), args.Error(1)
+}
+
+func (m *MockRegionRepository) SyncLandUseAndLegendByLayerLabel(ctx context.Context, layerID, labelID, landUseID, legendID uint64) (int64, error) {
+	args := m.Called(ctx, layerID, labelID, landUseID, legendID)
+	return args.Get(0).(int64), args.Error(1)
+}

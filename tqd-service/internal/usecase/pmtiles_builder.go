@@ -79,11 +79,11 @@ func BuildPMTilesFile(
 			if err := writer.Flush(); err != nil {
 				return fmt.Errorf("flush: %w", err)
 			}
-			progressFn(BuildProgress{
-				Status:       "processing",
-				Message:      fmt.Sprintf("Streamed %d features to NDJSON", count),
-				TilesWritten: count,
-			})
+			// progressFn(BuildProgress{
+			// 	Status:       "processing",
+			// 	Message:      fmt.Sprintf("Streamed %d features to NDJSON", count),
+			// 	TilesWritten: count,
+			// })
 		}
 	}
 
@@ -101,11 +101,11 @@ func BuildPMTilesFile(
 		return fmt.Errorf("layer %d has no valid geometry", layerID)
 	}
 
-	progressFn(BuildProgress{
-		Status:       "processing",
-		Message:      fmt.Sprintf("Starting tippecanoe with %d features...", count),
-		TilesWritten: count,
-	})
+	// progressFn(BuildProgress{
+	// 	Status:       "processing",
+	// 	Message:      fmt.Sprintf("Starting tippecanoe with %d features...", count),
+	// 	TilesWritten: count,
+	// })
 
 	// ── Tippecanoe command (cải thiện đáng kể) ─────────────────────────
 	args := []string{

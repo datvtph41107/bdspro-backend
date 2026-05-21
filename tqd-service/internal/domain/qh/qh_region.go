@@ -18,6 +18,11 @@ type QHRegion struct {
 	LabelName  string   `gorm:"-:migration;->;column:label_name" json:"labelName"`
 	LabelColor string   `gorm:"-:migration;->;column:label_color" json:"labelColor"`
 
+	LandUseID *uint64        `gorm:"column:land_use_id;index" json:"landUseId,omitempty"`
+	LandUse   *QHLandUse     `gorm:"foreignKey:LandUseID" json:"landUse,omitempty"`
+	LegendID  *uint64        `gorm:"column:legend_id;index" json:"legendId,omitempty"`
+	Legend    *QHLayerLegend `gorm:"foreignKey:LegendID" json:"legend,omitempty"`
+
 	LegalDoc     string `gorm:"type:text" json:"legalDoc"`
 	PlanningName string `gorm:"type:varchar(255)" json:"planningName"`
 
