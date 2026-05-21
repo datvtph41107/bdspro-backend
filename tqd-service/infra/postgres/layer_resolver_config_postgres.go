@@ -13,16 +13,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type LayerResolverConfigPostgres struct {
+type QHLayerResolverConfigPostgres struct {
 	db *gorm.DB
 }
 
-func NewLayerResolverConfigPostgres(db *gorm.DB) repo.ILayerResolverConfigRepo {
-	return &LayerResolverConfigPostgres{db: db}
+func NewLayerResolverConfigPostgres(db *gorm.DB) repo.IQHLayerResolverConfigRepo {
+	return &QHLayerResolverConfigPostgres{db: db}
 }
 
-func (r *LayerResolverConfigPostgres) GetByKey(ctx context.Context, key string) (json.RawMessage, error) {
-	var config qh_domain.LayerResolverConfig
+func (r *QHLayerResolverConfigPostgres) GetByKey(ctx context.Context, key string) (json.RawMessage, error) {
+	var config qh_domain.QHLayerResolverConfig
 	err := r.db.WithContext(ctx).Where("config_key = ?", key).First(&config).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -33,8 +33,8 @@ func (r *LayerResolverConfigPostgres) GetByKey(ctx context.Context, key string) 
 	return config.ConfigValue, nil
 }
 
-func (r *LayerResolverConfigPostgres) GetAll(ctx context.Context) (map[string]json.RawMessage, error) {
-	var configs []qh_domain.LayerResolverConfig
+func (r *QHLayerResolverConfigPostgres) GetAll(ctx context.Context) (map[string]json.RawMessage, error) {
+	var configs []qh_domain.QHLayerResolverConfig
 	err := r.db.WithContext(ctx).Find(&configs).Error
 	if err != nil {
 		return nil, fmt.Errorf("get all configs failed: %w", err)
@@ -46,9 +46,9 @@ func (r *LayerResolverConfigPostgres) GetAll(ctx context.Context) (map[string]js
 	return result, nil
 }
 
-func (r *LayerResolverConfigPostgres) UpdateByKey(ctx context.Context, key string, value json.RawMessage, updatedBy string) error {
+func (r *QHLayerResolverConfigPostgres) UpdateByKey(ctx context.Context, key string, value json.RawMessage, updatedBy string) error {
 	now := time.Now()
-	result := r.db.WithContext(ctx).Model(&qh_domain.LayerResolverConfig{}).
+	result := r.db.WithContext(ctx).Model(&qh_domain.QHLayerResolverConfig{}).
 		Where("config_key = ?", key).
 		Updates(map[string]interface{}{
 			"config_value": value,
@@ -60,7 +60,7 @@ func (r *LayerResolverConfigPostgres) UpdateByKey(ctx context.Context, key strin
 	}
 	if result.RowsAffected == 0 {
 		// Insert new record
-		config := &qh_domain.LayerResolverConfig{
+		config := &qh_domain.QHLayerResolverConfig{
 			ConfigKey:   key,
 			ConfigValue: value,
 			UpdatedBy:   updatedBy,

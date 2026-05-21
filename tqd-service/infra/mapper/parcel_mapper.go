@@ -28,14 +28,21 @@ func NewParcelMapper() *ParcelMapper {
 	}
 }
 
-func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parcelID uint64, mode string) *tqdpb.ParcelLayersV2Response {
-	resp := &tqdpb.ParcelLayersV2Response{
+func (m *ParcelMapper) ResolveResultToProtoAssessment(result *types.ResolveResult, parcelID uint64, mode string) *tqdpb.ParcelAssessmentResponse {
+	resp := &tqdpb.ParcelAssessmentResponse{
 		ParcelId:    parcelID,
 		HasConflict: result.HasConflict,
 		RiskScore:   result.RiskScore,
 		RiskLevel:   result.RiskLevel,
 		RiskReasons: result.RiskReasons,
-		Assessment: &tqdpb.AssessmentResponse{
+		Metadata: &tqdpb.ResponseMetadataInfo{
+			ResponseTimeMs: result.ProcessingTimeMs,
+		},
+	}
+
+	// Assessment: chỉ build cho detail mode (popup/compare không cần assessment chi tiết)
+	if mode == "detail" || mode == "" {
+		resp.Assessment = &tqdpb.AssessmentResponse{
 			Buildability: &tqdpb.BuildabilityResponse{
 				CanBuild:       result.CanBuild,
 				Status:         result.BuildStatus,
@@ -44,10 +51,7 @@ func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parce
 			},
 			Summary: m.buildAssessmentSummary(result),
 			Verdict: result.RiskLevel,
-		},
-		Metadata: &tqdpb.ResponseMetadataInfo{
-			ResponseTimeMs: result.ProcessingTimeMs,
-		},
+		}
 	}
 
 	if result.Primary != nil {
@@ -66,30 +70,36 @@ func (m *ParcelMapper) ResolveResultToProtoV2(result *types.ResolveResult, parce
 		resp.ParcelAreaSqm = result.Primary.ParcelAreaSqm
 	}
 
-	for _, sec := range result.Secondary {
-		resp.OtherPlans = append(resp.OtherPlans, &tqdpb.PlanDetailInfo{
-			LayerId:       sec.LayerID,
-			LayerName:     sec.LayerName,
-			DisplayName:   sec.LayerDisplayName,
-			LandUseCode:   sec.LandUseCode,
-			LandUseName:   sec.LandUseName,
-			LandUseColor:  sec.LandUseColor,
-			GroupCode:     sec.GroupCode,
-			ImpactPercent: sec.OverlapPercent,
-			ImpactAreaSqm: sec.OverlapAreaSqm,
-			LandUseGroups: mapLandUseGroups(result.LayerLandUseGroups, sec.LayerID),
-		})
+	// OtherPlans: bỏ qua cho popup mode
+	if mode != "popup" {
+		for _, sec := range result.Secondary {
+			resp.OtherPlans = append(resp.OtherPlans, &tqdpb.PlanDetailInfo{
+				LayerId:       sec.LayerID,
+				LayerName:     sec.LayerName,
+				DisplayName:   sec.LayerDisplayName,
+				LandUseCode:   sec.LandUseCode,
+				LandUseName:   sec.LandUseName,
+				LandUseColor:  sec.LandUseColor,
+				GroupCode:     sec.GroupCode,
+				ImpactPercent: sec.OverlapPercent,
+				ImpactAreaSqm: sec.OverlapAreaSqm,
+				LandUseGroups: mapLandUseGroups(result.LayerLandUseGroups, sec.LayerID),
+			})
+		}
 	}
 
-	for _, c := range result.CriticalConflicts {
-		resp.Conflicts = append(resp.Conflicts, &tqdpb.ConflictDetail{
-			Type:            c.Type,
-			Severity:        string(c.Severity),
-			Description:     c.Description,
-			Recommendation:  c.Recommendation,
-			ActionRequired:  c.ActionRequired,
-			AffectedPercent: c.AffectedPercent,
-		})
+	// Conflicts: bỏ qua cho popup mode
+	if mode != "popup" {
+		for _, c := range result.CriticalConflicts {
+			resp.Conflicts = append(resp.Conflicts, &tqdpb.ConflictDetail{
+				Type:            c.Type,
+				Severity:        string(c.Severity),
+				Description:     c.Description,
+				Recommendation:  c.Recommendation,
+				ActionRequired:  c.ActionRequired,
+				AffectedPercent: c.AffectedPercent,
+			})
+		}
 	}
 
 	return resp
@@ -196,18 +206,15 @@ func regionImpactToProto(region *dto.RegionImpact) *tqdpb.Region {
 		OverlapPercent: region.OverlapPct,
 		CenterLat:      region.CenterLat,
 		CenterLng:      region.CenterLng,
-		Geometry:       region.Geometry,
 	}
 }
 
-// SỬA: Thêm logic xử lý legalDocStr
-func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdpb.ParcelLayersResponse {
-	if resp == nil {
-		return nil
-	}
+// ToProtoParcelOverview - Map DTO → Proto OverviewResponse
+func (m *ParcelMapper) ToProtoParcelOverview(data *dto.ParcelLayersResponse) *tqdpb.ParcelOverviewResponse {
+	resp := data
 
-	layers := make([]*tqdpb.Layer, 0, len(resp.Layers))
-	for _, layer := range resp.Layers {
+	layers := make([]*tqdpb.Layer, 0, len(data.Layers))
+	for _, layer := range data.Layers {
 		if layer == nil {
 			continue
 		}
@@ -317,7 +324,7 @@ func (m *ParcelMapper) ToProtoParcelLayers(resp *dto.ParcelLayersResponse) *tqdp
 		meta = resp.Metadata
 	}
 
-	return &tqdpb.ParcelLayersResponse{
+	return &tqdpb.ParcelOverviewResponse{
 		ParcelId:             resp.ParcelID,
 		ParcelAreaSqm:        resp.ParcelAreaSqm,
 		Summary:              summary,

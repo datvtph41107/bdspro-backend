@@ -40,7 +40,7 @@ func NewParcelGrpcHandler(
 }
 
 // =====================================================
-// API Detail VIP - Get parcel detail information
+// PARCEL METADATA — thông tin cơ bản thửa đất (Free)
 // =====================================================
 
 func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelInfoResponse, error) {
@@ -67,7 +67,12 @@ func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetPar
 	return h.mapper.ToProtoParcelInfoDetail(data), nil
 }
 
-func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelLayersResponse, error) {
+// =====================================================
+// OVERVIEW — Tổng quan quy hoạch (Free)
+// Layers, regions, geometry, basic risk, conclude_label
+// =====================================================
+
+func (h *ParcelGrpcHandler) GetParcelOverview(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelOverviewResponse, error) {
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
 	}
@@ -76,10 +81,10 @@ func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetP
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
-		return &tqdpb.ParcelLayersResponse{}, nil
+		return &tqdpb.ParcelOverviewResponse{}, nil
 	}
 
-	data, err := h.usecase.GetParcelLayers(ctx, req.ParcelId)
+	data, err := h.usecase.GetParcelOverview(ctx, req.ParcelId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -88,27 +93,32 @@ func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetP
 		return nil, status.Error(codes.NotFound, "parcel not found")
 	}
 
-	return h.mapper.ToProtoParcelLayers(data), nil
+	return h.mapper.ToProtoParcelOverview(data), nil
 }
 
-func (h *ParcelGrpcHandler) GetParcelLayersV2(ctx context.Context, req *tqdpb.GetParcelLayersV2Request) (*tqdpb.ParcelLayersV2Response, error) {
+// =====================================================
+// ASSESSMENT — Đánh giá chuyên sâu (VIP)
+// Conflicts, landUseGroups, assessment, 3 modes
+// =====================================================
+
+func (h *ParcelGrpcHandler) GetParcelAssessment(ctx context.Context, req *tqdpb.GetParcelAssessmentRequest) (*tqdpb.ParcelAssessmentResponse, error) {
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
 	}
 
-	dtoReq := &dto.GetParcelLayersV2Request{
+	dtoReq := &dto.GetParcelAssessmentRequest{
 		ParcelID: req.ParcelId,
 		Mode:     req.Mode,
 		Preset:   req.Preset,
 		AsOfDate: req.AsOfDate,
 	}
 
-	result, err := h.usecase.GetParcelLayersV2(ctx, dtoReq)
+	result, err := h.usecase.GetParcelAssessment(ctx, dtoReq)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.mapper.ResolveResultToProtoV2(result, req.ParcelId, req.Mode), nil
+	return h.mapper.ResolveResultToProtoAssessment(result, req.ParcelId, req.Mode), nil
 }
 
 // =====================================================

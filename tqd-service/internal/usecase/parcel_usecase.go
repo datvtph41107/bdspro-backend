@@ -29,10 +29,14 @@ type ParcelUsecase interface {
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
 
-	// Detail VIP
+	// Parcel metadata (Free)
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
-	GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
-	GetParcelLayersV2(ctx context.Context, req *dto.GetParcelLayersV2Request) (*types.ResolveResult, error)
+
+	// Overview - Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk
+	GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
+
+	// Assessment - Đánh giá chuyên sâu (VIP): conflicts, landUseGroups, assessment, 3 modes
+	GetParcelAssessment(ctx context.Context, req *dto.GetParcelAssessmentRequest) (*types.ResolveResult, error)
 }
 
 type parcelUsecase struct {
@@ -291,7 +295,8 @@ func (u *parcelUsecase) GetParcelInfo(ctx context.Context, parcelID uint64) (*dt
 	return info, nil
 }
 
-func (u *parcelUsecase) GetParcelLayersV2(ctx context.Context, req *dto.GetParcelLayersV2Request) (*types.ResolveResult, error) {
+// GetParcelAssessment - Đánh giá chuyên sâu (VIP): phân tích conflicts, landUseGroups, assessment với 3 mode
+func (u *parcelUsecase) GetParcelAssessment(ctx context.Context, req *dto.GetParcelAssessmentRequest) (*types.ResolveResult, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -321,7 +326,8 @@ func (u *parcelUsecase) GetParcelLayersV2(ctx context.Context, req *dto.GetParce
 	return u.unifiedToResolveResult(unified, req.Mode), nil
 }
 
-func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
+// GetParcelOverview - Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk, conclude_label
+func (u *parcelUsecase) GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
 	start := time.Now()
 
 	if parcelID == 0 {
@@ -336,14 +342,14 @@ func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64) (*
 	layerIDs := extractLayerIDs(rows)
 	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if err != nil {
-		log.Printf("[GetParcelLayers] Failed to fetch legal docs for parcel %d: %v", parcelID, err)
+		log.Printf("[GetParcelOverview] Failed to fetch legal docs for parcel %d: %v", parcelID, err)
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
 	legalDocsDTO := convertLegalDocs(legalDocsMap)
 
 	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, parcelID)
 	if infoErr != nil {
-		log.Printf("[GetParcelLayers] Failed to fetch parcel info for parcel %d: %v", parcelID, infoErr)
+		log.Printf("[GetParcelOverview] Failed to fetch parcel info for parcel %d: %v", parcelID, infoErr)
 	}
 
 	unifiedRows := parcel_engine.ToUnifiedRowsFromV1(rows)
@@ -474,11 +480,34 @@ func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, 
 		}
 	}
 
-	for _, l := range ur.Layers {
-		if ur.PrimaryPlanning != nil && l.ID != ur.PrimaryPlanning.LayerID {
-			sec := buildRankedLayerFromLayerDetail(l, ur.ParcelAreaSqm)
-			if sec != nil {
-				result.Secondary = append(result.Secondary, sec)
+	// Secondary plans: ưu tiên từ SecondaryPlans (compare/detail mode), fallback từ Layers (V1 detail)
+	if len(ur.SecondaryPlans) > 0 {
+		for _, sp := range ur.SecondaryPlans {
+			result.Secondary = append(result.Secondary, &types.RankedLayer{
+				EvaluatedLayer: &types.EvaluatedLayer{
+					LayerCandidate: &types.LayerCandidate{
+						LayerID:          sp.LayerID,
+						LayerDisplayName: sp.LayerName,
+						LandUseCode:      sp.LandUseCode,
+						LandUseName:      sp.LandUseName,
+						LandUseColor:     sp.LandUseColor,
+						GroupCode:        sp.GroupCode,
+						OverlapPercent:   sp.OverlapPercent,
+						OverlapAreaSqm:   sp.OverlapAreaSqm,
+						ParcelAreaSqm:    ur.ParcelAreaSqm,
+					},
+				},
+				Rank:  2,
+				Score: 50,
+			})
+		}
+	} else {
+		for _, l := range ur.Layers {
+			if ur.PrimaryPlanning != nil && l.ID != ur.PrimaryPlanning.LayerID {
+				sec := buildRankedLayerFromLayerDetail(l, ur.ParcelAreaSqm)
+				if sec != nil {
+					result.Secondary = append(result.Secondary, sec)
+				}
 			}
 		}
 	}

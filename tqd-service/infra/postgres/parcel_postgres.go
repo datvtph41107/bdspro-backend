@@ -588,7 +588,7 @@ func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint
 		COALESCE(i.label_color,'#CCCCCC') AS label_color,
 
 		-- business fields for resolver
-		COALESCE(i.group_code,'unknown') AS label_group_code,
+		COALESCE(i.group_code::integer, 0) AS label_group_code,
 
 		COALESCE(
 			i.code_can_build,

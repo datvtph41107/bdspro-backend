@@ -79,6 +79,9 @@ type UnifiedResult struct {
 	// Quy hoạch chính (primary sau resolve)
 	PrimaryPlanning *PrimaryPlanningInfo
 
+	// Quy hoạch phụ (cho compare mode, build từ ranked[1:])
+	SecondaryPlans []*SecondaryPlanInfo
+
 	// Nhóm đất tổng hợp
 	LandUseGroups []*LandUseGroupInfo
 
@@ -96,6 +99,17 @@ type UnifiedResult struct {
 
 	// Metadata
 	Metadata *MetadataInfo
+}
+
+type SecondaryPlanInfo struct {
+	LayerID        uint64
+	LayerName      string
+	LandUseCode    string
+	LandUseName    string
+	LandUseColor   string
+	GroupCode      string
+	OverlapPercent float64
+	OverlapAreaSqm float64
 }
 
 type PrimaryPlanningInfo struct {

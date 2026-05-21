@@ -55,20 +55,22 @@ service ParcelService {
     };
   }
   
-  rpc GetParcelLayers(GetParcelDetailRequest) returns (ParcelLayersResponse) {
+  // Overview — Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk
+  rpc GetParcelOverview(GetParcelDetailRequest) returns (ParcelOverviewResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/parcels/{parcelId}/layers"
+      get: "/v2/tqd/parcels/{parcelId}/overview"
     };
   }
 
-  rpc GetParcelLayersV2(GetParcelLayersV2Request) returns (ParcelLayersV2Response) {
+  // Assessment — Đánh giá chuyên sâu (VIP): conflicts, landUseGroups, assessment, 3 modes
+  rpc GetParcelAssessment(GetParcelAssessmentRequest) returns (ParcelAssessmentResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/parcels/v2/{parcelId}/layers"
+      get: "/v2/tqd/parcels/{parcelId}/assessment"
     };
   }
 }
 
-message GetParcelLayersV2Request {
+message GetParcelAssessmentRequest {
   uint64 parcelId = 1;      // parcel_id
   string mode = 2;          // popup, detail, compare
   string preset = 3;        // active_only, all_layers
@@ -76,7 +78,7 @@ message GetParcelLayersV2Request {
   int64 timestamp = 5;
 }
 
-message ParcelLayersV2Response {
+message ParcelAssessmentResponse {
   uint64 parcelId = 1;                // parcel_id
   double parcelAreaSqm = 2;           // parcel_area_sqm
   PlanDetailInfo currentPlan = 3;     // current_plan
@@ -182,7 +184,7 @@ message ParcelSummary {
   bool buildable = 5;
 }
 
-message ParcelLayersResponse {
+message ParcelOverviewResponse {
   uint64 parcelId = 1;
   double parcelAreaSqm = 2;
 

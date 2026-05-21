@@ -85,6 +85,7 @@ func AutoMigrate() {
 		// &domain.Ward{},
 		// &qh_domain.QHLayerLegal{},
 		&qh_domain.QHLandUse{},
+		&qh_domain.QHLayerResolverConfig{},
 	// &qh_domain.QHLayerLandUse{},
 	// &qh_domain.QHAuthorityIssuring{},
 	// &qh_domain.QHLayerLegend{},

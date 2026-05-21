@@ -36,9 +36,11 @@ func (e *ParcelEngine) GetConfig() *EngineConfig {
 	return e.config
 }
 
-// Process - xử lý toàn bộ nghiệp vụ, trả về UnifiedResult dùng cho cả V1 và V2
+// Process - xử lý toàn bộ nghiệp vụ theo mode, trả về UnifiedResult dùng cho cả V1 và V2
+// mode: "popup" (tooltip nhanh), "detail" (đầy đủ), "compare" (so sánh)
 func (e *ParcelEngine) Process(rows []UnifiedRow, parcelInfo *dto.ParcelInfoResponse, legalDocsMap map[uint64][]*dto.LayerLegalDTO, mode string) *UnifiedResult {
 	startTime := time.Now()
+	resolveMode := types.ResolveMode(mode)
 
 	result := &UnifiedResult{
 		Metadata: &MetadataInfo{
@@ -57,38 +59,50 @@ func (e *ParcelEngine) Process(rows []UnifiedRow, parcelInfo *dto.ParcelInfoResp
 	result.ParcelAreaSqm = parcelArea
 	result.ParcelInfo = parcelInfo
 
-	// Bước 1: Build candidates từ rows
+	// Bước 1-2: Build candidates + Score & Rank (luôn chạy cho mọi mode)
 	candidates := e.buildCandidates(rows)
-
-	// Bước 2: Score & Rank
 	ranked := e.scoreAndRank(candidates)
 
-	// Bước 3: Detect conflicts
-	conflicts := e.detectConflicts(ranked)
+	switch resolveMode {
+	case types.ModePopup:
+		// Popup: chỉ cần primary plan + risk cơ bản, không cần conflicts/landUseGroups/layers/warnings
+		risk := e.assessRisk(ranked, nil)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+		result.PrimaryPlanning = primaryPlanning
+		result.Risk = risk
 
-	// Bước 4: Assess risk (single source of truth)
-	risk := e.assessRisk(ranked, conflicts)
+	case types.ModeCompare:
+		// Compare: cần conflicts + risk + primary + landUseGroups + secondary plans, không cần raw layers/warnings
+		conflicts := e.detectConflicts(ranked)
+		risk := e.assessRisk(ranked, conflicts)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+		landUseGroups := e.buildLandUseGroups(ranked, parcelArea)
+		secondaryPlans := e.buildSecondaryPlans(ranked[1:])
+		result.PrimaryPlanning = primaryPlanning
+		result.SecondaryPlans = secondaryPlans
+		result.LandUseGroups = landUseGroups
+		result.Conflicts = conflicts
+		result.Risk = risk
 
-	// Bước 5: Build primary planning
-	primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+	default: // ModeDetail (và fallback)
+		// Detail: toàn bộ 8 bước
+		conflicts := e.detectConflicts(ranked)
+		risk := e.assessRisk(ranked, conflicts)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+		landUseGroups := e.buildLandUseGroups(ranked, parcelArea)
+		layers := e.buildLayers(rows, legalDocsMap, parcelArea)
+		warnings := e.buildWarnings(parcelArea, layers, conflicts)
+		secondaryPlans := e.buildSecondaryPlans(ranked[1:])
+		result.PrimaryPlanning = primaryPlanning
+		result.SecondaryPlans = secondaryPlans
+		result.LandUseGroups = landUseGroups
+		result.Layers = layers
+		result.Conflicts = conflicts
+		result.Risk = risk
+		result.Warnings = warnings
+	}
 
-	// Bước 6: Build land use groups
-	landUseGroups := e.buildLandUseGroups(ranked, parcelArea)
-
-	// Bước 7: Build raw layers (cho V1)
-	layers := e.buildLayers(rows, legalDocsMap, parcelArea)
-
-	// Bước 8: Build warnings
-	warnings := e.buildWarnings(parcelArea, layers, conflicts)
-
-	result.PrimaryPlanning = primaryPlanning
-	result.LandUseGroups = landUseGroups
-	result.Layers = layers
-	result.Conflicts = conflicts
-	result.Risk = risk
-	result.Warnings = warnings
 	result.Metadata.ResponseTimeMs = time.Since(startTime).Milliseconds()
-
 	return result
 }
 
@@ -312,6 +326,28 @@ func (e *ParcelEngine) buildPrimaryPlanning(primary *rankedLayerInternal, parcel
 		LegalStatus: c.LegalStatus,
 		CanBuild:    c.CanBuild,
 	}
+}
+
+// buildSecondaryPlans - build danh sách quy hoạch phụ từ ranked[1:] (cho compare/detail mode)
+func (e *ParcelEngine) buildSecondaryPlans(secondary []*rankedLayerInternal) []*SecondaryPlanInfo {
+	if len(secondary) == 0 {
+		return nil
+	}
+	plans := make([]*SecondaryPlanInfo, 0, len(secondary))
+	for _, r := range secondary {
+		c := r.candidate
+		plans = append(plans, &SecondaryPlanInfo{
+			LayerID:        c.LayerID,
+			LayerName:      c.LayerDisplayName,
+			LandUseCode:    c.LandUseCode,
+			LandUseName:    c.LandUseName,
+			LandUseColor:   c.LandUseColor,
+			GroupCode:      c.GroupCode,
+			OverlapPercent: c.OverlapPercent,
+			OverlapAreaSqm: c.OverlapAreaSqm,
+		})
+	}
+	return plans
 }
 
 // ============================================

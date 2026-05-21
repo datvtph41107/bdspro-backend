@@ -19,7 +19,7 @@ func NewConfigPostgres(db *gorm.DB) IConfigRepository {
 }
 
 func (r *ConfigPostgres) GetByKey(ctx context.Context, key string) (json.RawMessage, error) {
-	var config qh_domain.LayerResolverConfig
+	var config qh_domain.QHLayerResolverConfig
 	err := r.db.WithContext(ctx).Where("config_key = ?", key).First(&config).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -31,7 +31,7 @@ func (r *ConfigPostgres) GetByKey(ctx context.Context, key string) (json.RawMess
 }
 
 func (r *ConfigPostgres) GetAll(ctx context.Context) (map[string]json.RawMessage, error) {
-	var configs []qh_domain.LayerResolverConfig
+	var configs []qh_domain.QHLayerResolverConfig
 	err := r.db.WithContext(ctx).Find(&configs).Error
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (r *ConfigPostgres) GetAll(ctx context.Context) (map[string]json.RawMessage
 
 func (r *ConfigPostgres) UpdateByKey(ctx context.Context, key string, value json.RawMessage, updatedBy string) error {
 	now := time.Now()
-	result := r.db.WithContext(ctx).Model(&qh_domain.LayerResolverConfig{}).
+	result := r.db.WithContext(ctx).Model(&qh_domain.QHLayerResolverConfig{}).
 		Where("config_key = ?", key).
 		Updates(map[string]interface{}{
 			"config_value": value,
@@ -57,7 +57,7 @@ func (r *ConfigPostgres) UpdateByKey(ctx context.Context, key string, value json
 	}
 	if result.RowsAffected == 0 {
 		// Insert new
-		config := &qh_domain.LayerResolverConfig{
+		config := &qh_domain.QHLayerResolverConfig{
 			ConfigKey:   key,
 			ConfigValue: value,
 			UpdatedBy:   updatedBy,

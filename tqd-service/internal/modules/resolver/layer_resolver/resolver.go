@@ -21,7 +21,7 @@ type Resolver struct {
 	mu       sync.RWMutex
 }
 
-func NewResolverWithDB(configRepo repo.ILayerResolverConfigRepo) *Resolver {
+func NewResolverWithDB(configRepo repo.IQHLayerResolverConfigRepo) *Resolver {
 	return &Resolver{
 		dbLoader: db.NewConfigLoader(configRepo),
 	}

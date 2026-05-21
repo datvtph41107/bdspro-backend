@@ -13,14 +13,14 @@ import (
 )
 
 type ConfigLoader struct {
-	configRepo repo.ILayerResolverConfigRepo
+	configRepo repo.IQHLayerResolverConfigRepo
 	cache      map[string]json.RawMessage
 	mu         sync.RWMutex
 	lastLoad   time.Time
 	ttl        time.Duration
 }
 
-func NewConfigLoader(configRepo repo.ILayerResolverConfigRepo) *ConfigLoader {
+func NewConfigLoader(configRepo repo.IQHLayerResolverConfigRepo) *ConfigLoader {
 	return &ConfigLoader{
 		configRepo: configRepo,
 		cache:      make(map[string]json.RawMessage),

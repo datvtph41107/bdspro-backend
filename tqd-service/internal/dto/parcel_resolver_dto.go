@@ -5,8 +5,8 @@ import (
 	"regexp"
 )
 
-// REQUEST
-type GetParcelLayersV2Request struct {
+// GetParcelAssessmentRequest - Request cho API đánh giá chuyên sâu (VIP)
+type GetParcelAssessmentRequest struct {
 	ParcelID uint64 `json:"parcel_id"`
 	Mode     string `json:"mode"`
 	Preset   string `json:"preset"`
@@ -15,7 +15,7 @@ type GetParcelLayersV2Request struct {
 
 var dateRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
-func (r *GetParcelLayersV2Request) Validate() error {
+func (r *GetParcelAssessmentRequest) Validate() error {
 	if r.ParcelID == 0 {
 		return errors.New("parcel_id is required")
 	}
@@ -37,8 +37,8 @@ func (r *GetParcelLayersV2Request) Validate() error {
 	return nil
 }
 
-// RESPONSE V2 (cho API mới)
-type ParcelLayersV2Response struct {
+// ParcelAssessmentResponse - Response DTO cho API đánh giá chuyên sâu (VIP)
+type ParcelAssessmentResponse struct {
 	ParcelID      uint64          `json:"parcel_id"`
 	ParcelAreaSqm float64         `json:"parcel_area_sqm"`
 	CurrentPlan   *PlanV2Info     `json:"current_plan,omitempty"`

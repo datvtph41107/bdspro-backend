@@ -5,6 +5,6 @@ import (
 )
 
 // NewResolver - Khởi tạo resolver với database config
-func NewResolver(configRepo repo.ILayerResolverConfigRepo) ILayerResolver {
+func NewResolver(configRepo repo.IQHLayerResolverConfigRepo) ILayerResolver {
 	return NewResolverWithDB(configRepo)
 }
