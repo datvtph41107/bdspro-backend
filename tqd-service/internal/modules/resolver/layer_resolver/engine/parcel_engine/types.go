@@ -97,6 +97,15 @@ type UnifiedResult struct {
 	// Cảnh báo
 	Warnings []string
 
+	// Compare result (mode=compare)
+	CompareResult *CompareResultInfo
+
+	// Historical risk trend (mode=detail)
+	HistoricalRisk *HistoricalRiskInfo
+
+	// Resolution status
+	ResolutionStatus string
+
 	// Metadata
 	Metadata *MetadataInfo
 }
@@ -124,6 +133,10 @@ type PrimaryPlanningInfo struct {
 	LayerName   string
 	LegalStatus uint32
 	CanBuild    bool
+	// Normalized legal info
+	LegalCanonical  string
+	LegalConfidence string
+	LegalActiveState string
 }
 
 type LandUseGroupInfo struct {
@@ -260,6 +273,24 @@ type EngineConfig struct {
 	RiskThresholds     []*RiskThreshold
 	DefaultPriority    int
 
+	// Legal Normalization
+	LegalNormalization *types.LegalNormalizationConfig
+
+	// Conflict Classification
+	ConflictClassification *types.ConflictClassificationConfig
+
+	// Semantic Normalization
+	SemanticCanonicalMap map[string]string
+	SemanticLabels       map[string]string
+
+	// Lifecycle, Audit, Timeline, Compare, Historical Risk configs
+	LifecycleConfig      *types.LifecycleConfig
+	AuditConfig          *types.AuditConfig
+	TimelineConfig       *types.TimelineConfig
+	CompareConfig        *types.CompareConfig
+	HistoricalRiskConfig *types.HistoricalRiskConfig
+	PipelineConfig       *types.PipelineConfig
+
 	// Conflict labels
 	ConflictType           string
 	ConflictSeverity       string
@@ -314,6 +345,24 @@ func DefaultEngineConfig() *EngineConfig {
 		MultiLayerPenalty:      types.DefaultMultiLayerPenaltyValue,
 		RiskThresholds:         thresholds,
 		DefaultPriority:        types.DefaultPriorityValue,
+		LegalNormalization: &types.LegalNormalizationConfig{
+			CanonicalMap:     types.DefaultCanonicalMap(),
+			ConfidenceWeight: types.DefaultConfidenceWeight(),
+			ActiveRules:      types.DefaultActiveRules(),
+		},
+		ConflictClassification: &types.ConflictClassificationConfig{
+			SeverityThresholds: types.DefaultSeverityThresholds(),
+			TypeWeights:        types.DefaultConflictTypeWeights(),
+			GuidanceTemplates:  types.DefaultGuidanceTemplates(),
+		},
+		SemanticCanonicalMap:   make(map[string]string),
+		SemanticLabels:         make(map[string]string),
+		LifecycleConfig:        &types.LifecycleConfig{AllowedTransitions: types.DefaultAllowedTransitions(), AutoIncrementVersion: true},
+		AuditConfig:            types.DefaultAuditConfig(),
+		TimelineConfig:         types.DefaultTimelineConfig(),
+		CompareConfig:          types.DefaultCompareConfig(),
+		HistoricalRiskConfig:   types.DefaultHistoricalRiskConfig(),
+		PipelineConfig:         types.DefaultPipelineConfig(),
 		ConflictType:           types.DefaultConflictType,
 		ConflictSeverity:       types.DefaultConflictSeverity,
 		ConflictRecommendation: types.DefaultConflictRecommendation,
@@ -425,4 +474,27 @@ func ToUnifiedRowsFromV2(rows []dto.ParcelLayerRowV2) []UnifiedRow {
 		}
 	}
 	return result
+}
+
+// ─── Compare & Historical Risk types ───
+
+type CompareResultInfo struct {
+	TotalLayers int
+	Changes     []*CompareChangeInfo
+}
+
+type CompareChangeInfo struct {
+	LayerID    uint64
+	LayerName  string
+	ChangeType string
+	OldValue   string
+	NewValue   string
+}
+
+type HistoricalRiskInfo struct {
+	Trend          string
+	TrendDetail    string
+	ActiveLayers   int
+	ExpiringLayers int
+	AnalyzedAt     string
 }

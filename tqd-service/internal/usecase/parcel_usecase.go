@@ -15,6 +15,7 @@ import (
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
+	"tqd/internal/modules/resolver/layer_resolver/rule"
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
@@ -37,22 +38,47 @@ type ParcelUsecase interface {
 
 	// Assessment - Đánh giá chuyên sâu (VIP): conflicts, landUseGroups, assessment, 3 modes
 	GetParcelAssessment(ctx context.Context, req *dto.GetParcelAssessmentRequest) (*types.ResolveResult, error)
+
+	// Timeline - Lịch sử biến động quy hoạch của thửa đất
+	GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error)
+
+	// LayerHistory - Lịch sử phiên bản của 1 layer
+	GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error)
 }
 
 type parcelUsecase struct {
 	parcelRepo     repo.IParcelRepo
 	layerLegalRepo repo.ILayerLegalRepo
+	auditRepo      rule.AuditRepository
+	layerRepo      rule.LayerRepository
 	parcelEngine   *parcel_engine.ParcelEngine
+	timelineEngine *rule.TimelineEngine
+	lifecycleEngine *rule.LifecycleEngine
 }
 
 func NewParcelUsecase(
 	parcelRepo repo.IParcelRepo,
 	layerLegalRepo repo.ILayerLegalRepo,
+	auditRepo rule.AuditRepository,
+	layerRepo rule.LayerRepository,
 ) ParcelUsecase {
+	auditEngine := rule.NewAuditEngine(nil, auditRepo)
+	lifecycleEngine := rule.NewLifecycleEngine(nil, layerRepo)
+	timelineEngine := rule.NewTimelineEngine(nil, auditRepo, nil)
+
+	engine := parcel_engine.NewParcelEngine(parcel_engine.DefaultEngineConfig()).
+		WithAuditEngine(auditEngine).
+		WithLifecycleEngine(lifecycleEngine).
+		WithTimelineEngine(timelineEngine)
+
 	return &parcelUsecase{
-		parcelRepo:     parcelRepo,
-		layerLegalRepo: layerLegalRepo,
-		parcelEngine:   parcel_engine.NewParcelEngine(parcel_engine.DefaultEngineConfig()),
+		parcelRepo:      parcelRepo,
+		layerLegalRepo:  layerLegalRepo,
+		auditRepo:       auditRepo,
+		layerRepo:       layerRepo,
+		parcelEngine:    engine,
+		timelineEngine:  timelineEngine,
+		lifecycleEngine: lifecycleEngine,
 	}
 }
 
@@ -425,10 +451,36 @@ func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedR
 
 func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, mode string) *types.ResolveResult {
 	result := &types.ResolveResult{
-		HasConflict:      len(ur.Conflicts) > 0,
-		Mode:             types.ResolveMode(mode),
-		ProcessingTimeMs: ur.Metadata.ResponseTimeMs,
-		ParcelAreaSqm:    ur.ParcelAreaSqm,
+		HasConflict:       len(ur.Conflicts) > 0,
+		Mode:              types.ResolveMode(mode),
+		ProcessingTimeMs:  ur.Metadata.ResponseTimeMs,
+		ParcelAreaSqm:     ur.ParcelAreaSqm,
+		ResolutionStatus:  ur.ResolutionStatus,
+	}
+
+	if ur.CompareResult != nil {
+		result.CompareResult = &types.CompareResultInfo{
+			TotalLayers: ur.CompareResult.TotalLayers,
+		}
+		for _, c := range ur.CompareResult.Changes {
+			result.CompareResult.Changes = append(result.CompareResult.Changes, &types.CompareChangeInfo{
+				LayerID:    c.LayerID,
+				LayerName:  c.LayerName,
+				ChangeType: c.ChangeType,
+				OldValue:   c.OldValue,
+				NewValue:   c.NewValue,
+			})
+		}
+	}
+
+	if ur.HistoricalRisk != nil {
+		result.HistoricalRisk = &types.HistoricalRiskInfo{
+			Trend:          ur.HistoricalRisk.Trend,
+			TrendDetail:    ur.HistoricalRisk.TrendDetail,
+			ActiveLayers:   ur.HistoricalRisk.ActiveLayers,
+			ExpiringLayers: ur.HistoricalRisk.ExpiringLayers,
+			AnalyzedAt:     ur.HistoricalRisk.AnalyzedAt,
+		}
 	}
 
 	if ur.Risk != nil {
@@ -512,6 +564,11 @@ func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, 
 		}
 	}
 
+	// Layers: convert engine layers → types layers (chỉ cho detail mode)
+	if mode == "detail" || mode == "" {
+		result.Layers = convertEngineLayersToTypes(ur.Layers)
+	}
+
 	return result
 }
 
@@ -587,10 +644,17 @@ func (u *parcelUsecase) buildStatusFromRisk(risk *parcel_engine.RiskInfo, hasCon
 }
 
 func (u *parcelUsecase) buildReasonFromPrimary(p *parcel_engine.PrimaryPlanningInfo, hasConflict bool) string {
-	if hasConflict {
-		return u.parcelEngine.GetConfig().ConflictStatusSuffix
+	if p == nil {
+		return ""
 	}
-	return ""
+	reason := fmt.Sprintf("%s (%s) — %s", p.Name, p.Code, p.LayerName)
+	if p.LegalCanonical != "" {
+		reason += fmt.Sprintf(" [Pháp lý: %s, độ tin cậy: %s]", p.LegalCanonical, p.LegalConfidence)
+	}
+	if hasConflict {
+		reason += " — " + u.parcelEngine.GetConfig().ConflictStatusSuffix
+	}
+	return reason
 }
 
 func buildWarningFromUnified(u *parcel_engine.UnifiedResult) string {
@@ -788,4 +852,152 @@ func filterByAsOfDate(rows []dto.ParcelLayerRowV2, asOfDate string) []dto.Parcel
 		}
 	}
 	return filtered
+}
+
+// ─── Engine → Types layer conversion ───────────────────────────────────────
+
+func convertEngineLayersToTypes(engineLayers []*parcel_engine.LayerDetail) []*types.LayerDetail {
+	if len(engineLayers) == 0 {
+		return nil
+	}
+	result := make([]*types.LayerDetail, len(engineLayers))
+	for i, el := range engineLayers {
+		result[i] = convertEngineLayerToType(el)
+	}
+	return result
+}
+
+func convertEngineLayerToType(el *parcel_engine.LayerDetail) *types.LayerDetail {
+	if el == nil {
+		return nil
+	}
+	l := &types.LayerDetail{
+		ID:            el.ID,
+		Name:          el.Name,
+		DisplayName:   el.DisplayName,
+		Type:          el.Type,
+		EffectiveDate: el.EffectiveDate,
+		TotalArea:     el.TotalArea,
+		TotalPct:      el.TotalPct,
+	}
+	if el.Authority != nil {
+		l.Authority = &types.AuthorityDetail{
+			ID:          el.Authority.ID,
+			Name:        el.Authority.Name,
+			Code:        el.Authority.Code,
+			Description: el.Authority.Description,
+		}
+	}
+	for _, d := range el.Documents {
+		l.LegalDocs = append(l.LegalDocs, &types.LegalDocDetail{
+			ID:       d.ID,
+			Name:     d.Name,
+			FileUrl:  d.FileUrl,
+			FileType: d.FileType,
+		})
+	}
+	for _, lbl := range el.Labels {
+		tl := &types.LabelDetail{
+			ID:        lbl.ID,
+			Name:      lbl.Name,
+			Color:     lbl.Color,
+			TotalArea: lbl.AreaSqm,
+			TotalPct:  lbl.Ratio,
+		}
+		for _, r := range lbl.Regions {
+			tr := &types.RegionDetail{
+				ID:             r.ID,
+				Name:           r.Name,
+				DisplayName:    r.DisplayName,
+				LandUseCode:    r.LandUseCode,
+				LandUseName:    r.LandUseName,
+				OverlapAreaSqm: r.OverlapAreaSqm,
+				OverlapPct:     r.OverlapPct,
+				Geometry:       r.Geometry,
+			}
+			if r.Color != nil {
+				tr.ColorRed = r.Color.Red
+				tr.ColorGreen = r.Color.Green
+				tr.ColorBlue = r.Color.Blue
+			}
+			tl.Regions = append(tl.Regions, tr)
+		}
+		l.Labels = append(l.Labels, tl)
+	}
+	return l
+}
+
+// GetParcelTimeline - Lịch sử biến động quy hoạch của thửa đất
+func (u *parcelUsecase) GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+
+	if u.timelineEngine != nil {
+		return u.timelineEngine.BuildTimeline(ctx, parcelID)
+	}
+
+	// Fallback: build from parcel layer rows
+	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+	}
+
+	events := make([]*types.TimelineEvent, 0, len(rows))
+	for _, row := range rows {
+		eventType := types.EventLayerEffective
+		if row.LayerEffectiveDate != "" {
+			eventType = types.EventLayerEffective
+		}
+		events = append(events, &types.TimelineEvent{
+			ID:          fmt.Sprintf("evt_%d_%d", row.LayerID, row.RegionID),
+			Date:        time.Now(),
+			EventType:   eventType,
+			LayerID:     row.LayerID,
+			LayerName:   row.LayerDisplayName,
+			Description: fmt.Sprintf("Layer %s — %s (%.1f%%)", row.LayerDisplayName, row.RegionLandUseName, row.OverlapPct),
+		})
+	}
+
+	summary := &types.TimelineSummary{
+		TotalEvents: len(events),
+	}
+	if len(events) > 0 {
+		summary.FirstEventAt = events[0].Date
+		summary.LastEventAt = events[len(events)-1].Date
+	}
+
+	return &types.ParcelTimeline{
+		ParcelID: parcelID,
+		Events:   events,
+		Summary:  summary,
+	}, nil
+}
+
+// GetLayerHistory - Lịch sử phiên bản của 1 layer
+func (u *parcelUsecase) GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error) {
+	if layerID == 0 {
+		return nil, fmt.Errorf("layer_id is required")
+	}
+
+	if u.lifecycleEngine != nil {
+		return u.lifecycleEngine.GetLineage(ctx, layerID)
+	}
+
+	// Fallback: return basic lineage
+	return &types.LayerLineage{
+		RootLayerID: layerID,
+		FamilyID:    layerID,
+		CurrentID:   layerID,
+		Versions: []*types.LayerVersion{
+			{
+				Version:   1,
+				LayerID:   layerID,
+				FamilyID:  layerID,
+				State:     types.StateEffective,
+				CreatedAt: time.Now(),
+				IsLatest:  true,
+			},
+		},
+	}, nil
 }

@@ -90,5 +90,7 @@ func AutoMigrate() {
 		&qh_domain.QHLayerLandUse{},
 		&qh_domain.QHAuthorityIssuring{},
 		&qh_domain.QHLayerLegend{},
+		&qh_domain.QHAuditEntry{},
+		&qh_domain.QHLifecycleTransition{},
 	)
 }

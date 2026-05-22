@@ -30,14 +30,54 @@ func NewParcelMapper() *ParcelMapper {
 
 func (m *ParcelMapper) ResolveResultToProtoAssessment(result *types.ResolveResult, parcelID uint64, mode string) *tqdpb.ParcelAssessmentResponse {
 	resp := &tqdpb.ParcelAssessmentResponse{
-		ParcelId:    parcelID,
-		HasConflict: result.HasConflict,
-		RiskScore:   result.RiskScore,
-		RiskLevel:   result.RiskLevel,
-		RiskReasons: result.RiskReasons,
+		ParcelId:          parcelID,
+		HasConflict:       result.HasConflict,
+		RiskScore:         result.RiskScore,
+		RiskLevel:         result.RiskLevel,
+		RiskReasons:       result.RiskReasons,
+		ResolutionStatus:  result.ResolutionStatus,
 		Metadata: &tqdpb.ResponseMetadataInfo{
 			ResponseTimeMs: result.ProcessingTimeMs,
 		},
+	}
+
+	// InfoConflicts
+	for _, c := range result.InfoConflicts {
+		resp.InfoConflicts = append(resp.InfoConflicts, &tqdpb.ConflictDetail{
+			Type:            c.Type,
+			Severity:        string(c.Severity),
+			Description:     c.Description,
+			Recommendation:  c.Recommendation,
+			ActionRequired:  c.ActionRequired,
+			AffectedPercent: c.AffectedPercent,
+		})
+	}
+
+	// CompareResult
+	if result.CompareResult != nil {
+		resp.CompareResult = &tqdpb.CompareResult{
+			TotalLayers: int32(result.CompareResult.TotalLayers),
+		}
+		for _, c := range result.CompareResult.Changes {
+			resp.CompareResult.Changes = append(resp.CompareResult.Changes, &tqdpb.CompareChange{
+				LayerId:    c.LayerID,
+				LayerName:  c.LayerName,
+				ChangeType: c.ChangeType,
+				OldValue:   c.OldValue,
+				NewValue:   c.NewValue,
+			})
+		}
+	}
+
+	// HistoricalRisk
+	if result.HistoricalRisk != nil {
+		resp.HistoricalRisk = &tqdpb.HistoricalRisk{
+			Trend:          result.HistoricalRisk.Trend,
+			TrendDetail:    result.HistoricalRisk.TrendDetail,
+			ActiveLayers:   int32(result.HistoricalRisk.ActiveLayers),
+			ExpiringLayers: int32(result.HistoricalRisk.ExpiringLayers),
+			AnalyzedAt:     result.HistoricalRisk.AnalyzedAt,
+		}
 	}
 
 	// Assessment: chỉ build cho detail mode (popup/compare không cần assessment chi tiết)
@@ -99,6 +139,13 @@ func (m *ParcelMapper) ResolveResultToProtoAssessment(result *types.ResolveResul
 				ActionRequired:  c.ActionRequired,
 				AffectedPercent: c.AffectedPercent,
 			})
+		}
+	}
+
+	// Layers: chỉ map cho detail mode
+	if mode == "detail" || mode == "" {
+		for _, l := range result.Layers {
+			resp.Layers = append(resp.Layers, mapTypeLayerToLayerDetail(l))
 		}
 	}
 
@@ -577,4 +624,124 @@ func (m *ParcelMapper) buildAssessmentSummary(result *types.ResolveResult) strin
 		summary += m.ConflictSummarySuffix
 	}
 	return summary
+}
+
+// ─── Types Layer → Proto Layer conversion ──────────────────────────────────
+
+func mapTypeLayerToProto(l *types.LayerDetail) *tqdpb.Layer {
+	if l == nil {
+		return nil
+	}
+	pl := &tqdpb.Layer{
+		Id:            l.ID,
+		Name:          l.Name,
+		DisplayName:   l.DisplayName,
+		Type:          l.Type,
+		EffectiveDate: l.EffectiveDate,
+		TotalArea:     l.TotalArea,
+		TotalPercent:  l.TotalPct,
+	}
+	if l.Authority != nil {
+		pl.AuthorityIssuing = &tqdpb.AuthorityIssuingInfo{
+			Id:          l.Authority.ID,
+			Name:        l.Authority.Name,
+			Code:        l.Authority.Code,
+			Description: l.Authority.Description,
+		}
+	}
+	for _, d := range l.LegalDocs {
+		pl.LegalDocs = append(pl.LegalDocs, &tqdpb.LayerLegalDocInfo{
+			Id:       d.ID,
+			Name:     d.Name,
+			FileUrl:  d.FileUrl,
+			FileType: d.FileType,
+		})
+	}
+	for _, lbl := range l.Labels {
+		plb := &tqdpb.Label{
+			Id:           lbl.ID,
+			Name:         lbl.Name,
+			DisplayName:  lbl.DisplayName,
+			Color:        lbl.Color,
+			TotalArea:    lbl.TotalArea,
+			TotalPercent: lbl.TotalPct,
+		}
+		for _, r := range lbl.Regions {
+			plb.Regions = append(plb.Regions, &tqdpb.Region{
+				Id:             r.ID,
+				Name:           r.Name,
+				DisplayName:    r.DisplayName,
+				LandUseCode:    r.LandUseCode,
+				LandUseName:    r.LandUseName,
+				OverlapArea:    r.OverlapAreaSqm,
+				OverlapPercent: r.OverlapPct,
+				Geometry:       r.Geometry,
+				Color: &tqdpb.RGBColor{
+					Red:   uint32(r.ColorRed),
+					Green: uint32(r.ColorGreen),
+					Blue:  uint32(r.ColorBlue),
+				},
+			})
+		}
+		pl.Labels = append(pl.Labels, plb)
+	}
+	return pl
+}
+
+func mapTypeLayerToLayerDetail(l *types.LayerDetail) *tqdpb.LayerDetail {
+	if l == nil {
+		return nil
+	}
+	pl := &tqdpb.LayerDetail{
+		Id:            l.ID,
+		Name:          l.Name,
+		DisplayName:   l.DisplayName,
+		Type:          l.Type,
+		EffectiveDate: l.EffectiveDate,
+		TotalArea:     l.TotalArea,
+		TotalPct:      l.TotalPct,
+	}
+	if l.Authority != nil {
+		pl.Authority = &tqdpb.AuthorityDetail{
+			Id:          l.Authority.ID,
+			Name:        l.Authority.Name,
+			Code:        l.Authority.Code,
+			Description: l.Authority.Description,
+		}
+	}
+	for _, d := range l.LegalDocs {
+		pl.LegalDocs = append(pl.LegalDocs, &tqdpb.LegalDocDetail{
+			Id:       d.ID,
+			Name:     d.Name,
+			FileUrl:  d.FileUrl,
+			FileType: d.FileType,
+		})
+	}
+	for _, lbl := range l.Labels {
+		plb := &tqdpb.LabelDetail{
+			Id:          lbl.ID,
+			Name:        lbl.Name,
+			DisplayName: lbl.DisplayName,
+			Color:       lbl.Color,
+			TotalArea:   lbl.TotalArea,
+			TotalPct:    lbl.TotalPct,
+		}
+		for _, r := range lbl.Regions {
+			plb.Regions = append(plb.Regions, &tqdpb.RegionDetail{
+				Id:             r.ID,
+				Name:           r.Name,
+				DisplayName:    r.DisplayName,
+				LandUseCode:    r.LandUseCode,
+				LandUseName:    r.LandUseName,
+				ColorRed:       uint32(r.ColorRed),
+				ColorGreen:     uint32(r.ColorGreen),
+				ColorBlue:      uint32(r.ColorBlue),
+				OverlapAreaSqm: r.OverlapAreaSqm,
+				OverlapPct:     r.OverlapPct,
+				Geometry:       r.Geometry,
+			})
+		}
+		pl.Labels = append(pl.Labels, plb)
+	}
+	return pl
 }

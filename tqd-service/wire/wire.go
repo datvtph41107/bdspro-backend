@@ -1,13 +1,11 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
-	"tqd/initial"
 	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
@@ -16,6 +14,7 @@ import (
 	tqd_infra_postgres "tqd/infra/postgres"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
+	"tqd/initial"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
@@ -26,6 +25,8 @@ import (
 	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_map "tqd/map"
+
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -112,6 +113,8 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewParcelGrpcHandler,
 	tqd_infra_mapper.NewParcelMapper,
 	tqd_infra_postgres.NewParcelPostgres,
+	tqd_infra_postgres.NewQHAuditPostgres,
+	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
 	tqd_internal_usecase.NewParcelUsecase,
 	tqd_infra_client.NewPermissionClient,
 	tqd_infra_handler_grpc.NewPoiCategoryGrpcHandler,

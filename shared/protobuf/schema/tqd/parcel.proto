@@ -68,6 +68,20 @@ service ParcelService {
       get: "/v2/tqd/parcels/{parcelId}/assessment"
     };
   }
+
+  // Timeline — Lịch sử biến động quy hoạch của thửa đất
+  rpc GetParcelTimeline(GetParcelDetailRequest) returns (ParcelTimelineResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/timeline"
+    };
+  }
+
+  // LayerHistory — Lịch sử phiên bản của 1 layer
+  rpc GetLayerHistory(GetLayerHistoryRequest) returns (LayerHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/layers/{layerId}/history"
+    };
+  }
 }
 
 message GetParcelAssessmentRequest {
@@ -90,6 +104,11 @@ message ParcelAssessmentResponse {
   uint32 riskScore = 9;               // risk_score (0-100)
   string riskLevel = 10;              // risk_level (LOW/MEDIUM/HIGH/CRITICAL)
   repeated string riskReasons = 11;   // risk_reasons
+  string resolutionStatus = 12;       // resolution_status
+  repeated ConflictDetail infoConflicts = 13;  // info_conflicts
+  CompareResult compareResult = 14;   // compare_result
+  HistoricalRisk historicalRisk = 15; // historical_risk
+  repeated LayerDetail layers = 16;   // layers (detail mode)
 }
 
 message PlanDetailInfo {
@@ -103,6 +122,9 @@ message PlanDetailInfo {
   double impactPercent = 8;
   double impactAreaSqm = 9;
   repeated PlanLandUseGroupDetail landUseGroups = 10;
+  string legalCanonical = 11;         // legal_canonical
+  string legalConfidence = 12;        // legal_confidence
+  string legalActiveState = 13;       // legal_active_state
 }
 
 message PlanLandUseGroupDetail {
@@ -348,6 +370,136 @@ message ListParcelsRequest {
 message ListParcelsResponse {
   repeated Parcel parcels = 1;
   int32           total   = 2;
+}
+
+// ─── Compare & Historical Risk messages ───
+
+message CompareResult {
+  int32 totalLayers = 1;
+  repeated CompareChange changes = 2;
+}
+
+message CompareChange {
+  uint64 layerId = 1;
+  string layerName = 2;
+  string changeType = 3;
+  string oldValue = 4;
+  string newValue = 5;
+}
+
+message HistoricalRisk {
+  string trend = 1;
+  string trendDetail = 2;
+  int32 activeLayers = 3;
+  int32 expiringLayers = 4;
+  string analyzedAt = 5;
+}
+
+message LayerDetail {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  uint32 type = 4;
+  string effectiveDate = 5;
+  repeated LabelDetail labels = 6;
+  repeated LegalDocDetail legalDocs = 7;
+  AuthorityDetail authority = 8;
+  double totalArea = 9;
+  double totalPct = 10;
+}
+
+message LabelDetail {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string color = 4;
+  repeated RegionDetail regions = 5;
+  double totalArea = 6;
+  double totalPct = 7;
+}
+
+message RegionDetail {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  uint32 colorRed = 6;
+  uint32 colorGreen = 7;
+  uint32 colorBlue = 8;
+  double overlapAreaSqm = 9;
+  double overlapPct = 10;
+  bytes geometry = 11;
+}
+
+message LegalDocDetail {
+  uint64 id = 1;
+  string name = 2;
+  string fileUrl = 3;
+  string fileType = 4;
+}
+
+message AuthorityDetail {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+}
+
+// ─── Timeline messages ───
+
+message ParcelTimelineResponse {
+  uint64 parcelId = 1;
+  repeated TimelineEvent events = 2;
+  TimelineSummary summary = 3;
+}
+
+message TimelineEvent {
+  string id = 1;
+  string date = 2;
+  string eventType = 3;
+  uint64 layerId = 4;
+  string layerName = 5;
+  string description = 6;
+}
+
+message TimelineSummary {
+  int32 totalEvents = 1;
+  string firstEventAt = 2;
+  string lastEventAt = 3;
+  repeated string majorChanges = 4;
+}
+
+// ─── LayerHistory messages ───
+
+message GetLayerHistoryRequest {
+  uint64 layerId = 1;
+}
+
+message LayerHistoryResponse {
+  uint64 layerId = 1;
+  uint64 familyId = 2;
+  repeated LayerVersionInfo versions = 3;
+  uint64 currentId = 4;
+}
+
+message LayerVersionInfo {
+  int32 version = 1;
+  uint64 layerId = 2;
+  string state = 3;
+  string createdAt = 4;
+  string createdBy = 5;
+  bool isLatest = 6;
+  repeated LifecycleTransitionInfo transitions = 7;
+}
+
+message LifecycleTransitionInfo {
+  string fromState = 1;
+  string toState = 2;
+  string timestamp = 3;
+  string actor = 4;
+  string reason = 5;
+  string legalDoc = 6;
 }
 
 message ParcelListDTO {

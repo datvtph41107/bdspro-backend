@@ -14,6 +14,7 @@ type LayerCandidate struct {
 	ExpiryDate    *time.Time
 	TrustValue    float32
 	Authority     string
+	LegalDocRef   string
 
 	LabelID          uint64
 	LabelName        string
@@ -94,4 +95,85 @@ type ResolveResult struct {
 	RiskLevel      string
 	RiskReasons    []string
 	Recommendation string
+
+	ResolutionStatus string
+
+	Layers []*LayerDetail
+
+	CompareResult  *CompareResultInfo
+	HistoricalRisk *HistoricalRiskInfo
+}
+
+type CompareResultInfo struct {
+	TotalLayers int
+	Changes     []*CompareChangeInfo
+}
+
+type CompareChangeInfo struct {
+	LayerID    uint64
+	LayerName  string
+	ChangeType string
+	OldValue   string
+	NewValue   string
+}
+
+type HistoricalRiskInfo struct {
+	Trend          string
+	TrendDetail    string
+	ActiveLayers   int
+	ExpiringLayers int
+	AnalyzedAt     string
+}
+
+// ─── Layer/Region detail types (dùng cho assessment mode=detail, map → proto Layer) ───
+
+type LayerDetail struct {
+	ID            uint64
+	Name          string
+	DisplayName   string
+	Type          uint32
+	EffectiveDate string
+	Labels        []*LabelDetail
+	LegalDocs     []*LegalDocDetail
+	Authority     *AuthorityDetail
+	TotalArea     float64
+	TotalPct      float64
+}
+
+type LabelDetail struct {
+	ID          uint64
+	Name        string
+	DisplayName string
+	Color       string
+	Regions     []*RegionDetail
+	TotalArea   float64
+	TotalPct    float64
+}
+
+type RegionDetail struct {
+	ID             uint64
+	Name           string
+	DisplayName    string
+	LandUseCode    string
+	LandUseName    string
+	ColorRed       uint8
+	ColorGreen     uint8
+	ColorBlue      uint8
+	OverlapAreaSqm float64
+	OverlapPct     float64
+	Geometry       []byte
+}
+
+type LegalDocDetail struct {
+	ID       uint64
+	Name     string
+	FileUrl  string
+	FileType string
+}
+
+type AuthorityDetail struct {
+	ID          uint64
+	Name        string
+	Code        string
+	Description string
 }

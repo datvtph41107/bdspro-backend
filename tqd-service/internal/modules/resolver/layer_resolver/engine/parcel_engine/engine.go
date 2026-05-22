@@ -10,11 +10,20 @@ import (
 	"time"
 
 	"tqd/internal/dto"
+	"tqd/internal/modules/resolver/layer_resolver/rule"
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
 type ParcelEngine struct {
-	config *EngineConfig
+	config               *EngineConfig
+	legalNormalizer      *rule.LegalStatusResolver
+	conflictClassifier   *rule.ConflictClassifier
+	semanticNormalizer   *rule.LandUseCodeResolver
+	compareEngine        *rule.CompareEngine
+	historicalRiskEngine *rule.HistoricalRiskEngine
+	lifecycleEngine      *rule.LifecycleEngine
+	auditEngine          *rule.AuditEngine
+	timelineEngine       *rule.TimelineEngine
 }
 
 type rankedLayerInternal struct {
@@ -28,7 +37,39 @@ func NewParcelEngine(config *EngineConfig) *ParcelEngine {
 	if config == nil {
 		config = DefaultEngineConfig()
 	}
-	return &ParcelEngine{config: config}
+	return &ParcelEngine{
+		config:               config,
+		legalNormalizer:      rule.NewLegalStatusResolver(config.LegalNormalization),
+		conflictClassifier:   rule.NewConflictClassifier(config.ConflictClassification),
+		semanticNormalizer:   rule.NewLandUseCodeResolver(config.SemanticCanonicalMap, config.SemanticLabels),
+		compareEngine:        rule.NewCompareEngine(config.CompareConfig, nil),
+		historicalRiskEngine: rule.NewHistoricalRiskEngine(config.HistoricalRiskConfig, nil, nil),
+	}
+}
+
+func (e *ParcelEngine) WithLifecycleEngine(le *rule.LifecycleEngine) *ParcelEngine {
+	e.lifecycleEngine = le
+	return e
+}
+
+func (e *ParcelEngine) WithAuditEngine(ae *rule.AuditEngine) *ParcelEngine {
+	e.auditEngine = ae
+	return e
+}
+
+func (e *ParcelEngine) WithTimelineEngine(te *rule.TimelineEngine) *ParcelEngine {
+	e.timelineEngine = te
+	return e
+}
+
+func (e *ParcelEngine) WithCompareRepo(repo rule.CompareRepository) *ParcelEngine {
+	e.compareEngine = rule.NewCompareEngine(e.config.CompareConfig, repo)
+	return e
+}
+
+func (e *ParcelEngine) WithHistoricalRiskRepo(repo rule.HistoricalRiskRepository) *ParcelEngine {
+	e.historicalRiskEngine = rule.NewHistoricalRiskEngine(e.config.HistoricalRiskConfig, repo, e.timelineEngine)
+	return e
 }
 
 func (e *ParcelEngine) GetConfig() *EngineConfig {
@@ -62,36 +103,47 @@ func (e *ParcelEngine) Process(rows []UnifiedRow, parcelInfo *dto.ParcelInfoResp
 	candidates := e.buildCandidates(rows)
 	ranked := e.scoreAndRank(candidates)
 
+	// Derive normalized legal cho primary
+	var primaryNormalized *types.NormalizedLegal
+	if len(ranked) > 0 {
+		primaryNormalized = e.legalNormalizer.Normalize(ranked[0].candidate)
+	}
+
 	switch resolveMode {
 	case types.ModePopup:
-		// Popup: chỉ cần primary plan + risk cơ bản, không cần conflicts/landUseGroups/layers/warnings
+		// Popup: chỉ cần primary plan + risk cơ bản
 		risk := e.assessRisk(ranked, nil)
-		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea, primaryNormalized)
 		result.PrimaryPlanning = primaryPlanning
 		result.Risk = risk
+		result.ResolutionStatus = string(types.StatusResolved)
 
 	case types.ModeCompare:
-		// Compare: cần conflicts + risk + primary + landUseGroups + secondary plans, không cần raw layers/warnings
+		// Compare: conflicts + risk + primary + landUseGroups + secondary plans + compare diff
 		conflicts := e.detectConflicts(ranked)
 		risk := e.assessRisk(ranked, conflicts)
-		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea, primaryNormalized)
 		landUseGroups := e.buildLandUseGroups(ranked, parcelArea)
 		secondaryPlans := e.buildSecondaryPlans(ranked[1:])
+		compareResult := e.buildCompareResult(rows)
 		result.PrimaryPlanning = primaryPlanning
 		result.SecondaryPlans = secondaryPlans
 		result.LandUseGroups = landUseGroups
 		result.Conflicts = conflicts
 		result.Risk = risk
+		result.CompareResult = compareResult
+		result.ResolutionStatus = e.resolveStatus(conflicts, nil)
 
 	default: // ModeDetail (và fallback)
-		// Detail: toàn bộ 8 bước
+		// Detail: toàn bộ các bước
 		conflicts := e.detectConflicts(ranked)
 		risk := e.assessRisk(ranked, conflicts)
-		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea, primaryNormalized)
 		landUseGroups := e.buildLandUseGroups(ranked, parcelArea)
 		layers := e.buildLayers(rows, legalDocsMap, parcelArea)
 		warnings := e.buildWarnings(parcelArea, layers, conflicts)
 		secondaryPlans := e.buildSecondaryPlans(ranked[1:])
+		historicalRisk := e.buildHistoricalRisk(rows, risk)
 		result.PrimaryPlanning = primaryPlanning
 		result.SecondaryPlans = secondaryPlans
 		result.LandUseGroups = landUseGroups
@@ -99,10 +151,23 @@ func (e *ParcelEngine) Process(rows []UnifiedRow, parcelInfo *dto.ParcelInfoResp
 		result.Conflicts = conflicts
 		result.Risk = risk
 		result.Warnings = warnings
+		result.HistoricalRisk = historicalRisk
+		result.ResolutionStatus = e.resolveStatus(conflicts, warnings)
 	}
 
 	result.Metadata.ResponseTimeMs = time.Since(startTime).Milliseconds()
 	return result
+}
+
+// resolveStatus xác định ResolutionStatus từ conflicts và warnings
+func (e *ParcelEngine) resolveStatus(conflicts []*ConflictInfo, warnings []string) string {
+	if len(conflicts) > 0 {
+		return string(types.StatusResolvedWithConflict)
+	}
+	if len(warnings) > 0 {
+		return string(types.StatusResolvedWithWarning)
+	}
+	return string(types.StatusResolved)
 }
 
 // ============================================
@@ -123,6 +188,7 @@ func (e *ParcelEngine) buildCandidates(rows []UnifiedRow) []*types.LayerCandidat
 			EffectiveDate:    parseTime(row.LayerEffectiveDate),
 			ExpiryDate:       parseTime(row.LayerExpiryDate),
 			Authority:        row.LayerAuthority,
+			LegalDocRef:      row.LayerLegalDoc,
 			LabelID:          row.LabelID,
 			LabelName:        row.LabelName,
 			LabelDisplayName: row.LabelDisplayName,
@@ -142,7 +208,10 @@ func (e *ParcelEngine) buildCandidates(rows []UnifiedRow) []*types.LayerCandidat
 			CenterLat:        row.CenterLat,
 			CenterLng:        row.CenterLng,
 			Geometry:         row.Geometry,
+			SourceType:       row.LabelGroupCode,
 		}
+		// Semantic normalization: chuẩn hóa LandUseCode
+		e.semanticNormalizer.NormalizeCandidate(c)
 		candidates = append(candidates, c)
 	}
 	return candidates
@@ -155,7 +224,8 @@ func (e *ParcelEngine) buildCandidates(rows []UnifiedRow) []*types.LayerCandidat
 func (e *ParcelEngine) scoreAndRank(candidates []*types.LayerCandidate) []*rankedLayerInternal {
 	ranked := make([]*rankedLayerInternal, len(candidates))
 	for i, c := range candidates {
-		legalScore := e.config.LegalScores[c.LegalStatus]
+		normalized := e.legalNormalizer.Normalize(c)
+		legalScore := normalized.Score
 		priorityScore := float64(e.calculatePriority(c))
 		areaScore := c.OverlapPercent
 
@@ -207,36 +277,20 @@ func (e *ParcelEngine) detectConflicts(ranked []*rankedLayerInternal) []*Conflic
 	var conflicts []*ConflictInfo
 
 	for _, sec := range ranked[1:] {
-		if e.hasConflict(primary.candidate, sec.candidate) {
+		classified := e.conflictClassifier.Classify(primary.candidate, sec.candidate)
+		if classified != nil {
 			conflicts = append(conflicts, &ConflictInfo{
-				Type:            e.config.ConflictType,
-				Severity:        e.config.ConflictSeverity,
-				Between:         []uint64{primary.candidate.LayerID, sec.candidate.LayerID},
-				Description:     primary.candidate.LandUseName + " vs " + sec.candidate.LandUseName,
-				Recommendation:  e.config.ConflictRecommendation,
-				ActionRequired:  e.config.ConflictActionRequired,
-				AffectedPercent: sec.candidate.OverlapPercent,
+				Type:            string(classified.Type),
+				Severity:        string(classified.Severity),
+				Between:         classified.Between,
+				Description:     classified.Description,
+				Recommendation:  classified.Recommendation,
+				ActionRequired:  classified.ActionRequired,
+				AffectedPercent: classified.AffectedPercent,
 			})
 		}
 	}
 	return conflicts
-}
-
-func (e *ParcelEngine) hasConflict(a, b *types.LayerCandidate) bool {
-	if a.GroupCode == b.GroupCode {
-		return false
-	}
-	if row, ok := e.config.ConflictMatrix[a.GroupCode]; ok {
-		if val, ok := row[b.GroupCode]; ok {
-			return val
-		}
-	}
-	if row, ok := e.config.ConflictMatrix[b.GroupCode]; ok {
-		if val, ok := row[a.GroupCode]; ok {
-			return val
-		}
-	}
-	return false
 }
 
 // ============================================
@@ -281,6 +335,21 @@ func (e *ParcelEngine) assessRisk(ranked []*rankedLayerInternal, conflicts []*Co
 		score += float64(len(seenLayers)) * e.config.MultiLayerPenalty
 	}
 
+	// Factor in conflict severity
+	if len(conflicts) > 0 {
+		for _, c := range conflicts {
+			switch c.Severity {
+			case string(types.SeverityHigh):
+				score += 15
+			case string(types.SeverityMedium):
+				score += 8
+			case string(types.SeverityLow):
+				score += 3
+			}
+		}
+		reasons = append(reasons, fmt.Sprintf("Phát hiện %d xung đột quy hoạch", len(conflicts)))
+	}
+
 	normalizedScore := uint32(math.Min(score, 100))
 
 	for _, t := range e.config.RiskThresholds {
@@ -305,14 +374,14 @@ func (e *ParcelEngine) assessRisk(ranked []*rankedLayerInternal, conflicts []*Co
 // STEP 5: BUILD PRIMARY PLANNING
 // ============================================
 
-func (e *ParcelEngine) buildPrimaryPlanning(primary *rankedLayerInternal, parcelArea float64) *PrimaryPlanningInfo {
+func (e *ParcelEngine) buildPrimaryPlanning(primary *rankedLayerInternal, parcelArea float64, normalized *types.NormalizedLegal) *PrimaryPlanningInfo {
 	c := primary.candidate
 	ratio := 0.0
 	if parcelArea > 0 {
 		ratio = (c.OverlapAreaSqm / parcelArea) * 100
 	}
 
-	return &PrimaryPlanningInfo{
+	info := &PrimaryPlanningInfo{
 		Code:        c.LandUseCode,
 		Name:        c.LandUseName,
 		Color:       c.LandUseColor,
@@ -325,6 +394,14 @@ func (e *ParcelEngine) buildPrimaryPlanning(primary *rankedLayerInternal, parcel
 		LegalStatus: c.LegalStatus,
 		CanBuild:    c.CanBuild,
 	}
+
+	if normalized != nil {
+		info.LegalCanonical = string(normalized.Canonical)
+		info.LegalConfidence = string(normalized.Confidence)
+		info.LegalActiveState = string(normalized.ActiveState)
+	}
+
+	return info
 }
 
 // buildSecondaryPlans - build danh sách quy hoạch phụ từ ranked[1:] (cho compare/detail mode)
@@ -615,4 +692,87 @@ func parseTime(s string) *time.Time {
 		return nil
 	}
 	return &t
+}
+
+// buildCompareResult — build compare diff từ rows (so sánh layer hiện tại vs lịch sử)
+func (e *ParcelEngine) buildCompareResult(rows []UnifiedRow) *CompareResultInfo {
+	// Group layers by ID, detect changes between versions
+	type layerSnapshot struct {
+		layerID   uint64
+		layerName string
+		landUse   string
+		overlap   float64
+		legal     uint32
+	}
+
+	seen := make(map[uint64]*layerSnapshot)
+	var changes []*CompareChangeInfo
+
+	for _, row := range rows {
+		snap := &layerSnapshot{
+			layerID:   row.LayerID,
+			layerName: row.LayerDisplayName,
+			landUse:   row.RegionLandUseName,
+			overlap:   row.OverlapPct,
+			legal:     row.LayerLegalStatus,
+		}
+		if prev, exists := seen[row.LayerID]; exists {
+			if prev.landUse != snap.landUse || prev.legal != snap.legal {
+				changes = append(changes, &CompareChangeInfo{
+					LayerID:    row.LayerID,
+					LayerName:  row.LayerDisplayName,
+					ChangeType: "modified",
+					OldValue:   fmt.Sprintf("%s (legal:%d)", prev.landUse, prev.legal),
+					NewValue:   fmt.Sprintf("%s (legal:%d)", snap.landUse, snap.legal),
+				})
+			}
+		}
+		seen[row.LayerID] = snap
+	}
+
+	return &CompareResultInfo{
+		TotalLayers: len(seen),
+		Changes:     changes,
+	}
+}
+
+// buildHistoricalRisk — build historical risk trend analysis
+func (e *ParcelEngine) buildHistoricalRisk(rows []UnifiedRow, risk *RiskInfo) *HistoricalRiskInfo {
+	if e.historicalRiskEngine == nil || risk == nil {
+		return nil
+	}
+
+	now := time.Now()
+	activeCount := 0
+	expiringCount := 0
+
+	for _, row := range rows {
+		if row.LayerEffectiveDate != "" {
+			effDate := parseTime(row.LayerEffectiveDate)
+			if effDate != nil && !effDate.After(now) {
+				activeCount++
+			}
+		}
+		if row.LayerExpiryDate != "" {
+			expDate := parseTime(row.LayerExpiryDate)
+			if expDate != nil && expDate.Before(now.AddDate(0, 6, 0)) && expDate.After(now) {
+				expiringCount++
+			}
+		}
+	}
+
+	trend := "stable"
+	trendDetail := "Rủi ro ổn định"
+	if expiringCount > 0 {
+		trend = "worsening"
+		trendDetail = fmt.Sprintf("%d layer sắp hết hạn trong 6 tháng tới", expiringCount)
+	}
+
+	return &HistoricalRiskInfo{
+		Trend:          trend,
+		TrendDetail:    trendDetail,
+		ActiveLayers:   activeCount,
+		ExpiringLayers: expiringCount,
+		AnalyzedAt:     now.Format(time.RFC3339),
+	}
 }

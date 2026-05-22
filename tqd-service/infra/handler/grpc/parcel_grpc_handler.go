@@ -121,6 +121,92 @@ func (h *ParcelGrpcHandler) GetParcelAssessment(ctx context.Context, req *tqdpb.
 	return h.mapper.ResolveResultToProtoAssessment(result, req.ParcelId, req.Mode), nil
 }
 
+// GetParcelTimeline - Lịch sử biến động quy hoạch của thửa đất
+func (h *ParcelGrpcHandler) GetParcelTimeline(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelTimelineResponse, error) {
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	timeline, err := h.usecase.GetParcelTimeline(ctx, req.ParcelId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	events := make([]*tqdpb.TimelineEvent, 0, len(timeline.Events))
+	for _, evt := range timeline.Events {
+		events = append(events, &tqdpb.TimelineEvent{
+			Id:          evt.ID,
+			Date:        evt.Date.Format("2006-01-02"),
+			EventType:   string(evt.EventType),
+			LayerId:     evt.LayerID,
+			LayerName:   evt.LayerName,
+			Description: evt.Description,
+		})
+	}
+
+	var summary *tqdpb.TimelineSummary
+	if timeline.Summary != nil {
+		summary = &tqdpb.TimelineSummary{
+			TotalEvents: int32(timeline.Summary.TotalEvents),
+			MajorChanges: timeline.Summary.MajorChanges,
+		}
+		if !timeline.Summary.FirstEventAt.IsZero() {
+			summary.FirstEventAt = timeline.Summary.FirstEventAt.Format("2006-01-02")
+		}
+		if !timeline.Summary.LastEventAt.IsZero() {
+			summary.LastEventAt = timeline.Summary.LastEventAt.Format("2006-01-02")
+		}
+	}
+
+	return &tqdpb.ParcelTimelineResponse{
+		ParcelId: req.ParcelId,
+		Events:   events,
+		Summary:  summary,
+	}, nil
+}
+
+// GetLayerHistory - Lịch sử phiên bản của 1 layer
+func (h *ParcelGrpcHandler) GetLayerHistory(ctx context.Context, req *tqdpb.GetLayerHistoryRequest) (*tqdpb.LayerHistoryResponse, error) {
+	if req == nil || req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layer_id is required")
+	}
+
+	lineage, err := h.usecase.GetLayerHistory(ctx, req.LayerId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	versions := make([]*tqdpb.LayerVersionInfo, 0, len(lineage.Versions))
+	for _, v := range lineage.Versions {
+		vi := &tqdpb.LayerVersionInfo{
+			Version:   int32(v.Version),
+			LayerId:   v.LayerID,
+			State:     string(v.State),
+			CreatedAt: v.CreatedAt.Format("2006-01-02"),
+			CreatedBy: v.CreatedBy,
+			IsLatest:  v.IsLatest,
+		}
+		for _, t := range v.Transitions {
+			vi.Transitions = append(vi.Transitions, &tqdpb.LifecycleTransitionInfo{
+				FromState: string(t.From),
+				ToState:   string(t.To),
+				Timestamp: t.Timestamp.Format("2006-01-02"),
+				Actor:     t.Actor,
+				Reason:    t.Reason,
+				LegalDoc:  t.LegalDoc,
+			})
+		}
+		versions = append(versions, vi)
+	}
+
+	return &tqdpb.LayerHistoryResponse{
+		LayerId:   req.LayerId,
+		FamilyId:  lineage.FamilyID,
+		Versions:  versions,
+		CurrentId: lineage.CurrentID,
+	}, nil
+}
+
 // =====================================================
 // Batch Operations
 // =====================================================
