@@ -21,6 +21,7 @@ type InitialApp struct {
 	ImportHTTPHandler        *handler_http.ImportHTTPHandler
 
 	// gRPC Handlers
+	RegionExtendGrpcHandler        *handler_grpc.RegionExtendGrpcHandler
 	ContactLabelGrpcHandler        *handler_grpc.ContactLabelGrpcHandler
 	DirectoryCategoryGrpcHandler   *handler_grpc.DirectoryCategoryGrpcHandler
 	DirectorySourceGrpcHandler     *handler_grpc.DirectorySourceGrpcHandler
@@ -49,6 +50,7 @@ type InitialApp struct {
 
 // NewApp creates a new App instance
 func NewApp(
+	regionExtendGrpcHandler *handler_grpc.RegionExtendGrpcHandler,
 	contactLabelHandler *handler_http.ContactLabelHandler,
 	directoryCategoryHandler *handler_http.DirectoryCategoryHandler,
 	directorySourceHandler *handler_http.DirectorySourceHandler,
@@ -86,6 +88,7 @@ func NewApp(
 	layerLegalGrpcHandler *handler_grpc.LayerLegalGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
+		RegionExtendGrpcHandler:        regionExtendGrpcHandler,
 		ContactLabelHandler:            contactLabelHandler,
 		DirectoryCategoryHandler:       directoryCategoryHandler,
 		DirectorySourceHandler:         directorySourceHandler,

@@ -1,0 +1,1 @@
+-- Keep qh_region_extends.geometry generic on rollback to avoid losing Point/LineString data.

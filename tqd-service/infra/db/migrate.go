@@ -50,6 +50,7 @@ func EnsurePostGIS() {
 }
 
 func AutoMigrate() {
+	return
 	EnsurePostGIS()
 	_db.DB.AutoMigrate(
 		// Import error log — bảng theo dõi các batch insert thất bại
@@ -74,6 +75,7 @@ func AutoMigrate() {
 		&qh_domain.QHParcelInfo{},
 		&qh_domain.QHLayer{},
 		&qh_domain.QHRegion{},
+		&qh_domain.QHRegionExtend{},
 		// &qh_domain.QHRegionLabel{},
 		&qh_domain.QHLabel{},
 		&qh_domain.QHLabelLayer{},

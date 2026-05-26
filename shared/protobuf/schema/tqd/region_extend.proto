@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// =====================================================
+// REGION EXTEND SERVICE
+// region extend lưu các feature geometry không phải Polygon/MultiPolygon
+// (Point, LineString, MultiLineString, v.v.) được lọc ra khi import.
+// =====================================================
+
+service RegionExtendService {
+
+  // CreateRegionExtend - Tạo region extend cho Point/LineString/MultiLineString
+  rpc CreateRegionExtend(CreateRegionExtendRequest) returns (RegionExtendResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/region-extends"
+      body: "*"
+    };
+  }
+
+  // UpdateRegionExtend - Cập nhật region extend
+  rpc UpdateRegionExtend(UpdateRegionExtendRequest) returns (RegionExtendResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/region-extends/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteRegionExtend - Xóa mềm region extend
+  rpc DeleteRegionExtend(DeleteRegionExtendRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/region-extends/{id}"
+    };
+  }
+
+  // ListRegionExtends - Danh sách region extends theo layer
+  rpc ListRegionExtends(ListRegionExtendsRequest) returns (ListRegionExtendsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/layers/{layer_id}/region-extends"
+    };
+  }
+
+  // GetRegionExtend - Lấy chi tiết một region extend
+  rpc GetRegionExtend(GetRegionExtendRequest) returns (RegionExtendResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/region-extends/{id}"
+    };
+  }
+}
+
+// =====================================================
+// REQUEST MESSAGES
+// =====================================================
+
+message CreateRegionExtendRequest {
+  uint64 layerId = 1;
+  string name = 2;
+  string displayName = 3;
+  string description = 4;
+  optional uint64 labelId = 5;
+  bytes geometry = 6;
+  string legalDoc = 7;
+  string planningName = 8;
+  google.protobuf.Struct originalProperties = 9;
+  string sourceFile = 10;
+  string importBatchId = 11;
+  optional uint32 status = 12;
+  // Danh sách id region extend cũ cần gộp thành 1 MultiLineString; sau khi tạo mới sẽ xóa mềm các bản ghi này.
+  repeated uint64 mergeSourceIds = 13;
+}
+
+message UpdateRegionExtendRequest {
+  uint64 id = 1;
+  optional uint64 layerId = 2;
+  optional string name = 3;
+  optional string displayName = 4;
+  optional string description = 5;
+  optional uint64 labelId = 6;
+  bytes geometry = 7;
+  optional string legalDoc = 8;
+  optional string planningName = 9;
+  google.protobuf.Struct originalProperties = 10;
+  optional string sourceFile = 11;
+  optional string importBatchId = 12;
+  optional uint32 status = 13;
+}
+
+message DeleteRegionExtendRequest {
+  uint64 id = 1;
+}
+
+message ListRegionExtendsRequest {
+  uint64 layer_id = 1;
+  optional string geomType = 2; // lọc theo loại geometry: "Point", "LineString", v.v.
+  uint32 page = 3;
+  uint32 size = 4;
+}
+
+message GetRegionExtendRequest {
+  uint64 id = 1;
+}
+
+// =====================================================
+// RESPONSE MESSAGES
+// =====================================================
+
+message RegionExtendResponse {
+  uint64 id = 1;
+  uint64 layerId = 2;
+  string name = 3;
+  string displayName = 4;
+  string description = 5;
+  uint64 labelId = 6;
+
+  string geomType = 7;
+  string geometryGeoJson = 8;
+
+  string legalDoc = 9;
+  string planningName = 10;
+
+  google.protobuf.Struct originalProperties = 11;
+  string sourceFile = 12;
+  string importBatchId = 13;
+
+  uint32 status = 14;
+  uint32 version = 15;
+  bool isLatest = 16;
+
+  string createdAt = 17;
+  string updatedAt = 18;
+  bytes geometry = 19;
+}
+
+message ListRegionExtendsResponse {
+  repeated RegionExtendResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}

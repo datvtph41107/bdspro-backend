@@ -23,6 +23,33 @@ func stripGeoJSONExtras(geom map[string]interface{}) map[string]interface{} {
 	return out
 }
 
+// IsPolygonType trả về true nếu geometry type là Polygon hoặc MultiPolygon.
+func IsPolygonType(geom map[string]interface{}) bool {
+	if geom == nil {
+		return false
+	}
+	t, _ := geom["type"].(string)
+	t = strings.TrimSpace(strings.ToLower(t))
+	return t == "polygon" || t == "multipolygon"
+}
+
+// GetGeomType trả về geometry type string từ GeoJSON object.
+func GetGeomType(geom map[string]interface{}) string {
+	if geom == nil {
+		return ""
+	}
+	t, _ := geom["type"].(string)
+	return strings.TrimSpace(t)
+}
+
+// ToRawGeoJSONBytes serialize geometry as-is (chỉ strip CRS/BBox) không convert sang MultiPolygon.
+func ToRawGeoJSONBytes(geom map[string]interface{}) ([]byte, error) {
+	if geom == nil {
+		return nil, fmt.Errorf("nil geometry")
+	}
+	return json.Marshal(stripGeoJSONExtras(geom))
+}
+
 // ToMultiPolygonGeoJSONBytes converts GeoJSON Polygon to MultiPolygon (single shell)
 // and passes MultiPolygon through. qh_regions.geometry is geometry(MultiPolygon,4326).
 func ToMultiPolygonGeoJSONBytes(geom map[string]interface{}) ([]byte, error) {

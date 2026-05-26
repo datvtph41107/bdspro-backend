@@ -69,20 +69,23 @@ func (lc *labelCache) set(normalized string, id uint64) {
 // ─── impl ──────────────────────────────────────────────────────────────────
 
 type importUsecaseImpl struct {
-	regionRepo repo.RegionRepository
-	labelRepo  repo.QHLabelRepository
-	layerRepo  repo.LayerRepository
+	regionRepo       repo.RegionRepository
+	regionExtendRepo repo.RegionExtendRepository
+	labelRepo        repo.QHLabelRepository
+	layerRepo        repo.LayerRepository
 }
 
 func NewImportUsecase(
 	regionRepo repo.RegionRepository,
+	regionExtendRepo repo.RegionExtendRepository,
 	labelRepo repo.QHLabelRepository,
 	layerRepo repo.LayerRepository,
 ) ImportUsecase {
 	return &importUsecaseImpl{
-		regionRepo: regionRepo,
-		labelRepo:  labelRepo,
-		layerRepo:  layerRepo,
+		regionRepo:       regionRepo,
+		regionExtendRepo: regionExtendRepo,
+		labelRepo:        labelRepo,
+		layerRepo:        layerRepo,
 	}
 }
 
@@ -253,6 +256,12 @@ type pendingRegion struct {
 	index  int
 }
 
+// pendingExtend carries a non-polygon feature routed to qh_region_extends.
+type pendingExtend struct {
+	record *qh_domain.QHRegionExtend
+	index  int
+}
+
 // runImportJob orchestrates the pipeline:
 //
 //	file reader → feature channel → N worker goroutines (normalize + label)
@@ -280,8 +289,10 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 
 	// featCh: parsed features from file reader
 	featCh := make(chan indexedFeature, importChanBuffer)
-	// regionCh: processed regions ready to batch-insert
+	// regionCh: polygon regions ready to batch-insert
 	regionCh := make(chan pendingRegion, importChanBuffer)
+	// extendCh: non-polygon features routed to qh_region_extends
+	extendCh := make(chan pendingExtend, importChanBuffer)
 
 	var workerWg sync.WaitGroup
 	var mu sync.Mutex // protects result
@@ -292,6 +303,27 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 		go func() {
 			defer workerWg.Done()
 			for item := range featCh {
+				// Route non-polygon geometry to extend table
+				if item.feat.Geometry != nil && !geometry.IsPolygonType(item.feat.Geometry) {
+					ext, failure := u.buildRegionExtend(ctx, batchID, item.index, item.feat, req, lc)
+					switch {
+					case failure != nil:
+						mu.Lock()
+						result.TotalFeatures++
+						result.FailedCount++
+						if failure.Reason != "" {
+							result.Failures = append(result.Failures, *failure)
+						}
+						mu.Unlock()
+					case ext != nil:
+						mu.Lock()
+						result.TotalFeatures++
+						mu.Unlock()
+						extendCh <- pendingExtend{record: ext, index: item.index}
+					}
+					continue
+				}
+
 				r, failure := u.buildRegion(ctx, batchID, item.index, item.feat, req, lc)
 				switch {
 				case failure != nil:
@@ -317,7 +349,7 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 		}()
 	}
 
-	// ── Batcher goroutine ────────────────────────────────────────────────
+	// ── Batcher goroutine (polygon regions) ─────────────────────────────
 	var batcherDone sync.WaitGroup
 	batcherDone.Add(1)
 	go func() {
@@ -359,6 +391,42 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 		flush() // flush remaining
 	}()
 
+	// ── Batcher goroutine (extend records) ──────────────────────────────
+	batcherDone.Add(1)
+	go func() {
+		defer batcherDone.Done()
+		batch := make([]*qh_domain.QHRegionExtend, 0, importBatchSize)
+
+		flush := func() {
+			if len(batch) == 0 {
+				return
+			}
+			if err := u.regionExtendRepo.CreateBatch(ctx, batch); err != nil {
+				mu.Lock()
+				for range batch {
+					result.FailedCount++
+					result.Failures = append(result.Failures, dto.ImportFailure{
+						Reason: fmt.Sprintf("extend batch insert: %v", err),
+					})
+				}
+				mu.Unlock()
+			} else {
+				mu.Lock()
+				result.SuccessCount += len(batch)
+				mu.Unlock()
+			}
+			batch = batch[:0]
+		}
+
+		for pe := range extendCh {
+			batch = append(batch, pe.record)
+			if len(batch) >= importBatchSize {
+				flush()
+			}
+		}
+		flush()
+	}()
+
 	// ── Reader (main goroutine, sequential I/O) ──────────────────────────
 	readErr := processImportFileByFormat(tmpPath, fileFormat, func(feat geoJSONFeature, index int) error {
 		featCh <- indexedFeature{feat: feat, index: index}
@@ -368,6 +436,7 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 
 	workerWg.Wait()
 	close(regionCh)
+	close(extendCh)
 	batcherDone.Wait()
 
 	// ── Finalise ────────────────────────────────────────────────────────
@@ -487,6 +556,72 @@ func (u *importUsecaseImpl) buildRegion(ctx context.Context, batchID string, ind
 	}
 
 	return region, nil
+}
+
+// buildRegionExtend builds a QHRegionExtend for non-polygon geometry types
+// (Point, LineString, MultiLineString, etc.).
+func (u *importUsecaseImpl) buildRegionExtend(ctx context.Context, batchID string, index int, feat geoJSONFeature, req *dto.ImportRequest, lc *labelCache) (*qh_domain.QHRegionExtend, *dto.ImportFailure) {
+	if feat.Geometry == nil {
+		if req.SkipInvalid {
+			return nil, nil
+		}
+		return nil, &dto.ImportFailure{FeatureIndex: index, Reason: "empty geometry"}
+	}
+
+	geomBytes, err := geometry.ToRawGeoJSONBytes(feat.Geometry)
+	if err != nil {
+		if req.SkipInvalid {
+			return nil, nil
+		}
+		return nil, &dto.ImportFailure{FeatureIndex: index, Reason: fmt.Sprintf("geometry serialize: %v", err)}
+	}
+
+	geomType := geometry.GetGeomType(feat.Geometry)
+
+	props := feat.Properties
+	if props == nil {
+		props = map[string]interface{}{}
+	}
+
+	labelID, err := u.resolveLabelIDCached(ctx, props, req, lc)
+	if err != nil {
+		if req.SkipInvalid {
+			return nil, nil
+		}
+		return nil, &dto.ImportFailure{FeatureIndex: index, Reason: fmt.Sprintf("label resolution: %v", err)}
+	}
+
+	propsBytes, _ := json.Marshal(props)
+
+	record := &qh_domain.QHRegionExtend{
+		LayerID:            req.LayerID,
+		LabelID:            &labelID,
+		GeomType:           geomType,
+		Geometry:           qh_domain.RawExtendGeometry{Raw: geomBytes},
+		OriginalProperties: propsBytes,
+		SourceFile:         req.SourceFileName,
+		ImportBatchID:      batchID,
+		Status:             10,
+		Version:            1,
+		IsLatest:           true,
+	}
+
+	if name, ok := props["name"]; ok {
+		record.Name = fmt.Sprintf("%v", name)
+	}
+	if dn, ok := props["display_name"]; ok {
+		record.DisplayName = fmt.Sprintf("%v", dn)
+	}
+	if tk, ok := props["ten_khu"]; ok {
+		if record.Name == "" {
+			record.Name = fmt.Sprintf("%v", tk)
+		}
+		if record.DisplayName == "" {
+			record.DisplayName = fmt.Sprintf("%v", tk)
+		}
+	}
+
+	return record, nil
 }
 
 // ─── Label resolution (cache-aware) ───────────────────────────────────────

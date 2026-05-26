@@ -78,13 +78,15 @@ func InitializeApp() (*initial.InitialApp, error) {
 	amenityHandler := handler_http.NewAmenityHandler(amenityUsecase, amenityMapper)
 	qhLabelRepository := postgres.NewQHLabelRepository(db)
 	regionRepository := postgres.NewRegionRepository(db)
+	regionExtendRepository := postgres.NewRegionExtendRepository(db)
 	qhLayerLegendRepository := postgres.NewQHLayerLegendRepository(db)
 	qhLabelUsecase := usecase.NewQHLabelUsecase(qhLabelRepository, regionRepository, qhLayerLegendRepository)
 	qhLabelHandler := handler_http.NewQHLabelHandler(qhLabelUsecase)
 	layerRepository := postgres.NewLayerRepository(db)
 	regionUsecase := usecase.NewRegionUsecase(regionRepository, layerRepository, qhLabelRepository)
 	regionHttpHandler := handler_http.NewRegionHttpHandler(regionUsecase)
-	importUsecase := usecase.NewImportUsecase(regionRepository, qhLabelRepository, layerRepository)
+	regionExtendUsecase := usecase.NewRegionExtendUsecase(regionExtendRepository)
+	importUsecase := usecase.NewImportUsecase(regionRepository, regionExtendRepository, qhLabelRepository, layerRepository)
 	importHTTPHandler := handler_http.NewImportHTTPHandler(importUsecase)
 	contactLabelGrpcHandler := handler_grpc.NewContactLabelGrpcHandler(contactLabelUsecase, contactLabelMapper)
 	directoryCategoryGrpcHandler := handler_grpc.NewDirectoryCategoryGrpcHandler(directoryCategoryUsecase, directoryCategoryMapper, directoryCategoryValidator)
@@ -128,6 +130,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	parcelMapper := mapper.NewParcelMapper()
 	parcelGrpcHandler := handler_grpc.NewParcelGrpcHandler(parcelUsecase, parcelMapper, syncProvider)
 	regionGrpcHandler := handler_grpc.NewRegionGrpcHandler(regionUsecase, qhLabelUsecase, syncProvider)
+	regionExtendGrpcHandler := handler_grpc.NewRegionExtendGrpcHandler(regionExtendUsecase)
 	reportRepository := postgres.NewReportRepository(db)
 	reportUsecase := usecase.NewReportUsecase(reportRepository)
 	reportGrpcHandler := handler_grpc.NewReportGrpcHandler(reportUsecase, syncProvider)
@@ -139,7 +142,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	tqdPublicService := handler_grpc.NewBdsproPublicService()
 	importGrpcHandler := handler_grpc.NewImportGrpcHandler(importUsecase)
 	layerLegalGrpcHandler := handler_grpc.NewLayerLegalGrpcHandler(iLayerLegalRepo)
-	initialApp := initial.NewApp(contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLandUseGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler)
+	initialApp := initial.NewApp(regionExtendGrpcHandler, contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLandUseGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler)
 	return initialApp, nil
 }
 

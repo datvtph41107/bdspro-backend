@@ -53,6 +53,18 @@ layer:
                   line-width: 1
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
+            - id: "{sourceCode}_line"
+              type: "line"
+              maxzoom: 22
+              filter:
+                  - any
+                  - ["==", ["geometry-type"], "LineString"]
+                  - ["in", ["get", "geomType"], ["literal", ["LineString", "MultiLineString"]]]
+              paint:
+                  line-color: ["coalesce", ["get", "color"], "#ff0000"]
+                  line-width: 2
+              source: "{sourceCode}"
+              source-layer: "{sourceCode}"
             - id: "{sourceCode}_label"
               type: "symbol"
               maxzoom: 22

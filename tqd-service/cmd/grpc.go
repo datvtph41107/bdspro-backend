@@ -159,6 +159,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterQHLayerLegendServiceServer(s, app.QHLayerLegendGrpcHandler)
 	tqdpb.RegisterQHLandUseServiceServer(s, app.QHLandUseGrpcHandler)
 	tqdpb.RegisterRegionServiceServer(s, app.RegionGrpcHandler)
+	tqdpb.RegisterRegionExtendServiceServer(s, app.RegionExtendGrpcHandler)
 	tqdpb.RegisterImportServiceServer(s, app.ImportGrpcHandler)
 	tqdpb.RegisterReportServiceServer(s, app.ReportGrpcHandler)
 	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
