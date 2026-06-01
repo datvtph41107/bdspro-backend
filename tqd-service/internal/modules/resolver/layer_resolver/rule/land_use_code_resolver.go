@@ -12,8 +12,8 @@ type LandUseCodeResolver struct {
 	labels       map[string]string // canonical code → display name
 }
 
-// NewLandUseCodeResolver tạo LandUseCodeResolver
-func NewLandUseCodeResolver(canonicalMap map[string]string, labels map[string]string) *LandUseCodeResolver {
+// MakeLandUseCodeResolver tạo LandUseCodeResolver
+func MakeLandUseCodeResolver(canonicalMap map[string]string, labels map[string]string) *LandUseCodeResolver {
 	if canonicalMap == nil {
 		canonicalMap = make(map[string]string)
 	}

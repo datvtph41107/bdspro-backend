@@ -6,10 +6,10 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"user/initial"
 	user_infra_client "user/infra/client"
 	user_infra_handler "user/infra/handler"
-	user_infra_implement "user/infra/implement"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_postgres "user/infra/postgres"
 	user_infra_routes "user/infra/routes"
@@ -27,6 +27,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(user_internal_interface_providers.AuthProvider), new(*user_infra_client.AuthClient)),
 	wire.Bind(new(user_internal_interface_providers.CrmProvider), new(*user_infra_client.CrmClient)),
 	wire.Bind(new(user_internal_interface_providers.HubProvider), new(*user_infra_client.HubClient)),
@@ -56,7 +57,6 @@ var wireSet = wire.NewSet(
 	user_internal_usecases.NewBookmarkUserUsecase,
 	user_infra_postgres.NewCertificationPostgres,
 	user_internal_usecases.NewCertificationUsecase,
-	user_infra_implement.NewCommonRedisProvider,
 	user_infra_postgres.NewContactPostgres,
 	user_infra_client.NewCrmClient,
 	user_infra_client.NewFeedbackClient,
@@ -91,6 +91,10 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewPlanMapper,
 	user_infra_postgres.NewPlanRepo,
 	user_internal_usecases.NewPlanUsecase,
+	user_infra_handler.NewPriceTableHandler,
+	user_infra_mapper.NewPriceTableMapper,
+	user_infra_postgres.NewPriceTableRepo,
+	user_internal_usecases.NewPriceTableUsecase,
 	user_infra_handler.NewProfessionHandler,
 	user_infra_mapper.NewProfessionMapper,
 	user_infra_postgres.NewProfessionPostgres,
@@ -106,7 +110,6 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewPurposeUseMapper,
 	user_infra_postgres.NewPurposeUseRepo,
 	user_internal_dto.NewRefreshResponse,
-	user_infra_implement.NewSyncProvider,
 	user_infra_handler.NewTagHandler,
 	user_infra_mapper.NewTagMapper,
 	user_infra_postgres.NewTagPostgres,

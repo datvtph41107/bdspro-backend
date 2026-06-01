@@ -15,7 +15,7 @@ require (
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-resty/resty/v2 v2.16.5
-	github.com/google/wire v0.6.0
+	github.com/google/wire v0.7.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible

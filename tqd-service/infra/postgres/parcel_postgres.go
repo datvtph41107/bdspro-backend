@@ -58,7 +58,7 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
             pi.land_type_id,
             ST_AsGeoJSON(p.geometry)::bytea as geometry
         FROM parcels p
-        LEFT JOIN qh_parcel_info pi ON p.id = pi.parcel_id
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id= p.id
         LEFT JOIN qh_shape sh ON sh.id = pi.shape_id
 
 		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = pi.id

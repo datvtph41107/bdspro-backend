@@ -1,11 +1,13 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
+	"tqd/initial"
 	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
@@ -14,7 +16,6 @@ import (
 	tqd_infra_postgres "tqd/infra/postgres"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
-	"tqd/initial"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
@@ -25,8 +26,6 @@ import (
 	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_map "tqd/map"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -41,12 +40,15 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewAmenityUsecase,
 	tqd_initial.NewApp,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAssessEngine,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewAuditEngine,
 	tqd_internal_usecase.NewBaseUsecase,
 	tqd_infra_handler_grpc.NewBdsproPublicService,
 	tqd_infra_providers.NewCacheProvider,
 	tqd_internal_modules_resolver_layer_resolver_builder.NewCandidateBuilder,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewCompareEngine,
 	tqd_internal_modules_resolver_layer_resolver_db.NewConfigLoader,
 	tqd_internal_modules_resolver_layer_resolver_db.NewConfigPostgres,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewConflictClassifier,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewConflictEngine,
 	tqd_infra_handler_grpc.NewContactLabelGrpcHandler,
 	tqd_infra_handler_http.NewContactLabelHandler,
@@ -77,6 +79,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_providers.NewFileProvider,
 	tqd_infra_providers.NewGeoProvider,
 	tqd_internal_dto.NewGeometryParser,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewHistoricalRiskEngine,
 	tqd_infra_handler_grpc.NewImportGrpcHandler,
 	tqd_infra_handler_http.NewImportHTTPHandler,
 	tqd_infra_mapper.NewImportMapper,
@@ -90,6 +93,8 @@ var wireSet = wire.NewSet(
 	tqd_config.NewLayerResolver,
 	tqd_infra_postgres.NewLayerResolverConfigPostgres,
 	tqd_internal_usecase.NewLayerUsecase,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewLegalStatusResolver,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewLifecycleEngine,
 	tqd_infra_handler_grpc.NewLocationHandler,
 	tqd_infra_mapper.NewLocationMapper,
 	tqd_infra_postgres.NewLocationRepository,
@@ -113,8 +118,6 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewParcelGrpcHandler,
 	tqd_infra_mapper.NewParcelMapper,
 	tqd_infra_postgres.NewParcelPostgres,
-	tqd_infra_postgres.NewQHAuditPostgres,
-	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
 	tqd_internal_usecase.NewParcelUsecase,
 	tqd_infra_client.NewPermissionClient,
 	tqd_infra_handler_grpc.NewPoiCategoryGrpcHandler,
@@ -126,6 +129,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_mapper.NewPoiMapper,
 	tqd_internal_usecase.NewPoiUsecase,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewPriorityEngine,
+	tqd_infra_postgres.NewQHAuditPostgres,
 	tqd_infra_handler_grpc.NewQHAuthorityIssuringGrpcHandler,
 	tqd_infra_postgres.NewQHAuthorityIssuringRepository,
 	tqd_internal_usecase.NewQHAuthorityIssuringUsecase,
@@ -142,23 +146,26 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewQHLayerLegendGrpcHandler,
 	tqd_infra_postgres.NewQHLayerLegendRepository,
 	tqd_internal_usecase.NewQHLayerLegendUsecase,
-	tqd_infra_handler_grpc.NewRegionGrpcHandler,
+	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
 	tqd_infra_handler_grpc.NewRegionExtendGrpcHandler,
+	tqd_infra_postgres.NewRegionExtendRepository,
+	tqd_internal_usecase.NewRegionExtendUsecase,
+	tqd_infra_handler_grpc.NewRegionGrpcHandler,
 	tqd_infra_handler_http.NewRegionHttpHandler,
 	tqd_infra_mapper.NewRegionMapper,
 	tqd_infra_postgres.NewRegionRepository,
-	tqd_infra_postgres.NewRegionExtendRepository,
 	tqd_internal_usecase.NewRegionUsecase,
-	tqd_internal_usecase.NewRegionExtendUsecase,
 	tqd_infra_handler_grpc.NewReportGrpcHandler,
 	tqd_infra_postgres.NewReportRepository,
 	tqd_internal_usecase.NewReportUsecase,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewResolutionPipeline,
 	tqd_internal_modules_resolver_layer_resolver.NewResolver,
 	tqd_internal_modules_resolver_layer_resolver_engine.NewResolverEngine,
 	tqd_internal_modules_resolver_layer_resolver.NewResolverWithDB,
 	tqd_infra_handler_grpc.NewSubscriptionGrpcHandler,
 	tqd_infra_postgres.NewSubscriptionRepository,
 	tqd_internal_usecase.NewSubscriptionUsecase,
+	tqd_internal_modules_resolver_layer_resolver_rule.NewTimelineEngine,
 	tqd_infra_providers.NewTransactionProvider,
 	tqd_infra_client.NewUserClient,
 )

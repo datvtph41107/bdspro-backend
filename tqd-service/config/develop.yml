@@ -54,7 +54,7 @@ layer:
               minzoom: 16
               layout:
                   text-field: ["get", "name"]
-                  text-size: 16
+                  text-size: 13
                   text-allow-overlap: false
                   text-padding: 12
               paint:

@@ -632,7 +632,6 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 							'geomType', re.geom_type,
 							
 							'label_fill_opacity', 0.6,
-							'label_stroke_color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#000000'),
 							'label_stroke_width', 2,
 							'color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#CCCCCC'),
 							

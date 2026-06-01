@@ -41,7 +41,7 @@ func NewParcelEngine(config *EngineConfig) *ParcelEngine {
 		config:               config,
 		legalNormalizer:      rule.NewLegalStatusResolver(config.LegalNormalization),
 		conflictClassifier:   rule.NewConflictClassifier(config.ConflictClassification),
-		semanticNormalizer:   rule.NewLandUseCodeResolver(config.SemanticCanonicalMap, config.SemanticLabels),
+		semanticNormalizer:   rule.MakeLandUseCodeResolver(config.SemanticCanonicalMap, config.SemanticLabels),
 		compareEngine:        rule.NewCompareEngine(config.CompareConfig, nil),
 		historicalRiskEngine: rule.NewHistoricalRiskEngine(config.HistoricalRiskConfig, nil, nil),
 	}

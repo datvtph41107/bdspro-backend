@@ -97,6 +97,7 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterProfessionServiceServer(s, app.ProfessionHandler)
 		userpb.RegisterTagServiceServer(s, app.TagHandler)
 		userpb.RegisterKYCServiceServer(s, app.KYCHandler)
+		userpb.RegisterPriceTableServiceServer(s, app.PriceTableHandler)
 
 		log.Printf("Listen: %v", port)
 		if err := s.Serve(lis); err != nil {

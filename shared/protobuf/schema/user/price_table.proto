@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// ============= PriceTable Messages =============
+
+message PriceTableResponse {
+  uint64 id = 1;
+  string name = 2;
+  double price = 3;
+  string currency = 4;
+  string description = 5;
+  bool isActive = 6;
+  google.protobuf.Timestamp createdAt = 7;
+  google.protobuf.Timestamp updatedAt = 8;
+}
+
+message CreatePriceTableRequest {
+  string name = 1;
+  double price = 2;
+  string currency = 3;
+  string description = 4;
+  bool isActive = 5;
+}
+
+message UpdatePriceTableRequest {
+  uint64 id = 1;
+  string name = 2;
+  double price = 3;
+  string currency = 4;
+  string description = 5;
+  bool isActive = 6;
+}
+
+message DeletePriceTableRequest {
+  uint64 id = 1;
+}
+
+message DeletePriceTableResponse {
+  bool success = 1;
+}
+
+message GetPriceTableByIdRequest {
+  uint64 id = 1;
+}
+
+message GetPriceTableByIdResponse {
+  PriceTableResponse priceTable = 1;
+}
+
+message GetPriceTableListRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string search = 3;
+}
+
+message GetPriceTableListResponse {
+  repeated PriceTableResponse data = 1;
+  int64 total = 2;
+}
+
+// ============= PriceTable Service =============
+
+service PriceTableService {
+  // Admin APIs - Quản lý bảng giá
+  rpc CreatePriceTable(CreatePriceTableRequest) returns (PriceTableResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/admin/pack/price-tables"
+      body: "*"
+    };
+  }
+  rpc UpdatePriceTable(UpdatePriceTableRequest) returns (PriceTableResponse) {
+    option (google.api.http) = {
+      put: "/v2/user/admin/pack/price-tables/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePriceTable(DeletePriceTableRequest) returns (DeletePriceTableResponse) {
+    option (google.api.http) = {
+      delete: "/v2/user/admin/pack/price-tables/{id}"
+    };
+  }
+  rpc GetPriceTableById(GetPriceTableByIdRequest) returns (GetPriceTableByIdResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/admin/pack/price-tables/{id}"
+    };
+  }
+  rpc GetPriceTableList(GetPriceTableListRequest) returns (GetPriceTableListResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/admin/pack/price-tables"
+    };
+  }
+}

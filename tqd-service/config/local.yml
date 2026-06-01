@@ -41,7 +41,7 @@ layer:
               type: "fill"
               maxzoom: 22
               paint:
-                  fill-color: ["get", "label_stroke_color"]
+                  fill-color: ["get", "color"]
                   fill-opacity: 0.3
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
@@ -49,7 +49,7 @@ layer:
               type: "line"
               minzoom: 16
               paint:
-                  line-color: ["get", "label_stroke_color"]
+                  line-color: ["get", "color"]
                   line-width: 1
               source: "{sourceCode}"
               source-layer: "{sourceCode}"
@@ -70,7 +70,7 @@ layer:
               maxzoom: 22
               layout:
                   text-field: ["get", "name"]
-                  text-size: 12
+                  text-size: 11
                   text-allow-overlap: false
                   text-padding: 12
               paint:

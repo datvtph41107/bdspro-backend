@@ -31,6 +31,7 @@ type InitialApp struct {
 	ProfessionHandler     *handler.ProfessionHandler
 	TagHandler            *handler.TagHandler
 	KYCHandler            *handler.KYCHandler
+	PriceTableHandler     *handler.PriceTableHandler
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
@@ -52,6 +53,7 @@ func NewInitialApp(
 	professionHandler *handler.ProfessionHandler,
 	tagHandler *handler.TagHandler,
 	kycHandler *handler.KYCHandler,
+	priceTableHandler *handler.PriceTableHandler,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 ) *InitialApp {
 	return &InitialApp{
@@ -72,6 +74,7 @@ func NewInitialApp(
 		ProfessionHandler:       professionHandler,
 		TagHandler:              tagHandler,
 		KYCHandler:              kycHandler,
+		PriceTableHandler:       priceTableHandler,
 		UserDashboardStatsJob:   userDashboardStatsJob,
 	}
 }
