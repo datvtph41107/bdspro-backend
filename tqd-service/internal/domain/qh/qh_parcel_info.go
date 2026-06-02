@@ -2,9 +2,12 @@ package qh_domain
 
 import (
 	_models "common/domain/entity"
+	_utils "common/utils"
 	"database/sql/driver"
 	"encoding/json"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // =====================================================
@@ -74,6 +77,7 @@ type QHParcelInfo struct {
 	DistrictCode string `gorm:"type:varchar(20)" json:"districtCode"`
 	WardCode     string `gorm:"type:varchar(20)" json:"wardCode"`
 	AddressText  string `gorm:"type:text" json:"addressText"`
+	AdrSearch    string `gorm:"type:text" json:"adrSearch"`
 
 	// Administrative info (V1 format - legacy)
 	ProvinceV1Id *uint64 `gorm:"default:null" json:"provinceV1Id,omitempty"`
@@ -122,6 +126,14 @@ type QHParcelInfo struct {
 
 func (QHParcelInfo) TableName() string {
 	return "qh_parcel_info"
+}
+
+// BeforeSave - GORM hook to automatically update AdrSearch
+func (p *QHParcelInfo) BeforeSave(tx *gorm.DB) error {
+	if p.AddressText != "" {
+		p.AdrSearch = _utils.CleanSearchText(p.AddressText)
+	}
+	return nil
 }
 
 type ParcelInfoResponse struct {

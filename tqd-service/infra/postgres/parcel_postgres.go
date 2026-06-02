@@ -99,14 +99,25 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 	return &result, nil
 }
 
-func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error) {
+func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, mapNumber, landNumber string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error) {
 	var parcels []qh_domain.QHParcelInfo
 	var total int64
 
-	searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
+	query := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{})
 
-	query := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{}).
-		Where("LOWER(address_text) LIKE ?", searchTerm)
+	// Nếu có số tờ hoặc số thửa, ưu tiên search theo field đó
+	if mapNumber != "" || landNumber != "" {
+		if mapNumber != "" {
+			query = query.Where("map_number = ?", mapNumber)
+		}
+		if landNumber != "" {
+			query = query.Where("land_number = ?", landNumber)
+		}
+	} else {
+		// Nếu không có tờ/thửa, search theo address_text như cũ
+		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
+		query = query.Where("adr_search LIKE ?", searchTerm)
+	}
 
 	// if err := query.Count(&total).Error; err != nil {
 	// 	return nil, 0, fmt.Errorf("count parcels: %w", err)

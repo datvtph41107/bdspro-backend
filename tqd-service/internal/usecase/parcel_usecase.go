@@ -22,7 +22,7 @@ import (
 type ParcelUsecase interface {
 	// Preview & Search
 	GetParcelInfoByID(ctx context.Context, parcelID uint64) (*qh_domain.ParcelInfoResponse, error)
-	SearchParcelsByText(ctx context.Context, text string, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error)
+	SearchParcelsByText(ctx context.Context, text string, mapNumber, landNumber string, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error)
 
 	// Basic
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error)
@@ -121,15 +121,15 @@ func (u *parcelUsecase) GetParcelInfoByID(ctx context.Context, parcelID uint64) 
 	}, nil
 }
 
-func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error) {
-	if text == "" {
-		return nil, 0, errors.New("search text is required")
+func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, mapNumber, landNumber string, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error) {
+	if text == "" && mapNumber == "" && landNumber == "" {
+		return nil, 0, errors.New("search criteria is required")
 	}
 
 	pagable := _dto.Pagable{Page: uint32(page), Size: uint32(limit)}
 	pagable.Normalize()
 
-	parcels, total, err := u.parcelRepo.SearchByAddress(ctx, text, pagable)
+	parcels, total, err := u.parcelRepo.SearchByAddress(ctx, text, mapNumber, landNumber, pagable)
 	if err != nil {
 		return nil, 0, fmt.Errorf("search parcels failed: %w", err)
 	}

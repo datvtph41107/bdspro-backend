@@ -372,13 +372,15 @@ func (h *ParcelGrpcHandler) SearchTxtClientParcels(
 	ctx context.Context,
 	req *sharepb.RequestV3Proto,
 ) (*tqdpb.ListParcelResponse, error) {
-	if req.Text == "" {
+	// Infer map number and land number from search text
+	searchInfo := _utils.InferParcelSearch(req.Text)
+	if searchInfo.CleanedText == "" && searchInfo.MapNumber == "" && searchInfo.LandNumber == "" {
 		return nil, status.Error(codes.InvalidArgument, "search text is required")
 	}
 
 	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[SearchTxtClientParcels] UserID: %d, SearchText: %s, Page: %d, Size: %d",
-		userID, req.Text, req.Page, req.Size)
+	log.Printf("[SearchTxtClientParcels] UserID: %d, OriginalText: %s, CleanedText: %s, Map: %s, Land: %s, Page: %d, Size: %d",
+		userID, req.Text, searchInfo.CleanedText, searchInfo.MapNumber, searchInfo.LandNumber, req.Page, req.Size)
 
 	pagable := _dto.Pagable{
 		Page: req.Page,
@@ -386,8 +388,8 @@ func (h *ParcelGrpcHandler) SearchTxtClientParcels(
 	}
 	pagable.Normalize()
 
-	// Gọi đúng method SearchParcelsByText (không phải Search)
-	parcels, total, err := h.usecase.SearchParcelsByText(ctx, req.Text, int(pagable.GetPage()), int(pagable.GetSize()))
+	// Gọi SearchParcelsByText với các thông tin đã bóc tách
+	parcels, total, err := h.usecase.SearchParcelsByText(ctx, searchInfo.CleanedText, searchInfo.MapNumber, searchInfo.LandNumber, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
 		log.Printf("[SearchTxtClientParcels] Error: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())

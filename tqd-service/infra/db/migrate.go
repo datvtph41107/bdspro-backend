@@ -25,32 +25,24 @@ func CheckPostGIS() (version string, installed bool) {
 	return extVersion, true
 }
 
-// EnsurePostGIS bật extension PostGIS trước khi tạo cột geometry (AutoMigrate / raw SQL).
+// EnsurePostGIS bật extension PostGIS và unaccent trước khi tạo cột geometry (AutoMigrate / raw SQL).
 func EnsurePostGIS() {
 	if ver, ok := CheckPostGIS(); ok {
 		log.Printf("✅ PostGIS đã có: %s", ver)
-		return
+	} else {
+		log.Println("⚠️  PostGIS chưa bật — thử CREATE EXTENSION postgis ...")
+		if err := _db.DB.Exec(`CREATE EXTENSION IF NOT EXISTS postgis`).Error; err != nil {
+			log.Printf("❌ không bật được PostGIS: %v", err)
+		}
 	}
 
-	log.Println("⚠️  PostGIS chưa bật — thử CREATE EXTENSION postgis ...")
-	if err := _db.DB.Exec(`CREATE EXTENSION IF NOT EXISTS postgis`).Error; err != nil {
-		log.Fatalf(
-			"❌ không bật được PostGIS: %v\n"+
-				"   Kiểm tra: SELECT * FROM pg_available_extensions WHERE name LIKE 'postgis%%';\n"+
-				"   DB server cần image có PostGIS (postgis/postgis), user cần quyền CREATE EXTENSION",
-			err,
-		)
+	log.Println("⚠️  Thử CREATE EXTENSION IF NOT EXISTS unaccent ...")
+	if err := _db.DB.Exec(`CREATE EXTENSION IF NOT EXISTS unaccent`).Error; err != nil {
+		log.Printf("❌ không bật được unaccent: %v", err)
 	}
-
-	if ver, ok := CheckPostGIS(); ok {
-		log.Printf("✅ PostGIS đã bật: %s", ver)
-		return
-	}
-	log.Fatal("❌ CREATE EXTENSION postgis xong nhưng PostGIS_Version() vẫn không chạy được")
 }
 
 func AutoMigrate() {
-	return
 	EnsurePostGIS()
 	_db.DB.AutoMigrate(
 		// Import error log — bảng theo dõi các batch insert thất bại

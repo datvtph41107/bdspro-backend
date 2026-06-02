@@ -10,7 +10,7 @@ import (
 type IParcelRepo interface {
 	// Preview & Search
 	GetParcelPreview(ctx context.Context, parcelID uint64) (*qh_domain.QHParcelInfo, error)
-	SearchByAddress(ctx context.Context, keyword string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error)
+	SearchByAddress(ctx context.Context, keyword string, mapNumber, landNumber string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error)
 
 	// Basic CRUD
 	GetByID(ctx context.Context, id uint64) (*qh_domain.Parcel, error)
