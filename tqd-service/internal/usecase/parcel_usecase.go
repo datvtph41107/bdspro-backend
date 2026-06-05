@@ -47,12 +47,12 @@ type ParcelUsecase interface {
 }
 
 type parcelUsecase struct {
-	parcelRepo     repo.IParcelRepo
-	layerLegalRepo repo.ILayerLegalRepo
-	auditRepo      rule.AuditRepository
-	layerRepo      rule.LayerRepository
-	parcelEngine   *parcel_engine.ParcelEngine
-	timelineEngine *rule.TimelineEngine
+	parcelRepo      repo.IParcelRepo
+	layerLegalRepo  repo.ILayerLegalRepo
+	auditRepo       rule.AuditRepository
+	layerRepo       rule.LayerRepository
+	parcelEngine    *parcel_engine.ParcelEngine
+	timelineEngine  *rule.TimelineEngine
 	lifecycleEngine *rule.LifecycleEngine
 }
 
@@ -451,11 +451,11 @@ func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedR
 
 func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, mode string) *types.ResolveResult {
 	result := &types.ResolveResult{
-		HasConflict:       len(ur.Conflicts) > 0,
-		Mode:              types.ResolveMode(mode),
-		ProcessingTimeMs:  ur.Metadata.ResponseTimeMs,
-		ParcelAreaSqm:     ur.ParcelAreaSqm,
-		ResolutionStatus:  ur.ResolutionStatus,
+		HasConflict:      len(ur.Conflicts) > 0,
+		Mode:             types.ResolveMode(mode),
+		ProcessingTimeMs: ur.Metadata.ResponseTimeMs,
+		ParcelAreaSqm:    ur.ParcelAreaSqm,
+		ResolutionStatus: ur.ResolutionStatus,
 	}
 
 	if ur.CompareResult != nil {

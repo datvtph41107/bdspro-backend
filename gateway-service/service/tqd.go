@@ -78,6 +78,7 @@ func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = tqdpb.RegisterLayerLegalServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterQHLandUseServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterRegionExtendServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterMapWorkspaceServiceHandler(ctx, mux, conn)
 }
 
 func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {
@@ -99,4 +100,5 @@ func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoin
 	_ = tqdpb.RegisterSubscriptionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterTqdPublicServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterLayerLegalServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = tqdpb.RegisterMapWorkspaceServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

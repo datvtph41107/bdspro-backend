@@ -165,6 +165,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
 	tqdpb.RegisterTqdPublicServiceServer(s, app.TqdPublicService)
 	tqdpb.RegisterLayerLegalServiceServer(s, app.LayerLegalGrpcHandler)
+	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
 
 	reflection.Register(s)
 

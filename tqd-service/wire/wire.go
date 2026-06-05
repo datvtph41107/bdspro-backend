@@ -101,6 +101,9 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewLocationUsecase,
 	tqd_infra_validator.NewLocationValidator,
 	tqd_map.NewMapManager,
+	tqd_infra_handler_grpc.NewMapWorkspaceGrpcHandler,
+	tqd_infra_postgres.NewMapWorkspacePostgres,
+	tqd_internal_usecase.NewMapWorkspaceUsecase,
 	tqd_infra_client.NewNotificationClient,
 	tqd_infra_postgres.NewNotificationRepository,
 	tqd_internal_usecase.NewNotificationUsecase,
@@ -168,6 +171,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_modules_resolver_layer_resolver_rule.NewTimelineEngine,
 	tqd_infra_providers.NewTransactionProvider,
 	tqd_infra_client.NewUserClient,
+	tqd_infra_mapper.NewWorkspaceMapper,
 )
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
