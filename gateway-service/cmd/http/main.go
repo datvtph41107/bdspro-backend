@@ -144,9 +144,11 @@ var publicRoutes = []string{
 	"/v2/tqd/properties",
 	"/v2/tqd/client/layers",
 	"/v2/tqd/client/parcels/search",
+	"/v2/tqd/client/qh/layer-families/list",
 	"/v2/tqd/parcels/public",
 	"/v2/tqd/public/enums",
 	"/v2/user/profile/session",
+	"/v2/tqd/public/maps",
 }
 
 var tempRoutes = []string{

@@ -31,7 +31,10 @@ func (h *QHLayerFamilyGrpcHandler) CreateLayerFamily(ctx context.Context, req *t
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
-	row := &qh_domain.QHLayerFamily{Name: strings.TrimSpace(req.Name)}
+	row := &qh_domain.QHLayerFamily{
+		Name:       strings.TrimSpace(req.Name),
+		SortNumber: req.SortNumber,
+	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
 		if strings.Contains(err.Error(), "required") {
@@ -69,7 +72,10 @@ func (h *QHLayerFamilyGrpcHandler) UpdateLayerFamily(ctx context.Context, req *t
 	if req.Name != nil {
 		in.Name = req.Name
 	}
-	if in.Name == nil {
+	if req.SortNumber != nil {
+		in.SortNumber = req.SortNumber
+	}
+	if in.Name == nil && in.SortNumber == nil {
 		return nil, status.Error(codes.InvalidArgument, "at least one field to update is required")
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
@@ -104,14 +110,18 @@ func (h *QHLayerFamilyGrpcHandler) ListLayerFamilies(ctx context.Context, req *t
 	page := uint32(0)
 	size := uint32(0)
 	search := ""
+	var sort *string
 	if req != nil {
 		page = req.Page
 		size = req.Size
 		if req.Search != nil {
 			search = *req.Search
 		}
+		if req.Sort != nil {
+			sort = req.Sort
+		}
 	}
-	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
+	pagable := _dto.NewPagableFromGrpc(&page, &size, sort)
 	rows, total, err := h.uc.List(ctx, pagable, search)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -128,6 +138,11 @@ func (h *QHLayerFamilyGrpcHandler) ListLayerFamilies(ctx context.Context, req *t
 	}, nil
 }
 
+// GetClientLayerFamilies — GET /v2/tqd/client/qh/layer-families/list
+func (h *QHLayerFamilyGrpcHandler) GetClientLayerFamilies(ctx context.Context, req *tqdpb.ListLayerFamiliesRequest) (*tqdpb.ListLayerFamiliesResponse, error) {
+	return h.ListLayerFamilies(ctx, req)
+}
+
 func toQHLayerFamilyPB(e *qh_domain.QHLayerFamily) *tqdpb.QHLayerFamilyResponse {
 	if e == nil {
 		return nil
@@ -140,9 +155,10 @@ func toQHLayerFamilyPB(e *qh_domain.QHLayerFamily) *tqdpb.QHLayerFamilyResponse 
 		updatedAt = _utils.FormatTimeToString(e.UpdatedAt)
 	}
 	return &tqdpb.QHLayerFamilyResponse{
-		Id:        e.ID,
-		Name:      e.Name,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		Id:         e.ID,
+		Name:       e.Name,
+		SortNumber: e.SortNumber,
+		CreatedAt:  createdAt,
+		UpdatedAt:  updatedAt,
 	}
 }

@@ -14,7 +14,8 @@ import (
 
 // QHLayerFamilyUpdateInput — trường nil = không đổi.
 type QHLayerFamilyUpdateInput struct {
-	Name *string
+	Name       *string
+	SortNumber *int32
 }
 
 type QHLayerFamilyUsecase interface {
@@ -70,6 +71,10 @@ func (u *qhLayerFamilyUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 		existing.Name = s
 	}
 
+	if in.SortNumber != nil {
+		existing.SortNumber = *in.SortNumber
+	}
+
 	if err := u.repo.Update(ctx, existing); err != nil {
 		return nil, fmt.Errorf("update layer family: %w", err)
 	}
@@ -107,9 +112,11 @@ func (u *qhLayerFamilyUsecase) GetByID(ctx context.Context, id uint64) (*qh_doma
 func (u *qhLayerFamilyUsecase) List(ctx context.Context, pagable *_dto.Pagable, search string) ([]qh_domain.QHLayerFamily, int64, error) {
 	offset := 0
 	limit := 20
+	sort := ""
 	if pagable != nil {
 		offset = pagable.GetOffset()
 		limit = pagable.GetLimit()
+		sort = pagable.GetSort()
 	}
-	return u.repo.List(ctx, offset, limit, search)
+	return u.repo.List(ctx, offset, limit, search, sort)
 }

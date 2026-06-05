@@ -29,7 +29,7 @@ func (r *qhLayerFamilyRepo) Create(ctx context.Context, row *qh_domain.QHLayerFa
 func (r *qhLayerFamilyRepo) Update(ctx context.Context, row *qh_domain.QHLayerFamily) error {
 	return r.db.WithContext(ctx).Model(row).
 		Omit("created_at", "created_by", "id", "Layers").
-		Select("Name").
+		Select("Name", "SortNumber").
 		Updates(row).Error
 }
 
@@ -58,7 +58,7 @@ func (r *qhLayerFamilyRepo) GetByID(ctx context.Context, id uint64) (*qh_domain.
 	return &row, nil
 }
 
-func (r *qhLayerFamilyRepo) List(ctx context.Context, offset, limit int, search string) ([]qh_domain.QHLayerFamily, int64, error) {
+func (r *qhLayerFamilyRepo) List(ctx context.Context, offset, limit int, search, sort string) ([]qh_domain.QHLayerFamily, int64, error) {
 	q := r.db.WithContext(ctx).Model(&qh_domain.QHLayerFamily{}).Where("deleted_at IS NULL")
 	search = strings.TrimSpace(search)
 	if search != "" {
@@ -71,8 +71,12 @@ func (r *qhLayerFamilyRepo) List(ctx context.Context, offset, limit int, search 
 		return nil, 0, fmt.Errorf("count qh_layer_families: %w", err)
 	}
 
+	if sort == "" {
+		sort = "sort_number DESC, id DESC"
+	}
+
 	var rows []qh_domain.QHLayerFamily
-	err := q.Omit("Layers").Order("id ASC").Offset(offset).Limit(limit).Find(&rows).Error
+	err := q.Omit("Layers").Order(sort).Offset(offset).Limit(limit).Find(&rows).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("list qh_layer_families: %w", err)
 	}

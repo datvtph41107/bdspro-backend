@@ -372,6 +372,7 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 				ON r.geometry && pb.parcel_geometry
 			   AND r.status = 10
 			   AND r.deleted_at IS NULL
+			   AND r.is_latest = true
 			JOIN qh_layers l
 				ON l.id = r.layer_id
 			   AND l.status = 10

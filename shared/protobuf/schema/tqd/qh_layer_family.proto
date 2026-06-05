@@ -45,15 +45,24 @@ service QHLayerFamilyService {
       get: "/v2/tqd/qh/admin/layer-families/list"
     };
   }
+
+  // GetClientLayerFamilies - Danh sách họ lớp cho client
+  rpc GetClientLayerFamilies(ListLayerFamiliesRequest) returns (ListLayerFamiliesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/qh/layer-families/list"
+    };
+  }
 }
 
 message CreateLayerFamilyRequest {
   string name = 1;
+  int32 sortNumber = 2;
 }
 
 message UpdateLayerFamilyRequest {
   uint64 id = 1;
   optional string name = 2;
+  optional int32 sortNumber = 3;
 }
 
 message GetLayerFamilyRequest {
@@ -68,6 +77,7 @@ message ListLayerFamiliesRequest {
   uint32 page = 1;
   uint32 size = 2;
   optional string search = 3;
+  optional string sort = 4;
 }
 
 message QHLayerFamilyResponse {
@@ -75,6 +85,7 @@ message QHLayerFamilyResponse {
   string name = 2;
   string createdAt = 3;
   string updatedAt = 4;
+  int32 sortNumber = 5;
 }
 
 message ListLayerFamiliesResponse {

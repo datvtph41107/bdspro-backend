@@ -72,3 +72,20 @@ func (s *TqdPublicService) GetQhConfigApp(ctx context.Context, _ *emptypb.Empty)
 	}
 	return st, nil
 }
+
+func (s *TqdPublicService) GetPublicMaps(ctx context.Context, _ *emptypb.Empty) (*tqdpb.GetPublicMapsResponse, error) {
+	return &tqdpb.GetPublicMapsResponse{
+		Data: []*tqdpb.MapSource{
+			{
+				Name:   "Giao thông",
+				Source: "http://14.225.210.29:8002/v1/map/config/style.json",
+				Type:   "vector",
+			},
+			{
+				Name:   "Vệ tinh",
+				Source: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+				Type:   "raster",
+			},
+		},
+	}, nil
+}

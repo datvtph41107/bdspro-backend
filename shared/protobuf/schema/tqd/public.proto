@@ -23,4 +23,20 @@ service TqdPublicService {
       get: "/v2/tqd/public/enums"
     };
   }
+
+  rpc GetPublicMaps(google.protobuf.Empty) returns (GetPublicMapsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/maps"
+    };
+  }
+}
+
+message GetPublicMapsResponse {
+  repeated MapSource data = 1;
+}
+
+message MapSource {
+  string source = 1;
+  string type = 2;
+  string name = 3;
 }
