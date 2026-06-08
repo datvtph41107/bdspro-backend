@@ -35,9 +35,18 @@ service MapWorkspaceService {
     };
   }
 
+  // Legacy-compatible endpoint. Backend sẽ chuyển qua TrackViewHistory với countIntent=false.
   rpc AddViewHistory(AddViewHistoryRequest) returns (WorkspaceMutationResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/map-workspace/view-history"
+      body: "*"
+    };
+  }
+
+  // Endpoint mới để tracking view đúng nghiệp vụ: idempotency, visibleMs, dedupe, counted.
+  rpc TrackViewHistory(TrackViewHistoryRequest) returns (TrackViewHistoryResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/view-history:track"
       body: "*"
     };
   }
@@ -57,6 +66,19 @@ service MapWorkspaceService {
   rpc ListGeneratedReports(WorkspacePageRequest) returns (ListGeneratedReportsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/map-workspace/reports"
+    };
+  }
+
+  rpc CreateGeneratedReport(CreateGeneratedReportRequest) returns (CreateGeneratedReportResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/reports"
+      body: "*"
+    };
+  }
+
+  rpc GetGeneratedReport(GetGeneratedReportRequest) returns (GeneratedReportPreview) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-workspace/reports/{reportId}"
     };
   }
 
@@ -216,6 +238,10 @@ message ViewHistoryPreview {
   ViewHistoryContext viewContext = 18;
 
   ViewHistoryActions actions = 19;
+
+  uint64 regionId = 20;
+  uint64 viewCount = 21;
+  uint64 countedViewCount = 22;
 }
 
 message ReportSpatialPreview {
@@ -273,6 +299,11 @@ message GeneratedReportPreview {
   ReportMeta reportMeta = 12;
   ReportComparison comparison = 13;
   ReportActions actions = 14;
+
+  uint32 entityType = 15;
+  uint64 entityId = 16;
+  uint64 parcelId = 17;
+  uint64 regionId = 18;
 }
 
 message ListFollowedParcelsResponse {
@@ -312,6 +343,41 @@ message AddViewHistoryRequest {
   uint32 source = 4;
   double zoom = 5;
   string timestamp = 6;
+  uint64 regionId = 7;
+}
+
+message TrackViewHistoryRequest {
+  string clientEventId = 1;
+  string sessionId = 2;
+  string deviceId = 3;
+
+  uint32 entityType = 4;
+  uint64 entityId = 5;
+  uint64 parcelId = 6;
+  uint64 regionId = 7;
+
+  uint32 source = 8;
+  string sourceRef = 9;
+  string routeName = 10;
+
+  double zoom = 11;
+  SpatialPoint center = 12;
+  SpatialBounds viewportBounds = 13;
+
+  uint64 visibleMs = 14;
+  bool countIntent = 15;
+
+  string timestamp = 16;
+  string metadataJson = 17;
+}
+
+message TrackViewHistoryResponse {
+  bool success = 1;
+  uint64 historyId = 2;
+  uint64 eventId = 3;
+  bool counted = 4;
+  uint64 viewCount = 5;
+  string message = 6;
 }
 
 message RemoveViewHistoryRequest {
@@ -321,6 +387,38 @@ message RemoveViewHistoryRequest {
 
 message ClearViewHistoryRequest {
   string timestamp = 1;
+}
+
+message CreateGeneratedReportRequest {
+  uint32 reportType = 1;
+
+  uint32 entityType = 2;
+  uint64 entityId = 3;
+
+  uint64 parcelId = 4;
+  uint64 regionId = 5;
+
+  string title = 6;
+  string subtitle = 7;
+
+  WorkspaceLocation location = 8;
+  ReportSpatialPreview spatial = 9;
+  ReportComparison comparison = 10;
+
+  string clientRequestId = 11;
+  string timestamp = 12;
+  string metadataJson = 13;
+}
+
+message CreateGeneratedReportResponse {
+  bool success = 1;
+  string message = 2;
+  GeneratedReportPreview item = 3;
+}
+
+message GetGeneratedReportRequest {
+  uint64 reportId = 1;
+  string timestamp = 2;
 }
 
 message RemoveGeneratedReportRequest {
@@ -343,4 +441,3 @@ message ShareReportResponse {
   string shareUrl = 2;
   string message = 3;
 }
-

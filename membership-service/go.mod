@@ -12,7 +12,7 @@ require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-resty/resty/v2 v2.16.5
-	github.com/google/wire v0.6.0
+	github.com/google/wire v0.7.0
 	github.com/spf13/viper v1.20.0
 	github.com/swaggo/swag v1.16.4
 	gorm.io/gorm v1.25.12

@@ -11,7 +11,7 @@ import (
 type QHUserReported struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
 
-	UserID uint64 `gorm:"column:user_id;not null;index:idx_generated_reports_user_id" json:"userId"`
+	UserID uint64 `gorm:"column:user_id;not null;index:idx_generated_reports_user_id;uniqueIndex:uidx_user_report_client_request,priority:1,where:client_request_id <> '' AND deleted_at IS NULL" json:"userId"`
 
 	ReportType enums.GeneratedReportType   `gorm:"column:report_type;not null;index:idx_generated_reports_report_type" json:"reportType"`
 	Status     enums.GeneratedReportStatus `gorm:"column:status;not null;index:idx_generated_reports_status" json:"status"`
@@ -25,6 +25,7 @@ type QHUserReported struct {
 	WardCode     string `gorm:"column:ward_code;type:varchar(20);default:''" json:"wardCode"`
 
 	ParcelID *uint64 `gorm:"column:parcel_id;index:idx_generated_reports_parcel_id" json:"parcelId,omitempty"`
+	RegionID *uint64 `gorm:"column:region_id;index:idx_generated_reports_region_id" json:"regionId,omitempty"`
 
 	MinLon float64 `gorm:"column:min_lon;default:0" json:"minLon"`
 	MinLat float64 `gorm:"column:min_lat;default:0" json:"minLat"`
@@ -44,6 +45,10 @@ type QHUserReported struct {
 
 	Comparison datatypes.JSON `gorm:"column:comparison;type:jsonb;default:'{}'::jsonb" json:"comparison"`
 	Metadata   datatypes.JSON `gorm:"column:metadata;type:jsonb;default:'{}'::jsonb" json:"metadata"`
+
+	ClientRequestID string `gorm:"column:client_request_id;type:varchar(100);default:'';uniqueIndex:uidx_user_report_client_request,priority:2" json:"clientRequestId"`
+	JobID           string `gorm:"column:job_id;type:varchar(100);default:'';index:idx_generated_reports_job_id" json:"jobId"`
+	ErrorMessage    string `gorm:"column:error_message;type:text;default:''" json:"errorMessage"`
 
 	CreatedAt time.Time      `gorm:"column:created_at;autoCreateTime;index:idx_generated_reports_created_at" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`

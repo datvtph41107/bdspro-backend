@@ -39,6 +39,62 @@ func NewParcelGrpcHandler(
 	}
 }
 
+func regionInfoToProto(v *dto.RegionInfoResponse) *tqdpb.RegionInfoResponse {
+	if v == nil {
+		return nil
+	}
+
+	return &tqdpb.RegionInfoResponse{
+		RegionId:  v.RegionID,
+		LayerId:   v.LayerID,
+		LabelId:   v.LabelID,
+		LandUseId: v.LandUseID,
+		LegendId:  v.LegendID,
+
+		Name:        v.Name,
+		DisplayName: v.DisplayName,
+		Description: v.Description,
+
+		LayerName:        v.LayerName,
+		LayerDisplayName: v.LayerDisplayName,
+
+		LandUseCode:  v.LandUseCode,
+		LandUseName:  v.LandUseName,
+		LandUseColor: v.LandUseColor,
+		CanBuild:     v.CanBuild,
+
+		LabelName:  v.LabelName,
+		LabelColor: v.LabelColor,
+
+		LegendColor:  v.LegendColor,
+		LegendType:   v.LegendType,
+		GeometryType: v.GeometryType,
+
+		LegalDoc:     v.LegalDoc,
+		PlanningName: v.PlanningName,
+
+		AreaSqm:    v.AreaSqm,
+		AreaHa:     v.AreaHa,
+		PerimeterM: v.PerimeterM,
+
+		CenterLat: v.CenterLat,
+		CenterLon: v.CenterLon,
+
+		Bounds: &tqdpb.RegionBounds{
+			MinLon: v.MinLon,
+			MinLat: v.MinLat,
+			MaxLon: v.MaxLon,
+			MaxLat: v.MaxLat,
+		},
+
+		GeoJson: v.GeoJSON,
+
+		Province:     v.Province,
+		ProvinceCode: v.ProvinceCode,
+		WardCode:     v.WardCode,
+	}
+}
+
 // =====================================================
 // PARCEL METADATA — thông tin cơ bản thửa đất (Free)
 // =====================================================
@@ -147,7 +203,7 @@ func (h *ParcelGrpcHandler) GetParcelTimeline(ctx context.Context, req *tqdpb.Ge
 	var summary *tqdpb.TimelineSummary
 	if timeline.Summary != nil {
 		summary = &tqdpb.TimelineSummary{
-			TotalEvents: int32(timeline.Summary.TotalEvents),
+			TotalEvents:  int32(timeline.Summary.TotalEvents),
 			MajorChanges: timeline.Summary.MajorChanges,
 		}
 		if !timeline.Summary.FirstEventAt.IsZero() {
@@ -288,6 +344,52 @@ func (h *ParcelGrpcHandler) FindParcelByLocation(ctx context.Context, req *tqdpb
 	}
 
 	return h.mapper.DomainToProto(result), nil
+}
+
+// ResolveMapTargetByLocation - Resolve target theo tọa độ: ưu tiên parcel, fallback region.
+func (h *ParcelGrpcHandler) ResolveMapTargetByLocation(
+	ctx context.Context,
+	req *tqdpb.ResolveMapTargetByLocationRequest,
+) (*tqdpb.ResolveMapTargetByLocationResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+
+	if req.GetLatitude() == 0 && req.GetLongitude() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "latitude and longitude are required")
+	}
+	if req.GetLatitude() < -90 || req.GetLatitude() > 90 {
+		return nil, status.Error(codes.InvalidArgument, "latitude must be between -90 and 90")
+	}
+	if req.GetLongitude() < -180 || req.GetLongitude() > 180 {
+		return nil, status.Error(codes.InvalidArgument, "longitude must be between -180 and 180")
+	}
+
+	result, err := h.usecase.ResolveMapTargetByLocation(ctx, dto.ResolveMapTargetRequestDTO{
+		Latitude:  req.GetLatitude(),
+		Longitude: req.GetLongitude(),
+		Radius:    req.GetRadius(),
+	})
+	if err != nil {
+		if err.Error() == "map target not found" {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &tqdpb.ResolveMapTargetByLocationResponse{
+		TargetType: result.TargetType,
+		TargetId:   result.TargetID,
+	}
+
+	if result.Parcel != nil {
+		resp.Parcel = h.mapper.ToProtoParcelInfoDetail(result.Parcel)
+	}
+	if result.Region != nil {
+		resp.Region = regionInfoToProto(result.Region)
+	}
+
+	return resp, nil
 }
 
 // =====================================================

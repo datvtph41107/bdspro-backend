@@ -5,7 +5,7 @@ import "google/api/annotations.proto";
 package chatpb;
 option go_package = "pb/types/chat;chatpb";
 
-import "chat/background.proto";
+import "chat_v1/background.proto";
 import "shared/common.proto";
 import "bdspro/common.proto";
 

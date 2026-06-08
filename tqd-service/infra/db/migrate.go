@@ -89,5 +89,6 @@ func AutoMigrate() {
 		&qh_domain.QHUserFollowedParcel{},
 		&qh_domain.QHUserReported{},
 		&qh_domain.QHUserViewHistory{},
+		&qh_domain.QHUserViewEvent{},
 	)
 }

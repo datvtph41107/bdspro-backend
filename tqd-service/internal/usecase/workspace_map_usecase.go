@@ -23,10 +23,13 @@ type MapWorkspaceUsecase interface {
 
 	ListViewHistory(ctx context.Context, userID uint64, pagable _dto.IPagable) (*dto.WorkspaceListResponse[dto.ViewHistoryPreviewDTO], error)
 	AddViewHistory(ctx context.Context, req dto.AddViewHistoryRequestDTO) (uint64, error)
+	TrackViewHistory(ctx context.Context, req dto.TrackViewHistoryRequestDTO) (*dto.TrackViewHistoryResultDTO, error)
 	RemoveViewHistory(ctx context.Context, req dto.RemoveViewHistoryRequestDTO) error
 	ClearViewHistory(ctx context.Context, userID uint64) error
 
 	ListGeneratedReports(ctx context.Context, userID uint64, pagable _dto.IPagable) (*dto.WorkspaceListResponse[dto.GeneratedReportPreviewDTO], error)
+	CreateGeneratedReport(ctx context.Context, req dto.CreateGeneratedReportRequestDTO) (*dto.GeneratedReportPreviewDTO, error)
+	GetGeneratedReport(ctx context.Context, userID, reportID uint64) (*dto.GeneratedReportPreviewDTO, error)
 	RemoveGeneratedReport(ctx context.Context, req dto.RemoveGeneratedReportRequestDTO) error
 	RegenerateReport(ctx context.Context, userID, reportID uint64) error
 	ShareReport(ctx context.Context, userID, reportID uint64) (*dto.ShareReportResultDTO, error)
@@ -37,9 +40,7 @@ type mapWorkspaceUsecase struct {
 }
 
 func NewMapWorkspaceUsecase(repo repo.IMapWorkspaceRepo) MapWorkspaceUsecase {
-	return &mapWorkspaceUsecase{
-		repo: repo,
-	}
+	return &mapWorkspaceUsecase{repo: repo}
 }
 
 func timeString(t time.Time) string {
@@ -48,6 +49,26 @@ func timeString(t time.Time) string {
 
 func timeStringPtr(t *time.Time) string {
 	return _utils.FormatRFC3339(t)
+}
+
+func buildViewDedupeKey(userID uint64, entityType uint32, entityID uint64, source uint32) string {
+	return fmt.Sprintf("%d:%d:%d:%d", userID, entityType, entityID, source)
+}
+
+func uniqueUint64(values []uint64) []uint64 {
+	seen := map[uint64]bool{}
+	out := make([]uint64, 0, len(values))
+
+	for _, v := range values {
+		if v == 0 || seen[v] {
+			continue
+		}
+
+		seen[v] = true
+		out = append(out, v)
+	}
+
+	return out
 }
 
 func buildParcelGeometryDTO(row dto.ParcelWorkspacePreviewRow) dto.GeometryPreviewDTO {
@@ -68,13 +89,31 @@ func buildParcelGeometryDTO(row dto.ParcelWorkspacePreviewRow) dto.GeometryPrevi
 	}
 }
 
-func buildPreviewHintDTO(g dto.GeometryPreviewDTO) dto.PreviewHintDTO {
+func buildRegionGeometryDTO(row dto.RegionWorkspacePreviewRow) dto.GeometryPreviewDTO {
+	return dto.GeometryPreviewDTO{
+		Type:    row.GeometryType,
+		GeoJSON: row.GeoJSON,
+		Centroid: dto.SpatialPointDTO{
+			Lat: row.CenterLat,
+			Lon: row.CenterLon,
+		},
+		Bounds: dto.SpatialBoundsDTO{
+			MinLon: row.MinLon,
+			MinLat: row.MinLat,
+			MaxLon: row.MaxLon,
+			MaxLat: row.MaxLat,
+		},
+		SRID: 4326,
+	}
+}
+
+func buildPreviewHintDTO(g dto.GeometryPreviewDTO, layer string) dto.PreviewHintDTO {
 	return dto.PreviewHintDTO{
 		Mode:            enums.PreviewModeGeometry.Uint32(),
 		Bounds:          g.Bounds,
 		Centroid:        g.Centroid,
 		FitPaddingRatio: 0.22,
-		HighlightLayer:  "target-parcel",
+		HighlightLayer:  layer,
 	}
 }
 
@@ -88,32 +127,88 @@ func buildGeometryFocusTargetDTO(g dto.GeometryPreviewDTO) dto.SpatialFocusTarge
 	}
 }
 
-func buildBoundsFocusTargetDTO(bounds dto.SpatialBoundsDTO, centroid dto.SpatialPointDTO) dto.SpatialFocusTargetDTO {
-	return dto.SpatialFocusTargetDTO{
-		Type:     enums.FocusTypeBounds.Uint32(),
-		Bounds:   bounds,
-		Centroid: centroid,
-		SRID:     4326,
-	}
-}
-
 func buildParcelTitle(landNumber string) string {
 	if landNumber == "" || landNumber == "0" {
 		return "Thửa đất"
 	}
+
 	return "Thửa " + landNumber
 }
 
 func buildParcelSubtitle(mapNumber string, areaSqm float64) string {
 	if mapNumber == "" || mapNumber == "0" {
+		if areaSqm <= 0 {
+			return ""
+		}
 		return fmt.Sprintf("Diện tích %.2f m²", areaSqm)
 	}
+
+	if areaSqm <= 0 {
+		return "Số tờ " + mapNumber
+	}
+
 	return fmt.Sprintf("Số tờ %s · Diện tích %.2f m²", mapNumber, areaSqm)
+}
+
+func buildRegionTitle(row dto.RegionWorkspacePreviewRow) string {
+	if row.DisplayName != "" {
+		return row.DisplayName
+	}
+	if row.LandUseName != "" {
+		return row.LandUseName
+	}
+	if row.Name != "" {
+		return row.Name
+	}
+	return "Vùng quy hoạch"
+}
+
+func buildRegionSubtitle(row dto.RegionWorkspacePreviewRow) string {
+	parts := make([]string, 0, 3)
+
+	if row.LayerDisplayName != "" {
+		parts = append(parts, row.LayerDisplayName)
+	} else if row.LayerName != "" {
+		parts = append(parts, row.LayerName)
+	}
+
+	if row.LandUseName != "" {
+		parts = append(parts, row.LandUseName)
+	}
+
+	if row.AreaSqm > 0 {
+		parts = append(parts, fmt.Sprintf("Diện tích %.2f m²", row.AreaSqm))
+	}
+
+	out := ""
+	for i, part := range parts {
+		if i > 0 {
+			out += " · "
+		}
+		out += part
+	}
+
+	return out
+}
+
+func buildParcelPreviewMap(rows []dto.ParcelWorkspacePreviewRow) map[uint64]dto.ParcelWorkspacePreviewRow {
+	result := make(map[uint64]dto.ParcelWorkspacePreviewRow, len(rows))
+	for _, row := range rows {
+		result[row.ParcelID] = row
+	}
+	return result
+}
+
+func buildRegionPreviewMap(rows []dto.RegionWorkspacePreviewRow) map[uint64]dto.RegionWorkspacePreviewRow {
+	result := make(map[uint64]dto.RegionWorkspacePreviewRow, len(rows))
+	for _, row := range rows {
+		result[row.RegionID] = row
+	}
+	return result
 }
 
 func buildFollowedParcelPreview(f qh_domain.QHUserFollowedParcel, row dto.ParcelWorkspacePreviewRow) dto.FollowedParcelPreviewDTO {
 	geometry := buildParcelGeometryDTO(row)
-	preview := buildPreviewHintDTO(geometry)
 
 	return dto.FollowedParcelPreviewDTO{
 		ID:       fmt.Sprintf("follow_%d", f.ID),
@@ -141,7 +236,7 @@ func buildFollowedParcelPreview(f qh_domain.QHUserFollowedParcel, row dto.Parcel
 		Lon: row.Lon,
 
 		GeometryPreview: geometry,
-		Preview:         preview,
+		Preview:         buildPreviewHintDTO(geometry, "target-parcel"),
 		FocusTarget:     buildGeometryFocusTargetDTO(geometry),
 
 		FollowedAt: timeString(f.CreatedAt),
@@ -155,9 +250,8 @@ func buildFollowedParcelPreview(f qh_domain.QHUserFollowedParcel, row dto.Parcel
 	}
 }
 
-func buildHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWorkspacePreviewRow) dto.ViewHistoryPreviewDTO {
+func buildParcelHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWorkspacePreviewRow) dto.ViewHistoryPreviewDTO {
 	geometry := buildParcelGeometryDTO(row)
-	preview := buildPreviewHintDTO(geometry)
 
 	return dto.ViewHistoryPreviewDTO{
 		ID:        fmt.Sprintf("history_%d", h.ID),
@@ -165,7 +259,7 @@ func buildHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWorkspaceP
 		HistoryID: h.ID,
 		UserID:    h.UserID,
 
-		EntityType: uint32(h.EntityType),
+		EntityType: enums.WorkspaceEntityTypeParcel.Uint32(),
 		EntityID:   h.EntityID,
 		ParcelID:   row.ParcelID,
 
@@ -188,18 +282,77 @@ func buildHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWorkspaceP
 		Lon: row.Lon,
 
 		GeometryPreview: geometry,
-		Preview:         preview,
+		Preview:         buildPreviewHintDTO(geometry, "target-parcel"),
 		FocusTarget:     buildGeometryFocusTargetDTO(geometry),
 
 		ViewedAt: timeString(h.ViewedAt),
 		ViewContext: dto.ViewHistoryContextDTO{
 			Source: uint32(h.Source),
+			Zoom:   h.LastZoom,
 		},
+
+		ViewCount:        h.ViewCount,
+		CountedViewCount: h.CountedViewCount,
 
 		Actions: dto.ViewHistoryActionsDTO{
 			Focus:  true,
 			Remove: true,
 			Follow: true,
+		},
+	}
+}
+
+func buildRegionHistoryPreview(h qh_domain.QHUserViewHistory, row dto.RegionWorkspacePreviewRow) dto.ViewHistoryPreviewDTO {
+	geometry := buildRegionGeometryDTO(row)
+
+	locationLabel := row.PlanningName
+	if locationLabel == "" {
+		locationLabel = row.LayerDisplayName
+	}
+	if locationLabel == "" {
+		locationLabel = row.Description
+	}
+
+	return dto.ViewHistoryPreviewDTO{
+		ID:        fmt.Sprintf("history_%d", h.ID),
+		Type:      enums.WorkspaceEntityTypeRegion.Uint32(),
+		HistoryID: h.ID,
+		UserID:    h.UserID,
+
+		EntityType: enums.WorkspaceEntityTypeRegion.Uint32(),
+		EntityID:   h.EntityID,
+		RegionID:   row.RegionID,
+
+		Title:    buildRegionTitle(row),
+		Subtitle: buildRegionSubtitle(row),
+
+		Location: dto.WorkspaceLocationDTO{
+			Address:      locationLabel,
+			Province:     row.Province,
+			ProvinceCode: row.ProvinceCode,
+			WardCode:     row.WardCode,
+		},
+
+		Lat: row.CenterLat,
+		Lon: row.CenterLon,
+
+		GeometryPreview: geometry,
+		Preview:         buildPreviewHintDTO(geometry, "target-region"),
+		FocusTarget:     buildGeometryFocusTargetDTO(geometry),
+
+		ViewedAt: timeString(h.ViewedAt),
+		ViewContext: dto.ViewHistoryContextDTO{
+			Source: uint32(h.Source),
+			Zoom:   h.LastZoom,
+		},
+
+		ViewCount:        h.ViewCount,
+		CountedViewCount: h.CountedViewCount,
+
+		Actions: dto.ViewHistoryActionsDTO{
+			Focus:  true,
+			Remove: true,
+			Follow: false,
 		},
 	}
 }
@@ -220,19 +373,6 @@ func decodeReportComparison(raw datatypes.JSON) dto.ReportComparisonDTO {
 
 func buildGeneratedReportPreview(r qh_domain.QHUserReported) dto.GeneratedReportPreviewDTO {
 	status := enums.GeneratedReportStatus(r.Status)
-
-	bounds := dto.SpatialBoundsDTO{
-		MinLon: r.MinLon,
-		MinLat: r.MinLat,
-		MaxLon: r.MaxLon,
-		MaxLat: r.MaxLat,
-	}
-
-	centroid := dto.SpatialPointDTO{
-		Lat: r.CenterLat,
-		Lon: r.CenterLon,
-	}
-
 	canDownload := status.CanDownload()
 
 	return dto.GeneratedReportPreviewDTO{
@@ -254,8 +394,16 @@ func buildGeneratedReportPreview(r qh_domain.QHUserReported) dto.GeneratedReport
 			WardCode:     r.WardCode,
 		},
 		Spatial: dto.ReportSpatialPreviewDTO{
-			Bounds:   bounds,
-			Centroid: centroid,
+			Bounds: dto.SpatialBoundsDTO{
+				MinLon: r.MinLon,
+				MinLat: r.MinLat,
+				MaxLon: r.MaxLon,
+				MaxLat: r.MaxLat,
+			},
+			Centroid: dto.SpatialPointDTO{
+				Lat: r.CenterLat,
+				Lon: r.CenterLon,
+			},
 		},
 		Assets: dto.ReportAssetsDTO{
 			ThumbnailURL: r.ThumbnailURL,
@@ -277,19 +425,9 @@ func buildGeneratedReportPreview(r qh_domain.QHUserReported) dto.GeneratedReport
 			DownloadPDF:   canDownload && r.PDFURL != "",
 			Share:         status.CanShare(),
 			Regenerate:    status.CanRegenerate(),
-			Remove:        true,
+			Remove:        status.CanRemove(),
 		},
 	}
-}
-
-func buildParcelPreviewMap(rows []dto.ParcelWorkspacePreviewRow) map[uint64]dto.ParcelWorkspacePreviewRow {
-	result := make(map[uint64]dto.ParcelWorkspacePreviewRow, len(rows))
-
-	for _, row := range rows {
-		result[row.ParcelID] = row
-	}
-
-	return result
 }
 
 func (u *mapWorkspaceUsecase) ListFollowedParcels(
@@ -301,12 +439,7 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 		return nil, fmt.Errorf("user_id is required")
 	}
 
-	follows, total, err := u.repo.ListFollowedParcels(
-		ctx,
-		userID,
-		pagable.GetLimit(),
-		pagable.GetOffset(),
-	)
+	follows, total, err := u.repo.ListFollowedParcels(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
 	if err != nil {
 		return nil, err
 	}
@@ -316,14 +449,14 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 		parcelIDs = append(parcelIDs, item.ParcelID)
 	}
 
-	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, parcelIDs)
+	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, uniqueUint64(parcelIDs))
 	if err != nil {
 		return nil, err
 	}
 
 	parcelMap := buildParcelPreviewMap(parcelRows)
-
 	items := make([]dto.FollowedParcelPreviewDTO, 0, len(follows))
+
 	for _, follow := range follows {
 		row, ok := parcelMap[follow.ParcelID]
 		if !ok {
@@ -367,7 +500,6 @@ func (u *mapWorkspaceUsecase) RemoveFollowedParcel(ctx context.Context, req dto.
 	if req.UserID == 0 {
 		return fmt.Errorf("user_id is required")
 	}
-
 	if req.FollowID == 0 && req.ParcelID == 0 {
 		return fmt.Errorf("follow_id or parcel_id is required")
 	}
@@ -384,51 +516,74 @@ func (u *mapWorkspaceUsecase) ListViewHistory(
 		return nil, fmt.Errorf("user_id is required")
 	}
 
-	histories, total, err := u.repo.ListViewHistory(
-		ctx,
-		userID,
-		pagable.GetLimit(),
-		pagable.GetOffset(),
-	)
+	histories, total, err := u.repo.ListViewHistory(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
 	if err != nil {
 		return nil, err
 	}
 
 	parcelIDs := make([]uint64, 0, len(histories))
+	regionIDs := make([]uint64, 0, len(histories))
+
 	for _, item := range histories {
-		if item.ParcelID != nil && *item.ParcelID > 0 {
-			parcelIDs = append(parcelIDs, *item.ParcelID)
-			continue
+		if item.EntityType == enums.WorkspaceEntityTypeParcel {
+			if item.ParcelID != nil && *item.ParcelID > 0 {
+				parcelIDs = append(parcelIDs, *item.ParcelID)
+			} else {
+				parcelIDs = append(parcelIDs, item.EntityID)
+			}
 		}
 
-		if item.EntityType == enums.WorkspaceEntityType(enums.WorkspaceEntityTypeParcel) {
-			parcelIDs = append(parcelIDs, item.EntityID)
+		if item.EntityType == enums.WorkspaceEntityTypeRegion {
+			if item.RegionID != nil && *item.RegionID > 0 {
+				regionIDs = append(regionIDs, *item.RegionID)
+			} else {
+				regionIDs = append(regionIDs, item.EntityID)
+			}
 		}
 	}
 
-	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, parcelIDs)
+	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, uniqueUint64(parcelIDs))
+	if err != nil {
+		return nil, err
+	}
+
+	regionRows, err := u.repo.GetRegionWorkspacePreviewsByIDs(ctx, uniqueUint64(regionIDs))
 	if err != nil {
 		return nil, err
 	}
 
 	parcelMap := buildParcelPreviewMap(parcelRows)
-
+	regionMap := buildRegionPreviewMap(regionRows)
 	items := make([]dto.ViewHistoryPreviewDTO, 0, len(histories))
+
 	for _, history := range histories {
-		var parcelID uint64
+		switch history.EntityType {
+		case enums.WorkspaceEntityTypeParcel:
+			parcelID := history.EntityID
+			if history.ParcelID != nil && *history.ParcelID > 0 {
+				parcelID = *history.ParcelID
+			}
 
-		if history.ParcelID != nil && *history.ParcelID > 0 {
-			parcelID = *history.ParcelID
-		} else if history.EntityType == enums.WorkspaceEntityType(enums.WorkspaceEntityTypeParcel) {
-			parcelID = history.EntityID
+			row, ok := parcelMap[parcelID]
+			if !ok {
+				continue
+			}
+
+			items = append(items, buildParcelHistoryPreview(history, row))
+
+		case enums.WorkspaceEntityTypeRegion:
+			regionID := history.EntityID
+			if history.RegionID != nil && *history.RegionID > 0 {
+				regionID = *history.RegionID
+			}
+
+			row, ok := regionMap[regionID]
+			if !ok {
+				continue
+			}
+
+			items = append(items, buildRegionHistoryPreview(history, row))
 		}
-
-		row, ok := parcelMap[parcelID]
-		if !ok {
-			continue
-		}
-
-		items = append(items, buildHistoryPreview(history, row))
 	}
 
 	return &dto.WorkspaceListResponse[dto.ViewHistoryPreviewDTO]{
@@ -438,39 +593,124 @@ func (u *mapWorkspaceUsecase) ListViewHistory(
 }
 
 func (u *mapWorkspaceUsecase) AddViewHistory(ctx context.Context, req dto.AddViewHistoryRequestDTO) (uint64, error) {
-	if req.UserID == 0 {
-		return 0, fmt.Errorf("user_id is required")
-	}
-	if req.EntityID == 0 {
-		return 0, fmt.Errorf("entity_id is required")
-	}
-	if req.EntityType == 0 {
-		req.EntityType = enums.WorkspaceEntityTypeParcel.Uint32()
-	}
-	if req.Source == 0 {
-		req.Source = enums.ViewHistorySourceUnknown.Uint32()
-	}
-
-	var parcelID *uint64
-	if req.ParcelID > 0 {
-		parcelID = &req.ParcelID
-	} else if req.EntityType == enums.WorkspaceEntityTypeParcel.Uint32() {
-		parcelID = &req.EntityID
-	}
-
-	row, err := u.repo.AddViewHistory(ctx, qh_domain.QHUserViewHistory{
-		UserID:     req.UserID,
-		EntityType: enums.WorkspaceEntityType(req.EntityType),
-		EntityID:   req.EntityID,
-		ParcelID:   parcelID,
-		Source:     enums.ViewHistorySource(req.Source),
-		ViewedAt:   _utils.TimeNowUTC(),
+	result, err := u.TrackViewHistory(ctx, dto.TrackViewHistoryRequestDTO{
+		UserID:        req.UserID,
+		EntityType:    req.EntityType,
+		EntityID:      req.EntityID,
+		ParcelID:      req.ParcelID,
+		RegionID:      req.RegionID,
+		Source:        req.Source,
+		Zoom:          req.Zoom,
+		VisibleMs:     0,
+		CountIntent:   false,
+		ClientEventID: fmt.Sprintf("legacy_%d_%d_%d", req.UserID, req.EntityID, time.Now().UnixNano()),
 	})
 	if err != nil {
 		return 0, err
 	}
 
-	return row.ID, nil
+	return result.HistoryID, nil
+}
+
+func (u *mapWorkspaceUsecase) TrackViewHistory(ctx context.Context, req dto.TrackViewHistoryRequestDTO) (*dto.TrackViewHistoryResultDTO, error) {
+	if req.UserID == 0 {
+		return nil, fmt.Errorf("user_id is required")
+	}
+	if req.EntityID == 0 {
+		return nil, fmt.Errorf("entity_id is required")
+	}
+
+	entityType := enums.WorkspaceEntityTypeFromUint32(req.EntityType)
+	if !entityType.IsValid() {
+		entityType = enums.WorkspaceEntityTypeParcel
+		req.EntityType = entityType.Uint32()
+	}
+
+	source := enums.ViewHistorySourceFromUint32(req.Source)
+	if !source.IsValid() {
+		source = enums.ViewHistorySourceUnknown
+		req.Source = source.Uint32()
+	}
+
+	if req.ClientEventID == "" {
+		req.ClientEventID = fmt.Sprintf("%d-%d-%d-%d", req.UserID, req.EntityType, req.EntityID, time.Now().UnixNano())
+	}
+
+	var parcelID *uint64
+	var regionID *uint64
+
+	if entityType == enums.WorkspaceEntityTypeParcel {
+		id := req.ParcelID
+		if id == 0 {
+			id = req.EntityID
+		}
+
+		parcel, err := u.repo.GetParcelWorkspacePreview(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if parcel == nil || parcel.ParcelID == 0 {
+			return nil, fmt.Errorf("parcel not found")
+		}
+
+		parcelID = &id
+	}
+
+	if entityType == enums.WorkspaceEntityTypeRegion {
+		id := req.RegionID
+		if id == 0 {
+			id = req.EntityID
+		}
+
+		region, err := u.repo.GetRegionWorkspacePreview(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if region == nil || region.RegionID == 0 {
+			return nil, fmt.Errorf("region not found")
+		}
+
+		regionID = &id
+	}
+
+	metadata := datatypes.JSON([]byte("{}"))
+	if req.MetadataJSON != "" {
+		metadata = datatypes.JSON([]byte(req.MetadataJSON))
+	}
+
+	event := qh_domain.QHUserViewEvent{
+		UserID:        req.UserID,
+		ClientEventID: req.ClientEventID,
+		SessionID:     req.SessionID,
+		DeviceID:      req.DeviceID,
+
+		EntityType: entityType,
+		EntityID:   req.EntityID,
+		ParcelID:   parcelID,
+		RegionID:   regionID,
+
+		Source:    source,
+		SourceRef: req.SourceRef,
+		RouteName: req.RouteName,
+
+		Zoom:      req.Zoom,
+		CenterLat: req.Center.Lat,
+		CenterLon: req.Center.Lon,
+
+		ViewportMinLon: req.ViewportBounds.MinLon,
+		ViewportMinLat: req.ViewportBounds.MinLat,
+		ViewportMaxLon: req.ViewportBounds.MaxLon,
+		ViewportMaxLat: req.ViewportBounds.MaxLat,
+
+		VisibleMs:   req.VisibleMs,
+		CountIntent: req.CountIntent,
+		DedupeKey:   buildViewDedupeKey(req.UserID, req.EntityType, req.EntityID, req.Source),
+
+		Metadata: metadata,
+		ViewedAt: _utils.TimeNowUTC(),
+	}
+
+	return u.repo.TrackViewHistory(ctx, event, 60*time.Second)
 }
 
 func (u *mapWorkspaceUsecase) RemoveViewHistory(ctx context.Context, req dto.RemoveViewHistoryRequestDTO) error {
@@ -501,12 +741,7 @@ func (u *mapWorkspaceUsecase) ListGeneratedReports(
 		return nil, fmt.Errorf("user_id is required")
 	}
 
-	reports, total, err := u.repo.ListGeneratedReports(
-		ctx,
-		userID,
-		pagable.GetLimit(),
-		pagable.GetOffset(),
-	)
+	reports, total, err := u.repo.ListGeneratedReports(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
 	if err != nil {
 		return nil, err
 	}
@@ -520,6 +755,207 @@ func (u *mapWorkspaceUsecase) ListGeneratedReports(
 		Items: items,
 		Total: total,
 	}, nil
+}
+
+func (u *mapWorkspaceUsecase) CreateGeneratedReport(ctx context.Context, req dto.CreateGeneratedReportRequestDTO) (*dto.GeneratedReportPreviewDTO, error) {
+	if req.UserID == 0 {
+		return nil, fmt.Errorf("user_id is required")
+	}
+	if req.ReportType == 0 {
+		return nil, fmt.Errorf("report_type is required")
+	}
+
+	reportType := enums.GeneratedReportType(req.ReportType)
+	if !reportType.IsValid() {
+		return nil, fmt.Errorf("invalid report_type")
+	}
+
+	entityType := enums.WorkspaceEntityTypeFromUint32(req.EntityType)
+	if !entityType.IsValid() {
+		if req.ParcelID > 0 {
+			entityType = enums.WorkspaceEntityTypeParcel
+		} else if req.RegionID > 0 {
+			entityType = enums.WorkspaceEntityTypeRegion
+		} else {
+			return nil, fmt.Errorf("entity_type is required")
+		}
+	}
+
+	if !reportType.SupportsEntityType(entityType) {
+		return nil, fmt.Errorf("report type does not support entity type")
+	}
+
+	if req.ClientRequestID != "" {
+		existing, err := u.repo.GetGeneratedReportByClientRequestID(ctx, req.UserID, req.ClientRequestID)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil && existing.ID > 0 {
+			item := buildGeneratedReportPreview(*existing)
+			return &item, nil
+		}
+	}
+
+	var parcelID *uint64
+	var regionID *uint64
+
+	title := req.Title
+	subtitle := req.Subtitle
+	location := req.Location
+	spatial := req.Spatial
+
+	if entityType == enums.WorkspaceEntityTypeParcel {
+		id := req.ParcelID
+		if id == 0 {
+			id = req.EntityID
+		}
+		if id == 0 {
+			return nil, fmt.Errorf("parcel_id is required")
+		}
+
+		parcel, err := u.repo.GetParcelWorkspacePreview(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if parcel == nil || parcel.ParcelID == 0 {
+			return nil, fmt.Errorf("parcel not found")
+		}
+
+		parcelID = &id
+
+		if title == "" {
+			title = fmt.Sprintf("Báo cáo quy hoạch thửa %s", parcel.LandNumber)
+		}
+		if subtitle == "" {
+			subtitle = buildParcelSubtitle(parcel.MapNumber, parcel.AreaSqm)
+		}
+
+		location = dto.WorkspaceLocationDTO{
+			Address:      parcel.Address,
+			Province:     parcel.Province,
+			ProvinceCode: parcel.ProvinceCode,
+			WardCode:     parcel.WardCode,
+		}
+
+		spatial = dto.ReportSpatialPreviewDTO{
+			Bounds: dto.SpatialBoundsDTO{
+				MinLon: parcel.MinLon,
+				MinLat: parcel.MinLat,
+				MaxLon: parcel.MaxLon,
+				MaxLat: parcel.MaxLat,
+			},
+			Centroid: dto.SpatialPointDTO{
+				Lat: parcel.CentroidLat,
+				Lon: parcel.CentroidLon,
+			},
+		}
+	}
+
+	if entityType == enums.WorkspaceEntityTypeRegion {
+		id := req.RegionID
+		if id == 0 {
+			id = req.EntityID
+		}
+		if id == 0 {
+			return nil, fmt.Errorf("region_id is required")
+		}
+
+		region, err := u.repo.GetRegionWorkspacePreview(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if region == nil || region.RegionID == 0 {
+			return nil, fmt.Errorf("region not found")
+		}
+
+		regionID = &id
+
+		if title == "" {
+			title = "Báo cáo vùng quy hoạch: " + buildRegionTitle(*region)
+		}
+		if subtitle == "" {
+			subtitle = buildRegionSubtitle(*region)
+		}
+
+		location = dto.WorkspaceLocationDTO{
+			Address:      region.PlanningName,
+			Province:     region.Province,
+			ProvinceCode: region.ProvinceCode,
+			WardCode:     region.WardCode,
+		}
+
+		spatial = dto.ReportSpatialPreviewDTO{
+			Bounds: dto.SpatialBoundsDTO{
+				MinLon: region.MinLon,
+				MinLat: region.MinLat,
+				MaxLon: region.MaxLon,
+				MaxLat: region.MaxLat,
+			},
+			Centroid: dto.SpatialPointDTO{
+				Lat: region.CenterLat,
+				Lon: region.CenterLon,
+			},
+		}
+	}
+
+	comparisonJSON, _ := json.Marshal(req.Comparison)
+
+	metadata := datatypes.JSON([]byte("{}"))
+	if req.MetadataJSON != "" {
+		metadata = datatypes.JSON([]byte(req.MetadataJSON))
+	}
+
+	row := qh_domain.QHUserReported{
+		UserID:          req.UserID,
+		ReportType:      reportType,
+		Status:          enums.GeneratedReportStatusProcessing,
+		Title:           title,
+		Subtitle:        subtitle,
+		Address:         location.Address,
+		Province:        location.Province,
+		ProvinceCode:    location.ProvinceCode,
+		WardCode:        location.WardCode,
+		ParcelID:        parcelID,
+		RegionID:        regionID,
+		MinLon:          spatial.Bounds.MinLon,
+		MinLat:          spatial.Bounds.MinLat,
+		MaxLon:          spatial.Bounds.MaxLon,
+		MaxLat:          spatial.Bounds.MaxLat,
+		CenterLat:       spatial.Centroid.Lat,
+		CenterLon:       spatial.Centroid.Lon,
+		Format:          reportType.DefaultFormat(),
+		Comparison:      datatypes.JSON(comparisonJSON),
+		Metadata:        metadata,
+		ClientRequestID: req.ClientRequestID,
+	}
+
+	created, err := u.repo.CreateGeneratedReport(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+
+	item := buildGeneratedReportPreview(*created)
+	return &item, nil
+}
+
+func (u *mapWorkspaceUsecase) GetGeneratedReport(ctx context.Context, userID, reportID uint64) (*dto.GeneratedReportPreviewDTO, error) {
+	if userID == 0 {
+		return nil, fmt.Errorf("user_id is required")
+	}
+	if reportID == 0 {
+		return nil, fmt.Errorf("report_id is required")
+	}
+
+	report, err := u.repo.GetGeneratedReport(ctx, userID, reportID)
+	if err != nil {
+		return nil, err
+	}
+	if report == nil || report.ID == 0 {
+		return nil, fmt.Errorf("report not found")
+	}
+
+	item := buildGeneratedReportPreview(*report)
+	return &item, nil
 }
 
 func (u *mapWorkspaceUsecase) RemoveGeneratedReport(ctx context.Context, req dto.RemoveGeneratedReportRequestDTO) error {
@@ -541,12 +977,20 @@ func (u *mapWorkspaceUsecase) RegenerateReport(ctx context.Context, userID, repo
 		return fmt.Errorf("report_id is required")
 	}
 
-	return u.repo.UpdateGeneratedReportStatus(
-		ctx,
-		userID,
-		reportID,
-		enums.GeneratedReportStatusProcessing.Uint32(),
-	)
+	report, err := u.repo.GetGeneratedReport(ctx, userID, reportID)
+	if err != nil {
+		return err
+	}
+	if report == nil || report.ID == 0 {
+		return fmt.Errorf("report not found")
+	}
+
+	status := enums.GeneratedReportStatus(report.Status)
+	if !status.CanRegenerate() {
+		return fmt.Errorf("report cannot regenerate in current status")
+	}
+
+	return u.repo.UpdateGeneratedReportStatus(ctx, userID, reportID, enums.GeneratedReportStatusProcessing.Uint32())
 }
 
 func (u *mapWorkspaceUsecase) ShareReport(ctx context.Context, userID, reportID uint64) (*dto.ShareReportResultDTO, error) {
@@ -565,14 +1009,18 @@ func (u *mapWorkspaceUsecase) ShareReport(ctx context.Context, userID, reportID 
 		return nil, fmt.Errorf("report not found")
 	}
 
-	shareURL := report.ShareURL
-	// if shareURL == "" {
-	// 	shareURL = fmt.Sprintf("/share/reports/%d", report.ID)
+	status := enums.GeneratedReportStatus(report.Status)
+	if !status.CanShare() {
+		return nil, fmt.Errorf("report is not ready to share")
+	}
 
-	// 	if err := u.repo.UpdateGeneratedReportShareURL(ctx, userID, reportID, shareURL); err != nil {
-	// 		return nil, err
-	// 	}
-	// }
+	shareURL := report.ShareURL
+	if shareURL == "" {
+		shareURL = fmt.Sprintf("/share/reports/%d", report.ID)
+		if err := u.repo.UpdateGeneratedReportShareURL(ctx, userID, reportID, shareURL); err != nil {
+			return nil, err
+		}
+	}
 
 	return &dto.ShareReportResultDTO{
 		Success:  true,

@@ -24,6 +24,16 @@ service ParcelService {
       body: "*"
     };
   }
+
+  // ResolveMapTargetByLocation - Resolve target theo tọa độ.
+  // Rule nghiệp vụ: ưu tiên parcel, nếu không có parcel thì fallback region.
+  // targetType dùng WorkspaceEntityType: parcel=1, location=2, region=3, report=4.
+  rpc ResolveMapTargetByLocation(ResolveMapTargetByLocationRequest) returns (ResolveMapTargetByLocationResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-target/by-location"
+      body: "*"
+    };
+  }
   rpc FindParcelsByPolygon(FindParcelsByPolygonRequest) returns (FindParcelsByPolygonResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/parcels/by-polygon"
@@ -328,6 +338,72 @@ message FindParcelByLocationRequest {
   double longitude = 2;
   double radius    = 3;
   int64 timestamp  = 4;
+}
+
+message ResolveMapTargetByLocationRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius = 3;
+  int64 timestamp = 4;
+}
+
+message ResolveMapTargetByLocationResponse {
+  uint32 targetType = 1; // WorkspaceEntityType: parcel=1, location=2, region=3, report=4
+  uint64 targetId = 2;
+
+  ParcelInfoResponse parcel = 3;
+  RegionInfoResponse region = 4;
+}
+
+message RegionBounds {
+  double minLon = 1;
+  double minLat = 2;
+  double maxLon = 3;
+  double maxLat = 4;
+}
+
+message RegionInfoResponse {
+  uint64 regionId = 1;
+  uint64 layerId = 2;
+  uint64 labelId = 3;
+  uint64 landUseId = 4;
+  uint64 legendId = 5;
+
+  string name = 6;
+  string displayName = 7;
+  string description = 8;
+
+  string layerName = 9;
+  string layerDisplayName = 10;
+
+  string landUseCode = 11;
+  string landUseName = 12;
+  string landUseColor = 13;
+  bool canBuild = 14;
+
+  string labelName = 15;
+  string labelColor = 16;
+
+  string legendColor = 17;
+  string legendType = 18;
+  string geometryType = 19;
+
+  string legalDoc = 20;
+  string planningName = 21;
+
+  double areaSqm = 22;
+  double areaHa = 23;
+  double perimeterM = 24;
+
+  double centerLat = 25;
+  double centerLon = 26;
+
+  RegionBounds bounds = 27;
+  string geoJson = 28;
+
+  string province = 29;
+  string provinceCode = 30;
+  string wardCode = 31;
 }
 
 message Parcel {

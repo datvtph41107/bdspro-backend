@@ -25,6 +25,96 @@ func NewParcelPostgres(db *gorm.DB) repo.IParcelRepo {
 	return &ParcelPostgres{DB: db}
 }
 
+func (p *ParcelPostgres) FindRegionByLocation(
+	ctx context.Context,
+	lat, lng float64,
+) (*dto.RegionInfoResponse, error) {
+	var result dto.RegionInfoResponse
+
+	query := `
+		SELECT
+			r.id AS region_id,
+			r.layer_id,
+			COALESCE(r.label_id, 0) AS label_id,
+			COALESCE(r.land_use_id, 0) AS land_use_id,
+			COALESCE(r.legend_id, 0) AS legend_id,
+
+			COALESCE(r.name, '') AS name,
+			COALESCE(r.display_name, '') AS display_name,
+			COALESCE(r.description, '') AS description,
+
+			COALESCE(l.name, '') AS layer_name,
+			COALESCE(l.display_name, '') AS layer_display_name,
+
+			COALESCE(lu.code, '') AS land_use_code,
+			COALESCE(lu.name, '') AS land_use_name,
+			COALESCE(lu.color, '') AS land_use_color,
+			COALESCE(lu.can_build, false) AS can_build,
+
+			COALESCE(lb.name, '') AS label_name,
+			COALESCE(lb.color, '') AS label_color,
+
+			COALESCE(leg.color, '') AS legend_color,
+			COALESCE(leg.legend_type, '') AS legend_type,
+			COALESCE(leg.geometry_type, '') AS geometry_type,
+
+			COALESCE(r.legal_doc, '') AS legal_doc,
+			COALESCE(r.planning_name, '') AS planning_name,
+
+			COALESCE(r.area_sqm, 0) AS area_sqm,
+			COALESCE(r.area_ha, 0) AS area_ha,
+			COALESCE(r.perimeter_m, 0) AS perimeter_m,
+
+			COALESCE(ST_Y(ST_PointOnSurface(r.geometry)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(r.geometry)), 0) AS center_lon,
+
+			COALESCE(ST_XMin(Box2D(r.geometry)), 0) AS min_lon,
+			COALESCE(ST_YMin(Box2D(r.geometry)), 0) AS min_lat,
+			COALESCE(ST_XMax(Box2D(r.geometry)), 0) AS max_lon,
+			COALESCE(ST_YMax(Box2D(r.geometry)), 0) AS max_lat,
+
+			ST_AsGeoJSON(r.geometry) AS geo_json,
+
+			'' AS province,
+			'' AS province_code,
+			'' AS ward_code
+		FROM qh_regions r
+		JOIN qh_layers l
+			ON l.id = r.layer_id
+		   AND l.deleted_at IS NULL
+		   AND l.status = 10
+		LEFT JOIN qh_labels lb
+			ON lb.id = r.label_id
+		   AND lb.deleted_at IS NULL
+		LEFT JOIN qh_land_use lu
+			ON lu.id = r.land_use_id
+		LEFT JOIN qh_legends leg
+			ON leg.id = r.legend_id
+		WHERE r.deleted_at IS NULL
+		  AND r.status = 10
+		  AND r.is_latest = true
+		  AND r.geometry && ST_SetSRID(ST_Point(?, ?), 4326)
+		  AND ST_Intersects(r.geometry, ST_SetSRID(ST_Point(?, ?), 4326))
+		ORDER BY
+		  COALESCE(l.display_order, 0) DESC,
+		  COALESCE(lu.priority, 50) ASC,
+		  COALESCE(r.area_sqm, 0) ASC,
+		  r.id DESC
+		LIMIT 1
+	`
+
+	err := p.DB.WithContext(ctx).Raw(query, lng, lat, lng, lat).Scan(&result).Error
+	if err != nil {
+		return nil, fmt.Errorf("find region by location failed: %w", err)
+	}
+
+	if result.RegionID == 0 {
+		return nil, nil
+	}
+
+	return &result, nil
+}
+
 // =====================================================
 // Preview & Search
 // =====================================================

@@ -9,7 +9,7 @@ go 1.24.1
 require (
 	common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.10.0
-	github.com/google/wire v0.6.0
+	github.com/google/wire v0.7.0
 	github.com/spf13/viper v1.20.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0

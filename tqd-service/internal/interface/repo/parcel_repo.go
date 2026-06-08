@@ -19,6 +19,7 @@ type IParcelRepo interface {
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	FindIntersectPolygon(ctx context.Context, points []Point, limit, offset int) ([]qh_domain.Parcel, int64, error)
 	FindWithinPolygon(ctx context.Context, points []Point, limit, offset int) ([]qh_domain.Parcel, int64, error)
+	FindRegionByLocation(ctx context.Context, lat, lng float64) (*dto.RegionInfoResponse, error)
 
 	// Detail API
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)

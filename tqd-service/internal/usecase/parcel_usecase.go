@@ -13,6 +13,7 @@ import (
 	"tqd/internal/config"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
 	"tqd/internal/modules/resolver/layer_resolver/rule"
@@ -28,6 +29,7 @@ type ParcelUsecase interface {
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error)
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
+	ResolveMapTargetByLocation(ctx context.Context, req dto.ResolveMapTargetRequestDTO) (*dto.ResolveMapTargetResponseDTO, error)
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
 
 	// Parcel metadata (Free)
@@ -191,6 +193,54 @@ func (u *parcelUsecase) FindByLocation(ctx context.Context, lat, lng float64) (*
 		return nil, fmt.Errorf("parcel not found")
 	}
 	return parcel, nil
+}
+
+func (u *parcelUsecase) ResolveMapTargetByLocation(
+	ctx context.Context,
+	req dto.ResolveMapTargetRequestDTO,
+) (*dto.ResolveMapTargetResponseDTO, error) {
+	if req.Latitude < -90 || req.Latitude > 90 {
+		return nil, fmt.Errorf("latitude must be between -90 and 90")
+	}
+	if req.Longitude < -180 || req.Longitude > 180 {
+		return nil, fmt.Errorf("longitude must be between -180 and 180")
+	}
+
+	parcel, err := u.parcelRepo.FindByLocation(ctx, req.Latitude, req.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("find parcel by location failed: %w", err)
+	}
+
+	if parcel != nil && parcel.ID > 0 {
+		info, err := u.parcelRepo.GetParcelInfo(ctx, parcel.ID)
+		if err != nil {
+			return nil, fmt.Errorf("get parcel info failed: %w", err)
+		}
+		if info == nil || info.ParcelID == 0 {
+			return nil, fmt.Errorf("parcel info not found")
+		}
+
+		return &dto.ResolveMapTargetResponseDTO{
+			TargetType: enums.WorkspaceEntityTypeParcel.Uint32(),
+			TargetID:   info.ParcelID,
+			Parcel:     info,
+		}, nil
+	}
+
+	region, err := u.parcelRepo.FindRegionByLocation(ctx, req.Latitude, req.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("find region by location failed: %w", err)
+	}
+
+	if region != nil && region.RegionID > 0 {
+		return &dto.ResolveMapTargetResponseDTO{
+			TargetType: enums.WorkspaceEntityTypeRegion.Uint32(),
+			TargetID:   region.RegionID,
+			Region:     region,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("map target not found")
 }
 
 func (u *parcelUsecase) FindParcelsByPolygon(
