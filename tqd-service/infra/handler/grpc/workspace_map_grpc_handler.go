@@ -207,7 +207,8 @@ func reportDTOToProto(item dto.GeneratedReportPreviewDTO) *tqdpb.GeneratedReport
 		Status:     item.Status,
 		Title:      item.Title,
 		Subtitle:   item.Subtitle,
-		Location:   protoLocation(item.Location),
+
+		Location: protoLocation(item.Location),
 		Spatial: &tqdpb.ReportSpatialPreview{
 			Bounds:   protoBounds(item.Spatial.Bounds),
 			Centroid: protoPoint(item.Spatial.Centroid),
@@ -239,6 +240,11 @@ func reportDTOToProto(item dto.GeneratedReportPreviewDTO) *tqdpb.GeneratedReport
 			Regenerate:    item.Actions.Regenerate,
 			Remove:        item.Actions.Remove,
 		},
+
+		EntityType: item.EntityType,
+		EntityId:   item.EntityID,
+		ParcelId:   item.ParcelID,
+		RegionId:   item.RegionID,
 	}
 }
 

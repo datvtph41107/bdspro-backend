@@ -192,32 +192,64 @@ func (p *MapWorkspacePostgres) ListFollowedParcels(ctx context.Context, userID u
 	return rows, total, nil
 }
 
-func (p *MapWorkspacePostgres) UpsertFollowedParcel(ctx context.Context, userID, parcelID uint64, note string) (*qh_domain.QHUserFollowedParcel, error) {
+func (p *MapWorkspacePostgres) UpsertFollowedParcel(
+	ctx context.Context,
+	userID uint64,
+	parcelID uint64,
+	note string,
+) (*qh_domain.QHUserFollowedParcel, error) {
 	var row qh_domain.QHUserFollowedParcel
-
 	err := p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		err := tx.Unscoped().
-			Where("user_id = ? AND parcel_id = ?", userID, parcelID).
-			Order("id DESC").
+		now := time.Now()
+
+		err := tx.
+			Where("user_id = ? AND parcel_id = ? AND deleted_at IS NULL", userID, parcelID).
 			First(&row).Error
+
+		if err == nil && row.ID > 0 {
+			if err := tx.
+				Model(&qh_domain.QHUserFollowedParcel{}).
+				Where("id = ?", row.ID).
+				Updates(map[string]any{
+					"note":       note,
+					"updated_at": now,
+				}).Error; err != nil {
+				return err
+			}
+
+			return tx.
+				Where("id = ? AND deleted_at IS NULL", row.ID).
+				First(&row).Error
+		}
 
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
 
-		if row.ID > 0 {
+		err = tx.Unscoped().
+			Where("user_id = ? AND parcel_id = ? AND deleted_at IS NOT NULL", userID, parcelID).
+			Order("id DESC").
+			First(&row).Error
+
+		if err == nil && row.ID > 0 {
 			if err := tx.Unscoped().
 				Model(&qh_domain.QHUserFollowedParcel{}).
 				Where("id = ?", row.ID).
 				Updates(map[string]any{
 					"note":       note,
 					"deleted_at": nil,
-					"updated_at": time.Now(),
+					"updated_at": now,
 				}).Error; err != nil {
 				return err
 			}
 
-			return tx.Where("id = ? AND deleted_at IS NULL", row.ID).First(&row).Error
+			return tx.
+				Where("id = ? AND deleted_at IS NULL", row.ID).
+				First(&row).Error
+		}
+
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
 
 		row = qh_domain.QHUserFollowedParcel{

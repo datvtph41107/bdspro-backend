@@ -63,16 +63,16 @@ service MapWorkspaceService {
     };
   }
 
-  rpc ListGeneratedReports(WorkspacePageRequest) returns (ListGeneratedReportsResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/map-workspace/reports"
-    };
-  }
-
   rpc CreateGeneratedReport(CreateGeneratedReportRequest) returns (CreateGeneratedReportResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/map-workspace/reports"
       body: "*"
+    };
+  }
+
+  rpc ListGeneratedReports(WorkspacePageRequest) returns (ListGeneratedReportsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-workspace/reports"
     };
   }
 

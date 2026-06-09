@@ -10,9 +10,9 @@ import (
 type QHUserFollowedParcel struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
 
-	UserID uint64 `gorm:"column:user_id;not null;index:idx_user_followed_parcels_user_id;uniqueIndex:uidx_user_followed_parcel,priority:1,where:deleted_at IS NULL" json:"userId"`
+	UserID uint64 `gorm:"column:user_id;not null;index:idx_user_followed_parcels_user_id;uniqueIndex:uidx_user_followed_parcels_active_user_parcel,priority:1,where:deleted_at IS NULL" json:"userId"`
 
-	ParcelID uint64 `gorm:"column:parcel_id;not null;index:idx_user_followed_parcels_parcel_id;uniqueIndex:uidx_user_followed_parcel,priority:2" json:"parcelId"`
+	ParcelID uint64 `gorm:"column:parcel_id;not null;index:idx_user_followed_parcels_parcel_id;uniqueIndex:uidx_user_followed_parcels_active_user_parcel,priority:2,where:deleted_at IS NULL" json:"parcelId"`
 
 	Note string `gorm:"column:note;type:text;default:''" json:"note"`
 

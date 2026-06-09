@@ -329,4 +329,8 @@ type GeneratedReportPreviewDTO struct {
 	Meta       ReportMetaDTO
 	Comparison ReportComparisonDTO
 	Actions    ReportActionsDTO
+	EntityType uint32
+	EntityID   uint64
+	ParcelID   uint64
+	RegionID   uint64
 }

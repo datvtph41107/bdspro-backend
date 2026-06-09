@@ -375,6 +375,23 @@ func buildGeneratedReportPreview(r qh_domain.QHUserReported) dto.GeneratedReport
 	status := enums.GeneratedReportStatus(r.Status)
 	canDownload := status.CanDownload()
 
+	entityType := enums.WorkspaceEntityTypeReport.Uint32()
+	entityID := r.ID
+
+	var parcelID uint64
+	if r.ParcelID != nil {
+		parcelID = *r.ParcelID
+		entityType = enums.WorkspaceEntityTypeParcel.Uint32()
+		entityID = parcelID
+	}
+
+	var regionID uint64
+	if r.RegionID != nil {
+		regionID = *r.RegionID
+		entityType = enums.WorkspaceEntityTypeRegion.Uint32()
+		entityID = regionID
+	}
+
 	return dto.GeneratedReportPreviewDTO{
 		ID:       fmt.Sprintf("report_%d", r.ID),
 		Type:     enums.WorkspaceEntityTypeReport.Uint32(),
@@ -386,6 +403,11 @@ func buildGeneratedReportPreview(r qh_domain.QHUserReported) dto.GeneratedReport
 
 		Title:    r.Title,
 		Subtitle: r.Subtitle,
+
+		EntityType: entityType,
+		EntityID:   entityID,
+		ParcelID:   parcelID,
+		RegionID:   regionID,
 
 		Location: dto.WorkspaceLocationDTO{
 			Address:      r.Address,
