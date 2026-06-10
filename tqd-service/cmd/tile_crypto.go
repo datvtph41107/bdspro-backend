@@ -18,7 +18,6 @@ import (
 const (
 	tileEncryptedHeader    = "X-Content-Encrypted"
 	tileEncryptedHeaderVal = "aes-256-ctr"
-	tileSessionIDHeader    = "X-Session-Id"
 	tileSessionIDQuery     = "sId"
 )
 
@@ -46,9 +45,9 @@ func sIdFromRequest(r *http.Request) string {
 	if r == nil {
 		return ""
 	}
-	if v := strings.TrimSpace(r.Header.Get(tileSessionIDHeader)); v != "" {
-		return v
-	}
+	// if v := strings.TrimSpace(r.Header.Get(tileSessionIDHeader)); v != "" {
+	// 	return v
+	// }
 	return strings.TrimSpace(r.URL.Query().Get(tileSessionIDQuery))
 }
 

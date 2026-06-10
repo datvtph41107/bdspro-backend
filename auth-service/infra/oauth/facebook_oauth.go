@@ -15,6 +15,7 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type FacebookAuthService struct {
@@ -166,16 +167,24 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 		return nil, errors.New("không lấy được id từ Facebook")
 	}
 
+	fullName := s.extractString(userInfo, "name")
+	email := s.extractString(userInfo, "email")
+	avatar := s.extractAvatar(userInfo)
+
 	// Check if user already exists
-	existingUser, _ := s.AuthMethodRepo.FindByOAuthID(c, username, "FACEBOOK")
+	existingUser, err := s.AuthMethodRepo.FindByOAuthID(c, username, "FACEBOOK")
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("lỗi khi tìm kiếm user: %v", err)
+	}
+
 	if existingUser == nil {
 		// User doesn't exist, create new one
 		oauthUser := &auth_model.AuthMethod{
 			Provider: "FACEBOOK",
 			AuthName: username,
-			FullName: s.extractString(userInfo, "name"),
-			Email:    s.extractString(userInfo, "email"),
-			Avatar:   s.extractAvatar(userInfo),
+			FullName: fullName,
+			Email:    email,
+			Avatar:   avatar,
 		}
 
 		createdUser, err := s.AuthMethodRepo.Create(c, oauthUser)
@@ -190,6 +199,25 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 		}
 
 		existingUser = createdUser
+	} else {
+		// Cập nhật thông tin nếu có thay đổi
+		updated := false
+		if existingUser.FullName != fullName && fullName != "" {
+			existingUser.FullName = fullName
+			updated = true
+		}
+		if existingUser.Avatar != avatar && avatar != "" {
+			existingUser.Avatar = avatar
+			updated = true
+		}
+		if existingUser.Email != email && email != "" {
+			existingUser.Email = email
+			updated = true
+		}
+
+		if updated {
+			_, _ = s.AuthMethodRepo.Update(c, existingUser)
+		}
 	}
 
 	if existingUser.UserID == 0 {
@@ -202,7 +230,10 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	}
 
 	// Create session and save to database
-	session, _ := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+	session, err := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi tạo session: %v", err)
+	}
 
 	// Generate refresh token
 	refreshToken := s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)

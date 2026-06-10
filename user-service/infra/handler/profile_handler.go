@@ -43,6 +43,7 @@ type GrpcProfileService struct {
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	SyncProvider          *_provider.SyncProvider
 	Redis                 *_redis.RedisService
+	sessionKey            uint64
 }
 
 // @bind: internal/usecases.IKYCUsecase
@@ -78,6 +79,7 @@ func NewGrpcProfileService(
 		UserDashboardStatsJob: userDashboardStatsJob,
 		SyncProvider:          SyncProvider,
 		Redis:                 redis,
+		sessionKey:            0,
 	}
 }
 

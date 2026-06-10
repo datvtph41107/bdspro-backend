@@ -18,19 +18,19 @@ redis:
 
 oauth:
   google:
-    client_id: 83012182189-nk4k3aqn3ccmr5hikv8djgb5vpkeragk.apps.googleusercontent.com
-    client_secret: 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
-    redirect_uri: http://14.225.210.29:8000/user/oauth/google/callback
+    client_id: 768102211675-0d4sd4dpormuo2n2gn1vgvs3h8ag5kr9.apps.googleusercontent.com
+    client_secret: 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
+    redirect_uri: http://localhost:3000/oauth-callback
   
   facebook:
     client_id: 2029655954220379
     client_secret: a00ffdf676394cb22b4af98bfe1dac3b
-    redirect_uri: http://14.225.210.29:8000/user/oauth/facebook/callback
+    redirect_uri: http://localhost:3000/oauth-callback
   
   zalo:
     app_id: 2829833978864922978
     secret_key: sSOl1rT294QeKLkHIGMQ
-    redirect_uri: http://14.225.210.29:8000/user/oauth/zalo/callback
+    redirect_uri: http://localhost:3000/oauth-callback
     permission_url: https://oauth.zaloapp.com/v4/permission?
 
 key:

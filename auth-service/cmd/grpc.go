@@ -10,7 +10,6 @@ import (
 
 	"auth/config"
 	"auth/env"
-	"auth/infra/db"
 	"auth/wire"
 
 	"github.com/spf13/cobra"
@@ -41,7 +40,7 @@ func startGRPCServer() {
 
 	app, _ := wire.InitializeApp()
 
-	db.AutoMigrate()
+	// db.AutoMigrate()
 
 	authpb.RegisterAuthServiceServer(s, app.AuthHandler)
 	authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)

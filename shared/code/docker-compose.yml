@@ -236,7 +236,9 @@ services:
       - internal
 
   tqd:
-    build: ./tqd-service
+    build: 
+      context: ./tqd-service
+      dockerfile: Dockerfile.tqd.develop
     container_name: tqd
     command: ["./main", "--server=grpc"]
     volumes:
@@ -306,7 +308,9 @@ services:
     restart: unless-stopped
   
   pmtiles:
-    build: ./tqd-service
+    build:
+      context: ./tqd-service
+      dockerfile: Dockerfile.pmtiles
     container_name: pmtiles
     command: ["./main", "--server=pmtiles", "--port=8032"]
     ports:
@@ -315,17 +319,32 @@ services:
       - ${PWD}/files:/files
     networks:
       - internal
-  qhpro_web:
+  
+  qhpro_app:
     image: nginx:alpine
-    container_name: qhpro_web
+    container_name: qhpro_app
     ports:
-      - "3108:80"
+      - "3109:80"
     environment:
       - NODE_ENV=develop
     volumes:
       - ${PWD}/build:/usr/share/nginx/html:ro
       - ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
+
+  qhpro_web:
+    image: node:20-alpine
+    container_name: qhpro_web
+    working_dir: /app
+    command: node ./standalone/server.js
+    ports:
+      - "3108:3000"
+    volumes:
+      - ${PWD}:/app
+      - ${PWD}/public:/app/standalone/public
+    networks:
+      - internal
+
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -333,17 +352,19 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${PWD}/conf:/etc/nginx/conf.d
-      - ${PWD}/certs:/etc/letsencrypt
-      - ${PWD}/www:/var/www/certbot
+      - ${PWD}/nginx/conf:/etc/nginx/conf.d
+      - ${PWD}/nginx/certs:/etc/letsencrypt
+      - ${PWD}/nginx/www:/var/www/certbot
     restart: always
+    networks:
+      - internal
   
   certbot:
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - ${PWD}/certs:/etc/letsencrypt
-      - ${PWD}/www:/var/www/certbot
+      - ${PWD}/nginx/certs:/etc/letsencrypt
+      - ${PWD}/nginx/www:/var/www/certbot
 
 networks:
   internal:

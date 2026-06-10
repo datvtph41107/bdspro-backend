@@ -6,15 +6,17 @@ import (
 	"auth/internal/dto"
 	"auth/internal/interface/repo"
 	"auth/internal/usecase"
-	_db "common/db"
 	_errors "common/errors"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type ZaloAuthService struct {
@@ -87,46 +89,12 @@ func (s *ZaloAuthService) GetUrlLogin() string {
 // }
 
 func (s *ZaloAuthService) HandleCallback(c *gin.Context, code string, state string) (*dto.AuthLoginResponse, error) {
-	// params := url.Values{}
-	// params.Set("app_id", property.AppProperties.Zalo.App.ID)
-	// params.Set("code", code)
-	// params.Set("grant_type", "authorization_code")
+	accessToken, err := s.getAccessToken(code)
+	if err != nil {
+		return nil, err
+	}
 
-	// req, err := http.NewRequest("POST", "https://oauth.zaloapp.com/v4/access_token", bytes.NewBufferString(params.Encode()))
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	// req.Header.Set("secret_key", property.AppProperties.Zalo.SecretKey)
-
-	// resp, err := s.HttpClient.Do(req)
-	// if err != nil {
-	// 	return nil, &_routes.Except{
-	// 		Code:    401,
-	// 		Message: "Không lấy được access_token từ Zalo",
-	// 	}
-	// }
-	// defer resp.Body.Close()
-
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// var result map[string]interface{}
-	// if err := json.Unmarshal(body, &result); err != nil {
-	// 	return nil, err
-	// }
-
-	// accessToken, ok := result["access_token"].(string)
-	// if !ok {
-	// 	return nil, &_routes.Except{
-	// 		Code:    401,
-	// 		Message: "Token hết hạn",
-	// 	}
-	// }
-
-	userInfo, err := s.fetchUserInfo(code)
+	userInfo, err := s.fetchUserInfo(accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -135,12 +103,54 @@ func (s *ZaloAuthService) HandleCallback(c *gin.Context, code string, state stri
 }
 
 func (s *ZaloAuthService) HandleCallbackWithDeviceInfo(c context.Context, code string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
-	userInfo, err := s.fetchUserInfo(code)
+	accessToken, err := s.getAccessToken(code)
+	if err != nil {
+		return nil, err
+	}
+
+	userInfo, err := s.fetchUserInfo(accessToken)
 	if err != nil {
 		return nil, err
 	}
 
 	return s.RegisterOrLogin(c, userInfo, otpReq)
+}
+
+func (s *ZaloAuthService) getAccessToken(code string) (string, error) {
+	data := url.Values{}
+	data.Set("app_id", config.Properties.OAuth.Zalo.AppID)
+	data.Set("code", code)
+	data.Set("grant_type", "authorization_code")
+
+	req, err := http.NewRequest("POST", "https://oauth.zaloapp.com/v4/access_token", nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("secret_key", config.Properties.OAuth.Zalo.SecretKey)
+
+	// Add data to body
+	req.URL.RawQuery = data.Encode()
+
+	resp, err := s.HttpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("không lấy được access_token từ Zalo: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	accessToken, ok := result["access_token"].(string)
+	if !ok {
+		if errorMsg, ok := result["error_description"].(string); ok {
+			return "", fmt.Errorf("Zalo OAuth error: %s", errorMsg)
+		}
+		return "", errors.New("không lấy được access_token từ Zalo")
+	}
+	return accessToken, nil
 }
 
 func (s *ZaloAuthService) fetchUserInfo(accessToken string) (map[string]interface{}, error) {
@@ -176,18 +186,59 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 			"Không lấy được id từ Zalo",
 		)
 	}
-	existingUser, _ := s.AuthMethodRepo.FindByOAuthID(c, username, "ZALO")
+
+	fullName := ""
+	if name, ok := userInfo["name"].(string); ok {
+		fullName = name
+	}
+
+	avatar := extractAvatar(userInfo)
+	isSensitive := false
+	if isS, ok := userInfo["is_sensitive"].(bool); ok {
+		isSensitive = isS
+	}
+
+	existingUser, err := s.AuthMethodRepo.FindByOAuthID(c, username, "ZALO")
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("lỗi khi tìm kiếm user: %v", err)
+	}
+
 	if existingUser == nil {
 		e := &domain.AuthMethod{
 			Provider:    "ZALO",
 			AuthName:    username,
-			FullName:    userInfo["name"].(string),
-			Avatar:      extractAvatar(userInfo),
-			IsSensitive: userInfo["is_sensitive"].(bool),
+			FullName:    fullName,
+			Avatar:      avatar,
+			IsSensitive: isSensitive,
 		}
-		_db.SaveWithContext(c, e)
-		s.AuthService.NewUser(c, e.ID)
-		existingUser = e
+		createdUser, err := s.AuthMethodRepo.Create(c, e)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo user mới: %v", err)
+		}
+		_, err = s.AuthService.NewUser(c, createdUser.ID)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo profile mới: %v", err)
+		}
+		existingUser = createdUser
+	} else {
+		// Cập nhật thông tin nếu có thay đổi
+		updated := false
+		if existingUser.FullName != fullName && fullName != "" {
+			existingUser.FullName = fullName
+			updated = true
+		}
+		if existingUser.Avatar != avatar && avatar != "" {
+			existingUser.Avatar = avatar
+			updated = true
+		}
+		if existingUser.IsSensitive != isSensitive {
+			existingUser.IsSensitive = isSensitive
+			updated = true
+		}
+
+		if updated {
+			_, _ = s.AuthMethodRepo.Update(c, existingUser)
+		}
 	}
 
 	if existingUser.UserID == 0 {
@@ -199,9 +250,11 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 		otpReq = &dto.OtpVerifyRequest{}
 	}
 
-	session, _ := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+	session, err := s.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi tạo session: %v", err)
+	}
 
-	// s.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	profile, err := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	if err != nil || profile == nil {
 		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")

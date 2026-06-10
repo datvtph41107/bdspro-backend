@@ -27,15 +27,15 @@ redis:
 
 config-app:
   qhpro:
-    domain_api: "http://14.225.210.29:8000"
-    domain_file: "http://14.225.210.29:8002"
-    domain_pmtile: "http://14.225.210.29:8032"
+    domain_api: "https://api-test.qhpro.vn"
+    domain_file: "https://data-test.qhpro.vn"
+    domain_pmtile: "https://data-map-test.qhpro.vn"
     domain_style: "http://14.225.210.29:8000"
 
 # Layer configuration
 layer:
     # Base URL configuration
-    base_url: "ciproto://14.225.210.29:8032"
+    base_url: "ciproto://data-map-test.qhpro.vn"
 
     # Default style templates
     default_styles:

@@ -28,10 +28,16 @@ func (s *GrpcProfileService) genTileSession(ctx context.Context) (sessionK uint6
 		return 0, "", 0, fmt.Errorf("redis not configured")
 	}
 
+	sessionEncryptKey, err = s.Redis.GetTileSessionEncryptKey(s.sessionKey)
+	if err == nil && sessionEncryptKey != "" && s.sessionKey != 0 {
+		return s.sessionKey, sessionEncryptKey, int64(_redis.TileSessionTTL.Seconds()), nil
+	}
+
 	sessionK, err = randomSessionK()
 	if err != nil {
 		return 0, "", 0, err
 	}
+	s.sessionKey = sessionK
 
 	aesKey := make([]byte, 32)
 	if _, err = rand.Read(aesKey); err != nil {

@@ -167,7 +167,7 @@
             }
         },
         {
-            "label": "🔌 Auth HTTP (8216)",
+            "label": "🔌 Auth HTTP (8002)",
             "type": "shell",
             "command": "cd shared/code && make run-dev auth grpc",
             "args": [],

@@ -209,6 +209,7 @@ var HttpCmd = &cobra.Command{
 				"https://app.bdspro.com",
 				"https://map.qhpro.vn",
 				"https://qhpro.vn",
+				"https://test.qhpro.vn",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},

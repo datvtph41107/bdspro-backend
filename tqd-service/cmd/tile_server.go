@@ -16,6 +16,7 @@ import (
 	"tqd/config"
 
 	"github.com/protomaps/go-pmtiles/pmtiles"
+	"github.com/rs/cors"
 )
 
 func RunTileServer(port int) error {
@@ -49,22 +50,26 @@ func RunTileServer(port int) error {
 	logger.Printf("PMTiles server đã khởi động")
 	logger.Printf("Thư mục tiles : %s", *tilesDir)
 	logger.Printf("Public URL    : %s", *publicURL)
-	logger.Printf("Tile ci_*     : header %s / query %s → Redis ss:k:{sessionK}", tileSessionIDHeader, tileSessionIDQuery)
+	logger.Printf("Tile ci_*     : query %s → Redis ss:k:{sessionK}", tileSessionIDQuery)
 
 	// ── HTTP handler ───────────────────────────────────────────
-	corsHeaders := fmt.Sprintf("Content-Type, Range, %s", tileSessionIDHeader)
-	corsMiddleware := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", corsHeaders)
-			w.Header().Set("Access-Control-Expose-Headers", tileEncryptedHeader)
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
+	corsOptions := cors.Options{
+		AllowedOrigins: []string{"*"}, // Cho phép tất cả để test, có thể giới hạn lại sau
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Authorization",
+			"Lang",
+			"Range",
+		},
+		ExposedHeaders: []string{
+			"Content-Length",
+			"Content-Range",
+			tileEncryptedHeader,
+		},
+		AllowCredentials: true,
+		MaxAge:           86400, // 24h
 	}
 
 	mux := http.NewServeMux()
@@ -115,6 +120,8 @@ func RunTileServer(port int) error {
 			for k, v := range headers {
 				w.Header().Set(k, v)
 			}
+			// setCORS(w)
+			w.Header().Set("Cache-Control", "public, max-age=86400, s-maxage=86400")
 			w.WriteHeader(statusCode)
 			_, _ = w.Write(body)
 			logTileRequest(logger, start, r, statusCode, len(body))
@@ -122,12 +129,14 @@ func RunTileServer(port int) error {
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=86400, s-maxage=86400")
 		fmt.Fprintf(w, indexHTML, *publicURL, *publicURL, *publicURL)
 	})
 
+	handler := cors.New(corsOptions).Handler(mux)
 	httpServer := &http.Server{
 		Addr:         ":" + strconv.Itoa(port),
-		Handler:      corsMiddleware(mux),
+		Handler:      handler,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -188,11 +197,10 @@ GET /{tileset}/{z}/{x}/{y}.mvt  → Vector tile
 GET /{tileset}/{z}/{x}/{y}.png  → Raster tile
 GET /health                  → Health check
 
-Tileset ci_*: header X-Session-Id hoặc query sId (= sessionK từ POST /v2/user/profile/session)
+Tileset ci_*: query sId (= sessionK từ POST /v2/user/profile/session)
   </pre>
   <h2>Ví dụ</h2>
   <pre>
-curl -H "X-Session-Id: 8472910384729103847" %s/ci_layer711.json
 curl "%s/ci_layer711.json?sId=8472910384729103847"
   </pre>
 </body>
