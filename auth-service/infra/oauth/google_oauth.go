@@ -12,10 +12,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type OAuthGoogle struct {
@@ -44,11 +46,11 @@ func (g *OAuthGoogle) GetUrlLogin() string {
 		"&response_type=code&scope=openid%20email%20profile&state=xyz"
 }
 
-func (g *OAuthGoogle) HandleCallback(c *gin.Context, accessToken string, state string) (*dto.AuthLoginResponse, error) {
-	// accessToken, err := g.getAccessToken(code)
-	// if err != nil {
-	// 	return nil, err
-	// }
+func (g *OAuthGoogle) HandleCallback(c *gin.Context, code string, state string) (*dto.AuthLoginResponse, error) {
+	accessToken, err := g.getAccessToken(code)
+	if err != nil {
+		return nil, err
+	}
 
 	userInfo, err := g.getUserInfo(accessToken)
 	if err != nil {
@@ -58,7 +60,12 @@ func (g *OAuthGoogle) HandleCallback(c *gin.Context, accessToken string, state s
 	return g.RegisterOrLogin(c, userInfo, &dto.OtpVerifyRequest{})
 }
 
-func (g *OAuthGoogle) HandleCallbackWithDeviceInfo(c context.Context, accessToken string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+func (g *OAuthGoogle) HandleCallbackWithDeviceInfo(c context.Context, code string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
+	accessToken, err := g.getAccessToken(code)
+	if err != nil {
+		return nil, err
+	}
+
 	userInfo, err := g.getUserInfo(accessToken)
 	if err != nil {
 		return nil, err
@@ -115,27 +122,65 @@ func (g *OAuthGoogle) getUserInfo(accessToken string) (map[string]interface{}, e
 func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]interface{}, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
 	oauthId, ok := userInfo["sub"].(string)
 	if !ok {
-		return nil, errors.New("failed to get user ID")
+		return nil, errors.New("failed to get user ID from Google")
 	}
-	existingUser, _ := g.AuthMethodRepo.FindByOAuthID(c, oauthId, "GOOGLE")
-	// if err != nil {
-	// 	return nil, err
-	// }
+
+	fullName := ""
+	if name, ok := userInfo["name"].(string); ok {
+		fullName = name
+	}
+
+	avatar := ""
+	if picture, ok := userInfo["picture"].(string); ok {
+		avatar = picture
+	}
+
+	email := ""
+	if e, ok := userInfo["email"].(string); ok {
+		email = e
+	}
+
+	existingUser, err := g.AuthMethodRepo.FindByOAuthID(c, oauthId, "GOOGLE")
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("lỗi khi tìm kiếm user: %v", err)
+	}
 
 	if existingUser == nil {
 		oauthUser := &domain.AuthMethod{
 			Provider: "GOOGLE",
 			AuthName: oauthId,
-			FullName: userInfo["name"].(string),
-			Avatar:   userInfo["picture"].(string),
-			Email:    userInfo["email"].(string),
+			FullName: fullName,
+			Avatar:   avatar,
+			Email:    email,
 		}
 		createdUser, err := g.AuthMethodRepo.Create(c, oauthUser)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("lỗi khi tạo user mới: %v", err)
 		}
-		g.AuthService.NewUser(c, createdUser.ID)
+		_, err = g.AuthService.NewUser(c, createdUser.ID)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo profile mới: %v", err)
+		}
 		existingUser = createdUser
+	} else {
+		// Cập nhật thông tin nếu có thay đổi
+		updated := false
+		if existingUser.FullName != fullName && fullName != "" {
+			existingUser.FullName = fullName
+			updated = true
+		}
+		if existingUser.Avatar != avatar && avatar != "" {
+			existingUser.Avatar = avatar
+			updated = true
+		}
+		if existingUser.Email != email && email != "" {
+			existingUser.Email = email
+			updated = true
+		}
+
+		if updated {
+			_, _ = g.AuthMethodRepo.Update(c, existingUser)
+		}
 	}
 
 	if existingUser.UserID == 0 {
@@ -146,10 +191,11 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		otpReq = &dto.OtpVerifyRequest{}
 	}
 
-	session, _ := g.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+	session, err := g.AuthService.CreateAndSaveSession(c, existingUser, otpReq)
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi tạo session: %v", err)
+	}
 
-	// g.AuthService.CookieService.SetRefreshToken(c.Writer, refreshToken)
-	// planID := g.AuthService.GetPlanID(existingUser.UserID)
 	profile, err := g.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	if err != nil || profile == nil {
 		return nil, _errors.ReturnError(int32(enums.NOT_FOUND_ACCOUNT), "không tìm thấy thông tin người dùng")

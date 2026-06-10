@@ -285,6 +285,7 @@ scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 scp config/production.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/production.yml
 if [ "$1" = "tqd" ]; then
   scp ../shared/code/Dockerfile.tqd.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+  scp -r template ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 else
   scp ../shared/code/Dockerfile.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 fi

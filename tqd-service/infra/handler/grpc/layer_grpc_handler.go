@@ -264,6 +264,23 @@ func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLay
 	return &sharepb.Empty{}, nil
 }
 
+func (h *LayerGrpcHandler) HardDeleteLayer(ctx context.Context, req *tqdpb.DeleteLayerRequest) (*sharepb.Empty, error) {
+	userID := _utils.GetOriginIdFromContext(ctx)
+	if userID == 0 {
+		return nil, _errors.ReturnError(401, "unauthorized")
+	}
+
+	if err := h.layerUsecase.HardDelete(ctx, req.Id, userID); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	t := time.Now()
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+
+	return &sharepb.Empty{}, nil
+}
+
 func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequest) (*tqdpb.LayerResponse, error) {
 	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)

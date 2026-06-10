@@ -5,7 +5,7 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
@@ -48,6 +48,36 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	val := reflect.ValueOf(msg)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
+	}
+
+	// Kiểm tra field Code
+	codeField := val.FieldByName("Code")
+	if codeField.IsValid() && codeField.CanInterface() {
+		var code int64
+		switch codeField.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			code = codeField.Int()
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			code = int64(codeField.Uint())
+		}
+
+		if code == 8500 {
+			dataField := val.FieldByName("Data")
+			if dataField.IsValid() && dataField.CanInterface() {
+				return json.Marshal(dataField.Interface())
+			}
+			return json.Marshal(v)
+		}
+
+		if code == 8501 {
+			dataField := val.FieldByName("Data")
+			if dataField.IsValid() && dataField.CanInterface() {
+				if b, ok := dataField.Interface().([]byte); ok {
+					return b, nil
+				}
+			}
+			return json.Marshal(v)
+		}
 	}
 
 	// Kiểm tra field Data
@@ -154,6 +184,25 @@ func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {
 	return json.NewEncoder(w)
 }
 
-func (c *CustomMarshaler) ContentType(_ interface{}) string {
+func (c *CustomMarshaler) ContentType(v interface{}) string {
+	if msg, ok := v.(proto.Message); ok {
+		val := reflect.ValueOf(msg)
+		if val.Kind() == reflect.Ptr {
+			val = val.Elem()
+		}
+		codeField := val.FieldByName("Code")
+		if codeField.IsValid() && codeField.CanInterface() {
+			var code int64
+			switch codeField.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				code = codeField.Int()
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				code = int64(codeField.Uint())
+			}
+			if code == 8501 {
+				return "application/x-protobuf"
+			}
+		}
+	}
 	return "application/json"
 }

@@ -17,4 +17,5 @@ type QHLandUseRepository interface {
 	List(ctx context.Context, pagable *_dto.Pagable, layerID *uint64) ([]qh_domain.QHLandUse, int64, error)
 	ListVisibleByLayer(ctx context.Context, layerID uint64, offset, limit int) ([]qh_domain.QHLandUse, int64, error)
 	SoftDeleteByLayerID(ctx context.Context, layerID uint64) error
+	HardDeleteByLayerID(ctx context.Context, layerID uint64) error
 }

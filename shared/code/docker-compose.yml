@@ -241,6 +241,7 @@ services:
     command: ["./main", "--server=grpc"]
     volumes:
       - ${PWD}/files:/files
+      - ${PWD}/template:/template
     networks:
       - internal
 
@@ -290,8 +291,6 @@ services:
     container_name: redis
     restart: always
     command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
-    ports:
-      - "6379:6379"
     volumes:
       - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
     networks:

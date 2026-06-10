@@ -41,6 +41,13 @@ service LayerService {
       delete: "/v2/tqd/qh/admin/layers/{id}"
     };
   }
+
+  // HardDeleteLayer - Xóa thật layer và toàn bộ dữ liệu liên quan (regions, labels)
+  rpc HardDeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/layers/{id}/delete"
+    };
+  }
   
   // GetLayer - Lấy chi tiết layer
   rpc GetLayer(GetLayerRequest) returns (LayerResponse) {

@@ -24,8 +24,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(grpc.GrpcCmd)
 	viper.AutomaticEnv()
+	rootCmd.AddCommand(grpc.GrpcCmd)
 }
 
 func main() {

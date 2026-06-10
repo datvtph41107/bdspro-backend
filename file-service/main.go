@@ -128,6 +128,8 @@ func main() {
 			"https://admin.bdspro.com",
 			"https://bdspro.com",
 			"https://app.bdspro.com",
+			"https://qhpro.vn",
+			"https://map.qhpro.vn",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang", "X-Service-Auth"},

@@ -34,3 +34,10 @@ security:
 redis:
   host: redis:6379
   pass: protected_redis_secure_password
+
+config-app:
+  qhpro:
+    - domain_api: "https://api.qhpro.vn"
+    - domain_file: "https://data.bdspro.com"
+    - domain_pmtile: "https://data-map.qhpro.vn"
+    - domain_style: "https://map.qhpro.vn"

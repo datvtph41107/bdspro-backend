@@ -16,6 +16,7 @@ type LayerUsecase interface {
 	Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64, replaceLayerIDs []uint64) (*qh_domain.QHLayer, error)
 	Update(ctx context.Context, id uint64, layer *qh_domain.QHLayer, userID uint64) (*qh_domain.QHLayer, error)
 	Delete(ctx context.Context, id uint64, userID uint64) error
+	HardDelete(ctx context.Context, id uint64, userID uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
 	List(ctx context.Context, filter *repo.LayerFilter) ([]qh_domain.QHLayer, int64, error)
 	UpdateStatus(ctx context.Context, id uint64, status enums.LayerStatus, userID uint64) error
@@ -32,25 +33,31 @@ type LayerUsecase interface {
 type layerUsecaseImpl struct {
 	layerRepo        repo.LayerRepository
 	regionRepo       repo.RegionRepository
+	regionExtendRepo repo.RegionExtendRepository
 	labelRepo        repo.QHLabelRepository
 	legendRepo       repo.QHLayerLegendRepository
 	landUseGroupRepo repo.QHLandUseRepository
+	layerLegalRepo   repo.ILayerLegalRepo
 	buildTracker     *buildTracker
 }
 
 func NewLayerUsecase(
 	layerRepo repo.LayerRepository,
 	regionRepo repo.RegionRepository,
+	regionExtendRepo repo.RegionExtendRepository,
 	labelRepo repo.QHLabelRepository,
 	legendRepo repo.QHLayerLegendRepository,
 	landUseGroupRepo repo.QHLandUseRepository,
+	layerLegalRepo repo.ILayerLegalRepo,
 ) LayerUsecase {
 	return &layerUsecaseImpl{
 		layerRepo:        layerRepo,
 		regionRepo:       regionRepo,
+		regionExtendRepo: regionExtendRepo,
 		labelRepo:        labelRepo,
 		legendRepo:       legendRepo,
 		landUseGroupRepo: landUseGroupRepo,
+		layerLegalRepo:   layerLegalRepo,
 		buildTracker:     newBuildTracker(),
 	}
 }
@@ -211,6 +218,63 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint64, userID uint64)
 	if err := u.layerRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete layer: %w", err)
 	}
+	return nil
+}
+
+func (u *layerUsecaseImpl) HardDelete(ctx context.Context, id uint64, userID uint64) error {
+	existing, err := u.layerRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get layer failed: %w", err)
+	}
+	if existing == nil {
+		return fmt.Errorf("layer with id %d not found", id)
+	}
+
+	// Xóa thật regions
+	if err := u.regionRepo.HardDeleteAllByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete regions by layer: %w", err)
+	}
+
+	// Xóa thật import error logs
+	if err := u.regionRepo.HardDeleteImportErrorLogsByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete import error logs by layer: %w", err)
+	}
+
+	// Xóa thật region extends
+	if err := u.regionExtendRepo.HardDeleteAllByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete region extends by layer: %w", err)
+	}
+
+	// Xóa thật legends
+	if err := u.legendRepo.HardDeleteByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete legends by layer: %w", err)
+	}
+
+	// Xóa thật land use groups
+	if err := u.landUseGroupRepo.HardDeleteByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete land use groups by layer: %w", err)
+	}
+
+	// Xóa thật layer legal docs
+	if err := u.layerLegalRepo.HardDeleteByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete layer legal docs by layer: %w", err)
+	}
+
+	// Xóa thật labels (chỉ xóa những label không được dùng bởi layer khác)
+	if err := u.labelRepo.HardDeleteAllByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("hard delete labels by layer: %w", err)
+	}
+
+	// Xóa link label-layer
+	if err := u.labelRepo.DeleteLabelLayerLinksByLayerID(ctx, id); err != nil {
+		return fmt.Errorf("unlink labels from layer: %w", err)
+	}
+
+	// Xóa thật layer
+	if err := u.layerRepo.HardDelete(ctx, id); err != nil {
+		return fmt.Errorf("hard delete layer: %w", err)
+	}
+
 	return nil
 }
 

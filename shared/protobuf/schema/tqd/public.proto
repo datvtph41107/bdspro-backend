@@ -12,9 +12,9 @@ import "shared/common.proto";
 
 service TqdPublicService {
   // Config app quy hoạch
-  rpc GetQhConfigApp(google.protobuf.Empty) returns (google.protobuf.Struct) {
+  rpc GetQhConfigApp(GetQhConfigAppRequest) returns (GetQhConfigAppResponse) {
     option (google.api.http) = {
-      get: "/v2/qh/config-app"
+      get: "/v2/tqd/qh/public/json/{config}"
     };
   }
 
@@ -29,6 +29,12 @@ service TqdPublicService {
       get: "/v2/tqd/public/maps"
     };
   }
+
+  rpc GetFont(GetFontRequest) returns (sharepb.CommonResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/public/font/{fontstack}/{range}"
+    };
+  }
 }
 
 message GetPublicMapsResponse {
@@ -39,4 +45,18 @@ message MapSource {
   string source = 1;
   string type = 2;
   string name = 3;
+}
+
+message GetQhConfigAppRequest {
+  string config = 1;
+}
+
+message GetQhConfigAppResponse {
+  int32 code = 1;
+  google.protobuf.Struct data = 2;
+}
+
+message GetFontRequest {
+  string fontstack = 1;
+  string range = 2;
 }

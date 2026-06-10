@@ -16,12 +16,20 @@ import (
 
 // Properties holds all configuration properties
 type Properties struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	Eureka   EurekaConfig   `mapstructure:"eureka"`
-	Key      KeyConfig      `mapstructure:"key"`
-	Layer    LayerConfig    `mapstructure:"layer"`
+	Server    ServerConfig   `mapstructure:"server"`
+	Database  DatabaseConfig `mapstructure:"database"`
+	JWT       JWTConfig      `mapstructure:"jwt"`
+	Eureka    EurekaConfig   `mapstructure:"eureka"`
+	Key       KeyConfig      `mapstructure:"key"`
+	Layer     LayerConfig    `mapstructure:"layer"`
+	ConfigApp struct {
+		Qhpro struct {
+			DomainAPI    string `mapstructure:"domain_api"`
+			DomainFile   string `mapstructure:"domain_file"`
+			DomainPMTile string `mapstructure:"domain_pmtile"`
+			DomainStyle  string `mapstructure:"domain_style"`
+		} `mapstructure:"qhpro"`
+	} `mapstructure:"config-app"`
 }
 
 type LayerConfig struct {

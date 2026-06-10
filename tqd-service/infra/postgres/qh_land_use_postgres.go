@@ -172,3 +172,37 @@ func (r *qhLandUseRepo) SoftDeleteByLayerID(ctx context.Context, layerID uint64)
 		Where("layer_id = ?", layerID).
 		Delete(&qh_domain.QHLayerLandUse{}).Error
 }
+
+func (r *qhLandUseRepo) HardDeleteByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Tìm các land_use_id liên quan đến layer này
+		var landUseIDs []uint64
+		if err := tx.Raw(`
+			SELECT land_use_id FROM qh_layer_land_use WHERE layer_id = ?
+		`, layerID).Scan(&landUseIDs).Error; err != nil {
+			return err
+		}
+
+		// Xóa link
+		if err := tx.Where("layer_id = ?", layerID).Delete(&qh_domain.QHLayerLandUse{}).Error; err != nil {
+			return err
+		}
+
+		if len(landUseIDs) == 0 {
+			return nil
+		}
+
+		// Xóa các land_use mà KHÔNG còn liên kết với bất kỳ layer nào khác
+		return tx.Exec(`
+			DELETE FROM qh_land_use
+			WHERE id IN ?
+			AND NOT EXISTS (
+				SELECT 1 FROM qh_layer_land_use qllu
+				WHERE qllu.land_use_id = qh_land_use.id
+			)
+		`, landUseIDs).Error
+	})
+}

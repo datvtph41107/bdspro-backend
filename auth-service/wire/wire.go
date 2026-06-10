@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"auth/initial"
 	auth_infra_client "auth/infra/client"
 	auth_infra_cookie "auth/infra/cookie"
@@ -31,6 +32,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(auth_internal_interface_provider.CrmProvider), new(*auth_infra_client.CrmClient)),
 	wire.Bind(new(auth_internal_interface_provider.NotificationProvider), new(*auth_infra_client.NotificationClient)),
 	wire.Bind(new(auth_internal_interface_provider.OrganizationProvider), new(*auth_infra_client.OrganizationClient)),

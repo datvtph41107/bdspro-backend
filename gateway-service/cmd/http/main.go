@@ -149,6 +149,8 @@ var publicRoutes = []string{
 	"/v2/tqd/public/enums",
 	"/v2/user/profile/session",
 	"/v2/tqd/public/maps",
+	"/v2/tqd/qh/public/json",
+	"/v2/tqd/qh/public/font",
 }
 
 var tempRoutes = []string{
@@ -205,6 +207,8 @@ var HttpCmd = &cobra.Command{
 				"https://admin.bdspro.com",
 				"https://bdspro.com",
 				"https://app.bdspro.com",
+				"https://map.qhpro.vn",
+				"https://qhpro.vn",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},

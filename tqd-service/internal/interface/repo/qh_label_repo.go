@@ -13,6 +13,8 @@ type QHLabelRepository interface {
 	DeleteBatch(ctx context.Context, ids []uint64) error
 	// DeleteLabelLayerLinksByLayerID chỉ xóa bản ghi trong qh_label_layers (không xóa qh_labels).
 	DeleteLabelLayerLinksByLayerID(ctx context.Context, layerID uint64) error
+	// HardDeleteAllByLayerID xóa thật mọi label thuộc layer (layer_id) mà không được dùng bởi layer khác.
+	HardDeleteAllByLayerID(ctx context.Context, layerID uint64) error
 	// CountActiveByIDs đếm label chưa xóa mềm có id thuộc ids (phục vụ validate batch).
 	CountActiveByIDs(ctx context.Context, ids []uint64) (int64, error)
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLabel, error)

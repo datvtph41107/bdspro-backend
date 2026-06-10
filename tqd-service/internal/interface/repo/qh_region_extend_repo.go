@@ -16,6 +16,7 @@ type RegionExtendRepository interface {
 	Delete(ctx context.Context, id uint64) error
 	List(ctx context.Context, filter *RegionExtendFilter) ([]qh_domain.QHRegionExtend, int64, error)
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegionExtend, error)
+	HardDeleteAllByLayerID(ctx context.Context, layerID uint64) error
 }
 
 type RegionExtendFilter struct {

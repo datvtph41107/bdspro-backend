@@ -143,6 +143,13 @@ func (r *regionRepoImpl) SoftDeleteAllByLayerID(ctx context.Context, layerID uin
 		}).Error
 }
 
+func (r *regionRepoImpl) HardDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Unscoped().Where("layer_id = ?", layerID).Delete(&qh_domain.QHRegion{}).Error
+}
+
 func (r *regionRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
 	var region qh_domain.QHRegion
 	err := r.db.WithContext(ctx).
@@ -352,6 +359,13 @@ func (r *regionRepoImpl) ResetImportErrorRetryIfProcessing(ctx context.Context, 
 	return r.db.WithContext(ctx).Model(&qh_domain.QHRegionImportErrorLog{}).
 		Where("id = ? AND status = ?", id, qh_domain.ImportErrorStatusProcessing).
 		Update("status", qh_domain.ImportErrorStatusPending).Error
+}
+
+func (r *regionRepoImpl) HardDeleteImportErrorLogsByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Unscoped().Where("layer_id = ?", layerID).Delete(&qh_domain.QHRegionImportErrorLog{}).Error
 }
 
 func (r *regionRepoImpl) ListClient(ctx context.Context, filter *repo.ClientRegionFilter) ([]qh_domain.QHRegion, int64, error) {

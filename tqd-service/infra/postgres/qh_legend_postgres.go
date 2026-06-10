@@ -137,6 +137,13 @@ func (r *qhLayerLegendRepo) SoftDeleteByLayerID(ctx context.Context, layerID uin
 		Update("deleted_at", now).Error
 }
 
+func (r *qhLayerLegendRepo) HardDeleteByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Unscoped().Where("layer_id = ?", layerID).Delete(&qh_domain.QHLayerLegend{}).Error
+}
+
 func (r *qhLayerLegendRepo) SoftDeleteByLabelID(ctx context.Context, labelID uint64) error {
 	if labelID == 0 {
 		return nil

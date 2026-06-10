@@ -219,3 +219,10 @@ func (r *regionExtendRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_doma
 	}
 	return &rec, nil
 }
+
+func (r *regionExtendRepoImpl) HardDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Unscoped().Where("layer_id = ?", layerID).Delete(&qh_domain.QHRegionExtend{}).Error
+}

@@ -16,6 +16,8 @@ type RegionRepository interface {
 	Delete(ctx context.Context, id uint64) error
 	// SoftDeleteAllByLayerID xóa mềm mọi region thuộc layer (layer_id).
 	SoftDeleteAllByLayerID(ctx context.Context, layerID uint64) error
+	// HardDeleteAllByLayerID xóa thật mọi region thuộc layer (layer_id).
+	HardDeleteAllByLayerID(ctx context.Context, layerID uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error)
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.QHRegion, error)
 
@@ -30,6 +32,7 @@ type RegionRepository interface {
 	TryBeginImportErrorRetry(ctx context.Context, id uint64) (bool, error)
 	// ResetImportErrorRetryIfProcessing — processing → pending (rollback lock / lỗi giữa chừng)
 	ResetImportErrorRetryIfProcessing(ctx context.Context, id uint64) error
+	HardDeleteImportErrorLogsByLayerID(ctx context.Context, layerID uint64) error
 
 	ListClient(ctx context.Context, filter *ClientRegionFilter) ([]qh_domain.QHRegion, int64, error)
 

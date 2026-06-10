@@ -30,6 +30,13 @@ redis:
     host: localhost:6379
     pass:
 
+config-app:
+  qhpro:
+    domain_api: "https://api.qhpro.vn"
+    domain_file: "https://data.bdspro.com"
+    domain_pmtile: "https://data-map.qhpro.vn"
+    domain_style: "https://map.qhpro.vn"
+    
 layer:
     # Base URL configuration
     base_url: "ciproto://14.225.210.29:8032"

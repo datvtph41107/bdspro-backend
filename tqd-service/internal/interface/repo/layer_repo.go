@@ -12,6 +12,7 @@ type LayerRepository interface {
 	Create(ctx context.Context, layer *qh_domain.QHLayer, replaceLayerIDs []uint64, updatedBy uint64) error
 	Update(ctx context.Context, layer *qh_domain.QHLayer) error
 	Delete(ctx context.Context, id uint64) error
+	HardDelete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error)
 	GetByName(ctx context.Context, name string) (*qh_domain.QHLayer, error)
 

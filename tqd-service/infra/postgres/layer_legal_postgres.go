@@ -84,3 +84,10 @@ func (r *LayerLegalPostgres) DeleteByLayerID(ctx context.Context, layerID uint64
 		Where("layer_id = ?", layerID).
 		Update("deleted_at", gorm.Expr("NOW()")).Error
 }
+
+func (r *LayerLegalPostgres) HardDeleteByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Unscoped().Where("layer_id = ?", layerID).Delete(&qh_domain.QHLayerLegal{}).Error
+}

@@ -3,9 +3,15 @@ package handler_grpc
 import (
 	_utils "common/utils"
 	"context"
+	"fmt"
+	"log"
+	"os"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
+	"strings"
+	"sync"
 	"time"
+	"tqd/config"
 	"tqd/internal/enums"
 
 	"google.golang.org/grpc/codes"
@@ -16,13 +22,15 @@ import (
 
 type TqdPublicService struct {
 	tqdpb.UnimplementedTqdPublicServiceServer
-	StartUpTime int64
+	StartUpTime      int64
+	processedConfigs map[string]bool
+	mu               sync.RWMutex
 }
 
 func NewBdsproPublicService() *TqdPublicService {
 	return &TqdPublicService{
-
-		StartUpTime: time.Now().UnixMilli(),
+		StartUpTime:      time.Now().UnixMilli(),
+		processedConfigs: make(map[string]bool),
 	}
 }
 
@@ -54,23 +62,81 @@ func (s *TqdPublicService) GetEnums(ctx context.Context, req *sharepb.SyncReques
 	}, nil
 }
 
-func (s *TqdPublicService) GetQhConfigApp(ctx context.Context, _ *emptypb.Empty) (*structpb.Struct, error) {
-	payload := map[string]interface{}{
-		"backgroundMaps": []interface{}{
-			map[string]interface{}{"id": "basemap-light", "name": "Bản đồ nền sáng", "image": ""},
-			map[string]interface{}{"id": "basemap-dark", "name": "Bản đồ nền tối", "image": ""},
-			map[string]interface{}{"id": "satellite", "name": "Ảnh vệ tinh", "image": ""},
-		},
-		"qhLayers": []interface{}{
-			map[string]interface{}{"id": "planning-use", "name": "Quy hoạch sử dụng đất", "image": ""},
-			map[string]interface{}{"id": "planning-transport", "name": "Quy hoạch giao thông", "image": ""},
-		},
+func (s *TqdPublicService) GetQhConfigApp(ctx context.Context, req *tqdpb.GetQhConfigAppRequest) (*tqdpb.GetQhConfigAppResponse, error) {
+	s.mu.RLock()
+	processed := s.processedConfigs[req.Config]
+	s.mu.RUnlock()
+
+	jsonPath := fmt.Sprintf("files/json/%s.json", req.Config)
+
+	if !processed {
+		templatePath := fmt.Sprintf("template/%s.json", req.Config)
+		templateData, err := os.ReadFile(templatePath)
+		if err != nil {
+			log.Printf("failed to read template file: %v", err)
+			return nil, status.Errorf(codes.NotFound, "template file not found: %v", err)
+		}
+
+		// Load domains from hub-service/config/develop.yml
+		qhpro := config.AppConfig.ConfigApp.Qhpro
+		content := string(templateData)
+		content = strings.ReplaceAll(content, "{{domain_api}}", qhpro.DomainAPI)
+		content = strings.ReplaceAll(content, "{{domain_file}}", qhpro.DomainFile)
+		content = strings.ReplaceAll(content, "{{domain_pmtile}}", qhpro.DomainPMTile)
+		content = strings.ReplaceAll(content, "{{domain_style}}", qhpro.DomainStyle)
+
+		s.mu.Lock()
+		s.processedConfigs[req.Config] = true
+		s.mu.Unlock()
+
+		if err := os.MkdirAll("files/json", 0755); err != nil {
+			log.Printf("failed to create json directory: %v", err)
+			return nil, status.Errorf(codes.Internal, "failed to create json directory: %v", err)
+		}
+
+		if err := os.WriteFile(jsonPath, []byte(content), 0644); err != nil {
+			log.Printf("failed to save processed config: %v", err)
+			return nil, status.Errorf(codes.Internal, "failed to save processed config: %v", err)
+		}
 	}
-	st, err := structpb.NewStruct(payload)
+
+	data, err := os.ReadFile(jsonPath)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "qh config-app: %v", err)
+		return nil, status.Errorf(codes.NotFound, "config file not found: %v", err)
 	}
-	return st, nil
+
+	st := &structpb.Struct{}
+	if err := st.UnmarshalJSON(data); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal config: %v", err)
+	}
+	return &tqdpb.GetQhConfigAppResponse{
+		Code: 8500,
+		Data: st,
+	}, nil
+}
+
+func (s *TqdPublicService) GetFont(ctx context.Context, req *tqdpb.GetFontRequest) (*sharepb.CommonResponse, error) {
+	path := fmt.Sprintf("files/fonts/%s/%s", req.Fontstack, req.Range)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "font file not found: %v", err)
+	}
+
+	return &sharepb.CommonResponse{
+		Code: 8501,
+		Data: data,
+	}, nil
+}
+
+func (s *TqdPublicService) loadDomains() (map[string]string, error) {
+
+	qhpro := config.AppConfig.ConfigApp.Qhpro
+	result := make(map[string]string)
+	result["domain_api"] = qhpro.DomainAPI
+	result["domain_file"] = qhpro.DomainFile
+	result["domain_pmtile"] = qhpro.DomainPMTile
+	result["domain_style"] = qhpro.DomainStyle
+	return result, nil
 }
 
 func (s *TqdPublicService) GetPublicMaps(ctx context.Context, _ *emptypb.Empty) (*tqdpb.GetPublicMapsResponse, error) {
@@ -78,7 +144,7 @@ func (s *TqdPublicService) GetPublicMaps(ctx context.Context, _ *emptypb.Empty) 
 		Data: []*tqdpb.MapSource{
 			{
 				Name:   "Giao thông",
-				Source: "http://14.225.210.29:8002/v1/map/config/style.json",
+				Source: "https://data.bdspro.com/v1/map/config/style.json",
 				Type:   "vector",
 			},
 			{

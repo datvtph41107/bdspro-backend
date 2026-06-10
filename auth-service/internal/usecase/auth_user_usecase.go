@@ -933,45 +933,45 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	}
 
 	// Lấy timestamp từ cache
-	cachedTimestamp, err := s.CacheProvider.GetToken(c, props.ProfileID)
-	if err != nil {
-		log.Printf("⚠️ [RefreshToken] Không tìm thấy token trong cache cho authID %d: %v. Bỏ qua kiểm tra.", props.AuthID, err)
-		// Không tìm thấy trong cache thì bỏ qua kiểm tra, tiếp tục xử lý
-	} else {
-		// Validate token bằng cách so sánh Unix timestamp (UTC)
-		validToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
-		if !validToken {
-			log.Printf("⚠️ [RefreshToken] Token không hợp lệ cho authID %d. IssuedAt: %s, CachedTime: %s",
-				props.AuthID, props.IssuedAt.Format(time.RFC3339), cachedTimestamp)
-			return nil, &_routes.Except{
-				Code:    401,
-				Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
-			}
-		}
-	}
+	// cachedTimestamp, err := s.CacheProvider.GetToken(c, props.ProfileID)
+	// if err != nil {
+	// 	log.Printf("⚠️ [RefreshToken] Không tìm thấy token trong cache cho authID %d: %v. Bỏ qua kiểm tra.", props.AuthID, err)
+	// 	// Không tìm thấy trong cache thì bỏ qua kiểm tra, tiếp tục xử lý
+	// } else {
+	// 	// Validate token bằng cách so sánh Unix timestamp (UTC)
+	// 	validToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
+	// 	if !validToken {
+	// 		log.Printf("⚠️ [RefreshToken] Token không hợp lệ cho authID %d. IssuedAt: %s, CachedTime: %s",
+	// 			props.AuthID, props.IssuedAt.Format(time.RFC3339), cachedTimestamp)
+	// 		return nil, &_routes.Except{
+	// 			Code:    401,
+	// 			Message: "Phiên làm việc đã hết hạn vui lòng đăng nhập lại",
+	// 		}
+	// 	}
+	// }
 
 	if props.Type == "REFRESH" {
-		if props.SessionID != 0 {
-			sessionEntity, err := s.SessionRepo.GetBySessionID(c, props.SessionID)
-			if err != nil {
-				return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
-			}
-			if sessionEntity == nil || sessionEntity.LogoutAt != nil {
-				return nil, _errors.ReturnError(401, "Phiên làm việc đã kết thúc. Vui lòng đăng nhập lại")
-			}
-		} else {
-			return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
-		}
+		// if props.SessionID != 0 {
+		// 	sessionEntity, err := s.SessionRepo.GetBySessionID(c, props.SessionID)
+		// 	if err != nil {
+		// 		return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
+		// 	}
+		// 	if sessionEntity == nil || sessionEntity.LogoutAt != nil {
+		// 		return nil, _errors.ReturnError(401, "Phiên làm việc đã kết thúc. Vui lòng đăng nhập lại")
+		// 	}
+		// } else {
+		// 	return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
+		// }
 
 		profile, err := s.ProfileProvider.GetByProfileID(c, props.ProfileID)
 		if err != nil {
 			return nil, err
 		}
 
-		originID, err := s.CrmProvider.GetOriginID(c, props.ProfileID)
-		if err != nil {
-			return nil, err
-		}
+		// originID, err := s.CrmProvider.GetOriginID(c, props.ProfileID)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
 		newAccessToken, err := s.GenerateAccessToken(c, props.AuthID, props.SessionID, props.OrganizationID)
 		if err != nil {
@@ -980,8 +980,8 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 
 		// Tạo refresh token mới
 		newRefreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
-			AuthID:         props.AuthID,
-			OriginID:       originID,
+			AuthID: props.AuthID,
+			// OriginID:       originID,
 			ProfileID:      props.ProfileID,
 			Role:           props.Role,
 			SessionID:      props.SessionID,

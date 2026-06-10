@@ -95,6 +95,40 @@ func (r *qhLabelRepoImpl) DeleteLabelLayerLinksByLayerID(ctx context.Context, la
 	return r.db.WithContext(ctx).Where("layer_id = ?", layerID).Delete(&qh_domain.QHLabelLayer{}).Error
 }
 
+func (r *qhLabelRepoImpl) HardDeleteAllByLayerID(ctx context.Context, layerID uint64) error {
+	if layerID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Tìm các label_id liên quan đến layer này
+		var labelIDs []uint64
+		if err := tx.Raw(`
+			SELECT id FROM qh_labels WHERE layer_id = ?
+			UNION
+			SELECT label_id FROM qh_label_layers WHERE layer_id = ?
+		`, layerID, layerID).Scan(&labelIDs).Error; err != nil {
+			return err
+		}
+
+		if len(labelIDs) == 0 {
+			return nil
+		}
+
+		// Xóa các label mà KHÔNG còn liên kết với bất kỳ layer nào khác (ngoại trừ layerID đang xóa)
+		// Và cũng không có layer_id trỏ tới layer khác (ngoại trừ layerID đang xóa)
+		return tx.Exec(`
+			DELETE FROM qh_labels
+			WHERE id IN ?
+			AND (layer_id IS NULL OR layer_id = 0 OR layer_id = ?)
+			AND NOT EXISTS (
+				SELECT 1 FROM qh_label_layers qll
+				WHERE qll.label_id = qh_labels.id
+				AND qll.layer_id != ?
+			)
+		`, labelIDs, layerID, layerID).Error
+	})
+}
+
 func (r *qhLabelRepoImpl) CountActiveByIDs(ctx context.Context, ids []uint64) (int64, error) {
 	if len(ids) == 0 {
 		return 0, nil

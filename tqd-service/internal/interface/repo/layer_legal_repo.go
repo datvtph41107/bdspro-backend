@@ -13,4 +13,5 @@ type ILayerLegalRepo interface {
 	GetByLayerIDs(ctx context.Context, layerIDs []uint64) (map[uint64][]*qh_domain.QHLayerLegal, error)
 	Delete(ctx context.Context, id uint64) error
 	DeleteByLayerID(ctx context.Context, layerID uint64) error
+	HardDeleteByLayerID(ctx context.Context, layerID uint64) error
 }

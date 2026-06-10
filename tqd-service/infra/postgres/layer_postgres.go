@@ -124,6 +124,10 @@ func (r *layerRepoImpl) Delete(ctx context.Context, id uint64) error {
 		Update("deleted_at", now).Error
 }
 
+func (r *layerRepoImpl) HardDelete(ctx context.Context, id uint64) error {
+	return r.db.WithContext(ctx).Unscoped().Delete(&qh_domain.QHLayer{}, id).Error
+}
+
 func (r *layerRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayer, error) {
 	var layer qh_domain.QHLayer
 	err := r.db.WithContext(ctx).
