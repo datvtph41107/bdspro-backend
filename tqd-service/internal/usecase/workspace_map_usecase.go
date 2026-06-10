@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
@@ -461,32 +462,91 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 		return nil, fmt.Errorf("user_id is required")
 	}
 
+	log.Printf(
+		"[DEBUG][Usecase][ListFollowedParcels][START] userID=%d limit=%d offset=%d page=%d size=%d",
+		userID,
+		pagable.GetLimit(),
+		pagable.GetOffset(),
+		pagable.GetPage(),
+		pagable.GetSize(),
+	)
+
 	follows, total, err := u.repo.ListFollowedParcels(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
 	if err != nil {
+		log.Printf(
+			"[DEBUG][Usecase][ListFollowedParcels][REPO_FOLLOWS_ERROR] userID=%d err=%v",
+			userID,
+			err,
+		)
 		return nil, err
 	}
+
+	log.Printf(
+		"[DEBUG][Usecase][ListFollowedParcels][FOLLOWS] userID=%d followsNil=%v followsLen=%d total=%d",
+		userID,
+		follows == nil,
+		len(follows),
+		total,
+	)
 
 	parcelIDs := make([]uint64, 0, len(follows))
 	for _, item := range follows {
 		parcelIDs = append(parcelIDs, item.ParcelID)
 	}
 
-	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, uniqueUint64(parcelIDs))
+	uniqueIDs := uniqueUint64(parcelIDs)
+
+	log.Printf(
+		"[DEBUG][Usecase][ListFollowedParcels][PARCEL_IDS] userID=%d parcelIDsLen=%d uniqueIDsLen=%d uniqueIDs=%v",
+		userID,
+		len(parcelIDs),
+		len(uniqueIDs),
+		uniqueIDs,
+	)
+
+	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, uniqueIDs)
 	if err != nil {
+		log.Printf(
+			"[DEBUG][Usecase][ListFollowedParcels][REPO_PREVIEWS_ERROR] userID=%d err=%v",
+			userID,
+			err,
+		)
 		return nil, err
 	}
+
+	log.Printf(
+		"[DEBUG][Usecase][ListFollowedParcels][PREVIEWS] userID=%d parcelRowsNil=%v parcelRowsLen=%d",
+		userID,
+		parcelRows == nil,
+		len(parcelRows),
+	)
 
 	parcelMap := buildParcelPreviewMap(parcelRows)
 	items := make([]dto.FollowedParcelPreviewDTO, 0, len(follows))
 
+	missingParcelIDs := make([]uint64, 0)
+
 	for _, follow := range follows {
 		row, ok := parcelMap[follow.ParcelID]
 		if !ok {
+			missingParcelIDs = append(missingParcelIDs, follow.ParcelID)
 			continue
 		}
 
 		items = append(items, buildFollowedParcelPreview(follow, row))
 	}
+
+	log.Printf(
+		"[DEBUG][Usecase][ListFollowedParcels][RETURN] userID=%d followsLen=%d parcelRowsLen=%d itemsNil=%v itemsLen=%d total=%d missingPreviewLen=%d missingPreviewIDs=%v",
+		userID,
+		len(follows),
+		len(parcelRows),
+		items == nil,
+		len(items),
+		total,
+		len(missingParcelIDs),
+		missingParcelIDs,
+	)
 
 	return &dto.WorkspaceListResponse[dto.FollowedParcelPreviewDTO]{
 		Items: items,

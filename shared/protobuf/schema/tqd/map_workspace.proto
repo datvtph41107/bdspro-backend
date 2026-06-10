@@ -35,7 +35,6 @@ service MapWorkspaceService {
     };
   }
 
-  // Legacy-compatible endpoint. Backend sẽ chuyển qua TrackViewHistory với countIntent=false.
   rpc AddViewHistory(AddViewHistoryRequest) returns (WorkspaceMutationResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/map-workspace/view-history"
@@ -43,7 +42,6 @@ service MapWorkspaceService {
     };
   }
 
-  // Endpoint mới để tracking view đúng nghiệp vụ: idempotency, visibleMs, dedupe, counted.
   rpc TrackViewHistory(TrackViewHistoryRequest) returns (TrackViewHistoryResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/map-workspace/view-history:track"
@@ -307,21 +305,27 @@ message GeneratedReportPreview {
 }
 
 message ListFollowedParcelsResponse {
-  repeated FollowedParcelPreview items = 1;
+  repeated FollowedParcelPreview data = 1;
   string nextCursor = 2;
   int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
 }
 
 message ListViewHistoryResponse {
-  repeated ViewHistoryPreview items = 1;
+  repeated ViewHistoryPreview data = 1;
   string nextCursor = 2;
   int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
 }
 
 message ListGeneratedReportsResponse {
-  repeated GeneratedReportPreview items = 1;
+  repeated GeneratedReportPreview data = 1;
   string nextCursor = 2;
   int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
 }
 
 message FollowParcelRequest {

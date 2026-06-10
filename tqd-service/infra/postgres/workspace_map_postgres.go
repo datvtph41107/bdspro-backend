@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
@@ -129,7 +130,18 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreview(ctx context.Context, pa
 func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(ctx context.Context, parcelIDs []uint64) ([]dto.ParcelWorkspacePreviewRow, error) {
 	rows := make([]dto.ParcelWorkspacePreviewRow, 0)
 
+	log.Printf(
+		"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][START] inputIDsLen=%d inputIDs=%v",
+		len(parcelIDs),
+		parcelIDs,
+	)
+
 	if len(parcelIDs) == 0 {
+		log.Printf(
+			"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][RETURN_EMPTY_INPUT] rowsNil=%v rowsLen=%d",
+			rows == nil,
+			len(rows),
+		)
 		return rows, nil
 	}
 
@@ -167,27 +179,82 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(ctx context.Conte
 	`
 
 	if err := p.DB.WithContext(ctx).Raw(query, parcelIDs).Scan(&rows).Error; err != nil {
+		log.Printf(
+			"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][ERROR] inputIDsLen=%d err=%v",
+			len(parcelIDs),
+			err,
+		)
 		return nil, fmt.Errorf("get parcel workspace previews failed: %w", err)
 	}
+
+	returnedIDs := make([]uint64, 0, len(rows))
+	for _, row := range rows {
+		returnedIDs = append(returnedIDs, row.ParcelID)
+	}
+
+	log.Printf(
+		"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][RETURN] inputIDsLen=%d rowsNil=%v rowsLen=%d returnedIDs=%v",
+		len(parcelIDs),
+		rows == nil,
+		len(rows),
+		returnedIDs,
+	)
 
 	return rows, nil
 }
 
 func (p *MapWorkspacePostgres) ListFollowedParcels(ctx context.Context, userID uint64, limit, offset int) ([]qh_domain.QHUserFollowedParcel, int64, error) {
-	var rows []qh_domain.QHUserFollowedParcel
+	rows := make([]qh_domain.QHUserFollowedParcel, 0)
 	var total int64
+
+	log.Printf(
+		"[DEBUG][Repo][ListFollowedParcels][START] userID=%d limit=%d offset=%d",
+		userID,
+		limit,
+		offset,
+	)
 
 	q := p.DB.WithContext(ctx).
 		Model(&qh_domain.QHUserFollowedParcel{}).
 		Where("user_id = ? AND deleted_at IS NULL", userID)
 
 	if err := q.Count(&total).Error; err != nil {
+		log.Printf(
+			"[DEBUG][Repo][ListFollowedParcels][COUNT_ERROR] userID=%d err=%v",
+			userID,
+			err,
+		)
 		return nil, 0, fmt.Errorf("count followed parcels failed: %w", err)
 	}
 
+	log.Printf(
+		"[DEBUG][Repo][ListFollowedParcels][COUNT] userID=%d total=%d",
+		userID,
+		total,
+	)
+
 	if err := q.Order("created_at DESC").Limit(limit).Offset(offset).Find(&rows).Error; err != nil {
+		log.Printf(
+			"[DEBUG][Repo][ListFollowedParcels][FIND_ERROR] userID=%d err=%v",
+			userID,
+			err,
+		)
 		return nil, 0, fmt.Errorf("list followed parcels failed: %w", err)
 	}
+
+	parcelIDs := make([]uint64, 0, len(rows))
+	for _, row := range rows {
+		parcelIDs = append(parcelIDs, row.ParcelID)
+	}
+
+	log.Printf(
+		"[DEBUG][Repo][ListFollowedParcels][RETURN] userID=%d rowsNil=%v rowsLen=%d total=%d parcelIDs=%v",
+		userID,
+		rows == nil,
+		len(rows),
+		total,
+		parcelIDs,
+	)
 
 	return rows, total, nil
 }

@@ -1,13 +1,15 @@
 package handler_grpc
 
 import (
+	"context"
+	"errors"
+	"log"
+	"strings"
+
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	_provider "common/provider"
 	_utils "common/utils"
-	"context"
-	"errors"
-	"strings"
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -48,13 +50,6 @@ func (h *MapWorkspaceGrpcHandler) currentUserID(ctx context.Context) (uint64, er
 	return userID, nil
 }
 
-func pagableFromWorkspaceRequest(req *tqdpb.WorkspacePageRequest) _dto.IPagable {
-	page := req.GetPage()
-	size := req.GetSize()
-
-	return _dto.NewPagableFromGrpc(&page, &size, nil)
-}
-
 func workspaceStatusError(err error) error {
 	if err == nil {
 		return nil
@@ -69,7 +64,9 @@ func workspaceStatusError(err error) error {
 		return status.Error(codes.NotFound, msg)
 	case strings.Contains(msg, "is required"), strings.Contains(msg, "invalid"):
 		return status.Error(codes.InvalidArgument, msg)
-	case strings.Contains(msg, "cannot regenerate"), strings.Contains(msg, "not ready to share"), strings.Contains(msg, "does not support"):
+	case strings.Contains(msg, "cannot regenerate"),
+		strings.Contains(msg, "not ready to share"),
+		strings.Contains(msg, "does not support"):
 		return status.Error(codes.FailedPrecondition, msg)
 	default:
 		return status.Error(codes.Internal, msg)
@@ -77,7 +74,10 @@ func workspaceStatusError(err error) error {
 }
 
 func protoPoint(v dto.SpatialPointDTO) *tqdpb.SpatialPoint {
-	return &tqdpb.SpatialPoint{Lat: v.Lat, Lon: v.Lon}
+	return &tqdpb.SpatialPoint{
+		Lat: v.Lat,
+		Lon: v.Lon,
+	}
 }
 
 func protoBounds(v dto.SpatialBoundsDTO) *tqdpb.SpatialBounds {
@@ -252,6 +252,7 @@ func workspaceLocationFromProto(v *tqdpb.WorkspaceLocation) dto.WorkspaceLocatio
 	if v == nil {
 		return dto.WorkspaceLocationDTO{}
 	}
+
 	return dto.WorkspaceLocationDTO{
 		Address:      v.GetAddress(),
 		Province:     v.GetProvince(),
@@ -264,6 +265,7 @@ func reportSpatialFromProto(v *tqdpb.ReportSpatialPreview) dto.ReportSpatialPrev
 	if v == nil {
 		return dto.ReportSpatialPreviewDTO{}
 	}
+
 	return dto.ReportSpatialPreviewDTO{
 		Bounds: dto.SpatialBoundsDTO{
 			MinLon: v.GetBounds().GetMinLon(),
@@ -282,6 +284,7 @@ func reportComparisonFromProto(v *tqdpb.ReportComparison) dto.ReportComparisonDT
 	if v == nil {
 		return dto.ReportComparisonDTO{}
 	}
+
 	return dto.ReportComparisonDTO{
 		FromPlanName: v.GetFromPlanName(),
 		ToPlanName:   v.GetToPlanName(),
@@ -299,17 +302,40 @@ func (h *MapWorkspaceGrpcHandler) ListFollowedParcels(
 		return nil, err
 	}
 
-	result, err := h.usecase.ListFollowedParcels(ctx, userID, pagableFromWorkspaceRequest(req))
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	result, err := h.usecase.ListFollowedParcels(ctx, userID, pagable)
 	if err != nil {
+		log.Printf("[DEBUG][Handler][ListFollowedParcels][ERROR] userID=%d err=%v", userID, err)
 		return nil, workspaceStatusError(err)
 	}
 
-	items := make([]*tqdpb.FollowedParcelPreview, 0, len(result.Items))
-	for _, item := range result.Items {
-		items = append(items, followedDTOToProto(item))
+	items := make([]*tqdpb.FollowedParcelPreview, 0)
+	total := int64(0)
+	nextCursor := ""
+
+	if result != nil {
+		total = result.Total
+		nextCursor = result.NextCursor
+
+		items = make([]*tqdpb.FollowedParcelPreview, 0, len(result.Items))
+		for _, item := range result.Items {
+			items = append(items, followedDTOToProto(item))
+		}
+	} else {
+		log.Printf(
+			"[DEBUG][Handler][ListFollowedParcels][USECASE_RESULT] userID=%d resultNil=true",
+			userID,
+		)
 	}
 
-	return &tqdpb.ListFollowedParcelsResponse{Items: items, NextCursor: result.NextCursor, Total: result.Total}, nil
+	return &tqdpb.ListFollowedParcelsResponse{
+		Data:       items,
+		NextCursor: nextCursor,
+		Total:      total,
+		Page:       int32(pagable.GetPage()),
+		Size:       int32(pagable.GetSize()),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) FollowParcel(
@@ -320,16 +346,28 @@ func (h *MapWorkspaceGrpcHandler) FollowParcel(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetParcelId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
 	}
 
-	id, err := h.usecase.FollowParcel(ctx, dto.FollowParcelRequestDTO{UserID: userID, ParcelID: req.GetParcelId(), Note: req.GetNote()})
+	log.Printf("[FollowParcel] UserID: %d, ParcelID: %d", userID, req.GetParcelId())
+
+	id, err := h.usecase.FollowParcel(ctx, dto.FollowParcelRequestDTO{
+		UserID:   userID,
+		ParcelID: req.GetParcelId(),
+		Note:     req.GetNote(),
+	})
 	if err != nil {
+		log.Printf("[FollowParcel] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "followed parcel saved", Id: id}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "followed parcel saved",
+		Id:      id,
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) RemoveFollowedParcel(
@@ -340,16 +378,33 @@ func (h *MapWorkspaceGrpcHandler) RemoveFollowedParcel(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetFollowId() == 0 && req.GetParcelId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "followId or parcelId is required")
 	}
 
-	err = h.usecase.RemoveFollowedParcel(ctx, dto.RemoveFollowedParcelRequestDTO{UserID: userID, FollowID: req.GetFollowId(), ParcelID: req.GetParcelId()})
+	log.Printf(
+		"[RemoveFollowedParcel] UserID: %d, FollowID: %d, ParcelID: %d",
+		userID,
+		req.GetFollowId(),
+		req.GetParcelId(),
+	)
+
+	err = h.usecase.RemoveFollowedParcel(ctx, dto.RemoveFollowedParcelRequestDTO{
+		UserID:   userID,
+		FollowID: req.GetFollowId(),
+		ParcelID: req.GetParcelId(),
+	})
 	if err != nil {
+		log.Printf("[RemoveFollowedParcel] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "followed parcel removed", Id: req.GetFollowId()}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "followed parcel removed",
+		Id:      req.GetFollowId(),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) ListViewHistory(
@@ -361,17 +416,51 @@ func (h *MapWorkspaceGrpcHandler) ListViewHistory(
 		return nil, err
 	}
 
-	result, err := h.usecase.ListViewHistory(ctx, userID, pagableFromWorkspaceRequest(req))
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	log.Printf(
+		"[ListViewHistory] UserID: %d, Page: %d, Size: %d, Limit: %d, Offset: %d",
+		userID,
+		pagable.GetPage(),
+		pagable.GetSize(),
+		pagable.GetLimit(),
+		pagable.GetOffset(),
+	)
+
+	result, err := h.usecase.ListViewHistory(ctx, userID, pagable)
 	if err != nil {
+		log.Printf("[ListViewHistory] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	items := make([]*tqdpb.ViewHistoryPreview, 0, len(result.Items))
-	for _, item := range result.Items {
-		items = append(items, historyDTOToProto(item))
+	items := make([]*tqdpb.ViewHistoryPreview, 0)
+	total := int64(0)
+	nextCursor := ""
+
+	if result != nil {
+		total = result.Total
+		nextCursor = result.NextCursor
+
+		items = make([]*tqdpb.ViewHistoryPreview, 0, len(result.Items))
+		for _, item := range result.Items {
+			items = append(items, historyDTOToProto(item))
+		}
 	}
 
-	return &tqdpb.ListViewHistoryResponse{Items: items, NextCursor: result.NextCursor, Total: result.Total}, nil
+	log.Printf(
+		"[ListViewHistory] UserID: %d, Total: %d, Items: %d",
+		userID,
+		total,
+		len(items),
+	)
+
+	return &tqdpb.ListViewHistoryResponse{
+		Data:       items,
+		NextCursor: nextCursor,
+		Total:      total,
+		Page:       int32(pagable.GetPage()),
+		Size:       int32(pagable.GetSize()),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) AddViewHistory(
@@ -382,9 +471,19 @@ func (h *MapWorkspaceGrpcHandler) AddViewHistory(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetEntityId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "entityId is required")
 	}
+
+	log.Printf(
+		"[AddViewHistory] UserID: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d",
+		userID,
+		req.GetEntityType(),
+		req.GetEntityId(),
+		req.GetParcelId(),
+		req.GetRegionId(),
+	)
 
 	id, err := h.usecase.AddViewHistory(ctx, dto.AddViewHistoryRequestDTO{
 		UserID:     userID,
@@ -396,10 +495,15 @@ func (h *MapWorkspaceGrpcHandler) AddViewHistory(
 		Zoom:       req.GetZoom(),
 	})
 	if err != nil {
+		log.Printf("[AddViewHistory] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "view history added", Id: id}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "view history added",
+		Id:      id,
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) TrackViewHistory(
@@ -410,9 +514,21 @@ func (h *MapWorkspaceGrpcHandler) TrackViewHistory(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetEntityId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "entityId is required")
 	}
+
+	log.Printf(
+		"[TrackViewHistory] UserID: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d, CountIntent: %v, VisibleMs: %d",
+		userID,
+		req.GetEntityType(),
+		req.GetEntityId(),
+		req.GetParcelId(),
+		req.GetRegionId(),
+		req.GetCountIntent(),
+		req.GetVisibleMs(),
+	)
 
 	result, err := h.usecase.TrackViewHistory(ctx, dto.TrackViewHistoryRequestDTO{
 		UserID:        userID,
@@ -442,6 +558,7 @@ func (h *MapWorkspaceGrpcHandler) TrackViewHistory(
 		MetadataJSON: req.GetMetadataJson(),
 	})
 	if err != nil {
+		log.Printf("[TrackViewHistory] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
@@ -463,16 +580,27 @@ func (h *MapWorkspaceGrpcHandler) RemoveViewHistory(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetHistoryId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "historyId is required")
 	}
 
-	err = h.usecase.RemoveViewHistory(ctx, dto.RemoveViewHistoryRequestDTO{UserID: userID, HistoryID: req.GetHistoryId()})
+	log.Printf("[RemoveViewHistory] UserID: %d, HistoryID: %d", userID, req.GetHistoryId())
+
+	err = h.usecase.RemoveViewHistory(ctx, dto.RemoveViewHistoryRequestDTO{
+		UserID:    userID,
+		HistoryID: req.GetHistoryId(),
+	})
 	if err != nil {
+		log.Printf("[RemoveViewHistory] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "view history removed", Id: req.GetHistoryId()}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "view history removed",
+		Id:      req.GetHistoryId(),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) ClearViewHistory(
@@ -484,11 +612,17 @@ func (h *MapWorkspaceGrpcHandler) ClearViewHistory(
 		return nil, err
 	}
 
+	log.Printf("[ClearViewHistory] UserID: %d", userID)
+
 	if err := h.usecase.ClearViewHistory(ctx, userID); err != nil {
+		log.Printf("[ClearViewHistory] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "view history cleared"}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "view history cleared",
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) ListGeneratedReports(
@@ -500,17 +634,51 @@ func (h *MapWorkspaceGrpcHandler) ListGeneratedReports(
 		return nil, err
 	}
 
-	result, err := h.usecase.ListGeneratedReports(ctx, userID, pagableFromWorkspaceRequest(req))
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	log.Printf(
+		"[ListGeneratedReports] UserID: %d, Page: %d, Size: %d, Limit: %d, Offset: %d",
+		userID,
+		pagable.GetPage(),
+		pagable.GetSize(),
+		pagable.GetLimit(),
+		pagable.GetOffset(),
+	)
+
+	result, err := h.usecase.ListGeneratedReports(ctx, userID, pagable)
 	if err != nil {
+		log.Printf("[ListGeneratedReports] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	items := make([]*tqdpb.GeneratedReportPreview, 0, len(result.Items))
-	for _, item := range result.Items {
-		items = append(items, reportDTOToProto(item))
+	items := make([]*tqdpb.GeneratedReportPreview, 0)
+	total := int64(0)
+	nextCursor := ""
+
+	if result != nil {
+		total = result.Total
+		nextCursor = result.NextCursor
+
+		items = make([]*tqdpb.GeneratedReportPreview, 0, len(result.Items))
+		for _, item := range result.Items {
+			items = append(items, reportDTOToProto(item))
+		}
 	}
 
-	return &tqdpb.ListGeneratedReportsResponse{Items: items, NextCursor: result.NextCursor, Total: result.Total}, nil
+	log.Printf(
+		"[ListGeneratedReports] UserID: %d, Total: %d, Items: %d",
+		userID,
+		total,
+		len(items),
+	)
+
+	return &tqdpb.ListGeneratedReportsResponse{
+		Data:       items,
+		NextCursor: nextCursor,
+		Total:      total,
+		Page:       int32(pagable.GetPage()),
+		Size:       int32(pagable.GetSize()),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) CreateGeneratedReport(
@@ -521,9 +689,20 @@ func (h *MapWorkspaceGrpcHandler) CreateGeneratedReport(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetReportType() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportType is required")
 	}
+
+	log.Printf(
+		"[CreateGeneratedReport] UserID: %d, ReportType: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d",
+		userID,
+		req.GetReportType(),
+		req.GetEntityType(),
+		req.GetEntityId(),
+		req.GetParcelId(),
+		req.GetRegionId(),
+	)
 
 	item, err := h.usecase.CreateGeneratedReport(ctx, dto.CreateGeneratedReportRequestDTO{
 		UserID:          userID,
@@ -541,10 +720,20 @@ func (h *MapWorkspaceGrpcHandler) CreateGeneratedReport(
 		MetadataJSON:    req.GetMetadataJson(),
 	})
 	if err != nil {
+		log.Printf("[CreateGeneratedReport] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.CreateGeneratedReportResponse{Success: true, Message: "report generation started", Item: reportDTOToProto(*item)}, nil
+	resp := &tqdpb.CreateGeneratedReportResponse{
+		Success: true,
+		Message: "report generation started",
+	}
+
+	if item != nil {
+		resp.Item = reportDTOToProto(*item)
+	}
+
+	return resp, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) GetGeneratedReport(
@@ -555,13 +744,21 @@ func (h *MapWorkspaceGrpcHandler) GetGeneratedReport(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
 
+	log.Printf("[GetGeneratedReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+
 	item, err := h.usecase.GetGeneratedReport(ctx, userID, req.GetReportId())
 	if err != nil {
+		log.Printf("[GetGeneratedReport] Error: %v", err)
 		return nil, workspaceStatusError(err)
+	}
+
+	if item == nil {
+		return nil, status.Error(codes.NotFound, "report not found")
 	}
 
 	return reportDTOToProto(*item), nil
@@ -575,16 +772,27 @@ func (h *MapWorkspaceGrpcHandler) RemoveGeneratedReport(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
 
-	err = h.usecase.RemoveGeneratedReport(ctx, dto.RemoveGeneratedReportRequestDTO{UserID: userID, ReportID: req.GetReportId()})
+	log.Printf("[RemoveGeneratedReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+
+	err = h.usecase.RemoveGeneratedReport(ctx, dto.RemoveGeneratedReportRequestDTO{
+		UserID:   userID,
+		ReportID: req.GetReportId(),
+	})
 	if err != nil {
+		log.Printf("[RemoveGeneratedReport] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "report removed", Id: req.GetReportId()}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "report removed",
+		Id:      req.GetReportId(),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) RegenerateReport(
@@ -595,16 +803,24 @@ func (h *MapWorkspaceGrpcHandler) RegenerateReport(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
 
+	log.Printf("[RegenerateReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+
 	err = h.usecase.RegenerateReport(ctx, userID, req.GetReportId())
 	if err != nil {
+		log.Printf("[RegenerateReport] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.WorkspaceMutationResponse{Success: true, Message: "report regeneration started", Id: req.GetReportId()}, nil
+	return &tqdpb.WorkspaceMutationResponse{
+		Success: true,
+		Message: "report regeneration started",
+		Id:      req.GetReportId(),
+	}, nil
 }
 
 func (h *MapWorkspaceGrpcHandler) ShareReport(
@@ -615,14 +831,22 @@ func (h *MapWorkspaceGrpcHandler) ShareReport(
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
 
+	log.Printf("[ShareReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+
 	result, err := h.usecase.ShareReport(ctx, userID, req.GetReportId())
 	if err != nil {
+		log.Printf("[ShareReport] Error: %v", err)
 		return nil, workspaceStatusError(err)
 	}
 
-	return &tqdpb.ShareReportResponse{Success: result.Success, ShareUrl: result.ShareURL, Message: result.Message}, nil
+	return &tqdpb.ShareReportResponse{
+		Success:  result.Success,
+		ShareUrl: result.ShareURL,
+		Message:  result.Message,
+	}, nil
 }
