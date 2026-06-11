@@ -3,25 +3,8 @@ package seo_domain
 import (
 	"crm/internal/enums"
 	"time"
-)
 
-type SeoClassify uint8
-
-const (
-	// chứa thông tin chi tiết
-	SeoClassifyA SeoClassify = 10
-
-	// chứa các điều hướng
-	SeoClassifyB SeoClassify = 20
-
-	// kết quả của dữ liệu tìm kiếm
-	SeoClassifyC SeoClassify = 30
-
-	// link chia sẻ lan truyền ko phục vụ seo, liên kết, bản xem trước
-	SeoClassifyD SeoClassify = 40
-
-	// không phục vụ seo: đăng nhập, đăng ký,  admin, 404, 500, ...
-	SeoClassifyN SeoClassify = 50
+	"gorm.io/gorm"
 )
 
 type SeoDomain struct {
@@ -31,29 +14,25 @@ type SeoDomain struct {
 
 	CanonicalURL string `gorm:"index"`
 
-	// Phân loại SEO
-	Classify SeoClassify `gorm:"not null;default:50"`
+	Classify enums.ESeoClassify `gorm:"type:smallint;not null;default:50"`
 
-	// Thời gian cập nhật sitemap lần cuối
 	SiteMapLastedAt *time.Time `gorm:""`
 
-	IsSiteMap bool
-
-	IsIndex bool
-
-	// kiểm tra robot
+	IsSiteMap bool `gorm:"not null;default:false"`
+	IsIndex bool `gorm:"not null;default:false"`
 	IsRobot *bool `gorm:"type:bool;default:false"`
 
 	Metadata *string `gorm:"type:jsonb"`
-
 	Note string `gorm:"type:text"`
-
 	InternalLinks []SeoInternalLink `gorm:"foreignKey:ParentSeoID;references:ID"`
+	Relatives []SeoRelative `gorm:"foreignKey:ParentSeoID;references:ID"`
+	RefType enums.ESEORefType `gorm:"type:smallint;index"`
 
-	// schema,đối tượng
-	RefType enums.ESEORefType `gorm:"type:smallint"`
+	RefID *uint64 `gorm:"type:bigint;index"`
 
-	RefID *uint64 `gorm:"type:uint64"`
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 func (SeoDomain) TableName() string {

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
@@ -72,10 +73,30 @@ func uniqueUint64(values []uint64) []uint64 {
 	return out
 }
 
+const maxListPreviewGeoJSONBytes = 16 * 1024
+
+func normalizePreviewGeoJSON(s string) (string, string, uint32) {
+	s = strings.TrimSpace(s)
+
+	if s == "" || s == "null" {
+		return "", "bounds", 0
+	}
+
+	size := uint32(len(s))
+
+	if len(s) > maxListPreviewGeoJSONBytes {
+		return "", "bounds", size
+	}
+
+	return s, "simplified", size
+}
+
 func buildParcelGeometryDTO(row dto.ParcelWorkspacePreviewRow) dto.GeometryPreviewDTO {
+	geoJSON, quality, byteSize := normalizePreviewGeoJSON(row.GeometryGeoJSON)
+
 	return dto.GeometryPreviewDTO{
 		Type:    row.GeometryType,
-		GeoJSON: row.GeometryGeoJSON,
+		GeoJSON: geoJSON,
 		Centroid: dto.SpatialPointDTO{
 			Lat: row.CentroidLat,
 			Lon: row.CentroidLon,
@@ -86,14 +107,18 @@ func buildParcelGeometryDTO(row dto.ParcelWorkspacePreviewRow) dto.GeometryPrevi
 			MaxLon: row.MaxLon,
 			MaxLat: row.MaxLat,
 		},
-		SRID: 4326,
+		SRID:     4326,
+		Quality:  quality,
+		ByteSize: byteSize,
 	}
 }
 
 func buildRegionGeometryDTO(row dto.RegionWorkspacePreviewRow) dto.GeometryPreviewDTO {
+	geoJSON, quality, byteSize := normalizePreviewGeoJSON(row.GeoJSON)
+
 	return dto.GeometryPreviewDTO{
 		Type:    row.GeometryType,
-		GeoJSON: row.GeoJSON,
+		GeoJSON: geoJSON,
 		Centroid: dto.SpatialPointDTO{
 			Lat: row.CenterLat,
 			Lon: row.CenterLon,
@@ -104,7 +129,9 @@ func buildRegionGeometryDTO(row dto.RegionWorkspacePreviewRow) dto.GeometryPrevi
 			MaxLon: row.MaxLon,
 			MaxLat: row.MaxLat,
 		},
-		SRID: 4326,
+		SRID:     4326,
+		Quality:  quality,
+		ByteSize: byteSize,
 	}
 }
 
@@ -124,6 +151,16 @@ func buildGeometryFocusTargetDTO(g dto.GeometryPreviewDTO) dto.SpatialFocusTarge
 		Bounds:   g.Bounds,
 		Centroid: g.Centroid,
 		GeoJSON:  g.GeoJSON,
+		SRID:     g.SRID,
+	}
+}
+
+func buildListFocusTargetDTO(g dto.GeometryPreviewDTO) dto.SpatialFocusTargetDTO {
+	return dto.SpatialFocusTargetDTO{
+		Type:     enums.FocusTypeGeometry.Uint32(),
+		Bounds:   g.Bounds,
+		Centroid: g.Centroid,
+		GeoJSON:  "",
 		SRID:     g.SRID,
 	}
 }
@@ -208,7 +245,10 @@ func buildRegionPreviewMap(rows []dto.RegionWorkspacePreviewRow) map[uint64]dto.
 	return result
 }
 
-func buildFollowedParcelPreview(f qh_domain.QHUserFollowedParcel, row dto.ParcelWorkspacePreviewRow) dto.FollowedParcelPreviewDTO {
+func buildFollowedParcelPreview(
+	f qh_domain.QHUserFollowedParcel,
+	row dto.ParcelWorkspacePreviewRow,
+) dto.FollowedParcelPreviewDTO {
 	geometry := buildParcelGeometryDTO(row)
 
 	return dto.FollowedParcelPreviewDTO{
@@ -238,7 +278,7 @@ func buildFollowedParcelPreview(f qh_domain.QHUserFollowedParcel, row dto.Parcel
 
 		GeometryPreview: geometry,
 		Preview:         buildPreviewHintDTO(geometry, "target-parcel"),
-		FocusTarget:     buildGeometryFocusTargetDTO(geometry),
+		FocusTarget:     buildListFocusTargetDTO(geometry),
 
 		FollowedAt: timeString(f.CreatedAt),
 
@@ -251,7 +291,10 @@ func buildFollowedParcelPreview(f qh_domain.QHUserFollowedParcel, row dto.Parcel
 	}
 }
 
-func buildParcelHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWorkspacePreviewRow) dto.ViewHistoryPreviewDTO {
+func buildParcelHistoryPreview(
+	h qh_domain.QHUserViewHistory,
+	row dto.ParcelWorkspacePreviewRow,
+) dto.ViewHistoryPreviewDTO {
 	geometry := buildParcelGeometryDTO(row)
 
 	return dto.ViewHistoryPreviewDTO{
@@ -284,7 +327,7 @@ func buildParcelHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWork
 
 		GeometryPreview: geometry,
 		Preview:         buildPreviewHintDTO(geometry, "target-parcel"),
-		FocusTarget:     buildGeometryFocusTargetDTO(geometry),
+		FocusTarget:     buildListFocusTargetDTO(geometry),
 
 		ViewedAt: timeString(h.ViewedAt),
 		ViewContext: dto.ViewHistoryContextDTO{
@@ -303,7 +346,10 @@ func buildParcelHistoryPreview(h qh_domain.QHUserViewHistory, row dto.ParcelWork
 	}
 }
 
-func buildRegionHistoryPreview(h qh_domain.QHUserViewHistory, row dto.RegionWorkspacePreviewRow) dto.ViewHistoryPreviewDTO {
+func buildRegionHistoryPreview(
+	h qh_domain.QHUserViewHistory,
+	row dto.RegionWorkspacePreviewRow,
+) dto.ViewHistoryPreviewDTO {
 	geometry := buildRegionGeometryDTO(row)
 
 	locationLabel := row.PlanningName
@@ -339,7 +385,7 @@ func buildRegionHistoryPreview(h qh_domain.QHUserViewHistory, row dto.RegionWork
 
 		GeometryPreview: geometry,
 		Preview:         buildPreviewHintDTO(geometry, "target-region"),
-		FocusTarget:     buildGeometryFocusTargetDTO(geometry),
+		FocusTarget:     buildListFocusTargetDTO(geometry),
 
 		ViewedAt: timeString(h.ViewedAt),
 		ViewContext: dto.ViewHistoryContextDTO{

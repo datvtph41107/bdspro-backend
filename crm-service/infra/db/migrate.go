@@ -2,17 +2,17 @@ package db
 
 import (
 	_db "common/db"
-	"crm/internal/domain"
+	seo_domain "crm/internal/domain/seo"
 	"log"
 )
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
 		// Core CRM entities
-		&domain.ContactEntity{},
+		// &domain.ContactEntity{},
 		// &domain.LeadEntity{},
 		// &domain.LeadContactEntity{},
-		&domain.OriginProfile{},
+		// &domain.OriginProfile{},
 		// // Pipeline management
 		// &domain.PipelineEntity{},
 		// &domain.StageEntity{},
@@ -52,9 +52,12 @@ func AutoMigrate() {
 
 		// &domain.Appointment{},
 		// &domain.AppointmentParticipant{},
-	// &domain.AppointmentReminder{},
-	// &domain.ContactProductEntity{},
+		// &domain.AppointmentReminder{},
+		// &domain.ContactProductEntity{},
 
+		&seo_domain.SeoDomain{},
+		&seo_domain.SeoInternalLink{},
+		&seo_domain.SeoRelative{},
 	)
 
 	log.Println("Migrate success")

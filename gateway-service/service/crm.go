@@ -36,4 +36,6 @@ func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	_ = crmpb.RegisterRegistryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterEnumServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterAppointmentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+
+	_ = crmpb.RegisterStageServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

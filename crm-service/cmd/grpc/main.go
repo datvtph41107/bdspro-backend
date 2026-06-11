@@ -66,6 +66,7 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterReportAdminServiceServer(s, app.ReportAdminHandler)
 		crmpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)
 		crmpb.RegisterAppointmentServiceServer(s, app.AppointmentService)
+		crmpb.RegisterSeoDomainServiceServer(s, app.SeoDomainHandler)
 		// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
 
 		log.Printf("Listen: %v", port)

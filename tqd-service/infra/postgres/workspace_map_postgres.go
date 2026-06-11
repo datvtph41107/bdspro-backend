@@ -35,7 +35,10 @@ func (p *MapWorkspacePostgres) GetRegionWorkspacePreview(ctx context.Context, re
 	return &rows[0], nil
 }
 
-func (p *MapWorkspacePostgres) GetRegionWorkspacePreviewsByIDs(ctx context.Context, regionIDs []uint64) ([]dto.RegionWorkspacePreviewRow, error) {
+func (p *MapWorkspacePostgres) GetRegionWorkspacePreviewsByIDs(
+	ctx context.Context,
+	regionIDs []uint64,
+) ([]dto.RegionWorkspacePreviewRow, error) {
 	rows := make([]dto.RegionWorkspacePreviewRow, 0)
 
 	if len(regionIDs) == 0 {
@@ -43,68 +46,165 @@ func (p *MapWorkspacePostgres) GetRegionWorkspacePreviewsByIDs(ctx context.Conte
 	}
 
 	query := `
+		WITH src AS (
+			SELECT
+				r.id AS region_id,
+				r.layer_id,
+				COALESCE(r.label_id, 0) AS label_id,
+				COALESCE(r.land_use_id, 0) AS land_use_id,
+				COALESCE(r.legend_id, 0) AS legend_id,
+
+				COALESCE(r.name, '') AS name,
+				COALESCE(r.display_name, '') AS display_name,
+				COALESCE(r.description, '') AS description,
+
+				COALESCE(l.name, '') AS layer_name,
+				COALESCE(l.display_name, '') AS layer_display_name,
+
+				COALESCE(lu.code, '') AS land_use_code,
+				COALESCE(lu.name, '') AS land_use_name,
+				COALESCE(lu.color, '') AS land_use_color,
+				COALESCE(lu.can_build, false) AS can_build,
+
+				COALESCE(lb.name, '') AS label_name,
+				COALESCE(lb.color, '') AS label_color,
+
+				COALESCE(leg.color, '') AS legend_color,
+				COALESCE(leg.legend_type, '') AS legend_type,
+				COALESCE(leg.geometry_type, '') AS geometry_type,
+
+				COALESCE(r.legal_doc, '') AS legal_doc,
+				COALESCE(r.planning_name, '') AS planning_name,
+
+				COALESCE(r.area_sqm, 0) AS area_sqm,
+				COALESCE(r.area_ha, 0) AS area_ha,
+				COALESCE(r.perimeter_m, 0) AS perimeter_m,
+
+				ST_Multi(
+					ST_CollectionExtract(
+						ST_MakeValid(r.geometry),
+						3
+					)
+				)::geometry(MultiPolygon, 4326) AS geom,
+
+				'' AS province,
+				'' AS province_code,
+				'' AS ward_code
+			FROM qh_regions r
+			JOIN qh_layers l
+				ON l.id = r.layer_id
+			   AND l.deleted_at IS NULL
+			   AND l.status = 10
+			LEFT JOIN qh_labels lb
+				ON lb.id = r.label_id
+			   AND lb.deleted_at IS NULL
+			LEFT JOIN qh_land_use lu
+				ON lu.id = r.land_use_id
+			LEFT JOIN qh_legends leg
+				ON leg.id = r.legend_id
+			WHERE r.id IN ?
+			  AND r.deleted_at IS NULL
+			  AND r.status = 10
+			  AND r.is_latest = true
+			  AND r.geometry IS NOT NULL
+			  AND NOT ST_IsEmpty(r.geometry)
+		),
+		metric AS (
+			SELECT
+				src.*,
+				ST_Transform(src.geom, 3857) AS geom_m,
+				Box2D(ST_Transform(src.geom, 3857)) AS box_m
+			FROM src
+		),
+		simplified AS (
+			SELECT
+				metric.*,
+
+				/*
+				 Region có thể rất lớn.
+				 List preview chỉ cần shape tổng thể.
+				 - min 2m
+				 - max 80m
+				 - /220 giữ đủ hình dáng cho thumbnail.
+				*/
+				LEAST(
+					80.0,
+					GREATEST(
+						2.0,
+						GREATEST(
+							ST_XMax(metric.box_m) - ST_XMin(metric.box_m),
+							ST_YMax(metric.box_m) - ST_YMin(metric.box_m)
+						) / 220.0
+					)
+				) AS tol_m
+			FROM metric
+		),
+		preview AS (
+			SELECT
+				simplified.*,
+				ST_Transform(
+					ST_Multi(
+						ST_CollectionExtract(
+							ST_MakeValid(
+								ST_SimplifyPreserveTopology(
+									ST_RemoveRepeatedPoints(simplified.geom_m, 0.50),
+									simplified.tol_m
+								)
+							),
+							3
+						)
+					),
+					4326
+				)::geometry(MultiPolygon, 4326) AS preview_geom
+			FROM simplified
+		)
 		SELECT
-			r.id AS region_id,
-			r.layer_id,
-			COALESCE(r.label_id, 0) AS label_id,
-			COALESCE(r.land_use_id, 0) AS land_use_id,
-			COALESCE(r.legend_id, 0) AS legend_id,
+			region_id,
+			layer_id,
+			label_id,
+			land_use_id,
+			legend_id,
 
-			COALESCE(r.name, '') AS name,
-			COALESCE(r.display_name, '') AS display_name,
-			COALESCE(r.description, '') AS description,
+			name,
+			display_name,
+			description,
 
-			COALESCE(l.name, '') AS layer_name,
-			COALESCE(l.display_name, '') AS layer_display_name,
+			layer_name,
+			layer_display_name,
 
-			COALESCE(lu.code, '') AS land_use_code,
-			COALESCE(lu.name, '') AS land_use_name,
-			COALESCE(lu.color, '') AS land_use_color,
-			COALESCE(lu.can_build, false) AS can_build,
+			land_use_code,
+			land_use_name,
+			land_use_color,
+			can_build,
 
-			COALESCE(lb.name, '') AS label_name,
-			COALESCE(lb.color, '') AS label_color,
+			label_name,
+			label_color,
 
-			COALESCE(leg.color, '') AS legend_color,
-			COALESCE(leg.legend_type, '') AS legend_type,
-			COALESCE(leg.geometry_type, '') AS geometry_type,
+			legend_color,
+			legend_type,
+			geometry_type,
 
-			COALESCE(r.legal_doc, '') AS legal_doc,
-			COALESCE(r.planning_name, '') AS planning_name,
+			legal_doc,
+			planning_name,
 
-			COALESCE(r.area_sqm, 0) AS area_sqm,
-			COALESCE(r.area_ha, 0) AS area_ha,
-			COALESCE(r.perimeter_m, 0) AS perimeter_m,
+			area_sqm,
+			area_ha,
+			perimeter_m,
 
-			COALESCE(ST_Y(ST_PointOnSurface(r.geometry)), 0) AS center_lat,
-			COALESCE(ST_X(ST_PointOnSurface(r.geometry)), 0) AS center_lon,
+			COALESCE(ST_Y(ST_PointOnSurface(geom)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(geom)), 0) AS center_lon,
 
-			COALESCE(ST_XMin(Box2D(r.geometry)), 0) AS min_lon,
-			COALESCE(ST_YMin(Box2D(r.geometry)), 0) AS min_lat,
-			COALESCE(ST_XMax(Box2D(r.geometry)), 0) AS max_lon,
-			COALESCE(ST_YMax(Box2D(r.geometry)), 0) AS max_lat,
+			COALESCE(ST_XMin(Box2D(geom)), 0) AS min_lon,
+			COALESCE(ST_YMin(Box2D(geom)), 0) AS min_lat,
+			COALESCE(ST_XMax(Box2D(geom)), 0) AS max_lon,
+			COALESCE(ST_YMax(Box2D(geom)), 0) AS max_lat,
 
-			ST_AsGeoJSON(r.geometry) AS geo_json,
+			COALESCE(ST_AsGeoJSON(preview_geom, 6), '') AS geo_json,
 
-			'' AS province,
-			'' AS province_code,
-			'' AS ward_code
-		FROM qh_regions r
-		JOIN qh_layers l
-			ON l.id = r.layer_id
-		   AND l.deleted_at IS NULL
-		   AND l.status = 10
-		LEFT JOIN qh_labels lb
-			ON lb.id = r.label_id
-		   AND lb.deleted_at IS NULL
-		LEFT JOIN qh_land_use lu
-			ON lu.id = r.land_use_id
-		LEFT JOIN qh_legends leg
-			ON leg.id = r.legend_id
-		WHERE r.id IN ?
-		  AND r.deleted_at IS NULL
-		  AND r.status = 10
-		  AND r.is_latest = true
+			province,
+			province_code,
+			ward_code
+		FROM preview
 	`
 
 	if err := p.DB.WithContext(ctx).Raw(query, regionIDs).Scan(&rows).Error; err != nil {
@@ -127,78 +227,150 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreview(ctx context.Context, pa
 	return &rows[0], nil
 }
 
-func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(ctx context.Context, parcelIDs []uint64) ([]dto.ParcelWorkspacePreviewRow, error) {
+func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(
+	ctx context.Context,
+	parcelIDs []uint64,
+) ([]dto.ParcelWorkspacePreviewRow, error) {
 	rows := make([]dto.ParcelWorkspacePreviewRow, 0)
 
-	log.Printf(
-		"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][START] inputIDsLen=%d inputIDs=%v",
-		len(parcelIDs),
-		parcelIDs,
-	)
-
 	if len(parcelIDs) == 0 {
-		log.Printf(
-			"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][RETURN_EMPTY_INPUT] rowsNil=%v rowsLen=%d",
-			rows == nil,
-			len(rows),
-		)
 		return rows, nil
 	}
 
 	query := `
+		WITH src AS (
+			SELECT
+				p.id AS parcel_id,
+				COALESCE(p.lat, 0) AS lat,
+				COALESCE(p.lon, 0) AS lon,
+
+				COALESCE(pi.total_area_sqm, 0) AS area_sqm,
+				COALESCE(pi.address_text, '') AS address,
+
+				COALESCE(pi.map_number, '') AS map_number,
+				COALESCE(pi.land_number, '') AS land_number,
+
+				ST_Multi(
+					ST_CollectionExtract(
+						ST_MakeValid(p.geometry),
+						3
+					)
+				)::geometry(MultiPolygon, 4326) AS geom,
+
+				COALESCE(prov.full_name, '') AS province,
+				COALESCE(pi.province_code, '') AS province_code,
+				COALESCE(pi.ward_code, '') AS ward_code
+			FROM parcels p
+			LEFT JOIN qh_parcel_info pi
+				ON pi.parcel_id = p.id
+			LEFT JOIN province_v2 prov
+				ON pi.province_code = prov.code
+			WHERE p.id IN ?
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			  AND NOT ST_IsEmpty(p.geometry)
+		),
+		metric AS (
+			SELECT
+				src.*,
+				ST_Transform(src.geom, 3857) AS geom_m,
+				Box2D(ST_Transform(src.geom, 3857)) AS box_m
+			FROM src
+		),
+		simplified AS (
+			SELECT
+				metric.*,
+
+				/*
+				 Dynamic tolerance theo kích thước parcel.
+
+				 Thumbnail trong SubPanel chỉ khoảng 64px,
+				 nên không cần trả full geometry.
+
+				 - min 0.03m: parcel nhỏ vẫn giữ shape.
+				 - max 1.50m: parcel lớn không làm payload quá nặng.
+				 - /128: tương ứng độ phân giải preview nhỏ.
+				*/
+				LEAST(
+					1.50,
+					GREATEST(
+						0.03,
+						GREATEST(
+							ST_XMax(metric.box_m) - ST_XMin(metric.box_m),
+							ST_YMax(metric.box_m) - ST_YMin(metric.box_m)
+						) / 128.0
+					)
+				) AS tol_m
+			FROM metric
+		),
+		preview AS (
+			SELECT
+				simplified.*,
+				ST_Transform(
+					ST_Multi(
+						ST_CollectionExtract(
+							ST_MakeValid(
+								ST_SimplifyPreserveTopology(
+									ST_RemoveRepeatedPoints(simplified.geom_m, 0.01),
+									simplified.tol_m
+								)
+							),
+							3
+						)
+					),
+					4326
+				)::geometry(MultiPolygon, 4326) AS preview_geom
+			FROM simplified
+		)
 		SELECT
-			p.id AS parcel_id,
-			COALESCE(p.lat, 0) AS lat,
-			COALESCE(p.lon, 0) AS lon,
+			parcel_id,
+			lat,
+			lon,
 
-			COALESCE(pi.total_area_sqm, 0) AS area_sqm,
-			COALESCE(pi.address_text, '') AS address,
+			area_sqm,
+			address,
 
-			COALESCE(pi.map_number, '') AS map_number,
-			COALESCE(pi.land_number, '') AS land_number,
+			map_number,
+			land_number,
 
-			ST_AsGeoJSON(p.geometry) AS geometry_geojson,
-			GeometryType(p.geometry) AS geometry_type,
+			/*
+			 Đây là dòng sửa quan trọng nhất.
 
-			ST_XMin(Box2D(p.geometry)) AS min_lon,
-			ST_YMin(Box2D(p.geometry)) AS min_lat,
-			ST_XMax(Box2D(p.geometry)) AS max_lon,
-			ST_YMax(Box2D(p.geometry)) AS max_lat,
+			 Cũ:
+			   AS geometry_geojson
 
-			ST_Y(ST_PointOnSurface(p.geometry)) AS centroid_lat,
-			ST_X(ST_PointOnSurface(p.geometry)) AS centroid_lon,
+			 Mới:
+			   AS geometry_geo_json
 
-			COALESCE(prov.full_name, '') AS province,
-			COALESCE(pi.province_code, '') AS province_code,
-			COALESCE(pi.ward_code, '') AS ward_code
-		FROM parcels p
-		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
-		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
-		WHERE p.id IN ?
-		  AND p.deleted_at IS NULL
+			 để scan đúng vào DTO.GeometryGeoJSON.
+			*/
+			COALESCE(ST_AsGeoJSON(preview_geom, 6), '') AS geometry_geo_json,
+
+			GeometryType(geom) AS geometry_type,
+
+			COALESCE(ST_XMin(Box2D(geom)), 0) AS min_lon,
+			COALESCE(ST_YMin(Box2D(geom)), 0) AS min_lat,
+			COALESCE(ST_XMax(Box2D(geom)), 0) AS max_lon,
+			COALESCE(ST_YMax(Box2D(geom)), 0) AS max_lat,
+
+			COALESCE(ST_Y(ST_PointOnSurface(geom)), 0) AS centroid_lat,
+			COALESCE(ST_X(ST_PointOnSurface(geom)), 0) AS centroid_lon,
+
+			province,
+			province_code,
+			ward_code
+		FROM preview
 	`
 
 	if err := p.DB.WithContext(ctx).Raw(query, parcelIDs).Scan(&rows).Error; err != nil {
 		log.Printf(
-			"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][ERROR] inputIDsLen=%d err=%v",
+			"[MapWorkspaceRepo][GetParcelWorkspacePreviewsByIDs] inputIDsLen=%d err=%v",
 			len(parcelIDs),
 			err,
 		)
+
 		return nil, fmt.Errorf("get parcel workspace previews failed: %w", err)
 	}
-
-	returnedIDs := make([]uint64, 0, len(rows))
-	for _, row := range rows {
-		returnedIDs = append(returnedIDs, row.ParcelID)
-	}
-
-	log.Printf(
-		"[DEBUG][Repo][GetParcelWorkspacePreviewsByIDs][RETURN] inputIDsLen=%d rowsNil=%v rowsLen=%d returnedIDs=%v",
-		len(parcelIDs),
-		rows == nil,
-		len(rows),
-		returnedIDs,
-	)
 
 	return rows, nil
 }
