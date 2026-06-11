@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"crm/initial"
 	crm_infra_client "crm/infra/client"
 	crm_infra_email_sender "crm/infra/email_sender"
@@ -26,6 +27,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(crm_internal_interface_provider.BdsproProvider), new(*crm_infra_client.BdsproClient)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
 	wire.Bind(new(crm_internal_interface_provider.UserClient), new(*crm_infra_client.UserClient)),
@@ -64,7 +66,6 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewCampaignPostgresRepository,
 	crm_internal_usecase.NewCampaignUsecase,
 	crm_infra_client.NewChatClient,
-	crm_infra_impl.NewCommonRedisProvider,
 	crm_infra_mapper.NewContactMapper,
 	crm_infra_postgre.NewContactProductPostgre,
 	crm_infra_postgre.NewContactRepo,
@@ -134,7 +135,6 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewSharingAccessUsecase,
 	crm_infra_handler.NewStageService,
 	crm_internal_usecase.NewStageUsecase,
-	crm_infra_impl.NewSyncProvider,
 	crm_infra_mapper.NewTagMapper,
 	crm_infra_postgre.NewTagPostgres,
 	crm_infra_handler.NewTagService,
