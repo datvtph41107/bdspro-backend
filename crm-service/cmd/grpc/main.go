@@ -84,6 +84,7 @@ var GrpcCmd = &cobra.Command{
 		log.Printf("Listen: %v", port)
 
 		startScheduler(app)
+		startSeoScheduler(app)
 
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("gRPC server error: %v", err)

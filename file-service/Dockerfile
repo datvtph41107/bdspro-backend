@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 WORKDIR /
 
-COPY docs docs
+COPY docs docsp
 
 COPY config config
 
