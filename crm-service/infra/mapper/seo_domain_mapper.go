@@ -5,6 +5,8 @@ import (
 	"time"
 
 	crmpb "pb/types/crm"
+
+	"gorm.io/datatypes"
 )
 
 type SeoDomainMapper struct{}
@@ -30,22 +32,38 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 	}
 
 	return &crmpb.SeoDomainResponse{
-		Id:              seo.ID,
-		OriginUrl:       seo.OriginURL,
-		CanonicalUrl:    seo.CanonicalURL,
-		Classify:        uint32(seo.Classify),
-		SiteMapLastedAt: formatTimePtr(seo.SiteMapLastedAt),
-		IsSiteMap:       seo.IsSiteMap,
-		IsIndex:         seo.IsIndex,
-		IsRobot:         seo.IsRobot,
-		Metadata:        seo.Metadata,
-		Note:            seo.Note,
-		RefType:         uint32(seo.RefType),
-		RefId:           seo.RefID,
-		InternalLinks:   links,
-		Relatives:       relatives,
-		CreatedAt:       formatTime(seo.CreatedAt),
-		UpdatedAt:       formatTime(seo.UpdatedAt),
+		Id:                seo.ID,
+		Slug:              seo.Slug,
+		OriginUrl:         seo.OriginURL,
+		CanonicalUrl:      seo.CanonicalURL,
+		RefType:           uint32(seo.RefType),
+		RefId:             seo.RefID,
+		Scope:             seo.Scope,
+		Classify:          uint32(seo.Classify),
+		Title:             seo.Title,
+		Description:       seo.Description,
+		Content:           seo.Content,
+		Summary:           seo.Summary,
+		Published:         seo.Published,
+		PublishedAt:       formatTimePtr(seo.PublishedAt),
+		IsSiteMap:         seo.IsSiteMap,
+		IsIndex:           seo.IsIndex,
+		IsRobot:           seo.IsRobot,
+		SiteMapLastedAt:   formatTimePtr(seo.SiteMapLastedAt),
+		SitemapPriority:   seo.SitemapPriority,
+		SitemapChangeFreq: seo.SitemapChangeFreq,
+		NeedGenerate:      seo.NeedGenerate,
+		GeneratedAt:       formatTimePtr(seo.GeneratedAt),
+		SourceUpdatedAt:   formatTimePtr(seo.SourceUpdatedAt),
+		StaticHtmlPath:    seo.StaticHtmlPath,
+		StaticHtmlHash:    seo.StaticHtmlHash,
+		DeepLink:          seo.DeepLink,
+		Metadata:          jsonToOptionalString(seo.Metadata),
+		Note:              seo.Note,
+		InternalLinks:     links,
+		Relatives:         relatives,
+		CreatedAt:         formatTime(seo.CreatedAt),
+		UpdatedAt:         formatTime(seo.UpdatedAt),
 	}
 }
 
@@ -55,8 +73,11 @@ func (m *SeoDomainMapper) SeoDomainBriefToPb(seo *seo_domain.SeoDomain) *crmpb.S
 	}
 	return &crmpb.SeoDomainBriefResponse{
 		Id:           seo.ID,
+		Slug:         seo.Slug,
 		OriginUrl:    seo.OriginURL,
 		CanonicalUrl: seo.CanonicalURL,
+		Title:        seo.Title,
+		Scope:        seo.Scope,
 		Classify:     uint32(seo.Classify),
 		RefType:      uint32(seo.RefType),
 		RefId:        seo.RefID,
@@ -79,6 +100,8 @@ func (m *SeoDomainMapper) SeoInternalLinkToPb(link *seo_domain.SeoInternalLink) 
 		Id:          link.ID,
 		Link:        link.Link,
 		Title:       link.Title,
+		LinkType:    link.LinkType,
+		Priority:    link.Priority,
 		ParentSeoId: link.ParentSeoID,
 		ChildSeoId:  link.ChildSeoID,
 		ParentSeo:   m.SeoDomainBriefToPb(link.ParentSeo),
@@ -101,13 +124,15 @@ func (m *SeoDomainMapper) SeoRelativeToPb(relative *seo_domain.SeoRelative) *crm
 		return nil
 	}
 	return &crmpb.SeoRelativeResponse{
-		Id:          relative.ID,
-		ParentSeoId: relative.ParentSeoID,
-		ChildSeoId:  relative.ChildSeoID,
-		ParentSeo:   m.SeoDomainBriefToPb(relative.ParentSeo),
-		ChildSeo:    m.SeoDomainBriefToPb(relative.ChildSeo),
-		CreatedAt:   formatTime(relative.CreatedAt),
-		UpdatedAt:   formatTime(relative.UpdatedAt),
+		Id:           relative.ID,
+		ParentSeoId:  relative.ParentSeoID,
+		ChildSeoId:   relative.ChildSeoID,
+		RelationType: relative.RelationType,
+		Priority:     relative.Priority,
+		ParentSeo:    m.SeoDomainBriefToPb(relative.ParentSeo),
+		ChildSeo:     m.SeoDomainBriefToPb(relative.ChildSeo),
+		CreatedAt:    formatTime(relative.CreatedAt),
+		UpdatedAt:    formatTime(relative.UpdatedAt),
 	}
 }
 
@@ -117,6 +142,17 @@ func (m *SeoDomainMapper) SeoRelativeListToPb(items []seo_domain.SeoRelative) []
 		responses = append(responses, m.SeoRelativeToPb(&items[i]))
 	}
 	return responses
+}
+
+func jsonToOptionalString(data datatypes.JSON) *string {
+	if len(data) == 0 {
+		return nil
+	}
+	s := string(data)
+	if s == "" || s == "null" {
+		return nil
+	}
+	return &s
 }
 
 func formatTime(t time.Time) string {

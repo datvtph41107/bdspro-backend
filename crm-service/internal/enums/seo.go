@@ -3,15 +3,15 @@ package enums
 type ESeoClassify uint32
 
 const (
-	// Chứa thông tin chi tiết, trang detail phục vụ long-tail SEO.
+	// SEO-A: detail page phục vụ long-tail và conversion.
 	ESeoClassifyA ESeoClassify = 10
-	// Chứa điều hướng, guide/category/hub page.
+	// SEO-B: guide/category/hub page phục vụ điều hướng và phân bổ authority.
 	ESeoClassifyB ESeoClassify = 20
-	// Kết quả dữ liệu tìm kiếm/faceted search.
+	// SEO-C: search/faceted page cần canonical/dedup rõ.
 	ESeoClassifyC ESeoClassify = 30
-	// Link chia sẻ/viral/preview không phải page SEO chính.
+	// SEO-D: share/preview/viral page, không phải page SEO chính.
 	ESeoClassifyD ESeoClassify = 40
-	// Không phục vụ SEO: login, register, admin, 404, 500...
+	// SEO-N: không phục vụ SEO như login/admin/404/private.
 	ESeoClassifyN ESeoClassify = 50
 )
 
@@ -33,4 +33,24 @@ func SeoClassifyFromUint32(v uint32) ESeoClassify {
 
 func (e ESeoClassify) Uint32() uint32 {
 	return uint32(e)
+}
+
+// IsValidSEORefType kiểm tra refType nằm trong nhóm entity SEO được hỗ trợ.
+// RefType=0 được xem là page SEO độc lập/manual, không gắn entity gốc.
+func IsValidSEORefType(v uint32) bool {
+	if v == 0 {
+		return true
+	}
+	switch ESEORefType(v) {
+	case ESEORefTypeAdmUnit,
+		ESEORefTypeRegion,
+		ESEORefTypeParcel,
+		ESEORefTypeProject,
+		ESEORefTypeDocument,
+		ESEORefTypeMap,
+		ESEORefTypeReport:
+		return true
+	default:
+		return false
+	}
 }

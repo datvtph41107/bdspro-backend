@@ -33,3 +33,22 @@ email:
   password: tuandq2112
   from: tuandq2112@gmail.com
   name: Tuấn Đặng
+
+seo:
+  public_base_url: "http://localhost:3000"
+  internal_secret_key: "local-seo-secret"
+  timezone: "Asia/Ho_Chi_Minh"
+
+  sitemap:
+    default_change_freq: "daily"
+    default_priority: 0.5
+
+  generation_job:
+    enabled: true
+    cron: "0 0 * * *"
+    batch_size: 100
+
+# env thiết lập server
+# export ENV_RUNTIME=develop
+# export SEO_PUBLIC_BASE_URL=https://dev.bdspro.vn
+# export SEO_INTERNAL_SECRET_KEY='<secret>'

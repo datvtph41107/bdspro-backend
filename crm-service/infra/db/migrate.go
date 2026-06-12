@@ -58,6 +58,7 @@ func AutoMigrate() {
 		&seo_domain.SeoDomain{},
 		&seo_domain.SeoInternalLink{},
 		&seo_domain.SeoRelative{},
+		&seo_domain.SeoTrend{},
 	)
 
 	log.Println("Migrate success")

@@ -10,6 +10,7 @@ import (
 
 type InitialApp struct {
 	RuleUsecase              *usecase.RuleUsecase
+	SeoDomainUsecase         *usecase.SeoDomainUsecase
 	RuleEventUsecase         *usecase.RuleEventUsecase
 	PipelineService          *handler.PipelineService
 	ContactService           *handler.ContactService
@@ -37,6 +38,7 @@ type InitialApp struct {
 
 func NewInitialApp(
 	ruleUsecase *usecase.RuleUsecase,
+	seoDomainRuntimeUsecase *usecase.SeoDomainUsecase,
 	ruleEventUsecase *usecase.RuleEventUsecase,
 	pipelineService *handler.PipelineService,
 	contactService *handler.ContactService,
@@ -62,6 +64,7 @@ func NewInitialApp(
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
+		SeoDomainUsecase:         seoDomainRuntimeUsecase,
 		RuleEventUsecase:         ruleEventUsecase,
 		PipelineService:          pipelineService,
 		ContactService:           contactService,

@@ -6,6 +6,7 @@ import (
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"crm/internal/repo"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -28,11 +29,36 @@ func (r *SeoDomainPostgres) Create(ctx context.Context, seo *seo_domain.SeoDomai
 func (r *SeoDomainPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain.SeoDomain, error) {
 	var seo seo_domain.SeoDomain
 	err := r.db.WithContext(ctx).
-		Preload("InternalLinks", "deleted_at IS NULL").
+		Preload("InternalLinks", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
 		Preload("InternalLinks.ChildSeo").
-		Preload("Relatives", "deleted_at IS NULL").
+		Preload("Relatives", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
 		Preload("Relatives.ChildSeo").
-		Where("id = ? AND deleted_at IS NULL", id).
+		First(&seo, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &seo, nil
+}
+
+func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error) {
+	var seo seo_domain.SeoDomain
+	err := r.db.WithContext(ctx).
+		Preload("InternalLinks", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
+		Preload("InternalLinks.ChildSeo").
+		Preload("Relatives", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
+		Preload("Relatives.ChildSeo").
+		Where("ref_type = ? AND ref_id = ?", refType, refID).
 		First(&seo).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -47,16 +73,26 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	var items []seo_domain.SeoDomain
 	var total int64
 
-	query := r.db.WithContext(ctx).
-		Model(&seo_domain.SeoDomain{}).
-		Where("deleted_at IS NULL")
+	query := r.db.WithContext(ctx).Model(&seo_domain.SeoDomain{})
 
 	if req.Keyword != nil && *req.Keyword != "" {
 		keyword := "%" + *req.Keyword + "%"
-		query = query.Where("origin_url ILIKE ? OR canonical_url ILIKE ? OR note ILIKE ?", keyword, keyword, keyword)
+		query = query.Where("slug ILIKE ? OR origin_url ILIKE ? OR canonical_url ILIKE ? OR title ILIKE ? OR description ILIKE ? OR note ILIKE ?", keyword, keyword, keyword, keyword, keyword, keyword)
+	}
+	if req.RefType != nil {
+		query = query.Where("ref_type = ?", *req.RefType)
+	}
+	if req.RefID != nil {
+		query = query.Where("ref_id = ?", *req.RefID)
+	}
+	if req.Scope != nil && *req.Scope != "" {
+		query = query.Where("scope = ?", *req.Scope)
 	}
 	if req.Classify != nil {
 		query = query.Where("classify = ?", *req.Classify)
+	}
+	if req.Published != nil {
+		query = query.Where("published = ?", *req.Published)
 	}
 	if req.IsSiteMap != nil {
 		query = query.Where("is_site_map = ?", *req.IsSiteMap)
@@ -67,11 +103,8 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	if req.IsRobot != nil {
 		query = query.Where("is_robot = ?", *req.IsRobot)
 	}
-	if req.RefType != nil {
-		query = query.Where("ref_type = ?", *req.RefType)
-	}
-	if req.RefID != nil {
-		query = query.Where("ref_id = ?", *req.RefID)
+	if req.NeedGenerate != nil {
+		query = query.Where("need_generate = ?", *req.NeedGenerate)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -79,43 +112,86 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 
 	if err := query.
-		Preload("InternalLinks", "deleted_at IS NULL").
-		Preload("Relatives", "deleted_at IS NULL").
 		Order("updated_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&items).Error; err != nil {
 		return nil, 0, err
 	}
-
 	return items, total, nil
 }
 
 func (r *SeoDomainPostgres) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoDomain{}).
-		Where("id = ? AND deleted_at IS NULL", id).
+		Where("id = ?", id).
 		Updates(updates).Error
 }
 
 func (r *SeoDomainPostgres) Delete(ctx context.Context, id uint64) error {
-	return impl.GetDB(ctx, r.db).
-		Model(&seo_domain.SeoDomain{}).
-		Where("id = ? AND deleted_at IS NULL", id).
-		Update("deleted_at", gorm.Expr("NOW()")).Error
+	return impl.GetDB(ctx, r.db).Delete(&seo_domain.SeoDomain{}, id).Error
 }
 
 func (r *SeoDomainPostgres) ExistByCanonicalURL(ctx context.Context, canonicalURL string, ignoreID *uint64) (bool, error) {
 	var count int64
 	query := r.db.WithContext(ctx).
 		Model(&seo_domain.SeoDomain{}).
-		Where("canonical_url = ? AND deleted_at IS NULL", canonicalURL)
+		Where("canonical_url = ?", canonicalURL)
 	if ignoreID != nil {
 		query = query.Where("id <> ?", *ignoreID)
 	}
 	err := query.Count(&count).Error
 	return count > 0, err
 }
+
+func (r *SeoDomainPostgres) MarkNeedGenerateByRef(ctx context.Context, refType uint32, refID uint64, sourceUpdatedAt time.Time) error {
+	return impl.GetDB(ctx, r.db).
+		Model(&seo_domain.SeoDomain{}).
+		Where("ref_type = ? AND ref_id = ?", refType, refID).
+		Updates(map[string]interface{}{
+			"need_generate":     true,
+			"source_updated_at": sourceUpdatedAt,
+			"updated_at":        gorm.Expr("NOW()"),
+		}).Error
+}
+
+func (r *SeoDomainPostgres) GetSitemapItems(ctx context.Context, scope *string) ([]dto.SeoSitemapItem, error) {
+	var rows []dto.SeoSitemapItem
+	query := r.db.WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Select(`
+			canonical_url AS canonical_url,
+			COALESCE(site_map_lasted_at, updated_at) AS site_map_lasted_at,
+			updated_at AS updated_at,
+			sitemap_priority AS sitemap_priority,
+			sitemap_change_freq AS sitemap_change_freq
+		`).
+		Where("published = ? AND is_site_map = ? AND is_index = ? AND classify <> ?", true, true, true, 50)
+	if scope != nil && *scope != "" {
+		query = query.Where("scope = ?", *scope)
+	}
+	if err := query.Order("updated_at DESC").Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *SeoDomainPostgres) GetNeedGenerateList(ctx context.Context, limit int) ([]seo_domain.SeoDomain, error) {
+	var items []seo_domain.SeoDomain
+	if limit <= 0 || limit > 1000 {
+		limit = 100
+	}
+	err := r.db.WithContext(ctx).
+		Where("need_generate = ? AND published = ?", true, true).
+		Order("source_updated_at ASC NULLS FIRST, updated_at ASC").
+		Limit(limit).
+		Find(&items).Error
+	return items, err
+}
+
+// -----------------------------------------------------------------------------
+// Internal links
+// -----------------------------------------------------------------------------
 
 type SeoInternalLinkPostgres struct {
 	db *gorm.DB
@@ -137,8 +213,7 @@ func (r *SeoInternalLinkPostgres) GetByID(ctx context.Context, id uint64) (*seo_
 	err := r.db.WithContext(ctx).
 		Preload("ParentSeo").
 		Preload("ChildSeo").
-		Where("id = ? AND deleted_at IS NULL", id).
-		First(&link).Error
+		First(&link, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -151,15 +226,16 @@ func (r *SeoInternalLinkPostgres) GetByID(ctx context.Context, id uint64) (*seo_
 func (r *SeoInternalLinkPostgres) GetList(ctx context.Context, req *dto.SeoInternalLinkListRequest) ([]seo_domain.SeoInternalLink, int64, error) {
 	var items []seo_domain.SeoInternalLink
 	var total int64
-	query := r.db.WithContext(ctx).
-		Model(&seo_domain.SeoInternalLink{}).
-		Where("deleted_at IS NULL")
+	query := r.db.WithContext(ctx).Model(&seo_domain.SeoInternalLink{})
 
 	if req.ParentSeoID != nil {
 		query = query.Where("parent_seo_id = ?", *req.ParentSeoID)
 	}
 	if req.ChildSeoID != nil {
 		query = query.Where("child_seo_id = ?", *req.ChildSeoID)
+	}
+	if req.LinkType != nil && *req.LinkType != "" {
+		query = query.Where("link_type = ?", *req.LinkType)
 	}
 	if req.Keyword != nil && *req.Keyword != "" {
 		keyword := "%" + *req.Keyword + "%"
@@ -172,7 +248,7 @@ func (r *SeoInternalLinkPostgres) GetList(ctx context.Context, req *dto.SeoInter
 	if err := query.
 		Preload("ParentSeo").
 		Preload("ChildSeo").
-		Order("updated_at DESC").
+		Order("priority DESC, updated_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&items).Error; err != nil {
@@ -184,28 +260,35 @@ func (r *SeoInternalLinkPostgres) GetList(ctx context.Context, req *dto.SeoInter
 func (r *SeoInternalLinkPostgres) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoInternalLink{}).
-		Where("id = ? AND deleted_at IS NULL", id).
+		Where("id = ?", id).
 		Updates(updates).Error
 }
 
 func (r *SeoInternalLinkPostgres) Delete(ctx context.Context, id uint64) error {
-	return impl.GetDB(ctx, r.db).
-		Model(&seo_domain.SeoInternalLink{}).
-		Where("id = ? AND deleted_at IS NULL", id).
-		Update("deleted_at", gorm.Expr("NOW()")).Error
+	return impl.GetDB(ctx, r.db).Delete(&seo_domain.SeoInternalLink{}, id).Error
 }
 
-func (r *SeoInternalLinkPostgres) Exist(ctx context.Context, parentSeoID uint64, childSeoID uint64, ignoreID *uint64) (bool, error) {
+func (r *SeoInternalLinkPostgres) DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error {
+	return impl.GetDB(ctx, r.db).
+		Where("parent_seo_id = ? OR child_seo_id = ?", seoDomainID, seoDomainID).
+		Delete(&seo_domain.SeoInternalLink{}).Error
+}
+
+func (r *SeoInternalLinkPostgres) Exist(ctx context.Context, parentSeoID uint64, childSeoID uint64, linkType string, ignoreID *uint64) (bool, error) {
 	var count int64
 	query := r.db.WithContext(ctx).
 		Model(&seo_domain.SeoInternalLink{}).
-		Where("parent_seo_id = ? AND child_seo_id = ? AND deleted_at IS NULL", parentSeoID, childSeoID)
+		Where("parent_seo_id = ? AND child_seo_id = ? AND link_type = ?", parentSeoID, childSeoID, linkType)
 	if ignoreID != nil {
 		query = query.Where("id <> ?", *ignoreID)
 	}
 	err := query.Count(&count).Error
 	return count > 0, err
 }
+
+// -----------------------------------------------------------------------------
+// Relatives
+// -----------------------------------------------------------------------------
 
 type SeoRelativePostgres struct {
 	db *gorm.DB
@@ -227,8 +310,7 @@ func (r *SeoRelativePostgres) GetByID(ctx context.Context, id uint64) (*seo_doma
 	err := r.db.WithContext(ctx).
 		Preload("ParentSeo").
 		Preload("ChildSeo").
-		Where("id = ? AND deleted_at IS NULL", id).
-		First(&relative).Error
+		First(&relative, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -241,15 +323,16 @@ func (r *SeoRelativePostgres) GetByID(ctx context.Context, id uint64) (*seo_doma
 func (r *SeoRelativePostgres) GetList(ctx context.Context, req *dto.SeoRelativeListRequest) ([]seo_domain.SeoRelative, int64, error) {
 	var items []seo_domain.SeoRelative
 	var total int64
-	query := r.db.WithContext(ctx).
-		Model(&seo_domain.SeoRelative{}).
-		Where("deleted_at IS NULL")
+	query := r.db.WithContext(ctx).Model(&seo_domain.SeoRelative{})
 
 	if req.ParentSeoID != nil {
 		query = query.Where("parent_seo_id = ?", *req.ParentSeoID)
 	}
 	if req.ChildSeoID != nil {
 		query = query.Where("child_seo_id = ?", *req.ChildSeoID)
+	}
+	if req.RelationType != nil && *req.RelationType != "" {
+		query = query.Where("relation_type = ?", *req.RelationType)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -258,7 +341,7 @@ func (r *SeoRelativePostgres) GetList(ctx context.Context, req *dto.SeoRelativeL
 	if err := query.
 		Preload("ParentSeo").
 		Preload("ChildSeo").
-		Order("updated_at DESC").
+		Order("priority DESC, updated_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&items).Error; err != nil {
@@ -268,17 +351,20 @@ func (r *SeoRelativePostgres) GetList(ctx context.Context, req *dto.SeoRelativeL
 }
 
 func (r *SeoRelativePostgres) Delete(ctx context.Context, id uint64) error {
-	return impl.GetDB(ctx, r.db).
-		Model(&seo_domain.SeoRelative{}).
-		Where("id = ? AND deleted_at IS NULL", id).
-		Update("deleted_at", gorm.Expr("NOW()")).Error
+	return impl.GetDB(ctx, r.db).Delete(&seo_domain.SeoRelative{}, id).Error
 }
 
-func (r *SeoRelativePostgres) Exist(ctx context.Context, parentSeoID uint64, childSeoID uint64) (bool, error) {
+func (r *SeoRelativePostgres) DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error {
+	return impl.GetDB(ctx, r.db).
+		Where("parent_seo_id = ? OR child_seo_id = ?", seoDomainID, seoDomainID).
+		Delete(&seo_domain.SeoRelative{}).Error
+}
+
+func (r *SeoRelativePostgres) Exist(ctx context.Context, parentSeoID uint64, childSeoID uint64, relationType string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&seo_domain.SeoRelative{}).
-		Where("parent_seo_id = ? AND child_seo_id = ? AND deleted_at IS NULL", parentSeoID, childSeoID).
+		Where("parent_seo_id = ? AND child_seo_id = ? AND relation_type = ?", parentSeoID, childSeoID, relationType).
 		Count(&count).Error
 	return count > 0, err
 }

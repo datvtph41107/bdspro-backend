@@ -7,11 +7,6 @@ option go_package = "pb/types/crm;crmpb";
 import "shared/common.proto";
 import "google/api/annotations.proto";
 
-// SEO Domain Service
-// Convention theo ReportService:
-// - Field proto dùng camelCase theo codebase hiện tại.
-// - Timestamp trong response là string: createdAt, updatedAt, siteMapLastedAt.
-// - Enum truyền bằng uint32, mapping qua crm/internal/enums/*.go.
 service SeoDomainService {
   rpc CreateSeoDomain(CreateSeoDomainRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
@@ -42,6 +37,39 @@ service SeoDomainService {
   rpc DeleteSeoDomain(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       delete: "/v2/crm/admin/seo-domains/{id}"
+    };
+  }
+
+  rpc TouchSeoDomainByRef(TouchSeoDomainByRefRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/touch-by-ref"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoSitemap(GetSeoSitemapRequest) returns (SeoSitemapXmlResponse) {
+    option (google.api.http) = {
+      get: "/v2/seo/sitemap.xml"
+    };
+  }
+
+  rpc GetInternalSeoRenderData(GetInternalSeoRenderDataRequest) returns (InternalSeoRenderDataResponse) {
+    option (google.api.http) = {
+      get: "/v2/internal/seo/render-data/{refType}/{refId}"
+    };
+  }
+
+
+
+  rpc GetInternalSeoRenderDataBySlug(GetInternalSeoRenderDataBySlugRequest) returns (InternalSeoRenderDataResponse) {
+    option (google.api.http) = {
+      get: "/v2/internal/seo/render-data/by-slug/{slug}"
+    };
+  }
+
+  rpc GetInternalSeoStaticPaths(GetInternalSeoStaticPathsRequest) returns (GetInternalSeoStaticPathsResponse) {
+    option (google.api.http) = {
+      get: "/v2/internal/seo/static-paths"
     };
   }
 
@@ -92,48 +120,79 @@ service SeoDomainService {
 }
 
 message CreateSeoDomainRequest {
-  string originUrl = 1;
-  optional string canonicalUrl = 2;
-  uint32 classify = 3;
-  optional string siteMapLastedAt = 4;
-  bool isSiteMap = 5;
-  bool isIndex = 6;
-  optional bool isRobot = 7;
-  optional string metadata = 8;
-  string note = 9;
-  uint32 refType = 10;
-  optional uint64 refId = 11;
-}
-
-message GetSeoDomainListRequest {
-  optional string keyword = 1;
-  optional uint32 classify = 2;
-  optional bool isSiteMap = 3;
-  optional bool isIndex = 4;
-  optional bool isRobot = 5;
-  optional uint32 refType = 6;
-  optional uint64 refId = 7;
-  uint32 page = 8;
-  uint32 size = 9;
+  string slug = 1;
+  string originUrl = 2;
+  optional string canonicalUrl = 3;
+  uint32 refType = 4;
+  optional uint64 refId = 5;
+  string scope = 6;
+  uint32 classify = 7;
+  string title = 8;
+  string description = 9;
+  string content = 10;
+  string summary = 11;
+  bool published = 12;
+  optional string publishedAt = 13;
+  bool isSiteMap = 14;
+  bool isIndex = 15;
+  optional bool isRobot = 16;
+  optional string siteMapLastedAt = 17;
+  float sitemapPriority = 18;
+  string sitemapChangeFreq = 19;
+  optional bool needGenerate = 20;
+  optional string generatedAt = 21;
+  optional string sourceUpdatedAt = 22;
+  string staticHtmlPath = 23;
+  string staticHtmlHash = 24;
+  string deepLink = 25;
+  optional string metadata = 26;
+  string note = 27;
 }
 
 message UpdateSeoDomainRequest {
   uint64 id = 1;
-  optional string originUrl = 2;
-  optional string canonicalUrl = 3;
-  optional uint32 classify = 4;
-  optional string siteMapLastedAt = 5;
-  optional bool isSiteMap = 6;
-  optional bool isIndex = 7;
-  optional bool isRobot = 8;
-  optional string metadata = 9;
-  optional string note = 10;
-  optional uint32 refType = 11;
-  optional uint64 refId = 12;
+  optional string slug = 2;
+  optional string originUrl = 3;
+  optional string canonicalUrl = 4;
+  optional uint32 refType = 5;
+  optional uint64 refId = 6;
+  optional string scope = 7;
+  optional uint32 classify = 8;
+  optional string title = 9;
+  optional string description = 10;
+  optional string content = 11;
+  optional string summary = 12;
+  optional bool published = 13;
+  optional string publishedAt = 14;
+  optional bool isSiteMap = 15;
+  optional bool isIndex = 16;
+  optional bool isRobot = 17;
+  optional string siteMapLastedAt = 18;
+  optional float sitemapPriority = 19;
+  optional string sitemapChangeFreq = 20;
+  optional bool needGenerate = 21;
+  optional string generatedAt = 22;
+  optional string sourceUpdatedAt = 23;
+  optional string staticHtmlPath = 24;
+  optional string staticHtmlHash = 25;
+  optional string deepLink = 26;
+  optional string metadata = 27;
+  optional string note = 28;
 }
 
-message UpdateSeoDomainResponse {
-  SeoDomainResponse seoDomain = 1;
+message GetSeoDomainListRequest {
+  optional string keyword = 1;
+  optional uint32 refType = 2;
+  optional uint64 refId = 3;
+  optional string scope = 4;
+  optional uint32 classify = 5;
+  optional bool published = 6;
+  optional bool isSiteMap = 7;
+  optional bool isIndex = 8;
+  optional bool isRobot = 9;
+  optional bool needGenerate = 10;
+  uint32 page = 11;
+  uint32 size = 12;
 }
 
 message GetSeoDomainListResponse {
@@ -141,59 +200,132 @@ message GetSeoDomainListResponse {
   int64 total = 2;
 }
 
+message UpdateSeoDomainResponse {
+  SeoDomainResponse seoDomain = 1;
+}
+
 message SeoDomainResponse {
   uint64 id = 1;
-  string originUrl = 2;
-  string canonicalUrl = 3;
-  uint32 classify = 4;
-  string siteMapLastedAt = 5;
-  bool isSiteMap = 6;
-  bool isIndex = 7;
-  optional bool isRobot = 8;
-  optional string metadata = 9;
-  string note = 10;
-  uint32 refType = 11;
-  optional uint64 refId = 12;
-  repeated SeoInternalLinkResponse internalLinks = 13;
-  repeated SeoRelativeResponse relatives = 14;
-  string createdAt = 15;
-  string updatedAt = 16;
+  string slug = 2;
+  string originUrl = 3;
+  string canonicalUrl = 4;
+  uint32 refType = 5;
+  optional uint64 refId = 6;
+  string scope = 7;
+  uint32 classify = 8;
+  string title = 9;
+  string description = 10;
+  string content = 11;
+  string summary = 12;
+  bool published = 13;
+  string publishedAt = 14;
+  bool isSiteMap = 15;
+  bool isIndex = 16;
+  optional bool isRobot = 17;
+  string siteMapLastedAt = 18;
+  float sitemapPriority = 19;
+  string sitemapChangeFreq = 20;
+  bool needGenerate = 21;
+  string generatedAt = 22;
+  string sourceUpdatedAt = 23;
+  string staticHtmlPath = 24;
+  string staticHtmlHash = 25;
+  string deepLink = 26;
+  optional string metadata = 27;
+  string note = 28;
+  repeated SeoInternalLinkResponse internalLinks = 29;
+  repeated SeoRelativeResponse relatives = 30;
+  string createdAt = 31;
+  string updatedAt = 32;
 }
 
 message SeoDomainBriefResponse {
   uint64 id = 1;
-  string originUrl = 2;
+  string slug = 2;
+  string originUrl = 3;
+  string canonicalUrl = 4;
+  string title = 5;
+  string scope = 6;
+  uint32 classify = 7;
+  uint32 refType = 8;
+  optional uint64 refId = 9;
+}
+
+message TouchSeoDomainByRefRequest {
+  uint32 refType = 1;
+  uint64 refId = 2;
+}
+
+message GetSeoSitemapRequest {
+  optional string scope = 1;
+}
+
+message SeoSitemapXmlResponse {
+  string xml = 1;
+  string contentType = 2;
+}
+
+message GetInternalSeoRenderDataRequest {
+  uint32 refType = 1;
+  uint64 refId = 2;
+}
+
+message InternalSeoRenderDataResponse {
+  SeoDomainResponse seoDomain = 1;
+  repeated SeoInternalLinkResponse internalLinks = 2;
+  repeated SeoRelativeResponse relatives = 3;
+}
+
+
+message GetInternalSeoRenderDataBySlugRequest {
+  string slug = 1;
+}
+
+message GetInternalSeoStaticPathsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+}
+
+message SeoStaticPathResponse {
+  uint64 id = 1;
+  string slug = 2;
   string canonicalUrl = 3;
-  uint32 classify = 4;
-  uint32 refType = 5;
-  optional uint64 refId = 6;
+  uint32 refType = 4;
+  optional uint64 refId = 5;
+  string updatedAt = 6;
+}
+
+message GetInternalSeoStaticPathsResponse {
+  repeated SeoStaticPathResponse data = 1;
+  int64 total = 2;
 }
 
 message CreateSeoInternalLinkRequest {
   string link = 1;
   string title = 2;
-  uint64 parentSeoId = 3;
-  uint64 childSeoId = 4;
+  string linkType = 3;
+  uint32 priority = 4;
+  uint64 parentSeoId = 5;
+  uint64 childSeoId = 6;
 }
 
 message UpdateSeoInternalLinkRequest {
   uint64 id = 1;
   optional string link = 2;
   optional string title = 3;
-  optional uint64 parentSeoId = 4;
-  optional uint64 childSeoId = 5;
-}
-
-message UpdateSeoInternalLinkResponse {
-  SeoInternalLinkResponse seoInternalLink = 1;
+  optional string linkType = 4;
+  optional uint32 priority = 5;
+  optional uint64 parentSeoId = 6;
+  optional uint64 childSeoId = 7;
 }
 
 message GetSeoInternalLinkListRequest {
   optional uint64 parentSeoId = 1;
   optional uint64 childSeoId = 2;
-  optional string keyword = 3;
-  uint32 page = 4;
-  uint32 size = 5;
+  optional string linkType = 3;
+  optional string keyword = 4;
+  uint32 page = 5;
+  uint32 size = 6;
 }
 
 message GetSeoInternalLinkListResponse {
@@ -201,28 +333,37 @@ message GetSeoInternalLinkListResponse {
   int64 total = 2;
 }
 
+message UpdateSeoInternalLinkResponse {
+  SeoInternalLinkResponse seoInternalLink = 1;
+}
+
 message SeoInternalLinkResponse {
   uint64 id = 1;
   string link = 2;
   string title = 3;
-  uint64 parentSeoId = 4;
-  uint64 childSeoId = 5;
-  SeoDomainBriefResponse parentSeo = 6;
-  SeoDomainBriefResponse childSeo = 7;
-  string createdAt = 8;
-  string updatedAt = 9;
+  string linkType = 4;
+  uint32 priority = 5;
+  uint64 parentSeoId = 6;
+  uint64 childSeoId = 7;
+  optional SeoDomainBriefResponse parentSeo = 8;
+  optional SeoDomainBriefResponse childSeo = 9;
+  string createdAt = 10;
+  string updatedAt = 11;
 }
 
 message CreateSeoRelativeRequest {
   uint64 parentSeoId = 1;
   uint64 childSeoId = 2;
+  string relationType = 3;
+  uint32 priority = 4;
 }
 
 message GetSeoRelativeListRequest {
   optional uint64 parentSeoId = 1;
   optional uint64 childSeoId = 2;
-  uint32 page = 3;
-  uint32 size = 4;
+  optional string relationType = 3;
+  uint32 page = 4;
+  uint32 size = 5;
 }
 
 message GetSeoRelativeListResponse {
@@ -234,8 +375,10 @@ message SeoRelativeResponse {
   uint64 id = 1;
   uint64 parentSeoId = 2;
   uint64 childSeoId = 3;
-  SeoDomainBriefResponse parentSeo = 4;
-  SeoDomainBriefResponse childSeo = 5;
-  string createdAt = 6;
-  string updatedAt = 7;
+  string relationType = 4;
+  uint32 priority = 5;
+  optional SeoDomainBriefResponse parentSeo = 6;
+  optional SeoDomainBriefResponse childSeo = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
 }

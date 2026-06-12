@@ -31,6 +31,18 @@ var GrpcCmd = &cobra.Command{
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
+		// timezone := viper.GetString("seo.timezone")
+		// if timezone == "" {
+		// 	timezone = "Asia/Ho_Chi_Minh"
+		// }
+
+		// loc, err := time.LoadLocation(timezone)
+		// if err != nil {
+		// 	log.Printf("invalid timezone %s, fallback Asia/Ho_Chi_Minh", timezone)
+		// 	loc, _ = time.LoadLocation("Asia/Ho_Chi_Minh")
+		// }
+
+		// time.Local = loc
 
 		app, _ := wire.InitializeApp()
 		db.AutoMigrate()

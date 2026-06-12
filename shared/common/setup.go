@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -151,28 +152,32 @@ func LoadConfig(configFile []byte) {
 }
 
 func LoadYMLConfigFile(runtimeEnv string) {
-	viper.SetConfigType("yaml") // Loại file config
+	viper.SetConfigType("yaml")
 
-	// Đọc biến môi trường (nếu có)
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	viper.AutomaticEnv()
+
+	// Default an toàn cho SEO runtime.
+	viper.SetDefault("seo.public_base_url", "http://localhost:3000")
+	viper.SetDefault("seo.internal_secret_key", "")
+	viper.SetDefault("seo.timezone", "Asia/Ho_Chi_Minh")
+	viper.SetDefault("seo.sitemap.default_change_freq", "daily")
+	viper.SetDefault("seo.sitemap.default_priority", 0.5)
+	viper.SetDefault("seo.generation_job.enabled", true)
+	viper.SetDefault("seo.generation_job.cron", "0 0 * * *")
+	viper.SetDefault("seo.generation_job.batch_size", 200)
 
 	env := "local"
 	if runtimeEnv != "" {
 		env = runtimeEnv
 	}
-	var err error
-	if env != "" {
-		config_file, err := os.ReadFile("config/" + env + ".yml")
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = viper.ReadConfig(bytes.NewReader(config_file))
-		if err != nil {
-			log.Fatalf("Lỗi khi đọc file config: %v", err)
-		}
+
+	configFile, err := os.ReadFile("config/" + env + ".yml")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	if err != nil {
+	if err := viper.ReadConfig(bytes.NewReader(configFile)); err != nil {
 		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}
 }

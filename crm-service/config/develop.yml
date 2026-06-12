@@ -29,3 +29,19 @@ email:
   password: tuandq2112
   from: tuandq2112@gmail.com
   name: Tuấn Đặng
+
+seo:
+  public_base_url: "https://dev.bdspro.vn"
+  internal_secret_key: ""
+  timezone: "Asia/Ho_Chi_Minh"
+
+  sitemap:
+    default_change_freq: "daily"
+    default_priority: 0.5
+
+  generation_job:
+    enabled: true
+    cron: "0 0 * * *"
+    batch_size: 200
+
+# export SEO_INTERNAL_SECRET_KEY='real-secret-from-server'
