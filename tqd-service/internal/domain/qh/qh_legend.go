@@ -61,7 +61,7 @@ type QHLayerLegend struct {
 	IconURL         string `gorm:"type:text" json:"iconUrl,omitempty"`
 	ImageURL        string `gorm:"type:text" json:"imageUrl,omitempty"`
 
-	// Label *QHLabel `gorm:"foreignKey:LabelID" json:"label,omitempty"`
+	Label *QHLabel `gorm:"foreignKey:LabelID" json:"label,omitempty"`
 
 	// LandUseGroupID *uint64       `gorm:"column:land_use_group_id;index" json:"landUseGroupId,omitempty"`
 	// LandUseGroup   *LandUseGroup `gorm:"foreignKey:LandUseGroupID" json:"landUseGroup,omitempty"`

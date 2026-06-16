@@ -93,6 +93,8 @@ func (g *OAuthGoogle) getAccessToken(code string) (string, error) {
 		return "", err
 	}
 
+	fmt.Println("result", result)
+
 	token, ok := result["access_token"].(string)
 	if !ok {
 		return "", errors.New("failed to get access token")

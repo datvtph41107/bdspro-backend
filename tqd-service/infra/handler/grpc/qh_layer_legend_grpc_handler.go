@@ -30,8 +30,8 @@ func (h *QHLayerLegendGrpcHandler) CreateLayerLegend(ctx context.Context, req *t
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
 	row := &qh_domain.QHLayerLegend{
-		LayerID: req.LayerId,
-		// LabelID:         req.LabelId,
+		LayerID:         req.LayerId,
+		LabelID:         req.LabelId,
 		Color:           req.Color,
 		Description:     req.Description,
 		Note:            req.Note,
@@ -43,9 +43,9 @@ func (h *QHLayerLegendGrpcHandler) CreateLayerLegend(ctx context.Context, req *t
 		IconURL:         req.IconUrl,
 		ImageURL:        req.ImageUrl,
 	}
-	// if req.LandUseGroupId != nil {
-	// 	row.LandUseGroupID = req.LandUseGroupId
-	// }
+	if req.LandUseGroupId != nil {
+		row.LandUseID = req.LandUseGroupId
+	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
 		return nil, mapLegendError(err)
@@ -60,7 +60,7 @@ func (h *QHLayerLegendGrpcHandler) BatchCreateLayerLegends(ctx context.Context, 
 	items := make([]qh_domain.QHLayerLegend, len(req.Items))
 	for i, it := range req.Items {
 		items[i] = qh_domain.QHLayerLegend{
-			// LabelID:         it.LabelId,
+			LabelID:         it.LabelId,
 			Note:            it.Note,
 			DisplayOrder:    int(it.DisplayOrder),
 			IsVisible:       it.IsVisible,
@@ -69,10 +69,12 @@ func (h *QHLayerLegendGrpcHandler) BatchCreateLayerLegends(ctx context.Context, 
 			StrokeDashArray: it.StrokeDashArray,
 			IconURL:         it.IconUrl,
 			ImageURL:        it.ImageUrl,
+			Description:     it.Description,
+			Color:           it.Color,
 		}
-		// if it.LandUseGroupId != nil {
-		// 	items[i].LandUseGroupID = it.LandUseGroupId
-		// }
+		if it.LandUseGroupId != nil {
+			items[i].LandUseID = it.LandUseGroupId
+		}
 	}
 	created, skipped, err := h.uc.BatchCreate(ctx, req.LayerId, items)
 	if err != nil {
@@ -147,7 +149,15 @@ func (h *QHLayerLegendGrpcHandler) UpdateLayerLegend(ctx context.Context, req *t
 		hasUpdate = true
 	}
 	if req.LandUseGroupId != nil {
-		in.LandUseGroupID = req.LandUseGroupId
+		in.LandUseID = req.LandUseGroupId
+		hasUpdate = true
+	}
+	if req.Description != "" {
+		in.Description = &req.Description
+		hasUpdate = true
+	}
+	if req.Color != "" {
+		in.Color = &req.Color
 		hasUpdate = true
 	}
 	if !hasUpdate {
@@ -232,6 +242,23 @@ func (h *QHLayerLegendGrpcHandler) ListClientLayerLegends(ctx context.Context, r
 	}, nil
 }
 
+func (h *QHLayerLegendGrpcHandler) GetAllLayerLegends(ctx context.Context, req *tqdpb.GetAllLayerLegendsRequest) (*tqdpb.ListLayerLegendsResponse, error) {
+	rows, total, err := h.uc.GetAll(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	data := make([]*tqdpb.QHLayerLegendResponse, len(rows))
+	for i := range rows {
+		data[i] = toQHLayerLegendPB(&rows[i])
+	}
+	return &tqdpb.ListLayerLegendsResponse{
+		Data:     data,
+		Total:    total,
+		Page:     1,
+		PageSize: 200,
+	}, nil
+}
+
 func mapLegendError(err error) error {
 	msg := err.Error()
 	if strings.Contains(msg, "already has legend") {
@@ -251,9 +278,9 @@ func toQHLayerLegendPB(e *qh_domain.QHLayerLegend) *tqdpb.QHLayerLegendResponse 
 		return nil
 	}
 	resp := &tqdpb.QHLayerLegendResponse{
-		Id:      e.ID,
-		LayerId: e.LayerID,
-		// LabelId:         e.LabelID,
+		Id:              e.ID,
+		LayerId:         e.LayerID,
+		LabelId:         e.LabelID,
 		Note:            e.Note,
 		DisplayOrder:    int32(e.DisplayOrder),
 		IsVisible:       e.IsVisible,
@@ -264,32 +291,32 @@ func toQHLayerLegendPB(e *qh_domain.QHLayerLegend) *tqdpb.QHLayerLegendResponse 
 		ImageUrl:        e.ImageURL,
 		Description:     e.Description,
 		Color:           e.GetDisplayColor(),
-		// LandUseGroupId:  e.LandUseGroupID,
-		CreatedAt: _utils.FormatTimeToString(e.CreatedAt),
-		UpdatedAt: _utils.FormatTimeToString(e.UpdatedAt),
+		LandUseGroupId:  e.LandUseID,
+		CreatedAt:       _utils.FormatTimeToString(e.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(e.UpdatedAt),
 	}
-	// if e.Label != nil {
-	// 	resp.LabelStyle = &tqdpb.LegendLabelStyleInfo{
-	// 		Id:              e.Label.ID,
-	// 		Name:            e.Label.Name,
-	// 		DisplayName:     e.Label.DisplayName,
-	// 		Color:           e.Label.Color,
-	// 		FillOpacity:     e.Label.FillOpacity,
-	// 		StrokeColor:     e.Label.StrokeColor,
-	// 		StrokeWidth:     int32(e.Label.StrokeWidth),
-	// 		StrokeDashArray: e.Label.StrokeDashArray,
-	// 	}
-	// }
-	// if e.LandUseGroup != nil {
-	// 	resp.LandUseGroupInfo = &tqdpb.LandUseGroupInfo{
-	// 		Id:          e.LandUseGroup.ID,
-	// 		Code:        e.LandUseGroup.Code,
-	// 		Name:        e.LandUseGroup.Name,
-	// 		Description: e.LandUseGroup.Description,
-	// 		Color:       e.LandUseGroup.Color,
-	// 		CanBuild:    e.LandUseGroup.CanBuild,
-	// 		Priority:    int32(e.LandUseGroup.Priority),
-	// 	}
-	// }
+	if e.Label != nil {
+		resp.LabelStyle = &tqdpb.LegendLabelStyleInfo{
+			Id:              e.Label.ID,
+			Name:            e.Label.Name,
+			DisplayName:     e.Label.DisplayName,
+			Color:           e.Label.Color,
+			FillOpacity:     e.Label.FillOpacity,
+			StrokeColor:     e.Label.StrokeColor,
+			StrokeWidth:     int32(e.Label.StrokeWidth),
+			StrokeDashArray: e.Label.StrokeDashArray,
+		}
+	}
+	if e.LandUse != nil {
+		resp.LandUseGroupInfo = &tqdpb.LandUseGroupInfo{
+			Id:          e.LandUse.ID,
+			Code:        e.LandUse.Code,
+			Name:        e.LandUse.Name,
+			Description: e.LandUse.Description,
+			Color:       e.LandUse.Color,
+			CanBuild:    e.LandUse.CanBuild,
+			Priority:    int32(e.LandUse.Priority),
+		}
+	}
 	return resp
 }

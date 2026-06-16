@@ -23,7 +23,9 @@ type QHLayerLegendUpdateInput struct {
 	StrokeDashArray *string
 	IconURL         *string
 	ImageURL        *string
-	LandUseGroupID  *uint64
+	LandUseID       *uint64
+	Description     *string
+	Color           *string
 }
 
 type QHLayerLegendUsecase interface {
@@ -35,6 +37,7 @@ type QHLayerLegendUsecase interface {
 	List(ctx context.Context, pagable *_dto.Pagable, layerID, labelID *uint64, legendType *string, landUseGroupID *uint64) ([]qh_domain.QHLayerLegend, int64, error)
 	ListAllByLayer(ctx context.Context, layerID uint64) ([]qh_domain.QHLayerLegend, error)
 	ListClientByLayer(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLayerLegend, int64, error)
+	GetAll(ctx context.Context) ([]qh_domain.QHLayerLegend, int64, error)
 }
 
 type qhLayerLegendUsecase struct {
@@ -276,12 +279,15 @@ func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 	if in.ImageURL != nil {
 		existing.ImageURL = *in.ImageURL
 	}
-	// if in.LandUseGroupID != nil {
-	// 	if err := u.validateLandUseGroupID(ctx, in.LandUseGroupID); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	existing.LandUseGroupID = in.LandUseGroupID
-	// }
+	if in.LandUseID != nil {
+		existing.LandUseID = in.LandUseID
+	}
+	if in.Description != nil {
+		existing.Description = *in.Description
+	}
+	if in.Color != nil {
+		existing.Color = *in.Color
+	}
 
 	if err := u.repo.Update(ctx, existing); err != nil {
 		return nil, fmt.Errorf("update layer legend: %w", err)
@@ -324,11 +330,11 @@ func (u *qhLayerLegendUsecase) List(ctx context.Context, pagable *_dto.Pagable, 
 		offset = pagable.GetOffset()
 		limit = pagable.GetLimit()
 	}
-	return u.repo.List(ctx, offset, limit, layerID, labelID, legendType, landUseGroupID)
+	return u.repo.List(ctx, offset, limit, layerID, labelID, legendType, landUseGroupID, nil)
 }
 
 func (u *qhLayerLegendUsecase) ListAllByLayer(ctx context.Context, layerID uint64) ([]qh_domain.QHLayerLegend, error) {
-	rows, _, err := u.repo.List(ctx, 0, 1000, &layerID, nil, nil, nil)
+	rows, _, err := u.repo.List(ctx, 0, 1000, &layerID, nil, nil, nil, nil)
 	return rows, err
 }
 
@@ -350,4 +356,9 @@ func (u *qhLayerLegendUsecase) ListClientByLayer(ctx context.Context, layerID ui
 		limit = pagable.GetLimit()
 	}
 	return u.repo.ListVisibleByLayer(ctx, layerID, offset, limit)
+}
+
+func (u *qhLayerLegendUsecase) GetAll(ctx context.Context) ([]qh_domain.QHLayerLegend, int64, error) {
+	isVisible := true
+	return u.repo.List(ctx, 0, 200, nil, nil, nil, nil, &isVisible)
 }

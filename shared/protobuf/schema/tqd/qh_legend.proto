@@ -54,6 +54,12 @@ service QHLayerLegendService {
       get: "/v2/tqd/client/layers/{layerId}/legends"
     };
   }
+
+  rpc GetAllLayerLegends(GetAllLayerLegendsRequest) returns (ListLayerLegendsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/public/layer-legends/all"
+    };
+  }
 }
 
 message CreateLayerLegendRequest {
@@ -135,6 +141,9 @@ message ListClientLayerLegendsRequest {
   uint64 layerId = 1;
   uint32 page = 2;
   uint32 size = 3;
+}
+
+message GetAllLayerLegendsRequest {
 }
 
 message QHLayerLegendResponse {
