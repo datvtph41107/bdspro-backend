@@ -32,12 +32,12 @@ type SeoDomain struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement"`
 
 	// Identity: định danh page SEO ổn định.
-	Slug         string `gorm:"type:varchar(255);not null;index"`
-	OriginURL    string `gorm:"column:origin_url;type:text;not null;index"`
+	Slug         string `gorm:"type:varchar(255);index"`
+	OriginURL    string `gorm:"column:origin_url;type:text;index"`
 	CanonicalURL string `gorm:"column:canonical_url;type:text;not null;index"`
 
 	// Source binding: page này đại diện cho dữ liệu nào trong hệ thống.
-	RefType enums.ESEORefType `gorm:"column:ref_type;type:smallint;not null;default:0;index"`
+	RefType enums.ESEORefType `gorm:"column:ref_type;type:smallint;default:0;index"`
 	RefID   *uint64           `gorm:"column:ref_id;type:bigint;index"`
 
 	// Scope phân vùng vận hành page: public/internal/app/admin.
@@ -53,21 +53,21 @@ type SeoDomain struct {
 	Summary     string `gorm:"type:text"`
 
 	// Publish lifecycle: page đã đủ điều kiện ra ngoài hay chưa.
-	Published   bool       `gorm:"not null;default:false;index"`
+	Published   bool       `gorm:"default:false;index"`
 	PublishedAt *time.Time `gorm:"column:published_at;index"`
 
 	// Search engine policy.
-	IsSiteMap bool  `gorm:"column:is_site_map;not null;default:false;index"`
-	IsIndex   bool  `gorm:"column:is_index;not null;default:false;index"`
+	IsSiteMap bool  `gorm:"column:is_site_map;default:false;index"`
+	IsIndex   bool  `gorm:"column:is_index;default:false;index"`
 	IsRobot   *bool `gorm:"column:is_robot;type:bool;default:false"`
 
 	// Sitemap data.
 	SiteMapLastedAt   *time.Time `gorm:"column:site_map_lasted_at;index"`
-	SitemapPriority   float32    `gorm:"column:sitemap_priority;type:real;not null;default:0.5"`
-	SitemapChangeFreq string     `gorm:"column:sitemap_change_freq;type:varchar(20);not null;default:'daily'"`
+	SitemapPriority   float32    `gorm:"column:sitemap_priority;type:real;default:0.5"`
+	SitemapChangeFreq string     `gorm:"column:sitemap_change_freq;type:varchar(20);default:'daily'"`
 
 	// Static generation pipeline.
-	NeedGenerate    bool       `gorm:"column:need_generate;not null;default:true;index"`
+	NeedGenerate    bool       `gorm:"column:need_generate;default:true;index"`
 	GeneratedAt     *time.Time `gorm:"column:generated_at;index"`
 	SourceUpdatedAt *time.Time `gorm:"column:source_updated_at;index"`
 	StaticHtmlPath  string     `gorm:"column:static_html_path;type:text"`
@@ -77,7 +77,7 @@ type SeoDomain struct {
 	DeepLink string `gorm:"column:deep_link;type:text"`
 
 	// Metadata chỉ giữ phần mở rộng: schema JSON-LD, breadcrumb, og, robots, custom.
-	Metadata datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'::jsonb"`
+	Metadata datatypes.JSON `gorm:"type:jsonb;default:'{}'::jsonb"`
 
 	Note string `gorm:"type:text"`
 

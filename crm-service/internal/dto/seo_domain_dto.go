@@ -98,6 +98,32 @@ type InternalSeoRenderDataRequest struct {
 	RefID   uint64 `json:"refId"`
 }
 
+type SitemapRequest struct {
+	BaseURL *string `json:"baseUrl" form:"baseUrl"`
+}
+
+type CreateSeoFromParcelRequest struct {
+	ParcelID uint64 `json:"parcelId"`
+}
+
+type GenerateSeoFromParcelsRequest struct {
+	Limit uint32 `json:"limit"`
+}
+
+type GenerateSeoFromParcelsResult struct {
+	Total   int64    `json:"total"`
+	Created int64    `json:"created"`
+	Skipped int64    `json:"skipped"`
+	Failed  int64    `json:"failed"`
+	Errors  []string `json:"errors"`
+}
+
+type ParcelSeoSource struct {
+	ParcelID  uint64  `json:"parcelId" gorm:"column:parcel_id"`
+	AdrSearch string  `json:"adrSearch" gorm:"column:adr_search"`
+	SeoID     *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
 type SeoInternalLinkCreateRequest struct {
 	Link        string `json:"link"`
 	Title       string `json:"title"`

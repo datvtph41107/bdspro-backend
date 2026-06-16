@@ -25,10 +25,10 @@ var (
 var (
 	EMAIL_HOST     = "smtp.gmail.com"
 	EMAIL_PORT     = 587
-	EMAIL_USERNAME = "tuandq2112@gmail.com"
-	EMAIL_PASSWORD = "tuandq2112"
-	EMAIL_FROM     = "tuandq2112@gmail.com"
-	EMAIL_NAME     = "Tuấn Đặng"
+	EMAIL_USERNAME = "ngohieu1811@gmail.com"
+	EMAIL_PASSWORD = "ngohieu1811"
+	EMAIL_FROM     = "ngohieu1811@gmail.com"
+	EMAIL_NAME     = "ngô hiếu"
 )
 
 func InitConfig() {

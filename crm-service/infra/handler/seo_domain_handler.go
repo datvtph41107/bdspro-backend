@@ -142,6 +142,75 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 	}, nil
 }
 
+// GetSitemap trả XML sitemap public cho Google Search Console.
+// @Summary Lấy sitemap XML
+// @Description Trả sitemap.xml từ SEO domain public.
+// @Tags SEO Domain
+// @Accept json
+// @Produce xml
+// @Param baseUrl query string false "Base URL để ghép khi canonicalUrl/originUrl là path tương đối"
+// @Router /v2/crm/sitemap.xml [get]
+func (h *SeoDomainHandler) GetSitemap(ctx context.Context, req *crmpb.GetSitemapRequest) (*sharepb.CommonResponse, error) {
+	xmlData, err := h.seoDomainUsecase.GetSitemapXML(ctx, &dto.SitemapRequest{
+		BaseURL: req.BaseUrl,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &sharepb.CommonResponse{
+		Code:    8501,
+		Message: "application/xml; charset=utf-8",
+		Data:    xmlData,
+	}, nil
+}
+
+// CreateSeoFromParcel tạo SEO domain từ parcel.
+// @Summary Tạo SEO từ parcel
+// @Description Sinh URL từ cấu hình seo.parcelUrlTemplate, replace {id} theo parcelId và {slug} theo adr_search.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateSeoFromParcelRequest true "Parcel ID"
+// @Router /v2/crm/admin/seo-domains/parcel [post]
+func (h *SeoDomainHandler) CreateSeoFromParcel(ctx context.Context, req *crmpb.CreateSeoFromParcelRequest) (*crmpb.SeoDomainResponse, error) {
+	seoDomain, err := h.seoDomainUsecase.CreateSeoFromParcel(ctx, &dto.CreateSeoFromParcelRequest{
+		ParcelID: req.ParcelId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return h.seoDomainMapper.SeoDomainToPb(seoDomain), nil
+}
+
+// GenerateSeoFromParcels tự động tạo SEO domain cho các parcel có bật isSeo và chưa có seoId.
+// @Summary Tự động tạo SEO từ parcel
+// @Description Quét parcels.is_seo = true, seo_id trống, sinh URL theo seo.parcelUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromParcelsRequest true "Giới hạn số parcel, 0 là toàn bộ"
+// @Router /v2/crm/admin/seo-domains/parcels/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromParcels(ctx context.Context, req *crmpb.GenerateSeoFromParcelsRequest) (*crmpb.GenerateSeoFromParcelsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromParcels(ctx, &dto.GenerateSeoFromParcelsRequest{
+		Limit: req.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromParcelsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
 func (h *SeoDomainHandler) DeleteSeoDomain(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if err := h.seoDomainUsecase.DeleteSeoDomain(ctx, req.Id); err != nil {
 		return nil, err

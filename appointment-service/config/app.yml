@@ -14,9 +14,9 @@ Database:
 Email:
   HOST: smtp.gmail.com
   PORT: 587
-  USERNAME: tuandq2112@gmail.com
-  PASSWORD: tuandq2112
-  FROM: tuandq2112@gmail.com
-  NAME: Tuấn Đặng
+  USERNAME: ngohieu1811@gmail.com
+  PASSWORD: ngohieu1811
+  FROM: ngohieu1811@gmail.com
+  NAME: ngô hiếu
 
 ENV_RUNTIME: release

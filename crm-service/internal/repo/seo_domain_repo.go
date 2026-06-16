@@ -12,7 +12,9 @@ type SeoDomainRepo interface {
 	GetByID(ctx context.Context, id uint64) (*seo_domain.SeoDomain, error)
 	GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error)
 	GetBySlug(ctx context.Context, slug string) (*seo_domain.SeoDomain, error)
+	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error)
 	GetList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error)
+	GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error)
 	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uint64) error
 	ExistByCanonicalURL(ctx context.Context, canonicalURL string, ignoreID *uint64) (bool, error)

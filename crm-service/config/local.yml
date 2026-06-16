@@ -38,6 +38,7 @@ seo:
   public_base_url: "http://localhost:3000"
   internal_secret_key: "local-seo-secret"
   timezone: "Asia/Ho_Chi_Minh"
+  parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}
 
   sitemap:
     default_change_freq: "daily"

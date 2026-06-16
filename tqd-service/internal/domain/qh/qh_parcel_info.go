@@ -78,6 +78,7 @@ type QHParcelInfo struct {
 	WardCode     string `gorm:"type:varchar(20)" json:"wardCode"`
 	AddressText  string `gorm:"type:text" json:"addressText"`
 	AdrSearch    string `gorm:"type:text" json:"adrSearch"`
+	IsSeo        bool   `gorm:"column:is_seo;default:false;index" json:"isSeo"`
 
 	// Administrative info (V1 format - legacy)
 	ProvinceV1Id *uint64 `gorm:"default:null" json:"provinceV1Id,omitempty"`
@@ -149,6 +150,7 @@ type ParcelInfoResponse struct {
 	TotalArea  float64 `json:"totalArea"`
 	LandTypeId uint64  `json:"landTypeId"`
 	Geometry   []byte  `json:"geometry,omitempty"`
+	IsSeo      bool    `json:"isSeo"`
 
 	Directions []QHDirection `json:"direction"`
 	Shape      *QHShape      `json:"shape"`

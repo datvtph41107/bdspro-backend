@@ -238,7 +238,7 @@ services:
   tqd:
     build: 
       context: ./tqd-service
-      dockerfile: Dockerfile.tqd.develop
+      dockerfile: Dockerfile.tqd
     container_name: tqd
     command: ["./main", "--server=grpc"]
     volumes:
@@ -310,7 +310,7 @@ services:
   pmtiles:
     build:
       context: ./tqd-service
-      dockerfile: Dockerfile.pmtiles
+      dockerfile: Dockerfile
     container_name: pmtiles
     command: ["./main", "--server=pmtiles", "--port=8032"]
     ports:
@@ -331,6 +331,19 @@ services:
       - ${PWD}/build:/usr/share/nginx/html:ro
       - ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
+
+  nextjs-website:
+    build:
+      context: ./nextjs-website
+      dockerfile: Dockerfile
+    container_name: nextjs-website
+    ports:
+      - "3103:3000"
+    volumes:
+      - ${PWD}:/app
+    restart: unless-stopped
+    networks:
+      - internal
 
   qhpro_web:
     image: node:20-alpine

@@ -26,6 +26,12 @@ type ParcelResponse struct {
 }
 
 // API 1: thông tin nhẹ, dùng để render header / summary base.
+type ParcelSeoSource struct {
+	ParcelID  uint64  `json:"parcelId" gorm:"column:parcel_id"`
+	AdrSearch string  `json:"adrSearch" gorm:"column:adr_search"`
+	SeoID     *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
 type ParcelInfoResponse struct {
 	ParcelID uint64
 
@@ -50,6 +56,8 @@ type ParcelInfoResponse struct {
 	Province     string
 	ProvinceCode string
 	WardCode     string
+	SeoID        uint64
+	IsSeo        bool
 }
 
 // API 2: layers/impact - data chính để vẽ map + đánh giá rủi ro.

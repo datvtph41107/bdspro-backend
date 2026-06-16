@@ -27,6 +27,26 @@ service SeoDomainService {
     };
   }
 
+  rpc GetSitemap(GetSitemapRequest) returns (sharepb.CommonResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/sitemap.xml"
+    };
+  }
+
+  rpc CreateSeoFromParcel(CreateSeoFromParcelRequest) returns (SeoDomainResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/parcel"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoFromParcels(GenerateSeoFromParcelsRequest) returns (GenerateSeoFromParcelsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/parcels/generate"
+      body: "*"
+    };
+  }
+
   rpc UpdateSeoDomain(UpdateSeoDomainRequest) returns (UpdateSeoDomainResponse) {
     option (google.api.http) = {
       put: "/v2/crm/admin/seo-domains/{id}"
@@ -147,6 +167,27 @@ message CreateSeoDomainRequest {
   string deepLink = 25;
   optional string metadata = 26;
   string note = 27;
+}
+
+message GetSitemapRequest {
+  optional string baseUrl = 1;
+}
+
+message CreateSeoFromParcelRequest {
+  uint64 parcelId = 1;
+}
+
+message GenerateSeoFromParcelsRequest {
+  uint32 limit = 1;
+}
+
+message GenerateSeoFromParcelsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
 }
 
 message UpdateSeoDomainRequest {

@@ -30,6 +30,7 @@ var wireSet = wire.NewSet(
 	_provider.SyncProviderSet,
 	wire.Bind(new(crm_internal_interface_provider.BdsproProvider), new(*crm_infra_client.BdsproClient)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
+	wire.Bind(new(crm_internal_interface_provider.TqdProvider), new(*crm_infra_client.TqdClient)),
 	wire.Bind(new(crm_internal_interface_provider.UserClient), new(*crm_infra_client.UserClient)),
 	wire.Bind(new(crm_internal_interface_provider.ITransaction), new(*crm_infra_impl.TransactionGorm)),
 	wire.Bind(new(crm_internal_repo.BlockRepo), new(*crm_infra_postgre.BlockRepo)),
@@ -145,6 +146,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewTagPostgres,
 	crm_infra_handler.NewTagService,
 	crm_internal_usecase.NewTagUsecase,
+	crm_infra_client.NewTqdClient,
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
 )

@@ -146,6 +146,7 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
             COALESCE(pi.facade, 0) as facade,
             COALESCE(pi.total_area_sqm, 0) as total_area_sqm,
             pi.land_type_id,
+            COALESCE(pi.is_seo, false) AS is_seo,
             ST_AsGeoJSON(p.geometry)::bytea as geometry
         FROM parcels p
 		LEFT JOIN qh_parcel_info pi ON pi.parcel_id= p.id
@@ -213,8 +214,36 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 	// 	return nil, 0, fmt.Errorf("count parcels: %w", err)
 	// }
 
-	if err := query.Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).Find(&parcels).Error; err != nil {
+	if err := query.Select("qh_parcel_info.*, p.lat, p.lon, sh.name as shape_name").
+		Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
+		Joins("LEFT JOIN qh_shape sh ON sh.id = qh_parcel_info.shape_id").
+		Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).Find(&parcels).Error; err != nil {
 		return nil, 0, fmt.Errorf("search parcels: %w", err)
+	}
+
+	return parcels, total, nil
+}
+
+func (p *ParcelPostgres) SearchPublicParcels(ctx context.Context, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error) {
+	var parcels []qh_domain.QHParcelInfo
+	var total int64
+
+	// Base query join với parcels để check seo_id
+	baseQuery := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{}).
+		Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
+		Joins("LEFT JOIN qh_shape sh ON sh.id = qh_parcel_info.shape_id").
+		Where("p.seo_id IS NOT NULL AND p.seo_id > 0").
+		Where("p.deleted_at IS NULL")
+
+	if err := baseQuery.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count public parcels: %w", err)
+	}
+
+	if err := baseQuery.Select("qh_parcel_info.*, p.lat, p.lon, sh.name as shape_name").
+		Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).
+		Order("p.created_at DESC").
+		Find(&parcels).Error; err != nil {
+		return nil, 0, fmt.Errorf("search public parcels: %w", err)
 	}
 
 	return parcels, total, nil
@@ -376,7 +405,9 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 
 			COALESCE(prov.full_name, '') AS province,
 			COALESCE(pi.province_code, '') AS province_code,
-			COALESCE(pi.ward_code, '') AS ward_code
+			COALESCE(pi.ward_code, '') AS ward_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
 		LEFT JOIN qh_parcel_info pi ON p.id = pi.parcel_id
 		LEFT JOIN qh_planning_land_use pu
@@ -756,6 +787,84 @@ func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint
 	}
 
 	return rows, nil
+}
+
+const parcelSeoAdrSearchExpr = `
+	COALESCE(
+		NULLIF(pi.adr_search, ''),
+		NULLIF(trim(regexp_replace(lower(unaccent(COALESCE(pi.address_text, ''))), '[^a-z0-9]+', ' ', 'g')), ''),
+		NULLIF(trim(regexp_replace(lower(unaccent(concat_ws(' ', COALESCE(pi.map_number, ''), COALESCE(pi.land_number, '')))), '[^a-z0-9]+', ' ', 'g')), ''),
+		''
+	)`
+
+func (p *ParcelPostgres) GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error) {
+	var source dto.ParcelSeoSource
+
+	err := p.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				p.id AS parcel_id,
+				`+parcelSeoAdrSearchExpr+` AS adr_search,
+				p.seo_id AS seo_id
+			FROM parcels p
+			LEFT JOIN LATERAL (
+				SELECT *
+				FROM qh_parcel_info
+				WHERE parcel_id = p.id
+				ORDER BY id DESC
+				LIMIT 1
+			) pi ON true
+			WHERE p.id = $1 AND p.deleted_at IS NULL
+			LIMIT 1
+		`, parcelID).
+		Scan(&source).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel seo source failed: %w", err)
+	}
+	if source.ParcelID == 0 {
+		return nil, nil
+	}
+	return &source, nil
+}
+
+func (p *ParcelPostgres) ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error) {
+	var sources []dto.ParcelSeoSource
+
+	query := `
+		SELECT
+			p.id AS parcel_id,
+			` + parcelSeoAdrSearchExpr + ` AS adr_search,
+			p.seo_id AS seo_id
+		FROM parcels p
+		JOIN LATERAL (
+			SELECT *
+			FROM qh_parcel_info
+			WHERE parcel_id = p.id
+			ORDER BY id DESC
+			LIMIT 1
+		) pi ON true
+		WHERE p.deleted_at IS NULL
+		  AND COALESCE(pi.is_seo, false) = true
+		  AND (p.seo_id IS NULL OR p.seo_id = 0)
+		ORDER BY p.id
+	`
+	args := []interface{}{}
+	if limit > 0 {
+		query += " LIMIT $1"
+		args = append(args, limit)
+	}
+
+	if err := p.DB.WithContext(ctx).Raw(query, args...).Scan(&sources).Error; err != nil {
+		return nil, fmt.Errorf("list parcel seo sources failed: %w", err)
+	}
+	return sources, nil
+}
+
+func (p *ParcelPostgres) UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error {
+	return p.DB.WithContext(ctx).
+		Table("parcels").
+		Where("id = ? AND deleted_at IS NULL", parcelID).
+		Update("seo_id", seoID).Error
 }
 
 // Helper function

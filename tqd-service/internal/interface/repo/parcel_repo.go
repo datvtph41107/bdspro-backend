@@ -11,6 +11,7 @@ type IParcelRepo interface {
 	// Preview & Search
 	GetParcelPreview(ctx context.Context, parcelID uint64) (*qh_domain.QHParcelInfo, error)
 	SearchByAddress(ctx context.Context, keyword string, mapNumber, landNumber string, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error)
+	SearchPublicParcels(ctx context.Context, pagable _dto.Pagable) ([]qh_domain.QHParcelInfo, int64, error)
 
 	// Basic CRUD
 	GetByID(ctx context.Context, id uint64) (*qh_domain.Parcel, error)
@@ -25,6 +26,10 @@ type IParcelRepo interface {
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
 	GetParcelLayerRows(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRow, error)
 	GetParcelLayerRowsV2(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRowV2, error)
+
+	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
+	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
+	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
 }
 
 type Point struct {

@@ -24,6 +24,7 @@ type ParcelUsecase interface {
 	// Preview & Search
 	GetParcelInfoByID(ctx context.Context, parcelID uint64) (*qh_domain.ParcelInfoResponse, error)
 	SearchParcelsByText(ctx context.Context, text string, mapNumber, landNumber string, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error)
+	SearchPublicParcels(ctx context.Context, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error)
 
 	// Basic
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error)
@@ -34,6 +35,7 @@ type ParcelUsecase interface {
 
 	// Parcel metadata (Free)
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
+	GetPublicParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
 
 	// Overview - Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk
 	GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
@@ -46,6 +48,10 @@ type ParcelUsecase interface {
 
 	// LayerHistory - Lịch sử phiên bản của 1 layer
 	GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error)
+
+	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
+	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
+	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
 }
 
 type parcelUsecase struct {
@@ -155,6 +161,39 @@ func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, ma
 			Facade:    uint32(p.Facade),
 			TotalArea: p.TotalAreaSqm,
 			Geometry:  p.Geometry,
+		})
+	}
+
+	return results, total, nil
+}
+
+func (u *parcelUsecase) SearchPublicParcels(ctx context.Context, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error) {
+	pagable := _dto.Pagable{Page: uint32(page), Size: uint32(limit)}
+	pagable.Normalize()
+
+	parcels, total, err := u.parcelRepo.SearchPublicParcels(ctx, pagable)
+	if err != nil {
+		return nil, 0, fmt.Errorf("search public parcels failed: %w", err)
+	}
+
+	results := make([]*qh_domain.ParcelInfoResponse, 0, len(parcels))
+	for _, p := range parcels {
+		mapNum, _ := strconv.ParseUint(p.MapNumber, 10, 32)
+		landNum, _ := strconv.ParseUint(p.LandNumber, 10, 32)
+
+		results = append(results, &qh_domain.ParcelInfoResponse{
+			ID:         p.ID,
+			ParcelID:   p.ParcelID,
+			AddressStr: p.AddressText,
+			MapNumber:  uint32(mapNum),
+			LandNumber: uint32(landNum),
+			Lat:        p.Latitude,
+			Lng:        p.Longitude,
+			Shape:      p.Shape,
+			ShapeId:    p.ShapeId,
+			Facade:     uint32(p.Facade),
+			TotalArea:  p.TotalAreaSqm,
+			Geometry:   p.Geometry,
 		})
 	}
 
@@ -369,6 +408,29 @@ func (u *parcelUsecase) GetParcelInfo(ctx context.Context, parcelID uint64) (*dt
 	}
 
 	return info, nil
+}
+
+func (u *parcelUsecase) GetPublicParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+
+	// Lấy overview (đã bao gồm info)
+	overview, err := u.GetParcelOverview(ctx, parcelID)
+	if err != nil {
+		return nil, err
+	}
+
+	if overview == nil || overview.ParcelInfo == nil {
+		return nil, fmt.Errorf("parcel %d not found", parcelID)
+	}
+
+	// Kiểm tra seoId
+	if overview.ParcelInfo.SeoID == 0 {
+		return nil, fmt.Errorf("parcel %d is not public", parcelID)
+	}
+
+	return overview, nil
 }
 
 // GetParcelAssessment - Đánh giá chuyên sâu (VIP): phân tích conflicts, landUseGroups, assessment với 3 mode
@@ -1050,4 +1112,22 @@ func (u *parcelUsecase) GetLayerHistory(ctx context.Context, layerID uint64) (*t
 			},
 		},
 	}, nil
+}
+
+func (u *parcelUsecase) GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+	return u.parcelRepo.GetParcelSeoSource(ctx, parcelID)
+}
+
+func (u *parcelUsecase) ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error) {
+	return u.parcelRepo.ListParcelSeoSourcesForGenerate(ctx, limit)
+}
+
+func (u *parcelUsecase) UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error {
+	if parcelID == 0 || seoID == 0 {
+		return fmt.Errorf("parcel_id và seo_id là bắt buộc")
+	}
+	return u.parcelRepo.UpdateParcelSeoID(ctx, parcelID, seoID)
 }

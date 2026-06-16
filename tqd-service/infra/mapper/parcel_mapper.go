@@ -30,12 +30,12 @@ func NewParcelMapper() *ParcelMapper {
 
 func (m *ParcelMapper) ResolveResultToProtoAssessment(result *types.ResolveResult, parcelID uint64, mode string) *tqdpb.ParcelAssessmentResponse {
 	resp := &tqdpb.ParcelAssessmentResponse{
-		ParcelId:          parcelID,
-		HasConflict:       result.HasConflict,
-		RiskScore:         result.RiskScore,
-		RiskLevel:         result.RiskLevel,
-		RiskReasons:       result.RiskReasons,
-		ResolutionStatus:  result.ResolutionStatus,
+		ParcelId:         parcelID,
+		HasConflict:      result.HasConflict,
+		RiskScore:        result.RiskScore,
+		RiskLevel:        result.RiskLevel,
+		RiskReasons:      result.RiskReasons,
+		ResolutionStatus: result.ResolutionStatus,
 		Metadata: &tqdpb.ResponseMetadataInfo{
 			ResponseTimeMs: result.ProcessingTimeMs,
 		},
@@ -185,6 +185,10 @@ func (m *ParcelMapper) DomainToProto(p *qh_domain.Parcel) *tqdpb.Parcel {
 		v.Geometry = []byte(p.Geometry.Raw)
 	}
 
+	if p.SeoID != nil {
+		v.SeoId = *p.SeoID
+	}
+
 	return v
 }
 
@@ -224,6 +228,8 @@ func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tq
 		Province:     resp.Province,
 		ProvinceCode: resp.ProvinceCode,
 		WardCode:     resp.WardCode,
+		SeoId:        resp.SeoID,
+		IsSeo:        resp.IsSeo,
 	}
 }
 
@@ -393,6 +399,7 @@ func (m *ParcelMapper) ToProtoParcelOverview(data *dto.ParcelLayersResponse) *tq
 		ResponseTimeMs:       meta.ResponseTimeMs,
 		SpatialDataAvailable: stats.SpatialDataAvailable,
 		ConcludeLabel:        regionImpactToProto(resp.ConcludeLabel),
+		Info:                 m.ToProtoParcelInfoDetail(resp.ParcelInfo),
 	}
 }
 
@@ -426,6 +433,7 @@ func (m *ParcelMapper) ParcelInfoToProto(p *qh_domain.QHParcelInfo) *tqdpb.Parce
 		Facade:     uint32(p.Facade),
 		TotalArea:  p.TotalAreaSqm,
 		Geometry:   p.Geometry,
+		IsSeo:      p.IsSeo,
 		LandType: &sharepb.ItemV3Proto{
 			Id:   landTypeId,
 			Name: m.getLandTypeName(landTypeId),
@@ -459,6 +467,7 @@ func (m *ParcelMapper) ToProtoParcelInfo(p *qh_domain.ParcelInfoResponse) *tqdpb
 		Facade:     p.Facade,
 		TotalArea:  p.TotalArea,
 		Geometry:   p.Geometry,
+		IsSeo:      p.IsSeo,
 		LandType: &sharepb.ItemV3Proto{
 			Id:   p.LandTypeId,
 			Name: m.getLandTypeName(p.LandTypeId),

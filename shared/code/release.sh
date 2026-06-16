@@ -32,7 +32,10 @@ fi
 if [ "$1" = "tqd-tool" ]; then
   REMOTE_DIR=$REMOTE_PATH/tqd-service
   scp Dockerfile.tqd-tool ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.tqd-tool
-  ssh ${REMOTE_USER}@${REMOTE_HOST} "
+  ssh ${REMOTE_USER}@${REMOTE_HOST} "if [ "$1" = "tqd" ]; then
+  scp ../shared/code/Dockerfile.tqd.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+  scp -r template ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+elif
   mkdir -p ${REMOTE_DIR}
   cd ${REMOTE_DIR}
   docker build -f Dockerfile.tqd-tool -t tippecanoe-builder .
@@ -284,7 +287,7 @@ scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
 scp config/production.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/production.yml
 if [ "$1" = "tqd" ]; then
-  scp ../shared/code/Dockerfile.tqd.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+  scp ../shared/code/Dockerfile.tqd.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.tqd
   scp -r template ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 else
   scp ../shared/code/Dockerfile.production ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile

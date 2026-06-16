@@ -20,6 +20,7 @@ type Parcel struct {
 	Lng     float64 `json:"lng" gorm:"column:lon"`
 	RefID   uint64  `json:"refId" gorm:"column:ref_id"`
 	RefType uint32  `json:"refType" gorm:"column:ref_type"`
+	SeoID   *uint64 `json:"seoId" gorm:"column:seo_id"`
 	// MinX    float64 `json:"minX" gorm:"column:min_x"`
 	// MinY    float64 `json:"minY" gorm:"column:min_y"`
 	// MaxX    float64 `json:"maxX" gorm:"column:max_x"`

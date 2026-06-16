@@ -124,6 +124,7 @@ gateway:
         - "/v2/tqd/parcels/batch"
         - "/v2/tqd/parcels/by-location"
         - "/v2/tqd/parcels/by-polygon"
+        - "/v2/tqd/public/parcels/search"
 
     temp_routes:
         - "/v2/auth/fullname"

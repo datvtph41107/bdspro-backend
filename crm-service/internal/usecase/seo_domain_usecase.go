@@ -3,6 +3,7 @@ package usecase
 import (
 	_errors "common/errors"
 	"context"
+	"crm/config"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -10,11 +11,14 @@ import (
 	"crm/internal/repo"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
 	"unicode"
 
+	"github.com/spf13/viper"
 	"gorm.io/datatypes"
 )
 
@@ -22,6 +26,7 @@ type SeoDomainUsecase struct {
 	seoDomainRepo   repo.SeoDomainRepo
 	seoInternalRepo repo.SeoInternalLinkRepo
 	seoRelativeRepo repo.SeoRelativeRepo
+	tqdProvider     provider.TqdProvider
 	transaction     provider.ITransaction
 }
 
@@ -29,12 +34,14 @@ func NewSeoDomainUsecase(
 	seoDomainRepo repo.SeoDomainRepo,
 	seoInternalRepo repo.SeoInternalLinkRepo,
 	seoRelativeRepo repo.SeoRelativeRepo,
+	tqdProvider provider.TqdProvider,
 	transaction provider.ITransaction,
 ) *SeoDomainUsecase {
 	return &SeoDomainUsecase{
 		seoDomainRepo:   seoDomainRepo,
 		seoInternalRepo: seoInternalRepo,
 		seoRelativeRepo: seoRelativeRepo,
+		tqdProvider:     tqdProvider,
 		transaction:     transaction,
 	}
 }
@@ -77,6 +84,179 @@ func (u *SeoDomainUsecase) GetSeoDomainByRef(ctx context.Context, refType uint32
 
 func (u *SeoDomainUsecase) GetSeoDomainList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error) {
 	return u.seoDomainRepo.GetList(ctx, req)
+}
+
+func (u *SeoDomainUsecase) GetSitemapXML(ctx context.Context, req *dto.SitemapRequest) ([]byte, error) {
+	baseURL := strings.TrimSpace(config.AppProperties.Seo.PublicBaseURL)
+	if req != nil && req.BaseURL != nil && strings.TrimSpace(*req.BaseURL) != "" {
+		baseURL = strings.TrimSpace(*req.BaseURL)
+	}
+	xmlText, err := u.BuildSitemapXML(ctx, &dto.SeoSitemapRequest{}, baseURL)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(xmlText), nil
+}
+
+func (u *SeoDomainUsecase) CreateSeoFromParcel(ctx context.Context, req *dto.CreateSeoFromParcelRequest) (*seo_domain.SeoDomain, error) {
+	if req == nil || req.ParcelID == 0 {
+		return nil, _errors.ReturnError(400, "parcelId không được để trống")
+	}
+
+	source, err := u.tqdProvider.GetParcelSeoSource(ctx, req.ParcelID)
+	if err != nil {
+		return nil, err
+	}
+	if source == nil {
+		return nil, _errors.ReturnError(404, "parcel không tồn tại")
+	}
+
+	seoDomain, _, err := u.createSeoFromParcelSource(ctx, *source)
+	return seoDomain, err
+}
+
+func (u *SeoDomainUsecase) GenerateSeoFromParcels(ctx context.Context, req *dto.GenerateSeoFromParcelsRequest) ([]seo_domain.SeoDomain, *dto.GenerateSeoFromParcelsResult, error) {
+	limit := uint32(0)
+	if req != nil {
+		limit = req.Limit
+	}
+
+	log.Printf("[SEO_GENERATE] start generate seo from parcels limit=%d", limit)
+	sources, err := u.tqdProvider.GetParcelSeoSourcesForGenerate(ctx, limit)
+	if err != nil {
+		log.Printf("[SEO_GENERATE] get parcel seo sources failed: %v", err)
+		return nil, nil, err
+	}
+	log.Printf("[SEO_GENERATE] received parcel seo sources total=%d", len(sources))
+
+	result := &dto.GenerateSeoFromParcelsResult{
+		Total: int64(len(sources)),
+	}
+	createdItems := make([]seo_domain.SeoDomain, 0, len(sources))
+
+	for i := range sources {
+		log.Printf("[SEO_GENERATE] processing parcelId=%d adrSearch=%q seoId=%v", sources[i].ParcelID, sources[i].AdrSearch, sources[i].SeoID)
+		seoDomain, created, err := u.createSeoFromParcelSource(ctx, sources[i])
+		if err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("parcelId=%d: %v", sources[i].ParcelID, err))
+			log.Printf("[SEO_GENERATE] failed parcelId=%d error=%v", sources[i].ParcelID, err)
+			continue
+		}
+		if seoDomain == nil || !created {
+			result.Skipped++
+			if seoDomain == nil {
+				log.Printf("[SEO_GENERATE] skipped parcelId=%d reason=seoDomain_nil", sources[i].ParcelID)
+			} else {
+				log.Printf("[SEO_GENERATE] skipped parcelId=%d reason=already_exists seoId=%d canonicalUrl=%s", sources[i].ParcelID, seoDomain.ID, seoDomain.CanonicalURL)
+			}
+			continue
+		}
+		result.Created++
+		createdItems = append(createdItems, *seoDomain)
+		log.Printf("[SEO_GENERATE] created parcelId=%d seoId=%d canonicalUrl=%s", sources[i].ParcelID, seoDomain.ID, seoDomain.CanonicalURL)
+	}
+
+	log.Printf("[SEO_GENERATE] done total=%d created=%d skipped=%d failed=%d", result.Total, result.Created, result.Skipped, result.Failed)
+	return createdItems, result, nil
+}
+
+func (u *SeoDomainUsecase) createSeoFromParcelSource(ctx context.Context, source dto.ParcelSeoSource) (*seo_domain.SeoDomain, bool, error) {
+	if source.SeoID != nil && *source.SeoID > 0 {
+		log.Printf("[SEO_GENERATE] parcelId=%d has seoId=%d, checking existing seo_domain", source.ParcelID, *source.SeoID)
+		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
+		if err != nil {
+			log.Printf("[SEO_GENERATE] get existing by seoId failed parcelId=%d seoId=%d error=%v", source.ParcelID, *source.SeoID, err)
+			return nil, false, err
+		}
+		if existing != nil {
+			log.Printf("[SEO_GENERATE] found existing by seoId parcelId=%d seoId=%d canonicalUrl=%s", source.ParcelID, existing.ID, existing.CanonicalURL)
+			return existing, false, nil
+		}
+		log.Printf("[SEO_GENERATE] parcelId=%d seoId=%d not found in crm, will recreate", source.ParcelID, *source.SeoID)
+	}
+
+	parcelURL, err := buildParcelSeoURL(source.ParcelID, source.AdrSearch)
+	if err != nil {
+		log.Printf("[SEO_GENERATE] build parcel seo url failed parcelId=%d adrSearch=%q error=%v", source.ParcelID, source.AdrSearch, err)
+		return nil, false, err
+	}
+	log.Printf("[SEO_GENERATE] built parcel url parcelId=%d url=%s", source.ParcelID, parcelURL)
+
+	existingByURL, err := u.seoDomainRepo.GetByCanonicalURL(ctx, parcelURL)
+	if err != nil {
+		log.Printf("[SEO_GENERATE] get existing by canonical failed parcelId=%d canonicalUrl=%s error=%v", source.ParcelID, parcelURL, err)
+		return nil, false, err
+	}
+	if existingByURL != nil {
+		log.Printf("[SEO_GENERATE] existing canonical found parcelId=%d seoId=%d, updating tqd seo_id", source.ParcelID, existingByURL.ID)
+		if err := u.tqdProvider.UpdateParcelSeoID(ctx, source.ParcelID, existingByURL.ID); err != nil {
+			log.Printf("[SEO_GENERATE] update tqd seo_id failed parcelId=%d seoId=%d error=%v", source.ParcelID, existingByURL.ID, err)
+			return nil, false, err
+		}
+		log.Printf("[SEO_GENERATE] updated tqd seo_id from existing canonical parcelId=%d seoId=%d", source.ParcelID, existingByURL.ID)
+		return existingByURL, false, nil
+	}
+
+	metadataBytes, err := json.Marshal(map[string]interface{}{
+		"parcelId":  source.ParcelID,
+		"adrSearch": source.AdrSearch,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	now := time.Now()
+	refID := source.ParcelID
+	seoDomain := &seo_domain.SeoDomain{
+		Slug:              resolveParcelSeoSlug(source.AdrSearch, source.ParcelID),
+		OriginURL:         parcelURL,
+		CanonicalURL:      parcelURL,
+		RefType:           enums.ESEORefTypeParcel,
+		RefID:             &refID,
+		Scope:             seo_domain.SeoScopePublic,
+		Classify:          enums.ESeoClassifyA,
+		Title:             buildParcelSeoTitle(source.AdrSearch, source.ParcelID),
+		Description:       buildParcelSeoDescription(source.AdrSearch, source.ParcelID),
+		Published:         true,
+		PublishedAt:       &now,
+		IsSiteMap:         true,
+		IsIndex:           true,
+		SiteMapLastedAt:   &now,
+		SitemapPriority:   0.8,
+		SitemapChangeFreq: seo_domain.SeoChangeFreqDaily,
+		NeedGenerate:      true,
+		SourceUpdatedAt:   &now,
+		Metadata:          datatypes.JSON(metadataBytes),
+	}
+
+	var created *seo_domain.SeoDomain
+	err = u.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		log.Printf("[SEO_GENERATE] creating seo_domain parcelId=%d slug=%q canonicalUrl=%s", source.ParcelID, seoDomain.Slug, seoDomain.CanonicalURL)
+		createdSeo, err := u.seoDomainRepo.Create(txCtx, seoDomain)
+		if err != nil {
+			log.Printf("[SEO_GENERATE] create seo_domain failed parcelId=%d canonicalUrl=%s error=%v", source.ParcelID, seoDomain.CanonicalURL, err)
+			return err
+		}
+		if createdSeo == nil || createdSeo.ID == 0 {
+			log.Printf("[SEO_GENERATE] create seo_domain returned empty parcelId=%d canonicalUrl=%s", source.ParcelID, seoDomain.CanonicalURL)
+			return _errors.ReturnError(500, "tạo seo domain thất bại")
+		}
+		log.Printf("[SEO_GENERATE] create seo_domain success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID)
+		if err := u.tqdProvider.UpdateParcelSeoID(txCtx, source.ParcelID, createdSeo.ID); err != nil {
+			log.Printf("[SEO_GENERATE] update tqd seo_id after create failed parcelId=%d seoId=%d error=%v", source.ParcelID, createdSeo.ID, err)
+			return err
+		}
+		log.Printf("[SEO_GENERATE] update tqd seo_id after create success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID)
+		created = createdSeo
+		return nil
+	})
+	if err != nil {
+		log.Printf("[SEO_GENERATE] transaction failed parcelId=%d error=%v", source.ParcelID, err)
+		return nil, false, err
+	}
+
+	return created, true, nil
 }
 
 func (u *SeoDomainUsecase) UpdateSeoDomain(ctx context.Context, id uint64, req *dto.SeoDomainUpdateRequest) (*seo_domain.SeoDomain, error) {
@@ -138,10 +318,7 @@ func (u *SeoDomainUsecase) BuildSitemapXML(ctx context.Context, req *dto.SeoSite
 
 	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	for _, item := range items {
-		loc := item.CanonicalURL
-		if baseURL != "" && strings.HasPrefix(loc, "/") {
-			loc = baseURL + loc
-		}
+		loc := buildAbsoluteSitemapLoc(item.CanonicalURL, baseURL)
 		lastmod := item.SiteMapLastedAt
 		if lastmod == "" {
 			lastmod = item.UpdatedAt
@@ -159,6 +336,20 @@ func (u *SeoDomainUsecase) BuildSitemapXML(ctx context.Context, req *dto.SeoSite
 		return "", err
 	}
 	return xml.Header + string(output), nil
+}
+
+func buildAbsoluteSitemapLoc(canonicalURL string, baseURL string) string {
+	loc := strings.TrimSpace(canonicalURL)
+	if loc == "" || strings.HasPrefix(loc, "http://") || strings.HasPrefix(loc, "https://") {
+		return loc
+	}
+
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if baseURL == "" {
+		baseURL = strings.TrimRight(strings.TrimSpace(config.AppProperties.Seo.PublicBaseURL), "/")
+	}
+
+	return baseURL + "/" + strings.TrimLeft(loc, "/")
 }
 
 func (u *SeoDomainUsecase) GetInternalRenderData(ctx context.Context, req *dto.InternalSeoRenderDataRequest) (*seo_domain.SeoDomain, error) {
@@ -778,6 +969,44 @@ func slugify(value string) string {
 		return "seo-page"
 	}
 	return value
+}
+
+func buildParcelSeoURL(parcelID uint64, adrSearch string) (string, error) {
+	template := strings.TrimSpace(viper.GetString("seo.parcelUrlTemplate"))
+	if template == "" {
+		return "", _errors.ReturnError(500, "seo.parcelUrlTemplate chưa được cấu hình")
+	}
+
+	slug := slugify(adrSearch)
+	if slug == "" || slug == "seo-page" {
+		slug = fmt.Sprintf("%d", parcelID)
+	}
+
+	return strings.NewReplacer(
+		"{id}", fmt.Sprintf("%d", parcelID),
+		"{slug}", slug,
+	).Replace(template), nil
+}
+
+func resolveParcelSeoSlug(adrSearch string, parcelID uint64) string {
+	slug := strings.TrimSpace(adrSearch)
+	if slug == "" {
+		return fmt.Sprintf("%d", parcelID)
+	}
+	return slug
+}
+
+func buildParcelSeoTitle(adrSearch string, parcelID uint64) string {
+	title := strings.TrimSpace(adrSearch)
+	if title == "" {
+		return fmt.Sprintf("Thửa đất %d", parcelID)
+	}
+	return title
+}
+
+func buildParcelSeoDescription(adrSearch string, parcelID uint64) string {
+	title := buildParcelSeoTitle(adrSearch, parcelID)
+	return fmt.Sprintf("Thông tin quy hoạch thửa đất %s", title)
 }
 
 type sitemapURLSet struct {

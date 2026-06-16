@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"io"
 	"reflect"
+	"strings"
 
-	"google.golang.org/protobuf/proto"
+	sharepb "pb/types/shared"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/protobuf/proto"
 )
 
 type CustomMarshaler struct{}
@@ -186,6 +189,13 @@ func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {
 
 func (c *CustomMarshaler) ContentType(v interface{}) string {
 	if msg, ok := v.(proto.Message); ok {
+		if cr, ok := msg.(*sharepb.CommonResponse); ok && cr.Code == 8501 {
+			if contentType := rawResponseContentType(cr.Message); contentType != "" {
+				return contentType
+			}
+			return "application/x-protobuf"
+		}
+
 		val := reflect.ValueOf(msg)
 		if val.Kind() == reflect.Ptr {
 			val = val.Elem()
@@ -205,4 +215,14 @@ func (c *CustomMarshaler) ContentType(v interface{}) string {
 		}
 	}
 	return "application/json"
+}
+
+func rawResponseContentType(message string) string {
+	contentType := strings.TrimSpace(message)
+	switch strings.ToLower(contentType) {
+	case "application/xml", "application/xml; charset=utf-8", "text/xml", "text/xml; charset=utf-8":
+		return contentType
+	default:
+		return ""
+	}
 }

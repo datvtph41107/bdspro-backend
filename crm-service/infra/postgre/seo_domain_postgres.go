@@ -28,7 +28,7 @@ func (r *SeoDomainPostgres) Create(ctx context.Context, seo *seo_domain.SeoDomai
 
 func (r *SeoDomainPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain.SeoDomain, error) {
 	var seo seo_domain.SeoDomain
-	err := r.db.WithContext(ctx).
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
 		Preload("InternalLinks", func(db *gorm.DB) *gorm.DB {
 			return db.Order("priority DESC, updated_at DESC")
 		}).
@@ -49,7 +49,7 @@ func (r *SeoDomainPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain
 
 func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error) {
 	var seo seo_domain.SeoDomain
-	err := r.db.WithContext(ctx).
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
 		Preload("InternalLinks", func(db *gorm.DB) *gorm.DB {
 			return db.Order("priority DESC, updated_at DESC")
 		}).
@@ -59,6 +59,20 @@ func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID 
 		}).
 		Preload("Relatives.ChildSeo").
 		Where("ref_type = ? AND ref_id = ?", refType, refID).
+		First(&seo).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &seo, nil
+}
+
+func (r *SeoDomainPostgres) GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error) {
+	var seo seo_domain.SeoDomain
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Where("canonical_url = ?", canonicalURL).
 		First(&seo).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -121,6 +135,23 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	return items, total, nil
 }
 
+func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error) {
+	var items []seo_domain.SeoDomain
+
+	err := r.db.WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Where("deleted_at IS NULL").
+		Where("COALESCE(NULLIF(canonical_url, ''), NULLIF(origin_url, '')) IS NOT NULL").
+		Order("site_map_lasted_at DESC NULLS LAST").
+		Order("updated_at DESC").
+		Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
 func (r *SeoDomainPostgres) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoDomain{}).
@@ -166,7 +197,7 @@ func (r *SeoDomainPostgres) GetSitemapItems(ctx context.Context, scope *string) 
 			sitemap_priority AS sitemap_priority,
 			sitemap_change_freq AS sitemap_change_freq
 		`).
-		Where("published = ? AND is_site_map = ? AND is_index = ? AND classify <> ?", true, true, true, 50)
+		Where("published = ? AND is_site_map = ?", true, true)
 	if scope != nil && *scope != "" {
 		query = query.Where("scope = ?", *scope)
 	}

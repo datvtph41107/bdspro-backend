@@ -123,6 +123,23 @@ func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetPar
 	return h.mapper.ToProtoParcelInfoDetail(data), nil
 }
 
+func (h *ParcelGrpcHandler) GetPublicParcelInfo(ctx context.Context, req *tqdpb.GetPublicParcelDetailRequest) (*tqdpb.ParcelOverviewResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	data, err := h.usecase.GetPublicParcelInfo(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if data == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	return h.mapper.ToProtoParcelOverview(data), nil
+}
+
 // =====================================================
 // OVERVIEW — Tổng quan quy hoạch (Free)
 // Layers, regions, geometry, basic risk, conclude_label
@@ -509,6 +526,35 @@ func (h *ParcelGrpcHandler) SearchTxtClientParcels(
 	}, nil
 }
 
+func (h *ParcelGrpcHandler) SearchPublicParcels(
+	ctx context.Context,
+	req *sharepb.RequestV3Proto,
+) (*tqdpb.ListParcelResponse, error) {
+	log.Printf("[SearchPublicParcels] Page: %d, Size: %d", req.Page, req.Size)
+
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+	}
+	pagable.Normalize()
+
+	parcels, total, err := h.usecase.SearchPublicParcels(ctx, int(pagable.GetPage()), int(pagable.GetSize()))
+	if err != nil {
+		log.Printf("[SearchPublicParcels] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	results := make([]*tqdpb.ParcelInfo, 0, len(parcels))
+	for _, p := range parcels {
+		results = append(results, h.mapper.ToProtoParcelInfo(p))
+	}
+
+	return &tqdpb.ListParcelResponse{
+		Data:  results,
+		Total: uint32(total),
+	}, nil
+}
+
 // PreviewParcelsById - Xem trước thông tin parcel theo ID
 func (h *ParcelGrpcHandler) PreviewParcelsById(
 	ctx context.Context,
@@ -560,4 +606,63 @@ func (h *ParcelGrpcHandler) PublicParcelsById(
 
 	// Convert sang proto
 	return h.mapper.ToProtoParcelInfo(info), nil
+}
+
+func (h *ParcelGrpcHandler) GetParcelSeoSource(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelSeoSourceResponse, error) {
+	if req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
+	}
+
+	source, err := h.usecase.GetParcelSeoSource(ctx, req.ParcelId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if source == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	return parcelSeoSourceToProto(source), nil
+}
+
+func (h *ParcelGrpcHandler) ListParcelSeoSourcesForGenerate(ctx context.Context, req *tqdpb.ListParcelSeoSourcesRequest) (*tqdpb.ListParcelSeoSourcesResponse, error) {
+	sources, err := h.usecase.ListParcelSeoSourcesForGenerate(ctx, req.GetLimit())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	items := make([]*tqdpb.ParcelSeoSourceResponse, 0, len(sources))
+	for i := range sources {
+		items = append(items, parcelSeoSourceToProto(&sources[i]))
+	}
+	return &tqdpb.ListParcelSeoSourcesResponse{Data: items}, nil
+}
+
+func (h *ParcelGrpcHandler) UpdateParcelSeoID(ctx context.Context, req *tqdpb.UpdateParcelSeoIDRequest) (*sharepb.SubmitResponse, error) {
+	if req.ParcelId == 0 || req.SeoId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcelId và seoId là bắt buộc")
+	}
+
+	if err := h.usecase.UpdateParcelSeoID(ctx, req.ParcelId, req.SeoId); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &sharepb.SubmitResponse{
+		Id:      req.ParcelId,
+		Message: "parcel seo_id updated successfully",
+	}, nil
+}
+
+func parcelSeoSourceToProto(source *dto.ParcelSeoSource) *tqdpb.ParcelSeoSourceResponse {
+	if source == nil {
+		return nil
+	}
+	var seoID uint64
+	if source.SeoID != nil {
+		seoID = *source.SeoID
+	}
+	return &tqdpb.ParcelSeoSourceResponse{
+		ParcelId:  source.ParcelID,
+		AdrSearch: source.AdrSearch,
+		SeoId:     seoID,
+	}
 }
