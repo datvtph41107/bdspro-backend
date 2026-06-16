@@ -32,6 +32,7 @@ type ParcelUsecase interface {
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	ResolveMapTargetByLocation(ctx context.Context, req dto.ResolveMapTargetRequestDTO) (*dto.ResolveMapTargetResponseDTO, error)
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
+	FindMapTargetsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32) (*dto.PolygonMapTargetsResponse, error)
 
 	// Parcel metadata (Free)
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
@@ -289,15 +290,92 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 	maxAreaKm2 float64,
 	page, pageSize int,
 ) ([]qh_domain.Parcel, int64, error) {
+	limit, offset, err := validatePolygonQuery(points, maxAreaKm2, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if intersect {
+		return u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset)
+	}
+
+	return u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset)
+}
+
+func (u *parcelUsecase) FindMapTargetsByPolygon(
+	ctx context.Context,
+	points []repo.Point,
+	intersect bool,
+	maxAreaKm2 float64,
+	page, pageSize int,
+	zoom *uint32,
+) (*dto.PolygonMapTargetsResponse, error) {
+	limit, offset, err := validatePolygonQuery(points, maxAreaKm2, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	_, _ = limit, offset
+
+	normalizedPage, normalizedPageSize := normalizePageValues(page, pageSize)
+
+	// Không truyền zoom => giữ legacy behavior: trả parcel.
+	// Có zoom và zoom < ParcelPolygonMinZ => trả region theo layer/label zoom.
+	if zoom != nil && *zoom < config.ParcelPolygonMinZ {
+		regions, total, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, *zoom, limit, offset)
+		if err != nil {
+			return nil, err
+		}
+
+		return &dto.PolygonMapTargetsResponse{
+			ResultType: enums.WorkspaceEntityTypeRegion.Uint32(),
+			Parcels:    []qh_domain.Parcel{},
+			Regions:    regions,
+			Total:      total,
+			Z:          *zoom,
+			Page:       uint32(normalizedPage),
+			PageSize:   uint32(normalizedPageSize),
+		}, nil
+	}
+
+	var parcels []qh_domain.Parcel
+	var total int64
+
+	if intersect {
+		parcels, total, err = u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset)
+	} else {
+		parcels, total, err = u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &dto.PolygonMapTargetsResponse{
+		ResultType: enums.WorkspaceEntityTypeParcel.Uint32(),
+		Parcels:    parcels,
+		Regions:    []dto.RegionInfoResponse{},
+		Total:      total,
+		Page:       uint32(normalizedPage),
+		PageSize:   uint32(normalizedPageSize),
+	}
+
+	if zoom != nil {
+		resp.Z = *zoom
+	}
+
+	return resp, nil
+}
+
+func validatePolygonQuery(points []repo.Point, maxAreaKm2 float64, page, pageSize int) (limit, offset int, err error) {
 	if len(points) < config.MinPolygonVertices {
-		return nil, 0, fmt.Errorf("polygon must have at least %d points", config.MinPolygonVertices)
+		return 0, 0, fmt.Errorf("polygon must have at least %d points", config.MinPolygonVertices)
 	}
 	if len(points) > config.MaxPolygonVertices {
-		return nil, 0, fmt.Errorf("polygon has %d vertices", len(points))
+		return 0, 0, fmt.Errorf("polygon has %d vertices", len(points))
 	}
 
 	if err := validatePolygon(points); err != nil {
-		return nil, 0, fmt.Errorf("invalid polygon: %v", err)
+		return 0, 0, fmt.Errorf("invalid polygon: %v", err)
 	}
 
 	area := calculatePolygonAreaKm2(points)
@@ -306,23 +384,11 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 		allowedArea = maxAreaKm2
 	}
 	if area > allowedArea {
-		return nil, 0, fmt.Errorf("polygon area %.2f km² exceeds limit", area)
+		return 0, 0, fmt.Errorf("polygon area %.2f km² exceeds limit", area)
 	}
 
-	limit, offset := normalizePage(page, pageSize)
-	var parcels []qh_domain.Parcel
-	var total int64
-	var err error
-
-	if intersect {
-		parcels, total, err = u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset)
-	} else {
-		parcels, total, err = u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset)
-	}
-	if err != nil {
-		return nil, 0, err
-	}
-	return parcels, total, nil
+	limit, offset = normalizePage(page, pageSize)
+	return limit, offset, nil
 }
 
 func calculatePolygonAreaKm2(points []repo.Point) float64 {
@@ -376,6 +442,19 @@ func segmentsIntersect(a, b, c, d repo.Point) bool {
 	o3 := orient(c, d, a)
 	o4 := orient(c, d, b)
 	return o1 != o2 && o3 != o4
+}
+
+func normalizePageValues(page, pageSize int) (normalizedPage, normalizedPageSize int) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = config.DefaultPageSize
+	}
+	if pageSize > config.MaxPageSize {
+		pageSize = config.MaxPageSize
+	}
+	return page, pageSize
 }
 
 func normalizePage(page, pageSize int) (limit, offset int) {

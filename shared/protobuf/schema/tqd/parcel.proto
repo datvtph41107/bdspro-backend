@@ -378,6 +378,10 @@ message FindParcelsByPolygonRequest {
   bool allowAutoShrink = 5;
   bool intersect = 6;
   int64 timestamp = 7;
+
+  // z là zoom hiện tại của map.
+  // Nếu không truyền, API giữ hành vi legacy: trả parcel.
+  optional uint32 z = 8;
 }
 
 message FindParcelsByPolygonResponse {
@@ -391,6 +395,15 @@ message FindParcelsByPolygonResponse {
   double          adjustedAreaKm2   = 8;
   double          maxAllowedAreaKm2 = 9;
   string          warning           = 10;
+
+  // Khi resultType = 3, data parcel rỗng và regions có dữ liệu.
+  repeated RegionInfoResponse regions = 11;
+
+  // WorkspaceEntityType: parcel=1, region=3
+  uint32 resultType = 12;
+
+  // Zoom backend đã dùng để quyết định.
+  uint32 z = 13;
 }
 
 message FindParcelByLocationRequest {

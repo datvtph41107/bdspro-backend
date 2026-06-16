@@ -39,62 +39,6 @@ func NewParcelGrpcHandler(
 	}
 }
 
-func regionInfoToProto(v *dto.RegionInfoResponse) *tqdpb.RegionInfoResponse {
-	if v == nil {
-		return nil
-	}
-
-	return &tqdpb.RegionInfoResponse{
-		RegionId:  v.RegionID,
-		LayerId:   v.LayerID,
-		LabelId:   v.LabelID,
-		LandUseId: v.LandUseID,
-		LegendId:  v.LegendID,
-
-		Name:        v.Name,
-		DisplayName: v.DisplayName,
-		Description: v.Description,
-
-		LayerName:        v.LayerName,
-		LayerDisplayName: v.LayerDisplayName,
-
-		LandUseCode:  v.LandUseCode,
-		LandUseName:  v.LandUseName,
-		LandUseColor: v.LandUseColor,
-		CanBuild:     v.CanBuild,
-
-		LabelName:  v.LabelName,
-		LabelColor: v.LabelColor,
-
-		LegendColor:  v.LegendColor,
-		LegendType:   v.LegendType,
-		GeometryType: v.GeometryType,
-
-		LegalDoc:     v.LegalDoc,
-		PlanningName: v.PlanningName,
-
-		AreaSqm:    v.AreaSqm,
-		AreaHa:     v.AreaHa,
-		PerimeterM: v.PerimeterM,
-
-		CenterLat: v.CenterLat,
-		CenterLon: v.CenterLon,
-
-		Bounds: &tqdpb.RegionBounds{
-			MinLon: v.MinLon,
-			MinLat: v.MinLat,
-			MaxLon: v.MaxLon,
-			MaxLat: v.MaxLat,
-		},
-
-		GeoJson: v.GeoJSON,
-
-		Province:     v.Province,
-		ProvinceCode: v.ProvinceCode,
-		WardCode:     v.WardCode,
-	}
-}
-
 // =====================================================
 // PARCEL METADATA — thông tin cơ bản thửa đất (Free)
 // =====================================================
@@ -364,6 +308,10 @@ func (h *ParcelGrpcHandler) FindParcelByLocation(ctx context.Context, req *tqdpb
 }
 
 // ResolveMapTargetByLocation - Resolve target theo tọa độ: ưu tiên parcel, fallback region.
+// Lưu ý nghiệp vụ:
+// - Click map giữ logic parcel-first.
+// - Không phụ thuộc zoom.
+// - Zoom chỉ dùng cho polygon draw selection.
 func (h *ParcelGrpcHandler) ResolveMapTargetByLocation(
 	ctx context.Context,
 	req *tqdpb.ResolveMapTargetByLocationRequest,
@@ -375,9 +323,11 @@ func (h *ParcelGrpcHandler) ResolveMapTargetByLocation(
 	if req.GetLatitude() == 0 && req.GetLongitude() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "latitude and longitude are required")
 	}
+
 	if req.GetLatitude() < -90 || req.GetLatitude() > 90 {
 		return nil, status.Error(codes.InvalidArgument, "latitude must be between -90 and 90")
 	}
+
 	if req.GetLongitude() < -180 || req.GetLongitude() > 180 {
 		return nil, status.Error(codes.InvalidArgument, "longitude must be between -180 and 180")
 	}
@@ -391,6 +341,7 @@ func (h *ParcelGrpcHandler) ResolveMapTargetByLocation(
 		if err.Error() == "map target not found" {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
+
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -402,89 +353,165 @@ func (h *ParcelGrpcHandler) ResolveMapTargetByLocation(
 	if result.Parcel != nil {
 		resp.Parcel = h.mapper.ToProtoParcelInfoDetail(result.Parcel)
 	}
+
 	if result.Region != nil {
-		resp.Region = regionInfoToProto(result.Region)
+		resp.Region = h.mapper.RegionInfoToProto(result.Region)
 	}
 
 	return resp, nil
 }
 
-// =====================================================
-// Polygon-based Queries
-// =====================================================
-
-// FindParcelsByPolygon - Tìm parcels theo polygon
-func (h *ParcelGrpcHandler) FindParcelsByPolygon(
-	ctx context.Context,
-	req *tqdpb.FindParcelsByPolygonRequest,
-) (*tqdpb.FindParcelsByPolygonResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
-	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
-	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
-	if !updated {
-		return &tqdpb.FindParcelsByPolygonResponse{}, nil
+func getOptionalPolygonZoom(req *tqdpb.FindParcelsByPolygonRequest) *uint32 {
+	if req == nil {
+		return nil
 	}
 
-	// Validate coordinates
-	var points []repo.Point
+	// Với proto3 optional uint32 z = 8, Go generated thường sinh field Z *uint32.
+	// Nếu generated code của bạn chưa có req.Z, cần generate lại protobuf sau khi sửa proto.
+	if req.Z == nil {
+		return nil
+	}
+
+	z := req.GetZ()
+	return &z
+}
+
+func validatePolygonCoordinates(req *tqdpb.FindParcelsByPolygonRequest) ([]repo.Point, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+
 	if len(req.Coordinates) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "coordinates are required")
 	}
 
-	// Build points list
-	points = make([]repo.Point, len(req.Coordinates))
-	for i, pt := range req.Coordinates {
-		// Validate each point
+	points := make([]repo.Point, 0, len(req.Coordinates))
+
+	for _, pt := range req.Coordinates {
+		if pt == nil {
+			return nil, status.Error(codes.InvalidArgument, "coordinate item is required")
+		}
+
 		if pt.Lat < -90 || pt.Lat > 90 {
 			return nil, status.Error(codes.InvalidArgument, "latitude must be between -90 and 90")
 		}
+
 		if pt.Lng < -180 || pt.Lng > 180 {
 			return nil, status.Error(codes.InvalidArgument, "longitude must be between -180 and 180")
 		}
-		points[i] = repo.Point{Lat: pt.Lat, Lng: pt.Lng}
+
+		points = append(points, repo.Point{
+			Lat: pt.Lat,
+			Lng: pt.Lng,
+		})
 	}
 
-	// Validate polygon has at least 3 points
 	if len(points) < 3 {
 		return nil, status.Error(codes.InvalidArgument, "polygon must have at least 3 points")
 	}
 
-	// Build pagable
-	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+	return points, nil
+}
 
-	log.Printf("[FindParcelsByPolygon] Points count: %d, Intersect: %v, MaxAreaKm2: %f, Page: %d, Size: %d",
-		len(points), req.Intersect, req.MaxAreaKm2, pagable.GetPage(), pagable.GetSize())
+// FindParcelsByPolygon - Resolve targets theo polygon.
+//
+// Legacy compatibility:
+//   - Nếu client không truyền z:
+//     giữ hành vi cũ, trả parcel.
+//
+// New behavior:
+//   - Nếu client truyền z và z >= ParcelPolygonMinZ:
+//     trả parcel.
+//   - Nếu client truyền z và z < ParcelPolygonMinZ:
+//     trả region theo layer/label zoom.
+//
+// Lưu ý:
+// - Click location không đi qua function này.
+// - Click location vẫn giữ parcel-first fallback region.
+func (h *ParcelGrpcHandler) FindParcelsByPolygon(
+	ctx context.Context,
+	req *tqdpb.FindParcelsByPolygonRequest,
+) (*tqdpb.FindParcelsByPolygonResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+
+	if !updated {
+		return &tqdpb.FindParcelsByPolygonResponse{}, nil
+	}
+
+	points, err := validatePolygonCoordinates(req)
+	if err != nil {
+		return nil, err
+	}
+
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 
 	page := int(pagable.GetPage())
 	pageSize := int(pagable.GetSize())
 
-	parcels, total, err := h.usecase.FindParcelsByPolygon(
+	z := getOptionalPolygonZoom(req)
+
+	if z == nil {
+		log.Printf(
+			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=<nil>, Mode=legacy-parcel",
+			len(points),
+			req.Intersect,
+			req.MaxAreaKm2,
+			page,
+			pageSize,
+		)
+	} else {
+		log.Printf(
+			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%d",
+			len(points),
+			req.Intersect,
+			req.MaxAreaKm2,
+			page,
+			pageSize,
+			*z,
+		)
+	}
+
+	result, err := h.usecase.FindMapTargetsByPolygon(
 		ctx,
 		points,
 		req.Intersect,
 		req.MaxAreaKm2,
 		page,
 		pageSize,
+		z,
 	)
 	if err != nil {
 		log.Printf("[FindParcelsByPolygon] Usecase error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Printf("[FindParcelsByPolygon] Found %d parcels, Total: %d", len(parcels), total)
-
-	// Convert domain to proto
-	data := make([]*tqdpb.Parcel, len(parcels))
-	for i, p := range parcels {
-		data[i] = h.mapper.DomainToProto(&p)
+	if result == nil {
+		return &tqdpb.FindParcelsByPolygonResponse{
+			Data:       []*tqdpb.Parcel{},
+			Regions:    []*tqdpb.RegionInfoResponse{},
+			Total:      0,
+			Page:       int32(pagable.GetPage()),
+			PageSize:   int32(pagable.GetSize()),
+			ResultType: mapper.WorkspaceEntityTypeParcel,
+		}, nil
 	}
 
-	return &tqdpb.FindParcelsByPolygonResponse{
-		Data:     data,
-		Total:    int32(total),
-		Page:     int32(pagable.GetPage()),
-		PageSize: int32(pagable.GetSize()),
-	}, nil
+	log.Printf(
+		"[FindParcelsByPolygon] ResultType=%d, Z=%d, Parcels=%d, Regions=%d, Total=%d",
+		result.ResultType,
+		result.Z,
+		len(result.Parcels),
+		len(result.Regions),
+		result.Total,
+	)
+
+	return h.mapper.PolygonMapTargetsToProto(result), nil
 }
 
 func (h *ParcelGrpcHandler) SearchTxtClientParcels(

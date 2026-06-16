@@ -69,6 +69,28 @@ func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID 
 	return &seo, nil
 }
 
+func (r *SeoDomainPostgres) GetByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64) (*seo_domain.SeoDomain, error) {
+	var seo seo_domain.SeoDomain
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Preload("InternalLinks", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
+		Preload("InternalLinks.ChildSeo").
+		Preload("Relatives", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
+		Preload("Relatives.ChildSeo").
+		Where("ref_type = ? AND ref_source = ? AND ref_id = ?", refType, refSource, refID).
+		First(&seo).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &seo, nil
+}
+
 func (r *SeoDomainPostgres) GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error) {
 	var seo seo_domain.SeoDomain
 	err := impl.GetDB(ctx, r.db).WithContext(ctx).
@@ -98,6 +120,15 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 	if req.RefID != nil {
 		query = query.Where("ref_id = ?", *req.RefID)
+	}
+	if req.RefSource != nil && *req.RefSource != "" {
+		query = query.Where("ref_source = ?", *req.RefSource)
+	}
+	if req.SourceStatus != nil && *req.SourceStatus != "" {
+		query = query.Where("source_status = ?", *req.SourceStatus)
+	}
+	if req.RefMissing != nil {
+		query = query.Where("ref_missing = ?", *req.RefMissing)
 	}
 	if req.Scope != nil && *req.Scope != "" {
 		query = query.Where("scope = ?", *req.Scope)
@@ -184,6 +215,28 @@ func (r *SeoDomainPostgres) MarkNeedGenerateByRef(ctx context.Context, refType u
 			"source_updated_at": sourceUpdatedAt,
 			"updated_at":        gorm.Expr("NOW()"),
 		}).Error
+}
+
+func (r *SeoDomainPostgres) MarkNeedGenerateByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64, sourceUpdatedAt time.Time) error {
+	return impl.GetDB(ctx, r.db).
+		Model(&seo_domain.SeoDomain{}).
+		Where("ref_type = ? AND ref_source = ? AND ref_id = ?", refType, refSource, refID).
+		Updates(map[string]interface{}{
+			"need_generate":     true,
+			"source_updated_at": sourceUpdatedAt,
+			"updated_at":        gorm.Expr("NOW()"),
+		}).Error
+}
+
+func (r *SeoDomainPostgres) UpdateSourceStateByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = gorm.Expr("NOW()")
+	return impl.GetDB(ctx, r.db).
+		Model(&seo_domain.SeoDomain{}).
+		Where("ref_type = ? AND ref_source = ? AND ref_id = ?", refType, refSource, refID).
+		Updates(updates).Error
 }
 
 func (r *SeoDomainPostgres) GetSitemapItems(ctx context.Context, scope *string) ([]dto.SeoSitemapItem, error) {

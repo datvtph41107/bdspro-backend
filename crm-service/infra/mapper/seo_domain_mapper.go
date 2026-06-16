@@ -38,6 +38,15 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		CanonicalUrl:      seo.CanonicalURL,
 		RefType:           uint32(seo.RefType),
 		RefId:             seo.RefID,
+		RefSource:         seo.RefSource,
+		RefLabel:          seo.RefLabel,
+		RefUrl:            seo.RefURL,
+		SourceStatus:      seo.SourceStatus,
+		RefMissing:        seo.RefMissing,
+		RefSnapshotJson:   jsonToOptionalString(seo.RefSnapshotJSON),
+		RefHash:           seo.RefHash,
+		RefLastSyncedAt:   formatTimePtr(seo.RefLastSyncedAt),
+		QualityScore:      seo.QualityScore,
 		Scope:             seo.Scope,
 		Classify:          uint32(seo.Classify),
 		Title:             seo.Title,
@@ -81,6 +90,9 @@ func (m *SeoDomainMapper) SeoDomainBriefToPb(seo *seo_domain.SeoDomain) *crmpb.S
 		Classify:     uint32(seo.Classify),
 		RefType:      uint32(seo.RefType),
 		RefId:        seo.RefID,
+		RefSource:    seo.RefSource,
+		RefLabel:     seo.RefLabel,
+		SourceStatus: seo.SourceStatus,
 	}
 }
 
@@ -88,6 +100,32 @@ func (m *SeoDomainMapper) SeoDomainListToPb(items []seo_domain.SeoDomain) []*crm
 	responses := make([]*crmpb.SeoDomainResponse, 0, len(items))
 	for i := range items {
 		responses = append(responses, m.SeoDomainToPb(&items[i]))
+	}
+	return responses
+}
+
+func (m *SeoDomainMapper) SeoRefTypeConfigToPb(cfg seo_domain.SeoRefTypeConfig) *crmpb.SeoRefTypeResponse {
+	return &crmpb.SeoRefTypeResponse{
+		Value:            cfg.Value,
+		Key:              cfg.Key,
+		Label:            cfg.Label,
+		Description:      cfg.Description,
+		Family:           cfg.Family,
+		SourceService:    cfg.SourceService,
+		ResolverKey:      cfg.ResolverKey,
+		Searchable:       cfg.Searchable,
+		UniquePerRef:     cfg.UniquePerRef,
+		SupportsTemplate: cfg.SupportsTemplate,
+		DefaultPageType:  cfg.DefaultPageType,
+		AdminUrlPattern:  cfg.AdminURLPattern,
+		PublicUrlPattern: cfg.PublicURLPattern,
+	}
+}
+
+func (m *SeoDomainMapper) SeoRefTypeConfigsToPb(items []seo_domain.SeoRefTypeConfig) []*crmpb.SeoRefTypeResponse {
+	responses := make([]*crmpb.SeoRefTypeResponse, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, m.SeoRefTypeConfigToPb(item))
 	}
 	return responses
 }

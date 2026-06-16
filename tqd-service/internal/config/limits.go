@@ -7,4 +7,8 @@ const (
 	DefaultPageSize    = 50
 	MaxPageSize        = 200
 	MaxParcelReturn    = 5000
+
+	// Polygon draw ở zoom >= ngưỡng này mới trả parcel.
+	// Zoom thấp hơn trả region để khớp cấp hiển thị của bản đồ.
+	ParcelPolygonMinZ = 14
 )

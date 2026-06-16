@@ -28,6 +28,7 @@ type SeoDomainUsecase struct {
 	seoRelativeRepo repo.SeoRelativeRepo
 	tqdProvider     provider.TqdProvider
 	transaction     provider.ITransaction
+	bdsproProvider  provider.BdsproProvider
 }
 
 func NewSeoDomainUsecase(
@@ -36,6 +37,7 @@ func NewSeoDomainUsecase(
 	seoRelativeRepo repo.SeoRelativeRepo,
 	tqdProvider provider.TqdProvider,
 	transaction provider.ITransaction,
+	bdsproProvider provider.BdsproProvider,
 ) *SeoDomainUsecase {
 	return &SeoDomainUsecase{
 		seoDomainRepo:   seoDomainRepo,
@@ -43,6 +45,7 @@ func NewSeoDomainUsecase(
 		seoRelativeRepo: seoRelativeRepo,
 		tqdProvider:     tqdProvider,
 		transaction:     transaction,
+		bdsproProvider:  bdsproProvider,
 	}
 }
 
@@ -302,7 +305,54 @@ func (u *SeoDomainUsecase) TouchByRef(ctx context.Context, req *dto.TouchSeoDoma
 	if req.RefID == 0 {
 		return _errors.ReturnError(400, "refId không hợp lệ")
 	}
-	return u.seoDomainRepo.MarkNeedGenerateByRef(ctx, req.RefType, req.RefID, time.Now())
+	cfg, err := resolveSeoRefConfig(req.RefType, req.RefSource, "")
+	if err != nil {
+		return err
+	}
+	existing, err := u.seoDomainRepo.GetByRefSource(ctx, req.RefType, cfg.ResolverKey, req.RefID)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	snapshot, err := newSeoRefResolver(cfg, u.bdsproProvider, u.tqdProvider).Resolve(ctx, &dto.ResolveSeoRefValueRequest{
+		RefType:     req.RefType,
+		RefID:       req.RefID,
+		ResolverKey: cfg.ResolverKey,
+	})
+	if err != nil {
+		updates := map[string]interface{}{
+			"source_status":     seo_domain.SeoSourceStatusMissing,
+			"ref_missing":       true,
+			"source_updated_at": now,
+			"need_generate":     true,
+		}
+		if existing != nil {
+			return u.seoDomainRepo.UpdateSourceStateByRefSource(ctx, req.RefType, cfg.ResolverKey, req.RefID, updates)
+		}
+		return err
+	}
+
+	needGenerate := existing == nil || existing.RefHash != snapshot.Hash
+	status := seo_domain.SeoSourceStatusLinked
+	if needGenerate && existing != nil {
+		status = seo_domain.SeoSourceStatusStale
+	}
+	updates := map[string]interface{}{
+		"ref_label":          snapshot.Label,
+		"ref_url":            snapshot.PublicURL,
+		"source_status":      status,
+		"ref_missing":        false,
+		"ref_snapshot_json":  datatypes.JSON([]byte(snapshot.DataJSON)),
+		"ref_hash":           snapshot.Hash,
+		"ref_last_synced_at": now,
+		"source_updated_at":  now,
+		"need_generate":      needGenerate,
+	}
+	if existing == nil {
+		return u.seoDomainRepo.MarkNeedGenerateByRefSource(ctx, req.RefType, cfg.ResolverKey, req.RefID, now)
+	}
+	return u.seoDomainRepo.UpdateSourceStateByRefSource(ctx, req.RefType, cfg.ResolverKey, req.RefID, updates)
 }
 
 func (u *SeoDomainUsecase) BuildSitemapXML(ctx context.Context, req *dto.SeoSitemapRequest, baseURL string) (string, error) {
@@ -525,9 +575,21 @@ func (u *SeoDomainUsecase) DeleteSeoRelative(ctx context.Context, id uint64) err
 // -----------------------------------------------------------------------------
 
 func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto.SeoDomainCreateRequest) (*seo_domain.SeoDomain, error) {
+	if err := validateRef(req.RefType, req.RefID); err != nil {
+		return nil, err
+	}
+
+	sourceBinding, err := u.prepareSourceBinding(ctx, req.RefType, req.RefID, strings.TrimSpace(req.RefSource))
+	if err != nil {
+		return nil, err
+	}
+
 	originURL := strings.TrimSpace(req.OriginURL)
+	if originURL == "" && sourceBinding.RefURL != "" {
+		originURL = sourceBinding.RefURL
+	}
 	if originURL == "" {
-		return nil, _errors.ReturnError(400, "originUrl không được để trống")
+		originURL = "/seo/" + firstNonEmpty(strings.TrimSpace(req.Slug), sourceBinding.SuggestedSlug, slugify(req.Title), "seo-page")
 	}
 
 	canonicalURL := originURL
@@ -537,7 +599,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 
 	slug := strings.TrimSpace(req.Slug)
 	if slug == "" {
-		slug = slugify(canonicalURL)
+		slug = firstNonEmpty(sourceBinding.SuggestedSlug, slugify(canonicalURL))
 	}
 
 	scope := normalizeScope(req.Scope)
@@ -547,10 +609,6 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 			return nil, _errors.ReturnError(400, "classify không hợp lệ")
 		}
 		classify = enums.SeoClassifyFromUint32(req.Classify)
-	}
-
-	if err := validateRef(req.RefType, req.RefID); err != nil {
-		return nil, err
 	}
 
 	publishedAt, err := parseSeoTime(req.PublishedAt)
@@ -569,9 +627,23 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	if err != nil {
 		return nil, _errors.ReturnError(400, "sourceUpdatedAt phải theo RFC3339 hoặc YYYY-MM-DD")
 	}
+	refLastSyncedAt, err := parseSeoTime(req.RefLastSyncedAt)
+	if err != nil {
+		return nil, _errors.ReturnError(400, "refLastSyncedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+	}
 	metadata, err := parseMetadata(req.Metadata)
 	if err != nil {
 		return nil, err
+	}
+	refSnapshotJSON := sourceBinding.RefSnapshotJSON
+	if req.RefSnapshotJSON != nil {
+		refSnapshotJSON, err = parseJSONPayload(req.RefSnapshotJSON, "refSnapshotJson")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if refLastSyncedAt == nil {
+		refLastSyncedAt = sourceBinding.RefLastSyncedAt
 	}
 
 	needGenerate := true
@@ -588,7 +660,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	state := seoState{
 		Slug:      slug,
 		Canonical: canonicalURL,
-		Title:     strings.TrimSpace(req.Title),
+		Title:     firstNonEmpty(strings.TrimSpace(req.Title), sourceBinding.SuggestedTitle),
 		Published: req.Published,
 		IsSiteMap: req.IsSiteMap,
 		IsIndex:   req.IsIndex,
@@ -605,6 +677,27 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	if exist {
 		return nil, _errors.ReturnError(400, "canonicalUrl đã tồn tại")
 	}
+	if sourceBinding.RefSource != seo_domain.SeoRefSourceManual && req.RefID != nil {
+		existingByRef, err := u.seoDomainRepo.GetByRefSource(ctx, req.RefType, sourceBinding.RefSource, *req.RefID)
+		if err != nil {
+			return nil, err
+		}
+		if existingByRef != nil {
+			return nil, _errors.ReturnError(400, "SEO page cho source này đã tồn tại")
+		}
+	}
+
+	refMissing := sourceBinding.RefMissing
+	if req.RefMissing != nil {
+		refMissing = *req.RefMissing
+	}
+	qualityScore := sourceBinding.QualityScore
+	if req.QualityScore != nil {
+		qualityScore = *req.QualityScore
+	}
+	if qualityScore > 100 {
+		return nil, _errors.ReturnError(400, "qualityScore phải nằm trong khoảng 0..100")
+	}
 
 	return &seo_domain.SeoDomain{
 		Slug:              slug,
@@ -612,10 +705,19 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		CanonicalURL:      canonicalURL,
 		RefType:           enums.ESEORefType(req.RefType),
 		RefID:             req.RefID,
+		RefSource:         sourceBinding.RefSource,
+		RefLabel:          firstNonEmpty(strings.TrimSpace(req.RefLabel), sourceBinding.RefLabel),
+		RefURL:            firstNonEmpty(strings.TrimSpace(req.RefURL), sourceBinding.RefURL),
+		SourceStatus:      firstNonEmpty(strings.TrimSpace(req.SourceStatus), sourceBinding.SourceStatus),
+		RefMissing:        refMissing,
+		RefSnapshotJSON:   refSnapshotJSON,
+		RefHash:           firstNonEmpty(strings.TrimSpace(req.RefHash), sourceBinding.RefHash),
+		RefLastSyncedAt:   refLastSyncedAt,
+		QualityScore:      qualityScore,
 		Scope:             scope,
 		Classify:          classify,
-		Title:             strings.TrimSpace(req.Title),
-		Description:       strings.TrimSpace(req.Description),
+		Title:             firstNonEmpty(strings.TrimSpace(req.Title), sourceBinding.SuggestedTitle),
+		Description:       firstNonEmpty(strings.TrimSpace(req.Description), sourceBinding.SuggestedDescription),
 		Content:           req.Content,
 		Summary:           strings.TrimSpace(req.Summary),
 		Published:         req.Published,
@@ -651,6 +753,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	}
 	refType := uint32(existing.RefType)
 	refID := existing.RefID
+	refSource := existing.RefSource
 
 	if req.Slug != nil {
 		slug := strings.TrimSpace(*req.Slug)
@@ -690,8 +793,25 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		refID = req.RefID
 		updates["ref_id"] = req.RefID
 	}
+	if req.RefSource != nil {
+		refSource = strings.TrimSpace(*req.RefSource)
+	}
 	if err := validateRef(refType, refID); err != nil {
 		return nil, err
+	}
+	if req.RefType != nil || req.RefID != nil || req.RefSource != nil {
+		sourceBinding, err := u.prepareSourceBinding(ctx, refType, refID, refSource)
+		if err != nil {
+			return nil, err
+		}
+		updates["ref_source"] = sourceBinding.RefSource
+		updates["ref_label"] = sourceBinding.RefLabel
+		updates["ref_url"] = sourceBinding.RefURL
+		updates["source_status"] = sourceBinding.SourceStatus
+		updates["ref_missing"] = sourceBinding.RefMissing
+		updates["ref_snapshot_json"] = sourceBinding.RefSnapshotJSON
+		updates["ref_hash"] = sourceBinding.RefHash
+		updates["ref_last_synced_at"] = sourceBinding.RefLastSyncedAt
 	}
 	if req.Scope != nil {
 		updates["scope"] = normalizeScope(*req.Scope)
@@ -775,6 +895,42 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		}
 		updates["source_updated_at"] = parsed
 	}
+	if req.RefLabel != nil {
+		updates["ref_label"] = strings.TrimSpace(*req.RefLabel)
+	}
+	if req.RefURL != nil {
+		updates["ref_url"] = strings.TrimSpace(*req.RefURL)
+	}
+	if req.SourceStatus != nil {
+		status := normalizeSourceStatus(*req.SourceStatus, refType == 0)
+		updates["source_status"] = status
+	}
+	if req.RefMissing != nil {
+		updates["ref_missing"] = *req.RefMissing
+	}
+	if req.RefSnapshotJSON != nil {
+		refSnapshotJSON, err := parseJSONPayload(req.RefSnapshotJSON, "refSnapshotJson")
+		if err != nil {
+			return nil, err
+		}
+		updates["ref_snapshot_json"] = refSnapshotJSON
+	}
+	if req.RefHash != nil {
+		updates["ref_hash"] = strings.TrimSpace(*req.RefHash)
+	}
+	if req.RefLastSyncedAt != nil {
+		parsed, err := parseSeoTime(req.RefLastSyncedAt)
+		if err != nil {
+			return nil, _errors.ReturnError(400, "refLastSyncedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+		}
+		updates["ref_last_synced_at"] = parsed
+	}
+	if req.QualityScore != nil {
+		if *req.QualityScore > 100 {
+			return nil, _errors.ReturnError(400, "qualityScore phải nằm trong khoảng 0..100")
+		}
+		updates["quality_score"] = *req.QualityScore
+	}
 	if req.StaticHtmlPath != nil {
 		updates["static_html_path"] = strings.TrimSpace(*req.StaticHtmlPath)
 	}
@@ -854,6 +1010,68 @@ func (u *SeoDomainUsecase) prepareRelative(ctx context.Context, parentID, childI
 	return parent, child, relationType, priority, nil
 }
 
+type seoSourceBinding struct {
+	RefSource            string
+	RefLabel             string
+	RefURL               string
+	SourceStatus         string
+	RefMissing           bool
+	RefSnapshotJSON      datatypes.JSON
+	RefHash              string
+	RefLastSyncedAt      *time.Time
+	QualityScore         uint32
+	SuggestedSlug        string
+	SuggestedTitle       string
+	SuggestedDescription string
+}
+
+func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uint32, refID *uint64, refSource string) (seoSourceBinding, error) {
+	emptyJSON := datatypes.JSON([]byte("{}"))
+	if refType == 0 {
+		return seoSourceBinding{
+			RefSource:       seo_domain.SeoRefSourceManual,
+			SourceStatus:    seo_domain.SeoSourceStatusManual,
+			RefSnapshotJSON: emptyJSON,
+		}, nil
+	}
+	if refID == nil || *refID == 0 {
+		return seoSourceBinding{}, _errors.ReturnError(400, "refId là bắt buộc khi refType khác 0")
+	}
+
+	cfg, err := resolveSeoRefConfig(refType, refSource, "")
+	if err != nil {
+		return seoSourceBinding{}, err
+	}
+	snapshot, err := newSeoRefResolver(cfg, u.bdsproProvider, u.tqdProvider).Resolve(ctx, &dto.ResolveSeoRefValueRequest{
+		RefType:     refType,
+		RefID:       *refID,
+		ResolverKey: cfg.ResolverKey,
+	})
+	if err != nil {
+		return seoSourceBinding{}, err
+	}
+	now := time.Now()
+	dataJSON := snapshot.DataJSON
+	if !json.Valid([]byte(dataJSON)) {
+		dataJSON = "{}"
+	}
+
+	return seoSourceBinding{
+		RefSource:            cfg.ResolverKey,
+		RefLabel:             snapshot.Label,
+		RefURL:               snapshot.PublicURL,
+		SourceStatus:         firstNonEmpty(snapshot.SourceStatus, seo_domain.SeoSourceStatusLinked),
+		RefMissing:           false,
+		RefSnapshotJSON:      datatypes.JSON([]byte(dataJSON)),
+		RefHash:              snapshot.Hash,
+		RefLastSyncedAt:      &now,
+		QualityScore:         0,
+		SuggestedSlug:        snapshot.SuggestedSlug,
+		SuggestedTitle:       snapshot.SuggestedTitle,
+		SuggestedDescription: snapshot.SuggestedMetaDescription,
+	}, nil
+}
+
 func validateRef(refType uint32, refID *uint64) error {
 	if !enums.IsValidSEORefType(refType) {
 		return _errors.ReturnError(400, "refType không hợp lệ")
@@ -909,6 +1127,17 @@ func parseMetadata(value *string) (datatypes.JSON, error) {
 	return datatypes.JSON([]byte(payload)), nil
 }
 
+func parseJSONPayload(value *string, fieldName string) (datatypes.JSON, error) {
+	if value == nil || strings.TrimSpace(*value) == "" {
+		return datatypes.JSON([]byte("{}")), nil
+	}
+	payload := strings.TrimSpace(*value)
+	if !json.Valid([]byte(payload)) {
+		return nil, _errors.ReturnError(400, fieldName+" phải là JSON hợp lệ")
+	}
+	return datatypes.JSON([]byte(payload)), nil
+}
+
 func parseSeoTime(value *string) (*time.Time, error) {
 	if value == nil {
 		return nil, nil
@@ -929,6 +1158,21 @@ func parseSeoTime(value *string) (*time.Time, error) {
 	return nil, lastErr
 }
 
+func normalizeSourceStatus(status string, isManual bool) string {
+	if isManual {
+		return seo_domain.SeoSourceStatusManual
+	}
+	switch strings.TrimSpace(status) {
+	case seo_domain.SeoSourceStatusLinked,
+		seo_domain.SeoSourceStatusStale,
+		seo_domain.SeoSourceStatusMissing,
+		seo_domain.SeoSourceStatusPermissionDenied:
+		return strings.TrimSpace(status)
+	default:
+		return seo_domain.SeoSourceStatusLinked
+	}
+}
+
 func normalizeScope(scope string) string {
 	switch strings.TrimSpace(scope) {
 	case seo_domain.SeoScopePublic, seo_domain.SeoScopeInternal, seo_domain.SeoScopeApp, seo_domain.SeoScopeAdmin:
@@ -936,6 +1180,15 @@ func normalizeScope(scope string) string {
 	default:
 		return seo_domain.SeoScopePublic
 	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }
 
 func normalizeChangeFreq(freq string) string {
@@ -951,6 +1204,19 @@ func normalizeChangeFreq(freq string) string {
 	default:
 		return seo_domain.SeoChangeFreqDaily
 	}
+}
+
+func resolveSeoRefConfig(refType uint32, resolverKey string, sourceService string) (seo_domain.SeoRefTypeConfig, error) {
+	if !enums.IsValidSEORefType(refType) {
+		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(400, "refType không hợp lệ")
+	}
+	resolverKey = strings.TrimSpace(resolverKey)
+	sourceService = strings.TrimSpace(sourceService)
+	cfg, ok := seo_domain.GetSeoRefTypeConfig(refType, resolverKey, sourceService)
+	if !ok {
+		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(400, "refType hoặc resolver không được hỗ trợ")
+	}
+	return cfg, nil
 }
 
 var nonSlugChars = regexp.MustCompile(`[^a-z0-9/_-]+`)

@@ -17,6 +17,11 @@ type ParcelMapper struct {
 	ConflictSummarySuffix string
 }
 
+const (
+	WorkspaceEntityTypeParcel uint32 = 1
+	WorkspaceEntityTypeRegion uint32 = 3
+)
+
 func NewParcelMapper() *ParcelMapper {
 	landTypes := make(map[uint64]string, len(types.DefaultLandTypeNames))
 	for k, v := range types.DefaultLandTypeNames {
@@ -230,6 +235,139 @@ func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tq
 		WardCode:     resp.WardCode,
 		SeoId:        resp.SeoID,
 		IsSeo:        resp.IsSeo,
+	}
+}
+
+func (m *ParcelMapper) RegionInfoToProto(v *dto.RegionInfoResponse) *tqdpb.RegionInfoResponse {
+	if v == nil {
+		return nil
+	}
+
+	return &tqdpb.RegionInfoResponse{
+		RegionId:  v.RegionID,
+		LayerId:   v.LayerID,
+		LabelId:   v.LabelID,
+		LandUseId: v.LandUseID,
+		LegendId:  v.LegendID,
+
+		Name:        v.Name,
+		DisplayName: v.DisplayName,
+		Description: v.Description,
+
+		LayerName:        v.LayerName,
+		LayerDisplayName: v.LayerDisplayName,
+
+		LandUseCode:  v.LandUseCode,
+		LandUseName:  v.LandUseName,
+		LandUseColor: v.LandUseColor,
+		CanBuild:     v.CanBuild,
+
+		LabelName:  v.LabelName,
+		LabelColor: v.LabelColor,
+
+		LegendColor:  v.LegendColor,
+		LegendType:   v.LegendType,
+		GeometryType: v.GeometryType,
+
+		LegalDoc:     v.LegalDoc,
+		PlanningName: v.PlanningName,
+
+		AreaSqm:    v.AreaSqm,
+		AreaHa:     v.AreaHa,
+		PerimeterM: v.PerimeterM,
+
+		CenterLat: v.CenterLat,
+		CenterLon: v.CenterLon,
+
+		Bounds: &tqdpb.RegionBounds{
+			MinLon: v.MinLon,
+			MinLat: v.MinLat,
+			MaxLon: v.MaxLon,
+			MaxLat: v.MaxLat,
+		},
+
+		GeoJson: v.GeoJSON,
+
+		Province:     v.Province,
+		ProvinceCode: v.ProvinceCode,
+		WardCode:     v.WardCode,
+	}
+}
+
+func (m *ParcelMapper) RegionInfoListToProto(items []dto.RegionInfoResponse) []*tqdpb.RegionInfoResponse {
+	if len(items) == 0 {
+		return []*tqdpb.RegionInfoResponse{}
+	}
+
+	result := make([]*tqdpb.RegionInfoResponse, 0, len(items))
+
+	for i := range items {
+		result = append(result, m.RegionInfoToProto(&items[i]))
+	}
+
+	return result
+}
+
+func (m *ParcelMapper) DomainListToProto(parcels []qh_domain.Parcel) []*tqdpb.Parcel {
+	if len(parcels) == 0 {
+		return []*tqdpb.Parcel{}
+	}
+
+	result := make([]*tqdpb.Parcel, 0, len(parcels))
+
+	for i := range parcels {
+		result = append(result, m.DomainToProto(&parcels[i]))
+	}
+
+	return result
+}
+
+func (m *ParcelMapper) PolygonMapTargetsToProto(
+	resp *dto.PolygonMapTargetsResponse,
+) *tqdpb.FindParcelsByPolygonResponse {
+	if resp == nil {
+		return &tqdpb.FindParcelsByPolygonResponse{
+			Data:       []*tqdpb.Parcel{},
+			Regions:    []*tqdpb.RegionInfoResponse{},
+			Total:      0,
+			Page:       1,
+			PageSize:   0,
+			ResultType: WorkspaceEntityTypeParcel,
+			Z:          0,
+		}
+	}
+
+	resultType := resp.ResultType
+	if resultType == 0 {
+		/**
+		 * Fallback an toàn:
+		 * - Có region thì coi là region result.
+		 * - Ngược lại coi là parcel result để giữ legacy.
+		 */
+		if len(resp.Regions) > 0 {
+			resultType = WorkspaceEntityTypeRegion
+		} else {
+			resultType = WorkspaceEntityTypeParcel
+		}
+	}
+
+	return &tqdpb.FindParcelsByPolygonResponse{
+		Data:    m.DomainListToProto(resp.Parcels),
+		Regions: m.RegionInfoListToProto(resp.Regions),
+
+		Total:    int32(resp.Total),
+		Page:     int32(resp.Page),
+		PageSize: int32(resp.PageSize),
+
+		AdjustedGeoJson:   resp.AdjustedGeoJSON,
+		AdjustmentReason:  resp.AdjustmentReason,
+		OriginalAreaKm2:   resp.OriginalAreaKm2,
+		AdjustedAreaKm2:   resp.AdjustedAreaKm2,
+		MaxAllowedAreaKm2: resp.MaxAllowedAreaKm2,
+		Warning:           resp.Warning,
+
+		ResultType: resultType,
+		Z:          resp.Z,
 	}
 }
 

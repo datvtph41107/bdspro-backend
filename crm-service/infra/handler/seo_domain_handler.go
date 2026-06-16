@@ -28,6 +28,82 @@ func NewSeoDomainHandler(seoDomainUsecase *usecase.SeoDomainUsecase, seoDomainMa
 	}
 }
 
+func (h *SeoDomainHandler) GetSeoRefTypes(ctx context.Context, req *crmpb.GetSeoRefTypesRequest) (*crmpb.GetSeoRefTypesResponse, error) {
+	return &crmpb.GetSeoRefTypesResponse{
+		Data: h.seoDomainMapper.SeoRefTypeConfigsToPb(h.seoDomainUsecase.GetSeoRefTypes(ctx)),
+	}, nil
+}
+
+func (h *SeoDomainHandler) SearchSeoRefValues(ctx context.Context, req *crmpb.SearchSeoRefValuesRequest) (*crmpb.SearchSeoRefValuesResponse, error) {
+	items, total, err := h.seoDomainUsecase.SearchSeoRefValues(ctx, &dto.SearchSeoRefValuesRequest{
+		RefType:       req.RefType,
+		Text:          req.Text,
+		Page:          req.Page,
+		Size:          req.Size,
+		ResolverKey:   req.ResolverKey,
+		SourceService: req.SourceService,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]*crmpb.SeoRefValueResponse, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, &crmpb.SeoRefValueResponse{
+			RefType:           item.RefType,
+			RefTypeKey:        item.RefTypeKey,
+			RefId:             item.RefID,
+			Label:             item.Label,
+			Description:       item.Description,
+			ImageUrl:          item.ImageURL,
+			AdminUrl:          item.AdminURL,
+			PublicUrl:         item.PublicURL,
+			AlreadyHasSeoPage: item.AlreadyHasSeoPage,
+			SeoPageId:         item.SeoPageID,
+			SourceService:     item.SourceService,
+			ResolverKey:       item.ResolverKey,
+			SourceStatus:      item.SourceStatus,
+		})
+	}
+
+	return &crmpb.SearchSeoRefValuesResponse{
+		Data:  responses,
+		Total: total,
+	}, nil
+}
+
+func (h *SeoDomainHandler) ResolveSeoRefValue(ctx context.Context, req *crmpb.ResolveSeoRefValueRequest) (*crmpb.SeoRefSnapshotResponse, error) {
+	item, err := h.seoDomainUsecase.ResolveSeoRefValue(ctx, &dto.ResolveSeoRefValueRequest{
+		RefType:       req.RefType,
+		RefID:         req.RefId,
+		ResolverKey:   req.ResolverKey,
+		SourceService: req.SourceService,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.SeoRefSnapshotResponse{
+		RefType:                  item.RefType,
+		RefTypeKey:               item.RefTypeKey,
+		RefId:                    item.RefID,
+		Label:                    item.Label,
+		Description:              item.Description,
+		ImageUrl:                 item.ImageURL,
+		AdminUrl:                 item.AdminURL,
+		PublicUrl:                item.PublicURL,
+		SuggestedSlug:            item.SuggestedSlug,
+		SuggestedTitle:           item.SuggestedTitle,
+		SuggestedMetaTitle:       item.SuggestedMetaTitle,
+		SuggestedMetaDescription: item.SuggestedMetaDescription,
+		SourceService:            item.SourceService,
+		ResolverKey:              item.ResolverKey,
+		SourceStatus:             item.SourceStatus,
+		Hash:                     item.Hash,
+		DataJson:                 item.DataJSON,
+	}, nil
+}
+
 func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.CreateSeoDomainRequest) (*crmpb.SeoDomainResponse, error) {
 	seoReq := &dto.SeoDomainCreateRequest{
 		Slug:              req.Slug,
@@ -35,6 +111,15 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		CanonicalURL:      req.CanonicalUrl,
 		RefType:           req.RefType,
 		RefID:             req.RefId,
+		RefSource:         req.RefSource,
+		RefLabel:          req.RefLabel,
+		RefURL:            req.RefUrl,
+		SourceStatus:      req.SourceStatus,
+		RefMissing:        req.RefMissing,
+		RefSnapshotJSON:   req.RefSnapshotJson,
+		RefHash:           req.RefHash,
+		RefLastSyncedAt:   req.RefLastSyncedAt,
+		QualityScore:      req.QualityScore,
 		Scope:             req.Scope,
 		Classify:          req.Classify,
 		Title:             req.Title,
@@ -83,6 +168,9 @@ func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetS
 		Keyword:      req.Keyword,
 		RefType:      req.RefType,
 		RefID:        req.RefId,
+		RefSource:    req.RefSource,
+		SourceStatus: req.SourceStatus,
+		RefMissing:   req.RefMissing,
 		Scope:        req.Scope,
 		Classify:     req.Classify,
 		Published:    req.Published,
@@ -109,6 +197,15 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		CanonicalURL:      req.CanonicalUrl,
 		RefType:           req.RefType,
 		RefID:             req.RefId,
+		RefSource:         req.RefSource,
+		RefLabel:          req.RefLabel,
+		RefURL:            req.RefUrl,
+		SourceStatus:      req.SourceStatus,
+		RefMissing:        req.RefMissing,
+		RefSnapshotJSON:   req.RefSnapshotJson,
+		RefHash:           req.RefHash,
+		RefLastSyncedAt:   req.RefLastSyncedAt,
+		QualityScore:      req.QualityScore,
 		Scope:             req.Scope,
 		Classify:          req.Classify,
 		Title:             req.Title,
@@ -219,7 +316,7 @@ func (h *SeoDomainHandler) DeleteSeoDomain(ctx context.Context, req *sharepb.IdR
 }
 
 func (h *SeoDomainHandler) TouchSeoDomainByRef(ctx context.Context, req *crmpb.TouchSeoDomainByRefRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.seoDomainUsecase.TouchByRef(ctx, &dto.TouchSeoDomainByRefRequest{RefType: req.RefType, RefID: req.RefId}); err != nil {
+	if err := h.seoDomainUsecase.TouchByRef(ctx, &dto.TouchSeoDomainByRefRequest{RefType: req.RefType, RefID: req.RefId, RefSource: req.RefSource}); err != nil {
 		return nil, err
 	}
 	return &sharepb.SubmitResponse{Id: req.RefId, Message: "Seo domain marked for regeneration"}, nil

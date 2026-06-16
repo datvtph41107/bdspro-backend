@@ -380,6 +380,151 @@ func (p *ParcelPostgres) FindWithinPolygon(ctx context.Context, points []repo.Po
 	return parcels, total, err
 }
 
+func (p *ParcelPostgres) FindRegionsByPolygon(
+	ctx context.Context,
+	points []repo.Point,
+	intersect bool,
+	zoom uint32,
+	limit int,
+	offset int,
+) ([]dto.RegionInfoResponse, int64, error) {
+	if len(points) < 3 {
+		return nil, 0, fmt.Errorf("invalid polygon")
+	}
+
+	polygon := buildPolygonWKT(points)
+
+	spatialPredicate := "ST_Contains(poly.geom, r.geometry)"
+	if intersect {
+		spatialPredicate = "ST_Intersects(r.geometry, poly.geom)"
+	}
+
+	baseWhere := fmt.Sprintf(`
+		FROM qh_regions r
+		JOIN qh_layers l
+			ON l.id = r.layer_id
+		   AND l.deleted_at IS NULL
+		   AND l.status = 10
+		LEFT JOIN qh_labels lb
+			ON lb.id = r.label_id
+		   AND lb.deleted_at IS NULL
+		LEFT JOIN qh_land_use lu
+			ON lu.id = r.land_use_id
+		LEFT JOIN qh_legends leg
+			ON leg.id = r.legend_id
+		CROSS JOIN poly
+		WHERE r.deleted_at IS NULL
+		  AND r.status = 10
+		  AND r.is_latest = true
+		  AND r.geometry && poly.geom
+		  AND %s
+
+		  -- Layer phải hợp lệ tại zoom hiện tại
+		  AND COALESCE(l.min_zoom, 0) <= ?
+		  AND COALESCE(l.max_zoom, 22) >= ?
+
+		  -- Label nếu có thì cũng phải hợp lệ tại zoom hiện tại
+		  AND (
+			r.label_id IS NULL
+			OR lb.id IS NULL
+			OR (
+				COALESCE(lb.is_visible, true) = true
+				AND COALESCE(lb.status, 10) = 10
+				AND COALESCE(lb.min_zoom, 0) <= ?
+				AND COALESCE(lb.max_zoom, 22) >= ?
+			)
+		  )
+	`, spatialPredicate)
+
+	var total int64
+
+	countQuery := `
+		WITH poly AS (
+			SELECT ST_GeomFromText(?, 4326) AS geom
+		)
+		SELECT COUNT(*)
+	` + baseWhere
+
+	if err := p.DB.WithContext(ctx).
+		Raw(countQuery, polygon, zoom, zoom, zoom, zoom).
+		Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count regions by polygon failed: %w", err)
+	}
+
+	if total == 0 {
+		return []dto.RegionInfoResponse{}, 0, nil
+	}
+
+	var regions []dto.RegionInfoResponse
+
+	query := `
+		WITH poly AS (
+			SELECT ST_GeomFromText(?, 4326) AS geom
+		)
+		SELECT
+			r.id AS region_id,
+			r.layer_id,
+			COALESCE(r.label_id, 0) AS label_id,
+			COALESCE(r.land_use_id, 0) AS land_use_id,
+			COALESCE(r.legend_id, 0) AS legend_id,
+
+			COALESCE(r.name, '') AS name,
+			COALESCE(r.display_name, '') AS display_name,
+			COALESCE(r.description, '') AS description,
+
+			COALESCE(l.name, '') AS layer_name,
+			COALESCE(l.display_name, '') AS layer_display_name,
+
+			COALESCE(lu.code, '') AS land_use_code,
+			COALESCE(lu.name, '') AS land_use_name,
+			COALESCE(lu.color, '') AS land_use_color,
+			COALESCE(lu.can_build, false) AS can_build,
+
+			COALESCE(lb.name, '') AS label_name,
+			COALESCE(lb.color, '') AS label_color,
+
+			COALESCE(leg.color, '') AS legend_color,
+			COALESCE(leg.legend_type, '') AS legend_type,
+			COALESCE(leg.geometry_type, '') AS geometry_type,
+
+			COALESCE(r.legal_doc, '') AS legal_doc,
+			COALESCE(r.planning_name, '') AS planning_name,
+
+			COALESCE(r.area_sqm, 0) AS area_sqm,
+			COALESCE(r.area_ha, 0) AS area_ha,
+			COALESCE(r.perimeter_m, 0) AS perimeter_m,
+
+			COALESCE(ST_Y(ST_PointOnSurface(r.geometry)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(r.geometry)), 0) AS center_lon,
+
+			COALESCE(ST_XMin(Box2D(r.geometry)), 0) AS min_lon,
+			COALESCE(ST_YMin(Box2D(r.geometry)), 0) AS min_lat,
+			COALESCE(ST_XMax(Box2D(r.geometry)), 0) AS max_lon,
+			COALESCE(ST_YMax(Box2D(r.geometry)), 0) AS max_lat,
+
+			ST_AsGeoJSON(r.geometry) AS geo_json,
+
+			'' AS province,
+			'' AS province_code,
+			'' AS ward_code
+	` + baseWhere + `
+		ORDER BY
+		  COALESCE(l.display_order, 0) DESC,
+		  COALESCE(lu.priority, 50) ASC,
+		  COALESCE(r.area_sqm, 0) ASC,
+		  r.id DESC
+		LIMIT ? OFFSET ?
+	`
+
+	if err := p.DB.WithContext(ctx).
+		Raw(query, polygon, zoom, zoom, zoom, zoom, limit, offset).
+		Scan(&regions).Error; err != nil {
+		return nil, 0, fmt.Errorf("find regions by polygon failed: %w", err)
+	}
+
+	return regions, total, nil
+}
+
 func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 

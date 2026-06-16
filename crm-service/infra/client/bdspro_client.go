@@ -5,6 +5,7 @@ import (
 	_middleware "common/middleware"
 	"context"
 	"crm/env"
+	"errors"
 	"fmt"
 	"log"
 	bdspropb "pb/types/bdspro"
@@ -17,12 +18,15 @@ import (
 
 // @bind: crm/internal/interface/provider.BdsproProvider
 type BdsproClient struct {
-	Client         bdspropb.ProductServiceClient
-	InternalClient bdspropb.BdsproInternalServiceClient
+	Client                bdspropb.ProductServiceClient
+	InternalClient        bdspropb.BdsproInternalServiceClient
+	AdminProjectClient    bdspropb.AdminProjectServiceClient
+	AdminRegionClient     bdspropb.AdminRegionServiceClient
+	AdminAreaRegionClient bdspropb.AdminAreaRegionServiceClient
 }
 
 func NewBdsproClient() *BdsproClient {
-	bdsproClient := &BdsproClient{Client: nil, InternalClient: nil}
+	bdsproClient := &BdsproClient{Client: nil, InternalClient: nil, AdminProjectClient: nil, AdminRegionClient: nil, AdminAreaRegionClient: nil}
 	go func() {
 		name := "bdspro"
 		url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, name)
@@ -46,6 +50,9 @@ func NewBdsproClient() *BdsproClient {
 		bdsproClient.Client = client
 		internalClient := bdspropb.NewBdsproInternalServiceClient(conn)
 		bdsproClient.InternalClient = internalClient
+		bdsproClient.AdminProjectClient = bdspropb.NewAdminProjectServiceClient(conn)
+		bdsproClient.AdminRegionClient = bdspropb.NewAdminRegionServiceClient(conn)
+		bdsproClient.AdminAreaRegionClient = bdspropb.NewAdminAreaRegionServiceClient(conn)
 	}()
 	return bdsproClient
 }
@@ -170,6 +177,77 @@ func (c *BdsproClient) UpdateContactCount(ctx context.Context, productID uint64,
 		Count:     count,
 	})
 	return err
+}
+
+func (c *BdsproClient) SearchProjects(ctx context.Context, text string, page uint32, size uint32) ([]*bdspropb.Project, int64, error) {
+	if c.AdminProjectClient == nil {
+		return nil, 0, errors.New("bdspro admin project client not available")
+	}
+	if page == 0 {
+		page = 1
+	}
+	if size == 0 {
+		size = 20
+	}
+	resp, err := c.AdminProjectClient.GetList(ctx, &bdspropb.SearchQueryRequest{
+		Page: page,
+		Size: size,
+		Text: text,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	return resp.GetData(), resp.GetTotalElements(), nil
+}
+
+func (c *BdsproClient) SearchRegions(ctx context.Context, text string, page uint32, size uint32) ([]*bdspropb.Region, int64, error) {
+	if c.AdminRegionClient == nil {
+		return nil, 0, errors.New("bdspro admin region client not available")
+	}
+	if page == 0 {
+		page = 1
+	}
+	if size == 0 {
+		size = 20
+	}
+	resp, err := c.AdminRegionClient.GetRegionList(ctx, &bdspropb.RegionListRequest{
+		Page: int32(page),
+		Size: int32(size),
+		Text: &text,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	return resp.GetData(), resp.GetTotal(), nil
+}
+
+func (c *BdsproClient) GetRegionByID(ctx context.Context, id uint64) (*bdspropb.Region, error) {
+	if c.AdminRegionClient == nil {
+		return nil, errors.New("bdspro admin region client not available")
+	}
+	return c.AdminRegionClient.GetRegionDetail(ctx, &bdspropb.RegionDetailRequest{Id: id})
+}
+
+func (c *BdsproClient) ListAreaRegions(ctx context.Context) ([]*bdspropb.AreaRegion, error) {
+	if c.AdminAreaRegionClient == nil {
+		return nil, errors.New("bdspro admin area region client not available")
+	}
+	resp, err := c.AdminAreaRegionClient.ListAreaRegions(ctx, &bdspropb.ListAreaRegionsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
+}
+
+func (c *BdsproClient) GetAreaRegionByID(ctx context.Context, id uint64) (*bdspropb.AreaRegion, error) {
+	if c.AdminAreaRegionClient == nil {
+		return nil, errors.New("bdspro admin area region client not available")
+	}
+	resp, err := c.AdminAreaRegionClient.GetAreaRegionByID(ctx, &bdspropb.GetAreaRegionByIDRequest{Id: id})
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetRegion(), nil
 }
 
 func (c *BdsproClient) GetProductUsersByDistributeId(ctx context.Context, distributeId uint64) ([]*sharepb.ProductUser, error) {

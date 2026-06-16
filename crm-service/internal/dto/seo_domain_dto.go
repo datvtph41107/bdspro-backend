@@ -8,6 +8,15 @@ type SeoDomainCreateRequest struct {
 	CanonicalURL      *string `json:"canonicalUrl"`
 	RefType           uint32  `json:"refType"`
 	RefID             *uint64 `json:"refId"`
+	RefSource         string  `json:"refSource"`
+	RefLabel          string  `json:"refLabel"`
+	RefURL            string  `json:"refUrl"`
+	SourceStatus      string  `json:"sourceStatus"`
+	RefMissing        *bool   `json:"refMissing"`
+	RefSnapshotJSON   *string `json:"refSnapshotJson"`
+	RefHash           string  `json:"refHash"`
+	RefLastSyncedAt   *string `json:"refLastSyncedAt"`
+	QualityScore      *uint32 `json:"qualityScore"`
 	Scope             string  `json:"scope"`
 	Classify          uint32  `json:"classify"`
 	Title             string  `json:"title"`
@@ -38,6 +47,15 @@ type SeoDomainUpdateRequest struct {
 	CanonicalURL      *string  `json:"canonicalUrl"`
 	RefType           *uint32  `json:"refType"`
 	RefID             *uint64  `json:"refId"`
+	RefSource         *string  `json:"refSource"`
+	RefLabel          *string  `json:"refLabel"`
+	RefURL            *string  `json:"refUrl"`
+	SourceStatus      *string  `json:"sourceStatus"`
+	RefMissing        *bool    `json:"refMissing"`
+	RefSnapshotJSON   *string  `json:"refSnapshotJson"`
+	RefHash           *string  `json:"refHash"`
+	RefLastSyncedAt   *string  `json:"refLastSyncedAt"`
+	QualityScore      *uint32  `json:"qualityScore"`
 	Scope             *string  `json:"scope"`
 	Classify          *uint32  `json:"classify"`
 	Title             *string  `json:"title"`
@@ -67,6 +85,9 @@ type SeoDomainListRequest struct {
 	Keyword      *string `json:"keyword" form:"keyword"`
 	RefType      *uint32 `json:"refType" form:"refType"`
 	RefID        *uint64 `json:"refId" form:"refId"`
+	RefSource    *string `json:"refSource" form:"refSource"`
+	SourceStatus *string `json:"sourceStatus" form:"sourceStatus"`
+	RefMissing   *bool   `json:"refMissing" form:"refMissing"`
 	Scope        *string `json:"scope" form:"scope"`
 	Classify     *uint32 `json:"classify" form:"classify"`
 	Published    *bool   `json:"published" form:"published"`
@@ -89,13 +110,15 @@ type SeoSitemapRequest struct {
 }
 
 type TouchSeoDomainByRefRequest struct {
-	RefType uint32 `json:"refType"`
-	RefID   uint64 `json:"refId"`
+	RefType   uint32 `json:"refType"`
+	RefID     uint64 `json:"refId"`
+	RefSource string `json:"refSource"`
 }
 
 type InternalSeoRenderDataRequest struct {
-	RefType uint32 `json:"refType"`
-	RefID   uint64 `json:"refId"`
+	RefType   uint32 `json:"refType"`
+	RefID     uint64 `json:"refId"`
+	RefSource string `json:"refSource"`
 }
 
 type SitemapRequest struct {

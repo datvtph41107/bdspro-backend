@@ -11,6 +11,7 @@ type SeoDomainRepo interface {
 	Create(ctx context.Context, seo *seo_domain.SeoDomain) (*seo_domain.SeoDomain, error)
 	GetByID(ctx context.Context, id uint64) (*seo_domain.SeoDomain, error)
 	GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error)
+	GetByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64) (*seo_domain.SeoDomain, error)
 	GetBySlug(ctx context.Context, slug string) (*seo_domain.SeoDomain, error)
 	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error)
 	GetList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error)
@@ -19,6 +20,8 @@ type SeoDomainRepo interface {
 	Delete(ctx context.Context, id uint64) error
 	ExistByCanonicalURL(ctx context.Context, canonicalURL string, ignoreID *uint64) (bool, error)
 	MarkNeedGenerateByRef(ctx context.Context, refType uint32, refID uint64, sourceUpdatedAt time.Time) error
+	MarkNeedGenerateByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64, sourceUpdatedAt time.Time) error
+	UpdateSourceStateByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64, updates map[string]interface{}) error
 	GetSitemapItems(ctx context.Context, scope *string) ([]dto.SeoSitemapItem, error)
 	GetNeedGenerateList(ctx context.Context, limit int) ([]seo_domain.SeoDomain, error)
 	GetPublishedStaticPaths(ctx context.Context, page uint32, size uint32) ([]seo_domain.SeoDomain, int64, error)

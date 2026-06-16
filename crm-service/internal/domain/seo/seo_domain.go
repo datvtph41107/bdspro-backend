@@ -25,6 +25,14 @@ const (
 	SeoChangeFreqNever   = "never"
 )
 
+const (
+	SeoSourceStatusManual           = "manual"
+	SeoSourceStatusLinked           = "linked"
+	SeoSourceStatusStale            = "stale"
+	SeoSourceStatusMissing          = "missing"
+	SeoSourceStatusPermissionDenied = "permission_denied"
+)
+
 // SeoDomain là SEO content registry trung tâm.
 // Nó không thay thế dữ liệu gốc như thửa/layer/tài liệu; nó lưu trạng thái SEO cuối cùng
 // để phục vụ sitemap, static generation, canonical, robots, deeplink và vận hành thủ công.
@@ -39,6 +47,17 @@ type SeoDomain struct {
 	// Source binding: page này đại diện cho dữ liệu nào trong hệ thống.
 	RefType enums.ESEORefType `gorm:"column:ref_type;type:smallint;default:0;index"`
 	RefID   *uint64           `gorm:"column:ref_id;type:bigint;index"`
+
+	// Source snapshot/cache: dữ liệu đã normalize từ resolver để editor/generator/audit dùng ổn định.
+	RefSource       string         `gorm:"column:ref_source;type:varchar(80);not null;default:'manual';index"`
+	RefLabel        string         `gorm:"column:ref_label;type:text"`
+	RefURL          string         `gorm:"column:ref_url;type:text"`
+	SourceStatus    string         `gorm:"column:source_status;type:varchar(40);not null;default:'manual';index"`
+	RefMissing      bool           `gorm:"column:ref_missing;not null;default:false;index"`
+	RefSnapshotJSON datatypes.JSON `gorm:"column:ref_snapshot_json;type:jsonb;not null;default:'{}'::jsonb"`
+	RefHash         string         `gorm:"column:ref_hash;type:varchar(64);index"`
+	RefLastSyncedAt *time.Time     `gorm:"column:ref_last_synced_at;index"`
+	QualityScore    uint32         `gorm:"column:quality_score;not null;default:0;index"`
 
 	// Scope phân vùng vận hành page: public/internal/app/admin.
 	Scope string `gorm:"type:varchar(50);not null;default:'public';index"`

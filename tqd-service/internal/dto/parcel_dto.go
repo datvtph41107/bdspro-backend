@@ -25,6 +25,24 @@ type ParcelResponse struct {
 	Longitude  float64 `json:"longitude"`
 }
 
+type PolygonMapTargetsResponse struct {
+	ResultType uint32
+	Parcels    []qh_domain.Parcel
+	Regions    []RegionInfoResponse
+	Total      int64
+	Z          uint32
+
+	Page     uint32
+	PageSize uint32
+
+	AdjustedGeoJSON  string
+	AdjustmentReason string
+	OriginalAreaKm2  float64
+	AdjustedAreaKm2  float64
+	MaxAllowedAreaKm2 float64
+	Warning          string
+}
+
 // API 1: thông tin nhẹ, dùng để render header / summary base.
 type ParcelSeoSource struct {
 	ParcelID  uint64  `json:"parcelId" gorm:"column:parcel_id"`
