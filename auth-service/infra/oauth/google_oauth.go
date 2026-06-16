@@ -185,9 +185,21 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		}
 	}
 
+	// Nếu chưa có UserID, tạo profile mới (không bắt buộc số điện thoại)
 	if existingUser.UserID == 0 {
-		return g.AuthService.ResponseLogin(c, existingUser, nil, 0), nil
+		profile, err := g.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, email, "", avatar)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo profile: %v", err)
+		}
+
+		// Cập nhật UserID cho AuthMethod
+		existingUser.UserID = profile.ProfileID
+		_, err = g.AuthMethodRepo.Update(c, existingUser)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi cập nhật UserID: %v", err)
+		}
 	}
+
 	// Nếu không có otpReq thì tạo mặc định
 	if otpReq == nil {
 		otpReq = &dto.OtpVerifyRequest{}
@@ -200,7 +212,11 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 
 	profile, err := g.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	if err != nil || profile == nil {
-		return nil, _errors.ReturnError(int32(enums.NOT_FOUND_ACCOUNT), "không tìm thấy thông tin người dùng")
+		// Nếu không tìm thấy profile, thử tạo lại (trường hợp user_id đã có nhưng profile bị xóa)
+		profile, err = g.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, email, "", avatar)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(enums.NOT_FOUND_ACCOUNT), "không tìm thấy thông tin người dùng và không thể tạo mới")
+		}
 	}
 
 	refreshToken := g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)

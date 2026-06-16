@@ -220,8 +220,19 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 		}
 	}
 
+	// Nếu chưa có UserID, tạo profile mới (không bắt buộc số điện thoại)
 	if existingUser.UserID == 0 {
-		return s.AuthService.ResponseLogin(c, existingUser, nil, 0), nil
+		profile, err := s.AuthService.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, email, "", avatar)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo profile: %v", err)
+		}
+
+		// Cập nhật UserID cho AuthMethod
+		existingUser.UserID = profile.ProfileID
+		_, err = s.AuthMethodRepo.Update(c, existingUser)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi cập nhật UserID: %v", err)
+		}
 	}
 
 	// Nếu không có otpReq thì tạo mặc định
@@ -241,7 +252,11 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 	// Get user profile
 	profile, err := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	if err != nil || profile == nil {
-		return nil, fmt.Errorf("không tìm thấy thông tin người dùng")
+		// Nếu không tìm thấy profile, thử tạo lại
+		profile, err = s.AuthService.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, email, "", avatar)
+		if err != nil {
+			return nil, fmt.Errorf("không tìm thấy thông tin người dùng và không thể tạo mới")
+		}
 	}
 
 	// Ghi log admin history

@@ -241,8 +241,19 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 		}
 	}
 
+	// Nếu chưa có UserID, tạo profile mới (không bắt buộc số điện thoại)
 	if existingUser.UserID == 0 {
-		return s.AuthService.ResponseLogin(c, existingUser, nil, 0), nil
+		profile, err := s.AuthService.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, "", "", avatar)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi tạo profile: %v", err)
+		}
+
+		// Cập nhật UserID cho AuthMethod
+		existingUser.UserID = profile.ProfileID
+		_, err = s.AuthMethodRepo.Update(c, existingUser)
+		if err != nil {
+			return nil, fmt.Errorf("lỗi khi cập nhật UserID: %v", err)
+		}
 	}
 
 	// Nếu không có otpReq thì tạo mặc định
@@ -257,7 +268,11 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 
 	profile, err := s.AuthService.ProfileProvider.GetByProfileID(c, existingUser.UserID)
 	if err != nil || profile == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+		// Nếu không tìm thấy profile, thử tạo lại
+		profile, err = s.AuthService.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, "", "", avatar)
+		if err != nil {
+			return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng và không thể tạo mới")
+		}
 	}
 
 	refreshToken := s.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
