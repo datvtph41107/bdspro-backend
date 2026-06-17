@@ -1,13 +1,11 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
-	"crm/initial"
 	crm_infra_client "crm/infra/client"
 	crm_infra_email_sender "crm/infra/email_sender"
 	crm_infra_handler "crm/infra/handler"
@@ -17,10 +15,12 @@ import (
 	crm_infra_mapper "crm/infra/mapper"
 	crm_infra_postgre "crm/infra/postgre"
 	crm_infra_validator "crm/infra/validator"
+	"crm/initial"
 	crm_initial "crm/initial"
 	crm_internal_interface_provider "crm/internal/interface/provider"
 	crm_internal_repo "crm/internal/repo"
 	crm_internal_usecase "crm/internal/usecase"
+	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -137,6 +137,7 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewSeoDomainUsecase,
 	crm_infra_postgre.NewSeoInternalLinkPostgres,
 	crm_infra_postgre.NewSeoRelativePostgres,
+	crm_infra_postgre.NewSeoTrendPostgres,
 	crm_infra_postgre.NewSharingAccessPostgre,
 	crm_infra_handler.NewSharingAccessService,
 	crm_internal_usecase.NewSharingAccessUsecase,
@@ -150,6 +151,7 @@ var wireSet = wire.NewSet(
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

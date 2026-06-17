@@ -35,10 +35,42 @@ func (u *SeoDomainUsecase) GetSeoOperationsDashboard(ctx context.Context, req *d
 		return nil, err
 	}
 
-	return buildSeoOperationsDashboard(items, total, needGenerateItems), nil
+	from, to := seoOperationsDateRange(req)
+	trend := []dto.SeoOperationTrendPoint{}
+	topQueries := []dto.SeoOperationTopQuery{}
+	if u.seoTrendRepo != nil {
+		trend, err = u.seoTrendRepo.GetDailySummary(ctx, from, to)
+		if err != nil {
+			return nil, err
+		}
+		topQueries, err = u.seoTrendRepo.GetTopPages(ctx, from, to, 10)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return buildSeoOperationsDashboard(items, total, needGenerateItems, trend, topQueries), nil
 }
 
-func buildSeoOperationsDashboard(items []seo_domain.SeoDomain, total int64, needGenerateItems []seo_domain.SeoDomain) *dto.SeoOperationsDashboardResponse {
+func seoOperationsDateRange(req *dto.SeoOperationsDashboardRequest) (time.Time, time.Time) {
+	now := time.Now()
+	days := 28
+	if req != nil {
+		switch strings.TrimSpace(req.Range) {
+		case "7d":
+			days = 7
+		case "14d":
+			days = 14
+		case "90d":
+			days = 90
+		}
+	}
+	to := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	from := to.AddDate(0, 0, -(days - 1))
+	return from, to
+}
+
+func buildSeoOperationsDashboard(items []seo_domain.SeoDomain, total int64, needGenerateItems []seo_domain.SeoDomain, trend []dto.SeoOperationTrendPoint, topQueries []dto.SeoOperationTopQuery) *dto.SeoOperationsDashboardResponse {
 	published := 0
 	draft := 0
 	needGenerate := 0
@@ -100,27 +132,15 @@ func buildSeoOperationsDashboard(items []seo_domain.SeoDomain, total int64, need
 			{Label: "Điểm chất lượng", Value: strconv.Itoa(avgQuality), Change: "trung bình", Tone: qualityTone(avgQuality)},
 			{Label: "Nguồn có vấn đề", Value: strconv.Itoa(sourceIssues), Change: "thiếu/cũ", Tone: toneByCount(sourceIssues)},
 		},
-		Trend:         buildSeoOperationTrend(items),
+		Trend:         trend,
 		Opportunities: buildSeoOpportunities(items),
-		TopQueries:    buildSeoTopQueries(items),
+		TopQueries:    topQueries,
 		SystemEvents:  buildSeoEvents(items, needGenerate, sourceIssues, notIndexed),
 		Requirements:  buildSeoRequirementGroups(items),
 		RenderQueue:   buildSeoRenderQueue(needGenerateItems),
 		IndexingRows:  buildSeoIndexingRows(items),
 		SourceHealth:  flattenSourceHealth(sourceGroups),
 	}
-}
-
-func buildSeoOperationTrend(items []seo_domain.SeoDomain) []dto.SeoOperationTrendPoint {
-	points := []dto.SeoOperationTrendPoint{}
-	for i := 0; i < 7; i++ {
-		points = append(points, dto.SeoOperationTrendPoint{
-			Label:       time.Now().AddDate(0, 0, -6+i).Format("02/01"),
-			Clicks:      uint64(len(items) * (i + 1) * 3),
-			Impressions: uint64(len(items) * (i + 1) * 40),
-		})
-	}
-	return points
 }
 
 func buildSeoOpportunities(items []seo_domain.SeoDomain) []dto.SeoOperationOpportunity {
@@ -151,43 +171,6 @@ func buildSeoOpportunities(items []seo_domain.SeoDomain) []dto.SeoOperationOppor
 	return opportunities
 }
 
-func buildSeoTopQueries(items []seo_domain.SeoDomain) []dto.SeoOperationTopQuery {
-	rows := []dto.SeoOperationTopQuery{}
-	for i := range items {
-		item := items[i]
-		query := strings.TrimSpace(item.RefLabel)
-		if query == "" {
-			query = strings.TrimSpace(item.Title)
-		}
-		if query == "" {
-			query = strings.TrimSpace(item.Slug)
-		}
-		if query == "" {
-			continue
-		}
-		score := uint64(item.QualityScore)
-		if score == 0 {
-			score = 50
-		}
-		impressions := score*120 + uint64(i+1)*37
-		clicks := impressions / 20
-		rows = append(rows, dto.SeoOperationTopQuery{
-			Query:       strings.ToLower(query),
-			Clicks:      clicks,
-			Impressions: impressions,
-			CTR:         percent(clicks, impressions),
-			AvgPosition: avgPositionFromQuality(item.QualityScore),
-		})
-	}
-	sort.SliceStable(rows, func(i, j int) bool {
-		return rows[i].Impressions > rows[j].Impressions
-	})
-	if len(rows) > 10 {
-		return rows[:10]
-	}
-	return rows
-}
-
 func buildSeoEvents(items []seo_domain.SeoDomain, needGenerate int, sourceIssues int, notIndexed int) []dto.SeoOperationEvent {
 	now := time.Now().Format(time.RFC3339)
 	events := []dto.SeoOperationEvent{
@@ -209,7 +192,9 @@ func buildSeoRequirementGroups(items []seo_domain.SeoDomain) []dto.SeoRequiremen
 			Title:       "Nội dung trước khi publish",
 			Description: "Tiêu đề, description, slug và chất lượng nội dung.",
 			Items: []dto.SeoRequirementItem{
-				requirementItem("seo-title", "SEO title và description đã đủ", "Trang cần có title và description để kết quả tìm kiếm rõ ràng.", total, countWhere(items, func(s seo_domain.SeoDomain) bool { return strings.TrimSpace(s.Title) != "" && strings.TrimSpace(s.Description) != "" }), "Đội nội dung", "Thiếu title/description làm CTR thấp và khó kiểm soát snippet."),
+				requirementItem("seo-title", "SEO title và description đã đủ", "Trang cần có title và description để kết quả tìm kiếm rõ ràng.", total, countWhere(items, func(s seo_domain.SeoDomain) bool {
+					return strings.TrimSpace(s.Title) != "" && strings.TrimSpace(s.Description) != ""
+				}), "Đội nội dung", "Thiếu title/description làm CTR thấp và khó kiểm soát snippet."),
 				requirementItem("seo-canonical", "Canonical URL hợp lệ", "Canonical giúp tránh trùng lặp nội dung giữa nhiều URL.", total, countWhere(items, func(s seo_domain.SeoDomain) bool { return strings.TrimSpace(s.CanonicalURL) != "" }), "Platform", "Canonical sai khiến tín hiệu SEO bị chia nhỏ."),
 			},
 		},
@@ -218,8 +203,12 @@ func buildSeoRequirementGroups(items []seo_domain.SeoDomain) []dto.SeoRequiremen
 			Title:       "Nguồn dữ liệu hệ thống",
 			Description: "Đảm bảo nội dung SEO dựa trên dữ liệu gốc và biết khi nào dữ liệu thay đổi.",
 			Items: []dto.SeoRequirementItem{
-				requirementItem("source-linked", "Nguồn chính đã liên kết", "Trang có nguồn dữ liệu rõ ràng hoặc được đánh dấu thủ công.", total, countWhere(items, func(s seo_domain.SeoDomain) bool { return s.RefSource != "" && s.SourceStatus != seo_domain.SeoSourceStatusMissing }), "Data Ops", "Admin không cần thấy refType/refId, nhưng backend phải giữ binding này."),
-				requirementItem("source-fresh", "Snapshot dữ liệu còn mới", "Trang không bị đánh dấu dữ liệu cũ hoặc cần Render lại.", total, countWhere(items, func(s seo_domain.SeoDomain) bool { return !s.NeedGenerate && s.SourceStatus != seo_domain.SeoSourceStatusStale && !s.RefMissing }), "Data Ops", "Dữ liệu cũ phải chặn publish hoặc đưa vào hàng đợi Render."),
+				requirementItem("source-linked", "Nguồn chính đã liên kết", "Trang có nguồn dữ liệu rõ ràng hoặc được đánh dấu thủ công.", total, countWhere(items, func(s seo_domain.SeoDomain) bool {
+					return s.RefSource != "" && s.SourceStatus != seo_domain.SeoSourceStatusMissing
+				}), "Data Ops", "Admin không cần thấy refType/refId, nhưng backend phải giữ binding này."),
+				requirementItem("source-fresh", "Snapshot dữ liệu còn mới", "Trang không bị đánh dấu dữ liệu cũ hoặc cần Render lại.", total, countWhere(items, func(s seo_domain.SeoDomain) bool {
+					return !s.NeedGenerate && s.SourceStatus != seo_domain.SeoSourceStatusStale && !s.RefMissing
+				}), "Data Ops", "Dữ liệu cũ phải chặn publish hoặc đưa vào hàng đợi Render."),
 			},
 		},
 		{
@@ -271,7 +260,7 @@ func buildSeoIndexingRows(items []seo_domain.SeoDomain) []dto.SeoIndexingRow {
 			sitemap = "Excluded"
 		}
 		rows = append(rows, dto.SeoIndexingRow{
-			URL:        url,
+			URL:       url,
 			Canonical: "Self",
 			Robots:    robotsState(item),
 			Sitemap:   sitemap,

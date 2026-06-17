@@ -48,3 +48,8 @@ type SeoRelativeRepo interface {
 	DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error
 	Exist(ctx context.Context, parentSeoID uint64, childSeoID uint64, relationType string) (bool, error)
 }
+
+type SeoTrendRepo interface {
+	GetDailySummary(ctx context.Context, from time.Time, to time.Time) ([]dto.SeoOperationTrendPoint, error)
+	GetTopPages(ctx context.Context, from time.Time, to time.Time, limit uint32) ([]dto.SeoOperationTopQuery, error)
+}

@@ -6,6 +6,7 @@ import (
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"crm/internal/repo"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -451,4 +452,97 @@ func (r *SeoRelativePostgres) Exist(ctx context.Context, parentSeoID uint64, chi
 		Where("parent_seo_id = ? AND child_seo_id = ? AND relation_type = ?", parentSeoID, childSeoID, relationType).
 		Count(&count).Error
 	return count > 0, err
+}
+
+// -----------------------------------------------------------------------------
+// SEO trend
+// -----------------------------------------------------------------------------
+
+type SeoTrendPostgres struct {
+	db *gorm.DB
+}
+
+func NewSeoTrendPostgres(db *gorm.DB) repo.SeoTrendRepo {
+	return &SeoTrendPostgres{db: db}
+}
+
+func (r *SeoTrendPostgres) GetDailySummary(ctx context.Context, from time.Time, to time.Time) ([]dto.SeoOperationTrendPoint, error) {
+	type row struct {
+		Date        time.Time
+		Clicks      uint64
+		Impressions uint64
+	}
+
+	var rows []row
+	err := r.db.WithContext(ctx).
+		Model(&seo_domain.SeoTrend{}).
+		Select("date, COALESCE(SUM(clicks), 0) AS clicks, COALESCE(SUM(impressions), 0) AS impressions").
+		Where("date >= ? AND date <= ?", from.Format("2006-01-02"), to.Format("2006-01-02")).
+		Group("date").
+		Order("date ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.SeoOperationTrendPoint, 0, len(rows))
+	for _, item := range rows {
+		items = append(items, dto.SeoOperationTrendPoint{
+			Label:       item.Date.Format("02/01"),
+			Clicks:      item.Clicks,
+			Impressions: item.Impressions,
+		})
+	}
+	return items, nil
+}
+
+func (r *SeoTrendPostgres) GetTopPages(ctx context.Context, from time.Time, to time.Time, limit uint32) ([]dto.SeoOperationTopQuery, error) {
+	if limit == 0 || limit > 100 {
+		limit = 10
+	}
+
+	type row struct {
+		Query       string
+		Clicks      uint64
+		Impressions uint64
+		CTR         float64
+		AvgPosition float64
+	}
+
+	var rows []row
+	labelExpr := "COALESCE(NULLIF(sd.ref_label, ''), NULLIF(sd.title, ''), NULLIF(sd.slug, ''), CAST(st.seo_domain_id AS TEXT))"
+	err := r.db.WithContext(ctx).
+		Table("seo_trend AS st").
+		Select(fmt.Sprintf(`
+			%s AS query,
+			COALESCE(SUM(st.clicks), 0) AS clicks,
+			COALESCE(SUM(st.impressions), 0) AS impressions,
+			CASE WHEN COALESCE(SUM(st.impressions), 0) > 0
+				THEN COALESCE(SUM(st.clicks), 0)::double precision * 100 / COALESCE(SUM(st.impressions), 0)::double precision
+				ELSE 0
+			END AS ctr,
+			COALESCE(AVG(NULLIF(st.avg_position, 0)), 0) AS avg_position
+		`, labelExpr)).
+		Joins("LEFT JOIN seo_domain sd ON sd.id = st.seo_domain_id").
+		Where("st.deleted_at IS NULL").
+		Where("st.date >= ? AND st.date <= ?", from.Format("2006-01-02"), to.Format("2006-01-02")).
+		Group(labelExpr).
+		Order("impressions DESC").
+		Limit(int(limit)).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.SeoOperationTopQuery, 0, len(rows))
+	for _, item := range rows {
+		items = append(items, dto.SeoOperationTopQuery{
+			Query:       item.Query,
+			Clicks:      item.Clicks,
+			Impressions: item.Impressions,
+			CTR:         item.CTR,
+			AvgPosition: item.AvgPosition,
+		})
+	}
+	return items, nil
 }

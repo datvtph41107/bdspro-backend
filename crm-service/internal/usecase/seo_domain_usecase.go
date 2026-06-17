@@ -26,6 +26,7 @@ type SeoDomainUsecase struct {
 	seoDomainRepo   repo.SeoDomainRepo
 	seoInternalRepo repo.SeoInternalLinkRepo
 	seoRelativeRepo repo.SeoRelativeRepo
+	seoTrendRepo    repo.SeoTrendRepo
 	tqdProvider     provider.TqdProvider
 	transaction     provider.ITransaction
 	bdsproProvider  provider.BdsproProvider
@@ -35,6 +36,7 @@ func NewSeoDomainUsecase(
 	seoDomainRepo repo.SeoDomainRepo,
 	seoInternalRepo repo.SeoInternalLinkRepo,
 	seoRelativeRepo repo.SeoRelativeRepo,
+	seoTrendRepo repo.SeoTrendRepo,
 	tqdProvider provider.TqdProvider,
 	transaction provider.ITransaction,
 	bdsproProvider provider.BdsproProvider,
@@ -43,6 +45,7 @@ func NewSeoDomainUsecase(
 		seoDomainRepo:   seoDomainRepo,
 		seoInternalRepo: seoInternalRepo,
 		seoRelativeRepo: seoRelativeRepo,
+		seoTrendRepo:    seoTrendRepo,
 		tqdProvider:     tqdProvider,
 		transaction:     transaction,
 		bdsproProvider:  bdsproProvider,
