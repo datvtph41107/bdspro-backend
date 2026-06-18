@@ -1,0 +1,163 @@
+// tqd/qh_planning.proto
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service QHPlanningService {
+  // QHPlanningProject APIs
+  rpc CreatePlanningProject(PlanningProject) returns (PlanningProject) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects"
+      body: "*"
+    };
+  }
+  rpc GetPlanningProject(IdRequest) returns (PlanningProject) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-projects/{id}"
+    };
+  }
+  rpc UpdatePlanningProject(PlanningProject) returns (PlanningProject) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/planning-projects/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningProject(IdRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-projects/{id}"
+    };
+  }
+  rpc ListPlanningProjects(ListPlanningProjectsRequest) returns (ListPlanningProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-projects"
+    };
+  }
+
+  // QHPlanningDocument APIs
+  rpc CreatePlanningDocument(PlanningDocument) returns (PlanningDocument) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents"
+      body: "*"
+    };
+  }
+  rpc GetPlanningDocument(IdRequest) returns (PlanningDocument) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-documents/{id}"
+    };
+  }
+  rpc UpdatePlanningDocument(PlanningDocument) returns (PlanningDocument) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/planning-documents/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningDocument(IdRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-documents/{id}"
+    };
+  }
+  rpc ListPlanningDocuments(ListPlanningDocumentsRequest) returns (ListPlanningDocumentsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-documents"
+    };
+  }
+
+  // Client APIs
+  rpc ClientGetPlanningProject(IdRequest) returns (PlanningProject) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{id}"
+    };
+  }
+  rpc ClientListPlanningProjects(ListPlanningProjectsRequest) returns (ListPlanningProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects"
+    };
+  }
+  rpc ClientGetPlanningDocument(IdRequest) returns (PlanningDocument) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/{id}"
+    };
+  }
+  rpc ClientListPlanningDocuments(ListPlanningDocumentsRequest) returns (ListPlanningDocumentsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents"
+    };
+  }
+}
+
+message PlanningProject {
+  uint64 id = 1;
+  string code = 2;
+  string name = 3;
+  string planningType = 4;
+  string planningLevel = 5;
+  string authority = 6;
+  string jurisdictionId = 7;
+  string summary = 8;
+  string approvalDate = 9;
+  string effectiveDate = 10;
+  string expiryDate = 11;
+  string validityStatus = 12;
+  string currentVersion = 13;
+  string metadata = 14; // JSON string
+  string createdAt = 15;
+  string updatedAt = 16;
+}
+
+message ListPlanningProjectsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  string planningType = 4;
+  string planningLevel = 5;
+  string validityStatus = 6;
+}
+
+message ListPlanningProjectsResponse {
+  repeated PlanningProject data = 1;
+  int64 total = 2;
+}
+
+message PlanningDocument {
+  uint64 id = 1;
+  uint64 planningProjectId = 2;
+  string documentType = 3;
+  string code = 4;
+  string title = 5;
+  string description = 6;
+  string filepath = 7;
+  string versionNo = 8;
+  string validityStatus = 9;
+  string issueDate = 10;
+  string effectiveDate = 11;
+  string metadata = 12; // JSON string
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+message ListPlanningDocumentsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 planningProjectId = 3;
+  string documentType = 4;
+  string validityStatus = 5;
+}
+
+message ListPlanningDocumentsResponse {
+  repeated PlanningDocument data = 1;
+  int64 total = 2;
+}
+
+message IdRequest {
+  uint64 id = 1;
+}
+
+message SubmitResponse {
+  bool success = 1;
+  string message = 2;
+}

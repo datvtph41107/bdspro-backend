@@ -42,7 +42,7 @@ func NewMapWorkspaceGrpcHandler(
 }
 
 func (h *MapWorkspaceGrpcHandler) currentUserID(ctx context.Context) (uint64, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return 0, _errors.UnauthorizedException()
 	}

@@ -47,6 +47,7 @@ type InitialApp struct {
 	ImportGrpcHandler              *handler_grpc.ImportGrpcHandler
 	LayerLegalGrpcHandler          *handler_grpc.LayerLegalGrpcHandler
 	WorkspaceMapGrpcHandler        *handler_grpc.MapWorkspaceGrpcHandler
+	QHPlanningGrpcHandler          *handler_grpc.QHPlanningGrpcHandler
 }
 
 // NewApp creates a new App instance
@@ -88,6 +89,7 @@ func NewApp(
 	importGrpcHandler *handler_grpc.ImportGrpcHandler,
 	layerLegalGrpcHandler *handler_grpc.LayerLegalGrpcHandler,
 	workspaceMapGrpcHandler *handler_grpc.MapWorkspaceGrpcHandler,
+	qhPlanningGrpcHandler *handler_grpc.QHPlanningGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RegionExtendGrpcHandler:        regionExtendGrpcHandler,
@@ -127,5 +129,6 @@ func NewApp(
 		ImportGrpcHandler:              importGrpcHandler,
 		LayerLegalGrpcHandler:          layerLegalGrpcHandler,
 		WorkspaceMapGrpcHandler:        workspaceMapGrpcHandler,
+		QHPlanningGrpcHandler:          qhPlanningGrpcHandler,
 	}
 }

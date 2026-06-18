@@ -25,6 +25,7 @@ import (
 	tqd_internal_modules_resolver_layer_resolver_engine_parcel_engine "tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
 	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
 	tqd_internal_usecase "tqd/internal/usecase"
+	tqd_internal_usecase_qh "tqd/internal/usecase/qh"
 	tqd_map "tqd/map"
 )
 
@@ -150,6 +151,13 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewQHLayerLegendRepository,
 	tqd_internal_usecase.NewQHLayerLegendUsecase,
 	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
+	tqd_infra_postgres.NewQHPlanningDocumentRepo,
+	tqd_internal_usecase_qh.NewQHPlanningDocumentUsecase,
+	tqd_infra_handler_grpc.NewQHPlanningGrpcHandler,
+	tqd_infra_mapper.NewQHPlanningMapper,
+	tqd_infra_postgres.NewQHPlanningProjectRepo,
+	tqd_internal_usecase_qh.NewQHPlanningProjectUsecase,
+	tqd_infra_validator.NewQHPlanningValidator,
 	tqd_infra_handler_grpc.NewRegionExtendGrpcHandler,
 	tqd_infra_postgres.NewRegionExtendRepository,
 	tqd_internal_usecase.NewRegionExtendUsecase,
