@@ -1,4 +1,4 @@
-# Tong ket trien khai SEO Fullstack
+# Tong ket trien khai SEO Domain
 
 Ngay cap nhat: 2026-06-17
 
@@ -74,15 +74,15 @@ crm-service/internal/usecase/seo_ref_resolver.go
 
 Hien da noi resolver that cho:
 
-| Resolver | Trang thai | Ghi chu |
-|---|---|---|
-| `bdspro.project` | Da search that | Resolve theo id se tim trong list vi BDSPro AdminProjectService chua co detail API |
-| `bdspro.region` | Da search/resolve that | Goi AdminRegionService |
-| `bdspro.area_region` | Da list/filter/resolve that | Goi AdminAreaRegionService |
-| `tqd.parcel` | Da search/resolve that | Goi TQD provider; search text numeric se resolve truc tiep theo parcel id, text thuong se loc tu danh sach generate |
-| `tqd.qh_layer` | Chua co adapter | Can them TQD provider vao CRM |
-| `tqd.legal_document` | Chua co adapter | Can chot source API tai TQD |
-| `crm.report` | Chua co adapter | Can chot report resolver noi bo CRM |
+| Resolver             | Trang thai                  | Ghi chu                                                                                                             |
+| -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `bdspro.project`     | Da search that              | Resolve theo id se tim trong list vi BDSPro AdminProjectService chua co detail API                                  |
+| `bdspro.region`      | Da search/resolve that      | Goi AdminRegionService                                                                                              |
+| `bdspro.area_region` | Da list/filter/resolve that | Goi AdminAreaRegionService                                                                                          |
+| `tqd.parcel`         | Da search/resolve that      | Goi TQD provider; search text numeric se resolve truc tiep theo parcel id, text thuong se loc tu danh sach generate |
+| `tqd.qh_layer`       | Chua co adapter             | Can them TQD provider vao CRM                                                                                       |
+| `tqd.legal_document` | Chua co adapter             | Can chot source API tai TQD                                                                                         |
+| `crm.report`         | Chua co adapter             | Can chot report resolver noi bo CRM                                                                                 |
 
 ### 2.4 Source-aware operations
 
@@ -262,9 +262,9 @@ Canh bao cu cua react-leaflet-draw ve leaflet.draw default export van con.
 ## 5. Viec con lai de production-ready tuyet doi
 
 1. Hoan thien cac resolver source con thieu:
-   - `tqd.qh_layer`
-   - `tqd.legal_document`
-   - `crm.report`
+    - `tqd.qh_layer`
+    - `tqd.legal_document`
+    - `crm.report`
 2. Them CRM report resolver cho `crm.report`.
 3. Neu business yeu cau mot source chi co mot SEO page, enable unique index:
 

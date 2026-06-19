@@ -32,17 +32,11 @@ type ParcelUsecase interface {
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	ResolveMapTargetByLocation(ctx context.Context, req dto.ResolveMapTargetRequestDTO) (*dto.ResolveMapTargetResponseDTO, error)
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
-	FindMapTargetsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32) (*dto.PolygonMapTargetsResponse, error)
+	FindMapTargetsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32, filter *dto.PolygonTargetFilter, includeAnalysis bool) (*dto.PolygonMapTargetsResponse, error)
 
 	// Parcel metadata (Free)
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
-	GetPublicParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
-
-	// Overview - Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk
-	GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error)
-
-	// Assessment - Đánh giá chuyên sâu (VIP): conflicts, landUseGroups, assessment, 3 modes
-	GetParcelAssessment(ctx context.Context, req *dto.GetParcelAssessmentRequest) (*types.ResolveResult, error)
+	GetParcelPlanning(ctx context.Context, req *dto.GetParcelPlanningRequest) (*ParcelPlanningResult, error)
 
 	// Timeline - Lịch sử biến động quy hoạch của thửa đất
 	GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error)
@@ -296,10 +290,10 @@ func (u *parcelUsecase) FindParcelsByPolygon(
 	}
 
 	if intersect {
-		return u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset)
+		return u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset, nil)
 	}
 
-	return u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset)
+	return u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset, nil)
 }
 
 func (u *parcelUsecase) FindMapTargetsByPolygon(
@@ -309,6 +303,8 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 	maxAreaKm2 float64,
 	page, pageSize int,
 	zoom *uint32,
+	filter *dto.PolygonTargetFilter,
+	includeAnalysis bool,
 ) (*dto.PolygonMapTargetsResponse, error) {
 	limit, offset, err := validatePolygonQuery(points, maxAreaKm2, page, pageSize)
 	if err != nil {
@@ -318,16 +314,24 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 	_, _ = limit, offset
 
 	normalizedPage, normalizedPageSize := normalizePageValues(page, pageSize)
+	effectiveZoom := uint32(config.ParcelPolygonMinZ)
+	if zoom != nil {
+		effectiveZoom = *zoom
+	}
+
+	if filter != nil {
+		filter.Zoom = &effectiveZoom
+	}
 
 	// Không truyền zoom => giữ legacy behavior: trả parcel.
 	// Có zoom và zoom < ParcelPolygonMinZ => trả region theo layer/label zoom.
 	if zoom != nil && *zoom < config.ParcelPolygonMinZ {
-		regions, total, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, *zoom, limit, offset)
+		regions, total, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, *zoom, limit, offset, filter)
 		if err != nil {
 			return nil, err
 		}
 
-		return &dto.PolygonMapTargetsResponse{
+		resp := &dto.PolygonMapTargetsResponse{
 			ResultType: enums.WorkspaceEntityTypeRegion.Uint32(),
 			Parcels:    []qh_domain.Parcel{},
 			Regions:    regions,
@@ -335,16 +339,29 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 			Z:          *zoom,
 			Page:       uint32(normalizedPage),
 			PageSize:   uint32(normalizedPageSize),
-		}, nil
+		}
+
+		if includeAnalysis {
+			analysis, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, *zoom, filter)
+			if err != nil {
+				return nil, err
+			}
+
+			analysis.ResultType = resp.ResultType
+			analysis.Z = *zoom
+			resp.Analysis = analysis
+		}
+
+		return resp, nil
 	}
 
 	var parcels []qh_domain.Parcel
 	var total int64
 
 	if intersect {
-		parcels, total, err = u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset)
+		parcels, total, err = u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset, filter)
 	} else {
-		parcels, total, err = u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset)
+		parcels, total, err = u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset, filter)
 	}
 	if err != nil {
 		return nil, err
@@ -361,6 +378,17 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 
 	if zoom != nil {
 		resp.Z = *zoom
+	}
+
+	if includeAnalysis {
+		analysis, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, effectiveZoom, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		analysis.ResultType = resp.ResultType
+		analysis.Z = effectiveZoom
+		resp.Analysis = analysis
 	}
 
 	return resp, nil
@@ -489,102 +517,116 @@ func (u *parcelUsecase) GetParcelInfo(ctx context.Context, parcelID uint64) (*dt
 	return info, nil
 }
 
-func (u *parcelUsecase) GetPublicParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
-	if parcelID == 0 {
-		return nil, fmt.Errorf("parcel_id is required")
-	}
-
-	// Lấy overview (đã bao gồm info)
-	overview, err := u.GetParcelOverview(ctx, parcelID)
-	if err != nil {
-		return nil, err
-	}
-
-	if overview == nil || overview.ParcelInfo == nil {
-		return nil, fmt.Errorf("parcel %d not found", parcelID)
-	}
-
-	// Kiểm tra seoId
-	if overview.ParcelInfo.SeoID == 0 {
-		return nil, fmt.Errorf("parcel %d is not public", parcelID)
-	}
-
-	return overview, nil
+type parcelPlanningResolveOptions struct {
+	ParcelID  uint64
+	Mode      string
+	Preset    string
+	AsOfDate  string
+	LogPrefix string
 }
 
-// GetParcelAssessment - Đánh giá chuyên sâu (VIP): phân tích conflicts, landUseGroups, assessment với 3 mode
-func (u *parcelUsecase) GetParcelAssessment(ctx context.Context, req *dto.GetParcelAssessmentRequest) (*types.ResolveResult, error) {
+func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPlanningResolveOptions) (*parcel_engine.UnifiedResult, error) {
+	if opts.ParcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+	if opts.Mode == "" {
+		opts.Mode = "detail"
+	}
+	if opts.LogPrefix == "" {
+		opts.LogPrefix = "resolveParcelPlanning"
+	}
+
+	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, opts.ParcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+	}
+
+	if opts.Preset == "active_only" {
+		rows = filterActiveLayers(rows)
+	}
+	if opts.AsOfDate != "" {
+		rows = filterByAsOfDate(rows, opts.AsOfDate)
+	}
+
+	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, opts.ParcelID)
+	if infoErr != nil {
+		log.Printf("[%s] Failed to fetch parcel info for parcel %d: %v", opts.LogPrefix, opts.ParcelID, infoErr)
+	}
+
+	layerIDs := extractLayerIDsV2(rows)
+	legalDocsMap, legalErr := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
+	if legalErr != nil {
+		log.Printf("[%s] Failed to fetch legal docs for parcel %d: %v", opts.LogPrefix, opts.ParcelID, legalErr)
+		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
+	}
+
+	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
+	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, convertLegalDocs(legalDocsMap), opts.Mode)
+	if unified.ParcelID == 0 {
+		unified.ParcelID = opts.ParcelID
+	}
+
+	return unified, nil
+}
+
+type ParcelPlanningResult struct {
+	ParcelID   uint64
+	View       string
+	Mode       string
+	Overview   *dto.ParcelLayersResponse
+	Assessment *types.ResolveResult
+	Metadata   *dto.ResponseMeta
+}
+
+func (u *parcelUsecase) GetParcelPlanning(ctx context.Context, req *dto.GetParcelPlanningRequest) (*ParcelPlanningResult, error) {
+	start := time.Now()
+
+	if req == nil {
+		return nil, fmt.Errorf("request is required")
+	}
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, req.ParcelID)
+	unified, err := u.resolveParcelPlanning(ctx, parcelPlanningResolveOptions{
+		ParcelID:  req.ParcelID,
+		Mode:      req.Mode,
+		Preset:    req.Preset,
+		AsOfDate:  req.AsOfDate,
+		LogPrefix: "GetParcelPlanning",
+	})
 	if err != nil {
-		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+		return nil, err
 	}
 
-	if req.Preset == "active_only" {
-		rows = filterActiveLayers(rows)
-	}
-	if req.AsOfDate != "" {
-		rows = filterByAsOfDate(rows, req.AsOfDate)
-	}
-
-	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
-
-	parcelInfo, _ := u.parcelRepo.GetParcelInfo(ctx, req.ParcelID)
-
-	layerIDs := extractLayerIDsV2(rows)
-	legalDocsMap, _ := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
-	legalDocsDTO := convertLegalDocs(legalDocsMap)
-
-	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, legalDocsDTO, req.Mode)
-
-	return u.unifiedToResolveResult(unified, req.Mode), nil
-}
-
-// GetParcelOverview - Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk, conclude_label
-func (u *parcelUsecase) GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelLayersResponse, error) {
-	start := time.Now()
-
-	if parcelID == 0 {
-		return nil, fmt.Errorf("parcel_id is required")
-	}
-
-	rows, err := u.parcelRepo.GetParcelLayerRows(ctx, parcelID)
-	if err != nil {
-		return nil, fmt.Errorf("get parcel layers failed: %w", err)
-	}
-
-	layerIDs := extractLayerIDs(rows)
-	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
-	if err != nil {
-		log.Printf("[GetParcelOverview] Failed to fetch legal docs for parcel %d: %v", parcelID, err)
-		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
-	}
-	legalDocsDTO := convertLegalDocs(legalDocsMap)
-
-	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, parcelID)
-	if infoErr != nil {
-		log.Printf("[GetParcelOverview] Failed to fetch parcel info for parcel %d: %v", parcelID, infoErr)
-	}
-
-	unifiedRows := parcel_engine.ToUnifiedRowsFromV1(rows)
-	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, legalDocsDTO, "detail")
-
-	resp := u.unifiedToParcelLayersResponse(unified)
-	resp.Metadata = &dto.ResponseMeta{
+	meta := &dto.ResponseMeta{
 		DataSource:     "postgis real-time",
 		QueriedAt:      time.Now().UTC().Format(time.RFC3339),
 		ResponseTimeMs: time.Since(start).Milliseconds(),
 		Cached:         false,
 	}
 
-	return resp, nil
+	result := &ParcelPlanningResult{
+		ParcelID: unified.ParcelID,
+		View:     req.View,
+		Mode:     req.Mode,
+		Metadata: meta,
+	}
+
+	if req.IncludeOverview {
+		result.Overview = u.unifiedToParcelLayersResponse(unified)
+		result.Overview.Metadata = meta
+	}
+
+	if req.IncludeAssessment {
+		result.Assessment = u.unifiedToResolveResult(unified, req.Mode)
+	}
+
+	return result, nil
 }
 
 // ============================================
-// CONVERSION HELPERS: UnifiedResult -> Legacy types
+// CONVERSION HELPERS: UnifiedResult -> projection responses
 // ============================================
 
 func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedResult) *dto.ParcelLayersResponse {
@@ -593,6 +635,8 @@ func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedR
 		ParcelAreaSqm: ur.ParcelAreaSqm,
 		ParcelInfo:    ur.ParcelInfo,
 	}
+	resp.PrimaryPlan = buildOverviewPrimaryPlan(ur.PrimaryPlanning)
+	resp.LandUseGroups = buildOverviewLandUseGroups(ur.LandUseGroups)
 
 	if ur.Risk != nil {
 		resp.Risk = &dto.RiskAssessment{
@@ -635,9 +679,86 @@ func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedR
 		resp.Summary.DominantLandUse = ur.PrimaryPlanning.Name
 		resp.Summary.DominantPercentage = ur.PrimaryPlanning.Ratio
 		resp.Summary.TopLayerName = ur.PrimaryPlanning.LayerName
+		resp.Summary.DominantLandUseCode = ur.PrimaryPlanning.Code
+		resp.Summary.DominantLandUseColor = ur.PrimaryPlanning.Color
+		resp.Summary.DominantLandUseGroupCode = ur.PrimaryPlanning.GroupCode
+		resp.Summary.DominantLandUseGroupName = ur.PrimaryPlanning.GroupName
+		resp.Summary.DominantAreaSqm = ur.PrimaryPlanning.AreaSqm
+		resp.Summary.DominantCanBuild = ur.PrimaryPlanning.CanBuild
+	} else if ur.ParcelInfo != nil {
+		resp.Summary.DominantLandUse = ur.ParcelInfo.LandUseName
+		resp.Summary.DominantLandUseCode = ur.ParcelInfo.LandUseCode
+		resp.Summary.DominantLandUseColor = ur.ParcelInfo.LandUseColor
 	}
 
 	return resp
+}
+
+func buildOverviewPrimaryPlan(p *parcel_engine.PrimaryPlanningInfo) *dto.ParcelPlanInfo {
+	if p == nil {
+		return nil
+	}
+
+	return &dto.ParcelPlanInfo{
+		LayerID:          p.LayerID,
+		LayerName:        p.LayerName,
+		DisplayName:      p.LayerName,
+		LandUseCode:      p.Code,
+		LandUseName:      p.Name,
+		LandUseColor:     p.Color,
+		GroupCode:        p.GroupCode,
+		GroupName:        p.GroupName,
+		CanBuild:         p.CanBuild,
+		ImpactPercent:    p.Ratio,
+		ImpactAreaSqm:    p.AreaSqm,
+		LegalCanonical:   p.LegalCanonical,
+		LegalConfidence:  p.LegalConfidence,
+		LegalActiveState: p.LegalActiveState,
+	}
+}
+
+func buildOverviewLandUseGroups(groups []*parcel_engine.LandUseGroupInfo) []*dto.PlanLandUseGroupDetail {
+	if len(groups) == 0 {
+		return nil
+	}
+
+	result := make([]*dto.PlanLandUseGroupDetail, 0, len(groups))
+	for _, g := range groups {
+		if g == nil {
+			continue
+		}
+		if len(g.Details) == 0 {
+			result = append(result, &dto.PlanLandUseGroupDetail{
+				Code:           g.Code,
+				Name:           g.Name,
+				Color:          g.Color,
+				CanBuild:       g.CanBuild,
+				LandUseName:    g.Name,
+				LandUseColor:   g.Color,
+				OverlapPercent: g.Ratio,
+				OverlapAreaSqm: g.AreaSqm,
+			})
+			continue
+		}
+		for _, d := range g.Details {
+			if d == nil {
+				continue
+			}
+			result = append(result, &dto.PlanLandUseGroupDetail{
+				Code:           g.Code,
+				Name:           g.Name,
+				Color:          g.Color,
+				CanBuild:       g.CanBuild,
+				LandUseCode:    d.LandUseCode,
+				LandUseName:    d.LandUseName,
+				LandUseColor:   g.Color,
+				OverlapPercent: d.Ratio,
+				OverlapAreaSqm: d.AreaSqm,
+			})
+		}
+	}
+
+	return result
 }
 
 func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, mode string) *types.ResolveResult {

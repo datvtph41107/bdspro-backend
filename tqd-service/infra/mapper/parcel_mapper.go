@@ -108,6 +108,8 @@ func (m *ParcelMapper) ResolveResultToProtoAssessment(result *types.ResolveResul
 			LandUseName:   result.Primary.LandUseName,
 			LandUseColor:  result.Primary.LandUseColor,
 			GroupCode:     result.Primary.GroupCode,
+			GroupName:     result.Primary.GroupName,
+			CanBuild:      result.Primary.CanBuild,
 			ImpactPercent: result.Primary.OverlapPercent,
 			ImpactAreaSqm: result.Primary.OverlapAreaSqm,
 			LandUseGroups: mapLandUseGroups(result.LayerLandUseGroups, result.Primary.LayerID),
@@ -126,6 +128,8 @@ func (m *ParcelMapper) ResolveResultToProtoAssessment(result *types.ResolveResul
 				LandUseName:   sec.LandUseName,
 				LandUseColor:  sec.LandUseColor,
 				GroupCode:     sec.GroupCode,
+				GroupName:     sec.GroupName,
+				CanBuild:      sec.CanBuild,
 				ImpactPercent: sec.OverlapPercent,
 				ImpactAreaSqm: sec.OverlapAreaSqm,
 				LandUseGroups: mapLandUseGroups(result.LayerLandUseGroups, sec.LayerID),
@@ -322,6 +326,90 @@ func (m *ParcelMapper) DomainListToProto(parcels []qh_domain.Parcel) []*tqdpb.Pa
 	return result
 }
 
+func polygonLandUseStatsToProto(items []dto.PolygonLandUseStat) []*tqdpb.PolygonLandUseStat {
+	if len(items) == 0 {
+		return []*tqdpb.PolygonLandUseStat{}
+	}
+
+	result := make([]*tqdpb.PolygonLandUseStat, 0, len(items))
+
+	for i := range items {
+		item := items[i]
+		result = append(result, &tqdpb.PolygonLandUseStat{
+			LandUseId:    item.LandUseID,
+			LandUseCode:  item.LandUseCode,
+			LandUseName:  item.LandUseName,
+			LandUseColor: item.LandUseColor,
+			CanBuild:     item.CanBuild,
+			RegionCount:  item.RegionCount,
+			AreaSqm:      item.AreaSqm,
+			AreaPct:      item.AreaPct,
+		})
+	}
+
+	return result
+}
+
+func polygonLayerStatsToProto(items []dto.PolygonLayerStat) []*tqdpb.PolygonLayerStat {
+	if len(items) == 0 {
+		return []*tqdpb.PolygonLayerStat{}
+	}
+
+	result := make([]*tqdpb.PolygonLayerStat, 0, len(items))
+
+	for i := range items {
+		item := items[i]
+		result = append(result, &tqdpb.PolygonLayerStat{
+			LayerId:          item.LayerID,
+			LayerName:        item.LayerName,
+			LayerDisplayName: item.LayerDisplayName,
+			RegionCount:      item.RegionCount,
+			AreaSqm:          item.AreaSqm,
+			AreaPct:          item.AreaPct,
+		})
+	}
+
+	return result
+}
+
+func polygonBuildabilityStatsToProto(items []dto.PolygonBuildabilityStat) []*tqdpb.PolygonBuildabilityStat {
+	if len(items) == 0 {
+		return []*tqdpb.PolygonBuildabilityStat{}
+	}
+
+	result := make([]*tqdpb.PolygonBuildabilityStat, 0, len(items))
+
+	for i := range items {
+		item := items[i]
+		result = append(result, &tqdpb.PolygonBuildabilityStat{
+			CanBuild:    item.CanBuild,
+			RegionCount: item.RegionCount,
+			AreaSqm:     item.AreaSqm,
+			AreaPct:     item.AreaPct,
+		})
+	}
+
+	return result
+}
+
+func polygonAnalysisSummaryToProto(summary *dto.PolygonAnalysisSummary) *tqdpb.PolygonAnalysisSummary {
+	if summary == nil {
+		return nil
+	}
+
+	return &tqdpb.PolygonAnalysisSummary{
+		ResultType:          summary.ResultType,
+		Z:                   summary.Z,
+		QueryAreaSqm:        summary.QueryAreaSqm,
+		TotalMatchedAreaSqm: summary.TotalMatchedAreaSqm,
+		RegionCount:         summary.RegionCount,
+		ParcelCount:         summary.ParcelCount,
+		LandUseStats:        polygonLandUseStatsToProto(summary.LandUseStats),
+		LayerStats:          polygonLayerStatsToProto(summary.LayerStats),
+		BuildabilityStats:   polygonBuildabilityStatsToProto(summary.BuildabilityStats),
+	}
+}
+
 func (m *ParcelMapper) PolygonMapTargetsToProto(
 	resp *dto.PolygonMapTargetsResponse,
 ) *tqdpb.FindParcelsByPolygonResponse {
@@ -368,6 +456,7 @@ func (m *ParcelMapper) PolygonMapTargetsToProto(
 
 		ResultType: resultType,
 		Z:          resp.Z,
+		Analysis:   polygonAnalysisSummaryToProto(resp.Analysis),
 	}
 }
 
@@ -398,6 +487,57 @@ func regionImpactToProto(region *dto.RegionImpact) *tqdpb.Region {
 		CenterLat:      region.CenterLat,
 		CenterLng:      region.CenterLng,
 	}
+}
+
+func parcelPlanInfoToProto(plan *dto.ParcelPlanInfo, groups []*dto.PlanLandUseGroupDetail) *tqdpb.PlanDetailInfo {
+	if plan == nil {
+		return nil
+	}
+
+	return &tqdpb.PlanDetailInfo{
+		LayerId:          plan.LayerID,
+		LayerName:        plan.LayerName,
+		DisplayName:      plan.DisplayName,
+		LandUseCode:      plan.LandUseCode,
+		LandUseName:      plan.LandUseName,
+		LandUseColor:     plan.LandUseColor,
+		GroupCode:        plan.GroupCode,
+		GroupName:        plan.GroupName,
+		CanBuild:         plan.CanBuild,
+		ImpactPercent:    plan.ImpactPercent,
+		ImpactAreaSqm:    plan.ImpactAreaSqm,
+		LandUseGroups:    overviewLandUseGroupsToProto(groups),
+		LegalCanonical:   plan.LegalCanonical,
+		LegalConfidence:  plan.LegalConfidence,
+		LegalActiveState: plan.LegalActiveState,
+	}
+}
+
+func overviewLandUseGroupsToProto(groups []*dto.PlanLandUseGroupDetail) []*tqdpb.PlanLandUseGroupDetail {
+	if len(groups) == 0 {
+		return nil
+	}
+
+	result := make([]*tqdpb.PlanLandUseGroupDetail, 0, len(groups))
+	for _, g := range groups {
+		if g == nil {
+			continue
+		}
+		result = append(result, &tqdpb.PlanLandUseGroupDetail{
+			Code:           g.Code,
+			Name:           g.Name,
+			Color:          g.Color,
+			CanBuild:       g.CanBuild,
+			Priority:       int32(g.Priority),
+			LandUseCode:    g.LandUseCode,
+			LandUseName:    g.LandUseName,
+			LandUseColor:   g.LandUseColor,
+			OverlapPercent: g.OverlapPercent,
+			OverlapAreaSqm: g.OverlapAreaSqm,
+		})
+	}
+
+	return result
 }
 
 // ToProtoParcelOverview - Map DTO → Proto OverviewResponse
@@ -492,11 +632,17 @@ func (m *ParcelMapper) ToProtoParcelOverview(data *dto.ParcelLayersResponse) *tq
 	summary := &tqdpb.ParcelSummary{}
 	if resp.Summary != nil {
 		summary = &tqdpb.ParcelSummary{
-			DominantLandUse:         resp.Summary.DominantLandUse,
-			DominantPercentage:      resp.Summary.DominantPercentage,
-			TotalAffectedPercentage: resp.Summary.TotalAffectedPercentage,
-			TopLayerName:            resp.Summary.TopLayerName,
-			Buildable:               resp.Summary.Buildable,
+			DominantLandUse:          resp.Summary.DominantLandUse,
+			DominantPercentage:       resp.Summary.DominantPercentage,
+			TotalAffectedPercentage:  resp.Summary.TotalAffectedPercentage,
+			TopLayerName:             resp.Summary.TopLayerName,
+			Buildable:                resp.Summary.Buildable,
+			DominantLandUseCode:      resp.Summary.DominantLandUseCode,
+			DominantLandUseColor:     resp.Summary.DominantLandUseColor,
+			DominantLandUseGroupCode: resp.Summary.DominantLandUseGroupCode,
+			DominantLandUseGroupName: resp.Summary.DominantLandUseGroupName,
+			DominantAreaSqm:          resp.Summary.DominantAreaSqm,
+			DominantCanBuild:         resp.Summary.DominantCanBuild,
 		}
 	}
 
@@ -538,6 +684,8 @@ func (m *ParcelMapper) ToProtoParcelOverview(data *dto.ParcelLayersResponse) *tq
 		SpatialDataAvailable: stats.SpatialDataAvailable,
 		ConcludeLabel:        regionImpactToProto(resp.ConcludeLabel),
 		Info:                 m.ToProtoParcelInfoDetail(resp.ParcelInfo),
+		PrimaryPlan:          parcelPlanInfoToProto(resp.PrimaryPlan, resp.LandUseGroups),
+		LandUseGroups:        overviewLandUseGroupsToProto(resp.LandUseGroups),
 	}
 }
 

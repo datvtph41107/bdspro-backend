@@ -71,23 +71,15 @@ service ParcelService {
     };
   }
 
-  rpc GetPublicParcelInfo(GetPublicParcelDetailRequest) returns (ParcelOverviewResponse) {
+  // GetParcelPlanning — API canonical cho thông tin quy hoạch theo parcel.
+  // view:
+  // - overview: public/free popup, trả overview.
+  // - detail: màn chi tiết, trả overview + assessment detail trong một lần xử lý.
+  // - assessment: chỉ trả assessment detail, dùng cho luồng VIP/report.
+  // - compare: trả assessment compare.
+  rpc GetParcelPlanning(GetParcelPlanningRequest) returns (ParcelPlanningResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/public/parcels/{id}/info"
-    };
-  }
-  
-  // Overview — Tổng quan quy hoạch (Free): layers, regions, geometry, basic risk
-  rpc GetParcelOverview(GetParcelDetailRequest) returns (ParcelOverviewResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/parcels/{parcelId}/overview"
-    };
-  }
-
-  // Assessment — Đánh giá chuyên sâu (VIP): conflicts, landUseGroups, assessment, 3 modes
-  rpc GetParcelAssessment(GetParcelAssessmentRequest) returns (ParcelAssessmentResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/parcels/{parcelId}/assessment"
+      get: "/v2/tqd/parcels/{parcelId}/planning"
     };
   }
 
@@ -126,14 +118,6 @@ service ParcelService {
   }
 }
 
-message GetParcelAssessmentRequest {
-  uint64 parcelId = 1;      // parcel_id
-  string mode = 2;          // popup, detail, compare
-  string preset = 3;        // active_only, all_layers
-  string asOfDate = 4;      // as_of_date (YYYY-MM-DD)
-  int64 timestamp = 5;
-}
-
 message ParcelAssessmentResponse {
   uint64 parcelId = 1;                // parcel_id
   double parcelAreaSqm = 2;           // parcel_area_sqm
@@ -167,6 +151,8 @@ message PlanDetailInfo {
   string legalCanonical = 11;         // legal_canonical
   string legalConfidence = 12;        // legal_confidence
   string legalActiveState = 13;       // legal_active_state
+  string groupName = 14;              // group_name
+  bool canBuild = 15;                 // can_build
 }
 
 message PlanLandUseGroupDetail {
@@ -211,6 +197,37 @@ message ResponseMetadataInfo {
   string disclaimer = 4;
 }
 
+message GetParcelPlanningRequest {
+  uint64 parcelId = 1;
+
+  // overview, detail, assessment, compare.
+  string view = 2;
+
+  // Optional. Nếu không truyền, backend tự map từ view:
+  // overview -> overview, detail/assessment -> detail, compare -> compare.
+  string mode = 3;
+
+  // active_only, all_layers.
+  string preset = 4;
+
+  // YYYY-MM-DD.
+  string asOfDate = 5;
+
+  // Khi cả includeOverview/includeAssessment đều false, backend tự chọn theo view.
+  bool includeOverview = 6;
+  bool includeAssessment = 7;
+
+  int64 timestamp = 8;
+}
+
+message ParcelPlanningResponse {
+  uint64 parcelId = 1;
+  string view = 2;
+  ParcelOverviewResponse overview = 3;
+  ParcelAssessmentResponse assessment = 4;
+  ResponseMetadataInfo metadata = 5;
+}
+
 message GetParcelDetailRequest {
   uint64 parcelId = 1;
   int64 timestamp = 2;
@@ -233,11 +250,6 @@ message ListParcelSeoSourcesResponse {
 message UpdateParcelSeoIDRequest {
   uint64 parcelId = 1;
   uint64 seoId = 2;
-}
-
-message GetPublicParcelDetailRequest {
-  uint64 id = 1;
-  int64 timestamp = 2;
 }
 
 message ParcelInfoResponse {
@@ -272,6 +284,12 @@ message ParcelSummary {
   double totalAffectedPercentage = 3;
   string topLayerName = 4;
   bool buildable = 5;
+  string dominantLandUseCode = 6;
+  string dominantLandUseColor = 7;
+  string dominantLandUseGroupCode = 8;
+  string dominantLandUseGroupName = 9;
+  double dominantAreaSqm = 10;
+  bool dominantCanBuild = 11;
 }
 
 message ParcelOverviewResponse {
@@ -304,6 +322,13 @@ message ParcelOverviewResponse {
   Region conclude_label = 21;
 
   ParcelInfoResponse info = 22;
+
+  // Kết luận quy hoạch chủ đạo cho màn overview/free.
+  // Trường này giúp client không cần gọi assessment chỉ để lấy loại đất chính.
+  PlanDetailInfo primaryPlan = 23;
+
+  // Tổng hợp nhóm/loại đất theo overlap, đủ cho popup public và filter cơ bản.
+  repeated PlanLandUseGroupDetail landUseGroups = 24;
 }
 
 message Layer {
@@ -382,6 +407,18 @@ message FindParcelsByPolygonRequest {
   // z là zoom hiện tại của map.
   // Nếu không truyền, API giữ hành vi legacy: trả parcel.
   optional uint32 z = 8;
+
+  // Bộ lọc áp dụng cho vùng phân tích. Khi dùng filter, backend lọc theo
+  // dữ liệu quy hoạch (qh_regions/layer/land_use), không lọc thô trên client.
+  repeated uint64 layerIds = 9;
+  repeated uint64 labelIds = 10;
+  repeated uint64 landUseIds = 11;
+  repeated string landUseCodes = 12;
+  optional bool canBuild = 13;
+  string keyword = 14;
+
+  // true: trả thêm thống kê tổng quan vùng khoanh.
+  bool includeAnalysis = 15;
 }
 
 message FindParcelsByPolygonResponse {
@@ -404,6 +441,58 @@ message FindParcelsByPolygonResponse {
 
   // Zoom backend đã dùng để quyết định.
   uint32 z = 13;
+
+  // Thống kê vùng phân tích, dùng cho UI summary/filter/report.
+  PolygonAnalysisSummary analysis = 14;
+}
+
+message PolygonLandUseStat {
+  uint64 landUseId = 1;
+  string landUseCode = 2;
+  string landUseName = 3;
+  string landUseColor = 4;
+  bool canBuild = 5;
+  int64 regionCount = 6;
+  double areaSqm = 7;
+  double areaPct = 8;
+}
+
+message PolygonLayerStat {
+  uint64 layerId = 1;
+  string layerName = 2;
+  string layerDisplayName = 3;
+  int64 regionCount = 4;
+  double areaSqm = 5;
+  double areaPct = 6;
+}
+
+message PolygonBuildabilityStat {
+  bool canBuild = 1;
+  int64 regionCount = 2;
+  double areaSqm = 3;
+  double areaPct = 4;
+}
+
+message PolygonAnalysisWarning {
+  string type = 1;
+  int64 count = 2;
+  string severity = 3;
+  string message = 4;
+}
+
+message PolygonAnalysisSummary {
+  uint32 resultType = 1;
+  uint32 z = 2;
+  double queryAreaSqm = 3;
+  double totalMatchedAreaSqm = 4;
+  int64 regionCount = 5;
+  int64 parcelCount = 6;
+  repeated PolygonLandUseStat landUseStats = 7;
+  repeated PolygonLayerStat layerStats = 8;
+  repeated PolygonBuildabilityStat buildabilityStats = 9;
+  double legalKnownPct = 10;
+  double legalUnknownPct = 11;
+  repeated PolygonAnalysisWarning warnings = 12;
 }
 
 message FindParcelByLocationRequest {

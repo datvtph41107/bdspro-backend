@@ -7,6 +7,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	sharepb "pb/types/shared"
@@ -67,75 +68,53 @@ func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetPar
 	return h.mapper.ToProtoParcelInfoDetail(data), nil
 }
 
-func (h *ParcelGrpcHandler) GetPublicParcelInfo(ctx context.Context, req *tqdpb.GetPublicParcelDetailRequest) (*tqdpb.ParcelOverviewResponse, error) {
-	if req == nil || req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+func responseMetaToProto(meta *dto.ResponseMeta) *tqdpb.ResponseMetadataInfo {
+	if meta == nil {
+		return nil
 	}
 
-	data, err := h.usecase.GetPublicParcelInfo(ctx, req.Id)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	return &tqdpb.ResponseMetadataInfo{
+		ResponseTimeMs: meta.ResponseTimeMs,
+		DataVersion:    meta.DataSource,
+		IsCached:       meta.Cached,
 	}
-
-	if data == nil {
-		return nil, status.Error(codes.NotFound, "parcel not found")
-	}
-
-	return h.mapper.ToProtoParcelOverview(data), nil
 }
 
-// =====================================================
-// OVERVIEW — Tổng quan quy hoạch (Free)
-// Layers, regions, geometry, basic risk, conclude_label
-// =====================================================
-
-func (h *ParcelGrpcHandler) GetParcelOverview(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelOverviewResponse, error) {
+func (h *ParcelGrpcHandler) GetParcelPlanning(ctx context.Context, req *tqdpb.GetParcelPlanningRequest) (*tqdpb.ParcelPlanningResponse, error) {
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
 	}
 
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDParcelLayers, req.ParcelId)
-	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
-	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
-	if !updated {
-		return &tqdpb.ParcelOverviewResponse{}, nil
-	}
-
-	data, err := h.usecase.GetParcelOverview(ctx, req.ParcelId)
+	data, err := h.usecase.GetParcelPlanning(ctx, &dto.GetParcelPlanningRequest{
+		ParcelID:          req.ParcelId,
+		View:              req.View,
+		Mode:              req.Mode,
+		Preset:            req.Preset,
+		AsOfDate:          req.AsOfDate,
+		IncludeOverview:   req.IncludeOverview,
+		IncludeAssessment: req.IncludeAssessment,
+		Timestamp:         req.Timestamp,
+	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
 	if data == nil {
-		return nil, status.Error(codes.NotFound, "parcel not found")
+		return nil, status.Error(codes.NotFound, "parcel planning not found")
 	}
 
-	return h.mapper.ToProtoParcelOverview(data), nil
-}
-
-// =====================================================
-// ASSESSMENT — Đánh giá chuyên sâu (VIP)
-// Conflicts, landUseGroups, assessment, 3 modes
-// =====================================================
-
-func (h *ParcelGrpcHandler) GetParcelAssessment(ctx context.Context, req *tqdpb.GetParcelAssessmentRequest) (*tqdpb.ParcelAssessmentResponse, error) {
-	if req == nil || req.ParcelId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	resp := &tqdpb.ParcelPlanningResponse{
+		ParcelId: data.ParcelID,
+		View:     data.View,
+		Metadata: responseMetaToProto(data.Metadata),
+	}
+	if data.Overview != nil {
+		resp.Overview = h.mapper.ToProtoParcelOverview(data.Overview)
+	}
+	if data.Assessment != nil {
+		resp.Assessment = h.mapper.ResolveResultToProtoAssessment(data.Assessment, data.ParcelID, data.Mode)
 	}
 
-	dtoReq := &dto.GetParcelAssessmentRequest{
-		ParcelID: req.ParcelId,
-		Mode:     req.Mode,
-		Preset:   req.Preset,
-		AsOfDate: req.AsOfDate,
-	}
-
-	result, err := h.usecase.GetParcelAssessment(ctx, dtoReq)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return h.mapper.ResolveResultToProtoAssessment(result, req.ParcelId, req.Mode), nil
+	return resp, nil
 }
 
 // GetParcelTimeline - Lịch sử biến động quy hoạch của thửa đất
@@ -376,6 +355,80 @@ func getOptionalPolygonZoom(req *tqdpb.FindParcelsByPolygonRequest) *uint32 {
 	return &z
 }
 
+func uniqueUint64List(values []uint64) []uint64 {
+	if len(values) == 0 {
+		return nil
+	}
+
+	seen := make(map[uint64]struct{}, len(values))
+	result := make([]uint64, 0, len(values))
+
+	for _, value := range values {
+		if value == 0 {
+			continue
+		}
+
+		if _, ok := seen[value]; ok {
+			continue
+		}
+
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+
+	return result
+}
+
+func uniqueStringList(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+
+	for _, value := range values {
+		normalized := strings.ToLower(strings.TrimSpace(value))
+		if normalized == "" {
+			continue
+		}
+
+		if _, ok := seen[normalized]; ok {
+			continue
+		}
+
+		seen[normalized] = struct{}{}
+		result = append(result, normalized)
+	}
+
+	return result
+}
+
+func getPolygonTargetFilter(req *tqdpb.FindParcelsByPolygonRequest) *dto.PolygonTargetFilter {
+	if req == nil {
+		return nil
+	}
+
+	filter := &dto.PolygonTargetFilter{
+		LayerIDs:     uniqueUint64List(req.LayerIds),
+		LabelIDs:     uniqueUint64List(req.LabelIds),
+		LandUseIDs:   uniqueUint64List(req.LandUseIds),
+		LandUseCodes: uniqueStringList(req.LandUseCodes),
+		Keyword:      strings.TrimSpace(req.Keyword),
+	}
+
+	if req.CanBuild != nil {
+		canBuild := req.GetCanBuild()
+		filter.CanBuild = &canBuild
+	}
+
+	if !filter.HasPlanningFilters() {
+		return nil
+	}
+
+	return filter
+}
+
 func validatePolygonCoordinates(req *tqdpb.FindParcelsByPolygonRequest) ([]repo.Point, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
@@ -420,9 +473,9 @@ func validatePolygonCoordinates(req *tqdpb.FindParcelsByPolygonRequest) ([]repo.
 //     giữ hành vi cũ, trả parcel.
 //
 // New behavior:
-//   - Nếu client truyền z và z >= ParcelPolygonMinZ:
+//   - Nếu client truyền z và z >= ParcelPolygonMinZ (hiện tại 15):
 //     trả parcel.
-//   - Nếu client truyền z và z < ParcelPolygonMinZ:
+//   - Nếu client truyền z và z < ParcelPolygonMinZ (14 trở xuống):
 //     trả region theo layer/label zoom.
 //
 // Lưu ý:
@@ -455,25 +508,31 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	pageSize := int(pagable.GetSize())
 
 	z := getOptionalPolygonZoom(req)
+	filter := getPolygonTargetFilter(req)
+	includeAnalysis := req.GetIncludeAnalysis()
 
 	if z == nil {
 		log.Printf(
-			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=<nil>, Mode=legacy-parcel",
+			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=<nil>, Mode=legacy-parcel, HasFilter=%v, IncludeAnalysis=%v",
 			len(points),
 			req.Intersect,
 			req.MaxAreaKm2,
 			page,
 			pageSize,
+			filter != nil,
+			includeAnalysis,
 		)
 	} else {
 		log.Printf(
-			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%d",
+			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%d, HasFilter=%v, IncludeAnalysis=%v",
 			len(points),
 			req.Intersect,
 			req.MaxAreaKm2,
 			page,
 			pageSize,
 			*z,
+			filter != nil,
+			includeAnalysis,
 		)
 	}
 
@@ -485,6 +544,8 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		page,
 		pageSize,
 		z,
+		filter,
+		includeAnalysis,
 	)
 	if err != nil {
 		log.Printf("[FindParcelsByPolygon] Usecase error: %v", err)

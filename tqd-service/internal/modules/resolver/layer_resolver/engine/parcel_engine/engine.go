@@ -90,6 +90,13 @@ func (e *ParcelEngine) Process(rows []UnifiedRow, parcelInfo *dto.ParcelInfoResp
 	}
 
 	if len(rows) == 0 {
+		result.ParcelInfo = parcelInfo
+		if parcelInfo != nil {
+			result.ParcelID = parcelInfo.ParcelID
+			result.ParcelAreaSqm = parcelInfo.AreaSqm
+		}
+		result.Risk = e.assessRisk(nil, nil)
+		result.ResolutionStatus = string(types.StatusResolved)
 		result.Metadata.ResponseTimeMs = time.Since(startTime).Milliseconds()
 		return result
 	}
@@ -117,6 +124,21 @@ func (e *ParcelEngine) Process(rows []UnifiedRow, parcelInfo *dto.ParcelInfoResp
 		result.PrimaryPlanning = primaryPlanning
 		result.Risk = risk
 		result.ResolutionStatus = string(types.StatusResolved)
+
+	case types.ModeOverview:
+		// Overview: đủ dữ liệu public/free để render popup/detail tổng quan,
+		// không build conflict detail/compare/historical risk.
+		risk := e.assessRisk(ranked, nil)
+		primaryPlanning := e.buildPrimaryPlanning(ranked[0], parcelArea, primaryNormalized)
+		landUseGroups := e.buildLandUseGroups(ranked, parcelArea)
+		layers := e.buildLayers(rows, legalDocsMap, parcelArea)
+		warnings := e.buildWarnings(parcelArea, layers, nil)
+		result.PrimaryPlanning = primaryPlanning
+		result.LandUseGroups = landUseGroups
+		result.Layers = layers
+		result.Risk = risk
+		result.Warnings = warnings
+		result.ResolutionStatus = e.resolveStatus(nil, warnings)
 
 	case types.ModeCompare:
 		// Compare: conflicts + risk + primary + landUseGroups + secondary plans + compare diff
@@ -177,6 +199,18 @@ func (e *ParcelEngine) resolveStatus(conflicts []*ConflictInfo, warnings []strin
 func (e *ParcelEngine) buildCandidates(rows []UnifiedRow) []*types.LayerCandidate {
 	candidates := make([]*types.LayerCandidate, 0, len(rows))
 	for _, row := range rows {
+		groupCode := row.LabelGroupCode
+		if groupCode == "" {
+			groupCode = row.GroupCode
+		}
+		landUseColor := row.RegionLandUseColor
+		if landUseColor == "" {
+			landUseColor = row.LabelColor
+		}
+		if landUseColor == "" {
+			landUseColor = row.GroupColor
+		}
+
 		c := &types.LayerCandidate{
 			LayerID:          row.LayerID,
 			LayerName:        row.LayerName,
@@ -195,8 +229,8 @@ func (e *ParcelEngine) buildCandidates(rows []UnifiedRow) []*types.LayerCandidat
 			LabelColor:       row.LabelColor,
 			LandUseCode:      row.RegionLandUseCode,
 			LandUseName:      row.RegionLandUseName,
-			LandUseColor:     row.LabelColor,
-			GroupCode:        row.LabelGroupCode,
+			LandUseColor:     landUseColor,
+			GroupCode:        groupCode,
 			GroupName:        row.GroupName,
 			GroupColor:       row.GroupColor,
 			CanBuild:         row.LabelCanBuild,

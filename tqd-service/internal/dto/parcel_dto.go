@@ -35,12 +35,86 @@ type PolygonMapTargetsResponse struct {
 	Page     uint32
 	PageSize uint32
 
-	AdjustedGeoJSON  string
-	AdjustmentReason string
-	OriginalAreaKm2  float64
-	AdjustedAreaKm2  float64
+	AdjustedGeoJSON   string
+	AdjustmentReason  string
+	OriginalAreaKm2   float64
+	AdjustedAreaKm2   float64
 	MaxAllowedAreaKm2 float64
-	Warning          string
+	Warning           string
+
+	Analysis *PolygonAnalysisSummary
+}
+
+type PolygonTargetFilter struct {
+	LayerIDs     []uint64
+	LabelIDs     []uint64
+	LandUseIDs   []uint64
+	LandUseCodes []string
+	CanBuild     *bool
+	Keyword      string
+	Zoom         *uint32
+}
+
+func (f *PolygonTargetFilter) HasPlanningFilters() bool {
+	if f == nil {
+		return false
+	}
+
+	return len(f.LayerIDs) > 0 ||
+		len(f.LabelIDs) > 0 ||
+		len(f.LandUseIDs) > 0 ||
+		len(f.LandUseCodes) > 0 ||
+		f.CanBuild != nil ||
+		f.Keyword != ""
+}
+
+type PolygonLandUseStat struct {
+	LandUseID    uint64  `gorm:"column:land_use_id"`
+	LandUseCode  string  `gorm:"column:land_use_code"`
+	LandUseName  string  `gorm:"column:land_use_name"`
+	LandUseColor string  `gorm:"column:land_use_color"`
+	CanBuild     bool    `gorm:"column:can_build"`
+	RegionCount  int64   `gorm:"column:region_count"`
+	AreaSqm      float64 `gorm:"column:area_sqm"`
+	AreaPct      float64 `gorm:"-"`
+}
+
+type PolygonLayerStat struct {
+	LayerID          uint64  `gorm:"column:layer_id"`
+	LayerName        string  `gorm:"column:layer_name"`
+	LayerDisplayName string  `gorm:"column:layer_display_name"`
+	RegionCount      int64   `gorm:"column:region_count"`
+	AreaSqm          float64 `gorm:"column:area_sqm"`
+	AreaPct          float64 `gorm:"-"`
+}
+
+type PolygonBuildabilityStat struct {
+	CanBuild    bool    `gorm:"column:can_build"`
+	RegionCount int64   `gorm:"column:region_count"`
+	AreaSqm     float64 `gorm:"column:area_sqm"`
+	AreaPct     float64 `gorm:"-"`
+}
+
+type PolygonAnalysisWarning struct {
+	Type     string
+	Count    int64
+	Severity string
+	Message  string
+}
+
+type PolygonAnalysisSummary struct {
+	ResultType          uint32
+	Z                   uint32
+	QueryAreaSqm        float64
+	TotalMatchedAreaSqm float64
+	RegionCount         int64
+	ParcelCount         int64
+	LandUseStats        []PolygonLandUseStat
+	LayerStats          []PolygonLayerStat
+	BuildabilityStats   []PolygonBuildabilityStat
+	LegalKnownPct       float64
+	LegalUnknownPct     float64
+	Warnings            []PolygonAnalysisWarning
 }
 
 // API 1: thông tin nhẹ, dùng để render header / summary base.
@@ -85,6 +159,8 @@ type ParcelLayersResponse struct {
 
 	ParcelInfo    *ParcelInfoResponse
 	Summary       *ParcelSummary
+	PrimaryPlan   *ParcelPlanInfo
+	LandUseGroups []*PlanLandUseGroupDetail
 	Layers        []*LayerImpact
 	ConcludeLabel *RegionImpact
 	Statistics    *ImpactStats
@@ -93,11 +169,34 @@ type ParcelLayersResponse struct {
 }
 
 type ParcelSummary struct {
-	DominantLandUse         string
-	DominantPercentage      float64
-	TotalAffectedPercentage float64
-	TopLayerName            string
-	Buildable               bool
+	DominantLandUse          string
+	DominantPercentage       float64
+	TotalAffectedPercentage  float64
+	TopLayerName             string
+	Buildable                bool
+	DominantLandUseCode      string
+	DominantLandUseColor     string
+	DominantLandUseGroupCode string
+	DominantLandUseGroupName string
+	DominantAreaSqm          float64
+	DominantCanBuild         bool
+}
+
+type ParcelPlanInfo struct {
+	LayerID          uint64
+	LayerName        string
+	DisplayName      string
+	LandUseCode      string
+	LandUseName      string
+	LandUseColor     string
+	GroupCode        string
+	GroupName        string
+	CanBuild         bool
+	ImpactPercent    float64
+	ImpactAreaSqm    float64
+	LegalCanonical   string
+	LegalConfidence  string
+	LegalActiveState string
 }
 
 // Raw row từ SQL.
@@ -154,6 +253,11 @@ type ParcelLayerRowV2 struct {
 	LayerExpiryDate    string
 	LayerAuthority     string
 
+	AuthorityIssuringID   uint64 `gorm:"column:authority_issuring_id"`
+	AuthorityIssuringName string `gorm:"column:authority_issuring_name"`
+	AuthorityIssuringCode string `gorm:"column:authority_issuring_code"`
+	AuthorityIssuringDesc string `gorm:"column:authority_issuring_desc"`
+
 	LabelID             uint64
 	LabelName           string
 	LabelDisplayName    string
@@ -169,14 +273,16 @@ type ParcelLayerRowV2 struct {
 	GroupCanBuild bool
 	GroupPriority int
 
-	RegionID          uint64
-	RegionName        string
-	RegionDisplayName string
-	RegionLandUseCode string
-	RegionLandUseName string
-	RegionColorRed    uint8
-	RegionColorGreen  uint8
-	RegionColorBlue   uint8
+	RegionID           uint64
+	RegionName         string
+	RegionDisplayName  string
+	RegionLandUseCode  string
+	RegionLandUseName  string
+	RegionLandUseGroup string
+	RegionColorRed     uint8
+	RegionColorGreen   uint8
+	RegionColorBlue    uint8
+	RegionLandUseColor string
 
 	OverlapAreaSqm float64
 	OverlapPct     float64

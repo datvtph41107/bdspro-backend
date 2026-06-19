@@ -9,6 +9,6 @@ const (
 	MaxParcelReturn    = 5000
 
 	// Polygon draw ở zoom >= ngưỡng này mới trả parcel.
-	// Zoom thấp hơn trả region để khớp cấp hiển thị của bản đồ.
-	ParcelPolygonMinZ = 14
+	// Zoom 14 trở xuống trả region để khớp cấp hiển thị của bản đồ.
+	ParcelPolygonMinZ = 15
 )

@@ -3,27 +3,69 @@ package dto
 import (
 	"errors"
 	"regexp"
+	"strings"
 )
-
-// GetParcelAssessmentRequest - Request cho API đánh giá chuyên sâu (VIP)
-type GetParcelAssessmentRequest struct {
-	ParcelID uint64 `json:"parcel_id"`
-	Mode     string `json:"mode"`
-	Preset   string `json:"preset"`
-	AsOfDate string `json:"as_of_date"`
-}
 
 var dateRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
-func (r *GetParcelAssessmentRequest) Validate() error {
+// GetParcelPlanningRequest - Request canonical cho parcel planning.
+// View quyết định projection trả về, mode quyết định cách engine xử lý.
+type GetParcelPlanningRequest struct {
+	ParcelID          uint64 `json:"parcel_id"`
+	View              string `json:"view"`
+	Mode              string `json:"mode"`
+	Preset            string `json:"preset"`
+	AsOfDate          string `json:"as_of_date"`
+	IncludeOverview   bool   `json:"include_overview"`
+	IncludeAssessment bool   `json:"include_assessment"`
+	Timestamp         int64  `json:"timestamp"`
+}
+
+func (r *GetParcelPlanningRequest) Validate() error {
 	if r.ParcelID == 0 {
 		return errors.New("parcel_id is required")
 	}
-	if r.Mode == "" {
-		r.Mode = "detail"
+
+	r.View = strings.TrimSpace(strings.ToLower(r.View))
+	if r.View == "" {
+		r.View = "overview"
 	}
-	if r.Mode != "popup" && r.Mode != "detail" && r.Mode != "compare" {
-		return errors.New("invalid mode: must be popup, detail, or compare")
+
+	switch r.View {
+	case "overview":
+		if !r.IncludeOverview && !r.IncludeAssessment {
+			r.IncludeOverview = true
+		}
+	case "detail":
+		if !r.IncludeOverview && !r.IncludeAssessment {
+			r.IncludeOverview = true
+			r.IncludeAssessment = true
+		}
+	case "assessment":
+		if !r.IncludeOverview && !r.IncludeAssessment {
+			r.IncludeAssessment = true
+		}
+	case "compare":
+		if !r.IncludeOverview && !r.IncludeAssessment {
+			r.IncludeAssessment = true
+		}
+	default:
+		return errors.New("invalid view: must be overview, detail, assessment, or compare")
+	}
+
+	if r.Mode == "" {
+		switch r.View {
+		case "overview":
+			r.Mode = "overview"
+		case "compare":
+			r.Mode = "compare"
+		default:
+			r.Mode = "detail"
+		}
+	}
+
+	if r.Mode != "popup" && r.Mode != "overview" && r.Mode != "detail" && r.Mode != "compare" {
+		return errors.New("invalid mode: must be popup, overview, detail, or compare")
 	}
 	if r.Preset == "" {
 		r.Preset = "all_layers"
@@ -34,36 +76,6 @@ func (r *GetParcelAssessmentRequest) Validate() error {
 	if r.AsOfDate != "" && !dateRegex.MatchString(r.AsOfDate) {
 		return errors.New("invalid as_of_date: must be YYYY-MM-DD format")
 	}
+
 	return nil
-}
-
-// ParcelAssessmentResponse - Response DTO cho API đánh giá chuyên sâu (VIP)
-type ParcelAssessmentResponse struct {
-	ParcelID      uint64          `json:"parcel_id"`
-	ParcelAreaSqm float64         `json:"parcel_area_sqm"`
-	CurrentPlan   *PlanV2Info     `json:"current_plan,omitempty"`
-	OtherPlans    []*PlanV2Info   `json:"other_plans,omitempty"`
-	HasConflict   bool            `json:"has_conflict"`
-	CanBuild      bool            `json:"can_build"`
-	Reason        string          `json:"reason"`
-	Summary       string          `json:"summary"`
-	Metadata      *ResponseMetaV2 `json:"metadata,omitempty"`
-}
-
-type PlanV2Info struct {
-	LayerID       uint64  `json:"layer_id"`
-	LayerName     string  `json:"layer_name"`
-	DisplayName   string  `json:"display_name"`
-	LandUseCode   string  `json:"land_use_code"`
-	LandUseName   string  `json:"land_use_name"`
-	GroupCode     string  `json:"group_code"`
-	ImpactPercent float64 `json:"impact_percent"`
-	ImpactAreaSqm float64 `json:"impact_area_sqm"`
-	CanBuild      bool    `json:"can_build"`
-	Note          string  `json:"note,omitempty"`
-}
-
-type ResponseMetaV2 struct {
-	ResponseTimeMs int64  `json:"response_time_ms"`
-	DataVersion    string `json:"data_version"`
 }

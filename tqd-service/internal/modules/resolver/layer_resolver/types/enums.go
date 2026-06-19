@@ -4,14 +4,15 @@ package types
 type ResolveMode string
 
 const (
-	ModePopup   ResolveMode = "popup"
-	ModeDetail  ResolveMode = "detail"
-	ModeCompare ResolveMode = "compare"
+	ModePopup    ResolveMode = "popup"
+	ModeOverview ResolveMode = "overview"
+	ModeDetail   ResolveMode = "detail"
+	ModeCompare  ResolveMode = "compare"
 )
 
 func (m ResolveMode) IsValid() bool {
 	switch m {
-	case ModePopup, ModeDetail, ModeCompare:
+	case ModePopup, ModeOverview, ModeDetail, ModeCompare:
 		return true
 	default:
 		return false
