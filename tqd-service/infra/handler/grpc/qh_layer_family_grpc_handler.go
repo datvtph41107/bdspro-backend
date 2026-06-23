@@ -2,16 +2,19 @@ package handler_grpc
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	_dto "common/domain/dto"
-	_utils "common/utils"
+	_provider "common/provider"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	tqdpb "pb/types/tqd"
+	"tqd/infra/mapper"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/usecase"
 )
@@ -19,11 +22,12 @@ import (
 // QHLayerFamilyGrpcHandler xử lý gRPC QHLayerFamilyService.
 type QHLayerFamilyGrpcHandler struct {
 	tqdpb.UnimplementedQHLayerFamilyServiceServer
-	uc usecase.QHLayerFamilyUsecase
+	uc           usecase.QHLayerFamilyUsecase
+	SyncProvider *_provider.SyncProvider
 }
 
-func NewQHLayerFamilyGrpcHandler(uc usecase.QHLayerFamilyUsecase) *QHLayerFamilyGrpcHandler {
-	return &QHLayerFamilyGrpcHandler{uc: uc}
+func NewQHLayerFamilyGrpcHandler(uc usecase.QHLayerFamilyUsecase, syncProvider *_provider.SyncProvider) *QHLayerFamilyGrpcHandler {
+	return &QHLayerFamilyGrpcHandler{uc: uc, SyncProvider: syncProvider}
 }
 
 // CreateLayerFamily — POST /v2/tqd/qh/admin/layer-families
@@ -42,7 +46,7 @@ func (h *QHLayerFamilyGrpcHandler) CreateLayerFamily(ctx context.Context, req *t
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return toQHLayerFamilyPB(out), nil
+	return mapper.ToProtoQHLayerFamilyClient(out, 6, 16), nil
 }
 
 // GetLayerFamily — GET /v2/tqd/qh/admin/layer-families/{id}
@@ -60,7 +64,11 @@ func (h *QHLayerFamilyGrpcHandler) GetLayerFamily(ctx context.Context, req *tqdp
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return toQHLayerFamilyPB(out), nil
+	minZoom, maxZoom, err := h.uc.GetZoomRangeByFamilyID(ctx, out.ID)
+	if err != nil {
+		minZoom, maxZoom = 6, 16
+	}
+	return mapper.ToProtoQHLayerFamilyClient(out, minZoom, maxZoom), nil
 }
 
 // UpdateLayerFamily — PUT /v2/tqd/qh/admin/layer-families/{id}
@@ -88,7 +96,11 @@ func (h *QHLayerFamilyGrpcHandler) UpdateLayerFamily(ctx context.Context, req *t
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return toQHLayerFamilyPB(out), nil
+	minZoom, maxZoom, err := h.uc.GetZoomRangeByFamilyID(ctx, out.ID)
+	if err != nil {
+		minZoom, maxZoom = 6, 16
+	}
+	return mapper.ToProtoQHLayerFamilyClient(out, minZoom, maxZoom), nil
 }
 
 // DeleteLayerFamily — DELETE /v2/tqd/qh/admin/layer-families/{id}
@@ -128,7 +140,12 @@ func (h *QHLayerFamilyGrpcHandler) ListLayerFamilies(ctx context.Context, req *t
 	}
 	data := make([]*tqdpb.QHLayerFamilyResponse, len(rows))
 	for i := range rows {
-		data[i] = toQHLayerFamilyPB(&rows[i])
+		family := &rows[i]
+		minZoom, maxZoom, err := h.uc.GetZoomRangeByFamilyID(ctx, family.ID)
+		if err != nil {
+			minZoom, maxZoom = 6, 16
+		}
+		data[i] = mapper.ToProtoQHLayerFamilyClient(family, minZoom, maxZoom)
 	}
 	return &tqdpb.ListLayerFamiliesResponse{
 		Data:     data,
@@ -143,22 +160,99 @@ func (h *QHLayerFamilyGrpcHandler) GetClientLayerFamilies(ctx context.Context, r
 	return h.ListLayerFamilies(ctx, req)
 }
 
-func toQHLayerFamilyPB(e *qh_domain.QHLayerFamily) *tqdpb.QHLayerFamilyResponse {
-	if e == nil {
+// ListClientFamilies — GET /v2/tqd/client/families
+func (h *QHLayerFamilyGrpcHandler) ListClientFamilies(ctx context.Context, req *tqdpb.ListClientFamiliesRequest) (*tqdpb.ListLayerFamiliesResponse, error) {
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerFamilyList, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp())
+	h.SyncProvider.PutTimeRequest(ctx, key, req.GetTimestamp())
+	if !updated {
+		return &tqdpb.ListLayerFamiliesResponse{}, nil
+	}
+
+	page := req.GetPage()
+	size := req.GetSize()
+	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
+	search := ""
+	if req.Search != nil {
+		search = *req.Search
+	}
+
+	rows, total, err := h.uc.ListClient(ctx, pagable, search)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	data := make([]*tqdpb.QHLayerFamilyResponse, 0, len(rows))
+	for i := range rows {
+		family := &rows[i]
+		minZoom, maxZoom, err := h.uc.GetZoomRangeByFamilyID(ctx, family.ID)
+		if err != nil {
+			minZoom, maxZoom = 6, 16
+		}
+		data = append(data, mapper.ToProtoQHLayerFamilyClient(family, minZoom, maxZoom))
+	}
+
+	return &tqdpb.ListLayerFamiliesResponse{
+		Data:     data,
+		Total:    total,
+		Page:     int32(pagable.GetPage()),
+		PageSize: int32(pagable.GetSize()),
+	}, nil
+}
+
+// BuildFamilyPMTiles — POST /v2/tqd/client/families/{familyId}/build-tile
+func (h *QHLayerFamilyGrpcHandler) BuildFamilyPMTiles(req *tqdpb.BuildFamilyPMTilesRequest, stream grpc.ServerStreamingServer[tqdpb.BuildFamilyPMTilesProgress]) error {
+	ctx := stream.Context()
+	if req.FamilyId == 0 {
+		return status.Error(codes.InvalidArgument, "family_id is required")
+	}
+
+	minZoom := req.MinZoom
+	maxZoom := req.MaxZoom
+	if maxZoom > 16 {
+		maxZoom = 16
+	}
+	if minZoom > 0 && maxZoom > 0 && minZoom > maxZoom {
+		minZoom = maxZoom
+	}
+
+	outputDir := "./files/tiles"
+	if req.OutputDir != nil && *req.OutputDir != "" {
+		outputDir = *req.OutputDir
+	}
+
+	progressFn := func(p usecase.BuildProgress) {
+		_ = stream.Send(&tqdpb.BuildFamilyPMTilesProgress{
+			Status:       p.Status,
+			Message:      p.Message,
+			CurrentZoom:  p.CurrentZoom,
+			TilesWritten: p.TilesWritten,
+			TotalTiles:   p.TotalTiles,
+			OutputPath:   p.OutputPath,
+		})
+	}
+
+	err := h.uc.BuildFamilyPMTiles(ctx, req.FamilyId, minZoom, maxZoom, outputDir, progressFn)
+	if err == nil {
 		return nil
 	}
-	var createdAt, updatedAt string
-	if e.CreatedAt != nil {
-		createdAt = _utils.FormatTimeToString(e.CreatedAt)
+
+	var buildErr *usecase.ErrFamilyBuildInProgress
+	if errors.As(err, &buildErr) {
+		_ = stream.Send(&tqdpb.BuildFamilyPMTilesProgress{
+			Status:       buildErr.Progress.Status,
+			Message:      "Another build is already in progress: " + buildErr.Progress.Message,
+			CurrentZoom:  buildErr.Progress.CurrentZoom,
+			TilesWritten: buildErr.Progress.TilesWritten,
+			TotalTiles:   buildErr.Progress.TotalTiles,
+			OutputPath:   buildErr.Progress.OutputPath,
+		})
+		return status.Error(codes.ResourceExhausted, err.Error())
 	}
-	if e.UpdatedAt != nil {
-		updatedAt = _utils.FormatTimeToString(e.UpdatedAt)
-	}
-	return &tqdpb.QHLayerFamilyResponse{
-		Id:         e.ID,
-		Name:       e.Name,
-		SortNumber: e.SortNumber,
-		CreatedAt:  createdAt,
-		UpdatedAt:  updatedAt,
-	}
+
+	_ = stream.Send(&tqdpb.BuildFamilyPMTilesProgress{
+		Status:  "error",
+		Message: err.Error(),
+	})
+	return status.Error(codes.Internal, err.Error())
 }

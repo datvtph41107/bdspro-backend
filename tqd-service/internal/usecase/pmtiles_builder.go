@@ -163,6 +163,114 @@ func BuildPMTilesFile(
 	return nil
 }
 
+// BuildFamilyPMTilesFile generates a single PMTiles file for all layers in a family.
+func BuildFamilyPMTilesFile(
+	ctx context.Context,
+	regionRepo repo.RegionRepository,
+	familyID uint64,
+	minZoom, maxZoom uint32,
+	outputDir string,
+	progressFn func(BuildProgress),
+) error {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("mkdir %s: %w", outputDir, err)
+	}
+
+	outputPath := filepath.Join(outputDir, fmt.Sprintf("ci_family%d.pmtiles", familyID))
+	tmpFile, err := os.CreateTemp(outputDir, fmt.Sprintf("ci_family%d_*.ndjson", familyID))
+	if err != nil {
+		return fmt.Errorf("create temp ndjson: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+	defer os.Remove(tmpPath)
+
+	rows, err := regionRepo.StreamGeoJSONByFamilyID(ctx, familyID)
+	if err != nil {
+		return fmt.Errorf("stream geojson by family: %w", err)
+	}
+	defer rows.Close()
+
+	writer := bufio.NewWriterSize(tmpFile, 2<<20)
+	var count int64
+
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			return fmt.Errorf("scan row: %w", err)
+		}
+		if len(raw) == 0 {
+			continue
+		}
+		if _, err := writer.Write(raw); err != nil {
+			return fmt.Errorf("write feature: %w", err)
+		}
+		if err := writer.WriteByte('\n'); err != nil {
+			return fmt.Errorf("write newline: %w", err)
+		}
+		count++
+		if count%5_000 == 0 || count == 1 {
+			if err := writer.Flush(); err != nil {
+				return fmt.Errorf("flush: %w", err)
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows error after %d features: %w", count, err)
+	}
+	if err := writer.Flush(); err != nil {
+		return fmt.Errorf("final flush: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("close temp file: %w", err)
+	}
+	if count == 0 {
+		return fmt.Errorf("family %d has no valid geometry", familyID)
+	}
+
+	args := []string{
+		"-o", outputPath,
+		"--force",
+		"--layer", fmt.Sprintf("family%d", familyID),
+		"--read-parallel",
+		"--no-feature-limit",
+		"--no-tile-size-limit",
+		"--drop-densest-as-needed",
+		"--extend-zooms-if-still-dropping",
+	}
+	if minZoom > 0 {
+		args = append(args, "--minimum-zoom", fmt.Sprintf("%d", minZoom))
+	} else {
+		args = append(args, "--minimum-zoom", "6")
+	}
+	if maxZoom > 0 {
+		args = append(args, "--maximum-zoom", fmt.Sprintf("%d", maxZoom))
+	} else {
+		args = append(args, "--maximum-zoom", "16")
+	}
+	args = append(args, tmpPath)
+
+	cmd := exec.CommandContext(ctx, "tippecanoe", args...)
+	stdoutPipe, _ := cmd.StdoutPipe()
+	stderrPipe, _ := cmd.StderrPipe()
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("start tippecanoe: %w", err)
+	}
+	go readOutput("tippecanoe:stdout", stdoutPipe, progressFn)
+	go readOutput("tippecanoe:stderr", stderrPipe, progressFn)
+	if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("tippecanoe failed (exit code %d): %w", cmd.ProcessState.ExitCode(), err)
+	}
+
+	progressFn(BuildProgress{
+		Status:       "done",
+		Message:      fmt.Sprintf("PMTiles generated successfully from %d features", count),
+		TilesWritten: count,
+		OutputPath:   outputPath,
+	})
+	return nil
+}
+
 // Helper đọc output mà không dễ block
 func readOutput(prefix string, r io.Reader, progressFn func(BuildProgress)) {
 	scanner := bufio.NewScanner(r)

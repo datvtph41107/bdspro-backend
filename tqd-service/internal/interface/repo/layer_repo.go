@@ -25,6 +25,7 @@ type LayerRepository interface {
 	UpdateImportStatus(ctx context.Context, id uint64, st enums.LayerImportStatus, importBatchID *string) error
 	GetByImportBatchID(ctx context.Context, batchID string) (*qh_domain.QHLayer, error)
 	ResetLayerImportTracking(ctx context.Context, id uint64) error
+	GetZoomRangeByFamilyID(ctx context.Context, familyID uint64) (minZoom, maxZoom uint32, err error)
 }
 
 // LayerFilter - Filter cho admin list

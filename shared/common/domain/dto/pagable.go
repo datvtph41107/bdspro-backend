@@ -48,6 +48,16 @@ func (p *Pagable) GetLimit() int {
 	return int(p.Size)
 }
 
+func (p *Pagable) GetLimitAdmin() int {
+	if p.Size <= 0 {
+		return 20
+	}
+	if p.Size >= 500 {
+		return 500
+	}
+	return int(p.Size)
+}
+
 func (p *Pagable) GetSort() string {
 	if p.Sort == "" {
 		return "created_at desc"
@@ -62,9 +72,9 @@ func (p *Pagable) Normalize() {
 	if p.Size <= 0 {
 		p.Size = 20
 	}
-	if p.Size > 100 {
-		p.Size = 100
-	}
+	// if p.Size > 100 {
+	// 	p.Size = 100
+	// }
 }
 
 func NewPagableFromGrpc(page *uint32, size *uint32, sort *string) *Pagable {

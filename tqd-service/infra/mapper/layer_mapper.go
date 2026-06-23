@@ -144,9 +144,35 @@ func ToProtoQHLayerFamily(f *qh_domain.QHLayerFamily) *tqdpb.QHLayerFamilyRespon
 		updatedAt = _utils.FormatTimeToString(f.UpdatedAt)
 	}
 	return &tqdpb.QHLayerFamilyResponse{
-		Id:        f.ID,
-		Name:      f.Name,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		Id:         f.ID,
+		Name:       f.Name,
+		SortNumber: f.SortNumber,
+		CreatedAt:  createdAt,
+		UpdatedAt:  updatedAt,
 	}
+}
+
+// ToProtoQHLayerFamilyClient map domain họ lớp → proto kèm URL tile và style cho client/admin list.
+func ToProtoQHLayerFamilyClient(f *qh_domain.QHLayerFamily, minZoom, maxZoom uint32) *tqdpb.QHLayerFamilyResponse {
+	if f == nil {
+		return nil
+	}
+	resp := ToProtoQHLayerFamily(f)
+	sourceCode := config.LayerResolverInstance.GetFamilySourceCode(f.ID)
+	tileName := config.LayerResolverInstance.GetFamilyTileName(f.ID)
+	layerUrl := config.LayerResolverInstance.GetFamilyURL(f.ID, tileName)
+
+	styleConfig, err := config.LayerResolverInstance.GetFamilyStyleConfig(f.ID, minZoom, maxZoom)
+	if err != nil {
+		styleConfig = "[]"
+	}
+
+	resp.FamilyUrl = layerUrl
+	resp.LayerUrl = layerUrl
+	resp.MinZoom = minZoom
+	resp.MaxZoom = maxZoom
+	resp.StyleConfig = styleConfig
+	resp.SourceType = "vector"
+	resp.SourceCode = sourceCode
+	return resp
 }

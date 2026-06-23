@@ -1184,6 +1184,70 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 	return rows, nil
 }
 
+func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error) {
+	var result []dto.ParcelLayerInfo
+
+	query := `
+		SELECT
+    r.id,
+
+    l.id AS layer_id,
+	l.avatar AS layer_avatar,
+    l.display_name AS layer_name,
+	l.legal_status AS layer_legal_status,
+
+    lu.id AS land_use_id,
+    lu.name AS land_use_name,
+	lu.warn_level AS warn_level,
+	lu.color AS land_use_color,
+
+    ST_Area(
+        ST_Intersection(r.geometry, p.geometry)::geography
+    ) AS intersect_area_sqm,
+
+    ROUND(
+        (
+            ST_Area(
+                ST_Intersection(r.geometry, p.geometry)::geography
+            )
+            /
+            NULLIF(
+                ST_Area(p.geometry::geography),
+                0
+            )
+        )::numeric * 100,
+        2
+    ) AS percent,
+
+    CASE
+        WHEN ST_Contains(r.geometry, p.geometry)
+            THEN 'contains'
+        ELSE 'intersects'
+    END AS relation_type
+
+FROM parcels p
+JOIN qh_regions r
+    ON r.geometry && p.geometry
+   AND ST_Intersects(r.geometry, p.geometry)
+JOIN qh_layers l
+    ON l.id = r.layer_id
+LEFT JOIN qh_land_use lu
+    ON lu.id = r.land_use_id
+
+WHERE p.id = ?
+  AND r.status = 10
+  AND r.deleted_at IS NULL
+  AND lu.id IS NOT NULL
+ORDER BY l.analyse_order DESC;
+	`
+
+	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel quick info failed: %w", err)
+	}
+	return result, nil
+}
+
 func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRowV2, error) {
 	var rows []dto.ParcelLayerRowV2
 

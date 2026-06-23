@@ -21,5 +21,6 @@ COPY --from=tippecanoe-builder /usr/local/bin/tippecanoe /usr/local/bin/tippecan
 # app
 COPY config config
 COPY main .
+COPY template template
 
 CMD ["./main"]

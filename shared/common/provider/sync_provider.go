@@ -44,6 +44,7 @@ const (
 	// TQD sync keys
 	SyncKeyTQDLayerDetail          = "tqd:layer:id"
 	SyncKeyTQDLayerList            = "tqd:layer:me"
+	SyncKeyTQDLayerFamilyList      = "tqd:layer-family:me"
 	SyncKeyTQDRegionDetail         = "tqd:region:id"
 	SyncKeyTQDRegionList           = "tqd:region:me"
 	SyncKeyTQDParcelDetail         = "tqd:parcel:id"

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	_enum "common/domain/enum"
 	qh_domain "tqd/internal/domain/qh"
 )
 
@@ -23,6 +24,21 @@ type ParcelResponse struct {
 	CategoryID uint64  `json:"categoryId"`
 	Latitude   float64 `json:"latitude"`
 	Longitude  float64 `json:"longitude"`
+}
+
+type ParcelLayerInfo struct {
+	ParcelID         uint64
+	LayerID          uint64
+	LayerName        string
+	LayerAvatar      string
+	LayerLegalStatus uint32
+	LandUseID        uint64
+	LandUseName      string
+	LandUseColor     string
+	RelationType     string
+	WarnLevel        _enum.EWarningLevel `gorm:"column:warn_level"`
+	IntersectAreaSqm float64             `gorm:"column:intersect_area_sqm"`
+	Percent          float64             `gorm:"column:percent"`
 }
 
 type PolygonMapTargetsResponse struct {

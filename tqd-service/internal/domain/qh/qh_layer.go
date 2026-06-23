@@ -19,10 +19,11 @@ type QHLayer struct {
 	Status enums.LayerStatus `gorm:"type:int;default:10;index" json:"status"`
 
 	DisplayOrder int   `gorm:"column:display_order;default:0;index" json:"displayOrder"`
+	AnalyseOrder int   `gorm:"column:analyse_order;default:10;index" json:"analyseOrder"`
 	Visible      int32 `gorm:"default:0;index" json:"visible"`
 
-	MinZoom uint32 `gorm:"default:0" json:"minZoom"`
-	MaxZoom uint32 `gorm:"default:22" json:"maxZoom"`
+	MinZoom uint32 `gorm:"default:6" json:"minZoom"`
+	MaxZoom uint32 `gorm:"default:16" json:"maxZoom"`
 
 	Avatar       string `gorm:"type:text" json:"avatar,omitempty"`
 	ImageURL     string `gorm:"type:text" json:"imageUrl,omitempty"`

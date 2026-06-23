@@ -6,6 +6,7 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
@@ -753,4 +755,73 @@ func parcelSeoSourceToProto(source *dto.ParcelSeoSource) *tqdpb.ParcelSeoSourceR
 		AdrSearch: source.AdrSearch,
 		SeoId:     seoID,
 	}
+}
+
+func (h *ParcelGrpcHandler) GetParcelQuickLayers(
+	ctx context.Context,
+	req *tqdpb.GetParcelPlanningRequest,
+) (*tqdpb.LayerQuickInfoResponse, error) {
+
+	if req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
+	}
+
+	quickInfo, err := h.usecase.GetParcelQuickInfo(ctx, req.ParcelId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	layerMap := make(map[uint64]*tqdpb.LayerQuickInfo)
+	layers := make([]*tqdpb.LayerQuickInfo, 0)
+	warnings := make([]string, 0)
+
+	for _, q := range quickInfo {
+		layer, exists := layerMap[q.LayerID]
+
+		if !exists {
+			layer = &tqdpb.LayerQuickInfo{
+				ParcelId:        q.ParcelID,
+				LayerId:         q.LayerID,
+				LayerName:       q.LayerName,
+				LegalStatus:     uint32(q.LayerLegalStatus),
+				LegalStatusName: enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
+				LayerAvatar:     q.LayerAvatar,
+				RelationType:    q.RelationType,
+				LandUses:        make([]*tqdpb.LandUseQuickInfo, 0),
+			}
+
+			layerMap[q.LayerID] = layer
+			layers = append(layers, layer)
+		}
+
+		layer.LandUses = append(layer.LandUses, &tqdpb.LandUseQuickInfo{
+			LandUseId:        q.LandUseID,
+			LandUseName:      q.LandUseName,
+			LandUseColor:     q.LandUseColor,
+			WarnLevel:        uint32(q.WarnLevel),
+			IntersectAreaSqm: q.IntersectAreaSqm,
+			Percent:          q.Percent,
+		})
+
+		if q.WarnLevel > 0 {
+			warnings = append(
+				warnings,
+				fmt.Sprintf(
+					"%.2f%% diện tích thuộc %s trong %s. Kiểm tra thêm.",
+					q.Percent,
+					q.LandUseName,
+					q.LayerName,
+				),
+			)
+		}
+	}
+
+	if len(warnings) == 0 {
+		warnings = append(warnings, "Không có cảnh báo nào.")
+	}
+
+	return &tqdpb.LayerQuickInfoResponse{
+		Layers:   layers,
+		Warnings: warnings,
+	}, nil
 }

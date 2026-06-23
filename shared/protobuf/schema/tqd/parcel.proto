@@ -83,6 +83,12 @@ service ParcelService {
     };
   }
 
+  rpc GetParcelQuickLayers(GetParcelPlanningRequest) returns (LayerQuickInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/public/parcels/{parcelId}/quick-layers"
+    };
+  }
+
   // Timeline — Lịch sử biến động quy hoạch của thửa đất
   rpc GetParcelTimeline(GetParcelDetailRequest) returns (ParcelTimelineResponse) {
     option (google.api.http) = {
@@ -749,4 +755,32 @@ message ParcelListDTO {
 message ListParcelResponse {
   repeated ParcelInfo data  = 1;
   uint32              total = 2;
+}
+
+message LayerQuickInfoResponse {
+  repeated LayerQuickInfo layers = 1;
+  repeated string warnings = 2;
+}
+
+message LandUseQuickInfo {
+  uint64 landUseId = 1;
+  string landUseName = 2;
+  double intersectAreaSqm = 3;
+  double percent = 4;
+  string landUseColor = 5;
+  uint32 warnLevel = 6;
+}
+
+message LayerQuickInfo {
+  uint64 parcelId = 1;
+  uint64 layerId = 2;
+  string layerName = 3;
+  string relationType = 4;
+  
+  repeated LandUseQuickInfo landUses = 5;
+  double intersectAreaSqm = 6;
+  uint32 legalStatus = 7;
+  string legalStatusName = 8;
+  string layerAvatar = 9;
+  string layerDisplayName = 10;
 }

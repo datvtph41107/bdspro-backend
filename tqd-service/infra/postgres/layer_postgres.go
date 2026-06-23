@@ -199,10 +199,12 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 		orderDir = "ASC"
 	}
 
+	log.Println("Creating layer:", filter.Size)
+
 	err := query.
 		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
 		Offset(filter.GetOffset()).
-		Limit(filter.GetLimit()).
+		Limit(filter.GetLimitAdmin()).
 		Find(&layers).Error
 
 	return layers, total, err
@@ -237,7 +239,7 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 	err := query.
 		Order("display_order ASC, id ASC").
 		Offset(filter.GetOffset()).
-		Limit(filter.GetLimit()).
+		Limit(1000).
 		Find(&layers).Error
 
 	return layers, total, err
@@ -294,4 +296,25 @@ func (r *layerRepoImpl) ResetLayerImportTracking(ctx context.Context, id uint64)
 			"import_batch_id": nil,
 			"updated_at":      time.Now(),
 		}).Error
+}
+
+func (r *layerRepoImpl) GetZoomRangeByFamilyID(ctx context.Context, familyID uint64) (uint32, uint32, error) {
+	var result struct {
+		MinZoom uint32
+		MaxZoom uint32
+	}
+	err := r.db.WithContext(ctx).Model(&qh_domain.QHLayer{}).
+		Select("COALESCE(MIN(min_zoom), 6) AS min_zoom, COALESCE(MAX(max_zoom), 16) AS max_zoom").
+		Where("family_id = ? AND deleted_at IS NULL AND status = ?", familyID, enums.LayerStatusActive).
+		Scan(&result).Error
+	if err != nil {
+		return 6, 16, err
+	}
+	if result.MinZoom == 0 {
+		result.MinZoom = 6
+	}
+	if result.MaxZoom == 0 {
+		result.MaxZoom = 16
+	}
+	return result.MinZoom, result.MaxZoom, nil
 }

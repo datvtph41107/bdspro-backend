@@ -622,7 +622,7 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 				FROM qh_regions r
 				LEFT JOIN qh_label_layers qll ON qll.layer_id = r.layer_id AND qll.label_id = r.label_id 
 				LEFT JOIN qh_land_use lu ON qll.land_use_id = lu.id AND lu.deleted_at IS NULL AND lu.is_active = true
-				LEFT JOIN qh_legends lg ON qll.legend_id = lg.id AND lg.deleted_at IS NULL
+				LEFT JOIN qh_legends lg ON r.legend_id = lg.id AND lg.deleted_at IS NULL
 				LEFT JOIN qh_labels l ON r.label_id = l.id AND l.deleted_at IS NULL
 				WHERE r.layer_id = $1
 				  AND r.geometry IS NOT NULL
@@ -666,6 +666,90 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 			) features
 			ORDER BY sort_order ASC, sort_id ASC
 		`, layerID).
+		Rows()
+}
+
+// StreamGeoJSONByFamilyID - Xuất GeoJSON stream gộp mọi region của các layer thuộc họ
+func (r *regionRepoImpl) StreamGeoJSONByFamilyID(ctx context.Context, familyID uint64) (*sql.Rows, error) {
+	return r.db.WithContext(ctx).
+		Raw(`
+			SELECT feature
+			FROM (
+				SELECT
+					1 AS sort_order,
+					r.layer_id AS sort_layer_id,
+					r.id AS sort_id,
+					json_build_object(
+						'type', 'Feature',
+						'geometry', ST_AsGeoJSON(ST_MakeValid(r.geometry))::json,
+						'properties', jsonb_build_object(
+							'id', r.id,
+							'layer_id', r.layer_id,
+							'family_id', $1,
+							'land_use_id', r.land_use_id,
+							'legend_id', r.legend_id,
+							'label_id', COALESCE(lg.label_id, r.label_id),
+							'geomType', 'MultiPolygon',
+							'label_fill_opacity', 0.6,
+							'label_stroke_color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#000000'),
+							'label_stroke_width', 1,
+							'color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#CCCCCC'),
+							'area_ha', r.area_ha,
+							'area_sqm', r.area_sqm,
+							'name', COALESCE(NULLIF(lu.name, ''), NULLIF(l.name, ''), r.name)
+						)
+					) AS feature
+				FROM qh_regions r
+				INNER JOIN qh_layers ly ON ly.id = r.layer_id
+					AND ly.family_id = $1
+					AND ly.deleted_at IS NULL
+				LEFT JOIN qh_label_layers qll ON qll.layer_id = r.layer_id AND qll.label_id = r.label_id
+				LEFT JOIN qh_land_use lu ON qll.land_use_id = lu.id AND lu.deleted_at IS NULL AND lu.is_active = true
+				LEFT JOIN qh_legends lg ON r.legend_id = lg.id AND lg.deleted_at IS NULL
+				LEFT JOIN qh_labels l ON r.label_id = l.id AND l.deleted_at IS NULL
+				WHERE r.geometry IS NOT NULL
+				  AND r.deleted_at IS NULL
+				  AND NOT ST_IsEmpty(ST_MakeValid(r.geometry))
+
+				UNION ALL
+
+				SELECT
+					2 AS sort_order,
+					re.layer_id AS sort_layer_id,
+					re.id AS sort_id,
+					json_build_object(
+						'type', 'Feature',
+						'geometry', ST_AsGeoJSON(ST_MakeValid(re.geometry))::json,
+						'properties', jsonb_build_object(
+							'id', re.id,
+							'layer_id', re.layer_id,
+							'family_id', $1,
+							'land_use_id', qll.land_use_id,
+							'legend_id', qll.legend_id,
+							'label_id', COALESCE(lg.label_id, re.label_id),
+							'geomType', re.geom_type,
+							'label_fill_opacity', 0.6,
+							'label_stroke_width', 2,
+							'color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#CCCCCC'),
+							'area_ha', 0,
+							'area_sqm', 0,
+							'name', COALESCE(NULLIF(lu.name, ''), NULLIF(l.name, ''), re.name)
+						)
+					) AS feature
+				FROM qh_region_extends re
+				INNER JOIN qh_layers ly ON ly.id = re.layer_id
+					AND ly.family_id = $1
+					AND ly.deleted_at IS NULL
+				LEFT JOIN qh_label_layers qll ON qll.layer_id = re.layer_id AND qll.label_id = re.label_id
+				LEFT JOIN qh_land_use lu ON qll.land_use_id = lu.id AND lu.deleted_at IS NULL AND lu.is_active = true
+				LEFT JOIN qh_legends lg ON qll.legend_id = lg.id AND lg.deleted_at IS NULL
+				LEFT JOIN qh_labels l ON re.label_id = l.id AND l.deleted_at IS NULL
+				WHERE re.geometry IS NOT NULL
+				  AND re.deleted_at IS NULL
+				  AND NOT ST_IsEmpty(ST_MakeValid(re.geometry))
+			) features
+			ORDER BY sort_order ASC, sort_layer_id ASC, sort_id ASC
+		`, familyID).
 		Rows()
 }
 

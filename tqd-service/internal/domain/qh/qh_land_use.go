@@ -1,6 +1,9 @@
 package qh_domain
 
-import _models "common/domain/entity"
+import (
+	_models "common/domain/entity"
+	_enum "common/domain/enum"
+)
 
 type QHLandUse struct {
 	_models.BaseEntity
@@ -22,6 +25,8 @@ type QHLandUse struct {
 	CanBuild bool   `gorm:"default:false" json:"canBuild"`
 
 	IsActive bool `gorm:"default:true" json:"isActive"`
+
+	WarnLevel _enum.EWarningLevel `gorm:"default:0" json:"warnLevel"`
 
 	Layers []*QHLayer `gorm:"many2many:qh_layer_land_use;joinForeignKey:land_use_id;joinReferences:layer_id" json:"layers,omitempty"`
 	// LandUseGroup *LandUseGroup `gorm:"foreignKey:LandUseGroupID" json:"landUseGroup,omitempty"`

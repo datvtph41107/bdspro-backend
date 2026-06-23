@@ -56,6 +56,7 @@ type RegionRepository interface {
 	GetLayerBBox(ctx context.Context, layerID uint64) (minLon, minLat, maxLon, maxLat float64, err error)
 	GetMVTTile(ctx context.Context, layerID uint64, z uint8, x, y uint32) ([]byte, error)
 	StreamGeoJSON(ctx context.Context, layerID uint64) (*sql.Rows, error)
+	StreamGeoJSONByFamilyID(ctx context.Context, familyID uint64) (*sql.Rows, error)
 }
 
 type RegionFilter struct {

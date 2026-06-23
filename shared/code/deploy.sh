@@ -283,7 +283,7 @@ scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
 scp config/develop.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/develop.yml
 if [ "$1" = "tqd" ]; then
-  scp ../shared/code/Dockerfile.tqd.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.tqd.develop
+  scp ../shared/code/Dockerfile.tqd.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.tqd
   scp -r template ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 elif [ "$1" = "pmtiles" ]; then
   scp ../shared/code/Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.pmtiles

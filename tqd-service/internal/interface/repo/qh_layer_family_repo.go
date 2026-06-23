@@ -13,4 +13,5 @@ type QHLayerFamilyRepository interface {
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayerFamily, error)
 	List(ctx context.Context, offset, limit int, search, sort string) ([]qh_domain.QHLayerFamily, int64, error)
+	ListClient(ctx context.Context, offset, limit int, search string) ([]qh_domain.QHLayerFamily, int64, error)
 }

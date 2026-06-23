@@ -8,6 +8,7 @@ import (
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -79,6 +80,40 @@ func (r *qhLayerFamilyRepo) List(ctx context.Context, offset, limit int, search,
 	err := q.Omit("Layers").Order(sort).Offset(offset).Limit(limit).Find(&rows).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("list qh_layer_families: %w", err)
+	}
+	return rows, total, nil
+}
+
+func (r *qhLayerFamilyRepo) ListClient(ctx context.Context, offset, limit int, search string) ([]qh_domain.QHLayerFamily, int64, error) {
+	q := r.db.WithContext(ctx).Model(&qh_domain.QHLayerFamily{}).
+		Where("qh_layer_families.deleted_at IS NULL").
+		Where(`EXISTS (
+			SELECT 1 FROM qh_layers l
+			WHERE l.family_id = qh_layer_families.id
+			  AND l.deleted_at IS NULL
+			  AND l.status = ?
+			  AND l.display_order > 0
+		)`, enums.LayerStatusActive)
+
+	search = strings.TrimSpace(search)
+	if search != "" {
+		like := "%" + search + "%"
+		q = q.Where("qh_layer_families.name ILIKE ?", like)
+	}
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count client qh_layer_families: %w", err)
+	}
+
+	var rows []qh_domain.QHLayerFamily
+	err := q.Omit("Layers").
+		Order("qh_layer_families.sort_number ASC, qh_layer_families.id ASC").
+		Offset(offset).
+		Limit(limit).
+		Find(&rows).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("list client qh_layer_families: %w", err)
 	}
 	return rows, total, nil
 }

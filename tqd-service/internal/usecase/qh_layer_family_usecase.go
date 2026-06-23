@@ -24,14 +24,29 @@ type QHLayerFamilyUsecase interface {
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayerFamily, error)
 	List(ctx context.Context, pagable *_dto.Pagable, search string) ([]qh_domain.QHLayerFamily, int64, error)
+	ListClient(ctx context.Context, pagable *_dto.Pagable, search string) ([]qh_domain.QHLayerFamily, int64, error)
+	GetZoomRangeByFamilyID(ctx context.Context, familyID uint64) (uint32, uint32, error)
+	BuildFamilyPMTiles(ctx context.Context, familyID uint64, minZoom, maxZoom uint32, outputDir string, progressFn func(BuildProgress)) error
 }
 
 type qhLayerFamilyUsecase struct {
-	repo repo.QHLayerFamilyRepository
+	repo         repo.QHLayerFamilyRepository
+	layerRepo    repo.LayerRepository
+	regionRepo   repo.RegionRepository
+	buildTracker *buildTracker
 }
 
-func NewQHLayerFamilyUsecase(r repo.QHLayerFamilyRepository) QHLayerFamilyUsecase {
-	return &qhLayerFamilyUsecase{repo: r}
+func NewQHLayerFamilyUsecase(
+	r repo.QHLayerFamilyRepository,
+	layerRepo repo.LayerRepository,
+	regionRepo repo.RegionRepository,
+) QHLayerFamilyUsecase {
+	return &qhLayerFamilyUsecase{
+		repo:         r,
+		layerRepo:    layerRepo,
+		regionRepo:   regionRepo,
+		buildTracker: newBuildTracker(),
+	}
 }
 
 func (u *qhLayerFamilyUsecase) Create(ctx context.Context, row *qh_domain.QHLayerFamily) (*qh_domain.QHLayerFamily, error) {
@@ -119,4 +134,55 @@ func (u *qhLayerFamilyUsecase) List(ctx context.Context, pagable *_dto.Pagable, 
 		sort = pagable.GetSort()
 	}
 	return u.repo.List(ctx, offset, limit, search, sort)
+}
+
+func (u *qhLayerFamilyUsecase) ListClient(ctx context.Context, pagable *_dto.Pagable, search string) ([]qh_domain.QHLayerFamily, int64, error) {
+	offset := 0
+	limit := 20
+	if pagable != nil {
+		offset = pagable.GetOffset()
+		limit = pagable.GetLimit()
+	}
+	return u.repo.ListClient(ctx, offset, limit, search)
+}
+
+func (u *qhLayerFamilyUsecase) GetZoomRangeByFamilyID(ctx context.Context, familyID uint64) (uint32, uint32, error) {
+	return u.layerRepo.GetZoomRangeByFamilyID(ctx, familyID)
+}
+
+func (u *qhLayerFamilyUsecase) BuildFamilyPMTiles(ctx context.Context, familyID uint64, minZoom, maxZoom uint32, outputDir string, progressFn func(BuildProgress)) error {
+	buildCtx, gen, err := u.buildTracker.tryStart(familyID)
+	if err != nil {
+		if buildErr, ok := err.(*ErrBuildInProgress); ok {
+			return &ErrFamilyBuildInProgress{FamilyID: familyID, Progress: buildErr.Progress}
+		}
+		return err
+	}
+	defer u.buildTracker.finish(familyID, gen)
+
+	family, err := u.repo.GetByID(ctx, familyID)
+	if err != nil || family == nil {
+		return fmt.Errorf("family %d not found", familyID)
+	}
+
+	familyMinZoom, familyMaxZoom, err := u.layerRepo.GetZoomRangeByFamilyID(ctx, familyID)
+	if err != nil {
+		return fmt.Errorf("get zoom range for family %d: %w", familyID, err)
+	}
+	if minZoom == 0 {
+		minZoom = familyMinZoom
+	}
+	if maxZoom == 0 {
+		maxZoom = familyMaxZoom
+	}
+	if outputDir == "" {
+		outputDir = "./files/tiles"
+	}
+
+	wrappedFn := func(p BuildProgress) {
+		u.buildTracker.updateProgress(familyID, gen, p)
+		progressFn(p)
+	}
+
+	return BuildFamilyPMTilesFile(buildCtx, u.regionRepo, familyID, minZoom, maxZoom, outputDir, wrappedFn)
 }

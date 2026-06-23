@@ -361,7 +361,7 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 	layerFilter := repo.ClientLayerFilter{
 		Pagable: _dto.Pagable{
 			Page: req.GetPage(),
-			Size: req.GetSize(),
+			Size: 1000,
 		},
 	}
 

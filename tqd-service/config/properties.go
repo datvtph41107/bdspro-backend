@@ -114,6 +114,28 @@ func (r *LayerResolver) GetTileName(layerID uint64) string {
 	return fmt.Sprintf("ci_layer%d", layerID)
 }
 
+func (r *LayerResolver) GetFamilyTileName(familyID uint64) string {
+	return fmt.Sprintf("ci_family%d", familyID)
+}
+
+// GetFamilyURL - Lấy URL tile cho họ lớp theo id
+func (r *LayerResolver) GetFamilyURL(familyID uint64, tileName string) string {
+	return fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", r.config.BaseURL, tileName)
+}
+
+func (r *LayerResolver) GetFamilySourceCode(familyID uint64) string {
+	return fmt.Sprintf("family%d", familyID)
+}
+
+// GetFamilyStyleConfig - Lấy style config cho họ lớp (cùng template vector với layer)
+func (r *LayerResolver) GetFamilyStyleConfig(familyID uint64, minZoom, maxZoom uint32) (string, error) {
+	familyIDStr := fmt.Sprintf("family_%d", familyID)
+	if override, exists := r.config.Overrides[familyIDStr]; exists && override.StyleConfig != "" {
+		return override.StyleConfig, nil
+	}
+	return r.GetStyleConfig(0, r.GetFamilySourceCode(familyID), uint32(enums.LayerTypeLandUse), minZoom, maxZoom)
+}
+
 // ServerConfig holds server configuration
 type ServerConfig struct {
 	GrpcPort int `mapstructure:"tcp_port"`

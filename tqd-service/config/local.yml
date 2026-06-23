@@ -39,7 +39,7 @@ config-app:
     
 layer:
     # Base URL configuration
-    base_url: "ciproto://14.225.210.29:8032"
+    base_url: "ciproto://localhost:8032"
 
     # Default style templates
     default_styles:

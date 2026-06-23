@@ -21,6 +21,16 @@ func (e *ErrBuildInProgress) Error() string {
 	return fmt.Sprintf("build already in progress for layer %d: %s", e.LayerID, e.Progress.Message)
 }
 
+// ErrFamilyBuildInProgress is returned when a family PMTiles build is already running.
+type ErrFamilyBuildInProgress struct {
+	FamilyID uint64
+	Progress BuildProgress
+}
+
+func (e *ErrFamilyBuildInProgress) Error() string {
+	return fmt.Sprintf("build already in progress for family %d: %s", e.FamilyID, e.Progress.Message)
+}
+
 type buildJob struct {
 	startTime time.Time
 	progress  atomic.Value // BuildProgress

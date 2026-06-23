@@ -41,6 +41,9 @@ type ParcelUsecase interface {
 	// Timeline - Lịch sử biến động quy hoạch của thửa đất
 	GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error)
 
+	// LayerQuickInfo - Thông tin nhanh về các layer của thửa đất
+	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
+
 	// LayerHistory - Lịch sử phiên bản của 1 layer
 	GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error)
 
@@ -1237,6 +1240,14 @@ func convertEngineLayerToType(el *parcel_engine.LayerDetail) *types.LayerDetail 
 		l.Labels = append(l.Labels, tl)
 	}
 	return l
+}
+
+func (u *parcelUsecase) GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error) {
+	quickInfo, err := u.parcelRepo.GetParcelQuickInfo(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel quick info failed: %w", err)
+	}
+	return quickInfo, nil
 }
 
 // GetParcelTimeline - Lịch sử biến động quy hoạch của thửa đất

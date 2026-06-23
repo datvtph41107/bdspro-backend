@@ -32,6 +32,7 @@ type IParcelRepo interface {
 	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
 	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
 	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
+	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
 }
 
 type Point struct {
