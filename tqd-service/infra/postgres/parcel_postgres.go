@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -186,6 +187,8 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 			return nil, err
 		}
 	}
+
+	result.Geometry = decodePostgresGeometry(result.Geometry)
 
 	return &result, nil
 }
@@ -1040,6 +1043,8 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 		return nil, nil
 	}
 
+	result.Geometry = decodePostgresGeometry(result.Geometry)
+
 	return &result, nil
 }
 
@@ -1188,58 +1193,59 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
 	var result []dto.ParcelLayerInfo
 
 	query := `
-		SELECT
-    r.id,
+        SELECT
+            r.id,
+            p.id          AS parcel_id,           
+            l.id          AS layer_id,
+            l.avatar      AS layer_avatar,
+            l.display_name AS layer_name,         
+            l.name        AS layer_display_name,   
+            l.type        AS layer_type,           
+            l.legal_status AS layer_legal_status,
 
-    l.id AS layer_id,
-	l.avatar AS layer_avatar,
-    l.display_name AS layer_name,
-	l.legal_status AS layer_legal_status,
+            lu.id         AS land_use_id,
+            lu.name       AS land_use_name,
+            lu.warn_level AS warn_level,
+            lu.color      AS land_use_color,
+            lu.can_build  AS can_build,
 
-    lu.id AS land_use_id,
-    lu.name AS land_use_name,
-	lu.warn_level AS warn_level,
-	lu.color AS land_use_color,
-
-    ST_Area(
-        ST_Intersection(r.geometry, p.geometry)::geography
-    ) AS intersect_area_sqm,
-
-    ROUND(
-        (
             ST_Area(
                 ST_Intersection(r.geometry, p.geometry)::geography
-            )
-            /
-            NULLIF(
-                ST_Area(p.geometry::geography),
-                0
-            )
-        )::numeric * 100,
-        2
-    ) AS percent,
+            ) AS intersect_area_sqm,
 
-    CASE
-        WHEN ST_Contains(r.geometry, p.geometry)
-            THEN 'contains'
-        ELSE 'intersects'
-    END AS relation_type
+            ROUND(
+                (
+                    ST_Area(
+                        ST_Intersection(r.geometry, p.geometry)::geography
+                    )
+                    /
+                    NULLIF(ST_Area(p.geometry::geography), 0)
+                )::numeric * 100,
+                2
+            ) AS percent,
 
-FROM parcels p
-JOIN qh_regions r
-    ON r.geometry && p.geometry
-   AND ST_Intersects(r.geometry, p.geometry)
-JOIN qh_layers l
-    ON l.id = r.layer_id
-LEFT JOIN qh_land_use lu
-    ON lu.id = r.land_use_id
+            CASE
+                WHEN ST_Contains(r.geometry, p.geometry) THEN 'contains'
+                ELSE 'intersects'
+            END AS relation_type
 
-WHERE p.id = ?
-  AND r.status = 10
-  AND r.deleted_at IS NULL
-  AND lu.id IS NOT NULL
-ORDER BY l.analyse_order DESC;
-	`
+        FROM parcels p
+        JOIN qh_regions r
+            ON r.geometry && p.geometry
+           AND ST_Intersects(r.geometry, p.geometry)
+        JOIN qh_layers l
+            ON l.id = r.layer_id
+        LEFT JOIN qh_land_use lu
+            ON lu.id = r.land_use_id
+
+        WHERE p.id = ?
+          AND r.status = 10
+          AND r.deleted_at IS NULL
+          AND l.deleted_at IS NULL
+          AND l.status = 10
+          AND lu.id IS NOT NULL
+        ORDER BY l.analyse_order DESC
+    `
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
 	if err != nil {
@@ -1253,228 +1259,223 @@ func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint
 
 	query := `
 		WITH parcel_base AS (
-		SELECT
-			p.id AS parcel_id,
-			p.geometry AS parcel_geometry,
-			ST_Area(p.geometry::geography) AS parcel_area_sqm
-		FROM parcels p
-		WHERE p.id = $1
-		AND p.deleted_at IS NULL
-		LIMIT 1
-	),
-
-	candidate_regions AS (
-		SELECT
-			-- parcel
-			pb.parcel_id,
-			pb.parcel_geometry,
-			pb.parcel_area_sqm,
-
-			-- region
-			r.id AS region_id,
-			r.layer_id,
-			r.label_id,
-			r.name AS region_name,
-			r.display_name AS region_display_name,
-			r.geometry AS region_geometry,
-
-			-- layer
-			l.name AS layer_name,
-			l.display_name AS layer_display_name,
-			l.type AS layer_type,
-			l.status AS layer_status,
-			l.legal_status AS layer_legal_status,
-			l.trust_value AS layer_trust_value,
-			l.effective_date,
-			l.expiry_date,
-			COALESCE(ai.id, 0) AS authority_issuring_id,
-			COALESCE(ai.name, '') AS authority_issuring_name,
-			COALESCE(ai.code, '') AS authority_issuring_code,
-			COALESCE(ai.description, '') AS authority_issuring_desc,
-
-			-- label
-			lb.name AS label_name,
-			lb.display_name AS label_display_name,
-			lb.color AS label_color,
-
-			-- land use code
-			luc.code AS land_use_code,
-			luc.name AS land_use_name,
-			luc.can_build AS code_can_build,
-			luc.priority AS code_priority,
-			luc.build_condition AS code_build_condition,
-
-			-- group
-			lg.code AS group_code,
-			lg.name AS group_name,
-			lg.color AS group_color,
-			lg.can_build AS group_can_build,
-			lg.priority AS group_priority,
-			lg.build_condition AS group_build_condition
-
-		FROM parcel_base pb
-
-		JOIN qh_regions r
-			ON r.geometry && pb.parcel_geometry
-		AND r.status = 10
-		AND r.deleted_at IS NULL
-		AND r.is_latest = true
-
-		JOIN qh_layers l
-			ON l.id = r.layer_id
-		AND l.deleted_at IS NULL
-		AND l.status = 10
-
-		LEFT JOIN qh_labels lb
-			ON lb.id = r.label_id
-		AND lb.deleted_at IS NULL
-		AND lb.status = 10
-
-		LEFT JOIN qh_authority_issuring ai
-			ON ai.id = l.authority_issuring_id
-
-		LEFT JOIN land_use_codes luc
-			ON luc.id = lb.land_code_id
-		AND luc.is_active = true
-
-		LEFT JOIN land_use_groups lg
-			ON lg.id = luc.group_id
-		AND lg.is_active = true
-
-		WHERE ST_Intersects(
-			r.geometry,
-			pb.parcel_geometry
-		)
-	),
-
-	intersections AS (
-		SELECT
-			cr.*,
-
-			ST_Area(
-				ST_Intersection(
-					cr.parcel_geometry,
-					cr.region_geometry
-				)::geography
-			) AS overlap_area_sqm,
-
-			CASE
-				WHEN cr.parcel_area_sqm > 0 THEN
-					(
+			SELECT
+				p.id            AS parcel_id,
+				p.geometry      AS parcel_geometry,
+				ST_Area(p.geometry::geography) AS parcel_area_sqm
+			FROM parcels p
+			WHERE p.id = $1
+			  AND p.deleted_at IS NULL
+			LIMIT 1
+		),
+ 
+		candidate_regions AS (
+			SELECT
+				pb.parcel_id,
+				pb.parcel_geometry,
+				pb.parcel_area_sqm,
+ 
+				r.id           AS region_id,
+				r.layer_id     AS region_layer_id,      
+				r.label_id     AS region_label_id,
+				r.land_use_id  AS region_land_use_id,
+				r.name         AS region_name,
+				r.display_name AS region_display_name,
+				r.geometry     AS region_geometry,
+ 
+				l.id               AS layer_id,          
+				l.name             AS layer_name,
+				l.display_name     AS layer_display_name,
+				l.type             AS layer_type,
+				l.status           AS layer_status,
+				l.legal_status     AS layer_legal_status,
+				l.trust_value      AS layer_trust_value,
+				l.effective_date   AS layer_effective_date,
+				l.expiry_date      AS layer_expiry_date,
+				l.avatar           AS layer_avatar,
+				l.analyse_order    AS layer_analyse_order,
+ 
+				COALESCE(ai.id,          0)  AS authority_issuring_id,
+				COALESCE(ai.name,        '') AS authority_issuring_name,
+				COALESCE(ai.code,        '') AS authority_issuring_code,
+				COALESCE(ai.description, '') AS authority_issuring_desc,
+ 
+				lb.id            AS label_id_resolved,
+				COALESCE(lb.name,         '') AS label_name,
+				COALESCE(lb.display_name, '') AS label_display_name,
+				COALESCE(lb.color,        '') AS label_color,
+				lb.land_code_id,
+ 
+				lu.id            AS lu_id,
+				COALESCE(lu.code,      '') AS lu_code,
+				COALESCE(lu.name,      '') AS lu_name,
+				COALESCE(lu.color,     '') AS lu_color,
+				COALESCE(lu.can_build, false) AS lu_can_build,
+				COALESCE(lu.warn_level, 0)    AS lu_warn_level,
+				COALESCE(lu.priority,  50)    AS lu_priority,
+ 
+				luc.code         AS luc_code,
+				luc.name         AS luc_name,
+				luc.group_id,
+				COALESCE(luc.can_build,        false) AS luc_can_build,
+				COALESCE(luc.priority,         50)    AS luc_priority,
+				COALESCE(luc.build_condition,  '')    AS luc_build_condition,
+ 
+				COALESCE(lg.code,            '') AS group_code,
+				COALESCE(lg.name,            '') AS group_name,
+				COALESCE(lg.color,           '') AS group_color,
+				COALESCE(lg.can_build,       false) AS group_can_build,
+				COALESCE(lg.priority,        50)    AS group_priority,
+				COALESCE(lg.build_condition, '')    AS group_build_condition
+ 
+			FROM parcel_base pb
+ 
+			JOIN qh_regions r
+				ON r.geometry && pb.parcel_geometry
+				AND r.status       = 10
+				AND r.deleted_at   IS NULL
+				AND r.is_latest    = true
+ 
+			JOIN qh_layers l
+				ON l.id          = r.layer_id
+				AND l.deleted_at  IS NULL
+				AND l.status      = 10
+ 
+			LEFT JOIN qh_land_use lu
+				ON lu.id = r.land_use_id
+ 
+			LEFT JOIN qh_labels lb
+				ON lb.id          = r.label_id
+				AND lb.deleted_at  IS NULL
+				AND lb.status      = 10
+ 
+			LEFT JOIN land_use_codes luc
+				ON luc.id        = lb.land_code_id
+				AND luc.is_active = true
+ 
+			LEFT JOIN land_use_groups lg
+				ON lg.id          = luc.group_id
+				AND lg.is_active   = true
+ 
+			LEFT JOIN qh_authority_issuring ai
+				ON ai.id = l.authority_issuring_id
+ 
+			WHERE ST_Intersects(r.geometry, pb.parcel_geometry)
+		),
+ 
+		intersections AS (
+			SELECT
+				cr.*,
+				ST_Area(
+					ST_Intersection(cr.parcel_geometry, cr.region_geometry)::geography
+				) AS overlap_area_sqm,
+				CASE
+					WHEN cr.parcel_area_sqm > 0 THEN
 						ST_Area(
-							ST_Intersection(
-								cr.parcel_geometry,
-								cr.region_geometry
-							)::geography
-						) / cr.parcel_area_sqm
-					) * 100
-				ELSE 0
-			END AS overlap_pct
-
-		FROM candidate_regions cr
-	)
-
-	SELECT
-		-- parcel
-		i.parcel_id,
-		i.parcel_area_sqm,
-
-		-- layer
-		i.layer_id,
-		i.layer_name,
-		i.layer_display_name,
-		i.layer_type,
-		i.layer_status,
-		i.layer_legal_status,
-		i.layer_trust_value,
-
-		COALESCE(
-			TO_CHAR(i.effective_date,'YYYY-MM-DD'),
-			''
-		) AS layer_effective_date,
-
-		COALESCE(
-			TO_CHAR(i.expiry_date,'YYYY-MM-DD'),
-			''
-		) AS layer_expiry_date,
-
-		i.authority_issuring_id,
-		i.authority_issuring_name,
-		i.authority_issuring_code,
-		i.authority_issuring_desc,
-
-		-- label
-		i.label_id,
-		COALESCE(i.label_name,'') AS label_name,
-		COALESCE(i.label_display_name,'') AS label_display_name,
-		COALESCE(NULLIF(i.label_color, ''), '#CCCCCC') AS label_color,
-
-		-- business fields for resolver
-		COALESCE(i.group_code, 'unknown') AS label_group_code,
-
-		COALESCE(
-			i.code_can_build,
+							ST_Intersection(cr.parcel_geometry, cr.region_geometry)::geography
+						) / cr.parcel_area_sqm * 100
+					ELSE 0
+				END AS overlap_pct
+			FROM candidate_regions cr
+		)
+ 
+		SELECT
+			-- Parcel
+			i.parcel_id,
+			i.parcel_area_sqm,
+ 
+			-- Layer (từ bảng l)
+			i.layer_id,
+			i.layer_name,
+			i.layer_display_name,
+			i.layer_type,
+			i.layer_status,
+			i.layer_legal_status,
+			i.layer_trust_value,
+			COALESCE(TO_CHAR(i.layer_effective_date, 'YYYY-MM-DD'), '') AS layer_effective_date,
+			COALESCE(TO_CHAR(i.layer_expiry_date,    'YYYY-MM-DD'), '') AS layer_expiry_date,
+			i.layer_avatar,
+			i.layer_analyse_order,
+ 
+			-- Authority
+			i.authority_issuring_id,
+			i.authority_issuring_name,
+			i.authority_issuring_code,
+			i.authority_issuring_desc,
+ 
+			-- Label
+			i.label_id_resolved                          AS label_id,
+			i.label_name,
+			i.label_display_name,
+			COALESCE(NULLIF(i.label_color, ''), '#CCCCCC') AS label_color,
+ 
+			-- Group
+			i.group_code                                 AS label_group_code,
+			COALESCE(NULLIF(i.group_name, ''), 'Chưa phân loại') AS label_group_name,
+ 
+			COALESCE(
+				i.lu_can_build,
+				i.luc_can_build,
+				i.group_can_build,
+				false
+			)                                            AS label_can_build,
+ 
+			COALESCE(i.lu_priority, i.luc_priority, i.group_priority, 50) AS label_priority,
+ 
+			COALESCE(NULLIF(i.luc_build_condition, ''), NULLIF(i.group_build_condition, ''), 'Chưa có thông tin') AS label_build_condition,
+ 
+			-- Land Use Group
+			i.group_code,
+			i.group_name,
+			i.group_color,
 			i.group_can_build,
-			false
-		) AS label_can_build,
-
-		COALESCE(
-			i.code_priority,
 			i.group_priority,
-			50
-		) AS label_priority,
-
-		COALESCE(
-			i.code_build_condition,
-			i.group_build_condition,
-			'Chưa có thông tin'
-		) AS label_build_condition,
-
-		-- land use group
-		COALESCE(i.group_code, '') AS group_code,
-		COALESCE(i.group_name, '') AS group_name,
-		COALESCE(i.group_color, '') AS group_color,
-		COALESCE(i.group_can_build, false) AS group_can_build,
-		COALESCE(i.group_priority, 50) AS group_priority,
-
-		-- land use code
-		COALESCE(i.land_use_code, '') AS region_land_use_code,
-		COALESCE(i.land_use_name, '') AS region_land_use_name,
-		COALESCE(i.group_name, '') AS region_land_use_group,
-		COALESCE(NULLIF(i.label_color, ''), NULLIF(i.group_color, ''), '#CCCCCC') AS region_land_use_color,
-
-		-- region
-		i.region_id,
-		i.region_name,
-		i.region_display_name,
-
-		-- overlap
-		i.overlap_area_sqm,
-		i.overlap_pct,
-
-		-- map
-		ST_Y(
-			ST_PointOnSurface(i.region_geometry)
-		) AS center_lat,
-
-		ST_X(
-			ST_PointOnSurface(i.region_geometry)
-		) AS center_lng,
-
-		ST_AsGeoJSON(i.region_geometry)::bytea AS geometry
-
-	FROM intersections i
-
-	WHERE i.overlap_area_sqm > 0
-
-	ORDER BY
-		i.layer_legal_status DESC,
-		i.overlap_pct DESC;
+ 
+			-- Land Use (PRIMARY: qh_land_use)
+			i.lu_code   AS region_land_use_code,
+			COALESCE(NULLIF(i.lu_name, ''), 'Chưa phân loại') AS region_land_use_name,
+			COALESCE(NULLIF(i.group_name, ''), 'Chưa phân loại') AS region_land_use_group,
+			COALESCE(NULLIF(i.lu_color, ''), NULLIF(i.label_color, ''), '#CCCCCC') AS region_land_use_color,
+ 
+			COALESCE(i.lu_warn_level, 0) AS warn_level,
+ 
+			-- Region
+			i.region_id,
+			i.region_name,
+			i.region_display_name,
+ 
+			-- Overlap
+			i.overlap_area_sqm,
+			i.overlap_pct,
+ 
+			-- Spatial
+			COALESCE(ST_Y(ST_PointOnSurface(i.region_geometry)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(i.region_geometry)), 0) AS center_lng,
+ 
+			ST_AsGeoJSON(i.region_geometry)::bytea AS geometry,
+ 
+			-- Additional fields for QuickLayers compatibility
+			i.lu_id AS land_use_id,
+			i.lu_name AS land_use_name,
+			i.lu_color AS land_use_color
+ 
+		FROM intersections i
+		WHERE i.overlap_area_sqm > 0
+ 
+		ORDER BY
+			i.layer_legal_status DESC,
+			COALESCE(i.layer_analyse_order, 0) DESC,
+			i.overlap_pct DESC,
+			i.lu_priority ASC
 	`
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&rows).Error
 	if err != nil {
-		return nil, fmt.Errorf("get parcel layer rows v2 failed: %w", err)
+		return nil, fmt.Errorf("get parcel layer rows v2 unified failed: %w", err)
+	}
+
+	for i := range rows {
+		rows[i].Geometry = decodePostgresGeometry(rows[i].Geometry)
 	}
 
 	return rows, nil
@@ -1576,4 +1577,21 @@ func buildPolygonWKT(points []repo.Point) string {
 	sb.WriteString(strconv.FormatFloat(points[0].Lat, 'f', 6, 64))
 	sb.WriteString("))")
 	return sb.String()
+}
+
+func decodePostgresGeometry(raw []byte) []byte {
+	if len(raw) == 0 {
+		return nil
+	}
+	s := string(raw)
+	// PostgreSQL trả hex-encoded bytea: \x7b22...
+	if strings.HasPrefix(s, `\x`) || strings.HasPrefix(s, "\\x") {
+		hexStr := strings.TrimPrefix(strings.TrimPrefix(s, "\\x"), `\x`)
+		decoded, err := hex.DecodeString(hexStr)
+		if err == nil {
+			return decoded
+		}
+	}
+	// Đã là raw bytes (GeoJSON text trực tiếp)
+	return raw
 }

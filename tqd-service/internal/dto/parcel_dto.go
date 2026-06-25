@@ -1,7 +1,6 @@
 package dto
 
 import (
-	_enum "common/domain/enum"
 	qh_domain "tqd/internal/domain/qh"
 )
 
@@ -26,19 +25,27 @@ type ParcelResponse struct {
 	Longitude  float64 `json:"longitude"`
 }
 
+// parcel_dto.go
 type ParcelLayerInfo struct {
-	ParcelID         uint64
-	LayerID          uint64
-	LayerName        string
-	LayerAvatar      string
-	LayerLegalStatus uint32
-	LandUseID        uint64
-	LandUseName      string
-	LandUseColor     string
-	RelationType     string
-	WarnLevel        _enum.EWarningLevel `gorm:"column:warn_level"`
-	IntersectAreaSqm float64             `gorm:"column:intersect_area_sqm"`
-	Percent          float64             `gorm:"column:percent"`
+	ID       uint64 `gorm:"column:id"`
+	ParcelID uint64 `gorm:"column:parcel_id"`
+
+	LayerID          uint64 `gorm:"column:layer_id"`
+	LayerName        string `gorm:"column:layer_name"`
+	LayerDisplayName string `gorm:"column:layer_display_name"`
+	LayerAvatar      string `gorm:"column:layer_avatar"`
+	LayerLegalStatus int    `gorm:"column:layer_legal_status"`
+	LayerType        uint32 `gorm:"column:layer_type"`
+
+	LandUseID    uint64 `gorm:"column:land_use_id"`
+	LandUseName  string `gorm:"column:land_use_name"`
+	LandUseColor string `gorm:"column:land_use_color"`
+	WarnLevel    int    `gorm:"column:warn_level"`
+	CanBuild     bool   `gorm:"column:can_build"`
+
+	IntersectAreaSqm float64 `gorm:"column:intersect_area_sqm"`
+	Percent          float64 `gorm:"column:percent"`
+	RelationType     string  `gorm:"column:relation_type"`
 }
 
 type PolygonMapTargetsResponse struct {
@@ -255,57 +262,68 @@ type ParcelLayerRow struct {
 }
 
 type ParcelLayerRowV2 struct {
-	ParcelID      uint64
-	ParcelAreaSqm float64
+	// ── Parcel ──────────────────────────────────────────────
+	ParcelID      uint64  `gorm:"column:parcel_id"`
+	ParcelAreaSqm float64 `gorm:"column:parcel_area_sqm"`
 
-	LayerID            uint64
-	LayerName          string
-	LayerDisplayName   string
-	LayerType          uint32
-	LayerStatus        uint32
-	LayerLegalStatus   uint32
-	LayerTrustValue    float32
-	LayerEffectiveDate string
-	LayerExpiryDate    string
-	LayerAuthority     string
-
+	// ── Layer ───────────────────────────────────────────────
+	LayerID            uint64  `gorm:"column:layer_id"`
+	LayerName          string  `gorm:"column:layer_name"`
+	LayerDisplayName   string  `gorm:"column:layer_display_name"`
+	LayerType          uint32  `gorm:"column:layer_type"`
+	LayerStatus        uint32  `gorm:"column:layer_status"`
+	LayerLegalStatus   uint32  `gorm:"column:layer_legal_status"`
+	LayerTrustValue    float32 `gorm:"column:layer_trust_value"`
+	LayerEffectiveDate string  `gorm:"column:layer_effective_date"`
+	LayerExpiryDate    string  `gorm:"column:layer_expiry_date"`
+	LayerAvatar        string  `gorm:"column:layer_avatar"`
+	// ── Authority ───────────────────────────────────────────
 	AuthorityIssuringID   uint64 `gorm:"column:authority_issuring_id"`
 	AuthorityIssuringName string `gorm:"column:authority_issuring_name"`
 	AuthorityIssuringCode string `gorm:"column:authority_issuring_code"`
 	AuthorityIssuringDesc string `gorm:"column:authority_issuring_desc"`
 
-	LabelID             uint64
-	LabelName           string
-	LabelDisplayName    string
-	LabelColor          string
-	LabelGroupCode      string
-	LabelCanBuild       bool
-	LabelPriority       int
-	LabelBuildCondition string
+	// ── Label ───────────────────────────────────────────────
+	LabelID          uint64 `gorm:"column:label_id"`
+	LabelName        string `gorm:"column:label_name"`
+	LabelDisplayName string `gorm:"column:label_display_name"`
+	LabelColor       string `gorm:"column:label_color"`
 
-	GroupCode     string
-	GroupName     string
-	GroupColor    string
-	GroupCanBuild bool
-	GroupPriority int
+	// Business fields (derived from qh_land_use PRIMARY)
+	LabelGroupCode      string `gorm:"column:label_group_code"`
+	LabelCanBuild       bool   `gorm:"column:label_can_build"`
+	LabelPriority       int    `gorm:"column:label_priority"`
+	LabelBuildCondition string `gorm:"column:label_build_condition"`
 
-	RegionID           uint64
-	RegionName         string
-	RegionDisplayName  string
-	RegionLandUseCode  string
-	RegionLandUseName  string
-	RegionLandUseGroup string
-	RegionColorRed     uint8
-	RegionColorGreen   uint8
-	RegionColorBlue    uint8
-	RegionLandUseColor string
+	// ── Land Use Group ──────────────────────────────────────
+	GroupCode     string `gorm:"column:group_code"`
+	GroupName     string `gorm:"column:group_name"`
+	GroupColor    string `gorm:"column:group_color"`
+	GroupCanBuild bool   `gorm:"column:group_can_build"`
+	GroupPriority int    `gorm:"column:group_priority"`
 
-	OverlapAreaSqm float64
-	OverlapPct     float64
+	// ── Land Use (PRIMARY: qh_land_use via r.land_use_id) ──
+	// Đây là nguồn sự thật duy nhất, align với GetParcelQuickInfo
+	RegionLandUseCode  string `gorm:"column:region_land_use_code"`
+	RegionLandUseName  string `gorm:"column:region_land_use_name"`
+	RegionLandUseGroup string `gorm:"column:region_land_use_group"`
+	RegionLandUseColor string `gorm:"column:region_land_use_color"`
 
-	CenterLat float64
-	CenterLng float64
-	Geometry  []byte
+	WarnLevel int32 `gorm:"column:warn_level"`
+
+	// ── Region ──────────────────────────────────────────────
+	RegionID          uint64 `gorm:"column:region_id"`
+	RegionName        string `gorm:"column:region_name"`
+	RegionDisplayName string `gorm:"column:region_display_name"`
+
+	// ── Overlap ─────────────────────────────────────────────
+	OverlapAreaSqm float64 `gorm:"column:overlap_area_sqm"`
+	OverlapPct     float64 `gorm:"column:overlap_pct"`
+
+	// ── Spatial ─────────────────────────────────────────────
+	CenterLat float64 `gorm:"column:center_lat"`
+	CenterLng float64 `gorm:"column:center_lng"`
+	Geometry  []byte  `gorm:"column:geometry"`
 }
 
 type PlanLandUseGroupDetail struct {
@@ -341,6 +359,9 @@ type LayerImpact struct {
 	Labels           []*LabelImpact
 	TotalArea        float64
 	TotalPct         float64
+	LegalStatus      uint32
+	LegalStatusName  string
+	LayerAvatar      string
 }
 
 type LabelImpact struct {
@@ -364,12 +385,14 @@ type RegionImpact struct {
 	LandUseCode    string
 	LandUseName    string
 	LandUseGroup   string
-	ColorRGB       *RGB
+	ColorRGB       string
 	OverlapAreaSqm float64
 	OverlapPct     float64
 	CenterLat      float64
 	CenterLng      float64
 	Geometry       []byte
+	WarnLevel      int32
+	CanBuild       bool
 }
 
 type RGB struct {

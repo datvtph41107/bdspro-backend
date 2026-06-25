@@ -801,6 +801,7 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 			WarnLevel:        uint32(q.WarnLevel),
 			IntersectAreaSqm: q.IntersectAreaSqm,
 			Percent:          q.Percent,
+			CanBuild:         q.CanBuild,
 		})
 
 		if q.WarnLevel > 0 {

@@ -536,14 +536,16 @@ func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPl
 		opts.Mode = "detail"
 	}
 	if opts.LogPrefix == "" {
-		opts.LogPrefix = "resolveParcelPlanning"
+		opts.LogPrefix = "resolveParcelPlanningUnified"
 	}
 
+	// ── CHANGE: dùng Unified query ──────────────────────────
 	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, opts.ParcelID)
 	if err != nil {
-		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+		return nil, fmt.Errorf("get parcel layers unified failed: %w", err)
 	}
 
+	// Apply preset/date filter (logic giữ nguyên)
 	if opts.Preset == "active_only" {
 		rows = filterActiveLayers(rows)
 	}
@@ -551,18 +553,23 @@ func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPl
 		rows = filterByAsOfDate(rows, opts.AsOfDate)
 	}
 
+	// Fetch parcel info (không đổi)
 	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, opts.ParcelID)
 	if infoErr != nil {
-		log.Printf("[%s] Failed to fetch parcel info for parcel %d: %v", opts.LogPrefix, opts.ParcelID, infoErr)
+		log.Printf("[%s] Failed to fetch parcel info for parcel %d: %v",
+			opts.LogPrefix, opts.ParcelID, infoErr)
 	}
 
+	// Legal docs (không đổi)
 	layerIDs := extractLayerIDsV2(rows)
 	legalDocsMap, legalErr := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if legalErr != nil {
-		log.Printf("[%s] Failed to fetch legal docs for parcel %d: %v", opts.LogPrefix, opts.ParcelID, legalErr)
+		log.Printf("[%s] Failed to fetch legal docs for parcel %d: %v",
+			opts.LogPrefix, opts.ParcelID, legalErr)
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
 
+	// ── CHANGE: dùng ToUnifiedRowsFromV2 (đã nhận UnifiedRow) ──
 	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
 	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, convertLegalDocs(legalDocsMap), opts.Mode)
 	if unified.ParcelID == 0 {
@@ -581,8 +588,20 @@ type ParcelPlanningResult struct {
 	Metadata   *dto.ResponseMeta
 }
 
-func (u *parcelUsecase) GetParcelPlanning(ctx context.Context, req *dto.GetParcelPlanningRequest) (*ParcelPlanningResult, error) {
-	start := time.Now()
+func (u *parcelUsecase) GetParcelPlanning(
+	ctx context.Context,
+	req *dto.GetParcelPlanningRequest,
+) (*ParcelPlanningResult, error) {
+	// Delegate hoàn toàn sang resolveParcelPlanningUnified,
+	// phần còn lại không thay đổi.
+	return u.getParcelPlanningInternal(ctx, req)
+}
+
+func (u *parcelUsecase) getParcelPlanningInternal(
+	ctx context.Context,
+	req *dto.GetParcelPlanningRequest,
+) (*ParcelPlanningResult, error) {
+	import_time := time.Now() // noinspection: placeholder — xem ghi chú bên dưới
 
 	if req == nil {
 		return nil, fmt.Errorf("request is required")
@@ -591,6 +610,7 @@ func (u *parcelUsecase) GetParcelPlanning(ctx context.Context, req *dto.GetParce
 		return nil, err
 	}
 
+	// ── CHANGE: dùng resolveParcelPlanningUnified ──
 	unified, err := u.resolveParcelPlanning(ctx, parcelPlanningResolveOptions{
 		ParcelID:  req.ParcelID,
 		Mode:      req.Mode,
@@ -603,9 +623,9 @@ func (u *parcelUsecase) GetParcelPlanning(ctx context.Context, req *dto.GetParce
 	}
 
 	meta := &dto.ResponseMeta{
-		DataSource:     "postgis real-time",
+		DataSource:     "postgis real-time (unified)",
 		QueriedAt:      time.Now().UTC().Format(time.RFC3339),
-		ResponseTimeMs: time.Since(start).Milliseconds(),
+		ResponseTimeMs: time.Since(import_time).Milliseconds(),
 		Cached:         false,
 	}
 
@@ -620,7 +640,6 @@ func (u *parcelUsecase) GetParcelPlanning(ctx context.Context, req *dto.GetParce
 		result.Overview = u.unifiedToParcelLayersResponse(unified)
 		result.Overview.Metadata = meta
 	}
-
 	if req.IncludeAssessment {
 		result.Assessment = u.unifiedToResolveResult(unified, req.Mode)
 	}
@@ -983,13 +1002,16 @@ func convertLayers(layers []*parcel_engine.LayerDetail) []*dto.LayerImpact {
 	result := make([]*dto.LayerImpact, 0, len(layers))
 	for _, l := range layers {
 		impact := &dto.LayerImpact{
-			ID:            l.ID,
-			Name:          l.Name,
-			DisplayName:   l.DisplayName,
-			Type:          l.Type,
-			EffectiveDate: l.EffectiveDate,
-			TotalArea:     l.TotalArea,
-			TotalPct:      l.TotalPct,
+			ID:              l.ID,
+			Name:            l.Name,
+			DisplayName:     l.DisplayName,
+			Type:            l.Type,
+			EffectiveDate:   l.EffectiveDate,
+			TotalArea:       l.TotalArea,
+			TotalPct:        l.TotalPct,
+			LegalStatus:     l.LegalStatus,
+			LegalStatusName: l.LegalStatusName,
+			LayerAvatar:     l.LayerAvatar,
 		}
 
 		if l.Authority != nil {
@@ -1030,12 +1052,14 @@ func convertLayers(layers []*parcel_engine.LayerDetail) []*dto.LayerImpact {
 					DisplayName:    reg.DisplayName,
 					LandUseCode:    reg.LandUseCode,
 					LandUseName:    reg.LandUseName,
-					ColorRGB:       reg.Color,
+					ColorRGB:       reg.LandUseColor,
 					OverlapAreaSqm: reg.OverlapAreaSqm,
 					OverlapPct:     reg.OverlapPct,
 					CenterLat:      reg.CenterLat,
 					CenterLng:      reg.CenterLng,
 					Geometry:       reg.Geometry,
+					WarnLevel:      reg.WarnLevel, // ✅ THÊM
+					CanBuild:       reg.CanBuild,  // ✅ THÊM
 				})
 			}
 			impact.Labels = append(impact.Labels, labelImpact)
@@ -1057,12 +1081,14 @@ func pickConcludeLabelFromLayers(layers []*parcel_engine.LayerDetail) *dto.Regio
 						DisplayName:    reg.DisplayName,
 						LandUseCode:    reg.LandUseCode,
 						LandUseName:    reg.LandUseName,
-						ColorRGB:       reg.Color,
+						ColorRGB:       reg.LandUseColor,
 						OverlapAreaSqm: reg.OverlapAreaSqm,
 						OverlapPct:     reg.OverlapPct,
 						CenterLat:      reg.CenterLat,
 						CenterLng:      reg.CenterLng,
 						Geometry:       reg.Geometry,
+						WarnLevel:      reg.WarnLevel,
+						CanBuild:       reg.CanBuild,
 					}
 				}
 			}
@@ -1187,13 +1213,16 @@ func convertEngineLayerToType(el *parcel_engine.LayerDetail) *types.LayerDetail 
 		return nil
 	}
 	l := &types.LayerDetail{
-		ID:            el.ID,
-		Name:          el.Name,
-		DisplayName:   el.DisplayName,
-		Type:          el.Type,
-		EffectiveDate: el.EffectiveDate,
-		TotalArea:     el.TotalArea,
-		TotalPct:      el.TotalPct,
+		ID:              el.ID,
+		Name:            el.Name,
+		DisplayName:     el.DisplayName,
+		Type:            el.Type,
+		EffectiveDate:   el.EffectiveDate,
+		TotalArea:       el.TotalArea,
+		TotalPct:        el.TotalPct,
+		LegalStatus:     el.LegalStatus,
+		LegalStatusName: el.LegalStatusName,
+		LayerAvatar:     el.LayerAvatar,
 	}
 	if el.Authority != nil {
 		l.Authority = &types.AuthorityDetail{
@@ -1219,6 +1248,7 @@ func convertEngineLayerToType(el *parcel_engine.LayerDetail) *types.LayerDetail 
 			TotalArea: lbl.AreaSqm,
 			TotalPct:  lbl.Ratio,
 		}
+
 		for _, r := range lbl.Regions {
 			tr := &types.RegionDetail{
 				ID:             r.ID,
@@ -1226,14 +1256,13 @@ func convertEngineLayerToType(el *parcel_engine.LayerDetail) *types.LayerDetail 
 				DisplayName:    r.DisplayName,
 				LandUseCode:    r.LandUseCode,
 				LandUseName:    r.LandUseName,
+				LandUseGroup:   r.LandUseGroup,
+				LandUseColor:   r.LandUseColor,
 				OverlapAreaSqm: r.OverlapAreaSqm,
 				OverlapPct:     r.OverlapPct,
 				Geometry:       r.Geometry,
-			}
-			if r.Color != nil {
-				tr.ColorRed = r.Color.Red
-				tr.ColorGreen = r.Color.Green
-				tr.ColorBlue = r.Color.Blue
+				WarnLevel:      r.WarnLevel,
+				CanBuild:       r.CanBuild,
 			}
 			tl.Regions = append(tl.Regions, tr)
 		}

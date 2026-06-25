@@ -162,16 +162,17 @@ message PlanDetailInfo {
 }
 
 message PlanLandUseGroupDetail {
-  string code = 1;
-  string name = 2;
-  string color = 3;
-  bool canBuild = 4;
-  int32 priority = 5;
-  string landUseCode = 6;
-  string landUseName = 7;
-  string landUseColor = 8;
+  string code           = 1;
+  string name           = 2;
+  string color          = 3;
+  bool   canBuild       = 4;
+  int32  priority       = 5;
+  string landUseCode    = 6;
+  string landUseName    = 7;
+  string landUseColor   = 8;
   double overlapPercent = 9;
   double overlapAreaSqm = 10;
+  int32  warnLevel      = 11;
 }
 
 message ConflictDetail {
@@ -338,19 +339,23 @@ message ParcelOverviewResponse {
 }
 
 message Layer {
-  uint64 id = 1;
-  string name = 2;
-  string displayName = 3;
-  uint32 type = 4;
-  string severity = 5;
-  string effectiveDate = 6;
-  string legalDoc = 7;
-  repeated Label labels = 8;
-  double totalArea = 9;
-  double totalPercent = 10;
+  uint64   id             = 1;
+  string   name           = 2;
+  string   displayName    = 3;
+  uint32   type           = 4;
+  string   severity       = 5;
+  string   effectiveDate  = 6;
+  string   legalDoc       = 7;
+  repeated Label labels   = 8;
+  double   totalArea      = 9;
+  double   totalPercent   = 10;
   repeated LayerLegalDocInfo legalDocs = 11;
   optional AuthorityIssuingInfo authorityIssuing = 12;
+  uint32   legalStatus     = 13;
+  string   legalStatusName = 14;
+  string   layerAvatar     = 15;  // THÊM
 }
+
 
 message LayerLegalDocInfo {
   uint64 id = 1;
@@ -381,25 +386,22 @@ message Label {
 }
 
 message Region {
-  uint64 id = 1;
-  string name = 2;
-  string displayName = 3;
-  string landUseCode = 4;
-  string landUseName = 5;
-  string landUseGroup = 6;
-  RGBColor color = 7;
-  double overlapArea = 8;
-  double overlapPercent = 9;
-  double centerLat = 10;
-  double centerLng = 11;
-  bytes geometry = 12;
+  uint64   id             = 1;
+  string   name           = 2;
+  string   displayName    = 3;
+  string   landUseCode    = 4;
+  string   landUseName    = 5;
+  string   landUseGroup   = 6;
+  string   color          = 7;
+  double   overlapArea    = 8;
+  double   overlapPercent = 9;
+  double   centerLat      = 10;
+  double   centerLng      = 11;
+  bytes    geometry       = 12;
+  int32    warnLevel      = 13;
+  bool     canBuild       = 14;
 }
 
-message RGBColor {
-  uint32 red = 1;
-  uint32 green = 2;
-  uint32 blue = 3;
-}
 
 message FindParcelsByPolygonRequest {
   repeated Point coordinates = 1;
@@ -670,12 +672,10 @@ message RegionDetail {
   string displayName = 3;
   string landUseCode = 4;
   string landUseName = 5;
-  uint32 colorRed = 6;
-  uint32 colorGreen = 7;
-  uint32 colorBlue = 8;
-  double overlapAreaSqm = 9;
-  double overlapPct = 10;
-  bytes geometry = 11;
+  string color = 6;
+  double overlapAreaSqm = 7;
+  double overlapPct = 8;
+  bytes geometry = 9;
 }
 
 message LegalDocDetail {
@@ -716,7 +716,6 @@ message TimelineSummary {
   repeated string majorChanges = 4;
 }
 
-// ─── LayerHistory messages ───
 
 message GetLayerHistoryRequest {
   uint64 layerId = 1;
@@ -769,18 +768,19 @@ message LandUseQuickInfo {
   double percent = 4;
   string landUseColor = 5;
   uint32 warnLevel = 6;
+  bool canBuild = 7;  
 }
 
 message LayerQuickInfo {
-  uint64 parcelId = 1;
-  uint64 layerId = 2;
-  string layerName = 3;
-  string relationType = 4;
-  
-  repeated LandUseQuickInfo landUses = 5;
-  double intersectAreaSqm = 6;
-  uint32 legalStatus = 7;
-  string legalStatusName = 8;
-  string layerAvatar = 9;
-  string layerDisplayName = 10;
+    uint64 parcelId      = 1;
+    uint64 layerId       = 2;
+    string layerName     = 3;
+    string relationType  = 4;
+    repeated LandUseQuickInfo landUses = 5;
+    double intersectAreaSqm = 6;
+    uint32 legalStatus   = 7;
+    string legalStatusName = 8;
+    string layerAvatar   = 9;
+    string layerDisplayName = 10;
+    uint32 layerType     = 11;
 }

@@ -5,12 +5,23 @@ import (
 	"tqd/internal/modules/resolver/layer_resolver/types"
 )
 
-// UnifiedRow kết hợp tất cả field từ ParcelLayerRow và ParcelLayerRowV2
+// ============================================================
+// UnifiedRow — nguồn đầu vào duy nhất cho engine.Process()
+//
+// Naming convention thống nhất:
+//   - Authority*  : thông tin cơ quan ban hành
+//   - LandUse*   : từ qh_land_use (PRIMARY, align QuickLayers)
+//   - Group*     : từ land_use_groups (secondary, display only)
+//   - Region*    : thông tin region địa lý
+//   - Overlap*   : kết quả tính toán diện tích giao
+//
+// ============================================================
 type UnifiedRow struct {
+	// ── Parcel ──────────────────────────────────────────────
 	ParcelID      uint64
 	ParcelAreaSqm float64
 
-	// Layer info
+	// ── Layer ───────────────────────────────────────────────
 	LayerID            uint64
 	LayerName          string
 	LayerDisplayName   string
@@ -20,55 +31,58 @@ type UnifiedRow struct {
 	LayerTrustValue    float32
 	LayerEffectiveDate string
 	LayerExpiryDate    string
-	LayerLegalDoc      string
-	LayerAuthority     string
+	LayerAvatar        string // ✅ THÊM – đồng bộ với proto Layer.layerAvatar
 
-	// Authority issuing
-	AuthorityIssuringID   uint64
-	AuthorityIssuringName string
-	AuthorityIssuringCode string
-	AuthorityIssuringDesc string
+	// ── Authority ───────────────────────────────────────────
+	// Đặt tên AuthorityID/Name/Code/Desc (không phải AuthorityIssuringXxx)
+	// để nhất quán với tất cả consumer (engine, builder, converter)
+	AuthorityID   uint64
+	AuthorityName string
+	AuthorityCode string
+	AuthorityDesc string
 
-	// Label info
-	LabelID             uint64
-	LabelName           string
-	LabelDisplayName    string
-	LabelColor          string
-	LabelGroupCode      string
-	LabelCanBuild       bool
-	LabelPriority       int
-	LabelBuildCondition string
+	// ── Label ───────────────────────────────────────────────
+	LabelID          uint64
+	LabelName        string
+	LabelDisplayName string
+	LabelColor       string
 
-	// Group info
-	GroupCode     string
-	GroupName     string
-	GroupColor    string
-	GroupCanBuild bool
-	GroupPriority int
+	// ── Land Use (PRIMARY: qh_land_use via r.land_use_id) ──
+	// Đây là nguồn sự thật duy nhất, align với GetParcelQuickInfo.
+	// KHÔNG dùng luc.name / lg.name làm primary.
+	LandUseCode  string
+	LandUseName  string
+	LandUseColor string // lu.color — hex string (e.g. "#FF5733")
+	CanBuild     bool   // lu.can_build (COALESCE với luc, lg ở SQL)
+	WarnLevel    int32  // lu.warn_level
+	Priority     int    // COALESCE(lu.priority, luc.priority, lg.priority, 50)
 
-	// Region info
-	RegionID           uint64
-	RegionName         string
-	RegionDisplayName  string
-	RegionLandUseCode  string
-	RegionLandUseName  string
-	RegionLandUseGroup string
-	RegionColorRed     uint8
-	RegionColorGreen   uint8
-	RegionColorBlue    uint8
-	RegionLandUseColor string
+	// ── Land Use Group (secondary, for display grouping) ────
+	GroupCode  string
+	GroupName  string
+	GroupColor string
 
-	// Overlap
+	// Build assessment
+	BuildCondition string
+
+	// ── Region ──────────────────────────────────────────────
+	RegionID          uint64
+	RegionName        string
+	RegionDisplayName string
+
+	// ── Overlap ─────────────────────────────────────────────
 	OverlapAreaSqm float64
 	OverlapPct     float64
 
-	// Spatial
+	// ── Spatial ─────────────────────────────────────────────
 	CenterLat float64
 	CenterLng float64
 	Geometry  []byte
 }
 
-// UnifiedResult - kết quả đầu ra duy nhất cho cả 2 view
+// ============================================================
+// UnifiedResult — kết quả đầu ra của engine.Process()
+// ============================================================
 type UnifiedResult struct {
 	ParcelID      uint64
 	ParcelAreaSqm float64
@@ -79,13 +93,13 @@ type UnifiedResult struct {
 	// Quy hoạch chính (primary sau resolve)
 	PrimaryPlanning *PrimaryPlanningInfo
 
-	// Quy hoạch phụ (cho compare mode, build từ ranked[1:])
+	// Quy hoạch phụ (cho compare/detail mode)
 	SecondaryPlans []*SecondaryPlanInfo
 
-	// Nhóm đất tổng hợp
+	// Nhóm đất tổng hợp (cho overview)
 	LandUseGroups []*LandUseGroupInfo
 
-	// Toàn bộ layers (dữ liệu thô cho V1)
+	// Toàn bộ layers (dữ liệu đầy đủ cho detail mode)
 	Layers []*LayerDetail
 
 	// Xung đột quy hoạch
@@ -110,16 +124,7 @@ type UnifiedResult struct {
 	Metadata *MetadataInfo
 }
 
-type SecondaryPlanInfo struct {
-	LayerID        uint64
-	LayerName      string
-	LandUseCode    string
-	LandUseName    string
-	LandUseColor   string
-	GroupCode      string
-	OverlapPercent float64
-	OverlapAreaSqm float64
-}
+// ── Planning info ──────────────────────────────────────────
 
 type PrimaryPlanningInfo struct {
 	Code        string
@@ -133,11 +138,24 @@ type PrimaryPlanningInfo struct {
 	LayerName   string
 	LegalStatus uint32
 	CanBuild    bool
-	// Normalized legal info
+	// Normalized legal
 	LegalCanonical   string
 	LegalConfidence  string
 	LegalActiveState string
 }
+
+type SecondaryPlanInfo struct {
+	LayerID        uint64
+	LayerName      string
+	LandUseCode    string
+	LandUseName    string
+	LandUseColor   string
+	GroupCode      string
+	OverlapPercent float64
+	OverlapAreaSqm float64
+}
+
+// ── Land Use Group ─────────────────────────────────────────
 
 type LandUseGroupInfo struct {
 	Code     string
@@ -154,24 +172,27 @@ type LandUseDetail struct {
 	LandUseName string
 	Ratio       float64
 	AreaSqm     float64
+	WarnLevel   int // lu.warn_level — align với QuickLayers
 }
 
+// ── Layer hierarchy ────────────────────────────────────────
+
 type LayerDetail struct {
-	ID            uint64
-	Name          string
-	DisplayName   string
-	Type          uint32
-	Status        uint32
-	LegalStatus   uint32
-	EffectiveDate string
-	ExpiryDate    string
-	Authority     *AuthorityInfo
-	Indicators    []*IndicatorInfo
-	Documents     []*DocumentInfo
-	Labels        []*LabelDetail
-	TotalArea     float64
-	TotalPct      float64
-	Geometry      []byte
+	ID              uint64
+	Name            string
+	DisplayName     string
+	Type            uint32
+	Status          uint32
+	LegalStatus     uint32
+	LegalStatusName string // ✅ THÊM – tên hiển thị của legal status (ví dụ: "Đã ban hành", "Hết hiệu lực")
+	LayerAvatar     string // ✅ THÊM – avatar của layer (đồng bộ với proto Layer.layerAvatar)
+	EffectiveDate   string
+	ExpiryDate      string
+	Authority       *AuthorityInfo
+	Documents       []*DocumentInfo
+	Labels          []*LabelDetail
+	TotalArea       float64
+	TotalPct        float64
 }
 
 type AuthorityInfo struct {
@@ -179,13 +200,6 @@ type AuthorityInfo struct {
 	Name        string
 	Code        string
 	Description string
-}
-
-type IndicatorInfo struct {
-	Code  string
-	Name  string
-	Value string
-	Unit  string
 }
 
 type DocumentInfo struct {
@@ -211,13 +225,18 @@ type RegionDetail struct {
 	DisplayName    string
 	LandUseCode    string
 	LandUseName    string
-	Color          *dto.RGB
+	LandUseGroup   string
+	LandUseColor   string
 	OverlapAreaSqm float64
 	OverlapPct     float64
 	CenterLat      float64
 	CenterLng      float64
 	Geometry       []byte
+	WarnLevel      int32
+	CanBuild       bool
 }
+
+// ── Risk & Conflict ────────────────────────────────────────
 
 type ConflictInfo struct {
 	Type            string
@@ -237,6 +256,31 @@ type RiskInfo struct {
 	Recommendation string
 }
 
+// ── Compare & Historical ───────────────────────────────────
+
+type CompareResultInfo struct {
+	TotalLayers int
+	Changes     []*CompareChangeInfo
+}
+
+type CompareChangeInfo struct {
+	LayerID    uint64
+	LayerName  string
+	ChangeType string
+	OldValue   string
+	NewValue   string
+}
+
+type HistoricalRiskInfo struct {
+	Trend          string
+	TrendDetail    string
+	ActiveLayers   int
+	ExpiringLayers int
+	AnalyzedAt     string
+}
+
+// ── Metadata ───────────────────────────────────────────────
+
 type MetadataInfo struct {
 	DataSource     string
 	QueriedAt      string
@@ -244,7 +288,8 @@ type MetadataInfo struct {
 	Cached         bool
 }
 
-// RiskThreshold - ngưỡng phân loại rủi ro (data-driven)
+// ── Engine config types ────────────────────────────────────
+
 type RiskThreshold struct {
 	MinScore       float64
 	Level          string
@@ -252,17 +297,16 @@ type RiskThreshold struct {
 	Recommendation string
 }
 
-// LandUseRiskWeight - trọng số rủi ro cho từng loại đất
 type LandUseRiskWeight struct {
-	Multiplier float64 // Hệ số nhân rủi ro (VD: DGT=2.0, ODT=0.35)
-	Label      string  // Mô tả tiếng Việt (VD: "không được phép xây dựng")
+	Multiplier float64
+	Label      string
 }
 
-// EngineConfig - cấu hình cho engine
 type EngineConfig struct {
-	LegalWeight          float64
-	PriorityWeight       float64
-	AreaWeight           float64
+	LegalWeight    float64
+	PriorityWeight float64
+	AreaWeight     float64
+
 	LegalScores          map[uint32]float64
 	ConflictMatrix       map[string]map[string]bool
 	DefaultGroupPriority map[string]int
@@ -273,50 +317,40 @@ type EngineConfig struct {
 	RiskThresholds     []*RiskThreshold
 	DefaultPriority    int
 
-	// Legal Normalization
-	LegalNormalization *types.LegalNormalizationConfig
-
-	// Conflict Classification
+	// Sub-engine configs
+	LegalNormalization     *types.LegalNormalizationConfig
 	ConflictClassification *types.ConflictClassificationConfig
+	SemanticCanonicalMap   map[string]string
+	SemanticLabels         map[string]string
+	LifecycleConfig        *types.LifecycleConfig
+	AuditConfig            *types.AuditConfig
+	TimelineConfig         *types.TimelineConfig
+	CompareConfig          *types.CompareConfig
+	HistoricalRiskConfig   *types.HistoricalRiskConfig
+	PipelineConfig         *types.PipelineConfig
 
-	// Semantic Normalization
-	SemanticCanonicalMap map[string]string
-	SemanticLabels       map[string]string
+	// Warning/status messages
+	WarningOverlapExceeded string
+	WarningMultiLayer      string
+	WarningConflict        string
+	NoPlanningImpactMsg    string
+	NoSignificantImpactMsg string
 
-	// Lifecycle, Audit, Timeline, Compare, Historical Risk configs
-	LifecycleConfig      *types.LifecycleConfig
-	AuditConfig          *types.AuditConfig
-	TimelineConfig       *types.TimelineConfig
-	CompareConfig        *types.CompareConfig
-	HistoricalRiskConfig *types.HistoricalRiskConfig
-	PipelineConfig       *types.PipelineConfig
-
-	// Conflict labels
+	// Conflict default labels
 	ConflictType           string
 	ConflictSeverity       string
 	ConflictRecommendation string
 	ConflictActionRequired string
 
-	// Warning messages
-	WarningOverlapExceeded string
-	WarningMultiLayer      string
-	WarningConflict        string
-
-	// Assess messages
-	NoPlanningImpactMsg    string
-	NoSignificantImpactMsg string
-
-	// Land type display names (key: landTypeId)
-	LandTypeNames map[uint64]string
-
-	// Build status labels (for old AssessEngine compatibility)
-	StatusProhibited     string
-	StatusConditional    string
-	StatusAllowed        string
-	ConflictStatusSuffix string
-
-	// Conflict summary suffix
+	// Build status labels
+	StatusProhibited      string
+	StatusConditional     string
+	StatusAllowed         string
+	ConflictStatusSuffix  string
 	ConflictSummarySuffix string
+
+	// Land type display names
+	LandTypeNames map[uint64]string
 }
 
 func DefaultEngineConfig() *EngineConfig {
@@ -326,7 +360,12 @@ func DefaultEngineConfig() *EngineConfig {
 	}
 	thresholds := make([]*RiskThreshold, len(types.DefaultRiskThresholds))
 	for i, t := range types.DefaultRiskThresholds {
-		thresholds[i] = &RiskThreshold{MinScore: t.MinScore, Level: t.Level, CanBuild: t.CanBuild, Recommendation: t.Recommendation}
+		thresholds[i] = &RiskThreshold{
+			MinScore:       t.MinScore,
+			Level:          t.Level,
+			CanBuild:       t.CanBuild,
+			Recommendation: t.Recommendation,
+		}
 	}
 	landTypes := make(map[uint64]string, len(types.DefaultLandTypeNames))
 	for k, v := range types.DefaultLandTypeNames {
@@ -341,10 +380,13 @@ func DefaultEngineConfig() *EngineConfig {
 		ConflictMatrix:       make(map[string]map[string]bool),
 		DefaultGroupPriority: make(map[string]int),
 		LandUseRiskWeights:   riskWeights,
-		DefaultRiskWeight:    &LandUseRiskWeight{Multiplier: types.DefaultRiskWeightValue.Multiplier, Label: types.DefaultRiskWeightValue.Label},
-		MultiLayerPenalty:    types.DefaultMultiLayerPenaltyValue,
-		RiskThresholds:       thresholds,
-		DefaultPriority:      types.DefaultPriorityValue,
+		DefaultRiskWeight: &LandUseRiskWeight{
+			Multiplier: types.DefaultRiskWeightValue.Multiplier,
+			Label:      types.DefaultRiskWeightValue.Label,
+		},
+		MultiLayerPenalty: types.DefaultMultiLayerPenaltyValue,
+		RiskThresholds:    thresholds,
+		DefaultPriority:   types.DefaultPriorityValue,
 		LegalNormalization: &types.LegalNormalizationConfig{
 			CanonicalMap:     types.DefaultCanonicalMap(),
 			ConfidenceWeight: types.DefaultConfidenceWeight(),
@@ -355,9 +397,12 @@ func DefaultEngineConfig() *EngineConfig {
 			TypeWeights:        types.DefaultConflictTypeWeights(),
 			GuidanceTemplates:  types.DefaultGuidanceTemplates(),
 		},
-		SemanticCanonicalMap:   make(map[string]string),
-		SemanticLabels:         make(map[string]string),
-		LifecycleConfig:        &types.LifecycleConfig{AllowedTransitions: types.DefaultAllowedTransitions(), AutoIncrementVersion: true},
+		SemanticCanonicalMap: make(map[string]string),
+		SemanticLabels:       make(map[string]string),
+		LifecycleConfig: &types.LifecycleConfig{
+			AllowedTransitions:   types.DefaultAllowedTransitions(),
+			AutoIncrementVersion: true,
+		},
 		AuditConfig:            types.DefaultAuditConfig(),
 		TimelineConfig:         types.DefaultTimelineConfig(),
 		CompareConfig:          types.DefaultCompareConfig(),
@@ -381,7 +426,8 @@ func DefaultEngineConfig() *EngineConfig {
 	}
 }
 
-// Internal helpers
+// ── Internal accumulator (private) ────────────────────────
+
 type layerGroupAccum struct {
 	code     string
 	name     string
@@ -392,115 +438,103 @@ type layerGroupAccum struct {
 	details  map[string]*LandUseDetail
 }
 
-// Helpers to convert from old types
-func ToUnifiedRowsFromV1(rows []dto.ParcelLayerRow) []UnifiedRow {
-	result := make([]UnifiedRow, len(rows))
-	for i, r := range rows {
-		result[i] = UnifiedRow{
-			ParcelID:              r.ParcelID,
-			ParcelAreaSqm:         r.ParcelAreaSqm,
-			LayerID:               r.LayerID,
-			LayerName:             r.LayerName,
-			LayerDisplayName:      r.LayerDisplayName,
-			LayerType:             r.LayerType,
-			LayerEffectiveDate:    r.LayerEffectiveDate,
-			LayerLegalDoc:         r.LayerLegalDoc,
-			AuthorityIssuringID:   r.AuthorityIssuringID,
-			AuthorityIssuringName: r.AuthorityIssuringName,
-			AuthorityIssuringCode: r.AuthorityIssuringCode,
-			AuthorityIssuringDesc: r.AuthorityIssuringDesc,
-			RegionID:              r.RegionID,
-			RegionName:            r.RegionName,
-			RegionDisplayName:     r.RegionDisplayName,
-			RegionLandUseCode:     r.RegionLandUseCode,
-			RegionLandUseName:     r.RegionLandUseName,
-			RegionLandUseGroup:    r.RegionLandUseGroup,
-			RegionColorRed:        r.RegionColorRed,
-			RegionColorGreen:      r.RegionColorGreen,
-			RegionColorBlue:       r.RegionColorBlue,
-			RegionLandUseColor:    r.RegionLandUseColor,
-			OverlapAreaSqm:        r.OverlapAreaSqm,
-			OverlapPct:            r.OverlapPct,
-			CenterLat:             r.CenterLat,
-			CenterLng:             r.CenterLng,
-			Geometry:              r.Geometry,
-		}
-	}
-	return result
-}
+// ── Row converters ─────────────────────────────────────────
+//
+// ToUnifiedRowsFromV2 chuyển ParcelLayerRowV2 → []UnifiedRow.
+// Field mapping 1-1, không có fallback logic — đã được resolve đúng ở SQL.
 
 func ToUnifiedRowsFromV2(rows []dto.ParcelLayerRowV2) []UnifiedRow {
-	result := make([]UnifiedRow, len(rows))
-	for i, r := range rows {
-		result[i] = UnifiedRow{
-			ParcelID:              r.ParcelID,
-			ParcelAreaSqm:         r.ParcelAreaSqm,
-			LayerID:               r.LayerID,
-			LayerName:             r.LayerName,
-			LayerDisplayName:      r.LayerDisplayName,
-			LayerType:             r.LayerType,
-			LayerStatus:           r.LayerStatus,
-			LayerLegalStatus:      r.LayerLegalStatus,
-			LayerTrustValue:       r.LayerTrustValue,
-			LayerEffectiveDate:    r.LayerEffectiveDate,
-			LayerExpiryDate:       r.LayerExpiryDate,
-			LayerAuthority:        r.LayerAuthority,
-			AuthorityIssuringID:   r.AuthorityIssuringID,
-			AuthorityIssuringName: r.AuthorityIssuringName,
-			AuthorityIssuringCode: r.AuthorityIssuringCode,
-			AuthorityIssuringDesc: r.AuthorityIssuringDesc,
-			LabelID:               r.LabelID,
-			LabelName:             r.LabelName,
-			LabelDisplayName:      r.LabelDisplayName,
-			LabelColor:            r.LabelColor,
-			LabelGroupCode:        r.LabelGroupCode,
-			LabelCanBuild:         r.LabelCanBuild,
-			LabelPriority:         r.LabelPriority,
-			LabelBuildCondition:   r.LabelBuildCondition,
-			GroupCode:             r.GroupCode,
-			GroupName:             r.GroupName,
-			GroupColor:            r.GroupColor,
-			GroupCanBuild:         r.GroupCanBuild,
-			GroupPriority:         r.GroupPriority,
-			RegionID:              r.RegionID,
-			RegionName:            r.RegionName,
-			RegionDisplayName:     r.RegionDisplayName,
-			RegionLandUseCode:     r.RegionLandUseCode,
-			RegionLandUseName:     r.RegionLandUseName,
-			RegionLandUseGroup:    r.RegionLandUseGroup,
-			RegionColorRed:        r.RegionColorRed,
-			RegionColorGreen:      r.RegionColorGreen,
-			RegionColorBlue:       r.RegionColorBlue,
-			RegionLandUseColor:    r.RegionLandUseColor,
-			OverlapAreaSqm:        r.OverlapAreaSqm,
-			OverlapPct:            r.OverlapPct,
-			CenterLat:             r.CenterLat,
-			CenterLng:             r.CenterLng,
-			Geometry:              r.Geometry,
-		}
+	result := make([]UnifiedRow, 0, len(rows))
+	for _, r := range rows {
+		result = append(result, UnifiedRow{
+			ParcelID:      r.ParcelID,
+			ParcelAreaSqm: r.ParcelAreaSqm,
+
+			LayerID:            r.LayerID,
+			LayerName:          r.LayerName,
+			LayerDisplayName:   r.LayerDisplayName,
+			LayerType:          r.LayerType,
+			LayerStatus:        r.LayerStatus,
+			LayerLegalStatus:   r.LayerLegalStatus,
+			LayerTrustValue:    r.LayerTrustValue,
+			LayerEffectiveDate: r.LayerEffectiveDate,
+			LayerExpiryDate:    r.LayerExpiryDate,
+			LayerAvatar:        r.LayerAvatar, // ✅ THÊM
+
+			// Authority: ParcelLayerRowV2 dùng AuthorityIssuringXxx
+			AuthorityID:   r.AuthorityIssuringID,
+			AuthorityName: r.AuthorityIssuringName,
+			AuthorityCode: r.AuthorityIssuringCode,
+			AuthorityDesc: r.AuthorityIssuringDesc,
+
+			LabelID:          r.LabelID,
+			LabelName:        r.LabelName,
+			LabelDisplayName: r.LabelDisplayName,
+			LabelColor:       r.LabelColor,
+
+			// PRIMARY from qh_land_use (via GetParcelLayerRowsV2Unified SQL)
+			LandUseCode:  r.RegionLandUseCode,  // lu.code
+			LandUseName:  r.RegionLandUseName,  // lu.name
+			LandUseColor: r.RegionLandUseColor, // COALESCE(lu.color, label_color, group_color)
+			CanBuild:     r.LabelCanBuild,      // COALESCE(lu.can_build, luc, lg) from SQL
+			WarnLevel:    r.WarnLevel,          // lu.warn_level
+			Priority:     r.LabelPriority,      // COALESCE(lu.priority, luc, lg) from SQL
+
+			// Group (secondary)
+			GroupCode:      r.GroupCode,
+			GroupName:      r.GroupName,
+			GroupColor:     r.GroupColor,
+			BuildCondition: r.LabelBuildCondition,
+
+			RegionID:          r.RegionID,
+			RegionName:        r.RegionName,
+			RegionDisplayName: r.RegionDisplayName,
+
+			OverlapAreaSqm: r.OverlapAreaSqm,
+			OverlapPct:     r.OverlapPct,
+
+			CenterLat: r.CenterLat,
+			CenterLng: r.CenterLng,
+			Geometry:  r.Geometry,
+		})
 	}
 	return result
 }
 
-// ─── Compare & Historical Risk types ───
+// ToUnifiedRowsFromV1 — legacy compat, giữ nguyên cho các caller cũ
+func ToUnifiedRowsFromV1(rows []dto.ParcelLayerRow) []UnifiedRow {
+	result := make([]UnifiedRow, 0, len(rows))
+	for _, r := range rows {
+		result = append(result, UnifiedRow{
+			ParcelID:      r.ParcelID,
+			ParcelAreaSqm: r.ParcelAreaSqm,
 
-type CompareResultInfo struct {
-	TotalLayers int
-	Changes     []*CompareChangeInfo
-}
+			LayerID:            r.LayerID,
+			LayerName:          r.LayerName,
+			LayerDisplayName:   r.LayerDisplayName,
+			LayerType:          r.LayerType,
+			LayerEffectiveDate: r.LayerEffectiveDate,
 
-type CompareChangeInfo struct {
-	LayerID    uint64
-	LayerName  string
-	ChangeType string
-	OldValue   string
-	NewValue   string
-}
+			AuthorityID:   r.AuthorityIssuringID,
+			AuthorityName: r.AuthorityIssuringName,
+			AuthorityCode: r.AuthorityIssuringCode,
+			AuthorityDesc: r.AuthorityIssuringDesc,
 
-type HistoricalRiskInfo struct {
-	Trend          string
-	TrendDetail    string
-	ActiveLayers   int
-	ExpiringLayers int
-	AnalyzedAt     string
+			// V1: land use info từ label (legacy, không có lu trực tiếp)
+			LandUseCode:  r.RegionLandUseCode,
+			LandUseName:  r.RegionLandUseName,
+			LandUseColor: r.RegionLandUseColor,
+
+			RegionID:          r.RegionID,
+			RegionName:        r.RegionName,
+			RegionDisplayName: r.RegionDisplayName,
+
+			OverlapAreaSqm: r.OverlapAreaSqm,
+			OverlapPct:     r.OverlapPct,
+			CenterLat:      r.CenterLat,
+			CenterLng:      r.CenterLng,
+			Geometry:       r.Geometry,
+		})
+	}
+	return result
 }

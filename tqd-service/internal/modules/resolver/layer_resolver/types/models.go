@@ -128,16 +128,19 @@ type HistoricalRiskInfo struct {
 // ─── Layer/Region detail types (dùng cho assessment mode=detail, map → proto Layer) ───
 
 type LayerDetail struct {
-	ID            uint64
-	Name          string
-	DisplayName   string
-	Type          uint32
-	EffectiveDate string
-	Labels        []*LabelDetail
-	LegalDocs     []*LegalDocDetail
-	Authority     *AuthorityDetail
-	TotalArea     float64
-	TotalPct      float64
+	ID              uint64
+	Name            string
+	DisplayName     string
+	Type            uint32
+	EffectiveDate   string
+	Labels          []*LabelDetail
+	LegalDocs       []*LegalDocDetail
+	Authority       *AuthorityDetail
+	TotalArea       float64
+	TotalPct        float64
+	LegalStatus     uint32
+	LegalStatusName string
+	LayerAvatar     string
 }
 
 type LabelDetail struct {
@@ -150,18 +153,24 @@ type LabelDetail struct {
 	TotalPct    float64
 }
 
+// parcel_engine/types.go
+// parcel_engine/types.go
+
 type RegionDetail struct {
 	ID             uint64
 	Name           string
 	DisplayName    string
 	LandUseCode    string
 	LandUseName    string
-	ColorRed       uint8
-	ColorGreen     uint8
-	ColorBlue      uint8
+	LandUseGroup   string
+	LandUseColor   string
 	OverlapAreaSqm float64
 	OverlapPct     float64
+	CenterLat      float64
+	CenterLng      float64
 	Geometry       []byte
+	WarnLevel      int32 // lu.warn_level
+	CanBuild       bool  // lu.can_build
 }
 
 type LegalDocDetail struct {

@@ -464,16 +464,6 @@ func regionImpactToProto(region *dto.RegionImpact) *tqdpb.Region {
 	if region == nil {
 		return nil
 	}
-	var color *tqdpb.RGBColor
-	if region.ColorRGB != nil {
-		color = &tqdpb.RGBColor{
-			Red:   uint32(region.ColorRGB.Red),
-			Green: uint32(region.ColorRGB.Green),
-			Blue:  uint32(region.ColorRGB.Blue),
-		}
-	} else {
-		color = &tqdpb.RGBColor{}
-	}
 	return &tqdpb.Region{
 		Id:             region.ID,
 		Name:           region.Name,
@@ -481,11 +471,14 @@ func regionImpactToProto(region *dto.RegionImpact) *tqdpb.Region {
 		LandUseCode:    region.LandUseCode,
 		LandUseName:    region.LandUseName,
 		LandUseGroup:   region.LandUseGroup,
-		Color:          color,
+		Color:          region.ColorRGB,
 		OverlapArea:    region.OverlapAreaSqm,
 		OverlapPercent: region.OverlapPct,
 		CenterLat:      region.CenterLat,
 		CenterLng:      region.CenterLng,
+		Geometry:       region.Geometry,
+		WarnLevel:      region.WarnLevel,
+		CanBuild:       region.CanBuild,
 	}
 }
 
@@ -549,7 +542,6 @@ func (m *ParcelMapper) ToProtoParcelOverview(data *dto.ParcelLayersResponse) *tq
 		if layer == nil {
 			continue
 		}
-
 		// Tạo legalDocStr từ LegalDocs
 		var legalDocStr string
 		if len(layer.LegalDocs) > 0 {
@@ -626,6 +618,9 @@ func (m *ParcelMapper) ToProtoParcelOverview(data *dto.ParcelLayersResponse) *tq
 			TotalPercent:     layer.TotalPct,
 			LegalDocs:        protoLegalDocs,
 			AuthorityIssuing: protoAuthority,
+			LegalStatus:      layer.LegalStatus,
+			LegalStatusName:  layer.LegalStatusName,
+			LayerAvatar:      layer.LayerAvatar,
 		})
 	}
 
@@ -847,18 +842,20 @@ func (m *ParcelMapper) buildRegionsProto(regions []*dto.RegionImpact) []*tqdpb.R
 	result := make([]*tqdpb.Region, 0, len(regions))
 	for _, r := range regions {
 		result = append(result, &tqdpb.Region{
-			Id:          r.ID,
-			Name:        r.Name,
-			LandUseCode: r.LandUseCode,
-			LandUseName: r.LandUseName,
-			Color: &tqdpb.RGBColor{
-				Red:   uint32(r.ColorRGB.Red),
-				Green: uint32(r.ColorRGB.Green),
-				Blue:  uint32(r.ColorRGB.Blue),
-			},
+			Id:             r.ID,
+			Name:           r.Name,
+			DisplayName:    r.DisplayName,
+			LandUseCode:    r.LandUseCode,
+			LandUseName:    r.LandUseName,
+			LandUseGroup:   r.LandUseGroup,
+			Color:          r.ColorRGB,
 			OverlapArea:    r.OverlapAreaSqm,
 			OverlapPercent: r.OverlapPct,
+			CenterLat:      r.CenterLat,
+			CenterLng:      r.CenterLng,
 			Geometry:       r.Geometry,
+			WarnLevel:      r.WarnLevel,
+			CanBuild:       r.CanBuild,
 		})
 	}
 	return result
@@ -922,19 +919,23 @@ func (m *ParcelMapper) buildAssessmentSummary(result *types.ResolveResult) strin
 }
 
 // ─── Types Layer → Proto Layer conversion ──────────────────────────────────
+// mapper/parcel_mapper.go
 
 func mapTypeLayerToProto(l *types.LayerDetail) *tqdpb.Layer {
 	if l == nil {
 		return nil
 	}
 	pl := &tqdpb.Layer{
-		Id:            l.ID,
-		Name:          l.Name,
-		DisplayName:   l.DisplayName,
-		Type:          l.Type,
-		EffectiveDate: l.EffectiveDate,
-		TotalArea:     l.TotalArea,
-		TotalPercent:  l.TotalPct,
+		Id:              l.ID,
+		Name:            l.Name,
+		DisplayName:     l.DisplayName,
+		Type:            l.Type,
+		EffectiveDate:   l.EffectiveDate,
+		TotalArea:       l.TotalArea,
+		TotalPercent:    l.TotalPct,
+		LegalStatus:     l.LegalStatus,
+		LegalStatusName: l.LegalStatusName,
+		LayerAvatar:     l.LayerAvatar,
 	}
 	if l.Authority != nil {
 		pl.AuthorityIssuing = &tqdpb.AuthorityIssuingInfo{
@@ -968,14 +969,12 @@ func mapTypeLayerToProto(l *types.LayerDetail) *tqdpb.Layer {
 				DisplayName:    r.DisplayName,
 				LandUseCode:    r.LandUseCode,
 				LandUseName:    r.LandUseName,
+				Color:          r.LandUseColor,
 				OverlapArea:    r.OverlapAreaSqm,
 				OverlapPercent: r.OverlapPct,
 				Geometry:       r.Geometry,
-				Color: &tqdpb.RGBColor{
-					Red:   uint32(r.ColorRed),
-					Green: uint32(r.ColorGreen),
-					Blue:  uint32(r.ColorBlue),
-				},
+				WarnLevel:      r.WarnLevel,
+				CanBuild:       r.CanBuild,
 			})
 		}
 		pl.Labels = append(pl.Labels, plb)
@@ -983,6 +982,7 @@ func mapTypeLayerToProto(l *types.LayerDetail) *tqdpb.Layer {
 	return pl
 }
 
+// Sửa mapTypeLayerToLayerDetail - bỏ RGBColor
 func mapTypeLayerToLayerDetail(l *types.LayerDetail) *tqdpb.LayerDetail {
 	if l == nil {
 		return nil
@@ -1028,9 +1028,7 @@ func mapTypeLayerToLayerDetail(l *types.LayerDetail) *tqdpb.LayerDetail {
 				DisplayName:    r.DisplayName,
 				LandUseCode:    r.LandUseCode,
 				LandUseName:    r.LandUseName,
-				ColorRed:       uint32(r.ColorRed),
-				ColorGreen:     uint32(r.ColorGreen),
-				ColorBlue:      uint32(r.ColorBlue),
+				Color:          r.LandUseColor,
 				OverlapAreaSqm: r.OverlapAreaSqm,
 				OverlapPct:     r.OverlapPct,
 				Geometry:       r.Geometry,
