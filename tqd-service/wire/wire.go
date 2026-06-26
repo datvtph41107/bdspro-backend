@@ -94,6 +94,7 @@ var wireSet = wire.NewSet(
 	tqd_config.NewLayerResolver,
 	tqd_infra_postgres.NewLayerResolverConfigPostgres,
 	tqd_internal_usecase.NewLayerUsecase,
+	tqd_infra_postgres.NewLegalDocumentPostgres,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewLegalStatusResolver,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewLifecycleEngine,
 	tqd_infra_handler_grpc.NewLocationHandler,

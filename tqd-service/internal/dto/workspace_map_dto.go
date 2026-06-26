@@ -174,6 +174,7 @@ type RegionInfoResponse struct {
 	Province     string
 	ProvinceCode string
 	WardCode     string
+	WarnLevel    int32 `json:"warnLevel"`
 }
 
 // workspace_PREVIEW

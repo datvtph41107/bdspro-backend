@@ -826,3 +826,149 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 		Warnings: warnings,
 	}, nil
 }
+
+func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {
+	log.Printf("[GetParcelDetail] ParcelID: %d", req.ParcelId)
+
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	data, err := h.usecase.GetParcelDetail(ctx, req.ParcelId)
+	if err != nil {
+		log.Printf("[GetParcelDetail] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if data == nil {
+		return nil, status.Error(codes.NotFound, "parcel not found")
+	}
+
+	return h.mapper.ToProtoParcelDetail(data), nil
+}
+
+func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetParcelLayersRequest) (*tqdpb.ParcelLayersResponse, error) {
+	log.Printf("[GetParcelLayers] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit)
+
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Limit,
+	}
+	pagable.Normalize()
+
+	data, total, err := h.usecase.GetParcelLayers(ctx, req.ParcelId, pagable)
+	if err != nil {
+		log.Printf("[GetParcelLayers] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &tqdpb.ParcelLayersResponse{
+		Data: h.mapper.ToProtoLayerDetailItems(data, req.ParcelId),
+		Pagination: &tqdpb.Pagination{ // ✅ BỎ COMMENT
+			Page:    pagable.GetPage(),
+			Limit:   pagable.GetSize(),
+			Total:   uint32(total),
+			HasMore: total > int64(pagable.GetOffset()+pagable.GetLimit()),
+		},
+		Meta: &tqdpb.LayersMeta{
+			PartialData:  false,
+			FailedLayers: []*tqdpb.FailedLayer{},
+		},
+		Links: &tqdpb.Links{
+			Self: fmt.Sprintf("/v2/tqd/parcels/%d/layers?page=%d&limit=%d", req.ParcelId, pagable.GetPage(), pagable.GetSize()),
+		},
+	}
+
+	return resp, nil
+}
+
+func (h *ParcelGrpcHandler) GetZoneGeometry(ctx context.Context, req *tqdpb.GetZoneGeometryRequest) (*tqdpb.ZoneGeometryResponse, error) {
+	log.Printf("[GetZoneGeometry] ParcelID: %d, LayerID: %d, ZoneID: %d", req.ParcelId, req.LayerId, req.ZoneId)
+
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+	if req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layer_id is required")
+	}
+	if req.ZoneId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "zone_id is required")
+	}
+
+	geoJSON, props, err := h.usecase.GetZoneGeometry(ctx, req.ParcelId, req.LayerId, req.ZoneId)
+	if err != nil {
+		log.Printf("[GetZoneGeometry] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if geoJSON == "" {
+		return nil, status.Error(codes.NotFound, "zone geometry not found")
+	}
+
+	return &tqdpb.ZoneGeometryResponse{
+		Type: "Feature",
+		Properties: &tqdpb.ZoneGeometryProperties{
+			ZoneId:           req.ZoneId,
+			ZoneName:         props.ZoneName,
+			LandUseCode:      props.LandUseCode,
+			LandUseName:      props.LandUseName,
+			LandUseColor:     props.LandUseColor,
+			BuildStatus:      uint32(props.BuildStatus),
+			AlertLevel:       uint32(props.AlertLevel),
+			LegalDocumentIds: props.LegalDocumentIds,
+		},
+		Geometry: geoJSON,
+	}, nil
+}
+
+func (h *ParcelGrpcHandler) GetParcelLegalDocuments(ctx context.Context, req *tqdpb.GetParcelLegalDocumentsRequest) (*tqdpb.ParcelLegalDocumentsResponse, error) {
+	log.Printf("[GetParcelLegalDocuments] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit)
+
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Limit,
+	}
+	pagable.Normalize()
+
+	docs, total, err := h.usecase.GetParcelLegalDocuments(ctx, req.ParcelId, req.Type, req.Status, pagable)
+	if err != nil {
+		log.Printf("[GetParcelLegalDocuments] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	items := h.mapper.ToProtoLegalDocumentItems(docs)
+	summary := h.mapper.ToProtoLegalDocumentSummary(docs)
+
+	return &tqdpb.ParcelLegalDocumentsResponse{
+		Data: items,
+		Summary: &tqdpb.LegalDocumentSummary{
+			Total:             uint32(total),
+			ByType:            summary.ByType,
+			ByStatus:          summary.ByStatus,
+			HasSupersededDocs: summary.HasSupersededDocs,
+		},
+		Filters: &tqdpb.LegalFilters{
+			Applied: &tqdpb.LegalFiltersApplied{
+				Type:   req.Type,
+				Status: req.Status,
+			},
+			AvailableTypes:    []string{"PLANNING_DECISION", "LAND_CERTIFICATE", "LAW", "DECREE", "REGULATION", "CIRCULAR"}, // ✅ BỎ COMMENT
+			AvailableStatuses: []string{"ACTIVE", "SUPERSEDED", "EXPIRED", "DRAFT"},                                         // ✅ BỎ COMMENT
+		},
+		Meta: &tqdpb.ResponseMetadata{
+			DataVersion: "2.1.0",
+			DataQuality: "VERIFIED",
+			QueriedAt:   time.Now().UTC().Format(time.RFC3339),
+			PartialData: false,
+		},
+		Links: &tqdpb.Links{
+			Self: fmt.Sprintf("/v2/tqd/parcels/%d/legal-documents", req.ParcelId),
+		},
+	}, nil
+}

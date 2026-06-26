@@ -93,5 +93,6 @@ func AutoMigrate() {
 
 		&qh_domain.QHPlanningProject{},
 		&qh_domain.QHPlanningDocument{},
+		&qh_domain.QHLegalDocument{},
 	)
 }

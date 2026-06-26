@@ -10,9 +10,11 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"tqd/internal/config"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
+	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
@@ -21,40 +23,45 @@ import (
 )
 
 type ParcelUsecase interface {
-	// Preview & Search
 	GetParcelInfoByID(ctx context.Context, parcelID uint64) (*qh_domain.ParcelInfoResponse, error)
 	SearchParcelsByText(ctx context.Context, text string, mapNumber, landNumber string, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error)
 	SearchPublicParcels(ctx context.Context, page, limit int) ([]*qh_domain.ParcelInfoResponse, int64, error)
-
-	// Basic
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error)
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	ResolveMapTargetByLocation(ctx context.Context, req dto.ResolveMapTargetRequestDTO) (*dto.ResolveMapTargetResponseDTO, error)
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
 	FindMapTargetsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32, filter *dto.PolygonTargetFilter, includeAnalysis bool) (*dto.PolygonMapTargetsResponse, error)
-
-	// Parcel metadata (Free)
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
 	GetParcelPlanning(ctx context.Context, req *dto.GetParcelPlanningRequest) (*ParcelPlanningResult, error)
-
-	// Timeline - Lịch sử biến động quy hoạch của thửa đất
 	GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error)
-
-	// LayerQuickInfo - Thông tin nhanh về các layer của thửa đất
 	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
-
-	// LayerHistory - Lịch sử phiên bản của 1 layer
 	GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error)
-
 	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
 	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
 	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
+
+	GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_dto.ParcelDetailResponseDTO, error)
+	GetParcelLayers(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]*dto.LayerImpact, int64, error)
+	GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *ZoneGeometryProps, error)
+	GetParcelLegalDocuments(ctx context.Context, parcelID uint64, docType, status *uint32, pagable _dto.Pagable) ([]*qh_domain.QHLegalDocument, int64, error)
+}
+
+// ZoneGeometryProps — Properties cho Zone Geometry response
+type ZoneGeometryProps struct {
+	ZoneName         string
+	LandUseCode      string
+	LandUseName      string
+	LandUseColor     string
+	BuildStatus      enums.BuildStatus
+	AlertLevel       enums.AlertLevel
+	LegalDocumentIds []string
 }
 
 type parcelUsecase struct {
 	parcelRepo      repo.IParcelRepo
 	layerLegalRepo  repo.ILayerLegalRepo
+	legalDocRepo    repo.ILegalDocumentRepo
 	auditRepo       rule.AuditRepository
 	layerRepo       rule.LayerRepository
 	parcelEngine    *parcel_engine.ParcelEngine
@@ -65,6 +72,7 @@ type parcelUsecase struct {
 func NewParcelUsecase(
 	parcelRepo repo.IParcelRepo,
 	layerLegalRepo repo.ILayerLegalRepo,
+	legalDocRepo repo.ILegalDocumentRepo,
 	auditRepo rule.AuditRepository,
 	layerRepo rule.LayerRepository,
 ) ParcelUsecase {
@@ -80,6 +88,7 @@ func NewParcelUsecase(
 	return &parcelUsecase{
 		parcelRepo:      parcelRepo,
 		layerLegalRepo:  layerLegalRepo,
+		legalDocRepo:    legalDocRepo,
 		auditRepo:       auditRepo,
 		layerRepo:       layerRepo,
 		parcelEngine:    engine,
@@ -87,6 +96,10 @@ func NewParcelUsecase(
 		lifecycleEngine: lifecycleEngine,
 	}
 }
+
+// ============================================================
+// EXISTING METHODS (giữ nguyên, không thay đổi)
+// ============================================================
 
 func (u *parcelUsecase) GetParcelInfoByID(ctx context.Context, parcelID uint64) (*qh_domain.ParcelInfoResponse, error) {
 	if parcelID == 0 {
@@ -101,7 +114,6 @@ func (u *parcelUsecase) GetParcelInfoByID(ctx context.Context, parcelID uint64) 
 		return nil, fmt.Errorf("parcel %d not found", parcelID)
 	}
 
-	// Convert map_number and land_number to uint32
 	mapNum, _ := strconv.ParseUint(info.MapNumber, 10, 32)
 	landNum, _ := strconv.ParseUint(info.LandNumber, 10, 32)
 
@@ -117,13 +129,7 @@ func (u *parcelUsecase) GetParcelInfoByID(ctx context.Context, parcelID uint64) 
 		ShapeId:    info.ShapeId,
 		Facade:     uint32(info.Facade),
 		TotalArea:  info.TotalAreaSqm,
-		// LandTypeId: func() uint64 {
-		// 	if info.LandTypeId != nil {
-		// 		return *info.LandTypeId
-		// 	}
-		// 	return 0
-		// }(),
-		Geometry: info.Geometry,
+		Geometry:   info.Geometry,
 	}, nil
 }
 
@@ -153,12 +159,11 @@ func (u *parcelUsecase) SearchParcelsByText(ctx context.Context, text string, ma
 			LandNumber: uint32(landNum),
 			Lat:        p.Latitude,
 			Lng:        p.Longitude,
-			// Direction:  p.Direction,
-			Shape:     p.Shape,
-			ShapeId:   p.ShapeId,
-			Facade:    uint32(p.Facade),
-			TotalArea: p.TotalAreaSqm,
-			Geometry:  p.Geometry,
+			Shape:      p.Shape,
+			ShapeId:    p.ShapeId,
+			Facade:     uint32(p.Facade),
+			TotalArea:  p.TotalAreaSqm,
+			Geometry:   p.Geometry,
 		})
 	}
 
@@ -326,8 +331,6 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 		filter.Zoom = &effectiveZoom
 	}
 
-	// Không truyền zoom => giữ legacy behavior: trả parcel.
-	// Có zoom và zoom < ParcelPolygonMinZ => trả region theo layer/label zoom.
 	if zoom != nil && *zoom < config.ParcelPolygonMinZ {
 		regions, total, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, *zoom, limit, offset, filter)
 		if err != nil {
@@ -349,7 +352,6 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 			if err != nil {
 				return nil, err
 			}
-
 			analysis.ResultType = resp.ResultType
 			analysis.Z = *zoom
 			resp.Analysis = analysis
@@ -388,7 +390,6 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 		if err != nil {
 			return nil, err
 		}
-
 		analysis.ResultType = resp.ResultType
 		analysis.Z = effectiveZoom
 		resp.Analysis = analysis
@@ -539,13 +540,11 @@ func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPl
 		opts.LogPrefix = "resolveParcelPlanningUnified"
 	}
 
-	// ── CHANGE: dùng Unified query ──────────────────────────
 	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, opts.ParcelID)
 	if err != nil {
 		return nil, fmt.Errorf("get parcel layers unified failed: %w", err)
 	}
 
-	// Apply preset/date filter (logic giữ nguyên)
 	if opts.Preset == "active_only" {
 		rows = filterActiveLayers(rows)
 	}
@@ -553,14 +552,12 @@ func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPl
 		rows = filterByAsOfDate(rows, opts.AsOfDate)
 	}
 
-	// Fetch parcel info (không đổi)
 	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, opts.ParcelID)
 	if infoErr != nil {
 		log.Printf("[%s] Failed to fetch parcel info for parcel %d: %v",
 			opts.LogPrefix, opts.ParcelID, infoErr)
 	}
 
-	// Legal docs (không đổi)
 	layerIDs := extractLayerIDsV2(rows)
 	legalDocsMap, legalErr := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if legalErr != nil {
@@ -569,7 +566,6 @@ func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPl
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
 
-	// ── CHANGE: dùng ToUnifiedRowsFromV2 (đã nhận UnifiedRow) ──
 	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
 	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, convertLegalDocs(legalDocsMap), opts.Mode)
 	if unified.ParcelID == 0 {
@@ -592,8 +588,6 @@ func (u *parcelUsecase) GetParcelPlanning(
 	ctx context.Context,
 	req *dto.GetParcelPlanningRequest,
 ) (*ParcelPlanningResult, error) {
-	// Delegate hoàn toàn sang resolveParcelPlanningUnified,
-	// phần còn lại không thay đổi.
 	return u.getParcelPlanningInternal(ctx, req)
 }
 
@@ -601,7 +595,7 @@ func (u *parcelUsecase) getParcelPlanningInternal(
 	ctx context.Context,
 	req *dto.GetParcelPlanningRequest,
 ) (*ParcelPlanningResult, error) {
-	import_time := time.Now() // noinspection: placeholder — xem ghi chú bên dưới
+	import_time := time.Now()
 
 	if req == nil {
 		return nil, fmt.Errorf("request is required")
@@ -610,7 +604,6 @@ func (u *parcelUsecase) getParcelPlanningInternal(
 		return nil, err
 	}
 
-	// ── CHANGE: dùng resolveParcelPlanningUnified ──
 	unified, err := u.resolveParcelPlanning(ctx, parcelPlanningResolveOptions{
 		ParcelID:  req.ParcelID,
 		Mode:      req.Mode,
@@ -647,9 +640,9 @@ func (u *parcelUsecase) getParcelPlanningInternal(
 	return result, nil
 }
 
-// ============================================
-// CONVERSION HELPERS: UnifiedResult -> projection responses
-// ============================================
+// ============================================================
+// CONVERSION HELPERS (giữ nguyên)
+// ============================================================
 
 func (u *parcelUsecase) unifiedToParcelLayersResponse(ur *parcel_engine.UnifiedResult) *dto.ParcelLayersResponse {
 	resp := &dto.ParcelLayersResponse{
@@ -720,7 +713,6 @@ func buildOverviewPrimaryPlan(p *parcel_engine.PrimaryPlanningInfo) *dto.ParcelP
 	if p == nil {
 		return nil
 	}
-
 	return &dto.ParcelPlanInfo{
 		LayerID:          p.LayerID,
 		LayerName:        p.LayerName,
@@ -743,7 +735,6 @@ func buildOverviewLandUseGroups(groups []*parcel_engine.LandUseGroupInfo) []*dto
 	if len(groups) == 0 {
 		return nil
 	}
-
 	result := make([]*dto.PlanLandUseGroupDetail, 0, len(groups))
 	for _, g := range groups {
 		if g == nil {
@@ -779,7 +770,6 @@ func buildOverviewLandUseGroups(groups []*parcel_engine.LandUseGroupInfo) []*dto
 			})
 		}
 	}
-
 	return result
 }
 
@@ -866,7 +856,6 @@ func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, 
 		}
 	}
 
-	// Secondary plans: ưu tiên từ SecondaryPlans (compare/detail mode), fallback từ Layers (V1 detail)
 	if len(ur.SecondaryPlans) > 0 {
 		for _, sp := range ur.SecondaryPlans {
 			result.Secondary = append(result.Secondary, &types.RankedLayer{
@@ -898,7 +887,6 @@ func (u *parcelUsecase) unifiedToResolveResult(ur *parcel_engine.UnifiedResult, 
 		}
 	}
 
-	// Layers: convert engine layers → types layers (chỉ cho detail mode)
 	if mode == "detail" || mode == "" {
 		result.Layers = convertEngineLayersToTypes(ur.Layers)
 	}
@@ -1058,8 +1046,8 @@ func convertLayers(layers []*parcel_engine.LayerDetail) []*dto.LayerImpact {
 					CenterLat:      reg.CenterLat,
 					CenterLng:      reg.CenterLng,
 					Geometry:       reg.Geometry,
-					WarnLevel:      reg.WarnLevel, // ✅ THÊM
-					CanBuild:       reg.CanBuild,  // ✅ THÊM
+					WarnLevel:      reg.WarnLevel,
+					CanBuild:       reg.CanBuild,
 				})
 			}
 			impact.Labels = append(impact.Labels, labelImpact)
@@ -1195,8 +1183,6 @@ func filterByAsOfDate(rows []dto.ParcelLayerRowV2, asOfDate string) []dto.Parcel
 	return filtered
 }
 
-// ─── Engine → Types layer conversion ───────────────────────────────────────
-
 func convertEngineLayersToTypes(engineLayers []*parcel_engine.LayerDetail) []*types.LayerDetail {
 	if len(engineLayers) == 0 {
 		return nil
@@ -1248,7 +1234,6 @@ func convertEngineLayerToType(el *parcel_engine.LayerDetail) *types.LayerDetail 
 			TotalArea: lbl.AreaSqm,
 			TotalPct:  lbl.Ratio,
 		}
-
 		for _, r := range lbl.Regions {
 			tr := &types.RegionDetail{
 				ID:             r.ID,
@@ -1279,7 +1264,6 @@ func (u *parcelUsecase) GetParcelQuickInfo(ctx context.Context, parcelID uint64)
 	return quickInfo, nil
 }
 
-// GetParcelTimeline - Lịch sử biến động quy hoạch của thửa đất
 func (u *parcelUsecase) GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error) {
 	if parcelID == 0 {
 		return nil, fmt.Errorf("parcel_id is required")
@@ -1289,7 +1273,6 @@ func (u *parcelUsecase) GetParcelTimeline(ctx context.Context, parcelID uint64) 
 		return u.timelineEngine.BuildTimeline(ctx, parcelID)
 	}
 
-	// Fallback: build from parcel layer rows
 	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, parcelID)
 	if err != nil {
 		return nil, fmt.Errorf("get parcel layers failed: %w", err)
@@ -1326,7 +1309,6 @@ func (u *parcelUsecase) GetParcelTimeline(ctx context.Context, parcelID uint64) 
 	}, nil
 }
 
-// GetLayerHistory - Lịch sử phiên bản của 1 layer
 func (u *parcelUsecase) GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error) {
 	if layerID == 0 {
 		return nil, fmt.Errorf("layer_id is required")
@@ -1336,7 +1318,6 @@ func (u *parcelUsecase) GetLayerHistory(ctx context.Context, layerID uint64) (*t
 		return u.lifecycleEngine.GetLineage(ctx, layerID)
 	}
 
-	// Fallback: return basic lineage
 	return &types.LayerLineage{
 		RootLayerID: layerID,
 		FamilyID:    layerID,
@@ -1370,4 +1351,415 @@ func (u *parcelUsecase) UpdateParcelSeoID(ctx context.Context, parcelID uint64, 
 		return fmt.Errorf("parcel_id và seo_id là bắt buộc")
 	}
 	return u.parcelRepo.UpdateParcelSeoID(ctx, parcelID, seoID)
+}
+
+// GetParcelDetail — Lấy tổng quan thửa đất
+func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_dto.ParcelDetailResponseDTO, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+
+	parcelInfo, err := u.parcelRepo.GetParcelInfo(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel info failed: %w", err)
+	}
+	if parcelInfo == nil || parcelInfo.ParcelID == 0 {
+		return nil, fmt.Errorf("parcel %d not found", parcelID)
+	}
+
+	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel layers failed: %w", err)
+	}
+
+	// 3. Lấy legal documents
+	layerIDs := extractLayerIDsV2(rows)
+	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
+	if err != nil {
+		log.Printf("[GetParcelDetail] Failed to fetch legal docs: %v", err)
+		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
+	}
+
+	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
+	unified := u.parcelEngine.Process(unifiedRows, parcelInfo, convertLegalDocs(legalDocsMap), "detail")
+	if unified.ParcelID == 0 {
+		unified.ParcelID = parcelID
+	}
+
+	resp := &qh_dto.ParcelDetailResponseDTO{
+		Parcel: qh_dto.ParcelIdentityDTO{
+			ID:               strconv.FormatUint(parcelInfo.ParcelID, 10),
+			MapSheetNumber:   parcelInfo.MapNumber,
+			LandParcelNumber: parcelInfo.LandNumber,
+			Address:          parcelInfo.AddressText,
+			TotalAreaSqm:     parcelInfo.AreaSqm,
+			Centroid: &qh_dto.CentroidDTO{
+				Lat: parcelInfo.Lat,
+				Lng: parcelInfo.Lon,
+			},
+			Location: &qh_dto.LocationDTO{
+				Province:     parcelInfo.Province,
+				ProvinceCode: parcelInfo.ProvinceCode,
+				WardCode:     parcelInfo.WardCode,
+			},
+		},
+		CurrentUse: qh_dto.CurrentUseDTO{
+			Code:            parcelInfo.LandUseCode,
+			Name:            parcelInfo.LandUseName,
+			Color:           parcelInfo.LandUseColor,
+			BuildStatus:     u.getBuildStatusString(unified),
+			LegalDocumentId: "",
+		},
+	}
+
+	if unified.PrimaryPlanning != nil {
+		resp.PlanningConclusion = u.buildPlanningConclusion(unified)
+	}
+
+	if unified.PrimaryPlanning != nil {
+		resp.PrimaryUse = u.buildPrimaryUse(unified)
+	}
+
+	resp.Guidance = u.buildGuidance(unified)
+
+	legalDocs := u.collectLegalDocumentsFromMap(legalDocsMap)
+	resp.LegalDocuments = u.buildLegalDocumentsSummary(legalDocs)
+
+	resp.Meta = &qh_dto.ResponseMetaDTO{
+		DataVersion: "2.1.0",
+		DataQuality: "VERIFIED",
+		QueriedAt:   time.Now().UTC().Format(time.RFC3339),
+	}
+	resp.Links = &qh_dto.LinksDTO{
+		Self:           fmt.Sprintf("/v2/tqd/parcels/%d", parcelID),
+		Layers:         fmt.Sprintf("/v2/tqd/parcels/%d/layers", parcelID),
+		LegalDocuments: fmt.Sprintf("/v2/tqd/parcels/%d/legal-documents", parcelID),
+		ShareUrl:       fmt.Sprintf("/map?parcel=%d", parcelID),
+	}
+
+	return resp, nil
+}
+
+func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]*dto.LayerImpact, int64, error) {
+	if parcelID == 0 {
+		return nil, 0, fmt.Errorf("parcel_id is required")
+	}
+
+	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, parcelID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get parcel layers failed: %w", err)
+	}
+
+	layerIDs := extractLayerIDsV2(rows)
+	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
+	if err != nil {
+		log.Printf("[GetParcelLayers] Failed to fetch legal docs: %v", err)
+		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
+	}
+
+	unifiedRows := parcel_engine.ToUnifiedRowsFromV2(rows)
+	unified := u.parcelEngine.Process(unifiedRows, nil, convertLegalDocs(legalDocsMap), "detail")
+	if unified.ParcelID == 0 {
+		unified.ParcelID = parcelID
+	}
+
+	layers := convertLayers(unified.Layers)
+
+	offset := pagable.GetOffset()
+	limit := pagable.GetLimit()
+
+	total := int64(len(layers))
+	if offset >= len(layers) {
+		return []*dto.LayerImpact{}, total, nil
+	}
+
+	end := offset + limit
+	if end > len(layers) {
+		end = len(layers)
+	}
+
+	return layers[offset:end], total, nil
+}
+
+// GetZoneGeometry — Lấy GeoJSON của một zone cụ thể
+func (u *parcelUsecase) GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *ZoneGeometryProps, error) {
+	if parcelID == 0 {
+		return "", nil, fmt.Errorf("parcel_id is required")
+	}
+	if layerID == 0 {
+		return "", nil, fmt.Errorf("layer_id is required")
+	}
+	if zoneID == 0 {
+		return "", nil, fmt.Errorf("zone_id is required")
+	}
+
+	// Lấy geometry từ repository
+	geoJSON, region, err := u.parcelRepo.GetZoneGeometry(ctx, parcelID, layerID, zoneID)
+	if err != nil {
+		return "", nil, fmt.Errorf("get zone geometry failed: %w", err)
+	}
+	if geoJSON == "" {
+		return "", nil, fmt.Errorf("zone not found")
+	}
+
+	// Build properties
+	props := &ZoneGeometryProps{
+		ZoneName:         region.Name,
+		LandUseCode:      region.LandUseCode,
+		LandUseName:      region.LandUseName,
+		LandUseColor:     region.LandUseColor,
+		BuildStatus:      u.determineBuildStatus(region.CanBuild),
+		AlertLevel:       u.determineAlertLevel(region.WarnLevel),
+		LegalDocumentIds: []string{},
+	}
+
+	return geoJSON, props, nil
+}
+
+func (u *parcelUsecase) GetParcelLegalDocuments(ctx context.Context, parcelID uint64, docType, status *uint32, pagable _dto.Pagable) ([]*qh_domain.QHLegalDocument, int64, error) {
+	if parcelID == 0 {
+		return nil, 0, fmt.Errorf("parcel_id is required")
+	}
+
+	docs, err := u.legalDocRepo.GetByParcelID(ctx, parcelID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get legal documents failed: %w", err)
+	}
+
+	// Filter
+	filtered := make([]*qh_domain.QHLegalDocument, 0)
+	for _, d := range docs {
+		if docType != nil && uint32(d.DocumentType) != *docType {
+			continue
+		}
+		if status != nil && uint32(d.Status) != *status {
+			continue
+		}
+		filtered = append(filtered, d)
+	}
+
+	// ✅ Dùng offset/limit từ pagable (an toàn)
+	offset := pagable.GetOffset()
+	limit := pagable.GetLimit()
+
+	total := int64(len(filtered))
+	if offset >= len(filtered) {
+		return []*qh_domain.QHLegalDocument{}, total, nil
+	}
+
+	end := offset + limit
+	if end > len(filtered) {
+		end = len(filtered)
+	}
+
+	return filtered[offset:end], total, nil
+}
+
+// getBuildStatusString — Lấy build status từ UnifiedResult
+func (u *parcelUsecase) getBuildStatusString(unified *parcel_engine.UnifiedResult) string {
+	if unified.Risk != nil {
+		if unified.Risk.CanBuild {
+			return "ALLOWED"
+		}
+		return "FORBIDDEN"
+	}
+	return "UNKNOWN"
+}
+
+// buildPlanningConclusion — Xây dựng PlanningConclusion từ UnifiedResult
+func (u *parcelUsecase) buildPlanningConclusion(unified *parcel_engine.UnifiedResult) *qh_dto.PlanningConclusionDTO {
+	pc := &qh_dto.PlanningConclusionDTO{
+		BuildStatus: u.getBuildStatusString(unified),
+		HasConflict: len(unified.Conflicts) > 0,
+	}
+
+	if unified.Risk != nil {
+		pc.Alert = &qh_dto.AlertDTO{
+			Level:   unified.Risk.Level,
+			Score:   unified.Risk.Score,
+			Message: u.buildAlertMessage(unified),
+		}
+	}
+
+	// Breakdown từ LandUseGroups
+	if unified.LandUseGroups != nil {
+		for idx, g := range unified.LandUseGroups {
+			if len(g.Details) == 0 {
+				pc.Breakdown = append(pc.Breakdown, qh_dto.PlanningBreakdownDTO{
+					Rank:         idx + 1,
+					LandUseCode:  g.Code,
+					LandUseName:  g.Name,
+					LandUseColor: g.Color,
+					GroupCode:    g.Code,
+					GroupName:    g.Name,
+					AreaSqm:      g.AreaSqm,
+					Percent:      g.Ratio,
+					BuildStatus:  u.getBuildStatusFromBool(g.CanBuild),
+					AlertLevel:   "NONE",
+				})
+				continue
+			}
+			for _, d := range g.Details {
+				pc.Breakdown = append(pc.Breakdown, qh_dto.PlanningBreakdownDTO{
+					Rank:         idx + 1,
+					LandUseCode:  d.LandUseCode,
+					LandUseName:  d.LandUseName,
+					LandUseColor: g.Color,
+					GroupCode:    g.Code,
+					GroupName:    g.Name,
+					AreaSqm:      d.AreaSqm,
+					Percent:      d.Ratio,
+					BuildStatus:  u.getBuildStatusFromBool(g.CanBuild),
+					AlertLevel:   "NONE",
+				})
+			}
+		}
+	}
+
+	return pc
+}
+
+// buildPrimaryUse — Xây dựng PrimaryUse từ UnifiedResult
+func (u *parcelUsecase) buildPrimaryUse(unified *parcel_engine.UnifiedResult) *qh_dto.PrimaryUseDTO {
+	if unified.PrimaryPlanning == nil {
+		return nil
+	}
+	p := unified.PrimaryPlanning
+	return &qh_dto.PrimaryUseDTO{
+		Rule:        "LARGEST_AREA",
+		LandUseCode: p.Code,
+		LandUseName: p.Name,
+		Percent:     p.Ratio,
+		BuildStatus: u.getBuildStatusFromBool(p.CanBuild),
+	}
+}
+
+func (u *parcelUsecase) buildGuidance(unified *parcel_engine.UnifiedResult) *qh_dto.GuidanceDTO {
+	guidance := &qh_dto.GuidanceDTO{
+		Warnings:        []qh_dto.WarningDTO{},
+		Recommendations: []qh_dto.RecommendationDTO{},
+	}
+
+	if unified.Risk != nil {
+		for _, reason := range unified.Risk.Reasons {
+			guidance.Warnings = append(guidance.Warnings, qh_dto.WarningDTO{
+				AlertLevel: unified.Risk.Level,
+				Title:      reason,
+				Action:     unified.Risk.Recommendation,
+			})
+		}
+	}
+
+	return guidance
+}
+
+// buildLegalDocumentsSummary — Tóm tắt legal documents
+func (u *parcelUsecase) buildLegalDocumentsSummary(docs []*qh_domain.QHLegalDocument) *qh_dto.LegalDocumentsSummaryDTO {
+	summary := &qh_dto.LegalDocumentsSummaryDTO{
+		Items:             []qh_dto.LegalDocumentDTO{},
+		ByType:            make(map[string]int),
+		ByStatus:          make(map[string]int),
+		HasSupersededDocs: false,
+	}
+
+	for _, d := range docs {
+		// Convert domain → DTO
+		item := qh_dto.LegalDocumentDTO{
+			ID:            strconv.FormatUint(d.ID, 10),
+			Type:          enums.DocumentTypeString[d.DocumentType],
+			TypeName:      enums.DocumentTypeName[d.DocumentType],
+			Name:          d.Name,
+			FullName:      d.FullName,
+			IssuedBy:      d.IssuedBy,
+			IssuedAt:      _utils.FormatRFC3339(d.IssuedAt),
+			EffectiveDate: _utils.FormatRFC3339(d.EffectiveAt),
+			Status:        enums.DocumentStatusString[d.Status],
+			StatusLabel:   enums.DocumentStatusLabel[d.Status],
+			StatusColor:   enums.DocumentStatusColor[d.Status],
+			IsPublic:      d.IsPublic,
+			RequiresAuth:  d.RequiresAuth,
+		}
+		if d.ExpiresAt != nil {
+			expiry := _utils.FormatRFC3339(d.ExpiresAt)
+			item.ExpiryDate = &expiry
+		}
+		if d.SupersededBy != nil {
+			sb := strconv.FormatUint(*d.SupersededBy, 10)
+			item.SupersededBy = &sb
+		}
+		for _, s := range d.Supersedes {
+			item.Supersedes = append(item.Supersedes, strconv.FormatUint(s, 10))
+		}
+
+		summary.Items = append(summary.Items, item)
+		summary.ByType[item.Type]++
+		summary.ByStatus[item.Status]++
+		if d.IsSuperseded() {
+			summary.HasSupersededDocs = true
+		}
+	}
+	summary.Total = len(summary.Items)
+
+	return summary
+}
+
+func (u *parcelUsecase) collectLegalDocumentsFromMap(legalDocsMap map[uint64][]*qh_domain.QHLayerLegal) []*qh_domain.QHLegalDocument {
+	seen := make(map[uint64]bool)
+	var docs []*qh_domain.QHLegalDocument
+
+	for _, list := range legalDocsMap {
+		for _, d := range list {
+			doc := &qh_domain.QHLegalDocument{
+				DocumentType: 0,
+				Name:         d.Name,
+				FileURL:      d.FileURL,
+				FileType:     d.FileType,
+			}
+			doc.ID = d.ID
+
+			if !seen[doc.ID] {
+				seen[doc.ID] = true
+				docs = append(docs, doc)
+			}
+		}
+	}
+	return docs
+}
+
+func (u *parcelUsecase) getBuildStatusFromBool(canBuild bool) string {
+	if canBuild {
+		return "ALLOWED"
+	}
+	return "FORBIDDEN"
+}
+
+func (u *parcelUsecase) determineBuildStatus(canBuild bool) enums.BuildStatus {
+	if canBuild {
+		return enums.BuildStatusAllowed
+	}
+	return enums.BuildStatusForbidden
+}
+
+func (u *parcelUsecase) determineAlertLevel(warnLevel int32) enums.AlertLevel {
+	switch warnLevel {
+	case 1:
+		return enums.AlertLevelLow
+	case 2:
+		return enums.AlertLevelMedium
+	case 3:
+		return enums.AlertLevelHigh
+	default:
+		return enums.AlertLevelNone
+	}
+}
+
+// buildAlertMessage — Xây dựng message alert
+func (u *parcelUsecase) buildAlertMessage(unified *parcel_engine.UnifiedResult) string {
+	if unified.Risk == nil {
+		return "Không có cảnh báo"
+	}
+	if len(unified.Risk.Reasons) > 0 {
+		return unified.Risk.Reasons[0]
+	}
+	return "Cần kiểm tra thêm thông tin quy hoạch"
 }

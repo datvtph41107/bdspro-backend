@@ -33,6 +33,9 @@ type IParcelRepo interface {
 	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
 	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
 	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
+
+	// GetZoneGeometry — Lấy geometry của một zone cụ thể
+	GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *dto.RegionInfoResponse, error)
 }
 
 type Point struct {

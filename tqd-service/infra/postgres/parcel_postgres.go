@@ -26,6 +26,10 @@ func NewParcelPostgres(db *gorm.DB) repo.IParcelRepo {
 	return &ParcelPostgres{DB: db}
 }
 
+// ============================================================
+// REGION BY LOCATION
+// ============================================================
+
 func (p *ParcelPostgres) FindRegionByLocation(
 	ctx context.Context,
 	lat, lng float64,
@@ -116,9 +120,9 @@ func (p *ParcelPostgres) FindRegionByLocation(
 	return &result, nil
 }
 
-// =====================================================
-// Preview & Search
-// =====================================================
+// ============================================================
+// PREVIEW & SEARCH
+// ============================================================
 
 func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) (*qh_domain.QHParcelInfo, error) {
 	var result qh_domain.QHParcelInfo
@@ -181,7 +185,6 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 		}
 	}
 
-	// parse directions
 	if len(result.DirectionsRaw) > 0 {
 		if err := json.Unmarshal(result.DirectionsRaw, &result.Directions); err != nil {
 			return nil, err
@@ -199,7 +202,6 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 
 	query := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{})
 
-	// Nếu có số tờ hoặc số thửa, ưu tiên search theo field đó
 	if mapNumber != "" || landNumber != "" {
 		if mapNumber != "" {
 			query = query.Where("map_number = ?", mapNumber)
@@ -208,14 +210,9 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 			query = query.Where("land_number = ?", landNumber)
 		}
 	} else {
-		// Nếu không có tờ/thửa, search theo address_text như cũ
 		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
 		query = query.Where("adr_search LIKE ?", searchTerm)
 	}
-
-	// if err := query.Count(&total).Error; err != nil {
-	// 	return nil, 0, fmt.Errorf("count parcels: %w", err)
-	// }
 
 	if err := query.Select("qh_parcel_info.*, p.lat, p.lon, sh.name as shape_name").
 		Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
@@ -231,7 +228,6 @@ func (p *ParcelPostgres) SearchPublicParcels(ctx context.Context, pagable _dto.P
 	var parcels []qh_domain.QHParcelInfo
 	var total int64
 
-	// Base query join với parcels để check seo_id
 	baseQuery := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{}).
 		Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
 		Joins("LEFT JOIN qh_shape sh ON sh.id = qh_parcel_info.shape_id").
@@ -252,9 +248,9 @@ func (p *ParcelPostgres) SearchPublicParcels(ctx context.Context, pagable _dto.P
 	return parcels, total, nil
 }
 
-// =====================================================
-// Basic CRUD
-// =====================================================
+// ============================================================
+// BASIC CRUD
+// ============================================================
 
 func (p *ParcelPostgres) GetByID(ctx context.Context, id uint64) (*qh_domain.Parcel, error) {
 	var parcel qh_domain.Parcel
@@ -330,6 +326,48 @@ func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Pa
 		return nil
 	})
 }
+
+// ============================================================
+// POLYGON HELPERS
+// ============================================================
+
+func buildPolygonWKT(points []repo.Point) string {
+	var sb strings.Builder
+	sb.WriteString("POLYGON((")
+	for i, p := range points {
+		sb.WriteString(strconv.FormatFloat(p.Lng, 'f', 6, 64))
+		sb.WriteByte(' ')
+		sb.WriteString(strconv.FormatFloat(p.Lat, 'f', 6, 64))
+		if i < len(points)-1 {
+			sb.WriteByte(',')
+		}
+	}
+	sb.WriteByte(',')
+	sb.WriteString(strconv.FormatFloat(points[0].Lng, 'f', 6, 64))
+	sb.WriteByte(' ')
+	sb.WriteString(strconv.FormatFloat(points[0].Lat, 'f', 6, 64))
+	sb.WriteString("))")
+	return sb.String()
+}
+
+func decodePostgresGeometry(raw []byte) []byte {
+	if len(raw) == 0 {
+		return nil
+	}
+	s := string(raw)
+	if strings.HasPrefix(s, `\x`) || strings.HasPrefix(s, "\\x") {
+		hexStr := strings.TrimPrefix(strings.TrimPrefix(s, "\\x"), `\x`)
+		decoded, err := hex.DecodeString(hexStr)
+		if err == nil {
+			return decoded
+		}
+	}
+	return raw
+}
+
+// ============================================================
+// POLYGON FILTER HELPERS
+// ============================================================
 
 func buildRegionPlanningFilterSQL(filter *dto.PolygonTargetFilter) (string, []interface{}) {
 	if filter == nil || !filter.HasPlanningFilters() {
@@ -460,6 +498,10 @@ func buildSelectedRegionsCTE(spatialPredicate string, zoomSQL string, filterSQL 
 		)
 	`, spatialPredicate, zoomSQL, filterSQL)
 }
+
+// ============================================================
+// POLYGON QUERIES
+// ============================================================
 
 func (p *ParcelPostgres) findParcelsByPolygonWithRegionFilter(
 	ctx context.Context,
@@ -647,11 +689,9 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 		  AND r.geometry && poly.geom
 		  AND %s
 
-		  -- Layer phải hợp lệ tại zoom hiện tại
 		  AND COALESCE(l.min_zoom, 0) <= ?
 		  AND COALESCE(l.max_zoom, 22) >= ?
 
-		  -- Label nếu có thì cũng phải hợp lệ tại zoom hiện tại
 		  AND (
 			r.label_id IS NULL
 			OR lb.id IS NULL
@@ -761,11 +801,14 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 	return regions, total, nil
 }
 
+// ============================================================
+// POLYGON ANALYSIS
+// ============================================================
+
 func applyPolygonLandUsePercentages(items []dto.PolygonLandUseStat, totalArea float64) {
 	if totalArea <= 0 {
 		return
 	}
-
 	for i := range items {
 		items[i].AreaPct = items[i].AreaSqm / totalArea * 100
 	}
@@ -775,7 +818,6 @@ func applyPolygonLayerPercentages(items []dto.PolygonLayerStat, totalArea float6
 	if totalArea <= 0 {
 		return
 	}
-
 	for i := range items {
 		items[i].AreaPct = items[i].AreaSqm / totalArea * 100
 	}
@@ -785,7 +827,6 @@ func applyPolygonBuildabilityPercentages(items []dto.PolygonBuildabilityStat, to
 	if totalArea <= 0 {
 		return
 	}
-
 	for i := range items {
 		items[i].AreaPct = items[i].AreaSqm / totalArea * 100
 	}
@@ -813,7 +854,6 @@ func appendPolygonWarning(
 	if count <= 0 {
 		return warnings
 	}
-
 	return append(warnings, dto.PolygonAnalysisWarning{
 		Type:     warningType,
 		Count:    count,
@@ -996,6 +1036,10 @@ func (p *ParcelPostgres) SummarizePolygonAnalysis(
 	return summary, nil
 }
 
+// ============================================================
+// PARCEL INFO
+// ============================================================
+
 func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 
@@ -1047,6 +1091,10 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 
 	return &result, nil
 }
+
+// ============================================================
+// PARCEL LAYER ROWS
+// ============================================================
 
 func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRow, error) {
 	var rows []dto.ParcelLayerRow
@@ -1189,6 +1237,10 @@ func (p *ParcelPostgres) GetParcelLayerRows(ctx context.Context, parcelID uint64
 	return rows, nil
 }
 
+// ============================================================
+// PARCEL QUICK INFO
+// ============================================================
+
 func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error) {
 	var result []dto.ParcelLayerInfo
 
@@ -1253,6 +1305,10 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
 	}
 	return result, nil
 }
+
+// ============================================================
+// PARCEL LAYER ROWS V2 (UNIFIED)
+// ============================================================
 
 func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRowV2, error) {
 	var rows []dto.ParcelLayerRowV2
@@ -1481,6 +1537,96 @@ func (p *ParcelPostgres) GetParcelLayerRowsV2(ctx context.Context, parcelID uint
 	return rows, nil
 }
 
+// ============================================================
+// GET ZONE GEOMETRY — PHASE 3 API
+// ============================================================
+
+// GetZoneGeometry — Lấy geometry của một zone cụ thể
+func (p *ParcelPostgres) GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *dto.RegionInfoResponse, error) {
+	var region dto.RegionInfoResponse
+
+	query := `
+		SELECT
+			ST_AsGeoJSON(r.geometry) AS geo_json,
+			r.id AS region_id,
+			r.layer_id,
+			COALESCE(r.label_id, 0) AS label_id,
+			COALESCE(r.land_use_id, 0) AS land_use_id,
+			COALESCE(r.legend_id, 0) AS legend_id,
+
+			COALESCE(r.name, '') AS name,
+			COALESCE(r.display_name, '') AS display_name,
+			COALESCE(r.description, '') AS description,
+
+			COALESCE(l.name, '') AS layer_name,
+			COALESCE(l.display_name, '') AS layer_display_name,
+
+			COALESCE(lu.code, '') AS land_use_code,
+			COALESCE(lu.name, '') AS land_use_name,
+			COALESCE(lu.color, '') AS land_use_color,
+			COALESCE(lu.can_build, false) AS can_build,
+			COALESCE(lu.warn_level, 0) AS warn_level,
+
+			COALESCE(lb.name, '') AS label_name,
+			COALESCE(lb.color, '') AS label_color,
+
+			COALESCE(leg.color, '') AS legend_color,
+			COALESCE(leg.legend_type, '') AS legend_type,
+			COALESCE(leg.geometry_type, '') AS geometry_type,
+
+			COALESCE(r.legal_doc, '') AS legal_doc,
+			COALESCE(r.planning_name, '') AS planning_name,
+
+			COALESCE(r.area_sqm, 0) AS area_sqm,
+			COALESCE(r.area_ha, 0) AS area_ha,
+			COALESCE(r.perimeter_m, 0) AS perimeter_m,
+
+			COALESCE(ST_Y(ST_PointOnSurface(r.geometry)), 0) AS center_lat,
+			COALESCE(ST_X(ST_PointOnSurface(r.geometry)), 0) AS center_lon,
+
+			COALESCE(ST_XMin(Box2D(r.geometry)), 0) AS min_lon,
+			COALESCE(ST_YMin(Box2D(r.geometry)), 0) AS min_lat,
+			COALESCE(ST_XMax(Box2D(r.geometry)), 0) AS max_lon,
+			COALESCE(ST_YMax(Box2D(r.geometry)), 0) AS max_lat,
+
+			'' AS province,
+			'' AS province_code,
+			'' AS ward_code
+		FROM qh_regions r
+		JOIN qh_layers l
+			ON l.id = r.layer_id
+		   AND l.deleted_at IS NULL
+		   AND l.status = 10
+		LEFT JOIN qh_labels lb
+			ON lb.id = r.label_id
+		   AND lb.deleted_at IS NULL
+		LEFT JOIN qh_land_use lu
+			ON lu.id = r.land_use_id
+		LEFT JOIN qh_legends leg
+			ON leg.id = r.legend_id
+		WHERE r.id = $1
+		  AND r.layer_id = $2
+		  AND r.deleted_at IS NULL
+		  AND r.status = 10
+		  AND r.is_latest = true
+	`
+
+	err := p.DB.WithContext(ctx).Raw(query, zoneID, layerID).Scan(&region).Error
+	if err != nil {
+		return "", nil, fmt.Errorf("get zone geometry failed: %w", err)
+	}
+
+	if region.RegionID == 0 {
+		return "", nil, nil
+	}
+
+	return region.GeoJSON, &region, nil
+}
+
+// ============================================================
+// SEO SOURCE
+// ============================================================
+
 const parcelSeoAdrSearchExpr = `
 	COALESCE(
 		NULLIF(pi.adr_search, ''),
@@ -1498,7 +1644,7 @@ func (p *ParcelPostgres) GetParcelSeoSource(ctx context.Context, parcelID uint64
 				p.id AS parcel_id,
 				`+parcelSeoAdrSearchExpr+` AS adr_search,
 				p.seo_id AS seo_id
-			FROM parcels p
+			FROM parcels p\
 			LEFT JOIN LATERAL (
 				SELECT *
 				FROM qh_parcel_info
@@ -1557,41 +1703,4 @@ func (p *ParcelPostgres) UpdateParcelSeoID(ctx context.Context, parcelID uint64,
 		Table("parcels").
 		Where("id = ? AND deleted_at IS NULL", parcelID).
 		Update("seo_id", seoID).Error
-}
-
-// Helper function
-func buildPolygonWKT(points []repo.Point) string {
-	var sb strings.Builder
-	sb.WriteString("POLYGON((")
-	for i, p := range points {
-		sb.WriteString(strconv.FormatFloat(p.Lng, 'f', 6, 64))
-		sb.WriteByte(' ')
-		sb.WriteString(strconv.FormatFloat(p.Lat, 'f', 6, 64))
-		if i < len(points)-1 {
-			sb.WriteByte(',')
-		}
-	}
-	sb.WriteByte(',')
-	sb.WriteString(strconv.FormatFloat(points[0].Lng, 'f', 6, 64))
-	sb.WriteByte(' ')
-	sb.WriteString(strconv.FormatFloat(points[0].Lat, 'f', 6, 64))
-	sb.WriteString("))")
-	return sb.String()
-}
-
-func decodePostgresGeometry(raw []byte) []byte {
-	if len(raw) == 0 {
-		return nil
-	}
-	s := string(raw)
-	// PostgreSQL trả hex-encoded bytea: \x7b22...
-	if strings.HasPrefix(s, `\x`) || strings.HasPrefix(s, "\\x") {
-		hexStr := strings.TrimPrefix(strings.TrimPrefix(s, "\\x"), `\x`)
-		decoded, err := hex.DecodeString(hexStr)
-		if err == nil {
-			return decoded
-		}
-	}
-	// Đã là raw bytes (GeoJSON text trực tiếp)
-	return raw
 }
