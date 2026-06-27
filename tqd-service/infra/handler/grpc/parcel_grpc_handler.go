@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
-	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
@@ -519,7 +517,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=<nil>, Mode=legacy-parcel, HasFilter=%v, IncludeAnalysis=%v",
 			len(points),
 			req.Intersect,
-			req.MaxAreaKm2,
+			req.MaxAreaHa,
 			page,
 			pageSize,
 			filter != nil,
@@ -530,7 +528,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%d, HasFilter=%v, IncludeAnalysis=%v",
 			len(points),
 			req.Intersect,
-			req.MaxAreaKm2,
+			req.MaxAreaHa,
 			page,
 			pageSize,
 			*z,
@@ -543,7 +541,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		ctx,
 		points,
 		req.Intersect,
-		req.MaxAreaKm2,
+		req.MaxAreaHa,
 		page,
 		pageSize,
 		z,
@@ -557,7 +555,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 
 	if result == nil {
 		return &tqdpb.FindParcelsByPolygonResponse{
-			Data:       []*tqdpb.Parcel{},
+			Parcels:    []*tqdpb.Parcel{},
 			Regions:    []*tqdpb.RegionInfoResponse{},
 			Total:      0,
 			Page:       int32(pagable.GetPage()),
@@ -573,6 +571,92 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		len(result.Parcels),
 		len(result.Regions),
 		result.Total,
+	)
+
+	return h.mapper.PolygonMapTargetsToProto(result), nil
+}
+
+func (h *ParcelGrpcHandler) CheckingPolygon(
+	ctx context.Context,
+	req *tqdpb.FindParcelsByPolygonRequest,
+) (*tqdpb.FindParcelsByPolygonResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+
+	// tối đa 1km2
+	req.MaxAreaHa = 100
+
+	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
+
+	if !updated {
+		return &tqdpb.FindParcelsByPolygonResponse{}, nil
+	}
+
+	points, err := validatePolygonCoordinates(req)
+	if err != nil {
+		return nil, err
+	}
+
+	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
+
+	page := int(pagable.GetPage())
+	pageSize := int(pagable.GetSize())
+
+	z := getOptionalPolygonZoom(req)
+	filter := getPolygonTargetFilter(req)
+	includeAnalysis := req.GetIncludeAnalysis()
+
+	log.Printf(
+		"[CheckingPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%v, HasFilter=%v, IncludeAnalysis=%v",
+		len(points),
+		req.Intersect,
+		req.MaxAreaHa,
+		page,
+		pageSize,
+		z,
+		filter != nil,
+		includeAnalysis,
+	)
+
+	handlerStart := time.Now()
+	result, err := h.usecase.CheckingPolygon(
+		ctx,
+		points,
+		req.Intersect,
+		req.MaxAreaHa,
+		page,
+		pageSize,
+		z,
+		filter,
+		includeAnalysis,
+	)
+	if err != nil {
+		log.Printf("[CheckingPolygon] Usecase error: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if result == nil {
+		return &tqdpb.FindParcelsByPolygonResponse{
+			Parcels:    []*tqdpb.Parcel{},
+			Regions:    []*tqdpb.RegionInfoResponse{},
+			Total:      0,
+			Page:       int32(pagable.GetPage()),
+			PageSize:   int32(pagable.GetSize()),
+			ResultType: mapper.WorkspaceEntityTypeParcel,
+		}, nil
+	}
+
+	log.Printf(
+		"[CheckingPolygon] ResultType=%d, Z=%d, Parcels=%d, Regions=%d, Total=%d, handlerTotal=%v",
+		result.ResultType,
+		result.Z,
+		len(result.Parcels),
+		len(result.Regions),
+		result.Total,
+		time.Since(handlerStart),
 	)
 
 	return h.mapper.PolygonMapTargetsToProto(result), nil
@@ -771,66 +855,7 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	layerMap := make(map[uint64]*tqdpb.LayerQuickInfo)
-	layers := make([]*tqdpb.LayerQuickInfo, 0)
-	warnings := make([]string, 0)
-
-	for _, q := range quickInfo {
-		layer, exists := layerMap[q.LayerID]
-		log.Printf("[GetParcelQuickLayers] LayerID: %d, LayerName: %s, LayerOrder: %d", q.LayerID, q.LayerName, q.LayerOrder)
-		if !exists {
-			layer = &tqdpb.LayerQuickInfo{
-				ParcelId:        q.ParcelID,
-				LayerId:         q.LayerID,
-				LayerName:       q.LayerName,
-				LegalStatus:     uint32(q.LayerLegalStatus),
-				LayerOrder:      q.LayerOrder,
-				LegalStatusName: enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
-				LayerAvatar:     q.LayerAvatar,
-				RelationType:    q.RelationType,
-				LandUses:        make([]*tqdpb.LandUseQuickInfo, 0),
-			}
-
-			layerMap[q.LayerID] = layer
-			layers = append(layers, layer)
-		}
-
-		layer.LandUses = append(layer.LandUses, &tqdpb.LandUseQuickInfo{
-			LandUseId:        q.LandUseID,
-			LandUseName:      q.LandUseName,
-			LandUseColor:     q.LandUseColor,
-			WarnLevel:        uint32(q.WarnLevel),
-			IntersectAreaSqm: q.IntersectAreaSqm,
-			Percent:          q.Percent,
-			CanBuild:         q.CanBuild,
-		})
-
-		if q.WarnLevel > 0 {
-			warnings = append(
-				warnings,
-				fmt.Sprintf(
-					"%.2f%% diện tích thuộc %s trong %s. Kiểm tra thêm.",
-					q.Percent,
-					q.LandUseName,
-					q.LayerName,
-				),
-			)
-		}
-	}
-
-	// Sắp xếp theo LayerOrder giảm dần
-	sort.SliceStable(layers, func(i, j int) bool {
-		return layers[i].LayerOrder > layers[j].LayerOrder
-	})
-
-	if len(warnings) == 0 {
-		warnings = append(warnings, "Không có cảnh báo nào.")
-	}
-
-	return &tqdpb.LayerQuickInfoResponse{
-		Layers:   layers,
-		Warnings: warnings,
-	}, nil
+	return h.mapper.BuildLayerQuickInfoFromRows(quickInfo), nil
 }
 
 func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {

@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -982,7 +983,7 @@ func polygonAnalysisSummaryToProto(summary *dto.PolygonAnalysisSummary) *tqdpb.P
 func (m *ParcelMapper) PolygonMapTargetsToProto(resp *dto.PolygonMapTargetsResponse) *tqdpb.FindParcelsByPolygonResponse {
 	if resp == nil {
 		return &tqdpb.FindParcelsByPolygonResponse{
-			Data:       []*tqdpb.Parcel{},
+			Parcels:    []*tqdpb.Parcel{},
 			Regions:    []*tqdpb.RegionInfoResponse{},
 			Total:      0,
 			Page:       1,
@@ -993,14 +994,27 @@ func (m *ParcelMapper) PolygonMapTargetsToProto(resp *dto.PolygonMapTargetsRespo
 	}
 	resultType := resp.ResultType
 	if resultType == 0 {
-		if len(resp.Regions) > 0 {
+		hasParcels := len(resp.Parcels) > 0
+		hasRegions := len(resp.Regions) > 0
+		switch {
+		case hasParcels && hasRegions:
+			// Mixed: giữ 0 để client đọc cả data (parcels) và regions
+			resultType = 0
+		case hasRegions:
 			resultType = WorkspaceEntityTypeRegion
-		} else {
+		default:
 			resultType = WorkspaceEntityTypeParcel
 		}
 	}
+	var layers []*tqdpb.LayerQuickInfo
+	var quickWarnings []string
+	if resp.QuickLayerRows != nil {
+		quickLayers := m.BuildLayerQuickInfoFromRows(resp.QuickLayerRows)
+		layers = quickLayers.Layers
+		quickWarnings = quickLayers.Warnings
+	}
 	return &tqdpb.FindParcelsByPolygonResponse{
-		Data:              m.DomainListToProto(resp.Parcels),
+		Parcels:           m.DomainListToProto(resp.Parcels),
 		Regions:           m.RegionInfoListToProto(resp.Regions),
 		Total:             int32(resp.Total),
 		Page:              int32(resp.Page),
@@ -1014,6 +1028,72 @@ func (m *ParcelMapper) PolygonMapTargetsToProto(resp *dto.PolygonMapTargetsRespo
 		ResultType:        resultType,
 		Z:                 resp.Z,
 		Analysis:          polygonAnalysisSummaryToProto(resp.Analysis),
+		Layers:            layers,
+		QuickWarnings:     quickWarnings,
+	}
+}
+
+func (m *ParcelMapper) BuildLayerQuickInfoFromRows(rows []dto.ParcelLayerInfo) *tqdpb.LayerQuickInfoResponse {
+	layerMap := make(map[uint64]*tqdpb.LayerQuickInfo)
+	layers := make([]*tqdpb.LayerQuickInfo, 0)
+	warnings := make([]string, 0)
+
+	for _, q := range rows {
+		layer, exists := layerMap[q.LayerID]
+		if !exists {
+			layer = &tqdpb.LayerQuickInfo{
+				ParcelId:         q.ParcelID,
+				LayerId:          q.LayerID,
+				LayerName:        q.LayerName,
+				LayerDisplayName: q.LayerDisplayName,
+				LayerType:        q.LayerType,
+				LegalStatus:      uint32(q.LayerLegalStatus),
+				LayerOrder:       q.LayerOrder,
+				LegalStatusName:  enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
+				LayerAvatar:      q.LayerAvatar,
+				RelationType:     q.RelationType,
+				UpdatedAt:        _utils.FormatTimeToString(&q.LayerUpdatedAt),
+				LandUses:         make([]*tqdpb.LandUseQuickInfo, 0),
+			}
+
+			layerMap[q.LayerID] = layer
+			layers = append(layers, layer)
+		}
+
+		layer.LandUses = append(layer.LandUses, &tqdpb.LandUseQuickInfo{
+			LandUseId:        q.LandUseID,
+			LandUseName:      q.LandUseName,
+			LandUseColor:     q.LandUseColor,
+			WarnLevel:        uint32(q.WarnLevel),
+			IntersectAreaSqm: q.IntersectAreaSqm,
+			Percent:          q.Percent,
+			CanBuild:         q.CanBuild,
+		})
+
+		if q.WarnLevel > 0 {
+			warnings = append(
+				warnings,
+				fmt.Sprintf(
+					"%.2f%% diện tích thuộc '%s' trong '%s'.",
+					q.Percent,
+					q.LandUseName,
+					q.LayerName,
+				),
+			)
+		}
+	}
+
+	sort.SliceStable(layers, func(i, j int) bool {
+		return layers[i].LayerOrder > layers[j].LayerOrder
+	})
+
+	if len(warnings) == 0 {
+		warnings = append(warnings, "Không có cảnh báo nào.")
+	}
+
+	return &tqdpb.LayerQuickInfoResponse{
+		Layers:   layers,
+		Warnings: warnings,
 	}
 }
 

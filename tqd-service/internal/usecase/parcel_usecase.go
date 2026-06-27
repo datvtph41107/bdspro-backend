@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"strconv"
+	"sync"
 	"time"
 
 	_dto "common/domain/dto"
@@ -45,6 +46,7 @@ type ParcelUsecase interface {
 	GetParcelLayers(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]*dto.LayerImpact, int64, error)
 	GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *ZoneGeometryProps, error)
 	GetParcelLegalDocuments(ctx context.Context, parcelID uint64, docType, status *uint32, pagable _dto.Pagable) ([]*qh_domain.QHLegalDocument, int64, error)
+	CheckingPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32, filter *dto.PolygonTargetFilter, includeAnalysis bool) (*dto.PolygonMapTargetsResponse, error)
 }
 
 // ZoneGeometryProps — Properties cho Zone Geometry response
@@ -319,8 +321,6 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 		return nil, err
 	}
 
-	_, _ = limit, offset
-
 	normalizedPage, normalizedPageSize := normalizePageValues(page, pageSize)
 	effectiveZoom := uint32(config.ParcelPolygonMinZ)
 	if zoom != nil {
@@ -332,9 +332,70 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 	}
 
 	if zoom != nil && *zoom < config.ParcelPolygonMinZ {
-		regions, total, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, *zoom, limit, offset, filter)
-		if err != nil {
-			return nil, err
+		regionZoom := *zoom
+		var (
+			regions     []dto.RegionInfoResponse
+			total       int64
+			analysis    *dto.PolygonAnalysisSummary
+			parcelCount int64
+			wg          sync.WaitGroup
+			mu          sync.Mutex
+			queryErr    error
+		)
+
+		recordErr := func(err error) {
+			if err == nil {
+				return
+			}
+			mu.Lock()
+			if queryErr == nil {
+				queryErr = err
+			}
+			mu.Unlock()
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			r, t, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, regionZoom, limit, offset, filter, false)
+			if err != nil {
+				recordErr(err)
+				return
+			}
+			regions = r
+			total = t
+		}()
+
+		if includeAnalysis {
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				a, _, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, regionZoom, filter, false)
+				if err != nil {
+					recordErr(err)
+					return
+				}
+				analysis = a
+			}()
+			go func() {
+				defer wg.Done()
+				count, err := u.parcelRepo.CountParcelsByPolygon(
+					ctx,
+					points,
+					intersect,
+					u.polygonFilterWithZoom(filter, regionZoom),
+				)
+				if err != nil {
+					log.Printf("[FindMapTargetsByPolygon] CountParcelsByPolygon error: %v", err)
+					return
+				}
+				parcelCount = count
+			}()
+		}
+
+		wg.Wait()
+		if queryErr != nil {
+			return nil, queryErr
 		}
 
 		resp := &dto.PolygonMapTargetsResponse{
@@ -342,34 +403,89 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 			Parcels:    []qh_domain.Parcel{},
 			Regions:    regions,
 			Total:      total,
-			Z:          *zoom,
+			Z:          regionZoom,
 			Page:       uint32(normalizedPage),
 			PageSize:   uint32(normalizedPageSize),
 		}
-
-		if includeAnalysis {
-			analysis, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, *zoom, filter)
-			if err != nil {
-				return nil, err
-			}
+		if analysis != nil {
 			analysis.ResultType = resp.ResultType
-			analysis.Z = *zoom
+			analysis.Z = regionZoom
+			analysis.ParcelCount = parcelCount
 			resp.Analysis = analysis
 		}
-
 		return resp, nil
 	}
 
-	var parcels []qh_domain.Parcel
-	var total int64
+	var (
+		parcels     []qh_domain.Parcel
+		total       int64
+		analysis    *dto.PolygonAnalysisSummary
+		parcelCount int64
+		wg          sync.WaitGroup
+		mu          sync.Mutex
+		queryErr    error
+	)
 
-	if intersect {
-		parcels, total, err = u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset, filter)
-	} else {
-		parcels, total, err = u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset, filter)
+	recordErr := func(err error) {
+		if err == nil {
+			return
+		}
+		mu.Lock()
+		if queryErr == nil {
+			queryErr = err
+		}
+		mu.Unlock()
 	}
-	if err != nil {
-		return nil, err
+
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	var p []qh_domain.Parcel
+	// 	var t int64
+	// 	var err error
+	// 	if intersect {
+	// 		p, t, err = u.parcelRepo.FindIntersectPolygon(ctx, points, limit, offset, filter)
+	// 	} else {
+	// 		p, t, err = u.parcelRepo.FindWithinPolygon(ctx, points, limit, offset, filter)
+	// 	}
+	// 	if err != nil {
+	// 		recordErr(err)
+	// 		return
+	// 	}
+	// 	parcels = p
+	// 	total = t
+	// }()
+
+	if includeAnalysis {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			a, _, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, effectiveZoom, filter, false)
+			if err != nil {
+				recordErr(err)
+				return
+			}
+			analysis = a
+		}()
+		go func() {
+			defer wg.Done()
+			count, err := u.parcelRepo.CountParcelsByPolygon(
+				ctx,
+				points,
+				intersect,
+				u.polygonFilterWithZoom(filter, effectiveZoom),
+			)
+			if err != nil {
+				log.Printf("[FindMapTargetsByPolygon] CountParcelsByPolygon error: %v", err)
+				return
+			}
+			parcelCount = count
+		}()
+	}
+
+	wg.Wait()
+	if queryErr != nil {
+		return nil, queryErr
 	}
 
 	resp := &dto.PolygonMapTargetsResponse{
@@ -385,17 +501,203 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 		resp.Z = *zoom
 	}
 
-	if includeAnalysis {
-		analysis, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, effectiveZoom, filter)
-		if err != nil {
-			return nil, err
-		}
+	if analysis != nil {
 		analysis.ResultType = resp.ResultType
 		analysis.Z = effectiveZoom
+		analysis.ParcelCount = parcelCount
 		resp.Analysis = analysis
 	}
 
 	return resp, nil
+}
+
+func (u *parcelUsecase) CheckingPolygon(
+	ctx context.Context,
+	points []repo.Point,
+	intersect bool,
+	maxAreaKm2 float64,
+	page, pageSize int,
+	zoom *uint32,
+	filter *dto.PolygonTargetFilter,
+	includeAnalysis bool,
+) (*dto.PolygonMapTargetsResponse, error) {
+	_, _, err := validatePolygonQuery(points, maxAreaKm2, page, pageSize)
+	var limit int = 500
+	var offset int = 0
+	if err != nil {
+		return nil, err
+	}
+
+	normalizedPage, normalizedPageSize := normalizePageValues(page, pageSize)
+	area := calculatePolygonAreaKm2(points)
+
+	effectiveZoom := uint32(14)
+	if zoom != nil && *zoom < config.ParcelPolygonMinZ {
+		effectiveZoom = *zoom
+	}
+
+	startedAt := time.Now()
+	var (
+		regions        []dto.RegionInfoResponse
+		analysis       *dto.PolygonAnalysisSummary
+		parcelCount    int64
+		quickLayerRows []dto.ParcelLayerInfo
+		hasQuickLayers bool
+		wg             sync.WaitGroup
+		mu             sync.Mutex
+		findRegionsMs  time.Duration
+		quickInfoMs    time.Duration
+		countParcelsMs time.Duration
+		analysisMs     time.Duration
+	)
+
+	recordDuration := func(target *time.Duration, start time.Time) {
+		mu.Lock()
+		*target = time.Since(start)
+		mu.Unlock()
+	}
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		start := time.Now()
+		r, _, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, effectiveZoom, limit, offset, filter, true)
+		recordDuration(&findRegionsMs, start)
+		if err != nil {
+			log.Printf("[CheckingPolygon] FindRegions error: %v", err)
+			return
+		}
+		regions = r
+	}()
+	go func() {
+		defer wg.Done()
+		start := time.Now()
+		count, err := u.parcelRepo.CountParcelsByPolygon(
+			ctx,
+			points,
+			intersect,
+			u.polygonFilterWithZoom(filter, effectiveZoom),
+		)
+		recordDuration(&countParcelsMs, start)
+		if err != nil {
+			log.Printf("[CheckingPolygon] CountParcelsByPolygon error: %v", err)
+			return
+		}
+		parcelCount = count
+	}()
+
+	if includeAnalysis {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			start := time.Now()
+			a, rows, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, effectiveZoom, filter, true)
+			recordDuration(&analysisMs, start)
+			if err != nil {
+				log.Printf("[CheckingPolygon] Analysis error: %v", err)
+				return
+			}
+			analysis = a
+			if rows == nil {
+				rows = []dto.ParcelLayerInfo{}
+			}
+			quickLayerRows = rows
+			hasQuickLayers = true
+		}()
+	} else {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			start := time.Now()
+			rows, err := u.parcelRepo.GetPolygonQuickInfo(ctx, points, intersect, effectiveZoom, filter)
+			recordDuration(&quickInfoMs, start)
+			if err != nil {
+				log.Printf("[CheckingPolygon] GetPolygonQuickInfo error: %v", err)
+				return
+			}
+			if rows == nil {
+				rows = []dto.ParcelLayerInfo{}
+			}
+			quickLayerRows = rows
+			hasQuickLayers = true
+		}()
+	}
+
+	wg.Wait()
+	totalMs := time.Since(startedAt)
+
+	resp := &dto.PolygonMapTargetsResponse{
+		ResultType: 0,
+		Parcels:    []qh_domain.Parcel{},
+		Regions:    regions,
+		Total:      parcelCount,
+		Page:       uint32(normalizedPage),
+		PageSize:   uint32(normalizedPageSize),
+		Analysis:   analysis,
+	}
+	if analysis != nil {
+		analysis.ParcelCount = parcelCount
+	}
+	if hasQuickLayers {
+		resp.QuickLayerRows = quickLayerRows
+	}
+
+	if zoom != nil {
+		resp.Z = *zoom
+	} else {
+		resp.Z = effectiveZoom
+	}
+
+	if area > 1.0 {
+		resp.Warning = fmt.Sprintf("Diện tích vùng chọn lớn (%.2f ha). Kết quả thửa đất có thể không đầy đủ.", area*100)
+	}
+
+	log.Printf(
+		"[CheckingPolygon] timing findRegions=%v quickInfo=%v countParcels=%v analysis=%v total=%v | regions=%d parcelCount=%d quickLayers=%v includeAnalysis=%v",
+		findRegionsMs,
+		quickInfoMs,
+		countParcelsMs,
+		analysisMs,
+		totalMs,
+		len(regions),
+		parcelCount,
+		hasQuickLayers,
+		includeAnalysis,
+	)
+
+	return resp, nil
+}
+
+func (u *parcelUsecase) polygonFilterWithZoom(filter *dto.PolygonTargetFilter, zoom uint32) *dto.PolygonTargetFilter {
+	localFilter := filter
+	if localFilter == nil {
+		localFilter = &dto.PolygonTargetFilter{}
+	} else {
+		copyFilter := *localFilter
+		localFilter = &copyFilter
+	}
+	localFilter.Zoom = &zoom
+	return localFilter
+}
+
+func (u *parcelUsecase) attachPolygonParcelCount(
+	ctx context.Context,
+	analysis *dto.PolygonAnalysisSummary,
+	points []repo.Point,
+	intersect bool,
+	filter *dto.PolygonTargetFilter,
+	zoom uint32,
+) {
+	if analysis == nil {
+		return
+	}
+
+	count, err := u.parcelRepo.CountParcelsByPolygon(ctx, points, intersect, u.polygonFilterWithZoom(filter, zoom))
+	if err != nil {
+		log.Printf("[attachPolygonParcelCount] error: %v", err)
+		return
+	}
+	analysis.ParcelCount = count
 }
 
 func validatePolygonQuery(points []repo.Point, maxAreaKm2 float64, page, pageSize int) (limit, offset int, err error) {
@@ -412,9 +714,9 @@ func validatePolygonQuery(points []repo.Point, maxAreaKm2 float64, page, pageSiz
 
 	area := calculatePolygonAreaKm2(points)
 	allowedArea := config.MaxPolygonAreaKm2
-	if maxAreaKm2 > 0 && maxAreaKm2 < allowedArea {
-		allowedArea = maxAreaKm2
-	}
+	// if maxAreaKm2 > 0 && maxAreaKm2 < allowedArea {
+	// 	allowedArea = maxAreaKm2
+	// }
 	if area > allowedArea {
 		return 0, 0, fmt.Errorf("polygon area %.2f km² exceeds limit", area)
 	}

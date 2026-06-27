@@ -8,9 +8,13 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	_dto "common/domain/dto"
 	_models "common/domain/entity"
+	_enum "common/domain/enum"
+	_utils "common/utils"
+	"tqd/internal/config"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -600,15 +604,15 @@ func (p *ParcelPostgres) FindIntersectPolygon(ctx context.Context, points []repo
 	var parcels []qh_domain.Parcel
 	var total int64
 
-	countQuery := `WITH poly AS (SELECT ST_GeomFromText(?, 4326) AS geom)
-                   SELECT COUNT(*) FROM parcels p, poly
-                   WHERE p.geometry && poly.geom AND ST_Intersects(p.geometry, poly.geom) AND p.deleted_at IS NULL`
-	if err := p.DB.WithContext(ctx).Raw(countQuery, polygon).Scan(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	if total == 0 {
-		return []qh_domain.Parcel{}, 0, nil
-	}
+	// countQuery := `WITH poly AS (SELECT ST_GeomFromText(?, 4326) AS geom)
+	//                SELECT COUNT(*) FROM parcels p, poly
+	//                WHERE p.geometry && poly.geom AND ST_Intersects(p.geometry, poly.geom) AND p.deleted_at IS NULL`
+	// if err := p.DB.WithContext(ctx).Raw(countQuery, polygon).Scan(&total).Error; err != nil {
+	// 	return nil, 0, err
+	// }
+	// if total == 0 {
+	// 	return []qh_domain.Parcel{}, 0, nil
+	// }
 
 	query := `WITH poly AS (SELECT ST_GeomFromText(?, 4326) AS geom)
               SELECT p.id, ST_AsGeoJSON(p.geometry) as geometry, p.lat, p.lon, p.ref_id, p.ref_type, p.created_at, p.updated_at
@@ -632,12 +636,12 @@ func (p *ParcelPostgres) FindWithinPolygon(ctx context.Context, points []repo.Po
 	var parcels []qh_domain.Parcel
 	var total int64
 
-	countQuery := `WITH poly AS (SELECT ST_GeomFromText(?, 4326) AS geom)
-                   SELECT COUNT(*) FROM parcels p, poly
-                   WHERE ST_Contains(poly.geom, p.geometry) AND p.deleted_at IS NULL`
-	if err := p.DB.WithContext(ctx).Raw(countQuery, polygon).Scan(&total).Error; err != nil {
-		return nil, 0, err
-	}
+	// countQuery := `WITH poly AS (SELECT ST_GeomFromText(?, 4326) AS geom)
+	//                SELECT COUNT(*) FROM parcels p, poly
+	//                WHERE ST_Contains(poly.geom, p.geometry) AND p.deleted_at IS NULL`
+	// if err := p.DB.WithContext(ctx).Raw(countQuery, polygon).Scan(&total).Error; err != nil {
+	// 	return nil, 0, err
+	// }
 
 	query := `WITH poly AS (SELECT ST_GeomFromText(?, 4326) AS geom)
               SELECT p.id, ST_AsGeoJSON(p.geometry) as geometry, p.lat, p.lon, p.ref_id, p.ref_type, p.created_at, p.updated_at
@@ -655,6 +659,7 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 	limit int,
 	offset int,
 	filter *dto.PolygonTargetFilter,
+	skipCount bool,
 ) ([]dto.RegionInfoResponse, int64, error) {
 	if len(points) < 3 {
 		return nil, 0, fmt.Errorf("invalid polygon")
@@ -706,25 +711,26 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 	`, spatialPredicate, filterSQL)
 
 	var total int64
+	if !skipCount {
+		countQuery := `
+			WITH poly AS (
+				SELECT ST_GeomFromText(?, 4326) AS geom
+			)
+			SELECT COUNT(*)
+		` + baseWhere
 
-	countQuery := `
-		WITH poly AS (
-			SELECT ST_GeomFromText(?, 4326) AS geom
-		)
-		SELECT COUNT(*)
-	` + baseWhere
+		countArgs := []interface{}{polygon, zoom, zoom, zoom, zoom}
+		countArgs = append(countArgs, filterArgs...)
 
-	countArgs := []interface{}{polygon, zoom, zoom, zoom, zoom}
-	countArgs = append(countArgs, filterArgs...)
+		if err := p.DB.WithContext(ctx).
+			Raw(countQuery, countArgs...).
+			Scan(&total).Error; err != nil {
+			return nil, 0, fmt.Errorf("count regions by polygon failed: %w", err)
+		}
 
-	if err := p.DB.WithContext(ctx).
-		Raw(countQuery, countArgs...).
-		Scan(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("count regions by polygon failed: %w", err)
-	}
-
-	if total == 0 {
-		return []dto.RegionInfoResponse{}, 0, nil
+		if total == 0 {
+			return []dto.RegionInfoResponse{}, 0, nil
+		}
 	}
 
 	var regions []dto.RegionInfoResponse
@@ -806,30 +812,242 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 // ============================================================
 
 func applyPolygonLandUsePercentages(items []dto.PolygonLandUseStat, totalArea float64) {
-	if totalArea <= 0 {
-		return
-	}
-	for i := range items {
-		items[i].AreaPct = items[i].AreaSqm / totalArea * 100
-	}
+	applyPolygonAreaPercentages(totalArea, len(items), func(i int) float64 { return items[i].AreaSqm }, func(i int, pct float64) {
+		items[i].AreaPct = pct
+	})
 }
 
 func applyPolygonLayerPercentages(items []dto.PolygonLayerStat, totalArea float64) {
-	if totalArea <= 0 {
-		return
-	}
-	for i := range items {
-		items[i].AreaPct = items[i].AreaSqm / totalArea * 100
-	}
+	applyPolygonAreaPercentages(totalArea, len(items), func(i int) float64 { return items[i].AreaSqm }, func(i int, pct float64) {
+		items[i].AreaPct = pct
+	})
 }
 
 func applyPolygonBuildabilityPercentages(items []dto.PolygonBuildabilityStat, totalArea float64) {
+	applyPolygonAreaPercentages(totalArea, len(items), func(i int) float64 { return items[i].AreaSqm }, func(i int, pct float64) {
+		items[i].AreaPct = pct
+	})
+}
+
+func applyPolygonAreaPercentages(
+	totalArea float64,
+	n int,
+	areaSqm func(int) float64,
+	setPct func(int, float64),
+) {
 	if totalArea <= 0 {
 		return
 	}
-	for i := range items {
-		items[i].AreaPct = items[i].AreaSqm / totalArea * 100
+	for i := 0; i < n; i++ {
+		setPct(i, areaSqm(i)/totalArea*100)
 	}
+}
+
+type polygonLandUseStatJSON struct {
+	LandUseID    uint64  `json:"land_use_id"`
+	LandUseCode  string  `json:"land_use_code"`
+	LandUseName  string  `json:"land_use_name"`
+	LandUseColor string  `json:"land_use_color"`
+	CanBuild     bool    `json:"can_build"`
+	RegionCount  int64   `json:"region_count"`
+	AreaSqm      float64 `json:"area_sqm"`
+}
+
+type polygonLayerStatJSON struct {
+	LayerID          uint64  `json:"layer_id"`
+	LayerName        string  `json:"layer_name"`
+	LayerDisplayName string  `json:"layer_display_name"`
+	RegionCount      int64   `json:"region_count"`
+	AreaSqm          float64 `json:"area_sqm"`
+}
+
+type polygonBuildabilityStatJSON struct {
+	CanBuild    bool    `json:"can_build"`
+	RegionCount int64   `json:"region_count"`
+	AreaSqm     float64 `json:"area_sqm"`
+}
+
+type polygonAnalysisScanRow struct {
+	QueryAreaSqm        float64 `gorm:"column:query_area_sqm"`
+	RegionCount         int64   `gorm:"column:region_count"`
+	TotalMatchedAreaSqm float64 `gorm:"column:total_matched_area_sqm"`
+	LandUseStatsJSON    []byte  `gorm:"column:land_use_stats"`
+	LayerStatsJSON      []byte  `gorm:"column:layer_stats"`
+	BuildabilityJSON    []byte  `gorm:"column:buildability_stats"`
+	QuickLayersJSON     []byte  `gorm:"column:quick_layers"`
+}
+
+type polygonQuickLayerJSON struct {
+	ID               uint64  `json:"id"`
+	ParcelID         uint64  `json:"parcel_id"`
+	LayerID          uint64  `json:"layer_id"`
+	LayerName        string  `json:"layer_name"`
+	LayerDisplayName string  `json:"layer_display_name"`
+	LayerAvatar      string  `json:"layer_avatar"`
+	LayerType        uint32  `json:"layer_type"`
+	LayerLegalStatus int     `json:"layer_legal_status"`
+	LayerOrder       int32   `json:"layer_order"`
+	LayerUpdatedAt   string  `json:"layer_updated_at"`
+	LandUseID        uint64  `json:"land_use_id"`
+	LandUseName      string  `json:"land_use_name"`
+	LandUseColor     string  `json:"land_use_color"`
+	WarnLevel        int     `json:"warn_level"`
+	CanBuild         bool    `json:"can_build"`
+	IntersectAreaSqm float64 `json:"intersect_area_sqm"`
+	Percent          float64 `json:"percent"`
+	RelationType     string  `json:"relation_type"`
+}
+
+const polygonQuickLayersSubquery = `
+				COALESCE((
+					SELECT json_agg(row_to_json(qi) ORDER BY qi.layer_order DESC, qi.intersect_area_sqm DESC)
+					FROM (
+						SELECT
+							0 AS id,
+							0 AS parcel_id,
+							sr.layer_id,
+							MAX(sr.layer_display_name) AS layer_name,
+							MAX(sr.layer_name) AS layer_display_name,
+							MAX(l.avatar) AS layer_avatar,
+							MAX(l.type) AS layer_type,
+							MAX(l.legal_status) AS layer_legal_status,
+							MAX(l.analyse_order) AS layer_order,
+							TO_CHAR(MAX(l.updated_at) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS layer_updated_at,
+							sr.land_use_id,
+							MAX(sr.land_use_name) AS land_use_name,
+							MAX(sr.land_use_color) AS land_use_color,
+							MAX(lu.warn_level) AS warn_level,
+							BOOL_OR(sr.can_build) AS can_build,
+							COALESCE(SUM(sr.overlap_area_sqm), 0) AS intersect_area_sqm,
+							ROUND(
+								(
+									COALESCE(SUM(sr.overlap_area_sqm), 0) /
+									NULLIF((SELECT ST_Area(geom::geography) FROM poly LIMIT 1), 0)
+								)::numeric * 100,
+								2
+							)::float8 AS percent,
+							'intersects' AS relation_type
+						FROM matched sr
+						JOIN qh_layers l
+							ON l.id = sr.layer_id
+						   AND l.deleted_at IS NULL
+						   AND l.status = 10
+						LEFT JOIN qh_land_use lu
+							ON lu.id = sr.land_use_id
+						WHERE sr.land_use_id > 0
+						  AND lu.id IS NOT NULL
+						GROUP BY sr.layer_id, sr.land_use_id
+					) qi
+				), '[]'::json) AS quick_layers`
+
+func unmarshalPolygonLandUseStats(raw []byte) ([]dto.PolygonLandUseStat, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var rows []polygonLandUseStatJSON
+	if err := json.Unmarshal(raw, &rows); err != nil {
+		return nil, err
+	}
+	out := make([]dto.PolygonLandUseStat, len(rows))
+	for i, row := range rows {
+		out[i] = dto.PolygonLandUseStat{
+			LandUseID:    row.LandUseID,
+			LandUseCode:  row.LandUseCode,
+			LandUseName:  row.LandUseName,
+			LandUseColor: row.LandUseColor,
+			CanBuild:     row.CanBuild,
+			RegionCount:  row.RegionCount,
+			AreaSqm:      row.AreaSqm,
+		}
+	}
+	return out, nil
+}
+
+func unmarshalPolygonLayerStats(raw []byte) ([]dto.PolygonLayerStat, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var rows []polygonLayerStatJSON
+	if err := json.Unmarshal(raw, &rows); err != nil {
+		return nil, err
+	}
+	out := make([]dto.PolygonLayerStat, len(rows))
+	for i, row := range rows {
+		out[i] = dto.PolygonLayerStat{
+			LayerID:          row.LayerID,
+			LayerName:        row.LayerName,
+			LayerDisplayName: row.LayerDisplayName,
+			RegionCount:      row.RegionCount,
+			AreaSqm:          row.AreaSqm,
+		}
+	}
+	return out, nil
+}
+
+func unmarshalPolygonBuildabilityStats(raw []byte) ([]dto.PolygonBuildabilityStat, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var rows []polygonBuildabilityStatJSON
+	if err := json.Unmarshal(raw, &rows); err != nil {
+		return nil, err
+	}
+	out := make([]dto.PolygonBuildabilityStat, len(rows))
+	for i, row := range rows {
+		out[i] = dto.PolygonBuildabilityStat{
+			CanBuild:    row.CanBuild,
+			RegionCount: row.RegionCount,
+			AreaSqm:     row.AreaSqm,
+		}
+	}
+	return out, nil
+}
+
+func parseLayerUpdatedAt(raw string) time.Time {
+	if raw == "" {
+		return time.Time{}
+	}
+	if t := _utils.ParseStringToTime(raw); t != nil {
+		return *t
+	}
+	if t := _utils.ParseStringToTimeCustom(raw); t != nil {
+		return *t
+	}
+	return time.Time{}
+}
+
+func unmarshalPolygonQuickLayers(raw []byte) ([]dto.ParcelLayerInfo, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var rows []polygonQuickLayerJSON
+	if err := json.Unmarshal(raw, &rows); err != nil {
+		return nil, err
+	}
+	out := make([]dto.ParcelLayerInfo, len(rows))
+	for i, row := range rows {
+		out[i] = dto.ParcelLayerInfo{
+			ID:               row.ID,
+			ParcelID:         row.ParcelID,
+			LayerID:          row.LayerID,
+			LayerName:        row.LayerName,
+			LayerDisplayName: row.LayerDisplayName,
+			LayerAvatar:      row.LayerAvatar,
+			LayerLegalStatus: row.LayerLegalStatus,
+			LayerType:        row.LayerType,
+			LayerOrder:       row.LayerOrder,
+			LayerUpdatedAt:   parseLayerUpdatedAt(row.LayerUpdatedAt),
+			LandUseID:        row.LandUseID,
+			LandUseName:      row.LandUseName,
+			LandUseColor:     row.LandUseColor,
+			WarnLevel:        _enum.EWarningLevel(row.WarnLevel),
+			CanBuild:         row.CanBuild,
+			IntersectAreaSqm: row.IntersectAreaSqm,
+			Percent:          row.Percent,
+			RelationType:     row.RelationType,
+		}
+	}
+	return out, nil
 }
 
 func polygonWarningSeverity(count int64) string {
@@ -845,41 +1063,23 @@ func polygonWarningSeverity(count int64) string {
 	}
 }
 
-func appendPolygonWarning(
-	warnings []dto.PolygonAnalysisWarning,
-	warningType string,
-	count int64,
-	message string,
-) []dto.PolygonAnalysisWarning {
-	if count <= 0 {
-		return warnings
-	}
-	return append(warnings, dto.PolygonAnalysisWarning{
-		Type:     warningType,
-		Count:    count,
-		Severity: polygonWarningSeverity(count),
-		Message:  message,
-	})
-}
-
 func (p *ParcelPostgres) SummarizePolygonAnalysis(
 	ctx context.Context,
 	points []repo.Point,
 	intersect bool,
 	zoom uint32,
 	filter *dto.PolygonTargetFilter,
-) (*dto.PolygonAnalysisSummary, error) {
+	withQuickInfo bool,
+) (*dto.PolygonAnalysisSummary, []dto.ParcelLayerInfo, error) {
 	if len(points) < 3 {
-		return nil, fmt.Errorf("invalid polygon")
+		return nil, nil, fmt.Errorf("invalid polygon")
 	}
 
 	polygon := buildPolygonWKT(points)
 
 	regionPredicate := "ST_Contains(poly.geom, r.geometry)"
-	parcelPredicate := "ST_Contains(poly.geom, p.geometry)"
 	if intersect {
 		regionPredicate = "ST_Intersects(r.geometry, poly.geom)"
-		parcelPredicate = "ST_Intersects(p.geometry, poly.geom)"
 	}
 
 	localFilter := filter
@@ -897,143 +1097,259 @@ func (p *ParcelPostgres) SummarizePolygonAnalysis(
 	baseArgs = append(baseArgs, zoomArgs...)
 	baseArgs = append(baseArgs, filterArgs...)
 
-	summary := &dto.PolygonAnalysisSummary{
-		Z: zoom,
+	quickLayersSQL := ""
+	if withQuickInfo {
+		quickLayersSQL = ",\n" + polygonQuickLayersSubquery
 	}
 
+	var row polygonAnalysisScanRow
 	if err := p.DB.WithContext(ctx).
-		Raw(`
+		Raw(cte+`
+			, matched AS MATERIALIZED (
+				SELECT * FROM selected_regions WHERE overlap_area_sqm > 0
+			)
+			SELECT
+				COALESCE(ST_Area(poly.geom::geography), 0) AS query_area_sqm,
+				(SELECT COUNT(DISTINCT region_id) FROM matched) AS region_count,
+				(SELECT COALESCE(SUM(overlap_area_sqm), 0) FROM matched) AS total_matched_area_sqm,
+				COALESCE((
+					SELECT json_agg(row_to_json(lu) ORDER BY lu.area_sqm DESC, lu.region_count DESC)
+					FROM (
+						SELECT
+							land_use_id,
+							MAX(land_use_code) AS land_use_code,
+							MAX(land_use_name) AS land_use_name,
+							MAX(land_use_color) AS land_use_color,
+							BOOL_OR(can_build) AS can_build,
+							COUNT(DISTINCT region_id) AS region_count,
+							COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
+						FROM matched
+						GROUP BY land_use_id
+						ORDER BY area_sqm DESC, region_count DESC
+						LIMIT 20
+					) lu
+				), '[]'::json) AS land_use_stats,
+				COALESCE((
+					SELECT json_agg(row_to_json(ls) ORDER BY ls.area_sqm DESC, ls.region_count DESC)
+					FROM (
+						SELECT
+							layer_id,
+							MAX(layer_name) AS layer_name,
+							MAX(layer_display_name) AS layer_display_name,
+							COUNT(DISTINCT region_id) AS region_count,
+							COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
+						FROM matched
+						GROUP BY layer_id
+						ORDER BY area_sqm DESC, region_count DESC
+						LIMIT 20
+					) ls
+				), '[]'::json) AS layer_stats,
+				COALESCE((
+					SELECT json_agg(row_to_json(bs) ORDER BY bs.can_build DESC)
+					FROM (
+						SELECT
+							can_build,
+							COUNT(DISTINCT region_id) AS region_count,
+							COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
+						FROM matched
+						GROUP BY can_build
+						ORDER BY can_build DESC
+					) bs
+				), '[]'::json) AS buildability_stats`+quickLayersSQL+`
+			FROM poly
+		`, baseArgs...).
+		Scan(&row).Error; err != nil {
+		return nil, nil, fmt.Errorf("summarize polygon analysis failed: %w", err)
+	}
+
+	landUseStats, err := unmarshalPolygonLandUseStats(row.LandUseStatsJSON)
+	if err != nil {
+		return nil, nil, fmt.Errorf("summarize polygon land-use stats failed: %w", err)
+	}
+	layerStats, err := unmarshalPolygonLayerStats(row.LayerStatsJSON)
+	if err != nil {
+		return nil, nil, fmt.Errorf("summarize polygon layer stats failed: %w", err)
+	}
+	buildabilityStats, err := unmarshalPolygonBuildabilityStats(row.BuildabilityJSON)
+	if err != nil {
+		return nil, nil, fmt.Errorf("summarize polygon buildability stats failed: %w", err)
+	}
+
+	applyPolygonLandUsePercentages(landUseStats, row.TotalMatchedAreaSqm)
+	applyPolygonLayerPercentages(layerStats, row.TotalMatchedAreaSqm)
+	applyPolygonBuildabilityPercentages(buildabilityStats, row.TotalMatchedAreaSqm)
+
+	var quickLayers []dto.ParcelLayerInfo
+	if withQuickInfo {
+		quickLayers, err = unmarshalPolygonQuickLayers(row.QuickLayersJSON)
+		if err != nil {
+			return nil, nil, fmt.Errorf("summarize polygon quick layers failed: %w", err)
+		}
+	}
+
+	return &dto.PolygonAnalysisSummary{
+		Z:                   zoom,
+		QueryAreaSqm:        row.QueryAreaSqm,
+		RegionCount:         row.RegionCount,
+		TotalMatchedAreaSqm: row.TotalMatchedAreaSqm,
+		LandUseStats:        landUseStats,
+		LayerStats:          layerStats,
+		BuildabilityStats:   buildabilityStats,
+	}, quickLayers, nil
+}
+
+func (p *ParcelPostgres) CountParcelsByPolygon(
+	ctx context.Context,
+	points []repo.Point,
+	intersect bool,
+	filter *dto.PolygonTargetFilter,
+) (int64, error) {
+	if len(points) < 3 {
+		return 0, fmt.Errorf("invalid polygon")
+	}
+
+	polygon := buildPolygonWKT(points)
+	parcelPredicate := "ST_Contains(poly.geom, p.geometry)"
+	regionPredicate := "ST_Contains(poly.geom, r.geometry)"
+	if intersect {
+		parcelPredicate = "ST_Intersects(p.geometry, poly.geom)"
+		regionPredicate = "ST_Intersects(r.geometry, poly.geom)"
+	}
+
+	localFilter := filter
+	if localFilter == nil {
+		localFilter = &dto.PolygonTargetFilter{}
+	}
+
+	var count int64
+	if !localFilter.HasPlanningFilters() {
+		query := `
 			WITH poly AS (
 				SELECT ST_GeomFromText(?, 4326) AS geom
 			)
-			SELECT COALESCE(ST_Area(poly.geom::geography), 0)
-			FROM poly
-		`, polygon).
-		Scan(&summary.QueryAreaSqm).Error; err != nil {
-		return nil, fmt.Errorf("calculate polygon area failed: %w", err)
-	}
-
-	type aggregateRow struct {
-		RegionCount int64   `gorm:"column:region_count"`
-		AreaSqm     float64 `gorm:"column:area_sqm"`
-	}
-
-	var aggregate aggregateRow
-	if err := p.DB.WithContext(ctx).
-		Raw(cte+`
-			SELECT
-				COUNT(DISTINCT region_id) AS region_count,
-				COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
-			FROM selected_regions
-			WHERE overlap_area_sqm > 0
-		`, baseArgs...).
-		Scan(&aggregate).Error; err != nil {
-		return nil, fmt.Errorf("summarize polygon regions failed: %w", err)
-	}
-
-	summary.RegionCount = aggregate.RegionCount
-	summary.TotalMatchedAreaSqm = aggregate.AreaSqm
-
-	var landUseStats []dto.PolygonLandUseStat
-	if err := p.DB.WithContext(ctx).
-		Raw(cte+`
-			SELECT
-				land_use_id,
-				MAX(land_use_code) AS land_use_code,
-				MAX(land_use_name) AS land_use_name,
-				MAX(land_use_color) AS land_use_color,
-				BOOL_OR(can_build) AS can_build,
-				COUNT(DISTINCT region_id) AS region_count,
-				COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
-			FROM selected_regions
-			WHERE overlap_area_sqm > 0
-			GROUP BY land_use_id
-			ORDER BY area_sqm DESC, region_count DESC
-			LIMIT 20
-		`, baseArgs...).
-		Scan(&landUseStats).Error; err != nil {
-		return nil, fmt.Errorf("summarize polygon land-use stats failed: %w", err)
-	}
-	applyPolygonLandUsePercentages(landUseStats, summary.TotalMatchedAreaSqm)
-	summary.LandUseStats = landUseStats
-
-	var layerStats []dto.PolygonLayerStat
-	if err := p.DB.WithContext(ctx).
-		Raw(cte+`
-			SELECT
-				layer_id,
-				MAX(layer_name) AS layer_name,
-				MAX(layer_display_name) AS layer_display_name,
-				COUNT(DISTINCT region_id) AS region_count,
-				COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
-			FROM selected_regions
-			WHERE overlap_area_sqm > 0
-			GROUP BY layer_id
-			ORDER BY area_sqm DESC, region_count DESC
-			LIMIT 20
-		`, baseArgs...).
-		Scan(&layerStats).Error; err != nil {
-		return nil, fmt.Errorf("summarize polygon layer stats failed: %w", err)
-	}
-	applyPolygonLayerPercentages(layerStats, summary.TotalMatchedAreaSqm)
-	summary.LayerStats = layerStats
-
-	var buildabilityStats []dto.PolygonBuildabilityStat
-	if err := p.DB.WithContext(ctx).
-		Raw(cte+`
-			SELECT
-				can_build,
-				COUNT(DISTINCT region_id) AS region_count,
-				COALESCE(SUM(overlap_area_sqm), 0) AS area_sqm
-			FROM selected_regions
-			WHERE overlap_area_sqm > 0
-			GROUP BY can_build
-			ORDER BY can_build DESC
-		`, baseArgs...).
-		Scan(&buildabilityStats).Error; err != nil {
-		return nil, fmt.Errorf("summarize polygon buildability stats failed: %w", err)
-	}
-	applyPolygonBuildabilityPercentages(buildabilityStats, summary.TotalMatchedAreaSqm)
-	summary.BuildabilityStats = buildabilityStats
-
-	hasPlanningFilter := localFilter.HasPlanningFilters()
-	parcelCountQuery := `
-		WITH poly AS (
-			SELECT ST_GeomFromText(?, 4326) AS geom
-		)
-		SELECT COUNT(DISTINCT p.id)
-		FROM parcels p, poly
-		WHERE p.geometry && poly.geom
-		  AND ` + parcelPredicate + `
-		  AND p.deleted_at IS NULL
-	`
-	parcelCountArgs := []interface{}{polygon}
-
-	if hasPlanningFilter {
-		parcelCountQuery = cte + `
 			SELECT COUNT(DISTINCT p.id)
 			FROM parcels p, poly
 			WHERE p.geometry && poly.geom
 			  AND ` + parcelPredicate + `
 			  AND p.deleted_at IS NULL
-			  AND EXISTS (
-				SELECT 1
-				FROM selected_regions sr
-				WHERE sr.overlap_area_sqm > 0
-				  AND sr.geom && p.geometry
-				  AND ST_Intersects(sr.geom, p.geometry)
-			  )
 		`
-		parcelCountArgs = baseArgs
+		if err := p.DB.WithContext(ctx).Raw(query, polygon).Scan(&count).Error; err != nil {
+			return 0, fmt.Errorf("count parcels by polygon failed: %w", err)
+		}
+		return count, nil
 	}
 
-	if err := p.DB.WithContext(ctx).
-		Raw(parcelCountQuery, parcelCountArgs...).
-		Scan(&summary.ParcelCount).Error; err != nil {
-		return nil, fmt.Errorf("summarize polygon parcel count failed: %w", err)
+	localZoom := uint32(config.ParcelPolygonMinZ)
+	if localFilter.Zoom != nil {
+		localZoom = *localFilter.Zoom
+	}
+	filterSQL, filterArgs := buildRegionPlanningFilterSQL(localFilter)
+	zoomSQL, zoomArgs := buildRegionZoomFilterSQL(&localZoom)
+	cte := buildSelectedRegionsCTE(regionPredicate, zoomSQL, filterSQL)
+
+	args := []interface{}{polygon}
+	args = append(args, zoomArgs...)
+	args = append(args, filterArgs...)
+
+	query := cte + `
+		SELECT COUNT(DISTINCT p.id)
+		FROM parcels p, poly
+		WHERE p.geometry && poly.geom
+		  AND ` + parcelPredicate + `
+		  AND p.deleted_at IS NULL
+		  AND EXISTS (
+			SELECT 1
+			FROM selected_regions sr
+			WHERE sr.overlap_area_sqm > 0
+			  AND sr.geom && p.geometry
+			  AND ST_Intersects(sr.geom, p.geometry)
+		  )
+	`
+	if err := p.DB.WithContext(ctx).Raw(query, args...).Scan(&count).Error; err != nil {
+		return 0, fmt.Errorf("count parcels by polygon failed: %w", err)
 	}
 
-	return summary, nil
+	return count, nil
+}
+
+func (p *ParcelPostgres) GetPolygonQuickInfo(
+	ctx context.Context,
+	points []repo.Point,
+	intersect bool,
+	zoom uint32,
+	filter *dto.PolygonTargetFilter,
+) ([]dto.ParcelLayerInfo, error) {
+	if len(points) < 3 {
+		return nil, fmt.Errorf("invalid polygon")
+	}
+
+	polygon := buildPolygonWKT(points)
+	regionPredicate := "ST_Contains(poly.geom, r.geometry)"
+	if intersect {
+		regionPredicate = "ST_Intersects(r.geometry, poly.geom)"
+	}
+
+	localFilter := filter
+	if localFilter == nil {
+		localFilter = &dto.PolygonTargetFilter{}
+	}
+	localZoom := zoom
+	localFilter.Zoom = &localZoom
+
+	filterSQL, filterArgs := buildRegionPlanningFilterSQL(localFilter)
+	zoomSQL, zoomArgs := buildRegionZoomFilterSQL(&localZoom)
+	cte := buildSelectedRegionsCTE(regionPredicate, zoomSQL, filterSQL)
+
+	args := []interface{}{polygon}
+	args = append(args, zoomArgs...)
+	args = append(args, filterArgs...)
+
+	var result []dto.ParcelLayerInfo
+	query := cte + `
+		SELECT
+			0 AS id,
+			0 AS parcel_id,
+			sr.layer_id,
+			MAX(sr.layer_display_name) AS layer_name,
+			MAX(sr.layer_name) AS layer_display_name,
+			MAX(l.avatar) AS layer_avatar,
+			MAX(l.type) AS layer_type,
+			MAX(l.legal_status) AS layer_legal_status,
+			MAX(l.analyse_order) AS layer_order,
+			TO_CHAR(MAX(l.updated_at) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS layer_updated_at,
+			sr.land_use_id,
+			MAX(sr.land_use_name) AS land_use_name,
+			MAX(sr.land_use_color) AS land_use_color,
+			MAX(lu.warn_level) AS warn_level,
+			BOOL_OR(sr.can_build) AS can_build,
+			COALESCE(SUM(sr.overlap_area_sqm), 0) AS intersect_area_sqm,
+			ROUND(
+				(
+					COALESCE(SUM(sr.overlap_area_sqm), 0) /
+					NULLIF((SELECT ST_Area(geom::geography) FROM poly LIMIT 1), 0)
+				)::numeric * 100,
+				2
+			) AS percent,
+			'intersects' AS relation_type
+		FROM selected_regions sr
+		JOIN qh_layers l
+			ON l.id = sr.layer_id
+		   AND l.deleted_at IS NULL
+		   AND l.status = 10
+		LEFT JOIN qh_land_use lu
+			ON lu.id = sr.land_use_id
+		WHERE sr.overlap_area_sqm > 0
+		  AND sr.land_use_id > 0
+		  AND lu.id IS NOT NULL
+		GROUP BY sr.layer_id, sr.land_use_id
+		ORDER BY MAX(l.analyse_order) DESC, intersect_area_sqm DESC
+	`
+
+	if err := p.DB.WithContext(ctx).Raw(query, args...).Scan(&result).Error; err != nil {
+		return nil, fmt.Errorf("get polygon quick info failed: %w", err)
+	}
+
+	return result, nil
 }
 
 // ============================================================
@@ -1266,6 +1582,7 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
 			l.display_name AS layer_name,
 			l.legal_status AS layer_legal_status,
 			l.analyse_order AS layer_order,
+			l.updated_at AS layer_updated_at,
 
             ST_Area(
                 ST_Intersection(r.geometry, p.geometry)::geography

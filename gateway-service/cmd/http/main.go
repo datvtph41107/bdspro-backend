@@ -141,6 +141,7 @@ var publicRoutes = []string{
 	"/v2/tqd/parcels/batch",
 	"/v2/tqd/parcels/by-location",
 	"/v2/tqd/parcels/by-polygon",
+	"/v2/tqd/public/qh/checking-polygon",
 	"/v2/tqd/properties",
 	"/v2/tqd/client/layers",
 	"/v2/tqd/client/parcels/search",

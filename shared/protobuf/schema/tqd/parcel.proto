@@ -39,6 +39,13 @@ service ParcelService {
     };
   }
 
+  rpc CheckingPolygon(FindParcelsByPolygonRequest) returns (FindParcelsByPolygonResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/public/qh/checking-polygon"
+      body: "*"
+    };
+  }
+
   rpc PreviewParcelsById(sharepb.RequestV3Proto) returns (ParcelInfo) {
     option (google.api.http) = {
       get: "/v2/tqd/parcels/preview/{id}"
@@ -876,6 +883,7 @@ message LayerQuickInfo {
   string layerDisplayName = 10;
   int32 layerOrder = 11;
   uint32 layerType = 12;
+  string updatedAt = 13;
 }
 
 message Layer {
@@ -945,7 +953,7 @@ message Region {
 
 message FindParcelsByPolygonRequest {
   repeated Point coordinates = 1;
-  double maxAreaKm2 = 2;
+  double maxAreaHa = 2;
   uint32 page = 3;
   uint32 size = 4;
   bool allowAutoShrink = 5;
@@ -962,7 +970,7 @@ message FindParcelsByPolygonRequest {
 }
 
 message FindParcelsByPolygonResponse {
-  repeated Parcel data = 1;
+  repeated Parcel parcels = 1;
   int32 total = 2;
   int32 page = 3;
   int32 pageSize = 4;
@@ -976,6 +984,8 @@ message FindParcelsByPolygonResponse {
   uint32 resultType = 12;
   uint32 z = 13;
   PolygonAnalysisSummary analysis = 14;
+  repeated LayerQuickInfo layers = 15;
+  repeated string quickWarnings = 16;
 }
 
 message PolygonLandUseStat {

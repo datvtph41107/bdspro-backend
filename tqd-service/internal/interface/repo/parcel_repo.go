@@ -21,8 +21,10 @@ type IParcelRepo interface {
 	FindIntersectPolygon(ctx context.Context, points []Point, limit, offset int, filter *dto.PolygonTargetFilter) ([]qh_domain.Parcel, int64, error)
 	FindWithinPolygon(ctx context.Context, points []Point, limit, offset int, filter *dto.PolygonTargetFilter) ([]qh_domain.Parcel, int64, error)
 	FindRegionByLocation(ctx context.Context, lat, lng float64) (*dto.RegionInfoResponse, error)
-	FindRegionsByPolygon(ctx context.Context, points []Point, intersect bool, zoom uint32, limit int, offset int, filter *dto.PolygonTargetFilter) ([]dto.RegionInfoResponse, int64, error)
-	SummarizePolygonAnalysis(ctx context.Context, points []Point, intersect bool, zoom uint32, filter *dto.PolygonTargetFilter) (*dto.PolygonAnalysisSummary, error)
+	FindRegionsByPolygon(ctx context.Context, points []Point, intersect bool, zoom uint32, limit int, offset int, filter *dto.PolygonTargetFilter, skipCount bool) ([]dto.RegionInfoResponse, int64, error)
+	SummarizePolygonAnalysis(ctx context.Context, points []Point, intersect bool, zoom uint32, filter *dto.PolygonTargetFilter, withQuickInfo bool) (*dto.PolygonAnalysisSummary, []dto.ParcelLayerInfo, error)
+	CountParcelsByPolygon(ctx context.Context, points []Point, intersect bool, filter *dto.PolygonTargetFilter) (int64, error)
+	GetPolygonQuickInfo(ctx context.Context, points []Point, intersect bool, zoom uint32, filter *dto.PolygonTargetFilter) ([]dto.ParcelLayerInfo, error)
 
 	// Detail API
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)

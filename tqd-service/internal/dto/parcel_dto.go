@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	_enum "common/domain/enum"
 	qh_domain "tqd/internal/domain/qh"
 )
@@ -37,6 +39,7 @@ type ParcelLayerInfo struct {
 	LayerAvatar      string `gorm:"column:layer_avatar"`
 	LayerLegalStatus int    `gorm:"column:layer_legal_status"`
 	LayerType        uint32 `gorm:"column:layer_type"`
+	LayerUpdatedAt   time.Time `gorm:"column:layer_updated_at"`
 
 	CanBuild bool `gorm:"column:can_build"`
 
@@ -67,7 +70,8 @@ type PolygonMapTargetsResponse struct {
 	MaxAllowedAreaKm2 float64
 	Warning           string
 
-	Analysis *PolygonAnalysisSummary
+	Analysis       *PolygonAnalysisSummary
+	QuickLayerRows []ParcelLayerInfo
 }
 
 type PolygonTargetFilter struct {

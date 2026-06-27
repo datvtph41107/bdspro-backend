@@ -5,6 +5,7 @@ pools:
             - tqdpb
 actions:
     tqdpb.FindParcelsByPolygon: 1
+    tqdpb.CheckingPolygon: 1
     tqdpb.FindParcelByLocation: 1
     tqdpb.GetParcelPlanning: 1
     tqdpb.CreateBatchParcels: 5 # tạo nhiều parcel tốn nhiều quota
