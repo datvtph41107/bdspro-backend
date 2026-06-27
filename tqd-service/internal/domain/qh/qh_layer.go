@@ -54,6 +54,8 @@ type QHLayer struct {
 	LegalNumber string           `gorm:"type:varchar(50)" json:"legalNumber,omitempty"` // số/ký hiệu văn bản
 	LegalDoc    string           `gorm:"type:text" json:"legalDoc,omitempty"`           // văn bản pháp lý (nội dung/mô tả)
 
+	DefaultVisible bool `gorm:"default:false" json:"defaultVisible"`
+
 	AuthorityIssuringID *uint64              `gorm:"type:bigint" json:"authorityIssuring,omitempty"` // cơ quan ban hành
 	AuthorityIssuring   *QHAuthorityIssuring `gorm:"foreignKey:AuthorityIssuringID;references:ID"`
 	PublishScopes       pq.Int32Array        `gorm:"type:integer[]" json:"publishScopes,omitempty"` // phạm vi áp dụng

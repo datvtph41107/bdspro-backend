@@ -77,7 +77,7 @@ func (p *MapWorkspacePostgres) GetRegionWorkspacePreviewsByIDs(
 				COALESCE(r.planning_name, '') AS planning_name,
 
 				COALESCE(r.area_sqm, 0) AS area_sqm,
-				COALESCE(r.area_ha, 0) AS area_ha,
+				0 AS area_ha,
 				COALESCE(r.perimeter_m, 0) AS perimeter_m,
 
 				ST_Multi(
@@ -188,7 +188,6 @@ func (p *MapWorkspacePostgres) GetRegionWorkspacePreviewsByIDs(
 			planning_name,
 
 			area_sqm,
-			area_ha,
 			perimeter_m,
 
 			COALESCE(ST_Y(ST_PointOnSurface(geom)), 0) AS center_lat,

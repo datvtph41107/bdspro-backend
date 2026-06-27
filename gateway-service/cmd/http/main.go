@@ -154,6 +154,7 @@ var publicRoutes = []string{
 	"/v2/tqd/public/parcels",
 	"/v2/crm/sitemap.xml",
 	"/v2/tqd/qh/public",
+	"/v2/tqd/map-target/by-location",
 }
 
 var tempRoutes = []string{

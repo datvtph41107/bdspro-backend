@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -761,7 +762,6 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 	ctx context.Context,
 	req *tqdpb.GetParcelPlanningRequest,
 ) (*tqdpb.LayerQuickInfoResponse, error) {
-
 	if req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
 	}
@@ -777,13 +777,14 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 
 	for _, q := range quickInfo {
 		layer, exists := layerMap[q.LayerID]
-
+		log.Printf("[GetParcelQuickLayers] LayerID: %d, LayerName: %s, LayerOrder: %d", q.LayerID, q.LayerName, q.LayerOrder)
 		if !exists {
 			layer = &tqdpb.LayerQuickInfo{
 				ParcelId:        q.ParcelID,
 				LayerId:         q.LayerID,
 				LayerName:       q.LayerName,
 				LegalStatus:     uint32(q.LayerLegalStatus),
+				LayerOrder:      q.LayerOrder,
 				LegalStatusName: enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
 				LayerAvatar:     q.LayerAvatar,
 				RelationType:    q.RelationType,
@@ -816,6 +817,11 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 			)
 		}
 	}
+
+	// Sắp xếp theo LayerOrder giảm dần
+	sort.SliceStable(layers, func(i, j int) bool {
+		return layers[i].LayerOrder > layers[j].LayerOrder
+	})
 
 	if len(warnings) == 0 {
 		warnings = append(warnings, "Không có cảnh báo nào.")

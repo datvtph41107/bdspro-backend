@@ -236,8 +236,8 @@ type RegionWorkspacePreviewRow struct {
 	LegalDoc     string `gorm:"column:legal_doc"`
 	PlanningName string `gorm:"column:planning_name"`
 
-	AreaSqm    float64 `gorm:"column:area_sqm"`
-	AreaHa     float64 `gorm:"column:area_ha"`
+	AreaSqm float64 `gorm:"column:area_sqm"`
+	// AreaHa     float64 `gorm:"column:area_ha"`
 	PerimeterM float64 `gorm:"column:perimeter_m"`
 
 	CenterLat float64 `gorm:"column:center_lat"`

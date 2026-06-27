@@ -1,6 +1,7 @@
 package dto
 
 import (
+	_enum "common/domain/enum"
 	qh_domain "tqd/internal/domain/qh"
 )
 
@@ -37,15 +38,16 @@ type ParcelLayerInfo struct {
 	LayerLegalStatus int    `gorm:"column:layer_legal_status"`
 	LayerType        uint32 `gorm:"column:layer_type"`
 
-	LandUseID    uint64 `gorm:"column:land_use_id"`
-	LandUseName  string `gorm:"column:land_use_name"`
-	LandUseColor string `gorm:"column:land_use_color"`
-	WarnLevel    int    `gorm:"column:warn_level"`
-	CanBuild     bool   `gorm:"column:can_build"`
+	CanBuild bool `gorm:"column:can_build"`
 
-	IntersectAreaSqm float64 `gorm:"column:intersect_area_sqm"`
-	Percent          float64 `gorm:"column:percent"`
-	RelationType     string  `gorm:"column:relation_type"`
+	LayerOrder       int32
+	LandUseID        uint64
+	LandUseName      string
+	LandUseColor     string
+	RelationType     string
+	WarnLevel        _enum.EWarningLevel `gorm:"column:warn_level"`
+	IntersectAreaSqm float64             `gorm:"column:intersect_area_sqm"`
+	Percent          float64             `gorm:"column:percent"`
 }
 
 type PolygonMapTargetsResponse struct {

@@ -240,12 +240,6 @@ func (r *regionRepoImpl) List(ctx context.Context, filter *repo.RegionFilter) ([
 	if filter.ProcessingStatus != nil {
 		baseQuery = baseQuery.Where("qh_regions.processing_status = ?", *filter.ProcessingStatus)
 	}
-	if filter.MinAreaHa != nil {
-		baseQuery = baseQuery.Where("qh_regions.area_ha >= ?", *filter.MinAreaHa)
-	}
-	if filter.MaxAreaHa != nil {
-		baseQuery = baseQuery.Where("qh_regions.area_ha <= ?", *filter.MaxAreaHa)
-	}
 	if filter.Search != nil && *filter.Search != "" {
 		searchTerm := "%" + strings.ToLower(*filter.Search) + "%"
 		baseQuery = baseQuery.Where(
@@ -480,10 +474,10 @@ func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*
 		Where("layer_id = ? AND deleted_at IS NULL AND status = 10", layerID).
 		Select(`
             COUNT(*) as total_regions,
-            COALESCE(SUM(area_ha), 0) as total_area_ha,
-            COALESCE(AVG(area_ha), 0) as avg_area_ha,
-            COALESCE(MIN(area_ha), 0) as min_area_ha,
-            COALESCE(MAX(area_ha), 0) as max_area_ha
+            COALESCE(SUM(area_sqm), 0) as total_area_sqm,
+            COALESCE(AVG(area_sqm), 0) as avg_area_sqm,
+            COALESCE(MIN(area_sqm), 0) as min_area_sqm,
+            COALESCE(MAX(area_sqm), 0) as max_area_sqm
         `).
 		Scan(&stats).Error
 	if err != nil {
@@ -497,10 +491,10 @@ func (r *regionRepoImpl) GetStatsByLayer(ctx context.Context, layerID uint64) (*
             land_use_code,
             MAX(land_use_name) as land_use_name,
             COUNT(*) as count,
-            COALESCE(SUM(area_ha), 0) as total_area_ha
+            COALESCE(SUM(area_sqm), 0) as total_area_sqm
         `).
 		Group("land_use_code").
-		Order("total_area_ha DESC").
+		Order("total_area_sqm DESC").
 		Scan(&landUseStats).Error
 	if err != nil {
 		return nil, err
@@ -614,7 +608,7 @@ func (r *regionRepoImpl) StreamGeoJSON(ctx context.Context, layerID uint64) (*sq
 							'label_stroke_width', 1,
 							'color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#CCCCCC'),
 							
-							'area_ha', r.area_ha,
+							'area_ha', 0,
 							'area_sqm', r.area_sqm,
 							'name', COALESCE(NULLIF(lu.name, ''), NULLIF(l.name, ''), r.name)
 						)
@@ -694,7 +688,7 @@ func (r *regionRepoImpl) StreamGeoJSONByFamilyID(ctx context.Context, familyID u
 							'label_stroke_color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#000000'),
 							'label_stroke_width', 1,
 							'color', COALESCE(NULLIF(lu.color, ''), NULLIF(lg.color, ''), NULLIF(l.color, ''), '#CCCCCC'),
-							'area_ha', r.area_ha,
+							'area_ha', 0,
 							'area_sqm', r.area_sqm,
 							'name', COALESCE(NULLIF(lu.name, ''), NULLIF(l.name, ''), r.name)
 						)

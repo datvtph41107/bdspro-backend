@@ -105,6 +105,7 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		FamilyId:        layer.FamilyID,
 		PublishScopes:   layer.PublishScopes,
 		LegalDoc:        layer.LegalDoc,
+		DefaultVisible:  layer.DefaultVisible,
 	}
 	if layer.ReplacedByID != nil {
 		rid := *layer.ReplacedByID

@@ -807,6 +807,7 @@ message TimelineSummary {
   repeated string majorChanges = 4;
 }
 
+// ─── LayerHistory messages ───
 message GetLayerHistoryRequest {
   uint64 layerId = 1;
 }
@@ -842,10 +843,11 @@ message ParcelListDTO {
 }
 
 message ListParcelResponse {
-  repeated ParcelInfo data = 1;
-  uint32 total = 2;
+  repeated ParcelInfo data  = 1;
+  uint32              total = 2;
 }
 
+// ─── Compare & Historical Risk messages ───
 message LayerQuickInfoResponse {
   repeated LayerQuickInfo layers = 1;
   repeated string warnings = 2;
@@ -872,7 +874,8 @@ message LayerQuickInfo {
   string legalStatusName = 8;
   string layerAvatar = 9;
   string layerDisplayName = 10;
-  uint32 layerType = 11;
+  int32 layerOrder = 11;
+  uint32 layerType = 12;
 }
 
 message Layer {
@@ -1127,5 +1130,5 @@ message ListParcelsRequest {
 
 message ListParcelsResponse {
   repeated Parcel parcels = 1;
-  int32 total = 2;
+  int32           total   = 2;
 }

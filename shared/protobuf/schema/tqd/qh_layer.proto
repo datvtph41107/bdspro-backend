@@ -265,6 +265,7 @@ message LayerResponse {
   // Họ lớp (qh_layer_families); chỉ có khi load chi tiết kèm preload Family
   optional QHLayerFamilyResponse family = 31;
   repeated int32 publishScopes = 32;
+  bool defaultVisible = 33;
 }
 
 message ListLayersResponse {

@@ -54,7 +54,7 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 	ctx context.Context,
 	req *tqdpb.ListParcelSubscriptionsRequest,
 ) (*tqdpb.ListParcelSubscriptionsResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -141,7 +141,7 @@ func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 	ctx context.Context,
 	req *tqdpb.GetParcelSubscriptionStatusRequest,
 ) (*tqdpb.ParcelSubscriptionStatusResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -177,7 +177,7 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 	ctx context.Context,
 	req *tqdpb.CreateParcelSubscriptionRequest,
 ) (*tqdpb.SubscriptionResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -213,7 +213,7 @@ func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 	ctx context.Context,
 	req *tqdpb.DeleteParcelSubscriptionRequest,
 ) (*emptypb.Empty, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -239,7 +239,7 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 	ctx context.Context,
 	req *tqdpb.ListRegionSubscriptionsRequest,
 ) (*tqdpb.ListRegionSubscriptionsResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -296,7 +296,7 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 	ctx context.Context,
 	req *tqdpb.CreateRegionSubscriptionRequest,
 ) (*tqdpb.SubscriptionResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -337,7 +337,7 @@ func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 	ctx context.Context,
 	req *tqdpb.DeleteRegionSubscriptionRequest,
 ) (*emptypb.Empty, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -368,7 +368,7 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 	ctx context.Context,
 	req *tqdpb.ListNotificationsRequest,
 ) (*tqdpb.ListNotificationsResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -424,7 +424,7 @@ func (h *SubscriptionGrpcHandler) MarkNotificationRead(
 	ctx context.Context,
 	req *tqdpb.MarkNotificationReadRequest,
 ) (*emptypb.Empty, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -447,7 +447,7 @@ func (h *SubscriptionGrpcHandler) MarkAllNotificationsRead(
 	ctx context.Context,
 	_ *emptypb.Empty,
 ) (*emptypb.Empty, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
@@ -470,7 +470,7 @@ func (h *SubscriptionGrpcHandler) AdminListSubscriptions(
 	ctx context.Context,
 	req *tqdpb.AdminListSubscriptionsRequest,
 ) (*tqdpb.ListSubscriptionsAdminResponse, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	log.Printf("[AdminListSubscriptions] AdminUserID: %d", userID)
 
 	// Sử dụng Pagable
@@ -514,7 +514,7 @@ func (h *SubscriptionGrpcHandler) AdminDeleteSubscription(
 	ctx context.Context,
 	req *tqdpb.AdminDeleteSubscriptionRequest,
 ) (*emptypb.Empty, error) {
-	userID := _utils.GetOriginIdFromContext(ctx)
+	userID := _utils.GetProfileIdWithContext(ctx)
 	log.Printf("[AdminDeleteSubscription] AdminUserID: %d, SubscriptionID: %d", userID, req.SubscriptionId)
 
 	if req.SubscriptionId == 0 {

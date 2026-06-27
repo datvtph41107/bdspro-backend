@@ -91,10 +91,10 @@ type BBox struct {
 type RegionStats struct {
 	LayerID      uint64        `json:"layerId"`
 	TotalRegions int64         `json:"totalRegions"`
-	TotalAreaHa  float64       `json:"totalAreaHa"`
-	AvgAreaHa    float64       `json:"avgAreaHa"`
-	MinAreaHa    float64       `json:"minAreaHa"`
-	MaxAreaHa    float64       `json:"maxAreaHa"`
+	TotalAreaSqm float64       `json:"totalAreaHa"`
+	AvgAreaSqm   float64       `json:"avgAreaHa"`
+	MinAreaSqm   float64       `json:"minAreaHa"`
+	MaxAreaSqm   float64       `json:"maxAreaHa"`
 	LandUseStats []LandUseStat `json:"landUseStats"`
 }
 
@@ -104,8 +104,8 @@ type RegionSyncReference struct {
 }
 
 type LandUseStat struct {
-	LandUseCode string  `json:"landUseCode"`
-	LandUseName string  `json:"landUseName"`
-	Count       int64   `json:"count"`
-	TotalAreaHa float64 `json:"totalAreaHa"`
+	LandUseCode  string  `json:"landUseCode"`
+	LandUseName  string  `json:"landUseName"`
+	Count        int64   `json:"count"`
+	TotalAreaSqm float64 `json:"totalAreaSqm"`
 }

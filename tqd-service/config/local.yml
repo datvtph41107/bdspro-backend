@@ -1,45 +1,46 @@
 server:
-    port: 8230
-    tcp_port: 8219
-
-eureka:
-    url: localhost
-    port: 8761
-
-database:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
-    # dsn: host=localhost user=admin password=123 dbname=postgres port=5432 sslmode=disable
-
-key:
-    jwt: key-generate-jwt-token-authentication
-
-jwt:
-    key-generate: key-generate-jwt-token-authentication
-    tokenPrefix: Bearer
-    tokenExpirationAfterDays: 14
-    accessExpAfterMinutes: 1 # access token hết hạn 15 phút
-    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
-    listPermit:
-    authorizationHeader: Authorization
+  port: 8230
+  http: 8030
+  tcp_port: 8219
 
 quota:
     enabled: true
     policy_file: "config/quota_policy.yml"
 
 redis:
-    host: localhost:6379
-    pass:
+    host: redis:6379
+    pass: protected_redis_secure_password
+
+database:
+  host: 103.172.239.89
+  port: 5433
+  name: db_tqd
+  user: tqd_admin
+  password: tqd_admin.1905
+  dsn: host=103.172.239.89 user=tqd_admin password=tqd_admin.1905 dbname=db_tqd port=5433 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 15 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
 
 config-app:
   qhpro:
-    domain_api: "https://api.qhpro.vn"
+    domain_api: "https://api.bdspro.com"
     domain_file: "https://data.bdspro.com"
-    domain_pmtile: "https://data-map.qhpro.vn"
+    domain_pmtile: "https://data-map.bdspro.com"
     domain_style: "https://map.qhpro.vn"
-    
+
 layer:
     # Base URL configuration
-    base_url: "ciproto://localhost:8032"
+    base_url: "ciproto://data-map.bdspro.com"
 
     # Default style templates
     default_styles:
@@ -65,7 +66,7 @@ layer:
               minzoom: 16
               layout:
                   text-field: ["get", "name"]
-                  text-size: 13
+                  text-size: 12
                   text-allow-overlap: false
                   text-padding: 12
               paint:

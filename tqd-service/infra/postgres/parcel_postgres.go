@@ -67,7 +67,7 @@ func (p *ParcelPostgres) FindRegionByLocation(
 			COALESCE(r.planning_name, '') AS planning_name,
 
 			COALESCE(r.area_sqm, 0) AS area_sqm,
-			COALESCE(r.area_ha, 0) AS area_ha,
+			0 AS area_ha,
 			COALESCE(r.perimeter_m, 0) AS perimeter_m,
 
 			COALESCE(ST_Y(ST_PointOnSurface(r.geometry)), 0) AS center_lat,
@@ -763,7 +763,7 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 			COALESCE(r.planning_name, '') AS planning_name,
 
 			COALESCE(r.area_sqm, 0) AS area_sqm,
-			COALESCE(r.area_ha, 0) AS area_ha,
+			0 AS area_ha,
 			COALESCE(r.perimeter_m, 0) AS perimeter_m,
 
 			COALESCE(ST_Y(ST_PointOnSurface(r.geometry)), 0) AS center_lat,
@@ -1260,6 +1260,12 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
             lu.warn_level AS warn_level,
             lu.color      AS land_use_color,
             lu.can_build  AS can_build,
+			
+			l.id AS layer_id,
+			l.avatar AS layer_avatar,
+			l.display_name AS layer_name,
+			l.legal_status AS layer_legal_status,
+			l.analyse_order AS layer_order,
 
             ST_Area(
                 ST_Intersection(r.geometry, p.geometry)::geography
