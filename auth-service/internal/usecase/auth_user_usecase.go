@@ -1548,7 +1548,12 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEnt
 	}
 
 	if smsChannel == "sms" && s.SMSProvider != nil {
-		_, err := s.SMSProvider.SendSMS(c, phone, "BDSP", "Mã OTP của bạn là: "+otp)
+		template := s.properties.SMSTemplate
+		if template == "" {
+			template = "Mã xác thực của bạn là {OTP}. Vui lòng không chia sẻ OTP cho bất kỳ ai."
+		}
+		message := strings.ReplaceAll(template, "{OTP}", otp)
+		_, err := s.SMSProvider.SendSMS(c, phone, "BDS Pro", message)
 		if err != nil {
 			log.Printf("⚠️ [SMS] Lỗi khi gửi OTP qua SMS cho phone %s: %v", phone, err)
 		} else {

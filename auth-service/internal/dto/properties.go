@@ -21,4 +21,5 @@ type PropertiesDTO struct {
 	CSKH struct {
 		TeamIDs []uint64
 	}
+	SMSTemplate string
 }

@@ -51,6 +51,7 @@ sms:
   account_sid: "your_twilio_account_sid"
   auth_token: "OTRjNGFlMzUtMTUzMC00OTdjLWE2ZjgtZDVjZTAxZWM2MjQ2OjBmMTI4ZGMzLTIyYmYtNDAyMC1hYzNhLWE2YzlkZjJiODExNg=="
   from_number: "+1234567890"
+  template: "Mã xác thực của bạn là {OTP}. Vui lòng không chia sẻ OTP cho bất kỳ ai."
 
 zns:
   template_id: 497058

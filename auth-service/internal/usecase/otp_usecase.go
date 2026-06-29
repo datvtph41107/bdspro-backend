@@ -88,7 +88,7 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 				int32(code),
 				"Mã không chính xác. Bạn còn "+fmt.Sprintf("%d",
 					s.properties.MaxTimesOtpEnter+1-otpEntity.OTPCheckTime)+
-					" lần. Mã OTP của bạn là "+otpEntity.OTP,
+					" lần.",
 			)
 		}
 	case enums.EXPIRED:

@@ -40,6 +40,7 @@ func NewRuntimeProperties() *RuntimeProperties {
 			}{
 				TeamIDs: config.Properties.CSKH.TeamIDs,
 			},
+			SMSTemplate: config.Properties.SMS.SMSTemplate,
 		},
 	}
 }
