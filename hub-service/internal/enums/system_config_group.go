@@ -47,12 +47,15 @@ var SystemConfigGroupEnumToKey = map[ESystemConfigGroup]string{
 
 // SystemConfigGroupMap map từ enum sang tên tiếng Việt
 var SystemConfigGroupMap = map[ESystemConfigGroup]string{
-	SystemConfigDesign:      "Thương hiệu & Giao diện",
-	SystemConfigFormat:      "Ngôn ngữ & Định dạng",
-	SystemConfigGeography:   "Phân vùng địa lý",
-	SystemConfigParameter:   "Tham số hiển thị & phân trang",
-	SystemConfigPerformance: "Tham số backend & hiệu năng",
-	SystemConfigContact:     "Thông tin liên hệ",
+	SystemConfigDesign:       "Thương hiệu & Giao diện",
+	SystemConfigFormat:       "Ngôn ngữ & Định dạng",
+	SystemConfigGeography:    "Phân vùng địa lý",
+	SystemConfigParameter:    "Tham số hiển thị & phân trang",
+	SystemConfigPerformance:  "Tham số backend & hiệu năng",
+	SystemConfigContact:      "Thông tin liên hệ",
+	SystemConfigGroupDefault: "Cấu hình mặc định",
+	SystemConfigGroupSecret:  "Cấu hình bí mật",
+	SystemConfigGroupSystem:  "Cấu hình hệ thống",
 }
 
 // GetSystemConfigGroupName lấy tên nhóm theo enum

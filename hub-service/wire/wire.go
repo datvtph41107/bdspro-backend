@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"hub/initial"
 	hub_infra_client "hub/infra/client"
 	hub_infra_handler "hub/infra/handler"
@@ -26,6 +27,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(hub_internal_interface.INotificationClient), new(*hub_infra_client.NotificationClient)),
 	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
@@ -69,7 +71,6 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewProvinceRepo,
 	hub_infra_postgre.NewProvinceV2Repo,
 	hub_infra_redis.NewRedisProvider,
-	hub_infra_provider.NewSyncProvider,
 	hub_infra_handler.NewSystemConfigHandler,
 	hub_infra_setting.NewSystemConfigPersist,
 	hub_infra_postgre.NewSystemConfigPostgres,

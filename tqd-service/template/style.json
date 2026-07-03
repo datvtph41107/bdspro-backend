@@ -7,7 +7,7 @@
   "sources": {
     "openmaptiles": {
       "type": "vector",
-      "url": "{{domain_api}}/v2/tqd/qh/public/json/vietnam-v2"
+      "url": "{{domain_api}}/v2/tqd/qh/public/json/vietnam"
     }
   },
   "glyphs": "{{domain_api}}/v2/tqd/qh/public/font/{fontstack}/{range}.pbf",

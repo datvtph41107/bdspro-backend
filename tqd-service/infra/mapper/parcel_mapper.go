@@ -1087,9 +1087,9 @@ func (m *ParcelMapper) BuildLayerQuickInfoFromRows(rows []dto.ParcelLayerInfo) *
 		return layers[i].LayerOrder > layers[j].LayerOrder
 	})
 
-	if len(warnings) == 0 {
-		warnings = append(warnings, "Không có cảnh báo nào.")
-	}
+	// if len(warnings) == 0 {
+	// 	warnings = append(warnings, "Không có cảnh báo nào.")
+	// }
 
 	return &tqdpb.LayerQuickInfoResponse{
 		Layers:   layers,

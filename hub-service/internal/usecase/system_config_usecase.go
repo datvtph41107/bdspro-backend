@@ -67,7 +67,7 @@ func getEncryptor() crypto.Encryptor {
 }
 
 // GetEncryptedSystemConfigByKey lấy config theo key và trả về giá trị đã mã hóa
-func (uc *SystemConfigUsecase) GetEncryptedSystemConfigByKey(ctx context.Context, key string) (*dto.EncryptedConfigResponse, error) {
+func (uc *SystemConfigUsecase) GetEncryptedSystemConfigByKey(ctx context.Context, key string) (*dto.SystemConfigResponse, error) {
 	// Validate key
 	if key == "" {
 		return nil, _errors.BadRequestException("key is required")
@@ -81,12 +81,12 @@ func (uc *SystemConfigUsecase) GetEncryptedSystemConfigByKey(ctx context.Context
 
 	// Kiểm tra encryption có enabled không
 	if !viper.GetBool("encryption.enabled") {
-		return &dto.EncryptedConfigResponse{
-			Key:       config.Key,
-			Value:     config.Value,
-			Encrypted: false,
-			KeyID:     "",
-			Version:   "none",
+		return &dto.SystemConfigResponse{
+			Key:   config.Key,
+			Value: config.Value,
+			// Encrypted: false,
+			// KeyID:     "",
+			// Version:   "none",
 		}, nil
 	}
 
@@ -102,12 +102,12 @@ func (uc *SystemConfigUsecase) GetEncryptedSystemConfigByKey(ctx context.Context
 		return nil, _errors.InternalServerException(fmt.Sprintf("encryption failed: %v", err))
 	}
 
-	return &dto.EncryptedConfigResponse{
-		Key:       config.Key,
-		Value:     encryptedValue,
-		Encrypted: true,
-		KeyID:     uc.encryptor.GetKeyID(),
-		Version:   "v1",
+	return &dto.SystemConfigResponse{
+		Key:   config.Key,
+		Value: encryptedValue,
+		// Encrypted: true,
+		// KeyID:     uc.encryptor.GetKeyID(),
+		// Version:   "v1",
 	}, nil
 }
 
