@@ -291,22 +291,81 @@ service SeoDomainService {
     };
   }
 
-// ---------------------------------------------------------------------------
-// SEO Measurement & Feedback Loop.
-// Mock-first metrics and feedback APIs for Admin dashboard.
-// ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // SEO Measurement & Feedback Loop.
+  // Admin-facing APIs for SEO measurement, crawl/index visibility,
+  // issue detection, and recommendation workflow.
+  // ---------------------------------------------------------------------------
 
-rpc GetSeoMeasurementOverview(GetSeoMeasurementOverviewRequest) returns (SeoMeasurementOverviewResponse);
-  rpc GenerateSeoMockMeasurement(GenerateSeoMockMeasurementRequest) returns (GenerateSeoMockMeasurementResponse);
-  rpc RunSeoFeedbackDetector(RunSeoFeedbackDetectorRequest) returns (RunSeoFeedbackDetectorResponse);
-  rpc GetSeoPagePerformanceList(GetSeoPagePerformanceListRequest) returns (GetSeoPagePerformanceListResponse);
-  rpc GetSeoQueryPerformanceList(GetSeoQueryPerformanceListRequest) returns (GetSeoQueryPerformanceListResponse);
-  rpc GetSeoIndexCoverageList(GetSeoIndexCoverageListRequest) returns (GetSeoIndexCoverageListResponse);
-  rpc GetSeoTrafficList(GetSeoTrafficListRequest) returns (GetSeoTrafficListResponse);
-  rpc GetSeoRankingList(GetSeoRankingListRequest) returns (GetSeoRankingListResponse);
-  rpc GetSeoCrawlEventList(GetSeoCrawlEventListRequest) returns (GetSeoCrawlEventListResponse);
-  rpc GetSeoIssueList(GetSeoIssueListRequest) returns (GetSeoIssueListResponse);
-  rpc ResolveSeoIssue(ResolveSeoIssueRequest) returns (sharepb.SubmitResponse);
+  rpc GetSeoMeasurementOverview(GetSeoMeasurementOverviewRequest) returns (SeoMeasurementOverviewResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/overview"
+    };
+  }
+
+  rpc GenerateSeoMockMeasurement(GenerateSeoMockMeasurementRequest) returns (GenerateSeoMockMeasurementResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/measurement/mock"
+      body: "*"
+    };
+  }
+
+  rpc RunSeoFeedbackDetector(RunSeoFeedbackDetectorRequest) returns (RunSeoFeedbackDetectorResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/measurement/feedback/detect"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoPagePerformanceList(GetSeoPagePerformanceListRequest) returns (GetSeoPagePerformanceListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/pages"
+    };
+  }
+
+  rpc GetSeoQueryPerformanceList(GetSeoQueryPerformanceListRequest) returns (GetSeoQueryPerformanceListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/queries"
+    };
+  }
+
+  rpc GetSeoIndexCoverageList(GetSeoIndexCoverageListRequest) returns (GetSeoIndexCoverageListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/index-coverage"
+    };
+  }
+
+  rpc GetSeoTrafficList(GetSeoTrafficListRequest) returns (GetSeoTrafficListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/traffic"
+    };
+  }
+
+  rpc GetSeoRankingList(GetSeoRankingListRequest) returns (GetSeoRankingListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/ranking"
+    };
+  }
+
+  rpc GetSeoCrawlEventList(GetSeoCrawlEventListRequest) returns (GetSeoCrawlEventListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/crawl-events"
+    };
+  }
+
+  rpc GetSeoIssueList(GetSeoIssueListRequest) returns (GetSeoIssueListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/issues"
+    };
+  }
+
+  rpc ResolveSeoIssue(ResolveSeoIssueRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/measurement/issues/{id}/resolve"
+      body: "*"
+    };
+  }
+
 }
 
 // -----------------------------------------------------------------------------
@@ -1132,7 +1191,7 @@ message SeoRelativeResponse {
 // -----------------------------------------------------------------------------
 
 message GetSeoMeasurementOverviewRequest {
-  string range = 1;
+  string range = 1; // today | 7d | 28d | 90d | custom
   uint32 limit = 2;
 }
 
@@ -1142,7 +1201,7 @@ message SeoMeasurementKPI {
   double value = 3;
   string unit = 4;
   double delta = 5;
-  string severity = 6;
+  string severity = 6; // normal | warning | critical | success
 }
 
 message SeoMeasurementTrendPoint {
@@ -1156,17 +1215,17 @@ message SeoMeasurementTrendPoint {
 }
 
 message SeoIssueSummary {
-  string issue_type = 1;
-  string severity = 2;
-  uint32 open_count = 3;
+  string issueType = 1;
+  string severity = 2; // info | warning | critical
+  uint32 openCount = 3;
 }
 
 message SeoMeasurementOverviewResponse {
   repeated SeoMeasurementKPI kpis = 1;
   repeated SeoMeasurementTrendPoint trend = 2;
-  repeated SeoIssueSummary issue_summary = 3;
-  repeated SeoPagePerformanceRow top_pages = 4;
-  repeated SeoIssueRow need_attention = 5;
+  repeated SeoIssueSummary issueSummary = 3;
+  repeated SeoPagePerformanceRow topPages = 4;
+  repeated SeoIssueRow needAttention = 5;
 }
 
 message GenerateSeoMockMeasurementRequest {
@@ -1177,13 +1236,13 @@ message GenerateSeoMockMeasurementRequest {
 
 message GenerateSeoMockMeasurementResponse {
   uint32 pages = 1;
-  uint32 search_rows = 2;
-  uint32 inspection_rows = 3;
-  uint32 traffic_rows = 4;
-  uint32 ranking_rows = 5;
-  uint32 crawl_rows = 6;
-  uint32 keyword_targets = 7;
-  string data_source = 8;
+  uint32 searchRows = 2;
+  uint32 inspectionRows = 3;
+  uint32 trafficRows = 4;
+  uint32 rankingRows = 5;
+  uint32 crawlRows = 6;
+  uint32 keywordTargets = 7;
+  string dataSource = 8; // mock
   repeated string messages = 9;
 }
 
@@ -1204,32 +1263,32 @@ message GetSeoPagePerformanceListRequest {
   uint32 size = 2;
   string sort = 3;
   string keyword = 4;
-  string page_status = 5;
-  string render_status = 6;
-  string index_status = 7;
-  string issue_status = 8;
+  string pageStatus = 5;
+  string renderStatus = 6;
+  string indexStatus = 7;
+  string issueStatus = 8;
   string range = 9;
 }
 
 message SeoPagePerformanceRow {
-  uint64 seo_domain_id = 1;
-  string canonical_url = 2;
+  uint64 seoDomainId = 1;
+  string canonicalUrl = 2;
   string slug = 3;
   string title = 4;
-  string page_status = 5;
-  string render_status = 6;
-  bool is_sitemap = 7;
-  bool is_index = 8;
-  uint32 quality_score = 9;
+  string pageStatus = 5;
+  string renderStatus = 6;
+  bool isSiteMap = 7;
+  bool isIndex = 8;
+  uint32 qualityScore = 9;
   double clicks = 10;
   double impressions = 11;
   double ctr = 12;
   double position = 13;
   double sessions = 14;
   double conversions = 15;
-  string index_status = 16;
-  string last_crawl_time = 17;
-  uint32 open_issue_count = 18;
+  string indexStatus = 16;
+  string lastCrawlTime = 17;
+  uint32 openIssueCount = 18;
 }
 
 message GetSeoPagePerformanceListResponse {
@@ -1242,7 +1301,7 @@ message GetSeoQueryPerformanceListRequest {
   uint32 size = 2;
   string sort = 3;
   string query = 4;
-  string canonical_url = 5;
+  string canonicalUrl = 5;
   string device = 6;
   string country = 7;
   string range = 8;
@@ -1250,7 +1309,7 @@ message GetSeoQueryPerformanceListRequest {
 
 message SeoQueryPerformanceRow {
   string query = 1;
-  string canonical_url = 2;
+  string canonicalUrl = 2;
   string device = 3;
   string country = 4;
   double clicks = 5;
@@ -1268,24 +1327,24 @@ message GetSeoIndexCoverageListRequest {
   uint32 page = 1;
   uint32 size = 2;
   string sort = 3;
-  string canonical_url = 4;
-  string index_status = 5;
+  string canonicalUrl = 4;
+  string indexStatus = 5;
   string verdict = 6;
   string range = 7;
 }
 
 message SeoIndexCoverageRow {
-  uint64 seo_domain_id = 1;
-  string canonical_url = 2;
-  string inspection_status = 3;
-  string index_status = 4;
-  string coverage_state = 5;
-  string robots_txt_state = 6;
-  string google_canonical = 7;
-  string user_canonical = 8;
-  string last_crawl_time = 9;
+  uint64 seoDomainId = 1;
+  string canonicalUrl = 2;
+  string inspectionStatus = 3;
+  string indexStatus = 4;
+  string coverageState = 5;
+  string robotsTxtState = 6;
+  string googleCanonical = 7;
+  string userCanonical = 8;
+  string lastCrawlTime = 9;
   string verdict = 10;
-  string inspected_at = 11;
+  string inspectedAt = 11;
 }
 
 message GetSeoIndexCoverageListResponse {
@@ -1297,7 +1356,7 @@ message GetSeoTrafficListRequest {
   uint32 page = 1;
   uint32 size = 2;
   string sort = 3;
-  string canonical_url = 4;
+  string canonicalUrl = 4;
   string source = 5;
   string medium = 6;
   string device = 7;
@@ -1306,13 +1365,13 @@ message GetSeoTrafficListRequest {
 }
 
 message SeoTrafficRow {
-  string canonical_url = 1;
+  string canonicalUrl = 1;
   string date = 2;
   double sessions = 3;
   double users = 4;
-  double active_users = 5;
-  double page_views = 6;
-  double engagement_seconds = 7;
+  double activeUsers = 5;
+  double pageViews = 6;
+  double engagementSeconds = 7;
   double conversions = 8;
   string source = 9;
   string medium = 10;
@@ -1330,21 +1389,21 @@ message GetSeoRankingListRequest {
   uint32 size = 2;
   string sort = 3;
   string keyword = 4;
-  string canonical_url = 5;
+  string canonicalUrl = 5;
   string device = 6;
   string range = 7;
 }
 
 message SeoRankingRow {
   string keyword = 1;
-  string canonical_url = 2;
+  string canonicalUrl = 2;
   double position = 3;
-  double previous_position = 4;
-  double position_delta = 5;
+  double previousPosition = 4;
+  double positionDelta = 5;
   string device = 6;
   string location = 7;
   string language = 8;
-  string checked_at = 9;
+  string checkedAt = 9;
 }
 
 message GetSeoRankingListResponse {
@@ -1356,22 +1415,22 @@ message GetSeoCrawlEventListRequest {
   uint32 page = 1;
   uint32 size = 2;
   string sort = 3;
-  string canonical_url = 4;
-  string bot_name = 5;
-  int32 status_code = 6;
+  string canonicalUrl = 4;
+  string botName = 5;
+  int32 statusCode = 6;
   string range = 7;
 }
 
 message SeoCrawlEventRow {
   uint64 id = 1;
-  uint64 seo_domain_id = 2;
-  string canonical_url = 3;
-  string bot_name = 4;
-  string user_agent = 5;
-  int32 status_code = 6;
+  uint64 seoDomainId = 2;
+  string canonicalUrl = 3;
+  string botName = 4;
+  string userAgent = 5;
+  int32 statusCode = 6;
   string method = 7;
-  int64 response_time_ms = 8;
-  string crawled_at = 9;
+  int64 responseTimeMs = 8;
+  string crawledAt = 9;
 }
 
 message GetSeoCrawlEventListResponse {
@@ -1383,8 +1442,8 @@ message GetSeoIssueListRequest {
   uint32 page = 1;
   uint32 size = 2;
   string sort = 3;
-  string canonical_url = 4;
-  string issue_type = 5;
+  string canonicalUrl = 4;
+  string issueType = 5;
   string severity = 6;
   string status = 7;
   string range = 8;
@@ -1392,17 +1451,17 @@ message GetSeoIssueListRequest {
 
 message SeoIssueRow {
   uint64 id = 1;
-  uint64 seo_domain_id = 2;
-  string canonical_url = 3;
-  string issue_type = 4;
+  uint64 seoDomainId = 2;
+  string canonicalUrl = 3;
+  string issueType = 4;
   string severity = 5;
   string status = 6;
   string title = 7;
   string message = 8;
   string evidence = 9;
   string recommendation = 10;
-  string detected_at = 11;
-  string resolved_at = 12;
+  string detectedAt = 11;
+  string resolvedAt = 12;
 }
 
 message GetSeoIssueListResponse {
@@ -1412,6 +1471,6 @@ message GetSeoIssueListResponse {
 
 message ResolveSeoIssueRequest {
   uint64 id = 1;
-  string status = 2;
+  string status = 2; // resolved | ignored
   string note = 3;
 }

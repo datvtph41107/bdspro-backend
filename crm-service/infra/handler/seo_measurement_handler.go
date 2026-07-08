@@ -231,7 +231,26 @@ func seoIssueSummaryToPb(items []dto.SeoIssueSummary) []*crmpb.SeoIssueSummary {
 func seoPagePerformanceRowsToPb(items []dto.SeoPagePerformanceRow) []*crmpb.SeoPagePerformanceRow {
 	out := make([]*crmpb.SeoPagePerformanceRow, 0, len(items))
 	for _, item := range items {
-		out = append(out, &crmpb.SeoPagePerformanceRow{SeoDomainId: item.SeoDomainID, CanonicalUrl: item.CanonicalURL, Slug: item.Slug, Title: item.Title, PageStatus: item.PageStatus, RenderStatus: item.RenderStatus, IsSitemap: item.IsSitemap, IsIndex: item.IsIndex, QualityScore: item.QualityScore, Clicks: item.Clicks, Impressions: item.Impressions, Ctr: item.CTR, Position: item.Position, Sessions: item.Sessions, Conversions: item.Conversions, IndexStatus: item.IndexStatus, LastCrawlTime: item.LastCrawlTime, OpenIssueCount: item.OpenIssueCount})
+		out = append(out, &crmpb.SeoPagePerformanceRow{
+			SeoDomainId:    item.SeoDomainID,
+			CanonicalUrl:   item.CanonicalURL,
+			Slug:           item.Slug,
+			Title:          item.Title,
+			PageStatus:     item.PageStatus,
+			RenderStatus:   item.RenderStatus,
+			IsSiteMap:      item.IsSitemap,
+			IsIndex:        item.IsIndex,
+			QualityScore:   item.QualityScore,
+			Clicks:         item.Clicks,
+			Impressions:    item.Impressions,
+			Ctr:            item.CTR,
+			Position:       item.Position,
+			Sessions:       item.Sessions,
+			Conversions:    item.Conversions,
+			IndexStatus:    item.IndexStatus,
+			LastCrawlTime:  item.LastCrawlTime,
+			OpenIssueCount: item.OpenIssueCount,
+		})
 	}
 	return out
 }
