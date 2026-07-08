@@ -7,6 +7,7 @@ import (
 	"crm/internal/dto"
 	"crm/internal/repo"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -21,6 +22,9 @@ func NewSeoDomainPostgres(db *gorm.DB) repo.SeoDomainRepo {
 }
 
 func (r *SeoDomainPostgres) Create(ctx context.Context, seo *seo_domain.SeoDomain) (*seo_domain.SeoDomain, error) {
+	if seo != nil {
+		seo.NormalizeLifecycle()
+	}
 	if err := impl.GetDB(ctx, r.db).Create(seo).Error; err != nil {
 		return nil, err
 	}
@@ -45,6 +49,7 @@ func (r *SeoDomainPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain
 		}
 		return nil, err
 	}
+	seo.NormalizeLifecycle()
 	return &seo, nil
 }
 
@@ -67,6 +72,7 @@ func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID 
 		}
 		return nil, err
 	}
+	seo.NormalizeLifecycle()
 	return &seo, nil
 }
 
@@ -89,6 +95,7 @@ func (r *SeoDomainPostgres) GetByRefSource(ctx context.Context, refType uint32, 
 		}
 		return nil, err
 	}
+	seo.NormalizeLifecycle()
 	return &seo, nil
 }
 
@@ -103,6 +110,7 @@ func (r *SeoDomainPostgres) GetByCanonicalURL(ctx context.Context, canonicalURL 
 		}
 		return nil, err
 	}
+	seo.NormalizeLifecycle()
 	return &seo, nil
 }
 
@@ -110,11 +118,19 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	var items []seo_domain.SeoDomain
 	var total int64
 
+	if req == nil {
+		req = &dto.SeoDomainListRequest{}
+	}
+	req.Normalize()
+
 	query := r.db.WithContext(ctx).Model(&seo_domain.SeoDomain{})
 
-	if req.Keyword != nil && *req.Keyword != "" {
-		keyword := "%" + *req.Keyword + "%"
-		query = query.Where("slug ILIKE ? OR origin_url ILIKE ? OR canonical_url ILIKE ? OR title ILIKE ? OR description ILIKE ? OR note ILIKE ?", keyword, keyword, keyword, keyword, keyword, keyword)
+	if req.Keyword != nil && strings.TrimSpace(*req.Keyword) != "" {
+		keyword := "%" + strings.TrimSpace(*req.Keyword) + "%"
+		query = query.Where(
+			"slug ILIKE ? OR origin_url ILIKE ? OR canonical_url ILIKE ? OR title ILIKE ? OR description ILIKE ? OR note ILIKE ? OR ref_label ILIKE ?",
+			keyword, keyword, keyword, keyword, keyword, keyword, keyword,
+		)
 	}
 	if req.RefType != nil {
 		query = query.Where("ref_type = ?", *req.RefType)
@@ -122,17 +138,17 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	if req.RefID != nil {
 		query = query.Where("ref_id = ?", *req.RefID)
 	}
-	if req.RefSource != nil && *req.RefSource != "" {
-		query = query.Where("ref_source = ?", *req.RefSource)
+	if req.RefSource != nil && strings.TrimSpace(*req.RefSource) != "" {
+		query = query.Where("ref_source = ?", strings.TrimSpace(*req.RefSource))
 	}
-	if req.SourceStatus != nil && *req.SourceStatus != "" {
-		query = query.Where("source_status = ?", *req.SourceStatus)
+	if req.SourceStatus != nil && strings.TrimSpace(*req.SourceStatus) != "" {
+		query = query.Where("source_status = ?", strings.TrimSpace(*req.SourceStatus))
 	}
 	if req.RefMissing != nil {
 		query = query.Where("ref_missing = ?", *req.RefMissing)
 	}
-	if req.Scope != nil && *req.Scope != "" {
-		query = query.Where("scope = ?", *req.Scope)
+	if req.Scope != nil && strings.TrimSpace(*req.Scope) != "" {
+		query = query.Where("scope = ?", strings.TrimSpace(*req.Scope))
 	}
 	if req.Classify != nil {
 		query = query.Where("classify = ?", *req.Classify)
@@ -153,6 +169,17 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 		query = query.Where("need_generate = ?", *req.NeedGenerate)
 	}
 
+	// V2 lifecycle/render filters.
+	if req.PageStatus != nil && strings.TrimSpace(*req.PageStatus) != "" {
+		query = query.Where("page_status = ?", strings.TrimSpace(*req.PageStatus))
+	}
+	if req.RenderStatus != nil && strings.TrimSpace(*req.RenderStatus) != "" {
+		query = query.Where("render_status = ?", strings.TrimSpace(*req.RenderStatus))
+	}
+	if req.TemplateKey != nil && strings.TrimSpace(*req.TemplateKey) != "" {
+		query = query.Where("template_key = ?", strings.TrimSpace(*req.TemplateKey))
+	}
+
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -160,10 +187,15 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	if err := query.
 		Order("updated_at DESC").
 		Offset(req.GetOffset()).
-		Limit(req.GetLimit()).
+		Limit(req.GetLimitAdmin()).
 		Find(&items).Error; err != nil {
 		return nil, 0, err
 	}
+
+	for i := range items {
+		items[i].NormalizeLifecycle()
+	}
+
 	return items, total, nil
 }
 
@@ -181,10 +213,18 @@ func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.Se
 		return nil, err
 	}
 
+	for i := range items {
+		items[i].NormalizeLifecycle()
+	}
+
 	return items, nil
 }
 
 func (r *SeoDomainPostgres) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = gorm.Expr("NOW()")
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoDomain{}).
 		Where("id = ?", id).
@@ -213,6 +253,7 @@ func (r *SeoDomainPostgres) MarkNeedGenerateByRef(ctx context.Context, refType u
 		Where("ref_type = ? AND ref_id = ?", refType, refID).
 		Updates(map[string]interface{}{
 			"need_generate":     true,
+			"render_status":     seo_domain.SeoRenderStatusPending,
 			"source_updated_at": sourceUpdatedAt,
 			"updated_at":        gorm.Expr("NOW()"),
 		}).Error
@@ -224,6 +265,7 @@ func (r *SeoDomainPostgres) MarkNeedGenerateByRefSource(ctx context.Context, ref
 		Where("ref_type = ? AND ref_source = ? AND ref_id = ?", refType, refSource, refID).
 		Updates(map[string]interface{}{
 			"need_generate":     true,
+			"render_status":     seo_domain.SeoRenderStatusPending,
 			"source_updated_at": sourceUpdatedAt,
 			"updated_at":        gorm.Expr("NOW()"),
 		}).Error
@@ -232,6 +274,11 @@ func (r *SeoDomainPostgres) MarkNeedGenerateByRefSource(ctx context.Context, ref
 func (r *SeoDomainPostgres) UpdateSourceStateByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64, updates map[string]interface{}) error {
 	if len(updates) == 0 {
 		return nil
+	}
+	if _, ok := updates["need_generate"]; ok {
+		if _, hasRender := updates["render_status"]; !hasRender {
+			updates["render_status"] = seo_domain.SeoRenderStatusPending
+		}
 	}
 	updates["updated_at"] = gorm.Expr("NOW()")
 	return impl.GetDB(ctx, r.db).
@@ -242,6 +289,7 @@ func (r *SeoDomainPostgres) UpdateSourceStateByRefSource(ctx context.Context, re
 
 func (r *SeoDomainPostgres) GetSitemapItems(ctx context.Context, scope *string) ([]dto.SeoSitemapItem, error) {
 	var rows []dto.SeoSitemapItem
+
 	query := r.db.WithContext(ctx).
 		Model(&seo_domain.SeoDomain{}).
 		Select(`
@@ -251,10 +299,15 @@ func (r *SeoDomainPostgres) GetSitemapItems(ctx context.Context, scope *string) 
 			sitemap_priority AS sitemap_priority,
 			sitemap_change_freq AS sitemap_change_freq
 		`).
-		Where("published = ? AND is_site_map = ?", true, true)
-	if scope != nil && *scope != "" {
-		query = query.Where("scope = ?", *scope)
+		Where("published = ? AND is_site_map = ?", true, true).
+		Where("page_status = ?", seo_domain.SeoPageStatusPublished).
+		Where("is_index = ?", true).
+		Where("scope = ?", seo_domain.SeoScopePublic)
+
+	if scope != nil && strings.TrimSpace(*scope) != "" {
+		query = query.Where("scope = ?", strings.TrimSpace(*scope))
 	}
+
 	if err := query.Order("updated_at DESC").Scan(&rows).Error; err != nil {
 		return nil, err
 	}
@@ -268,6 +321,8 @@ func (r *SeoDomainPostgres) GetNeedGenerateList(ctx context.Context, limit int) 
 	}
 	err := r.db.WithContext(ctx).
 		Where("need_generate = ? AND published = ?", true, true).
+		Where("page_status = ?", seo_domain.SeoPageStatusPublished).
+		Where("render_status IN ?", []string{seo_domain.SeoRenderStatusPending, seo_domain.SeoRenderStatusFailed}).
 		Order("source_updated_at ASC NULLS FIRST, updated_at ASC").
 		Limit(limit).
 		Find(&items).Error
@@ -311,6 +366,12 @@ func (r *SeoInternalLinkPostgres) GetByID(ctx context.Context, id uint64) (*seo_
 func (r *SeoInternalLinkPostgres) GetList(ctx context.Context, req *dto.SeoInternalLinkListRequest) ([]seo_domain.SeoInternalLink, int64, error) {
 	var items []seo_domain.SeoInternalLink
 	var total int64
+
+	if req == nil {
+		req = &dto.SeoInternalLinkListRequest{}
+	}
+	req.Normalize()
+
 	query := r.db.WithContext(ctx).Model(&seo_domain.SeoInternalLink{})
 
 	if req.ParentSeoID != nil {
@@ -319,11 +380,11 @@ func (r *SeoInternalLinkPostgres) GetList(ctx context.Context, req *dto.SeoInter
 	if req.ChildSeoID != nil {
 		query = query.Where("child_seo_id = ?", *req.ChildSeoID)
 	}
-	if req.LinkType != nil && *req.LinkType != "" {
-		query = query.Where("link_type = ?", *req.LinkType)
+	if req.LinkType != nil && strings.TrimSpace(*req.LinkType) != "" {
+		query = query.Where("link_type = ?", strings.TrimSpace(*req.LinkType))
 	}
-	if req.Keyword != nil && *req.Keyword != "" {
-		keyword := "%" + *req.Keyword + "%"
+	if req.Keyword != nil && strings.TrimSpace(*req.Keyword) != "" {
+		keyword := "%" + strings.TrimSpace(*req.Keyword) + "%"
 		query = query.Where("link ILIKE ? OR title ILIKE ?", keyword, keyword)
 	}
 
@@ -343,6 +404,10 @@ func (r *SeoInternalLinkPostgres) GetList(ctx context.Context, req *dto.SeoInter
 }
 
 func (r *SeoInternalLinkPostgres) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = gorm.Expr("NOW()")
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoInternalLink{}).
 		Where("id = ?", id).
@@ -408,6 +473,12 @@ func (r *SeoRelativePostgres) GetByID(ctx context.Context, id uint64) (*seo_doma
 func (r *SeoRelativePostgres) GetList(ctx context.Context, req *dto.SeoRelativeListRequest) ([]seo_domain.SeoRelative, int64, error) {
 	var items []seo_domain.SeoRelative
 	var total int64
+
+	if req == nil {
+		req = &dto.SeoRelativeListRequest{}
+	}
+	req.Normalize()
+
 	query := r.db.WithContext(ctx).Model(&seo_domain.SeoRelative{})
 
 	if req.ParentSeoID != nil {
@@ -416,8 +487,8 @@ func (r *SeoRelativePostgres) GetList(ctx context.Context, req *dto.SeoRelativeL
 	if req.ChildSeoID != nil {
 		query = query.Where("child_seo_id = ?", *req.ChildSeoID)
 	}
-	if req.RelationType != nil && *req.RelationType != "" {
-		query = query.Where("relation_type = ?", *req.RelationType)
+	if req.RelationType != nil && strings.TrimSpace(*req.RelationType) != "" {
+		query = query.Where("relation_type = ?", strings.TrimSpace(*req.RelationType))
 	}
 
 	if err := query.Count(&total).Error; err != nil {

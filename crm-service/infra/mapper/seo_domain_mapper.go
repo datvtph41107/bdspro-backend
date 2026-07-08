@@ -2,6 +2,7 @@ package mapper
 
 import (
 	seo_domain "crm/internal/domain/seo"
+	"strings"
 	"time"
 
 	crmpb "pb/types/crm"
@@ -73,6 +74,14 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		Relatives:         relatives,
 		CreatedAt:         formatTime(seo.CreatedAt),
 		UpdatedAt:         formatTime(seo.UpdatedAt),
+
+		// V2 lifecycle/render fields.
+		PageStatus:      seoPageStatusToPb(seo),
+		RenderStatus:    seoRenderStatusToPb(seo),
+		RenderedHtml:    seo.RenderedHTML,
+		LastRenderError: seo.LastRenderError,
+		TemplateKey:     seo.TemplateKey,
+		TemplateVersion: seo.TemplateVersion,
 	}
 }
 
@@ -93,6 +102,11 @@ func (m *SeoDomainMapper) SeoDomainBriefToPb(seo *seo_domain.SeoDomain) *crmpb.S
 		RefSource:    seo.RefSource,
 		RefLabel:     seo.RefLabel,
 		SourceStatus: seo.SourceStatus,
+
+		// V2 lifecycle/render fields.
+		PageStatus:   seoPageStatusToPb(seo),
+		RenderStatus: seoRenderStatusToPb(seo),
+		NeedGenerate: seo.NeedGenerate,
 	}
 }
 
@@ -104,7 +118,21 @@ func (m *SeoDomainMapper) SeoDomainListToPb(items []seo_domain.SeoDomain) []*crm
 	return responses
 }
 
+func (m *SeoDomainMapper) SeoSourceCapabilitiesToPb(cap seo_domain.SeoSourceCapabilities) *crmpb.SeoSourceCapabilitiesResponse {
+	return &crmpb.SeoSourceCapabilitiesResponse{
+		Searchable:       cap.Searchable,
+		Resolvable:       cap.Resolvable,
+		UniquePerRef:     cap.UniquePerRef,
+		SupportsTemplate: cap.SupportsTemplate,
+		SupportsPreview:  cap.SupportsPreview,
+		SupportsGenerate: cap.SupportsGenerate,
+		SupportsHealth:   cap.SupportsHealth,
+	}
+}
+
 func (m *SeoDomainMapper) SeoRefTypeConfigToPb(cfg seo_domain.SeoRefTypeConfig) *crmpb.SeoRefTypeResponse {
+	cfg = seo_domain.NormalizeSeoRefTypeConfig(cfg)
+
 	return &crmpb.SeoRefTypeResponse{
 		Value:            cfg.Value,
 		Key:              cfg.Key,
@@ -119,6 +147,12 @@ func (m *SeoDomainMapper) SeoRefTypeConfigToPb(cfg seo_domain.SeoRefTypeConfig) 
 		DefaultPageType:  cfg.DefaultPageType,
 		AdminUrlPattern:  cfg.AdminURLPattern,
 		PublicUrlPattern: cfg.PublicURLPattern,
+
+		// V2 compatibility fields.
+		Status:         cfg.Status,
+		Resolvable:     cfg.Resolvable,
+		DisabledReason: cfg.DisabledReason,
+		Capabilities:   m.SeoSourceCapabilitiesToPb(cfg.Capabilities),
 	}
 }
 
@@ -126,6 +160,90 @@ func (m *SeoDomainMapper) SeoRefTypeConfigsToPb(items []seo_domain.SeoRefTypeCon
 	responses := make([]*crmpb.SeoRefTypeResponse, 0, len(items))
 	for _, item := range items {
 		responses = append(responses, m.SeoRefTypeConfigToPb(item))
+	}
+	return responses
+}
+
+func (m *SeoDomainMapper) SeoSourceConfigToPb(cfg seo_domain.SeoRefTypeConfig) *crmpb.SeoSourceResponse {
+	cfg = seo_domain.NormalizeSeoRefTypeConfig(cfg)
+
+	return &crmpb.SeoSourceResponse{
+		Value:            cfg.Value,
+		Key:              cfg.Key,
+		Label:            cfg.Label,
+		Description:      cfg.Description,
+		Family:           cfg.Family,
+		SourceService:    cfg.SourceService,
+		ResolverKey:      cfg.ResolverKey,
+		Status:           cfg.Status,
+		DisabledReason:   cfg.DisabledReason,
+		Capabilities:     m.SeoSourceCapabilitiesToPb(cfg.Capabilities),
+		DefaultPageType:  cfg.DefaultPageType,
+		AdminUrlPattern:  cfg.AdminURLPattern,
+		PublicUrlPattern: cfg.PublicURLPattern,
+
+		// Compatibility aliases.
+		Searchable:       cfg.Searchable,
+		UniquePerRef:     cfg.UniquePerRef,
+		SupportsTemplate: cfg.SupportsTemplate,
+		Resolvable:       cfg.Resolvable,
+	}
+}
+
+func (m *SeoDomainMapper) SeoSourceConfigsToPb(items []seo_domain.SeoRefTypeConfig) []*crmpb.SeoSourceResponse {
+	responses := make([]*crmpb.SeoSourceResponse, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, m.SeoSourceConfigToPb(item))
+	}
+	return responses
+}
+
+func (m *SeoDomainMapper) SeoSourceHealthToPb(item seo_domain.SeoSourceHealth) *crmpb.SeoSourceHealthItemResponse {
+	return &crmpb.SeoSourceHealthItemResponse{
+		SourceKey:      item.SourceKey,
+		SourceService:  item.SourceService,
+		ResolverKey:    item.ResolverKey,
+		Status:         string(item.Status),
+		LatencyMs:      item.LatencyMs,
+		LastCheckedAt:  item.LastCheckedAt,
+		DisabledReason: item.DisabledReason,
+		ErrorMessage:   item.ErrorMessage,
+	}
+}
+
+func (m *SeoDomainMapper) SeoSourceHealthListToPb(items []seo_domain.SeoSourceHealth) []*crmpb.SeoSourceHealthItemResponse {
+	responses := make([]*crmpb.SeoSourceHealthItemResponse, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, m.SeoSourceHealthToPb(item))
+	}
+	return responses
+}
+
+func (m *SeoDomainMapper) SeoGenerationLogToPb(log *seo_domain.SeoGenerationLog) *crmpb.SeoGenerationLogResponse {
+	if log == nil {
+		return nil
+	}
+
+	return &crmpb.SeoGenerationLogResponse{
+		Id:             log.ID,
+		SeoDomainId:    log.SeoDomainID,
+		TriggerType:    log.TriggerType,
+		Status:         log.Status,
+		StartedAt:      formatTimePtr(log.StartedAt),
+		FinishedAt:     formatTimePtr(log.FinishedAt),
+		StaticHtmlPath: log.StaticHTMLPath,
+		StaticHtmlHash: log.StaticHTMLHash,
+		ErrorMessage:   log.ErrorMessage,
+		Metadata:       jsonToString(log.Metadata),
+		CreatedAt:      formatTime(log.CreatedAt),
+		UpdatedAt:      formatTime(log.UpdatedAt),
+	}
+}
+
+func (m *SeoDomainMapper) SeoGenerationLogListToPb(items []seo_domain.SeoGenerationLog) []*crmpb.SeoGenerationLogResponse {
+	responses := make([]*crmpb.SeoGenerationLogResponse, 0, len(items))
+	for i := range items {
+		responses = append(responses, m.SeoGenerationLogToPb(&items[i]))
 	}
 	return responses
 }
@@ -182,6 +300,19 @@ func (m *SeoDomainMapper) SeoRelativeListToPb(items []seo_domain.SeoRelative) []
 	return responses
 }
 
+func jsonToString(value datatypes.JSON) string {
+	if len(value) == 0 {
+		return ""
+	}
+
+	text := strings.TrimSpace(string(value))
+	if text == "" || text == "null" {
+		return ""
+	}
+
+	return text
+}
+
 func jsonToOptionalString(data datatypes.JSON) *string {
 	if len(data) == 0 {
 		return nil
@@ -205,4 +336,48 @@ func formatTimePtr(t *time.Time) string {
 		return ""
 	}
 	return t.Format(time.RFC3339)
+}
+
+func seoPageStatusToPb(seo *seo_domain.SeoDomain) string {
+	if seo == nil {
+		return ""
+	}
+
+	switch seo.PageStatus {
+	case seo_domain.SeoPageStatusDraft,
+		seo_domain.SeoPageStatusPublished,
+		seo_domain.SeoPageStatusArchived:
+		return seo.PageStatus
+	}
+
+	if seo.DeletedAt.Valid {
+		return seo_domain.SeoPageStatusArchived
+	}
+	if seo.Published {
+		return seo_domain.SeoPageStatusPublished
+	}
+	return seo_domain.SeoPageStatusDraft
+}
+
+func seoRenderStatusToPb(seo *seo_domain.SeoDomain) string {
+	if seo == nil {
+		return ""
+	}
+
+	switch seo.RenderStatus {
+	case seo_domain.SeoRenderStatusNone,
+		seo_domain.SeoRenderStatusPending,
+		seo_domain.SeoRenderStatusRendering,
+		seo_domain.SeoRenderStatusSuccess,
+		seo_domain.SeoRenderStatusFailed:
+		return seo.RenderStatus
+	}
+
+	if seo.NeedGenerate {
+		return seo_domain.SeoRenderStatusPending
+	}
+	if seo.StaticHtmlHash != "" || seo.GeneratedAt != nil {
+		return seo_domain.SeoRenderStatusSuccess
+	}
+	return seo_domain.SeoRenderStatusNone
 }

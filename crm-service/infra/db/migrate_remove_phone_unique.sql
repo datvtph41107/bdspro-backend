@@ -44,4 +44,3 @@ DROP INDEX IF EXISTS idx_tb_contact_phone_owner_id_owner_of;
 DROP INDEX IF EXISTS uniq_tb_contact_phone_owner_id_owner_of;
 DROP INDEX IF EXISTS tb_contact_phone_owner_id_owner_of_idx;
 DROP INDEX IF EXISTS tb_contact_phone_owner_id_owner_of_key;
-

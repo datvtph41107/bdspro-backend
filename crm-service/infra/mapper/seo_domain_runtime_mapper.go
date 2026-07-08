@@ -17,6 +17,11 @@ func (m *SeoDomainMapper) SeoDomainToStaticPathPb(seo *seo_domain.SeoDomain) *cr
 		RefType:      uint32(seo.RefType),
 		RefId:        seo.RefID,
 		UpdatedAt:    formatTime(seo.UpdatedAt),
+
+		// V2 lifecycle/render fields.
+		PageStatus:   seoPageStatusToPb(seo),
+		RenderStatus: seoRenderStatusToPb(seo),
+		NeedGenerate: seo.NeedGenerate,
 	}
 }
 

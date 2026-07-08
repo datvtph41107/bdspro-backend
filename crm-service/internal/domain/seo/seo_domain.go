@@ -33,9 +33,28 @@ const (
 	SeoSourceStatusPermissionDenied = "permission_denied"
 )
 
+const (
+	SeoPageStatusDraft     = "draft"
+	SeoPageStatusPublished = "published"
+	SeoPageStatusArchived  = "archived"
+)
+
+const (
+	SeoRenderStatusNone      = "none"
+	SeoRenderStatusPending   = "pending"
+	SeoRenderStatusRendering = "rendering"
+	SeoRenderStatusSuccess   = "success"
+	SeoRenderStatusFailed    = "failed"
+)
+
 // SeoDomain là SEO content registry trung tâm.
-// Nó không thay thế dữ liệu gốc như thửa/layer/tài liệu; nó lưu trạng thái SEO cuối cùng
-// để phục vụ sitemap, static generation, canonical, robots, deeplink và vận hành thủ công.
+//
+// Architectural role:
+//   - It is not the source data owner.
+//   - It stores the SEO page lifecycle, source snapshot, render state,
+//     sitemap/index policy and operational metadata.
+//   - Source data remains owned by BDSPro/TQD/CRM upstream.
+//   - RefSnapshotJSON is an immutable-ish snapshot at create/sync time.
 type SeoDomain struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement"`
 
@@ -65,6 +84,11 @@ type SeoDomain struct {
 	// SEO classify: A/B/C/D/N.
 	Classify enums.ESeoClassify `gorm:"type:smallint;not null;default:50;index"`
 
+	// Page lifecycle.
+	// PageStatus is the official lifecycle state for command APIs.
+	// Legacy Published boolean is kept for compatibility and fast filters.
+	PageStatus string `gorm:"column:page_status;type:varchar(30);not null;default:'draft';index"`
+
 	// Content lõi để render SEO page.
 	Title       string `gorm:"type:text"`
 	Description string `gorm:"type:text"`
@@ -85,12 +109,20 @@ type SeoDomain struct {
 	SitemapPriority   float32    `gorm:"column:sitemap_priority;type:real;default:0.5"`
 	SitemapChangeFreq string     `gorm:"column:sitemap_change_freq;type:varchar(20);default:'daily'"`
 
-	// Static generation pipeline.
+	// Render/generation pipeline.
 	NeedGenerate    bool       `gorm:"column:need_generate;default:true;index"`
 	GeneratedAt     *time.Time `gorm:"column:generated_at;index"`
 	SourceUpdatedAt *time.Time `gorm:"column:source_updated_at;index"`
-	StaticHtmlPath  string     `gorm:"column:static_html_path;type:text"`
-	StaticHtmlHash  string     `gorm:"column:static_html_hash;type:varchar(64);index"`
+
+	RenderStatus    string `gorm:"column:render_status;type:varchar(30);not null;default:'none';index"`
+	RenderedHTML    string `gorm:"column:rendered_html;type:text"`
+	LastRenderError string `gorm:"column:last_render_error;type:text"`
+	StaticHtmlPath  string `gorm:"column:static_html_path;type:text"`
+	StaticHtmlHash  string `gorm:"column:static_html_hash;type:varchar(64);index"`
+
+	// Template metadata used by backend renderer.
+	TemplateKey     string `gorm:"column:template_key;type:varchar(120);index"`
+	TemplateVersion string `gorm:"column:template_version;type:varchar(80)"`
 
 	// Mobile app deeplink.
 	DeepLink string `gorm:"column:deep_link;type:text"`
@@ -131,4 +163,88 @@ func (s *SeoDomain) GetSchema() string {
 	default:
 		return "info"
 	}
+}
+
+func (s *SeoDomain) NormalizeLifecycle() {
+	if s == nil {
+		return
+	}
+
+	if s.PageStatus == "" {
+		if s.DeletedAt.Valid {
+			s.PageStatus = SeoPageStatusArchived
+		} else if s.Published {
+			s.PageStatus = SeoPageStatusPublished
+		} else {
+			s.PageStatus = SeoPageStatusDraft
+		}
+	}
+
+	if s.RenderStatus == "" {
+		if s.NeedGenerate {
+			s.RenderStatus = SeoRenderStatusPending
+		} else if s.StaticHtmlHash != "" || s.GeneratedAt != nil {
+			s.RenderStatus = SeoRenderStatusSuccess
+		} else {
+			s.RenderStatus = SeoRenderStatusNone
+		}
+	}
+}
+
+func (s *SeoDomain) IsPublicIndexable() bool {
+	if s == nil {
+		return false
+	}
+	return s.PageStatus == SeoPageStatusPublished &&
+		s.Published &&
+		s.IsIndex &&
+		s.Scope == SeoScopePublic &&
+		s.Classify != enums.ESeoClassifyN &&
+		s.SourceStatus != SeoSourceStatusMissing &&
+		s.SourceStatus != SeoSourceStatusPermissionDenied
+}
+
+func (s *SeoDomain) IsSitemapEligible() bool {
+	if s == nil {
+		return false
+	}
+	return s.IsPublicIndexable() && s.IsSiteMap
+}
+
+func (s *SeoDomain) MarkRenderPending() {
+	if s == nil {
+		return
+	}
+	s.RenderStatus = SeoRenderStatusPending
+	s.NeedGenerate = true
+	s.LastRenderError = ""
+}
+
+func (s *SeoDomain) MarkRenderRunning() {
+	if s == nil {
+		return
+	}
+	s.RenderStatus = SeoRenderStatusRendering
+}
+
+func (s *SeoDomain) MarkRenderSuccess(staticPath string, staticHash string, generatedAt time.Time) {
+	if s == nil {
+		return
+	}
+	s.RenderStatus = SeoRenderStatusSuccess
+	s.NeedGenerate = false
+	s.GeneratedAt = &generatedAt
+	s.SiteMapLastedAt = &generatedAt
+	s.StaticHtmlPath = staticPath
+	s.StaticHtmlHash = staticHash
+	s.LastRenderError = ""
+}
+
+func (s *SeoDomain) MarkRenderFailed(message string) {
+	if s == nil {
+		return
+	}
+	s.RenderStatus = SeoRenderStatusFailed
+	s.NeedGenerate = true
+	s.LastRenderError = message
 }

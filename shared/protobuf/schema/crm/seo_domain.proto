@@ -8,6 +8,11 @@ import "shared/common.proto";
 import "google/api/annotations.proto";
 
 service SeoDomainService {
+  // ---------------------------------------------------------------------------
+  // Legacy SEO source APIs.
+  // Keep these for backward compatibility with current frontend/gateway.
+  // ---------------------------------------------------------------------------
+
   rpc GetSeoRefTypes(GetSeoRefTypesRequest) returns (GetSeoRefTypesResponse) {
     option (google.api.http) = {
       get: "/v2/crm/admin/seo/ref-types"
@@ -26,11 +31,58 @@ service SeoDomainService {
     };
   }
 
+  // ---------------------------------------------------------------------------
+  // SEO Source Registry V2.
+  // Source-of-truth APIs for frontend/admin.
+  // Frontend should depend on sourceKey + capabilities instead of manually
+  // composing refType + resolverKey + sourceService.
+  // ---------------------------------------------------------------------------
+
+  rpc GetSeoSources(GetSeoSourcesRequest) returns (GetSeoSourcesResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/sources"
+    };
+  }
+
+  rpc GetSeoSourceHealth(GetSeoSourceHealthRequest) returns (GetSeoSourceHealthResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/source-health"
+    };
+  }
+
+  rpc GetSeoSource(GetSeoSourceRequest) returns (SeoSourceResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/sources/{sourceKey}"
+    };
+  }
+
+  rpc SearchSeoSourceValues(SearchSeoSourceValuesRequest) returns (SearchSeoSourceValuesResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/sources/{sourceKey}/values"
+    };
+  }
+
+  rpc ResolveSeoSourceValue(ResolveSeoSourceValueRequest) returns (SeoSourceSnapshotResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/sources/{sourceKey}/values/{refId}"
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // SEO Operations Dashboard.
+  // ---------------------------------------------------------------------------
+
   rpc GetSeoOperationsDashboard(GetSeoOperationsDashboardRequest) returns (SeoOperationsDashboardResponse) {
     option (google.api.http) = {
       get: "/v2/crm/admin/seo/operations/dashboard"
     };
   }
+
+  // ---------------------------------------------------------------------------
+  // Legacy SEO Domain CRUD.
+  // Keep this API because current frontend/backend already use it.
+  // New command APIs below should gradually replace direct boolean patching.
+  // ---------------------------------------------------------------------------
 
   rpc CreateSeoDomain(CreateSeoDomainRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
@@ -51,6 +103,94 @@ service SeoDomainService {
     };
   }
 
+  rpc UpdateSeoDomain(UpdateSeoDomainRequest) returns (UpdateSeoDomainResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo-domains/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteSeoDomain(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/seo-domains/{id}"
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // SEO Page Command APIs.
+  // Commands express business actions instead of patching booleans directly.
+  // ---------------------------------------------------------------------------
+
+  rpc CreateSeoDraft(CreateSeoDraftRequest) returns (SeoDomainResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/drafts"
+      body: "*"
+    };
+  }
+
+  rpc PublishSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/{id}/publish"
+      body: "*"
+    };
+  }
+
+  rpc UnpublishSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/{id}/unpublish"
+      body: "*"
+    };
+  }
+
+  rpc ArchiveSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/{id}/archive"
+      body: "*"
+    };
+  }
+
+  rpc RestoreSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/{id}/restore"
+      body: "*"
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // SEO Render / Generate APIs.
+  // ---------------------------------------------------------------------------
+
+  rpc PreviewSeoPage(RenderSeoPreviewRequest) returns (RenderSeoPreviewResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/preview"
+      body: "*"
+    };
+  }
+
+  rpc PreviewExistingSeoPage(RenderExistingSeoPreviewRequest) returns (RenderSeoPreviewResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/{id}/preview"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoPage(GenerateSeoPageRequest) returns (GenerateSeoPageResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-pages/{id}/generate"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoGenerationLogs(GetSeoGenerationLogsRequest) returns (GetSeoGenerationLogsResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo-pages/{seoDomainId}/generation-logs"
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Existing sitemap / internal render APIs.
+  // ---------------------------------------------------------------------------
+
   rpc GetSitemap(GetSitemapRequest) returns (sharepb.CommonResponse) {
     option (google.api.http) = {
       get: "/v2/crm/sitemap.xml"
@@ -68,19 +208,6 @@ service SeoDomainService {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/parcels/generate"
       body: "*"
-    };
-  }
-
-  rpc UpdateSeoDomain(UpdateSeoDomainRequest) returns (UpdateSeoDomainResponse) {
-    option (google.api.http) = {
-      put: "/v2/crm/admin/seo-domains/{id}"
-      body: "*"
-    };
-  }
-
-  rpc DeleteSeoDomain(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
-    option (google.api.http) = {
-      delete: "/v2/crm/admin/seo-domains/{id}"
     };
   }
 
@@ -103,8 +230,6 @@ service SeoDomainService {
     };
   }
 
-
-
   rpc GetInternalSeoRenderDataBySlug(GetInternalSeoRenderDataBySlugRequest) returns (InternalSeoRenderDataResponse) {
     option (google.api.http) = {
       get: "/v2/internal/seo/render-data/by-slug/{slug}"
@@ -116,6 +241,10 @@ service SeoDomainService {
       get: "/v2/internal/seo/static-paths"
     };
   }
+
+  // ---------------------------------------------------------------------------
+  // Existing internal link / relative APIs.
+  // ---------------------------------------------------------------------------
 
   rpc CreateSeoInternalLink(CreateSeoInternalLinkRequest) returns (SeoInternalLinkResponse) {
     option (google.api.http) = {
@@ -161,9 +290,40 @@ service SeoDomainService {
       delete: "/v2/crm/admin/seo-domains/relatives/{id}"
     };
   }
+
+// ---------------------------------------------------------------------------
+// SEO Measurement & Feedback Loop.
+// Mock-first metrics and feedback APIs for Admin dashboard.
+// ---------------------------------------------------------------------------
+
+rpc GetSeoMeasurementOverview(GetSeoMeasurementOverviewRequest) returns (SeoMeasurementOverviewResponse);
+  rpc GenerateSeoMockMeasurement(GenerateSeoMockMeasurementRequest) returns (GenerateSeoMockMeasurementResponse);
+  rpc RunSeoFeedbackDetector(RunSeoFeedbackDetectorRequest) returns (RunSeoFeedbackDetectorResponse);
+  rpc GetSeoPagePerformanceList(GetSeoPagePerformanceListRequest) returns (GetSeoPagePerformanceListResponse);
+  rpc GetSeoQueryPerformanceList(GetSeoQueryPerformanceListRequest) returns (GetSeoQueryPerformanceListResponse);
+  rpc GetSeoIndexCoverageList(GetSeoIndexCoverageListRequest) returns (GetSeoIndexCoverageListResponse);
+  rpc GetSeoTrafficList(GetSeoTrafficListRequest) returns (GetSeoTrafficListResponse);
+  rpc GetSeoRankingList(GetSeoRankingListRequest) returns (GetSeoRankingListResponse);
+  rpc GetSeoCrawlEventList(GetSeoCrawlEventListRequest) returns (GetSeoCrawlEventListResponse);
+  rpc GetSeoIssueList(GetSeoIssueListRequest) returns (GetSeoIssueListResponse);
+  rpc ResolveSeoIssue(ResolveSeoIssueRequest) returns (sharepb.SubmitResponse);
 }
 
+// -----------------------------------------------------------------------------
+// Source registry / legacy ref-type messages.
+// -----------------------------------------------------------------------------
+
 message GetSeoRefTypesRequest {}
+
+message SeoSourceCapabilitiesResponse {
+  bool searchable = 1;
+  bool resolvable = 2;
+  bool uniquePerRef = 3;
+  bool supportsTemplate = 4;
+  bool supportsPreview = 5;
+  bool supportsGenerate = 6;
+  bool supportsHealth = 7;
+}
 
 message SeoRefTypeResponse {
   uint32 value = 1;
@@ -179,11 +339,61 @@ message SeoRefTypeResponse {
   string defaultPageType = 11;
   string adminUrlPattern = 12;
   string publicUrlPattern = 13;
+
+  // V2 compatibility fields.
+  string status = 14;          // ready | coming_soon | disabled
+  bool resolvable = 15;
+  string disabledReason = 16;
+  SeoSourceCapabilitiesResponse capabilities = 17;
 }
 
 message GetSeoRefTypesResponse {
   repeated SeoRefTypeResponse data = 1;
 }
+
+// -----------------------------------------------------------------------------
+// Source registry V2 messages.
+// -----------------------------------------------------------------------------
+
+message GetSeoSourcesRequest {}
+
+message GetSeoSourceRequest {
+  string sourceKey = 1;
+}
+
+message SeoSourceResponse {
+  uint32 value = 1;
+  string key = 2;
+  string label = 3;
+  string description = 4;
+  string family = 5;
+  string sourceService = 6;
+  string resolverKey = 7;
+
+  // ready | coming_soon | disabled
+  string status = 8;
+  string disabledReason = 9;
+
+  SeoSourceCapabilitiesResponse capabilities = 10;
+
+  string defaultPageType = 11;
+  string adminUrlPattern = 12;
+  string publicUrlPattern = 13;
+
+  // Compatibility aliases for older UI code.
+  bool searchable = 14;
+  bool uniquePerRef = 15;
+  bool supportsTemplate = 16;
+  bool resolvable = 17;
+}
+
+message GetSeoSourcesResponse {
+  repeated SeoSourceResponse data = 1;
+}
+
+// -----------------------------------------------------------------------------
+// Source search / resolve messages.
+// -----------------------------------------------------------------------------
 
 message SearchSeoRefValuesRequest {
   uint32 refType = 1;
@@ -208,6 +418,9 @@ message SeoRefValueResponse {
   string sourceService = 11;
   string resolverKey = 12;
   string sourceStatus = 13;
+
+  // V2 compatibility field.
+  string sourceKey = 14;
 }
 
 message SearchSeoRefValuesResponse {
@@ -240,7 +453,94 @@ message SeoRefSnapshotResponse {
   string hash = 15;
   string dataJson = 16;
   string sourceStatus = 17;
+
+  // V2 compatibility fields.
+  string sourceKey = 18;
+  string visibility = 19; // public | restricted | private
+  bool indexable = 20;
+  string disabledReason = 21;
 }
+
+message SearchSeoSourceValuesRequest {
+  string sourceKey = 1;
+  string text = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+}
+
+message SeoSourceValueResponse {
+  string sourceKey = 1;
+  uint32 refType = 2;
+  string refTypeKey = 3;
+  uint64 refId = 4;
+  string label = 5;
+  string description = 6;
+  string imageUrl = 7;
+  string adminUrl = 8;
+  string publicUrl = 9;
+  string sourceService = 10;
+  string resolverKey = 11;
+  string sourceStatus = 12;
+  bool alreadyHasSeoPage = 13;
+  uint64 seoPageId = 14;
+}
+
+message SearchSeoSourceValuesResponse {
+  repeated SeoSourceValueResponse data = 1;
+  int64 total = 2;
+}
+
+message ResolveSeoSourceValueRequest {
+  string sourceKey = 1;
+  uint64 refId = 2;
+}
+
+message SeoSourceSnapshotResponse {
+  string sourceKey = 1;
+  uint32 refType = 2;
+  string refTypeKey = 3;
+  uint64 refId = 4;
+  string label = 5;
+  string description = 6;
+  string imageUrl = 7;
+  string adminUrl = 8;
+  string publicUrl = 9;
+  string suggestedSlug = 10;
+  string suggestedTitle = 11;
+  string suggestedMetaTitle = 12;
+  string suggestedMetaDescription = 13;
+  string sourceService = 14;
+  string resolverKey = 15;
+  string hash = 16;
+  string dataJson = 17;
+  string sourceStatus = 18;
+
+  // Policy/visibility hints.
+  string visibility = 19; // public | restricted | private
+  bool indexable = 20;
+  string disabledReason = 21;
+}
+
+message GetSeoSourceHealthRequest {}
+
+message SeoSourceHealthItemResponse {
+  string sourceKey = 1;
+  string sourceService = 2;
+  string resolverKey = 3;
+  string status = 4; // healthy | degraded | unavailable | not_implemented
+  int64 latencyMs = 5;
+  string lastCheckedAt = 6;
+  string disabledReason = 7;
+  string errorMessage = 8;
+}
+
+message GetSeoSourceHealthResponse {
+  repeated SeoSourceHealthItemResponse data = 1;
+}
+
+// -----------------------------------------------------------------------------
+// Operations dashboard messages.
+// -----------------------------------------------------------------------------
 
 message GetSeoOperationsDashboardRequest {
   string range = 1;
@@ -346,6 +646,10 @@ message SeoOperationsDashboardResponse {
   repeated SeoSourceHealthResponse sourceHealth = 9;
 }
 
+// -----------------------------------------------------------------------------
+// SEO domain CRUD messages.
+// -----------------------------------------------------------------------------
+
 message CreateSeoDomainRequest {
   string slug = 1;
   string originUrl = 2;
@@ -383,27 +687,14 @@ message CreateSeoDomainRequest {
   string refHash = 34;
   optional string refLastSyncedAt = 35;
   optional uint32 qualityScore = 36;
-}
 
-message GetSitemapRequest {
-  optional string baseUrl = 1;
-}
-
-message CreateSeoFromParcelRequest {
-  uint64 parcelId = 1;
-}
-
-message GenerateSeoFromParcelsRequest {
-  uint32 limit = 1;
-}
-
-message GenerateSeoFromParcelsResponse {
-  repeated SeoDomainResponse data = 1;
-  int64 total = 2;
-  int64 created = 3;
-  int64 skipped = 4;
-  int64 failed = 5;
-  repeated string errors = 6;
+  // V2 lifecycle fields.
+  string pageStatus = 37;      // draft | published | archived
+  string renderStatus = 38;    // none | pending | rendering | success | failed
+  string renderedHtml = 39;
+  string lastRenderError = 40;
+  string templateKey = 41;
+  string templateVersion = 42;
 }
 
 message UpdateSeoDomainRequest {
@@ -444,6 +735,14 @@ message UpdateSeoDomainRequest {
   optional string refHash = 35;
   optional string refLastSyncedAt = 36;
   optional uint32 qualityScore = 37;
+
+  // V2 lifecycle fields.
+  optional string pageStatus = 38;
+  optional string renderStatus = 39;
+  optional string renderedHtml = 40;
+  optional string lastRenderError = 41;
+  optional string templateKey = 42;
+  optional string templateVersion = 43;
 }
 
 message GetSeoDomainListRequest {
@@ -462,6 +761,11 @@ message GetSeoDomainListRequest {
   optional string refSource = 13;
   optional string sourceStatus = 14;
   optional bool refMissing = 15;
+
+  // V2 lifecycle filters.
+  optional string pageStatus = 16;
+  optional string renderStatus = 17;
+  optional string templateKey = 18;
 }
 
 message GetSeoDomainListResponse {
@@ -515,6 +819,14 @@ message SeoDomainResponse {
   string refHash = 39;
   string refLastSyncedAt = 40;
   uint32 qualityScore = 41;
+
+  // V2 lifecycle fields.
+  string pageStatus = 42;
+  string renderStatus = 43;
+  string renderedHtml = 44;
+  string lastRenderError = 45;
+  string templateKey = 46;
+  string templateVersion = 47;
 }
 
 message SeoDomainBriefResponse {
@@ -530,6 +842,144 @@ message SeoDomainBriefResponse {
   string refSource = 10;
   string refLabel = 11;
   string sourceStatus = 12;
+
+  // V2 lifecycle fields.
+  string pageStatus = 13;
+  string renderStatus = 14;
+  bool needGenerate = 15;
+}
+
+// -----------------------------------------------------------------------------
+// SEO draft / command messages.
+// -----------------------------------------------------------------------------
+
+message SeoDraftSourceInput {
+  string sourceKey = 1; // manual | parcel | project | region | adm_unit | document | map | report
+  uint64 refId = 2;    // required when sourceKey != manual
+}
+
+message SeoDraftContentInput {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  string summary = 4;
+  string content = 5;
+  bool isIndex = 6;
+  bool isSiteMap = 7;
+  optional bool isRobot = 8;
+  string metadata = 9;
+  string templateKey = 10;
+  string canonicalUrl = 11;
+  string originUrl = 12;
+  string scope = 13;
+  uint32 classify = 14;
+}
+
+message CreateSeoDraftRequest {
+  SeoDraftSourceInput source = 1;
+  SeoDraftContentInput seo = 2;
+}
+
+message SeoPageCommandRequest {
+  uint64 id = 1;
+  string reason = 2;
+  string actorNote = 3;
+}
+
+// -----------------------------------------------------------------------------
+// Render / generation messages.
+// -----------------------------------------------------------------------------
+
+message RenderSeoPreviewRequest {
+  optional string sourceKey = 1;
+  optional uint64 refId = 2;
+  string slug = 3;
+  string title = 4;
+  string description = 5;
+  string canonicalUrl = 6;
+  string content = 7;
+  string summary = 8;
+  string metadata = 9;
+  string templateKey = 10;
+}
+
+message RenderExistingSeoPreviewRequest {
+  uint64 id = 1;
+  optional string content = 2;
+  optional string templateKey = 3;
+}
+
+message RenderSeoPreviewResponse {
+  string html = 1;
+  string staticPath = 2;
+  string hash = 3;
+  repeated string warnings = 4;
+}
+
+message GenerateSeoPageRequest {
+  uint64 id = 1;
+  string triggerType = 2; // manual | scheduler | source_sync | publish
+  string reason = 3;
+}
+
+message GenerateSeoPageResponse {
+  uint64 id = 1;
+  string renderStatus = 2; // pending | rendering | success | failed
+  string staticHtmlPath = 3;
+  string staticHtmlHash = 4;
+  string generatedAt = 5;
+  string errorMessage = 6;
+}
+
+message GetSeoGenerationLogsRequest {
+  uint64 seoDomainId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message SeoGenerationLogResponse {
+  uint64 id = 1;
+  uint64 seoDomainId = 2;
+  string triggerType = 3; // manual | scheduler | source_sync | publish
+  string status = 4;      // pending | running | success | failed
+  string startedAt = 5;
+  string finishedAt = 6;
+  string staticHtmlPath = 7;
+  string staticHtmlHash = 8;
+  string errorMessage = 9;
+  string metadata = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+}
+
+message GetSeoGenerationLogsResponse {
+  repeated SeoGenerationLogResponse data = 1;
+  int64 total = 2;
+}
+
+// -----------------------------------------------------------------------------
+// Existing sitemap / parcel generation messages.
+// -----------------------------------------------------------------------------
+
+message GetSitemapRequest {
+  optional string baseUrl = 1;
+}
+
+message CreateSeoFromParcelRequest {
+  uint64 parcelId = 1;
+}
+
+message GenerateSeoFromParcelsRequest {
+  uint32 limit = 1;
+}
+
+message GenerateSeoFromParcelsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
 }
 
 message TouchSeoDomainByRefRequest {
@@ -558,7 +1008,6 @@ message InternalSeoRenderDataResponse {
   repeated SeoRelativeResponse relatives = 3;
 }
 
-
 message GetInternalSeoRenderDataBySlugRequest {
   string slug = 1;
 }
@@ -575,12 +1024,21 @@ message SeoStaticPathResponse {
   uint32 refType = 4;
   optional uint64 refId = 5;
   string updatedAt = 6;
+
+  // V2 lifecycle fields.
+  string pageStatus = 7;
+  string renderStatus = 8;
+  bool needGenerate = 9;
 }
 
 message GetInternalSeoStaticPathsResponse {
   repeated SeoStaticPathResponse data = 1;
   int64 total = 2;
 }
+
+// -----------------------------------------------------------------------------
+// Internal links.
+// -----------------------------------------------------------------------------
 
 message CreateSeoInternalLinkRequest {
   string link = 1;
@@ -633,6 +1091,10 @@ message SeoInternalLinkResponse {
   string updatedAt = 11;
 }
 
+// -----------------------------------------------------------------------------
+// SEO relatives.
+// -----------------------------------------------------------------------------
+
 message CreateSeoRelativeRequest {
   uint64 parentSeoId = 1;
   uint64 childSeoId = 2;
@@ -663,4 +1125,293 @@ message SeoRelativeResponse {
   optional SeoDomainBriefResponse childSeo = 7;
   string createdAt = 8;
   string updatedAt = 9;
+}
+
+// -----------------------------------------------------------------------------
+// SEO Measurement & Feedback messages.
+// -----------------------------------------------------------------------------
+
+message GetSeoMeasurementOverviewRequest {
+  string range = 1;
+  uint32 limit = 2;
+}
+
+message SeoMeasurementKPI {
+  string key = 1;
+  string label = 2;
+  double value = 3;
+  string unit = 4;
+  double delta = 5;
+  string severity = 6;
+}
+
+message SeoMeasurementTrendPoint {
+  string date = 1;
+  double clicks = 2;
+  double impressions = 3;
+  double ctr = 4;
+  double position = 5;
+  double sessions = 6;
+  double conversions = 7;
+}
+
+message SeoIssueSummary {
+  string issue_type = 1;
+  string severity = 2;
+  uint32 open_count = 3;
+}
+
+message SeoMeasurementOverviewResponse {
+  repeated SeoMeasurementKPI kpis = 1;
+  repeated SeoMeasurementTrendPoint trend = 2;
+  repeated SeoIssueSummary issue_summary = 3;
+  repeated SeoPagePerformanceRow top_pages = 4;
+  repeated SeoIssueRow need_attention = 5;
+}
+
+message GenerateSeoMockMeasurementRequest {
+  string range = 1;
+  uint32 limit = 2;
+  bool overwrite = 3;
+}
+
+message GenerateSeoMockMeasurementResponse {
+  uint32 pages = 1;
+  uint32 search_rows = 2;
+  uint32 inspection_rows = 3;
+  uint32 traffic_rows = 4;
+  uint32 ranking_rows = 5;
+  uint32 crawl_rows = 6;
+  uint32 keyword_targets = 7;
+  string data_source = 8;
+  repeated string messages = 9;
+}
+
+message RunSeoFeedbackDetectorRequest {
+  string range = 1;
+  uint32 limit = 2;
+}
+
+message RunSeoFeedbackDetectorResponse {
+  uint32 scanned = 1;
+  uint32 created = 2;
+  uint32 skipped = 3;
+  repeated string errors = 4;
+}
+
+message GetSeoPagePerformanceListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string keyword = 4;
+  string page_status = 5;
+  string render_status = 6;
+  string index_status = 7;
+  string issue_status = 8;
+  string range = 9;
+}
+
+message SeoPagePerformanceRow {
+  uint64 seo_domain_id = 1;
+  string canonical_url = 2;
+  string slug = 3;
+  string title = 4;
+  string page_status = 5;
+  string render_status = 6;
+  bool is_sitemap = 7;
+  bool is_index = 8;
+  uint32 quality_score = 9;
+  double clicks = 10;
+  double impressions = 11;
+  double ctr = 12;
+  double position = 13;
+  double sessions = 14;
+  double conversions = 15;
+  string index_status = 16;
+  string last_crawl_time = 17;
+  uint32 open_issue_count = 18;
+}
+
+message GetSeoPagePerformanceListResponse {
+  repeated SeoPagePerformanceRow data = 1;
+  uint64 total = 2;
+}
+
+message GetSeoQueryPerformanceListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string query = 4;
+  string canonical_url = 5;
+  string device = 6;
+  string country = 7;
+  string range = 8;
+}
+
+message SeoQueryPerformanceRow {
+  string query = 1;
+  string canonical_url = 2;
+  string device = 3;
+  string country = 4;
+  double clicks = 5;
+  double impressions = 6;
+  double ctr = 7;
+  double position = 8;
+}
+
+message GetSeoQueryPerformanceListResponse {
+  repeated SeoQueryPerformanceRow data = 1;
+  uint64 total = 2;
+}
+
+message GetSeoIndexCoverageListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string canonical_url = 4;
+  string index_status = 5;
+  string verdict = 6;
+  string range = 7;
+}
+
+message SeoIndexCoverageRow {
+  uint64 seo_domain_id = 1;
+  string canonical_url = 2;
+  string inspection_status = 3;
+  string index_status = 4;
+  string coverage_state = 5;
+  string robots_txt_state = 6;
+  string google_canonical = 7;
+  string user_canonical = 8;
+  string last_crawl_time = 9;
+  string verdict = 10;
+  string inspected_at = 11;
+}
+
+message GetSeoIndexCoverageListResponse {
+  repeated SeoIndexCoverageRow data = 1;
+  uint64 total = 2;
+}
+
+message GetSeoTrafficListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string canonical_url = 4;
+  string source = 5;
+  string medium = 6;
+  string device = 7;
+  string country = 8;
+  string range = 9;
+}
+
+message SeoTrafficRow {
+  string canonical_url = 1;
+  string date = 2;
+  double sessions = 3;
+  double users = 4;
+  double active_users = 5;
+  double page_views = 6;
+  double engagement_seconds = 7;
+  double conversions = 8;
+  string source = 9;
+  string medium = 10;
+  string device = 11;
+  string country = 12;
+}
+
+message GetSeoTrafficListResponse {
+  repeated SeoTrafficRow data = 1;
+  uint64 total = 2;
+}
+
+message GetSeoRankingListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string keyword = 4;
+  string canonical_url = 5;
+  string device = 6;
+  string range = 7;
+}
+
+message SeoRankingRow {
+  string keyword = 1;
+  string canonical_url = 2;
+  double position = 3;
+  double previous_position = 4;
+  double position_delta = 5;
+  string device = 6;
+  string location = 7;
+  string language = 8;
+  string checked_at = 9;
+}
+
+message GetSeoRankingListResponse {
+  repeated SeoRankingRow data = 1;
+  uint64 total = 2;
+}
+
+message GetSeoCrawlEventListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string canonical_url = 4;
+  string bot_name = 5;
+  int32 status_code = 6;
+  string range = 7;
+}
+
+message SeoCrawlEventRow {
+  uint64 id = 1;
+  uint64 seo_domain_id = 2;
+  string canonical_url = 3;
+  string bot_name = 4;
+  string user_agent = 5;
+  int32 status_code = 6;
+  string method = 7;
+  int64 response_time_ms = 8;
+  string crawled_at = 9;
+}
+
+message GetSeoCrawlEventListResponse {
+  repeated SeoCrawlEventRow data = 1;
+  uint64 total = 2;
+}
+
+message GetSeoIssueListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string canonical_url = 4;
+  string issue_type = 5;
+  string severity = 6;
+  string status = 7;
+  string range = 8;
+}
+
+message SeoIssueRow {
+  uint64 id = 1;
+  uint64 seo_domain_id = 2;
+  string canonical_url = 3;
+  string issue_type = 4;
+  string severity = 5;
+  string status = 6;
+  string title = 7;
+  string message = 8;
+  string evidence = 9;
+  string recommendation = 10;
+  string detected_at = 11;
+  string resolved_at = 12;
+}
+
+message GetSeoIssueListResponse {
+  repeated SeoIssueRow data = 1;
+  uint64 total = 2;
+}
+
+message ResolveSeoIssueRequest {
+  uint64 id = 1;
+  string status = 2;
+  string note = 3;
 }

@@ -39,6 +39,14 @@ type SeoDomainCreateRequest struct {
 	DeepLink          string  `json:"deepLink"`
 	Metadata          *string `json:"metadata"`
 	Note              string  `json:"note"`
+
+	// V2 lifecycle/render fields.
+	PageStatus      string `json:"pageStatus"`
+	RenderStatus    string `json:"renderStatus"`
+	RenderedHTML    string `json:"renderedHtml"`
+	LastRenderError string `json:"lastRenderError"`
+	TemplateKey     string `json:"templateKey"`
+	TemplateVersion string `json:"templateVersion"`
 }
 
 type SeoDomainUpdateRequest struct {
@@ -78,6 +86,14 @@ type SeoDomainUpdateRequest struct {
 	DeepLink          *string  `json:"deepLink"`
 	Metadata          *string  `json:"metadata"`
 	Note              *string  `json:"note"`
+
+	// V2 lifecycle/render fields.
+	PageStatus      *string `json:"pageStatus"`
+	RenderStatus    *string `json:"renderStatus"`
+	RenderedHTML    *string `json:"renderedHtml"`
+	LastRenderError *string `json:"lastRenderError"`
+	TemplateKey     *string `json:"templateKey"`
+	TemplateVersion *string `json:"templateVersion"`
 }
 
 type SeoDomainListRequest struct {
@@ -95,6 +111,11 @@ type SeoDomainListRequest struct {
 	IsIndex      *bool   `json:"isIndex" form:"isIndex"`
 	IsRobot      *bool   `json:"isRobot" form:"isRobot"`
 	NeedGenerate *bool   `json:"needGenerate" form:"needGenerate"`
+
+	// V2 lifecycle/render filters.
+	PageStatus   *string `json:"pageStatus" form:"pageStatus"`
+	RenderStatus *string `json:"renderStatus" form:"renderStatus"`
+	TemplateKey  *string `json:"templateKey" form:"templateKey"`
 }
 
 type SeoSitemapItem struct {
@@ -185,4 +206,11 @@ type SeoRelativeListRequest struct {
 	ParentSeoID  *uint64 `json:"parentSeoId" form:"parentSeoId"`
 	ChildSeoID   *uint64 `json:"childSeoId" form:"childSeoId"`
 	RelationType *string `json:"relationType" form:"relationType"`
+}
+
+type SeoGenerationLogListRequest struct {
+	_dto.Pagable
+	SeoDomainID *uint64 `json:"seoDomainId" form:"seoDomainId"`
+	Status      *string `json:"status" form:"status"`
+	TriggerType *string `json:"triggerType" form:"triggerType"`
 }

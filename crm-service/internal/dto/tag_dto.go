@@ -18,4 +18,3 @@ type AdminTagListRequest struct {
 	Size uint32
 	Text string
 }
-

@@ -11,6 +11,7 @@ import (
 type InitialApp struct {
 	RuleUsecase              *usecase.RuleUsecase
 	SeoDomainUsecase         *usecase.SeoDomainUsecase
+	SeoWorkerUsecase         *usecase.SeoWorkerUsecase
 	RuleEventUsecase         *usecase.RuleEventUsecase
 	PipelineService          *handler.PipelineService
 	ContactService           *handler.ContactService
@@ -25,6 +26,7 @@ type InitialApp struct {
 	InvitationInstallService *handler.InvitationInstallService
 	CrmInternalService       *handler.CrmInternalService
 	EnumService              *handler.EnumService
+
 	// Feedback handlers
 	RateHandler         *handler.RateHandler
 	ReportHandler       *handler.ReportHandler
@@ -32,13 +34,15 @@ type InitialApp struct {
 	ReportReasonHandler *handler.ReportReasonHandler
 	RegistryHandler     *handler.RegistryHandler
 	AppointmentService  *handler.AppointmentHandler
-	Logger              *flogging.FabricLogger
-	SeoDomainHandler    *handler.SeoDomainHandler
+
+	Logger           *flogging.FabricLogger
+	SeoDomainHandler *handler.SeoDomainHandler
 }
 
 func NewInitialApp(
 	ruleUsecase *usecase.RuleUsecase,
 	seoDomainRuntimeUsecase *usecase.SeoDomainUsecase,
+	seoWorkerUsecase *usecase.SeoWorkerUsecase,
 	ruleEventUsecase *usecase.RuleEventUsecase,
 	pipelineService *handler.PipelineService,
 	contactService *handler.ContactService,
@@ -53,6 +57,7 @@ func NewInitialApp(
 	invitationInstallService *handler.InvitationInstallService,
 	crmInternalService *handler.CrmInternalService,
 	enumService *handler.EnumService,
+
 	// Feedback handlers
 	rateHandler *handler.RateHandler,
 	reportHandler *handler.ReportHandler,
@@ -65,6 +70,7 @@ func NewInitialApp(
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
 		SeoDomainUsecase:         seoDomainRuntimeUsecase,
+		SeoWorkerUsecase:         seoWorkerUsecase,
 		RuleEventUsecase:         ruleEventUsecase,
 		PipelineService:          pipelineService,
 		ContactService:           contactService,
@@ -79,6 +85,7 @@ func NewInitialApp(
 		InvitationInstallService: invitationInstallService,
 		CrmInternalService:       crmInternalService,
 		EnumService:              enumService,
+
 		// Feedback handlers
 		RateHandler:         rateHandler,
 		ReportHandler:       reportHandler,
@@ -86,7 +93,8 @@ func NewInitialApp(
 		ReportReasonHandler: reportReasonHandler,
 		RegistryHandler:     registryHandler,
 		AppointmentService:  appointmentService,
-		SeoDomainHandler:    seoDomainHandler,
-		Logger:              flogging.MustGetLogger(viper.GetString("server.name")),
+
+		SeoDomainHandler: seoDomainHandler,
+		Logger:           flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

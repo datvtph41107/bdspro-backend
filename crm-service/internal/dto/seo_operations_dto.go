@@ -75,7 +75,7 @@ type SeoRenderQueueItem struct {
 }
 
 type SeoIndexingRow struct {
-	URL        string `json:"url"`
+	URL       string `json:"url"`
 	Canonical string `json:"canonical"`
 	Robots    string `json:"robots"`
 	Sitemap   string `json:"sitemap"`

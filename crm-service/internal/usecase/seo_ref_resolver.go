@@ -23,28 +23,43 @@ type seoRefResolver struct {
 }
 
 type normalizedSeoRef struct {
-	RefType      uint32
-	RefTypeKey   string
-	RefID        uint64
-	Label        string
-	Description  string
-	ImageURL     string
-	AdminURL     string
-	PublicURL    string
-	Source       string
-	SourceStatus string
-	Data         map[string]interface{}
+	RefType        uint32
+	RefTypeKey     string
+	RefID          uint64
+	Label          string
+	Description    string
+	ImageURL       string
+	AdminURL       string
+	PublicURL      string
+	Source         string
+	SourceKey      string
+	SourceStatus   string
+	Visibility     string
+	Indexable      bool
+	DisabledReason string
+	Data           map[string]interface{}
 }
 
 func newSeoRefResolver(cfg seo_domain.SeoRefTypeConfig, bdsproProvider provider.BdsproProvider, tqdProvider provider.TqdProvider) *seoRefResolver {
 	return &seoRefResolver{
-		cfg:            cfg,
+		cfg:            seo_domain.NormalizeSeoRefTypeConfig(cfg),
 		bdsproProvider: bdsproProvider,
 		tqdProvider:    tqdProvider,
 	}
 }
 
 func (r *seoRefResolver) Search(ctx context.Context, req *dto.SearchSeoRefValuesRequest) ([]dto.SeoRefValueResponse, int64, error) {
+	if req == nil {
+		return nil, 0, _errors.ReturnError(400, "request không hợp lệ")
+	}
+
+	if !seo_domain.IsSeoRefTypeSearchable(r.cfg) {
+		return []dto.SeoRefValueResponse{}, 0, nil
+	}
+	if !seo_domain.IsSeoResolverReady(r.cfg.ResolverKey) {
+		return nil, 0, resolverNotImplemented(r.cfg.ResolverKey)
+	}
+
 	page, size := normalizeRefPaging(req.Page, req.Size)
 
 	switch r.cfg.ResolverKey {
@@ -93,6 +108,7 @@ func (r *seoRefResolver) Search(ctx context.Context, req *dto.SearchSeoRefValues
 		filtered := filterAreaRegions(regions, req.Text)
 		total := int64(len(filtered))
 		filtered = paginateAreaRegions(filtered, page, size)
+
 		items := make([]dto.SeoRefValueResponse, 0, len(filtered))
 		for _, region := range filtered {
 			if region == nil {
@@ -118,6 +134,20 @@ func (r *seoRefResolver) Search(ctx context.Context, req *dto.SearchSeoRefValues
 }
 
 func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValueRequest) (*dto.SeoRefSnapshotResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+	if req.RefID == 0 {
+		return nil, _errors.ReturnError(400, "refId không hợp lệ")
+	}
+
+	if !seo_domain.IsSeoRefTypeResolvable(r.cfg) {
+		return nil, resolverNotImplemented(r.cfg.ResolverKey)
+	}
+	if !seo_domain.IsSeoResolverReady(r.cfg.ResolverKey) {
+		return nil, resolverNotImplemented(r.cfg.ResolverKey)
+	}
+
 	var item normalizedSeoRef
 
 	switch r.cfg.ResolverKey {
@@ -206,6 +236,7 @@ func (r *seoRefResolver) normalizeProject(project *bdspropb.Project) normalizedS
 		label = fmt.Sprintf("Dự án #%d", project.GetId())
 	}
 	slug := slugify(label)
+
 	data := map[string]interface{}{
 		"id":          project.GetId(),
 		"name":        project.GetName(),
@@ -215,8 +246,10 @@ func (r *seoRefResolver) normalizeProject(project *bdspropb.Project) normalizedS
 		"createdAt":   project.GetCreatedAt(),
 		"updatedAt":   project.GetUpdatedAt(),
 		"source":      r.cfg.ResolverKey,
+		"sourceKey":   r.cfg.Key,
 	}
-	return normalizedSeoRef{
+
+	return r.newNormalizedSeoRef(normalizedSeoRef{
 		RefType:      r.cfg.Value,
 		RefTypeKey:   enums.SEORefTypeKey(r.cfg.Value),
 		RefID:        project.GetId(),
@@ -227,7 +260,7 @@ func (r *seoRefResolver) normalizeProject(project *bdspropb.Project) normalizedS
 		Source:       r.cfg.ResolverKey,
 		SourceStatus: seo_domain.SeoSourceStatusLinked,
 		Data:         data,
-	}
+	})
 }
 
 func (r *seoRefResolver) normalizeRegion(region *bdspropb.Region) normalizedSeoRef {
@@ -236,6 +269,7 @@ func (r *seoRefResolver) normalizeRegion(region *bdspropb.Region) normalizedSeoR
 		label = fmt.Sprintf("Đơn vị hành chính #%d", region.GetId())
 	}
 	slug := slugify(label)
+
 	description := strings.TrimSpace(fmt.Sprintf("%s cấp %d, mã %d", region.GetUnit(), region.GetLevel(), region.GetCode()))
 	data := map[string]interface{}{
 		"id":        region.GetId(),
@@ -248,8 +282,10 @@ func (r *seoRefResolver) normalizeRegion(region *bdspropb.Region) normalizedSeoR
 		"createdAt": region.GetCreatedAt(),
 		"updatedAt": region.GetUpdatedAt(),
 		"source":    r.cfg.ResolverKey,
+		"sourceKey": r.cfg.Key,
 	}
-	return normalizedSeoRef{
+
+	return r.newNormalizedSeoRef(normalizedSeoRef{
 		RefType:      r.cfg.Value,
 		RefTypeKey:   enums.SEORefTypeKey(r.cfg.Value),
 		RefID:        region.GetId(),
@@ -260,7 +296,7 @@ func (r *seoRefResolver) normalizeRegion(region *bdspropb.Region) normalizedSeoR
 		Source:       r.cfg.ResolverKey,
 		SourceStatus: seo_domain.SeoSourceStatusLinked,
 		Data:         data,
-	}
+	})
 }
 
 func (r *seoRefResolver) normalizeAreaRegion(region *bdspropb.AreaRegion) normalizedSeoRef {
@@ -269,18 +305,22 @@ func (r *seoRefResolver) normalizeAreaRegion(region *bdspropb.AreaRegion) normal
 		label = fmt.Sprintf("Khu vực #%d", region.GetId())
 	}
 	slug := slugify(label)
+
 	description := "Khu vực phục vụ SEO địa phương"
 	if !region.GetActive() {
 		description = "Khu vực đang tắt hoạt động"
 	}
+
 	data := map[string]interface{}{
-		"id":     region.GetId(),
-		"name":   region.GetName(),
-		"code":   region.GetCode(),
-		"active": region.GetActive(),
-		"source": r.cfg.ResolverKey,
+		"id":        region.GetId(),
+		"name":      region.GetName(),
+		"code":      region.GetCode(),
+		"active":    region.GetActive(),
+		"source":    r.cfg.ResolverKey,
+		"sourceKey": r.cfg.Key,
 	}
-	return normalizedSeoRef{
+
+	return r.newNormalizedSeoRef(normalizedSeoRef{
 		RefType:      r.cfg.Value,
 		RefTypeKey:   enums.SEORefTypeKey(r.cfg.Value),
 		RefID:        region.GetId(),
@@ -291,7 +331,7 @@ func (r *seoRefResolver) normalizeAreaRegion(region *bdspropb.AreaRegion) normal
 		Source:       r.cfg.ResolverKey,
 		SourceStatus: seo_domain.SeoSourceStatusLinked,
 		Data:         data,
-	}
+	})
 }
 
 func (r *seoRefResolver) searchParcels(ctx context.Context, req *dto.SearchSeoRefValuesRequest, size uint32) ([]dto.SeoRefValueResponse, int64, error) {
@@ -317,13 +357,16 @@ func (r *seoRefResolver) searchParcels(ctx context.Context, req *dto.SearchSeoRe
 	if req.Page > 0 {
 		fetchLimit = (req.Page + 1) * fetchLimit
 	}
+
 	sources, err := r.tqdProvider.GetParcelSeoSourcesForGenerate(ctx, fetchLimit)
 	if err != nil {
 		return nil, 0, err
 	}
+
 	filtered := filterParcelSeoSources(sources, text)
 	total := int64(len(filtered))
 	filtered = paginateParcelSeoSources(filtered, req.Page, size)
+
 	items := make([]dto.SeoRefValueResponse, 0, len(filtered))
 	for _, source := range filtered {
 		items = append(items, r.normalizeParcel(source).toValueResponse())
@@ -337,13 +380,16 @@ func (r *seoRefResolver) normalizeParcel(source dto.ParcelSeoSource) normalizedS
 		label = fmt.Sprintf("Thửa đất #%d", source.ParcelID)
 	}
 	slug := slugify(label)
+
 	data := map[string]interface{}{
 		"parcelId":  source.ParcelID,
 		"adrSearch": source.AdrSearch,
 		"seoId":     source.SeoID,
 		"source":    r.cfg.ResolverKey,
+		"sourceKey": r.cfg.Key,
 	}
-	return normalizedSeoRef{
+
+	return r.newNormalizedSeoRef(normalizedSeoRef{
 		RefType:      r.cfg.Value,
 		RefTypeKey:   enums.SEORefTypeKey(r.cfg.Value),
 		RefID:        source.ParcelID,
@@ -354,7 +400,25 @@ func (r *seoRefResolver) normalizeParcel(source dto.ParcelSeoSource) normalizedS
 		Source:       r.cfg.ResolverKey,
 		SourceStatus: seo_domain.SeoSourceStatusLinked,
 		Data:         data,
+	})
+}
+
+func (r *seoRefResolver) newNormalizedSeoRef(item normalizedSeoRef) normalizedSeoRef {
+	if item.Source == "" {
+		item.Source = r.cfg.ResolverKey
 	}
+	if item.SourceKey == "" {
+		item.SourceKey = r.cfg.Key
+	}
+	if item.SourceStatus == "" {
+		item.SourceStatus = seo_domain.SeoSourceStatusLinked
+	}
+	if item.Visibility == "" {
+		item.Visibility = "public"
+	}
+	item.Indexable = item.Visibility == "public"
+	item.DisabledReason = r.cfg.DisabledReason
+	return item
 }
 
 func (n normalizedSeoRef) toValueResponse() dto.SeoRefValueResponse {
@@ -370,19 +434,23 @@ func (n normalizedSeoRef) toValueResponse() dto.SeoRefValueResponse {
 		ResolverKey:   n.Source,
 		SourceStatus:  n.SourceStatus,
 		SourceService: sourceServiceFromResolver(n.Source),
+		SourceKey:     n.SourceKey,
 	}
 }
 
 func (n normalizedSeoRef) toSnapshotResponse() dto.SeoRefSnapshotResponse {
 	dataJSON, hash := buildRefDataJSONAndHash(n.Data)
+
 	title := strings.TrimSpace(n.Label)
 	if title == "" {
 		title = fmt.Sprintf("%s #%d", n.RefTypeKey, n.RefID)
 	}
+
 	description := strings.TrimSpace(n.Description)
 	if description == "" {
 		description = "Nguồn dữ liệu đã được CRM SEO resolver chuẩn hóa."
 	}
+
 	return dto.SeoRefSnapshotResponse{
 		RefType:                  n.RefType,
 		RefTypeKey:               n.RefTypeKey,
@@ -401,6 +469,10 @@ func (n normalizedSeoRef) toSnapshotResponse() dto.SeoRefSnapshotResponse {
 		SourceStatus:             n.SourceStatus,
 		Hash:                     hash,
 		DataJSON:                 dataJSON,
+		SourceKey:                n.SourceKey,
+		Visibility:               n.Visibility,
+		Indexable:                n.Indexable,
+		DisabledReason:           n.DisabledReason,
 	}
 }
 
@@ -470,6 +542,7 @@ func filterAreaRegions(items []*bdspropb.AreaRegion, text string) []*bdspropb.Ar
 	if text == "" {
 		return items
 	}
+
 	filtered := make([]*bdspropb.AreaRegion, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -500,6 +573,7 @@ func filterParcelSeoSources(items []dto.ParcelSeoSource, text string) []dto.Parc
 	if text == "" {
 		return items
 	}
+
 	filtered := make([]dto.ParcelSeoSource, 0, len(items))
 	for _, item := range items {
 		haystack := strings.ToLower(fmt.Sprintf("%d %s", item.ParcelID, item.AdrSearch))

@@ -12,4 +12,3 @@ WHERE profile_id IS NOT NULL AND deleted_at IS NULL;
 
 -- Comment
 COMMENT ON INDEX idx_contact_profile_owner_unique IS 'Unique constraint cho profile_id, owner_id và owner_of, chỉ áp dụng cho các record chưa bị xóa (deleted_at IS NULL) và có profile_id';
-

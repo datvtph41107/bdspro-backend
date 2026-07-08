@@ -14,4 +14,3 @@ ON appointment_participants (appointment_id, user_id);
 
 -- Comment
 COMMENT ON INDEX idx_appointment_user_unique IS 'Unique constraint cho appointment_id và user_id';
-
