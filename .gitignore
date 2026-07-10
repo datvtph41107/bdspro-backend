@@ -50,3 +50,4 @@ tqd-service/tqd-service
 /tqd-service/files
 tqd-service/tqd
 user-service/user
+crm-service/crm

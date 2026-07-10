@@ -22,4 +22,5 @@ type ListPlanningDocumentsRequest struct {
 type ListPlanningEventsRequest struct {
 	_dto.Pagable
 	PlanningProjectID uint64 `json:"planningProjectId"`
+	Ver               bool   `json:"ver"`
 }

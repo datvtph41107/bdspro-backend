@@ -94,6 +94,11 @@ service QHPlanningService {
       get: "/v2/tqd/client/planning-projects/{planningProjectId}/events"
     };
   }
+  rpc ClientListPlanningRelations(ListPlanningEventsRequest) returns (ListPlanningRelationsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{planningProjectId}/relations"
+    };
+  }
 }
 
 message Jurisdiction {
@@ -178,12 +183,19 @@ message PlanningEvent {
   string eventDate = 4;
   string createdAt = 5;
   string updatedAt = 6;
+  string description = 7;
+  repeated PlanningDocument docs = 8;
+  repeated uint64 docIds = 9;
+  string verNo = 10;
+  uint32 legalStatus = 11;
+  string legalStatusName = 12;
 }
 
 message ListPlanningEventsRequest {
   uint32 page = 1;
   uint32 size = 2;
   uint64 planningProjectId = 3;
+  bool ver = 4;
 }
 
 message ListPlanningEventsResponse {
@@ -198,4 +210,15 @@ message IdRequest {
 message SubmitResponse {
   bool success = 1;
   string message = 2;
+}
+
+message ListPlanningRelationsResponse {
+  repeated PlanningRelation data = 1;
+  int64 total = 2;
+}
+
+message PlanningRelation {
+  PlanningProject parent = 1;
+  PlanningProject child = 2;
+  PlanningProject peer = 3;
 }

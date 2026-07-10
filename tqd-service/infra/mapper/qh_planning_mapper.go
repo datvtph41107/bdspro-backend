@@ -115,20 +115,76 @@ func (m *QHPlanningMapper) ToEventProto(event *qh_domain.QHPlanningEvent) *tqdpb
 		return nil
 	}
 
-	return &tqdpb.PlanningEvent{
+	result := &tqdpb.PlanningEvent{
 		Id:                event.ID,
 		PlanningProjectId: event.PlanningProjectID,
+		DocIds:            toEventDocIDs(event.DocIDs),
 		EventName:         event.EventName,
 		EventDate:         _utils.FormatTimeToString(event.EventDate),
+		Description:       event.Description,
+		VerNo:             event.VerNo,
+		LegalStatus:       uint32(event.LegalStatus),
+		LegalStatusName:   enums.LegalStatusMap[event.LegalStatus],
 		CreatedAt:         _utils.FormatTimeToString(event.CreatedAt),
 		UpdatedAt:         _utils.FormatTimeToString(event.UpdatedAt),
 	}
+
+	if len(event.Docs) > 0 {
+		result.Docs = m.ToDocumentProtoList(event.Docs)
+	}
+
+	return result
+}
+
+func toEventDocIDs(docIDs []int64) []uint64 {
+	if len(docIDs) == 0 {
+		return nil
+	}
+	result := make([]uint64, len(docIDs))
+	for i, id := range docIDs {
+		result[i] = uint64(id)
+	}
+	return result
 }
 
 func (m *QHPlanningMapper) ToEventProtoList(events []qh_domain.QHPlanningEvent) []*tqdpb.PlanningEvent {
 	result := make([]*tqdpb.PlanningEvent, len(events))
 	for i, event := range events {
 		result[i] = m.ToEventProto(&event)
+	}
+	return result
+}
+
+func (m *QHPlanningMapper) ToRelationProto(item *qh_domain.QHPlanningRelationItem, planningProjectId uint64) *tqdpb.PlanningRelation {
+	if item == nil {
+		return nil
+	}
+
+	result := &tqdpb.PlanningRelation{
+		Parent: m.ToProjectProto(item.Parent),
+		Child:  m.ToProjectProto(item.Child),
+		Peer:   m.ToProjectProto(item.Peer),
+	}
+
+	if item.Parent != nil && item.Parent.ID == planningProjectId {
+		result.Parent = nil
+	}
+
+	if item.Child != nil && item.Child.ID == planningProjectId {
+		result.Child = nil
+	}
+
+	if item.Peer != nil && item.Peer.ID == planningProjectId {
+		result.Peer = nil
+	}
+
+	return result
+}
+
+func (m *QHPlanningMapper) ToRelationProtoList(items []qh_domain.QHPlanningRelationItem, planningProjectId uint64) []*tqdpb.PlanningRelation {
+	result := make([]*tqdpb.PlanningRelation, len(items))
+	for i, item := range items {
+		result[i] = m.ToRelationProto(&item, planningProjectId)
 	}
 	return result
 }

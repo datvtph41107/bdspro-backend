@@ -94,7 +94,9 @@ func AutoMigrate() {
 		// &qh_domain.QHUserViewEvent{},
 
 		// &qh_domain.QHPlanningProject{},
-		&qh_domain.QHPlanningDocument{},
+		// &qh_domain.QHPlanningDocument{},
+		&qh_domain.QHPlanningEvent{},
+		&qh_domain.QHPlanningRelation{},
 	// &domain.UserSubscription{},
 	)
 }
