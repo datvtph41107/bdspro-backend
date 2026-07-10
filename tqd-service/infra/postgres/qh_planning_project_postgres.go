@@ -3,6 +3,7 @@ package postgres
 import (
 	_db "common/db"
 	"context"
+	"log"
 	"strings"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
@@ -32,7 +33,11 @@ func (r *QHPlanningProjectRepo) Delete(ctx context.Context, id uint64) error {
 
 func (r *QHPlanningProjectRepo) GetByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error) {
 	var entity qh_domain.QHPlanningProject
-	err := r.db.GetDB(ctx).Where("id = ? AND deleted_at IS NULL", id).First(&entity).Error
+	err := r.db.GetDB(ctx).
+		Preload("Jurisdiction").
+		Preload("Layers").
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&entity).Error
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +78,14 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 		return nil, 0, err
 	}
 
-	err := db.Offset(req.GetOffset()).
+	err := db.
+		Preload("Jurisdiction").
+		Preload("Layers").
+		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Order("created_at DESC").
 		Find(&projects).Error
 
+	log.Printf("projects: %+v", len(projects))
 	return projects, total, err
 }

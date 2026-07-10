@@ -247,6 +247,15 @@ func (r *locationRepo) GetNearestLocations(ctx context.Context, coordinates []*d
 	}
 }
 
+func (r *locationRepo) SearchTxtClient(ctx context.Context, query string, limit int) ([]*domain.SearchItem, error) {
+	var searchItems []*domain.SearchItem
+	err := r.db.WithContext(ctx).
+		Where("search_text LIKE ?", "%"+strings.ToLower(query)+"%").
+		Limit(limit).
+		Find(&searchItems).Error
+	return searchItems, err
+}
+
 // ==================== PRIVATE HELPERS ====================
 
 func (r *locationRepo) getNearestLocationForCoordinate(ctx context.Context, lat, lng, maxDistanceKm float64) (*dto.LocationResult, error) {

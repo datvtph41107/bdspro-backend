@@ -24,4 +24,5 @@ type LocationRepository interface {
 
 	// Batch operations
 	GetNearestLocations(ctx context.Context, coordinates []*dto.Coordinate, maxDistanceKm float64) ([]*dto.LocationResult, error)
+	SearchTxtClient(ctx context.Context, query string, limit int) ([]*domain.SearchItem, error)
 }

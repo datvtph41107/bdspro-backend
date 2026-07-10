@@ -15,6 +15,9 @@ type QHLayer struct {
 	DisplayName string `gorm:"type:varchar(255);not null" json:"displayName"`
 	Description string `gorm:"type:text" json:"description,omitempty"`
 
+	PlanningProjectID *uint64            `gorm:"column:planning_project_id;index" json:"planningProjectId,omitempty"`
+	PlanningProject   *QHPlanningProject `gorm:"foreignKey:PlanningProjectID;references:ID"`
+
 	Type   enums.LayerType   `gorm:"type:int;not null;index" json:"type"`
 	Status enums.LayerStatus `gorm:"type:int;default:10;index" json:"status"`
 

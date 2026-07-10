@@ -1054,6 +1054,8 @@ func (m *ParcelMapper) BuildLayerQuickInfoFromRows(rows []dto.ParcelLayerInfo) *
 				RelationType:     q.RelationType,
 				UpdatedAt:        _utils.FormatTimeToString(&q.LayerUpdatedAt),
 				LandUses:         make([]*tqdpb.LandUseQuickInfo, 0),
+
+				PlanningProjectId: q.PlanningProjectID,
 			}
 
 			layerMap[q.LayerID] = layer

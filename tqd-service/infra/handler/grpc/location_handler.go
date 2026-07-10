@@ -6,6 +6,8 @@ import (
 	"errors"
 
 	_provider "common/provider"
+	_utils "common/utils"
+	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/internal/usecase"
@@ -186,6 +188,35 @@ func (h *LocationHandler) ListWardsByProvince(ctx context.Context, req *tqdpb.Li
 
 	// Convert dto -> proto
 	return h.mapper.ToProtoListWardsResponse(resp), nil
+}
+
+func (h *LocationHandler) SearchTxtClient(ctx context.Context, req *sharepb.RequestV3Proto) (*tqdpb.SearchResponse, error) {
+	// Call usecase
+	resp, err := h.locationUsecase.SearchTxtClient(ctx, _utils.CleanSearchText(req.Text), 20)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+
+	searchItems := make([]*tqdpb.SearchItem, len(resp))
+	for i, item := range resp {
+		searchItems[i] = &tqdpb.SearchItem{
+			Address:  item.Address,
+			Title:    item.Title,
+			PoiId:    item.PoiId,
+			ParcelId: item.ParcelId,
+		}
+
+		lat, lng, err := item.Geom.GetLatLng()
+		// log.Printf("item: %+v, lat: %f, lng: %f", searchItems[i], lat, lng)
+		if err == nil {
+			searchItems[i].Latitude = lat
+			searchItems[i].Longitude = lng
+		}
+
+	}
+	return &tqdpb.SearchResponse{
+		Data: searchItems,
+	}, nil
 }
 
 // ==================== VALIDATION ====================

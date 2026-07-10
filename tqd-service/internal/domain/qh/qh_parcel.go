@@ -25,6 +25,8 @@ type Parcel struct {
 	// MinY    float64 `json:"minY" gorm:"column:min_y"`
 	// MaxX    float64 `json:"maxX" gorm:"column:max_x"`
 	// MaxY    float64 `json:"maxY" gorm:"column:max_y"`
+
+	// Geometry []byte `gorm:"type:geometry(MultiPolygon,4326)" json:"geometry,omitempty"`
 }
 
 func (Parcel) TableName() string {

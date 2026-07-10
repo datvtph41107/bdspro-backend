@@ -4,6 +4,7 @@ syntax = "proto3";
 package tqdpb;
 
 import "google/api/annotations.proto";
+import "shared/v3.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -50,6 +51,26 @@ service LocationService {
             get: "/v1/tqd/provinces/{provinceId}/wards"
         };
     }
+
+    rpc SearchTxtClient(sharepb.RequestV3Proto) returns (SearchResponse) {
+        option (google.api.http) = {
+          get: "/v2/tqd/public/client/search"
+        };
+    }
+}
+
+
+message SearchItem {
+    string address = 1;
+    string title = 2;
+    double latitude = 3;
+    double longitude = 4;
+    uint64 poiId = 5;
+    uint64 parcelId = 6;
+}
+
+message SearchResponse {
+    repeated SearchItem data  = 1;
 }
 
 // Request/Response messages

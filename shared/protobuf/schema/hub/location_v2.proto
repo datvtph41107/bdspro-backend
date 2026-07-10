@@ -134,5 +134,26 @@ service LocationV2Service {
       get: "/v2/hub/v2/location/search"
     };
   };
+
+  rpc SearchTxtClient(sharepb.RequestV3Proto) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/search"
+    };
+  };
 }
 
+
+
+message SearchItem {
+  string address = 1;
+  string name = 2;
+  double latitude = 3;
+  double longitude = 4;
+  bytes geometry = 5;
+  uint64 seoId = 6;
+  uint64 parcelId = 7;
+}
+
+message SearchResponse {
+  repeated SearchItem data  = 1;
+}

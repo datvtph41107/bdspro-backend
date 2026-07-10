@@ -134,9 +134,9 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 	query := `
         SELECT 
             p.id,
-            COALESCE(pi.address_text, '') as address_text,
-            COALESCE(pi.map_number, '0') as map_number,
-            COALESCE(pi.land_number, '0') as land_number,
+            COALESCE(p.address_text, '') as address_text,
+            COALESCE(p.map_number, '0') as map_number,
+            COALESCE(p.land_number, '0') as land_number,
             p.lat,
             p.lon,
             
@@ -151,21 +151,20 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 			) as directions,
 
             COALESCE(sh.name, '') as shape_name,
-            pi.shape_id,
-            COALESCE(pi.facade, 0) as facade,
-            COALESCE(pi.total_area_sqm, 0) as total_area_sqm,
-            pi.land_type_id,
-            COALESCE(pi.is_seo, false) AS is_seo,
+            p.shape_id,
+            COALESCE(p.facade, 0) as facade,
+            COALESCE(p.total_area_sqm, 0) as total_area_sqm,
+            p.land_type_id,
+            COALESCE(p.is_seo, false) AS is_seo,
             ST_AsGeoJSON(p.geometry)::bytea as geometry
         FROM parcels p
-		LEFT JOIN qh_parcel_info pi ON pi.parcel_id= p.id
-        LEFT JOIN qh_shape sh ON sh.id = pi.shape_id
+        LEFT JOIN qh_shape sh ON sh.id = p.shape_id
 
-		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = pi.id
+		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = p.id
 		LEFT JOIN qh_direction d ON d.id = pd.qh_direction_id
 
         WHERE p.id = $1 AND p.deleted_at IS NULL
-		GROUP BY p.id, pi.id, sh.id
+		GROUP BY p.id, sh.id
     `
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
@@ -215,7 +214,7 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 		}
 	} else {
 		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
-		query = query.Where("adr_search LIKE ?", searchTerm)
+		query = query.Where("p.adr_search LIKE ?", searchTerm)
 	}
 
 	if err := query.Select("qh_parcel_info.*, p.lat, p.lon, sh.name as shape_name").
@@ -913,6 +912,7 @@ const polygonQuickLayersSubquery = `
 							MAX(l.legal_status) AS layer_legal_status,
 							MAX(l.analyse_order) AS layer_order,
 							TO_CHAR(MAX(l.updated_at) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS layer_updated_at,
+							MAX(l.planning_project_id) AS planning_project_id,
 							sr.land_use_id,
 							MAX(sr.land_use_name) AS land_use_name,
 							MAX(sr.land_use_color) AS land_use_color,
@@ -1317,6 +1317,7 @@ func (p *ParcelPostgres) GetPolygonQuickInfo(
 			MAX(l.legal_status) AS layer_legal_status,
 			MAX(l.analyse_order) AS layer_order,
 			TO_CHAR(MAX(l.updated_at) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS layer_updated_at,
+			MAX(l.planning_project_id) AS planning_project_id,
 			sr.land_use_id,
 			MAX(sr.land_use_name) AS land_use_name,
 			MAX(sr.land_use_color) AS land_use_color,
@@ -1364,14 +1365,14 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			p.id AS parcel_id,
 			COALESCE(p.lat, 0) AS lat,
 			COALESCE(p.lon, 0) AS lon,
-			COALESCE(pi.total_area_sqm, 0) AS area_sqm,
-			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(p.total_area_sqm, 0) AS area_sqm,
+			COALESCE(p.address_text, '') AS address_text,
 			ST_AsGeoJSON(p.geometry) AS geometry,
 
-			COALESCE(pi.map_number, '') AS map_number,
-			COALESCE(pi.land_number, '') AS land_number,
-			COALESCE(pi.property_code, '') AS property_code,
-			COALESCE(pi.property_uuid::text, '') AS property_uuid,
+			COALESCE(p.map_number, '') AS map_number,
+			COALESCE(p.land_number, '') AS land_number,
+			COALESCE(p.property_code, '') AS property_code,
+			COALESCE(p.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 
@@ -1380,15 +1381,14 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			'#CCCCCC' AS land_use_color,
 
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(pi.province_code, '') AS province_code,
-			COALESCE(pi.ward_code, '') AS ward_code,
+			COALESCE(p.province_code, '') AS province_code,
+			COALESCE(p.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(pi.is_seo, false) AS is_seo
+			COALESCE(p.is_seo, false) AS is_seo
 		FROM parcels p
-		LEFT JOIN qh_parcel_info pi ON p.id = pi.parcel_id
 		LEFT JOIN qh_planning_land_use pu
-			ON pi.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+			ON p.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON p.province_code = prov.code
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1
@@ -1583,6 +1583,7 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
 			l.legal_status AS layer_legal_status,
 			l.analyse_order AS layer_order,
 			l.updated_at AS layer_updated_at,
+			l.planning_project_id AS planning_project_id,
 
             ST_Area(
                 ST_Intersection(r.geometry, p.geometry)::geography

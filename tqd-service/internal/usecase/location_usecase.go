@@ -88,6 +88,16 @@ func (u *LocationUsecase) BatchGetNearestLocations(ctx context.Context, req *dto
 	}, nil
 }
 
+// SearchTxtClient - Tìm kiếm theo tên
+func (u *LocationUsecase) SearchTxtClient(ctx context.Context, query string, limit int) ([]*domain.SearchItem, error) {
+	results, err := u.repo.SearchTxtClient(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("search txt client: %w", err)
+	}
+
+	return results, nil
+}
+
 // SearchLocations - Tìm kiếm theo tên
 func (u *LocationUsecase) SearchLocations(ctx context.Context, req *dto.SearchLocationsRequest) (*dto.SearchLocationsResponse, error) {
 	limit := 20

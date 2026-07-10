@@ -33,13 +33,15 @@ type ParcelLayerInfo struct {
 	ID       uint64 `gorm:"column:id"`
 	ParcelID uint64 `gorm:"column:parcel_id"`
 
-	LayerID          uint64 `gorm:"column:layer_id"`
-	LayerName        string `gorm:"column:layer_name"`
-	LayerDisplayName string `gorm:"column:layer_display_name"`
-	LayerAvatar      string `gorm:"column:layer_avatar"`
-	LayerLegalStatus int    `gorm:"column:layer_legal_status"`
-	LayerType        uint32 `gorm:"column:layer_type"`
+	LayerID          uint64    `gorm:"column:layer_id"`
+	LayerName        string    `gorm:"column:layer_name"`
+	LayerDisplayName string    `gorm:"column:layer_display_name"`
+	LayerAvatar      string    `gorm:"column:layer_avatar"`
+	LayerLegalStatus int       `gorm:"column:layer_legal_status"`
+	LayerType        uint32    `gorm:"column:layer_type"`
 	LayerUpdatedAt   time.Time `gorm:"column:layer_updated_at"`
+
+	PlanningProjectID *uint64 `gorm:"column:planning_project_id"`
 
 	CanBuild bool `gorm:"column:can_build"`
 

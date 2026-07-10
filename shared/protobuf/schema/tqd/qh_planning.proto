@@ -5,6 +5,7 @@ package tqdpb;
 
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "tqd/qh_layer.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -85,19 +86,32 @@ service QHPlanningService {
   }
   rpc ClientListPlanningDocuments(ListPlanningDocumentsRequest) returns (ListPlanningDocumentsResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/client/planning-documents"
+      get: "/v2/tqd/client/planning-projects/{planningProjectId}/planning-documents"
     };
   }
+  rpc ClientListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{planningProjectId}/events"
+    };
+  }
+}
+
+message Jurisdiction {
+  uint64 id = 1;
+  string name = 2;
 }
 
 message PlanningProject {
   uint64 id = 1;
   string code = 2;
   string name = 3;
-  string planningType = 4;
-  string planningLevel = 5;
+  uint32 planningType = 4;
+  string planningTypeName = 17;
+  uint32 planningLevel = 5;
+  string planningLevelName = 18;
   string authority = 6;
-  string jurisdictionId = 7;
+  uint64 jurisdictionId = 7;
+  Jurisdiction jurisdiction = 19;
   string summary = 8;
   string approvalDate = 9;
   string effectiveDate = 10;
@@ -107,6 +121,9 @@ message PlanningProject {
   string metadata = 14; // JSON string
   string createdAt = 15;
   string updatedAt = 16;
+  uint32 legalStatus = 20;
+  string legalStatusName = 21;
+  repeated LayerResponse layers = 22;
 }
 
 message ListPlanningProjectsRequest {
@@ -138,6 +155,7 @@ message PlanningDocument {
   string metadata = 12; // JSON string
   string createdAt = 13;
   string updatedAt = 14;
+  string thumbnail = 15;
 }
 
 message ListPlanningDocumentsRequest {
@@ -150,6 +168,26 @@ message ListPlanningDocumentsRequest {
 
 message ListPlanningDocumentsResponse {
   repeated PlanningDocument data = 1;
+  int64 total = 2;
+}
+
+message PlanningEvent {
+  uint64 id = 1;
+  uint64 planningProjectId = 2;
+  string eventName = 3;
+  string eventDate = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message ListPlanningEventsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 planningProjectId = 3;
+}
+
+message ListPlanningEventsResponse {
+  repeated PlanningEvent data = 1;
   int64 total = 2;
 }
 

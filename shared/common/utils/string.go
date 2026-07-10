@@ -48,7 +48,7 @@ type ParcelSearchInfo struct {
 // InferParcelSearch bóc tách số tờ, số thửa từ chuỗi tìm kiếm
 func InferParcelSearch(s string) ParcelSearchInfo {
 	info := ParcelSearchInfo{}
-	
+
 	// Chuẩn hóa chuỗi trước khi parse (loại bỏ dấu để dễ bắt pattern)
 	normalized := strings.ToLower(RemoveAccents(s))
 

@@ -39,6 +39,10 @@ var enumProviders = map[string][]*sharepb.EnumItem{
 	"legal_status":   _utils.EnumMapToList(enums.LegalStatusMap),
 	"legal_level":    _utils.EnumMapToList(enums.LegalLevelMap),
 	"scope_apply":    _utils.EnumMapToList(enums.ScopeApplyNames),
+
+	"planning_document_type": _utils.EnumMapToList(enums.PlanningDocumentTypeLabelMap),
+	"planning_type":          _utils.EnumMapToList(enums.PlanningTypeMap),
+	"planning_level":         _utils.EnumMapToList(enums.PlanningLevelMap),
 }
 
 func (s *TqdPublicService) GetEnums(ctx context.Context, req *sharepb.SyncRequest) (*sharepb.GetEnumsResponse, error) {

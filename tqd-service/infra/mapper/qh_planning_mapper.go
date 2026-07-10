@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/enums"
 )
 
 type QHPlanningMapper struct{}
@@ -17,17 +18,25 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		return nil
 	}
 
-	jurisdictionId := ""
+	jurisdictionId := uint64(0)
 	if project.JurisdictionID != nil {
 		jurisdictionId = *project.JurisdictionID
 	}
 
-	return &tqdpb.PlanningProject{
-		Id:             project.ID,
-		Code:           project.Code,
-		Name:           project.Name,
-		PlanningType:   project.PlanningType,
-		PlanningLevel:  project.PlanningLevel,
+	result := &tqdpb.PlanningProject{
+		Id:           project.ID,
+		Code:         project.Code,
+		Name:         project.Name,
+		PlanningType: project.PlanningType,
+
+		PlanningTypeName: enums.GetPlanningTypeLabel(project.PlanningType),
+
+		PlanningLevel:     project.PlanningLevel,
+		PlanningLevelName: enums.GetPlanningLevelLabel(project.PlanningLevel),
+
+		LegalStatus:     uint32(project.LegalStatus),
+		LegalStatusName: enums.LegalStatusMap[project.LegalStatus],
+
 		Authority:      project.Authority,
 		JurisdictionId: jurisdictionId,
 		Summary:        project.Summary,
@@ -40,6 +49,25 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		CreatedAt:      _utils.FormatTimeToString(project.CreatedAt),
 		UpdatedAt:      _utils.FormatTimeToString(project.UpdatedAt),
 	}
+
+	if project.Jurisdiction != nil {
+		result.Jurisdiction = &tqdpb.Jurisdiction{
+			Id:   project.Jurisdiction.ID,
+			Name: project.Jurisdiction.Name,
+		}
+	}
+
+	if len(project.Layers) > 0 {
+		result.Layers = make([]*tqdpb.LayerResponse, len(project.Layers))
+		for i, layer := range project.Layers {
+			result.Layers[i] = &tqdpb.LayerResponse{
+				Id:   layer.ID,
+				Name: layer.Name,
+			}
+		}
+	}
+
+	return result
 }
 
 func (m *QHPlanningMapper) ToProjectProtoList(projects []qh_domain.QHPlanningProject) []*tqdpb.PlanningProject {
@@ -58,11 +86,12 @@ func (m *QHPlanningMapper) ToDocumentProto(document *qh_domain.QHPlanningDocumen
 	return &tqdpb.PlanningDocument{
 		Id:                document.ID,
 		PlanningProjectId: document.PlanningProjectID,
-		DocumentType:      document.DocumentType,
+		DocumentType:      enums.GetPlanningDocumentTypeLabel(uint32(document.DocumentType)),
 		Code:              document.Code,
 		Title:             document.Title,
 		Description:       document.Description,
 		Filepath:          document.Filepath,
+		Thumbnail:         document.Thumbnail,
 		VersionNo:         document.VersionNo,
 		ValidityStatus:    document.ValidityStatus,
 		IssueDate:         _utils.FormatTimeToString(document.IssueDate),
@@ -81,13 +110,36 @@ func (m *QHPlanningMapper) ToDocumentProtoList(documents []qh_domain.QHPlanningD
 	return result
 }
 
+func (m *QHPlanningMapper) ToEventProto(event *qh_domain.QHPlanningEvent) *tqdpb.PlanningEvent {
+	if event == nil {
+		return nil
+	}
+
+	return &tqdpb.PlanningEvent{
+		Id:                event.ID,
+		PlanningProjectId: event.PlanningProjectID,
+		EventName:         event.EventName,
+		EventDate:         _utils.FormatTimeToString(event.EventDate),
+		CreatedAt:         _utils.FormatTimeToString(event.CreatedAt),
+		UpdatedAt:         _utils.FormatTimeToString(event.UpdatedAt),
+	}
+}
+
+func (m *QHPlanningMapper) ToEventProtoList(events []qh_domain.QHPlanningEvent) []*tqdpb.PlanningEvent {
+	result := make([]*tqdpb.PlanningEvent, len(events))
+	for i, event := range events {
+		result[i] = m.ToEventProto(&event)
+	}
+	return result
+}
+
 func (m *QHPlanningMapper) ToProjectDomain(proto *tqdpb.PlanningProject) *qh_domain.QHPlanningProject {
 	if proto == nil {
 		return nil
 	}
 
-	var jurisdictionId *string
-	if proto.JurisdictionId != "" {
+	var jurisdictionId *uint64
+	if proto.JurisdictionId != 0 {
 		jurisdictionId = &proto.JurisdictionId
 	}
 
@@ -125,11 +177,12 @@ func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_d
 
 	return &qh_domain.QHPlanningDocument{
 		PlanningProjectID: proto.PlanningProjectId,
-		DocumentType:      proto.DocumentType,
+		DocumentType:      enums.PlanningDocumentType(enums.GetPlanningDocumentTypeValue(proto.DocumentType)),
 		Code:              proto.Code,
 		Title:             proto.Title,
 		Description:       proto.Description,
 		Filepath:          proto.Filepath,
+		Thumbnail:         proto.Thumbnail,
 		VersionNo:         proto.VersionNo,
 		ValidityStatus:    proto.ValidityStatus,
 		IssueDate:         _utils.ParseStringToTime(proto.IssueDate),

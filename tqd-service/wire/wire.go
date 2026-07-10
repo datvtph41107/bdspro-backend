@@ -1,13 +1,12 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
-	"tqd/initial"
+	"github.com/google/wire"
 	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
@@ -16,6 +15,7 @@ import (
 	tqd_infra_postgres "tqd/infra/postgres"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
+	"tqd/initial"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
@@ -154,6 +154,8 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
 	tqd_infra_postgres.NewQHPlanningDocumentRepo,
 	tqd_internal_usecase_qh.NewQHPlanningDocumentUsecase,
+	tqd_infra_postgres.NewQHPlanningEventRepo,
+	tqd_internal_usecase_qh.NewQHPlanningEventUsecase,
 	tqd_infra_handler_grpc.NewQHPlanningGrpcHandler,
 	tqd_infra_mapper.NewQHPlanningMapper,
 	tqd_infra_postgres.NewQHPlanningProjectRepo,
@@ -182,6 +184,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_client.NewUserClient,
 	tqd_infra_mapper.NewWorkspaceMapper,
 )
+
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

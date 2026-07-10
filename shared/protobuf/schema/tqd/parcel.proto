@@ -884,6 +884,7 @@ message LayerQuickInfo {
   int32 layerOrder = 11;
   uint32 layerType = 12;
   string updatedAt = 13;
+  optional uint64 planningProjectId = 14;
 }
 
 message Layer {

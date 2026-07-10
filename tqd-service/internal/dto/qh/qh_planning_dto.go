@@ -18,3 +18,8 @@ type ListPlanningDocumentsRequest struct {
 	DocumentType      string `json:"documentType"`
 	ValidityStatus    string `json:"validityStatus"`
 }
+
+type ListPlanningEventsRequest struct {
+	_dto.Pagable
+	PlanningProjectID uint64 `json:"planningProjectId"`
+}

@@ -19,10 +19,10 @@ func (v *QHPlanningValidator) ValidateProject(req *qh_domain.QHPlanningProject) 
 	if strings.TrimSpace(req.Code) == "" {
 		return _errors.ReturnError(400, "code is required")
 	}
-	if strings.TrimSpace(req.PlanningType) == "" {
+	if req.PlanningType == 0 {
 		return _errors.ReturnError(400, "planningType is required")
 	}
-	if strings.TrimSpace(req.PlanningLevel) == "" {
+	if req.PlanningLevel == 0 {
 		return _errors.ReturnError(400, "planningLevel is required")
 	}
 	if strings.TrimSpace(req.ValidityStatus) == "" {
@@ -38,7 +38,7 @@ func (v *QHPlanningValidator) ValidateDocument(req *qh_domain.QHPlanningDocument
 	if strings.TrimSpace(req.Title) == "" {
 		return _errors.ReturnError(400, "title is required")
 	}
-	if strings.TrimSpace(req.DocumentType) == "" {
+	if req.DocumentType == 0 {
 		return _errors.ReturnError(400, "documentType is required")
 	}
 	return nil

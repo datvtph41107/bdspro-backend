@@ -16,6 +16,7 @@ type QHPlanningGrpcHandler struct {
 	tqdpb.UnimplementedQHPlanningServiceServer
 	projectUsecase  qh_usecase.IQHPlanningProjectUsecase
 	documentUsecase qh_usecase.IQHPlanningDocumentUsecase
+	eventUsecase    qh_usecase.IQHPlanningEventUsecase
 	mapper          *mapper.QHPlanningMapper
 	validator       *validator.QHPlanningValidator
 }
@@ -23,12 +24,14 @@ type QHPlanningGrpcHandler struct {
 func NewQHPlanningGrpcHandler(
 	projectUsecase qh_usecase.IQHPlanningProjectUsecase,
 	documentUsecase qh_usecase.IQHPlanningDocumentUsecase,
+	eventUsecase qh_usecase.IQHPlanningEventUsecase,
 	mapper *mapper.QHPlanningMapper,
 	validator *validator.QHPlanningValidator,
 ) *QHPlanningGrpcHandler {
 	return &QHPlanningGrpcHandler{
 		projectUsecase:  projectUsecase,
 		documentUsecase: documentUsecase,
+		eventUsecase:    eventUsecase,
 		mapper:          mapper,
 		validator:       validator,
 	}
@@ -199,4 +202,22 @@ func (h *QHPlanningGrpcHandler) ClientGetPlanningDocument(ctx context.Context, r
 
 func (h *QHPlanningGrpcHandler) ClientListPlanningDocuments(ctx context.Context, req *tqdpb.ListPlanningDocumentsRequest) (*tqdpb.ListPlanningDocumentsResponse, error) {
 	return h.ListPlanningDocuments(ctx, req)
+}
+
+func (h *QHPlanningGrpcHandler) ClientListPlanningEvents(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningEventsResponse, error) {
+	listReq := &qh_dto.ListPlanningEventsRequest{
+		PlanningProjectID: req.PlanningProjectId,
+	}
+	listReq.Page = req.Page
+	listReq.Size = req.Size
+
+	results, total, err := h.eventUsecase.GetList(ctx, listReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.ListPlanningEventsResponse{
+		Data:  h.mapper.ToEventProtoList(results),
+		Total: total,
+	}, nil
 }
