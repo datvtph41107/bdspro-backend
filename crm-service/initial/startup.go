@@ -35,8 +35,9 @@ type InitialApp struct {
 	RegistryHandler     *handler.RegistryHandler
 	AppointmentService  *handler.AppointmentHandler
 
-	Logger           *flogging.FabricLogger
-	SeoDomainHandler *handler.SeoDomainHandler
+	Logger            *flogging.FabricLogger
+	SeoDomainHandler  *handler.SeoDomainHandler
+	SeoStrategyHander *handler.SeoStrategyHandler
 }
 
 func NewInitialApp(
@@ -66,6 +67,7 @@ func NewInitialApp(
 	registryHandler *handler.RegistryHandler,
 	appointmentService *handler.AppointmentHandler,
 	seoDomainHandler *handler.SeoDomainHandler,
+	seoStrategyHandler *handler.SeoStrategyHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
@@ -94,7 +96,8 @@ func NewInitialApp(
 		RegistryHandler:     registryHandler,
 		AppointmentService:  appointmentService,
 
-		SeoDomainHandler: seoDomainHandler,
-		Logger:           flogging.MustGetLogger(viper.GetString("server.name")),
+		SeoDomainHandler:  seoDomainHandler,
+		SeoStrategyHander: seoStrategyHandler,
+		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

@@ -39,4 +39,5 @@ func RegisterCrmService(ctx context.Context, mux *runtime.ServeMux, env string, 
 
 	_ = crmpb.RegisterStageServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterSeoDomainServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = crmpb.RegisterSeoStrategyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

@@ -1,0 +1,297 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "google/api/annotations.proto";
+
+service SeoStrategyService {
+  rpc CreateSeoObjective(CreateSeoObjectiveRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/objectives"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoObjective(GetSeoObjectiveRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/objectives/{id}"
+    };
+  }
+
+  rpc GetSeoObjectiveList(GetSeoObjectiveListRequest)
+      returns (GetSeoObjectiveListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/objectives"
+    };
+  }
+
+  rpc UpdateSeoObjectiveDefinition(
+      UpdateSeoObjectiveDefinitionRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo/strategy/objectives/{id}"
+      body: "*"
+    };
+  }
+
+  rpc AddSeoObjectiveEvidence(
+      AddSeoObjectiveEvidenceRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/objectives/{objectiveId}/evidence"
+      body: "*"
+    };
+  }
+
+  rpc UpsertSeoObjectiveMetric(
+      UpsertSeoObjectiveMetricRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo/strategy/objectives/{objectiveId}/metrics/{metricCode}"
+      body: "*"
+    };
+  }
+
+  rpc EvaluateSeoObjectiveReadiness(
+      GetSeoObjectiveRequest)
+      returns (SeoObjectiveReadinessResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/objectives/{id}/readiness"
+    };
+  }
+
+  rpc ActivateSeoObjective(
+      SeoObjectiveCommandRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/objectives/{id}/activate"
+      body: "*"
+    };
+  }
+
+  rpc PauseSeoObjective(
+      SeoObjectiveCommandRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/objectives/{id}/pause"
+      body: "*"
+    };
+  }
+
+  rpc ArchiveSeoObjective(
+      SeoObjectiveCommandRequest)
+      returns (SeoObjectiveResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/objectives/{id}/archive"
+      body: "*"
+    };
+  }
+}
+
+message CreateSeoObjectiveRequest {
+  string code = 1;
+  string name = 2;
+}
+
+message GetSeoObjectiveRequest {
+  uint64 id = 1;
+}
+
+message GetSeoObjectiveListRequest {
+  string keyword = 1;
+  string status = 2;
+  string confidence = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+}
+
+message GetSeoObjectiveListResponse {
+  repeated SeoObjectiveSummaryResponse data = 1;
+  int64 total = 2;
+}
+
+message UpdateSeoObjectiveDefinitionRequest {
+  uint64 id = 1;
+  uint32 expectedVersion = 2;
+
+  string name = 3;
+
+  string audienceSummary = 4;
+  string situation = 5;
+  string problemStatement = 6;
+
+  string userOutcome = 7;
+  string productOutcome = 8;
+  string businessOutcome = 9;
+
+  repeated string nonGoals = 10;
+  repeated string constraints = 11;
+
+  string confidence = 12;
+  string ownerCode = 13;
+  optional string reviewDueAt = 14;
+}
+
+message AddSeoObjectiveEvidenceRequest {
+  uint64 objectiveId = 1;
+
+  string evidenceType = 2;
+  string stance = 3;
+
+  string sourceSystem = 4;
+  string sourceReference = 5;
+
+  string finding = 6;
+  string confidence = 7;
+
+  optional string observedAt = 8;
+  optional string validUntil = 9;
+
+  string metadataJson = 10;
+}
+
+message UpsertSeoObjectiveMetricRequest {
+  uint64 objectiveId = 1;
+
+  string metricCode = 2;
+  string metricName = 3;
+
+  string metricLayer = 4;
+  string description = 5;
+
+  string sourceSystem = 6;
+  string calculationMethod = 7;
+
+  string unit = 8;
+  string targetDirection = 9;
+
+  optional double baselineValue = 10;
+  optional double targetValue = 11;
+
+  bool isPrimary = 12;
+
+  string instrumentationStatus = 13;
+  string status = 14;
+}
+
+message SeoObjectiveCommandRequest {
+  uint64 id = 1;
+  uint32 expectedVersion = 2;
+  string reason = 3;
+}
+
+message SeoObjectiveSummaryResponse {
+  uint64 id = 1;
+  string code = 2;
+  string name = 3;
+
+  string status = 4;
+  string confidence = 5;
+
+  string ownerCode = 6;
+  string userOutcome = 7;
+
+  uint32 lockVersion = 8;
+
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message SeoObjectiveResponse {
+  uint64 id = 1;
+  string code = 2;
+  string name = 3;
+
+  string audienceSummary = 4;
+  string situation = 5;
+  string problemStatement = 6;
+
+  string userOutcome = 7;
+  string productOutcome = 8;
+  string businessOutcome = 9;
+
+  repeated string nonGoals = 10;
+  repeated string constraints = 11;
+
+  string status = 12;
+  string confidence = 13;
+
+  string ownerCode = 14;
+  optional string reviewDueAt = 15;
+
+  uint32 lockVersion = 16;
+
+  repeated SeoObjectiveEvidenceResponse evidence = 17;
+  repeated SeoObjectiveMetricResponse metrics = 18;
+
+  SeoObjectiveReadinessResponse readiness = 19;
+
+  string createdAt = 20;
+  string updatedAt = 21;
+}
+
+message SeoObjectiveEvidenceResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+
+  string evidenceType = 3;
+  string stance = 4;
+
+  string sourceSystem = 5;
+  string sourceReference = 6;
+
+  string finding = 7;
+  string confidence = 8;
+
+  optional string observedAt = 9;
+  optional string validUntil = 10;
+
+  string status = 11;
+  string metadataJson = 12;
+
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+message SeoObjectiveMetricResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+
+  string metricCode = 3;
+  string metricName = 4;
+
+  string metricLayer = 5;
+  string description = 6;
+
+  string sourceSystem = 7;
+  string calculationMethod = 8;
+
+  string unit = 9;
+  string targetDirection = 10;
+
+  optional double baselineValue = 11;
+  optional double targetValue = 12;
+
+  bool isPrimary = 13;
+
+  string instrumentationStatus = 14;
+  string status = 15;
+
+  string createdAt = 16;
+  string updatedAt = 17;
+}
+
+message SeoObjectiveReadinessIssueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+message SeoObjectiveReadinessResponse {
+  bool ready = 1;
+  repeated SeoObjectiveReadinessIssueResponse blockers = 2;
+  repeated SeoObjectiveReadinessIssueResponse warnings = 3;
+}
