@@ -12,6 +12,10 @@ var (
 		"seo objective không tồn tại",
 	)
 
+	ErrSeoObjectiveEvidenceNotFound = errors.New(
+		"seo objective evidence không tồn tại",
+	)
+
 	ErrSeoObjectiveConflict = errors.New(
 		"seo objective đã được cập nhật bởi thao tác khác",
 	)
@@ -36,6 +40,7 @@ type SeoObjectiveRepo interface {
 
 	CreateEvidence(ctx context.Context, evidence *seo_strategy.SeoObjectiveEvidence) error
 	ListEvidence(ctx context.Context, objectiveID uint64) ([]seo_strategy.SeoObjectiveEvidence, error)
+	GetEvidenceByID(ctx context.Context, id uint64) (*seo_strategy.SeoObjectiveEvidence, error)
 
 	UpsertMetric(ctx context.Context, metric *seo_strategy.SeoObjectiveMetric) error
 	ListMetrics(ctx context.Context, objectiveID uint64) ([]seo_strategy.SeoObjectiveMetric, error)

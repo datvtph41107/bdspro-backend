@@ -2,12 +2,11 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
-	"time"
-
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/usecase"
+	"encoding/json"
+	"time"
 
 	crmpb "pb/types/crm"
 )
@@ -17,15 +16,31 @@ type SeoStrategyHandler struct {
 
 	usecase *usecase.SeoObjectiveUsecase
 	mapper  *mapper.SeoObjectiveMapper
+
+	audienceUsecase *usecase.SeoAudienceUsecase
+	audienceMapper  *mapper.SeoAudienceMapper
+
+	userNeedUsecase *usecase.SeoUserNeedUsecase
+	userNeedMapper  *mapper.SeoUserNeedMapper
 }
 
 func NewSeoStrategyHandler(
 	objectiveUsecase *usecase.SeoObjectiveUsecase,
 	objectiveMapper *mapper.SeoObjectiveMapper,
+	audienceUsecase *usecase.SeoAudienceUsecase,
+	audienceMapper *mapper.SeoAudienceMapper,
+	userNeedUsecase *usecase.SeoUserNeedUsecase,
+	userNeedMapper *mapper.SeoUserNeedMapper,
 ) *SeoStrategyHandler {
 	return &SeoStrategyHandler{
 		usecase: objectiveUsecase,
 		mapper:  objectiveMapper,
+
+		audienceUsecase: audienceUsecase,
+		audienceMapper:  audienceMapper,
+
+		userNeedUsecase: userNeedUsecase,
+		userNeedMapper:  userNeedMapper,
 	}
 }
 

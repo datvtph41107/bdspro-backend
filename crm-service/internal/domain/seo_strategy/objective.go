@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -179,8 +178,6 @@ type SeoObjectiveAggregate struct {
 	Readiness ObjectiveReadiness
 }
 
-var objectiveCodePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{2,119}$`)
-
 // CreateSeoObjectiveDraft tạo domain draft từ dữ liệu request.
 //
 // Không dùng tiền tố New* vì Wire generator của dự án tự động
@@ -212,11 +209,12 @@ func CreateSeoObjectiveDraft(
 	return objective, nil
 }
 
+// NormalizeObjectiveCode được giữ lại để tương thích với code hiện tại.
+//
+// Việc chuẩn hóa thực tế được chuyển sang NormalizeStrategyCode để các
+// domain entity trong SEO Strategy sử dụng chung một quy tắc.
 func NormalizeObjectiveCode(value string) string {
-	value = strings.ToLower(strings.TrimSpace(value))
-	value = strings.ReplaceAll(value, "-", "_")
-	value = strings.Join(strings.Fields(value), "_")
-	return value
+	return NormalizeStrategyCode(value)
 }
 
 func ValidateObjectiveIdentity(objective *SeoObjective) error {
@@ -224,10 +222,8 @@ func ValidateObjectiveIdentity(objective *SeoObjective) error {
 		return errors.New("objective không tồn tại")
 	}
 
-	if !objectiveCodePattern.MatchString(objective.Code) {
-		return errors.New(
-			"objective code phải dùng lower_snake_case và dài từ 3 đến 120 ký tự",
-		)
+	if err := ValidateStrategyCode(objective.Code); err != nil {
+		return err
 	}
 
 	if strings.TrimSpace(objective.Name) == "" {
@@ -262,11 +258,17 @@ func ValidateEvidence(evidence *SeoObjectiveEvidence) error {
 	}
 
 	if !IsValidEvidenceType(evidence.Type) {
-		return fmt.Errorf("evidence type không hợp lệ: %s", evidence.Type)
+		return fmt.Errorf(
+			"evidence type không hợp lệ: %s",
+			evidence.Type,
+		)
 	}
 
 	if !IsValidEvidenceStance(evidence.Stance) {
-		return fmt.Errorf("evidence stance không hợp lệ: %s", evidence.Stance)
+		return fmt.Errorf(
+			"evidence stance không hợp lệ: %s",
+			evidence.Stance,
+		)
 	}
 
 	if !IsValidObjectiveConfidence(evidence.Confidence) {
@@ -300,11 +302,11 @@ func ValidateMetric(metric *SeoObjectiveMetric) error {
 		return errors.New("objectiveId không hợp lệ")
 	}
 
-	metric.Code = NormalizeObjectiveCode(metric.Code)
+	metric.Code = NormalizeStrategyCode(metric.Code)
 	metric.Name = strings.TrimSpace(metric.Name)
 
-	if !objectiveCodePattern.MatchString(metric.Code) {
-		return errors.New("metric code phải dùng lower_snake_case")
+	if err := ValidateStrategyCode(metric.Code); err != nil {
+		return err
 	}
 
 	if metric.Name == "" {
@@ -312,7 +314,10 @@ func ValidateMetric(metric *SeoObjectiveMetric) error {
 	}
 
 	if !IsValidMetricLayer(metric.Layer) {
-		return fmt.Errorf("metric layer không hợp lệ: %s", metric.Layer)
+		return fmt.Errorf(
+			"metric layer không hợp lệ: %s",
+			metric.Layer,
+		)
 	}
 
 	if !IsValidTargetDirection(metric.TargetDirection) {
@@ -331,7 +336,10 @@ func ValidateMetric(metric *SeoObjectiveMetric) error {
 
 	if metric.Status != MetricStatusActive &&
 		metric.Status != MetricStatusDeprecated {
-		return fmt.Errorf("metric status không hợp lệ: %s", metric.Status)
+		return fmt.Errorf(
+			"metric status không hợp lệ: %s",
+			metric.Status,
+		)
 	}
 
 	return nil

@@ -20,6 +20,8 @@ type SeoObjectivePostgres struct {
 	db *gorm.DB
 }
 
+var _ repo.SeoObjectiveRepo = (*SeoObjectivePostgres)(nil)
+
 func NewSeoObjectivePostgres(
 	db *gorm.DB,
 ) repo.SeoObjectiveRepo {
@@ -339,12 +341,46 @@ func (r *SeoObjectivePostgres) ListEvidence(
 		return nil, err
 	}
 
-	items := make([]seo_strategy.SeoObjectiveEvidence, 0, len(rows))
+	items := make(
+		[]seo_strategy.SeoObjectiveEvidence,
+		0,
+		len(rows),
+	)
+
 	for i := range rows {
-		items = append(items, *evidenceRowToDomain(&rows[i]))
+		items = append(
+			items,
+			*evidenceRowToDomain(&rows[i]),
+		)
 	}
 
 	return items, nil
+}
+
+func (r *SeoObjectivePostgres) GetEvidenceByID(
+	ctx context.Context,
+	id uint64,
+) (*seo_strategy.SeoObjectiveEvidence, error) {
+	if id == 0 {
+		return nil, repo.ErrSeoObjectiveEvidenceNotFound
+	}
+
+	var row seoObjectiveEvidenceRow
+
+	err := r.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&row).
+		Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repo.ErrSeoObjectiveEvidenceNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return evidenceRowToDomain(&row), nil
 }
 
 func (r *SeoObjectivePostgres) UpsertMetric(
