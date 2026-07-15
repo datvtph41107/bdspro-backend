@@ -1,12 +1,12 @@
 package handler
 
 import (
+	_errors "common/errors"
 	"context"
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/usecase"
 	"encoding/json"
-	"time"
 
 	crmpb "pb/types/crm"
 )
@@ -22,6 +22,15 @@ type SeoStrategyHandler struct {
 
 	userNeedUsecase *usecase.SeoUserNeedUsecase
 	userNeedMapper  *mapper.SeoUserNeedMapper
+
+	queryEvidenceUsecase *usecase.SeoQueryEvidenceUsecase
+	queryEvidenceMapper  *mapper.SeoQueryEvidenceMapper
+
+	intentHypothesisUsecase *usecase.SeoIntentHypothesisUsecase
+	intentHypothesisMapper  *mapper.SeoIntentHypothesisMapper
+
+	queryClusterUsecase *usecase.SeoQueryClusterUsecase
+	queryClusterMapper  *mapper.SeoQueryClusterMapper
 }
 
 func NewSeoStrategyHandler(
@@ -31,6 +40,12 @@ func NewSeoStrategyHandler(
 	audienceMapper *mapper.SeoAudienceMapper,
 	userNeedUsecase *usecase.SeoUserNeedUsecase,
 	userNeedMapper *mapper.SeoUserNeedMapper,
+	queryEvidenceUsecase *usecase.SeoQueryEvidenceUsecase,
+	queryEvidenceMapper *mapper.SeoQueryEvidenceMapper,
+	intentHypothesisUsecase *usecase.SeoIntentHypothesisUsecase,
+	intentHypothesisMapper *mapper.SeoIntentHypothesisMapper,
+	queryClusterUsecase *usecase.SeoQueryClusterUsecase,
+	queryClusterMapper *mapper.SeoQueryClusterMapper,
 ) *SeoStrategyHandler {
 	return &SeoStrategyHandler{
 		usecase: objectiveUsecase,
@@ -41,6 +56,15 @@ func NewSeoStrategyHandler(
 
 		userNeedUsecase: userNeedUsecase,
 		userNeedMapper:  userNeedMapper,
+
+		queryEvidenceUsecase: queryEvidenceUsecase,
+		queryEvidenceMapper:  queryEvidenceMapper,
+
+		intentHypothesisUsecase: intentHypothesisUsecase,
+		intentHypothesisMapper:  intentHypothesisMapper,
+
+		queryClusterUsecase: queryClusterUsecase,
+		queryClusterMapper:  queryClusterMapper,
 	}
 }
 
@@ -110,6 +134,18 @@ func (h *SeoStrategyHandler) UpdateSeoObjectiveDefinition(
 	ctx context.Context,
 	req *crmpb.UpdateSeoObjectiveDefinitionRequest,
 ) (*crmpb.SeoObjectiveResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không được để trống")
+	}
+
+	reviewDueAt, err := parseOptionalStrategyTime(req.ReviewDueAt)
+	if err != nil {
+		return nil, _errors.ReturnError(
+			400,
+			"reviewDueAt không hợp lệ: "+err.Error(),
+		)
+	}
+
 	result, err := h.usecase.UpdateDefinition(
 		ctx,
 		&dto.UpdateSeoObjectiveDefinitionRequest{
@@ -126,7 +162,7 @@ func (h *SeoStrategyHandler) UpdateSeoObjectiveDefinition(
 			Constraints:      req.GetConstraints(),
 			Confidence:       req.GetConfidence(),
 			OwnerCode:        req.GetOwnerCode(),
-			ReviewDueAt:      parseOptionalObjectiveTime(req.ReviewDueAt),
+			ReviewDueAt:      reviewDueAt,
 		},
 	)
 	if err != nil {
@@ -140,6 +176,26 @@ func (h *SeoStrategyHandler) AddSeoObjectiveEvidence(
 	ctx context.Context,
 	req *crmpb.AddSeoObjectiveEvidenceRequest,
 ) (*crmpb.SeoObjectiveResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không được để trống")
+	}
+
+	observedAt, err := parseOptionalStrategyTime(req.ObservedAt)
+	if err != nil {
+		return nil, _errors.ReturnError(
+			400,
+			"observedAt không hợp lệ: "+err.Error(),
+		)
+	}
+
+	validUntil, err := parseOptionalStrategyTime(req.ValidUntil)
+	if err != nil {
+		return nil, _errors.ReturnError(
+			400,
+			"validUntil không hợp lệ: "+err.Error(),
+		)
+	}
+
 	metadata := json.RawMessage(req.GetMetadataJson())
 	if len(metadata) == 0 {
 		metadata = json.RawMessage(`{}`)
@@ -155,8 +211,8 @@ func (h *SeoStrategyHandler) AddSeoObjectiveEvidence(
 			SourceReference: req.GetSourceReference(),
 			Finding:         req.GetFinding(),
 			Confidence:      req.GetConfidence(),
-			ObservedAt:      parseOptionalObjectiveTime(req.ObservedAt),
-			ValidUntil:      parseOptionalObjectiveTime(req.ValidUntil),
+			ObservedAt:      observedAt,
+			ValidUntil:      validUntil,
 			Metadata:        metadata,
 		},
 	)
@@ -262,19 +318,4 @@ func objectiveCommandToDTO(
 		ExpectedVersion: req.GetExpectedVersion(),
 		Reason:          req.GetReason(),
 	}
-}
-
-func parseOptionalObjectiveTime(
-	value *string,
-) *time.Time {
-	if value == nil || *value == "" {
-		return nil
-	}
-
-	parsed, err := time.Parse(time.RFC3339, *value)
-	if err != nil {
-		return nil
-	}
-
-	return &parsed
 }

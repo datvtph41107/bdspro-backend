@@ -171,6 +171,199 @@ service SeoStrategyService {
        post: "/v2/crm/admin/seo/strategy/user-needs/{id}/archive" body: "*" 
     };
   }
+
+  // QUERY EVIDENCE RPCS
+  rpc UpsertSeoQueryEvidence(UpsertSeoQueryEvidenceRequest)
+      returns (SeoQueryEvidenceResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-evidence"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoQueryEvidence(GetSeoQueryEvidenceRequest)
+      returns (SeoQueryEvidenceResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/query-evidence/{id}"
+    };
+  }
+
+  rpc GetSeoQueryEvidenceList(GetSeoQueryEvidenceListRequest)
+      returns (GetSeoQueryEvidenceListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/query-evidence"
+    };
+  }
+
+  rpc SupersedeSeoQueryEvidence(SeoQueryEvidenceStatusCommandRequest)
+      returns (SeoQueryEvidenceResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-evidence/{id}/supersede"
+      body: "*"
+    };
+  }
+
+  rpc RejectSeoQueryEvidence(SeoQueryEvidenceStatusCommandRequest)
+      returns (SeoQueryEvidenceResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-evidence/{id}/reject"
+      body: "*"
+    };
+  }
+
+  // INTENT HYPOTHESIS RPCS
+  rpc CreateSeoIntentHypothesis(CreateSeoIntentHypothesisRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/intent-hypotheses"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoIntentHypothesis(GetSeoIntentHypothesisRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/intent-hypotheses/{id}"
+    };
+  }
+
+  rpc GetSeoIntentHypothesisList(GetSeoIntentHypothesisListRequest)
+      returns (GetSeoIntentHypothesisListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/intent-hypotheses"
+    };
+  }
+
+  rpc UpdateSeoIntentHypothesis(UpdateSeoIntentHypothesisRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo/strategy/intent-hypotheses/{id}"
+      body: "*"
+    };
+  }
+
+  rpc LinkSeoIntentEvidence(LinkSeoIntentEvidenceRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/intent-hypotheses/{intentHypothesisId}/evidence"
+      body: "*"
+    };
+  }
+
+  rpc UnlinkSeoIntentEvidence(UnlinkSeoIntentEvidenceRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/seo/strategy/intent-hypotheses/{intentHypothesisId}/evidence/{queryEvidenceId}"
+    };
+  }
+
+  rpc EvaluateSeoIntentHypothesisReadiness(GetSeoIntentHypothesisRequest)
+      returns (SeoIntentHypothesisReadinessResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/intent-hypotheses/{id}/readiness"
+    };
+  }
+
+  rpc ActivateSeoIntentHypothesis(SeoIntentHypothesisCommandRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/intent-hypotheses/{id}/activate"
+      body: "*"
+    };
+  }
+
+  rpc PauseSeoIntentHypothesis(SeoIntentHypothesisCommandRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/intent-hypotheses/{id}/pause"
+      body: "*"
+    };
+  }
+
+  rpc ArchiveSeoIntentHypothesis(SeoIntentHypothesisCommandRequest)
+      returns (SeoIntentHypothesisResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/intent-hypotheses/{id}/archive"
+      body: "*"
+    };
+  }
+
+  // QUERY CLUSTER & SEARCH PROMISE RPCS
+  rpc CreateSeoQueryCluster(CreateSeoQueryClusterRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-clusters"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoQueryCluster(GetSeoQueryClusterRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/query-clusters/{id}"
+    };
+  }
+
+  rpc GetSeoQueryClusterList(GetSeoQueryClusterListRequest)
+      returns (GetSeoQueryClusterListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/query-clusters"
+    };
+  }
+
+  rpc UpdateSeoQueryCluster(UpdateSeoQueryClusterRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo/strategy/query-clusters/{id}"
+      body: "*"
+    };
+  }
+
+  rpc UpsertSeoQueryClusterMember(UpsertSeoQueryClusterMemberRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo/strategy/query-clusters/{clusterId}/members/{queryEvidenceId}"
+      body: "*"
+    };
+  }
+
+  rpc RemoveSeoQueryClusterMember(RemoveSeoQueryClusterMemberRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/seo/strategy/query-clusters/{clusterId}/members/{queryEvidenceId}"
+    };
+  }
+
+  rpc EvaluateSeoQueryClusterReadiness(GetSeoQueryClusterRequest)
+      returns (SeoQueryClusterReadinessResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/strategy/query-clusters/{id}/readiness"
+    };
+  }
+
+  rpc ActivateSeoQueryCluster(SeoQueryClusterCommandRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-clusters/{id}/activate"
+      body: "*"
+    };
+  }
+
+  rpc PauseSeoQueryCluster(SeoQueryClusterCommandRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-clusters/{id}/pause"
+      body: "*"
+    };
+  }
+
+  rpc ArchiveSeoQueryCluster(SeoQueryClusterCommandRequest)
+      returns (SeoQueryClusterResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/strategy/query-clusters/{id}/archive"
+      body: "*"
+    };
+  }
 }
 
 message CreateSeoObjectiveRequest {
@@ -582,5 +775,352 @@ message SeoUserNeedResponse {
 
 message GetSeoUserNeedListResponse {
   repeated SeoUserNeedSummaryResponse data = 1;
+  int64 total = 2;
+}
+
+// ============================================================
+// MODULE 3 - QUERY EVIDENCE
+// ============================================================
+message UpsertSeoQueryEvidenceRequest {
+  uint64 userNeedId = 1;
+  string rawQuery = 2;
+
+  string sourceSystem = 3;
+  string sourceKind = 4;
+  string observationType = 5;
+  string sourceRecordKey = 6;
+  string sourceReference = 7;
+
+  string locale = 8;
+  string countryCode = 9;
+  string deviceCategory = 10;
+
+  optional string observedFrom = 11;
+  optional string observedTo = 12;
+  optional string validUntil = 13;
+
+  optional int64 impressions = 14;
+  optional int64 clicks = 15;
+  optional double ctr = 16;
+  optional double avgPosition = 17;
+  optional int64 searchVolume = 18;
+
+  string confidence = 19;
+  string metadataJson = 20;
+}
+
+message GetSeoQueryEvidenceRequest {
+  uint64 id = 1;
+}
+
+message GetSeoQueryEvidenceListRequest {
+  uint64 objectiveId = 1;
+  uint64 userNeedId = 2;
+
+  string keyword = 3;
+  string sourceSystem = 4;
+
+  string sourceKind = 5;
+  string observationType = 6;
+  string deviceCategory = 7;
+  string confidence = 8;
+  string status = 9;
+
+  bool currentOnly = 10;
+  uint32 page = 11;
+  uint32 size = 12;
+}
+
+message SeoQueryEvidenceStatusCommandRequest {
+  uint64 id = 1;
+  string expectedStatus = 2;
+}
+
+message SeoQueryEvidenceResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+  uint64 userNeedId = 3;
+
+  string rawQuery = 4;
+  string normalizedQuery = 5;
+  string queryHash = 6;
+
+  string sourceSystem = 7;
+  string sourceKind = 8;
+  string observationType = 9;
+  string sourceRecordKey = 10;
+  string sourceReference = 11;
+
+  string locale = 12;
+  string countryCode = 13;
+  string deviceCategory = 14;
+
+  optional string observedFrom = 15;
+  optional string observedTo = 16;
+  optional string validUntil = 17;
+
+  optional int64 impressions = 18;
+  optional int64 clicks = 19;
+  optional double ctr = 20;
+  optional double avgPosition = 21;
+  optional int64 searchVolume = 22;
+
+  string confidence = 23;
+  string status = 24;
+  string metadataJson = 25;
+
+  string createdAt = 26;
+  string updatedAt = 27;
+}
+
+message GetSeoQueryEvidenceListResponse {
+  repeated SeoQueryEvidenceResponse data = 1;
+  int64 total = 2;
+}
+
+// ============================================================
+// MODULE 3 - INTENT HYPOTHESIS
+// ============================================================
+message CreateSeoIntentHypothesisRequest {
+  uint64 userNeedId = 1;
+  string code = 2;
+  string name = 3;
+}
+
+message GetSeoIntentHypothesisRequest {
+  uint64 id = 1;
+}
+
+message GetSeoIntentHypothesisListRequest {
+  uint64 objectiveId = 1;
+  uint64 userNeedId = 2;
+  string keyword = 3;
+  string searchAction = 4;
+  string subjectType = 5;
+  string scopeType = 6;
+  string status = 7;
+  string confidence = 8;
+  uint32 page = 9;
+  uint32 size = 10;
+}
+
+message UpdateSeoIntentHypothesisRequest {
+  uint64 id = 1;
+  uint32 expectedVersion = 2;
+  string name = 3;
+  string goalStatement = 4;
+  string primaryQuestion = 5;
+  string expectedResult = 6;
+  string searchAction = 7;
+  string subjectType = 8;
+  string scopeType = 9;
+  string confidence = 10;
+  string ownerCode = 11;
+  optional string reviewDueAt = 12;
+}
+
+message LinkSeoIntentEvidenceRequest {
+  uint64 intentHypothesisId = 1;
+  uint64 queryEvidenceId = 2;
+  string relationType = 3;
+  string relevanceNote = 4;
+}
+
+message UnlinkSeoIntentEvidenceRequest {
+  uint64 intentHypothesisId = 1;
+  uint64 queryEvidenceId = 2;
+}
+
+message SeoIntentHypothesisCommandRequest {
+  uint64 id = 1;
+  uint32 expectedVersion = 2;
+  string reason = 3;
+}
+
+message SeoIntentHypothesisReadinessIssueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+message SeoIntentHypothesisReadinessResponse {
+  bool ready = 1;
+  repeated SeoIntentHypothesisReadinessIssueResponse blockers = 2;
+  repeated SeoIntentHypothesisReadinessIssueResponse warnings = 3;
+}
+
+message SeoIntentLinkedEvidenceResponse {
+  string relationType = 1;
+  string relevanceNote = 2;
+  string linkedAt = 3;
+  SeoQueryEvidenceResponse queryEvidence = 4;
+}
+
+message SeoIntentHypothesisSummaryResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+  uint64 userNeedId = 3;
+  string code = 4;
+  string name = 5;
+  string searchAction = 6;
+  string subjectType = 7;
+  string scopeType = 8;
+  string status = 9;
+  string confidence = 10;
+  string ownerCode = 11;
+  uint32 lockVersion = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+message SeoIntentHypothesisResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+  uint64 userNeedId = 3;
+  string code = 4;
+  string name = 5;
+  string goalStatement = 6;
+  string primaryQuestion = 7;
+  string expectedResult = 8;
+  string searchAction = 9;
+  string subjectType = 10;
+  string scopeType = 11;
+  string status = 12;
+  string confidence = 13;
+  string ownerCode = 14;
+  optional string reviewDueAt = 15;
+  uint32 lockVersion = 16;
+  SeoUserNeedSummaryResponse userNeed = 17;
+  repeated SeoIntentLinkedEvidenceResponse evidence = 18;
+  SeoIntentHypothesisReadinessResponse readiness = 19;
+  string createdAt = 20;
+  string updatedAt = 21;
+}
+
+message GetSeoIntentHypothesisListResponse {
+  repeated SeoIntentHypothesisSummaryResponse data = 1;
+  int64 total = 2;
+}
+
+// ============================================================
+// MODULE 3 - QUERY CLUSTER & SEARCH PROMISE
+// ============================================================
+message CreateSeoQueryClusterRequest {
+  uint64 intentHypothesisId = 1;
+  string code = 2;
+  string name = 3;
+}
+
+message GetSeoQueryClusterRequest {
+  uint64 id = 1;
+}
+
+message GetSeoQueryClusterListRequest {
+  uint64 objectiveId = 1;
+  uint64 userNeedId = 2;
+  uint64 intentHypothesisId = 3;
+  string keyword = 4;
+  string status = 5;
+  string confidence = 6;
+  uint32 page = 7;
+  uint32 size = 8;
+}
+
+message UpdateSeoQueryClusterRequest {
+  uint64 id = 1;
+  uint32 expectedVersion = 2;
+  string name = 3;
+  string searchPromise = 4;
+  string inclusionRule = 5;
+  string exclusionRule = 6;
+  string confidence = 7;
+  string ownerCode = 8;
+  optional string reviewDueAt = 9;
+}
+
+message UpsertSeoQueryClusterMemberRequest {
+  uint64 clusterId = 1;
+  uint64 queryEvidenceId = 2;
+  uint32 expectedVersion = 3;
+  string membershipType = 4;
+  string rationale = 5;
+}
+
+message RemoveSeoQueryClusterMemberRequest {
+  uint64 clusterId = 1;
+  uint64 queryEvidenceId = 2;
+  uint32 expectedVersion = 3;
+}
+
+message SeoQueryClusterCommandRequest {
+  uint64 id = 1;
+  uint32 expectedVersion = 2;
+  string reason = 3;
+}
+
+message SeoQueryClusterReadinessIssueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+message SeoQueryClusterReadinessResponse {
+  bool ready = 1;
+  bool answerEquivalenceReady = 2;
+  uint32 primaryCount = 3;
+  uint32 includedCount = 4;
+  uint32 excludedCount = 5;
+  repeated SeoQueryClusterReadinessIssueResponse blockers = 6;
+  repeated SeoQueryClusterReadinessIssueResponse warnings = 7;
+}
+
+message SeoQueryClusterMemberResponse {
+  string membershipType = 1;
+  string rationale = 2;
+  string status = 3;
+  string createdAt = 4;
+  string updatedAt = 5;
+  SeoQueryEvidenceResponse queryEvidence = 6;
+}
+
+message SeoQueryClusterSummaryResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+  uint64 userNeedId = 3;
+  uint64 intentHypothesisId = 4;
+  string code = 5;
+  string name = 6;
+  string searchPromise = 7;
+  string status = 8;
+  string confidence = 9;
+  string ownerCode = 10;
+  uint32 lockVersion = 11;
+  string createdAt = 12;
+  string updatedAt = 13;
+}
+
+message SeoQueryClusterResponse {
+  uint64 id = 1;
+  uint64 objectiveId = 2;
+  uint64 userNeedId = 3;
+  uint64 intentHypothesisId = 4;
+  string code = 5;
+  string name = 6;
+  string searchPromise = 7;
+  string inclusionRule = 8;
+  string exclusionRule = 9;
+  string status = 10;
+  string confidence = 11;
+  string ownerCode = 12;
+  optional string reviewDueAt = 13;
+  uint32 lockVersion = 14;
+  SeoIntentHypothesisSummaryResponse intentHypothesis = 15;
+  SeoUserNeedSummaryResponse userNeed = 16;
+  repeated SeoQueryClusterMemberResponse members = 17;
+  SeoQueryClusterReadinessResponse readiness = 18;
+  string createdAt = 19;
+  string updatedAt = 20;
+}
+
+message GetSeoQueryClusterListResponse {
+  repeated SeoQueryClusterSummaryResponse data = 1;
   int64 total = 2;
 }
