@@ -93,7 +93,9 @@ func AutoMigrate() {
 		// &qh_domain.QHUserViewHistory{},
 		// &qh_domain.QHUserViewEvent{},
 
-		// &qh_domain.QHPlanningProject{},
+		// &qh_domain.QHPlanningProject{}, // tắt: jurisdiction_id ở raw SQL là UUID, lệch kiểu *uint64 ở domain -> AutoMigrate lỗi.
+		// Cột mới (source_folder_name/path, process_status) áp dụng qua migration SQL
+		// infra/db/migrations/v3/000002_qh_planning_folder_process.up.sql, không qua AutoMigrate ở đây.
 		&qh_domain.QHPlanningDocument{},
 	// &domain.UserSubscription{},
 	)

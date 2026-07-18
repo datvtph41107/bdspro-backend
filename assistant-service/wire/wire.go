@@ -6,6 +6,7 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
+	_provider "common/provider"
 	"assistant/initial"
 	assistant_infra_client "assistant/infra/client"
 	assistant_infra_handler "assistant/infra/handler"
@@ -18,6 +19,7 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(assistant_internal_interface_provider.BdsproInternalProvider), new(*assistant_infra_client.BdsproInternalClient)),
 	wire.Bind(new(assistant_internal_interface_provider.DeepseekProvider), new(*assistant_infra_client.DeepseekClient)),
 	wire.Bind(new(assistant_internal_interface_provider.FileProvider), new(*assistant_infra_client.FileClient)),

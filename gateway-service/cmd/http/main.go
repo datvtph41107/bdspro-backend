@@ -299,6 +299,10 @@ var HttpCmd = &cobra.Command{
 		v2Import := r.Group("/form", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 
+		// Multipart tạo đồ án QH từ folder: cùng lý do, dùng chung group "/form" với import
+		// (tránh đăng ký static route dưới "/v2" — có thể đụng wildcard "/v2/*any" ở dưới).
+		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
+
 		// v2 API routes (gRPC Gateway)
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 		r.Any("/v2.1/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))

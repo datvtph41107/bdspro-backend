@@ -115,6 +115,7 @@ var HttpV2Cmd = &cobra.Command{
 		env := os.Getenv("ENV_RUNTIME")
 		v2Import := r.Group("/v2", _jwt.JWTAuthMiddleware(cfg.Gateway.PublicRoutes, cfg.Gateway.TempRoutes))
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
+		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
 
 		// 7. Routes
 		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(cfg.Gateway.PublicRoutes, cfg.Gateway.TempRoutes), gin.WrapH(mux))

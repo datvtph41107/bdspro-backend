@@ -701,3 +701,50 @@ func (h *AssistantHandler) GenerateContentWithGemini(ctx context.Context, req *a
 		},
 	}, nil
 }
+
+// ClassifyDocumentWithGemini - Đọc & phân loại 1 tài liệu bằng Gemini (multimodal)
+// @Summary Phân loại tài liệu bằng Gemini
+// @Description Gửi prompt kèm nội dung file (PDF/ảnh/text) để Gemini đọc và trả về kết quả. file_content rỗng => text-only.
+// @Tags Assistant
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body assistantpb.ClassifyDocumentRequest true "Prompt và nội dung file"
+// @Success 200 {object} assistantpb.GenerateResponse
+// @Router /v2/assistant/gemini/classify-document [post]
+func (h *AssistantHandler) ClassifyDocumentWithGemini(ctx context.Context, req *assistantpb.ClassifyDocumentRequest) (*assistantpb.GenerateResponse, error) {
+	if req.Prompt == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "prompt is required")
+	}
+
+	maxTokens := int(req.MaxTokens)
+	if maxTokens == 0 {
+		maxTokens = 2000
+	}
+
+	temperature := req.Temperature
+	if temperature == 0 {
+		temperature = 0.2
+	}
+
+	content, modelName, processingTime, err := h.Usecase.ClassifyDocumentWithGemini(
+		ctx,
+		req.Prompt,
+		req.FileContent,
+		req.MimeType,
+		maxTokens,
+		temperature,
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to classify document with gemini: %v", err)
+	}
+
+	return &assistantpb.GenerateResponse{
+		Content: content,
+		Metadata: &assistantpb.GenerateMetadata{
+			ProcessingTimeMs: processingTime,
+			TokensUsed:       0,
+			Model:            modelName,
+		},
+	}, nil
+}

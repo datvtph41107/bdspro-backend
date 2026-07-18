@@ -5,6 +5,7 @@ import (
 	"bytes"
 	_dto "common/domain/dto"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -299,11 +300,43 @@ func (c *GeminiClient) GenerateContent(ctx context.Context, prompt string, maxTo
 	return response.Candidates[0].Content.Parts[0].Text, nil
 }
 
-// sendRequest - Helper để gửi request đến Gemini API
+// GenerateContentWithFile - Gửi prompt kèm nội dung 1 file (multimodal) cho Gemini.
+// fileContent được base64-encode và gắn vào inlineData; mimeType ví dụ "application/pdf", "image/png".
+func (c *GeminiClient) GenerateContentWithFile(ctx context.Context, prompt string, fileContent []byte, mimeType string, maxTokens int, temperature float32) (string, error) {
+	if len(fileContent) == 0 {
+		return c.GenerateContent(ctx, prompt, maxTokens, temperature)
+	}
+
+	parts := []GeminiPart{
+		{Text: prompt},
+		{InlineData: &GeminiInlineData{
+			MimeType: mimeType,
+			Data:     base64.StdEncoding.EncodeToString(fileContent),
+		}},
+	}
+
+	response, err := c.sendRequestWithParts(ctx, parts, maxTokens, temperature)
+	if err != nil {
+		return "", err
+	}
+
+	if len(response.Candidates) == 0 || len(response.Candidates[0].Content.Parts) == 0 {
+		return "", fmt.Errorf("no content in response")
+	}
+
+	return response.Candidates[0].Content.Parts[0].Text, nil
+}
+
+// sendRequest - Helper để gửi request text-only đến Gemini API
 func (c *GeminiClient) sendRequest(ctx context.Context, userMessage string, maxTokens int, temperature float32) (*GeminiResponse, error) {
+	return c.sendRequestWithParts(ctx, []GeminiPart{{Text: userMessage}}, maxTokens, temperature)
+}
+
+// sendRequestWithParts - Helper gửi request với nhiều part (text + inlineData) đến Gemini API
+func (c *GeminiClient) sendRequestWithParts(ctx context.Context, parts []GeminiPart, maxTokens int, temperature float32) (*GeminiResponse, error) {
 	contents := []GeminiContent{
 		{
-			Parts: []GeminiPart{{Text: userMessage}},
+			Parts: parts,
 		},
 	}
 

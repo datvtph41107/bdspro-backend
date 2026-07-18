@@ -40,8 +40,12 @@ func RunGRPCServer() {
 		log.Fatalf("Failed to initialize dependencies: %v", err)
 	}
 
-	// Create gRPC server
-	grpcServer := grpc.NewServer()
+	// Create gRPC server — max msg đủ cho ClassifyDocumentWithGemini (file inline ~15MB).
+	const grpcMaxMsgBytes = 32 << 20
+	grpcServer := grpc.NewServer(
+		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
+		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
+	)
 
 	// Register services
 	assistantpb.RegisterAssistantServiceServer(grpcServer, assistantHandler.AssistantHandler)

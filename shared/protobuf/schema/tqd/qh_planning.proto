@@ -38,6 +38,20 @@ service QHPlanningService {
       get: "/v2/tqd/admin/planning-projects"
     };
   }
+  // CreatePlanningProjectFromFolder tạo đồ án + toàn bộ tài liệu từ 1 folder admin chọn.
+  // Mỗi file trong folder trở thành 1 PlanningDocument (trạng thái Pending, chờ job AI phân loại).
+  rpc CreatePlanningProjectFromFolder(CreatePlanningProjectFromFolderRequest) returns (CreatePlanningProjectFromFolderResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/from-folder"
+      body: "*"
+    };
+  }
+  // ApprovePlanningProject phê duyệt đồ án (chỉ khi đã Classified), đồng thời phê duyệt các tài liệu đã Classified.
+  rpc ApprovePlanningProject(IdRequest) returns (PlanningProject) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{id}/approve"
+    };
+  }
 
   // QHPlanningDocument APIs
   rpc CreatePlanningDocument(PlanningDocument) returns (PlanningDocument) {
@@ -65,6 +79,12 @@ service QHPlanningService {
   rpc ListPlanningDocuments(ListPlanningDocumentsRequest) returns (ListPlanningDocumentsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/admin/planning-documents"
+    };
+  }
+  // ApprovePlanningDocument phê duyệt 1 tài liệu đã được AI phân loại (chỉ khi đang Classified).
+  rpc ApprovePlanningDocument(IdRequest) returns (PlanningDocument) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents/{id}/approve"
     };
   }
 
@@ -124,6 +144,10 @@ message PlanningProject {
   uint32 legalStatus = 20;
   string legalStatusName = 21;
   repeated LayerResponse layers = 22;
+  string sourceFolderName = 23;
+  string sourceFolderPath = 24;
+  uint32 processStatus = 25;
+  string processStatusName = 26;
 }
 
 message ListPlanningProjectsRequest {
@@ -133,6 +157,7 @@ message ListPlanningProjectsRequest {
   string planningType = 4;
   string planningLevel = 5;
   string validityStatus = 6;
+  string processStatus = 7;
 }
 
 message ListPlanningProjectsResponse {
@@ -156,6 +181,10 @@ message PlanningDocument {
   string createdAt = 13;
   string updatedAt = 14;
   string thumbnail = 15;
+  string relativePath = 16;
+  uint32 processStatus = 17;
+  string processStatusName = 18;
+  string classifyError = 19;
 }
 
 message ListPlanningDocumentsRequest {
@@ -164,6 +193,32 @@ message ListPlanningDocumentsRequest {
   uint64 planningProjectId = 3;
   string documentType = 4;
   string validityStatus = 5;
+  string processStatus = 6;
+}
+
+// FolderFileEntry — 1 file trong folder admin chọn để tạo đồ án.
+message FolderFileEntry {
+  string relative_path = 1;
+  bytes content = 2;
+  string content_type = 3;
+}
+
+message CreatePlanningProjectFromFolderRequest {
+  string folder_name = 1;
+  string code = 2;
+  string name = 3;
+  uint32 planning_type = 4;
+  uint32 planning_level = 5;
+  string validity_status = 6;
+  string authority = 7;
+  string summary = 8;
+  uint64 jurisdiction_id = 9;
+  repeated FolderFileEntry files = 10;
+}
+
+message CreatePlanningProjectFromFolderResponse {
+  PlanningProject project = 1;
+  repeated PlanningDocument documents = 2;
 }
 
 message ListPlanningDocumentsResponse {

@@ -1,12 +1,13 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
-	"github.com/google/wire"
+	"tqd/initial"
 	tqd_config "tqd/config"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
@@ -15,7 +16,6 @@ import (
 	tqd_infra_postgres "tqd/infra/postgres"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
-	"tqd/initial"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
@@ -41,6 +41,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewAmenityUsecase,
 	tqd_initial.NewApp,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAssessEngine,
+	tqd_infra_client.NewAssistantClient,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAuditEngine,
 	tqd_internal_usecase.NewBaseUsecase,
 	tqd_infra_handler_grpc.NewBdsproPublicService,
@@ -77,7 +78,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewFeatureGrpcHandler,
 	tqd_infra_postgres.NewFeatureRepository,
 	tqd_internal_usecase.NewFeatureUsecase,
-	tqd_infra_providers.NewFileProvider,
+	tqd_infra_client.NewFileClient,
 	tqd_infra_providers.NewGeoProvider,
 	tqd_internal_dto.NewGeometryParser,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewHistoricalRiskEngine,
@@ -152,10 +153,12 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewQHLayerLegendRepository,
 	tqd_internal_usecase.NewQHLayerLegendUsecase,
 	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
+	tqd_internal_usecase_qh.NewQHPlanningClassifyUsecase,
 	tqd_infra_postgres.NewQHPlanningDocumentRepo,
 	tqd_internal_usecase_qh.NewQHPlanningDocumentUsecase,
 	tqd_infra_postgres.NewQHPlanningEventRepo,
 	tqd_internal_usecase_qh.NewQHPlanningEventUsecase,
+	tqd_internal_usecase_qh.NewQHPlanningFolderUsecase,
 	tqd_infra_handler_grpc.NewQHPlanningGrpcHandler,
 	tqd_infra_mapper.NewQHPlanningMapper,
 	tqd_infra_postgres.NewQHPlanningProjectRepo,
@@ -184,7 +187,6 @@ var wireSet = wire.NewSet(
 	tqd_infra_client.NewUserClient,
 	tqd_infra_mapper.NewWorkspaceMapper,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

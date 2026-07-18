@@ -73,6 +73,9 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 	if req.ValidityStatus != "" {
 		db = db.Where("validity_status = ?", req.ValidityStatus)
 	}
+	if req.ProcessStatus != "" {
+		db = db.Where("process_status = ?", req.ProcessStatus)
+	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -88,4 +91,10 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 
 	log.Printf("projects: %+v", len(projects))
 	return projects, total, err
+}
+
+// UpdateProcessStatus cập nhật riêng cột process_status, dùng cho job classify.
+func (r *QHPlanningProjectRepo) UpdateProcessStatus(ctx context.Context, id uint64, status uint32) error {
+	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningProject{}).Where("id = ?", id).
+		Update("process_status", status).Error
 }

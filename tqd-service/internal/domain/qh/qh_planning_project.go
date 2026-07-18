@@ -31,6 +31,11 @@ type QHPlanningProject struct {
 	CurrentVersion string     `gorm:"type:varchar(50)" json:"currentVersion"`
 	Metadata       string     `gorm:"type:jsonb" json:"metadata"`
 
+	// SourceFolderName/SourceFolderPath — ghi lại folder gốc khi admin tạo đồ án bằng cách upload cả folder.
+	SourceFolderName string                      `gorm:"type:varchar(255)" json:"sourceFolderName"`
+	SourceFolderPath string                      `gorm:"type:varchar(500)" json:"sourceFolderPath"`
+	ProcessStatus    enums.PlanningProcessStatus `gorm:"type:int4;default:10;index" json:"processStatus"`
+
 	Layers []*QHLayer `gorm:"foreignKey:PlanningProjectID" json:"layers"`
 }
 
