@@ -179,7 +179,8 @@ transaction-grpc:
 	$(CD_ROOT) && cd transaction-service && air grpc
 
 auth-grpc:
-	$(CD_ROOT) && cd auth-service && air -server=grpc
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	$(CD_ROOT) && cd auth-service && $(AIR_EXE)
 tqd-http:
 	$(CD_ROOT) && cd tqd-service && air -- -server=http
 

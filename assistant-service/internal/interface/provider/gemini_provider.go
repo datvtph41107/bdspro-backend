@@ -17,6 +17,9 @@ type GeminiProvider interface {
 	// GenerateContent tạo nội dung theo template
 	GenerateContent(ctx context.Context, prompt string, maxTokens int, temperature float32) (string, error)
 
+	// GenerateContentWithFile tạo nội dung theo prompt kèm nội dung file (multimodal)
+	GenerateContentWithFile(ctx context.Context, prompt string, fileContent []byte, mimeType string, maxTokens int, temperature float32) (string, error)
+
 	// GetModel trả về model name đang sử dụng
 	GetModel() string
 }

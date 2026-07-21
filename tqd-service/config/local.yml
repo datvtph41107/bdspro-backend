@@ -33,6 +33,18 @@ config-app:
     domain_pmtile: "https://data-map.bdspro.com"
     domain_style: "https://map.qhpro.vn"
 
+file_service:
+  base_url: "http://14.225.210.29:8002"
+  service_auth_key: "internal-service-secret-key-change-in-production"
+  timeout_seconds: 30
+
+qh_planning_classify:
+  enabled: true
+  interval_seconds: 30
+  batch_size: 5
+  max_inline_bytes: 15728640   # 15MB; lớn hơn -> fallback filename
+  read_content: true           # tắt để quay lại chế độ filename-only
+
 layer:
     # Base URL configuration
     base_url: "ciproto://data-map.bdspro.com"

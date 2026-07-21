@@ -321,6 +321,22 @@ func (u *AssistantUsecase) ChatWithGemini(ctx context.Context, message string, h
 	return reply, sessionID, modelName, processingTime, nil
 }
 
+// ClassifyDocumentWithGemini - Phân loại/đọc nội dung 1 tài liệu bằng Gemini (multimodal).
+// Nếu fileContent rỗng sẽ tự fallback về text-only (chỉ dựa prompt).
+func (u *AssistantUsecase) ClassifyDocumentWithGemini(ctx context.Context, prompt string, fileContent []byte, mimeType string, maxTokens int, temperature float32) (string, string, int64, error) {
+	startTime := time.Now()
+
+	content, err := u.GeminiClient.GenerateContentWithFile(ctx, prompt, fileContent, mimeType, maxTokens, temperature)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("failed to classify document with gemini: %w", err)
+	}
+
+	processingTime := time.Since(startTime).Milliseconds()
+	modelName := u.GeminiClient.GetModel()
+
+	return content, modelName, processingTime, nil
+}
+
 // GenerateContentWithGemini - Tạo nội dung theo template bằng Gemini
 func (u *AssistantUsecase) GenerateContentWithGemini(ctx context.Context, prompt string, template string, variables map[string]string, maxTokens int, temperature float32) (string, string, int64, error) {
 	startTime := time.Now()

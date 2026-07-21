@@ -10,6 +10,7 @@ type ListPlanningProjectsRequest struct {
 	PlanningType   string `json:"planningType"`
 	PlanningLevel  string `json:"planningLevel"`
 	ValidityStatus string `json:"validityStatus"`
+	ProcessStatus  string `json:"processStatus"`
 }
 
 type ListPlanningDocumentsRequest struct {
@@ -17,10 +18,18 @@ type ListPlanningDocumentsRequest struct {
 	PlanningProjectID uint64 `json:"planningProjectId"`
 	DocumentType      string `json:"documentType"`
 	ValidityStatus    string `json:"validityStatus"`
+	ProcessStatus     string `json:"processStatus"`
 }
 
 type ListPlanningEventsRequest struct {
 	_dto.Pagable
 	PlanningProjectID uint64 `json:"planningProjectId"`
 	Ver               bool   `json:"ver"`
+}
+
+// FolderFileInput — 1 file trong folder đồ án admin upload.
+type FolderFileInput struct {
+	RelativePath string
+	Content      []byte
+	ContentType  string
 }
