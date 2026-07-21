@@ -17,18 +17,26 @@ type IQHPlanningProjectUsecase interface {
 	GetList(ctx context.Context, req *qh_dto.ListPlanningProjectsRequest) ([]qh_domain.QHPlanningProject, int64, error)
 	// Approve phê duyệt đồ án (chỉ khi đã Classified) và phê duyệt luôn các tài liệu đã Classified thuộc đồ án.
 	Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error)
+	// RetryFailedDocuments đưa tất cả tài liệu Failed của đồ án về Pending.
+	RetryFailedDocuments(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error)
 }
 
 type qhPlanningProjectUsecase struct {
 	repo         repo.IQHPlanningProjectRepo
 	documentRepo repo.IQHPlanningDocumentRepo
+	aiJobRepo    repo.IProAIJobRepo
 }
 
 // NewQHPlanningProjectUsecase @bind: internal/usecase/qh.IQHPlanningProjectUsecase
-func NewQHPlanningProjectUsecase(repo repo.IQHPlanningProjectRepo, documentRepo repo.IQHPlanningDocumentRepo) IQHPlanningProjectUsecase {
+func NewQHPlanningProjectUsecase(
+	repo repo.IQHPlanningProjectRepo,
+	documentRepo repo.IQHPlanningDocumentRepo,
+	aiJobRepo repo.IProAIJobRepo,
+) IQHPlanningProjectUsecase {
 	return &qhPlanningProjectUsecase{
 		repo:         repo,
 		documentRepo: documentRepo,
+		aiJobRepo:    aiJobRepo,
 	}
 }
 
@@ -112,7 +120,43 @@ func (u *qhPlanningProjectUsecase) Approve(ctx context.Context, id uint64) (*qh_
 			Message: "Không thể phê duyệt đồ án",
 		}
 	}
+	_ = u.aiJobRepo.UpdateProcessStatusByProjectID(ctx, id, enums.PlanningProcessStatusApproved)
 
 	project.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusApproved)
+	return project, nil
+}
+
+func (u *qhPlanningProjectUsecase) RetryFailedDocuments(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error) {
+	project, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy đồ án",
+		}
+	}
+
+	affected, err := u.documentRepo.ResetFailedClassifyByProject(ctx, id)
+	if err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể retry các tài liệu lỗi: " + err.Error(),
+		}
+	}
+	if affected == 0 {
+		return nil, &_err.ErrorDTO{
+			Code:    400,
+			Message: "Không có tài liệu nào ở trạng thái Lỗi để retry",
+		}
+	}
+
+	if err := u.repo.UpdateProcessStatus(ctx, id, enums.PlanningProcessStatusPending); err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Đã reset tài liệu nhưng không cập nhật được trạng thái đồ án",
+		}
+	}
+	_ = u.aiJobRepo.UpdateProcessStatusByProjectID(ctx, id, enums.PlanningProcessStatusPending)
+
+	project.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusPending)
 	return project, nil
 }

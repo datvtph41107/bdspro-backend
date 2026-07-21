@@ -242,3 +242,35 @@ func (m *QHPlanningMapper) ToFolderFileInputs(entries []*tqdpb.FolderFileEntry) 
 	}
 	return inputs
 }
+
+func (m *QHPlanningMapper) ToProAIJobProto(job *qh_domain.ProAIJob) *tqdpb.ProAIJob {
+	if job == nil {
+		return nil
+	}
+	var projectID uint64
+	if job.PlanningProjectID != nil {
+		projectID = *job.PlanningProjectID
+	}
+	return &tqdpb.ProAIJob{
+		Id:                 job.ID,
+		JobType:            job.JobType,
+		JobTypeName:        enums.GetProAIJobTypeLabel(job.JobType),
+		Name:               job.Name,
+		SourceFolderName:   job.SourceFolderName,
+		ProcessStatus:      uint32(job.ProcessStatus),
+		ProcessStatusName:  enums.GetPlanningProcessStatusLabel(uint32(job.ProcessStatus)),
+		PlanningProjectId:  projectID,
+		ClassifyError:      job.ClassifyError,
+		Metadata:           job.Metadata,
+		CreatedAt:          _utils.FormatTimeToString(job.CreatedAt),
+		UpdatedAt:          _utils.FormatTimeToString(job.UpdatedAt),
+	}
+}
+
+func (m *QHPlanningMapper) ToProAIJobProtoList(jobs []qh_domain.ProAIJob) []*tqdpb.ProAIJob {
+	result := make([]*tqdpb.ProAIJob, len(jobs))
+	for i := range jobs {
+		result[i] = m.ToProAIJobProto(&jobs[i])
+	}
+	return result
+}

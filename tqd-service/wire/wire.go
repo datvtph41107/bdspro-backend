@@ -164,6 +164,8 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewQHPlanningProjectRepo,
 	tqd_internal_usecase_qh.NewQHPlanningProjectUsecase,
 	tqd_infra_validator.NewQHPlanningValidator,
+	tqd_infra_postgres.NewProAIJobRepo,
+	tqd_internal_usecase_qh.NewProAIJobUsecase,
 	tqd_infra_handler_grpc.NewRegionExtendGrpcHandler,
 	tqd_infra_postgres.NewRegionExtendRepository,
 	tqd_internal_usecase.NewRegionExtendUsecase,

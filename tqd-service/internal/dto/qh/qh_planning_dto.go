@@ -13,6 +13,13 @@ type ListPlanningProjectsRequest struct {
 	ProcessStatus  string `json:"processStatus"`
 }
 
+type ListProAIJobsRequest struct {
+	_dto.Pagable
+	Search        string `json:"search"`
+	JobType       string `json:"jobType"`
+	ProcessStatus string `json:"processStatus"`
+}
+
 type ListPlanningDocumentsRequest struct {
 	_dto.Pagable
 	PlanningProjectID uint64 `json:"planningProjectId"`

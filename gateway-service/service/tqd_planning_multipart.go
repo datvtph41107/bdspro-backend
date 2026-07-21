@@ -108,6 +108,13 @@ func createPlanningProjectFromFolderMultipartHandler(conn *grpc.ClientConn) gin.
 		if v, err := parseUint64FormGin(c, "jurisdiction_id", "jurisdictionId"); err == nil {
 			req.JurisdictionId = v
 		}
+		if s := firstNonEmptyGin(c, "job_type", "jobType"); s != "" {
+			if v, err := strconv.ParseUint(s, 10, 32); err == nil {
+				req.JobType = uint32(v)
+			}
+		} else {
+			req.JobType = 10 // Đồ án
+		}
 
 		md := _middleware.InjectGrpcMetadataContextMiddleware(c.Request.Context(), c.Request)
 		outCtx := metadata.NewOutgoingContext(c.Request.Context(), md)

@@ -21,4 +21,8 @@ type IQHPlanningDocumentRepo interface {
 	CountByProjectAndStatuses(ctx context.Context, projectID uint64, statuses []uint32) (int64, error)
 	// ApproveClassifiedByProject chuyển toàn bộ tài liệu đã Classified của 1 đồ án sang Approved (khi admin duyệt cả đồ án).
 	ApproveClassifiedByProject(ctx context.Context, projectID uint64) error
+	// ResetClassifyForRetry đưa 1 tài liệu Failed về Pending và xóa classify_error.
+	ResetClassifyForRetry(ctx context.Context, id uint64) error
+	// ResetFailedClassifyByProject đưa tất cả tài liệu Failed của đồ án về Pending; trả về số bản ghi cập nhật.
+	ResetFailedClassifyByProject(ctx context.Context, projectID uint64) (int64, error)
 }

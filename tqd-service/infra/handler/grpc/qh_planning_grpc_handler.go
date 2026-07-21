@@ -18,6 +18,7 @@ type QHPlanningGrpcHandler struct {
 	documentUsecase qh_usecase.IQHPlanningDocumentUsecase
 	eventUsecase    qh_usecase.IQHPlanningEventUsecase
 	folderUsecase   qh_usecase.IQHPlanningFolderUsecase
+	aiJobUsecase    qh_usecase.IProAIJobUsecase
 	mapper          *mapper.QHPlanningMapper
 	validator       *validator.QHPlanningValidator
 }
@@ -27,6 +28,7 @@ func NewQHPlanningGrpcHandler(
 	documentUsecase qh_usecase.IQHPlanningDocumentUsecase,
 	eventUsecase qh_usecase.IQHPlanningEventUsecase,
 	folderUsecase qh_usecase.IQHPlanningFolderUsecase,
+	aiJobUsecase qh_usecase.IProAIJobUsecase,
 	mapper *mapper.QHPlanningMapper,
 	validator *validator.QHPlanningValidator,
 ) *QHPlanningGrpcHandler {
@@ -35,6 +37,7 @@ func NewQHPlanningGrpcHandler(
 		documentUsecase: documentUsecase,
 		eventUsecase:    eventUsecase,
 		folderUsecase:   folderUsecase,
+		aiJobUsecase:    aiJobUsecase,
 		mapper:          mapper,
 		validator:       validator,
 	}
@@ -129,7 +132,7 @@ func (h *QHPlanningGrpcHandler) CreatePlanningProjectFromFolder(ctx context.Cont
 	project := h.mapper.ToProjectDomainFromFolderRequest(req)
 	files := h.mapper.ToFolderFileInputs(req.Files)
 
-	resultProject, resultDocuments, err := h.folderUsecase.CreateFromFolder(ctx, project, req.FolderName, files)
+	resultProject, resultDocuments, aiJob, err := h.folderUsecase.CreateFromFolder(ctx, project, req.FolderName, files, req.JobType)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -137,7 +140,38 @@ func (h *QHPlanningGrpcHandler) CreatePlanningProjectFromFolder(ctx context.Cont
 	return &tqdpb.CreatePlanningProjectFromFolderResponse{
 		Project:   h.mapper.ToProjectProto(resultProject),
 		Documents: h.mapper.ToDocumentProtoList(resultDocuments),
+		AiJob:     h.mapper.ToProAIJobProto(aiJob),
 	}, nil
+}
+
+func (h *QHPlanningGrpcHandler) ListProAIJobs(ctx context.Context, req *tqdpb.ListProAIJobsRequest) (*tqdpb.ListProAIJobsResponse, error) {
+	listReq := &qh_dto.ListProAIJobsRequest{
+		Search:        req.Search,
+		JobType:       req.JobType,
+		ProcessStatus: req.ProcessStatus,
+	}
+	listReq.Page = req.Page
+	listReq.Size = req.Size
+
+	results, total, err := h.aiJobUsecase.GetList(ctx, listReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &tqdpb.ListProAIJobsResponse{
+		Data:  h.mapper.ToProAIJobProtoList(results),
+		Total: total,
+	}, nil
+}
+
+func (h *QHPlanningGrpcHandler) GetProAIJob(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.ProAIJob, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.aiJobUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+	return h.mapper.ToProAIJobProto(result), nil
 }
 
 // ApprovePlanningProject phê duyệt đồ án (chỉ khi đã Classified), đồng thời phê duyệt các tài liệu đã Classified.
@@ -237,6 +271,30 @@ func (h *QHPlanningGrpcHandler) ApprovePlanningDocument(ctx context.Context, req
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return h.mapper.ToDocumentProto(result), nil
+}
+
+// RetryPlanningDocument đưa tài liệu Failed về Pending để job classify chạy lại.
+func (h *QHPlanningGrpcHandler) RetryPlanningDocument(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningDocument, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.documentUsecase.Retry(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return h.mapper.ToDocumentProto(result), nil
+}
+
+// RetryFailedPlanningDocuments đưa tất cả tài liệu Failed của đồ án về Pending.
+func (h *QHPlanningGrpcHandler) RetryFailedPlanningDocuments(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningProject, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.projectUsecase.RetryFailedDocuments(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return h.mapper.ToProjectProto(result), nil
 }
 
 // Client APIs

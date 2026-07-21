@@ -18,13 +18,15 @@ import (
 
 // IQHPlanningFolderUsecase tạo 1 đồ án quy hoạch từ 1 folder admin upload: mỗi file trong folder
 // trở thành 1 QHPlanningDocument (trạng thái Pending, chờ job classify quét và gọi Gemini phân loại).
+// Đồng thời tạo ProAIJob type Đồ án gắn planning_project_id.
 type IQHPlanningFolderUsecase interface {
-	CreateFromFolder(ctx context.Context, project *qh_domain.QHPlanningProject, folderName string, files []qh_dto.FolderFileInput) (*qh_domain.QHPlanningProject, []qh_domain.QHPlanningDocument, error)
+	CreateFromFolder(ctx context.Context, project *qh_domain.QHPlanningProject, folderName string, files []qh_dto.FolderFileInput, jobType uint32) (*qh_domain.QHPlanningProject, []qh_domain.QHPlanningDocument, *qh_domain.ProAIJob, error)
 }
 
 type qhPlanningFolderUsecase struct {
 	projectRepo  repo.IQHPlanningProjectRepo
 	documentRepo repo.IQHPlanningDocumentRepo
+	aiJobRepo    repo.IProAIJobRepo
 	fileProvider provider.FileProvider
 	tx           *_db.TransactionRepo
 }
@@ -33,12 +35,14 @@ type qhPlanningFolderUsecase struct {
 func NewQHPlanningFolderUsecase(
 	projectRepo repo.IQHPlanningProjectRepo,
 	documentRepo repo.IQHPlanningDocumentRepo,
+	aiJobRepo repo.IProAIJobRepo,
 	fileProvider provider.FileProvider,
 	tx *_db.TransactionRepo,
 ) IQHPlanningFolderUsecase {
 	return &qhPlanningFolderUsecase{
 		projectRepo:  projectRepo,
 		documentRepo: documentRepo,
+		aiJobRepo:    aiJobRepo,
 		fileProvider: fileProvider,
 		tx:           tx,
 	}
@@ -49,9 +53,21 @@ func (u *qhPlanningFolderUsecase) CreateFromFolder(
 	project *qh_domain.QHPlanningProject,
 	folderName string,
 	files []qh_dto.FolderFileInput,
-) (*qh_domain.QHPlanningProject, []qh_domain.QHPlanningDocument, error) {
+	jobType uint32,
+) (*qh_domain.QHPlanningProject, []qh_domain.QHPlanningDocument, *qh_domain.ProAIJob, error) {
 	if len(files) == 0 {
-		return nil, nil, &_err.ErrorDTO{Code: 400, Message: "folder không có file nào"}
+		return nil, nil, nil, &_err.ErrorDTO{Code: 400, Message: "folder không có file nào"}
+	}
+
+	if jobType == 0 {
+		jobType = enums.ProAIJobTypePlanningProject
+	}
+	if !enums.IsSupportedProAIJobType(jobType) {
+		return nil, nil, nil, &_err.ErrorDTO{Code: 400, Message: "job_type không được hỗ trợ"}
+	}
+	// Hiện chỉ type Đồ án mới đẩy sang project/document.
+	if jobType != enums.ProAIJobTypePlanningProject {
+		return nil, nil, nil, &_err.ErrorDTO{Code: 400, Message: "chỉ hỗ trợ job_type Đồ án (10)"}
 	}
 
 	if project.ValidityStatus == "" {
@@ -103,6 +119,7 @@ func (u *qhPlanningFolderUsecase) CreateFromFolder(
 		pending = append(pending, doc)
 	}
 
+	var aiJob *qh_domain.ProAIJob
 	err := u.tx.WithTransaction(ctx, func(txCtx context.Context) error {
 		if err := u.projectRepo.Create(txCtx, project); err != nil {
 			return &_err.ErrorDTO{Code: 500, Message: "Không thể tạo đồ án: " + err.Error()}
@@ -114,11 +131,25 @@ func (u *qhPlanningFolderUsecase) CreateFromFolder(
 				return &_err.ErrorDTO{Code: 500, Message: fmt.Sprintf("Không thể lưu tài liệu %s: %v", pending[i].RelativePath, err)}
 			}
 		}
+
+		projectID := project.ID
+		job := &qh_domain.ProAIJob{
+			JobType:           jobType,
+			Name:              project.Name,
+			SourceFolderName:  folderName,
+			ProcessStatus:     enums.PlanningProcessStatus(enums.PlanningProcessStatusPending),
+			PlanningProjectID: &projectID,
+			Metadata:          "{}",
+		}
+		if err := u.aiJobRepo.Create(txCtx, job); err != nil {
+			return &_err.ErrorDTO{Code: 500, Message: "Không thể tạo job AI: " + err.Error()}
+		}
+		aiJob = job
 		return nil
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return project, pending, nil
+	return project, pending, aiJob, nil
 }

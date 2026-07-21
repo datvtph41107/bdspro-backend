@@ -106,3 +106,24 @@ func (r *QHPlanningDocumentRepo) ApproveClassifiedByProject(ctx context.Context,
 		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status = ?", projectID, enums.PlanningProcessStatusClassified).
 		Update("process_status", enums.PlanningProcessStatusApproved).Error
 }
+
+// ResetClassifyForRetry đưa tài liệu Failed về Pending và xóa lỗi classify.
+func (r *QHPlanningDocumentRepo) ResetClassifyForRetry(ctx context.Context, id uint64) error {
+	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+		Where("id = ? AND deleted_at IS NULL AND process_status = ?", id, enums.PlanningProcessStatusFailed).
+		Updates(map[string]interface{}{
+			"process_status": enums.PlanningProcessStatusPending,
+			"classify_error": "",
+		}).Error
+}
+
+// ResetFailedClassifyByProject đưa tất cả tài liệu Failed của đồ án về Pending.
+func (r *QHPlanningDocumentRepo) ResetFailedClassifyByProject(ctx context.Context, projectID uint64) (int64, error) {
+	tx := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status = ?", projectID, enums.PlanningProcessStatusFailed).
+		Updates(map[string]interface{}{
+			"process_status": enums.PlanningProcessStatusPending,
+			"classify_error": "",
+		})
+	return tx.RowsAffected, tx.Error
+}

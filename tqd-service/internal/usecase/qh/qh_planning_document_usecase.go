@@ -17,16 +17,26 @@ type IQHPlanningDocumentUsecase interface {
 	GetList(ctx context.Context, req *qh_dto.ListPlanningDocumentsRequest) ([]qh_domain.QHPlanningDocument, int64, error)
 	// Approve phê duyệt 1 tài liệu đã được AI phân loại (chỉ khi đang ở trạng thái Classified).
 	Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
+	// Retry đưa tài liệu Failed về Pending để job classify chạy lại.
+	Retry(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 }
 
 type qhPlanningDocumentUsecase struct {
-	repo repo.IQHPlanningDocumentRepo
+	repo         repo.IQHPlanningDocumentRepo
+	projectRepo  repo.IQHPlanningProjectRepo
+	aiJobRepo    repo.IProAIJobRepo
 }
 
 // NewQHPlanningDocumentUsecase @bind: internal/usecase/qh.IQHPlanningDocumentUsecase
-func NewQHPlanningDocumentUsecase(repo repo.IQHPlanningDocumentRepo) IQHPlanningDocumentUsecase {
+func NewQHPlanningDocumentUsecase(
+	repo repo.IQHPlanningDocumentRepo,
+	projectRepo repo.IQHPlanningProjectRepo,
+	aiJobRepo repo.IProAIJobRepo,
+) IQHPlanningDocumentUsecase {
 	return &qhPlanningDocumentUsecase{
-		repo: repo,
+		repo:        repo,
+		projectRepo: projectRepo,
+		aiJobRepo:   aiJobRepo,
 	}
 }
 
@@ -105,4 +115,37 @@ func (u *qhPlanningDocumentUsecase) Approve(ctx context.Context, id uint64) (*qh
 		}
 	}
 	return document, nil
+}
+
+func (u *qhPlanningDocumentUsecase) Retry(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error) {
+	document, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy tài liệu",
+		}
+	}
+	if document.ProcessStatus != enums.PlanningProcessStatus(enums.PlanningProcessStatusFailed) {
+		return nil, &_err.ErrorDTO{
+			Code:    400,
+			Message: "Chỉ có thể retry tài liệu đang ở trạng thái Lỗi (Failed)",
+		}
+	}
+
+	if err := u.repo.ResetClassifyForRetry(ctx, id); err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể đưa tài liệu về chờ xử lý: " + err.Error(),
+		}
+	}
+
+	// Đưa đồ án về Pending nếu đang Failed để worker/admin theo dõi lại.
+	if project, err := u.projectRepo.GetByID(ctx, document.PlanningProjectID); err == nil && project != nil {
+		if project.ProcessStatus == enums.PlanningProcessStatus(enums.PlanningProcessStatusFailed) {
+			_ = u.projectRepo.UpdateProcessStatus(ctx, project.ID, enums.PlanningProcessStatusPending)
+			_ = u.aiJobRepo.UpdateProcessStatusByProjectID(ctx, project.ID, enums.PlanningProcessStatusPending)
+		}
+	}
+
+	return u.repo.GetByID(ctx, id)
 }
