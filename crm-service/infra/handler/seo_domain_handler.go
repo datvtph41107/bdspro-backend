@@ -8,7 +8,6 @@ import (
 	"crm/infra/mapper"
 	"crm/infra/utils"
 	"crm/internal/dto"
-	"crm/internal/enums"
 	"crm/internal/usecase"
 	"strings"
 
@@ -211,31 +210,6 @@ func (h *SeoDomainHandler) GetSeoDomain(ctx context.Context, req *sharepb.IdRequ
 		return nil, err
 	}
 	return h.seoDomainMapper.SeoDomainToPb(seoDomain), nil
-}
-
-// GetSeoRefs @Summary Danh sách SEO liên kết theo ref
-// @Description Lấy danh sách bài SEO public liên kết tới domain (refType/refId) qua bảng seo_refs
-func (h *SeoDomainHandler) GetSeoRefs(ctx context.Context, req *crmpb.GetSeoRefsRequest) (*crmpb.GetSeoDomainListResponse, error) {
-	if req == nil {
-		req = &crmpb.GetSeoRefsRequest{}
-	}
-
-	items, total, err := h.seoDomainUsecase.GetSeoRefs(ctx, &dto.GetSeoRefsRequest{
-		Pagable: _dto.Pagable{
-			Page: req.GetPage(),
-			Size: req.GetSize(),
-		},
-		RefType: enums.ESEORefType(req.GetRefType()),
-		RefID:   req.GetRefId(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &crmpb.GetSeoDomainListResponse{
-		Data:  h.seoDomainMapper.SeoDomainListToPb(items),
-		Total: total,
-	}, nil
 }
 
 func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetSeoDomainListRequest) (*crmpb.GetSeoDomainListResponse, error) {

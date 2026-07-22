@@ -54,11 +54,10 @@ func AutoMigrate() {
 		// &domain.AppointmentParticipant{},
 		// &domain.AppointmentReminder{},
 		// &domain.ContactProductEntity{},
-		// &seo_domain.SeoDomain{},
-		// &seo_domain.SeoRef{},
-		// &seo_domain.SeoInternalLink{},
-		// &seo_domain.SeoRelative{},
-		&seo_domain.SeoRef{},
+		&seo_domain.SeoDomain{},
+		&seo_domain.SeoInternalLink{},
+		&seo_domain.SeoRelative{},
+		&seo_domain.SeoTrend{},
 	)
 
 	log.Println("Migrate success")

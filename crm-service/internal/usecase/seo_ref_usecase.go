@@ -274,22 +274,3 @@ func inferSeoSnapshotIndexable(item *dto.SeoRefSnapshotResponse) bool {
 	}
 	return inferSeoSnapshotVisibility(item) == "public"
 }
-
-// GetSeoRefs trả danh sách SEO page public được liên kết qua bảng seo_refs.
-func (u *SeoDomainUsecase) GetSeoRefs(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error) {
-	if req == nil {
-		req = &dto.GetSeoRefsRequest{}
-	}
-
-	refType := req.RefType.Validate()
-	if !refType {
-		return nil, 0, _errors.ReturnError(400, "refType không hợp lệ")
-	}
-	if req.RefID == 0 {
-		return nil, 0, _errors.ReturnError(400, "refId không hợp lệ")
-	}
-
-	req.Normalize()
-
-	return u.seoDomainRepo.GetListByLinkedRef(ctx, req)
-}

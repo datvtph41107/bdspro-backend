@@ -1,15 +1,6 @@
 package dto
 
-import (
-	_dto "common/domain/dto"
-	"crm/internal/enums"
-)
-
-type GetSeoRefsRequest struct {
-	_dto.Pagable
-	RefType enums.ESEORefType `json:"refType"`
-	RefID   uint64            `json:"refId"`
-}
+import _dto "common/domain/dto"
 
 // SearchSeoRefValuesRequest is the legacy search request.
 // It is still used by /v2/crm/admin/seo/ref-values.

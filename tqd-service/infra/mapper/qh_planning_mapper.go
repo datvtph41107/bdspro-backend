@@ -4,7 +4,6 @@ import (
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
-	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
 )
 
@@ -49,11 +48,6 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		Metadata:       project.Metadata,
 		CreatedAt:      _utils.FormatTimeToString(project.CreatedAt),
 		UpdatedAt:      _utils.FormatTimeToString(project.UpdatedAt),
-
-		SourceFolderName:  project.SourceFolderName,
-		SourceFolderPath:  project.SourceFolderPath,
-		ProcessStatus:     uint32(project.ProcessStatus),
-		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(project.ProcessStatus)),
 	}
 
 	if project.Jurisdiction != nil {
@@ -105,11 +99,6 @@ func (m *QHPlanningMapper) ToDocumentProto(document *qh_domain.QHPlanningDocumen
 		Metadata:          document.Metadata,
 		CreatedAt:         _utils.FormatTimeToString(document.CreatedAt),
 		UpdatedAt:         _utils.FormatTimeToString(document.UpdatedAt),
-
-		RelativePath:      document.RelativePath,
-		ProcessStatus:     uint32(document.ProcessStatus),
-		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(document.ProcessStatus)),
-		ClassifyError:     document.ClassifyError,
 	}
 }
 
@@ -126,76 +115,20 @@ func (m *QHPlanningMapper) ToEventProto(event *qh_domain.QHPlanningEvent) *tqdpb
 		return nil
 	}
 
-	result := &tqdpb.PlanningEvent{
+	return &tqdpb.PlanningEvent{
 		Id:                event.ID,
 		PlanningProjectId: event.PlanningProjectID,
-		DocIds:            toEventDocIDs(event.DocIDs),
 		EventName:         event.EventName,
 		EventDate:         _utils.FormatTimeToString(event.EventDate),
-		Description:       event.Description,
-		VerNo:             event.VerNo,
-		LegalStatus:       uint32(event.LegalStatus),
-		LegalStatusName:   enums.LegalStatusMap[event.LegalStatus],
 		CreatedAt:         _utils.FormatTimeToString(event.CreatedAt),
 		UpdatedAt:         _utils.FormatTimeToString(event.UpdatedAt),
 	}
-
-	if len(event.Docs) > 0 {
-		result.Docs = m.ToDocumentProtoList(event.Docs)
-	}
-
-	return result
-}
-
-func toEventDocIDs(docIDs []int64) []uint64 {
-	if len(docIDs) == 0 {
-		return nil
-	}
-	result := make([]uint64, len(docIDs))
-	for i, id := range docIDs {
-		result[i] = uint64(id)
-	}
-	return result
 }
 
 func (m *QHPlanningMapper) ToEventProtoList(events []qh_domain.QHPlanningEvent) []*tqdpb.PlanningEvent {
 	result := make([]*tqdpb.PlanningEvent, len(events))
 	for i, event := range events {
 		result[i] = m.ToEventProto(&event)
-	}
-	return result
-}
-
-func (m *QHPlanningMapper) ToRelationProto(item *qh_domain.QHPlanningRelationItem, planningProjectId uint64) *tqdpb.PlanningRelation {
-	if item == nil {
-		return nil
-	}
-
-	result := &tqdpb.PlanningRelation{
-		Parent: m.ToProjectProto(item.Parent),
-		Child:  m.ToProjectProto(item.Child),
-		Peer:   m.ToProjectProto(item.Peer),
-	}
-
-	if item.Parent != nil && item.Parent.ID == planningProjectId {
-		result.Parent = nil
-	}
-
-	if item.Child != nil && item.Child.ID == planningProjectId {
-		result.Child = nil
-	}
-
-	if item.Peer != nil && item.Peer.ID == planningProjectId {
-		result.Peer = nil
-	}
-
-	return result
-}
-
-func (m *QHPlanningMapper) ToRelationProtoList(items []qh_domain.QHPlanningRelationItem, planningProjectId uint64) []*tqdpb.PlanningRelation {
-	result := make([]*tqdpb.PlanningRelation, len(items))
-	for i, item := range items {
-		result[i] = m.ToRelationProto(&item, planningProjectId)
 	}
 	return result
 }
@@ -256,45 +189,4 @@ func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_d
 		EffectiveDate:     _utils.ParseStringToTime(proto.EffectiveDate),
 		Metadata:          metadata,
 	}
-}
-
-// ToProjectDomainFromFolderRequest chuyển metadata đồ án trong CreatePlanningProjectFromFolderRequest thành domain.
-// Không set SourceFolderName/ProcessStatus ở đây — usecase CreateFromFolder sẽ set trước khi Create.
-func (m *QHPlanningMapper) ToProjectDomainFromFolderRequest(req *tqdpb.CreatePlanningProjectFromFolderRequest) *qh_domain.QHPlanningProject {
-	if req == nil {
-		return nil
-	}
-
-	var jurisdictionId *uint64
-	if req.JurisdictionId != 0 {
-		jurisdictionId = &req.JurisdictionId
-	}
-
-	return &qh_domain.QHPlanningProject{
-		Code:           req.Code,
-		Name:           req.Name,
-		PlanningType:   req.PlanningType,
-		PlanningLevel:  req.PlanningLevel,
-		Authority:      req.Authority,
-		JurisdictionID: jurisdictionId,
-		Summary:        req.Summary,
-		ValidityStatus: req.ValidityStatus,
-		Metadata:       "{}",
-	}
-}
-
-// ToFolderFileInputs chuyển danh sách FolderFileEntry (proto) thành input cho usecase.
-func (m *QHPlanningMapper) ToFolderFileInputs(entries []*tqdpb.FolderFileEntry) []qh_dto.FolderFileInput {
-	inputs := make([]qh_dto.FolderFileInput, 0, len(entries))
-	for _, e := range entries {
-		if e == nil || e.RelativePath == "" {
-			continue
-		}
-		inputs = append(inputs, qh_dto.FolderFileInput{
-			RelativePath: e.RelativePath,
-			Content:      e.Content,
-			ContentType:  e.ContentType,
-		})
-	}
-	return inputs
 }

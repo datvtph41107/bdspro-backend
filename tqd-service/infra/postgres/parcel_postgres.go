@@ -214,12 +214,20 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 		}
 	} else {
 		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
-		query = query.Where("p.adr_search LIKE ?", searchTerm)
+		query = query.Where("LOWER(qh_parcel_info.adr_search) LIKE ?", searchTerm)
+	}
+
+	countQuery := query.Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
+		Where("p.deleted_at IS NULL")
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count parcels: %w", err)
 	}
 
 	if err := query.Select("qh_parcel_info.*, p.lat, p.lon, sh.name as shape_name").
 		Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
 		Joins("LEFT JOIN qh_shape sh ON sh.id = qh_parcel_info.shape_id").
+		Where("p.deleted_at IS NULL").
+		Order("p.id DESC").
 		Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).Find(&parcels).Error; err != nil {
 		return nil, 0, fmt.Errorf("search parcels: %w", err)
 	}
@@ -295,11 +303,18 @@ func (p *ParcelPostgres) FindByLocation(ctx context.Context, lat, lng float64) (
 	var parcel qh_domain.Parcel
 	err := p.DB.WithContext(ctx).
 		Raw(`SELECT id, ST_AsGeoJSON(geometry) as geometry, lat, lon, ref_id, ref_type, created_at, updated_at
-             FROM parcels WHERE ST_Intersects(geometry, ST_SetSRID(ST_Point(?, ?), 4326))
-             AND deleted_at IS NULL LIMIT 1`, lng, lat).
+             FROM parcels
+             WHERE geometry && ST_SetSRID(ST_Point(?, ?), 4326)
+               AND ST_Covers(geometry, ST_SetSRID(ST_Point(?, ?), 4326))
+               AND deleted_at IS NULL
+             ORDER BY ST_Area(geometry::geography) ASC, id DESC
+             LIMIT 1`, lng, lat, lng, lat).
 		Scan(&parcel).Error
 	if err != nil {
 		return nil, err
+	}
+	if parcel.ID == 0 {
+		return nil, nil
 	}
 	return &parcel, nil
 }

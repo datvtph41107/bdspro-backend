@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"html"
 	"html/template"
 	"strings"
 	"time"
@@ -50,6 +49,9 @@ func (u *SeoRenderUsecase) PreviewSeoPage(ctx context.Context, req *dto.RenderSe
 		Summary:      req.Summary,
 		Metadata:     req.Metadata,
 		TemplateKey:  strings.TrimSpace(req.TemplateKey),
+		ModuleID:     firstNonEmptyRender(strings.TrimSpace(req.TemplateKey), "default"),
+		Environment:  "preview",
+		Indexable:    false,
 		GeneratedAt:  time.Now().UTC(),
 	})
 	if err != nil {
@@ -146,15 +148,19 @@ func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.Generat
 	}
 
 	htmlBody, err := renderSeoHTML(renderSeoInput{
-		Slug:         page.Slug,
-		Title:        page.Title,
-		Description:  page.Description,
-		CanonicalURL: page.CanonicalURL,
-		Content:      page.Content,
-		Summary:      page.Summary,
-		Metadata:     string(page.Metadata),
-		TemplateKey:  page.TemplateKey,
-		GeneratedAt:  now,
+		Slug:            page.Slug,
+		Title:           page.Title,
+		Description:     page.Description,
+		CanonicalURL:    page.CanonicalURL,
+		Content:         page.Content,
+		Summary:         page.Summary,
+		Metadata:        string(page.Metadata),
+		TemplateKey:     page.TemplateKey,
+		ModuleID:        firstNonEmptyRender(page.TemplateKey, page.GetSchema(), "default"),
+		Environment:     "crm-rendered",
+		Indexable:       page.IsPublicIndexable(),
+		TelemetryScript: "/static/qhpro/seo-m8-client.js",
+		GeneratedAt:     now,
 	})
 	if err != nil {
 		failedAt := time.Now().UTC()
@@ -199,15 +205,19 @@ func (u *SeoRenderUsecase) GetSeoGenerationLogs(ctx context.Context, req *dto.Se
 }
 
 type renderSeoInput struct {
-	Slug         string
-	Title        string
-	Description  string
-	CanonicalURL string
-	Content      string
-	Summary      string
-	Metadata     string
-	TemplateKey  string
-	GeneratedAt  time.Time
+	Slug            string
+	Title           string
+	Description     string
+	CanonicalURL    string
+	Content         string
+	Summary         string
+	Metadata        string
+	TemplateKey     string
+	ModuleID        string
+	Environment     string
+	Indexable       bool
+	TelemetryScript string
+	GeneratedAt     time.Time
 }
 
 func renderSeoHTML(input renderSeoInput) (string, error) {
@@ -229,32 +239,41 @@ func renderSeoHTML(input renderSeoInput) (string, error) {
 
 	metadataScript := buildMetadataScript(input.Metadata)
 
+	robots := "noindex,follow"
+	if input.Indexable {
+		robots = "index,follow"
+	}
+
 	view := struct {
-		Slug             string
-		Title            string
-		Description      string
-		CanonicalURL     string
-		ContentHTML      template.HTML
-		Summary          string
-		MetadataScript   template.HTML
-		TemplateKey      string
-		GeneratedAtISO   string
-		EscapedTitle     string
-		EscapedDesc      string
-		EscapedCanonical string
+		Slug            string
+		Title           string
+		Description     string
+		CanonicalURL    string
+		ContentHTML     template.HTML
+		Summary         string
+		MetadataScript  template.HTML
+		TemplateKey     string
+		ModuleID        string
+		Environment     string
+		Indexable       bool
+		Robots          string
+		TelemetryScript string
+		GeneratedAtISO  string
 	}{
-		Slug:             input.Slug,
-		Title:            title,
-		Description:      description,
-		CanonicalURL:     canonical,
-		ContentHTML:      template.HTML(sanitizeTrustedContent(input.Content)),
-		Summary:          summary,
-		MetadataScript:   template.HTML(metadataScript),
-		TemplateKey:      firstNonEmptyRender(input.TemplateKey, "default"),
-		GeneratedAtISO:   input.GeneratedAt.Format(time.RFC3339),
-		EscapedTitle:     html.EscapeString(title),
-		EscapedDesc:      html.EscapeString(description),
-		EscapedCanonical: html.EscapeString(canonical),
+		Slug:            input.Slug,
+		Title:           title,
+		Description:     description,
+		CanonicalURL:    canonical,
+		ContentHTML:     template.HTML(sanitizeTrustedContent(input.Content)),
+		Summary:         summary,
+		MetadataScript:  template.HTML(metadataScript),
+		TemplateKey:     firstNonEmptyRender(input.TemplateKey, "default"),
+		ModuleID:        firstNonEmptyRender(input.ModuleID, input.TemplateKey, "default"),
+		Environment:     firstNonEmptyRender(input.Environment, "crm-rendered"),
+		Indexable:       input.Indexable,
+		Robots:          robots,
+		TelemetryScript: strings.TrimSpace(input.TelemetryScript),
+		GeneratedAtISO:  input.GeneratedAt.Format(time.RFC3339),
 	}
 
 	tpl, err := template.New("seo_page").Parse(defaultSEOPageTemplate)
@@ -274,18 +293,18 @@ const defaultSEOPageTemplate = `<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <title>{{.EscapedTitle}}</title>
-  <meta name="description" content="{{.EscapedDesc}}">
-  <link rel="canonical" href="{{.EscapedCanonical}}">
-  <meta name="robots" content="index,follow">
-  <meta property="og:title" content="{{.EscapedTitle}}">
-  <meta property="og:description" content="{{.EscapedDesc}}">
-  <meta property="og:url" content="{{.EscapedCanonical}}">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  <link rel="canonical" href="{{.CanonicalURL}}">
+  <meta name="robots" content="{{.Robots}}">
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:url" content="{{.CanonicalURL}}">
   <meta name="x-seo-template" content="{{.TemplateKey}}">
   <meta name="x-seo-generated-at" content="{{.GeneratedAtISO}}">
   {{.MetadataScript}}
 </head>
-<body>
+<body data-qhpro-seo-document data-qhpro-seo-module="{{.ModuleID}}" data-qhpro-seo-environment="{{.Environment}}" data-qhpro-seo-indexable="{{.Indexable}}">
   <main data-seo-slug="{{.Slug}}">
     <article>
       <header>
@@ -297,6 +316,7 @@ const defaultSEOPageTemplate = `<!doctype html>
       </section>
     </article>
   </main>
+  {{if .TelemetryScript}}<script src="{{.TelemetryScript}}" defer></script>{{end}}
 </body>
 </html>`
 
@@ -378,12 +398,23 @@ func buildGenerationMetadata(reason string) datatypes.JSON {
 
 func buildMetadataScript(metadata string) string {
 	metadata = strings.TrimSpace(metadata)
-	if metadata == "" || metadata == "null" || !json.Valid([]byte(metadata)) {
+	if metadata == "" || metadata == "null" {
 		return ""
 	}
 
-	escaped := html.EscapeString(metadata)
-	return `<script type="application/ld+json">` + escaped + `</script>`
+	var payload any
+	if err := json.Unmarshal([]byte(metadata), &payload); err != nil {
+		return ""
+	}
+
+	normalized, err := json.Marshal(payload)
+	if err != nil {
+		return ""
+	}
+
+	// encoding/json escapes <, > and &, which prevents a JSON value from
+	// prematurely closing the script element while keeping valid JSON-LD.
+	return `<script type="application/ld+json">` + string(normalized) + `</script>`
 }
 
 func sanitizeTrustedContent(content string) string {

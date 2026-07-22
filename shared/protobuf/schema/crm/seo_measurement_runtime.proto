@@ -1,0 +1,16 @@
+syntax = "proto3";
+package crmpb;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/crm;crmpb";
+
+// SEO-M8 connector control plane. The runtime uses Struct intentionally so
+// connector row schemas can evolve independently from the large legacy CRM proto.
+service SeoMeasurementRuntimeService {
+  rpc ImportMeasurement(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc GetSourceHealth(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc ListImportRuns(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc RunScoring(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc ListPageScores(google.protobuf.Struct) returns (google.protobuf.Struct);
+}

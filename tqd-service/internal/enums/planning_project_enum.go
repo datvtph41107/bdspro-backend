@@ -3,7 +3,6 @@ package enums
 type PlanningType uint32
 type PlanningLevel uint32
 type PlanningDocumentType uint32
-type PlanningProcessStatus uint32
 
 const (
 	PlanningTypeUsed    uint32 = 10
@@ -25,13 +24,6 @@ const (
 	PlanningDocumentTypeGIS         uint32 = 50
 	PlanningDocumentTypeAppendix    uint32 = 60
 	PlanningDocumentTypeOther       uint32 = 70
-
-	// PlanningProcessStatus — trạng thái xử lý của đồ án/tài liệu sau khi upload folder.
-	PlanningProcessStatusPending    uint32 = 10 // vừa upload, chưa quét
-	PlanningProcessStatusProcessing uint32 = 20 // job đang gọi AI phân loại
-	PlanningProcessStatusClassified uint32 = 30 // AI đã phân loại xong, chờ admin duyệt
-	PlanningProcessStatusApproved   uint32 = 40 // admin đã phê duyệt
-	PlanningProcessStatusFailed     uint32 = 50 // lỗi khi upload hoặc phân loại
 )
 
 var PlanningDocumentTypeLabelMap = map[uint32]string{
@@ -58,18 +50,6 @@ var PlanningLevelMap = map[uint32]string{
 	PlanningLevelDistrict:   "Huyện",
 	PlanningLevelWard:       "Xã",
 	PlanningLevelProject:    "Dự án",
-}
-
-var PlanningProcessStatusMap = map[uint32]string{
-	PlanningProcessStatusPending:    "Chờ xử lý",
-	PlanningProcessStatusProcessing: "Đang xử lý",
-	PlanningProcessStatusClassified: "Đã phân loại",
-	PlanningProcessStatusApproved:   "Đã phê duyệt",
-	PlanningProcessStatusFailed:     "Lỗi",
-}
-
-func GetPlanningProcessStatusLabel(status uint32) string {
-	return PlanningProcessStatusMap[status]
 }
 
 func GetPlanningDocumentTypeLabel(planningDocumentType uint32) string {

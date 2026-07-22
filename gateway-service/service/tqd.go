@@ -38,7 +38,7 @@ func DialTQDGRPC(env string, opts []grpc.DialOption) (*grpc.ClientConn, error) {
 // Dùng grpc.NewClient (không block khi start): kết nối thật sự và reconnect diễn ra
 // khi có RPC; backend tạm tắt thì request sau vẫn thử lại theo ConnectParams ở main.
 // Nếu NewClient trả lỗi (cấu hình/target), fallback FromEndpoint; gateway vẫn khởi động bình thường.
-func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
+func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) *grpc.ClientConn {
 	port := viper.GetString("service.port.tqd")
 	url := common.GetPrefixProtobufUrl(env, "tqd")
 	endpoint := fmt.Sprintf("%s:%s", url, port)
@@ -47,10 +47,11 @@ func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	if err != nil {
 		log.Printf("[TQD] Không tạo được client tới %s (đăng ký lazy theo endpoint): %v", endpoint, err)
 		registerTqdFromEndpoint(ctx, mux, endpoint, mergeTqdDialOpts(opts))
-		return
+		return nil
 	}
 	log.Printf("[TQD] Đã tạo client tới %s (kết nối khi có request)", endpoint)
 	registerTqdWithConn(ctx, mux, conn)
+	return conn
 }
 
 func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) {

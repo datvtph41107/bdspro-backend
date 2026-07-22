@@ -16,15 +16,13 @@ import (
 
 // Properties holds all configuration properties
 type Properties struct {
-	Server             ServerConfig             `mapstructure:"server"`
-	Database           DatabaseConfig           `mapstructure:"database"`
-	JWT                JWTConfig                `mapstructure:"jwt"`
-	Eureka             EurekaConfig             `mapstructure:"eureka"`
-	Key                KeyConfig                `mapstructure:"key"`
-	Layer              LayerConfig              `mapstructure:"layer"`
-	FileService        FileServiceConfig        `mapstructure:"file_service"`
-	QHPlanningClassify QHPlanningClassifyConfig `mapstructure:"qh_planning_classify"`
-	ConfigApp          struct {
+	Server    ServerConfig   `mapstructure:"server"`
+	Database  DatabaseConfig `mapstructure:"database"`
+	JWT       JWTConfig      `mapstructure:"jwt"`
+	Eureka    EurekaConfig   `mapstructure:"eureka"`
+	Key       KeyConfig      `mapstructure:"key"`
+	Layer     LayerConfig    `mapstructure:"layer"`
+	ConfigApp struct {
 		Qhpro struct {
 			DomainAPI    string `mapstructure:"domain_api"`
 			DomainFile   string `mapstructure:"domain_file"`
@@ -32,22 +30,6 @@ type Properties struct {
 			DomainStyle  string `mapstructure:"domain_style"`
 		} `mapstructure:"qhpro"`
 	} `mapstructure:"config-app"`
-}
-
-// FileServiceConfig cấu hình client gọi sang file-service (upload/tải file cho hồ sơ quy hoạch).
-type FileServiceConfig struct {
-	BaseURL        string `mapstructure:"base_url"`
-	ServiceAuthKey string `mapstructure:"service_auth_key"`
-	TimeoutSeconds int    `mapstructure:"timeout_seconds"`
-}
-
-// QHPlanningClassifyConfig cấu hình worker quét tài liệu Pending và gọi Gemini phân loại.
-type QHPlanningClassifyConfig struct {
-	Enabled         bool `mapstructure:"enabled"`
-	IntervalSeconds int  `mapstructure:"interval_seconds"`
-	BatchSize       int  `mapstructure:"batch_size"`
-	MaxInlineBytes  int  `mapstructure:"max_inline_bytes"` // file lớn hơn → fallback filename; mặc định 15MB
-	ReadContent     bool `mapstructure:"read_content"`     // false → chỉ phân loại theo filename
 }
 
 type LayerConfig struct {

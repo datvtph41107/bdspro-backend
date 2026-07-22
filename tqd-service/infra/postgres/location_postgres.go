@@ -14,6 +14,7 @@ import (
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type locationRepo struct {
@@ -56,7 +57,7 @@ func (r *locationRepo) GetNearestProvince(ctx context.Context, lat, lng float64,
 	// Sử dụng raw query cho hiệu suất tốt hơn
 	query := `
 		SELECT id, full_name, short_name, lat, lng, code, created_at
-		FROM provinces
+		FROM province_v2
 		WHERE (6371 * acos(cos(radians(?)) * cos(radians(lat)) * 
 		      cos(radians(lng) - radians(?)) + sin(radians(?)) * 
 		      sin(radians(lat)))) < ?
@@ -86,7 +87,16 @@ func (r *locationRepo) SearchProvinces(ctx context.Context, query string, limit 
 	err := r.db.WithContext(ctx).
 		Where("LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR code = ?",
 			searchPattern, searchPattern, query).
-		Order(r.buildSearchOrderSQL(query)).
+		Order(clause.Expr{
+			SQL: `CASE
+				WHEN LOWER(full_name) = LOWER(?) THEN 1
+				WHEN LOWER(short_name) = LOWER(?) THEN 2
+				WHEN LOWER(full_name) LIKE LOWER(?) THEN 3
+				WHEN LOWER(short_name) LIKE LOWER(?) THEN 4
+				ELSE 5 END, LENGTH(full_name)`,
+			Vars:               []interface{}{query, query, query + "%", query + "%"},
+			WithoutParentheses: true,
+		}).
 		Limit(limit).
 		Find(&provinces).Error
 
@@ -132,7 +142,7 @@ func (r *locationRepo) GetNearestWard(ctx context.Context, lat, lng float64, pro
 
 	query := `
 		SELECT id, full_name, short_name, lat, lng, code, province_id
-		FROM wards
+		FROM ward_v2
 		WHERE province_id = ?
 		  AND (6371 * acos(cos(radians(?)) * cos(radians(lat)) * 
 		       cos(radians(lng) - radians(?)) + sin(radians(?)) * 
@@ -168,7 +178,16 @@ func (r *locationRepo) SearchWards(ctx context.Context, query string, provinceID
 		db = db.Where("province_id = ?", provinceID)
 	}
 
-	err := db.Order(r.buildSearchOrderSQL(query)).
+	err := db.Order(clause.Expr{
+		SQL: `CASE
+				WHEN LOWER(full_name) = LOWER(?) THEN 1
+				WHEN LOWER(short_name) = LOWER(?) THEN 2
+				WHEN LOWER(full_name) LIKE LOWER(?) THEN 3
+				WHEN LOWER(short_name) LIKE LOWER(?) THEN 4
+				ELSE 5 END, LENGTH(full_name)`,
+		Vars:               []interface{}{query, query, query + "%", query + "%"},
+		WithoutParentheses: true,
+	}).
 		Limit(limit).
 		Find(&wards).Error
 
@@ -280,18 +299,6 @@ func (r *locationRepo) getNearestLocationForCoordinate(ctx context.Context, lat,
 		Distance:   provDist,
 		Confidence: confidence,
 	}, nil
-}
-
-func (r *locationRepo) buildSearchOrderSQL(query string) string {
-	return fmt.Sprintf(`
-		CASE 
-			WHEN LOWER(full_name) = LOWER('%s') THEN 1
-			WHEN LOWER(short_name) = LOWER('%s') THEN 2
-			WHEN LOWER(full_name) LIKE LOWER('%s%%') THEN 3
-			WHEN LOWER(short_name) LIKE LOWER('%s%%') THEN 4
-			ELSE 5
-		END, LENGTH(full_name)
-	`, query, query, query, query)
 }
 
 func (r *locationRepo) haversine(lat1, lng1, lat2, lng2 float64) float64 {

@@ -199,47 +199,6 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	return items, total, nil
 }
 
-func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error) {
-	var items []seo_domain.SeoDomain
-	var total int64
-
-	if req == nil {
-		req = &dto.GetSeoRefsRequest{}
-	}
-	req.Normalize()
-
-	buildQuery := func(db *gorm.DB) *gorm.DB {
-		return db.WithContext(ctx).
-			Model(&seo_domain.SeoDomain{}).
-			Joins("INNER JOIN seo_refs sr ON sr.seo_domain_id = seo_domain.id").
-			Where("sr.ref_type = ? AND sr.ref_id = ?", req.RefType, req.RefID).
-			Where("seo_domain.published = ?", true).
-			Where("(seo_domain.scope = ? OR seo_domain.scope = '')", seo_domain.SeoScopePublic)
-	}
-
-	db := impl.GetDB(ctx, r.db)
-
-	if err := buildQuery(db).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	err := buildQuery(db).
-		Select("seo_domain.*").
-		Order("seo_domain.published_at DESC NULLS LAST, seo_domain.created_at DESC").
-		Offset(req.GetOffset()).
-		Limit(req.GetLimit()).
-		Find(&items).Error
-	if err != nil {
-		return nil, 0, err
-	}
-
-	for i := range items {
-		items[i].NormalizeLifecycle()
-	}
-
-	return items, total, nil
-}
-
 func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error) {
 	var items []seo_domain.SeoDomain
 

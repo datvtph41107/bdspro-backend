@@ -2,6 +2,7 @@ package postgre
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -29,7 +30,7 @@ func (r *SeoMeasurementPostgres) UpsertSearchPerformanceDaily(ctx context.Contex
 	}
 	return impl.GetDB(ctx, r.db).WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "canonical_url"}, {Name: "query"}, {Name: "device"}, {Name: "country"}, {Name: "search_type"}, {Name: "date"}},
-		DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "clicks", "impressions", "ctr", "position", "data_source", "imported_at", "updated_at"}),
+		DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "clicks", "impressions", "ctr", "position", "data_source", "source_run_id", "imported_at", "updated_at"}),
 	}).Create(&items).Error
 }
 
@@ -39,7 +40,7 @@ func (r *SeoMeasurementPostgres) UpsertURLInspectionSnapshots(ctx context.Contex
 	}
 	return impl.GetDB(ctx, r.db).WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "canonical_url"}, {Name: "data_source"}},
-		DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "inspection_status", "index_status", "coverage_state", "robots_txt_state", "indexing_state", "google_canonical", "user_canonical", "last_crawl_time", "page_fetch_state", "verdict", "raw_json", "inspected_at", "updated_at"}),
+		DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "inspection_status", "index_status", "coverage_state", "robots_txt_state", "indexing_state", "google_canonical", "user_canonical", "last_crawl_time", "page_fetch_state", "verdict", "raw_json", "data_source", "source_run_id", "inspected_at", "updated_at"}),
 	}).Create(&items).Error
 }
 
@@ -49,7 +50,7 @@ func (r *SeoMeasurementPostgres) UpsertTrafficDaily(ctx context.Context, items [
 	}
 	return impl.GetDB(ctx, r.db).WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "canonical_url"}, {Name: "date"}, {Name: "source"}, {Name: "medium"}, {Name: "device"}, {Name: "country"}},
-		DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "sessions", "users", "active_users", "page_views", "engagement_seconds", "conversions", "data_source", "imported_at", "updated_at"}),
+		DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "sessions", "users", "active_users", "page_views", "engagement_seconds", "conversions", "data_source", "source_run_id", "imported_at", "updated_at"}),
 	}).Create(&items).Error
 }
 
@@ -489,4 +490,284 @@ func severityForOpenIssues(open float64) string {
 		return seo_domain.SeoIssueSeverityMedium
 	}
 	return seo_domain.SeoIssueSeverityInfo
+}
+
+func (r *SeoMeasurementPostgres) ReconcileIssues(ctx context.Context, canonicalURL string, items []seo_domain.SeoIssue) (uint32, uint32, error) {
+	db := impl.GetDB(ctx, r.db).WithContext(ctx)
+	managedTypes := []string{
+		seo_domain.SeoIssueTypeNotRendered,
+		seo_domain.SeoIssueTypeNotInSitemap,
+		seo_domain.SeoIssueTypeCrawledNotIndexed,
+		seo_domain.SeoIssueTypeHighImpressionLowCTR,
+		seo_domain.SeoIssueTypeGoodPositionLowCTR,
+		seo_domain.SeoIssueTypeTrafficNoConversion,
+	}
+	var created uint32
+	var resolved uint32
+	err := db.Transaction(func(tx *gorm.DB) error {
+		var existing []seo_domain.SeoIssue
+		if err := tx.Where("canonical_url = ? AND status = ? AND issue_type IN ?", canonicalURL, seo_domain.SeoIssueStatusOpen, managedTypes).Find(&existing).Error; err != nil {
+			return err
+		}
+		existingTypes := make(map[string]bool, len(existing))
+		for _, issue := range existing {
+			existingTypes[issue.IssueType] = true
+		}
+		activeTypes := make([]string, 0, len(items))
+		for i := range items {
+			item := &items[i]
+			activeTypes = append(activeTypes, item.IssueType)
+			if !existingTypes[item.IssueType] {
+				created++
+			}
+			if err := tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "canonical_url"}, {Name: "issue_type"}, {Name: "status"}},
+				DoUpdates: clause.AssignmentColumns([]string{"seo_domain_id", "severity", "title", "message", "evidence", "recommendation", "detected_at", "resolved_at", "updated_at"}),
+			}).Create(item).Error; err != nil {
+				return err
+			}
+		}
+		query := tx.Model(&seo_domain.SeoIssue{}).
+			Where("canonical_url = ? AND status = ? AND issue_type IN ?", canonicalURL, seo_domain.SeoIssueStatusOpen, managedTypes)
+		if len(activeTypes) > 0 {
+			query = query.Where("issue_type NOT IN ?", activeTypes)
+		}
+		now := time.Now()
+		result := query.Updates(map[string]interface{}{
+			"status":      seo_domain.SeoIssueStatusResolved,
+			"resolved_at": &now,
+			"updated_at":  now,
+		})
+		if result.Error != nil {
+			return result.Error
+		}
+		resolved = uint32(result.RowsAffected)
+		return nil
+	})
+	return created, resolved, err
+}
+
+func (r *SeoMeasurementPostgres) GetReusableImportRunByChecksum(ctx context.Context, source string, checksum string) (*seo_domain.SeoMeasurementImportRun, error) {
+	var run seo_domain.SeoMeasurementImportRun
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Where("source = ? AND checksum = ? AND status IN ?", strings.TrimSpace(source), strings.TrimSpace(checksum), []string{
+			seo_domain.SeoMeasurementImportStatusRunning,
+			seo_domain.SeoMeasurementImportStatusSucceeded,
+			seo_domain.SeoMeasurementImportStatusPartial,
+		}).
+		Order("id DESC").
+		First(&run).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if run.Status == seo_domain.SeoMeasurementImportStatusRunning && time.Since(run.StartedAt) > 2*time.Hour {
+		now := time.Now().UTC()
+		if err := impl.GetDB(ctx, r.db).WithContext(ctx).Model(&seo_domain.SeoMeasurementImportRun{}).
+			Where("id = ? AND status = ?", run.ID, seo_domain.SeoMeasurementImportStatusRunning).
+			Updates(map[string]interface{}{
+				"status": seo_domain.SeoMeasurementImportStatusFailed, "error_message": "expired stale running import",
+				"finished_at": now, "updated_at": now,
+			}).Error; err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+	return &run, nil
+}
+
+func (r *SeoMeasurementPostgres) CreateImportRun(ctx context.Context, run *seo_domain.SeoMeasurementImportRun) error {
+	if run == nil {
+		return nil
+	}
+	return impl.GetDB(ctx, r.db).WithContext(ctx).Create(run).Error
+}
+
+func (r *SeoMeasurementPostgres) CompleteImportRun(ctx context.Context, run *seo_domain.SeoMeasurementImportRun) error {
+	if run == nil || run.ID == 0 {
+		return nil
+	}
+	return impl.GetDB(ctx, r.db).WithContext(ctx).Model(&seo_domain.SeoMeasurementImportRun{}).
+		Where("id = ?", run.ID).
+		Updates(map[string]interface{}{
+			"status":         run.Status,
+			"row_count":      run.RowCount,
+			"accepted_count": run.AcceptedCount,
+			"rejected_count": run.RejectedCount,
+			"checksum":       run.Checksum,
+			"error_message":  run.ErrorMessage,
+			"metadata":       run.Metadata,
+			"finished_at":    run.FinishedAt,
+			"updated_at":     time.Now(),
+		}).Error
+}
+
+func (r *SeoMeasurementPostgres) UpsertSourceState(ctx context.Context, state *seo_domain.SeoMeasurementSourceState) error {
+	if state == nil || strings.TrimSpace(state.Source) == "" {
+		return nil
+	}
+	return impl.GetDB(ctx, r.db).WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "source"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"status":               gorm.Expr("EXCLUDED.status"),
+			"last_run_id":          gorm.Expr("EXCLUDED.last_run_id"),
+			"last_attempt_at":      gorm.Expr("EXCLUDED.last_attempt_at"),
+			"last_success_at":      gorm.Expr("COALESCE(EXCLUDED.last_success_at, seo_measurement_source_state.last_success_at)"),
+			"last_row_count":       gorm.Expr("CASE WHEN EXCLUDED.last_success_at IS NULL THEN seo_measurement_source_state.last_row_count ELSE EXCLUDED.last_row_count END"),
+			"stale_after_hours":    gorm.Expr("EXCLUDED.stale_after_hours"),
+			"consecutive_failures": gorm.Expr("CASE WHEN EXCLUDED.last_success_at IS NULL THEN seo_measurement_source_state.consecutive_failures + 1 ELSE 0 END"),
+			"last_error":           gorm.Expr("CASE WHEN EXCLUDED.status = 'partial' THEN EXCLUDED.last_error WHEN EXCLUDED.last_success_at IS NULL THEN EXCLUDED.last_error ELSE '' END"),
+			"metadata":             gorm.Expr("EXCLUDED.metadata"),
+			"updated_at":           gorm.Expr("NOW()"),
+		}),
+	}).Create(state).Error
+}
+
+func (r *SeoMeasurementPostgres) ListSourceHealth(ctx context.Context) ([]dto.SeoMeasurementSourceHealth, error) {
+	var rows []struct {
+		Source              string
+		Status              string
+		LastRunID           uint64
+		LastAttemptAt       *time.Time
+		LastSuccessAt       *time.Time
+		LastRowCount        int64
+		StaleAfterHours     int
+		ConsecutiveFailures int
+		LastError           string
+	}
+	if err := impl.GetDB(ctx, r.db).WithContext(ctx).Table("seo_measurement_source_state").Order("source ASC").Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	out := make([]dto.SeoMeasurementSourceHealth, 0, len(rows))
+	for _, row := range rows {
+		item := dto.SeoMeasurementSourceHealth{
+			Source:              row.Source,
+			Status:              row.Status,
+			LastRunID:           row.LastRunID,
+			LastRowCount:        row.LastRowCount,
+			StaleAfterHours:     row.StaleAfterHours,
+			ConsecutiveFailures: row.ConsecutiveFailures,
+			LastError:           row.LastError,
+		}
+		if row.LastAttemptAt != nil {
+			item.LastAttemptAt = row.LastAttemptAt.UTC().Format(time.RFC3339)
+		}
+		if row.LastSuccessAt != nil {
+			item.LastSuccessAt = row.LastSuccessAt.UTC().Format(time.RFC3339)
+			item.AgeHours = int64(now.Sub(*row.LastSuccessAt).Hours())
+			item.Fresh = item.AgeHours <= int64(row.StaleAfterHours)
+		}
+		if row.LastSuccessAt == nil {
+			item.Status = "never_imported"
+		}
+		if row.LastSuccessAt != nil && !item.Fresh && item.Status != seo_domain.SeoMeasurementImportStatusFailed && item.Status != seo_domain.SeoMeasurementImportStatusRunning {
+			item.Status = "stale"
+		}
+		out = append(out, item)
+	}
+	return out, nil
+}
+
+func (r *SeoMeasurementPostgres) ListImportRuns(ctx context.Context, req *dto.SeoMeasurementImportRunListRequest) ([]dto.SeoMeasurementImportRunRow, int64, error) {
+	if req == nil {
+		req = &dto.SeoMeasurementImportRunListRequest{}
+	}
+	size := int(req.Size)
+	if size <= 0 {
+		size = 20
+	}
+	if size > 200 {
+		size = 200
+	}
+	page := int(req.Page)
+	if page <= 0 {
+		page = 1
+	}
+	offset := (page - 1) * size
+	query := impl.GetDB(ctx, r.db).WithContext(ctx).Table("seo_measurement_import_run")
+	if strings.TrimSpace(req.Source) != "" {
+		query = query.Where("source = ?", strings.TrimSpace(req.Source))
+	}
+	if strings.TrimSpace(req.Status) != "" {
+		query = query.Where("status = ?", strings.TrimSpace(req.Status))
+	}
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	rows := make([]dto.SeoMeasurementImportRunRow, 0)
+	err := query.Select(`id, source, status, requested_by, row_count, accepted_count, rejected_count, checksum, error_message,
+		COALESCE(TO_CHAR(started_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '') AS started_at,
+		COALESCE(TO_CHAR(finished_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), '') AS finished_at`).
+		Order("started_at DESC").Offset(offset).Limit(size).Scan(&rows).Error
+	return rows, total, err
+}
+
+func (r *SeoMeasurementPostgres) UpsertPageScores(ctx context.Context, items []seo_domain.SeoPageScoreSnapshot) error {
+	if len(items) == 0 {
+		return nil
+	}
+	return impl.GetDB(ctx, r.db).WithContext(ctx).Create(&items).Error
+}
+
+func (r *SeoMeasurementPostgres) ListPageScores(ctx context.Context, req *dto.SeoPageScoreListRequest) ([]dto.SeoPageScoreRow, int64, error) {
+	if req == nil {
+		req = &dto.SeoPageScoreListRequest{}
+	}
+	size := int(req.Size)
+	if size <= 0 {
+		size = 20
+	}
+	if size > 200 {
+		size = 200
+	}
+	page := int(req.Page)
+	if page <= 0 {
+		page = 1
+	}
+	offset := (page - 1) * size
+	latest := impl.GetDB(ctx, r.db).WithContext(ctx).Raw(`
+		SELECT DISTINCT ON (canonical_url)
+			COALESCE(seo_domain_id,0) AS seo_domain_id, canonical_url, range_key,
+			TO_CHAR(measured_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS measured_at,
+			index_score, visibility_score, engagement_score, conversion_score, technical_score,
+			issue_penalty, overall_score, grade, blockers, warnings, source_freshness
+		FROM seo_page_score_snapshot
+		ORDER BY canonical_url, measured_at DESC
+	`)
+	base := r.db.Table("(?) scores", latest)
+	if strings.TrimSpace(req.CanonicalURL) != "" {
+		base = base.Where("canonical_url ILIKE ?", "%"+strings.TrimSpace(req.CanonicalURL)+"%")
+	}
+	if strings.TrimSpace(req.Grade) != "" {
+		base = base.Where("grade = ?", strings.ToUpper(strings.TrimSpace(req.Grade)))
+	}
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rawRows []struct {
+		SeoDomainID                                                                                               uint64
+		CanonicalURL, RangeKey, MeasuredAt                                                                        string
+		IndexScore, VisibilityScore, EngagementScore, ConversionScore, TechnicalScore, IssuePenalty, OverallScore float64
+		Grade                                                                                                     string
+		Blockers, Warnings, SourceFreshness                                                                       []byte
+	}
+	if err := base.Order("overall_score ASC, canonical_url ASC").Offset(offset).Limit(size).Scan(&rawRows).Error; err != nil {
+		return nil, 0, err
+	}
+	rows := make([]dto.SeoPageScoreRow, 0, len(rawRows))
+	for _, row := range rawRows {
+		rows = append(rows, dto.SeoPageScoreRow{
+			SeoDomainID: row.SeoDomainID, CanonicalURL: row.CanonicalURL, RangeKey: row.RangeKey, MeasuredAt: row.MeasuredAt,
+			IndexScore: row.IndexScore, VisibilityScore: row.VisibilityScore, EngagementScore: row.EngagementScore,
+			ConversionScore: row.ConversionScore, TechnicalScore: row.TechnicalScore, IssuePenalty: row.IssuePenalty,
+			OverallScore: row.OverallScore, Grade: row.Grade,
+			Blockers: json.RawMessage(row.Blockers), Warnings: json.RawMessage(row.Warnings), SourceFreshness: json.RawMessage(row.SourceFreshness),
+		})
+	}
+	return rows, total, nil
 }

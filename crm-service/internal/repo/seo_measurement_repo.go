@@ -33,4 +33,14 @@ type SeoMeasurementRepo interface {
 
 	CreateIssues(ctx context.Context, items []seo_domain.SeoIssue) error
 	ResolveIssue(ctx context.Context, id uint64, status string) error
+	ReconcileIssues(ctx context.Context, canonicalURL string, items []seo_domain.SeoIssue) (created uint32, resolved uint32, err error)
+
+	GetReusableImportRunByChecksum(ctx context.Context, source string, checksum string) (*seo_domain.SeoMeasurementImportRun, error)
+	CreateImportRun(ctx context.Context, run *seo_domain.SeoMeasurementImportRun) error
+	CompleteImportRun(ctx context.Context, run *seo_domain.SeoMeasurementImportRun) error
+	UpsertSourceState(ctx context.Context, state *seo_domain.SeoMeasurementSourceState) error
+	ListSourceHealth(ctx context.Context) ([]dto.SeoMeasurementSourceHealth, error)
+	ListImportRuns(ctx context.Context, req *dto.SeoMeasurementImportRunListRequest) ([]dto.SeoMeasurementImportRunRow, int64, error)
+	UpsertPageScores(ctx context.Context, items []seo_domain.SeoPageScoreSnapshot) error
+	ListPageScores(ctx context.Context, req *dto.SeoPageScoreListRequest) ([]dto.SeoPageScoreRow, int64, error)
 }

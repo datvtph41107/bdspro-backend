@@ -12,6 +12,8 @@ const (
 	SeoMeasurementDataSourceAnalytics     = "analytics"
 	SeoMeasurementDataSourceCrawlLog      = "crawl_log"
 	SeoMeasurementDataSourceRankTracker   = "rank_tracker"
+	SeoMeasurementDataSourceURLInspection = "url_inspection"
+	SeoMeasurementDataSourceWebVitals     = "web_vitals"
 )
 
 const (
@@ -77,6 +79,7 @@ type SeoSearchPerformanceDaily struct {
 	CTR          float64   `gorm:"column:ctr;not null;default:0"`
 	Position     float64   `gorm:"column:position;not null;default:0"`
 	DataSource   string    `gorm:"column:data_source;type:varchar(32);not null;default:'mock';index"`
+	SourceRunID  *uint64   `gorm:"column:source_run_id;index"`
 	ImportedAt   time.Time `gorm:"column:imported_at;not null;autoCreateTime"`
 	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime"`
@@ -108,6 +111,7 @@ type SeoURLInspectionSnapshot struct {
 	Verdict          string         `gorm:"column:verdict;type:varchar(64);not null;default:'';index"`
 	RawJSON          datatypes.JSON `gorm:"column:raw_json;type:jsonb;not null;default:'{}'::jsonb"`
 	DataSource       string         `gorm:"column:data_source;type:varchar(32);not null;default:'mock';index"`
+	SourceRunID      *uint64        `gorm:"column:source_run_id;index"`
 	InspectedAt      time.Time      `gorm:"column:inspected_at;not null;autoCreateTime;index"`
 	CreatedAt        time.Time      `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt        time.Time      `gorm:"column:updated_at;autoUpdateTime"`
@@ -132,6 +136,7 @@ type SeoTrafficDaily struct {
 	Device            string    `gorm:"column:device;type:varchar(32);not null;default:'';index"`
 	Country           string    `gorm:"column:country;type:varchar(16);not null;default:'';index"`
 	DataSource        string    `gorm:"column:data_source;type:varchar(32);not null;default:'mock';index"`
+	SourceRunID       *uint64   `gorm:"column:source_run_id;index"`
 	ImportedAt        time.Time `gorm:"column:imported_at;not null;autoCreateTime"`
 	CreatedAt         time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt         time.Time `gorm:"column:updated_at;autoUpdateTime"`
@@ -170,6 +175,7 @@ type SeoRankingSnapshot struct {
 	Location         string         `gorm:"column:location;type:varchar(128);not null;default:'';index"`
 	Language         string         `gorm:"column:language;type:varchar(32);not null;default:'';index"`
 	DataSource       string         `gorm:"column:data_source;type:varchar(32);not null;default:'mock';index"`
+	SourceRunID      *uint64        `gorm:"column:source_run_id;index"`
 	CheckedAt        time.Time      `gorm:"column:checked_at;not null;autoCreateTime;index"`
 	RawJSON          datatypes.JSON `gorm:"column:raw_json;type:jsonb;not null;default:'{}'::jsonb"`
 	CreatedAt        time.Time      `gorm:"column:created_at;autoCreateTime"`
@@ -192,6 +198,8 @@ type SeoCrawlEvent struct {
 	IP             string         `gorm:"column:ip;type:text;not null;default:''"`
 	CrawledAt      time.Time      `gorm:"column:crawled_at;not null;index"`
 	RawJSON        datatypes.JSON `gorm:"column:raw_json;type:jsonb;not null;default:'{}'::jsonb"`
+	DataSource     string         `gorm:"column:data_source;type:varchar(32);not null;default:'crawl_log';index"`
+	SourceRunID    *uint64        `gorm:"column:source_run_id;index"`
 	CreatedAt      time.Time      `gorm:"column:created_at;autoCreateTime"`
 }
 
@@ -221,3 +229,73 @@ type SeoIssue struct {
 }
 
 func (SeoIssue) TableName() string { return "seo_issue" }
+
+const (
+	SeoMeasurementImportStatusRunning   = "running"
+	SeoMeasurementImportStatusSucceeded = "succeeded"
+	SeoMeasurementImportStatusPartial   = "partial"
+	SeoMeasurementImportStatusFailed    = "failed"
+)
+
+// SeoMeasurementImportRun is the audit boundary for every external M8 load.
+type SeoMeasurementImportRun struct {
+	ID            uint64         `gorm:"primaryKey;autoIncrement"`
+	Source        string         `gorm:"column:source;type:varchar(64);not null;index"`
+	Status        string         `gorm:"column:status;type:varchar(32);not null;default:'running';index"`
+	RequestedBy   string         `gorm:"column:requested_by;type:varchar(128);not null;default:''"`
+	RangeStart    *time.Time     `gorm:"column:range_start"`
+	RangeEnd      *time.Time     `gorm:"column:range_end"`
+	RowCount      int64          `gorm:"column:row_count;not null;default:0"`
+	AcceptedCount int64          `gorm:"column:accepted_count;not null;default:0"`
+	RejectedCount int64          `gorm:"column:rejected_count;not null;default:0"`
+	Checksum      string         `gorm:"column:checksum;type:varchar(128);not null;default:''"`
+	ErrorMessage  string         `gorm:"column:error_message;type:text;not null;default:''"`
+	Metadata      datatypes.JSON `gorm:"column:metadata;type:jsonb;not null;default:'{}'::jsonb"`
+	StartedAt     time.Time      `gorm:"column:started_at;not null;autoCreateTime;index"`
+	FinishedAt    *time.Time     `gorm:"column:finished_at"`
+	CreatedAt     time.Time      `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt     time.Time      `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+func (SeoMeasurementImportRun) TableName() string { return "seo_measurement_import_run" }
+
+// SeoMeasurementSourceState provides one operational truth for connector freshness.
+type SeoMeasurementSourceState struct {
+	Source              string         `gorm:"primaryKey;column:source;type:varchar(64)"`
+	Status              string         `gorm:"column:status;type:varchar(32);not null;default:'never_imported'"`
+	LastRunID           *uint64        `gorm:"column:last_run_id"`
+	LastAttemptAt       *time.Time     `gorm:"column:last_attempt_at"`
+	LastSuccessAt       *time.Time     `gorm:"column:last_success_at"`
+	LastRowCount        int64          `gorm:"column:last_row_count;not null;default:0"`
+	StaleAfterHours     int            `gorm:"column:stale_after_hours;not null;default:48"`
+	ConsecutiveFailures int            `gorm:"column:consecutive_failures;not null;default:0"`
+	LastError           string         `gorm:"column:last_error;type:text;not null;default:''"`
+	Metadata            datatypes.JSON `gorm:"column:metadata;type:jsonb;not null;default:'{}'::jsonb"`
+	CreatedAt           time.Time      `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt           time.Time      `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+func (SeoMeasurementSourceState) TableName() string { return "seo_measurement_source_state" }
+
+// SeoPageScoreSnapshot is a reproducible M8 decision output, not a second metric source.
+type SeoPageScoreSnapshot struct {
+	ID              uint64         `gorm:"primaryKey;autoIncrement"`
+	SeoDomainID     *uint64        `gorm:"column:seo_domain_id;index"`
+	CanonicalURL    string         `gorm:"column:canonical_url;type:text;not null;index"`
+	RangeKey        string         `gorm:"column:range_key;type:varchar(32);not null;default:'28d'"`
+	MeasuredAt      time.Time      `gorm:"column:measured_at;not null;index"`
+	IndexScore      float64        `gorm:"column:index_score;not null;default:0"`
+	VisibilityScore float64        `gorm:"column:visibility_score;not null;default:0"`
+	EngagementScore float64        `gorm:"column:engagement_score;not null;default:0"`
+	ConversionScore float64        `gorm:"column:conversion_score;not null;default:0"`
+	TechnicalScore  float64        `gorm:"column:technical_score;not null;default:0"`
+	IssuePenalty    float64        `gorm:"column:issue_penalty;not null;default:0"`
+	OverallScore    float64        `gorm:"column:overall_score;not null;default:0;index"`
+	Grade           string         `gorm:"column:grade;type:varchar(8);not null;default:'F';index"`
+	Blockers        datatypes.JSON `gorm:"column:blockers;type:jsonb;not null;default:'[]'::jsonb"`
+	Warnings        datatypes.JSON `gorm:"column:warnings;type:jsonb;not null;default:'[]'::jsonb"`
+	SourceFreshness datatypes.JSON `gorm:"column:source_freshness;type:jsonb;not null;default:'{}'::jsonb"`
+	CreatedAt       time.Time      `gorm:"column:created_at;autoCreateTime"`
+}
+
+func (SeoPageScoreSnapshot) TableName() string { return "seo_page_score_snapshot" }

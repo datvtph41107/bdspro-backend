@@ -11,12 +11,3 @@ const (
 	ESEORefTypeMap      ESEORefType = 600
 	ESEORefTypeReport   ESEORefType = 700
 )
-
-func (e ESEORefType) Validate() bool {
-	switch e {
-	case ESEORefTypeAdmUnit, ESEORefTypeParcel, ESEORefTypeRegion, ESEORefTypeProject, ESEORefTypeDocument, ESEORefTypeMap, ESEORefTypeReport:
-		return true
-	default:
-		return false
-	}
-}

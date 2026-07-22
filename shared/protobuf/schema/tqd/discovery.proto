@@ -1,0 +1,209 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// Typed canonical Discovery API used by Gateway and TQD over gRPC.
+service DiscoveryService {
+  rpc IdentifyAtPoint(IdentifyAtPointRequest) returns (IdentifyAtPointResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/discovery/identify"
+      body: "*"
+    };
+  }
+
+  rpc SearchDiscovery(SearchDiscoveryRequest) returns (SearchDiscoveryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/discovery/search"
+    };
+  }
+
+  rpc GetDiscoveryEntity(GetDiscoveryEntityRequest) returns (EntityCandidate) {
+    option (google.api.http) = {
+      get: "/v2/tqd/discovery/entities/{key}"
+    };
+  }
+}
+
+enum EntityKind {
+  ENTITY_KIND_UNSPECIFIED = 0;
+  ENTITY_KIND_PARCEL = 1;
+  ENTITY_KIND_PLANNING_REGION = 2;
+  ENTITY_KIND_ADMINISTRATIVE_UNIT = 3;
+  ENTITY_KIND_POI = 4;
+  ENTITY_KIND_PLANNING_PROJECT = 5;
+  ENTITY_KIND_LEGAL_DOCUMENT = 6;
+  ENTITY_KIND_PLANNING_MAP = 7;
+  ENTITY_KIND_MAP_LAYER = 8;
+  ENTITY_KIND_ANALYSIS_REPORT = 9;
+  ENTITY_KIND_NEWS_ARTICLE = 10;
+}
+
+message EntityRef {
+  EntityKind kind = 1;
+  string id = 2;
+  string key = 3;
+}
+
+message DiscoveryPoint {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message DiscoveryBounds {
+  double min_longitude = 1;
+  double min_latitude = 2;
+  double max_longitude = 3;
+  double max_latitude = 4;
+}
+
+message DiscoverySpatialSummary {
+  string geometry_type = 1;
+  DiscoveryPoint centroid = 2;
+  DiscoveryBounds bounds = 3;
+  string geometry_ref = 4;
+  google.protobuf.Struct geometry_preview = 5;
+}
+
+message EntityPresentation {
+  string title = 1;
+  string subtitle = 2;
+  string description = 3;
+  string status = 4;
+  repeated string badges = 5;
+}
+
+message EntityLocation {
+  string address = 1;
+  string province = 2;
+  string province_code = 3;
+  string ward = 4;
+  string ward_code = 5;
+}
+
+message EntitySource {
+  string system = 1;
+  string dataset = 2;
+  string authority = 3;
+  string updated_at = 4;
+  string data_quality = 5;
+}
+
+message EntityCapabilities {
+  bool can_open_detail = 1;
+  bool can_focus_map = 2;
+  bool can_follow = 3;
+  bool can_create_report = 4;
+  bool can_compare = 5;
+  bool can_share = 6;
+  bool can_download = 7;
+}
+
+message EntityLinks {
+  string canonical_url = 1;
+  string detail_url = 2;
+  string geometry_url = 3;
+}
+
+message EntityMatch {
+  string type = 1;
+  repeated string matched_fields = 2;
+  repeated string highlights = 3;
+  repeated string reason_codes = 4;
+}
+
+message EntityRank {
+  double score = 1;
+  repeated string reason_codes = 2;
+}
+
+message EntityCandidate {
+  EntityRef entity = 1;
+  EntityPresentation presentation = 2;
+  DiscoverySpatialSummary spatial = 3;
+  EntityLocation location = 4;
+  EntitySource source = 5;
+  EntityCapabilities capabilities = 6;
+  EntityLinks links = 7;
+  EntityMatch match = 8;
+  EntityRank rank = 9;
+  google.protobuf.Struct attributes = 10;
+}
+
+message IdentifyContext {
+  double zoom = 1;
+  string map_mode = 2;
+  repeated string active_layer_ids = 3;
+  repeated EntityKind preferred_kinds = 4;
+  DiscoveryBounds viewport = 5;
+}
+
+message IdentifyOptions {
+  double tolerance_meters = 1;
+  int32 limit = 2;
+  bool include_geometry_preview = 3;
+}
+
+message IdentifyAtPointRequest {
+  DiscoveryPoint point = 1;
+  IdentifyContext context = 2;
+  IdentifyOptions options = 3;
+}
+
+message DiscoveryResolution {
+  string status = 1;
+  string primary_key = 2;
+  double confidence = 3;
+  bool ambiguous = 4;
+  string strategy = 5;
+}
+
+message IdentifyAtPointResponse {
+  string request_id = 1;
+  DiscoveryResolution resolution = 2;
+  EntityCandidate primary = 3;
+  repeated EntityCandidate candidates = 4;
+  bool partial = 5;
+  repeated string warnings = 6;
+}
+
+message SearchDiscoveryRequest {
+  string q = 1;
+  string mode = 2;
+  repeated EntityKind kinds = 3;
+  string map_mode = 4;
+  repeated string active_layer_ids = 5;
+  string cursor = 6;
+  int32 limit = 7;
+}
+
+message SearchInterpretation {
+  string original_query = 1;
+  string normalized_query = 2;
+  repeated string detected_intents = 3;
+  map<string, string> structured_terms = 4;
+}
+
+message SearchGroup {
+  EntityKind kind = 1;
+  string label = 2;
+  int32 total = 3;
+  repeated EntityCandidate items = 4;
+}
+
+message SearchDiscoveryResponse {
+  string request_id = 1;
+  SearchInterpretation interpretation = 2;
+  repeated SearchGroup groups = 3;
+  string next_cursor = 4;
+  bool partial = 5;
+  repeated string warnings = 6;
+}
+
+message GetDiscoveryEntityRequest {
+  string key = 1;
+}

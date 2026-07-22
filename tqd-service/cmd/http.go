@@ -10,9 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	_db "common/db"
 	_jwt "common/jwt"
 	"tqd/config"
+	discovery_handler "tqd/infra/handler/http/discovery"
+	publiccontent_handler "tqd/infra/handler/http/publiccontent"
+	discovery_postgres "tqd/infra/postgres/discovery"
+	publiccontent_postgres "tqd/infra/postgres/publiccontent"
 	"tqd/initial"
+	discovery_application "tqd/internal/modules/discovery/application"
 	"tqd/wire"
 
 	"github.com/gin-contrib/cors"
@@ -76,6 +82,19 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 	// Run database migration
 	// db.AutoMigrate()
 
+	// Initialize Discovery HTTP dependencies independently from the generated Wire graph.
+	// This keeps the new additive REST API deployable without regenerating legacy protobuf/Wire code.
+	discoveryDB, err := _db.NewDB()
+	if err != nil {
+		return fmt.Errorf("initialize discovery database: %w", err)
+	}
+	discoveryRepo := discovery_postgres.NewRepository(discoveryDB)
+	discoveryService := discovery_application.NewService(discoveryRepo)
+	discoveryHandler := discovery_handler.NewHandler(discoveryService)
+
+	publicContentRepo := publiccontent_postgres.NewRepository(discoveryDB)
+	publicContentHandler := publiccontent_handler.NewHandler(publicContentRepo)
+
 	// Setup Gin router
 	router := gin.Default()
 
@@ -105,7 +124,7 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 	}))
 
 	// Setup routes
-	setupHTTPRoutes(router, app)
+	setupHTTPRoutes(router, app, discoveryHandler, publicContentHandler)
 
 	// Create HTTP server
 	server := &http.Server{
@@ -140,7 +159,12 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
+func setupHTTPRoutes(
+	router *gin.Engine,
+	app *initial.InitialApp,
+	discoveryHandler *discovery_handler.Handler,
+	publicContentHandler *publiccontent_handler.Handler,
+) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
@@ -148,6 +172,22 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 			"time":    time.Now().UTC(),
 		})
 	})
+
+	// Discovery routes are public read-only endpoints. Authorization is still enforced by domain providers for restricted entities.
+	discovery := router.Group("/v2/tqd/discovery")
+	{
+		discovery.POST("/identify", discoveryHandler.Identify)
+		discovery.GET("/search", discoveryHandler.Search)
+		discovery.GET("/entities/:key", discoveryHandler.GetEntity)
+	}
+
+	// Public content projections keep map quick-view and SEO rendering on one
+	// backend-owned source of truth. They do not require authentication.
+	publicContent := router.Group("/v2/tqd/public")
+	{
+		publicContent.GET("/parcels/:id/quick-view", publicContentHandler.GetParcelQuickView)
+		publicContent.GET("/planning-projects/:identity/projection", publicContentHandler.GetPlanningProjectProjection)
+	}
 
 	// API v2 routes
 	v2 := router.Group("/v2/tqd")

@@ -2,55 +2,40 @@ package cmd_http
 
 import (
 	"context"
-	"crm/initial"
+	"errors"
+	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
 )
 
-// @deprecated
-var publicRoutes = []string{}
-
 var HttpCmd = &cobra.Command{
 	Use:   "http",
-	Short: "Run the HTTP server",
-	Run: func(cmd *cobra.Command, args []string) {
-		// r := gin.Default()
+	Short: "Run the CRM public content HTTP server",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		server, err := NewPublicHTTPServer()
+		if err != nil {
+			return err
+		}
 
-		// parameters := common.SetupParameters{
-		// 	ConfigFile:   config.EmbeddedConfig,
-		// 	Engine:       r,
-		// 	PublicRoutes: publicRoutes,
-		// 	Prefix:       "/crm",
-		// }
+		ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
+		defer stop()
 
-		// common.SetupRestfulAPI(parameters, func() {
-		// 	// config.LoadProperties()
-		// 	log.Printf("Data: ", config.AppProperties)
+		errCh := make(chan error, 1)
+		go func() { errCh <- server.ListenAndServe() }()
 
-		// 	app, _ := wire.InitializeApp()
-		// 	db.AutoMigrate()
-
-		// 	r.Use(_jwt.JWTAuthMiddleware(nil))
-		// 	// app.RuntimeRouter.RuntimeRoutes(r)
-
-		// 	startScheduler(app)
-		// })
+		select {
+		case err := <-errCh:
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			return err
+		case <-ctx.Done():
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			return server.Shutdown(shutdownCtx)
+		}
 	},
-}
-
-func startScheduler(app *initial.InitialApp) {
-	now := time.Now()
-	nextHour := now.Truncate(time.Hour).Add(1 * time.Hour) // giờ tròn kế tiếp
-	wait := time.Until(nextHour)
-	app.RuleEventUsecase.TriggerJobAutoEvent(context.Background())
-
-	time.AfterFunc(wait, func() {
-		s := gocron.NewScheduler(time.Local)
-		s.Every(1).Hour().Do(func() {
-			app.RuleEventUsecase.TriggerJobAutoEvent(context.Background())
-		})
-		s.StartAsync()
-	})
 }

@@ -8,11 +8,8 @@ import (
 
 // FileProvider defines the interface for file operations
 type FileProvider interface {
-	// UploadFile uploads a file and returns the file path (dùng để lưu vào Filepath, truyền lại cho GetFile)
+	// UploadFile uploads a file and returns the file URL
 	UploadFile(ctx context.Context, file io.Reader, filename string, contentType string) (string, error)
-
-	// GetFile lấy nội dung file theo path đã trả về từ UploadFile
-	GetFile(ctx context.Context, path string) ([]byte, error)
 
 	// DeleteFile deletes a file by URL
 	DeleteFile(ctx context.Context, fileURL string) error

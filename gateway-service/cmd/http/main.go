@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	sharepb "pb/types/shared"
+	tqdpb "pb/types/tqd"
+	"strings"
 	"time"
 
 	"gateway/config"
@@ -152,13 +154,13 @@ var publicRoutes = []string{
 	"/v2/crm/sitemap.xml",
 	"/v2/tqd/qh/public",
 	"/v2/tqd/map-target/by-location",
+	"/v2/tqd/discovery/",
 	"/v2/tqd/public/qh/checking-polygon",
 	"/v2/tqd/public/enums",
 	"/v2/tqd/public/maps",
 	"/v2/tqd/public/parcels",
 	"/v2/tqd/public",
 	"/v2/tqd/client/planning-projects",
-	"/v2/crm/public",
 }
 
 var tempRoutes = []string{
@@ -285,6 +287,9 @@ var HttpCmd = &cobra.Command{
 		service.RegisterOrganizationService(ctx, mux, env, opts)
 		service.RegisterBdsproService(ctx, mux, env, opts)
 		service.RegisterCrmService(ctx, mux, env, opts)
+		if err := service.RegisterSeoMeasurementRuntimeHTTP(ctx, mux, env, opts); err != nil {
+			log.Fatalf("register CRM SEO-M8 runtime: %v", err)
+		}
 		service.RegisterSocialService(ctx, mux, env, opts)
 		service.RegisterAppointmentService(ctx, mux, env, opts)
 		service.RegisterUserService(ctx, mux, env, opts)
@@ -294,18 +299,61 @@ var HttpCmd = &cobra.Command{
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
 		service.RegisterHubService(ctx, mux, env, opts)
-		service.RegisterTqdService(ctx, mux, env, opts)
+		tqdConn := service.RegisterTqdService(ctx, mux, env, opts)
+		var discoveryClient tqdpb.DiscoveryServiceClient
+		if tqdConn != nil {
+			discoveryClient = tqdpb.NewDiscoveryServiceClient(tqdConn)
+		}
 
 		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
 		v2Import := r.Group("/form", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 
-		// Multipart tạo đồ án QH từ folder: cùng lý do, dùng chung group "/form" với import
-		// (tránh đăng ký static route dưới "/v2" — có thể đụng wildcard "/v2/*any" ở dưới).
-		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
-
 		// v2 API routes (gRPC Gateway)
-		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
+		tqdPublicProxy := r.Group("/v2/tqd/public")
+		tqdPublicProxy.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
+		if err := service.RegisterTQDPublicHTTPProxy(tqdPublicProxy, env); err != nil {
+			log.Fatalf("register TQD public HTTP proxy: %v", err)
+		}
+
+		crmPublicProxy := r.Group("/v2/crm/public/content")
+		if err := service.RegisterCRMPublicHTTPProxy(crmPublicProxy, env); err != nil {
+			log.Fatalf("register CRM public HTTP proxy: %v", err)
+		}
+
+		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
+		// như /v2/tqd/public/* và /v2/crm/public/content/*. Vì vậy các route
+		// cụ thể được đăng ký bình thường; phần /v2 còn lại đi qua NoRoute.
+		v2Fallback := service.DiscoveryOrGRPCHandler(mux, discoveryClient)
+		r.NoRoute(
+			func(c *gin.Context) {
+				path := c.Request.URL.Path
+
+				// RC2 gRPC-only: route Discovery legacy bị loại bỏ hoàn toàn và
+				// phải trả 404 trước khi JWT middleware xử lý.
+				if path == "/v2/discovery" || strings.HasPrefix(path, "/v2/discovery/") {
+					c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+						"code":    "ROUTE_NOT_FOUND",
+						"message": "Route not found",
+					})
+					return
+				}
+
+				// NoRoute còn nhận cả URL ngoài /v2. Không chuyển các URL đó
+				// sang grpc-gateway vì chúng không thuộc API v2.
+				if path != "/v2" && !strings.HasPrefix(path, "/v2/") {
+					c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+						"code":    "ROUTE_NOT_FOUND",
+						"message": "Route not found",
+					})
+					return
+				}
+
+				c.Next()
+			},
+			_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes),
+			v2Fallback,
+		)
 		r.Any("/v2.1/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 		r.Any("/v3/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 

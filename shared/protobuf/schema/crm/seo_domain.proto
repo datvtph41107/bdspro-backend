@@ -91,12 +91,6 @@ service SeoDomainService {
     };
   }
 
-  rpc GetSeoRefs(GetSeoRefsRequest) returns (GetSeoDomainListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/public/seos/{refType}/{refId}/list"
-    };
-  }
-
   rpc GetSeoDomain(sharepb.IdRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       get: "/v2/crm/admin/seo-domains/{id}"
@@ -1479,11 +1473,4 @@ message ResolveSeoIssueRequest {
   uint64 id = 1;
   string status = 2; // resolved | ignored
   string note = 3;
-}
-
-message GetSeoRefsRequest {
-  uint32 refType = 1;
-  uint64 refId = 2;
-  uint32 page = 3;
-  uint32 size = 4;
 }

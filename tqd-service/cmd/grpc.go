@@ -12,7 +12,6 @@ import (
 
 	"tqd/config"
 	"tqd/infra/db"
-	"tqd/initial"
 	"tqd/wire"
 
 	_middleware "common/middleware"
@@ -26,50 +25,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 )
-
-// startQHPlanningClassifyWorker chạy nền định kỳ quét tài liệu quy hoạch Pending và gọi Gemini phân loại.
-// Không chặn khởi động server; lỗi từng lượt chỉ log, worker tiếp tục ở lượt sau.
-func startQHPlanningClassifyWorker(ctx context.Context, app *initial.InitialApp, cfg *config.Properties) {
-	if app.QHPlanningClassifyUsecase == nil {
-		return
-	}
-	if !cfg.QHPlanningClassify.Enabled {
-		log.Println("[QHPlanningClassify] worker tắt qua config (qh_planning_classify.enabled=false)")
-		return
-	}
-
-	intervalSec := cfg.QHPlanningClassify.IntervalSeconds
-	if intervalSec <= 0 {
-		intervalSec = 30
-	}
-	batchSize := cfg.QHPlanningClassify.BatchSize
-	if batchSize <= 0 {
-		batchSize = 5
-	}
-
-	log.Printf("[QHPlanningClassify] worker bật: interval=%ds batchSize=%d", intervalSec, batchSize)
-
-	go func() {
-		ticker := time.NewTicker(time.Duration(intervalSec) * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				processed, err := app.QHPlanningClassifyUsecase.RunOnce(ctx, batchSize)
-				if err != nil {
-					log.Printf("[QHPlanningClassify] lỗi RunOnce: %v", err)
-					continue
-				}
-				if processed > 0 {
-					log.Printf("[QHPlanningClassify] đã xử lý %d tài liệu", processed)
-				}
-			}
-		}
-	}()
-}
 
 // grpcMaxMsgBytes — default gRPC ~4MB; ImportGeoJSON gửi file_content lớn từ gateway.
 // Đồng bộ với gateway-service/service/tqd.go (TqdGRPCMaxMsgBytes).
@@ -119,10 +74,6 @@ func runGRPCServer() error {
 	}
 
 	db.AutoMigrate()
-
-	workerCtx, cancelWorker := context.WithCancel(context.Background())
-	defer cancelWorker()
-	startQHPlanningClassifyWorker(workerCtx, app, cfg)
 
 	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Server.GrpcPort)
 	lis, err := net.Listen("tcp", addr)
@@ -216,6 +167,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterLayerLegalServiceServer(s, app.LayerLegalGrpcHandler)
 	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
 	tqdpb.RegisterQHPlanningServiceServer(s, app.QHPlanningGrpcHandler)
+	tqdpb.RegisterDiscoveryServiceServer(s, app.DiscoveryGrpcHandler)
 
 	reflection.Register(s)
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
-	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 )
 
@@ -15,8 +14,6 @@ type IQHPlanningDocumentUsecase interface {
 	Delete(ctx context.Context, id uint64) (bool, error)
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 	GetList(ctx context.Context, req *qh_dto.ListPlanningDocumentsRequest) ([]qh_domain.QHPlanningDocument, int64, error)
-	// Approve phê duyệt 1 tài liệu đã được AI phân loại (chỉ khi đang ở trạng thái Classified).
-	Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 }
 
 type qhPlanningDocumentUsecase struct {
@@ -80,29 +77,4 @@ func (u *qhPlanningDocumentUsecase) GetList(ctx context.Context, req *qh_dto.Lis
 		}
 	}
 	return entities, total, nil
-}
-
-func (u *qhPlanningDocumentUsecase) Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error) {
-	document, err := u.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Không tìm thấy tài liệu",
-		}
-	}
-	if document.ProcessStatus != enums.PlanningProcessStatus(enums.PlanningProcessStatusClassified) {
-		return nil, &_err.ErrorDTO{
-			Code:    400,
-			Message: "Tài liệu chưa được AI phân loại xong (chưa ở trạng thái Classified), không thể phê duyệt",
-		}
-	}
-
-	document.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusApproved)
-	if err := u.repo.Update(ctx, id, document); err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    500,
-			Message: "Không thể phê duyệt tài liệu",
-		}
-	}
-	return document, nil
 }

@@ -150,7 +150,7 @@ func (h *FAQHandler) GetFAQList(ctx context.Context, req *hubpb.GetFAQListReques
 }
 
 // @Summary Lấy danh sách FAQs đơn giản cho user
-// @Description API đơn giản cho user lấy danh sách FAQs, chỉ trả về id, question và answer (tối đa 50 ký tự). Hỗ trợ search theo text (lowercase, khoảng trống thay bằng %)
+// @Description API public trả về nội dung FAQ đầy đủ để ứng dụng và SEO render cùng một câu trả lời. Hỗ trợ search theo text và lọc groupKey.
 // @Tags FAQ/Simple
 // @Accept json
 // @Produce json
@@ -178,16 +178,14 @@ func (h *FAQHandler) GetFAQSimple(ctx context.Context, req *hubpb.GetFAQSimpleRe
 		return nil, err
 	}
 
-	// Convert to simple proto format with safe truncation
+	// Public consumers (including Next.js SEO rendering) need the complete answer.
+	// Truncation belongs to presentation components, not to the source-of-truth API.
 	var simpleItems []*hubpb.FAQSimple
 	for _, item := range data {
-		// Truncate answer to max 50 characters (UTF-8 safe)
-		answer := h.faqMapper.TruncateAnswerSafe(item.Answer, 30)
-
 		simpleItems = append(simpleItems, &hubpb.FAQSimple{
 			Id:       item.ID,
 			Question: h.faqMapper.SanitizeUTF8(item.Question),
-			Answer:   answer,
+			Answer:   h.faqMapper.SanitizeUTF8(item.Answer),
 		})
 	}
 
@@ -198,7 +196,7 @@ func (h *FAQHandler) GetFAQSimple(ctx context.Context, req *hubpb.GetFAQSimpleRe
 }
 
 // @Summary Lấy chi tiết FAQ đơn giản cho user
-// @Description API đơn giản cho user lấy chi tiết FAQ theo ID, chỉ trả về id, question và answer (tối đa 50 ký tự)
+// @Description API public lấy chi tiết FAQ đầy đủ theo ID
 // @Tags FAQ/Simple
 // @Accept json
 // @Produce json

@@ -3,7 +3,6 @@ package initial
 import (
 	handler_grpc "tqd/infra/handler/grpc"
 	handler_http "tqd/infra/handler/http"
-	qh_usecase "tqd/internal/usecase/qh"
 )
 
 // InitialApp holds all application dependencies
@@ -49,10 +48,7 @@ type InitialApp struct {
 	LayerLegalGrpcHandler          *handler_grpc.LayerLegalGrpcHandler
 	WorkspaceMapGrpcHandler        *handler_grpc.MapWorkspaceGrpcHandler
 	QHPlanningGrpcHandler          *handler_grpc.QHPlanningGrpcHandler
-
-	// QHPlanningClassifyUsecase — chạy nền định kỳ (goroutine trong cmd/grpc.go) để quét tài liệu
-	// Pending và gọi Gemini phân loại, không đăng ký như 1 gRPC handler.
-	QHPlanningClassifyUsecase qh_usecase.IQHPlanningClassifyUsecase
+	DiscoveryGrpcHandler           *handler_grpc.DiscoveryGrpcHandler
 }
 
 // NewApp creates a new App instance
@@ -95,7 +91,7 @@ func NewApp(
 	layerLegalGrpcHandler *handler_grpc.LayerLegalGrpcHandler,
 	workspaceMapGrpcHandler *handler_grpc.MapWorkspaceGrpcHandler,
 	qhPlanningGrpcHandler *handler_grpc.QHPlanningGrpcHandler,
-	qhPlanningClassifyUsecase qh_usecase.IQHPlanningClassifyUsecase,
+	discoveryGrpcHandler *handler_grpc.DiscoveryGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RegionExtendGrpcHandler:        regionExtendGrpcHandler,
@@ -136,6 +132,6 @@ func NewApp(
 		LayerLegalGrpcHandler:          layerLegalGrpcHandler,
 		WorkspaceMapGrpcHandler:        workspaceMapGrpcHandler,
 		QHPlanningGrpcHandler:          qhPlanningGrpcHandler,
-		QHPlanningClassifyUsecase:      qhPlanningClassifyUsecase,
+		DiscoveryGrpcHandler:           discoveryGrpcHandler,
 	}
 }

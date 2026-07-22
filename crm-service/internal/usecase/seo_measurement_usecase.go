@@ -328,15 +328,21 @@ func (u *SeoMeasurementUsecase) RunFeedbackDetector(ctx context.Context, req *dt
 		return nil, err
 	}
 
-	issues := make([]seo_domain.SeoIssue, 0)
+	result := &dto.SeoMeasurementDetectorResponse{Scanned: uint32(len(rows)), Errors: []string{}}
 	for i := range rows {
 		row := rows[i]
-		issues = append(issues, detectIssuesForPage(row)...)
+		issues := detectIssuesForPage(row)
+		created, resolved, reconcileErr := u.seoMeasurementRepo.ReconcileIssues(ctx, row.CanonicalURL, issues)
+		if reconcileErr != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", row.CanonicalURL, reconcileErr))
+			continue
+		}
+		result.Created += created
+		// The existing proto field is kept for compatibility; in SEO-M8 it counts
+		// stale open issues that were automatically closed after recovery.
+		result.Skipped += resolved
 	}
-	if err := u.seoMeasurementRepo.CreateIssues(ctx, issues); err != nil {
-		return nil, err
-	}
-	return &dto.SeoMeasurementDetectorResponse{Scanned: uint32(len(rows)), Created: uint32(len(issues)), Errors: []string{}}, nil
+	return result, nil
 }
 
 func detectIssuesForPage(row dto.SeoPagePerformanceRow) []seo_domain.SeoIssue {

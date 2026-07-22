@@ -1,0 +1,636 @@
+package publiccontent
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
+	"tqd/internal/enums"
+	"tqd/internal/modules/publiccontent/domain"
+
+	"gorm.io/gorm"
+)
+
+type Repository struct {
+	db *gorm.DB
+}
+
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{db: db}
+}
+
+type parcelRow struct {
+	ParcelID     uint64
+	MapNumber    string
+	LandNumber   string
+	PropertyCode string
+	Address      string
+	TotalAreaSqm float64
+	ProvinceCode string
+	WardCode     string
+	IsVerified   bool
+	UpdatedAt    *time.Time
+	GeometryType string
+	CenterLat    float64
+	CenterLon    float64
+	MinLon       float64
+	MinLat       float64
+	MaxLon       float64
+	MaxLat       float64
+}
+
+type relatedProjectRow struct {
+	ID               uint64
+	Code             string
+	Name             string
+	PlanningType     uint32
+	LegalStatus      uint32
+	ValidityStatus   string
+	TotalArea        float64
+	Metadata         string
+	IntersectAreaSqm float64
+	ParcelAreaSqm    float64
+}
+
+type projectRow struct {
+	ID               uint64
+	Code             string
+	Slug             string
+	Name             string
+	PlanningType     uint32
+	PlanningLevel    uint32
+	TotalArea        float64
+	JurisdictionID   *uint64
+	JurisdictionName string
+	LegalStatus      uint32
+	ValidityStatus   string
+	Authority        string
+	Summary          string
+	ResearchScope    string
+	Indicators       string
+	ApprovalDate     *time.Time
+	EffectiveDate    *time.Time
+	ExpiryDate       *time.Time
+	CurrentVersion   string
+	Metadata         string
+	UpdatedAt        *time.Time
+	MinLon           float64
+	MinLat           float64
+	MaxLon           float64
+	MaxLat           float64
+	CenterLat        float64
+	CenterLon        float64
+	GeometryType     string
+}
+
+type eventRow struct {
+	ID          uint64
+	EventType   string
+	Name        string
+	Description string
+	EventDate   *time.Time
+	DocumentID  *uint64
+	SourceURL   string
+}
+
+type documentRow struct {
+	ID             uint64
+	DocumentType   uint32
+	Code           string
+	Title          string
+	Description    string
+	Filepath       string
+	Thumbnail      string
+	VersionNo      string
+	ValidityStatus string
+	IssueDate      *time.Time
+	EffectiveDate  *time.Time
+}
+
+type relationRow struct {
+	ID       uint64
+	Code     string
+	Name     string
+	Metadata string
+}
+
+var nonSlugCharacters = regexp.MustCompile(`[^a-z0-9]+`)
+
+func slugify(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	replacer := strings.NewReplacer(
+		"à", "a", "á", "a", "ạ", "a", "ả", "a", "ã", "a",
+		"â", "a", "ầ", "a", "ấ", "a", "ậ", "a", "ẩ", "a", "ẫ", "a",
+		"ă", "a", "ằ", "a", "ắ", "a", "ặ", "a", "ẳ", "a", "ẵ", "a",
+		"è", "e", "é", "e", "ẹ", "e", "ẻ", "e", "ẽ", "e",
+		"ê", "e", "ề", "e", "ế", "e", "ệ", "e", "ể", "e", "ễ", "e",
+		"ì", "i", "í", "i", "ị", "i", "ỉ", "i", "ĩ", "i",
+		"ò", "o", "ó", "o", "ọ", "o", "ỏ", "o", "õ", "o",
+		"ô", "o", "ồ", "o", "ố", "o", "ộ", "o", "ổ", "o", "ỗ", "o",
+		"ơ", "o", "ờ", "o", "ớ", "o", "ợ", "o", "ở", "o", "ỡ", "o",
+		"ù", "u", "ú", "u", "ụ", "u", "ủ", "u", "ũ", "u",
+		"ư", "u", "ừ", "u", "ứ", "u", "ự", "u", "ử", "u", "ữ", "u",
+		"ỳ", "y", "ý", "y", "ỵ", "y", "ỷ", "y", "ỹ", "y",
+		"đ", "d",
+	)
+	value = replacer.Replace(value)
+	value = strings.Trim(nonSlugCharacters.ReplaceAllString(value, "-"), "-")
+	return value
+}
+
+func metadataString(metadata string, keys ...string) string {
+	if strings.TrimSpace(metadata) == "" {
+		return ""
+	}
+	var data map[string]any
+	if err := json.Unmarshal([]byte(metadata), &data); err != nil {
+		return ""
+	}
+	for _, key := range keys {
+		if value, ok := data[key]; ok {
+			text := strings.TrimSpace(fmt.Sprint(value))
+			if text != "" && text != "<nil>" {
+				return text
+			}
+		}
+	}
+	return ""
+}
+
+func metadataIndicators(metadata string) []domain.PlanningIndicator {
+	if strings.TrimSpace(metadata) == "" {
+		return []domain.PlanningIndicator{}
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal([]byte(metadata), &data); err != nil {
+		return []domain.PlanningIndicator{}
+	}
+
+	var raw any
+	for _, key := range []string{"indicators", "planningIndicators", "planning_indicators", "targets", "planningTargets"} {
+		if value, ok := data[key]; ok {
+			raw = value
+			break
+		}
+	}
+
+	items, ok := raw.([]any)
+	if !ok {
+		return []domain.PlanningIndicator{}
+	}
+
+	result := make([]domain.PlanningIndicator, 0, len(items))
+	for _, item := range items {
+		entry, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		read := func(keys ...string) string {
+			for _, key := range keys {
+				if value, exists := entry[key]; exists {
+					text := strings.TrimSpace(fmt.Sprint(value))
+					if text != "" && text != "<nil>" {
+						return text
+					}
+				}
+			}
+			return ""
+		}
+
+		indicator := domain.PlanningIndicator{
+			Code:        read("code", "key", "id"),
+			Name:        read("name", "label", "title"),
+			Value:       read("value", "target", "amount"),
+			Unit:        read("unit", "uom"),
+			Description: read("description", "note"),
+		}
+		if indicator.Name == "" || indicator.Value == "" {
+			continue
+		}
+		result = append(result, indicator)
+	}
+	return result
+}
+
+func projectSlug(id uint64, persistedSlug, code, name, metadata string) string {
+	if value := strings.TrimSpace(persistedSlug); value != "" {
+		return slugify(value)
+	}
+	if value := metadataString(metadata, "slug", "seoSlug", "seo_slug"); value != "" {
+		return slugify(value)
+	}
+	if value := slugify(code); value != "" {
+		return value
+	}
+	if value := slugify(name); value != "" {
+		return value
+	}
+	return strconv.FormatUint(id, 10)
+}
+
+func preview(
+	geometryType string,
+	centerLat, centerLon, minLon, minLat, maxLon, maxLat float64,
+) domain.PreviewContext {
+	result := domain.PreviewContext{
+		GeometryType: geometryType,
+		PaddingRatio: 0.12,
+		FitMode:      "contain",
+		Completeness: "missing",
+	}
+
+	if centerLat != 0 || centerLon != 0 {
+		result.Centroid = &domain.Point{
+			Latitude:  centerLat,
+			Longitude: centerLon,
+		}
+	}
+
+	if minLon != 0 || minLat != 0 || maxLon != 0 || maxLat != 0 {
+		result.Bounds = &domain.Bounds{
+			MinLongitude: minLon,
+			MinLatitude:  minLat,
+			MaxLongitude: maxLon,
+			MaxLatitude:  maxLat,
+		}
+		result.Completeness = "complete"
+	}
+
+	return result
+}
+
+func (r *Repository) GetParcelQuickView(
+	ctx context.Context,
+	parcelID uint64,
+) (*domain.ParcelQuickView, error) {
+	var row parcelRow
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT p.id AS parcel_id,
+		       COALESCE(pi.map_number,'') AS map_number,
+		       COALESCE(pi.land_number,'') AS land_number,
+		       COALESCE(pi.property_code,'') AS property_code,
+		       COALESCE(pi.address_text,'') AS address,
+		       COALESCE(pi.total_area_sqm,0) AS total_area_sqm,
+		       COALESCE(pi.province_code,'') AS province_code,
+		       COALESCE(pi.ward_code,'') AS ward_code,
+		       COALESCE(pi.is_verified,false) AS is_verified,
+		       pi.updated_at,
+		       GeometryType(p.geometry) AS geometry_type,
+		       ST_Y(ST_PointOnSurface(p.geometry)) AS center_lat,
+		       ST_X(ST_PointOnSurface(p.geometry)) AS center_lon,
+		       ST_XMin(Box2D(p.geometry)) AS min_lon,
+		       ST_YMin(Box2D(p.geometry)) AS min_lat,
+		       ST_XMax(Box2D(p.geometry)) AS max_lon,
+		       ST_YMax(Box2D(p.geometry)) AS max_lat
+		FROM parcels p
+		JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+		WHERE p.id = ?
+		  AND p.deleted_at IS NULL
+		  AND p.geometry IS NOT NULL
+		LIMIT 1`, parcelID).Scan(&row).Error
+	if err != nil {
+		return nil, fmt.Errorf("load parcel quick view: %w", err)
+	}
+	if row.ParcelID == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	var projectRows []relatedProjectRow
+	if err := r.db.WithContext(ctx).Raw(`
+		SELECT DISTINCT pp.id,
+		       COALESCE(pp.code,'') AS code,
+		       pp.name,
+		       pp.planning_type,
+		       pp.legal_status,
+		       COALESCE(pp.validity_status,'') AS validity_status,
+		       COALESCE(pp.total_area,0) AS total_area,
+		       COALESCE(pp.metadata::text,'{}') AS metadata,
+		       ST_Area(ST_Intersection(p.geometry, r.geometry)::geography) AS intersect_area_sqm,
+		       NULLIF(ST_Area(p.geometry::geography),0) AS parcel_area_sqm
+		FROM parcels p
+		JOIN qh_regions r
+		  ON r.deleted_at IS NULL
+		 AND r.status = 10
+		 AND r.is_latest = true
+		 AND ST_Intersects(p.geometry, r.geometry)
+		JOIN qh_layers l
+		  ON l.id = r.layer_id
+		 AND l.deleted_at IS NULL
+		 AND l.status = 10
+		 AND l.planning_project_id IS NOT NULL
+		JOIN qh_planning_projects pp
+		  ON pp.id = l.planning_project_id
+		 AND pp.deleted_at IS NULL
+		WHERE p.id = ?
+		ORDER BY intersect_area_sqm DESC, pp.id DESC
+		LIMIT 12`, parcelID).Scan(&projectRows).Error; err != nil {
+		return nil, fmt.Errorf("load parcel related planning projects: %w", err)
+	}
+
+	related := make([]domain.RelatedPlanningProject, 0, len(projectRows))
+	for _, project := range projectRows {
+		slug := projectSlug(project.ID, "", project.Code, project.Name, project.Metadata)
+		ratio := 0.0
+		if project.ParcelAreaSqm > 0 {
+			ratio = project.IntersectAreaSqm / project.ParcelAreaSqm * 100
+		}
+		related = append(related, domain.RelatedPlanningProject{
+			ID:                project.ID,
+			Code:              project.Code,
+			Slug:              slug,
+			Name:              project.Name,
+			PlanningType:      project.PlanningType,
+			PlanningTypeName:  enums.GetPlanningTypeLabel(project.PlanningType),
+			LegalStatus:       project.LegalStatus,
+			LegalStatusName:   enums.LegalStatus(project.LegalStatus).DisplayName(),
+			ValidityStatus:    project.ValidityStatus,
+			TotalArea:         project.TotalArea,
+			IntersectAreaSqm:  project.IntersectAreaSqm,
+			IntersectionRatio: ratio,
+			PublicPath:        "/do-an-quy-hoach/" + slug,
+			MapPath:           "/ban-do?projectId=" + strconv.FormatUint(project.ID, 10),
+		})
+	}
+
+	return &domain.ParcelQuickView{
+		ParcelID:        row.ParcelID,
+		CanonicalKey:    "parcel:" + strconv.FormatUint(row.ParcelID, 10),
+		MapNumber:       row.MapNumber,
+		LandNumber:      row.LandNumber,
+		PropertyCode:    row.PropertyCode,
+		Address:         row.Address,
+		TotalAreaSqm:    row.TotalAreaSqm,
+		ProvinceCode:    row.ProvinceCode,
+		WardCode:        row.WardCode,
+		IsVerified:      row.IsVerified,
+		Preview:         preview(row.GeometryType, row.CenterLat, row.CenterLon, row.MinLon, row.MinLat, row.MaxLon, row.MaxLat),
+		RelatedProjects: related,
+		UpdatedAt:       row.UpdatedAt,
+	}, nil
+}
+
+func (r *Repository) getPlanningProjectRow(
+	ctx context.Context,
+	identity string,
+) (*projectRow, error) {
+	var row projectRow
+	query := `
+		SELECT pp.id,
+		       COALESCE(pp.code,'') AS code,
+		       COALESCE(pp.slug,'') AS slug,
+		       pp.name,
+		       pp.planning_type,
+		       pp.planning_level,
+		       COALESCE(pp.total_area,0) AS total_area,
+		       pp.jurisdiction_id,
+		       COALESCE(j.name,'') AS jurisdiction_name,
+		       pp.legal_status,
+		       COALESCE(pp.validity_status,'') AS validity_status,
+		       COALESCE(pp.authority,'') AS authority,
+		       COALESCE(pp.summary,'') AS summary,
+		       COALESCE(pp.research_scope,'') AS research_scope,
+		       COALESCE(pp.indicators::text,'[]') AS indicators,
+		       pp.approval_date,
+		       pp.effective_date,
+		       pp.expiry_date,
+		       COALESCE(pp.current_version,'') AS current_version,
+		       COALESCE(pp.metadata::text,'{}') AS metadata,
+		       pp.updated_at,
+		       COALESCE(GeometryType(extent.geometry),'') AS geometry_type,
+		       COALESCE(ST_Y(ST_PointOnSurface(extent.geometry)),0) AS center_lat,
+		       COALESCE(ST_X(ST_PointOnSurface(extent.geometry)),0) AS center_lon,
+		       COALESCE(ST_XMin(Box2D(extent.geometry)),0) AS min_lon,
+		       COALESCE(ST_YMin(Box2D(extent.geometry)),0) AS min_lat,
+		       COALESCE(ST_XMax(Box2D(extent.geometry)),0) AS max_lon,
+		       COALESCE(ST_YMax(Box2D(extent.geometry)),0) AS max_lat
+		FROM qh_planning_projects pp
+		LEFT JOIN qh_jurisdictions j
+		  ON j.id = pp.jurisdiction_id
+		 AND j.deleted_at IS NULL
+		LEFT JOIN LATERAL (
+		  SELECT ST_Union(r.geometry) AS geometry
+		  FROM qh_layers l
+		  JOIN qh_regions r
+		    ON r.layer_id = l.id
+		   AND r.deleted_at IS NULL
+		   AND r.status = 10
+		   AND r.is_latest = true
+		  WHERE l.planning_project_id = pp.id
+		    AND l.deleted_at IS NULL
+		    AND l.status = 10
+		) extent ON true
+		WHERE pp.deleted_at IS NULL
+		  AND (
+		    pp.id::text = ?
+		    OR LOWER(COALESCE(pp.code,'')) = LOWER(?)
+		    OR LOWER(COALESCE(pp.slug,'')) = LOWER(?)
+		    OR LOWER(COALESCE(pp.metadata->>'slug','')) = LOWER(?)
+		    OR LOWER(REGEXP_REPLACE(pp.name, '[^[:alnum:]]+', '-', 'g')) = LOWER(?)
+		  )
+		LIMIT 1`
+
+	if err := r.db.WithContext(ctx).Raw(query, identity, identity, identity, identity, identity).Scan(&row).Error; err != nil {
+		return nil, err
+	}
+	if row.ID == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &row, nil
+}
+
+func (r *Repository) GetPlanningProjectProjection(
+	ctx context.Context,
+	identity string,
+) (*domain.PlanningProjectProjection, error) {
+	row, err := r.getPlanningProjectRow(ctx, strings.TrimSpace(identity))
+	if err != nil {
+		return nil, fmt.Errorf("load planning project: %w", err)
+	}
+
+	slug := projectSlug(row.ID, row.Slug, row.Code, row.Name, row.Metadata)
+	researchScope := strings.TrimSpace(row.ResearchScope)
+	if researchScope == "" {
+		researchScope = metadataString(
+			row.Metadata,
+			"researchScope",
+			"research_scope",
+			"studyScope",
+			"study_scope",
+		)
+	}
+	indicators := metadataIndicators(row.Indicators)
+	if len(indicators) == 0 {
+		indicators = metadataIndicators(row.Metadata)
+	}
+
+	var eventRows []eventRow
+	if err := r.db.WithContext(ctx).Raw(`
+		SELECT id,
+		       COALESCE(event_type,'') AS event_type,
+		       event_name AS name,
+		       COALESCE(description,'') AS description,
+		       event_date,
+		       document_id,
+		       COALESCE(source_url,'') AS source_url
+		FROM qh_planning_events
+		WHERE planning_project_id = ?
+		  AND deleted_at IS NULL
+		ORDER BY event_date DESC NULLS LAST, id DESC`, row.ID).Scan(&eventRows).Error; err != nil {
+		return nil, fmt.Errorf("load planning project events: %w", err)
+	}
+
+	events := make([]domain.PlanningEvent, 0, len(eventRows))
+	for _, item := range eventRows {
+		events = append(events, domain.PlanningEvent{
+			ID:          item.ID,
+			EventType:   item.EventType,
+			Name:        item.Name,
+			Description: item.Description,
+			EventDate:   item.EventDate,
+			DocumentID:  item.DocumentID,
+			SourceURL:   item.SourceURL,
+		})
+	}
+
+	var documentRows []documentRow
+	if err := r.db.WithContext(ctx).Raw(`
+		SELECT id,
+		       document_type,
+		       COALESCE(code,'') AS code,
+		       title,
+		       COALESCE(description,'') AS description,
+		       COALESCE(filepath,'') AS filepath,
+		       COALESCE(thumbnail,'') AS thumbnail,
+		       COALESCE(version_no,'') AS version_no,
+		       COALESCE(validity_status,'') AS validity_status,
+		       issue_date,
+		       effective_date
+		FROM qh_planning_documents
+		WHERE planning_project_id = ?
+		  AND deleted_at IS NULL
+		ORDER BY issue_date DESC NULLS LAST, id DESC`, row.ID).Scan(&documentRows).Error; err != nil {
+		return nil, fmt.Errorf("load planning project documents: %w", err)
+	}
+
+	documents := make([]domain.PlanningDocument, 0, len(documentRows))
+	for _, item := range documentRows {
+		documents = append(documents, domain.PlanningDocument{
+			ID:               item.ID,
+			DocumentType:     item.DocumentType,
+			DocumentTypeName: enums.GetPlanningDocumentTypeLabel(item.DocumentType),
+			Code:             item.Code,
+			Title:            item.Title,
+			Description:      item.Description,
+			Filepath:         item.Filepath,
+			Thumbnail:        item.Thumbnail,
+			VersionNo:        item.VersionNo,
+			ValidityStatus:   item.ValidityStatus,
+			IssueDate:        item.IssueDate,
+			EffectiveDate:    item.EffectiveDate,
+		})
+	}
+
+	var relationRows []relationRow
+	if err := r.db.WithContext(ctx).Raw(`
+		SELECT related.id,
+		       COALESCE(related.code,'') AS code,
+		       related.name,
+		       COALESCE(related.metadata::text,'{}') AS metadata
+		FROM qh_planning_relations relation
+		JOIN qh_planning_projects related
+		  ON related.id = relation.related_planning_project_id
+		 AND related.deleted_at IS NULL
+		WHERE relation.planning_project_id = ?
+		  AND relation.deleted_at IS NULL
+		ORDER BY related.name`, row.ID).Scan(&relationRows).Error; err != nil {
+		return nil, fmt.Errorf("load related planning projects: %w", err)
+	}
+
+	relations := make([]domain.PlanningProjectRelation, 0, len(relationRows))
+	for _, item := range relationRows {
+		relatedSlug := projectSlug(item.ID, "", item.Code, item.Name, item.Metadata)
+		relations = append(relations, domain.PlanningProjectRelation{
+			ID:         item.ID,
+			Slug:       relatedSlug,
+			Code:       item.Code,
+			Name:       item.Name,
+			PublicPath: "/do-an-quy-hoach/" + relatedSlug,
+			MapPath:    "/ban-do?projectId=" + strconv.FormatUint(item.ID, 10),
+		})
+	}
+
+	limitations := []string{}
+	dataQuality := "complete"
+	if row.Summary == "" {
+		dataQuality = "partial"
+		limitations = append(limitations, "Đồ án chưa có nội dung tóm tắt.")
+	}
+	if strings.TrimSpace(researchScope) == "" {
+		dataQuality = "partial"
+		limitations = append(limitations, "Chưa có phạm vi nghiên cứu được cấu trúc trong nguồn hiện tại.")
+	}
+	if len(indicators) == 0 {
+		dataQuality = "partial"
+		limitations = append(limitations, "Chưa có chỉ tiêu quy hoạch được cấu trúc trong nguồn hiện tại.")
+	}
+	if len(events) == 0 {
+		dataQuality = "partial"
+		limitations = append(limitations, "Chưa có lịch sử pháp lý được công bố.")
+	}
+	if row.MinLon == 0 && row.MaxLon == 0 {
+		dataQuality = "partial"
+		limitations = append(limitations, "Chưa có geometry tổng hợp để dựng bản đồ ngữ cảnh.")
+	}
+
+	return &domain.PlanningProjectProjection{
+		ID:                row.ID,
+		CanonicalKey:      "planning_project:" + strconv.FormatUint(row.ID, 10),
+		Slug:              slug,
+		CanonicalPath:     "/do-an-quy-hoach/" + slug,
+		Code:              row.Code,
+		Name:              row.Name,
+		PlanningType:      row.PlanningType,
+		PlanningTypeName:  enums.GetPlanningTypeLabel(row.PlanningType),
+		PlanningLevel:     row.PlanningLevel,
+		PlanningLevelName: enums.GetPlanningLevelLabel(row.PlanningLevel),
+		TotalArea:         row.TotalArea,
+		LegalStatus:       row.LegalStatus,
+		LegalStatusName:   enums.LegalStatus(row.LegalStatus).DisplayName(),
+		ValidityStatus:    row.ValidityStatus,
+		Authority:         row.Authority,
+		Summary:           row.Summary,
+		ResearchScope:     researchScope,
+		ApprovalDate:      row.ApprovalDate,
+		EffectiveDate:     row.EffectiveDate,
+		ExpiryDate:        row.ExpiryDate,
+		CurrentVersion:    row.CurrentVersion,
+		JurisdictionID:    row.JurisdictionID,
+		JurisdictionName:  row.JurisdictionName,
+		Preview:           preview(row.GeometryType, row.CenterLat, row.CenterLon, row.MinLon, row.MinLat, row.MaxLon, row.MaxLat),
+		Indicators:        indicators,
+		Events:            events,
+		Documents:         documents,
+		RelatedProjects:   relations,
+		Source: domain.ProjectionSource{
+			System:         "tqd-service",
+			Dataset:        "qh_planning_projects",
+			Authority:      "aggregated",
+			AuthorityName:  row.Authority,
+			AuthorityClass: "aggregated",
+			DataQuality:    dataQuality,
+			UpdatedAt:      row.UpdatedAt,
+			Limitations:    limitations,
+		},
+	}, nil
+}
+
+func IsNotFound(err error) bool {
+	return errors.Is(err, gorm.ErrRecordNotFound)
+}

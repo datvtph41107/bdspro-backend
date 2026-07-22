@@ -5,7 +5,6 @@ import (
 	"context"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
-	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 )
 
@@ -64,9 +63,6 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 	if req.ValidityStatus != "" {
 		db = db.Where("validity_status = ?", req.ValidityStatus)
 	}
-	if req.ProcessStatus != "" {
-		db = db.Where("process_status = ?", req.ProcessStatus)
-	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -78,31 +74,4 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 		Find(&documents).Error
 
 	return documents, total, err
-}
-
-// ListByProcessStatus lấy các tài liệu ở 1 trạng thái xử lý, dùng cho job classify quét theo batch.
-func (r *QHPlanningDocumentRepo) ListByProcessStatus(ctx context.Context, status uint32, limit int) ([]qh_domain.QHPlanningDocument, error) {
-	var documents []qh_domain.QHPlanningDocument
-	err := r.db.GetDB(ctx).
-		Where("deleted_at IS NULL AND process_status = ?", status).
-		Order("id ASC").
-		Limit(limit).
-		Find(&documents).Error
-	return documents, err
-}
-
-// CountByProjectAndStatuses đếm tài liệu của 1 đồ án theo danh sách trạng thái.
-func (r *QHPlanningDocumentRepo) CountByProjectAndStatuses(ctx context.Context, projectID uint64, statuses []uint32) (int64, error) {
-	var total int64
-	err := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
-		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status IN ?", projectID, statuses).
-		Count(&total).Error
-	return total, err
-}
-
-// ApproveClassifiedByProject chuyển toàn bộ tài liệu đã Classified của đồ án sang Approved.
-func (r *QHPlanningDocumentRepo) ApproveClassifiedByProject(ctx context.Context, projectID uint64) error {
-	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
-		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status = ?", projectID, enums.PlanningProcessStatusClassified).
-		Update("process_status", enums.PlanningProcessStatusApproved).Error
 }
