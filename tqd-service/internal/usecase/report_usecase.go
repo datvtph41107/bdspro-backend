@@ -2,9 +2,12 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"time"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/datatypes"
@@ -16,7 +19,15 @@ type ReportUsecase interface {
 	Download(ctx context.Context, userID uint64, reportID uint64) (*domain.Report, error)
 	ListUser(ctx context.Context, userID uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error)
 	Delete(ctx context.Context, userID uint64, reportID uint64) error
-	AdminList(ctx context.Context, userID *uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error)
+	AdminList(ctx context.Context, filter repo.AdminReportFilter) ([]domain.Report, int64, error)
+	AdminSummary(ctx context.Context) (map[uint32]int64, error)
+	AdminGet(ctx context.Context, reportID uint64) (*domain.Report, error)
+	AdminCreateInternal(ctx context.Context, actorID uint64, req dto.AdminCreateReportRequest) (*domain.Report, error)
+	AdminAssign(ctx context.Context, reportID, assigneeID uint64) error
+	AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32) error
+	AdminUpdateQaStatus(ctx context.Context, reportID uint64, qaStatus uint32) error
+	AdminUpdateLinkage(ctx context.Context, reportID uint64, linkage map[string]interface{}) error
+	AdminClose(ctx context.Context, reportID uint64, reject bool, note string) error
 	AdminDelete(ctx context.Context, reportID uint64) error
 }
 
@@ -30,34 +41,25 @@ func NewReportUsecase(repo repo.ReportRepository) ReportUsecase {
 
 func (u *reportUsecase) CreateAsync(ctx context.Context, userID uint64, reqDTO dto.ReportDTO) (uint64, error) {
 	var targetSnapshot datatypes.JSON
-	// if targetData != nil {
-	// 	b, err := json.Marshal(targetData)
-	// 	if err != nil {
-	// 		return 0, err
-	// 	}
-	// 	targetSnapshot = datatypes.JSON(b)
-	// }
 	report := &domain.Report{
-		UserID:         userID,
-		ProblemReport:  reqDTO.ProblemReport,
-		ReportType:     reqDTO.ReportType,
-		Description:    reqDTO.Description,
-		TargetID:       reqDTO.TargetId,
+		UserID:        userID,
+		ProblemReport: reqDTO.ProblemReport,
+		ReportType:    reqDTO.ReportType,
+		Description:   reqDTO.Description,
+		TargetID:      reqDTO.TargetId,
 		TargetSnapshot: targetSnapshot,
-		// Profile:        profile,
-		// Format:         format,
-		Status: 10,
+		Status:         10,
+		QaStatus:       enums.ReportQaStatusSubmitted,
+		Severity:       enums.ReportSeverityMedium,
 	}
 	if err := u.repo.Create(ctx, report); err != nil {
 		return 0, err
 	}
-	// go u.processReport(report.ID, userID, reportType, targetID, targetData, profile, format, includeMapImage)
 	return report.ID, nil
 }
 
 func (u *reportUsecase) processReport(reportID, userID uint64, reportType uint32, targetID *string, targetData interface{}, profile, format uint32, includeMapImage bool) {
 	_ = u.repo.UpdateStatus(context.Background(), reportID, 20, nil)
-	// TODO: generate actual report PDF
 	fileURL := "https://storage.example.com/reports/" + string(rune(reportID)) + ".pdf"
 	fileSize := int64(1024)
 	fileHash := "dummyhash"
@@ -104,8 +106,110 @@ func (u *reportUsecase) Delete(ctx context.Context, userID uint64, reportID uint
 	return u.repo.Delete(ctx, reportID)
 }
 
-func (u *reportUsecase) AdminList(ctx context.Context, userID *uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error) {
-	return u.repo.AdminList(ctx, userID, reportType, status, page, limit)
+func (u *reportUsecase) AdminList(ctx context.Context, filter repo.AdminReportFilter) ([]domain.Report, int64, error) {
+	return u.repo.AdminList(ctx, filter)
+}
+
+func (u *reportUsecase) AdminSummary(ctx context.Context) (map[uint32]int64, error) {
+	return u.repo.AdminSummary(ctx)
+}
+
+func (u *reportUsecase) AdminGet(ctx context.Context, reportID uint64) (*domain.Report, error) {
+	report, err := u.repo.GetByID(ctx, reportID)
+	if err != nil || report == nil {
+		return nil, errors.New("report not found")
+	}
+	return report, nil
+}
+
+func (u *reportUsecase) AdminCreateInternal(ctx context.Context, actorID uint64, req dto.AdminCreateReportRequest) (*domain.Report, error) {
+	report := &domain.Report{
+		UserID:          actorID,
+		Title:           req.Title,
+		Description:     req.Description,
+		ProblemReport:   enums.ProblemReport(req.ProblemReport),
+		ReportType:      enums.ReportType(req.ReportType),
+		Severity:        enums.ReportSeverity(req.Severity),
+		QaStatus:        enums.ReportQaStatusSubmitted,
+		Status:          10,
+		Profile:         10,
+		Format:          10,
+		SupportTicketID: req.SupportTicketID,
+		TargetID:        req.TargetID,
+	}
+	if req.Severity == 0 {
+		report.Severity = enums.ReportSeverityMedium
+	}
+	if req.ProblemReport == 0 {
+		report.ProblemReport = enums.ProblemReport_Other
+	}
+	if req.ReportType == 0 {
+		report.ReportType = enums.ReportTypeParcel
+	}
+	if err := u.repo.Create(ctx, report); err != nil {
+		return nil, err
+	}
+	return report, nil
+}
+
+func (u *reportUsecase) AdminAssign(ctx context.Context, reportID, assigneeID uint64) error {
+	report, err := u.repo.GetByID(ctx, reportID)
+	if err != nil || report == nil {
+		return errors.New("report not found")
+	}
+	report.AssigneeID = &assigneeID
+	if report.QaStatus == enums.ReportQaStatusSubmitted {
+		report.QaStatus = enums.ReportQaStatusVerifying
+	}
+	return u.repo.Update(ctx, report)
+}
+
+func (u *reportUsecase) AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32) error {
+	report, err := u.repo.GetByID(ctx, reportID)
+	if err != nil || report == nil {
+		return errors.New("report not found")
+	}
+	report.Severity = enums.ReportSeverity(severity)
+	return u.repo.Update(ctx, report)
+}
+
+func (u *reportUsecase) AdminUpdateQaStatus(ctx context.Context, reportID uint64, qaStatus uint32) error {
+	report, err := u.repo.GetByID(ctx, reportID)
+	if err != nil || report == nil {
+		return errors.New("report not found")
+	}
+	to := enums.ReportQaStatus(qaStatus)
+	if !enums.CanTransitionReportQa(report.QaStatus, to) {
+		return errors.New("STATUS_TRANSITION_INVALID")
+	}
+	report.QaStatus = to
+	if to == enums.ReportQaStatusClosed || to == enums.ReportQaStatusRejected {
+		now := time.Now()
+		report.ClosedAt = &now
+	}
+	return u.repo.Update(ctx, report)
+}
+
+func (u *reportUsecase) AdminUpdateLinkage(ctx context.Context, reportID uint64, linkage map[string]interface{}) error {
+	report, err := u.repo.GetByID(ctx, reportID)
+	if err != nil || report == nil {
+		return errors.New("report not found")
+	}
+	b, err := json.Marshal(linkage)
+	if err != nil {
+		return err
+	}
+	report.Linkage = datatypes.JSON(b)
+	return u.repo.Update(ctx, report)
+}
+
+func (u *reportUsecase) AdminClose(ctx context.Context, reportID uint64, reject bool, note string) error {
+	to := enums.ReportQaStatusClosed
+	if reject {
+		to = enums.ReportQaStatusRejected
+	}
+	_ = note
+	return u.AdminUpdateQaStatus(ctx, reportID, uint32(to))
 }
 
 func (u *reportUsecase) AdminDelete(ctx context.Context, reportID uint64) error {

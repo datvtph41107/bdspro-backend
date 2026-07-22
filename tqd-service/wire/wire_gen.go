@@ -134,6 +134,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	regionGrpcHandler := handler_grpc.NewRegionGrpcHandler(regionUsecase, qhLabelUsecase, syncProvider)
 	reportRepository := postgres.NewReportRepository(db)
 	reportUsecase := usecase.NewReportUsecase(reportRepository)
+	reportAdminHTTPHandler := handler_http.NewReportAdminHTTPHandler(reportUsecase)
 	reportGrpcHandler := handler_grpc.NewReportGrpcHandler(reportUsecase, syncProvider)
 	subscriptionRepository := postgres.NewSubscriptionRepository(db)
 	subscriptionUsecase := usecase.NewSubscriptionUsecase(subscriptionRepository, regionRepository, iParcelRepo)
@@ -162,7 +163,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	qhPlanningGrpcHandler := handler_grpc.NewQHPlanningGrpcHandler(iqhPlanningProjectUsecase, iqhPlanningDocumentUsecase, iqhPlanningEventUsecase, iqhPlanningFolderUsecase, iProAIJobUsecase, qhPlanningMapper, qhPlanningValidator)
 	assistantProvider := client.NewAssistantClient()
 	iqhPlanningClassifyUsecase := qh_usecase.NewQHPlanningClassifyUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo, assistantProvider, fileProvider)
-	initialApp := initial.NewApp(regionExtendGrpcHandler, contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLandUseGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler, mapWorkspaceGrpcHandler, qhPlanningGrpcHandler, iqhPlanningClassifyUsecase)
+	initialApp := initial.NewApp(regionExtendGrpcHandler, contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, reportAdminHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLandUseGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler, mapWorkspaceGrpcHandler, qhPlanningGrpcHandler, iqhPlanningClassifyUsecase)
 	return initialApp, nil
 }
 

@@ -5,6 +5,7 @@ package hubpb;
 option go_package = "pb/types/hub;hubpb";
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "shared/v3.proto";
 
 // ========== Messages ==========
 

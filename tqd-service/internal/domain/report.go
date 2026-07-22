@@ -25,9 +25,16 @@ type Report struct {
 	ExpiresAt            *time.Time         `gorm:"column:expires_at;index:idx_report_expires"`
 	DeletedAt            *time.Time         `gorm:"column:deleted_at"`
 
-	ProblemReport enums.ProblemReport `gorm:"column:problem_report;not null;default:10"`
-	ReportType    enums.ReportType    `gorm:"column:report_type;not null;default:10"`
-	Description   string              `gorm:"column:description"`
+	ProblemReport   enums.ProblemReport  `gorm:"column:problem_report;not null;default:10"`
+	ReportType      enums.ReportType     `gorm:"column:report_type;not null;default:10"`
+	Description     string               `gorm:"column:description"`
+	Title           string               `gorm:"column:title;type:varchar(255)"`
+	Severity        enums.ReportSeverity `gorm:"column:severity;default:20"`
+	AssigneeID      *uint64              `gorm:"column:assignee_id;index"`
+	QaStatus        enums.ReportQaStatus `gorm:"column:qa_status;default:10;index"`
+	Linkage         datatypes.JSON       `gorm:"column:linkage;type:jsonb"`
+	SupportTicketID *uint64              `gorm:"column:support_ticket_id;index"`
+	ClosedAt        *time.Time           `gorm:"column:closed_at"`
 }
 
 func (Report) TableName() string { return "reports" }

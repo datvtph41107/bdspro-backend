@@ -78,25 +78,70 @@ func (r *reportRepo) ListByUser(ctx context.Context, userID uint64, reportType *
 	return reports, total, err
 }
 
-func (r *reportRepo) AdminList(ctx context.Context, userID *uint64, reportType *uint32, status *uint32, page, limit int) ([]domain.Report, int64, error) {
+func (r *reportRepo) AdminList(ctx context.Context, filter repo.AdminReportFilter) ([]domain.Report, int64, error) {
 	var reports []domain.Report
 	var total int64
 	query := r.db.WithContext(ctx).Model(&domain.Report{}).Where("deleted_at IS NULL")
-	if userID != nil {
-		query = query.Where("user_id = ?", *userID)
+	if filter.UserID != nil {
+		query = query.Where("user_id = ?", *filter.UserID)
 	}
-	if reportType != nil {
-		query = query.Where("report_type = ?", *reportType)
+	if filter.ReportType != nil {
+		query = query.Where("report_type = ?", *filter.ReportType)
 	}
-	if status != nil {
-		query = query.Where("status = ?", *status)
+	if filter.Status != nil {
+		query = query.Where("status = ?", *filter.Status)
+	}
+	if filter.ProblemReport != nil {
+		query = query.Where("problem_report = ?", *filter.ProblemReport)
+	}
+	if filter.QaStatus != nil {
+		query = query.Where("qa_status = ?", *filter.QaStatus)
+	}
+	if filter.Severity != nil {
+		query = query.Where("severity = ?", *filter.Severity)
+	}
+	if filter.AssigneeID != nil {
+		query = query.Where("assignee_id = ?", *filter.AssigneeID)
+	}
+	if filter.Q != "" {
+		like := "%" + filter.Q + "%"
+		query = query.Where("title ILIKE ? OR description ILIKE ?", like, like)
 	}
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
+	page := filter.Page
+	limit := filter.Limit
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
 	offset := (page - 1) * limit
 	err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&reports).Error
 	return reports, total, err
+}
+
+func (r *reportRepo) AdminSummary(ctx context.Context) (map[uint32]int64, error) {
+	type row struct {
+		QaStatus uint32
+		Count    int64
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).Model(&domain.Report{}).
+		Select("qa_status as qa_status, count(*) as count").
+		Where("deleted_at IS NULL").
+		Group("qa_status").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := map[uint32]int64{}
+	for _, r0 := range rows {
+		out[r0.QaStatus] = r0.Count
+	}
+	return out, nil
 }
 
 func (r *reportRepo) Delete(ctx context.Context, id uint64) error {

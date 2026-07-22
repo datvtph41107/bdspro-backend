@@ -254,9 +254,22 @@ func setupHTTPRoutes(router *gin.Engine, app *initial.InitialApp) {
 
 		// Admin import — multipart (stream → temp file, xóa sau job); cùng path chuẩn với proto HTTP
 		importHTTPHandler := app.ImportHTTPHandler
+		reportAdminHandler := app.ReportAdminHTTPHandler
 		admin := v2.Group("/admin")
 		{
 			admin.POST("/import/geojson", importHTTPHandler.PostImportGeoJSONMultipart)
+			reports := admin.Group("/reports")
+			{
+				reports.GET("", reportAdminHandler.List)
+				reports.GET("/summary", reportAdminHandler.Summary)
+				reports.GET("/:id", reportAdminHandler.Get)
+				reports.POST("/internal", reportAdminHandler.CreateInternal)
+				reports.POST("/:id/assign", reportAdminHandler.Assign)
+				reports.PATCH("/:id/severity", reportAdminHandler.UpdateSeverity)
+				reports.PATCH("/:id/qa-status", reportAdminHandler.UpdateQaStatus)
+				reports.POST("/:id/linkage", reportAdminHandler.UpdateLinkage)
+				reports.POST("/:id/close", reportAdminHandler.Close)
+			}
 		}
 
 		// QH Label routes - ghép vào màn chi tiết lớp

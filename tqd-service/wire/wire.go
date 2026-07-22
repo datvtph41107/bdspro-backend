@@ -84,6 +84,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_modules_resolver_layer_resolver_rule.NewHistoricalRiskEngine,
 	tqd_infra_handler_grpc.NewImportGrpcHandler,
 	tqd_infra_handler_http.NewImportHTTPHandler,
+	tqd_infra_handler_http.NewReportAdminHTTPHandler,
 	tqd_infra_mapper.NewImportMapper,
 	tqd_internal_usecase.NewImportUsecase,
 	tqd_infra_mapper.NewLabelMapper,

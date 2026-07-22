@@ -31,9 +31,10 @@ type InitialApp struct {
 	RateHandler         *handler.RateHandler
 	ReportHandler       *handler.ReportHandler
 	ReportAdminHandler  *handler.ReportAdminHandler
-	ReportReasonHandler *handler.ReportReasonHandler
-	RegistryHandler     *handler.RegistryHandler
-	AppointmentService  *handler.AppointmentHandler
+	ReportReasonHandler   *handler.ReportReasonHandler
+	RegistryHandler       *handler.RegistryHandler
+	AppointmentService    *handler.AppointmentHandler
+	SupportTicketHandler  *handler.SupportTicketHandler
 
 	Logger            *flogging.FabricLogger
 	SeoDomainHandler  *handler.SeoDomainHandler
@@ -66,6 +67,7 @@ func NewInitialApp(
 	reportReasonHandler *handler.ReportReasonHandler,
 	registryHandler *handler.RegistryHandler,
 	appointmentService *handler.AppointmentHandler,
+	supportTicketHandler *handler.SupportTicketHandler,
 	seoDomainHandler *handler.SeoDomainHandler,
 	seoStrategyHandler *handler.SeoStrategyHandler,
 ) *InitialApp {
@@ -92,9 +94,10 @@ func NewInitialApp(
 		RateHandler:         rateHandler,
 		ReportHandler:       reportHandler,
 		ReportAdminHandler:  reportAdminHandler,
-		ReportReasonHandler: reportReasonHandler,
-		RegistryHandler:     registryHandler,
-		AppointmentService:  appointmentService,
+		ReportReasonHandler:  reportReasonHandler,
+		RegistryHandler:      registryHandler,
+		AppointmentService:   appointmentService,
+		SupportTicketHandler: supportTicketHandler,
 
 		SeoDomainHandler:  seoDomainHandler,
 		SeoStrategyHander: seoStrategyHandler,
