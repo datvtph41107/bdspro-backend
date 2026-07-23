@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package tqdpb;
+
+option go_package = "pb/types/tqd;tqdpb";
+
+import "google/protobuf/wrappers.proto";
+
+// TqdSeoProjectionService is an internal-only source projection contract.
+// It intentionally has no google.api.http annotation: browser/public traffic
+// continues to use the TQD HTTP projection, while backend generation uses gRPC.
+service TqdSeoProjectionService {
+  rpc GetPlanningProjectProjection(google.protobuf.StringValue)
+      returns (google.protobuf.BytesValue);
+}

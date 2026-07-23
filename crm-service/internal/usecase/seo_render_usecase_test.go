@@ -7,6 +7,7 @@ import (
 	"time"
 
 	seo_domain "crm/internal/domain/seo"
+	"crm/internal/dto"
 	"crm/internal/enums"
 
 	"gorm.io/datatypes"
@@ -372,5 +373,93 @@ func TestBuildMetadataScriptProducesValidJSONLD(t *testing.T) {
 	}
 	if !strings.Contains(got, `A \u003c B`) {
 		t.Fatalf("expected script-safe JSON escaping: %s", got)
+	}
+}
+
+func TestBuildPlanningProjectPublicDocumentPartialKeepsVisibleTimelineButNoindex(t *testing.T) {
+	projection := &dto.TqdPlanningProjectProjection{
+		ID:                2,
+		Slug:              "qh2",
+		CanonicalPath:     "/do-an-quy-hoach/qh2",
+		Name:              "Quy hoạch H2-1",
+		PlanningTypeName:  "QH sử dụng đất",
+		LegalStatusName:   "Dự thảo",
+		JurisdictionName:  "UBND Hà Nội",
+		PlanningLevelName: "Cấp đô thị",
+		Preview: dto.TqdPlanningPreview{
+			Bounds:       &dto.TqdPlanningBounds{MinLongitude: 105.1, MinLatitude: 20.1, MaxLongitude: 106.1, MaxLatitude: 21.1},
+			Completeness: "complete",
+		},
+		Source: dto.TqdPlanningProjectionSource{
+			Dataset:        "qh_planning_projects",
+			AuthorityClass: "aggregated",
+			DataQuality:    "partial",
+		},
+	}
+
+	document := buildPlanningProjectPublicDocument(projection)
+	warnings := []string{}
+	normalizeSeoPublicDocument(document, &warnings)
+	document.SEO.Indexable = true
+	applySeoAnswerReadiness(document)
+
+	if document.AnswerReadiness == nil || document.AnswerReadiness.Ready {
+		t.Fatalf("partial projection must not be answer-ready: %#v", document.AnswerReadiness)
+	}
+	if document.SEO.Indexable {
+		t.Fatal("partial projection must be noindex")
+	}
+	found := false
+	for _, section := range document.Sections {
+		if section.ID != "legal-timeline" {
+			continue
+		}
+		found = true
+		if len(section.Blocks) != 1 || section.Blocks[0].Type != "notice" {
+			t.Fatalf("expected legal timeline empty-state notice: %#v", section.Blocks)
+		}
+	}
+	if !found {
+		t.Fatal("legal-timeline section must remain visible")
+	}
+}
+
+func TestBuildPlanningProjectPublicDocumentCompleteBecomesReady(t *testing.T) {
+	updatedAt := time.Date(2026, 7, 23, 7, 0, 0, 0, time.UTC)
+	projection := &dto.TqdPlanningProjectProjection{
+		ID:               2,
+		Slug:             "qh2",
+		CanonicalPath:    "/do-an-quy-hoach/qh2",
+		Name:             "Quy hoạch H2-1",
+		PlanningTypeName: "Quy hoạch phân khu",
+		LegalStatusName:  "Đã phê duyệt",
+		JurisdictionName: "UBND Hà Nội",
+		Summary:          "Đồ án định hướng tổ chức không gian, sử dụng đất và hệ thống hạ tầng kỹ thuật trong khu vực nghiên cứu.",
+		ResearchScope:    "Phạm vi nghiên cứu bao gồm ranh giới đồ án, các khu chức năng và mạng lưới hạ tầng liên quan.",
+		Events:           []dto.TqdPlanningEvent{{ID: 1, Name: "Phê duyệt đồ án", EventDate: &updatedAt}},
+		Indicators:       []dto.TqdPlanningIndicator{{Name: "Mật độ xây dựng", Value: "40", Unit: "%"}},
+		Preview: dto.TqdPlanningPreview{
+			Bounds:       &dto.TqdPlanningBounds{MinLongitude: 105.1, MinLatitude: 20.1, MaxLongitude: 106.1, MaxLatitude: 21.1},
+			Completeness: "complete",
+		},
+		Source: dto.TqdPlanningProjectionSource{
+			Dataset:        "qh_planning_projects",
+			AuthorityClass: "aggregated",
+			DataQuality:    "complete",
+			UpdatedAt:      &updatedAt,
+		},
+	}
+
+	document := buildPlanningProjectPublicDocument(projection)
+	warnings := []string{}
+	normalizeSeoPublicDocument(document, &warnings)
+	document.SEO.Indexable = true
+	applySeoAnswerReadiness(document)
+
+	if document.AnswerReadiness == nil || !document.AnswerReadiness.Ready {
+		t.Fatalf("complete projection must be answer-ready: %#v", document.AnswerReadiness)
+	}
+	if !document.SEO.Indexable {
+		t.Fatal("complete trusted projection must remain indexable")
 	}
 }

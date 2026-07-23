@@ -3,272 +3,22 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 type NewFunc struct {
 	FullPackage string
 	Alias       string
 	Func        string
-}
-
-const packageName = "cmd"
-
-func main() {
-	// const rootPackage = "bdspro"
-	rootPackage := os.Args[1]
-	prefix := rootPackage + "/cmd"
-	// path := fmt.Sprintf("../%s-service/cmd/http", rootPackage)
-	wireFile := "wire/wire.go" //fmt.Sprint()
-	// log.Println("wireFile: ", wireFile)
-	folderFind := "./" //fmt.Sprintf("", rootPackage)
-	// mod := os.Args[0]
-	// log.Printf("MOD= %s; %s", mod, rootPackage)
-
-	newFuncs := findNewFunctions(rootPackage, folderFind)
-	existingFuncs := readExistingWire(wireFile)
-
-	updatedFuncs := mergeFunctions(existingFuncs, newFuncs)
-	binds := findBinds("./", rootPackage)
-	// log.Println("binds: ", binds)
-
-	moduleName := rootPackage
-	// if moduleName == "notification" {
-	// 	moduleName = "noti"
-	// }
-	if moduleName == "transaction" {
-		moduleName = "tx"
-	}
-	writeWireFile(updatedFuncs, binds, rootPackage, prefix, wireFile, moduleName)
-	fmt.Println("✅ wire.go updated successfully!")
-
-	// cmd := exec.Command("cd .. && wire")
-	var cmd *exec.Cmd
-
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/C", "cd .. && wire")
-	} else {
-		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("cd wire && wire"))
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("wire generate failed: " + err.Error())
-	} else {
-		fmt.Println("✅ wire generate successfully!")
-	}
-}
-
-// Tìm tất cả các hàm `NewXXX` trong các file Go và lấy package + đường dẫn đầy đủ
-func findNewFunctions(rootPackage, root string) []NewFunc {
-	var newFuncs []NewFunc
-	re := regexp.MustCompile(`func\s+(New\w+)\(`)
-
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-
-		fullPackage := getFullPackagePath(rootPackage, path)
-		// log.Printf("fullPackage: %s; %s", rootPackage, path)
-		alias := generateAlias(fullPackage)
-		if fullPackage == "" {
-			return nil
-		}
-
-		file, err := os.Open(path)
-		if err != nil {
-			fmt.Println("⚠️ Error opening file:", path, err)
-			return nil
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-
-			// Bỏ qua comment `// func NewXXX`
-			if strings.HasPrefix(line, "// func New") {
-				continue
-			}
-
-			if matches := re.FindStringSubmatch(line); len(matches) > 1 {
-				newFuncs = append(newFuncs, NewFunc{FullPackage: fullPackage, Alias: alias, Func: matches[1]})
-			}
-		}
-
-		return nil
-	})
-
-	sort.Slice(newFuncs, func(i, j int) bool {
-		return newFuncs[i].Func < newFuncs[j].Func
-	})
-	return newFuncs
-}
-
-// Lấy đường dẫn import đầy đủ từ đường dẫn file, bỏ `../`
-func getFullPackagePath(rootPackage, path string) string {
-	relPath, err := filepath.Rel(".", filepath.Dir(path))
-	if err != nil {
-		return ""
-	}
-	if path == "../main.go" {
-		return ""
-	}
-	return rootPackage + "/" + strings.TrimPrefix(strings.ReplaceAll(relPath, "\\", "/"), "../") // Bỏ `../`
-}
-
-// Tạo alias từ đường dẫn package (ví dụ: "mod/user/product" -> "mod_user_product")
-func generateAlias(pkgPath string) string {
-	return strings.ReplaceAll(pkgPath, "/", "_")
-}
-
-// Đọc các hàm đã có trong wire.go
-func readExistingWire(wireFile string) []NewFunc {
-	data, err := os.ReadFile(wireFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Println("📄 wire.go not found, creating a new one.")
-			return nil
-		}
-		fmt.Println("⚠️ Error reading wire.go:", err)
-		return nil
-	}
-
-	re := regexp.MustCompile(`(\S+)\.(New\w+)\(\)`)
-	matches := re.FindAllStringSubmatch(string(data), -1)
-
-	var funcs []NewFunc
-	for _, match := range matches {
-		funcs = append(funcs, NewFunc{FullPackage: match[1], Alias: generateAlias(match[1]), Func: match[2]})
-	}
-
-	sort.Slice(funcs, func(i, j int) bool {
-		return funcs[i].Func < funcs[j].Func
-	})
-	return funcs
-}
-
-// Hợp nhất danh sách hàm cũ và mới, tránh trùng lặp
-func mergeFunctions(existing, newFuncs []NewFunc) []NewFunc {
-	funcSet := make(map[string]NewFunc)
-
-	for _, f := range existing {
-		funcSet[f.Func] = f
-	}
-	for _, f := range newFuncs {
-		funcSet[f.Func] = f
-	}
-
-	var result []NewFunc
-	for _, f := range funcSet {
-		result = append(result, f)
-	}
-
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Func < result[j].Func
-	})
-	return result
-}
-
-// Ghi danh sách các hàm vào wire.go
-func writeWireFile(inputs []NewFunc, binds []BindEntry, rootPackage, prefix string, wireFile string, moduleName string) {
-	funcs := []NewFunc{}
-	for _, f := range inputs {
-		log.Println(f.FullPackage)
-		if !strings.HasPrefix(f.FullPackage, prefix) {
-			funcs = append(funcs, f)
-		}
-	}
-
-	file, err := os.Create(wireFile)
-	if err != nil {
-		fmt.Println("⚠️ Error creating wire.go:", err)
-		return
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-
-	// Viết phần header
-	writer.WriteString(fmt.Sprintf(`//go:build wireinject
-// +build wireinject
-	
-package wire
-
-import (
-	"github.com/google/wire"
-	_db "common/db"
-	_provider "common/provider"
-	"%s/initial"
-`, moduleName))
-
-	// Viết danh sách import package với alias mới
-	packageSet := make(map[string]string)
-	for _, f := range funcs {
-		packageSet[f.FullPackage] = f.Alias
-	}
-	for _, b := range binds {
-		packageSet[b.InterfacePath] = b.InterfaceAlias
-		// writer.WriteString(fmt.Sprintf("\twire.Bind(new(%s.%s), new(*%s.%s)),\n",
-		// 	b.InterfaceAlias, b.InterfaceName,
-		// 	b.StructAlias, b.StructName))
-	}
-
-	var imports []string
-	for pkg, alias := range packageSet {
-		imports = append(imports, fmt.Sprintf("\t%s \"%s\"", alias, replacePrefix(pkg, moduleName)))
-
-	}
-	sort.Strings(imports)
-
-	for _, imp := range imports {
-		writer.WriteString(imp + "\n")
-	}
-
-	writer.WriteString(")\n\n")
-
-	// Viết danh sách WireSet
-	writer.WriteString("// Inject dependencies\n")
-	writer.WriteString(`var wireSet = wire.NewSet(
-	_db.NewDB,
-	_db.NewTransactionRepo,
-	_provider.SyncProviderSet,
-`)
-
-	// for _, f := range binds {
-	// 	if f.IsBind {
-	// 		// writer.WriteString(fmt.Sprintf("\twire.Bind(new(%s.%s), new(*%s.%s)),\n",
-	// 		// 	f.Alias, f.BindTarget, f.Alias, f.Func))
-	// 		writer.WriteString(fmt.Sprintf("\twire.Bind(new(%s.%s), new(*%s.%s)),\n",
-	// 			f.Alias, f.Func, f.Alias, f.BindTarget))
-	// 	}
-	// }
-	for _, b := range binds {
-		writer.WriteString(fmt.Sprintf("\twire.Bind(new(%s.%s), new(*%s.%s)),\n",
-			b.InterfaceAlias, b.InterfaceName,
-			b.StructAlias, b.StructName))
-	}
-
-	for _, f := range funcs {
-		writer.WriteString(fmt.Sprintf("\t%s.%s,\n", f.Alias, f.Func))
-	}
-
-	// Đóng file
-	writer.WriteString(`)
-func InitializeApp() (*initial.InitialApp, error) {
-	wire.Build(wireSet)
-	return nil, nil
-}`)
-	writer.Flush()
 }
 
 type BindEntry struct {
@@ -280,95 +30,318 @@ type BindEntry struct {
 	StructName     string
 }
 
-// func findBindStatements(root string) []BindStatement {
-// 	var binds []BindStatement
-// 	re := regexp.MustCompile(`@bind:\s+([\w./]+)\s*=>\s*([\w./]+)`)
+func main() {
+	if len(os.Args) < 2 || strings.TrimSpace(os.Args[1]) == "" {
+		fmt.Fprintln(os.Stderr, "usage: go run gen_wire.go <service-module>")
+		os.Exit(2)
+	}
 
-// 	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-// 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") {
-// 			return nil
-// 		}
+	rootPackage := strings.TrimSpace(os.Args[1])
+	moduleName := rootPackage
+	if moduleName == "transaction" {
+		moduleName = "tx"
+	}
 
-// 		file, err := os.Open(path)
-// 		if err != nil {
-// 			return nil
-// 		}
-// 		defer file.Close()
+	wireFile := filepath.Join("wire", "wire.go")
+	constructors, err := findNewFunctions(rootPackage, ".")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "scan constructors:", err)
+		os.Exit(1)
+	}
+	binds, err := findBinds(".", rootPackage)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "scan binds:", err)
+		os.Exit(1)
+	}
+	if err := writeWireFile(constructors, binds, wireFile, moduleName); err != nil {
+		fmt.Fprintln(os.Stderr, "write wire.go:", err)
+		os.Exit(1)
+	}
 
-// 		scanner := bufio.NewScanner(file)
-// 		for scanner.Scan() {
-// 			line := strings.TrimSpace(scanner.Text())
-// 			if matches := re.FindStringSubmatch(line); len(matches) == 3 {
-// 				binds = append(binds, BindStatement{
-// 					Interface: matches[1],
-// 					Concrete:  matches[2],
-// 				})
-// 			}
-// 		}
-// 		return nil
-// 	})
+	fmt.Println("✅ wire.go updated successfully")
 
-// 	return binds
-// }
+	cmd := exec.Command("wire")
+	cmd.Dir = filepath.Dir(wireFile)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, "wire generate failed:", err)
+		os.Exit(1)
+	}
 
-func findBinds(root string, rootPackage string) []BindEntry {
-	var binds []BindEntry
-	bindRe := regexp.MustCompile(`@bind:\s*([\w/]+)/(\w+)\.(\w+)`) // e.g., payment/internal/wallet/repo.AccountRepo
+	fmt.Println("✅ wire generate successfully")
+}
 
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") {
+func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
+	functions := make(map[string]NewFunc)
+	fset := token.NewFileSet()
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() {
+			name := info.Name()
+			if name == ".git" || name == "vendor" || name == "node_modules" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
 		}
 
-		file, err := os.Open(path)
+		file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
 		if err != nil {
+			return fmt.Errorf("parse %s: %w", path, err)
+		}
+		fullPackage := getFullPackagePath(rootPackage, path)
+		if fullPackage == "" || strings.HasPrefix(fullPackage, rootPackage+"/cmd") {
 			return nil
 		}
-		defer file.Close()
 
-		fullStructPackage := getFullPackagePath(rootPackage, path)
-		structAlias := generateAlias(fullStructPackage)
-
-		var pendingBind *BindEntry
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-			if matches := bindRe.FindStringSubmatch(line); len(matches) == 4 {
-				interfacePkgPath := matches[1] + "/" + matches[2]
-				interfaceAlias := generateAlias(interfacePkgPath)
-				interfaceName := matches[3]
-
-				pendingBind = &BindEntry{
-					InterfaceAlias: interfaceAlias,
-					InterfacePath:  interfacePkgPath,
-					InterfaceName:  interfaceName,
-					StructPackage:  fullStructPackage,
-					StructAlias:    structAlias,
-				}
+		for _, declaration := range file.Decls {
+			function, ok := declaration.(*ast.FuncDecl)
+			if !ok || function.Recv != nil || !strings.HasPrefix(function.Name.Name, "New") {
 				continue
 			}
-
-			// Expect: type Xxx struct {
-			if pendingBind != nil && strings.HasPrefix(line, "type ") && strings.Contains(line, "struct") {
-				words := strings.Fields(line)
-				if len(words) >= 3 && strings.HasPrefix(words[2], "struct") {
-					pendingBind.StructName = words[1]
-					binds = append(binds, *pendingBind)
-					pendingBind = nil
-				}
+			item := NewFunc{
+				FullPackage: fullPackage,
+				Alias:       generateAlias(fullPackage),
+				Func:        function.Name.Name,
 			}
+			// Constructor identity includes its package. Two packages are allowed to
+			// expose constructors with the same name; silently dropping either one
+			// creates an incomplete dependency graph.
+			functions[item.FullPackage+"\x00"+item.Func] = item
 		}
-
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return binds
+	result := make([]NewFunc, 0, len(functions))
+	for _, item := range functions {
+		result = append(result, item)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Func == result[j].Func {
+			return result[i].FullPackage < result[j].FullPackage
+		}
+		return result[i].Func < result[j].Func
+	})
+	return result, nil
+}
+
+func findBinds(root, rootPackage string) ([]BindEntry, error) {
+	bindPattern := regexp.MustCompile(`@bind:\s*([A-Za-z0-9_./-]+)`)
+	binds := make(map[string]BindEntry)
+	fset := token.NewFileSet()
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() {
+			name := info.Name()
+			if name == ".git" || name == "vendor" || name == "node_modules" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+
+		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments|parser.SkipObjectResolution)
+		if err != nil {
+			return fmt.Errorf("parse %s: %w", path, err)
+		}
+		structPackage := getFullPackagePath(rootPackage, path)
+		structAlias := generateAlias(structPackage)
+
+		for _, declaration := range file.Decls {
+			gen, ok := declaration.(*ast.GenDecl)
+			if !ok || gen.Tok != token.TYPE {
+				continue
+			}
+			for _, specification := range gen.Specs {
+				typeSpec, ok := specification.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if _, ok := typeSpec.Type.(*ast.StructType); !ok {
+					continue
+				}
+
+				comment := commentText(gen.Doc) + "\n" + commentText(typeSpec.Doc)
+				matches := bindPattern.FindStringSubmatch(comment)
+				if len(matches) != 2 {
+					continue
+				}
+				target := strings.TrimSuffix(strings.TrimSpace(matches[1]), ".go")
+				separator := strings.LastIndex(target, ".")
+				if separator <= 0 || separator == len(target)-1 {
+					return fmt.Errorf("%s: invalid @bind target %q", path, target)
+				}
+				interfacePath := target[:separator]
+				interfaceName := target[separator+1:]
+				if !ast.IsExported(typeSpec.Name.Name) {
+					return fmt.Errorf("%s: @bind concrete struct %s must be exported", path, typeSpec.Name.Name)
+				}
+
+				item := BindEntry{
+					InterfaceAlias: generateAlias(interfacePath),
+					InterfacePath:  interfacePath,
+					InterfaceName:  interfaceName,
+					StructAlias:    structAlias,
+					StructPackage:  structPackage,
+					StructName:     typeSpec.Name.Name,
+				}
+				key := item.InterfacePath + "." + item.InterfaceName + "\x00" + item.StructPackage + "." + item.StructName
+				binds[key] = item
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]BindEntry, 0, len(binds))
+	for _, item := range binds {
+		result = append(result, item)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].InterfacePath == result[j].InterfacePath {
+			return result[i].InterfaceName < result[j].InterfaceName
+		}
+		return result[i].InterfacePath < result[j].InterfacePath
+	})
+	return result, nil
+}
+
+func commentText(group *ast.CommentGroup) string {
+	if group == nil {
+		return ""
+	}
+	return group.Text()
+}
+
+func getFullPackagePath(rootPackage, path string) string {
+	relativeDirectory, err := filepath.Rel(".", filepath.Dir(path))
+	if err != nil {
+		return ""
+	}
+	relativeDirectory = filepath.ToSlash(relativeDirectory)
+	if relativeDirectory == "." || relativeDirectory == "" {
+		return rootPackage
+	}
+	return rootPackage + "/" + strings.TrimPrefix(relativeDirectory, "../")
+}
+
+func generateAlias(packagePath string) string {
+	var output strings.Builder
+	for _, character := range packagePath {
+		if unicode.IsLetter(character) || unicode.IsDigit(character) || character == '_' {
+			output.WriteRune(character)
+			continue
+		}
+		output.WriteByte('_')
+	}
+	return strings.Trim(output.String(), "_")
+}
+
+func writeWireFile(functions []NewFunc, binds []BindEntry, wireFile, moduleName string) error {
+	if err := os.MkdirAll(filepath.Dir(wireFile), 0o755); err != nil {
+		return err
+	}
+	file, err := os.Create(wireFile)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	defer writer.Flush()
+
+	initialPackage := moduleName + "/initial"
+	initialAlias := generateAlias(initialPackage)
+
+	if _, err := fmt.Fprintf(writer, `//go:build wireinject
+// +build wireinject
+
+package wire
+
+import (
+	"github.com/google/wire"
+	_db "common/db"
+	_provider "common/provider"
+	%s %q
+`, initialAlias, initialPackage); err != nil {
+		return err
+	}
+
+	packages := make(map[string]string)
+	for _, function := range functions {
+		packages[function.FullPackage] = function.Alias
+	}
+	for _, bind := range binds {
+		packages[bind.InterfacePath] = bind.InterfaceAlias
+		packages[bind.StructPackage] = bind.StructAlias
+	}
+
+	imports := make([]string, 0, len(packages))
+	for packagePath, alias := range packages {
+		if packagePath == initialPackage || packagePath == "common/db" || packagePath == "common/provider" {
+			continue
+		}
+		imports = append(imports, fmt.Sprintf("\t%s %q", alias, replacePrefix(packagePath, moduleName)))
+	}
+	sort.Strings(imports)
+	for _, item := range imports {
+		if _, err := writer.WriteString(item + "\n"); err != nil {
+			return err
+		}
+	}
+	if _, err := writer.WriteString(")\n\n// Inject dependencies\nvar wireSet = wire.NewSet(\n\t_db.NewDB,\n\t_db.NewTransactionRepo,\n\t_provider.SyncProviderSet,\n"); err != nil {
+		return err
+	}
+
+	for _, bind := range binds {
+		if _, err := fmt.Fprintf(writer, "\twire.Bind(new(%s.%s), new(*%s.%s)),\n", bind.InterfaceAlias, bind.InterfaceName, bind.StructAlias, bind.StructName); err != nil {
+			return err
+		}
+	}
+	for _, function := range functions {
+		if _, err := fmt.Fprintf(writer, "\t%s.%s,\n", function.Alias, function.Func); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(writer, `)
+
+func InitializeApp() (*%s.InitialApp, error) {
+	wire.Build(wireSet)
+	return nil, nil
+}
+`, initialAlias); err != nil {
+		return err
+	}
+	if err := writer.Flush(); err != nil {
+		return err
+	}
+
+	format := exec.Command("gofmt", "-w", wireFile)
+	format.Stdout = os.Stdout
+	format.Stderr = os.Stderr
+	return format.Run()
 }
 
 func replacePrefix(input, newPrefix string) string {
-	idx := strings.Index(input, "/")
-	if idx == -1 {
-		return newPrefix // hoặc input nếu không muốn thay
+	index := strings.Index(input, "/")
+	if index == -1 {
+		return newPrefix
 	}
-	return newPrefix + input[idx:]
+	return newPrefix + input[index:]
 }

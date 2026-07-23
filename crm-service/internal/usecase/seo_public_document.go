@@ -483,7 +483,7 @@ func hasMeaningfulSeoSection(section dto.SeoSection) bool {
 				}
 			}
 		case "notice":
-			if len([]rune(strings.TrimSpace(block.Text))) >= 12 {
+			if len([]rune(strings.TrimSpace(block.Text))) >= 12 && !isPlaceholderSeoText(block.Text) {
 				return true
 			}
 		case "timeline":

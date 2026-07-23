@@ -28,13 +28,13 @@ type InitialApp struct {
 	EnumService              *handler.EnumService
 
 	// Feedback handlers
-	RateHandler         *handler.RateHandler
-	ReportHandler       *handler.ReportHandler
-	ReportAdminHandler  *handler.ReportAdminHandler
-	ReportReasonHandler   *handler.ReportReasonHandler
-	RegistryHandler       *handler.RegistryHandler
-	AppointmentService    *handler.AppointmentHandler
-	SupportTicketHandler  *handler.SupportTicketHandler
+	RateHandler          *handler.RateHandler
+	ReportHandler        *handler.ReportHandler
+	ReportAdminHandler   *handler.ReportAdminHandler
+	ReportReasonHandler  *handler.ReportReasonHandler
+	RegistryHandler      *handler.RegistryHandler
+	AppointmentService   *handler.AppointmentHandler
+	SupportTicketHandler *handler.SupportTicketHandler
 
 	Logger            *flogging.FabricLogger
 	SeoDomainHandler  *handler.SeoDomainHandler
@@ -91,9 +91,9 @@ func NewInitialApp(
 		EnumService:              enumService,
 
 		// Feedback handlers
-		RateHandler:         rateHandler,
-		ReportHandler:       reportHandler,
-		ReportAdminHandler:  reportAdminHandler,
+		RateHandler:          rateHandler,
+		ReportHandler:        reportHandler,
+		ReportAdminHandler:   reportAdminHandler,
 		ReportReasonHandler:  reportReasonHandler,
 		RegistryHandler:      registryHandler,
 		AppointmentService:   appointmentService,

@@ -5,7 +5,8 @@ SCHEMA := cd ../protobuf/schema
 AIR_EXE ?= air
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
-PORT := $(shell yq e ".service.port.$(SERVICE)" ../../gateway-service/config/local.yml)
+PRIMARY_GOAL := $(firstword $(MAKECMDGOALS))
+PORT = $(shell yq e ".service.port.$(SERVICE)" ../../gateway-service/config/local.yml)
 
 # Debug info
 debug-info:
@@ -32,7 +33,8 @@ swag-file:
 swag:
 	./script.sh swag $(word 2, $(MAKECMDGOALS))
 wire:
-	./script.sh wire $(word 2, $(MAKECMDGOALS))
+	@test -n "$(SERVICE)" || (echo "Usage: make wire <service>" >&2; exit 2)
+	./script.sh wire $(SERVICE)
 proto:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path $(word 2, $(MAKECMDGOALS))
 run:
@@ -131,7 +133,11 @@ gateway-http:
 	$(CD_ROOT) && cd gateway-service && air http
 
 crm:
-	$(CD_ROOT) && cd crm-service && air grpc
+	@if [ "$(PRIMARY_GOAL)" = "wire" ] || [ "$(PRIMARY_GOAL)" = "swag" ] || [ "$(PRIMARY_GOAL)" = "map" ] || [ "$(PRIMARY_GOAL)" = "proto" ]; then \
+		:; \
+	else \
+		cd $(ROOT_DIR)/crm-service && air grpc; \
+	fi
 
 bdspro-grpc:
 	$(CD_ROOT) && cd bdspro-service && air grpc

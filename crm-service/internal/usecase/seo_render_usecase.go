@@ -12,6 +12,7 @@ import (
 	_errors "common/errors"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
+	provider_interface "crm/internal/interface/provider"
 	"crm/internal/repo"
 
 	"gorm.io/datatypes"
@@ -20,15 +21,18 @@ import (
 type SeoRenderUsecase struct {
 	seoDomainRepo        repo.SeoDomainRepo
 	seoGenerationLogRepo repo.SeoGenerationLogRepo
+	tqdProvider          provider_interface.TqdProvider
 }
 
 func NewSeoRenderUsecase(
 	seoDomainRepo repo.SeoDomainRepo,
 	seoGenerationLogRepo repo.SeoGenerationLogRepo,
+	tqdProvider provider_interface.TqdProvider,
 ) *SeoRenderUsecase {
 	return &SeoRenderUsecase{
 		seoDomainRepo:        seoDomainRepo,
 		seoGenerationLogRepo: seoGenerationLogRepo,
+		tqdProvider:          tqdProvider,
 	}
 }
 
@@ -141,6 +145,16 @@ func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.Generat
 	now := time.Now().UTC()
 	if err := u.seoGenerationLogRepo.MarkRunning(ctx, logEntry.ID, now); err != nil {
 		return nil, err
+	}
+	if err := u.hydratePlanningProjectSource(ctx, page, now); err != nil {
+		failedAt := time.Now().UTC()
+		_ = u.seoGenerationLogRepo.MarkFailed(ctx, logEntry.ID, err.Error(), failedAt)
+		_ = u.seoDomainRepo.MarkRenderFailed(ctx, page.ID, err.Error())
+		return &dto.GenerateSeoPageResponse{
+			ID:           page.ID,
+			RenderStatus: seo_domain.SeoRenderStatusFailed,
+			ErrorMessage: err.Error(),
+		}, nil
 	}
 	if err := u.seoDomainRepo.MarkRenderRunning(ctx, page.ID); err != nil {
 		_ = u.seoGenerationLogRepo.MarkFailed(ctx, logEntry.ID, err.Error(), time.Now().UTC())

@@ -12,8 +12,11 @@ import (
 
 	"tqd/config"
 	"tqd/infra/db"
+	handler_grpc "tqd/infra/handler/grpc"
+	publiccontent_postgres "tqd/infra/postgres/publiccontent"
 	"tqd/wire"
 
+	_db "common/db"
 	_middleware "common/middleware"
 	"common/quota"
 	_redis "common/redis"
@@ -72,6 +75,17 @@ func runGRPCServer() error {
 	if app == nil {
 		log.Fatal("app is nil after InitializeApp")
 	}
+
+	// The SEO projection service uses the same authoritative public-content
+	// repository as the TQD HTTP projection, but is registered only on the
+	// internal gRPC server. It is initialized outside the legacy Wire graph so
+	// Gate 2.2B remains additive and does not disturb existing handlers.
+	projectionDB, err := _db.NewDB()
+	if err != nil {
+		return fmt.Errorf("initialize SEO projection database: %w", err)
+	}
+	seoProjectionRepository := publiccontent_postgres.NewRepository(projectionDB)
+	seoProjectionGrpcHandler := handler_grpc.NewSeoProjectionGrpcHandler(seoProjectionRepository)
 
 	db.AutoMigrate()
 
@@ -164,6 +178,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterReportServiceServer(s, app.ReportGrpcHandler)
 	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
 	tqdpb.RegisterTqdPublicServiceServer(s, app.TqdPublicService)
+	tqdpb.RegisterTqdSeoProjectionServiceServer(s, seoProjectionGrpcHandler)
 	tqdpb.RegisterLayerLegalServiceServer(s, app.LayerLegalGrpcHandler)
 	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
 	tqdpb.RegisterQHPlanningServiceServer(s, app.QHPlanningGrpcHandler)

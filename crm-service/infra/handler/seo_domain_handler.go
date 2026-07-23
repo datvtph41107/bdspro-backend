@@ -17,11 +17,18 @@ import (
 
 type SeoDomainHandler struct {
 	crmpb.UnimplementedSeoDomainServiceServer
+	crmpb.UnimplementedSeoMeasurementRuntimeServiceServer
+
 	seoDomainUsecase      *usecase.SeoDomainUsecase
 	seoRenderUsecase      *usecase.SeoRenderUsecase
 	seoMeasurementUsecase *usecase.SeoMeasurementUsecase
 	seoDomainMapper       *mapper.SeoDomainMapper
 }
+
+var (
+	_ crmpb.SeoDomainServiceServer = (*SeoDomainHandler)(nil)
+	_ crmpb.SeoMeasurementRuntimeServiceServer = (*SeoDomainHandler)(nil)
+)
 
 // @bind: crm/infra/handler.SeoDomainHandler
 func NewSeoDomainHandler(

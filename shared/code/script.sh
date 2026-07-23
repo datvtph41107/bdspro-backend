@@ -1,28 +1,37 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -u
 
-# Kiểm tra tham số đầu vào
-if [ "$1" = "swag" ]; then
-  echo "Usage: $0 swag [extra_flags]"
-  cd ../../$2-service && swag init --parseDependency --output ../gateway-service/docs/$2
+COMMAND="${1:-}"
+SERVICE="${2:-}"
 
-  exit 1
-fi
+case "$COMMAND" in
+  swag)
+    if [[ -z "$SERVICE" ]]; then
+      echo "Usage: $0 swag <service>" >&2
+      exit 2
+    fi
+    cd "../../${SERVICE}-service" || exit 1
+    swag init --parseDependency --output "../gateway-service/docs/${SERVICE}"
+    ;;
 
-if [ "$1" = "wire" ]; then
-  echo "Usage: $1 swag [extra_flags]"
-  cd ../../$2-service
-  echo "$(pwd)"
-  go run ../shared/code/script/gen_wire.go $2
+  wire)
+    if [[ -z "$SERVICE" ]]; then
+      echo "Usage: $0 wire <service>" >&2
+      exit 2
+    fi
+    cd "../../${SERVICE}-service" || exit 1
+    echo "Generating Wire graph in $(pwd)"
+    go run ../shared/code/script/gen_wire.go "$SERVICE"
+    ;;
 
-  exit 1
-fi
+  social)
+    cd social-service || exit 1
+    swag init --parseDependency --output ../../gateway-service/docs/social
+    go run script/gen_wire.go social
+    ;;
 
-
-if [ "$1" = "social" ]; then
-  echo "Usage: $1 swag [extra_flags]"
-  cd social-service 
-  swag init --parseDependency --output ../../gateway-service/docs/social
-  go run script/gen_wire.go social
-  exit 1
-fi
-
+  *)
+    echo "Usage: $0 {wire|swag} <service>" >&2
+    exit 2
+    ;;
+esac

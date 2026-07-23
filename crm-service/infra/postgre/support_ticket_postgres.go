@@ -16,7 +16,6 @@ type SupportTicketPostgres struct {
 	db *gorm.DB
 }
 
-// @bind: crm/internal/repo.SupportTicketRepo
 func NewSupportTicketPostgres(db *gorm.DB) repo.SupportTicketRepo {
 	return &SupportTicketPostgres{db: db}
 }
