@@ -281,6 +281,9 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 			switch info := d.(type) {
 			case *sharepb.ErrorResponse:
 				fmt.Printf("Custom code = %d, message = %s\n", info.Code, info.Message)
+				// Business error trong body; HTTP 200 để FE đọc res.code (tránh axios reject).
+				// (NoRoute từng để status=404 → login "404" dù auth thành công.)
+				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"code":    info.Code,
 					"message": info.Message,

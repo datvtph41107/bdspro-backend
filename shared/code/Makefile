@@ -179,7 +179,9 @@ transaction-grpc:
 	$(CD_ROOT) && cd transaction-service && air grpc
 
 auth-grpc:
-	$(CD_ROOT) && cd auth-service && air -server=grpc
+	# .air.toml đã có args_bin=["grpc"] — chỉ cần `air` (không dùng -server=grpc; không truyền thêm grpc)
+	$(CD_ROOT) && cd auth-service && air
+
 tqd-http:
 	$(CD_ROOT) && cd tqd-service && air -- -server=http
 

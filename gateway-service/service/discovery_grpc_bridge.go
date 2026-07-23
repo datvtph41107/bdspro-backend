@@ -455,6 +455,10 @@ func DiscoveryOrGRPCHandler(grpcGateway http.Handler, discoveryClient tqdpb.Disc
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 		if !hasPathPrefix(path, "/v2/tqd/discovery") {
+			// Gin NoRoute preset status=404. grpc-gateway thường Write() body
+			// mà không WriteHeader(200) → client nhận HTTP 404 dù body code:0.
+			// Reset trước khi forward; handler/error sẽ ghi đè khi cần.
+			c.Status(http.StatusOK)
 			grpcGateway.ServeHTTP(c.Writer, c.Request)
 			return
 		}

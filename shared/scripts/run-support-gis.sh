@@ -117,6 +117,23 @@ kill_port() {
   fi
 }
 
+wait_port() {
+  local port="$1"
+  local name="$2"
+  local tries="${3:-40}"
+  local i
+  for i in $(seq 1 "$tries"); do
+    if ss -ltn 2>/dev/null | grep -q ":${port} "; then
+      echo "    ✓ $name listening :$port"
+      return 0
+    fi
+    sleep 0.5
+  done
+  echo "    ✗ WARN: $name chưa listen :$port — xem log: $LOG_DIR/$name.log"
+  tail -n 20 "$LOG_DIR/$name.log" 2>/dev/null || true
+  return 1
+}
+
 start_svc() {
   local name="$1"
   local make_target="$2"
@@ -281,9 +298,10 @@ do_migrate() {
     "$BE/tqd-service"
 
   echo "==> Auth: seed ADMIN_HT_* / ADMIN_BC_GIS_* + attach SUPER_ADMIN..."
+  # workdir = crm-service vì auth-service go.mod không có github.com/lib/pq
   apply_sql_file "$AUTH_DSN" \
     "$BE/auth-service/scripts/attach_admin_ht_bc_gis_permissions.sql" \
-    "$BE/auth-service" || echo "WARN: auth permission seed failed (check AUTH_DSN / HE_THONG exists)"
+    "$BE/crm-service" || echo "WARN: auth permission seed failed (check AUTH_DSN / HE_THONG exists)"
 
   echo "Migrate (feature SQL) done."
   echo "NOTE: nếu menu/API vẫn 403 — xóa Redis ROLE_PERMS_* rồi login lại."
@@ -304,6 +322,26 @@ print_be_urls() {
   echo "  Login API: POST http://localhost:8000/v2/auth/admin/login"
 }
 
+wait_critical_ports() {
+  echo "==> Chờ critical ports..."
+  # Auth: Listen() trước AutoMigrate+Serve → port mở sớm nhưng chưa sẵn sàng gRPC.
+  # Đợi log "gRPC server listening" (tối đa ~90s) thay vì chỉ check TCP.
+  local i
+  for i in $(seq 1 90); do
+    if grep -q 'gRPC server listening' "$LOG_DIR/auth.log" 2>/dev/null; then
+      echo "    ✓ auth ready (:8216)"
+      break
+    fi
+    if [[ "$i" -eq 90 ]]; then
+      echo "    ✗ WARN: auth chưa ready — xem log: $LOG_DIR/auth.log"
+      tail -n 30 "$LOG_DIR/auth.log" 2>/dev/null || true
+    fi
+    sleep 1
+  done
+  wait_port 8201 user 40 || true
+  wait_port 8000 gateway 40 || true
+}
+
 do_be_full() {
   need_cmd air
   need_cmd make
@@ -311,6 +349,7 @@ do_be_full() {
   # Dọn instance cũ trước khi start full (tránh air chồng / port in use)
   do_stop_soft
   start_svc_list ALL_SVCS
+  wait_critical_ports
   print_be_urls
 }
 
@@ -320,6 +359,7 @@ do_be_support() {
   ensure_redis
   do_stop_soft
   start_svc_list SUPPORT_SVCS
+  wait_critical_ports
   print_be_urls
 }
 
