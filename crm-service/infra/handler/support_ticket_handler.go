@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crm/infra/client"
 	"crm/internal/dto"
 	"crm/internal/usecase"
 
@@ -15,15 +16,19 @@ import (
 
 type SupportTicketHandler struct {
 	crmpb.UnimplementedSupportTicketServiceServer
-	usecase *usecase.SupportTicketUsecase
+	usecase    *usecase.SupportTicketUsecase
+	authClient *client.AuthClient
 }
 
 // @bind: crm/infra/handler.SupportTicketHandler
-func NewSupportTicketHandler(usecase *usecase.SupportTicketUsecase) *SupportTicketHandler {
-	return &SupportTicketHandler{usecase: usecase}
+func NewSupportTicketHandler(usecase *usecase.SupportTicketUsecase, authClient *client.AuthClient) *SupportTicketHandler {
+	return &SupportTicketHandler{usecase: usecase, authClient: authClient}
 }
 
 func (h *SupportTicketHandler) ListSupportTickets(ctx context.Context, req *crmpb.ListSupportTicketsRequest) (*crmpb.ListSupportTicketsResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_XEM"}); err != nil {
+		return nil, err
+	}
 	listReq := &dto.SupportTicketListRequest{
 		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size},
 		Q:       req.GetQ(),
@@ -56,6 +61,9 @@ func (h *SupportTicketHandler) ListSupportTickets(ctx context.Context, req *crmp
 }
 
 func (h *SupportTicketHandler) GetSupportTicketSummary(ctx context.Context, _ *emptypb.Empty) (*crmpb.SupportTicketSummaryResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_XEM"}); err != nil {
+		return nil, err
+	}
 	res, err := h.usecase.Summary(ctx)
 	if err != nil {
 		return nil, err
@@ -71,6 +79,9 @@ func (h *SupportTicketHandler) GetSupportTicketSummary(ctx context.Context, _ *e
 }
 
 func (h *SupportTicketHandler) GetSupportTicket(ctx context.Context, req *sharepb.IdRequest) (*crmpb.GetSupportTicketResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_XEM"}); err != nil {
+		return nil, err
+	}
 	res, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -79,6 +90,9 @@ func (h *SupportTicketHandler) GetSupportTicket(ctx context.Context, req *sharep
 }
 
 func (h *SupportTicketHandler) CreateSupportTicket(ctx context.Context, req *crmpb.CreateSupportTicketRequest) (*crmpb.GetSupportTicketResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_TAO"}); err != nil {
+		return nil, err
+	}
 	createReq := &dto.SupportTicketCreateRequest{
 		Title:       req.Title,
 		Description: req.Description,
@@ -86,6 +100,7 @@ func (h *SupportTicketHandler) CreateSupportTicket(ctx context.Context, req *crm
 		Priority:    req.Priority,
 		Product:     req.Product,
 		Source:      req.Source,
+		Images:      req.Images,
 	}
 	if req.RelatedUserId != nil {
 		v := req.GetRelatedUserId()
@@ -103,6 +118,9 @@ func (h *SupportTicketHandler) CreateSupportTicket(ctx context.Context, req *crm
 }
 
 func (h *SupportTicketHandler) AssignSupportTicket(ctx context.Context, req *crmpb.AssignSupportTicketRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_SUA"}); err != nil {
+		return nil, err
+	}
 	err := h.usecase.Assign(ctx, req.Id, &dto.SupportTicketAssignRequest{
 		AssigneeID: req.AssigneeId,
 		Note:       req.GetNote(),
@@ -114,6 +132,9 @@ func (h *SupportTicketHandler) AssignSupportTicket(ctx context.Context, req *crm
 }
 
 func (h *SupportTicketHandler) UpdateSupportTicketPriority(ctx context.Context, req *crmpb.UpdateSupportTicketPriorityRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_SUA"}); err != nil {
+		return nil, err
+	}
 	err := h.usecase.UpdatePriority(ctx, req.Id, &dto.SupportTicketPriorityRequest{
 		Priority: req.Priority,
 		Reason:   req.Reason,
@@ -125,6 +146,9 @@ func (h *SupportTicketHandler) UpdateSupportTicketPriority(ctx context.Context, 
 }
 
 func (h *SupportTicketHandler) UpdateSupportTicketStatus(ctx context.Context, req *crmpb.UpdateSupportTicketStatusRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_SUA"}); err != nil {
+		return nil, err
+	}
 	err := h.usecase.UpdateStatus(ctx, req.Id, &dto.SupportTicketStatusRequest{
 		Status: req.Status,
 		Note:   req.Note,
@@ -136,6 +160,9 @@ func (h *SupportTicketHandler) UpdateSupportTicketStatus(ctx context.Context, re
 }
 
 func (h *SupportTicketHandler) AddSupportTicketNote(ctx context.Context, req *crmpb.AddSupportTicketNoteRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_SUA"}); err != nil {
+		return nil, err
+	}
 	err := h.usecase.AddNote(ctx, req.Id, &dto.SupportTicketNoteRequest{Body: req.Body})
 	if err != nil {
 		return nil, err
@@ -144,11 +171,25 @@ func (h *SupportTicketHandler) AddSupportTicketNote(ctx context.Context, req *cr
 }
 
 func (h *SupportTicketHandler) CloseSupportTicket(ctx context.Context, req *crmpb.CloseSupportTicketRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_XOA"}); err != nil {
+		return nil, err
+	}
 	err := h.usecase.Close(ctx, req.Id, &dto.SupportTicketCloseRequest{Note: req.Note})
 	if err != nil {
 		return nil, err
 	}
 	return &sharepb.SubmitResponse{Id: req.Id, Message: "closed"}, nil
+}
+
+func (h *SupportTicketHandler) UpdateSupportTicketImages(ctx context.Context, req *crmpb.UpdateSupportTicketImagesRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_HT_SUA"}); err != nil {
+		return nil, err
+	}
+	err := h.usecase.UpdateImages(ctx, req.Id, req.Images)
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{Id: req.Id, Message: "images updated"}, nil
 }
 
 func toProtoItem(item dto.SupportTicketItemResponse) *crmpb.SupportTicketItem {
@@ -160,6 +201,7 @@ func toProtoItem(item dto.SupportTicketItemResponse) *crmpb.SupportTicketItem {
 		Status:    item.Status,
 		Priority:  item.Priority,
 		Product:   item.Product,
+		Images:    item.Images,
 		UpdatedAt: _utils.FormatTimeToString(item.UpdatedAt),
 		CreatedAt: _utils.FormatTimeToString(item.CreatedAt),
 	}
@@ -201,6 +243,7 @@ func toProtoDetail(d *dto.SupportTicketDetailResponse) *crmpb.SupportTicketDetai
 		Priority:    d.Priority,
 		Product:     d.Product,
 		Source:      d.Source,
+		Images:      d.Images,
 		CreatedAt:   _utils.FormatTimeToString(d.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(d.UpdatedAt),
 		Notes:       notes,

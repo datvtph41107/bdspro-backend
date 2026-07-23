@@ -3598,6 +3598,134 @@
           ]
         }
       ]
+    },
+    {
+      "name": "HỖ TRỢ",
+      "key": "HO_TRO",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "parentId": 0,
+      "priority": 30,
+      "requiredKey": "",
+      "createdAt": "0001-01-01T00:00:00Z",
+      "updatedAt": "0001-01-01T00:00:00Z",
+      "childs": [
+        {
+          "name": "Yêu cầu hỗ trợ",
+          "key": "ADMIN_HT",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_HT_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_HT_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_HT_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_HT_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            }
+          ]
+        },
+        {
+          "name": "Báo cáo sai sót dữ liệu",
+          "key": "ADMIN_BC_GIS",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "createdAt": "0001-01-01T00:00:00Z",
+          "updatedAt": "0001-01-01T00:00:00Z",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_BC_GIS_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_BC_GIS_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_BC_GIS_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_BC_GIS_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": "",
+              "createdAt": "0001-01-01T00:00:00Z",
+              "updatedAt": "0001-01-01T00:00:00Z"
+            }
+          ]
+        }
+      ]
     }
   ],
   "exportedAt": "2025-10-13T13:44:56.613339+07:00",

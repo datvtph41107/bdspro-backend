@@ -308,6 +308,7 @@ func setupHTTPRoutes(
 				reports.PATCH("/:id/severity", reportAdminHandler.UpdateSeverity)
 				reports.PATCH("/:id/qa-status", reportAdminHandler.UpdateQaStatus)
 				reports.POST("/:id/linkage", reportAdminHandler.UpdateLinkage)
+				reports.POST("/:id/images", reportAdminHandler.UpdateImages)
 				reports.POST("/:id/close", reportAdminHandler.Close)
 			}
 		}

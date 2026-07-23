@@ -74,7 +74,19 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 		db = db.Where("validity_status = ?", req.ValidityStatus)
 	}
 	if req.ProcessStatus != "" {
-		db = db.Where("process_status = ?", req.ProcessStatus)
+		statuses := strings.Split(req.ProcessStatus, ",")
+		trimmed := make([]string, 0, len(statuses))
+		for _, s := range statuses {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				trimmed = append(trimmed, s)
+			}
+		}
+		if len(trimmed) == 1 {
+			db = db.Where("process_status = ?", trimmed[0])
+		} else if len(trimmed) > 1 {
+			db = db.Where("process_status IN ?", trimmed)
+		}
 	}
 
 	if err := db.Count(&total).Error; err != nil {

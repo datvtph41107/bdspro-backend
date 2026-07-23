@@ -261,6 +261,8 @@ message ProAIJob {
   string metadata = 10;
   string created_at = 11;
   string updated_at = 12;
+  string completed_at = 13; // thời gian hoàn thành job (phân loại xong / lỗi)
+  string approved_at = 14;  // thời gian phê duyệt
 }
 
 message ListProAIJobsRequest {

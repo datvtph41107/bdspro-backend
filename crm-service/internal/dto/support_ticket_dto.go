@@ -7,14 +7,19 @@ import (
 )
 
 type SupportTicketCreateRequest struct {
-	Title           string `json:"title" binding:"required"`
-	Description     string `json:"description"`
-	IssueType       uint32 `json:"issueType"`
-	Priority        uint32 `json:"priority"`
-	RelatedUserID   *uint64 `json:"relatedUserId"`
-	RelatedReportID *uint64 `json:"relatedReportId"`
-	Product         uint32 `json:"product"`
-	Source          uint32 `json:"source"`
+	Title           string   `json:"title" binding:"required"`
+	Description     string   `json:"description"`
+	IssueType       uint32   `json:"issueType"`
+	Priority        uint32   `json:"priority"`
+	RelatedUserID   *uint64  `json:"relatedUserId"`
+	RelatedReportID *uint64  `json:"relatedReportId"`
+	Product         uint32   `json:"product"`
+	Source          uint32   `json:"source"`
+	Images          []string `json:"images"`
+}
+
+type SupportTicketImagesRequest struct {
+	Images []string `json:"images" binding:"required"`
 }
 
 type SupportTicketListRequest struct {
@@ -60,6 +65,7 @@ type SupportTicketItemResponse struct {
 	RelatedUserID   *uint64    `json:"relatedUserId"`
 	RelatedReportID *uint64    `json:"relatedReportId"`
 	Product         uint32     `json:"product"`
+	Images          []string   `json:"images,omitempty"`
 	UpdatedAt       *time.Time `json:"updatedAt"`
 	CreatedAt       *time.Time `json:"createdAt"`
 }
@@ -80,23 +86,24 @@ type SupportTicketEventResponse struct {
 }
 
 type SupportTicketDetailResponse struct {
-	ID              uint64                        `json:"id"`
-	Code            string                        `json:"code"`
-	Title           string                        `json:"title"`
-	Description     string                        `json:"description"`
-	IssueType       uint32                        `json:"issueType"`
-	Status          uint32                        `json:"status"`
-	Priority        uint32                        `json:"priority"`
-	AssigneeID      *uint64                       `json:"assigneeId"`
-	RelatedUserID   *uint64                       `json:"relatedUserId"`
-	RelatedReportID *uint64                       `json:"relatedReportId"`
-	Product         uint32                        `json:"product"`
-	Source          uint32                        `json:"source"`
-	CreatedAt       *time.Time                    `json:"createdAt"`
-	UpdatedAt       *time.Time                    `json:"updatedAt"`
-	ClosedAt        *time.Time                    `json:"closedAt"`
-	Notes           []SupportTicketNoteResponse   `json:"notes"`
-	Events          []SupportTicketEventResponse  `json:"events"`
+	ID              uint64                       `json:"id"`
+	Code            string                       `json:"code"`
+	Title           string                       `json:"title"`
+	Description     string                       `json:"description"`
+	IssueType       uint32                       `json:"issueType"`
+	Status          uint32                       `json:"status"`
+	Priority        uint32                       `json:"priority"`
+	AssigneeID      *uint64                      `json:"assigneeId"`
+	RelatedUserID   *uint64                      `json:"relatedUserId"`
+	RelatedReportID *uint64                      `json:"relatedReportId"`
+	Product         uint32                       `json:"product"`
+	Source          uint32                       `json:"source"`
+	Images          []string                     `json:"images"`
+	CreatedAt       *time.Time                   `json:"createdAt"`
+	UpdatedAt       *time.Time                   `json:"updatedAt"`
+	ClosedAt        *time.Time                   `json:"closedAt"`
+	Notes           []SupportTicketNoteResponse  `json:"notes"`
+	Events          []SupportTicketEventResponse `json:"events"`
 }
 
 type SupportTicketListResponse struct {
@@ -105,12 +112,12 @@ type SupportTicketListResponse struct {
 }
 
 type SupportTicketSummaryResponse struct {
-	Total              int64 `json:"total"`
-	StatusNew          int64 `json:"statusNew"`
-	StatusInProgress   int64 `json:"statusInProgress"`
-	StatusWaitingUser  int64 `json:"statusWaitingUser"`
-	StatusResolved     int64 `json:"statusResolved"`
-	StatusClosed       int64 `json:"statusClosed"`
+	Total             int64 `json:"total"`
+	StatusNew         int64 `json:"statusNew"`
+	StatusInProgress  int64 `json:"statusInProgress"`
+	StatusWaitingUser int64 `json:"statusWaitingUser"`
+	StatusResolved    int64 `json:"statusResolved"`
+	StatusClosed      int64 `json:"statusClosed"`
 }
 
 // Defaults helpers

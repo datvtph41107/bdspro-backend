@@ -2,6 +2,7 @@ package qh_domain
 
 import (
 	_models "common/domain/entity"
+	"time"
 	"tqd/internal/enums"
 )
 
@@ -15,6 +16,10 @@ type ProAIJob struct {
 	PlanningProjectID *uint64                     `gorm:"type:int8;index" json:"planningProjectId"`
 	ClassifyError     string                      `gorm:"type:text" json:"classifyError"`
 	Metadata          string                      `gorm:"type:jsonb" json:"metadata"`
+	// CompletedAt — thời điểm job hoàn thành phân loại (status 30) hoặc lỗi (50)
+	CompletedAt *time.Time `gorm:"column:completed_at" json:"completedAt"`
+	// ApprovedAt — thời điểm admin phê duyệt (status 40)
+	ApprovedAt *time.Time `gorm:"column:approved_at" json:"approvedAt"`
 }
 
 func (ProAIJob) TableName() string {

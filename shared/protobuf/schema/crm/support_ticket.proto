@@ -61,6 +61,12 @@ service SupportTicketService {
       body: "*"
     };
   }
+  rpc UpdateSupportTicketImages(UpdateSupportTicketImagesRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/images"
+      body: "*"
+    };
+  }
 }
 
 message ListSupportTicketsRequest {
@@ -96,6 +102,7 @@ message CreateSupportTicketRequest {
   optional uint64 relatedReportId = 6;
   uint32 product = 7;
   uint32 source = 8;
+  repeated string images = 9;
 }
 
 message AssignSupportTicketRequest {
@@ -126,6 +133,11 @@ message CloseSupportTicketRequest {
   string note = 2;
 }
 
+message UpdateSupportTicketImagesRequest {
+  uint64 id = 1;
+  repeated string images = 2;
+}
+
 message GetSupportTicketResponse {
   SupportTicketDetail ticket = 1;
 }
@@ -143,6 +155,7 @@ message SupportTicketItem {
   uint32 product = 10;
   string updatedAt = 11;
   string createdAt = 12;
+  repeated string images = 13;
 }
 
 message SupportTicketNoteItem {
@@ -178,4 +191,5 @@ message SupportTicketDetail {
   optional string closedAt = 15;
   repeated SupportTicketNoteItem notes = 16;
   repeated SupportTicketEventItem events = 17;
+  repeated string images = 18;
 }

@@ -4,9 +4,13 @@ import (
 	_db "common/db"
 	"context"
 	"strings"
+	"time"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
+
+	"gorm.io/gorm"
 )
 
 type ProAIJobRepo struct {
@@ -73,7 +77,24 @@ func (r *ProAIJobRepo) GetList(ctx context.Context, req *qh_dto.ListProAIJobsReq
 }
 
 func (r *ProAIJobRepo) UpdateProcessStatusByProjectID(ctx context.Context, planningProjectID uint64, status uint32) error {
+	now := time.Now()
+	updates := map[string]interface{}{
+		"process_status": status,
+		"updated_at":     now,
+	}
+	switch status {
+	case enums.PlanningProcessStatusClassified, enums.PlanningProcessStatusFailed:
+		// Chỉ set lần đầu hoàn thành (không ghi đè nếu đã có)
+		updates["completed_at"] = gorm.Expr("COALESCE(completed_at, ?)", now)
+	case enums.PlanningProcessStatusApproved:
+		updates["completed_at"] = gorm.Expr("COALESCE(completed_at, ?)", now)
+		updates["approved_at"] = gorm.Expr("COALESCE(approved_at, ?)", now)
+	case enums.PlanningProcessStatusPending:
+		// Retry: reset mốc hoàn thành / phê duyệt
+		updates["completed_at"] = nil
+		updates["approved_at"] = nil
+	}
 	return r.db.GetDB(ctx).Model(&qh_domain.ProAIJob{}).
 		Where("planning_project_id = ? AND deleted_at IS NULL", planningProjectID).
-		Update("process_status", status).Error
+		Updates(updates).Error
 }

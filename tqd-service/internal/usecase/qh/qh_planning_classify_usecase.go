@@ -81,6 +81,7 @@ type IQHPlanningClassifyUsecase interface {
 type qhPlanningClassifyUsecase struct {
 	documentRepo repo.IQHPlanningDocumentRepo
 	projectRepo  repo.IQHPlanningProjectRepo
+	aiJobRepo    repo.IProAIJobRepo
 	assistant    provider.AssistantProvider
 	fileProvider provider.FileProvider
 }
@@ -89,12 +90,14 @@ type qhPlanningClassifyUsecase struct {
 func NewQHPlanningClassifyUsecase(
 	documentRepo repo.IQHPlanningDocumentRepo,
 	projectRepo repo.IQHPlanningProjectRepo,
+	aiJobRepo repo.IProAIJobRepo,
 	assistant provider.AssistantProvider,
 	fileProvider provider.FileProvider,
 ) IQHPlanningClassifyUsecase {
 	return &qhPlanningClassifyUsecase{
 		documentRepo: documentRepo,
 		projectRepo:  projectRepo,
+		aiJobRepo:    aiJobRepo,
 		assistant:    assistant,
 		fileProvider: fileProvider,
 	}
@@ -294,6 +297,10 @@ func (u *qhPlanningClassifyUsecase) refreshProjectStatus(ctx context.Context, pr
 	}
 	if err := u.projectRepo.UpdateProcessStatus(ctx, projectID, newStatus); err != nil {
 		log.Printf("[QHPlanningClassify] cập nhật trạng thái đồ án %d lỗi: %v", projectID, err)
+		return
+	}
+	if err := u.aiJobRepo.UpdateProcessStatusByProjectID(ctx, projectID, newStatus); err != nil {
+		log.Printf("[QHPlanningClassify] sync job AI đồ án %d lỗi: %v", projectID, err)
 	}
 }
 
