@@ -191,9 +191,8 @@ tqd-grpc:
 
 start-all:
 	@echo "Starting all services..."
-	$(CD_ROOT) &
 	$(MAKE) gateway-http &
-	$(MAKE) crm-grpc &
+	$(MAKE) crm &
 	$(MAKE) bdspro-grpc &
 	$(MAKE) user-http &
 	$(MAKE) user-grpc &
@@ -210,9 +209,12 @@ start-all:
 	$(MAKE) marketing-grpc &
 	$(MAKE) transaction-grpc &
 	$(MAKE) auth-grpc &
-	@echo "All services started in background. Use 'make stop-all' to stop them."
+	$(MAKE) tqd-http &
+	$(MAKE) tqd-grpc &
+	@echo "All services started in background. Prefer: ../../scripts/run-support-gis.sh start"
+	@echo "Use 'make stop-all' to stop them."
 	@echo "To see running processes: ps aux | grep air"
-	@echo "To see logs: tail -f */tmp/*.log"
+	@echo "To see logs: tail -f /tmp/bdspro-support-gis/*.log"
 
 stop-all:
 	$(CD_ROOT)
