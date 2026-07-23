@@ -12,6 +12,7 @@ import (
 	tqdpb "pb/types/tqd"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
+	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -280,7 +281,13 @@ func (h *ReportGrpcHandler) AdminListReports(ctx context.Context, req *tqdpb.Adm
 	log.Printf("[AdminListReports] Page: %d, Limit: %d, UserID: %v, ReportType: %v, Status: %v",
 		page, limit, req.UserId, req.ReportType, req.Status)
 
-	reports, total, err := h.reportUsecase.AdminList(ctx, req.UserId, req.ReportType, req.Status, page, limit)
+	reports, total, err := h.reportUsecase.AdminList(ctx, repo.AdminReportFilter{
+		UserID:     req.UserId,
+		ReportType: req.ReportType,
+		Status:     req.Status,
+		Page:       page,
+		Limit:      limit,
+	})
 	if err != nil {
 		log.Printf("[AdminListReports] Error: %v", err)
 		return nil, _errors.ReturnError(500, err.Error())

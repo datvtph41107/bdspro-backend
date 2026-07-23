@@ -17,6 +17,7 @@ type QHPlanningGrpcHandler struct {
 	projectUsecase  qh_usecase.IQHPlanningProjectUsecase
 	documentUsecase qh_usecase.IQHPlanningDocumentUsecase
 	eventUsecase    qh_usecase.IQHPlanningEventUsecase
+	folderUsecase   qh_usecase.IQHPlanningFolderUsecase
 	mapper          *mapper.QHPlanningMapper
 	validator       *validator.QHPlanningValidator
 }
@@ -25,6 +26,7 @@ func NewQHPlanningGrpcHandler(
 	projectUsecase qh_usecase.IQHPlanningProjectUsecase,
 	documentUsecase qh_usecase.IQHPlanningDocumentUsecase,
 	eventUsecase qh_usecase.IQHPlanningEventUsecase,
+	folderUsecase qh_usecase.IQHPlanningFolderUsecase,
 	mapper *mapper.QHPlanningMapper,
 	validator *validator.QHPlanningValidator,
 ) *QHPlanningGrpcHandler {
@@ -32,6 +34,7 @@ func NewQHPlanningGrpcHandler(
 		projectUsecase:  projectUsecase,
 		documentUsecase: documentUsecase,
 		eventUsecase:    eventUsecase,
+		folderUsecase:   folderUsecase,
 		mapper:          mapper,
 		validator:       validator,
 	}
@@ -97,6 +100,7 @@ func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *t
 		PlanningType:   req.PlanningType,
 		PlanningLevel:  req.PlanningLevel,
 		ValidityStatus: req.ValidityStatus,
+		ProcessStatus:  req.ProcessStatus,
 	}
 	listReq.Page = req.Page
 	listReq.Size = req.Size
@@ -110,6 +114,42 @@ func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *t
 		Data:  h.mapper.ToProjectProtoList(results),
 		Total: total,
 	}, nil
+}
+
+// CreatePlanningProjectFromFolder tạo đồ án + toàn bộ tài liệu từ 1 folder admin chọn (upload multipart qua gateway).
+// Mỗi file trở thành 1 PlanningDocument trạng thái Pending, chờ job classify quét và gọi Gemini phân loại.
+func (h *QHPlanningGrpcHandler) CreatePlanningProjectFromFolder(ctx context.Context, req *tqdpb.CreatePlanningProjectFromFolderRequest) (*tqdpb.CreatePlanningProjectFromFolderResponse, error) {
+	if req.FolderName == "" {
+		return nil, status.Error(codes.InvalidArgument, "folder_name is required")
+	}
+	if len(req.Files) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "files is required")
+	}
+
+	project := h.mapper.ToProjectDomainFromFolderRequest(req)
+	files := h.mapper.ToFolderFileInputs(req.Files)
+
+	resultProject, resultDocuments, err := h.folderUsecase.CreateFromFolder(ctx, project, req.FolderName, files)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.CreatePlanningProjectFromFolderResponse{
+		Project:   h.mapper.ToProjectProto(resultProject),
+		Documents: h.mapper.ToDocumentProtoList(resultDocuments),
+	}, nil
+}
+
+// ApprovePlanningProject phê duyệt đồ án (chỉ khi đã Classified), đồng thời phê duyệt các tài liệu đã Classified.
+func (h *QHPlanningGrpcHandler) ApprovePlanningProject(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningProject, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.projectUsecase.Approve(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return h.mapper.ToProjectProto(result), nil
 }
 
 // QHPlanningDocument APIs
@@ -171,6 +211,7 @@ func (h *QHPlanningGrpcHandler) ListPlanningDocuments(ctx context.Context, req *
 		PlanningProjectID: req.PlanningProjectId,
 		DocumentType:      req.DocumentType,
 		ValidityStatus:    req.ValidityStatus,
+		ProcessStatus:     req.ProcessStatus,
 	}
 	listReq.Page = req.Page
 	listReq.Size = req.Size
@@ -184,6 +225,18 @@ func (h *QHPlanningGrpcHandler) ListPlanningDocuments(ctx context.Context, req *
 		Data:  h.mapper.ToDocumentProtoList(results),
 		Total: total,
 	}, nil
+}
+
+// ApprovePlanningDocument phê duyệt 1 tài liệu đã được AI phân loại (chỉ khi đang ở trạng thái Classified).
+func (h *QHPlanningGrpcHandler) ApprovePlanningDocument(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningDocument, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.documentUsecase.Approve(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return h.mapper.ToDocumentProto(result), nil
 }
 
 // Client APIs

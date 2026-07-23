@@ -88,7 +88,7 @@ func runHTTPServer(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("initialize discovery database: %w", err)
 	}
-	discoveryRepo := discovery_postgres.NewRepository(discoveryDB)
+	discoveryRepo := discovery_postgres.NewDiscoveryRepository(discoveryDB)
 	discoveryService := discovery_application.NewService(discoveryRepo)
 	discoveryHandler := discovery_handler.NewHandler(discoveryService)
 
@@ -294,9 +294,22 @@ func setupHTTPRoutes(
 
 		// Admin import — multipart (stream → temp file, xóa sau job); cùng path chuẩn với proto HTTP
 		importHTTPHandler := app.ImportHTTPHandler
+		reportAdminHandler := app.ReportAdminHTTPHandler
 		admin := v2.Group("/admin")
 		{
 			admin.POST("/import/geojson", importHTTPHandler.PostImportGeoJSONMultipart)
+			reports := admin.Group("/reports")
+			{
+				reports.GET("", reportAdminHandler.List)
+				reports.GET("/summary", reportAdminHandler.Summary)
+				reports.GET("/:id", reportAdminHandler.Get)
+				reports.POST("/internal", reportAdminHandler.CreateInternal)
+				reports.POST("/:id/assign", reportAdminHandler.Assign)
+				reports.PATCH("/:id/severity", reportAdminHandler.UpdateSeverity)
+				reports.PATCH("/:id/qa-status", reportAdminHandler.UpdateQaStatus)
+				reports.POST("/:id/linkage", reportAdminHandler.UpdateLinkage)
+				reports.POST("/:id/close", reportAdminHandler.Close)
+			}
 		}
 
 		// QH Label routes - ghép vào màn chi tiết lớp

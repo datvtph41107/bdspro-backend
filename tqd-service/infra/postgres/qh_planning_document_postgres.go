@@ -5,6 +5,7 @@ import (
 	"context"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 )
 
@@ -74,4 +75,52 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 		Find(&documents).Error
 
 	return documents, total, err
+}
+
+// ListByProcessStatus lấy các tài liệu ở 1 trạng thái xử lý, dùng cho job classify quét theo batch.
+func (r *QHPlanningDocumentRepo) ListByProcessStatus(ctx context.Context, status uint32, limit int) ([]qh_domain.QHPlanningDocument, error) {
+	var documents []qh_domain.QHPlanningDocument
+	err := r.db.GetDB(ctx).
+		Where("deleted_at IS NULL AND process_status = ?", status).
+		Order("id ASC").
+		Limit(limit).
+		Find(&documents).Error
+	return documents, err
+}
+
+// CountByProjectAndStatuses đếm tài liệu của 1 đồ án theo danh sách trạng thái.
+func (r *QHPlanningDocumentRepo) CountByProjectAndStatuses(ctx context.Context, projectID uint64, statuses []uint32) (int64, error) {
+	var total int64
+	err := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status IN ?", projectID, statuses).
+		Count(&total).Error
+	return total, err
+}
+
+// ApproveClassifiedByProject chuyển toàn bộ tài liệu đã Classified của đồ án sang Approved.
+func (r *QHPlanningDocumentRepo) ApproveClassifiedByProject(ctx context.Context, projectID uint64) error {
+	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status = ?", projectID, enums.PlanningProcessStatusClassified).
+		Update("process_status", enums.PlanningProcessStatusApproved).Error
+}
+
+// ResetClassifyForRetry đưa tài liệu Failed về Pending và xóa lỗi classify.
+func (r *QHPlanningDocumentRepo) ResetClassifyForRetry(ctx context.Context, id uint64) error {
+	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+		Where("id = ? AND deleted_at IS NULL AND process_status = ?", id, enums.PlanningProcessStatusFailed).
+		Updates(map[string]interface{}{
+			"process_status": enums.PlanningProcessStatusPending,
+			"classify_error": "",
+		}).Error
+}
+
+// ResetFailedClassifyByProject đưa tất cả tài liệu Failed của đồ án về Pending.
+func (r *QHPlanningDocumentRepo) ResetFailedClassifyByProject(ctx context.Context, projectID uint64) (int64, error) {
+	tx := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+		Where("deleted_at IS NULL AND planning_project_id = ? AND process_status = ?", projectID, enums.PlanningProcessStatusFailed).
+		Updates(map[string]interface{}{
+			"process_status": enums.PlanningProcessStatusPending,
+			"classify_error": "",
+		})
+	return tx.RowsAffected, tx.Error
 }

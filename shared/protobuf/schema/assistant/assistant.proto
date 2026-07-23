@@ -123,6 +123,14 @@ service AssistantService {
       body: "*"
     };
   };
+
+  // Phân loại/đọc nội dung 1 tài liệu bằng Gemini (multimodal). file_content rỗng => text-only.
+  rpc ClassifyDocumentWithGemini (ClassifyDocumentRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/classify-document"
+      body: "*"
+    };
+  };
 }
 
 // =============== Analyze Product Text ===============
@@ -208,6 +216,15 @@ message GenerateRequest {
 message GenerateResponse {
   string content = 1;
   GenerateMetadata metadata = 2;
+}
+
+// ClassifyDocumentRequest — prompt kèm nội dung file để Gemini đọc & phân loại.
+message ClassifyDocumentRequest {
+  string prompt = 1;
+  bytes file_content = 2;   // rỗng => fallback text-only (chỉ dựa prompt)
+  string mime_type = 3;     // ví dụ application/pdf, image/png
+  int32 max_tokens = 4;
+  float temperature = 5;
 }
 
 message GenerateMetadata {

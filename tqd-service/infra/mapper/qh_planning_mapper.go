@@ -4,6 +4,7 @@ import (
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
+	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
 )
 
@@ -189,4 +190,77 @@ func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_d
 		EffectiveDate:     _utils.ParseStringToTime(proto.EffectiveDate),
 		Metadata:          metadata,
 	}
+}
+
+// ToProjectDomainFromFolderRequest chuyển metadata đồ án trong CreatePlanningProjectFromFolderRequest thành domain.
+// Không set SourceFolderName/ProcessStatus ở đây — usecase CreateFromFolder sẽ set trước khi Create.
+func (m *QHPlanningMapper) ToProjectDomainFromFolderRequest(req *tqdpb.CreatePlanningProjectFromFolderRequest) *qh_domain.QHPlanningProject {
+	if req == nil {
+		return nil
+	}
+
+	var jurisdictionId *uint64
+	if req.JurisdictionId != 0 {
+		jurisdictionId = &req.JurisdictionId
+	}
+
+	return &qh_domain.QHPlanningProject{
+		Code:           req.Code,
+		Name:           req.Name,
+		PlanningType:   req.PlanningType,
+		PlanningLevel:  req.PlanningLevel,
+		Authority:      req.Authority,
+		JurisdictionID: jurisdictionId,
+		Summary:        req.Summary,
+		ValidityStatus: req.ValidityStatus,
+		Metadata:       "{}",
+	}
+}
+
+// ToFolderFileInputs chuyển danh sách FolderFileEntry (proto) thành input cho usecase.
+func (m *QHPlanningMapper) ToFolderFileInputs(entries []*tqdpb.FolderFileEntry) []qh_dto.FolderFileInput {
+	inputs := make([]qh_dto.FolderFileInput, 0, len(entries))
+	for _, e := range entries {
+		if e == nil || e.RelativePath == "" {
+			continue
+		}
+		inputs = append(inputs, qh_dto.FolderFileInput{
+			RelativePath: e.RelativePath,
+			Content:      e.Content,
+			ContentType:  e.ContentType,
+		})
+	}
+	return inputs
+}
+
+func (m *QHPlanningMapper) ToProAIJobProto(job *qh_domain.ProAIJob) *tqdpb.ProAIJob {
+	if job == nil {
+		return nil
+	}
+	var projectID uint64
+	if job.PlanningProjectID != nil {
+		projectID = *job.PlanningProjectID
+	}
+	return &tqdpb.ProAIJob{
+		Id:                job.ID,
+		JobType:           job.JobType,
+		JobTypeName:       enums.GetProAIJobTypeLabel(job.JobType),
+		Name:              job.Name,
+		SourceFolderName:  job.SourceFolderName,
+		ProcessStatus:     uint32(job.ProcessStatus),
+		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(job.ProcessStatus)),
+		PlanningProjectId: projectID,
+		ClassifyError:     job.ClassifyError,
+		Metadata:          job.Metadata,
+		CreatedAt:         _utils.FormatTimeToString(job.CreatedAt),
+		UpdatedAt:         _utils.FormatTimeToString(job.UpdatedAt),
+	}
+}
+
+func (m *QHPlanningMapper) ToProAIJobProtoList(jobs []qh_domain.ProAIJob) []*tqdpb.ProAIJob {
+	result := make([]*tqdpb.ProAIJob, len(jobs))
+	for i := range jobs {
+		result[i] = m.ToProAIJobProto(&jobs[i])
+	}
+	return result
 }

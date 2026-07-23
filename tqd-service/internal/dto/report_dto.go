@@ -18,3 +18,32 @@ type ReportDTO struct {
 	Description   string
 	TargetId      *uint64
 }
+
+type AdminCreateReportRequest struct {
+	Title           string  `json:"title"`
+	Description     string  `json:"description"`
+	ProblemReport   uint32  `json:"problemReport"`
+	ReportType      uint32  `json:"reportType"`
+	Severity        uint32  `json:"severity"`
+	TargetID        *uint64 `json:"targetId"`
+	SupportTicketID *uint64 `json:"supportTicketId"`
+}
+
+type AdminAssignRequest struct {
+	AssigneeID uint64 `json:"assigneeId"`
+}
+
+type AdminSeverityRequest struct {
+	Severity uint32 `json:"severity"`
+	Reason   string `json:"reason"`
+}
+
+type AdminQaStatusRequest struct {
+	QaStatus uint32 `json:"qaStatus"`
+	Note     string `json:"note"`
+}
+
+type AdminCloseRequest struct {
+	Reject bool   `json:"reject"`
+	Note   string `json:"note"`
+}

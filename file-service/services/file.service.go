@@ -152,23 +152,41 @@ func LoadVideoAndResponse(c *gin.Context, fileInfoDecode *dto.FileInfo, segmentI
 }
 
 func LoadFileAndResponse(c *gin.Context, path string, ext string, signatureOrSegmentID string) {
-	mimeType := "application/octet-stream"
+	ext = strings.ToLower(strings.TrimPrefix(ext, "."))
 	contentType := map[string]string{
 		"mp4":   "video/mp4",
 		"mov":   "video/quicktime",
 		"webm":  "video/webm",
 		"ogg":   "video/ogg",
 		"png":   "image/png",
-		"jpg":   "image/jpg",
+		"jpg":   "image/jpeg",
 		"jpeg":  "image/jpeg",
+		"gif":   "image/gif",
+		"webp":  "image/webp",
+		"bmp":   "image/bmp",
+		"svg":   "image/svg+xml",
+		"pdf":   "application/pdf",
+		"txt":   "text/plain; charset=utf-8",
+		"json":  "application/json",
+		"xml":   "application/xml",
+		"html":  "text/html; charset=utf-8",
+		"htm":   "text/html; charset=utf-8",
+		"csv":   "text/csv; charset=utf-8",
 		"m3u8":  "application/vnd.apple.mpegurl",
 		"video": "application/vnd.apple.mpegurl",
 	}
-	mime, exists := contentType[ext]
-	if exists {
+	mimeType := "application/octet-stream"
+	if mime, exists := contentType[ext]; exists {
 		mimeType = mime
-	} else {
-		mimeType = "application/octet-stream"
+	}
+
+	// Xem trực tiếp trên trình duyệt (PDF/ảnh/text) thay vì ép tải xuống.
+	inlineExts := map[string]bool{
+		"pdf": true, "png": true, "jpg": true, "jpeg": true, "gif": true,
+		"webp": true, "bmp": true, "svg": true, "txt": true, "html": true, "htm": true,
+	}
+	if inlineExts[ext] {
+		c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filepath.Base(path)))
 	}
 
 	// if ext == "mp4" {

@@ -15,7 +15,9 @@ import (
 
 type Repository struct{ db *gorm.DB }
 
-func NewRepository(db *gorm.DB) ports.Repository { return &Repository{db: db} }
+func NewDiscoveryRepository(db *gorm.DB) ports.Repository {
+	return &Repository{db: db}
+}
 
 type spatialRow struct {
 	ID             string  `gorm:"column:id"`

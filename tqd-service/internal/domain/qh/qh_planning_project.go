@@ -2,7 +2,6 @@ package qh_domain
 
 import (
 	_models "common/domain/entity"
-	"encoding/json"
 	"time"
 	"tqd/internal/enums"
 )
@@ -10,7 +9,6 @@ import (
 type QHPlanningProject struct {
 	_models.BaseEntity
 	Code string `gorm:"type:varchar(255);not null;index" json:"code"`
-	Slug string `gorm:"type:varchar(180);index" json:"slug"`
 	Name string `gorm:"type:varchar(255);not null" json:"name"`
 
 	PlanningType  uint32 `gorm:"type:int4;not null" json:"planningType"`
@@ -25,9 +23,6 @@ type QHPlanningProject struct {
 
 	Authority string `gorm:"type:varchar(255)" json:"authority"`
 
-	ResearchScope string          `gorm:"type:text" json:"researchScope"`
-	Indicators    json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"indicators"`
-
 	Summary        string     `gorm:"type:text" json:"summary"`
 	ApprovalDate   *time.Time `json:"approvalDate"`
 	EffectiveDate  *time.Time `json:"effectiveDate"`
@@ -35,6 +30,11 @@ type QHPlanningProject struct {
 	ValidityStatus string     `gorm:"type:varchar(50);not null" json:"validityStatus"`
 	CurrentVersion string     `gorm:"type:varchar(50)" json:"currentVersion"`
 	Metadata       string     `gorm:"type:jsonb" json:"metadata"`
+
+	// SourceFolderName/SourceFolderPath — ghi lại folder gốc khi admin tạo đồ án bằng cách upload cả folder.
+	SourceFolderName string                      `gorm:"type:varchar(255)" json:"sourceFolderName"`
+	SourceFolderPath string                      `gorm:"type:varchar(500)" json:"sourceFolderPath"`
+	ProcessStatus    enums.PlanningProcessStatus `gorm:"type:int4;default:10;index" json:"processStatus"`
 
 	Layers []*QHLayer `gorm:"foreignKey:PlanningProjectID" json:"layers"`
 }
