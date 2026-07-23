@@ -1,28 +1,30 @@
 //go:build wireinject
 // +build wireinject
-
+	
 package wire
 
 import (
+	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
+	"crm/initial"
 	crm_infra_client "crm/infra/client"
 	crm_infra_email_sender "crm/infra/email_sender"
 	crm_infra_handler "crm/infra/handler"
+	crm_infra_handler_http_contentcatalog "crm/infra/handler/http/contentcatalog"
+	crm_infra_handler_http_seopublic "crm/infra/handler/http/seopublic"
 	crm_infra_impl "crm/infra/impl"
 	crm_infra_job "crm/infra/job"
 	crm_infra_job_appointment_reminder "crm/infra/job/appointment_reminder"
 	crm_infra_mapper "crm/infra/mapper"
 	crm_infra_postgre "crm/infra/postgre"
+	crm_infra_postgre_contentcatalog "crm/infra/postgre/contentcatalog"
 	crm_infra_validator "crm/infra/validator"
-	"crm/initial"
 	crm_initial "crm/initial"
 	crm_internal_domain_seo "crm/internal/domain/seo"
 	crm_internal_interface_provider "crm/internal/interface/provider"
 	crm_internal_repo "crm/internal/repo"
 	crm_internal_usecase "crm/internal/usecase"
-
-	"github.com/google/wire"
 )
 
 // Inject dependencies
@@ -49,6 +51,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.RuleRepo), new(*crm_infra_postgre.PostgreRule)),
 	wire.Bind(new(crm_internal_repo.SharingAccessRepo), new(*crm_infra_postgre.SharingAccessPostgre)),
 	wire.Bind(new(crm_internal_repo.StageRepo), new(*crm_infra_postgre.PostgreStage)),
+	wire.Bind(new(crm_internal_repo.SupportTicketRepo), new(*crm_infra_postgre.row)),
 	crm_infra_postgre.NewAdvertisingSettingsPostgresRepository,
 	crm_internal_usecase.NewAdvertisingSettingsUsecase,
 	crm_infra_handler.NewAppointmentHandler,
@@ -59,6 +62,7 @@ var wireSet = wire.NewSet(
 	crm_infra_mapper.NewAppointmentTransformer,
 	crm_internal_usecase.NewAppointmentUsecase,
 	crm_infra_validator.NewAppointmentValidator,
+	crm_infra_client.NewAuthClient,
 	crm_infra_client.NewBdsproClient,
 	crm_infra_postgre.NewBlockRepo,
 	crm_infra_handler.NewBlockService,
@@ -90,6 +94,7 @@ var wireSet = wire.NewSet(
 	crm_infra_handler.NewFriendService,
 	crm_internal_usecase.NewFriendUsecase,
 	crm_infra_postgre.NewGroupRepo,
+	crm_infra_handler_http_contentcatalog.NewHandler,
 	crm_initial.NewInitialApp,
 	crm_infra_postgre.NewInvitationInstallPostgre,
 	crm_infra_handler.NewInvitationInstallService,
@@ -130,10 +135,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewReportReasonPostgres,
 	crm_internal_usecase.NewReportReasonUsecase,
 	crm_internal_usecase.NewReportUsecase,
-	crm_infra_client.NewAuthClient,
-	crm_infra_postgre.NewSupportTicketPostgres,
-	crm_internal_usecase.NewSupportTicketUsecase,
-	crm_infra_handler.NewSupportTicketHandler,
+	crm_infra_postgre_contentcatalog.NewRepository,
 	crm_internal_usecase.NewRuleEventUsecase,
 	crm_infra_handler.NewRuleService,
 	crm_internal_usecase.NewRuleUsecase,
@@ -174,8 +176,12 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewSharingAccessPostgre,
 	crm_infra_handler.NewSharingAccessService,
 	crm_internal_usecase.NewSharingAccessUsecase,
+	crm_infra_handler_http_seopublic.NewSitemapHandler,
 	crm_infra_handler.NewStageService,
 	crm_internal_usecase.NewStageUsecase,
+	crm_infra_handler.NewSupportTicketHandler,
+	crm_infra_postgre.NewSupportTicketPostgres,
+	crm_internal_usecase.NewSupportTicketUsecase,
 	crm_infra_mapper.NewTagMapper,
 	crm_infra_postgre.NewTagPostgres,
 	crm_infra_handler.NewTagService,
@@ -184,7 +190,6 @@ var wireSet = wire.NewSet(
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
 )
-
 func InitializeApp() (*initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil

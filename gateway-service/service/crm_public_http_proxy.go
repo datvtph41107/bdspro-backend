@@ -14,10 +14,10 @@ import (
 
 /**
  * Googlebot
-→ https://qhpro.vn
-→ Load Balancer / Gateway
-→ http://crm-service:8246 trong private network
-*/
+ * → https://qhpro.vn
+ * → Load Balancer / Gateway
+ * → http://crm-service:8246 trong private network
+ */
 
 const defaultCRMHTTPURL = "http://127.0.0.1:8246"
 
@@ -52,6 +52,7 @@ func resolveCRMPublicHTTPURL(env string) (*url.URL, error) {
 //   - database access
 //   - SEO public-page policy
 //   - rendered HTML
+//   - sitemap XML
 //   - cache headers and ETag
 //
 // Gateway only performs transport-level reverse proxying.
@@ -108,18 +109,19 @@ func RegisterCRMPublicHTTPProxy(routes gin.IRoutes, env string) error {
 		c.Abort()
 	}
 
-	// Taxonomy và content catalog.
+	// Taxonomy and content catalog.
 	routes.GET("/domains", handler)
 	routes.GET("/categories", handler)
 	routes.GET("/feeds/:feed", handler)
 	routes.GET("/search", handler)
 
-	// Rendered SEO HTML.
-	// Ví dụ:
-	// /page/do-an-quy-hoach/qh2
-	//
-	// Wildcard phải đăng ký sau các route cụ thể.
+	// Raw public sitemap XML.
+	routes.GET("/sitemap.xml", handler)
+	routes.HEAD("/sitemap.xml", handler)
+
+	// Rendered SEO HTML. Wildcard routes must stay last.
 	routes.GET("/page/*path", handler)
+	routes.HEAD("/page/*path", handler)
 
 	return nil
 }

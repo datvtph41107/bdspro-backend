@@ -381,63 +381,127 @@ func (r *Repository) getPlanningProjectRow(
 	identity string,
 ) (*projectRow, error) {
 	var row projectRow
-	query := `
-		SELECT pp.id,
-		       COALESCE(pp.code,'') AS code,
-		       COALESCE(pp.slug,'') AS slug,
-		       pp.name,
-		       pp.planning_type,
-		       pp.planning_level,
-		       COALESCE(pp.total_area,0) AS total_area,
-		       pp.jurisdiction_id,
-		       COALESCE(j.name,'') AS jurisdiction_name,
-		       pp.legal_status,
-		       COALESCE(pp.validity_status,'') AS validity_status,
-		       COALESCE(pp.authority,'') AS authority,
-		       COALESCE(pp.summary,'') AS summary,
-		       COALESCE(pp.research_scope,'') AS research_scope,
-		       COALESCE(pp.indicators::text,'[]') AS indicators,
-		       pp.approval_date,
-		       pp.effective_date,
-		       pp.expiry_date,
-		       COALESCE(pp.current_version,'') AS current_version,
-		       COALESCE(pp.metadata::text,'{}') AS metadata,
-		       pp.updated_at,
-		       COALESCE(GeometryType(extent.geometry),'') AS geometry_type,
-		       COALESCE(ST_Y(ST_PointOnSurface(extent.geometry)),0) AS center_lat,
-		       COALESCE(ST_X(ST_PointOnSurface(extent.geometry)),0) AS center_lon,
-		       COALESCE(ST_XMin(Box2D(extent.geometry)),0) AS min_lon,
-		       COALESCE(ST_YMin(Box2D(extent.geometry)),0) AS min_lat,
-		       COALESCE(ST_XMax(Box2D(extent.geometry)),0) AS max_lon,
-		       COALESCE(ST_YMax(Box2D(extent.geometry)),0) AS max_lat
-		FROM qh_planning_projects pp
-		LEFT JOIN qh_jurisdictions j
-		  ON j.id = pp.jurisdiction_id
-		 AND j.deleted_at IS NULL
-		LEFT JOIN LATERAL (
-		  SELECT ST_Union(r.geometry) AS geometry
-		  FROM qh_layers l
-		  JOIN qh_regions r
-		    ON r.layer_id = l.id
-		   AND r.deleted_at IS NULL
-		   AND r.status = 10
-		   AND r.is_latest = true
-		  WHERE l.planning_project_id = pp.id
-		    AND l.deleted_at IS NULL
-		    AND l.status = 10
-		) extent ON true
-		WHERE pp.deleted_at IS NULL
-		  AND (
-		    pp.id::text = ?
-		    OR LOWER(COALESCE(pp.code,'')) = LOWER(?)
-		    OR LOWER(COALESCE(pp.slug,'')) = LOWER(?)
-		    OR LOWER(COALESCE(pp.metadata->>'slug','')) = LOWER(?)
-		    OR LOWER(REGEXP_REPLACE(pp.name, '[^[:alnum:]]+', '-', 'g')) = LOWER(?)
-		  )
-		LIMIT 1`
 
-	if err := r.db.WithContext(ctx).Raw(query, identity, identity, identity, identity, identity).Scan(&row).Error; err != nil {
-		return nil, err
+	/*
+		Resolve exactly one planning project before calculating spatial statistics.
+
+		The previous query joined a correlated LATERAL ST_Union before the final
+		WHERE/LIMIT could reliably reduce the candidate set. Besides creating a
+		full topological union only to read bounds, that plan could aggregate a
+		large number of region geometries and take tens of seconds.
+
+		This query has two explicit stages:
+
+		1. selected_project resolves one project using only lightweight columns.
+		2. The LATERAL subquery calculates ST_Extent for that selected project.
+
+		ST_Extent is sufficient for the public projection because it only needs
+		map bounds and a camera center. It avoids constructing a merged polygon.
+	*/
+	query := `
+		WITH selected_project AS MATERIALIZED (
+			SELECT pp.id,
+			       COALESCE(pp.code,'') AS code,
+			       COALESCE(pp.slug,'') AS slug,
+			       pp.name,
+			       pp.planning_type,
+			       pp.planning_level,
+			       COALESCE(pp.total_area,0) AS total_area,
+			       pp.jurisdiction_id,
+			       COALESCE(j.name,'') AS jurisdiction_name,
+			       pp.legal_status,
+			       COALESCE(pp.validity_status,'') AS validity_status,
+			       COALESCE(pp.authority,'') AS authority,
+			       COALESCE(pp.summary,'') AS summary,
+			       COALESCE(pp.research_scope,'') AS research_scope,
+			       COALESCE(pp.indicators::text,'[]') AS indicators,
+			       pp.approval_date,
+			       pp.effective_date,
+			       pp.expiry_date,
+			       COALESCE(pp.current_version,'') AS current_version,
+			       COALESCE(pp.metadata::text,'{}') AS metadata,
+			       pp.updated_at
+			FROM qh_planning_projects pp
+			LEFT JOIN qh_jurisdictions j
+			  ON j.id = pp.jurisdiction_id
+			 AND j.deleted_at IS NULL
+			WHERE pp.deleted_at IS NULL
+			  AND (
+			    pp.id::text = ?
+			    OR LOWER(COALESCE(pp.code,'')) = LOWER(?)
+			    OR LOWER(COALESCE(pp.slug,'')) = LOWER(?)
+			    OR LOWER(COALESCE(pp.metadata->>'slug','')) = LOWER(?)
+			    OR LOWER(REGEXP_REPLACE(pp.name, '[^[:alnum:]]+', '-', 'g')) = LOWER(?)
+			  )
+			LIMIT 1
+		)
+		SELECT selected.id,
+		       selected.code,
+		       selected.slug,
+		       selected.name,
+		       selected.planning_type,
+		       selected.planning_level,
+		       selected.total_area,
+		       selected.jurisdiction_id,
+		       selected.jurisdiction_name,
+		       selected.legal_status,
+		       selected.validity_status,
+		       selected.authority,
+		       selected.summary,
+		       selected.research_scope,
+		       selected.indicators,
+		       selected.approval_date,
+		       selected.effective_date,
+		       selected.expiry_date,
+		       selected.current_version,
+		       selected.metadata,
+		       selected.updated_at,
+		       COALESCE(extent.geometry_type,'') AS geometry_type,
+		       COALESCE(
+		         (ST_YMin(extent.bounds) + ST_YMax(extent.bounds)) / 2.0,
+		         0
+		       ) AS center_lat,
+		       COALESCE(
+		         (ST_XMin(extent.bounds) + ST_XMax(extent.bounds)) / 2.0,
+		         0
+		       ) AS center_lon,
+		       COALESCE(ST_XMin(extent.bounds),0) AS min_lon,
+		       COALESCE(ST_YMin(extent.bounds),0) AS min_lat,
+		       COALESCE(ST_XMax(extent.bounds),0) AS max_lon,
+		       COALESCE(ST_YMax(extent.bounds),0) AS max_lat
+		FROM selected_project selected
+		LEFT JOIN LATERAL (
+			SELECT
+			  MIN(GeometryType(region.geometry)) AS geometry_type,
+			  ST_Extent(region.geometry) AS bounds
+			FROM qh_layers layer
+			JOIN qh_regions region
+			  ON region.layer_id = layer.id
+			 AND region.deleted_at IS NULL
+			 AND region.status = 10
+			 AND region.is_latest = true
+			 AND region.geometry IS NOT NULL
+			WHERE layer.planning_project_id = selected.id
+			  AND layer.deleted_at IS NULL
+			  AND layer.status = 10
+		) extent ON true`
+
+	normalizedIdentity := strings.TrimSpace(identity)
+	if err := r.db.WithContext(ctx).
+		Raw(
+			query,
+			normalizedIdentity,
+			normalizedIdentity,
+			normalizedIdentity,
+			normalizedIdentity,
+			normalizedIdentity,
+		).
+		Scan(&row).Error; err != nil {
+		return nil, fmt.Errorf(
+			"query planning project %q: %w",
+			normalizedIdentity,
+			err,
+		)
 	}
 	if row.ID == 0 {
 		return nil, gorm.ErrRecordNotFound

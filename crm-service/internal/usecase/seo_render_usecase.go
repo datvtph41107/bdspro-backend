@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"strings"
 	"time"
 
@@ -40,7 +39,7 @@ func (u *SeoRenderUsecase) PreviewSeoPage(ctx context.Context, req *dto.RenderSe
 
 	warnings := validatePreviewWarnings(req.Title, req.Description, req.CanonicalURL, req.Content)
 
-	htmlBody, err := renderSeoHTML(renderSeoInput{
+	htmlBody, documentWarnings, err := renderSeoHTMLWithWarnings(renderSeoInput{
 		Slug:         strings.TrimSpace(req.Slug),
 		Title:        strings.TrimSpace(req.Title),
 		Description:  strings.TrimSpace(req.Description),
@@ -57,6 +56,7 @@ func (u *SeoRenderUsecase) PreviewSeoPage(ctx context.Context, req *dto.RenderSe
 	if err != nil {
 		return nil, err
 	}
+	warnings = append(warnings, documentWarnings...)
 
 	hash := hashRenderedHTML(htmlBody)
 	staticPath := buildStaticHTMLPath(0, req.Slug, hash)
@@ -148,6 +148,7 @@ func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.Generat
 	}
 
 	htmlBody, err := renderSeoHTML(renderSeoInput{
+		Page:            page,
 		Slug:            page.Slug,
 		Title:           page.Title,
 		Description:     page.Description,
@@ -205,6 +206,7 @@ func (u *SeoRenderUsecase) GetSeoGenerationLogs(ctx context.Context, req *dto.Se
 }
 
 type renderSeoInput struct {
+	Page            *seo_domain.SeoDomain
 	Slug            string
 	Title           string
 	Description     string
@@ -221,104 +223,76 @@ type renderSeoInput struct {
 }
 
 func renderSeoHTML(input renderSeoInput) (string, error) {
-	title := strings.TrimSpace(input.Title)
-	if title == "" {
-		return "", _errors.ReturnError(422, "title là bắt buộc để render")
-	}
-
-	canonical := strings.TrimSpace(input.CanonicalURL)
-	if canonical == "" {
-		canonical = "/seo/" + strings.Trim(strings.TrimSpace(input.Slug), "/")
-	}
-
-	description := strings.TrimSpace(input.Description)
-	summary := strings.TrimSpace(input.Summary)
-	if summary == "" {
-		summary = description
-	}
-
-	metadataScript := buildMetadataScript(input.Metadata)
-
-	robots := "noindex,follow"
-	if input.Indexable {
-		robots = "index,follow"
-	}
-
-	view := struct {
-		Slug            string
-		Title           string
-		Description     string
-		CanonicalURL    string
-		ContentHTML     template.HTML
-		Summary         string
-		MetadataScript  template.HTML
-		TemplateKey     string
-		ModuleID        string
-		Environment     string
-		Indexable       bool
-		Robots          string
-		TelemetryScript string
-		GeneratedAtISO  string
-	}{
-		Slug:            input.Slug,
-		Title:           title,
-		Description:     description,
-		CanonicalURL:    canonical,
-		ContentHTML:     template.HTML(sanitizeTrustedContent(input.Content)),
-		Summary:         summary,
-		MetadataScript:  template.HTML(metadataScript),
-		TemplateKey:     firstNonEmptyRender(input.TemplateKey, "default"),
-		ModuleID:        firstNonEmptyRender(input.ModuleID, input.TemplateKey, "default"),
-		Environment:     firstNonEmptyRender(input.Environment, "crm-rendered"),
-		Indexable:       input.Indexable,
-		Robots:          robots,
-		TelemetryScript: strings.TrimSpace(input.TelemetryScript),
-		GeneratedAtISO:  input.GeneratedAt.Format(time.RFC3339),
-	}
-
-	tpl, err := template.New("seo_page").Parse(defaultSEOPageTemplate)
-	if err != nil {
-		return "", _errors.ReturnError(500, "không parse được SEO template")
-	}
-
-	var out strings.Builder
-	if err := tpl.Execute(&out, view); err != nil {
-		return "", _errors.ReturnError(500, "render SEO template thất bại: "+err.Error())
-	}
-
-	return out.String(), nil
+	htmlBody, _, err := renderSeoHTMLWithWarnings(input)
+	return htmlBody, err
 }
 
-const defaultSEOPageTemplate = `<!doctype html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8">
-  <title>{{.Title}}</title>
-  <meta name="description" content="{{.Description}}">
-  <link rel="canonical" href="{{.CanonicalURL}}">
-  <meta name="robots" content="{{.Robots}}">
-  <meta property="og:title" content="{{.Title}}">
-  <meta property="og:description" content="{{.Description}}">
-  <meta property="og:url" content="{{.CanonicalURL}}">
-  <meta name="x-seo-template" content="{{.TemplateKey}}">
-  <meta name="x-seo-generated-at" content="{{.GeneratedAtISO}}">
-  {{.MetadataScript}}
-</head>
-<body data-qhpro-seo-document data-qhpro-seo-module="{{.ModuleID}}" data-qhpro-seo-environment="{{.Environment}}" data-qhpro-seo-indexable="{{.Indexable}}">
-  <main data-seo-slug="{{.Slug}}">
-    <article>
-      <header>
-        <h1>{{.Title}}</h1>
-        {{if .Summary}}<p>{{.Summary}}</p>{{end}}
-      </header>
-      <section>
-        {{.ContentHTML}}
-      </section>
-    </article>
-  </main>
-  {{if .TelemetryScript}}<script src="{{.TelemetryScript}}" defer></script>{{end}}
-</body>
-</html>`
+func renderSeoHTMLWithWarnings(input renderSeoInput) (string, []string, error) {
+	generatedAt := input.GeneratedAt
+	if generatedAt.IsZero() {
+		generatedAt = time.Now().UTC()
+	}
+
+	page := input.Page
+	if page == nil {
+		metadata := datatypes.JSON([]byte(strings.TrimSpace(input.Metadata)))
+		if len(metadata) == 0 || !json.Valid(metadata) {
+			metadata = datatypes.JSON([]byte("{}"))
+		}
+		page = &seo_domain.SeoDomain{
+			Slug:         strings.TrimSpace(input.Slug),
+			CanonicalURL: strings.TrimSpace(input.CanonicalURL),
+			Title:        strings.TrimSpace(input.Title),
+			Description:  strings.TrimSpace(input.Description),
+			Content:      input.Content,
+			Summary:      input.Summary,
+			TemplateKey:  firstNonEmptyRender(input.TemplateKey, input.ModuleID, "default"),
+			Metadata:     metadata,
+			Scope:        seo_domain.SeoScopePublic,
+			PageStatus:   seo_domain.SeoPageStatusDraft,
+			RenderStatus: seo_domain.SeoRenderStatusNone,
+			Published:    false,
+			IsIndex:      input.Indexable,
+		}
+	}
+
+	document, warnings, err := composeSeoPublicDocument(page, generatedAt)
+	if err != nil {
+		return "", warnings, err
+	}
+
+	// Explicit render input controls preview/runtime delivery details. Domain
+	// fields remain authoritative for persisted generation.
+	if strings.TrimSpace(input.Title) != "" {
+		document.Heading.Title = strings.TrimSpace(input.Title)
+		document.SEO.Title = strings.TrimSpace(input.Title)
+	}
+	if strings.TrimSpace(input.Description) != "" {
+		document.SEO.Description = strings.TrimSpace(input.Description)
+	}
+	if strings.TrimSpace(input.Summary) != "" {
+		document.Heading.Summary = strings.TrimSpace(input.Summary)
+	}
+	if strings.TrimSpace(input.CanonicalURL) != "" {
+		document.Identity.CanonicalPath = canonicalPathFromURL(input.CanonicalURL, input.Slug)
+		document.SEO.CanonicalPath = document.Identity.CanonicalPath
+	}
+	if input.Page == nil {
+		document.Source.Environment = "fixture"
+		document.SEO.Indexable = false
+		applySeoAnswerReadiness(document)
+	}
+
+	htmlBody, err := renderSeoPublicDocumentHTML(document, seoDocumentRenderOptions{
+		CanonicalURL:    firstNonEmptyRender(input.CanonicalURL, page.CanonicalURL, document.SEO.CanonicalPath),
+		TemplateKey:     firstNonEmptyRender(input.TemplateKey, page.TemplateKey, document.ModuleID),
+		ModuleID:        firstNonEmptyRender(input.ModuleID, document.ModuleID),
+		Environment:     firstNonEmptyRender(input.Environment, "crm-rendered"),
+		TelemetryScript: strings.TrimSpace(input.TelemetryScript),
+		GeneratedAt:     generatedAt,
+	})
+	return htmlBody, warnings, err
+}
 
 func validatePreviewWarnings(title string, description string, canonicalURL string, content string) []string {
 	warnings := make([]string, 0)

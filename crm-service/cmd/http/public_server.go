@@ -43,14 +43,22 @@ func NewPublicHTTPServer() (*http.Server, error) {
 	catalogHandler := catalog_handler.NewHandler(catalogRepository)
 
 	seoDomainRepository := postgre.NewSeoDomainPostgres(database)
+
 	seoPublicUsecase := usecase.NewSeoPublicUsecase(seoDomainRepository)
 	seoPublicHandler := seo_public_handler.NewHandler(seoPublicUsecase)
+
+	seoSitemapUsecase := usecase.NewSeoSitemapUsecase(seoDomainRepository)
+	seoSitemapHandler := seo_public_handler.NewSitemapHandler(
+		seoSitemapUsecase,
+		config.AppProperties.Seo.PublicBaseURL,
+	)
 
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:3000",
+			"http://127.0.0.1:3000",
 			"https://qhpro.vn",
 			"https://map.qhpro.vn",
 		},
@@ -66,9 +74,13 @@ func NewPublicHTTPServer() (*http.Server, error) {
 			"If-None-Match",
 		},
 		ExposeHeaders: []string{
+			"Content-Length",
+			"Content-Type",
 			"ETag",
 			"Cache-Control",
+			"Retry-After",
 			"X-Robots-Tag",
+			"X-Content-Type-Options",
 		},
 		MaxAge: 12 * time.Hour,
 	}))
@@ -87,9 +99,14 @@ func NewPublicHTTPServer() (*http.Server, error) {
 		public.GET("/feeds/:feed", catalogHandler.ListFeed)
 		public.GET("/search", catalogHandler.Search)
 
-		// Phải đặt sau các route cụ thể.
-		// c.Param("slug") sẽ có dạng "/do-an-quy-hoach/qh2".
+		// Raw public sitemap XML. Register this before wildcard page routes.
+		public.GET("/sitemap.xml", seoSitemapHandler.Get)
+		public.HEAD("/sitemap.xml", seoSitemapHandler.Get)
+
+		// Rendered SEO HTML.
+		// c.Param("slug") has a leading slash, e.g. "/do-an-quy-hoach/qh2".
 		public.GET("/page/*slug", seoPublicHandler.GetPageBySlug)
+		public.HEAD("/page/*slug", seoPublicHandler.GetPageBySlug)
 	}
 
 	return &http.Server{

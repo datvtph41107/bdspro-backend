@@ -49,6 +49,7 @@ func (h *Handler) GetPageBySlug(c *gin.Context) {
 		c.Header("X-Robots-Tag", "noindex, follow")
 	}
 
+	c.Header("Content-Type", contentType)
 	c.Header("X-Content-Type-Options", "nosniff")
 
 	etag := normalizeETag(response.ETag)
@@ -59,6 +60,11 @@ func (h *Handler) GetPageBySlug(c *gin.Context) {
 			c.Status(http.StatusNotModified)
 			return
 		}
+	}
+
+	if c.Request.Method == http.MethodHead {
+		c.Status(statusCode)
+		return
 	}
 
 	c.Data(statusCode, contentType, []byte(response.HTML))
