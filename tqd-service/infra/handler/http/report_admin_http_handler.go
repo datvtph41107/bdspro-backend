@@ -1,11 +1,15 @@
 package handler_http
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
 
 	_utils "common/utils"
+	"pb/clients"
+	"tqd/env"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -15,14 +19,29 @@ import (
 )
 
 type ReportAdminHTTPHandler struct {
-	usecase usecase.ReportUsecase
+	usecase    usecase.ReportUsecase
+	authClient *clients.AuthGrpcClient
 }
 
 func NewReportAdminHTTPHandler(usecase usecase.ReportUsecase) *ReportAdminHTTPHandler {
-	return &ReportAdminHTTPHandler{usecase: usecase}
+	return &ReportAdminHTTPHandler{
+		usecase:    usecase,
+		authClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+	}
+}
+
+// ctxFromGin: JWT middleware gắn profileId trên Gin keys, không có trên Request.Context().
+// HasPermissions (gRPC) cần ProfileIDKey trên context — dùng CreateContextFromGin.
+func ctxFromGin(c *gin.Context) context.Context {
+	return _utils.CreateContextFromGin(c)
 }
 
 func (h *ReportAdminHTTPHandler) List(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XEM"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
 	filter := repo.AdminReportFilter{Page: page, Limit: size, Q: c.Query("q")}
@@ -45,7 +64,7 @@ func (h *ReportAdminHTTPHandler) List(c *gin.Context) {
 		n, _ := strconv.ParseUint(v, 10, 64)
 		filter.AssigneeID = &n
 	}
-	reports, total, err := h.usecase.AdminList(c.Request.Context(), filter)
+	reports, total, err := h.usecase.AdminList(ctx, filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -58,7 +77,12 @@ func (h *ReportAdminHTTPHandler) List(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) Summary(c *gin.Context) {
-	m, err := h.usecase.AdminSummary(c.Request.Context())
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XEM"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+	m, err := h.usecase.AdminSummary(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -67,12 +91,17 @@ func (h *ReportAdminHTTPHandler) Summary(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) Get(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XEM"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	report, err := h.usecase.AdminGet(c.Request.Context(), id)
+	report, err := h.usecase.AdminGet(ctx, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -81,13 +110,18 @@ func (h *ReportAdminHTTPHandler) Get(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) CreateInternal(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_TAO"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	var req dto.AdminCreateReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	actorID := _utils.GetProfileIdWithContext(c.Request.Context())
-	report, err := h.usecase.AdminCreateInternal(c.Request.Context(), actorID, req)
+	actorID := _utils.GetProfileIdWithContext(ctx)
+	report, err := h.usecase.AdminCreateInternal(ctx, actorID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -96,13 +130,18 @@ func (h *ReportAdminHTTPHandler) CreateInternal(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) Assign(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req dto.AdminAssignRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.usecase.AdminAssign(c.Request.Context(), id, req.AssigneeID); err != nil {
+	if err := h.usecase.AdminAssign(ctx, id, req.AssigneeID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -110,13 +149,18 @@ func (h *ReportAdminHTTPHandler) Assign(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) UpdateSeverity(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req dto.AdminSeverityRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.usecase.AdminUpdateSeverity(c.Request.Context(), id, req.Severity); err != nil {
+	if err := h.usecase.AdminUpdateSeverity(ctx, id, req.Severity); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -124,13 +168,18 @@ func (h *ReportAdminHTTPHandler) UpdateSeverity(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) UpdateQaStatus(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req dto.AdminQaStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.usecase.AdminUpdateQaStatus(c.Request.Context(), id, req.QaStatus); err != nil {
+	if err := h.usecase.AdminUpdateQaStatus(ctx, id, req.QaStatus); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -138,28 +187,68 @@ func (h *ReportAdminHTTPHandler) UpdateQaStatus(c *gin.Context) {
 }
 
 func (h *ReportAdminHTTPHandler) UpdateLinkage(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var linkage map[string]interface{}
 	if err := c.ShouldBindJSON(&linkage); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.usecase.AdminUpdateLinkage(c.Request.Context(), id, linkage); err != nil {
+	if err := h.usecase.AdminUpdateLinkage(ctx, id, linkage); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"id": id, "message": "linkage updated"})
 }
 
+func (h *ReportAdminHTTPHandler) UpdateImages(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var req dto.AdminImagesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.usecase.AdminUpdateImages(ctx, id, req.Images); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"id": id, "message": "images updated"})
+}
+
 func (h *ReportAdminHTTPHandler) Close(c *gin.Context) {
+	ctx := ctxFromGin(c)
+	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XOA"}); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req dto.AdminCloseRequest
 	_ = c.ShouldBindJSON(&req)
-	if err := h.usecase.AdminClose(c.Request.Context(), id, req.Reject, req.Note); err != nil {
+	if err := h.usecase.AdminClose(ctx, id, req.Reject, req.Note); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"id": id, "message": "closed"})
+}
+
+func reportImages(raw []byte) []string {
+	if len(raw) == 0 {
+		return []string{}
+	}
+	var out []string
+	if err := json.Unmarshal(raw, &out); err != nil || out == nil {
+		return []string{}
+	}
+	return out
 }
 
 func reportToJSON(r domain.Report) gin.H {
@@ -175,6 +264,7 @@ func reportToJSON(r domain.Report) gin.H {
 		"severity":      uint32(r.Severity),
 		"createdAt":     r.CreatedAt.Format(time.RFC3339),
 		"linkage":       r.Linkage,
+		"images":        reportImages(r.Images),
 	}
 	if r.AssigneeID != nil {
 		out["assigneeId"] = *r.AssigneeID

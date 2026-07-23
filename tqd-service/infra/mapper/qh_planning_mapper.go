@@ -264,6 +264,8 @@ func (m *QHPlanningMapper) ToProAIJobProto(job *qh_domain.ProAIJob) *tqdpb.ProAI
 		Metadata:           job.Metadata,
 		CreatedAt:          _utils.FormatTimeToString(job.CreatedAt),
 		UpdatedAt:          _utils.FormatTimeToString(job.UpdatedAt),
+		CompletedAt:        _utils.FormatTimeToString(job.CompletedAt),
+		ApprovedAt:         _utils.FormatTimeToString(job.ApprovedAt),
 	}
 }
 

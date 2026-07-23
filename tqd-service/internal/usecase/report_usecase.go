@@ -27,6 +27,7 @@ type ReportUsecase interface {
 	AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32) error
 	AdminUpdateQaStatus(ctx context.Context, reportID uint64, qaStatus uint32) error
 	AdminUpdateLinkage(ctx context.Context, reportID uint64, linkage map[string]interface{}) error
+	AdminUpdateImages(ctx context.Context, reportID uint64, images []string) error
 	AdminClose(ctx context.Context, reportID uint64, reject bool, note string) error
 	AdminDelete(ctx context.Context, reportID uint64) error
 }
@@ -123,6 +124,14 @@ func (u *reportUsecase) AdminGet(ctx context.Context, reportID uint64) (*domain.
 }
 
 func (u *reportUsecase) AdminCreateInternal(ctx context.Context, actorID uint64, req dto.AdminCreateReportRequest) (*domain.Report, error) {
+	imagesJSON := datatypes.JSON([]byte("[]"))
+	if len(req.Images) > 0 {
+		b, err := json.Marshal(req.Images)
+		if err != nil {
+			return nil, err
+		}
+		imagesJSON = datatypes.JSON(b)
+	}
 	report := &domain.Report{
 		UserID:          actorID,
 		Title:           req.Title,
@@ -136,6 +145,7 @@ func (u *reportUsecase) AdminCreateInternal(ctx context.Context, actorID uint64,
 		Format:          10,
 		SupportTicketID: req.SupportTicketID,
 		TargetID:        req.TargetID,
+		Images:          imagesJSON,
 	}
 	if req.Severity == 0 {
 		report.Severity = enums.ReportSeverityMedium
@@ -201,6 +211,58 @@ func (u *reportUsecase) AdminUpdateLinkage(ctx context.Context, reportID uint64,
 	}
 	report.Linkage = datatypes.JSON(b)
 	return u.repo.Update(ctx, report)
+}
+
+func (u *reportUsecase) AdminUpdateImages(ctx context.Context, reportID uint64, images []string) error {
+	report, err := u.repo.GetByID(ctx, reportID)
+	if err != nil || report == nil {
+		return errors.New("report not found")
+	}
+	existing := unmarshalReportImages(report.Images)
+	merged := mergeUniqueStrings(existing, images)
+	b, err := json.Marshal(merged)
+	if err != nil {
+		return err
+	}
+	report.Images = datatypes.JSON(b)
+	return u.repo.Update(ctx, report)
+}
+
+func unmarshalReportImages(raw datatypes.JSON) []string {
+	if len(raw) == 0 {
+		return []string{}
+	}
+	var out []string
+	if err := json.Unmarshal(raw, &out); err != nil || out == nil {
+		return []string{}
+	}
+	return out
+}
+
+func mergeUniqueStrings(existing, incoming []string) []string {
+	seen := make(map[string]struct{}, len(existing)+len(incoming))
+	out := make([]string, 0, len(existing)+len(incoming))
+	for _, s := range existing {
+		if s == "" {
+			continue
+		}
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	for _, s := range incoming {
+		if s == "" {
+			continue
+		}
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	return out
 }
 
 func (u *reportUsecase) AdminClose(ctx context.Context, reportID uint64, reject bool, note string) error {

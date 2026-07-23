@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 # Chạy local tối thiểu: login (auth+user+redis+gateway) + ticket/report (crm+tqd) + FE
+# + TQD gRPC (Pro AI / planning qua gateway :8219)
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BE="$ROOT/bdspro-golang-microservices"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Hỗ trợ 2 vị trí:
+#   bdspro/scripts/run-support-gis.sh
+#   bdspro/bdspro-golang-microservices/shared/scripts/run-support-gis.sh
+if [[ -d "$SCRIPT_DIR/../../tqd-service" ]]; then
+  BE="$(cd "$SCRIPT_DIR/../.." && pwd)"
+  ROOT="$(cd "$BE/.." && pwd)"
+elif [[ -d "$SCRIPT_DIR/../bdspro-golang-microservices" ]]; then
+  ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+  BE="$ROOT/bdspro-golang-microservices"
+else
+  echo "Cannot resolve BE root from $SCRIPT_DIR"
+  exit 1
+fi
 FE="$ROOT/react-js-admin-bds"
 CODE="$BE/shared/code"
 LOG_DIR="${TMPDIR:-/tmp}/bdspro-support-gis"
@@ -11,6 +24,7 @@ mkdir -p "$LOG_DIR"
 
 CRM_DSN="${CRM_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_crm?sslmode=disable}"
 TQD_DSN="${TQD_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable}"
+AUTH_DSN="${AUTH_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_auth?sslmode=disable}"
 REDIS_NAME="${REDIS_NAME:-bdspro-redis-local}"
 REDIS_PASS="${REDIS_PASS:-protected_redis_secure_password}"
 
@@ -29,8 +43,8 @@ usage() {
 Usage: ./scripts/run-support-gis.sh [deps|migrate|be|fe|all|stop]
 
   deps     Cài migrate/air/protoc + go mod + yarn + redis docker
-  migrate  Apply SQL feature (CRM support_tickets + TQD report QA)
-  be       Redis + auth + user + gateway + crm + tqd (đủ login + feature)
+  migrate  Apply SQL feature (CRM/TQD tickets+reports+images + auth HT/BC_GIS perms)
+  be       Redis + auth + user + gateway + crm + tqd-http + tqd-grpc
   fe       Admin FE (vite)
   all      deps + migrate + be + fe  (mặc định)
   stop     Kill ports + redis container
@@ -188,13 +202,25 @@ do_migrate() {
   apply_sql_file "$CRM_DSN" \
     "$BE/crm-service/infra/db/migrate_v2/000012_support_tickets.up.sql" \
     "$BE/crm-service"
+  apply_sql_file "$CRM_DSN" \
+    "$BE/crm-service/infra/db/migrate_v2/000013_support_ticket_images.up.sql" \
+    "$BE/crm-service"
 
-  echo "==> TQD: apply report QA fields SQL..."
+  echo "==> TQD: apply report QA + images SQL..."
   apply_sql_file "$TQD_DSN" \
     "$BE/tqd-service/infra/db/migrations/v2/000021_report_qa_admin_fields.up.sql" \
     "$BE/tqd-service"
+  apply_sql_file "$TQD_DSN" \
+    "$BE/tqd-service/infra/db/migrations/v2/000022_report_images.up.sql" \
+    "$BE/tqd-service"
+
+  echo "==> Auth: seed ADMIN_HT_* / ADMIN_BC_GIS_* + attach SUPER_ADMIN..."
+  apply_sql_file "$AUTH_DSN" \
+    "$BE/auth-service/scripts/attach_admin_ht_bc_gis_permissions.sql" \
+    "$BE/auth-service" || echo "WARN: auth permission seed failed (check AUTH_DSN / HE_THONG exists)"
 
   echo "Migrate (feature SQL) done."
+  echo "NOTE: nếu menu/API vẫn 403 — xóa Redis ROLE_PERMS_* rồi login lại."
 }
 
 do_be() {
@@ -209,7 +235,9 @@ do_be() {
 
   # Feature stack
   start_svc crm crm 8206
-  start_svc tqd tqd-http 8230
+  start_svc tqd-http tqd-http 8230
+  # Pro AI / planning qua gateway cần TQD gRPC
+  start_svc tqd-grpc tqd-grpc 8219
 
   echo
   echo "BE started (ENV_RUNTIME unset → dial localhost)."
@@ -218,7 +246,8 @@ do_be() {
   echo "  Auth:     :8216"
   echo "  User:     :8201"
   echo "  CRM:      :8206"
-  echo "  TQD HTTP: http://localhost:8230"
+  echo "  TQD HTTP: http://localhost:8230  (reports)"
+  echo "  TQD gRPC: :8219                 (Pro AI / planning)"
   echo "  Logs:     $LOG_DIR/*.log"
   echo "  Login API: POST http://localhost:8000/v2/auth/admin/login"
 }
@@ -233,10 +262,10 @@ do_fe() {
 
 do_stop() {
   echo "==> Stopping services..."
-  for port in 8000 8201 8206 8216 8230 5173; do
+  for port in 8000 8201 8206 8216 8219 8230 5173; do
     kill_port "$port"
   done
-  for f in auth user gateway crm tqd fe; do
+  for f in auth user gateway crm tqd tqd-http tqd-grpc fe; do
     if [[ -f "$LOG_DIR/$f.pid" ]]; then
       kill -9 "$(cat "$LOG_DIR/$f.pid")" 2>/dev/null || true
       rm -f "$LOG_DIR/$f.pid"

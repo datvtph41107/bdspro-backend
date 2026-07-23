@@ -2530,6 +2530,111 @@
           ]
         }
       ]
+    },
+    {
+      "name": "HỖ TRỢ",
+      "key": "HO_TRO",
+      "description": "",
+      "permissionType": "ORGANIZATION",
+      "module": "",
+      "priority": 30,
+      "requiredKey": "",
+      "childs": [
+        {
+          "name": "Yêu cầu hỗ trợ",
+          "key": "ADMIN_HT",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_HT_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_HT_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_HT_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_HT_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        },
+        {
+          "name": "Báo cáo sai sót dữ liệu",
+          "key": "ADMIN_BC_GIS",
+          "description": "",
+          "permissionType": "ORGANIZATION",
+          "module": "",
+          "priority": 20,
+          "requiredKey": "",
+          "childs": [
+            {
+              "name": "Xem",
+              "key": "ADMIN_BC_GIS_XEM",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Tạo",
+              "key": "ADMIN_BC_GIS_TAO",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Sửa",
+              "key": "ADMIN_BC_GIS_SUA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            },
+            {
+              "name": "Xóa",
+              "key": "ADMIN_BC_GIS_XOA",
+              "description": "",
+              "permissionType": "ORGANIZATION",
+              "module": "",
+              "priority": 10,
+              "requiredKey": ""
+            }
+          ]
+        }
+      ]
     }
   ],
   "exportedAt": "2025-10-13T13:51:17.12348+07:00",

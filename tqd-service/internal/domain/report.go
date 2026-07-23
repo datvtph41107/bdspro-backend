@@ -33,6 +33,7 @@ type Report struct {
 	AssigneeID      *uint64              `gorm:"column:assignee_id;index"`
 	QaStatus        enums.ReportQaStatus `gorm:"column:qa_status;default:10;index"`
 	Linkage         datatypes.JSON       `gorm:"column:linkage;type:jsonb"`
+	Images          datatypes.JSON       `gorm:"column:images;type:jsonb;default:'[]'"`
 	SupportTicketID *uint64              `gorm:"column:support_ticket_id;index"`
 	ClosedAt        *time.Time           `gorm:"column:closed_at"`
 }

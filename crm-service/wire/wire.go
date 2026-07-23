@@ -129,6 +129,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewReportReasonPostgres,
 	crm_internal_usecase.NewReportReasonUsecase,
 	crm_internal_usecase.NewReportUsecase,
+	crm_infra_client.NewAuthClient,
 	crm_infra_postgre.NewSupportTicketPostgres,
 	crm_internal_usecase.NewSupportTicketUsecase,
 	crm_infra_handler.NewSupportTicketHandler,

@@ -12,6 +12,8 @@ import (
 
 	_errors "common/errors"
 	_utils "common/utils"
+
+	"gorm.io/datatypes"
 )
 
 type SupportTicketUsecase struct {
@@ -28,6 +30,14 @@ func (u *SupportTicketUsecase) Create(ctx context.Context, req *dto.SupportTicke
 	if err != nil {
 		return nil, err
 	}
+	imagesJSON := datatypes.JSON([]byte("[]"))
+	if len(req.Images) > 0 {
+		b, mErr := json.Marshal(req.Images)
+		if mErr != nil {
+			return nil, mErr
+		}
+		imagesJSON = datatypes.JSON(b)
+	}
 	ticket := &domain.SupportTicket{
 		Code:            code,
 		Title:           req.Title,
@@ -39,6 +49,7 @@ func (u *SupportTicketUsecase) Create(ctx context.Context, req *dto.SupportTicke
 		Source:          dto.DefaultSource(req.Source),
 		RelatedUserID:   req.RelatedUserID,
 		RelatedReportID: req.RelatedReportID,
+		Images:          imagesJSON,
 	}
 	ticket, err = u.repo.Create(ctx, ticket)
 	if err != nil {
@@ -210,6 +221,74 @@ func (u *SupportTicketUsecase) Close(ctx context.Context, id uint64, req *dto.Su
 	})
 }
 
+func (u *SupportTicketUsecase) UpdateImages(ctx context.Context, id uint64, images []string) error {
+	actorID := _utils.GetProfileIdWithContext(ctx)
+	ticket, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if ticket == nil {
+		return _errors.ReturnError(404, "ticket not found")
+	}
+	existing := unmarshalImages(ticket.Images)
+	before, _ := json.Marshal(existing)
+	merged := mergeUniqueStrings(existing, images)
+	b, err := json.Marshal(merged)
+	if err != nil {
+		return err
+	}
+	ticket.Images = datatypes.JSON(b)
+	if err := u.repo.Update(ctx, ticket); err != nil {
+		return err
+	}
+	after, _ := json.Marshal(merged)
+	return u.repo.AddEvent(ctx, &domain.SupportTicketEvent{
+		TicketID:   id,
+		ActorID:    actorID,
+		Action:     "images",
+		BeforeJSON: string(before),
+		AfterJSON:  string(after),
+		Note:       "Images updated",
+	})
+}
+
+func unmarshalImages(raw datatypes.JSON) []string {
+	if len(raw) == 0 {
+		return []string{}
+	}
+	var out []string
+	if err := json.Unmarshal(raw, &out); err != nil || out == nil {
+		return []string{}
+	}
+	return out
+}
+
+func mergeUniqueStrings(existing, incoming []string) []string {
+	seen := make(map[string]struct{}, len(existing)+len(incoming))
+	out := make([]string, 0, len(existing)+len(incoming))
+	for _, s := range existing {
+		if s == "" {
+			continue
+		}
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	for _, s := range incoming {
+		if s == "" {
+			continue
+		}
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	return out
+}
+
 func toItem(t domain.SupportTicket) dto.SupportTicketItemResponse {
 	return dto.SupportTicketItemResponse{
 		ID:              t.ID,
@@ -222,6 +301,7 @@ func toItem(t domain.SupportTicket) dto.SupportTicketItemResponse {
 		RelatedUserID:   t.RelatedUserID,
 		RelatedReportID: t.RelatedReportID,
 		Product:         uint32(t.Product),
+		Images:          unmarshalImages(t.Images),
 		UpdatedAt:       t.UpdatedAt,
 		CreatedAt:       t.CreatedAt,
 	}
@@ -249,6 +329,7 @@ func toDetail(t *domain.SupportTicket, notes []domain.SupportTicketNote, events 
 		RelatedReportID: t.RelatedReportID,
 		Product:         uint32(t.Product),
 		Source:          uint32(t.Source),
+		Images:          unmarshalImages(t.Images),
 		CreatedAt:       t.CreatedAt,
 		UpdatedAt:       t.UpdatedAt,
 		ClosedAt:        t.ClosedAt,

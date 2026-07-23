@@ -5,6 +5,8 @@ import (
 	"time"
 
 	_models "common/models"
+
+	"gorm.io/datatypes"
 )
 
 type SupportTicket struct {
@@ -20,6 +22,7 @@ type SupportTicket struct {
 	AssigneeID      *uint64                      `gorm:"index" json:"assigneeId"`
 	RelatedUserID   *uint64                      `gorm:"index" json:"relatedUserId"`
 	RelatedReportID *uint64                      `gorm:"index" json:"relatedReportId"`
+	Images          datatypes.JSON               `gorm:"type:jsonb;default:'[]'" json:"images"`
 	ClosedAt        *time.Time                   `json:"closedAt"`
 }
 
