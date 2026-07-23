@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Chạy local tối thiểu: login (auth+user+redis+gateway) + ticket/report (crm+tqd) + FE
-# + TQD gRPC (Pro AI / planning qua gateway :8219)
+# Start local BDS Pro: Redis + toàn bộ microservice (air) + Admin FE
+# Hỗ trợ thêm stack tối thiểu cho Support/GIS (tickets + reports).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -32,22 +32,71 @@ REDIS_PASS="${REDIS_PASS:-protected_redis_secure_password}"
 # (ENV_RUNTIME=local sẽ dial hostname "user"/"auth" — chỉ dùng trong docker-compose)
 unset ENV_RUNTIME || true
 export PATH="$PATH:$HOME/go/bin"
-# nvm node nếu có
 if [[ -d "$HOME/.nvm/versions/node" ]]; then
   NODE_DIR="$(ls -1 "$HOME/.nvm/versions/node" | tail -1)"
   export PATH="$PATH:$HOME/.nvm/versions/node/$NODE_DIR/bin"
 fi
 
+# name | make_target | port
+# Port theo gateway-service/config/local.yml + HTTP phụ (file/user/relay/tqd)
+ALL_SVCS=(
+  "auth|auth-grpc|8216"
+  "user|user-grpc|8201"
+  "user-http|user-http|8001"
+  "gateway|gateway-http|8000"
+  "crm|crm|8206"
+  "bdspro|bdspro-grpc|8202"
+  "organization|organization-grpc|8207"
+  "notification|notification-grpc|8204"
+  "social|social-grpc|8209"
+  "appointment|appointment-grpc|8213"
+  "chat|chat-grpc|8208"
+  "chat-http|chat-http|8081"
+  "relay|relay-grpc|8308"
+  "payment|payment-grpc|8205"
+  "membership|membership-grpc|8212"
+  "file|file-http|8002"
+  "marketing|marketing-grpc|8214"
+  "transaction|transaction-grpc|8215"
+  "tqd-http|tqd-http|8230"
+  "tqd-grpc|tqd-grpc|8219"
+)
+
+# Stack tối thiểu: login + ticket/report + upload ảnh + Pro AI
+SUPPORT_SVCS=(
+  "auth|auth-grpc|8216"
+  "user|user-grpc|8201"
+  "gateway|gateway-http|8000"
+  "crm|crm|8206"
+  "file|file-http|8002"
+  "tqd-http|tqd-http|8230"
+  "tqd-grpc|tqd-grpc|8219"
+)
+
+ALL_PORTS=(
+  8000 8001 8002 8081 5173 8308 8800
+  8201 8202 8203 8204 8205 8206 8207 8208 8209
+  8210 8211 8212 8213 8214 8215 8216 8217 8218 8219 8230 8280
+)
+
+ALL_MOD_SVCS=(
+  auth-service user-service gateway-service crm-service tqd-service
+  bdspro-service organization-service notification-service social-service
+  appointment-service chat-service relay-service payment-service
+  membership-service file-service marketing-service transaction-service
+)
+
 usage() {
   cat <<'EOF'
-Usage: ./scripts/run-support-gis.sh [deps|migrate|be|fe|all|stop]
+Usage: ./scripts/run-support-gis.sh [start|all|support|be|fe|deps|migrate|stop|help]
 
-  deps     Cài migrate/air/protoc + go mod + yarn + redis docker
-  migrate  Apply SQL feature (CRM/TQD tickets+reports+images + auth HT/BC_GIS perms)
-  be       Redis + auth + user + gateway + crm + tqd-http + tqd-grpc
-  fe       Admin FE (vite)
-  all      deps + migrate + be + fe  (mặc định)
-  stop     Kill ports + redis container
+  start | all   Stop sạch rồi start TẤT CẢ BE + FE   (mặc định)
+  support       Stack tối thiểu Support/GIS (auth+user+gateway+crm+tqd) + FE
+  be            Chỉ BE full (không FE)
+  fe            Chỉ Admin FE (vite)
+  deps          Cài migrate/air/protoc + go mod + yarn + redis docker
+  migrate       Apply SQL feature (tickets/reports + auth HT/BC_GIS)
+  stop          Kill toàn bộ port/service + redis container
 EOF
 }
 
@@ -63,6 +112,9 @@ kill_port() {
   if command -v lsof >/dev/null 2>&1; then
     lsof -ti "tcp:$port" 2>/dev/null | xargs -r kill -9 2>/dev/null || true
   fi
+  if command -v fuser >/dev/null 2>&1; then
+    fuser -k "${port}/tcp" >/dev/null 2>&1 || true
+  fi
 }
 
 start_svc() {
@@ -73,6 +125,17 @@ start_svc() {
   echo "==> Start $name (make $make_target) → :$port  log: $LOG_DIR/$name.log"
   (cd "$CODE" && make "$make_target") >"$LOG_DIR/$name.log" 2>&1 &
   echo $! >"$LOG_DIR/$name.pid"
+  # Stagger nhẹ để nhiều air không tranh bind cùng lúc
+  sleep 0.3
+}
+
+start_svc_list() {
+  local -n list=$1
+  local row name target port
+  for row in "${list[@]}"; do
+    IFS='|' read -r name target port <<<"$row"
+    start_svc "$name" "$target" "$port"
+  done
 }
 
 ensure_migrate_cli() {
@@ -134,19 +197,22 @@ do_deps() {
   ensure_protoc_plugins
   ensure_redis
 
-  echo "==> go mod download (auth / user / gateway / crm / tqd)..."
-  for svc in auth-service user-service gateway-service crm-service tqd-service; do
-    echo "    $svc"
-    (cd "$BE/$svc" && go mod download)
+  echo "==> go mod download..."
+  for svc in "${ALL_MOD_SVCS[@]}"; do
+    if [[ -d "$BE/$svc" ]]; then
+      echo "    $svc"
+      (cd "$BE/$svc" && go mod download) || echo "WARN: go mod download failed for $svc"
+    fi
   done
 
   if command -v buf >/dev/null 2>&1 && [[ -d "$BE/shared/protobuf/schema" ]]; then
-    echo "==> buf generate crm + auth + user..."
+    echo "==> buf generate crm + auth + user + tqd..."
     (
       cd "$BE/shared/protobuf/schema"
       buf generate --template ./buf.gen.yaml --path crm || true
       buf generate --template ./buf.gen.yaml --path auth || true
       buf generate --template ./buf.gen.yaml --path user || true
+      buf generate --template ./buf.gen.yaml --path tqd || true
     )
   else
     echo "warn: buf chưa sẵn — bỏ qua generate proto"
@@ -223,22 +289,7 @@ do_migrate() {
   echo "NOTE: nếu menu/API vẫn 403 — xóa Redis ROLE_PERMS_* rồi login lại."
 }
 
-do_be() {
-  need_cmd air
-  need_cmd make
-  ensure_redis
-
-  # Login stack
-  start_svc auth auth-grpc 8216
-  start_svc user user-grpc 8201
-  start_svc gateway gateway-http 8000
-
-  # Feature stack
-  start_svc crm crm 8206
-  start_svc tqd-http tqd-http 8230
-  # Pro AI / planning qua gateway cần TQD gRPC
-  start_svc tqd-grpc tqd-grpc 8219
-
+print_be_urls() {
   echo
   echo "BE started (ENV_RUNTIME unset → dial localhost)."
   echo "  Redis:    localhost:6379 ($REDIS_NAME)"
@@ -246,55 +297,120 @@ do_be() {
   echo "  Auth:     :8216"
   echo "  User:     :8201"
   echo "  CRM:      :8206"
+  echo "  File:     http://localhost:8002  (upload /v1/file/upload)"
   echo "  TQD HTTP: http://localhost:8230  (reports)"
   echo "  TQD gRPC: :8219                 (Pro AI / planning)"
   echo "  Logs:     $LOG_DIR/*.log"
   echo "  Login API: POST http://localhost:8000/v2/auth/admin/login"
 }
 
+do_be_full() {
+  need_cmd air
+  need_cmd make
+  ensure_redis
+  # Dọn instance cũ trước khi start full (tránh air chồng / port in use)
+  do_stop_soft
+  start_svc_list ALL_SVCS
+  print_be_urls
+}
+
+do_be_support() {
+  need_cmd air
+  need_cmd make
+  ensure_redis
+  do_stop_soft
+  start_svc_list SUPPORT_SVCS
+  print_be_urls
+}
+
 do_fe() {
   need_cmd yarn
+  kill_port 5173
+  # Dọn vite/yarn sót (không dùng pkill -f 'yarn' vì dễ match nhầm)
+  local pids
+  mapfile -t pids < <(pgrep -f "$FE/node_modules/.bin/vite" || true)
+  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
   echo "==> Start Admin FE → log: $LOG_DIR/fe.log"
-  (cd "$FE" && yarn dev) >"$LOG_DIR/fe.log" 2>&1 &
+  # Polling tránh EMFILE khi inotify instances gần đầy (nhiều air)
+  (
+    cd "$FE"
+    export CHOKIDAR_USEPOLLING=1
+    export WATCHPACK_POLLING=true
+    ulimit -n 65536 2>/dev/null || true
+    yarn dev
+  ) >"$LOG_DIR/fe.log" 2>&1 &
   echo $! >"$LOG_DIR/fe.pid"
-  echo "FE started. URL thường http://localhost:5173/login"
+  # Đợi vite bind :5173 (tối đa ~20s)
+  local i
+  for i in $(seq 1 40); do
+    if ss -ltn 2>/dev/null | grep -q ':5173'; then
+      echo "FE started. URL: http://localhost:5173/login"
+      return 0
+    fi
+    sleep 0.5
+  done
+  echo "WARN: FE chưa listen :5173 — xem log: $LOG_DIR/fe.log"
+  tail -n 30 "$LOG_DIR/fe.log" || true
+}
+
+do_stop_soft() {
+  echo "==> Stopping existing services (ports + pids)..."
+  local port
+  for port in "${ALL_PORTS[@]}"; do
+    kill_port "$port"
+  done
+  local f
+  for f in "$LOG_DIR"/*.pid; do
+    [[ -f "$f" ]] || continue
+    kill -9 "$(cat "$f")" 2>/dev/null || true
+    rm -f "$f"
+  done
+  # Dọn air + tmp/main (tránh chồng watcher → FE EMFILE)
+  local pids
+  mapfile -t pids < <(pgrep -x air || true)
+  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
+  mapfile -t pids < <(pgrep -f "$BE/.*/tmp/main" || true)
+  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
+  mapfile -t pids < <(pgrep -f "$FE/node_modules/.bin/vite" || true)
+  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
+  sleep 1
 }
 
 do_stop() {
-  echo "==> Stopping services..."
-  for port in 8000 8201 8206 8216 8219 8230 5173; do
-    kill_port "$port"
-  done
-  for f in auth user gateway crm tqd tqd-http tqd-grpc fe; do
-    if [[ -f "$LOG_DIR/$f.pid" ]]; then
-      kill -9 "$(cat "$LOG_DIR/$f.pid")" 2>/dev/null || true
-      rm -f "$LOG_DIR/$f.pid"
-    fi
-  done
+  do_stop_soft
   if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$REDIS_NAME"; then
     docker stop "$REDIS_NAME" >/dev/null || true
   fi
   echo "Stopped."
 }
 
-cmd="${1:-all}"
+print_ui() {
+  echo
+  echo "UI:"
+  echo "  Login:    http://localhost:5173/login"
+  echo "  Tickets:  http://localhost:5173/admin/support/tickets"
+  echo "  Reports:  http://localhost:5173/admin/gis-reports"
+}
+
+cmd="${1:-start}"
 case "$cmd" in
   -h|--help|help) usage ;;
   deps) do_deps ;;
   migrate) do_migrate ;;
-  be) do_be ;;
+  be) do_be_full ;;
+  support)
+    do_be_support
+    do_fe
+    print_ui
+    ;;
   fe) do_fe ;;
   stop) do_stop ;;
-  all)
+  start|start-all|all)
     do_deps
     do_migrate
-    do_be
+    do_be_full
     do_fe
-    echo
-    echo "UI:"
-    echo "  Login:    http://localhost:5173/login"
-    echo "  Tickets:  http://localhost:5173/admin/support/tickets"
-    echo "  Reports:  http://localhost:5173/admin/gis-reports"
+    print_ui
     ;;
   *)
     usage
