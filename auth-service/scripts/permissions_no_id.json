@@ -2568,8 +2568,8 @@
               "requiredKey": ""
             },
             {
-              "name": "Sửa",
-              "key": "ADMIN_HT_SUA",
+              "name": "Xử lý",
+              "key": "ADMIN_HT_XU_LY",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",
@@ -2577,8 +2577,8 @@
               "requiredKey": ""
             },
             {
-              "name": "Xóa",
-              "key": "ADMIN_HT_XOA",
+              "name": "Đóng",
+              "key": "ADMIN_HT_DONG",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",
@@ -2615,8 +2615,8 @@
               "requiredKey": ""
             },
             {
-              "name": "Sửa",
-              "key": "ADMIN_BC_GIS_SUA",
+              "name": "Xử lý",
+              "key": "ADMIN_BC_GIS_XU_LY",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",
@@ -2624,8 +2624,8 @@
               "requiredKey": ""
             },
             {
-              "name": "Xóa",
-              "key": "ADMIN_BC_GIS_XOA",
+              "name": "Đóng",
+              "key": "ADMIN_BC_GIS_DONG",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",

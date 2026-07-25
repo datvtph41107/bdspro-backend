@@ -3,6 +3,7 @@ package initial
 import (
 	handler_grpc "tqd/infra/handler/grpc"
 	handler_http "tqd/infra/handler/http"
+	"tqd/infra/worker"
 )
 
 // InitialApp holds all application dependencies
@@ -50,6 +51,9 @@ type InitialApp struct {
 	WorkspaceMapGrpcHandler        *handler_grpc.MapWorkspaceGrpcHandler
 	QHPlanningGrpcHandler          *handler_grpc.QHPlanningGrpcHandler
 	DiscoveryGrpcHandler           *handler_grpc.DiscoveryGrpcHandler
+
+	// Background workers
+	QHPlanningClassifyWorker *worker.QHPlanningClassifyWorker
 }
 
 // NewApp creates a new App instance
@@ -94,6 +98,7 @@ func NewApp(
 	workspaceMapGrpcHandler *handler_grpc.MapWorkspaceGrpcHandler,
 	qhPlanningGrpcHandler *handler_grpc.QHPlanningGrpcHandler,
 	discoveryGrpcHandler *handler_grpc.DiscoveryGrpcHandler,
+	qhPlanningClassifyWorker *worker.QHPlanningClassifyWorker,
 ) *InitialApp {
 	return &InitialApp{
 		RegionExtendGrpcHandler:        regionExtendGrpcHandler,
@@ -136,5 +141,6 @@ func NewApp(
 		WorkspaceMapGrpcHandler:        workspaceMapGrpcHandler,
 		QHPlanningGrpcHandler:          qhPlanningGrpcHandler,
 		DiscoveryGrpcHandler:           discoveryGrpcHandler,
+		QHPlanningClassifyWorker:       qhPlanningClassifyWorker,
 	}
 }

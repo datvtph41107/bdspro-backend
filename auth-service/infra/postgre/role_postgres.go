@@ -180,9 +180,15 @@ func (r *RoleRepo) GetList(ctx context.Context, pagable _dto.IPagable) ([]domain
 		return nil, 0, err
 	}
 
+	// GetLimitAdmin cho phép size lớn (tới 500) — màn role default gọi size=999 để lấy gần như all
+	limit := pagable.GetLimit()
+	if p, ok := pagable.(*dto.RoleSearchRequest); ok {
+		limit = p.GetLimitAdmin()
+	}
 	err = query.
+		Order("roles.id DESC").
 		Offset(pagable.GetOffset()).
-		Limit(pagable.GetLimit()).
+		Limit(limit).
 		Find(&roles).Error
 	if err != nil {
 		return nil, 0, err
@@ -364,14 +370,30 @@ func (r *RoleRepo) GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domai
 	return &role, err
 }
 
-// AssignRoleToUser gán role cho user bằng cách cập nhật role_key trong auth method
+// AssignRoleToUser gán role cho user: cập nhật auth_method.role_key + ghi role_profiles
+// (permission/me và HasPermissions đều đọc từ role_profiles theo profile_id)
 func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *domain.Role) error {
-	// Cập nhật role_key trong bảng auth_method
-	err := r.GetDB(ctx).
-		Model(&domain.AuthMethod{}).
-		Where("user_id = ?", userId).
-		Update("role_key", role.RoleKey).Error
-	if err != nil {
+	db := r.GetDB(ctx).WithContext(ctx)
+
+	if err := db.Model(&domain.AuthMethod{}).
+		Where("user_id = ? AND deleted_at IS NULL", userId).
+		Update("role_key", role.RoleKey).Error; err != nil {
+		return err
+	}
+
+	// Soft-delete mapping cũ rồi gắn role mới (admin create/update chọn 1 role)
+	now := time.Now()
+	if err := db.Model(&domain.RoleProfile{}).
+		Where("profile_id = ? AND deleted_at IS NULL", userId).
+		Update("deleted_at", now).Error; err != nil {
+		return err
+	}
+
+	rp := &domain.RoleProfile{
+		ProfileID: userId,
+		RoleID:    role.ID,
+	}
+	if err := db.Create(rp).Error; err != nil {
 		return err
 	}
 
@@ -465,9 +487,11 @@ func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64
 		// Nếu có role info thì tạo Role object
 		if result.RoleID != nil && result.RoleName != nil {
 			role := &domain.Role{
-				RoleName:        *result.RoleName,
-				RoleKey:         result.RoleKey,
-				RoleDescription: *result.RoleDesc,
+				RoleName: *result.RoleName,
+				RoleKey:  result.RoleKey,
+			}
+			if result.RoleDesc != nil {
+				role.RoleDescription = *result.RoleDesc
 			}
 			role.ID = *result.RoleID
 			admin.Role = role

@@ -197,6 +197,12 @@ tqd-grpc:
 	@export PATH=$$PATH:$$HOME/go/bin && \
 	$(CD_ROOT) && cd tqd-service && $(AIR_EXE) -- -server=grpc
 
+assistant-grpc:
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	lsof -i :8218 | xargs kill -9 2>/dev/null || true
+	@export PATH=$$PATH:$$HOME/go/bin && \
+	$(CD_ROOT) && cd assistant-service && go run .
+
 start-all:
 	@echo "Starting all services..."
 	$(MAKE) gateway-http &

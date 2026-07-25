@@ -104,9 +104,20 @@ func NewQHPlanningClassifyUsecase(
 }
 
 func (u *qhPlanningClassifyUsecase) RunOnce(ctx context.Context, batchSize int) (int, error) {
+	if batchSize <= 0 {
+		batchSize = 5
+	}
+
 	docs, err := u.documentRepo.ListByProcessStatus(ctx, enums.PlanningProcessStatusPending, batchSize)
 	if err != nil {
 		return 0, err
+	}
+	// Reclaim tài liệu kẹt Processing (crash/restart worker) để không treo mãi.
+	if len(docs) < batchSize {
+		stale, errStale := u.documentRepo.ListByProcessStatus(ctx, enums.PlanningProcessStatusProcessing, batchSize-len(docs))
+		if errStale == nil && len(stale) > 0 {
+			docs = append(docs, stale...)
+		}
 	}
 
 	processed := 0

@@ -49,6 +49,11 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		Metadata:       project.Metadata,
 		CreatedAt:      _utils.FormatTimeToString(project.CreatedAt),
 		UpdatedAt:      _utils.FormatTimeToString(project.UpdatedAt),
+
+		SourceFolderName:  project.SourceFolderName,
+		SourceFolderPath:  project.SourceFolderPath,
+		ProcessStatus:     uint32(project.ProcessStatus),
+		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(project.ProcessStatus)),
 	}
 
 	if project.Jurisdiction != nil {
@@ -100,6 +105,10 @@ func (m *QHPlanningMapper) ToDocumentProto(document *qh_domain.QHPlanningDocumen
 		Metadata:          document.Metadata,
 		CreatedAt:         _utils.FormatTimeToString(document.CreatedAt),
 		UpdatedAt:         _utils.FormatTimeToString(document.UpdatedAt),
+		RelativePath:      document.RelativePath,
+		ProcessStatus:     uint32(document.ProcessStatus),
+		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(document.ProcessStatus)),
+		ClassifyError:     document.ClassifyError,
 	}
 }
 

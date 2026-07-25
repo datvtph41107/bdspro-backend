@@ -77,6 +77,7 @@ func (c *AuthClient) Update(ctx context.Context, authMethod *providers.AuthMetho
 
 	return &providers.AuthMethodDomain{
 		ID:       resp.Id,
+		UserID:   resp.UserId,
 		AuthName: resp.AuthName,
 		FullName: resp.FullName,
 		Email:    resp.Email,
@@ -88,6 +89,13 @@ func (c *AuthClient) Update(ctx context.Context, authMethod *providers.AuthMetho
 func (c *AuthClient) SoftDelete(ctx context.Context, id uint64) error {
 	// return c.AuthGrpcClient.SoftDelete(ctx, id)
 	return nil
+}
+
+func (c *AuthClient) AssignRoleToUser(ctx context.Context, profileID, roleID uint64) error {
+	if profileID == 0 || roleID == 0 {
+		return nil
+	}
+	return c.AuthGrpcClient.AssignRoleToUser(ctx, profileID, roleID)
 }
 
 // DeleteAllAuthMethodsByUserId xóa tất cả auth_method của 1 user
@@ -142,7 +150,9 @@ func (c *AuthClient) FindByID(ctx context.Context, id uint64) (*providers.AuthMe
 
 // AuthAdminInfo chứa thông tin admin từ auth service
 type AuthAdminInfo struct {
-	ProfileID uint64
+	ID        uint64
+	UserID    uint64
+	ProfileID uint64 // legacy alias — thực tế nên dùng UserID (= auth.user_id)
 	Username  string
 	FullName  string
 	Email     string
@@ -150,7 +160,7 @@ type AuthAdminInfo struct {
 	RoleKey   uint32
 }
 
-// GetAuthAdminByIds lấy thông tin admin theo danh sách IDs
+// GetAuthAdminByIds lấy thông tin admin theo danh sách user_id (auth_method.user_id)
 func (c *AuthClient) GetAuthAdminByIds(ctx context.Context, ids []uint64) ([]*AuthAdminInfo, error) {
 	resp, err := c.AuthGrpcClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{
 		Ids: ids,
@@ -162,7 +172,9 @@ func (c *AuthClient) GetAuthAdminByIds(ctx context.Context, ids []uint64) ([]*Au
 	result := make([]*AuthAdminInfo, 0, len(resp.Data))
 	for _, admin := range resp.Data {
 		result = append(result, &AuthAdminInfo{
-			ProfileID: admin.Id,
+			ID:        admin.Id,
+			UserID:    admin.UserId,
+			ProfileID: admin.UserId, // map đúng user_id để list join theo admin_profiles.id
 			Username:  admin.Username,
 			FullName:  admin.FullName,
 			Email:     admin.Email,

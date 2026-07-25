@@ -93,5 +93,8 @@ type AuthProvider interface {
 	// GetRolesByIds lấy danh sách roles theo IDs
 	GetRolesByIds(ctx context.Context, roleIds []uint64) (map[uint64]*models.RoleDTO, error)
 
+	// AssignRoleToUser gắn role vào role_profiles (profileId = auth.user_id)
+	AssignRoleToUser(ctx context.Context, profileID, roleID uint64) error
+
 	// Admin Management methods - gọi trực tiếp auth service
 }

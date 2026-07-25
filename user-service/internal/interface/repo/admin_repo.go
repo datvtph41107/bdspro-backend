@@ -15,6 +15,7 @@ type IAdminRepo interface {
 	ListAdmin(ctx context.Context, req *dto.AdminListRequest) ([]models.AdminProfile, int64, error)
 	CreateAdmin(ctx context.Context, admin *models.AdminProfile) (*models.AdminProfile, error)
 	UpdateAdmin(ctx context.Context, req *models.AdminProfile) (*models.AdminProfile, error)
+	UpdateAuthID(ctx context.Context, adminID, authID uint64) error
 	DeleteAdmin(ctx context.Context, authID uint64) error
 	AssignRole(ctx context.Context, authID uint64, roleKey string) error
 	GetDetail(ctx context.Context, req uint64) (*models.AdminProfile, error)

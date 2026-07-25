@@ -52,8 +52,8 @@ func (p *Pagable) GetLimitAdmin() int {
 	if p.Size <= 0 {
 		return 20
 	}
-	if p.Size >= 500 {
-		return 500
+	if p.Size >= 999 {
+		return 999
 	}
 	return int(p.Size)
 }

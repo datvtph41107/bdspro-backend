@@ -19,6 +19,7 @@ import (
 	tqd_infra_postgres_publiccontent "tqd/infra/postgres/publiccontent"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
+	tqd_infra_worker "tqd/infra/worker"
 	tqd_initial "tqd/initial"
 	tqd_internal_dto "tqd/internal/dto"
 	tqd_internal_modules_discovery_application "tqd/internal/modules/discovery/application"
@@ -166,6 +167,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewQHLayerLegendUsecase,
 	tqd_infra_postgres.NewQHLayerLifecyclePostgres,
 	tqd_internal_usecase_qh.NewQHPlanningClassifyUsecase,
+	tqd_infra_worker.NewQHPlanningClassifyWorker,
 	tqd_infra_postgres.NewQHPlanningDocumentRepo,
 	tqd_internal_usecase_qh.NewQHPlanningDocumentUsecase,
 	tqd_infra_postgres.NewQHPlanningEventRepo,

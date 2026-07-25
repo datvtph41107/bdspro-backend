@@ -324,6 +324,9 @@ func (h *RoleHandler) AssignRoleToUser(ctx context.Context, req *authpb.AssignRo
 		return nil, err
 	}
 
+	// Xóa cache USER_ROLES_* để lần check permission kế tiếp lấy role mới
+	h.internalHandler.ClearUserRolesCache(req.UserId)
+
 	// Convert DTO response to protobuf
 	pbRole := h.convertRoleDTOToPb(result.AssignedRole)
 

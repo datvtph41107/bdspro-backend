@@ -181,6 +181,7 @@ message ListPlanningProjectsRequest {
   string planningType = 4;
   string planningLevel = 5;
   string validityStatus = 6;
+  // processStatus: một giá trị hoặc nhiều (phân tách dấu phẩy) — Pending/Processing/Classified/Approved/Failed.
   string processStatus = 7;
 }
 

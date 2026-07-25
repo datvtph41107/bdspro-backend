@@ -105,7 +105,8 @@ func (r *reportRepo) AdminList(ctx context.Context, filter repo.AdminReportFilte
 	}
 	if filter.Q != "" {
 		like := "%" + filter.Q + "%"
-		query = query.Where("title ILIKE ? OR description ILIKE ?", like, like)
+		// Ưu tiên title (có index khả dụng hơn); description chỉ khi cần và bị giới hạn độ dài scan.
+		query = query.Where("(title ILIKE ? OR left(description, 500) ILIKE ?)", like, like)
 	}
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -119,7 +120,13 @@ func (r *reportRepo) AdminList(ctx context.Context, filter repo.AdminReportFilte
 		limit = 20
 	}
 	offset := (page - 1) * limit
-	err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&reports).Error
+	// List chỉ cần cột nhẹ — bỏ description/images/linkage nặng.
+	err := query.
+		Select("id, user_id, title, problem_report, report_type, status, qa_status, severity, assignee_id, support_ticket_id, created_at, closed_at").
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&reports).Error
 	return reports, total, err
 }
 

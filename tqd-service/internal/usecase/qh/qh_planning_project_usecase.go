@@ -3,6 +3,7 @@ package qh_usecase
 import (
 	_err "common/domain/err"
 	"context"
+	"strings"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
@@ -41,6 +42,11 @@ func NewQHPlanningProjectUsecase(
 }
 
 func (u *qhPlanningProjectUsecase) Create(ctx context.Context, entity *qh_domain.QHPlanningProject) (*qh_domain.QHPlanningProject, error) {
+	// Tạo qua API QH: bắt đầu ở Pending (chờ xử lý / phân loại).
+	entity.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusPending)
+	if strings.TrimSpace(entity.Metadata) == "" {
+		entity.Metadata = "{}"
+	}
 	if err := u.repo.Create(ctx, entity); err != nil {
 		return nil, &_err.ErrorDTO{
 			Code:    500,
@@ -103,7 +109,7 @@ func (u *qhPlanningProjectUsecase) Approve(ctx context.Context, id uint64) (*qh_
 	if project.ProcessStatus != enums.PlanningProcessStatus(enums.PlanningProcessStatusClassified) {
 		return nil, &_err.ErrorDTO{
 			Code:    400,
-			Message: "Đồ án chưa được phân loại xong (chưa ở trạng thái Classified), không thể phê duyệt",
+			Message: "Đồ án chưa phân loại xong (chưa Classified), không thể phê duyệt",
 		}
 	}
 

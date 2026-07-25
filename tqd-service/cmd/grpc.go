@@ -186,6 +186,11 @@ func runGRPCServer() error {
 
 	reflection.Register(s)
 
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	if app.QHPlanningClassifyWorker != nil {
+		app.QHPlanningClassifyWorker.Start(workerCtx)
+	}
+
 	go func() {
 		log.Printf("gRPC Server listening on %s", addr)
 		if err := s.Serve(lis); err != nil {
@@ -197,6 +202,7 @@ func runGRPCServer() error {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutting down gRPC server...")
+	workerCancel()
 	s.GracefulStop()
 	log.Println("gRPC server exited")
 

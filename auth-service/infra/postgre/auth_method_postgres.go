@@ -194,16 +194,43 @@ func (r *AuthMethodPostgres) GetFirstByUserID(ctx context.Context, userID uint64
 	return &auth, nil
 }
 
-// FindByUsernameAndProvider tìm auth method theo username và provider
+// FindByAuthNameAndProvider tìm auth method theo auth_name và provider
 func (r *AuthMethodPostgres) FindByAuthNameAndProvider(ctx context.Context, username, provider string) (*domain.AuthMethod, error) {
 	var auth domain.AuthMethod
 	err := r.GetDB(ctx).WithContext(ctx).
-		Where("username = ? AND provider = ? AND deleted_at IS NULL", username, provider).
+		Where("auth_name = ? AND provider = ? AND deleted_at IS NULL", username, provider).
+		Order("updated_at DESC").
 		First(&auth).Error
 	if err != nil {
 		return nil, err
 	}
 	return &auth, nil
+}
+
+// FindAllByAuthNameAndProvider trả về mọi auth_method trùng auth_name + provider (xử lý dữ liệu legacy trùng username)
+func (r *AuthMethodPostgres) FindAllByAuthNameAndProvider(ctx context.Context, username, provider string) ([]*domain.AuthMethod, error) {
+	var auths []*domain.AuthMethod
+	err := r.GetDB(ctx).WithContext(ctx).
+		Where("auth_name = ? AND provider = ? AND deleted_at IS NULL", username, provider).
+		Order("updated_at DESC").
+		Find(&auths).Error
+	if err != nil {
+		return nil, err
+	}
+	return auths, nil
+}
+
+// FindAllByEmailAndProvider trả về mọi auth_method trùng email + provider
+func (r *AuthMethodPostgres) FindAllByEmailAndProvider(ctx context.Context, email, provider string) ([]*domain.AuthMethod, error) {
+	var auths []*domain.AuthMethod
+	err := r.GetDB(ctx).WithContext(ctx).
+		Where("email = ? AND provider = ? AND deleted_at IS NULL", email, provider).
+		Order("updated_at DESC").
+		Find(&auths).Error
+	if err != nil {
+		return nil, err
+	}
+	return auths, nil
 }
 
 // CountByProvider đếm số lượng auth method theo provider
@@ -266,7 +293,7 @@ func (r *AuthMethodPostgres) FindDeletedByUsername(c context.Context, username s
 	var auth domain.AuthMethod
 	err := r.GetDB(c).
 		WithContext(c).
-		Where("username = ? AND deleted_at IS NOT NULL", username).
+		Where("auth_name = ? AND deleted_at IS NOT NULL", username).
 		First(&auth).
 		Error
 	if err != nil {

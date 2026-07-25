@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Start local BDS Pro: Redis + toàn bộ microservice (air) + Admin FE
-# Hỗ trợ thêm stack tối thiểu cho Support/GIS (tickets + reports).
+# Start local BDS Pro: microservice (air) + Admin FE.
+# Redis + Postgres dùng remote (config service) — không Docker.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -25,8 +25,6 @@ mkdir -p "$LOG_DIR"
 CRM_DSN="${CRM_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_crm?sslmode=disable}"
 TQD_DSN="${TQD_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable}"
 AUTH_DSN="${AUTH_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_auth?sslmode=disable}"
-REDIS_NAME="${REDIS_NAME:-bdspro-redis-local}"
-REDIS_PASS="${REDIS_PASS:-protected_redis_secure_password}"
 
 # Quan trọng: để TRỐNG để GetPrefixProtobufUrl → localhost
 # (ENV_RUNTIME=local sẽ dial hostname "user"/"auth" — chỉ dùng trong docker-compose)
@@ -58,6 +56,7 @@ ALL_SVCS=(
   "file|file-http|8002"
   "marketing|marketing-grpc|8214"
   "transaction|transaction-grpc|8215"
+  "assistant|assistant-grpc|8218"
   "tqd-http|tqd-http|8230"
   "tqd-grpc|tqd-grpc|8219"
 )
@@ -69,6 +68,7 @@ SUPPORT_SVCS=(
   "gateway|gateway-http|8000"
   "crm|crm|8206"
   "file|file-http|8002"
+  "assistant|assistant-grpc|8218"
   "tqd-http|tqd-http|8230"
   "tqd-grpc|tqd-grpc|8219"
 )
@@ -84,6 +84,7 @@ ALL_MOD_SVCS=(
   bdspro-service organization-service notification-service social-service
   appointment-service chat-service relay-service payment-service
   membership-service file-service marketing-service transaction-service
+  assistant-service
 )
 
 usage() {
@@ -94,9 +95,9 @@ Usage: ./scripts/run-support-gis.sh [start|all|support|be|fe|deps|migrate|stop|h
   support       Stack tối thiểu Support/GIS (auth+user+gateway+crm+tqd) + FE
   be            Chỉ BE full (không FE)
   fe            Chỉ Admin FE (vite)
-  deps          Cài migrate/air/protoc + go mod + yarn + redis docker
-  migrate       Apply SQL feature (tickets/reports + auth HT/BC_GIS)
-  stop          Kill toàn bộ port/service + redis container
+  deps          Cài migrate/air/protoc + go mod + yarn (không Docker)
+  migrate       Apply SQL feature (tickets/reports + auth HT/BC_GIS) lên DB remote
+  stop          Kill toàn bộ port/service local (không đụng Redis/DB remote)
 EOF
 }
 
@@ -110,11 +111,27 @@ need_cmd() {
 kill_port() {
   local port="$1"
   if command -v lsof >/dev/null 2>&1; then
-    lsof -ti "tcp:$port" 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    local pids
+    pids="$(lsof -ti "tcp:$port" 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      # shellcheck disable=SC2086
+      kill -9 $pids 2>/dev/null || true
+    fi
   fi
   if command -v fuser >/dev/null 2>&1; then
     fuser -k "${port}/tcp" >/dev/null 2>&1 || true
   fi
+}
+
+port_listening() {
+  local port="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 && return 0
+  fi
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | grep -q ":${port} " && return 0
+  fi
+  return 1
 }
 
 wait_port() {
@@ -123,7 +140,7 @@ wait_port() {
   local tries="${3:-40}"
   local i
   for i in $(seq 1 "$tries"); do
-    if ss -ltn 2>/dev/null | grep -q ":${port} "; then
+    if port_listening "$port"; then
       echo "    ✓ $name listening :$port"
       return 0
     fi
@@ -147,12 +164,21 @@ start_svc() {
 }
 
 start_svc_list() {
-  local -n list=$1
   local row name target port
-  for row in "${list[@]}"; do
+  for row in "$@"; do
     IFS='|' read -r name target port <<<"$row"
     start_svc "$name" "$target" "$port"
   done
+}
+
+kill_matching_processes() {
+  local pattern="$1"
+  local pids
+  pids="$(pgrep -f "$pattern" 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    # shellcheck disable=SC2086
+    kill -9 $pids 2>/dev/null || true
+  fi
 }
 
 ensure_migrate_cli() {
@@ -187,32 +213,14 @@ ensure_protoc_plugins() {
   fi
 }
 
-ensure_redis() {
-  need_cmd docker
-  if docker ps --format '{{.Names}}' | grep -qx "$REDIS_NAME"; then
-    echo "==> Redis already running ($REDIS_NAME)"
-    return 0
-  fi
-  if docker ps -a --format '{{.Names}}' | grep -qx "$REDIS_NAME"; then
-    echo "==> Starting existing Redis container..."
-    docker start "$REDIS_NAME" >/dev/null
-    return 0
-  fi
-  echo "==> Creating Redis container ($REDIS_NAME) on :6379..."
-  docker run -d --name "$REDIS_NAME" -p 6379:6379 \
-    redis:7-alpine redis-server --requirepass "$REDIS_PASS" >/dev/null
-}
-
 do_deps() {
   need_cmd go
   need_cmd make
   need_cmd yarn
-  need_cmd docker
 
   ensure_migrate_cli
   ensure_air
   ensure_protoc_plugins
-  ensure_redis
 
   echo "==> go mod download..."
   for svc in "${ALL_MOD_SVCS[@]}"; do
@@ -238,7 +246,7 @@ do_deps() {
   echo "==> yarn install (admin FE)..."
   (cd "$FE" && yarn install)
 
-  echo "Deps done."
+  echo "Deps done (Redis/DB remote — không Docker)."
 }
 
 apply_sql_file() {
@@ -310,7 +318,7 @@ do_migrate() {
 print_be_urls() {
   echo
   echo "BE started (ENV_RUNTIME unset → dial localhost)."
-  echo "  Redis:    localhost:6379 ($REDIS_NAME)"
+  echo "  Redis/DB: remote (theo config service — không Docker)"
   echo "  Gateway:  http://localhost:8000"
   echo "  Auth:     :8216"
   echo "  User:     :8201"
@@ -345,10 +353,9 @@ wait_critical_ports() {
 do_be_full() {
   need_cmd air
   need_cmd make
-  ensure_redis
   # Dọn instance cũ trước khi start full (tránh air chồng / port in use)
   do_stop_soft
-  start_svc_list ALL_SVCS
+  start_svc_list "${ALL_SVCS[@]}"
   wait_critical_ports
   print_be_urls
 }
@@ -356,9 +363,8 @@ do_be_full() {
 do_be_support() {
   need_cmd air
   need_cmd make
-  ensure_redis
   do_stop_soft
-  start_svc_list SUPPORT_SVCS
+  start_svc_list "${SUPPORT_SVCS[@]}"
   wait_critical_ports
   print_be_urls
 }
@@ -367,9 +373,7 @@ do_fe() {
   need_cmd yarn
   kill_port 5173
   # Dọn vite/yarn sót (không dùng pkill -f 'yarn' vì dễ match nhầm)
-  local pids
-  mapfile -t pids < <(pgrep -f "$FE/node_modules/.bin/vite" || true)
-  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
+  kill_matching_processes "$FE/node_modules/.bin/vite"
   echo "==> Start Admin FE → log: $LOG_DIR/fe.log"
   # Polling tránh EMFILE khi inotify instances gần đầy (nhiều air)
   (
@@ -383,7 +387,7 @@ do_fe() {
   # Đợi vite bind :5173 (tối đa ~20s)
   local i
   for i in $(seq 1 40); do
-    if ss -ltn 2>/dev/null | grep -q ':5173'; then
+    if port_listening 5173; then
       echo "FE started. URL: http://localhost:5173/login"
       return 0
     fi
@@ -406,22 +410,15 @@ do_stop_soft() {
     rm -f "$f"
   done
   # Dọn air + tmp/main (tránh chồng watcher → FE EMFILE)
-  local pids
-  mapfile -t pids < <(pgrep -x air || true)
-  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
-  mapfile -t pids < <(pgrep -f "$BE/.*/tmp/main" || true)
-  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
-  mapfile -t pids < <(pgrep -f "$FE/node_modules/.bin/vite" || true)
-  ((${#pids[@]})) && kill -9 "${pids[@]}" 2>/dev/null || true
+  kill_matching_processes '(^|/)air($| )'
+  kill_matching_processes "$BE/.*/tmp/main"
+  kill_matching_processes "$FE/node_modules/.bin/vite"
   sleep 1
 }
 
 do_stop() {
   do_stop_soft
-  if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$REDIS_NAME"; then
-    docker stop "$REDIS_NAME" >/dev/null || true
-  fi
-  echo "Stopped."
+  echo "Stopped (không đụng Redis/DB remote)."
 }
 
 print_ui() {

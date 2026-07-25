@@ -77,3 +77,9 @@ layer:
               paint:
                   raster-opacity: 1.0
               source: "{sourceCode}"
+qh_planning_classify:
+  enabled: true
+  interval_sec: 15
+  batch_size: 5
+  read_content: true
+  max_inline_bytes: 15728640

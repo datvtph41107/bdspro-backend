@@ -3645,8 +3645,8 @@
               "updatedAt": "0001-01-01T00:00:00Z"
             },
             {
-              "name": "Sửa",
-              "key": "ADMIN_HT_SUA",
+              "name": "Xử lý",
+              "key": "ADMIN_HT_XU_LY",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",
@@ -3656,8 +3656,8 @@
               "updatedAt": "0001-01-01T00:00:00Z"
             },
             {
-              "name": "Xóa",
-              "key": "ADMIN_HT_XOA",
+              "name": "Đóng",
+              "key": "ADMIN_HT_DONG",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",
@@ -3702,8 +3702,8 @@
               "updatedAt": "0001-01-01T00:00:00Z"
             },
             {
-              "name": "Sửa",
-              "key": "ADMIN_BC_GIS_SUA",
+              "name": "Xử lý",
+              "key": "ADMIN_BC_GIS_XU_LY",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",
@@ -3713,8 +3713,8 @@
               "updatedAt": "0001-01-01T00:00:00Z"
             },
             {
-              "name": "Xóa",
-              "key": "ADMIN_BC_GIS_XOA",
+              "name": "Đóng",
+              "key": "ADMIN_BC_GIS_DONG",
               "description": "",
               "permissionType": "ORGANIZATION",
               "module": "",

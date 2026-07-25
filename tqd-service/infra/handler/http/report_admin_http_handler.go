@@ -18,6 +18,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Quyền theo hành động. Key ADMIN_BC_GIS_SUA/ADMIN_BC_GIS_XOA là key cũ trước khi
+// tách Xử lý / Đóng, vẫn nhận cho tới khi mọi môi trường chạy script rename permission.
+var (
+	permReportView = []string{
+		"ADMIN_BC_GIS_XEM",
+		"ADMIN_BC_GIS_XU_LY", "ADMIN_BC_GIS_SUA",
+		"ADMIN_BC_GIS_DONG", "ADMIN_BC_GIS_XOA",
+	}
+	permReportCreate  = []string{"ADMIN_BC_GIS_TAO"}
+	permReportProcess = []string{"ADMIN_BC_GIS_XU_LY", "ADMIN_BC_GIS_SUA"}
+	permReportClose   = []string{"ADMIN_BC_GIS_DONG", "ADMIN_BC_GIS_XOA"}
+)
+
 type ReportAdminHTTPHandler struct {
 	usecase    usecase.ReportUsecase
 	authClient *clients.AuthGrpcClient
@@ -38,7 +51,7 @@ func ctxFromGin(c *gin.Context) context.Context {
 
 func (h *ReportAdminHTTPHandler) List(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XEM"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportView); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -71,14 +84,14 @@ func (h *ReportAdminHTTPHandler) List(c *gin.Context) {
 	}
 	data := make([]gin.H, 0, len(reports))
 	for _, r := range reports {
-		data = append(data, reportToJSON(r))
+		data = append(data, reportToListJSON(r))
 	}
 	c.JSON(http.StatusOK, gin.H{"data": data, "total": total})
 }
 
 func (h *ReportAdminHTTPHandler) Summary(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XEM"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportView); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -92,7 +105,7 @@ func (h *ReportAdminHTTPHandler) Summary(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) Get(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XEM"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportView); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -111,7 +124,7 @@ func (h *ReportAdminHTTPHandler) Get(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) CreateInternal(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_TAO"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportCreate); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -131,7 +144,7 @@ func (h *ReportAdminHTTPHandler) CreateInternal(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) Assign(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportProcess); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -150,7 +163,7 @@ func (h *ReportAdminHTTPHandler) Assign(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) UpdateSeverity(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportProcess); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -169,7 +182,7 @@ func (h *ReportAdminHTTPHandler) UpdateSeverity(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) UpdateQaStatus(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportProcess); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -188,7 +201,7 @@ func (h *ReportAdminHTTPHandler) UpdateQaStatus(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) UpdateLinkage(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportProcess); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -207,7 +220,7 @@ func (h *ReportAdminHTTPHandler) UpdateLinkage(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) UpdateImages(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_SUA"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportProcess); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -226,7 +239,7 @@ func (h *ReportAdminHTTPHandler) UpdateImages(c *gin.Context) {
 
 func (h *ReportAdminHTTPHandler) Close(c *gin.Context) {
 	ctx := ctxFromGin(c)
-	if err := h.authClient.HasPermissions(ctx, []string{"ADMIN_BC_GIS_XOA"}); err != nil {
+	if err := h.authClient.HasPermissions(ctx, permReportClose); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
@@ -247,6 +260,31 @@ func reportImages(raw []byte) []string {
 	var out []string
 	if err := json.Unmarshal(raw, &out); err != nil || out == nil {
 		return []string{}
+	}
+	return out
+}
+
+// reportToListJSON — payload nhẹ cho bảng danh sách (không description/images/linkage).
+func reportToListJSON(r domain.Report) gin.H {
+	out := gin.H{
+		"id":            r.ID,
+		"userId":        r.UserID,
+		"title":         r.Title,
+		"problemReport": uint32(r.ProblemReport),
+		"reportType":    uint32(r.ReportType),
+		"status":        uint32(r.Status),
+		"qaStatus":      uint32(r.QaStatus),
+		"severity":      uint32(r.Severity),
+		"createdAt":     r.CreatedAt.Format(time.RFC3339),
+	}
+	if r.AssigneeID != nil {
+		out["assigneeId"] = *r.AssigneeID
+	}
+	if r.SupportTicketID != nil {
+		out["supportTicketId"] = *r.SupportTicketID
+	}
+	if r.ClosedAt != nil {
+		out["closedAt"] = r.ClosedAt.Format(time.RFC3339)
 	}
 	return out
 }

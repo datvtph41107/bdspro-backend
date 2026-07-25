@@ -106,15 +106,31 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req *models.AdminProfile
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
 
+	if req.Username == "" {
+		return nil, _errors.ReturnError(int32(400), "Username không được để trống")
+	}
+	if req.Password == "" {
+		return nil, _errors.ReturnError(int32(400), "Password không được để trống")
+	}
+
 	// Convert response từ auth service
 	createAdminResp, err := u.adminRepo.CreateAdmin(ctx, req)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi convert response từ auth service")
+		return nil, _errors.ReturnError(int32(500), "Lỗi tạo hồ sơ admin")
 	}
 
-	// Gọi auth service để tạo admin
-	_, err = u.authProvider.Update(ctx, &providers.AuthMethodDomain{
-		UserID:   createAdminResp.ID,
+	// Link auth.user_id ↔ admin_profiles.id (BaseEntity.ID). Fallback AuthID nếu ID chưa được GORM fill.
+	linkUserID := createAdminResp.ID
+	if linkUserID == 0 {
+		linkUserID = createAdminResp.AuthID
+	}
+	if linkUserID == 0 {
+		return nil, _errors.ReturnError(int32(500), "Không lấy được ID hồ sơ admin sau khi tạo")
+	}
+
+	// Gọi auth service để tạo/cập nhật credential đăng nhập (auth_name + password)
+	createdAuth, err := u.authProvider.Update(ctx, &providers.AuthMethodDomain{
+		UserID:   linkUserID,
 		AuthName: req.Username,
 		Password: req.Password,
 		FullName: req.FullName,
@@ -125,7 +141,23 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req *models.AdminProfile
 	})
 	if err != nil {
 		fmt.Printf("Error updating admin via auth service: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
+		return nil, _errors.ReturnError(int32(500), "Lỗi tạo thông tin đăng nhập admin")
+	}
+
+	createAdminResp.Username = req.Username
+	if createdAuth != nil && createdAuth.ID != 0 {
+		createAdminResp.AuthID = createdAuth.ID
+		if err := u.adminRepo.UpdateAuthID(ctx, linkUserID, createdAuth.ID); err != nil {
+			fmt.Printf("WARN: failed to persist auth_id on admin profile: %v\n", err)
+		}
+	}
+
+	// Gán role vào role_profiles — bắt buộc để permission/me và HasPermissions hoạt động
+	if req.RoleID != nil && *req.RoleID > 0 {
+		if err := u.authProvider.AssignRoleToUser(ctx, linkUserID, *req.RoleID); err != nil {
+			fmt.Printf("Error assigning role via auth service: %v\n", err)
+			return nil, _errors.ReturnError(int32(500), "Tạo tài khoản thành công nhưng gán role thất bại: "+err.Error())
+		}
 	}
 
 	return createAdminResp, nil
@@ -139,9 +171,14 @@ func (u *AdminUsecase) UpdateAdmin(ctx context.Context, req *models.AdminProfile
 		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
 	}
 
+	linkUserID := req.ID
+	if linkUserID == 0 {
+		linkUserID = req.AuthID
+	}
+
 	// Gọi auth service để cập nhật admin
 	_, err := u.authProvider.Update(ctx, &providers.AuthMethodDomain{
-		UserID:   req.ID,
+		UserID:   linkUserID,
 		AuthName: req.Username,
 		Password: req.Password,
 		FullName: req.FullName,
@@ -157,7 +194,15 @@ func (u *AdminUsecase) UpdateAdmin(ctx context.Context, req *models.AdminProfile
 
 	result, err := u.adminRepo.UpdateAdmin(ctx, req)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
+		fmt.Printf("Error updating admin profile in DB: %v\n", err)
+		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật hồ sơ admin: "+err.Error())
+	}
+
+	if req.RoleID != nil && *req.RoleID > 0 && linkUserID > 0 {
+		if err := u.authProvider.AssignRoleToUser(ctx, linkUserID, *req.RoleID); err != nil {
+			fmt.Printf("Error assigning role via auth service: %v\n", err)
+			return nil, _errors.ReturnError(int32(500), "Cập nhật thành công nhưng gán role thất bại: "+err.Error())
+		}
 	}
 
 	return result, nil

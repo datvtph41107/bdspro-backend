@@ -218,9 +218,9 @@ func (u *reportUsecase) AdminUpdateImages(ctx context.Context, reportID uint64, 
 	if err != nil || report == nil {
 		return errors.New("report not found")
 	}
-	existing := unmarshalReportImages(report.Images)
-	merged := mergeUniqueStrings(existing, images)
-	b, err := json.Marshal(merged)
+	// Client gửi full array (thêm/xoá local rồi lưu) — thay thế, không merge
+	next := sanitizeImageList(images)
+	b, err := json.Marshal(next)
 	if err != nil {
 		return err
 	}
@@ -239,20 +239,10 @@ func unmarshalReportImages(raw datatypes.JSON) []string {
 	return out
 }
 
-func mergeUniqueStrings(existing, incoming []string) []string {
-	seen := make(map[string]struct{}, len(existing)+len(incoming))
-	out := make([]string, 0, len(existing)+len(incoming))
-	for _, s := range existing {
-		if s == "" {
-			continue
-		}
-		if _, ok := seen[s]; ok {
-			continue
-		}
-		seen[s] = struct{}{}
-		out = append(out, s)
-	}
-	for _, s := range incoming {
+func sanitizeImageList(images []string) []string {
+	seen := make(map[string]struct{}, len(images))
+	out := make([]string, 0, len(images))
+	for _, s := range images {
 		if s == "" {
 			continue
 		}
@@ -263,6 +253,10 @@ func mergeUniqueStrings(existing, incoming []string) []string {
 		out = append(out, s)
 	}
 	return out
+}
+
+func mergeUniqueStrings(existing, incoming []string) []string {
+	return sanitizeImageList(append(append([]string{}, existing...), incoming...))
 }
 
 func (u *reportUsecase) AdminClose(ctx context.Context, reportID uint64, reject bool, note string) error {

@@ -21,6 +21,8 @@ type AuthMethodRepository interface {
 	// Admin management methods
 	FindAdminsByProvider(c context.Context, provider string, page, size int, roleId *uint64, name string) ([]*domain.AuthMethod, int64, error)
 	FindByAuthNameAndProvider(c context.Context, authName, provider string) (*domain.AuthMethod, error)
+	FindAllByAuthNameAndProvider(c context.Context, authName, provider string) ([]*domain.AuthMethod, error)
+	FindAllByEmailAndProvider(c context.Context, email, provider string) ([]*domain.AuthMethod, error)
 	GetByUserIdAndProvider(c context.Context, userID uint64, provider string) (*domain.AuthMethod, error)
 	GetFirstByUserID(ctx context.Context, userID uint64) (*domain.AuthMethod, error)
 	CountByProvider(c context.Context, provider string) (int64, error)

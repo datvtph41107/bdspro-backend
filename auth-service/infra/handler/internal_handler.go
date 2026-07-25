@@ -182,6 +182,14 @@ func (h *InternalHandler) ResetPermission(ctx context.Context, roleId uint64) er
 	return nil
 }
 
+// ClearUserRolesCache xóa cache role của 1 profile sau khi gán role mới
+func (h *InternalHandler) ClearUserRolesCache(profileId uint64) {
+	if profileId == 0 || h.redisService == nil {
+		return
+	}
+	_ = h.redisService.DeleteAllKeysWithPrefix("USER_ROLES_" + strconv.FormatUint(profileId, 10))
+}
+
 func (h *InternalHandler) GetRoleById(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
 	role, err := h.roleRepo.GetByID(ctx, req.Id)
 	if err != nil {

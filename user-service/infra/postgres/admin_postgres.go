@@ -146,27 +146,34 @@ func (r *AdminPostgres) ListAdmin(ctx context.Context, req *dto.AdminListRequest
 		return nil, 0, err
 	}
 
-	// Lấy thông tin username từ auth-service cho các admin
+	// Enrich username từ auth-service.
+	// GetAuthAdminByIds query theo auth_method.user_id (= admin_profiles.id), không phải auth_id.
 	if len(admins) > 0 && r.AuthClient != nil {
-		// Lấy danh sách auth_id để gọi auth service
-		authIDs := make([]uint64, 0, len(admins))
+		adminIDs := make([]uint64, 0, len(admins))
 		for _, admin := range admins {
-			if admin.AuthID > 0 {
-				authIDs = append(authIDs, admin.AuthID)
+			if admin.ID > 0 {
+				adminIDs = append(adminIDs, admin.ID)
 			}
 		}
 
-		// Gọi auth client để lấy thông tin batch
-		if len(authIDs) > 0 {
-			authAdminsResp, err := r.AuthClient.GetAuthAdminByIds(ctx, authIDs)
-			if err == nil && authAdminsResp != nil {
-				// Tạo map để lookup nhanh
-				authAdminMap := make(map[uint64]string)
+		if len(adminIDs) > 0 {
+			authAdminsResp, err := r.AuthClient.GetAuthAdminByIds(ctx, adminIDs)
+			if err != nil {
+				fmt.Printf("WARN GetAuthAdminByIds for list username: %v\n", err)
+			} else if authAdminsResp != nil {
+				// key = auth.user_id = admin_profiles.id
+				authAdminMap := make(map[uint64]string, len(authAdminsResp))
 				for _, authAdmin := range authAdminsResp {
-					authAdminMap[authAdmin.ProfileID] = authAdmin.Username
+					if authAdmin.Username == "" {
+						continue
+					}
+					key := authAdmin.UserID
+					if key == 0 {
+						key = authAdmin.ProfileID
+					}
+					authAdminMap[key] = authAdmin.Username
 				}
 
-				// Cập nhật username cho từng admin
 				for i := range admins {
 					if username, ok := authAdminMap[admins[i].ID]; ok {
 						admins[i].Username = username
@@ -218,8 +225,29 @@ func (r *AdminPostgres) CreateAdmin(ctx context.Context, admin *models.AdminProf
 	return admin, nil
 }
 
-// UpdateAdmin cập nhật thông tin admin
+// UpdateAuthID gắn auth_method.id vào admin_profiles.auth_id
+func (r *AdminPostgres) UpdateAuthID(ctx context.Context, adminID, authID uint64) error {
+	err := r.DB.WithContext(ctx).
+		Model(&models.AdminProfile{}).
+		Where("id = ?", adminID).
+		Update("auth_id", authID).Error
+	if err != nil {
+		return fmt.Errorf("failed to update auth_id: %v", err)
+	}
+	return nil
+}
+
+// UpdateAdmin cập nhật thông tin admin theo id (admin_profiles.id)
 func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *models.AdminProfile) (*models.AdminProfile, error) {
+	if req.ID == 0 {
+		return nil, fmt.Errorf("admin id is required")
+	}
+
+	attachments := req.Attachments
+	if attachments == nil {
+		attachments = []string{}
+	}
+
 	updates := map[string]interface{}{
 		"full_name":         req.FullName,
 		"email":             req.Email,
@@ -232,14 +260,14 @@ func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *models.AdminProfil
 		"work_at":           req.WorkAt,
 		"role_id":           req.RoleID,
 		"role_key":          req.RoleKey,
-		"attachments":       req.Attachments,
+		"attachments":       attachments,
 		"internal_notes":    req.InternalNotes,
 		"send_notification": req.SendNotification,
 	}
 
 	err := r.DB.WithContext(ctx).
 		Model(&models.AdminProfile{}).
-		Where("profile_id = ?", req.ProfileID).
+		Where("id = ?", req.ID).
 		Updates(updates).Error
 
 	if err != nil {

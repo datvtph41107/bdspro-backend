@@ -17,6 +17,7 @@ import (
 
 type AuthGrpcClient struct {
 	authpb.AuthInternalServiceClient
+	RoleClient authpb.RoleServiceClient
 }
 
 func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
@@ -39,8 +40,8 @@ func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 		// Khởi chạy goroutine để theo dõi trạng thái kết nối
 		go _middleware.MonitorConnection(ctx, name, conn)
 
-		client := authpb.NewAuthInternalServiceClient(conn)
-		authClient.AuthInternalServiceClient = client
+		authClient.AuthInternalServiceClient = authpb.NewAuthInternalServiceClient(conn)
+		authClient.RoleClient = authpb.NewRoleServiceClient(conn)
 	}()
 	return authClient
 }
@@ -59,6 +60,18 @@ func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) erro
 		return _errors.ReturnError(403, "Bạn không có quyền truy cập")
 	}
 	return nil
+}
+
+// AssignRoleToUser gán role vào role_profiles theo profile/user id
+func (c *AuthGrpcClient) AssignRoleToUser(ctx context.Context, userID, roleID uint64) error {
+	if c.RoleClient == nil {
+		return fmt.Errorf("role client chưa sẵn sàng")
+	}
+	_, err := c.RoleClient.AssignRoleToUser(ctx, &authpb.AssignRoleToUserRequest{
+		UserId: userID,
+		RoleId: roleID,
+	})
+	return err
 }
 
 func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*sharepb.Role, error) {

@@ -2,6 +2,8 @@ package handler_grpc
 
 import (
 	"context"
+	_err "common/domain/err"
+	"errors"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/infra/validator"
@@ -11,6 +13,19 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+func planningProjectStatusError(err error) error {
+	var dto *_err.ErrorDTO
+	if errors.As(err, &dto) {
+		switch dto.Code {
+		case 400:
+			return status.Error(codes.InvalidArgument, dto.Message)
+		case 404:
+			return status.Error(codes.NotFound, dto.Message)
+		}
+	}
+	return status.Error(codes.Internal, err.Error())
+}
 
 type QHPlanningGrpcHandler struct {
 	tqdpb.UnimplementedQHPlanningServiceServer
@@ -181,7 +196,7 @@ func (h *QHPlanningGrpcHandler) ApprovePlanningProject(ctx context.Context, req 
 	}
 	result, err := h.projectUsecase.Approve(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, planningProjectStatusError(err)
 	}
 	return h.mapper.ToProjectProto(result), nil
 }

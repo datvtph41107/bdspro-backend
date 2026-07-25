@@ -2154,25 +2154,26 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		)
 	}
 
-	// Tìm admin trong database
-	adminAuthEntity, err := s.AuthMethodRepo.FindByUsername(c, adminLogin.Username)
-	if err != nil {
+	// Tìm theo username (ADMIN); có thể có bản ghi legacy trùng auth_name → thử password từng candidate
+	candidates, err := s.AuthMethodRepo.FindAllByAuthNameAndProvider(c, adminLogin.Username, "ADMIN")
+	if err != nil || len(candidates) == 0 {
+		candidates, err = s.AuthMethodRepo.FindAllByEmailAndProvider(c, adminLogin.Username, "ADMIN")
+	}
+	if err != nil || len(candidates) == 0 {
 		return nil, _errors.ReturnError(
 			int32(401),
 			"Username hoặc password không đúng",
 		)
 	}
 
-	// Kiểm tra provider phải là ADMIN
-	if adminAuthEntity.Provider != "ADMIN" {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Tài khoản không có quyền admin",
-		)
+	var adminAuthEntity *domain.AuthMethod
+	for _, candidate := range candidates {
+		if candidate != nil && _utils.CheckPasswordHash(adminLogin.Password, candidate.Password) {
+			adminAuthEntity = candidate
+			break
+		}
 	}
-
-	// Kiểm tra password
-	if !_utils.CheckPasswordHash(adminLogin.Password, adminAuthEntity.Password) {
+	if adminAuthEntity == nil {
 		return nil, _errors.ReturnError(
 			int32(401),
 			"Username hoặc password không đúng",

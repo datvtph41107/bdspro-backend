@@ -68,9 +68,10 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMeth
 	// Convert roleKey string to uint32 (có thể cần mapping logic)
 	var roleKey uint32 = 1 // Default role, cần implement logic mapping
 
-	// Tạo auth method mới
+	// Tạo auth method mới — AuthName bắt buộc cho AdminLogin (FindByUsername)
 	authMethod := &domain.AuthMethod{
 		Provider:  "ADMIN",
+		AuthName:  req.AuthName,
 		Password:  hashedPassword,
 		FullName:  req.FullName,
 		Email:     req.Email,
@@ -138,6 +139,14 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *domain.AuthMeth
 
 	// Nếu không tìm thấy thì tạo mới
 	if err != nil || authMethod == nil {
+		// Username không được trùng với admin khác
+		if req.AuthName != "" {
+			existingAuth, err := u.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.AuthName, "ADMIN")
+			if err == nil && existingAuth != nil {
+				return nil, _errors.ReturnError(int32(400), "Username đã tồn tại")
+			}
+		}
+
 		// Tạo auth method mới
 		hashedPassword, err := _utils.HashPassword(req.Password)
 		if err != nil {
@@ -183,6 +192,19 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *domain.AuthMeth
 	authMethod.Email = req.Email
 	authMethod.Phone = req.Phone
 	authMethod.Avatar = req.Avatar
+
+	// Đồng bộ AuthName khi client gửi — luôn kiểm tra trùng với admin khác (kể cả legacy trùng username)
+	if req.AuthName != "" {
+		existingAuths, err := u.AuthMethodRepo.FindAllByAuthNameAndProvider(ctx, req.AuthName, "ADMIN")
+		if err == nil {
+			for _, existingAuth := range existingAuths {
+				if existingAuth != nil && existingAuth.ID != authMethod.ID {
+					return nil, _errors.ReturnError(int32(400), "Username đã tồn tại")
+				}
+			}
+		}
+		authMethod.AuthName = req.AuthName
+	}
 
 	if req.Password != "" {
 		hashedPassword, err := _utils.HashPassword(req.Password)

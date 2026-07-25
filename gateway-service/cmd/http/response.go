@@ -91,8 +91,12 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 		// Khởi tạo pagination info
 		pagination := &PaginationInfo{}
 
-		// Tìm trực tiếp Total, Page, Size fields
+		// Tìm trực tiếp Total / TotalElements, Page, Size fields
+		// Nhiều service dùng TotalElements (RoleListResponse, PermissionListResponse…)
 		totalField := val.FieldByName("Total")
+		if !totalField.IsValid() {
+			totalField = val.FieldByName("TotalElements")
+		}
 		if totalField.IsValid() && totalField.CanInterface() {
 			switch totalField.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:

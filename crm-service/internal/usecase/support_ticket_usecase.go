@@ -232,8 +232,9 @@ func (u *SupportTicketUsecase) UpdateImages(ctx context.Context, id uint64, imag
 	}
 	existing := unmarshalImages(ticket.Images)
 	before, _ := json.Marshal(existing)
-	merged := mergeUniqueStrings(existing, images)
-	b, err := json.Marshal(merged)
+	// Client gửi full array (thêm/xoá local rồi lưu) — thay thế, không merge
+	next := sanitizeImageList(images)
+	b, err := json.Marshal(next)
 	if err != nil {
 		return err
 	}
@@ -241,7 +242,7 @@ func (u *SupportTicketUsecase) UpdateImages(ctx context.Context, id uint64, imag
 	if err := u.repo.Update(ctx, ticket); err != nil {
 		return err
 	}
-	after, _ := json.Marshal(merged)
+	after, _ := json.Marshal(next)
 	return u.repo.AddEvent(ctx, &domain.SupportTicketEvent{
 		TicketID:   id,
 		ActorID:    actorID,
@@ -263,20 +264,10 @@ func unmarshalImages(raw datatypes.JSON) []string {
 	return out
 }
 
-func mergeUniqueStrings(existing, incoming []string) []string {
-	seen := make(map[string]struct{}, len(existing)+len(incoming))
-	out := make([]string, 0, len(existing)+len(incoming))
-	for _, s := range existing {
-		if s == "" {
-			continue
-		}
-		if _, ok := seen[s]; ok {
-			continue
-		}
-		seen[s] = struct{}{}
-		out = append(out, s)
-	}
-	for _, s := range incoming {
+func sanitizeImageList(images []string) []string {
+	seen := make(map[string]struct{}, len(images))
+	out := make([]string, 0, len(images))
+	for _, s := range images {
 		if s == "" {
 			continue
 		}
@@ -287,6 +278,10 @@ func mergeUniqueStrings(existing, incoming []string) []string {
 		out = append(out, s)
 	}
 	return out
+}
+
+func mergeUniqueStrings(existing, incoming []string) []string {
+	return sanitizeImageList(append(append([]string{}, existing...), incoming...))
 }
 
 func toItem(t domain.SupportTicket) dto.SupportTicketItemResponse {

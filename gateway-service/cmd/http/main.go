@@ -221,7 +221,7 @@ var HttpCmd = &cobra.Command{
 				"https://qhpro.vn",
 				"https://test.qhpro.vn",
 			},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
 			ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
 			AllowCredentials: true,
