@@ -201,6 +201,8 @@ var HttpCmd = &cobra.Command{
 		r.Use(cors.New(cors.Config{
 			AllowOrigins: []string{
 				"http://localhost:3000",
+				"http://127.0.0.1:3000",
+				"http://127.0.0.1:3001",
 				"http://14.225.210.29:3108",
 				"http://localhost:3001",
 				"http://localhost:8000",
@@ -221,9 +223,9 @@ var HttpCmd = &cobra.Command{
 				"https://qhpro.vn",
 				"https://test.qhpro.vn",
 			},
-			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Lang"},
-			ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Lang", "If-None-Match"},
+			ExposeHeaders:    []string{"Content-Length", "Content-Type", "Set-Cookie", "ETag", "Cache-Control", "X-Robots-Tag", "X-Content-Type-Options"},
 			AllowCredentials: true,
 			MaxAge:           12 * time.Hour,
 		}))
@@ -321,8 +323,19 @@ var HttpCmd = &cobra.Command{
 			log.Fatalf("register CRM public HTTP proxy: %v", err)
 		}
 
+		crmPublicSEOProxy := r.Group("/v2/crm/public/seo")
+		if err := service.RegisterCRMPublicSEOHTTPProxy(crmPublicSEOProxy, env); err != nil {
+			log.Fatalf("register CRM public SEO HTTP proxy: %v", err)
+		}
+
+		crmSeoGovernanceProxy := r.Group("/v2/crm/admin/seo-governance")
+		crmSeoGovernanceProxy.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
+		if err := service.RegisterCRMSeoGovernanceHTTPProxy(crmSeoGovernanceProxy, env); err != nil {
+			log.Fatalf("register CRM SEO governance HTTP proxy: %v", err)
+		}
+
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
-		// như /v2/tqd/public/* và /v2/crm/public/content/*. Vì vậy các route
+		// như /v2/tqd/public/* và /v2/crm/public/{content,seo}/*. Vì vậy các route
 		// cụ thể được đăng ký bình thường; phần /v2 còn lại đi qua NoRoute.
 		v2Fallback := service.DiscoveryOrGRPCHandler(mux, discoveryClient)
 		r.NoRoute(

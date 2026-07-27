@@ -146,7 +146,7 @@ func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.Generat
 	if err := u.seoGenerationLogRepo.MarkRunning(ctx, logEntry.ID, now); err != nil {
 		return nil, err
 	}
-	if err := u.hydratePlanningProjectSource(ctx, page, now); err != nil {
+	if err := u.hydrateSeoSource(ctx, page, now); err != nil {
 		failedAt := time.Now().UTC()
 		_ = u.seoGenerationLogRepo.MarkFailed(ctx, logEntry.ID, err.Error(), failedAt)
 		_ = u.seoDomainRepo.MarkRenderFailed(ctx, page.ID, err.Error())

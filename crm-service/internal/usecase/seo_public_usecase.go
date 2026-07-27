@@ -3,6 +3,10 @@ package usecase
 import (
 	_errors "common/errors"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	seo_domain "crm/internal/domain/seo"
@@ -88,4 +92,129 @@ func buildSeoCacheControl(page *seo_domain.SeoDomain) string {
 		return "public, max-age=300, stale-while-revalidate=3600"
 	}
 	return "no-cache"
+}
+
+func (u *SeoPublicUsecase) GetPublicSeoDocument(
+	ctx context.Context,
+	moduleID string,
+	slug string,
+) (*dto.SeoPublicDocumentResponse, error) {
+	moduleID = normalizeSeoModuleID(moduleID)
+	if moduleID == "" || moduleID == "default" {
+		return nil, _errors.ReturnError(400, "SEO module không được hỗ trợ")
+	}
+	slug, err := normalizePublicSeoSlug(slug)
+	if err != nil {
+		return nil, err
+	}
+
+	canonicalPath, err := publicCanonicalPath(moduleID, slug)
+	if err != nil {
+		return nil, err
+	}
+	page, err := u.resolvePublicDocumentPage(ctx, canonicalPath, slug)
+	if err != nil {
+		return nil, err
+	}
+	decision := seo_domain.CanServePublic(page)
+	if !decision.Allowed {
+		switch decision.Code {
+		case "page_archived":
+			return nil, _errors.ReturnError(410, decision.Message)
+		case "page_nil", "page_not_published", "not_public_scope":
+			return nil, _errors.ReturnError(404, decision.Message)
+		default:
+			return nil, _errors.ReturnError(503, decision.Message)
+		}
+	}
+
+	generatedAt := page.UpdatedAt.UTC()
+	if page.GeneratedAt != nil {
+		generatedAt = page.GeneratedAt.UTC()
+	}
+	document, warnings, err := composeSeoPublicDocument(page, generatedAt)
+	if err != nil {
+		return nil, _errors.ReturnError(503, err.Error())
+	}
+	if document.ModuleID != moduleID {
+		return nil, _errors.ReturnError(503, fmt.Sprintf("SEO module contract mismatch: expected %s, got %s", moduleID, document.ModuleID))
+	}
+	if document.Identity.CanonicalPath != canonicalPath || document.SEO.CanonicalPath != canonicalPath {
+		return nil, _errors.ReturnError(503, "SEO canonical contract mismatch")
+	}
+	if document.IndexDecision == nil || document.IndexDecision.PolicyVersion == "" {
+		return nil, _errors.ReturnError(503, "SEO index decision is missing")
+	}
+
+	payload, err := json.Marshal(document)
+	if err != nil {
+		return nil, fmt.Errorf("encode public SEO document: %w", err)
+	}
+	hash := sha256.Sum256(payload)
+	return &dto.SeoPublicDocumentResponse{
+		Document:     document,
+		ETag:         hex.EncodeToString(hash[:]),
+		CacheControl: buildSeoCacheControl(page),
+		StatusCode:   200,
+		Warnings:     compactUniqueStrings(append(decision.Warnings, warnings...)),
+	}, nil
+}
+
+func (u *SeoPublicUsecase) resolvePublicDocumentPage(
+	ctx context.Context,
+	canonicalPath string,
+	slug string,
+) (*seo_domain.SeoDomain, error) {
+	for _, candidate := range compactUniqueStrings([]string{
+		canonicalPath,
+		strings.TrimPrefix(canonicalPath, "/"),
+		slug,
+	}) {
+		page, err := u.seoDomainRepo.GetBySlug(ctx, candidate)
+		if err != nil {
+			return nil, err
+		}
+		if page != nil {
+			return page, nil
+		}
+	}
+	page, err := u.seoDomainRepo.GetByCanonicalURL(ctx, canonicalPath)
+	if err != nil {
+		return nil, err
+	}
+	if page == nil {
+		return nil, _errors.ReturnError(404, "SEO page không tồn tại")
+	}
+	return page, nil
+}
+
+func normalizePublicSeoSlug(value string) (string, error) {
+	slug := strings.TrimSpace(value)
+	lower := strings.ToLower(slug)
+	if slug == "" ||
+		strings.ContainsAny(slug, `/\`) ||
+		strings.Contains(slug, "..") ||
+		strings.ContainsAny(slug, "?#") ||
+		lower == "undefined" ||
+		lower == "null" ||
+		strings.Contains(lower, "[object object]") {
+		return "", _errors.ReturnError(400, "slug không hợp lệ")
+	}
+	return slug, nil
+}
+
+func publicCanonicalPath(moduleID string, slug string) (string, error) {
+	prefixes := map[string]string{
+		"administrative-unit": "/dia-ban",
+		"parcel":              "/thua-dat",
+		"planning-region":     "/vung-quy-hoach",
+		"planning-project":    "/do-an-quy-hoach",
+		"planning-news":       "/quy-hoach/tin-tuc",
+		"planning-report":     "/quy-hoach/bao-cao",
+	}
+	prefix := prefixes[moduleID]
+	if prefix == "" {
+		return "", _errors.ReturnError(400, "SEO module chưa có public route contract")
+	}
+	return prefix + "/" + strings.Trim(slug, "/"), nil
 }

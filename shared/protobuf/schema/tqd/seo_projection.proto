@@ -10,6 +10,8 @@ import "google/protobuf/wrappers.proto";
 // It intentionally has no google.api.http annotation: browser/public traffic
 // continues to use the TQD HTTP projection, while backend generation uses gRPC.
 service TqdSeoProjectionService {
+  rpc GetAdministrativeUnitProjection(google.protobuf.StringValue)
+      returns (google.protobuf.BytesValue);
   rpc GetPlanningProjectProjection(google.protobuf.StringValue)
       returns (google.protobuf.BytesValue);
 }

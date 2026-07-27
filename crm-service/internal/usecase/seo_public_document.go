@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -17,6 +18,7 @@ import (
 
 const (
 	planningProjectAnswerSpecVersion = "seo-m4/planning-project/v1"
+	seoIndexPolicyVersion            = "seo-m11/index-eligibility/v1"
 	maxSeoFacts                      = 24
 	maxSeoSections                   = 20
 	maxSeoBlocksPerSection           = 20
@@ -39,6 +41,10 @@ func composeSeoPublicDocument(page *seo_domain.SeoDomain, generatedAt time.Time)
 	}
 
 	page.NormalizeLifecycle()
+	moduleID := normalizeSeoModuleID(firstNonEmptyRender(page.TemplateKey, page.GetSchema(), "default"))
+	if moduleID == "" {
+		return nil, nil, fmt.Errorf("unsupported SEO module %q", firstNonEmptyRender(page.TemplateKey, page.GetSchema()))
+	}
 	warnings := make([]string, 0, 8)
 	document := buildDefaultSeoPublicDocument(page, generatedAt)
 
@@ -258,6 +264,7 @@ func applySeoDomainOwnedFields(document *dto.SeoPublicDocument, page *seo_domain
 	summary := firstNonEmptyRender(page.Summary, page.Description, document.Heading.Summary)
 
 	document.SchemaVersion = dto.SeoPublicDocumentSchemaVersion
+	document.DocumentVersion = seoPublicDocumentVersion(page)
 	document.ModuleID = moduleID
 	document.ResourceType = resourceTypeForModule(moduleID)
 	document.Identity.ID = fmt.Sprintf("seo-%d", page.ID)
@@ -282,6 +289,50 @@ func applySeoDomainOwnedFields(document *dto.SeoPublicDocument, page *seo_domain
 	if page.PublishedAt != nil && strings.TrimSpace(document.Source.PublishedAt) == "" {
 		document.Source.PublishedAt = page.PublishedAt.Format(time.RFC3339)
 	}
+}
+
+func seoPublicDocumentVersion(page *seo_domain.SeoDomain) string {
+	if page == nil {
+		return ""
+	}
+
+	sourceUpdatedAt := ""
+	if page.SourceUpdatedAt != nil {
+		sourceUpdatedAt = page.SourceUpdatedAt.UTC().Format(time.RFC3339Nano)
+	}
+	publishedAt := ""
+	if page.PublishedAt != nil {
+		publishedAt = page.PublishedAt.UTC().Format(time.RFC3339Nano)
+	}
+
+	// The public-document version deliberately excludes render output fields
+	// (RenderedHTML, StaticHtmlHash, GeneratedAt and UpdatedAt). Those fields are
+	// written after composition and would make the JSON document version differ
+	// from the version embedded in the rendered HTML generated from that same
+	// semantic document. Only source, content, template and publication inputs
+	// participate in the version fingerprint.
+	material := strings.Join([]string{
+		dto.SeoPublicDocumentSchemaVersion,
+		dto.SeoOperatingSystemRelease,
+		strconv.FormatUint(page.ID, 10),
+		strings.TrimSpace(page.Slug),
+		strings.TrimSpace(page.CanonicalURL),
+		strings.TrimSpace(page.RefHash),
+		strings.TrimSpace(page.TemplateKey),
+		strings.TrimSpace(page.TemplateVersion),
+		strings.TrimSpace(page.Title),
+		strings.TrimSpace(page.Description),
+		strings.TrimSpace(page.Summary),
+		strings.TrimSpace(page.Content),
+		strings.TrimSpace(page.PageStatus),
+		strconv.FormatBool(page.Published),
+		strconv.FormatBool(page.IsIndex),
+		strconv.FormatBool(page.IsSiteMap),
+		sourceUpdatedAt,
+		publishedAt,
+	}, "|")
+	digest := sha256.Sum256([]byte(material))
+	return fmt.Sprintf("qhpro-public-document/%x", digest[:16])
 }
 
 func mergeDatabaseRelationships(document *dto.SeoPublicDocument, page *seo_domain.SeoDomain) {
@@ -444,7 +495,38 @@ func applySeoAnswerReadiness(document *dto.SeoPublicDocument) {
 	}
 
 	production := document.Source.Environment == "production"
-	document.SEO.Indexable = document.SEO.Indexable && production && ready && isTrustedSeoSource(document.Source)
+	trustedSource := isTrustedSeoSource(document.Source)
+	domainAllowsIndex := document.SEO.Indexable
+	reasonCodes := make([]string, 0, 8)
+	if !domainAllowsIndex {
+		reasonCodes = append(reasonCodes, "domain_index_disabled")
+	}
+	if !production {
+		reasonCodes = append(reasonCodes, "non_production_source")
+	}
+	if len(missingFacts) > 0 {
+		reasonCodes = append(reasonCodes, "missing_required_facts")
+	}
+	if len(missingSections) > 0 {
+		reasonCodes = append(reasonCodes, "missing_required_sections")
+	}
+	if moduleRequiresMapTarget(document.ModuleID) && document.MapTarget == nil {
+		reasonCodes = append(reasonCodes, "missing_map_target")
+	}
+	if moduleRequiresSourceDisclosure(document.ModuleID) && strings.TrimSpace(firstNonEmptyRender(document.Source.SourceName, document.Source.SourceURL)) == "" {
+		reasonCodes = append(reasonCodes, "missing_source_disclosure")
+	}
+	if !trustedSource {
+		reasonCodes = append(reasonCodes, "untrusted_source")
+	}
+	eligible := domainAllowsIndex && production && ready && trustedSource
+	document.SEO.Indexable = eligible
+	document.IndexDecision = &dto.SeoIndexDecision{
+		PolicyVersion: seoIndexPolicyVersion,
+		Eligible:      eligible,
+		ReasonCodes:   compactUniqueStrings(reasonCodes),
+	}
+	applySeoOperatingSystemV2U(document)
 }
 
 func answerSpecification(moduleID string) ([]string, []string, string) {
@@ -524,7 +606,7 @@ func isTrustedSeoSource(source dto.SeoPublicSource) bool {
 	if quality == "unverified" || quality == "conflicted" || quality == "stale" {
 		return false
 	}
-	if authority == "official" || authority == "authorized_partner" || authority == "editorial" {
+	if authority == "official" || authority == "government_derived" || authority == "authorized_partner" || authority == "editorial" {
 		return true
 	}
 	return authority == "aggregated" && quality == "complete" && strings.TrimSpace(source.SourceName) != ""
@@ -703,8 +785,10 @@ func normalizeSeoModuleID(value string) string {
 		return "planning-news"
 	case "planning-report", "report", "analysis-report":
 		return "planning-report"
+	case "default", "generic", "generic-page":
+		return "default"
 	default:
-		return "planning-project"
+		return ""
 	}
 }
 
@@ -720,8 +804,12 @@ func resourceTypeForModule(moduleID string) string {
 		return "article"
 	case "planning-report":
 		return "report"
-	default:
+	case "planning-project":
 		return "planning_project"
+	case "default":
+		return "generic_page"
+	default:
+		return ""
 	}
 }
 
@@ -930,10 +1018,10 @@ func normalizeMediaBundle(bundle *dto.SeoMediaBundle) *dto.SeoMediaBundle {
 		return nil
 	}
 	out := &dto.SeoMediaBundle{Completeness: bundle.Completeness, FitMode: bundle.FitMode, Note: trimLimit(bundle.Note, 1000)}
-	if out.Completeness != "complete" && out.Completeness != "partial" {
+	if out.Completeness != "complete" && out.Completeness != "partial" && out.Completeness != "centroid_only" {
 		out.Completeness = "missing"
 	}
-	if out.FitMode != "cover" {
+	if out.FitMode != "cover" && out.FitMode != "center" {
 		out.FitMode = "contain"
 	}
 	for _, item := range bundle.Items {
@@ -981,7 +1069,7 @@ func normalizeMedia(item dto.SeoMedia) *dto.SeoMedia {
 
 func normalizeSource(source dto.SeoPublicSource) dto.SeoPublicSource {
 	source.Environment = "production"
-	source.Authority = normalizeEnum(source.Authority, []string{"official", "authorized_partner", "aggregated", "derived", "editorial", "unknown"}, "unknown")
+	source.Authority = normalizeEnum(source.Authority, []string{"official", "government_derived", "authorized_partner", "aggregated", "derived", "editorial", "unknown"}, "unknown")
 	source.Quality = normalizeEnum(source.Quality, []string{"complete", "partial", "stale", "estimated", "unverified", "conflicted"}, "unverified")
 	source.SourceName = trimLimit(source.SourceName, 300)
 	source.SourceURL = strings.TrimSpace(source.SourceURL)

@@ -19,6 +19,99 @@ func NewHandler(uc *usecase.SeoPublicUsecase) *Handler {
 	return &Handler{usecase: uc}
 }
 
+func (h *Handler) GetDocument(c *gin.Context) {
+	response, err := h.usecase.GetPublicSeoDocument(
+		c.Request.Context(),
+		c.Param("module"),
+		c.Param("slug"),
+	)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+
+	if cacheControl := strings.TrimSpace(response.CacheControl); cacheControl != "" {
+		c.Header("Cache-Control", cacheControl)
+	}
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	c.Header("X-Content-Type-Options", "nosniff")
+	if response.Document != nil && !response.Document.SEO.Indexable {
+		c.Header("X-Robots-Tag", "noindex, follow")
+	}
+
+	etag := normalizeETag(response.ETag)
+	if etag != "" {
+		c.Header("ETag", etag)
+		if matchesETag(c.GetHeader("If-None-Match"), etag) {
+			c.Status(http.StatusNotModified)
+			return
+		}
+	}
+
+	statusCode := response.StatusCode
+	if statusCode <= 0 {
+		statusCode = http.StatusOK
+	}
+	if c.Request.Method == http.MethodHead {
+		c.Status(statusCode)
+		return
+	}
+	c.JSON(statusCode, response.Document)
+}
+
+func (h *Handler) GetGovernanceDocument(c *gin.Context) {
+	response, err := h.usecase.GetSeoGovernanceDocument(
+		c.Request.Context(),
+		c.Param("module"),
+		c.Param("slug"),
+	)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "private, no-store")
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	c.Header("X-Content-Type-Options", "nosniff")
+
+	etag := normalizeETag(response.ETag)
+	if etag != "" {
+		c.Header("ETag", etag)
+		if matchesETag(c.GetHeader("If-None-Match"), etag) {
+			c.Status(http.StatusNotModified)
+			return
+		}
+	}
+
+	statusCode := response.StatusCode
+	if statusCode <= 0 {
+		statusCode = http.StatusOK
+	}
+	if c.Request.Method == http.MethodHead {
+		c.Status(statusCode)
+		return
+	}
+	c.JSON(statusCode, gin.H{
+		"code": http.StatusOK,
+		"data": response.Document,
+	})
+}
+
+func (h *Handler) GetOperatingSystemManifest(c *gin.Context) {
+	manifest := h.usecase.GetSeoOperatingSystemManifest()
+	c.Header("Cache-Control", "private, no-store")
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	c.Header("X-Content-Type-Options", "nosniff")
+	if c.Request.Method == http.MethodHead {
+		c.Status(http.StatusOK)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"data": manifest,
+	})
+}
+
 func (h *Handler) GetPageBySlug(c *gin.Context) {
 	slug := strings.TrimSpace(c.Param("slug"))
 

@@ -11,6 +11,7 @@ import (
 
 	_db "common/db"
 	"crm/config"
+	"crm/infra/client"
 	catalog_handler "crm/infra/handler/http/contentcatalog"
 	seo_public_handler "crm/infra/handler/http/seopublic"
 	"crm/infra/postgre"
@@ -47,6 +48,27 @@ func NewPublicHTTPServer() (*http.Server, error) {
 	seoPublicUsecase := usecase.NewSeoPublicUsecase(seoDomainRepository)
 	seoPublicHandler := seo_public_handler.NewHandler(seoPublicUsecase)
 
+	tqdClient := client.NewTqdClient()
+	seoGenerationLogRepository := postgre.NewSeoGenerationLogPostgres(database)
+	seoRenderUsecase := usecase.NewSeoRenderUsecase(
+		seoDomainRepository,
+		seoGenerationLogRepository,
+		tqdClient,
+	)
+	seoAdministrativeUnitProvisioningUsecase := usecase.NewSeoAdministrativeUnitProvisioningUsecase(
+		seoDomainRepository,
+		tqdClient,
+		seoRenderUsecase,
+	)
+	seoOperationsHandler := seo_public_handler.NewOperationsHandler(seoAdministrativeUnitProvisioningUsecase)
+
+	seoRuntimeEventRepository := postgre.NewSeoRuntimeEventPostgres(database)
+	seoRuntimeEventUsecase := usecase.NewSeoRuntimeEventUsecase(seoRuntimeEventRepository)
+	seoTelemetryHandler := seo_public_handler.NewTelemetryHandler(
+		seoRuntimeEventUsecase,
+		os.Getenv("CRM_SEO_RUNTIME_EVENT_INGEST_KEY"),
+	)
+
 	seoSitemapUsecase := usecase.NewSeoSitemapUsecase(seoDomainRepository)
 	seoSitemapHandler := seo_public_handler.NewSitemapHandler(
 		seoSitemapUsecase,
@@ -65,6 +87,7 @@ func NewPublicHTTPServer() (*http.Server, error) {
 		AllowMethods: []string{
 			http.MethodGet,
 			http.MethodHead,
+			http.MethodPost,
 			http.MethodOptions,
 		},
 		AllowHeaders: []string{
@@ -72,6 +95,9 @@ func NewPublicHTTPServer() (*http.Server, error) {
 			"Content-Type",
 			"Accept",
 			"If-None-Match",
+			"Authorization",
+			"X-QHPro-Telemetry-Key",
+			"X-QHPro-Internal-Operation-Key",
 		},
 		ExposeHeaders: []string{
 			"Content-Length",
@@ -91,6 +117,27 @@ func NewPublicHTTPServer() (*http.Server, error) {
 			"service": "crm-public-content",
 		})
 	})
+
+	seoDocuments := router.Group("/v2/crm/public/seo")
+	{
+		seoDocuments.GET("/documents/:module/:slug", seoPublicHandler.GetDocument)
+		seoDocuments.HEAD("/documents/:module/:slug", seoPublicHandler.GetDocument)
+	}
+
+	seoInternal := router.Group("/v2/crm/internal/seo")
+	{
+		seoInternal.POST("/measurement/events", seoTelemetryHandler.Ingest)
+	}
+
+	seoGovernance := router.Group("/v2/crm/admin/seo-governance")
+	seoGovernance.Use(seo_public_handler.RequireGovernanceInternalKey(os.Getenv("CRM_SEO_GOVERNANCE_INTERNAL_KEY")))
+	{
+		seoGovernance.GET("/operating-system/v2u", seoPublicHandler.GetOperatingSystemManifest)
+		seoGovernance.HEAD("/operating-system/v2u", seoPublicHandler.GetOperatingSystemManifest)
+		seoGovernance.GET("/documents/:module/:slug", seoPublicHandler.GetGovernanceDocument)
+		seoGovernance.HEAD("/documents/:module/:slug", seoPublicHandler.GetGovernanceDocument)
+		seoGovernance.POST("/administrative-units/provision", seoOperationsHandler.ProvisionAdministrativeUnit)
+	}
 
 	public := router.Group("/v2/crm/public/content")
 	{

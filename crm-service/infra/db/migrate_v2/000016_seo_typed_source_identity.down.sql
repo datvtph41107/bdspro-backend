@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS uq_seo_domain_administrative_unit_typed_identity;

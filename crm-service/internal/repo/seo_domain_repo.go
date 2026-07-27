@@ -12,6 +12,7 @@ type SeoDomainRepo interface {
 	GetByID(ctx context.Context, id uint64) (*seo_domain.SeoDomain, error)
 	GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error)
 	GetByRefSource(ctx context.Context, refType uint32, refSource string, refID uint64) (*seo_domain.SeoDomain, error)
+	GetByRefIdentity(ctx context.Context, refType uint32, refSource string, refURL string) (*seo_domain.SeoDomain, error)
 	GetBySlug(ctx context.Context, slug string) (*seo_domain.SeoDomain, error)
 	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error)
 	GetList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error)

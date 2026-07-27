@@ -72,6 +72,7 @@ func RegisterTQDPublicHTTPProxy(routes gin.IRoutes, env string) error {
 	}
 
 	routes.GET("/parcels/:id/quick-view", handler)
+	routes.GET("/administrative-units/:identity/projection", handler)
 	routes.GET("/planning-projects/:identity/projection", handler)
 	return nil
 }
