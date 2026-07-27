@@ -335,15 +335,26 @@ func (h *InternalHandler) DeleteAuthMethodsByUserId(ctx context.Context, req *sh
 
 // GetAuthAdminByIds lấy thông tin admin kèm với role theo danh sách IDs
 func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.GetAuthAdminByIdsRequest) (*authpb.GetAuthAdminByIdsResponse, error) {
-	// Gọi repository để lấy admin info kèm role
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+	if h.roleRepo == nil {
+		return nil, _errors.ReturnError(500, "role repository chưa được cấu hình")
+	}
+	if h.roleMapper == nil {
+		return nil, _errors.ReturnError(500, "role mapper chưa được cấu hình")
+	}
+
 	admins, err := h.roleRepo.GetAuthAdminsWithRolesByIds(ctx, req.Ids)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert sang proto response
 	var pbAdmins []*authpb.AuthAdminWithRole
 	for _, admin := range admins {
+		if admin == nil {
+			continue
+		}
 		pbAdmins = append(pbAdmins, h.roleMapper.MapAuthAdminWithRoleToPb(admin))
 	}
 

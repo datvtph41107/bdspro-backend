@@ -417,87 +417,71 @@ func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([
 	return authMethods, nil
 }
 
-// GetAuthAdminsWithRolesByIds lấy danh sách admin kèm với thông tin role
+// GetAuthAdminsWithRolesByIds lấy danh sách admin kèm với thông tin role (theo auth_method.user_id).
 func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64) ([]*domain.AuthAdminWithRole, error) {
 	if len(ids) == 0 {
 		return []*domain.AuthAdminWithRole{}, nil
 	}
-
-	// Query để lấy admin info kèm với role
-	var results []struct {
-		ID        uint64    `gorm:"id"`
-		UserID    uint64    `gorm:"user_id"`
-		AuthName  string    `gorm:"auth_name"`
-		FullName  string    `gorm:"full_name"`
-		Email     string    `gorm:"email"`
-		Phone     string    `gorm:"phone"`
-		Avatar    string    `gorm:"avatar"`
-		RoleKey   uint32    `gorm:"role_key"`
-		Status    uint32    `gorm:"status"`
-		CreatedAt time.Time `gorm:"created_at"`
-		UpdatedAt time.Time `gorm:"updated_at"`
-		RoleID    *uint64   `gorm:"role_id"`
-		RoleName  *string   `gorm:"role_name"`
-		RoleDesc  *string   `gorm:"role_description"`
+	if r == nil || r.CrudRepo == nil || r.TransactionRepo == nil {
+		return nil, errors.New("role repository chưa được khởi tạo")
 	}
 
+	var authMethods []*domain.AuthMethod
 	err := r.GetDB(ctx).
-		Table("auth_method am").
-		Select(`
-			am.id,
-			am.user_id,
-			am.auth_name,
-			am.full_name,
-			am.email,
-			am.phone,
-			am.avatar,
-			am.role_key,
-			am.status,
-			am.created_at,
-			am.updated_at,
-			r.id as role_id,
-			r.role_name,
-			r.role_description
-		`).
-		Joins("LEFT JOIN roles r ON am.role_key = r.role_key").
-		Where("am.user_id IN (?) AND am.provider = 'ADMIN' AND am.deleted_at IS NULL", ids).
-		Find(&results).Error
-
+		Where("user_id IN ? AND provider = ? AND deleted_at IS NULL", ids, domain.ProviderAdmin).
+		Find(&authMethods).Error
 	if err != nil {
 		return nil, err
 	}
+	if len(authMethods) == 0 {
+		return []*domain.AuthAdminWithRole{}, nil
+	}
 
-	// Convert sang domain objects
-	admins := make([]*domain.AuthAdminWithRole, len(results))
-	for i, result := range results {
+	roleKeySet := make(map[uint32]struct{})
+	for _, am := range authMethods {
+		if am != nil && am.RoleKey != 0 {
+			roleKeySet[am.RoleKey] = struct{}{}
+		}
+	}
+
+	roleByKey := make(map[uint32]domain.Role)
+	if len(roleKeySet) > 0 {
+		roleKeys := make([]uint32, 0, len(roleKeySet))
+		for roleKey := range roleKeySet {
+			roleKeys = append(roleKeys, roleKey)
+		}
+		roles, err := r.FindByRoleKeys(ctx, roleKeys)
+		if err != nil {
+			return nil, err
+		}
+		for _, role := range roles {
+			roleByKey[role.RoleKey] = role
+		}
+	}
+
+	admins := make([]*domain.AuthAdminWithRole, 0, len(authMethods))
+	for _, am := range authMethods {
+		if am == nil {
+			continue
+		}
 		admin := &domain.AuthAdminWithRole{
-			ID:        result.ID,
-			UserID:    result.UserID,
-			Username:  result.AuthName,
-			FullName:  result.FullName,
-			Email:     result.Email,
-			Phone:     result.Phone,
-			Avatar:    result.Avatar,
-			RoleKey:   result.RoleKey,
-			Status:    result.Status,
-			CreatedAt: result.CreatedAt,
-			UpdatedAt: result.UpdatedAt,
+			ID:        am.ID,
+			UserID:    am.UserID,
+			Username:  am.AuthName,
+			FullName:  am.FullName,
+			Email:     am.Email,
+			Phone:     am.Phone,
+			Avatar:    am.Avatar,
+			RoleKey:   am.RoleKey,
+			Status:    uint32(am.Status),
+			CreatedAt: am.CreatedAt,
+			UpdatedAt: am.UpdatedAt,
 		}
-
-		// Nếu có role info thì tạo Role object
-		if result.RoleID != nil && result.RoleName != nil {
-			role := &domain.Role{
-				RoleName: *result.RoleName,
-				RoleKey:  result.RoleKey,
-			}
-			if result.RoleDesc != nil {
-				role.RoleDescription = *result.RoleDesc
-			}
-			role.ID = *result.RoleID
-			admin.Role = role
+		if role, ok := roleByKey[am.RoleKey]; ok {
+			roleCopy := role
+			admin.Role = &roleCopy
 		}
-
-		admins[i] = admin
+		admins = append(admins, admin)
 	}
 
 	return admins, nil
