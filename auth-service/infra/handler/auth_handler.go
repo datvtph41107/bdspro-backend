@@ -815,10 +815,21 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequ
 // @Failure 500 {object} authpb.AdminListResponse
 // @Router /admin/list [get]
 func (h *AuthHandler) ListAdmins(ctx context.Context, req *authpb.AdminListRequest) (*authpb.AdminListResponse, error) {
+	page := req.Page
+	if page < 1 {
+		page = 1
+	}
+	size := req.Size
+	if size < 1 {
+		size = 100
+	}
+	if size > 100 {
+		size = 100
+	}
 	// Convert proto request to DTO
 	dto := &dto.AdminListRequest{
-		Page: req.Page,
-		Size: req.Size,
+		Page: page,
+		Size: size,
 	}
 
 	result, err := h.AdminUsecase.ListAdmins(ctx, *dto)

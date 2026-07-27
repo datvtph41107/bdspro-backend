@@ -39,3 +39,17 @@ type Report struct {
 }
 
 func (Report) TableName() string { return "reports" }
+
+// ReportEvent nhật ký thao tác admin trên phản ánh (SRS 10.8.4).
+type ReportEvent struct {
+	ID         uint64    `gorm:"primaryKey" json:"id"`
+	ReportID   uint64    `gorm:"column:report_id;not null;index" json:"reportId"`
+	ActorID    uint64    `gorm:"column:actor_id;not null" json:"actorId"`
+	Action     string    `gorm:"column:action;type:varchar(64);not null" json:"action"`
+	BeforeJSON string    `gorm:"column:before_json;type:text" json:"beforeJson"`
+	AfterJSON  string    `gorm:"column:after_json;type:text" json:"afterJson"`
+	Note       string    `gorm:"column:note;type:text" json:"note"`
+	CreatedAt  time.Time `gorm:"column:created_at;default:now()" json:"createdAt"`
+}
+
+func (ReportEvent) TableName() string { return "report_events" }

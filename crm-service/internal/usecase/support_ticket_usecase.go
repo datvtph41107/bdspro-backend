@@ -51,6 +51,9 @@ func (u *SupportTicketUsecase) Create(ctx context.Context, req *dto.SupportTicke
 		RelatedReportID: req.RelatedReportID,
 		Images:          imagesJSON,
 	}
+	if actorID > 0 {
+		ticket.CreatedBy = &actorID
+	}
 	ticket, err = u.repo.Create(ctx, ticket)
 	if err != nil {
 		return nil, err
@@ -100,6 +103,49 @@ func (u *SupportTicketUsecase) GetByID(ctx context.Context, id uint64) (*dto.Sup
 	notes, _ := u.repo.ListNotes(ctx, id)
 	events, _ := u.repo.ListEvents(ctx, id, 50)
 	return toDetail(ticket, notes, events), nil
+}
+
+func (u *SupportTicketUsecase) Update(ctx context.Context, id uint64, req *dto.SupportTicketUpdateRequest) error {
+	actorID := _utils.GetProfileIdWithContext(ctx)
+	ticket, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if ticket == nil {
+		return _errors.ReturnError(404, "ticket not found")
+	}
+	if req == nil || (req.Title == nil && req.Description == nil) {
+		return _errors.ReturnError(400, "Cần ít nhất tiêu đề hoặc mô tả để cập nhật")
+	}
+	before, _ := json.Marshal(map[string]string{
+		"title":       ticket.Title,
+		"description": ticket.Description,
+	})
+	if req.Title != nil {
+		title := *req.Title
+		if title == "" {
+			return _errors.ReturnError(400, "Tiêu đề không được để trống")
+		}
+		ticket.Title = title
+	}
+	if req.Description != nil {
+		ticket.Description = *req.Description
+	}
+	if err := u.repo.Update(ctx, ticket); err != nil {
+		return err
+	}
+	after, _ := json.Marshal(map[string]string{
+		"title":       ticket.Title,
+		"description": ticket.Description,
+	})
+	return u.repo.AddEvent(ctx, &domain.SupportTicketEvent{
+		TicketID:   id,
+		ActorID:    actorID,
+		Action:     "update",
+		BeforeJSON: string(before),
+		AfterJSON:  string(after),
+		Note:       "Ticket content updated",
+	})
 }
 
 func (u *SupportTicketUsecase) Assign(ctx context.Context, id uint64, req *dto.SupportTicketAssignRequest) error {
@@ -297,6 +343,7 @@ func toItem(t domain.SupportTicket) dto.SupportTicketItemResponse {
 		RelatedReportID: t.RelatedReportID,
 		Product:         uint32(t.Product),
 		Images:          unmarshalImages(t.Images),
+		CreatedBy:       derefUint64(t.CreatedBy),
 		UpdatedAt:       t.UpdatedAt,
 		CreatedAt:       t.CreatedAt,
 	}
@@ -325,10 +372,18 @@ func toDetail(t *domain.SupportTicket, notes []domain.SupportTicketNote, events 
 		Product:         uint32(t.Product),
 		Source:          uint32(t.Source),
 		Images:          unmarshalImages(t.Images),
+		CreatedBy:       derefUint64(t.CreatedBy),
 		CreatedAt:       t.CreatedAt,
 		UpdatedAt:       t.UpdatedAt,
 		ClosedAt:        t.ClosedAt,
 		Notes:           noteRes,
 		Events:          eventRes,
 	}
+}
+
+func derefUint64(v *uint64) uint64 {
+	if v == nil {
+		return 0
+	}
+	return *v
 }

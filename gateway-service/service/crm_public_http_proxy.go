@@ -80,6 +80,8 @@ func RegisterCRMPublicHTTPProxy(routes gin.IRoutes, env string) error {
 		req.Header.Set("X-QHPro-Upstream", "crm-public-content")
 	}
 
+	proxy.ModifyResponse = stripUpstreamCORSHeaders
+
 	proxy.Transport = &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,

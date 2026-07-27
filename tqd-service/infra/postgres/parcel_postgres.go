@@ -203,33 +203,86 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 	var parcels []qh_domain.QHParcelInfo
 	var total int64
 
-	query := p.DB.WithContext(ctx).Model(&qh_domain.QHParcelInfo{})
+	// Địa chỉ/tờ-thửa nằm ở bảng parcels (qh_parcel_info.adr_search/address_text hiện đang trống trên DB).
+	where := []string{"parcel.deleted_at IS NULL"}
+	args := make([]interface{}, 0, 6)
 
 	if mapNumber != "" || landNumber != "" {
 		if mapNumber != "" {
-			query = query.Where("map_number = ?", mapNumber)
+			where = append(where, "COALESCE(NULLIF(info.map_number, ''), parcel.map_number) = ?")
+			args = append(args, mapNumber)
 		}
 		if landNumber != "" {
-			query = query.Where("land_number = ?", landNumber)
+			where = append(where, "COALESCE(NULLIF(info.land_number, ''), parcel.land_number) = ?")
+			args = append(args, landNumber)
 		}
 	} else {
 		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
-		query = query.Where("LOWER(qh_parcel_info.adr_search) LIKE ?", searchTerm)
+		// Ưu tiên adr_search (đã bỏ dấu); fallback address_text khi adr_search trống.
+		where = append(where, `(
+			LOWER(COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '')) LIKE ?
+			OR (
+				COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '') = ''
+				AND LOWER(COALESCE(NULLIF(info.address_text, ''), parcel.address_text, '')) LIKE ?
+			)
+		)`)
+		args = append(args, searchTerm, searchTerm)
 	}
+	whereSQL := strings.Join(where, " AND ")
 
-	countQuery := query.Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
-		Where("p.deleted_at IS NULL")
-	if err := countQuery.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("count parcels: %w", err)
-	}
-
-	if err := query.Select("qh_parcel_info.*, p.lat, p.lon, sh.name as shape_name").
-		Joins("JOIN parcels p ON p.id = qh_parcel_info.parcel_id").
-		Joins("LEFT JOIN qh_shape sh ON sh.id = qh_parcel_info.shape_id").
-		Where("p.deleted_at IS NULL").
-		Order("p.id DESC").
-		Limit(pagable.GetLimit()).Offset(pagable.GetOffset()).Find(&parcels).Error; err != nil {
+	// Không COUNT(*) — LIKE trên hàng triệu dòng rất chậm; Select FE chỉ cần list.
+	listSQL := `
+		SELECT
+			info.id,
+			info.parcel_id,
+			COALESCE(NULLIF(info.property_code, ''), parcel.property_code) AS property_code,
+			info.property_uuid,
+			COALESCE(NULLIF(info.map_number, ''), parcel.map_number) AS map_number,
+			COALESCE(NULLIF(info.land_number, ''), parcel.land_number) AS land_number,
+			COALESCE(info.total_area_sqm, parcel.total_area_sqm, 0) AS total_area_sqm,
+			parcel.lat,
+			parcel.lon,
+			COALESCE(NULLIF(info.province_code, ''), parcel.province_code) AS province_code,
+			COALESCE(NULLIF(info.district_code, ''), parcel.district_code) AS district_code,
+			COALESCE(NULLIF(info.ward_code, ''), parcel.ward_code) AS ward_code,
+			COALESCE(NULLIF(info.address_text, ''), parcel.address_text, '') AS address_text,
+			COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '') AS adr_search,
+			COALESCE(info.is_seo, parcel.is_seo, false) AS is_seo,
+			COALESCE(info.shape_id, parcel.shape_id) AS shape_id,
+			sh.name AS shape_name,
+			COALESCE(info.facade, parcel.facade, 0) AS facade,
+			COALESCE(info.land_type_id, parcel.land_type_id) AS land_type_id,
+			info.source_type,
+			info.is_verified,
+			info.verified_at,
+			info.created_at,
+			info.updated_at
+		FROM qh_parcel_info info
+		INNER JOIN parcels parcel ON parcel.id = info.parcel_id
+		LEFT JOIN qh_shape sh ON sh.id = COALESCE(info.shape_id, parcel.shape_id)
+		WHERE ` + whereSQL + `
+		ORDER BY parcel.id DESC
+		LIMIT ? OFFSET ?`
+	limit := pagable.GetLimit()
+	offset := pagable.GetOffset()
+	listArgs := append(append([]interface{}{}, args...), limit, offset)
+	if err := p.DB.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&parcels).Error; err != nil {
 		return nil, 0, fmt.Errorf("search parcels: %w", err)
+	}
+
+	total = int64(offset + len(parcels))
+	if len(parcels) >= limit {
+		// Có thể còn trang sau — báo total > offset+len để client biết còn data.
+		total = int64(offset+len(parcels)) + 1
+	}
+
+	for i := range parcels {
+		if parcels[i].ShapeId != nil && parcels[i].ShapeName != "" {
+			parcels[i].Shape = &qh_domain.QHShape{
+				BaseEntity: _models.BaseEntity{ID: *parcels[i].ShapeId},
+				Name:       parcels[i].ShapeName,
+			}
+		}
 	}
 
 	return parcels, total, nil

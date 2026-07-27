@@ -302,6 +302,10 @@ func setupHTTPRoutes(
 			{
 				reports.GET("", reportAdminHandler.List)
 				reports.GET("/summary", reportAdminHandler.Summary)
+				reports.GET("/queue", reportAdminHandler.Queue)
+				reports.GET("/queue/summary", reportAdminHandler.QueueSummary)
+				reports.GET("/events", reportAdminHandler.ListEvents)
+				reports.GET("/:id/events", reportAdminHandler.ListReportEvents)
 				reports.GET("/:id", reportAdminHandler.Get)
 				reports.POST("/internal", reportAdminHandler.CreateInternal)
 				reports.POST("/:id/assign", reportAdminHandler.Assign)

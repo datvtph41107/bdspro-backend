@@ -96,7 +96,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	importUsecase := usecase.NewImportUsecase(regionRepository, regionExtendRepository, qhLabelRepository, layerRepository)
 	importHTTPHandler := handler_http.NewImportHTTPHandler(importUsecase)
 	reportRepository := postgres.NewReportRepository(db)
-	reportUsecase := usecase.NewReportUsecase(reportRepository)
+	reportUsecase := usecase.NewReportUsecase(reportRepository, userProvider)
 	reportAdminHTTPHandler := handler_http.NewReportAdminHTTPHandler(reportUsecase)
 	contactLabelGrpcHandler := handler_grpc.NewContactLabelGrpcHandler(contactLabelUsecase, contactLabelMapper)
 	directoryCategoryGrpcHandler := handler_grpc.NewDirectoryCategoryGrpcHandler(directoryCategoryUsecase, directoryCategoryMapper, directoryCategoryValidator)

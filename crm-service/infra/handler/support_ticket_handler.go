@@ -130,6 +130,25 @@ func (h *SupportTicketHandler) CreateSupportTicket(ctx context.Context, req *crm
 	return &crmpb.GetSupportTicketResponse{Ticket: toProtoDetail(res)}, nil
 }
 
+func (h *SupportTicketHandler) UpdateSupportTicket(ctx context.Context, req *crmpb.UpdateSupportTicketRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+		return nil, err
+	}
+	updateReq := &dto.SupportTicketUpdateRequest{}
+	if req.Title != nil {
+		v := req.GetTitle()
+		updateReq.Title = &v
+	}
+	if req.Description != nil {
+		v := req.GetDescription()
+		updateReq.Description = &v
+	}
+	if err := h.usecase.Update(ctx, req.Id, updateReq); err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{Id: req.Id, Message: "updated"}, nil
+}
+
 func (h *SupportTicketHandler) AssignSupportTicket(ctx context.Context, req *crmpb.AssignSupportTicketRequest) (*sharepb.SubmitResponse, error) {
 	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
@@ -215,6 +234,7 @@ func toProtoItem(item dto.SupportTicketItemResponse) *crmpb.SupportTicketItem {
 		Priority:  item.Priority,
 		Product:   item.Product,
 		Images:    item.Images,
+		CreatedBy: item.CreatedBy,
 		UpdatedAt: _utils.FormatTimeToString(item.UpdatedAt),
 		CreatedAt: _utils.FormatTimeToString(item.CreatedAt),
 	}
@@ -257,6 +277,7 @@ func toProtoDetail(d *dto.SupportTicketDetailResponse) *crmpb.SupportTicketDetai
 		Product:     d.Product,
 		Source:      d.Source,
 		Images:      d.Images,
+		CreatedBy:   d.CreatedBy,
 		CreatedAt:   _utils.FormatTimeToString(d.CreatedAt),
 		UpdatedAt:   _utils.FormatTimeToString(d.UpdatedAt),
 		Notes:       notes,
