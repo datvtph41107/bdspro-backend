@@ -46,24 +46,17 @@ func resolveCRMPublicHTTPURL(env string) (*url.URL, error) {
 	return url.Parse("http://crm-service:8246")
 }
 
-// RegisterCRMPublicHTTPProxy publishes CRM read-only public content APIs.
-//
-// CRM remains the owner of:
-//   - database access
-//   - SEO public-page policy
-//   - rendered HTML
-//   - sitemap XML
-//   - cache headers and ETag
-//
-// Gateway only performs transport-level reverse proxying.
-func RegisterCRMPublicHTTPProxy(routes gin.IRoutes, env string) error {
+// newCRMPublicHTTPProxy builds the shared transport boundary for CRM-owned
+// read-only public contracts. Route registration remains explicit so the
+// Gateway never becomes a second content or SEO policy owner.
+func newCRMPublicHTTPProxy(env string) (*httputil.ReverseProxy, error) {
 	target, err := resolveCRMPublicHTTPURL(env)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if target == nil || target.Scheme == "" || target.Host == "" {
-		return errors.New("invalid CRM public HTTP target")
+		return nil, errors.New("invalid CRM public HTTP target")
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
@@ -104,10 +97,42 @@ func RegisterCRMPublicHTTPProxy(routes gin.IRoutes, env string) error {
 		))
 	}
 
-	handler := func(c *gin.Context) {
+	return proxy, nil
+}
+
+func newCRMSeoGovernanceHTTPProxy(env string) (*httputil.ReverseProxy, error) {
+	proxy, err := newCRMPublicHTTPProxy(env)
+	if err != nil {
+		return nil, err
+	}
+	internalKey := strings.TrimSpace(os.Getenv("CRM_SEO_GOVERNANCE_INTERNAL_KEY"))
+	if internalKey == "" {
+		return nil, errors.New("CRM_SEO_GOVERNANCE_INTERNAL_KEY is required")
+	}
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.Header.Set("X-QHPro-Internal-Operation-Key", internalKey)
+	}
+	return proxy, nil
+}
+
+func crmPublicProxyHandler(proxy *httputil.ReverseProxy) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		proxy.ServeHTTP(c.Writer, c.Request)
 		c.Abort()
 	}
+}
+
+// RegisterCRMPublicHTTPProxy publishes CRM read-only public content APIs.
+// CRM remains the owner of database access, rendered HTML, sitemap XML, cache
+// headers and ETag; Gateway only performs transport-level reverse proxying.
+func RegisterCRMPublicHTTPProxy(routes gin.IRoutes, env string) error {
+	proxy, err := newCRMPublicHTTPProxy(env)
+	if err != nil {
+		return err
+	}
+	handler := crmPublicProxyHandler(proxy)
 
 	// Taxonomy and content catalog.
 	routes.GET("/domains", handler)
@@ -123,5 +148,35 @@ func RegisterCRMPublicHTTPProxy(routes gin.IRoutes, env string) error {
 	routes.GET("/page/*path", handler)
 	routes.HEAD("/page/*path", handler)
 
+	return nil
+}
+
+// RegisterCRMPublicSEOHTTPProxy publishes versioned PublicSeoDocument JSON.
+// The backend remains the sole owner of answer readiness and index eligibility.
+func RegisterCRMPublicSEOHTTPProxy(routes gin.IRoutes, env string) error {
+	proxy, err := newCRMPublicHTTPProxy(env)
+	if err != nil {
+		return err
+	}
+	handler := crmPublicProxyHandler(proxy)
+	routes.GET("/documents/:module/:slug", handler)
+	routes.HEAD("/documents/:module/:slug", handler)
+	return nil
+}
+
+// RegisterCRMSeoGovernanceHTTPProxy exposes backend-owned SEO governance reads and explicit authenticated operations
+// through the authenticated Gateway boundary. CRM remains the policy owner;
+// Gateway performs transport only.
+func RegisterCRMSeoGovernanceHTTPProxy(routes gin.IRoutes, env string) error {
+	proxy, err := newCRMSeoGovernanceHTTPProxy(env)
+	if err != nil {
+		return err
+	}
+	handler := crmPublicProxyHandler(proxy)
+	routes.GET("/operating-system/v2u", handler)
+	routes.HEAD("/operating-system/v2u", handler)
+	routes.GET("/documents/:module/:slug", handler)
+	routes.HEAD("/documents/:module/:slug", handler)
+	routes.POST("/administrative-units/provision", handler)
 	return nil
 }

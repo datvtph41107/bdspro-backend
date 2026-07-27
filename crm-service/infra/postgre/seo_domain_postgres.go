@@ -99,6 +99,29 @@ func (r *SeoDomainPostgres) GetByRefSource(ctx context.Context, refType uint32, 
 	return &seo, nil
 }
 
+func (r *SeoDomainPostgres) GetByRefIdentity(ctx context.Context, refType uint32, refSource string, refURL string) (*seo_domain.SeoDomain, error) {
+	var seo seo_domain.SeoDomain
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Preload("InternalLinks", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
+		Preload("InternalLinks.ChildSeo").
+		Preload("Relatives", func(db *gorm.DB) *gorm.DB {
+			return db.Order("priority DESC, updated_at DESC")
+		}).
+		Preload("Relatives.ChildSeo").
+		Where("ref_type = ? AND ref_source = ? AND ref_url = ?", refType, refSource, strings.TrimSpace(refURL)).
+		First(&seo).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	seo.NormalizeLifecycle()
+	return &seo, nil
+}
+
 func (r *SeoDomainPostgres) GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error) {
 	var seo seo_domain.SeoDomain
 	err := impl.GetDB(ctx, r.db).WithContext(ctx).

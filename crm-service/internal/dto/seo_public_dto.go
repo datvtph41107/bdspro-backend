@@ -28,3 +28,11 @@ type SeoSitemapXMLResponse struct {
 	ContentType string `json:"contentType"`
 	Total       int    `json:"total"`
 }
+
+type SeoPublicDocumentResponse struct {
+	Document     *SeoPublicDocument `json:"document"`
+	ETag         string             `json:"etag"`
+	CacheControl string             `json:"cacheControl"`
+	StatusCode   int                `json:"statusCode"`
+	Warnings     []string           `json:"warnings,omitempty"`
+}

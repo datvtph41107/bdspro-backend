@@ -42,6 +42,9 @@ func load(serviceName string, cfg interface{}) error {
 	v.SetConfigType("yaml")
 	v.AddConfigPath(fmt.Sprintf("./%s/config", serviceName))
 	v.AddConfigPath(fmt.Sprintf("./%s", serviceName))
+	// QHPro: also resolve configuration relative to the running service directory
+	v.AddConfigPath("./config")
+	v.AddConfigPath(".")
 
 	if err := v.MergeInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
@@ -49,10 +52,31 @@ func load(serviceName string, cfg interface{}) error {
 		}
 	}
 
-	// 4. local.yaml (gitignore)
-	v.SetConfigName("local")
-	if err := v.MergeInConfig(); err != nil {
-		// optional
+	// 4. local config override
+	// QHPro: explicitly merge a service-local local.yml/local.yaml overlay
+	localConfigLoaded := false
+	for _, localConfigFile := range []string{
+		"./config/local.yml",
+		"./config/local.yaml",
+		"./local.yml",
+		"./local.yaml",
+	} {
+		if _, err := os.Stat(localConfigFile); err != nil {
+			continue
+		}
+
+		v.SetConfigFile(localConfigFile)
+		if err := v.MergeInConfig(); err != nil {
+			return fmt.Errorf("merge local config %s: %w", localConfigFile, err)
+		}
+
+		localConfigLoaded = true
+		break
+	}
+
+	if !localConfigLoaded {
+		v.SetConfigName("local")
+		_ = v.MergeInConfig()
 	}
 
 	// 5. Unmarshal

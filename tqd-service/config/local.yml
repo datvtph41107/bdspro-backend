@@ -28,7 +28,7 @@ jwt:
 
 config-app:
   qhpro:
-    domain_api: "https://api.bdspro.com"
+    domain_api: "http://127.0.0.1:8000"
     domain_file: "https://data.bdspro.com"
     domain_pmtile: "https://data-map.bdspro.com"
     domain_style: "https://map.qhpro.vn"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -88,7 +89,8 @@ func candidate(kind domain.EntityKind, row spatialRow, matchType string) domain.
 	if row.DistanceMeters > 0 {
 		attrs["distanceMeters"] = row.DistanceMeters
 	}
-	capabilities := domain.Capabilities{CanOpenDetail: true, CanFocusMap: spatial.Centroid != nil || spatial.Bounds != nil, CanShare: true}
+	detailPath := detailURL(kind, row)
+	capabilities := domain.Capabilities{CanOpenDetail: detailPath != "", CanFocusMap: spatial.Centroid != nil || spatial.Bounds != nil, CanShare: true}
 	if kind == domain.EntityKindParcel {
 		capabilities.CanFollow = true
 		capabilities.CanCreateReport = true
@@ -97,6 +99,10 @@ func candidate(kind domain.EntityKind, row spatialRow, matchType string) domain.
 	if kind == domain.EntityKindPlanningRegion {
 		capabilities.CanCreateReport = true
 	}
+	links := domain.Links{DetailURL: detailPath, GeometryURL: "/v2/tqd/discovery/entities/" + ref.Key}
+	if strings.HasPrefix(detailPath, "/dia-ban/") || strings.HasPrefix(detailPath, "/do-an-quy-hoach/") {
+		links.CanonicalURL = detailPath
+	}
 	return domain.EntityCandidate{
 		Entity:       ref,
 		Presentation: domain.Presentation{Title: title, Subtitle: row.Subtitle, Description: row.Description, Status: "active"},
@@ -104,7 +110,7 @@ func candidate(kind domain.EntityKind, row spatialRow, matchType string) domain.
 		Location:     &domain.Location{Address: row.Address, Province: row.Province, ProvinceCode: row.ProvinceCode, Ward: row.Ward, WardCode: row.WardCode},
 		Source:       domain.Source{System: "tqd", Dataset: dataset(kind), Authority: "TQD", DataQuality: "authoritative"},
 		Capabilities: capabilities,
-		Links:        domain.Links{DetailURL: detailURL(kind, row.ID), GeometryURL: "/v2/tqd/discovery/entities/" + ref.Key},
+		Links:        links,
 		Match:        domain.Match{Type: matchType, ReasonCodes: []string{matchType}},
 		Rank:         domain.Rank{Score: row.Score, ReasonCodes: []string{matchType}},
 		Attributes:   attrs,
@@ -126,16 +132,55 @@ func dataset(kind domain.EntityKind) string {
 	}
 	return ""
 }
-func detailURL(kind domain.EntityKind, id string) string {
+
+var discoveryNonSlugCharacters = regexp.MustCompile(`[^a-z0-9]+`)
+
+func discoverySlugify(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	replacer := strings.NewReplacer(
+		"à", "a", "á", "a", "ạ", "a", "ả", "a", "ã", "a",
+		"â", "a", "ầ", "a", "ấ", "a", "ậ", "a", "ẩ", "a", "ẫ", "a",
+		"ă", "a", "ằ", "a", "ắ", "a", "ặ", "a", "ẳ", "a", "ẵ", "a",
+		"è", "e", "é", "e", "ẹ", "e", "ẻ", "e", "ẽ", "e",
+		"ê", "e", "ề", "e", "ế", "e", "ệ", "e", "ể", "e", "ễ", "e",
+		"ì", "i", "í", "i", "ị", "i", "ỉ", "i", "ĩ", "i",
+		"ò", "o", "ó", "o", "ọ", "o", "ỏ", "o", "õ", "o",
+		"ô", "o", "ồ", "o", "ố", "o", "ộ", "o", "ổ", "o", "ỗ", "o",
+		"ơ", "o", "ờ", "o", "ớ", "o", "ợ", "o", "ở", "o", "ỡ", "o",
+		"ù", "u", "ú", "u", "ụ", "u", "ủ", "u", "ũ", "u",
+		"ư", "u", "ừ", "u", "ứ", "u", "ự", "u", "ử", "u", "ữ", "u",
+		"ỳ", "y", "ý", "y", "ỵ", "y", "ỷ", "y", "ỹ", "y",
+		"đ", "d",
+	)
+	value = replacer.Replace(value)
+	return strings.Trim(discoveryNonSlugCharacters.ReplaceAllString(value, "-"), "-")
+}
+
+func administrativeDetailURL(row spatialRow) string {
+	code := strings.TrimSpace(row.ProvinceCode)
+	if strings.HasPrefix(row.ID, "ward:") {
+		code = strings.TrimSpace(row.WardCode)
+	}
+	nameSlug := discoverySlugify(row.Title)
+	codeSlug := discoverySlugify(code)
+	if nameSlug == "" || codeSlug == "" {
+		return ""
+	}
+	return "/dia-ban/" + nameSlug + "-" + codeSlug
+}
+
+func detailURL(kind domain.EntityKind, row spatialRow) string {
 	switch kind {
 	case domain.EntityKindParcel:
-		return "/v2/tqd/parcels/" + id + "/detail"
+		return "/v2/tqd/parcels/" + row.ID + "/detail"
 	case domain.EntityKindPlanningRegion:
-		return "/v2/tqd/client/regions/" + id
+		return "/v2/tqd/client/regions/" + row.ID
 	case domain.EntityKindPlanningProject:
-		return "/do-an-quy-hoach/" + id
+		return "/do-an-quy-hoach/" + row.ID
+	case domain.EntityKindAdministrativeUnit:
+		return administrativeDetailURL(row)
 	case domain.EntityKindPOI:
-		return "/v2/tqd/pois/" + id
+		return "/v2/tqd/pois/" + row.ID
 	}
 	return ""
 }

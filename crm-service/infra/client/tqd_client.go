@@ -52,6 +52,45 @@ func NewTqdClient() *TqdClient {
 	return client
 }
 
+func (c *TqdClient) GetAdministrativeUnitProjection(
+	ctx context.Context,
+	identity string,
+) (*dto.TqdAdministrativeUnitProjection, error) {
+	if c == nil || c.SeoProjectionClient == nil {
+		return nil, errors.New("tqd SEO projection client not available")
+	}
+	identity = strings.TrimSpace(identity)
+	if identity == "" {
+		return nil, errors.New("administrative unit identity is required")
+	}
+
+	resp, err := c.SeoProjectionClient.GetAdministrativeUnitProjection(
+		ctx,
+		wrapperspb.String(identity),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || len(resp.Value) == 0 {
+		return nil, errors.New("tqd returned an empty administrative unit projection")
+	}
+
+	var projection dto.TqdAdministrativeUnitProjection
+	if err := json.Unmarshal(resp.Value, &projection); err != nil {
+		return nil, fmt.Errorf("decode administrative unit projection: %w", err)
+	}
+	if strings.TrimSpace(projection.EntityID) == "" ||
+		strings.TrimSpace(projection.Name) == "" ||
+		strings.TrimSpace(projection.AdministrativeCode) == "" ||
+		!strings.HasPrefix(strings.TrimSpace(projection.CanonicalPath), "/dia-ban/") {
+		return nil, errors.New("tqd administrative unit projection is missing stable identity fields")
+	}
+	if projection.SchemaVersion != dto.TqdAdministrativeUnitProjectionSchemaVersion {
+		return nil, fmt.Errorf("unsupported administrative unit projection schema %q", projection.SchemaVersion)
+	}
+	return &projection, nil
+}
+
 func (c *TqdClient) GetPlanningProjectProjection(
 	ctx context.Context,
 	identity string,

@@ -14,10 +14,11 @@ const (
 	SeoRefSourceBdsproProject    = "bdspro.project"
 	SeoRefSourceBdsproDocType    = "bdspro.doc_type"
 
-	SeoRefSourceTqdParcel   = "tqd.parcel"
-	SeoRefSourceTqdLayer    = "tqd.qh_layer"
-	SeoRefSourceTqdDocument = "tqd.legal_document"
-	SeoRefSourceTqdReport   = "tqd.report"
+	SeoRefSourceTqdAdministrativeUnit = "tqd.administrative_unit"
+	SeoRefSourceTqdParcel             = "tqd.parcel"
+	SeoRefSourceTqdLayer              = "tqd.qh_layer"
+	SeoRefSourceTqdDocument           = "tqd.legal_document"
+	SeoRefSourceTqdReport             = "tqd.report"
 
 	SeoRefSourceCrmReport = "crm.report"
 )
@@ -178,27 +179,19 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			Value:            uint32(enums.ESEORefTypeAdmUnit),
 			Key:              "adm_unit",
 			Label:            "Đơn vị hành chính",
-			Description:      "Tỉnh, huyện, xã hoặc đơn vị hành chính",
+			Description:      "Tỉnh, xã/phường hoặc đơn vị hành chính từ TQD projection",
 			Family:           "location",
-			SourceService:    "bdspro",
-			ResolverKey:      SeoRefSourceBdsproRegion,
-			Searchable:       true,
+			SourceService:    "tqd",
+			ResolverKey:      SeoRefSourceTqdAdministrativeUnit,
+			Searchable:       false,
 			UniquePerRef:     true,
-			SupportsTemplate: true,
+			SupportsTemplate: false,
 			DefaultPageType:  "entity",
-			AdminURLPattern:  "/admin/region/{id}",
-			PublicURLPattern: "/dia-diem/{slug}",
-			Status:           SeoSourceStatusReady,
-			Resolvable:       true,
-			Capabilities: readyCapabilities(
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-			),
+			PublicURLPattern: "/dia-ban/{slug}",
+			Status:           SeoSourceStatusComingSoon,
+			Resolvable:       false,
+			DisabledReason:   "Generic numeric refId cannot preserve typed province/ward identity; dedicated canonical provisioning is required",
+			Capabilities:     comingSoonCapabilities(true),
 		},
 		{
 			Value:            uint32(enums.ESEORefTypeRegion),

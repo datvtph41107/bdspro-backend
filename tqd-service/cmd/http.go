@@ -186,6 +186,7 @@ func setupHTTPRoutes(
 	publicContent := router.Group("/v2/tqd/public")
 	{
 		publicContent.GET("/parcels/:id/quick-view", publicContentHandler.GetParcelQuickView)
+		publicContent.GET("/administrative-units/:identity/projection", publicContentHandler.GetAdministrativeUnitProjection)
 		publicContent.GET("/planning-projects/:identity/projection", publicContentHandler.GetPlanningProjectProjection)
 	}
 

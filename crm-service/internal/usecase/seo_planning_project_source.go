@@ -55,6 +55,7 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 	// fields are re-applied during rendering. Persist only the source semantic
 	// document, not a stale derived result.
 	document.AnswerReadiness = nil
+	document.IndexDecision = nil
 	document.SEO = dto.SeoPublicSEO{}
 
 	projectionJSON, err := json.Marshal(projection)
@@ -304,6 +305,8 @@ func normalizePlanningSourceAuthority(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "official", "government", "state":
 		return "official"
+	case "government_derived", "government-derived":
+		return "government_derived"
 	case "authorized_partner", "partner":
 		return "authorized_partner"
 	case "editorial":

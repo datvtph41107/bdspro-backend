@@ -49,6 +49,37 @@ func (h *Handler) GetParcelQuickView(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func (h *Handler) GetAdministrativeUnitProjection(c *gin.Context) {
+	identity := strings.TrimSpace(c.Param("identity"))
+	if identity == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    "INVALID_ADMINISTRATIVE_UNIT_IDENTITY",
+			"message": "Administrative unit identity is required.",
+		})
+		return
+	}
+
+	result, err := h.repository.GetAdministrativeUnitProjection(c.Request.Context(), identity)
+	if err != nil {
+		if publiccontent_postgres.IsNotFound(err) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"code":    "ADMINISTRATIVE_UNIT_NOT_FOUND",
+				"message": "Không tìm thấy đơn vị hành chính.",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    "ADMINISTRATIVE_UNIT_PROJECTION_FAILED",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.Header("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
+	c.JSON(http.StatusOK, result)
+}
+
 func (h *Handler) GetPlanningProjectProjection(c *gin.Context) {
 	identity := strings.TrimSpace(c.Param("identity"))
 	if identity == "" {

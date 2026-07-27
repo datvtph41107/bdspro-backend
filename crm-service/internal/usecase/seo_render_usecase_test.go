@@ -463,3 +463,45 @@ func TestBuildPlanningProjectPublicDocumentCompleteBecomesReady(t *testing.T) {
 		t.Fatal("complete trusted projection must remain indexable")
 	}
 }
+
+func TestSeoPublicDocumentVersionIsStableAcrossRenderOutputWrites(t *testing.T) {
+	page := planningProjectPage(t)
+	before, _, err := composeSeoPublicDocument(page, time.Now().UTC())
+	if err != nil {
+		t.Fatalf("compose before render failed: %v", err)
+	}
+	if strings.TrimSpace(before.DocumentVersion) == "" {
+		t.Fatal("document version must be backend-owned and non-empty")
+	}
+
+	generatedAt := time.Now().UTC().Add(time.Minute)
+	page.RenderedHTML = "<html>rendered output</html>"
+	page.StaticHtmlHash = "new-render-hash"
+	page.GeneratedAt = &generatedAt
+	page.UpdatedAt = generatedAt
+
+	after, _, err := composeSeoPublicDocument(page, generatedAt)
+	if err != nil {
+		t.Fatalf("compose after render failed: %v", err)
+	}
+	if after.DocumentVersion != before.DocumentVersion {
+		t.Fatalf("render output must not change semantic document version: before=%q after=%q", before.DocumentVersion, after.DocumentVersion)
+	}
+}
+
+func TestSeoPublicDocumentVersionChangesWithSourceContent(t *testing.T) {
+	page := planningProjectPage(t)
+	before, _, err := composeSeoPublicDocument(page, time.Now().UTC())
+	if err != nil {
+		t.Fatalf("compose before source update failed: %v", err)
+	}
+
+	page.RefHash = "source-version-2"
+	after, _, err := composeSeoPublicDocument(page, time.Now().UTC())
+	if err != nil {
+		t.Fatalf("compose after source update failed: %v", err)
+	}
+	if after.DocumentVersion == before.DocumentVersion {
+		t.Fatalf("source/content changes must update semantic document version: %q", before.DocumentVersion)
+	}
+}

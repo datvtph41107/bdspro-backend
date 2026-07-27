@@ -5,22 +5,28 @@ import "encoding/json"
 const SeoPublicDocumentSchemaVersion = "qhpro-public-seo-document/v1"
 
 type SeoPublicDocument struct {
-	SchemaVersion   string              `json:"schemaVersion"`
-	ModuleID        string              `json:"moduleId"`
-	ResourceType    string              `json:"resourceType"`
-	Identity        SeoPublicIdentity   `json:"identity"`
-	Heading         SeoPublicHeading    `json:"heading"`
-	Breadcrumbs     []SeoBreadcrumb     `json:"breadcrumbs"`
-	Facts           []SeoFact           `json:"facts"`
-	Sections        []SeoSection        `json:"sections"`
-	RelatedLinks    []SeoRelatedLink    `json:"relatedLinks"`
-	RelatedEntities []SeoRelatedEntity  `json:"relatedEntities,omitempty"`
-	Media           *SeoMediaBundle     `json:"media,omitempty"`
-	FAQ             *SeoFAQ             `json:"faq,omitempty"`
-	MapTarget       *SeoMapTarget       `json:"mapTarget,omitempty"`
-	AnswerReadiness *SeoAnswerReadiness `json:"answerReadiness,omitempty"`
-	SEO             SeoPublicSEO        `json:"seo"`
-	Source          SeoPublicSource     `json:"source"`
+	SchemaVersion   string                      `json:"schemaVersion"`
+	DocumentVersion string                      `json:"documentVersion"`
+	ModuleID        string                      `json:"moduleId"`
+	ResourceType    string                      `json:"resourceType"`
+	Identity        SeoPublicIdentity           `json:"identity"`
+	Heading         SeoPublicHeading            `json:"heading"`
+	Breadcrumbs     []SeoBreadcrumb             `json:"breadcrumbs"`
+	Facts           []SeoFact                   `json:"facts"`
+	Sections        []SeoSection                `json:"sections"`
+	RelatedLinks    []SeoRelatedLink            `json:"relatedLinks"`
+	RelatedEntities []SeoRelatedEntity          `json:"relatedEntities,omitempty"`
+	Media           *SeoMediaBundle             `json:"media,omitempty"`
+	FAQ             *SeoFAQ                     `json:"faq,omitempty"`
+	MapTarget       *SeoMapTarget               `json:"mapTarget,omitempty"`
+	AnswerReadiness *SeoAnswerReadiness         `json:"answerReadiness,omitempty"`
+	IndexDecision   *SeoIndexDecision           `json:"indexDecision,omitempty"`
+	OperatingSystem *SeoOperatingSystemSnapshot `json:"operatingSystem,omitempty"`
+	ClientHandoff   *SeoPageBootstrap           `json:"clientHandoff,omitempty"`
+	Measurement     *SeoMeasurementPlan         `json:"measurement,omitempty"`
+	GenerativeAI    *SeoGenerativeAnswer        `json:"generativeAi,omitempty"`
+	SEO             SeoPublicSEO                `json:"seo"`
+	Source          SeoPublicSource             `json:"source"`
 }
 
 type SeoPublicIdentity struct {
@@ -175,6 +181,12 @@ type SeoAnswerReadiness struct {
 	RequiredSections     []string `json:"requiredSections"`
 	RenderedSections     []string `json:"renderedSections"`
 	Ready                bool     `json:"ready"`
+}
+
+type SeoIndexDecision struct {
+	PolicyVersion string   `json:"policyVersion"`
+	Eligible      bool     `json:"eligible"`
+	ReasonCodes   []string `json:"reasonCodes"`
 }
 
 type SeoPublicSEO struct {

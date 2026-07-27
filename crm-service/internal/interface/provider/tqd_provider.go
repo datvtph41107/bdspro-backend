@@ -6,6 +6,7 @@ import (
 )
 
 type TqdProvider interface {
+	GetAdministrativeUnitProjection(ctx context.Context, identity string) (*dto.TqdAdministrativeUnitProjection, error)
 	GetPlanningProjectProjection(ctx context.Context, identity string) (*dto.TqdPlanningProjectProjection, error)
 	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
 	GetParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
