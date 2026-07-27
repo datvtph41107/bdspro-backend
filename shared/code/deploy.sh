@@ -315,6 +315,7 @@ fi
 if [ "$1" = "gateway" ]; then
   # scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
   scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+  scp ../.env.backend.local ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/.env.backend.local
 fi
 if [ "$1" = "file" ]; then
   scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
