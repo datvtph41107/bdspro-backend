@@ -4,12 +4,35 @@ package tqdpb;
 
 option go_package = "pb/types/tqd;tqdpb";
 
+import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
 import "google/protobuf/wrappers.proto";
 
-// TqdSeoProjectionService is an internal-only source projection contract.
-// It intentionally has no google.api.http annotation: browser/public traffic
-// continues to use the TQD HTTP projection, while backend generation uses gRPC.
+// TqdSeoProjectionService — public content + SEO source projection.
+// CRM vẫn gọi GetPlanningProjectProjection qua gRPC (BytesValue).
+// Browser/FE đi gateway HTTP → các RPC *Public (HttpBody JSON).
 service TqdSeoProjectionService {
+  // Internal CRM / backend sync (no google.api.http)
   rpc GetPlanningProjectProjection(google.protobuf.StringValue)
       returns (google.protobuf.BytesValue);
+
+  rpc GetParcelQuickViewPublic(GetParcelQuickViewRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/parcels/{parcel_id}/quick-view"
+    };
+  }
+
+  rpc GetPlanningProjectProjectionPublic(GetPlanningProjectProjectionRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/planning-projects/{identity}/projection"
+    };
+  }
+}
+
+message GetParcelQuickViewRequest {
+  uint64 parcel_id = 1;
+}
+
+message GetPlanningProjectProjectionRequest {
+  string identity = 1;
 }

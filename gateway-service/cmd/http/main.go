@@ -311,26 +311,13 @@ var HttpCmd = &cobra.Command{
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 
 		// v2 API routes (gRPC Gateway)
-		tqdPublicProxy := r.Group("/v2/tqd/public")
-		tqdPublicProxy.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
-		if err := service.RegisterTQDPublicHTTPProxy(tqdPublicProxy, env); err != nil {
-			log.Fatalf("register TQD public HTTP proxy: %v", err)
-		}
-
-		// Admin GIS reports (tqd Gin HTTP) — proxy qua gateway :8000
-		tqdAdminReports := r.Group("/v2/tqd/admin/reports")
-		tqdAdminReports.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
-		if err := service.RegisterTQDAdminReportsHTTPProxy(tqdAdminReports, env); err != nil {
-			log.Fatalf("register TQD admin reports HTTP proxy: %v", err)
-		}
-
 		crmPublicProxy := r.Group("/v2/crm/public/content")
 		if err := service.RegisterCRMPublicHTTPProxy(crmPublicProxy, env); err != nil {
 			log.Fatalf("register CRM public HTTP proxy: %v", err)
 		}
 
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
-		// như /v2/tqd/public/* và /v2/crm/public/content/*. Vì vậy các route
+		// như /v2/crm/public/content/*. Vì vậy các route
 		// cụ thể được đăng ký bình thường; phần /v2 còn lại đi qua NoRoute.
 		v2Fallback := service.DiscoveryOrGRPCHandler(mux, discoveryClient)
 		r.NoRoute(

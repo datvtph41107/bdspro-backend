@@ -4,6 +4,7 @@ package tqd;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -34,9 +35,58 @@ service ReportService {
       delete: "/v2/tqd/reports/{reportId}"
     };
   }
-  rpc AdminListReports(AdminListReportsRequest) returns (ListReportsResponse) {
+
+  // —— Admin GIS reports (gateway → gRPC :8219) ——
+  // Static paths trước {reportId} để tránh /summary|/internal bị bắt nhầm.
+  rpc AdminListReports(AdminListReportsRequest) returns (AdminListReportsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/admin/reports"
+    };
+  }
+  rpc AdminReportSummary(AdminReportSummaryRequest) returns (AdminReportSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/summary"
+    };
+  }
+  rpc AdminCreateInternalReport(AdminCreateInternalReportRequest) returns (AdminReportItem) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/internal"
+      body: "*"
+    };
+  }
+  rpc AdminGetReport(AdminGetReportRequest) returns (AdminReportItem) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/{reportId}"
+    };
+  }
+  rpc AdminAssignReport(AdminAssignReportRequest) returns (AdminActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{reportId}/assign"
+      body: "*"
+    };
+  }
+  rpc AdminUpdateSeverity(AdminUpdateSeverityRequest) returns (AdminActionResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/admin/reports/{reportId}/severity"
+      body: "*"
+    };
+  }
+  rpc AdminUpdateQaStatus(AdminUpdateQaStatusRequest) returns (AdminActionResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/admin/reports/{reportId}/qa-status"
+      body: "*"
+    };
+  }
+  rpc AdminUpdateImages(AdminUpdateImagesRequest) returns (AdminActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{reportId}/images"
+      body: "*"
+    };
+  }
+  rpc AdminCloseReport(AdminCloseReportRequest) returns (AdminActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{reportId}/close"
+      body: "*"
     };
   }
   rpc AdminDeleteReport(AdminDeleteReportRequest) returns (google.protobuf.Empty) {
@@ -94,15 +144,6 @@ message ListReportsRequest {
   int64 timestamp = 5;
 }
 
-message AdminListReportsRequest {
-  optional uint64 userId = 1;
-  optional uint32 reportType = 2;
-  optional uint32 status = 3;
-  uint32 page = 4;
-  uint32 size = 5;
-  int64 timestamp = 6;
-}
-
 message ListReportsResponse {
   repeated ReportSummary data = 1;
   int64 total = 2;
@@ -127,6 +168,109 @@ message DeleteReportRequest {
   uint64 reportId = 1;
 }
 
+message AdminListReportsRequest {
+  optional uint64 userId = 1;
+  optional uint32 reportType = 2;
+  optional uint32 status = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+  optional uint32 problemReport = 6;
+  optional uint32 qaStatus = 7;
+  optional uint32 severity = 8;
+  optional uint64 assigneeId = 9;
+  string q = 10;
+}
+
+message AdminListReportsResponse {
+  repeated AdminReportItem data = 1;
+  int64 total = 2;
+}
+
+message AdminGetReportRequest {
+  uint64 reportId = 1;
+}
+
+message AdminReportSummaryRequest {}
+
+message AdminReportSummaryResponse {
+  map<uint32, int64> byQaStatus = 1;
+}
+
+message AdminCreateInternalReportRequest {
+  string title = 1;
+  string description = 2;
+  uint32 problemReport = 3;
+  uint32 reportType = 4;
+  uint32 severity = 5;
+  optional uint64 targetId = 6;
+  optional uint64 supportTicketId = 7;
+  repeated string images = 8;
+}
+
+message AdminAssignReportRequest {
+  uint64 reportId = 1;
+  uint64 assigneeId = 2;
+}
+
+message AdminUpdateSeverityRequest {
+  uint64 reportId = 1;
+  uint32 severity = 2;
+  string reason = 3;
+}
+
+message AdminUpdateQaStatusRequest {
+  uint64 reportId = 1;
+  uint32 qaStatus = 2;
+  string note = 3;
+}
+
+message AdminUpdateImagesRequest {
+  uint64 reportId = 1;
+  repeated string images = 2;
+}
+
+message AdminCloseReportRequest {
+  uint64 reportId = 1;
+  bool reject = 2;
+  string note = 3;
+}
+
 message AdminDeleteReportRequest {
   uint64 reportId = 1;
+}
+
+message AdminActionResponse {
+  uint64 id = 1;
+  string message = 2;
+}
+
+message AdminReportItem {
+  uint64 id = 1;
+  uint64 userId = 2;
+  string title = 3;
+  string description = 4;
+  uint32 problemReport = 5;
+  uint32 reportType = 6;
+  uint32 status = 7;
+  uint32 qaStatus = 8;
+  uint32 severity = 9;
+  string createdAt = 10;
+  optional uint64 assigneeId = 11;
+  optional uint64 targetId = 12;
+  optional uint64 supportTicketId = 13;
+  optional string closedAt = 14;
+  repeated string images = 15;
+  google.protobuf.Struct linkage = 16;
+  string parcelOrRegion = 17;
+  string parcelName = 18;
+  string layerName = 19;
+  string layerId = 20;
+  string version = 21;
+  string legalStatus = 22;
+  string userName = 23;
+  string userFullName = 24;
+  string userUsername = 25;
+  string assigneeName = 26;
+  string assigneeFullName = 27;
+  string assigneeUsername = 28;
 }

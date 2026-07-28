@@ -1,6 +1,9 @@
 package service
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 // stripUpstreamCORSHeaders removes CORS headers from an upstream response so the
 // gateway's gin-contrib/cors middleware remains the single source of truth.
@@ -20,4 +23,14 @@ func stripUpstreamCORSHeaders(res *http.Response) error {
 	h.Del("Access-Control-Request-Headers")
 	h.Del("Access-Control-Request-Method")
 	return nil
+}
+
+func requestScheme(req *http.Request) string {
+	if forwarded := strings.TrimSpace(req.Header.Get("X-Forwarded-Proto")); forwarded != "" {
+		return forwarded
+	}
+	if req.TLS != nil {
+		return "https"
+	}
+	return "http"
 }

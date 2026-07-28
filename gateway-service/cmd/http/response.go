@@ -9,6 +9,7 @@ import (
 	sharepb "pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -46,6 +47,14 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	msg, ok := v.(proto.Message)
 	if !ok {
 		return json.Marshal(v)
+	}
+
+	// HttpBody: trả raw JSON/binary (public TQD projections, …)
+	if hb, ok := msg.(*httpbody.HttpBody); ok {
+		if hb == nil {
+			return []byte("null"), nil
+		}
+		return hb.GetData(), nil
 	}
 
 	val := reflect.ValueOf(msg)
@@ -193,6 +202,12 @@ func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {
 
 func (c *CustomMarshaler) ContentType(v interface{}) string {
 	if msg, ok := v.(proto.Message); ok {
+		if hb, ok := msg.(*httpbody.HttpBody); ok && hb != nil {
+			if ct := strings.TrimSpace(hb.GetContentType()); ct != "" {
+				return ct
+			}
+			return "application/json"
+		}
 		if cr, ok := msg.(*sharepb.CommonResponse); ok && cr.Code == 8501 {
 			if contentType := rawResponseContentType(cr.Message); contentType != "" {
 				return contentType

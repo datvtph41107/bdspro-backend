@@ -9,10 +9,11 @@ import (
 	_errors "common/errors"
 	_provider "common/provider"
 	_utils "common/utils"
+	"pb/clients"
 	tqdpb "pb/types/tqd"
+	"tqd/env"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
-	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,10 +23,15 @@ type ReportGrpcHandler struct {
 	tqdpb.UnimplementedReportServiceServer
 	reportUsecase usecase.ReportUsecase
 	SyncProvider  *_provider.SyncProvider
+	authClient    *clients.AuthGrpcClient
 }
 
 func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase, syncProvider *_provider.SyncProvider) *ReportGrpcHandler {
-	return &ReportGrpcHandler{reportUsecase: reportUsecase, SyncProvider: syncProvider}
+	return &ReportGrpcHandler{
+		reportUsecase: reportUsecase,
+		SyncProvider:  syncProvider,
+		authClient:    clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+	}
 }
 
 // CreateReportAsync - Tạo báo cáo bất đồng bộ
@@ -257,89 +263,4 @@ func (h *ReportGrpcHandler) DeleteReport(
 	return &emptypb.Empty{}, nil
 }
 
-// =====================================================
-// ADMIN APIs
-// =====================================================
-
-// AdminListReports - Admin: Danh sách tất cả báo cáo
-func (h *ReportGrpcHandler) AdminListReports(ctx context.Context, req *tqdpb.AdminListReportsRequest) (*tqdpb.ListReportsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, 0)
-	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
-	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
-	if !updated {
-		return &tqdpb.ListReportsResponse{}, nil
-	}
-
-	// TODO: Check admin permission
-	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[AdminListReports] AdminUserID: %d", userID)
-
-	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
-	page := int(pagable.GetPage())
-	limit := pagable.GetLimit()
-
-	log.Printf("[AdminListReports] Page: %d, Limit: %d, UserID: %v, ReportType: %v, Status: %v",
-		page, limit, req.UserId, req.ReportType, req.Status)
-
-	reports, total, err := h.reportUsecase.AdminList(ctx, repo.AdminReportFilter{
-		UserID:     req.UserId,
-		ReportType: req.ReportType,
-		Status:     req.Status,
-		Page:       page,
-		Limit:      limit,
-	})
-	if err != nil {
-		log.Printf("[AdminListReports] Error: %v", err)
-		return nil, _errors.ReturnError(500, err.Error())
-	}
-
-	items := make([]*tqdpb.ReportSummary, 0, len(reports))
-	for _, r := range reports {
-		item := &tqdpb.ReportSummary{
-			Id:         r.ID,
-			ReportType: uint32(r.ProblemReport),
-			Profile:    r.Profile,
-			Status:     uint32(r.Status),
-			CreatedAt:  r.CreatedAt.Format(time.RFC3339),
-		}
-		if r.CompletedAt != nil {
-			completed := r.CompletedAt.Format(time.RFC3339)
-			item.CompletedAt = &completed
-		}
-		if r.FileURL != nil {
-			item.FileUrl = r.FileURL
-		}
-		items = append(items, item)
-	}
-
-	return &tqdpb.ListReportsResponse{
-		Data:  items,
-		Total: total,
-		Page:  int32(pagable.GetPage()),
-		Size:  int32(pagable.GetSize()),
-	}, nil
-}
-
-// AdminDeleteReport - Admin: Xóa báo cáo
-func (h *ReportGrpcHandler) AdminDeleteReport(
-	ctx context.Context,
-	req *tqdpb.AdminDeleteReportRequest,
-) (*emptypb.Empty, error) {
-	// TODO: Check admin permission
-	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[AdminDeleteReport] AdminUserID: %d, ReportID: %d", userID, req.ReportId)
-
-	if req.ReportId == 0 {
-		return nil, _errors.ReturnError(400, "report_id is required")
-	}
-
-	if err := h.reportUsecase.AdminDelete(ctx, req.ReportId); err != nil {
-		log.Printf("[AdminDeleteReport] Error: %v", err)
-		return nil, _errors.ReturnError(500, err.Error())
-	}
-
-	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, 0), t.UnixMilli())
-
-	return &emptypb.Empty{}, nil
-}
+// Admin GIS report RPCs: xem report_admin_grpc.go
