@@ -13,7 +13,9 @@ import (
 	"tqd/config"
 	"tqd/infra/db"
 	handler_grpc "tqd/infra/handler/grpc"
+	planningclient_postgres "tqd/infra/postgres/planningclient"
 	publiccontent_postgres "tqd/infra/postgres/publiccontent"
+	planningclient_application "tqd/internal/modules/planningclient/application"
 	"tqd/wire"
 
 	_db "common/db"
@@ -86,6 +88,9 @@ func runGRPCServer() error {
 	}
 	seoProjectionRepository := publiccontent_postgres.NewRepository(projectionDB)
 	seoProjectionGrpcHandler := handler_grpc.NewSeoProjectionGrpcHandler(seoProjectionRepository)
+	planningClientRepository := planningclient_postgres.NewRepository(projectionDB)
+	planningClientService := planningclient_application.NewService(planningClientRepository, seoProjectionRepository)
+	planningClientGrpcHandler := handler_grpc.NewPlanningClientGrpcHandler(planningClientService)
 
 	db.AutoMigrate()
 
@@ -179,6 +184,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
 	tqdpb.RegisterTqdPublicServiceServer(s, app.TqdPublicService)
 	tqdpb.RegisterTqdSeoProjectionServiceServer(s, seoProjectionGrpcHandler)
+	tqdpb.RegisterPlanningClientServiceServer(s, planningClientGrpcHandler)
 	tqdpb.RegisterLayerLegalServiceServer(s, app.LayerLegalGrpcHandler)
 	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
 	tqdpb.RegisterQHPlanningServiceServer(s, app.QHPlanningGrpcHandler)

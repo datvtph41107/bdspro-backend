@@ -32,9 +32,10 @@ type UserProperties struct {
 	} `mapstructure:"email"`
 
 	Seo struct {
-		PublicBaseURL     string `mapstructure:"public_base_url"`
-		InternalSecretKey string `mapstructure:"internal_secret_key"`
-		Timezone          string `mapstructure:"timezone"`
+		PublicBaseURL         string `mapstructure:"public_base_url"`
+		InternalSecretKey     string `mapstructure:"internal_secret_key"`
+		RuntimeEventIngestKey string `mapstructure:"runtime_event_ingest_key"`
+		Timezone              string `mapstructure:"timezone"`
 
 		Sitemap struct {
 			DefaultChangeFreq string  `mapstructure:"default_change_freq"`

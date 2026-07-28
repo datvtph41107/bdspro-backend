@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	sharepb "pb/types/shared"
-	tqdpb "pb/types/tqd"
 	"strings"
 	"time"
 
@@ -122,6 +121,7 @@ var publicRoutes = []string{
 	"/v2/hub/system-config/key",
 	"/v2/hub/system-config/by-group",
 	"/v2/hub/user-guides",
+	"/v2/hub/faqs",
 	"/v2/hub/app-bundle/version",
 	"/v2/hub/app-bundle/update-check",
 
@@ -152,6 +152,8 @@ var publicRoutes = []string{
 	"/v2/tqd/qh/public/json",
 	"/v2/tqd/qh/public/font",
 	"/v2/crm/sitemap.xml",
+	"/v2/crm/public",
+	"/v2/crm/internal/seo/measurement/events",
 	"/v2/tqd/qh/public",
 	"/v2/tqd/map-target/by-location",
 	"/v2/tqd/discovery/",
@@ -223,8 +225,8 @@ var HttpCmd = &cobra.Command{
 				"https://qhpro.vn",
 				"https://test.qhpro.vn",
 			},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Lang", "If-None-Match"},
+			AllowMethods:     []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Lang", "If-None-Match", "X-QHPro-Telemetry-Key"},
 			ExposeHeaders:    []string{"Content-Length", "Content-Type", "Set-Cookie", "ETag", "Cache-Control", "X-Robots-Tag", "X-Content-Type-Options"},
 			AllowCredentials: true,
 			MaxAge:           12 * time.Hour,
@@ -243,6 +245,7 @@ var HttpCmd = &cobra.Command{
 				_jwt.ErrorToGatewayResponse(ctx, w, err)
 			}),
 			runtime.WithMarshalerOption(runtime.MIMEWildcard, &CustomMarshaler{}),
+			runtime.WithForwardResponseOption(ForwardGatewayResponseMetadata),
 			runtime.WithForwardResponseOption(func(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
 				// nếu resp implement interface nào đó, ví dụ CommonResponse
 				if cr, ok := resp.(*sharepb.CommonResponse); ok {
@@ -289,9 +292,6 @@ var HttpCmd = &cobra.Command{
 		service.RegisterOrganizationService(ctx, mux, env, opts)
 		service.RegisterBdsproService(ctx, mux, env, opts)
 		service.RegisterCrmService(ctx, mux, env, opts)
-		if err := service.RegisterSeoMeasurementRuntimeHTTP(ctx, mux, env, opts); err != nil {
-			log.Fatalf("register CRM SEO-M8 runtime: %v", err)
-		}
 		service.RegisterSocialService(ctx, mux, env, opts)
 		service.RegisterAppointmentService(ctx, mux, env, opts)
 		service.RegisterUserService(ctx, mux, env, opts)
@@ -301,43 +301,16 @@ var HttpCmd = &cobra.Command{
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
 		service.RegisterHubService(ctx, mux, env, opts)
-		tqdConn := service.RegisterTqdService(ctx, mux, env, opts)
-		var discoveryClient tqdpb.DiscoveryServiceClient
-		if tqdConn != nil {
-			discoveryClient = tqdpb.NewDiscoveryServiceClient(tqdConn)
-		}
+		service.RegisterTqdService(ctx, mux, env, opts)
 
 		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
 		v2Import := r.Group("/form", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 
-		// v2 API routes (gRPC Gateway)
-		tqdPublicProxy := r.Group("/v2/tqd/public")
-		tqdPublicProxy.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
-		if err := service.RegisterTQDPublicHTTPProxy(tqdPublicProxy, env); err != nil {
-			log.Fatalf("register TQD public HTTP proxy: %v", err)
-		}
-
-		crmPublicProxy := r.Group("/v2/crm/public/content")
-		if err := service.RegisterCRMPublicHTTPProxy(crmPublicProxy, env); err != nil {
-			log.Fatalf("register CRM public HTTP proxy: %v", err)
-		}
-
-		crmPublicSEOProxy := r.Group("/v2/crm/public/seo")
-		if err := service.RegisterCRMPublicSEOHTTPProxy(crmPublicSEOProxy, env); err != nil {
-			log.Fatalf("register CRM public SEO HTTP proxy: %v", err)
-		}
-
-		crmSeoGovernanceProxy := r.Group("/v2/crm/admin/seo-governance")
-		crmSeoGovernanceProxy.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
-		if err := service.RegisterCRMSeoGovernanceHTTPProxy(crmSeoGovernanceProxy, env); err != nil {
-			log.Fatalf("register CRM SEO governance HTTP proxy: %v", err)
-		}
-
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
 		// như /v2/tqd/public/* và /v2/crm/public/{content,seo}/*. Vì vậy các route
 		// cụ thể được đăng ký bình thường; phần /v2 còn lại đi qua NoRoute.
-		v2Fallback := service.DiscoveryOrGRPCHandler(mux, discoveryClient)
+		v2Fallback := gin.WrapH(mux)
 		r.NoRoute(
 			func(c *gin.Context) {
 				path := c.Request.URL.Path

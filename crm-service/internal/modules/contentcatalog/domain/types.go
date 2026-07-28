@@ -19,6 +19,7 @@ type ContentCategory struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	SortOrder   int    `json:"sortOrder"`
+	ItemCount   int64  `json:"itemCount"`
 }
 
 type ContentFeedItem struct {
@@ -34,6 +35,7 @@ type ContentFeedItem struct {
 	CategoryName  string     `json:"categoryName,omitempty"`
 	PlacementCode string     `json:"placementCode,omitempty"`
 	Priority      int        `json:"priority"`
+	VisibleOn     uint32     `json:"visibleOn"`
 }
 
 type FeedResult struct {
@@ -41,6 +43,53 @@ type FeedResult struct {
 	Computed bool              `json:"computed"`
 	Items    []ContentFeedItem `json:"items"`
 	Warnings []string          `json:"warnings,omitempty"`
+}
+
+type PlanningNewsItem struct {
+	ID              uint64         `json:"id"`
+	SEOPageID       uint64         `json:"seoDomainId"`
+	Slug            string         `json:"slug"`
+	Title           string         `json:"title"`
+	Description     string         `json:"description,omitempty"`
+	Summary         string         `json:"summary,omitempty"`
+	Content         string         `json:"content,omitempty"`
+	RenderedHTML    string         `json:"renderedHtml,omitempty"`
+	CanonicalURL    string         `json:"canonicalUrl"`
+	PublicURL       string         `json:"publicUrl,omitempty"`
+	DeepLink        string         `json:"deepLink,omitempty"`
+	RefSource       string         `json:"refSource,omitempty"`
+	RefLabel        string         `json:"refLabel,omitempty"`
+	SourceStatus    string         `json:"sourceStatus,omitempty"`
+	QualityScore    uint32         `json:"qualityScore"`
+	VisibleOn       uint32         `json:"visibleOn"`
+	PublishedAt     *time.Time     `json:"publishedAt,omitempty"`
+	UpdatedAt       *time.Time     `json:"updatedAt,omitempty"`
+	CategoryCode    string         `json:"categoryCode,omitempty"`
+	CategoryName    string         `json:"categoryName,omitempty"`
+	Metadata        map[string]any `json:"metadata,omitempty"`
+	RefSnapshotJSON map[string]any `json:"refSnapshotJson,omitempty"`
+}
+
+type PlanningNewsListFilter struct {
+	Page      int
+	Size      int
+	Keyword   string
+	Topic     string
+	Location  string
+	Range     string
+	VisibleOn uint32
+}
+
+type PlanningNewsListResult struct {
+	Data  []PlanningNewsItem `json:"data"`
+	Total int64              `json:"total"`
+	Page  int                `json:"page"`
+	Size  int                `json:"size"`
+}
+
+type PlanningNewsDetailResult struct {
+	SEODomain   PlanningNewsItem   `json:"seoDomain"`
+	RelatedNews []PlanningNewsItem `json:"relatedNews"`
 }
 
 type SearchEntityRef struct {

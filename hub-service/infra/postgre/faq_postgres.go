@@ -32,6 +32,9 @@ func (r *FAQPostgres) GetListWithFilter(ctx context.Context, question string, gr
 	db := r.GetDB(ctx).Model(&domain.FAQEntity{})
 
 	// Apply filters
+	question = strings.TrimSpace(question)
+	groupKey = strings.ToLower(strings.TrimSpace(groupKey))
+
 	if question != "" {
 		db = db.Where("question ILIKE ?", "%"+question+"%")
 	}
@@ -50,7 +53,7 @@ func (r *FAQPostgres) GetListWithFilter(ctx context.Context, question string, gr
 	db = db.Offset(offset).Limit(limit)
 
 	// Order by created_at desc
-	db = db.Order("created_at DESC")
+	db = db.Order("updated_at DESC, id DESC")
 
 	// Execute query
 	if err := db.Find(&faqs).Error; err != nil {
@@ -66,6 +69,9 @@ func (r *FAQPostgres) GetSimpleListWithText(ctx context.Context, text string, gr
 	var total int64
 
 	db := r.GetDB(ctx).Model(&domain.FAQEntity{})
+
+	text = strings.TrimSpace(text)
+	groupKey = strings.ToLower(strings.TrimSpace(groupKey))
 
 	// Apply text search: lowercase và thay khoảng trống bằng %
 	if text != "" {
@@ -96,7 +102,7 @@ func (r *FAQPostgres) GetSimpleListWithText(ctx context.Context, text string, gr
 	db = db.Offset(offset).Limit(limit)
 
 	// Order by created_at desc
-	db = db.Order("created_at DESC")
+	db = db.Order("updated_at DESC, id DESC")
 
 	// Execute query
 	if err := db.Find(&faqs).Error; err != nil {

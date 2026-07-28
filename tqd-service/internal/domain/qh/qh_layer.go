@@ -35,7 +35,10 @@ type QHLayer struct {
 	ImportStatus  enums.LayerImportStatus `gorm:"column:import_status;type:int;default:20;index" json:"importStatus"`
 	ImportBatchID *string                 `gorm:"column:import_batch_id;type:varchar(64);index" json:"importBatchId,omitempty"`
 
-	SourceType string `gorm:"type:varchar(10);not null;default:raster" json:"sourceType,omitempty"`
+	SourceCode  string      `gorm:"type:varchar(100);index" json:"sourceCode,omitempty"`
+	SourceType  string      `gorm:"type:varchar(20);not null;default:raster" json:"sourceType,omitempty"`
+	LayerURL    string      `gorm:"type:text" json:"layerUrl,omitempty"`
+	StyleConfig jsonb.JSONB `gorm:"type:jsonb;default:'[]'" json:"styleConfig,omitempty"`
 
 	InsuanceDate  *time.Time `gorm:"type:date;index" json:"insuanceDate,omitempty"`  // ngày ban hành
 	EffectiveDate *time.Time `gorm:"type:date;index" json:"effectiveDate,omitempty"` // ngày hiệu lực

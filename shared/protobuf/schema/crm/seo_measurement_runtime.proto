@@ -1,16 +1,59 @@
 syntax = "proto3";
+
 package crmpb;
-
-import "google/protobuf/struct.proto";
-
 option go_package = "pb/types/crm;crmpb";
 
-// SEO-M8 connector control plane. The runtime uses Struct intentionally so
-// connector row schemas can evolve independently from the large legacy CRM proto.
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+message SeoMeasurementImportRequest {
+  string source = 1;
+  google.protobuf.Struct payload = 2;
+}
+
+message SeoMeasurementQueryRequest {
+  string source = 1;
+  string status = 2;
+  string grade = 3;
+  string canonical_url = 4;
+  string range = 5;
+  int32 page = 6;
+  int32 size = 7;
+  int32 limit = 8;
+}
+
+message SeoMeasurementScoreRequest {
+  google.protobuf.Struct payload = 1;
+}
+
+// Canonical SEO-M8 control-plane contract. HTTP is generated from Proto and registered by Gateway.
 service SeoMeasurementRuntimeService {
-  rpc ImportMeasurement(google.protobuf.Struct) returns (google.protobuf.Struct);
-  rpc GetSourceHealth(google.protobuf.Struct) returns (google.protobuf.Struct);
-  rpc ListImportRuns(google.protobuf.Struct) returns (google.protobuf.Struct);
-  rpc RunScoring(google.protobuf.Struct) returns (google.protobuf.Struct);
-  rpc ListPageScores(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc ImportMeasurement(SeoMeasurementImportRequest) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/measurement/m8/import/{source}"
+      body: "payload"
+    };
+  }
+  rpc GetSourceHealth(google.protobuf.Empty) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/m8/sources"
+    };
+  }
+  rpc ListImportRuns(SeoMeasurementQueryRequest) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/m8/runs"
+    };
+  }
+  rpc RunScoring(SeoMeasurementScoreRequest) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo/measurement/m8/score"
+      body: "payload"
+    };
+  }
+  rpc ListPageScores(SeoMeasurementQueryRequest) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo/measurement/m8/scores"
+    };
+  }
 }

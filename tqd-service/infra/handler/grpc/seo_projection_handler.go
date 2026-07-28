@@ -17,8 +17,8 @@ import (
 const seoProjectionTimeout = 15 * time.Second
 
 // SeoProjectionGrpcHandler exposes authoritative TQD source projections to
-// internal backend consumers. Public/browser traffic continues to use the HTTP
-// projection handler; this service exists for CRM generation and source sync.
+// internal backend consumers. Public/browser traffic is owned by Gateway;
+// CRM and Gateway consume this projection exclusively over gRPC.
 type SeoProjectionGrpcHandler struct {
 	tqdpb.UnimplementedTqdSeoProjectionServiceServer
 	repository *publiccontent_postgres.Repository
@@ -68,6 +68,7 @@ func (h *SeoProjectionGrpcHandler) GetAdministrativeUnitProjection(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "encode administrative unit projection: %v", err)
 	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return wrapperspb.Bytes(payload), nil
 }
 
@@ -109,5 +110,6 @@ func (h *SeoProjectionGrpcHandler) GetPlanningProjectProjection(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "encode planning project projection: %v", err)
 	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return wrapperspb.Bytes(payload), nil
 }

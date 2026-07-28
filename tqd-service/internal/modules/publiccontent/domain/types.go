@@ -70,6 +70,8 @@ type PlanningDocument struct {
 	ID               uint64     `json:"id"`
 	DocumentType     uint32     `json:"documentType"`
 	DocumentTypeName string     `json:"documentTypeName,omitempty"`
+	Status           uint32     `json:"status"`
+	StatusName       string     `json:"statusName"`
 	Code             string     `json:"code,omitempty"`
 	Title            string     `json:"title"`
 	Description      string     `json:"description,omitempty"`
@@ -87,6 +89,25 @@ type PlanningIndicator struct {
 	Value       string `json:"value"`
 	Unit        string `json:"unit,omitempty"`
 	Description string `json:"description,omitempty"`
+}
+
+type PlanningLayer struct {
+	ID                uint64     `json:"id"`
+	PlanningProjectID uint64     `json:"planningProjectId"`
+	Name              string     `json:"name"`
+	DisplayName       string     `json:"displayName"`
+	Description       string     `json:"description,omitempty"`
+	Type              uint32     `json:"type"`
+	Status            uint32     `json:"status"`
+	Visible           bool       `json:"visible"`
+	DefaultVisible    bool       `json:"defaultVisible"`
+	MinZoom           uint32     `json:"minZoom"`
+	MaxZoom           uint32     `json:"maxZoom"`
+	ImageURL          string     `json:"imageUrl,omitempty"`
+	ThumbnailURL      string     `json:"thumbnailUrl,omitempty"`
+	EffectiveDate     *time.Time `json:"effectiveDate,omitempty"`
+	ExpiryDate        *time.Time `json:"expiryDate,omitempty"`
+	UpdatedAt         *time.Time `json:"updatedAt,omitempty"`
 }
 
 type PlanningProjectRelation struct {
@@ -114,6 +135,7 @@ type PlanningProjectProjection struct {
 	LegalStatusName   string                    `json:"legalStatusName,omitempty"`
 	ValidityStatus    string                    `json:"validityStatus,omitempty"`
 	Authority         string                    `json:"authority,omitempty"`
+	DecisionNumber    string                    `json:"decisionNumber,omitempty"`
 	Summary           string                    `json:"summary,omitempty"`
 	ResearchScope     string                    `json:"researchScope,omitempty"`
 	ApprovalDate      *time.Time                `json:"approvalDate,omitempty"`
@@ -126,6 +148,7 @@ type PlanningProjectProjection struct {
 	Indicators        []PlanningIndicator       `json:"indicators"`
 	Events            []PlanningEvent           `json:"events"`
 	Documents         []PlanningDocument        `json:"documents"`
+	Layers            []PlanningLayer           `json:"layers"`
 	RelatedProjects   []PlanningProjectRelation `json:"relatedProjects"`
 	Source            ProjectionSource          `json:"source"`
 }

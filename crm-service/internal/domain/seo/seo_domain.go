@@ -95,6 +95,10 @@ type SeoDomain struct {
 	Content     string `gorm:"type:text"`
 	Summary     string `gorm:"type:text"`
 
+	// Planning-news default feed classification.
+	// 10 featured, 20 attention, 30 latest, 40 most_read, 50 breaking.
+	VisibleOn uint32 `gorm:"column:visible_on;type:smallint;not null;default:30;index"`
+
 	// Publish lifecycle: page đã đủ điều kiện ra ngoài hay chưa.
 	Published   bool       `gorm:"default:false;index"`
 	PublishedAt *time.Time `gorm:"column:published_at;index"`

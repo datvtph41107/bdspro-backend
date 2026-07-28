@@ -9,7 +9,7 @@ var rootCmd = &cobra.Command{
 	Use:   "tqd",
 	Short: "TQD Service - A microservice for directory management",
 	Long: `TQD Service is a microservice that provides directory management functionality.
-It supports both HTTP REST API and gRPC interfaces for managing various directory entities.`,
+It exposes gRPC services for directory and planning data. Public HTTP is owned exclusively by gateway-service.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
