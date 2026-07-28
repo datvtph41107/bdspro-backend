@@ -20,8 +20,8 @@ service:
     feature: "Enabled only for Service User"
 
 redis:
-    host: localhost:6379
-    pass:
+    host: 14.225.210.29:6379
+    pass: protected_redis_secure_password
 
 spring:
     jpa:

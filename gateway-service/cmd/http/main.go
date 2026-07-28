@@ -319,6 +319,13 @@ var HttpCmd = &cobra.Command{
 			log.Fatalf("register TQD public HTTP proxy: %v", err)
 		}
 
+		// Admin GIS reports (tqd Gin HTTP) — proxy qua gateway :8000
+		tqdAdminReports := r.Group("/v2/tqd/admin/reports")
+		tqdAdminReports.Use(_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
+		if err := service.RegisterTQDAdminReportsHTTPProxy(tqdAdminReports, env); err != nil {
+			log.Fatalf("register TQD admin reports HTTP proxy: %v", err)
+		}
+
 		crmPublicProxy := r.Group("/v2/crm/public/content")
 		if err := service.RegisterCRMPublicHTTPProxy(crmPublicProxy, env); err != nil {
 			log.Fatalf("register CRM public HTTP proxy: %v", err)

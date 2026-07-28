@@ -2,6 +2,7 @@ package _redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -24,11 +25,20 @@ type RedisService struct {
 
 const userPrefix = "USER_"
 
+// errRedisUnavailable returned when Redis was down at boot / marked disconnected.
+// Callers (e.g. HasPermissions) should fall back to DB immediately — do not dial.
+var errRedisUnavailable = errors.New("redis unavailable")
+
 // NewRedisService khởi tạo RedisService
 func NewRedisService() *RedisService {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
-		Password: viper.GetString("redis.pass"),
+		Addr:         viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
+		Password:     viper.GetString("redis.pass"),
+		DialTimeout:  500 * time.Millisecond,
+		ReadTimeout:  500 * time.Millisecond,
+		WriteTimeout: 500 * time.Millisecond,
+		PoolTimeout:  500 * time.Millisecond,
+		MaxRetries:   1,
 	})
 	// Không crash app nếu không connect được, chỉ log warning
 	svc := &RedisService{
@@ -36,7 +46,9 @@ func NewRedisService() *RedisService {
 		Ctx:    context.Background(),
 		logger: flogging.MustGetLogger("redis"),
 	}
-	_, err := rdb.Ping(context.Background()).Result()
+	pingCtx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
+	defer cancel()
+	_, err := rdb.Ping(pingCtx).Result()
 	if err != nil {
 		log.Printf("Warning: Failed to connect to Redis at %s: %v. App will continue but Redis operations may fail.", viper.GetString("redis.host"), err)
 	} else {
@@ -46,6 +58,18 @@ func NewRedisService() *RedisService {
 	return svc
 }
 
+func (r *RedisService) markDisconnected() {
+	r.mu.Lock()
+	r.connected = false
+	r.mu.Unlock()
+}
+
+func (r *RedisService) isConnected() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.connected
+}
+
 // Client returns the underlying Redis client
 func (r *RedisService) Instance() (*redis.Client, error) {
 	r.mu.RLock()
@@ -53,28 +77,27 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 	r.mu.RUnlock()
 
 	if connected {
-		// Kiểm tra kết nối còn hoạt động không
-		_, err := r.Client.Ping(r.Ctx).Result()
+		pingCtx, cancel := context.WithTimeout(r.Ctx, 500*time.Millisecond)
+		_, err := r.Client.Ping(pingCtx).Result()
+		cancel()
 		if err == nil {
 			return r.Client, nil
 		}
-		// Kết nối bị mất, đánh dấu là chưa kết nối
-		r.mu.Lock()
-		r.connected = false
-		r.mu.Unlock()
+		r.markDisconnected()
 		r.logger.Warnf("Redis connection lost: %v", err)
 	}
 
-	// Thử kết nối lại
+	// Thử kết nối lại (timeout ngắn — tránh treo API ~25s khi Redis down)
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// Double check sau khi lock
 	if r.connected {
 		return r.Client, nil
 	}
 
-	_, err := r.Client.Ping(r.Ctx).Result()
+	pingCtx, cancel := context.WithTimeout(r.Ctx, 500*time.Millisecond)
+	_, err := r.Client.Ping(pingCtx).Result()
+	cancel()
 	if err != nil {
 		r.logger.Warnf("Failed to reconnect to Redis: %v", err)
 		return nil, err
@@ -97,7 +120,7 @@ func (r *RedisService) SaveToken(userID uint64, token string, expirationInSecond
 // GetToken lấy token từ Redis
 func (r *RedisService) GetToken(userID uint64) (string, error) {
 	key := userPrefix + strconv.FormatUint(userID, 10)
-	return r.Client.Get(r.Ctx, key).Result()
+	return r.Get(key)
 }
 
 // IsTokenValid kiểm tra token có hợp lệ không
@@ -111,40 +134,74 @@ func (r *RedisService) IsTokenValid(userID uint64, token string) (bool, error) {
 
 // DeleteToken xóa token khi đăng xuất
 func (r *RedisService) DeleteToken(userID uint64) error {
-	return r.Client.Del(r.Ctx, userPrefix+strconv.FormatUint(userID, 10)).Err()
+	return r.Delete(userPrefix + strconv.FormatUint(userID, 10))
 }
 
 // Set lưu một key-value vào Redis
 func (r *RedisService) Set(key, value string) error {
-	return r.Client.Set(r.Ctx, key, value, 15*time.Minute).Err()
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
+	err := r.Client.Set(r.Ctx, key, value, 15*time.Minute).Err()
+	if err != nil {
+		r.markDisconnected()
+	}
+	return err
 }
 
-// Set lưu một key-value vào Redis
+// SetWithTime lưu một key-value vào Redis
 func (r *RedisService) SetWithTime(key string, value int64, expiration time.Duration) error {
-	return r.Client.Set(r.Ctx, key, value, expiration).Err()
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
+	err := r.Client.Set(r.Ctx, key, value, expiration).Err()
+	if err != nil {
+		r.markDisconnected()
+	}
+	return err
 }
 
-// Get lấy giá trị từ Redis
+// Get lấy giá trị từ Redis. Khi Redis down → lỗi ngay (fallback DB), không dial timeout.
 func (r *RedisService) Get(key string) (string, error) {
-	return r.Client.Get(r.Ctx, key).Result()
+	if !r.isConnected() {
+		return "", errRedisUnavailable
+	}
+	val, err := r.Client.Get(r.Ctx, key).Result()
+	if err != nil && err != redis.Nil {
+		r.markDisconnected()
+	}
+	return val, err
 }
 
 // Delete xóa một key khỏi Redis
 func (r *RedisService) Delete(key string) error {
-	return r.Client.Del(r.Ctx, key).Err()
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
+	err := r.Client.Del(r.Ctx, key).Err()
+	if err != nil {
+		r.markDisconnected()
+	}
+	return err
 }
 
 // DeleteAllKeysWithPrefix xóa tất cả các key có prefix
 func (r *RedisService) DeleteAllKeysWithPrefix(prefix string) error {
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
 	iter := r.Client.Scan(r.Ctx, 0, prefix, 0).Iterator()
 	for iter.Next(r.Ctx) {
 		err := r.Client.Del(r.Ctx, iter.Val()).Err()
 		if err != nil {
 			fmt.Println("Xóa lỗi key:", iter.Val(), err)
+			r.markDisconnected()
 		}
 	}
 	if err := iter.Err(); err != nil {
 		fmt.Println("Scan lỗi:", err)
+		r.markDisconnected()
+		return err
 	}
 
 	return nil
@@ -152,7 +209,14 @@ func (r *RedisService) DeleteAllKeysWithPrefix(prefix string) error {
 
 // Increment tăng giá trị của một key số nguyên trong Redis
 func (r *RedisService) Increment(key string) error {
-	return r.Client.Incr(r.Ctx, key).Err()
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
+	err := r.Client.Incr(r.Ctx, key).Err()
+	if err != nil {
+		r.markDisconnected()
+	}
+	return err
 }
 
 // GetAsInt lấy giá trị từ Redis và chuyển đổi thành số nguyên
@@ -166,9 +230,23 @@ func (r *RedisService) GetAsInt(key string) (int, error) {
 
 // Expire đặt thời gian hết hạn cho một key
 func (r *RedisService) Expire(key string, seconds int) error {
-	return r.Client.Expire(r.Ctx, key, time.Duration(seconds)*time.Second).Err()
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
+	err := r.Client.Expire(r.Ctx, key, time.Duration(seconds)*time.Second).Err()
+	if err != nil {
+		r.markDisconnected()
+	}
+	return err
 }
 
 func (r *RedisService) IncrementBy(key string, delta int64) error {
-	return r.Client.IncrBy(r.Ctx, key, delta).Err()
+	if !r.isConnected() {
+		return errRedisUnavailable
+	}
+	err := r.Client.IncrBy(r.Ctx, key, delta).Err()
+	if err != nil {
+		r.markDisconnected()
+	}
+	return err
 }

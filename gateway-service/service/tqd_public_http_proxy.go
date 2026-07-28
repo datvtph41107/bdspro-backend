@@ -50,6 +50,7 @@ func RegisterTQDPublicHTTPProxy(routes gin.IRoutes, env string) error {
 		req.Header.Set("X-Forwarded-Proto", requestScheme(req))
 		req.Header.Set("X-QHPro-Upstream", "tqd-public-content")
 	}
+	proxy.ModifyResponse = stripUpstreamCORSHeaders
 	proxy.Transport = &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,

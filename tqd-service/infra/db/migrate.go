@@ -2,6 +2,7 @@ package db
 
 import (
 	"log"
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 
 	_db "common/db"
@@ -97,6 +98,8 @@ func AutoMigrate() {
 		// &qh_domain.QHPlanningDocument{},
 		&qh_domain.QHPlanningEvent{},
 		&qh_domain.QHPlanningRelation{},
+		&domain.Report{},
+		&domain.ReportEvent{},
 	// &domain.UserSubscription{},
 	)
 }

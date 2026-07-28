@@ -38,7 +38,7 @@ jwt:
 quota:
     storage: redis # or local
     redis:
-        addr: localhost:6379
+        addr: 14.225.210.29:6379
         db: 0
     policies:
         default:

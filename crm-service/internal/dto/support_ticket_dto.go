@@ -54,6 +54,11 @@ type SupportTicketCloseRequest struct {
 	Note string `json:"note"`
 }
 
+type SupportTicketUpdateRequest struct {
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+}
+
 type SupportTicketItemResponse struct {
 	ID              uint64     `json:"id"`
 	Code            string     `json:"code"`
@@ -66,6 +71,7 @@ type SupportTicketItemResponse struct {
 	RelatedReportID *uint64    `json:"relatedReportId"`
 	Product         uint32     `json:"product"`
 	Images          []string   `json:"images,omitempty"`
+	CreatedBy       uint64     `json:"createdBy"`
 	UpdatedAt       *time.Time `json:"updatedAt"`
 	CreatedAt       *time.Time `json:"createdAt"`
 }
@@ -99,6 +105,7 @@ type SupportTicketDetailResponse struct {
 	Product         uint32                       `json:"product"`
 	Source          uint32                       `json:"source"`
 	Images          []string                     `json:"images"`
+	CreatedBy       uint64                       `json:"createdBy"`
 	CreatedAt       *time.Time                   `json:"createdAt"`
 	UpdatedAt       *time.Time                   `json:"updatedAt"`
 	ClosedAt        *time.Time                   `json:"closedAt"`
