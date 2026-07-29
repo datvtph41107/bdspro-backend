@@ -11,6 +11,8 @@ type QHPlanningDocument struct {
 	PlanningProjectID uint64 `gorm:"not null;index" json:"planningProjectId"`
 
 	DocumentType enums.PlanningDocumentType `gorm:"type:int4;not null" json:"documentType"`
+	// Status controls how the document is presented in project overview: 10=normal, 20=important.
+	Status uint32 `gorm:"type:int4;not null;default:10;index" json:"status"`
 
 	Code           string     `gorm:"type:varchar(255)" json:"code"`
 	Title          string     `gorm:"type:varchar(255);not null" json:"title"`

@@ -189,7 +189,8 @@ auth-grpc:
 	$(CD_ROOT) && cd auth-service && air
 
 tqd-http:
-	$(CD_ROOT) && cd tqd-service && air -- -server=http
+	@echo "TQD application HTTP is disabled. Start gateway HTTP and TQD gRPC instead." >&2
+	@exit 2
 
 tqd-grpc:
 	@export PATH=$$PATH:$$HOME/go/bin && \
@@ -223,7 +224,6 @@ start-all:
 	$(MAKE) marketing-grpc &
 	$(MAKE) transaction-grpc &
 	$(MAKE) auth-grpc &
-	$(MAKE) tqd-http &
 	$(MAKE) tqd-grpc &
 	@echo "All services started in background. Prefer: ../../scripts/run-support-gis.sh start"
 	@echo "Use 'make stop-all' to stop them."

@@ -108,7 +108,9 @@ func (s *Service) Identify(ctx context.Context, req domain.IdentifyRequest) (*do
 }
 
 var coordinatePattern = regexp.MustCompile(`^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:\.\d+)?)\s*$`)
-var parcelPattern = regexp.MustCompile(`(?i)(?:thửa|thua)\s*(\d+)\D+(?:tờ|to)\s*(\d+)`)
+var parcelLandMapPattern = regexp.MustCompile(`(?i)(?:thửa|thua)\s*[:#-]?\s*([[:alnum:]_-]+)\D+(?:tờ|to)\s*[:#-]?\s*([[:alnum:]_-]+)`)
+var parcelMapLandPattern = regexp.MustCompile(`(?i)(?:tờ|to)\s*[:#-]?\s*([[:alnum:]_-]+)\D+(?:thửa|thua)\s*[:#-]?\s*([[:alnum:]_-]+)`)
+var parcelSlashPattern = regexp.MustCompile(`^\s*([[:alnum:]_-]+)\s*[/\-]\s*([[:alnum:]_-]+)\s*$`)
 
 func normalizeQuery(q string) string {
 	return strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(q))), " ")
@@ -121,10 +123,19 @@ func interpret(q string) domain.SearchInterpretation {
 		out.DetectedIntents = []string{"coordinate_lookup"}
 		out.StructuredTerms["latitude"] = m[1]
 		out.StructuredTerms["longitude"] = m[2]
-	} else if m := parcelPattern.FindStringSubmatch(normalized); len(m) == 3 {
+	} else if m := parcelLandMapPattern.FindStringSubmatch(normalized); len(m) == 3 {
 		out.DetectedIntents = []string{"parcel_lookup"}
 		out.StructuredTerms["landNumber"] = m[1]
 		out.StructuredTerms["mapNumber"] = m[2]
+	} else if m := parcelMapLandPattern.FindStringSubmatch(normalized); len(m) == 3 {
+		out.DetectedIntents = []string{"parcel_lookup"}
+		out.StructuredTerms["mapNumber"] = m[1]
+		out.StructuredTerms["landNumber"] = m[2]
+	} else if m := parcelSlashPattern.FindStringSubmatch(normalized); len(m) == 3 {
+		// Compact input follows the placeholder contract: map-number/land-number.
+		out.DetectedIntents = []string{"parcel_lookup"}
+		out.StructuredTerms["mapNumber"] = m[1]
+		out.StructuredTerms["landNumber"] = m[2]
 	} else if strings.Contains(normalized, "phường") || strings.Contains(normalized, "xã") || strings.Contains(normalized, "tỉnh") || strings.Contains(normalized, "quận") || strings.Contains(normalized, "huyện") {
 		out.DetectedIntents = []string{"administrative_lookup", "free_text"}
 	} else if strings.Contains(normalized, "quy hoạch") || strings.Contains(normalized, "quy hoach") {

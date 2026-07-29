@@ -36,6 +36,7 @@ email:
 
 seo:
   public_base_url: "http://localhost:3000"
+  runtime_event_ingest_key: "local-runtime-event-ingest-key-change-me"
   internal_secret_key: "local-seo-secret"
   timezone: "Asia/Ho_Chi_Minh"
   parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}

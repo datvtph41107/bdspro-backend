@@ -70,6 +70,7 @@ type projectRow struct {
 	LegalStatus      uint32
 	ValidityStatus   string
 	Authority        string
+	DecisionNumber   string
 	Summary          string
 	ResearchScope    string
 	Indicators       string
@@ -101,6 +102,7 @@ type eventRow struct {
 type documentRow struct {
 	ID             uint64
 	DocumentType   uint32
+	Status         uint32
 	Code           string
 	Title          string
 	Description    string
@@ -117,6 +119,25 @@ type relationRow struct {
 	Code     string
 	Name     string
 	Metadata string
+}
+
+type layerRow struct {
+	ID                uint64
+	PlanningProjectID uint64
+	Name              string
+	DisplayName       string
+	Description       string
+	Type              uint32
+	Status            uint32
+	Visible           bool
+	DefaultVisible    bool
+	MinZoom           uint32
+	MaxZoom           uint32
+	ImageURL          string
+	ThumbnailURL      string
+	EffectiveDate     *time.Time
+	ExpiryDate        *time.Time
+	UpdatedAt         *time.Time
 }
 
 var nonSlugCharacters = regexp.MustCompile(`[^a-z0-9]+`)
@@ -412,6 +433,7 @@ func (r *Repository) getPlanningProjectRow(
 			       pp.legal_status,
 			       COALESCE(pp.validity_status,'') AS validity_status,
 			       COALESCE(pp.authority,'') AS authority,
+			       COALESCE(pp.decision_number,'') AS decision_number,
 			       COALESCE(pp.summary,'') AS summary,
 			       COALESCE(pp.research_scope,'') AS research_scope,
 			       COALESCE(pp.indicators::text,'[]') AS indicators,
@@ -447,6 +469,7 @@ func (r *Repository) getPlanningProjectRow(
 		       selected.legal_status,
 		       selected.validity_status,
 		       selected.authority,
+		       selected.decision_number,
 		       selected.summary,
 		       selected.research_scope,
 		       selected.indicators,
@@ -567,6 +590,7 @@ func (r *Repository) GetPlanningProjectProjection(
 	if err := r.db.WithContext(ctx).Raw(`
 		SELECT id,
 		       document_type,
+		       COALESCE(status,10) AS status,
 		       COALESCE(code,'') AS code,
 		       title,
 		       COALESCE(description,'') AS description,
@@ -589,6 +613,8 @@ func (r *Repository) GetPlanningProjectProjection(
 			ID:               item.ID,
 			DocumentType:     item.DocumentType,
 			DocumentTypeName: enums.GetPlanningDocumentTypeLabel(item.DocumentType),
+			Status:           item.Status,
+			StatusName:       map[bool]string{true: "Quan trọng", false: "Thông thường"}[item.Status == 20],
 			Code:             item.Code,
 			Title:            item.Title,
 			Description:      item.Description,
@@ -598,6 +624,53 @@ func (r *Repository) GetPlanningProjectProjection(
 			ValidityStatus:   item.ValidityStatus,
 			IssueDate:        item.IssueDate,
 			EffectiveDate:    item.EffectiveDate,
+		})
+	}
+
+	var layerRows []layerRow
+	if err := r.db.WithContext(ctx).Raw(`
+		SELECT l.id,
+		       l.planning_project_id,
+		       COALESCE(l.name,'') AS name,
+		       COALESCE(l.display_name,'') AS display_name,
+		       COALESCE(l.description,'') AS description,
+		       l.type,
+		       l.status,
+		       (l.visible = 1) AS visible,
+		       COALESCE(l.default_visible,FALSE) AS default_visible,
+		       l.min_zoom,
+		       l.max_zoom,
+		       COALESCE(l.image_url,'') AS image_url,
+		       COALESCE(l.thumbnail_url,'') AS thumbnail_url,
+		       l.effective_date,
+		       l.expiry_date,
+		       l.updated_at
+		FROM qh_layers l
+		WHERE l.planning_project_id = ?
+		  AND l.deleted_at IS NULL
+		ORDER BY l.default_visible DESC, l.display_order ASC, l.id ASC`, row.ID).Scan(&layerRows).Error; err != nil {
+		return nil, fmt.Errorf("load planning project layers: %w", err)
+	}
+
+	layers := make([]domain.PlanningLayer, 0, len(layerRows))
+	for _, item := range layerRows {
+		layers = append(layers, domain.PlanningLayer{
+			ID:                item.ID,
+			PlanningProjectID: item.PlanningProjectID,
+			Name:              item.Name,
+			DisplayName:       item.DisplayName,
+			Description:       item.Description,
+			Type:              item.Type,
+			Status:            item.Status,
+			Visible:           item.Visible,
+			DefaultVisible:    item.DefaultVisible,
+			MinZoom:           item.MinZoom,
+			MaxZoom:           item.MaxZoom,
+			ImageURL:          item.ImageURL,
+			ThumbnailURL:      item.ThumbnailURL,
+			EffectiveDate:     item.EffectiveDate,
+			ExpiryDate:        item.ExpiryDate,
+			UpdatedAt:         item.UpdatedAt,
 		})
 	}
 
@@ -669,6 +742,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		LegalStatusName:   enums.LegalStatus(row.LegalStatus).DisplayName(),
 		ValidityStatus:    row.ValidityStatus,
 		Authority:         row.Authority,
+		DecisionNumber:    row.DecisionNumber,
 		Summary:           row.Summary,
 		ResearchScope:     researchScope,
 		ApprovalDate:      row.ApprovalDate,
@@ -681,6 +755,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		Indicators:        indicators,
 		Events:            events,
 		Documents:         documents,
+		Layers:            layers,
 		RelatedProjects:   relations,
 		Source: domain.ProjectionSource{
 			System:         "tqd-service",

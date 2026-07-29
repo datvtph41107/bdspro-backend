@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+package crmpb;
+option go_package = "pb/types/crm;crmpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+
+message SeoDocumentRequest {
+  string module = 1;
+  string slug = 2;
+}
+
+message RenderedSeoPageRequest {
+  string path = 1;
+}
+
+message ContentQueryRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string search = 3;
+  string q = 4;
+  string query = 5;
+  string keyword = 6;
+  repeated string kinds = 7;
+  string domain = 8;
+  string domain_code = 9;
+  string category = 10;
+  string category_code = 11;
+  int32 visible_on = 12;
+  int32 limit = 13;
+  string cursor = 14;
+  string sort_by = 15;
+  string sort_order = 16;
+}
+
+message ContentFeedRequest {
+  string feed = 1;
+  int32 page = 2;
+  int32 size = 3;
+  int32 limit = 4;
+  string cursor = 5;
+  string domain = 6;
+  string category = 7;
+}
+
+message PlanningNewsQueryRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string search = 3;
+  string keyword = 4;
+  string q = 5;
+  int32 visible_on = 6;
+  string category = 7;
+  string topic = 8;
+  string domain = 9;
+  string location = 10;
+  string range = 11;
+  string sort_by = 12;
+  string sort_order = 13;
+}
+
+message PlanningNewsSlugRequest {
+  string slug = 1;
+}
+
+message UpdatePlanningNewsVisibilityRequest {
+  uint64 id = 1;
+  int32 visible_on = 2;
+}
+
+message AssignPlanningNewsCategoryRequest {
+  uint64 id = 1;
+  string category = 2;
+}
+
+// Canonical CRM public content and SEO contract. Gateway registers generated HTTP handlers; CRM exposes gRPC only.
+service CRMPublicContentService {
+  rpc GetPublicSeoDocument(SeoDocumentRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo/documents/{module}/{slug}"
+      additional_bindings {
+        custom {
+          kind: "HEAD"
+          path: "/v2/crm/public/seo/documents/{module}/{slug}"
+        }
+      }
+    };
+  }
+  rpc GetGovernanceSeoDocument(SeoDocumentRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo-governance/documents/{module}/{slug}"
+      additional_bindings {
+        custom {
+          kind: "HEAD"
+          path: "/v2/crm/admin/seo-governance/documents/{module}/{slug}"
+        }
+      }
+    };
+  }
+  rpc GetOperatingSystemManifest(google.protobuf.Empty) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo-governance/operating-system/v2u"
+      additional_bindings {
+        custom {
+          kind: "HEAD"
+          path: "/v2/crm/admin/seo-governance/operating-system/v2u"
+        }
+      }
+    };
+  }
+  rpc GetRenderedSeoPage(RenderedSeoPageRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/page/{path=**}"
+      additional_bindings {
+        custom {
+          kind: "HEAD"
+          path: "/v2/crm/public/content/page/{path=**}"
+        }
+      }
+    };
+  }
+  rpc GetSitemap(google.protobuf.Empty) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/sitemap.xml"
+      additional_bindings {
+        custom {
+          kind: "HEAD"
+          path: "/v2/crm/public/content/sitemap.xml"
+        }
+      }
+      additional_bindings {
+        get: "/v2/crm/sitemap.xml"
+      }
+      additional_bindings {
+        custom {
+          kind: "HEAD"
+          path: "/v2/crm/sitemap.xml"
+        }
+      }
+    };
+  }
+  rpc ListContentDomains(ContentQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/domains"
+    };
+  }
+  rpc ListContentCategories(ContentQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/categories"
+    };
+  }
+  rpc ListContentFeed(ContentFeedRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/feeds/{feed}"
+    };
+  }
+  rpc SearchContent(ContentQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/search"
+    };
+  }
+  rpc ListPlanningNews(PlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo/news"
+    };
+  }
+  rpc GetPlanningNews(PlanningNewsSlugRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo/news/{slug}"
+    };
+  }
+  rpc UpdatePlanningNewsVisibility(UpdatePlanningNewsVisibilityRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      patch: "/v2/crm/admin/content/planning-news/{id}/visibility"
+      body: "*"
+    };
+  }
+  rpc AssignPlanningNewsCategory(AssignPlanningNewsCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/content/planning-news/{id}/category"
+      body: "*"
+    };
+  }
+  rpc ProvisionAdministrativeUnit(google.protobuf.Struct) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-governance/administrative-units/provision"
+      body: "*"
+    };
+  }
+  rpc IngestRuntimeEvent(google.protobuf.Struct) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/internal/seo/measurement/events"
+      body: "*"
+    };
+  }
+}

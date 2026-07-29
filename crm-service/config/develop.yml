@@ -32,6 +32,7 @@ email:
 
 seo:
   public_base_url: "https://dev.bdspro.vn"
+  runtime_event_ingest_key: ""
   internal_secret_key: ""
   timezone: "Asia/Ho_Chi_Minh"
   parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}

@@ -2,42 +2,28 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 
 	_ "common/models"
-	cmd_grpc "crm/cmd/grpc"
-	cmd_http "crm/cmd/http"
+	cmdgrpc "crm/cmd/grpc"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// @title CRM API
-// @version 1.0
-// @description API phần logic chính của CRM. Đã chuyển sang grpc
-// @BasePath /v2/crm
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
+// CRM is an internal gRPC service. gateway-service owns all public/admin HTTP
+// routes and invokes CRM through gRPC, including SEO and public content APIs.
 var rootCmd = &cobra.Command{
 	Use:   "crm",
-	Short: "Một ứng dụng quản lý server gRPC và HTTP",
+	Short: "CRM internal gRPC service",
 }
 
 func init() {
-	rootCmd.AddCommand(cmd_http.HttpCmd)
-	rootCmd.AddCommand(cmd_grpc.GrpcCmd)
+	rootCmd.AddCommand(cmdgrpc.GrpcCmd)
 	viper.AutomaticEnv()
 }
 
 func main() {
-	go func() {
-		log.Println("run go-routine")
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

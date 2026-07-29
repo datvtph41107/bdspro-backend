@@ -9,26 +9,19 @@ import (
 
 	_ "common/models"
 	cmd_grpc "hub/cmd/grpc"
-	cmd_http "hub/cmd/http"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// @title Utility API
-// @version 1.0
-// @description API cho utility service, bao gồm event-queue và các tiện ích khác
-// @BasePath /v2/utility
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
+// Hub is an internal gRPC service. gateway-service owns the public HTTP boundary
+// and registers Hub grpc-gateway handlers generated from Proto.
 var rootCmd = &cobra.Command{
-	Use:   "utility",
-	Short: "Một ứng dụng quản lý server gRPC và HTTP",
+	Use:   "hub",
+	Short: "Hub internal gRPC service",
 }
 
 func init() {
-	rootCmd.AddCommand(cmd_http.HttpCmd)
 	rootCmd.AddCommand(cmd_grpc.GrpcCmd)
 	viper.AutomaticEnv()
 }

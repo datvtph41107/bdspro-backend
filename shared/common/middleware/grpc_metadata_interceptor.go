@@ -36,6 +36,9 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 		appendIfExists(md, "device-id", r.Header.Get("device-id"))
 	}
 	appendIfExists(md, "api-key", r.Header.Get("API-KEY"))
+	appendIfExists(md, "x-qhpro-telemetry-key", r.Header.Get("X-QHPro-Telemetry-Key"))
+	appendIfExists(md, "if-none-match", r.Header.Get("If-None-Match"))
+	appendIfExists(md, "method", r.Method)
 
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
@@ -68,7 +71,6 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	if claims.PlanFrom != nil {
 		appendIfExists(md, "planFrom", *claims.PlanFrom)
 	}
-	appendIfExists(md, "method", r.Method)
 
 	// Thêm writer vào context để có thể truy cập từ gRPC server
 	if writer, ok := r.Context().Value("response-writer").(http.ResponseWriter); ok {

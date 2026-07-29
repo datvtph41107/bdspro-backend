@@ -36,7 +36,7 @@ if [[ -d "$HOME/.nvm/versions/node" ]]; then
 fi
 
 # name | make_target | port
-# Port theo gateway-service/config/local.yml + HTTP phụ (file/user/relay/tqd)
+# Port theo gateway-service/config/local.yml + HTTP phụ (file/user/relay); TQD application APIs đi qua Gateway
 ALL_SVCS=(
   "auth|auth-grpc|8216"
   "user|user-grpc|8201"
@@ -57,7 +57,6 @@ ALL_SVCS=(
   "marketing|marketing-grpc|8214"
   "transaction|transaction-grpc|8215"
   "assistant|assistant-grpc|8218"
-  "tqd-http|tqd-http|8230"
   "tqd-grpc|tqd-grpc|8219"
 )
 
@@ -69,14 +68,13 @@ SUPPORT_SVCS=(
   "crm|crm|8206"
   "file|file-http|8002"
   "assistant|assistant-grpc|8218"
-  "tqd-http|tqd-http|8230"
   "tqd-grpc|tqd-grpc|8219"
 )
 
 ALL_PORTS=(
   8000 8001 8002 8081 5173 8308 8800
   8201 8202 8203 8204 8205 8206 8207 8208 8209
-  8210 8211 8212 8213 8214 8215 8216 8217 8218 8219 8230 8280
+  8210 8211 8212 8213 8214 8215 8216 8217 8218 8219 8280
 )
 
 ALL_MOD_SVCS=(
@@ -324,7 +322,7 @@ print_be_urls() {
   echo "  User:     :8201"
   echo "  CRM:      :8206"
   echo "  File:     http://localhost:8002  (upload /v1/file/upload)"
-  echo "  TQD HTTP: http://localhost:8230  (reports)"
+  echo "  TQD API:  http://localhost:8000/v2/tqd/... (Gateway)"
   echo "  TQD gRPC: :8219                 (Pro AI / planning)"
   echo "  Logs:     $LOG_DIR/*.log"
   echo "  Login API: POST http://localhost:8000/v2/auth/admin/login"

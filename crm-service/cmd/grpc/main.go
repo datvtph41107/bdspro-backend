@@ -1,11 +1,18 @@
 package cmd_grpc
 
 import (
+	_db "common/db"
 	_middleware "common/middleware"
 	"context"
 	"crm/config"
+	"crm/infra/client"
 	"crm/infra/db"
+	handler_grpc "crm/infra/handler/grpc"
+	"crm/infra/postgre"
+	catalog_postgres "crm/infra/postgre/contentcatalog"
 	"crm/initial"
+	catalog_application "crm/internal/modules/contentcatalog/application"
+	"crm/internal/usecase"
 	"crm/wire"
 	"fmt"
 	"log"
@@ -47,6 +54,24 @@ var GrpcCmd = &cobra.Command{
 		app, _ := wire.InitializeApp()
 		db.AutoMigrate()
 
+		// Public SEO/content remains CRM-owned but is exposed only over gRPC.
+		publicDB, publicDBErr := _db.NewDB()
+		if publicDBErr != nil {
+			log.Fatalf("initialize CRM public gRPC database: %v", publicDBErr)
+		}
+		seoDomainRepository := postgre.NewSeoDomainPostgres(publicDB)
+		seoPublicUsecase := usecase.NewSeoPublicUsecase(seoDomainRepository)
+		seoSitemapUsecase := usecase.NewSeoSitemapUsecase(seoDomainRepository)
+		tqdClient := client.NewTqdClient()
+		seoGenerationLogRepository := postgre.NewSeoGenerationLogPostgres(publicDB)
+		seoRenderUsecase := usecase.NewSeoRenderUsecase(seoDomainRepository, seoGenerationLogRepository, tqdClient)
+		seoProvisioningUsecase := usecase.NewSeoAdministrativeUnitProvisioningUsecase(seoDomainRepository, tqdClient, seoRenderUsecase)
+		catalogRepository := catalog_postgres.NewRepository(publicDB)
+		catalogService := catalog_application.NewService(catalogRepository)
+		runtimeEventRepository := postgre.NewSeoRuntimeEventPostgres(publicDB)
+		runtimeEventUsecase := usecase.NewSeoRuntimeEventUsecase(runtimeEventRepository)
+		publicContentGrpcHandler := handler_grpc.NewPublicContentGrpcHandler(seoPublicUsecase, seoSitemapUsecase, seoProvisioningUsecase, catalogService, runtimeEventUsecase, config.AppProperties.Seo.RuntimeEventIngestKey)
+
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
@@ -82,6 +107,7 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterSeoDomainServiceServer(s, app.SeoDomainHandler)
 		crmpb.RegisterSeoMeasurementRuntimeServiceServer(s, app.SeoDomainHandler)
 		crmpb.RegisterSeoStrategyServiceServer(s, app.SeoStrategyHander)
+		crmpb.RegisterCRMPublicContentServiceServer(s, publicContentGrpcHandler)
 		// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
 
 		log.Printf("Listen: %v", port)

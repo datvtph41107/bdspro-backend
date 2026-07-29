@@ -1,15 +1,20 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"io"
+	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	sharepb "pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type CustomMarshaler struct{}
@@ -47,10 +52,19 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	if !ok {
 		return json.Marshal(v)
 	}
+	if raw, ok := msg.(*wrapperspb.BytesValue); ok {
+		return raw.GetValue(), nil
+	}
 
 	val := reflect.ValueOf(msg)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
+	}
+
+	// Canonical protobuf contracts without legacy Code/Data wrappers are emitted
+	// with their Proto JSON names (camelCase) and are not wrapped a second time.
+	if !val.IsValid() || (!val.FieldByName("Code").IsValid() && !val.FieldByName("Data").IsValid()) {
+		return protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: false}.Marshal(msg)
 	}
 
 	// Kiểm tra field Code
@@ -187,8 +201,22 @@ func (c *CustomMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
 	return json.NewDecoder(r)
 }
 
+type customGatewayEncoder struct {
+	writer    io.Writer
+	marshaler *CustomMarshaler
+}
+
+func (e *customGatewayEncoder) Encode(value interface{}) error {
+	payload, err := e.marshaler.Marshal(value)
+	if err != nil {
+		return err
+	}
+	_, err = e.writer.Write(payload)
+	return err
+}
+
 func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {
-	return json.NewEncoder(w)
+	return &customGatewayEncoder{writer: w, marshaler: c}
 }
 
 func (c *CustomMarshaler) ContentType(v interface{}) string {
@@ -229,4 +257,41 @@ func rawResponseContentType(message string) string {
 	default:
 		return ""
 	}
+}
+
+// ForwardGatewayResponseMetadata converts transport-neutral gRPC response
+// metadata into the real HTTP response. This keeps status/header ownership in
+// gateway-service while CRM/TQD/Hub remain gRPC-only.
+func ForwardGatewayResponseMetadata(ctx context.Context, w http.ResponseWriter, _ proto.Message) error {
+	serverMetadata, ok := runtime.ServerMetadataFromContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	for _, key := range []string{
+		"content-type",
+		"cache-control",
+		"etag",
+		"x-robots-tag",
+		"x-content-type-options",
+		"retry-after",
+		"content-disposition",
+	} {
+		values := serverMetadata.HeaderMD.Get(key)
+		if len(values) == 0 || strings.TrimSpace(values[0]) == "" {
+			continue
+		}
+		w.Header().Set(http.CanonicalHeaderKey(key), strings.TrimSpace(values[0]))
+	}
+
+	values := serverMetadata.HeaderMD.Get("x-http-status")
+	if len(values) == 0 {
+		return nil
+	}
+	statusCode, err := strconv.Atoi(strings.TrimSpace(values[0]))
+	if err != nil || statusCode < 100 || statusCode > 599 {
+		return nil
+	}
+	w.WriteHeader(statusCode)
+	return nil
 }

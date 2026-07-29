@@ -9,6 +9,7 @@ import (
 type QHPlanningProject struct {
 	_models.BaseEntity
 	Code string `gorm:"type:varchar(255);not null;index" json:"code"`
+	Slug string `gorm:"type:varchar(180);index" json:"slug"`
 	Name string `gorm:"type:varchar(255);not null" json:"name"`
 
 	PlanningType  uint32 `gorm:"type:int4;not null" json:"planningType"`
@@ -21,9 +22,12 @@ type QHPlanningProject struct {
 
 	LegalStatus enums.LegalStatus `gorm:"type:int4;default:800" json:"legalStatus"`
 
-	Authority string `gorm:"type:varchar(255)" json:"authority"`
+	Authority      string `gorm:"type:varchar(255)" json:"authority"`
+	DecisionNumber string `gorm:"type:varchar(255);index" json:"decisionNumber"`
 
 	Summary        string     `gorm:"type:text" json:"summary"`
+	ResearchScope  string     `gorm:"type:text" json:"researchScope"`
+	Indicators     string     `gorm:"type:jsonb;default:'[]'" json:"indicators"`
 	ApprovalDate   *time.Time `json:"approvalDate"`
 	EffectiveDate  *time.Time `json:"effectiveDate"`
 	ExpiryDate     *time.Time `json:"expiryDate"`
