@@ -1,8 +1,8 @@
 package handler_grpc
 
 import (
-	"context"
 	_err "common/domain/err"
+	"context"
 	"errors"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -120,8 +120,8 @@ func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *t
 		ValidityStatus: req.ValidityStatus,
 		ProcessStatus:  req.ProcessStatus,
 	}
-	listReq.Page = req.Page
-	listReq.Size = req.Size
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
 
 	results, total, err := h.projectUsecase.GetList(ctx, listReq)
 	if err != nil {
@@ -257,13 +257,11 @@ func (h *QHPlanningGrpcHandler) DeletePlanningDocument(ctx context.Context, req 
 
 func (h *QHPlanningGrpcHandler) ListPlanningDocuments(ctx context.Context, req *tqdpb.ListPlanningDocumentsRequest) (*tqdpb.ListPlanningDocumentsResponse, error) {
 	listReq := &qh_dto.ListPlanningDocumentsRequest{
-		PlanningProjectID: req.PlanningProjectId,
+		PlanningProjectID: req.ProjectId,
 		DocumentType:      req.DocumentType,
-		ValidityStatus:    req.ValidityStatus,
-		ProcessStatus:     req.ProcessStatus,
 	}
-	listReq.Page = req.Page
-	listReq.Size = req.Size
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
 
 	results, total, err := h.documentUsecase.GetList(ctx, listReq)
 	if err != nil {
@@ -332,11 +330,10 @@ func (h *QHPlanningGrpcHandler) ClientListPlanningDocuments(ctx context.Context,
 
 func (h *QHPlanningGrpcHandler) ClientListPlanningEvents(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningEventsResponse, error) {
 	listReq := &qh_dto.ListPlanningEventsRequest{
-		PlanningProjectID: req.PlanningProjectId,
-		Ver:               req.Ver,
+		PlanningProjectID: req.ProjectId,
 	}
-	listReq.Page = req.Page
-	listReq.Size = req.Size
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
 
 	results, total, err := h.eventUsecase.GetList(ctx, listReq)
 	if err != nil {
@@ -351,10 +348,10 @@ func (h *QHPlanningGrpcHandler) ClientListPlanningEvents(ctx context.Context, re
 
 func (h *QHPlanningGrpcHandler) ClientListPlanningRelations(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningRelationsResponse, error) {
 	listReq := &qh_dto.ListPlanningEventsRequest{
-		PlanningProjectID: req.PlanningProjectId,
+		PlanningProjectID: req.ProjectId,
 	}
-	listReq.Page = req.Page
-	listReq.Size = req.Size
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
 
 	results, total, err := h.eventUsecase.GetRelations(ctx, listReq)
 	if err != nil {
@@ -362,7 +359,7 @@ func (h *QHPlanningGrpcHandler) ClientListPlanningRelations(ctx context.Context,
 	}
 
 	return &tqdpb.ListPlanningRelationsResponse{
-		Data:  h.mapper.ToRelationProtoList(results, req.PlanningProjectId),
+		Data:  h.mapper.ToRelationProtoList(results, req.ProjectId),
 		Total: total,
 	}, nil
 }

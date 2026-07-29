@@ -12,9 +12,8 @@ import (
 	sharepb "pb/types/shared"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type CustomMarshaler struct{}
@@ -52,19 +51,18 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	if !ok {
 		return json.Marshal(v)
 	}
-	if raw, ok := msg.(*wrapperspb.BytesValue); ok {
-		return raw.GetValue(), nil
+
+	// HttpBody: trả raw JSON/binary (public TQD projections, …)
+	if hb, ok := msg.(*httpbody.HttpBody); ok {
+		if hb == nil {
+			return []byte("null"), nil
+		}
+		return hb.GetData(), nil
 	}
 
 	val := reflect.ValueOf(msg)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
-	}
-
-	// Canonical protobuf contracts without legacy Code/Data wrappers are emitted
-	// with their Proto JSON names (camelCase) and are not wrapped a second time.
-	if !val.IsValid() || (!val.FieldByName("Code").IsValid() && !val.FieldByName("Data").IsValid()) {
-		return protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: false}.Marshal(msg)
 	}
 
 	// Kiểm tra field Code
@@ -201,26 +199,18 @@ func (c *CustomMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
 	return json.NewDecoder(r)
 }
 
-type customGatewayEncoder struct {
-	writer    io.Writer
-	marshaler *CustomMarshaler
-}
-
-func (e *customGatewayEncoder) Encode(value interface{}) error {
-	payload, err := e.marshaler.Marshal(value)
-	if err != nil {
-		return err
-	}
-	_, err = e.writer.Write(payload)
-	return err
-}
-
 func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {
-	return &customGatewayEncoder{writer: w, marshaler: c}
+	return json.NewEncoder(w)
 }
 
 func (c *CustomMarshaler) ContentType(v interface{}) string {
 	if msg, ok := v.(proto.Message); ok {
+		if hb, ok := msg.(*httpbody.HttpBody); ok && hb != nil {
+			if ct := strings.TrimSpace(hb.GetContentType()); ct != "" {
+				return ct
+			}
+			return "application/json"
+		}
 		if cr, ok := msg.(*sharepb.CommonResponse); ok && cr.Code == 8501 {
 			if contentType := rawResponseContentType(cr.Message); contentType != "" {
 				return contentType

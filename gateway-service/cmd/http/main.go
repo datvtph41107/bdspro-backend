@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	sharepb "pb/types/shared"
-	"strings"
 	"time"
 
 	"gateway/config"
@@ -218,7 +217,6 @@ var HttpCmd = &cobra.Command{
 				"http://14.225.210.29:3110",
 				"http://103.145.63.185:3107",
 				"http://103.172.239.89:3108",
-				"http://localhost:5173",
 				"https://admin.bdspro.com",
 				"https://bdspro.com",
 				"https://app.bdspro.com",
@@ -311,36 +309,41 @@ var HttpCmd = &cobra.Command{
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
 		// như /v2/tqd/public/* và /v2/crm/public/{content,seo}/*. Vì vậy các route
 		// cụ thể được đăng ký bình thường; phần /v2 còn lại đi qua NoRoute.
-		v2Fallback := gin.WrapH(mux)
-		r.NoRoute(
-			func(c *gin.Context) {
-				path := c.Request.URL.Path
+		// v2Fallback := gin.WrapH(mux)
+		// r.NoRoute(
+		// 	func(c *gin.Context) {
+		// 		path := c.Request.URL.Path
 
-				// RC2 gRPC-only: route Discovery legacy bị loại bỏ hoàn toàn và
-				// phải trả 404 trước khi JWT middleware xử lý.
-				if path == "/v2/discovery" || strings.HasPrefix(path, "/v2/discovery/") {
-					c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-						"code":    "ROUTE_NOT_FOUND",
-						"message": "Route not found",
-					})
-					return
-				}
+		// 		// RC2 gRPC-only: route Discovery legacy bị loại bỏ hoàn toàn và
+		// 		// phải trả 404 trước khi JWT middleware xử lý.
+		// 		if path == "/v2/discovery" || strings.HasPrefix(path, "/v2/discovery/") {
+		// 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+		// 				"code":    "ROUTE_NOT_FOUND",
+		// 				"message": "Route not found",
+		// 			})
+		// 			return
+		// 		}
 
-				// NoRoute còn nhận cả URL ngoài /v2. Không chuyển các URL đó
-				// sang grpc-gateway vì chúng không thuộc API v2.
-				if path != "/v2" && !strings.HasPrefix(path, "/v2/") {
-					c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-						"code":    "ROUTE_NOT_FOUND",
-						"message": "Route not found",
-					})
-					return
-				}
+		// 		// NoRoute còn nhận cả URL ngoài /v2. Không chuyển các URL đó
+		// 		// sang grpc-gateway vì chúng không thuộc API v2.
+		// 		if path != "/v2" && !strings.HasPrefix(path, "/v2/") {
+		// 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+		// 				"code":    "ROUTE_NOT_FOUND",
+		// 				"message": "Route not found",
+		// 			})
+		// 			return
+		// 		}
 
-				c.Next()
-			},
-			_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes),
-			v2Fallback,
-		)
+		// 		// Gin khởi tạo NoRoute với status 404. Đặt lại status trước khi
+		// 		// grpc-gateway ghi response thành công, nếu không body 2xx sẽ
+		// 		// bị trả kèm HTTP 404.
+		// 		c.Status(http.StatusOK)
+		// 		c.Next()
+		// 	},
+		// 	_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes),
+		// 	v2Fallback,
+		// )
+		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 		r.Any("/v2.1/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 		r.Any("/v3/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
 
