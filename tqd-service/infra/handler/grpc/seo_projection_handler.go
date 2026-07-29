@@ -170,5 +170,5 @@ func (h *SeoProjectionGrpcHandler) loadPlanningProjectionJSON(ctx context.Contex
 		return nil, status.Errorf(codes.Internal, "encode planning project projection: %v", err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
-	return wrapperspb.Bytes(payload), nil
+	return payload, nil
 }
