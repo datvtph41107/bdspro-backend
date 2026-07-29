@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"log"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -18,6 +19,21 @@ func NewRedisProvider() *RedisProvider {
 	return &RedisProvider{
 		RedisService: _redis.NewRedisService(),
 	}
+}
+
+// MGet lấy nhiều giá trị từ Redis bằng các khóa đã cho.
+func (r *RedisProvider) MGet(c context.Context, keys ...string) ([]interface{}, error) {
+	if len(keys) == 0 {
+		return []interface{}{}, nil
+	}
+
+	val, err := r.RedisService.Client.MGet(c, keys...).Result()
+	if err != nil {
+		log.Printf("Lỗi khi MGet từ Redis: %v", err)
+		return nil, fmt.Errorf("lỗi khi MGet từ Redis: %w", err)
+	}
+
+	return val, nil
 }
 
 // SaveToken lưu token vào Redis với expiration

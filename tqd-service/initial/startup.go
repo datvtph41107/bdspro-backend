@@ -44,6 +44,7 @@ type InitialApp struct {
 	QHLandUseGrpcHandler           *handler_grpc.QHLandUseGrpcHandler
 	RegionGrpcHandler              *handler_grpc.RegionGrpcHandler
 	ReportGrpcHandler              *handler_grpc.ReportGrpcHandler
+	GisReportAdminGrpcHandler      *handler_grpc.GisReportAdminGrpcHandler
 	SubscriptionGrpcHandler        *handler_grpc.SubscriptionGrpcHandler
 	TqdPublicService               *handler_grpc.TqdPublicService
 	ImportGrpcHandler              *handler_grpc.ImportGrpcHandler
@@ -91,6 +92,7 @@ func NewApp(
 	pa *handler_grpc.ParcelGrpcHandler,
 	regionGrpcHandler *handler_grpc.RegionGrpcHandler,
 	reportGrpcHandler *handler_grpc.ReportGrpcHandler,
+	gisReportAdminGrpcHandler *handler_grpc.GisReportAdminGrpcHandler,
 	subscriptionGrpcHandler *handler_grpc.SubscriptionGrpcHandler,
 	tqdPublicService *handler_grpc.TqdPublicService,
 	importGrpcHandler *handler_grpc.ImportGrpcHandler,
@@ -134,6 +136,7 @@ func NewApp(
 		QHLandUseGrpcHandler:           qhLandUseGrpcHandler,
 		RegionGrpcHandler:              regionGrpcHandler,
 		ReportGrpcHandler:              reportGrpcHandler,
+		GisReportAdminGrpcHandler:      gisReportAdminGrpcHandler,
 		SubscriptionGrpcHandler:        subscriptionGrpcHandler,
 		TqdPublicService:               tqdPublicService,
 		ImportGrpcHandler:              importGrpcHandler,

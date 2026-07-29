@@ -263,4 +263,6 @@ func (h *ReportGrpcHandler) DeleteReport(
 	return &emptypb.Empty{}, nil
 }
 
-// Admin GIS report RPCs: xem report_admin_grpc.go
+// =====================================================
+// ADMIN DELETE
+// =====================================================

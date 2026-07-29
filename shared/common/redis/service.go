@@ -168,6 +168,7 @@ func (r *RedisService) Get(key string) (string, error) {
 	}
 	val, err := r.Client.Get(r.Ctx, key).Result()
 	if err != nil && err != redis.Nil {
+		log.Printf("[RedisService.Get] Error getting key %s: %v", key, err)
 		r.markDisconnected()
 	}
 	return val, err

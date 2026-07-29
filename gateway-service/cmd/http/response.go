@@ -259,7 +259,6 @@ func ForwardGatewayResponseMetadata(ctx context.Context, w http.ResponseWriter, 
 	}
 
 	for _, key := range []string{
-		"content-type",
 		"cache-control",
 		"etag",
 		"x-robots-tag",

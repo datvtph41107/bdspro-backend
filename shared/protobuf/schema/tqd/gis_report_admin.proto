@@ -1,0 +1,282 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// Admin GIS problem reports (báo cáo phản ánh bản đồ) — gateway grpc-gateway, không qua Gin HTTP tqd.
+service GisReportAdminService {
+  rpc List(AdminGisReportListRequest) returns (AdminGisReportListResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports"
+    };
+  }
+
+  rpc Summary(google.protobuf.Empty) returns (AdminGisReportSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/summary"
+    };
+  }
+
+  rpc Queue(AdminGisReportQueueRequest) returns (AdminGisReportListResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/queue"
+    };
+  }
+
+  rpc QueueSummary(google.protobuf.Empty) returns (AdminGisReportQueueSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/queue/summary"
+    };
+  }
+
+  rpc ListEvents(AdminGisReportListEventsRequest) returns (AdminGisReportEventListResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/events"
+    };
+  }
+
+  rpc ListReportEvents(AdminGisReportListReportEventsRequest) returns (AdminGisReportEventListResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/events/{id}"
+    };
+  }
+
+  rpc Get(AdminGisReportGetRequest) returns (AdminGisReportDetail) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/reports/detail/{id}"
+    };
+  }
+
+  rpc CreateInternal(AdminGisReportCreateInternalRequest) returns (AdminGisReportDetail) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/internal"
+      body: "*"
+    };
+  }
+
+  rpc Assign(AdminGisReportAssignRequest) returns (AdminGisReportActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{id}/assign"
+      body: "*"
+    };
+  }
+
+  rpc UpdateSeverity(AdminGisReportUpdateSeverityRequest) returns (AdminGisReportActionResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/admin/reports/{id}/severity"
+      body: "*"
+    };
+  }
+
+  rpc UpdateQaStatus(AdminGisReportUpdateQaStatusRequest) returns (AdminGisReportActionResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/admin/reports/{id}/qa-status"
+      body: "*"
+    };
+  }
+
+  rpc UpdateLinkage(AdminGisReportUpdateLinkageRequest) returns (AdminGisReportActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{id}/linkage"
+      body: "linkage"
+    };
+  }
+
+  rpc UpdateImages(AdminGisReportUpdateImagesRequest) returns (AdminGisReportActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{id}/images"
+      body: "*"
+    };
+  }
+
+  rpc Close(AdminGisReportCloseRequest) returns (AdminGisReportActionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/reports/{id}/close"
+      body: "*"
+    };
+  }
+}
+
+message AdminGisReportListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional string q = 3;
+  optional uint32 problem_report = 4 [json_name = "problemReport"];
+  optional uint32 qa_status = 5 [json_name = "qaStatus"];
+  optional uint32 severity = 6;
+  optional uint64 assignee_id = 7 [json_name = "assigneeId"];
+}
+
+message AdminGisReportListResponse {
+  repeated AdminGisReportListItem data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+  optional string bucket = 5;
+}
+
+message AdminGisReportListItem {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  string title = 3;
+  uint32 problem_report = 4;
+  uint32 report_type = 5;
+  uint32 status = 6;
+  uint32 qa_status = 7;
+  uint32 severity = 8;
+  string created_at = 9;
+  optional uint64 assignee_id = 10;
+  optional uint64 support_ticket_id = 11;
+  optional uint64 target_id = 12;
+  optional string closed_at = 13;
+  optional string layer_name = 14;
+  optional string layer_id = 15;
+  optional string version = 16;
+  optional string legal_status = 17;
+  optional string parcel_name = 18;
+  optional string parcel_or_region = 19;
+  optional string user_name = 20;
+  optional string user_full_name = 21;
+  optional string user_username = 22;
+  optional string assignee_name = 23;
+  optional string assignee_full_name = 24;
+  optional string assignee_username = 25;
+}
+
+message AdminGisReportSummaryResponse {
+  map<uint32, int64> by_qa_status = 1;
+}
+
+message AdminGisReportQueueRequest {
+  string bucket = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  optional uint32 severity = 4;
+}
+
+message AdminGisReportQueueSummaryResponse {
+  int64 mine = 1;
+  int64 unassigned = 2;
+  int64 data_fix = 3;
+}
+
+message AdminGisReportListEventsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional uint64 report_id = 3 [json_name = "reportId"];
+  optional uint64 actor_id = 4 [json_name = "actorId"];
+  optional string action = 5;
+  optional string from = 6;
+  optional string to = 7;
+}
+
+message AdminGisReportListReportEventsRequest {
+  uint64 id = 1;
+  uint32 limit = 2;
+}
+
+message AdminGisReportEventListResponse {
+  repeated AdminGisReportEvent data = 1;
+  int64 total = 2;
+}
+
+message AdminGisReportEvent {
+  uint64 id = 1;
+  uint64 report_id = 2;
+  uint64 actor_id = 3;
+  string action = 4;
+  string note = 5;
+  string created_at = 6;
+  optional string before_json = 7;
+  optional string after_json = 8;
+  optional string actor_name = 9;
+}
+
+message AdminGisReportGetRequest {
+  uint64 id = 1;
+}
+
+message AdminGisReportDetail {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  string title = 3;
+  string description = 4;
+  uint32 problem_report = 5;
+  uint32 report_type = 6;
+  uint32 status = 7;
+  uint32 qa_status = 8;
+  uint32 severity = 9;
+  string created_at = 10;
+  google.protobuf.Struct linkage = 11;
+  repeated string images = 12;
+  optional uint64 assignee_id = 13;
+  optional uint64 target_id = 14;
+  optional uint64 support_ticket_id = 15;
+  optional string closed_at = 16;
+  optional string layer_name = 17;
+  optional string layer_id = 18;
+  optional string version = 19;
+  optional string legal_status = 20;
+  optional string parcel_name = 21;
+  optional string parcel_or_region = 22;
+  optional string user_name = 23;
+  optional string user_full_name = 24;
+  optional string user_username = 25;
+  optional string assignee_name = 26;
+  optional string assignee_full_name = 27;
+  optional string assignee_username = 28;
+}
+
+message AdminGisReportCreateInternalRequest {
+  string title = 1;
+  string description = 2;
+  uint32 problem_report = 3;
+  uint32 report_type = 4;
+  uint32 severity = 5;
+  optional uint64 target_id = 6;
+  optional uint64 support_ticket_id = 7;
+  repeated string images = 8;
+}
+
+message AdminGisReportAssignRequest {
+  uint64 id = 1;
+  uint64 assignee_id = 2;
+}
+
+message AdminGisReportUpdateSeverityRequest {
+  uint64 id = 1;
+  uint32 severity = 2;
+  string reason = 3;
+}
+
+message AdminGisReportUpdateQaStatusRequest {
+  uint64 id = 1;
+  uint32 qa_status = 2;
+  string note = 3;
+}
+
+message AdminGisReportUpdateLinkageRequest {
+  uint64 id = 1;
+  google.protobuf.Struct linkage = 2;
+}
+
+message AdminGisReportUpdateImagesRequest {
+  uint64 id = 1;
+  repeated string images = 2;
+}
+
+message AdminGisReportCloseRequest {
+  uint64 id = 1;
+  bool reject = 2;
+  string note = 3;
+}
+
+message AdminGisReportActionResponse {
+  uint64 id = 1;
+  string message = 2;
+}

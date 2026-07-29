@@ -111,6 +111,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMeth
 	createdAuth.UserID = profile.ProfileID
 	_, err = u.AuthMethodRepo.Update(ctx, createdAuth)
 	if err != nil {
+		fmt.Printf("Error updating auth method: %v\n", err)
 		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
 	}
 
@@ -217,6 +218,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *domain.AuthMeth
 	// Lưu cập nhật
 	updatedAuth, err := u.AuthMethodRepo.Update(ctx, authMethod)
 	if err != nil {
+		fmt.Printf("Error updating auth method: %v\n", err)
 		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
 	}
 

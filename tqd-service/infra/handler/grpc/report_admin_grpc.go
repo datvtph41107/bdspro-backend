@@ -23,17 +23,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-var (
-	permReportView = []string{
-		"ADMIN_BC_GIS_XEM",
-		"ADMIN_BC_GIS_XU_LY", "ADMIN_BC_GIS_SUA",
-		"ADMIN_BC_GIS_DONG", "ADMIN_BC_GIS_XOA",
-	}
-	permReportCreate  = []string{"ADMIN_BC_GIS_TAO"}
-	permReportProcess = []string{"ADMIN_BC_GIS_XU_LY", "ADMIN_BC_GIS_SUA"}
-	permReportClose   = []string{"ADMIN_BC_GIS_DONG", "ADMIN_BC_GIS_XOA"}
-)
-
 func (h *ReportGrpcHandler) auth() *clients.AuthGrpcClient {
 	if h.authClient == nil {
 		h.authClient = clients.MakeAuthGrpcClient(env.ENV_RUNTIME)
@@ -287,17 +276,6 @@ func toAdminReportItem(r domain.Report, display usecase.LinkageDisplay, user use
 		item.AssigneeUsername = user.AssigneeUsername
 	}
 	return item
-}
-
-func reportImagesProto(raw []byte) []string {
-	if len(raw) == 0 {
-		return []string{}
-	}
-	var out []string
-	if err := json.Unmarshal(raw, &out); err != nil || out == nil {
-		return []string{}
-	}
-	return out
 }
 
 func jsonToStruct(raw datatypes.JSON) (*structpb.Struct, error) {

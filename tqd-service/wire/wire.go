@@ -188,6 +188,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewRegionUsecase,
 	tqd_infra_handler_http.NewReportAdminHTTPHandler,
 	tqd_infra_handler_grpc.NewReportGrpcHandler,
+	tqd_infra_handler_grpc.NewGisReportAdminGrpcHandler,
 	tqd_infra_postgres.NewReportRepository,
 	tqd_internal_usecase.NewReportUsecase,
 	tqd_infra_postgres_publiccontent.NewRepository,

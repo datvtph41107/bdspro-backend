@@ -181,6 +181,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterRegionExtendServiceServer(s, app.RegionExtendGrpcHandler)
 	tqdpb.RegisterImportServiceServer(s, app.ImportGrpcHandler)
 	tqdpb.RegisterReportServiceServer(s, app.ReportGrpcHandler)
+	tqdpb.RegisterGisReportAdminServiceServer(s, app.GisReportAdminGrpcHandler)
 	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
 	tqdpb.RegisterTqdPublicServiceServer(s, app.TqdPublicService)
 	tqdpb.RegisterTqdSeoProjectionServiceServer(s, seoProjectionGrpcHandler)
