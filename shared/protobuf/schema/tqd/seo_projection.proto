@@ -33,4 +33,8 @@ service TqdSeoProjectionService {
       }
     };
   }
+
+  // Internal CRM / backend sync (no google.api.http)
+  rpc GetPlanningProjectProjection(google.protobuf.StringValue)
+      returns (google.protobuf.BytesValue);
 }
