@@ -13,6 +13,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -192,11 +193,34 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 }
 
 func (c *CustomMarshaler) Unmarshal(data []byte, v interface{}) error {
+	if msg, ok := v.(proto.Message); ok {
+		return protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(data, msg)
+	}
+	return json.Unmarshal(data, v)
+}
+
+// protoJSONDecoder — grpc-gateway Decode body vào proto phải dùng protojson
+// (encoding/json không map đúng mọi field proto → assigneeId/qaStatus bị = 0).
+type protoJSONDecoder struct {
+	r io.Reader
+}
+
+func (d *protoJSONDecoder) Decode(v interface{}) error {
+	data, err := io.ReadAll(d.r)
+	if err != nil {
+		return err
+	}
+	if len(data) == 0 {
+		return io.EOF
+	}
+	if msg, ok := v.(proto.Message); ok {
+		return protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(data, msg)
+	}
 	return json.Unmarshal(data, v)
 }
 
 func (c *CustomMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
-	return json.NewDecoder(r)
+	return &protoJSONDecoder{r: r}
 }
 
 func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {

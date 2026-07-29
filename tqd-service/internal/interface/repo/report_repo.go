@@ -8,6 +8,7 @@ import (
 type ReportRepository interface {
 	Create(ctx context.Context, report *domain.Report) error
 	Update(ctx context.Context, report *domain.Report) error
+	UpdateAssignee(ctx context.Context, id, assigneeID uint64, qaStatus uint32) error
 	UpdateStatus(ctx context.Context, id uint64, status uint32, errorMsg *string) error
 	UpdateFileInfo(ctx context.Context, id uint64, fileURL *string, fileSize *int64, fileHash *string, completedAt *string) error
 	GetByID(ctx context.Context, id uint64) (*domain.Report, error)

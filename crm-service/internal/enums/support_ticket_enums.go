@@ -52,6 +52,32 @@ const (
 	SupportTicketSourceAPI     SupportTicketSource = 50
 )
 
+// SupportTicketHandlingTeam — tuyến / bộ phận xử lý (SRS IV.10.7.1 chuyển tuyến).
+type SupportTicketHandlingTeam uint32
+
+const (
+	SupportTicketTeamCSKH    SupportTicketHandlingTeam = 10
+	SupportTicketTeamData    SupportTicketHandlingTeam = 20
+	SupportTicketTeamFinance SupportTicketHandlingTeam = 30
+	SupportTicketTeamSales   SupportTicketHandlingTeam = 40
+	SupportTicketTeamRuntime SupportTicketHandlingTeam = 50
+	SupportTicketTeamOther   SupportTicketHandlingTeam = 60
+)
+
+func IsValidSupportTicketHandlingTeam(v uint32) bool {
+	switch SupportTicketHandlingTeam(v) {
+	case SupportTicketTeamCSKH,
+		SupportTicketTeamData,
+		SupportTicketTeamFinance,
+		SupportTicketTeamSales,
+		SupportTicketTeamRuntime,
+		SupportTicketTeamOther:
+		return true
+	default:
+		return false
+	}
+}
+
 // ValidSupportTicketTransitions maps from-status -> allowed to-status
 var ValidSupportTicketTransitions = map[SupportTicketStatus][]SupportTicketStatus{
 	SupportTicketStatusNew:         {SupportTicketStatusInProgress, SupportTicketStatusWaitingUser, SupportTicketStatusTransferred, SupportTicketStatusClosed},

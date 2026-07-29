@@ -52,6 +52,18 @@ func (r *SupportTicketPostgres) List(ctx context.Context, req *dto.SupportTicket
 	if req.AssigneeID != nil {
 		q = q.Where("assignee_id = ?", *req.AssigneeID)
 	}
+	if req.UnassignedOnly {
+		q = q.Where("assignee_id IS NULL")
+	}
+	if req.Product != nil {
+		q = q.Where("product = ?", *req.Product)
+	}
+	if req.Source != nil {
+		q = q.Where("source = ?", *req.Source)
+	}
+	if req.HandlingTeam != nil {
+		q = q.Where("handling_team = ?", *req.HandlingTeam)
+	}
 	if req.Q != "" {
 		like := "%" + req.Q + "%"
 		q = q.Where("code ILIKE ? OR title ILIKE ?", like, like)
@@ -97,8 +109,24 @@ func (r *SupportTicketPostgres) Summary(ctx context.Context) (*dto.SupportTicket
 			out.StatusResolved = r0.Count
 		case enums.SupportTicketStatusClosed:
 			out.StatusClosed = r0.Count
+		case enums.SupportTicketStatusTransferred:
+			out.StatusTransferred = r0.Count
 		}
 	}
+	var unassigned int64
+	if err := r.db.WithContext(ctx).Model(&domain.SupportTicket{}).
+		Where("deleted_at IS NULL AND assignee_id IS NULL AND status <> ?", enums.SupportTicketStatusClosed).
+		Count(&unassigned).Error; err != nil {
+		return nil, err
+	}
+	out.Unassigned = unassigned
+	var critical int64
+	if err := r.db.WithContext(ctx).Model(&domain.SupportTicket{}).
+		Where("deleted_at IS NULL AND priority = ? AND status <> ?", enums.SupportTicketPriorityCritical, enums.SupportTicketStatusClosed).
+		Count(&critical).Error; err != nil {
+		return nil, err
+	}
+	out.PriorityCritical = critical
 	return out, nil
 }
 

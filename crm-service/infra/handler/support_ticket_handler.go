@@ -5,9 +5,12 @@ import (
 	"crm/infra/client"
 	"crm/internal/dto"
 	"crm/internal/usecase"
+	"fmt"
+	"strings"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
+	authpb "pb/types/auth"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -62,6 +65,21 @@ func (h *SupportTicketHandler) ListSupportTickets(ctx context.Context, req *crmp
 		v := req.GetAssigneeId()
 		listReq.AssigneeID = &v
 	}
+	if req.Product != nil {
+		v := req.GetProduct()
+		listReq.Product = &v
+	}
+	if req.Source != nil {
+		v := req.GetSource()
+		listReq.Source = &v
+	}
+	if req.HandlingTeam != nil {
+		v := req.GetHandlingTeam()
+		listReq.HandlingTeam = &v
+	}
+	if req.UnassignedOnly != nil && req.GetUnassignedOnly() {
+		listReq.UnassignedOnly = true
+	}
 	res, err := h.usecase.List(ctx, listReq)
 	if err != nil {
 		return nil, err
@@ -82,12 +100,15 @@ func (h *SupportTicketHandler) GetSupportTicketSummary(ctx context.Context, _ *e
 		return nil, err
 	}
 	return &crmpb.SupportTicketSummaryResponse{
-		Total:             res.Total,
-		StatusNew:         res.StatusNew,
-		StatusInProgress:  res.StatusInProgress,
-		StatusWaitingUser: res.StatusWaitingUser,
-		StatusResolved:    res.StatusResolved,
-		StatusClosed:      res.StatusClosed,
+		Total:              res.Total,
+		StatusNew:          res.StatusNew,
+		StatusInProgress:   res.StatusInProgress,
+		StatusWaitingUser:  res.StatusWaitingUser,
+		StatusResolved:     res.StatusResolved,
+		StatusClosed:       res.StatusClosed,
+		StatusTransferred:  res.StatusTransferred,
+		Unassigned:         res.Unassigned,
+		PriorityCritical:   res.PriorityCritical,
 	}, nil
 }
 
@@ -99,6 +120,7 @@ func (h *SupportTicketHandler) GetSupportTicket(ctx context.Context, req *sharep
 	if err != nil {
 		return nil, err
 	}
+	h.enrichTicketEventActors(ctx, res)
 	return &crmpb.GetSupportTicketResponse{Ticket: toProtoDetail(res)}, nil
 }
 
@@ -224,6 +246,20 @@ func (h *SupportTicketHandler) UpdateSupportTicketImages(ctx context.Context, re
 	return &sharepb.SubmitResponse{Id: req.Id, Message: "images updated"}, nil
 }
 
+func (h *SupportTicketHandler) TransferSupportTicket(ctx context.Context, req *crmpb.TransferSupportTicketRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+		return nil, err
+	}
+	err := h.usecase.Transfer(ctx, req.Id, &dto.SupportTicketTransferRequest{
+		HandlingTeam: req.HandlingTeam,
+		Reason:       req.Reason,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{Id: req.Id, Message: "transferred"}, nil
+}
+
 func toProtoItem(item dto.SupportTicketItemResponse) *crmpb.SupportTicketItem {
 	out := &crmpb.SupportTicketItem{
 		Id:        item.ID,
@@ -233,6 +269,7 @@ func toProtoItem(item dto.SupportTicketItemResponse) *crmpb.SupportTicketItem {
 		Status:    item.Status,
 		Priority:  item.Priority,
 		Product:   item.Product,
+		Source:    item.Source,
 		Images:    item.Images,
 		CreatedBy: item.CreatedBy,
 		UpdatedAt: _utils.FormatTimeToString(item.UpdatedAt),
@@ -246,6 +283,9 @@ func toProtoItem(item dto.SupportTicketItemResponse) *crmpb.SupportTicketItem {
 	}
 	if item.RelatedReportID != nil {
 		out.RelatedReportId = item.RelatedReportID
+	}
+	if item.HandlingTeam != nil {
+		out.HandlingTeam = item.HandlingTeam
 	}
 	return out
 }
@@ -262,9 +302,22 @@ func toProtoDetail(d *dto.SupportTicketDetailResponse) *crmpb.SupportTicketDetai
 	}
 	events := make([]*crmpb.SupportTicketEventItem, len(d.Events))
 	for i, e := range d.Events {
-		events[i] = &crmpb.SupportTicketEventItem{
+		ev := &crmpb.SupportTicketEventItem{
 			Id: e.ID, ActorId: e.ActorID, Action: e.Action, Note: e.Note, CreatedAt: _utils.FormatTimeToString(e.CreatedAt),
 		}
+		if e.ActorName != "" {
+			name := e.ActorName
+			ev.ActorName = &name
+		}
+		if e.BeforeJSON != "" {
+			b := e.BeforeJSON
+			ev.BeforeJson = &b
+		}
+		if e.AfterJSON != "" {
+			a := e.AfterJSON
+			ev.AfterJson = &a
+		}
+		events[i] = ev
 	}
 	out := &crmpb.SupportTicketDetail{
 		Id:          d.ID,
@@ -292,9 +345,70 @@ func toProtoDetail(d *dto.SupportTicketDetailResponse) *crmpb.SupportTicketDetai
 	if d.RelatedReportID != nil {
 		out.RelatedReportId = d.RelatedReportID
 	}
+	if d.HandlingTeam != nil {
+		out.HandlingTeam = d.HandlingTeam
+	}
 	if d.ClosedAt != nil {
 		s := _utils.FormatTimeToString(d.ClosedAt)
 		out.ClosedAt = &s
 	}
 	return out
+}
+
+func (h *SupportTicketHandler) enrichTicketEventActors(ctx context.Context, d *dto.SupportTicketDetailResponse) {
+	if d == nil || len(d.Events) == 0 || h.authClient == nil || h.authClient.AuthInternalServiceClient == nil {
+		return
+	}
+	idSet := map[uint64]struct{}{}
+	for _, e := range d.Events {
+		if e.ActorID > 0 {
+			idSet[e.ActorID] = struct{}{}
+		}
+	}
+	if len(idSet) == 0 {
+		return
+	}
+	ids := make([]uint64, 0, len(idSet))
+	for id := range idSet {
+		ids = append(ids, id)
+	}
+	resp, err := h.authClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{Ids: ids})
+	if err != nil || resp == nil {
+		for i := range d.Events {
+			if d.Events[i].ActorID > 0 && d.Events[i].ActorName == "" {
+				d.Events[i].ActorName = fmt.Sprintf("User #%d", d.Events[i].ActorID)
+			}
+		}
+		return
+	}
+	names := map[uint64]string{}
+	for _, a := range resp.GetData() {
+		if a == nil {
+			continue
+		}
+		label := strings.TrimSpace(a.GetFullName())
+		if label == "" {
+			label = strings.TrimSpace(a.GetUsername())
+		}
+		if label == "" {
+			continue
+		}
+		if uid := a.GetUserId(); uid > 0 {
+			names[uid] = label
+		}
+		if aid := a.GetId(); aid > 0 {
+			names[aid] = label
+		}
+	}
+	for i := range d.Events {
+		id := d.Events[i].ActorID
+		if id == 0 {
+			continue
+		}
+		if n := names[id]; n != "" {
+			d.Events[i].ActorName = n
+		} else {
+			d.Events[i].ActorName = fmt.Sprintf("User #%d", id)
+		}
+	}
 }

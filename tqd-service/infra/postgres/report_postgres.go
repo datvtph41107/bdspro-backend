@@ -27,6 +27,15 @@ func (r *reportRepo) Update(ctx context.Context, report *domain.Report) error {
 	return r.db.WithContext(ctx).Save(report).Error
 }
 
+func (r *reportRepo) UpdateAssignee(ctx context.Context, id, assigneeID uint64, qaStatus uint32) error {
+	return r.db.WithContext(ctx).Model(&domain.Report{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(map[string]interface{}{
+			"assignee_id": assigneeID,
+			"qa_status":   qaStatus,
+		}).Error
+}
+
 func (r *reportRepo) UpdateStatus(ctx context.Context, id uint64, status uint32, errorMsg *string) error {
 	updates := map[string]interface{}{"status": status}
 	if errorMsg != nil {

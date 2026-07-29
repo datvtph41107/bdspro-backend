@@ -20,7 +20,6 @@ type InitialApp struct {
 	QHLabelHandler           *handler_http.QHLabelHandler
 	RegionHttpHandler        *handler_http.RegionHttpHandler
 	ImportHTTPHandler        *handler_http.ImportHTTPHandler
-	ReportAdminHTTPHandler   *handler_http.ReportAdminHTTPHandler
 
 	// gRPC Handlers
 	RegionExtendGrpcHandler        *handler_grpc.RegionExtendGrpcHandler
@@ -71,7 +70,6 @@ func NewApp(
 	qhLabelHandler *handler_http.QHLabelHandler,
 	regionHttpHandler *handler_http.RegionHttpHandler,
 	importHTTPHandler *handler_http.ImportHTTPHandler,
-	reportAdminHTTPHandler *handler_http.ReportAdminHTTPHandler,
 	contactLabelGrpcHandler *handler_grpc.ContactLabelGrpcHandler,
 	directoryCategoryGrpcHandler *handler_grpc.DirectoryCategoryGrpcHandler,
 	directorySourceGrpcHandler *handler_grpc.DirectorySourceGrpcHandler,
@@ -115,7 +113,6 @@ func NewApp(
 		QHLabelHandler:                 qhLabelHandler,
 		RegionHttpHandler:              regionHttpHandler,
 		ImportHTTPHandler:              importHTTPHandler,
-		ReportAdminHTTPHandler:         reportAdminHTTPHandler,
 		ContactLabelGrpcHandler:        contactLabelGrpcHandler,
 		DirectoryCategoryGrpcHandler:   directoryCategoryGrpcHandler,
 		DirectorySourceGrpcHandler:     directorySourceGrpcHandler,

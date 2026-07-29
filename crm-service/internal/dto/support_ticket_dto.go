@@ -24,16 +24,25 @@ type SupportTicketImagesRequest struct {
 
 type SupportTicketListRequest struct {
 	_dto.Pagable
-	Status     *uint32 `json:"status"`
-	Priority   *uint32 `json:"priority"`
-	IssueType  *uint32 `json:"issueType"`
-	AssigneeID *uint64 `json:"assigneeId"`
-	Q          string  `json:"q"`
+	Status         *uint32 `json:"status"`
+	Priority       *uint32 `json:"priority"`
+	IssueType      *uint32 `json:"issueType"`
+	AssigneeID     *uint64 `json:"assigneeId"`
+	Product        *uint32 `json:"product"`
+	Source         *uint32 `json:"source"`
+	HandlingTeam   *uint32 `json:"handlingTeam"`
+	UnassignedOnly bool    `json:"unassignedOnly"`
+	Q              string  `json:"q"`
 }
 
 type SupportTicketAssignRequest struct {
 	AssigneeID uint64 `json:"assigneeId" binding:"required"`
 	Note       string `json:"note"`
+}
+
+type SupportTicketTransferRequest struct {
+	HandlingTeam uint32 `json:"handlingTeam" binding:"required"`
+	Reason       string `json:"reason" binding:"required"`
 }
 
 type SupportTicketPriorityRequest struct {
@@ -70,6 +79,8 @@ type SupportTicketItemResponse struct {
 	RelatedUserID   *uint64    `json:"relatedUserId"`
 	RelatedReportID *uint64    `json:"relatedReportId"`
 	Product         uint32     `json:"product"`
+	Source          uint32     `json:"source"`
+	HandlingTeam    *uint32    `json:"handlingTeam"`
 	Images          []string   `json:"images,omitempty"`
 	CreatedBy       uint64     `json:"createdBy"`
 	UpdatedAt       *time.Time `json:"updatedAt"`
@@ -84,11 +95,14 @@ type SupportTicketNoteResponse struct {
 }
 
 type SupportTicketEventResponse struct {
-	ID        uint64     `json:"id"`
-	ActorID   uint64     `json:"actorId"`
-	Action    string     `json:"action"`
-	Note      string     `json:"note"`
-	CreatedAt *time.Time `json:"createdAt"`
+	ID         uint64     `json:"id"`
+	ActorID    uint64     `json:"actorId"`
+	Action     string     `json:"action"`
+	Note       string     `json:"note"`
+	CreatedAt  *time.Time `json:"createdAt"`
+	ActorName  string     `json:"actorName,omitempty"`
+	BeforeJSON string     `json:"beforeJson,omitempty"`
+	AfterJSON  string     `json:"afterJson,omitempty"`
 }
 
 type SupportTicketDetailResponse struct {
@@ -104,6 +118,7 @@ type SupportTicketDetailResponse struct {
 	RelatedReportID *uint64                      `json:"relatedReportId"`
 	Product         uint32                       `json:"product"`
 	Source          uint32                       `json:"source"`
+	HandlingTeam    *uint32                      `json:"handlingTeam"`
 	Images          []string                     `json:"images"`
 	CreatedBy       uint64                       `json:"createdBy"`
 	CreatedAt       *time.Time                   `json:"createdAt"`
@@ -119,12 +134,15 @@ type SupportTicketListResponse struct {
 }
 
 type SupportTicketSummaryResponse struct {
-	Total             int64 `json:"total"`
-	StatusNew         int64 `json:"statusNew"`
-	StatusInProgress  int64 `json:"statusInProgress"`
-	StatusWaitingUser int64 `json:"statusWaitingUser"`
-	StatusResolved    int64 `json:"statusResolved"`
-	StatusClosed      int64 `json:"statusClosed"`
+	Total              int64 `json:"total"`
+	StatusNew          int64 `json:"statusNew"`
+	StatusInProgress   int64 `json:"statusInProgress"`
+	StatusWaitingUser  int64 `json:"statusWaitingUser"`
+	StatusResolved     int64 `json:"statusResolved"`
+	StatusClosed       int64 `json:"statusClosed"`
+	StatusTransferred  int64 `json:"statusTransferred"`
+	Unassigned         int64 `json:"unassigned"`
+	PriorityCritical   int64 `json:"priorityCritical"`
 }
 
 // Defaults helpers

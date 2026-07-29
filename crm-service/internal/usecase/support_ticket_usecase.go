@@ -8,6 +8,7 @@ import (
 	"crm/internal/repo"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	_errors "common/errors"
@@ -216,6 +217,9 @@ func (u *SupportTicketUsecase) UpdateStatus(ctx context.Context, id uint64, req 
 	if !enums.CanTransitionSupportTicket(ticket.Status, to) {
 		return _errors.ReturnError(400, "STATUS_TRANSITION_INVALID")
 	}
+	if strings.TrimSpace(req.Note) == "" {
+		return _errors.ReturnError(400, "Vui lòng nhập ghi chú cập nhật trạng thái")
+	}
 	before := fmt.Sprintf("%d", ticket.Status)
 	ticket.Status = to
 	if to == enums.SupportTicketStatusClosed {
@@ -232,6 +236,53 @@ func (u *SupportTicketUsecase) UpdateStatus(ctx context.Context, id uint64, req 
 		BeforeJSON: before,
 		AfterJSON:  fmt.Sprintf("%d", to),
 		Note:       req.Note,
+	})
+}
+
+func (u *SupportTicketUsecase) Transfer(ctx context.Context, id uint64, req *dto.SupportTicketTransferRequest) error {
+	actorID := _utils.GetProfileIdWithContext(ctx)
+	ticket, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if ticket == nil {
+		return _errors.ReturnError(404, "ticket not found")
+	}
+	if ticket.Status == enums.SupportTicketStatusClosed {
+		return _errors.ReturnError(400, "không thể chuyển tuyến ticket đã đóng")
+	}
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		return _errors.ReturnError(400, "Vui lòng nhập lý do chuyển tuyến")
+	}
+	if !enums.IsValidSupportTicketHandlingTeam(req.HandlingTeam) {
+		return _errors.ReturnError(400, "bộ phận xử lý không hợp lệ")
+	}
+	toStatus := enums.SupportTicketStatusTransferred
+	if !enums.CanTransitionSupportTicket(ticket.Status, toStatus) && ticket.Status != toStatus {
+		return _errors.ReturnError(400, "STATUS_TRANSITION_INVALID")
+	}
+	before, _ := json.Marshal(map[string]interface{}{
+		"status":       ticket.Status,
+		"handlingTeam": ticket.HandlingTeam,
+	})
+	team := enums.SupportTicketHandlingTeam(req.HandlingTeam)
+	ticket.HandlingTeam = &team
+	ticket.Status = toStatus
+	if err := u.repo.Update(ctx, ticket); err != nil {
+		return err
+	}
+	after, _ := json.Marshal(map[string]interface{}{
+		"status":       ticket.Status,
+		"handlingTeam": ticket.HandlingTeam,
+	})
+	return u.repo.AddEvent(ctx, &domain.SupportTicketEvent{
+		TicketID:   id,
+		ActorID:    actorID,
+		Action:     "transfer",
+		BeforeJSON: string(before),
+		AfterJSON:  string(after),
+		Note:       reason,
 	})
 }
 
@@ -261,9 +312,13 @@ func (u *SupportTicketUsecase) AddNote(ctx context.Context, id uint64, req *dto.
 }
 
 func (u *SupportTicketUsecase) Close(ctx context.Context, id uint64, req *dto.SupportTicketCloseRequest) error {
+	note := strings.TrimSpace(req.Note)
+	if note == "" {
+		note = "Đóng ticket"
+	}
 	return u.UpdateStatus(ctx, id, &dto.SupportTicketStatusRequest{
 		Status: uint32(enums.SupportTicketStatusClosed),
-		Note:   req.Note,
+		Note:   note,
 	})
 }
 
@@ -331,7 +386,7 @@ func mergeUniqueStrings(existing, incoming []string) []string {
 }
 
 func toItem(t domain.SupportTicket) dto.SupportTicketItemResponse {
-	return dto.SupportTicketItemResponse{
+	item := dto.SupportTicketItemResponse{
 		ID:              t.ID,
 		Code:            t.Code,
 		Title:           t.Title,
@@ -342,11 +397,17 @@ func toItem(t domain.SupportTicket) dto.SupportTicketItemResponse {
 		RelatedUserID:   t.RelatedUserID,
 		RelatedReportID: t.RelatedReportID,
 		Product:         uint32(t.Product),
+		Source:          uint32(t.Source),
 		Images:          unmarshalImages(t.Images),
 		CreatedBy:       derefUint64(t.CreatedBy),
 		UpdatedAt:       t.UpdatedAt,
 		CreatedAt:       t.CreatedAt,
 	}
+	if t.HandlingTeam != nil {
+		v := uint32(*t.HandlingTeam)
+		item.HandlingTeam = &v
+	}
+	return item
 }
 
 func toDetail(t *domain.SupportTicket, notes []domain.SupportTicketNote, events []domain.SupportTicketEvent) *dto.SupportTicketDetailResponse {
@@ -356,7 +417,10 @@ func toDetail(t *domain.SupportTicket, notes []domain.SupportTicketNote, events 
 	}
 	eventRes := make([]dto.SupportTicketEventResponse, len(events))
 	for i, e := range events {
-		eventRes[i] = dto.SupportTicketEventResponse{ID: e.ID, ActorID: e.ActorID, Action: e.Action, Note: e.Note, CreatedAt: e.CreatedAt}
+		eventRes[i] = dto.SupportTicketEventResponse{
+			ID: e.ID, ActorID: e.ActorID, Action: e.Action, Note: e.Note, CreatedAt: e.CreatedAt,
+			BeforeJSON: e.BeforeJSON, AfterJSON: e.AfterJSON,
+		}
 	}
 	return &dto.SupportTicketDetailResponse{
 		ID:              t.ID,
@@ -371,6 +435,7 @@ func toDetail(t *domain.SupportTicket, notes []domain.SupportTicketNote, events 
 		RelatedReportID: t.RelatedReportID,
 		Product:         uint32(t.Product),
 		Source:          uint32(t.Source),
+		HandlingTeam:    handlingTeamPtr(t.HandlingTeam),
 		Images:          unmarshalImages(t.Images),
 		CreatedBy:       derefUint64(t.CreatedBy),
 		CreatedAt:       t.CreatedAt,
@@ -379,6 +444,14 @@ func toDetail(t *domain.SupportTicket, notes []domain.SupportTicketNote, events 
 		Notes:           noteRes,
 		Events:          eventRes,
 	}
+}
+
+func handlingTeamPtr(t *enums.SupportTicketHandlingTeam) *uint32 {
+	if t == nil {
+		return nil
+	}
+	v := uint32(*t)
+	return &v
 }
 
 func derefUint64(v *uint64) uint64 {

@@ -18,12 +18,13 @@ type SupportTicket struct {
 	Status          enums.SupportTicketStatus    `gorm:"not null;default:10;index" json:"status"`
 	Priority        enums.SupportTicketPriority  `gorm:"not null;default:20;index" json:"priority"`
 	Product         enums.SupportTicketProduct   `gorm:"not null;default:10" json:"product"`
-	Source          enums.SupportTicketSource    `gorm:"not null;default:10" json:"source"`
-	AssigneeID      *uint64                      `gorm:"index" json:"assigneeId"`
-	RelatedUserID   *uint64                      `gorm:"index" json:"relatedUserId"`
-	RelatedReportID *uint64                      `gorm:"index" json:"relatedReportId"`
-	Images          datatypes.JSON               `gorm:"type:jsonb;default:'[]'" json:"images"`
-	ClosedAt        *time.Time                   `json:"closedAt"`
+	Source          enums.SupportTicketSource       `gorm:"not null;default:10" json:"source"`
+	HandlingTeam    *enums.SupportTicketHandlingTeam `gorm:"column:handling_team;index" json:"handlingTeam"`
+	AssigneeID      *uint64                         `gorm:"index" json:"assigneeId"`
+	RelatedUserID   *uint64                         `gorm:"index" json:"relatedUserId"`
+	RelatedReportID *uint64                         `gorm:"index" json:"relatedReportId"`
+	Images          datatypes.JSON                  `gorm:"type:jsonb;default:'[]'" json:"images"`
+	ClosedAt        *time.Time                      `json:"closedAt"`
 }
 
 func (SupportTicket) TableName() string { return "support_tickets" }

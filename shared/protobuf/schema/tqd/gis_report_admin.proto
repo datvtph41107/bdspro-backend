@@ -9,6 +9,7 @@ import "google/protobuf/empty.proto";
 option go_package = "pb/types/tqd;tqdpb";
 
 // Admin GIS problem reports (báo cáo phản ánh bản đồ) — gateway grpc-gateway, không qua Gin HTTP tqd.
+// Field names dùng camelCase để CustomMarshaler (encoding/json) trả đúng key FE.
 service GisReportAdminService {
   rpc List(AdminGisReportListRequest) returns (AdminGisReportListResponse) {
     option (google.api.http) = {
@@ -40,9 +41,13 @@ service GisReportAdminService {
     };
   }
 
+  // Path khớp FE: /v2/tqd/admin/reports/{id}/events
   rpc ListReportEvents(AdminGisReportListReportEventsRequest) returns (AdminGisReportEventListResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/admin/reports/events/{id}"
+      get: "/v2/tqd/admin/reports/{id}/events"
+      additional_bindings {
+        get: "/v2/tqd/admin/reports/events/{id}"
+      }
     };
   }
 
@@ -106,10 +111,10 @@ message AdminGisReportListRequest {
   uint32 page = 1;
   uint32 size = 2;
   optional string q = 3;
-  optional uint32 problem_report = 4 [json_name = "problemReport"];
-  optional uint32 qa_status = 5 [json_name = "qaStatus"];
+  optional uint32 problemReport = 4;
+  optional uint32 qaStatus = 5;
   optional uint32 severity = 6;
-  optional uint64 assignee_id = 7 [json_name = "assigneeId"];
+  optional uint64 assigneeId = 7;
 }
 
 message AdminGisReportListResponse {
@@ -122,34 +127,34 @@ message AdminGisReportListResponse {
 
 message AdminGisReportListItem {
   uint64 id = 1;
-  uint64 user_id = 2;
+  uint64 userId = 2;
   string title = 3;
-  uint32 problem_report = 4;
-  uint32 report_type = 5;
+  uint32 problemReport = 4;
+  uint32 reportType = 5;
   uint32 status = 6;
-  uint32 qa_status = 7;
+  uint32 qaStatus = 7;
   uint32 severity = 8;
-  string created_at = 9;
-  optional uint64 assignee_id = 10;
-  optional uint64 support_ticket_id = 11;
-  optional uint64 target_id = 12;
-  optional string closed_at = 13;
-  optional string layer_name = 14;
-  optional string layer_id = 15;
+  string createdAt = 9;
+  optional uint64 assigneeId = 10;
+  optional uint64 supportTicketId = 11;
+  optional uint64 targetId = 12;
+  optional string closedAt = 13;
+  optional string layerName = 14;
+  optional string layerId = 15;
   optional string version = 16;
-  optional string legal_status = 17;
-  optional string parcel_name = 18;
-  optional string parcel_or_region = 19;
-  optional string user_name = 20;
-  optional string user_full_name = 21;
-  optional string user_username = 22;
-  optional string assignee_name = 23;
-  optional string assignee_full_name = 24;
-  optional string assignee_username = 25;
+  optional string legalStatus = 17;
+  optional string parcelName = 18;
+  optional string parcelOrRegion = 19;
+  optional string userName = 20;
+  optional string userFullName = 21;
+  optional string userUsername = 22;
+  optional string assigneeName = 23;
+  optional string assigneeFullName = 24;
+  optional string assigneeUsername = 25;
 }
 
 message AdminGisReportSummaryResponse {
-  map<uint32, int64> by_qa_status = 1;
+  map<uint32, int64> byQaStatus = 1;
 }
 
 message AdminGisReportQueueRequest {
@@ -162,14 +167,14 @@ message AdminGisReportQueueRequest {
 message AdminGisReportQueueSummaryResponse {
   int64 mine = 1;
   int64 unassigned = 2;
-  int64 data_fix = 3;
+  int64 dataFix = 3;
 }
 
 message AdminGisReportListEventsRequest {
   uint32 page = 1;
   uint32 size = 2;
-  optional uint64 report_id = 3 [json_name = "reportId"];
-  optional uint64 actor_id = 4 [json_name = "actorId"];
+  optional uint64 reportId = 3;
+  optional uint64 actorId = 4;
   optional string action = 5;
   optional string from = 6;
   optional string to = 7;
@@ -187,14 +192,14 @@ message AdminGisReportEventListResponse {
 
 message AdminGisReportEvent {
   uint64 id = 1;
-  uint64 report_id = 2;
-  uint64 actor_id = 3;
+  uint64 reportId = 2;
+  uint64 actorId = 3;
   string action = 4;
   string note = 5;
-  string created_at = 6;
-  optional string before_json = 7;
-  optional string after_json = 8;
-  optional string actor_name = 9;
+  string createdAt = 6;
+  optional string beforeJson = 7;
+  optional string afterJson = 8;
+  optional string actorName = 9;
 }
 
 message AdminGisReportGetRequest {
@@ -203,49 +208,49 @@ message AdminGisReportGetRequest {
 
 message AdminGisReportDetail {
   uint64 id = 1;
-  uint64 user_id = 2;
+  uint64 userId = 2;
   string title = 3;
   string description = 4;
-  uint32 problem_report = 5;
-  uint32 report_type = 6;
+  uint32 problemReport = 5;
+  uint32 reportType = 6;
   uint32 status = 7;
-  uint32 qa_status = 8;
+  uint32 qaStatus = 8;
   uint32 severity = 9;
-  string created_at = 10;
+  string createdAt = 10;
   google.protobuf.Struct linkage = 11;
   repeated string images = 12;
-  optional uint64 assignee_id = 13;
-  optional uint64 target_id = 14;
-  optional uint64 support_ticket_id = 15;
-  optional string closed_at = 16;
-  optional string layer_name = 17;
-  optional string layer_id = 18;
+  optional uint64 assigneeId = 13;
+  optional uint64 targetId = 14;
+  optional uint64 supportTicketId = 15;
+  optional string closedAt = 16;
+  optional string layerName = 17;
+  optional string layerId = 18;
   optional string version = 19;
-  optional string legal_status = 20;
-  optional string parcel_name = 21;
-  optional string parcel_or_region = 22;
-  optional string user_name = 23;
-  optional string user_full_name = 24;
-  optional string user_username = 25;
-  optional string assignee_name = 26;
-  optional string assignee_full_name = 27;
-  optional string assignee_username = 28;
+  optional string legalStatus = 20;
+  optional string parcelName = 21;
+  optional string parcelOrRegion = 22;
+  optional string userName = 23;
+  optional string userFullName = 24;
+  optional string userUsername = 25;
+  optional string assigneeName = 26;
+  optional string assigneeFullName = 27;
+  optional string assigneeUsername = 28;
 }
 
 message AdminGisReportCreateInternalRequest {
   string title = 1;
   string description = 2;
-  uint32 problem_report = 3;
-  uint32 report_type = 4;
+  uint32 problemReport = 3;
+  uint32 reportType = 4;
   uint32 severity = 5;
-  optional uint64 target_id = 6;
-  optional uint64 support_ticket_id = 7;
+  optional uint64 targetId = 6;
+  optional uint64 supportTicketId = 7;
   repeated string images = 8;
 }
 
 message AdminGisReportAssignRequest {
   uint64 id = 1;
-  uint64 assignee_id = 2;
+  uint64 assigneeId = 2;
 }
 
 message AdminGisReportUpdateSeverityRequest {
@@ -256,7 +261,7 @@ message AdminGisReportUpdateSeverityRequest {
 
 message AdminGisReportUpdateQaStatusRequest {
   uint64 id = 1;
-  uint32 qa_status = 2;
+  uint32 qaStatus = 2;
   string note = 3;
 }
 

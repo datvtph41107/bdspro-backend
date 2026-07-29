@@ -73,6 +73,12 @@ service SupportTicketService {
       body: "*"
     };
   }
+  rpc TransferSupportTicket(TransferSupportTicketRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/transfer"
+      body: "*"
+    };
+  }
 }
 
 message ListSupportTicketsRequest {
@@ -83,6 +89,10 @@ message ListSupportTicketsRequest {
   optional uint32 issueType = 5;
   optional uint64 assigneeId = 6;
   optional string q = 7;
+  optional uint32 product = 8;
+  optional uint32 source = 9;
+  optional uint32 handlingTeam = 10;
+  optional bool unassignedOnly = 11;
 }
 
 message ListSupportTicketsResponse {
@@ -97,6 +107,9 @@ message SupportTicketSummaryResponse {
   int64 statusWaitingUser = 4;
   int64 statusResolved = 5;
   int64 statusClosed = 6;
+  int64 statusTransferred = 7;
+  int64 unassigned = 8;
+  int64 priorityCritical = 9;
 }
 
 message CreateSupportTicketRequest {
@@ -150,6 +163,12 @@ message UpdateSupportTicketImagesRequest {
   repeated string images = 2;
 }
 
+message TransferSupportTicketRequest {
+  uint64 id = 1;
+  uint32 handlingTeam = 2;
+  string reason = 3;
+}
+
 message GetSupportTicketResponse {
   SupportTicketDetail ticket = 1;
 }
@@ -169,6 +188,8 @@ message SupportTicketItem {
   string createdAt = 12;
   repeated string images = 13;
   uint64 createdBy = 14;
+  optional uint32 handlingTeam = 15;
+  uint32 source = 16;
 }
 
 message SupportTicketNoteItem {
@@ -184,6 +205,9 @@ message SupportTicketEventItem {
   string action = 3;
   string note = 4;
   string createdAt = 5;
+  optional string actorName = 6;
+  optional string beforeJson = 7;
+  optional string afterJson = 8;
 }
 
 message SupportTicketDetail {
@@ -206,4 +230,5 @@ message SupportTicketDetail {
   repeated SupportTicketEventItem events = 17;
   repeated string images = 18;
   uint64 createdBy = 19;
+  optional uint32 handlingTeam = 20;
 }

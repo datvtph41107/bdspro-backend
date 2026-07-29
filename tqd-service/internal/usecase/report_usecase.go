@@ -35,7 +35,7 @@ type ReportUsecase interface {
 	AdminGet(ctx context.Context, reportID uint64) (*domain.Report, error)
 	AdminCreateInternal(ctx context.Context, actorID uint64, req dto.AdminCreateReportRequest) (*domain.Report, error)
 	AdminAssign(ctx context.Context, reportID, assigneeID uint64) error
-	AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32) error
+	AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32, reason string) error
 	AdminUpdateQaStatus(ctx context.Context, reportID uint64, qaStatus uint32, note string) error
 	AdminUpdateLinkage(ctx context.Context, reportID uint64, linkage map[string]interface{}) error
 	AdminUpdateImages(ctx context.Context, reportID uint64, images []string) error
@@ -216,6 +216,9 @@ func (u *reportUsecase) AdminCreateInternal(ctx context.Context, actorID uint64,
 }
 
 func (u *reportUsecase) AdminAssign(ctx context.Context, reportID, assigneeID uint64) error {
+	if assigneeID == 0 {
+		return errors.New("assigneeId is required")
+	}
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
 		return errors.New("report not found")
@@ -223,21 +226,21 @@ func (u *reportUsecase) AdminAssign(ctx context.Context, reportID, assigneeID ui
 	before := compactJSON(map[string]interface{}{
 		"assigneeId": report.AssigneeID, "qaStatus": uint32(report.QaStatus),
 	})
-	report.AssigneeID = &assigneeID
-	if report.QaStatus == enums.ReportQaStatusSubmitted {
-		report.QaStatus = enums.ReportQaStatusVerifying
+	qaStatus := report.QaStatus
+	if qaStatus == enums.ReportQaStatusSubmitted {
+		qaStatus = enums.ReportQaStatusVerifying
 	}
-	if err := u.repo.Update(ctx, report); err != nil {
+	if err := u.repo.UpdateAssignee(ctx, reportID, assigneeID, uint32(qaStatus)); err != nil {
 		return err
 	}
 	actorID := actorFromCtx(ctx)
 	_ = u.addEvent(ctx, reportID, actorID, "assign", before, compactJSON(map[string]interface{}{
-		"assigneeId": assigneeID, "qaStatus": uint32(report.QaStatus),
+		"assigneeId": assigneeID, "qaStatus": uint32(qaStatus),
 	}), "Gán xác minh GIS QA")
 	return nil
 }
 
-func (u *reportUsecase) AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32) error {
+func (u *reportUsecase) AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32, reason string) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
 		return errors.New("report not found")
@@ -247,9 +250,13 @@ func (u *reportUsecase) AdminUpdateSeverity(ctx context.Context, reportID uint64
 	if err := u.repo.Update(ctx, report); err != nil {
 		return err
 	}
+	note := strings.TrimSpace(reason)
+	if note == "" {
+		note = "Đổi mức độ"
+	}
 	_ = u.addEvent(ctx, reportID, actorFromCtx(ctx), "severity", before, compactJSON(map[string]interface{}{
 		"severity": severity,
-	}), "Đổi mức độ")
+	}), note)
 	return nil
 }
 

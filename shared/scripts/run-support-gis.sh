@@ -289,10 +289,13 @@ GO
 do_migrate() {
   echo "==> CRM: apply support_tickets SQL..."
   apply_sql_file "$CRM_DSN" \
-    "$BE/crm-service/infra/db/migrate_v2/000012_support_tickets.up.sql" \
+    "$BE/crm-service/infra/db/migrate_v2/000017_support_tickets.up.sql" \
     "$BE/crm-service"
   apply_sql_file "$CRM_DSN" \
-    "$BE/crm-service/infra/db/migrate_v2/000013_support_ticket_images.up.sql" \
+    "$BE/crm-service/infra/db/migrate_v2/000018_support_ticket_images.up.sql" \
+    "$BE/crm-service"
+  apply_sql_file "$CRM_DSN" \
+    "$BE/crm-service/infra/db/migrate_v2/000020_support_ticket_handling_team.up.sql" \
     "$BE/crm-service"
 
   echo "==> TQD: apply report QA + images SQL..."
@@ -434,6 +437,16 @@ case "$cmd" in
   migrate) do_migrate ;;
   be) do_be_full ;;
   support)
+    if command -v buf >/dev/null 2>&1 && [[ -d "$BE/shared/protobuf/schema" ]]; then
+      echo "==> buf generate crm + tqd proto (gateway phụ thuộc cả hai)..."
+      (
+        cd "$BE/shared/protobuf/schema"
+        buf generate --template ./buf.gen.yaml --path crm || true
+        buf generate --template ./buf.gen.yaml --path tqd || true
+      )
+    else
+      echo "warn: buf chưa sẵn — bỏ qua generate proto"
+    fi
     do_be_support
     do_fe
     print_ui

@@ -234,7 +234,7 @@ func (h *GisReportAdminGrpcHandler) UpdateSeverity(ctx context.Context, req *tqd
 	if err := h.requirePerm(ctx, permReportProcess); err != nil {
 		return nil, err
 	}
-	if err := h.usecase.AdminUpdateSeverity(ctx, req.GetId(), req.GetSeverity()); err != nil {
+	if err := h.usecase.AdminUpdateSeverity(ctx, req.GetId(), req.GetSeverity(), req.GetReason()); err != nil {
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "severity updated"}, nil
