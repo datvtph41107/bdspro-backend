@@ -75,7 +75,7 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 	updates := map[string]interface{}{
 		"ref_type":           enums.ESEORefTypeProject,
 		"ref_id":             projection.ID,
-		"ref_source":         "tqd",
+		"ref_source":         seo_domain.SeoRefSourceTqdPlanningProject,
 		"ref_label":          projection.Name,
 		"ref_url":            projection.CanonicalPath,
 		"source_status":      seo_domain.SeoSourceStatusLinked,
@@ -104,7 +104,7 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 	page.RefType = enums.ESEORefTypeProject
 	projectID := projection.ID
 	page.RefID = &projectID
-	page.RefSource = "tqd"
+	page.RefSource = seo_domain.SeoRefSourceTqdPlanningProject
 	page.RefLabel = projection.Name
 	page.RefURL = projection.CanonicalPath
 	page.SourceStatus = seo_domain.SeoSourceStatusLinked
@@ -129,7 +129,7 @@ func planningProjectSourceIdentity(page *seo_domain.SeoDomain) string {
 	if page == nil {
 		return ""
 	}
-	if page.RefSource == "tqd" && page.RefID != nil && *page.RefID > 0 {
+	if (page.RefSource == "tqd" || page.RefSource == seo_domain.SeoRefSourceTqdPlanningProject) && page.RefID != nil && *page.RefID > 0 {
 		return strconv.FormatUint(*page.RefID, 10)
 	}
 	path := strings.Trim(strings.TrimSpace(page.Slug), "/")
@@ -290,14 +290,47 @@ func planningIndicatorItems(items []dto.TqdPlanningIndicator) []string {
 }
 
 func planningDocumentItems(items []dto.TqdPlanningDocument) []string {
-	out := make([]string, 0, len(items))
-	for _, item := range items {
-		title := firstNonEmptyRender(item.Title, item.Code, "Văn bản quy hoạch")
+	labels := make([]string, len(items))
+	labelCounts := make(map[string]int, len(items))
+
+	for index, item := range items {
+		title := firstNonEmptyRender(
+			item.Title,
+			item.Code,
+			"Văn bản quy hoạch",
+		)
+
 		if kind := strings.TrimSpace(item.DocumentTypeName); kind != "" {
 			title = kind + ": " + title
 		}
+
+		labels[index] = title
+		labelCounts[strings.ToLower(strings.TrimSpace(title))]++
+	}
+
+	out := make([]string, 0, len(items))
+
+	for index, item := range items {
+		title := labels[index]
+		key := strings.ToLower(strings.TrimSpace(title))
+
+		if labelCounts[key] > 1 {
+			switch {
+			case item.ID > 0:
+				title += " · Hồ sơ #" +
+					strconv.FormatUint(item.ID, 10)
+
+			case strings.TrimSpace(item.Code) != "":
+				title += " · " + strings.TrimSpace(item.Code)
+
+			default:
+				title += fmt.Sprintf(" · Hồ sơ %d", index+1)
+			}
+		}
+
 		out = append(out, title)
 	}
+
 	return out
 }
 

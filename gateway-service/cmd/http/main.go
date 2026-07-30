@@ -305,6 +305,7 @@ var HttpCmd = &cobra.Command{
 		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
 		v2Import := r.Group("/form", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
+		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
 
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
 		// như /v2/tqd/public/* và /v2/crm/public/{content,seo}/*. Vì vậy các route

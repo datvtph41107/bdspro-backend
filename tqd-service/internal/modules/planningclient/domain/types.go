@@ -72,8 +72,8 @@ type Project struct {
 	UpdatedAt         *time.Time       `json:"updatedAt,omitempty"`
 	HasLayer          bool             `json:"hasLayer"`
 	LayerCount        int64            `json:"layerCount"`
-	Overview          *ProjectOverview `json:"overview,omitempty"`
-	Tags              []ProjectTag     `json:"tags,omitempty"`
+	Overview          *ProjectOverview `json:"overview,omitempty" gorm:"-"`
+	Tags              []ProjectTag     `json:"tags,omitempty" gorm:"-"`
 }
 
 type ProjectTag struct {

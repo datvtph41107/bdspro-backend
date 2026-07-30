@@ -8,6 +8,8 @@ import (
 )
 
 type RegistryHandler struct {
+	crmpb.UnimplementedRegistryServiceServer
+
 	registryUsecase *usecase.RegistryUsecase
 }
 

@@ -15,9 +15,29 @@ import (
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type CustomMarshaler struct{}
+
+type customJSONDecoder struct {
+	decoder *json.Decoder
+}
+
+func (d *customJSONDecoder) Decode(v interface{}) error {
+	var raw json.RawMessage
+	if err := d.decoder.Decode(&raw); err != nil {
+		return err
+	}
+
+	if msg, ok := v.(proto.Message); ok {
+		return (protojson.UnmarshalOptions{
+			DiscardUnknown: false,
+		}).Unmarshal(raw, msg)
+	}
+
+	return json.Unmarshal(raw, v)
+}
 
 // PaginationInfo chứa thông tin phân trang
 type PaginationInfo struct {
@@ -59,6 +79,15 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 			return []byte("null"), nil
 		}
 		return hb.GetData(), nil
+	}
+
+	// BytesValue được các gRPC handler dùng để vận chuyển JSON đã marshal.
+	// Phải trả raw bytes; nếu để encoding/json xử lý, []byte sẽ bị base64.
+	if bv, ok := msg.(*wrapperspb.BytesValue); ok {
+		if bv == nil {
+			return []byte("null"), nil
+		}
+		return bv.GetValue(), nil
 	}
 
 	val := reflect.ValueOf(msg)

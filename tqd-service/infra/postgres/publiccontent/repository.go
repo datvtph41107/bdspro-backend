@@ -188,38 +188,60 @@ func metadataIndicators(metadata string) []domain.PlanningIndicator {
 		return []domain.PlanningIndicator{}
 	}
 
-	var data map[string]any
-	if err := json.Unmarshal([]byte(metadata), &data); err != nil {
+	var root interface{}
+	if err := json.Unmarshal([]byte(metadata), &root); err != nil {
 		return []domain.PlanningIndicator{}
 	}
 
-	var raw any
-	for _, key := range []string{"indicators", "planningIndicators", "planning_indicators", "targets", "planningTargets"} {
-		if value, ok := data[key]; ok {
-			raw = value
+	var items []interface{}
+
+	switch value := root.(type) {
+	case []interface{}:
+		items = value
+
+	case map[string]interface{}:
+		for _, key := range []string{
+			"indicators",
+			"planningIndicators",
+			"planning_indicators",
+			"targets",
+			"planningTargets",
+		} {
+			raw, exists := value[key]
+			if !exists {
+				continue
+			}
+
+			list, ok := raw.([]interface{})
+			if ok {
+				items = list
+			}
 			break
 		}
 	}
 
-	items, ok := raw.([]any)
-	if !ok {
+	if len(items) == 0 {
 		return []domain.PlanningIndicator{}
 	}
 
 	result := make([]domain.PlanningIndicator, 0, len(items))
-	for _, item := range items {
-		entry, ok := item.(map[string]any)
+
+	for _, rawItem := range items {
+		entry, ok := rawItem.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
 		read := func(keys ...string) string {
 			for _, key := range keys {
-				if value, exists := entry[key]; exists {
-					text := strings.TrimSpace(fmt.Sprint(value))
-					if text != "" && text != "<nil>" {
-						return text
-					}
+				value, exists := entry[key]
+				if !exists {
+					continue
+				}
+
+				rendered := strings.TrimSpace(fmt.Sprint(value))
+				if rendered != "" && rendered != "<nil>" {
+					return rendered
 				}
 			}
 			return ""
@@ -232,11 +254,14 @@ func metadataIndicators(metadata string) []domain.PlanningIndicator {
 			Unit:        read("unit", "uom"),
 			Description: read("description", "note"),
 		}
+
 		if indicator.Name == "" || indicator.Value == "" {
 			continue
 		}
+
 		result = append(result, indicator)
 	}
+
 	return result
 }
 

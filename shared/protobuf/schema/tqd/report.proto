@@ -4,6 +4,7 @@ package tqd;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 

@@ -52,7 +52,7 @@ message PlanningNewsQueryRequest {
   string search = 3;
   string keyword = 4;
   string q = 5;
-  int32 visible_on = 6;
+  optional uint32 visible_on = 6;
   string category = 7;
   string topic = 8;
   string domain = 9;
@@ -68,8 +68,7 @@ message PlanningNewsSlugRequest {
 
 message UpdatePlanningNewsVisibilityRequest {
   uint64 id = 1;
-  int32 visible_on = 2;
-}
+  uint32 visible_on = 2;}
 
 message AssignPlanningNewsCategoryRequest {
   uint64 id = 1;

@@ -56,7 +56,7 @@ func (r *Repository) ListCategories(ctx context.Context, domainCode string) ([]d
 		query += " AND d.code = ?"
 		args = append(args, value)
 	}
-	query += " GROUP BY c.id,d.code ORDER BY d.sort_order,c.sort_order,c.name,c.id"
+	query += " GROUP BY c.id,d.code,d.sort_order ORDER BY d.sort_order,c.sort_order,c.name,c.id"
 	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&items).Error; err != nil {
 		return nil, fmt.Errorf("list content categories: %w", err)
 	}

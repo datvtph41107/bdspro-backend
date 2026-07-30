@@ -22,9 +22,9 @@ CODE="$BE/shared/code"
 LOG_DIR="${TMPDIR:-/tmp}/bdspro-support-gis"
 mkdir -p "$LOG_DIR"
 
-CRM_DSN="${CRM_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_crm?sslmode=disable}"
-TQD_DSN="${TQD_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable}"
-AUTH_DSN="${AUTH_DSN:-postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_auth?sslmode=disable}"
+CRM_DSN="${CRM_DSN:-}"
+TQD_DSN="${TQD_DSN:-}"
+AUTH_DSN="${AUTH_DSN:-}"
 
 # Quan trọng: để TRỐNG để GetPrefixProtobufUrl → localhost
 # (ENV_RUNTIME=local sẽ dial hostname "user"/"auth" — chỉ dùng trong docker-compose)
@@ -224,22 +224,20 @@ do_deps() {
   for svc in "${ALL_MOD_SVCS[@]}"; do
     if [[ -d "$BE/$svc" ]]; then
       echo "    $svc"
-      (cd "$BE/$svc" && go mod download) || echo "WARN: go mod download failed for $svc"
+      (cd "$BE/$svc" && go mod download)
     fi
   done
 
-  if command -v buf >/dev/null 2>&1 && [[ -d "$BE/shared/protobuf/schema" ]]; then
-    echo "==> buf generate crm + auth + user + tqd..."
-    (
-      cd "$BE/shared/protobuf/schema"
-      buf generate --template ./buf.gen.yaml --path crm || true
-      buf generate --template ./buf.gen.yaml --path auth || true
-      buf generate --template ./buf.gen.yaml --path user || true
-      buf generate --template ./buf.gen.yaml --path tqd || true
-    )
-  else
-    echo "warn: buf chưa sẵn — bỏ qua generate proto"
-  fi
+  need_cmd buf
+  echo "==> generate Proto bằng Makefile chuẩn..."
+  (
+    cd "$CODE"
+    make buf-crm
+    make buf-auth
+    make buf-user
+    make buf-tqd
+    make buf-hub
+  )
 
   echo "==> yarn install (admin FE)..."
   (cd "$FE" && yarn install)
@@ -287,6 +285,10 @@ GO
 }
 
 do_migrate() {
+  : "${CRM_DSN:?Set CRM_DSN before running migrate}"
+  : "${TQD_DSN:?Set TQD_DSN before running migrate}"
+  : "${AUTH_DSN:?Set AUTH_DSN before running migrate}"
+
   echo "==> CRM: apply support_tickets SQL..."
   apply_sql_file "$CRM_DSN" \
     "$BE/crm-service/infra/db/migrate_v2/000017_support_tickets.up.sql" \

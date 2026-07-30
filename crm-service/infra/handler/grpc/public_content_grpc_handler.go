@@ -14,6 +14,8 @@ import (
 	catalogdomain "crm/internal/modules/contentcatalog/domain"
 	"crm/internal/usecase"
 
+	crmpb "pb/types/crm"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -24,7 +26,6 @@ import (
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
-	crmpb "pb/types/crm"
 )
 
 // PublicContentGrpcHandler is CRM's transport-neutral SEO/content boundary.
@@ -51,6 +52,21 @@ func jsonBytes(value any) (*wrapperspb.BytesValue, error) {
 	}
 	return wrapperspb.Bytes(payload), nil
 }
+
+// TASK9_VISIBLE_ON_VALIDATOR_BEGIN
+func validatePlanningNewsVisibleOn(value uint32) error {
+	visibleOn := catalogdomain.PlanningNewsVisibleOn(value)
+	if visibleOn.IsValid() {
+		return nil
+	}
+	return status.Error(
+		codes.InvalidArgument,
+		"visibleOn chỉ chấp nhận 10, 20, 30, 40 hoặc 50",
+	)
+}
+
+// TASK9_VISIBLE_ON_VALIDATOR_END
+
 func requestMap(req proto.Message) map[string]any {
 	if req == nil {
 		return map[string]any{}
@@ -290,6 +306,18 @@ func (h *PublicContentGrpcHandler) SearchContent(ctx context.Context, req *crmpb
 	return jsonBytes(result)
 }
 func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *crmpb.PlanningNewsQueryRequest) (*wrapperspb.BytesValue, error) {
+
+	// TASK9_LIST_VISIBLE_ON_VALIDATION_BEGIN
+	if req == nil {
+		req = &crmpb.PlanningNewsQueryRequest{}
+	}
+	if req.VisibleOn != nil {
+		if err := validatePlanningNewsVisibleOn(req.GetVisibleOn()); err != nil {
+			return nil, err
+		}
+	}
+	// TASK9_LIST_VISIBLE_ON_VALIDATION_END
+
 	m := requestMap(req)
 	filter := catalogdomain.PlanningNewsListFilter{Page: intValue(m, "page", 1), Size: intValue(m, "size", 20), Keyword: stringValue(m, "keyword", "q", "search"), Topic: stringValue(m, "topic", "category"), Location: stringValue(m, "location"), Range: stringValue(m, "range"), VisibleOn: uintValue(m, "visibleOn")}
 	result, err := h.catalog.ListPlanningNews(ctx, filter)
@@ -312,9 +340,22 @@ func (h *PublicContentGrpcHandler) GetPlanningNews(ctx context.Context, req *crm
 }
 
 func (h *PublicContentGrpcHandler) UpdatePlanningNewsVisibility(ctx context.Context, req *crmpb.UpdatePlanningNewsVisibilityRequest) (*wrapperspb.BytesValue, error) {
-	m := requestMap(req)
-	id := uint64Value(m, "id")
-	visibleOn := uintValue(m, "visibleOn")
+
+	// TASK9_UPDATE_VISIBLE_ON_VALIDATION_BEGIN
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+	if err := validatePlanningNewsVisibleOn(req.GetVisibleOn()); err != nil {
+		return nil, err
+	}
+	// TASK9_UPDATE_VISIBLE_ON_VALIDATION_END
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+
+	id := req.GetId()
+	visibleOn := uint32(req.GetVisibleOn())
 	if id == 0 || visibleOn == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id and visibleOn are required")
 	}

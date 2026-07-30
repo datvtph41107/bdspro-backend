@@ -1,13 +1,12 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
 	_provider "common/provider"
-	"hub/initial"
+	"github.com/google/wire"
 	hub_infra_client "hub/infra/client"
 	hub_infra_handler "hub/infra/handler"
 	hub_infra_mapper "hub/infra/mapper"
@@ -19,8 +18,8 @@ import (
 	hub_initial "hub/initial"
 	hub_internal_interface "hub/internal/interface"
 	hub_internal_repo "hub/internal/repo"
-	hub_internal_usecase "hub/internal/usecase"
 	user_internal_repo "hub/internal/repo"
+	hub_internal_usecase "hub/internal/usecase"
 )
 
 // Inject dependencies
@@ -31,8 +30,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(hub_internal_interface.INotificationClient), new(*hub_infra_client.NotificationClient)),
 	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
-	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
 	wire.Bind(new(hub_internal_repo.IUpdateDataRepo), new(*hub_infra_postgre.UpdateDataRepo)),
+	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
 	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
 	hub_infra_handler.NewApiKeyHandler,
 	hub_infra_mapper.NewApiKeyMapper,
@@ -92,7 +91,8 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewWardRepo,
 	hub_infra_postgre.NewWardV2Repo,
 )
-func InitializeApp() (*initial.InitialApp, error) {
+
+func InitializeApp() (*hub_initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

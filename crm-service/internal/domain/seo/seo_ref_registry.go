@@ -16,6 +16,7 @@ const (
 
 	SeoRefSourceTqdAdministrativeUnit = "tqd.administrative_unit"
 	SeoRefSourceTqdParcel             = "tqd.parcel"
+	SeoRefSourceTqdPlanningProject    = "tqd.planning_project"
 	SeoRefSourceTqdLayer              = "tqd.qh_layer"
 	SeoRefSourceTqdDocument           = "tqd.legal_document"
 	SeoRefSourceTqdReport             = "tqd.report"
@@ -272,6 +273,31 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			),
 		},
 		{
+			Value:            uint32(enums.ESEORefTypeProject),
+			Key:              "planning_project",
+			Label:            "Đồ án quy hoạch",
+			Description:      "Đồ án quy hoạch từ TQD Planning Project projection",
+			Family:           "planning",
+			SourceService:    "tqd",
+			ResolverKey:      SeoRefSourceTqdPlanningProject,
+			Searchable:       false,
+			UniquePerRef:     true,
+			SupportsTemplate: true,
+			DefaultPageType:  "entity",
+			PublicURLPattern: "/do-an-quy-hoach/{slug}",
+			Status:           SeoSourceStatusReady,
+			Resolvable:       true,
+			Capabilities: readyCapabilities(
+				false, // searchable
+				true,  // resolvable
+				true,  // uniquePerRef
+				true,  // supportsTemplate
+				true,  // supportsPreview
+				true,  // supportsGenerate
+				true,  // supportsHealth
+			),
+		},
+		{
 			Value:            uint32(enums.ESEORefTypeDocument),
 			Key:              "document",
 			Label:            "Tài liệu",
@@ -410,7 +436,8 @@ func IsSeoResolverReady(resolverKey string) bool {
 	case SeoRefSourceBdsproProject,
 		SeoRefSourceBdsproRegion,
 		SeoRefSourceBdsproAreaRegion,
-		SeoRefSourceTqdParcel:
+		SeoRefSourceTqdParcel,
+		SeoRefSourceTqdPlanningProject:
 		return true
 	default:
 		return false

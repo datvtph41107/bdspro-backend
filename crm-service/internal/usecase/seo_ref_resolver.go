@@ -37,6 +37,7 @@ type normalizedSeoRef struct {
 	Visibility     string
 	Indexable      bool
 	DisabledReason string
+	SuggestedSlug  string
 	Data           map[string]interface{}
 }
 
@@ -196,6 +197,27 @@ func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValu
 			return nil, _errors.ReturnError(404, "source parcel không tồn tại")
 		}
 		item = r.normalizeParcel(*source)
+
+	case seo_domain.SeoRefSourceTqdPlanningProject:
+		if r.tqdProvider == nil {
+			return nil, resolverUnavailable(r.cfg.ResolverKey)
+		}
+
+		source, err := r.tqdProvider.GetPlanningProjectProjection(
+			ctx,
+			strconv.FormatUint(req.RefID, 10),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if source == nil || source.ID == 0 {
+			return nil, _errors.ReturnError(
+				404,
+				"source đồ án quy hoạch không tồn tại",
+			)
+		}
+
+		item = r.normalizePlanningProject(*source)
 
 	default:
 		return nil, resolverNotImplemented(r.cfg.ResolverKey)
@@ -403,6 +425,96 @@ func (r *seoRefResolver) normalizeParcel(source dto.ParcelSeoSource) normalizedS
 	})
 }
 
+func (r *seoRefResolver) normalizePlanningProject(
+	source dto.TqdPlanningProjectProjection,
+) normalizedSeoRef {
+	label := strings.TrimSpace(source.Name)
+	if label == "" {
+		label = fmt.Sprintf("Đồ án quy hoạch #%d", source.ID)
+	}
+
+	slug := strings.Trim(strings.TrimSpace(source.Slug), "/")
+	if slug == "" {
+		slug = slugify(label)
+	}
+
+	publicURL := strings.TrimSpace(source.CanonicalPath)
+	if publicURL == "" {
+		publicURL = formatRefURL(
+			r.cfg.PublicURLPattern,
+			source.ID,
+			slug,
+		)
+	}
+
+	description := strings.TrimSpace(source.Summary)
+	if description == "" {
+		parts := make([]string, 0, 3)
+
+		if value := strings.TrimSpace(source.PlanningTypeName); value != "" {
+			parts = append(parts, value)
+		}
+		if value := strings.TrimSpace(source.LegalStatusName); value != "" {
+			parts = append(parts, value)
+		}
+		if value := strings.TrimSpace(source.JurisdictionName); value != "" {
+			parts = append(parts, value)
+		}
+
+		description = strings.Join(parts, " · ")
+	}
+	if description == "" {
+		description = fmt.Sprintf(
+			"Dữ liệu đồ án quy hoạch TQD #%d",
+			source.ID,
+		)
+	}
+
+	data := map[string]interface{}{
+		"id":                source.ID,
+		"canonicalKey":      source.CanonicalKey,
+		"slug":              slug,
+		"canonicalPath":     publicURL,
+		"code":              source.Code,
+		"name":              source.Name,
+		"planningType":      source.PlanningType,
+		"planningTypeName":  source.PlanningTypeName,
+		"planningLevel":     source.PlanningLevel,
+		"planningLevelName": source.PlanningLevelName,
+		"totalArea":         source.TotalArea,
+		"legalStatus":       source.LegalStatus,
+		"legalStatusName":   source.LegalStatusName,
+		"validityStatus":    source.ValidityStatus,
+		"authority":         source.Authority,
+		"researchScope":     source.ResearchScope,
+		"approvalDate":      source.ApprovalDate,
+		"effectiveDate":     source.EffectiveDate,
+		"expiryDate":        source.ExpiryDate,
+		"jurisdictionId":    source.JurisdictionID,
+		"jurisdictionName":  source.JurisdictionName,
+		"indicators":        source.Indicators,
+		"events":            source.Events,
+		"documents":         source.Documents,
+		"relatedProjects":   source.RelatedProjects,
+		"source":            r.cfg.ResolverKey,
+		"sourceKey":         r.cfg.Key,
+		"projection":        source,
+	}
+
+	return r.newNormalizedSeoRef(normalizedSeoRef{
+		RefType:       r.cfg.Value,
+		RefTypeKey:    enums.SEORefTypeKey(r.cfg.Value),
+		RefID:         source.ID,
+		Label:         label,
+		Description:   description,
+		PublicURL:     publicURL,
+		Source:        r.cfg.ResolverKey,
+		SourceStatus:  seo_domain.SeoSourceStatusLinked,
+		SuggestedSlug: slug,
+		Data:          data,
+	})
+}
+
 func (r *seoRefResolver) newNormalizedSeoRef(item normalizedSeoRef) normalizedSeoRef {
 	if item.Source == "" {
 		item.Source = r.cfg.ResolverKey
@@ -451,6 +563,11 @@ func (n normalizedSeoRef) toSnapshotResponse() dto.SeoRefSnapshotResponse {
 		description = "Nguồn dữ liệu đã được CRM SEO resolver chuẩn hóa."
 	}
 
+	suggestedSlug := strings.Trim(strings.TrimSpace(n.SuggestedSlug), "/")
+	if suggestedSlug == "" {
+		suggestedSlug = slugify(title)
+	}
+
 	return dto.SeoRefSnapshotResponse{
 		RefType:                  n.RefType,
 		RefTypeKey:               n.RefTypeKey,
@@ -460,7 +577,7 @@ func (n normalizedSeoRef) toSnapshotResponse() dto.SeoRefSnapshotResponse {
 		ImageURL:                 n.ImageURL,
 		AdminURL:                 n.AdminURL,
 		PublicURL:                n.PublicURL,
-		SuggestedSlug:            slugify(title),
+		SuggestedSlug:            suggestedSlug,
 		SuggestedTitle:           title,
 		SuggestedMetaTitle:       title,
 		SuggestedMetaDescription: description,

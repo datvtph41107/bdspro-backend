@@ -114,11 +114,9 @@ service PlanningClientService {
       get: "/v2/tqd/client/planning-projects/followed"
     };
   }
-  rpc GetParcelQuickView(ParcelQuickViewRequest) returns (google.protobuf.BytesValue) {
-    option (google.api.http) = {
-      get: "/v2/tqd/public/parcels/{parcel_id}/quick-view"
-    };
-  }
+  // gRPC compatibility method. Public HTTP ownership belongs to
+  // TqdSeoProjectionService.GetParcelQuickViewPublic.
+  rpc GetParcelQuickView(ParcelQuickViewRequest) returns (google.protobuf.BytesValue);
   rpc GetPlanningProjectProjection(google.protobuf.StringValue) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{value}/projection"

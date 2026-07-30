@@ -197,11 +197,9 @@ service SeoDomainService {
   // Existing sitemap / internal render APIs.
   // ---------------------------------------------------------------------------
 
-  rpc GetSitemap(GetSitemapRequest) returns (sharepb.CommonResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/sitemap.xml"
-    };
-  }
+  // gRPC compatibility endpoint. Public HTTP sitemap ownership belongs to
+  // CRMPublicContentService in public_content.proto.
+  rpc GetSitemap(GetSitemapRequest) returns (sharepb.CommonResponse);
 
   rpc CreateSeoFromParcel(CreateSeoFromParcelRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {

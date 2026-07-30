@@ -20,17 +20,27 @@ service TqdSeoProjectionService {
       }
     };
   }
-  rpc GetPlanningProjectProjection(google.protobuf.StringValue) returns (google.protobuf.BytesValue) {
+  // gRPC compatibility method. Public HTTP ownership belongs to
+  // GetPlanningProjectProjectionPublic so raw JSON is emitted via HttpBody.
+  rpc GetPlanningProjectProjection(google.protobuf.StringValue) returns (google.protobuf.BytesValue);
+
+  rpc GetParcelQuickViewPublic(GetParcelQuickViewRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v2/tqd/public/planning-projects/{value}/projection"
+      get: "/v2/tqd/public/parcels/{parcel_id}/quick-view"
+    };
+  }
+
+  rpc GetPlanningProjectProjectionPublic(GetPlanningProjectProjectionRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/planning-projects/{identity}/projection"
       additional_bindings {
         custom {
           kind: "HEAD"
-          path: "/v2/tqd/public/planning-projects/{value}/projection"
+          path: "/v2/tqd/public/planning-projects/{identity}/projection"
         }
       }
       additional_bindings {
-        get: "/v2/tqd/public/planning-projects/{value}"
+        get: "/v2/tqd/public/planning-projects/{identity}"
       }
     };
   }
@@ -46,6 +56,15 @@ service TqdSeoProjectionService {
       get: "/v2/tqd/public/planning-projects/{identity}/projection"
     };
   }
+}
+
+
+message GetParcelQuickViewRequest {
+  uint64 parcel_id = 1;
+}
+
+message GetPlanningProjectProjectionRequest {
+  string identity = 1;
 }
 
 

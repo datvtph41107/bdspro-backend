@@ -104,21 +104,12 @@ service QHPlanningService {
   }
 
   // Client APIs
-  rpc ClientGetPlanningProject(IdRequest) returns (PlanningProject) {
-    option (google.api.http) = {
-      get: "/v2/tqd/client/planning-projects/{id}"
-    };
-  }
-  rpc ClientGetPlanningDocument(IdRequest) returns (PlanningDocument) {
-    option (google.api.http) = {
-      get: "/v2/tqd/client/planning-documents/{id}"
-    };
-  }
-  rpc ClientListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse) {
-    option (google.api.http) = {
-      get: "/v2/tqd/client/planning-projects/{project_id}/events"
-    };
-  }
+  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
+  rpc ClientGetPlanningProject(IdRequest) returns (PlanningProject);
+  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
+  rpc ClientGetPlanningDocument(IdRequest) returns (PlanningDocument);
+  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
+  rpc ClientListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse);
   rpc ClientListPlanningRelations(ListPlanningEventsRequest) returns (ListPlanningRelationsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/relations"
