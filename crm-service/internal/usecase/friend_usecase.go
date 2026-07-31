@@ -4,7 +4,6 @@ import (
 	base_enum "base/enum"
 	_db "common/db"
 	_enum "common/domain/enum"
-	_provider "common/domain/provider"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -28,7 +27,7 @@ type FriendUsecase struct {
 	blockService *BlockUsecase
 	userClient   provider.UserClient
 
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	transaction        provider.ITransaction
 }
 
@@ -40,7 +39,7 @@ func NewFriendUsecase(
 	blockService *BlockUsecase,
 	userClient provider.UserClient,
 
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	transaction provider.ITransaction,
 ) *FriendUsecase {
 	return &FriendUsecase{

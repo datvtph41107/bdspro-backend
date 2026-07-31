@@ -19,4 +19,6 @@ type IAdminRepo interface {
 	DeleteAdmin(ctx context.Context, authID uint64) error
 	AssignRole(ctx context.Context, authID uint64, roleKey string) error
 	GetDetail(ctx context.Context, req uint64) (*models.AdminProfile, error)
+	GetMapByAuthIDs(ctx context.Context, authIDs []uint64) (map[uint64]*models.AdminProfile, error)
+	GetMapByIDs(ctx context.Context, ids []uint64) (map[uint64]*models.AdminProfile, error)
 }

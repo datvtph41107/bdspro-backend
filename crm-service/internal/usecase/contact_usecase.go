@@ -4,7 +4,6 @@ import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	_provider "common/domain/provider"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -32,7 +31,7 @@ type ContactUsecase struct {
 	ownerUsecase       *OwnerUsecase
 	tagUsecase         *TagUsecase
 
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	transaction        provider.ITransaction
 }
 
@@ -46,7 +45,7 @@ func NewContactUsecase(
 	ownerUsecase *OwnerUsecase,
 	tagUsecase *TagUsecase,
 
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	transaction provider.ITransaction,
 ) *ContactUsecase {
 	return &ContactUsecase{

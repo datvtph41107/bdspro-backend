@@ -5,8 +5,8 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"user/infra/client"
 	"user/internal/dto"
+	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 	models "user/internal/models"
 
@@ -15,13 +15,15 @@ import (
 
 type AdminPostgres struct {
 	DB         *gorm.DB
-	AuthClient *client.AuthClient
+	AuthClient providers.AuthProvider
+	RoleRepo   repo.RoleRepository
 }
 
-func NewAdminPostgres(db *gorm.DB, authClient *client.AuthClient) repo.IAdminRepo {
+func NewAdminPostgres(db *gorm.DB, authClient providers.AuthProvider, roleRepo repo.RoleRepository) repo.IAdminRepo {
 	return &AdminPostgres{
 		DB:         db,
 		AuthClient: authClient,
+		RoleRepo:   roleRepo,
 	}
 }
 
@@ -157,7 +159,7 @@ func (r *AdminPostgres) ListAdmin(ctx context.Context, req *dto.AdminListRequest
 		}
 
 		if len(adminIDs) > 0 {
-			authAdminsResp, err := r.AuthClient.GetAuthAdminByIds(ctx, adminIDs)
+			authAdminsResp, err := r.RoleRepo.GetAuthAdminsWithRolesByIds(ctx, adminIDs)
 			if err != nil {
 				fmt.Printf("WARN GetAuthAdminByIds for list username: %v\n", err)
 			} else if authAdminsResp != nil {
@@ -169,7 +171,7 @@ func (r *AdminPostgres) ListAdmin(ctx context.Context, req *dto.AdminListRequest
 					}
 					key := authAdmin.UserID
 					if key == 0 {
-						key = authAdmin.ProfileID
+						key = authAdmin.ID
 					}
 					authAdminMap[key] = authAdmin.Username
 				}
@@ -311,4 +313,46 @@ func (r *AdminPostgres) GetDetail(ctx context.Context, req uint64) (*models.Admi
 		return nil, err
 	}
 	return &admin, nil
+}
+
+func (r *AdminPostgres) GetMapByAuthIDs(ctx context.Context, authIDs []uint64) (map[uint64]*models.AdminProfile, error) {
+	result := make(map[uint64]*models.AdminProfile)
+	if len(authIDs) == 0 {
+		return result, nil
+	}
+
+	var admins []models.AdminProfile
+	err := r.DB.WithContext(ctx).
+		Where("auth_id IN ? AND deleted_at IS NULL", authIDs).
+		Find(&admins).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range admins {
+		if admins[i].AuthID > 0 {
+			result[admins[i].AuthID] = &admins[i]
+		}
+	}
+	return result, nil
+}
+
+func (r *AdminPostgres) GetMapByIDs(ctx context.Context, ids []uint64) (map[uint64]*models.AdminProfile, error) {
+	result := make(map[uint64]*models.AdminProfile)
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	var admins []models.AdminProfile
+	err := r.DB.WithContext(ctx).
+		Where("id IN ? AND deleted_at IS NULL", ids).
+		Find(&admins).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range admins {
+		result[admins[i].ID] = &admins[i]
+	}
+	return result, nil
 }

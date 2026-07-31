@@ -2,7 +2,6 @@ package usecase
 
 import (
 	base_enum "base/enum"
-	_provider "common/domain/provider"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -16,7 +15,7 @@ import (
 type PipelineUsecase struct {
 	pipelineRepo       repo.PipelineRepo
 	permissionUsecase  PermissionUsecase
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	customerRepo       repo.LeadRepo
 	stageRepo          repo.StageRepo
 	transaction        provider.ITransaction
@@ -25,7 +24,7 @@ type PipelineUsecase struct {
 func NewPipelineUsecase(
 	pipelineRepo repo.PipelineRepo,
 	permissionUsecase PermissionUsecase,
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	customerRepo repo.LeadRepo,
 	stageRepo repo.StageRepo,
 	transaction provider.ITransaction,

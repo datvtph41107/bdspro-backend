@@ -2,11 +2,14 @@ package client
 
 import (
 	"context"
+	"errors"
 	"pb/clients"
 	sharepb "pb/types/shared"
 	"user/env"
+	"user/internal/dto"
 )
 
+// @bind: user/internal/interface/providers.BdsproProvider
 type BdsproClient struct {
 	*clients.BdsproGrpcClient
 }
@@ -17,9 +20,26 @@ func NewBdsproClient() *BdsproClient {
 	}
 }
 
-// GetDashboardByProfileId lấy dashboard stats theo profileId
+func (c *BdsproClient) GetDealMember(ctx context.Context, dealId uint64, userId uint64) (*dto.DealMember, error) {
+	if c.BdsproGrpcClient == nil {
+		return nil, errors.New("bdspro grpc client not available")
+	}
+
+	resp, err := c.BdsproGrpcClient.GetDealMember(ctx, dealId, userId)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.DealMember{
+		DealId:  resp.DealId,
+		UserId:  resp.MemberId,
+		RoleId:  resp.RoleId,
+		RoleKey: resp.RoleKey,
+	}, nil
+}
+
+// GetDashboardByProfileId lấy dashboard stats theo profileId (dùng bởi profile handler).
 func (c *BdsproClient) GetDashboardByProfileId(ctx context.Context, profileID uint64) (*sharepb.BDSProDashboardProto, error) {
-	if c.BdsproGrpcClient.InternalClient == nil {
+	if c.BdsproGrpcClient == nil || c.BdsproGrpcClient.InternalClient == nil {
 		return nil, nil
 	}
 
@@ -27,6 +47,5 @@ func (c *BdsproClient) GetDashboardByProfileId(ctx context.Context, profileID ui
 	if err != nil {
 		return nil, nil
 	}
-
 	return resp, nil
 }

@@ -2,8 +2,11 @@ package config
 
 import (
 	"common"
+	"log"
 	"os"
 	"user/env"
+
+	"github.com/spf13/viper"
 )
 
 // LoadProperties đọc cấu hình từ file config.yml
@@ -11,6 +14,10 @@ func LoadProperties() {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
 	common.LoadYMLConfigFile(env.ENV_RUNTIME)
 	// viper.SetConfigType("yaml") // Loại file config
+
+	if err := viper.Unmarshal(&Properties); err != nil {
+		log.Fatalf("Lỗi parse config: %v", err)
+	}
 
 	// // Đọc biến môi trường (nếu có)
 	// viper.AutomaticEnv()

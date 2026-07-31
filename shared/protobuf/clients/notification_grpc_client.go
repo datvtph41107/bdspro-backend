@@ -209,21 +209,45 @@ func (s *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, 
 }
 
 // CreateNotification tạo thông báo cho user với đầy đủ thông tin
-func (s *NotificationClient) CreateNotification(ctx context.Context,
+func (c *NotificationClient) CreateNotification(
+	ctx context.Context,
+	avatar string,
 	title string,
 	message []string,
-	notificationType int32,
-	link string,
-	ownerID uint64,
+	notificationType _enum.ENotificationType,
+	targetId *uint64,
+	ownerId uint64,
+	ownerOf _enum.EOwnerOf,
 	attachData []string,
 ) error {
-	_, err := s.Client.Create(ctx, &sharepb.NotificationRequest{
-		Title:      title,
-		Message:    message,
-		Type:       notificationType,
-		Link:       link,
-		OwnerId:    ownerID,
-		AttachData: attachData,
+	log.Println("avatar", avatar)
+	_, err := c.Client.CreateToOwner(ctx, &sharepb.NotificationRequest{
+		Avatar:           avatar,
+		Title:            title,
+		Message:          message,
+		Type:             int32(notificationType),
+		OwnerId:          ownerId,
+		OwnerOf:          uint32(ownerOf),
+		NotificationType: uint32(notificationType),
+		TargetId:         *targetId,
+		AttachData:       attachData,
+		SendToDevice:     false,
+	})
+	return err
+}
+
+func (c *NotificationClient) RemoveNotification(
+	ctx context.Context,
+	ownerOf _enum.EOwnerOf,
+	ownerId uint64,
+	targetId uint64,
+	notificationType _enum.ENotificationType,
+) error {
+	_, err := c.Client.RemoveToOwner(ctx, &sharepb.NotificationRequest{
+		OwnerOf:          uint32(ownerOf),
+		OwnerId:          ownerId,
+		TargetId:         targetId,
+		NotificationType: uint32(notificationType),
 	})
 	return err
 }

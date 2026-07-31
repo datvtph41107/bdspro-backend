@@ -9,32 +9,10 @@ import (
 	models "user/internal/models"
 )
 
-// AuthLoginResponse đại diện cho phản hồi đăng nhập
-type AuthLoginResponse struct {
-	AccessToken    string `json:"accessToken,omitempty"`
-	AuthID         uint64 `json:"authId,omitempty"`
-	Role           string `json:"role,omitempty"`
-	Username       string `json:"username,omitempty"`
-	ProfileID      uint64 `json:"profileId,omitempty"`
-	RefreshToken   string `json:"refreshToken,omitempty"`
-	OrganizationID uint32 `json:"organizationId,omitempty"`
-}
-
 type FollowInfoRes struct {
 	NumFollower  int64 `json:"numFollower"`
 	NumFollowing int64 `json:"numFollowing"`
 	NumFriend    int64 `json:"numFriend"`
-}
-
-// Hàm khởi tạo AuthLoginResponse
-func MakeAuthLoginResponse(accessToken string, authID uint64, profileID uint64, role string) *AuthLoginResponse {
-	return &AuthLoginResponse{
-		AccessToken: accessToken,
-		// RefreshToken: refreshToken,
-		Role:      role,
-		AuthID:    authID,
-		ProfileID: profileID,
-	}
 }
 
 // MarshalJSON ẩn RefreshToken khi serialize JSON
@@ -51,7 +29,8 @@ func (a AuthLoginResponse) MarshalJSON() ([]byte, error) {
 
 // RefreshResponse đại diện cho phản hồi làm mới token
 type RefreshResponse struct {
-	AccessToken string `json:"accessToken"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 // NewRefreshResponse tạo mới RefreshResponse
@@ -61,9 +40,11 @@ func NewRefreshResponse(accessToken string) RefreshResponse {
 
 // RequestLoginResponse đại diện cho phản hồi yêu cầu đăng nhập
 type RequestLoginResponse struct {
-	AuthID   uint64 `json:"authId,omitempty"`
-	Provider string `json:"provider,omitempty"`
-	OAuthID  string `json:"oauthId,omitempty"`
+	AuthID     uint64 `json:"authId,omitempty"`
+	Provider   string `json:"provider,omitempty"`
+	OAuthID    string `json:"oauthId,omitempty"`
+	Existed    bool   `json:"existed"`    // true: user đã tồn tại, false: user mới đăng ký
+	SmsChannel string `json:"smsChannel"` // "zalo" nếu gửi ZNS thành công, "sms" nếu ZNS lỗi
 }
 
 // UserInfoResponse đại diện cho phản hồi thông tin người dùng

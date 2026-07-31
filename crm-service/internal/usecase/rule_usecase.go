@@ -2,24 +2,24 @@ package usecase
 
 import (
 	base_enum "base/enum"
-	_provider "common/domain/provider"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 )
 
 type RuleUsecase struct {
 	ruleRepo           repo.RuleRepo
 	permissionUsecase  PermissionUsecase
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	customerRepo       repo.LeadRepo
 }
 
 func NewRuleUsecase(
 	ruleRepo repo.RuleRepo,
 	permissionUsecase PermissionUsecase,
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	customerRepo repo.LeadRepo,
 ) *RuleUsecase {
 	return &RuleUsecase{

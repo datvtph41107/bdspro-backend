@@ -1,18 +1,167 @@
 package client
 
 import (
-	"user/env"
-
+	_enum "common/domain/enum"
+	provider_grpc "common/provider/grpc"
+	"context"
+	"errors"
+	"log"
 	"pb/clients"
+	notificationpb "pb/types/notification"
+	sharepb "pb/types/shared"
+	"time"
+	"user/env"
+	"user/internal/dto"
+	"user/internal/interface/providers"
+
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// @bind: user/internal/interface/providers.NotificationProvider
 type NotificationClient struct {
+	*provider_grpc.NotificationGrpcClient
 	*clients.NotificationClient
 }
 
-func NewNotificationClient() *NotificationClient {
+func NewNotificationClient() providers.NotificationProvider {
+	notificationClient := clients.MakeNotificationClient(env.ENV_RUNTIME)
 	return &NotificationClient{
-		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
+		NotificationClient:     notificationClient,
+		NotificationGrpcClient: provider_grpc.MakeNotificationGrpcClient(env.ENV_RUNTIME),
 	}
+}
+
+// LogAdminLogin ghi log khi admin đăng nhập thành công
+func (c *NotificationClient) LogAdminLogin(ctx context.Context, adminID uint64, adminRole string, ipAddress string, userAgent string) error {
+	return c.NotificationClient.LogAdminLogin(ctx, adminID, adminRole, ipAddress, userAgent)
+}
+
+// CreateAdminHistory tạo lịch sử admin
+func (c *NotificationClient) CreateAdminHistory(ctx context.Context,
+	adminID uint64,
+	targetID uint64,
+	targetType int32,
+	actionType int32,
+	title string,
+	notes []string,
+	preStage string,
+	afterStage string,
+	ownerID *uint64,
+	ownerType int32,
+	adminRole string,
+	ipAddress string,
+	userAgent string,
+) error {
+	return c.NotificationClient.CreateAdminHistory(ctx, adminID, targetID, targetType, actionType, title, notes, preStage, afterStage, ownerID, ownerType, adminRole, ipAddress, userAgent)
+}
+
+func (c *NotificationClient) CreateHistoryAuth(ctx context.Context, payload *dto.HistoryAuthCreateDTO) error {
+	if payload == nil {
+		return nil
+	}
+
+	var metadataStruct *structpb.Struct
+	if payload.Metadata != nil {
+		if converted, err := structpb.NewStruct(payload.Metadata); err == nil {
+			metadataStruct = converted
+		}
+	}
+
+	req := &notificationpb.HistoryAuthCreateRequest{
+		UserId:         payload.UserID,
+		OrganizationId: payload.OrganizationID,
+		ActionType:     payload.ActionType,
+		ActionName:     payload.ActionName,
+		Description:    payload.Description,
+		Reason:         payload.Reason,
+		IpAddress:      payload.IPAddress,
+		UserAgent:      payload.UserAgent,
+		PerformedBy:    payload.PerformedBy,
+		SessionId:      payload.SessionID,
+		Channel:        payload.Channel,
+		DeviceId:       payload.DeviceID,
+		Location:       payload.Location,
+		AdditionalNote: payload.AdditionalNote,
+		SourceService:  payload.SourceService,
+		Metadata:       metadataStruct,
+	}
+
+	if payload.Success != nil {
+		req.Success = *payload.Success
+	} else {
+		req.Success = true
+	}
+
+	_, err := c.NotificationClient.CreateHistoryAuth(ctx, req)
+	return err
+}
+
+// CreateNotification tạo thông báo cho user
+// func (c *NotificationClient) CreateNotification(ctx context.Context,
+// 	title string,
+// 	message []string,
+// 	notificationType int32,
+// 	link string,
+// 	ownerID uint64,
+// 	attachData []string,
+// ) error {
+// 	return c.client.CreateNotification(ctx, title, message, notificationType, link, ownerID, attachData)
+// }
+
+func (c *NotificationClient) CreateNotification(
+	ctx context.Context,
+	avatar string,
+	title string,
+	message []string,
+	notificationType _enum.ENotificationType,
+	targetId *uint64,
+	ownerId uint64,
+	ownerOf _enum.EOwnerOf,
+	attachData []string,
+) error {
+	go func() {
+		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := c.NotificationGrpcClient.CreateNotification(contextTimeout, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
+		if err != nil {
+			log.Printf("Failed to send notification: %v", err)
+		} else {
+			log.Printf("Successfully sent notification to user %d", ownerId)
+		}
+	}()
+	return nil
+}
+
+func (c *NotificationClient) GetPersonConfigs(ctx context.Context, userID uint64) ([]*dto.PersonConfigDTO, error) {
+	if userID == 0 {
+		return []*dto.PersonConfigDTO{}, nil
+	}
+
+	if c.NotificationGrpcClient == nil || c.NotificationGrpcClient.Client == nil {
+		return nil, errors.New("notification grpc client chưa được khởi tạo")
+	}
+
+	var configs []*sharepb.PersonConfigV3Proto
+	var err error
+
+	if configs, err = c.NotificationGrpcClient.GetPersonConfigs(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	result := make([]*dto.PersonConfigDTO, 0, len(configs))
+	for _, cfg := range configs {
+		if cfg == nil {
+			continue
+		}
+		result = append(result, &dto.PersonConfigDTO{
+			ID:        cfg.Id,
+			UserID:    cfg.UserId,
+			Key:       cfg.Key,
+			Checked:   cfg.Checked,
+			IsDefault: cfg.IsDefault,
+			Channel:   _enum.EChannelNotification(cfg.Channel),
+		})
+	}
+
+	return result, nil
 }

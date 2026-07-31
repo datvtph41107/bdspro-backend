@@ -2,10 +2,10 @@ package usecase
 
 import (
 	_enum "common/domain/enum"
-	_provider "common/domain/provider"
 	"context"
 	"crm/internal/dto"
 	"crm/internal/enums"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 	"fmt"
 	"strconv"
@@ -15,12 +15,12 @@ import (
 type RuleEventUsecase struct {
 	ruleRepo             repo.RuleRepo
 	customerRepo         repo.LeadRepo
-	notificationProvider _provider.NotificationProvider
+	notificationProvider provider.NotificationProvider
 }
 
 func NewRuleEventUsecase(ruleRepo repo.RuleRepo,
 	customerRepo repo.LeadRepo,
-	client _provider.NotificationProvider) *RuleEventUsecase {
+	client provider.NotificationProvider) *RuleEventUsecase {
 	return &RuleEventUsecase{ruleRepo: ruleRepo,
 		customerRepo:         customerRepo,
 		notificationProvider: client,

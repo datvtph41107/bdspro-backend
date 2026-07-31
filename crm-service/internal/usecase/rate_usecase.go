@@ -2,7 +2,6 @@ package usecase
 
 import (
 	_enum "common/domain/enum"
-	_provider "common/domain/provider"
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
@@ -18,13 +17,13 @@ type RateUsecase struct {
 	rateRepo             repo.RateRepo
 	transaction          provider.ITransaction
 	registryUsecase      *RegistryUsecase
-	notificationProvider _provider.NotificationProvider
+	notificationProvider provider.NotificationProvider
 }
 
 func NewRateUsecase(rateRepo repo.RateRepo,
 	transaction provider.ITransaction,
 	registryUsecase *RegistryUsecase,
-	notificationProvider _provider.NotificationProvider) *RateUsecase {
+	notificationProvider provider.NotificationProvider) *RateUsecase {
 	return &RateUsecase{
 		rateRepo:             rateRepo,
 		transaction:          transaction,

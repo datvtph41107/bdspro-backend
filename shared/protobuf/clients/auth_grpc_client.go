@@ -26,7 +26,7 @@ func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 		name := "auth"
 		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8216", url),
+		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),

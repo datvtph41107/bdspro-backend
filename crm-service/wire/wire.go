@@ -9,6 +9,7 @@ import (
 	crm_infra_client "crm/infra/client"
 	crm_infra_email_sender "crm/infra/email_sender"
 	crm_infra_handler "crm/infra/handler"
+	crm_infra_handler_grpc "crm/infra/handler/grpc"
 	crm_infra_handler_http_contentcatalog "crm/infra/handler/http/contentcatalog"
 	crm_infra_handler_http_seopublic "crm/infra/handler/http/seopublic"
 	crm_infra_impl "crm/infra/impl"
@@ -21,6 +22,7 @@ import (
 	crm_initial "crm/initial"
 	crm_internal_domain_seo "crm/internal/domain/seo"
 	crm_internal_interface_provider "crm/internal/interface/provider"
+	crm_internal_modules_contentcatalog_application "crm/internal/modules/contentcatalog/application"
 	crm_internal_repo "crm/internal/repo"
 	crm_internal_usecase "crm/internal/usecase"
 	"github.com/google/wire"
@@ -50,12 +52,11 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.SharingAccessRepo), new(*crm_infra_postgre.SharingAccessPostgre)),
 	wire.Bind(new(crm_internal_repo.StageRepo), new(*crm_infra_postgre.PostgreStage)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
-	crm_infra_postgre.NewAdvertisingSettingsPostgresRepository,
-	crm_internal_usecase.NewAdvertisingSettingsUsecase,
+	crm_infra_postgre.NewAdminOpportunityEventPostgres,
 	crm_infra_handler.NewAdminSalesHandler,
 	crm_internal_usecase.NewAdminSalesUsecase,
-	crm_infra_postgre.NewAdminOpportunityEventPostgres,
-	wire.Bind(new(crm_internal_repo.AdminOpportunityEventRepo), new(*crm_infra_postgre.AdminOpportunityEventPostgres)),
+	crm_infra_postgre.NewAdvertisingSettingsPostgresRepository,
+	crm_internal_usecase.NewAdvertisingSettingsUsecase,
 	crm_infra_handler.NewAppointmentHandler,
 	crm_infra_postgre.NewAppointmentPostgresRepository,
 	crm_infra_job_appointment_reminder.NewAppointmentReminderJob,
@@ -123,6 +124,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewPostgreRule,
 	crm_infra_postgre.NewPostgreStage,
 	crm_infra_postgre.NewProductCarePostgre,
+	crm_infra_handler_grpc.NewPublicContentGrpcHandler,
 	crm_infra_handler.NewRateHandler,
 	crm_infra_mapper.NewRateMapper,
 	crm_infra_postgre.NewRatePostgres,
@@ -180,6 +182,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewSeoUserNeedPostgres,
 	crm_internal_usecase.NewSeoUserNeedUsecase,
 	crm_internal_usecase.NewSeoWorkerUsecase,
+	crm_internal_modules_contentcatalog_application.NewService,
 	crm_infra_postgre.NewSharingAccessPostgre,
 	crm_infra_handler.NewSharingAccessService,
 	crm_internal_usecase.NewSharingAccessUsecase,

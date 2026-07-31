@@ -10,8 +10,8 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
-	"user/infra/client"
 	"user/internal/dto"
+	"user/internal/interface/providers"
 	"user/internal/job"
 	"user/internal/usecases"
 
@@ -23,14 +23,14 @@ type AdminUserProfileHandler struct {
 	userpb.UnimplementedAdminUserProfileServiceServer
 	AdminUsecase          *usecases.AdminUsecase
 	ProfileUsecase        *usecases.ProfileUsecase
-	NotificationClient    *client.NotificationClient
+	NotificationClient    providers.NotificationProvider
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 }
 
 func NewAdminUserProfileHandler(
 	adminUsecase *usecases.AdminUsecase,
 	profileUsecase *usecases.ProfileUsecase,
-	notificationClient *client.NotificationClient,
+	notificationClient providers.NotificationProvider,
 	UserDashboardStatsJob *job.UserDashboardStatsJob,
 ) *AdminUserProfileHandler {
 	return &AdminUserProfileHandler{
@@ -133,12 +133,24 @@ func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.
 		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
 	}
 
+	page := req.Page
+	if page < 1 {
+		page = 1
+	}
+	size := req.Size
+	if size < 1 {
+		size = 20
+	}
+	var totalPages uint32
+	if size > 0 && total > 0 {
+		totalPages = (total + size - 1) / size
+	}
+
 	// Convert DTO response to proto response
 	response := &userpb.ListAllUsersResponse{
-		// Total:      result.Total,
-		Page:       req.Page,
-		Size:       req.Size,
-		TotalPages: total,
+		Page:       page,
+		Size:       size,
+		TotalPages: totalPages,
 		Total:      int32(total),
 	}
 

@@ -176,15 +176,33 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 
 		pageField := val.FieldByName("Page")
 		if pageField.IsValid() && pageField.CanInterface() {
-			if page, ok := pageField.Interface().(int32); ok {
-				pagination.Page = page
+			switch p := pageField.Interface().(type) {
+			case int32:
+				pagination.Page = p
+			case uint32:
+				pagination.Page = int32(p)
 			}
 		}
 
 		sizeField := val.FieldByName("Size")
 		if sizeField.IsValid() && sizeField.CanInterface() {
-			if size, ok := sizeField.Interface().(int32); ok {
-				pagination.Size = size
+			switch s := sizeField.Interface().(type) {
+			case int32:
+				pagination.Size = s
+			case uint32:
+				pagination.Size = int32(s)
+			}
+		}
+
+		totalPagesField := val.FieldByName("TotalPages")
+		if totalPagesField.IsValid() && totalPagesField.CanInterface() {
+			switch tp := totalPagesField.Interface().(type) {
+			case int32:
+				pagination.Pages = tp
+			case uint32:
+				pagination.Pages = int32(tp)
+			case int64:
+				pagination.Pages = int32(tp)
 			}
 		}
 
@@ -288,7 +306,7 @@ func hasProtoSiblingPayload(val reflect.Value) bool {
 		return false
 	}
 	skip := map[string]struct{}{
-		"Data": {}, "Total": {}, "TotalElements": {}, "Page": {}, "Size": {}, "Pagination": {},
+		"Data": {}, "Total": {}, "TotalElements": {}, "Page": {}, "Size": {}, "TotalPages": {}, "Pagination": {},
 		"Code": {}, "Message": {}, "state": {}, "sizeCache": {}, "unknownFields": {},
 	}
 	typ := val.Type()

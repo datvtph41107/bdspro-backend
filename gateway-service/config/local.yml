@@ -20,7 +20,7 @@ service:
         appointment: 8213
         marketing: 8214
         transaction: 8215
-        auth: 8216
+        auth: 8201
         feedback: 8217
         assistant: 8218
         hub: 8280

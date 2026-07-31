@@ -3,7 +3,6 @@ package usecase
 import (
 	base_enum "base/enum"
 	_enum "common/domain/enum"
-	_provider "common/domain/provider"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -23,7 +22,7 @@ type FollowUsecase struct {
 	blockRepo          repo.BlockRepo
 	blockService       *BlockUsecase
 	userClient         provider.UserClient
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	transaction        provider.ITransaction
 }
 
@@ -33,7 +32,7 @@ func NewFollowUsecase(followRepo repo.FollowRepo,
 	blockService *BlockUsecase,
 	client provider.UserClient,
 	transaction provider.ITransaction,
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 ) *FollowUsecase {
 	return &FollowUsecase{
 		followRepo:         followRepo,

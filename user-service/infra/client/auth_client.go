@@ -11,12 +11,11 @@ import (
 	"user/internal/models"
 )
 
-// @bind: user/internal/interface/providers.AuthProvider
 type AuthClient struct {
 	*clients.AuthGrpcClient
 }
 
-func NewAuthClient() *AuthClient {
+func NewAuthClient() providers.AuthProvider {
 	return &AuthClient{
 		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
 	}

@@ -9,7 +9,7 @@ services:
         bdspro:
             addresses: ["localhost:8202"]
         auth:
-            addresses: ["localhost:8216"]
+            addresses: ["localhost:8201"]
         tqd:
             addresses: ["localhost:8219"]
         crm:

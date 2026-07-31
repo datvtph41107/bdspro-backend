@@ -2,7 +2,6 @@ package usecase
 
 import (
 	_enum "common/domain/enum"
-	_provider "common/domain/provider"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
@@ -25,7 +24,7 @@ type LeadUsecase struct {
 	documentRepo       repo.DocumentRepo
 	productCareRepo    repo.ProductCareRepo
 	transaction        provider.ITransaction
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	ownerUsecase       *OwnerUsecase
 }
 
@@ -39,7 +38,7 @@ func NewLeadUsecase(
 	documentRepo repo.DocumentRepo,
 	productCareRepo repo.ProductCareRepo,
 	transaction provider.ITransaction,
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	ownerUsecase *OwnerUsecase,
 ) *LeadUsecase {
 	result := &LeadUsecase{

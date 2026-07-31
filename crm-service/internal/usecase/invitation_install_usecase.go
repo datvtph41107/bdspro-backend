@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	_provider "common/domain/provider"
 	_utils "common/utils"
 	"context"
 	"crm/internal/domain"
@@ -12,12 +11,12 @@ import (
 
 type InvitationInstallUsecase struct {
 	repo               repo.InvitationInstallRepo
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	userClient         provider.UserClient
 }
 
 func NewInvitationInstallUsecase(repo repo.InvitationInstallRepo,
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	userClient provider.UserClient,
 ) *InvitationInstallUsecase {
 	return &InvitationInstallUsecase{repo: repo, notificationClient: notificationClient, userClient: userClient}

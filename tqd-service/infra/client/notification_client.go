@@ -1,6 +1,7 @@
 package client
 
 import (
+	_enum "common/domain/enum"
 	"context"
 	clients "pb/clients"
 	"tqd/env"
@@ -69,5 +70,5 @@ func (c *NotificationClient) SendSystemNotification(ctx context.Context, userID 
 
 // CreateNotification là wrapper gọi sang notification-service
 func (c *NotificationClient) CreateNotification(ctx context.Context, title string, message []string, notificationType int32, link string, ownerID uint64, attachData []string) error {
-	return c.NotificationClient.CreateNotification(ctx, title, message, notificationType, link, ownerID, attachData)
+	return c.NotificationClient.CreateNotification(ctx, "", title, message, _enum.ENotificationType(notificationType), &ownerID, ownerID, _enum.EOwnerOfMember, attachData)
 }

@@ -2,7 +2,6 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	_enum "common/domain/enum"
 	"user/enums"
 )
 
@@ -39,12 +38,4 @@ type ProfilePrivacyRequest struct {
 	ProfileVisibility uint8
 	StatusOnline      enums.EOnlineStatus
 	PersonConfigs     []*PersonConfigDTO
-}
-
-type PersonConfigDTO struct {
-	ID        uint64
-	Key       string
-	Checked   bool
-	IsDefault bool
-	Channel   _enum.EChannelNotification
 }

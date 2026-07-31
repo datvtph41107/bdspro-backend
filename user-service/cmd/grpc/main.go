@@ -9,11 +9,14 @@ import (
 	"strconv"
 	"time"
 
+	authpb "pb/types/auth"
 	userpb "pb/types/user"
 	"user/config"
 	"user/db"
+	"user/env"
 	"user/wire"
 
+	_db "common/db"
 	_middleware "common/middleware"
 	"common/quota"
 	_redis "common/redis"
@@ -28,12 +31,17 @@ var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Run the GRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
+		env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
 		config.LoadProperties()
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, _ := wire.InitializeApp()
+		if _, err := _db.NewDB(); err != nil {
+			log.Fatalf("failed to connect database: %v", err)
+		}
 		db.AutoMigrate()
+
+		app, _ := wire.InitializeApp()
 		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
 		app.CrmClient.RegisterService(context.Background())
 
@@ -98,6 +106,15 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterTagServiceServer(s, app.TagHandler)
 		userpb.RegisterKYCServiceServer(s, app.KYCHandler)
 		userpb.RegisterPriceTableServiceServer(s, app.PriceTableHandler)
+
+		authpb.RegisterAuthInternalServiceServer(s, app.AuthInternalHandler)
+		authpb.RegisterAuthServiceServer(s, app.AuthHandler)
+		authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
+		// authpb.RegisterAuthInternalServiceServer(s, app.InternalHandler)
+		authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
+		authpb.RegisterRoleServiceServer(s, app.RoleHandler)
+		authpb.RegisterRoleGroupServiceServer(s, app.RoleGroupHandler)
+		authpb.RegisterUserInfoServiceServer(s, app.UserInfoHandler)
 
 		log.Printf("Listen: %v", port)
 		if err := s.Serve(lis); err != nil {

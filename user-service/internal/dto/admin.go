@@ -78,30 +78,6 @@ type ApproveUserRequest struct {
 	Note      string `json:"note"`
 }
 
-// Admin Management DTOs
-type UpdateAdminRequest struct {
-	AuthID   uint64 `json:"authId"`
-	FullName string `json:"fullName"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	Avatar   string `json:"avatar"`
-}
-
-type DeleteAdminRequest struct {
-	AuthID uint64 `json:"authId"`
-}
-
-type AssignRoleRequest struct {
-	AuthID  uint64 `json:"authId"`
-	RoleKey string `json:"roleKey"`
-}
-
-type AdminListRequest struct {
-	_dto.Pagable
-	RoleID uint64 `json:"roleId" form:"roleId"`
-	Name   string `json:"name" form:"name"`
-}
-
 // CreateUserRequest DTO cho request tạo user mới
 type CreateUserRequest struct {
 	Username string     `json:"username"` // Optional - sẽ tự động generate từ email nếu không có

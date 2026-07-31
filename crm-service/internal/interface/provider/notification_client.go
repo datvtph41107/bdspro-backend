@@ -1,12 +1,33 @@
 package provider
 
 import (
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	"context"
-	notificationpb "pb/types/notification"
 )
 
 type NotificationProvider interface {
-	CreateHistory(ctx context.Context, history *notificationpb.HistoryDTO) (*notificationpb.HistoryDTO, error)
+	CreateHistory(ctx context.Context, history *_dto.HistoryDTO) error
+
+	CreateNotification(
+		ctx context.Context,
+		avatar string,
+		title string,
+		message []string,
+		notificationType _enum.ENotificationType,
+		targetId *uint64,
+		ownerId uint64,
+		ownerOf _enum.EOwnerOf,
+		attachData []string,
+	) error
+
+	RemoveNotification(
+		ctx context.Context,
+		ownerOf _enum.EOwnerOf,
+		ownerId uint64,
+		targetId uint64,
+		notificationType _enum.ENotificationType,
+	) error
 }
 
 // type INotificationClient interface {

@@ -288,14 +288,14 @@ var HttpCmd = &cobra.Command{
 		// Đăng ký các gRPC services
 		service.RegisterNotificationService(ctx, mux, env, opts)
 		service.RegisterPaymentService(ctx, mux, env, opts)
-		service.RegisterOrganizationService(ctx, mux, env, opts)
+		// service.RegisterOrganizationService(ctx, mux, env, opts)
 		service.RegisterBdsproService(ctx, mux, env, opts)
 		service.RegisterCrmService(ctx, mux, env, opts)
 		service.RegisterSocialService(ctx, mux, env, opts)
-		service.RegisterAppointmentService(ctx, mux, env, opts)
+		// service.RegisterAppointmentService(ctx, mux, env, opts)
 		service.RegisterUserService(ctx, mux, env, opts)
 		service.RegisterChatService(ctx, mux, env, opts)
-		service.RegisterMarketingService(ctx, mux, env, opts)
+		// service.RegisterMarketingService(ctx, mux, env, opts)
 		service.RegisterTransactionService(ctx, mux, env, opts)
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
@@ -376,4 +376,3 @@ var HttpCmd = &cobra.Command{
 		}
 	},
 }
-

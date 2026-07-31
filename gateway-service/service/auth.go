@@ -12,8 +12,8 @@ import (
 )
 
 func RegisterAuthService(ctx context.Context, mux *runtime.ServeMux, env string, opts []grpc.DialOption) {
-	port := viper.GetString("service.port.auth")
-	url := common.GetPrefixProtobufUrl(env, "auth")
+	port := viper.GetString("service.port.user")
+	url := common.GetPrefixProtobufUrl(env, "user")
 
 	endpoint := fmt.Sprintf("%s:%s", url, port)
 	_ = authpb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)

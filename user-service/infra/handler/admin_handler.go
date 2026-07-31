@@ -9,8 +9,8 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
-	"user/infra/client"
 	"user/infra/mapper"
+	"user/internal/interface/providers"
 	"user/internal/usecases"
 
 	"google.golang.org/grpc/codes"
@@ -21,13 +21,13 @@ type AdminHandler struct {
 	userpb.UnimplementedAdminProfileServiceServer
 	AdminUsecase       *usecases.AdminUsecase
 	AdminMapper        *mapper.AdminMapper
-	NotificationClient *client.NotificationClient
+	NotificationClient providers.NotificationProvider
 }
 
 func NewAdminHandler(
 	adminUsecase *usecases.AdminUsecase,
 	adminMapper *mapper.AdminMapper,
-	notificationClient *client.NotificationClient) *AdminHandler {
+	notificationClient providers.NotificationProvider) *AdminHandler {
 	return &AdminHandler{
 		AdminUsecase:       adminUsecase,
 		AdminMapper:        adminMapper,

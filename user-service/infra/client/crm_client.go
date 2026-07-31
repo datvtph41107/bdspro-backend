@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
+	"log"
 	"pb/clients"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
@@ -138,4 +139,27 @@ func (c *CrmClient) GetUserRateStatsV3(ctx context.Context, userId uint64) (*_dt
 		Star4Count:   uint64(resp.Star4Count),
 		Star5Count:   uint64(resp.Star5Count),
 	}, nil
+}
+
+// GetOriginProfile lấy origin profile từ CRM service theo profileID
+func (c *CrmClient) GetOriginID(ctx context.Context, profileID uint64) (uint64, error) {
+	if c.CrmGrpcClient == nil || c.CrmGrpcClient.CrmInternalServiceClient == nil {
+		log.Printf("CRM client is nil")
+		return 0, nil
+	}
+
+	resp, err := c.CrmGrpcClient.CrmInternalServiceClient.GetOriginProfileByProfileID(ctx, &sharepb.IdRequest{
+		Id: profileID,
+	})
+	if err != nil {
+		log.Printf("Failed to get origin profile: %v", err)
+		return 0, err
+	}
+
+	if resp == nil {
+		return 0, nil
+	}
+
+	// Trả về origin profile đầu tiên
+	return resp.OriginId, nil
 }

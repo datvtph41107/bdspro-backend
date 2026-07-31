@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_utils "common/utils"
-	shared_enum "pb/enums"
-	notificationpb "pb/types/notification"
 	pb_payment "pb/types/payment"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -50,21 +50,23 @@ func NewCampaignUsecase(campaignRepo repo.CampaignRepo, paymentClient *client.Pa
 }
 
 // createHistoryRecord helper function to create history records
-func (u *campaignUsecase) createHistoryRecord(ctx context.Context, actionType shared_enum.EHistory, targetId uint64, targetType shared_enum.ETargetHistory, title string, notes []string) {
+func (u *campaignUsecase) createHistoryRecord(ctx context.Context, actionType _enum.EHistory, targetId uint64, targetType _enum.ETargetHistory, title string, notes []string) {
 	if u.notificationClient == nil {
 		return
 	}
 
-	historyReq := &notificationpb.HistoryDTO{
-		ActionType: int32(actionType),
+	userID := _utils.GetProfileIdWithContext(ctx)
+	historyReq := &_dto.HistoryDTO{
+		ActionType: actionType,
 		TargetId:   targetId,
-		TargetType: int32(targetType),
+		TargetType: targetType,
 		Title:      title,
 		Note:       notes,
-		OwnerType:  int32(shared_enum.EOwnerTypeOrgnization),
+		OwnerOf:    _enum.EOwnerOfAdmin,
+		OwnerID:    &userID,
 	}
 
-	_, err := u.notificationClient.CreateHistory(ctx, historyReq)
+	err := u.notificationClient.CreateHistory(ctx, historyReq)
 	if err != nil {
 		// Log error but don't fail the main operation
 		fmt.Printf("Failed to create history record: %v\n", err)
@@ -154,9 +156,9 @@ func (u *campaignUsecase) CreateCampaign(ctx context.Context, createDTO *dto.Cam
 
 	// Create history record
 	u.createHistoryRecord(ctx,
-		shared_enum.HistoryCampaignCreate,
+		_enum.HistoryCampaignCreate,
 		createdCampaign.ID,
-		shared_enum.TargetHistoryCampaign,
+		_enum.TargetHistoryCampaign,
 		"Tạo chiến dịch quảng cáo",
 		[]string{createdCampaign.Name, fmt.Sprintf("Ngân sách: %.0f %s", createdCampaign.Budget, createdCampaign.Currency)},
 	)
@@ -249,9 +251,9 @@ func (u *campaignUsecase) UpdateCampaign(ctx context.Context, id uint64, updateD
 
 	// Create history record
 	u.createHistoryRecord(ctx,
-		shared_enum.HistoryCampaignUpdate,
+		_enum.HistoryCampaignUpdate,
 		updatedCampaign.ID,
-		shared_enum.TargetHistoryCampaign,
+		_enum.TargetHistoryCampaign,
 		"Cập nhật chiến dịch quảng cáo",
 		[]string{updatedCampaign.Name, fmt.Sprintf("Ngân sách: %.0f %s", updatedCampaign.Budget, updatedCampaign.Currency)},
 	)
@@ -275,9 +277,9 @@ func (u *campaignUsecase) DeleteCampaign(ctx context.Context, id uint64) error {
 
 	// Create history record
 	u.createHistoryRecord(ctx,
-		shared_enum.HistoryCampaignDelete,
+		_enum.HistoryCampaignDelete,
 		id,
-		shared_enum.TargetHistoryCampaign,
+		_enum.TargetHistoryCampaign,
 		"Xóa chiến dịch quảng cáo",
 		[]string{campaign.Name},
 	)
@@ -346,30 +348,30 @@ func (u *campaignUsecase) UpdateCampaignStatus(ctx context.Context, id uint64, s
 	}
 
 	// Create history record based on status change
-	var actionType shared_enum.EHistory
+	var actionType _enum.EHistory
 	var title string
 	var notes []string
 
 	switch status {
 	case domain.CampaignStatusActive:
-		actionType = shared_enum.HistoryCampaignActivate
+		actionType = _enum.HistoryCampaignActivate
 		title = "Kích hoạt chiến dịch quảng cáo"
 		notes = []string{campaign.Name, "Trạng thái: ACTIVE"}
 	case domain.CampaignStatusPaused:
-		actionType = shared_enum.HistoryCampaignPause
+		actionType = _enum.HistoryCampaignPause
 		title = "Tạm dừng chiến dịch quảng cáo"
 		notes = []string{campaign.Name, "Trạng thái: PAUSED"}
 	case domain.CampaignStatusCompleted:
-		actionType = shared_enum.HistoryCampaignUpdate
+		actionType = _enum.HistoryCampaignUpdate
 		title = "Hoàn thành chiến dịch quảng cáo"
 		notes = []string{campaign.Name, "Trạng thái: COMPLETED"}
 	default:
-		actionType = shared_enum.HistoryCampaignUpdate
+		actionType = _enum.HistoryCampaignUpdate
 		title = "Cập nhật trạng thái chiến dịch"
 		notes = []string{campaign.Name, fmt.Sprintf("Từ %s → %s", oldStatus, status)}
 	}
 
-	u.createHistoryRecord(ctx, actionType, id, shared_enum.TargetHistoryCampaign, title, notes)
+	u.createHistoryRecord(ctx, actionType, id, _enum.TargetHistoryCampaign, title, notes)
 
 	return nil
 }
@@ -459,9 +461,9 @@ func (u *campaignUsecase) TopupCampaignBudget(ctx context.Context, topupDTO *dto
 
 	// Create history record
 	u.createHistoryRecord(ctx,
-		shared_enum.HistoryCampaignTopup,
+		_enum.HistoryCampaignTopup,
 		topupDTO.CampaignID,
-		shared_enum.TargetHistoryCampaign,
+		_enum.TargetHistoryCampaign,
 		"Chuyển tiền từ ví cá nhân sang chiến dịch quảng cáo",
 		[]string{campaign.Name, fmt.Sprintf("Số tiền: %.0f %s", topupDTO.Amount, campaign.Currency), transferResp.TransactionCode},
 	)

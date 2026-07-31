@@ -3,6 +3,7 @@ package postgre
 import (
 	"context"
 	"crm/internal/domain"
+	"crm/internal/repo"
 
 	"gorm.io/gorm"
 )
@@ -11,7 +12,7 @@ type AdminOpportunityEventPostgres struct {
 	db *gorm.DB
 }
 
-func NewAdminOpportunityEventPostgres(db *gorm.DB) *AdminOpportunityEventPostgres {
+func NewAdminOpportunityEventPostgres(db *gorm.DB) repo.AdminOpportunityEventRepo {
 	return &AdminOpportunityEventPostgres{db: db}
 }
 

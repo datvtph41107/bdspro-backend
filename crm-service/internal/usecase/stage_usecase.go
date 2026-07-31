@@ -1,11 +1,11 @@
 package usecase
 
 import (
-	_provider "common/domain/provider"
 	_routes "common/routes"
 	"context"
 	"crm/internal/domain"
 	"crm/internal/dto"
+	"crm/internal/interface/provider"
 	"crm/internal/repo"
 )
 
@@ -13,7 +13,7 @@ type StageUsecase struct {
 	stageRepo          repo.StageRepo
 	permissionUsecase  PermissionUsecase
 	pipelineRepo       repo.PipelineRepo
-	notificationClient _provider.NotificationProvider
+	notificationClient provider.NotificationProvider
 	customerRepo       repo.LeadRepo
 }
 
@@ -21,7 +21,7 @@ func NewStageUsecase(
 	stageRepo repo.StageRepo,
 	permissionUsecase PermissionUsecase,
 	pipelineRepo repo.PipelineRepo,
-	notificationClient _provider.NotificationProvider,
+	notificationClient provider.NotificationProvider,
 	customerRepo repo.LeadRepo,
 ) *StageUsecase {
 	return &StageUsecase{
