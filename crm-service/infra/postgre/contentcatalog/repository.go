@@ -63,102 +63,188 @@ func (r *Repository) ListCategories(ctx context.Context, domainCode string) ([]d
 	return items, nil
 }
 
+// visibleOnForFeed là nguồn mapping của public feed hiện tại.
+//
+// Các alias chỉ phục vụ tương thích với frontend đang tồn tại;
+// database vẫn chỉ sử dụng các enum 10, 20, 30, 40 và 50.
 func visibleOnForFeed(feed string) (uint32, bool) {
 	switch strings.ToLower(strings.TrimSpace(feed)) {
-	case "featured":
+	case "top", "pinned", "featured":
 		return 10, true
-	case "attention":
+	case "notable", "attention":
 		return 20, true
 	case "latest":
 		return 30, true
 	case "most_read", "trending":
 		return 40, true
-	case "breaking":
+	case "quick_news", "breaking":
 		return 50, true
 	default:
 		return 0, false
 	}
 }
 
-func (r *Repository) ListFeed(ctx context.Context, feed, domainCode, categoryCode string, limit int) (*domain.FeedResult, error) {
+func normalizeFeedLimit(limit int) int {
+	if limit <= 0 {
+		return 20
+	}
+	if limit > 100 {
+		return 100
+	}
+	return limit
+}
+
+func normalizePlanningFeedDomain(domainCode string) (string, error) {
+	value := strings.ToLower(strings.TrimSpace(domainCode))
+	if value == "" || value == "planning" {
+		return "planning", nil
+	}
+
+	return "", fmt.Errorf(
+		"unsupported content domain %q for planning news feed",
+		domainCode,
+	)
+}
+
+func (r *Repository) ListFeed(
+	ctx context.Context,
+	feed string,
+	domainCode string,
+	categoryCode string,
+	limit int,
+) (*domain.FeedResult, error) {
 	feed = strings.ToLower(strings.TrimSpace(feed))
-	if limit <= 0 || limit > 100 {
-		limit = 20
+	if feed == "" {
+		return nil, fmt.Errorf("content feed is required")
 	}
-	if feed == "pinned" {
-		return r.listPinnedFeed(ctx, domainCode, categoryCode, limit)
-	}
+
 	visibleOn, ok := visibleOnForFeed(feed)
 	if !ok {
 		return nil, fmt.Errorf("unsupported content feed %q", feed)
 	}
-	return r.listVisibilityFeed(ctx, feed, visibleOn, domainCode, categoryCode, limit)
+
+	if _, err := normalizePlanningFeedDomain(domainCode); err != nil {
+		return nil, err
+	}
+
+	return r.listVisibilityFeed(
+		ctx,
+		feed,
+		visibleOn,
+		strings.TrimSpace(categoryCode),
+		normalizeFeedLimit(limit),
+	)
 }
 
-func (r *Repository) listVisibilityFeed(ctx context.Context, feed string, visibleOn uint32, domainCode, categoryCode string, limit int) (*domain.FeedResult, error) {
+func (r *Repository) listVisibilityFeed(
+	ctx context.Context,
+	feed string,
+	visibleOn uint32,
+	categoryCode string,
+	limit int,
+) (*domain.FeedResult, error) {
 	items := []domain.ContentFeedItem{}
+
+	/*
+		visible_on là điều kiện lựa chọn bắt buộc của Planning News feed.
+
+		Category assignment là metadata tùy chọn. Vì vậy:
+		- không dùng d.code='planning' để lọc;
+		- không biến LEFT JOIN category thành INNER JOIN ngầm;
+		- không dùng placement để kéo tin có visible_on khác vào feed;
+		- placement chỉ được dùng để ưu tiên thứ tự trong cùng visible_on.
+	*/
 	query := `
         SELECT DISTINCT ON (sd.id)
-          sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') AS title,
-          COALESCE(sd.description,'') AS description,COALESCE(sd.summary,'') AS summary,
-          sd.canonical_url,sd.published_at,sd.updated_at,
-          COALESCE(c.code,'') AS category_code,COALESCE(c.name,'') AS category_name,
-          COALESCE(p.placement_code,'') AS placement_code,COALESCE(p.priority,0) AS priority,
+          sd.id AS seo_page_id,
+          sd.slug,
+          COALESCE(sd.title,'') AS title,
+          COALESCE(sd.description,'') AS description,
+          COALESCE(sd.summary,'') AS summary,
+          sd.canonical_url,
+          sd.published_at,
+          sd.updated_at,
+          COALESCE(c.code,'') AS category_code,
+          COALESCE(c.name,'') AS category_name,
+          COALESCE(p.placement_code,'') AS placement_code,
+          COALESCE(p.priority,0) AS priority,
           sd.visible_on
         FROM seo_domain sd
-        LEFT JOIN seo_content_category_assignment a ON a.seo_domain_id=sd.id AND a.deleted_at IS NULL AND a.is_primary=TRUE
-        LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL
-        LEFT JOIN seo_content_domain d ON d.id=c.domain_id AND d.deleted_at IS NULL
-        LEFT JOIN seo_content_placement p ON p.seo_domain_id=sd.id AND p.deleted_at IS NULL AND p.status='active'
-          AND p.placement_code=? AND (p.starts_at IS NULL OR p.starts_at<=NOW()) AND (p.ends_at IS NULL OR p.ends_at>NOW())
-        WHERE ` + planningNewsWhere + ` AND (sd.visible_on=? OR p.id IS NOT NULL)`
+        LEFT JOIN seo_content_category_assignment a
+          ON a.seo_domain_id = sd.id
+         AND a.deleted_at IS NULL
+         AND a.is_primary = TRUE
+        LEFT JOIN seo_category c
+          ON c.id = a.category_id
+         AND c.deleted_at IS NULL
+        LEFT JOIN seo_content_placement p
+          ON p.seo_domain_id = sd.id
+         AND p.deleted_at IS NULL
+         AND p.status = 'active'
+         AND p.placement_code = ?
+         AND (p.starts_at IS NULL OR p.starts_at <= NOW())
+         AND (p.ends_at IS NULL OR p.ends_at > NOW())
+        WHERE ` + planningNewsWhere + `
+          AND sd.visible_on = ?`
+
 	args := []any{feed, visibleOn}
-	query, args = addTaxonomyFilter(query, args, domainCode, categoryCode)
-	query += " ORDER BY sd.id,CASE WHEN p.id IS NULL THEN 1 ELSE 0 END,p.priority DESC,sd.published_at DESC NULLS LAST"
-	wrapped := "SELECT * FROM (" + query + ") feed_rows ORDER BY priority DESC,published_at DESC NULLS LAST,seo_page_id DESC LIMIT ?"
-	args = append(args, limit)
-	if err := r.db.WithContext(ctx).Raw(wrapped, args...).Scan(&items).Error; err != nil {
-		return nil, fmt.Errorf("list visibility feed: %w", err)
+
+	if categoryCode != "" {
+		query += `
+          AND (
+            c.code = ?
+            OR c.slug = ?
+            OR LOWER(c.name) = LOWER(?)
+          )`
+		args = append(args, categoryCode, categoryCode, categoryCode)
 	}
+
+	query += `
+        ORDER BY
+          sd.id,
+          CASE WHEN p.id IS NULL THEN 1 ELSE 0 END,
+          p.priority DESC,
+          sd.published_at DESC NULLS LAST,
+          sd.updated_at DESC,
+          sd.id DESC`
+
+	wrapped := `
+        SELECT *
+        FROM (` + query + `) AS feed_rows
+        ORDER BY
+          priority DESC,
+          published_at DESC NULLS LAST,
+          updated_at DESC,
+          seo_page_id DESC
+        LIMIT ?`
+
+	args = append(args, limit)
+
+	if err := r.db.WithContext(ctx).
+		Raw(wrapped, args...).
+		Scan(&items).Error; err != nil {
+		return nil, fmt.Errorf(
+			"list planning news feed %q visible_on=%d: %w",
+			feed,
+			visibleOn,
+			err,
+		)
+	}
+
 	warnings := []string{}
 	if feed == "most_read" || feed == "trending" {
-		warnings = append(warnings, "Feed dùng visible_on=40; thứ tự analytics sẽ được ưu tiên khi hệ đo lường cung cấp viewCount.")
+		warnings = append(
+			warnings,
+			"Feed hiện được phân loại biên tập bằng visible_on=40; viewCount chưa tham gia sắp xếp.",
+		)
 	}
-	return &domain.FeedResult{Feed: feed, Computed: feed == "latest" || feed == "most_read" || feed == "trending", Items: items, Warnings: warnings}, nil
-}
 
-func (r *Repository) listPinnedFeed(ctx context.Context, domainCode, categoryCode string, limit int) (*domain.FeedResult, error) {
-	items := []domain.ContentFeedItem{}
-	query := `
-      SELECT sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,
-       COALESCE(sd.summary,'') summary,sd.canonical_url,sd.published_at,sd.updated_at,
-       COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,p.placement_code,p.priority,sd.visible_on
-      FROM seo_content_placement p JOIN seo_domain sd ON sd.id=p.seo_domain_id
-      LEFT JOIN seo_content_category_assignment a ON a.seo_domain_id=sd.id AND a.deleted_at IS NULL AND a.is_primary=TRUE
-      LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL
-      LEFT JOIN seo_content_domain d ON d.id=c.domain_id AND d.deleted_at IS NULL
-      WHERE p.deleted_at IS NULL AND p.status='active' AND p.placement_code='pinned'
-       AND (p.starts_at IS NULL OR p.starts_at<=NOW()) AND (p.ends_at IS NULL OR p.ends_at>NOW()) AND ` + planningNewsWhere
-	args := []any{}
-	query, args = addTaxonomyFilter(query, args, domainCode, categoryCode)
-	query += " ORDER BY p.priority DESC,sd.published_at DESC NULLS LAST LIMIT ?"
-	args = append(args, limit)
-	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&items).Error; err != nil {
-		return nil, fmt.Errorf("list pinned feed: %w", err)
-	}
-	return &domain.FeedResult{Feed: "pinned", Items: items}, nil
-}
-
-func addTaxonomyFilter(query string, args []any, domainCode, categoryCode string) (string, []any) {
-	if value := strings.TrimSpace(domainCode); value != "" {
-		query += " AND d.code = ?"
-		args = append(args, value)
-	}
-	if value := strings.TrimSpace(categoryCode); value != "" {
-		query += " AND c.code = ?"
-		args = append(args, value)
-	}
-	return query, args
+	return &domain.FeedResult{
+		Feed:     feed,
+		Computed: false,
+		Items:    items,
+		Warnings: warnings,
+	}, nil
 }
 
 type planningNewsRow struct {
@@ -178,8 +264,32 @@ func decodeJSONObject(raw []byte) map[string]any {
 	}
 	return out
 }
+
 func newsFromRow(row planningNewsRow) domain.PlanningNewsItem {
-	return domain.PlanningNewsItem{ID: row.ID, SEOPageID: row.ID, Slug: row.Slug, Title: row.Title, Description: row.Description, Summary: row.Summary, Content: row.Content, RenderedHTML: row.RenderedHTML, CanonicalURL: row.CanonicalURL, PublicURL: row.PublicURL, DeepLink: row.DeepLink, RefSource: row.RefSource, RefLabel: row.RefLabel, SourceStatus: row.SourceStatus, QualityScore: row.QualityScore, VisibleOn: row.VisibleOn, PublishedAt: row.PublishedAt, UpdatedAt: row.UpdatedAt, CategoryCode: row.CategoryCode, CategoryName: row.CategoryName, Metadata: decodeJSONObject(row.MetadataJSON), RefSnapshotJSON: decodeJSONObject(row.RefSnapshotRaw)}
+	return domain.PlanningNewsItem{
+		ID:              row.ID,
+		SEOPageID:       row.ID,
+		Slug:            row.Slug,
+		Title:           row.Title,
+		Description:     row.Description,
+		Summary:         row.Summary,
+		Content:         row.Content,
+		RenderedHTML:    row.RenderedHTML,
+		CanonicalURL:    row.CanonicalURL,
+		PublicURL:       row.PublicURL,
+		DeepLink:        row.DeepLink,
+		RefSource:       row.RefSource,
+		RefLabel:        row.RefLabel,
+		SourceStatus:    row.SourceStatus,
+		QualityScore:    row.QualityScore,
+		VisibleOn:       row.VisibleOn,
+		PublishedAt:     row.PublishedAt,
+		UpdatedAt:       row.UpdatedAt,
+		CategoryCode:    row.CategoryCode,
+		CategoryName:    row.CategoryName,
+		Metadata:        decodeJSONObject(row.MetadataJSON),
+		RefSnapshotJSON: decodeJSONObject(row.RefSnapshotRaw),
+	}
 }
 
 func normalizePage(page, size int) (int, int) {
