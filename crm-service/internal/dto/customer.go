@@ -19,8 +19,24 @@ type LeadSearchDTO struct {
 	FromDate        *time.Time          `form:"fromDate"`
 	ToDate          *time.Time          `form:"toDate"`
 	LastUpdatedAt   *time.Time          `form:"lastUpdatedAt"`
-	ProductCareIDs  []uint64            `form:"productCareIds" parser:"uint64s"` // todo: add product care
+	ProductCareIDs  []uint64            `form:"productCareIds" parser:"uint64s"`
 	PipelineID      *uint64             `form:"pipelineId"`
+	UnassignedOnly  bool                `form:"unassignedOnly"`
+
+	// Admin sales filters (IV.10.9.1)
+	OpportunityStatuses []enums.EOpportunityStatus `form:"opportunityStatuses"`
+	CustomerTypes       []enums.ECustomerType      `form:"customerTypes"`
+	AdminSources        []enums.EAdminSalesSource  `form:"adminSources"`
+	Queue               string                     `form:"queue"` // overdue_followup|unassigned|waiting_quote|waiting_approval|waiting_payment|renewal|upgrade|churn|new|consulting|business|api|mine (mine via chargePersonIds on FE)
+	FollowUpFrom        *time.Time                 `form:"followUpFrom"`
+	FollowUpTo          *time.Time                 `form:"followUpTo"`
+	MinExpectedValue    *float64                   `form:"minExpectedValue"`
+	MaxExpectedValue    *float64                   `form:"maxExpectedValue"`
+	Probabilities       []enums.EWinProbability    `form:"probabilities"`
+	ChurnRisks          []enums.EChurnRisk         `form:"churnRisks"`
+	UpgradeOnly         bool                       `form:"upgradeOnly"`
+	RenewalOnly         bool                       `form:"renewalOnly"`
+	InterestedPlan      string                     `form:"interestedPlan"`
 
 	OwnerID uint64             `form:"ownerId"`
 	OwnerOf base_enum.EOwnerOf `form:"ownerOf"`

@@ -11,6 +11,8 @@ import (
 
 type ContactRepo interface {
 	Search(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error)
+	// SearchByOwnerOf lists contacts for a shared owner_of pool (admin sales; no owner_id filter).
+	SearchByOwnerOf(c context.Context, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactEntity, int64, error)
 	Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error)
 	Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error)
 	UpdateContactID(c context.Context, contactId uint64, leadId uint64) (*domain.ContactEntity, error)

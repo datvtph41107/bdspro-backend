@@ -44,29 +44,7 @@ service TqdSeoProjectionService {
       }
     };
   }
-
-  rpc GetParcelQuickViewPublic(GetParcelQuickViewRequest) returns (google.api.HttpBody) {
-    option (google.api.http) = {
-      get: "/v2/tqd/public/parcels/{parcel_id}/quick-view"
-    };
-  }
-
-  rpc GetPlanningProjectProjectionPublic(GetPlanningProjectProjectionRequest) returns (google.api.HttpBody) {
-    option (google.api.http) = {
-      get: "/v2/tqd/public/planning-projects/{identity}/projection"
-    };
-  }
 }
-
-
-message GetParcelQuickViewRequest {
-  uint64 parcel_id = 1;
-}
-
-message GetPlanningProjectProjectionRequest {
-  string identity = 1;
-}
-
 
 message GetParcelQuickViewRequest {
   uint64 parcel_id = 1;

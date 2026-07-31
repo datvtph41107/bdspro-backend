@@ -299,6 +299,12 @@ do_migrate() {
   apply_sql_file "$CRM_DSN" \
     "$BE/crm-service/infra/db/migrate_v2/000020_support_ticket_handling_team.up.sql" \
     "$BE/crm-service"
+  apply_sql_file "$CRM_DSN" \
+    "$BE/crm-service/infra/db/migrate_v2/000021_admin_opportunity_events.up.sql" \
+    "$BE/crm-service"
+  apply_sql_file "$CRM_DSN" \
+    "$BE/crm-service/infra/db/migrate_v2/000022_admin_opportunity_fields.up.sql" \
+    "$BE/crm-service"
 
   echo "==> TQD: apply report QA + images SQL..."
   apply_sql_file "$TQD_DSN" \
@@ -313,6 +319,9 @@ do_migrate() {
   apply_sql_file "$AUTH_DSN" \
     "$BE/auth-service/scripts/attach_admin_ht_bc_gis_permissions.sql" \
     "$BE/crm-service" || echo "WARN: auth permission seed failed (check AUTH_DSN / HE_THONG exists)"
+  apply_sql_file "$AUTH_DSN" \
+    "$BE/auth-service/scripts/attach_admin_kd_permissions.sql" \
+    "$BE/crm-service" || echo "WARN: auth ADMIN_KD permission seed failed"
 
   echo "Migrate (feature SQL) done."
   echo "NOTE: nếu menu/API vẫn 403 — xóa Redis ROLE_PERMS_* rồi login lại."

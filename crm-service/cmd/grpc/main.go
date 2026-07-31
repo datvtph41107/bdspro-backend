@@ -103,6 +103,7 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterReportAdminServiceServer(s, app.ReportAdminHandler)
 		crmpb.RegisterReportReasonServiceServer(s, app.ReportReasonHandler)
 		crmpb.RegisterSupportTicketServiceServer(s, app.SupportTicketHandler)
+		crmpb.RegisterAdminSalesServiceServer(s, app.AdminSalesHandler)
 		crmpb.RegisterAppointmentServiceServer(s, app.AppointmentService)
 		crmpb.RegisterSeoDomainServiceServer(s, app.SeoDomainHandler)
 		crmpb.RegisterSeoMeasurementRuntimeServiceServer(s, app.SeoDomainHandler)

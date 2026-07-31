@@ -9,6 +9,10 @@ import (
 
 type LeadRepo interface {
 	Search(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error)
+	// SearchByOwnerOf lists leads whose contact has the given owner_of (shared pool; no owner_id filter).
+	SearchByOwnerOf(c context.Context, ownerType base_enum.EOwnerOf, dto dto.LeadSearchDTO) ([]domain.LeadEntity, int64, error)
+	AdminOpportunitySummary(c context.Context, ownerType base_enum.EOwnerOf) (*dto.AdminOpportunitiesSummaryDTO, error)
+	AdminFunnel(c context.Context, ownerType base_enum.EOwnerOf, search dto.LeadSearchDTO) ([]dto.AdminFunnelBucketDTO, error)
 	Create(c context.Context, entity *domain.LeadEntity) (*domain.LeadEntity, error)
 	Update(c context.Context, id uint64, entity *domain.LeadEntity) (*domain.LeadEntity, error)
 	Delete(c context.Context, id uint64) error

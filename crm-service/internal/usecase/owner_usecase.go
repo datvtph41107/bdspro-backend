@@ -32,6 +32,13 @@ func (u *OwnerUsecase) GetOwnerInfo(ctx context.Context, ownerOf base_enum.EOwne
 		id = ownerId
 	}
 
+	if ownerOf == base_enum.EOwnerOfAdmin {
+		id = _utils.GetAuthIdFromContext(ctx)
+		if id == 0 {
+			id = _utils.GetProfileIdWithContext(ctx)
+		}
+	}
+
 	if id == 0 {
 		return 0, _errors.ReturnError(400, "Yêu cầu không thể thực hiện")
 	}

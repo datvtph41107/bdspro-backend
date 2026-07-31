@@ -128,7 +128,26 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	// Kiểm tra field Data
 	dataField := val.FieldByName("Data")
 	if dataField.IsValid() && dataField.CanInterface() {
-		resp.Data = dataField.Interface()
+		// Một số response (AdminOpportunity, list+funnel, …) có sibling fields
+		// (events, commercial, funnel, …) ngoài Data/Total. Custom envelope cũ
+		// chỉ lấy Data → FE mất nhật ký / commercial / phễu. Khi có sibling,
+		// nhét cả message vào data để giữ nguyên các field đó.
+		if hasProtoSiblingPayload(val) {
+			raw, err := protojson.MarshalOptions{
+				UseProtoNames:   false,
+				EmitUnpopulated: false,
+			}.Marshal(msg)
+			if err != nil {
+				return nil, err
+			}
+			var envelope any
+			if err := json.Unmarshal(raw, &envelope); err != nil {
+				return nil, err
+			}
+			resp.Data = envelope
+		} else {
+			resp.Data = dataField.Interface()
+		}
 
 		// Khởi tạo pagination info
 		pagination := &PaginationInfo{}
@@ -254,6 +273,69 @@ func (c *CustomMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
 
 func (c *CustomMarshaler) NewEncoder(w io.Writer) runtime.Encoder {
 	return json.NewEncoder(w)
+}
+
+// hasProtoSiblingPayload reports whether a response message carries payload
+// fields other than Data + pagination (e.g. events, commercial, funnel).
+func hasProtoSiblingPayload(val reflect.Value) bool {
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return false
+		}
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return false
+	}
+	skip := map[string]struct{}{
+		"Data": {}, "Total": {}, "TotalElements": {}, "Page": {}, "Size": {}, "Pagination": {},
+		"Code": {}, "Message": {}, "state": {}, "sizeCache": {}, "unknownFields": {},
+	}
+	typ := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		sf := typ.Field(i)
+		if !sf.IsExported() {
+			continue
+		}
+		if strings.HasPrefix(sf.Name, "XXX_") {
+			continue
+		}
+		if _, ok := skip[sf.Name]; ok {
+			continue
+		}
+		f := val.Field(i)
+		if !f.IsValid() || !f.CanInterface() {
+			continue
+		}
+		switch f.Kind() {
+		case reflect.Ptr, reflect.Interface, reflect.Slice, reflect.Map:
+			if f.IsNil() || (f.Kind() == reflect.Slice && f.Len() == 0) {
+				continue
+			}
+		case reflect.String:
+			if f.String() == "" {
+				continue
+			}
+		case reflect.Bool:
+			if !f.Bool() {
+				continue
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if f.Int() == 0 {
+				continue
+			}
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if f.Uint() == 0 {
+				continue
+			}
+		case reflect.Float32, reflect.Float64:
+			if f.Float() == 0 {
+				continue
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func (c *CustomMarshaler) ContentType(v interface{}) string {

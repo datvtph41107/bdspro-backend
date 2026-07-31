@@ -11,6 +11,7 @@ enum OwnerOf {
     user = 10;
     group = 20;
     organization = 30;
+    admin = 40;
 }
 
 message LeadDTO {

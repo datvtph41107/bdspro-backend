@@ -209,6 +209,25 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 	return contacts, total, nil
 }
 
+func (r *PostgreContact) SearchByOwnerOf(c context.Context, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactEntity, int64, error) {
+	query := r.GetDB(c).Model(&domain.ContactEntity{}).
+		Where("deleted_at is null and owner_of = ?", ownerType)
+	if strings.TrimSpace(dto.Text) != "" {
+		q := "%" + strings.TrimSpace(dto.Text) + "%"
+		query = query.Where("(full_name ILIKE ? OR phone ILIKE ? OR email ILIKE ? OR company ILIKE ?)", q, q, q, q)
+	}
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var contacts []domain.ContactEntity
+	err := query.Order("updated_at desc, id desc").
+		Offset(dto.GetOffset()).
+		Limit(dto.GetLimit()).
+		Find(&contacts).Error
+	return contacts, total, err
+}
+
 func (r *PostgreContact) GetListContactByProductId(
 	c context.Context,
 	productId uint64,
@@ -329,6 +348,7 @@ func (r *PostgreContact) Update(c context.Context, id uint64, entity *domain.Con
 		Update("email", entity.Email).
 		Update("zalo", entity.Zalo).
 		Update("company", entity.Company).
+		Update("address", entity.Address).
 		Update("note", entity.Note).
 		Update("visibility", entity.Visibility)
 	if result.Error != nil {
