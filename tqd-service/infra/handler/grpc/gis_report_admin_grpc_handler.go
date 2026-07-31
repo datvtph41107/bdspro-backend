@@ -32,7 +32,6 @@ var (
 )
 
 // GisReportAdminGrpcHandler — admin GIS reports qua gateway (grpc-gateway).
-// @bind: tqd/infra/handler/grpc.GisReportAdminGrpcHandler
 type GisReportAdminGrpcHandler struct {
 	tqdpb.UnimplementedGisReportAdminServiceServer
 	usecase    usecase.ReportUsecase
