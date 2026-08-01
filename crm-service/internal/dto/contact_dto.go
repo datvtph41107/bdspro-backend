@@ -3,7 +3,6 @@ package dto
 import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
-	"crm/internal/domain"
 	"crm/internal/enums"
 	"time"
 )
@@ -20,15 +19,6 @@ type ContactSearchDTO struct {
 
 	OwnerId uint64             `form:"ownerId"`
 	OwnerOf base_enum.EOwnerOf `form:"ownerOf"`
-}
-
-type RelationShipDTO struct {
-	FriendStatus *domain.FriendItem
-	Following    bool
-	Blocked      bool
-	NumFollower  int64
-	NumFollowing int64
-	NumFriend    int64
 }
 
 type PinRequestDTO struct {

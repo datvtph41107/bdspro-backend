@@ -5,6 +5,7 @@ package wire
 
 import (
 	_db "common/db"
+	common_injection "common/injection"
 	_provider "common/provider"
 	"github.com/google/wire"
 	tqd_config "tqd/config"
@@ -42,6 +43,17 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
+	common_injection.NewAuthClient,
+	common_injection.NewBDSProClient,
+	common_injection.NewCRMClient,
+	common_injection.NewChatClient,
+	common_injection.NewHubClient,
+	common_injection.NewNotification,
+	common_injection.NewOrganizationClient,
+	common_injection.NewPaymentClient,
+	common_injection.NewTQClient,
+	common_injection.NewTransactionClient,
+	common_injection.NewUserClient,
 	tqd_infra_handler_grpc.NewAmenityGrpcHandlerImpl,
 	tqd_infra_handler_http.NewAmenityHandler,
 	tqd_infra_mapper.NewAmenityMapper,

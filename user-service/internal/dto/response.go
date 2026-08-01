@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"user/enums"
 	models "user/internal/models"
@@ -129,15 +130,15 @@ type PublicUserInfo struct {
 	Professions    []models.ProfessionEntity    `json:"professions,omitempty"`
 	PurposeUses    []models.PurposeUseEntity    `json:"purposeUses,omitempty"`
 	MainAreas      []models.MainAreaEntity      `json:"mainAreas,omitempty"`
-	FriendStatus   *models.FriendItem           `json:"relationShip,omitempty"`
+	FriendStatus   *_dto.FriendItemDTO          `json:"relationShip,omitempty"`
 	Following      bool                         `json:"following,omitempty"`
 	Bookmark       bool                         `json:"bookmark,omitempty"`
-	RateStats      *models.RateStats            `json:"rateStats,omitempty"`
+	RateStats      *_dto.RateStats              `json:"rateStats,omitempty"`
 }
 
 type RelationShip struct {
-	FriendStatus *models.FriendItem `json:"friendStatus,omitempty"`
-	IsFollowing  bool               `json:"isFollowing,omitempty"`
+	FriendStatus *_dto.FriendItemDTO `json:"friendStatus,omitempty"`
+	IsFollowing  bool                `json:"isFollowing,omitempty"`
 }
 
 type JwtTokenProperties struct {

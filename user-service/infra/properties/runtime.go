@@ -5,7 +5,7 @@ import (
 	"user/internal/dto"
 )
 
-// @bind: auth/internal/interface/factory.IFactory
+// @bind: user/internal/interface/factory.IFactory
 type RuntimeProperties struct {
 	Properties dto.PropertiesDTO
 }

@@ -10,9 +10,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"unicode"
+
+	"gopkg.in/yaml.v3"
 )
 
 type NewFunc struct {
@@ -30,6 +33,15 @@ type BindEntry struct {
 	StructName     string
 }
 
+type InjectionConfig struct {
+	Packages []InjectionPackage `yaml:"packages"`
+}
+
+type InjectionPackage struct {
+	Import       string   `yaml:"import"`
+	Constructors []string `yaml:"constructors"`
+}
+
 func main() {
 	if len(os.Args) < 2 || strings.TrimSpace(os.Args[1]) == "" {
 		fmt.Fprintln(os.Stderr, "usage: go run gen_wire.go <service-module>")
@@ -43,6 +55,11 @@ func main() {
 	}
 
 	wireFile := filepath.Join("wire", "wire.go")
+	injections, err := loadInjectionConfig()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "load injection config:", err)
+		os.Exit(1)
+	}
 	constructors, err := findNewFunctions(rootPackage, ".")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "scan constructors:", err)
@@ -53,7 +70,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "scan binds:", err)
 		os.Exit(1)
 	}
-	if err := writeWireFile(constructors, binds, wireFile, moduleName); err != nil {
+	if err := writeWireFile(constructors, binds, injections, wireFile, moduleName); err != nil {
 		fmt.Fprintln(os.Stderr, "write wire.go:", err)
 		os.Exit(1)
 	}
@@ -110,9 +127,6 @@ func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
 				Alias:       generateAlias(fullPackage),
 				Func:        function.Name.Name,
 			}
-			// Constructor identity includes its package. Two packages are allowed to
-			// expose constructors with the same name; silently dropping either one
-			// creates an incomplete dependency graph.
 			functions[item.FullPackage+"\x00"+item.Func] = item
 		}
 		return nil
@@ -253,7 +267,32 @@ func generateAlias(packagePath string) string {
 	return strings.Trim(output.String(), "_")
 }
 
-func writeWireFile(functions []NewFunc, binds []BindEntry, wireFile, moduleName string) error {
+func scriptDir() string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return "."
+	}
+	return filepath.Dir(filename)
+}
+
+func loadInjectionConfig() ([]InjectionPackage, error) {
+	configPath := filepath.Join(scriptDir(), "injection_clients.yml")
+	content, err := os.ReadFile(configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read %s: %w", configPath, err)
+	}
+
+	var config InjectionConfig
+	if err := yaml.Unmarshal(content, &config); err != nil {
+		return nil, fmt.Errorf("parse %s: %w", configPath, err)
+	}
+	return config.Packages, nil
+}
+
+func writeWireFile(functions []NewFunc, binds []BindEntry, injections []InjectionPackage, wireFile, moduleName string) error {
 	if err := os.MkdirAll(filepath.Dir(wireFile), 0o755); err != nil {
 		return err
 	}
@@ -291,13 +330,20 @@ import (
 		packages[bind.InterfacePath] = bind.InterfaceAlias
 		packages[bind.StructPackage] = bind.StructAlias
 	}
+	for _, injection := range injections {
+		packagePath := strings.TrimSpace(injection.Import)
+		if packagePath == "" {
+			continue
+		}
+		packages[packagePath] = generateAlias(packagePath)
+	}
 
 	imports := make([]string, 0, len(packages))
 	for packagePath, alias := range packages {
 		if packagePath == initialPackage || packagePath == "common/db" || packagePath == "common/provider" {
 			continue
 		}
-		imports = append(imports, fmt.Sprintf("\t%s %q", alias, replacePrefix(packagePath, moduleName)))
+		imports = append(imports, fmt.Sprintf("\t%s %q", alias, resolveImportPath(packagePath, moduleName)))
 	}
 	sort.Strings(imports)
 	for _, item := range imports {
@@ -312,6 +358,18 @@ import (
 	for _, bind := range binds {
 		if _, err := fmt.Fprintf(writer, "\twire.Bind(new(%s.%s), new(*%s.%s)),\n", bind.InterfaceAlias, bind.InterfaceName, bind.StructAlias, bind.StructName); err != nil {
 			return err
+		}
+	}
+	for _, injection := range injections {
+		alias := packages[strings.TrimSpace(injection.Import)]
+		for _, constructor := range injection.Constructors {
+			constructor = strings.TrimSpace(constructor)
+			if constructor == "" {
+				continue
+			}
+			if _, err := fmt.Fprintf(writer, "\t%s.%s,\n", alias, constructor); err != nil {
+				return err
+			}
 		}
 	}
 	for _, function := range functions {
@@ -336,6 +394,16 @@ func InitializeApp() (*%s.InitialApp, error) {
 	format.Stdout = os.Stdout
 	format.Stderr = os.Stderr
 	return format.Run()
+}
+
+func resolveImportPath(packagePath, moduleName string) string {
+	if strings.HasPrefix(packagePath, moduleName+"/") || packagePath == moduleName {
+		return replacePrefix(packagePath, moduleName)
+	}
+	if !strings.Contains(packagePath, "/") {
+		return moduleName
+	}
+	return packagePath
 }
 
 func replacePrefix(input, newPrefix string) string {

@@ -12,7 +12,7 @@ import (
 )
 
 // SessionPostgres implementation của Session repository
-// @bind: auth/internal/interface/repo.SessionRepository
+// @bind: user/internal/interface/repo.SessionRepository
 type SessionPostgres struct {
 	// TODO: Add database connection
 }

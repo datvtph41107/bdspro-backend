@@ -293,7 +293,12 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 func (s *ContactService) RelationShip(ctx context.Context, req *sharepb.IdRequest) (*crmpb.RelationShipResponse, error) {
 	result := s.UC.RelationShip(ctx, req.Id)
 	return &crmpb.RelationShipResponse{
-		FriendStatus: s.FriendMapper.FriendItemToPb(result.FriendStatus),
+		FriendStatus: &sharepb.FriendItem{
+			Id:         result.FriendStatus.ID,
+			ReceiverId: result.FriendStatus.ReceiverID,
+			CreatedBy:  &result.FriendStatus.CreatedBy,
+			Status:     result.FriendStatus.Status,
+		},
 		Following:    result.Following,
 		NumFollower:  result.NumFollower,
 		NumFollowing: result.NumFollowing,

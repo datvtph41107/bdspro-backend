@@ -1,12 +1,9 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
-	_db "common/db"
-	"bdspro/initial"
 	bdspro_infra_client "bdspro/infra/client"
 	bdspro_infra_handler "bdspro/infra/handler"
 	bdspro_infra_handler_admin "bdspro/infra/handler/admin"
@@ -32,27 +29,27 @@ import (
 	bdspro_internal_usecases_admin "bdspro/internal/usecases/admin"
 	bdspro_internal_usecases_property "bdspro/internal/usecases/property"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
+	_db "common/db"
+	_provider "common/provider"
+	"github.com/google/wire"
 )
 
 // Inject dependencies
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(bdspro_internal_provider.ChatProvider), new(*bdspro_infra_client.ChatClient)),
-	wire.Bind(new(bdspro_internal_provider.DeepseekProvider), new(*bdspro_infra_client.DeepseekClient)),
 	wire.Bind(new(bdspro_internal_provider.HubProvider), new(*bdspro_infra_client.HubClient)),
 	wire.Bind(new(bdspro_internal_provider.IUserProvider), new(*bdspro_infra_client.UserClient)),
-	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_handler.MemberPlanUsecase)),
-	wire.Bind(new(bdspro_internal_repo_admin.AdminAssetRepo), new(*bdspro_infra_postgres_admin.AdminAssetPostgres)),
-	wire.Bind(new(bdspro_internal_repo_admin.AdminPostRepo), new(*bdspro_infra_postgres_admin.AdminPostPostgres)),
-	wire.Bind(new(bdspro_internal_repo_admin.AdminProductRepo), new(*bdspro_infra_postgres_admin.AdminProductPostgres)),
-	wire.Bind(new(bdspro_internal_repo_admin.AdminProjectRepo), new(*bdspro_infra_postgres_admin.AdminProjectPostgres)),
-	wire.Bind(new(bdspro_internal_repo_admin.AdminPropertyTypeRepo), new(*bdspro_infra_postgres_admin.AdminPropertyTypePostgres)),
+	wire.Bind(new(bdspro_internal_provider.PlanProvider), new(*bdspro_infra_providers.MemberPlanProvider)),
+	wire.Bind(new(bdspro_internal_provider.TransactionProvider), new(*bdspro_infra_postgres.TransactionGorm)),
 	wire.Bind(new(bdspro_internal_repo.ApartmentRepo), new(*bdspro_infra_postgres.PostgreApartment)),
 	wire.Bind(new(bdspro_internal_repo.AssetCostRepo), new(*bdspro_infra_postgres.GormAssetCostRepo)),
 	wire.Bind(new(bdspro_internal_repo.AssetCostTypeRepo), new(*bdspro_infra_postgres.PostgreUserCostType)),
 	wire.Bind(new(bdspro_internal_repo.AssetExploitationRepo), new(*bdspro_infra_postgres.PostgreAssetExploitation)),
 	wire.Bind(new(bdspro_internal_repo.AssetIncomeTypeRepo), new(*bdspro_infra_postgres.GormAssetIncomeTypeRepo)),
+	wire.Bind(new(bdspro_internal_repo.AssetLegalRepo), new(*bdspro_infra_postgres.GormAssetLegalRepo)),
 	wire.Bind(new(bdspro_internal_repo.AssetOrganizationRepo), new(*bdspro_infra_postgres.PostgreAssetOrganization)),
 	wire.Bind(new(bdspro_internal_repo.AssetRepo), new(*bdspro_infra_postgres.PostgreAsset)),
 	wire.Bind(new(bdspro_internal_repo.AssetShareRepo), new(*bdspro_infra_postgres.AssetShareRepo)),
@@ -60,18 +57,20 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo.BankAccountRepository), new(*bdspro_infra_postgres.BankAccountPostgresRepository)),
 	wire.Bind(new(bdspro_internal_repo.BdsDomainRepo), new(*bdspro_infra_postgres.BdsDomainPostgres)),
 	wire.Bind(new(bdspro_internal_repo.CostDocumentRepo), new(*bdspro_infra_postgres.GormCostDocumentRepo)),
-	wire.Bind(new(bdspro_internal_repo.InvestmentRepository), new(*bdspro_infra_postgres.InvestmentPostgres)),
 	wire.Bind(new(bdspro_internal_repo.DealMemberRepository), new(*bdspro_infra_postgres.DealMemberPostgresRepository)),
 	wire.Bind(new(bdspro_internal_repo.DealMilestoneRepository), new(*bdspro_infra_postgres.DealMilestonePostgresRepository)),
 	wire.Bind(new(bdspro_internal_repo.DocTypeRepo), new(*bdspro_infra_postgres.PostgreDocType)),
 	wire.Bind(new(bdspro_internal_repo.DocumentRepository), new(*bdspro_infra_postgres.DocumentPostgresRepository)),
 	wire.Bind(new(bdspro_internal_repo.HouseInfoRepo), new(*bdspro_infra_postgres.GormHouseInfoRepo)),
 	wire.Bind(new(bdspro_internal_repo.IncomeDocumentRepo), new(*bdspro_infra_postgres.GormIncomeDocumentRepo)),
+	wire.Bind(new(bdspro_internal_repo.InvestmentRepository), new(*bdspro_infra_postgres.InvestmentPostgres)),
+	wire.Bind(new(bdspro_internal_repo.PostMediaRepo), new(*bdspro_infra_postgres.GormPostMediaRepo)),
 	wire.Bind(new(bdspro_internal_repo.PostOrganizationRepo), new(*bdspro_infra_postgres.PostgrePostOrganization)),
 	wire.Bind(new(bdspro_internal_repo.PostRepo), new(*bdspro_infra_postgres.GormPostRepo)),
 	wire.Bind(new(bdspro_internal_repo.PostUserRepo), new(*bdspro_infra_postgres.PostgrePostUser)),
 	wire.Bind(new(bdspro_internal_repo.ProductAssetRepo), new(*bdspro_infra_postgres.ProductAssetPostgres)),
 	wire.Bind(new(bdspro_internal_repo.ProductHistoryRepo), new(*bdspro_infra_postgres.PostgreHistoryRepo)),
+	wire.Bind(new(bdspro_internal_repo.ProductMediaRepo), new(*bdspro_infra_postgres.GormProductMediaRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductOrganizationRepo), new(*bdspro_infra_postgres.ProductOrganizationPostgres)),
 	wire.Bind(new(bdspro_internal_repo.ProductPriceRepo), new(*bdspro_infra_postgres.GormProductPriceRepo)),
 	wire.Bind(new(bdspro_internal_repo.ProductPrivateRepo), new(*bdspro_infra_postgres.GormProductPrivateRepo)),
@@ -81,12 +80,13 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo.RecordHistoryRepo), new(*bdspro_infra_postgres.PostgreReportHistory)),
 	wire.Bind(new(bdspro_internal_repo.RegionRepo), new(*bdspro_infra_postgres.PostgreRegion)),
 	wire.Bind(new(bdspro_internal_repo.SharingAccessRepo), new(*bdspro_infra_postgres.SharingAccessPostgre)),
-	wire.Bind(new(bdspro_internal_provider.TransactionProvider), new(*bdspro_infra_postgres.TransactionGorm)),
-	wire.Bind(new(bdspro_internal_repo.AssetLegalRepo), new(*bdspro_infra_postgres.GormAssetLegalRepo)),
-	wire.Bind(new(bdspro_internal_repo.PostMediaRepo), new(*bdspro_infra_postgres.GormPostMediaRepo)),
 	wire.Bind(new(bdspro_internal_repo.UProductChildRepo), new(*bdspro_infra_postgres.PostgreProductChild)),
-	wire.Bind(new(bdspro_internal_repo.ProductMediaRepo), new(*bdspro_infra_postgres.GormProductMediaRepo)),
-	wire.Bind(new(bdspro_internal_provider.PlanProvider), new(*bdspro_infra_providers.MemberPlanProvider)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminAssetRepo), new(*bdspro_infra_postgres_admin.AdminAssetPostgres)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminPostRepo), new(*bdspro_infra_postgres_admin.AdminPostPostgres)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminProductRepo), new(*bdspro_infra_postgres_admin.AdminProductPostgres)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminProjectRepo), new(*bdspro_infra_postgres_admin.AdminProjectPostgres)),
+	wire.Bind(new(bdspro_internal_repo_admin.AdminPropertyTypeRepo), new(*bdspro_infra_postgres_admin.AdminPropertyTypePostgres)),
+	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_handler.MemberPlanUsecase)),
 	bdspro_infra_postgres.NewActionRepo,
 	bdspro_infra_handler.NewAdminAreaRegionHandler,
 	bdspro_infra_handler_admin.NewAdminAssetHandler,
@@ -154,7 +154,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_redis.NewClient,
 	bdspro_infra_providers.NewCodeDataUsecase,
 	bdspro_infra_mapper.NewCommonMapper,
-	bdspro_infra_providers.NewCommonRedisProvider,
 	bdspro_infra_mapper.NewContractDealMapper,
 	bdspro_infra_validator.NewContractDealValidator,
 	bdspro_infra_handler.NewCostDocumentServer,
@@ -341,7 +340,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_validator.NewSharingAccessValidator,
 	bdspro_internal_modules.NewSnapshotComparator,
 	bdspro_infra_postgres.NewSnapshotRepository,
-	bdspro_infra_providers.NewSyncProvider,
 	bdspro_infra_providers.NewTQDClient,
 	bdspro_infra_postgres.NewTransactionActionPostgresRepository,
 	bdspro_infra_validator.NewTransactionActionValidator,
@@ -371,7 +369,8 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres_audit.NewVersionRepo,
 	bdspro_infra_postgres.NewWardV2Repository,
 )
-func InitializeApp() (*initial.InitialApp, error) {
+
+func InitializeApp() (*bdspro_initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

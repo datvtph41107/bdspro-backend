@@ -240,6 +240,23 @@ func (c *OrganizationClient) GetOrganizationMember(ctx context.Context, organiza
 	return resp.Data[0], nil
 }
 
+func (c *OrganizationClient) GetOrganizationsByUserId(ctx context.Context, userId uint64) ([]*organizationpb.Organization, error) {
+	if c.Client == nil {
+		return nil, errors.New("organization client not avaiable")
+	}
+
+	// resp, err := c.Client.GetOrganizationByUserId(ctx, &organizationpb.GetOrganizationByUserIdRequest{UserId: userId})
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// if len(resp.Data) == 0 {
+	// 	return nil, nil
+	// }
+
+	return nil, nil
+}
+
 // func (c *OrganizationClient) GetDealTransactionsByIds(ctx context.Context, dealIds []uint64) ([]*organizationpb.DealTransactionResponse, error) {
 // 	if c.Client == nil {
 // 		return nil, errors.New("organization client not avaiable")

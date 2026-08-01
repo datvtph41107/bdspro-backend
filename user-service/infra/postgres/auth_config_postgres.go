@@ -8,7 +8,7 @@ import (
 )
 
 // AuthConfigPostgres implementation của AuthConfig repository
-// @bind: auth/internal/interface/repo.IAuthConfigRepo
+// @bind: user/internal/interface/repo.IAuthConfigRepo
 type AuthConfigPostgres struct {
 	// TODO: Add database connection
 }

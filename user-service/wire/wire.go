@@ -5,7 +5,9 @@ package wire
 
 import (
 	_db "common/db"
+	common_injection "common/injection"
 	_provider "common/provider"
+	common_utils "common/utils"
 	"github.com/google/wire"
 	user_infra_client "user/infra/client"
 	user_infra_cookie "user/infra/cookie"
@@ -16,7 +18,6 @@ import (
 	user_infra_properties "user/infra/properties"
 	user_infra_provider "user/infra/provider"
 	user_infra_redis "user/infra/redis"
-	user_infra_routes "user/infra/routes"
 	user_infra_scheduler "user/infra/scheduler"
 	user_infra_sms "user/infra/sms"
 	user_infra_zns "user/infra/zns"
@@ -24,9 +25,8 @@ import (
 	user_internal_domain "user/internal/domain"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
-	auth_internal_interface_factory "user/internal/interface/factory"
+	user_internal_interface_factory "user/internal/interface/factory"
 	user_internal_interface_providers "user/internal/interface/providers"
-	auth_internal_interface_repo "user/internal/interface/repo"
 	user_internal_interface_repo "user/internal/interface/repo"
 	user_internal_job "user/internal/job"
 	user_internal_models "user/internal/models"
@@ -40,25 +40,37 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
-	wire.Bind(new(auth_internal_interface_factory.IFactory), new(*user_infra_properties.RuntimeProperties)),
-	wire.Bind(new(auth_internal_interface_repo.AdminAccessRepository), new(*user_infra_postgres.AdminAccessPostgresRepo)),
-	wire.Bind(new(auth_internal_interface_repo.DeviceRepository), new(*user_infra_postgres.DevicePostgresRepo)),
-	wire.Bind(new(auth_internal_interface_repo.IAuthConfigRepo), new(*user_infra_postgres.AuthConfigPostgres)),
-	wire.Bind(new(auth_internal_interface_repo.OTPRepository), new(*user_infra_postgres.OTPPostgres)),
-	wire.Bind(new(auth_internal_interface_repo.PINRepository), new(*user_infra_postgres.PINPostgres)),
-	wire.Bind(new(auth_internal_interface_repo.SessionRepository), new(*user_infra_postgres.SessionPostgres)),
-	wire.Bind(new(auth_internal_interface_repo.StatusRepository), new(*user_infra_postgres.StatusPostgres)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
+	wire.Bind(new(user_internal_interface_factory.IFactory), new(*user_infra_properties.RuntimeProperties)),
 	wire.Bind(new(user_internal_interface_providers.BdsproProvider), new(*user_infra_client.BdsproClient)),
-	wire.Bind(new(user_internal_interface_providers.CrmProvider), new(*user_infra_client.CrmClient)),
 	wire.Bind(new(user_internal_interface_providers.HubProvider), new(*user_infra_client.HubClient)),
 	wire.Bind(new(user_internal_interface_providers.OrganizationProvider), new(*user_infra_client.OrganizationProviderClient)),
 	wire.Bind(new(user_internal_interface_providers.ProfileProvider), new(*user_infra_provider.ProfileProvider)),
+	wire.Bind(new(user_internal_interface_repo.AdminAccessRepository), new(*user_infra_postgres.AdminAccessPostgresRepo)),
+	wire.Bind(new(user_internal_interface_repo.DeviceRepository), new(*user_infra_postgres.DevicePostgresRepo)),
+	wire.Bind(new(user_internal_interface_repo.IAuthConfigRepo), new(*user_infra_postgres.AuthConfigPostgres)),
 	wire.Bind(new(user_internal_interface_repo.IBlockRepo), new(*user_infra_postgres.BlockPostgres)),
 	wire.Bind(new(user_internal_interface_repo.IContactRepo), new(*user_infra_postgres.ContactPostgres)),
 	wire.Bind(new(user_internal_interface_repo.IFollowRepo), new(*user_infra_postgres.FollowPostgres)),
 	wire.Bind(new(user_internal_interface_repo.IProfileDeletedRepo), new(*user_infra_postgres.ProfileDeletedPostgres)),
 	wire.Bind(new(user_internal_interface_repo.IProfileRepo), new(*user_infra_postgres.ProfilePostgres)),
+	wire.Bind(new(user_internal_interface_repo.OTPRepository), new(*user_infra_postgres.OTPPostgres)),
+	wire.Bind(new(user_internal_interface_repo.PINRepository), new(*user_infra_postgres.PINPostgres)),
+	wire.Bind(new(user_internal_interface_repo.SessionRepository), new(*user_infra_postgres.SessionPostgres)),
+	wire.Bind(new(user_internal_interface_repo.StatusRepository), new(*user_infra_postgres.StatusPostgres)),
+	common_injection.NewAuthClient,
+	common_injection.NewBDSProClient,
+	common_injection.NewCRMClient,
+	common_injection.NewChatClient,
+	common_injection.NewHubClient,
+	common_injection.NewNotification,
+	common_injection.NewOrganizationClient,
+	common_injection.NewPaymentClient,
+	common_injection.NewTQClient,
+	common_injection.NewTransactionClient,
+	common_injection.NewUserClient,
+	common_injection.NewHttpClient,
+	common_utils.NewSyncUtil,
 	user_infra_postgres.NewAdminAccessPostgresRepo,
 	user_internal_usecase.NewAdminAccessUsecase,
 	user_infra_handler.NewAdminHandler,
@@ -82,33 +94,25 @@ var wireSet = wire.NewSet(
 	user_internal_usecase.NewAuthService,
 	user_infra_client.NewBdsproClient,
 	user_infra_postgres.NewBlockPostgres,
-	user_infra_routes.NewBlockRouter,
 	user_internal_usecases.NewBlockUsecase,
 	user_infra_handler.NewBookmarkUserHandler,
 	user_infra_postgres.NewBookmarkUserPostgres,
 	user_internal_usecases.NewBookmarkUserUsecase,
 	user_infra_postgres.NewCertificationPostgres,
 	user_internal_usecases.NewCertificationUsecase,
-	user_infra_client.NewChatClient,
 	user_infra_postgres.NewContactPostgres,
 	user_infra_cookie.NewCookieProvider,
-	user_infra_client.NewCrmClient,
 	user_infra_mapper.NewDeviceMapper,
 	user_infra_postgres.NewDevicePostgresRepo,
 	user_internal_usecase.NewDeviceUsecase,
 	user_infra_oauth.NewFacebookAuthService,
-	user_infra_client.NewFeedbackClient,
 	user_infra_postgres.NewFollowPostgres,
-	user_infra_routes.NewFollowRouter,
 	user_internal_usecases.NewFollowUsecase,
 	user_infra_postgres.NewFriendPostgres,
-	user_infra_routes.NewFriendRouter,
 	user_internal_usecases.NewFriendUsecase,
 	user_infra_oauth.NewGoogleAuthService,
-	user_infra_client.NewGroupClient,
 	user_infra_postgres.NewGroupPostgres,
 	user_infra_handler.NewGrpcProfileService,
-	user_infra_client.NewHttpClient,
 	user_infra_client.NewHubClient,
 	user_initial.NewInitialApp,
 	user_infra_handler.NewInternalHandler,
@@ -130,8 +134,6 @@ var wireSet = wire.NewSet(
 	user_infra_handler.NewOAuthRouter,
 	user_internal_usecase.NewOAuthUsecase,
 	user_infra_postgres.NewOTPRepository,
-	user_infra_client.NewOrganizationClient,
-	user_infra_client.NewOrganizationMemberClient,
 	user_infra_client.NewOrganizationProviderClient,
 	user_internal_usecase.NewOtpUsecase,
 	user_infra_postgres.NewPINRepository,
@@ -158,7 +160,6 @@ var wireSet = wire.NewSet(
 	user_infra_postgres.NewProfileMediaPostgres,
 	user_infra_postgres.NewProfilePostgres,
 	user_infra_provider.NewProfileProvider,
-	user_infra_routes.NewProfileRouter,
 	user_internal_usecases.NewProfileUsecase,
 	user_infra_handler.NewPurposeUseHandler,
 	user_infra_mapper.NewPurposeUseMapper,

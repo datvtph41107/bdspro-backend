@@ -1,0 +1,19 @@
+# Constructor dùng chung — gen_wire import package và thêm vào wire.go
+packages:
+  - import: common/injection
+    constructors:
+      - NewAuthClient
+      - NewBDSProClient
+      - NewCRMClient
+      - NewChatClient
+      - NewHubClient
+      - NewNotification
+      - NewOrganizationClient
+      - NewPaymentClient
+      - NewTQClient
+      - NewTransactionClient
+      - NewUserClient
+      - NewHttpClient
+  - import: common/utils
+    constructors:
+      - NewSyncUtil

@@ -2,14 +2,14 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_provider "common/domain/provider"
 	_errors "common/errors"
-	_provider "common/provider"
 	_redis "common/redis"
 	_utils "common/utils"
 	"context"
 	"fmt"
 	"log"
-	orgpb "pb/types/organization"
+	"pb/clients"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strconv"
@@ -33,15 +33,14 @@ type GrpcProfileService struct {
 	ProfileUsecase        *usecases.ProfileUsecase
 	KYCUsecase            usecases.IKYCUsecase
 	cache                 *cache.Cache
-	OrgClient             orgpb.OrganizationServiceClient
-	GroupClient           orgpb.GroupServiceClient
+	OrgClient             *clients.OrganizationClient
 	ProfileMapper         *mapper.ProfileMapper
 	KYCMapper             *mapper.KYCMapper
-	CrmClient             *client.CrmClient
+	CrmClient             _provider.CrmProvider
 	HubClient             *client.HubClient
 	BdsproClient          *client.BdsproClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
-	SyncProvider          *_provider.SyncProvider
+	SyncProvider          *_utils.SyncUtil
 	Redis                 *_redis.RedisService
 	sessionKey            uint64
 }
@@ -52,25 +51,25 @@ func NewGrpcProfileService(
 	adminUsecase *usecases.AdminUsecase,
 	profileUsecase *usecases.ProfileUsecase,
 	kycUsecase usecases.IKYCUsecase,
-	orgClient orgpb.OrganizationServiceClient,
-	groupClient orgpb.GroupServiceClient,
+	orgClient *clients.OrganizationClient,
+	// groupClient *clients.OrganizationClient,
 	profileMapper *mapper.ProfileMapper,
 	kycMapper *mapper.KYCMapper,
-	crmClient *client.CrmClient,
+	crmClient _provider.CrmProvider,
 	hubClient *client.HubClient,
 	bdsproClient *client.BdsproClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 	redis *_redis.RedisService,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
-		ProfileRepo:           profileRepo,
-		ProfileUsecase:        profileUsecase,
-		AdminUsecase:          adminUsecase,
-		KYCUsecase:            kycUsecase,
-		cache:                 cache.New(5*time.Minute, 10*time.Minute),
-		OrgClient:             orgClient,
-		GroupClient:           groupClient,
+		ProfileRepo:    profileRepo,
+		ProfileUsecase: profileUsecase,
+		AdminUsecase:   adminUsecase,
+		KYCUsecase:     kycUsecase,
+		cache:          cache.New(5*time.Minute, 10*time.Minute),
+		OrgClient:      orgClient,
+		// GroupClient:           groupClient,
 		ProfileMapper:         profileMapper,
 		KYCMapper:             kycMapper,
 		CrmClient:             crmClient,
@@ -222,7 +221,15 @@ func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.
 	var contactInfo *sharepb.ContactInfoV3Proto
 	friendInfoResp, errFriendInfo := s.CrmClient.GetFriendInfo(ctx, req.Id)
 	if errFriendInfo == nil && friendInfoResp != nil {
-		contactInfo = friendInfoResp
+		contactInfo = &sharepb.ContactInfoV3Proto{
+			NumFriend:    friendInfoResp.NumFriend,
+			NumFollower:  friendInfoResp.NumFollower,
+			NumFollowing: friendInfoResp.NumFollowing,
+			ContactId:    friendInfoResp.ContactId,
+			BlockId:      friendInfoResp.BlockId,
+			ReportId:     friendInfoResp.ReportId,
+			FollowId:     friendInfoResp.FollowId,
+		}
 	}
 
 	// Lấy BDSPro dashboard stats từ BDSPro service
@@ -326,9 +333,7 @@ func (s *GrpcProfileService) GenTileSessionToken(ctx context.Context, _ *sharepb
 func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Empty) (*userpb.AccountInfoResponse, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
-	orgs, _ := s.OrgClient.GetOrganizationByUserId(ctx, &orgpb.GetOrganizationByUserIdRequest{
-		UserId: uint32(profileId),
-	})
+	orgs, _ := s.OrgClient.GetOrganizationsByUserId(ctx, profileId)
 
 	// groups, _ := s.GroupClient.GetGroupByUserId(ctx, &organizationpb.GetGroupByUserIdRequest{
 	// 	UserId: uint32(profileId),
@@ -351,8 +356,8 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 		OwnerType: &ownerType,
 	})
 
-	if orgs != nil && len(orgs.Data) > 0 {
-		for _, org := range orgs.Data {
+	if len(orgs) > 0 {
+		for _, org := range orgs {
 			ownerType := uint32(30)
 			accountInfos = append(accountInfos, &userpb.AccountInfo{
 				// Id:              uint64(org.Id),
@@ -465,7 +470,8 @@ func (s *GrpcProfileService) SearchProfilePublic(ctx context.Context, req *userp
 
 	infos := s.ProfileMapper.UserSearchItemToPbs(results)
 
-	s.CrmClient.MapFriendStatusToSearchItemPb(ctx, infos)
+	// TODO:
+	// s.CrmClient.MapFriendStatusToSearchItemPb(ctx, infos)
 	fmt.Printf("total=%d", total)
 
 	return &userpb.SearchProfilePublicResponse{

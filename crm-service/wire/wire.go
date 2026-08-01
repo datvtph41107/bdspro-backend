@@ -5,6 +5,7 @@ package wire
 
 import (
 	_db "common/db"
+	common_injection "common/injection"
 	_provider "common/provider"
 	crm_infra_client "crm/infra/client"
 	crm_infra_email_sender "crm/infra/email_sender"
@@ -52,6 +53,18 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.SharingAccessRepo), new(*crm_infra_postgre.SharingAccessPostgre)),
 	wire.Bind(new(crm_internal_repo.StageRepo), new(*crm_infra_postgre.PostgreStage)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
+	common_injection.NewAuthClient,
+	common_injection.NewBDSProClient,
+	common_injection.NewCRMClient,
+	common_injection.NewChatClient,
+	common_injection.NewHubClient,
+	common_injection.NewNotification,
+	common_injection.NewOrganizationClient,
+	common_injection.NewPaymentClient,
+	common_injection.NewTQClient,
+	common_injection.NewTransactionClient,
+	common_injection.NewUserClient,
+	common_injection.NewHttpClient,
 	crm_infra_postgre.NewAdminOpportunityEventPostgres,
 	crm_infra_handler.NewAdminSalesHandler,
 	crm_internal_usecase.NewAdminSalesUsecase,

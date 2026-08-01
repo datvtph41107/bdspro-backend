@@ -43,7 +43,7 @@ var GrpcCmd = &cobra.Command{
 
 		app, _ := wire.InitializeApp()
 		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
-		app.CrmClient.RegisterService(context.Background())
+		// app.CrmProvider.RegisterService(context.Background())
 
 		// === QUOTA INIT ===
 		var quotaInterceptor grpc.UnaryServerInterceptor

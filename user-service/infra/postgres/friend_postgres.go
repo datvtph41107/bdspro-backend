@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	_dto "common/domain/dto"
 	"time"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -146,11 +147,11 @@ func (repo *FriendPostgres) ExistsFriendship(id uint64, receiverID uint64) (bool
 	return count > 0, err
 }
 
-func (repo *FriendPostgres) GetRelationShip(currentId uint64, targetId uint64) (*models.FriendItem, error) {
-	var status *models.FriendItem
+func (repo *FriendPostgres) GetRelationShip(currentId uint64, targetId uint64) (*_dto.FriendItemDTO, error) {
+	var status *_dto.FriendItemDTO
 
 	err := repo.DB.
-		Model(&models.FriendItem{}).
+		Model(&_dto.FriendItemDTO{}).
 		Select("id, status, created_by, receiver_id").
 		Where("((created_by = ? AND receiver_id = ?) OR (created_by = ? AND receiver_id = ?)) AND deleted_at IS NULL",
 			currentId, targetId, targetId, currentId).

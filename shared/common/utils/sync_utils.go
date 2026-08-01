@@ -1,8 +1,7 @@
-package _provider
+package _utils
 
 import (
 	_redis "common/redis"
-	_utils "common/utils"
 	"context"
 	"fmt"
 	"strconv"
@@ -42,53 +41,53 @@ const (
 	SyncKeyConversationsMe      = "cnv:me"
 	SyncKeyConversationCommon   = "cnv:c"
 	// TQD sync keys
-	SyncKeyTQDLayerDetail          = "tqd:layer:id"
-	SyncKeyTQDLayerList            = "tqd:layer:me"
-	SyncKeyTQDLayerFamilyList      = "tqd:layer-family:me"
-	SyncKeyTQDRegionDetail         = "tqd:region:id"
-	SyncKeyTQDRegionList           = "tqd:region:me"
-	SyncKeyTQDParcelDetail         = "tqd:parcel:id"
-	SyncKeyTQDParcelLayers         = "tqd:parcel:layers"
-	SyncKeyTQDLabelDetail          = "tqd:label:id"
-	SyncKeyTQDLabelList            = "tqd:label:me"
-	SyncKeyTQDSubscriptionList     = "tqd:sub:me"
-	SyncKeyTQDNotificationList     = "tqd:notif:me"
-	SyncKeyTQDPOIDetail            = "tqd:poi:id"
-	SyncKeyTQDPOIList              = "tqd:poi:me"
-	SyncKeyTQDLocationSearch       = "tqd:loc:me"
-	SyncKeyTQDReportList           = "tqd:report:me"
-	SyncKeyTQDFeatureList          = "tqd:feature:me"
+	SyncKeyTQDLayerDetail      = "tqd:layer:id"
+	SyncKeyTQDLayerList        = "tqd:layer:me"
+	SyncKeyTQDLayerFamilyList  = "tqd:layer-family:me"
+	SyncKeyTQDRegionDetail     = "tqd:region:id"
+	SyncKeyTQDRegionList       = "tqd:region:me"
+	SyncKeyTQDParcelDetail     = "tqd:parcel:id"
+	SyncKeyTQDParcelLayers     = "tqd:parcel:layers"
+	SyncKeyTQDLabelDetail      = "tqd:label:id"
+	SyncKeyTQDLabelList        = "tqd:label:me"
+	SyncKeyTQDSubscriptionList = "tqd:sub:me"
+	SyncKeyTQDNotificationList = "tqd:notif:me"
+	SyncKeyTQDPOIDetail        = "tqd:poi:id"
+	SyncKeyTQDPOIList          = "tqd:poi:me"
+	SyncKeyTQDLocationSearch   = "tqd:loc:me"
+	SyncKeyTQDReportList       = "tqd:report:me"
+	SyncKeyTQDFeatureList      = "tqd:feature:me"
 )
 
-type SyncProvider struct {
+type SyncUtil struct {
 	redis *_redis.RedisService
 }
 
-func NewSyncProvider(rd *_redis.RedisService) *SyncProvider {
-	return &SyncProvider{
+func NewSyncUtil(rd *_redis.RedisService) *SyncUtil {
+	return &SyncUtil{
 		redis: rd,
 	}
 }
 
 // GetKey trả về key Redis theo format {profileId}:{resourceId}:{prefix}
 // Ví dụ: GetKey(ctx, "product", 123) -> "1:123:product" (1 là profileId từ context)
-func (s *SyncProvider) GetKey(ctx context.Context, prefix string, resourceId uint64) string {
-	profileId := _utils.GetProfileIdWithContext(ctx)
+func (s *SyncUtil) GetKey(ctx context.Context, prefix string, resourceId uint64) string {
+	profileId := GetProfileIdWithContext(ctx)
 	return s.GetKeyForProfile(profileId, resourceId, prefix)
 }
 
 // GetKey trả về key Redis theo format {profileId}:{resourceId}:{prefix}
 // Ví dụ: GetKey(ctx, "product", 123) -> "1:123:product" (1 là profileId từ context)
-func (s *SyncProvider) GetKeyWithoutMe(ctx context.Context, prefix string, resourceId uint64) string {
+func (s *SyncUtil) GetKeyWithoutMe(ctx context.Context, prefix string, resourceId uint64) string {
 	return fmt.Sprintf("%d:%s", resourceId, prefix)
 }
 
 // GetKeyForProfile trả về key Redis theo profileId cụ thể (dùng khi cần invalidate key của user khác)
-func (s *SyncProvider) GetKeyForProfile(profileId, resourceId uint64, prefix string) string {
+func (s *SyncUtil) GetKeyForProfile(profileId, resourceId uint64, prefix string) string {
 	return fmt.Sprintf("%d:%d:%s", profileId, resourceId, prefix)
 }
 
-func (s *SyncProvider) HasUpdated(ctx context.Context, key string, timestamp int64) bool {
+func (s *SyncUtil) HasUpdated(ctx context.Context, key string, timestamp int64) bool {
 	str, err := s.redis.Get(key)
 	if err != nil {
 		return true
@@ -102,7 +101,7 @@ func (s *SyncProvider) HasUpdated(ctx context.Context, key string, timestamp int
 }
 
 // return: isChanged, cache exists
-func (s *SyncProvider) IsCacheChanged(ctx context.Context, key string, timestamp int64) (bool, bool) {
+func (s *SyncUtil) IsCacheChanged(ctx context.Context, key string, timestamp int64) (bool, bool) {
 	str, err := s.redis.Get(key)
 	if err != nil {
 		return true, false
@@ -115,12 +114,12 @@ func (s *SyncProvider) IsCacheChanged(ctx context.Context, key string, timestamp
 	return true, false
 }
 
-func (s *SyncProvider) PutTimestamp(ctx context.Context, key string, timestamp int64) error {
+func (s *SyncUtil) PutTimestamp(ctx context.Context, key string, timestamp int64) error {
 	s.redis.SetWithTime(key, timestamp, 48*time.Hour)
 	return nil
 }
 
-func (s *SyncProvider) PutTimeRequest(ctx context.Context, key string, timestamp int64) {
+func (s *SyncUtil) PutTimeRequest(ctx context.Context, key string, timestamp int64) {
 	ts := time.Now().UnixMilli() - 5000
 	if timestamp > 0 {
 		ts = timestamp
@@ -129,12 +128,12 @@ func (s *SyncProvider) PutTimeRequest(ctx context.Context, key string, timestamp
 }
 
 // Del xóa key trong Redis (để client sync lại ds/chi tiết).
-func (s *SyncProvider) Del(ctx context.Context, key string) error {
+func (s *SyncUtil) Del(ctx context.Context, key string) error {
 	return s.redis.Delete(key)
 }
 
 // GetTimestamp lấy timestamp từ Redis, trả về 0 nếu key không tồn tại
-func (s *SyncProvider) GetTimestamp(ctx context.Context, key string) int64 {
+func (s *SyncUtil) GetTimestamp(ctx context.Context, key string) int64 {
 	str, err := s.redis.Get(key)
 	if err != nil {
 		return 0
@@ -146,7 +145,7 @@ func (s *SyncProvider) GetTimestamp(ctx context.Context, key string) int64 {
 	return ts
 }
 
-func (s *SyncProvider) MGet(ctx context.Context, keys []string) ([]interface{}, error) {
+func (s *SyncUtil) MGet(ctx context.Context, keys []string) ([]interface{}, error) {
 	vals, err := s.redis.Client.MGet(ctx, keys...).Result()
 	if err != nil {
 		return nil, err
