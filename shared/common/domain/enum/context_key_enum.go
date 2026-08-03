@@ -16,4 +16,5 @@ const (
 	UserAgentKey      ContextKey = "user-agent"
 	APIKeyKey         ContextKey = "api-key"
 	DeviceIDKey       ContextKey = "device-id"
+	RoleIDsKey        ContextKey = "roleIds"
 )

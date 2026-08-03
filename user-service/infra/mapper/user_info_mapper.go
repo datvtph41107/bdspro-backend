@@ -2,8 +2,8 @@ package mapper
 
 import (
 	_utils "common/utils"
-	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 	"user/internal/domain"
 )
 
@@ -14,8 +14,8 @@ func NewUserInfoMapper() *UserInfoMapper {
 	return &UserInfoMapper{}
 }
 
-func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *domain.AuthUser) *authpb.AuthUserStatusInfo {
-	result := &authpb.AuthUserStatusInfo{
+func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *domain.AuthUser) *userpb.AuthUserStatusInfo {
+	result := &userpb.AuthUserStatusInfo{
 		ProfileId:   user.ProfileID,
 		Status:      uint32(user.Status),
 		StatusText:  user.Status.Str(),

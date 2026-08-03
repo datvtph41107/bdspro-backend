@@ -1,4 +1,4 @@
-package _provider
+package _algorithm
 
 import (
 	"encoding/binary"

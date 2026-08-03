@@ -4,6 +4,7 @@ package userpb;
 
 import "shared/common.proto";
 import "shared/v3.proto";
+import "auth/role.proto";
 
 option go_package = "pb/types/user;userpb";
 
@@ -11,25 +12,50 @@ option go_package = "pb/types/user;userpb";
 service InternalUserService {
     // Tạo profile mới (dùng bởi auth-service khi đăng ký)
     rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
-    
+
     // Cập nhật profile (dùng bởi auth-service)
     rpc UpdateProfile(UpdateProfileRequest) returns (sharepb.Empty);
-    
+
     // Xóa mềm profile (dùng bởi auth-service)
     rpc SoftDeleteProfile(SoftDeleteProfileRequest) returns (sharepb.Empty);
-    
+
     // Xóa vĩnh viễn profile (dùng bởi auth-service)
     rpc HardDeleteProfile(sharepb.IdRequest) returns (sharepb.Empty);
-    
+
     // Lấy profile theo ID
     rpc GetProfileByID(GetProfileByIDRequest) returns (ProfileResponse);
 
     rpc GetProfileByIDV3(sharepb.RequestV3Proto) returns (sharepb.UserV3Proto);
 
     rpc LockUser(sharepb.RequestV3Proto) returns (sharepb.Empty);
-    
+
     // Cập nhật thời gian hoạt động gần nhất (dùng bởi relay-service khi disconnect)
     rpc UpdateLastSeen(sharepb.IdRequest) returns (sharepb.Empty);
+
+    rpc GetRoleById(sharepb.IdRequest) returns (sharepb.Role);
+    rpc GetRolesByIds(sharepb.IdRequest) returns (authpb.RoleListResponse);
+    rpc GetRolesByRoleKeys(GetRolesByRoleKeysRequest) returns (authpb.RoleListResponse);
+
+    // Lấy role kèm danh sách permissionId (id/ids cụ thể; để trống = tất cả role)
+    rpc GetRolePermissions(sharepb.IdRequest) returns (GetRolePermissionsResponse);
+
+    // Get Auth Users by Profile IDs
+    rpc GetAuthUsersByProfileIDs(GetAuthUsersByProfileIDsRequest) returns (GetAuthUsersByProfileIDsResponse);
+
+    // Get Auth Admin by IDs with role info
+    rpc GetAuthAdminByIds(GetAuthAdminByIdsRequest) returns (GetAuthAdminByIdsResponse);
+
+    // Delete all auth methods by userId
+    rpc DeleteAuthMethodsByUserId(sharepb.IdRequest) returns (sharepb.SubmitResponse);
+
+    // Get authentication security data by authId
+    rpc GetAuthDataByAuthId(sharepb.RequestV3Proto) returns (sharepb.AuthDataV3Proto);
+
+    // Get push tokens by profile ID (Internal API for notification service)
+    rpc GetPushTokensByProfileId(sharepb.IdRequest) returns (GetPushTokensResponse);
+
+    // Lấy danh sách roleId theo profileId (dùng bởi auth-service)
+    rpc GetRoleIdsByProfileId(sharepb.IdRequest) returns (GetRoleIdsByProfileIdResponse);
 }
 
 // ============= Request Messages =============
@@ -65,6 +91,18 @@ message GetProfileByIDRequest {
     uint64 profileId = 1;
 }
 
+message GetRolesByRoleKeysRequest {
+    repeated uint32 roleKeys = 1;
+}
+
+message GetAuthUsersByProfileIDsRequest {
+    repeated uint64 profileIds = 1;
+}
+
+message GetAuthAdminByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
 // ============= Response Messages =============
 
 message CreateProfileResponse {
@@ -89,3 +127,58 @@ message ProfileResponse {
     string updatedAt = 9;
 }
 
+message GetAuthUsersByProfileIDsResponse {
+    repeated AuthUserStatusInfo data = 1;
+}
+
+message AuthUserStatusInfo {
+    uint64 profileId = 1;
+    uint64 roleId = 2;
+    sharepb.Role role = 3;
+    uint32 status = 4;
+    string statusText = 5;
+    bool isLocked = 6;
+    uint32 lockType = 7;
+    string lockedAt = 8;
+    string lockedUntil = 9;
+    string lockReason = 10;
+    optional uint64 lockedBy = 11;
+    bool canLogin = 12;
+    bool isExpired = 13;
+}
+
+message GetAuthAdminByIdsResponse {
+    repeated AuthAdminWithRole data = 1;
+}
+
+message AuthAdminWithRole {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string username = 3;
+    string fullName = 4;
+    string email = 5;
+    string phone = 6;
+    string avatar = 7;
+    uint32 roleKey = 8;
+    sharepb.Role role = 9;
+    uint32 status = 10;
+    string createdAt = 11;
+    string updatedAt = 12;
+}
+
+message GetPushTokensResponse {
+    repeated string pushTokens = 1;
+}
+
+message RolePermissionItem {
+    sharepb.Role role = 1;
+    repeated uint64 permissionIds = 2;
+}
+
+message GetRolePermissionsResponse {
+    repeated RolePermissionItem data = 1;
+}
+
+message GetRoleIdsByProfileIdResponse {
+    repeated uint64 roleIds = 1;
+}

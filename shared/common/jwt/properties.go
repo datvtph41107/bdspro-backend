@@ -28,6 +28,7 @@ type JwtTokenProperties struct {
 	OrganizationID *uint64                `json:"organizationId"`
 	PlanID         *uint64                `json:"planId"`
 	Role           string                 `json:"role"`
+	RoleIds        []uint64               `json:"roleIds"`
 	SessionID      uint64                 `json:"sessionId"`
 	MinuteExpired  int64                  `json:"minuteExpired"`
 	Type           TokenType              `json:"type"`

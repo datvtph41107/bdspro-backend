@@ -22,4 +22,5 @@ type UserInfoRepository interface {
 	GetUsersByProfileIDs(ctx context.Context, profileIDs []uint64) ([]domain.AuthUser, error)
 	LockMultipleUsers(ctx context.Context, profileIDs []uint64, lockType domain.AccountStatus, duration int, reason string, lockedBy uint64) error
 	UnlockMultipleUsers(ctx context.Context, profileIDs []uint64, reason string, unlockedBy uint64) error
+	GetRoleIdsByProfileId(ctx context.Context, profileID uint64) ([]uint64, error)
 }

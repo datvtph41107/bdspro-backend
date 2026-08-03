@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 	"user/infra/mapper"
+	"user/internal/domain"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -27,7 +28,6 @@ import (
 
 type InternalHandler struct {
 	userpb.UnimplementedInternalUserServiceServer
-	authpb.UnimplementedAuthInternalServiceServer
 	profileUsecase *usecases.ProfileUsecase
 	adminUsecase   *usecases.AdminUsecase
 
@@ -256,19 +256,6 @@ func (h *InternalHandler) UpdateLastSeen(ctx context.Context, req *sharepb.IdReq
 	return &sharepb.Empty{}, nil
 }
 
-func (h *InternalHandler) RequiredRoles(ctx context.Context, req *authpb.RequiredRolesRequest) (*authpb.RequiredRolesResponse, error) {
-	return &authpb.RequiredRolesResponse{}, nil
-}
-func (h *InternalHandler) RequiredPermissions(ctx context.Context, req *authpb.RequiredPermissionsRequest) (*authpb.RequiredPermissionsResponse, error) {
-	err := h.HasPermissions(ctx, req.Permissions)
-	if err != nil {
-		return nil, err
-	}
-	return &authpb.RequiredPermissionsResponse{
-		Status: true,
-	}, nil
-}
-
 func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) error {
 	funcStart := time.Now()
 	profileId := _utils.GetProfileIdWithContext(ctx)
@@ -473,43 +460,7 @@ func (h *InternalHandler) GetRolesByIds(ctx context.Context, req *sharepb.IdRequ
 	}, nil
 }
 
-func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
-	role, err := h.roleRepo.GetAdminRoleIdByGroupKey(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	var pbRole *sharepb.Role
-	if role != nil {
-		pbRole = h.roleMapper.MapRoleToPb(role)
-	}
-
-	return pbRole, nil
-}
-
-func (h *InternalHandler) GetProfileByIds(ctx context.Context, req *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error) {
-	// Lấy thông tin từ AuthMethod domain thay vì gọi user service
-	authMethods, err := h.roleRepo.GetAuthMethodsByIds(ctx, req.Ids)
-	if err != nil {
-		return nil, err
-	}
-
-	profiles := make([]*sharepb.ProfileItem, len(authMethods))
-	for i, auth := range authMethods {
-		profiles[i] = &sharepb.ProfileItem{
-			Id:       auth.UserID,
-			FullName: auth.FullName,
-			Avatar:   auth.Avatar,
-			Phone:    auth.Phone,
-		}
-	}
-
-	return &sharepb.GetProfileByIdsResponse{
-		Profiles: profiles,
-	}, nil
-}
-
-func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *authpb.GetRolesByRoleKeysRequest) (*authpb.RoleListResponse, error) {
+func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *userpb.GetRolesByRoleKeysRequest) (*authpb.RoleListResponse, error) {
 	roles, err := h.roleRepo.FindByRoleKeys(ctx, req.RoleKeys)
 	if err != nil {
 		return nil, err
@@ -521,52 +472,59 @@ func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *authpb.Ge
 	}, nil
 }
 
-func (h *InternalHandler) CreateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
-	entity := h.authMethodMapper.MapAuthMethodPbToDomain(req)
+func (h *InternalHandler) GetRolePermissions(ctx context.Context, req *sharepb.IdRequest) (*userpb.GetRolePermissionsResponse, error) {
+	var roles []domain.Role
+	var err error
 
-	result, err := h.authMethodUsecase.CreateAdmin(ctx, entity)
+	switch {
+	case req.Id > 0:
+		role, getErr := h.roleRepo.GetByID(ctx, req.Id)
+		if getErr != nil {
+			return nil, getErr
+		}
+		if role != nil {
+			roles = []domain.Role{*role}
+		}
+	case len(req.Ids) > 0:
+		roles, err = h.roleRepo.GetListByIDs(ctx, req.Ids)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		roles, err = h.roleRepo.GetAll(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	roleIds := make([]uint64, 0, len(roles))
+	for _, role := range roles {
+		roleIds = append(roleIds, role.ID)
+	}
+
+	permMap, err := h.roleRepo.GetPermissionIdsByRoleIds(ctx, roleIds)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert DTO response to proto response
-	return h.authMethodMapper.MapAuthMethodPb(result), nil
-}
-
-func (h *InternalHandler) UpdateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
-	// Convert proto request to DTO
-	en := h.authMethodMapper.MapAuthMethodPbToDomain(req)
-
-	result, err := h.authMethodUsecase.UpdateAdmin(ctx, en)
-	if err != nil {
-		return nil, err
+	data := make([]*userpb.RolePermissionItem, 0, len(roles))
+	for _, role := range roles {
+		permIds := permMap[role.ID]
+		pbRole := h.roleMapper.MapRoleToPb(&role)
+		if pbRole != nil {
+			pbRole.PermissionIds = permIds
+		}
+		data = append(data, &userpb.RolePermissionItem{
+			Role:          pbRole,
+			PermissionIds: permIds,
+		})
 	}
 
-	// Convert DTO response to proto response
-	return h.authMethodMapper.MapAuthMethodPb(result), nil
-}
-
-func (h *InternalHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
-	err := h.authMethodUsecase.DeleteAdmin(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sharepb.SubmitResponse{
-		Message: "Admin đã được xóa thành công",
-	}, nil
-}
-
-func (h *InternalHandler) GetAdminById(ctx context.Context, req *sharepb.IdRequest) (*authpb.AuthMethod, error) {
-	result, err := h.authMethodUsecase.GetByID(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-	return h.authMethodMapper.MapAuthMethodPb(result), nil
+	return &userpb.GetRolePermissionsResponse{Data: data}, nil
 }
 
 // GetAuthUsersByProfileIDs lấy thông tin AuthUser theo danh sách profile IDs (Internal API)
-func (h *InternalHandler) GetAuthUsersByProfileIDs(ctx context.Context, req *authpb.GetAuthUsersByProfileIDsRequest) (*authpb.GetAuthUsersByProfileIDsResponse, error) {
+func (h *InternalHandler) GetAuthUsersByProfileIDs(ctx context.Context, req *userpb.GetAuthUsersByProfileIDsRequest) (*userpb.GetAuthUsersByProfileIDsResponse, error) {
 	// Call usecase
 	result, err := h.userInfoUsecase.GetAuthUsersByProfileIDs(ctx, req.ProfileIds)
 	if err != nil {
@@ -574,12 +532,12 @@ func (h *InternalHandler) GetAuthUsersByProfileIDs(ctx context.Context, req *aut
 	}
 
 	// Convert DTO response to proto response
-	var users []*authpb.AuthUserStatusInfo
+	var users []*userpb.AuthUserStatusInfo
 	for _, user := range result {
 		users = append(users, h.userInfoMapper.MapAuthUserStatusInfoToPb(&user))
 	}
 
-	return &authpb.GetAuthUsersByProfileIDsResponse{
+	return &userpb.GetAuthUsersByProfileIDsResponse{
 		Data: users,
 	}, nil
 }
@@ -597,7 +555,7 @@ func (h *InternalHandler) DeleteAuthMethodsByUserId(ctx context.Context, req *sh
 }
 
 // GetAuthAdminByIds lấy thông tin admin kèm với role theo danh sách IDs
-func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.GetAuthAdminByIdsRequest) (*authpb.GetAuthAdminByIdsResponse, error) {
+func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *userpb.GetAuthAdminByIdsRequest) (*userpb.GetAuthAdminByIdsResponse, error) {
 	if req == nil {
 		return nil, _errors.ReturnError(400, "request không hợp lệ")
 	}
@@ -613,7 +571,7 @@ func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.Get
 		return nil, err
 	}
 
-	var pbAdmins []*authpb.AuthAdminWithRole
+	var pbAdmins []*userpb.AuthAdminWithRole
 	for _, admin := range admins {
 		if admin == nil {
 			continue
@@ -621,7 +579,7 @@ func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *authpb.Get
 		pbAdmins = append(pbAdmins, h.roleMapper.MapAuthAdminWithRoleToPb(admin))
 	}
 
-	return &authpb.GetAuthAdminByIdsResponse{
+	return &userpb.GetAuthAdminByIdsResponse{
 		Data: pbAdmins,
 	}, nil
 }
@@ -641,7 +599,7 @@ func (h *InternalHandler) GetAuthDataByAuthId(ctx context.Context, req *sharepb.
 }
 
 // GetPushTokensByProfileId lấy danh sách push token theo profile ID (Internal API cho notification service)
-func (h *InternalHandler) GetPushTokensByProfileId(ctx context.Context, req *sharepb.IdRequest) (*authpb.GetPushTokensResponse, error) {
+func (h *InternalHandler) GetPushTokensByProfileId(ctx context.Context, req *sharepb.IdRequest) (*userpb.GetPushTokensResponse, error) {
 	if req == nil || req.Id == 0 {
 		return nil, _errors.ReturnError(400, "profileId là bắt buộc")
 	}
@@ -658,7 +616,22 @@ func (h *InternalHandler) GetPushTokensByProfileId(ctx context.Context, req *sha
 		}
 	}
 
-	return &authpb.GetPushTokensResponse{
+	return &userpb.GetPushTokensResponse{
 		PushTokens: pushTokens,
+	}, nil
+}
+
+func (h *InternalHandler) GetRoleIdsByProfileId(ctx context.Context, req *sharepb.IdRequest) (*userpb.GetRoleIdsByProfileIdResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.ReturnError(400, "profileId là bắt buộc")
+	}
+
+	roleIds, err := h.roleRepo.GetRoleIdsByProfileId(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userpb.GetRoleIdsByProfileIdResponse{
+		RoleIds: roleIds,
 	}, nil
 }

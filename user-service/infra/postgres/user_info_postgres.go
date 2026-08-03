@@ -221,6 +221,39 @@ func (r *UserInfoPostgres) GetUsersByProfileIDs(ctx context.Context, profileIDs 
 	return users, nil
 }
 
+func (r *UserInfoPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID uint64) ([]uint64, error) {
+	roleIDSet := make(map[uint64]struct{})
+
+	var userInfo domain.AuthUser
+	err := r.GetDB(ctx).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		First(&userInfo).Error
+	if err == nil && userInfo.RoleID != nil && *userInfo.RoleID > 0 {
+		roleIDSet[*userInfo.RoleID] = struct{}{}
+	}
+
+	var profileRoleIDs []uint64
+	err = r.GetDB(ctx).
+		Table("role_profiles").
+		Select("role_id").
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Pluck("role_id", &profileRoleIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, roleID := range profileRoleIDs {
+		if roleID > 0 {
+			roleIDSet[roleID] = struct{}{}
+		}
+	}
+
+	roleIDs := make([]uint64, 0, len(roleIDSet))
+	for roleID := range roleIDSet {
+		roleIDs = append(roleIDs, roleID)
+	}
+	return roleIDs, nil
+}
+
 // LockMultipleUsers khóa nhiều user cùng lúc
 func (r *UserInfoPostgres) LockMultipleUsers(ctx context.Context, profileIDs []uint64, lockType domain.AccountStatus, duration int, reason string, lockedBy uint64) error {
 	now := time.Now()

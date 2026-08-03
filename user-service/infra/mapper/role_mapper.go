@@ -2,8 +2,8 @@ package mapper
 
 import (
 	_utils "common/utils"
-	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 	"user/internal/domain"
 )
 
@@ -129,12 +129,12 @@ func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *
 }
 
 // MapAuthAdminWithRoleToPb convert domain.AuthAdminWithRole to proto
-func (m *RoleMapper) MapAuthAdminWithRoleToPb(admin *domain.AuthAdminWithRole) *authpb.AuthAdminWithRole {
+func (m *RoleMapper) MapAuthAdminWithRoleToPb(admin *domain.AuthAdminWithRole) *userpb.AuthAdminWithRole {
 	if admin == nil {
 		return nil
 	}
 
-	pbAdmin := &authpb.AuthAdminWithRole{
+	pbAdmin := &userpb.AuthAdminWithRole{
 		Id:        admin.ID,
 		UserId:    admin.UserID,
 		Username:  admin.Username,

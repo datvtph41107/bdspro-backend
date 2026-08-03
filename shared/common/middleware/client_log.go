@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -52,6 +53,18 @@ func UnaryClientInterceptor(
 	appendUint64IfExists(_enums.PlanIDKey, "planId")
 
 	appendStringIfExists(_enums.RoleKey, "role")
+	appendUint64SliceIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
+		roleIds, ok := ctx.Value(ctxKey).([]uint64)
+		if !ok || len(roleIds) == 0 {
+			return
+		}
+		parts := make([]string, 0, len(roleIds))
+		for _, id := range roleIds {
+			parts = append(parts, strconv.FormatUint(id, 10))
+		}
+		md.Append(mdKey, strings.Join(parts, ","))
+	}
+	appendUint64SliceIfExists(_enums.RoleIDsKey, "roleIds")
 	appendStringIfExists(_enums.TypeKey, "type")
 
 	appendTimeIfExists(_enums.PlanFromKey, "planFrom")

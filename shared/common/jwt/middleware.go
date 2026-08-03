@@ -235,6 +235,13 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 	if claims.Role != "" {
 		md.Append("role", claims.Role)
 	}
+	if len(claims.RoleIds) > 0 {
+		parts := make([]string, 0, len(claims.RoleIds))
+		for _, id := range claims.RoleIds {
+			parts = append(parts, fmt.Sprintf("%d", id))
+		}
+		md.Append("roleIds", strings.Join(parts, ","))
+	}
 	if claims.Type != "" {
 		md.Append("type", claims.Type)
 	}

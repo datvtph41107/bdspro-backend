@@ -10,7 +10,6 @@ import (
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
-	authpb "pb/types/auth"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -100,15 +99,15 @@ func (h *SupportTicketHandler) GetSupportTicketSummary(ctx context.Context, _ *e
 		return nil, err
 	}
 	return &crmpb.SupportTicketSummaryResponse{
-		Total:              res.Total,
-		StatusNew:          res.StatusNew,
-		StatusInProgress:   res.StatusInProgress,
-		StatusWaitingUser:  res.StatusWaitingUser,
-		StatusResolved:     res.StatusResolved,
-		StatusClosed:       res.StatusClosed,
-		StatusTransferred:  res.StatusTransferred,
-		Unassigned:         res.Unassigned,
-		PriorityCritical:   res.PriorityCritical,
+		Total:             res.Total,
+		StatusNew:         res.StatusNew,
+		StatusInProgress:  res.StatusInProgress,
+		StatusWaitingUser: res.StatusWaitingUser,
+		StatusResolved:    res.StatusResolved,
+		StatusClosed:      res.StatusClosed,
+		StatusTransferred: res.StatusTransferred,
+		Unassigned:        res.Unassigned,
+		PriorityCritical:  res.PriorityCritical,
 	}, nil
 }
 
@@ -356,7 +355,7 @@ func toProtoDetail(d *dto.SupportTicketDetailResponse) *crmpb.SupportTicketDetai
 }
 
 func (h *SupportTicketHandler) enrichTicketEventActors(ctx context.Context, d *dto.SupportTicketDetailResponse) {
-	if d == nil || len(d.Events) == 0 || h.authClient == nil || h.authClient.AuthInternalServiceClient == nil {
+	if d == nil || len(d.Events) == 0 || h.authClient == nil || h.authClient.UserClient == nil {
 		return
 	}
 	idSet := map[uint64]struct{}{}
@@ -372,7 +371,7 @@ func (h *SupportTicketHandler) enrichTicketEventActors(ctx context.Context, d *d
 	for id := range idSet {
 		ids = append(ids, id)
 	}
-	resp, err := h.authClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{Ids: ids})
+	resp, err := h.authClient.UserClient.GetAuthAdminByIds(ctx, ids)
 	if err != nil || resp == nil {
 		for i := range d.Events {
 			if d.Events[i].ActorID > 0 && d.Events[i].ActorName == "" {

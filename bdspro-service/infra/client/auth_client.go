@@ -4,17 +4,18 @@ import (
 	"bdspro/env"
 	"context"
 	"pb/clients"
-	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 )
 
 type AuthClient struct {
 	*clients.AuthGrpcClient
+	userClient *clients.UserGrpcClient
 }
 
 func NewAuthClient() *AuthClient {
 	return &AuthClient{
-		clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		userClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
 }
 
@@ -26,7 +27,7 @@ func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations 
 		}
 	}
 
-	roles, err := c.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{RoleKeys: roleIds})
+	roles, err := c.userClient.GetRolesByRoleKeys(ctx, roleIds)
 	if err != nil {
 		return
 	}

@@ -5,37 +5,10 @@ package authpb;
 option go_package = "pb/types/auth;authpb";
 
 import "shared/common.proto";
-import "shared/v3.proto";
-import "auth/role.proto";
-import "auth/auth_method.proto";
 
 service AuthInternalService {
     rpc RequiredRoles(RequiredRolesRequest) returns (RequiredRolesResponse);
     rpc RequiredPermissions(RequiredPermissionsRequest) returns (RequiredPermissionsResponse);
-    rpc GetRoleById(sharepb.IdRequest) returns (sharepb.Role);
-    rpc GetRolesByIds(sharepb.IdRequest) returns (RoleListResponse);
-    rpc GetAdminRoleIdByGroupKey(sharepb.IdRequest) returns (sharepb.Role);
-    rpc GetRolesByRoleKeys(GetRolesByRoleKeysRequest) returns (RoleListResponse);
-    rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
-    rpc CreateAdmin(AuthMethod) returns (AuthMethod);
-    rpc UpdateAdmin(AuthMethod) returns (AuthMethod);
-    rpc DeleteAdmin(sharepb.IdRequest) returns (sharepb.SubmitResponse);
-    rpc GetAdminById(sharepb.IdRequest) returns (AuthMethod);
-
-    // Get Auth Users by Profile IDs
-    rpc GetAuthUsersByProfileIDs(GetAuthUsersByProfileIDsRequest) returns (GetAuthUsersByProfileIDsResponse);
-    
-    // Get Auth Admin by IDs with role info
-    rpc GetAuthAdminByIds(GetAuthAdminByIdsRequest) returns (GetAuthAdminByIdsResponse);
-    
-    // Delete all auth methods by userId
-    rpc DeleteAuthMethodsByUserId(sharepb.IdRequest) returns (sharepb.SubmitResponse);
-
-    // Get authentication security data by authId
-    rpc GetAuthDataByAuthId(sharepb.RequestV3Proto) returns (sharepb.AuthDataV3Proto);
-    
-    // Get push tokens by profile ID (Internal API for notification service)
-    rpc GetPushTokensByProfileId(sharepb.IdRequest) returns (GetPushTokensResponse);
 }
 
 message RequiredRolesRequest {
@@ -49,72 +22,10 @@ message RequiredRolesResponse {
 
 message RequiredPermissionsRequest {
     repeated string permissions = 1;
+    repeated uint32 permissionIds = 2;
 }
 
 message RequiredPermissionsResponse {
     bool status = 1;
     string message = 2;
-}
-
-message GetRolesByRoleKeysRequest {
-    repeated uint32 roleKeys = 1;
-}
-
-message GetRolesByIdsRequest {
-    repeated uint64 ids = 1;
-}
-
-
-// Get Auth Users by Profile IDs Messages
-message GetAuthUsersByProfileIDsRequest {
-    repeated uint64 profileIds = 1;
-}
-
-message GetAuthUsersByProfileIDsResponse {
-    repeated AuthUserStatusInfo data = 3;
-}
-
-message AuthUserStatusInfo {
-    uint64 profileId = 1;
-    uint64 roleId = 2;
-    sharepb.Role role = 3;
-    uint32 status = 4;
-    string statusText = 5;
-    bool isLocked = 6;
-    uint32 lockType = 7;
-    string lockedAt = 8;
-    string lockedUntil = 9;
-    string lockReason = 10;
-    optional uint64 lockedBy = 11;
-    bool canLogin = 12;
-    bool isExpired = 13;
-}
-
-// Get Auth Admin by IDs Messages
-message GetAuthAdminByIdsRequest {
-    repeated uint64 ids = 1;
-}
-
-message GetAuthAdminByIdsResponse {
-    repeated AuthAdminWithRole data = 1;
-}
-
-message AuthAdminWithRole {
-    uint64 id = 1;
-    uint64 userId = 2;
-    string username = 3;
-    string fullName = 4;
-    string email = 5;
-    string phone = 6;
-    string avatar = 7;
-    uint32 roleKey = 8;
-    sharepb.Role role = 9;
-    uint32 status = 10;
-    string createdAt = 11;
-    string updatedAt = 12;
-}
-
-// Get Push Tokens Messages
-message GetPushTokensResponse {
-    repeated string pushTokens = 1;
 }

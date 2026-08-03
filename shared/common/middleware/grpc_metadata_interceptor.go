@@ -63,6 +63,7 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 	}
 	appendIfExists(md, "session", claims.Session)
 	appendIfExists(md, "role", claims.Role)
+	appendIfExists(md, "roleIds", claims.RoleIds)
 	appendIfExists(md, "type", claims.Type)
 	appendIfExists(md, "authId", claims.AuthID)
 	if claims.PlanId != nil {
@@ -128,6 +129,7 @@ func ParseGrpcMetadataContextMiddleware(
 	ctx = parseUint64Metadata(ctx, md, "session", _enums.SessionKey)
 	ctx = parseUint64Metadata(ctx, md, "planId", _enums.PlanIDKey)
 	ctx = parseStringMetadata(ctx, md, "role", _enums.RoleKey)
+	ctx = parseUint64SliceMetadata(ctx, md, "roleIds", _enums.RoleIDsKey)
 	ctx = parseStringMetadata(ctx, md, "type", _enums.TypeKey)
 	ctx = parseTimeMetadata(ctx, md, "planFrom", _enums.PlanFromKey)
 	ctx = parseStringMetadata(ctx, md, "api-key", _enums.APIKeyKey)
@@ -166,6 +168,19 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 			md.Append(mdKey, val.Format(time.RFC3339))
 		}
 	}
+
+	appendUint64SliceIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
+		roleIds, ok := ctx.Value(ctxKey).([]uint64)
+		if !ok || len(roleIds) == 0 {
+			return
+		}
+		parts := make([]string, 0, len(roleIds))
+		for _, id := range roleIds {
+			parts = append(parts, strconv.FormatUint(id, 10))
+		}
+		md.Append(mdKey, strings.Join(parts, ","))
+	}
+
 	// Các key giống với middleware ở server
 	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
 	appendUint64IfExists(_enums.OriginIDKey, "originId")
@@ -175,6 +190,7 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 	appendUint64IfExists(_enums.PlanIDKey, "planId")
 
 	appendStringIfExists(_enums.RoleKey, "role")
+	appendUint64SliceIfExists(_enums.RoleIDsKey, "roleIds")
 	appendStringIfExists(_enums.TypeKey, "type")
 	appendStringIfExists(_enums.APIKeyKey, "api-key")
 	appendStringIfExists(_enums.DeviceIDKey, "device-id")
@@ -232,6 +248,7 @@ func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 
 	p.Role = parseString("role")
 	p.Type = parseString("type")
+	p.RoleIds = parseUint64Slice(md, "roleIds")
 
 	if v, ok := parseUint64("session"); ok {
 		p.Session = v
@@ -280,6 +297,31 @@ func parseTimeMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _
 	return ctx
 }
 
+func parseUint64SliceMetadata(ctx context.Context, md metadata.MD, key string, ctxKey _enums.ContextKey) context.Context {
+	roleIds := parseUint64Slice(md, key)
+	if len(roleIds) == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxKey, roleIds)
+}
+
+func parseUint64Slice(md metadata.MD, key string) []uint64 {
+	vals := md.Get(key)
+	if len(vals) == 0 || vals[0] == "" {
+		return nil
+	}
+
+	parts := strings.Split(vals[0], ",")
+	roleIds := make([]uint64, 0, len(parts))
+	for _, part := range parts {
+		id, err := strconv.ParseUint(strings.TrimSpace(part), 10, 64)
+		if err == nil && id > 0 {
+			roleIds = append(roleIds, id)
+		}
+	}
+	return roleIds
+}
+
 func appendIfExists(md metadata.MD, key string, value any) {
 	if value == nil {
 		return
@@ -315,6 +357,15 @@ func appendIfExists(md metadata.MD, key string, value any) {
 		if v != nil && !v.IsZero() {
 			md.Append(key, v.Format(time.RFC3339))
 		}
+	case []uint64:
+		if len(v) == 0 {
+			return
+		}
+		parts := make([]string, 0, len(v))
+		for _, id := range v {
+			parts = append(parts, strconv.FormatUint(id, 10))
+		}
+		md.Append(key, strings.Join(parts, ","))
 	case jwt.NumericDate:
 		if !v.Time.IsZero() {
 			md.Append(key, v.Time.Format(time.RFC3339))

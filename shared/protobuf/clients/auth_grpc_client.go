@@ -2,14 +2,12 @@ package clients
 
 import (
 	"common"
-	_dto "common/domain/dto"
 	_errors "common/errors"
 	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"log"
 	authpb "pb/types/auth"
-	sharepb "pb/types/shared"
 	"time"
 
 	"google.golang.org/grpc"
@@ -17,32 +15,43 @@ import (
 
 type AuthGrpcClient struct {
 	authpb.AuthInternalServiceClient
-	RoleClient authpb.RoleServiceClient
+	legacyAuthClient authpb.AuthInternalServiceClient
+	RoleClient       authpb.RoleServiceClient
 }
 
 func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 	authClient := &AuthGrpcClient{}
 	go func() {
-		// AuthInternalService chạy trên user-service (port 8201), không còn auth-service riêng
-		name := "user"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),
+		authName := "auth"
+		authURL := common.GetPrefixProtobufUrl(env_runtime, authName)
+		authConn, err := grpc.Dial(fmt.Sprintf("%s:8216", authURL),
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
 		)
 		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
+			log.Fatalf("failed to dial auth: %v", err)
 		}
 
-		ctx, _ := context.WithCancel(context.Background())
+		authCtx, _ := context.WithCancel(context.Background())
+		go _middleware.MonitorConnection(authCtx, authName, authConn)
+		authClient.AuthInternalServiceClient = authpb.NewAuthInternalServiceClient(authConn)
 
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
+		userName := "user"
+		userURL := common.GetPrefixProtobufUrl(env_runtime, userName)
+		userConn, err := grpc.Dial(fmt.Sprintf("%s:8201", userURL),
+			grpc.WithInsecure(),
+			grpc.WithBackoffMaxDelay(5*time.Second),
+			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+		)
+		if err != nil {
+			log.Fatalf("failed to dial user: %v", err)
+		}
 
-		authClient.AuthInternalServiceClient = authpb.NewAuthInternalServiceClient(conn)
-		authClient.RoleClient = authpb.NewRoleServiceClient(conn)
+		userCtx, _ := context.WithCancel(context.Background())
+		go _middleware.MonitorConnection(userCtx, userName, userConn)
+		authClient.legacyAuthClient = authpb.NewAuthInternalServiceClient(userConn)
+		authClient.RoleClient = authpb.NewRoleServiceClient(userConn)
 	}()
 	return authClient
 }
@@ -52,8 +61,14 @@ func (c *AuthGrpcClient) HasRoles(ctx context.Context, keys []string) (bool, err
 	return response.Status, err
 }
 
-func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) error {
-	response, err := c.RequiredPermissions(ctx, &authpb.RequiredPermissionsRequest{Permissions: keys})
+func (c *AuthGrpcClient) RequiredPermissions(ctx context.Context, permissionIds []uint32) error {
+	if c.AuthInternalServiceClient == nil {
+		return _errors.ReturnError(503, "auth client chưa sẵn sàng")
+	}
+	log.Printf("[AuthGrpcClient] RequiredPermissions: permissionIds: %v", permissionIds)
+	response, err := c.AuthInternalServiceClient.RequiredPermissions(ctx, &authpb.RequiredPermissionsRequest{
+		PermissionIds: permissionIds,
+	})
 	if err != nil {
 		return err
 	}
@@ -63,7 +78,22 @@ func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) erro
 	return nil
 }
 
-// AssignRoleToUser gán role vào role_profiles theo profile/user id
+func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) error {
+	if c.legacyAuthClient == nil {
+		return _errors.ReturnError(503, "auth client chưa sẵn sàng")
+	}
+	response, err := c.legacyAuthClient.RequiredPermissions(ctx, &authpb.RequiredPermissionsRequest{
+		Permissions: keys,
+	})
+	if err != nil {
+		return err
+	}
+	if !response.Status {
+		return _errors.ReturnError(403, "Bạn không có quyền truy cập")
+	}
+	return nil
+}
+
 func (c *AuthGrpcClient) AssignRoleToUser(ctx context.Context, userID, roleID uint64) error {
 	if c.RoleClient == nil {
 		return fmt.Errorf("role client chưa sẵn sàng")
@@ -73,47 +103,4 @@ func (c *AuthGrpcClient) AssignRoleToUser(ctx context.Context, userID, roleID ui
 		RoleId: roleID,
 	})
 	return err
-}
-
-func (c *AuthGrpcClient) GetRoleByID(ctx context.Context, id uint64) (*sharepb.Role, error) {
-	return c.AuthInternalServiceClient.
-		GetRoleById(ctx, &sharepb.IdRequest{Id: id})
-}
-
-func (c *AuthGrpcClient) GetAuthUsersByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*_dto.AuthUserProfileDTO, error) {
-	response, err := c.AuthInternalServiceClient.
-		GetAuthUsersByProfileIDs(ctx, &authpb.GetAuthUsersByProfileIDsRequest{ProfileIds: profileIDs})
-	if err != nil {
-		return nil, err
-	}
-
-	roleMap := make(map[uint64]*_dto.AuthUserProfileDTO)
-	for _, user := range response.Data {
-		roleMap[user.ProfileId] = &_dto.AuthUserProfileDTO{
-			ProfileID: user.ProfileId,
-			RoleID:    user.RoleId,
-		}
-
-		if user.Role != nil {
-			r := &_dto.RoleDTO{
-				ID:       user.Role.Id,
-				RoleName: user.Role.RoleName,
-				RoleKey:  user.Role.RoleKey,
-			}
-			if user.Role.Color != nil {
-				r.Color = &_dto.ColorDTO{
-					ID:              user.Role.Color.Id,
-					Code:            user.Role.Color.ColorKey,
-					Color:           user.Role.Color.ContentColor,
-					ContentColor:    user.Role.Color.ContentColor,
-					BackgroundColor: user.Role.Color.BackgroundColor,
-					ColorKey:        user.Role.Color.ColorKey,
-					HexCode:         user.Role.Color.HexCode,
-				}
-			}
-
-			roleMap[user.ProfileId].Role = r
-		}
-	}
-	return roleMap, nil
 }

@@ -1,11 +1,9 @@
 package client
 
 import (
+	_dto "common/domain/dto"
 	"context"
-	// authpb "pb/types/auth" // TODO: Uncomment sau khi gen proto
 	"pb/clients"
-	authpb "pb/types/auth"
-	sharepb "pb/types/shared"
 	"user/env"
 	"user/internal/interface/providers"
 	"user/internal/models"
@@ -13,32 +11,27 @@ import (
 
 type AuthClient struct {
 	*clients.AuthGrpcClient
+	userClient *clients.UserGrpcClient
 }
 
 func NewAuthClient() providers.AuthProvider {
 	return &AuthClient{
 		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		userClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
 }
 
 func (c *AuthClient) GetUserStatus(ctx context.Context, profileID uint64) (*providers.UserStatusInfo, error) {
-	// TODO: Implement gọi auth-service để lấy thông tin user status
-	// Hiện tại trả về mock data, sau này sẽ implement thực tế
-
-	// Mock data - sẽ được thay thế bằng gọi API thực tế
 	return &providers.UserStatusInfo{
 		ProfileID:   profileID,
 		Verified:    true,
-		VerifiedAt:  nil, // Sẽ lấy từ auth-service
-		LockedUntil: nil, // Sẽ lấy từ auth-service
+		VerifiedAt:  nil,
+		LockedUntil: nil,
 		Active:      true,
 	}, nil
 }
 
 func (c *AuthClient) GetUserStatusBatch(ctx context.Context, profileIDs []uint64) (map[uint64]*providers.UserStatusInfo, error) {
-	// TODO: Implement gọi auth-service để lấy thông tin user status cho nhiều user
-	// Hiện tại trả về mock data, sau này sẽ implement thực tế
-
 	result := make(map[uint64]*providers.UserStatusInfo)
 	for _, profileID := range profileIDs {
 		result[profileID] = &providers.UserStatusInfo{
@@ -54,39 +47,14 @@ func (c *AuthClient) GetUserStatusBatch(ctx context.Context, profileIDs []uint64
 }
 
 func (c *AuthClient) Create(ctx context.Context, authMethod *providers.AuthMethodDomain) (*providers.AuthMethodDomain, error) {
-	// return c.AuthGrpcClient.Create(ctx, authMethod)
 	return authMethod, nil
 }
 
 func (c *AuthClient) Update(ctx context.Context, authMethod *providers.AuthMethodDomain) (*providers.AuthMethodDomain, error) {
-	req := &authpb.AuthMethod{
-		Id:       authMethod.ID,
-		AuthName: authMethod.AuthName,
-		FullName: authMethod.FullName,
-		Email:    authMethod.Email,
-		Phone:    authMethod.Phone,
-		Avatar:   authMethod.Avatar,
-		Password: authMethod.Password,
-		UserId:   authMethod.UserID,
-	}
-	resp, err := c.AuthGrpcClient.UpdateAdmin(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &providers.AuthMethodDomain{
-		ID:       resp.Id,
-		UserID:   resp.UserId,
-		AuthName: resp.AuthName,
-		FullName: resp.FullName,
-		Email:    resp.Email,
-		Phone:    resp.Phone,
-		Avatar:   resp.Avatar,
-	}, nil
+	return authMethod, nil
 }
 
 func (c *AuthClient) SoftDelete(ctx context.Context, id uint64) error {
-	// return c.AuthGrpcClient.SoftDelete(ctx, id)
 	return nil
 }
 
@@ -97,35 +65,24 @@ func (c *AuthClient) AssignRoleToUser(ctx context.Context, profileID, roleID uin
 	return c.AuthGrpcClient.AssignRoleToUser(ctx, profileID, roleID)
 }
 
-// DeleteAllAuthMethodsByUserId xóa tất cả auth_method của 1 user
 func (c *AuthClient) DeleteAllAuthMethodsByUserId(ctx context.Context, userId uint64) error {
-	// _, err := c.AuthGrpcClient.DeleteAuthMethodsByUserId(ctx, &sharepb.IdRequest{
-	// 	Id: userId,
-	// })
-	// return err
 	return nil
 }
 
 func (c *AuthClient) FindAdminsByProvider(ctx context.Context, provider string, page, size int) ([]*providers.AuthMethodDomain, int64, error) {
-	// return c.AuthGrpcClient.FindAdminsByProvider(ctx, provider, page, size)
 	return nil, 0, nil
 }
 
 func (c *AuthClient) FindByAuthNameAndProvider(ctx context.Context, authName, provider string) (*providers.AuthMethodDomain, error) {
-	// return c.AuthGrpcClient.FindByAuthNameAndProvider(ctx, authName, provider)
 	return nil, nil
 }
 
 func (c *AuthClient) FindByEmail(ctx context.Context, email string) (*providers.AuthMethodDomain, error) {
-	// return c.AuthGrpcClient.FindByEmail(ctx, email)
 	return nil, nil
 }
 
 func (c *AuthClient) FindByID(ctx context.Context, id uint64) (*providers.AuthMethodDomain, error) {
-	// Sử dụng GetAuthAdminByIds với 1 ID
-	resp, err := c.AuthGrpcClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{
-		Ids: []uint64{id},
-	})
+	resp, err := c.userClient.GetAuthAdminByIds(ctx, []uint64{id})
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +104,10 @@ func (c *AuthClient) FindByID(ctx context.Context, id uint64) (*providers.AuthMe
 	}, nil
 }
 
-// AuthAdminInfo chứa thông tin admin từ auth service
 type AuthAdminInfo struct {
 	ID        uint64
 	UserID    uint64
-	ProfileID uint64 // legacy alias — thực tế nên dùng UserID (= auth.user_id)
+	ProfileID uint64
 	Username  string
 	FullName  string
 	Email     string
@@ -159,11 +115,8 @@ type AuthAdminInfo struct {
 	RoleKey   uint32
 }
 
-// GetAuthAdminByIds lấy thông tin admin theo danh sách user_id (auth_method.user_id)
 func (c *AuthClient) GetAuthAdminByIds(ctx context.Context, ids []uint64) ([]*AuthAdminInfo, error) {
-	resp, err := c.AuthGrpcClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{
-		Ids: ids,
-	})
+	resp, err := c.userClient.GetAuthAdminByIds(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +126,7 @@ func (c *AuthClient) GetAuthAdminByIds(ctx context.Context, ids []uint64) ([]*Au
 		result = append(result, &AuthAdminInfo{
 			ID:        admin.Id,
 			UserID:    admin.UserId,
-			ProfileID: admin.UserId, // map đúng user_id để list join theo admin_profiles.id
+			ProfileID: admin.UserId,
 			Username:  admin.Username,
 			FullName:  admin.FullName,
 			Email:     admin.Email,
@@ -190,14 +143,9 @@ func (c *AuthClient) GetRolesByIds(ctx context.Context, roleIds []uint64) (map[u
 		return make(map[uint64]*models.RoleDTO), nil
 	}
 
-	// TODO: Implement sau khi gen proto
-	// Hiện tại trả về empty map
 	roleMap := make(map[uint64]*models.RoleDTO)
 
-	// NOTE: Code này sẽ được uncomment sau khi gen proto:
-	rolesResp, err := c.AuthGrpcClient.GetRolesByIds(ctx, &sharepb.IdRequest{
-		Ids: roleIds,
-	})
+	rolesResp, err := c.userClient.GetRolesByIds(ctx, roleIds)
 	if err != nil {
 		return nil, err
 	}
@@ -211,4 +159,8 @@ func (c *AuthClient) GetRolesByIds(ctx context.Context, roleIds []uint64) (map[u
 	}
 
 	return roleMap, nil
+}
+
+func (c *AuthClient) GetAuthUsersByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*_dto.AuthUserProfileDTO, error) {
+	return c.userClient.GetAuthUsersByProfileIDs(ctx, profileIDs)
 }

@@ -13,11 +13,13 @@ import (
 
 type AuthClient struct {
 	*clients.AuthGrpcClient
+	userClient *clients.UserGrpcClient
 }
 
 func NewAuthClient() *AuthClient {
 	return &AuthClient{
 		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		userClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
 }
 
@@ -29,7 +31,7 @@ func (c *AuthClient) MapRoleToGroups(ctx context.Context, groups []*dto.GroupWit
 		}
 	}
 
-	roles, err := c.GetRolesByIds(ctx, &sharepb.IdRequest{Ids: roleIds})
+	roles, err := c.userClient.GetRolesByIds(ctx, roleIds)
 	if err != nil {
 		return
 	}
@@ -48,19 +50,40 @@ func (c *AuthClient) MapRoleToGroups(ctx context.Context, groups []*dto.GroupWit
 	}
 }
 
-// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
+func toAuthRole(r *sharepb.Role) *authpb.Role {
+	if r == nil {
+		return nil
+	}
+	role := &authpb.Role{
+		Id:              r.Id,
+		RoleName:        r.RoleName,
+		RoleKey:         r.RoleKey,
+		RoleDescription: r.RoleDescription,
+		Key:             r.Key,
+		PermissionIds:   r.PermissionIds,
+		OrganizationId:  r.OrganizationId,
+		IsDefault:       r.IsDefault,
+		DomainType:      r.DomainType,
+		AllowAssign:     r.AllowAssign,
+		CreatedAt:       r.CreatedAt,
+		UpdatedAt:       r.UpdatedAt,
+	}
+	if r.Color != nil {
+		role.Color = r.Color
+		role.ColorId = &r.Color.Id
+	}
+	return role
+}
+
 func (c *AuthClient) GetRoleBySystemKey(ctx context.Context, systemKey uint32) (*authpb.Role, error) {
-	// Gọi sang auth service để lấy admin role
-	response, err := c.AuthGrpcClient.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{
-		RoleKeys: []uint32{systemKey},
-	})
+	response, err := c.userClient.GetRolesByRoleKeys(ctx, []uint32{systemKey})
 	if err != nil {
 		return nil, err
 	}
 	if len(response.Data) == 0 {
 		return nil, custom_error.RecordNotFound("Role not found")
 	}
-	return response.Data[0], nil
+	return toAuthRole(response.Data[0]), nil
 }
 
 func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations []*organizationpb.DealMember) {
@@ -71,14 +94,14 @@ func (c *AuthClient) MapRoleToDealInvitationPb(ctx context.Context, invitations 
 		}
 	}
 
-	roles, err := c.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{RoleKeys: roleIds})
+	roles, err := c.userClient.GetRolesByRoleKeys(ctx, roleIds)
 	if err != nil {
 		return
 	}
 
 	roleMap := make(map[uint32]*authpb.Role)
 	for _, r := range roles.Data {
-		roleMap[r.RoleKey] = r
+		roleMap[r.RoleKey] = toAuthRole(r)
 	}
 
 	for i, r := range invitations {
@@ -96,22 +119,30 @@ func (c *AuthClient) MapRoleToOrganizationMemberPb(ctx context.Context, orgMembe
 		}
 	}
 
-	roles, err := c.GetRolesByRoleKeys(ctx, &authpb.GetRolesByRoleKeysRequest{RoleKeys: roleIds})
+	roles, err := c.userClient.GetRolesByRoleKeys(ctx, roleIds)
 	if err != nil {
 		return err
 	}
 
 	roleMap := make(map[uint32]*authpb.Role)
 	for _, r := range roles.Data {
-		roleMap[r.RoleKey] = r
+		roleMap[r.RoleKey] = toAuthRole(r)
 	}
 
 	for i, r := range orgMembers {
 		if r.GetRoleKey() != 0 {
-			orgMembers[i].RoleName = roleMap[r.RoleKey].RoleName
-			orgMembers[i].RoleKey = roleMap[r.RoleKey].RoleKey
-			orgMembers[i].RoleId = roleMap[r.RoleKey].Id
+			role := roleMap[r.RoleKey]
+			if role == nil {
+				continue
+			}
+			orgMembers[i].RoleName = role.RoleName
+			orgMembers[i].RoleKey = role.RoleKey
+			orgMembers[i].RoleId = role.Id
 		}
 	}
 	return nil
+}
+
+func (c *AuthClient) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey int) (*authpb.Role, error) {
+	return c.GetRoleBySystemKey(ctx, uint32(groupKey))
 }

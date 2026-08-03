@@ -2,6 +2,7 @@ package _utils
 
 import (
 	_enums "common/domain/enum"
+	_jwt "common/jwt"
 	"context"
 
 	"github.com/gin-gonic/gin"
@@ -88,6 +89,17 @@ func GetDeviceIdFromContext(c context.Context) string {
 	return ""
 }
 
+func GetRoleIdsFromContext(ctx context.Context) []uint64 {
+	roleIds := ctx.Value(_enums.RoleIDsKey)
+	if roleIds == nil {
+		return nil
+	}
+	if ids, ok := roleIds.([]uint64); ok {
+		return ids
+	}
+	return nil
+}
+
 // func GetProfileIdFromContext(ctx context.Context) uint64 {
 // 	return ctx.Value("profileId").(uint64)
 // 	// if claims, ok := clms.(*Principal); ok {
@@ -104,6 +116,10 @@ func CloneContext(ctx context.Context) context.Context {
 	cloneCtx = context.WithValue(cloneCtx, _enums.ProfileIDKey, profileId)
 	cloneCtx = context.WithValue(cloneCtx, _enums.OriginIDKey, originId)
 	cloneCtx = context.WithValue(cloneCtx, _enums.OrganizationIDKey, organizationId)
+	roleIds := GetRoleIdsFromContext(ctx)
+	if len(roleIds) > 0 {
+		cloneCtx = context.WithValue(cloneCtx, _enums.RoleIDsKey, roleIds)
+	}
 	return cloneCtx
 }
 
@@ -171,11 +187,14 @@ func CreateContextFromGin(c *gin.Context) context.Context {
 
 	// Get auth ID if available
 	if claims, exists := c.Get("claims"); exists {
-		if principal, ok := claims.(*Principal); ok {
-			ctx = context.WithValue(ctx, _enums.AuthIDKey, principal.UserID)
+		if principal, ok := claims.(*_jwt.Principal); ok {
+			ctx = context.WithValue(ctx, _enums.AuthIDKey, principal.AuthID)
 			ctx = context.WithValue(ctx, _enums.RoleKey, principal.Role)
 			ctx = context.WithValue(ctx, _enums.TypeKey, principal.Type)
 			ctx = context.WithValue(ctx, _enums.SessionKey, uint64(principal.Session))
+			if len(principal.RoleIds) > 0 {
+				ctx = context.WithValue(ctx, _enums.RoleIDsKey, principal.RoleIds)
+			}
 		}
 	}
 

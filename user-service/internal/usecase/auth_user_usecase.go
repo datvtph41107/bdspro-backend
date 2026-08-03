@@ -980,11 +980,13 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		}
 
 		// Tạo refresh token mới
+		roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(c, props.ProfileID)
 		newRefreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 			AuthID: props.AuthID,
 			// OriginID:       originID,
 			ProfileID:      props.ProfileID,
 			Role:           props.Role,
+			RoleIds:        roleIds,
 			SessionID:      props.SessionID,
 			OrganizationID: props.OrganizationID,
 			PlanID:         profile.PlanID,
@@ -1700,14 +1702,15 @@ func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *domain.Auth
 	return response
 }
 
-func (s *AuthUsecase) GetRefreshToken(authEntity *domain.AuthMethod, sessionID uint64) string {
+func (s *AuthUsecase) GetRefreshToken(ctx context.Context, authEntity *domain.AuthMethod, sessionID uint64) string {
+	roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(ctx, authEntity.UserID)
 	refreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:    authEntity.ID,
 		ProfileID: authEntity.UserID,
-		// PlanID: ,
 		SessionID: sessionID,
 		Role:      "ROLE_USER",
 		Type:      "REFRESH",
+		RoleIds:   roleIds,
 	})
 	return refreshToken
 }
@@ -1927,7 +1930,7 @@ func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.Auth
 	println("GenRefreshToken: ", authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
 	s.CacheProvider.SaveToken(c, authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
 
-	refreshToken := s.GetRefreshToken(authEntity, sessionId)
+	refreshToken := s.GetRefreshToken(c, authEntity, sessionId)
 	// Không set cookie nữa, trả refreshToken trong response body
 	// s.CookieProvider.SetRefreshToken(c, refreshToken)
 	log.Printf("✅ [GenRefreshToken] authID=%d, validFrom=%d (%s), refreshToken=%s",
@@ -2888,11 +2891,13 @@ func (s *AuthUsecase) SwitchAccount(c context.Context, req dto.SwitchAccountRequ
 	}
 
 	// Tạo JWT token mới với thông tin chuyển đổi
+	roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(c, currentProfileId)
 	payload := _jwt.JwtTokenProperties{
 		AuthID:    authId,
 		ProfileID: currentProfileId,
 		SessionID: sessionId,
 		Role:      "ROLE_USER",
+		RoleIds:   roleIds,
 		Type:      "ACCESS",
 		PlanID:    profile.PlanID,
 		PlanAt:    profile.PlanAt,
@@ -2983,6 +2988,11 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 	}
 
 	// Tạo access token mới
+	roleIds := props.RoleIds
+	if len(roleIds) == 0 {
+		roleIds, _ = s.UserInfoRepo.GetRoleIdsByProfileId(ctx, props.ProfileID)
+	}
+
 	var accessToken string
 	if profile.FullName == "" {
 		// Chưa có fullname, trả TEMP token
@@ -2991,6 +3001,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 			ProfileID:      props.ProfileID,
 			SessionID:      props.SessionID,
 			Role:           props.Role,
+			RoleIds:        roleIds,
 			Type:           _jwt.TempToken,
 			OrganizationID: props.OrganizationID,
 			PlanID:         profile.PlanID,
@@ -3003,6 +3014,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 			ProfileID:      props.ProfileID,
 			SessionID:      props.SessionID,
 			Role:           props.Role,
+			RoleIds:        roleIds,
 			Type:           _jwt.AccessToken,
 			OrganizationID: props.OrganizationID,
 			PlanID:         profile.PlanID,
@@ -3144,11 +3156,13 @@ func (s *AuthUsecase) UpdateFullname(ctx context.Context, fullname string) (*dto
 	}
 
 	// Tạo ACCESS token mới (không phải TEMP nữa vì đã có fullname)
+	roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(ctx, profileId)
 	accessToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:    authId,
 		ProfileID: profileId,
 		SessionID: sessionId,
 		Role:      enums.RoleMap[profile.RoleType],
+		RoleIds:   roleIds,
 		Type:      _jwt.AccessToken, // Token bình thường, không phải TEMP
 		PlanID:    profile.PlanID,
 		PlanAt:    profile.PlanAt,
@@ -3260,11 +3274,14 @@ func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, se
 		return "", err
 	}
 
+	roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(ctx, authMethod.UserID)
+
 	accessToken, err := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:         authId,
 		OriginID:       originID,
 		ProfileID:      authMethod.UserID,
 		Role:           enums.RoleMap[enums.ERole(authMethod.RoleKey)],
+		RoleIds:        roleIds,
 		SessionID:      sessionId,
 		OrganizationID: organizationId,
 		PlanID:         profile.PlanID,

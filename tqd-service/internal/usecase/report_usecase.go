@@ -17,7 +17,6 @@ import (
 
 	_utils "common/utils"
 	"pb/clients"
-	authpb "pb/types/auth"
 
 	"gorm.io/datatypes"
 )
@@ -52,6 +51,7 @@ type reportUsecase struct {
 	repo         repo.ReportRepository
 	userProvider provider.UserProvider
 	authClient   *clients.AuthGrpcClient
+	userClient   *clients.UserGrpcClient
 }
 
 func NewReportUsecase(repo repo.ReportRepository, userProvider provider.UserProvider) ReportUsecase {
@@ -59,6 +59,7 @@ func NewReportUsecase(repo repo.ReportRepository, userProvider provider.UserProv
 		repo:         repo,
 		userProvider: userProvider,
 		authClient:   clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		userClient:   clients.MakeUserGrpcClient(env.ENV_RUNTIME),
 	}
 }
 
@@ -504,8 +505,8 @@ func (u *reportUsecase) ResolveUserDisplays(ctx context.Context, reports []domai
 		}
 	}
 
-	if u.authClient != nil && u.authClient.AuthInternalServiceClient != nil && len(ids) > 0 {
-		if resp, err := u.authClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{Ids: ids}); err == nil && resp != nil {
+	if u.userClient != nil && u.userClient.InternalClient != nil && len(ids) > 0 {
+		if resp, err := u.userClient.GetAuthAdminByIds(ctx, ids); err == nil && resp != nil {
 			for _, a := range resp.GetData() {
 				if a == nil {
 					continue
@@ -729,8 +730,8 @@ func (u *reportUsecase) ResolveActorNames(ctx context.Context, actorIDs []uint64
 			}
 		}
 	}
-	if u.authClient != nil && u.authClient.AuthInternalServiceClient != nil {
-		if resp, err := u.authClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{Ids: ids}); err == nil && resp != nil {
+	if u.userClient != nil && u.userClient.InternalClient != nil {
+		if resp, err := u.userClient.GetAuthAdminByIds(ctx, ids); err == nil && resp != nil {
 			for _, a := range resp.GetData() {
 				if a == nil {
 					continue

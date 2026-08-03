@@ -23,6 +23,7 @@ type Principal struct {
 	PlanId         *uint64          `json:"plan"`
 	Type           string           `json:"type"`
 	Role           string           `json:"role"`
+	RoleIds        []uint64         `json:"roleIds"`
 	Session        uint64           `json:"session"`
 	PlanFrom       *jwt.NumericDate `json:"start"`
 	jwt.RegisteredClaims
@@ -34,6 +35,7 @@ func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 		"origin":       jwtTokenProperties.OriginID,
 		"organization": jwtTokenProperties.OrganizationID,
 		"role":         jwtTokenProperties.Role,
+		"roleIds":      jwtTokenProperties.RoleIds,
 		"type":         jwtTokenProperties.Type,
 		"session":      jwtTokenProperties.SessionID,
 		"authorities":  jwtTokenProperties.Privileges,
@@ -202,6 +204,20 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 	planFrom, _ := claims["start"].(int64)
 	issuedAt, _ := claims["iat"].(float64) // Unix timestamp
 
+	var roleIds []uint64
+	if rawRoleIds, ok := claims["roleIds"].([]interface{}); ok {
+		for _, item := range rawRoleIds {
+			switch v := item.(type) {
+			case float64:
+				roleIds = append(roleIds, uint64(v))
+			case int64:
+				roleIds = append(roleIds, uint64(v))
+			case uint64:
+				roleIds = append(roleIds, v)
+			}
+		}
+	}
+
 	planAt := time.Unix(planFrom, 0)
 	plan := uint64(planID)
 	organization := uint64(organizationID)
@@ -213,6 +229,7 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 		OrganizationID: &organization,
 		PlanID:         &plan,
 		Role:           role,
+		RoleIds:        roleIds,
 		Type:           TokenType(tokenType),
 		Privileges:     privileges,
 		IssuedAt:       time.Unix(int64(issuedAt), 0),

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	_enum "common/domain/enum"
 	_errors "common/errors"
-	authpb "pb/types/auth"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -21,15 +21,15 @@ import (
 )
 
 var (
-	permSalesView = []string{
-		"ADMIN_KD_XEM",
-		"ADMIN_KD_TAO",
-		"ADMIN_KD_SUA",
-		"ADMIN_KD_XOA",
+	permSalesView = []uint32{
+		_enum.ADMIN_KD_XEM,
+		_enum.ADMIN_KD_TAO,
+		_enum.ADMIN_KD_SUA,
+		_enum.ADMIN_KD_XOA,
 	}
-	permSalesCreate = []string{"ADMIN_KD_TAO"}
-	permSalesUpdate = []string{"ADMIN_KD_SUA"}
-	permSalesDelete = []string{"ADMIN_KD_XOA"}
+	permSalesCreate = []uint32{_enum.ADMIN_KD_TAO}
+	permSalesUpdate = []uint32{_enum.ADMIN_KD_SUA}
+	permSalesDelete = []uint32{_enum.ADMIN_KD_XOA}
 )
 
 type AdminSalesHandler struct {
@@ -44,7 +44,7 @@ func NewAdminSalesHandler(uc *usecase.AdminSalesUsecase, authClient *client.Auth
 }
 
 func (h *AdminSalesHandler) ListOpportunities(ctx context.Context, req *crmpb.ListAdminOpportunitiesRequest) (*crmpb.ListAdminOpportunitiesResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesView); err != nil {
 		return nil, err
 	}
 	search := mapListSearch(req)
@@ -76,7 +76,7 @@ func (h *AdminSalesHandler) ListOpportunities(ctx context.Context, req *crmpb.Li
 }
 
 func (h *AdminSalesHandler) GetOpportunitiesSummary(ctx context.Context, _ *emptypb.Empty) (*crmpb.AdminOpportunitiesSummaryResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesView); err != nil {
 		return nil, err
 	}
 	s, err := h.usecase.Summary(ctx)
@@ -104,7 +104,7 @@ func (h *AdminSalesHandler) GetOpportunitiesSummary(ctx context.Context, _ *empt
 }
 
 func (h *AdminSalesHandler) ListContacts(ctx context.Context, req *crmpb.ListAdminContactsRequest) (*crmpb.ListAdminContactsResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesView); err != nil {
 		return nil, err
 	}
 	items, total, err := h.usecase.ListContacts(ctx, req.Page, req.Size, req.GetQ())
@@ -119,7 +119,7 @@ func (h *AdminSalesHandler) ListContacts(ctx context.Context, req *crmpb.ListAdm
 }
 
 func (h *AdminSalesHandler) CreateContact(ctx context.Context, req *crmpb.CreateAdminContactRequest) (*crmpb.AdminContactResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesCreate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesCreate); err != nil {
 		return nil, err
 	}
 	contact, err := h.usecase.CreateContact(ctx, &dto.AdminContactSaveDTO{
@@ -139,7 +139,7 @@ func (h *AdminSalesHandler) CreateContact(ctx context.Context, req *crmpb.Create
 }
 
 func (h *AdminSalesHandler) GetOpportunity(ctx context.Context, req *sharepb.IdRequest) (*crmpb.AdminOpportunityResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesView); err != nil {
 		return nil, err
 	}
 	lead, err := h.usecase.Get(ctx, req.Id)
@@ -152,7 +152,7 @@ func (h *AdminSalesHandler) GetOpportunity(ctx context.Context, req *sharepb.IdR
 }
 
 func (h *AdminSalesHandler) GetOpportunityQuickView(ctx context.Context, req *sharepb.IdRequest) (*crmpb.AdminOpportunityQuickViewResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesView); err != nil {
 		return nil, err
 	}
 	lead, err := h.usecase.Get(ctx, req.Id)
@@ -178,7 +178,7 @@ func (h *AdminSalesHandler) GetOpportunityQuickView(ctx context.Context, req *sh
 }
 
 func (h *AdminSalesHandler) CreateOpportunity(ctx context.Context, req *crmpb.CreateAdminOpportunityRequest) (*crmpb.AdminOpportunityResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesCreate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesCreate); err != nil {
 		return nil, err
 	}
 	lead, err := h.usecase.Create(ctx, mapAdminCreateReq(req))
@@ -191,7 +191,7 @@ func (h *AdminSalesHandler) CreateOpportunity(ctx context.Context, req *crmpb.Cr
 }
 
 func (h *AdminSalesHandler) UpdateOpportunity(ctx context.Context, req *crmpb.UpdateAdminOpportunityRequest) (*crmpb.AdminOpportunityResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	if req.Id == 0 {
@@ -207,7 +207,7 @@ func (h *AdminSalesHandler) UpdateOpportunity(ctx context.Context, req *crmpb.Up
 }
 
 func (h *AdminSalesHandler) DeleteOpportunity(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesDelete); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesDelete); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.Delete(ctx, req.Id); err != nil {
@@ -217,7 +217,7 @@ func (h *AdminSalesHandler) DeleteOpportunity(ctx context.Context, req *sharepb.
 }
 
 func (h *AdminSalesHandler) AssignOpportunity(ctx context.Context, req *crmpb.AssignAdminOpportunityRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.Assign(ctx, req.Id, &dto.AdminOpportunityAssignDTO{
@@ -230,7 +230,7 @@ func (h *AdminSalesHandler) AssignOpportunity(ctx context.Context, req *crmpb.As
 }
 
 func (h *AdminSalesHandler) SwitchStage(ctx context.Context, req *crmpb.SwitchAdminOpportunityStageRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.SwitchStage(ctx, req.Id, req.StageId, req.StageNote); err != nil {
@@ -240,7 +240,7 @@ func (h *AdminSalesHandler) SwitchStage(ctx context.Context, req *crmpb.SwitchAd
 }
 
 func (h *AdminSalesHandler) UpdateNote(ctx context.Context, req *crmpb.UpdateAdminOpportunityNoteRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.UpdateNote(ctx, req.Id, req.Note); err != nil {
@@ -250,7 +250,7 @@ func (h *AdminSalesHandler) UpdateNote(ctx context.Context, req *crmpb.UpdateAdm
 }
 
 func (h *AdminSalesHandler) UpdateStatus(ctx context.Context, req *crmpb.UpdateAdminOpportunityStatusRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.UpdateStatus(ctx, req.Id, &dto.AdminOpportunityStatusDTO{
@@ -263,7 +263,7 @@ func (h *AdminSalesHandler) UpdateStatus(ctx context.Context, req *crmpb.UpdateA
 }
 
 func (h *AdminSalesHandler) CreateFollowUp(ctx context.Context, req *crmpb.CreateAdminOpportunityFollowUpRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	t, err := parseTime(req.NextFollowUpAt)
@@ -281,7 +281,7 @@ func (h *AdminSalesHandler) CreateFollowUp(ctx context.Context, req *crmpb.Creat
 }
 
 func (h *AdminSalesHandler) CloseOpportunity(ctx context.Context, req *crmpb.CloseAdminOpportunityRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesUpdate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesUpdate); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.Close(ctx, req.Id, &dto.AdminOpportunityCloseDTO{
@@ -294,7 +294,7 @@ func (h *AdminSalesHandler) CloseOpportunity(ctx context.Context, req *crmpb.Clo
 }
 
 func (h *AdminSalesHandler) ExportOpportunities(ctx context.Context, req *crmpb.ExportAdminOpportunitiesRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permSalesView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permSalesView); err != nil {
 		return nil, err
 	}
 	if err := h.usecase.Export(ctx, req.Reason); err != nil {
@@ -727,7 +727,7 @@ func toPBTimestamp(t *time.Time) *timestamppb.Timestamp {
 }
 
 func (h *AdminSalesHandler) enrichSalesEventActors(ctx context.Context, events []dto.AdminOpportunityEventResponse) {
-	if len(events) == 0 || h.authClient == nil || h.authClient.AuthInternalServiceClient == nil {
+	if len(events) == 0 || h.authClient == nil || h.authClient.UserClient == nil {
 		return
 	}
 	idSet := map[uint64]struct{}{}
@@ -743,7 +743,7 @@ func (h *AdminSalesHandler) enrichSalesEventActors(ctx context.Context, events [
 	for id := range idSet {
 		ids = append(ids, id)
 	}
-	resp, err := h.authClient.GetAuthAdminByIds(ctx, &authpb.GetAuthAdminByIdsRequest{Ids: ids})
+	resp, err := h.authClient.UserClient.GetAuthAdminByIds(ctx, ids)
 	if err != nil || resp == nil {
 		for i := range events {
 			if events[i].ActorID > 0 && events[i].ActorName == "" {

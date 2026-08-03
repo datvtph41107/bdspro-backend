@@ -3,6 +3,9 @@ package main
 import (
 	"auth/config"
 	"auth/env"
+	"auth/infra/handler"
+	"auth/infra/services"
+	_middleware "common/middleware"
 	_ "common/models"
 	"fmt"
 	"log"
@@ -10,6 +13,8 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"time"
+
+	authpb "pb/types/auth"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -31,6 +36,8 @@ import (
 func main() {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
 	config.LoadProperties()
+	permissionService := services.NewPermissionService(env.ENV_RUNTIME)
+	authInternalHandler := handler.NewAuthInternalHandler(permissionService)
 	os.Setenv("TZ", "Europe/London")
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
@@ -40,7 +47,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			_middleware.ParseGrpcMetadataContextMiddleware,
+		),
+	)
+	authpb.RegisterAuthInternalServiceServer(s, authInternalHandler)
 
 	log.Printf("Listen: %v", port)
 	if err := s.Serve(lis); err != nil {
