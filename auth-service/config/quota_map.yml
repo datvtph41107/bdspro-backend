@@ -1,0 +1,6 @@
+apis:
+  - name: "auth.login"
+    quota: 100
+    method: "POST"
+    path: "/auth/login"
+  

@@ -22,6 +22,12 @@ import (
 // @in header
 // @name Authorization
 
+// auth không giữ logic liên quan tới lưu trữ db
+// tức auth như 1 service đứng giữa gateway và service con
+// gateway sau chỉ làm 1 việc duy nhất là điều hướng
+// tương lai middleware jwt của gateway sẽ bê vào auth và toàn bộ request chia 2 hướng
+// nếu public -> đi luôn vào service con
+// nếu private -> đi vào auth -> auth điều hướng tới service con
 func main() {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
 	config.LoadProperties()
