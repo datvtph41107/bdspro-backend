@@ -3,6 +3,7 @@ go 1.25.0
 // Go workspace để gopls index cross-service (Go to Implementation / References).
 // Không thêm module trùng tên: chat (chat-service vs chat-v1-service), bdspro (bdspro-service vs shared/platform/bdspro).
 use (
+	./auth-service
 	./assistant-service
 	./bdspro-service
 	./chat-service
