@@ -51,6 +51,7 @@ type InitialApp struct {
 	WorkspaceMapGrpcHandler        *handler_grpc.MapWorkspaceGrpcHandler
 	QHPlanningGrpcHandler          *handler_grpc.QHPlanningGrpcHandler
 	DiscoveryGrpcHandler           *handler_grpc.DiscoveryGrpcHandler
+	RelatedEntityGrpcHandler       *handler_grpc.RelatedEntityGrpcHandler
 
 	// Background workers
 	QHPlanningClassifyWorker *worker.QHPlanningClassifyWorker
@@ -98,6 +99,7 @@ func NewApp(
 	workspaceMapGrpcHandler *handler_grpc.MapWorkspaceGrpcHandler,
 	qhPlanningGrpcHandler *handler_grpc.QHPlanningGrpcHandler,
 	discoveryGrpcHandler *handler_grpc.DiscoveryGrpcHandler,
+	relatedEntityGrpcHandler *handler_grpc.RelatedEntityGrpcHandler,
 	qhPlanningClassifyWorker *worker.QHPlanningClassifyWorker,
 ) *InitialApp {
 	return &InitialApp{
@@ -141,6 +143,7 @@ func NewApp(
 		WorkspaceMapGrpcHandler:        workspaceMapGrpcHandler,
 		QHPlanningGrpcHandler:          qhPlanningGrpcHandler,
 		DiscoveryGrpcHandler:           discoveryGrpcHandler,
+		RelatedEntityGrpcHandler:       relatedEntityGrpcHandler,
 		QHPlanningClassifyWorker:       qhPlanningClassifyWorker,
 	}
 }

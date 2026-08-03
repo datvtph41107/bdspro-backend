@@ -51,6 +51,8 @@ type ParcelQuickView struct {
 	ProvinceCode    string                   `json:"provinceCode,omitempty"`
 	WardCode        string                   `json:"wardCode,omitempty"`
 	IsVerified      bool                     `json:"isVerified"`
+	Completeness    string                   `json:"completeness"`
+	Warnings        []string                 `json:"warnings,omitempty"`
 	Preview         PreviewContext           `json:"preview"`
 	RelatedProjects []RelatedPlanningProject `json:"relatedPlanningProjects"`
 	UpdatedAt       *time.Time               `json:"updatedAt,omitempty"`

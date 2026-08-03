@@ -2,12 +2,11 @@ package discovery
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
+	"tqd/infra/postgres/entitycandidate"
 	"tqd/internal/modules/discovery/domain"
 	"tqd/internal/modules/discovery/ports"
 
@@ -20,170 +19,21 @@ func NewDiscoveryRepository(db *gorm.DB) ports.Repository {
 	return &Repository{db: db}
 }
 
-type spatialRow struct {
-	ID             string  `gorm:"column:id"`
-	Title          string  `gorm:"column:title"`
-	Subtitle       string  `gorm:"column:subtitle"`
-	Description    string  `gorm:"column:description"`
-	Address        string  `gorm:"column:address"`
-	Province       string  `gorm:"column:province"`
-	ProvinceCode   string  `gorm:"column:province_code"`
-	Ward           string  `gorm:"column:ward"`
-	WardCode       string  `gorm:"column:ward_code"`
-	GeometryType   string  `gorm:"column:geometry_type"`
-	CenterLat      float64 `gorm:"column:center_lat"`
-	CenterLon      float64 `gorm:"column:center_lon"`
-	MinLon         float64 `gorm:"column:min_lon"`
-	MinLat         float64 `gorm:"column:min_lat"`
-	MaxLon         float64 `gorm:"column:max_lon"`
-	MaxLat         float64 `gorm:"column:max_lat"`
-	GeoJSON        string  `gorm:"column:geo_json"`
-	LayerID        string  `gorm:"column:layer_id"`
-	MapNumber      string  `gorm:"column:map_number"`
-	LandNumber     string  `gorm:"column:land_number"`
-	AreaSqm        float64 `gorm:"column:area_sqm"`
-	DistanceMeters float64 `gorm:"column:distance_meters"`
-	Score          float64 `gorm:"column:score"`
-}
-
-func preview(raw string) any {
-	if strings.TrimSpace(raw) == "" {
-		return nil
-	}
-	var value any
-	if json.Unmarshal([]byte(raw), &value) == nil {
-		return value
-	}
-	return nil
-}
+type spatialRow = entitycandidate.Row
 
 func candidate(kind domain.EntityKind, row spatialRow, matchType string) domain.EntityCandidate {
-	ref := domain.NewEntityRef(kind, row.ID)
-	title := strings.TrimSpace(row.Title)
-	if title == "" {
-		title = string(kind) + " #" + row.ID
-	}
-	spatial := &domain.SpatialSummary{GeometryType: row.GeometryType, GeometryRef: ref.Key}
-	if row.CenterLat != 0 || row.CenterLon != 0 {
-		spatial.Centroid = &domain.Point{Latitude: row.CenterLat, Longitude: row.CenterLon}
-	}
-	if row.MinLon != 0 || row.MinLat != 0 || row.MaxLon != 0 || row.MaxLat != 0 {
-		spatial.Bounds = &domain.Bounds{MinLongitude: row.MinLon, MinLatitude: row.MinLat, MaxLongitude: row.MaxLon, MaxLatitude: row.MaxLat}
-	}
-	if p := preview(row.GeoJSON); p != nil {
-		spatial.GeometryPreview = p
-	}
-	attrs := map[string]any{}
-	if row.LayerID != "" {
-		attrs["layerId"] = row.LayerID
-	}
-	if row.MapNumber != "" {
-		attrs["mapNumber"] = row.MapNumber
-	}
-	if row.LandNumber != "" {
-		attrs["landNumber"] = row.LandNumber
-	}
-	if row.AreaSqm > 0 {
-		attrs["areaSqm"] = row.AreaSqm
-	}
-	if row.DistanceMeters > 0 {
-		attrs["distanceMeters"] = row.DistanceMeters
-	}
-	detailPath := detailURL(kind, row)
-	capabilities := domain.Capabilities{CanOpenDetail: detailPath != "", CanFocusMap: spatial.Centroid != nil || spatial.Bounds != nil, CanShare: true}
-	if kind == domain.EntityKindParcel {
-		capabilities.CanFollow = true
-		capabilities.CanCreateReport = true
-		capabilities.CanCompare = true
-	}
-	if kind == domain.EntityKindPlanningRegion {
-		capabilities.CanCreateReport = true
-	}
-	links := domain.Links{DetailURL: detailPath, GeometryURL: "/v2/tqd/discovery/entities/" + ref.Key}
-	if strings.HasPrefix(detailPath, "/dia-ban/") || strings.HasPrefix(detailPath, "/do-an-quy-hoach/") {
-		links.CanonicalURL = detailPath
-	}
-	return domain.EntityCandidate{
-		Entity:       ref,
-		Presentation: domain.Presentation{Title: title, Subtitle: row.Subtitle, Description: row.Description, Status: "active"},
-		Spatial:      spatial,
-		Location:     &domain.Location{Address: row.Address, Province: row.Province, ProvinceCode: row.ProvinceCode, Ward: row.Ward, WardCode: row.WardCode},
-		Source:       domain.Source{System: "tqd", Dataset: dataset(kind), Authority: "TQD", DataQuality: "authoritative"},
-		Capabilities: capabilities,
-		Links:        links,
-		Match:        domain.Match{Type: matchType, ReasonCodes: []string{matchType}},
-		Rank:         domain.Rank{Score: row.Score, ReasonCodes: []string{matchType}},
-		Attributes:   attrs,
-	}
+	return entitycandidate.Build(kind, row, entitycandidate.BuildOptions{
+		MatchType: matchType,
+	})
 }
 
-func dataset(kind domain.EntityKind) string {
-	switch kind {
-	case domain.EntityKindParcel:
-		return "parcels"
-	case domain.EntityKindPlanningRegion:
-		return "qh_regions"
-	case domain.EntityKindPlanningProject:
-		return "qh_planning_projects"
-	case domain.EntityKindAdministrativeUnit:
-		return "province_v2/ward_v2"
-	case domain.EntityKindPOI:
-		return "pois"
-	}
-	return ""
-}
-
-var discoveryNonSlugCharacters = regexp.MustCompile(`[^a-z0-9]+`)
-
-func discoverySlugify(value string) string {
-	value = strings.ToLower(strings.TrimSpace(value))
-	replacer := strings.NewReplacer(
-		"à", "a", "á", "a", "ạ", "a", "ả", "a", "ã", "a",
-		"â", "a", "ầ", "a", "ấ", "a", "ậ", "a", "ẩ", "a", "ẫ", "a",
-		"ă", "a", "ằ", "a", "ắ", "a", "ặ", "a", "ẳ", "a", "ẵ", "a",
-		"è", "e", "é", "e", "ẹ", "e", "ẻ", "e", "ẽ", "e",
-		"ê", "e", "ề", "e", "ế", "e", "ệ", "e", "ể", "e", "ễ", "e",
-		"ì", "i", "í", "i", "ị", "i", "ỉ", "i", "ĩ", "i",
-		"ò", "o", "ó", "o", "ọ", "o", "ỏ", "o", "õ", "o",
-		"ô", "o", "ồ", "o", "ố", "o", "ộ", "o", "ổ", "o", "ỗ", "o",
-		"ơ", "o", "ờ", "o", "ớ", "o", "ợ", "o", "ở", "o", "ỡ", "o",
-		"ù", "u", "ú", "u", "ụ", "u", "ủ", "u", "ũ", "u",
-		"ư", "u", "ừ", "u", "ứ", "u", "ự", "u", "ử", "u", "ữ", "u",
-		"ỳ", "y", "ý", "y", "ỵ", "y", "ỷ", "y", "ỹ", "y",
-		"đ", "d",
-	)
-	value = replacer.Replace(value)
-	return strings.Trim(discoveryNonSlugCharacters.ReplaceAllString(value, "-"), "-")
-}
-
-func administrativeDetailURL(row spatialRow) string {
-	code := strings.TrimSpace(row.ProvinceCode)
-	if strings.HasPrefix(row.ID, "ward:") {
-		code = strings.TrimSpace(row.WardCode)
-	}
-	nameSlug := discoverySlugify(row.Title)
-	codeSlug := discoverySlugify(code)
-	if nameSlug == "" || codeSlug == "" {
-		return ""
-	}
-	return "/dia-ban/" + nameSlug + "-" + codeSlug
-}
-
+// detailURL remains as a package-level compatibility seam for existing tests
+// and repository code. Canonical URL/capability rules are owned by the shared
+// entitycandidate projection package.
 func detailURL(kind domain.EntityKind, row spatialRow) string {
-	switch kind {
-	case domain.EntityKindParcel:
-		return "/v2/tqd/parcels/" + row.ID + "/detail"
-	case domain.EntityKindPlanningRegion:
-		return "/v2/tqd/client/regions/" + row.ID
-	case domain.EntityKindPlanningProject:
-		return "/do-an-quy-hoach/" + row.ID
-	case domain.EntityKindAdministrativeUnit:
-		return administrativeDetailURL(row)
-	case domain.EntityKindPOI:
-		return "/v2/tqd/pois/" + row.ID
-	}
-	return ""
+	return entitycandidate.DetailURL(kind, row)
 }
+
 func limit(reqLimit int) int {
 	if reqLimit <= 0 {
 		return 20
@@ -875,10 +725,18 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 	case domain.EntityKindParcel:
 		err = r.db.WithContext(ctx).Raw(`
 			SELECT p.id::text AS id,
-			       CONCAT('Thửa ',COALESCE(NULLIF(pi.land_number,''),p.id::text),CASE WHEN COALESCE(pi.map_number,'')<>'' THEN CONCAT(', tờ ',pi.map_number) ELSE '' END) AS title,
-			       COALESCE(pi.address_text,'') AS subtitle,
+			       CONCAT(
+			         'Thửa ',
+			         COALESCE(NULLIF(pi.land_number,''),NULLIF(p.land_number,''),p.id::text),
+			         CASE
+			           WHEN COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,''),'') <> ''
+			           THEN CONCAT(', tờ ',COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,'')))
+			           ELSE ''
+			         END
+			       ) AS title,
+			       COALESCE(NULLIF(pi.address_text,''),NULLIF(p.address_text,''),'') AS subtitle,
 			       '' AS description,
-			       COALESCE(pi.address_text,'') AS address,
+			       COALESCE(NULLIF(pi.address_text,''),NULLIF(p.address_text,''),'') AS address,
 			       COALESCE(prov.full_name,'') AS province,
 			       COALESCE(pi.province_code,'') AS province_code,
 			       COALESCE(w.full_name,'') AS ward,
@@ -891,16 +749,19 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 			       ST_XMax(Box2D(p.geometry)) AS max_lon,
 			       ST_YMax(Box2D(p.geometry)) AS max_lat,
 			       ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geometry,0.000002)) AS geo_json,
-			       COALESCE(pi.map_number,'') AS map_number,
-			       COALESCE(pi.land_number,'') AS land_number,
-			       COALESCE(pi.total_area_sqm,0) AS area_sqm,
+			       COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,''),'') AS map_number,
+			       COALESCE(NULLIF(pi.land_number,''),NULLIF(p.land_number,''),'') AS land_number,
+			       COALESCE(NULLIF(pi.total_area_sqm,0),p.total_area_sqm,0) AS area_sqm,
 			       50::float8 AS score
 			FROM parcels p
 			LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
 			LEFT JOIN province_v2 prov ON prov.code = pi.province_code
 			LEFT JOIN ward_v2 w ON w.code = pi.ward_code
-			WHERE p.id = ? AND p.deleted_at IS NULL AND p.geometry IS NOT NULL
-			LIMIT 1`, numericID).Scan(&row).Error
+			WHERE (p.id = ? OR p.ref_id = ?)
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			ORDER BY CASE WHEN p.id = ? THEN 0 ELSE 1 END, p.id DESC
+			LIMIT 1`, numericID, numericID, numericID).Scan(&row).Error
 	case domain.EntityKindPlanningRegion:
 		err = r.db.WithContext(ctx).Raw(`
 			SELECT r.id::text AS id,
@@ -921,8 +782,20 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 			       50::float8 AS score
 			FROM qh_regions r
 			JOIN qh_layers l ON l.id = r.layer_id
-			WHERE r.id = ? AND r.deleted_at IS NULL
-			LIMIT 1`, numericID).Scan(&row).Error
+			WHERE r.deleted_at IS NULL
+			  AND (
+			    r.id = ?
+			    OR EXISTS (
+			      SELECT 1
+			      FROM jsonb_each_text(COALESCE(r.original_properties,'{}'::jsonb)) AS property(key,value)
+			      WHERE LOWER(REPLACE(property.key,'_','')) IN (
+			        'regionid','planningregionid','areaid','objectid','gid','fid','id'
+			      )
+			        AND property.value = ?
+			    )
+			  )
+			ORDER BY CASE WHEN r.id = ? THEN 0 ELSE 1 END, r.id DESC
+			LIMIT 1`, numericID, ref.ID, numericID).Scan(&row).Error
 	case domain.EntityKindPlanningProject:
 		err = r.db.WithContext(ctx).Raw(`
 			SELECT pp.id::text AS id,
@@ -973,11 +846,5 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 		return nil, nil
 	}
 	c := candidate(ref.Kind, row, "entity_key")
-	if ref.Kind == domain.EntityKindPlanningProject {
-		c.Links.CanonicalURL = "/do-an-quy-hoach/" + row.ID
-		c.Links.DetailURL = c.Links.CanonicalURL
-		c.Capabilities.CanCreateReport = true
-		c.Capabilities.CanCompare = true
-	}
 	return &c, nil
 }

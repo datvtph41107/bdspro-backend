@@ -86,6 +86,7 @@ func registerTqdWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = tqdpb.RegisterMapWorkspaceServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterQHPlanningServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterDiscoveryServiceHandler(ctx, mux, conn)
+	_ = tqdpb.RegisterRelatedEntityServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterPlanningClientServiceHandler(ctx, mux, conn)
 	_ = tqdpb.RegisterTqdSeoProjectionServiceHandler(ctx, mux, conn)
 }
@@ -121,6 +122,7 @@ func registerTqdFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoin
 	_ = tqdpb.RegisterMapWorkspaceServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterQHPlanningServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterDiscoveryServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = tqdpb.RegisterRelatedEntityServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterPlanningClientServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = tqdpb.RegisterTqdSeoProjectionServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

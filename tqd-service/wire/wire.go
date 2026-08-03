@@ -18,6 +18,7 @@ import (
 	tqd_infra_postgres_discovery "tqd/infra/postgres/discovery"
 	tqd_infra_postgres_planningclient "tqd/infra/postgres/planningclient"
 	tqd_infra_postgres_publiccontent "tqd/infra/postgres/publiccontent"
+	tqd_infra_postgres_relatedentity "tqd/infra/postgres/relatedentity"
 	tqd_infra_providers "tqd/infra/providers"
 	tqd_infra_validator "tqd/infra/validator"
 	tqd_infra_worker "tqd/infra/worker"
@@ -26,6 +27,7 @@ import (
 	tqd_internal_modules_discovery_application "tqd/internal/modules/discovery/application"
 	tqd_internal_modules_discovery_domain "tqd/internal/modules/discovery/domain"
 	tqd_internal_modules_planningclient_application "tqd/internal/modules/planningclient/application"
+	tqd_internal_modules_relatedentity_application "tqd/internal/modules/relatedentity/application"
 	tqd_internal_modules_resolver_layer_resolver "tqd/internal/modules/resolver/layer_resolver"
 	tqd_internal_modules_resolver_layer_resolver_builder "tqd/internal/modules/resolver/layer_resolver/builder"
 	tqd_internal_modules_resolver_layer_resolver_db "tqd/internal/modules/resolver/layer_resolver/db"
@@ -86,6 +88,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewDiscoveryGrpcHandler,
 	tqd_infra_mapper.NewDiscoveryMapper,
 	tqd_infra_postgres_discovery.NewDiscoveryRepository,
+	tqd_infra_postgres_relatedentity.NewEntityReader,
 	tqd_internal_modules_discovery_domain.NewEntityRef,
 	tqd_infra_handler_grpc.NewFeatureGrpcHandler,
 	tqd_infra_postgres.NewFeatureRepository,
@@ -191,11 +194,13 @@ var wireSet = wire.NewSet(
 	tqd_infra_mapper.NewRegionMapper,
 	tqd_infra_postgres.NewRegionRepository,
 	tqd_internal_usecase.NewRegionUsecase,
+	tqd_infra_handler_grpc.NewRelatedEntityGrpcHandler,
 	tqd_infra_handler_grpc.NewReportGrpcHandler,
 	tqd_infra_postgres.NewReportRepository,
 	tqd_internal_usecase.NewReportUsecase,
 	tqd_infra_postgres_planningclient.NewRepository,
 	tqd_infra_postgres_publiccontent.NewRepository,
+	tqd_infra_postgres_relatedentity.NewRepository,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewResolutionPipeline,
 	tqd_internal_modules_resolver_layer_resolver.NewResolver,
 	tqd_internal_modules_resolver_layer_resolver_engine.NewResolverEngine,
@@ -203,6 +208,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewSeoProjectionGrpcHandler,
 	tqd_internal_modules_discovery_application.NewService,
 	tqd_internal_modules_planningclient_application.NewService,
+	tqd_internal_modules_relatedentity_application.NewService,
 	tqd_infra_handler_grpc.NewSubscriptionGrpcHandler,
 	tqd_infra_postgres.NewSubscriptionRepository,
 	tqd_internal_usecase.NewSubscriptionUsecase,

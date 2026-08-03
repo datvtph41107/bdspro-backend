@@ -25,23 +25,24 @@ func NewRepository(db *gorm.DB) *Repository {
 }
 
 type parcelRow struct {
-	ParcelID     uint64
-	MapNumber    string
-	LandNumber   string
-	PropertyCode string
-	Address      string
-	TotalAreaSqm float64
-	ProvinceCode string
-	WardCode     string
-	IsVerified   bool
-	UpdatedAt    *time.Time
-	GeometryType string
-	CenterLat    float64
-	CenterLon    float64
-	MinLon       float64
-	MinLat       float64
-	MaxLon       float64
-	MaxLat       float64
+	ParcelID      uint64
+	HasParcelInfo bool
+	MapNumber     string
+	LandNumber    string
+	PropertyCode  string
+	Address       string
+	TotalAreaSqm  float64
+	ProvinceCode  string
+	WardCode      string
+	IsVerified    bool
+	UpdatedAt     *time.Time
+	GeometryType  string
+	CenterLat     float64
+	CenterLon     float64
+	MinLon        float64
+	MinLat        float64
+	MaxLon        float64
+	MaxLat        float64
 }
 
 type relatedProjectRow struct {
@@ -319,15 +320,16 @@ func (r *Repository) GetParcelQuickView(
 	var row parcelRow
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT p.id AS parcel_id,
-		       COALESCE(pi.map_number,'') AS map_number,
-		       COALESCE(pi.land_number,'') AS land_number,
+		       (pi.parcel_id IS NOT NULL) AS has_parcel_info,
+		       COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,''),'') AS map_number,
+		       COALESCE(NULLIF(pi.land_number,''),NULLIF(p.land_number,''),'') AS land_number,
 		       COALESCE(pi.property_code,'') AS property_code,
-		       COALESCE(pi.address_text,'') AS address,
-		       COALESCE(pi.total_area_sqm,0) AS total_area_sqm,
+		       COALESCE(NULLIF(pi.address_text,''),NULLIF(p.address_text,''),'') AS address,
+		       COALESCE(NULLIF(pi.total_area_sqm,0),p.total_area_sqm,0) AS total_area_sqm,
 		       COALESCE(pi.province_code,'') AS province_code,
 		       COALESCE(pi.ward_code,'') AS ward_code,
 		       COALESCE(pi.is_verified,false) AS is_verified,
-		       pi.updated_at,
+		       COALESCE(pi.updated_at,p.updated_at) AS updated_at,
 		       GeometryType(p.geometry) AS geometry_type,
 		       ST_Y(ST_PointOnSurface(p.geometry)) AS center_lat,
 		       ST_X(ST_PointOnSurface(p.geometry)) AS center_lon,
@@ -336,7 +338,7 @@ func (r *Repository) GetParcelQuickView(
 		       ST_XMax(Box2D(p.geometry)) AS max_lon,
 		       ST_YMax(Box2D(p.geometry)) AS max_lat
 		FROM parcels p
-		JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
 		WHERE p.id = ?
 		  AND p.deleted_at IS NULL
 		  AND p.geometry IS NOT NULL
@@ -405,6 +407,23 @@ func (r *Repository) GetParcelQuickView(
 		})
 	}
 
+	return buildParcelQuickView(row, related), nil
+}
+
+func buildParcelQuickView(
+	row parcelRow,
+	related []domain.RelatedPlanningProject,
+) *domain.ParcelQuickView {
+	completeness := "complete"
+	warnings := []string{}
+	if !row.HasParcelInfo {
+		completeness = "partial"
+		warnings = append(warnings, "parcel_info_missing")
+	}
+	if len(related) == 0 {
+		warnings = append(warnings, "planning_context_empty")
+	}
+
 	return &domain.ParcelQuickView{
 		ParcelID:        row.ParcelID,
 		CanonicalKey:    "parcel:" + strconv.FormatUint(row.ParcelID, 10),
@@ -416,10 +435,12 @@ func (r *Repository) GetParcelQuickView(
 		ProvinceCode:    row.ProvinceCode,
 		WardCode:        row.WardCode,
 		IsVerified:      row.IsVerified,
+		Completeness:    completeness,
+		Warnings:        warnings,
 		Preview:         preview(row.GeometryType, row.CenterLat, row.CenterLon, row.MinLon, row.MinLat, row.MaxLon, row.MaxLat),
 		RelatedProjects: related,
 		UpdatedAt:       row.UpdatedAt,
-	}, nil
+	}
 }
 
 func (r *Repository) getPlanningProjectRow(

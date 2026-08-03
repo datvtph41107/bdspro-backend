@@ -190,6 +190,7 @@ func runGRPCServer() error {
 	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
 	tqdpb.RegisterQHPlanningServiceServer(s, app.QHPlanningGrpcHandler)
 	tqdpb.RegisterDiscoveryServiceServer(s, app.DiscoveryGrpcHandler)
+	tqdpb.RegisterRelatedEntityServiceServer(s, app.RelatedEntityGrpcHandler)
 
 	reflection.Register(s)
 

@@ -26,11 +26,11 @@ redis:
     pass: protected_redis_secure_password
 
 config-app:
-  qhpro:
-    domain_api: "https://api-test.qhpro.vn"
-    domain_file: "https://data-test.qhpro.vn"
-    domain_pmtile: "https://data-map-test.qhpro.vn"
-    domain_style: "http://14.225.210.29:8000"
+    qhpro:
+        domain_api: "http://14.225.210.29:8000"
+        domain_file: "https://data-test.qhpro.vn"
+        domain_pmtile: "https://data-map-test.qhpro.vn"
+        domain_style: "http://14.225.210.29:8000"
 
 # Layer configuration
 layer:
