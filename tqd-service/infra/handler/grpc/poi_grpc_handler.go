@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	_provider "common/provider"
+	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -22,14 +22,13 @@ type PoiGrpcHandler struct {
 	tqdpb.UnimplementedPoiServiceServer
 	usecase      usecase.PoiUsecase
 	mapper       *mapper.PoiMapper
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
-// NewPoiGrpcHandler creates new handler
 func NewPoiGrpcHandler(
 	usecase usecase.PoiUsecase,
 	mapper *mapper.PoiMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *PoiGrpcHandler {
 	return &PoiGrpcHandler{
 		usecase:      usecase,
@@ -78,7 +77,7 @@ func (h *PoiGrpcHandler) CreatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0), t.UnixMilli())
 
 	return h.mapper.ToProtoFromResponse(result), nil
 }
@@ -89,7 +88,7 @@ func (h *PoiGrpcHandler) GetPoi(ctx context.Context, req *sharepb.IdRequest) (*t
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDPOIDetail, req.Id)
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDPOIDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -122,7 +121,7 @@ func (h *PoiGrpcHandler) GetPoiByCode(ctx context.Context, req *tqdpb.GetPoiByCo
 
 // GetNearbyPois handles nearby search request
 func (h *PoiGrpcHandler) GetNearbyPois(ctx context.Context, req *tqdpb.GetNearbyPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -163,7 +162,7 @@ func (h *PoiGrpcHandler) GetNearbyPois(ctx context.Context, req *tqdpb.GetNearby
 
 // GetPoisByCategory handles get by category request
 func (h *PoiGrpcHandler) GetPoisByCategory(ctx context.Context, req *tqdpb.GetPoisByCategoryRequest) (*tqdpb.ListPoisResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -256,8 +255,8 @@ func (h *PoiGrpcHandler) UpdatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDPOIDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDPOIDetail, req.Id), t.UnixMilli())
 
 	return h.mapper.ToProtoFromResponse(result), nil
 }
@@ -289,8 +288,8 @@ func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) 
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDPOIDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDPOIDetail, req.Id), t.UnixMilli())
 
 	return &sharepb.SubmitResponse{
 		Message: "POI deleted successfully",
@@ -299,7 +298,7 @@ func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) 
 
 // ListPois handles list request
 func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDPOIList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {

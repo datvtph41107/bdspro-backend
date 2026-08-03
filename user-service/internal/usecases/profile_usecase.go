@@ -3,6 +3,7 @@ package usecases
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_errors "common/errors"
 	_jwt "common/jwt"
 	_models "common/models"
@@ -35,7 +36,7 @@ type ProfileUsecase struct {
 	PurposeUseRepo     repo.IPurposeUseRepo
 	MainAreaRepo       repo.IMainAreaRepo
 	TagRepo            repo.ITagRepo
-	CrmProvider        providers.CrmProvider
+	CrmProvider        _provider.CrmProvider
 	FollowRepo         repo.IFollowRepo
 	AuthProvider       providers.AuthProvider
 	NotificationClient providers.NotificationProvider
@@ -49,7 +50,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	PurposeUseRepo repo.IPurposeUseRepo,
 	MainAreaRepo repo.IMainAreaRepo,
 	TagRepo repo.ITagRepo,
-	CrmProvider providers.CrmProvider,
+	CrmProvider _provider.CrmProvider,
 	FollowRepo repo.IFollowRepo,
 	AuthProvider providers.AuthProvider,
 	NotificationClient providers.NotificationProvider,
@@ -123,7 +124,7 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 	}
 
 	// Convert crm response to user model
-	stats := models.RateStats{
+	stats := _dto.RateStats{
 		TotalReviews: rateStatsResp.TotalReviews,
 		AverageScore: rateStatsResp.AverageScore,
 		Star1Count:   rateStatsResp.Star1Count,
@@ -316,7 +317,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	}
 
 	// Convert feedback response to user model
-	stats := models.RateStats{
+	stats := _dto.RateStats{
 		TotalReviews: rateStatsResp.TotalReviews,
 		AverageScore: rateStatsResp.AverageScore,
 		Star1Count:   rateStatsResp.Star1Count,
@@ -327,7 +328,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	}
 	infoEntity.RateStats = &stats
 
-	var relationShip *models.FriendItem
+	var relationShip *_dto.FriendItemDTO
 	if profileId != 0 {
 		relationShip, _ = s.CrmProvider.GetRelationShip(c, profileId, currentUserId)
 	}

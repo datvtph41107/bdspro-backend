@@ -3,8 +3,8 @@ package handler
 import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
+	_provider "common/domain/provider"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -27,23 +27,23 @@ type ContactService struct {
 	crmpb.UnimplementedContactServiceServer
 	UC                 *usecase.ContactUsecase
 	UserClient         *client.UserClient
-	ChatClient         *client.ChatClient
+	ChatClient         _provider.ChatProvider
 	BdsproClient       *client.BdsproClient
 	OrganizationClient *client.OrganizationClient
 	ContactMapper      *mapper.ContactMapper
 	FriendMapper       *mapper.FriendMapper
-	SyncProvider       *_provider.SyncProvider
+	SyncProvider       *_utils.SyncUtil
 }
 
 func NewContactService(
 	uc *usecase.ContactUsecase,
 	userClient *client.UserClient,
-	chatClient *client.ChatClient,
+	chatClient _provider.ChatProvider,
 	bdsproClient *client.BdsproClient,
 	organizationClient *client.OrganizationClient,
 	contactMapper *mapper.ContactMapper,
 	friendMapper *mapper.FriendMapper,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *ContactService {
 	return &ContactService{
 		UC:                 uc,
@@ -131,7 +131,8 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 
 	// Nếu có conversationId, map thông tin member vào contact
 	if req.ConversationId != nil && *req.ConversationId > 0 {
-		s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
+		// todo: map participant to contact
+		// s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
 	}
 
 	return &crmpb.ContactListDTO{
@@ -141,7 +142,7 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 }
 
 func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyContactMe, 0)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -179,7 +180,7 @@ func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (
 // @Security BearerAuth
 // @Router /contact/detail/{id} [get]
 func (s *ContactService) Detail(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactDTO, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyContactDetail, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactDetail, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -293,7 +294,12 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 func (s *ContactService) RelationShip(ctx context.Context, req *sharepb.IdRequest) (*crmpb.RelationShipResponse, error) {
 	result := s.UC.RelationShip(ctx, req.Id)
 	return &crmpb.RelationShipResponse{
-		FriendStatus: s.FriendMapper.FriendItemToPb(result.FriendStatus),
+		FriendStatus: &sharepb.FriendItem{
+			Id:         result.FriendStatus.ID,
+			ReceiverId: result.FriendStatus.ReceiverID,
+			CreatedBy:  &result.FriendStatus.CreatedBy,
+			Status:     result.FriendStatus.Status,
+		},
 		Following:    result.Following,
 		NumFollower:  result.NumFollower,
 		NumFollowing: result.NumFollowing,
@@ -364,7 +370,7 @@ func (s *ContactService) CheckPhone(ctx context.Context, req *crmpb.CheckPhoneRe
 // @Security BearerAuth
 // @Router /contact/by-product/{id} [get]
 func (s *ContactService) GetListContactByProductId(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductContacts, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductContacts, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {

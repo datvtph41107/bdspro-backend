@@ -9,7 +9,7 @@ import (
 )
 
 // DevicePostgresRepo triển khai DeviceRepository với PostgreSQL
-// @bind: auth/internal/interface/repo.DeviceRepository
+// @bind: user/internal/interface/repo.DeviceRepository
 type DevicePostgresRepo struct {
 }
 

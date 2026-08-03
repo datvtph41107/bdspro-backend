@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	_provider "common/provider"
+	_utils "common/utils"
 	"notification/infra/mapper"
 	"notification/internal/usecase"
 	notificationpb "pb/types/notification"
@@ -16,12 +16,12 @@ type PropertyHistoryHandler struct {
 	notificationpb.UnimplementedPropertyHistoryServiceServer
 	usecase      *usecase.PropertyHistoryUseCase
 	mapper       *mapper.PropertyHistoryMapper
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
 func NewPropertyHistoryHandler(
 	uc *usecase.PropertyHistoryUseCase,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *PropertyHistoryHandler {
 	return &PropertyHistoryHandler{
 		usecase:      uc,
@@ -65,7 +65,7 @@ func (h *PropertyHistoryHandler) GetPropertyHistory(
 	ctx context.Context,
 	req *notificationpb.GetPropertyHistoryRequest,
 ) (*notificationpb.GetPropertyHistoryResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyHistories, req.SubjectId)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyHistories, req.SubjectId)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0

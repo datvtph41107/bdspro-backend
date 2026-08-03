@@ -8,7 +8,7 @@ import (
 	_crud "common/domain/crud"
 )
 
-// @bind: auth/internal/interface/repo
+// @bind: user/internal/interface/repo
 type IModuleRepo interface {
 	_crud.ICrudRepo[domain.Module]
 

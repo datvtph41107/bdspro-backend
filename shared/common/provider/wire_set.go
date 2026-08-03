@@ -8,7 +8,6 @@ import (
 
 var SyncProviderSet = wire.NewSet(
 	NewRedisService,
-	NewSyncProvider,
 )
 
 func NewRedisService() *_redis.RedisService {

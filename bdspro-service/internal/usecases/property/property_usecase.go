@@ -13,7 +13,6 @@ import (
 	_errors "common/errors"
 	"common/pkg/fieldmask"
 	"common/pkg/patch"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -49,7 +48,7 @@ type PropertyUsecase struct {
 	Transaction              provider.TransactionProvider
 	NotifyProvider           provider.NotificationProvider
 	HubProvider              provider.HubProvider
-	SyncProvider             *_provider.SyncProvider
+	SyncProvider             *_utils.SyncUtil
 	LineageRepo              property_repo.PropertyLineageRepository
 	InfoRepo                 property_repo.PropertyInfoRepository
 	LocationRepo             property_repo.PropertyLocationRepository
@@ -94,7 +93,7 @@ func NewPropertyUsecase(
 	transaction provider.TransactionProvider,
 	notifyProvider provider.NotificationProvider,
 	hubProvider provider.HubProvider,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 	lineageRepo property_repo.PropertyLineageRepository,
 	inforRepo property_repo.PropertyInfoRepository,
 	locationRepo property_repo.PropertyLocationRepository,
@@ -797,8 +796,8 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 
 		go func() {
 			cloneCtx := _utils.CloneContext(ctx)
-			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, 0), property.UpdatedAt.UnixMilli())
-			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyProductMe, 0), property.UpdatedAt.UnixMilli())
+			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _utils.SyncKeyPropertyMe, 0), property.UpdatedAt.UnixMilli())
+			u.SyncProvider.PutTimestamp(cloneCtx, u.SyncProvider.GetKey(cloneCtx, _utils.SyncKeyProductMe, 0), property.UpdatedAt.UnixMilli())
 		}()
 
 		return nil
@@ -2502,7 +2501,7 @@ func (u *PropertyUsecase) triggerReportSync(ctx context.Context, lineageID uint6
 	cloneCtx := _utils.CloneContext(ctx)
 	now := time.Now().UnixMilli()
 	u.SyncProvider.PutTimestamp(cloneCtx,
-		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, lineageID), now)
+		u.SyncProvider.GetKey(cloneCtx, _utils.SyncKeyPropertyDetail, lineageID), now)
 }
 
 // =============================================================================
@@ -2515,9 +2514,9 @@ func (u *PropertyUsecase) triggerSyncEvents(ctx context.Context, lineageID uint6
 	now := time.Now().UnixMilli()
 
 	u.SyncProvider.PutTimestamp(cloneCtx,
-		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyMe, profileID), now)
+		u.SyncProvider.GetKey(cloneCtx, _utils.SyncKeyPropertyMe, profileID), now)
 	u.SyncProvider.PutTimestamp(cloneCtx,
-		u.SyncProvider.GetKey(cloneCtx, _provider.SyncKeyPropertyDetail, lineageID), now)
+		u.SyncProvider.GetKey(cloneCtx, _utils.SyncKeyPropertyDetail, lineageID), now)
 }
 
 func (u *PropertyUsecase) convertToResponse(evaluation *modules.ImpactEvaluation) *dto.ImpactEvaluationResponse {

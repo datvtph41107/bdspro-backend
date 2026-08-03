@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 
-	_provider "common/provider"
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -20,13 +19,13 @@ type LocationHandler struct {
 	tqdpb.UnimplementedLocationServiceServer
 	locationUsecase *usecase.LocationUsecase
 	mapper          *mapper.LocationMapper
-	SyncProvider    *_provider.SyncProvider
+	SyncProvider    *_utils.SyncUtil
 }
 
 func NewLocationHandler(
 	locationUsecase *usecase.LocationUsecase,
 	mapper *mapper.LocationMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *LocationHandler {
 	return &LocationHandler{
 		locationUsecase: locationUsecase,
@@ -37,7 +36,7 @@ func NewLocationHandler(
 
 // GetNearestLocation - Tìm location gần nhất từ tọa độ
 func (h *LocationHandler) GetNearestLocation(ctx context.Context, req *tqdpb.GetNearestLocationRequest) (*tqdpb.LocationResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLocationSearch, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -84,7 +83,7 @@ func (h *LocationHandler) BatchGetNearestLocations(ctx context.Context, req *tqd
 
 // SearchLocations - Tìm kiếm location theo tên
 func (h *LocationHandler) SearchLocations(ctx context.Context, req *tqdpb.SearchLocationsRequest) (*tqdpb.SearchLocationsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLocationSearch, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -111,7 +110,7 @@ func (h *LocationHandler) SearchLocations(ctx context.Context, req *tqdpb.Search
 
 // GetProvince - Lấy thông tin chi tiết của province
 func (h *LocationHandler) GetProvince(ctx context.Context, req *tqdpb.GetProvinceRequest) (*tqdpb.Province, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLocationSearch, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -138,7 +137,7 @@ func (h *LocationHandler) GetProvince(ctx context.Context, req *tqdpb.GetProvinc
 
 // GetWard - Lấy thông tin chi tiết của ward
 func (h *LocationHandler) GetWard(ctx context.Context, req *tqdpb.GetWardRequest) (*tqdpb.Ward, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLocationSearch, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -165,7 +164,7 @@ func (h *LocationHandler) GetWard(ctx context.Context, req *tqdpb.GetWardRequest
 
 // ListWardsByProvince - Lấy danh sách wards theo province
 func (h *LocationHandler) ListWardsByProvince(ctx context.Context, req *tqdpb.ListWardsByProvinceRequest) (*tqdpb.ListWardsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLocationSearch, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {

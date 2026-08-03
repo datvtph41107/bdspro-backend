@@ -7,6 +7,7 @@ import (
 )
 
 func AutoMigrate() {
+	return
 	_db.DB.AutoMigrate(
 		// Auth entities (migrated from auth-service)
 		&domain.AuthMethod{},

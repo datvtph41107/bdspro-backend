@@ -6,7 +6,6 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	_provider "common/provider"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -24,10 +23,10 @@ type QHLabelGrpcHandler struct {
 	tqdpb.UnimplementedQHLabelServiceServer
 	labelUsecase  usecase.QHLabelUsecase
 	legendUsecase usecase.QHLayerLegendUsecase
-	SyncProvider  *_provider.SyncProvider
+	SyncProvider  *_utils.SyncUtil
 }
 
-func NewQHLabelGrpcHandler(labelUsecase usecase.QHLabelUsecase, legendUsecase usecase.QHLayerLegendUsecase, syncProvider *_provider.SyncProvider) *QHLabelGrpcHandler {
+func NewQHLabelGrpcHandler(labelUsecase usecase.QHLabelUsecase, legendUsecase usecase.QHLayerLegendUsecase, syncProvider *_utils.SyncUtil) *QHLabelGrpcHandler {
 	return &QHLabelGrpcHandler{labelUsecase: labelUsecase, legendUsecase: legendUsecase, SyncProvider: syncProvider}
 }
 
@@ -98,8 +97,8 @@ func (h *QHLabelGrpcHandler) CreateLabel(ctx context.Context, req *tqdpb.CreateL
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, result.ID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLabelDetail, result.ID), t.UnixMilli())
 
 	return toQHLabelResponse(result), nil
 }
@@ -154,7 +153,7 @@ func (h *QHLabelGrpcHandler) BatchCreateLabels(ctx context.Context, req *tqdpb.B
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0), t.UnixMilli())
 
 	out := make([]*tqdpb.QHLabelResponse, len(created))
 	for i, c := range created {
@@ -172,7 +171,7 @@ func (h *QHLabelGrpcHandler) GetLabel(ctx context.Context, req *tqdpb.GetLabelRe
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, req.Id)
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLabelDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -262,8 +261,8 @@ func (h *QHLabelGrpcHandler) UpdateLabel(ctx context.Context, req *tqdpb.UpdateL
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLabelDetail, req.Id), t.UnixMilli())
 
 	resp := toQHLabelResponse(result)
 	if req.LayerId != nil && *req.LayerId > 0 {
@@ -285,8 +284,8 @@ func (h *QHLabelGrpcHandler) DeleteLabel(ctx context.Context, req *tqdpb.DeleteL
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLabelDetail, req.Id), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }
@@ -312,7 +311,7 @@ func (h *QHLabelGrpcHandler) BatchDeleteLabels(ctx context.Context, req *tqdpb.B
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }
@@ -376,15 +375,15 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, result.ID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLabelDetail, result.ID), t.UnixMilli())
 
 	return toQHLabelResponse(result), nil
 }
 
 // ListAdminLabels - Danh sách tất cả label (admin), phân trang (GET /v2/tqd/qh/admin/labels/list)
 func (h *QHLabelGrpcHandler) ListAdminLabels(ctx context.Context, req *tqdpb.ListAdminLabelsRequest) (*tqdpb.ListLabelsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -424,7 +423,7 @@ func (h *QHLabelGrpcHandler) ListAdminLabels(ctx context.Context, req *tqdpb.Lis
 
 // ListLabelsByLayer - Danh sách label theo layer (admin)
 func (h *QHLabelGrpcHandler) ListLabelsByLayer(ctx context.Context, req *tqdpb.ListLabelsByLayerRequest) (*tqdpb.ListLabelsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -474,7 +473,7 @@ func (h *QHLabelGrpcHandler) buildLegendMapByLayer(ctx context.Context, layerID 
 
 // ListClientLabelsByLayer - Danh sách label public theo layer
 func (h *QHLabelGrpcHandler) ListClientLabelsByLayer(ctx context.Context, req *tqdpb.ListLabelsByLayerRequest) (*tqdpb.ListLabelsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLabelList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLabelList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -511,7 +510,7 @@ func (h *QHLabelGrpcHandler) GetClientLabel(ctx context.Context, req *tqdpb.GetL
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLabelDetail, req.Id)
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLabelDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {

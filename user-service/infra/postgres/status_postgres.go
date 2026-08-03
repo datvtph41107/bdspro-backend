@@ -8,7 +8,7 @@ import (
 	"user/internal/domain"
 )
 
-// @bind: auth/internal/interface/repo.StatusRepository
+// @bind: user/internal/interface/repo.StatusRepository
 type StatusPostgres struct {
 	// TODO: Add database connection
 }

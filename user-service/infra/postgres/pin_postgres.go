@@ -11,7 +11,7 @@ import (
 )
 
 // PINPostgres implementation của PIN repository
-// @bind: auth/internal/interface/repo.PINRepository
+// @bind: user/internal/interface/repo.PINRepository
 type PINPostgres struct {
 	db *gorm.DB
 }

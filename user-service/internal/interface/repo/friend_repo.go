@@ -1,6 +1,7 @@
 package repo
 
 import (
+	_dto "common/domain/dto"
 	"time"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -23,6 +24,6 @@ type IFriendRepo interface {
 	DeleteByID(id uint64) error
 	BlockFriend(profileId uint64, targetId uint64) error
 	ExistsFriendship(id uint64, receiverID uint64) (bool, error)
-	GetRelationShip(currentId uint64, targetId uint64) (*models.FriendItem, error)
+	GetRelationShip(currentId uint64, targetId uint64) (*_dto.FriendItemDTO, error)
 	// CancelRequest(id uint64) error
 }

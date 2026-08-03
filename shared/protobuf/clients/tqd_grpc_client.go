@@ -51,8 +51,8 @@ func GetTQDClient(envRuntime string) *TQDGrpcClient {
 	return tqdClientInstance
 }
 
-// NewTQDClient - Tạo instance mới (không singleton)
-func NewTQDClient(envRuntime string) *TQDGrpcClient {
+// MakeTQDClient - Tạo instance mới (không singleton)
+func MakeTQDClient(envRuntime string) *TQDGrpcClient {
 	client := &TQDGrpcClient{}
 
 	go client.initConnection(envRuntime)

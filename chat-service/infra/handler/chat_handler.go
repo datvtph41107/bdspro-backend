@@ -41,7 +41,7 @@ type chatHandler struct {
 	bdsproClient            *client.BdsproClient
 	conversationMapper      *mapper.ConversationMapper
 	backgroundMapper        *mapper.BackgroundMapper
-	syncProvider            *_provider.SyncProvider
+	syncProvider            *_utils.SyncUtil
 }
 
 func NewChatHandler(
@@ -54,7 +54,7 @@ func NewChatHandler(
 	bdsproClient *client.BdsproClient,
 	conversationMapper *mapper.ConversationMapper,
 	backgroundMapper *mapper.BackgroundMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *chatHandler {
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
@@ -1247,14 +1247,14 @@ func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharep
 
 	convID := req.Id
 	redisKeys := []string{
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationDetail, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationFiles, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationLinks, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationImages, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMembers, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationSetting, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationPinned, convID),
-		s.syncProvider.GetKey(ctx, _provider.SyncKeyConversationMessages, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationDetail, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationFiles, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationLinks, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationImages, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationMembers, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationSetting, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationPinned, convID),
+		s.syncProvider.GetKey(ctx, _utils.SyncKeyConversationMessages, convID),
 	}
 
 	vals, err := s.syncProvider.MGet(ctx, redisKeys)

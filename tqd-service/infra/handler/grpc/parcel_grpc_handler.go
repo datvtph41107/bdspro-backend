@@ -3,7 +3,6 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -26,13 +25,13 @@ type ParcelGrpcHandler struct {
 	tqdpb.UnimplementedParcelServiceServer
 	usecase      usecase.ParcelUsecase
 	mapper       *mapper.ParcelMapper
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
 func NewParcelGrpcHandler(
 	usecase usecase.ParcelUsecase,
 	mapper *mapper.ParcelMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *ParcelGrpcHandler {
 	return &ParcelGrpcHandler{
 		usecase:      usecase,
@@ -50,7 +49,7 @@ func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetPar
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
 	}
 
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDParcelDetail, req.ParcelId)
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDParcelDetail, req.ParcelId)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -238,7 +237,7 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 	log.Printf("[CreateBatchParcels] Successfully created %d parcels", len(result.Data))
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDParcelDetail, 0), t.UnixMilli())
 
 	return &tqdpb.ParcelListDTO{
 		Data: h.mapper.ToProtoFromDomainList(result),
@@ -251,7 +250,7 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 
 // FindParcelByLocation - Tìm parcel theo tọa độ
 func (h *ParcelGrpcHandler) FindParcelByLocation(ctx context.Context, req *tqdpb.FindParcelByLocationRequest) (*tqdpb.Parcel, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDParcelDetail, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -490,7 +489,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
 
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDParcelDetail, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 
@@ -587,7 +586,7 @@ func (h *ParcelGrpcHandler) CheckingPolygon(
 	// tối đa 1km2
 	req.MaxAreaHa = 100
 
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDParcelDetail, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDParcelDetail, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 

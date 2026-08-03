@@ -399,7 +399,7 @@ func (s *ContactUsecase) GetContactProducts(c context.Context, contactId uint64,
 	return productIds, total, nil
 }
 
-func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *dto.RelationShipDTO {
+func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *_dto.RelationShipDTO {
 	currentUserId := _utils.GetProfileIdWithContext(c)
 	var relationShip *domain.FriendItem
 	var following bool
@@ -410,8 +410,13 @@ func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *dto.
 
 	numFollower, numFollowing, friendNumber, _ := s.followRepo.GetFollowInfoCount(c, profileId)
 
-	return &dto.RelationShipDTO{
-		FriendStatus: relationShip,
+	return &_dto.RelationShipDTO{
+		FriendStatus: &_dto.FriendItemDTO{
+			ID:         relationShip.ID,
+			ReceiverID: relationShip.ReceiverID,
+			CreatedBy:  relationShip.CreatedBy,
+			Status:     uint32(relationShip.Status), // TODO: convert to uint32
+		},
 		Following:    following,
 		NumFollower:  numFollower,
 		NumFollowing: numFollowing,

@@ -2,7 +2,6 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -21,13 +20,13 @@ type DistributionHandler struct {
 	bdspropb.UnimplementedDistributionServiceServer
 	usecase      *usecases.DistributionUsecase
 	mapper       *mapper.DistributionMapper
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
 func NewDistributionHandler(
 	usecase *usecases.DistributionUsecase,
 	mapper *mapper.DistributionMapper,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *DistributionHandler {
 	return &DistributionHandler{
 		usecase:      usecase,
@@ -119,7 +118,7 @@ func (h *DistributionHandler) ListDistributions(
 	ctx context.Context,
 	req *bdspropb.ListDistributionsRequest,
 ) (*bdspropb.ListDistributionsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDistrs, req.ProductId)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDistrs, req.ProductId)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	_provider "common/provider"
+	_utils "common/utils"
 	"hub/infra/mapper"
 	"hub/internal/domain"
 	"hub/internal/repo"
@@ -18,20 +18,20 @@ type UserGuideHandler struct {
 	userGuideUsecase _usecase.IUserGuideUsecase
 	userGuideMapper  *mapper.UserGuideMapper
 	stepRepo         repo.IUserGuideStepRepo
-	syncProvider     *_provider.SyncProvider
+	syncProvider     *_utils.SyncUtil
 }
 
 func NewUserGuideHandler(
 	userGuideUsecase _usecase.IUserGuideUsecase,
 	userGuideMapper *mapper.UserGuideMapper,
 	stepRepo repo.IUserGuideStepRepo,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *UserGuideHandler {
 	return &UserGuideHandler{
 		userGuideUsecase: userGuideUsecase,
 		userGuideMapper:  userGuideMapper,
 		stepRepo:         stepRepo,
-		syncProvider:    syncProvider,
+		syncProvider:     syncProvider,
 	}
 }
 
@@ -75,7 +75,7 @@ func (h *UserGuideHandler) CreateUserGuide(ctx context.Context, req *hubpb.Creat
 		} else {
 			ts = time.Now().UnixMilli()
 		}
-		_ = h.syncProvider.PutTimestamp(ctx, _provider.SyncKeyUserGuideByKey, ts)
+		_ = h.syncProvider.PutTimestamp(ctx, _utils.SyncKeyUserGuideByKey, ts)
 	}
 
 	return &hubpb.CreateUserGuideResponse{
@@ -136,7 +136,7 @@ func (h *UserGuideHandler) UpdateUserGuide(ctx context.Context, req *hubpb.Updat
 		} else {
 			ts = time.Now().UnixMilli()
 		}
-		_ = h.syncProvider.PutTimestamp(ctx, _provider.SyncKeyUserGuideByKey, ts)
+		_ = h.syncProvider.PutTimestamp(ctx, _utils.SyncKeyUserGuideByKey, ts)
 	}
 
 	return &hubpb.UpdateUserGuideResponse{
@@ -324,7 +324,7 @@ func (h *UserGuideHandler) GetUserGuideByKey(ctx context.Context, req *hubpb.Get
 // @Success 200 {object} hubpb.GetAllUserGuidesByKeyResponse
 // @Router /v2/hub/user-guides/by-key [get]
 func (h *UserGuideHandler) GetAllUserGuidesByKey(ctx context.Context, req *hubpb.GetAllUserGuidesByKeyRequest) (*hubpb.GetAllUserGuidesByKeyResponse, error) {
-	key := _provider.SyncKeyUserGuideByKey
+	key := _utils.SyncKeyUserGuideByKey
 	clientTs := req.GetTimestamp()
 
 	if h.syncProvider != nil && clientTs > 0 {

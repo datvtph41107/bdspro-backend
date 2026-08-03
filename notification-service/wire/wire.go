@@ -1,20 +1,19 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
-	"notification/initial"
-	crm_internal_repo "notification/internal/repo"
-	noti_internal_repo "notification/internal/repo"
+	common_injection "common/injection"
+	_provider "common/provider"
+	common_utils "common/utils"
+	"github.com/google/wire"
 	notification_config "notification/config"
 	notification_infra_cache "notification/infra/cache"
 	notification_infra_client "notification/infra/client"
 	notification_infra_firebase "notification/infra/firebase"
 	notification_infra_handler "notification/infra/handler"
-	notification_infra_impl "notification/infra/impl"
 	notification_infra_mapper "notification/infra/mapper"
 	notification_infra_postgres "notification/infra/postgres"
 	notification_initial "notification/initial"
@@ -28,14 +27,25 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(notification_internal_provider.IAuthClient), new(*notification_infra_client.AuthClient)),
 	wire.Bind(new(notification_internal_provider.IFirebaseProvider), new(*notification_infra_firebase.FirebaseProvider)),
 	wire.Bind(new(notification_internal_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
-	wire.Bind(new(noti_internal_repo.AdminHistoryRepo), new(*notification_infra_postgres.AdminHistoryPostgres)),
 	wire.Bind(new(notification_internal_repo.HistoryAuthRepo), new(*notification_infra_postgres.HistoryAuthPostgres)),
-	wire.Bind(new(crm_internal_repo.HistoryRepo), new(*notification_infra_postgres.HistoryRepo)),
-	wire.Bind(new(noti_internal_repo.NotificationRepo), new(*notification_infra_postgres.PostgreNotification)),
 	wire.Bind(new(notification_internal_repo.PersonConfigRepo), new(*notification_infra_postgres.PersonConfigPostgres)),
+	common_injection.NewAuthClient,
+	common_injection.NewBDSProClient,
+	common_injection.NewCRMClient,
+	common_injection.NewChatClient,
+	common_injection.NewHubClient,
+	common_injection.NewNotification,
+	common_injection.NewOrganizationClient,
+	common_injection.NewPaymentClient,
+	common_injection.NewTQClient,
+	common_injection.NewTransactionClient,
+	common_injection.NewUserClient,
+	common_injection.NewHttpClient,
+	common_utils.NewSyncUtil,
 	notification_infra_postgres.NewAccountWarningPostgresRepo,
 	notification_internal_usecase.NewAccountWarningUsecase,
 	notification_infra_postgres.NewActivityHistoryPostgres,
@@ -43,7 +53,6 @@ var wireSet = wire.NewSet(
 	notification_infra_postgres.NewAdminHistoryPostgres,
 	notification_internal_usecase.NewAdminHistoryUsecase,
 	notification_infra_client.NewAuthClient,
-	notification_infra_impl.NewCommonRedisProvider,
 	notification_infra_handler.NewDealHistoryHandler,
 	notification_infra_postgres.NewDealHistoryPostgres,
 	notification_internal_usecase.NewDealHistoryUsecase,
@@ -70,10 +79,10 @@ var wireSet = wire.NewSet(
 	notification_internal_usecase.NewPropertyHistoryUseCase,
 	notification_infra_cache.NewRedisClient,
 	notification_internal_dto.NewSendNotiResponse,
-	notification_infra_impl.NewSyncProvider,
 	notification_infra_client.NewUserClient,
 )
-func InitializeApp() (*initial.InitialApp, error) {
+
+func InitializeApp() (*notification_initial.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }

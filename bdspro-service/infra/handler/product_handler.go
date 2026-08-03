@@ -11,7 +11,6 @@ import (
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
@@ -38,7 +37,7 @@ type ProductHandler struct {
 	ProductAssetUC *usecases.ProductAssetUsecase
 	AssetMapper    *mapper.AssetMapper
 	DealMapper     mapper.DealMapper
-	SyncProvider   *_provider.SyncProvider
+	SyncProvider   *_utils.SyncUtil
 }
 
 func NewProductService(
@@ -54,7 +53,7 @@ func NewProductService(
 	productAssetUC *usecases.ProductAssetUsecase,
 	assetMapper *mapper.AssetMapper,
 	dealMapper mapper.DealMapper,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *ProductHandler {
 	return &ProductHandler{
 		UC:                 uc,
@@ -503,7 +502,7 @@ func (s *ProductHandler) ExportProduct(context.Context, *bdspropb.IdRequest) (*b
 // @Param sort query string false "Sort order" default("price_asc")
 // @Router /v2/bdspro/v2/product/me [get]
 func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.SearchResponse, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductMe, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {
 		return &bdspropb.SearchResponse{}, nil
@@ -752,15 +751,15 @@ func (s *ProductHandler) GetProductTimestamps(ctx context.Context, req *sharepb.
 	}
 
 	redisKeys := []string{
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDetail, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPriceHist, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDistrs, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPosts, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDeals, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductNotes, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductAppointments, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductContacts, req.Id),
-		s.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyHistories, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductPriceHist, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDistrs, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductPosts, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDeals, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductNotes, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductAppointments, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductContacts, req.Id),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyHistories, req.Id),
 	}
 
 	vals, err := s.SyncProvider.MGet(ctx, redisKeys)
@@ -798,7 +797,7 @@ func (s *ProductHandler) GetProductTimestamps(ctx context.Context, req *sharepb.
 }
 
 func (s *ProductHandler) GetDetail(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.ProductResponse, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDetail, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -885,7 +884,7 @@ func (s *ProductHandler) GetMembers(ctx context.Context, req *bdspropb.IdRequest
 // @Param id path int true "Product ID"
 // @Router /v2/bdspro/v2/product/{id}/posts [get]
 func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.PostResponse, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPosts, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductPosts, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
@@ -930,7 +929,7 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest)
 // @Param size query int false "Page size"
 // @Router /v2/bdspro/v2/product/{id}/deals [get]
 func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDeals, req.Id)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDeals, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
@@ -1034,8 +1033,8 @@ func (s *ProductHandler) DeleteProduct(ctx context.Context, req *bdspropb.IdRequ
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductDetail, req.Id), time.Now().UnixMilli())
-	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductMe, req.Id), time.Now().UnixMilli())
+	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id), time.Now().UnixMilli())
+	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, req.Id), time.Now().UnixMilli())
 	return &bdspropb.Response{
 		Message: "ok",
 	}, nil
@@ -1429,7 +1428,7 @@ func (s *ProductHandler) GetPriceHistory(
 	if req.ProductId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "product_id is required")
 	}
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPriceHist, req.ProductId)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductPriceHist, req.ProductId)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {

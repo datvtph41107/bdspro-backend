@@ -2,7 +2,6 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	crmpb "pb/types/crm"
@@ -24,7 +23,7 @@ type AppointmentHandler struct {
 	Transformer        mapper.AppointmentTransformer
 	Validator          validator.AppointmentValidator
 	DashboardStatsJob  *job.DashboardStatsJob
-	SyncProvider       *_provider.SyncProvider
+	SyncProvider       *_utils.SyncUtil
 }
 
 func NewAppointmentHandler(
@@ -32,7 +31,7 @@ func NewAppointmentHandler(
 	transformer mapper.AppointmentTransformer,
 	validator validator.AppointmentValidator,
 	dashboardStatsJob *job.DashboardStatsJob,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *AppointmentHandler {
 	return &AppointmentHandler{
 		AppointmentUsecase: appointmentUsecase,
@@ -313,7 +312,7 @@ func (h *AppointmentHandler) GetAppointmentStats(ctx context.Context, req *share
 // @Success 200 {object} crmpb.ListAppointmentsResponse "Thành công"
 // @Router /v2.1/appointment/list/by-product/{id} [get]
 func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ListAppointmentsResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductAppointments, req.Id)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductAppointments, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0

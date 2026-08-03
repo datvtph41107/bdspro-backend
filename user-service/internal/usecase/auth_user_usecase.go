@@ -11,6 +11,7 @@ import (
 	_db "common/db"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_errors "common/errors"
 	_jwt "common/jwt"
 	_routes "common/routes"
@@ -42,11 +43,11 @@ type AuthUsecase struct {
 	OrganizationClient providers.OrganizationProvider
 	PaymentProvider    providers.IPaymentProvider
 	NotificationClient providers.NotificationProvider
-	ChatProvider       providers.ChatProvider
+	ChatProvider       _provider.ChatProvider
 	ZnsProvider        providers.IZnsProvider
 	SMSProvider        providers.ISmsProvider
 	properties         dto.PropertiesDTO
-	CrmProvider        providers.CrmProvider
+	CrmProvider        _provider.CrmProvider
 }
 
 func NewAuthService(cookieProvider providers.CookieProvider,
@@ -64,11 +65,11 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 	organizationClient providers.OrganizationProvider,
 	paymentProvider providers.IPaymentProvider,
 	notificationClient providers.NotificationProvider,
-	chatProvider providers.ChatProvider,
+	chatProvider _provider.ChatProvider,
 	znsProvider providers.IZnsProvider,
 	smsProvider providers.ISmsProvider,
 	properties factory.IFactory,
-	crmProvider providers.CrmProvider,
+	crmProvider _provider.CrmProvider,
 ) *AuthUsecase {
 	planId := uint64(1)
 	return &AuthUsecase{

@@ -1,7 +1,7 @@
 package handler_grpc
 
 import (
-	_provider "common/provider"
+	_utils "common/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,15 +17,15 @@ import (
 type FeatureGrpcHandler struct {
 	tqdpb.UnimplementedFeatureServiceServer
 	featureUsecase *usecase.FeatureUsecase
-	SyncProvider   *_provider.SyncProvider
+	SyncProvider   *_utils.SyncUtil
 }
 
-func NewFeatureGrpcHandler(usecase *usecase.FeatureUsecase, syncProvider *_provider.SyncProvider) *FeatureGrpcHandler {
+func NewFeatureGrpcHandler(usecase *usecase.FeatureUsecase, syncProvider *_utils.SyncUtil) *FeatureGrpcHandler {
 	return &FeatureGrpcHandler{featureUsecase: usecase, SyncProvider: syncProvider}
 }
 
 func (h *FeatureGrpcHandler) GetFeaturesByPointRadius(ctx context.Context, req *tqdpb.GetFeaturesByPointRadiusRequest) (*tqdpb.ListFeaturesResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDFeatureList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDFeatureList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -79,7 +79,7 @@ func (h *FeatureGrpcHandler) GetFeaturesByPointRadius(ctx context.Context, req *
 }
 
 func (h *FeatureGrpcHandler) GetFeaturesByPolygon(ctx context.Context, req *tqdpb.GetFeaturesByPolygonRequest) (*tqdpb.ListFeaturesResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDFeatureList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDFeatureList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {

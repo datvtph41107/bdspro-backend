@@ -4,6 +4,7 @@ import (
 	"context"
 	"notification/internal/domain"
 	"notification/internal/dto"
+	"notification/internal/repo"
 	"time"
 
 	shared_enum "pb/enums"
@@ -11,12 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.HistoryRepo
 type HistoryRepo struct {
 	DB *gorm.DB
 }
 
-func NewHistoryRepo(db *gorm.DB) *HistoryRepo {
+func NewHistoryRepo(db *gorm.DB) repo.HistoryRepo {
 	return &HistoryRepo{DB: db}
 }
 

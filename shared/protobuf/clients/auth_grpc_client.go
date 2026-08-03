@@ -23,7 +23,8 @@ type AuthGrpcClient struct {
 func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 	authClient := &AuthGrpcClient{}
 	go func() {
-		name := "auth"
+		// AuthInternalService chạy trên user-service (port 8201), không còn auth-service riêng
+		name := "user"
 		url := common.GetPrefixProtobufUrl(env_runtime, name)
 
 		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),

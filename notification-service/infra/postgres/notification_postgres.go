@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"notification/internal/domain"
 	"notification/internal/dto"
+	"notification/internal/repo"
 
 	"gorm.io/gorm"
 )
 
-// @bind: noti/internal/repo.NotificationRepo
 type PostgreNotification struct {
 	DB *gorm.DB
 }
 
-func NewPostgreNotification(db *gorm.DB) *PostgreNotification {
+func NewPostgreNotification(db *gorm.DB) repo.NotificationRepo {
 	return &PostgreNotification{DB: db}
 }
 

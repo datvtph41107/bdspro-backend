@@ -68,10 +68,10 @@ const (
 ### 2.3. Cách dùng trong handler
 
 ```go
-key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyProduct, req.Id)
+key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProduct, req.Id)
 redisKeys := []string{
-	s.SyncProvider.GetKey(ctx, _provider.SyncKeyProduct, req.Id),
-	s.SyncProvider.GetKey(ctx, _provider.SyncKeyProductPriceHist, req.Id),
+	s.SyncProvider.GetKey(ctx, _utils.SyncKeyProduct, req.Id),
+	s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductPriceHist, req.Id),
 	// ...
 }
 ```

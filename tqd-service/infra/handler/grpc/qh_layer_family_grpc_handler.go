@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
-	_provider "common/provider"
+	_utils "common/utils"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -23,10 +23,10 @@ import (
 type QHLayerFamilyGrpcHandler struct {
 	tqdpb.UnimplementedQHLayerFamilyServiceServer
 	uc           usecase.QHLayerFamilyUsecase
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
-func NewQHLayerFamilyGrpcHandler(uc usecase.QHLayerFamilyUsecase, syncProvider *_provider.SyncProvider) *QHLayerFamilyGrpcHandler {
+func NewQHLayerFamilyGrpcHandler(uc usecase.QHLayerFamilyUsecase, syncProvider *_utils.SyncUtil) *QHLayerFamilyGrpcHandler {
 	return &QHLayerFamilyGrpcHandler{uc: uc, SyncProvider: syncProvider}
 }
 
@@ -162,7 +162,7 @@ func (h *QHLayerFamilyGrpcHandler) GetClientLayerFamilies(ctx context.Context, r
 
 // ListClientFamilies — GET /v2/tqd/client/families
 func (h *QHLayerFamilyGrpcHandler) ListClientFamilies(ctx context.Context, req *tqdpb.ListClientFamiliesRequest) (*tqdpb.ListLayerFamiliesResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerFamilyList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerFamilyList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp())
 	h.SyncProvider.PutTimeRequest(ctx, key, req.GetTimestamp())
 	if !updated {

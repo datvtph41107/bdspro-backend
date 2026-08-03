@@ -6,16 +6,16 @@ import (
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/enums"
+	"hub/internal/repo"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/repo.ISystemConfigRepo
 type SystemConfigPostgres struct {
 	DB *gorm.DB
 }
 
-func NewSystemConfigPostgres(db *gorm.DB) *SystemConfigPostgres {
+func NewSystemConfigPostgres(db *gorm.DB) repo.ISystemConfigRepo {
 	return &SystemConfigPostgres{
 		DB: db,
 	}

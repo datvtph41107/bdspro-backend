@@ -5,7 +5,9 @@ package wire
 
 import (
 	_db "common/db"
+	common_injection "common/injection"
 	_provider "common/provider"
+	common_utils "common/utils"
 	"github.com/google/wire"
 	hub_infra_client "hub/infra/client"
 	hub_infra_handler "hub/infra/handler"
@@ -18,7 +20,6 @@ import (
 	hub_initial "hub/initial"
 	hub_internal_interface "hub/internal/interface"
 	hub_internal_repo "hub/internal/repo"
-	user_internal_repo "hub/internal/repo"
 	hub_internal_usecase "hub/internal/usecase"
 )
 
@@ -31,7 +32,19 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
 	wire.Bind(new(hub_internal_repo.IUpdateDataRepo), new(*hub_infra_postgre.UpdateDataRepo)),
-	wire.Bind(new(user_internal_repo.ISystemConfigRepo), new(*hub_infra_postgre.SystemConfigPostgres)),
+	common_injection.NewAuthClient,
+	common_injection.NewBDSProClient,
+	common_injection.NewCRMClient,
+	common_injection.NewChatClient,
+	common_injection.NewHubClient,
+	common_injection.NewNotification,
+	common_injection.NewOrganizationClient,
+	common_injection.NewPaymentClient,
+	common_injection.NewTQClient,
+	common_injection.NewTransactionClient,
+	common_injection.NewUserClient,
+	common_injection.NewHttpClient,
+	common_utils.NewSyncUtil,
 	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
 	hub_infra_handler.NewApiKeyHandler,
 	hub_infra_mapper.NewApiKeyMapper,

@@ -6,7 +6,6 @@ import (
 	"chat/infrastructure/client"
 	"chat/infrastructure/mapper"
 	"chat/internal/usecases"
-	_provider "common/provider"
 	chatpb "pb/types/chat"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -31,7 +30,7 @@ func NewDelivery(
 	conversationMapper *mapper.ConversationMapper,
 	messageMapper *mapper.MessageMapper,
 	backgroundMapper *mapper.BackgroundMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 	messageRepository usecases.Repository,
 	systemMessageUsecase *usecases.SystemMessageUsecase,
 ) *Delivery {

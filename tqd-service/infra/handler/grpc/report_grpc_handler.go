@@ -7,7 +7,6 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
@@ -22,11 +21,11 @@ import (
 type ReportGrpcHandler struct {
 	tqdpb.UnimplementedReportServiceServer
 	reportUsecase usecase.ReportUsecase
-	SyncProvider  *_provider.SyncProvider
+	SyncProvider  *_utils.SyncUtil
 	authClient    *clients.AuthGrpcClient
 }
 
-func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase, syncProvider *_provider.SyncProvider) *ReportGrpcHandler {
+func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase, syncProvider *_utils.SyncUtil) *ReportGrpcHandler {
 	return &ReportGrpcHandler{
 		reportUsecase: reportUsecase,
 		SyncProvider:  syncProvider,
@@ -77,7 +76,7 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 	log.Printf("[CreateReportAsync] Report created: %d", reportID)
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, userID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDReportList, userID), t.UnixMilli())
 
 	return &tqdpb.CreateReportAsyncResponse{
 		ReportId:  reportID,
@@ -185,7 +184,7 @@ func (h *ReportGrpcHandler) ListReports(ctx context.Context, req *tqdpb.ListRepo
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, userID)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDReportList, userID)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -258,7 +257,7 @@ func (h *ReportGrpcHandler) DeleteReport(
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDReportList, userID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDReportList, userID), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // OTPPostgres implementation của OTP repository
-// @bind: auth/internal/interface/repo.OTPRepository
+// @bind: user/internal/interface/repo.OTPRepository
 type OTPPostgres struct {
 	// TODO: Add database connection
 	db *gorm.DB

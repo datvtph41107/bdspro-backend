@@ -8,16 +8,16 @@ import (
 
 	"notification/internal/domain"
 	"notification/internal/dto"
+	"notification/internal/repo"
 
 	"gorm.io/gorm"
 )
 
-// @bind: noti/internal/repo.AdminHistoryRepo
 type AdminHistoryPostgres struct {
 	DB *gorm.DB
 }
 
-func NewAdminHistoryPostgres(db *gorm.DB) *AdminHistoryPostgres {
+func NewAdminHistoryPostgres(db *gorm.DB) repo.AdminHistoryRepo {
 	return &AdminHistoryPostgres{DB: db}
 }
 

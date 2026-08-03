@@ -7,7 +7,7 @@ import (
 	"bdspro/internal/usecases"
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
+	_utils "common/utils"
 	"context"
 
 	bdspropb "pb/types/bdspro"
@@ -19,14 +19,14 @@ type ProductNoteHandler struct {
 	ProductNoteUsecase *usecases.ProductNoteUsecase
 	ProductNoteMapper  *mapper.ProductNoteMapper
 	UserClient         *client.UserClient
-	SyncProvider       *_provider.SyncProvider
+	SyncProvider       *_utils.SyncUtil
 }
 
 func NewProductNoteHandler(
 	usecase *usecases.ProductNoteUsecase,
 	mapper *mapper.ProductNoteMapper,
 	userClient *client.UserClient,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *ProductNoteHandler {
 	return &ProductNoteHandler{
 		ProductNoteUsecase: usecase,
@@ -40,7 +40,7 @@ func (h *ProductNoteHandler) ListProductNotes(
 	ctx context.Context,
 	req *bdspropb.ListProductNotesRequest,
 ) (*bdspropb.ListProductNotesResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductNotes, req.ProductId)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductNotes, req.ProductId)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	// client mặc định sẽ truyền page = 0 GET /v2/deals?page=0
@@ -94,7 +94,7 @@ func (h *ProductNoteHandler) CreateProductNote(
 	if err != nil {
 		return nil, err
 	}
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyProductNotes, req.ProductId)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductNotes, req.ProductId)
 	h.SyncProvider.PutTimestamp(ctx, key, result.UpdatedAt.UnixMilli())
 	return &bdspropb.Response{
 		Id:      req.ProductId,

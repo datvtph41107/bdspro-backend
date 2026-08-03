@@ -8,7 +8,6 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 
 	tqdpb "pb/types/tqd"
@@ -26,13 +25,13 @@ type MapWorkspaceGrpcHandler struct {
 
 	usecase      usecase.MapWorkspaceUsecase
 	mapper       *mapper.WorkspaceMapper
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
 func NewMapWorkspaceGrpcHandler(
 	usecase usecase.MapWorkspaceUsecase,
 	mapper *mapper.WorkspaceMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *MapWorkspaceGrpcHandler {
 	return &MapWorkspaceGrpcHandler{
 		usecase:      usecase,

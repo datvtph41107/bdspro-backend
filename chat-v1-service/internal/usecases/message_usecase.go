@@ -5,7 +5,6 @@ import (
 	_interface "chat/internal/interface"
 	iusecase "chat/internal/interface"
 	_dto "common/domain/dto"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"time"
@@ -56,7 +55,7 @@ func (c *messageUsecases) SendToReceiver(ctx context.Context, message *models.Me
 	}
 	if c.syncProvider != nil {
 		ts := time.Now().UnixMilli()
-		key := c.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, message.ConversationID)
+		key := c.syncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyConversationCommon, message.ConversationID)
 		_ = c.syncProvider.PutTimestamp(ctx, key, ts)
 	}
 	return data, nil
@@ -82,7 +81,7 @@ func (c *messageUsecases) SendMessage(ctx context.Context, message *models.Messa
 	}
 	if c.syncProvider != nil {
 		ts := time.Now().UnixMilli()
-		key := c.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, message.ConversationID)
+		key := c.syncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyConversationCommon, message.ConversationID)
 		_ = c.syncProvider.PutTimestamp(ctx, key, ts)
 	}
 	return data, nil
@@ -159,7 +158,7 @@ func (c *messageUsecases) CreateSystemMessage(ctx context.Context, conversationI
 	}
 	if c.syncProvider != nil {
 		ts := time.Now().UnixMilli()
-		key := c.syncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyConversationCommon, conversationId)
+		key := c.syncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyConversationCommon, conversationId)
 		_ = c.syncProvider.PutTimestamp(ctx, key, ts)
 	}
 	return data, nil

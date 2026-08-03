@@ -2,6 +2,7 @@ package models
 
 import (
 	_db "common/db"
+	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_model "common/models"
 	"fmt"
@@ -85,11 +86,11 @@ type UserProfileEntity struct {
 	TagProjects     []TagEntity           `gorm:"-" json:"tagProjects"`
 	Tags            []TagEntity           `gorm:"-" json:"tags"`
 	ProfileMedias   []ProfileMediaEntity  `gorm:"-" json:"profileMedias"`
-	RateStats       *RateStats            `gorm:"-" json:"rateStats"`
+	RateStats       *_dto.RateStats       `gorm:"-" json:"rateStats"`
 
-	FriendStatus *FriendItem       `gorm:"-" json:"friendStatus"`
-	Following    bool              `gorm:"-" json:"following"`
-	Status       _enum.EUserStatus `gorm:"column:status;default:10" json:"status"`
+	FriendStatus *_dto.FriendItemDTO `gorm:"-" json:"friendStatus"`
+	Following    bool                `gorm:"-" json:"following"`
+	Status       _enum.EUserStatus   `gorm:"column:status;default:10" json:"status"`
 
 	Bookmark bool `gorm:"-" json:"bookmark"`
 

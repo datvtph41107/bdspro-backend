@@ -225,7 +225,7 @@ var HttpCmd = &cobra.Command{
 				"https://test.qhpro.vn",
 			},
 			AllowMethods:     []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Lang", "If-None-Match", "X-QHPro-Telemetry-Key"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Lang", "If-None-Match", "X-QHPro-Telemetry-Key", "Referer", "timezone_offset"},
 			ExposeHeaders:    []string{"Content-Length", "Content-Type", "Set-Cookie", "ETag", "Cache-Control", "X-Robots-Tag", "X-Content-Type-Options"},
 			AllowCredentials: true,
 			MaxAge:           12 * time.Hour,

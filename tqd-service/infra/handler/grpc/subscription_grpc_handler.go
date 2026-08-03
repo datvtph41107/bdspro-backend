@@ -7,7 +7,6 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -25,7 +24,7 @@ type SubscriptionGrpcHandler struct {
 	regionUsecase usecase.RegionUsecase
 	parcelUsecase usecase.ParcelUsecase
 	parcelMapper  *mapper.ParcelMapper
-	SyncProvider  *_provider.SyncProvider
+	SyncProvider  *_utils.SyncUtil
 }
 
 func NewSubscriptionGrpcHandler(
@@ -33,7 +32,7 @@ func NewSubscriptionGrpcHandler(
 	notifUsecase usecase.NotificationUsecase,
 	regionUsecase usecase.RegionUsecase,
 	parcelUsecase usecase.ParcelUsecase,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *SubscriptionGrpcHandler {
 	return &SubscriptionGrpcHandler{
 		subUsecase:    subUsecase,
@@ -59,7 +58,7 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -195,7 +194,7 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
 
 	scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
 	return &tqdpb.SubscriptionResponse{
@@ -230,7 +229,7 @@ func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }
@@ -244,7 +243,7 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -319,7 +318,7 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
 
 	scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
 	return &tqdpb.SubscriptionResponse{
@@ -354,7 +353,7 @@ func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }
@@ -373,7 +372,7 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
 
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDNotificationList, userID)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDNotificationList, userID)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -527,7 +526,7 @@ func (h *SubscriptionGrpcHandler) AdminDeleteSubscription(
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDSubscriptionList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, 0), t.UnixMilli())
 
 	return &emptypb.Empty{}, nil
 }

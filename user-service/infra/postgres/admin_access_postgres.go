@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: auth/internal/interface/repo.AdminAccessRepository
+// @bind: user/internal/interface/repo.AdminAccessRepository
 type AdminAccessPostgresRepo struct {
 }
 

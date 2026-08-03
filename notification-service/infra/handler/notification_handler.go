@@ -2,7 +2,6 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -27,7 +26,7 @@ type NotificationHandler struct {
 	AccountWarningUsecase *usecase.AccountWarningUsecase
 	UserClient            provider.IUserProvider
 	Mapper                *mapper.NotificationMapper
-	SyncProvider          *_provider.SyncProvider
+	SyncProvider          *_utils.SyncUtil
 	notipb.UnimplementedGatewayNotificationServiceServer
 }
 
@@ -38,7 +37,7 @@ func NewNotificationHandler(
 	accountWarningUsecase *usecase.AccountWarningUsecase,
 	userClient provider.IUserProvider,
 	mapper *mapper.NotificationMapper,
-	syncProvider *_provider.SyncProvider,
+	syncProvider *_utils.SyncUtil,
 ) *NotificationHandler {
 	return &NotificationHandler{
 		Usecase:               usecase,
@@ -89,7 +88,7 @@ func (s *NotificationHandler) Create(ctx context.Context, req *notipb.GatewayNot
 // @Router /count [get]
 func (s *NotificationHandler) Count(ctx context.Context, req *notipb.CountRequest) (*notipb.CountResponse, error) {
 	clientTs := req.GetTimestamp()
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyNotificationMe, 0)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
 	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
 	println("updated", updated)
 	if !updated {
@@ -217,7 +216,7 @@ func (s *NotificationHandler) Remove(ctx context.Context, req *notipb.IdRequest)
 func (s *NotificationHandler) List(ctx context.Context, req *notipb.ListRequest) (*notipb.ListResponse, error) {
 	clientTs := req.GetTimestamp()
 
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyNotificationMe, 0)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
 	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
 	s.SyncProvider.PutTimeRequest(ctx, key, clientTs)
 	if !updated && req.Page == 0 {
@@ -259,7 +258,7 @@ func (s *NotificationHandler) invalidateNotificationSync(ctx context.Context) {
 	if s.SyncProvider == nil {
 		return
 	}
-	key := s.SyncProvider.GetKey(ctx, _provider.SyncKeyNotificationMe, 0)
+	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
 	_ = s.SyncProvider.PutTimestamp(ctx, key, time.Now().UnixMilli())
 }
 

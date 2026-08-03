@@ -4,7 +4,6 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -29,10 +28,10 @@ import (
 type LayerGrpcHandler struct {
 	tqdpb.UnimplementedLayerServiceServer
 	layerUsecase usecase.LayerUsecase
-	SyncProvider *_provider.SyncProvider
+	SyncProvider *_utils.SyncUtil
 }
 
-func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase, syncProvider *_provider.SyncProvider) *LayerGrpcHandler {
+func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase, syncProvider *_utils.SyncUtil) *LayerGrpcHandler {
 	return &LayerGrpcHandler{
 		layerUsecase: layerUsecase,
 		SyncProvider: syncProvider,
@@ -122,8 +121,8 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, created.ID), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, created.ID), t.UnixMilli())
 
 	return h.toProtoLayer(created, true)
 }
@@ -216,8 +215,8 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
 
 	return h.toProtoLayer(updated, true)
 }
@@ -241,8 +240,8 @@ func (h *LayerGrpcHandler) ToggleLayerBasicVisibility(ctx context.Context, req *
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
 
 	return h.toProtoLayer(layer, true)
 }
@@ -258,8 +257,8 @@ func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLay
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
 
 	return &sharepb.Empty{}, nil
 }
@@ -275,14 +274,14 @@ func (h *LayerGrpcHandler) HardDeleteLayer(ctx context.Context, req *tqdpb.Delet
 	}
 
 	t := time.Now()
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0), t.UnixMilli())
-	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0), t.UnixMilli())
+	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, req.Id), t.UnixMilli())
 
 	return &sharepb.Empty{}, nil
 }
 
 func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequest) (*tqdpb.LayerResponse, error) {
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id)
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -298,7 +297,7 @@ func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequ
 }
 
 func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayersRequest) (*tqdpb.ListLayersResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -351,7 +350,7 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 }
 
 func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.ListClientLayersRequest) (*tqdpb.ListLayersResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyTQDLayerList, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLayerList, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -397,7 +396,7 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 }
 
 func (h *LayerGrpcHandler) GetClientLayer(ctx context.Context, req *tqdpb.GetClientLayerRequest) (*tqdpb.LayerResponse, error) {
-	key := h.SyncProvider.GetKeyWithoutMe(ctx, _provider.SyncKeyTQDLayerDetail, req.Id)
+	key := h.SyncProvider.GetKeyWithoutMe(ctx, _utils.SyncKeyTQDLayerDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {

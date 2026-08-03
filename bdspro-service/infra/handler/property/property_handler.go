@@ -7,7 +7,6 @@ import (
 	property_usecases "bdspro/internal/usecases/property"
 	_enum "common/domain/enum"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -27,14 +26,14 @@ type PropertyHandler struct {
 	PropertyUsecase *property_usecases.PropertyUsecase
 	PropertyMapper  *mapper.PropertyMapper
 	AssetMapper     *mapper.AssetMapper
-	SyncProvider    *_provider.SyncProvider
+	SyncProvider    *_utils.SyncUtil
 }
 
 func NewPropertyHandler(
 	propertyUsecase *property_usecases.PropertyUsecase,
 	propertyMapper *mapper.PropertyMapper,
 	assetMapper *mapper.AssetMapper,
-	SyncProvider *_provider.SyncProvider,
+	SyncProvider *_utils.SyncUtil,
 ) *PropertyHandler {
 	return &PropertyHandler{
 		PropertyUsecase: propertyUsecase,
@@ -166,7 +165,7 @@ func (h *PropertyHandler) ListMe(
 	ctx context.Context,
 	req *sharepb.SyncRequest,
 ) (*bdspropb.PropertyListResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, 0)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, 0)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {
@@ -271,8 +270,8 @@ func (h *PropertyHandler) AddPropertyUser(
 		return nil, err
 	}
 	t := time.Now()
-	keyList := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, userId)
-	keyItem := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, prop.ID)
+	keyList := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, userId)
+	keyItem := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyDetail, prop.ID)
 	h.SyncProvider.PutTimeRequest(ctx, keyList, t.UnixMilli())
 	h.SyncProvider.PutTimeRequest(ctx, keyItem, t.UnixMilli())
 	return &bdspropb.Response{
@@ -294,7 +293,7 @@ func (h *PropertyHandler) GetDetail(
 	ctx context.Context,
 	req *sharepb.SyncRequest,
 ) (*bdspropb.PropertyDetailResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, req.Id)
+	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyDetail, req.Id)
 	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
 	if !updated {
@@ -330,8 +329,8 @@ func (h *PropertyHandler) GetPropertyTimestamps(ctx context.Context, req *sharep
 		return nil, status.Error(codes.InvalidArgument, "property id is required")
 	}
 	redisKeys := []string{
-		h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, req.Id),
-		h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyHistories, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyDetail, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyHistories, req.Id),
 	}
 
 	vals, err := h.SyncProvider.MGet(ctx, redisKeys)
@@ -593,10 +592,10 @@ func (h *PropertyHandler) invalidatePropertySyncKeys(ctx context.Context, ids []
 	if h.SyncProvider == nil {
 		return
 	}
-	keyList := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyMe, 0)
+	keyList := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, 0)
 	_ = h.SyncProvider.Del(ctx, keyList)
 	for _, id := range ids {
-		keyDetail := h.SyncProvider.GetKey(ctx, _provider.SyncKeyPropertyDetail, id)
+		keyDetail := h.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyDetail, id)
 		_ = h.SyncProvider.Del(ctx, keyDetail)
 	}
 }
