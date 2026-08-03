@@ -13,7 +13,6 @@ import (
 )
 
 // @bind: bdspro/internal/provider.DeepseekProvider
-
 type DeepseekClient struct {
 	apiKey     string
 	baseURL    string

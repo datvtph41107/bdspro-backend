@@ -5,6 +5,7 @@ import (
 	_dto "common/domain/dto"
 	_provider "common/domain/provider"
 	_middleware "common/middleware"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"log"
@@ -111,4 +112,19 @@ func (c *ChatGrpcClient) MapParticipantToContact(ctx context.Context, conversati
 	// }
 
 	return nil
+}
+
+func (c *ChatGrpcClient) SendProductToReceiver(ctx context.Context, productID uint64, content string, receiverID *uint64) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	_, err := c.Client.SendToReceiver(ctx, &chatpb.SendMessageRequest{
+		ConversationId: 1,
+		SenderId:       int32(profileId),
+		Content:        content,
+		ContentType:    "product",
+		FileUrl:        nil,
+		ReplyId:        nil,
+		ExtraId:        &productID,
+		ReceiverId:     receiverID,
+	})
+	return err
 }

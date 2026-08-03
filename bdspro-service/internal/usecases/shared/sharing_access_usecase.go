@@ -9,6 +9,7 @@ import (
 	_db "common/db"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
@@ -23,7 +24,7 @@ type SharingAccessUsecase struct {
 	Repo           repo.SharingAccessRepo
 	ProductUsecase *ProductUsecase
 	Client         provider.NotificationProvider
-	ChatClient     provider.ChatProvider
+	ChatProvider   _provider.ChatProvider
 	AssetRepo      repo.AssetRepo
 }
 
@@ -31,14 +32,14 @@ func NewShareAccessUsecase(
 	repo repo.SharingAccessRepo,
 	ProductUc *ProductUsecase,
 	Client provider.NotificationProvider,
-	chatClient provider.ChatProvider,
+	chatClient _provider.ChatProvider,
 	assetRepo repo.AssetRepo,
 ) *SharingAccessUsecase {
 	return &SharingAccessUsecase{
 		Repo:           repo,
 		ProductUsecase: ProductUc,
 		Client:         Client,
-		ChatClient:     chatClient,
+		ChatProvider:   chatClient,
 		AssetRepo:      assetRepo,
 	}
 }
@@ -85,7 +86,7 @@ func (s *SharingAccessUsecase) CreateBatch(c context.Context, domainId uint64, o
 		})
 
 		for _, entity := range entities {
-			s.ChatClient.SendProductToReceiver(ctxClone,
+			s.ChatProvider.SendProductToReceiver(ctxClone,
 				product.ID,
 				"",
 				&entity.ToId,
@@ -203,7 +204,7 @@ func (s *SharingAccessUsecase) BulkSave(c context.Context,
 
 		if dto.Domain == enums.EDomainProduct {
 			for _, entity := range entities {
-				s.ChatClient.SendProductToReceiver(ctxClone,
+				s.ChatProvider.SendProductToReceiver(ctxClone,
 					entity.DomainID,
 					"",
 					&entity.ToId,

@@ -274,3 +274,21 @@ func (c *CrmGrpcClient) MapFriendStatusToSearchItemPb(ctx context.Context, searc
 		searchItems[i].FriendStatus = friendStatusMap[searchItem.ProfileId]
 	}
 }
+
+// GetContactByOriginId retrieves contact information by originId using internal service
+func (c *CrmGrpcClient) GetContactByOriginId(ctx context.Context, originId uint64) (*sharepb.ContactDTO, error) {
+	if c.CrmInternalServiceClient == nil {
+		return nil, errors.New("crm service not initialized")
+	}
+
+	resp, err := c.CrmInternalServiceClient.GetContactByOriginId(
+		ctx,
+		&sharepb.IdRequest{
+			Id: originId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

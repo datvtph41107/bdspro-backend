@@ -15,6 +15,7 @@ import (
 	"bdspro/internal/utils"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_provider "common/domain/provider"
 	_usecase "common/domain/usecase"
 	_errors "common/errors"
 	_models "common/models"
@@ -72,7 +73,7 @@ type ProductUsecase struct {
 
 	Transaction            provider.TransactionProvider
 	DeepseekClient         provider.DeepseekProvider
-	CrmProvider            provider.CrmProvider
+	CrmProvider            _provider.CrmProvider
 	UserProvider           provider.IUserProvider
 	DistributionRepo       repo.DistributeRepository
 	HubProvider            provider.HubProvider
@@ -109,7 +110,7 @@ func NewProductUsecase(
 	deepseekClient provider.DeepseekProvider,
 	transaction provider.TransactionProvider,
 	notificationClient provider.NotificationProvider,
-	crmProvider provider.CrmProvider,
+	crmProvider _provider.CrmProvider,
 	userProvider provider.IUserProvider,
 	distributionRepo repo.DistributeRepository,
 	hubProvider provider.HubProvider,

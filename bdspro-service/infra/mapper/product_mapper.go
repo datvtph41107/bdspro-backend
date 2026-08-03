@@ -5,9 +5,9 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	"bdspro/internal/provider"
 	"bdspro/internal/repo"
 	_dto "common/domain/dto"
+	_provider "common/domain/provider"
 	_usecase "common/domain/usecase"
 	_utils "common/utils"
 	"context"
@@ -27,7 +27,7 @@ type ProductMapper struct {
 	DepositeMapper           *DepositeMapper
 	CodeDataUsecase          *_usecase.CodeDataUsecase
 	UserClient               *client.UserClient
-	CrmClient                provider.CrmProvider
+	CrmClient                _provider.CrmProvider
 	AssetRepo                repo.AssetRepo
 	PropertyMapper           *PropertyMapper
 	// TransactionMapper        TransactionTransformer
@@ -42,7 +42,7 @@ func NewProductMapper(postMapper *PostMapper,
 	depositeMapper *DepositeMapper,
 	codeDataUsecase *_usecase.CodeDataUsecase,
 	userClient *client.UserClient,
-	crmClient provider.CrmProvider,
+	crmClient _provider.CrmProvider,
 	assetRepo repo.AssetRepo,
 	// transactionMapper TransactionTransformer,
 ) *ProductMapper {

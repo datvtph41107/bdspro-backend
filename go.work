@@ -24,6 +24,5 @@ use (
 	./shared/protobuf
 	./social-service
 	./tqd-service
-	./transaction-service
 	./user-service
 )

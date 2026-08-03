@@ -30,7 +30,9 @@ import (
 	bdspro_internal_usecases_property "bdspro/internal/usecases/property"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
 	_db "common/db"
+	common_injection "common/injection"
 	_provider "common/provider"
+	common_utils "common/utils"
 	"github.com/google/wire"
 )
 
@@ -39,7 +41,7 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
-	wire.Bind(new(bdspro_internal_provider.ChatProvider), new(*bdspro_infra_client.ChatClient)),
+	wire.Bind(new(bdspro_internal_provider.DeepseekProvider), new(*bdspro_infra_client.DeepseekClient)),
 	wire.Bind(new(bdspro_internal_provider.HubProvider), new(*bdspro_infra_client.HubClient)),
 	wire.Bind(new(bdspro_internal_provider.IUserProvider), new(*bdspro_infra_client.UserClient)),
 	wire.Bind(new(bdspro_internal_provider.PlanProvider), new(*bdspro_infra_providers.MemberPlanProvider)),
@@ -87,6 +89,19 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo_admin.AdminProjectRepo), new(*bdspro_infra_postgres_admin.AdminProjectPostgres)),
 	wire.Bind(new(bdspro_internal_repo_admin.AdminPropertyTypeRepo), new(*bdspro_infra_postgres_admin.AdminPropertyTypePostgres)),
 	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_handler.MemberPlanUsecase)),
+	common_injection.NewAuthClient,
+	common_injection.NewBDSProClient,
+	common_injection.NewCRMClient,
+	common_injection.NewChatClient,
+	common_injection.NewHubClient,
+	common_injection.NewNotification,
+	common_injection.NewOrganizationClient,
+	common_injection.NewPaymentClient,
+	common_injection.NewTQClient,
+	common_injection.NewTransactionClient,
+	common_injection.NewUserClient,
+	common_injection.NewHttpClient,
+	common_utils.NewSyncUtil,
 	bdspro_infra_postgres.NewActionRepo,
 	bdspro_infra_handler.NewAdminAreaRegionHandler,
 	bdspro_infra_handler_admin.NewAdminAssetHandler,
@@ -150,7 +165,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewBdsproPublicService,
 	bdspro_infra_mapper.NewBuildMapper,
 	bdspro_infra_postgres.NewBuildingInfoRepo,
-	bdspro_infra_client.NewChatClient,
 	bdspro_infra_redis.NewClient,
 	bdspro_infra_providers.NewCodeDataUsecase,
 	bdspro_infra_mapper.NewCommonMapper,
@@ -162,7 +176,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_postgres.NewCostTypeRepository,
 	bdspro_internal_usecases.NewCostTypeUsecase,
 	bdspro_infra_validator.NewCostTypeValidator,
-	bdspro_infra_client.NewCrmClient,
 	bdspro_internal_usecases.NewDashboardUsecase,
 	bdspro_infra_handler.NewDealCommissionHandler,
 	bdspro_infra_mapper.NewDealCommissionTransformer,
@@ -340,7 +353,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_validator.NewSharingAccessValidator,
 	bdspro_internal_modules.NewSnapshotComparator,
 	bdspro_infra_postgres.NewSnapshotRepository,
-	bdspro_infra_providers.NewTQDClient,
 	bdspro_infra_postgres.NewTransactionActionPostgresRepository,
 	bdspro_infra_validator.NewTransactionActionValidator,
 	bdspro_infra_postgres.NewTransactionGorm,

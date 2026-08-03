@@ -4,7 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	"bdspro/internal/provider"
+	_provider "common/domain/provider"
 	_usecase "common/domain/usecase"
 	_utils "common/utils"
 	"context"
@@ -13,11 +13,11 @@ import (
 )
 
 type DistributionMapper struct {
-	CrmClient       provider.CrmProvider
+	CrmClient       _provider.CrmProvider
 	CodeDataUsecase *_usecase.CodeDataUsecase
 }
 
-func NewDistributionMapper(crmClient provider.CrmProvider, codeDataUsecase *_usecase.CodeDataUsecase) *DistributionMapper {
+func NewDistributionMapper(crmClient _provider.CrmProvider, codeDataUsecase *_usecase.CodeDataUsecase) *DistributionMapper {
 	return &DistributionMapper{
 		CrmClient:       crmClient,
 		CodeDataUsecase: codeDataUsecase,
