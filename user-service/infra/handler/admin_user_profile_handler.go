@@ -10,6 +10,7 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
+	"user/infra/mapper"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/job"
@@ -74,7 +75,8 @@ func (h *AdminUserProfileHandler) createAdminHistory(ctx context.Context, action
 // @Param search query string false "Tìm kiếm theo tên, email, phone"
 // @Param page query int false "Trang hiện tại (mặc định: 1)"
 // @Param size query int false "Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)"
-// @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email)"
+// @Param sort query string false "Sắp xếp (format: createdAt,desc hoặc lastLogin,desc)"
+// @Param sortBy query string false "Sắp xếp theo trường (createdAt, fullName, email, lastLogin)"
 // @Param sortOrder query string false "Thứ tự sắp xếp (asc, desc)"
 // @Param status query int false "Lọc theo trạng thái (1: active, 0: inactive)"
 // @Param roleId query int false "Lọc theo role ID"
@@ -88,10 +90,20 @@ func (h *AdminUserProfileHandler) createAdminHistory(ctx context.Context, action
 // @Router /v2/user/admin/users [get]
 func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
 	// Convert proto request to DTO
+	sort := req.GetSort()
+	if sort == "" && req.SortBy != "" {
+		sortOrder := req.SortOrder
+		if sortOrder == "" {
+			sortOrder = "desc"
+		}
+		sort = req.SortBy + "," + sortOrder
+	}
+
 	dtoReq := &dto.ListUsersRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
+			Sort: sort,
 		},
 		Search:    req.Search,
 		SortBy:    req.SortBy,
@@ -155,6 +167,7 @@ func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.
 	}
 
 	// Convert data items
+	kycMapper := mapper.NewKYCMapper()
 	for _, item := range result {
 		protoItem := &userpb.AdminUserItem{
 			ProfileId:    item.ProfileID,
@@ -200,9 +213,13 @@ func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.
 		if item.Birth != nil {
 			protoItem.Birth = _utils.FormatTimeToString(item.Birth)
 		}
-		// if item.LastLoginAt != nil {
-		// 	protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
-		// }
+		if item.LastLoginAt != nil {
+			protoItem.LastLoginAt = _utils.FormatTimeToString(item.LastLoginAt)
+		}
+		protoItem.TotalLogin = item.TotalLogin
+		if item.KYC != nil {
+			protoItem.Kyc = kycMapper.ToProtoWithOwnerCheck(item.KYC, true)
+		}
 
 		response.Data = append(response.Data, protoItem)
 	}

@@ -4,6 +4,7 @@ package userpb;
 
 import "google/api/annotations.proto";
 import "shared/common.proto";
+import "shared/v3.proto";
 import "auth/role.proto";
 
 option go_package = "pb/types/user;userpb";
@@ -101,6 +102,7 @@ message ListAllUsersRequest {
     string endDate = 9;          // Lọc đến ngày tạo
     optional bool bookmark = 10; // Lọc theo bookmark
     uint64 roleId = 11;          // Lọc theo role ID
+    string sort = 12;            // Sắp xếp (format: "createdAt,desc" hoặc "lastLogin,desc")
 }
 
 message BookmarkUsersRequest {
@@ -205,6 +207,7 @@ message AdminUserItem {
     string verifiedAt = 21;      // Thời gian xác thực
     string lockedAt = 22;        // Thời gian khóa tài khoản
     optional authpb.Role role = 23; // Role của user
+    optional sharepb.KYCV3Proto kyc = 24; // Thông tin KYC
 }
 
 message SendWarningResponse {

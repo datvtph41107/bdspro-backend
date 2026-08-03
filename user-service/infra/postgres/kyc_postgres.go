@@ -30,6 +30,27 @@ func (r *KYCRepo) GetByProfileID(ctx context.Context, profileID uint64) (*models
 	return &entity, nil
 }
 
+func (r *KYCRepo) GetMapByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*models.KYCEntity, error) {
+	result := make(map[uint64]*models.KYCEntity)
+	if len(profileIDs) == 0 {
+		return result, nil
+	}
+
+	var entities []models.KYCEntity
+	err := r.TransactionRepo.GetDB(ctx).
+		Where("profile_id IN ? AND deleted_at IS NULL", profileIDs).
+		Find(&entities).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range entities {
+		result[entities[i].ProfileID] = &entities[i]
+	}
+
+	return result, nil
+}
+
 func (r *KYCRepo) GetListWithFilter(ctx context.Context, search string, status uint32, page, size int, sortBy, sortOrder string) ([]models.KYCEntity, int64, error) {
 	var entities []models.KYCEntity
 	var total int64

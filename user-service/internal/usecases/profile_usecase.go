@@ -692,6 +692,16 @@ func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		}
 	}
 
+	kycMap, err := uc.KYCRepo.GetMapByProfileIDs(ctx, profileIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range users {
+		if kyc, ok := kycMap[users[i].ProfileID]; ok {
+			users[i].KYC = kyc
+		}
+	}
+
 	return users, total, nil
 }
 

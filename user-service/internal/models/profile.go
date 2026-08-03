@@ -94,6 +94,9 @@ type UserProfileEntity struct {
 
 	Bookmark bool `gorm:"-" json:"bookmark"`
 
+	LastLoginAt *time.Time `gorm:"column:last_login_at" json:"lastLoginAt"`
+	TotalLogin  uint32     `gorm:"column:total_login" json:"totalLogin"`
+
 	// WarningLevel level
 	WarningLevel _enum.EWarningLevel `gorm:"column:warning;default:0" json:"warning"`
 
@@ -105,6 +108,8 @@ type UserProfileEntity struct {
 	RoleKeyData uint32 `gorm:"-" json:"roleKeyData"` // Role key from role table
 	RoleColor   string `gorm:"-" json:"roleColor"`
 	RoleBgColor string `gorm:"-" json:"roleBgColor"`
+
+	KYC *KYCEntity `gorm:"-" json:"kyc"`
 }
 
 // TableName đặt tên bảng trong DB

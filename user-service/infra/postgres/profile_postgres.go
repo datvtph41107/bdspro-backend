@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	hubpb "pb/types/hub"
+	"strings"
 	"time"
 	"user/enums"
 	"user/infra/client"
@@ -203,14 +204,12 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 		up.tick_verified,
 		NULL as verified_at,
 		NULL as locked_at,
-		NULL as last_login_at,
-		NULL as total_login,
+		session_agg.last_login_at,
+		COALESCE(session_agg.total_login, 0) as total_login,
 		NULL as job_title,
 		NULL as attachments,
 		NULL as internal_notes,
-		NULL as send_notification,
-		NULL as last_login_at,
-		0 as total_login`
+		NULL as send_notification`
 
 	// Thêm bookmark field tùy theo trường hợp
 	if needBookmarkInfo {
@@ -222,7 +221,15 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	}
 
 	// Tạo query
-	query := r.DB.Debug().WithContext(ctx).Table("user_profile up").Select(selectFields)
+	query := r.DB.Debug().WithContext(ctx).Table("user_profile up").Select(selectFields).
+		Joins(`LEFT JOIN (
+			SELECT am.user_id,
+				MAX(us.last_login) AS last_login_at,
+				COUNT(us.session_id) AS total_login
+			FROM user_session us
+			INNER JOIN auth_method am ON us.auth_id = am.id
+			GROUP BY am.user_id
+		) session_agg ON session_agg.user_id = up.profile_id`)
 
 	// JOIN bookmark table nếu cần
 	if needBookmarkInfo {
@@ -281,30 +288,11 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	}
 
 	// Apply sorting
-	if false {
-		// sortOrder := "ASC"
-		// if strings.ToUpper(req.SortOrder) == "DESC" {
-		// 	sortOrder = "DESC"
-		// }
-
-		// // Map sortBy to actual column names
-		// sortColumn := req.SortBy
-		// switch req.SortBy {
-		// case "fullName":
-		// 	sortColumn = "up.full_name"
-		// case "createdAt":
-		// 	sortColumn = "up.created_at"
-		// case "updatedAt":
-		// 	sortColumn = "up.updated_at"
-		// default:
-		// 	sortColumn = "up." + sortColumn
-		// }
-
-		// query = query.Order(fmt.Sprintf("%s %s", sortColumn, sortOrder))
-	} else {
-		// Default sorting by created_at DESC
-		query = query.Order("up.created_at DESC")
+	orderClause := r.parseListUsersSort(req)
+	if orderClause == "" {
+		orderClause = "up.created_at DESC, session_agg.last_login_at DESC NULLS LAST"
 	}
+	query = query.Order(orderClause)
 
 	// Apply pagination
 	err = query.
@@ -624,4 +612,60 @@ func (r *ProfilePostgres) GetUserGuideByKey(ctx context.Context, key string) (*h
 		return nil, fmt.Errorf("hub client not available")
 	}
 	return r.HubClient.GetUserGuideByKey(ctx, key)
+}
+
+// parseListUsersSort parses sort string (format: "field,order") to SQL ORDER BY clause.
+// Ví dụ: "createdAt,desc" -> "up.created_at DESC, session_agg.last_login_at DESC NULLS LAST"
+func (r *ProfilePostgres) parseListUsersSort(req *dto.ListUsersRequest) string {
+	sort := strings.TrimSpace(req.GetSort())
+	if sort == "" {
+		sort = strings.TrimSpace(req.Sort)
+	}
+	if sort == "" && req.SortBy != "" {
+		order := req.SortOrder
+		if order == "" {
+			order = "desc"
+		}
+		sort = req.SortBy + "," + order
+	}
+	if sort == "" {
+		return ""
+	}
+
+	parts := strings.Split(sort, ",")
+	if len(parts) != 2 {
+		return ""
+	}
+
+	field := strings.TrimSpace(parts[0])
+	order := strings.TrimSpace(strings.ToUpper(parts[1]))
+	if order != "ASC" && order != "DESC" {
+		return ""
+	}
+
+	fieldMap := map[string]string{
+		"createdAt":  "up.created_at",
+		"updatedAt":  "up.updated_at",
+		"fullName":   "up.full_name",
+		"email":      "up.email",
+		"lastLogin":  "session_agg.last_login_at",
+		"lastLoginAt": "session_agg.last_login_at",
+	}
+
+	dbField, exists := fieldMap[field]
+	if !exists {
+		return ""
+	}
+
+	nullsLast := ""
+	if field == "lastLogin" || field == "lastLoginAt" {
+		nullsLast = " NULLS LAST"
+	}
+
+	orderClause := fmt.Sprintf("%s %s%s", dbField, order, nullsLast)
+	if field == "createdAt" {
+		orderClause += ", session_agg.last_login_at DESC NULLS LAST"
+	}
+
+	return orderClause
 }
