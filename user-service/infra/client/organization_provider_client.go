@@ -30,6 +30,7 @@ func NewOrganizationProviderClient() *OrganizationProviderClient {
 		fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 	)
 	if err != nil {
 		log.Fatalf("Failed to connect to organization role service: %v", err)

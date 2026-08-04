@@ -13,6 +13,9 @@ type Repository interface {
 	ListFeed(context.Context, string, string, string, int) (*domain.FeedResult, error)
 	ListPlanningNews(context.Context, domain.PlanningNewsListFilter) (*domain.PlanningNewsListResult, error)
 	GetPlanningNews(context.Context, string) (*domain.PlanningNewsDetailResult, error)
+	ListSavedPlanningNews(context.Context, uint64, domain.SavedPlanningNewsListFilter) (*domain.PlanningNewsListResult, error)
+	SavePlanningNews(context.Context, uint64, uint64) (*domain.PlanningNewsItem, error)
+	UnsavePlanningNews(context.Context, uint64, uint64) error
 	UpdatePlanningNewsVisibility(context.Context, uint64, uint32) (*domain.PlanningNewsItem, error)
 	AssignPlanningNewsCategory(context.Context, uint64, string) (*domain.PlanningNewsItem, error)
 	SearchPublishedContent(context.Context, string, []string, int) (*domain.ContentSearchResult, error)
@@ -36,6 +39,15 @@ func (s *Service) ListPlanningNews(ctx context.Context, filter domain.PlanningNe
 }
 func (s *Service) GetPlanningNews(ctx context.Context, slug string) (*domain.PlanningNewsDetailResult, error) {
 	return s.repository.GetPlanningNews(ctx, slug)
+}
+func (s *Service) ListSavedPlanningNews(ctx context.Context, userID uint64, filter domain.SavedPlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
+	return s.repository.ListSavedPlanningNews(ctx, userID, filter)
+}
+func (s *Service) SavePlanningNews(ctx context.Context, userID, newsID uint64) (*domain.PlanningNewsItem, error) {
+	return s.repository.SavePlanningNews(ctx, userID, newsID)
+}
+func (s *Service) UnsavePlanningNews(ctx context.Context, userID, newsID uint64) error {
+	return s.repository.UnsavePlanningNews(ctx, userID, newsID)
 }
 func (s *Service) UpdatePlanningNewsVisibility(ctx context.Context, id uint64, visibleOn uint32) (*domain.PlanningNewsItem, error) {
 	return s.repository.UpdatePlanningNewsVisibility(ctx, id, visibleOn)

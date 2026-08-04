@@ -82,7 +82,12 @@ var GrpcCmd = &cobra.Command{
 			_middleware.ParseGrpcMetadataContextMiddleware,
 			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)
-		s := grpc.NewServer(interceptors)
+		s := grpc.NewServer(
+			interceptors,
+			grpc.ChainStreamInterceptor(
+				_middleware.ParseGrpcMetadataContextStreamMiddleware,
+			),
+		)
 		crmpb.RegisterPipelineServiceServer(s, app.PipelineService)
 		crmpb.RegisterContactServiceServer(s, app.ContactService)
 		crmpb.RegisterLeadServiceServer(s, app.LeadService)

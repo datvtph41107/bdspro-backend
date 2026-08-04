@@ -54,6 +54,7 @@ type relatedProjectRow struct {
 	ValidityStatus   string
 	TotalArea        float64
 	Metadata         string
+	UpdatedAt        *time.Time
 	IntersectAreaSqm float64
 	ParcelAreaSqm    float64
 }
@@ -91,13 +92,16 @@ type projectRow struct {
 }
 
 type eventRow struct {
-	ID          uint64
-	EventType   string
-	Name        string
-	Description string
-	EventDate   *time.Time
-	DocumentID  *uint64
-	SourceURL   string
+	ID               uint64
+	EventType        string
+	Name             string
+	Description      string
+	EventDate        *time.Time
+	DocumentID       *uint64
+	DocumentCode     string
+	DocumentTitle    string
+	IssuingAuthority string
+	SourceURL        string
 }
 
 type documentRow struct {
@@ -360,6 +364,7 @@ func (r *Repository) GetParcelQuickView(
 		       COALESCE(pp.validity_status,'') AS validity_status,
 		       COALESCE(pp.total_area,0) AS total_area,
 		       COALESCE(pp.metadata::text,'{}') AS metadata,
+		       pp.updated_at,
 		       ST_Area(ST_Intersection(p.geometry, r.geometry)::geography) AS intersect_area_sqm,
 		       NULLIF(ST_Area(p.geometry::geography),0) AS parcel_area_sqm
 		FROM parcels p
@@ -389,25 +394,32 @@ func (r *Repository) GetParcelQuickView(
 		if project.ParcelAreaSqm > 0 {
 			ratio = project.IntersectAreaSqm / project.ParcelAreaSqm * 100
 		}
-		related = append(related, domain.RelatedPlanningProject{
-			ID:                project.ID,
-			Code:              project.Code,
-			Slug:              slug,
-			Name:              project.Name,
-			PlanningType:      project.PlanningType,
-			PlanningTypeName:  enums.GetPlanningTypeLabel(project.PlanningType),
-			LegalStatus:       project.LegalStatus,
-			LegalStatusName:   enums.LegalStatus(project.LegalStatus).DisplayName(),
-			ValidityStatus:    project.ValidityStatus,
-			TotalArea:         project.TotalArea,
-			IntersectAreaSqm:  project.IntersectAreaSqm,
-			IntersectionRatio: ratio,
-			PublicPath:        "/do-an-quy-hoach/" + slug,
-			MapPath:           "/ban-do?projectId=" + strconv.FormatUint(project.ID, 10),
-		})
+		related = append(related, buildRelatedPlanningProject(project, slug, ratio))
 	}
 
 	return buildParcelQuickView(row, related), nil
+}
+
+func buildRelatedPlanningProject(project relatedProjectRow, slug string, ratio float64) domain.RelatedPlanningProject {
+	id := strconv.FormatUint(project.ID, 10)
+	return domain.RelatedPlanningProject{
+		ID:                project.ID,
+		Code:              project.Code,
+		Slug:              slug,
+		Name:              project.Name,
+		PlanningType:      project.PlanningType,
+		PlanningTypeName:  enums.GetPlanningTypeLabel(project.PlanningType),
+		LegalStatus:       project.LegalStatus,
+		LegalStatusName:   enums.LegalStatus(project.LegalStatus).DisplayName(),
+		ValidityStatus:    project.ValidityStatus,
+		TotalArea:         project.TotalArea,
+		IntersectAreaSqm:  project.IntersectAreaSqm,
+		IntersectionRatio: ratio,
+		UpdatedAt:         project.UpdatedAt,
+		PublicPath:        "/do-an-quy-hoach/" + slug,
+		DossierPath:       "/ban-do/do-an/" + id,
+		MapPath:           "/ban-do?projectId=" + id,
+	}
 }
 
 func buildParcelQuickView(
@@ -605,30 +617,43 @@ func (r *Repository) GetPlanningProjectProjection(
 
 	var eventRows []eventRow
 	if err := r.db.WithContext(ctx).Raw(`
-		SELECT id,
-		       COALESCE(event_type,'') AS event_type,
-		       event_name AS name,
-		       COALESCE(description,'') AS description,
-		       event_date,
-		       document_id,
-		       COALESCE(source_url,'') AS source_url
-		FROM qh_planning_events
-		WHERE planning_project_id = ?
-		  AND deleted_at IS NULL
-		ORDER BY event_date DESC NULLS LAST, id DESC`, row.ID).Scan(&eventRows).Error; err != nil {
+		SELECT e.id,
+		       COALESCE(e.event_type,'') AS event_type,
+		       e.event_name AS name,
+		       COALESCE(e.description,'') AS description,
+		       e.event_date,
+		       e.document_id,
+		       COALESCE(d.code,'') AS document_code,
+		       COALESCE(d.title,'') AS document_title,
+		       COALESCE(
+		         NULLIF(e.metadata->>'issuingAuthority',''),
+		         NULLIF(e.metadata->>'issuing_authority',''),
+		         ''
+		       ) AS issuing_authority,
+		       COALESCE(e.source_url,'') AS source_url
+		FROM qh_planning_events e
+		LEFT JOIN qh_planning_documents d
+		  ON d.id = e.document_id
+		 AND d.deleted_at IS NULL
+		WHERE e.planning_project_id = ?
+		  AND e.deleted_at IS NULL
+		ORDER BY e.event_date DESC NULLS LAST, e.id DESC`, row.ID).Scan(&eventRows).Error; err != nil {
 		return nil, fmt.Errorf("load planning project events: %w", err)
 	}
 
 	events := make([]domain.PlanningEvent, 0, len(eventRows))
 	for _, item := range eventRows {
 		events = append(events, domain.PlanningEvent{
-			ID:          item.ID,
-			EventType:   item.EventType,
-			Name:        item.Name,
-			Description: item.Description,
-			EventDate:   item.EventDate,
-			DocumentID:  item.DocumentID,
-			SourceURL:   item.SourceURL,
+			ID:               item.ID,
+			EventType:        item.EventType,
+			Name:             item.Name,
+			Description:      item.Description,
+			EventDate:        item.EventDate,
+			DocumentID:       item.DocumentID,
+			DocumentCode:     item.DocumentCode,
+			DocumentTitle:    item.DocumentTitle,
+			IssuingAuthority: item.IssuingAuthority,
+			SourceURL:        item.SourceURL,
 		})
 	}
 

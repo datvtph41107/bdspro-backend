@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	_middleware "common/middleware"
 	"crm/config"
 	"crm/internal/dto"
 	catalogapp "crm/internal/modules/contentcatalog/application"
@@ -51,6 +52,14 @@ func jsonBytes(value any) (*wrapperspb.BytesValue, error) {
 		return nil, status.Errorf(codes.Internal, "encode response: %v", err)
 	}
 	return wrapperspb.Bytes(payload), nil
+}
+
+func authenticatedProfileID(ctx context.Context) (uint64, error) {
+	principal, err := _middleware.PrincipalFromContext(ctx)
+	if err != nil || principal == nil || principal.ProfileId == 0 {
+		return 0, status.Error(codes.Unauthenticated, "authentication is required")
+	}
+	return principal.ProfileId, nil
 }
 
 // TASK9_VISIBLE_ON_VALIDATOR_BEGIN
@@ -337,6 +346,59 @@ func (h *PublicContentGrpcHandler) GetPlanningNews(ctx context.Context, req *crm
 	}
 	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "public, max-age=60, stale-while-revalidate=300", "", "")
 	return jsonBytes(result)
+}
+
+func (h *PublicContentGrpcHandler) ListSavedPlanningNews(ctx context.Context, req *crmpb.SavedPlanningNewsQueryRequest) (*wrapperspb.BytesValue, error) {
+	userID, err := authenticatedProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if req == nil {
+		req = &crmpb.SavedPlanningNewsQueryRequest{}
+	}
+	result, err := h.catalog.ListSavedPlanningNews(ctx, userID, catalogdomain.SavedPlanningNewsListFilter{
+		Page: int(req.GetPage()),
+		Size: int(req.GetSize()),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list saved planning news: %v", err)
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(result)
+}
+
+func (h *PublicContentGrpcHandler) SavePlanningNews(ctx context.Context, req *crmpb.PlanningNewsSaveRequest) (*wrapperspb.BytesValue, error) {
+	userID, err := authenticatedProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if req == nil || req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planning news id is required")
+	}
+	item, err := h.catalog.SavePlanningNews(ctx, userID, req.GetId())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Error(codes.NotFound, "planning news was not found or is not public")
+		}
+		return nil, status.Errorf(codes.Internal, "save planning news: %v", err)
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"saved": true, "data": item})
+}
+
+func (h *PublicContentGrpcHandler) UnsavePlanningNews(ctx context.Context, req *crmpb.PlanningNewsSaveRequest) (*wrapperspb.BytesValue, error) {
+	userID, err := authenticatedProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if req == nil || req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planning news id is required")
+	}
+	if err := h.catalog.UnsavePlanningNews(ctx, userID, req.GetId()); err != nil {
+		return nil, status.Errorf(codes.Internal, "unsave planning news: %v", err)
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"saved": false, "planningNewsId": req.GetId()})
 }
 
 func (h *PublicContentGrpcHandler) UpdatePlanningNewsVisibility(ctx context.Context, req *crmpb.UpdatePlanningNewsVisibilityRequest) (*wrapperspb.BytesValue, error) {

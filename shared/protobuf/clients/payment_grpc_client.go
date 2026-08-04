@@ -28,6 +28,7 @@ func MakePaymentClient(env_runtime string) *PaymentClient {
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 		)
 		if err != nil {
 			log.Fatalf("failed to dial: %v", err)

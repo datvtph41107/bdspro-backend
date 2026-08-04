@@ -169,7 +169,9 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 		interceptors.UnaryRecoveryInterceptor(logger),
 		_middleware.ParseGrpcMetadataContextMiddleware,
 	}
-	streamInts := []grpc.StreamServerInterceptor{}
+	streamInts := []grpc.StreamServerInterceptor{
+		_middleware.ParseGrpcMetadataContextStreamMiddleware,
+	}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", env.GRPC_PORT))
 	_, start, stop, err := BuildGRPCServer(
 		fmt.Sprintf(":%s", env.GRPC_PORT),

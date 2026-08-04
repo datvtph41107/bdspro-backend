@@ -1,8 +1,11 @@
 package _jwt
 
 import (
+	_callercontext "common/callercontext"
+
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,156 +20,99 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Kiểm tra xem đường dẫn có trong danh sách publicRoutes không
-func isPublicRoute(pubRoutes []string, path string) bool {
-	for _, route := range pubRoutes {
-		if matchRoute(route, path) {
-			return true
-		}
-	}
-	return false
-}
-
-// matchRoute kiểm tra xem path có match với pattern không
-// Hỗ trợ:
-// - * : wildcard cho bất kỳ ký tự nào (có thể rỗng)
-// - : : parameter cho số hoặc chữ (không được rỗng)
-func matchRoute(pattern, path string) bool {
-	// Nếu pattern không chứa wildcard hoặc parameter, dùng prefix matching
-	if !strings.Contains(pattern, "*") && !strings.Contains(pattern, ":") {
-		return strings.HasPrefix(path, pattern)
-	}
-
-	// Split pattern và path thành segments
-	patternSegments := strings.Split(strings.Trim(pattern, "/"), "/")
-	pathSegments := strings.Split(strings.Trim(path, "/"), "/")
-
-	// Loại bỏ segments rỗng cuối cùng từ path
-	for len(pathSegments) > 0 && pathSegments[len(pathSegments)-1] == "" {
-		pathSegments = pathSegments[:len(pathSegments)-1]
-	}
-
-	// Loại bỏ segments rỗng cuối cùng từ pattern, nhưng giữ lại wildcard
-	for len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "" {
-		patternSegments = patternSegments[:len(patternSegments)-1]
-	}
-
-	// Nếu pattern kết thúc bằng wildcard (*), cho phép path có thêm 1 segment
-	if len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "*" {
-		// Loại bỏ wildcard cuối cùng
-		patternSegments = patternSegments[:len(patternSegments)-1]
-		// Path phải có đúng số segments bằng pattern + 1 (cho wildcard)
-		if len(pathSegments) != len(patternSegments)+1 {
-			return false
-		}
-		// Chỉ kiểm tra các segments tương ứng
-		for i := 0; i < len(patternSegments); i++ {
-			patternSeg := patternSegments[i]
-			pathSeg := pathSegments[i]
-
-			// Nếu pattern segment là parameter (:), match nếu không rỗng
-			if patternSeg == ":" {
-				if pathSeg == "" {
-					return false
-				}
-				continue
-			}
-
-			// Nếu pattern segment không phải parameter, phải khớp chính xác
-			if patternSeg != pathSeg {
-				return false
-			}
-		}
-		return true
-	}
-
-	// Nếu số lượng segments không khớp, không match
-	if len(patternSegments) != len(pathSegments) {
-		return false
-	}
-
-	// Kiểm tra từng segment
-	for i, patternSeg := range patternSegments {
-		pathSeg := pathSegments[i]
-
-		// Nếu pattern segment là wildcard (*), match bất kỳ gì (kể cả rỗng)
-		if patternSeg == "*" {
-			continue
-		}
-
-		// Nếu pattern segment là parameter (:), match nếu không rỗng
-		if patternSeg == ":" {
-			if pathSeg == "" {
-				return false
-			}
-			continue
-		}
-
-		// Nếu pattern segment không phải wildcard hay parameter, phải khớp chính xác
-		if patternSeg != pathSeg {
-			return false
-		}
-	}
-
-	return true
-}
-
 // Middleware để xác thực JWT
-func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string) gin.HandlerFunc {
+func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string, options ...AuthOption) gin.HandlerFunc {
+	cfg := authConfig{}
+	for _, option := range options {
+		if option != nil {
+			option(&cfg)
+		}
+	}
+
 	return func(c *gin.Context) {
-		if c.Request.Method == "OPTIONS" {
+		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusOK)
 			return
 		}
-		apiKey := c.GetHeader("API-KEY")
-		if apiKey != "" {
-			c.Set("api-key", apiKey)
-		}
-		// fmt.Printf("request: %s _ api-key: %s\n", c.Request.URL.Path, apiKey)
-		// fmt.Printf("pubRoutes: %v\n", pubRoutes)
-		// Lấy token từ header Authorization
-		tokenString := c.GetHeader("Authorization")
-		ignoreToken := false
-		if pubRoutes != nil && isPublicRoute(pubRoutes, c.Request.URL.Path) {
-			ignoreToken = true
+
+		rawAPIKey, hasAPIKey, apiKeyErr := APIKeyFromRequest(c.Request)
+		if apiKeyErr != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": "Invalid API key header",
+			})
+			return
 		}
 
-		if tokenString == "" && !ignoreToken {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
+		var verifiedAPIKey VerifiedAPIKey
+		if hasAPIKey {
+			if cfg.apiKeyVerifier == nil {
+				c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
+					"code":    http.StatusServiceUnavailable,
+					"message": "API key verification unavailable",
+				})
+				return
+			}
+
+			verifiedAPIKey, apiKeyErr = cfg.apiKeyVerifier.VerifyAPIKey(c.Request.Context(), rawAPIKey)
+			if apiKeyErr != nil {
+				statusCode := http.StatusUnauthorized
+				if errors.Is(apiKeyErr, ErrAPIKeyUnavailable) {
+					statusCode = http.StatusServiceUnavailable
+				}
+				c.AbortWithStatusJSON(statusCode, gin.H{
+					"code":    statusCode,
+					"message": "API key verification failed",
+				})
+				return
+			}
+			if verifiedAPIKey.ID == 0 || strings.TrimSpace(verifiedAPIKey.AppName) == "" {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"code":    http.StatusUnauthorized,
+					"message": "Invalid API key",
+				})
+				return
+			}
+
+			c.Request.Header.Set(APIKeyHeader, rawAPIKey)
+			c.Set("api-key", rawAPIKey)
+			c.Set("api-key-id", verifiedAPIKey.ID)
+			c.Set("api-key-app", verifiedAPIKey.AppName)
+		}
+
+		tokenString := strings.TrimSpace(c.GetHeader("Authorization"))
+		ignoreToken := pubRoutes != nil && isPublicRoute(pubRoutes, c.Request.URL.Path)
+		if tokenString == "" && !ignoreToken && !hasAPIKey {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
 				"message": "Authorization header missing",
 			})
-			c.Abort()
 			return
 		}
 
-		// Xóa "Bearer " nếu có
-		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-
-		// Parse và xác thực token
-		claims, err := ParseJWT(tokenString)
-		// log.Printf("claims=%v, ignoreToken=%v, err=%v", claims, ignoreToken, err)
-		if err != nil && !ignoreToken {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
+		var claims *Principal
+		var tokenErr error
+		if tokenString != "" {
+			tokenString = strings.TrimSpace(strings.TrimPrefix(tokenString, "Bearer "))
+			claims, tokenErr = ParseJWT(tokenString)
+		}
+		if tokenErr != nil && !ignoreToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
 				"message": "Invalid or expired token",
 			})
-			c.Abort()
 			return
 		}
 
-		// tx := c.MustGet("db").(*gorm.DB) // Lấy DB từ context
-		// tx = tx.WithContext(context.WithValue(tx.Statement.Context, "profileId", claims.ProfileId))
-		// c.Set("db", tx)
-
-		// Gắn claims vào context để các handler sau có thể sử dụng
-		if claims != nil {
+		caller := _callercontext.Caller{Kind: _callercontext.KindAnonymous}
+		if claims != nil && tokenErr == nil {
+			c.Request = c.Request.WithContext(WithPrincipal(c.Request.Context(), claims))
 			c.Set("claims", claims)
 			c.Set("organizationId", claims.OrganizationId)
 			c.Set("profileId", claims.ProfileId)
 			c.Set("planId", claims.PlanId)
+			caller.Kind = _callercontext.KindUser
 
-			// Kiểm tra nếu là TEMP token thì chỉ cho phép gọi tempRoutes
 			if claims.Type == string(TempToken) {
 				isTempRoute := false
 				for _, route := range tempRoutes {
@@ -176,16 +122,29 @@ func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string) gin.HandlerFunc 
 					}
 				}
 				if !isTempRoute {
-					c.JSON(http.StatusForbidden, gin.H{
-						"code":    403,
+					c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+						"code":    http.StatusForbidden,
 						"message": "Token không đúng",
 					})
-					c.Abort()
 					return
 				}
 			}
+		} else if hasAPIKey {
+			caller.Kind = _callercontext.KindAPIKey
 		}
 
+		if hasAPIKey {
+			caller.APIKeyID = verifiedAPIKey.ID
+			caller.APIKeyApp = verifiedAPIKey.AppName
+		}
+		if !caller.IsValid() {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
+				"message": "Invalid caller classification",
+			})
+			return
+		}
+		c.Request = c.Request.WithContext(_callercontext.WithCaller(c.Request.Context(), caller))
 		c.Next()
 	}
 }
@@ -234,13 +193,6 @@ func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.M
 	}
 	if claims.Role != "" {
 		md.Append("role", claims.Role)
-	}
-	if len(claims.RoleIds) > 0 {
-		parts := make([]string, 0, len(claims.RoleIds))
-		for _, id := range claims.RoleIds {
-			parts = append(parts, fmt.Sprintf("%d", id))
-		}
-		md.Append("roleIds", strings.Join(parts, ","))
 	}
 	if claims.Type != "" {
 		md.Append("type", claims.Type)

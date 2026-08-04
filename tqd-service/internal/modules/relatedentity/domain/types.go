@@ -24,6 +24,7 @@ const (
 	RelationshipIntersectsPrimary     RelationshipKind = "intersects_primary"
 	RelationshipAdjacent              RelationshipKind = "adjacent"
 	RelationshipNearby                RelationshipKind = "nearby"
+	RelationshipUnknown               RelationshipKind = "unknown"
 )
 
 func (value RelationshipKind) IsValid() bool {
@@ -34,7 +35,8 @@ func (value RelationshipKind) IsValid() bool {
 		RelationshipMemberOfPrimary,
 		RelationshipIntersectsPrimary,
 		RelationshipAdjacent,
-		RelationshipNearby:
+		RelationshipNearby,
+		RelationshipUnknown:
 		return true
 	default:
 		return false
@@ -80,6 +82,7 @@ type Query struct {
 type Candidate struct {
 	Entity         discoverydomain.EntityCandidate
 	Relationship   RelationshipKind
+	Role           RelatedRole
 	DistanceMeters float64
 	Score          float64
 	ReasonCodes    []string
@@ -93,4 +96,7 @@ type Response struct {
 	Warnings            []string                         `json:"warnings,omitempty"`
 	AppliedRadiusMeters float64                          `json:"appliedRadiusMeters"`
 	AppliedLimit        int                              `json:"appliedLimit"`
+	Projection          ProjectionPolicy                 `json:"projection"`
+	Groups              []GroupSummary                   `json:"groups,omitempty"`
+	Roles               []RoleSummary                    `json:"roles,omitempty"`
 }

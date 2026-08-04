@@ -1,0 +1,220 @@
+package productcatalog
+
+import (
+	"testing"
+	"time"
+)
+
+func TestNewBuildsImmutableCatalog(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	catalog := sampleCatalog(start)
+
+	registry, err := New(catalog)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	catalog.Products[0].Plans[0].Entitlements[0].FeatureCode = "mutated.feature"
+	catalog.Products[0].Plans[0].Prices[0].AmountMinor = 999
+
+	plan, ok := registry.Plan("qhpro.pro", "1.0.0")
+	if !ok {
+		t.Fatal("Plan() missing approved version")
+	}
+	if plan.Entitlements[0].FeatureCode != "workspace.report.generate" {
+		t.Fatalf("feature code mutated: %q", plan.Entitlements[0].FeatureCode)
+	}
+	if plan.Prices[0].AmountMinor != 9900000 {
+		t.Fatalf("price mutated: %d", plan.Prices[0].AmountMinor)
+	}
+
+	plan.Entitlements[0].FeatureCode = "caller.mutation"
+	again, _ := registry.Plan("qhpro.pro", "1.0.0")
+	if again.Entitlements[0].FeatureCode != "workspace.report.generate" {
+		t.Fatal("Plan() did not return a defensive copy")
+	}
+}
+
+func TestEffectivePlanUsesExclusiveEnd(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	end := start.AddDate(0, 1, 0)
+	catalog := sampleCatalog(start)
+	catalog.Products[0].Plans[0].EffectiveUntil = &end
+
+	registry, err := New(catalog)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	if _, ok := registry.EffectivePlan("qhpro.pro", start); !ok {
+		t.Fatal("plan should be active at effective_from")
+	}
+	if _, ok := registry.EffectivePlan("qhpro.pro", end); ok {
+		t.Fatal("plan should be inactive at exclusive effective_until")
+	}
+}
+
+func TestNewRejectsOverlappingActiveVersions(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	catalog := sampleCatalog(start)
+	catalog.Products[0].Plans = append(
+		catalog.Products[0].Plans,
+		PlanVersion{
+			ProductCode:   "qhpro",
+			PlanCode:      "qhpro.pro",
+			Version:       "2.0.0",
+			DisplayName:   "Pro V2",
+			Status:        StatusActive,
+			SubjectScope:  SubjectScopeProfile,
+			EffectiveFrom: start.AddDate(0, 0, 10),
+		},
+	)
+
+	if _, err := New(catalog); err == nil {
+		t.Fatal("New() accepted overlapping active versions")
+	}
+}
+
+func TestNewRejectsDuplicateEntitlementTarget(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	catalog := sampleCatalog(start)
+	catalog.Products[0].Plans[0].Entitlements = append(
+		catalog.Products[0].Plans[0].Entitlements,
+		Entitlement{
+			Code:      "workspace.report.allowance.duplicate",
+			Kind:      EntitlementUsageAllowance,
+			MeterCode: "workspace.report_generation.accepted",
+			Amount:    50,
+			Period:    PeriodSubscriptionCycle,
+		},
+	)
+
+	if _, err := New(catalog); err == nil {
+		t.Fatal("New() accepted duplicate entitlement target")
+	}
+}
+
+func TestNewRejectsFloatStyleAndTransportCodesByContract(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	catalog := sampleCatalog(start)
+	catalog.Products[0].Plans[0].PlanCode = "FindParcelByLocation"
+
+	if _, err := New(catalog); err == nil {
+		t.Fatal("New() accepted a transport-style plan code")
+	}
+}
+
+func TestNewValidatesEntitlementShapes(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name        string
+		entitlement Entitlement
+	}{
+		{
+			name: "feature with quota fields",
+			entitlement: Entitlement{
+				Code:        "workspace.report.feature",
+				Kind:        EntitlementFeatureAccess,
+				FeatureCode: "workspace.report.generate",
+				Amount:      1,
+			},
+		},
+		{
+			name: "usage without period",
+			entitlement: Entitlement{
+				Code:      "workspace.report.allowance",
+				Kind:      EntitlementUsageAllowance,
+				MeterCode: "workspace.report_generation.accepted",
+				Amount:    100,
+				Period:    PeriodNone,
+			},
+		},
+		{
+			name: "capacity with reset period",
+			entitlement: Entitlement{
+				Code:      "organization.member.capacity",
+				Kind:      EntitlementCapacityLimit,
+				MeterCode: "organization.member.active",
+				Amount:    10,
+				Period:    PeriodCalendarMonth,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			catalog := sampleCatalog(start)
+			catalog.Products[0].Plans[0].Entitlements = []Entitlement{test.entitlement}
+			if _, err := New(catalog); err == nil {
+				t.Fatal("New() accepted invalid entitlement")
+			}
+		})
+	}
+}
+
+func TestNewValidatesPriceShapes(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	catalog := sampleCatalog(start)
+	catalog.Products[0].Plans[0].Prices = []PriceItem{
+		{
+			Code:        "workspace.report.overage",
+			Kind:        PriceOverage,
+			Currency:    "VND",
+			AmountMinor: 500000,
+			BillingUnit: "accepted.report",
+			Quantity:    1,
+		},
+	}
+
+	if _, err := New(catalog); err == nil {
+		t.Fatal("New() accepted overage price without meter")
+	}
+}
+
+func sampleCatalog(start time.Time) Catalog {
+	return Catalog{
+		Version: "1.0.0",
+		Products: []Product{
+			{
+				Code:        "qhpro",
+				DisplayName: "QHPRO",
+				Plans: []PlanVersion{
+					{
+						ProductCode:   "qhpro",
+						PlanCode:      "qhpro.pro",
+						Version:       "1.0.0",
+						DisplayName:   "QHPRO Pro",
+						Status:        StatusActive,
+						SubjectScope:  SubjectScopeProfile,
+						EffectiveFrom: start,
+						Entitlements: []Entitlement{
+							{
+								Code:        "workspace.report.feature",
+								Kind:        EntitlementFeatureAccess,
+								FeatureCode: "workspace.report.generate",
+								Period:      PeriodNone,
+							},
+							{
+								Code:      "workspace.report.allowance",
+								Kind:      EntitlementUsageAllowance,
+								MeterCode: "workspace.report_generation.accepted",
+								Amount:    100,
+								Period:    PeriodSubscriptionCycle,
+							},
+						},
+						Prices: []PriceItem{
+							{
+								Code:        "qhpro.pro.subscription",
+								Kind:        PriceRecurring,
+								Currency:    "VND",
+								AmountMinor: 9900000,
+								BillingUnit: "subscription.cycle",
+								Quantity:    1,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}

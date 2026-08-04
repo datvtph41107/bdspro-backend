@@ -51,6 +51,9 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
 		),
+		grpc.ChainStreamInterceptor(
+			_middleware.ParseGrpcMetadataContextStreamMiddleware,
+		),
 	)
 	authpb.RegisterAuthInternalServiceServer(s, authInternalHandler)
 

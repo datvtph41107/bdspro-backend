@@ -1,6 +1,8 @@
 package client
 
 import (
+	_middleware "common/middleware"
+
 	"context"
 	"fmt"
 	"organization/env"
@@ -16,7 +18,12 @@ type ChatClient struct {
 }
 
 func NewChatClient() *ChatClient {
-	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", env.CHAT_SERVICE_HOST, env.CHAT_SERVICE_PORT), grpc.WithInsecure())
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("%s:%s", env.CHAT_SERVICE_HOST, env.CHAT_SERVICE_PORT),
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
+	)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to chat service: %v", err))
 	}

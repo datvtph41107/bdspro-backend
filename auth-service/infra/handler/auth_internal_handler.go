@@ -23,7 +23,12 @@ func (h *AuthInternalHandler) RequiredRoles(ctx context.Context, req *authpb.Req
 }
 
 func (h *AuthInternalHandler) RequiredPermissions(ctx context.Context, req *authpb.RequiredPermissionsRequest) (*authpb.RequiredPermissionsResponse, error) {
-	if err := h.permissionService.RequiredPermissions(ctx, req.GetPermissionIds()); err != nil {
+	if err := h.permissionService.RequiredPermissions(
+		ctx,
+		req.GetPermissionIds(),
+		req.GetPermissions(),
+		services.MatchAll,
+	); err != nil {
 		return nil, err
 	}
 	return &authpb.RequiredPermissionsResponse{

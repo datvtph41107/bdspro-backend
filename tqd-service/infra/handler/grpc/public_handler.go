@@ -8,11 +8,13 @@ import (
 	"os"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 	"tqd/config"
 	"tqd/internal/enums"
+	atlasflowcatalog "tqd/internal/modules/atlasflow/catalog"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -66,42 +68,16 @@ func (s *TqdPublicService) GetEnums(ctx context.Context, req *sharepb.SyncReques
 	}, nil
 }
 
+var qhConfigNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
 func (s *TqdPublicService) GetQhConfigApp(ctx context.Context, req *tqdpb.GetQhConfigAppRequest) (*tqdpb.GetQhConfigAppResponse, error) {
-	s.mu.RLock()
-	processed := s.processedConfigs[req.Config]
-	s.mu.RUnlock()
+	if req == nil || !qhConfigNamePattern.MatchString(req.Config) {
+		return nil, status.Error(codes.InvalidArgument, "invalid config name")
+	}
 
-	jsonPath := fmt.Sprintf("files/json/%s.json", req.Config)
-
-	if !processed {
-		templatePath := fmt.Sprintf("template/%s.json", req.Config)
-		templateData, err := os.ReadFile(templatePath)
-		if err != nil {
-			log.Printf("failed to read template file: %v", err)
-			return nil, status.Errorf(codes.NotFound, "template file not found: %v", err)
-		}
-
-		// Load domains from hub-service/config/develop.yml
-		qhpro := config.AppConfig.ConfigApp.Qhpro
-		content := string(templateData)
-		content = strings.ReplaceAll(content, "{{domain_api}}", qhpro.DomainAPI)
-		content = strings.ReplaceAll(content, "{{domain_file}}", qhpro.DomainFile)
-		content = strings.ReplaceAll(content, "{{domain_pmtile}}", qhpro.DomainPMTile)
-		content = strings.ReplaceAll(content, "{{domain_style}}", qhpro.DomainStyle)
-
-		s.mu.Lock()
-		s.processedConfigs[req.Config] = true
-		s.mu.Unlock()
-
-		if err := os.MkdirAll("files/json", 0755); err != nil {
-			log.Printf("failed to create json directory: %v", err)
-			return nil, status.Errorf(codes.Internal, "failed to create json directory: %v", err)
-		}
-
-		if err := os.WriteFile(jsonPath, []byte(content), 0644); err != nil {
-			log.Printf("failed to save processed config: %v", err)
-			return nil, status.Errorf(codes.Internal, "failed to save processed config: %v", err)
-		}
+	jsonPath, err := s.ensureQhConfigProcessed(req.Config)
+	if err != nil {
+		return nil, err
 	}
 
 	data, err := os.ReadFile(jsonPath)
@@ -117,6 +93,83 @@ func (s *TqdPublicService) GetQhConfigApp(ctx context.Context, req *tqdpb.GetQhC
 		Code: 8500,
 		Data: st,
 	}, nil
+}
+
+// ensureQhConfigProcessed owns template expansion and atomic publication.
+//
+// Configuration endpoints are read frequently by map clients, while template
+// expansion is required only once per process. The single mutex prevents two
+// concurrent requests from writing the same generated JSON file, and the
+// processed flag is committed only after the atomic rename succeeds.
+func (s *TqdPublicService) ensureQhConfigProcessed(configName string) (string, error) {
+	jsonPath := fmt.Sprintf("files/json/%s.json", configName)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.processedConfigs[configName] {
+		if _, err := os.Stat(jsonPath); err == nil {
+			return jsonPath, nil
+		}
+		// A generated file may have been removed outside the process. Rebuild it
+		// instead of keeping a stale in-memory success flag.
+		delete(s.processedConfigs, configName)
+	}
+
+	templatePath := fmt.Sprintf("template/%s.json", configName)
+	templateData, err := os.ReadFile(templatePath)
+	if err != nil {
+		log.Printf("failed to read template file: %v", err)
+		return "", status.Errorf(codes.NotFound, "template file not found: %v", err)
+	}
+
+	qhpro := config.AppConfig.ConfigApp.Qhpro
+	content := string(templateData)
+	content = strings.ReplaceAll(content, "{{domain_api}}", qhpro.DomainAPI)
+	content = strings.ReplaceAll(content, "{{domain_file}}", qhpro.DomainFile)
+	content = strings.ReplaceAll(content, "{{domain_pmtile}}", qhpro.DomainPMTile)
+	content = strings.ReplaceAll(content, "{{domain_style}}", qhpro.DomainStyle)
+
+	if configName == atlasflowcatalog.TemplateName {
+		if err := atlasflowcatalog.ValidateJSON([]byte(content)); err != nil {
+			log.Printf("invalid AtlasFlow map catalog: %v", err)
+			return "", status.Errorf(codes.Internal, "invalid AtlasFlow map catalog: %v", err)
+		}
+	}
+
+	if err := os.MkdirAll("files/json", 0755); err != nil {
+		log.Printf("failed to create json directory: %v", err)
+		return "", status.Errorf(codes.Internal, "failed to create json directory: %v", err)
+	}
+
+	temporaryFile, err := os.CreateTemp("files/json", configName+"-*.tmp")
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "failed to create temporary config: %v", err)
+	}
+	temporaryPath := temporaryFile.Name()
+	defer os.Remove(temporaryPath)
+
+	if _, err := temporaryFile.Write([]byte(content)); err != nil {
+		temporaryFile.Close()
+		return "", status.Errorf(codes.Internal, "failed to write temporary config: %v", err)
+	}
+	if err := temporaryFile.Chmod(0644); err != nil {
+		temporaryFile.Close()
+		return "", status.Errorf(codes.Internal, "failed to set config permissions: %v", err)
+	}
+	if err := temporaryFile.Sync(); err != nil {
+		temporaryFile.Close()
+		return "", status.Errorf(codes.Internal, "failed to sync temporary config: %v", err)
+	}
+	if err := temporaryFile.Close(); err != nil {
+		return "", status.Errorf(codes.Internal, "failed to close temporary config: %v", err)
+	}
+	if err := os.Rename(temporaryPath, jsonPath); err != nil {
+		return "", status.Errorf(codes.Internal, "failed to publish processed config: %v", err)
+	}
+
+	s.processedConfigs[configName] = true
+	return jsonPath, nil
 }
 
 func (s *TqdPublicService) GetFont(ctx context.Context, req *tqdpb.GetFontRequest) (*sharepb.CommonResponse, error) {
@@ -144,12 +197,13 @@ func (s *TqdPublicService) loadDomains() (map[string]string, error) {
 }
 
 func (s *TqdPublicService) GetPublicMaps(ctx context.Context, _ *emptypb.Empty) (*tqdpb.GetPublicMapsResponse, error) {
+	qhpro := config.AppConfig.ConfigApp.Qhpro
 	return &tqdpb.GetPublicMapsResponse{
 		Data: []*tqdpb.MapSource{
 			{
 				Name:   "Giao thông",
-				Source: "https://data.bdspro.com/v1/map/config/style.json",
-				Type:   "vector",
+				Source: strings.TrimRight(qhpro.DomainAPI, "/") + "/v2/tqd/qh/public/json/style",
+				Type:   "style",
 			},
 			{
 				Name:   "Vệ tinh",

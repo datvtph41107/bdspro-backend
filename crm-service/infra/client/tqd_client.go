@@ -37,6 +37,7 @@ func NewTqdClient() *TqdClient {
 		grpc.WithInsecure(),
 		grpc.WithBackoffMaxDelay(5*time.Second),
 		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 	)
 	if err != nil {
 		log.Printf("failed to dial tqd service: %v", err)

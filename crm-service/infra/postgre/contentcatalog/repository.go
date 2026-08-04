@@ -253,6 +253,7 @@ type planningNewsRow struct {
 	Slug, Title, Description, Summary, Content, RenderedHTML, CanonicalURL, PublicURL, DeepLink, RefSource, RefLabel, SourceStatus string
 	QualityScore, VisibleOn                                                                                                        uint32
 	PublishedAt, UpdatedAt                                                                                                         *time.Time
+	SavedAt                                                                                                                        *time.Time
 	CategoryCode, CategoryName                                                                                                     string
 	MetadataJSON, RefSnapshotRaw                                                                                                   []byte
 }
@@ -285,6 +286,7 @@ func newsFromRow(row planningNewsRow) domain.PlanningNewsItem {
 		VisibleOn:       row.VisibleOn,
 		PublishedAt:     row.PublishedAt,
 		UpdatedAt:       row.UpdatedAt,
+		SavedAt:         row.SavedAt,
 		CategoryCode:    row.CategoryCode,
 		CategoryName:    row.CategoryName,
 		Metadata:        decodeJSONObject(row.MetadataJSON),
@@ -383,6 +385,77 @@ func (r *Repository) GetPlanningNews(ctx context.Context, slug string) (*domain.
 		related = append(related, newsFromRow(rr))
 	}
 	return &domain.PlanningNewsDetailResult{SEODomain: newsFromRow(row), RelatedNews: related}, nil
+}
+
+func (r *Repository) ListSavedPlanningNews(ctx context.Context, userID uint64, filter domain.SavedPlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
+	if userID == 0 {
+		return nil, fmt.Errorf("user id is required")
+	}
+	filter.Page, filter.Size = normalizePage(filter.Page, filter.Size)
+
+	base := ` FROM user_saved_planning_news saved
+	      JOIN seo_domain sd ON sd.id=saved.seo_domain_id
+	      LEFT JOIN seo_content_category_assignment a ON a.seo_domain_id=sd.id AND a.deleted_at IS NULL AND a.is_primary=TRUE
+	      LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL
+	      WHERE saved.user_id=? AND saved.deleted_at IS NULL AND ` + planningNewsWhere
+
+	var total int64
+	if err := r.db.WithContext(ctx).Raw("SELECT COUNT(DISTINCT sd.id)"+base, userID).Scan(&total).Error; err != nil {
+		return nil, fmt.Errorf("count saved planning news: %w", err)
+	}
+
+	rows := []planningNewsRow{}
+	selectSQL := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,saved.updated_at AS saved_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw` + base + ` ORDER BY saved.updated_at DESC,saved.id DESC LIMIT ? OFFSET ?`
+	if err := r.db.WithContext(ctx).Raw(selectSQL, userID, filter.Size, (filter.Page-1)*filter.Size).Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("list saved planning news: %w", err)
+	}
+
+	data := make([]domain.PlanningNewsItem, 0, len(rows))
+	for _, row := range rows {
+		data = append(data, newsFromRow(row))
+	}
+	return &domain.PlanningNewsListResult{Data: data, Total: total, Page: filter.Page, Size: filter.Size}, nil
+}
+
+func (r *Repository) SavePlanningNews(ctx context.Context, userID, newsID uint64) (*domain.PlanningNewsItem, error) {
+	if userID == 0 || newsID == 0 {
+		return nil, fmt.Errorf("user id and planning news id are required")
+	}
+	result := r.db.WithContext(ctx).Exec(`
+		INSERT INTO user_saved_planning_news (user_id,seo_domain_id,created_at,updated_at,deleted_at)
+		SELECT ?,sd.id,NOW(),NOW(),NULL
+		FROM seo_domain sd
+		LEFT JOIN seo_content_category_assignment a ON a.seo_domain_id=sd.id AND a.deleted_at IS NULL AND a.is_primary=TRUE
+		LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL
+		WHERE `+planningNewsWhere+` AND sd.id=?
+		ON CONFLICT (user_id,seo_domain_id)
+		DO UPDATE SET updated_at=NOW(),deleted_at=NULL`, userID, newsID)
+	if result.Error != nil {
+		return nil, fmt.Errorf("save planning news: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	detail, err := r.GetPlanningNews(ctx, strconv.FormatUint(newsID, 10))
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	item := detail.SEODomain
+	item.SavedAt = &now
+	return &item, nil
+}
+
+func (r *Repository) UnsavePlanningNews(ctx context.Context, userID, newsID uint64) error {
+	if userID == 0 || newsID == 0 {
+		return fmt.Errorf("user id and planning news id are required")
+	}
+	if err := r.db.WithContext(ctx).Table("user_saved_planning_news").
+		Where("user_id=? AND seo_domain_id=? AND deleted_at IS NULL", userID, newsID).
+		Updates(map[string]any{"deleted_at": time.Now(), "updated_at": time.Now()}).Error; err != nil {
+		return fmt.Errorf("unsave planning news: %w", err)
+	}
+	return nil
 }
 
 func validPlanningNewsVisibility(value uint32) bool {

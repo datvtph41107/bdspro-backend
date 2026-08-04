@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"net"
@@ -75,11 +76,14 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	internalHandler *handler.InternalHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
+		_middleware.ParseGrpcMetadataContextMiddleware,
 		interceptors.UnaryLoggerInterceptor(logger),
 		// interceptors.UnaryAuthInterceptor(logger, appconfig.Whitelist),
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
-	streamInts := []grpc.StreamServerInterceptor{}
+	streamInts := []grpc.StreamServerInterceptor{
+		_middleware.ParseGrpcMetadataContextStreamMiddleware,
+	}
 	logger.Info(fmt.Sprintf("Starting GRPC server at port %s", appconfig.Port))
 	_, start, stop, err := BuildGRPCServer(
 		fmt.Sprintf("%s:%s", appconfig.Host, appconfig.Port),

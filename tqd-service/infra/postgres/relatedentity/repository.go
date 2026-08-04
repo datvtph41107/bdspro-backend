@@ -61,7 +61,7 @@ func relationshipKind(value string) relateddomain.RelationshipKind {
 	if normalized.IsValid() {
 		return normalized
 	}
-	return relateddomain.RelationshipNearby
+	return relateddomain.RelationshipUnknown
 }
 
 func normalizedDistance(value float64) float64 {

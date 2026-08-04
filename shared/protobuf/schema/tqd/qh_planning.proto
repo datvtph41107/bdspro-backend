@@ -149,6 +149,8 @@ message PlanningProject {
   string sourceFolderPath = 24;
   uint32 processStatus = 25;
   string processStatusName = 26;
+  string researchScope = 27; // Phạm vi nghiên cứu hiển thị trên hồ sơ đồ án công khai.
+  string indicators = 28; // JSON array chỉ tiêu quy hoạch hiển thị trên hồ sơ đồ án công khai.
 }
 
 message ListPlanningProjectsResponse {

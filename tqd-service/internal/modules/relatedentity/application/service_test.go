@@ -58,7 +58,7 @@ func (f *fakeRepository) FindPOIs(_ context.Context, query relateddomain.Query) 
 	return f.pois, f.poiErr
 }
 
-func TestGetRelatedEntitiesClampsAndSelectsOnePerKind(t *testing.T) {
+func TestGetRelatedEntitiesClampsAndOrdersByUserFacingRole(t *testing.T) {
 	primary := entity(discoverydomain.EntityKindParcel, "10", 10)
 	repo := &fakeRepository{
 		primary: &primary,
@@ -86,6 +86,9 @@ func TestGetRelatedEntitiesClampsAndSelectsOnePerKind(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetRelatedEntities() error = %v", err)
 	}
+	if response.Projection.Coverage != relateddomain.CoverageBoundedComplete {
+		t.Fatalf("Coverage = %q, want bounded_complete", response.Projection.Coverage)
+	}
 	if response.AppliedRadiusMeters != relateddomain.MaxRadiusMeters {
 		t.Fatalf("AppliedRadiusMeters = %v, want %v", response.AppliedRadiusMeters, relateddomain.MaxRadiusMeters)
 	}
@@ -97,15 +100,15 @@ func TestGetRelatedEntitiesClampsAndSelectsOnePerKind(t *testing.T) {
 	if len(response.Candidates) != 5 {
 		t.Fatalf("len(Candidates) = %d, want 5", len(response.Candidates))
 	}
-	wantKinds := []discoverydomain.EntityKind{
-		discoverydomain.EntityKindPlanningRegion,
-		discoverydomain.EntityKindAdministrativeUnit,
-		discoverydomain.EntityKindParcel,
-		discoverydomain.EntityKindPOI,
+	wantKeys := []string{
+		"planning_region:21",          // impact
+		"administrative_unit:ward:31", // context
+		"parcel:11",                   // adjacent
+		"parcel:12",                   // higher-score nearby item remains ahead in pure relevance order
 	}
-	for index, want := range wantKinds {
-		if response.Candidates[index].Entity.Entity.Kind != want {
-			t.Fatalf("Candidates[%d].Kind = %q, want %q", index, response.Candidates[index].Entity.Entity.Kind, want)
+	for index, want := range wantKeys {
+		if response.Candidates[index].Entity.Entity.Key != want {
+			t.Fatalf("Candidates[%d].Key = %q, want %q", index, response.Candidates[index].Entity.Entity.Key, want)
 		}
 	}
 	for _, candidate := range response.Candidates {
@@ -114,6 +117,9 @@ func TestGetRelatedEntitiesClampsAndSelectsOnePerKind(t *testing.T) {
 		}
 		if candidate.Entity.Attributes["relationship"] == nil {
 			t.Fatalf("candidate %q has no relationship", candidate.Entity.Entity.Key)
+		}
+		if candidate.Entity.Attributes["relatedRole"] == nil {
+			t.Fatalf("candidate %q has no relatedRole", candidate.Entity.Entity.Key)
 		}
 	}
 
@@ -130,6 +136,9 @@ func TestGetRelatedEntitiesClampsAndSelectsOnePerKind(t *testing.T) {
 		}
 		if query.Limit <= 0 || query.Limit > relateddomain.MaxLimit {
 			t.Fatalf("provider limit = %v, want bounded positive value", query.Limit)
+		}
+		if query.IncludeGeometryPreview {
+			t.Fatal("Related list query unexpectedly requested geometry preview")
 		}
 		limits = append(limits, query.Limit)
 	}
@@ -266,13 +275,16 @@ func TestGetRelatedEntitiesReturnsPartialWhenOneProviderFails(t *testing.T) {
 	if !response.Partial {
 		t.Fatal("Partial = false, want true")
 	}
+	if response.Projection.Coverage != relateddomain.CoverageBoundedPartial {
+		t.Fatalf("Coverage = %q, want bounded_partial", response.Projection.Coverage)
+	}
 	assertContains(t, response.Warnings, "related_planning_unavailable")
 	if len(response.Candidates) != 1 {
 		t.Fatalf("len(Candidates) = %d, want 1", len(response.Candidates))
 	}
 }
 
-func TestGetRelatedEntitiesFailsWhenAllProvidersFail(t *testing.T) {
+func TestGetRelatedEntitiesKeepsPrimaryWhenAllProvidersFail(t *testing.T) {
 	primary := entity(discoverydomain.EntityKindParcel, "10", 10)
 	repo := &fakeRepository{
 		primary:           &primary,
@@ -283,12 +295,19 @@ func TestGetRelatedEntitiesFailsWhenAllProvidersFail(t *testing.T) {
 	}
 
 	response, err := NewService(repo).GetRelatedEntities(context.Background(), relateddomain.Request{Key: "parcel:10"})
-	if response != nil {
-		t.Fatalf("response = %#v, want nil", response)
+	if err != nil {
+		t.Fatalf("GetRelatedEntities() error = %v", err)
 	}
-	if !errors.Is(err, relateddomain.ErrProvidersFailed) {
-		t.Fatalf("error = %v, want ErrProvidersFailed", err)
+	if response == nil || response.Primary == nil {
+		t.Fatal("primary overview must survive optional Related provider failures")
 	}
+	if !response.Partial {
+		t.Fatal("Partial = false, want true")
+	}
+	if len(response.Candidates) != 0 {
+		t.Fatalf("len(Candidates) = %d, want 0", len(response.Candidates))
+	}
+	assertContains(t, response.Warnings, "related_all_providers_unavailable")
 }
 
 func TestGetRelatedEntitiesValidatesRequest(t *testing.T) {
@@ -325,6 +344,75 @@ func TestGetRelatedEntitiesKeepsPrimaryWhenFocusUnavailable(t *testing.T) {
 	assertContains(t, response.Warnings, "related_entity_focus_unavailable")
 }
 
+func TestSelectCandidatesUsesPrimarySpecificRoleOrderBeforeRawScore(t *testing.T) {
+	primary := entity(discoverydomain.EntityKindPlanningRegion, "root", 10)
+	parent := related(
+		entity(discoverydomain.EntityKindPlanningProject, "parent", 11),
+		relateddomain.RelationshipContainsPrimary,
+		100,
+		30,
+	)
+	child := related(
+		entity(discoverydomain.EntityKindPlanningRegion, "child", 12),
+		relateddomain.RelationshipContainedByPrimary,
+		10,
+		99,
+	)
+	overlap := related(
+		entity(discoverydomain.EntityKindPlanningRegion, "overlap", 13),
+		relateddomain.RelationshipIntersectsPrimary,
+		5,
+		100,
+	)
+
+	selected := selectCandidates(
+		primary.Entity.Kind,
+		primary.Entity.Key,
+		[]relateddomain.Candidate{overlap, child, parent},
+		3,
+	)
+	want := []string{"planning_project:parent", "planning_region:child", "planning_region:overlap"}
+	for index := range want {
+		if selected[index].Entity.Entity.Key != want[index] {
+			t.Fatalf("selected[%d] = %q, want %q", index, selected[index].Entity.Entity.Key, want[index])
+		}
+	}
+}
+
+func TestCandidateDecorationKeepsSourceProvenanceFaithful(t *testing.T) {
+	candidate := related(
+		entity(discoverydomain.EntityKindPlanningRegion, "21", 21),
+		relateddomain.RelationshipContainsPrimary,
+		0,
+		100,
+	)
+	candidate.Entity.Source = discoverydomain.Source{
+		System:      "planning-service",
+		Dataset:     "zoning-2026",
+		Authority:   "Department A",
+		UpdatedAt:   "2026-08-03T00:00:00Z",
+		DataQuality: "source_record",
+	}
+	decorateCandidate(discoverydomain.EntityKindParcel, &candidate)
+
+	attributes := candidate.Entity.Attributes
+	if got := attributes["relatedRole"]; got != string(relateddomain.RelatedRoleImpact) {
+		t.Fatalf("relatedRole = %#v, want impact", got)
+	}
+	if got := attributes["sourceDataset"]; got != "zoning-2026" {
+		t.Fatalf("sourceDataset = %#v", got)
+	}
+	if got := attributes["sourceAuthority"]; got != "Department A" {
+		t.Fatalf("sourceAuthority = %#v", got)
+	}
+	if got := attributes["sourceUpdatedAt"]; got != "2026-08-03T00:00:00Z" {
+		t.Fatalf("sourceUpdatedAt = %#v", got)
+	}
+	if _, exists := attributes["official"]; exists {
+		t.Fatal("service must not infer official/legal certainty")
+	}
+}
+
 func entity(kind discoverydomain.EntityKind, id string, coordinate float64) discoverydomain.EntityCandidate {
 	return discoverydomain.EntityCandidate{
 		Entity: discoverydomain.NewEntityRef(kind, id),
@@ -354,4 +442,87 @@ func assertContains(t *testing.T, values []string, want string) {
 		}
 	}
 	t.Fatalf("%q not found in %v", want, values)
+}
+
+func TestLargePlanningRegionUsesGroupedProjectionAndSkipsParcelPOI(t *testing.T) {
+	primary := entity(discoverydomain.EntityKindPlanningRegion, "88", 21)
+	primary.Attributes = map[string]any{"areaSqm": 41_200_000.0}
+	repo := &fakeRepository{
+		primary:   &primary,
+		parcelErr: errors.New("parcel provider must not run for large region"),
+		poiErr:    errors.New("poi provider must not run for large region"),
+		planning: []relateddomain.Candidate{
+			related(entity(discoverydomain.EntityKindPlanningProject, "7", 21), relateddomain.RelationshipContainsPrimary, 0, 100),
+		},
+		administrative: []relateddomain.Candidate{
+			related(entity(discoverydomain.EntityKindAdministrativeUnit, "ward:9", 21), relateddomain.RelationshipAdministrativeContext, 0, 95),
+		},
+	}
+
+	response, err := NewService(repo).GetRelatedEntities(context.Background(), relateddomain.Request{Key: primary.Entity.Key})
+	if err != nil {
+		t.Fatalf("GetRelatedEntities() error = %v", err)
+	}
+	if response.Projection.DisplayMode != relateddomain.DisplayModeGroups {
+		t.Fatalf("DisplayMode = %q, want %q", response.Projection.DisplayMode, relateddomain.DisplayModeGroups)
+	}
+	repo.mu.Lock()
+	queryCount := len(repo.queries)
+	repo.mu.Unlock()
+	if queryCount != 2 {
+		t.Fatalf("provider query count = %d, want 2", queryCount)
+	}
+	projection, ok := response.Primary.Attributes["relatedProjection"].(map[string]any)
+	if !ok {
+		t.Fatalf("relatedProjection metadata = %#v", response.Primary.Attributes["relatedProjection"])
+	}
+	if _, mutated := primary.Attributes["relatedProjection"]; mutated {
+		t.Fatal("service must not mutate the repository-owned primary attributes")
+	}
+	if projection["displayMode"] != string(relateddomain.DisplayModeGroups) {
+		t.Fatalf("projection displayMode = %#v", projection["displayMode"])
+	}
+	if projection["schemaVersion"] != 2 {
+		t.Fatalf("projection schemaVersion = %#v, want 2", projection["schemaVersion"])
+	}
+	roleOrder, ok := projection["roleOrder"].([]string)
+	if !ok || len(roleOrder) < 3 {
+		t.Fatalf("projection roleOrder = %#v", projection["roleOrder"])
+	}
+	if roleOrder[0] != string(relateddomain.RelatedRoleContext) ||
+		roleOrder[1] != string(relateddomain.RelatedRoleContained) ||
+		roleOrder[2] != string(relateddomain.RelatedRoleOverlap) {
+		t.Fatalf("projection roleOrder = %v", roleOrder)
+	}
+	if len(response.Roles) != 1 || response.Roles[0].Key != relateddomain.RelatedRoleContext {
+		t.Fatalf("response Roles = %#v, want one context role", response.Roles)
+	}
+	assertContains(t, response.Warnings, "related_projection_grouped")
+	assertContains(t, response.Warnings, "related_group_parcel_suppressed")
+	assertContains(t, response.Warnings, "related_group_poi_suppressed")
+}
+
+func TestRestrictedProjectionCanAlsoBePartial(t *testing.T) {
+	primary := entity(discoverydomain.EntityKindPlanningRegion, "99", 21)
+	primary.Attributes = map[string]any{"areaSqm": 500_000_000.0}
+	repo := &fakeRepository{
+		primary:     &primary,
+		planningErr: errors.New("planning provider unavailable"),
+		administrative: []relateddomain.Candidate{
+			related(entity(discoverydomain.EntityKindAdministrativeUnit, "province:1", 21), relateddomain.RelationshipAdministrativeContext, 0, 95),
+		},
+	}
+
+	response, err := NewService(repo).GetRelatedEntities(context.Background(), relateddomain.Request{Key: primary.Entity.Key})
+	if err != nil {
+		t.Fatalf("GetRelatedEntities() error = %v", err)
+	}
+	if response.Projection.DisplayMode != relateddomain.DisplayModeRestricted {
+		t.Fatalf("DisplayMode = %q, want restricted", response.Projection.DisplayMode)
+	}
+	if !response.Partial {
+		t.Fatal("Partial = false, want true when one allowed provider fails")
+	}
+	assertContains(t, response.Warnings, "related_projection_restricted")
+	assertContains(t, response.Warnings, "related_planning_unavailable")
 }

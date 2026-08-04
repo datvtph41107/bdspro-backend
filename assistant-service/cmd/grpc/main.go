@@ -3,6 +3,7 @@ package grpc
 import (
 	"assistant/env"
 	"assistant/wire"
+	_middleware "common/middleware"
 	"fmt"
 	"log"
 	"net"
@@ -45,6 +46,8 @@ func RunGRPCServer() {
 	grpcServer := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
+		grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 
 	// Register services

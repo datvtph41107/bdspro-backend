@@ -1,6 +1,8 @@
 package common
 
 import (
+	_middleware "common/middleware"
+
 	"bytes"
 	_db "common/db"
 	"context"
@@ -98,7 +100,13 @@ func SetupGRPCServer(parameters SetupParameters, setup func(*grpc.Server)) {
 	}
 
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(ProfileIDInterceptor),
+		grpc.ChainUnaryInterceptor(
+			_middleware.ParseGrpcMetadataContextMiddleware,
+			ProfileIDInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			_middleware.ParseGrpcMetadataContextStreamMiddleware,
+		),
 	)
 	setup(s)
 

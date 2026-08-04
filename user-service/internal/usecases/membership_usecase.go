@@ -11,15 +11,21 @@ import (
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 	"user/internal/models"
+	"user/internal/subscriptionshadow"
 
 	"github.com/spf13/viper"
 )
+
+type membershipReadSelector interface {
+	SelectMembership(context.Context, *models.Membership) (*models.Membership, error)
+}
 
 type MembershipUsecase struct {
 	membershipRepo  repo.IMembershipRepo
 	planRepo        repo.IPlanRepo
 	paymentProvider providers.IPaymentProvider
 	secretKey       string
+	shadowObserver  subscriptionshadow.Observer
 }
 
 type IMembershipUsecase interface {
@@ -32,12 +38,14 @@ func NewMembershipUsecase(
 	membershipRepo repo.IMembershipRepo,
 	planRepo repo.IPlanRepo,
 	paymentProvider providers.IPaymentProvider,
+	shadowObserver subscriptionshadow.Observer,
 ) IMembershipUsecase {
 	return &MembershipUsecase{
 		membershipRepo:  membershipRepo,
 		planRepo:        planRepo,
 		paymentProvider: paymentProvider,
 		secretKey:       viper.GetString("payment.secretKey"),
+		shadowObserver:  shadowObserver,
 	}
 }
 
@@ -157,6 +165,20 @@ func (u *MembershipUsecase) GetMyMembership(ctx context.Context) (*models.Member
 		return nil, &_err.ErrorDTO{
 			Code:    404,
 			Message: fmt.Sprintf("Không tìm thấy membership: %v", err),
+		}
+	}
+
+	if u.shadowObserver != nil {
+		u.shadowObserver.ObserveMembership(ctx, membership)
+		if selector, ok := u.shadowObserver.(membershipReadSelector); ok {
+			selected, selectErr := selector.SelectMembership(ctx, membership)
+			if selectErr != nil {
+				return nil, &_err.ErrorDTO{
+					Code:    503,
+					Message: "Nguồn dữ liệu gói tạm thời không khả dụng",
+				}
+			}
+			return selected, nil
 		}
 	}
 

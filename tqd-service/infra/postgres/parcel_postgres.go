@@ -82,7 +82,9 @@ func (p *ParcelPostgres) FindRegionByLocation(
 			COALESCE(ST_XMax(Box2D(r.geometry)), 0) AS max_lon,
 			COALESCE(ST_YMax(Box2D(r.geometry)), 0) AS max_lat,
 
-			ST_AsGeoJSON(r.geometry) AS geo_json,
+			-- Pointer selection returns overview + bounds first. Canonical geometry
+			-- is hydrated independently after Quick Overview is committed.
+			'' AS geo_json,
 
 			'' AS province,
 			'' AS province_code,
@@ -105,9 +107,11 @@ func (p *ParcelPostgres) FindRegionByLocation(
 		  AND r.geometry && ST_SetSRID(ST_Point(?, ?), 4326)
 		  AND ST_Intersects(r.geometry, ST_SetSRID(ST_Point(?, ?), 4326))
 		ORDER BY
-		  COALESCE(l.display_order, 0) DESC,
-		  COALESCE(lu.priority, 50) ASC,
+		  -- Direct manipulation prefers the most specific containing region.
+		  -- Layer render order is presentation metadata, not click relevance.
+		  CASE WHEN COALESCE(r.area_sqm, 0) > 0 THEN 0 ELSE 1 END ASC,
 		  COALESCE(r.area_sqm, 0) ASC,
+		  COALESCE(lu.priority, 50) ASC,
 		  r.id DESC
 		LIMIT 1
 	`
@@ -847,16 +851,20 @@ func (p *ParcelPostgres) FindRegionsByPolygon(
 			COALESCE(ST_XMax(Box2D(r.geometry)), 0) AS max_lon,
 			COALESCE(ST_YMax(Box2D(r.geometry)), 0) AS max_lat,
 
-			ST_AsGeoJSON(r.geometry) AS geo_json,
+			-- Pointer selection returns overview + bounds first. Canonical geometry
+			-- is hydrated independently after Quick Overview is committed.
+			'' AS geo_json,
 
 			'' AS province,
 			'' AS province_code,
 			'' AS ward_code
 	` + baseWhere + `
 		ORDER BY
-		  COALESCE(l.display_order, 0) DESC,
-		  COALESCE(lu.priority, 50) ASC,
+		  -- Direct manipulation prefers the most specific containing region.
+		  -- Layer render order is presentation metadata, not click relevance.
+		  CASE WHEN COALESCE(r.area_sqm, 0) > 0 THEN 0 ELSE 1 END ASC,
 		  COALESCE(r.area_sqm, 0) ASC,
+		  COALESCE(lu.priority, 50) ASC,
 		  r.id DESC
 		LIMIT ? OFFSET ?
 	`
@@ -1425,6 +1433,99 @@ func (p *ParcelPostgres) GetPolygonQuickInfo(
 // PARCEL INFO
 // ============================================================
 
+// ResolveParcelOverviewByLocation is the map-click hot path. It performs
+// point-in-polygon resolution and returns only the Quick Overview fields in a
+// single query. Full canonical geometry is hydrated independently after the
+// overview has been committed on the client.
+func (p *ParcelPostgres) ResolveParcelOverviewByLocation(
+	ctx context.Context,
+	lat, lng float64,
+) (*dto.ParcelInfoResponse, error) {
+	var result dto.ParcelInfoResponse
+
+	query := `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(NULLIF(p.lat, 0), ST_Y(ST_PointOnSurface(p.geometry)), 0) AS lat,
+			COALESCE(NULLIF(p.lon, 0), ST_X(ST_PointOnSurface(p.geometry)), 0) AS lon,
+			COALESCE(NULLIF(p.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(p.address_text, '') AS address_text,
+			COALESCE(p.map_number, '') AS map_number,
+			COALESCE(p.land_number, '') AS land_number,
+			COALESCE(p.property_code, '') AS property_code,
+			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			'' AS shape_type,
+			'' AS direction,
+			'' AS land_use_code,
+			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
+			'#CCCCCC' AS land_use_color,
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(p.province_code, '') AS province_code,
+			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(p.is_seo, false) AS is_seo
+		FROM parcels p
+		LEFT JOIN qh_planning_land_use pu ON p.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+		WHERE p.deleted_at IS NULL
+		  AND p.geometry && ST_SetSRID(ST_Point(?, ?), 4326)
+		  AND ST_Covers(p.geometry, ST_SetSRID(ST_Point(?, ?), 4326))
+		ORDER BY ST_Area(p.geometry::geography) ASC, p.id DESC
+		LIMIT 1
+	`
+
+	if err := p.DB.WithContext(ctx).Raw(query, lng, lat, lng, lat).Scan(&result).Error; err != nil {
+		return nil, fmt.Errorf("resolve parcel overview by location failed: %w", err)
+	}
+	if result.ParcelID == 0 {
+		return nil, nil
+	}
+	return &result, nil
+}
+
+// GetParcelOverview returns the fields required by Quick Overview without
+// serializing canonical geometry.
+func (p *ParcelPostgres) GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
+	var result dto.ParcelInfoResponse
+
+	query := `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(p.lat, 0) AS lat,
+			COALESCE(p.lon, 0) AS lon,
+			COALESCE(p.total_area_sqm, 0) AS area_sqm,
+			COALESCE(p.address_text, '') AS address_text,
+			COALESCE(p.map_number, '') AS map_number,
+			COALESCE(p.land_number, '') AS land_number,
+			COALESCE(p.property_code, '') AS property_code,
+			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			'' AS shape_type,
+			'' AS direction,
+			'' AS land_use_code,
+			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
+			'#CCCCCC' AS land_use_color,
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(p.province_code, '') AS province_code,
+			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(p.is_seo, false) AS is_seo
+		FROM parcels p
+		LEFT JOIN qh_planning_land_use pu ON p.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+		WHERE p.id = $1
+		  AND p.deleted_at IS NULL
+		LIMIT 1
+	`
+
+	if err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error; err != nil {
+		return nil, fmt.Errorf("get parcel overview failed: %w", err)
+	}
+	if result.ParcelID == 0 {
+		return nil, nil
+	}
+	return &result, nil
+}
+
 func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 
@@ -1939,7 +2040,9 @@ func (p *ParcelPostgres) GetZoneGeometry(ctx context.Context, parcelID, layerID,
 
 	query := `
 		SELECT
-			ST_AsGeoJSON(r.geometry) AS geo_json,
+			-- Pointer selection returns overview + bounds first. Canonical geometry
+			-- is hydrated independently after Quick Overview is committed.
+			'' AS geo_json,
 			r.id AS region_id,
 			r.layer_id,
 			COALESCE(r.label_id, 0) AS label_id,

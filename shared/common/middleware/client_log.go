@@ -1,15 +1,17 @@
 package _middleware
 
 import (
-	_enums "common/domain/enum"
+	_transporttrust "common/transporttrust"
+
 	"context"
+	"errors"
 	"log"
-	"strconv"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func UnaryClientInterceptor(
@@ -20,64 +22,95 @@ func UnaryClientInterceptor(
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) error {
+	return unaryClientInterceptorWithTrust(
+		_transporttrust.ConfigFromEnv(),
+		ctx, method, req, reply, cc, invoker, opts...,
+	)
+}
+
+func unaryClientInterceptorWithTrust(
+	trustConfig _transporttrust.Config,
+	ctx context.Context,
+	method string,
+	req, reply interface{},
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
 	start := time.Now()
 
-	// Tạo metadata từ context hiện tại
-	md := metadata.MD{}
-
-	// Các hàm helper để lấy giá trị từ context và gắn vào metadata
-	appendUint64IfExists := func(ctxKey _enums.ContextKey, mdKey string) {
-		if val, ok := ctx.Value(ctxKey).(uint64); ok {
-			md.Append(mdKey, strconv.FormatUint(val, 10))
-		}
+	outgoingCtx, err := outgoingContextWithTrust(trustConfig, ctx, method)
+	if err != nil {
+		return err
 	}
 
-	appendStringIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
-		if val, ok := ctx.Value(ctxKey).(string); ok && val != "" {
-			md.Append(mdKey, val)
-		}
-	}
-
-	appendTimeIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
-		if val, ok := ctx.Value(ctxKey).(time.Time); ok && !val.IsZero() {
-			md.Append(mdKey, val.Format(time.RFC3339))
-		}
-	}
-
-	// Gắn các giá trị cần truyền sang service B
-	appendUint64IfExists(_enums.ProfileIDKey, "profileId")
-	appendUint64IfExists(_enums.OriginIDKey, "originId")
-	appendUint64IfExists(_enums.OrganizationIDKey, "organizationId")
-	appendUint64IfExists(_enums.AuthIDKey, "authId")
-	appendUint64IfExists(_enums.SessionKey, "session")
-	appendUint64IfExists(_enums.PlanIDKey, "planId")
-
-	appendStringIfExists(_enums.RoleKey, "role")
-	appendUint64SliceIfExists := func(ctxKey _enums.ContextKey, mdKey string) {
-		roleIds, ok := ctx.Value(ctxKey).([]uint64)
-		if !ok || len(roleIds) == 0 {
-			return
-		}
-		parts := make([]string, 0, len(roleIds))
-		for _, id := range roleIds {
-			parts = append(parts, strconv.FormatUint(id, 10))
-		}
-		md.Append(mdKey, strings.Join(parts, ","))
-	}
-	appendUint64SliceIfExists(_enums.RoleIDsKey, "roleIds")
-	appendStringIfExists(_enums.TypeKey, "type")
-
-	appendTimeIfExists(_enums.PlanFromKey, "planFrom")
-
-	// Gắn metadata vào context
-	ctx = metadata.NewOutgoingContext(ctx, md)
-
-	// Tiếp tục gọi RPC
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	elapsed := time.Since(start)
-
-	log.Printf("[gRPC Client] Method: %s, Duration: %s, Error: %v", method, elapsed, err)
+	err = invoker(outgoingCtx, method, req, reply, cc, opts...)
+	log.Printf("[gRPC Client] Method: %s, Duration: %s, Error: %v", method, time.Since(start), err)
 	return err
+}
+
+/**
+ * StreamClientInterceptor propagates signed metadata to streaming calls.
+ */
+func StreamClientInterceptor(
+	ctx context.Context,
+	desc *grpc.StreamDesc,
+	cc *grpc.ClientConn,
+	method string,
+	streamer grpc.Streamer,
+	opts ...grpc.CallOption,
+) (grpc.ClientStream, error) {
+	return streamClientInterceptorWithTrust(
+		_transporttrust.ConfigFromEnv(),
+		ctx, desc, cc, method, streamer, opts...,
+	)
+}
+
+func streamClientInterceptorWithTrust(
+	trustConfig _transporttrust.Config,
+	ctx context.Context,
+	desc *grpc.StreamDesc,
+	cc *grpc.ClientConn,
+	method string,
+	streamer grpc.Streamer,
+	opts ...grpc.CallOption,
+) (grpc.ClientStream, error) {
+	start := time.Now()
+
+	outgoingCtx, err := outgoingContextWithTrust(trustConfig, ctx, method)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := streamer(outgoingCtx, desc, cc, method, opts...)
+	log.Printf("[gRPC Stream Client] Method: %s, Duration: %s, Error: %v", method, time.Since(start), err)
+	return stream, err
+}
+
+func outgoingContextWithTrust(
+	trustConfig _transporttrust.Config,
+	ctx context.Context,
+	method string,
+) (context.Context, error) {
+	canonicalMD := GrpcClientMetadataFromContext(ctx)
+	mergedMD := metadata.MD{}
+	if existingMD, ok := metadata.FromOutgoingContext(ctx); ok {
+		mergedMD = existingMD.Copy()
+	}
+	for key, values := range canonicalMD {
+		mergedMD.Set(key, values...)
+	}
+
+	if err := _transporttrust.Sign(method, mergedMD, trustConfig); err != nil {
+		if trustConfig.Mode == _transporttrust.ModeEnforce {
+			return nil, status.Error(codes.FailedPrecondition, "internal metadata signing is unavailable")
+		}
+		if !errors.Is(err, _transporttrust.ErrNotConfigured) {
+			log.Printf("[gRPC Client] Trusted metadata signing skipped: %v", err)
+		}
+	}
+
+	return metadata.NewOutgoingContext(ctx, mergedMD), nil
 }
 
 func MonitorConnection(ctx context.Context, name string, conn *grpc.ClientConn) {

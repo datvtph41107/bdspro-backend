@@ -239,6 +239,21 @@ func (u *parcelUsecase) FindByLocation(ctx context.Context, lat, lng float64) (*
 	return parcel, nil
 }
 
+// parcelLocationOverviewReader is an optional optimized repository capability
+// used by the pointer-selection hot path. It resolves point-in-polygon and the
+// Quick Overview projection in one query, without serializing full geometry.
+// The public ParcelRepo contract remains unchanged so other implementations
+// stay backward compatible during the migration.
+type parcelLocationOverviewReader interface {
+	ResolveParcelOverviewByLocation(ctx context.Context, lat, lng float64) (*dto.ParcelInfoResponse, error)
+}
+
+// parcelOverviewReader is the compatibility path for repositories that have
+// not implemented the one-query location overview yet.
+type parcelOverviewReader interface {
+	GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
+}
+
 func (u *parcelUsecase) ResolveMapTargetByLocation(
 	ctx context.Context,
 	req dto.ResolveMapTargetRequestDTO,
@@ -250,25 +265,55 @@ func (u *parcelUsecase) ResolveMapTargetByLocation(
 		return nil, fmt.Errorf("longitude must be between -180 and 180")
 	}
 
-	parcel, err := u.parcelRepo.FindByLocation(ctx, req.Latitude, req.Longitude)
-	if err != nil {
-		return nil, fmt.Errorf("find parcel by location failed: %w", err)
-	}
-
-	if parcel != nil && parcel.ID > 0 {
-		info, err := u.parcelRepo.GetParcelInfo(ctx, parcel.ID)
+	// Optimized repositories resolve containment + overview in one lightweight
+	// query. This is the normal path for interactive map clicks.
+	if locationOverviewRepo, ok := u.parcelRepo.(parcelLocationOverviewReader); ok {
+		info, err := locationOverviewRepo.ResolveParcelOverviewByLocation(
+			ctx,
+			req.Latitude,
+			req.Longitude,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("get parcel info failed: %w", err)
+			return nil, fmt.Errorf("resolve parcel overview by location failed: %w", err)
 		}
-		if info == nil || info.ParcelID == 0 {
-			return nil, fmt.Errorf("parcel info not found")
+		if info != nil && info.ParcelID > 0 {
+			return &dto.ResolveMapTargetResponseDTO{
+				TargetType: enums.WorkspaceEntityTypeParcel.Uint32(),
+				TargetID:   info.ParcelID,
+				Parcel:     info,
+			}, nil
+		}
+	} else {
+		// Compatibility path. It may perform two queries and include geometry,
+		// but preserves behavior for alternative repository implementations.
+		parcel, err := u.parcelRepo.FindByLocation(ctx, req.Latitude, req.Longitude)
+		if err != nil {
+			return nil, fmt.Errorf("find parcel by location failed: %w", err)
 		}
 
-		return &dto.ResolveMapTargetResponseDTO{
-			TargetType: enums.WorkspaceEntityTypeParcel.Uint32(),
-			TargetID:   info.ParcelID,
-			Parcel:     info,
-		}, nil
+		if parcel != nil && parcel.ID > 0 {
+			var info *dto.ParcelInfoResponse
+			if overviewRepo, ok := u.parcelRepo.(parcelOverviewReader); ok {
+				info, err = overviewRepo.GetParcelOverview(ctx, parcel.ID)
+			} else {
+				info, err = u.parcelRepo.GetParcelInfo(ctx, parcel.ID)
+			}
+			if err != nil {
+				return nil, fmt.Errorf("get parcel overview failed: %w", err)
+			}
+			if info == nil || info.ParcelID == 0 {
+				return nil, fmt.Errorf("parcel info not found")
+			}
+			if len(info.Geometry) == 0 && len(parcel.Geometry.Raw) > 0 {
+				info.Geometry = parcel.Geometry.Raw
+			}
+
+			return &dto.ResolveMapTargetResponseDTO{
+				TargetType: enums.WorkspaceEntityTypeParcel.Uint32(),
+				TargetID:   info.ParcelID,
+				Parcel:     info,
+			}, nil
+		}
 	}
 
 	region, err := u.parcelRepo.FindRegionByLocation(ctx, req.Latitude, req.Longitude)

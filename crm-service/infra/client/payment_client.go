@@ -1,6 +1,8 @@
 package client
 
 import (
+	_middleware "common/middleware"
+
 	"context"
 	"crm/env"
 	"fmt"
@@ -22,7 +24,12 @@ func NewPaymentClient() (*PaymentClient, error) {
 		url = "payment"
 	}
 	paymentServiceURL := fmt.Sprintf("%s:8205", url)
-	conn, err := grpc.Dial(paymentServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(
+		paymentServiceURL,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to payment service: %w", err)
 	}

@@ -2,6 +2,7 @@ package relatedentity
 
 import (
 	"math"
+	"os"
 	"strings"
 	"testing"
 
@@ -24,8 +25,8 @@ func TestRelationshipKindPreservesSupportedValues(t *testing.T) {
 			t.Fatalf("relationshipKind(%q) = %q, want %q", value, got, value)
 		}
 	}
-	if got := relationshipKind("unknown"); got != relateddomain.RelationshipNearby {
-		t.Fatalf("relationshipKind(unknown) = %q, want nearby", got)
+	if got := relationshipKind("unknown"); got != relateddomain.RelationshipUnknown {
+		t.Fatalf("relationshipKind(unknown) = %q, want unknown", got)
 	}
 }
 
@@ -76,4 +77,63 @@ func TestPlanningProjectMembershipIsNotRadiusFiltered(t *testing.T) {
 	if !strings.Contains(sql, "'member_of_primary'") {
 		t.Fatalf("membership relationship missing: %s", sql)
 	}
+}
+
+func TestParcelPlanningQueryKeepsCoreRelationIndexFriendly(t *testing.T) {
+	contents, err := os.ReadFile("planning.go")
+	if err != nil {
+		t.Fatalf("ReadFile(planning.go): %v", err)
+	}
+	source := string(contents)
+	start := strings.Index(source, "func (r *Repository) findPlanningRegionsForParcel")
+	end := strings.Index(source[start:], "func (r *Repository) findPlanningEntitiesForRegion")
+	if start < 0 || end < 0 {
+		t.Fatal("cannot locate parcel planning query")
+	}
+	body := source[start : start+end]
+	if strings.Contains(body, "ST_DWithin") || strings.Contains(body, "ST_Buffer") {
+		t.Fatalf("parcel core planning query must not pay nearby-distance cost: %s", body)
+	}
+	if !strings.Contains(body, "ST_Intersects") || !strings.Contains(body, "region.geometry && primary_entity.geometry") {
+		t.Fatalf("parcel core planning query must use bbox + direct intersection: %s", body)
+	}
+}
+
+func TestParcelAdjacencyQueryDoesNotMixNearbyRadiusSearch(t *testing.T) {
+	body := sourceFunctionBody(t, "parcel.go", "findParcelsAroundParcel", "findParcelsInsidePlanningRegion")
+	if strings.Contains(body, "ST_DWithin") || strings.Contains(body, "ST_Buffer") {
+		t.Fatalf("parcel adjacency must not pay nearby-radius cost: %s", body)
+	}
+	if !strings.Contains(body, "ST_Touches") || !strings.Contains(body, "parcel.geometry && primary_entity.geometry") {
+		t.Fatalf("parcel adjacency must use bbox + ST_Touches: %s", body)
+	}
+}
+
+func TestPlanningContainedParcelQueryUsesWholeRegionGeometry(t *testing.T) {
+	body := sourceFunctionBody(t, "parcel.go", "findParcelsInsidePlanningRegion", "findParcelsAroundPoint")
+	if strings.Contains(body, "ST_DWithin") || strings.Contains(body, "ST_Buffer") || strings.Contains(body, "focus.point") {
+		t.Fatalf("planning containment must not be an undocumented centroid sample: %s", body)
+	}
+	if !strings.Contains(body, "ST_Covers(primary_entity.geometry, parcel.geometry)") ||
+		!strings.Contains(body, "parcel.geometry && primary_entity.geometry") {
+		t.Fatalf("planning containment must use bbox + full geometry coverage: %s", body)
+	}
+}
+
+func sourceFunctionBody(t *testing.T, filename, functionName, nextFunctionName string) string {
+	t.Helper()
+	contents, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", filename, err)
+	}
+	source := string(contents)
+	start := strings.Index(source, "func (r *Repository) "+functionName)
+	if start < 0 {
+		t.Fatalf("cannot locate %s", functionName)
+	}
+	endOffset := strings.Index(source[start:], "func (r *Repository) "+nextFunctionName)
+	if endOffset < 0 {
+		t.Fatalf("cannot locate %s after %s", nextFunctionName, functionName)
+	}
+	return source[start : start+endOffset]
 }

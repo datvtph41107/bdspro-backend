@@ -18,8 +18,9 @@ import (
 )
 
 type UserGrpcClient struct {
-	Client         userpb.ProfileServiceClient
-	InternalClient userpb.InternalUserServiceClient
+	Client           userpb.ProfileServiceClient
+	InternalClient   userpb.InternalUserServiceClient
+	PermissionClient authpb.PermissionServiceClient
 }
 
 func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
@@ -32,6 +33,7 @@ func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 		)
 		if err != nil {
 			log.Fatalf("failed to dial: %v", err)
@@ -43,8 +45,23 @@ func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
 
 		userClient.Client = userpb.NewProfileServiceClient(conn)
 		userClient.InternalClient = userpb.NewInternalUserServiceClient(conn)
+		userClient.PermissionClient = authpb.NewPermissionServiceClient(conn)
 	}()
 	return userClient
+}
+
+/**
+ * GetAllPermissions returns the durable permission-code catalog.
+ */
+func (c *UserGrpcClient) GetAllPermissions(ctx context.Context) ([]*sharepb.Permission, error) {
+	if c.PermissionClient == nil {
+		return nil, errors.New("user permission client not available")
+	}
+	response, err := c.PermissionClient.GetAllPermissions(ctx, &sharepb.IdRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return response.GetData(), nil
 }
 
 func (c *UserGrpcClient) GetMapByIDs(ctx context.Context, profileIDSet map[uint64]struct{}) (map[uint64]*sharepb.ProfileItem, error) {

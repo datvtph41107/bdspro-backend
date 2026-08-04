@@ -15,7 +15,7 @@ import (
 //
 // Tại sao cho phép client set request_id?
 // - Client SDK có thể tạo ID trước để correlate request với response
-// - Idempotency: cùng request_id → cùng operation (dành cho Layer 5 retry)
+// - Request correlation: mỗi retry dùng request_id riêng
 //
 // Tại sao sinh ID mới khi không có?
 // - Log không có request_id = không trace được request → useless log

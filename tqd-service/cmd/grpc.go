@@ -149,12 +149,21 @@ func runGRPCServer() error {
 		}
 	}
 
+	operationRuntime, err := newTQDOperationRuntime()
+	if err != nil {
+		return err
+	}
+
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
 		grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			operationRuntime.UnaryServerInterceptor,
 			quotaInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			_middleware.ParseGrpcMetadataContextStreamMiddleware,
 		),
 	)
 

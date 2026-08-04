@@ -176,6 +176,9 @@ func discoveryError(err error, operation string) error {
 	case strings.Contains(message, "invalid latitude"),
 		strings.Contains(message, "invalid longitude"),
 		strings.Contains(message, "invalid canonical"),
+		strings.Contains(message, "entity id must be numeric"),
+		strings.Contains(message, "administrative entity id must be"),
+		strings.Contains(message, "unsupported administrative unit type"),
 		strings.Contains(message, "unsupported entity kind"),
 		strings.Contains(message, "query is required"):
 		return status.Error(

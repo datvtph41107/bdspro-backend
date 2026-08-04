@@ -66,6 +66,15 @@ message PlanningNewsSlugRequest {
   string slug = 1;
 }
 
+message SavedPlanningNewsQueryRequest {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message PlanningNewsSaveRequest {
+  uint64 id = 1;
+}
+
 message UpdatePlanningNewsVisibilityRequest {
   uint64 id = 1;
   uint32 visible_on = 2;}
@@ -169,6 +178,21 @@ service CRMPublicContentService {
   rpc GetPlanningNews(PlanningNewsSlugRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/crm/public/seo/news/{slug}"
+    };
+  }
+  rpc ListSavedPlanningNews(SavedPlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/client/content/planning-news/saved"
+    };
+  }
+  rpc SavePlanningNews(PlanningNewsSaveRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/client/content/planning-news/{id}/saved"
+    };
+  }
+  rpc UnsavePlanningNews(PlanningNewsSaveRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      delete: "/v2/crm/client/content/planning-news/{id}/saved"
     };
   }
   rpc UpdatePlanningNewsVisibility(UpdatePlanningNewsVisibilityRequest) returns (google.protobuf.BytesValue) {

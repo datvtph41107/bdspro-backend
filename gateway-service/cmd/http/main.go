@@ -3,6 +3,7 @@ package cmd
 import (
 	_jwt "common/jwt"
 	_middleware "common/middleware"
+	_requestcontext "common/requestcontext"
 	"context"
 	"fmt"
 	"io"
@@ -199,6 +200,18 @@ var HttpCmd = &cobra.Command{
 		r.RedirectTrailingSlash = false
 		r.RedirectFixedPath = false
 
+		/**
+		 * Attach canonical request and operation IDs before all handlers.
+		 */
+		r.Use(func(c *gin.Context) {
+			requestID := _requestcontext.EnsureRequestID(c.Request)
+			operationID := _requestcontext.EnsureOperationID(c.Request)
+
+			_requestcontext.SetResponseHeader(c.Writer, requestID)
+			_requestcontext.SetOperationResponseHeader(c.Writer, operationID)
+
+			c.Next()
+		})
 		// CORS middleware
 		r.Use(cors.New(cors.Config{
 			AllowOrigins: []string{
@@ -224,12 +237,52 @@ var HttpCmd = &cobra.Command{
 				"https://qhpro.vn",
 				"https://test.qhpro.vn",
 			},
-			AllowMethods:     []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Lang", "If-None-Match", "X-QHPro-Telemetry-Key", "Referer", "timezone_offset"},
-			ExposeHeaders:    []string{"Content-Length", "Content-Type", "Set-Cookie", "ETag", "Cache-Control", "X-Robots-Tag", "X-Content-Type-Options"},
+			AllowMethods: []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+			AllowHeaders: []string{
+				"Origin",
+				"Content-Type",
+				"Accept",
+				"Authorization",
+				_jwt.APIKeyHeader,
+				_jwt.LegacyAPIKeyHeader,
+				"Lang",
+				"If-None-Match",
+				"X-QHPro-Telemetry-Key",
+				"Referer",
+				"timezone_offset",
+				_requestcontext.RequestIDHeader,
+				_requestcontext.OperationIDHeader,
+				_requestcontext.IdempotencyKeyHeader,
+			},
+
+			ExposeHeaders: []string{
+				"Content-Length",
+				"Content-Type",
+				"Set-Cookie",
+				"ETag",
+				"Cache-Control",
+				"X-Robots-Tag",
+				"X-Content-Type-Options",
+				_requestcontext.RequestIDHeader,
+				_requestcontext.OperationIDHeader,
+			},
 			AllowCredentials: true,
 			MaxAge:           12 * time.Hour,
 		}))
+
+		/**
+		 * Reject malformed optional idempotency keys.
+		 */
+		r.Use(func(c *gin.Context) {
+			if _, _, err := _requestcontext.IdempotencyKeyFromRequest(c.Request); err != nil {
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+					"error": "invalid Idempotency-Key header",
+				})
+				return
+			}
+
+			c.Next()
+		})
 
 		env := os.Getenv("ENV_RUNTIME")
 
@@ -274,6 +327,8 @@ var HttpCmd = &cobra.Command{
 		ctx := context.Background()
 		opts := []grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithChainUnaryInterceptor(_middleware.UnaryClientInterceptor),
+			grpc.WithChainStreamInterceptor(_middleware.StreamClientInterceptor),
 			grpc.WithConnectParams(grpc.ConnectParams{
 				Backoff: backoff.Config{
 					BaseDelay:  5 * time.Second,
@@ -284,6 +339,19 @@ var HttpCmd = &cobra.Command{
 				MinConnectTimeout: 5 * time.Second,
 			}),
 		}
+
+		apiKeyVerifier, verifierErr := service.NewHubAPIKeyVerifier(env, opts)
+		if verifierErr != nil {
+			log.Printf("Gateway API key verifier unavailable: %v", verifierErr)
+		}
+		if apiKeyVerifier != nil {
+			defer apiKeyVerifier.Close()
+		}
+		authMiddleware := _jwt.JWTAuthMiddleware(
+			publicRoutes,
+			tempRoutes,
+			_jwt.WithAPIKeyVerifier(apiKeyVerifier),
+		)
 
 		// Đăng ký các gRPC services
 		service.RegisterNotificationService(ctx, mux, env, opts)
@@ -296,14 +364,13 @@ var HttpCmd = &cobra.Command{
 		service.RegisterUserService(ctx, mux, env, opts)
 		service.RegisterChatService(ctx, mux, env, opts)
 		// service.RegisterMarketingService(ctx, mux, env, opts)
-		service.RegisterTransactionService(ctx, mux, env, opts)
 		service.RegisterAuthService(ctx, mux, env, opts)
 		service.RegisterAssistantService(ctx, mux, env, opts)
 		service.RegisterHubService(ctx, mux, env, opts)
 		service.RegisterTqdService(ctx, mux, env, opts)
 
 		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
-		v2Import := r.Group("/form", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes))
+		v2Import := r.Group("/form", authMiddleware)
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
 
@@ -341,12 +408,12 @@ var HttpCmd = &cobra.Command{
 		// 		c.Status(http.StatusOK)
 		// 		c.Next()
 		// 	},
-		// 	_jwt.JWTAuthMiddleware(publicRoutes, tempRoutes),
+		// 	authMiddleware,
 		// 	v2Fallback,
 		// )
-		r.Any("/v2/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
-		r.Any("/v2.1/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
-		r.Any("/v3/*any", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), gin.WrapH(mux))
+		r.Any("/v2/*any", authMiddleware, gin.WrapH(mux))
+		r.Any("/v2.1/*any", authMiddleware, gin.WrapH(mux))
+		r.Any("/v3/*any", authMiddleware, gin.WrapH(mux))
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")
@@ -368,7 +435,7 @@ var HttpCmd = &cobra.Command{
 
 		// v1 API routes (legacy proxy)
 		forwarding := pkg.ForwardingRequest(gateway, env)
-		r.Any("/v1/:service/*path", _jwt.JWTAuthMiddleware(publicRoutes, tempRoutes), forwarding)
+		r.Any("/v1/:service/*path", authMiddleware, forwarding)
 
 		log.Printf("Gateway server starting on port: %s", port)
 		if err := r.Run(":" + port); err != nil {

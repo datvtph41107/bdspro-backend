@@ -64,6 +64,7 @@ type PlanningNewsItem struct {
 	VisibleOn       uint32         `json:"visibleOn"`
 	PublishedAt     *time.Time     `json:"publishedAt,omitempty"`
 	UpdatedAt       *time.Time     `json:"updatedAt,omitempty"`
+	SavedAt         *time.Time     `json:"savedAt,omitempty"`
 	CategoryCode    string         `json:"categoryCode,omitempty"`
 	CategoryName    string         `json:"categoryName,omitempty"`
 	Metadata        map[string]any `json:"metadata,omitempty"`
@@ -78,6 +79,11 @@ type PlanningNewsListFilter struct {
 	Location  string
 	Range     string
 	VisibleOn uint32
+}
+
+type SavedPlanningNewsListFilter struct {
+	Page int
+	Size int
 }
 
 type PlanningNewsListResult struct {

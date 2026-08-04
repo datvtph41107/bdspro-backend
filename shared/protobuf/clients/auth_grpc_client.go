@@ -15,8 +15,7 @@ import (
 
 type AuthGrpcClient struct {
 	authpb.AuthInternalServiceClient
-	legacyAuthClient authpb.AuthInternalServiceClient
-	RoleClient       authpb.RoleServiceClient
+	RoleClient authpb.RoleServiceClient
 }
 
 func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
@@ -28,6 +27,7 @@ func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 		)
 		if err != nil {
 			log.Fatalf("failed to dial auth: %v", err)
@@ -43,6 +43,7 @@ func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 		)
 		if err != nil {
 			log.Fatalf("failed to dial user: %v", err)
@@ -50,7 +51,6 @@ func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 
 		userCtx, _ := context.WithCancel(context.Background())
 		go _middleware.MonitorConnection(userCtx, userName, userConn)
-		authClient.legacyAuthClient = authpb.NewAuthInternalServiceClient(userConn)
 		authClient.RoleClient = authpb.NewRoleServiceClient(userConn)
 	}()
 	return authClient
@@ -79,10 +79,10 @@ func (c *AuthGrpcClient) RequiredPermissions(ctx context.Context, permissionIds 
 }
 
 func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) error {
-	if c.legacyAuthClient == nil {
+	if c.AuthInternalServiceClient == nil {
 		return _errors.ReturnError(503, "auth client chưa sẵn sàng")
 	}
-	response, err := c.legacyAuthClient.RequiredPermissions(ctx, &authpb.RequiredPermissionsRequest{
+	response, err := c.AuthInternalServiceClient.RequiredPermissions(ctx, &authpb.RequiredPermissionsRequest{
 		Permissions: keys,
 	})
 	if err != nil {

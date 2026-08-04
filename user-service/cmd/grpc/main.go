@@ -90,6 +90,9 @@ var GrpcCmd = &cobra.Command{
 				admin_middleware.AdminAuthInterceptor,
 				quotaInterceptor,
 			),
+			grpc.ChainStreamInterceptor(
+				_middleware.ParseGrpcMetadataContextStreamMiddleware,
+			),
 		)
 
 		// Register services (unchanged)
@@ -107,7 +110,6 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterKYCServiceServer(s, app.KYCHandler)
 		userpb.RegisterPriceTableServiceServer(s, app.PriceTableHandler)
 
-		authpb.RegisterAuthInternalServiceServer(s, app.AuthInternalHandler)
 		authpb.RegisterAuthServiceServer(s, app.AuthHandler)
 		authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
 		// authpb.RegisterAuthInternalServiceServer(s, app.InternalHandler)

@@ -40,6 +40,7 @@ var GrpcCmd = &cobra.Command{
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+			grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 		)
 		pb_social.RegisterNewsFeedServiceServer(s, app.NewsFeedService)
 		pb_social.RegisterReportServiceServer(s, app.ReportService)

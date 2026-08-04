@@ -50,7 +50,12 @@ var GrpcCmd = &cobra.Command{
 			}
 		}
 
-		s := grpc.NewServer(interceptors)
+		s := grpc.NewServer(
+			interceptors,
+			grpc.ChainStreamInterceptor(
+				_middleware.ParseGrpcMetadataContextStreamMiddleware,
+			),
+		)
 		hubpb.RegisterEventQueueServiceServer(s, app.EventQueueService)
 		hubpb.RegisterHubInternalServiceServer(s, app.InternalHandler)
 		hubpb.RegisterLocationServiceServer(s, app.LocationHandler)

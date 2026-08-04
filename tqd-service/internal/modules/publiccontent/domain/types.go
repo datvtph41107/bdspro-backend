@@ -24,20 +24,22 @@ type PreviewContext struct {
 }
 
 type RelatedPlanningProject struct {
-	ID                uint64  `json:"id"`
-	Code              string  `json:"code,omitempty"`
-	Slug              string  `json:"slug,omitempty"`
-	Name              string  `json:"name"`
-	PlanningType      uint32  `json:"planningType,omitempty"`
-	PlanningTypeName  string  `json:"planningTypeName,omitempty"`
-	LegalStatus       uint32  `json:"legalStatus,omitempty"`
-	LegalStatusName   string  `json:"legalStatusName,omitempty"`
-	ValidityStatus    string  `json:"validityStatus,omitempty"`
-	TotalArea         float64 `json:"totalArea,omitempty"`
-	IntersectAreaSqm  float64 `json:"intersectAreaSqm,omitempty"`
-	IntersectionRatio float64 `json:"intersectionRatio,omitempty"`
-	PublicPath        string  `json:"publicPath"`
-	MapPath           string  `json:"mapPath"`
+	ID                uint64     `json:"id"`
+	Code              string     `json:"code,omitempty"`
+	Slug              string     `json:"slug,omitempty"`
+	Name              string     `json:"name"`
+	PlanningType      uint32     `json:"planningType,omitempty"`
+	PlanningTypeName  string     `json:"planningTypeName,omitempty"`
+	LegalStatus       uint32     `json:"legalStatus,omitempty"`
+	LegalStatusName   string     `json:"legalStatusName,omitempty"`
+	ValidityStatus    string     `json:"validityStatus,omitempty"`
+	TotalArea         float64    `json:"totalArea,omitempty"`
+	IntersectAreaSqm  float64    `json:"intersectAreaSqm,omitempty"`
+	IntersectionRatio float64    `json:"intersectionRatio,omitempty"`
+	UpdatedAt         *time.Time `json:"updatedAt,omitempty"`
+	PublicPath        string     `json:"publicPath"`
+	DossierPath       string     `json:"dossierPath"`
+	MapPath           string     `json:"mapPath"`
 }
 
 type ParcelQuickView struct {
@@ -59,13 +61,16 @@ type ParcelQuickView struct {
 }
 
 type PlanningEvent struct {
-	ID          uint64     `json:"id"`
-	EventType   string     `json:"eventType,omitempty"`
-	Name        string     `json:"name"`
-	Description string     `json:"description,omitempty"`
-	EventDate   *time.Time `json:"eventDate,omitempty"`
-	DocumentID  *uint64    `json:"documentId,omitempty"`
-	SourceURL   string     `json:"sourceUrl,omitempty"`
+	ID               uint64     `json:"id"`
+	EventType        string     `json:"eventType,omitempty"`
+	Name             string     `json:"name"`
+	Description      string     `json:"description,omitempty"`
+	EventDate        *time.Time `json:"eventDate,omitempty"`
+	DocumentID       *uint64    `json:"documentId,omitempty"`
+	DocumentCode     string     `json:"documentCode,omitempty"`
+	DocumentTitle    string     `json:"documentTitle,omitempty"`
+	IssuingAuthority string     `json:"issuingAuthority,omitempty"`
+	SourceURL        string     `json:"sourceUrl,omitempty"`
 }
 
 type PlanningDocument struct {

@@ -34,6 +34,7 @@ func startGRPCServer() {
 
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 
 	app, _ := wire.InitializeApp()

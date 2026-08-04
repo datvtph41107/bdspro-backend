@@ -49,6 +49,8 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		Metadata:       project.Metadata,
 		CreatedAt:      _utils.FormatTimeToString(project.CreatedAt),
 		UpdatedAt:      _utils.FormatTimeToString(project.UpdatedAt),
+		ResearchScope:  project.ResearchScope,
+		Indicators:     project.Indicators,
 
 		SourceFolderName:  project.SourceFolderName,
 		SourceFolderPath:  project.SourceFolderPath,
@@ -213,6 +215,10 @@ func (m *QHPlanningMapper) ToProjectDomain(proto *tqdpb.PlanningProject) *qh_dom
 	if metadata == "" {
 		metadata = "{}"
 	}
+	indicators := proto.Indicators
+	if indicators == "" {
+		indicators = "[]"
+	}
 
 	return &qh_domain.QHPlanningProject{
 		Code:           proto.Code,
@@ -228,6 +234,8 @@ func (m *QHPlanningMapper) ToProjectDomain(proto *tqdpb.PlanningProject) *qh_dom
 		ValidityStatus: proto.ValidityStatus,
 		CurrentVersion: proto.CurrentVersion,
 		Metadata:       metadata,
+		ResearchScope:  proto.ResearchScope,
+		Indicators:     indicators,
 	}
 }
 

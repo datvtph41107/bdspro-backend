@@ -78,6 +78,7 @@ func NewGRPCServer(port string) *GRPCServer {
 
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 	delivery.RegisterGRPCServer(server)
 

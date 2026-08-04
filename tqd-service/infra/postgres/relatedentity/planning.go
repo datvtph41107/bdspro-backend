@@ -29,10 +29,12 @@ func planningGeometryPreview(include bool) string {
 }
 
 func (r *Repository) findPlanningRegionsForParcel(ctx context.Context, query relateddomain.Query) ([]relateddomain.Candidate, error) {
+	// A parcel's core planning relations are direct containment/intersection.
+	// Nearby planning polygons are a separate exploratory concern and should not
+	// make the primary Related query pay geography distance/buffer costs.
 	sql := fmt.Sprintf(`
 		WITH primary_entity AS (
-			SELECT parcel.geometry,
-			       ST_Envelope(ST_Buffer(parcel.geometry::geography, ?)::geometry) AS search_envelope
+			SELECT parcel.geometry
 			FROM parcels parcel
 			WHERE parcel.id::text = ?
 			  AND parcel.deleted_at IS NULL
@@ -50,31 +52,24 @@ func (r *Repository) findPlanningRegionsForParcel(ctx context.Context, query rel
 		  AND region.status = 10
 		  AND region.is_latest = true
 		  AND region.geometry IS NOT NULL
-		  AND region.geometry && primary_entity.search_envelope
-		  AND (
-		    ST_Intersects(region.geometry, primary_entity.geometry)
-		    OR ST_DWithin(region.geometry::geography, primary_entity.geometry::geography, ?)
-		  )
-		ORDER BY score DESC, distance_meters ASC, region.id DESC
+		  AND region.geometry && primary_entity.geometry
+		  AND ST_Intersects(region.geometry, primary_entity.geometry)
+		ORDER BY score DESC, region.id DESC
 		LIMIT ?`, planningSelectColumns(
 		planningGeometryPreview(query.IncludeGeometryPreview),
 		`CASE
 		   WHEN ST_Covers(region.geometry, primary_entity.geometry) THEN 'contains_primary'
-		   WHEN ST_Intersects(region.geometry, primary_entity.geometry) THEN 'intersects_primary'
-		   ELSE 'nearby'
+		   ELSE 'intersects_primary'
 		 END`,
-		`ST_Distance(region.geometry::geography, primary_entity.geometry::geography)`,
+		`0::float8`,
 		`CASE
 		   WHEN ST_Covers(region.geometry, primary_entity.geometry) THEN 100
-		   WHEN ST_Intersects(region.geometry, primary_entity.geometry) THEN 82
-		   ELSE 55
+		   ELSE 82
 		 END`,
 	))
 
 	return r.scanPlanningRegions(ctx, "find planning regions for parcel", sql,
-		query.RadiusMeters,
 		query.Primary.ID,
-		query.RadiusMeters,
 		query.Limit,
 	)
 }
@@ -330,7 +325,7 @@ func planningSelectColumns(geometryPreview, relationship, distance, score string
 	       COALESCE(region.area_sqm, ST_Area(region.geometry::geography), 0) AS area_sqm,
 	       %s AS relationship,
 	       %s AS distance_meters,
-	       ((%s) + LEAST(COALESCE(layer.display_order, 0), 20))::float8 AS score`,
+	       (%s)::float8 AS score`,
 		geometryPreview,
 		relationship,
 		distance,

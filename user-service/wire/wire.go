@@ -22,6 +22,7 @@ import (
 	user_infra_sms "user/infra/sms"
 	user_infra_zns "user/infra/zns"
 	user_initial "user/initial"
+	user_internal_catalogshadow "user/internal/catalogshadow"
 	user_internal_domain "user/internal/domain"
 	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
@@ -30,6 +31,8 @@ import (
 	user_internal_interface_repo "user/internal/interface/repo"
 	user_internal_job "user/internal/job"
 	user_internal_models "user/internal/models"
+	user_internal_subscriptionread "user/internal/subscriptionread"
+	user_internal_subscriptionshadow "user/internal/subscriptionshadow"
 	user_internal_usecase "user/internal/usecase"
 	user_internal_usecases "user/internal/usecases"
 	user_validator "user/validator"
@@ -58,6 +61,10 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_interface_repo.PINRepository), new(*user_infra_postgres.PINPostgres)),
 	wire.Bind(new(user_internal_interface_repo.SessionRepository), new(*user_infra_postgres.SessionPostgres)),
 	wire.Bind(new(user_internal_interface_repo.StatusRepository), new(*user_infra_postgres.StatusPostgres)),
+	wire.Bind(new(user_internal_catalogshadow.Repository), new(*user_infra_postgres.CatalogRepo)),
+	wire.Bind(new(user_internal_catalogshadow.Observer), new(*user_internal_catalogshadow.Reader)),
+	wire.Bind(new(user_internal_subscriptionshadow.Repository), new(*user_infra_postgres.CatalogRepo)),
+	wire.Bind(new(user_internal_subscriptionshadow.Observer), new(*user_internal_subscriptionread.Router)),
 	common_injection.NewAuthClient,
 	common_injection.NewBDSProClient,
 	common_injection.NewCRMClient,
@@ -98,6 +105,9 @@ var wireSet = wire.NewSet(
 	user_infra_handler.NewBookmarkUserHandler,
 	user_infra_postgres.NewBookmarkUserPostgres,
 	user_internal_usecases.NewBookmarkUserUsecase,
+	user_infra_postgres.NewCatalogRepo,
+	user_internal_catalogshadow.NewReader,
+	user_internal_subscriptionread.NewRouter,
 	user_infra_postgres.NewCertificationPostgres,
 	user_internal_usecases.NewCertificationUsecase,
 	user_infra_postgres.NewContactPostgres,

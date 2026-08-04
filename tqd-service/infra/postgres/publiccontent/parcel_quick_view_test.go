@@ -2,9 +2,31 @@ package publiccontent
 
 import (
 	"testing"
+	"time"
 
 	"tqd/internal/modules/publiccontent/domain"
 )
+
+func TestBuildRelatedPlanningProjectKeepsUpdateAndDossierPath(t *testing.T) {
+	t.Parallel()
+
+	updatedAt := time.Date(2026, time.July, 30, 8, 0, 0, 0, time.UTC)
+	project := buildRelatedPlanningProject(relatedProjectRow{
+		ID:        9,
+		Name:      "Đồ án A",
+		UpdatedAt: &updatedAt,
+	}, "do-an-a", 42.5)
+
+	if project.DossierPath != "/ban-do/do-an/9" {
+		t.Fatalf("unexpected dossier path: %q", project.DossierPath)
+	}
+	if project.PublicPath != "/do-an-quy-hoach/do-an-a" {
+		t.Fatalf("unexpected public SEO path: %q", project.PublicPath)
+	}
+	if project.UpdatedAt == nil || !project.UpdatedAt.Equal(updatedAt) {
+		t.Fatalf("unexpected updatedAt: %#v", project.UpdatedAt)
+	}
+}
 
 func TestBuildParcelQuickViewKeepsExistingParcelWhenMetadataIsMissing(t *testing.T) {
 	t.Parallel()

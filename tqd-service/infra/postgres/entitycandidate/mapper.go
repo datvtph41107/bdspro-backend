@@ -101,7 +101,7 @@ func Build(
 	capabilities := discoverydomain.Capabilities{
 		CanOpenDetail: detailPath != "",
 		CanFocusMap:   spatial.Centroid != nil || spatial.Bounds != nil,
-		CanShare:      true,
+		CanShare:      detailPath != "",
 	}
 	switch kind {
 	case discoverydomain.EntityKindParcel:
@@ -129,7 +129,7 @@ func Build(
 	}
 	dataQuality := strings.TrimSpace(options.DataQuality)
 	if dataQuality == "" {
-		dataQuality = "authoritative"
+		dataQuality = "unknown"
 	}
 
 	return discoverydomain.EntityCandidate{
@@ -138,7 +138,7 @@ func Build(
 			Title:       title,
 			Subtitle:    strings.TrimSpace(row.Subtitle),
 			Description: strings.TrimSpace(row.Description),
-			Status:      "active",
+			Status:      "unknown",
 		},
 		Spatial: spatial,
 		Location: &discoverydomain.Location{
@@ -151,7 +151,7 @@ func Build(
 		Source: discoverydomain.Source{
 			System:      "tqd",
 			Dataset:     Dataset(kind),
-			Authority:   "TQD",
+			Authority:   "",
 			DataQuality: dataQuality,
 		},
 		Capabilities: capabilities,

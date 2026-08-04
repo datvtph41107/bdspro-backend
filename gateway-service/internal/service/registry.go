@@ -6,6 +6,7 @@ import (
 	"gateway/internal/config"
 	"time"
 
+	_middleware "common/middleware"
 	shared "common/pkg/config"
 
 	"google.golang.org/grpc"
@@ -19,7 +20,13 @@ func DialWithRetry(ep shared.ServiceEndpoint) (*grpc.ClientConn, error) {
 	for i := 0; i <= ep.Retries; i++ {
 		for _, addr := range ep.Addresses {
 			ctx, cancel := context.WithTimeout(context.Background(), ep.Timeout)
-			conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.DialContext(
+				ctx,
+				addr,
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithChainUnaryInterceptor(_middleware.UnaryClientInterceptor),
+				grpc.WithChainStreamInterceptor(_middleware.StreamClientInterceptor),
+			)
 			cancel()
 			if err == nil {
 				return conn, nil

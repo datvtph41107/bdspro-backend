@@ -38,6 +38,7 @@ func NewAssistantClient() provider.AssistantProvider {
 			grpc.WithInsecure(),
 			grpc.WithBackoffMaxDelay(5*time.Second),
 			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
 			grpc.WithDefaultCallOptions(
 				grpc.MaxCallRecvMsgSize(assistantGrpcMaxMsgBytes),
 				grpc.MaxCallSendMsgSize(assistantGrpcMaxMsgBytes),
