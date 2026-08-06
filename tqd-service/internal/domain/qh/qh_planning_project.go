@@ -3,6 +3,7 @@ package qh_domain
 import (
 	_models "common/domain/entity"
 	"time"
+	"tqd/internal/domain"
 	"tqd/internal/enums"
 )
 
@@ -40,7 +41,9 @@ type QHPlanningProject struct {
 	SourceFolderPath string                      `gorm:"type:varchar(500)" json:"sourceFolderPath"`
 	ProcessStatus    enums.PlanningProcessStatus `gorm:"type:int4;default:10;index" json:"processStatus"`
 
-	Layers []*QHLayer `gorm:"foreignKey:PlanningProjectID" json:"layers"`
+	Layers    []*QHLayer        `gorm:"foreignKey:PlanningProjectID" json:"layers"`
+	Provinces []domain.Province `gorm:"many2many:qh_planning_project_provinces;joinForeignKey:PlanningProjectID;joinReferences:ID" json:"provinces,omitempty"`
+	// EntityTags []domain.Tag   `gorm:"many2many:qh_planning_project_tags;joinForeignKey:PlanningProjectID;joinReferences:TagID" json:"entityTags,omitempty"`
 }
 
 func (QHPlanningProject) TableName() string {

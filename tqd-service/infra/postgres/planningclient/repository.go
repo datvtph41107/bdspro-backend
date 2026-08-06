@@ -134,6 +134,22 @@ func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *
 	if filter.UpdatedTo != nil {
 		db = db.Where("p.updated_at <= ?", *filter.UpdatedTo)
 	}
+	if values := parseUintCSV(filter.TagIDs); len(values) > 0 {
+		db = db.Where(`EXISTS (
+			SELECT 1 FROM qh_planning_project_tags ppt
+			WHERE ppt.planning_project_id = p.id
+			  AND ppt.deleted_at IS NULL
+			  AND ppt.tag_id IN ?
+		)`, values)
+	}
+	if values := parseCSV(filter.ProvinceIDs); len(values) > 0 {
+		db = db.Where(`EXISTS (
+			SELECT 1 FROM qh_planning_project_provinces ppp
+			WHERE ppp.planning_project_id = p.id
+			  AND ppp.deleted_at IS NULL
+			  AND ppp.province_id IN ?
+		)`, values)
+	}
 	return db
 }
 
@@ -216,6 +232,9 @@ func (r *Repository) ListProjects(ctx context.Context, filter planningdomain.Pro
 	for i := range items {
 		r.decorateProject(&items[i])
 	}
+	if err := r.attachProjectRelations(ctx, items); err != nil {
+		return nil, err
+	}
 	return &planningdomain.Page[planningdomain.Project]{Data: items, Total: total, Page: page, Size: size}, nil
 }
 
@@ -264,6 +283,11 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 		LatestUpdatedAt:        stats.LatestUpdatedAt,
 		HasLayer:               item.HasLayer,
 	}
+	projects := []planningdomain.Project{item}
+	if err := r.attachProjectRelations(ctx, projects); err != nil {
+		return nil, err
+	}
+	item = projects[0]
 	return &item, nil
 }
 
@@ -281,6 +305,76 @@ func (r *Repository) decorateProject(item *planningdomain.Project) {
 		{Key: "approvalDate", Label: "Ngày phê duyệt", Value: formatDate(item.ApprovalDate)},
 		{Key: "updatedAt", Label: "Ngày cập nhật", Value: formatDate(item.UpdatedAt)},
 	}
+}
+
+func (r *Repository) attachProjectProvinces(ctx context.Context, items []planningdomain.Project) error {
+	if len(items) == 0 {
+		return nil
+	}
+	projectIDs := make([]uint64, 0, len(items))
+	indexByID := make(map[uint64]int, len(items))
+	for i := range items {
+		if items[i].ID == 0 {
+			continue
+		}
+		indexByID[items[i].ID] = i
+		projectIDs = append(projectIDs, items[i].ID)
+	}
+	if len(projectIDs) == 0 {
+		return nil
+	}
+
+	type projectProvinceRow struct {
+		PlanningProjectID uint64
+		ID                string
+		FullName          string
+		ShortName         string
+		Code              string
+		QHOrder           int32
+		Zoom              uint32
+		Lat               float64
+		Lng               float64
+	}
+	rows := []projectProvinceRow{}
+	err := r.db.WithContext(ctx).
+		Table("qh_planning_project_provinces ppp").
+		Joins("JOIN province_v2 pv ON pv.id = ppp.province_id").
+		Where("ppp.deleted_at IS NULL AND ppp.planning_project_id IN ?", projectIDs).
+		Select(`ppp.planning_project_id,
+			pv.id,
+			pv.full_name,
+			COALESCE(pv.short_name,'') AS short_name,
+			COALESCE(pv.code,'') AS code,
+			COALESCE(pv.qh_order,0) AS qh_order,
+			COALESCE(pv.zoom,10) AS zoom,
+			COALESCE(pv.lat,0) AS lat,
+			COALESCE(pv.lng,0) AS lng`).
+		Order("pv.qh_order DESC, pv.full_name ASC, pv.id ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return fmt.Errorf("load planning project provinces: %w", err)
+	}
+	for _, row := range rows {
+		index, ok := indexByID[row.PlanningProjectID]
+		if !ok {
+			continue
+		}
+		items[index].Provinces = append(items[index].Provinces, planningdomain.ProjectProvince{
+			ID:        row.ID,
+			FullName:  row.FullName,
+			ShortName: row.ShortName,
+			Code:      row.Code,
+			QHOrder:   row.QHOrder,
+			Zoom:      row.Zoom,
+			Lat:       row.Lat,
+			Lng:       row.Lng,
+		})
+	}
+	return nil
+}
+
+func (r *Repository) attachProjectRelations(ctx context.Context, items []planningdomain.Project) error {
+	return r.attachProjectProvinces(ctx, items)
 }
 
 func formatArea(value float64) string {
@@ -481,6 +575,19 @@ func (r *Repository) ListFollowed(ctx context.Context, userID uint64, page, size
 		r.decorateProject(&rows[i].Project)
 		items = append(items, planningdomain.FollowedProject{FollowID: rows[i].FollowID, FollowedAt: rows[i].FollowedAt, Note: rows[i].Note, Project: rows[i].Project})
 	}
+	projects := make([]planningdomain.Project, len(items))
+	for i := range items {
+		projects[i] = items[i].Project
+	}
+	// if err := r.attachProjectTags(ctx, projects); err != nil {
+	// 	return nil, err
+	// }
+	if err := r.attachProjectRelations(ctx, projects); err != nil {
+		return nil, err
+	}
+	for i := range items {
+		items[i].Project = projects[i]
+	}
 	return &planningdomain.Page[planningdomain.FollowedProject]{Data: items, Total: total, Page: page, Size: size}, nil
 }
 
@@ -510,6 +617,36 @@ func (r *Repository) ListProjectLayers(ctx context.Context, projectID uint64) ([
 	}
 	for i := range items {
 		items[i].StyleConfig = normalizeJSON(items[i].StyleConfig, "[]")
+	}
+	return items, nil
+}
+
+func (r *Repository) ListProvinces(ctx context.Context, filter planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error) {
+	db := r.db.WithContext(ctx).Table("province_v2")
+	if filter.Scope == planningdomain.ProvinceScopeQH {
+		db = db.Where("qh_order > 0")
+	}
+	if value := strings.TrimSpace(filter.Search); value != "" {
+		pattern := "%" + strings.ToLower(value) + "%"
+		db = db.Where(
+			"LOWER(COALESCE(full_name,'')) LIKE ? OR LOWER(COALESCE(short_name,'')) LIKE ? OR code = ?",
+			pattern, pattern, value,
+		)
+	}
+
+	items := []planningdomain.ProvinceItem{}
+	err := db.Select(`id,
+		full_name,
+		COALESCE(short_name,'') AS short_name,
+		COALESCE(code,'') AS code,
+		COALESCE(lat,0) AS lat,
+		COALESCE(lng,0) AS lng,
+		COALESCE(qh_order,0) AS qh_order,
+		COALESCE(zoom,10) AS zoom`).
+		Order("qh_order DESC, full_name ASC, id ASC").
+		Scan(&items).Error
+	if err != nil {
+		return nil, fmt.Errorf("list provinces: %w", err)
 	}
 	return items, nil
 }

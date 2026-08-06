@@ -27,6 +27,8 @@ type ProjectListFilter struct {
 	Decision       string
 	UpdatedFrom    *time.Time
 	UpdatedTo      *time.Time
+	TagIDs         string
+	ProvinceIDs    string
 }
 
 type ProjectOverview struct {
@@ -74,6 +76,27 @@ type Project struct {
 	LayerCount        int64            `json:"layerCount"`
 	Overview          *ProjectOverview `json:"overview,omitempty" gorm:"-"`
 	Tags              []ProjectTag     `json:"tags,omitempty" gorm:"-"`
+	ProjectTags       []Tag            `json:"projectTags,omitempty" gorm:"-"`
+	Provinces         []ProjectProvince `json:"provinces,omitempty" gorm:"-"`
+}
+
+type ProjectProvince struct {
+	ID        string  `json:"id"`
+	FullName  string  `json:"fullName"`
+	ShortName string  `json:"shortName,omitempty"`
+	Code      string  `json:"code,omitempty"`
+	QHOrder   int32   `json:"qhOrder"`
+	Zoom      uint32  `json:"zoom"`
+	Lat       float64 `json:"lat,omitempty"`
+	Lng       float64 `json:"lng,omitempty"`
+}
+
+type Tag struct {
+	ID       uint64 `json:"id"`
+	Name     string `json:"name"`
+	Code     string `json:"code,omitempty"`
+	Type     uint32 `json:"type"`
+	TypeName string `json:"typeName,omitempty"`
 }
 
 type ProjectTag struct {
@@ -162,4 +185,23 @@ type ProjectLayer struct {
 	EffectiveDate     *time.Time      `json:"effectiveDate,omitempty"`
 	ExpiryDate        *time.Time      `json:"expiryDate,omitempty"`
 	UpdatedAt         *time.Time      `json:"updatedAt,omitempty"`
+}
+
+type ProvinceListFilter struct {
+	Scope  uint32
+	Search string
+}
+
+const ProvinceScopeQH uint32 = 10
+
+type ProvinceItem struct {
+	ID        string  `json:"id" gorm:"column:id"`
+	FullName  string  `json:"fullName" gorm:"column:full_name"`
+	ShortName string  `json:"shortName,omitempty" gorm:"column:short_name"`
+	Code      string  `json:"code,omitempty" gorm:"column:code"`
+	Lat       float64 `json:"lat,omitempty" gorm:"column:lat"`
+	Lng       float64 `json:"lng,omitempty" gorm:"column:lng"`
+	WardCount int32   `json:"wardCount" gorm:"column:ward_count"`
+	QHOrder   int32   `json:"qhOrder" gorm:"column:qh_order"`
+	Zoom      uint32  `json:"zoom" gorm:"column:zoom"`
 }

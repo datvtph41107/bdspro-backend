@@ -317,7 +317,7 @@ func (s *PermissionService) resolvePermissionIDs(
 }
 
 func profileIDFromContext(ctx context.Context) uint64 {
-	if actor, ok := _identitycontext.ActorFromContext(ctx); ok && actor.ProfileID != 0 {
+	if actor, ok := _identitycontext.FromContext(ctx); ok && actor.ProfileID != 0 {
 		return actor.ProfileID
 	}
 	return _utils.GetProfileIdWithContext(ctx)

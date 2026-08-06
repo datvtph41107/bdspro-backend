@@ -138,9 +138,9 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 	query := `
         SELECT 
             p.id,
-            COALESCE(p.address_text, '') as address_text,
-            COALESCE(p.map_number, '0') as map_number,
-            COALESCE(p.land_number, '0') as land_number,
+            COALESCE(pi.address_text, '') as address_text,
+            COALESCE(pi.map_number, '0') as map_number,
+            COALESCE(pi.land_number, '0') as land_number,
             p.lat,
             p.lon,
             
@@ -155,20 +155,20 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 			) as directions,
 
             COALESCE(sh.name, '') as shape_name,
-            p.shape_id,
-            COALESCE(p.facade, 0) as facade,
-            COALESCE(p.total_area_sqm, 0) as total_area_sqm,
-            p.land_type_id,
-            COALESCE(p.is_seo, false) AS is_seo,
+            pi.shape_id,
+            COALESCE(pi.facade, 0) as facade,
+            COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) as total_area_sqm,
+            pi.land_type_id,
+            COALESCE(pi.is_seo, false) AS is_seo,
             ST_AsGeoJSON(p.geometry)::bytea as geometry
         FROM parcels p
-        LEFT JOIN qh_shape sh ON sh.id = p.shape_id
-
-		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = p.id
+        LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+        LEFT JOIN qh_shape sh ON sh.id = pi.shape_id
+		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = pi.id
 		LEFT JOIN qh_direction d ON d.id = pd.qh_direction_id
-
         WHERE p.id = $1 AND p.deleted_at IS NULL
-		GROUP BY p.id, sh.id
+		GROUP BY p.id, pi.id, sh.id, pi.address_text, pi.map_number, pi.land_number, p.lat, p.lon,
+		         pi.shape_id, sh.name, pi.facade, pi.total_area_sqm, pi.land_type_id, pi.is_seo, p.geometry
     `
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
@@ -213,21 +213,20 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 
 	if mapNumber != "" || landNumber != "" {
 		if mapNumber != "" {
-			where = append(where, "COALESCE(NULLIF(info.map_number, ''), parcel.map_number) = ?")
+			where = append(where, "NULLIF(info.map_number, '') = ?")
 			args = append(args, mapNumber)
 		}
 		if landNumber != "" {
-			where = append(where, "COALESCE(NULLIF(info.land_number, ''), parcel.land_number) = ?")
+			where = append(where, "NULLIF(info.land_number, '') = ?")
 			args = append(args, landNumber)
 		}
 	} else {
 		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
-		// Ưu tiên adr_search (đã bỏ dấu); fallback address_text khi adr_search trống.
 		where = append(where, `(
-			LOWER(COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '')) LIKE ?
+			LOWER(COALESCE(NULLIF(info.adr_search, ''), '')) LIKE ?
 			OR (
-				COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '') = ''
-				AND LOWER(COALESCE(NULLIF(info.address_text, ''), parcel.address_text, '')) LIKE ?
+				COALESCE(NULLIF(info.adr_search, ''), '') = ''
+				AND LOWER(COALESCE(NULLIF(info.address_text, ''), '')) LIKE ?
 			)
 		)`)
 		args = append(args, searchTerm, searchTerm)
@@ -239,23 +238,23 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 		SELECT
 			info.id,
 			info.parcel_id,
-			COALESCE(NULLIF(info.property_code, ''), parcel.property_code) AS property_code,
+			COALESCE(info.property_code, '') AS property_code,
 			info.property_uuid,
-			COALESCE(NULLIF(info.map_number, ''), parcel.map_number) AS map_number,
-			COALESCE(NULLIF(info.land_number, ''), parcel.land_number) AS land_number,
-			COALESCE(info.total_area_sqm, parcel.total_area_sqm, 0) AS total_area_sqm,
+			COALESCE(info.map_number, '') AS map_number,
+			COALESCE(info.land_number, '') AS land_number,
+			COALESCE(info.total_area_sqm, 0) AS total_area_sqm,
 			parcel.lat,
 			parcel.lon,
-			COALESCE(NULLIF(info.province_code, ''), parcel.province_code) AS province_code,
-			COALESCE(NULLIF(info.district_code, ''), parcel.district_code) AS district_code,
-			COALESCE(NULLIF(info.ward_code, ''), parcel.ward_code) AS ward_code,
-			COALESCE(NULLIF(info.address_text, ''), parcel.address_text, '') AS address_text,
-			COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '') AS adr_search,
-			COALESCE(info.is_seo, parcel.is_seo, false) AS is_seo,
-			COALESCE(info.shape_id, parcel.shape_id) AS shape_id,
+			COALESCE(info.province_code, '') AS province_code,
+			COALESCE(info.district_code, '') AS district_code,
+			COALESCE(info.ward_code, '') AS ward_code,
+			COALESCE(info.address_text, '') AS address_text,
+			COALESCE(info.adr_search, '') AS adr_search,
+			COALESCE(info.is_seo, false) AS is_seo,
+			info.shape_id AS shape_id,
 			sh.name AS shape_name,
-			COALESCE(info.facade, parcel.facade, 0) AS facade,
-			COALESCE(info.land_type_id, parcel.land_type_id) AS land_type_id,
+			COALESCE(info.facade, 0) AS facade,
+			info.land_type_id AS land_type_id,
 			info.source_type,
 			info.is_verified,
 			info.verified_at,
@@ -263,7 +262,7 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 			info.updated_at
 		FROM qh_parcel_info info
 		INNER JOIN parcels parcel ON parcel.id = info.parcel_id
-		LEFT JOIN qh_shape sh ON sh.id = COALESCE(info.shape_id, parcel.shape_id)
+		LEFT JOIN qh_shape sh ON sh.id = info.shape_id
 		WHERE ` + whereSQL + `
 		ORDER BY parcel.id DESC
 		LIMIT ? OFFSET ?`
@@ -1448,25 +1447,26 @@ func (p *ParcelPostgres) ResolveParcelOverviewByLocation(
 			p.id AS parcel_id,
 			COALESCE(NULLIF(p.lat, 0), ST_Y(ST_PointOnSurface(p.geometry)), 0) AS lat,
 			COALESCE(NULLIF(p.lon, 0), ST_X(ST_PointOnSurface(p.geometry)), 0) AS lon,
-			COALESCE(NULLIF(p.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
-			COALESCE(p.address_text, '') AS address_text,
-			COALESCE(p.map_number, '') AS map_number,
-			COALESCE(p.land_number, '') AS land_number,
-			COALESCE(p.property_code, '') AS property_code,
-			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 			'' AS land_use_code,
 			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
 			'#CCCCCC' AS land_use_color,
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(p.province_code, '') AS province_code,
-			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(p.is_seo, false) AS is_seo
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
-		LEFT JOIN qh_planning_land_use pu ON p.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.deleted_at IS NULL
 		  AND p.geometry && ST_SetSRID(ST_Point(?, ?), 4326)
 		  AND ST_Covers(p.geometry, ST_SetSRID(ST_Point(?, ?), 4326))
@@ -1493,25 +1493,26 @@ func (p *ParcelPostgres) GetParcelOverview(ctx context.Context, parcelID uint64)
 			p.id AS parcel_id,
 			COALESCE(p.lat, 0) AS lat,
 			COALESCE(p.lon, 0) AS lon,
-			COALESCE(p.total_area_sqm, 0) AS area_sqm,
-			COALESCE(p.address_text, '') AS address_text,
-			COALESCE(p.map_number, '') AS map_number,
-			COALESCE(p.land_number, '') AS land_number,
-			COALESCE(p.property_code, '') AS property_code,
-			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 			'' AS land_use_code,
 			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
 			'#CCCCCC' AS land_use_color,
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(p.province_code, '') AS province_code,
-			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(p.is_seo, false) AS is_seo
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
-		LEFT JOIN qh_planning_land_use pu ON p.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1
@@ -1534,14 +1535,14 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			p.id AS parcel_id,
 			COALESCE(p.lat, 0) AS lat,
 			COALESCE(p.lon, 0) AS lon,
-			COALESCE(p.total_area_sqm, 0) AS area_sqm,
-			COALESCE(p.address_text, '') AS address_text,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
 			ST_AsGeoJSON(p.geometry) AS geometry,
 
-			COALESCE(p.map_number, '') AS map_number,
-			COALESCE(p.land_number, '') AS land_number,
-			COALESCE(p.property_code, '') AS property_code,
-			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 
@@ -1550,14 +1551,15 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			'#CCCCCC' AS land_use_color,
 
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(p.province_code, '') AS province_code,
-			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(p.is_seo, false) AS is_seo
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
 		LEFT JOIN qh_planning_land_use pu
-			ON p.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+			ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1

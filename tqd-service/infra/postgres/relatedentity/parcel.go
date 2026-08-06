@@ -146,16 +146,16 @@ func (r *Repository) findParcelsAroundPoint(ctx context.Context, query relateddo
 func parcelSelectColumns(geometryPreview, relationship, distance, score string) string {
 	return fmt.Sprintf(`SELECT parcel.id::text AS id,
 	       CONCAT(
-	         'Thửa ', COALESCE(NULLIF(info.land_number, ''), NULLIF(parcel.land_number, ''), parcel.id::text),
+	         'Thửa ', COALESCE(NULLIF(info.land_number, ''), parcel.id::text),
 	         CASE
-	           WHEN COALESCE(NULLIF(info.map_number, ''), NULLIF(parcel.map_number, ''), '') <> ''
-	           THEN CONCAT(', tờ ', COALESCE(NULLIF(info.map_number, ''), NULLIF(parcel.map_number, '')))
+	           WHEN COALESCE(NULLIF(info.map_number, ''), '') <> ''
+	           THEN CONCAT(', tờ ', info.map_number)
 	           ELSE ''
 	         END
 	       ) AS title,
-	       COALESCE(NULLIF(info.address_text, ''), NULLIF(parcel.address_text, ''), '') AS subtitle,
+	       COALESCE(NULLIF(info.address_text, ''), '') AS subtitle,
 	       '' AS description,
-	       COALESCE(NULLIF(info.address_text, ''), NULLIF(parcel.address_text, ''), '') AS address,
+	       COALESCE(NULLIF(info.address_text, ''), '') AS address,
 	       COALESCE(province.full_name, '') AS province,
 	       COALESCE(info.province_code, '') AS province_code,
 	       COALESCE(ward.full_name, '') AS ward,
@@ -168,9 +168,9 @@ func parcelSelectColumns(geometryPreview, relationship, distance, score string) 
 	       ST_XMax(Box2D(parcel.geometry)) AS max_lon,
 	       ST_YMax(Box2D(parcel.geometry)) AS max_lat,
 	       %s,
-	       COALESCE(NULLIF(info.map_number, ''), NULLIF(parcel.map_number, ''), '') AS map_number,
-	       COALESCE(NULLIF(info.land_number, ''), NULLIF(parcel.land_number, ''), '') AS land_number,
-	       COALESCE(NULLIF(info.total_area_sqm, 0), parcel.total_area_sqm, ST_Area(parcel.geometry::geography), 0) AS area_sqm,
+	       COALESCE(NULLIF(info.map_number, ''), '') AS map_number,
+	       COALESCE(NULLIF(info.land_number, ''), '') AS land_number,
+	       COALESCE(NULLIF(info.total_area_sqm, 0), ST_Area(parcel.geometry::geography), 0) AS area_sqm,
 	       %s AS relationship,
 	       %s AS distance_meters,
 	       (%s)::float8 AS score`,

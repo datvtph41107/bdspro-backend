@@ -111,6 +111,7 @@ var coordinatePattern = regexp.MustCompile(`^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*
 var parcelLandMapPattern = regexp.MustCompile(`(?i)(?:thửa|thua)\s*[:#-]?\s*([[:alnum:]_-]+)\D+(?:tờ|to)\s*[:#-]?\s*([[:alnum:]_-]+)`)
 var parcelMapLandPattern = regexp.MustCompile(`(?i)(?:tờ|to)\s*[:#-]?\s*([[:alnum:]_-]+)\D+(?:thửa|thua)\s*[:#-]?\s*([[:alnum:]_-]+)`)
 var parcelSlashPattern = regexp.MustCompile(`^\s*([[:alnum:]_-]+)\s*[/\-]\s*([[:alnum:]_-]+)\s*$`)
+var parcelSpacePattern = regexp.MustCompile(`^([0-9]+)\s+([0-9]+)$`)
 
 func normalizeQuery(q string) string {
 	return strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(q))), " ")
@@ -133,6 +134,11 @@ func interpret(q string) domain.SearchInterpretation {
 		out.StructuredTerms["landNumber"] = m[2]
 	} else if m := parcelSlashPattern.FindStringSubmatch(normalized); len(m) == 3 {
 		// Compact input follows the placeholder contract: map-number/land-number.
+		out.DetectedIntents = []string{"parcel_lookup"}
+		out.StructuredTerms["mapNumber"] = m[1]
+		out.StructuredTerms["landNumber"] = m[2]
+	} else if m := parcelSpacePattern.FindStringSubmatch(normalized); len(m) == 3 {
+		// Shorthand: "160 53" => tờ 160, thửa 53.
 		out.DetectedIntents = []string{"parcel_lookup"}
 		out.StructuredTerms["mapNumber"] = m[1]
 		out.StructuredTerms["landNumber"] = m[2]

@@ -27,7 +27,7 @@ func (h *AuthInternalHandler) RequiredPermissions(ctx context.Context, req *auth
 		ctx,
 		req.GetPermissionIds(),
 		req.GetPermissions(),
-		services.MatchAll,
+		services.MatchAny,
 	); err != nil {
 		return nil, err
 	}

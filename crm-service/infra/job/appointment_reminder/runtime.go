@@ -7,21 +7,17 @@ import (
 
 	emailsender "crm/infra/email_sender"
 	"crm/internal/usecase"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type AppointmentReminderJob struct {
 	appointmentReminderUsecase usecase.AppointmentReminderUsecase
 	emailSender                *emailsender.EmailSender
-	logger                     *flogging.FabricLogger
 }
 
 func NewAppointmentReminderJob(appointmentReminderUsecase usecase.AppointmentReminderUsecase, emailSender *emailsender.EmailSender) *AppointmentReminderJob {
 	return &AppointmentReminderJob{
 		appointmentReminderUsecase: appointmentReminderUsecase,
 		emailSender:                emailSender,
-		logger:                     flogging.MustGetLogger("appointment-reminder-job"),
 	}
 }
 

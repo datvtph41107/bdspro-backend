@@ -21,6 +21,7 @@ type PlanningRepository interface {
 	Unfollow(context.Context, uint64, uint64) error
 	ListFollowed(context.Context, uint64, int, int, string) (*planningdomain.Page[planningdomain.FollowedProject], error)
 	ListProjectLayers(context.Context, uint64) ([]planningdomain.ProjectLayer, error)
+	ListProvinces(context.Context, planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error)
 }
 
 // ProjectionRepository owns source projections that CRM consumes through
@@ -68,6 +69,9 @@ func (s *Service) ListFollowed(ctx context.Context, userID uint64, page, size in
 }
 func (s *Service) ListProjectLayers(ctx context.Context, projectID uint64) ([]planningdomain.ProjectLayer, error) {
 	return s.planning.ListProjectLayers(ctx, projectID)
+}
+func (s *Service) ListProvinces(ctx context.Context, filter planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error) {
+	return s.planning.ListProvinces(ctx, filter)
 }
 func (s *Service) GetParcelQuickView(ctx context.Context, parcelID uint64) (*publicdomain.ParcelQuickView, error) {
 	return s.projection.GetParcelQuickView(ctx, parcelID)

@@ -79,6 +79,16 @@ func TestSearchParcelIntentRanksParcel(t *testing.T) {
 	}
 }
 
+func TestInterpretParcelSpacePattern(t *testing.T) {
+	out := interpret("160 53")
+	if out.DetectedIntents[0] != "parcel_lookup" {
+		t.Fatalf("expected parcel_lookup, got %#v", out.DetectedIntents)
+	}
+	if out.StructuredTerms["mapNumber"] != "160" || out.StructuredTerms["landNumber"] != "53" {
+		t.Fatalf("unexpected structured terms: %#v", out.StructuredTerms)
+	}
+}
+
 func TestSearchFiltersEntityKinds(t *testing.T) {
 	svc := NewService(fakeRepo{
 		parcels: []domain.EntityCandidate{item(domain.EntityKindParcel, "1")},

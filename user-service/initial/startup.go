@@ -3,13 +3,14 @@ package initial
 import (
 	_provider "common/domain/provider"
 	"context"
+	"log"
+	"os"
 	"user/infra/handler"
 	"user/infra/scheduler"
 	"user/internal/job"
 	"user/internal/usecase"
 	"user/internal/usecases"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
 )
 
@@ -50,7 +51,7 @@ type InitialApp struct {
 	// Scheduler để chạy background jobs
 	ZnsScheduler *scheduler.ZnsScheduler
 
-	Logger *flogging.FabricLogger
+	logger *log.Logger
 }
 
 func NewInitialApp(
@@ -113,7 +114,7 @@ func NewInitialApp(
 	if loggerName == "" {
 		loggerName = "user-service"
 	}
-	app.Logger = flogging.MustGetLogger(loggerName)
+	app.logger = log.New(os.Stdout, loggerName+": ", log.LstdFlags)
 
 	app.LoadModulesOnStartup()
 
@@ -126,9 +127,9 @@ func NewInitialApp(
 func (app *InitialApp) StartZnsScheduler() {
 	if app.ZnsScheduler != nil {
 		app.ZnsScheduler.Start()
-		app.Logger.Infof("ZNS Token Refresh Scheduler started successfully")
+		app.logger.Printf("ZNS Token Refresh Scheduler started successfully")
 	} else {
-		app.Logger.Warnf("ZNS Scheduler is nil, skipping scheduler start")
+		app.logger.Printf("WARN: ZNS Scheduler is nil, skipping scheduler start")
 	}
 }
 
@@ -138,9 +139,9 @@ func (app *InitialApp) LoadModulesOnStartup() {
 
 	err := app.ModuleService.LoadModules(ctx)
 	if err != nil {
-		app.Logger.Errorf("Failed to load modules on startup: %v", err)
+		app.logger.Printf("ERROR: Failed to load modules on startup: %v", err)
 		return
 	}
 
-	app.Logger.Infof("Successfully loaded modules on startup")
+	app.logger.Printf("Successfully loaded modules on startup")
 }

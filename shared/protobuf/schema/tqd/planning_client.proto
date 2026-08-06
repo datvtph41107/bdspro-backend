@@ -10,19 +10,22 @@ message ListPlanningProjectsRequest {
   int32 page = 1;
   int32 size = 2;
   string search = 3;
-  string planning_type = 4;
-  string planning_level = 5;
-  string validity_status = 6;
-  string process_status = 7;
-  uint64 jurisdiction_id = 8;
+  string planningType = 4;
+  string planningLevel = 5;
+  string validityStatus = 6;
+  string processStatus = 7;
+  uint64 jurisdictionId = 8;
   string area = 9;
-  string legal_status = 10;
-  google.protobuf.BoolValue has_layer = 11;
-  string sort_by = 12;
-  string sort_order = 13;
+  string legalStatus = 10;
+  // has_layer: 1 = có layer, 0 = không có layer. Không truyền = bỏ lọc.
+  optional int32 hasLayer = 11;
+  string sortBy = 12;
+  string sortOrder = 13;
   string decision = 14;
-  string updated_from = 15;
-  string updated_to = 16;
+  string updatedFrom = 15;
+  string updatedTo = 16;
+  string tagIds = 17;
+  string provinceIds = 18;
 }
 
 message PlanningProjectIdRequest {
@@ -61,6 +64,12 @@ message ListFollowedPlanningProjectsRequest {
 
 message ParcelQuickViewRequest {
   uint64 parcel_id = 1;
+}
+
+message ListProvincesRequest {
+  uint32 scope = 1;
+  string search = 2;
+  int64 timestamp = 3;
 }
 
 // Canonical planning client contract. Gateway registers generated HTTP handlers; TQD exposes gRPC only.
@@ -125,6 +134,11 @@ service PlanningClientService {
   rpc ListPlanningProjectLayers(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/layers"
+    };
+  }
+  rpc ListProvinces(ListProvincesRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/provinces"
     };
   }
 }

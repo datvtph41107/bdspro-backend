@@ -12,13 +12,14 @@ import (
 	planningapp "tqd/internal/modules/planningclient/application"
 	planningdomain "tqd/internal/modules/planningclient/domain"
 
+	tqdpb "pb/types/tqd"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
-	tqdpb "pb/types/tqd"
 )
 
 // PlanningClientGrpcHandler owns planning-project business workflows in TQD.
@@ -26,11 +27,15 @@ import (
 // and registered only by gateway-service.
 type PlanningClientGrpcHandler struct {
 	tqdpb.UnimplementedPlanningClientServiceServer
-	service *planningapp.Service
+	service                    *planningapp.Service
+	provinceScopeListStartTime int64
 }
 
 func NewPlanningClientGrpcHandler(service *planningapp.Service) *PlanningClientGrpcHandler {
-	return &PlanningClientGrpcHandler{service: service}
+	return &PlanningClientGrpcHandler{
+		service:                    service,
+		provinceScopeListStartTime: time.Now().UnixMilli(),
+	}
 }
 
 func bytesResponse(value any) (*wrapperspb.BytesValue, error) {
@@ -39,6 +44,10 @@ func bytesResponse(value any) (*wrapperspb.BytesValue, error) {
 		return nil, status.Errorf(codes.Internal, "encode response: %v", err)
 	}
 	return wrapperspb.Bytes(payload), nil
+}
+
+func successResponse(data any) (*wrapperspb.BytesValue, error) {
+	return bytesResponse(map[string]any{"code": 0, "data": data})
 }
 
 func setPlanningHTTPMetadata(ctx context.Context, statusCode int, cacheControl string) {
@@ -113,9 +122,17 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 		return nil, err
 	}
 	var hasLayer *bool
-	if req.GetHasLayer() != nil {
-		value := req.GetHasLayer().GetValue()
-		hasLayer = &value
+	if req.HasLayer != nil {
+		switch *req.HasLayer {
+		case 0:
+			value := false
+			hasLayer = &value
+		case 1:
+			value := true
+			hasLayer = &value
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "has_layer must be 0 or 1")
+		}
 	}
 	filter := planningdomain.ProjectListFilter{
 		Page:           int(req.GetPage()),
@@ -134,6 +151,8 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 		Decision:       strings.TrimSpace(req.GetDecision()),
 		UpdatedFrom:    updatedFrom,
 		UpdatedTo:      updatedTo,
+		TagIDs:         strings.TrimSpace(req.GetTagIds()),
+		ProvinceIDs:    strings.TrimSpace(req.GetProvinceIds()),
 	}
 	result, err := h.service.ListProjects(ctx, filter)
 	if err != nil {
@@ -153,7 +172,7 @@ func (h *PlanningClientGrpcHandler) GetPlanningProject(ctx context.Context, req 
 		return nil, repositoryError(err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
-	return bytesResponse(result)
+	return successResponse(result)
 }
 
 func (h *PlanningClientGrpcHandler) ListPlanningDocuments(ctx context.Context, req *tqdpb.ListPlanningDocumentsRequest) (*wrapperspb.BytesValue, error) {
@@ -300,4 +319,41 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjectLayers(ctx context.Contex
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return bytesResponse(map[string]any{"data": result, "total": len(result)})
+}
+
+func (h *PlanningClientGrpcHandler) ListProvinces(ctx context.Context, req *tqdpb.ListProvincesRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil {
+		req = &tqdpb.ListProvincesRequest{}
+	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=300, stale-while-revalidate=600")
+
+	if req.GetScope() > 0 {
+		if req.GetTimestamp() > 0 && req.GetTimestamp() < h.provinceScopeListStartTime {
+			return bytesResponse(map[string]any{
+				"timestamp": h.provinceScopeListStartTime,
+				"lastest":   false,
+				"data":      []any{},
+				"total":     0,
+			})
+		}
+	}
+
+	filter := planningdomain.ProvinceListFilter{
+		Scope:  req.GetScope(),
+		Search: strings.TrimSpace(req.GetSearch()),
+	}
+	result, err := h.service.ListProvinces(ctx, filter)
+	if err != nil {
+		return nil, repositoryError(err)
+	}
+
+	response := map[string]any{
+		"data":  result,
+		"total": len(result),
+	}
+	if req.GetScope() > 0 {
+		response["timestamp"] = h.provinceScopeListStartTime
+		response["lastest"] = true
+	}
+	return bytesResponse(response)
 }

@@ -1,0 +1,3 @@
+DROP INDEX IF EXISTS idx_discovery_parcel_info_address_trgm_nonempty;
+DROP INDEX IF EXISTS idx_discovery_parcel_info_adr_trgm_nonempty;
+DROP INDEX IF EXISTS idx_discovery_parcel_info_property_code_lower_nonempty;

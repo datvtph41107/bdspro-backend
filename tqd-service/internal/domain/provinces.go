@@ -11,8 +11,10 @@ type Province struct {
 	ShortName string    `json:"shortName" gorm:"column:short_name;size:100;index:idx_provinces_short_name"`
 	Lat       float64   `json:"lat" gorm:"column:lat;type:decimal(10,8)"`
 	Lng       float64   `json:"lng" gorm:"column:lng;type:decimal(11,8)"`
-	Code      string    `json:"code" gorm:"column:code;size:20;uniqueIndex;index:idx_provinces_code"`
+	Code      string    `json:"code" gorm:"column:code;size:20;index:idx_provinces_code"`
 	WardCount int32     `json:"wardCount" gorm:"column:ward_count;default:0"`
+	QHOrder   int32     `json:"qhOrder" gorm:"column:qh_order;default:0;index:idx_provinces_qh_order"`
+	Zoom      uint32    `json:"zoom" gorm:"column:zoom;default:10"`
 	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at;default:CURRENT_TIMESTAMP;index:idx_provinces_created_at"`
 	UpdatedAt time.Time `json:"updatedAt" gorm:"column:updated_at;default:CURRENT_TIMESTAMP"`
 }

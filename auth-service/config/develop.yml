@@ -14,7 +14,7 @@ service:
   feature: "Enabled only for Service Auth"
 
 redis:
-  host: 14.225.210.29:6379
+  host: redis:6379
   pass: protected_redis_secure_password
 
 key:

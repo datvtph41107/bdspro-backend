@@ -277,6 +277,8 @@ var (
 	ADMIN_KD_XEM                               uint32 = 294
 	ADMIN_KD_TAO                               uint32 = 295
 	ADMIN_KD_XOA                               uint32 = 296
+	ADMIN_HT_SUA                               uint32 = 297
+	ADMIN_HT_XOA                               uint32 = 298
 )
 
-var PermissionIDMax = 296
+var PermissionIDMax = 298

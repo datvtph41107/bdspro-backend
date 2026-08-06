@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_utils "common/utils"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
@@ -16,17 +17,18 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Quyền theo hành động. Key ADMIN_HT_SUA/ADMIN_HT_XOA là key cũ trước khi tách
-// Xử lý / Đóng, vẫn nhận cho tới khi mọi môi trường chạy script rename permission.
 var (
-	permTicketView = []string{
-		"ADMIN_HT_XEM",
-		"ADMIN_HT_XU_LY", "ADMIN_HT_SUA",
-		"ADMIN_HT_DONG", "ADMIN_HT_XOA",
+	permTicketView = []uint32{
+		_enum.ADMIN_HT_XEM,
+		_enum.ADMIN_HT_TAO,
+		_enum.ADMIN_HT_SUA,
+		_enum.ADMIN_HT_XOA,
+		_enum.ADMIN_HT_XU_LY,
+		_enum.ADMIN_HT_DONG,
 	}
-	permTicketCreate  = []string{"ADMIN_HT_TAO"}
-	permTicketProcess = []string{"ADMIN_HT_XU_LY", "ADMIN_HT_SUA"}
-	permTicketClose   = []string{"ADMIN_HT_DONG", "ADMIN_HT_XOA"}
+	permTicketCreate  = []uint32{_enum.ADMIN_HT_TAO}
+	permTicketProcess = []uint32{_enum.ADMIN_HT_XU_LY}
+	permTicketClose   = []uint32{_enum.ADMIN_HT_DONG}
 )
 
 type SupportTicketHandler struct {
@@ -41,7 +43,7 @@ func NewSupportTicketHandler(usecase *usecase.SupportTicketUsecase, authClient *
 }
 
 func (h *SupportTicketHandler) ListSupportTickets(ctx context.Context, req *crmpb.ListSupportTicketsRequest) (*crmpb.ListSupportTicketsResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketView); err != nil {
 		return nil, err
 	}
 	listReq := &dto.SupportTicketListRequest{
@@ -91,7 +93,7 @@ func (h *SupportTicketHandler) ListSupportTickets(ctx context.Context, req *crmp
 }
 
 func (h *SupportTicketHandler) GetSupportTicketSummary(ctx context.Context, _ *emptypb.Empty) (*crmpb.SupportTicketSummaryResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketView); err != nil {
 		return nil, err
 	}
 	res, err := h.usecase.Summary(ctx)
@@ -112,7 +114,7 @@ func (h *SupportTicketHandler) GetSupportTicketSummary(ctx context.Context, _ *e
 }
 
 func (h *SupportTicketHandler) GetSupportTicket(ctx context.Context, req *sharepb.IdRequest) (*crmpb.GetSupportTicketResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketView); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketView); err != nil {
 		return nil, err
 	}
 	res, err := h.usecase.GetByID(ctx, req.Id)
@@ -124,7 +126,7 @@ func (h *SupportTicketHandler) GetSupportTicket(ctx context.Context, req *sharep
 }
 
 func (h *SupportTicketHandler) CreateSupportTicket(ctx context.Context, req *crmpb.CreateSupportTicketRequest) (*crmpb.GetSupportTicketResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketCreate); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketCreate); err != nil {
 		return nil, err
 	}
 	createReq := &dto.SupportTicketCreateRequest{
@@ -152,7 +154,7 @@ func (h *SupportTicketHandler) CreateSupportTicket(ctx context.Context, req *crm
 }
 
 func (h *SupportTicketHandler) UpdateSupportTicket(ctx context.Context, req *crmpb.UpdateSupportTicketRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	updateReq := &dto.SupportTicketUpdateRequest{}
@@ -171,7 +173,7 @@ func (h *SupportTicketHandler) UpdateSupportTicket(ctx context.Context, req *crm
 }
 
 func (h *SupportTicketHandler) AssignSupportTicket(ctx context.Context, req *crmpb.AssignSupportTicketRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	err := h.usecase.Assign(ctx, req.Id, &dto.SupportTicketAssignRequest{
@@ -185,7 +187,7 @@ func (h *SupportTicketHandler) AssignSupportTicket(ctx context.Context, req *crm
 }
 
 func (h *SupportTicketHandler) UpdateSupportTicketPriority(ctx context.Context, req *crmpb.UpdateSupportTicketPriorityRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	err := h.usecase.UpdatePriority(ctx, req.Id, &dto.SupportTicketPriorityRequest{
@@ -199,7 +201,7 @@ func (h *SupportTicketHandler) UpdateSupportTicketPriority(ctx context.Context, 
 }
 
 func (h *SupportTicketHandler) UpdateSupportTicketStatus(ctx context.Context, req *crmpb.UpdateSupportTicketStatusRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	err := h.usecase.UpdateStatus(ctx, req.Id, &dto.SupportTicketStatusRequest{
@@ -213,7 +215,7 @@ func (h *SupportTicketHandler) UpdateSupportTicketStatus(ctx context.Context, re
 }
 
 func (h *SupportTicketHandler) AddSupportTicketNote(ctx context.Context, req *crmpb.AddSupportTicketNoteRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	err := h.usecase.AddNote(ctx, req.Id, &dto.SupportTicketNoteRequest{Body: req.Body})
@@ -224,7 +226,7 @@ func (h *SupportTicketHandler) AddSupportTicketNote(ctx context.Context, req *cr
 }
 
 func (h *SupportTicketHandler) CloseSupportTicket(ctx context.Context, req *crmpb.CloseSupportTicketRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketClose); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketClose); err != nil {
 		return nil, err
 	}
 	err := h.usecase.Close(ctx, req.Id, &dto.SupportTicketCloseRequest{Note: req.Note})
@@ -235,7 +237,7 @@ func (h *SupportTicketHandler) CloseSupportTicket(ctx context.Context, req *crmp
 }
 
 func (h *SupportTicketHandler) UpdateSupportTicketImages(ctx context.Context, req *crmpb.UpdateSupportTicketImagesRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	err := h.usecase.UpdateImages(ctx, req.Id, req.Images)
@@ -246,7 +248,7 @@ func (h *SupportTicketHandler) UpdateSupportTicketImages(ctx context.Context, re
 }
 
 func (h *SupportTicketHandler) TransferSupportTicket(ctx context.Context, req *crmpb.TransferSupportTicketRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.authClient.HasPermissions(ctx, permTicketProcess); err != nil {
+	if err := h.authClient.RequiredPermissions(ctx, permTicketProcess); err != nil {
 		return nil, err
 	}
 	err := h.usecase.Transfer(ctx, req.Id, &dto.SupportTicketTransferRequest{

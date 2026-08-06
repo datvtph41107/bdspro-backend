@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -42,6 +43,126 @@ func limit(reqLimit int) int {
 		return 50
 	}
 	return reqLimit
+}
+
+// planningRegionEntitySelect: dùng centroid đã tính sẵn; ST_Simplify nhanh hơn SimplifyPreserveTopology cho preview 1 row.
+const planningRegionEntitySelect = `
+SELECT r.id::text AS id,
+       COALESCE(NULLIF(r.display_name,''),NULLIF(r.name,''),CONCAT('Vùng quy hoạch #',r.id)) AS title,
+       COALESCE(NULLIF(l.display_name,''),l.name,'') AS subtitle,
+       COALESCE(r.description,'') AS description,
+       '' AS address,'' AS province,'' AS province_code,'' AS ward,'' AS ward_code,
+       GeometryType(r.geometry) AS geometry_type,
+       COALESCE(ST_Y(r.centroid), ST_Y(ST_PointOnSurface(r.geometry))) AS center_lat,
+       COALESCE(ST_X(r.centroid), ST_X(ST_PointOnSurface(r.geometry))) AS center_lon,
+       ST_XMin(Box2D(r.geometry)) AS min_lon,
+       ST_YMin(Box2D(r.geometry)) AS min_lat,
+       ST_XMax(Box2D(r.geometry)) AS max_lon,
+       ST_YMax(Box2D(r.geometry)) AS max_lat,
+       ST_AsGeoJSON(ST_Simplify(r.geometry, 0.00001), 6) AS geo_json,
+       r.layer_id::text AS layer_id,
+       COALESCE(r.area_sqm,0) AS area_sqm,
+       50::float8 AS score`
+
+const planningRegionEntityFrom = `
+FROM qh_regions r
+JOIN qh_layers l ON l.id = r.layer_id`
+
+func (r *Repository) getPlanningRegionEntity(ctx context.Context, numericID uint64, refID string) (spatialRow, error) {
+	var row spatialRow
+	err := r.db.WithContext(ctx).Raw(
+		planningRegionEntitySelect+planningRegionEntityFrom+`
+WHERE r.deleted_at IS NULL
+  AND r.id = ?
+LIMIT 1`, numericID).Scan(&row).Error
+	if err != nil {
+		return row, err
+	}
+	if row.ID != "" {
+		return row, nil
+	}
+	// Fallback: tra external id trong original_properties — chỉ chạy khi PK miss, tránh OR + jsonb scan trên mọi request.
+	err = r.db.WithContext(ctx).Raw(`
+WITH matched AS (
+  SELECT r.id
+  FROM qh_regions r
+  WHERE r.deleted_at IS NULL
+    AND EXISTS (
+      SELECT 1
+      FROM jsonb_each_text(COALESCE(r.original_properties,'{}'::jsonb)) AS property(key,value)
+      WHERE LOWER(REPLACE(property.key,'_','')) IN (
+        'regionid','planningregionid','areaid','objectid','gid','fid','id'
+      )
+        AND property.value = ?
+    )
+  ORDER BY r.id DESC
+  LIMIT 1
+)`+planningRegionEntitySelect+planningRegionEntityFrom+`
+JOIN matched m ON m.id = r.id
+WHERE r.deleted_at IS NULL
+LIMIT 1`, refID).Scan(&row).Error
+	return row, err
+}
+
+const parcelEntitySelect = `
+SELECT p.id::text AS id,
+       CONCAT(
+         'Thửa ',
+         COALESCE(NULLIF(pi.land_number,''),p.id::text),
+         CASE
+           WHEN COALESCE(NULLIF(pi.map_number,''),'') <> ''
+           THEN CONCAT(', tờ ',pi.map_number)
+           ELSE ''
+         END
+       ) AS title,
+       COALESCE(NULLIF(pi.address_text,''),'') AS subtitle,
+       '' AS description,
+       COALESCE(NULLIF(pi.address_text,''),'') AS address,
+       COALESCE(prov.full_name,'') AS province,
+       COALESCE(pi.province_code,'') AS province_code,
+       COALESCE(w.full_name,'') AS ward,
+       COALESCE(pi.ward_code,'') AS ward_code,
+       GeometryType(p.geometry) AS geometry_type,
+       COALESCE(ST_Y(p.centroid_geom), p.lat::float8, ST_Y(ST_PointOnSurface(p.geometry))) AS center_lat,
+       COALESCE(ST_X(p.centroid_geom), p.lon::float8, ST_X(ST_PointOnSurface(p.geometry))) AS center_lon,
+       ST_XMin(Box2D(p.geometry)) AS min_lon,
+       ST_YMin(Box2D(p.geometry)) AS min_lat,
+       ST_XMax(Box2D(p.geometry)) AS max_lon,
+       ST_YMax(Box2D(p.geometry)) AS max_lat,
+       ST_AsGeoJSON(ST_Simplify(p.geometry, 0.000002), 6) AS geo_json,
+       COALESCE(pi.map_number,'') AS map_number,
+       COALESCE(pi.land_number,'') AS land_number,
+       COALESCE(NULLIF(pi.total_area_sqm,0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+       50::float8 AS score`
+
+const parcelEntityFrom = `
+FROM parcels p
+LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+LEFT JOIN province_v2 prov ON prov.code = pi.province_code
+LEFT JOIN ward_v2 w ON w.code = pi.ward_code`
+
+func (r *Repository) getParcelEntity(ctx context.Context, numericID uint64) (spatialRow, error) {
+	var row spatialRow
+	err := r.db.WithContext(ctx).Raw(
+		parcelEntitySelect+parcelEntityFrom+`
+WHERE p.id = ?
+  AND p.deleted_at IS NULL
+  AND p.geometry IS NOT NULL
+LIMIT 1`, numericID).Scan(&row).Error
+	if err != nil {
+		return row, err
+	}
+	if row.ID != "" {
+		return row, nil
+	}
+	err = r.db.WithContext(ctx).Raw(
+		parcelEntitySelect+parcelEntityFrom+`
+WHERE p.ref_id = ?
+  AND p.deleted_at IS NULL
+  AND p.geometry IS NOT NULL
+ORDER BY p.id DESC
+LIMIT 1`, numericID).Scan(&row).Error
+	return row, err
 }
 
 func (r *Repository) IdentifyParcels(ctx context.Context, req domain.IdentifyRequest) ([]domain.EntityCandidate, error) {
@@ -201,6 +322,106 @@ func (r *Repository) IdentifyPOIs(ctx context.Context, req domain.IdentifyReques
 
 func searchPattern(q string) string { return "%" + strings.ToLower(strings.TrimSpace(q)) + "%" }
 
+// parcelSearchHitLimit caps rows per fuzzy UNION branch before GROUP BY.
+func parcelSearchHitLimit(reqLimit int) int {
+	lim := limit(reqLimit)
+	hitLimit := lim * 4
+	if hitLimit < 80 {
+		return 80
+	}
+	if hitLimit > 400 {
+		return 400
+	}
+	return hitLimit
+}
+
+type parcelHit struct {
+	ParcelID uint64  `gorm:"column:parcel_id"`
+	Score    float64 `gorm:"column:score"`
+}
+
+func mergeParcelHits(scores map[uint64]float64, hits []parcelHit) {
+	for _, h := range hits {
+		if cur, ok := scores[h.ParcelID]; !ok || h.Score > cur {
+			scores[h.ParcelID] = h.Score
+		}
+	}
+}
+
+func (r *Repository) collectParcelHits(ctx context.Context, scores map[uint64]float64, sql string, args ...any) error {
+	var hits []parcelHit
+	if err := r.db.WithContext(ctx).Raw(sql, args...).Scan(&hits).Error; err != nil {
+		return err
+	}
+	mergeParcelHits(scores, hits)
+	return nil
+}
+
+func topParcelHits(scores map[uint64]float64, n int) []parcelHit {
+	out := make([]parcelHit, 0, len(scores))
+	for id, score := range scores {
+		out = append(out, parcelHit{ParcelID: id, Score: score})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Score != out[j].Score {
+			return out[i].Score > out[j].Score
+		}
+		return out[i].ParcelID > out[j].ParcelID
+	})
+	if len(out) > n {
+		out = out[:n]
+	}
+	return out
+}
+
+func matchedValuesClause(hits []parcelHit) (string, []any) {
+	parts := make([]string, len(hits))
+	args := make([]any, 0, len(hits)*2)
+	for i, h := range hits {
+		parts[i] = "(?::bigint, ?::float8)"
+		args = append(args, h.ParcelID, h.Score)
+	}
+	return "VALUES " + strings.Join(parts, ","), args
+}
+
+// parseMapLandQuery nhận dạng "160 53" (tờ/thửa) để dùng index map_number + land_number.
+func parseMapLandQuery(q string) (mapNumber, landNumber string, ok bool) {
+	parts := strings.Fields(strings.TrimSpace(q))
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	mapNumber = strings.TrimSpace(parts[0])
+	landNumber = strings.TrimSpace(parts[1])
+	if mapNumber == "" || landNumber == "" {
+		return "", "", false
+	}
+	return mapNumber, landNumber, true
+}
+
+const parcelSearchProjection = `
+       CONCAT(
+         'Thửa ', COALESCE(NULLIF(pi.land_number,''), p.id::text),
+         CASE WHEN COALESCE(pi.map_number,'') <> '' THEN CONCAT(', tờ ', pi.map_number) ELSE '' END
+       ) AS title,
+       COALESCE(pi.address_text,'') AS subtitle,
+       '' AS description,
+       COALESCE(pi.address_text,'') AS address,
+       COALESCE(prov.full_name,'') AS province,
+       COALESCE(pi.province_code,'') AS province_code,
+       COALESCE(w.full_name,'') AS ward,
+       COALESCE(pi.ward_code,'') AS ward_code,
+       GeometryType(p.geometry) AS geometry_type,
+       COALESCE(ST_Y(p.centroid_geom), p.lat::float8, ST_Y(ST_PointOnSurface(p.geometry))) AS center_lat,
+       COALESCE(ST_X(p.centroid_geom), p.lon::float8, ST_X(ST_PointOnSurface(p.geometry))) AS center_lon,
+       ST_XMin(Box2D(p.geometry)) AS min_lon,
+       ST_YMin(Box2D(p.geometry)) AS min_lat,
+       ST_XMax(Box2D(p.geometry)) AS max_lon,
+       ST_YMax(Box2D(p.geometry)) AS max_lat,
+       '' AS geo_json,
+       COALESCE(pi.map_number,'') AS map_number,
+       COALESCE(pi.land_number,'') AS land_number,
+       COALESCE(pi.total_area_sqm,0) AS area_sqm`
+
 func viewportGeometryClause(req domain.SearchRequest, geometryExpression string) (string, []any) {
 	if req.MapContext.Viewport == nil {
 		return "", nil
@@ -226,61 +447,78 @@ func (r *Repository) SearchParcels(ctx context.Context, req domain.SearchRequest
 		return nil, nil
 	}
 
-	var rows []spatialRow
+	q := strings.TrimSpace(req.Query)
+	qLower := strings.ToLower(q)
+	pattern := searchPattern(q)
+	hitLimit := parcelSearchHitLimit(req.Limit)
+	mapNo, landNo, hasMapLand := parseMapLandQuery(q)
+
 	viewportClause, viewportArgs := viewportGeometryClause(req, "p.geometry")
 
+	// Chạy từng nhánh index riêng thay vì UNION ALL + GroupAggregate (planner hay chọn seq scan).
+	scores := make(map[uint64]float64)
+
+	if err := r.collectParcelHits(ctx, scores, `
+		SELECT pi.parcel_id, 100::float8 AS score
+		FROM qh_parcel_info pi
+		WHERE pi.property_code IS NOT NULL AND pi.property_code <> ''
+		  AND LOWER(pi.property_code) = ?
+		LIMIT ?`, qLower, hitLimit); err != nil {
+		return nil, fmt.Errorf("search parcels property_code: %w", err)
+	}
+
+	if hasMapLand {
+		if err := r.collectParcelHits(ctx, scores, `
+			SELECT pi.parcel_id, 95::float8 AS score
+			FROM qh_parcel_info pi
+			WHERE pi.map_number = ? AND pi.land_number = ?
+			LIMIT ?`, mapNo, landNo, hitLimit); err != nil {
+			return nil, fmt.Errorf("search parcels map_land: %w", err)
+		}
+	}
+
+	if len(q) >= 3 && len(scores) < hitLimit {
+		if err := r.collectParcelHits(ctx, scores, `
+			SELECT pi.parcel_id, 35::float8 AS score
+			FROM qh_parcel_info pi
+			WHERE COALESCE(pi.adr_search,'') <> ''
+			  AND LOWER(pi.adr_search) LIKE ?
+			LIMIT ?`, pattern, hitLimit); err != nil {
+			return nil, fmt.Errorf("search parcels adr_search: %w", err)
+		}
+	}
+
+	if len(q) >= 3 && len(scores) < hitLimit {
+		if err := r.collectParcelHits(ctx, scores, `
+			SELECT pi.parcel_id, 30::float8 AS score
+			FROM qh_parcel_info pi
+			WHERE COALESCE(pi.address_text,'') <> ''
+			  AND LOWER(COALESCE(pi.address_text,'')) LIKE ?
+			LIMIT ?`, pattern, hitLimit); err != nil {
+			return nil, fmt.Errorf("search parcels address_text: %w", err)
+		}
+	}
+
+	topHits := topParcelHits(scores, hitLimit)
+	if len(topHits) == 0 {
+		return nil, nil
+	}
+
+	valuesSQL, valuesArgs := matchedValuesClause(topHits)
+
 	query := `
-		SELECT p.id::text AS id,
-		       CONCAT(
-		         'Thửa ', COALESCE(NULLIF(pi.land_number,''), p.id::text),
-		         CASE WHEN COALESCE(pi.map_number,'') <> '' THEN CONCAT(', tờ ', pi.map_number) ELSE '' END
-		       ) AS title,
-		       COALESCE(pi.address_text,'') AS subtitle,
-		       '' AS description,
-		       COALESCE(pi.address_text,'') AS address,
-		       COALESCE(prov.full_name,'') AS province,
-		       COALESCE(pi.province_code,'') AS province_code,
-		       COALESCE(w.full_name,'') AS ward,
-		       COALESCE(pi.ward_code,'') AS ward_code,
-		       GeometryType(p.geometry) AS geometry_type,
-		       ST_Y(ST_PointOnSurface(p.geometry)) AS center_lat,
-		       ST_X(ST_PointOnSurface(p.geometry)) AS center_lon,
-		       ST_XMin(Box2D(p.geometry)) AS min_lon,
-		       ST_YMin(Box2D(p.geometry)) AS min_lat,
-		       ST_XMax(Box2D(p.geometry)) AS max_lon,
-		       ST_YMax(Box2D(p.geometry)) AS max_lat,
-		       '' AS geo_json,
-		       COALESCE(pi.map_number,'') AS map_number,
-		       COALESCE(pi.land_number,'') AS land_number,
-		       COALESCE(pi.total_area_sqm,0) AS area_sqm,
-		       CASE
-		         WHEN LOWER(COALESCE(pi.property_code,'')) = LOWER(?) THEN 100
-		         WHEN LOWER(COALESCE(pi.map_number,'') || ' ' || COALESCE(pi.land_number,'')) = LOWER(?) THEN 90
-		         WHEN LOWER(COALESCE(pi.adr_search,'')) LIKE ? THEN 35
-		         ELSE 20
-		       END::float8 AS score
-		FROM parcels p
+		WITH matched(parcel_id, score) AS (` + valuesSQL + `)
+		SELECT p.id::text AS id,` + parcelSearchProjection + `,
+		       m.score
+		FROM matched m
+		JOIN parcels p ON p.id = m.parcel_id
 		JOIN qh_parcel_info pi ON pi.parcel_id = p.id
 		LEFT JOIN province_v2 prov ON prov.code = pi.province_code
 		LEFT JOIN ward_v2 w ON w.code = pi.ward_code
 		WHERE p.deleted_at IS NULL
-		  AND p.geometry IS NOT NULL
-		  AND (
-		    LOWER(COALESCE(pi.adr_search,'')) LIKE ?
-		    OR LOWER(COALESCE(pi.address_text,'')) LIKE ?
-		    OR LOWER(COALESCE(pi.property_code,'')) LIKE ?
-		    OR LOWER(COALESCE(pi.map_number,'') || ' ' || COALESCE(pi.land_number,'')) LIKE ?
-		  )`
+		  AND p.geometry IS NOT NULL`
 
-	args := []any{
-		req.Query,
-		strings.ToLower(strings.TrimSpace(req.Query)),
-		searchPattern(req.Query),
-		searchPattern(req.Query),
-		searchPattern(req.Query),
-		searchPattern(req.Query),
-		searchPattern(req.Query),
-	}
+	args := append([]any{}, valuesArgs...)
 	query += viewportClause
 	args = append(args, viewportArgs...)
 
@@ -289,9 +527,9 @@ func (r *Repository) SearchParcels(ctx context.Context, req domain.SearchRequest
 		args = append(args, req.AdministrativeCode, req.AdministrativeCode)
 	}
 
-	query += " ORDER BY score DESC, p.id DESC LIMIT ?"
-	args = append(args, limit(req.Limit))
+	query += " ORDER BY m.score DESC, p.id DESC"
 
+	var rows []spatialRow
 	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("search parcels: %w", err)
 	}
@@ -723,79 +961,9 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 	}
 	switch ref.Kind {
 	case domain.EntityKindParcel:
-		err = r.db.WithContext(ctx).Raw(`
-			SELECT p.id::text AS id,
-			       CONCAT(
-			         'Thửa ',
-			         COALESCE(NULLIF(pi.land_number,''),NULLIF(p.land_number,''),p.id::text),
-			         CASE
-			           WHEN COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,''),'') <> ''
-			           THEN CONCAT(', tờ ',COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,'')))
-			           ELSE ''
-			         END
-			       ) AS title,
-			       COALESCE(NULLIF(pi.address_text,''),NULLIF(p.address_text,''),'') AS subtitle,
-			       '' AS description,
-			       COALESCE(NULLIF(pi.address_text,''),NULLIF(p.address_text,''),'') AS address,
-			       COALESCE(prov.full_name,'') AS province,
-			       COALESCE(pi.province_code,'') AS province_code,
-			       COALESCE(w.full_name,'') AS ward,
-			       COALESCE(pi.ward_code,'') AS ward_code,
-			       GeometryType(p.geometry) AS geometry_type,
-			       ST_Y(ST_PointOnSurface(p.geometry)) AS center_lat,
-			       ST_X(ST_PointOnSurface(p.geometry)) AS center_lon,
-			       ST_XMin(Box2D(p.geometry)) AS min_lon,
-			       ST_YMin(Box2D(p.geometry)) AS min_lat,
-			       ST_XMax(Box2D(p.geometry)) AS max_lon,
-			       ST_YMax(Box2D(p.geometry)) AS max_lat,
-			       ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geometry,0.000002)) AS geo_json,
-			       COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,''),'') AS map_number,
-			       COALESCE(NULLIF(pi.land_number,''),NULLIF(p.land_number,''),'') AS land_number,
-			       COALESCE(NULLIF(pi.total_area_sqm,0),p.total_area_sqm,0) AS area_sqm,
-			       50::float8 AS score
-			FROM parcels p
-			LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
-			LEFT JOIN province_v2 prov ON prov.code = pi.province_code
-			LEFT JOIN ward_v2 w ON w.code = pi.ward_code
-			WHERE (p.id = ? OR p.ref_id = ?)
-			  AND p.deleted_at IS NULL
-			  AND p.geometry IS NOT NULL
-			ORDER BY CASE WHEN p.id = ? THEN 0 ELSE 1 END, p.id DESC
-			LIMIT 1`, numericID, numericID, numericID).Scan(&row).Error
+		row, err = r.getParcelEntity(ctx, numericID)
 	case domain.EntityKindPlanningRegion:
-		err = r.db.WithContext(ctx).Raw(`
-			SELECT r.id::text AS id,
-			       COALESCE(NULLIF(r.display_name,''),NULLIF(r.name,''),CONCAT('Vùng quy hoạch #',r.id)) AS title,
-			       COALESCE(NULLIF(l.display_name,''),l.name,'') AS subtitle,
-			       COALESCE(r.description,'') AS description,
-			       '' AS address,'' AS province,'' AS province_code,'' AS ward,'' AS ward_code,
-			       GeometryType(r.geometry) AS geometry_type,
-			       ST_Y(ST_PointOnSurface(r.geometry)) AS center_lat,
-			       ST_X(ST_PointOnSurface(r.geometry)) AS center_lon,
-			       ST_XMin(Box2D(r.geometry)) AS min_lon,
-			       ST_YMin(Box2D(r.geometry)) AS min_lat,
-			       ST_XMax(Box2D(r.geometry)) AS max_lon,
-			       ST_YMax(Box2D(r.geometry)) AS max_lat,
-			       ST_AsGeoJSON(ST_SimplifyPreserveTopology(r.geometry,0.00001)) AS geo_json,
-			       r.layer_id::text AS layer_id,
-			       COALESCE(r.area_sqm,0) AS area_sqm,
-			       50::float8 AS score
-			FROM qh_regions r
-			JOIN qh_layers l ON l.id = r.layer_id
-			WHERE r.deleted_at IS NULL
-			  AND (
-			    r.id = ?
-			    OR EXISTS (
-			      SELECT 1
-			      FROM jsonb_each_text(COALESCE(r.original_properties,'{}'::jsonb)) AS property(key,value)
-			      WHERE LOWER(REPLACE(property.key,'_','')) IN (
-			        'regionid','planningregionid','areaid','objectid','gid','fid','id'
-			      )
-			        AND property.value = ?
-			    )
-			  )
-			ORDER BY CASE WHEN r.id = ? THEN 0 ELSE 1 END, r.id DESC
-			LIMIT 1`, numericID, ref.ID, numericID).Scan(&row).Error
+		row, err = r.getPlanningRegionEntity(ctx, numericID, ref.ID)
 	case domain.EntityKindPlanningProject:
 		err = r.db.WithContext(ctx).Raw(`
 			SELECT pp.id::text AS id,

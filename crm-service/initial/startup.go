@@ -4,7 +4,8 @@ import (
 	"crm/infra/handler"
 	"crm/internal/usecase"
 
-	"github.com/hyperledger/fabric/common/flogging"
+	_middleware "common/middleware"
+
 	"github.com/spf13/viper"
 )
 
@@ -37,7 +38,7 @@ type InitialApp struct {
 	SupportTicketHandler *handler.SupportTicketHandler
 	AdminSalesHandler    *handler.AdminSalesHandler
 
-	Logger            *flogging.FabricLogger
+	Logger            _middleware.StdLogger
 	SeoDomainHandler  *handler.SeoDomainHandler
 	SeoStrategyHander *handler.SeoStrategyHandler
 }
@@ -104,6 +105,6 @@ func NewInitialApp(
 
 		SeoDomainHandler:  seoDomainHandler,
 		SeoStrategyHander: seoStrategyHandler,
-		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
+		Logger:            _middleware.NewStdLogger(viper.GetString("server.name")),
 	}
 }

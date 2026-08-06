@@ -14,8 +14,6 @@ import (
 	_enum "common/domain/enum"
 	_utils "common/utils"
 	pb_payment "pb/types/payment"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type CampaignUsecase interface {
@@ -37,7 +35,6 @@ type campaignUsecase struct {
 	campaignRepo       repo.CampaignRepo
 	paymentClient      *client.PaymentClient
 	notificationClient provider.NotificationProvider
-	logger             *flogging.FabricLogger
 }
 
 func NewCampaignUsecase(campaignRepo repo.CampaignRepo, paymentClient *client.PaymentClient, notificationClient provider.NotificationProvider) CampaignUsecase {
@@ -45,7 +42,6 @@ func NewCampaignUsecase(campaignRepo repo.CampaignRepo, paymentClient *client.Pa
 		campaignRepo:       campaignRepo,
 		paymentClient:      paymentClient,
 		notificationClient: notificationClient,
-		logger:             flogging.MustGetLogger("campaignUsecase"),
 	}
 }
 
