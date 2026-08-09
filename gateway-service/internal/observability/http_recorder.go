@@ -68,7 +68,9 @@ func (recorder *HTTPRecorder) RecordHTTPRequest(
 	ctx context.Context,
 	result _httpmiddleware.HTTPRequestResult,
 ) {
-	level := levelForStatus(result.StatusCode)
+	level := levelForResult(
+		result,
+	)
 
 	recorder.logger.LogAttrs(
 		ctx,
@@ -106,6 +108,19 @@ func (recorder *HTTPRecorder) RecordHTTPRequest(
 			"error_count",
 			result.ErrorCount,
 		),
+		slog.String(
+			"http_transport_outcome",
+			string(
+				result.TransportOutcome,
+			),
+		),
+
+		slog.String(
+			"http_transport_reason",
+			string(
+				result.TransportReason,
+			),
+		),
 	)
 }
 
@@ -118,4 +133,18 @@ func levelForStatus(statusCode int) slog.Level {
 	default:
 		return slog.LevelInfo
 	}
+}
+
+func levelForResult(
+	result _httpmiddleware.HTTPRequestResult,
+) slog.Level {
+	if result.TransportOutcome ==
+		_httpmiddleware.HTTPTransportOutcomeInterrupted {
+
+		return slog.LevelWarn
+	}
+
+	return levelForStatus(
+		result.StatusCode,
+	)
 }

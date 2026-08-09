@@ -1,0 +1,11 @@
+goos: linux
+goarch: amd64
+pkg: gateway/internal/httpmiddleware
+cpu: AMD Ryzen 5 5600H with Radeon Graphics         
+BenchmarkGatewayRequestBoundary-2   	  247592	      4387 ns/op	    6601 B/op	      27 allocs/op
+BenchmarkGatewayRequestBoundary-2   	  244651	      4809 ns/op	    6601 B/op	      27 allocs/op
+BenchmarkGatewayRequestBoundary-2   	  250612	      4612 ns/op	    6601 B/op	      27 allocs/op
+BenchmarkGatewayRequestBoundary-2   	  257428	      4930 ns/op	    6601 B/op	      27 allocs/op
+BenchmarkGatewayRequestBoundary-2   	  256468	      4775 ns/op	    6601 B/op	      27 allocs/op
+PASS
+ok  	gateway/internal/httpmiddleware	6.814s

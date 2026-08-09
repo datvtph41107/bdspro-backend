@@ -23,13 +23,15 @@ type RequestIDDecisionRecorder interface {
  */
 
 type HTTPRequestResult struct {
-	RequestID  string
-	Method     string
-	Route      string
-	StatusCode int
-	Duration   time.Duration
-	Aborted    bool
-	ErrorCount int
+	RequestID        string
+	Method           string
+	Route            string
+	StatusCode       int
+	Duration         time.Duration
+	Aborted          bool
+	ErrorCount       int
+	TransportOutcome HTTPTransportOutcome
+	TransportReason  HTTPTransportReason
 }
 
 // HTTPRequestRecorder -> Http attempt

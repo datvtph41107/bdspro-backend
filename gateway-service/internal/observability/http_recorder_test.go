@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"net/http"
 	"testing"
 	"time"
 
@@ -39,6 +40,11 @@ func TestHTTPRecorderWritesStructuredCompletionLog(
 			Duration:   125 * time.Millisecond,
 			Aborted:    true,
 			ErrorCount: 1,
+			TransportOutcome: _httpmiddleware.
+				HTTPTransportOutcomeCompleted,
+
+			TransportReason: _httpmiddleware.
+				HTTPTransportReasonNone,
 		},
 	)
 
@@ -73,6 +79,108 @@ func TestHTTPRecorderWritesStructuredCompletionLog(
 		t.Fatalf(
 			"http_status_code = %v",
 			event["http_status_code"],
+		)
+	}
+
+	if event["http_transport_outcome"] !=
+		"completed" {
+
+		t.Fatalf(
+			"http_transport_outcome = %v",
+			event["http_transport_outcome"],
+		)
+	}
+}
+
+func TestHTTPRecorderDoesNotTreatInterruptedTransportAsSuccess(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	var output bytes.Buffer
+
+	logger := slog.New(
+		slog.NewJSONHandler(
+			&output,
+			&slog.HandlerOptions{
+				Level: slog.LevelDebug,
+			},
+		),
+	)
+
+	recorder :=
+		NewHTTPRecorder(
+			logger,
+		)
+
+	recorder.RecordHTTPRequest(
+		context.Background(),
+		_httpmiddleware.HTTPRequestResult{
+			RequestID: "request-interrupted-123",
+			Method:    http.MethodGet,
+			Route:     "/stream/:id",
+
+			// Đây cố tình là 200.
+			// Nó mô phỏng default/internal writer
+			// state khi transport bị interrupted.
+			StatusCode: 200,
+
+			Duration:   10 * time.Millisecond,
+			Aborted:    true,
+			ErrorCount: 1,
+
+			TransportOutcome: _httpmiddleware.
+				HTTPTransportOutcomeInterrupted,
+
+			TransportReason: _httpmiddleware.
+				HTTPTransportReasonBrokenPipe,
+		},
+	)
+
+	var event map[string]any
+
+	if err := json.Unmarshal(
+		output.Bytes(),
+		&event,
+	); err != nil {
+		t.Fatalf(
+			"invalid JSON: %v\n%s",
+			err,
+			output.String(),
+		)
+	}
+
+	if event["level"] != "WARN" {
+		t.Fatalf(
+			"level = %v, want WARN",
+			event["level"],
+		)
+	}
+
+	if event["http_status_code"] !=
+		float64(200) {
+
+		t.Fatalf(
+			"http_status_code = %v",
+			event["http_status_code"],
+		)
+	}
+
+	if event["http_transport_outcome"] !=
+		"interrupted" {
+
+		t.Fatalf(
+			"http_transport_outcome = %v",
+			event["http_transport_outcome"],
+		)
+	}
+
+	if event["http_transport_reason"] !=
+		"broken_pipe" {
+
+		t.Fatalf(
+			"http_transport_reason = %v",
+			event["http_transport_reason"],
 		)
 	}
 }

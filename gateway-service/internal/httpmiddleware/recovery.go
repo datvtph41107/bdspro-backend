@@ -1,16 +1,15 @@
 package httpmiddleware
 
 import (
+	_requestcontext "common/requestcontext"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
 
-	_requestcontext "common/requestcontext"
-
 	"github.com/gin-gonic/gin"
 )
 
-// Recovery panic -> http 500
 func Recovery(
 	logger *slog.Logger,
 ) gin.HandlerFunc {
@@ -18,18 +17,29 @@ func Recovery(
 		logger = slog.Default()
 	}
 
-	return gin.CustomRecovery(
+	return gin.CustomRecoveryWithWriter(
+		nil,
 		func(
 			ctx *gin.Context,
 			recovered any,
 		) {
-			requestID, _ := _requestcontext.
-				FromContext(
+			requestID, _ :=
+				_requestcontext.FromContext(
 					ctx.Request.Context(),
 				)
 
-			logger.ErrorContext(
+			recoveredErr :=
+				asRecoveredError(
+					recovered,
+				)
+
+			_ = ctx.Error(
+				recoveredErr,
+			)
+
+			logger.LogAttrs(
 				ctx.Request.Context(),
+				slog.LevelError,
 				"gateway request panic",
 				slog.String(
 					"event_name",
@@ -47,15 +57,25 @@ func Recovery(
 					"http_route",
 					normalizedRoute(ctx),
 				),
-				slog.Any(
-
-					"panic",
-					string(debug.Stack()),
+				slog.Bool(
+					"response_committed",
+					ctx.Writer.Written(),
+				),
+				slog.String(
+					"panic_type",
+					fmt.Sprintf(
+						"%T",
+						recovered,
+					),
+				),
+				slog.String(
+					"stack_trace",
+					string(
+						debug.Stack(),
+					),
 				),
 			)
 
-			// Header request ID đã được set
-			// trc khi chain chạy
 			if ctx.Writer.Written() {
 				ctx.Abort()
 				return
@@ -65,5 +85,20 @@ func Recovery(
 				http.StatusInternalServerError,
 			)
 		},
+	)
+}
+
+func asRecoveredError(
+	recovered any,
+) error {
+	if err, ok :=
+		recovered.(error); ok {
+
+		return err
+	}
+
+	return fmt.Errorf(
+		"%v",
+		recovered,
 	)
 }

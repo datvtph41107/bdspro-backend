@@ -21,6 +21,12 @@ func RequestLifecycle(
 
 		ctx.Next()
 
+		transportOutcome,
+			transportReason :=
+			classifyHTTPTransport(
+				ctx,
+			)
+
 		requestID, _ := _requestcontext.
 			FromContext(
 				ctx.Request.Context(),
@@ -33,13 +39,15 @@ func RequestLifecycle(
 		recorder.RecordHTTPRequest(
 			ctx.Request.Context(),
 			HTTPRequestResult{
-				RequestID:  requestID,
-				Method:     ctx.Request.Method,
-				Route:      route,
-				StatusCode: ctx.Writer.Status(),
-				Duration:   time.Since(startedAt),
-				Aborted:    ctx.IsAborted(),
-				ErrorCount: len(ctx.Errors),
+				RequestID:        requestID,
+				Method:           ctx.Request.Method,
+				Route:            route,
+				StatusCode:       ctx.Writer.Status(),
+				Duration:         time.Since(startedAt),
+				Aborted:          ctx.IsAborted(),
+				ErrorCount:       len(ctx.Errors),
+				TransportOutcome: transportOutcome,
+				TransportReason:  transportReason,
 			},
 		)
 	}
