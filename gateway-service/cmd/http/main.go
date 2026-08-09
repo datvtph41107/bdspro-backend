@@ -4,16 +4,20 @@ import (
 	_jwt "common/jwt"
 	_middleware "common/middleware"
 	_requestcontext "common/requestcontext"
+
 	"context"
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	sharepb "pb/types/shared"
 	"time"
 
 	"gateway/config"
+	_httpmiddleware "gateway/internal/httpmiddleware"
+	_observability "gateway/internal/observability"
 	"gateway/pkg"
 	"gateway/service"
 
@@ -180,111 +184,220 @@ var HttpCmd = &cobra.Command{
 		port := viper.GetString("server.port")
 		gateway := pkg.NewGateway("url")
 
+		env := os.Getenv("ENV_RUNTIME")
 		// Set timezone
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 		// Tạo thư mục nếu chưa có
-		os.MkdirAll("./app/logs", os.ModePerm)
+		if err :=
+			os.MkdirAll(
+				"./app/logs",
+				os.ModePerm,
+			); err != nil {
 
+			panic(err)
+		}
 		// Mở file log
-		f, err := os.OpenFile("./app/logs/app.log",
-			os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		f, err :=
+			os.OpenFile(
+				"./app/logs/app.log",
+				os.O_CREATE|
+					os.O_WRONLY|
+					os.O_APPEND,
+				0666,
+			)
+
 		if err != nil {
 			panic(err)
 		}
-		gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
-		r := gin.Default()
+		defer func() {
+			if err :=
+				f.Close(); err != nil {
+
+				log.Printf(
+					"failed to close gateway log file: %v",
+					err,
+				)
+			}
+		}()
+
+		logOutput :=
+			io.MultiWriter(
+				f,
+				os.Stdout,
+			)
+
+		gin.DefaultWriter = logOutput
+
+		logger :=
+			slog.New(
+				slog.NewJSONHandler(
+					logOutput,
+					&slog.HandlerOptions{
+						Level: slog.LevelInfo,
+					},
+				),
+			).With(
+				"service_name",
+				"gateway-service",
+				"environment",
+				env,
+			)
+
+		httpRecorder :=
+			_observability.
+				NewHTTPRecorder(
+					logger,
+				)
+
+		r := gin.New()
 		// Tránh 301/307 redirect tự thêm/xóa "/" cuối path (httprouter/Gin mặc định bật).
 		r.RedirectTrailingSlash = false
 		r.RedirectFixedPath = false
+		r.HandleMethodNotAllowed =
+			true
 
-		/**
-		 * Attach canonical request and operation IDs before all handlers.
-		 */
-		r.Use(func(c *gin.Context) {
-			requestID := _requestcontext.EnsureRequestID(c.Request)
-			operationID := _requestcontext.EnsureOperationID(c.Request)
+		r.Use(
+			_httpmiddleware.
+				RequestID(
+					httpRecorder,
+				),
+		)
 
-			_requestcontext.SetResponseHeader(c.Writer, requestID)
-			_requestcontext.SetOperationResponseHeader(c.Writer, operationID)
+		r.Use(
+			_httpmiddleware.
+				RequestLifecycle(
+					httpRecorder,
+				),
+		)
 
-			c.Next()
-		})
+		r.Use(
+			_httpmiddleware.
+				Recovery(
+					logger,
+				),
+		)
+
+		r.Use(
+			func(
+				c *gin.Context,
+			) {
+				operationID :=
+					_requestcontext.
+						EnsureOperationID(
+							c.Request,
+						)
+
+				_requestcontext.
+					SetOperationResponseHeader(
+						c.Writer,
+						operationID,
+					)
+
+				c.Next()
+			},
+		)
 		// CORS middleware
-		r.Use(cors.New(cors.Config{
-			AllowOrigins: []string{
-				"http://localhost:3000",
-				"http://127.0.0.1:3000",
-				"http://127.0.0.1:3001",
-				"http://14.225.210.29:3108",
-				"http://localhost:3001",
-				"http://localhost:8000",
-				"http://localhost:5173",
-				"http://localhost:5174",
-				"http://14.225.210.29:8000",
-				"http://14.225.205.222:8000",
-				"http://14.225.205.222:3107",
-				"http://14.225.205.222:3108",
-				"http://14.225.210.29:3110",
-				"http://103.145.63.185:3107",
-				"http://103.172.239.89:3108",
-				"https://admin.bdspro.com",
-				"https://bdspro.com",
-				"https://app.bdspro.com",
-				"https://map.qhpro.vn",
-				"https://qhpro.vn",
-				"https://test.qhpro.vn",
-			},
-			AllowMethods: []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-			AllowHeaders: []string{
-				"Origin",
-				"Content-Type",
-				"Accept",
-				"Authorization",
-				_jwt.APIKeyHeader,
-				_jwt.LegacyAPIKeyHeader,
-				"Lang",
-				"If-None-Match",
-				"X-QHPro-Telemetry-Key",
-				"Referer",
-				"timezone_offset",
-				_requestcontext.RequestIDHeader,
-				_requestcontext.OperationIDHeader,
-				_requestcontext.IdempotencyKeyHeader,
-			},
+		corsConfig :=
+			_httpmiddleware.
+				WithRequestIDCORS(
+					cors.Config{
+						AllowOrigins: []string{
+							"http://localhost:3000",
+							"http://127.0.0.1:3000",
+							"http://127.0.0.1:3001",
+							"http://14.225.210.29:3108",
+							"http://localhost:3001",
+							"http://localhost:8000",
+							"http://localhost:5173",
+							"http://localhost:5174",
+							"http://14.225.210.29:8000",
+							"http://14.225.205.222:8000",
+							"http://14.225.205.222:3107",
+							"http://14.225.205.222:3108",
+							"http://14.225.210.29:3110",
+							"http://103.145.63.185:3107",
+							"http://103.172.239.89:3108",
+							"https://admin.bdspro.com",
+							"https://bdspro.com",
+							"https://app.bdspro.com",
+							"https://map.qhpro.vn",
+							"https://qhpro.vn",
+							"https://test.qhpro.vn",
+						},
+						AllowMethods: []string{
+							http.MethodGet,
+							http.MethodHead,
+							http.MethodPost,
+							http.MethodPut,
+							http.MethodPatch,
+							http.MethodDelete,
+							http.MethodOptions,
+						},
+						AllowHeaders: []string{
+							"Origin",
+							"Content-Type",
+							"Accept",
+							"Authorization",
+							_jwt.APIKeyHeader,
+							_jwt.LegacyAPIKeyHeader,
+							"Lang",
+							"If-None-Match",
+							"X-QHPro-Telemetry-Key",
+							"Referer",
+							"timezone_offset",
+							_requestcontext.OperationIDHeader,
+							_requestcontext.IdempotencyKeyHeader,
+						},
 
-			ExposeHeaders: []string{
-				"Content-Length",
-				"Content-Type",
-				"Set-Cookie",
-				"ETag",
-				"Cache-Control",
-				"X-Robots-Tag",
-				"X-Content-Type-Options",
-				_requestcontext.RequestIDHeader,
-				_requestcontext.OperationIDHeader,
-			},
-			AllowCredentials: true,
-			MaxAge:           12 * time.Hour,
-		}))
+						ExposeHeaders: []string{
+							"Content-Length",
+							"Content-Type",
+							"Set-Cookie",
+							"ETag",
+							"Cache-Control",
+							"X-Robots-Tag",
+							"X-Content-Type-Options",
+							_requestcontext.OperationIDHeader,
+						},
+						AllowCredentials: true,
+						MaxAge:           12 * time.Hour,
+					},
+				)
+		r.Use(
+			cors.New(
+				corsConfig,
+			),
+		)
 
 		/**
 		 * Reject malformed optional idempotency keys.
 		 */
-		r.Use(func(c *gin.Context) {
-			if _, _, err := _requestcontext.IdempotencyKeyFromRequest(c.Request); err != nil {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-					"error": "invalid Idempotency-Key header",
-				})
-				return
-			}
+		r.Use(
+			func(
+				c *gin.Context,
+			) {
+				if _, _, err :=
+					_requestcontext.
+						IdempotencyKeyFromRequest(
+							c.Request,
+						); err != nil {
 
-			c.Next()
-		})
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						gin.H{
+							"error": "invalid Idempotency-Key header",
+						},
+					)
 
-		env := os.Getenv("ENV_RUNTIME")
+					return
+				}
+
+				c.Next()
+			},
+		)
 
 		// gRPC Gateway muxcs
 		mux := runtime.NewServeMux(
